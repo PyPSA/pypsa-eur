@@ -61,8 +61,10 @@ def plot_weighting(n, country, country_shape=None):
 # # Determining the number of clusters per country
 
 def distribute_clusters(n, n_clusters, solver_name=None):
-    if solver_name is None:
-        solver_name = snakemake.config['solver']['solver']['name']
+    if solver_name is None and 'snakemake' in globals():
+        solver_name = snakemake.config['solving']['solver']['name']
+    else:
+        solver_name = "cbc"
 
     L = (n.loads_t.p_set.mean()
          .groupby(n.loads.bus).sum()
@@ -93,18 +95,13 @@ def distribute_clusters(n, n_clusters, solver_name=None):
 
     return pd.Series(m.n.get_values(), index=L.index).astype(int)
 
-def busmap_for_n_clusters(n, n_clusters, algorithm="kmeans", **algorithm_kwds):
+def busmap_for_n_clusters(n, n_clusters, algorithm="kmeans", solver_name="cbc", **algorithm_kwds):
     if algorithm == "kmeans":
         algorithm_kwds.setdefault('n_init', 1000)
         algorithm_kwds.setdefault('max_iter', 30000)
         algorithm_kwds.setdefault('tol', 1e-6)
 
     n.determine_network_topology()
-
-    if 'snakemake' in globals():
-        solver_name = snakemake.config['solving']['solver']['name']
-    else:
-        solver_name = "gurobi"
 
     n_clusters = distribute_clusters(n, n_clusters, solver_name=solver_name)
 
@@ -140,7 +137,8 @@ def plot_busmap_for_n_clusters(n, n_clusters=50):
     del cs, cr
 
 def clustering_for_n_clusters(n, n_clusters, aggregate_carriers=None,
-                              line_length_factor=1.25, potential_mode='simple', algorithm="kmeans"):
+                              line_length_factor=1.25, potential_mode='simple', algorithm="kmeans"
+                              solver_name="cbc"):
 
     if potential_mode == 'simple':
         p_nom_max_strategy = np.sum
@@ -151,7 +149,7 @@ def clustering_for_n_clusters(n, n_clusters, aggregate_carriers=None,
                              "but is '{}'".format(potential_mode))
 
     clustering = get_clustering_from_busmap(
-        n, busmap_for_n_clusters(n, n_clusters, algorithm),
+        n, busmap_for_n_clusters(n, n_clusters, algorithm, solver_name=solver_name),
         bus_strategies=dict(country=_make_consense("Bus", "country")),
         aggregate_generators_weighted=True,
         aggregate_generators_carriers=aggregate_carriers,
@@ -233,7 +231,8 @@ if __name__ == "__main__":
                                              for tech in renewable_carriers]))
         clustering = clustering_for_n_clusters(n, n_clusters, aggregate_carriers,
                                                line_length_factor=line_length_factor,
-                                               potential_mode=potential_mode)
+                                               potential_mode=potential_mode,
+                                               solver_name=snakemake.config['solving']['solver']['name'])
 
     clustering.network.export_to_netcdf(snakemake.output.network)
     with pd.HDFStore(snakemake.output.clustermaps, mode='w') as store:
