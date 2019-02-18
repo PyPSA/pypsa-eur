@@ -104,7 +104,7 @@ def busmap_for_n_clusters(n, n_clusters, algorithm="kmeans", **algorithm_kwds):
     if 'snakemake' in globals():
         solver_name = snakemake.config['solving']['solver']['name']
     else:
-        solver_name = "gurobi"
+        solver_name = "cbc"
 
     n_clusters = distribute_clusters(n, n_clusters, solver_name=solver_name)
 
