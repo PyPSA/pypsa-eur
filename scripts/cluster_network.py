@@ -137,7 +137,7 @@ def plot_busmap_for_n_clusters(n, n_clusters=50):
     del cs, cr
 
 def clustering_for_n_clusters(n, n_clusters, aggregate_carriers=None,
-                              line_length_factor=1.25, potential_mode='simple', algorithm="kmeans"
+                              line_length_factor=1.25, potential_mode='simple', algorithm="kmeans",
                               solver_name="cbc"):
 
     if potential_mode == 'simple':
