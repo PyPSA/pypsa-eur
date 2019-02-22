@@ -158,7 +158,7 @@ transformers:
   type: ''
 
 load:
-  scaler: 1.0
+  scaling_factor: 1.0
 
 costs:
   year: 2030
