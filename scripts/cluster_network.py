@@ -75,10 +75,11 @@ def distribute_clusters(n, n_clusters, solver_name=None):
         "Number of clusters must be {} <= n_clusters <= {} for this selection of countries.".format(len(N), N.sum())
     
     focus_country = snakemake.config['focus_country']
+    focus_factor = snakemake.config['focus_factor']
     
-    L[focus_country] = 1.0e+9
+    L[focus_country] = focus_factor*L[focus_country]
     
-    logger.warn(f'Using `{focus_country}` as focus country with maximum number of clusters`.')
+    logger.warn(f'Using `{focus_country}` as focus country with factor `{focus_factor}` for determining number of clusters`.')
 
     m = po.ConcreteModel()
     def n_bounds(model, *n_id):
