@@ -283,7 +283,11 @@ def calculate_weighted_prices(n,label,weighted_prices):
 
     return weighted_prices
 
+def calculate_marginal_prices(n,label,marginal_prices):
+    
+    marginal_prices = n.buses_t.marginal_price
 
+    return marginal_prices
 
 # BROKEN don't use
 #
@@ -351,6 +355,7 @@ outputs = ["costs",
            # "price_statistics",
            # "market_values",
            "metrics",
+           "marginal_prices",
            ]
 
 def make_summaries(networks_dict, country='all'):
