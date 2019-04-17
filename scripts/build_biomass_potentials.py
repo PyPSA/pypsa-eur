@@ -7,9 +7,10 @@ def build_biomass_potentials():
 
     #delete empty column C from this sheet first before reading it in
     df = pd.read_excel(snakemake.input.jrc_potentials,
-                       "Potentials (PJ)")
+                       "Potentials (PJ)",
+                       index_col=[0,1])
 
-    df.rename(columns={"Unnamed: 16":"Municipal waste"},inplace=True)
+    df.rename(columns={"Unnamed: 18":"Municipal waste"},inplace=True)
     df.drop(columns="Total",inplace=True)
     df.replace("-",0.,inplace=True)
 
