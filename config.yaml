@@ -1,3 +1,4 @@
+logging_level: INFO
 
 results_dir: 'results/'
 summary_dir: results
@@ -6,9 +7,10 @@ run: '190416-modular-test'
 scenario:
   sectors: [E] # ,E+EV,E+BEV,E+BEV+V2G] # [ E+EV, E+BEV, E+BEV+V2G ]
   simpl: ['']
-  lv: [1.0]#[1.0, 1.125, 1.25, 1.5, 2.0, opt]# or opt
+  lv: [1.0,1.25]#[1.0, 1.125, 1.25, 1.5, 2.0, opt]# or opt
   clusters: [128] #[90, 128, 181] #[45, 64, 90, 128, 181, 256] #, 362] # (2**np.r_[5.5:9:.5]).astype(int) minimum is 37
-  opts: [Co2L0-3H-T-H-B-I,Co2L0-3H-T-H-B-I-onwind0,Co2L0-3H-T-H-B-I-onwind0p1]#,Co2L0p05-3H-T-H-B-I,Co2L0p10-3H-T-H-B-I,Co2L0p20-3H-T-H-B-I,Co2L0p30-3H-T-H-B-I,Co2L0p50-3H-T-H-B-I]#[Co2L-3H-T-H,Co2L0p10-3H-T-H,Co2L0-3H-T-H,Co2L0p20-3H-T-H]   #Co2L-3H-T-H,Co2L0p10-3H-T-H,Co2L0p20-3H-T-HCo2L-3H-T-H,Co2L0p10-3H-T-H,Co2L0p30-3H-T-H,Co2L0p50-3H-T-H] #Co2L-3H,Co2L-3H-T,, LC-FL, LC-T, Ep-T, Co2L-T]
+  opts: ['']  #for pypsa-eur
+  sector_opts: [Co2L0-3H-T-H-B-I,Co2L0-3H-T-H-B-I-onwind0,Co2L0-3H-T-H-B-I-onwind0p1,Co2L0p1-3H-T-H-B-I,Co2L0p1-3H-T-H-B-I-onwind0,Co2L0p1-3H-T-H-B-I-onwind0p1]#,Co2L0p05-3H-T-H-B-I,Co2L0p10-3H-T-H-B-I,Co2L0p20-3H-T-H-B-I,Co2L0p30-3H-T-H-B-I,Co2L0p50-3H-T-H-B-I]#[Co2L-3H-T-H,Co2L0p10-3H-T-H,Co2L0-3H-T-H,Co2L0p20-3H-T-H]   #Co2L-3H-T-H,Co2L0p10-3H-T-H,Co2L0p20-3H-T-HCo2L-3H-T-H,Co2L0p10-3H-T-H,Co2L0p30-3H-T-H,Co2L0p50-3H-T-H] #Co2L-3H,Co2L-3H-T,, LC-FL, LC-T, Ep-T, Co2L-T]
   # Co2L will give default (5%); Co2L0p25 will give 25% CO2 emissions; Co2Lm0p05 will give 5% negative emissions
 
 
@@ -90,3 +92,66 @@ renewable:
 biomass:
   year: 2030
   scenario: "Med"
+
+
+sector:
+  'central' : True
+  'central_fraction' : 0.6
+  'dsm_restriction_value' : 0.75  #Set to 0 for no restriction on BEV DSM
+  'dsm_restriction_time' : 7  #Time at which SOC of BEV has to be dsm_restriction_value
+  'transport_heating_deadband_upper' : 20.
+  'transport_heating_deadband_lower' : 15.
+  'ICE_lower_degree_factor' : 0.375    #in per cent increase in fuel consumption per degree above deadband
+  'ICE_upper_degree_factor' : 1.6
+  'EV_lower_degree_factor' : 0.98
+  'EV_upper_degree_factor' : 0.63
+  'district_heating_loss' : 0.1
+  'bev' : True #turns on EV battery
+  'bev_availability' : 0.5  #How many cars do smart charging
+  'v2g' : True #allows feed-in to grid from EV battery
+  'transport_fuel_cell_share' : 0.   #0 means all EVs, 1 means all FCs
+  'time_dep_hp_cop' : True
+  'retrofitting' : False
+  'retroI-fraction' : 0.25
+  'retroI-fraction' : 0.55
+  'retrofitting-cost_factor' : 1.0
+  'tes' : True
+  'tes_tau' : 3.
+  'boilers' : True
+  'chp' : True
+  'chp_parameters':
+    'eta_elec' : 0.468 #electrical efficiency with no heat output
+    'c_v' : 0.15 #loss of fuel for each addition of heat
+    'c_m' : 0.75 #backpressure ratio
+    'p_nom_ratio' : 1. #ratio of max heat output to max electrical output
+  'solar_thermal' : True
+  'solar_cf_correction': 0.788457  # =  >>> 1/1.2683
+  'marginal_cost_storage' : 0. #1e-4
+  'methanation' : True
+  'helmeth' : True
+  'dac' : True
+  'ccs_fraction' : 0.9
+
+
+
+costs:
+  year: 2030
+
+  # From a Lion Hirth paper, also reflects average of Noothout et al 2016
+  discountrate: 0.07
+  # [EUR/USD] ECB: https://www.ecb.europa.eu/stats/exchange/eurofxref/html/eurofxref-graph-usd.en.html # noqa: E501
+  USD2013_to_EUR2013: 0.7532
+
+  # Marginal and capital costs can be overwritten
+  # capital_cost:
+  #   Wind: Bla
+  marginal_cost: #
+    solar: 0.01
+    onwind: 0.015
+    offwind: 0.015
+    hydro: 0.
+    H2: 0.
+    battery: 0.
+
+  emission_prices: # only used with the option Ep (emission prices)
+    co2: 0.

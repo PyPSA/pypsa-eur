@@ -10,16 +10,15 @@ import scipy as sp
 import xarray as xr
 import re, os
 
-from six import iteritems
-import geopandas as gpd
+from six import iteritems, string_types
 
 import pypsa
+
+import yaml
 
 import pytz
 
 from vresutils.costdata import annuity
-
-from add_electricity import load_costs, update_transmission_costs
 
 
 #First tell PyPSA that links can have multiple outputs by
@@ -59,7 +58,8 @@ def add_co2_tracking(n):
            bus="co2 atmosphere")
 
     #this tracks CO2 stored, e.g. underground
-    n.add("Bus","co2 stored")
+    n.add("Bus","co2 stored",
+          carrier="co2 stored")
 
     #NB: can also be negative
     #cost of 10 euro/tCO2 for whatever stays
@@ -170,6 +170,16 @@ def average_every_nhours(n, offset):
     logger.info('Resampling the network to {}'.format(offset))
     m = n.copy(with_time=False)
 
+    #fix copying of network attributes
+    #copied from pypsa/io.py, should be in pypsa/components.py#Network.copy()
+    allowed_types = (float,int,bool) + string_types + tuple(np.typeDict.values())
+    attrs = dict((attr, getattr(n, attr))
+                 for attr in dir(n)
+                 if (not attr.startswith("__") and
+                     isinstance(getattr(n,attr), allowed_types)))
+    for k,v in iteritems(attrs):
+        setattr(m,k,v)
+
     snapshot_weightings = n.snapshot_weightings.resample(offset).sum()
     m.set_snapshots(snapshot_weightings.index)
     m.snapshot_weightings = snapshot_weightings
@@ -187,9 +197,6 @@ def average_every_nhours(n, offset):
 
     return m
 
-
-
-timezone_mappings = pd.read_csv("data/timezone_mappings.csv",index_col=0,squeeze=True,header=None)
 
 def generate_periodic_profiles(dt_index=pd.date_range("2011-01-01 00:00","2011-12-31 23:00",freq="H",tz="UTC"),
                                nodes=[],
@@ -256,7 +263,7 @@ def prepare_data(network):
     heat_demand_df = xr.open_dataarray(snakemake.input.heat_demand_total).T.to_pandas().reindex(index=network.snapshots, method="ffill")
 
 
-    intraday_profiles = pd.read_csv("data/heating/heat_load_profile_DK_AdamJensen.csv",index_col=0)
+    intraday_profiles = pd.read_csv(snakemake.input.heat_profile,index_col=0)
 
     intraday_year_profiles = generate_periodic_profiles(heat_demand_df.index.tz_localize("UTC"),
                                                         nodes=heat_demand_df.columns,
@@ -388,7 +395,7 @@ def prepare_data(network):
 def prepare_costs():
 
     #set all asset costs and other parameters
-    costs = pd.read_csv("data/costs.csv",index_col=list(range(3))).sort_index()
+    costs = pd.read_csv(snakemake.input.costs,index_col=list(range(3))).sort_index()
 
     #correct units to MW and EUR
     costs.loc[costs.unit.str.contains("/kW"),"value"]*=1e3
@@ -1165,15 +1172,20 @@ if __name__ == "__main__":
         from vresutils.snakemake import MockSnakemake
         snakemake = MockSnakemake(
             wildcards=dict(network='elec', simpl='', clusters='37', lv='2', opts='Co2L-3H'),
-            input=['networks/{network}_s{simpl}_{clusters}.nc'],
+            input=dict(network='../pypsa-eur/networks/{network}_s{simpl}_{clusters}.nc', timezone_mappings='data/timezone_mappings.csv'),
             output=['networks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}.nc']
         )
+        with open('config.yaml') as f:
+            snakemake.config = yaml.load(f)
+
 
     logging.basicConfig(level=snakemake.config['logging_level'])
 
+    timezone_mappings = pd.read_csv(snakemake.input.timezone_mappings,index_col=0,squeeze=True,header=None)
+
     options = snakemake.config["sector"]
 
-    opts = snakemake.wildcards.opts.split('-')
+    opts = snakemake.wildcards.sector_opts.split('-')
 
     n = pypsa.Network(snakemake.input.network,
                       override_component_attrs=override_component_attrs)
@@ -1209,8 +1221,6 @@ if __name__ == "__main__":
     if "I" in opts:
         add_industry(n)
 
-    set_line_s_max_pu(n)
-
     for o in opts:
         m = re.match(r'^\d+h$', o, re.IGNORECASE)
         if m is not None:
@@ -1238,8 +1248,5 @@ if __name__ == "__main__":
             limit = o[o.find("onwind")+6:]
             limit = float(limit.replace("p",".").replace("m","-"))
             restrict_technology_potential(n,"onwind",limit)
-
-
-    set_line_volume_limit(n, snakemake.wildcards.lv)
 
     n.export_to_netcdf(snakemake.output[0])

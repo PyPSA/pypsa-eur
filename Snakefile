@@ -6,7 +6,8 @@ wildcard_constraints:
     simpl="[a-zA-Z0-9]*",
     clusters="[0-9]+m?",
     sectors="[+a-zA-Z0-9]+",
-    opts="[-+a-zA-Z0-9]*"
+    opts="[-+a-zA-Z0-9]*",
+    sector_opts="[-+a-zA-Z0-9]*"
 
 
 
@@ -23,7 +24,7 @@ rule test_script:
 
 rule prepare_sector_networks:
     input:
-        expand(config['results_dir'] + config['run'] + "/prenetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}.nc",
+        expand(config['results_dir'] + config['run'] + "/prenetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}.nc",
                  **config['scenario'])
 
 
@@ -141,13 +142,16 @@ rule build_industrial_demand:
 
 
 
-rule prepare_network:
+rule prepare_sector_network:
     input:
-        network=config['results_dir']  +  config['run'] + '/prenetworks/{network}_s{simpl}_{clusters}.nc',
+        network=pypsaeur('networks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}.nc'),
         energy_totals_name='data/energy_totals.csv',
         co2_totals_name='data/co2_totals.csv',
         transport_name='data/transport_data.csv',
         biomass_potentials='data/biomass_potentials.csv',
+        timezone_mappings='data/timezone_mappings.csv',
+        heat_profile="data/heat_load_profile_DK_AdamJensen.csv",
+        costs="data/costs.csv",
         clustered_pop_layout="resources/pop_layout_{network}_s{simpl}_{clusters}.csv",
         industrial_demand="resources/industrial_demand_{network}_s{simpl}_{clusters}.csv",
         heat_demand_urban="resources/heat_demand_urban_{network}_s{simpl}_{clusters}.nc",
@@ -168,8 +172,8 @@ rule prepare_network:
         solar_thermal_total="resources/solar_thermal_total_{network}_s{simpl}_{clusters}.nc",
         solar_thermal_urban="resources/solar_thermal_urban_{network}_s{simpl}_{clusters}.nc",
         solar_thermal_rural="resources/solar_thermal_rural_{network}_s{simpl}_{clusters}.nc"
-    output: config['results_dir']  +  config['run'] + '/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}.nc'
+    output: config['results_dir']  +  config['run'] + '/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}.nc'
     threads: 1
     resources: mem=1000
-    benchmark: "benchmarks/prepare_network/{network}_s{simpl}_{clusters}_lv{lv}_{opts}"
-    script: "scripts/prepare_network.py"
+    benchmark: "benchmarks/prepare_network/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}"
+    script: "scripts/prepare_sector_network.py"
