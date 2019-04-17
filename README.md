@@ -24,6 +24,21 @@ better integrated with the corresponding scripts in PyPSA-Eur.
 First install [PyPSA-Eur](https://github.com/PyPSA/pypsa-eur) and all
 its dependencies.
 
+Create a parallel directory for PyPSA-Eur-Sec with:
+```shell
+projects % git clone git@github.com:nworbmot/pypsa-eur-sec.git
+```
+
+
+
 ## Data requirements
 
-JRC-IDEES, JRC biomass potentials, .... EEA emissions.
+The Data requirements include JRC-IDEES-2015, JRC biomass potentials,
+EEA emission statistics, Eurostat Energy Balances, urban district
+heating potentials, emobility statistics, timezone mappings and
+heating profiles.
+
+```shell
+projects/pypsa-eur-sec/data % wget "https://nworbmot.org/pypsa-eur-sec-data-bundle-190417.tar.gz"
+projects/pypsa-eur-sec/data % tar xvzf pypsa-eur-sec-data-bundle-190417.tar.gz
+```
