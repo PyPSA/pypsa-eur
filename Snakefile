@@ -16,6 +16,14 @@ subworkflow pypsaeur:
     snakefile: "../pypsa-eur/Snakefile"
     configfile: "../pypsa-eur/config.yaml"
 
+rule all:
+     input: config['summary_dir'] + '/' + config['run'] + '/graphs/costs.pdf'
+
+
+rule solve_all_elec_networks:
+    input:
+        expand(config['results_dir'] + config['run'] + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}.nc",
+               **config['scenario'])
 
 rule test_script:
     input:
@@ -177,3 +185,63 @@ rule prepare_sector_network:
     resources: mem=1000
     benchmark: "benchmarks/prepare_network/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}"
     script: "scripts/prepare_sector_network.py"
+
+
+rule solve_network:
+    input: config['results_dir'] +  config['run'] + "/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}.nc"
+    output: config['results_dir'] +  config['run'] + "/postnetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}.nc"
+    shadow: "shallow"
+    log:
+        solver="logs/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_solver.log",
+        python="logs/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_python.log",
+        memory="logs/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_memory.log"
+    benchmark: "benchmarks/solve_network/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}"
+    threads: 4
+    resources: mem=95000 #memory; 40 GB enough for 45+B+I; 100 GB based on RESI usage for 128
+    # group: "solve" # with group, threads is ignored https://bitbucket.org/snakemake/snakemake/issues/971/group-job-description-does-not-contain
+    script: "scripts/solve_network.py"
+
+rule plot_network:
+    input:
+        network="results/networks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}.nc",
+        supply_regions='data/supply_regions/supply_regions.shp',
+        resarea=lambda w: config['data']['resarea'][w.resarea],
+        costs='data/costs.csv'
+    output:
+        only_map="results/plots/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{attr}.pdf",
+        ext="results/plots/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{attr}_ext.pdf"
+    script: "scripts/plot_network.py"
+
+rule make_summary:
+    input:
+        expand(config['results_dir'] + config['run'] + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}.nc",
+               **config['scenario'])
+        #heat_demand_name='data/heating/daily_heat_demand.h5'
+    output:
+        costs=config['summary_dir'] + '/' + config['run'] + '/csvs/costs.csv',
+        curtailment=config['summary_dir'] + '/' + config['run'] + '/csvs/curtailment.csv',
+        energy=config['summary_dir'] + '/' + config['run'] + '/csvs/energy.csv',
+        supply=config['summary_dir'] + '/' + config['run'] + '/csvs/supply.csv',
+        supply_energy=config['summary_dir'] + '/' + config['run'] + '/csvs/supply_energy.csv',
+        prices=config['summary_dir'] + '/' + config['run'] + '/csvs/prices.csv',
+        weighted_prices=config['summary_dir'] + '/' + config['run'] + '/csvs/weighted_prices.csv',
+        market_values=config['summary_dir'] + '/' + config['run'] + '/csvs/market_values.csv',
+        price_statistics=config['summary_dir'] + '/' + config['run'] + '/csvs/price_statistics.csv',
+        metrics=config['summary_dir'] + '/' + config['run'] + '/csvs/metrics.csv'
+    threads: 2
+    resources: mem_mb=10000
+    script:
+        'scripts/make_summary.py'
+
+
+rule plot_summary:
+    input:
+        costs=config['summary_dir'] + '/' + config['run'] + '/csvs/costs.csv',
+        energy=config['summary_dir'] + '/' + config['run'] + '/csvs/energy.csv'
+    output:
+        costs=config['summary_dir'] + '/' + config['run'] + '/graphs/costs.pdf',
+        energy=config['summary_dir'] + '/' + config['run'] + '/graphs/energy.pdf'
+    threads: 2
+    resources: mem_mb=10000
+    script:
+        'scripts/plot_summary.py'

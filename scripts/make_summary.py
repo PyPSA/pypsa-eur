@@ -3,7 +3,7 @@ from six import iteritems
 
 import sys
 
-sys.path = ['/home/vres/lib/python3.5/site-packages'] + sys.path
+sys.path.append("../pypsa-eur/scripts")
 
 import pandas as pd
 
@@ -13,7 +13,7 @@ import pypsa
 
 from vresutils.costdata import annuity
 
-from prepare_network import generate_periodic_profiles
+from prepare_sector_network import generate_periodic_profiles
 
 from add_electricity import load_costs
 
@@ -428,13 +428,15 @@ if __name__ == "__main__":
         for item in outputs:
             snakemake.output[item] = snakemake.config['summary_dir'] + '/{name}/csvs/{item}.csv'.format(name=snakemake.config['run'],item=item)
 
-    networks_dict = {(cluster,lv,opt) :
-                     snakemake.config['results_dir'] + snakemake.config['run'] + '/postnetworks/elec_s_{cluster}_lv{lv}_{opt}.nc'\
+    networks_dict = {(cluster,lv,opt+sector_opt) :
+                     snakemake.config['results_dir'] + snakemake.config['run'] + '/postnetworks/elec_s_{cluster}_lv{lv}_{opt}_{sector_opt}.nc'\
                      .format(cluster=cluster,
                              opt=opt,
-                             lv=lv)\
+                             lv=lv,
+                             sector_opt=sector_opt)\
                      for cluster in snakemake.config['scenario']['clusters'] \
                      for opt in snakemake.config['scenario']['opts'] \
+                     for sector_opt in snakemake.config['scenario']['sector_opts'] \
                      for lv in snakemake.config['scenario']['lv']}
     print(networks_dict)
 
