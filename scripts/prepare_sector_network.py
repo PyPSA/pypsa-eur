@@ -37,6 +37,21 @@ override_component_attrs["Link"].loc["p3"] = ["series","MW",0.,"3rd bus output",
 
 
 
+def remove_elec_base_techs(n):
+    """remove conventional generators (e.g. OCGT) and storage units (e.g. batteries and H2)
+    from base electricity-only network, since they're added here differently using links
+    """
+    to_keep = {"generators" : snakemake.config["plotting"]["vre_techs"],
+               "storage_units" : snakemake.config["plotting"]["renewable_storage_techs"]}
+
+    n.carriers = n.carriers.loc[to_keep["generators"] + to_keep["storage_units"]]
+
+    for components, techs in iteritems(to_keep):
+        df = getattr(n,components)
+        to_remove = df.carrier.value_counts().index^techs
+        print("removing {} with carrier {}".format(components,to_remove))
+        df.drop(df.index[df.carrier.isin(to_remove)],inplace=True)
+
 
 def add_co2_tracking(n):
 
@@ -1141,7 +1156,7 @@ def add_industry(network):
     network.add("Load",
                 "Fischer-Tropsch",
                 bus="Fischer-Tropsch",
-                p_set = industrial_demand.loc[nodes,["aviation kerosene","naptha feedstock"]].sum().sum()/8760.)
+                p_set = industrial_demand.loc[nodes,["aviation kerosene","naphtha feedstock"]].sum().sum()/8760.)
 
     network.madd("Load",
                  nodes,
@@ -1199,6 +1214,8 @@ if __name__ == "__main__":
     pop_layout["fraction"] = pop_layout["total"]/pop_layout["ct_total"]
 
     costs = prepare_costs()
+
+    remove_elec_base_techs(n)
 
     add_co2_tracking(n)
 

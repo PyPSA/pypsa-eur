@@ -2,7 +2,7 @@ logging_level: INFO
 
 results_dir: 'results/'
 summary_dir: results
-run: '190416-modular-test'
+run: '190418-test-rebase'
 
 scenario:
   sectors: [E] # ,E+EV,E+BEV,E+BEV+V2G] # [ E+EV, E+BEV, E+BEV+V2G ]
@@ -35,73 +35,11 @@ electricity:
   conventional_carriers: [] # nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
 
 atlite:
-  nprocesses: 4
   cutout_dir: '../pypsa-eur/cutouts'
-  cutouts:
-    europe-2013-era5:
-      module: era5
-      xs: [-12., 35.]
-      ys: [72., 33.]
-      years: [2013, 2013]
-    europe-2013-sarah:
-      module: sarah
-      resolution: 0.2
-      xs: [-12., 42.]
-      ys: [65., 33.]
-      years: [2013, 2013]
 
 renewable:
   onwind:
     cutout: europe-2013-era5
-    resource:
-      method: wind
-      turbine: Vestas_V112_3MW
-    # ScholzPhd Tab 4.3.1: 10MW/km^2
-    capacity_per_sqm: 3
-    # correction_factor: 0.93
-    corine:
-      #The selection of CORINE Land Cover [1] types that are allowed for wind and solar are based on [2] p.42 / p.28
-      #
-      #[1] https://www.eea.europa.eu/ds_resolveuid/C9RK15EA06
-      #
-      #[2] Scholz, Y. (2012). Renewable energy based electricity supply at low costs: development of the REMix model and application for Europe.
-      grid_codes: [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
-                   24, 25, 26, 27, 28, 29, 31, 32]
-      distance: 1000
-      distance_grid_codes: [1, 2, 3, 4, 5, 6]
-      natura: true
-  offwind:
-    cutout: europe-2013-era5
-    resource:
-      method: wind
-      turbine: NREL_ReferenceTurbine_5MW_offshore
-    # ScholzPhd Tab 4.3.1: 10MW/km^2
-    capacity_per_sqm: 3
-    height_cutoff: 50
-    # correction_factor: 0.93
-    corine:
-      grid_codes: [44, 255]
-      natura: true
-  solar:
-    cutout: europe-2013-sarah
-    resource:
-      method: pv
-      panel: CSi
-      orientation:
-        slope: 35.
-        azimuth: 180.
-    # ScholzPhd Tab 4.3.1: 170 MW/km^2
-    capacity_per_sqm: 1.7
-    correction_factor: 0.877
-    corine:
-      grid_codes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17,
-      18, 19, 20, 26, 31, 32]
-      natura: true
-  hydro:
-    cutout: europe-2013-era5
-    carriers: [ror, PHS, hydro]
-    PHS_max_hours: 6
-
 
 biomass:
   year: 2030
@@ -216,7 +154,8 @@ plotting:
   energy_threshold: 50.
 
 
-  vre_techs: ["onwind", "offwind", "solar", "ror"]
+  vre_techs: ["onwind", "offwind-ac", "offwind-dc", "solar", "ror"]
+  renewable_storage_techs: ["PHS","hydro"]
   conv_techs: ["OCGT", "CCGT", "Nuclear", "Coal"]
   storage_techs: ["hydro+PHS", "battery", "H2"]
   # store_techs: ["Li ion", "water tanks"]

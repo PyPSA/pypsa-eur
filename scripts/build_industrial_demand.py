@@ -10,7 +10,7 @@ def build_industrial_demand():
 
     totals = pd.Series(data=[1100.,1814.,586.,400.,580.,186.],
                        index=["industry new electricity","industry process heat",
-                              "naptha feedstock","shipping H2","aviation kerosene","process emissions"])
+                              "naphtha feedstock","shipping H2","aviation kerosene","process emissions"])
 
     industrial_demand = pd.DataFrame({i : population["total"]*totals[i]*1e6/population["total"].sum() for i in totals.index })
 

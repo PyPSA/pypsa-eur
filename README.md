@@ -17,19 +17,24 @@ the additional sectors.
 
 Currently the scripts to solve and process the resulting PyPSA models
 are also included in PyPSA-Eur-Sec, although they could in future be
-better integrated with the corresponding scripts in PyPSA-Eur.
+better integrated with the corresponding scripts in PyPSA-Eur. A
+stumbling block to sharing solve_network.py between PyPSA-Eur and
+PyPSA-Eur-Sec is the different extra_functionality required to build
+storage and CHP constraints.
 
 # Installation
 
 First install [PyPSA-Eur](https://github.com/PyPSA/pypsa-eur) and all
-its dependencies.
+its dependencies. Clone the repository:
+```shell
+projects % git clone git@github.com:PyPSA/pypsa-eur.git
+```
+then download and unpack all the data files.
 
 Create a parallel directory for PyPSA-Eur-Sec with:
 ```shell
 projects % git clone git@github.com:nworbmot/pypsa-eur-sec.git
 ```
-
-
 
 ## Data requirements
 
