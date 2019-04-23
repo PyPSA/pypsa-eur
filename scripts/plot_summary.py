@@ -40,6 +40,10 @@ def rename_techs(label):
         label = "methanation"
     if label == "offwind":
         label = "offshore wind"
+    if label == "offwind-ac":
+        label = "offshore wind (AC)"
+    if label == "offwind-dc":
+        label = "offshore wind (DC)"
     if label == "onwind":
         label = "onshore wind"
     if label == "ror":
@@ -59,7 +63,7 @@ def rename_techs(label):
     return label
 
 
-preferred_order = pd.Index(["transmission lines","hydroelectricity","hydro reservoir","run of river","pumped hydro storage","solid biomass","biogas","onshore wind","offshore wind","solar PV","solar thermal","solar","building retrofitting","ground heat pump","air heat pump","heat pump","resistive heater","power-to-heat","gas-to-power/heat","CHP","OCGT","gas boiler","gas","natural gas","helmeth","methanation","hydrogen storage","power-to-gas","power-to-liquid","battery storage","hot water storage","CO2 sequestration"])
+preferred_order = pd.Index(["transmission lines","hydroelectricity","hydro reservoir","run of river","pumped hydro storage","solid biomass","biogas","onshore wind","offshore wind","offshore wind (AC)","offshore wind (DC)","solar PV","solar thermal","solar","building retrofitting","ground heat pump","air heat pump","heat pump","resistive heater","power-to-heat","gas-to-power/heat","CHP","OCGT","gas boiler","gas","natural gas","helmeth","methanation","hydrogen storage","power-to-gas","power-to-liquid","battery storage","hot water storage","CO2 sequestration"])
 
 def plot_costs():
 
