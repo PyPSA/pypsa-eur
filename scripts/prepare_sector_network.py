@@ -1177,7 +1177,8 @@ def add_industry(network):
 
 def restrict_technology_potential(n,tech,limit):
     print("restricting potentials (p_nom_max) for {} to {} of technical potential".format(tech,limit))
-    gens = n.generators.index[n.generators.carrier == tech]
+    gens = n.generators.index[n.generators.carrier.str.contains(tech)]
+    #beware if limit is 0 and p_nom_max is np.inf, 0*np.inf is nan
     n.generators.loc[gens,"p_nom_max"] *=limit
 
 
@@ -1261,9 +1262,10 @@ if __name__ == "__main__":
     # if 'Ep' in opts:
     #     add_emission_prices(n)
 
-        if "onwind" in o:
-            limit = o[o.find("onwind")+6:]
-            limit = float(limit.replace("p",".").replace("m","-"))
-            restrict_technology_potential(n,"onwind",limit)
+        for tech in ["solar","onwind","offwind"]:
+            if tech in o:
+                limit = o[o.find(tech)+len(tech):]
+                limit = float(limit.replace("p",".").replace("m","-"))
+                restrict_technology_potential(n,tech,limit)
 
     n.export_to_netcdf(snakemake.output[0])
