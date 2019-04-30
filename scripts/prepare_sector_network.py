@@ -1139,23 +1139,45 @@ def add_industry(network):
                 "Fischer-Tropsch",
                 carrier="Fischer-Tropsch")
 
-    #TODO: Add capital cost
-    #NB: CO2 gets released again to atmosphere when plastics decay or kerosene is burned
+    network.add("Bus",
+                "Fischer-Tropsch-demand",
+                carrier="Fischer-Tropsch")
+
+    #use madd to get carrier inserted
+    network.madd("Store",
+                 ["Fischer-Tropsch Store"],
+                 bus="Fischer-Tropsch",
+                 e_nom_extendable=True,
+                 #force fossil to be empty at end of period; can start higher to represent fossil input
+                 e_max_pu=pd.DataFrame({ "Fischer-Tropsch Store" : pd.Series([1.]*(len(network.snapshots)-1)+[0.],index=network.snapshots)}),
+                 carrier="Fischer-Tropsch",
+                 marginal_cost=costs.at["oil",'fuel'])
+
     network.madd("Link",
                  nodes + " Fischer-Tropsch",
                  bus0=nodes + " H2",
                  bus1="Fischer-Tropsch",
                  bus2="co2 stored",
-                 bus3="co2 atmosphere",
                  carrier="Fischer-Tropsch",
-                 efficiency=0.8,
-                 efficiency2=-0.26*0.8,
-                 efficiency3=0.26*0.8,
+                 efficiency=costs.at["Fischer-Tropsch",'efficiency'],
+                 capital_cost=costs.at["Fischer-Tropsch",'fixed'],
+                 efficiency2=-costs.at["oil",'CO2 intensity']*costs.at["Fischer-Tropsch",'efficiency'],
+                 p_nom_extendable=True)
+
+    #NB: CO2 gets released again to atmosphere when plastics decay or kerosene is burned
+    network.madd("Link",
+                 ["Fischer-Tropsch-demand"],
+                 bus0="Fischer-Tropsch",
+                 bus1="Fischer-Tropsch-demand",
+                 bus2="co2 atmosphere",
+                 carrier="Fischer-Tropsch-demand",
+                 efficiency=1.,
+                 efficiency2=costs.at["oil",'CO2 intensity'],
                  p_nom_extendable=True)
 
     network.add("Load",
                 "Fischer-Tropsch",
-                bus="Fischer-Tropsch",
+                bus="Fischer-Tropsch-demand",
                 p_set = industrial_demand.loc[nodes,["aviation kerosene","naphtha feedstock"]].sum().sum()/8760.)
 
     network.madd("Load",

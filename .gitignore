@@ -10,10 +10,15 @@ gurobi.log
 /benchmarks
 /logs
 /notebooks
-/data
+/data/timezone_mappings.csv
+/data/urban_percent.csv
 /data/links_p_nom.csv
 /data/*totals.csv
+/data/*Jensen.csv
+/data/biomass*
 /data/emobility/
+/data/eea*
+/data/jrc*
 /data/heating/
 /data/eurostat*
 /data/odyssee/
