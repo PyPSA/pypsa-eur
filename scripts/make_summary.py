@@ -422,6 +422,11 @@ if __name__ == "__main__":
         snakemake = Dict()
         with open('config.yaml') as f:
             snakemake.config = yaml.load(f)
+
+        #overwrite some options
+        snakemake.config["run"] = "190418-test-rebase"
+        snakemake.config["scenario"]["lv"] = [1.0, 1.25]
+        snakemake.config["scenario"]["sector_opts"] = ["Co2L0-3H-T-H-B-I","Co2L0-3H-T-H-B-I-onwind0","Co2L0p1-3H-T-H-B-I","Co2L0-3H-T-H-B-I-onwind0-solar2-offwind2"]
         snakemake.input = Dict()
         snakemake.input['heat_demand_name'] = 'data/heating/daily_heat_demand.h5'
         snakemake.output = Dict()
