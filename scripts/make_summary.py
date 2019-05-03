@@ -75,6 +75,11 @@ def calculate_costs(n,label,costs):
         else:
             p = c.pnl.p.multiply(n.snapshot_weightings,axis=0).sum()
 
+        #correct sequestration cost
+        if c.name == "Store":
+            items = c.df.index[(c.df.carrier == "co2 stored") & (c.df.marginal_cost <= -100.)]
+            c.df.loc[items,"marginal_cost"] = -20.
+
         marginal_costs = p*c.df.marginal_cost
 
         marginal_costs_grouped = marginal_costs.groupby(c.df.carrier).sum()
@@ -98,6 +103,18 @@ def calculate_costs(n,label,costs):
 
     return costs
 
+
+
+def calculate_capacities(n,label,capacities):
+
+    for c in n.iterate_components(n.branch_components|n.controllable_one_port_components^{"Load"}):
+        capacities_grouped = c.df[opt_name.get(c.name,"p") + "_nom_opt"].groupby(c.df.carrier).sum()
+
+        capacities = capacities.reindex(capacities.index|pd.MultiIndex.from_product([[c.list_name],capacities_grouped.index]))
+
+        capacities.loc[idx[c.list_name,list(capacities_grouped.index)],label] = capacities_grouped.values
+
+    return capacities
 
 
 def calculate_curtailment(n,label,curtailment):
@@ -373,6 +390,7 @@ def calculate_price_statistics(n, label, price_statistics):
 
 
 outputs = ["costs",
+           "capacities",
            "curtailment",
            "energy",
            "supply",
@@ -448,5 +466,7 @@ if __name__ == "__main__":
     costs_db = load_costs(Nyears=1.,tech_costs="data/costs.csv",config=snakemake.config["costs"],elec_config=snakemake.config['electricity'])
 
     df = make_summaries(networks_dict)
+
+    df["metrics"].loc["total costs"] =  df["costs"].sum()
 
     to_csv(df)

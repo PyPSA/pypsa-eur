@@ -219,6 +219,7 @@ rule make_summary:
         #heat_demand_name='data/heating/daily_heat_demand.h5'
     output:
         costs=config['summary_dir'] + '/' + config['run'] + '/csvs/costs.csv',
+        capacities=config['summary_dir'] + '/' + config['run'] + '/csvs/capacities.csv',
         curtailment=config['summary_dir'] + '/' + config['run'] + '/csvs/curtailment.csv',
         energy=config['summary_dir'] + '/' + config['run'] + '/csvs/energy.csv',
         supply=config['summary_dir'] + '/' + config['run'] + '/csvs/supply.csv',
