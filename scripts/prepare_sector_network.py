@@ -452,10 +452,18 @@ def add_generation(network):
                      ["EU " + carrier + " Store"],
                      bus=["EU " + carrier],
                      e_nom_extendable=True,
-                     #force fossil to be empty at end of period; can start higher to represent fossil input
-                     e_max_pu=pd.DataFrame({ "EU " + carrier + " Store" : pd.Series([1.]*(len(network.snapshots)-1)+[0.],index=network.snapshots)}),
+                     e_cyclic=True,
                      carrier=carrier,
-                     marginal_cost=costs.at[carrier,'fuel'])
+                     capital_cost=0.) #could correct to e.g. 0.2 EUR/kWh * annuity and O&M
+
+        network.add("Generator",
+                    "EU fossil " + carrier,
+                    bus="EU " + carrier,
+                    p_nom_extendable=True,
+                    carrier=carrier,
+                    capital_cost=0.,
+                    marginal_cost=costs.at[carrier,'fuel'])
+
 
         network.madd("Link",
                      nodes + " " + generator,
@@ -1148,10 +1156,17 @@ def add_industry(network):
                  ["Fischer-Tropsch Store"],
                  bus="Fischer-Tropsch",
                  e_nom_extendable=True,
-                 #force fossil to be empty at end of period; can start higher to represent fossil input
-                 e_max_pu=pd.DataFrame({ "Fischer-Tropsch Store" : pd.Series([1.]*(len(network.snapshots)-1)+[0.],index=network.snapshots)}),
+                 e_cyclic=True,
                  carrier="Fischer-Tropsch",
-                 marginal_cost=costs.at["oil",'fuel'])
+                 capital_cost=0.) #could correct to e.g. 0.001 EUR/kWh * annuity and O&M
+
+    network.add("Generator",
+                "fossil oil",
+                bus="Fischer-Tropsch",
+                p_nom_extendable=True,
+                carrier="oil",
+                capital_cost=0.,
+                marginal_cost=costs.at["oil",'fuel'])
 
     network.madd("Link",
                  nodes + " Fischer-Tropsch",
