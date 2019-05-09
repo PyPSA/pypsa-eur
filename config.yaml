@@ -250,6 +250,7 @@ plotting:
     "transport fuel cell" : "#AAAAAA"
     "biogas" : "#800000"
     "solid biomass" : "#DAA520"
+    "today" : "#D2691E"
   nice_names:
     # OCGT: "Gas"
     # OCGT marginal: "Gas (marginal)"
