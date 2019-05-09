@@ -22,18 +22,32 @@ from matplotlib.patches import Circle, Ellipse
 
 from matplotlib.legend_handler import HandlerPatch
 
+import cartopy.crs as ccrs
+
+
+override_component_attrs = pypsa.descriptors.Dict({k : v.copy() for k,v in pypsa.components.component_attrs.items()})
+override_component_attrs["Link"].loc["bus2"] = ["string",np.nan,np.nan,"2nd bus","Input (optional)"]
+override_component_attrs["Link"].loc["bus3"] = ["string",np.nan,np.nan,"3rd bus","Input (optional)"]
+override_component_attrs["Link"].loc["efficiency2"] = ["static or series","per unit",1.,"2nd bus efficiency","Input (optional)"]
+override_component_attrs["Link"].loc["efficiency3"] = ["static or series","per unit",1.,"3rd bus efficiency","Input (optional)"]
+override_component_attrs["Link"].loc["p2"] = ["series","MW",0.,"2nd bus output","Output"]
+override_component_attrs["Link"].loc["p3"] = ["series","MW",0.,"3rd bus output","Output"]
 
 
 def rename_techs_tyndp(tech):
     tech = rename_techs(tech)
     if "heat pump" in tech or "resistive heater" in tech:
         return "power-to-heat"
-    elif tech in ["methanation","hydrogen storage"]:
+    elif tech in ["methanation","hydrogen storage","helmeth"]:
         return "power-to-gas"
     elif tech in ["OCGT","CHP","gas boiler"]:
         return "gas-to-power/heat"
     elif "solar" in tech:
         return "solar"
+    elif tech == "Fischer-Tropsch":
+        return "power-to-liquid"
+    elif "offshore wind" in tech:
+        return "offshore wind"
     else:
         return tech
 
@@ -82,7 +96,9 @@ def assign_location(n):
 
 def plot_map(components=["links","stores","storage_units","generators"],bus_size_factor=1.7e10,suffix="all"):
 
-    n = pypsa.Network(snakemake.input.network)
+    n = pypsa.Network(snakemake.input.network,
+                      override_component_attrs=override_component_attrs)
+
 
     assign_location(n)
 
@@ -115,7 +131,7 @@ def plot_map(components=["links","stores","storage_units","generators"],bus_size
 
     #print(costs)
 
-    fig, ax = plt.subplots(1,1)
+    fig, ax = plt.subplots(subplot_kw={"projection":ccrs.PlateCarree()})
 
     fig.set_size_inches(7,6)
 
@@ -140,6 +156,9 @@ def plot_map(components=["links","stores","storage_units","generators"],bus_size
     to_drop = costs.index.levels[0]^n.buses.index
     print("dropping non-buses",to_drop)
     costs.drop(to_drop,level=0,inplace=True,axis=0)
+
+    #make sure they are removed from index
+    costs.index = pd.MultiIndex.from_tuples(costs.index.values)
 
     n.plot(bus_sizes=costs/bus_size_factor,
            bus_colors=snakemake.config['plotting']['tech_colors'],
@@ -179,21 +198,23 @@ def plot_map(components=["links","stores","storage_units","generators"],bus_size
 
     fig.tight_layout()
 
-    fig.savefig("{}/{}-CO0-spatial-costs-{}.pdf".format(snakemake.config['summary_dir'],
-                                                        snakemake.input.scenario.replace(".","p"),
-                                                        suffix),transparent=True)
+    fig.savefig("{}/{}/graphs/{}-CO0-spatial-costs-{}.pdf".format(snakemake.config['summary_dir'],
+                                                                  snakemake.config['run'],
+                                                                  snakemake.input.scenario.replace(".","p"),
+                                                                  suffix),transparent=True)
 
 
 def plot_map_without():
 
-    n = pypsa.Network(snakemake.input.network)
+    n = pypsa.Network(snakemake.input.network,
+                      override_component_attrs=override_component_attrs)
 
     assign_location(n)
 
     #Drop non-electric buses so they don't clutter the plot
     n.buses.drop(n.buses.index[n.buses.carrier != "AC"],inplace=True)
 
-    fig, ax = plt.subplots(1,1)
+    fig, ax = plt.subplots(subplot_kw={"projection":ccrs.PlateCarree()})
 
     fig.set_size_inches(7,6)
 
@@ -243,13 +264,16 @@ def plot_map_without():
 
     fig.tight_layout()
 
-    fig.savefig("{}/today.pdf".format(snakemake.config['summary_dir']),
+    fig.savefig("{}/{}/graphs/today.pdf".format(snakemake.config['summary_dir'],
+                snakemake.config['run']),
                 transparent=True)
 
 
 def plot_series(carrier="AC"):
 
-    n = pypsa.Network(snakemake.input.network)
+    n = pypsa.Network(snakemake.input.network,
+                      override_component_attrs=override_component_attrs)
+
 
     assign_location(n)
 
@@ -358,15 +382,16 @@ if __name__ == "__main__":
         with open('config.yaml') as f:
             snakemake.config = yaml.load(f)
         snakemake.input = Dict()
-        snakemake.input.scenario = "lvopt"  #lv1.0, lv1.25, lvopt
-        snakemake.input.network = "{}postnetworks/elec_s_128_{}_Co2L0-3H-T-H.nc".format(snakemake.config['results_dir'],
-                                                                                        snakemake.input.scenario)
+        snakemake.input.scenario = "lv1.0"  #lv1.0, lv1.25, lvopt
+        snakemake.config["run"] = "190503-es2050-lv"
+        snakemake.input.network = "{}{}/postnetworks/elec_s_181_{}__Co2L0-3H-T-H-B-I-solar3.nc".format(snakemake.config['results_dir'],
+                                                                                                       snakemake.config['run'],
+                                                                                                       snakemake.input.scenario)
 
-        #"../elec_s_128_{}_Co2L0-3H-T-H.nc".format(snakemake.input.scenario)
 
     plot_map(components=["generators","links","stores","storage_units"],bus_size_factor=1.5e10,suffix="all")
 
-    #plot_map_without()
+    plot_map_without()
 
     #plot_map(components=["generators"],bus_size_factor=1.7e10,suffix="generators")
 
