@@ -100,6 +100,10 @@ helmeth,2030,investment,2000,EUR/kW,no source
 helmeth,2030,lifetime,25,years,no source
 helmeth,2030,FOM,3,%/year,no source
 helmeth,2030,efficiency,0.8,per unit,HELMETH press release
+SMR,2030,investment,540.56,EUR/kWCH4,https://www.gov.uk/government/publications/hydrogen-supply-chain-evidence-base; slide 42 assumption for 2030; GBP 466 exchange 1.16
+SMR,2030,lifetime,25,years,TODO
+SMR,2030,FOM,5.4,%/year,https://www.gov.uk/government/publications/hydrogen-supply-chain-evidence-base; slide 42 assumption for 2030
+SMR,2030,efficiency,0.74,per unit,https://www.gov.uk/government/publications/hydrogen-supply-chain-evidence-base; slide 42 assumption for 2030
 Fischer-Tropsch,2030,investment,677.6,EUR/kWH2,Fasihi doi:10.3390/su9020306 (60 kEUR/bpd = 847 EUR/kWL (1b = 1.7 MWh) 847*0.8 = 677.6)
 Fischer-Tropsch,2030,lifetime,30,years,doi:10.3390/su9020306
 Fischer-Tropsch,2030,FOM,3,%/year,doi:10.3390/su9020306

@@ -76,14 +76,22 @@ def add_co2_tracking(n):
     n.add("Bus","co2 stored",
           carrier="co2 stored")
 
-    #NB: can also be negative
-    #cost of 10 euro/tCO2 for whatever stays
     #TODO move cost to data/costs.csv
+    #TODO move maximum somewhere more transparent
     n.madd("Store",["co2 stored"],
            e_nom_extendable = True,
-           marginal_cost=-1000.,
+           e_nom_max=2e8,
+           capital_cost=20.,
            carrier="co2 stored",
            bus="co2 stored")
+
+    if options['co2_vent']:
+        n.madd("Link",["co2 vent"],
+               bus0="co2 stored",
+               bus1="co2 atmosphere",
+               carrier="co2 vent",
+               efficiency=1.,
+               p_nom_extendable=True)
 
     if options['dac']:
         #direct air capture consumes electricity to take CO2 from the air to the underground store
@@ -574,6 +582,20 @@ def add_storage(network):
                      efficiency2=-costs.at["helmeth","efficiency"]*costs.at['gas','CO2 intensity'],
                      capital_cost=costs.at["helmeth","fixed"])
 
+
+    if options['SMR']:
+        network.madd("Link",
+                     nodes + " SMR",
+                     bus0=["EU gas"]*len(nodes),
+                     bus1=nodes+" H2",
+                     bus2="co2 atmosphere",
+                     bus3="co2 stored",
+                     p_nom_extendable=True,
+                     carrier="SMR",
+                     efficiency=costs.at["SMR","efficiency"],
+                     efficiency2=costs.at['gas','CO2 intensity']*(1-options["ccs_fraction"]),
+                     efficiency3=costs.at['gas','CO2 intensity']*options["ccs_fraction"],
+                     capital_cost=costs.at["SMR","fixed"])
 
 
 def add_transport(network):
