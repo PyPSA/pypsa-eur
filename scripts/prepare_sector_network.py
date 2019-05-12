@@ -515,9 +515,24 @@ def add_storage(network):
                  efficiency=costs.at["fuel cell","efficiency"],
                  capital_cost=costs.at["fuel cell","fixed"]*costs.at["fuel cell","efficiency"])  #NB: fixed cost is per MWel
 
+    network.add("Bus",
+                "EU H2",
+                carrier="H2")
+
+    #TODO Add capital costs, efficiency losses
+    network.madd("Link",
+                 nodes + " H2 pipeline",
+                 bus0=nodes + " H2",
+                 bus1="EU H2",
+                 p_min_pu=-1,
+                 p_nom_extendable=True,
+                 carrier="H2 pipeline")
+
     network.madd("Store",
-                 nodes + " H2 Store",
-                 bus=nodes + " H2",
+                 ["EU H2 Store"],
+                 bus="EU H2",
+                 #nodes + " H2 Store",
+                 #bus=nodes + " H2",
                  e_nom_extendable=True,
                  e_cyclic=True,
                  carrier="H2 Store",
