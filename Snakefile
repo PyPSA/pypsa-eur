@@ -218,6 +218,10 @@ rule make_summary:
                **config['scenario'])
         #heat_demand_name='data/heating/daily_heat_demand.h5'
     output:
+        nodal_costs=config['summary_dir'] + '/' + config['run'] + '/csvs/nodal_costs.csv',
+        nodal_capacities=config['summary_dir'] + '/' + config['run'] + '/csvs/nodal_capacities.csv',
+        nodal_cfs=config['summary_dir'] + '/' + config['run'] + '/csvs/nodal_cfs.csv',
+        cfs=config['summary_dir'] + '/' + config['run'] + '/csvs/cfs.csv',
         costs=config['summary_dir'] + '/' + config['run'] + '/csvs/costs.csv',
         capacities=config['summary_dir'] + '/' + config['run'] + '/csvs/capacities.csv',
         curtailment=config['summary_dir'] + '/' + config['run'] + '/csvs/curtailment.csv',

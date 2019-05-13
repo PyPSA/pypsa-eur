@@ -53,6 +53,103 @@ def assign_carriers(n):
     if n.stores.loc["EU gas Store","carrier"] == "":
         n.stores.loc["EU gas Store","carrier"] = "gas Store"
 
+def assign_locations(n):
+    for c in n.iterate_components(n.one_port_components|n.branch_components):
+
+        ifind = pd.Series(c.df.index.str.find(" ",start=4),c.df.index)
+
+        for i in ifind.unique():
+            names = ifind.index[ifind == i]
+
+            if i == -1:
+                c.df.loc[names,'location'] = ""
+            else:
+                c.df.loc[names,'location'] = names.str[:i]
+
+def calculate_nodal_cfs(n,label,nodal_cfs):
+    #Beware this also has extraneous locations for country (e.g. biomass) or continent-wide (e.g. fossil gas/oil) stuff
+    for c in n.iterate_components((n.branch_components^{"Line","Transformer"})|n.controllable_one_port_components^{"Load","StorageUnit"}):
+        capacities_c = c.df[opt_name.get(c.name,"p") + "_nom_opt"].groupby((c.df.location,c.df.carrier)).sum()
+
+        if c.name == "Link":
+            p = c.pnl.p0.abs().mean()
+        elif c.name == "Generator":
+            p = c.pnl.p.abs().mean()
+        elif c.name == "Store":
+            p = c.pnl.e.abs().mean()
+        else:
+            sys.exit()
+
+        p_c = p.groupby((c.df.location,c.df.carrier)).sum()
+
+        cf_c = p_c/capacities_c
+
+        index = pd.MultiIndex.from_tuples([(c.list_name,) + t for t in cf_c.index.to_list()])
+        nodal_cfs = nodal_cfs.reindex(nodal_cfs.index|index)
+        nodal_cfs.loc[index,label] = cf_c.values
+
+    return nodal_cfs
+
+
+
+
+
+def calculate_cfs(n,label,cfs):
+
+    for c in n.iterate_components(n.branch_components|n.controllable_one_port_components^{"Load","StorageUnit"}):
+        capacities_c = c.df[opt_name.get(c.name,"p") + "_nom_opt"].groupby(c.df.carrier).sum()
+
+        if c.name in ["Link","Line","Transformer"]:
+            p = c.pnl.p0.abs().mean()
+        elif c.name == "Store":
+            p = c.pnl.e.abs().mean()
+        else:
+            p = c.pnl.p.abs().mean()
+
+        p_c = p.groupby(c.df.carrier).sum()
+
+        cf_c = p_c/capacities_c
+
+        cfs = cfs.reindex(cfs.index|pd.MultiIndex.from_product([[c.list_name],cf_c.index]))
+
+        cfs.loc[idx[c.list_name,list(cf_c.index)],label] = cf_c.values
+
+    return cfs
+
+
+
+
+def calculate_nodal_costs(n,label,nodal_costs):
+    #Beware this also has extraneous locations for country (e.g. biomass) or continent-wide (e.g. fossil gas/oil) stuff
+    for c in n.iterate_components(n.branch_components|n.controllable_one_port_components^{"Load"}):
+        capital_costs = (c.df.capital_cost*c.df[opt_name.get(c.name,"p") + "_nom_opt"]).groupby((c.df.location,c.df.carrier)).sum()
+        index = pd.MultiIndex.from_tuples([(c.list_name,"capital") + t for t in capital_costs.index.to_list()])
+        nodal_costs = nodal_costs.reindex(nodal_costs.index|index)
+        nodal_costs.loc[index,label] = capital_costs.values
+
+        if c.name == "Link":
+            p = c.pnl.p0.multiply(n.snapshot_weightings,axis=0).sum()
+        elif c.name == "Line":
+            continue
+        elif c.name == "StorageUnit":
+            p_all = c.pnl.p.multiply(n.snapshot_weightings,axis=0)
+            p_all[p_all < 0.] = 0.
+            p = p_all.sum()
+        else:
+            p = c.pnl.p.multiply(n.snapshot_weightings,axis=0).sum()
+
+        #correct sequestration cost
+        if c.name == "Store":
+            items = c.df.index[(c.df.carrier == "co2 stored") & (c.df.marginal_cost <= -100.)]
+            c.df.loc[items,"marginal_cost"] = -20.
+
+        marginal_costs = (p*c.df.marginal_cost).groupby((c.df.location,c.df.carrier)).sum()
+        index = pd.MultiIndex.from_tuples([(c.list_name,"marginal") + t for t in marginal_costs.index.to_list()])
+        nodal_costs = nodal_costs.reindex(nodal_costs.index|index)
+        nodal_costs.loc[index,label] = marginal_costs.values
+
+    return nodal_costs
+
 
 def calculate_costs(n,label,costs):
 
@@ -102,6 +199,18 @@ def calculate_costs(n,label,costs):
     #costs.loc[("generators","capital","ror"),label] = (0.02)*3e6*n.generators.loc[n.generators.group=="ror","p_nom"].sum()
 
     return costs
+
+
+def calculate_nodal_capacities(n,label,nodal_capacities):
+    #Beware this also has extraneous locations for country (e.g. biomass) or continent-wide (e.g. fossil gas/oil) stuff
+    for c in n.iterate_components(n.branch_components|n.controllable_one_port_components^{"Load"}):
+        nodal_capacities_c = c.df[opt_name.get(c.name,"p") + "_nom_opt"].groupby((c.df.location,c.df.carrier)).sum()
+        index = pd.MultiIndex.from_tuples([(c.list_name,) + t for t in nodal_capacities_c.index.to_list()])
+        nodal_capacities = nodal_capacities.reindex(nodal_capacities.index|index)
+        nodal_capacities.loc[index,label] = nodal_capacities_c.values
+
+    return nodal_capacities
+
 
 
 
@@ -247,12 +356,10 @@ def calculate_metrics(n,label,metrics):
 
 def calculate_prices(n,label,prices):
 
-    bus_type = pd.Series(n.buses.index.str[3:],n.buses.index).replace("","electricity")
+    prices = prices.reindex(prices.index|n.buses.carrier.unique())
 
-    prices = prices.reindex(prices.index|bus_type.value_counts().index)
-
-    #WARNING: this is time-averaged, should really be load-weighted average
-    prices[label] = n.buses_t.marginal_price.mean().groupby(bus_type).mean()
+    #WARNING: this is time-averaged, see weighted_prices for load-weighted average
+    prices[label] = n.buses_t.marginal_price.mean().groupby(n.buses.carrier).mean()
 
     return prices
 
@@ -389,7 +496,11 @@ def calculate_price_statistics(n, label, price_statistics):
     return price_statistics
 
 
-outputs = ["costs",
+outputs = ["nodal_costs",
+           "nodal_capacities",
+           "nodal_cfs",
+           "cfs",
+           "costs",
            "capacities",
            "curtailment",
            "energy",
@@ -419,6 +530,7 @@ def make_summaries(networks_dict):
 
 
         assign_carriers(n)
+        assign_locations(n)
 
         for output in outputs:
             df[output] = globals()["calculate_" + output](n, label, df[output])
