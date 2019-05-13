@@ -188,13 +188,13 @@ rule prepare_sector_network:
 
 
 rule solve_network:
-    input: config['results_dir'] +  config['run'] + "/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}.nc"
-    output: config['results_dir'] +  config['run'] + "/postnetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}.nc"
+    input: config['results_dir'] + config['run'] + "/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}.nc"
+    output: config['results_dir'] + config['run'] + "/postnetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}.nc"
     shadow: "shallow"
     log:
-        solver="logs/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_solver.log",
-        python="logs/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_python.log",
-        memory="logs/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_memory.log"
+        solver="logs/" + config['run'] + "/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_solver.log",
+        python="logs/" + config['run'] + "/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_python.log",
+        memory="logs/" + config['run'] + "/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_memory.log"
     benchmark: "benchmarks/solve_network/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}"
     threads: 4
     resources: mem=100000 #memory in MB; 40 GB enough for 45+B+I; 100 GB based on RESI usage for 128
