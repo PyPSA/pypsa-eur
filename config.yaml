@@ -2,7 +2,7 @@ logging_level: INFO
 
 results_dir: 'results/'
 summary_dir: results
-run: '190511-h2_network'
+run: '190512-underground_h2'
 
 scenario:
   sectors: [E] # ,E+EV,E+BEV,E+BEV+V2G] # [ E+EV, E+BEV, E+BEV+V2G ]
@@ -85,7 +85,7 @@ sector:
   'co2_vent' : True
   'SMR' : True
   'ccs_fraction' : 0.9
-
+  'hydrogen_underground_storage' : True
 
 
 costs:

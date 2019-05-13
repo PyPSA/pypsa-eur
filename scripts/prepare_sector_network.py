@@ -528,6 +528,12 @@ def add_storage(network):
                  p_nom_extendable=True,
                  carrier="H2 pipeline")
 
+    if options['hydrogen_underground_storage']:
+        h2_capital_cost = costs.at["hydrogen underground storage","fixed"]
+    else:
+        h2_capital_cost = costs.at["hydrogen storage","fixed"]
+
+
     network.madd("Store",
                  ["EU H2 Store"],
                  bus="EU H2",
@@ -536,8 +542,7 @@ def add_storage(network):
                  e_nom_extendable=True,
                  e_cyclic=True,
                  carrier="H2 Store",
-                 capital_cost=costs.at["hydrogen storage","fixed"])
-
+                 capital_cost=h2_capital_cost)
 
 
     network.add("Carrier","battery")
@@ -1186,7 +1191,7 @@ def add_industry(network):
 
     network.add("Bus",
                 "Fischer-Tropsch-demand",
-                carrier="Fischer-Tropsch")
+                carrier="Fischer-Tropsch-demand")
 
     #use madd to get carrier inserted
     network.madd("Store",
