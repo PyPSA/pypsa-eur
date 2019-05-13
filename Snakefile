@@ -203,18 +203,19 @@ rule solve_network:
 
 rule plot_network:
     input:
-        network="results/networks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}.nc",
-        supply_regions='data/supply_regions/supply_regions.shp',
-        resarea=lambda w: config['data']['resarea'][w.resarea],
-        costs='data/costs.csv'
+        network=config['results_dir'] + config['run'] + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}.nc"
     output:
-        only_map="results/plots/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{attr}.pdf",
-        ext="results/plots/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{attr}_ext.pdf"
+        map=config['results_dir'] + config['run'] + "/maps/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}-costs-all.pdf",
+	today=config['results_dir'] + config['run'] + "/maps/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}-today.pdf"
+    threads: 2
+    resources: mem_mb=10000
     script: "scripts/plot_network.py"
 
 rule make_summary:
     input:
-        expand(config['results_dir'] + config['run'] + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}.nc",
+        networks=expand(config['results_dir'] + config['run'] + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}.nc",
+               **config['scenario']),
+        plots=expand(config['results_dir'] + config['run'] + "/maps/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}-costs-all.pdf",
                **config['scenario'])
         #heat_demand_name='data/heating/daily_heat_demand.h5'
     output:

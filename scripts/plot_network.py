@@ -94,7 +94,7 @@ def assign_location(n):
 
 
 
-def plot_map(components=["links","stores","storage_units","generators"],bus_size_factor=1.7e10,suffix="all"):
+def plot_map(components=["links","stores","storage_units","generators"],bus_size_factor=1.7e10):
 
     n = pypsa.Network(snakemake.input.network,
                       override_component_attrs=override_component_attrs)
@@ -198,10 +198,7 @@ def plot_map(components=["links","stores","storage_units","generators"],bus_size
 
     fig.tight_layout()
 
-    fig.savefig("{}/{}/graphs/{}-CO0-spatial-costs-{}.pdf".format(snakemake.config['summary_dir'],
-                                                                  snakemake.config['run'],
-                                                                  snakemake.input.scenario.replace(".","p"),
-                                                                  suffix),transparent=True)
+    fig.savefig(snakemake.output.map,transparent=True)
 
 
 def plot_map_without():
@@ -264,9 +261,7 @@ def plot_map_without():
 
     fig.tight_layout()
 
-    fig.savefig("{}/{}/graphs/today.pdf".format(snakemake.config['summary_dir'],
-                snakemake.config['run']),
-                transparent=True)
+    fig.savefig(snakemake.output.today,transparent=True)
 
 
 def plot_series(carrier="AC"):
@@ -382,14 +377,18 @@ if __name__ == "__main__":
         with open('config.yaml') as f:
             snakemake.config = yaml.load(f)
         snakemake.input = Dict()
+        snakemake.output = Dict()
         snakemake.input.scenario = "lv1.0"  #lv1.0, lv1.25, lvopt
         snakemake.config["run"] = "190503-es2050-lv"
         snakemake.input.network = "{}{}/postnetworks/elec_s_181_{}__Co2L0-3H-T-H-B-I-solar3.nc".format(snakemake.config['results_dir'],
                                                                                                        snakemake.config['run'],
                                                                                                        snakemake.input.scenario)
+        snakemake.output.network = "{}{}/maps/elec_s_181_{}__Co2L0-3H-T-H-B-I-solar3.pdf".format(snakemake.config['results_dir'],
+                                                                                                 snakemake.config['run'],
+                                                                                                 snakemake.input.scenario)
 
 
-    plot_map(components=["generators","links","stores","storage_units"],bus_size_factor=1.5e10,suffix="all")
+    plot_map(components=["generators","links","stores","storage_units"],bus_size_factor=1.5e10)
 
     plot_map_without()
 
