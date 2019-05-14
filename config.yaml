@@ -2,7 +2,7 @@ logging_level: INFO
 
 results_dir: 'results/'
 summary_dir: results
-run: '190512-underground_h2'
+run: '190513-h2_waste_heat'
 
 scenario:
   sectors: [E] # ,E+EV,E+BEV,E+BEV+V2G] # [ E+EV, E+BEV, E+BEV+V2G ]
@@ -86,7 +86,8 @@ sector:
   'SMR' : True
   'ccs_fraction' : 0.9
   'hydrogen_underground_storage' : True
-
+  'use_fischer_tropsch_waste_heat' : True
+  'use_fuel_cell_waste_heat' : True
 
 costs:
   year: 2030

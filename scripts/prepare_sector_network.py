@@ -533,7 +533,6 @@ def add_storage(network):
     else:
         h2_capital_cost = costs.at["hydrogen storage","fixed"]
 
-
     network.madd("Store",
                  ["EU H2 Store"],
                  bus="EU H2",
@@ -1253,6 +1252,21 @@ def add_industry(network):
                 bus="co2 stored",
                 p_set = -industrial_demand.loc[nodes,"process emissions"].sum()*options["ccs_fraction"]/8760.)
 
+def add_waste_heat(network):
+
+    print("adding possibility to use industrial waste heat in district heating")
+
+    #AC buses with district heating
+    central_buses = n.buses.index[n.buses.index.str.contains("central CHP")].str[:-12]
+
+    if options['use_fischer_tropsch_waste_heat']:
+        n.links.loc[central_buses + " Fischer-Tropsch","bus3"] = central_buses + " urban heat"
+        n.links.loc[central_buses + " Fischer-Tropsch","efficiency3"] = 0.95 - n.links.loc[central_buses + " Fischer-Tropsch","efficiency"]
+
+    if options['use_fuel_cell_waste_heat']:
+        n.links.loc[central_buses + " H2 Fuel Cell","bus2"] = central_buses + " urban heat"
+        n.links.loc[central_buses + " H2 Fuel Cell","efficiency2"] = 0.95 - n.links.loc[central_buses + " H2 Fuel Cell","efficiency"]
+
 
 def restrict_technology_potential(n,tech,limit):
     print("restricting potentials (p_nom_max) for {} to {} of technical potential".format(tech,limit))
@@ -1317,6 +1331,9 @@ if __name__ == "__main__":
 
     if "I" in opts:
         add_industry(n)
+
+    if "I" in opts and "H" in opts:
+        add_waste_heat(n)
 
     for o in opts:
         m = re.match(r'^\d+h$', o, re.IGNORECASE)
