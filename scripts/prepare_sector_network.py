@@ -1274,6 +1274,10 @@ def restrict_technology_potential(n,tech,limit):
     #beware if limit is 0 and p_nom_max is np.inf, 0*np.inf is nan
     n.generators.loc[gens,"p_nom_max"] *=limit
 
+def decentral(n):
+    n.lines.drop(n.lines.index,inplace=True)
+    n.links.drop(n.links.index[n.links.carrier.isin(["DC","B2B"])],inplace=True)
+
 
 if __name__ == "__main__":
     # Detect running outside of snakemake and mock snakemake for testing
@@ -1334,6 +1338,9 @@ if __name__ == "__main__":
 
     if "I" in opts and "H" in opts:
         add_waste_heat(n)
+
+    if "decentral" in opts:
+        decentral(n)
 
     for o in opts:
         m = re.match(r'^\d+h$', o, re.IGNORECASE)
