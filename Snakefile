@@ -211,12 +211,27 @@ rule plot_network:
     resources: mem_mb=10000
     script: "scripts/plot_network.py"
 
+
+
+rule copy_config:
+    input:
+        networks=expand(config['results_dir'] + config['run'] + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}.nc",
+               **config['scenario'])
+    output:
+        config=config['summary_dir'] + '/' + config['run'] + '/configs/config.yaml'
+    threads: 1
+    resources: mem_mb=1000
+    script:
+        'scripts/copy_config.py'
+
+
 rule make_summary:
     input:
         networks=expand(config['results_dir'] + config['run'] + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}.nc",
                **config['scenario']),
         plots=expand(config['results_dir'] + config['run'] + "/maps/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}-costs-all.pdf",
-               **config['scenario'])
+               **config['scenario']),
+        config=config['summary_dir'] + '/' + config['run'] + '/configs/config.yaml'
         #heat_demand_name='data/heating/daily_heat_demand.h5'
     output:
         nodal_costs=config['summary_dir'] + '/' + config['run'] + '/csvs/nodal_costs.csv',
