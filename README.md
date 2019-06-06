@@ -109,6 +109,7 @@ Not all data dependencies are shipped with the git repository (since git is not 
 
 ```shell
 .../pypsa-eur % rm -rf data/pypsa-eur-data-bundle.tar.xz pypsa-eur-cutouts.tar.xz
+```
 
 # Script overview
 
