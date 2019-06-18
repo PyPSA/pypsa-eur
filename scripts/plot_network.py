@@ -104,20 +104,22 @@ linewidth_factor = opts['map'][snakemake.wildcards.attr]['linewidth_factor']
 bus_size_factor  = opts['map'][snakemake.wildcards.attr]['bus_size_factor']
 
 ## PLOT
-fig, ax = plt.subplots(figsize=map_figsize)
+import cartopy.crs as ccrs
+fig, ax = plt.subplots(subplot_kw={"projection":ccrs.PlateCarree()})
+
 n.plot(line_widths=pd.concat(line_widths_exp)/linewidth_factor,
        line_colors=dict(Line=line_colors['exp'], Link=line_colors['exp']),
        bus_sizes=bus_sizes/bus_size_factor,
        bus_colors=tech_colors,
        boundaries=map_boundaries,
-       basemap=True,
+       geomap=True,
        ax=ax)
 n.plot(line_widths=pd.concat(line_widths_cur)/linewidth_factor,
        line_colors=pd.concat(line_colors_with_alpha),
        bus_sizes=0,
        bus_colors=tech_colors,
        boundaries=map_boundaries,
-       basemap=False,
+       geomap=True,
        ax=ax)
 ax.set_aspect('equal')
 ax.axis('off')
