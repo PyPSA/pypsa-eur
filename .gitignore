@@ -3,6 +3,8 @@
 __pycache__
 gurobi.log
 
+config.yaml
+
 /bak
 /resources
 /results
