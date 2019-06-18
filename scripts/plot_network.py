@@ -119,7 +119,7 @@ n.plot(line_widths=pd.concat(line_widths_cur)/linewidth_factor,
        bus_sizes=0,
        bus_colors=tech_colors,
        boundaries=map_boundaries,
-       geomap=True,
+       geomap=True,    # TODO : Turn to False, after the release of PyPSA 0.14.2 (refer to https://github.com/PyPSA/PyPSA/issues/75)
        ax=ax)
 ax.set_aspect('equal')
 ax.axis('off')
