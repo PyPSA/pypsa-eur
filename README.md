@@ -107,7 +107,7 @@ Not all data dependencies are shipped with the git repository (since git is not 
 # Script overview
 
 The model has several configuration options collected in the [config.yaml](config.yaml) file
-located in the root directory.
+located in the root directory. An example of this that is kept up to date in the repository can be found in [config.example.yaml](config.example.yaml). The [config.yaml](config.yaml) is included in the [.gitignore](.gitignore) and won't be updated automatically. Users should therefore from time to time check their config against [config.example.yaml](config.example.yaml).
 
 ## Model workflow
 The generation of the model is controlled by the workflow management system
