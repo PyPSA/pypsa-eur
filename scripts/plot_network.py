@@ -118,6 +118,7 @@ n.plot(line_widths=pd.concat(line_widths_cur)/linewidth_factor,
        bus_sizes=0,
        bus_colors=tech_colors,
        boundaries=map_boundaries,
+       geomap=False,
        ax=ax)
 ax.set_aspect('equal')
 ax.axis('off')
