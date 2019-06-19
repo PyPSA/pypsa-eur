@@ -69,6 +69,18 @@ Clone the repository using `git` (**to a directory without any spaces in the pat
 /some/path/without/spaces % git clone https://github.com/PyPSA/pypsa-eur.git
 ```
 
+The model has several configuration options that must be specified in a `config.yaml` file located in the root directory.
+An example configuration [config.example.yaml](config.example.yaml) is maintained in the repository.
+Before first use, create a `config.yaml` by copying the example.
+
+```shell
+/some/path/without/spaces % cd pypsa-eur
+/some/path/without/spaces/pypsa-eur % cp config.example.yaml config.yaml
+```
+
+Users are advised to check their own `config.yaml` against changes in the [config.example.yaml](config.example.yaml)
+when pulling from the remote repository.
+
 ## Python dependencies
 The python package requirements are curated in the conda [environment.yaml](environment.yaml) file.
 The environment can be installed and activated using
@@ -106,8 +118,9 @@ Not all data dependencies are shipped with the git repository (since git is not 
 
 # Script overview
 
-The model has several configuration options collected in the [config.yaml](config.yaml) file
-located in the root directory. An example of this that is kept up to date in the repository can be found in [config.example.yaml](config.example.yaml). The [config.yaml](config.yaml) is included in the [.gitignore](.gitignore) and won't be updated automatically. Users should therefore from time to time check their config against [config.example.yaml](config.example.yaml).
+The model can be configured through the `config.yaml` file in the root directory.
+Instructions for how to get the `config.yaml` from the provided example [config.example.yaml](config.example.yaml)
+are provided in [Installation](#installation).
 
 ## Model workflow
 The generation of the model is controlled by the workflow management system
