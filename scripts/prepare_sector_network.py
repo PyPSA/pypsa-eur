@@ -1278,6 +1278,29 @@ def decentral(n):
     n.lines.drop(n.lines.index,inplace=True)
     n.links.drop(n.links.index[n.links.carrier.isin(["DC","B2B"])],inplace=True)
 
+def remove_h2_network(n):
+
+    nodes = pop_layout.index
+
+    n.links.drop(n.links.index[n.links.carrier.isin(["H2 pipeline"])],inplace=True)
+
+    n.stores.drop(["EU H2 Store"],inplace=True)
+
+    if options['hydrogen_underground_storage']:
+        h2_capital_cost = costs.at["hydrogen underground storage","fixed"]
+    else:
+        h2_capital_cost = costs.at["hydrogen storage","fixed"]
+
+    #put back nodal H2 storage
+    n.madd("Store",
+           nodes + " H2 Store",
+           bus=nodes + " H2",
+           e_nom_extendable=True,
+           e_cyclic=True,
+           carrier="H2 Store",
+           capital_cost=h2_capital_cost)
+
+
 
 if __name__ == "__main__":
     # Detect running outside of snakemake and mock snakemake for testing
@@ -1341,6 +1364,9 @@ if __name__ == "__main__":
 
     if "decentral" in opts:
         decentral(n)
+
+    if "noH2network" in opts:
+        remove_h2_network(n)
 
     for o in opts:
         m = re.match(r'^\d+h$', o, re.IGNORECASE)

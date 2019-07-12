@@ -411,10 +411,10 @@ def calculate_weighted_prices(n,label,weighted_prices):
             load += n.links_t.p0[names].groupby(n.links.loc[names,"bus0"],axis=1).sum(axis=1)
 
         #Add H2 Store when charging
-        if carrier == "H2":
-            stores = n.stores_t.p[buses+ " Store"].groupby(n.stores.loc[buses+ " Store","bus"],axis=1).sum(axis=1)
-            stores[stores > 0.] = 0.
-            load += -stores
+        #if carrier == "H2":
+        #    stores = n.stores_t.p[buses+ " Store"].groupby(n.stores.loc[buses+ " Store","bus"],axis=1).sum(axis=1)
+        #    stores[stores > 0.] = 0.
+        #    load += -stores
 
         weighted_prices.loc[carrier,label] = (load*n.buses_t.marginal_price[buses]).sum().sum()/load.sum().sum()
 
