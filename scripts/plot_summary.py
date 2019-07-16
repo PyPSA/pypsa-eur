@@ -13,53 +13,46 @@ import matplotlib.pyplot as plt
 
 #consolidate and rename
 def rename_techs(label):
-    if label[:8] == "central ":
-        label = label[8:]
-    if label[:6] == "urban ":
-        label = label[6:]
 
-    if "retrofitting" in label:
-        label = "building retrofitting"
-    if "H2" in label:
-        label = "hydrogen storage"
-    if "CHP" in label:
-        label = "CHP"
-    if "water tank" in label:
-        label = "water tanks"
-    if label=="water tanks":
-        label = "hot water storage"
-    if "gas" in label and label not in  ["gas boiler","biogas"]:
-        label = "natural gas"
-    if "solar thermal" in label:
-        label = "solar thermal"
-    if label == "solar":
-        label = "solar PV"
-    if label == "heat pump":
-        label = "air heat pump"
-    if label == "Sabatier":
-        label = "methanation"
-    if label == "offwind":
-        label = "offshore wind"
-    if label == "offwind-ac":
-        label = "offshore wind (AC)"
-    if label == "offwind-dc":
-        label = "offshore wind (DC)"
-    if label == "onwind":
-        label = "onshore wind"
-    if label == "ror":
-        label = "hydroelectricity"
-    if label == "hydro":
-        label = "hydroelectricity"
-    if label == "PHS":
-        label = "hydroelectricity"
-    if label == "co2 Store":
-        label = "DAC"
-    if label == "co2 stored":
-        label = "CO2 sequestration"
-    if "battery" in label:
-        label = "battery storage"
-    if label in ["AC","DC","B2B"]:
-        label = "transmission lines"
+    prefix_to_remove = ["central ","urban "]
+
+    rename_if_contains = ["CHP","gas boiler","biogas","solar thermal","air heat pump","ground heat pump","resistive heater"]
+
+    rename_if_contains_dict = {"water tanks" : "hot water storage",
+                               "retrofitting" : "building retrofitting",
+                               "H2" : "hydrogen storage",
+                               "battery" : "battery storage"}
+
+    rename = {"solar" : "solar PV",
+              "Sabatier" : "methanation",
+              "offwind" : "offshore wind",
+              "offwind-ac" : "offshore wind (AC)",
+              "offwind-dc" : "offshore wind (DC)",
+              "onwind" : "onshore wind",
+              "ror" : "hydroelectricity",
+              "hydro" : "hydroelectricity",
+              "PHS" : "hydroelectricity",
+              "co2 Store" : "DAC",
+              "co2 stored" : "CO2 sequestration",
+              "AC" : "transmission lines",
+              "DC" : "transmission lines",
+              "B2B" : "transmission lines"}
+
+    for ptr in prefix_to_remove:
+        if label[:len(ptr)] == ptr:
+            label = label[len(ptr):]
+
+    for rif in rename_if_contains:
+        if rif in label:
+            label = rif
+
+    for old,new in rename_if_contains_dict.items():
+        if old in label:
+            label = new
+
+    for old,new in rename.items():
+        if old == label:
+            label = new
     return label
 
 

@@ -138,26 +138,29 @@ def add_chp_constraints(network):
 
     if hasattr(network.links.index,"str") and network.links.index.str.contains("CHP").any():
 
-        #also catches central heat buses for district heating
-        nodes = list(network.links.index[network.links.index.str.contains("CHP electric")].str[:-len(" CHP electric")])
+        #AC buses with district heating
+        urban_central = n.buses.index[n.buses.carrier == "urban central heat"]
+        if not urban_central.empty:
+            urban_central = urban_central.str[:-len(" urban central heat")]
+
 
         def chp_nom(model,node):
-            return network.links.at[node + " CHP electric","efficiency"]*options['chp_parameters']['p_nom_ratio']*model.link_p_nom[node + " CHP electric"] == network.links.at[node + " CHP heat","efficiency"]*options['chp_parameters']['p_nom_ratio']*model.link_p_nom[node + " CHP heat"]
+            return network.links.at[node + " urban central CHP electric","efficiency"]*options['chp_parameters']['p_nom_ratio']*model.link_p_nom[node + " urban central CHP electric"] == network.links.at[node + " urban central CHP heat","efficiency"]*options['chp_parameters']['p_nom_ratio']*model.link_p_nom[node + " urban central CHP heat"]
 
 
-        network.model.chp_nom = pypsa.opt.Constraint(nodes,rule=chp_nom)
+        network.model.chp_nom = pypsa.opt.Constraint(urban_central,rule=chp_nom)
 
 
         def backpressure(model,node,snapshot):
-            return options['chp_parameters']['c_m']*network.links.at[node + " CHP heat","efficiency"]*model.link_p[node + " CHP heat",snapshot] <= network.links.at[node + " CHP electric","efficiency"]*model.link_p[node + " CHP electric",snapshot]
+            return options['chp_parameters']['c_m']*network.links.at[node + " urban central CHP heat","efficiency"]*model.link_p[node + " urban central CHP heat",snapshot] <= network.links.at[node + " urban central CHP electric","efficiency"]*model.link_p[node + " urban central CHP electric",snapshot]
 
-        network.model.backpressure = pypsa.opt.Constraint(nodes,list(network.snapshots),rule=backpressure)
+        network.model.backpressure = pypsa.opt.Constraint(urban_central,list(network.snapshots),rule=backpressure)
 
 
         def top_iso_fuel_line(model,node,snapshot):
-            return model.link_p[node + " CHP heat",snapshot] + model.link_p[node + " CHP electric",snapshot] <= model.link_p_nom[node + " CHP electric"]
+            return model.link_p[node + " urban central CHP heat",snapshot] + model.link_p[node + " urban central CHP electric",snapshot] <= model.link_p_nom[node + " urban central CHP electric"]
 
-        network.model.top_iso_fuel_line = pypsa.opt.Constraint(nodes,list(network.snapshots),rule=top_iso_fuel_line)
+        network.model.top_iso_fuel_line = pypsa.opt.Constraint(urban_central,list(network.snapshots),rule=top_iso_fuel_line)
 
 
 

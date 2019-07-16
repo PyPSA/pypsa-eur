@@ -41,17 +41,9 @@ override_component_attrs["Link"].loc["p3"] = ["series","MW",0.,"3rd bus output",
 
 
 def assign_carriers(n):
-
-    if "carrier" not in n.loads:
-        n.loads["carrier"] = "electricity"
-        for carrier in ["transport","heat","urban heat"]:
-            n.loads.loc[n.loads.index.str.contains(carrier),"carrier"] = carrier
-
     if "carrier" not in n.lines:
         n.lines["carrier"] = "AC"
 
-    if n.stores.loc["EU gas Store","carrier"] == "":
-        n.stores.loc["EU gas Store","carrier"] = "gas Store"
 
 def assign_locations(n):
     for c in n.iterate_components(n.one_port_components|n.branch_components):
