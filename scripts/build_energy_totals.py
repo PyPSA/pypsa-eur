@@ -179,6 +179,7 @@ def build_idees(year):
         # TRANSPORT
 
         filename = "{}/JRC-IDEES-2015_Transport_{}.xlsx".format(base_dir,rename.get(ct,ct))
+
         df = pd.read_excel(filename,"TrRoad_ene")
 
         assert df.iloc[2,0] == "by fuel (EUROSTAT DATA)"
@@ -186,8 +187,30 @@ def build_idees(year):
         assert df.iloc[13,0] == "Electricity"
         totals.loc[ct,"electricity road"] = df.loc[13,year]
 
+        assert df.iloc[17,0] == "Powered 2-wheelers (Gasoline)"
+        totals.loc[ct,"total two-wheel"] = df.loc[17,year]
+
+        assert df.iloc[19,0] == "Passenger cars"
+        totals.loc[ct,"total passenger cars"] = df.loc[19,year]
+        assert df.iloc[30,0] == "Battery electric vehicles"
+        totals.loc[ct,"electricity passenger cars"] = df.loc[30,year]
+
+        assert df.iloc[31,0] == "Motor coaches, buses and trolley buses"
+        totals.loc[ct,"total other road passenger"] = df.loc[31,year]
+        assert df.iloc[39,0] == "Battery electric vehicles"
+        totals.loc[ct,"electricity other road passenger"] = df.loc[39,year]
+
+        assert df.iloc[41,0] == "Light duty vehicles"
+        totals.loc[ct,"total light duty road freight"] = df.loc[41,year]
+        assert df.iloc[49,0] == "Battery electric vehicles"
+        totals.loc[ct,"electricity light duty road freight"] = df.loc[49,year]
+
+        assert df.iloc[50,0] == "Heavy duty vehicles (Diesel oil incl. biofuels)"
+        totals.loc[ct,"total heavy duty road freight"] = df.loc[50,year]
+
         assert df.iloc[61,0] == "Passenger cars"
         totals.loc[ct,"passenger car efficiency"] = df.loc[61,year]
+
 
         df = pd.read_excel(filename,"TrRail_ene")
 
@@ -195,6 +218,45 @@ def build_idees(year):
         totals.loc[ct,"total rail"] = df.loc[2,year]
         assert df.iloc[12,0] == "Electricity"
         totals.loc[ct,"electricity rail"] = df.loc[12,year]
+
+        assert df.iloc[15,0] == "Passenger transport"
+        totals.loc[ct,"total rail passenger"] = df.loc[15,year]
+        assert df.iloc[19,0] == "Electric"
+        totals.loc[ct,"electricity rail passenger"] = df.loc[19,year]
+
+        assert df.iloc[21,0] == "Freight transport"
+        totals.loc[ct,"total rail freight"] = df.loc[21,year]
+        assert df.iloc[23,0] == "Electric"
+        totals.loc[ct,"electricity rail freight"] = df.loc[23,year]
+
+
+        df = pd.read_excel(filename,"TrAvia_ene")
+
+        assert df.iloc[6,0] == "Passenger transport"
+        totals.loc[ct,"total aviation passenger"] = df.loc[6,year]
+        assert df.iloc[10,0] == "Freight transport"
+        totals.loc[ct,"total aviation freight"] = df.loc[10,year]
+
+        assert df.iloc[7,0] == "Domestic"
+        totals.loc[ct,"total domestic aviation passenger"] = df.loc[7,year]
+        assert df.iloc[8,0] == "International - Intra-EU"
+        assert df.iloc[9,0] == "International - Extra-EU"
+        totals.loc[ct,"total international aviation passenger"] = df.loc[[8,9],year].sum()
+
+        assert df.iloc[11,0] == "Domestic and International - Intra-EU"
+        totals.loc[ct,"total domestic aviation freight"] = df.loc[11,year]
+        assert df.iloc[12,0] == "International - Extra-EU"
+        totals.loc[ct,"total international aviation freight"] = df.loc[12,year]
+
+        totals.loc[ct,"total domestic aviation"] = totals.loc[ct,["total domestic aviation freight","total domestic aviation passenger"]].sum()
+        totals.loc[ct,"total international aviation"] = totals.loc[ct,["total international aviation freight","total international aviation passenger"]].sum()
+
+        df = pd.read_excel(filename,"TrNavi_ene")
+
+        #coastal and inland
+        assert df.iloc[2,0] == "by fuel (EUROSTAT DATA)"
+        totals.loc[ct,"total domestic navigation"] = df.loc[2,year]
+
 
         df = pd.read_excel(filename,"TrRoad_act")
 
@@ -214,6 +276,10 @@ def build_idees(year):
 def build_energy_totals():
 
     clean_df = idees.reindex(population.index).drop(["passenger cars","passenger car efficiency"],axis=1)
+
+    print("International navigation")
+    in_eurostat = clean_df.index.intersection(eurostat.index.levels[0])
+    clean_df.loc[in_eurostat,"total international navigation"] = eurostat.loc[idx[in_eurostat,:,"Bunkers",:],"Total all products"].groupby(level=0).sum()
 
     clean_df.loc["CH"] = swiss
 
@@ -267,6 +333,49 @@ def build_energy_totals():
                         (without_norway["{} {}".format("total",sector)]-without_norway["{} {}".format("electricity",sector)])).mean()
             clean_df.loc["NO","{} {} {}".format("total",sector,use)] = total_heating*fraction
             clean_df.loc["NO","{} {} {}".format("electricity",sector,use)] = total_heating*fraction*elec_fraction
+
+    #Missing aviation
+    print("Aviation")
+    clean_df.loc[missing_in_eurostat,"total domestic aviation"] = eurostat.loc[idx[missing_in_eurostat,:,:,"Domestic aviation"],"Total all products"].groupby(level=0).sum()
+    clean_df.loc[missing_in_eurostat,"total international aviation"] = eurostat.loc[idx[missing_in_eurostat,:,:,"International aviation"],"Total all products"].groupby(level=0).sum()
+
+    print("Domestic navigation")
+    clean_df.loc[missing_in_eurostat,"total domestic navigation"] = eurostat.loc[idx[missing_in_eurostat,:,:,"Domestic Navigation"],"Total all products"].groupby(level=0).sum()
+
+
+    #split road traffic for non-IDEES
+    missing = clean_df.index[clean_df["total passenger cars"].isnull()]
+    for fuel in ["total","electricity"]:
+        selection = [fuel+" passenger cars",fuel+" other road passenger",fuel+" light duty road freight"]
+        if fuel == "total":
+            selection = [fuel+" two-wheel"] + selection + [fuel+" heavy duty road freight"]
+        road = clean_df[selection].sum()
+        road_fraction = road/road.sum()
+        for i in road_fraction.index:
+            clean_df.loc[missing,i] = road_fraction[i]*clean_df.loc[missing,fuel+" road"]
+
+
+    #split rail traffic for non-IDEES
+    missing = clean_df.index[clean_df["total rail passenger"].isnull()]
+    for fuel in ["total","electricity"]:
+        selection = [fuel+" rail passenger",fuel+" rail freight"]
+        rail = clean_df[selection].sum()
+        rail_fraction = rail/rail.sum()
+        for i in rail_fraction.index:
+            clean_df.loc[missing,i] = rail_fraction[i]*clean_df.loc[missing,fuel+" rail"].values
+
+
+    #split aviation traffic for non-IDEES
+    missing = clean_df.index[clean_df["total domestic aviation passenger"].isnull()]
+    for destination in ["domestic","international"]:
+        selection = ["total " + destination+" aviation passenger","total " + destination+" aviation freight"]
+        aviation = clean_df[selection].sum()
+        aviation_fraction = aviation/aviation.sum()
+        for i in aviation_fraction.index:
+            clean_df.loc[missing,i] = aviation_fraction[i]*clean_df.loc[missing,"total "+ destination + " aviation"].values
+    clean_df.loc[missing,"total aviation passenger"] = clean_df.loc[missing,["total domestic aviation passenger","total international aviation passenger"]].sum(axis=1)
+    clean_df.loc[missing,"total aviation freight"] = clean_df.loc[missing,["total domestic aviation freight","total international aviation freight"]].sum(axis=1)
+
 
     #fix missing data for BA (services and road energy data)
     missing = (clean_df.loc["BA"] == 0.)
