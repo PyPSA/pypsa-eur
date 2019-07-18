@@ -138,6 +138,25 @@ rule build_biomass_potentials:
     resources: mem_mb=1000
     script: 'scripts/build_biomass_potentials.py'
 
+
+rule build_industry_sector_ratios:
+    output:
+        industry_sector_ratios="resources/industry_sector_ratios.csv"
+    threads: 1
+    resources: mem_mb=1000
+    script: 'scripts/build_industry_sector_ratios.py'
+
+
+rule build_industrial_demand_per_country:
+    input:
+        industry_sector_ratios="resources/industry_sector_ratios.csv"
+    output:
+        industrial_demand_per_country="resources/industrial_demand_per_country.csv"
+    threads: 1
+    resources: mem_mb=1000
+    script: 'scripts/build_industrial_demand_per_country.py'
+
+
 rule build_industrial_demand:
     input:
         clustered_pop_layout="resources/pop_layout_{network}_s{simpl}_{clusters}.csv"
