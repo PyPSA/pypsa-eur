@@ -159,7 +159,8 @@ rule build_industrial_demand_per_country:
 
 rule build_industrial_demand:
     input:
-        clustered_pop_layout="resources/pop_layout_{network}_s{simpl}_{clusters}.csv"
+        clustered_pop_layout="resources/pop_layout_{network}_s{simpl}_{clusters}.csv",
+        industrial_demand_per_country="resources/industrial_demand_per_country.csv"
     output:
         industrial_demand="resources/industrial_demand_{network}_s{simpl}_{clusters}.csv"
     threads: 1
