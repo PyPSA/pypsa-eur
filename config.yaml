@@ -2,7 +2,7 @@ logging_level: INFO
 
 results_dir: 'results/'
 summary_dir: results
-run: '190712-test_district'
+run: '190718-new_industry'
 
 scenario:
   sectors: [E] # ,E+EV,E+BEV,E+BEV+V2G] # [ E+EV, E+BEV, E+BEV+V2G ]
@@ -62,6 +62,7 @@ sector:
   'bev_availability' : 0.5  #How many cars do smart charging
   'v2g' : True #allows feed-in to grid from EV battery
   'transport_fuel_cell_share' : 0.   #0 means all EVs, 1 means all FCs
+  'shipping_average_efficiency' : 0.4 #For conversion of fuel oil to propulsion in 2011
   'time_dep_hp_cop' : True
   'retrofitting' : False
   'retroI-fraction' : 0.25
