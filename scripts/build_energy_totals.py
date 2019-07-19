@@ -221,8 +221,10 @@ def build_idees(year):
 
         assert df.iloc[15,0] == "Passenger transport"
         totals.loc[ct,"total rail passenger"] = df.loc[15,year]
+        assert df.iloc[16,0] == "Metro and tram, urban light rail"
         assert df.iloc[19,0] == "Electric"
-        totals.loc[ct,"electricity rail passenger"] = df.loc[19,year]
+        assert df.iloc[20,0] == "High speed passenger trains"
+        totals.loc[ct,"electricity rail passenger"] = df.loc[[16,19,20],year].sum()
 
         assert df.iloc[21,0] == "Freight transport"
         totals.loc[ct,"total rail freight"] = df.loc[21,year]
