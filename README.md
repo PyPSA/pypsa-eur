@@ -38,12 +38,15 @@ projects % git clone git@github.com:nworbmot/pypsa-eur-sec.git
 
 ## Data requirements
 
-The Data requirements include JRC-IDEES-2015, JRC biomass potentials,
-EEA emission statistics, Eurostat Energy Balances, urban district
-heating potentials, emobility statistics, timezone mappings and
-heating profiles.
+The data requirements include the JRC-IDEES-2015 database, JRC biomass
+potentials, EEA emission statistics, Eurostat Energy Balances, urban
+district heating potentials, emobility statistics, timezone mappings
+and heating profiles.
 
+The data bundle is about 640 MB.
+
+To download and extract it on the command line:
 ```shell
-projects/pypsa-eur-sec/data % wget "https://nworbmot.org/pypsa-eur-sec-data-bundle-190417.tar.gz"
-projects/pypsa-eur-sec/data % tar xvzf pypsa-eur-sec-data-bundle-190417.tar.gz
+projects/pypsa-eur-sec/data % wget "https://nworbmot.org/pypsa-eur-sec-data-bundle-190719.tar.gz"
+projects/pypsa-eur-sec/data % tar xvzf pypsa-eur-sec-data-bundle-190719.tar.gz
 ```
