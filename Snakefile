@@ -208,7 +208,9 @@ rule prepare_sector_network:
 
 
 rule solve_network:
-    input: config['results_dir'] + config['run'] + "/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}.nc"
+    input:
+        network=config['results_dir'] + config['run'] + "/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}.nc",
+        config=config['summary_dir'] + '/' + config['run'] + '/configs/config.yaml'
     output: config['results_dir'] + config['run'] + "/postnetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}.nc"
     shadow: "shallow"
     log:
@@ -235,7 +237,7 @@ rule plot_network:
 
 rule copy_config:
     input:
-        networks=expand(config['results_dir'] + config['run'] + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}.nc",
+        networks=expand(config['results_dir'] + config['run'] + "/prenetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}.nc",
                **config['scenario'])
     output:
         config=config['summary_dir'] + '/' + config['run'] + '/configs/config.yaml'
@@ -250,8 +252,7 @@ rule make_summary:
         networks=expand(config['results_dir'] + config['run'] + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}.nc",
                **config['scenario']),
         plots=expand(config['results_dir'] + config['run'] + "/maps/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}-costs-all.pdf",
-               **config['scenario']),
-        config=config['summary_dir'] + '/' + config['run'] + '/configs/config.yaml'
+               **config['scenario'])
         #heat_demand_name='data/heating/daily_heat_demand.h5'
     output:
         nodal_costs=config['summary_dir'] + '/' + config['run'] + '/csvs/nodal_costs.csv',

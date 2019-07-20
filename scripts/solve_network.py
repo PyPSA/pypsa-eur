@@ -352,7 +352,7 @@ if __name__ == "__main__":
         from vresutils.snakemake import MockSnakemake, Dict
         snakemake = MockSnakemake(
             wildcards=dict(network='elec', simpl='', clusters='45', lv='1.25', opts='Co2L-3H-T-H'),
-            input=["networks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}.nc"],
+            input=dict(network="networks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}.nc"),
             output=["results/networks/s{simpl}_{clusters}_lv{lv}_{opts}-test.nc"],
             log=dict(gurobi="logs/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_gurobi-test.log",
                      python="logs/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_python-test.log")
@@ -367,7 +367,7 @@ if __name__ == "__main__":
                         level=snakemake.config['logging_level'])
 
     with memory_logger(filename=getattr(snakemake.log, 'memory', None), interval=30.) as mem:
-        n = pypsa.Network(snakemake.input[0],
+        n = pypsa.Network(snakemake.input.network,
                           override_component_attrs=override_component_attrs)
 
         n = prepare_network(n)
