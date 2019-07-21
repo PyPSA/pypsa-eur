@@ -1094,34 +1094,32 @@ def add_biomass(network):
     network.add("Carrier","solid biomass")
 
     network.madd("Bus",
-                 cts + " biogas",
+                 ["EU biogas"],
                  carrier="biogas")
 
     network.madd("Bus",
-                 cts + " solid biomass",
+                 ["EU solid biomass"],
                  carrier="solid biomass")
 
     network.madd("Store",
-                 cts,
-                 suffix=" biogas",
-                 bus=cts + " biogas",
+                 ["EU biogas"],
+                 bus="EU biogas",
                  carrier="biogas",
-                 e_nom=biomass_potentials.loc[cts,"biogas"],
+                 e_nom=biomass_potentials.loc[cts,"biogas"].sum(),
                  marginal_cost=costs.at['biogas','fuel'],
-                 e_initial=biomass_potentials.loc[cts,"biogas"])
+                 e_initial=biomass_potentials.loc[cts,"biogas"].sum())
 
     network.madd("Store",
-                 cts,
-                 suffix=" solid biomass",
-                 bus=cts + " solid biomass",
+                 ["EU solid biomass"],
+                 bus="EU solid biomass",
                  carrier="solid biomass",
-                 e_nom=biomass_potentials.loc[cts,"solid biomass"],
+                 e_nom=biomass_potentials.loc[cts,"solid biomass"].sum(),
                  marginal_cost=costs.at['solid biomass','fuel'],
-                 e_initial=biomass_potentials.loc[cts,"solid biomass"])
+                 e_initial=biomass_potentials.loc[cts,"solid biomass"].sum())
 
     network.madd("Link",
-                 cts + " biogas to gas",
-                 bus0=cts + " biogas",
+                 ["biogas to gas"],
+                 bus0="EU biogas",
                  bus1="EU gas",
                  bus2="co2 atmosphere",
                  carrier="biogas to gas",
@@ -1137,7 +1135,7 @@ def add_biomass(network):
         #with BECCS
         network.madd("Link",
                      urban_central + " solid biomass to urban central CHP",
-                     bus0=urban_central.str[:2] + " solid biomass",
+                     bus0="EU solid biomass",
                      bus1=urban_central + " urban central CHP",
                      bus2="co2 atmosphere",
                      bus3="co2 stored",
@@ -1161,11 +1159,10 @@ def add_industry(network):
     countries = solid_biomass_by_country.index
 
     network.madd("Load",
-                 countries,
-                 suffix=" solid biomass for industry",
-                 bus=countries+ " solid biomass",
+                 ["solid biomass for industry"],
+                 bus="EU solid biomass",
                  carrier="solid biomass for industry",
-                 p_set=solid_biomass_by_country/8760.)
+                 p_set=solid_biomass_by_country.sum()/8760.)
 
     #Net transfer of CO2 from atmosphere to stored
     network.madd("Load",
