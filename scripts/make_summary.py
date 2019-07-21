@@ -234,7 +234,9 @@ def calculate_energy(n,label,energy):
         if c.name in n.one_port_components:
             c_energies = c.pnl.p.multiply(n.snapshot_weightings,axis=0).sum().multiply(c.df.sign).groupby(c.df.carrier).sum()
         else:
-            c_energies = (-c.pnl.p1.multiply(n.snapshot_weightings,axis=0).sum() - c.pnl.p0.multiply(n.snapshot_weightings,axis=0).sum()).groupby(c.df.carrier).sum()
+            c_energies = pd.Series(0.,c.df.carrier.unique())
+            for port in [col[3:] for col in c.df.columns if col[:3] == "bus"]:
+                c_energies -= c.pnl["p"+port].multiply(n.snapshot_weightings,axis=0).sum().groupby(c.df.carrier).sum()
 
         energy = energy.reindex(energy.index|pd.MultiIndex.from_product([[c.list_name],c_energies.index]))
 
