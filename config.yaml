@@ -2,12 +2,12 @@ logging_level: INFO
 
 results_dir: 'results/'
 summary_dir: results
-run: '190719-new_industry'
+run: '190720-new_industry'
 
 scenario:
   sectors: [E] # ,E+EV,E+BEV,E+BEV+V2G] # [ E+EV, E+BEV, E+BEV+V2G ]
   simpl: ['']
-  lv: [1.0]#, 1.125, 1.25, 1.5, 2.0]# or opt
+  lv: [1.0,1.25,1.5,2.0]#, 1.125, 1.25, 1.5, 2.0]# or opt
   clusters: [128] #[90, 128, 181] #[45, 64, 90, 128, 181, 256] #, 362] # (2**np.r_[5.5:9:.5]).astype(int) minimum is 37
   opts: ['']  #for pypsa-eur
   sector_opts: [Co2L0-3H-T-H-B-I]#,Co2L0p1-3H-T-H-B-I,Co2L0p25-3H-T-H-B-I,Co2L0p5-3H-T-H-B-I]#[Co2L0-3H-T-H-B-I-onwind0-solar3,Co2L0-3H-T-H-B-I-onwind0p125-solar3,Co2L0-3H-T-H-B-I-onwind0p25-solar3,Co2L0-3H-T-H-B-I-onwind0p50-solar3,Co2L0-3H-T-H-B-I-solar3]#,Co2L0-3H-T-H-B-I-onwind0p25-solar3]#,Co2L0p05-3H-T-H-B-I,Co2L0p10-3H-T-H-B-I,Co2L0p20-3H-T-H-B-I,Co2L0p30-3H-T-H-B-I,Co2L0p50-3H-T-H-B-I]#[Co2L-3H-T-H,Co2L0p10-3H-T-H,Co2L0-3H-T-H,Co2L0p20-3H-T-H]   #Co2L-3H-T-H,Co2L0p10-3H-T-H,Co2L0p20-3H-T-HCo2L-3H-T-H,Co2L0p10-3H-T-H,Co2L0p30-3H-T-H,Co2L0p50-3H-T-H] #Co2L-3H,Co2L-3H-T,, LC-FL, LC-T, Ep-T, Co2L-T]
@@ -228,7 +228,14 @@ plotting:
     "co2 stored" : "#123456"
     "CO2 sequestration" : "#123456"
     "co2" : "#123456"
+    "co2 vent" : "#654321"
+    "solid biomass for industry co2 from atmosphere" : "#654321"
+    "solid biomass for industry co2 to stored": "#654321"
+    "gas for industry co2 to atmosphere": "#654321"
+    "gas for industry co2 to stored": "#654321"
     "Fischer-Tropsch" : "#44DD33"
+    "kerosene for aviation": "#44DD33"
+    "naphtha for industry" : "#44DD33"
     "nuclear" : "#303030"
     "water tanks" : "#BBBBBB"
     "hot water storage" : "#BBBBBB"
@@ -246,6 +253,7 @@ plotting:
     "rural heat" : "#880000"
     "central heat" : "#b22222"
     "decentral heat" : "#800000"
+    "low-temperature heat for industry" : "#991111"
     "process heat" : "#FF3333"
     "heat demand" : "darkred"
     "electric demand" : "k"
@@ -257,6 +265,8 @@ plotting:
     "V2G" : "grey"
     "transport" : "grey"
     "electricity" : "k"
+    "gas for industry" : "#333333"
+    "solid biomass for industry" : "#555555"
     "industry new electricity" : "#222222"
     "process emissions to stored" : "#444444"
     "process emissions to atmosphere" : "#888888"

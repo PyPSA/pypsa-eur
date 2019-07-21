@@ -16,7 +16,7 @@ def rename_techs(label):
 
     prefix_to_remove = ["central ","urban "]
 
-    rename_if_contains = ["CHP","gas boiler","biogas","solar thermal","air heat pump","ground heat pump","resistive heater"]
+    rename_if_contains = ["CHP","gas boiler","biogas","solar thermal","air heat pump","ground heat pump","resistive heater","Fischer-Tropsch"]
 
     rename_if_contains_dict = {"water tanks" : "hot water storage",
                                "retrofitting" : "building retrofitting",
