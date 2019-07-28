@@ -175,6 +175,11 @@ decentral CHP,2030,discount rate,0.04,per unit,Palzer thesis
 central CHP,2030,lifetime,25,years,HP
 central CHP,2030,investment,650,EUR/kWel,HP
 central CHP,2030,FOM,3,%/year,HP
+micro CHP,2030,lifetime,20,years,DEA for PEMFC with methane (for unit consuming 2kW CH4)
+micro CHP,2030,investment,4500,EUR/kWCH4,DEA for PEMFC with methane (for unit consuming 2kW CH4)
+micro CHP,2030,FOM,6,%/year,DEA for PEMFC with methane (for unit consuming 2kW CH4)
+micro CHP,2030,efficiency,0.351,per unit,DEA for PEMFC with methane (for unit consuming 2kW CH4)
+micro CHP,2030,efficiency-heat,0.609,per unit,DEA for PEMFC with methane (for unit consuming 2kW CH4)
 decentral solar thermal,2030,discount rate,0.04,per unit,Palzer thesis
 decentral solar thermal,2030,FOM,1.3,%/year,HP
 decentral solar thermal,2030,investment,270000,EUR/1000m2,HP

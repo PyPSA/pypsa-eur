@@ -978,7 +978,7 @@ def add_heat(network):
                      efficiency=costs.at['central resistive heater','efficiency'])
 
         network.madd("Link",
-                     rural + " gas boiler",
+                     rural + " rural gas boiler",
                      p_nom_extendable=True,
                      bus0=["EU gas"]*len(rural),
                      bus1=rural + " rural heat",
@@ -1009,6 +1009,35 @@ def add_heat(network):
                      capital_cost=costs.at['central gas boiler','efficiency']*costs.at['central gas boiler','fixed'],
                      efficiency2=costs.at['gas','CO2 intensity'],
                      efficiency=costs.at['central gas boiler','efficiency'])
+
+        network.madd("Link",
+                     rural + " rural micro CHP",
+                     p_nom_extendable=True,
+                     bus0=["EU gas"]*len(rural),
+                     bus1=rural,
+                     bus2=rural + " rural heat",
+                     bus3="co2 atmosphere",
+                     carrier="rural micro CHP",
+                     efficiency=costs.at['micro CHP','efficiency'],
+                     efficiency2=costs.at['micro CHP','efficiency-heat'],
+                     efficiency3=costs.at['gas','CO2 intensity'],
+                     capital_cost=costs.at['micro CHP','fixed'])
+
+
+        network.madd("Link",
+                     urban_decentral + " urban decentral micro CHP",
+                     p_nom_extendable=True,
+                     bus0=["EU gas"]*len(urban_decentral),
+                     bus1=urban_decentral,
+                     bus2=urban_decentral + " urban decentral heat",
+                     bus3="co2 atmosphere",
+                     carrier="urban decentral micro CHP",
+                     efficiency=costs.at['micro CHP','efficiency'],
+                     efficiency2=costs.at['micro CHP','efficiency-heat'],
+                     efficiency3=costs.at['gas','CO2 intensity'],
+                     capital_cost=costs.at['micro CHP','fixed'])
+
+
 
     if options["chp"]:
 
