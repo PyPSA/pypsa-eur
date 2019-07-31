@@ -309,7 +309,7 @@ def prepare_data(network):
 
     sectors = ["residential","services"]
 
-    nodal_energy_totals["Space Heating"] = nodal_energy_totals[["total {sector} space".format(sector=sector) for sector in sectors]].sum(axis=1)
+    nodal_energy_totals["Space Heating"] = options['space_heating_fraction']*nodal_energy_totals[["total {sector} space".format(sector=sector) for sector in sectors]].sum(axis=1)
     nodal_energy_totals["Water Heating"] = nodal_energy_totals[["total {sector} water".format(sector=sector) for sector in sectors]].sum(axis=1)
 
     space_heat_demand = (heat_demand_df/heat_demand_df.sum()).multiply(nodal_energy_totals["Space Heating"])*1e6*Nyears
@@ -1425,6 +1425,12 @@ if __name__ == "__main__":
 
     add_storage(n)
 
+    for o in opts:
+        if "space" in o:
+            limit = o[o.find("space")+5:]
+            limit = float(limit.replace("p",".").replace("m","-"))
+            print(o,limit)
+            options['space_heating_fraction'] = limit
 
     nodal_energy_totals, heat_demand, space_heat_demand, water_heat_demand, ashp_cop, gshp_cop, solar_thermal, transport, avail_profile, dsm_profile, co2_totals, nodal_transport_data = prepare_data(n)
 
