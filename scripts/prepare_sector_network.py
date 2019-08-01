@@ -304,6 +304,7 @@ def prepare_data(network):
     uses = ["water","space"]
 
     heat_demand = {}
+    electric_heat_supply = {}
     for sector in sectors:
         for use in uses:
             intraday_year_profile = generate_periodic_profiles(daily_space_heat_demand.index.tz_localize("UTC"),
@@ -318,9 +319,14 @@ def prepare_data(network):
                 factor = 1.
 
             heat_demand["{} {}".format(sector,use)] = factor*(heat_demand_shape/heat_demand_shape.sum()).multiply(nodal_energy_totals["total {} {}".format(sector,use)])*1e6
+            electric_heat_supply["{} {}".format(sector,use)] = (heat_demand_shape/heat_demand_shape.sum()).multiply(nodal_energy_totals["electricity {} {}".format(sector,use)])*1e6
 
     heat_demand = pd.concat(heat_demand,axis=1)
+    electric_heat_supply = pd.concat(electric_heat_supply,axis=1)
 
+    #subtract from electricity load since heat demand already in heat_demand
+    electric_nodes = n.loads.index[n.loads.carrier == "electricity"]
+    n.loads_t.p_set[electric_nodes] = n.loads_t.p_set[electric_nodes] - electric_heat_supply.groupby(level=1,axis=1).sum()[electric_nodes]
 
     ##############
     #Transport
