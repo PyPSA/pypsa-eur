@@ -282,18 +282,6 @@ def prepare_data(network):
     ##############
 
 
-    #copy forward the daily average heat demand into each hour, so it can be multipled by the intraday profile
-    heat_demand_df = xr.open_dataarray(snakemake.input.heat_demand_total).T.to_pandas().reindex(index=network.snapshots, method="ffill")
-
-
-    intraday_profiles = pd.read_csv(snakemake.input.heat_profile,index_col=0)
-
-    intraday_year_profiles = generate_periodic_profiles(heat_demand_df.index.tz_localize("UTC"),
-                                                        nodes=heat_demand_df.columns,
-                                                        weekly_profile=(list(intraday_profiles["weekday"])*5 + list(intraday_profiles["weekend"])*2)).tz_localize(None)
-
-    heat_demand_df = heat_demand_df*intraday_year_profiles
-
     ashp_cop = xr.open_dataarray(snakemake.input.cop_air_total).T.to_pandas().reindex(index=network.snapshots)
     gshp_cop = xr.open_dataarray(snakemake.input.cop_soil_total).T.to_pandas().reindex(index=network.snapshots)
 
@@ -307,18 +295,31 @@ def prepare_data(network):
     nodal_energy_totals.index = pop_layout.index
     nodal_energy_totals = nodal_energy_totals.multiply(pop_layout.fraction,axis=0)
 
+    #copy forward the daily average heat demand into each hour, so it can be multipled by the intraday profile
+    daily_space_heat_demand = xr.open_dataarray(snakemake.input.heat_demand_total).T.to_pandas().reindex(index=network.snapshots, method="ffill")
+
+    intraday_profiles = pd.read_csv(snakemake.input.heat_profile,index_col=0)
+
     sectors = ["residential","services"]
+    uses = ["water","space"]
 
-    nodal_energy_totals["Space Heating"] = options['space_heating_fraction']*nodal_energy_totals[["total {sector} space".format(sector=sector) for sector in sectors]].sum(axis=1)
-    nodal_energy_totals["Water Heating"] = nodal_energy_totals[["total {sector} water".format(sector=sector) for sector in sectors]].sum(axis=1)
+    heat_demand = {}
+    for sector in sectors:
+        for use in uses:
+            intraday_year_profile = generate_periodic_profiles(daily_space_heat_demand.index.tz_localize("UTC"),
+                                                               nodes=daily_space_heat_demand.columns,
+                                                               weekly_profile=(list(intraday_profiles["{} {} weekday".format(sector,use)])*5 + list(intraday_profiles["{} {} weekend".format(sector,use)])*2)).tz_localize(None)
 
-    space_heat_demand = (heat_demand_df/heat_demand_df.sum()).multiply(nodal_energy_totals["Space Heating"])*1e6*Nyears
+            if use == "space":
+                heat_demand_shape = daily_space_heat_demand*intraday_year_profile
+                factor = options['space_heating_fraction']
+            else:
+                heat_demand_shape = intraday_year_profile
+                factor = 1.
 
-    water_heat_demand = (nodal_energy_totals["Water Heating"]/8760.)*1e6
+            heat_demand["{} {}".format(sector,use)] = factor*(heat_demand_shape/heat_demand_shape.sum()).multiply(nodal_energy_totals["total {} {}".format(sector,use)])*1e6
 
-    heat_demand = space_heat_demand + water_heat_demand
-
-
+    heat_demand = pd.concat(heat_demand,axis=1)
 
 
     ##############
@@ -413,7 +414,7 @@ def prepare_data(network):
 
 
 
-    return nodal_energy_totals, heat_demand, space_heat_demand, water_heat_demand, ashp_cop, gshp_cop, solar_thermal, transport, avail_profile, dsm_profile, co2_totals, nodal_transport_data
+    return nodal_energy_totals, heat_demand, ashp_cop, gshp_cop, solar_thermal, transport, avail_profile, dsm_profile, co2_totals, nodal_transport_data
 
 def prepare_costs():
 
@@ -695,6 +696,9 @@ def add_heat(network):
 
     print("adding heat")
 
+    #aggregate all residential, services and water, space heat
+    aggregated_heat_demand = heat_demand.groupby(level=1,axis=1).sum()
+
     #rural are areas with low heating density
     #urban are areas with high heating density
     #urban can be split into district heating (central) and individual heating (decentral)
@@ -741,21 +745,21 @@ def add_heat(network):
                  suffix=" rural heat",
                  bus=rural + " rural heat",
                  carrier="rural heat",
-                 p_set= heat_demand[rural].multiply((1-urban_fraction[rural])))
+                 p_set= aggregated_heat_demand[rural].multiply((1-urban_fraction[rural])))
 
     network.madd("Load",
                  urban_central,
                  suffix=" urban central heat",
                  bus=urban_central + " urban central heat",
                  carrier="urban central heat",
-                 p_set= heat_demand[urban_central].multiply(urban_fraction[urban_central]*(1+options['district_heating_loss'])))
+                 p_set= aggregated_heat_demand[urban_central].multiply(urban_fraction[urban_central]*(1+options['district_heating_loss'])))
 
     network.madd("Load",
                  urban_decentral,
                  suffix=" urban decentral heat",
                  bus=urban_decentral + " urban decentral heat",
                  carrier="urban decentral heat",
-                 p_set= heat_demand[urban_decentral].multiply(urban_fraction[urban_decentral]))
+                 p_set= aggregated_heat_demand[urban_decentral].multiply(urban_fraction[urban_decentral]))
 
 
     network.madd("Link",
@@ -1432,7 +1436,7 @@ if __name__ == "__main__":
             print(o,limit)
             options['space_heating_fraction'] = limit
 
-    nodal_energy_totals, heat_demand, space_heat_demand, water_heat_demand, ashp_cop, gshp_cop, solar_thermal, transport, avail_profile, dsm_profile, co2_totals, nodal_transport_data = prepare_data(n)
+    nodal_energy_totals, heat_demand, ashp_cop, gshp_cop, solar_thermal, transport, avail_profile, dsm_profile, co2_totals, nodal_transport_data = prepare_data(n)
 
     if "nodistrict" in opts:
         options["central"] = False
