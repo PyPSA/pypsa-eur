@@ -35,3 +35,4 @@ gurobi.log
 
 *.pyc
 /cutouts
+/tmp

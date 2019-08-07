@@ -21,8 +21,6 @@ from vresutils.benchmark import memory_logger
 
 
 
-
-
 #First tell PyPSA that links can have multiple outputs by
 #overriding the component_attrs. This can be done for
 #as many buses as you need with format busi for i = 2,3,4,5,....
@@ -73,9 +71,11 @@ def prepare_network(n, solve_opts=None):
             #if 'capital_cost' in t.df:
             #    t.df['capital_cost'] += 1e1 + 2.*(np.random.random(len(t.df)) - 0.5)
             if 'marginal_cost' in t.df:
+                np.random.seed(174)
                 t.df['marginal_cost'] += 1e-2 + 2e-3*(np.random.random(len(t.df)) - 0.5)
 
         for t in n.iterate_components(['Line', 'Link']):
+            np.random.seed(123)
             t.df['capital_cost'] += (1e-1 + 2e-2*(np.random.random(len(t.df)) - 0.5)) * t.df['length']
 
     if solve_opts.get('nhours'):
@@ -243,6 +243,7 @@ def solve_network(n, config=None, solver_log=None, opts=None):
                                      solver_options=solver_options,
                                      formulation=solve_opts['formulation'],
                                      extra_postprocessing=extra_postprocessing
+                                     #keep_files=True
                                      #free_memory={'pypsa'}
                                      )
 

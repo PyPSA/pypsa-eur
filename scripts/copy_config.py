@@ -2,6 +2,7 @@
 from shutil import copy
 
 files = ["config.yaml",
+         "Snakefile",
          "scripts/solve_network.py",
          "scripts/prepare_sector_network.py"]
 

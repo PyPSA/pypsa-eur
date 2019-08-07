@@ -178,7 +178,7 @@ rule prepare_sector_network:
         transport_name='data/transport_data.csv',
         biomass_potentials='data/biomass_potentials.csv',
         timezone_mappings='data/timezone_mappings.csv',
-        heat_profile="data/heat_load_profile.csv",
+        heat_profile="data/heat_load_profile_BDEW.csv",
         costs="data/costs.csv",
         clustered_pop_layout="resources/pop_layout_{network}_s{simpl}_{clusters}.csv",
         industrial_demand="resources/industrial_demand_{network}_s{simpl}_{clusters}.csv",
@@ -219,7 +219,7 @@ rule solve_network:
         memory="logs/" + config['run'] + "/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_memory.log"
     benchmark: "benchmarks/solve_network/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}"
     threads: 4
-    resources: mem=100000 #memory in MB; 40 GB enough for 45+B+I; 100 GB based on RESI usage for 128
+    resources: mem=50000 #memory in MB; 40 GB enough for 45+B+I; 100 GB based on RESI usage for 128
     # group: "solve" # with group, threads is ignored https://bitbucket.org/snakemake/snakemake/issues/971/group-job-description-does-not-contain
     script: "scripts/solve_network.py"
 
