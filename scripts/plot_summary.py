@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 #consolidate and rename
 def rename_techs(label):
 
-    prefix_to_remove = ["central ","urban "]
+    prefix_to_remove = ["residential ","services ","urban ","rural ","central ","decentral "]
 
     rename_if_contains = ["CHP","gas boiler","biogas","solar thermal","air heat pump","ground heat pump","resistive heater","Fischer-Tropsch"]
 

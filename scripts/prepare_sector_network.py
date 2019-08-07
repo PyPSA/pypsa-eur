@@ -702,101 +702,205 @@ def add_heat(network):
 
     print("adding heat")
 
-    #aggregate all residential, services and water, space heat
-    aggregated_heat_demand = heat_demand.groupby(level=1,axis=1).sum()
+    sectors = ["residential","services"]
 
-    #rural are areas with low heating density
+    #stores the different groups of nodes
+    nodes = {}
+
+    #rural are areas with low heating density and individual heating
     #urban are areas with high heating density
     #urban can be split into district heating (central) and individual heating (decentral)
-    rural = pop_layout.index
-    urban = pop_layout.index
+    for sector in sectors:
+        nodes[sector + " rural"] = pop_layout.index
 
-    network.add("Carrier","rural heat")
-    network.add("Carrier","urban central heat")
-    network.add("Carrier","urban decentral heat")
-    network.add("Carrier","rural water tanks")
-    network.add("Carrier","urban central water tanks")
-    network.add("Carrier","urban decentral water tanks")
+        if options["central"]:
+            urban_decentral_ct = pd.Index(["ES","GR","PT","IT","BG"])
+            nodes[sector + " urban decentral"] = pop_layout.index[pop_layout.ct.isin(urban_decentral_ct)]
+        else:
+            nodes[sector + " urban decentral"] = pop_layout.index
 
-
-    #urban are high density locations
-    if options["central"]:
-        urban_decentral_ct = pd.Index(["ES","GR","PT","IT","BG"])
-        urban_decentral = pop_layout.index[pop_layout.ct.isin(urban_decentral_ct)]
-    else:
-        urban_decentral = urban
+    #for central nodes, residential and services are aggregated
+    nodes["urban central"] = pop_layout.index ^ nodes["residential urban decentral"]
 
     #NB: must add costs of central heating afterwards (EUR 400 / kWpeak, 50a, 1% FOM from Fraunhofer ISE)
 
-    urban_central = urban ^ urban_decentral
-
     urban_fraction = options['central_fraction']*pop_layout["urban"]/(pop_layout[["urban","rural"]].sum(axis=1))
 
+    for name in ["residential rural","services rural","residential urban decentral","services urban decentral","urban central"]:
 
-    network.madd("Bus",
-                 rural + " rural heat",
-                 carrier="rural heat")
+        name_type = "central" if name == "urban central" else "decentral"
 
-    network.madd("Bus",
-                 urban_central + " urban central heat",
-                 carrier="urban central heat")
+        network.add("Carrier",name + " heat")
 
-    network.madd("Bus",
-                 urban_decentral + " urban decentral heat",
-                 carrier="urban decentral heat")
+        network.madd("Bus",
+                     nodes[name] + " " + name + " heat",
+                     carrier=name + " heat")
 
+        ## Add heat load
 
-    network.madd("Load",
-                 rural,
-                 suffix=" rural heat",
-                 bus=rural + " rural heat",
-                 carrier="rural heat",
-                 p_set= aggregated_heat_demand[rural].multiply((1-urban_fraction[rural])))
+        for sector in sectors:
+            if "rural" in name:
+                factor = 1-urban_fraction[nodes[name]]
+            elif "urban" in name:
+                factor = urban_fraction[nodes[name]]
+            else:
+                factor = None
+            if sector in name:
+                heat_load = heat_demand[[sector + " water",sector + " space"]].groupby(level=1,axis=1).sum()[nodes[name]].multiply(factor)
 
-    network.madd("Load",
-                 urban_central,
-                 suffix=" urban central heat",
-                 bus=urban_central + " urban central heat",
-                 carrier="urban central heat",
-                 p_set= aggregated_heat_demand[urban_central].multiply(urban_fraction[urban_central]*(1+options['district_heating_loss'])))
+        if name == "urban central":
+            heat_load = heat_demand.groupby(level=1,axis=1).sum()[nodes[name]].multiply(urban_fraction[nodes[name]]*(1+options['district_heating_loss']))
 
-    network.madd("Load",
-                 urban_decentral,
-                 suffix=" urban decentral heat",
-                 bus=urban_decentral + " urban decentral heat",
-                 carrier="urban decentral heat",
-                 p_set= aggregated_heat_demand[urban_decentral].multiply(urban_fraction[urban_decentral]))
+        network.madd("Load",
+                     nodes[name],
+                     suffix=" " + name + "heat",
+                     bus=nodes[name] + " " + name + " heat",
+                     carrier=name + " heat",
+                     p_set=heat_load)
 
 
-    network.madd("Link",
-                 urban_decentral,
-                 suffix=" urban decentral air heat pump",
-                 bus0=urban_decentral,
-                 bus1=urban_decentral + " urban decentral heat",
-                 carrier="urban decentral air heat pump",
-                 efficiency=ashp_cop[urban_decentral] if options["time_dep_hp_cop"] else costs.at['decentral air-sourced heat pump','efficiency'],
-                 capital_cost=costs.at['decentral air-sourced heat pump','efficiency']*costs.at['decentral air-sourced heat pump','fixed'],
-                 p_nom_extendable=True)
+        ## Add heat pumps
 
-    network.madd("Link",
-                 urban_central,
-                 suffix=" urban central air heat pump",
-                 bus0=urban_central,
-                 bus1=urban_central + " urban central heat",
-                 carrier="urban central air heat pump",
-                 efficiency=ashp_cop[urban_central] if options["time_dep_hp_cop"] else costs.at['central air-sourced heat pump','efficiency'],
-                 capital_cost=costs.at['central air-sourced heat pump','efficiency']*costs.at['central air-sourced heat pump','fixed'],
-                 p_nom_extendable=True)
+        heat_pump_type = "air" if "urban" in name else "ground"
 
-    network.madd("Link",
-                 rural,
-                 suffix=" rural ground heat pump",
-                 bus0=rural,
-                 bus1=rural + " rural heat",
-                 carrier="rural ground heat pump",
-                 efficiency=gshp_cop[rural] if options["time_dep_hp_cop"] else costs.at['decentral ground-sourced heat pump','efficiency'],
-                 capital_cost=costs.at['decentral ground-sourced heat pump','efficiency']*costs.at['decentral ground-sourced heat pump','fixed'],
-                 p_nom_extendable=True)
+        costs_name = "{} {}-sourced heat pump".format(name_type,heat_pump_type)
+        cop = {"air" : ashp_cop, "ground" : gshp_cop}
+        efficiency = cop[heat_pump_type][nodes[name]] if options["time_dep_hp_cop"] else costs.at[costs_name,'efficiency']
+
+        network.madd("Link",
+                     nodes[name],
+                     suffix=" {} {} heat pump".format(name,heat_pump_type),
+                     bus0=nodes[name],
+                     bus1=nodes[name] + " " + name + " heat",
+                     carrier="{} {} heat pump".format(name,heat_pump_type),
+                     efficiency=efficiency,
+                     capital_cost=costs.at[costs_name,'efficiency']*costs.at[costs_name,'fixed'],
+                     p_nom_extendable=True)
+
+
+        if options["tes"]:
+
+            network.add("Carrier",name + " water tanks")
+
+            network.madd("Bus",
+                         nodes[name] + " " + name + " water tanks",
+                         carrier=name + " water tanks")
+
+            network.madd("Link",
+                         nodes[name] + " " + name + " water tanks charger",
+                         bus0=nodes[name] + " " + name + " heat",
+                         bus1=nodes[name] + " " + name + " water tanks",
+                         efficiency=costs.at['water tank charger','efficiency'],
+                         carrier=name + " water tanks charger",
+                         p_nom_extendable=True)
+
+            network.madd("Link",
+                         nodes[name] + " " + name + " water tanks discharger",
+                         bus0=nodes[name] + " " + name + " water tanks",
+                         bus1=nodes[name] + " " + name + " heat",
+                         carrier=name + " water tanks discharger",
+                         efficiency=costs.at['water tank discharger','efficiency'],
+                         p_nom_extendable=True)
+
+            # [HP] 180 day time constant for centralised, 3 day for decentralised
+            tes_time_constant_days = options["tes_tau"] if name_type == "decentral" else 180.
+
+            network.madd("Store",
+                         nodes[name] + " " + name + " water tanks",
+                         bus=nodes[name] + " " + name + " water tanks",
+                         e_cyclic=True,
+                         e_nom_extendable=True,
+                         carrier=name + " water tanks",
+                         standing_loss=1-np.exp(-1/(24.*tes_time_constant_days)),
+                         capital_cost=costs.at[name_type + ' water tank storage','fixed']/(1.17e-3*40)) #conversion from EUR/m^3 to EUR/MWh for 40 K diff and 1.17 kWh/m^3/K
+
+
+        if options["boilers"]:
+
+            network.madd("Link",
+                         nodes[name] + " " + name + " resistive heater",
+                         bus0=nodes[name],
+                         bus1=nodes[name] + " " + name + " heat",
+                         carrier=name + " resistive heater",
+                         efficiency=costs.at[name_type + ' resistive heater','efficiency'],
+                         capital_cost=costs.at[name_type + ' resistive heater','efficiency']*costs.at[name_type + ' resistive heater','fixed'],
+                         p_nom_extendable=True)
+
+            network.madd("Link",
+                         nodes[name] + " " + name + " gas boiler",
+                         p_nom_extendable=True,
+                         bus0=["EU gas"]*len(nodes[name]),
+                         bus1=nodes[name] + " " + name + " heat",
+                         bus2="co2 atmosphere",
+                         carrier=name + " gas boiler",
+                         efficiency=costs.at[name_type + ' gas boiler','efficiency'],
+                         efficiency2=costs.at['gas','CO2 intensity'],
+                         capital_cost=costs.at[name_type + ' gas boiler','efficiency']*costs.at[name_type + ' gas boiler','fixed'])
+
+
+
+        if options["solar_thermal"]:
+
+            network.add("Carrier",name + " solar thermal")
+
+            network.madd("Generator",
+                         nodes[name],
+                         suffix=" " + name + " solar thermal collector",
+                         bus=nodes[name] + " " + name + " heat",
+                         carrier=name + " solar thermal",
+                         p_nom_extendable=True,
+                         capital_cost=costs.at[name_type + ' solar thermal','fixed'],
+                         p_max_pu=solar_thermal[nodes[name]])
+
+
+        if options["chp"]:
+
+            if name == "urban central":
+                #additional bus, to which we can also connect biomass
+                network.madd("Bus",
+                             nodes[name] + " urban central CHP",
+                             carrier="urban central CHP")
+
+                network.madd("Link",
+                             nodes[name] + " gas to urban central CHP",
+                             bus0="EU gas",
+                             bus1=nodes[name] + " urban central CHP",
+                             bus2="co2 atmosphere",
+                             bus3="co2 stored",
+                             efficiency2=costs.at['gas','CO2 intensity']*(1-options["ccs_fraction"]),
+                             efficiency3=costs.at['gas','CO2 intensity']*options["ccs_fraction"],
+                             carrier="gas to central CHP",
+                             p_nom_extendable=True)
+
+                network.madd("Link",
+                             nodes[name] + " urban central CHP electric",
+                             bus0=nodes[name] + " urban central CHP",
+                             bus1=nodes[name],
+                             carrier="urban central CHP electric",
+                             p_nom_extendable=True,
+                             capital_cost=costs.at['central CHP','fixed']*options['chp_parameters']['eta_elec'],
+                             efficiency=options['chp_parameters']['eta_elec'])
+
+                network.madd("Link",
+                             nodes[name] + " urban central CHP heat",
+                             bus0=nodes[name] + " urban central CHP",
+                             bus1=nodes[name] + " urban central heat",
+                             carrier="urban central CHP heat",
+                             p_nom_extendable=True,
+                             efficiency=options['chp_parameters']['eta_elec']/options['chp_parameters']['c_v'])
+            else:
+                network.madd("Link",
+                             nodes[name] + " " + name + " micro CHP",
+                             p_nom_extendable=True,
+                             bus0=["EU gas"]*len(nodes[name]),
+                             bus1=nodes[name],
+                             bus2=nodes[name] + " " + name + " heat",
+                             bus3="co2 atmosphere",
+                             carrier=name + " micro CHP",
+                             efficiency=costs.at['micro CHP','efficiency'],
+                             efficiency2=costs.at['micro CHP','efficiency-heat'],
+                             efficiency3=costs.at['gas','CO2 intensity'],
+                             capital_cost=costs.at['micro CHP','fixed'])
 
 
     #NB: this currently doesn't work for pypsa-eur model
@@ -860,262 +964,6 @@ def add_heat(network):
 
 
 
-    if options["tes"]:
-
-        network.madd("Bus",
-                    rural + " rural water tanks",
-                    carrier="rural water tanks")
-
-        network.madd("Link",
-                     rural + " rural water tanks charger",
-                     bus0=rural + " rural heat",
-                     bus1=rural + " rural water tanks",
-                     efficiency=costs.at['water tank charger','efficiency'],
-                     carrier="rural water tanks charger",
-                     p_nom_extendable=True)
-
-        network.madd("Link",
-                     rural + " rural water tanks discharger",
-                     bus0=rural + " rural water tanks",
-                     bus1=rural + " rural heat",
-                     carrier="rural water tanks discharger",
-                     efficiency=costs.at['water tank discharger','efficiency'],
-                     p_nom_extendable=True)
-
-
-        network.madd("Store",
-                     rural + " rural water tanks",
-                     bus=rural + " rural water tanks",
-                     e_cyclic=True,
-                     e_nom_extendable=True,
-                     carrier="rural water tanks",
-                     standing_loss=1-np.exp(-1/(24.*options["tes_tau"])),  # [HP] 180 day time constant for centralised, 3 day for decentralised
-                     capital_cost=costs.at['decentral water tank storage','fixed']/(1.17e-3*40)) #conversion from EUR/m^3 to EUR/MWh for 40 K diff and 1.17 kWh/m^3/K
-
-
-        network.madd("Bus",
-                    urban_decentral + " urban decentral water tanks",
-                    carrier="urban decentral water tanks")
-
-        network.madd("Link",
-                     urban_decentral + " urban decentral water tanks charger",
-                     bus0=urban_decentral  + " urban decentral heat",
-                     bus1=urban_decentral + " urban decentral water tanks",
-                     carrier="urban decentral water tanks charger",
-                     efficiency=costs.at['water tank charger','efficiency'],
-                     p_nom_extendable=True)
-
-        network.madd("Link",
-                     urban_decentral + " urban decentral water tanks discharger",
-                     bus0=urban_decentral + " urban decentral water tanks",
-                     bus1=urban_decentral + " urban decentral heat",
-                     carrier="urban decentral water tanks discharger",
-                     efficiency=costs.at['water tank discharger','efficiency'],
-                     p_nom_extendable=True)
-
-
-        network.madd("Store",
-                     urban_decentral + " urban decentral water tanks",
-                     bus=urban_decentral + " urban decentral water tanks",
-                     e_cyclic=True,
-                     e_nom_extendable=True,
-                     carrier="urban decentral water tanks",
-                     standing_loss=1-np.exp(-1/(24.*options["tes_tau"])),  # [HP] 180 day time constant for centralised, 3 day for decentralised
-                     capital_cost=costs.at['decentral water tank storage','fixed']/(1.17e-3*40)) #conversion from EUR/m^3 to EUR/MWh for 40 K diff and 1.17 kWh/m^3/K
-
-
-
-        network.madd("Bus",
-                     urban_central + " urban central water tanks",
-                     carrier="urban central water tanks")
-
-        network.madd("Link",
-                     urban_central + " urban central water tanks charger",
-                     bus0=urban_central + " urban central heat",
-                     bus1=urban_central + " urban central water tanks",
-                     p_nom_extendable=True,
-                     carrier="urban central water tanks charger",
-                     efficiency=costs.at['water tank charger','efficiency'])
-
-        network.madd("Link",
-                     urban_central + " urban central water tanks discharger",
-                     bus0=urban_central + " urban central water tanks",
-                     bus1=urban_central + " urban central heat",
-                     carrier="urban central water tanks discharger",
-                     p_nom_extendable=True,
-                     efficiency=costs.at['water tank discharger','efficiency'])
-
-        network.madd("Store",
-                     urban_central,
-                     suffix=" urban central water tanks",
-                     bus=urban_central + " urban central water tanks",
-                     e_cyclic=True,
-                     carrier="urban central water tanks",
-                     e_nom_extendable=True,
-                     standing_loss=1-np.exp(-1/(24.*180.)),  # [HP] 180 day time constant for centralised, 3 day for decentralised
-                     capital_cost=costs.at['central water tank storage','fixed']/(1.17e-3*40)) #convert EUR/m^3 to EUR/MWh for 40 K diff and 1.17 kWh/m^3/K
-
-
-
-    if options["boilers"]:
-
-        network.madd("Link",
-                     rural + " rural resistive heater",
-                     bus0=rural,
-                     bus1=rural + " rural heat",
-                     carrier="rural resistive heater",
-                     efficiency=costs.at['decentral resistive heater','efficiency'],
-                     capital_cost=costs.at['decentral resistive heater','efficiency']*costs.at['decentral resistive heater','fixed'],
-                     p_nom_extendable=True)
-
-        network.madd("Link",
-                     urban_decentral + " urban decentral resistive heater",
-                     bus0=urban_decentral,
-                     bus1=urban_decentral + " urban decentral heat",
-                     carrier="urban decentral resistive heater",
-                     efficiency=costs.at['decentral resistive heater','efficiency'],
-                     capital_cost=costs.at['decentral resistive heater','efficiency']*costs.at['decentral resistive heater','fixed'],
-                     p_nom_extendable=True)
-
-
-        network.madd("Link",
-                     urban_central + " urban central resistive heater",
-                     bus0=urban_central,
-                     bus1=urban_central + " urban central heat",
-                     p_nom_extendable=True,
-                     carrier="urban central resistive heater",
-                     capital_cost=costs.at['central resistive heater','efficiency']*costs.at['central resistive heater','fixed'],
-                     efficiency=costs.at['central resistive heater','efficiency'])
-
-        network.madd("Link",
-                     rural + " rural gas boiler",
-                     p_nom_extendable=True,
-                     bus0=["EU gas"]*len(rural),
-                     bus1=rural + " rural heat",
-                     bus2="co2 atmosphere",
-                     carrier="rural gas boiler",
-                     efficiency=costs.at['decentral gas boiler','efficiency'],
-                     efficiency2=costs.at['gas','CO2 intensity'],
-                     capital_cost=costs.at['decentral gas boiler','efficiency']*costs.at['decentral gas boiler','fixed'])
-
-        network.madd("Link",
-                     urban_decentral + " urban decentral gas boiler",
-                     p_nom_extendable=True,
-                     bus0=["EU gas"]*len(urban_decentral),
-                     bus1=urban_decentral + " urban decentral heat",
-                     bus2="co2 atmosphere",
-                     carrier="urban decentral gas boiler",
-                     efficiency=costs.at['decentral gas boiler','efficiency'],
-                     efficiency2=costs.at['gas','CO2 intensity'],
-                     capital_cost=costs.at['decentral gas boiler','efficiency']*costs.at['decentral gas boiler','fixed'])
-
-        network.madd("Link",
-                     urban_central + " urban central gas boiler",
-                     bus0=["EU gas"]*len(urban_central),
-                     bus1=urban_central + " urban central heat",
-                     bus2="co2 atmosphere",
-                     carrier="urban central gas boiler",
-                     p_nom_extendable=True,
-                     capital_cost=costs.at['central gas boiler','efficiency']*costs.at['central gas boiler','fixed'],
-                     efficiency2=costs.at['gas','CO2 intensity'],
-                     efficiency=costs.at['central gas boiler','efficiency'])
-
-        network.madd("Link",
-                     rural + " rural micro CHP",
-                     p_nom_extendable=True,
-                     bus0=["EU gas"]*len(rural),
-                     bus1=rural,
-                     bus2=rural + " rural heat",
-                     bus3="co2 atmosphere",
-                     carrier="rural micro CHP",
-                     efficiency=costs.at['micro CHP','efficiency'],
-                     efficiency2=costs.at['micro CHP','efficiency-heat'],
-                     efficiency3=costs.at['gas','CO2 intensity'],
-                     capital_cost=costs.at['micro CHP','fixed'])
-
-
-        network.madd("Link",
-                     urban_decentral + " urban decentral micro CHP",
-                     p_nom_extendable=True,
-                     bus0=["EU gas"]*len(urban_decentral),
-                     bus1=urban_decentral,
-                     bus2=urban_decentral + " urban decentral heat",
-                     bus3="co2 atmosphere",
-                     carrier="urban decentral micro CHP",
-                     efficiency=costs.at['micro CHP','efficiency'],
-                     efficiency2=costs.at['micro CHP','efficiency-heat'],
-                     efficiency3=costs.at['gas','CO2 intensity'],
-                     capital_cost=costs.at['micro CHP','fixed'])
-
-
-
-    if options["chp"]:
-
-        #additional bus, to which we can also connect biomass
-        network.madd("Bus",
-                     urban_central + " urban central CHP",
-                     carrier="urban central CHP")
-
-        network.madd("Link",
-                     urban_central + " gas to urban central CHP",
-                     bus0="EU gas",
-                     bus1=urban_central + " urban central CHP",
-                     bus2="co2 atmosphere",
-                     bus3="co2 stored",
-                     efficiency2=costs.at['gas','CO2 intensity']*(1-options["ccs_fraction"]),
-                     efficiency3=costs.at['gas','CO2 intensity']*options["ccs_fraction"],
-                     carrier="gas to central CHP",
-                     p_nom_extendable=True)
-
-        network.madd("Link",
-                     urban_central + " urban central CHP electric",
-                     bus0=urban_central + " urban central CHP",
-                     bus1=urban_central,
-                     carrier="urban central CHP electric",
-                     p_nom_extendable=True,
-                     capital_cost=costs.at['central CHP','fixed']*options['chp_parameters']['eta_elec'],
-                     efficiency=options['chp_parameters']['eta_elec'])
-
-        network.madd("Link",
-                     urban_central + " urban central CHP heat",
-                     bus0=urban_central + " urban central CHP",
-                     bus1=urban_central + " urban central heat",
-                     carrier="urban central CHP heat",
-                     p_nom_extendable=True,
-                     efficiency=options['chp_parameters']['eta_elec']/options['chp_parameters']['c_v'])
-
-
-    if options["solar_thermal"]:
-
-        network.add("Carrier","solar thermal")
-
-        network.madd("Generator",
-                     rural,
-                     suffix=" rural solar thermal collector",
-                     bus=rural + " rural heat",
-                     carrier="rural solar thermal",
-                     p_nom_extendable=True,
-                     capital_cost=costs.at['decentral solar thermal','fixed'],
-                     p_max_pu=solar_thermal[rural])
-
-
-        network.madd("Generator",
-                     urban_decentral,
-                     suffix=" urban decentral solar thermal collector",
-                     bus=urban_decentral + " urban decentral heat",
-                     carrier="urban decentral solar thermal",
-                     p_nom_extendable=True,
-                     capital_cost=costs.at['decentral solar thermal','fixed'],
-                     p_max_pu=solar_thermal[urban_decentral])
-
-        network.madd("Generator",
-                     urban_central,
-                     suffix=" urban central solar thermal collector",
-                     bus=urban_central + " urban central heat",
-                     carrier="urban central solar thermal",
-                     p_nom_extendable=True,
-                     capital_cost=costs.at['central solar thermal','fixed'],
-                     p_max_pu=solar_thermal[urban_central])
 
 def add_biomass(network):
 
@@ -1310,11 +1158,10 @@ def add_industry(network):
                  carrier="kerosene for aviation",
                  p_set = nodal_energy_totals.loc[nodes,["total international aviation","total domestic aviation"]].sum(axis=1).sum()*1e6/8760.)
 
-    urban = n.buses.index[n.buses.index.str.contains("urban") & n.buses.index.str.contains("heat")]
     network.madd("Load",
                  nodes,
                  suffix=" low-temperature heat for industry",
-                 bus=urban,
+                 bus=[node + " urban central heat" if node + " urban central heat" in network.buses.index else node + " services urban decentral heat" for node in nodes],
                  carrier="low-temperature heat for industry",
                  p_set=industrial_demand.loc[nodes,"low-temperature heat"]/8760.)
 
