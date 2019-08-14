@@ -12,7 +12,6 @@ pycountry
 seaborn
 memory_profiler
 xarray
-cartopy
 fiona
 pyproj
 pyshp
