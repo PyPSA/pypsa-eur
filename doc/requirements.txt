@@ -1,7 +1,7 @@
 sphinx
 sphinx_rtd_theme
 
-pypsa>=0.14
+# pypsa
 vresutils>=0.2.5
 powerplantmatching
 atlite
@@ -20,5 +20,6 @@ geopandas
 rasterio
 shapely
 
+git+https://github.com/PyPSA/pypsa.git#egg=pypsa
 git+https://github.com/PyPSA/glaes.git#egg=glaes
 git+https://github.com/PyPSA/geokit.git#egg=geokit
