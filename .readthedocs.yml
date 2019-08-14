@@ -1,4 +1,7 @@
 version: 2
 
-conda:
-    environment: environment_docs.yaml
+python:
+  version: 3.7
+  install:
+    - requirements: doc/requirements.txt
+  system_packages: true
