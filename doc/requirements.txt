@@ -6,7 +6,7 @@ vresutils>=0.2.5
 powerplantmatching
 atlite
 
-cartopy
+# cartopy
 scikit-learn
 pycountry
 seaborn
