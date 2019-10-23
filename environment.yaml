@@ -2,11 +2,12 @@ name: pypsa-eur
 channels:
   - conda-forge
   - bioconda
+  - gurobi
 dependencies:
   - python
   - pip
 
-  - pypsa>=0.14
+  # - pypsa>=0.14
 
   # Dependencies of the workflow itself
   - xlrd
@@ -26,6 +27,9 @@ dependencies:
   # Include ipython so that one does not inadvertently drop out of the conda
   # environment by calling ipython
   - ipython
+  
+  # Install gurobipy
+  - gurobi::gurobi
 
   # GIS dependencies have to come all from conda-forge
   - conda-forge::cartopy
@@ -43,4 +47,5 @@ dependencies:
     - git+https://github.com/FRESNA/atlite.git#egg=atlite
     - git+https://github.com/PyPSA/glaes.git#egg=glaes
     - git+https://github.com/PyPSA/geokit.git#egg=geokit
+    - git+https://github.com/PyPSA/pypsa.git@nomopyomo
     #- git+https://github.com/FRESNA/powerplantmatching.git#egg=powerplantmatching
