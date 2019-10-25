@@ -3,7 +3,34 @@ language: python
 python:
 - "3.7"
 
+install:
+  #- apt-get
+  - apt-get update --fix-missing
+  - apt-get install -yq --no-install-recommends curl bzip2 xz-utils git ca-certificates
+  # data
+  - curl -L "https://zenodo.org/record/3517921/files/pypsa-eur-tutorial-data-bundle.tar.xz" -o "./pypsa-eur-data-bundle.tar.xz"
+  - curl -L "https://zenodo.org/record/3518020/files/pypsa-eur-tutorial-cutouts.tar.xz" -o "./pypsa-eur-cutouts.tar.xz"
+  - curl -L "https://zenodo.org/record/3518215/files/natura.tiff" -o "./resources/natura.tiff"
+  - tar xJf ./pypsa-eur-data-bundle.tar.xz -C ./data 
+  - tar xJf ./pypsa-eur-cutouts.tar.xz -C .
+  # conda
+  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - source "$HOME/miniconda/etc/profile.d/conda.sh"
+  - hash -r
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q conda
+  # Useful for debugging any issues with conda
+  - conda info -a
+  # install conda environment
+  - conda env create -f ./environment.yaml
+  - conda activate pypsa-eur
+  # install open-source solvers
+  - apt-get install -yq --no-install-recommends coinor-cbc
+  - conda install -c conda-forge ipopt
+
 script:
   - echo $HOME
   - ls
+  - conda list
   - python ./test.py
