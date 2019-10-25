@@ -1,9 +1,12 @@
 language: python
 
+python:
+  - "3.7"
+
 install:
   # install system utilities
   - sudo apt-get update --fix-missing
-  - sudo apt-get install -yq --no-install-recommends curl bzip2 xz-utils git ca-certificates
+  - sudo apt-get install -yq --no-install-recommends curl bzip2 xz-utils git ca-certificates coinor-cbc
   
   # download and extract data dependencies
   - curl -L "https://zenodo.org/record/3517921/files/pypsa-eur-tutorial-data-bundle.tar.xz" -o "./pypsa-eur-data-bundle.tar.xz"
@@ -25,8 +28,7 @@ install:
   - conda env create -f ./environment.yaml
   - conda activate pypsa-eur
   
-  # install open-source solvers
-  - sudo apt-get install -yq --no-install-recommends coinor-cbc
+  # install open-source solver
   - conda install -c conda-forge ipopt
 
 script:
