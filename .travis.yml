@@ -1,12 +1,12 @@
 language: python
 
 python:
-- "3.7"
+  - "3.7"
 
 install:
   #- apt-get
-  - apt-get update --fix-missing
-  - apt-get install -yq --no-install-recommends curl bzip2 xz-utils git ca-certificates
+  - sudo apt-get update --fix-missing
+  - sudo apt-get install -yq --no-install-recommends curl bzip2 xz-utils git ca-certificates
   # data
   - curl -L "https://zenodo.org/record/3517921/files/pypsa-eur-tutorial-data-bundle.tar.xz" -o "./pypsa-eur-data-bundle.tar.xz"
   - curl -L "https://zenodo.org/record/3518020/files/pypsa-eur-tutorial-cutouts.tar.xz" -o "./pypsa-eur-cutouts.tar.xz"
@@ -26,7 +26,7 @@ install:
   - conda env create -f ./environment.yaml
   - conda activate pypsa-eur
   # install open-source solvers
-  - apt-get install -yq --no-install-recommends coinor-cbc
+  - sudo apt-get install -yq --no-install-recommends coinor-cbc
   - conda install -c conda-forge ipopt
 
 script:
