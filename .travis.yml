@@ -5,4 +5,5 @@ python:
 
 script:
   - echo $HOME
+  - ls
   - python ./test.py
