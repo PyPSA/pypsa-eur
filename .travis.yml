@@ -33,7 +33,7 @@ install:
   - conda install -c conda-forge ipopt
 
 script:
-  - cp ./test/config.test1.yaml ./config.yaml
+  - cp ./test/config.test2.yaml ./config.yaml
   - snakemake
   - rm -rf resources/*.nc resources/*.geojson resources/*.h5 networks results
   # could repeat for more configurations in future
