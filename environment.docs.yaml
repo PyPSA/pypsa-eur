@@ -20,6 +20,7 @@ dependencies:
 
   # Second order dependencies which should really be deps of atlite
   - xarray
+  #- netcdf4
   #- bottleneck
   #- toolz
   #- dask
