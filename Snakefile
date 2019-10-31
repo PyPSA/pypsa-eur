@@ -93,7 +93,7 @@ rule build_bus_regions:
     script: "scripts/build_bus_regions.py"
 
 rule build_cutout:
-    output: "cutouts/{cutout}"
+    output: directory("cutouts/{cutout}")
     resources: mem=config['atlite'].get('nprocesses', 4) * 1000
     threads: config['atlite'].get('nprocesses', 4)
     benchmark: "benchmarks/build_cutout_{cutout}"
@@ -110,7 +110,9 @@ rule build_renewable_profiles:
         base_network="networks/base.nc",
         corine="data/bundle/corine/g250_clc06_V18_5.tif",
         natura="resources/natura.tiff",
-        gebco="data/bundle/GEBCO_2014_2D.nc",
+        gebco=lambda wildcards: ("data/bundle/GEBCO_2014_2D.nc"
+                                 if "max_depth" in config["renewable"][wildcards.technology].keys()
+                                 else []),
         country_shapes='resources/country_shapes.geojson',
         offshore_shapes='resources/offshore_shapes.geojson',
         regions=lambda wildcards: ("resources/regions_onshore.geojson"
@@ -124,15 +126,16 @@ rule build_renewable_profiles:
     # group: 'feedin_preparation'
     script: "scripts/build_renewable_profiles.py"
 
-rule build_hydro_profile:
-    input:
-        country_shapes='resources/country_shapes.geojson',
-        eia_hydro_generation='data/bundle/EIA_hydro_generation_2000_2014.csv',
-        cutout="cutouts/" + config["renewable"]['hydro']['cutout']
-    output: 'resources/profile_hydro.nc'
-    resources: mem=5000
-    # group: 'feedin_preparation'
-    script: 'scripts/build_hydro_profile.py'
+if 'hydro' in config['renewable'].keys():
+    rule build_hydro_profile:
+        input:
+            country_shapes='resources/country_shapes.geojson',
+            eia_hydro_generation='data/bundle/EIA_hydro_generation_2000_2014.csv',
+            cutout="cutouts/" + config["renewable"]['hydro']['cutout']
+        output: 'resources/profile_hydro.nc'
+        resources: mem=5000
+        # group: 'feedin_preparation'
+        script: 'scripts/build_hydro_profile.py'
 
 rule add_electricity:
     input:
@@ -175,7 +178,8 @@ rule cluster_network:
         network='networks/{network}_s{simpl}.nc',
         regions_onshore="resources/regions_onshore_{network}_s{simpl}.geojson",
         regions_offshore="resources/regions_offshore_{network}_s{simpl}.geojson",
-        clustermaps=ancient('resources/clustermaps_{network}_s{simpl}.h5')
+        clustermaps=ancient('resources/clustermaps_{network}_s{simpl}.h5'),
+        tech_costs=COSTS
     output:
         network='networks/{network}_s{simpl}_{clusters}.nc',
         regions_onshore="resources/regions_onshore_{network}_s{simpl}_{clusters}.geojson",
@@ -305,7 +309,9 @@ rule build_country_flh:
         base_network="networks/base.nc",
         corine="data/bundle/corine/g250_clc06_V18_5.tif",
         natura="resources/natura.tiff",
-        gebco="data/bundle/GEBCO_2014_2D.nc",
+        gebco=lambda wildcards: ("data/bundle/GEBCO_2014_2D.nc"
+                                 if "max_depth" in config["renewable"][wildcards.technology].keys()
+                                 else []),
         country_shapes='resources/country_shapes.geojson',
         offshore_shapes='resources/offshore_shapes.geojson',
         pietzker="data/pietzker2014.xlsx",
