@@ -74,14 +74,7 @@ import geopandas as gpd
 from shapely.geometry import MultiPolygon, Polygon
 from shapely.ops import cascaded_union
 
-import pycountry as pyc
-
-def _get_country(target, **keys):
-    assert len(keys) == 1
-    try:
-        return getattr(pyc.countries.get(**keys), target)
-    except (KeyError, AttributeError):
-        return np.nan
+from _helpers import get_country
 
 def _simplify_polys(polys, minarea=0.1, tolerance=0.01, filterremote=True):
     if isinstance(polys, MultiPolygon):
@@ -114,8 +107,8 @@ def countries():
 
 def eez(country_shapes):
     df = gpd.read_file(snakemake.input.eez)
-    df = df.loc[df['ISO_3digit'].isin([_get_country('alpha_3', alpha_2=c) for c in snakemake.config['countries']])]
-    df['name'] = df['ISO_3digit'].map(lambda c: _get_country('alpha_2', alpha_3=c))
+    df = df.loc[df['ISO_3digit'].isin([get_country('alpha_3', alpha_2=c) for c in snakemake.config['countries']])]
+    df['name'] = df['ISO_3digit'].map(lambda c: get_country('alpha_2', alpha_3=c))
     s = df.set_index('name').geometry.map(lambda s: _simplify_polys(s, filterremote=False))
     s = gpd.GeoSeries({k:v for k,v in s.iteritems() if v.distance(country_shapes[k]) < 1e-3})
     s.index.name = "name"

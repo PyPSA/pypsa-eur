@@ -20,9 +20,15 @@ snapshots:
 enable:
   prepare_links_p_nom: false
 
+co2emissions:
+  absolute_limit: false
+  relative_limit_base: false
+  infer_base:
+    category: 1A1a
+    year: 1990
+    
 electricity:
   voltages: [220., 300., 380.]
-  co2limit: 100.e+6
 
   extendable_carriers:
     Generator: [OCGT]

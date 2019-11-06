@@ -6,6 +6,15 @@ import pypsa
 
 from add_electricity import load_costs, update_transmission_costs
 
+import pycountry as pyc
+
+def get_country(target, **keys):
+    assert len(keys) == 1
+    try:
+        return getattr(pyc.countries.get(**keys), target)
+    except (KeyError, AttributeError):
+        return np.nan
+
 def pdbcast(v, h):
     return pd.DataFrame(v.values.reshape((-1, 1)) * h.values,
                         index=v.index, columns=h.index)

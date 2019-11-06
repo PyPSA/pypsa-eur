@@ -201,7 +201,8 @@ rule cluster_network:
 #     script: "scripts/add_sectors.py"
 
 rule prepare_network:
-    input: 'networks/{network}_s{simpl}_{clusters}.nc', tech_costs=COSTS
+    input: 'networks/{network}_s{simpl}_{clusters}.nc', tech_costs=COSTS,
+        emissions="data/bundle/v432_CO2_excl_short-cycle_org_C_1970_2012.xls"
     output: 'networks/{network}_s{simpl}_{clusters}_l{ll}_{opts}.nc'
     threads: 1
     resources: mem=1000
