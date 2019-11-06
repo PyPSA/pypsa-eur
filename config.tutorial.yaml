@@ -24,12 +24,12 @@ enable:
   build_natura_raster: false
 
 co2emissions:
-  absolute_limit: false
-  relative_limit_base: false
+  # absolute_limit: 7.75e+7
+  # relative_limit_base: 3.1e+9
   infer_base:
     category: 1A1a
     year: 1990
-    
+
 electricity:
   voltages: [220., 300., 380.]
 

@@ -1,0 +1,6 @@
+,Unit,Values,Description
+absolute_limit,:math:`t_{CO_2-eq}/a`,float,"Cap on total annual system carbon dioxide emissions"
+relative_limit_base,:math:`t_{CO_2-eq}/a`,float,"Reference value of total annual system carbon dioxide emissions if relative emission reduction target is specified in ``{opts}`` wildcard."
+infer_base,,,"Like ``relative_limit_base``, but automatically determines the reference value from `EDGAR (Emissions Database for Global Atmospheric Research) <https://edgar.jrc.ec.europa.eu/overview.php?v=432_GHG&SECURE=123>`_"
+-- category,--,,"Emission sector according to `revised IPCC 1996 code <https://www.ipcc-nggip.iges.or.jp/public/gl/guidelin/ch1ri.pdf>`_ sector specifications (e.g. ``1A1a``)"
+-- year,--,,"Reference year"

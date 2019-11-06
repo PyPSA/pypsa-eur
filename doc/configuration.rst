@@ -82,6 +82,20 @@ Specifies the temporal range to build an energy system model for as arguments to
    :widths: 25,7,22,30
    :file: configtables/electricity.csv
 
+.. _emissions_cf:
+
+``co2emissions``
+================
+
+.. literalinclude:: ../config.default.yaml
+   :language: yaml
+   :lines: 24-37
+
+.. csv-table::
+   :header-rows: 1
+   :widths: 25,7,22,30
+   :file: configtables/emissions.csv
+
 .. warning::
     Carriers in ``conventional_carriers`` must not also be in ``extendable_carriers``.
 
