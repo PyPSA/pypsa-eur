@@ -112,6 +112,11 @@ renewable:
     natura: true
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
+  hydro:
+    cutout: europe-2013-era5
+    carriers: [ror]
+    clip_min_inflow: 1.0
+
 
 lines:
   types:
