@@ -9,7 +9,7 @@ scenario:
   simpl: ['']
   ll: ['copt']
   clusters: [5]
-  opts: [Co2L-24H, 24H]
+  opts: [Co2L-24H]
 
 countries: ['DE'] 
 
