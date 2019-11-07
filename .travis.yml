@@ -20,7 +20,7 @@ before_install:
   - conda activate pypsa-eur
   
   # install open-source solver
-  - conda install -c conda-forge ipopt
+  - conda install -c conda-forge ipopt coincbc
 
 script:
   - cp ./test/config.test1.yaml ./config.yaml
