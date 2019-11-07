@@ -166,7 +166,7 @@ def distribute_clusters(n, n_clusters, focus_weights=None, solver_name=None):
 
         total_focus = sum(list(focus_weights.values()))
 
-        assert total_focus <= 1.0, "The sum of focus weights must be less than 1."
+        assert total_focus <= 1.0, "The sum of focus weights must be less than or equal to 1."
         
         for country, weight in focus_weights.items():
             L[country] = weight
