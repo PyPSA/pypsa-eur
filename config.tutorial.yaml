@@ -1,4 +1,5 @@
 version: 0.1
+tutorial: true
 logging_level: INFO
 
 summary_dir: results
@@ -7,7 +8,7 @@ scenario:
   sectors: [E]
   simpl: ['']
   ll: ['copt']
-  clusters: [2,6]
+  clusters: [5]
   opts: [Co2L-24H]
 
 countries: ['DE'] 
@@ -18,8 +19,9 @@ snapshots:
   closed: 'left' # end is not inclusive
 
 enable:
-  powerplantmatching: false
   prepare_links_p_nom: false
+  build_cutout: false
+  build_natura_raster: false
 
 electricity:
   voltages: [220., 300., 380.]
@@ -33,6 +35,8 @@ electricity:
     battery: 6
     H2: 168
 
+  powerplants_filter: false # use pandas query strings here, e.g. Country not in ['Germany']
+  custom_powerplants: false # use pandas query strings here, e.g. Country in ['Germany']
   conventional_carriers: [coal, CCGT] # [nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
 
 atlite:
@@ -154,7 +158,7 @@ solving:
     clip_p_max_pu: 0.01
     #nhours: 10
   solver:
-    name: ipopt
+    name: glpk
   # solver:
     # name: gurobi
     # threads: 4
