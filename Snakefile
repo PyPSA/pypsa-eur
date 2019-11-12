@@ -39,12 +39,14 @@ datafiles = ['ch_cantons.csv', 'je-e-21.03.02.xls',
             'NUTS_2013_60M_SH/data/NUTS_RG_60M_2013.shp', 'nama_10r_3popgdp.tsv.gz', 
             'nama_10r_3gdp.tsv.gz', 'time_series_60min_singleindex_filtered.csv', 
             'corine/g250_clc06_V18_5.tif']
+
 if not config['tutorial']:
     datafiles.extend(["natura/Natura2000_end2015.shp", "GEBCO_2014_2D.nc"])
 
-rule retrieve_databundle:
-    output:  expand('data/bundle/{file}', file=datafiles)
-    script: 'scripts/retrieve_databundle.py'
+if config['enable']['retrieve_databundle']:
+    rule retrieve_databundle:
+        output:  expand('data/bundle/{file}', file=datafiles)
+        script: 'scripts/retrieve_databundle.py'
 
 rule build_powerplants:
     input:
