@@ -469,7 +469,7 @@ def attach_extendable_generators(n, costs, ppl):
                                       "Only OCGT and CCGT are allowed at the moment.")
 
 
-def attach_storage(n, costs):
+def attach_storageunits(n, costs):
     elec_opts = snakemake.config['electricity']
     carriers = elec_opts['extendable_carriers']['StorageUnit']
     max_hours = elec_opts['max_hours']
@@ -490,55 +490,60 @@ def attach_storage(n, costs):
                max_hours=max_hours[carrier],
                cyclic_state_of_charge=True)
 
-    ## Implementing them separately will come later!
-    ##
-    # if 'H2' in carriers:
-    #     h2_buses = n.madd("Bus", buses + " H2", carrier="H2")
+def attach_stores(n, costs):
+    elec_opts = snakemake.config['electricity']
+    carriers = elec_opts['extendable_carriers']['Store']
 
-    #     n.madd("Link", h2_buses + " Electrolysis",
-    #            bus1=h2_buses,
-    #            bus0=buses,
-    #            p_nom_extendable=True,
-    #            efficiency=costs.at["electrolysis", "efficiency"],
-    #            capital_cost=costs.at["electrolysis", "capital_cost"])
+    _add_missing_carriers_from_costs(n, costs, carriers)
 
-    #     n.madd("Link", h2_buses + " Fuel Cell",
-    #            bus0=h2_buses,
-    #            bus1=buses,
-    #            p_nom_extendable=True,
-    #            efficiency=costs.at["fuel cell", "efficiency"],
-    #            #NB: fixed cost is per MWel
-    #            capital_cost=costs.at["fuel cell", "capital_cost"] * costs.at["fuel cell", "efficiency"])
+    buses_i = n.buses.index[n.buses.substation_lv]
 
-    #     n.madd("Store", h2_buses,
-    #            bus=h2_buses,
-    #            e_nom_extendable=True,
-    #            e_cyclic=True,
-    #            capital_cost=costs.at["hydrogen storage", "capital_cost"])
+    if 'H2' in carriers:
+        h2_buses_i = n.madd("Bus", buses_i + " H2", carrier="H2")
 
-    # if 'battery' in carriers:
-    #     b_buses = n.madd("Bus", buses + " battery", carrier="battery")
+        n.madd("Store", h2_buses_i,
+               bus=h2_buses_i,
+               e_nom_extendable=True,
+               e_cyclic=True,
+               capital_cost=costs.at["hydrogen storage", "capital_cost"])
 
-    #     network.madd("Store", b_buses,
-    #                  bus=b_buses,
-    #                  e_cyclic=True,
-    #                  e_nom_extendable=True,
-    #                  capital_cost=costs.at['battery storage', 'capital_cost'])
+        n.madd("Link", h2_buses_i + " Electrolysis",
+               bus0=buses_i,
+               bus1=h2_buses_i,
+               p_nom_extendable=True,
+               efficiency=costs.at["electrolysis", "efficiency"],
+               capital_cost=costs.at["electrolysis", "capital_cost"])
 
-    #     network.madd("Link", b_buses + " charger",
-    #                  bus0=buses,
-    #                  bus1=b_buses,
-    #                  efficiency=costs.at['battery inverter', 'efficiency']**0.5,
-    #                  capital_cost=costs.at['battery inverter', 'capital_cost'],
-    #                  p_nom_extendable=True)
+        n.madd("Link", h2_buses_i + " Fuel Cell",
+               bus0=h2_buses_i,
+               bus1=buses_i,
+               p_nom_extendable=True,
+               efficiency=costs.at["fuel cell", "efficiency"],
+               #NB: fixed cost is per MWel
+               capital_cost=costs.at["fuel cell", "capital_cost"] * costs.at["fuel cell", "efficiency"])
 
-    #     network.madd("Link",
-    #                  nodes + " battery discharger",
-    #                  bus0=nodes + " battery",
-    #                  bus1=nodes,
-    #                  efficiency=costs.at['battery inverter','efficiency']**0.5,
-    #                  marginal_cost=options['marginal_cost_storage'],
-    #                  p_nom_extendable=True)
+    if 'battery' in carriers:
+        b_buses_i = n.madd("Bus", buses_i + " battery", carrier="battery")
+
+        n.madd("Store", b_buses_i,
+               bus=b_buses_i,
+               e_cyclic=True,
+               e_nom_extendable=True,
+               capital_cost=costs.at['battery storage', 'capital_cost'])
+
+        n.madd("Link", b_buses_i + " charger",
+               bus0=buses_i,
+               bus1=b_buses_i,
+               efficiency=costs.at['battery inverter', 'efficiency'],
+               capital_cost=costs.at['battery inverter', 'capital_cost'],
+               p_nom_extendable=True)
+
+        n.madd("Link", b_buses_i + " discharger",
+               bus0=b_buses_i,
+               bus1=buses_i,
+               efficiency=costs.at['battery inverter','efficiency'],
+               capital_cost=costs.at['battery inverter', 'capital_cost'],
+               p_nom_extendable=True)
 
 def estimate_renewable_capacities(n, tech_map=None):
     if tech_map is None:
@@ -617,7 +622,8 @@ if __name__ == "__main__":
     if 'hydro' in snakemake.config['renewable']:
         attach_hydro(n, costs, ppl)
     attach_extendable_generators(n, costs, ppl)
-    attach_storage(n, costs)
+    attach_storageunits(n, costs)
+    attach_stores(n, costs)
 
     estimate_renewable_capacities(n)
     add_nice_carrier_names(n)
