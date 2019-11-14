@@ -3,7 +3,7 @@
 Prepare PyPSA network for solving according to :ref:`opts` and :ref:`ll`, such as
 
 - adding an annual **limit** of carbon-dioxide emissions,
-- adding an exogenous **price** of carbon-dioxide emissions,
+- adding an exogenous **price** of carbon-dioxide emissions (or other kinds),
 - setting an **N-1 security margin** factor for transmission line capacities,
 - specifying a limit on the **cost** of transmission expansion,
 - specifying a limit on the **volume** of transmission expansion, and
@@ -25,7 +25,7 @@ Relevant Settings
         co2limit:
         max_hours:
 
-.. seealso:: 
+.. seealso::
     Documentation of the configuration file ``config.yaml`` at
     :ref:`costs_cf`, :ref:`electricity_cf`
 
@@ -50,21 +50,17 @@ Description
 
 """
 
-import logging
-logger = logging.getLogger(__name__)
-import pandas as pd
-idx = pd.IndexSlice
+from add_electricity import load_costs, update_transmission_costs
+from six import iteritems
 
 import numpy as np
-import scipy as sp
-import xarray as xr
 import re
-
-from six import iteritems
-import geopandas as gpd
-
 import pypsa
-from add_electricity import load_costs, update_transmission_costs
+import pandas as pd
+import logging
+
+idx = pd.IndexSlice
+logger = logging.getLogger(__name__)
 
 def add_co2limit(n, Nyears=1., factor=None):
 
@@ -78,12 +74,11 @@ def add_co2limit(n, Nyears=1., factor=None):
           constant=annual_emissions * Nyears)
 
 def add_emission_prices(n, emission_prices=None, exclude_co2=False):
-    assert False, "Needs to be fixed, adds NAN"
-
     if emission_prices is None:
         emission_prices = snakemake.config['costs']['emission_prices']
     if exclude_co2: emission_prices.pop('co2')
-    ep = (pd.Series(emission_prices).rename(lambda x: x+'_emissions') * n.carriers).sum(axis=1)
+    ep = (pd.Series(emission_prices).rename(lambda x: x+'_emissions') *
+          n.carriers.filter(like='_emissions')).sum(axis=1)
     n.generators['marginal_cost'] += n.generators.carrier.map(ep)
     n.storage_units['marginal_cost'] += n.storage_units.carrier.map(ep)
 
@@ -215,8 +210,8 @@ if __name__ == "__main__":
             else:
                 add_co2limit(n, Nyears)
 
-    # if 'Ep' in opts:
-    #     add_emission_prices(n)
+    if 'Ep' in opts:
+        add_emission_prices(n)
 
     ll_type, factor = snakemake.wildcards.ll[0], snakemake.wildcards.ll[1:]
     if ll_type == 'v':
