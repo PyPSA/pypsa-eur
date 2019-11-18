@@ -219,6 +219,19 @@ rule cluster_network:
     # group: 'build_pypsa_networks'
     script: "scripts/cluster_network.py"
 
+
+rule add_extra_stores:
+    input:
+        network='networks/{network}_s{simpl}_{clusters}.nc',
+        tech_costs=COSTS,
+    output: 'networks/{network}_s{simpl}_{clusters}.nc'
+    benchmark: "benchmarks/add_extra_stores/{network}_s{simpl}_{clusters}_f"
+    threads: 1
+    resources: mem=3000
+    # group: 'build_pypsa_networks'
+    script: "scripts/add_extra_stores.py"
+
+
 # rule add_sectors:
 #     input:
 #         network="networks/elec_{cost}_{resarea}_{opts}.nc",

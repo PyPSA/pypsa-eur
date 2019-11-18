@@ -265,7 +265,8 @@ def update_transmission_costs(n, costs, length_factor=1.0, simple_hvdc_costs=Fal
                 costs.at['HVDC submarine', 'capital_cost']) +
                 costs.at['HVDC inverter pair', 'capital_cost'])
     n.links.loc[dc_b, 'capital_cost'] = costs
-# ### Generators
+
+### Generators
 
 def attach_wind_and_solar(n, costs):
     for tech in snakemake.config['renewable']:
@@ -307,8 +308,6 @@ def attach_wind_and_solar(n, costs):
                    p_max_pu=ds['profile'].transpose('time', 'bus').to_pandas())
 
 
-# # Generators
-
 
 def attach_conventional_generators(n, costs, ppl):
     carriers = snakemake.config['electricity']['conventional_carriers']
@@ -329,6 +328,7 @@ def attach_conventional_generators(n, costs, ppl):
 
 
 def attach_hydro(n, costs, ppl):
+    if 'hydro' not in snakemake.config['renewable']: return
     c = snakemake.config['renewable']['hydro']
     carriers = c.get('carriers', ['ror', 'PHS', 'hydro'])
 
@@ -431,13 +431,10 @@ def attach_hydro(n, costs, ppl):
 def attach_extendable_generators(n, costs, ppl):
     elec_opts = snakemake.config['electricity']
     carriers = pd.Index(elec_opts['extendable_carriers']['Generator'])
-
     _add_missing_carriers_from_costs(n, costs, carriers)
 
     for tech in carriers:
-        suptech = tech.split('-')[0]
-
-        if suptech == 'OCGT':
+        if tech.startswith('OCGT'):
             ocgt = ppl.query("carrier in ['OCGT', 'CCGT']").groupby('bus', as_index=False).first()
             n.madd('Generator', ocgt.index,
                    suffix=' OCGT',
@@ -449,7 +446,7 @@ def attach_extendable_generators(n, costs, ppl):
                    marginal_cost=costs.at['OCGT', 'marginal_cost'],
                    efficiency=costs.at['OCGT', 'efficiency'])
 
-        elif suptech == 'CCGT':
+        elif tech.startswith('CCGT'):
             ccgt = ppl.query("carrier in ['OCGT', 'CCGT']").groupby('bus', as_index=False).first()
             n.madd('Generator', ccgt.index,
                    suffix=' CCGT',
@@ -465,82 +462,6 @@ def attach_extendable_generators(n, costs, ppl):
                                       "'{tech}' is not implemented, yet. "
                                       "Only OCGT and CCGT are allowed at the moment.")
 
-
-def attach_storageunits(n, costs):
-    elec_opts = snakemake.config['electricity']
-    carriers = elec_opts['extendable_carriers']['StorageUnit']
-    max_hours = elec_opts['max_hours']
-
-    _add_missing_carriers_from_costs(n, costs, carriers)
-
-    buses_i = n.buses.index[n.buses.substation_lv]
-
-    for carrier in carriers:
-        n.madd("StorageUnit", buses_i, ' ' + carrier,
-               bus=buses_i,
-               carrier=carrier,
-               p_nom_extendable=True,
-               capital_cost=costs.at[carrier, 'capital_cost'],
-               marginal_cost=costs.at[carrier, 'marginal_cost'],
-               efficiency_store=costs.at[carrier, 'efficiency'],
-               efficiency_dispatch=costs.at[carrier, 'efficiency'],
-               max_hours=max_hours[carrier],
-               cyclic_state_of_charge=True)
-
-def attach_stores(n, costs):
-    elec_opts = snakemake.config['electricity']
-    carriers = elec_opts['extendable_carriers']['Store']
-
-    _add_missing_carriers_from_costs(n, costs, carriers)
-
-    buses_i = n.buses.index[n.buses.substation_lv]
-
-    if 'H2' in carriers:
-        h2_buses_i = n.madd("Bus", buses_i + " H2", carrier="H2")
-
-        n.madd("Store", h2_buses_i,
-               bus=h2_buses_i,
-               e_nom_extendable=True,
-               e_cyclic=True,
-               capital_cost=costs.at["hydrogen storage", "capital_cost"])
-
-        n.madd("Link", h2_buses_i + " Electrolysis",
-               bus0=buses_i,
-               bus1=h2_buses_i,
-               p_nom_extendable=True,
-               efficiency=costs.at["electrolysis", "efficiency"],
-               capital_cost=costs.at["electrolysis", "capital_cost"])
-
-        n.madd("Link", h2_buses_i + " Fuel Cell",
-               bus0=h2_buses_i,
-               bus1=buses_i,
-               p_nom_extendable=True,
-               efficiency=costs.at["fuel cell", "efficiency"],
-               #NB: fixed cost is per MWel
-               capital_cost=costs.at["fuel cell", "capital_cost"] * costs.at["fuel cell", "efficiency"])
-
-    if 'battery' in carriers:
-        b_buses_i = n.madd("Bus", buses_i + " battery", carrier="battery")
-
-        n.madd("Store", b_buses_i,
-               bus=b_buses_i,
-               e_cyclic=True,
-               e_nom_extendable=True,
-               capital_cost=costs.at['battery storage', 'capital_cost'])
-
-        n.madd("Link", b_buses_i + " charger",
-               bus0=buses_i,
-               bus1=b_buses_i,
-               efficiency=costs.at['battery inverter', 'efficiency'],
-               capital_cost=costs.at['battery inverter', 'capital_cost'],
-               p_nom_extendable=True)
-
-        n.madd("Link", b_buses_i + " discharger",
-               bus0=b_buses_i,
-               bus1=buses_i,
-               efficiency=costs.at['battery inverter','efficiency'],
-               capital_cost=costs.at['battery inverter', 'capital_cost'],
-               p_nom_extendable=True)
 
 def estimate_renewable_capacities(n, tech_map=None):
     if tech_map is None:
@@ -600,14 +521,11 @@ if __name__ == "__main__":
     attach_load(n)
 
     update_transmission_costs(n, costs)
-    attach_conventional_generators(n, costs, ppl)
 
+    attach_conventional_generators(n, costs, ppl)
     attach_wind_and_solar(n, costs)
-    if 'hydro' in snakemake.config['renewable']:
-        attach_hydro(n, costs, ppl)
+    attach_hydro(n, costs, ppl)
     attach_extendable_generators(n, costs, ppl)
-    attach_storageunits(n, costs)
-    attach_stores(n, costs)
 
     estimate_renewable_capacities(n)
     add_nice_carrier_names(n)
