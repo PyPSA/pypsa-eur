@@ -15,7 +15,7 @@ Relevant Settings
             resource:
             correction_factor:
 
-.. seealso:: 
+.. seealso::
     Documentation of the configuration file ``config.yaml`` at
     :ref:`snapshots_cf`, :ref:`renewable_cf`
 
@@ -148,6 +148,9 @@ def build_aggregate(flh, countries, areamatrix, breaks, p_area, fn):
 if __name__ == '__main__':
     # Detect running outside of snakemake and mock snakemake for testing
     if 'snakemake' not in globals():
+#        from _helpers import mocksnakemake
+#        snakemake = mocksnakemake('build_country_flh', technology='solar')
+
         from vresutils.snakemake import MockSnakemake, Dict
         snakemake = MockSnakemake(
             wildcards=Dict(technology='solar'),

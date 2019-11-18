@@ -114,3 +114,58 @@ def progress_retrieve(url, file):
 
     urllib.request.urlretrieve(url, file, reporthook=dlProgress)
 
+
+def mocksnakemake(rulename, **wildcards):
+    """
+    This rule is expected to be executed in the 'scripts'-directory within the
+    snakemake project. It returns a snakemake.script.Snakemake object, which
+    includes mostly all necessary information, except for wildcards.
+
+    If a rule has wildcards, you have to specify them in **wildcards.
+    """
+    import snakemake as sm
+    import os
+    from pypsa.descriptors import Dict
+
+    os.chdir('..')
+    for p in sm.SNAKEFILE_CHOICES:
+        if os.path.exists(p):
+            snakefile = p
+            break
+    workflow = sm.Workflow(snakefile)
+    workflow.include(snakefile)
+    rule = workflow.get_rule(rulename)
+    wc = Dict(wildcards)
+
+    # make the input files accessable by taking the absolut paths
+    input_abs = sm.io.InputFiles()
+    for index, (key, p) in enumerate(rule.input.allitems()):
+        if callable(p):
+            p = p(wc)
+        if isinstance(p, str):
+            input_abs.insert(index, sm.io.apply_wildcards(os.path.abspath(p), wildcards))
+        else:
+            input_abs.insert(index, p)
+        if key is not None:
+            input_abs.add_name(key)
+
+    # make the output files accessable by taking the absolut paths
+    output_abs = sm.io.InputFiles()
+    for index, (key, p) in enumerate(rule.output.allitems()):
+        if callable(p):
+            p = p(wc)
+        if isinstance(p, str):
+            output_abs.insert(index, sm.io.apply_wildcards(os.path.abspath(p), wildcards))
+        else:
+            output_abs.insert(index, p)
+        if key is not None:
+            output_abs.add_name(key)
+
+    snakemake = sm.script.Snakemake(input=input_abs, output=output_abs,
+                            params=rule.params, wildcards=wc, threads=None,
+                            resources=rule.resources, log=rule.log,
+                            config=workflow.config, rulename=rule.name,
+                            bench_iteration=None)
+
+    os.chdir('scripts')
+    return snakemake
