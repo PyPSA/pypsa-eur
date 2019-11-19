@@ -133,6 +133,7 @@ def attach_stores(n, costs):
 
         n.madd("Store", h2_buses_i,
                bus=h2_buses_i,
+               carrier='H2',
                e_nom_extendable=True,
                e_cyclic=True,
                capital_cost=costs.at["hydrogen storage", "capital_cost"])
@@ -140,6 +141,7 @@ def attach_stores(n, costs):
         n.madd("Link", h2_buses_i + " Electrolysis",
                bus0=buses_i,
                bus1=h2_buses_i,
+               carrier='H2 electrolysis',
                p_nom_extendable=True,
                efficiency=costs.at["electrolysis", "efficiency"],
                capital_cost=costs.at["electrolysis", "capital_cost"])
@@ -147,6 +149,7 @@ def attach_stores(n, costs):
         n.madd("Link", h2_buses_i + " Fuel Cell",
                bus0=h2_buses_i,
                bus1=buses_i,
+               carrier='H2 fuel cell',
                p_nom_extendable=True,
                efficiency=costs.at["fuel cell", "efficiency"],
                #NB: fixed cost is per MWel
@@ -157,6 +160,7 @@ def attach_stores(n, costs):
 
         n.madd("Store", b_buses_i,
                bus=b_buses_i,
+               carrier='battery',
                e_cyclic=True,
                e_nom_extendable=True,
                capital_cost=costs.at['battery storage', 'capital_cost'])
@@ -164,14 +168,16 @@ def attach_stores(n, costs):
         n.madd("Link", b_buses_i + " charger",
                bus0=buses_i,
                bus1=b_buses_i,
-               efficiency=costs.at['battery inverter', 'efficiency'],
+               carrier='battery charger',
+               efficiency=costs.at['battery inverter', 'efficiency']**0.5,
                capital_cost=costs.at['battery inverter', 'capital_cost'],
                p_nom_extendable=True)
 
         n.madd("Link", b_buses_i + " discharger",
                bus0=b_buses_i,
                bus1=buses_i,
-               efficiency=costs.at['battery inverter','efficiency'],
+               carrier='battery discharger',
+               efficiency=costs.at['battery inverter','efficiency']**0.5,
                capital_cost=costs.at['battery inverter', 'capital_cost'],
                p_nom_extendable=True)
 
