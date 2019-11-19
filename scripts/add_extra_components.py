@@ -91,13 +91,11 @@ It further adds extendable ``generators`` and ``storage_units`` with **zero** ca
 import logging
 import pandas as pd
 import pypsa
-from add_electricity import load_costs
+from add_electricity import load_costs, normed, add_nice_carrier_names
 
 idx = pd.IndexSlice
 logger = logging.getLogger(__name__)
 
-
-def normed(s): return s/s.sum()
 
 def _add_missing_carriers_from_costs(n, costs, carriers):
     missing_carriers = pd.Index(carriers).difference(n.carriers.index)
@@ -188,17 +186,13 @@ def attach_stores(n, costs):
                capital_cost=costs.at['battery inverter', 'capital_cost'],
                p_nom_extendable=True)
 
-def add_nice_carrier_names(n):
-    nice_names = pd.Series(snakemake.config['plotting']['nice_names'])
-    n.carriers['nice_names'] = nice_names[n.carriers.index]
-
 
 if __name__ == "__main__":
     # Detect running outside of snakemake and mock snakemake for testing
     if 'snakemake' not in globals():
         from vresutils.snakemake import MockSnakemake, Dict
 
-        snakemake = MockSnakemake(output=['networks/elec_s_5.nc'])
+        snakemake = MockSnakemake(output=['networks/elec_s_5_ec.nc'])
         snakemake.input = snakemake.expand(
             Dict(network='networks/elec_s_5.nc',
                  tech_costs='data/costs.csv'))
@@ -214,6 +208,6 @@ if __name__ == "__main__":
     attach_storageunits(n, costs)
     attach_stores(n, costs)
 
-    add_nice_carrier_names(n)
+    add_nice_carrier_names(n, config=snakemake.config)
 
     n.export_to_netcdf(snakemake.output[0])

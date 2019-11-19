@@ -487,8 +487,9 @@ def estimate_renewable_capacities(n, tech_map=None):
              .transform(lambda s: normed(s) * tech_capacities.at[s.name])
              .where(lambda s: s>0.1, 0.))  # only capacities above 100kW
 
-def add_nice_carrier_names(n):
-    nice_names = pd.Series(snakemake.config['plotting']['nice_names'])
+def add_nice_carrier_names(n, config=None):
+    if config is None: config = snakemake.config
+    nice_names = pd.Series(config['plotting']['nice_names'])
     n.carriers['nice_names'] = nice_names[n.carriers.index]
 
 
