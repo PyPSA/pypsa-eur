@@ -1,6 +1,6 @@
 # coding: utf-8
 """
-Adds electrical generators and storage units to a base network.
+Adds electrical generators and existing hydro storage units to a base network.
 
 Relevant Settings
 -----------------
@@ -21,7 +21,6 @@ Relevant Settings
         co2limit:
         extendable_carriers:
             Generator:
-            StorageUnit:
         estimate_renewable_capacities_from_capacity_stats:
 
     load:
@@ -81,10 +80,9 @@ The rule :mod:`add_electricity` ties all the different data inputs from the prec
 - today's thermal and hydro power generation capacities (for the technologies listed in the config setting ``electricity: conventional_carriers``), and
 - today's load time-series (upsampled in a top-down approach according to population and gross domestic product)
 
-It further adds extendable ``generators`` and ``storage_units`` with **zero** capacity for
+It further adds extendable ``generators`` with **zero** capacity for
 
 - photovoltaic, onshore and AC- as well as DC-connected offshore wind installations with today's locational, hourly wind and solar capacity factors (but **no** current capacities),
-- long-term hydrogen and short-term battery storage units (if listed in the config setting ``electricity: extendable_carriers``), and
 - additional open- and combined-cycle gas turbines (if ``OCGT`` and/or ``CCGT`` is listed in the config setting ``electricity: extendable_carriers``)
 """
 
