@@ -456,7 +456,7 @@ def attach_extendable_generators(n, costs, ppl):
                    marginal_cost=costs.at['CCGT', 'marginal_cost'],
                    efficiency=costs.at['CCGT', 'efficiency'])
 
-        elif suptech == 'nuclear':
+        elif tech.startswith('nuclear'):
             nuclear = ppl.query("carrier == 'nuclear'").groupby('bus', as_index=False).first()
             n.madd('Generator', nuclear.index,
                 suffix=' nuclear',
