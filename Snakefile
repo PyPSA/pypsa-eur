@@ -220,7 +220,7 @@ rule cluster_network:
     script: "scripts/cluster_network.py"
 
 
-rule add_extra_stores:
+rule add_extra_components:
     input:
         network='networks/{network}_s{simpl}_{clusters}.nc',
         tech_costs=COSTS,
