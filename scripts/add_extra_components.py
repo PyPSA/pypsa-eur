@@ -91,22 +91,12 @@ It further adds extendable ``generators`` and ``storage_units`` with **zero** ca
 import logging
 import pandas as pd
 import pypsa
-from add_electricity import load_costs, normed, add_nice_carrier_names
+from add_electricity import load_costs, normed,
+                            add_nice_carrier_names,
+                            _add_missing_carriers_from_costs
 
 idx = pd.IndexSlice
 logger = logging.getLogger(__name__)
-
-
-def _add_missing_carriers_from_costs(n, costs, carriers):
-    missing_carriers = pd.Index(carriers).difference(n.carriers.index)
-    if missing_carriers.empty: return
-
-    emissions_cols = costs.columns.to_series()\
-                           .loc[lambda s: s.str.endswith('_emissions')].values
-    suptechs = missing_carriers.str.split('-').str[0]
-    emissions = costs.loc[suptechs, emissions_cols].fillna(0.)
-    emissions.index = missing_carriers
-    n.import_components_from_dataframe(emissions, 'Carrier')
 
 
 def attach_storageunits(n, costs):
