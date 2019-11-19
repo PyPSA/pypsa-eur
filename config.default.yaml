@@ -20,9 +20,9 @@ snapshots:
 
 enable:
   prepare_links_p_nom: false
+  retrieve_databundle: true
   build_cutout: false
   build_natura_raster: false
-  retrieve_databundle: enable # enable: to retrieve databundle from zenodo; false: to use own databundle
 
 electricity:
   voltages: [220., 300., 380.]
