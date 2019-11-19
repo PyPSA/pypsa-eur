@@ -18,7 +18,7 @@ dependencies:
   - memory_profiler
   - yaml
   - pytables
-  - powerplantmatching >=0.4.2
+  - powerplantmatching>=0.4.2
 
   # Second order dependencies which should really be deps of atlite
   - xarray
@@ -27,7 +27,7 @@ dependencies:
   - toolz
   - dask
   - progressbar2
-  - pyyaml >= 5.1.0
+  - pyyaml>=5.1.0
 
   # Include ipython so that one does not inadvertently drop out of the conda
   # environment by calling ipython
