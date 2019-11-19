@@ -225,7 +225,7 @@ rule add_extra_components:
         network='networks/{network}_s{simpl}_{clusters}.nc',
         tech_costs=COSTS,
     output: 'networks/{network}_s{simpl}_{clusters}_ec.nc'
-    benchmark: "benchmarks/add_extra_components/{network}_s{simpl}_{clusters}"
+    benchmark: "benchmarks/add_extra_components/{network}_s{simpl}_{clusters}_ec"
     threads: 1
     resources: mem=3000
     # group: 'build_pypsa_networks'
@@ -243,7 +243,7 @@ rule add_extra_components:
 #     script: "scripts/add_sectors.py"
 
 rule prepare_network:
-    input: 'networks/{network}_s{simpl}_{clusters}.nc', tech_costs=COSTS
+    input: 'networks/{network}_s{simpl}_{clusters}_ec.nc', tech_costs=COSTS
     output: 'networks/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc'
     threads: 1
     resources: mem=1000
