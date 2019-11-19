@@ -225,7 +225,7 @@ rule add_extra_stores:
         network='networks/{network}_s{simpl}_{clusters}.nc',
         tech_costs=COSTS,
     output: 'networks/{network}_s{simpl}_{clusters}.nc'
-    benchmark: "benchmarks/add_extra_stores/{network}_s{simpl}_{clusters}_f"
+    benchmark: "benchmarks/add_extra_stores/{network}_s{simpl}_{clusters}"
     threads: 1
     resources: mem=3000
     # group: 'build_pypsa_networks'
