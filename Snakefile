@@ -16,12 +16,12 @@ rule cluster_all_elec_networks:
 
 rule prepare_all_elec_networks:
     input:
-        expand("networks/elec_s{simpl}_{clusters}_l{ll}_{opts}.nc",
+        expand("networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
                **config['scenario'])
 
 rule solve_all_elec_networks:
     input:
-        expand("results/networks/elec_s{simpl}_{clusters}_l{ll}_{opts}.nc",
+        expand("results/networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
                **config['scenario'])
 
 if config['enable']['prepare_links_p_nom']:
@@ -244,10 +244,10 @@ rule add_extra_components:
 
 rule prepare_network:
     input: 'networks/{network}_s{simpl}_{clusters}.nc', tech_costs=COSTS
-    output: 'networks/{network}_s{simpl}_{clusters}_l{ll}_{opts}.nc'
+    output: 'networks/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc'
     threads: 1
     resources: mem=1000
-    # benchmark: "benchmarks/prepare_network/{network}_s{simpl}_{clusters}_l{ll}_{opts}"
+    # benchmark: "benchmarks/prepare_network/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}"
     script: "scripts/prepare_network.py"
 
 def memory(w):
@@ -264,24 +264,24 @@ def memory(w):
         # return 4890+310 * int(w.clusters)
 
 rule solve_network:
-    input: "networks/{network}_s{simpl}_{clusters}_l{ll}_{opts}.nc"
-    output: "results/networks/{network}_s{simpl}_{clusters}_l{ll}_{opts}.nc"
+    input: "networks/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"
+    output: "results/networks/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"
     shadow: "shallow"
     log:
-        solver="logs/{network}_s{simpl}_{clusters}_l{ll}_{opts}_solver.log",
-        python="logs/{network}_s{simpl}_{clusters}_l{ll}_{opts}_python.log",
-        memory="logs/{network}_s{simpl}_{clusters}_l{ll}_{opts}_memory.log"
-    benchmark: "benchmarks/solve_network/{network}_s{simpl}_{clusters}_l{ll}_{opts}"
+        solver="logs/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_solver.log",
+        python="logs/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_python.log",
+        memory="logs/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_memory.log"
+    benchmark: "benchmarks/solve_network/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}"
     threads: 4
     resources: mem=memory
     # group: "solve" # with group, threads is ignored https://bitbucket.org/snakemake/snakemake/issues/971/group-job-description-does-not-contain
     script: "scripts/solve_network.py"
 
 rule trace_solve_network:
-    input: "networks/{network}_s{simpl}_{clusters}_l{ll}_{opts}.nc"
-    output: "results/networks/{network}_s{simpl}_{clusters}_l{ll}_{opts}_trace.nc"
+    input: "networks/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"
+    output: "results/networks/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_trace.nc"
     shadow: "shallow"
-    log: python="logs/{network}_s{simpl}_{clusters}_l{ll}_{opts}_python_trace.log",
+    log: python="logs/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_python_trace.log",
     threads: 4
     resources: mem=memory
     script: "scripts/trace_solve_network.py"
@@ -289,14 +289,14 @@ rule trace_solve_network:
 rule solve_operations_network:
     input:
         unprepared="networks/{network}_s{simpl}_{clusters}.nc",
-        optimized="results/networks/{network}_s{simpl}_{clusters}_l{ll}_{opts}.nc"
-    output: "results/networks/{network}_s{simpl}_{clusters}_l{ll}_{opts}_op.nc"
+        optimized="results/networks/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"
+    output: "results/networks/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_op.nc"
     shadow: "shallow"
     log:
-        solver="logs/solve_operations_network/{network}_s{simpl}_{clusters}_l{ll}_{opts}_op_solver.log",
-        python="logs/solve_operations_network/{network}_s{simpl}_{clusters}_l{ll}_{opts}_op_python.log",
-        memory="logs/solve_operations_network/{network}_s{simpl}_{clusters}_l{ll}_{opts}_op_memory.log"
-    benchmark: "benchmarks/solve_operations_network/{network}_s{simpl}_{clusters}_l{ll}_{opts}"
+        solver="logs/solve_operations_network/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_op_solver.log",
+        python="logs/solve_operations_network/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_op_python.log",
+        memory="logs/solve_operations_network/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_op_memory.log"
+    benchmark: "benchmarks/solve_operations_network/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}"
     threads: 4
     resources: mem=(lambda w: 5000 + 372 * int(w.clusters))
     # group: "solve_operations"
@@ -304,11 +304,11 @@ rule solve_operations_network:
 
 rule plot_network:
     input:
-        network="results/networks/{network}_s{simpl}_{clusters}_l{ll}_{opts}.nc",
+        network="results/networks/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
         tech_costs=COSTS
     output:
-        only_map="results/plots/{network}_s{simpl}_{clusters}_l{ll}_{opts}_{attr}.{ext}",
-        ext="results/plots/{network}_s{simpl}_{clusters}_l{ll}_{opts}_{attr}_ext.{ext}"
+        only_map="results/plots/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}.{ext}",
+        ext="results/plots/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}_ext.{ext}"
     script: "scripts/plot_network.py"
 
 def input_make_summary(w):
@@ -320,7 +320,7 @@ def input_make_summary(w):
     else:
         ll = w.ll
     return ([COSTS] +
-            expand("results/networks/{network}_s{simpl}_{clusters}_l{ll}_{opts}.nc",
+            expand("results/networks/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
                    network=w.network,
                    ll=ll,
                    **{k: config["scenario"][k] if getattr(w, k) == "all" else getattr(w, k)
@@ -328,12 +328,12 @@ def input_make_summary(w):
 
 rule make_summary:
     input: input_make_summary
-    output: directory("results/summaries/{network}_s{simpl}_{clusters}_l{ll}_{opts}_{country}")
+    output: directory("results/summaries/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}")
     script: "scripts/make_summary.py"
 
 rule plot_summary:
-    input: "results/summaries/{network}_s{simpl}_{clusters}_l{ll}_{opts}_{country}"
-    output: "results/plots/summary_{summary}_{network}_s{simpl}_{clusters}_l{ll}_{opts}_{country}.{ext}"
+    input: "results/summaries/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}"
+    output: "results/plots/summary_{summary}_{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}.{ext}"
     script: "scripts/plot_summary.py"
 
 def input_plot_p_nom_max(wildcards):
