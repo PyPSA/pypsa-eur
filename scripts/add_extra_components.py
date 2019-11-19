@@ -19,7 +19,7 @@ Relevant Settings
         capital_cost:
         extendable_carriers:
             StorageUnit:
-            Stores:
+            Store:
 
 .. seealso::
     Documentation of the configuration file ``config.yaml`` at :ref:`costs_cf`,
