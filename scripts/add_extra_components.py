@@ -39,7 +39,7 @@ Outputs
 Description
 -----------
 
-The rule :mod:`add_extra_components` attaches additional artificial components, specified by the configuration file, to the clustered and simplyfied network. Therefore it converts networks of kind `networks/{network}_s{simpl}_{clusters}.nc`` to ``networks/{network}_s{simpl}_{clusters}_ec.nc``, which in contrast to the previous contain
+The rule :mod:`add_extra_components` attaches additional components to the clustered and simplified network. These can be configured in the `config.yaml` at `electricity: extendable_carriers: `. It further processes `networks/{network}_s{simpl}_{clusters}.nc`` to build ``networks/{network}_s{simpl}_{clusters}_ec.nc``, which in contrast to the former contain
 
 - `Stores` of carrier 'H2' and/or 'Battery'. If this option is chosen, the script adds extra buses with corresponding carrier and links for empowering and discharge. All those components have extendable capacities.
 
