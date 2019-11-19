@@ -91,9 +91,8 @@ It further adds extendable ``generators`` and ``storage_units`` with **zero** ca
 import logging
 import pandas as pd
 import pypsa
-from add_electricity import load_costs, normed,
-                            add_nice_carrier_names,
-                            _add_missing_carriers_from_costs
+from add_electricity import (load_costs, normed, add_nice_carrier_names,
+                             _add_missing_carriers_from_costs)
 
 idx = pd.IndexSlice
 logger = logging.getLogger(__name__)
