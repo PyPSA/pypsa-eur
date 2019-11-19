@@ -26,6 +26,7 @@ dependencies:
   - toolz
   - dask
   - progressbar2
+  - pyyaml>=5.1
 
   # Include ipython so that one does not inadvertently drop out of the conda
   # environment by calling ipython
