@@ -347,7 +347,7 @@ def input_make_summary(w):
 rule make_summary:
     input: input_make_summary
     output: directory("results/summaries/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}")
-    log: 'logs/make_summary/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}.log",
+    log: "logs/make_summary/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}.log",
     script: "scripts/make_summary.py"
 
 rule plot_summary:
