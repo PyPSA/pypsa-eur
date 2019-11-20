@@ -39,6 +39,9 @@ import numpy as np
 import atlite
 import geokit as gk
 
+import logging
+logger = logging.getLogger(__name__)
+
 def determine_cutout_xXyY(cutout_name):
     cutout = atlite.Cutout(cutout_name, cutout_dir="cutouts")
     x, X, y, Y = cutout.extent
@@ -47,6 +50,9 @@ def determine_cutout_xXyY(cutout_name):
     return [x - dx/2., X + dx/2., y - dy/2., Y + dy/2.]
 
 if __name__ == "__main__":
+    logging.basicConfig(filename=snakemake.log,
+                        level=snakemake.config['logging_level'])
+
     cutout_names = np.unique([res['cutout'] for res in snakemake.config['renewable'].values()])
     xs, Xs, ys, Ys = zip(*(determine_cutout_xXyY(cutout) for cutout in cutout_names))
     xXyY = min(xs), max(Xs), min(ys), max(Ys)

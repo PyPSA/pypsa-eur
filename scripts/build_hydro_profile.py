@@ -59,10 +59,11 @@ import atlite
 import geopandas as gpd
 from vresutils import hydro as vhydro
 import logging
-
+logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
-    logging.basicConfig(level=snakemake.config['logging_level'])
+    logging.basicConfig(filename=snakemake.log,
+                        level=snakemake.config['logging_level'])
 
     config = snakemake.config['renewable']['hydro']
     cutout = atlite.Cutout(config['cutout'],

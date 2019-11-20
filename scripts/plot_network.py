@@ -21,6 +21,7 @@ import pandas as pd
 import numpy as np
 from six.moves import zip
 import logging
+logger = logging.getLogger(__name__)
 
 import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
@@ -257,7 +258,8 @@ if __name__ == "__main__":
                         ext="results/plots/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{attr}_ext.{ext}")
         )
 
-    logging.basicConfig(level=snakemake.config['logging_level'])
+    logging.basicConfig(filename=snakemake.log,
+                        level=snakemake.config['logging_level'])
 
     set_plot_style()
 

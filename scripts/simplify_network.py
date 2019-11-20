@@ -349,8 +349,8 @@ if __name__ == "__main__":
                 clustermaps='resources/clustermaps_{network}_s{simpl}.h5'
             )
         )
-
-    logging.basicConfig(level=snakemake.config['logging_level'])
+    logging.basicConfig(filename=snakemake.log,
+                        level=snakemake.config['logging_level'])
 
     n = pypsa.Network(snakemake.input.network)
 

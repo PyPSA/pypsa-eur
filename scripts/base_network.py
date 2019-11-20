@@ -568,8 +568,8 @@ if __name__ == "__main__":
             ),
             output = ['networks/base.nc']
         )
-
-    logging.basicConfig(level=snakemake.config['logging_level'])
+    logging.basicConfig(filename=snakemake.log,
+                        level=snakemake.config['logging_level'])
 
     n = base_network()
     n.export_to_netcdf(snakemake.output[0])

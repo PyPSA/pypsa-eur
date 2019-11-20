@@ -43,12 +43,14 @@ import os
 import pandas as pd
 import geopandas as gpd
 
-
 import pypsa
+
 import logging
+logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
-    logging.basicConfig(level=snakemake.config["logging_level"])
+    logging.basicConfig(filename=snakemake.log,
+                        level=snakemake.config['logging_level'])    
 
     countries = snakemake.config['countries']
 

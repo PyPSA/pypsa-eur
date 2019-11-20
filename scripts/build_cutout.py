@@ -92,7 +92,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
-    logging.basicConfig(level=snakemake.config['logging_level'])
+    logging.basicConfig(filename=snakemake.log,
+                        level=snakemake.config['logging_level'])
 
     cutout_params = snakemake.config['atlite']['cutouts'][snakemake.wildcards.cutout]
     for p in ('xs', 'ys', 'years', 'months'):

@@ -34,6 +34,9 @@ logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
 
+    logging.basicConfig(filename=snakemake.log,
+                        level=snakemake.config['logging_level'])
+
     d = './resources'
     if not os.path.exists(d):
         os.makedirs(d)

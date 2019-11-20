@@ -76,6 +76,9 @@ from shapely.ops import cascaded_union
 
 import pycountry as pyc
 
+import logging
+logger = logging.getLogger(__name__)
+
 def _get_country(target, **keys):
     assert len(keys) == 1
     try:
@@ -220,6 +223,9 @@ if __name__ == "__main__":
                 nuts3_shapes='resources/nuts3_shapes.geojson'
             )
         )
+
+    logging.basicConfig(filename=snakemake.log,
+                        level=snakemake.config['logging_level'])
 
     country_shapes = countries()
     save_to_geojson(country_shapes, snakemake.output.country_shapes)

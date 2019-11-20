@@ -16,6 +16,9 @@ Description
 """
 
 import pypsa
+import logging
+logger = logging.getLogger(__name__)
+
 import pandas as pd
 import matplotlib.pyplot as plt
 
@@ -57,7 +60,8 @@ if __name__ == "__main__":
             output=['results/plots/cum_p_nom_max_{clusters}_{country}.pdf']
         )
 
-    logging.basicConfig(level=snakemake.config['logging_level'])
+    logging.basicConfig(filename=snakemake.log,
+                        level=snakemake.config['logging_level'])
 
     plot_kwds = dict(drawstyle="steps-post")
 

@@ -379,12 +379,12 @@ if __name__ == "__main__":
                      python="logs/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_python.log")
         )
 
+    logging.basicConfig(filename=snakemake.log.python,
+                        level=snakemake.config['logging_level'])
+
     tmpdir = snakemake.config['solving'].get('tmpdir')
     if tmpdir is not None:
         patch_pyomo_tmpdir(tmpdir)
-
-    logging.basicConfig(filename=snakemake.log.python,
-                        level=snakemake.config['logging_level'])
 
     with memory_logger(filename=getattr(snakemake.log, 'memory', None), interval=30.) as mem:
         n = pypsa.Network(snakemake.input[0])

@@ -53,6 +53,7 @@ rule build_powerplants:
         base_network="networks/base.nc",
         custom_powerplants="data/custom_powerplants.csv"
     output: "resources/powerplants.csv"
+    log: "logs/build_powerplants.log"
     threads: 1
     resources: mem=500
     # group: 'nonfeedin_preparation'
@@ -72,6 +73,7 @@ rule base_network:
         offshore_shapes='resources/offshore_shapes.geojson',
         europe_shape='resources/europe_shape.geojson'
     output: "networks/base.nc"
+    log: "logs/base_network.log"
     benchmark: "benchmarks/base_network"
     threads: 1
     resources: mem=500
@@ -92,6 +94,7 @@ rule build_shapes:
         offshore_shapes='resources/offshore_shapes.geojson',
         europe_shape='resources/europe_shape.geojson',
         nuts3_shapes='resources/nuts3_shapes.geojson'
+    log: "logs/build_shapes.log"
     threads: 1
     resources: mem=500
     # group: 'nonfeedin_preparation'
@@ -105,6 +108,7 @@ rule build_bus_regions:
     output:
         regions_onshore="resources/regions_onshore.geojson",
         regions_offshore="resources/regions_offshore.geojson"
+    log: "logs/build_bus_regions.log"
     resources: mem=1000
     # group: 'nonfeedin_preparation'
     script: "scripts/build_bus_regions.py"
@@ -112,6 +116,7 @@ rule build_bus_regions:
 if config['enable'].get('build_cutout', False):        
     rule build_cutout:
         output: directory("cutouts/{cutout}")
+        log: "logs/build_cutout.log"
         resources: mem=config['atlite'].get('nprocesses', 4) * 1000
         threads: config['atlite'].get('nprocesses', 4)
         benchmark: "benchmarks/build_cutout_{cutout}"
@@ -120,6 +125,7 @@ if config['enable'].get('build_cutout', False):
 else:
     rule retrieve_cutout:
         output: directory(expand("cutouts/{cutouts}", **config['atlite'])),
+        log: "logs/retrieve_cutout.log"
         script: 'scripts/retrieve_cutout.py'
 
 
@@ -129,10 +135,12 @@ if config['enable'].get('build_natura_raster', False):
             natura="data/bundle/natura/Natura2000_end2015.shp",
             cutouts=expand("cutouts/{cutouts}", **config['atlite'])
         output: "resources/natura.tiff"
+        log: "logs/build_natura_raster.log"
         script: "scripts/build_natura_raster.py"
 else:
     rule retrieve_natura_raster:
         output: "resources/natura.tiff"
+        log: "logs/retrieve_natura_raster.log"
         script: 'scripts/retrieve_natura_raster.py'
 
 rule build_renewable_profiles:
@@ -150,6 +158,7 @@ rule build_renewable_profiles:
                                    else "resources/regions_offshore.geojson"),
         cutout=lambda wildcards: "cutouts/" + config["renewable"][wildcards.technology]['cutout']
     output: profile="resources/profile_{technology}.nc",
+    log: "logs/build_renewable_profile_{technology}.log"
     resources: mem=config['atlite'].get('nprocesses', 2) * 5000
     threads: config['atlite'].get('nprocesses', 2)
     benchmark: "benchmarks/build_renewable_profiles_{technology}"
@@ -163,6 +172,7 @@ if 'hydro' in config['renewable'].keys():
             eia_hydro_generation='data/bundle/EIA_hydro_generation_2000_2014.csv',
             cutout="cutouts/" + config["renewable"]['hydro']['cutout']
         output: 'resources/profile_hydro.nc'
+        log: "logs/build_hydro_profile.log"
         resources: mem=5000
         # group: 'feedin_preparation'
         script: 'scripts/build_hydro_profile.py'
@@ -180,6 +190,7 @@ rule add_electricity:
         **{'profile_' + t: "resources/profile_" + t + ".nc"
            for t in config['renewable']}
     output: "networks/elec.nc"
+    log: "logs/add_electricity.log"
     benchmark: "benchmarks/add_electricity"
     threads: 1
     resources: mem=3000
@@ -197,6 +208,7 @@ rule simplify_network:
         regions_onshore="resources/regions_onshore_{network}_s{simpl}.geojson",
         regions_offshore="resources/regions_offshore_{network}_s{simpl}.geojson",
         clustermaps='resources/clustermaps_{network}_s{simpl}.h5'
+    log: "logs/simplify_network/{network}_s{simpl}.log"
     benchmark: "benchmarks/simplify_network/{network}_s{simpl}"
     threads: 1
     resources: mem=4000
@@ -215,6 +227,7 @@ rule cluster_network:
         regions_onshore="resources/regions_onshore_{network}_s{simpl}_{clusters}.geojson",
         regions_offshore="resources/regions_offshore_{network}_s{simpl}_{clusters}.geojson",
         clustermaps='resources/clustermaps_{network}_s{simpl}_{clusters}.h5'
+    log: "logs/cluster_network/{network}_s{simpl}_{clusters}.log"
     benchmark: "benchmarks/cluster_network/{network}_s{simpl}_{clusters}"
     threads: 1
     resources: mem=3000
@@ -227,6 +240,7 @@ rule add_extra_components:
         network='networks/{network}_s{simpl}_{clusters}.nc',
         tech_costs=COSTS,
     output: 'networks/{network}_s{simpl}_{clusters}_ec.nc'
+    log: "logs/add_extra_components/{network}_s{simpl}_{clusters}.log"
     benchmark: "benchmarks/add_extra_components/{network}_s{simpl}_{clusters}_ec"
     threads: 1
     resources: mem=3000
@@ -247,6 +261,7 @@ rule add_extra_components:
 rule prepare_network:
     input: 'networks/{network}_s{simpl}_{clusters}_ec.nc', tech_costs=COSTS
     output: 'networks/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc'
+    log: "logs/prepare_network/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}.log"
     threads: 1
     resources: mem=1000
     # benchmark: "benchmarks/prepare_network/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}"
@@ -270,9 +285,9 @@ rule solve_network:
     output: "results/networks/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"
     shadow: "shallow"
     log:
-        solver="logs/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_solver.log",
-        python="logs/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_python.log",
-        memory="logs/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_memory.log"
+        solver="logs/solve_network/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_solver.log",
+        python="logs/solve_network/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_python.log",
+        memory="logs/solve_network/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_memory.log"
     benchmark: "benchmarks/solve_network/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}"
     threads: 4
     resources: mem=memory
@@ -311,6 +326,7 @@ rule plot_network:
     output:
         only_map="results/plots/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}.{ext}",
         ext="results/plots/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}_ext.{ext}"
+    log: "logs/plot_network/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}.log"
     script: "scripts/plot_network.py"
 
 def input_make_summary(w):
@@ -331,11 +347,13 @@ def input_make_summary(w):
 rule make_summary:
     input: input_make_summary
     output: directory("results/summaries/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}")
+    log: 'logs/make_summary/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}.log",
     script: "scripts/make_summary.py"
 
 rule plot_summary:
     input: "results/summaries/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}"
     output: "results/plots/summary_{summary}_{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}.{ext}"
+    log: "logs/plot_summary/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}.log"
     script: "scripts/plot_summary.py"
 
 def input_plot_p_nom_max(wildcards):
@@ -345,6 +363,7 @@ def input_plot_p_nom_max(wildcards):
 rule plot_p_nom_max:
     input: input_plot_p_nom_max
     output: "results/plots/{network}_s{simpl}_cum_p_nom_max_{clusters}_{technology}_{country}.{ext}"
+    log: "logs/plot_p_nom_max/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}.log"
     script: "scripts/plot_p_nom_max.py"
 
 rule build_country_flh:
@@ -368,6 +387,7 @@ rule build_country_flh:
         uncorrected="resources/country_flh_uncorrected_{technology}.csv",
         plot="resources/country_flh_{technology}.pdf",
         exclusion=directory("resources/country_exclusion_{technology}")
+    log: "logs/build_country_flh_{technology}.log"
     resources: mem=10000
     benchmark: "benchmarks/build_country_flh_{technology}"
     # group: 'feedin_preparation'

@@ -44,6 +44,9 @@ logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
 
+    logging.basicConfig(filename=snakemake.log,
+                        level=snakemake.config['logging_level'])
+
     if snakemake.config['tutorial']:
         url = "https://zenodo.org/record/3518020/files/pypsa-eur-tutorial-cutouts.tar.xz"
     else:
