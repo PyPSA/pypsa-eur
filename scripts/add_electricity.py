@@ -270,7 +270,7 @@ def update_transmission_costs(n, costs, length_factor=1.0, simple_hvdc_costs=Fal
     n.links.loc[dc_b, 'capital_cost'] = costs
 # ### Generators
 
-def attach_wind_and_solar(n, costs):
+def attach_wind_and_solar(n, costs,ppl):
     for tech in snakemake.config['renewable']:
         if tech == 'hydro': continue
 
@@ -298,7 +298,26 @@ def attach_wind_and_solar(n, costs):
             else:
                 capital_cost = costs.at[tech, 'capital_cost']
 
-            n.madd("Generator", ds.indexes['bus'], ' ' + tech,
+            if snakemake.config['electricity']['custom_powerplants']: #adapt "if" in case wind and solar are not part of custom_ppls?
+                p = ppl.query('carrier == @tech')
+                logger.info('Adding {} generators of type {}'.format(len(p), tech))
+                profile = ds['profile'].to_pandas()
+                # rename indices in the following to add them at the correct places in the network:
+                profile = profile.rename(index={profile.index[bus_i]: profile.index[bus_i] + ' ' + tech for bus_i in range(len(profile))})
+                p.bus = p.bus.apply(lambda b: b[:-2] if b[-2:] == '.0' else b) #for some reason buses in custom_ppls may end with .0 -> delete that! .astype(int) does not work?
+                p = p.rename(index={p.index[bus_i]: p.iloc[bus_i].bus + ' ' + tech for bus_i in range(len(p))})
+                n.madd("Generator", p.index,
+                    bus=p['bus'],
+                    carrier=tech,
+                    p_nom_extendable=False,
+                    p_nom=p['p_nom'],
+                    weight=ds['weight'].to_pandas(), #adapt? Weights happen to be 0...??
+                    marginal_cost=costs.at[suptech, 'marginal_cost'],
+                    capital_cost=capital_cost,
+                    efficiency=costs.at[suptech, 'efficiency'],
+                    p_max_pu=profile.T.loc[:, p.index])
+            else:
+                n.madd("Generator", ds.indexes['bus'], ' ' + tech,
                    bus=ds.indexes['bus'],
                    carrier=tech,
                    p_nom_extendable=True,
@@ -308,8 +327,6 @@ def attach_wind_and_solar(n, costs):
                    capital_cost=capital_cost,
                    efficiency=costs.at[suptech, 'efficiency'],
                    p_max_pu=ds['profile'].transpose('time', 'bus').to_pandas())
-
-
 # # Generators
 
 
@@ -606,6 +623,7 @@ if __name__ == "__main__":
     Nyears = n.snapshot_weightings.sum()/8760.
 
     costs = load_costs(Nyears)
+    
     ppl = load_powerplants()
 
     attach_load(n)
@@ -613,7 +631,7 @@ if __name__ == "__main__":
     update_transmission_costs(n, costs)
     attach_conventional_generators(n, costs, ppl)
 
-    attach_wind_and_solar(n, costs)
+    attach_wind_and_solar(n, costs, ppl)
     if 'hydro' in snakemake.config['renewable']:
         attach_hydro(n, costs, ppl)
     attach_extendable_generators(n, costs, ppl)
