@@ -326,7 +326,7 @@ rule plot_network:
     output:
         only_map="results/plots/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}.{ext}",
         ext="results/plots/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}_ext.{ext}"
-    log: "logs/plot_network/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}.log"
+    log: "logs/plot_network/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}_{ext}.log"
     script: "scripts/plot_network.py"
 
 def input_make_summary(w):
@@ -353,7 +353,7 @@ rule make_summary:
 rule plot_summary:
     input: "results/summaries/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}"
     output: "results/plots/summary_{summary}_{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}.{ext}"
-    log: "logs/plot_summary/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}.log"
+    log: "logs/plot_summary/{summary}_{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}_{ext}.log"
     script: "scripts/plot_summary.py"
 
 def input_plot_p_nom_max(wildcards):
