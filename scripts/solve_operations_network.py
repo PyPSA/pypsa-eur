@@ -29,12 +29,12 @@ Inputs
 ------
 
 - ``networks/{network}_s{simpl}_{clusters}.nc``: confer :ref:`cluster`
-- ``results/networks/{network}_s{simpl}_{clusters}_l{ll}_{opts}.nc``: confer :ref:`solve`
+- ``results/networks/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc``: confer :ref:`solve`
 
 Outputs
 -------
 
-- ``results/networks/{network}_s{simpl}_{clusters}_l{ll}_{opts}_op.nc``: Solved PyPSA network for optimal dispatch including optimisation results
+- ``results/networks/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_op.nc``: Solved PyPSA network for optimal dispatch including optimisation results
 
 Description
 -----------

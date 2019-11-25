@@ -28,12 +28,12 @@ Relevant Settings
 Inputs
 ------
 
-- ``networks/{network}_s{simpl}_{clusters}_l{ll}_{opts}.nc``: confer :ref:`prepare`
+- ``networks/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc``: confer :ref:`prepare`
 
 Outputs
 -------
 
-- ``results/networks/{network}_s{simpl}_{clusters}_l{ll}_{opts}_trace.nc``: Solved PyPSA network including optimisation results (with trace)
+- ``results/networks/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_trace.nc``: Solved PyPSA network including optimisation results (with trace)
 
 Description
 -----------

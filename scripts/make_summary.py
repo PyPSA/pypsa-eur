@@ -484,7 +484,7 @@ if __name__ == "__main__":
     logging.basicConfig(filename=snakemake.log,
                         level=snakemake.config['logging_level'])
 
-    networks_dict = {(simpl,clusters,l,opts) : ('results/networks/{network}_s{simpl}_{clusters}_l{ll}_{opts}.nc'
+    networks_dict = {(simpl,clusters,l,opts) : ('results/networks/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc'
                                                  .format(network=snakemake.wildcards.network,
                                                          simpl=simpl,
                                                          clusters=clusters,
