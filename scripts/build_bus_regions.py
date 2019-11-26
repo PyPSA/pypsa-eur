@@ -49,8 +49,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
-    logging.basicConfig(filename=snakemake.log,
-                        level=snakemake.config['logging_level'])    
+    logging.basicConfig(handlers=[logging.FileHandler(snakemake.log[0]),
+                                  logging.StreamHandler()],
+                        format=snakemake.config['logging_format'],
+                        level=snakemake.config['logging_level'])
 
     countries = snakemake.config['countries']
 

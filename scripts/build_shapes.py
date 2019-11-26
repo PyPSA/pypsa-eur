@@ -224,7 +224,9 @@ if __name__ == "__main__":
             )
         )
 
-    logging.basicConfig(filename=snakemake.log,
+    logging.basicConfig(handlers=[logging.FileHandler(snakemake.log[0]),
+                                  logging.StreamHandler()],
+                        format=snakemake.config['logging_format'],
                         level=snakemake.config['logging_level'])
 
     country_shapes = countries()

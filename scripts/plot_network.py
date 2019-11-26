@@ -258,7 +258,9 @@ if __name__ == "__main__":
                         ext="results/plots/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{attr}_ext.{ext}")
         )
 
-    logging.basicConfig(filename=snakemake.log,
+    logging.basicConfig(handlers=[logging.FileHandler(snakemake.log[0]),
+                                  logging.StreamHandler()],
+                        format=snakemake.config['logging_format'],
                         level=snakemake.config['logging_level'])
 
     set_plot_style()

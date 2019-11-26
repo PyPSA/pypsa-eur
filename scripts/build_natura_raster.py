@@ -50,7 +50,9 @@ def determine_cutout_xXyY(cutout_name):
     return [x - dx/2., X + dx/2., y - dy/2., Y + dy/2.]
 
 if __name__ == "__main__":
-    logging.basicConfig(filename=snakemake.log,
+    logging.basicConfig(handlers=[logging.FileHandler(snakemake.log[0]),
+                                  logging.StreamHandler()],
+                        format=snakemake.config['logging_format'],
                         level=snakemake.config['logging_level'])
 
     cutout_names = np.unique([res['cutout'] for res in snakemake.config['renewable'].values()])

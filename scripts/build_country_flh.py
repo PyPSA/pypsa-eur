@@ -175,8 +175,10 @@ if __name__ == '__main__':
                                                  snakemake.config["renewable"][snakemake.wildcards.technology]['cutout'])
 
     pgb.streams.wrap_stderr()
-    logging.basicConfig(filename=snakemake.log,
-                        level=snakemake.config['logging_level'])    
+    logging.basicConfig(handlers=[logging.FileHandler(snakemake.log[0]),
+                                  logging.StreamHandler()],
+                        format=snakemake.config['logging_format'],
+                        level=snakemake.config['logging_level'])
 
     config = snakemake.config['renewable'][snakemake.wildcards.technology]
 
