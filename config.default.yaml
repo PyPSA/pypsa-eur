@@ -1,6 +1,7 @@
 version: 0.1
 tutorial: false
 logging_level: INFO
+logging_format: '%(levelname)s:%(name)s:%(message)s' # Custom format for log messages, see logging's LogRecord attributes
 
 summary_dir: results
 
