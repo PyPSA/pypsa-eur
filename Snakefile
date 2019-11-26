@@ -48,6 +48,7 @@ if not config.get('tutorial', False):
 if config['enable'].get('retrieve_databundle', True):
     rule retrieve_databundle:
         output:  expand('data/bundle/{file}', file=datafiles)
+        log: "logs/retrieve_databundle.log"
         script: 'scripts/retrieve_databundle.py'
 
 rule build_powerplants:
