@@ -379,7 +379,7 @@ if __name__ == "__main__":
                      python="logs/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_python.log")
         )
 
-    logging.basicConfig(handlers=[logging.FileHandler(snakemake.log[0]),
+    logging.basicConfig(handlers=[logging.FileHandler(snakemake.log.python),
                                   logging.StreamHandler()],
                         format=snakemake.config['logging_format'],
                         level=snakemake.config['logging_level'])
