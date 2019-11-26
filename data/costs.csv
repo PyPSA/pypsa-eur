@@ -94,6 +94,9 @@ hydrogen storage,2030,investment,11.2,USD/kWh,budischak2013
 hydrogen storage,2030,lifetime,20,years,budischak2013
 hydrogen underground storage,2030,investment,0.5,EUR/kWh,maximum from https://www.nrel.gov/docs/fy10osti/46719.pdf
 hydrogen underground storage,2030,lifetime,40,years,http://www.acatech.de/fileadmin/user_upload/Baumstruktur_nach_Website/Acatech/root/de/Publikationen/Materialien/ESYS_Technologiesteckbrief_Energiespeicher.pdf
+H2 pipeline,2030,investment,267,EUR/MW/km,Welder et al https://doi.org/10.1016/j.ijhydene.2018.12.156
+H2 pipeline,2030,lifetime,40,years,TODO
+H2 pipeline,2030,FOM,3,%/year,TODO
 methanation,2030,investment,1000,EUR/kWH2,Schaber thesis
 methanation,2030,lifetime,25,years,Schaber thesis
 methanation,2030,FOM,3,%/year,Schaber thesis

@@ -202,7 +202,7 @@ rule prepare_sector_network:
         solar_thermal_rural="resources/solar_thermal_rural_{network}_s{simpl}_{clusters}.nc"
     output: config['results_dir']  +  config['run'] + '/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}.nc'
     threads: 1
-    resources: mem=1000
+    resources: mem=2000
     benchmark: "benchmarks/prepare_network/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}"
     script: "scripts/prepare_sector_network.py"
 
@@ -219,7 +219,7 @@ rule solve_network:
         memory="logs/" + config['run'] + "/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_memory.log"
     benchmark: "benchmarks/solve_network/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}"
     threads: 4
-    resources: mem=50000 #memory in MB; 40 GB enough for 45+B+I; 100 GB based on RESI usage for 128
+    resources: mem=120000 #memory in MB; 40 GB enough for 45+B+I; 100 GB based on RESI usage for 128
     # group: "solve" # with group, threads is ignored https://bitbucket.org/snakemake/snakemake/issues/971/group-job-description-does-not-contain
     script: "scripts/solve_network.py"
 

@@ -522,33 +522,45 @@ def add_storage(network):
                  efficiency=costs.at["fuel cell","efficiency"],
                  capital_cost=costs.at["fuel cell","fixed"]*costs.at["fuel cell","efficiency"])  #NB: fixed cost is per MWel
 
-    network.add("Bus",
-                "EU H2",
-                carrier="H2")
-
-    #TODO Add capital costs, efficiency losses
-    network.madd("Link",
-                 nodes + " H2 pipeline",
-                 bus0=nodes + " H2",
-                 bus1="EU H2",
-                 p_min_pu=-1,
-                 p_nom_extendable=True,
-                 carrier="H2 pipeline")
-
     if options['hydrogen_underground_storage']:
         h2_capital_cost = costs.at["hydrogen underground storage","fixed"]
     else:
         h2_capital_cost = costs.at["hydrogen storage","fixed"]
 
     network.madd("Store",
-                 ["EU H2 Store"],
-                 bus="EU H2",
-                 #nodes + " H2 Store",
-                 #bus=nodes + " H2",
+                 nodes + " H2 Store",
+                 bus=nodes + " H2",
                  e_nom_extendable=True,
                  e_cyclic=True,
                  carrier="H2 Store",
                  capital_cost=h2_capital_cost)
+
+    h2_links = pd.DataFrame(columns=["bus0","bus1","length"])
+    prefix = "H2 pipeline "
+    connector = " -> "
+    attrs = ["bus0","bus1","length"]
+
+    candidates = pd.concat([n.lines[attrs],n.links.loc[n.links.carrier == "DC",attrs]])
+
+    for candidate in candidates.index:
+        buses = [candidates.at[candidate,"bus0"],candidates.at[candidate,"bus1"]]
+        buses.sort()
+        name = prefix + buses[0] + connector + buses[1]
+        if name not in h2_links.index:
+            h2_links.at[name,"bus0"] = buses[0]
+            h2_links.at[name,"bus1"] = buses[1]
+            h2_links.at[name,"length"] = candidates.at[candidate,"length"]
+
+    #TODO Add efficiency losses
+    network.madd("Link",
+                 h2_links.index,
+                 bus0=h2_links.bus0.values + " H2",
+                 bus1=h2_links.bus1.values + " H2",
+                 p_min_pu=-1,
+                 p_nom_extendable=True,
+                 length=h2_links.length.values,
+                 capital_cost=costs.at['H2 pipeline','fixed']*h2_links.length.values,
+                 carrier="H2 pipeline")
 
 
     network.add("Carrier","battery")
@@ -1247,6 +1259,7 @@ if __name__ == "__main__":
             input=dict(network='../pypsa-eur/networks/{network}_s{simpl}_{clusters}.nc', timezone_mappings='data/timezone_mappings.csv'),
             output=['networks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}.nc']
         )
+        import yaml
         with open('config.yaml') as f:
             snakemake.config = yaml.load(f)
 
