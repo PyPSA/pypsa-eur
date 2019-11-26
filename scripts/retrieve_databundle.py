@@ -61,4 +61,4 @@ if __name__ == "__main__":
     
     tarball_fn.unlink()
     
-    logger.info(f"Cutouts available in '{to_fn}'.")
+    logger.info(f"Databundle available in '{to_fn}'.")
