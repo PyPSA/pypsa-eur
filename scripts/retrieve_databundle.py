@@ -28,12 +28,20 @@ The :ref:`tutorial` uses a smaller `data bundle <https://zenodo.org/record/35179
 
 """
 
-import logging, os, tarfile
+import os
+import tarfile
 from _helpers import progress_retrieve
 
+import logging
 logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
+
+    logging.basicConfig(format=snakemake.config['logging_format'],
+                    level=snakemake.config['logging_level']
+                    # Logging to file doesn't work; collission with _helpers.progress_retrieve
+                    # handlers=[logging.FileHandler(snakemake.log[0]), logging.StreamHandler()],
+                    )
 
     if snakemake.config['tutorial']:
         url = "https://zenodo.org/record/3517921/files/pypsa-eur-tutorial-data-bundle.tar.xz"
@@ -42,8 +50,14 @@ if __name__ == "__main__":
 
     tarball_fn = "./bundle.tar.xz"
 
+    logger.info(f"Downloading databundle from '{url}'.")
     progress_retrieve(url, tarball_fn)
 
-    tarfile.open(tarball_fn).extractall('./data')
+    to_fn = "./data"
 
+    logger.info(f"Extracting databundle.")
+    tarfile.open(tarball_fn).extractall(to_fn)
+    
     os.remove(tarball_fn)
+    
+    logger.info(f"Cutouts available in '{to_fn}'."

@@ -26,20 +26,29 @@ This rule, as a substitute for :mod:`build_natura_raster`, downloads an already 
 
 """
 
-import logging, os
+import os
 from _helpers import progress_retrieve
 
+import logging
 logger = logging.getLogger(__name__)
 
 
 if __name__ == "__main__":
 
-    logging.basicConfig(filename=snakemake.log,
-                        level=snakemake.config['logging_level'])
+    logging.basicConfig(format=snakemake.config['logging_format'],
+                        level=snakemake.config['logging_level']
+                        # Logging to file doesn't work; collission with _helpers.progress_retrieve
+                        # handlers=[logging.FileHandler(snakemake.log[0]), logging.StreamHandler()],
+                        )
 
     d = './resources'
     if not os.path.exists(d):
         os.makedirs(d)
 
-    progress_retrieve("https://zenodo.org/record/3518215/files/natura.tiff",
-                    "resources/natura.tiff")
+    url = "https://zenodo.org/record/3518215/files/natura.tiff"
+    to_fn = "resources/natura.tiff"
+
+    logger.info(f"Downloading natura raster from '{url}'.")
+    progress_retrieve(url, to_fn)
+    
+    logger.info(f"Natura raster available as '{to_fn}'.")
