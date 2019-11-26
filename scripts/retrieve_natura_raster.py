@@ -26,7 +26,7 @@ This rule, as a substitute for :mod:`build_natura_raster`, downloads an already 
 
 """
 
-import os
+from pathlib import Path
 from _helpers import progress_retrieve
 
 import logging
@@ -41,12 +41,11 @@ if __name__ == "__main__":
                         # handlers=[logging.FileHandler(snakemake.log[0]), logging.StreamHandler()],
                         )
 
-    d = './resources'
-    if not os.path.exists(d):
-        os.makedirs(d)
+    # Save location, ensure folder existence
+    to_fn = Path("resources/natura.tiff")
+    to_fn.parent.mkdir(parents=True, exist_ok=True)
 
     url = "https://zenodo.org/record/3518215/files/natura.tiff"
-    to_fn = "resources/natura.tiff"
 
     logger.info(f"Downloading natura raster from '{url}'.")
     progress_retrieve(url, to_fn)

@@ -29,6 +29,7 @@ The :ref:`tutorial` uses a smaller `data bundle <https://zenodo.org/record/35179
 """
 
 import os
+from pathlib import Path
 import tarfile
 from _helpers import progress_retrieve
 
@@ -48,16 +49,16 @@ if __name__ == "__main__":
     else:
         url = "https://zenodo.org/record/3517935/files/pypsa-eur-data-bundle.tar.xz"
 
-    tarball_fn = "./bundle.tar.xz"
+    # Save locations
+    tarball_fn = Path("./bundle.tar.xz")
+    to_fn = Path("./data")
 
     logger.info(f"Downloading databundle from '{url}'.")
     progress_retrieve(url, tarball_fn)
 
-    to_fn = "./data"
-
     logger.info(f"Extracting databundle.")
     tarfile.open(tarball_fn).extractall(to_fn)
     
-    os.remove(tarball_fn)
+    tarball_fn.unlink()
     
-    logger.info(f"Cutouts available in '{to_fn}'."
+    logger.info(f"Cutouts available in '{to_fn}'.")

@@ -37,7 +37,7 @@ The :ref:`tutorial` uses smaller `cutouts <https://zenodo.org/record/3518020/fil
 
 """
 
-import os
+from pathlib import Path
 import tarfile
 from _helpers import progress_retrieve
 
@@ -58,7 +58,8 @@ if __name__ == "__main__":
     else:
         url = "https://zenodo.org/record/3517949/files/pypsa-eur-cutouts.tar.xz"
 
-    tarball_fn = "./cutouts.tar.xz"
+    # Save location
+    tarball_fn = Path("./cutouts.tar.xz")
 
     logger.info(f"Downloading cutouts from '{url}'.")
     progress_retrieve(url, tarball_fn)
@@ -66,6 +67,6 @@ if __name__ == "__main__":
     logger.info(f"Extracting cutouts.")
     tarfile.open(tarball_fn).extractall()
 
-    os.remove(tarball_fn)
-    
-    logger.info(f"Cutouts available in '{tarball_fn}'."
+    tarball_fn.unlink()
+
+    logger.info(f"Cutouts available in '{tarball_fn}'.")
