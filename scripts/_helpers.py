@@ -1,7 +1,6 @@
 import pandas as pd
 from six import iterkeys, itervalues
 import urllib
-from progressbar import ProgressBar
 
 import pypsa
 
@@ -107,6 +106,8 @@ def aggregate_costs(n, flatten=False, opts=None, existing_only=False):
     return costs
 
 def progress_retrieve(url, file):
+    from progressbar import ProgressBar
+
     pbar = ProgressBar(0, 100)
 
     def dlProgress(count, blockSize, totalSize):
