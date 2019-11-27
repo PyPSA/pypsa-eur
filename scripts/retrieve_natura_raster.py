@@ -26,20 +26,15 @@ This rule, as a substitute for :mod:`build_natura_raster`, downloads an already 
 
 """
 
-from pathlib import Path
-from _helpers import progress_retrieve
-
 import logging
 logger = logging.getLogger(__name__)
 
+from pathlib import Path
+from _helpers import progress_retrieve, configure_logging
 
 if __name__ == "__main__":
 
-    logging.basicConfig(format=snakemake.config['logging_format'],
-                        level=snakemake.config['logging_level']
-                        # Logging to file doesn't work; collission with _helpers.progress_retrieve
-                        # handlers=[logging.FileHandler(snakemake.log[0]), logging.StreamHandler()],
-                        )
+    configure_logging(logging, snakemake) # TODO Make logging compatible with progressbar (see PR #102)
 
     # Save location, ensure folder existence
     to_fn = Path("resources/natura.tiff")

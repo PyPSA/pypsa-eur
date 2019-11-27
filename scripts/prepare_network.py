@@ -50,6 +50,10 @@ Description
 
 """
 
+import logging
+logger = logging.getLogger(__name__)
+from _helpers import configure_logging
+
 from add_electricity import load_costs, update_transmission_costs
 from six import iteritems
 
@@ -57,10 +61,8 @@ import numpy as np
 import re
 import pypsa
 import pandas as pd
-import logging
 
 idx = pd.IndexSlice
-logger = logging.getLogger(__name__)
 
 def add_co2limit(n, Nyears=1., factor=None):
 
@@ -185,10 +187,7 @@ if __name__ == "__main__":
             output=['networks/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc']
         )
 
-    logging.basicConfig(handlers=[logging.FileHandler(snakemake.log[0]),
-                                  logging.StreamHandler()],
-                        format=snakemake.config['logging_format'],
-                        level=snakemake.config['logging_level'])
+    configure_logging(logging, snakemake)
 
     opts = snakemake.wildcards.opts.split('-')
 

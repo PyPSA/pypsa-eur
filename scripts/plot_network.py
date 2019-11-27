@@ -15,13 +15,13 @@ Description
 
 """
 
-from _helpers import load_network, aggregate_p, aggregate_costs
+import logging
+logger = logging.getLogger(__name__)
+from _helpers import load_network, aggregate_p, aggregate_costs, configure_logging
 
 import pandas as pd
 import numpy as np
 from six.moves import zip
-import logging
-logger = logging.getLogger(__name__)
 
 import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
@@ -258,11 +258,8 @@ if __name__ == "__main__":
                         ext="results/plots/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{attr}_ext.{ext}")
         )
 
-    logging.basicConfig(handlers=[logging.FileHandler(snakemake.log[0]),
-                                  logging.StreamHandler()],
-                        format=snakemake.config['logging_format'],
-                        level=snakemake.config['logging_level'])
-
+    configure_logging(logging, snakemake)
+    
     set_plot_style()
 
     opts = snakemake.config['plotting']

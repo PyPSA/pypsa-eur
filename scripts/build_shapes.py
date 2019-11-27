@@ -63,6 +63,10 @@ Description
 
 """
 
+import logging
+logger = logging.getLogger(__name__)
+from _helpers import configure_logging
+
 import os
 import numpy as np
 from operator import attrgetter
@@ -75,9 +79,6 @@ from shapely.geometry import MultiPolygon, Polygon
 from shapely.ops import cascaded_union
 
 import pycountry as pyc
-
-import logging
-logger = logging.getLogger(__name__)
 
 def _get_country(target, **keys):
     assert len(keys) == 1
@@ -224,10 +225,7 @@ if __name__ == "__main__":
             )
         )
 
-    logging.basicConfig(handlers=[logging.FileHandler(snakemake.log[0]),
-                                  logging.StreamHandler()],
-                        format=snakemake.config['logging_format'],
-                        level=snakemake.config['logging_level'])
+    configure_logging(logging, snakemake)
 
     country_shapes = countries()
     save_to_geojson(country_shapes, snakemake.output.country_shapes)

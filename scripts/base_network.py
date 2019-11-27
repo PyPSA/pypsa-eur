@@ -58,6 +58,10 @@ Description
 
 """
 
+import logging
+logger = logging.getLogger(__name__)
+from _helpers import configure_logging
+
 import yaml
 import pandas as pd
 import geopandas as gpd
@@ -71,9 +75,6 @@ from shapely.geometry import Point, LineString
 import shapely, shapely.prepared, shapely.wkt
 
 import networkx as nx
-
-import logging
-logger = logging.getLogger(__name__)
 
 import pypsa
 
@@ -569,10 +570,7 @@ if __name__ == "__main__":
             output = ['networks/base.nc']
         )
 
-    logging.basicConfig(handlers=[logging.FileHandler(snakemake.log[0]),
-                                  logging.StreamHandler()],
-                        format=snakemake.config['logging_format'],
-                        level=snakemake.config['logging_level'])
+    configure_logging(logging, snakemake)
 
     n = base_network()
     n.export_to_netcdf(snakemake.output[0])

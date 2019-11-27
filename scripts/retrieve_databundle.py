@@ -28,21 +28,16 @@ The :ref:`tutorial` uses a smaller `data bundle <https://zenodo.org/record/35179
 
 """
 
-import os
-from pathlib import Path
-import tarfile
-from _helpers import progress_retrieve
-
 import logging
 logger = logging.getLogger(__name__)
+from _helpers import progress_retrieve, configure_logging
+
+from pathlib import Path
+import tarfile
 
 if __name__ == "__main__":
 
-    logging.basicConfig(format=snakemake.config['logging_format'],
-                    level=snakemake.config['logging_level']
-                    # Logging to file doesn't work; collission with _helpers.progress_retrieve
-                    # handlers=[logging.FileHandler(snakemake.log[0]), logging.StreamHandler()],
-                    )
+    configure_logging(logging, snakemake) # TODO Make logging compatible with progressbar (see PR #102)
 
     if snakemake.config['tutorial']:
         url = "https://zenodo.org/record/3517921/files/pypsa-eur-tutorial-data-bundle.tar.xz"

@@ -40,12 +40,13 @@ Description
 
 """
 
+import logging
+logger = logging.getLogger(__name__)
+from _helpers import configure_logging
+
 from solve_network import patch_pyomo_tmpdir, prepare_network, solve_network
 
-import logging
 import pypsa
-
-logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     # Detect running outside of snakemake and mock snakemake for testing
@@ -62,10 +63,7 @@ if __name__ == "__main__":
     if tmpdir is not None:
         patch_pyomo_tmpdir(tmpdir)
 
-    logging.basicConfig(handlers=[logging.FileHandler(snakemake.log.python),
-                                  logging.StreamHandler()],
-                        format=snakemake.config['logging_format'],
-                        level=snakemake.config['logging_level'])
+    configure_logging(logging, snakemake)
 
     n = pypsa.Network(snakemake.input[0])
 

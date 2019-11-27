@@ -41,11 +41,13 @@ Description
 
 """
 
+import logging
+logger = logging.getLogger(__name__)
+from _helpers import configure_logging
+
 import pypsa
 import numpy as np
 import re
-import logging
-logger = logging.getLogger(__name__)
 
 from vresutils.benchmark import memory_logger
 from solve_network import patch_pyomo_tmpdir, solve_network, prepare_network
@@ -93,10 +95,7 @@ if __name__ == "__main__":
     if tmpdir is not None:
         patch_pyomo_tmpdir(tmpdir)
 
-    logging.basicConfig(handlers=[logging.FileHandler(snakemake.log.python),
-                                  logging.StreamHandler()],
-                        format=snakemake.config['logging_format'],
-                        level=snakemake.config['logging_level'])
+    configure_logging(logging, snakemake)
 
     n = pypsa.Network(snakemake.input.unprepared)
 

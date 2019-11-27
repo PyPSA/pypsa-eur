@@ -77,10 +77,12 @@ Details (and errors made through this heuristic) are discussed in the paper
 
 """
 
-import numpy as np
-import pandas as pd
 import logging
 logger = logging.getLogger(__name__)
+from _helpers import configure_logging
+
+import numpy as np
+import pandas as pd
 import gc
 
 import pypsa
@@ -379,10 +381,7 @@ if __name__ == "__main__":
                      python="logs/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_python.log")
         )
 
-    logging.basicConfig(handlers=[logging.FileHandler(snakemake.log.python),
-                                  logging.StreamHandler()],
-                        format=snakemake.config['logging_format'],
-                        level=snakemake.config['logging_level'])
+    configure_logging(logging, snakemake)
 
     tmpdir = snakemake.config['solving'].get('tmpdir')
     if tmpdir is not None:
