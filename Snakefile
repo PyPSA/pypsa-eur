@@ -29,6 +29,7 @@ rule solve_all_elec_networks:
 if config['enable'].get('prepare_links_p_nom', False):
     rule prepare_links_p_nom:
         output: 'data/links_p_nom.csv'
+        log: 'logs/prepare_links_p_nom.log'
         threads: 1
         resources: mem=500
         # group: 'nonfeedin_preparation'
