@@ -4,13 +4,48 @@ import urllib
 
 import pypsa
 
-from add_electricity import load_costs, update_transmission_costs
+def configure_logging(logging, snakemake, skip_handlers=False):
+    """
+    Configure the basic behaviour for the logging module.
+
+    Note: Must only be called once from the __main__ section of a script.
+
+    The setup includes printing log messages to STDERR and to a log file defined
+    by either (in priority order): snakemake.log.python, snakemake.log[0] or "logs/{rulename}.log".
+    Additional keywords from logging.basicConfig are accepted via the snakemake configuration
+    file under snakemake.config.logging.
+
+    Parameters
+    ----------
+    logging : module
+        The logging module imported.
+    snakemake : snakemake object
+        Your snakemake object containing a snakemake.config and snakemake.log.
+    skip_handlers : True | False (default)
+        Do (not) skip the default handlers created for redirecting output to STDERR and file.
+    """
+
+    kwargs = snakemake.config.get('logging', dict())
+    kwargs.setdefault("level", "INFO")
+
+    if skip_handlers is False:
+        kwargs.update(
+            {'handlers': [
+                # Prefer the 'python' log, otherwise take the first log for each
+                # Snakemake rule
+                logging.FileHandler(snakemake.log.get('python', snakemake.log[0] if snakemake.log else f"logs/{snakemake.rule}.log")),
+                logging.StreamHandler()
+                ]
+            })
+    logging.basicConfig(**kwargs)
 
 def pdbcast(v, h):
     return pd.DataFrame(v.values.reshape((-1, 1)) * h.values,
                         index=v.index, columns=h.index)
 
 def load_network(fn, tech_costs, config, combine_hydro_ps=True):
+    from add_electricity import update_transmission_costs, load_costs
+
     opts = config['plotting']
 
     n = pypsa.Network(fn)
