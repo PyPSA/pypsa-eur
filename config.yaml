@@ -147,6 +147,12 @@ solving:
     #barrier_convergetol: 1.e-5
     #feasopt_tolerance: 1.e-6
 
+industry:
+  'DRI_ratio' : 0.5 #ratio of blast-furnace steel transformed into DRI + electric arc
+  'H2_DRI' : 1.7   #H2 consumption in Direct Reduced Iron (DRI),  MWh_H2/ton_Steel
+  'Al_to_scrap' : 0.5 # ratio of primary-route Aluminum transformed into scrap 
+  'H2_for_NH3' : 85000 # H2 for NH3 transformed from SMR to electrolyzed-H2, in GWh/year following Lechtenböhmer(2016)
+  
 plotting:
   map:
     figsize: [7, 7]

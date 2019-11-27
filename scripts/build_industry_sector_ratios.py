@@ -163,8 +163,8 @@ df.loc[['elec','heat','methane'],sector] = df.loc[['elec','heat','methane'],sect
 df['Integrated steelworks']=df['Electric arc']
 
 # adding the Hydrogen necessary for the Direct Reduction of Iron. consumption 1.7 MWh H2 /ton steel
-#(0.5 becuase only half of the steel requires DRI, the rest is scrap  metal)
-df.loc['hydrogen', 'Integrated steelworks'] =1.7 * 0.5
+#(0.5 because only half of the steel requires DRI, the rest is scrap  metal)
+df.loc['hydrogen', 'Integrated steelworks'] =snakemake.config["industry"]["H2_DRI"] * snakemake.config["industry"]["DRI_ratio"]
 
 
 ## Chemicals Industry
@@ -220,8 +220,8 @@ df.loc['naphtha',sector] += s_fec['Naphtha']
 
 # natural gas
 # 85 TWh/year of methane for the ammonia industry are substituted by hydrogen
-df.loc['methane',sector] += s_fec['Natural gas'] - 85000/conv_factor
-df.loc['hydrogen',sector] += 85000/conv_factor
+df.loc['methane',sector] += s_fec['Natural gas'] - snakemake.config["industry"]["H2_for_NH3"]/conv_factor
+df.loc['hydrogen',sector] += snakemake.config["industry"]["H2_for_NH3"]/conv_factor
 # 1 ktoe = 11630 MWh
 
 # LPG and other feedstock materials are assimilated to naphtha since they will be produced trough Fischer-Tropsh process
@@ -1050,8 +1050,8 @@ df.loc[sources,sector] = df.loc[sources,sector]*conv_factor/s_out['Aluminium - s
 # 1 ktoe = 11630 MWh
 
 # primary route is divided into 50% remains as today and 50% is transformed into secondary route
-df.loc[sources,'Aluminium - primary production'] = 0.5*df.loc[sources,'Aluminium - primary production'] + 0.5*df.loc[sources,'Aluminium - secondary production']
-df.loc['process emission','Aluminium - primary production'] = 0.5*df.loc['process emission','Aluminium - primary production']
+df.loc[sources,'Aluminium - primary production'] = (1-snakemake.config["industry"]["Al_to_scrap"])*df.loc[sources,'Aluminium - primary production'] + snakemake.config["industry"]["Al_to_scrap"]*df.loc[sources,'Aluminium - secondary production']
+df.loc['process emission','Aluminium - primary production'] = (1-snakemake.config["industry"]["Al_to_scrap"])*df.loc['process emission','Aluminium - primary production']
 
 ### Other non-ferrous metals
 
