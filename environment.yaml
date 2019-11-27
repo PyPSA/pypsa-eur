@@ -6,7 +6,7 @@ dependencies:
   - python
   - pip
 
-  #- pypsa>=0.14  # until pypsa/pypsa#102 closed
+  - pypsa>=0.15
   - atlite
 
   # Dependencies of the workflow itself
@@ -18,6 +18,7 @@ dependencies:
   - memory_profiler
   - yaml
   - pytables
+  - powerplantmatching>=0.4.2
 
   # Second order dependencies which should really be deps of atlite
   - xarray
@@ -26,6 +27,7 @@ dependencies:
   - toolz
   - dask
   - progressbar2
+  - pyyaml>=5.1.0
 
   # Include ipython so that one does not inadvertently drop out of the conda
   # environment by calling ipython
@@ -42,9 +44,7 @@ dependencies:
   - conda-forge::libgdal
 
   - pip:
-    - vresutils>=0.3
-    - git+https://github.com/PyPSA/pypsa.git#egg=pypsa  # until pypsa/pypsa#102 closed
+    - git+https://github.com/FRESNA/vresutils.git#egg=vresutils
     - git+https://github.com/PyPSA/glaes.git#egg=glaes
     - git+https://github.com/PyPSA/geokit.git#egg=geokit
     - cdsapi
-    - powerplantmatching

@@ -64,7 +64,6 @@ import xarray as xr
 import pandas as pd
 
 import geokit as gk
-from osgeo import gdal
 from scipy.sparse import vstack
 import pycountry as pyc
 import matplotlib.pyplot as plt
