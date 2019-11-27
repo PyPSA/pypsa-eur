@@ -381,7 +381,7 @@ if __name__ == "__main__":
                      python="logs/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_python.log")
         )
 
-    configure_logging(logging, snakemake)
+    configure_logging(snakemake)
 
     tmpdir = snakemake.config['solving'].get('tmpdir')
     if tmpdir is not None:

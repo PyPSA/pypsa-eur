@@ -95,7 +95,7 @@ import os
 import atlite
 
 if __name__ == "__main__":
-    configure_logging(logging, snakemake)
+    configure_logging(snakemake)
 
     cutout_params = snakemake.config['atlite']['cutouts'][snakemake.wildcards.cutout]
     for p in ('xs', 'ys', 'years', 'months'):

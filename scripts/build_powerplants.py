@@ -98,7 +98,7 @@ if __name__ == "__main__":
             output=['resources/powerplants.csv']
         )
 
-    configure_logging(logging, snakemake)
+    configure_logging(snakemake)
 
     n = pypsa.Network(snakemake.input.base_network)
     countries = n.buses.country.unique()

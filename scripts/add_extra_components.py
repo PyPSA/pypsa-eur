@@ -150,7 +150,7 @@ if __name__ == "__main__":
             Dict(network='networks/elec_s_5.nc',
                  tech_costs='data/costs.csv'))
 
-    configure_logging(logging, snakemake)
+    configure_logging(snakemake)
 
     n = pypsa.Network(snakemake.input.network)
     Nyears = n.snapshot_weightings.sum()/8760.

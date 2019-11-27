@@ -178,7 +178,7 @@ if __name__ == '__main__':
 
     pgb.streams.wrap_stderr()
 
-    configure_logging(logging, snakemake)
+    configure_logging(snakemake)
 
     config = snakemake.config['renewable'][snakemake.wildcards.technology]
 

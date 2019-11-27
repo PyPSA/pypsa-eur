@@ -187,7 +187,7 @@ if __name__ == "__main__":
             output=['networks/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc']
         )
 
-    configure_logging(logging, snakemake)
+    configure_logging(snakemake)
 
     opts = snakemake.wildcards.opts.split('-')
 

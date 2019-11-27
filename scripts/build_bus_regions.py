@@ -51,7 +51,7 @@ import geopandas as gpd
 import pypsa
 
 if __name__ == "__main__":
-    configure_logging(logging, snakemake)
+    configure_logging(snakemake)
 
     countries = snakemake.config['countries']
 

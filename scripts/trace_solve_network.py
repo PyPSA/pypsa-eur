@@ -63,7 +63,7 @@ if __name__ == "__main__":
     if tmpdir is not None:
         patch_pyomo_tmpdir(tmpdir)
 
-    configure_logging(logging, snakemake)
+    configure_logging(snakemake)
 
     n = pypsa.Network(snakemake.input[0])
 

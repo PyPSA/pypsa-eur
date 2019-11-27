@@ -39,7 +39,7 @@ import pandas as pd
 
 if __name__ == "__main__":
 
-    configure_logging(logging, snakemake)
+    configure_logging(snakemake)
 
     links_p_nom = pd.read_html('https://en.wikipedia.org/wiki/List_of_HVDC_projects', header=0, match="SwePol")[0]
 

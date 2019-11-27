@@ -258,7 +258,7 @@ if __name__ == "__main__":
                         ext="results/plots/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{attr}_ext.{ext}")
         )
 
-    configure_logging(logging, snakemake)
+    configure_logging(snakemake)
     
     set_plot_style()
 

@@ -51,7 +51,7 @@ def determine_cutout_xXyY(cutout_name):
     return [x - dx/2., X + dx/2., y - dy/2., Y + dy/2.]
 
 if __name__ == "__main__":
-    configure_logging(logging, snakemake)
+    configure_logging(snakemake)
 
     cutout_names = np.unique([res['cutout'] for res in snakemake.config['renewable'].values()])
     xs, Xs, ys, Ys = zip(*(determine_cutout_xXyY(cutout) for cutout in cutout_names))

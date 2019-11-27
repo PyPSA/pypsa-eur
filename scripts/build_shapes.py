@@ -225,7 +225,7 @@ if __name__ == "__main__":
             )
         )
 
-    configure_logging(logging, snakemake)
+    configure_logging(snakemake)
 
     country_shapes = countries()
     save_to_geojson(country_shapes, snakemake.output.country_shapes)

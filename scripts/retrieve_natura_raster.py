@@ -34,7 +34,7 @@ from _helpers import progress_retrieve, configure_logging
 
 if __name__ == "__main__":
 
-    configure_logging(logging, snakemake) # TODO Make logging compatible with progressbar (see PR #102)
+    configure_logging(snakemake) # TODO Make logging compatible with progressbar (see PR #102)
 
     # Save location, ensure folder existence
     to_fn = Path("resources/natura.tiff")

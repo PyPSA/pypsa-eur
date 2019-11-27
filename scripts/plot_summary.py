@@ -182,7 +182,7 @@ def plot_energy(infn, fn=None):
 
 if __name__ == "__main__":
 
-    configure_logging(logging, snakemake)
+    configure_logging(snakemake)
 
     summary = snakemake.wildcards.summary
     try:

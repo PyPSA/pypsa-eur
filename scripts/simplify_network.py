@@ -351,7 +351,7 @@ if __name__ == "__main__":
             )
         )
     
-    configure_logging(logging, snakemake)
+    configure_logging(snakemake)
 
     n = pypsa.Network(snakemake.input.network)
 

@@ -1,10 +1,6 @@
 import pandas as pd
-from six import iterkeys, itervalues
-import urllib
 
-import pypsa
-
-def configure_logging(logging, snakemake, skip_handlers=False):
+def configure_logging(snakemake, skip_handlers=False):
     """
     Configure the basic behaviour for the logging module.
 
@@ -17,13 +13,13 @@ def configure_logging(logging, snakemake, skip_handlers=False):
 
     Parameters
     ----------
-    logging : module
-        The logging module imported.
     snakemake : snakemake object
         Your snakemake object containing a snakemake.config and snakemake.log.
     skip_handlers : True | False (default)
         Do (not) skip the default handlers created for redirecting output to STDERR and file.
     """
+
+    import logging
 
     kwargs = snakemake.config.get('logging', dict())
     kwargs.setdefault("level", "INFO")
@@ -44,6 +40,7 @@ def pdbcast(v, h):
                         index=v.index, columns=h.index)
 
 def load_network(fn, tech_costs, config, combine_hydro_ps=True):
+    import pypsa
     from add_electricity import update_transmission_costs, load_costs
 
     opts = config['plotting']
@@ -107,6 +104,8 @@ def aggregate_p_curtailed(n):
     ])
 
 def aggregate_costs(n, flatten=False, opts=None, existing_only=False):
+    from six import iterkeys, itervalues
+    
     components = dict(Link=("p_nom", "p0"),
                       Generator=("p_nom", "p"),
                       StorageUnit=("p_nom", "p"),
@@ -141,6 +140,7 @@ def aggregate_costs(n, flatten=False, opts=None, existing_only=False):
     return costs
 
 def progress_retrieve(url, file):
+    import urllib
     from progressbar import ProgressBar
 
     pbar = ProgressBar(0, 100)

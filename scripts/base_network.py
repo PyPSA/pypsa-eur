@@ -570,7 +570,7 @@ if __name__ == "__main__":
             output = ['networks/base.nc']
         )
 
-    configure_logging(logging, snakemake)
+    configure_logging(snakemake)
 
     n = base_network()
     n.export_to_netcdf(snakemake.output[0])

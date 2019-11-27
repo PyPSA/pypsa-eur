@@ -64,7 +64,7 @@ import geopandas as gpd
 from vresutils import hydro as vhydro
 
 if __name__ == "__main__":
-    configure_logging(logging, snakemake)
+    configure_logging(snakemake)
     
     config = snakemake.config['renewable']['hydro']
     cutout = atlite.Cutout(config['cutout'],

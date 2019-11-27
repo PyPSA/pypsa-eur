@@ -46,7 +46,7 @@ from _helpers import progress_retrieve, configure_logging
 
 if __name__ == "__main__":
 
-    configure_logging(logging, snakemake) # TODO Make logging compatible with progressbar (see PR #102)
+    configure_logging(snakemake) # TODO Make logging compatible with progressbar (see PR #102)
 
     if snakemake.config['tutorial']:
         url = "https://zenodo.org/record/3518020/files/pypsa-eur-tutorial-cutouts.tar.xz"

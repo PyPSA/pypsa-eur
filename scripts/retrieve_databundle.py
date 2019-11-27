@@ -37,7 +37,7 @@ import tarfile
 
 if __name__ == "__main__":
 
-    configure_logging(logging, snakemake) # TODO Make logging compatible with progressbar (see PR #102)
+    configure_logging(snakemake) # TODO Make logging compatible with progressbar (see PR #102)
 
     if snakemake.config['tutorial']:
         url = "https://zenodo.org/record/3517921/files/pypsa-eur-tutorial-data-bundle.tar.xz"

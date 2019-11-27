@@ -524,7 +524,7 @@ if __name__ == "__main__":
                     for t in snakemake.config['renewable']})
         )
 
-    configure_logging(logging, snakemake)
+    configure_logging(snakemake)
 
     n = pypsa.Network(snakemake.input.base_network)
     Nyears = n.snapshot_weightings.sum()/8760.

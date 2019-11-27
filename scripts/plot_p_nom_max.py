@@ -61,7 +61,7 @@ if __name__ == "__main__":
             output=['results/plots/cum_p_nom_max_{clusters}_{country}.pdf']
         )
     
-    configure_logging(logging, snakemake)
+    configure_logging(snakemake)
 
     plot_kwds = dict(drawstyle="steps-post")
 
