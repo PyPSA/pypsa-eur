@@ -36,3 +36,4 @@ gurobi.log
 *.pyc
 /cutouts
 /tmp
+/pypsa

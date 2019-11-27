@@ -1,7 +1,15 @@
+import os
+
+os.system("conda config --add channels http://conda.anaconda.org/gurobi")
+
+os.system("conda install -y gurobi=8.1.0")
+
 
 import sys
 
-sys.path = ["/home/vres/data/tom/lib/pypsa"] + sys.path
+sys.path = ["pypsa"] + sys.path
+
+
 
 import numpy as np
 import pandas as pd
@@ -11,6 +19,8 @@ import gc
 import os
 
 import pypsa
+
+from pypsa.linopt import get_var, linexpr, define_constraints
 
 from pypsa.descriptors import free_output_series_dataframes
 
@@ -121,47 +131,69 @@ def add_eps_storage_constraint(n):
     fix_sus_i = n.storage_units.index[~ n.storage_units.p_nom_extendable]
     n.model.objective.expr += sum(n.epsilon * n.model.state_of_charge[su, n.snapshots[0]] for su in fix_sus_i)
 
-def add_battery_constraints(network):
+def add_battery_constraints(n):
 
-    nodes = list(network.buses.index[network.buses.carrier == "battery"])
+    nodes = n.buses.index[n.buses.carrier == "battery"]
 
-    def battery(model, node):
-        return model.link_p_nom[node + " charger"] == model.link_p_nom[node + " discharger"]*network.links.at[node + " charger","efficiency"]
+    link_p_nom = get_var(n, "Link", "p_nom")
 
-    network.model.battery = pypsa.opt.Constraint(nodes, rule=battery)
+    lhs = linexpr((1,link_p_nom[nodes + " charger"]),
+                  (-n.links.loc[nodes + " charger", "efficiency"],
+                   link_p_nom[nodes + " discharger"].values))
+    define_constraints(n, lhs, "=", 0, 'Link', 'charger_ratio')
 
 
+def add_chp_constraints(n):
 
-def add_chp_constraints(network):
 
-    options = snakemake.config["sector"]
+    options = { "chp_parameters" : {    'eta_elec' : 0.468, #electrical efficiency with no heat output
+                                        'c_v' : 0.15, #loss of fuel for each addition of heat
+                                        'c_m' : 0.75, #backpressure ratio
+                                        'p_nom_ratio' : 1., #ratio of max heat output to max electrical output
+                                        }}
 
-    if hasattr(network.links.index,"str") and network.links.index.str.contains("CHP").any():
+    if hasattr(n.links.index,"str") and n.links.index.str.contains("CHP").any():
 
         #AC buses with district heating
         urban_central = n.buses.index[n.buses.carrier == "urban central heat"]
         if not urban_central.empty:
             urban_central = urban_central.str[:-len(" urban central heat")]
 
+        link_p_nom = get_var(n, "Link", "p_nom")
 
-        def chp_nom(model,node):
-            return network.links.at[node + " urban central CHP electric","efficiency"]*options['chp_parameters']['p_nom_ratio']*model.link_p_nom[node + " urban central CHP electric"] == network.links.at[node + " urban central CHP heat","efficiency"]*options['chp_parameters']['p_nom_ratio']*model.link_p_nom[node + " urban central CHP heat"]
+        #chp_nom
+        lhs = linexpr((n.links.loc[urban_central + " urban central CHP electric","efficiency"]
+                       *options['chp_parameters']['p_nom_ratio'],
+                       link_p_nom[urban_central + " urban central CHP electric"]),
+                      (-n.links.loc[urban_central + " urban central CHP heat","efficiency"].values
+                       *options['chp_parameters']['p_nom_ratio'],
+                       link_p_nom[urban_central + " urban central CHP heat"].values))
+        define_constraints(n, lhs, "=", 0, 'chplink', 'fix_p_nom_ratio')
 
+        link_p = get_var(n, "Link", "p")
 
-        network.model.chp_nom = pypsa.opt.Constraint(urban_central,rule=chp_nom)
+        #backpressure
+        lhs = linexpr((options['chp_parameters']['c_m']
+                       *n.links.loc[urban_central + " urban central CHP heat","efficiency"],
+                       link_p[urban_central + " urban central CHP heat"]),
+                      (-n.links.loc[urban_central + " urban central CHP electric","efficiency"].values,
+                       link_p[urban_central + " urban central CHP electric"].values))
 
+        define_constraints(n, lhs, "<=", 0, 'chplink', 'backpressure')
 
-        def backpressure(model,node,snapshot):
-            return options['chp_parameters']['c_m']*network.links.at[node + " urban central CHP heat","efficiency"]*model.link_p[node + " urban central CHP heat",snapshot] <= network.links.at[node + " urban central CHP electric","efficiency"]*model.link_p[node + " urban central CHP electric",snapshot]
+        #top_iso_fuel_line
+        lhs = linexpr((1,link_p[urban_central + " urban central CHP heat"]),
+                      (1,link_p[urban_central + " urban central CHP electric"].values),
+                      (-1,link_p_nom[urban_central + " urban central CHP electric"].values))
 
-        network.model.backpressure = pypsa.opt.Constraint(urban_central,list(network.snapshots),rule=backpressure)
+        define_constraints(n, lhs, "<=", 0, 'chplink', 'top_iso_fuel_line')
 
-
-        def top_iso_fuel_line(model,node,snapshot):
-            return model.link_p[node + " urban central CHP heat",snapshot] + model.link_p[node + " urban central CHP electric",snapshot] <= model.link_p_nom[node + " urban central CHP electric"]
-
-        network.model.top_iso_fuel_line = pypsa.opt.Constraint(urban_central,list(network.snapshots),rule=top_iso_fuel_line)
-
+def extra_functionality(n, snapshots):
+    #add_opts_constraints(n, opts)
+    #add_lv_constraint(n)
+    #add_eps_storage_constraint(n)
+    add_chp_constraints(n)
+    add_battery_constraints(n)
 
 
 
@@ -190,16 +222,6 @@ def solve_network(n, config=None, solver_log=None, opts=None):
 
     def run_lopf(n, allow_warning_status=False, fix_zero_lines=False, fix_ext_lines=False):
         free_output_series_dataframes(n)
-
-        if not hasattr(n, 'opt') or not isinstance(n.opt, pypsa.opf.PersistentSolver):
-            pypsa.opf.network_lopf_build_model(n, formulation=solve_opts['formulation'])
-            add_opts_constraints(n, opts)
-            add_lv_constraint(n)
-            #add_eps_storage_constraint(n)
-            add_battery_constraints(n)
-            add_chp_constraints(n)
-
-            pypsa.opf.network_lopf_prepare_solver(n, solver_name=solver_name)
 
         if fix_zero_lines:
             fix_lines_b = (n.lines.s_nom_opt == 0.) & n.lines.s_nom_extendable
@@ -237,15 +259,15 @@ def solve_network(n, config=None, solver_log=None, opts=None):
         #sys.exit()
 
 
-        status, termination_condition = \
-        pypsa.opf.network_lopf_solve(n,
-                                     solver_logfile=solver_log,
-                                     solver_options=solver_options,
-                                     formulation=solve_opts['formulation'],
-                                     extra_postprocessing=extra_postprocessing
-                                     #keep_files=True
-                                     #free_memory={'pypsa'}
-                                     )
+        status, termination_condition = n.lopf(pyomo=False,
+                                               solver_name=solver_name,
+                                               solver_logfile=solver_log,
+                                               solver_options=solver_options,
+                                               extra_functionality=extra_functionality,
+                                               formulation=solve_opts['formulation'])
+                                               #extra_postprocessing=extra_postprocessing
+                                               #keep_files=True
+                                               #free_memory={'pypsa'}
 
         assert status == "ok" or allow_warning_status and status == 'warning', \
             ("network_lopf did abort with status={} "
