@@ -89,13 +89,8 @@ def add_custom_powerplants(ppl):
 
 if __name__ == "__main__":
     if 'snakemake' not in globals():
-        from vresutils.snakemake import MockSnakemake, Dict
-
-        snakemake = MockSnakemake(
-            input=Dict(base_network='networks/base.nc',
-                       custom_powerplants='data/custom_powerplants.csv'),
-            output=['resources/powerplants.csv']
-        )
+        from _helpers import mocksnakemake
+        snakemake = mocksnakemake('build_powerplants')
 
     logging.basicConfig(level=snakemake.config['logging_level'])
 

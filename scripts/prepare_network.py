@@ -178,12 +178,9 @@ def average_every_nhours(n, offset):
 if __name__ == "__main__":
     # Detect running outside of snakemake and mock snakemake for testing
     if 'snakemake' not in globals():
-        from vresutils.snakemake import MockSnakemake
-        snakemake = MockSnakemake(
-            wildcards=dict(network='elec', simpl='', clusters='37', ll='v2', opts='Co2L-3H'),
-            input=['networks/{network}_s{simpl}_{clusters}.nc'],
-            output=['networks/{network}_s{simpl}_{clusters}_l{ll}_{opts}.nc']
-        )
+        from _helpers import mocksnakemake
+        snakemake = mocksnakemake('prepare_network', network='elec', simpl='',
+                                  clusters='5', ll='v2', opts='Co2L-3H')
 
     logging.basicConfig(level=snakemake.config['logging_level'])
 

@@ -21,7 +21,7 @@ Relevant Settings
             name:
             (solveroptions):
 
-.. seealso:: 
+.. seealso::
     Documentation of the configuration file ``config.yaml`` at
     :ref:`solving_cf`
 
@@ -79,15 +79,9 @@ def set_parameters_from_optimized(n, n_optim):
 if __name__ == "__main__":
     # Detect running outside of snakemake and mock snakemake for testing
     if 'snakemake' not in globals():
-        from vresutils.snakemake import MockSnakemake
-        snakemake = MockSnakemake(
-            wildcards=dict(network='elec', simpl='', clusters='45', lv='1.5', opts='Co2L-3H'),
-            input=dict(unprepared="networks/{network}_s{simpl}_{clusters}.nc",
-                       optimized="results/networks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}.nc"),
-            output=["results/networks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_op.nc"],
-            log=dict(solver="logs/s{simpl}_{clusters}_lv{lv}_{opts}_op_solver.log",
-                     python="logs/s{simpl}_{clusters}_lv{lv}_{opts}_op_python.log")
-        )
+        from _helpers import mocksnakemake
+        snakemake = mocksnakemake('solve_operations_network', network='elec',
+                                  simpl='', clusters='5', ll='copt', opts='Co2L-3H')
 
     tmpdir = snakemake.config['solving'].get('tmpdir')
     if tmpdir is not None:

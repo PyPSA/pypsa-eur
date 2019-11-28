@@ -43,6 +43,9 @@ from _helpers import progress_retrieve
 logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
+    if 'snakemake' not in globals():
+        from _helpers import mocksnakemake
+        snakemake = mocksnakemake('retrieve_cutout')
 
     if snakemake.config['tutorial']:
         url = "https://zenodo.org/record/3518020/files/pypsa-eur-tutorial-cutouts.tar.xz"

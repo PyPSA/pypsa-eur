@@ -138,32 +138,28 @@ def mocksnakemake(rulename, **wildcards):
     wc = Dict(wildcards)
 
     # make the input files accessable by taking the absolut paths
-    input_abs = sm.io.InputFiles()
-    for index, (key, p) in enumerate(rule.input.allitems()):
-        if callable(p):
-            p = p(wc)
-        if isinstance(p, str):
-            input_abs.insert(index, sm.io.apply_wildcards(os.path.abspath(p), wildcards))
-        else:
-            input_abs.insert(index, p)
-        if key is not None:
-            input_abs.add_name(key)
+    def make_io_accessable(smfiles):
+        if smfiles is None:
+            return
+        files = sm.io.InputFiles()
+        for index, (key, p) in enumerate(smfiles.allitems()):
+            if callable(p):
+                p = p(wc)
+            if isinstance(p, str):
+                files.insert(index, sm.io.apply_wildcards(os.path.abspath(p), wildcards))
+            else:
+                files.insert(index, p)
+            if key is not None:
+                files.add_name(key)
+        return files
 
-    # make the output files accessable by taking the absolut paths
-    output_abs = sm.io.InputFiles()
-    for index, (key, p) in enumerate(rule.output.allitems()):
-        if callable(p):
-            p = p(wc)
-        if isinstance(p, str):
-            output_abs.insert(index, sm.io.apply_wildcards(os.path.abspath(p), wildcards))
-        else:
-            output_abs.insert(index, p)
-        if key is not None:
-            output_abs.add_name(key)
+    Input = make_io_accessable(rule.input)
+    Output = make_io_accessable(rule.output)
+    Log = make_io_accessable(rule.log)
 
-    snakemake = sm.script.Snakemake(input=input_abs, output=output_abs,
+    snakemake = sm.script.Snakemake(input=Input, output=Output,
                             params=rule.params, wildcards=wc, threads=None,
-                            resources=rule.resources, log=rule.log,
+                            resources=rule.resources, log=Log,
                             config=workflow.config, rulename=rule.name,
                             bench_iteration=None)
 

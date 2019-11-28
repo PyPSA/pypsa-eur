@@ -50,13 +50,9 @@ logger = logging.getLogger(__name__)
 if __name__ == "__main__":
     # Detect running outside of snakemake and mock snakemake for testing
     if 'snakemake' not in globals():
-        from vresutils.snakemake import MockSnakemake
-        snakemake = MockSnakemake(
-            wildcards=dict(network='elec', simpl='', clusters='45', lv='1.25', opts='Co2L-3H'),
-            input=["networks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}.nc"],
-            output=["results/networks/s{simpl}_{clusters}_lv{lv}_{opts}_trace.nc"],
-            log=dict(python="logs/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_python_trace.log")
-        )
+        from _helpers import mocksnakemake
+        snakemake = mocksnakemake('trace_solve_network', network='elec', simpl='',
+                                  clusters='5', ll='copt', opts='Co2L-24H')
 
     tmpdir = snakemake.config['solving'].get('tmpdir')
     if tmpdir is not None:

@@ -143,12 +143,9 @@ def attach_stores(n, costs):
 if __name__ == "__main__":
     # Detect running outside of snakemake and mock snakemake for testing
     if 'snakemake' not in globals():
-        from vresutils.snakemake import MockSnakemake, Dict
-
-        snakemake = MockSnakemake(output=['networks/elec_s_5_ec.nc'])
-        snakemake.input = snakemake.expand(
-            Dict(network='networks/elec_s_5.nc',
-                 tech_costs='data/costs.csv'))
+        from _helpers import mocksnakemake
+        snakemake = mocksnakemake('add_extra_components', network='elec',
+                                  simpl='', clusters=5)
 
     logging.basicConfig(level=snakemake.config['logging_level'])
 

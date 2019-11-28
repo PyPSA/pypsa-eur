@@ -34,7 +34,6 @@ from _helpers import progress_retrieve
 logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
-
     if snakemake.config['tutorial']:
         url = "https://zenodo.org/record/3517921/files/pypsa-eur-tutorial-data-bundle.tar.xz"
     else:

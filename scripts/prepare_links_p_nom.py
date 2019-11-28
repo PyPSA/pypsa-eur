@@ -34,6 +34,10 @@ Description
 import pandas as pd
 
 if __name__ == "__main__":
+    if 'snakemake' not in globals():
+        from _helpers import mocksnakemake #rule must be enabled in config
+        snakemake = mocksnakemake('prepare_links_p_nom', simpl='', network='elec')
+
     links_p_nom = pd.read_html('https://en.wikipedia.org/wiki/List_of_HVDC_projects', header=0, match="SwePol")[0]
 
     def extract_coordinates(s):
