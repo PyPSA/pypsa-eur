@@ -22,7 +22,7 @@ This rule, as a substitute for :mod:`build_natura_raster`, downloads an already 
 - ``resources/natura.tiff``: Rasterized version of `Natura 2000 <https://en.wikipedia.org/wiki/Natura_2000>`_ natural protection areas to reduce computation times.
 
 .. seealso::
-    For details see :mod:`build_natura_raster`. 
+    For details see :mod:`build_natura_raster`.
 
 """
 
@@ -33,6 +33,11 @@ logger = logging.getLogger(__name__)
 
 
 if __name__ == "__main__":
+    # Detect running outside of snakemake and mock snakemake for testing
+    if 'snakemake' not in globals():
+        from _helpers import mocksnakemake
+        snakemake = mocksnakemake('retrieve_natura_raster')
+
 
     d = './resources'
     if not os.path.exists(d):

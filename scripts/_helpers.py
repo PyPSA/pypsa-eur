@@ -117,15 +117,25 @@ def progress_retrieve(url, file):
 
 def mocksnakemake(rulename, **wildcards):
     """
-    This rule is expected to be executed in the 'scripts'-directory within the
-    snakemake project. It returns a snakemake.script.Snakemake object, which
-    includes mostly all necessary information, except for wildcards.
+    This function is expected to be executed in the 'scripts'-directory within
+    the snakemake project. It returns a snakemake.script.Snakemake object,
+    based on the Snakefile of the upper directory, such that includes
+    mostly all necessary information (input, output, log etc.).
 
     If a rule has wildcards, you have to specify them in **wildcards.
+
+    Parameters
+    ----------
+    rulename: str
+        name of the rule for which the snakemake object should be generated
+    **wildcards:
+        keyword arguments fixing the wildcards. Only necessary if wildcards are
+        needed.
     """
     import snakemake as sm
     import os
     from pypsa.descriptors import Dict
+    from os.path import abspath
 
     os.chdir('..')
     for p in sm.SNAKEFILE_CHOICES:
@@ -146,7 +156,7 @@ def mocksnakemake(rulename, **wildcards):
             if callable(p):
                 p = p(wc)
             if isinstance(p, str):
-                files.insert(index, sm.io.apply_wildcards(os.path.abspath(p), wildcards))
+                files.insert(index, sm.io.apply_wildcards(abspath(p), wc))
             else:
                 files.insert(index, p)
             if key is not None:

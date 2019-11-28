@@ -81,7 +81,7 @@ if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mocksnakemake
         snakemake = mocksnakemake('solve_operations_network', network='elec',
-                                  simpl='', clusters='5', ll='copt', opts='Co2L-3H')
+                                  simpl='', clusters='5', ll='copt', opts='Co2L-24H')
 
     tmpdir = snakemake.config['solving'].get('tmpdir')
     if tmpdir is not None:

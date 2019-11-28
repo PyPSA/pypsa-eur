@@ -35,7 +35,7 @@ Relevant settings
             clip_p_max_pu:
             resource:
 
-.. seealso:: 
+.. seealso::
     Documentation of the configuration file ``config.yaml`` at
     :ref:`snapshots_cf`, :ref:`atlite_cf`, :ref:`renewable_cf`
 
@@ -91,24 +91,24 @@ Outputs
 
     .. image:: ../img/profile_ts.png
         :scale: 33 %
-    
+
     - **p_nom_max**
 
     .. image:: ../img/p_nom_max_hist.png
         :scale: 33 %
-    
+
     - **potential**
 
     .. image:: ../img/potential_heatmap.png
         :scale: 33 %
-    
+
     - **average_distance**
-    
+
     .. image:: ../img/distance_hist.png
         :scale: 33 %
-    
+
     - **underwater_fraction**
-    
+
     .. image:: ../img/underwater_hist.png
         :scale: 33 %
 
@@ -238,6 +238,9 @@ def calculate_potential(gid, save_map=None):
 
 
 if __name__ == '__main__':
+    if 'snakemake' not in globals():
+        from _helpers import mocksnakemake
+        snakemake = mocksnakemake('build_renewable_profiles', technology='solar')
     pgb.streams.wrap_stderr()
     logging.basicConfig(level=snakemake.config['logging_level'])
 

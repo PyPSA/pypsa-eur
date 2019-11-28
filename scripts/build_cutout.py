@@ -20,7 +20,7 @@ Relevant Settings
         cutouts:
             {cutout}:
 
-.. seealso:: 
+.. seealso::
     Documentation of the configuration file ``config.yaml`` at
     :ref:`atlite_cf`
 
@@ -74,11 +74,11 @@ Outputs
     ===================  ==========  ==========  =========================================================
 
     .. image:: ../img/era5.png
-        :scale: 40 %    
-    
+        :scale: 40 %
+
 A **SARAH-2 cutout** can be used to amend the fields ``temperature``, ``influx_toa``, ``influx_direct``, ``albedo``,
 ``influx_diffuse`` of ERA5 using satellite-based radiation observations.
-    
+
     .. image:: ../img/sarah.png
         :scale: 40 %
 
@@ -92,6 +92,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
+    if 'snakemake' not in globals():
+        from _helpers import mocksnakemake
+        snakemake = mocksnakemake('build_cutout', cutout='europe-2013-era5')
     logging.basicConfig(level=snakemake.config['logging_level'])
 
     cutout_params = snakemake.config['atlite']['cutouts'][snakemake.wildcards.cutout]

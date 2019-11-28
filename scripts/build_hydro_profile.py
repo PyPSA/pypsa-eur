@@ -62,6 +62,9 @@ import logging
 
 
 if __name__ == "__main__":
+    if 'snakemake' not in globals():
+        from _helpers import mocksnakemake
+        snakemake = mocksnakemake('build_hydro_profile')
     logging.basicConfig(level=snakemake.config['logging_level'])
 
     config = snakemake.config['renewable']['hydro']

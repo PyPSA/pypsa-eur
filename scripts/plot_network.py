@@ -72,7 +72,7 @@ def plot_map(n, ax=None, attribute='p_nom', opts={}):
 
     ## DATA
     line_colors = {'cur': "purple",
-                   'exp': to_rgba("red", 0.7)}
+                   'exp': mpl.colors.rgb2hex(to_rgba("red", 0.7), True)}
     tech_colors = opts['tech_colors']
 
     if attribute == 'p_nom':
@@ -244,18 +244,10 @@ def plot_total_cost_bar(n, ax=None):
 
 if __name__ == "__main__":
     if 'snakemake' not in globals():
-        from vresutils.snakemake import MockSnakemake, Dict
-        from snakemake.rules import expand
-
-        snakemake = Dict()
-        snakemake = MockSnakemake(
-            path='..',
-            wildcards=dict(network='elec', simpl='', clusters='90', lv='1.25', opts='Co2L-3H', attr='p_nom', ext="pdf"),
-            input=dict(network="results/networks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}.nc",
-                    tech_costs="data/costs.csv"),
-            output=dict(only_map="results/plots/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{attr}.{ext}",
-                        ext="results/plots/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{attr}_ext.{ext}")
-        )
+        from _helpers import mocksnakemake
+        snakemake = mocksnakemake('plot_network', network='elec', simpl='',
+                                  clusters='5', ll='copt', opts='Co2L-24H',
+                                  attr='p_nom', ext="pdf")
 
     logging.basicConfig(level=snakemake.config['logging_level'])
 
@@ -272,8 +264,7 @@ if __name__ == "__main__":
     fig, ax = plt.subplots(figsize=map_figsize, subplot_kw={"projection": ccrs.PlateCarree()})
     plot_map(n, ax, snakemake.wildcards.attr, opts)
 
-    fig.savefig(snakemake.output.only_map, dpi=150,
-                bbox_inches='tight', bbox_extra_artists=[l1,l2,l3])
+    fig.savefig(snakemake.output.only_map, dpi=150, bbox_inches='tight')
 
     ax1 = fig.add_axes([-0.115, 0.625, 0.2, 0.2])
     plot_total_energy_pie(n, ax1)
@@ -291,5 +282,4 @@ if __name__ == "__main__":
     fig.suptitle('Expansion to {amount} {label} at {clusters} clusters'
                 .format(amount=amnt, label=lbl, clusters=snakemake.wildcards.clusters))
 
-    fig.savefig(snakemake.output.ext, transparent=True,
-                bbox_inches='tight', bbox_extra_artists=[l1, l2, l3, ax1, ax2])
+    fig.savefig(snakemake.output.ext, transparent=True, bbox_inches='tight')
