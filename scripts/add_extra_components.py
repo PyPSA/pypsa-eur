@@ -143,7 +143,7 @@ def attach_hydrogen_pipelines(n, costs):
     elec_opts = snakemake.config['electricity']
     as_stores = elec_opts['extendable_carriers']['Store']
 
-    if 'H2 pipeline' not in elec_opts.get('Links',[]): return
+    if 'H2 pipeline' not in elec_opts.get('Link',[]): return
 
     assert 'H2' in as_stores, "Attaching hydrogen pipelines requires hydrogen storage\
                                to be modelled as Store-Link-Bus combination.\
