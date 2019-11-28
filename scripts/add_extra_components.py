@@ -139,6 +139,36 @@ def attach_stores(n, costs):
                capital_cost=costs.at['battery inverter', 'capital_cost'],
                p_nom_extendable=True)
 
+def attach_hydrogen_pipelines(n, costs):
+    elec_opts = snakemake.config['electricity']
+    as_stores = elec_opts['extendable_carriers']['Store']
+
+    if 'H2 pipeline' not in elec_opts.get('Links',[]): return
+
+    assert 'H2' in as_stores, "Attaching hydrogen pipelines requires hydrogen storage\
+                               to be modelled as Store-Link-Bus combination.\
+                               See `config.yaml` at `electricity: extendable_carriers: Store:`."
+
+    # determine bus pairs
+    attrs = ["bus0","bus1","length"]
+    candidates = pd.concat([n.lines[attrs],
+                 n.links.loc[n.links.carrier=="DC",attrs]]).reset_index(drop=True)
+
+    # remove bus pair duplicates regardless of order of bus0 and bus1
+    h2_links = candidates.loc[~pd.DataFrame(np.sort(candidates.iloc[:,:2])).duplicated()]
+    h2_links.index = h2_links.apply(lambda c: "H2 pipeline {}-{}".format(c.bus0, c.bus1), axis=1)
+
+    # add pipelines
+    network.madd("Link",
+                 h2_links.index,
+                 bus0=h2_links.bus0.values + " H2",
+                 bus1=h2_links.bus1.values + " H2",
+                 p_min_pu=-1,
+                 p_nom_extendable=True,
+                 length=h2_links.length.values,
+                 capital_cost=costs.at['H2 pipeline','capital_cost']*h2_links.length.values,
+                 efficiency=costs.at['H2 pipeline','efficiency'],
+                 carrier="H2 pipeline")
 
 if __name__ == "__main__":
     # Detect running outside of snakemake and mock snakemake for testing
@@ -160,6 +190,7 @@ if __name__ == "__main__":
 
     attach_storageunits(n, costs)
     attach_stores(n, costs)
+    attach_hydrogen_pipelines(n, costs)
 
     add_nice_carrier_names(n, config=snakemake.config)
 
