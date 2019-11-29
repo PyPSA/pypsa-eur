@@ -25,11 +25,12 @@ def configure_logging(snakemake, skip_handlers=False):
     kwargs.setdefault("level", "INFO")
 
     if skip_handlers is False:
+        logfile = snakemake.log[0] if  snakemake.log else f"logs/{snakemake.rule}.log"
         kwargs.update(
             {'handlers': [
                 # Prefer the 'python' log, otherwise take the first log for each
                 # Snakemake rule
-                logging.FileHandler(snakemake.log.get('python', snakemake.log[0] if snakemake.log else f"logs/{snakemake.rule}.log")),
+                logging.FileHandler(snakemake.log.get('python', logfile)),
                 logging.StreamHandler()
                 ]
             })
@@ -105,7 +106,7 @@ def aggregate_p_curtailed(n):
 
 def aggregate_costs(n, flatten=False, opts=None, existing_only=False):
     from six import iterkeys, itervalues
-    
+
     components = dict(Link=("p_nom", "p0"),
                       Generator=("p_nom", "p"),
                       StorageUnit=("p_nom", "p"),
@@ -170,6 +171,7 @@ def mocksnakemake(rulename, **wildcards):
     """
     import snakemake as sm
     import os
+    import logging
     from pypsa.descriptors import Dict
     from os.path import abspath
 
@@ -185,10 +187,19 @@ def mocksnakemake(rulename, **wildcards):
 
     # make the input files accessable by taking the absolut paths
     def make_io_accessable(smfiles):
-        if smfiles is None:
+        if not smfiles:
             return
+        # for mildy hacky input functions (like make_summary):
+        if len(smfiles) == 1 and callable(smfiles[0]):
+            new_input_files = smfiles[0](wc)
+            # overwrite smfiles with extracted files from function
+            smfiles = sm.io.InputFiles()
+            for index, p in enumerate(new_input_files):
+                smfiles.insert(index, p)
+        # now iterate over each item and make path an absolut path
         files = sm.io.InputFiles()
         for index, (key, p) in enumerate(smfiles.allitems()):
+            # case that item is a function
             if callable(p):
                 p = p(wc)
             if isinstance(p, str):
@@ -201,7 +212,15 @@ def mocksnakemake(rulename, **wildcards):
 
     Input = make_io_accessable(rule.input)
     Output = make_io_accessable(rule.output)
+    if not rule.log:
+        rule.log.insert(0, f"logs/{rule.name}.log")
     Log = make_io_accessable(rule.log)
+    # create log dir it not existent
+    for logfile in Log:
+        dir = os.path.dirname(logfile)
+        if not os.path.exists(dir):
+            logging.info(f'Log directory {dir} not existent, creating it.')
+            os.mkdir(dir)
 
     snakemake = sm.script.Snakemake(input=Input, output=Output,
                             params=rule.params, wildcards=wc, threads=None,

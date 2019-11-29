@@ -45,23 +45,10 @@ def cum_p_nom_max(net, tech, country=None):
 if __name__ == "__main__":
     # Detect running outside of snakemake and mock snakemake for testing
     if 'snakemake' not in globals():
-        from vresutils.snakemake import MockSnakemake, Dict
-        snakemake = MockSnakemake(
-            path='..',
-            wildcards={'clusters': '45,90,181,full',
-                       'country': 'all'},
-            params=dict(techs=['onwind', 'offwind-ac', 'offwind-dc', 'solar']),
-            input=Dict(
-                **{
-                    'full': 'networks/elec_s.nc',
-                    '45': 'networks/elec_s_45.nc',
-                    '90': 'networks/elec_s_90.nc',
-                    '181': 'networks/elec_s_181.nc',
-                }
-            ),
-            output=['results/plots/cum_p_nom_max_{clusters}_{country}.pdf']
-        )
-    
+        from _helpers import mocksnakemake
+        snakemake = mocksnakemake('plot_p_nom_max', network='elec', simpl='',
+                                  technology='solar', ext='pdf', clusters= '5,full',
+                                  country= 'all')
     configure_logging(snakemake)
 
     plot_kwds = dict(drawstyle="steps-post")

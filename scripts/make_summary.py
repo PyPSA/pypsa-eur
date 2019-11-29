@@ -471,6 +471,15 @@ def to_csv(dfs):
 
 
 if __name__ == "__main__":
+    if 'snakemake' not in globals():
+        from _helpers import mocksnakemake
+        snakemake = mocksnakemake('make_summary', network='elec', simpl='',
+                           clusters='5', ll='copt', opts='Co2L-24H', country='all')
+        network_dir = os.path.join('..', 'results', 'networks')
+    else:
+        network_dir = os.path.join('results', 'networks')
+
+
     # Detect running outside of snakemake and mock snakemake for testing
     def expand_from_wildcard(key):
         w = getattr(snakemake.wildcards, key)
@@ -485,12 +494,9 @@ if __name__ == "__main__":
 
     configure_logging(snakemake)
 
-    networks_dict = {(simpl,clusters,l,opts) : ('results/networks/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc'
-                                                 .format(network=snakemake.wildcards.network,
-                                                         simpl=simpl,
-                                                         clusters=clusters,
-                                                         opts=opts,
-                                                         ll=l))
+    networks_dict = {(simpl,clusters,l,opts) :
+        os.path.join(network_dir, f'{snakemake.wildcards.network}_s{simpl}_'
+                                  f'{clusters}_ec_l{l}_{opts}.nc')
                      for simpl in expand_from_wildcard("simpl")
                      for clusters in expand_from_wildcard("clusters")
                      for l in ll

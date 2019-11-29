@@ -551,8 +551,6 @@ if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mocksnakemake
         snakemake = mocksnakemake('base_network')
-
-
     configure_logging(snakemake)
 
     n = base_network()
