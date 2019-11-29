@@ -174,7 +174,7 @@ if __name__ == '__main__':
     # Use GLAES to compute available potentials and the transition matrix
     paths = dict(snakemake.input)
 
-    init_globals(bounds, dx, dy, config, paths)
+    init_globals(bounds.xXyY, dx, dy, config, paths)
     regions = gk.vector.extractFeatures(paths["regions"], onlyAttr=True)
     countries = pd.Index(regions["name"], name="country")
 
