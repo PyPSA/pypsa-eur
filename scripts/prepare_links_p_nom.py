@@ -31,12 +31,17 @@ Description
 
 """
 
+import logging
+logger = logging.getLogger(__name__)
+from _helpers import configure_logging
+
 import pandas as pd
 
 if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mocksnakemake #rule must be enabled in config
         snakemake = mocksnakemake('prepare_links_p_nom', simpl='', network='elec')
+    configure_logging(snakemake)
 
     links_p_nom = pd.read_html('https://en.wikipedia.org/wiki/List_of_HVDC_projects', header=0, match="SwePol")[0]
 

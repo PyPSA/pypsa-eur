@@ -35,6 +35,10 @@ Description
 
 """
 
+import logging
+logger = logging.getLogger(__name__)
+from _helpers import configure_logging
+
 import numpy as np
 import atlite
 import geokit as gk
@@ -52,6 +56,7 @@ if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mocksnakemake
         snakemake = mocksnakemake('build_natura_raster') #has to be enabled
+    configure_logging(snakemake)
 
     cutout_names = {res['cutout'] for res in snakemake.config['renewable'].values()}
     xs, Xs, ys, Ys = zip(*(determine_cutout_xXyY(cutout) for cutout in cutout_names))

@@ -16,6 +16,9 @@ Description
 """
 
 import os
+import logging
+logger = logging.getLogger(__name__)
+
 import pandas as pd
 import matplotlib.pyplot as plt
 
@@ -183,6 +186,7 @@ if __name__ == "__main__":
         snakemake = mocksnakemake('plot_summary', summary='energy', network='elec',
                                   simpl='', clusters=5, ll='copt', opts='Co2L-24H',
                                   attr='', ext='png', country='DE')
+    configure_logging(snakemake)
 
     summary = snakemake.wildcards.summary
     try:

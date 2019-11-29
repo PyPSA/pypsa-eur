@@ -15,12 +15,13 @@ Description
 
 """
 
-from _helpers import load_network, aggregate_p, aggregate_costs
+import logging
+logger = logging.getLogger(__name__)
+from _helpers import load_network, aggregate_p, aggregate_costs, configure_logging
 
 import pandas as pd
 import numpy as np
 from six.moves import zip
-import logging
 
 import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
@@ -249,8 +250,8 @@ if __name__ == "__main__":
                                   clusters='5', ll='copt', opts='Co2L-24H',
                                   attr='p_nom', ext="pdf")
 
-    logging.basicConfig(level=snakemake.config['logging_level'])
-
+    configure_logging(snakemake)
+    
     set_plot_style()
 
     opts = snakemake.config['plotting']

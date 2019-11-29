@@ -150,6 +150,9 @@ node (`p_nom_max`): ``simple`` and ``conservative``:
   reached.
 
 """
+import logging
+logger = logging.getLogger(__name__)
+from _helpers import configure_logging
 
 import matplotlib.pyplot as plt
 
@@ -170,8 +173,6 @@ from vresutils import landuse as vlanduse
 from vresutils.array import spdiag
 
 import progressbar as pgb
-import logging
-logger = logging.getLogger(__name__)
 
 bounds = dx = dy = config = paths = gebco = clc = natura = None
 def init_globals(bounds_xXyY, n_dx, n_dy, n_config, n_paths):
@@ -242,7 +243,8 @@ if __name__ == '__main__':
         from _helpers import mocksnakemake
         snakemake = mocksnakemake('build_renewable_profiles', technology='solar')
     pgb.streams.wrap_stderr()
-    logging.basicConfig(level=snakemake.config['logging_level'])
+
+    configure_logging(snakemake)
 
     config = snakemake.config['renewable'][snakemake.wildcards.technology]
 

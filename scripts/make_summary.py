@@ -49,7 +49,12 @@ Replacing '/summaries/' with '/plots/' creates nice colored maps of the results.
 
 """
 
+import logging
+logger = logging.getLogger(__name__)
+from _helpers import configure_logging
+
 import os
+
 from six import iteritems
 import pandas as pd
 
@@ -477,6 +482,8 @@ if __name__ == "__main__":
             ll = [l for l in ll if l[0] == snakemake.wildcards.ll[0]]
     else:
         ll = [snakemake.wildcards.ll]
+
+    configure_logging(snakemake)
 
     networks_dict = {(simpl,clusters,l,opts) : ('results/networks/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc'
                                                  .format(network=snakemake.wildcards.network,

@@ -68,14 +68,14 @@ The configuration options ``electricity: powerplants_filter`` and ``electricity:
 """
 
 import logging
+logger = logging.getLogger(__name__)
+from _helpers import configure_logging
+
 from scipy.spatial import cKDTree as KDTree
 
 import pypsa
 import powerplantmatching as pm
 import pandas as pd
-
-logger = logging.getLogger(__name__)
-
 
 def add_custom_powerplants(ppl):
     custom_ppl_query = snakemake.config['electricity']['custom_powerplants']
@@ -88,11 +88,12 @@ def add_custom_powerplants(ppl):
 
 
 if __name__ == "__main__":
+
     if 'snakemake' not in globals():
         from _helpers import mocksnakemake
         snakemake = mocksnakemake('build_powerplants')
 
-    logging.basicConfig(level=snakemake.config['logging_level'])
+    configure_logging(snakemake)
 
     n = pypsa.Network(snakemake.input.base_network)
     countries = n.buses.country.unique()
