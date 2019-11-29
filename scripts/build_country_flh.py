@@ -112,8 +112,8 @@ def plot_area_solar(area, p_area, countries):
         d.plot.bar(ax=ax, legend=False, align='edge', width=1.)
         # ax.set_ylabel(f"Potential {c} / GW")
         ax.set_title(c)
-    ax.legend()
-    ax.set_xlabel("Full-load hours")
+        ax.legend()
+        ax.set_xlabel("Full-load hours")
 
     fig.savefig(snakemake.output.plot, transparent=True, bbox_inches='tight')
 
