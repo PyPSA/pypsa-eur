@@ -191,7 +191,7 @@ def calculate_supply(n,label,supply):
 
             items = c.df.index[c.df.bus.map(bus_map)]
 
-            if len(items) == 0:
+            if len(items) == 0 or c.pnl.p.empty:
                 continue
 
             s = c.pnl.p[items].max().multiply(c.df.loc[items,'sign']).groupby(c.df.loc[items,'carrier']).sum()
@@ -209,7 +209,7 @@ def calculate_supply(n,label,supply):
 
                 items = c.df.index[c.df["bus" + end].map(bus_map)]
 
-                if len(items) == 0:
+                if len(items) == 0 or c.pnl["p"+end].empty:
                     continue
 
                 #lots of sign compensation for direction and to do maximums
@@ -237,7 +237,7 @@ def calculate_supply_energy(n,label,supply_energy):
 
             items = c.df.index[c.df.bus.map(bus_map)]
 
-            if len(items) == 0:
+            if len(items) == 0 or c.pnl.p.empty:
                 continue
 
             s = c.pnl.p[items].sum().multiply(c.df.loc[items,'sign']).groupby(c.df.loc[items,'carrier']).sum()
@@ -255,7 +255,7 @@ def calculate_supply_energy(n,label,supply_energy):
 
                 items = c.df.index[c.df["bus" + end].map(bus_map)]
 
-                if len(items) == 0:
+                if len(items) == 0  or c.pnl['p' + end].empty:
                     continue
 
                 s = (-1)*c.pnl["p"+end][items].sum().groupby(c.df.loc[items,'carrier']).sum()
