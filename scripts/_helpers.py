@@ -215,12 +215,18 @@ def mocksnakemake(rulename, **wildcards):
     if not rule.log:
         rule.log.insert(0, f"logs/{rule.name}.log")
     Log = make_io_accessable(rule.log)
-    # create log dir it not existent
-    for logfile in Log:
-        dir = os.path.dirname(logfile)
+    # create log dir if not existent
+    for file in list(Log) + list(Output):
+        dir = os.path.dirname(file)
         if not os.path.exists(dir):
             logging.info(f'Log directory {dir} not existent, creating it.')
             os.mkdir(dir)
+#    # create output dir if not existent
+#    for outfile in Output:
+#        dir = os.path.dirname(outfile)
+#        if not os.path.exists(dir):
+#            logging.info(f'Log directory {dir} not existent, creating it.')
+#            os.mkdir(dir)
 
     snakemake = sm.script.Snakemake(input=Input, output=Output,
                             params=rule.params, wildcards=wc, threads=None,
