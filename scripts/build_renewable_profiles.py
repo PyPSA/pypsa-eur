@@ -242,9 +242,9 @@ if __name__ == '__main__':
     if 'snakemake' not in globals():
         from _helpers import mocksnakemake
         snakemake = mocksnakemake('build_renewable_profiles', technology='solar')
-    pgb.streams.wrap_stderr()
-
     configure_logging(snakemake)
+
+    pgb.streams.wrap_stderr()
 
     config = snakemake.config['renewable'][snakemake.wildcards.technology]
 

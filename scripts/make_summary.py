@@ -478,9 +478,9 @@ if __name__ == "__main__":
         network_dir = os.path.join('..', 'results', 'networks')
     else:
         network_dir = os.path.join('results', 'networks')
+    configure_logging(snakemake)
 
 
-    # Detect running outside of snakemake and mock snakemake for testing
     def expand_from_wildcard(key):
         w = getattr(snakemake.wildcards, key)
         return snakemake.config["scenario"][key] if w == "all" else [w]
@@ -491,8 +491,6 @@ if __name__ == "__main__":
             ll = [l for l in ll if l[0] == snakemake.wildcards.ll[0]]
     else:
         ll = [snakemake.wildcards.ll]
-
-    configure_logging(snakemake)
 
     networks_dict = {(simpl,clusters,l,opts) :
         os.path.join(network_dir, f'{snakemake.wildcards.network}_s{simpl}_'

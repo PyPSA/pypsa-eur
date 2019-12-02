@@ -147,14 +147,13 @@ def build_aggregate(flh, countries, areamatrix, breaks, p_area, fn):
     agg.to_csv(fn)
 
 if __name__ == '__main__':
-    # Detect running outside of snakemake and mock snakemake for testing
     if 'snakemake' not in globals():
        from _helpers import mocksnakemake
        snakemake = mocksnakemake('build_country_flh', technology='solar')
+    configure_logging(snakemake)
 
     pgb.streams.wrap_stderr()
 
-    configure_logging(snakemake)
 
     config = snakemake.config['renewable'][snakemake.wildcards.technology]
 

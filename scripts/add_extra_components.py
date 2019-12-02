@@ -145,7 +145,6 @@ if __name__ == "__main__":
         from _helpers import mocksnakemake
         snakemake = mocksnakemake('add_extra_components', network='elec',
                                   simpl='', clusters=5)
-
     configure_logging(snakemake)
 
     n = pypsa.Network(snakemake.input.network)

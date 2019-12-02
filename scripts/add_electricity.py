@@ -510,7 +510,6 @@ if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mocksnakemake
         snakemake = mocksnakemake('add_electricity')
-
     configure_logging(snakemake)
 
     n = pypsa.Network(snakemake.input.base_network)

@@ -49,17 +49,16 @@ from solve_network import patch_pyomo_tmpdir, prepare_network, solve_network
 import pypsa
 
 if __name__ == "__main__":
-    # Detect running outside of snakemake and mock snakemake for testing
     if 'snakemake' not in globals():
         from _helpers import mocksnakemake
         snakemake = mocksnakemake('trace_solve_network', network='elec', simpl='',
                                   clusters='5', ll='copt', opts='Co2L-24H')
+    configure_logging(snakemake)
 
     tmpdir = snakemake.config['solving'].get('tmpdir')
     if tmpdir is not None:
         patch_pyomo_tmpdir(tmpdir)
 
-    configure_logging(snakemake)
 
     n = pypsa.Network(snakemake.input[0])
 

@@ -331,7 +331,6 @@ def cluster(n, n_clusters):
     return clustering.network, clustering.busmap
 
 if __name__ == "__main__":
-    # Detect running outside of snakemake and mock snakemake for testing
     if 'snakemake' not in globals():
         from _helpers import mocksnakemake
         snakemake = mocksnakemake('simplify_network', simpl='', network='elec')

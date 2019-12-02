@@ -206,7 +206,6 @@ if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mocksnakemake
         snakemake = mocksnakemake('build_shapes')
-
     configure_logging(snakemake)
 
     country_shapes = countries()

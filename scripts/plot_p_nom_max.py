@@ -43,7 +43,6 @@ def cum_p_nom_max(net, tech, country=None):
 
 
 if __name__ == "__main__":
-    # Detect running outside of snakemake and mock snakemake for testing
     if 'snakemake' not in globals():
         from _helpers import mocksnakemake
         snakemake = mocksnakemake('plot_p_nom_max', network='elec', simpl='',
