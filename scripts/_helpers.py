@@ -172,7 +172,8 @@ def mocksnakemake(rulename, **wildcards):
     from pypsa.descriptors import Dict
     from os.path import abspath
 
-    os.chdir('..')
+    old_wd = os.getcwd()
+    os.chdir(base_dir)
     for p in sm.SNAKEFILE_CHOICES:
         if os.path.exists(p):
             snakefile = p
