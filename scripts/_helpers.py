@@ -30,7 +30,7 @@ def configure_logging(snakemake, skip_handlers=False):
             {'handlers': [
                 # Prefer the 'python' log, otherwise take the first log for each
                 # Snakemake rule
-                logging.FileHandler(snakemake.log.get('python', logfile)),
+                logging.FileHandler(logfile),
                 logging.StreamHandler()
                 ]
             })
