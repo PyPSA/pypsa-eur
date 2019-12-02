@@ -34,8 +34,8 @@ from _helpers import progress_retrieve, configure_logging
 
 if __name__ == "__main__":
     if 'snakemake' not in globals():
-        from _helpers import mocksnakemake
-        snakemake = mocksnakemake('retrieve_natura_raster')
+        from _helpers import mock_snakemake
+        snakemake = mock_snakemake('retrieve_natura_raster')
     configure_logging(snakemake) # TODO Make logging compatible with progressbar (see PR #102)
 
     # Save location, ensure folder existence

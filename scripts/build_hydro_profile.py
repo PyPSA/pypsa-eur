@@ -65,8 +65,8 @@ from vresutils import hydro as vhydro
 
 if __name__ == "__main__":
     if 'snakemake' not in globals():
-        from _helpers import mocksnakemake
-        snakemake = mocksnakemake('build_hydro_profile')
+        from _helpers import mock_snakemake
+        snakemake = mock_snakemake('build_hydro_profile')
     configure_logging(snakemake)
 
     config = snakemake.config['renewable']['hydro']

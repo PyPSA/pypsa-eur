@@ -151,7 +151,7 @@ def progress_retrieve(url, file):
     urllib.request.urlretrieve(url, file, reporthook=dlProgress)
 
 
-def mocksnakemake(rulename, **wildcards):
+def mock_snakemake(rulename, **wildcards):
     """
     This function is expected to be executed in the 'scripts'-directory within
     the snakemake project. It returns a snakemake.script.Snakemake object,

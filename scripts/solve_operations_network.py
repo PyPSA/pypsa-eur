@@ -80,8 +80,8 @@ def set_parameters_from_optimized(n, n_optim):
 
 if __name__ == "__main__":
     if 'snakemake' not in globals():
-        from _helpers import mocksnakemake
-        snakemake = mocksnakemake('solve_operations_network', network='elec',
+        from _helpers import mock_snakemake
+        snakemake = mock_snakemake('solve_operations_network', network='elec',
                                   simpl='', clusters='5', ll='copt', opts='Co2L-24H')
     configure_logging(snakemake)
 

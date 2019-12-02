@@ -90,8 +90,8 @@ def add_custom_powerplants(ppl):
 if __name__ == "__main__":
 
     if 'snakemake' not in globals():
-        from _helpers import mocksnakemake
-        snakemake = mocksnakemake('build_powerplants')
+        from _helpers import mock_snakemake
+        snakemake = mock_snakemake('build_powerplants')
     configure_logging(snakemake)
 
     n = pypsa.Network(snakemake.input.base_network)

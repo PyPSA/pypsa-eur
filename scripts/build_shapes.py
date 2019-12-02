@@ -204,8 +204,8 @@ def save_to_geojson(df, fn):
 
 if __name__ == "__main__":
     if 'snakemake' not in globals():
-        from _helpers import mocksnakemake
-        snakemake = mocksnakemake('build_shapes')
+        from _helpers import mock_snakemake
+        snakemake = mock_snakemake('build_shapes')
     configure_logging(snakemake)
 
     country_shapes = countries()

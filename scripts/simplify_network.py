@@ -332,8 +332,8 @@ def cluster(n, n_clusters):
 
 if __name__ == "__main__":
     if 'snakemake' not in globals():
-        from _helpers import mocksnakemake
-        snakemake = mocksnakemake('simplify_network', simpl='', network='elec')
+        from _helpers import mock_snakemake
+        snakemake = mock_snakemake('simplify_network', simpl='', network='elec')
     configure_logging(snakemake)
 
     n = pypsa.Network(snakemake.input.network)

@@ -46,8 +46,8 @@ from _helpers import progress_retrieve, configure_logging
 
 if __name__ == "__main__":
     if 'snakemake' not in globals():
-        from _helpers import mocksnakemake
-        snakemake = mocksnakemake('retrieve_cutout')
+        from _helpers import mock_snakemake
+        snakemake = mock_snakemake('retrieve_cutout')
     configure_logging(snakemake) # TODO Make logging compatible with progressbar (see PR #102)
 
     if snakemake.config['tutorial']:

@@ -44,8 +44,8 @@ def cum_p_nom_max(net, tech, country=None):
 
 if __name__ == "__main__":
     if 'snakemake' not in globals():
-        from _helpers import mocksnakemake
-        snakemake = mocksnakemake('plot_p_nom_max', network='elec', simpl='',
+        from _helpers import mock_snakemake
+        snakemake = mock_snakemake('plot_p_nom_max', network='elec', simpl='',
                                   technology='solar', ext='pdf', clusters= '5,full',
                                   country= 'all')
     configure_logging(snakemake)

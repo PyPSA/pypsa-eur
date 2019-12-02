@@ -53,8 +53,8 @@ def determine_cutout_xXyY(cutout_name):
 
 if __name__ == "__main__":
     if 'snakemake' not in globals():
-        from _helpers import mocksnakemake
-        snakemake = mocksnakemake('build_natura_raster') #has to be enabled
+        from _helpers import mock_snakemake
+        snakemake = mock_snakemake('build_natura_raster') #has to be enabled
     configure_logging(snakemake)
 
     cutout_dir = Path(snakemake.input.cutouts).parent.absolute()

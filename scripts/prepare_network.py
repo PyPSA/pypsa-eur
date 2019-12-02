@@ -179,8 +179,8 @@ def average_every_nhours(n, offset):
 
 if __name__ == "__main__":
     if 'snakemake' not in globals():
-        from _helpers import mocksnakemake
-        snakemake = mocksnakemake('prepare_network', network='elec', simpl='',
+        from _helpers import mock_snakemake
+        snakemake = mock_snakemake('prepare_network', network='elec', simpl='',
                                   clusters='5', ll='copt', opts='Co2L-24H')
     configure_logging(snakemake)
 
