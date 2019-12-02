@@ -25,7 +25,7 @@ def configure_logging(snakemake, skip_handlers=False):
     kwargs.setdefault("level", "INFO")
 
     if skip_handlers is False:
-        logfile = snakemake.log[0] if  snakemake.log else f"logs/{snakemake.rule}.log"
+        logfile = snakemake.log.get('python', snakemake.log[0] if snakemake.log else f"logs/{snakemake.rule}.log")
         kwargs.update(
             {'handlers': [
                 # Prefer the 'python' log, otherwise take the first log for each
