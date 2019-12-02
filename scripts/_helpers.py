@@ -27,7 +27,9 @@ def configure_logging(snakemake, skip_handlers=False):
     kwargs.setdefault("level", "INFO")
 
     if skip_handlers is False:
-        logfile = snakemake.log.get('python', snakemake.log[0] if snakemake.log else f"logs/{snakemake.rule}.log")
+        fallback_path = Path(__file__).parent.parent.joinpath('logs', f"{snakemake.rule}.log")
+        logfile = snakemake.log.get('python', snakemake.log[0] if snakemake.log
+                                    else fallback_path)
         kwargs.update(
             {'handlers': [
                 # Prefer the 'python' log, otherwise take the first log for each
@@ -187,8 +189,9 @@ def mock_snakemake(rulename, **wildcards):
 
     # make the input files accessable by taking the absolut paths
     def make_io_accessable(smfiles):
+        files = sm.io.InputFiles()
         if not smfiles:
-            return
+            return files
         # for mildy hacky input functions (like make_summary):
         if len(smfiles) == 1 and callable(smfiles[0]):
             new_input_files = smfiles[0](wc)
@@ -197,7 +200,6 @@ def mock_snakemake(rulename, **wildcards):
             for index, p in enumerate(new_input_files):
                 smfiles.insert(index, p)
         # now iterate over each item and make path an absolut path
-        files = sm.io.InputFiles()
         for index, (key, p) in enumerate(smfiles.allitems()):
             # case that item is a function
             if callable(p):
@@ -215,8 +217,6 @@ def mock_snakemake(rulename, **wildcards):
 
     Input = make_io_accessable(rule.input)
     Output = make_io_accessable(rule.output)
-    if not rule.log:
-        rule.log.insert(0, f"logs/{rule.name}.log")
     Log = make_io_accessable(rule.log)
     # create log and output dir if not existent
     for file in list(Log) + list(Output):
