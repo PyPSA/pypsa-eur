@@ -189,9 +189,8 @@ def mock_snakemake(rulename, **wildcards):
 
     # make the input files accessable by taking the absolut paths
     def make_io_accessable(smfiles):
-        files = sm.io.InputFiles()
         if not smfiles:
-            return files
+            return []
         # for mildy hacky input functions (like make_summary):
         if len(smfiles) == 1 and callable(smfiles[0]):
             new_input_files = smfiles[0](wc)
@@ -200,6 +199,7 @@ def mock_snakemake(rulename, **wildcards):
             for index, p in enumerate(new_input_files):
                 smfiles.insert(index, p)
         # now iterate over each item and make path an absolut path
+        files = getattr(sm.io, type(smfiles))()
         for index, (key, p) in enumerate(smfiles.allitems()):
             # case that item is a function
             if callable(p):
