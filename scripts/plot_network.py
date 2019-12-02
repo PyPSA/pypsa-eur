@@ -249,6 +249,7 @@ def plot_total_cost_bar(n, ax=None):
 
 if __name__ == "__main__":
     if 'snakemake' not in globals():
+        from _helpers import mocksnakemake
         snakemake = mocksnakemake('plot_network', network='elec', simpl='',
                                   clusters='5', ll='copt', opts='Co2L-24H',
                                   attr='p_nom', ext="pdf")
