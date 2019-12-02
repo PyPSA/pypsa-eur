@@ -140,7 +140,6 @@ else:
 if config['enable'].get('build_natura_raster', False):        
     rule build_natura_raster:
         input: 
-            cutout_dir = "cutouts",
             natura="data/bundle/natura/Natura2000_end2015.shp",
             cutouts=expand("cutouts/{cutouts}", **config['atlite'])
         output: "resources/natura.tiff"

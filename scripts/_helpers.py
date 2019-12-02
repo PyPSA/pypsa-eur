@@ -1,4 +1,6 @@
 import pandas as pd
+from pathlib import Path
+
 
 def configure_logging(snakemake, skip_handlers=False):
     """
@@ -168,10 +170,10 @@ def mocksnakemake(rulename, **wildcards):
     """
     import snakemake as sm
     import os
-    import logging
     from pypsa.descriptors import Dict
     from os.path import abspath
 
+    base_dir = Path(__file__).parent.parent
     old_wd = os.getcwd()
     os.chdir(base_dir)
     for p in sm.SNAKEFILE_CHOICES:
@@ -200,6 +202,9 @@ def mocksnakemake(rulename, **wildcards):
             # case that item is a function
             if callable(p):
                 p = p(wc)
+            if isinstance(p, list):
+                if len(p) == 1:
+                    p = p[0]
             if isinstance(p, str):
                 files.insert(index, sm.io.apply_wildcards(abspath(p), wc))
             else:
@@ -213,18 +218,9 @@ def mocksnakemake(rulename, **wildcards):
     if not rule.log:
         rule.log.insert(0, f"logs/{rule.name}.log")
     Log = make_io_accessable(rule.log)
-    # create log dir if not existent
+    # create log and output dir if not existent
     for file in list(Log) + list(Output):
-        dir = os.path.dirname(file)
-        if not os.path.exists(dir):
-            logging.info(f'Log directory {dir} not existent, creating it.')
-            os.mkdir(dir)
-#    # create output dir if not existent
-#    for outfile in Output:
-#        dir = os.path.dirname(outfile)
-#        if not os.path.exists(dir):
-#            logging.info(f'Log directory {dir} not existent, creating it.')
-#            os.mkdir(dir)
+            Path(file).parent.mkdir(parents=True, exist_ok=True)
 
     snakemake = sm.script.Snakemake(input=Input, output=Output,
                             params=rule.params, wildcards=wc, threads=None,
