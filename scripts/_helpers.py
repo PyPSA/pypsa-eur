@@ -65,9 +65,6 @@ def load_network(fn, tech_costs, config, combine_hydro_ps=True):
     # bus_carrier = n.storage_units.bus.map(n.buses.carrier)
     # n.storage_units.loc[bus_carrier == "heat","carrier"] = "water tanks"
 
-    for name in opts['heat_links'] + opts['heat_generators']:
-        n.links.loc[n.links.index.to_series().str.endswith(name), "carrier"] = name
-
     Nyears = n.snapshot_weightings.sum()/8760.
     costs = load_costs(Nyears, tech_costs, config['costs'], config['electricity'])
     update_transmission_costs(n, costs)

@@ -64,7 +64,6 @@ Description
 """
 
 import logging
-logger = logging.getLogger(__name__)
 from _helpers import configure_logging
 
 import os
@@ -77,9 +76,9 @@ import pandas as pd
 import geopandas as gpd
 from shapely.geometry import MultiPolygon, Polygon
 from shapely.ops import cascaded_union
-
 import pycountry as pyc
-from _helpers import mocksnakemake
+
+logger = logging.getLogger(__name__)
 
 
 def _get_country(target, **keys):

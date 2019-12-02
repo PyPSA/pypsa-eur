@@ -124,7 +124,7 @@ rule build_bus_regions:
 if config['enable'].get('build_cutout', False):        
     rule build_cutout:
         output: directory("cutouts/{cutout}")
-        log: "logs/build_cutout.log"
+        log: "logs/build_cutout/{cutout}.log"
         resources: mem=config['atlite'].get('nprocesses', 4) * 1000
         threads: config['atlite'].get('nprocesses', 4)
         benchmark: "benchmarks/build_cutout_{cutout}"

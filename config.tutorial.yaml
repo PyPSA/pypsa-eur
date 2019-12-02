@@ -202,8 +202,6 @@ plotting:
   load_carriers: ["AC load"]
   AC_carriers: ["AC line", "AC transformer"]
   link_carriers: ["DC line", "Converter AC-DC"]
-  heat_links: []
-  heat_generators: []
   tech_colors:
     "onwind" : "#235ebc"
     "onshore wind" : "#235ebc"
