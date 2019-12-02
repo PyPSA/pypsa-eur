@@ -18,7 +18,7 @@ Description
 import logging
 logger = logging.getLogger(__name__)
 from _helpers import (load_network, aggregate_p, aggregate_costs,
-                      configure_logging, mocksnakemake)
+                      configure_logging)
 
 import pandas as pd
 import numpy as np
