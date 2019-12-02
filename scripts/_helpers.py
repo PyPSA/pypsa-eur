@@ -231,5 +231,5 @@ def mocksnakemake(rulename, **wildcards):
                             config=workflow.config, rulename=rule.name,
                             bench_iteration=None)
 
-    os.chdir('scripts')
+    os.chdir(old_wd)
     return snakemake
