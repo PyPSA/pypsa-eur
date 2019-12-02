@@ -92,7 +92,6 @@ from pypsa.descriptors import free_output_series_dataframes
 pypsa.pf.logger.setLevel(logging.WARNING)
 
 from vresutils.benchmark import memory_logger
-from _helpers import mocksnakemake
 
 def patch_pyomo_tmpdir(tmpdir):
     # PYOMO should write its lp files into tmp here
@@ -373,6 +372,7 @@ def solve_network(n, config=None, solver_log=None, opts=None, callback=None,
 if __name__ == "__main__":
     # Detect running outside of snakemake and mock snakemake for testing
     if 'snakemake' not in globals():
+        from _helpers import mocksnakemake
         snakemake = mocksnakemake('solve_network', network='elec', simpl='',
                                   clusters='5', ll='copt', opts='Co2L-24H')
 
