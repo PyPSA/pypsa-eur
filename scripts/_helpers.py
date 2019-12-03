@@ -27,7 +27,7 @@ def configure_logging(snakemake, skip_handlers=False):
     kwargs.setdefault("level", "INFO")
 
     if skip_handlers is False:
-        fallback_path = Path(__file__).parent.parent.joinpath('logs', f"{snakemake.rule}.log")
+        fallback_path = Path(__file__).parent.joinpath('..', 'logs', f"{snakemake.rule}.log")
         logfile = snakemake.log.get('python', snakemake.log[0] if snakemake.log
                                     else fallback_path)
         kwargs.update(
@@ -175,7 +175,7 @@ def mock_snakemake(rulename, **wildcards):
     from pypsa.descriptors import Dict
     from os.path import abspath
 
-    base_dir = Path(__file__).parent.parent
+    base_dir = Path(__file__).parent.joinpath('..')
     old_wd = os.getcwd()
     os.chdir(base_dir)
     for p in sm.SNAKEFILE_CHOICES:
@@ -189,8 +189,9 @@ def mock_snakemake(rulename, **wildcards):
 
     # make the input files accessable by taking the absolut paths
     def make_io_accessable(smfiles):
+        files = smfiles.__class__()
         if not smfiles:
-            return []
+            return files
         # for mildy hacky input functions (like make_summary):
         if len(smfiles) == 1 and callable(smfiles[0]):
             new_input_files = smfiles[0](wc)
@@ -199,7 +200,6 @@ def mock_snakemake(rulename, **wildcards):
             for index, p in enumerate(new_input_files):
                 smfiles.insert(index, p)
         # now iterate over each item and make path an absolut path
-        files = getattr(sm.io, type(smfiles))()
         for index, (key, p) in enumerate(smfiles.allitems()):
             # case that item is a function
             if callable(p):
@@ -227,6 +227,5 @@ def mock_snakemake(rulename, **wildcards):
                             resources=rule.resources, log=Log,
                             config=workflow.config, rulename=rule.name,
                             bench_iteration=None)
-
     os.chdir(old_wd)
     return snakemake
