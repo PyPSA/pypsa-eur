@@ -38,8 +38,8 @@ import tarfile
 if __name__ == "__main__":
     # Detect running outside of snakemake and mock snakemake for testing
     if 'snakemake' not in globals():
-        from _helpers import mocksnakemake
-        snakemake = mocksnakemake('retrieve_databundle')
+        from _helpers import mock_snakemake
+        snakemake = mock_snakemake('retrieve_databundle')
     configure_logging(snakemake) # TODO Make logging compatible with progressbar (see PR #102)
 
     if snakemake.config['tutorial']:
@@ -56,7 +56,7 @@ if __name__ == "__main__":
 
     logger.info(f"Extracting databundle.")
     tarfile.open(tarball_fn).extractall(to_fn)
-    
+
     tarball_fn.unlink()
-    
+
     logger.info(f"Databundle available in '{to_fn}'.")

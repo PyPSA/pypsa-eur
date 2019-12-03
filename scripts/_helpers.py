@@ -175,8 +175,8 @@ def mock_snakemake(rulename, **wildcards):
     from snakemake.script import Snakemake
     import logging
 
-    base_dir = Path(__file__).parent.joinpath('..').absolute()
-    if Path(os.getcwd()).absolute() != base_dir:
+    base_dir = Path(__file__).resolve().parents[1]
+    if Path.cwd().resolve() != base_dir:
         logging.info(f'Changing directory to repository root {base_dir}')
         os.chdir(base_dir)
 
@@ -194,8 +194,8 @@ def mock_snakemake(rulename, **wildcards):
     snakemake = Snakemake(job.input, job.output, job.params, job.wildcards,
                           job.threads, job.resources, job.log,
                           job.dag.workflow.config, job.rule.name, None,)
-
     # create log and output dir if not existent
     for path in list(rule.log) + list(rule.output):
         Path(path).parent.mkdir(parents=True, exist_ok=True)
+
     return snakemake

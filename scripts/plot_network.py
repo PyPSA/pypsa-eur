@@ -253,7 +253,6 @@ if __name__ == "__main__":
         snakemake = mock_snakemake('plot_network', network='elec', simpl='',
                                   clusters='5', ll='copt', opts='Co2L-24H',
                                   attr='p_nom', ext="pdf")
-
     configure_logging(snakemake)
 
     set_plot_style()
