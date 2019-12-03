@@ -155,10 +155,9 @@ def progress_retrieve(url, file):
 
 def mock_snakemake(rulename, **wildcards):
     """
-    This function is expected to be executed in the 'scripts'-directory within
+    This function is expected to be executed from the 'scripts'-directory of the
     the snakemake project. It returns a snakemake.script.Snakemake object,
-    based on the Snakefile of the upper directory, such that includes
-    mostly all necessary information (input, output, log etc.).
+    based on the Snakefile.
 
     If a rule has wildcards, you have to specify them in **wildcards.
 
@@ -173,59 +172,30 @@ def mock_snakemake(rulename, **wildcards):
     import snakemake as sm
     import os
     from pypsa.descriptors import Dict
-    from os.path import abspath
+    from snakemake.script import Snakemake
+    import logging
 
-    base_dir = Path(__file__).parent.joinpath('..')
-    old_wd = os.getcwd()
-    os.chdir(base_dir)
+    base_dir = Path(__file__).parent.joinpath('..').absolute()
+    if Path(os.getcwd()).absolute() != base_dir:
+        logging.info(f'Changing directory to repository root {base_dir}')
+        os.chdir(base_dir)
+
     for p in sm.SNAKEFILE_CHOICES:
         if os.path.exists(p):
             snakefile = p
             break
     workflow = sm.Workflow(snakefile)
     workflow.include(snakefile)
+    workflow.global_resources = {}
     rule = workflow.get_rule(rulename)
+    dag = sm.dag.DAG(workflow, rules=[rule])
     wc = Dict(wildcards)
+    job = sm.jobs.Job(rule, dag, wc)
+    snakemake = Snakemake(job.input, job.output, job.params, job.wildcards,
+                          job.threads, job.resources, job.log,
+                          job.dag.workflow.config, job.rule.name, None,)
 
-    # make the input files accessable by taking the absolut paths
-    def make_io_accessable(smfiles):
-        files = smfiles.__class__()
-        if not smfiles:
-            return files
-        # for mildy hacky input functions (like make_summary):
-        if len(smfiles) == 1 and callable(smfiles[0]):
-            new_input_files = smfiles[0](wc)
-            # overwrite smfiles with extracted files from function
-            smfiles = sm.io.InputFiles()
-            for index, p in enumerate(new_input_files):
-                smfiles.insert(index, p)
-        # now iterate over each item and make path an absolut path
-        for index, (key, p) in enumerate(smfiles.allitems()):
-            # case that item is a function
-            if callable(p):
-                p = p(wc)
-            if isinstance(p, list):
-                if len(p) == 1:
-                    p = p[0]
-            if isinstance(p, str):
-                files.insert(index, sm.io.apply_wildcards(abspath(p), wc))
-            else:
-                files.insert(index, p)
-            if key is not None:
-                files.add_name(key)
-        return files
-
-    Input = make_io_accessable(rule.input)
-    Output = make_io_accessable(rule.output)
-    Log = make_io_accessable(rule.log)
     # create log and output dir if not existent
-    for file in list(Log) + list(Output):
-            Path(file).parent.mkdir(parents=True, exist_ok=True)
-
-    snakemake = sm.script.Snakemake(input=Input, output=Output,
-                            params=rule.params, wildcards=wc, threads=None,
-                            resources=rule.resources, log=Log,
-                            config=workflow.config, rulename=rule.name,
-                            bench_iteration=None)
-    os.chdir(old_wd)
+    for path in list(rule.log) + list(rule.output):
+        Path(path).parent.mkdir(parents=True, exist_ok=True)
     return snakemake
