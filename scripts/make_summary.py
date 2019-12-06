@@ -248,17 +248,13 @@ def calculate_energy(n,label,energy):
 
 
 def calculate_supply(n,label,supply):
-    """calculate the max dispatch of each component at the buses where the loads are attached"""
+    """calculate the max dispatch of each component at the buses aggregated by carrier"""
 
-    load_types = n.loads.carrier.value_counts().index
+    bus_carriers = n.buses.carrier.unique()
 
-    for i in load_types:
-
-        buses = n.loads.bus[n.loads.carrier == i].values
-
-        bus_map = pd.Series(False,index=n.buses.index)
-
-        bus_map.loc[buses] = True
+    for i in bus_carriers:
+        bus_map = (n.buses.carrier == i)
+        bus_map.at[""] = False
 
         for c in n.iterate_components(n.one_port_components):
 
@@ -275,9 +271,9 @@ def calculate_supply(n,label,supply):
 
         for c in n.iterate_components(n.branch_components):
 
-            for end in ["0","1"]:
+            for end in [col[3:] for col in c.df.columns if col[:3] == "bus"]:
 
-                items = c.df.index[c.df["bus" + end].map(bus_map)]
+                items = c.df.index[c.df["bus" + end].map(bus_map,na_action=False)]
 
                 if len(items) == 0:
                     continue
@@ -285,23 +281,20 @@ def calculate_supply(n,label,supply):
                 #lots of sign compensation for direction and to do maximums
                 s = (-1)**(1-int(end))*((-1)**int(end)*c.pnl["p"+end][items]).max().groupby(c.df.loc[items,'carrier']).sum()
 
-                supply = supply.reindex(pd.MultiIndex.from_product([[i],[c.list_name],s.index])|supply.index)
-                supply.loc[idx[i,c.list_name,list(s.index)],label] = s.values
+                supply = supply.reindex(pd.MultiIndex.from_product([[i],[c.list_name],s.index+end])|supply.index)
+                supply.loc[idx[i,c.list_name,list(s.index+end)],label] = s.values
 
     return supply
 
 def calculate_supply_energy(n,label,supply_energy):
-    """calculate the total dispatch of each component at the buses where the loads are attached"""
+    """calculate the total energy supply/consuption of each component at the buses aggregated by carrier"""
 
-    load_types = n.loads.carrier.value_counts().index
 
-    for i in load_types:
+    bus_carriers = n.buses.carrier.unique()
 
-        buses = n.loads.bus[n.loads.carrier == i].values
-
-        bus_map = pd.Series(False,index=n.buses.index)
-
-        bus_map.loc[buses] = True
+    for i in bus_carriers:
+        bus_map = (n.buses.carrier == i)
+        bus_map.at[""] = False
 
         for c in n.iterate_components(n.one_port_components):
 
@@ -310,7 +303,7 @@ def calculate_supply_energy(n,label,supply_energy):
             if len(items) == 0:
                 continue
 
-            s = c.pnl.p[items].sum().multiply(c.df.loc[items,'sign']).groupby(c.df.loc[items,'carrier']).sum()
+            s = c.pnl.p[items].multiply(n.snapshot_weightings,axis=0).sum().multiply(c.df.loc[items,'sign']).groupby(c.df.loc[items,'carrier']).sum()
 
             supply_energy = supply_energy.reindex(pd.MultiIndex.from_product([[i],[c.list_name],s.index])|supply_energy.index)
             supply_energy.loc[idx[i,c.list_name,list(s.index)],label] = s.values
@@ -318,17 +311,17 @@ def calculate_supply_energy(n,label,supply_energy):
 
         for c in n.iterate_components(n.branch_components):
 
-            for end in ["0","1"]:
+            for end in [col[3:] for col in c.df.columns if col[:3] == "bus"]:
 
-                items = c.df.index[c.df["bus" + end].map(bus_map)]
+                items = c.df.index[c.df["bus" + str(end)].map(bus_map,na_action=False)]
 
                 if len(items) == 0:
                     continue
 
-                s = (-1)*c.pnl["p"+end][items].sum().groupby(c.df.loc[items,'carrier']).sum()
+                s = (-1)*c.pnl["p"+end][items].multiply(n.snapshot_weightings,axis=0).sum().groupby(c.df.loc[items,'carrier']).sum()
 
-                supply_energy = supply_energy.reindex(pd.MultiIndex.from_product([[i],[c.list_name],s.index])|supply_energy.index)
-                supply_energy.loc[idx[i,c.list_name,list(s.index)],label] = s.values
+                supply_energy = supply_energy.reindex(pd.MultiIndex.from_product([[i],[c.list_name],s.index+end])|supply_energy.index)
+                supply_energy.loc[idx[i,c.list_name,list(s.index+end)],label] = s.values
 
     return supply_energy
 
