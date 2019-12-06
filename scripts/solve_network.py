@@ -113,18 +113,6 @@ def add_opts_constraints(n, opts=None):
         ext_gens_i = n.generators.index[n.generators.carrier.isin(conv_techs) & n.generators.p_nom_extendable]
         n.model.safe_peakdemand = pypsa.opt.Constraint(expr=sum(n.model.generator_p_nom[gen] for gen in ext_gens_i) >= peakdemand - exist_conv_caps)
 
-def add_lv_constraint(n):
-    line_volume = getattr(n, 'line_volume_limit', None)
-    if line_volume is not None and not np.isinf(line_volume):
-        n.model.line_volume_constraint = pypsa.opt.Constraint(
-            expr=((sum(n.model.passive_branch_s_nom["Line",line]*n.lines.at[line,"length"]
-                        for line in n.lines.index[n.lines.s_nom_extendable]) +
-                    sum(n.model.link_p_nom[link]*n.links.at[link,"length"]
-                        for link in n.links.index[(n.links.carrier=='DC') &
-                                                    n.links.p_nom_extendable]))
-                    <= line_volume)
-        )
-
 def add_eps_storage_constraint(n):
     if not hasattr(n, 'epsilon'):
         n.epsilon = 1e-5
@@ -190,7 +178,6 @@ def add_chp_constraints(n):
 
 def extra_functionality(n, snapshots):
     #add_opts_constraints(n, opts)
-    #add_lv_constraint(n)
     #add_eps_storage_constraint(n)
     add_chp_constraints(n)
     add_battery_constraints(n)
@@ -199,16 +186,11 @@ def extra_functionality(n, snapshots):
 
 def fix_branches(n, lines_s_nom=None, links_p_nom=None):
     if lines_s_nom is not None and len(lines_s_nom) > 0:
-        for l, s_nom in lines_s_nom.iteritems():
-            n.model.passive_branch_s_nom["Line", l].fix(s_nom)
-        if isinstance(n.opt, pypsa.opf.PersistentSolver):
-            n.opt.update_var(n.model.passive_branch_s_nom)
-
+        n.lines.loc[lines_s_nom.index,"s_nom"] = lines_s_nom.values
+        n.lines.loc[lines_s_nom.index,"s_nom_extendable"] = False
     if links_p_nom is not None and len(links_p_nom) > 0:
-        for l, p_nom in links_p_nom.iteritems():
-            n.model.link_p_nom[l].fix(p_nom)
-        if isinstance(n.opt, pypsa.opf.PersistentSolver):
-            n.opt.update_var(n.model.link_p_nom)
+        n.links.loc[links_p_nom.index,"p_nom"] = links_p_nom.values
+        n.links.loc[links_p_nom.index,"p_nom_extendable"] = False
 
 def solve_network(n, config=None, solver_log=None, opts=None):
     if config is None:
@@ -234,19 +216,19 @@ def solve_network(n, config=None, solver_log=None, opts=None):
             fix_branches(n,
                          lines_s_nom=n.lines.loc[n.lines.s_nom_extendable, 's_nom_opt'],
                          links_p_nom=n.links.loc[(n.links.carrier=='DC') & n.links.p_nom_extendable, 'p_nom_opt'])
-
-
-        if not fix_ext_lines and hasattr(n.model, 'line_volume_constraint'):
-
-            def extra_postprocessing(n, snapshots, duals):
-                index = list(n.model.line_volume_constraint.keys())
-                cdata = pd.Series(list(n.model.line_volume_constraint.values()),
-                                  index=index)
-                n.line_volume_limit_dual =  -cdata.map(duals).sum()
-                print("line volume limit dual:",n.line_volume_limit_dual)
-
+            if "line_volume_constraint" in n.global_constraints.index:
+                n.global_constraints.drop("line_volume_constraint",inplace=True)
         else:
-            extra_postprocessing = None
+            if "line_volume_constraint" not in n.global_constraints.index:
+                line_volume = getattr(n, 'line_volume_limit', None)
+                if line_volume is not None and not np.isinf(line_volume):
+                    n.add("GlobalConstraint",
+                          "line_volume_constraint",
+                          type="transmission_volume_expansion_limit",
+                          carrier_attribute="AC,DC",
+                          sense="<=",
+                          constant=line_volume)
+
 
         # Firing up solve will increase memory consumption tremendously, so
         # make sure we freed everything we can
@@ -273,6 +255,10 @@ def solve_network(n, config=None, solver_log=None, opts=None):
             ("network_lopf did abort with status={} "
              "and termination_condition={}"
              .format(status, termination_condition))
+
+        if not fix_ext_lines and "line_volume_constraint" in n.global_constraints.index:
+            n.line_volume_limit_dual = n.global_constraints.at["line_volume_constraint","mu"]
+            print("line volume limit dual:",n.line_volume_limit_dual)
 
         return status, termination_condition
 
@@ -307,21 +293,6 @@ def solve_network(n, config=None, solver_log=None, opts=None):
                     n.lines['s_nom_opt']/lines['s_nom']
                 )
                 logger.debug("lines.num_parallel={}".format(n.lines.loc[lines_ext_typed_b, 'num_parallel']))
-
-            if isinstance(n.opt, pypsa.opf.PersistentSolver):
-                n.calculate_dependent_values()
-
-                assert solve_opts['formulation'] == 'kirchhoff', \
-                    "Updating persistent solvers has only been implemented for the kirchhoff formulation for now"
-
-                n.opt.remove_constraint(n.model.cycle_constraints)
-                del n.model.cycle_constraints_index
-                del n.model.cycle_constraints_index_0
-                del n.model.cycle_constraints_index_1
-                del n.model.cycle_constraints
-
-                pypsa.opf.define_passive_branch_flows_with_kirchhoff(n, n.snapshots, skip_vars=True)
-                n.opt.add_constraint(n.model.cycle_constraints)
 
         iteration = 1
 
