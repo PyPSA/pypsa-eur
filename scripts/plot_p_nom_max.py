@@ -53,7 +53,7 @@ if __name__ == "__main__":
     plot_kwds = dict(drawstyle="steps-post")
 
     clusters = snakemake.wildcards.clusters.split(',')
-    techs = snakemake.config['renewable'].keys()
+    techs = snakemake.wildcards.techs.split(',')
     country = snakemake.wildcards.country
     if country == 'all':
         country = None
