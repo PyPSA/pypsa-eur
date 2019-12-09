@@ -175,10 +175,8 @@ def mock_snakemake(rulename, **wildcards):
     from snakemake.script import Snakemake
 
     script_dir = Path(__file__).parent.resolve()
-    msg = ('mock_snakemake has to be run from the repository scripts '
-           f'directory {script_dir}')
-    assert Path.cwd().resolve() == script_dir, msg
-
+    assert Path.cwd().resolve() == script_dir, \
+      f'mock_snakemake has to be run from the repository scripts directory {script_dir}'
     os.chdir(script_dir.parent)
     for p in sm.SNAKEFILE_CHOICES:
         if os.path.exists(p):
