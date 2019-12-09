@@ -47,12 +47,12 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
         snakemake = mock_snakemake('plot_p_nom_max', network='elec', simpl='',
                                   techs='solar,onwind,offwind-dc', ext='png',
-                                  clusters= '5,full', country= 'all')
+                                  clusts= '5,full', country= 'all')
     configure_logging(snakemake)
 
     plot_kwds = dict(drawstyle="steps-post")
 
-    clusters = snakemake.wildcards.clusters.split(',')
+    clusters = snakemake.wildcards.clusts.split(',')
     techs = snakemake.wildcards.techs.split(',')
     country = snakemake.wildcards.country
     if country == 'all':
