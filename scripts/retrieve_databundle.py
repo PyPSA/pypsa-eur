@@ -40,9 +40,9 @@ if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
         snakemake = mock_snakemake('retrieve_databundle')
-        pathprefix = '..'
+        rootpath = '..'
     else:
-        pathprefix = '.'
+        rootpath = '.'
     configure_logging(snakemake) # TODO Make logging compatible with progressbar (see PR #102)
 
     if snakemake.config['tutorial']:
@@ -51,8 +51,8 @@ if __name__ == "__main__":
         url = "https://zenodo.org/record/3517935/files/pypsa-eur-data-bundle.tar.xz"
 
     # Save locations
-    tarball_fn = Path(f"{pathprefix}/bundle.tar.xz")
-    to_fn = Path(f"{pathprefix}/data")
+    tarball_fn = Path(f"{rootpath}/bundle.tar.xz")
+    to_fn = Path(f"{rootpath}/data")
 
     logger.info(f"Downloading databundle from '{url}'.")
     progress_retrieve(url, tarball_fn)
