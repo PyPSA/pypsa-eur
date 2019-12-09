@@ -359,9 +359,9 @@ def input_plot_p_nom_max(wildcards):
              .format(maybe_cluster=('' if c == 'full' else ('_' + c)), **wildcards))
             for c in wildcards.clusters.split(",")]
 rule plot_p_nom_max:
-    input: input_plot_p_nom_max
+    input: 'networks/{network}_s{simpl}{maybe_cluster}.nc'
     output: "results/plots/{network}_s{simpl}_cum_p_nom_max_{clusters}_{technology}_{country}.{ext}"
-    log: "logs/plot_p_nom_max/{network}_s{simpl}_{clusters}_{technology}_{country}_{ext}.log"
+    log: "logs/plot_p_nom_max/{network}_s{simpl}_{clusters}_{techs}_{country}_{ext}.log"
     script: "scripts/plot_p_nom_max.py"
 
 rule build_country_flh:
