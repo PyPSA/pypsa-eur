@@ -57,7 +57,7 @@ if __name__ == "__main__":
         snakemake = mock_snakemake('build_natura_raster') #has to be enabled
     configure_logging(snakemake)
 
-    cutout_dir = Path(snakemake.input.cutouts).parent.absolute()
+    cutout_dir = Path(snakemake.input.cutouts[0]).parent.resolve()
     cutout_names = {res['cutout'] for res in snakemake.config['renewable'].values()}
     xs, Xs, ys, Ys = zip(*(determine_cutout_xXyY(cutout) for cutout in cutout_names))
     xXyY = min(xs), max(Xs), min(ys), max(Ys)

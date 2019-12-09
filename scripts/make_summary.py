@@ -475,7 +475,9 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
         snakemake = mock_snakemake('make_summary', network='elec', simpl='',
                            clusters='5', ll='copt', opts='Co2L-24H', country='all')
-    network_dir = os.path.join('results', 'networks')
+        network_dir = os.path.join('..', 'results', 'networks')
+    else:
+        network_dir = os.path.join('results', 'networks')
     configure_logging(snakemake)
 
 
