@@ -46,14 +46,14 @@ if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
         snakemake = mock_snakemake('plot_p_nom_max', network='elec', simpl='',
-                                  technology='solar', ext='pdf', clusters= '5,full',
-                                  country= 'all')
+                                  technology='solar,onwind,offwind-dc', ext='png',
+                                  clusters= '5,full', country= 'all')
     configure_logging(snakemake)
 
     plot_kwds = dict(drawstyle="steps-post")
 
     clusters = snakemake.wildcards.clusters.split(',')
-    techs = snakemake.wildcards.techs.split(',')
+    techs = snakemake.wildcards.technology.split(',')
     country = snakemake.wildcards.country
     if country == 'all':
         country = None
