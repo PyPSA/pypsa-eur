@@ -36,17 +36,11 @@ if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
         snakemake = mock_snakemake('retrieve_natura_raster')
-        to_fn = Path("..", "resources/natura.tiff")
-    else:
-        to_fn = Path("resources/natura.tiff")
     configure_logging(snakemake) # TODO Make logging compatible with progressbar (see PR #102)
-
-    # Save location, ensure folder existence
-    to_fn.parent.mkdir(parents=True, exist_ok=True)
 
     url = "https://zenodo.org/record/3518215/files/natura.tiff"
 
     logger.info(f"Downloading natura raster from '{url}'.")
-    progress_retrieve(url, to_fn)
+    progress_retrieve(url, snakemake.output[0])
 
-    logger.info(f"Natura raster available as '{to_fn}'.")
+    logger.info(f"Natura raster available as '{snakemake.output[0]}'.")
