@@ -66,7 +66,7 @@ if __name__ == "__main__":
         net = pypsa.Network(snakemake.input[j])
 
         for i, tech in enumerate(techs):
-            cum_p_nom_max(net, tech, country).plot(x="p_max_pu", y="p_nom_max",
+            cum_p_nom_max(net, tech, country).plot(x="p_max_pu", y="cum_p_nom_max",
                          label=cluster, ax=axes[i], **plot_kwds)
 
     for i, tech in enumerate(techs):
