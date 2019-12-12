@@ -126,53 +126,43 @@ def add_battery_constraints(n):
     link_p_nom = get_var(n, "Link", "p_nom")
 
     lhs = linexpr((1,link_p_nom[nodes + " charger"]),
-                  (-n.links.loc[nodes + " charger", "efficiency"],
+                  (-n.links.loc[nodes + " discharger", "efficiency"],
                    link_p_nom[nodes + " discharger"].values))
     define_constraints(n, lhs, "=", 0, 'Link', 'charger_ratio')
 
 
 def add_chp_constraints(n):
 
+    electric = n.links.index[n.links.index.str.contains("urban central") & n.links.index.str.contains("CHP") & n.links.index.str.contains("electric")]
+    heat = n.links.index[n.links.index.str.contains("urban central") & n.links.index.str.contains("CHP") & n.links.index.str.contains("heat")]
 
-    options = { "chp_parameters" : {    'eta_elec' : 0.468, #electrical efficiency with no heat output
-                                        'c_v' : 0.15, #loss of fuel for each addition of heat
-                                        'c_m' : 0.75, #backpressure ratio
-                                        'p_nom_ratio' : 1., #ratio of max heat output to max electrical output
-                                        }}
-
-    if hasattr(n.links.index,"str") and n.links.index.str.contains("CHP").any():
-
-        #AC buses with district heating
-        urban_central = n.buses.index[n.buses.carrier == "urban central heat"]
-        if not urban_central.empty:
-            urban_central = urban_central.str[:-len(" urban central heat")]
+    if not electric.empty:
 
         link_p_nom = get_var(n, "Link", "p_nom")
 
-        #chp_nom
-        lhs = linexpr((n.links.loc[urban_central + " urban central CHP electric","efficiency"]
-                       *options['chp_parameters']['p_nom_ratio'],
-                       link_p_nom[urban_central + " urban central CHP electric"]),
-                      (-n.links.loc[urban_central + " urban central CHP heat","efficiency"].values
-                       *options['chp_parameters']['p_nom_ratio'],
-                       link_p_nom[urban_central + " urban central CHP heat"].values))
+        #ratio of output heat to electricity set by p_nom_ratio
+        lhs = linexpr((n.links.loc[electric,"efficiency"]
+                       *n.links.loc[electric,'p_nom_ratio'],
+                       link_p_nom[electric]),
+                      (-n.links.loc[heat,"efficiency"].values,
+                       link_p_nom[heat].values))
         define_constraints(n, lhs, "=", 0, 'chplink', 'fix_p_nom_ratio')
 
         link_p = get_var(n, "Link", "p")
 
         #backpressure
-        lhs = linexpr((options['chp_parameters']['c_m']
-                       *n.links.loc[urban_central + " urban central CHP heat","efficiency"],
-                       link_p[urban_central + " urban central CHP heat"]),
-                      (-n.links.loc[urban_central + " urban central CHP electric","efficiency"].values,
-                       link_p[urban_central + " urban central CHP electric"].values))
+        lhs = linexpr((n.links.loc[electric,'c_b'].values
+                       *n.links.loc[heat,"efficiency"],
+                       link_p[heat]),
+                      (-n.links.loc[electric,"efficiency"].values,
+                       link_p[electric].values))
 
         define_constraints(n, lhs, "<=", 0, 'chplink', 'backpressure')
 
         #top_iso_fuel_line
-        lhs = linexpr((1,link_p[urban_central + " urban central CHP heat"]),
-                      (1,link_p[urban_central + " urban central CHP electric"].values),
-                      (-1,link_p_nom[urban_central + " urban central CHP electric"].values))
+        lhs = linexpr((1,link_p[heat]),
+                      (1,link_p[electric].values),
+                      (-1,link_p_nom[electric].values))
 
         define_constraints(n, lhs, "<=", 0, 'chplink', 'top_iso_fuel_line')
 

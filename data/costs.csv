@@ -175,9 +175,38 @@ decentral CHP,2030,lifetime,25,years,HP
 decentral CHP,2030,investment,1400,EUR/kWel,HP
 decentral CHP,2030,FOM,3,%/year,HP
 decentral CHP,2030,discount rate,0.04,per unit,Palzer thesis
-central CHP,2030,lifetime,25,years,HP
-central CHP,2030,investment,650,EUR/kWel,HP
-central CHP,2030,FOM,3,%/year,HP
+central gas CHP,2030,lifetime,30,years,DEA
+central gas CHP,2030,investment,1300,EUR/kWel,DEA
+central gas CHP,2030,FOM,3,%/year,DEA
+central gas CHP,2030,efficiency,0.45,per unit,DEA (condensation mode)
+central gas CHP,2030,c_b,0.7,per unit,DEA (backpressure ratio)
+central gas CHP,2030,c_v,0.17,per unit,DEA (loss of fuel for additional heat)
+central gas CHP,2030,p_nom_ratio,1.,per unit,
+central gas CHP,2030,VOM,0.82,EUR/MWh,DEA
+central gas CHP CCS,2030,lifetime,30,years,DEA
+central gas CHP CCS,2030,investment,1900,EUR/kWel,DEA + DIW extra for CCS on gas plant
+central gas CHP CCS,2030,FOM,3,%/year,DEA
+central gas CHP CCS,2030,efficiency,0.405,per unit,DEA (condensation mode + efficiency loss due to capture)
+central gas CHP CCS,2030,c_b,0.7,per unit,DEA (backpressure ratio)
+central gas CHP CCS,2030,c_v,0.17,per unit,DEA (loss of fuel for additional heat)
+central gas CHP CCS,2030,p_nom_ratio,1.,per unit,
+central gas CHP CCS,2030,VOM,0.82,EUR/MWh,DEA
+central solid biomass CHP,2030,lifetime,40,years,DEA
+central solid biomass CHP,2030,investment,1990,EUR/kWel,DEA
+central solid biomass CHP,2030,FOM,3,%/year,DEA
+central solid biomass CHP,2030,efficiency,0.52,per unit,DEA (condensation mode)
+central solid biomass CHP,2030,c_b,1.01,per unit,DEA (backpressure ratio)
+central solid biomass CHP,2030,c_v,0.15,per unit,DEA (loss of fuel for additional heat)
+central solid biomass CHP,2030,p_nom_ratio,1.,per unit,
+central solid biomass CHP,2030,VOM,2.2,EUR/MWh,DEA
+central solid biomass CHP CCS,2030,lifetime,40,years,DEA
+central solid biomass CHP CCS,2030,investment,2590,EUR/kWel,DEA + DIW extra for CCS on gas plant
+central solid biomass CHP CCS,2030,FOM,3,%/year,DEA
+central solid biomass CHP CCS,2030,efficiency,0.468,per unit,DEA (condensation mode + efficiency loss due to capture)
+central solid biomass CHP CCS,2030,c_b,1.01,per unit,DEA (backpressure ratio)
+central solid biomass CHP CCS,2030,c_v,0.15,per unit,DEA (loss of fuel for additional heat)
+central solid biomass CHP CCS,2030,p_nom_ratio,1.,per unit,
+central solid biomass CHP CCS,2030,VOM,2.2,EUR/MWh,DEA
 micro CHP,2030,lifetime,20,years,DEA for PEMFC with methane (for unit consuming 2kW CH4)
 micro CHP,2030,investment,4500,EUR/kWCH4,DEA for PEMFC with methane (for unit consuming 2kW CH4)
 micro CHP,2030,FOM,6,%/year,DEA for PEMFC with methane (for unit consuming 2kW CH4)
