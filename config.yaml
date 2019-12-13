@@ -2,7 +2,7 @@ logging_level: INFO
 
 results_dir: 'results/'
 summary_dir: results
-run: '191108-h2_pipeline_network'
+run: '191212-ccs'
 
 scenario:
   sectors: [E] # ,E+EV,E+BEV,E+BEV+V2G] # [ E+EV, E+BEV, E+BEV+V2G ]
@@ -10,7 +10,7 @@ scenario:
   lv: [1.0]#, 1.125, 1.25, 1.5, 2.0]# or opt
   clusters: [50] #[90, 128, 181] #[45, 64, 90, 128, 181, 256] #, 362] # (2**np.r_[5.5:9:.5]).astype(int) minimum is 37
   opts: ['']  #for pypsa-eur
-  sector_opts: [Co2L0-3H-T-H-B-I,Co2L0-5H-T-H-B-I]#,Co2L0p1-3H-T-H-B-I,Co2L0p25-3H-T-H-B-I,Co2L0p5-3H-T-H-B-I]#[Co2L0-3H-T-H-B-I-onwind0-solar3,Co2L0-3H-T-H-B-I-onwind0p125-solar3,Co2L0-3H-T-H-B-I-onwind0p25-solar3,Co2L0-3H-T-H-B-I-onwind0p50-solar3,Co2L0-3H-T-H-B-I-solar3]#,Co2L0-3H-T-H-B-I-onwind0p25-solar3]#,Co2L0p05-3H-T-H-B-I,Co2L0p10-3H-T-H-B-I,Co2L0p20-3H-T-H-B-I,Co2L0p30-3H-T-H-B-I,Co2L0p50-3H-T-H-B-I]#[Co2L-3H-T-H,Co2L0p10-3H-T-H,Co2L0-3H-T-H,Co2L0p20-3H-T-H]   #Co2L-3H-T-H,Co2L0p10-3H-T-H,Co2L0p20-3H-T-HCo2L-3H-T-H,Co2L0p10-3H-T-H,Co2L0p30-3H-T-H,Co2L0p50-3H-T-H] #Co2L-3H,Co2L-3H-T,, LC-FL, LC-T, Ep-T, Co2L-T]
+  sector_opts: [Co2L0-3H-T-H-B-I,Co2L0p2-3H-T-H-B-I,Co2L0p5-3H-T-H-B-I]#,Co2L0p1-3H-T-H-B-I,Co2L0p25-3H-T-H-B-I,Co2L0p5-3H-T-H-B-I]#[Co2L0-3H-T-H-B-I-onwind0-solar3,Co2L0-3H-T-H-B-I-onwind0p125-solar3,Co2L0-3H-T-H-B-I-onwind0p25-solar3,Co2L0-3H-T-H-B-I-onwind0p50-solar3,Co2L0-3H-T-H-B-I-solar3]#,Co2L0-3H-T-H-B-I-onwind0p25-solar3]#,Co2L0p05-3H-T-H-B-I,Co2L0p10-3H-T-H-B-I,Co2L0p20-3H-T-H-B-I,Co2L0p30-3H-T-H-B-I,Co2L0p50-3H-T-H-B-I]#[Co2L-3H-T-H,Co2L0p10-3H-T-H,Co2L0-3H-T-H,Co2L0p20-3H-T-H]   #Co2L-3H-T-H,Co2L0p10-3H-T-H,Co2L0p20-3H-T-HCo2L-3H-T-H,Co2L0p10-3H-T-H,Co2L0p30-3H-T-H,Co2L0p50-3H-T-H] #Co2L-3H,Co2L-3H-T,, LC-FL, LC-T, Ep-T, Co2L-T]
   # Co2L will give default (5%); Co2L0p25 will give 25% CO2 emissions; Co2Lm0p05 will give 5% negative emissions
 
 
@@ -73,11 +73,6 @@ sector:
   'tes_tau' : 3.
   'boilers' : True
   'chp' : True
-  'chp_parameters':
-    'eta_elec' : 0.468 #electrical efficiency with no heat output
-    'c_v' : 0.15 #loss of fuel for each addition of heat
-    'c_m' : 0.75 #backpressure ratio
-    'p_nom_ratio' : 1. #ratio of max heat output to max electrical output
   'solar_thermal' : True
   'solar_cf_correction': 0.788457  # =  >>> 1/1.2683
   'marginal_cost_storage' : 0. #1e-4

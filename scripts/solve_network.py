@@ -1,7 +1,15 @@
+import os
+
+os.system("conda config --add channels http://conda.anaconda.org/gurobi")
+
+os.system("conda install -y gurobi=8.1.0")
+
 
 import sys
 
-sys.path = ["/home/vres/data/tom/lib/pypsa"] + sys.path
+sys.path = ["pypsa"] + sys.path
+
+
 
 import numpy as np
 import pandas as pd
@@ -11,6 +19,8 @@ import gc
 import os
 
 import pypsa
+
+from pypsa.linopt import get_var, linexpr, define_constraints
 
 from pypsa.descriptors import free_output_series_dataframes
 
@@ -103,80 +113,74 @@ def add_opts_constraints(n, opts=None):
         ext_gens_i = n.generators.index[n.generators.carrier.isin(conv_techs) & n.generators.p_nom_extendable]
         n.model.safe_peakdemand = pypsa.opt.Constraint(expr=sum(n.model.generator_p_nom[gen] for gen in ext_gens_i) >= peakdemand - exist_conv_caps)
 
-def add_lv_constraint(n):
-    line_volume = getattr(n, 'line_volume_limit', None)
-    if line_volume is not None and not np.isinf(line_volume):
-        n.model.line_volume_constraint = pypsa.opt.Constraint(
-            expr=((sum(n.model.passive_branch_s_nom["Line",line]*n.lines.at[line,"length"]
-                        for line in n.lines.index[n.lines.s_nom_extendable]) +
-                    sum(n.model.link_p_nom[link]*n.links.at[link,"length"]
-                        for link in n.links.index[(n.links.carrier=='DC') &
-                                                    n.links.p_nom_extendable]))
-                    <= line_volume)
-        )
-
 def add_eps_storage_constraint(n):
     if not hasattr(n, 'epsilon'):
         n.epsilon = 1e-5
     fix_sus_i = n.storage_units.index[~ n.storage_units.p_nom_extendable]
     n.model.objective.expr += sum(n.epsilon * n.model.state_of_charge[su, n.snapshots[0]] for su in fix_sus_i)
 
-def add_battery_constraints(network):
+def add_battery_constraints(n):
 
-    nodes = list(network.buses.index[network.buses.carrier == "battery"])
+    nodes = n.buses.index[n.buses.carrier == "battery"]
 
-    def battery(model, node):
-        return model.link_p_nom[node + " charger"] == model.link_p_nom[node + " discharger"]*network.links.at[node + " charger","efficiency"]
+    link_p_nom = get_var(n, "Link", "p_nom")
 
-    network.model.battery = pypsa.opt.Constraint(nodes, rule=battery)
-
-
-
-def add_chp_constraints(network):
-
-    options = snakemake.config["sector"]
-
-    if hasattr(network.links.index,"str") and network.links.index.str.contains("CHP").any():
-
-        #AC buses with district heating
-        urban_central = n.buses.index[n.buses.carrier == "urban central heat"]
-        if not urban_central.empty:
-            urban_central = urban_central.str[:-len(" urban central heat")]
+    lhs = linexpr((1,link_p_nom[nodes + " charger"]),
+                  (-n.links.loc[nodes + " discharger", "efficiency"].values,
+                   link_p_nom[nodes + " discharger"].values))
+    define_constraints(n, lhs, "=", 0, 'Link', 'charger_ratio')
 
 
-        def chp_nom(model,node):
-            return network.links.at[node + " urban central CHP electric","efficiency"]*options['chp_parameters']['p_nom_ratio']*model.link_p_nom[node + " urban central CHP electric"] == network.links.at[node + " urban central CHP heat","efficiency"]*options['chp_parameters']['p_nom_ratio']*model.link_p_nom[node + " urban central CHP heat"]
+def add_chp_constraints(n):
 
+    electric = n.links.index[n.links.index.str.contains("urban central") & n.links.index.str.contains("CHP") & n.links.index.str.contains("electric")]
+    heat = n.links.index[n.links.index.str.contains("urban central") & n.links.index.str.contains("CHP") & n.links.index.str.contains("heat")]
 
-        network.model.chp_nom = pypsa.opt.Constraint(urban_central,rule=chp_nom)
+    if not electric.empty:
 
+        link_p_nom = get_var(n, "Link", "p_nom")
 
-        def backpressure(model,node,snapshot):
-            return options['chp_parameters']['c_m']*network.links.at[node + " urban central CHP heat","efficiency"]*model.link_p[node + " urban central CHP heat",snapshot] <= network.links.at[node + " urban central CHP electric","efficiency"]*model.link_p[node + " urban central CHP electric",snapshot]
+        #ratio of output heat to electricity set by p_nom_ratio
+        lhs = linexpr((n.links.loc[electric,"efficiency"]
+                       *n.links.loc[electric,'p_nom_ratio'],
+                       link_p_nom[electric]),
+                      (-n.links.loc[heat,"efficiency"].values,
+                       link_p_nom[heat].values))
+        define_constraints(n, lhs, "=", 0, 'chplink', 'fix_p_nom_ratio')
 
-        network.model.backpressure = pypsa.opt.Constraint(urban_central,list(network.snapshots),rule=backpressure)
+        link_p = get_var(n, "Link", "p")
 
+        #backpressure
+        lhs = linexpr((n.links.loc[electric,'c_b'].values
+                       *n.links.loc[heat,"efficiency"],
+                       link_p[heat]),
+                      (-n.links.loc[electric,"efficiency"].values,
+                       link_p[electric].values))
 
-        def top_iso_fuel_line(model,node,snapshot):
-            return model.link_p[node + " urban central CHP heat",snapshot] + model.link_p[node + " urban central CHP electric",snapshot] <= model.link_p_nom[node + " urban central CHP electric"]
+        define_constraints(n, lhs, "<=", 0, 'chplink', 'backpressure')
 
-        network.model.top_iso_fuel_line = pypsa.opt.Constraint(urban_central,list(network.snapshots),rule=top_iso_fuel_line)
+        #top_iso_fuel_line
+        lhs = linexpr((1,link_p[heat]),
+                      (1,link_p[electric].values),
+                      (-1,link_p_nom[electric].values))
 
+        define_constraints(n, lhs, "<=", 0, 'chplink', 'top_iso_fuel_line')
+
+def extra_functionality(n, snapshots):
+    #add_opts_constraints(n, opts)
+    #add_eps_storage_constraint(n)
+    add_chp_constraints(n)
+    add_battery_constraints(n)
 
 
 
 def fix_branches(n, lines_s_nom=None, links_p_nom=None):
     if lines_s_nom is not None and len(lines_s_nom) > 0:
-        for l, s_nom in lines_s_nom.iteritems():
-            n.model.passive_branch_s_nom["Line", l].fix(s_nom)
-        if isinstance(n.opt, pypsa.opf.PersistentSolver):
-            n.opt.update_var(n.model.passive_branch_s_nom)
-
+        n.lines.loc[lines_s_nom.index,"s_nom"] = lines_s_nom.values
+        n.lines.loc[lines_s_nom.index,"s_nom_extendable"] = False
     if links_p_nom is not None and len(links_p_nom) > 0:
-        for l, p_nom in links_p_nom.iteritems():
-            n.model.link_p_nom[l].fix(p_nom)
-        if isinstance(n.opt, pypsa.opf.PersistentSolver):
-            n.opt.update_var(n.model.link_p_nom)
+        n.links.loc[links_p_nom.index,"p_nom"] = links_p_nom.values
+        n.links.loc[links_p_nom.index,"p_nom_extendable"] = False
 
 def solve_network(n, config=None, solver_log=None, opts=None):
     if config is None:
@@ -191,16 +195,6 @@ def solve_network(n, config=None, solver_log=None, opts=None):
     def run_lopf(n, allow_warning_status=False, fix_zero_lines=False, fix_ext_lines=False):
         free_output_series_dataframes(n)
 
-        if not hasattr(n, 'opt') or not isinstance(n.opt, pypsa.opf.PersistentSolver):
-            pypsa.opf.network_lopf_build_model(n, formulation=solve_opts['formulation'])
-            add_opts_constraints(n, opts)
-            add_lv_constraint(n)
-            #add_eps_storage_constraint(n)
-            add_battery_constraints(n)
-            add_chp_constraints(n)
-
-            pypsa.opf.network_lopf_prepare_solver(n, solver_name=solver_name)
-
         if fix_zero_lines:
             fix_lines_b = (n.lines.s_nom_opt == 0.) & n.lines.s_nom_extendable
             fix_links_b = (n.links.carrier=='DC') & (n.links.p_nom_opt == 0.) & n.links.p_nom_extendable
@@ -212,19 +206,19 @@ def solve_network(n, config=None, solver_log=None, opts=None):
             fix_branches(n,
                          lines_s_nom=n.lines.loc[n.lines.s_nom_extendable, 's_nom_opt'],
                          links_p_nom=n.links.loc[(n.links.carrier=='DC') & n.links.p_nom_extendable, 'p_nom_opt'])
-
-
-        if not fix_ext_lines and hasattr(n.model, 'line_volume_constraint'):
-
-            def extra_postprocessing(n, snapshots, duals):
-                index = list(n.model.line_volume_constraint.keys())
-                cdata = pd.Series(list(n.model.line_volume_constraint.values()),
-                                  index=index)
-                n.line_volume_limit_dual =  -cdata.map(duals).sum()
-                print("line volume limit dual:",n.line_volume_limit_dual)
-
+            if "line_volume_constraint" in n.global_constraints.index:
+                n.global_constraints.drop("line_volume_constraint",inplace=True)
         else:
-            extra_postprocessing = None
+            if "line_volume_constraint" not in n.global_constraints.index:
+                line_volume = getattr(n, 'line_volume_limit', None)
+                if line_volume is not None and not np.isinf(line_volume):
+                    n.add("GlobalConstraint",
+                          "line_volume_constraint",
+                          type="transmission_volume_expansion_limit",
+                          carrier_attribute="AC,DC",
+                          sense="<=",
+                          constant=line_volume)
+
 
         # Firing up solve will increase memory consumption tremendously, so
         # make sure we freed everything we can
@@ -237,20 +231,24 @@ def solve_network(n, config=None, solver_log=None, opts=None):
         #sys.exit()
 
 
-        status, termination_condition = \
-        pypsa.opf.network_lopf_solve(n,
-                                     solver_logfile=solver_log,
-                                     solver_options=solver_options,
-                                     formulation=solve_opts['formulation'],
-                                     extra_postprocessing=extra_postprocessing
-                                     #keep_files=True
-                                     #free_memory={'pypsa'}
-                                     )
+        status, termination_condition = n.lopf(pyomo=False,
+                                               solver_name=solver_name,
+                                               solver_logfile=solver_log,
+                                               solver_options=solver_options,
+                                               extra_functionality=extra_functionality,
+                                               formulation=solve_opts['formulation'])
+                                               #extra_postprocessing=extra_postprocessing
+                                               #keep_files=True
+                                               #free_memory={'pypsa'}
 
         assert status == "ok" or allow_warning_status and status == 'warning', \
             ("network_lopf did abort with status={} "
              "and termination_condition={}"
              .format(status, termination_condition))
+
+        if not fix_ext_lines and "line_volume_constraint" in n.global_constraints.index:
+            n.line_volume_limit_dual = n.global_constraints.at["line_volume_constraint","mu"]
+            print("line volume limit dual:",n.line_volume_limit_dual)
 
         return status, termination_condition
 
@@ -285,21 +283,6 @@ def solve_network(n, config=None, solver_log=None, opts=None):
                     n.lines['s_nom_opt']/lines['s_nom']
                 )
                 logger.debug("lines.num_parallel={}".format(n.lines.loc[lines_ext_typed_b, 'num_parallel']))
-
-            if isinstance(n.opt, pypsa.opf.PersistentSolver):
-                n.calculate_dependent_values()
-
-                assert solve_opts['formulation'] == 'kirchhoff', \
-                    "Updating persistent solvers has only been implemented for the kirchhoff formulation for now"
-
-                n.opt.remove_constraint(n.model.cycle_constraints)
-                del n.model.cycle_constraints_index
-                del n.model.cycle_constraints_index_0
-                del n.model.cycle_constraints_index_1
-                del n.model.cycle_constraints
-
-                pypsa.opf.define_passive_branch_flows_with_kirchhoff(n, n.snapshots, skip_vars=True)
-                n.opt.add_constraint(n.model.cycle_constraints)
 
         iteration = 1
 

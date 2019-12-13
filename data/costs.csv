@@ -73,15 +73,15 @@ CCGT,2030,efficiency,0.5,per unit,DIW DataDoc http://hdl.handle.net/10419/80348
 biomass,2030,efficiency,0.468,per unit,DIW DataDoc http://hdl.handle.net/10419/80348
 geothermal,2030,efficiency,0.239,per unit,DIW DataDoc http://hdl.handle.net/10419/80348
 nuclear,2030,efficiency,0.337,per unit,DIW DataDoc http://hdl.handle.net/10419/80348
-gas,2030,CO2 intensity,0.187,tCO2/MWth,https://www.eia.gov/environment/emissions/co2_vol_mass.php
+gas,2030,CO2 intensity,0.187,tCO2/MWhth,https://www.eia.gov/environment/emissions/co2_vol_mass.php
 coal,2030,efficiency,0.464,per unit,DIW DataDoc http://hdl.handle.net/10419/80348 PC (Advanced/SuperC)
 lignite,2030,efficiency,0.447,per unit,DIW DataDoc http://hdl.handle.net/10419/80348
 oil,2030,efficiency,0.393,per unit,DIW DataDoc http://hdl.handle.net/10419/80348 CT
-coal,2030,CO2 intensity,0.354,tCO2/MWth,https://www.eia.gov/environment/emissions/co2_vol_mass.php
-lignite,2030,CO2 intensity,0.4,tCO2/MWth,German sources
-oil,2030,CO2 intensity,0.248,tCO2/MWth,https://www.eia.gov/environment/emissions/co2_vol_mass.php
-geothermal,2030,CO2 intensity,0.026,tCO2/MWth,https://www.eia.gov/environment/emissions/co2_vol_mass.php
-solid biomass,2030,CO2 intensity,0.3,tCO2/MWth,TODO
+coal,2030,CO2 intensity,0.354,tCO2/MWhth,https://www.eia.gov/environment/emissions/co2_vol_mass.php
+lignite,2030,CO2 intensity,0.4,tCO2/MWhth,German sources
+oil,2030,CO2 intensity,0.248,tCO2/MWhth,https://www.eia.gov/environment/emissions/co2_vol_mass.php
+geothermal,2030,CO2 intensity,0.026,tCO2/MWhth,https://www.eia.gov/environment/emissions/co2_vol_mass.php
+solid biomass,2030,CO2 intensity,0.3,tCO2/MWhth,TODO
 electrolysis,2030,investment,350,EUR/kWel,Palzer Thesis
 electrolysis,2030,FOM,4,%/year,NREL http://www.nrel.gov/docs/fy09osti/45873.pdf; budischak2013
 electrolysis,2030,lifetime,18,years,NREL http://www.nrel.gov/docs/fy09osti/45873.pdf; budischak2013
@@ -109,6 +109,14 @@ SMR,2030,investment,540.56,EUR/kWCH4,https://www.gov.uk/government/publications/
 SMR,2030,lifetime,25,years,TODO
 SMR,2030,FOM,5.4,%/year,https://www.gov.uk/government/publications/hydrogen-supply-chain-evidence-base; slide 42 assumption for 2030
 SMR,2030,efficiency,0.74,per unit,https://www.gov.uk/government/publications/hydrogen-supply-chain-evidence-base; slide 42 assumption for 2030
+SMR CCS,2030,investment,1032,EUR/kWCH4,https://www.gov.uk/government/publications/hydrogen-supply-chain-evidence-base; slide 42 assumption for 2030; GBP 466 exchange 1.16; CCS costed at 300 EUR/tCO2/a
+SMR CCS,2030,lifetime,25,years,TODO
+SMR CCS,2030,FOM,5.4,%/year,https://www.gov.uk/government/publications/hydrogen-supply-chain-evidence-base; slide 42 assumption for 2030
+SMR CCS,2030,efficiency,0.67,per unit,https://www.gov.uk/government/publications/hydrogen-supply-chain-evidence-base; slide 42 assumption for 2030; CCS uses 10% of gas
+industry CCS,2030,investment,300,EUR/tCO2/a,Saygin et al 2013 https://doi.org/10.1016/j.ijggc.2013.05.032
+industry CCS,2030,FOM,2,%/year,Saygin et al 2013 https://doi.org/10.1016/j.ijggc.2013.05.032
+industry CCS,2030,lifetime,25,years,Saygin et al 2013 https://doi.org/10.1016/j.ijggc.2013.05.032
+industry CCS,2030,efficiency,0.9,per unit,Saygin et al 2013 https://doi.org/10.1016/j.ijggc.2013.05.032
 Fischer-Tropsch,2030,investment,677.6,EUR/kWH2,Fasihi doi:10.3390/su9020306 (60 kEUR/bpd = 847 EUR/kWL (1b = 1.7 MWh) 847*0.8 = 677.6)
 Fischer-Tropsch,2030,lifetime,30,years,doi:10.3390/su9020306
 Fischer-Tropsch,2030,FOM,3,%/year,doi:10.3390/su9020306
@@ -118,7 +126,7 @@ DAC,2030,lifetime,30,years,Fasihi
 DAC,2030,FOM,4,%/year,Fasihi
 battery inverter,2030,investment,411,USD/kWel,budischak2013
 battery inverter,2030,lifetime,20,years,budischak2013
-battery inverter,2030,efficiency,0.81,per unit,budischak2013; Lund and Kempton (2008) http://dx.doi.org/10.1016/j.enpol.2008.06.007
+battery inverter,2030,efficiency,0.81,per unit,budischak2013; Lund and Kempton (2008) https://doi.org/10.1016/j.enpol.2008.06.007
 battery inverter,2030,FOM,3,%/year,budischak2013
 battery storage,2030,investment,192,USD/kWh,budischak2013
 battery storage,2030,lifetime,15,years,budischak2013
@@ -175,9 +183,38 @@ decentral CHP,2030,lifetime,25,years,HP
 decentral CHP,2030,investment,1400,EUR/kWel,HP
 decentral CHP,2030,FOM,3,%/year,HP
 decentral CHP,2030,discount rate,0.04,per unit,Palzer thesis
-central CHP,2030,lifetime,25,years,HP
-central CHP,2030,investment,650,EUR/kWel,HP
-central CHP,2030,FOM,3,%/year,HP
+central gas CHP,2030,lifetime,30,years,DEA
+central gas CHP,2030,investment,1300,EUR/kWel,DEA
+central gas CHP,2030,FOM,3,%/year,DEA
+central gas CHP,2030,efficiency,0.45,per unit,DEA (condensation mode)
+central gas CHP,2030,c_b,0.7,per unit,DEA (backpressure ratio)
+central gas CHP,2030,c_v,0.17,per unit,DEA (loss of fuel for additional heat)
+central gas CHP,2030,p_nom_ratio,1.,per unit,
+central gas CHP,2030,VOM,0.82,EUR/MWh,DEA
+central gas CHP CCS,2030,lifetime,30,years,DEA
+central gas CHP CCS,2030,investment,1900,EUR/kWel,DEA + DIW extra for CCS on gas plant
+central gas CHP CCS,2030,FOM,3,%/year,DEA
+central gas CHP CCS,2030,efficiency,0.405,per unit,DEA (condensation mode + efficiency loss due to capture)
+central gas CHP CCS,2030,c_b,0.7,per unit,DEA (backpressure ratio)
+central gas CHP CCS,2030,c_v,0.17,per unit,DEA (loss of fuel for additional heat)
+central gas CHP CCS,2030,p_nom_ratio,1.,per unit,
+central gas CHP CCS,2030,VOM,0.82,EUR/MWh,DEA
+central solid biomass CHP,2030,lifetime,40,years,DEA for wood pellets CHP
+central solid biomass CHP,2030,investment,1990,EUR/kWel,DEA for wood pellets CHP
+central solid biomass CHP,2030,FOM,3,%/year,DEA for wood pellets CHP
+central solid biomass CHP,2030,efficiency,0.52,per unit,DEA for wood pellets CHP (condensation mode)
+central solid biomass CHP,2030,c_b,1.01,per unit,DEA for wood pellets CHP (backpressure ratio)
+central solid biomass CHP,2030,c_v,0.15,per unit,DEA for wood pellets CHP (loss of fuel for additional heat)
+central solid biomass CHP,2030,p_nom_ratio,1.,per unit,
+central solid biomass CHP,2030,VOM,2.2,EUR/MWh,DEA for wood pellets CHP
+central solid biomass CHP CCS,2030,lifetime,40,years,DEA for wood pellets CHP
+central solid biomass CHP CCS,2030,investment,2590,EUR/kWel,DEA for wood pellets CHP + DIW extra for CCS on gas plant
+central solid biomass CHP CCS,2030,FOM,3,%/year,DEA for wood pellets CHP
+central solid biomass CHP CCS,2030,efficiency,0.468,per unit,DEA for wood pellets CHP (condensation mode + efficiency loss due to capture)
+central solid biomass CHP CCS,2030,c_b,1.01,per unit,DEA for wood pellets CHP (backpressure ratio)
+central solid biomass CHP CCS,2030,c_v,0.15,per unit,DEA for wood pellets CHP (loss of fuel for additional heat)
+central solid biomass CHP CCS,2030,p_nom_ratio,1.,per unit,
+central solid biomass CHP CCS,2030,VOM,2.2,EUR/MWh,DEA for wood pellets CHP
 micro CHP,2030,lifetime,20,years,DEA for PEMFC with methane (for unit consuming 2kW CH4)
 micro CHP,2030,investment,4500,EUR/kWCH4,DEA for PEMFC with methane (for unit consuming 2kW CH4)
 micro CHP,2030,FOM,6,%/year,DEA for PEMFC with methane (for unit consuming 2kW CH4)
