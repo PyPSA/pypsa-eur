@@ -14,7 +14,7 @@ Relevant Settings
             cutout:
             clip_min_inflow:
 
-.. seealso:: 
+.. seealso::
     Documentation of the configuration file ``config.yaml`` at
     :ref:`toplevel_cf`, :ref:`renewable_cf`
 
@@ -43,7 +43,7 @@ Outputs
 
     .. image:: ../img/inflow-ts.png
         :scale: 33 %
-    
+
     .. image:: ../img/inflow-box.png
         :scale: 33 %
 
@@ -54,16 +54,20 @@ Description
     :mod:`build_renewable_profiles`
 """
 
+import logging
+logger = logging.getLogger(__name__)
+from _helpers import configure_logging
+
 import os
 import atlite
-import pandas as pd
 import geopandas as gpd
 from vresutils import hydro as vhydro
-import logging
-
 
 if __name__ == "__main__":
-    logger.basicConfig(level=snakemake.config['logging_level'])
+    if 'snakemake' not in globals():
+        from _helpers import mock_snakemake
+        snakemake = mock_snakemake('build_hydro_profile')
+    configure_logging(snakemake)
 
     config = snakemake.config['renewable']['hydro']
     cutout = atlite.Cutout(config['cutout'],

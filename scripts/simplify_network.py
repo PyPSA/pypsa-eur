@@ -32,7 +32,7 @@ Relevant Settings
         solver:
             name:
 
-.. seealso:: 
+.. seealso::
     Documentation of the configuration file ``config.yaml`` at
     :ref:`costs_cf`, :ref:`electricity_cf`, :ref:`renewable_cf`,
     :ref:`lines_cf`, :ref:`links_cf`, :ref:`solving_cf`
@@ -78,21 +78,17 @@ The rule :mod:`simplify_network` does up to four things:
 4. Optionally, if an integer were provided for the wildcard ``{simpl}`` (e.g. ``networks/elec_s500.nc``), the network is clustered to this number of clusters with the routines from the ``cluster_network`` rule with the function ``cluster_network.cluster(...)``. This step is usually skipped!
 """
 
-import pandas as pd
-idx = pd.IndexSlice
-
 import logging
 logger = logging.getLogger(__name__)
+from _helpers import configure_logging
 
-import os
-import re
+from cluster_network import clustering_for_n_clusters, cluster_regions
+from add_electricity import load_costs
+
+import pandas as pd
 import numpy as np
 import scipy as sp
 from scipy.sparse.csgraph import connected_components, dijkstra
-import xarray as xr
-import geopandas as gpd
-import shapely
-import networkx as nx
 
 from six import iteritems
 from six.moves import reduce
@@ -101,8 +97,7 @@ import pypsa
 from pypsa.io import import_components_from_dataframe, import_series_from_dataframe
 from pypsa.networkclustering import busmap_by_stubs, aggregategenerators, aggregateoneport
 
-from cluster_network import clustering_for_n_clusters, cluster_regions
-from add_electricity import load_costs
+idx = pd.IndexSlice
 
 def simplify_network_to_380(n):
     ## All goes to v_nom == 380
@@ -336,27 +331,10 @@ def cluster(n, n_clusters):
     return clustering.network, clustering.busmap
 
 if __name__ == "__main__":
-    # Detect running outside of snakemake and mock snakemake for testing
     if 'snakemake' not in globals():
-        from vresutils.snakemake import MockSnakemake, Dict
-        snakemake = MockSnakemake(
-            path='..',
-            wildcards=Dict(simpl='1024', network='elec'),
-            input=Dict(
-                network='networks/{network}.nc',
-                tech_costs="data/costs.csv",
-                regions_onshore="resources/regions_onshore.geojson",
-                regions_offshore="resources/regions_offshore.geojson"
-            ),
-            output=Dict(
-                network='networks/{network}_s{simpl}.nc',
-                regions_onshore="resources/regions_onshore_{network}_s{simpl}.geojson",
-                regions_offshore="resources/regions_offshore_{network}_s{simpl}.geojson",
-                clustermaps='resources/clustermaps_{network}_s{simpl}.h5'
-            )
-        )
-
-    logging.basicConfig(level=snakemake.config['logging_level'])
+        from _helpers import mock_snakemake
+        snakemake = mock_snakemake('simplify_network', simpl='', network='elec')
+    configure_logging(snakemake)
 
     n = pypsa.Network(snakemake.input.network)
 

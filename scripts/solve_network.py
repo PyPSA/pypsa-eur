@@ -27,19 +27,19 @@ Relevant Settings
     (plotting:)
         (conv_techs:)
 
-.. seealso:: 
+.. seealso::
     Documentation of the configuration file ``config.yaml`` at
     :ref:`electricity_cf`, :ref:`solving_cf`, :ref:`plotting_cf`
 
 Inputs
 ------
 
-- ``networks/{network}_s{simpl}_{clusters}_l{ll}_{opts}.nc``: confer :ref:`prepare`
+- ``networks/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc``: confer :ref:`prepare`
 
 Outputs
 -------
 
-- ``results/networks/{network}_s{simpl}_{clusters}_l{ll}_{opts}.nc``: Solved PyPSA network including optimisation results
+- ``results/networks/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc``: Solved PyPSA network including optimisation results
 
     .. image:: ../img/results.png
         :scale: 40 %
@@ -72,14 +72,18 @@ Details (and errors made through this heuristic) are discussed in the paper
 
 .. tip::
     The rule :mod:`solve_all_networks` runs
-    for all ``scenario`` s in the configuration file 
+    for all ``scenario`` s in the configuration file
     the rule :mod:`solve_network`.
 
 """
 
-import numpy as np
 import logging
 logger = logging.getLogger(__name__)
+from _helpers import configure_logging
+
+import numpy as np
+import pandas as pd
+import gc
 
 import pypsa
 
@@ -87,7 +91,6 @@ import pypsa
 pypsa.pf.logger.setLevel(logging.WARNING)
 
 from vresutils.benchmark import memory_logger
-from vresutils.snakemake import MockSnakemake
 
 
 def prepare_network(n, solve_opts=None):
@@ -121,7 +124,6 @@ def prepare_network(n, solve_opts=None):
 #    if opts is None:
 #        opts = snakemake.wildcards.opts.split('-')
 #
-#    if 'BAU' in opts:
 #        mincaps = snakemake.config['electricity']['BAU_mincapacities']
 #        def bau_mincapacities_rule(model, carrier):
 #            gens = n.generators.index[n.generators.p_nom_extendable & (n.generators.carrier == carrier)]
@@ -165,12 +167,11 @@ def prepare_network(n, solve_opts=None):
 #        n.model.agg_p_nom_min = pypsa.opt.Constraint(list(agg_p_nom_minmax.index), rule=agg_p_nom_min_rule)
 #        n.model.agg_p_nom_max = pypsa.opt.Constraint(list(agg_p_nom_minmax.index), rule=agg_p_nom_max_rule)
 
+def add_opts_constraints(n, opts=None):
+    if opts is None:
+        opts = snakemake.wildcards.opts.split('-')
 
-def add_lv_constraint(n):
-    line_volume = getattr(n, 'line_volume_limit', None)
-    if line_volume is not None:
-        n.add('GlobalConstraint', 'lv_limit',
-              type='transmission_volume_expansion_limit',
+    if 'BAU' in opts:
               sense='<=', constant=line_volume, carrier_attribute='AC, DC')
 
 
@@ -188,7 +189,10 @@ def add_lc_constraint(n):
 #    n.model.objective.expr += sum(n.epsilon * n.model.state_of_charge[su, n.snapshots[0]] for su in fix_sus_i)
 
 
-def solve_network(n, config=None, solver_log=None, opts=None, callback=None):
+def solve_network(n, config=None, solver_log=None, opts=None, callback=None,
+                  skip_iterating=False,
+                  extra_functionality=None, extra_functionality_args=None,
+                  extra_postprocessing=None):
     if config is None:
         config = snakemake.config['solving']
 #    solve_opts = config['options']
@@ -199,28 +203,16 @@ def solve_network(n, config=None, solver_log=None, opts=None, callback=None):
     solver_name = solver_options.pop('name')
     pypsa.linopf.ilopf(n, solver_name=solver_name, solver_options=solver_options)
 
-
     return n
 
 if __name__ == "__main__":
-    # Detect running outside of snakemake and mock snakemake for testing
     if 'snakemake' not in globals():
-        snakemake = MockSnakemake(
-            wildcards=dict(network='elec', simpl='',
-                           clusters='45', lv='1.0', opts='Co2L-3H'),
-            input=["networks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}.nc"],
-            output=["results/networks/s{simpl}_{clusters}_lv{lv}_{opts}.nc"],
-            log=dict(solver="logs/{network}_s{simpl}_{clusters}_lv{lv}_"
-                             "{opts}_solver.log",
-                     python="logs/{network}_s{simpl}_{clusters}_lv{lv}_"
-                             "{opts}_python.log"))
+        from _helpers import mock_snakemake
+        snakemake = mock_snakemake('solve_network', network='elec', simpl='',
+                                  clusters='5', ll='copt', opts='Co2L-24H')
+    configure_logging(snakemake)
 
-
-    logging.basicConfig(filename=snakemake.log.python,
-                        level=snakemake.config['logging_level'])
-
-    with memory_logger(filename=getattr(snakemake.log, 'memory', None),
-                       interval=30.) as mem:
+    with memory_logger(filename=getattr(snakemake.log, 'memory', None), interval=30.) as mem:
         n = pypsa.Network(snakemake.input[0])
         add_lc_constraint(n)
         add_lv_constraint(n)

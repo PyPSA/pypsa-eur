@@ -18,26 +18,26 @@ Relevant Settings
         types:
         s_max_pu:
         under_construction:
-        
+
     links:
         p_max_pu:
         under_construction:
         include_tyndp:
-        
+
     transformers:
         x:
         s_nom:
         type:
 
-.. seealso:: 
+.. seealso::
     Documentation of the configuration file ``config.yaml`` at
     :ref:`snapshots_cf`, :ref:`toplevel_cf`, :ref:`electricity_cf`, :ref:`load_cf`,
     :ref:`lines_cf`, :ref:`links_cf`, :ref:`transformers_cf`
-        
+
 Inputs
 ------
 
-- ``data/entsoegridkit``:  Extract from the geographical vector data of the online `ENTSO-E Interactive Map <https://www.entsoe.eu/data/map/>`_ by the `GridKit <https://github.com/pypsa/gridkit>`_ toolkit. 
+- ``data/entsoegridkit``:  Extract from the geographical vector data of the online `ENTSO-E Interactive Map <https://www.entsoe.eu/data/map/>`_ by the `GridKit <https://github.com/pypsa/gridkit>`_ toolkit.
 - ``data/parameter_corrections.yaml``: Corrections for ``data/entsoegridkit``
 - ``data/links_p_nom.csv``: confer :ref:`links`
 - ``data/links_tyndp.csv``: List of projects in the `TYNDP 2018 <https://tyndp.entsoe.eu/tyndp2018/>`_ that are at least *in permitting* with fields for start- and endpoint (names and coordinates), length, capacity, construction status, and project reference ID.
@@ -58,6 +58,10 @@ Description
 
 """
 
+import logging
+logger = logging.getLogger(__name__)
+from _helpers import configure_logging
+
 import yaml
 import pandas as pd
 import geopandas as gpd
@@ -71,9 +75,6 @@ from shapely.geometry import Point, LineString
 import shapely, shapely.prepared, shapely.wkt
 
 import networkx as nx
-
-import logging
-logger = logging.getLogger(__name__)
 
 import pypsa
 
@@ -216,7 +217,7 @@ def _add_links_from_tyndp(buses, links):
 
     links_tyndp_located_b = links_tyndp["bus0"].notnull() & links_tyndp["bus1"].notnull()
     if not links_tyndp_located_b.all():
-        logger.warn("Did not find connected buses for TYNDP links (skipping): " + ", ".join(links_tyndp.loc[~links_tyndp_located_b, "Name"]))
+        logger.warning("Did not find connected buses for TYNDP links (skipping): " + ", ".join(links_tyndp.loc[~links_tyndp_located_b, "Name"]))
         links_tyndp = links_tyndp.loc[links_tyndp_located_b]
 
     logger.info("Adding the following TYNDP links: " + ", ".join(links_tyndp["Name"]))
@@ -236,7 +237,7 @@ def _add_links_from_tyndp(buses, links):
 
     links_tyndp.index = "T" + links_tyndp.index.astype(str)
 
-    return buses, links.append(links_tyndp)
+    return buses, links.append(links_tyndp, sort=True)
 
 def _load_lines_from_eg(buses):
     lines = (pd.read_csv(snakemake.input.eg_lines, quotechar="'", true_values='t', false_values='f',
@@ -451,7 +452,7 @@ def _replace_b2b_converter_at_country_border_by_link(n):
         if busattr is not None:
             comp, line = next(iter(G[b0][b1]))
             if comp != "Line":
-                logger.warn("Unable to replace B2B `{}` expected a Line, but found a {}"
+                logger.warning("Unable to replace B2B `{}` expected a Line, but found a {}"
                             .format(i, comp))
                 continue
 
@@ -469,7 +470,7 @@ def _replace_b2b_converter_at_country_border_by_link(n):
 
 def _set_links_underwater_fraction(n):
     if n.links.empty: return
-    
+
     if not hasattr(n.links, 'geometry'):
         n.links['underwater_fraction'] = 0.
     else:
@@ -485,7 +486,7 @@ def _adjust_capacities_of_under_construction_branches(n):
     elif lines_mode == 'remove':
         n.mremove("Line", n.lines.index[n.lines.under_construction])
     elif lines_mode != 'keep':
-        logger.warn("Unrecognized configuration for `lines: under_construction` = `{}`. Keeping under construction lines.")
+        logger.warning("Unrecognized configuration for `lines: under_construction` = `{}`. Keeping under construction lines.")
 
     links_mode = snakemake.config['links'].get('under_construction', 'undef')
     if links_mode == 'zero':
@@ -493,7 +494,7 @@ def _adjust_capacities_of_under_construction_branches(n):
     elif links_mode == 'remove':
         n.mremove("Link", n.links.index[n.links.under_construction])
     elif links_mode != 'keep':
-        logger.warn("Unrecognized configuration for `links: under_construction` = `{}`. Keeping under construction links.")
+        logger.warning("Unrecognized configuration for `links: under_construction` = `{}`. Keeping under construction links.")
 
     if lines_mode == 'remove' or links_mode == 'remove':
         # We might need to remove further unconnected components
@@ -547,29 +548,10 @@ def base_network():
     return n
 
 if __name__ == "__main__":
-    # Detect running outside of snakemake and mock snakemake for testing
     if 'snakemake' not in globals():
-        from vresutils.snakemake import MockSnakemake, Dict
-        snakemake = MockSnakemake(
-            path='..',
-            wildcards={},
-            input=Dict(
-                eg_buses='data/entsoegridkit/buses.csv',
-                eg_lines='data/entsoegridkit/lines.csv',
-                eg_links='data/entsoegridkit/links.csv',
-                eg_converters='data/entsoegridkit/converters.csv',
-                eg_transformers='data/entsoegridkit/transformers.csv',
-                parameter_corrections='data/parameter_corrections.yaml',
-                links_p_nom='data/links_p_nom.csv',
-                links_tyndp='data/links_tyndp.csv',
-                country_shapes='resources/country_shapes.geojson',
-                offshore_shapes='resources/offshore_shapes.geojson',
-                europe_shape='resources/europe_shape.geojson'
-            ),
-            output = ['networks/base.nc']
-        )
-
-    logging.basicConfig(level=snakemake.config['logging_level'])
+        from _helpers import mock_snakemake
+        snakemake = mock_snakemake('base_network')
+    configure_logging(snakemake)
 
     n = base_network()
     n.export_to_netcdf(snakemake.output[0])

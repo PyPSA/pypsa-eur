@@ -8,7 +8,7 @@ Relevant Settings
 
     countries:
 
-.. seealso:: 
+.. seealso::
     Documentation of the configuration file ``config.yaml`` at
     :ref:`toplevel_cf`
 
@@ -37,19 +37,24 @@ Description
 
 """
 
+import logging
+logger = logging.getLogger(__name__)
+from _helpers import configure_logging
+
+from vresutils.graph import voronoi_partition_pts
+
 import os
-from operator import attrgetter
 
 import pandas as pd
 import geopandas as gpd
 
-from vresutils.graph import voronoi_partition_pts
-
 import pypsa
-import logging
 
 if __name__ == "__main__":
-    logging.basicConfig(level=snakemake.config["logging_level"])
+    if 'snakemake' not in globals():
+        from _helpers import mock_snakemake
+        snakemake = mock_snakemake('build_bus_regions')
+    configure_logging(snakemake)
 
     countries = snakemake.config['countries']
 

@@ -12,24 +12,12 @@ which allows the user to explore most of its functionalities on a local machine.
 It takes approximately five minutes to complete and
 requires 3 GB of memory along with 1 GB free disk space.
 
+If not yet completed, follow the :ref:`installation` steps first.
+
 The tutorial will cover examples on how to
 
 - configure and customise the PyPSA-Eur model and
 - run the ``snakemake`` workflow step by step from network creation to the solved network.
-
-If not yet completed, follow the :ref:`installation` steps but
-substitute the links for the **data bundle** and the **cutouts** with the following lightweight alternatives:
-
-    .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3517921.svg
-      :target: https://doi.org/10.5281/zenodo.3517921
-
-    .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3518020.svg
-      :target: https://doi.org/10.5281/zenodo.3518020
-    
-    - **Data Bundle:** ``https://zenodo.org/record/3517921/files/pypsa-eur-tutorial-data-bundle.tar.xz`` (197 MB)
-
-
-    - **Cutouts:** ``https://zenodo.org/record/3518020/files/pypsa-eur-tutorial-cutouts.tar.xz`` (19 MB)
 
 The configuration of the tutorial is included in the ``config.tutorial.yaml``.
 To run the tutorial, use this as your configuration file ``config.yaml``.
@@ -38,6 +26,11 @@ To run the tutorial, use this as your configuration file ``config.yaml``.
 
     .../pypsa-eur % cp config.tutorial.yaml config.yaml
 
+This configuration is set to download a reduced data set via the rules :mod:`retrieve_databundle`,
+:mod:`retrieve_natura_raster`, :mod:`retrieve_cutout` totalling at less than 250 MB.
+The full set of data dependencies would consume 5.3 GB.
+For more information on the data dependencies of PyPSA-Eur, continue reading :ref:`data`.
+
 How to customise PyPSA-Eur?
 ===========================
 
@@ -45,47 +38,47 @@ The model can be adapted to only include selected countries (e.g. Germany) inste
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 13
+   :lines: 15
    
 Likewise, the example's temporal scope can be restricted (e.g. to a single month).
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 15-18
+   :lines: 17-20
 
 It is also possible to allow less or more carbon-dioxide emissions. Here, we limit the emissions of Germany 100 Megatonnes per year.
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 26
+   :lines: 30
 
 PyPSA-Eur also includes a database of existing conventional powerplants.
 We can select which types of powerplants we like to be included with fixed capacities:
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 36
+   :lines: 43
 
 To accurately model the temporal and spatial availability of renewables such as wind and solar energy, we rely on historical weather data.
 It is advisable to adapt the required range of coordinates to the selection of countries.
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 38-47
+   :lines: 45-53
 
 We can also decide which weather data source should be used to calculate potentials and capacity factor time-series for each carrier.
 For example, we may want to use the ERA-5 dataset for solar and not the default SARAH-2 dataset.
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 48,91-92
+   :lines: 55,98-99
 
 Finally, it is possible to pick a solver. For instance, this tutorial uses the open-source solvers CBC and Ipopt and does not rely
 on the commercial solvers Gurobi or CPLEX (for which free academic licenses are available).
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 156-157
+   :lines: 154,163-164
 
 .. note::
 
@@ -117,10 +110,17 @@ orders ``snakemake`` to run the script ``solve_network`` that produces the solve
 .. code::
 
     rule solve_network:
-        input: "networks/{network}_s{simpl}_{clusters}_l{ll}_{opts}.nc"
-        output: "results/networks/{network}_s{simpl}_{clusters}_l{ll}_{opts}.nc"
+        input: "networks/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"
+        output: "results/networks/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"
         [...]
         script: "scripts/solve_network.py"
+
+.. until https://github.com/snakemake/snakemake/issues/46 closed
+
+.. warning::
+    On Windows the previous command may currently cause a ``MissingRuleException`` due to problems with output files in subfolders.
+    This is an `open issue <https://github.com/snakemake/snakemake/issues/46>`_ at `snakemake <https://snakemake.readthedocs.io/>`_.
+    Windows users should add the option ``--keep-target-files`` to the command or instead run ``snakemake solve_all_elec_networks``.
 
 This triggers a workflow of multiple preceding jobs that depend on each rule's inputs and outputs:
     
@@ -262,7 +262,7 @@ the wildcards given in ``scenario`` in the configuration file ``config.yaml`` ar
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 6-11
+   :lines: 7-12
 
 In this example we would not only solve a 6-node model of Germany but also a 2-node model.
 

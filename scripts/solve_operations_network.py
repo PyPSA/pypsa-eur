@@ -21,7 +21,7 @@ Relevant Settings
             name:
             (solveroptions):
 
-.. seealso:: 
+.. seealso::
     Documentation of the configuration file ``config.yaml`` at
     :ref:`solving_cf`
 
@@ -29,23 +29,25 @@ Inputs
 ------
 
 - ``networks/{network}_s{simpl}_{clusters}.nc``: confer :ref:`cluster`
-- ``results/networks/{network}_s{simpl}_{clusters}_l{ll}_{opts}.nc``: confer :ref:`solve`
+- ``results/networks/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc``: confer :ref:`solve`
 
 Outputs
 -------
 
-- ``results/networks/{network}_s{simpl}_{clusters}_l{ll}_{opts}_op.nc``: Solved PyPSA network for optimal dispatch including optimisation results
+- ``results/networks/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_op.nc``: Solved PyPSA network for optimal dispatch including optimisation results
 
 Description
 -----------
 
 """
 
+import logging
+logger = logging.getLogger(__name__)
+from _helpers import configure_logging
+
 import pypsa
 import numpy as np
 import re
-import logging
-logger = logging.getLogger(__name__)
 
 from vresutils.benchmark import memory_logger
 from solve_network import patch_pyomo_tmpdir, solve_network, prepare_network
@@ -77,24 +79,16 @@ def set_parameters_from_optimized(n, n_optim):
     return n
 
 if __name__ == "__main__":
-    # Detect running outside of snakemake and mock snakemake for testing
     if 'snakemake' not in globals():
-        from vresutils.snakemake import MockSnakemake
-        snakemake = MockSnakemake(
-            wildcards=dict(network='elec', simpl='', clusters='45', lv='1.5', opts='Co2L-3H'),
-            input=dict(unprepared="networks/{network}_s{simpl}_{clusters}.nc",
-                       optimized="results/networks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}.nc"),
-            output=["results/networks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_op.nc"],
-            log=dict(solver="logs/s{simpl}_{clusters}_lv{lv}_{opts}_op_solver.log",
-                     python="logs/s{simpl}_{clusters}_lv{lv}_{opts}_op_python.log")
-        )
+        from _helpers import mock_snakemake
+        snakemake = mock_snakemake('solve_operations_network', network='elec',
+                                  simpl='', clusters='5', ll='copt', opts='Co2L-24H')
+    configure_logging(snakemake)
 
     tmpdir = snakemake.config['solving'].get('tmpdir')
     if tmpdir is not None:
         patch_pyomo_tmpdir(tmpdir)
 
-    logging.basicConfig(filename=snakemake.log.python,
-                        level=snakemake.config['logging_level'])
 
     n = pypsa.Network(snakemake.input.unprepared)
 

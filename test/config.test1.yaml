@@ -1,5 +1,8 @@
 version: 0.1
-logging_level: INFO
+tutorial: true
+logging:
+  level: INFO
+  format: '%(levelname)s:%(name)s:%(message)s'
 
 summary_dir: results
 
@@ -8,9 +11,9 @@ scenario:
   simpl: ['']
   ll: ['copt']
   clusters: [5]
-  opts: [Co2L-24H, 24H]
+  opts: [Co2L-24H]
 
-countries: ['DE'] 
+countries: ['DE']
 
 snapshots:
   start: "2013-03-01"
@@ -18,8 +21,10 @@ snapshots:
   closed: 'left' # end is not inclusive
 
 enable:
-  powerplantmatching: false
   prepare_links_p_nom: false
+  retrieve_databundle: true
+  build_cutout: false
+  build_natura_raster: false
 
 electricity:
   voltages: [220., 300., 380.]
@@ -27,12 +32,16 @@ electricity:
 
   extendable_carriers:
     Generator: [OCGT]
-    StorageUnit: [battery, H2]
+    StorageUnit: [battery]
+    Store: [H2]
+    Link: [H2 pipeline]
 
   max_hours:
     battery: 6
     H2: 168
 
+  powerplants_filter: false # use pandas query strings here, e.g. Country not in ['Germany']
+  custom_powerplants: false # use pandas query strings here, e.g. Country in ['Germany']
   conventional_carriers: [coal, CCGT] # [nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
 
 atlite:
@@ -154,7 +163,7 @@ solving:
     clip_p_max_pu: 0.01
     #nhours: 10
   solver:
-    name: cbc
+    name: glpk
   # solver:
     # name: gurobi
     # threads: 4
@@ -193,7 +202,7 @@ plotting:
   storage_techs: ["hydro+PHS", "battery", "H2"]
   load_carriers: ["AC load"]
   AC_carriers: ["AC line", "AC transformer"]
-  link_carriers: ["DC line", "Converter AC-DC"] 
+  link_carriers: ["DC line", "Converter AC-DC"]
   tech_colors:
     "onwind" : "#235ebc"
     "onshore wind" : "#235ebc"
@@ -247,7 +256,7 @@ plotting:
     "helmeth" : "#a31597"
     "DAC" : "#d284ff"
     "co2 stored" : "#e5e5e5"
-    "CO2 sequestration" : "#e5e5e5" 
+    "CO2 sequestration" : "#e5e5e5"
     "battery" : "#b8ea04"
     "battery storage" : "#b8ea04"
     "Li ion" : "#b8ea04"
@@ -256,7 +265,7 @@ plotting:
     "transport fuel cell" : "#e884be"
     "retrofitting" : "#e0d6a8"
     "building retrofitting" : "#e0d6a8"
-    "heat pumps" : "#ff9768" 
+    "heat pumps" : "#ff9768"
     "heat pump" : "#ff9768"
     "air heat pump" : "#ffbea0"
     "ground heat pump" : "#ff7a3d"
@@ -308,4 +317,3 @@ plotting:
     H2: "Hydrogen\nStorage"
     lines: "Transmission\nlines"
     ror: "Run of\nriver"
-    

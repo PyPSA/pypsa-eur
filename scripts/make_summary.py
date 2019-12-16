@@ -15,7 +15,7 @@ Relevant Settings
     electricity:
         max_hours:
 
-.. seealso:: 
+.. seealso::
     Documentation of the configuration file ``config.yaml`` at
     :ref:`costs_cf`, :ref:`electricity_cf`
 
@@ -49,9 +49,13 @@ Replacing '/summaries/' with '/plots/' creates nice colored maps of the results.
 
 """
 
+import logging
+logger = logging.getLogger(__name__)
+from _helpers import configure_logging
+
 import os
+
 from six import iteritems
-from itertools import product
 import pandas as pd
 
 import pypsa
@@ -94,7 +98,7 @@ def calculate_costs(n,label,costs):
     for c in n.iterate_components(n.branch_components|n.controllable_one_port_components^{"Load"}):
         capital_costs = c.df.capital_cost*c.df[opt_name.get(c.name,"p") + "_nom_opt"]
         capital_costs_grouped = capital_costs.groupby(c.df.carrier).sum()
-        
+
         # Index tuple(s) indicating the newly to-be-added row(s)
         raw_index = tuple([[c.list_name],["capital"],list(capital_costs_grouped.index)])
         costs = _add_indexed_rows(costs, raw_index)
@@ -149,7 +153,7 @@ def include_in_summary(summary, multiindexprefix, label, item):
     # Index tuple(s) indicating the newly to-be-added row(s)
     raw_index = tuple([multiindexprefix,list(item.index)])
     summary = _add_indexed_rows(summary, raw_index)
-    
+
     summary.loc[idx[raw_index], label] = item.values
     return summary
 
@@ -187,15 +191,15 @@ def calculate_supply(n,label,supply):
 
             items = c.df.index[c.df.bus.map(bus_map)]
 
-            if len(items) == 0:
+            if len(items) == 0 or c.pnl.p.empty:
                 continue
 
             s = c.pnl.p[items].max().multiply(c.df.loc[items,'sign']).groupby(c.df.loc[items,'carrier']).sum()
-            
+
             # Index tuple(s) indicating the newly to-be-added row(s)
             raw_index = tuple([[i],[c.list_name],list(s.index)])
             supply = _add_indexed_rows(supply, raw_index)
-            
+
             supply.loc[idx[raw_index],label] = s.values
 
 
@@ -205,7 +209,7 @@ def calculate_supply(n,label,supply):
 
                 items = c.df.index[c.df["bus" + end].map(bus_map)]
 
-                if len(items) == 0:
+                if len(items) == 0 or c.pnl["p"+end].empty:
                     continue
 
                 #lots of sign compensation for direction and to do maximums
@@ -233,15 +237,15 @@ def calculate_supply_energy(n,label,supply_energy):
 
             items = c.df.index[c.df.bus.map(bus_map)]
 
-            if len(items) == 0:
+            if len(items) == 0 or c.pnl.p.empty:
                 continue
 
             s = c.pnl.p[items].sum().multiply(c.df.loc[items,'sign']).groupby(c.df.loc[items,'carrier']).sum()
-          
+
             # Index tuple(s) indicating the newly to-be-added row(s)
             raw_index = tuple([[i],[c.list_name],list(s.index)])
             supply_energy = _add_indexed_rows(supply_energy, raw_index)
-            
+
             supply_energy.loc[idx[raw_index],label] = s.values
 
 
@@ -251,7 +255,7 @@ def calculate_supply_energy(n,label,supply_energy):
 
                 items = c.df.index[c.df["bus" + end].map(bus_map)]
 
-                if len(items) == 0:
+                if len(items) == 0  or c.pnl['p' + end].empty:
                     continue
 
                 s = (-1)*c.pnl["p"+end][items].sum().groupby(c.df.loc[items,'carrier']).sum()
@@ -467,7 +471,16 @@ def to_csv(dfs):
 
 
 if __name__ == "__main__":
-    # Detect running outside of snakemake and mock snakemake for testing
+    if 'snakemake' not in globals():
+        from _helpers import mock_snakemake
+        snakemake = mock_snakemake('make_summary', network='elec', simpl='',
+                           clusters='5', ll='copt', opts='Co2L-24H', country='all')
+        network_dir = os.path.join('..', 'results', 'networks')
+    else:
+        network_dir = os.path.join('results', 'networks')
+    configure_logging(snakemake)
+
+
     def expand_from_wildcard(key):
         w = getattr(snakemake.wildcards, key)
         return snakemake.config["scenario"][key] if w == "all" else [w]
@@ -479,19 +492,16 @@ if __name__ == "__main__":
     else:
         ll = [snakemake.wildcards.ll]
 
-    networks_dict = {(simpl,clusters,l,opts) : ('results/networks/{network}_s{simpl}_{clusters}_l{ll}_{opts}.nc'
-                                                 .format(network=snakemake.wildcards.network,
-                                                         simpl=simpl,
-                                                         clusters=clusters,
-                                                         opts=opts,
-                                                         ll=l))
+    networks_dict = {(simpl,clusters,l,opts) :
+        os.path.join(network_dir, f'{snakemake.wildcards.network}_s{simpl}_'
+                                  f'{clusters}_ec_l{l}_{opts}.nc')
                      for simpl in expand_from_wildcard("simpl")
                      for clusters in expand_from_wildcard("clusters")
                      for l in ll
                      for opts in expand_from_wildcard("opts")}
 
     print(networks_dict)
-    
+
     dfs = make_summaries(networks_dict, country=snakemake.wildcards.country)
 
     to_csv(dfs)
