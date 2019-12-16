@@ -167,18 +167,19 @@ def prepare_network(n, solve_opts=None):
 #        n.model.agg_p_nom_min = pypsa.opt.Constraint(list(agg_p_nom_minmax.index), rule=agg_p_nom_min_rule)
 #        n.model.agg_p_nom_max = pypsa.opt.Constraint(list(agg_p_nom_minmax.index), rule=agg_p_nom_max_rule)
 
-def add_opts_constraints(n, opts=None):
-    if opts is None:
-        opts = snakemake.wildcards.opts.split('-')
 
-    if 'BAU' in opts:
+def add_lv_constraint(n):
+    line_volume = getattr(n, 'line_cost_limit', None)
+    if line_volume is not None:
+        n.add('GlobalConstraint', 'lv_limit',
+              type='transmission_volume_expansion_limit',
               sense='<=', constant=line_volume, carrier_attribute='AC, DC')
 
 
 def add_lc_constraint(n):
     line_cost = getattr(n, 'line_cost_limit', None)
     if line_cost is not None:
-        n.add('GlobalConstraint', 'lv_limit',
+        n.add('GlobalConstraint', 'lc_limit',
               type='transmission_expansion_cost_limit',
               sense='<=', constant=line_cost, carrier_attribute='AC, DC')
 
