@@ -336,7 +336,7 @@ if __name__ == "__main__":
         clustering = clustering_for_n_clusters(n, n_clusters, aggregate_carriers,
                                                line_length_factor=line_length_factor,
                                                potential_mode=potential_mode,
-                                               solver_name=snakemake.config['solving']['solver']['name'],
+                                               solver_name='cbc',
                                                extended_link_costs=hvac_overhead_cost,
                                                focus_weights=focus_weights)
 
