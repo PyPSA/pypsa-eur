@@ -169,7 +169,7 @@ def prepare_network(n, solve_opts=None):
 
 
 def add_lv_constraint(n):
-    line_volume = getattr(n, 'line_cost_limit', None)
+    line_volume = getattr(n, 'line_volume_limit', None)
     if line_volume is not None:
         n.add('GlobalConstraint', 'lv_limit',
               type='transmission_volume_expansion_limit',
