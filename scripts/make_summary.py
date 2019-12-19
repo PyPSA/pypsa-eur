@@ -104,9 +104,11 @@ def calculate_cfs(n,label,cfs):
 
         cf_c = p_c/capacities_c
 
-        cfs = cfs.reindex(pd.MultiIndex.from_product([[c.list_name],cf_c.index])|cfs.index)
+        cf_c = pd.concat([cf_c], keys=[c.list_name])
 
-        cfs.loc[idx[c.list_name,list(cf_c.index)],label] = cf_c.values
+        cfs = cfs.reindex(cf_c.index|cfs.index)
+
+        cfs.loc[cf_c.index,label] = cf_c
 
     return cfs
 
@@ -151,9 +153,12 @@ def calculate_costs(n,label,costs):
         capital_costs = c.df.capital_cost*c.df[opt_name.get(c.name,"p") + "_nom_opt"]
         capital_costs_grouped = capital_costs.groupby(c.df.carrier).sum()
 
-        costs = costs.reindex(pd.MultiIndex.from_product([[c.list_name],["capital"],capital_costs_grouped.index])|costs.index)
+        capital_costs_grouped = pd.concat([capital_costs_grouped], keys=["capital"])
+        capital_costs_grouped = pd.concat([capital_costs_grouped], keys=[c.list_name])
 
-        costs.loc[idx[c.list_name,"capital",list(capital_costs_grouped.index)],label] = capital_costs_grouped.values
+        costs = costs.reindex(capital_costs_grouped.index|costs.index)
+
+        costs.loc[capital_costs_grouped.index,label] = capital_costs_grouped
 
         if c.name == "Link":
             p = c.pnl.p0.multiply(n.snapshot_weightings,axis=0).sum()
@@ -175,9 +180,12 @@ def calculate_costs(n,label,costs):
 
         marginal_costs_grouped = marginal_costs.groupby(c.df.carrier).sum()
 
-        costs = costs.reindex(pd.MultiIndex.from_product([[c.list_name],["marginal"],marginal_costs_grouped.index])|costs.index)
+        marginal_costs_grouped = pd.concat([marginal_costs_grouped], keys=["marginal"])
+        marginal_costs_grouped = pd.concat([marginal_costs_grouped], keys=[c.list_name])
 
-        costs.loc[idx[c.list_name,"marginal",list(marginal_costs_grouped.index)],label] = marginal_costs_grouped.values
+        costs = costs.reindex(marginal_costs_grouped.index|costs.index)
+
+        costs.loc[marginal_costs_grouped.index,label] = marginal_costs_grouped
 
     #add back in costs of links if there is a line volume limit
     if label[1] != "opt":
@@ -212,10 +220,11 @@ def calculate_capacities(n,label,capacities):
 
     for c in n.iterate_components(n.branch_components|n.controllable_one_port_components^{"Load"}):
         capacities_grouped = c.df[opt_name.get(c.name,"p") + "_nom_opt"].groupby(c.df.carrier).sum()
+        capacities_grouped = pd.concat([capacities_grouped], keys=[c.list_name])
 
-        capacities = capacities.reindex(pd.MultiIndex.from_product([[c.list_name],capacities_grouped.index])|capacities.index)
+        capacities = capacities.reindex(capacities_grouped.index|capacities.index)
 
-        capacities.loc[idx[c.list_name,list(capacities_grouped.index)],label] = capacities_grouped.values
+        capacities.loc[capacities_grouped.index,label] = capacities_grouped
 
     return capacities
 
@@ -240,9 +249,11 @@ def calculate_energy(n,label,energy):
             for port in [col[3:] for col in c.df.columns if col[:3] == "bus"]:
                 c_energies -= c.pnl["p"+port].multiply(n.snapshot_weightings,axis=0).sum().groupby(c.df.carrier).sum()
 
-        energy = energy.reindex(pd.MultiIndex.from_product([[c.list_name],c_energies.index])|energy.index)
+        c_energies = pd.concat([c_energies], keys=[c.list_name])
 
-        energy.loc[idx[c.list_name,list(c_energies.index)],label] = c_energies.values
+        energy = energy.reindex(c_energies.index|energy.index)
+
+        energy.loc[c_energies.index,label] = c_energies
 
     return energy
 
@@ -264,9 +275,11 @@ def calculate_supply(n,label,supply):
                 continue
 
             s = c.pnl.p[items].max().multiply(c.df.loc[items,'sign']).groupby(c.df.loc[items,'carrier']).sum()
+            s = pd.concat([s], keys=[c.list_name])
+            s = pd.concat([s], keys=[i])
 
-            supply = supply.reindex(pd.MultiIndex.from_product([[i],[c.list_name],s.index])|supply.index)
-            supply.loc[idx[i,c.list_name,list(s.index)],label] = s.values
+            supply = supply.reindex(s.index|supply.index)
+            supply.loc[s.index,label] = s
 
 
         for c in n.iterate_components(n.branch_components):
@@ -280,9 +293,12 @@ def calculate_supply(n,label,supply):
 
                 #lots of sign compensation for direction and to do maximums
                 s = (-1)**(1-int(end))*((-1)**int(end)*c.pnl["p"+end][items]).max().groupby(c.df.loc[items,'carrier']).sum()
+                s.index = s.index+end
+                s = pd.concat([s], keys=[c.list_name])
+                s = pd.concat([s], keys=[i])
 
-                supply = supply.reindex(pd.MultiIndex.from_product([[i],[c.list_name],s.index+end])|supply.index)
-                supply.loc[idx[i,c.list_name,list(s.index+end)],label] = s.values
+                supply = supply.reindex(s.index|supply.index)
+                supply.loc[s.index,label] = s
 
     return supply
 
@@ -304,9 +320,11 @@ def calculate_supply_energy(n,label,supply_energy):
                 continue
 
             s = c.pnl.p[items].multiply(n.snapshot_weightings,axis=0).sum().multiply(c.df.loc[items,'sign']).groupby(c.df.loc[items,'carrier']).sum()
+            s = pd.concat([s], keys=[c.list_name])
+            s = pd.concat([s], keys=[i])
 
-            supply_energy = supply_energy.reindex(pd.MultiIndex.from_product([[i],[c.list_name],s.index])|supply_energy.index)
-            supply_energy.loc[idx[i,c.list_name,list(s.index)],label] = s.values
+            supply_energy = supply_energy.reindex(s.index|supply_energy.index)
+            supply_energy.loc[s.index,label] = s
 
 
         for c in n.iterate_components(n.branch_components):
@@ -319,9 +337,14 @@ def calculate_supply_energy(n,label,supply_energy):
                     continue
 
                 s = (-1)*c.pnl["p"+end][items].multiply(n.snapshot_weightings,axis=0).sum().groupby(c.df.loc[items,'carrier']).sum()
+                s.index = s.index+end
+                s = pd.concat([s], keys=[c.list_name])
+                s = pd.concat([s], keys=[i])
 
-                supply_energy = supply_energy.reindex(pd.MultiIndex.from_product([[i],[c.list_name],s.index+end])|supply_energy.index)
-                supply_energy.loc[idx[i,c.list_name,list(s.index+end)],label] = s.values
+                supply_energy = supply_energy.reindex(s.index|supply_energy.index)
+
+                supply_energy.loc[s.index,label] = s
+
 
     return supply_energy
 
