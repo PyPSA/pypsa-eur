@@ -26,7 +26,7 @@ sub_sheet_name_dict = { 'Iron and steel':'ISI',
                         'Wood and wood products': 'WWP',
                         'Other Industrial Sectors': 'OIS'}
 
-index = ['elec','biomass','methane','hydrogen','heat','naphtha','process emission']
+index = ['elec','biomass','methane','hydrogen','heat','naphtha','process emission','process emission from feedstock']
 
 df = pd.DataFrame(index=index)
 
@@ -302,7 +302,11 @@ s_out = excel_out.iloc[8:9,year]
 
 assert sector in str(s_out.index)
 
-df.loc['process emission',sector] += s_emi['Process emissions']/s_out.values # unit tCO2/t material
+df.loc['process emission',sector] += (s_emi['Process emissions'] - snakemake.config["industry"]['petrochemical_process_emissions']*1e3 - snakemake.config["industry"]['NH3_process_emissions']*1e3)/s_out.values # unit tCO2/t material
+
+#these are emissions originating from feedstock, i.e. could be non-fossil origin
+df.loc['process emission from feedstock',sector] += (snakemake.config["industry"]['petrochemical_process_emissions']*1e3)/s_out.values # unit tCO2/t material
+
 
 # final energy consumption per t
 sources=['elec','biomass', 'methane', 'hydrogen', 'heat','naphtha']
@@ -315,7 +319,6 @@ df.loc[sources,sector] = df.loc[sources,sector]*conv_factor/s_out.values# unit M
 sector = 'Other chemicals'
 
 df[sector] = 0
-
 # read the corresponding lines
 s_fec = excel_fec.iloc[58:64,year]
 

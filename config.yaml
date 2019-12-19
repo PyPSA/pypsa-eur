@@ -146,7 +146,9 @@ industry:
   'DRI_ratio' : 0.5 #ratio of today's blast-furnace steel (60% primary route, 40% secondary) to future assumption (30% primary, 70% secondary), transformed into DRI + electric arc
   'H2_DRI' : 1.7   #H2 consumption in Direct Reduced Iron (DRI),  MWh_H2/ton_Steel from Vogl et al (2018) doi:10.1016/j.jclepro.2018.08.279
   'Al_to_scrap' : 0.5 # ratio of primary-route Aluminum transformed into scrap (today 40% to future 20% primary route)
-  'H2_for_NH3' : 85000 # H2 for NH3 transformed from SMR to electrolyzed-H2, in GWh/year following Lechtenböhmer(2016)
+  'H2_for_NH3' : 85000 # H2 in GWh/a for 17 MtNH3/a transformed from SMR to electrolyzed-H2, following Lechtenböhmer(2016)
+  'NH3_process_emissions' : 24.5 # in MtCO2/a from SMR for H2 production for NH3 from UNFCCC for 2015 for EU28
+  'petrochemical_process_emissions' : 25.5 # in MtCO2/a for petrochemical and other from UNFCCC for 2015 for EU28
 
 plotting:
   map:

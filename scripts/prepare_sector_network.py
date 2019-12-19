@@ -1219,10 +1219,6 @@ def add_industry(network):
                 "Fischer-Tropsch",
                 carrier="Fischer-Tropsch")
 
-    network.add("Bus",
-                "Fischer-Tropsch-demand",
-                carrier="Fischer-Tropsch-demand")
-
     #use madd to get carrier inserted
     network.madd("Store",
                  ["Fischer-Tropsch Store"],
@@ -1251,28 +1247,28 @@ def add_industry(network):
                  efficiency2=-costs.at["oil",'CO2 intensity']*costs.at["Fischer-Tropsch",'efficiency'],
                  p_nom_extendable=True)
 
-    #NB: CO2 gets released again to atmosphere when plastics decay or kerosene is burned
-    network.madd("Link",
-                 ["Fischer-Tropsch-demand"],
-                 bus0="Fischer-Tropsch",
-                 bus1="Fischer-Tropsch-demand",
-                 bus2="co2 atmosphere",
-                 carrier="Fischer-Tropsch-demand",
-                 efficiency=1.,
-                 efficiency2=costs.at["oil",'CO2 intensity'],
-                 p_nom_extendable=True)
-
     network.madd("Load",
                  ["naphtha for industry"],
-                 bus="Fischer-Tropsch-demand",
+                 bus="Fischer-Tropsch",
                  carrier="naphtha for industry",
                  p_set = industrial_demand.loc[nodes,"naphtha"].sum()/8760.)
 
     network.madd("Load",
                  ["kerosene for aviation"],
-                 bus="Fischer-Tropsch-demand",
+                 bus="Fischer-Tropsch",
                  carrier="kerosene for aviation",
                  p_set = nodal_energy_totals.loc[nodes,["total international aviation","total domestic aviation"]].sum(axis=1).sum()*1e6/8760.)
+
+    #NB: CO2 gets released again to atmosphere when plastics decay or kerosene is burned
+    #except for the process emissions when naphtha is used for petrochemicals, which can be captured with other industry process emissions
+    #tco2 per hour
+    co2 = network.loads.loc[["naphtha for industry","kerosene for aviation"],"p_set"].sum()*costs.at["oil",'CO2 intensity'] - industrial_demand.loc[nodes,"process emission from feedstock"].sum()/8760.
+
+    network.madd("Load",
+                 ["Fischer-Tropsch emissions"],
+                 bus="co2 atmosphere",
+                 carrier="Fischer-Tropsch emissions",
+                 p_set=-co2)
 
     network.madd("Load",
                  nodes,
@@ -1298,7 +1294,7 @@ def add_industry(network):
                  ["process emissions"],
                  bus="process emissions",
                  carrier="process emissions",
-                 p_set = -industrial_demand.loc[nodes,"process emission"].sum()/8760.)
+                 p_set = -industrial_demand.loc[nodes,["process emission","process emission from feedstock"]].sum(axis=1).sum()/8760.)
 
     network.madd("Link",
                  ["process emissions"],
