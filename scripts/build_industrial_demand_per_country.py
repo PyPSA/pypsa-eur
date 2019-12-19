@@ -34,7 +34,7 @@ sub_sheet_name_dict = { 'Iron and steel':'ISI',
                         'Wood and wood products': 'WWP',
                         'Other Industrial Sectors': 'OIS'}
 
-index = ['elec','biomass','methane','hydrogen','heat','naphtha','process emission']
+index = ['elec','biomass','methane','hydrogen','heat','naphtha','process emission','process emission from feedstock']
 
 countries_df = pd.DataFrame(columns=index) #data frame final energy consumption per country and source
 
