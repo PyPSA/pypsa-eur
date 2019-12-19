@@ -160,7 +160,7 @@ plotting:
   costs_threshold: 1
 
 
-  energy_max: 15000.
+  energy_max: 20000.
   energy_min: -15000.
   energy_threshold: 50.
 
@@ -234,6 +234,7 @@ plotting:
     "DAC" : "#E74C3C"
     "co2 stored" : "#123456"
     "CO2 sequestration" : "#123456"
+    "CCS" : "k"
     "co2" : "#123456"
     "co2 vent" : "#654321"
     "solid biomass for industry co2 from atmosphere" : "#654321"
@@ -277,6 +278,7 @@ plotting:
     "industry new electricity" : "#222222"
     "process emissions to stored" : "#444444"
     "process emissions to atmosphere" : "#888888"
+    "process emissions" : "#222222"
     "transport fuel cell" : "#AAAAAA"
     "biogas" : "#800000"
     "solid biomass" : "#DAA520"

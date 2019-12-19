@@ -21,7 +21,8 @@ def rename_techs(label):
     rename_if_contains_dict = {"water tanks" : "hot water storage",
                                "retrofitting" : "building retrofitting",
                                "H2" : "hydrogen storage",
-                               "battery" : "battery storage"}
+                               "battery" : "battery storage",
+                               "CCS" : "CCS"}
 
     rename = {"solar" : "solar PV",
               "Sabatier" : "methanation",
@@ -133,12 +134,16 @@ def plot_energy():
 
     print(df.sum())
 
+    print(df)
+
     new_index = (preferred_order&df.index).append(df.index.difference(preferred_order))
 
     new_columns = df.columns.sort_values()
 
     fig, ax = plt.subplots()
     fig.set_size_inches((12,8))
+
+    print(df.loc[new_index,new_columns])
 
     df.loc[new_index,new_columns].T.plot(kind="bar",ax=ax,stacked=True,color=[snakemake.config['plotting']['tech_colors'][i] for i in new_index])
 
