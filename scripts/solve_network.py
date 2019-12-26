@@ -1,12 +1,8 @@
 import os
 
-os.system("conda config --add channels http://conda.anaconda.org/gurobi")
+os.system("conda install -y -c gurobi gurobi=8.1.0")
 
-os.system("conda install -y gurobi=8.1.0")
-
-os.system("conda install -y git")
-
-os.system("pip install -U git+git://github.com/PyPSA/pypsa.git@nomopyomo#egg=pypsa")
+os.system("conda install -y -c conda-forge pypsa=0.16.0")
 
 #import sys
 
