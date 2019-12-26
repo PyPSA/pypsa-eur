@@ -540,7 +540,8 @@ def add_storage(network):
     connector = " -> "
     attrs = ["bus0","bus1","length"]
 
-    candidates = pd.concat([n.lines[attrs],n.links.loc[n.links.carrier == "DC",attrs]])
+    candidates = pd.concat([n.lines[attrs],n.links.loc[n.links.carrier == "DC",attrs]],
+                           keys=["lines","links"])
 
     for candidate in candidates.index:
         buses = [candidates.at[candidate,"bus0"],candidates.at[candidate,"bus1"]]
