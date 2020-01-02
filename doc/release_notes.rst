@@ -32,3 +32,5 @@ This is the first release of PyPSA-Eur:
 * Logfiles for all rules of the ``snakemake`` workflow are now written in the folder ``log/`` (`#102 <https://github.com/PyPSA/pypsa-eur/pull/102>`_). 
 
 * The new function ``_helpers.mock_snakemake`` creates a ``snakemake`` object which mimics the actual ``snakemake`` object produced by workflow by parsing the ``Snakefile`` and setting all paths for inputs, outputs, and logs. This allows running all scripts within a (I)python terminal (or just by calling ``python <script-name>``) and thereby facilitates developing and debugging scripts significantly (`#107 <https://github.com/PyPSA/pypsa-eur/pull/107>`_).
+
+* Acceleration of Travis CI builds (`#115 <https://github.com/PyPSA/pypsa-eur/pull/115>`_).
