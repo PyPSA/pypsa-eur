@@ -1,9 +1,12 @@
+language: bash
+
 os: 
   - windows
   - linux
   - osx
 
-language: bash
+env:
+  - TEST_SUITE=test1
 
 before_install:
   # install conda
@@ -18,7 +21,5 @@ before_install:
   - conda install -c conda-forge ipopt glpk
 
 script:
-  - cp ./test/config.test1.yaml ./config.yaml
-  - snakemake solve_all_elec_networks
-  - rm -rf resources/*.nc resources/*.geojson resources/*.h5 networks results
-  # could repeat for more configurations in future
+  - cp ./test/config.$TEST_SUITE.yaml ./config.yaml
+  - snakemake -j 2 solve_all_elec_networks
