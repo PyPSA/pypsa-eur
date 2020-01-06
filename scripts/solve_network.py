@@ -123,6 +123,7 @@ def add_opts_constraints(n, opts=None):
     if opts is None:
         opts = snakemake.wildcards.opts.split('-')
 
+    if 'BAU' in opts:
         mincaps = snakemake.config['electricity']['BAU_mincapacities']
         lhs = (linexpr((1, get_var(n, 'Generator', 'p_nom')))
                .groupby(n.generators.carrier).apply(join_exprs))
@@ -136,7 +137,7 @@ def add_opts_constraints(n, opts=None):
         exist_conv_caps = n.generators.query('~p_nom_extendable & carrier in @conv_techs')\
                            .p_nom.sum()
         ext_gens_i = n.generators.query('carrier in @conv_techs & p_nom_extendable').index
-        lhs = linexpr((1, get_var('n', 'Generator', 'p_nom'))).sum()
+        lhs = linexpr((1, get_var('n', 'Generator', 'p_nom')[ext_gens_i])).sum()
         rhs = peakdemand - exist_conv_caps
         define_constraints(n, lhs, '>=', rhs, 'Safe', 'mintotalcap')
 
