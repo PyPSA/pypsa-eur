@@ -7,7 +7,7 @@ dependencies:
   - python
   - pip
 
-  - pypsa>=0.15
+  - pypsa>=0.16
   - atlite
 
   # Dependencies of the workflow itself
@@ -33,7 +33,7 @@ dependencies:
   # Include ipython so that one does not inadvertently drop out of the conda
   # environment by calling ipython
   - ipython
-  
+
   # Install gurobipy
   - gurobi::gurobi
 
