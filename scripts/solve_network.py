@@ -87,7 +87,7 @@ import gc
 
 import pypsa
 from pypsa.linopf import (get_var, define_constraints, linexpr, join_exprs,
-                          lopf, ilopf)
+                          network_lopf, ilopf)
 
 from vresutils.benchmark import memory_logger
 
@@ -200,7 +200,7 @@ def solve_network(n, config=None, solver_log=None, skip_iterating=False,
         solver_log = snakemake.log.solver
     solver_name = solver_options.pop('name')
     if skip_iterating:
-        lopf(n, solver_name=solver_name, solver_options=solver_options, **kwargs)
+        network_lopf(n, solver_name=solver_name, solver_options=solver_options, **kwargs)
     else:
         ilopf(n, solver_name=solver_name, solver_options=solver_options, **kwargs)
     return n
