@@ -2,7 +2,7 @@ import os
 
 os.system("conda install -y -c gurobi gurobi=8.1.0")
 
-os.system("conda install -y -c conda-forge pypsa=0.16.0")
+os.system("conda install -y -c conda-forge pypsa=0.16.1")
 
 #import sys
 
