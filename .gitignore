@@ -37,3 +37,5 @@ gurobi.log
 /cutouts
 /tmp
 /pypsa
+
+*.xlsx

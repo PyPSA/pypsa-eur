@@ -2,7 +2,7 @@ logging_level: INFO
 
 results_dir: 'results/'
 summary_dir: results
-run: '191219-process'
+run: '200110-wave'
 
 scenario:
   sectors: [E] # ,E+EV,E+BEV,E+BEV+V2G] # [ E+EV, E+BEV, E+BEV+V2G ]
@@ -188,6 +188,7 @@ plotting:
     'offshore wind (AC)' : "c"
     'offwind-dc' : "#009999"
     'offshore wind (DC)' : "#009999"
+    'wave' : "#004444"
     "hydro" : "#3B5323"
     "hydro reservoir" : "#3B5323"
     "ror" : "#78AB46"
