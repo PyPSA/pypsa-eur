@@ -492,7 +492,7 @@ def add_generation(network):
                      efficiency=costs.at[generator,'efficiency'],
                      efficiency2=costs.at[carrier,'CO2 intensity'])
 
-def add_wave(network):
+def add_wave(network, wave_cost_factor):
     wave_fn = "data/WindWaveWEC_GLTB.xlsx"
 
     locations = ["FirthForth","Hebrides"]
@@ -501,7 +501,7 @@ def add_wave(network):
     capacity = pd.Series([750,1000,600],["Attenuator","F2HB","MultiPA"])
 
     #in EUR/MW
-    costs = pd.Series([2.5,2,1.5],["Attenuator","F2HB","MultiPA"])*1e6
+    costs = wave_cost_factor*pd.Series([2.5,2,1.5],["Attenuator","F2HB","MultiPA"])*1e6
 
     sheets = {}
 
@@ -1445,8 +1445,6 @@ if __name__ == "__main__":
 
     add_generation(n)
 
-    add_wave(n)
-
     add_storage(n)
 
     for o in opts:
@@ -1455,6 +1453,10 @@ if __name__ == "__main__":
             limit = float(limit.replace("p",".").replace("m","-"))
             print(o,limit)
             options['space_heating_fraction'] = limit
+        if o[:4] == "wave":
+            wave_cost_factor = float(o[4:].replace("p",".").replace("m","-"))
+            print("Including wave generators with cost factor of", wave_cost_factor)
+            add_wave(n, wave_cost_factor)
 
     nodal_energy_totals, heat_demand, ashp_cop, gshp_cop, solar_thermal, transport, avail_profile, dsm_profile, co2_totals, nodal_transport_data = prepare_data(n)
 
