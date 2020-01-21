@@ -148,7 +148,11 @@ def plot_map(components=["links","stores","storage_units","generators"],bus_size
     n.links.drop(n.links.index[(n.links.carrier != "DC") & (n.links.carrier != "B2B")],inplace=True)
 
 
-    line_widths_exp = pd.concat(dict(Line=(n.lines.s_nom_opt-n.lines.s_nom), Link=(n.links.p_nom_opt-n.links.p_nom)))
+    if snakemake.wildcards.lv == "1.0":
+        #should be zero
+        line_widths_exp = pd.concat(dict(Line=(n.lines.s_nom_opt-n.lines.s_nom), Link=(n.links.p_nom_opt-n.links.p_nom)))
+    else:
+        line_widths_exp = pd.concat(dict(Line=(n.lines.s_nom_opt-n.lines.s_nom_min), Link=(n.links.p_nom_opt-n.links.p_nom_min)))
 
     #PDF has minimum width, so set these to zero
     line_threshold = 500.
@@ -204,6 +208,87 @@ def plot_map(components=["links","stores","storage_units","generators"],bus_size
     fig.savefig(snakemake.output.map,transparent=True)
 
 
+
+def plot_h2_map():
+
+    n = pypsa.Network(snakemake.input.network,
+                      override_component_attrs=override_component_attrs)
+
+    if "H2 pipeline" not in n.links.carrier.unique():
+        return
+
+    assign_location(n)
+
+    bus_size_factor=5e2
+    linewidth_factor=1e4
+    #MW below which not drawn
+    line_threshold=1e3
+    bus_color="m"
+    link_color="c"
+
+    #Drop non-electric buses so they don't clutter the plot
+    n.buses.drop(n.buses.index[n.buses.carrier != "AC"],inplace=True)
+
+    elec = n.links.index[n.links.carrier == "H2 Electrolysis"]
+
+    bus_sizes = pd.Series(0., index=n.buses.index)
+    bus_sizes.loc[elec.str.replace(" H2 Electrolysis","")] = n.links.loc[elec,"p_nom_opt"].values/bus_size_factor
+
+    n.links.drop(n.links.index[n.links.carrier != "H2 pipeline"],inplace=True)
+
+    link_widths = n.links.p_nom_opt/linewidth_factor
+    link_widths[n.links.p_nom_opt < line_threshold] = 0.
+
+    n.links.bus0 = n.links.bus0.str.replace(" H2","")
+    n.links.bus1 = n.links.bus1.str.replace(" H2","")
+
+    print(link_widths.sort_values())
+
+    print(n.links[["bus0","bus1"]])
+
+    fig, ax = plt.subplots(subplot_kw={"projection":ccrs.PlateCarree()})
+
+    fig.set_size_inches(7,6)
+
+    n.plot(bus_sizes=bus_sizes,
+           bus_colors=bus_color,
+           line_colors=dict(Link=link_color),
+           line_widths={"Link" : link_widths},
+           branch_components=["Link"],
+           ax=ax)
+
+    handles = make_legend_circles_for([50, 10], scale=bus_size_factor, facecolor=bus_color)
+    labels = ["{} GW".format(s) for s in (50, 10)]
+    l2 = ax.legend(handles, labels,
+                       loc="upper left", bbox_to_anchor=(0.01, 1.01),
+                       labelspacing=1.0,
+                       framealpha=1.,
+                       title='Electrolyzer capacity',
+                       handler_map=make_handler_map_to_scale_circles_as_in(ax))
+    ax.add_artist(l2)
+
+    handles = []
+    labels = []
+
+    for s in (50, 10):
+        handles.append(plt.Line2D([0],[0],color=link_color,
+                                  linewidth=s*1e3/linewidth_factor))
+        labels.append("{} GW".format(s))
+    l1 = l1_1 = ax.legend(handles, labels,
+                              loc="upper left", bbox_to_anchor=(0.30, 1.01),
+                              framealpha=1,
+                              labelspacing=0.8, handletextpad=1.5,
+                              title='H2 pipeline capacity')
+    ax.add_artist(l1_1)
+
+
+    #ax.set_title("Scenario {} with {} transmission".format(snakemake.config['plotting']['scenario_names'][flex],"optimal" if line_limit == "opt" else "no"))
+
+    fig.tight_layout()
+
+    fig.savefig(snakemake.output.map.replace("-costs-all","-h2_network"),transparent=True)
+
+
 def plot_map_without():
 
     n = pypsa.Network(snakemake.input.network,
@@ -228,7 +313,10 @@ def plot_map_without():
     n.links.drop(n.links.index[(n.links.carrier != "DC") & (n.links.carrier != "B2B")],inplace=True)
 
 
-    line_widths_exp = pd.concat(dict(Line=(n.lines.s_nom), Link=(n.links.p_nom)))
+    if snakemake.wildcards.lv == "1.0":
+        line_widths_exp = pd.concat(dict(Line=(n.lines.s_nom), Link=(n.links.p_nom)))
+    else:
+        line_widths_exp = pd.concat(dict(Line=(n.lines.s_nom_min), Link=(n.links.p_nom_min)))
 
     #PDF has minimum width, so set these to zero
     line_threshold = 0.
@@ -392,6 +480,8 @@ if __name__ == "__main__":
 
 
     plot_map(components=["generators","links","stores","storage_units"],bus_size_factor=1.5e10)
+
+    plot_h2_map()
 
     plot_map_without()
 
