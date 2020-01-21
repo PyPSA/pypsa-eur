@@ -184,7 +184,7 @@ def add_opts_constraints(n, opts=None):
 
 def add_battery_constraints(n):
     nodes = n.buses.index[n.buses.carrier == "battery"]
-    if nodes.empty:
+    if nodes.empty or ('Link', 'p_nom') not in n.variables.index:
         return
 
     link_p_nom = get_var(n, "Link", "p_nom")
