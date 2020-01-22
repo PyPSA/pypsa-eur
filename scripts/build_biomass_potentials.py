@@ -21,6 +21,16 @@ def build_biomass_potentials():
 
     df_new = pd.concat(df_dict)
 
+    #  solid biomass includes: Primary agricultural residues (MINBIOAGRW1),
+    #  Forestry energy residue (MINBIOFRSF1), 
+    #  Secondary forestry residues (MINBIOWOOW1),
+    #  Secondary Forestry residues – sawdust (MINBIOWOO1a)',
+    #  Forestry residues from landscape care biomass (MINBIOFRSF1a), 
+    #  Municipal waste (MINBIOMUN1)',
+    
+    # biogas includes : Manure biomass potential (MINBIOGAS1),
+    # Sludge biomass (MINBIOSLU1)
+    
     us_type = pd.Series(index=df_new.columns)
     us_type.iloc[0:7] = "not included"
     us_type.iloc[7:8] = "biogas"
