@@ -181,11 +181,52 @@ def average_every_nhours(n, offset):
     return m
 
 
+def resample_with_weighting_sample(n, alterning_weights):
+    """
+    Set new snapshot weightings on the basis of a repeated weighting sequence.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+    alterning_weights : list
+        List of snapshot weightings which will be repeated along the time
+        axis until all snapshots are covered.
+
+    Returns
+    -------
+    m : pypsa.Network
+        Copy of the input network with aggregated snapshots according to the
+        sample.
+
+    """
+    T = len(n.snapshots)
+    delta = sum(alterning_weights)
+    repeats = pd.Series(int(T / delta + 1) * alterning_weights)\
+                [lambda ds: ds.cumsum() < T]
+    if repeats.sum() < T:
+        repeats = repeats.append(pd.Series(T - repeats.sum()), ignore_index=True)
+    groups = np.repeat(repeats.index.values, repeats)
+    m = n.copy(with_time=False)
+    m.snapshots = n.snapshots[repeats.cumsum().values - 1]
+    sn_map = pd.Series(m.snapshots, repeats.index)
+    m.snapshot_weightings = n.snapshot_weightings.groupby(groups).sum()\
+                                .rename(index=sn_map)
+
+    for c in n.iterate_components():
+        pnl = getattr(m, c.list_name+"_t")
+        for k, df in c.pnl.items():
+            if not df.empty:
+                pnl[k] = df.groupby(groups).mean().rename(index=sn_map)
+
+    m.set_snapshots(m.snapshots)
+    return m
+
+
 if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
         snakemake = mock_snakemake('prepare_network', network='elec', simpl='',
-                                  clusters='5', ll='copt', opts='Co2L-24H')
+                                  clusters='5', ll='copt', opts='Co2L-SR')
     configure_logging(snakemake)
 
     opts = snakemake.wildcards.opts.split('-')
@@ -200,6 +241,9 @@ if __name__ == "__main__":
         if m is not None:
             n = average_every_nhours(n, m.group(0))
             break
+        elif 'SR' == o:
+            alterning_weights = snakemake.config['snapshots']['weighting_sample']
+            n = resample_with_weighting_sample(n, alterning_weights)
     else:
         logger.info("No resampling")
 
