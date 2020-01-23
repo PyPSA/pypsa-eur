@@ -83,22 +83,31 @@ from _helpers import configure_logging
 
 import numpy as np
 import pandas as pd
-import gc
 
 import pypsa
 from pypsa.linopf import (get_var, define_constraints, linexpr, join_exprs,
                           network_lopf, ilopf)
-
+from pathlib import Path
 from vresutils.benchmark import memory_logger
 
-
-def prepare_network(n, solve_opts=None):
-    if solve_opts is None:
-        solve_opts = snakemake.config['solving']['options']
+def prepare_network(n, solve_opts):
 
     if 'clip_p_max_pu' in solve_opts:
         for df in (n.generators_t.p_max_pu, n.storage_units_t.inflow):
             df.where(df>solve_opts['clip_p_max_pu'], other=0., inplace=True)
+
+    if solve_opts.get('load_shedding'):
+        n.add("Carrier", "Load")
+        n.madd("Generator", n.buses.index, " load",
+               bus=n.buses.index,
+               carrier='load',
+               sign=1e-3, # Adjust sign to measure p and p_nom in kW instead of MW
+               marginal_cost=1e2, # Eur/kWh
+               # intersect between macroeconomic and surveybased
+               # willingness to pay
+               # http://journal.frontiersin.org/article/10.3389/fenrg.2015.00055/full
+               p_nom=1e9 # kW
+               )
 
     if solve_opts.get('noisy_costs'):
         for t in n.iterate_components(n.one_port_components):
@@ -119,74 +128,71 @@ def prepare_network(n, solve_opts=None):
     return n
 
 
-def add_opts_constraints(n, opts=None):
-    if opts is None:
-        opts = snakemake.wildcards.opts.split('-')
-
-    if 'BAU' in opts:
-        mincaps = pd.Series(snakemake.config['electricity']['BAU_mincapacities'])
-        lhs = (linexpr((1, get_var(n, 'Generator', 'p_nom')))
-               .groupby(n.generators.carrier).apply(join_exprs))
-        define_constraints(n, lhs, '>=', mincaps[lhs.index], 'Carrier', 'bau_mincaps')
-
-
-    if 'SAFE' in opts:
-        peakdemand = (1. + snakemake.config['electricity']['SAFE_reservemargin']) *\
-                      n.loads_t.p_set.sum(axis=1).max()
-        conv_techs = snakemake.config['plotting']['conv_techs']
-        exist_conv_caps = n.generators.query('~p_nom_extendable & carrier in @conv_techs')\
-                           .p_nom.sum()
-        ext_gens_i = n.generators.query('carrier in @conv_techs & p_nom_extendable').index
-        lhs = linexpr((1, get_var(n, 'Generator', 'p_nom')[ext_gens_i])).sum()
-        rhs = peakdemand - exist_conv_caps
-        define_constraints(n, lhs, '>=', rhs, 'Safe', 'mintotalcap')
-
+def add_CCL_constraints(n, config):
+    assert False, 'CCL not fully implemented yet, please do not use it for now.'
     # Add constraints on the per-carrier capacity in each country
-    # if 'CCL' in opts:
-    #     agg_p_nom_limits = snakemake.config['electricity'].get('agg_p_nom_limits')
+    agg_p_nom_limits = config['electricity'].get('agg_p_nom_limits')
 
-    #     try:
-    #         agg_p_nom_minmax = pd.read_csv(agg_p_nom_limits, index_col=list(range(2)))
-    #     except IOError:
-    #         logger.exception("Need to specify the path to a .csv file containing "
-    #                          "aggregate capacity limits per country in "
-    #                          "config['electricity']['agg_p_nom_limit'].")
-    #     logger.info("Adding per carrier generation capacity constraints for "
-    #                 "individual countries")
+    try:
+        agg_p_nom_minmax = pd.read_csv(agg_p_nom_limits, index_col=list(range(2)))
+    except IOError:
+        logger.exception("Need to specify the path to a .csv file containing "
+                          "aggregate capacity limits per country in "
+                          "config['electricity']['agg_p_nom_limit'].")
+    logger.info("Adding per carrier generation capacity constraints for "
+                "individual countries")
 
-    #     gen_country = n.generators.bus.map(n.buses.country)
-    #     # min, cc means country and carrier
-    #     p_nom_per_cc = (pd.DataFrame(
-    #                    {'p_nom': linexpr((1, get_var(n, 'Generator', 'p_nom'))),
-    #                     'country': gen_country, 'carrier': n.generators.carrier})
-    #                    .groupby(['country', 'carrier']).p_nom
-    #                    .apply(join_exprs))
+    gen_country = n.generators.bus.map(n.buses.country)
+    # min, cc means country and carrier
+    p_nom_per_cc = (pd.DataFrame(
+                    {'p_nom': linexpr((1, get_var(n, 'Generator', 'p_nom'))),
+                    'country': gen_country, 'carrier': n.generators.carrier})
+                    .groupby(['country', 'carrier']).p_nom
+                    .apply(join_exprs))
+    #  from here on is old code
+    def agg_p_nom_min_rule(model, country, carrier):
+        min = agg_p_nom_minmax.at[(country, carrier), 'min']
+        return ((sum(model.generator_p_nom[gen]
+                    for gen in n.generators.index[(gen_country == country) &
+                                                  (n.generators.carrier == carrier)])
+                >= min)
+                if np.isfinite(min) else pypsa.opt.Constraint.Skip)
+
+    def agg_p_nom_max_rule(model, country, carrier):
+        max = agg_p_nom_minmax.at[(country, carrier), 'max']
+        return ((sum(model.generator_p_nom[gen]
+                    for gen in n.generators.index[(gen_country == country) &
+                                                  (n.generators.carrier == carrier)])
+                <= max)
+                if np.isfinite(max) else pypsa.opt.Constraint.Skip)
+
+    n.model.agg_p_nom_min = pypsa.opt.Constraint(list(agg_p_nom_minmax.index), rule=agg_p_nom_min_rule)
+    n.model.agg_p_nom_max = pypsa.opt.Constraint(list(agg_p_nom_minmax.index), rule=agg_p_nom_max_rule)
 
 
-    #     # def agg_p_nom_min_rule(model, country, carrier):
-    #     #     min = agg_p_nom_minmax.at[(country, carrier), 'min']
-    #     #     return ((sum(model.generator_p_nom[gen]
-    #     #                 for gen in n.generators.index[(gen_country == country) & (n.generators.carrier == carrier)])
-    #     #             >= min)
-    #     #             if np.isfinite(min) else pypsa.opt.Constraint.Skip)
+def add_BAU_constraints(n, config):
+    mincaps = pd.Series(config['electricity']['BAU_mincapacities'])
+    lhs = (linexpr((1, get_var(n, 'Generator', 'p_nom')))
+           .groupby(n.generators.carrier).apply(join_exprs))
+    define_constraints(n, lhs, '>=', mincaps[lhs.index], 'Carrier', 'bau_mincaps')
 
-    #     # def agg_p_nom_max_rule(model, country, carrier):
-    #     #     max = agg_p_nom_minmax.at[(country, carrier), 'max']
-    #     #     return ((sum(model.generator_p_nom[gen]
-    #     #                 for gen in n.generators.index[(gen_country == country) & (n.generators.carrier == carrier)])
-    #     #             <= max)
-    #     #             if np.isfinite(max) else pypsa.opt.Constraint.Skip)
 
-    #     # n.model.agg_p_nom_min = pypsa.opt.Constraint(list(agg_p_nom_minmax.index), rule=agg_p_nom_min_rule)
-    #     # n.model.agg_p_nom_max = pypsa.opt.Constraint(list(agg_p_nom_minmax.index), rule=agg_p_nom_max_rule)
-
+def add_SAFE_constraints(n, config):
+    peakdemand = (1. + config['electricity']['SAFE_reservemargin']) *\
+                  n.loads_t.p_set.sum(axis=1).max()
+    conv_techs = config['plotting']['conv_techs']
+    exist_conv_caps = n.generators.query('~p_nom_extendable & carrier in @conv_techs')\
+                       .p_nom.sum()
+    ext_gens_i = n.generators.query('carrier in @conv_techs & p_nom_extendable').index
+    lhs = linexpr((1, get_var(n, 'Generator', 'p_nom')[ext_gens_i])).sum()
+    rhs = peakdemand - exist_conv_caps
+    define_constraints(n, lhs, '>=', rhs, 'Safe', 'mintotalcap')
 
 
 def add_battery_constraints(n):
     nodes = n.buses.index[n.buses.carrier == "battery"]
     if nodes.empty or ('Link', 'p_nom') not in n.variables.index:
         return
-
     link_p_nom = get_var(n, "Link", "p_nom")
     lhs = linexpr((1,link_p_nom[nodes + " charger"]),
                   (-n.links.loc[nodes + " discharger", "efficiency"].values,
@@ -194,28 +200,30 @@ def add_battery_constraints(n):
     define_constraints(n, lhs, "=", 0, 'Link', 'charger_ratio')
 
 
-#def add_eps_storage_constraint(n):
-#    if not hasattr(n, 'epsilon'):
-#        n.epsilon = 1e-5
-#    fix_sus_i = n.storage_units.index[~ n.storage_units.p_nom_extendable]
-#    n.model.objective.expr += sum(n.epsilon * n.model.state_of_charge[su, n.snapshots[0]] for su in fix_sus_i)
-
-
+# extra_functionality:
+# Extra constraints which will be passed to pypsa.linopf.network_lopf.
+# If you want to set additional constraints, please add them here.
+# opts and config are expectd to be attached to the network. This is
+# necessary to use this function independent of this module
 def extra_functionality(n, snapshots):
-    add_opts_constraints(n)
+    opts = n.opts
+    config = n.sn_config
+    if 'BAU' in opts and n.generators.p_nom_extendable.any():
+        add_BAU_constraints(n, config)
+    if 'SAFE' in opts and n.generators.p_nom_extendable.any():
+        add_SAFE_constraints(n, config)
+    if 'CCL' in opts and n.generators.p_nom_extendable.any():
+        add_CCL_constraints(n, config)
     add_battery_constraints(n)
-    #add_eps_storage_constraint(n)
 
 
 def solve_network(n, config=None, solver_log=None, skip_iterating=False,
-                  **kwargs):
-    if config is None:
-        config = snakemake.config['solving']
-
-    solver_options = config['solver'].copy()
-    if solver_log is None:
-        solver_log = snakemake.log.solver
+                  opts=None, **kwargs):
+    solver_options = config['solving']['solver'].copy()
     solver_name = solver_options.pop('name')
+    # add to network for extra_functionality
+    n.sn_config = config
+    n.opts = opts
     if skip_iterating:
         network_lopf(n, solver_name=solver_name, solver_options=solver_options,
                      extra_functionality=extra_functionality, **kwargs)
@@ -224,18 +232,26 @@ def solve_network(n, config=None, solver_log=None, skip_iterating=False,
               extra_functionality=extra_functionality, **kwargs)
     return n
 
+
 if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
         snakemake = mock_snakemake('solve_network', network='elec', simpl='',
-                                  clusters='5', ll='copt', opts='Co2L-24H-BAU-SAFE')
+                                  clusters='5', ll='copt', opts='Co2L-BAU-24H')
     configure_logging(snakemake)
+
+    tmpdir = snakemake.config['solving'].get('tmpdir')
+    if tmpdir is not None:
+        Path(tmpdir).mkdir(parents=True, exist_ok=True)
+    opts = snakemake.wildcards.opts.split('-')
+    solve_opts = snakemake.config['solving']['options']
 
     with memory_logger(filename=getattr(snakemake.log, 'memory', None),
                        interval=30.) as mem:
         n = pypsa.Network(snakemake.input[0])
-        n = prepare_network(n)
-        n = solve_network(n)
+        n = prepare_network(n, solve_opts)
+        n = solve_network(n, config=snakemake.config, solver_dir=tmpdir,
+                          solver_log=snakemake.log.solver, opts=opts)
         n.export_to_netcdf(snakemake.output[0])
 
     logger.info("Maximum memory usage: {}".format(mem.mem_usage))
