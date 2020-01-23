@@ -207,12 +207,10 @@ def extra_functionality(n, snapshots):
     #add_eps_storage_constraint(n)
 
 
-
 def solve_network(n, config=None, solver_log=None, skip_iterating=False,
                   **kwargs):
     if config is None:
         config = snakemake.config['solving']
-#    solve_opts = config['options']
 
     solver_options = config['solver'].copy()
     if solver_log is None:
