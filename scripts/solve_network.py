@@ -129,12 +129,12 @@ def prepare_network(n, solve_opts):
 
 
 def add_CCL_constraints(n, config):
-    assert False, 'CCL not fully implemented yet, please do not use it for now.'
     # Add constraints on the per-carrier capacity in each country
     agg_p_nom_limits = config['electricity'].get('agg_p_nom_limits')
 
     try:
-        agg_p_nom_minmax = pd.read_csv(agg_p_nom_limits, index_col=list(range(2)))
+        agg_p_nom_minmax = pd.read_csv(agg_p_nom_limits,
+                                       index_col=list(range(2)))
     except IOError:
         logger.exception("Need to specify the path to a .csv file containing "
                           "aggregate capacity limits per country in "
@@ -143,31 +143,21 @@ def add_CCL_constraints(n, config):
                 "individual countries")
 
     gen_country = n.generators.bus.map(n.buses.country)
-    # min, cc means country and carrier
+    # cc means country and carrier
     p_nom_per_cc = (pd.DataFrame(
                     {'p_nom': linexpr((1, get_var(n, 'Generator', 'p_nom'))),
                     'country': gen_country, 'carrier': n.generators.carrier})
+                    .dropna(subset=['p_nom'])
                     .groupby(['country', 'carrier']).p_nom
                     .apply(join_exprs))
-    #  from here on is old code
-    def agg_p_nom_min_rule(model, country, carrier):
-        min = agg_p_nom_minmax.at[(country, carrier), 'min']
-        return ((sum(model.generator_p_nom[gen]
-                    for gen in n.generators.index[(gen_country == country) &
-                                                  (n.generators.carrier == carrier)])
-                >= min)
-                if np.isfinite(min) else pypsa.opt.Constraint.Skip)
-
-    def agg_p_nom_max_rule(model, country, carrier):
-        max = agg_p_nom_minmax.at[(country, carrier), 'max']
-        return ((sum(model.generator_p_nom[gen]
-                    for gen in n.generators.index[(gen_country == country) &
-                                                  (n.generators.carrier == carrier)])
-                <= max)
-                if np.isfinite(max) else pypsa.opt.Constraint.Skip)
-
-    n.model.agg_p_nom_min = pypsa.opt.Constraint(list(agg_p_nom_minmax.index), rule=agg_p_nom_min_rule)
-    n.model.agg_p_nom_max = pypsa.opt.Constraint(list(agg_p_nom_minmax.index), rule=agg_p_nom_max_rule)
+    minimum = agg_p_nom_minmax['min'].dropna()
+    if not minimum.empty:
+        minconstraint = define_constraints(n, p_nom_per_cc[minimum.index],
+                                           '>=', minimum, 'agg_p_nom', 'min')
+    maximum = agg_p_nom_minmax['max'].dropna()
+    if not maximum.empty:
+        maxconstraint = define_constraints(n, p_nom_per_cc[maximum.index],
+                                           '<=', maximum, 'agg_p_nom', 'max')
 
 
 def add_BAU_constraints(n, config):
@@ -237,7 +227,7 @@ if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
         snakemake = mock_snakemake('solve_network', network='elec', simpl='',
-                                  clusters='5', ll='copt', opts='Co2L-BAU-24H')
+                                  clusters='5', ll='copt', opts='Co2L-BAU-CCL-24H')
     configure_logging(snakemake)
 
     tmpdir = snakemake.config['solving'].get('tmpdir')
