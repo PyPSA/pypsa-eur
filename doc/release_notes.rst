@@ -2,6 +2,12 @@
 Release Notes
 ##########################################
 
+PyPSA-Eur 0.2.0 
+==================================
+
+* The linear optimization is now performed using the ``pyomo=False`` setting in the :func:`pypsa.lopf.network_lopf`. This speeds up the solving process significantly and consumes much less memory. The inclusion of additional constraints were adjusted to the new implementation. They are all passed to the :func:`network_lopf` function via the ``extra_functionality`` argument. 
+
+
 PyPSA-Eur 0.1.0 (9th January 2020)
 ==================================
 
