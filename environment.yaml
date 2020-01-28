@@ -33,15 +33,15 @@ dependencies:
   # environment by calling ipython
   - ipython
 
-  # GIS dependencies have to come all from conda-forge
-  - conda-forge::cartopy
-  - conda-forge::fiona
-  - conda-forge::proj
-  - conda-forge::pyshp
-  - conda-forge::geopandas
-  - conda-forge::rasterio
-  - conda-forge::shapely
-  - conda-forge::libgdal
+  # GIS dependencies:
+  - cartopy
+  - fiona
+  - proj
+  - pyshp
+  - geopandas
+  - rasterio
+  - shapely
+  - libgdal
 
   - pip:
     - git+https://github.com/FRESNA/vresutils.git#egg=vresutils
