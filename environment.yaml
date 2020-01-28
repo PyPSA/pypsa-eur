@@ -2,7 +2,6 @@ name: pypsa-eur
 channels:
   - conda-forge
   - bioconda
-  - gurobi
 dependencies:
   - python
   - pip
@@ -33,9 +32,6 @@ dependencies:
   # Include ipython so that one does not inadvertently drop out of the conda
   # environment by calling ipython
   - ipython
-
-  # Install gurobipy
-  - gurobi::gurobi
 
   # GIS dependencies have to come all from conda-forge
   - conda-forge::cartopy

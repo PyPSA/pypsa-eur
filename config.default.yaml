@@ -53,7 +53,7 @@ electricity:
   #   Solar: [solar]
 
 atlite:
-  nprocesses: 10
+  nprocesses: 4
   cutouts:
     europe-2013-era5:
       module: era5
@@ -187,7 +187,7 @@ solving:
     #nhours: 10
   solver:
     name: gurobi
-    threads: 18
+    threads: 4
     method: 2 # barrier
     crossover: 0
     BarConvTol: 1.e-5
