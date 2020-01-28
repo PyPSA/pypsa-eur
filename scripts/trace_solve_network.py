@@ -44,7 +44,7 @@ import logging
 logger = logging.getLogger(__name__)
 from _helpers import configure_logging
 
-from solve_network import patch_pyomo_tmpdir, prepare_network, solve_network
+from solve_network import prepare_network, solve_network
 
 import pypsa
 
@@ -55,9 +55,6 @@ if __name__ == "__main__":
                                   clusters='5', ll='copt', opts='Co2L-24H')
     configure_logging(snakemake)
 
-    tmpdir = snakemake.config['solving'].get('tmpdir')
-    if tmpdir is not None:
-        patch_pyomo_tmpdir(tmpdir)
 
 
     n = pypsa.Network(snakemake.input[0])

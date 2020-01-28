@@ -51,7 +51,7 @@ Total annual system costs are minimised with PyPSA. The full formulation of the
 linear optimal power flow (plus investment planning
 is provided in the
 `documentation of PyPSA <https://pypsa.readthedocs.io/en/latest/optimal_power_flow.html#linear-optimal-power-flow>`_.
-Additionaly some extra constraints from :mod:`prepare_network` are added.
+The optimization is based on the pyomo=False setting in the :func:`network.lopf` and  :func:`pypsa.linopf.ilopf` function. Additionaly some extra constraints from :mod:`prepare_network` are added.
 
 Solving the network in multiple iterations is motivated through the dependence of transmission line capacities and impedances.
 As lines are expanded their electrical parameters change, which renders the optimisation bilinear even if the power flow
