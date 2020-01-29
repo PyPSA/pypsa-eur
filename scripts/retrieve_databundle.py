@@ -1,4 +1,4 @@
-## Copyright 2019 Fabian Hofmann (FIAS)
+## Copyright 2019-2020 Fabian Hofmann (FIAS)
 """
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3517935.svg
    :target: https://doi.org/10.5281/zenodo.3517935
@@ -36,7 +36,13 @@ from pathlib import Path
 import tarfile
 
 if __name__ == "__main__":
-
+    # Detect running outside of snakemake and mock snakemake for testing
+    if 'snakemake' not in globals():
+        from _helpers import mock_snakemake
+        snakemake = mock_snakemake('retrieve_databundle')
+        rootpath = '..'
+    else:
+        rootpath = '.'
     configure_logging(snakemake) # TODO Make logging compatible with progressbar (see PR #102)
 
     if snakemake.config['tutorial']:
@@ -45,15 +51,15 @@ if __name__ == "__main__":
         url = "https://zenodo.org/record/3517935/files/pypsa-eur-data-bundle.tar.xz"
 
     # Save locations
-    tarball_fn = Path("./bundle.tar.xz")
-    to_fn = Path("./data")
+    tarball_fn = Path(f"{rootpath}/bundle.tar.xz")
+    to_fn = Path(f"{rootpath}/data")
 
     logger.info(f"Downloading databundle from '{url}'.")
     progress_retrieve(url, tarball_fn)
 
     logger.info(f"Extracting databundle.")
     tarfile.open(tarball_fn).extractall(to_fn)
-    
+
     tarball_fn.unlink()
-    
+
     logger.info(f"Databundle available in '{to_fn}'.")

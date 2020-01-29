@@ -1,4 +1,4 @@
-version: 0.1
+version: 0.1.0
 tutorial: false
 
 logging:
@@ -11,10 +11,10 @@ scenario:
   sectors: [E]
   simpl: ['']
   ll: ['copt']
-  clusters: [37, 100]
+  clusters: [37, 128, 256, 512, 1024]
   opts: [Co2L-3H]
 
-countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK'] 
+countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK']
 
 snapshots:
   start: "2013-01-01"
@@ -22,7 +22,7 @@ snapshots:
   closed: 'left' # end is not inclusive
 
 enable:
-  prepare_links_p_nom: false
+  prepare_links_p_nom: true
   retrieve_databundle: true
   build_cutout: false
   build_natura_raster: false
@@ -34,7 +34,7 @@ electricity:
   agg_p_nom_limits: data/agg_p_nom_minmax.csv
 
   extendable_carriers:
-    Generator: [OCGT]
+    Generator: []
     StorageUnit: [battery, H2]
     Store: [] # battery, H2
     Link: []
@@ -45,13 +45,12 @@ electricity:
 
   powerplants_filter: false # use pandas query strings here, e.g. Country not in ['Germany']
   custom_powerplants: false # use pandas query strings here, e.g. Country in ['Germany']
-  conventional_carriers: [] # nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
+  conventional_carriers: [nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
 
   # estimate_renewable_capacities_from_capacity_stats:
   #   # Wind is the Fueltype in ppm.data.Capacity_stats, onwind, offwind-{ac,dc} the carrier in PyPSA-Eur
   #   Wind: [onwind, offwind-ac, offwind-dc]
   #   Solar: [solar]
-
 
 atlite:
   nprocesses: 4
@@ -224,7 +223,7 @@ plotting:
   storage_techs: ["hydro+PHS", "battery", "H2"]
   load_carriers: ["AC load"]
   AC_carriers: ["AC line", "AC transformer"]
-  link_carriers: ["DC line", "Converter AC-DC"] 
+  link_carriers: ["DC line", "Converter AC-DC"]
   tech_colors:
     "onwind" : "#235ebc"
     "onshore wind" : "#235ebc"
@@ -278,7 +277,7 @@ plotting:
     "helmeth" : "#a31597"
     "DAC" : "#d284ff"
     "co2 stored" : "#e5e5e5"
-    "CO2 sequestration" : "#e5e5e5" 
+    "CO2 sequestration" : "#e5e5e5"
     "battery" : "#b8ea04"
     "battery storage" : "#b8ea04"
     "Li ion" : "#b8ea04"
@@ -287,7 +286,7 @@ plotting:
     "transport fuel cell" : "#e884be"
     "retrofitting" : "#e0d6a8"
     "building retrofitting" : "#e0d6a8"
-    "heat pumps" : "#ff9768" 
+    "heat pumps" : "#ff9768"
     "heat pump" : "#ff9768"
     "air heat pump" : "#ffbea0"
     "ground heat pump" : "#ff7a3d"
@@ -325,6 +324,9 @@ plotting:
     offwind-ac: "Offshore Wind (AC)"
     offwind-dc: "Offshore Wind (DC)"
     onwind: "Onshore Wind"
+    solar: "Solar"
+    PHS: "Pumped Hydro Storage"
+    hydro: "Reservoir & Dam"
     battery: "Battery Storage"
     H2: "Hydrogen Storage"
     lines: "Transmission lines"
@@ -339,4 +341,6 @@ plotting:
     H2: "Hydrogen\nStorage"
     lines: "Transmission\nlines"
     ror: "Run of\nriver"
+    PHS: "Pumped Hydro\nStorage"
+    hydro: "Reservoir\n& Dam"
 

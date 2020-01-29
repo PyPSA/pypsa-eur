@@ -1,6 +1,6 @@
 # coding: utf-8
 """
-Creates the network topology from the ENTSO-E map extracts as a PyPSA network.
+Creates the network topology from a `ENTSO-E map extract <https://github.com/PyPSA/GridKit/tree/master/entsoe>`_ (25 May 2018) as a PyPSA network.
 
 Relevant Settings
 -----------------
@@ -37,7 +37,7 @@ Relevant Settings
 Inputs
 ------
 
-- ``data/entsoegridkit``:  Extract from the geographical vector data of the online `ENTSO-E Interactive Map <https://www.entsoe.eu/data/map/>`_ by the `GridKit <https://github.com/pypsa/gridkit>`_ toolkit.
+- ``data/entsoegridkit``:  Extract from the geographical vector data of the online `ENTSO-E Interactive Map <https://www.entsoe.eu/data/map/>`_ by the `GridKit <https://github.com/pypsa/gridkit>`_ toolkit dating back to 25 May 2018.
 - ``data/parameter_corrections.yaml``: Corrections for ``data/entsoegridkit``
 - ``data/links_p_nom.csv``: confer :ref:`links`
 - ``data/links_tyndp.csv``: List of projects in the `TYNDP 2018 <https://tyndp.entsoe.eu/tyndp2018/>`_ that are at least *in permitting* with fields for start- and endpoint (names and coordinates), length, capacity, construction status, and project reference ID.
@@ -548,28 +548,9 @@ def base_network():
     return n
 
 if __name__ == "__main__":
-    # Detect running outside of snakemake and mock snakemake for testing
     if 'snakemake' not in globals():
-        from vresutils.snakemake import MockSnakemake, Dict
-        snakemake = MockSnakemake(
-            path='..',
-            wildcards={},
-            input=Dict(
-                eg_buses='data/entsoegridkit/buses.csv',
-                eg_lines='data/entsoegridkit/lines.csv',
-                eg_links='data/entsoegridkit/links.csv',
-                eg_converters='data/entsoegridkit/converters.csv',
-                eg_transformers='data/entsoegridkit/transformers.csv',
-                parameter_corrections='data/parameter_corrections.yaml',
-                links_p_nom='data/links_p_nom.csv',
-                links_tyndp='data/links_tyndp.csv',
-                country_shapes='resources/country_shapes.geojson',
-                offshore_shapes='resources/offshore_shapes.geojson',
-                europe_shape='resources/europe_shape.geojson'
-            ),
-            output = ['networks/base.nc']
-        )
-
+        from _helpers import mock_snakemake
+        snakemake = mock_snakemake('base_network')
     configure_logging(snakemake)
 
     n = base_network()
