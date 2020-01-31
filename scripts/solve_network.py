@@ -59,7 +59,7 @@ def prepare_network(n, solve_opts=None):
         solve_opts = snakemake.config['solving']['options']
 
     if 'clip_p_max_pu' in solve_opts:
-        for df in (n.generators_t.p_max_pu, n.storage_units_t.inflow):
+        for df in (n.generators_t.p_max_pu, n.generators_t.p_min_pu, n.storage_units_t.inflow):
             df.where(df>solve_opts['clip_p_max_pu'], other=0., inplace=True)
 
     if solve_opts.get('load_shedding'):
