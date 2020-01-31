@@ -219,7 +219,7 @@ def plot_h2_map():
 
     assign_location(n)
 
-    bus_size_factor=5e2
+    bus_size_factor=1e5
     linewidth_factor=1e4
     #MW below which not drawn
     line_threshold=1e3
@@ -233,6 +233,9 @@ def plot_h2_map():
 
     bus_sizes = pd.Series(0., index=n.buses.index)
     bus_sizes.loc[elec.str.replace(" H2 Electrolysis","")] = n.links.loc[elec,"p_nom_opt"].values/bus_size_factor
+
+    #make a fake MultiIndex so that area is correct for legend
+    bus_sizes.index = pd.MultiIndex.from_product([bus_sizes.index,["electrolysis"]])
 
     n.links.drop(n.links.index[n.links.carrier != "H2 pipeline"],inplace=True)
 
@@ -251,13 +254,13 @@ def plot_h2_map():
     fig.set_size_inches(7,6)
 
     n.plot(bus_sizes=bus_sizes,
-           bus_colors=bus_color,
+           bus_colors={"electrolysis" : bus_color},
            line_colors=dict(Link=link_color),
            line_widths={"Link" : link_widths},
            branch_components=["Link"],
            ax=ax)
 
-    handles = make_legend_circles_for([50, 10], scale=bus_size_factor, facecolor=bus_color)
+    handles = make_legend_circles_for([50000, 10000], scale=bus_size_factor, facecolor=bus_color)
     labels = ["{} GW".format(s) for s in (50, 10)]
     l2 = ax.legend(handles, labels,
                        loc="upper left", bbox_to_anchor=(0.01, 1.01),
