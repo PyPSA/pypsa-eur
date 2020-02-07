@@ -207,10 +207,12 @@ def extra_functionality(n, snapshots):
     add_battery_constraints(n)
 
 
-def solve_network(n, config=None, solver_log=None, skip_iterating=False,
-                  opts=None, **kwargs):
+def solve_network(n, config=None, solver_log=None, opts=None, **kwargs):
+    solve_opts = snakemake.config['solving']['options']
     solver_options = config['solving']['solver'].copy()
     solver_name = solver_options.pop('name')
+    skip_iterating = solve_opts.get('skip_iterating', False)
+    track_iterations = solve_opts.get('track_iterations', False)
     # add to network for extra_functionality
     n.sn_config = config
     n.opts = opts
@@ -219,6 +221,7 @@ def solve_network(n, config=None, solver_log=None, skip_iterating=False,
                      extra_functionality=extra_functionality, **kwargs)
     else:
         ilopf(n, solver_name=solver_name, solver_options=solver_options,
+              track_iterations=track_iterations,
               extra_functionality=extra_functionality, **kwargs)
     return n
 
