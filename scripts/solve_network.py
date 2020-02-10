@@ -20,6 +20,8 @@ Relevant Settings
             nhours:
             min_iterations:
             max_iterations:
+            skip_iterating:
+            track_iterations:
         solver:
             name:
             (solveroptions):
@@ -51,7 +53,8 @@ Total annual system costs are minimised with PyPSA. The full formulation of the
 linear optimal power flow (plus investment planning
 is provided in the
 `documentation of PyPSA <https://pypsa.readthedocs.io/en/latest/optimal_power_flow.html#linear-optimal-power-flow>`_.
-The optimization is based on the pyomo=False setting in the :func:`network.lopf` and  :func:`pypsa.linopf.ilopf` function. Additionaly some extra constraints from :mod:`prepare_network` are added.
+The optimization is based on the ``pyomo=False`` setting in the :func:`network.lopf` and  :func:`pypsa.linopf.ilopf` function.
+Additionally, some extra constraints specified in :mod:`prepare_network` are added.
 
 Solving the network in multiple iterations is motivated through the dependence of transmission line capacities and impedances.
 As lines are expanded their electrical parameters change, which renders the optimisation bilinear even if the power flow
@@ -130,7 +133,6 @@ def prepare_network(n, solve_opts):
 
 
 def add_CCL_constraints(n, config):
-    # Add constraints on the per-carrier capacity in each country
     agg_p_nom_limits = config['electricity'].get('agg_p_nom_limits')
 
     try:
@@ -191,14 +193,14 @@ def add_battery_constraints(n):
     define_constraints(n, lhs, "=", 0, 'Link', 'charger_ratio')
 
 
-# extra_functionality:
-# Extra constraints which will be passed to pypsa.linopf.network_lopf.
-# If you want to set additional constraints, please add them here.
-# opts and config are expectd to be attached to the network. This is
-# necessary to use this function independent of this module
 def extra_functionality(n, snapshots):
+    """
+    Collects supplementary constraints which will be passed to ``pypsa.linopf.network_lopf``.
+    If you want to enforce additional custom constraints, this is a good location to add them.
+    The arguments ``opts`` and ``snakemake.config`` are expected to be attached to the network.
+    """
     opts = n.opts
-    config = n.sn_config
+    config = n.config
     if 'BAU' in opts and n.generators.p_nom_extendable.any():
         add_BAU_constraints(n, config)
     if 'SAFE' in opts and n.generators.p_nom_extendable.any():
@@ -214,9 +216,11 @@ def solve_network(n, config=None, solver_log=None, opts=None, **kwargs):
     solver_name = solver_options.pop('name')
     skip_iterating = solve_opts.get('skip_iterating', False)
     track_iterations = solve_opts.get('track_iterations', False)
+    
     # add to network for extra_functionality
-    n.sn_config = config
+    n.config = config
     n.opts = opts
+    
     if skip_iterating:
         network_lopf(n, solver_name=solver_name, solver_options=solver_options,
                      extra_functionality=extra_functionality, **kwargs)
