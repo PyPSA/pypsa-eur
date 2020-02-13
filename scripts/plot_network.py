@@ -261,7 +261,7 @@ if __name__ == "__main__":
     map_figsize = opts['map']['figsize']
     map_boundaries = opts['map']['boundaries']
 
-    n = load_network_for_plot(snakemake.input.network, snakemake.input.tech_costs, snakemake.config)
+    n = load_network_for_plots(snakemake.input.network, snakemake.input.tech_costs, snakemake.config)
 
     scenario_opts = snakemake.wildcards.opts.split('-')
 
