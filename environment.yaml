@@ -44,6 +44,9 @@ dependencies:
   - shapely
   - libgdal
 
+  # Solvers
+  - gurobi:gurobi # until https://github.com/conda-forge/pypsa-feedstock/issues/4 closed
+
   - pip:
     - git+https://github.com/FRESNA/vresutils.git#egg=vresutils
     - git+https://github.com/PyPSA/glaes.git#egg=glaes
