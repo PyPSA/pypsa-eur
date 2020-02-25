@@ -214,8 +214,8 @@ def solve_network(n, config, solver_log=None, opts='', **kwargs):
     solver_options = config['solving']['solver'].copy()
     solver_name = solver_options.pop('name')
     track_iterations = config['solving']['options'].get('track_iterations', False)
-    min_iterations = config['solving']['options'].get('min_iterations', False)
-    max_iterations = config['solving']['options'].get('max_iterations', False)
+    min_iterations = config['solving']['options'].get('min_iterations', 4)
+    max_iterations = config['solving']['options'].get('max_iterations', 6)
 
     # add to network for extra_functionality
     n.config = config
