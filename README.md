@@ -50,6 +50,40 @@ stumbling block to sharing solve_network.py between PyPSA-Eur and
 PyPSA-Eur-Sec is the different extra_functionality required to build
 storage and CHP constraints.
 
+# Spatial resolution of sectors
+
+Not all of the sectors are at the full nodal resolution, and some are
+distributed to nodes using heuristics that need to be corrected. Some
+networks are copper-plated to reduce computational times.
+
+For example:
+
+Electricity network: nodal.
+
+Electricity demand: nodal, distributed in each country based on
+population and GDP.
+
+Building heating demand: nodal, distributed in each country based on
+population.
+
+Industry demand: nodal, distributed in each country based on
+population (will be corrected to real locations of industry, see
+github issue).
+
+Hydrogen network: nodal.
+
+Methane network: copper-plated for Europe, since future demand is so
+low and no bottlenecks are expected.
+
+Solid biomass: copper-plated until transport costs can be
+incorporated.
+
+CO2: copper-plated (but a transport and storage cost is added for
+sequestered CO2).
+
+Liquid hydrocarbons: copper-plated since transport costs are low.
+
+
 # Installation
 
 First install [PyPSA-Eur](https://github.com/PyPSA/pypsa-eur) and all
