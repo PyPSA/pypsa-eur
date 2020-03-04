@@ -40,11 +40,8 @@ projects % git clone git@github.com:nworbmot/pypsa-eur-sec.git
 
 The requirements are the same as
 [PyPSA-Eur](https://github.com/PyPSA/pypsa-eur), but for
-`solve_network.py` in addition you need `gurobipy` and version 0.16.0
-or greater of PyPSA in order to use the `nomopyomo` framework. These
-libraries are currently imported "by hand" at the start of the
-`solve_network.py` script.
-
+`solve_network.py` in addition you need `gurobipy` and version 0.16.1
+or greater of PyPSA in order to use the `nomopyomo` framework.
 
 ## Data requirements
 

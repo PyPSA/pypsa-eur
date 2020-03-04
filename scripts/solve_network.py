@@ -1,14 +1,3 @@
-import os
-
-os.system("conda install -y -c gurobi gurobi=8.1.0")
-
-os.system("conda install -y -c conda-forge pypsa=0.16.1")
-
-#import sys
-
-#sys.path = ["pypsa"] + sys.path
-
-
 
 import numpy as np
 import pandas as pd
