@@ -2,7 +2,7 @@
 
 
 
-*WARNING*: This model is under construction and contains serious
+**WARNING**: This model is under construction and contains serious
 problems that distort the results. See the github repository
 [issues](https://github.com/PyPSA/pypsa-eur-sec/issues) for some of
 the problems (please feel free to help or make suggestions). There is
@@ -18,8 +18,13 @@ heating, biomass, industry and industrial feedstocks. This completes
 the energy system and includes all greenhouse gas emitters except
 waste management, agriculture, forestry and land use.
 
+This diagram gives an overview of the sectors and the links between
+them:
 
-PyPSA-Eur-Sec was initially based on the model PyPSA-Eur-Sec described
+![sector diagram](graphics/multisector_figure.png)
+
+
+PyPSA-Eur-Sec was initially based on the model PyPSA-Eur-Sec-30 described
 in the paper [Synergies of sector coupling and transmission
 reinforcement in a cost-optimised, highly renewable European energy
 system](https://arxiv.org/abs/1801.05290) (2018) but it differs by
