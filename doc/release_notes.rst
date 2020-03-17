@@ -9,6 +9,9 @@ PyPSA-Eur 0.2.0 (TBD)
 
 * Removed the `id` column for custom power plants in `data/custom_powerplants.csv` to avoid custom power plants with conflicting ids getting attached to the wrong bus (`#131 <https://github.com/PyPSA/pypsa-eur/pull/131>`_).
 
+* ``snakemake`` rules for retrieving cutouts and the natura raster can now be disabled independently from their respective rules to build them; via ``config.*yaml`` (`#136 <https://github.com/PyPSA/pypsa-eur/pull/136>`_).
+
+
 PyPSA-Eur 0.1.0 (9th January 2020)
 ==================================
 
