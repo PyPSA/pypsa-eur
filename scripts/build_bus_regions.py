@@ -71,13 +71,15 @@ if __name__ == "__main__":
 
         onshore_shape = country_shapes[country]
         onshore_locs = n.buses.loc[c_b & n.buses.substation_lv, ["x", "y"]]
-        onshore_regions.append(gpd.GeoDataFrame({
+        onshore_regions_c = gpd.GeoDataFrame({
                 'name': onshore_locs.index,
                 'x': onshore_locs['x'],
                 'y': onshore_locs['y'],
                 'geometry': voronoi_partition_pts(onshore_locs.values, onshore_shape),
                 'country': country
-            }))
+            })
+        onshore_regions_c.reset_index(drop=True, inplace=True)
+        onshore_regions.append(onshore_regions_c)
 
         if country not in offshore_shapes.index: continue
         offshore_shape = offshore_shapes[country]
@@ -88,8 +90,9 @@ if __name__ == "__main__":
                 'y': offshore_locs['y'],
                 'geometry': voronoi_partition_pts(offshore_locs.values, offshore_shape),
                 'country': country
-            }, index=offshore_locs.index)
+            })
         offshore_regions_c = offshore_regions_c.loc[offshore_regions_c.area > 1e-2]
+        offshore_regions_c.reset_index(drop=True, inplace=True)
         offshore_regions.append(offshore_regions_c)
 
     def save_to_geojson(s, fn):
