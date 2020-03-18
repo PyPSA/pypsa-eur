@@ -36,14 +36,15 @@ dependencies:
   - ipython
 
   # GIS dependencies:
-  - conda-forge::cartopy
-  - conda-forge::fiona
-  - conda-forge::proj
-  - conda-forge::pyshp
-  - conda-forge::geopandas
-  - conda-forge::rasterio
-  - conda-forge::shapely
-  - conda-forge::libgdal
+  - cartopy
+  - fiona
+  - proj
+  - pyshp
+  - geopandas<=0.6.3
+  - rasterio
+  - shapely
+  - libgdal
+  - descartes
 
   # Solvers
   - gurobi:gurobi # until https://github.com/conda-forge/pypsa-feedstock/issues/4 closed
