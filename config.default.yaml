@@ -55,19 +55,18 @@ electricity:
   #   Solar: [solar]
 
 atlite:
-  nprocesses: 4
   cutouts:
     europe-2013-era5:
       module: era5
-      xs: [-12., 35.]
-      ys: [72., 33.]
-      years: [2013, 2013]
+      x: [-12., 35.]
+      y: [33., 72.]
+      time: ["2013-01-01", "2013-12-31"]
     europe-2013-sarah:
       module: sarah
       resolution: 0.2
-      xs: [-12., 42.]
-      ys: [65., 33.]
-      years: [2013, 2013]
+      x: [-12., 42.]
+      y: [33., 65.]
+      time: ["2013-01-01", "2013-12-31"]
 
 renewable:
   onwind:

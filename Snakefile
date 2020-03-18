@@ -128,20 +128,19 @@ rule build_bus_regions:
 
 if config['enable'].get('build_cutout', False):        
     rule build_cutout:
-        output: directory("cutouts/{cutout}")
+        output: "cutouts/{cutout}.nc"
         log: "logs/build_cutout/{cutout}.log"
-        resources: mem=config['atlite'].get('nprocesses', 4) * 1000
-        threads: config['atlite'].get('nprocesses', 4)
+        resources: mem=4000
+        threads: 4
         benchmark: "benchmarks/build_cutout_{cutout}"
         # group: 'feedin_preparation'
         script: "scripts/build_cutout.py"
 
 if config['enable'].get('retrieve_cutout', True):
     rule retrieve_cutout:
-        output: directory(expand("cutouts/{cutouts}", **config['atlite'])),
+        output: expand("cutouts/{cutouts}.nc", **config['atlite']),
         log: "logs/retrieve_cutout.log"
         script: 'scripts/retrieve_cutout.py'
-
 
 if config['enable'].get('build_natura_raster', False):        
     rule build_natura_raster:
@@ -171,7 +170,7 @@ rule build_renewable_profiles:
         regions=lambda wildcards: ("resources/regions_onshore.geojson"
                                    if wildcards.technology in ('onwind', 'solar')
                                    else "resources/regions_offshore.geojson"),
-        cutout=lambda wildcards: "cutouts/" + config["renewable"][wildcards.technology]['cutout']
+        cutout=lambda wildcards: "cutouts/" + config["renewable"][wildcards.technology]['cutout'] + ".nc"
     output: profile="resources/profile_{technology}.nc",
     log: "logs/build_renewable_profile_{technology}.log"
     resources: mem=config['atlite'].get('nprocesses', 2) * 5000
