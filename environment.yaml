@@ -1,4 +1,4 @@
-name: pypsa-eur
+name: pypsa-eur-atlite-v0.2
 channels:
   - defaults
   - conda-forge
@@ -7,9 +7,7 @@ channels:
 dependencies:
   - python
   - pip
-
   # - pypsa>=0.16 # until PyPSA/a3c0991 released 
-  - atlite
 
   # Dependencies of the workflow itself
   - xlrd
@@ -49,9 +47,10 @@ dependencies:
   # Solvers
   - gurobi:gurobi # until https://github.com/conda-forge/pypsa-feedstock/issues/4 closed
 
+  - cdsapi
   - pip:
     - vresutils==0.3.1
     - git+https://github.com/PyPSA/glaes.git#egg=glaes
     - git+https://github.com/PyPSA/geokit.git#egg=geokit
     - git+https://github.com/PyPSA/pypsa.git#egg=pypsa # until PyPSA/a3c0991 released 
-    - cdsapi
+    - git+https://github.com/PyPSA/atlite.git@v0.2
