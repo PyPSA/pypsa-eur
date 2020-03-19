@@ -67,6 +67,8 @@ atlite:
       x: [-12., 42.]
       y: [33., 65.]
       time: ["2013-01-01", "2013-12-31"]
+      # Folder to place extracted sarah-2 files for build_cutout
+      sarah_dir: "data/sarah"
 
 renewable:
   onwind:
