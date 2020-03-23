@@ -298,9 +298,6 @@ def _set_electrical_parameters_links(links):
     links_p_nom['not_in_operation']=links_p_nom.Remarks.str.contains('Shut down', na=False) | links_p_nom.Remarks.str.contains('Replaced', na=False)
     
     links_p_nom = links_p_nom[links_p_nom.not_in_operation == False]
- 
-    #add column for closest link id
-    links_p_nom["j"] = np.nan
     
     #find closest link for all links in links_p_nom        
     links_p_nom['j'] = _find_closest_links(links, links_p_nom)
