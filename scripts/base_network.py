@@ -295,9 +295,8 @@ def _set_electrical_parameters_links(links):
     links_p_nom = pd.read_csv(snakemake.input.links_p_nom)
     
     #Filter links that are not in operation anymore    
-    links_p_nom['not_in_operation']=links_p_nom.Remarks.str.contains('Shut down', na=False) | links_p_nom.Remarks.str.contains('Replaced', na=False)
-    
-    links_p_nom = links_p_nom[links_p_nom.not_in_operation == False]
+    removed_b = links_p_nom.Remarks.str.contains('Shut down|Replaced', na=False)
+    links_p_nom = links_p_nom[~removed_b]
     
     #find closest link for all links in links_p_nom        
     links_p_nom['j'] = _find_closest_links(links, links_p_nom)
