@@ -165,8 +165,8 @@ if __name__ == '__main__':
                            **params)
 
     minx, maxx, miny, maxy = cutout.extent
-    dx = (maxx - minx) / (cutout.shape[1] - 1)
-    dy = (maxy - miny) / (cutout.shape[0] - 1)
+    dx = (maxx - minx) / (cutout.meta.x.size - 1)
+    dy = (maxy - miny) / (cutout.meta.y.size - 1)
     bounds = gk.Extent.from_xXyY((minx - dx/2., maxx + dx/2.,
                                   miny - dy/2., maxy + dy/2.))
 
