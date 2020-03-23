@@ -46,8 +46,8 @@ logger = logging.getLogger(__name__)
 def determine_cutout_xXyY(cutout_name):
     cutout = atlite.Cutout(cutout_name, cutout_dir=cutout_dir)
     x, X, y, Y = cutout.extent
-    dx = (X - x) / (cutout.shape[1] - 1)
-    dy = (Y - y) / (cutout.shape[0] - 1)
+    dx = (X - x) / (cutout.meta.x.size - 1)
+    dy = (Y - y) / (cutout.meta.y.size - 1)
     return [x - dx/2., X + dx/2., y - dy/2., Y + dy/2.]
 
 
