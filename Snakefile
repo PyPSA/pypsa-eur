@@ -173,8 +173,8 @@ rule build_renewable_profiles:
         cutout=lambda wildcards: "cutouts/" + config["renewable"][wildcards.technology]['cutout'] + ".nc"
     output: profile="resources/profile_{technology}.nc",
     log: "logs/build_renewable_profile_{technology}.log"
-    resources: mem=config['atlite'].get('nprocesses', 2) * 5000
-    threads: config['atlite'].get('nprocesses', 2)
+    resources: mem=20000
+    threads: 4
     benchmark: "benchmarks/build_renewable_profiles_{technology}"
     # group: 'feedin_preparation'
     script: "scripts/build_renewable_profiles.py"
