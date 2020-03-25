@@ -219,7 +219,7 @@ rule solve_network:
         memory="logs/" + config['run'] + "/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_memory.log"
     benchmark: "benchmarks/solve_network/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}"
     threads: 4
-    resources: mem=100000 #memory in MB; 40 GB enough for 45+B+I; 100 GB based on RESI usage for 128
+    resources: mem=config['solving']['mem']
     # group: "solve" # with group, threads is ignored https://bitbucket.org/snakemake/snakemake/issues/971/group-job-description-does-not-contain
     script: "scripts/solve_network.py"
 
