@@ -111,13 +111,17 @@ def plot_map(components=["links","stores","storage_units","generators"],bus_size
     costs = pd.DataFrame(index=n.buses.index)
 
     for comp in components:
-        getattr(n,comp)["nice_group"] = getattr(n,comp).carrier.map(rename_techs_tyndp)
+
+        df = getattr(n,comp)
+
+        df["nice_group"] = df.carrier.map(rename_techs_tyndp)
 
         attr = "e_nom_opt" if comp == "stores" else "p_nom_opt"
 
-        costs = pd.concat((costs,(getattr(n,comp).capital_cost*getattr(n,comp)[attr]).groupby((getattr(n,comp).location,getattr(n,comp).nice_group)).sum().unstack().fillna(0.)),axis=1)
+        df["costs"] = df.capital_cost*df[attr]
 
-        print(comp,costs)
+        costs = pd.concat((costs,df.groupby(by=["location","nice_group"]).sum()["costs"].unstack().fillna(0.)),axis=1)
+
     costs = costs.groupby(costs.columns,axis=1).sum()
 
 
@@ -127,12 +131,7 @@ def plot_map(components=["links","stores","storage_units","generators"],bus_size
 
     costs = costs[new_columns]
 
-    #print(costs)
-    #print(costs.sum())
-
     costs = costs.stack()#.sort_index()
-
-    #print(costs)
 
     fig, ax = plt.subplots(subplot_kw={"projection":ccrs.PlateCarree()})
 

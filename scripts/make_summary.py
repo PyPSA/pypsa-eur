@@ -63,7 +63,7 @@ def assign_locations(n):
 def calculate_nodal_cfs(n,label,nodal_cfs):
     #Beware this also has extraneous locations for country (e.g. biomass) or continent-wide (e.g. fossil gas/oil) stuff
     for c in n.iterate_components((n.branch_components^{"Line","Transformer"})|n.controllable_one_port_components^{"Load","StorageUnit"}):
-        capacities_c = c.df[opt_name.get(c.name,"p") + "_nom_opt"].groupby((c.df.location,c.df.carrier)).sum()
+        capacities_c = c.df.groupby(["location","carrier"])[opt_name.get(c.name,"p") + "_nom_opt"].sum()
 
         if c.name == "Link":
             p = c.pnl.p0.abs().mean()
@@ -74,7 +74,8 @@ def calculate_nodal_cfs(n,label,nodal_cfs):
         else:
             sys.exit()
 
-        p_c = p.groupby((c.df.location,c.df.carrier)).sum()
+        c.df["p"] = p
+        p_c = c.df.groupby(["location","carrier"])["p"].sum()
 
         cf_c = p_c/capacities_c
 
@@ -118,7 +119,8 @@ def calculate_cfs(n,label,cfs):
 def calculate_nodal_costs(n,label,nodal_costs):
     #Beware this also has extraneous locations for country (e.g. biomass) or continent-wide (e.g. fossil gas/oil) stuff
     for c in n.iterate_components(n.branch_components|n.controllable_one_port_components^{"Load"}):
-        capital_costs = (c.df.capital_cost*c.df[opt_name.get(c.name,"p") + "_nom_opt"]).groupby((c.df.location,c.df.carrier)).sum()
+        c.df["capital_costs"] = c.df.capital_cost*c.df[opt_name.get(c.name,"p") + "_nom_opt"]
+        capital_costs = c.df.groupby(["location","carrier"])["capital_costs"].sum()
         index = pd.MultiIndex.from_tuples([(c.list_name,"capital") + t for t in capital_costs.index.to_list()])
         nodal_costs = nodal_costs.reindex(index|nodal_costs.index)
         nodal_costs.loc[index,label] = capital_costs.values
@@ -139,7 +141,8 @@ def calculate_nodal_costs(n,label,nodal_costs):
             items = c.df.index[(c.df.carrier == "co2 stored") & (c.df.marginal_cost <= -100.)]
             c.df.loc[items,"marginal_cost"] = -20.
 
-        marginal_costs = (p*c.df.marginal_cost).groupby((c.df.location,c.df.carrier)).sum()
+        c.df["marginal_costs"] = p*c.df.marginal_cost
+        marginal_costs = c.df.groupby(["location","carrier"])["marginal_costs"].sum()
         index = pd.MultiIndex.from_tuples([(c.list_name,"marginal") + t for t in marginal_costs.index.to_list()])
         nodal_costs = nodal_costs.reindex(index|nodal_costs.index)
         nodal_costs.loc[index,label] = marginal_costs.values
@@ -206,7 +209,7 @@ def calculate_costs(n,label,costs):
 def calculate_nodal_capacities(n,label,nodal_capacities):
     #Beware this also has extraneous locations for country (e.g. biomass) or continent-wide (e.g. fossil gas/oil) stuff
     for c in n.iterate_components(n.branch_components|n.controllable_one_port_components^{"Load"}):
-        nodal_capacities_c = c.df[opt_name.get(c.name,"p") + "_nom_opt"].groupby((c.df.location,c.df.carrier)).sum()
+        nodal_capacities_c = c.df.groupby(["location","carrier"])[opt_name.get(c.name,"p") + "_nom_opt"].sum()
         index = pd.MultiIndex.from_tuples([(c.list_name,) + t for t in nodal_capacities_c.index.to_list()])
         nodal_capacities = nodal_capacities.reindex(index|nodal_capacities.index)
         nodal_capacities.loc[index,label] = nodal_capacities_c.values
