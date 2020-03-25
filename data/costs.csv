@@ -239,3 +239,6 @@ HVDC submarine,2030,FOM,2,%/year,Hagspiel
 HVDC inverter pair,2030,investment,150000,EUR/MW,Hagspiel
 HVDC inverter pair,2030,lifetime,40,years,Hagspiel
 HVDC inverter pair,2030,FOM,2,%/year,Hagspiel
+electricity distribution grid,2030,investment,500,EUR/kW,TODO
+electricity distribution grid,2030,lifetime,40,years,TODO
+electricity distribution grid,2030,FOM,2,%/year,TODO

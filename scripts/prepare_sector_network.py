@@ -524,6 +524,39 @@ def add_wave(network, wave_cost_factor):
               capital_cost=(annuity(25,0.07)+0.03)*costs[wave_type],
               p_max_pu=wave["Hebrides",wave_type])
 
+
+
+def insert_electricity_distribution_grid(network):
+    print("Inserting electricity distribution grid with investment cost factor of",
+          snakemake.config["sector"]['electricity_distribution_grid_cost_factor'])
+
+    nodes = pop_layout.index
+
+    network.madd("Bus",
+                 nodes+ " low voltage",
+                 carrier="low voltage")
+
+    network.madd("Link",
+                 nodes + " electricity distribution grid",
+                 bus0=nodes,
+                 bus1=nodes + " low voltage",
+                 p_nom_extendable=True,
+                 p_min_pu=-1,
+                 carrier="electricity distribution grid",
+                 efficiency=1,
+                 marginal_cost=0,
+                 capital_cost=costs.at['electricity distribution grid','fixed']*snakemake.config["sector"]['electricity_distribution_grid_cost_factor'])
+
+    loads = network.loads.index[network.loads.carrier=="electricity"]
+    network.loads.loc[loads,"bus"] += " low voltage"
+
+    bevs = network.links.index[network.links.carrier == "BEV charger"]
+    network.links.loc[bevs,"bus0"] += " low voltage"
+
+    v2gs = network.links.index[network.links.carrier == "V2G"]
+    network.links.loc[v2gs,"bus1"] += " low voltage"
+
+
 def add_storage(network):
     print("adding electricity storage")
     nodes = pop_layout.index
@@ -571,7 +604,7 @@ def add_storage(network):
     connector = " -> "
     attrs = ["bus0","bus1","length"]
 
-    candidates = pd.concat([n.lines[attrs],n.links.loc[n.links.carrier == "DC",attrs]],
+    candidates = pd.concat([network.lines[attrs],network.links.loc[network.links.carrier == "DC",attrs]],
                            keys=["lines","links"])
 
     for candidate in candidates.index:
@@ -1095,7 +1128,7 @@ def add_biomass(network):
 
 
     #AC buses with district heating
-    urban_central = n.buses.index[n.buses.carrier == "urban central heat"]
+    urban_central = network.buses.index[network.buses.carrier == "urban central heat"]
     if not urban_central.empty and options["chp"]:
         urban_central = urban_central.str[:-len(" urban central heat")]
 
@@ -1355,17 +1388,17 @@ def add_waste_heat(network):
     print("adding possibility to use industrial waste heat in district heating")
 
     #AC buses with district heating
-    urban_central = n.buses.index[n.buses.carrier == "urban central heat"]
+    urban_central = network.buses.index[network.buses.carrier == "urban central heat"]
     if not urban_central.empty:
         urban_central = urban_central.str[:-len(" urban central heat")]
 
         if options['use_fischer_tropsch_waste_heat']:
-            n.links.loc[urban_central + " Fischer-Tropsch","bus3"] = urban_central + " urban central heat"
-            n.links.loc[urban_central + " Fischer-Tropsch","efficiency3"] = 0.95 - n.links.loc[urban_central + " Fischer-Tropsch","efficiency"]
+            network.links.loc[urban_central + " Fischer-Tropsch","bus3"] = urban_central + " urban central heat"
+            network.links.loc[urban_central + " Fischer-Tropsch","efficiency3"] = 0.95 - network.links.loc[urban_central + " Fischer-Tropsch","efficiency"]
 
         if options['use_fuel_cell_waste_heat']:
-            n.links.loc[urban_central + " H2 Fuel Cell","bus2"] = urban_central + " urban central heat"
-            n.links.loc[urban_central + " H2 Fuel Cell","efficiency2"] = 0.95 - n.links.loc[urban_central + " H2 Fuel Cell","efficiency"]
+            network.links.loc[urban_central + " H2 Fuel Cell","bus2"] = urban_central + " urban central heat"
+            network.links.loc[urban_central + " H2 Fuel Cell","efficiency2"] = 0.95 - network.links.loc[urban_central + " H2 Fuel Cell","efficiency"]
 
 
 def restrict_technology_potential(n,tech,limit):
@@ -1457,6 +1490,9 @@ if __name__ == "__main__":
             wave_cost_factor = float(o[4:].replace("p",".").replace("m","-"))
             print("Including wave generators with cost factor of", wave_cost_factor)
             add_wave(n, wave_cost_factor)
+        if o[:4] == "dist":
+            snakemake.config["sector"]['electricity_distribution_grid'] = True
+            snakemake.config["sector"]['electricity_distribution_grid_cost_factor'] = float(o[4:].replace("p",".").replace("m","-"))
 
     nodal_energy_totals, heat_demand, ashp_cop, gshp_cop, solar_thermal, transport, avail_profile, dsm_profile, co2_totals, nodal_transport_data = prepare_data(n)
 
@@ -1512,5 +1548,8 @@ if __name__ == "__main__":
                 limit = o[o.find(tech)+len(tech):]
                 limit = float(limit.replace("p",".").replace("m","-"))
                 restrict_technology_potential(n,tech,limit)
+
+    if snakemake.config["sector"]['electricity_distribution_grid']:
+        insert_electricity_distribution_grid(n)
 
     n.export_to_netcdf(snakemake.output[0])
