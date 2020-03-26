@@ -576,6 +576,38 @@ def insert_electricity_distribution_grid(network):
 
 
 
+    network.add("Carrier","home battery")
+
+    network.madd("Bus",
+                 nodes + " home battery",
+                 carrier="home battery")
+
+    network.madd("Store",
+                 nodes + " home battery",
+                 bus=nodes + " home battery",
+                 e_cyclic=True,
+                 e_nom_extendable=True,
+                 carrier="home battery",
+                 capital_cost=costs.at['battery storage','fixed'])
+
+    network.madd("Link",
+                 nodes + " home battery charger",
+                 bus0=nodes + " low voltage",
+                 bus1=nodes + " home battery",
+                 carrier="home battery charger",
+                 efficiency=costs.at['battery inverter','efficiency']**0.5,
+                 capital_cost=costs.at['battery inverter','fixed'],
+                 p_nom_extendable=True)
+
+    network.madd("Link",
+                 nodes + " home battery discharger",
+                 bus0=nodes + " home battery",
+                 bus1=nodes + " low voltage",
+                 carrier="home battery discharger",
+                 efficiency=costs.at['battery inverter','efficiency']**0.5,
+                 marginal_cost=options['marginal_cost_storage'],
+                 p_nom_extendable=True)
+
 
 
 def add_storage(network):

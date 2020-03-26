@@ -109,13 +109,14 @@ def add_eps_storage_constraint(n):
 
 def add_battery_constraints(n):
 
-    nodes = n.buses.index[n.buses.carrier == "battery"]
+    nodes = n.buses.index[n.buses.carrier.isin(["battery","home battery"])]
 
     link_p_nom = get_var(n, "Link", "p_nom")
 
     lhs = linexpr((1,link_p_nom[nodes + " charger"]),
                   (-n.links.loc[nodes + " discharger", "efficiency"].values,
                    link_p_nom[nodes + " discharger"].values))
+
     define_constraints(n, lhs, "=", 0, 'Link', 'charger_ratio')
 
 
