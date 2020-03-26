@@ -556,6 +556,27 @@ def insert_electricity_distribution_grid(network):
     v2gs = network.links.index[network.links.carrier == "V2G"]
     network.links.loc[v2gs,"bus1"] += " low voltage"
 
+    hps = network.links.index[network.links.carrier.str.contains("heat pump")]
+    network.links.loc[hps,"bus0"] += " low voltage"
+
+    #set existing solar to cost of utility cost rather the 50-50 rooftop-utility
+    solar = network.generators.index[network.generators.carrier == "solar"]
+    network.generators.loc[solar,"capital_cost"] = costs.at['solar-utility','fixed']
+
+    network.madd("Generator", solar,
+                 suffix=" rooftop",
+                 bus=network.generators.loc[solar,"bus"] + " low voltage",
+                 carrier="solar rooftop",
+                 p_nom_extendable=True,
+                 p_nom_max=network.generators.loc[solar,"p_nom_max"],
+                 marginal_cost=network.generators.loc[solar, 'marginal_cost'],
+                 capital_cost=costs.at['solar-rooftop','fixed'],
+                 efficiency=network.generators.loc[solar, 'efficiency'],
+                 p_max_pu=network.generators_t.p_max_pu[solar])
+
+
+
+
 
 def add_storage(network):
     print("adding electricity storage")

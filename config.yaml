@@ -2,7 +2,7 @@ logging_level: INFO
 
 results_dir: 'results/'
 summary_dir: results
-run: '200325-distgrids-ev2'
+run: '200325-distgrids-ev-hp-pv'
 
 scenario:
   sectors: [E] # ,E+EV,E+BEV,E+BEV+V2G] # [ E+EV, E+BEV, E+BEV+V2G ]
@@ -200,6 +200,7 @@ plotting:
     'solar' : "y"
     'solar PV' : "y"
     'solar thermal' : 'coral'
+    'solar rooftop' : '#e6b800'
     "OCGT" : "wheat"
     "OCGT marginal" : "sandybrown"
     "OCGT-heat" : "orange"
