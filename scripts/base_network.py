@@ -301,8 +301,7 @@ def _set_electrical_parameters_links(links):
     #find closest link for all links in links_p_nom        
     links_p_nom['j'] = _find_closest_links(links, links_p_nom)
         
-    links_p_nom = links_p_nom.groupby(['j'],as_index=False).agg({'Power (MW)': 'sum',
-                                                                 })    
+    links_p_nom = links_p_nom.groupby(['j'],as_index=False).agg({'Power (MW)': 'sum'})    
         
     p_nom = links_p_nom.dropna(subset=["j"]).set_index("j")["Power (MW)"]
    
