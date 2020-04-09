@@ -239,3 +239,7 @@ HVDC submarine,2030,FOM,2,%/year,Hagspiel
 HVDC inverter pair,2030,investment,150000,EUR/MW,Hagspiel
 HVDC inverter pair,2030,lifetime,40,years,Hagspiel
 HVDC inverter pair,2030,FOM,2,%/year,Hagspiel
+decentral oil boiler,2030,investment,156.0140915953699,EUR/kWth,Palzer thesis (https://energiesysteme-zukunft.de/fileadmin/user_upload/Publikationen/PDFs/ESYS_Materialien_Optimierungsmodell_REMod-D.pdf) (+eigene Berechnung)
+decentral oil boiler,2030,lifetime,20.0,years,Palzer thesis (https://energiesysteme-zukunft.de/fileadmin/user_upload/Publikationen/PDFs/ESYS_Materialien_Optimierungsmodell_REMod-D.pdf)
+decentral oil boiler,2030,FOM,2.0,%/year,Palzer thesis (https://energiesysteme-zukunft.de/fileadmin/user_upload/Publikationen/PDFs/ESYS_Materialien_Optimierungsmodell_REMod-D.pdf)
+decentral oil boiler,2030,efficiency,0.9,per unit,Palzer thesis (https://energiesysteme-zukunft.de/fileadmin/user_upload/Publikationen/PDFs/ESYS_Materialien_Optimierungsmodell_REMod-D.pdf)

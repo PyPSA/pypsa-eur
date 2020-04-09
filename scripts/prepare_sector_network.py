@@ -757,25 +757,9 @@ def add_heat(network):
 
     print("adding heat")
 
-    sectors = ["residential","services"]
+    sectors = ["residential", "services"]
 
-    #stores the different groups of nodes
-    nodes = {}
-
-    #rural are areas with low heating density and individual heating
-    #urban are areas with high heating density
-    #urban can be split into district heating (central) and individual heating (decentral)
-    for sector in sectors:
-        nodes[sector + " rural"] = pop_layout.index
-
-        if options["central"]:
-            urban_decentral_ct = pd.Index(["ES","GR","PT","IT","BG"])
-            nodes[sector + " urban decentral"] = pop_layout.index[pop_layout.ct.isin(urban_decentral_ct)]
-        else:
-            nodes[sector + " urban decentral"] = pop_layout.index
-
-    #for central nodes, residential and services are aggregated
-    nodes["urban central"] = pop_layout.index ^ nodes["residential urban decentral"]
+    nodes = create_nodes_for_heat_sector()
 
     #NB: must add costs of central heating afterwards (EUR 400 / kWpeak, 50a, 1% FOM from Fraunhofer ISE)
 
@@ -1043,6 +1027,24 @@ def add_heat(network):
                      capital_cost=options['retrofitting-cost_factor']*costs.at['retrofitting II','fixed']*square_metres/(options['retroII-fraction']*space_peak))
 
 
+def create_nodes_for_heat_sector():
+    sectors = ["residential", "services"]
+    # stores the different groups of nodes
+    nodes = {}
+    # rural are areas with low heating density and individual heating
+    # urban are areas with high heating density
+    # urban can be split into district heating (central) and individual heating (decentral)
+    for sector in sectors:
+        nodes[sector + " rural"] = pop_layout.index
+
+        if options["central"]:
+            urban_decentral_ct = pd.Index(["ES", "GR", "PT", "IT", "BG"])
+            nodes[sector + " urban decentral"] = pop_layout.index[pop_layout.ct.isin(urban_decentral_ct)]
+        else:
+            nodes[sector + " urban decentral"] = pop_layout.index
+    # for central nodes, residential and services are aggregated
+    nodes["urban central"] = pop_layout.index ^ nodes["residential urban decentral"]
+    return nodes
 
 
 def add_biomass(network):
@@ -1267,6 +1269,23 @@ def add_industry(network):
                 carrier="oil",
                 capital_cost=0.,
                 marginal_cost=costs.at["oil",'fuel'])
+
+    if options["oil_boilers"]:
+
+        nodes_heat = create_nodes_for_heat_sector()
+
+        for name in ["residential rural", "services rural", "residential urban decentral", "services urban decentral"]:
+            network.madd("Link",
+                         nodes_heat[name] + " " + name + " oil boiler",
+                         p_nom_extendable=True,
+                         bus0=["Fischer-Tropsch"] * len(nodes_heat[name]),
+                         bus1=nodes_heat[name] + " " + name + " heat",
+                         bus2="co2 atmosphere",
+                         carrier=name + " oil boiler",
+                         efficiency=costs.at['decentral oil boiler', 'efficiency'],
+                         efficiency2=costs.at['oil', 'CO2 intensity'],
+                         capital_cost=costs.at['decentral oil boiler', 'efficiency'] * costs.at[
+                                                'decentral oil boiler', 'fixed'])
 
     network.madd("Link",
                  nodes + " Fischer-Tropsch",
