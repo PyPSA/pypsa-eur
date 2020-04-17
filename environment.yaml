@@ -1,4 +1,4 @@
-name: pypsa-eur-atlite-v0.2
+name: pypsa-eur
 channels:
   - defaults
   - conda-forge
