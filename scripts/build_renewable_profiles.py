@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 """Calculates for each network node the
-(i) installable capacity (based on land-use), (ii) the available generation time
-series (based on weather data), and (iii) the average distance from the node for
-onshore wind, AC-connected offshore wind, DC-connected offshore wind and solar
-PV generators. In addition for offshore wind it calculates the fraction of the
-grid connection which is under water.
+
+1. installable capacity (based on land-use),
+2. the available generation time series (based on weather data)
+3. the average distance from the node for onshore wind, AC-connected offshore
+    wind, DC-connected offshore wind and solar PV generators.
+    In addition for offshore wind it calculates the fraction
+    of the grid connection which is under water.
 
 .. note:: Hydroelectric profiles are built in script :mod:`build_hydro_profiles`.
 
@@ -154,8 +156,6 @@ import logging
 logger = logging.getLogger(__name__)
 from _helpers import configure_logging
 
-import matplotlib.pyplot as plt
-
 import os
 import atlite
 import numpy as np
@@ -163,16 +163,18 @@ import xarray as xr
 import pandas as pd
 import multiprocessing as mp
 
-from scipy.sparse import csr_matrix, vstack
-
 from pypsa.geo import haversine
-from vresutils import landuse as vlanduse
-from vresutils.array import spdiag
 
 import progressbar as pgb
 
+from _helpers import as_sparse, as_dense
+
 bounds = dx = dy = config = paths = gebco = clc = natura = None
+
+
 def init_globals(bounds_xXyY, n_dx, n_dy, n_config, n_paths):
+    """Function to init necessary context in threads for multiprocessing."""
+
     # Late import so that the GDAL Context is only created in the new processes
     global gl, gk, gdal
     import glaes as gl
@@ -197,18 +199,30 @@ def init_globals(bounds_xXyY, n_dx, n_dy, n_config, n_paths):
 
     natura = gk.raster.loadRaster(paths["natura"])
 
+
 def downsample_to_coarse_grid(bounds, dx, dy, mask, data):
     # The GDAL warp function with the 'average' resample algorithm needs a band of zero values of at least
     # the size of one coarse cell around the original raster or it produces erroneous results
     orig = mask.createRaster(data=data)
-    padded_extent = mask.extent.castTo(bounds.srs).pad(max(dx, dy)).castTo(mask.srs)
-    padded = padded_extent.fit((mask.pixelWidth, mask.pixelHeight)).warp(orig, mask.pixelWidth, mask.pixelHeight)
-    orig = None # free original raster
+    padded_extent = mask.extent.castTo(bounds.srs).pad(max(dx, dy)).castTo(
+        mask.srs)
+    padded = padded_extent.fit(
+        (mask.pixelWidth, mask.pixelHeight)).warp(orig, mask.pixelWidth,
+                                                  mask.pixelHeight)
+    orig = None  # free original raster
     average = bounds.createRaster(dx, dy, dtype=gdal.GDT_Float32)
-    assert gdal.Warp(average, padded, resampleAlg='average') == 1, "gdal warp failed: %s" % gdal.GetLastErrorMsg()
+    assert gdal.Warp(average, padded, resampleAlg='average'
+                     ) == 1, "gdal warp failed: %s" % gdal.GetLastErrorMsg()
     return average
 
+
 def calculate_potential(gid, save_map=None):
+    """Calculates the potential (installable capacity) a single region with 'gid'
+    using the glaes toolkit based on excluded/included areas from natura and corine
+    land-use databases.
+    
+    Function is executed by a multiprocessing pool."""
+
     feature = gk.vector.extractFeature(paths["regions"], where=gid)
     ec = gl.ExclusionCalculator(feature.geom)
 
@@ -218,7 +232,9 @@ def calculate_potential(gid, save_map=None):
     if "grid_codes" in corine:
         ec.excludeRasterType(clc, value=corine["grid_codes"], invert=True)
     if corine.get("distance", 0.) > 0.:
-        ec.excludeRasterType(clc, value=corine["distance_grid_codes"], buffer=corine["distance"])
+        ec.excludeRasterType(clc,
+                             value=corine["distance_grid_codes"],
+                             buffer=corine["distance"])
 
     if config.get("natura", False):
         ec.excludeRasterType(natura, value=1)
@@ -227,49 +243,78 @@ def calculate_potential(gid, save_map=None):
 
     # TODO compute a distance field as a raster beforehand
     if 'max_shore_distance' in config:
-        ec.excludeVectorType(paths["country_shapes"], buffer=config['max_shore_distance'], invert=True)
+        ec.excludeVectorType(paths["country_shapes"],
+                             buffer=config['max_shore_distance'],
+                             invert=True)
     if 'min_shore_distance' in config:
-        ec.excludeVectorType(paths["country_shapes"], buffer=config['min_shore_distance'])
+        ec.excludeVectorType(paths["country_shapes"],
+                             buffer=config['min_shore_distance'])
 
     if save_map is not None:
+        import matplotlib.pyplot as plt
         ec.draw()
         plt.savefig(save_map, transparent=True)
         plt.close()
 
-    availability = downsample_to_coarse_grid(bounds, dx, dy, ec.region, np.where(ec.region.mask, ec._availability, 0))
+    availability = downsample_to_coarse_grid(
+        bounds, dx, dy, ec.region, np.where(ec.region.mask, ec._availability,
+                                            0))
 
-    return csr_matrix(gk.raster.extractMatrix(availability).flatten() / 100.)
+    # Return the 2D land availability matrix for 'gid'
+    return gk.raster.extractMatrix(availability)
+
+
+def get_gridcell_areas(cutout):
+    """Calculate the area in sqkm per grid cell of the cutout."""
+
+    # Reproject the shape to determine the area
+    import pyproj
+    from shapely.ops import transform
+
+    project = pyproj.Transformer.from_proj(
+        proj_from=pyproj.Proj(proj='longlat'),
+        proj_to=pyproj.Proj(proj='aea',
+                            lat_1=cutout.meta.lat.min().item(),
+                            lat_2=cutout.meta.lat.max().item()))
+
+    areas = np.array(
+        [transform(project.transform, gc).area for gc in cutout.grid_cells])
+
+    return (xr.DataArray(areas.reshape(cutout.shape),
+                         coords=[cutout.meta.y, cutout.meta.x])) / 1.e6
 
 
 if __name__ == '__main__':
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
-        snakemake = mock_snakemake('build_renewable_profiles', technology='solar')
+        snakemake = mock_snakemake('build_renewable_profiles',
+                                   technology='onwind')
     configure_logging(snakemake)
 
     pgb.streams.wrap_stderr()
 
     config = snakemake.config['renewable'][snakemake.wildcards.technology]
 
-    time = pd.date_range(freq='m', **snakemake.config['snapshots'])
-    params = dict(years=slice(*time.year[[0, -1]]), months=slice(*time.month[[0, -1]]))
+    cutout = atlite.Cutout(snakemake.input.cutout)
 
-    cutout = atlite.Cutout(config['cutout'],
-                           cutout_dir=os.path.dirname(snakemake.input.cutout),
-                           **params)
-
-    minx, maxx, miny, maxy = cutout.extent
-    dx = (maxx - minx) / (cutout.shape[1] - 1)
-    dy = (maxy - miny) / (cutout.shape[0] - 1)
-    bounds_xXyY = (minx - dx/2., maxx + dx/2., miny - dy/2., maxy + dy/2.)
+    minx, maxx = cutout.meta.x.min().item(), cutout.meta.x.max().item()
+    miny, maxy = cutout.meta.y.min().item(), cutout.meta.y.max().item()
+    dx = (maxx - minx) / (cutout.meta.x.size - 1)
+    dy = (maxy - miny) / (cutout.meta.y.size - 1)
+    bounds_xXyY = (minx - dx / 2., maxx + dx / 2., miny - dy / 2.,
+                   maxy + dy / 2.)
+    x = cutout.meta.x
+    y = cutout.meta.y
 
     # Use GLAES to compute available potentials and the transition matrix
     paths = dict(snakemake.input)
 
     # Use the following for testing the default windows method on linux
     # mp.set_start_method('spawn')
-    with mp.Pool(initializer=init_globals, initargs=(bounds_xXyY, dx, dy, config, paths),
-                 maxtasksperchild=20, processes=snakemake.config['atlite'].get('nprocesses', 2)) as pool:
+    with mp.Pool(initializer=init_globals,
+                 initargs=(bounds_xXyY, dx, dy, config, paths),
+                 maxtasksperchild=20,
+                 processes=snakemake.threads) as pool:
 
         # The GDAL library creates a GDAL context on module import, which may not be shared over multiple
         # processes or the PROJ4 library has a hickup, so we import only after forking.
@@ -278,36 +323,84 @@ if __name__ == '__main__':
         regions = gk.vector.extractFeatures(paths["regions"], onlyAttr=True)
         buses = pd.Index(regions['name'], name="bus")
         widgets = [
-            pgb.widgets.Percentage(),
-            ' ', pgb.widgets.SimpleProgress(format='(%s)' % pgb.widgets.SimpleProgress.DEFAULT_FORMAT),
-            ' ', pgb.widgets.Bar(),
-            ' ', pgb.widgets.Timer(),
-            ' ', pgb.widgets.ETA()
+            pgb.widgets.Percentage(), ' ',
+            pgb.widgets.SimpleProgress(
+                format='(%s)' % pgb.widgets.SimpleProgress.DEFAULT_FORMAT),
+            ' ',
+            pgb.widgets.Bar(), ' ',
+            pgb.widgets.Timer(), ' ',
+            pgb.widgets.ETA()
         ]
-        progressbar = pgb.ProgressBar(prefix='Compute GIS potentials: ', widgets=widgets, max_value=len(regions))
-        matrix = vstack(list(progressbar(pool.imap(calculate_potential, regions.index))))
 
-    potentials = config['capacity_per_sqkm'] * vlanduse._cutout_cell_areas(cutout)
-    potmatrix = matrix * spdiag(potentials.ravel())
-    potmatrix.data[potmatrix.data < 1.] = 0 # ignore weather cells where only less than 1 MW can be installed
-    potmatrix.eliminate_zeros()
+        progressbar = pgb.ProgressBar(prefix='Compute GIS potentials: ',
+                                      widgets=widgets,
+                                      max_value=len(regions))
+
+        # Calculate available capacities per bus in percent
+        availabilities = list(
+            progressbar(pool.imap(calculate_potential, regions.index, 5)))
+
+    availabilities = xr.DataArray(
+        np.array(availabilities),
+        coords=[
+            buses,
+            y.sortby('y', ascending=False),  # GLAES internal structure
+            x.sortby('x', ascending=True)  # GLAES internal structure
+        ],
+        dims=['bus', 'y', 'x'])
+
+    matrix = as_sparse(availabilities) / 100.
+
+    # Maximum capacitiy which fits into each grid cell
+    areas = get_gridcell_areas(cutout)
+    potentials = areas * config['capacity_per_sqkm']
+
+    # Technical feasible capacitiy for each grid cell
+    potmatrix = matrix * potentials
+
+    # ignore weather cells where only less than 1 MW can be installed
+    ignored_potential = xr.where(potmatrix < 1., potmatrix, 0.).sum()
+    potmatrix = xr.where(potmatrix > 1., potmatrix, 0.)
+
+    if ignored_potential:
+        logger.info(
+            f'Excluding weather cell(s) with a '
+            f'total negligible potential of {ignored_potential.item():.2f} MW.'
+        )
 
     resource = config['resource']
+
+    # Conversion function for RE type. pop() so we can pass 'resource' to func later as kwargs
     func = getattr(cutout, resource.pop('method'))
     correction_factor = config.get('correction_factor', 1.)
-    if correction_factor != 1.:
-        logger.warning('correction_factor is set as {}'.format(correction_factor))
-    capacity_factor = correction_factor * func(capacity_factor=True, show_progress='Compute capacity factors: ', **resource).stack(spatial=('y', 'x')).values
-    layoutmatrix = potmatrix * spdiag(capacity_factor)
 
-    profile, capacities = func(matrix=layoutmatrix, index=buses, per_unit=True,
-                               return_capacity=True, show_progress='Compute profiles: ',
-                               **resource)
+    if correction_factor != 1.:
+        logger.info(f'correction_factor is set to {correction_factor}')
+
+    # Calculate corrected CFs for each grid cell
+    capacity_factor = correction_factor * func(
+        capacity_factor=True,
+        show_progress='Compute capacity factors: ',
+        **resource)
+
+    # Create a layout: Distribute capacities based on potentials and CF
+    layoutmatrix = potmatrix * capacity_factor
+
+    # Generate RE profile with the constructed layout
+    profile, capacities = func(
+        # Redindex, stack index and conv. to CSR to be consistent with the format expected by atlite
+        matrix=layoutmatrix.reindex_like(
+            cutout.data).stack(spatial=('y', 'x')).data.tocsr(),
+        index=buses,
+        per_unit=True,
+        return_capacity=True,
+        show_progress='Compute profiles: ',
+        **resource)
 
     p_nom_max_meth = config.get('potential', 'conservative')
 
     if p_nom_max_meth == 'simple':
-        p_nom_max = xr.DataArray(np.asarray(potmatrix.sum(axis=1)).squeeze(), [buses])
+        p_nom_max = as_dense(potmatrix.sum(dim=['y', 'x']))
     elif p_nom_max_meth == 'conservative':
         # p_nom_max has to be calculated for each bus and is the minimal ratio
         # (min over all weather grid cells of the bus region) between the available
@@ -315,51 +408,82 @@ if __name__ == '__main__':
         # capacities), so we would like to calculate i.e. potmatrix / (layoutmatrix /
         # capacities). Since layoutmatrix = potmatrix * capacity_factor, this
         # corresponds to capacities/max(capacity factor in the voronoi cell)
-        p_nom_max = xr.DataArray([1./np.max(capacity_factor[inds]) if len(inds) else 0.
-                                  for inds in np.split(potmatrix.indices, potmatrix.indptr[1:-1])], [buses]) * capacities
+        # See PyPSA-EUR paper (Hörsch et al. 2018, eq. (5), (7)) for further details
+
+        p_nom_max = capacities / (xr.where(
+            layoutmatrix.reindex_like(capacity_factor) != 0, capacity_factor,
+            0)).groupby('bus').max(['x', 'y']).fillna(0.)
     else:
-        raise AssertionError('Config key `potential` should be one of "simple" (default) or "conservative",'
-                             ' not "{}"'.format(p_nom_max_meth))
+        raise KeyError(
+            f'Config key `potential`={p_nom_max_meth} not implemented, should be "simple" (default) or "conservative",'
+        )
 
-    layout = xr.DataArray(np.asarray(potmatrix.sum(axis=0)).reshape(cutout.shape),
-                          [cutout.meta.indexes[ax] for ax in ['y', 'x']])
+    ## Determine weighted average distance from substation
 
-    # Determine weighted average distance from substation
-    cell_coords = cutout.grid_coordinates()
+    # Convert 2D to 1D: workaround to enable .nonzero() below
+    layoutmatrix = layoutmatrix.stack(spatial=('x', 'y'))
 
     average_distance = []
-    for i in regions.index:
-        row = layoutmatrix[i]
-        distances = haversine(regions.loc[i, ['x', 'y']], cell_coords[row.indices])[0]
-        average_distance.append((distances * (row.data / row.data.sum())).sum())
+    # Iterate all buses
+    for index, row in regions.iterrows():
+
+        bus_coords = row[['x', 'y']]
+
+        # Extract the coordinates and layout values for non-zero cells per bus
+        # complexity required for reasonable performance, b'c sparse xarray's
+        # don't work with xr.where() at the moment.
+        tmp = layoutmatrix.sel(bus=row['name'])
+        nnz_idx = tmp.data.nonzero()
+        tmp = as_dense(tmp[nnz_idx])
+        cell_coords = np.column_stack((tmp['x'], tmp['y']))
+
+        distances = haversine(bus_coords, cell_coords)
+        weighted_distances = (tmp.values * distances)
+        average_distance.append(weighted_distances.sum() / tmp.sum().item())
 
     average_distance = xr.DataArray(average_distance, [buses])
+
+    potential = as_dense(potmatrix.sum(dim='bus'))
 
     ds = xr.merge([(correction_factor * profile).rename('profile'),
                    capacities.rename('weight'),
                    p_nom_max.rename('p_nom_max'),
-                   layout.rename('potential'),
+                   potential.rename('potential'),
                    average_distance.rename('average_distance')])
 
     if snakemake.wildcards.technology.startswith("offwind"):
+        # Estimate the share of underwater area per bus region
+
         import geopandas as gpd
         from shapely.geometry import LineString
+        offshore_shape = gpd.read_file(
+            snakemake.input.offshore_shapes).unary_union
 
-        offshore_shape = gpd.read_file(snakemake.input.offshore_shapes).unary_union
         underwater_fraction = []
-        for i in regions.index:
-            row = layoutmatrix[i]
-            centre_of_mass = (cell_coords[row.indices] * (row.data / row.data.sum())[:,np.newaxis]).sum(axis=0)
-            line = LineString([centre_of_mass, regions.loc[i, ['x', 'y']]])
-            underwater_fraction.append(line.intersection(offshore_shape).length / line.length)
+        for index, row in regions.iterrows():
+
+            bus_layout = layoutmatrix.sel(bus=row['name'])
+            bus_layout = as_dense(bus_layout[bus_layout.data.nonzero()])
+            cell_coords = np.column_stack((bus_layout['x'], bus_layout['y']))
+            bus_coords = row[['x', 'y']]
+
+            centre_of_mass = (cell_coords *
+                              (bus_layout.values /
+                               bus_layout.sum().item())[:, np.newaxis]).sum(
+                                   axis=0)
+            line = LineString([centre_of_mass, bus_coords])
+            underwater_fraction.append(
+                line.intersection(offshore_shape).length / line.length)
 
         ds['underwater_fraction'] = xr.DataArray(underwater_fraction, [buses])
 
-    # select only buses with some capacity and minimal capacity factor
-    ds = ds.sel(bus=((ds['profile'].mean('time') > config.get('min_p_max_pu', 0.)) &
-                     (ds['p_nom_max'] > config.get('min_p_nom_max', 0.))))
+    # Unclutter: Disregard busses with neglible capacity or average CF
+    ds = ds.sel(
+        bus=(ds['profile'].mean('time') > config.get('min_p_max_pu', 0.)))
+    ds = ds.sel(bus=(ds['p_nom_max'] > config.get('min_p_nom_max', 0.)))
 
     if 'clip_p_max_pu' in config:
-        ds['profile'].values[ds['profile'].values < config['clip_p_max_pu']] = 0.
+        ds['profile'] = ds['profile'].where(
+            ds['profile'] >= config.get('clip_p_max_pu', 0.01), other=0.)
 
     ds.to_netcdf(snakemake.output.profile)
