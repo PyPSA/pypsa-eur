@@ -20,6 +20,7 @@ dependencies:
   - pytables
   - lxml
   - powerplantmatching>=0.4.3
+  - sparse
 
   # Second order dependencies which should really be deps of atlite
   - xarray

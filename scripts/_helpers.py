@@ -249,3 +249,40 @@ def mock_snakemake(rulename, **wildcards):
 
     os.chdir(script_dir)
     return snakemake
+
+def as_sparse(ds):
+    """
+    Convert dense dataset/dataarray into a sparse dataset.
+
+    Parameters
+    ----------
+    ds : xr.Dataset or xr.DataArray
+
+    Returns
+    -------
+    xr.Dataset or xr.DataArray
+        Dataset or DataArray with sparse data.
+
+    """
+    from sparse import COO
+    func = lambda data: COO(data) if not isinstance(data, COO) else data
+    return xr.apply_ufunc(func, ds)
+
+
+def as_dense(ds):
+    """
+    Convert sparse dataset/dataarray into a dense dataset.
+
+    Parameters
+    ----------
+    ds : xr.Dataset or xr.DataArray
+
+    Returns
+    -------
+    xr.Dataset or xr.DataArray
+        Dataset or DataArray with dense data.
+
+    """
+    from sparse import COO
+    func = lambda data: data.todense() if isinstance(data, COO) else data
+    return xr.apply_ufunc(func, ds)
