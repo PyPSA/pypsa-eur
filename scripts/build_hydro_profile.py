@@ -84,6 +84,6 @@ if __name__ == "__main__":
                         normalize_using_yearly=eia_stats)
 
     if 'clip_min_inflow' in config:
-        inflow.values[inflow.values < config['clip_min_inflow']] = 0.
+        inflow = inflow.where(inflow >= config['clip_min_inflow'], 0.)
 
     inflow.to_netcdf(snakemake.output[0])
