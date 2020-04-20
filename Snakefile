@@ -184,7 +184,7 @@ if 'hydro' in config['renewable'].keys():
         input:
             country_shapes='resources/country_shapes.geojson',
             eia_hydro_generation='data/bundle/EIA_hydro_generation_2000_2014.csv',
-            cutout="cutouts/" + config["renewable"]['hydro']['cutout']
+            cutout="cutouts/" + config["renewable"]['hydro']['cutout'] + ".nc"
         output: 'resources/profile_hydro.nc'
         log: "logs/build_hydro_profile.log"
         resources: mem=5000

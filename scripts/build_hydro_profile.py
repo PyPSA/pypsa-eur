@@ -70,8 +70,7 @@ if __name__ == "__main__":
     configure_logging(snakemake)
 
     config = snakemake.config['renewable']['hydro']
-    cutout = atlite.Cutout(config['cutout'],
-                        cutout_dir=os.path.dirname(snakemake.input.cutout))
+    cutout = atlite.Cutout(snakemake.input.cutout)
 
     countries = snakemake.config['countries']
     country_shapes = gpd.read_file(snakemake.input.country_shapes).set_index('name')['geometry'].reindex(countries)
