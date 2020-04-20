@@ -1,5 +1,6 @@
 import pandas as pd
 from pathlib import Path
+import xarray as xr
 
 
 def configure_logging(snakemake, skip_handlers=False):
