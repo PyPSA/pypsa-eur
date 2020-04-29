@@ -134,6 +134,10 @@ def plot_map(network, components=["links", "stores", "storage_units", "generator
                    .append(costs.columns.difference(preferred_order)))
     costs = costs[new_columns]
 
+    for item in new_columns:
+        if item not in snakemake.config['plotting']['tech_colors']:
+            print("Warning!",item,"not in config/plotting/tech_colors")
+
     costs = costs.stack()  # .sort_index()
 
     # hack because impossible to drop buses...
@@ -152,50 +156,49 @@ def plot_map(network, components=["links", "stores", "storage_units", "generator
     costs.index = pd.MultiIndex.from_tuples(costs.index.values)
 
     # PDF has minimum width, so set these to zero
-    line_threshold = 500.
-    linewidth_factor = 2e4
+    line_lower_threshold = 500.
+    line_upper_threshold = 1e4
+    linewidth_factor = 2e3
     ac_color = "gray"
     dc_color = "m"
 
     if snakemake.wildcards["lv"] == "1.0":
         # should be zero
-        line_widths_exp = pd.concat(
-            dict(
-                Line=(
-                    n.lines.s_nom_opt -
-                    n.lines.s_nom),
-                Link=(
-                    n.links.p_nom_opt -
-                    n.links.p_nom)))
+        line_widths = n.lines.s_nom_opt - n.lines.s_nom
+        link_widths = n.links.p_nom_opt - n.links.p_nom
+        title = "Transmission reinforcement"
+
         if transmission:
-            line_widths_exp = pd.concat(
-                dict(Line=n.lines.s_nom_opt,
-                     Link=n.links.p_nom_opt))
+            line_widths = n.lines.s_nom_opt
+            link_widths = n.links.p_nom_opt
             linewidth_factor = 2e3
-            line_threshold = 0.
-
+            line_lower_threshold = 0.
+            title = "Today's transmission"
     else:
-        line_widths_exp = pd.concat(
-            dict(
-                Line=(
-                    n.lines.s_nom_opt -
-                    n.lines.s_nom_min),
-                Link=(
-                    n.links.p_nom_opt -
-                    n.links.p_nom_min)))
+        line_widths = n.lines.s_nom_opt - n.lines.s_nom_min
+        link_widths = n.links.p_nom_opt - n.links.p_nom_min
+        title = "Transmission reinforcement"
 
-    line_widths_exp[line_widths_exp < line_threshold] = 0.
+        if transmission:
+            line_widths = n.lines.s_nom_opt
+            link_widths = n.links.p_nom_opt
+            title = "Total transmission"
 
-    if transmission:
-        line_widths_exp[line_widths_exp > 1e4] = 1e4
+    line_widths[line_widths < line_lower_threshold] = 0.
+    link_widths[link_widths < line_lower_threshold] = 0.
+
+    line_widths[line_widths > line_upper_threshold] = line_upper_threshold
+    link_widths[link_widths > line_upper_threshold] = line_upper_threshold
 
     fig, ax = plt.subplots(subplot_kw={"projection": ccrs.PlateCarree()})
     fig.set_size_inches(7, 6)
 
     n.plot(bus_sizes=costs / bus_size_factor,
            bus_colors=snakemake.config['plotting']['tech_colors'],
-           line_colors=dict(Line=ac_color, Link=dc_color),
-           line_widths=line_widths_exp / linewidth_factor,
+           line_colors=ac_color,
+           link_colors=dc_color,
+           line_widths=line_widths / linewidth_factor,
+           link_widths=link_widths / linewidth_factor,
            ax=ax,  boundaries=(-10, 30, 34, 70),
            color_geomap={'ocean': 'lightblue', 'land': "palegoldenrod"})
 
@@ -217,21 +220,16 @@ def plot_map(network, components=["links", "stores", "storage_units", "generator
         handles.append(plt.Line2D([0], [0], color=ac_color,
                                   linewidth=s * 1e3 / linewidth_factor))
         labels.append("{} GW".format(s))
+
     l1_1 = ax.legend(handles, labels,
                      loc="upper left", bbox_to_anchor=(0.30, 1.01),
                      framealpha=1,
                      labelspacing=0.8, handletextpad=1.5,
-                     title='Transmission reinforcement')
-    if transmission:
-            l1_1 = ax.legend(handles, labels,
-                     loc="upper left", bbox_to_anchor=(0.30, 1.01),
-                     framealpha=1,
-                     labelspacing=0.8, handletextpad=1.5,
-                     title='Today\'s transmission')
+                     title=title)
 
     ax.add_artist(l1_1)
 
-    fig.savefig(snakemake.output.map + "_costs.pdf", transparent=True,
+    fig.savefig(snakemake.output.map, transparent=True,
                 bbox_inches="tight")
 
 
@@ -246,7 +244,7 @@ def plot_h2_map(network):
     bus_size_factor = 1e5
     linewidth_factor = 1e4
     # MW below which not drawn
-    line_threshold = 1e3
+    line_lower_threshold = 1e3
     bus_color = "m"
     link_color = "c"
 
@@ -266,7 +264,7 @@ def plot_h2_map(network):
     n.links.drop(n.links.index[n.links.carrier != "H2 pipeline"], inplace=True)
 
     link_widths = n.links.p_nom_opt / linewidth_factor
-    link_widths[n.links.p_nom_opt < line_threshold] = 0.
+    link_widths[n.links.p_nom_opt < line_lower_threshold] = 0.
 
     n.links.bus0 = n.links.bus0.str.replace(" H2", "")
     n.links.bus1 = n.links.bus1.str.replace(" H2", "")
@@ -281,8 +279,8 @@ def plot_h2_map(network):
 
     n.plot(bus_sizes=bus_sizes,
            bus_colors={"electrolysis": bus_color},
-           line_colors=dict(Link=link_color),
-           line_widths={"Link": link_widths},
+           link_colors=link_color,
+           link_widths=link_widths,
            branch_components=["Link"],
            ax=ax,  boundaries=(-10, 30, 34, 70))
 
@@ -311,7 +309,7 @@ def plot_h2_map(network):
                      title='H2 pipeline capacity')
     ax.add_artist(l1_1)
 
-    fig.savefig(snakemake.output.map + "-h2_network.pdf", transparent=True,
+    fig.savefig(snakemake.output.map.replace("-costs-all","-h2_network"), transparent=True,
                 bbox_inches="tight")
 
 
@@ -327,6 +325,9 @@ def plot_map_without(network):
 
     fig.set_size_inches(7, 6)
 
+    # PDF has minimum width, so set these to zero
+    line_lower_threshold = 0.
+    line_upper_threshold = 1e4
     linewidth_factor = 2e3
     ac_color = "gray"
     dc_color = "m"
@@ -338,29 +339,24 @@ def plot_map_without(network):
         n.links.carrier != "B2B")], inplace=True)
 
     if snakemake.wildcards["lv"] == "1.0":
-        line_widths_exp = pd.concat(
-            dict(
-                Line=(
-                    n.lines.s_nom), Link=(
-                    n.links.p_nom)))
+        line_widths = n.lines.s_nom
+        link_widths = n.links.p_nom
     else:
-        line_widths_exp = pd.concat(
-            dict(
-                Line=(
-                    n.lines.s_nom_min), Link=(
-                    n.links.p_nom_min)))
+        line_widths = n.lines.s_nom_min
+        link_widths = n.links.p_nom_min
 
-    # PDF has minimum width, so set these to zero
-    line_threshold = 0.
+    line_widths[line_widths < line_upper_threshold] = 0.
+    link_widths[link_widths < line_upper_threshold] = 0.
 
-    line_widths_exp[line_widths_exp < line_threshold] = 0.
-
-    line_widths_exp[line_widths_exp > 1e4] = 1e4
+    line_widths[line_widths > line_upper_threshold] = line_upper_threshold
+    link_widths[link_widths > line_upper_threshold] = line_upper_threshold
 
     n.plot(bus_sizes=10,
            bus_colors="k",
-           line_colors=dict(Line=ac_color, Link=dc_color),
-           line_widths=line_widths_exp / linewidth_factor,
+           line_colors=ac_color,
+           link_colors=dc_color,
+           line_widths=line_widths / linewidth_factor,
+           link_widths=link_widths / linewidth_factor,
            ax=ax,  boundaries=(-10, 30, 34, 70))
 
     handles = []
@@ -542,10 +538,10 @@ if __name__ == "__main__":
                       override_component_attrs=override_component_attrs)
 
     plot_map(n, components=["generators", "links", "stores", "storage_units"],
-             bus_size_factor=1.5e10, transmission=True)
+             bus_size_factor=1.5e10, transmission=False)
 
     plot_h2_map(n)
-#    plot_map_without(n)
+    plot_map_without(n)
 
-    plot_series(n, carrier="AC", name=suffix)
-    plot_series(n, carrier="heat", name=suffix)
+    #plot_series(n, carrier="AC", name=suffix)
+    #plot_series(n, carrier="heat", name=suffix)

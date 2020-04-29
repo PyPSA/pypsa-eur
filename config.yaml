@@ -2,7 +2,7 @@ logging_level: INFO
 
 results_dir: 'results/'
 summary_dir: results
-run: '200326-distgrids-ev-hp-pv-batt'
+run: '200429-distgrids-ev-hp-pv-batt-upgrade'
 
 scenario:
   sectors: [E] # ,E+EV,E+BEV,E+BEV+V2G] # [ E+EV, E+BEV, E+BEV+V2G ]
@@ -10,7 +10,7 @@ scenario:
   lv: [1.0]# or opt
   clusters: [50] #[90, 128, 181] #[45, 64, 90, 128, 181, 256] #, 362] # (2**np.r_[5.5:9:.5]).astype(int) minimum is 37
   opts: ['']  #for pypsa-eur
-  sector_opts: [Co2L0-3H-T-H-B-I-solar3-dist0,Co2L0-3H-T-H-B-I-solar3-dist0p25,Co2L0-3H-T-H-B-I-solar3-dist0p5,Co2L0-3H-T-H-B-I-solar3-dist1,Co2L0-3H-T-H-B-I-solar3-dist2,Co2L0-3H-T-H-B-I-solar3-dist4]#Co2L0-3H-T-H-B-I-onwind0-solar3,Co2L0-3H-T-H-B-I-onwind0p125-solar3,Co2L0-3H-T-H-B-I-onwind0p25-solar3,Co2L0-3H-T-H-B-I-onwind0p50-solar3,Co2L0-3H-T-H-B-I-solar3]#[Co2L0-3H-T-H-B-I]#,Co2L0p2-3H-T-H-B-I,Co2L0p5-3H-T-H-B-I]#,Co2L0p1-3H-T-H-B-I,Co2L0p25-3H-T-H-B-I,Co2L0p5-3H-T-H-B-I]#[Co2L0-3H-T-H-B-I-onwind0-solar3,Co2L0-3H-T-H-B-I-onwind0p125-solar3,Co2L0-3H-T-H-B-I-onwind0p25-solar3,Co2L0-3H-T-H-B-I-onwind0p50-solar3,Co2L0-3H-T-H-B-I-solar3]#,Co2L0-3H-T-H-B-I-onwind0p25-solar3]#,Co2L0p05-3H-T-H-B-I,Co2L0p10-3H-T-H-B-I,Co2L0p20-3H-T-H-B-I,Co2L0p30-3H-T-H-B-I,Co2L0p50-3H-T-H-B-I]#[Co2L-3H-T-H,Co2L0p10-3H-T-H,Co2L0-3H-T-H,Co2L0p20-3H-T-H]   #Co2L-3H-T-H,Co2L0p10-3H-T-H,Co2L0p20-3H-T-HCo2L-3H-T-H,Co2L0p10-3H-T-H,Co2L0p30-3H-T-H,Co2L0p50-3H-T-H] #Co2L-3H,Co2L-3H-T,, LC-FL, LC-T, Ep-T, Co2L-T]
+  sector_opts: [Co2L0-3H-T-H-B-I-solar3-dist1]#Co2L0-3H-T-H-B-I-onwind0-solar3,Co2L0-3H-T-H-B-I-onwind0p125-solar3,Co2L0-3H-T-H-B-I-onwind0p25-solar3,Co2L0-3H-T-H-B-I-onwind0p50-solar3,Co2L0-3H-T-H-B-I-solar3]#[Co2L0-3H-T-H-B-I]#,Co2L0p2-3H-T-H-B-I,Co2L0p5-3H-T-H-B-I]#,Co2L0p1-3H-T-H-B-I,Co2L0p25-3H-T-H-B-I,Co2L0p5-3H-T-H-B-I]#[Co2L0-3H-T-H-B-I-onwind0-solar3,Co2L0-3H-T-H-B-I-onwind0p125-solar3,Co2L0-3H-T-H-B-I-onwind0p25-solar3,Co2L0-3H-T-H-B-I-onwind0p50-solar3,Co2L0-3H-T-H-B-I-solar3]#,Co2L0-3H-T-H-B-I-onwind0p25-solar3]#,Co2L0p05-3H-T-H-B-I,Co2L0p10-3H-T-H-B-I,Co2L0p20-3H-T-H-B-I,Co2L0p30-3H-T-H-B-I,Co2L0p50-3H-T-H-B-I]#[Co2L-3H-T-H,Co2L0p10-3H-T-H,Co2L0-3H-T-H,Co2L0p20-3H-T-H]   #Co2L-3H-T-H,Co2L0p10-3H-T-H,Co2L0p20-3H-T-HCo2L-3H-T-H,Co2L0p10-3H-T-H,Co2L0p30-3H-T-H,Co2L0p50-3H-T-H] #Co2L-3H,Co2L-3H-T,, LC-FL, LC-T, Ep-T, Co2L-T]
   # Co2L will give default (5%); Co2L0p25 will give 25% CO2 emissions; Co2Lm0p05 will give 5% negative emissions
   #dist{n} includes distribution grids with investment cost of n times cost in data/costs.csv
 
@@ -213,6 +213,7 @@ plotting:
     "natural gas" : "brown"
     "SMR" : "#4F4F2F"
     "oil" : "#B5A642"
+    "oil boiler" : "#B5A677"
     "lines" : "k"
     "transmission lines" : "k"
     "H2" : "m"
