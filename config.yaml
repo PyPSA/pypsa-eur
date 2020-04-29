@@ -72,6 +72,7 @@ sector:
   'tes' : True
   'tes_tau' : 3.
   'boilers' : True
+  'oil_boilers': True
   'chp' : True
   'solar_thermal' : True
   'solar_cf_correction': 0.788457  # =  >>> 1/1.2683
