@@ -101,9 +101,11 @@ projects % git clone git@github.com:nworbmot/pypsa-eur-sec.git
 ## Package requirements
 
 The requirements are the same as
-[PyPSA-Eur](https://github.com/PyPSA/pypsa-eur), but for
-`solve_network.py` in addition you need `gurobipy` and version 0.16.1
-or greater of PyPSA in order to use the `nomopyomo` framework.
+[PyPSA-Eur](https://github.com/PyPSA/pypsa-eur). For
+`solve_network.py` in addition you need `gurobipy`.  If you have
+xarray version >= 0.15.1, you will need the latest master branch of
+atlite version 0.0.2.
+
 
 ## Data requirements
 
@@ -118,4 +120,30 @@ To download and extract it on the command line:
 ```shell
 projects/pypsa-eur-sec/data % wget "https://nworbmot.org/pypsa-eur-sec-data-bundle-190719.tar.gz"
 projects/pypsa-eur-sec/data % tar xvzf pypsa-eur-sec-data-bundle-190719.tar.gz
+```
+
+
+# Getting started
+
+First make your own copy of the `config.yaml`:
+```shell
+projects/pypsa-eur-sec % cp config.default.yaml config.yaml
+```
+
+In `config.yaml` you can control the settings for the scenarios you
+want to run, such as the number of nodes, the CO2 limit, the
+installable potentials for solar and wind, which technologies are
+activated, etc.
+
+To run the full optimization with your settings:
+```shell
+projects/pypsa-eur-sec % snakemake
+```
+
+Warning: you may need a cluster for this (with e.g. 10-100 GB of RAM
+and several processors).
+
+To only prepare the networks, you can run the scripts up to the point before optimization:
+```shell
+projects/pypsa-eur-sec % snakemake prepare_sector_networks
 ```

@@ -39,3 +39,5 @@ gurobi.log
 /pypsa
 
 *.xlsx
+
+config.yaml
