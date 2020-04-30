@@ -18,7 +18,7 @@ if 'snakemake' not in globals():
 time = pd.date_range(freq='m', **snakemake.config['snapshots'])
 params = dict(years=slice(*time.year[[0, -1]]), months=slice(*time.month[[0, -1]]))
 
-cutout = atlite.Cutout(snakemake.config['renewable']['onwind']['cutout'],
+cutout = atlite.Cutout(snakemake.config['atlite']['cutout_name'],
                        cutout_dir=snakemake.config['atlite']['cutout_dir'],
                        **params)
 
@@ -32,9 +32,9 @@ I = cutout.indicatormatrix(clustered_busregions)
 for item in ["rural","urban","total"]:
 
     pop_layout = xr.open_dataarray(snakemake.input['pop_layout_'+item])
-    
+
     M = I.T.dot(sp.diag(I.dot(pop_layout.stack(spatial=('y', 'x')))))
-    
+
     heat_demand = cutout.heat_demand(matrix=M.T,index=clustered_busregions.index)
 
     heat_demand.to_netcdf(snakemake.output["heat_demand_"+item])

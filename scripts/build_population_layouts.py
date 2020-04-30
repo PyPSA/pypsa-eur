@@ -21,7 +21,7 @@ if 'snakemake' not in globals():
 
     snakemake.input["urban_percent"] = "data/urban_percent.csv"
 
-cutout = atlite.Cutout(snakemake.config['renewable']['onwind']['cutout'],
+cutout = atlite.Cutout(snakemake.config['atlite']['cutout_name'],
                        cutout_dir=snakemake.config['atlite']['cutout_dir'])
 
 grid_cells = cutout.grid_cells()
@@ -101,4 +101,3 @@ for key in pop_cells.keys():
                           [('y', cutout.coords['y']), ('x', cutout.coords['x'])])
 
     layout.to_netcdf(snakemake.output["pop_layout_"+key])
-

@@ -6,7 +6,7 @@ import atlite
 
 
 
-cutout = atlite.Cutout(snakemake.config['renewable']['onwind']['cutout'],
+cutout = atlite.Cutout(snakemake.config['atlite']['cutout_name'],
                        cutout_dir=snakemake.config['atlite']['cutout_dir'])
 
 
