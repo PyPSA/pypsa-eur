@@ -28,10 +28,16 @@ snapshots:
   end: "2014-01-01"
   closed: 'left' # end is not inclusive
 
-
 atlite:
   cutout_dir: '../pypsa-eur/cutouts'
   cutout_name: "europe-2013-era5"
+
+# this information is NOT used but needed as an argument for
+# pypsa-eur/scripts/add_electricity.py/load_costs in make_summary.py
+electricity:
+  max_hours:
+    battery: 6
+    H2: 168
 
 biomass:
   year: 2030
