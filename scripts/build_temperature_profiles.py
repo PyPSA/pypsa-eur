@@ -4,7 +4,7 @@ import atlite
 import pandas as pd
 import xarray as xr
 import scipy as sp
-
+import helper
 
 if 'snakemake' not in globals():
     from vresutils import Dict
@@ -26,6 +26,8 @@ cutout = atlite.Cutout(snakemake.config['atlite']['cutout_name'],
 clustered_busregions_as_geopd = gpd.read_file(snakemake.input.regions_onshore).set_index('name', drop=True)
 
 clustered_busregions = pd.Series(clustered_busregions_as_geopd.geometry, index=clustered_busregions_as_geopd.index)
+
+helper.clean_invalid_geometries(clustered_busregions)
 
 I = cutout.indicatormatrix(clustered_busregions)
 
