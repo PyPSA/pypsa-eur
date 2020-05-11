@@ -208,8 +208,9 @@ def extra_functionality(n, snapshots):
         add_SAFE_constraints(n, config)
     if 'CCL' in opts and n.generators.p_nom_extendable.any():
         add_CCL_constraints(n, config)
-    if 'SC' in opts:
-        add_SC_constraints(n, snapshots)
+    for o in opts:
+        if o == 'SC':
+            add_SC_constraints(n, snapshots)
     add_battery_constraints(n)
 
 
