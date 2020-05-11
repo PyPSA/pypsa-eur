@@ -242,6 +242,9 @@ HVDC inverter pair,2030,FOM,2,%/year,Hagspiel
 electricity distribution grid,2030,investment,500,EUR/kW,TODO
 electricity distribution grid,2030,lifetime,40,years,TODO
 electricity distribution grid,2030,FOM,2,%/year,TODO
+electricity grid connection,2030,investment,140,EUR/kW,DEA
+electricity grid connection,2030,lifetime,40,years,TODO
+electricity grid connection,2030,FOM,2,%/year,TODO
 decentral oil boiler,2030,investment,156.0140915953699,EUR/kWth,Palzer thesis (https://energiesysteme-zukunft.de/fileadmin/user_upload/Publikationen/PDFs/ESYS_Materialien_Optimierungsmodell_REMod-D.pdf) (+eigene Berechnung)
 decentral oil boiler,2030,lifetime,20.0,years,Palzer thesis (https://energiesysteme-zukunft.de/fileadmin/user_upload/Publikationen/PDFs/ESYS_Materialien_Optimierungsmodell_REMod-D.pdf)
 decentral oil boiler,2030,FOM,2.0,%/year,Palzer thesis (https://energiesysteme-zukunft.de/fileadmin/user_upload/Publikationen/PDFs/ESYS_Materialien_Optimierungsmodell_REMod-D.pdf)

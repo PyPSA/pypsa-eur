@@ -608,7 +608,13 @@ def insert_electricity_distribution_grid(network):
                  marginal_cost=options['marginal_cost_storage'],
                  p_nom_extendable=True)
 
+def add_electricity_grid_connection(network):
 
+    carriers = ["onwind","solar"]
+
+    gens = network.generators.index[network.generators.carrier.isin(carriers)]
+
+    network.generators.loc[gens,"capital_cost"] += costs.at['electricity grid connection','fixed']
 
 def add_storage(network):
     print("adding electricity storage")
@@ -1623,5 +1629,7 @@ if __name__ == "__main__":
 
     if snakemake.config["sector"]['electricity_distribution_grid']:
         insert_electricity_distribution_grid(n)
+    if snakemake.config["sector"]['electricity_grid_connection']:
+        add_electricity_grid_connection(n)
 
     n.export_to_netcdf(snakemake.output[0])

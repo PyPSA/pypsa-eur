@@ -86,6 +86,7 @@ sector:
   'use_fuel_cell_waste_heat' : True
   'electricity_distribution_grid' : False
   'electricity_distribution_grid_cost_factor' : 1.0  #multiplies cost in data/costs.csv
+  'electricity_grid_connection' : True  # only applies to onshore wind and utility PV
 
 costs:
   year: 2030
