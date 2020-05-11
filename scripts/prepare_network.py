@@ -165,7 +165,7 @@ def set_line_volume_limit(n, lv, Nyears=1.):
     return n
 
 def average_every_nhours(n, offset):
-    logger.info('Resampling the network to {}'.format(offset))
+    logger.info(f'Resampling the network to {offset}')
     m = n.copy(with_time=False)
 
     snapshot_weightings = n.snapshot_weightings.resample(offset).sum()
@@ -203,16 +203,34 @@ if __name__ == "__main__":
     else:
         logger.info("No resampling")
 
+    float_regex = "[0-9]*\.?[0-9]+$"
+
     for o in opts:
         if "Co2L" in o:
-            m = re.findall("[0-9]*\.?[0-9]+$", o)
+            m = re.findall(float_regex, o)
             if len(m) > 0:
-                add_co2limit(n, Nyears, float(m[0]))
+                co2limit = float(m[0])
+                add_co2limit(n, Nyears, co2limit)
+                logger.info(f"Added relative CO2 limit via wildcard: {co2limit} %")
             else:
                 add_co2limit(n, Nyears)
-
-    if 'Ep' in opts:
-        add_emission_prices(n)
+                logger.info("Added configured CO2 limit.")
+        if "SC" in o:
+            m = re.findall(float_regex, o)
+            if len(m) > 0:
+                s_max_pu = float(m[0])
+                n.lines.s_max_pu = s_max_pu
+                logger.info(f"Added line utilisation security margin via wildcard: {s_max_pu}")
+            else:
+                n.lines.s_max_pu = 1.
+                logger.info("Removed all security margins. Set to solve with N-1 constraints.")
+        if "Ep" in o:
+            m = re.findall(float_regex, o)
+            ep = None
+            if len(m) > 0:
+                ep = dict(co2=float(m[0]))
+                logger.info(f"Found carbon-dioxide price via wildcard: {ep['co2']} EUR/t")
+            add_emission_prices(n, emission_price=ep)
 
     ll_type, factor = snakemake.wildcards.ll[0], snakemake.wildcards.ll[1:]
     if ll_type == 'v':

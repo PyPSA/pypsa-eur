@@ -90,6 +90,7 @@ import pandas as pd
 import pypsa
 from pypsa.linopf import (get_var, define_constraints, linexpr, join_exprs,
                           network_lopf, ilopf)
+from pypsa.contingency import add_contingency_constraints_lowmem as add_SC_constraints
 from pathlib import Path
 from vresutils.benchmark import memory_logger
 
@@ -207,6 +208,8 @@ def extra_functionality(n, snapshots):
         add_SAFE_constraints(n, config)
     if 'CCL' in opts and n.generators.p_nom_extendable.any():
         add_CCL_constraints(n, config)
+    if 'SC' in opts:
+        add_SC_constraints(n, snapshots)
     add_battery_constraints(n)
 
 
