@@ -107,7 +107,7 @@ if __name__ == "__main__":
         if p in cutout_params:
             cutout_params[p] = slice(*cutout_params[p])
 
-    logging.info(f"Preparing cutout with parameters {cutout_params}".)
+    logging.info(f"Preparing cutout with parameters {cutout_params}.")
     
     cutout = atlite.Cutout(snakemake.output[0], **cutout_params)
     cutout.prepare()
