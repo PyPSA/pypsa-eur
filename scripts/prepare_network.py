@@ -230,7 +230,7 @@ if __name__ == "__main__":
             if len(m) > 0:
                 ep = dict(co2=float(m[0]))
                 logger.info(f"Found carbon-dioxide price via wildcard: {ep['co2']} EUR/t")
-            add_emission_prices(n, emission_price=ep)
+            add_emission_prices(n, emission_prices=ep)
 
     ll_type, factor = snakemake.wildcards.ll[0], snakemake.wildcards.ll[1:]
     if ll_type == 'v':
