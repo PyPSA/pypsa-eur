@@ -250,7 +250,11 @@ def calculate_energy(n,label,energy):
         else:
             c_energies = pd.Series(0.,c.df.carrier.unique())
             for port in [col[3:] for col in c.df.columns if col[:3] == "bus"]:
-                c_energies -= c.pnl["p"+port].multiply(n.snapshot_weightings,axis=0).sum().groupby(c.df.carrier).sum()
+                totals = c.pnl["p"+port].multiply(n.snapshot_weightings,axis=0).sum()
+                #remove values where bus is missing (bug in nomopyomo)
+                no_bus = c.df.index[c.df["bus"+port] == ""]
+                totals.loc[no_bus] = n.component_attrs[c.name].loc["p"+port,"default"]
+                c_energies -= totals.groupby(c.df.carrier).sum()
 
         c_energies = pd.concat([c_energies], keys=[c.list_name])
 
