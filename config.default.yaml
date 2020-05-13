@@ -70,7 +70,7 @@ sector:
   'tes' : True
   'tes_tau' : 3.
   'boilers' : True
-  'oil_boilers': True
+  'oil_boilers': False
   'chp' : True
   'solar_thermal' : True
   'solar_cf_correction': 0.788457  # =  >>> 1/1.2683
@@ -252,8 +252,8 @@ plotting:
     "gas for industry co2 to atmosphere": "#654321"
     "gas for industry co2 to stored": "#654321"
     "Fischer-Tropsch" : "#44DD33"
-    "kerosene for aviation": "#44DD33"
-    "naphtha for industry" : "#44DD33"
+    "kerosene for aviation": "#44BB11"
+    "naphtha for industry" : "#44FF55"
     "nuclear" : "#303030"
     "water tanks" : "#BBBBBB"
     "hot water storage" : "#BBBBBB"

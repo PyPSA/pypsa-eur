@@ -169,6 +169,75 @@ def plot_energy():
     fig.savefig(snakemake.output.energy,transparent=True)
 
 
+
+def plot_balances():
+
+    co2_carriers = ["co2","co2 stored","process emissions"]
+
+    balances_df = pd.read_csv(snakemake.input.balances,index_col=list(range(3)),header=[0,1,2])
+
+    balances = {i.replace(" ","_") : [i] for i in balances_df.index.levels[0]}
+    balances["energy"] = balances_df.index.levels[0]^co2_carriers
+
+    for k,v in balances.items():
+
+        df = balances_df.loc[v]
+        df = df.groupby(df.index.get_level_values(2)).sum()
+
+        #convert MWh to TWh
+        df = df/1e6
+
+        #remove trailing link ports
+        df.index = [i[:-1] if i[-1:] in ["0","1","2","3"] else i for i in df.index]
+
+        df = df.groupby(df.index.map(rename_techs)).sum()
+
+        to_drop = df.index[df.abs().max(axis=1) < snakemake.config['plotting']['energy_threshold']]
+
+        print("dropping")
+
+        print(df.loc[to_drop])
+
+        df = df.drop(to_drop)
+
+        print(df.sum())
+
+        if df.empty:
+            continue
+
+        new_index = (preferred_order&df.index).append(df.index.difference(preferred_order))
+
+        new_columns = df.columns.sort_values()
+
+        fig, ax = plt.subplots()
+        fig.set_size_inches((12,8))
+
+        df.loc[new_index,new_columns].T.plot(kind="bar",ax=ax,stacked=True,color=[snakemake.config['plotting']['tech_colors'][i] for i in new_index])
+
+
+        handles,labels = ax.get_legend_handles_labels()
+
+        handles.reverse()
+        labels.reverse()
+
+        if v[0] in co2_carriers:
+            ax.set_ylabel("CO2 [MtCO2/a]")
+        else:
+            ax.set_ylabel("Energy [TWh/a]")
+
+        ax.set_xlabel("")
+
+        ax.grid(axis="y")
+
+        ax.legend(handles,labels,ncol=4,loc="upper left")
+
+
+        fig.tight_layout()
+
+        fig.savefig(snakemake.output.balances[:-10] + k + ".pdf",transparent=True)
+
+
+
 if __name__ == "__main__":
     # Detect running outside of snakemake and mock snakemake for testing
     if 'snakemake' not in globals():
@@ -180,10 +249,12 @@ if __name__ == "__main__":
         snakemake.input = Dict()
         snakemake.output = Dict()
 
-        for item in ["costs","energy"]:
+        for item in ["costs", "energy", "balances"]:
             snakemake.input[item] = snakemake.config['summary_dir'] + '/{name}/csvs/{item}.csv'.format(name=snakemake.config['run'],item=item)
             snakemake.output[item] = snakemake.config['summary_dir'] + '/{name}/graphs/{item}.pdf'.format(name=snakemake.config['run'],item=item)
 
     plot_costs()
 
     plot_energy()
+
+    plot_balances()

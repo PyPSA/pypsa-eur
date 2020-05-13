@@ -279,10 +279,12 @@ rule make_summary:
 rule plot_summary:
     input:
         costs=config['summary_dir'] + '/' + config['run'] + '/csvs/costs.csv',
-        energy=config['summary_dir'] + '/' + config['run'] + '/csvs/energy.csv'
+        energy=config['summary_dir'] + '/' + config['run'] + '/csvs/energy.csv',
+	balances=config['summary_dir'] + '/' + config['run'] + '/csvs/supply_energy.csv'
     output:
         costs=config['summary_dir'] + '/' + config['run'] + '/graphs/costs.pdf',
-        energy=config['summary_dir'] + '/' + config['run'] + '/graphs/energy.pdf'
+        energy=config['summary_dir'] + '/' + config['run'] + '/graphs/energy.pdf',
+	balances=config['summary_dir'] + '/' + config['run'] + '/graphs/balances-energy.pdf'
     threads: 2
     resources: mem_mb=10000
     script:
