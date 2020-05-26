@@ -90,6 +90,9 @@ Description
 import logging
 logger = logging.getLogger(__name__)
 from _helpers import configure_logging
+import numpy as np
+import pandas as pd
+import geopandas as gpd
 
 import os
 import atlite
@@ -108,5 +111,20 @@ if __name__ == "__main__":
     cutout = atlite.Cutout(snakemake.wildcards.cutout,
                         cutout_dir=os.path.dirname(snakemake.output[0]),
                         **cutout_params)
+
+    # Check if all spatial and temporal bounds of the network are included in
+    # the cutout
+    cutout_bounds = np.array(cutout.extent)[[0,2,1,3]]
+    onshore_bounds = gpd.read_file(snakemake.input.regions_onshore).total_bounds
+    offshore_bounds = gpd.read_file(snakemake.input.regions_offshore).total_bounds
+
+    assert all(onshore_bounds[:2] >= cutout_bounds[:2])
+    assert all(onshore_bounds[2:] <= cutout_bounds[2:])
+
+    # assert all(offshore_bounds[:2] >= cutout_bounds[:2])
+    # assert all(offshore_bounds[2:] <= cutout_bounds[2:])
+
+    snapshots = pd.date_range(freq='h', **snakemake.config['snapshots'])
+    assert all(snapshots.isin(cutout.coords['time'].data))
 
     cutout.prepare(nprocesses=snakemake.config['atlite'].get('nprocesses', 4))

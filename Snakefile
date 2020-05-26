@@ -128,6 +128,9 @@ rule build_bus_regions:
 
 if config['enable'].get('build_cutout', False):        
     rule build_cutout:
+        input:
+            regions_onshore="resources/regions_onshore.geojson",
+            regions_offshore="resources/regions_offshore.geojson"
         output: directory("cutouts/{cutout}")
         log: "logs/build_cutout/{cutout}.log"
         resources: mem=config['atlite'].get('nprocesses', 4) * 1000
