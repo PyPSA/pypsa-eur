@@ -197,7 +197,8 @@ PyPSA-Eur work is released under multiple licenses:
 
 * All original source code is licensed as free software under `GPL-3.0-or-later <LICENSES/GPL-3.0-or-later.txt>`_.
 * The documentation is licensed under `CC-BY-4.0 <LICENSES/CC-BY-4.0.txt>`_.
-* Configuration and data files are mostly licensed under `CC0-1.0 <LICENSES/CC0-1.0.txt>`_.
+* Configuration files are mostly licensed under `CC0-1.0 <LICENSES/CC0-1.0.txt>`_.
+* Data files are licensed under `CC-BY-4.0 <LICENSES/CC-BY-4.0.txt>`_.
 
 See the individual files for license details.
 
