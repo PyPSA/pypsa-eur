@@ -16,7 +16,7 @@ PyPSA-Eur 0.2.0 (TBD)
 
 * ``snakemake`` rules for retrieving cutouts and the natura raster can now be disabled independently from their respective rules to build them; via ``config.*yaml`` (`#136 <https://github.com/PyPSA/pypsa-eur/pull/136>`_).
 
-* Added `FSFE REUSE <https://reuse.software>`_ compliant license information. Documentation now licensed under CC-BY-4.0 (`#159 <https://github.com/PyPSA/pypsa-eur/pull/159>`_).
+* Added `FSFE REUSE <https://reuse.software>`_ compliant license information. Documentation now licensed under CC-BY-4.0 (`#160 <https://github.com/PyPSA/pypsa-eur/pull/160>`_).
 
 
 PyPSA-Eur 0.1.0 (9th January 2020)
