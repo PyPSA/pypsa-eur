@@ -200,7 +200,7 @@ PyPSA-Eur work is released under multiple licenses:
 * Configuration files are mostly licensed under `CC0-1.0 <LICENSES/CC0-1.0.txt>`_.
 * Data files are licensed under `CC-BY-4.0 <LICENSES/CC-BY-4.0.txt>`_.
 
-See the individual files for license details.
+See the individual files and the `dep5 <.reuse/dep5>`_ file for license details.
 
 Additionally, different licenses and terms of use also apply to the various input data, which are summarised below.
 More details are included in 
