@@ -179,11 +179,11 @@ def add_EQ_constraints(n, o, scaling=1e-1):
         ggrouper = n.generators.bus
         lgrouper = n.loads.bus
         sgrouper = n.storage_units.bus
-    rhs = scaling * level * (
-            n.snapshot_weightings @ \
-            n.loads_t.p_set.groupby(lgrouper, axis=1).sum() - \
-            n.storage_units_t.inflow.groupby(sgrouper, axis=1).sum().sum()
-          )
+    load = n.snapshot_weightings @ \
+           n.loads_t.p_set.groupby(lgrouper, axis=1).sum()
+    inflow = n.storage_units_t.inflow.groupby(sgrouper, axis=1).sum().sum()
+    inflow = inflow.reindex(load.index).fillna(0.)
+    rhs = scaling * level * ( load - inflow )
     lhs = linexpr((n.snapshot_weightings * scaling,
                    get_var(n, "Generator", "p").T)
                  ).T.groupby(ggrouper, axis=1).apply(join_exprs)
