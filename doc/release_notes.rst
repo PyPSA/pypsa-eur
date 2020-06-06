@@ -18,6 +18,9 @@ PyPSA-Eur 0.2.0 (TBD)
 
 * Added `FSFE REUSE <https://reuse.software>`_ compliant license information. Documentation now licensed under CC-BY-4.0 (`#160 <https://github.com/PyPSA/pypsa-eur/pull/160>`_).
 
+* An option is introduced which adds constraints such that each country or node produces on average a minimal share of its total consumption itself.
+  For example ``EQ0.5c`` set in the ``{opts}`` wildcard requires each country to produce on average at least 50% of its consumption (`#TBA <https://github.com/PyPSA/pypsa-eur/pull/TBA>`_).
+
 
 PyPSA-Eur 0.1.0 (9th January 2020)
 ==================================
