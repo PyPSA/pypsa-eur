@@ -168,18 +168,21 @@ def add_CCL_constraints(n, config):
                                            '<=', maximum, 'agg_p_nom', 'max')
 
 
-def add_EQ_constraints(n, o, scaling=1e-2):
+def add_EQ_constraints(n, o, scaling=1e-1):
     float_regex = "[0-9]*\.?[0-9]+"
     level = float(re.findall(float_regex, o)[0])
     if o[-1] == 'c':
         ggrouper = n.generators.bus.map(n.buses.country)
         lgrouper = n.loads.bus.map(n.buses.country)
+        sgrouper = n.storage_units.bus.map(n.buses.country)
     else:
         ggrouper = n.generators.bus
         lgrouper = n.loads.bus
+        sgrouper = n.storage_units.bus
     rhs = scaling * level * (
             n.snapshot_weightings @ \
-            n.loads_t.p_set.groupby(lgrouper, axis=1).sum() 
+            n.loads_t.p_set.groupby(lgrouper, axis=1).sum() - \
+            n.storage_units_t.inflow.groupby(sgrouper, axis=1).sum().sum()
           )
     lhs = linexpr((n.snapshot_weightings * scaling,
                    get_var(n, "Generator", "p").T)
