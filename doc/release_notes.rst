@@ -2,7 +2,7 @@
 Release Notes
 ##########################################
 
-* An updated extract of the `ENTSO-E Transmission System Map <https://www.entsoe.eu/data/map/>`_ was added to the repository using the `GridKit <https://github.com/PyPSA/GridKit>`_ tool. This tool has been updated to retrieve up-to-date map extracts using a single `script <https://github.com/PyPSA/GridKit/blob/master/entsoe/runall_in_docker.sh>`_ (`#118 <https://github.com/PyPSA/pypsa-eur/pull/118>`_).
+* An updated extract of the `ENTSO-E Transmission System Map <https://www.entsoe.eu/data/map/>`_ (including Malta) was added to the repository using the `GridKit <https://github.com/PyPSA/GridKit>`_ tool. This tool has been updated to retrieve up-to-date map extracts using a single `script <https://github.com/PyPSA/GridKit/blob/master/entsoe/runall_in_docker.sh>`_. The update extract features 5322 buses, 6574 lines, 46 links. (`#118 <https://github.com/PyPSA/pypsa-eur/pull/118>`_).
 
 PyPSA-Eur 0.1.0 (9th January 2020)
 ==================================
