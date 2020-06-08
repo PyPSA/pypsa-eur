@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """
 Plots renewable installation potentials per capacity factor.
 
@@ -22,7 +26,6 @@ import pypsa
 
 import pandas as pd
 import matplotlib.pyplot as plt
-import logging
 
 def cum_p_nom_max(net, tech, country=None):
     carrier_b = net.generators.carrier == tech

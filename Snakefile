@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 from os.path import normpath, exists
 from shutil import copyfile
 
@@ -135,7 +139,8 @@ if config['enable'].get('build_cutout', False):
         benchmark: "benchmarks/build_cutout_{cutout}"
         # group: 'feedin_preparation'
         script: "scripts/build_cutout.py"
-else:
+
+if config['enable'].get('retrieve_cutout', True):
     rule retrieve_cutout:
         output: directory(expand("cutouts/{cutouts}", **config['atlite'])),
         log: "logs/retrieve_cutout.log"
@@ -150,7 +155,8 @@ if config['enable'].get('build_natura_raster', False):
         output: "resources/natura.tiff"
         log: "logs/build_natura_raster.log"
         script: "scripts/build_natura_raster.py"
-else:
+
+if config['enable'].get('retrieve_natura_raster', True):
     rule retrieve_natura_raster:
         output: "resources/natura.tiff"
         log: "logs/retrieve_natura_raster.log"
@@ -297,18 +303,9 @@ rule solve_network:
     # group: "solve" # with group, threads is ignored https://bitbucket.org/snakemake/snakemake/issues/971/group-job-description-does-not-contain
     script: "scripts/solve_network.py"
 
-rule trace_solve_network:
-    input: "networks/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"
-    output: "results/networks/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_trace.nc"
-    shadow: "shallow"
-    log: python="logs/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_python_trace.log",
-    threads: 4
-    resources: mem=memory
-    script: "scripts/trace_solve_network.py"
-
 rule solve_operations_network:
     input:
-        unprepared="networks/{network}_s{simpl}_{clusters}.nc",
+        unprepared="networks/{network}_s{simpl}_{clusters}_ec.nc",
         optimized="results/networks/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"
     output: "results/networks/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}_op.nc"
     shadow: "shallow"

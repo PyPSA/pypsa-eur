@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: CC0-1.0
+
 version: 0.1.0
 tutorial: true
 logging:
@@ -24,7 +28,9 @@ enable:
   prepare_links_p_nom: false
   retrieve_databundle: true
   build_cutout: false
+  retrieve_cutout: true
   build_natura_raster: false
+  retrieve_natura_raster: true
 
 electricity:
   voltages: [220., 300., 380.]
@@ -161,6 +167,8 @@ solving:
     min_iterations: 1
     max_iterations: 1
     clip_p_max_pu: 0.01
+    skip_iterations: false
+    track_iterations: false
     #nhours: 10
   solver:
     name: cbc
@@ -303,6 +311,9 @@ plotting:
     offwind-ac: "Offshore Wind (AC)"
     offwind-dc: "Offshore Wind (DC)"
     onwind: "Onshore Wind"
+    solar: "Solar"
+    PHS: "Pumped Hydro Storage"
+    hydro: "Reservoir & Dam"
     battery: "Battery Storage"
     H2: "Hydrogen Storage"
     lines: "Transmission lines"
@@ -317,3 +328,5 @@ plotting:
     H2: "Hydrogen\nStorage"
     lines: "Transmission\nlines"
     ror: "Run of\nriver"
+    PHS: "Pumped Hydro\nStorage"
+    hydro: "Reservoir\n& Dam"

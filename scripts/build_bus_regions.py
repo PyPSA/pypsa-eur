@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """
 Creates Voronoi shapes for each bus representing both onshore and offshore regions.
 
@@ -88,7 +92,7 @@ if __name__ == "__main__":
                 'y': offshore_locs['y'],
                 'geometry': voronoi_partition_pts(offshore_locs.values, offshore_shape),
                 'country': country
-            }, index=offshore_locs.index)
+            })
         offshore_regions_c = offshore_regions_c.loc[offshore_regions_c.area > 1e-2]
         offshore_regions.append(offshore_regions_c)
 
@@ -98,6 +102,6 @@ if __name__ == "__main__":
         schema = {**gpd.io.file.infer_schema(s), 'geometry': 'Unknown'}
         s.to_file(fn, driver='GeoJSON', schema=schema)
 
-    save_to_geojson(pd.concat(onshore_regions), snakemake.output.regions_onshore)
+    save_to_geojson(pd.concat(onshore_regions, ignore_index=True), snakemake.output.regions_onshore)
 
-    save_to_geojson(pd.concat(offshore_regions), snakemake.output.regions_offshore)
+    save_to_geojson(pd.concat(offshore_regions, ignore_index=True), snakemake.output.regions_offshore)

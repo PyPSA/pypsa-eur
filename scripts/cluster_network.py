@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # coding: utf-8
 """
 Creates networks clustered to ``{cluster}`` number of zones with aggregated buses, generators and transmission corridors.
@@ -227,7 +231,7 @@ def busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights=None, algori
         elif algorithm == "louvain":
             return prefix + busmap_by_louvain(reduce_network(n, x), n_clusters[x.name], **algorithm_kwds)
         else:
-            raise ArgumentError("`algorithm` must be one of 'kmeans', 'spectral' or 'louvain'")
+            raise ValueError(f"`algorithm` must be one of 'kmeans', 'spectral' or 'louvain'. Is {algorithm}.")
 
     return (n.buses.groupby(['country', 'sub_network'], group_keys=False, squeeze=True)
             .apply(busmap_for_country).rename('busmap'))
@@ -262,13 +266,15 @@ def clustering_for_n_clusters(n, n_clusters, aggregate_carriers=None,
         generator_strategies={'p_nom_max': p_nom_max_strategy},
         scale_link_capital_costs=False)
 
-    nc = clustering.network
-    nc.links['underwater_fraction'] = (n.links.eval('underwater_fraction * length')
-                                       .div(nc.links.length).dropna())
-    nc.links['capital_cost'] = (nc.links['capital_cost']
-                                .add((nc.links.length - n.links.length)
-                                      .clip(lower=0).mul(extended_link_costs),
-                                      fill_value=0))
+    if not n.links.empty:
+        nc = clustering.network
+        nc.links['underwater_fraction'] = (n.links.eval('underwater_fraction * length')
+                                        .div(nc.links.length).dropna())
+        nc.links['capital_cost'] = (nc.links['capital_cost']
+                                    .add((nc.links.length - n.links.length)
+                                        .clip(lower=0).mul(extended_link_costs),
+                                        fill_value=0))
+
     return clustering
 
 def save_to_geojson(s, fn):

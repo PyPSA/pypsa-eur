@@ -1,8 +1,19 @@
+..
+  SPDX-FileCopyrightText: 2019-2020 The PyPSA-Eur Authors
+  
+  SPDX-License-Identifier: CC-BY-4.0
+
 .. _intro:
 
 ##########################################
  Introduction
 ##########################################
+
+.. raw:: html
+
+    <iframe width="832" height="468" src="https://www.youtube.com/embed/ty47YU1_eeQ" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+Find the introductory slides `here <https://docs.google.com/presentation/d/e/2PACX-1vQGQZD7KIVdocRZzRVu8Uk-JC_ltEow5zjtIarhyws46IMJpaqGuux695yincmJA_i5bVEibEs7z2eo/pub?start=false&loop=true&delayms=3000>`_.
 
 Workflow
 =========
@@ -17,7 +28,7 @@ For instance an invocation to
 
 .. code:: bash
 
-    .../pypsa-eur % snakemake networks/elec_s_128.nc
+    .../pypsa-eur % snakemake -j 1 networks/elec_s_128.nc
 
 follows this dependency graph:
 
@@ -29,7 +40,7 @@ The **blocks** represent the individual rules which are required to create the f
     The dependency graph shown above was generated using
     ``snakemake --dag networks/elec_s_128.nc | dot -Tpng > workflow.png``
 
-For the use of ``snakemake``, it makes sense to familiarize oneself quickly with its `basic tutorial <https://snakemake.readthedocs.io/en/stable/tutorial/basics.html>`_ and then read carefully through the section `Executing Snakemake <https://snakemake.readthedocs.io/en/stable/executable.html>`_, noting the arguments ``-n``, ``-r``, but also ``--dag``, ``-R`` and ``-t``.
+For the use of ``snakemake``, it makes sense to familiarize oneself quickly with its `basic tutorial <https://snakemake.readthedocs.io/en/stable/tutorial/basics.html>`_ and then read carefully through the section `Executing Snakemake <https://snakemake.readthedocs.io/en/stable/executable.html>`_, noting the arguments ``-j``, ``-n``, ``-r``, but also ``--dag``, ``-R`` and ``-t``.
 
 Scenarios, Configuration and Modification
 =========================================

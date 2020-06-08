@@ -1,8 +1,21 @@
+..
+  SPDX-FileCopyrightText: 2019-2020 The PyPSA-Eur Authors
+
+  SPDX-License-Identifier: CC-BY-4.0
+
 ##########################################
 Release Notes
 ##########################################
 
 * An updated extract of the `ENTSO-E Transmission System Map <https://www.entsoe.eu/data/map/>`_ (including Malta) was added to the repository using the `GridKit <https://github.com/PyPSA/GridKit>`_ tool. This tool has been updated to retrieve up-to-date map extracts using a single `script <https://github.com/PyPSA/GridKit/blob/master/entsoe/runall_in_docker.sh>`_. The update extract features 5322 buses, 6574 lines, 46 links. (`#118 <https://github.com/PyPSA/pypsa-eur/pull/118>`_).
+
+* The optimization is now performed using the ``pyomo=False`` setting in the :func:`pypsa.lopf.network_lopf`. This speeds up the solving process significantly and consumes much less memory. The inclusion of additional constraints were adjusted to the new implementation. They are all passed to the :func:`network_lopf` function via the ``extra_functionality`` argument. The rule ``trace_solve_network`` was integrated into the rule :mod:`solve_network` and can be activated via configuration with ``solving: options: track_iterations: true``. The charging and discharging capacities of batteries modelled as store-link combination are now coupled (`#116 <https://github.com/PyPSA/pypsa-eur/pull/116>`_).
+
+* Removed the `id` column for custom power plants in `data/custom_powerplants.csv` to avoid custom power plants with conflicting ids getting attached to the wrong bus (`#131 <https://github.com/PyPSA/pypsa-eur/pull/131>`_).
+
+* ``snakemake`` rules for retrieving cutouts and the natura raster can now be disabled independently from their respective rules to build them; via ``config.*yaml`` (`#136 <https://github.com/PyPSA/pypsa-eur/pull/136>`_).
+
+* Added `FSFE REUSE <https://reuse.software>`_ compliant license information. Documentation now licensed under CC-BY-4.0 (`#160 <https://github.com/PyPSA/pypsa-eur/pull/160>`_).
 
 PyPSA-Eur 0.1.0 (9th January 2020)
 ==================================
@@ -55,7 +68,7 @@ Release Process
 
 * Upload code to `zenodo code repository <https://doi.org/10.5281/zenodo.3520875>`_ with `GNU GPL 3.0 <https://www.gnu.org/licenses/gpl-3.0.en.html>`_ license.
 
-* Create pre-built networks for ``config.default.yaml`` by running ``snakemake extra_components_all_elec_networks``.
+* Create pre-built networks for ``config.default.yaml`` by running ``snakemake -j 1 extra_components_all_elec_networks``.
 
 * Upload pre-built networks to `zenodo data repository <https://doi.org/10.5281/zenodo.3601882>`_ with `CC BY 4.0 <https://creativecommons.org/licenses/by/4.0/>`_ license.
 

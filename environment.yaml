@@ -1,13 +1,19 @@
+# SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 name: pypsa-eur
 channels:
+  - defaults
   - conda-forge
   - bioconda
+  - http://conda.anaconda.org/gurobi
 dependencies:
   - python
   - pip
 
-  - pypsa>=0.16
-  - atlite
+  - pypsa>=0.17 
+  - atlite=0.0.3
 
   # Dependencies of the workflow itself
   - xlrd
@@ -18,6 +24,7 @@ dependencies:
   - memory_profiler
   - yaml
   - pytables
+  - lxml
   - powerplantmatching>=0.4.3
 
   # Second order dependencies which should really be deps of atlite
@@ -33,18 +40,21 @@ dependencies:
   # environment by calling ipython
   - ipython
 
-  # GIS dependencies have to come all from conda-forge
-  - conda-forge::cartopy
-  - conda-forge::fiona
-  - conda-forge::pyproj<=1.9.6 # until cartopy release with proj>=6.2
-  - conda-forge::pyshp
-  - conda-forge::geopandas
-  - conda-forge::rasterio
-  - conda-forge::shapely
-  - conda-forge::libgdal
+  # GIS dependencies:
+  - cartopy
+  - fiona
+  - proj
+  - pyshp
+  - geopandas
+  - rasterio
+  - shapely
+  - libgdal
+
+  # Solvers
+  - gurobi:gurobi # until https://github.com/conda-forge/pypsa-feedstock/issues/4 closed
 
   - pip:
-    - git+https://github.com/FRESNA/vresutils.git#egg=vresutils
+    - vresutils==0.3.1
     - git+https://github.com/PyPSA/glaes.git#egg=glaes
     - git+https://github.com/PyPSA/geokit.git#egg=geokit
     - cdsapi

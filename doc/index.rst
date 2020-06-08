@@ -1,3 +1,8 @@
+..
+  SPDX-FileCopyrightText: 2019-2020 The PyPSA-Eur Authors
+
+  SPDX-License-Identifier: CC-BY-4.0
+
 PyPSA-Eur: An Open Optimisation Model of the European Transmission System
 =========================================================================
 
@@ -24,6 +29,14 @@ PyPSA-Eur: An Open Optimisation Model of the European Transmission System
     :target: https://gitter.im/PyPSA/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge
     :alt: Chat on Gitter
 
+.. image:: https://img.shields.io/badge/snakemake-≥5.0.0-brightgreen.svg?style=flat
+    :target: https://snakemake.readthedocs.io
+    :alt: Snakemake
+
+.. image:: https://api.reuse.software/badge/github.com/pypsa/pypsa-eur
+    :target: https://api.reuse.software/info/github.com/pypsa/pypsa-eur
+    :alt: REUSE status
+
 PyPSA-Eur is an open model dataset of the European power system at the
 transmission network level that covers the full ENTSO-E area.
 
@@ -38,6 +51,9 @@ The restriction to freely available and open data encourages the open exchange o
 PyPSA-Eur is designed to be imported into the open toolbox `PyPSA <https://www.pypsa.org>`_ for which `documentation <https://pypsa.org/doc>`_ is available as well.
 
 This project is maintained by the `Energy System Modelling group <https://www.iai.kit.edu/english/2338.php>`_ at the `Institute for Automation and Applied Informatics <https://www.iai.kit.edu/english/index.php>`_ at the `Karlsruhe Institute of Technology <http://www.kit.edu/english/index.php>`_. The group is funded by the `Helmholtz Association <https://www.helmholtz.de/en/>`_ until 2024. Previous versions were developed by the `Renewable Energy Group <https://fias.uni-frankfurt.de/physics/schramm/renewable-energy-system-and-network-analysis/>`_ at `FIAS <https://fias.uni-frankfurt.de/>`_ to carry out simulations for the `CoNDyNet project <http://condynet.de/>`_, financed by the `German Federal Ministry for Education and Research (BMBF) <https://www.bmbf.de/en/index.html>`_ as part of the `Stromnetze Research Initiative <http://forschung-stromnetze.info/projekte/grundlagen-und-konzepte-fuer-effiziente-dezentrale-stromnetze/>`_.
+
+A version of the model that adds building heating, transport and industry sectors to the model,
+as well as gas networks, is currently being developed in the `PyPSA-Eur-Sec repository <https://github.com/pypsa/pypsa-eur-sec>`_.
 
 Documentation
 =============
@@ -104,6 +120,19 @@ Documentation
    limitations
    contributing
 
+Warnings
+========
+
+Please read the `limitations <https://pypsa-eur.readthedocs.io/en/latest/limitations.html>`_ section of the
+documentation and paper carefully before using the model. We do not
+recommend to use the full resolution network model for simulations. At
+high granularity the assignment of loads and generators to the nearest
+network node may not be a correct assumption, depending on the topology of the underlying distribution grid,
+and local grid
+bottlenecks may cause unrealistic load-shedding or generator
+curtailment. We recommend to cluster the network to a couple of
+hundred nodes to remove these local inconsistencies.
+
 Learning Energy System Modelling
 ================================
 
@@ -164,10 +193,16 @@ The included ``.nc`` files are PyPSA network files which can be imported with Py
 Licence
 =======
 
-The code in PyPSA-Eur is released as free software under the `GPLv3
-<http://www.gnu.org/licenses/gpl-3.0.en.html>`_, see
-`LICENSE <https://github.com/PyPSA/pypsa-eur/blob/master/LICENSE.txt>`_.
-However, different licenses and terms of use apply to the various input data, which are summarised below.
+PyPSA-Eur work is released under multiple licenses:
+
+* All original source code is licensed as free software under `GPL-3.0-or-later <LICENSES/GPL-3.0-or-later.txt>`_.
+* The documentation is licensed under `CC-BY-4.0 <LICENSES/CC-BY-4.0.txt>`_.
+* Configuration files are mostly licensed under `CC0-1.0 <LICENSES/CC0-1.0.txt>`_.
+* Data files are licensed under `CC-BY-4.0 <LICENSES/CC-BY-4.0.txt>`_.
+
+See the individual files and the `dep5 <.reuse/dep5>`_ file for license details.
+
+Additionally, different licenses and terms of use also apply to the various input data, which are summarised below.
 More details are included in 
 `the description of the data bundles on zenodo <https://zenodo.org/record/3517935#.XbGeXvzRZGo>`_.
 

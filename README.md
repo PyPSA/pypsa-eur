@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2017-2020 The PyPSA-Eur Authors
+SPDX-License-Identifier: CC-BY-4.0
+-->
+
 ![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/pypsa/pypsa-eur?include_prereleases)
 [![Build Status](https://travis-ci.org/PyPSA/pypsa-eur.svg?branch=master)](https://travis-ci.org/PyPSA/pypsa-eur)
 [![Documentation](https://readthedocs.org/projects/pypsa-eur/badge/?version=latest)](https://pypsa-eur.readthedocs.io/en/latest/?badge=latest)
@@ -5,6 +10,8 @@
 ![Size](https://img.shields.io/github/repo-size/pypsa/pypsa-eur)
 [![Zenodo](https://zenodo.org/badge/DOI/10.5281/zenodo.3520875.svg)](https://doi.org/10.5281/zenodo.3520875)
 [![Gitter](https://badges.gitter.im/PyPSA/community.svg)](https://gitter.im/PyPSA/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+[![Snakemake](https://img.shields.io/badge/snakemake-≥5.0.0-brightgreen.svg?style=flat)](https://snakemake.readthedocs.io)
+[![REUSE status](https://api.reuse.software/badge/github.com/pypsa/pypsa-eur)](https://api.reuse.software/info/github.com/pypsa/pypsa-eur)
 
 # PyPSA-Eur: An Open Optimisation Model of the European Transmission System
 
@@ -20,6 +27,17 @@ and in the paper
 [PyPSA-Eur: An Open Optimisation Model of the European Transmission
 System](https://arxiv.org/abs/1806.01613), 2018,
 [arXiv:1806.01613](https://arxiv.org/abs/1806.01613).
+
+**WARNING**: Please read the [limitations](https://pypsa-eur.readthedocs.io/en/latest/limitations.html) section of the
+documentation and paper carefully before using the model. We do not
+recommend to use the full resolution network model for simulations. At
+high granularity the assignment of loads and generators to the nearest
+network node may not be a correct assumption, depending on the topology of the underlying distribution grid,
+and local grid
+bottlenecks may cause unrealistic load-shedding or generator
+curtailment. We recommend to cluster the network to a couple of
+hundred nodes to remove these local inconsistencies. See the
+discussion in Section 3.4 "Model validation" of the paper. 
 
 ![PyPSA-Eur Grid Model](doc/img/base.png)
 
@@ -45,3 +63,7 @@ The dataset consists of:
 
 Already-built versions of the model can be found in the accompanying [Zenodo
 repository](https://doi.org/10.5281/zenodo.3601882).
+
+A version of the model that adds building heating, transport and
+industry sectors to the model, as well as gas networks, can be found
+in the [PyPSA-Eur-Sec](https://github.com/PyPSA/pypsa-eur-sec) repository.

@@ -1,3 +1,8 @@
+..
+  SPDX-FileCopyrightText: 2019-2020 The PyPSA-Eur Authors
+
+  SPDX-License-Identifier: CC-BY-4.0
+
 .. _wildcards:
 
 #########
@@ -124,7 +129,7 @@ in Germany (in the solution for Europe) use:
 
 .. code:: bash
 
-    snakemake results/summaries/elec_s_all_lall_Co2L-3H_DE
+    snakemake -j 1 results/summaries/elec_s_all_lall_Co2L-3H_DE
 
 .. seealso::
     :mod:`make_summary`, :mod:`plot_summary`, :mod:`plot_p_nom_max`
