@@ -27,13 +27,13 @@ PyPSA-Eur 0.2.0 (8th June 2020)
 
 * Networks now store a color and a nicely formatted name for each carrier, accessible via ``n.carrier['color']`` and ``n.carrier['nice_name'] ``(networks after ``elec.nc``).
 
-* Added an option to skip iterative solving usually performed to update the line impedances of expanded lines at ``solving: options: skip_iterations; ``.
+* Added an option to skip iterative solving usually performed to update the line impedances of expanded lines at ``solving: options: skip_iterations:``.
 
 * ``snakemake`` rules for retrieving cutouts and the natura raster can now be disabled independently from their respective rules to build them; via ``config.*yaml`` (`#136 <https://github.com/PyPSA/pypsa-eur/pull/136>`_).
 
 * Removed the ``id`` column for custom power plants in ``data/custom_powerplants.csv`` to avoid custom power plants with conflicting ids getting attached to the wrong bus (`#131 <https://github.com/PyPSA/pypsa-eur/pull/131>`_).
 
-* Add option ``renewables: {carrier}: keep_all_available_areas: `` to use all availabe weather cells for renewable profile and potential generation. The default ignores weather cells where only less than 1 MW can be installed  (`#150 <https://github.com/PyPSA/pypsa-eur/pull/150>`_).
+* Add option ``renewables: {carrier}: keep_all_available_areas:`` to use all availabe weather cells for renewable profile and potential generation. The default ignores weather cells where only less than 1 MW can be installed  (`#150 <https://github.com/PyPSA/pypsa-eur/pull/150>`_).
 
 * Added a function ``_helpers.load_network()`` which loads a network with overridden components specified in ``snakemake.config['override_components']`` (`#128 <https://github.com/PyPSA/pypsa-eur/pull/128>`_).
 
