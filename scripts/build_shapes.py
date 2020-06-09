@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """
 Creates GIS shape files of the countries, exclusive economic zones and `NUTS3 <https://en.wikipedia.org/wiki/Nomenclature_of_Territorial_Units_for_Statistics>`_ areas.
 
@@ -111,7 +115,7 @@ def countries():
     fieldnames = (df[x].where(lambda s: s!='-99') for x in ('ISO_A2', 'WB_A2', 'ADM0_A3'))
     df['name'] = reduce(lambda x,y: x.fillna(y), fieldnames, next(fieldnames)).str[0:2]
 
-    df = df.loc[df.name.isin(cntries) & (df['scalerank'] == 0)]
+    df = df.loc[df.name.isin(cntries) & ((df['scalerank'] == 0) | (df['scalerank'] == 5))]
     s = df.set_index('name')['geometry'].map(_simplify_polys)
     if 'RS' in cntries: s['RS'] = s['RS'].union(s.pop('KV'))
 

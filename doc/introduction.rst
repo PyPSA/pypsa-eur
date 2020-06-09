@@ -1,8 +1,19 @@
+..
+  SPDX-FileCopyrightText: 2019-2020 The PyPSA-Eur Authors
+  
+  SPDX-License-Identifier: CC-BY-4.0
+
 .. _intro:
 
 ##########################################
  Introduction
 ##########################################
+
+.. raw:: html
+
+    <iframe width="832" height="468" src="https://www.youtube.com/embed/ty47YU1_eeQ" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+Find the introductory slides `here <https://docs.google.com/presentation/d/e/2PACX-1vQGQZD7KIVdocRZzRVu8Uk-JC_ltEow5zjtIarhyws46IMJpaqGuux695yincmJA_i5bVEibEs7z2eo/pub?start=false&loop=true&delayms=3000>`_.
 
 Workflow
 =========
