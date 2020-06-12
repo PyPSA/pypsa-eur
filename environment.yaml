@@ -13,7 +13,7 @@ dependencies:
   - pip
 
   - pypsa>=0.17 
-  - atlite=0.0.3
+  - atlite>=0.2
 
   # Dependencies of the workflow itself
   - xlrd

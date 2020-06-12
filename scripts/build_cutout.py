@@ -1,7 +1,3 @@
-# SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
-#
-# SPDX-License-Identifier: GPL-3.0-or-later
-
 """
 Create cutouts with `atlite <https://atlite.readthedocs.io/en/latest/>`_.
 
@@ -92,11 +88,11 @@ Description
 """
 
 import logging
-logger = logging.getLogger(__name__)
+import atlite
 from _helpers import configure_logging
 
-import os
-import atlite
+logger = logging.getLogger(__name__)
+
 
 if __name__ == "__main__":
     if 'snakemake' not in globals():
@@ -105,12 +101,13 @@ if __name__ == "__main__":
     configure_logging(snakemake)
 
     cutout_params = snakemake.config['atlite']['cutouts'][snakemake.wildcards.cutout]
-    for p in ('xs', 'ys', 'years', 'months'):
+
+    # atlite expects slices, not lists
+    for p in ('x', 'y', 'time'):
         if p in cutout_params:
             cutout_params[p] = slice(*cutout_params[p])
 
-    cutout = atlite.Cutout(snakemake.wildcards.cutout,
-                        cutout_dir=os.path.dirname(snakemake.output[0]),
-                        **cutout_params)
+    logging.info(f"Preparing cutout with parameters {cutout_params}.")
 
-    cutout.prepare(nprocesses=snakemake.config['atlite'].get('nprocesses', 4))
+    cutout = atlite.Cutout(snakemake.output[0], **cutout_params)
+    cutout.prepare()
