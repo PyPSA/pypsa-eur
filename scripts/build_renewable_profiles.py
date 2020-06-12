@@ -246,7 +246,7 @@ def downsample_to_coarse_grid(bounds, dx, dy, mask, data):
 def calculate_potential(gid, save_map=None):
     feature = gk.vector.extractFeature(paths["regions"], where=gid)
     ec = gl.ExclusionCalculator(feature.geom)
-    print(gid)
+
     corine = config.get("corine", {})
     if isinstance(corine, list):
         corine = {'grid_codes': corine}
