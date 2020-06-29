@@ -224,7 +224,9 @@ if __name__ == "__main__":
     elif ll_type == 'c':
         set_line_cost_limit(n, factor, Nyears)
 
-    n.links.loc[n.links.carrier=='DC', "p_nom_max"] = config["links"].get("p_nom_max", np.inf)
-    n.lines.s_nom_max = config["lines"].get("s_nom_max,", np.inf)
+    ln_config = snakemake.config["lines"]
+    lk_config = snakemake.config["links"]
+    n.lines.s_nom_max = ln_config.get("s_nom_max,", np.inf)
+    n.links.loc[n.links.carrier=='DC', "p_nom_max"] = lk_config.get("p_nom_max", np.inf)
 
     n.export_to_netcdf(snakemake.output[0])
