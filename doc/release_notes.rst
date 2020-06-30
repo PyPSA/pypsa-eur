@@ -11,7 +11,10 @@ Release Notes
 Upcoming Release
 ================
 
-* ...
+* An option is introduced which adds constraints such that each country or node produces on average a minimal share of its total consumption itself.
+  For example ``EQ0.5c`` set in the ``{opts}`` wildcard requires each country to produce on average at least 50% of its consumption. Additionally,
+  the option ``ATK`` requires autarky at each node and removes all means of power transmission through lines and HVDC links. Moreover, line and link
+  capacities can be capped in the ``config.yaml`` at ``lines: s_nom_max:`` and ``links: p_nom_max`` (`#166 <https://github.com/PyPSA/pypsa-eur/pull/166>`_).
 
 
 PyPSA-Eur 0.2.0 (8th June 2020)
@@ -46,11 +49,6 @@ PyPSA-Eur 0.2.0 (8th June 2020)
 * Improved documentation on open-source solver setup and added usage warnings.
 
 * Updated ``conda`` environment regarding ``pypsa``, ``pyproj``, ``gurobi``, ``lxml``. This release requires PyPSA v0.17.0.
-
-* An option is introduced which adds constraints such that each country or node produces on average a minimal share of its total consumption itself.
-  For example ``EQ0.5c`` set in the ``{opts}`` wildcard requires each country to produce on average at least 50% of its consumption. Additionally,
-  the option ``ATK`` requires autarky at each node and removes all means of power transmission through lines and HVDC links. Moreover, line and link
-  capacities can be capped in the ``config.yaml`` at ``lines: s_nom_max:`` and ``links: p_nom_max`` (`#166 <https://github.com/PyPSA/pypsa-eur/pull/166>`_).
 
 PyPSA-Eur 0.1.0 (9th January 2020)
 ==================================
