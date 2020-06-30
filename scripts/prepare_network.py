@@ -91,7 +91,6 @@ def add_emission_prices(n, emission_prices=None, exclude_co2=False):
 def set_line_s_max_pu(n):
     # set n-1 security margin to 0.5 for 37 clusters and to 0.7 from 200 clusters
     n_clusters = len(n.buses)
-    s_max_pu = np.clip(0.5 + 0.2 * (n_clusters - 37) / (200 - 37), 0.5, 0.7)
     n.lines['s_max_pu'] = s_max_pu
 
 def set_line_cost_limit(n, lc, Nyears=1.):
@@ -184,6 +183,15 @@ def average_every_nhours(n, offset):
 
     return m
 
+def enforce_autarky(n):
+    n.mremove(n.lines.index)
+    n.mremove(n.links.index)
+
+def set_line_nom_max(n):
+    s_nom_max_set = snakemake.config["lines"].get("s_nom_max,", np.inf)
+    p_nom_max_set = snakemake.config["links"].get("p_nom_max", np.inf)
+    n.lines.s_nom_max.clip(upper=s_nom_max_set, inplace=True)
+    n.links.p_nom_max.clip(upper=p_nom_max_set, inplace=True)
 
 if __name__ == "__main__":
     if 'snakemake' not in globals():
@@ -224,9 +232,9 @@ if __name__ == "__main__":
     elif ll_type == 'c':
         set_line_cost_limit(n, factor, Nyears)
 
-    ln_config = snakemake.config["lines"]
-    lk_config = snakemake.config["links"]
-    n.lines.s_nom_max = ln_config.get("s_nom_max,", np.inf)
-    n.links.loc[n.links.carrier=='DC', "p_nom_max"] = lk_config.get("p_nom_max", np.inf)
+    set_line_nom_max(n)
+
+    if "ATK" in opts:
+        enforce_autarky(n)
 
     n.export_to_netcdf(snakemake.output[0])
