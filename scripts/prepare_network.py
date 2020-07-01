@@ -184,9 +184,21 @@ def average_every_nhours(n, offset):
 
     return m
 
-def enforce_autarky(n):
-    n.mremove(n.lines.index)
-    n.mremove(n.links.index)
+def enforce_autarky(n, only_crossborder=False):
+    if only_crossborder:
+        lines_rm = n.lines.loc[
+                        n.lines.bus0.map(n.buses.country) !=
+                        n.lines.bus1.map(n.buses.country)
+                    ].index
+        links_rm = n.links.loc[
+                        n.links.bus0.map(n.buses.country) !=
+                        n.links.bus1.map(n.buses.country)
+                    ].index
+    else:
+        lines_rm = n.lines.index
+        links_rm = n.links.index
+    n.mremove("Line", lines_rm)
+    n.mremove("Link", links_rm)
 
 def set_line_nom_max(n):
     s_nom_max_set = snakemake.config["lines"].get("s_nom_max,", np.inf)
@@ -237,5 +249,7 @@ if __name__ == "__main__":
 
     if "ATK" in opts:
         enforce_autarky(n)
+    elif "ATKc" in opts:
+        enforce_autarky(n, only_crossborder=True)
 
     n.export_to_netcdf(snakemake.output[0])
