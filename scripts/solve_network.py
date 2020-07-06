@@ -181,7 +181,8 @@ def add_EQ_constraints(n, o, scaling=1e-1):
         sgrouper = n.storage_units.bus
     load = n.snapshot_weightings @ \
            n.loads_t.p_set.groupby(lgrouper, axis=1).sum()
-    inflow = n.storage_units_t.inflow.groupby(sgrouper, axis=1).sum().sum()
+    inflow = n.snapshot_weightings @ \
+             n.storage_units_t.inflow.groupby(sgrouper, axis=1).sum()
     inflow = inflow.reindex(load.index).fillna(0.)
     rhs = scaling * level * ( load - inflow )
     lhs = linexpr((n.snapshot_weightings * scaling,
