@@ -184,10 +184,15 @@ def add_EQ_constraints(n, o, scaling=1e-1):
     inflow = n.snapshot_weightings @ \
              n.storage_units_t.inflow.groupby(sgrouper, axis=1).sum()
     inflow = inflow.reindex(load.index).fillna(0.)
-    rhs = scaling * level * ( load - inflow )
-    lhs = linexpr((n.snapshot_weightings * scaling,
-                   get_var(n, "Generator", "p").T)
-                 ).T.groupby(ggrouper, axis=1).apply(join_exprs)
+    rhs = scaling * ( level * load - inflow )
+    lhs_gen = linexpr((n.snapshot_weightings * scaling,
+                       get_var(n, "Generator", "p").T)
+              ).T.groupby(ggrouper, axis=1).apply(join_exprs)
+    lhs_spill = linexpr((-n.snapshot_weightings * scaling,
+                         get_var(n, "StorageUnit", "spill").T)
+                ).T.groupby(sgrouper, axis=1).apply(join_exprs)
+    lhs_spill = lhs_spill.reindex(lhs_gen.index).fillna("")
+    lhs = lhs_gen + lhs_spill
     define_constraints(n, lhs, ">=", rhs, "equity", "min")
 
 
