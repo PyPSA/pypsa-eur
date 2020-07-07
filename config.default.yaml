@@ -3,6 +3,8 @@ logging_level: INFO
 results_dir: 'results/'
 summary_dir: results
 run: 'your-run-name'  # use this to keep track of runs with different settings
+foresight: 'myopic' #options are overnight, myopic, perfect
+
 
 scenario:
   sectors: [E]  # ignore this legacy setting
@@ -19,7 +21,8 @@ scenario:
   # B for biomass supply, I for industry, shipping and aviation
   # solarx or onwindx changes the available installable potential by factor x
   # dist{n} includes distribution grids with investment cost of n times cost in data/costs.csv
-
+  planning_horizons : ['2020', '2030', '2040', '2050'] #timesteps for myopic and perfect 
+  co2_budget_name: ['go']  
 
 # snapshots are originally set in PyPSA-Eur/config.yaml but used again by PyPSA-Eur-Sec
 snapshots:
@@ -113,7 +116,7 @@ costs:
 
 
 solving:
-  #tmpdir: "/mnt/lsdf/tom/playground/pypsa-eur-sec/tmp"
+  #tmpdir: "/martavp/pypsa-eur-sec/tmp"
   options:
     formulation: kirchhoff
     clip_p_max_pu: 1.e-2
