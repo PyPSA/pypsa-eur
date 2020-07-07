@@ -55,6 +55,6 @@ dependencies:
 
   - pip:
     - vresutils==0.3.1
-    - git+https://github.com/PyPSA/glaes.git#egg=glaes
-    - git+https://github.com/PyPSA/geokit.git#egg=geokit
+    - https://github.com/FZJ-IEK3-VSA/geokit/archive/v1.2.6.zip
+    - https://github.com/FZJ-IEK3-VSA/glaes/archive/v1.1.6.zip
     - cdsapi
