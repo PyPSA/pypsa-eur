@@ -155,6 +155,16 @@ def add_chp_constraints(n):
 
         define_constraints(n, lhs, "<=", 0, 'chplink', 'top_iso_fuel_line')
 
+def land_use_constraint(n):
+    for carrier in ['solar', 'onwind', 'offwind-ac', 'offwind-dc']:
+        gens = list(n.generators.index[n.generators.carrier==carrier])
+        gens_0=[gen for gen in gens if gen[-4:] not in snakemake.config['scenario']['planning_horizons']]        
+        #total capacity installed in a country <= potential per country
+        lhs=linexpr((1, np.array([n.generators.loc[[gen for gen in gens if country[0:3] in gen],"p_nom"].sum() for country in gens_0])),
+                    (-1, n.generators.loc[gens_0,'p_nom_max'].values))
+        
+        define_constraints(n, lhs, "<=", 0, "land use", carrier)
+
 def extra_functionality(n, snapshots):
     #add_opts_constraints(n, opts)
     #add_eps_storage_constraint(n)
@@ -324,14 +334,15 @@ if __name__ == "__main__":
     if 'snakemake' not in globals():
         from vresutils.snakemake import MockSnakemake, Dict
         snakemake = MockSnakemake(
-            wildcards=dict(network='elec', simpl='', clusters='45', lv='1.25', opts='Co2L-3H-T-H'),
-            input=dict(network="networks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}.nc"),
-            output=["results/networks/s{simpl}_{clusters}_lv{lv}_{opts}-test.nc"],
-            log=dict(gurobi="logs/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_gurobi-test.log",
-                     python="logs/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_python-test.log")
+            wildcards=dict(network='elec', simpl='', clusters='37', lv='1.0',
+                           sector_opts='Co2L0-168H-T-H-B-I-solar3-dist1',
+                           co2_budget_name='go', planning_horizons='2020'),
+            input=dict(network="pysa-eur-sec/results/test/prenetworks_bf/{network}_s{simpl}_{clusters}_lv{lv}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc"),
+            output=["results/networks/s{simpl}_{clusters}_lv{lv}_{sector_opts}_{co2_budget_name}_{planning_horizons}-test.nc"],
+            log=dict(gurobi="logs/{network}_s{simpl}_{clusters}_lv{lv}_{sector_opts}_{co2_budget_name}_{planning_horizons}_gurobi-test.log",
+                     python="logs/{network}_s{simpl}_{clusters}_lv{lv}_{sector_opts}_{co2_budget_name}_{planning_horizons}_python-test.log")
         )
-
-
+  
     tmpdir = snakemake.config['solving'].get('tmpdir')
     if tmpdir is not None:
         patch_pyomo_tmpdir(tmpdir)
@@ -340,6 +351,7 @@ if __name__ == "__main__":
                         level=snakemake.config['logging_level'])
 
     with memory_logger(filename=getattr(snakemake.log, 'memory', None), interval=30.) as mem:
+
         n = pypsa.Network(snakemake.input.network,
                           override_component_attrs=override_component_attrs)
 
@@ -349,3 +361,4 @@ if __name__ == "__main__":
         n.export_to_netcdf(snakemake.output[0])
 
     logger.info("Maximum memory usage: {}".format(mem.mem_usage))
+
