@@ -62,7 +62,7 @@ preferred_order = pd.Index(["transmission lines","hydroelectricity","hydro reser
 def plot_costs():
 
 
-    cost_df = pd.read_csv(snakemake.input.costs,index_col=list(range(3)),header=[0,1,2])
+    cost_df = pd.read_csv(snakemake.input.costs,index_col=list(range(3)),header=list(range(n_header)))
 
 
     df = cost_df.groupby(cost_df.index.get_level_values(2)).sum()
@@ -115,7 +115,7 @@ def plot_costs():
 
 def plot_energy():
 
-    energy_df = pd.read_csv(snakemake.input.energy,index_col=list(range(2)),header=[0,1,2])
+    energy_df = pd.read_csv(snakemake.input.energy,index_col=list(range(2)),header=list(range(n_header)))
 
     df = energy_df.groupby(energy_df.index.get_level_values(1)).sum()
 
@@ -139,7 +139,7 @@ def plot_energy():
     new_index = (preferred_order&df.index).append(df.index.difference(preferred_order))
 
     new_columns = df.columns.sort_values()
-
+    #new_columns = df.sum().sort_values().index
     fig, ax = plt.subplots()
     fig.set_size_inches((12,8))
 
@@ -174,7 +174,7 @@ def plot_balances():
 
     co2_carriers = ["co2","co2 stored","process emissions"]
 
-    balances_df = pd.read_csv(snakemake.input.balances,index_col=list(range(3)),header=[0,1,2])
+    balances_df = pd.read_csv(snakemake.input.balances,index_col=list(range(3)),header=list(range(n_header)))
 
     balances = {i.replace(" ","_") : [i] for i in balances_df.index.levels[0]}
     balances["energy"] = balances_df.index.levels[0]^co2_carriers
@@ -199,7 +199,7 @@ def plot_balances():
         print(df.loc[to_drop])
 
         df = df.drop(to_drop)
-
+ 
         print(df.sum())
 
         if df.empty:
@@ -209,6 +209,7 @@ def plot_balances():
 
         new_columns = df.columns.sort_values()
 
+        
         fig, ax = plt.subplots()
         fig.set_size_inches((12,8))
 
@@ -249,12 +250,16 @@ if __name__ == "__main__":
         snakemake.input = Dict()
         snakemake.output = Dict()
 
-        for item in ["costs", "energy", "balances"]:
+        for item in ["costs", "energy"]:
             snakemake.input[item] = snakemake.config['summary_dir'] + '/{name}/csvs/{item}.csv'.format(name=snakemake.config['run'],item=item)
             snakemake.output[item] = snakemake.config['summary_dir'] + '/{name}/graphs/{item}.pdf'.format(name=snakemake.config['run'],item=item)
+        snakemake.input["balances"] = snakemake.config['summary_dir'] + '/test/csvs/supply_energy.csv'
+        snakemake.output["balances"] = snakemake.config['summary_dir'] + '/test/graphs/balances-energy.csv'
+    
+    n_header = 5 if snakemake.config['foresight']=='myopic' else 3
 
     plot_costs()
 
     plot_energy()
-
-    plot_balances()
+    
+    #plot_balances()
