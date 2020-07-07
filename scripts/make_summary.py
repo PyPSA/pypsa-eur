@@ -533,9 +533,10 @@ outputs = ["nodal_costs",
            ]
 
 def make_summaries(networks_dict):
-
-    columns = pd.MultiIndex.from_tuples(networks_dict.keys(),names=["cluster","lv","opt"])
-
+    if snakemake.config['foresight'] =='myopic':
+        columns = pd.MultiIndex.from_tuples(networks_dict.keys(),names=["cluster","lv","opt", "co2_budget_name","planning_horizon"])
+    else:
+        columns = pd.MultiIndex.from_tuples(networks_dict.keys(),names=["cluster","lv","opt"])
     df = {}
 
     for output in outputs:
@@ -573,16 +574,34 @@ if __name__ == "__main__":
             snakemake.config = yaml.load(f)
 
         #overwrite some options
-        snakemake.config["run"] = "190418-test-rebase"
-        snakemake.config["scenario"]["lv"] = [1.0, 1.25]
-        snakemake.config["scenario"]["sector_opts"] = ["Co2L0-3H-T-H-B-I","Co2L0-3H-T-H-B-I-onwind0","Co2L0p1-3H-T-H-B-I","Co2L0-3H-T-H-B-I-onwind0-solar2-offwind2"]
+        snakemake.config["run"] = "test"
+        snakemake.config["scenario"]["lv"] = [1.0]
+        snakemake.config["scenario"]["sector_opts"] = ["Co2L0-168H-T-H-B-I-solar3-dist1"]
+        snakemake.config["planning_horizons"] = ['2020', '2030', '2040', '2050']
         snakemake.input = Dict()
         snakemake.input['heat_demand_name'] = 'data/heating/daily_heat_demand.h5'
         snakemake.output = Dict()
         for item in outputs:
             snakemake.output[item] = snakemake.config['summary_dir'] + '/{name}/csvs/{item}.csv'.format(name=snakemake.config['run'],item=item)
-
-    networks_dict = {(cluster,lv,opt+sector_opt) :
+    if snakemake.config['foresight'] =='myopic':
+        networks_dict = {(cluster,lv,opt+sector_opt, co2_budget_name, planning_horizon) :
+                     snakemake.config['results_dir'] + snakemake.config['run'] + '/postnetworks/elec_s{simpl}_{cluster}_lv{lv}_{opt}_{sector_opt}_{co2_budget_name}_{planning_horizon}.nc'\
+                     .format(simpl=simpl,
+                             cluster=cluster,
+                             opt=opt,
+                             lv=lv,
+                             sector_opt=sector_opt,
+                             co2_budget_name=co2_budget_name,
+                             planning_horizon=planning_horizon)\
+                     for simpl in snakemake.config['scenario']['simpl'] \
+                     for cluster in snakemake.config['scenario']['clusters'] \
+                     for opt in snakemake.config['scenario']['opts'] \
+                     for sector_opt in snakemake.config['scenario']['sector_opts'] \
+                     for lv in snakemake.config['scenario']['lv'] \
+                     for co2_budget_name in snakemake.config['scenario']['co2_budget_name'] \
+                     for planning_horizon in snakemake.config['scenario']['planning_horizons']}
+    else:
+        networks_dict = {(cluster,lv,opt+sector_opt) :
                      snakemake.config['results_dir'] + snakemake.config['run'] + '/postnetworks/elec_s{simpl}_{cluster}_lv{lv}_{opt}_{sector_opt}.nc'\
                      .format(simpl=simpl,
                              cluster=cluster,
@@ -593,7 +612,7 @@ if __name__ == "__main__":
                      for cluster in snakemake.config['scenario']['clusters'] \
                      for opt in snakemake.config['scenario']['opts'] \
                      for sector_opt in snakemake.config['scenario']['sector_opts'] \
-                     for lv in snakemake.config['scenario']['lv']}
+                     for lv in snakemake.config['scenario']['lv'] }       
     print(networks_dict)
 
     costs_db = load_costs(Nyears=1.,tech_costs="data/costs.csv",config=snakemake.config["costs"],elec_config=snakemake.config['electricity'])
