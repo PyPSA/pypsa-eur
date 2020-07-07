@@ -15,11 +15,12 @@ subworkflow pypsaeur:
     workdir: "../pypsa-eur"
     snakefile: "../pypsa-eur/Snakefile"
     configfile: "../pypsa-eur/config.yaml"
-
+                
 rule all:
-     input: config['summary_dir'] + '/' + config['run'] + '/graphs/costs.pdf'
+    input: 
+       config['summary_dir'] + '/' + config['run'] + '/graphs/costs.pdf'
 
-
+                                                     
 rule solve_all_elec_networks:
     input:
         expand(config['results_dir'] + config['run'] + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}.nc",
@@ -44,6 +45,7 @@ rule build_population_layouts:
         pop_layout_total="resources/pop_layout_total.nc",
         pop_layout_urban="resources/pop_layout_urban.nc",
         pop_layout_rural="resources/pop_layout_rural.nc"
+    resources: mem_mb=20000
     script: "scripts/build_population_layouts.py"
 
 
@@ -55,6 +57,7 @@ rule build_clustered_population_layouts:
         regions_onshore=pypsaeur('resources/regions_onshore_{network}_s{simpl}_{clusters}.geojson')
     output:
         clustered_pop_layout="resources/pop_layout_{network}_s{simpl}_{clusters}.csv"
+    resources: mem_mb=10000
     script: "scripts/build_clustered_population_layouts.py"
 
 
@@ -68,6 +71,7 @@ rule build_heat_demands:
         heat_demand_urban="resources/heat_demand_urban_{network}_s{simpl}_{clusters}.nc",
         heat_demand_rural="resources/heat_demand_rural_{network}_s{simpl}_{clusters}.nc",
         heat_demand_total="resources/heat_demand_total_{network}_s{simpl}_{clusters}.nc"
+    resources: mem_mb=20000
     script: "scripts/build_heat_demand.py"
 
 rule build_temperature_profiles:
@@ -83,6 +87,7 @@ rule build_temperature_profiles:
         temp_air_total="resources/temp_air_total_{network}_s{simpl}_{clusters}.nc",
         temp_air_rural="resources/temp_air_rural_{network}_s{simpl}_{clusters}.nc",
         temp_air_urban="resources/temp_air_urban_{network}_s{simpl}_{clusters}.nc"
+    resources: mem_mb=20000
     script: "scripts/build_temperature_profiles.py"
 
 
@@ -101,6 +106,7 @@ rule build_cop_profiles:
         cop_air_total="resources/cop_air_total_{network}_s{simpl}_{clusters}.nc",
         cop_air_rural="resources/cop_air_rural_{network}_s{simpl}_{clusters}.nc",
         cop_air_urban="resources/cop_air_urban_{network}_s{simpl}_{clusters}.nc"
+    resources: mem_mb=20000
     script: "scripts/build_cop_profiles.py"
 
 
@@ -114,6 +120,7 @@ rule build_solar_thermal_profiles:
         solar_thermal_total="resources/solar_thermal_total_{network}_s{simpl}_{clusters}.nc",
         solar_thermal_urban="resources/solar_thermal_urban_{network}_s{simpl}_{clusters}.nc",
         solar_thermal_rural="resources/solar_thermal_rural_{network}_s{simpl}_{clusters}.nc"
+    resources: mem_mb=20000
     script: "scripts/build_solar_thermal_profiles.py"
 
 
@@ -166,126 +173,304 @@ rule build_industrial_demand:
     threads: 1
     resources: mem_mb=1000
     script: 'scripts/build_industrial_demand.py'
+ 
+if config["foresight"] == "overnight":
+
+    rule prepare_sector_network:
+        input:
+            network=pypsaeur('networks/{network}_s{simpl}_{clusters}_ec_lv{lv}_{opts}.nc'),
+            energy_totals_name='data/energy_totals.csv',
+            co2_totals_name='data/co2_totals.csv',
+            transport_name='data/transport_data.csv',
+            biomass_potentials='data/biomass_potentials.csv',
+            timezone_mappings='data/timezone_mappings.csv',
+            heat_profile="data/heat_load_profile_BDEW.csv",
+            costs="data/costs.csv",
+            clustered_pop_layout="resources/pop_layout_{network}_s{simpl}_{clusters}.csv",
+            industrial_demand="resources/industrial_demand_{network}_s{simpl}_{clusters}.csv",
+            heat_demand_urban="resources/heat_demand_urban_{network}_s{simpl}_{clusters}.nc",
+            heat_demand_rural="resources/heat_demand_rural_{network}_s{simpl}_{clusters}.nc",
+            heat_demand_total="resources/heat_demand_total_{network}_s{simpl}_{clusters}.nc",
+            temp_soil_total="resources/temp_soil_total_{network}_s{simpl}_{clusters}.nc",
+            temp_soil_rural="resources/temp_soil_rural_{network}_s{simpl}_{clusters}.nc",
+            temp_soil_urban="resources/temp_soil_urban_{network}_s{simpl}_{clusters}.nc",
+            temp_air_total="resources/temp_air_total_{network}_s{simpl}_{clusters}.nc",
+            temp_air_rural="resources/temp_air_rural_{network}_s{simpl}_{clusters}.nc",
+            temp_air_urban="resources/temp_air_urban_{network}_s{simpl}_{clusters}.nc",
+            cop_soil_total="resources/cop_soil_total_{network}_s{simpl}_{clusters}.nc",
+            cop_soil_rural="resources/cop_soil_rural_{network}_s{simpl}_{clusters}.nc",
+            cop_soil_urban="resources/cop_soil_urban_{network}_s{simpl}_{clusters}.nc",
+            cop_air_total="resources/cop_air_total_{network}_s{simpl}_{clusters}.nc",
+            cop_air_rural="resources/cop_air_rural_{network}_s{simpl}_{clusters}.nc",
+            cop_air_urban="resources/cop_air_urban_{network}_s{simpl}_{clusters}.nc",
+            solar_thermal_total="resources/solar_thermal_total_{network}_s{simpl}_{clusters}.nc",
+            solar_thermal_urban="resources/solar_thermal_urban_{network}_s{simpl}_{clusters}.nc",
+            solar_thermal_rural="resources/solar_thermal_rural_{network}_s{simpl}_{clusters}.nc"
+        output: config['results_dir']  +  config['run'] + '/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}.nc'
+        threads: 1
+        resources: mem_mb=2000
+        benchmark: "benchmarks/prepare_network/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}"
+        script: "scripts/prepare_sector_network.py"
 
 
+    rule solve_network:
+        input:
+            network=config['results_dir'] + config['run'] + "/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}.nc",
+            config=config['summary_dir'] + '/' + config['run'] + '/configs/config.yaml'
+        output: config['results_dir'] + config['run'] + "/postnetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}.nc"
+        shadow: "shallow"
+        log:
+            solver="logs/" + config['run'] + "/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_solver.log",
+            python="logs/" + config['run'] + "/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_python.log",
+            memory="logs/" + config['run'] + "/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_memory.log"
+        benchmark: "benchmarks/solve_network/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}"
+        threads: 4
+        resources: mem_mb=config['solving']['mem']
+        # group: "solve" # with group, threads is ignored https://bitbucket.org/snakemake/snakemake/issues/971/group-job-description-does-not-contain
+        script: "scripts/solve_network.py"
 
 
-rule prepare_sector_network:
-    input:
-        network=pypsaeur('networks/{network}_s{simpl}_{clusters}_ec_lv{lv}_{opts}.nc'),
-        energy_totals_name='data/energy_totals.csv',
-        co2_totals_name='data/co2_totals.csv',
-        transport_name='data/transport_data.csv',
-        biomass_potentials='data/biomass_potentials.csv',
-        timezone_mappings='data/timezone_mappings.csv',
-        heat_profile="data/heat_load_profile_BDEW.csv",
-        costs="data/costs.csv",
-        clustered_pop_layout="resources/pop_layout_{network}_s{simpl}_{clusters}.csv",
-        industrial_demand="resources/industrial_demand_{network}_s{simpl}_{clusters}.csv",
-        heat_demand_urban="resources/heat_demand_urban_{network}_s{simpl}_{clusters}.nc",
-        heat_demand_rural="resources/heat_demand_rural_{network}_s{simpl}_{clusters}.nc",
-        heat_demand_total="resources/heat_demand_total_{network}_s{simpl}_{clusters}.nc",
-        temp_soil_total="resources/temp_soil_total_{network}_s{simpl}_{clusters}.nc",
-        temp_soil_rural="resources/temp_soil_rural_{network}_s{simpl}_{clusters}.nc",
-        temp_soil_urban="resources/temp_soil_urban_{network}_s{simpl}_{clusters}.nc",
-        temp_air_total="resources/temp_air_total_{network}_s{simpl}_{clusters}.nc",
-        temp_air_rural="resources/temp_air_rural_{network}_s{simpl}_{clusters}.nc",
-        temp_air_urban="resources/temp_air_urban_{network}_s{simpl}_{clusters}.nc",
-        cop_soil_total="resources/cop_soil_total_{network}_s{simpl}_{clusters}.nc",
-        cop_soil_rural="resources/cop_soil_rural_{network}_s{simpl}_{clusters}.nc",
-        cop_soil_urban="resources/cop_soil_urban_{network}_s{simpl}_{clusters}.nc",
-        cop_air_total="resources/cop_air_total_{network}_s{simpl}_{clusters}.nc",
-        cop_air_rural="resources/cop_air_rural_{network}_s{simpl}_{clusters}.nc",
-        cop_air_urban="resources/cop_air_urban_{network}_s{simpl}_{clusters}.nc",
-        solar_thermal_total="resources/solar_thermal_total_{network}_s{simpl}_{clusters}.nc",
-        solar_thermal_urban="resources/solar_thermal_urban_{network}_s{simpl}_{clusters}.nc",
-        solar_thermal_rural="resources/solar_thermal_rural_{network}_s{simpl}_{clusters}.nc"
-    output: config['results_dir']  +  config['run'] + '/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}.nc'
-    threads: 1
-    resources: mem=2000
-    benchmark: "benchmarks/prepare_network/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}"
-    script: "scripts/prepare_sector_network.py"
+    rule plot_network:
+        input:
+            network=config['results_dir'] + config['run'] + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}.nc"
+        output:
+            map=config['results_dir'] + config['run'] + "/maps/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}-costs-all.pdf",
+        	today=config['results_dir'] + config['run'] + "/maps/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}-today.pdf"
+        threads: 2
+        resources: mem_mb=10000
+        script: "scripts/plot_network.py"
 
 
-rule solve_network:
-    input:
-        network=config['results_dir'] + config['run'] + "/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}.nc",
-        config=config['summary_dir'] + '/' + config['run'] + '/configs/config.yaml'
-    output: config['results_dir'] + config['run'] + "/postnetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}.nc"
-    shadow: "shallow"
-    log:
-        solver="logs/" + config['run'] + "/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_solver.log",
-        python="logs/" + config['run'] + "/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_python.log",
-        memory="logs/" + config['run'] + "/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_memory.log"
-    benchmark: "benchmarks/solve_network/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}"
-    threads: 4
-    resources: mem=config['solving']['mem']
-    # group: "solve" # with group, threads is ignored https://bitbucket.org/snakemake/snakemake/issues/971/group-job-description-does-not-contain
-    script: "scripts/solve_network.py"
+    rule copy_config:
+        input:
+            networks=expand(config['results_dir'] + config['run'] + "/prenetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}.nc",
+                   **config['scenario'])
+        output:
+            config=config['summary_dir'] + '/' + config['run'] + '/configs/config.yaml'
+        threads: 1
+        resources: mem_mb=1000
+        script:
+            'scripts/copy_config.py'
 
-rule plot_network:
-    input:
-        network=config['results_dir'] + config['run'] + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}.nc"
-    output:
-        map=config['results_dir'] + config['run'] + "/maps/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}-costs-all.pdf",
-	today=config['results_dir'] + config['run'] + "/maps/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}-today.pdf"
-    threads: 2
-    resources: mem_mb=10000
-    script: "scripts/plot_network.py"
-
-
-
-rule copy_config:
-    input:
-        networks=expand(config['results_dir'] + config['run'] + "/prenetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}.nc",
-               **config['scenario'])
-    output:
-        config=config['summary_dir'] + '/' + config['run'] + '/configs/config.yaml'
-    threads: 1
-    resources: mem_mb=1000
-    script:
-        'scripts/copy_config.py'
-
-
-rule make_summary:
-    input:
-        networks=expand(config['results_dir'] + config['run'] + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}.nc",
-               **config['scenario']),
-        plots=expand(config['results_dir'] + config['run'] + "/maps/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}-costs-all.pdf",
-               **config['scenario'])
-        #heat_demand_name='data/heating/daily_heat_demand.h5'
-    output:
-        nodal_costs=config['summary_dir'] + '/' + config['run'] + '/csvs/nodal_costs.csv',
-        nodal_capacities=config['summary_dir'] + '/' + config['run'] + '/csvs/nodal_capacities.csv',
-        nodal_cfs=config['summary_dir'] + '/' + config['run'] + '/csvs/nodal_cfs.csv',
-        cfs=config['summary_dir'] + '/' + config['run'] + '/csvs/cfs.csv',
-        costs=config['summary_dir'] + '/' + config['run'] + '/csvs/costs.csv',
-        capacities=config['summary_dir'] + '/' + config['run'] + '/csvs/capacities.csv',
-        curtailment=config['summary_dir'] + '/' + config['run'] + '/csvs/curtailment.csv',
-        energy=config['summary_dir'] + '/' + config['run'] + '/csvs/energy.csv',
-        supply=config['summary_dir'] + '/' + config['run'] + '/csvs/supply.csv',
-        supply_energy=config['summary_dir'] + '/' + config['run'] + '/csvs/supply_energy.csv',
-        prices=config['summary_dir'] + '/' + config['run'] + '/csvs/prices.csv',
-        weighted_prices=config['summary_dir'] + '/' + config['run'] + '/csvs/weighted_prices.csv',
-        market_values=config['summary_dir'] + '/' + config['run'] + '/csvs/market_values.csv',
-        price_statistics=config['summary_dir'] + '/' + config['run'] + '/csvs/price_statistics.csv',
-        metrics=config['summary_dir'] + '/' + config['run'] + '/csvs/metrics.csv'
-    threads: 2
-    resources: mem_mb=10000
-    script:
-        'scripts/make_summary.py'
+            
+    rule make_summary:
+        input:
+            networks=expand(config['results_dir'] + config['run'] + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}.nc",
+                   **config['scenario']),
+            plots=expand(config['results_dir'] + config['run'] + "/maps/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}-costs-all.pdf",
+                   **config['scenario'])
+            #heat_demand_name='data/heating/daily_heat_demand.h5'
+        output:
+            nodal_costs=config['summary_dir'] + '/' + config['run'] + '/csvs/nodal_costs.csv',
+            nodal_capacities=config['summary_dir'] + '/' + config['run'] + '/csvs/nodal_capacities.csv',
+            nodal_cfs=config['summary_dir'] + '/' + config['run'] + '/csvs/nodal_cfs.csv',
+            cfs=config['summary_dir'] + '/' + config['run'] + '/csvs/cfs.csv',
+            costs=config['summary_dir'] + '/' + config['run'] + '/csvs/costs.csv',
+            capacities=config['summary_dir'] + '/' + config['run'] + '/csvs/capacities.csv',
+            curtailment=config['summary_dir'] + '/' + config['run'] + '/csvs/curtailment.csv',
+            energy=config['summary_dir'] + '/' + config['run'] + '/csvs/energy.csv',
+            supply=config['summary_dir'] + '/' + config['run'] + '/csvs/supply.csv',
+            supply_energy=config['summary_dir'] + '/' + config['run'] + '/csvs/supply_energy.csv',
+            prices=config['summary_dir'] + '/' + config['run'] + '/csvs/prices.csv',
+            weighted_prices=config['summary_dir'] + '/' + config['run'] + '/csvs/weighted_prices.csv',
+            market_values=config['summary_dir'] + '/' + config['run'] + '/csvs/market_values.csv',
+            price_statistics=config['summary_dir'] + '/' + config['run'] + '/csvs/price_statistics.csv',
+            metrics=config['summary_dir'] + '/' + config['run'] + '/csvs/metrics.csv'
+        threads: 2
+        resources: mem_mb=10000
+        script:
+            'scripts/make_summary.py'
 
 
-rule plot_summary:
-    input:
-        costs=config['summary_dir'] + '/' + config['run'] + '/csvs/costs.csv',
-        energy=config['summary_dir'] + '/' + config['run'] + '/csvs/energy.csv',
-	balances=config['summary_dir'] + '/' + config['run'] + '/csvs/supply_energy.csv'
-    output:
-        costs=config['summary_dir'] + '/' + config['run'] + '/graphs/costs.pdf',
-        energy=config['summary_dir'] + '/' + config['run'] + '/graphs/energy.pdf',
-	balances=config['summary_dir'] + '/' + config['run'] + '/graphs/balances-energy.pdf'
-    threads: 2
-    resources: mem_mb=10000
-    script:
-        'scripts/plot_summary.py'
+    rule plot_summary:
+        input:
+            costs=config['summary_dir'] + '/' + config['run'] + '/csvs/costs.csv',
+            energy=config['summary_dir'] + '/' + config['run'] + '/csvs/energy.csv',
+        	balances=config['summary_dir'] + '/' + config['run'] + '/csvs/supply_energy.csv'
+        output:
+            costs=config['summary_dir'] + '/' + config['run'] + '/graphs/costs.pdf',
+            energy=config['summary_dir'] + '/' + config['run'] + '/graphs/energy.pdf',
+        	balances=config['summary_dir'] + '/' + config['run'] + '/graphs/balances-energy.pdf'
+        threads: 2
+        resources: mem_mb=10000
+        script:
+            'scripts/plot_summary.py'        
+
+
+if config["foresight"] == "myopic":
+        
+    rule prepare_sector_network_myopic:
+        input:
+            network=pypsaeur('networks/{network}_s{simpl}_{clusters}_ec_lv{lv}_{opts}.nc'),
+            energy_totals_name='data/energy_totals.csv',
+            co2_totals_name='data/co2_totals.csv',
+            transport_name='data/transport_data.csv',
+            biomass_potentials='data/biomass_potentials.csv',
+            timezone_mappings='data/timezone_mappings.csv',
+            heat_profile="data/heat_load_profile_BDEW.csv",
+            costs="data/costs.csv", #"data/costs/costs_{planning_horizons}.csv",
+            co2_budget="data/co2_budget.csv",
+            clustered_pop_layout="resources/pop_layout_{network}_s{simpl}_{clusters}.csv",
+            industrial_demand="resources/industrial_demand_{network}_s{simpl}_{clusters}.csv",
+            heat_demand_urban="resources/heat_demand_urban_{network}_s{simpl}_{clusters}.nc",
+            heat_demand_rural="resources/heat_demand_rural_{network}_s{simpl}_{clusters}.nc",
+            heat_demand_total="resources/heat_demand_total_{network}_s{simpl}_{clusters}.nc",
+            temp_soil_total="resources/temp_soil_total_{network}_s{simpl}_{clusters}.nc",
+            temp_soil_rural="resources/temp_soil_rural_{network}_s{simpl}_{clusters}.nc",
+            temp_soil_urban="resources/temp_soil_urban_{network}_s{simpl}_{clusters}.nc",
+            temp_air_total="resources/temp_air_total_{network}_s{simpl}_{clusters}.nc",
+            temp_air_rural="resources/temp_air_rural_{network}_s{simpl}_{clusters}.nc",
+            temp_air_urban="resources/temp_air_urban_{network}_s{simpl}_{clusters}.nc",
+            cop_soil_total="resources/cop_soil_total_{network}_s{simpl}_{clusters}.nc",
+            cop_soil_rural="resources/cop_soil_rural_{network}_s{simpl}_{clusters}.nc",
+            cop_soil_urban="resources/cop_soil_urban_{network}_s{simpl}_{clusters}.nc",
+            cop_air_total="resources/cop_air_total_{network}_s{simpl}_{clusters}.nc",
+            cop_air_rural="resources/cop_air_rural_{network}_s{simpl}_{clusters}.nc",
+            cop_air_urban="resources/cop_air_urban_{network}_s{simpl}_{clusters}.nc",
+            solar_thermal_total="resources/solar_thermal_total_{network}_s{simpl}_{clusters}.nc",
+            solar_thermal_urban="resources/solar_thermal_urban_{network}_s{simpl}_{clusters}.nc",
+            solar_thermal_rural="resources/solar_thermal_rural_{network}_s{simpl}_{clusters}.nc"
+        output: config['results_dir']  +  config['run'] + '/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc'
+        threads: 1
+        resources: mem_mb=2000
+        benchmark: "benchmarks/prepare_network/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}"
+        script: "scripts/prepare_sector_network.py"
+    
+
+    rule add_existing_baseyear:
+        input:
+            network=config['results_dir']  +  config['run'] + '/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc',
+            costs="data/costs/costs_{}.csv".format(config['scenario']['planning_horizons'][0]),
+            cop_soil_total="resources/cop_soil_total_{network}_s{simpl}_{clusters}.nc",            
+            cop_air_total="resources/cop_air_total_{network}_s{simpl}_{clusters}.nc"
+        output: config['results_dir']  +  config['run'] + '/prenetworks_bf/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc'            
+        wildcard_constraints:
+            planning_horizons=config['scenario']['planning_horizons'][0] #only applies to baseyear
+        threads: 1
+        resources: mem_mb=2000 
+        script: "scripts/add_existing_baseyear.py"
+     
+    rule solve_network_baseyear:
+        input:
+            network=config['results_dir'] + config['run'] + "/prenetworks_bf/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc", 
+            config=config['summary_dir'] + '/' + config['run'] + '/configs/config.yaml'
+        output: config['results_dir'] + config['run'] + "/postnetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc"            
+        wildcard_constraints:
+            planning_horizons=config['scenario']['planning_horizons'][0] #only applies to baseyear
+
+        shadow: "shallow"
+        log:
+            solver="logs/" + config['run'] + "/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}_solver.log", 
+            python="logs/" + config['run'] + "/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}_python.log", 
+            memory="logs/" + config['run'] + "/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}_memory.log" 
+        benchmark: "benchmarks/solve_network/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}" 
+        threads: 4
+        resources: mem_mb=config['solving']['mem']
+        script: "scripts/solve_network.py"
+               
+    def process_input(wildcards):
+        i = config["scenario"]["planning_horizons"].index(wildcards.planning_horizons)
+        return config['results_dir'] + config['run'] + "/postnetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_" + config["scenario"]["planning_horizons"][i-1] + ".nc" 
+ 
+   
+    rule add_brownfield:
+        input:
+            network=config['results_dir']  +  config['run'] + '/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc',
+            network_p=process_input, #solved network at previous time step
+            costs="data/costs/costs_{planning_horizons}.csv",
+            cop_soil_total="resources/cop_soil_total_{network}_s{simpl}_{clusters}.nc",            
+            cop_air_total="resources/cop_air_total_{network}_s{simpl}_{clusters}.nc"
+   
+        output: config['results_dir'] + config['run'] + "/prenetworks_bf/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc"            
+        threads: 4
+        resources: mem_mb=2000 
+        script: "scripts/add_brownfield.py"
+
+        
+    rule solve_network_myopic:
+        input:
+            network=config['results_dir'] + config['run'] + "/prenetworks_bf/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc",
+            costs="data/costs/costs_{planning_horizons}.csv",
+            
+        output: config['results_dir'] + config['run'] + "/postnetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc"    
+        wildcard_constraints:
+            planning_horizons = "^(?!2020).*$" #only applies to timestep different from baseyear
+        shadow: "shallow"
+        log:
+            solver="logs/" + config['run'] + "/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}_solver.log",
+            python="logs/" + config['run'] + "/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}_python.log",
+            memory="logs/" + config['run'] + "/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}_memory.log"
+        benchmark: "benchmarks/solve_network/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}"
+        threads: 4
+        resources: mem_mb=config['solving']['mem']
+        script: "scripts/solve_network.py"
+
+    
+    rule plot_network:
+        input:
+            network=config['results_dir'] + config['run'] + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc"
+        output:
+            map=config['results_dir'] + config['run'] + "/maps/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}-costs-all_{co2_budget_name}_{planning_horizons}.pdf",
+        	today=config['results_dir'] + config['run'] + "/maps/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}-today.pdf"
+        threads: 2
+        resources: mem_mb=10000
+        script: "scripts/plot_network.py"
+
+
+    rule copy_config:
+        input:
+            networks=expand(config['results_dir'] + config['run'] + "/prenetworks_bf/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc",
+                   **config['scenario'])
+        output:
+            config=config['summary_dir'] + '/' + config['run'] + '/configs/config.yaml'
+        threads: 1
+        resources: mem_mb=1000
+        script:
+            'scripts/copy_config.py'
+
+
+    rule make_summary:
+        input:
+            networks=expand(config['results_dir'] + config['run'] + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc",
+                   **config['scenario']),
+            #plots=expand(config['results_dir'] + config['run'] + "/maps/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}-costs-all_{co2_budget_name}_{planning_horizons}.pdf",
+            #       **config['scenario'])
+            #heat_demand_name='data/heating/daily_heat_demand.h5'
+        output:
+            nodal_costs=config['summary_dir'] + '/' + config['run'] + '/csvs/nodal_costs.csv',
+            nodal_capacities=config['summary_dir'] + '/' + config['run'] + '/csvs/nodal_capacities.csv',
+            nodal_cfs=config['summary_dir'] + '/' + config['run'] + '/csvs/nodal_cfs.csv',
+            cfs=config['summary_dir'] + '/' + config['run'] + '/csvs/cfs.csv',
+            costs=config['summary_dir'] + '/' + config['run'] + '/csvs/costs.csv',
+            capacities=config['summary_dir'] + '/' + config['run'] + '/csvs/capacities.csv',
+            curtailment=config['summary_dir'] + '/' + config['run'] + '/csvs/curtailment.csv',
+            energy=config['summary_dir'] + '/' + config['run'] + '/csvs/energy.csv',
+            supply=config['summary_dir'] + '/' + config['run'] + '/csvs/supply.csv',
+            supply_energy=config['summary_dir'] + '/' + config['run'] + '/csvs/supply_energy.csv',
+            prices=config['summary_dir'] + '/' + config['run'] + '/csvs/prices.csv',
+            weighted_prices=config['summary_dir'] + '/' + config['run'] + '/csvs/weighted_prices.csv',
+            market_values=config['summary_dir'] + '/' + config['run'] + '/csvs/market_values.csv',
+            price_statistics=config['summary_dir'] + '/' + config['run'] + '/csvs/price_statistics.csv',
+            metrics=config['summary_dir'] + '/' + config['run'] + '/csvs/metrics.csv'
+        threads: 2
+        resources: mem_mb=10000
+        script:
+            'scripts/make_summary.py'
+
+
+    rule plot_summary:
+        input:
+            costs=config['summary_dir'] + '/' + config['run'] + '/csvs/costs.csv',
+            energy=config['summary_dir'] + '/' + config['run'] + '/csvs/energy.csv',
+        	balances=config['summary_dir'] + '/' + config['run'] + '/csvs/supply_energy.csv'
+        output:
+            costs=config['summary_dir'] + '/' + config['run'] + '/graphs/costs.pdf',
+            energy=config['summary_dir'] + '/' + config['run'] + '/graphs/energy.pdf',
+        	#balances=config['summary_dir'] + '/' + config['run'] + '/graphs/balances-energy.pdf'
+        threads: 2
+        resources: mem_mb=10000
+        script:
+            'scripts/plot_summary.py'
+            
+ruleorder: add_existing_baseyear > add_brownfield
+ruleorder: solve_network_baseyear > solve_network_myopic #baseyear is solved with solve_network_baseyear
