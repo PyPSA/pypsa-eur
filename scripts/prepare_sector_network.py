@@ -422,18 +422,21 @@ def prepare_data(network):
 
     return nodal_energy_totals, heat_demand, ashp_cop, gshp_cop, solar_thermal, transport, avail_profile, dsm_profile, co2_totals, nodal_transport_data
 
+
+
 def prepare_costs():
 
     #set all asset costs and other parameters
-    costs = pd.read_csv(snakemake.input.costs,index_col=list(range(3))).sort_index()
-
+    costs = pd.read_csv(snakemake.input.costs,index_col=list(range(3))).sort_index()    
+    #costs = pd.read_csv(snakemake.input.costs,index_col=list(range(2))).sort_index()
+    
     #correct units to MW and EUR
     costs.loc[costs.unit.str.contains("/kW"),"value"]*=1e3
     costs.loc[costs.unit.str.contains("USD"),"value"]*=snakemake.config['costs']['USD2013_to_EUR2013']
 
     cost_year = snakemake.config['costs']['year']
-
     costs = costs.loc[idx[:,cost_year,:],"value"].unstack(level=2).groupby(level="technology").sum(min_count=1)
+    #costs = costs.loc[:, "value"].unstack(level=1).groupby("technology").sum()
     costs = costs.fillna({"CO2 intensity" : 0,
                           "FOM" : 0,
                           "VOM" : 0,
@@ -446,7 +449,6 @@ def prepare_costs():
 
     costs["fixed"] = [(annuity(v["lifetime"],v["discount rate"])+v["FOM"]/100.)*v["investment"]*Nyears for i,v in costs.iterrows()]
     return costs
-
 
 def add_generation(network):
     print("adding electricity generation")
@@ -1518,10 +1520,14 @@ if __name__ == "__main__":
     if 'snakemake' not in globals():
         from vresutils.snakemake import MockSnakemake
         snakemake = MockSnakemake(
-            wildcards=dict(network='elec', simpl='', clusters='37', lv='2', opts='Co2L-3H'),
-            input=dict(network='../pypsa-eur/networks/{network}_s{simpl}_{clusters}.nc', timezone_mappings='data/timezone_mappings.csv'),
-            output=['networks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}.nc']
-        )
+            wildcards=dict(network='elec', simpl='', clusters='39', lv='1.0', 
+                           opts='', planning_horizons='2020',
+                           sector_opts='Co2L0-168H-T-H-B-I-solar3-dist1'),
+            input=dict(network='pypsa-eur/networks/{network}_s{simpl}_{clusters}_ec_lv{lv}_{opts}.nc', 
+                       timezone_mappings='pypsa-eur-sec/data/timezone_mappings.csv',
+                       co2_budget='pypsa-eur-sec/data/co2_budget.csv'),
+            output=['pypsa-eur-sec/results/test/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{planning_horizons}.nc']
+        )        
         import yaml
         with open('config.yaml') as f:
             snakemake.config = yaml.load(f)
@@ -1539,13 +1545,13 @@ if __name__ == "__main__":
                       override_component_attrs=override_component_attrs)
 
     Nyears = n.snapshot_weightings.sum()/8760.
-
+#%%
     pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout,index_col=0)
     pop_layout["ct"] = pop_layout.index.str[:2]
     ct_total = pop_layout.total.groupby(pop_layout["ct"]).sum()
     pop_layout["ct_total"] = pop_layout["ct"].map(ct_total.get)
     pop_layout["fraction"] = pop_layout["total"]/pop_layout["ct_total"]
-
+#%%
     costs = prepare_costs()
 
     remove_elec_base_techs(n)
@@ -1606,16 +1612,22 @@ if __name__ == "__main__":
     else:
         logger.info("No resampling")
 
-    for o in opts:
-        if "Co2L" in o:
-
-            limit = o[o.find("Co2L")+4:]
-            print(o,limit)
-            if limit == "":
-                limit = snakemake.config['co2_reduction']
-            else:
-                limit = float(limit.replace("p",".").replace("m","-"))
-            add_co2limit(n, Nyears, limit)
+    
+    if snakemake.config["foresight"] == 'myopic':
+        co2_limits=pd.read_csv(snakemake.input.co2_budget, index_col=0)
+        year=snakemake.wildcards.planning_horizons[-4:]
+        limit=co2_limits.loc[int(year),snakemake.config["scenario"]["co2_budget_name"]]
+        add_co2limit(n, Nyears, limit)    
+    else: 
+        for o in opts:
+            if "Co2L" in o:
+                limit = o[o.find("Co2L")+4:]
+                print(o,limit)
+                if limit == "":
+                    limit = snakemake.config['co2_reduction']
+                else:
+                    limit = float(limit.replace("p",".").replace("m","-"))
+                add_co2limit(n, Nyears, limit)
         # add_emission_prices(n, exclude_co2=True)
 
     # if 'Ep' in opts:
