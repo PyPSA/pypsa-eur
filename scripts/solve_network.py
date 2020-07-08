@@ -155,7 +155,7 @@ def add_chp_constraints(n):
 
         define_constraints(n, lhs, "<=", 0, 'chplink', 'top_iso_fuel_line')
 
-def land_use_constraint(n):
+def add_land_use_constraint(n):
     for carrier in ['solar', 'onwind', 'offwind-ac', 'offwind-dc']:
         gens = list(n.generators.index[n.generators.carrier==carrier])
         gens_0=[gen for gen in gens if gen[-4:] not in snakemake.config['scenario']['planning_horizons']]        
@@ -169,6 +169,7 @@ def extra_functionality(n, snapshots):
     #add_opts_constraints(n, opts)
     #add_eps_storage_constraint(n)
     add_chp_constraints(n)
+    add_land_use_constraint(n)
     add_battery_constraints(n)
 
 
