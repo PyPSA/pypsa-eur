@@ -20,6 +20,7 @@ rule all:
     input: 
        config['summary_dir'] + '/' + config['run'] + '/graphs/costs.pdf'
 
+
                                                      
 rule solve_all_elec_networks:
     input:
@@ -349,25 +350,7 @@ if config["foresight"] == "myopic":
         threads: 1
         resources: mem_mb=2000 
         script: "scripts/add_existing_baseyear.py"
-     
-    rule solve_network_baseyear:
-        input:
-            network=config['results_dir'] + config['run'] + "/prenetworks_bf/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc", 
-            config=config['summary_dir'] + '/' + config['run'] + '/configs/config.yaml'
-        output: config['results_dir'] + config['run'] + "/postnetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc"            
-        wildcard_constraints:
-            planning_horizons=config['scenario']['planning_horizons'][0] #only applies to baseyear
-
-        shadow: "shallow"
-        log:
-            solver="logs/" + config['run'] + "/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}_solver.log", 
-            python="logs/" + config['run'] + "/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}_python.log", 
-            memory="logs/" + config['run'] + "/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}_memory.log" 
-        benchmark: "benchmarks/solve_network/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}" 
-        threads: 4
-        resources: mem_mb=config['solving']['mem']
-        script: "scripts/solve_network.py"
-               
+                
     def process_input(wildcards):
         i = config["scenario"]["planning_horizons"].index(wildcards.planning_horizons)
         return config['results_dir'] + config['run'] + "/postnetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_" + config["scenario"]["planning_horizons"][i-1] + ".nc" 
@@ -393,8 +376,8 @@ if config["foresight"] == "myopic":
             costs="data/costs/costs_{planning_horizons}.csv",
             
         output: config['results_dir'] + config['run'] + "/postnetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc"    
-        wildcard_constraints:
-            planning_horizons = "^(?!2020).*$" #only applies to timestep different from baseyear
+        #wildcard_constraints:
+        #    planning_horizons = "^(?!2020).*$" #only applies to timestep different from baseyear
         shadow: "shallow"
         log:
             solver="logs/" + config['run'] + "/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}_solver.log",
@@ -473,4 +456,4 @@ if config["foresight"] == "myopic":
             'scripts/plot_summary.py'
             
 ruleorder: add_existing_baseyear > add_brownfield
-ruleorder: solve_network_baseyear > solve_network_myopic #baseyear is solved with solve_network_baseyear
+
