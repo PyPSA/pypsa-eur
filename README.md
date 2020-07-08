@@ -95,7 +95,7 @@ then download and unpack all the data files.
 
 Create a parallel directory for PyPSA-Eur-Sec with:
 ```shell
-projects % git clone git@github.com:nworbmot/pypsa-eur-sec.git
+projects % git clone git@github.com:PyPSA/pypsa-eur-sec.git
 ```
 
 ## Package requirements
@@ -147,3 +147,11 @@ To only prepare the networks, you can run the scripts up to the point before opt
 ```shell
 projects/pypsa-eur-sec % snakemake prepare_sector_networks
 ```
+
+
+# Licence
+
+The code in PyPSA-Eur-Sec is released as free software under the
+[GPLv3](http://www.gnu.org/licenses/gpl-3.0.en.html), see LICENSE.txt.
+However, different licenses and terms of use may apply to the various
+input data.
