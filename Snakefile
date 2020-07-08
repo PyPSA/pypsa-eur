@@ -376,8 +376,6 @@ if config["foresight"] == "myopic":
             costs="data/costs/costs_{planning_horizons}.csv",
             
         output: config['results_dir'] + config['run'] + "/postnetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc"    
-        #wildcard_constraints:
-        #    planning_horizons = "^(?!2020).*$" #only applies to timestep different from baseyear
         shadow: "shallow"
         log:
             solver="logs/" + config['run'] + "/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}_solver.log",
