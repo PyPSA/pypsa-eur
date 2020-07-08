@@ -1,8 +1,17 @@
+..
+  SPDX-FileCopyrightText: 2019-2020 The PyPSA-Eur Authors
+  
+  SPDX-License-Identifier: CC-BY-4.0
+
 .. _tutorial:
 
 #####################
 Tutorial
 #####################
+
+.. raw:: html
+
+    <iframe width="832" height="468" src="https://www.youtube.com/embed/mAwhQnNRIvs" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 Before getting started with **PyPSA-Eur** it makes sense to be familiar
 with its general modelling framework `PyPSA <https://pypsa.readthedocs.io>`_.
@@ -38,7 +47,7 @@ The model can be adapted to only include selected countries (e.g. Germany) inste
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 15
+   :lines: 16
    
 Likewise, the example's temporal scope can be restricted (e.g. to a single month).
 
