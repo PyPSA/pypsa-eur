@@ -93,7 +93,7 @@ sector:
 
 costs:
   year: 2030
-
+  lifetime: 25 #default lifetime
   # From a Lion Hirth paper, also reflects average of Noothout et al 2016
   discountrate: 0.07
   # [EUR/USD] ECB: https://www.ecb.europa.eu/stats/exchange/eurofxref/html/eurofxref-graph-usd.en.html # noqa: E501
