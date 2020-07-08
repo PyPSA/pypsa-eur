@@ -168,9 +168,10 @@ def add_land_use_constraint(n):
 def extra_functionality(n, snapshots):
     #add_opts_constraints(n, opts)
     #add_eps_storage_constraint(n)
-    add_chp_constraints(n)
-    add_land_use_constraint(n)
+    add_chp_constraints(n)    
     add_battery_constraints(n)
+    if snakemake.config['foresight']=='myopic':
+        add_land_use_constraint(n)
 
 
 
@@ -343,7 +344,7 @@ if __name__ == "__main__":
             log=dict(gurobi="logs/{network}_s{simpl}_{clusters}_lv{lv}_{sector_opts}_{co2_budget_name}_{planning_horizons}_gurobi-test.log",
                      python="logs/{network}_s{simpl}_{clusters}_lv{lv}_{sector_opts}_{co2_budget_name}_{planning_horizons}_python-test.log")
         )
-  
+#%%  
     tmpdir = snakemake.config['solving'].get('tmpdir')
     if tmpdir is not None:
         patch_pyomo_tmpdir(tmpdir)
