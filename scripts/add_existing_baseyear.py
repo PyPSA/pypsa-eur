@@ -67,7 +67,7 @@ def add_power_capacities_installed_before_baseyear(n, year, baseyear, costs):
     Parameters
     ----------
     n : network
-    year : capacity that fulfills YearDecomissioning < year is added
+    year : capacity that fulfills YearDecomissioning > year is added
 
     baseyear : capacity name will be e.g. "solar <baseyear"
                this allows adding the solar capacity that was installed before 
@@ -198,14 +198,14 @@ def add_power_capacities_installed_before_baseyear(n, year, baseyear, costs):
     n.mremove("Generator", [index for index in n.generators.index.to_list() if '<'+baseyear in index and n.generators.p_nom[index]==0])
     n.mremove("Link", [index for index in n.links.index.to_list() if '<'+baseyear in index and n.links.p_nom[index]==0])
     
-def add_heating_capacities_installed_before_baseyear(n, year, baseyear, ashp_cop, gshp_cop, time_dep_hp_cop, costs):
+def add_heating_capacities_installed_before_baseyear(n, year, baseyear, ashp_cop, gshp_cop, time_dep_hp_cop, costs, default_lifetime):
 
     """
 
     Parameters
     ----------
     n : network
-    year : capacity that fulfills YearDecomissioning < year is added 
+    year : capacity that fulfills YearDecomissioning > year is added 
     baseyear : capacity name will be e.g. "gas boiler <baseyear"
                 this allows adding the gas boiler capacity that was installed 
                 before 2020 (baseyear) and is still alive in 2030 (year)
@@ -300,7 +300,7 @@ def add_heating_capacities_installed_before_baseyear(n, year, baseyear, ashp_cop
                carrier="{} {} heat pump".format(name,heat_pump_type),
                efficiency=efficiency,
                capital_cost=costs.at[costs_name,'efficiency']*costs.at[costs_name,'fixed'],
-               p_nom=p_nom[name]*max(0,(2045-int(year))/25)) #decomissioning happens lineary from now to 25 years lter  
+               p_nom=p_nom[name]*max(0,(int(baseyear)+default_lifetime-int(year))/default_lifetime)) #decomissioning happens lineary from now to 25 years lter  
            
         # add resistive heater, gas boilers and oil boilers 
         # (50% capacities to rural buses, 50% to urban buses)
@@ -312,7 +312,7 @@ def add_heating_capacities_installed_before_baseyear(n, year, baseyear, ashp_cop
                carrier=name + " resistive heater",
                efficiency=costs.at[name_type + ' resistive heater','efficiency'],
                capital_cost=costs.at[name_type + ' resistive heater','efficiency']*costs.at[name_type + ' resistive heater','fixed'],
-               p_nom=0.5*df['{} resistive heater'.format(heat_type)][nodes[name]]*max(0,(2045-int(year))/25))
+               p_nom=0.5*df['{} resistive heater'.format(heat_type)][nodes[name]]*max(0,(int(baseyear)+default_lifetime-int(year))/default_lifetime))
 
         n.madd("Link",
                nodes[name],
@@ -324,7 +324,7 @@ def add_heating_capacities_installed_before_baseyear(n, year, baseyear, ashp_cop
                efficiency=costs.at[name_type + ' gas boiler','efficiency'],
                efficiency2=costs.at['gas','CO2 intensity'],
                capital_cost=costs.at[name_type + ' gas boiler','efficiency']*costs.at[name_type + ' gas boiler','fixed'],
-               p_nom=0.5*df['{} gas boiler'.format(heat_type)][nodes[name]]*max(0,(2045-int(year))/25))
+               p_nom=0.5*df['{} gas boiler'.format(heat_type)][nodes[name]]*max(0,(int(baseyear)+default_lifetime-int(year))/default_lifetime))
 
         n.madd("Link",
                nodes[name],
@@ -336,7 +336,7 @@ def add_heating_capacities_installed_before_baseyear(n, year, baseyear, ashp_cop
                efficiency=costs.at['decentral oil boiler','efficiency'],
                efficiency2=costs.at['oil','CO2 intensity'],
                capital_cost=costs.at['decentral oil boiler','efficiency']*costs.at['decentral oil boiler','fixed'],
-               p_nom=0.5*df['{} oil boiler'.format(heat_type)][nodes[name]]*max(0,(2045-int(year))/25))
+               p_nom=0.5*df['{} oil boiler'.format(heat_type)][nodes[name]]*max(0,(int(baseyear)+default_lifetime-int(year))/default_lifetime))
             
         # delete links with p_nom=nan corresponding to extra nodes in country
         n.mremove("Link", [index for index in n.links.index.to_list() if baseyear in index and np.isnan(n.links.p_nom[index])])
@@ -350,9 +350,10 @@ if __name__ == "__main__":
         from vresutils.snakemake import MockSnakemake
         snakemake = MockSnakemake(
             wildcards=dict(network='elec', simpl='', clusters='37', lv='1.0', 
-                           sector_opts='Co2L0-168H-T-H-B-I-solar3-dist1', 
+                           sector_opts='Co2L0-168H-T-H-B-I-solar3-dist1',
+                           co2_budget_name='go',
                            planning_horizons='2020'),
-            input=dict(network='pypsa-eur-sec/results/test/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{planning_horizons}.nc', 
+            input=dict(network='pypsa-eur-sec/results/test/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{co2_budget_name}_{planning_horizons}.nc', 
                        costs='pypsa-eur-sec/data/costs/costs_{planning_horizons}.csv',
                        cop_air_total="pypsa-eur-sec/resources/cop_air_total_{network}_s{simpl}_{clusters}.nc",
                        cop_soil_total="pypsa-eur-sec/resources/cop_soil_total_{network}_s{simpl}_{clusters}.nc"),                      
@@ -376,13 +377,15 @@ if __name__ == "__main__":
     Nyears = n.snapshot_weightings.sum()/8760.
     costs = prepare_costs() 
 
+    
     add_power_capacities_installed_before_baseyear(n, baseyear, baseyear, costs)
         
     if "H" in opts:
         time_dep_hp_cop = options["time_dep_hp_cop"] 
         ashp_cop = xr.open_dataarray(snakemake.input.cop_air_total).T.to_pandas().reindex(index=n.snapshots)
         gshp_cop = xr.open_dataarray(snakemake.input.cop_soil_total).T.to_pandas().reindex(index=n.snapshots)
-        add_heating_capacities_installed_before_baseyear(n, baseyear, baseyear, ashp_cop, gshp_cop, time_dep_hp_cop, costs)
+        default_lifetime = snakemake.config['costs']['lifetime']
+        add_heating_capacities_installed_before_baseyear(n, baseyear, baseyear, ashp_cop, gshp_cop, time_dep_hp_cop, costs, default_lifetime)
    
     n.export_to_netcdf(snakemake.output[0])
 
