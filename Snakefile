@@ -65,6 +65,11 @@ if config['enable'].get('retrieve_databundle', True):
         log: "logs/retrieve_databundle.log"
         script: 'scripts/retrieve_databundle.py'
 
+rule build_load_data:
+    output: "resources/load.csv"
+    log: "logs/retrieve_load_data.log"
+    script: 'scripts/build_load_data.py'
+    
 rule build_powerplants:
     input:
         base_network="networks/base.nc",
