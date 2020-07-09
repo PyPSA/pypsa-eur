@@ -182,22 +182,19 @@ node (`p_nom_max`): ``simple`` and ``conservative``:
 """
 import progressbar as pgb
 from dask.diagnostics import ProgressBar
-from vresutils.array import spdiag
 import geopandas as gpd
+from shapely.geometry import LineString
 from pypsa.geo import haversine
-from scipy.sparse import csr_matrix, vstack
-import multiprocessing as mp
-import pandas as pd
 import xarray as xr
 import numpy as np
 import atlite
-import geokit as gk
 import matplotlib.pyplot as plt
-from _helpers import configure_logging
 import logging
-import geokit as gk
 import glaes as gl
+import geokit as gk
 from osgeo import gdal as gdal
+from _helpers import configure_logging
+
 logger = logging.getLogger(__name__)
 
 
@@ -298,7 +295,7 @@ if __name__ == '__main__':
         gebco.SetProjection(gk.srs.loadSRS(4326).ExportToWkt())
 
     regions = gk.vector.extractFeatures(paths["regions"], onlyAttr=True)
-    buses = regions.index
+    buses = regions.index.rename('bus')
     da = xr.DataArray(buses, dims=['bus']).chunk({'bus': 1})
     available = xr.apply_ufunc(calculate_potential, da,
                                dask='parallelized', vectorize=True,
@@ -307,6 +304,7 @@ if __name__ == '__main__':
                                              'x': len(cutout.data.x)},
                                output_dtypes=[np.float32],
                               ).assign_coords(x=cutout.data.x, y=cutout.data.y)
+    logger.info('GIS: Calculate elegible area per grid cell.')
     with ProgressBar():
         available = available.compute()
 
@@ -314,8 +312,7 @@ if __name__ == '__main__':
               .to_crs({'proj': 'cea'}).area
     area = xr.DataArray(area.values.reshape(cutout.shape),
                         [cutout.coords['y'], cutout.coords['x']])
-    potentials = config['capacity_per_sqkm'] * area
-    potmatrix = available * potentials
+    potmatrix = available * area * config['capacity_per_sqkm']
 
     if not config.get('keep_all_available_areas', False):
         # ignore grid cells where only less than 1 MW can be installed
@@ -324,12 +321,15 @@ if __name__ == '__main__':
     resource = config['resource']
     func = getattr(cutout, resource.pop('method'))
     correction_factor = config.get('correction_factor', 1.)
+
     if correction_factor != 1.:
         logger.warning(f'correction_factor is set as {correction_factor}')
+
+    layout = potmatrix.sum('bus')
     capacity_factor = correction_factor * func(capacity_factor=True, **resource)
     layoutmatrix = (potmatrix * capacity_factor).stack(spatial=['y','x'])
 
-    profile, capacities = func(matrix=layoutmatrix, index=potmatrix.bus,
+    profile, capacities = func(matrix=layoutmatrix, index=buses,
                                per_unit=True, return_capacity=True, **resource)
 
     p_nom_max_meth = config.get('potential', 'conservative')
@@ -337,31 +337,27 @@ if __name__ == '__main__':
     if p_nom_max_meth == 'simple':
         p_nom_max = potmatrix.sum(['x', 'y'])
     elif p_nom_max_meth == 'conservative':
-        # p_nom_max has to be calculated for each bus and is the minimal ratio
-        # (min over all grid cells of the bus region) between the available
-        # potential (potmatrix) and the used normalised layout (layoutmatrix /
-        # capacities), so we would like to calculate i.e. potmatrix / (layoutmatrix /
-        # capacities). Since layoutmatrix = potmatrix * capacity_factor, this
-        # corresponds to capacities/max(capacity factor in the voronoi cell)
+        # p_nom_max is the minimal ratio between the available potential
+        # (potmatrix) and the normalised layout  (layoutmatrix /  capacities)
+        # in a bus region. So we would like to calculate i.e.
+        #       min(potmatrix / (layoutmatrix / capacities)) ∀ busregions
+        # Since
+        #       layoutmatrix = potmatrix * capacity_factor
+        # this corresponds to
+        #       capacities/max(capacity_factor) ∀ busregions
+
         p_nom_max = capacities/capacity_factor.where(potmatrix!=0).max(['x', 'y'])
     else:
         raise AssertionError('Config key `potential` should be one of "simple" '
                               '(default) or "conservative",'
                               ' not "{}"'.format(p_nom_max_meth))
-    layout = potmatrix.sum('bus')
 
     # Determine weighted average distance from substation
     layoutmatrix = layoutmatrix.where(layoutmatrix!=0)
-
-    assert all(layoutmatrix.bus == buses)
-    average_distance = []
-    for i in buses:
-        row = layoutmatrix.sel(bus=i).dropna('spatial')
-        coords = [[s[1], s[0]] for s in row.spatial.data]
-        distances = haversine(regions.loc[i, ['x', 'y']], coords)[0]
-        average_distance.append((distances * (row.data / row.data.sum())).sum())
-
-    average_distance = xr.DataArray(average_distance, [layoutmatrix.bus])
+    distances = haversine(regions[['x', 'y']],  cutout.grid_coordinates())
+    distances = layoutmatrix.copy(data=distances)
+    average_distance = (layoutmatrix *distances / layoutmatrix.sum('spatial'))\
+                        .sum('spatial')
 
     ds = xr.merge([(correction_factor * profile).rename('profile'),
                     capacities.rename('weight'),
@@ -370,18 +366,12 @@ if __name__ == '__main__':
                     average_distance.rename('average_distance')])
 
     if snakemake.wildcards.technology.startswith("offwind"):
-        import geopandas as gpd
-        from shapely.geometry import LineString
-
-        offshore_shape = gpd.read_file(
-            snakemake.input.offshore_shapes).unary_union
+        offshore_shape = gpd.read_file(paths['offshore_shapes']).unary_union
         underwater_fraction = []
         for i in buses:
             row = layoutmatrix.sel(bus=i).dropna('spatial')
             coords = np.array([[s[1], s[0]] for s in row.spatial.data])
-            centre_of_mass = (coords *
-                              (row.data / row.data.sum())[:, np.newaxis])\
-                            .sum(axis=0)
+            centre_of_mass = (coords.T * (row.data / row.data.sum())).sum(1)
             line = LineString([centre_of_mass, regions.loc[i, ['x', 'y']]])
             underwater_fraction.append(
                 line.intersection(offshore_shape).length / line.length)
@@ -393,6 +383,7 @@ if __name__ == '__main__':
                       (ds['p_nom_max'] > config.get('min_p_nom_max', 0.))))
 
     if 'clip_p_max_pu' in config:
-        ds['profile'].values[ds['profile'].values < config['clip_p_max_pu']] = 0.
+        min_p_max_pu = config['clip_p_max_pu']
+        ds['profile'] = ds['profile'].where(ds['profile'] >= min_p_max_pu, 0)
 
     ds.to_netcdf(snakemake.output.profile)
