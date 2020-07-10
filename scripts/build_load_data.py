@@ -1,20 +1,23 @@
 # coding: utf-8
 """
 
-This rule downloads the load data from `Open Power System Data Time series <https://data.open-power-system-data.org/time_series/>` and interpolate the date to fill gaps. The resulting data saved as ``.csv`` file. The user can choos two different load data sources ("ENTSOE_transparency" or "ENTSOE_power_statistics"). 
+This rule downloads the load data from `Open Power System Data Time series <https://data.open-power-system-data.org/time_series/>` and interpolate the date to fill gaps. The resulting data saved as ``.csv`` file. The user can choose between two different data sources ("ENTSOE_transparency" or "ENTSOE_power_statistics"). 
 
 Relevant Settings
 -----------------
 
 .. code:: yaml
 
-    electricity:
-      powerplants_filter:
-      custom_powerplants:
+    snapshots:
+
+    load:
+        url:
+        source:
+        scaling_factor:
 
 .. seealso::
     Documentation of the configuration file ``config.yaml`` at
-    :ref:`electricity`
+    :ref:`load`
 
 Inputs
 ------
@@ -29,36 +32,9 @@ Outputs
 Description
 -----------
 
-The configuration options ``electricity: powerplants_filter`` and ``electricity: custom_powerplants`` can be used to control whether data should be retrieved from the original powerplants database or from custom amendmends. These specify `pandas.query <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.query.html>`_ commands.
+The configuration options ``load: source:`` can be used to control which load data should be used in the model "ENTSOE_transparency" or "ENTSOE_power_statistics".
 
-1. Adding all powerplants from custom:
-
-    .. code:: yaml
-
-        powerplants_filter: false
-        custom_powerplants: true
-
-2. Replacing powerplants in e.g. Germany by custom data:
-
-    .. code:: yaml
-
-        powerplants_filter: Country not in ['Germany']
-        custom_powerplants: true
-
-    or
-
-    .. code:: yaml
-
-        powerplants_filter: Country not in ['Germany']
-        custom_powerplants: Country in ['Germany']
-
-
-3. Adding additional built year constraints:
-
-    .. code:: yaml
-
-        powerplants_filter: Country not in ['Germany'] and YearCommissioned <= 2015
-        custom_powerplants: YearCommissioned <= 2015
+The configuration options ``load: scaling_factor:`` can be used to scal the completly load data by a specify factor.
 
 """
 
@@ -71,7 +47,7 @@ from pathlib import Path
 import pandas as pd
 
 
-def load_timeseries_opsd(years=slice("2018", "2018"), fn=None, countries=None, source="ENTSOE_transparency"):
+def load_timeseries_opsd(years=None, fn=None, countries=None, source="ENTSOE_power_statistics"):
     """
     Read load data from OPSD time-series package version 2019-06-05.
 
@@ -123,7 +99,7 @@ def load_timeseries_opsd(years=slice("2018", "2018"), fn=None, countries=None, s
     return load
 
 
-def interpolate_load_data(load=None, source="ENTSOE_power_statistics"):
+def interpolate_load_data(load, source="ENTSOE_power_statistics"):
     """
     Interpolate load data from OPSD time-series package version 2019-06-05 to fill gaps.
 
@@ -137,11 +113,10 @@ def interpolate_load_data(load=None, source="ENTSOE_power_statistics"):
     Returns
     -------
     load : pd.DataFrame
-        Interpolated load time-series with UTC timestamps x ISO-2 countries
+        Manual adjusted and interpolated load time-series with UTC timestamps x ISO-2 countries
     """
     
-    # manual adjustment of the load data 
-    
+    # manual adjustment of the load data filtered by year and source    
     
     if load.index.year.max() < 2016 and source == 'ENTSOE_power_statistics':
         
@@ -166,17 +141,16 @@ def interpolate_load_data(load=None, source="ENTSOE_power_statistics"):
         # might be better)
         load['EE'] = load['EE'].interpolate()
         
-        logger.info(f"Missing load data are interpolating linearly and adjusted manual. In total {nan_stats.total.sum()} gaps were filled. The longest consecutive gap was {nan_stats.consecutive.max()} hours long.")    
+        logger.info(f"Missing load data are interpolating linearly and adjusted manual.")    
 
 
     if 2018 in load.index.year and source == 'ENTSOE_power_statistics':
 
-        load.interpolate(method='linear', limit=5, inplace=True)
+        load.interpolate(method='linear', limit=3, inplace=True)
         
-        logger.info(f"Missing load data are interpolating linearly. In total {nan_stats.total.sum()} gaps were linearly interpolated. The longest consecutive gap was {nan_stats.consecutive.max()} hours long.")    
+        logger.info(f"Missing load data are interpolating linearly.")    
 
-    
-    # not in use, because not al gaps are covert
+
     if 2018 in load.index.year and source == 'ENTSOE_transparency':
 
         # To fill the gaps in BE 
@@ -184,8 +158,8 @@ def interpolate_load_data(load=None, source="ENTSOE_power_statistics"):
         # we interpolate linearly
         load['BE'] = load['BE'].interpolate()        
 
-        # # To fill the gap in BG from start to stop,
-        # # we copy the same period from one week before into it
+        # To fill the gap in BG from start to stop,
+        # we copy the same period from one week before into it
         start = pd.Timestamp('2018-10-27 21:00')
         stop = pd.Timestamp('2018-10-28 22:00')
         w = pd.Timedelta(weeks=1)
@@ -392,9 +366,7 @@ def interpolate_load_data(load=None, source="ENTSOE_power_statistics"):
         load.loc[date_2, 'MK'] = load.loc[date_2+w, 'MK']
         
         load['MK'] = load['MK'].interpolate()
-    
-        
-        # manual alterations:
+      
         # Kosovo (KV) and Albania (AL) do not exist in the data set
         # Kosovo (KV) gets the same load curve as Serbia (RS)
         # scale parameter selected by energy consumption ratio from IEA Data browser for the year 2017
@@ -404,6 +376,9 @@ def interpolate_load_data(load=None, source="ENTSOE_power_statistics"):
         # scale parameter selected by energy consumption ratio from IEA Data browser for the year 2017
         # https://www.iea.org/data-and-statistics?country=ALBANIA&fuel=Electricity%20and%20heat&indicator=Electricity%20final%20consumption
         load['AL'] = load['MK'] * (6.0 / 7.0)
+        
+        logger.info(f"Missing load data are interpolating linearly and adjusted manual.")
+        logger.info(f"Several load data are missing for 'GR'. Manual processing not possible. Copying the data from another source would be one possibility.")
 
     return load
 
@@ -448,6 +423,7 @@ if __name__ == "__main__":
                                  source = snakemake.config['load']['source']))
 
     # Scalling data according to scalling factor in config.yaml
+    logger.info(f"Load data scalled with scalling factior {snakemake.config['load']['scaling_factor']}.")
     opsd_load = opsd_load * snakemake.config.get('load', {}).get('scaling_factor', 1.0)
 
     # Convert to naive UTC (has to be explicit since pandas 0.24)
@@ -456,10 +432,17 @@ if __name__ == "__main__":
     # check the number and lenght of gaps
     nan_stats = nan_statistics(opsd_load)
     
-    if nan_stats.consecutive.max() > 5:        
-        logger.warning(f'Load data contains consecutive gaps of longer than 5 hours! Check dataset carefully!')
+    if nan_stats.consecutive.max() > 3:        
+        logger.warning(f'Load data contains consecutive gaps of longer than 3 hours! Check dataset carefully!')
+        
+    # adjust gaps manuel and interpolate over small gaps
+    opsd_load_interpolated = interpolate_load_data(load=opsd_load, source=snakemake.config['load']['source'])
+    
+    # check the number and lenght of gaps after manuel adjustment and interpolating
+    nan_stats = nan_statistics(opsd_load_interpolated)
+    
+    if nan_stats.consecutive.max() > 0:        
+        logger.warning(f'Load data contains gaps after manuel adjustment. Modify interpolate_load_data() function!')
 
-    opsd_load_ = interpolate_load_data(load=opsd_load, source=snakemake.config['load']['source'])
-
-    opsd_load.to_csv(snakemake.output[0])
+    opsd_load_interpolated.to_csv(snakemake.output[0])
     
