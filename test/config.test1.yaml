@@ -144,6 +144,8 @@ transformers:
   type: ''
 
 load:
+  url: https://data.open-power-system-data.org/time_series/latest/time_series_60min_singleindex.csv
+  source: ENTSOE_power_statistics #ENTSOE_transparency
   scaling_factor: 1.0
 
 costs:
