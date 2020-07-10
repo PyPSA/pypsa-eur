@@ -1,3 +1,10 @@
+![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/pypsa/pypsa-eur?include_prereleases)
+[![Documentation](https://readthedocs.org/projects/pypsa-eur-sec/badge/?version=latest)](https://pypsa-eur-sec.readthedocs.io/en/latest/?badge=latest)
+![GitHub](https://img.shields.io/github/license/pypsa/pypsa-eur-sec)
+![Size](https://img.shields.io/github/repo-size/pypsa/pypsa-eur-sec)
+[![Zenodo](https://zenodo.org/badge/DOI/10.5281/zenodo.3938042.svg)](https://doi.org/10.5281/zenodo.3938042)
+[![Gitter](https://badges.gitter.im/PyPSA/community.svg)](https://gitter.im/PyPSA/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+
 # PyPSA-Eur-Sec: A Sector-Coupled Open Optimisation Model of the European Energy System
 
 

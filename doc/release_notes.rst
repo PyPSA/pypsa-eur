@@ -58,4 +58,6 @@ Release Process
 
 * Tag a release by running ``git tag v0.x.x``, ``git push``, ``git push --tags``. Include release notes in the tag message.
 
+* Make a `GitHub release <https://github.com/PyPSA/pypsa-eur-sec/releases>`_, which automatically triggers archiving by `zenodo <https://doi.org/10.5281/zenodo.3938042>`_.
+
 * Send announcement on the `PyPSA mailing list <https://groups.google.com/forum/#!forum/pypsa>`_.
