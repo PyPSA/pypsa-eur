@@ -66,7 +66,7 @@ if config['enable'].get('retrieve_databundle', True):
         script: 'scripts/retrieve_databundle.py'
 
 rule build_load_data:
-    output: "resources/load.csv"
+    output: "resources/opsd_load.csv"
     log: "logs/retrieve_load_data.log"
     script: 'scripts/build_load_data.py'
     
@@ -209,7 +209,7 @@ rule add_electricity:
         powerplants='resources/powerplants.csv',
         hydro_capacities='data/bundle/hydro_capacities.csv',
         geth_hydro_capacities='data/geth2015_hydro_capacities.csv',
-        opsd_load='data/bundle/time_series_60min_singleindex_filtered.csv',
+        load='resources/opsd_load.csv',
         nuts3_shapes='resources/nuts3_shapes.geojson',
         **{'profile_' + t: "resources/profile_" + t + ".nc"
            for t in config['renewable']}

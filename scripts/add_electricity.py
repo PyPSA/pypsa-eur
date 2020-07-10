@@ -26,9 +26,9 @@ Relevant Settings
         extendable_carriers:
             Generator:
         estimate_renewable_capacities_from_capacity_stats:
-
+            
     load:
-        scaling_factor:
+        scaling_factor:           
 
     renewable: (keys)
         hydro:
@@ -53,14 +53,9 @@ Inputs
         :scale: 34 %
 
 - ``data/geth2015_hydro_capacities.csv``: alternative to capacities above; NOT CURRENTLY USED!
-- ``data/bundle/time_series_60min_singleindex_filtered.csv``: Hourly per-country load profiles since 2010 from the `ENTSO-E statistical database <https://www.entsoe.eu/data/power-stats/hourly_load/>`_
 
-    .. image:: ../img/load-box.png
-        :scale: 33 %
 
-    .. image:: ../img/load-ts.png
-        :scale: 33 %
-
+- ``resources/load.csv`` Hourly per-country load profiles.
 - ``resources/regions_onshore.geojson``: confer :ref:`busregions`
 - ``resources/nuts3_shapes.geojson``: confer :ref:`shapes`
 - ``resources/powerplants.csv``: confer :ref:`powerplants`
@@ -91,7 +86,6 @@ It further adds extendable ``generators`` with **zero** capacity for
 """
 
 from vresutils.costdata import annuity
-from vresutils.load import timeseries_opsd
 from vresutils import transfer as vtransfer
 
 import logging
@@ -203,6 +197,17 @@ def load_powerplants(ppl_fn=None):
             .rename(columns=str.lower).drop(columns=['efficiency'])
             .replace({'carrier': carrier_dict}))
 
+def load_opsd_loaddata(load_fn=None, countries=None):
+    if load_fn is None:
+        load_fn = snakemake.input.load
+    
+    if countries is None:
+        countries = snakemake.config['countries']
+    
+    load = pd.read_csv(load_fn, index_col=0, parse_dates=True)
+    load = load.filter(items=countries)
+    
+    return (load)
 
 # =============================================================================
 # Attach components
@@ -214,9 +219,11 @@ def attach_load(n):
     substation_lv_i = n.buses.index[n.buses['substation_lv']]
     regions = (gpd.read_file(snakemake.input.regions).set_index('name')
                .reindex(substation_lv_i))
-    opsd_load = (timeseries_opsd(slice(*n.snapshots[[0,-1]].year.astype(str)),
-                                 snakemake.input.opsd_load) *
-                 snakemake.config.get('load', {}).get('scaling_factor', 1.0))
+    opsd_load = load_opsd_loaddata(load_fn=snakemake.input.load, countries=snakemake.config['countries'])
+    
+    # Scalling data according to scalling factor in config.yaml
+    logger.info(f"Load data scalled with scalling factior {snakemake.config['load']['scaling_factor']}.")
+    opsd_load = opsd_load * snakemake.config.get('load', {}).get('scaling_factor', 1.0)
 
     # Convert to naive UTC (has to be explicit since pandas 0.24)
     opsd_load.index = opsd_load.index.tz_localize(None)

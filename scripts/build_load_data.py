@@ -13,7 +13,6 @@ Relevant Settings
     load:
         url:
         source:
-        scaling_factor:
 
 .. seealso::
     Documentation of the configuration file ``config.yaml`` at
@@ -34,7 +33,6 @@ Description
 
 The configuration options ``load: source:`` can be used to control which load data should be used in the model "ENTSOE_transparency" or "ENTSOE_power_statistics".
 
-The configuration options ``load: scaling_factor:`` can be used to scal the completly load data by a specify factor.
 
 """
 
@@ -71,7 +69,7 @@ def load_timeseries_opsd(years=None, fn=None, countries=None, source="ENTSOE_pow
         
     if countries is None:
         countries = snakemake.config['countries']
-        
+     
     if source == 'ENTSOE_transparency':
         load = (pd.read_csv(fn, index_col=0, parse_dates=True)
                 .loc[:, lambda df: df.columns.to_series().str.endswith('_load_actual_entsoe_transparency')]
@@ -421,10 +419,6 @@ if __name__ == "__main__":
                                  fn=to_fn,
                                  countries = snakemake.config['countries'],
                                  source = snakemake.config['load']['source']))
-
-    # Scalling data according to scalling factor in config.yaml
-    logger.info(f"Load data scalled with scalling factior {snakemake.config['load']['scaling_factor']}.")
-    opsd_load = opsd_load * snakemake.config.get('load', {}).get('scaling_factor', 1.0)
 
     # Convert to naive UTC (has to be explicit since pandas 0.24)
     opsd_load.index = opsd_load.index.tz_localize(None)
