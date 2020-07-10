@@ -87,7 +87,7 @@ def add_emission_prices(n, emission_prices=None, exclude_co2=False):
           n.carriers.filter(like='_emissions')).sum(axis=1)
     gen_ep = n.generators.carrier.map(ep) / n.generators.efficiency
     n.generators['marginal_cost'] += gen_ep
-    su_ep = n.storage_units.carrier.map(ep) / n.storage_units.efficiency
+    su_ep = n.storage_units.carrier.map(ep) / n.storage_units.efficiency_dispatch
     n.storage_units['marginal_cost'] += su_ep
 
 def set_line_s_max_pu(n):
