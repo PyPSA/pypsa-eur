@@ -55,7 +55,10 @@ def add_brownfield(n, n_p, year):
     n_p.mremove("Generator", [index for index in n_p.generators.index.to_list() if 'ror' in index])
     
     # generators whose installationYear + lifetime < year are removed
-    n_p.mremove("Generator", [index for index in n_p.generators.index.to_list() if (index[-4:] in previous_timesteps) and (int(index[-4:])+snakemake.config['costs']['lifetime'] < int(year))])
+    #n_p.mremove("Generator", [index for index in n_p.generators.index.to_list() if (index[-4:] in previous_timesteps) and (int(index[-4:])+snakemake.config['costs']['lifetime'] < int(year))])    
+    n_p.mremove("Generator", [index for index in n_p.generators.index.to_list() 
+                              if (n_p.generators.loc[index, 'build_year'] in previous_timesteps) 
+                              and (n_p.generators.loc[index, 'build_year']+n_p.generators.loc[index, 'lifetime'] < int(year))])
     
     # generators whose capacity was optimized in the previous year are renamed
     n_p.generators.index=np.where(n_p.generators.index.str[-4:].isin(previous_timesteps)==False,
@@ -70,14 +73,19 @@ def add_brownfield(n, n_p, year):
             marginal_cost=n_p.generators.marginal_cost,
             capital_cost=n_p.generators.capital_cost,
             efficiency=n_p.generators.efficiency,
-            p_max_pu=n_p.generators_t.p_max_pu)
+            p_max_pu=n_p.generators_t.p_max_pu,
+            build_year=int(previous_timestep),
+            lifetime=snakemake.config['costs']['lifetime'])
             
     #add stores from previous steps
     n_p.mremove("Store", ['co2 atmosphere', 'co2 stored', 'EU gas Store'] )
     
     # stores whose installationYear + lifetime < year are removed
-    n_p.mremove("Store", [index for index in n_p.stores.index.to_list() if (index[-4:] in previous_timesteps) and (int(index[-4:])+snakemake.config['costs']['lifetime'] < int(year))])
-        
+    #n_p.mremove("Store", [index for index in n_p.stores.index.to_list() if (index[-4:] in previous_timesteps) and (int(index[-4:])+snakemake.config['costs']['lifetime'] < int(year))])
+    n_p.mremove("Store", [index for index in n_p.stores.index.to_list() 
+                              if (n_p.stores.loc[index, 'build_year'] in previous_timesteps) 
+                              and (n_p.stores.loc[index, 'build_year']+n_p.stores.loc[index, 'lifetime'] < int(year))])    
+    
     # stores whose capacity was optimized in the previous year are renamed
     n_p.stores.index=np.where(n_p.stores.index.str[-4:].isin(previous_timesteps)==False,
                                   n_p.stores.index + '-' + previous_timestep, 
@@ -88,7 +96,9 @@ def add_brownfield(n, n_p, year):
             carrier=n_p.stores.carrier,
             e_nom=n_p.stores.e_nom_opt,
             e_cyclic=True,
-            capital_cost=n_p.stores.capital_cost)
+            capital_cost=n_p.stores.capital_cost,
+            build_year=int(previous_timestep),
+            lifetime=snakemake.config['costs']['lifetime'])
     
     ## add links from previous steps          
     # TODO: add_chp_constraint() in solve_network needs to be adjusted
@@ -96,8 +106,11 @@ def add_brownfield(n, n_p, year):
     n_p.mremove("Link", [index for index in n_p.links.index.to_list() if 'CHP' in index])
     
     # stores whose installationYear + lifetime < year are removed
-    n_p.mremove("Link", [index for index in n_p.links.index.to_list() if (index[-4:] in previous_timesteps) and (int(index[-4:])+snakemake.config['costs']['lifetime'] < int(year))])
-    
+    #n_p.mremove("Link", [index for index in n_p.links.index.to_list() if (index[-4:] in previous_timesteps) and (int(index[-4:])+snakemake.config['costs']['lifetime'] < int(year))])
+    n_p.mremove("Link", [index for index in n_p.links.index.to_list() 
+                              if (n_p.links.loc[index, 'build_year'] in previous_timesteps) 
+                              and (n_p.links.loc[index, 'build_year']+n_p.links.loc[index, 'lifetime'] < int(year))]) 
+        
     # links whose installationYear + lifetime < year are removed
     n_p.links.index=np.where(n_p.links.index.str[-4:].isin(previous_timesteps)==False,
                                   n_p.links.index + '-' + previous_timestep, 
@@ -112,7 +125,9 @@ def add_brownfield(n, n_p, year):
             marginal_cost=n_p.links.marginal_cost,
             capital_cost=n_p.links.capital_cost,
             efficiency=n_p.links.efficiency,
-            efficiency2=n_p.links.efficiency2)
+            efficiency2=n_p.links.efficiency2,
+            build_year=int(previous_timestep),
+            lifetime=snakemake.config['costs']['lifetime'])
     
     
 if __name__ == "__main__":
@@ -123,9 +138,9 @@ if __name__ == "__main__":
             wildcards=dict(network='elec', simpl='', clusters='37', lv='1.0', 
                            sector_opts='Co2L0-168H-T-H-B-I-solar3-dist1',
                            co2_budget_name='go',
-                           planning_horizons='2050'),
+                           planning_horizons='2030'),
             input=dict(network='pypsa-eur-sec/results/test/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{co2_budget_name}_{planning_horizons}.nc', 
-                       network_p='pypsa-eur-sec/results/test/postnetworks/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{co2_budget_name}_2040.nc',                        
+                       network_p='pypsa-eur-sec/results/test/postnetworks/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{co2_budget_name}_2020.nc',                        
                        costs='pypsa-eur-sec/data/costs/costs_{planning_horizons}.csv',
                        cop_air_total="pypsa-eur-sec/resources/cop_air_total_{network}_s{simpl}_{clusters}.nc",
                        cop_soil_total="pypsa-eur-sec/resources/cop_soil_total_{network}_s{simpl}_{clusters}.nc"),                   
@@ -148,7 +163,7 @@ if __name__ == "__main__":
   
     n_p = pypsa.Network(snakemake.input.network_p,
                       override_component_attrs=override_component_attrs)
-
+#%%
     add_brownfield(n, n_p, year)
     
     Nyears = n.snapshot_weightings.sum()/8760.

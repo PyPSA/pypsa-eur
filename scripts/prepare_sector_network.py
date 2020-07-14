@@ -1664,4 +1664,13 @@ if __name__ == "__main__":
     if snakemake.config["sector"]['electricity_grid_connection']:
         add_electricity_grid_connection(n)
 
+
+    # Add lifetime and build_year attributes to generators, links and stores
+    n.generators["lifetime"]=np.nan
+    n.generators["build_year"]=np.nan
+    n.links["lifetime"]=np.nan
+    n.links["build_year"]=np.nan
+    n.stores["lifetime"]=np.nan
+    n.stores["build_year"]=np.nan
+    
     n.export_to_netcdf(snakemake.output[0])
