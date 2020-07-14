@@ -20,6 +20,7 @@ import pytz
 
 from vresutils.costdata import annuity
 
+from prepare_sector_network import prepare_costs
 
 #First tell PyPSA that links can have multiple outputs by
 #overriding the component_attrs. This can be done for
@@ -34,32 +35,6 @@ override_component_attrs["Link"].loc["efficiency3"] = ["static or series","per u
 override_component_attrs["Link"].loc["p2"] = ["series","MW",0.,"2nd bus output","Output"]
 override_component_attrs["Link"].loc["p3"] = ["series","MW",0.,"3rd bus output","Output"]
 
-def prepare_costs():
-
-    #set all asset costs and other parameters
-    #costs = pd.read_csv(snakemake.input.costs,index_col=list(range(3))).sort_index()
-    
-    costs = pd.read_csv(snakemake.input.costs,index_col=list(range(2))).sort_index()
-    
-    #correct units to MW and EUR
-    costs.loc[costs.unit.str.contains("/kW"),"value"]*=1e3
-    costs.loc[costs.unit.str.contains("USD"),"value"]*=snakemake.config['costs']['USD2013_to_EUR2013']
-
-    #cost_year = snakemake.config['costs']['year']
-    #costs = costs.loc[idx[:,cost_year,:],"value"].unstack(level=2).groupby(level="technology").sum(min_count=1)
-    costs = costs.loc[:, "value"].unstack(level=1).groupby("technology").sum()
-    costs = costs.fillna({"CO2 intensity" : 0,
-                          "FOM" : 0,
-                          "VOM" : 0,
-                          "discount rate" : snakemake.config['costs']['discountrate'],
-                          "efficiency" : 1,
-                          "fuel" : 0,
-                          "investment" : 0,
-                          "lifetime" : 25
-    })
-
-    costs["fixed"] = [(annuity(v["lifetime"],v["discount rate"])+v["FOM"]/100.)*v["investment"]*Nyears for i,v in costs.iterrows()]
-    return costs
 
 def add_power_capacities_installed_before_baseyear(n, year, baseyear, costs):
     """
@@ -375,7 +350,10 @@ if __name__ == "__main__":
                       override_component_attrs=override_component_attrs)
    
     Nyears = n.snapshot_weightings.sum()/8760.
-    costs = prepare_costs() 
+    costs = prepare_costs(snakemake.input.costs,
+                          snakemake.config['costs']['USD2013_to_EUR2013'],
+                          snakemake.config['costs']['discountrate'],
+                          Nyears)
 
     
     add_power_capacities_installed_before_baseyear(n, baseyear, baseyear, costs)

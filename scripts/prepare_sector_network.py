@@ -424,23 +424,23 @@ def prepare_data(network):
 
 
 
-def prepare_costs():
+def prepare_costs(cost_file, USD_to_EUR, discount_rate, Nyears):
 
     #set all asset costs and other parameters
-    costs = pd.read_csv(snakemake.input.costs,index_col=list(range(3))).sort_index()    
-    #costs = pd.read_csv(snakemake.input.costs,index_col=list(range(2))).sort_index()
+    #costs = pd.read_csv(snakemake.input.costs,index_col=list(range(3))).sort_index()    
+    costs = pd.read_csv(cost_file,index_col=list(range(2))).sort_index()
     
     #correct units to MW and EUR
     costs.loc[costs.unit.str.contains("/kW"),"value"]*=1e3
-    costs.loc[costs.unit.str.contains("USD"),"value"]*=snakemake.config['costs']['USD2013_to_EUR2013']
+    costs.loc[costs.unit.str.contains("USD"),"value"]*=USD_to_EUR 
 
-    cost_year = snakemake.config['costs']['year']
-    costs = costs.loc[idx[:,cost_year,:],"value"].unstack(level=2).groupby(level="technology").sum(min_count=1)
-    #costs = costs.loc[:, "value"].unstack(level=1).groupby("technology").sum()
+    #cost_year = snakemake.config['costs']['year']
+    #costs = costs.loc[idx[:,cost_year,:],"value"].unstack(level=2).groupby(level="technology").sum(min_count=1)
+    costs = costs.loc[:, "value"].unstack(level=1).groupby("technology").sum()
     costs = costs.fillna({"CO2 intensity" : 0,
                           "FOM" : 0,
                           "VOM" : 0,
-                          "discount rate" : snakemake.config['costs']['discountrate'],
+                          "discount rate" : discount_rate, 
                           "efficiency" : 1,
                           "fuel" : 0,
                           "investment" : 0,
@@ -648,7 +648,8 @@ def add_storage(network):
                  capital_cost=costs.at["fuel cell","fixed"]*costs.at["fuel cell","efficiency"])  #NB: fixed cost is per MWel
 
     if options['hydrogen_underground_storage']:
-        h2_capital_cost = costs.at["hydrogen underground storage","fixed"]
+        h2_capital_cost = costs.at["gas storage","fixed"]
+        #h2_capital_cost = costs.at["hydrogen underground storage","fixed"]
     else:
         h2_capital_cost = costs.at["hydrogen storage","fixed"]
 
@@ -1500,7 +1501,8 @@ def remove_h2_network(n):
     n.stores.drop(["EU H2 Store"],inplace=True)
 
     if options['hydrogen_underground_storage']:
-        h2_capital_cost = costs.at["hydrogen underground storage","fixed"]
+        h2_capital_cost = costs.at["gas storage","fixed"]
+        #h2_capital_cost = costs.at["hydrogen underground storage","fixed"]
     else:
         h2_capital_cost = costs.at["hydrogen storage","fixed"]
 
@@ -1520,13 +1522,28 @@ if __name__ == "__main__":
     if 'snakemake' not in globals():
         from vresutils.snakemake import MockSnakemake
         snakemake = MockSnakemake(
-            wildcards=dict(network='elec', simpl='', clusters='39', lv='1.0', 
+            wildcards=dict(network='elec', simpl='', clusters='37', lv='1.0', 
                            opts='', planning_horizons='2020',
+                           co2_budget_name='go',
                            sector_opts='Co2L0-168H-T-H-B-I-solar3-dist1'),
             input=dict(network='pypsa-eur/networks/{network}_s{simpl}_{clusters}_ec_lv{lv}_{opts}.nc', 
                        timezone_mappings='pypsa-eur-sec/data/timezone_mappings.csv',
-                       co2_budget='pypsa-eur-sec/data/co2_budget.csv'),
-            output=['pypsa-eur-sec/results/test/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{planning_horizons}.nc']
+                       co2_budget='pypsa-eur-sec/data/co2_budget.csv',
+                       clustered_pop_layout='pypsa-eur-sec/resources/pop_layout_{network}_s{simpl}_{clusters}.csv',
+                       #costs='pypsa-eur-sec/data/costs.csv',
+                       costs='pypsa-eur-sec/data/costs/costs_{planning_horizons}.csv',
+                       cop_air_total='pypsa-eur-sec/resources/cop_air_total_{network}_s{simpl}_{clusters}.nc',
+                       cop_soil_total='pypsa-eur-sec/resources/cop_soil_total_{network}_s{simpl}_{clusters}.nc',
+                       solar_thermal_total='pypsa-eur-sec/resources/solar_thermal_total_{network}_s{simpl}_{clusters}.nc',
+                       energy_totals_name='pypsa-eur-sec/data/energy_totals.csv',
+                       heat_demand_total='pypsa-eur-sec/resources/heat_demand_total_{network}_s{simpl}_{clusters}.nc',
+                       heat_profile='pypsa-eur-sec/data/heat_load_profile_BDEW.csv',
+                       transport_name='pypsa-eur-sec/data/transport_data.csv',
+                       temp_air_total='pypsa-eur-sec/resources/temp_air_total_{network}_s{simpl}_{clusters}.nc',
+                       co2_totals_name='pypsa-eur-sec/data/co2_totals.csv',
+                       biomass_potentials='pypsa-eur-sec/data/biomass_potentials.csv',
+                       industrial_demand='pypsa-eur-sec/resources/industrial_demand_{network}_s{simpl}_{clusters}.csv',),
+            output=['pypsa-eur-sec/results/test/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{co2_budget_name}_{planning_horizons}.nc']
         )        
         import yaml
         with open('config.yaml') as f:
@@ -1545,14 +1562,17 @@ if __name__ == "__main__":
                       override_component_attrs=override_component_attrs)
 
     Nyears = n.snapshot_weightings.sum()/8760.
-#%%
+
     pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout,index_col=0)
     pop_layout["ct"] = pop_layout.index.str[:2]
     ct_total = pop_layout.total.groupby(pop_layout["ct"]).sum()
     pop_layout["ct_total"] = pop_layout["ct"].map(ct_total.get)
     pop_layout["fraction"] = pop_layout["total"]/pop_layout["ct_total"]
-#%%
-    costs = prepare_costs()
+
+    costs = prepare_costs(snakemake.input.costs, 
+                          snakemake.config['costs']['USD2013_to_EUR2013'],
+                          snakemake.config['costs']['discountrate'],
+                          Nyears)
 
     remove_elec_base_techs(n)
 
