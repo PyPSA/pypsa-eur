@@ -185,7 +185,7 @@ rule prepare_sector_network:
         biomass_potentials='data/biomass_potentials.csv',
         timezone_mappings='data/timezone_mappings.csv',
         heat_profile="data/heat_load_profile_BDEW.csv",
-        costs="data/costs.csv", #"data/costs/costs_{planning_horizons}.csv",
+        costs="data/costs/costs_{planning_horizons}.csv", #"data/costs.csv"
         co2_budget="data/co2_budget.csv",
         clustered_pop_layout="resources/pop_layout_{network}_s{simpl}_{clusters}.csv",
         industrial_demand="resources/industrial_demand_{network}_s{simpl}_{clusters}.csv",
