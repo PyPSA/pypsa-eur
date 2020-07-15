@@ -82,7 +82,7 @@ def load_timeseries_opsd(years=None, fn=None, countries=None, source="ENTSOE_pow
             .rename(columns=lambda s: s[:-len('_load_actual_entsoe_power_statistics')])
             .dropna(how="all", axis=0))
     else:
-        logger.warning("Please proviede correct source name for load data")
+        raise NotImplementedError(f"Data for source `{source}` not available.")
     
     
     if 'GB_UKM' in load.columns:
