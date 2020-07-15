@@ -92,7 +92,15 @@ def load_timeseries_opsd(years=None, fn=None, countries=None, source="ENTSOE_pow
         
     
     return load
+def consecutive_nans(ds):
+    return (ds.isnull().astype(int)
+            .groupby(ds.notnull().astype(int).cumsum())
+            .transform('sum'))
 
+def fill_large_gaps(ds, gapsize=3):
+    """Fill up large gaps with load data from the previous week."""
+    week_shift = pd.Series(ds.values, ds.index + pd.Timedelta('1w'))
+    return ds.where(consecutive_nans(ds) < gapsize, week_shift.reindex_like(ds))
 
 def interpolate_load_data(load, source="ENTSOE_power_statistics"):
     """
