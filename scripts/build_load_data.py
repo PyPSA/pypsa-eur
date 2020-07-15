@@ -85,10 +85,7 @@ def load_timeseries_opsd(years=None, fn=None, countries=None, source="ENTSOE_pow
         raise NotImplementedError(f"Data for source `{source}` not available.")
     
     
-    if 'GB_UKM' in load.columns:
-        load.rename(columns={'GB_UKM' : 'GB'}, inplace=True)
-    
-    load = load.filter(items=countries)
+   load = load.rename(columns={'GB_UKM' : 'GB'}).filter(items=countries)
 
     if years is not None:
         load = load.loc[years]
