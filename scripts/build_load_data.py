@@ -72,29 +72,39 @@ def load_timeseries_opsd(years=None, fn=None, countries=None, source="ENTSOE_pow
      
     if source == 'ENTSOE_transparency':
         load = (pd.read_csv(fn, index_col=0, parse_dates=True)
-                .loc[:, lambda df: df.columns.to_series().str.endswith('_load_actual_entsoe_transparency')]
+                .filter(like='_load_actual_entsoe_transparency')
                 .rename(columns=lambda s: s[:-len('_load_actual_entsoe_transparency')])
                 .dropna(how="all", axis=0))
         
     elif source == 'ENTSOE_power_statistics':
         load = (pd.read_csv(fn, index_col=0, parse_dates=True)
-            .loc[:, lambda df: df.columns.to_series().str.endswith('_load_actual_entsoe_power_statistics')]
+            .filter(like='_load_actual_entsoe_power_statistics')
             .rename(columns=lambda s: s[:-len('_load_actual_entsoe_power_statistics')])
             .dropna(how="all", axis=0))
     else:
-        logger.warning("Please proviede correct source name for load data")
+        raise NotImplementedError(f"Data for source `{source}` not available.")
     
     
-    if 'GB_UKM' in load.columns:
-        load.rename(columns={'GB_UKM' : 'GB'}, inplace=True)
-    
-    load = load.filter(items=countries)
+    load = load.rename(columns={'GB_UKM' : 'GB'}).filter(items=countries)
 
     if years is not None:
         load = load.loc[years]
         
     
     return load
+
+
+
+def consecutive_nans(ds):
+    return (ds.isnull().astype(int)
+            .groupby(ds.notnull().astype(int).cumsum())
+            .transform('sum'))
+
+
+def fill_large_gaps(ds, gapsize=3):
+    """Fill up large gaps with load data from the previous week."""
+    week_shift = pd.Series(ds.values, ds.index + pd.Timedelta('1w'))
+    return ds.where(consecutive_nans(ds) < gapsize, week_shift.reindex_like(ds))
 
 
 def interpolate_load_data(load, source="ENTSOE_power_statistics"):
