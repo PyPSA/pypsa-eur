@@ -38,9 +38,7 @@ The configuration options ``load: source:`` can be used to control which load da
 
 import logging
 logger = logging.getLogger(__name__)
-from _helpers import progress_retrieve, configure_logging
-
-from pathlib import Path
+from _helpers import configure_logging
 
 import pandas as pd
 
@@ -55,7 +53,7 @@ def load_timeseries_opsd(years=None, fn=None, countries=None, source="ENTSOE_pow
         Years for which to read load data (defaults to
         slice("2018","2019"))
         
-    fn : file name
+    fn : file name or url location (file format .csv)
     
     countries : Countries for which to read load data.
         
@@ -66,9 +64,11 @@ def load_timeseries_opsd(years=None, fn=None, countries=None, source="ENTSOE_pow
     load : pd.DataFrame
         Load time-series with UTC timestamps x ISO-2 countries
     """
-        
+
     if countries is None:
         countries = snakemake.config['countries']
+        
+    logger.info(f"Retrieving load data from '{fn}'.")
      
     if source == 'ENTSOE_transparency':
         load = (pd.read_csv(fn, index_col=0, parse_dates=True)
@@ -92,6 +92,7 @@ def load_timeseries_opsd(years=None, fn=None, countries=None, source="ENTSOE_pow
         
     
     return load
+
 def consecutive_nans(ds):
     return (ds.isnull().astype(int)
             .groupby(ds.notnull().astype(int).cumsum())
@@ -102,9 +103,20 @@ def fill_large_gaps(ds, gapsize=3):
     week_shift = pd.Series(ds.values, ds.index + pd.Timedelta('1w'))
     return ds.where(consecutive_nans(ds) < gapsize, week_shift.reindex_like(ds))
 
-def interpolate_load_data(load, source="ENTSOE_power_statistics"):
+def nan_statistics(df):
+    def max_consecutive_nans(ds):
+        return (ds.isnull().astype(int)
+                  .groupby(ds.notnull().astype(int).cumsum())
+                  .sum().max())
+    consecutive = df.apply(max_consecutive_nans)
+    total = df.isnull().sum()
+    max_total_per_month = df.isnull().resample('m').sum().max()
+    return pd.concat([total, consecutive, max_total_per_month],
+                 keys=['total', 'consecutive', 'max_total_per_month'], axis=1)
+
+def manual_adjustment(load, source="ENTSOE_power_statistics"):
     """
-    Interpolate load data from OPSD time-series package version 2019-06-05 to fill gaps.
+    Adjust gaps manual for load data from OPSD time-series package.
 
     Parameters
     ----------
@@ -119,16 +131,18 @@ def interpolate_load_data(load, source="ENTSOE_power_statistics"):
         Manual adjusted and interpolated load time-series with UTC timestamps x ISO-2 countries
     """
     
-    # manual adjustment of the load data filtered by year and source    
+    # manual adjustment of the load data    
     
     if load.index.year.max() < 2016 and source == 'ENTSOE_power_statistics':
         
         # manual alterations:
         # Kosovo gets the same load curve as Serbia
         # scaled by energy consumption ratio from IEA 2012
-        load['KV'] = load['RS'] * (4.8 / 27.)
+        if 'KV' not in load.columns or load.KV.isnull().values.all():
+            load['KV'] = load['RS'] * (4.8 / 27.)
         # Albania gets the same load curve as Macedonia
-        load['AL'] = load['MK'] * (4.1 / 7.4)
+        if 'AL' not in load.columns or load.AL.isnull().values.all():
+            load['AL'] = load['MK'] * (4.1 / 7.4)
     
         # To fill the half week gap in Greece from start to stop,
         # we copy the week before into it
@@ -140,26 +154,12 @@ def interpolate_load_data(load, source="ENTSOE_power_statistics"):
             load.loc[start:stop, 'GR'] = load.loc[start-w:stop-w, 'GR'].values
 
         # There are three missing hours in 2014 and four in 2015
-        # we interpolate linearly (copying from the previous week
-        # might be better)
+        # we interpolate linearly
         load['EE'] = load['EE'].interpolate()
-        
-        logger.info(f"Missing load data are interpolating linearly and adjusted manual.")    
-
-
-    if 2018 in load.index.year and source == 'ENTSOE_power_statistics':
-
-        load.interpolate(method='linear', limit=3, inplace=True)
-        
-        logger.info(f"Missing load data are interpolating linearly.")    
 
 
     if 2018 in load.index.year and source == 'ENTSOE_transparency':
 
-        # To fill the gaps in BE 
-        # There are two missing hours in 2018
-        # we interpolate linearly
-        load['BE'] = load['BE'].interpolate()        
 
         # To fill the gap in BG from start to stop,
         # we copy the same period from one week before into it
@@ -386,16 +386,7 @@ def interpolate_load_data(load, source="ENTSOE_power_statistics"):
     return load
 
 
-def nan_statistics(df):
-    def max_consecutive_nans(ds):
-        return (ds.isnull().astype(int)
-                  .groupby(ds.notnull().astype(int).cumsum())
-                  .sum().max())
-    consecutive = df.apply(max_consecutive_nans)
-    total = df.isnull().sum()
-    max_total_per_month = df.isnull().resample('m').sum().max()
-    return pd.concat([total, consecutive, max_total_per_month],
-                 keys=['total', 'consecutive', 'max_total_per_month'], axis=1)
+
 
 
 if __name__ == "__main__":
@@ -411,37 +402,38 @@ if __name__ == "__main__":
     
     url = snakemake.config['load']['url']
     
-    # Save location
-    to_fn = Path(f"{rootpath}/data/time_series_60min_singleindex.csv")
-
-    logger.info(f"Downloading load data from '{url}'.")
-    
-    progress_retrieve(url, to_fn)
-
-    logger.info(f"Raw load data available at '{to_fn}'.")
-    
     opsd_load = (load_timeseries_opsd(years = slice(*pd.date_range(freq='y', **snakemake.config['snapshots'])[[0,-1]].year.astype(str)),
-                                 fn=to_fn,
+                                 fn=url,
                                  countries = snakemake.config['countries'],
                                  source = snakemake.config['load']['source']))
 
     # Convert to naive UTC (has to be explicit since pandas 0.24)
     opsd_load.index = opsd_load.index.tz_localize(None)
     
-    # check the number and lenght of gaps
+    # # check the number and lenght of gaps
     nan_stats = nan_statistics(opsd_load)
     
-    if nan_stats.consecutive.max() > 3:        
-        logger.warning(f'Load data contains consecutive gaps of longer than 3 hours! Check dataset carefully!')
-        
-    # adjust gaps manuel and interpolate over small gaps
-    opsd_load_interpolated = interpolate_load_data(load=opsd_load, source=snakemake.config['load']['source'])
+    gap_filling_threshold = snakemake.config['load']['gap_filling_threshold']
     
-    # check the number and lenght of gaps after manuel adjustment and interpolating
-    nan_stats = nan_statistics(opsd_load_interpolated)
-    
-    if nan_stats.consecutive.max() > 0:        
-        logger.warning(f'Load data contains gaps after manuel adjustment. Modify interpolate_load_data() function!')
+  
+    if nan_stats.consecutive.max() > gap_filling_threshold:        
+        logger.warning(f"Load data contains consecutive gaps of longer than '{gap_filling_threshold}' hours! Check dataset carefully!")
 
-    opsd_load_interpolated.to_csv(snakemake.output[0])
+    # adjust gaps and interpolate load data
+    logger.info(f"Gaps of {gap_filling_threshold} hours filled with data from previous week. Smaler gaps interpolated linearly.")
+    opsd_load = opsd_load.apply(fill_large_gaps, gapsize=gap_filling_threshold).interpolate(method='linear', limit=gap_filling_threshold)
+    
+          
+    # adjust gaps manuel
+    if snakemake.config['load']['adjust_gaps_manuel']:
+        logger.info(f"Load data are adjusted manual.")
+        opsd_load = manual_adjustment(load=opsd_load, source=snakemake.config['load']['source'])
+    
+    # check the number and lenght of gaps after adjustment and interpolating
+    nan_stats = nan_statistics(opsd_load)
+    
+    if nan_stats.consecutive.max() > gap_filling_threshold:        
+        logger.warning(f'Load data contains gaps after manuel adjustment. Modify manual_adjustment() function!')
+
+    opsd_load.to_csv(snakemake.output[0])
     
