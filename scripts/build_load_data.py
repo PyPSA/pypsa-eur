@@ -183,10 +183,7 @@ def manual_adjustment(load, source="ENTSOE_power_statistics"):
     
         load.loc[start:stop, 'EE'] = load.loc[start-w:stop-w, 'EE'].values
             
-        # to fill a 3 hour gap in the night
-        load['EE'] = load['EE'].interpolate()
-        
-        
+    
         # To fill the gaps in FR from start to stop,
         # we copy the same period from one week before into it
         start = pd.Timestamp('2018-08-12 07:00')
@@ -194,9 +191,7 @@ def manual_adjustment(load, source="ENTSOE_power_statistics"):
         w = pd.Timedelta(weeks=1)
     
         load.loc[start:stop, 'FR'] = load.loc[start-w:stop-w, 'FR'].values
-            
-        # to fill a two 3 hour gaps in the night
-        load['FR'] = load['FR'].interpolate()
+
         
         # To fill the first gaps in LT from start to stop,
         # we copy the same period from the next sunnday into it
@@ -258,7 +253,6 @@ def manual_adjustment(load, source="ENTSOE_power_statistics"):
         
         load.loc[start:stop, 'LU'] = load.loc[start+w:stop+w, 'LU'].values
         
-        load['LU'] = load['LU'].interpolate()
     
         # To fill the gaps in MK from start to stop,
         # we copy the same period from one week before into it
@@ -368,7 +362,6 @@ def manual_adjustment(load, source="ENTSOE_power_statistics"):
         load.loc[date_1, 'MK'] = load.loc[date_1+w, 'MK']
         load.loc[date_2, 'MK'] = load.loc[date_2+w, 'MK']
         
-        load['MK'] = load['MK'].interpolate()
       
         # Kosovo (KV) and Albania (AL) do not exist in the data set
         # Kosovo (KV) gets the same load curve as Serbia (RS)
