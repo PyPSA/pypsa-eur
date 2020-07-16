@@ -197,18 +197,6 @@ def load_powerplants(ppl_fn=None):
             .rename(columns=str.lower).drop(columns=['efficiency'])
             .replace({'carrier': carrier_dict}))
 
-def load_opsd_loaddata(load_fn=None, countries=None):
-    if load_fn is None:
-        load_fn = snakemake.input.load
-    
-    if countries is None:
-        countries = snakemake.config['countries']
-    
-    load = pd.read_csv(load_fn, index_col=0, parse_dates=True)
-    load = load.filter(items=countries)
-    
-    return (load)
-
 # =============================================================================
 # Attach components
 # =============================================================================
