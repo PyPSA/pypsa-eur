@@ -407,16 +407,14 @@ if __name__ == "__main__":
     nan_stats = nan_statistics(opsd_load)
     
     gap_filling_threshold = snakemake.config['load']['gap_filling_threshold']
-    
-  
+      
     if nan_stats.consecutive.max() > gap_filling_threshold:        
         logger.warning(f"Load data contains consecutive gaps of longer than '{gap_filling_threshold}' hours! Check dataset carefully!")
 
     # adjust gaps and interpolate load data
     logger.info(f"Gaps of {gap_filling_threshold} hours filled with data from previous week. Smaler gaps interpolated linearly.")
     opsd_load = opsd_load.apply(fill_large_gaps, gapsize=gap_filling_threshold).interpolate(method='linear', limit=gap_filling_threshold)
-    
-          
+              
     # adjust gaps manuel
     if snakemake.config['load']['adjust_gaps_manuel']:
         logger.info(f"Load data are adjusted manual.")
