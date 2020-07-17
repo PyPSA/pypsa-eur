@@ -102,7 +102,8 @@ def add_co2_tracking(n):
                carrier="DAC",
                marginal_cost=75.,
                efficiency=1.,
-               p_nom_extendable=True)
+               p_nom_extendable=True,
+               lifetime=costs.at['DAC','lifetime'])
 
 
 def add_co2limit(n, Nyears=1.,limit=0.):
@@ -492,7 +493,8 @@ def add_generation(network):
                      p_nom_extendable=True,
                      carrier=generator,
                      efficiency=costs.at[generator,'efficiency'],
-                     efficiency2=costs.at[carrier,'CO2 intensity'])
+                     efficiency2=costs.at[carrier,'CO2 intensity'],
+                     lifetime=costs.at[generator,'lifetime'])
 
 def add_wave(network, wave_cost_factor):
     wave_fn = "data/WindWaveWEC_GLTB.xlsx"
@@ -547,6 +549,7 @@ def insert_electricity_distribution_grid(network):
                  carrier="electricity distribution grid",
                  efficiency=1,
                  marginal_cost=0,
+                 lifetime=costs.at['electricity distribution grid','lifetime'],
                  capital_cost=costs.at['electricity distribution grid','fixed']*snakemake.config["sector"]['electricity_distribution_grid_cost_factor'])
 
     loads = network.loads.index[network.loads.carrier=="electricity"]
@@ -574,7 +577,8 @@ def insert_electricity_distribution_grid(network):
                  marginal_cost=network.generators.loc[solar, 'marginal_cost'],
                  capital_cost=costs.at['solar-rooftop','fixed'],
                  efficiency=network.generators.loc[solar, 'efficiency'],
-                 p_max_pu=network.generators_t.p_max_pu[solar])
+                 p_max_pu=network.generators_t.p_max_pu[solar],
+                 lifetime=costs.at['solar-rooftop','lifetime'])
 
 
 
@@ -590,7 +594,8 @@ def insert_electricity_distribution_grid(network):
                  e_cyclic=True,
                  e_nom_extendable=True,
                  carrier="home battery",
-                 capital_cost=costs.at['battery storage','fixed'])
+                 capital_cost=costs.at['battery storage','fixed'],
+                 lifetime=costs.at['battery storage','lifetime'])
 
     network.madd("Link",
                  nodes + " home battery charger",
@@ -599,7 +604,8 @@ def insert_electricity_distribution_grid(network):
                  carrier="home battery charger",
                  efficiency=costs.at['battery inverter','efficiency']**0.5,
                  capital_cost=costs.at['battery inverter','fixed'],
-                 p_nom_extendable=True)
+                 p_nom_extendable=True,
+                 lifetime=costs.at['battery inverter','lifetime'])
 
     network.madd("Link",
                  nodes + " home battery discharger",
@@ -608,7 +614,8 @@ def insert_electricity_distribution_grid(network):
                  carrier="home battery discharger",
                  efficiency=costs.at['battery inverter','efficiency']**0.5,
                  marginal_cost=options['marginal_cost_storage'],
-                 p_nom_extendable=True)
+                 p_nom_extendable=True,
+                 lifetime=costs.at['battery inverter','lifetime'])
 
 def add_electricity_grid_connection(network):
 
@@ -636,7 +643,8 @@ def add_storage(network):
                  p_nom_extendable=True,
                  carrier="H2 Electrolysis",
                  efficiency=costs.at["electrolysis","efficiency"],
-                 capital_cost=costs.at["electrolysis","fixed"])
+                 capital_cost=costs.at["electrolysis","fixed"],
+                 lifetime=costs.at['electrolysis','lifetime'])
 
     network.madd("Link",
                  nodes + " H2 Fuel Cell",
@@ -645,10 +653,12 @@ def add_storage(network):
                  p_nom_extendable=True,
                  carrier ="H2 Fuel Cell",
                  efficiency=costs.at["fuel cell","efficiency"],
-                 capital_cost=costs.at["fuel cell","fixed"]*costs.at["fuel cell","efficiency"])  #NB: fixed cost is per MWel
+                 capital_cost=costs.at["fuel cell","fixed"]*costs.at["fuel cell","efficiency"], #NB: fixed cost is per MWel
+                 lifetime=costs.at['fuel cell','lifetime'])  
 
     if options['hydrogen_underground_storage']:
         h2_capital_cost = costs.at["gas storage","fixed"]
+        #TODO: change gas storage to hydrogen underground storage when cost database is updated
         #h2_capital_cost = costs.at["hydrogen underground storage","fixed"]
     else:
         h2_capital_cost = costs.at["hydrogen storage","fixed"]
@@ -659,7 +669,8 @@ def add_storage(network):
                  e_nom_extendable=True,
                  e_cyclic=True,
                  carrier="H2 Store",
-                 capital_cost=h2_capital_cost)
+                 capital_cost=h2_capital_cost,
+                 lifetime=costs.at['gas storage','lifetime'])
 
     h2_links = pd.DataFrame(columns=["bus0","bus1","length"])
     prefix = "H2 pipeline "
@@ -687,7 +698,8 @@ def add_storage(network):
                  p_nom_extendable=True,
                  length=h2_links.length.values,
                  capital_cost=costs.at['H2 pipeline','fixed']*h2_links.length.values,
-                 carrier="H2 pipeline")
+                 carrier="H2 pipeline",
+                 lifetime=costs.at['H2 pipeline','lifetime'])
 
 
     network.add("Carrier","battery")
@@ -702,7 +714,8 @@ def add_storage(network):
                  e_cyclic=True,
                  e_nom_extendable=True,
                  carrier="battery",
-                 capital_cost=costs.at['battery storage','fixed'])
+                 capital_cost=costs.at['battery storage','fixed'],
+                 lifetime=costs.at['battery storage','lifetime'])
 
     network.madd("Link",
                  nodes + " battery charger",
@@ -711,7 +724,8 @@ def add_storage(network):
                  carrier="battery charger",
                  efficiency=costs.at['battery inverter','efficiency']**0.5,
                  capital_cost=costs.at['battery inverter','fixed'],
-                 p_nom_extendable=True)
+                 p_nom_extendable=True,
+                 lifetime=costs.at['battery inverter','lifetime'])
 
     network.madd("Link",
                  nodes + " battery discharger",
@@ -720,7 +734,8 @@ def add_storage(network):
                  carrier="battery discharger",
                  efficiency=costs.at['battery inverter','efficiency']**0.5,
                  marginal_cost=options['marginal_cost_storage'],
-                 p_nom_extendable=True)
+                 p_nom_extendable=True,
+                 lifetime=costs.at['battery inverter','lifetime'])
 
 
     if options['methanation']:
@@ -733,7 +748,8 @@ def add_storage(network):
                      carrier="Sabatier",
                      efficiency=costs.at["methanation","efficiency"],
                      efficiency2=-costs.at["methanation","efficiency"]*costs.at['gas','CO2 intensity'],
-                     capital_cost=costs.at["methanation","fixed"])
+                     capital_cost=costs.at["methanation","fixed"],
+                     lifetime=costs.at['methanation','lifetime'])
 
     if options['helmeth']:
         network.madd("Link",
@@ -745,7 +761,8 @@ def add_storage(network):
                      p_nom_extendable=True,
                      efficiency=costs.at["helmeth","efficiency"],
                      efficiency2=-costs.at["helmeth","efficiency"]*costs.at['gas','CO2 intensity'],
-                     capital_cost=costs.at["helmeth","fixed"])
+                     capital_cost=costs.at["helmeth","fixed"],
+                     lifetime=costs.at['helmeth','lifetime'])
 
 
     if options['SMR']:
@@ -760,7 +777,8 @@ def add_storage(network):
                      efficiency=costs.at["SMR CCS","efficiency"],
                      efficiency2=costs.at['gas','CO2 intensity']*(1-options["ccs_fraction"]),
                      efficiency3=costs.at['gas','CO2 intensity']*options["ccs_fraction"],
-                     capital_cost=costs.at["SMR CCS","fixed"])
+                     capital_cost=costs.at["SMR CCS","fixed"],
+                     lifetime=costs.at['SMR CCS','lifetime'])
 
         network.madd("Link",
                      nodes + " SMR",
@@ -771,7 +789,8 @@ def add_storage(network):
                      carrier="SMR",
                      efficiency=costs.at["SMR","efficiency"],
                      efficiency2=costs.at['gas','CO2 intensity'],
-                     capital_cost=costs.at["SMR","fixed"])
+                     capital_cost=costs.at["SMR","fixed"],
+                     lifetime=costs.at['SMR','lifetime'])
 
 
 def add_transport(network):
@@ -909,7 +928,8 @@ def add_heat(network):
                      carrier="{} {} heat pump".format(name,heat_pump_type),
                      efficiency=efficiency,
                      capital_cost=costs.at[costs_name,'efficiency']*costs.at[costs_name,'fixed'],
-                     p_nom_extendable=True)
+                     p_nom_extendable=True,
+                     lifetime=costs.at[costs_name,'lifetime'])
 
 
         if options["tes"]:
@@ -946,8 +966,8 @@ def add_heat(network):
                          e_nom_extendable=True,
                          carrier=name + " water tanks",
                          standing_loss=1-np.exp(-1/(24.*tes_time_constant_days)),
-                         capital_cost=costs.at[name_type + ' water tank storage','fixed']/(1.17e-3*40)) #conversion from EUR/m^3 to EUR/MWh for 40 K diff and 1.17 kWh/m^3/K
-
+                         capital_cost=costs.at[name_type + ' water tank storage','fixed']/(1.17e-3*40), #conversion from EUR/m^3 to EUR/MWh for 40 K diff and 1.17 kWh/m^3/K
+                         lifetime=costs.at[name_type + ' water tank storage','lifetime'])
 
         if options["boilers"]:
 
@@ -958,7 +978,8 @@ def add_heat(network):
                          carrier=name + " resistive heater",
                          efficiency=costs.at[name_type + ' resistive heater','efficiency'],
                          capital_cost=costs.at[name_type + ' resistive heater','efficiency']*costs.at[name_type + ' resistive heater','fixed'],
-                         p_nom_extendable=True)
+                         p_nom_extendable=True,
+                         lifetime=costs.at[name_type + ' resistive heater','lifetime'])
 
             network.madd("Link",
                          nodes[name] + " " + name + " gas boiler",
@@ -969,7 +990,8 @@ def add_heat(network):
                          carrier=name + " gas boiler",
                          efficiency=costs.at[name_type + ' gas boiler','efficiency'],
                          efficiency2=costs.at['gas','CO2 intensity'],
-                         capital_cost=costs.at[name_type + ' gas boiler','efficiency']*costs.at[name_type + ' gas boiler','fixed'])
+                         capital_cost=costs.at[name_type + ' gas boiler','efficiency']*costs.at[name_type + ' gas boiler','fixed'],
+                         lifetime=costs.at[name_type + ' gas boiler','lifetime'])
 
 
 
@@ -984,7 +1006,8 @@ def add_heat(network):
                          carrier=name + " solar thermal",
                          p_nom_extendable=True,
                          capital_cost=costs.at[name_type + ' solar thermal','fixed'],
-                         p_max_pu=solar_thermal[nodes[name]])
+                         p_max_pu=solar_thermal[nodes[name]],
+                         lifetime=costs.at[name_type + ' solar thermal','lifetime'])
 
 
         if options["chp"]:
@@ -1004,7 +1027,8 @@ def add_heat(network):
                              efficiency2=costs.at['gas','CO2 intensity'],
                              c_b=costs.at['central gas CHP','c_b'],
                              c_v=costs.at['central gas CHP','c_v'],
-                             p_nom_ratio=costs.at['central gas CHP','p_nom_ratio'])
+                             p_nom_ratio=costs.at['central gas CHP','p_nom_ratio'],
+                             lifetime=costs.at['central gas CHP','lifetime'])
 
                 network.madd("Link",
                              nodes[name] + " urban central gas CHP heat",
@@ -1015,7 +1039,8 @@ def add_heat(network):
                              p_nom_extendable=True,
                              marginal_cost=costs.at['central gas CHP','VOM'],
                              efficiency=costs.at['central gas CHP','efficiency']/costs.at['central gas CHP','c_v'],
-                             efficiency2=costs.at['gas','CO2 intensity'])
+                             efficiency2=costs.at['gas','CO2 intensity'],
+                             lifetime=costs.at['central gas CHP','lifetime'])
 
                 network.madd("Link",
                              nodes[name] + " urban central gas CHP CCS electric",
@@ -1032,7 +1057,8 @@ def add_heat(network):
                              efficiency3=costs.at['gas','CO2 intensity']*options["ccs_fraction"],
                              c_b=costs.at['central gas CHP CCS','c_b'],
                              c_v=costs.at['central gas CHP CCS','c_v'],
-                             p_nom_ratio=costs.at['central gas CHP CCS','p_nom_ratio'])
+                             p_nom_ratio=costs.at['central gas CHP CCS','p_nom_ratio'],
+                             lifetime=costs.at['central gas CHP CCS','lifetime'])
 
                 network.madd("Link",
                              nodes[name] + " urban central gas CHP CCS heat",
@@ -1045,7 +1071,8 @@ def add_heat(network):
                              marginal_cost=costs.at['central gas CHP CCS','VOM'],
                              efficiency=costs.at['central gas CHP CCS','efficiency']/costs.at['central gas CHP CCS','c_v'],
                              efficiency2=costs.at['gas','CO2 intensity']*(1-options["ccs_fraction"]),
-                             efficiency3=costs.at['gas','CO2 intensity']*options["ccs_fraction"])
+                             efficiency3=costs.at['gas','CO2 intensity']*options["ccs_fraction"],
+                             lifetime=costs.at['central gas CHP CCS','lifetime'])
 
             else:
                 network.madd("Link",
@@ -1059,7 +1086,8 @@ def add_heat(network):
                              efficiency=costs.at['micro CHP','efficiency'],
                              efficiency2=costs.at['micro CHP','efficiency-heat'],
                              efficiency3=costs.at['gas','CO2 intensity'],
-                             capital_cost=costs.at['micro CHP','fixed'])
+                             capital_cost=costs.at['micro CHP','fixed'],
+                             lifetime=costs.at['micro CHP','lifetime'])
 
 
     #NB: this currently doesn't work for pypsa-eur model
@@ -1207,7 +1235,8 @@ def add_biomass(network):
                      efficiency=costs.at['central solid biomass CHP','efficiency'],
                      c_b=costs.at['central solid biomass CHP','c_b'],
                      c_v=costs.at['central solid biomass CHP','c_v'],
-                     p_nom_ratio=costs.at['central solid biomass CHP','p_nom_ratio'])
+                     p_nom_ratio=costs.at['central solid biomass CHP','p_nom_ratio'],
+                     lifetime=costs.at['central solid biomass CHP','lifetime'])
 
 
         network.madd("Link",
@@ -1217,7 +1246,8 @@ def add_biomass(network):
                      carrier="urban central solid biomass CHP heat",
                      p_nom_extendable=True,
                      marginal_cost=costs.at['central solid biomass CHP','VOM'],
-                     efficiency=costs.at['central solid biomass CHP','efficiency']/costs.at['central solid biomass CHP','c_v'])
+                     efficiency=costs.at['central solid biomass CHP','efficiency']/costs.at['central solid biomass CHP','c_v'],
+                     lifetime=costs.at['central solid biomass CHP','lifetime'])
 
         network.madd("Link",
                      urban_central + " urban central solid biomass CHP CCS electric",
@@ -1234,7 +1264,8 @@ def add_biomass(network):
                      efficiency3=costs.at['solid biomass','CO2 intensity']*options["ccs_fraction"],
                      c_b=costs.at['central solid biomass CHP','c_b'],
                      c_v=costs.at['central solid biomass CHP','c_v'],
-                     p_nom_ratio=costs.at['central solid biomass CHP','p_nom_ratio'])
+                     p_nom_ratio=costs.at['central solid biomass CHP','p_nom_ratio'],
+                     lifetime=costs.at['central solid biomass CHP CCS','lifetime'])
 
         network.madd("Link",
                      urban_central + " urban central solid biomass CHP CCS heat",
@@ -1247,7 +1278,8 @@ def add_biomass(network):
                      marginal_cost=costs.at['central solid biomass CHP CCS','VOM'],
                      efficiency=costs.at['central solid biomass CHP CCS','efficiency']/costs.at['central solid biomass CHP CCS','c_v'],
                      efficiency2=-costs.at['solid biomass','CO2 intensity']*options["ccs_fraction"],
-                     efficiency3=costs.at['solid biomass','CO2 intensity']*options["ccs_fraction"])
+                     efficiency3=costs.at['solid biomass','CO2 intensity']*options["ccs_fraction"],
+                     lifetime=costs.at['central solid biomass CHP CCS','lifetime'])
 
 
 def add_industry(network):
@@ -1292,7 +1324,8 @@ def add_industry(network):
                  capital_cost=costs.at["industry CCS","fixed"]*costs.at['solid biomass','CO2 intensity']*8760, #8760 converts EUR/(tCO2/a) to EUR/(tCO2/h)
                  efficiency=0.9,
                  efficiency2=-costs.at['solid biomass','CO2 intensity']*options["ccs_fraction"],
-                 efficiency3=costs.at['solid biomass','CO2 intensity']*options["ccs_fraction"])
+                 efficiency3=costs.at['solid biomass','CO2 intensity']*options["ccs_fraction"],
+                 lifetime=costs.at['industry CCS','lifetime'])
 
 
     network.madd("Bus",
@@ -1326,7 +1359,8 @@ def add_industry(network):
                  capital_cost=costs.at["industry CCS","fixed"]*costs.at['gas','CO2 intensity']*8760, #8760 converts EUR/(tCO2/a) to EUR/(tCO2/h)
                  efficiency=0.9,
                  efficiency2=costs.at['gas','CO2 intensity']*(1-options["ccs_fraction"]),
-                 efficiency3=costs.at['gas','CO2 intensity']*options["ccs_fraction"])
+                 efficiency3=costs.at['gas','CO2 intensity']*options["ccs_fraction"],
+                 lifetime=costs.at['industry CCS','lifetime'])
 
 
     network.madd("Load",
@@ -1380,7 +1414,8 @@ def add_industry(network):
                          efficiency=costs.at['decentral oil boiler', 'efficiency'],
                          efficiency2=costs.at['oil', 'CO2 intensity'],
                          capital_cost=costs.at['decentral oil boiler', 'efficiency'] * costs.at[
-                                                'decentral oil boiler', 'fixed'])
+                                                'decentral oil boiler', 'fixed'],
+                         lifetime=costs.at['decentral oil boiler','lifetime'])
 
     network.madd("Link",
                  nodes + " Fischer-Tropsch",
@@ -1391,7 +1426,8 @@ def add_industry(network):
                  efficiency=costs.at["Fischer-Tropsch",'efficiency'],
                  capital_cost=costs.at["Fischer-Tropsch",'fixed'],
                  efficiency2=-costs.at["oil",'CO2 intensity']*costs.at["Fischer-Tropsch",'efficiency'],
-                 p_nom_extendable=True)
+                 p_nom_extendable=True,
+                 lifetime=costs.at['Fischer-Tropsch','lifetime'])
 
     network.madd("Load",
                  ["naphtha for industry"],
@@ -1460,7 +1496,8 @@ def add_industry(network):
                  p_nom_extendable=True,
                  capital_cost=costs.at["industry CCS","fixed"]*8760, #8760 converts EUR/(tCO2/a) to EUR/(tCO2/h)
                  efficiency=(1-options["ccs_fraction"]),
-                 efficiency2=options["ccs_fraction"])
+                 efficiency2=options["ccs_fraction"],
+                 lifetime=costs.at['industry CCS','lifetime'])
 
 
 
@@ -1578,6 +1615,20 @@ if __name__ == "__main__":
 
     n.loads["carrier"] = "electricity"
 
+    # Add lifetime and build_year attributes to generators, links and stores
+    n.generators["lifetime"]=np.nan
+    n.generators["build_year"]=np.nan
+    n.links["lifetime"]=np.nan
+    n.links["build_year"]=np.nan    
+    n.stores["lifetime"]=np.nan
+    
+    # Add lifetime for solar and wind generators
+    for carrier in ['solar', 'onwind', 'offwind-dc', 'offwind-ac']:
+        carrier_name='offwind' if carrier in ['offwind-dc', 'offwind-ac'] else carrier
+        n.generators.loc[[index for index in n.generators.index.to_list()
+                        if carrier in index], 'lifetime']=costs.at[carrier_name,'lifetime']
+    
+   
     add_co2_tracking(n)
 
     add_generation(n)
@@ -1663,14 +1714,6 @@ if __name__ == "__main__":
         insert_electricity_distribution_grid(n)
     if snakemake.config["sector"]['electricity_grid_connection']:
         add_electricity_grid_connection(n)
-
-
-    # Add lifetime and build_year attributes to generators, links and stores
-    n.generators["lifetime"]=np.nan
-    n.generators["build_year"]=np.nan
-    n.links["lifetime"]=np.nan
-    n.links["build_year"]=np.nan
-    n.stores["lifetime"]=np.nan
+   
     n.stores["build_year"]=np.nan
-    
     n.export_to_netcdf(snakemake.output[0])

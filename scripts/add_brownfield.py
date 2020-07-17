@@ -44,6 +44,26 @@ override_component_attrs["Link"].loc["p3"] = ["series","MW",0.,"3rd bus output",
 def add_brownfield(n, n_p, year):
     print("adding brownfield")
     
+    #first, remove generators, links and stores that track CO2 or global EU values
+    n_p.mremove("Generator", [index for index in n_p.generators.index.to_list() if 'ror' in index])   
+    n_p.mremove("Generator", ['EU fossil gas', 'fossil oil'] )
+    n_p.mremove("Store", ['co2 atmosphere', 'co2 stored', 'EU gas Store'] )
+    n_p.mremove("Link", ['co2 vent'] )
+    
+    if "H" in opts:
+        n_p.mremove("Link", [index for index in n_p.links.index.to_list() if 'water tanks charger' in index])
+        n_p.mremove("Link", [index for index in n_p.links.index.to_list() if 'water tanks discharger' in index])
+    if "B" in opts:
+         n_p.mremove("Store", ['EU biogas', 'EU solid biomass'])
+         n_p.mremove("Link", ['biogas to gas'])
+    if "I" in opts:
+         n_p.mremove("Store", ['Fischer-Tropsch Store'])
+         n_p.mremove("Link", ['process emissions' , 'gas for industry', 'solid biomass for industry'])
+    if "T" in opts:
+        n_p.mremove("Store", [index for index in n_p.stores.index.to_list() if 'battery storage' in index])
+        n_p.mremove("Link", [index for index in n_p.links.index.to_list() if 'BEV charger' in index])
+        n_p.mremove("Link", [index for index in n_p.links.index.to_list() if 'V2G' in index])
+        
     previous_timestep=snakemake.config['scenario']['planning_horizons'][snakemake.config['scenario']['planning_horizons'].index(year)-1]
     previous_timesteps=snakemake.config['scenario']['planning_horizons'][0:snakemake.config['scenario']['planning_horizons'].index(year)]
     
@@ -51,11 +71,8 @@ def add_brownfield(n, n_p, year):
     # they are added again by add_power_capacities_installed_before_baseyear() 
     # with updated capacities (some of them have been decomissioned)
     n_p.mremove("Generator", [index for index in n_p.generators.index.to_list() if '<'+snakemake.config['scenario']['planning_horizons'][0] in index])
-
-    n_p.mremove("Generator", [index for index in n_p.generators.index.to_list() if 'ror' in index])
     
-    # generators whose installationYear + lifetime < year are removed
-    #n_p.mremove("Generator", [index for index in n_p.generators.index.to_list() if (index[-4:] in previous_timesteps) and (int(index[-4:])+snakemake.config['costs']['lifetime'] < int(year))])    
+    # generators whose build_year + lifetime < year are removed
     n_p.mremove("Generator", [index for index in n_p.generators.index.to_list() 
                               if (n_p.generators.loc[index, 'build_year'] in previous_timesteps) 
                               and (n_p.generators.loc[index, 'build_year']+n_p.generators.loc[index, 'lifetime'] < int(year))])
@@ -64,6 +81,9 @@ def add_brownfield(n, n_p, year):
     n_p.generators.index=np.where(n_p.generators.index.str[-4:].isin(previous_timesteps)==False,
                                   n_p.generators.index + '-' + previous_timestep, 
                                   n_p.generators.index)
+    n_p.generators.loc[[index for index in n_p.generators.index.to_list()
+                        if previous_timestep in index], 'build_year']=int(previous_timestep)
+    
     #add generators from previous step 
     n.madd("Generator", 
             n_p.generators.index,
@@ -74,22 +94,22 @@ def add_brownfield(n, n_p, year):
             capital_cost=n_p.generators.capital_cost,
             efficiency=n_p.generators.efficiency,
             p_max_pu=n_p.generators_t.p_max_pu,
-            build_year=int(previous_timestep),
-            lifetime=snakemake.config['costs']['lifetime'])
+            build_year=n_p.generators.build_year,
+            lifetime=n_p.generators.lifetime)
             
     #add stores from previous steps
-    n_p.mremove("Store", ['co2 atmosphere', 'co2 stored', 'EU gas Store'] )
     
     # stores whose installationYear + lifetime < year are removed
-    #n_p.mremove("Store", [index for index in n_p.stores.index.to_list() if (index[-4:] in previous_timesteps) and (int(index[-4:])+snakemake.config['costs']['lifetime'] < int(year))])
     n_p.mremove("Store", [index for index in n_p.stores.index.to_list() 
-                              if (n_p.stores.loc[index, 'build_year'] in previous_timesteps) 
-                              and (n_p.stores.loc[index, 'build_year']+n_p.stores.loc[index, 'lifetime'] < int(year))])    
+                          if (n_p.stores.loc[index, 'build_year'] in previous_timesteps) 
+                          and (n_p.stores.loc[index, 'build_year']+n_p.stores.loc[index, 'lifetime'] < int(year))])    
     
     # stores whose capacity was optimized in the previous year are renamed
     n_p.stores.index=np.where(n_p.stores.index.str[-4:].isin(previous_timesteps)==False,
                                   n_p.stores.index + '-' + previous_timestep, 
                                   n_p.stores.index)
+    n_p.stores.loc[[index for index in n_p.stores.index.to_list()
+                    if previous_timestep in index], 'build_year']=int(previous_timestep)
     n.madd("Store", 
             n_p.stores.index,
             bus=n_p.stores.bus,
@@ -97,8 +117,8 @@ def add_brownfield(n, n_p, year):
             e_nom=n_p.stores.e_nom_opt,
             e_cyclic=True,
             capital_cost=n_p.stores.capital_cost,
-            build_year=int(previous_timestep),
-            lifetime=snakemake.config['costs']['lifetime'])
+            build_year=n_p.stores.build_year,
+            lifetime=n_p.stores.lifetime)
     
     ## add links from previous steps          
     # TODO: add_chp_constraint() in solve_network needs to be adjusted
@@ -106,7 +126,6 @@ def add_brownfield(n, n_p, year):
     n_p.mremove("Link", [index for index in n_p.links.index.to_list() if 'CHP' in index])
     
     # stores whose installationYear + lifetime < year are removed
-    #n_p.mremove("Link", [index for index in n_p.links.index.to_list() if (index[-4:] in previous_timesteps) and (int(index[-4:])+snakemake.config['costs']['lifetime'] < int(year))])
     n_p.mremove("Link", [index for index in n_p.links.index.to_list() 
                               if (n_p.links.loc[index, 'build_year'] in previous_timesteps) 
                               and (n_p.links.loc[index, 'build_year']+n_p.links.loc[index, 'lifetime'] < int(year))]) 
@@ -115,6 +134,8 @@ def add_brownfield(n, n_p, year):
     n_p.links.index=np.where(n_p.links.index.str[-4:].isin(previous_timesteps)==False,
                                   n_p.links.index + '-' + previous_timestep, 
                                   n_p.links.index)
+    n_p.links.loc[[index for index in n_p.links.index.to_list()
+                  if previous_timestep in index], 'build_year']=int(previous_timestep)
     n.madd("Link", 
             n_p.links.index,
             bus0=n_p.links.bus0,
@@ -126,8 +147,8 @@ def add_brownfield(n, n_p, year):
             capital_cost=n_p.links.capital_cost,
             efficiency=n_p.links.efficiency,
             efficiency2=n_p.links.efficiency2,
-            build_year=int(previous_timestep),
-            lifetime=snakemake.config['costs']['lifetime'])
+            build_year=n_p.links.build_year,
+            lifetime=n_p.links.lifetime)
     
     
 if __name__ == "__main__":
@@ -138,13 +159,13 @@ if __name__ == "__main__":
             wildcards=dict(network='elec', simpl='', clusters='37', lv='1.0', 
                            sector_opts='Co2L0-168H-T-H-B-I-solar3-dist1',
                            co2_budget_name='go',
-                           planning_horizons='2030'),
+                           planning_horizons='2050'),
             input=dict(network='pypsa-eur-sec/results/test/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{co2_budget_name}_{planning_horizons}.nc', 
-                       network_p='pypsa-eur-sec/results/test/postnetworks/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{co2_budget_name}_2020.nc',                        
+                       network_p='pypsa-eur-sec/results/test/postnetworks/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{co2_budget_name}_2040.nc',                        
                        costs='pypsa-eur-sec/data/costs/costs_{planning_horizons}.csv',
                        cop_air_total="pypsa-eur-sec/resources/cop_air_total_{network}_s{simpl}_{clusters}.nc",
                        cop_soil_total="pypsa-eur-sec/resources/cop_soil_total_{network}_s{simpl}_{clusters}.nc"),                   
-            output=['pypsa-eur-sec/results/test/prenetworks_bf/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{planning_horizons}.nc']
+            output=['pypsa-eur-sec/results/test/prenetworks_brownfied/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{planning_horizons}.nc']
         )
         import yaml
         with open('config.yaml') as f:
