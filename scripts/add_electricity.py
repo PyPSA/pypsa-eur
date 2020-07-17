@@ -211,7 +211,7 @@ def attach_load(n):
                 .filter(items=snakemake.config['countries']))
     
     # Scalling data according to scalling factor in config.yaml
-    logger.info(f"Load data scalled with scalling factior {snakemake.config['load']['scaling_factor']}.")
+    logger.info(f"Load data scalled with scalling factor {snakemake.config['load']['scaling_factor']}.")
     opsd_load = opsd_load * snakemake.config.get('load', {}).get('scaling_factor', 1.0)
 
     # Convert to naive UTC (has to be explicit since pandas 0.24)
