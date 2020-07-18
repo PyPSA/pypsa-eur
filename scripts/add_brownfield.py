@@ -20,10 +20,6 @@ import pytz
 
 from vresutils.costdata import annuity
 
-from add_existing_baseyear import add_power_capacities_installed_before_baseyear 
-
-from add_existing_baseyear import add_heating_capacities_installed_before_baseyear 
-
 from prepare_sector_network import prepare_costs
 
 #First tell PyPSA that links can have multiple outputs by
@@ -39,7 +35,12 @@ override_component_attrs["Link"].loc["efficiency3"] = ["static or series","per u
 override_component_attrs["Link"].loc["p2"] = ["series","MW",0.,"2nd bus output","Output"]
 override_component_attrs["Link"].loc["p3"] = ["series","MW",0.,"3rd bus output","Output"]
 
-
+override_component_attrs["Link"].loc["build_year"] = ["integer","year",np.nan,"build year","Input (optional)"]
+override_component_attrs["Link"].loc["lifetime"] = ["float","years",np.nan,"build year","Input (optional)"]
+override_component_attrs["Generator"].loc["build_year"] = ["integer","year",np.nan,"build year","Input (optional)"]
+override_component_attrs["Generator"].loc["lifetime"] = ["float","years",np.nan,"build year","Input (optional)"]
+override_component_attrs["Store"].loc["build_year"] = ["integer","year",np.nan,"build year","Input (optional)"]
+override_component_attrs["Store"].loc["lifetime"] = ["float","years",np.nan,"build year","Input (optional)"]
     
 def add_brownfield(n, n_p, year):
     print("adding brownfield")
@@ -66,19 +67,21 @@ def add_brownfield(n, n_p, year):
         
     previous_timestep=snakemake.config['scenario']['planning_horizons'][snakemake.config['scenario']['planning_horizons'].index(year)-1]
     previous_timesteps=snakemake.config['scenario']['planning_horizons'][0:snakemake.config['scenario']['planning_horizons'].index(year)]
+    grouping_years=snakemake.config['existing_capacities']['grouping_years']
     
-    # generators installed before baseyear are removed,
-    # they are added again by add_power_capacities_installed_before_baseyear() 
-    # with updated capacities (some of them have been decomissioned)
-    n_p.mremove("Generator", [index for index in n_p.generators.index.to_list() if '<'+snakemake.config['scenario']['planning_horizons'][0] in index])
-    
+        
+    ### GENERATORS ###
     # generators whose build_year + lifetime < year are removed
     n_p.mremove("Generator", [index for index in n_p.generators.index.to_list() 
-                              if (n_p.generators.loc[index, 'build_year'] in previous_timesteps) 
-                              and (n_p.generators.loc[index, 'build_year']+n_p.generators.loc[index, 'lifetime'] < int(year))])
+                              if  (n_p.generators.loc[index, 'build_year']+n_p.generators.loc[index, 'lifetime'] < int(year))])
     
-    # generators whose capacity was optimized in the previous year are renamed
-    n_p.generators.index=np.where(n_p.generators.index.str[-4:].isin(previous_timesteps)==False,
+    # remove generators if their optimized nominal capacity is lower than a threshold
+    n_p.mremove("Generator", [index for index in n_p.generators.index.to_list() 
+                              if (n_p.generators.loc[index, 'p_nom_opt'] < snakemake.config['existing_capacities']['threshold_capacity'])])
+
+    
+    # generators whose capacity was optimized in the previous year are renamed and build year is added
+    n_p.generators.index=np.where(n_p.generators.index.str[-4:].isin(previous_timesteps+grouping_years)==False,
                                   n_p.generators.index + '-' + previous_timestep, 
                                   n_p.generators.index)
     n_p.generators.loc[[index for index in n_p.generators.index.to_list()
@@ -97,19 +100,22 @@ def add_brownfield(n, n_p, year):
             build_year=n_p.generators.build_year,
             lifetime=n_p.generators.lifetime)
             
-    #add stores from previous steps
-    
+    ### STORES ###
     # stores whose installationYear + lifetime < year are removed
     n_p.mremove("Store", [index for index in n_p.stores.index.to_list() 
-                          if (n_p.stores.loc[index, 'build_year'] in previous_timesteps) 
-                          and (n_p.stores.loc[index, 'build_year']+n_p.stores.loc[index, 'lifetime'] < int(year))])    
+                          if (n_p.stores.loc[index, 'build_year']+n_p.stores.loc[index, 'lifetime'] < int(year))])    
     
-    # stores whose capacity was optimized in the previous year are renamed
-    n_p.stores.index=np.where(n_p.stores.index.str[-4:].isin(previous_timesteps)==False,
+    # remove stores if their optimized nominal capacity is lower than a threshold
+    n_p.mremove("Store", [index for index in n_p.stores.index.to_list() 
+                              if (n_p.stores.loc[index, 'e_nom_opt'] < snakemake.config['existing_capacities']['threshold_capacity'])])
+    
+    # stores whose capacity was optimized in the previous year are renamed and the build year is added
+    n_p.stores.index=np.where(n_p.stores.index.str[-4:].isin(previous_timesteps+grouping_years)==False,
                                   n_p.stores.index + '-' + previous_timestep, 
                                   n_p.stores.index)
     n_p.stores.loc[[index for index in n_p.stores.index.to_list()
                     if previous_timestep in index], 'build_year']=int(previous_timestep)
+    #add stores from previous steps
     n.madd("Store", 
             n_p.stores.index,
             bus=n_p.stores.bus,
@@ -120,22 +126,25 @@ def add_brownfield(n, n_p, year):
             build_year=n_p.stores.build_year,
             lifetime=n_p.stores.lifetime)
     
-    ## add links from previous steps          
-    # TODO: add_chp_constraint() in solve_network needs to be adjusted
-    n_p.mremove("Link", [index for index in n_p.links.index.to_list() if '<'+snakemake.config['scenario']['planning_horizons'][0] in index])
+    ### LINKS ###         
+    # TODO: add_chp_constraint() in solve_network needs to be adjusted    
     n_p.mremove("Link", [index for index in n_p.links.index.to_list() if 'CHP' in index])
     
-    # stores whose installationYear + lifetime < year are removed
-    n_p.mremove("Link", [index for index in n_p.links.index.to_list() 
-                              if (n_p.links.loc[index, 'build_year'] in previous_timesteps) 
-                              and (n_p.links.loc[index, 'build_year']+n_p.links.loc[index, 'lifetime'] < int(year))]) 
-        
     # links whose installationYear + lifetime < year are removed
-    n_p.links.index=np.where(n_p.links.index.str[-4:].isin(previous_timesteps)==False,
+    n_p.mremove("Link", [index for index in n_p.links.index.to_list() 
+                              if (n_p.links.loc[index, 'build_year']+n_p.links.loc[index, 'lifetime'] < int(year))]) 
+    
+    # delete links if their optimized nominal capacity is lower than a threshold
+    n_p.mremove("Link", [index for index in n_p.links.index.to_list() 
+                              if (n_p.links.loc[index, 'p_nom_opt'] < snakemake.config['existing_capacities']['threshold_capacity'])])
+    
+    # links whose capacity was optimized in the previous year are renamed and the build year is added
+    n_p.links.index=np.where(n_p.links.index.str[-4:].isin(previous_timesteps+grouping_years)==False,
                                   n_p.links.index + '-' + previous_timestep, 
                                   n_p.links.index)
     n_p.links.loc[[index for index in n_p.links.index.to_list()
                   if previous_timestep in index], 'build_year']=int(previous_timestep)
+    #add links from previous steps
     n.madd("Link", 
             n_p.links.index,
             bus0=n_p.links.bus0,
@@ -159,9 +168,9 @@ if __name__ == "__main__":
             wildcards=dict(network='elec', simpl='', clusters='37', lv='1.0', 
                            sector_opts='Co2L0-168H-T-H-B-I-solar3-dist1',
                            co2_budget_name='go',
-                           planning_horizons='2050'),
+                           planning_horizons='2030'),
             input=dict(network='pypsa-eur-sec/results/test/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{co2_budget_name}_{planning_horizons}.nc', 
-                       network_p='pypsa-eur-sec/results/test/postnetworks/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{co2_budget_name}_2040.nc',                        
+                       network_p='pypsa-eur-sec/results/test/postnetworks/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{co2_budget_name}_2020.nc',                        
                        costs='pypsa-eur-sec/data/costs/costs_{planning_horizons}.csv',
                        cop_air_total="pypsa-eur-sec/resources/cop_air_total_{network}_s{simpl}_{clusters}.nc",
                        cop_soil_total="pypsa-eur-sec/resources/cop_soil_total_{network}_s{simpl}_{clusters}.nc"),                   
@@ -195,17 +204,8 @@ if __name__ == "__main__":
                           Nyears)
 
     baseyear = snakemake.config['scenario']["planning_horizons"][0]
-    
-    add_power_capacities_installed_before_baseyear(n, year, baseyear, costs) # only the capacities with YearDecomissioning > year are added
+      
    
-    if "H" in opts:
-        time_dep_hp_cop = options["time_dep_hp_cop"] 
-        ashp_cop = xr.open_dataarray(snakemake.input.cop_air_total).T.to_pandas().reindex(index=n.snapshots)
-        gshp_cop = xr.open_dataarray(snakemake.input.cop_soil_total).T.to_pandas().reindex(index=n.snapshots)
-        default_lifetime = snakemake.config['costs']['lifetime']
-        add_heating_capacities_installed_before_baseyear(n, year, baseyear, ashp_cop, gshp_cop, time_dep_hp_cop, costs,
-                                                         default_lifetime) # only the capacities with YearDecomissioning > year are added
-    
     n.export_to_netcdf(snakemake.output[0])
 
    

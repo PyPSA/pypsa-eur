@@ -46,7 +46,10 @@ biomass:
   year: 2030
   scenario: "Med"
 
-
+existing_capacities:
+  grouping_years: ['1980', '1985', '1990', '1995', '2000','2005','2010','2015', '2019']
+  threshold_capacity: 10
+  
 sector:
   'central' : True
   'central_fraction' : 0.6

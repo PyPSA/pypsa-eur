@@ -35,8 +35,32 @@ override_component_attrs["Link"].loc["efficiency3"] = ["static or series","per u
 override_component_attrs["Link"].loc["p2"] = ["series","MW",0.,"2nd bus output","Output"]
 override_component_attrs["Link"].loc["p3"] = ["series","MW",0.,"3rd bus output","Output"]
 
+override_component_attrs["Link"].loc["build_year"] = ["integer","year",np.nan,"build year","Input (optional)"]
+override_component_attrs["Link"].loc["lifetime"] = ["float","years",np.nan,"build year","Input (optional)"]
+override_component_attrs["Generator"].loc["build_year"] = ["integer","year",np.nan,"build year","Input (optional)"]
+override_component_attrs["Generator"].loc["lifetime"] = ["float","years",np.nan,"build year","Input (optional)"]
+override_component_attrs["Store"].loc["build_year"] = ["integer","year",np.nan,"build year","Input (optional)"]
+override_component_attrs["Store"].loc["lifetime"] = ["float","years",np.nan,"build year","Input (optional)"]
 
+def add_lifetime_wind_solar(n):
+    """
+    Add lifetime for solar and wind generators
+    """
+    for carrier in ['solar', 'onwind', 'offwind-dc', 'offwind-ac']:
+        carrier_name='offwind' if carrier in ['offwind-dc', 'offwind-ac'] else carrier
+        n.generators.loc[[index for index in n.generators.index.to_list()
+                        if carrier in index], 'lifetime']=costs.at[carrier_name,'lifetime']
 
+def add_coal_oil_uranium_buses(n):
+    """
+    Add buses to connect coal, nuclear and oil plants
+    """
+
+    for carrier in ['coal', 'oil', 'uranium']:
+        n.add("Bus",
+              "EU " + carrier,
+              carrier=carrier)   
+    
 def remove_elec_base_techs(n):
     """remove conventional generators (e.g. OCGT) and storage units (e.g. batteries and H2)
     from base electricity-only network, since they're added here differently using links
@@ -1615,20 +1639,11 @@ if __name__ == "__main__":
 
     n.loads["carrier"] = "electricity"
 
-    # Add lifetime and build_year attributes to generators, links and stores
-    n.generators["lifetime"]=np.nan
-    n.generators["build_year"]=np.nan
-    n.links["lifetime"]=np.nan
-    n.links["build_year"]=np.nan    
-    n.stores["lifetime"]=np.nan
+
+    if snakemake.config["foresight"]=='myopic':
+        add_lifetime_wind_solar(n)
+        add_coal_oil_uranium_buses(n)
     
-    # Add lifetime for solar and wind generators
-    for carrier in ['solar', 'onwind', 'offwind-dc', 'offwind-ac']:
-        carrier_name='offwind' if carrier in ['offwind-dc', 'offwind-ac'] else carrier
-        n.generators.loc[[index for index in n.generators.index.to_list()
-                        if carrier in index], 'lifetime']=costs.at[carrier_name,'lifetime']
-    
-   
     add_co2_tracking(n)
 
     add_generation(n)
@@ -1715,5 +1730,4 @@ if __name__ == "__main__":
     if snakemake.config["sector"]['electricity_grid_connection']:
         add_electricity_grid_connection(n)
    
-    n.stores["build_year"]=np.nan
     n.export_to_netcdf(snakemake.output[0])
