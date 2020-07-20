@@ -1,4 +1,4 @@
-![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/pypsa/pypsa-eur?include_prereleases)
+![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/pypsa/pypsa-eur-sec?include_prereleases)
 [![Documentation](https://readthedocs.org/projects/pypsa-eur-sec/badge/?version=latest)](https://pypsa-eur-sec.readthedocs.io/en/latest/?badge=latest)
 ![GitHub](https://img.shields.io/github/license/pypsa/pypsa-eur-sec)
 ![Size](https://img.shields.io/github/repo-size/pypsa/pypsa-eur-sec)
