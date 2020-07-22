@@ -227,8 +227,8 @@ if __name__ == "__main__":
     # check the number and lenght of gaps after adjustment and interpolating
     nan_stats = nan_statistics(opsd_load)
     
-    if nan_stats.consecutive.max() > 0:        
-        logger.warning(f'Load data contains gaps after adjustments. Modify manual_adjustment() function!')
+    if nan_stats.consecutive.max() > 0:
+        raise NotImplementedError(f'Load data contains gaps after adjustments. Modify manual_adjustment() function for implementing the needed load data modifications!')
 
     opsd_load.to_csv(snakemake.output[0])
     
