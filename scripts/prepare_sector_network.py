@@ -36,11 +36,11 @@ override_component_attrs["Link"].loc["p2"] = ["series","MW",0.,"2nd bus output",
 override_component_attrs["Link"].loc["p3"] = ["series","MW",0.,"3rd bus output","Output"]
 
 override_component_attrs["Link"].loc["build_year"] = ["integer","year",np.nan,"build year","Input (optional)"]
-override_component_attrs["Link"].loc["lifetime"] = ["float","years",np.nan,"build year","Input (optional)"]
+override_component_attrs["Link"].loc["lifetime"] = ["float","years",np.nan,"lifetime","Input (optional)"]
 override_component_attrs["Generator"].loc["build_year"] = ["integer","year",np.nan,"build year","Input (optional)"]
-override_component_attrs["Generator"].loc["lifetime"] = ["float","years",np.nan,"build year","Input (optional)"]
+override_component_attrs["Generator"].loc["lifetime"] = ["float","years",np.nan,"lifetime","Input (optional)"]
 override_component_attrs["Store"].loc["build_year"] = ["integer","year",np.nan,"build year","Input (optional)"]
-override_component_attrs["Store"].loc["lifetime"] = ["float","years",np.nan,"build year","Input (optional)"]
+override_component_attrs["Store"].loc["lifetime"] = ["float","years",np.nan,"lifetime","Input (optional)"]
 
 def add_lifetime_wind_solar(n):
     """
@@ -57,10 +57,32 @@ def add_coal_oil_uranium_buses(n):
     """
 
     for carrier in ['coal', 'oil', 'uranium']:
+
+        n.add("Carrier",
+              carrier)
+
         n.add("Bus",
               "EU " + carrier,
-              carrier=carrier)   
-    
+              carrier=carrier)
+
+        #use madd to get carrier inserted
+        n.madd("Store",
+               ["EU " + carrier + " Store"],
+               bus=["EU " + carrier],
+               e_nom_extendable=True,
+               e_cyclic=True,
+               carrier=carrier,
+               capital_cost=0.) #could correct to e.g. 0.2 EUR/kWh * annuity and O&M
+
+        n.add("Generator",
+              "EU " + carrier,
+              bus="EU " + carrier,
+              p_nom_extendable=True,
+              carrier=carrier,
+              capital_cost=0.,
+              marginal_cost=costs.at[carrier,'fuel'])
+
+
 def remove_elec_base_techs(n):
     """remove conventional generators (e.g. OCGT) and storage units (e.g. batteries and H2)
     from base electricity-only network, since they're added here differently using links
@@ -452,20 +474,19 @@ def prepare_data(network):
 def prepare_costs(cost_file, USD_to_EUR, discount_rate, Nyears):
 
     #set all asset costs and other parameters
-    #costs = pd.read_csv(snakemake.input.costs,index_col=list(range(3))).sort_index()    
+    #costs = pd.read_csv(snakemake.input.costs,index_col=list(range(3))).sort_index()
     costs = pd.read_csv(cost_file,index_col=list(range(2))).sort_index()
-    
+
     #correct units to MW and EUR
     costs.loc[costs.unit.str.contains("/kW"),"value"]*=1e3
-    costs.loc[costs.unit.str.contains("USD"),"value"]*=USD_to_EUR 
+    costs.loc[costs.unit.str.contains("USD"),"value"]*=USD_to_EUR
 
-    #cost_year = snakemake.config['costs']['year']
-    #costs = costs.loc[idx[:,cost_year,:],"value"].unstack(level=2).groupby(level="technology").sum(min_count=1)
-    costs = costs.loc[:, "value"].unstack(level=1).groupby("technology").sum()
+    #min_count=1 is important to generate NaNs which are then filled by fillna
+    costs = costs.loc[:, "value"].unstack(level=1).groupby("technology").sum(min_count=1)
     costs = costs.fillna({"CO2 intensity" : 0,
                           "FOM" : 0,
                           "VOM" : 0,
-                          "discount rate" : discount_rate, 
+                          "discount rate" : discount_rate,
                           "efficiency" : 1,
                           "fuel" : 0,
                           "investment" : 0,
@@ -678,7 +699,7 @@ def add_storage(network):
                  carrier ="H2 Fuel Cell",
                  efficiency=costs.at["fuel cell","efficiency"],
                  capital_cost=costs.at["fuel cell","fixed"]*costs.at["fuel cell","efficiency"], #NB: fixed cost is per MWel
-                 lifetime=costs.at['fuel cell','lifetime'])  
+                 lifetime=costs.at['fuel cell','lifetime'])
 
     if options['hydrogen_underground_storage']:
         h2_capital_cost = costs.at["gas storage","fixed"]
@@ -1583,11 +1604,11 @@ if __name__ == "__main__":
     if 'snakemake' not in globals():
         from vresutils.snakemake import MockSnakemake
         snakemake = MockSnakemake(
-            wildcards=dict(network='elec', simpl='', clusters='37', lv='1.0', 
+            wildcards=dict(network='elec', simpl='', clusters='37', lv='1.0',
                            opts='', planning_horizons='2020',
                            co2_budget_name='go',
                            sector_opts='Co2L0-168H-T-H-B-I-solar3-dist1'),
-            input=dict(network='pypsa-eur/networks/{network}_s{simpl}_{clusters}_ec_lv{lv}_{opts}.nc', 
+            input=dict(network='pypsa-eur/networks/{network}_s{simpl}_{clusters}_ec_lv{lv}_{opts}.nc',
                        timezone_mappings='pypsa-eur-sec/data/timezone_mappings.csv',
                        co2_budget='pypsa-eur-sec/data/co2_budget.csv',
                        clustered_pop_layout='pypsa-eur-sec/resources/pop_layout_{network}_s{simpl}_{clusters}.csv',
@@ -1605,7 +1626,7 @@ if __name__ == "__main__":
                        biomass_potentials='pypsa-eur-sec/data/biomass_potentials.csv',
                        industrial_demand='pypsa-eur-sec/resources/industrial_demand_{network}_s{simpl}_{clusters}.csv',),
             output=['pypsa-eur-sec/results/test/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{co2_budget_name}_{planning_horizons}.nc']
-        )        
+        )
         import yaml
         with open('config.yaml') as f:
             snakemake.config = yaml.load(f)
@@ -1630,7 +1651,7 @@ if __name__ == "__main__":
     pop_layout["ct_total"] = pop_layout["ct"].map(ct_total.get)
     pop_layout["fraction"] = pop_layout["total"]/pop_layout["ct_total"]
 
-    costs = prepare_costs(snakemake.input.costs, 
+    costs = prepare_costs(snakemake.input.costs,
                           snakemake.config['costs']['USD2013_to_EUR2013'],
                           snakemake.config['costs']['discountrate'],
                           Nyears)
@@ -1643,7 +1664,7 @@ if __name__ == "__main__":
     if snakemake.config["foresight"]=='myopic':
         add_lifetime_wind_solar(n)
         add_coal_oil_uranium_buses(n)
-    
+
     add_co2_tracking(n)
 
     add_generation(n)
@@ -1698,13 +1719,13 @@ if __name__ == "__main__":
     else:
         logger.info("No resampling")
 
-    
+
     if snakemake.config["foresight"] == 'myopic':
         co2_limits=pd.read_csv(snakemake.input.co2_budget, index_col=0)
         year=snakemake.wildcards.planning_horizons[-4:]
         limit=co2_limits.loc[int(year),snakemake.config["scenario"]["co2_budget_name"]]
-        add_co2limit(n, Nyears, limit)    
-    else: 
+        add_co2limit(n, Nyears, limit)
+    else:
         for o in opts:
             if "Co2L" in o:
                 limit = o[o.find("Co2L")+4:]
@@ -1729,5 +1750,5 @@ if __name__ == "__main__":
         insert_electricity_distribution_grid(n)
     if snakemake.config["sector"]['electricity_grid_connection']:
         add_electricity_grid_connection(n)
-   
+
     n.export_to_netcdf(snakemake.output[0])
