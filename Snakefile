@@ -15,13 +15,13 @@ subworkflow pypsaeur:
     workdir: "../pypsa-eur"
     snakefile: "../pypsa-eur/Snakefile"
     configfile: "../pypsa-eur/config.yaml"
-                
+
 rule all:
-    input: 
+    input:
        config['summary_dir'] + '/' + config['run'] + '/graphs/costs.pdf'
 
 
-                                                     
+
 rule solve_all_elec_networks:
     input:
         expand(config['results_dir'] + config['run'] + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}.nc",
@@ -174,7 +174,7 @@ rule build_industrial_demand:
     threads: 1
     resources: mem_mb=1000
     script: 'scripts/build_industrial_demand.py'
- 
+
 
 rule prepare_sector_network:
     input:
@@ -185,7 +185,7 @@ rule prepare_sector_network:
         biomass_potentials='data/biomass_potentials.csv',
         timezone_mappings='data/timezone_mappings.csv',
         heat_profile="data/heat_load_profile_BDEW.csv",
-        costs="data/costs/costs_{planning_horizons}.csv", #"data/costs.csv"
+        costs=config['costs_dir'] + "costs_{planning_horizons}.csv", #"data/costs.csv"
         co2_budget="data/co2_budget.csv",
         clustered_pop_layout="resources/pop_layout_{network}_s{simpl}_{clusters}.csv",
         industrial_demand="resources/industrial_demand_{network}_s{simpl}_{clusters}.csv",
@@ -265,7 +265,7 @@ rule make_summary:
     resources: mem_mb=10000
     script:
         'scripts/make_summary.py'
-            
+
 
 rule plot_summary:
     input:
@@ -282,13 +282,13 @@ rule plot_summary:
         'scripts/plot_summary.py'
 
 if config["foresight"] == "overnight":
-  
+
     rule solve_network:
         input:
             network=config['results_dir'] + config['run'] + "/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc",
-            costs="data/costs/costs_{planning_horizons}.csv",
-            
-        output: config['results_dir'] + config['run'] + "/postnetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc"    
+            costs=config['costs_dir'] + "costs_{planning_horizons}.csv",
+
+        output: config['results_dir'] + config['run'] + "/postnetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc"
         shadow: "shallow"
         log:
             solver="logs/" + config['run'] + "/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}_solver.log",
@@ -297,51 +297,51 @@ if config["foresight"] == "overnight":
         benchmark: "benchmarks/solve_network/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}"
         threads: 4
         resources: mem_mb=config['solving']['mem']
-        # group: "solve" # with group, threads is ignored https://bitbucket.org/snakemake/snakemake/issues/971/group-job-description-does-not-contain        
+        # group: "solve" # with group, threads is ignored https://bitbucket.org/snakemake/snakemake/issues/971/group-job-description-does-not-contain
         script: "scripts/solve_network.py"
-          
-        
-if config["foresight"] == "myopic":           
+
+
+if config["foresight"] == "myopic":
 
     rule add_existing_baseyear:
         input:
             network=config['results_dir']  +  config['run'] + '/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc',
-            costs="data/costs/costs_{}.csv".format(config['scenario']['planning_horizons'][0]),
-            cop_soil_total="resources/cop_soil_total_{network}_s{simpl}_{clusters}.nc",            
+            costs=config['costs_dir'] + "costs_{}.csv".format(config['scenario']['planning_horizons'][0]),
+            cop_soil_total="resources/cop_soil_total_{network}_s{simpl}_{clusters}.nc",
             cop_air_total="resources/cop_air_total_{network}_s{simpl}_{clusters}.nc"
-        output: config['results_dir']  +  config['run'] + '/prenetworks_brownfield/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc'            
+        output: config['results_dir']  +  config['run'] + '/prenetworks_brownfield/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc'
         wildcard_constraints:
             planning_horizons=config['scenario']['planning_horizons'][0] #only applies to baseyear
         threads: 1
-        resources: mem_mb=2000 
+        resources: mem_mb=2000
         script: "scripts/add_existing_baseyear.py"
-                
+
     def process_input(wildcards):
         i = config["scenario"]["planning_horizons"].index(wildcards.planning_horizons)
-        return config['results_dir'] + config['run'] + "/postnetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_" + config["scenario"]["planning_horizons"][i-1] + ".nc" 
- 
-   
+        return config['results_dir'] + config['run'] + "/postnetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_" + config["scenario"]["planning_horizons"][i-1] + ".nc"
+
+
     rule add_brownfield:
         input:
             network=config['results_dir']  +  config['run'] + '/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc',
             network_p=process_input, #solved network at previous time step
-            costs="data/costs/costs_{planning_horizons}.csv",
-            cop_soil_total="resources/cop_soil_total_{network}_s{simpl}_{clusters}.nc",            
+            costs=config['costs_dir'] + "costs_{planning_horizons}.csv",
+            cop_soil_total="resources/cop_soil_total_{network}_s{simpl}_{clusters}.nc",
             cop_air_total="resources/cop_air_total_{network}_s{simpl}_{clusters}.nc"
-   
-        output: config['results_dir'] + config['run'] + "/prenetworks_brownfield/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc"            
+
+        output: config['results_dir'] + config['run'] + "/prenetworks_brownfield/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc"
         threads: 4
-        resources: mem_mb=2000 
+        resources: mem_mb=2000
         script: "scripts/add_brownfield.py"
 
-    ruleorder: add_existing_baseyear > add_brownfield        
-    
+    ruleorder: add_existing_baseyear > add_brownfield
+
     rule solve_network_myopic:
         input:
             network=config['results_dir'] + config['run'] + "/prenetworks_brownfield/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc",
-            costs="data/costs/costs_{planning_horizons}.csv",
-            
-        output: config['results_dir'] + config['run'] + "/postnetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc"    
+            costs=config['costs_dir'] + "costs_{planning_horizons}.csv",
+
+        output: config['results_dir'] + config['run'] + "/postnetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc"
         shadow: "shallow"
         log:
             solver="logs/" + config['run'] + "/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}_solver.log",
@@ -351,7 +351,3 @@ if config["foresight"] == "myopic":
         threads: 4
         resources: mem_mb=config['solving']['mem']
         script: "scripts/solve_network.py"
-
-            
-
-
