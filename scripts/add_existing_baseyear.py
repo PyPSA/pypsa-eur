@@ -48,7 +48,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs):
     Parameters
     ----------
     n : network
-    
+
     grouping_years : intervals to group existing capacities
 
     costs : to read lifetime to estimate YearDecomissioning
@@ -56,8 +56,8 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs):
 
     """
     print("adding power capacities installed before baseyear")
-    
-    
+
+
     ### add conventional capacities using 'powerplants.csv'
     df_agg = pd.read_csv('../pypsa-eur/resources/powerplants.csv', index_col=0)
 
@@ -89,7 +89,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs):
     name_to_2code = dict(zip(cc['Country'].tolist(),
                              cc['2 letter code (ISO-3166-2)'].tolist()))
     for tech in ['solar', 'onwind', 'offwind']:
-        df = pd.read_csv('data/existing_infrastructure/{}_capacity_IRENA.csv'.format(tech), 
+        df = pd.read_csv('data/existing_infrastructure/{}_capacity_IRENA.csv'.format(tech),
                          sep=',', index_col=0)
 
         df.rename(index={'Czechia':'Czech Republic',
@@ -114,10 +114,10 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs):
                                             'YearCommissioned':int(year),
                                             'YearDecommissioning':int(float(year)+costs.at[tech, 'lifetime'])},
                                              ignore_index=True)
-           
+
     nodes=set([node[0:2] for node in n.buses.index[n.buses.carrier == "AC"]])
- 
-    
+
+
     #TODO: Check if we want to change YearCommisioned into YearRetrofited
     for i,grouping_year in enumerate(grouping_years):
         if i==0:
@@ -127,45 +127,47 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs):
 
         df = df_agg[index].pivot_table(index='Country', columns='Fueltype',
                                            values='Capacity', aggfunc='sum')
-        
-    
+
+
         for node in nodes:
             #if a country has more than one node, selects the first one
-            bus_selected=[bus for bus in n.buses.index[n.buses.carrier == "AC"] if bus[0:2]==node][0]  
-            for generator,carrier in [("OCGT","gas"), 
-                                      ("CCGT", "gas"), 
-                                      ("coal", "coal"), 
-                                      ("oil","oil"), 
-                                      ("nuclear","uranium")]: 
+            bus_selected=[bus for bus in n.buses.index[n.buses.carrier == "AC"] if bus[0:2]==node][0]
+            for generator,carrier in [("OCGT","gas"),
+                                      ("CCGT", "gas"),
+                                      ("coal", "coal"),
+                                      ("oil","oil"),
+                                      ("nuclear","uranium")]:
                 try:
-                    if node in df.index and not np.isnan(df.loc[node, generator]):           
-                        n.add("Link",
-                              bus_selected + " " + generator +"-" + grouping_year,
-                              bus0="EU " + carrier,
-                              bus1=bus_selected,
-                              bus2="co2 atmosphere",                        
-                              marginal_cost=costs.at[generator,'efficiency']*costs.at[generator,'VOM'], #NB: VOM is per MWel
-                              capital_cost=costs.at[generator,'efficiency']*costs.at[generator,'fixed'], #NB: fixed cost is per MWel
-                              p_nom=df.loc[node, generator],
-                              efficiency=costs.at[generator,'efficiency'],
-                              efficiency2=costs.at[carrier,'CO2 intensity'],
-                              build_year=int(grouping_year),
-                              lifetime=costs.at[generator,'lifetime'])        
+                    if node in df.index and not np.isnan(df.loc[node, generator]):
+                        #use madd so that we can insert the carrier attribute
+                        n.madd("Link",
+                               [bus_selected + " " + generator +"-" + grouping_year],
+                               bus0="EU " + carrier,
+                               bus1=bus_selected,
+                               bus2="co2 atmosphere",
+                               carrier=generator,
+                               marginal_cost=costs.at[generator,'efficiency']*costs.at[generator,'VOM'], #NB: VOM is per MWel
+                               capital_cost=costs.at[generator,'efficiency']*costs.at[generator,'fixed'], #NB: fixed cost is per MWel
+                               p_nom=df.loc[node, generator],
+                               efficiency=costs.at[generator,'efficiency'],
+                               efficiency2=costs.at[carrier,'CO2 intensity'],
+                               build_year=int(grouping_year),
+                               lifetime=costs.at[generator,'lifetime'])
                 except:
                     print("No capacity installed around " + grouping_year + "  of " + generator + " in node " + node)
-                    
+
             for generator in ['solar', 'onwind', 'offwind']:
-                try: 
+                try:
                     if not np.isnan(df.loc[node, generator]):
                         if generator =='offwind':
                             p_max_pu=n.generators_t.p_max_pu[bus_selected + ' offwind-ac']
                         else:
                             p_max_pu=n.generators_t.p_max_pu[bus_selected + ' ' + generator]
-            
-                        n.add("Generator", 
+
+                        n.add("Generator",
                               bus_selected + ' ' + generator +"-"+ grouping_year,
                               bus=bus_selected,
-                              carrier=generator,                  
+                              carrier=generator,
                               p_nom=df.loc[node, generator],
                               marginal_cost=costs.at[generator,'VOM'],
                               capital_cost=costs.at[generator,'fixed'],
@@ -179,7 +181,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs):
             # delete generators if their lifetime is over and p_nom=0
             n.mremove("Generator", [index for index in n.generators.index.to_list() if grouping_year in index and n.generators.p_nom[index] < snakemake.config['existing_capacities']['threshold_capacity']])
             n.mremove("Link", [index for index in n.links.index.to_list() if grouping_year in index and n.links.p_nom[index] < snakemake.config['existing_capacities']['threshold_capacity']])
-    
+
 def add_heating_capacities_installed_before_baseyear(n, baseyear, grouping_years, ashp_cop, gshp_cop, time_dep_hp_cop, costs, default_lifetime):
 
     """
@@ -187,26 +189,26 @@ def add_heating_capacities_installed_before_baseyear(n, baseyear, grouping_years
     Parameters
     ----------
     n : network
-    
+
     baseyear: last year covered in the existing capacities database
-        
+
     grouping_years : intervals to group existing capacities
-    
-    linear decomissioning of heating capacities from 2020 to 2045 is 
+
+    linear decomissioning of heating capacities from 2020 to 2045 is
     currently assumed
-    
+
     heating capacities split between residential and services proportional
-    to heating load in both 
+    to heating load in both
     50% capacities in rural busess 50% in urban buses
-    """    
-    print("adding heating capacities installed before baseyear")        
-                
+    """
+    print("adding heating capacities installed before baseyear")
+
     # Add existing heating capacities, data comes from the study
-    # "Mapping and analyses of the current and future (2020 - 2030) 
+    # "Mapping and analyses of the current and future (2020 - 2030)
     # heating/cooling fuel deployment (fossil/renewables) "
     # https://ec.europa.eu/energy/studies/mapping-and-analyses-current-and-future-2020-2030-heatingcooling-fuel-deployment_en?redir=1
     # file: "WP2_DataAnnex_1_BuildingTechs_ForPublication_201603.xls" -> "existing_heating_raw.csv".
-        
+
     # retrieve existing heating capacities
     techs = ['gas boiler',
              'oil boiler',
@@ -216,58 +218,58 @@ def add_heating_capacities_installed_before_baseyear(n, baseyear, grouping_years
     df = pd.read_csv('data/existing_infrastructure/existing_heating_raw.csv',
                      index_col=0,
                      header=0)
-    # data for Albania, Montenegro and Macedonia not included in database 
+    # data for Albania, Montenegro and Macedonia not included in database
     df.loc['Albania']=np.nan
     df.loc['Montenegro']=np.nan
     df.loc['Macedonia']=np.nan
     df.fillna(0, inplace=True)
     df *= 1e3 # GW to MW
-        
+
     cc = pd.read_csv('data/Country_codes.csv', sep=',', index_col=-1)
     name_to_2code = dict(zip(cc['Country'].tolist(),
                          cc['2 letter code (ISO-3166-2)'].tolist()))
     df.rename(index=lambda country : name_to_2code[country], inplace=True)
 
-        
-    # coal and oil boilers are assimilated to oil boilers        
-    df['oil boiler'] =df['oil boiler'] + df['coal boiler'] 
+
+    # coal and oil boilers are assimilated to oil boilers
+    df['oil boiler'] =df['oil boiler'] + df['coal boiler']
     df.drop(['coal boiler'], axis=1, inplace=True)
-        
+
     # rename countries with network buses names
     nodes_elec=[node for node in n.buses.index[n.buses.carrier == "AC"]]
     name_to_busname={ index : [node for node in nodes_elec if index in node][0] for index in df.index}
     df.rename(index=lambda country : name_to_busname[country], inplace=True)
 
-    # split existing capacities between residential and services 
-    # proportional to energy demand           
+    # split existing capacities between residential and services
+    # proportional to energy demand
     ratio_residential=pd.Series([(n.loads_t.p_set.sum()['{} residential rural heat'.format(node)] /
                (n.loads_t.p_set.sum()['{} residential rural heat'.format(node)] +
                 n.loads_t.p_set.sum()['{} services rural heat'.format(node)] ))
                    for node in df.index], index=df.index)
-       
-    for tech in techs: 
+
+    for tech in techs:
         df['residential ' + tech] = df[tech]*ratio_residential
         df['services ' + tech] = df[tech]*(1-ratio_residential)
-               
+
     nodes={}
-    p_nom={}        
-    for name in ["residential rural", 
+    p_nom={}
+    for name in ["residential rural",
                  "services rural",
                  "residential urban decentral",
-                 "services urban decentral", 
+                 "services urban decentral",
                  "urban central"]:
-            
-        name_type = "central" if name == "urban central" else "decentral"            
+
+        name_type = "central" if name == "urban central" else "decentral"
         nodes[name] = pd.Index([index[0:5] for index in n.buses.index[n.buses.index.str.contains(name) & n.buses.index.str.contains('heat')]])
         heat_pump_type = "air" if "urban" in name else "ground"
         heat_type= "residential" if "residential" in name else "services"
-            
+
         if name == "urban central":
             p_nom[name]=df['air heat pump'][nodes[name]]
         else:
             p_nom[name] =  df['{} {} heat pump'.format(heat_type, heat_pump_type)][nodes[name]]
-            
-        # Add heat pumps        
+
+        # Add heat pumps
         costs_name = "{} {}-sourced heat pump".format("decentral", heat_pump_type)
 
 
@@ -277,7 +279,7 @@ def add_heating_capacities_installed_before_baseyear(n, baseyear, grouping_years
             if int(grouping_year) + default_lifetime <= int(baseyear):
                 ratio=0
             else:
-                #installation is assumed to be linear for the past 25 years (default lifetime)  
+                #installation is assumed to be linear for the past 25 years (default lifetime)
                 ratio = (int(grouping_year)-int(grouping_years[i-1]))/default_lifetime
             print(grouping_year + ' ratio ' + str(ratio))
             n.madd("Link",
@@ -288,11 +290,11 @@ def add_heating_capacities_installed_before_baseyear(n, baseyear, grouping_years
                    carrier="{} {} heat pump".format(name,heat_pump_type),
                    efficiency=efficiency,
                    capital_cost=costs.at[costs_name,'efficiency']*costs.at[costs_name,'fixed'],
-                   p_nom=p_nom[name]*ratio, 
+                   p_nom=p_nom[name]*ratio,
                    build_year=int(grouping_year),
                    lifetime=costs.at[costs_name,'lifetime'])
-            
-            # add resistive heater, gas boilers and oil boilers 
+
+            # add resistive heater, gas boilers and oil boilers
             # (50% capacities to rural buses, 50% to urban buses)
             n.madd("Link",
                    nodes[name],
@@ -302,10 +304,10 @@ def add_heating_capacities_installed_before_baseyear(n, baseyear, grouping_years
                    carrier=name + " resistive heater",
                    efficiency=costs.at[name_type + ' resistive heater','efficiency'],
                    capital_cost=costs.at[name_type + ' resistive heater','efficiency']*costs.at[name_type + ' resistive heater','fixed'],
-                   p_nom=0.5*df['{} resistive heater'.format(heat_type)][nodes[name]]*ratio, 
+                   p_nom=0.5*df['{} resistive heater'.format(heat_type)][nodes[name]]*ratio,
                    build_year=int(grouping_year),
-                   lifetime=costs.at[costs_name,'lifetime']) 
-            
+                   lifetime=costs.at[costs_name,'lifetime'])
+
             n.madd("Link",
                    nodes[name],
                    suffix= " " + name + " gas boiler-{}".format(grouping_year),
@@ -316,9 +318,9 @@ def add_heating_capacities_installed_before_baseyear(n, baseyear, grouping_years
                    efficiency=costs.at[name_type + ' gas boiler','efficiency'],
                    efficiency2=costs.at['gas','CO2 intensity'],
                    capital_cost=costs.at[name_type + ' gas boiler','efficiency']*costs.at[name_type + ' gas boiler','fixed'],
-                   p_nom=0.5*df['{} gas boiler'.format(heat_type)][nodes[name]]*ratio, 
+                   p_nom=0.5*df['{} gas boiler'.format(heat_type)][nodes[name]]*ratio,
                    build_year=int(grouping_year),
-                   lifetime=costs.at[name_type + ' gas boiler','lifetime']) 
+                   lifetime=costs.at[name_type + ' gas boiler','lifetime'])
             n.madd("Link",
                    nodes[name],
                    suffix=" " + name + " oil boiler-{}".format(grouping_year),
@@ -329,30 +331,30 @@ def add_heating_capacities_installed_before_baseyear(n, baseyear, grouping_years
                    efficiency=costs.at['decentral oil boiler','efficiency'],
                    efficiency2=costs.at['oil','CO2 intensity'],
                    capital_cost=costs.at['decentral oil boiler','efficiency']*costs.at['decentral oil boiler','fixed'],
-                   p_nom=0.5*df['{} oil boiler'.format(heat_type)][nodes[name]]*ratio, 
+                   p_nom=0.5*df['{} oil boiler'.format(heat_type)][nodes[name]]*ratio,
                    build_year=int(grouping_year),
-                   lifetime=costs.at[name_type + ' gas boiler','lifetime']) 
-            
+                   lifetime=costs.at[name_type + ' gas boiler','lifetime'])
+
             # delete links with p_nom=nan corresponding to extra nodes in country
             n.mremove("Link", [index for index in n.links.index.to_list() if grouping_year in index and np.isnan(n.links.p_nom[index])])
-        
+
             # delete links if their lifetime is over and p_nom=0
             n.mremove("Link", [index for index in n.links.index.to_list() if grouping_year in index and n.links.p_nom[index]<snakemake.config['existing_capacities']['threshold_capacity']])
 
-  
+
 if __name__ == "__main__":
     # Detect running outside of snakemake and mock snakemake for testing
     if 'snakemake' not in globals():
         from vresutils.snakemake import MockSnakemake
         snakemake = MockSnakemake(
-            wildcards=dict(network='elec', simpl='', clusters='37', lv='1.0', 
+            wildcards=dict(network='elec', simpl='', clusters='37', lv='1.0',
                            sector_opts='Co2L0-168H-T-H-B-I-solar3-dist1',
                            co2_budget_name='go',
                            planning_horizons='2020'),
-            input=dict(network='pypsa-eur-sec/results/test/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{co2_budget_name}_{planning_horizons}.nc', 
+            input=dict(network='pypsa-eur-sec/results/test/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{co2_budget_name}_{planning_horizons}.nc',
                        costs='pypsa-eur-sec/data/costs/costs_{planning_horizons}.csv',
                        cop_air_total="pypsa-eur-sec/resources/cop_air_total_{network}_s{simpl}_{clusters}.nc",
-                       cop_soil_total="pypsa-eur-sec/resources/cop_soil_total_{network}_s{simpl}_{clusters}.nc"),                      
+                       cop_soil_total="pypsa-eur-sec/resources/cop_soil_total_{network}_s{simpl}_{clusters}.nc"),
             output=['pypsa-eur-sec/results/test/prenetworks_brownfield/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{planning_horizons}.nc'],
         )
         import yaml
@@ -366,10 +368,10 @@ if __name__ == "__main__":
     opts = snakemake.wildcards.sector_opts.split('-')
 
     baseyear= snakemake.config['scenario']["planning_horizons"][0]
-    
+
     n = pypsa.Network(snakemake.input.network,
                       override_component_attrs=override_component_attrs)
- 
+
     Nyears = n.snapshot_weightings.sum()/8760.
     costs = prepare_costs(snakemake.input.costs,
                           snakemake.config['costs']['USD2013_to_EUR2013'],
@@ -378,19 +380,12 @@ if __name__ == "__main__":
 
     grouping_years=snakemake.config['existing_capacities']['grouping_years']
     add_power_capacities_installed_before_baseyear(n, grouping_years, costs)
-        
+
     if "H" in opts:
-        time_dep_hp_cop = options["time_dep_hp_cop"] 
+        time_dep_hp_cop = options["time_dep_hp_cop"]
         ashp_cop = xr.open_dataarray(snakemake.input.cop_air_total).T.to_pandas().reindex(index=n.snapshots)
         gshp_cop = xr.open_dataarray(snakemake.input.cop_soil_total).T.to_pandas().reindex(index=n.snapshots)
         default_lifetime = snakemake.config['costs']['lifetime']
         add_heating_capacities_installed_before_baseyear(n, baseyear, grouping_years, ashp_cop, gshp_cop, time_dep_hp_cop, costs, default_lifetime)
-   
+
     n.export_to_netcdf(snakemake.output[0])
-
-
-    
-
-
-   
-
