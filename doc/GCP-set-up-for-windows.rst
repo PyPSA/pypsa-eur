@@ -1,16 +1,36 @@
 ..
-  SPDX-FileCopyrightText: 2019-2020 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: 2020 Maximilian Parzen and Emmanuel Paez
   
   SPDX-License-Identifier: CC-BY-4.0
 
 .. _installation:
 
 ##########################################
-Installation
+Set-up Google Cloud Platform on Windows (300$ free trial)
 ##########################################
 
-The subsequently described installation steps are demonstrated as shell commands, where the path before the ``%`` sign denotes the
-directory in which the commands following the ``%`` should be entered.
+Purpose
+====================
+The Google Cloud Platform is an ideal tool to test PyPSA-Eur or PyPSA-Eur-Sec when, 
+
+- you don't have immediately access to a high performance computation facility,
+- you have problems with the Windows operating system and want a quick run on a linux-based system,
+- you want to model whole-EU in acceptable spatial and time-resolution to run small research or work projects,
+- you need quick results (the GCP provide you in the trial version max. 32 vCPU cores and more than 600 GB memory)
+
+What you basically do with the Google Cloud Platform is that you set up a virtual machine/computer in the cloud which can store and operate data.
+Similar as on your local computer, you have to install all software and solvers, and create paths on the virtual machine to run PyPSA. 
+The 300$ free trial google budget for the first Google Cloud Platform use equals roughly, 10 whole-EU simulations, with 181 nodes at hourly basis.
+
+The following steps are required for a successfull Google CLoud Platform set-up:
+
+- `Google Cloud Platform registration <https://console.cloud.google.com>`_, to receive 300$ free budget.
+- `Creating an Virtual Machine (VM) instance <https://www.ibm.com/products/ilog-cplex-optimization-studio>`_, which is practically a virtual computer with Linux as OS.
+- `Installation of Cloud SDK <https://cloud.google.com/sdk/>`_, to create a communication channel between your computer and the cloud virtual machine (VM).
+- `Installation of WinSCP <https://winscp.net/eng/download.php>`_, to comfortably handle or transfer files between the VM and you local computer.
+
+- `Installation of PuTTy <https://www.ibm.com/products/ilog-cplex-optimization-studio>`_ ## not sure about that one
+
 
 Clone the Repository
 ====================
