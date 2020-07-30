@@ -29,9 +29,6 @@ The following steps are required for a successfull Google CLoud Platform set-up:
 - `Installation of Cloud SDK <https://cloud.google.com/sdk/>`_, to create a communication channel between your computer and the cloud virtual machine (VM).
 - `Installation of WinSCP <https://winscp.net/eng/download.php>`_, to comfortably handle or transfer files between the VM and you local computer.
 
-- `Installation of PuTTy `<https://www.ibm.com/products/ilog-cplex-optimization-studio>`_ ## not sure about that one
-
-
 Step 1 - Google Cloud Platform registration
 ====================
 
@@ -50,7 +47,7 @@ With the following steps we create a Virtual Machine (VM) on Google Cloud.
 - Click on create.
 - Click on new VM instance.
 
-Now the a window with the machine detail will open. You have to configure the following things:
+Now a window with the machine details will open. You have to configure the following things:
 
 - Name. Set a name for your VM (Chose your name well i.e. "climate-casino". You cannot edit the name after saving the instance.)
 - Region. You can keep us-central1 (Iowa), since it is a 'cheap' computational region. Sometimes your machine is limited in a specific region, dont worry to pick another region.
@@ -59,71 +56,35 @@ Now the a window with the machine detail will open. You have to configure the fo
 
 - Click on create and celebrate your first VM on GCP.
 
-Installation of Cloud SDK
-=========================
+Step 3 - Installation of Cloud SDK
+===================================
 
-PyPSA passes the PyPSA-Eur network model to an external solver for performing a total annual system cost minimization with optimal power flow.
-PyPSA is known to work with the free software
-
-- `Ipopt <https://coin-or.github.io/Ipopt/INSTALL.html>`_
-- `Cbc <https://projects.coin-or.org/Cbc#DownloadandInstall>`_
-- `GLPK <https://www.gnu.org/software/glpk/>`_ (`WinGLKP <http://winglpk.sourceforge.net/>`_)
-
-and the non-free, commercial software (for which free academic licenses are available)
-
-- `Gurobi <https://www.gurobi.com/documentation/quickstart.html>`_
-- `CPLEX <https://www.ibm.com/products/ilog-cplex-optimization-studio>`_
-
-and any other solver that works with the underlying modelling framework `Pyomo <http://www.pyomo.org/>`_.
-For installation instructions of these solvers for your operating system, follow the links above.
-
-.. seealso::
-    `Getting a solver in the PyPSA documentation <https://pypsa.readthedocs.io/en/latest/installation.html#getting-a-solver-for-linear-optimisation>`_
-
-.. note::
-    Commercial solvers such as Gurobi and CPLEX currently significantly outperform open-source solvers for large-scale problems.
-    It might be the case that you can only retrieve solutions by using a commercial solver.
-
-.. note::
-    The rules :mod:`cluster_network` and :mod:`simplify_network` solve a quadratic optimisation problem for clustering.
-    The open-source solvers Cbc and GlPK cannot handle this. A fallback to Ipopt is implemented in this case, but requires
-    also Ipopt to be installed. For an open-source solver setup install in your `conda` environment on OSX/Linux
-
-    .. code:: bash
-
-        conda activate pypsa-eur
-        conda install -c conda-forge ipopt coincbc
-
-    and on Windows
+- Download Google Cloud SDK `SDK <https://cloud.google.com/sdk>`_. Check that you are logged in in your google account. The link should lead you to the windows installation of Google Cloud SDK.
+- Follow the "Quickstart for Windows - Before you begin" steps.
+- After the successfull installation, close the Google Cloud SDK reopen it again. Type the following command into the "Google Cloud SDK Shell":
 
     .. code:: bash
         
-        conda activate pypsa-eur
-        conda install -c conda-forge ipopt glpk
+        gcloud compute ssh [Your VM instance name] -- -L 8888:localhost:8888
         
 
-.. _defaultconfig:
+        This command above will open a PuTTy command window that is connected to your Virtual Machine. Time to celebrate if it works!
+        
+- Now install all necessary tools. As a little help: 
 
-Set Up the Default Configuration
-================================
+    .. code:: bash
+        
+        sudo apt-get update
+        sudo apt-get install bzip2 libxml2-dev
+        sudo apt-get install wget
+        wget https://repo.anaconda.com/archive/Anaconda3-2020.07-Linux-x86_64.sh    (Check the http link. To be up to date with anaconda, check the `Anaconda website <https://www.anaconda.com/products/individual>`_)
+        ls (to see what anaconda file to bash)
+        bash Anaconda3-2020.07-Linux-x86_64.sh  
+        source ~/.bashrc  
+        
+        Close and reopen the PuTTy file (-> open Google Cloud SDK -> initialize again with the command above to open the PuTTY command window).
+        Now Conda can be listed with 'conda list'. Follow now the basic PyPSA installation to make your Virtual Machine ready.
+        
+Step 4 - Installation of WinSCP
+===================================  
 
-PyPSA-Eur has several configuration options that must be specified in a ``config.yaml`` file located in the root directory.
-An example configuration ``config.default.yaml`` is maintained in the repository. 
-More details on the configuration options are in :ref:`config`.
-
-Before first use, create a ``config.yaml`` by copying the example.
-
-.. code:: bash
-
-    .../pypsa-eur % cp config.default.yaml config.yaml
-
-Users are advised to regularly check their own ``config.yaml`` against changes in the ``config.default.yaml``
-when pulling a new version from the remote repository.
-
-.. Using PyPSA-Eur with Docker Images
-.. ==================================
-
-.. If docker. Optional.
-.. To run on cloud computing.
-.. Gurobi license - floating token server - license must not be tied to a particular machine
-.. Provide ``Dockerfile``.
