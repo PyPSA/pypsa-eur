@@ -67,24 +67,24 @@ Step 3 - Installation of Cloud SDK
         
         gcloud compute ssh [Your VM instance name] -- -L 8888:localhost:8888
         
-
-        This command above will open a PuTTy command window that is connected to your Virtual Machine. Time to celebrate if it works!
-        
-- Now install all necessary tools. As a little help: 
+- This command above will open a PuTTy command window that is connected to your Virtual Machine. Time to celebrate if it works!
+- Now install all necessary tools. As little help, the first steps: 
 
     .. code:: bash
         
         sudo apt-get update
         sudo apt-get install bzip2 libxml2-dev
         sudo apt-get install wget
-        wget https://repo.anaconda.com/archive/Anaconda3-2020.07-Linux-x86_64.sh    (Check the http link. To be up to date with anaconda, check the `Anaconda website <https://www.anaconda.com/products/individual>`_)
-        ls (to see what anaconda file to bash)
+        wget https://repo.anaconda.com/archive/Anaconda3-2020.07-Linux-x86_64.sh    (Check the http link. To be up to date with anaconda, check the Anaconda website https://www.anaconda.com/products/individual )
+        ls  (to see what anaconda file to bash)
         bash Anaconda3-2020.07-Linux-x86_64.sh  
         source ~/.bashrc  
         
-        Close and reopen the PuTTy file (-> open Google Cloud SDK -> initialize again with the command above to open the PuTTY command window).
-        Now Conda can be listed with 'conda list'. Follow now the basic PyPSA installation to make your Virtual Machine ready.
+- Close and reopen the PuTTy file (-> open Google Cloud SDK -> initialize again with the command above to open the PuTTY command window). Now Conda can be listed with 'conda list'. Follow now the standard PyPSA/PyPSA-Eur/PyPSA-Eur-Sec installation pages to finalize your machine for any PyPSA modelling tasks (don't forget the solvers - for bigger simulations use commercial solvers such as Gurobi).
         
 Step 4 - Installation of WinSCP
 ===================================  
 
+Step 5 - Extra. Copying your instance with all its data/ paths included.
+========================================================================
+Especially if you think about operating several instance for quicker simulations, you can create a so called `"image" <https://console.cloud.google.com/compute/images?authuser=1&project=exalted-country-284917>`_ of the virtual machine. The "image" include all the data and software set-ups from your VM. Afterwards you can create a VM from an image and avoid all the installation steps above. 
