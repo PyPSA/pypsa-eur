@@ -29,25 +29,16 @@ The following steps are required for a successfull Google CLoud Platform set-up:
 - `Installation of Cloud SDK <https://cloud.google.com/sdk/>`_, to create a communication channel between your computer and the cloud virtual machine (VM).
 - `Installation of WinSCP <https://winscp.net/eng/download.php>`_, to comfortably handle or transfer files between the VM and you local computer.
 
-- `Installation of PuTTy <https://www.ibm.com/products/ilog-cplex-optimization-studio>`_ ## not sure about that one
+- `Installation of PuTTy `<https://www.ibm.com/products/ilog-cplex-optimization-studio>`_ ## not sure about that one
 
 
-Clone the Repository
+Step 1 - Google Cloud Platform registration
 ====================
 
-First of all, clone the `PyPSA-Eur repository <https://github.com/PyPSA/pypsa-eur>`_ using the version control system ``git``.
-The path to the directory into which the ``git repository`` is cloned, must **not** have any spaces!
+First of all, you have to register at the `Google Cloud Platform <https://console.cloud.google.com>`_ (GCP). No magic.
+You only need an active bank account. Don't worry they won't charge you for anything as far as you are in the free trial budget and don't want to continue the GCP.
+( Top secret tip. If you run out of your first 300$ free trial budget, you can simply ask a friend or family member to set up another account for you. Though, we don't recommend that as long-term solution.)
 
-.. code:: bash
-
-    /some/other/path % cd /some/path/without/spaces
-
-    /some/path/without/spaces % git clone https://github.com/PyPSA/pypsa-eur.git
-
-.. note::
-    If you do not have ``git`` installed, follow installation instructions `here <https://git-scm.com/book/en/v2/Getting-Started-Installing-Git>`_.
-
-.. _deps:
 
 Install Python Dependencies
 ===============================
