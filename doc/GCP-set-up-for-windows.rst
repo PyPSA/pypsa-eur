@@ -40,43 +40,27 @@ You only need an active bank account. Don't worry they won't charge you for anyt
 ( Top secret tip. If you run out of your first 300$ free trial budget, you can simply ask a friend or family member to set up another account for you. Though, we don't recommend that as long-term solution.)
 
 
-Install Python Dependencies
+Step 2 - Create your Virtual Machine instance
 ===============================
 
-PyPSA-Eur relies on a set of other Python packages to function.
-We recommend using the package manager and environment management system ``conda`` to install them.
-Install `miniconda <https://docs.conda.io/en/latest/miniconda.html>`_, which is a mini version of `Anaconda <https://www.anaconda.com/>`_ that includes only ``conda`` and its dependencies or make sure ``conda`` is already installed on your system.
-For instructions for your operating system follow the ``conda`` `installation guide <https://docs.conda.io/projects/conda/en/latest/user-guide/install/>`_.
+With the following steps we create a Virtual Machine (VM) on Google Cloud.
 
-The python package requirements are curated in the `environment.yaml <https://github.com/PyPSA/pypsa-eur/blob/master/environment.yaml>`_ file.
-The environment can be installed and activated using
+- Click on the `GCP Dashboard <https://console.cloud.google.com/home/dashboard>`_.
+- Click at the "COMPUTE" header, on the "Compute Engine" and then on the "VM instance".
+- Click on create.
+- Click on new VM instance.
 
-.. code:: bash
+Now the a window with the machine detail will open. You have to configure the following things:
 
-    .../pypsa-eur % conda env create -f environment.yaml
+- Name. Set a name for your VM (Chose your name well i.e. "climate-casino". You cannot edit the name after saving the instance.)
+- Region. You can keep us-central1 (Iowa), since it is a 'cheap' computational region. Sometimes your machine is limited in a specific region, dont worry to pick another region.
+- Machine configuration. The machine configuration sets how powerful your VM is. For the set-up stage we suggest that you using a 1 vCPU and 3.75 GB memory, N1 series machine. We suggest that because every operating second cost money (Your valuable free trial money!). In a later stage you can edit your machine configuration without problems. So use a cheap machine type configuration to handle/ transfer data and only when everything is ready and tested, your expensive machine type, for instance a 8 vCPU with 160 GB memory (check "snakemake -j -n 1 solve_all_elec_networks" as a dry run to see what PyPSA-Eur or PyPSA-Eur-Sec requires for memory. Usually PyPSA can't handle not more than 8 vCPU so no more cores than 8 are required. But the memory requirements can often vary depending on the spatial and time detail of your simulation (I.e. we computed an hourly, 181 node full EU-network, with 8 vCPU and 150 GB memory since the dry-run gave as 135 GB memory as min. requirement.)
+- Boot disk. As default, your VM is created with 10 GB. Depending on how much you want to handle on one VM you should increase the disk size. We recommend a disk size of 100 GB for a safe start (cost roughly 8$ per month), the disk can be resized at any later stage as additional disk.
 
-    .../pypsa-eur % conda activate pypsa-eur
+- Click on create and celebrate your first VM on GCP.
 
-.. note::
-    Note that activation is local to the currently open shell!
-    After opening a new terminal window, one needs to reissue the second command!
-
-.. note::
-    If you have troubles with a slow ``conda`` installation, we recommend to install
-    `mamba <https://github.com/QuantStack/mamba>`_ as a fast drop-in replacement via
-
-    .. code:: bash
-        
-        conda install -c conda-forge mamba
-
-    and then install the environment with
-
-    .. code:: bash
-
-        mamba env create -f environment.yaml
-
-Install a Solver
-================
+Installation of Cloud SDK
+=========================
 
 PyPSA passes the PyPSA-Eur network model to an external solver for performing a total annual system cost minimization with optimal power flow.
 PyPSA is known to work with the free software
