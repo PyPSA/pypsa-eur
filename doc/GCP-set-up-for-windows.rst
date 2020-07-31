@@ -106,3 +106,12 @@ Make sure that your instance is operating for the next steps.
 Step 5 - Extra. Copying your instance with all its data/ paths included.
 ========================================================================
 Especially if you think about operating several instance for quicker simulations, you can create a so called `"image" <https://console.cloud.google.com/compute/images?authuser=1&project=exalted-country-284917>`_ of the virtual machine. The "image" include all the data and software set-ups from your VM. Afterwards you can create a VM from an image and avoid all the installation steps above. 
+
+Important points when to solve networks.
+========================================================================
+If you use the GCP with the default PyPSA-Eur settings, your free budget will dissapear quickly. The following tips should help you to be efficient with your free budget.
+
+- Test always in low resolution networks. I.e single country with 5 nodes, 24h time resolution for 2 month data.
+- Adjust your solver in the config.yaml file. 
+- 1. At "solving:" reset "skip_iterations:" from "false" to "true". This will lead to a single solver iteration which is often precise enough, since the following iteration barely change the objective value. 
+- 2. At "solver:" and "FeasibilityTol:" increase the tolerance to 1.e-4. This will lead to a slightly less accurate objective value but lowers drastically the computational requirements.
