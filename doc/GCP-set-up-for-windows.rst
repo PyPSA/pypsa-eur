@@ -34,7 +34,7 @@ Step 1 - Google Cloud Platform registration
 
 First of all, you have to register at the `Google Cloud Platform <https://console.cloud.google.com>`_ (GCP). No magic.
 You only need an active bank account. Don't worry they won't charge you for anything as far as you are in the free trial budget and don't want to continue the GCP.
-( Top secret tip. If you run out of your first 300$ free trial budget, you can simply ask a friend or family member to set up another account for you. Though, we don't recommend that as long-term solution.)
+(Tip. If you run out of your first 300$ free trial budget, you can simply ask a friend or family member to set up another account for you. Though, we don't recommend that as long-term solution.)
 
 
 Step 2 - Create your Virtual Machine instance
