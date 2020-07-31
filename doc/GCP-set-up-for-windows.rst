@@ -98,6 +98,11 @@ Make sure that your instance is operating for the next steps.
 - Option 2 (alternative). Click on the Tools button and "Generate new key pair...". Save the private key at a folder you remember and add it to the "private key file" field in WinSCP. Upload the public key to the metadeta of your instance. 
 - Click ok and save. Then click Login. If successfull WinSCP will open on the left side your local computer folder structure and on the right side the folder strucutre of your VM. (If you followed Option 2 and its not initially working. Stop your instance, refresh the website, reopen the WinSCP field. Afterwards your your Login should be successfull)
 
+.. note::
+    If you stop your VM instance and re-run it. Double check the External IP before you login with WinSCP.
+..
+
+
 Step 5 - Extra. Copying your instance with all its data/ paths included.
 ========================================================================
 Especially if you think about operating several instance for quicker simulations, you can create a so called `"image" <https://console.cloud.google.com/compute/images?authuser=1&project=exalted-country-284917>`_ of the virtual machine. The "image" include all the data and software set-ups from your VM. Afterwards you can create a VM from an image and avoid all the installation steps above. 
