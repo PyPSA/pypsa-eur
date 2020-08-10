@@ -51,12 +51,12 @@ def add_lifetime_wind_solar(n):
         n.generators.loc[[index for index in n.generators.index.to_list()
                         if carrier in index], 'lifetime']=costs.at[carrier_name,'lifetime']
 
-def add_coal_oil_uranium_buses(n):
+def add_carrier_buses(n, carriers):
     """
-    Add buses to connect coal, nuclear and oil plants
+    Add buses to connect e.g. coal, nuclear and oil plants
     """
 
-    for carrier in ['coal', 'oil', 'uranium']:
+    for carrier in carriers:
 
         n.add("Carrier",
               carrier)
@@ -1663,7 +1663,7 @@ if __name__ == "__main__":
 
     if snakemake.config["foresight"]=='myopic':
         add_lifetime_wind_solar(n)
-        add_coal_oil_uranium_buses(n)
+        add_carrier_buses(n,['lignite', 'coal', 'oil', 'uranium'])
 
     add_co2_tracking(n)
 

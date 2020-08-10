@@ -42,6 +42,60 @@ override_component_attrs["Generator"].loc["lifetime"] = ["float","years",np.nan,
 override_component_attrs["Store"].loc["build_year"] = ["integer","year",np.nan,"build year","Input (optional)"]
 override_component_attrs["Store"].loc["lifetime"] = ["float","years",np.nan,"build year","Input (optional)"]
 
+
+def add_existing_renewables(df_agg):
+    cc = pd.read_csv('data/Country_codes.csv',
+                     index_col=0)
+
+    carriers = {"solar" : "solar",
+                "onwind" : "onwind",
+                "offwind" : "offwind-ac"}
+
+    for tech in ['solar', 'onwind', 'offwind']:
+        carrier = carriers[tech]
+        df = pd.read_csv('data/existing_infrastructure/{}_capacity_IRENA.csv'.format(tech),
+                         index_col=0)
+        df = df.fillna(0.)
+        df.columns = df.columns.astype(int)
+
+        df.rename(index={'Czechia':'Czech Republic',
+                         'UK':'United Kingdom',
+                         'Bosnia Herzg':'Bosnia Herzegovina',
+                         'North Macedonia': 'Macedonia'}, inplace=True)
+
+        df.rename(index=cc["2 letter code (ISO-3166-2)"], inplace=True)
+
+        # calculate yearly differences
+        df.insert(loc=0, value=.0, column='1999')
+        df = df.diff(axis=1).drop('1999', axis=1)
+        df = df.clip(lower=0)
+
+
+        #distribute capacities among nodes according to capacity factor
+        #weighting with nodal_fraction
+        elec_buses = n.buses.index[n.buses.carrier == "AC"]
+        nodal_fraction = pd.Series(0.,elec_buses)
+
+        for country in n.buses.loc[elec_buses,"country"].unique():
+            gens = [c for c in n.generators_t.p_max_pu.columns if c[:2] == country and c[-len(carrier):] == carrier]
+            cfs = n.generators_t.p_max_pu[gens].mean()
+            cfs_key = cfs/cfs.sum()
+            nodal_fraction.loc[n.generators.loc[gens,"bus"]] = cfs_key.values
+
+        nodal_df = df.loc[n.buses.loc[elec_buses,"country"]]
+        nodal_df.index = elec_buses
+        nodal_df = nodal_df.multiply(nodal_fraction,axis=0)
+
+        for year in nodal_df.columns:
+            for node in nodal_df.index:
+                name = f"{node}-{tech}-{year}"
+                capacity = nodal_df.loc[node,year]
+                if capacity > 0.:
+                    df_agg.at[name,"Fueltype"] = tech
+                    df_agg.at[name,"Capacity"] = capacity
+                    df_agg.at[name,"YearCommissioned"] = year
+                    df_agg.at[name,"cluster_bus"] = node
+
 def add_power_capacities_installed_before_baseyear(n, grouping_years, costs):
     """
 
@@ -59,7 +113,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs):
 
 
     ### add conventional capacities using 'powerplants.csv'
-    df_agg = pd.read_csv('../pypsa-eur/resources/powerplants.csv', index_col=0)
+    df_agg = pd.read_csv(snakemake.input.powerplants, index_col=0)
 
     rename_fuel = {'Hard Coal':'coal',
                    'Lignite':'lignite',
@@ -83,104 +137,81 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs):
     df_agg.drop(df_agg.index[df_agg.Technology.isin(technology_to_drop)],inplace=True)
     df_agg.Fueltype = df_agg.Fueltype.map(rename_fuel)
 
-    # add existing solar and wind capacities
-    # source: https://www.irena.org/Statistics/Download-Data
-    cc = pd.read_csv('data/Country_codes.csv', sep=',', index_col=-1)
-    name_to_2code = dict(zip(cc['Country'].tolist(),
-                             cc['2 letter code (ISO-3166-2)'].tolist()))
-    for tech in ['solar', 'onwind', 'offwind']:
-        df = pd.read_csv('data/existing_infrastructure/{}_capacity_IRENA.csv'.format(tech),
-                         sep=',', index_col=0)
+    #assign clustered bus
+    busmap_s = pd.read_hdf(snakemake.input.clustermaps,
+                           key="/busmap_s")
+    busmap = pd.read_hdf(snakemake.input.clustermaps,
+                         key="/busmap")
+    clustermaps = busmap_s.map(busmap)
+    clustermaps.index = clustermaps.index.astype(int)
 
-        df.rename(index={'Czechia':'Czech Republic',
-                         'UK':'United Kingdom',
-                         'Bosnia Herzg':'Bosnia Herzegovina',
-                         'North Macedonia': 'Macedonia'}, inplace=True)
-
-        df.rename(index=lambda country : name_to_2code[country], inplace=True)
-
-        # calculate yearly differences
-        df.insert(loc=0, value=.0, column='1999')
-        df = df.diff(axis=1).drop('1999', axis=1)
-        df = df.clip(lower=0)
-        df.replace(to_replace=0.0, value=np.nan, inplace=True)
-
-        for year in df.columns:
-            for country in df.index:
-                if df.notnull().loc[country,year]:
-                    df_agg = df_agg.append({'Fueltype':tech,
-                                            'Country':country,
-                                            'Capacity':df.loc[country,year],
-                                            'YearCommissioned':int(year),
-                                            'YearDecommissioning':int(float(year)+costs.at[tech, 'lifetime'])},
-                                             ignore_index=True)
-
-    nodes=set([node[0:2] for node in n.buses.index[n.buses.carrier == "AC"]])
+    df_agg["cluster_bus"] = df_agg.bus.map(clustermaps)
 
 
-    #TODO: Check if we want to change YearCommisioned into YearRetrofited
-    for i,grouping_year in enumerate(grouping_years):
-        if i==0:
-            index = df_agg.YearCommissioned < int(grouping_year)
+    #include renewables in df_agg
+    add_existing_renewables(df_agg)
+
+    df_agg["grouping_year"] = np.take(grouping_years,
+                                      np.digitize(df_agg.YearCommissioned,
+                                                  grouping_years,
+                                                  right=True))
+
+    df = df_agg.pivot_table(index=["grouping_year",'Fueltype'], columns='cluster_bus',
+                            values='Capacity', aggfunc='sum')
+
+    print(df)
+
+    carrier = {"OCGT" : "gas",
+               "CCGT" : "gas",
+               "coal" : "coal",
+               "oil" : "oil",
+               "lignite" : "lignite",
+               "nuclear" : "uranium"}
+
+    for grouping_year, generator in df.index:
+        #capacity is the capacity in MW at each node for this
+        capacity = df.loc[grouping_year, generator]
+        capacity = capacity[~capacity.isna()]
+        capacity = capacity[capacity > snakemake.config['existing_capacities']['threshold_capacity']]
+
+        #print(grouping_year,generator,capacity)
+
+        if generator in ['solar', 'onwind', 'offwind']:
+            print("adding generators for",grouping_year,generator,capacity)
+            if generator =='offwind':
+                p_max_pu=n.generators_t.p_max_pu[capacity.index + ' offwind-ac']
+            else:
+                p_max_pu=n.generators_t.p_max_pu[capacity.index + ' ' + generator]
+
+            n.madd("Generator",
+                   capacity.index,
+                   suffix=' ' + generator +"-"+ str(grouping_year),
+                   bus=capacity.index,
+                   carrier=generator,
+                   p_nom=capacity,
+                   marginal_cost=costs.at[generator,'VOM'],
+                   capital_cost=costs.at[generator,'fixed'],
+                   efficiency=costs.at[generator, 'efficiency'],
+                   p_max_pu=p_max_pu.rename(columns=n.generators.bus),
+                   build_year=grouping_year,
+                   lifetime=costs.at[generator,'lifetime'])
         else:
-            index = (int(grouping_years[i-1]) < df_agg.YearCommissioned) & (df_agg.YearCommissioned  < int(grouping_year))
+            print("adding links for",grouping_year,generator,capacity)
+            n.madd("Link",
+                   capacity.index,
+                   suffix= " " + generator +"-" + str(grouping_year),
+                   bus0="EU " + carrier[generator],
+                   bus1=capacity.index,
+                   bus2="co2 atmosphere",
+                   carrier=generator,
+                   marginal_cost=costs.at[generator,'efficiency']*costs.at[generator,'VOM'], #NB: VOM is per MWel
+                   capital_cost=costs.at[generator,'efficiency']*costs.at[generator,'fixed'], #NB: fixed cost is per MWel
+                   p_nom=capacity,
+                   efficiency=costs.at[generator,'efficiency'],
+                   efficiency2=costs.at[carrier[generator],'CO2 intensity'],
+                   build_year=grouping_year,
+                   lifetime=costs.at[generator,'lifetime'])
 
-        df = df_agg[index].pivot_table(index='Country', columns='Fueltype',
-                                           values='Capacity', aggfunc='sum')
-
-
-        for node in nodes:
-            #if a country has more than one node, selects the first one
-            bus_selected=[bus for bus in n.buses.index[n.buses.carrier == "AC"] if bus[0:2]==node][0]
-            for generator,carrier in [("OCGT","gas"),
-                                      ("CCGT", "gas"),
-                                      ("coal", "coal"),
-                                      ("oil","oil"),
-                                      ("nuclear","uranium")]:
-                try:
-                    if node in df.index and not np.isnan(df.loc[node, generator]):
-                        #use madd so that we can insert the carrier attribute
-                        n.madd("Link",
-                               [bus_selected + " " + generator +"-" + grouping_year],
-                               bus0="EU " + carrier,
-                               bus1=bus_selected,
-                               bus2="co2 atmosphere",
-                               carrier=generator,
-                               marginal_cost=costs.at[generator,'efficiency']*costs.at[generator,'VOM'], #NB: VOM is per MWel
-                               capital_cost=costs.at[generator,'efficiency']*costs.at[generator,'fixed'], #NB: fixed cost is per MWel
-                               p_nom=df.loc[node, generator],
-                               efficiency=costs.at[generator,'efficiency'],
-                               efficiency2=costs.at[carrier,'CO2 intensity'],
-                               build_year=int(grouping_year),
-                               lifetime=costs.at[generator,'lifetime'])
-                except:
-                    print("No capacity installed around " + grouping_year + "  of " + generator + " in node " + node)
-
-            for generator in ['solar', 'onwind', 'offwind']:
-                try:
-                    if not np.isnan(df.loc[node, generator]):
-                        if generator =='offwind':
-                            p_max_pu=n.generators_t.p_max_pu[bus_selected + ' offwind-ac']
-                        else:
-                            p_max_pu=n.generators_t.p_max_pu[bus_selected + ' ' + generator]
-
-                        n.add("Generator",
-                              bus_selected + ' ' + generator +"-"+ grouping_year,
-                              bus=bus_selected,
-                              carrier=generator,
-                              p_nom=df.loc[node, generator],
-                              marginal_cost=costs.at[generator,'VOM'],
-                              capital_cost=costs.at[generator,'fixed'],
-                              efficiency=costs.at[generator, 'efficiency'],
-                              p_max_pu=p_max_pu,
-                              build_year=int(grouping_year),
-                              lifetime=costs.at[generator,'lifetime'])
-                except:
-                    print("No capacity installed around " + grouping_year + "  of " + generator + " in node " + node)
-
-            # delete generators if their lifetime is over and p_nom=0
-            n.mremove("Generator", [index for index in n.generators.index.to_list() if grouping_year in index and n.generators.p_nom[index] < snakemake.config['existing_capacities']['threshold_capacity']])
-            n.mremove("Link", [index for index in n.links.index.to_list() if grouping_year in index and n.links.p_nom[index] < snakemake.config['existing_capacities']['threshold_capacity']])
 
 def add_heating_capacities_installed_before_baseyear(n, baseyear, grouping_years, ashp_cop, gshp_cop, time_dep_hp_cop, costs, default_lifetime):
 
@@ -281,7 +312,7 @@ def add_heating_capacities_installed_before_baseyear(n, baseyear, grouping_years
             else:
                 #installation is assumed to be linear for the past 25 years (default lifetime)
                 ratio = (int(grouping_year)-int(grouping_years[i-1]))/default_lifetime
-            print(grouping_year + ' ratio ' + str(ratio))
+            print(str(grouping_year) + ' ratio ' + str(ratio))
             n.madd("Link",
                    nodes[name],
                    suffix=" {} {} heat pump-{}".format(name,heat_pump_type, grouping_year),
@@ -336,10 +367,10 @@ def add_heating_capacities_installed_before_baseyear(n, baseyear, grouping_years
                    lifetime=costs.at[name_type + ' gas boiler','lifetime'])
 
             # delete links with p_nom=nan corresponding to extra nodes in country
-            n.mremove("Link", [index for index in n.links.index.to_list() if grouping_year in index and np.isnan(n.links.p_nom[index])])
+            n.mremove("Link", [index for index in n.links.index.to_list() if str(grouping_year) in index and np.isnan(n.links.p_nom[index])])
 
             # delete links if their lifetime is over and p_nom=0
-            n.mremove("Link", [index for index in n.links.index.to_list() if grouping_year in index and n.links.p_nom[index]<snakemake.config['existing_capacities']['threshold_capacity']])
+            n.mremove("Link", [index for index in n.links.index.to_list() if str(grouping_year) in index and n.links.p_nom[index]<snakemake.config['existing_capacities']['threshold_capacity']])
 
 
 if __name__ == "__main__":
