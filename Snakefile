@@ -308,6 +308,7 @@ if config["foresight"] == "myopic":
             network=config['results_dir']  +  config['run'] + '/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc',
             powerplants=pypsaeur('resources/powerplants.csv'),
             clustermaps=pypsaeur('resources/clustermaps_{network}_s{simpl}_{clusters}.h5'),
+            clustered_pop_layout="resources/pop_layout_{network}_s{simpl}_{clusters}.csv",
             costs=config['costs_dir'] + "costs_{}.csv".format(config['scenario']['planning_horizons'][0]),
             cop_soil_total="resources/cop_soil_total_{network}_s{simpl}_{clusters}.nc",
             cop_air_total="resources/cop_air_total_{network}_s{simpl}_{clusters}.nc"
