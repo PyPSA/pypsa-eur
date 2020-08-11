@@ -61,9 +61,11 @@ def add_carrier_buses(n, carriers):
         n.add("Carrier",
               carrier)
 
-        n.add("Bus",
-              "EU " + carrier,
-              carrier=carrier)
+        #use madd to get location inserted
+        n.madd("Bus",
+               ["EU " + carrier],
+               location="EU",
+               carrier=carrier)
 
         #use madd to get carrier inserted
         n.madd("Store",
@@ -108,8 +110,10 @@ def add_co2_tracking(n):
           co2_emissions=-1.)
 
     #this tracks CO2 in the atmosphere
-    n.add("Bus","co2 atmosphere",
-          carrier="co2")
+    n.madd("Bus",
+           ["co2 atmosphere"],
+           location="EU",
+           carrier="co2")
 
     #NB: can also be negative
     n.madd("Store",["co2 atmosphere"],
@@ -119,8 +123,10 @@ def add_co2_tracking(n):
            bus="co2 atmosphere")
 
     #this tracks CO2 stored, e.g. underground
-    n.add("Bus","co2 stored",
-          carrier="co2 stored")
+    n.madd("Bus",
+           ["co2 stored"],
+           location="EU",
+           carrier="co2 stored")
 
     #TODO move cost to data/costs.csv
     #TODO move maximum somewhere more transparent
@@ -506,9 +512,10 @@ def add_generation(network):
         network.add("Carrier",
                     carrier)
 
-        network.add("Bus",
-                    "EU " + carrier,
-                    carrier=carrier)
+        network.madd("Bus",
+                     ["EU " + carrier],
+                     location="EU",
+                     carrier=carrier)
 
         #use madd to get carrier inserted
         network.madd("Store",
@@ -583,6 +590,7 @@ def insert_electricity_distribution_grid(network):
 
     network.madd("Bus",
                  nodes+ " low voltage",
+                 location=nodes,
                  carrier="low voltage")
 
     network.madd("Link",
@@ -631,6 +639,7 @@ def insert_electricity_distribution_grid(network):
 
     network.madd("Bus",
                  nodes + " home battery",
+                 location=nodes,
                  carrier="home battery")
 
     network.madd("Store",
@@ -679,6 +688,7 @@ def add_storage(network):
 
     network.madd("Bus",
                  nodes+ " H2",
+                 location=nodes,
                  carrier="H2")
 
     network.madd("Link",
@@ -751,6 +761,7 @@ def add_storage(network):
 
     network.madd("Bus",
                  nodes + " battery",
+                 location=nodes,
                  carrier="battery")
 
     network.madd("Store",
@@ -846,6 +857,7 @@ def add_transport(network):
 
     network.madd("Bus",
                  nodes,
+                 location=nodes,
                  suffix=" EV battery",
                  carrier="Li ion")
 
@@ -932,6 +944,7 @@ def add_heat(network):
 
         network.madd("Bus",
                      nodes[name] + " " + name + " heat",
+                     location=nodes[name],
                      carrier=name + " heat")
 
         ## Add heat load
@@ -983,6 +996,7 @@ def add_heat(network):
 
             network.madd("Bus",
                          nodes[name] + " " + name + " water tanks",
+                         location=nodes[name],
                          carrier=name + " water tanks")
 
             network.madd("Link",
@@ -1232,10 +1246,12 @@ def add_biomass(network):
 
     network.madd("Bus",
                  ["EU biogas"],
+                 location="EU",
                  carrier="biogas")
 
     network.madd("Bus",
                  ["EU solid biomass"],
+                 location="EU",
                  carrier="solid biomass")
 
     network.madd("Store",
@@ -1342,6 +1358,7 @@ def add_industry(network):
 
     network.madd("Bus",
                  ["solid biomass for industry"],
+                 location="EU",
                  carrier="solid biomass for industry")
 
     network.madd("Load",
@@ -1375,6 +1392,7 @@ def add_industry(network):
 
     network.madd("Bus",
                  ["gas for industry"],
+                 location="EU",
                  carrier="gas for industry")
 
     network.madd("Load",
@@ -1423,9 +1441,10 @@ def add_industry(network):
                  carrier="H2 for shipping",
                  p_set = nodal_energy_totals.loc[nodes,["total international navigation","total domestic navigation"]].sum(axis=1)*1e6*options['shipping_average_efficiency']/costs.at["fuel cell","efficiency"]/8760.)
 
-    network.add("Bus",
-                "Fischer-Tropsch",
-                carrier="Fischer-Tropsch")
+    network.madd("Bus",
+                 ["Fischer-Tropsch"],
+                 location="EU",
+                 carrier="Fischer-Tropsch")
 
     #use madd to get carrier inserted
     network.madd("Store",
@@ -1513,6 +1532,7 @@ def add_industry(network):
 
     network.madd("Bus",
                  ["process emissions"],
+                 location="EU",
                  carrier="process emissions")
 
     #this should be process emissions fossil+feedstock
@@ -1660,6 +1680,7 @@ if __name__ == "__main__":
 
     n.loads["carrier"] = "electricity"
 
+    n.buses["location"] = n.buses.index
 
     if snakemake.config["foresight"]=='myopic':
         add_lifetime_wind_solar(n)
