@@ -227,9 +227,6 @@ rule plot_network:
 
 
 rule copy_config:
-    input:
-        networks=expand(config['results_dir'] + config['run'] + "/prenetworks_brownfield/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc",
-                 **config['scenario'])
     output:
         config=config['summary_dir'] + '/' + config['run'] + '/configs/config.yaml'
     threads: 1
@@ -287,7 +284,7 @@ if config["foresight"] == "overnight":
         input:
             network=config['results_dir'] + config['run'] + "/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc",
             costs=config['costs_dir'] + "costs_{planning_horizons}.csv",
-
+            config=config['summary_dir'] + '/' + config['run'] + '/configs/config.yaml'
         output: config['results_dir'] + config['run'] + "/postnetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc"
         shadow: "shallow"
         log:
@@ -320,8 +317,8 @@ if config["foresight"] == "myopic":
         script: "scripts/add_existing_baseyear.py"
 
     def process_input(wildcards):
-        i = config["scenario"]["planning_horizons"].index(wildcards.planning_horizons)
-        return config['results_dir'] + config['run'] + "/postnetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_" + config["scenario"]["planning_horizons"][i-1] + ".nc"
+        i = config["scenario"]["planning_horizons"].index(int(wildcards.planning_horizons))
+        return config['results_dir'] + config['run'] + "/postnetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_" + str(config["scenario"]["planning_horizons"][i-1]) + ".nc"
 
 
     rule add_brownfield:
@@ -343,7 +340,7 @@ if config["foresight"] == "myopic":
         input:
             network=config['results_dir'] + config['run'] + "/prenetworks_brownfield/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc",
             costs=config['costs_dir'] + "costs_{planning_horizons}.csv",
-
+            config=config['summary_dir'] + '/' + config['run'] + '/configs/config.yaml'
         output: config['results_dir'] + config['run'] + "/postnetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc"
         shadow: "shallow"
         log:
