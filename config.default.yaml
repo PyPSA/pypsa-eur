@@ -50,7 +50,7 @@ biomass:
 existing_capacities:
   grouping_years: [1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2019]
   threshold_capacity: 10
-
+  conventional_carriers: ['lignite', 'coal', 'oil', 'uranium']
 sector:
   'central' : True
   'central_fraction' : 0.6

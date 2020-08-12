@@ -1736,7 +1736,7 @@ if __name__ == "__main__":
     if snakemake.config["foresight"]=='myopic':
         add_lifetime_wind_solar(n)
         update_wind_solar_costs(n, costs)
-        add_carrier_buses(n,['lignite', 'coal', 'oil', 'uranium'])
+        add_carrier_buses(n,snakemake.config['existing_capacities']['conventional_carriers'])
 
     add_co2_tracking(n)
 
