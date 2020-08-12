@@ -117,6 +117,8 @@ costs:
   emission_prices: # only used with the option Ep (emission prices)
     co2: 0.
 
+  lines:
+    length_factor: 1.25 #to estimate offwind connection costs
 
 
 solving:

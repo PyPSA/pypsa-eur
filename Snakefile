@@ -187,6 +187,9 @@ rule prepare_sector_network:
         heat_profile="data/heat_load_profile_BDEW.csv",
         costs=config['costs_dir'] + "costs_{planning_horizons}.csv", #"data/costs.csv"
         co2_budget="data/co2_budget.csv",
+        profile_offwind_ac=pypsaeur("resources/profile_offwind-ac.nc"),
+        profile_offwind_dc=pypsaeur("resources/profile_offwind-dc.nc"),
+        clustermaps=pypsaeur('resources/clustermaps_{network}_s{simpl}_{clusters}.h5'),
         clustered_pop_layout="resources/pop_layout_{network}_s{simpl}_{clusters}.csv",
         industrial_demand="resources/industrial_demand_{network}_s{simpl}_{clusters}.csv",
         heat_demand_urban="resources/heat_demand_urban_{network}_s{simpl}_{clusters}.nc",
