@@ -18,9 +18,7 @@ import yaml
 
 import pytz
 
-from vresutils.costdata import annuity
-
-from prepare_sector_network import prepare_costs
+from add_existing_baseyear import add_build_year_to_new_assets
 
 #First tell PyPSA that links can have multiple outputs by
 #overriding the component_attrs. This can be done for
@@ -43,121 +41,39 @@ override_component_attrs["Store"].loc["build_year"] = ["integer","year",np.nan,"
 override_component_attrs["Store"].loc["lifetime"] = ["float","years",np.nan,"build year","Input (optional)"]
 
 def add_brownfield(n, n_p, year):
+
     print("adding brownfield")
 
-    #first, remove generators, links and stores that track CO2 or global EU values
-    n_p.mremove("Generator", [index for index in n_p.generators.index.to_list() if 'ror' in index])
-    n_p.mremove("Generator", ['EU fossil gas', 'fossil oil'] )
-    n_p.mremove("Store", ['co2 atmosphere', 'co2 stored', 'EU gas Store'] )
-    n_p.mremove("Link", ['co2 vent'] )
+    for c in n_p.iterate_components(["Link", "Generator", "Store"]):
 
-    if "H" in opts:
-        n_p.mremove("Link", [index for index in n_p.links.index.to_list() if 'water tanks charger' in index])
-        n_p.mremove("Link", [index for index in n_p.links.index.to_list() if 'water tanks discharger' in index])
-    if "B" in opts:
-         n_p.mremove("Store", ['EU biogas', 'EU solid biomass'])
-         n_p.mremove("Link", ['biogas to gas'])
-    if "I" in opts:
-         n_p.mremove("Store", ['Fischer-Tropsch Store'])
-         n_p.mremove("Link", ['process emissions' , 'gas for industry', 'solid biomass for industry'])
-    if "T" in opts:
-        n_p.mremove("Store", [index for index in n_p.stores.index.to_list() if 'battery storage' in index])
-        n_p.mremove("Link", [index for index in n_p.links.index.to_list() if 'BEV charger' in index])
-        n_p.mremove("Link", [index for index in n_p.links.index.to_list() if 'V2G' in index])
+        attr = "e" if c.name == "Store" else "p"
 
-    previous_timestep=snakemake.config['scenario']['planning_horizons'][snakemake.config['scenario']['planning_horizons'].index(year)-1]
-    previous_timesteps=snakemake.config['scenario']['planning_horizons'][0:snakemake.config['scenario']['planning_horizons'].index(year)]
-    grouping_years=snakemake.config['existing_capacities']['grouping_years']
+        #first, remove generators, links and stores that track CO2 or global EU values
+        #since these are already in n
+        n_p.mremove(c.name,
+                    c.df.index[c.df.lifetime.isna()])
 
+        #remove assets whose build_year + lifetime < year are removed
+        n_p.mremove(c.name,
+                    c.df.index[c.df.build_year + c.df.lifetime < year])
 
-    ### GENERATORS ###
-    # generators whose build_year + lifetime < year are removed
-    n_p.mremove("Generator", [index for index in n_p.generators.index.to_list()
-                              if  (n_p.generators.loc[index, 'build_year']+n_p.generators.loc[index, 'lifetime'] < int(year))])
+        #remove assets if their optimized nominal capacity is lower than a threshold
+        n_p.mremove(c.name,
+                    c.df.index[c.df[attr + "_nom_opt"] < snakemake.config['existing_capacities']['threshold_capacity']])
 
-    # remove generators if their optimized nominal capacity is lower than a threshold
-    n_p.mremove("Generator", [index for index in n_p.generators.index.to_list()
-                              if (n_p.generators.loc[index, 'p_nom_opt'] < snakemake.config['existing_capacities']['threshold_capacity'])])
+        #copy over assets but fix their capacity
+        c.df[attr + "_nom"] = c.df[attr + "_nom_opt"]
+        c.df[attr + "_nom_extendable"] = False
 
+        n.import_components_from_dataframe(c.df,
+                                           c.name)
 
-    # generators whose capacity was optimized in the previous year are renamed and build year is added
-    n_p.generators.index=np.where(n_p.generators.index.str[-4:].isin(previous_timesteps+grouping_years)==False,
-                                  n_p.generators.index + '-' + previous_timestep,
-                                  n_p.generators.index)
-    n_p.generators.loc[[index for index in n_p.generators.index.to_list()
-                        if previous_timestep in index], 'build_year']=int(previous_timestep)
-
-    #add generators from previous step
-    n.madd("Generator",
-            n_p.generators.index,
-            bus=n_p.generators.bus,
-            carrier=n_p.generators.carrier,
-            p_nom=n_p.generators.p_nom_opt,
-            marginal_cost=n_p.generators.marginal_cost,
-            capital_cost=n_p.generators.capital_cost,
-            efficiency=n_p.generators.efficiency,
-            p_max_pu=n_p.generators_t.p_max_pu,
-            build_year=n_p.generators.build_year,
-            lifetime=n_p.generators.lifetime)
-
-    ### STORES ###
-    # stores whose installationYear + lifetime < year are removed
-    n_p.mremove("Store", [index for index in n_p.stores.index.to_list()
-                          if (n_p.stores.loc[index, 'build_year']+n_p.stores.loc[index, 'lifetime'] < int(year))])
-
-    # remove stores if their optimized nominal capacity is lower than a threshold
-    n_p.mremove("Store", [index for index in n_p.stores.index.to_list()
-                              if (n_p.stores.loc[index, 'e_nom_opt'] < snakemake.config['existing_capacities']['threshold_capacity'])])
-
-    # stores whose capacity was optimized in the previous year are renamed and the build year is added
-    n_p.stores.index=np.where(n_p.stores.index.str[-4:].isin(previous_timesteps+grouping_years)==False,
-                                  n_p.stores.index + '-' + previous_timestep,
-                                  n_p.stores.index)
-    n_p.stores.loc[[index for index in n_p.stores.index.to_list()
-                    if previous_timestep in index], 'build_year']=int(previous_timestep)
-    #add stores from previous steps
-    n.madd("Store",
-            n_p.stores.index,
-            bus=n_p.stores.bus,
-            carrier=n_p.stores.carrier,
-            e_nom=n_p.stores.e_nom_opt,
-            e_cyclic=True,
-            capital_cost=n_p.stores.capital_cost,
-            build_year=n_p.stores.build_year,
-            lifetime=n_p.stores.lifetime)
-
-    ### LINKS ###
-    # TODO: add_chp_constraint() in solve_network needs to be adjusted
-    n_p.mremove("Link", [index for index in n_p.links.index.to_list() if 'CHP' in index])
-
-    # links whose installationYear + lifetime < year are removed
-    n_p.mremove("Link", [index for index in n_p.links.index.to_list()
-                              if (n_p.links.loc[index, 'build_year']+n_p.links.loc[index, 'lifetime'] < int(year))])
-
-    # delete links if their optimized nominal capacity is lower than a threshold
-    n_p.mremove("Link", [index for index in n_p.links.index.to_list()
-                              if (n_p.links.loc[index, 'p_nom_opt'] < snakemake.config['existing_capacities']['threshold_capacity'])])
-
-    # links whose capacity was optimized in the previous year are renamed and the build year is added
-    n_p.links.index=np.where(n_p.links.index.str[-4:].isin(previous_timesteps+grouping_years)==False,
-                                  n_p.links.index + '-' + previous_timestep,
-                                  n_p.links.index)
-    n_p.links.loc[[index for index in n_p.links.index.to_list()
-                  if previous_timestep in index], 'build_year']=int(previous_timestep)
-    #add links from previous steps
-    n.madd("Link",
-            n_p.links.index,
-            bus0=n_p.links.bus0,
-            bus1=n_p.links.bus1,
-            bus2=n_p.links.bus2,
-            carrier=n_p.links.carrier,
-            p_nom=n_p.links.p_nom_opt,
-            marginal_cost=n_p.links.marginal_cost,
-            capital_cost=n_p.links.capital_cost,
-            efficiency=n_p.links.efficiency,
-            efficiency2=n_p.links.efficiency2,
-            build_year=n_p.links.build_year,
-            lifetime=n_p.links.lifetime)
+        #copy time-dependent
+        for tattr in n.component_attrs[c.name].index[(n.component_attrs[c.name].type.str.contains("series") &
+                                                     n.component_attrs[c.name].status.str.contains("Input"))]:
+            n.import_series_from_dataframe(c.pnl[tattr],
+                                           c.name,
+                                           tattr)
 
 
 if __name__ == "__main__":
@@ -183,27 +99,16 @@ if __name__ == "__main__":
     print(snakemake.input.network_p)
     logging.basicConfig(level=snakemake.config['logging_level'])
 
-    options = snakemake.config["sector"]
-    opts = snakemake.wildcards.sector_opts.split('-')
-
-    year=snakemake.wildcards.planning_horizons
+    year=int(snakemake.wildcards.planning_horizons)
 
     n = pypsa.Network(snakemake.input.network,
                       override_component_attrs=override_component_attrs)
+
+    add_build_year_to_new_assets(n, year)
 
     n_p = pypsa.Network(snakemake.input.network_p,
                       override_component_attrs=override_component_attrs)
 #%%
     add_brownfield(n, n_p, year)
-
-    Nyears = n.snapshot_weightings.sum()/8760.
-
-    costs = prepare_costs(snakemake.input.costs,
-                          snakemake.config['costs']['USD2013_to_EUR2013'],
-                          snakemake.config['costs']['discountrate'],
-                          Nyears)
-
-    baseyear = snakemake.config['scenario']["planning_horizons"][0]
-
 
     n.export_to_netcdf(snakemake.output[0])

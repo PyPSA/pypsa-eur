@@ -43,6 +43,33 @@ override_component_attrs["Store"].loc["build_year"] = ["integer","year",np.nan,"
 override_component_attrs["Store"].loc["lifetime"] = ["float","years",np.nan,"build year","Input (optional)"]
 
 
+def add_build_year_to_new_assets(n, baseyear):
+
+    """
+
+    Parameters
+    ----------
+    n : network
+
+    baseyear: year in which optimized assets are built
+    """
+
+    #Give assets with lifetimes and no build year the build year baseyear
+    for c in n.iterate_components(["Link", "Generator", "Store"]):
+
+        assets = c.df.index[~c.df.lifetime.isna() & c.df.build_year.isna()]
+        c.df.loc[assets, "build_year"] = baseyear
+
+        #add -baseyear to name
+        rename = pd.Series(c.df.index, c.df.index)
+        rename[assets] += "-" + str(baseyear)
+        c.df.rename(index=rename, inplace=True)
+
+        #rename time-dependent
+        for attr in n.component_attrs[c.name].index[(n.component_attrs[c.name].type.str.contains("series") &
+                                                     n.component_attrs[c.name].status.str.contains("Input"))]:
+            c.pnl[attr].rename(columns=rename, inplace=True)
+
 def add_existing_renewables(df_agg):
     """
     Append existing renewables to the df_agg pd.DataFrame
@@ -82,7 +109,7 @@ def add_existing_renewables(df_agg):
         nodal_fraction = pd.Series(0.,elec_buses)
 
         for country in n.buses.loc[elec_buses,"country"].unique():
-            gens = [c for c in n.generators_t.p_max_pu.columns if c[:2] == country and c[-len(carrier):] == carrier]
+            gens = n.generators.index[(n.generators.index.str[:2] == country) & (n.generators.carrier == carrier)]
             cfs = n.generators_t.p_max_pu[gens].mean()
             cfs_key = cfs/cfs.sum()
             nodal_fraction.loc[n.generators.loc[gens,"bus"]] = cfs_key.values
@@ -101,7 +128,7 @@ def add_existing_renewables(df_agg):
                     df_agg.at[name,"YearCommissioned"] = year
                     df_agg.at[name,"cluster_bus"] = node
 
-def add_power_capacities_installed_before_baseyear(n, grouping_years, costs):
+def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, baseyear):
     """
 
     Parameters
@@ -179,9 +206,9 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs):
 
         if generator in ['solar', 'onwind', 'offwind']:
             if generator =='offwind':
-                p_max_pu=n.generators_t.p_max_pu[capacity.index + ' offwind-ac']
+                p_max_pu=n.generators_t.p_max_pu[capacity.index + ' offwind-ac' + '-' + str(baseyear)]
             else:
-                p_max_pu=n.generators_t.p_max_pu[capacity.index + ' ' + generator]
+                p_max_pu=n.generators_t.p_max_pu[capacity.index + ' ' + generator + '-' + str(baseyear)]
 
             n.madd("Generator",
                    capacity.index,
@@ -408,6 +435,8 @@ if __name__ == "__main__":
     n = pypsa.Network(snakemake.input.network,
                       override_component_attrs=override_component_attrs)
 
+    add_build_year_to_new_assets(n, baseyear)
+
     Nyears = n.snapshot_weightings.sum()/8760.
     costs = prepare_costs(snakemake.input.costs,
                           snakemake.config['costs']['USD2013_to_EUR2013'],
@@ -415,7 +444,7 @@ if __name__ == "__main__":
                           Nyears)
 
     grouping_years=snakemake.config['existing_capacities']['grouping_years']
-    add_power_capacities_installed_before_baseyear(n, grouping_years, costs)
+    add_power_capacities_installed_before_baseyear(n, grouping_years, costs, baseyear)
 
     if "H" in opts:
         time_dep_hp_cop = options["time_dep_hp_cop"]

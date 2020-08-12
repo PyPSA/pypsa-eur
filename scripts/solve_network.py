@@ -109,13 +109,14 @@ def add_eps_storage_constraint(n):
 
 def add_battery_constraints(n):
 
-    nodes = n.buses.index[n.buses.carrier.isin(["battery","home battery"])]
+    chargers = n.links.index[n.links.carrier.str.contains("battery charger") & n.links.p_nom_extendable]
+    dischargers = chargers.str.replace("charger","discharger")
 
     link_p_nom = get_var(n, "Link", "p_nom")
 
-    lhs = linexpr((1,link_p_nom[nodes + " charger"]),
-                  (-n.links.loc[nodes + " discharger", "efficiency"].values,
-                   link_p_nom[nodes + " discharger"].values))
+    lhs = linexpr((1,link_p_nom[chargers]),
+                  (-n.links.loc[dischargers, "efficiency"].values,
+                   link_p_nom[dischargers].values))
 
     define_constraints(n, lhs, "=", 0, 'Link', 'charger_ratio')
 
@@ -158,17 +159,17 @@ def add_chp_constraints(n):
 def add_land_use_constraint(n):
     for carrier in ['solar', 'onwind', 'offwind-ac', 'offwind-dc']:
         gens = list(n.generators.index[n.generators.carrier==carrier])
-        gens_0=[gen for gen in gens if gen[-4:] not in snakemake.config['scenario']['planning_horizons']]        
+        gens_0=[gen for gen in gens if gen[-4:] not in snakemake.config['scenario']['planning_horizons']]
         #total capacity installed in a country <= potential per country
         lhs=linexpr((1, np.array([n.generators.loc[[gen for gen in gens if country[0:3] in gen],"p_nom"].sum() for country in gens_0])),
                     (-1, n.generators.loc[gens_0,'p_nom_max'].values))
-        
+
         define_constraints(n, lhs, "<=", 0, "land use", carrier)
 
 def extra_functionality(n, snapshots):
     #add_opts_constraints(n, opts)
     #add_eps_storage_constraint(n)
-    add_chp_constraints(n)    
+    add_chp_constraints(n)
     add_battery_constraints(n)
     if snakemake.config['foresight']=='myopic':
         add_land_use_constraint(n)
@@ -344,7 +345,7 @@ if __name__ == "__main__":
             log=dict(gurobi="logs/{network}_s{simpl}_{clusters}_lv{lv}_{sector_opts}_{co2_budget_name}_{planning_horizons}_gurobi-test.log",
                      python="logs/{network}_s{simpl}_{clusters}_lv{lv}_{sector_opts}_{co2_budget_name}_{planning_horizons}_python-test.log")
         )
-#%%  
+#%%
     tmpdir = snakemake.config['solving'].get('tmpdir')
     if tmpdir is not None:
         patch_pyomo_tmpdir(tmpdir)
@@ -363,4 +364,3 @@ if __name__ == "__main__":
         n.export_to_netcdf(snakemake.output[0])
 
     logger.info("Maximum memory usage: {}".format(mem.mem_usage))
-
