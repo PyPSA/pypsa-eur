@@ -50,7 +50,56 @@ def add_lifetime_wind_solar(n):
         carrier_name='offwind' if carrier in ['offwind-dc', 'offwind-ac'] else carrier
         n.generators.loc[[index for index in n.generators.index.to_list()
                         if carrier in index], 'lifetime']=costs.at[carrier_name,'lifetime']
+def update_wind_solar_costs(n,costs):
+    """
+    Update costs for wind and solar generators added with pypsa-eur to those 
+    cost in the planning year
 
+    """
+        
+    #assign clustered bus
+    #map initial network -> simplified network
+    busmap_s = pd.read_hdf(snakemake.input.clustermaps,
+                           key="/busmap_s")
+    #map simplified network -> clustered network
+    busmap = pd.read_hdf(snakemake.input.clustermaps,
+                         key="/busmap")
+    clustermaps = busmap_s.map(busmap)
+
+    for tech in ['solar', 'onwind', 'offwind-dc', 'offwind-ac']:
+        suptech = tech.split('-', 2)[0]
+        if suptech == 'offwind':
+            profile = snakemake.input.profile_offwind_dc if tech=='offwind-dc' else snakemake.input.profile_offwind_ac
+            with xr.open_dataset(profile) as ds:
+                underwater_fraction = ds['underwater_fraction'].to_pandas().to_frame()
+                underwater_fraction["cluster_bus"] = underwater_fraction.index.map(clustermaps)               
+                u_f = underwater_fraction.groupby("cluster_bus").mean()
+                                
+                average_distance = ds['average_distance'].to_pandas().to_frame()
+                average_distance["cluster_bus"] = average_distance.index.map(clustermaps)            
+                a_d = average_distance.groupby("cluster_bus").mean()
+                
+                connection_cost = (snakemake.config['costs']['lines']['length_factor'] *
+                                   a_d*
+                                   (u_f *
+                                    costs.at[tech + '-connection-submarine', 'fixed'] +
+                                    (1. - u_f) *
+                                    costs.at[tech + '-connection-underground', 'fixed']))
+                capital_cost = (costs.at['offwind', 'fixed'] +
+                                costs.at[tech + '-station', 'fixed'] +
+                                connection_cost)
+                logger.info("Added connection cost of {:0.0f}-{:0.0f} Eur/MW/a to {}"
+                            .format(connection_cost[0].min(), connection_cost[0].max(), tech))
+            capital_cost.rename(index=lambda node: node + ' ' + tech, inplace=True) 
+            n.generators.loc[n.generators.index[n.generators.carrier==tech],'capital_cost']=capital_cost[0]   
+            
+        elif suptech == 'solar':
+            capital_cost = costs.at['solar-utility', 'fixed'] 
+            n.generators.loc[n.generators.index[n.generators.carrier==tech],'capital_cost']=capital_cost
+        else:
+            capital_cost = costs.at['onwind', 'fixed'] 
+            n.generators.loc[n.generators.index[n.generators.carrier==tech],'capital_cost']=capital_cost
+                          
 def add_carrier_buses(n, carriers):
     """
     Add buses to connect e.g. coal, nuclear and oil plants
@@ -1632,8 +1681,10 @@ if __name__ == "__main__":
                        timezone_mappings='pypsa-eur-sec/data/timezone_mappings.csv',
                        co2_budget='pypsa-eur-sec/data/co2_budget.csv',
                        clustered_pop_layout='pypsa-eur-sec/resources/pop_layout_{network}_s{simpl}_{clusters}.csv',
-                       #costs='pypsa-eur-sec/data/costs.csv',
                        costs='pypsa-eur-sec/data/costs/costs_{planning_horizons}.csv',
+                       profile_offwind_ac='pypsa-eur/resources/profile_offwind-ac.nc',
+                       profile_offwind_dc='pypsa-eur/resources/profile_offwind-dc.nc',                       
+                       clustermaps="pypsa-eur/resources/clustermaps_{network}_s{simpl}_{clusters}.h5",
                        cop_air_total='pypsa-eur-sec/resources/cop_air_total_{network}_s{simpl}_{clusters}.nc',
                        cop_soil_total='pypsa-eur-sec/resources/cop_soil_total_{network}_s{simpl}_{clusters}.nc',
                        solar_thermal_total='pypsa-eur-sec/resources/solar_thermal_total_{network}_s{simpl}_{clusters}.nc',
@@ -1684,7 +1735,8 @@ if __name__ == "__main__":
 
     if snakemake.config["foresight"]=='myopic':
         add_lifetime_wind_solar(n)
-        add_carrier_buses(n,['lignite', 'coal', 'oil', 'uranium'])
+        update_wind_solar_costs(n, costs)
+        add_carrier_buses(n,snakemake.config['existing_capacities']['conventional_carriers'])
 
     add_co2_tracking(n)
 
