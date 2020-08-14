@@ -10,14 +10,16 @@ The myopic approach was initially developed and used in the paper [Early decarbo
 
 The current code applies the myopic approach to generators, storage technologies and links in the power sector and the space and water heating sector. 
 
-The transport sector and industry and are not affected by the myopic code. In essence, the electrification of road and rail transport, the percentage of electric vehicles that allow demand-side management and vehicle-to-grid services, and the transformation in the different industrial subsectors do not evolve with time. They are kept fixed at the values specified in the configuration file.  
+The transport sector and industry are not affected by the myopic code. In essence, the electrification of road and rail transport, the percentage of electric vehicles that allow demand-side management and vehicle-to-grid services, and the transformation in the different industrial subsectors do not evolve with time. They are kept fixed at the values specified in the configuration file.  
 
 
 
 Configuration
 =================
 
-PyPSA-Eur-Sec has several configuration options which are collected in a config.yaml file located in the root directory. Users should copy the provided default configuration (config.default.yaml) and amend their own modifications and assumptions in the user-specific configuration file (config.yaml). The following options included in the config.yaml file  are relevant for the myopic code.
+PyPSA-Eur-Sec has several configuration options which are collected in a config.yaml file located in the root directory. Users should copy the provided default configuration (config.default.yaml) and amend their own modifications and assumptions in the user-specific configuration file (config.yaml). 
+
+The following options included in the config.yaml file  are relevant for the myopic code.
 
 To activate the myopic option select
 
@@ -33,6 +35,7 @@ grouping_years: [1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2019]
 
 
 
+
 **threshold capacity**
 
 if for a technology and grouping bin, the capacity is lower than threshold_capacity, it is ignored 
@@ -41,11 +44,13 @@ threshold_capacity: 10
 
 
 
+
 **conventional carriers**
 
 conventional carriers indicate carriers used in the existing conventional technologies
 
 conventional_carriers: ['lignite', 'coal', 'oil', 'uranium']
+
 
 
 Wildcards
@@ -66,7 +71,8 @@ A csv file is used as input including the planning_horizons as index, the name o
 Rules overview
 =================
 
-## General myopic code structure
+General myopic code structure
+===============================
 
 The myopic code solves the network for the time steps included in planning_horizons in a recursive loop, so that
 
@@ -80,13 +86,14 @@ Base year is the first element in planning_horizons.
 
 
 
-3.For the next planning horizon, e.g. 2030, the capacities from a previous time step are added if they are still in operation (i.e., if they fulfil planning horizon < commissioned year + lifetime). In addition, the network comprises additional generator, storage, and link capacities with p_nom_extendable=True. The non-solved network is saved in ‘networks/prenetworks_bronwfield’.
+3.For the next planning horizon, e.g. 2030, the capacities from a previous time step are added if they are still in operation (i.e., if they fulfil planning horizon <= commissioned year + lifetime). In addition, the network comprises additional generator, storage, and link capacities with p_nom_extendable=True. The non-solved network is saved in ‘results/run_name/networks/prenetworks_bronwfield’.
 
-Steps 2 and 3 are solved recursively for all the planning_horizons included in the configuration file
+Steps 2 and 3 are solved recursively for all the planning_horizons included in the configuration file.
 
 
 
-## **add_existing baseyear**
+add_existing baseyear
+=======================
 
 The rule add_existing_baseyear loads the network in ‘results/run_name/networks/prenetworks’ and performs the following operations:
 
@@ -104,7 +111,8 @@ The heating capacities are assumed to have a lifetime indicated by the parameter
 
 Then, the resulting network is saved in ‘results/run_name/networks/prenetworks’ 
 
-## **add_brownfield**
+add_brownfield
+================
 
 The rule add_brownfield loads the network in ‘results/run_name/networks/prenetworks’ and performs the following operation:
 
