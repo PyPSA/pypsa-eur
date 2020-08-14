@@ -53,7 +53,7 @@ def add_brownfield(n, n_p, year):
         n_p.mremove(c.name,
                     c.df.index[c.df.lifetime.isna()])
 
-        #remove assets whose build_year + lifetime < year are removed
+        #remove assets whose build_year + lifetime < year
         n_p.mremove(c.name,
                     c.df.index[c.df.build_year + c.df.lifetime < year])
 
