@@ -58,8 +58,13 @@ def add_brownfield(n, n_p, year):
                     c.df.index[c.df.build_year + c.df.lifetime < year])
 
         #remove assets if their optimized nominal capacity is lower than a threshold
+        #since CHP heat Link is proportional to CHP electric Link, make sure threshold is compatible
+        chp_heat = c.df.index[c.df[attr + "_nom_extendable"] & c.df.index.str.contains("urban central") & c.df.index.str.contains("CHP") & c.df.index.str.contains("heat")]
+        if not chp_heat.empty:
+            n_p.mremove(c.name,
+                        chp_heat[c.df.loc[chp_heat, attr + "_nom_opt"] < snakemake.config['existing_capacities']['threshold_capacity']*c.df.efficiency[chp_heat.str.replace("heat","electric")].values*c.df.p_nom_ratio[chp_heat.str.replace("heat","electric")].values/c.df.efficiency[chp_heat].values])
         n_p.mremove(c.name,
-                    c.df.index[c.df[attr + "_nom_opt"] < snakemake.config['existing_capacities']['threshold_capacity']])
+                    c.df.index[c.df[attr + "_nom_extendable"] & ~c.df.index.isin(chp_heat) & (c.df[attr + "_nom_opt"] < snakemake.config['existing_capacities']['threshold_capacity'])])
 
         #copy over assets but fix their capacity
         c.df[attr + "_nom"] = c.df[attr + "_nom_opt"]

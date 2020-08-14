@@ -123,20 +123,35 @@ def add_battery_constraints(n):
 
 def add_chp_constraints(n):
 
-    electric = n.links.index[n.links.index.str.contains("urban central") & n.links.index.str.contains("CHP") & n.links.index.str.contains("electric")]
-    heat = n.links.index[n.links.index.str.contains("urban central") & n.links.index.str.contains("CHP") & n.links.index.str.contains("heat")]
+    electric_bool = (n.links.index.str.contains("urban central")
+                     & n.links.index.str.contains("CHP")
+                     & n.links.index.str.contains("electric"))
+    heat_bool = (n.links.index.str.contains("urban central")
+                 & n.links.index.str.contains("CHP")
+                 & n.links.index.str.contains("heat"))
 
-    if not electric.empty:
+    electric = n.links.index[electric_bool]
+    heat = n.links.index[heat_bool]
+    electric_ext = n.links.index[electric_bool & n.links.p_nom_extendable]
+    heat_ext = n.links.index[heat_bool & n.links.p_nom_extendable]
+    electric_fix = n.links.index[electric_bool & ~n.links.p_nom_extendable]
+    heat_fix = n.links.index[heat_bool & ~n.links.p_nom_extendable]
+
+
+    if not electric_ext.empty:
 
         link_p_nom = get_var(n, "Link", "p_nom")
 
         #ratio of output heat to electricity set by p_nom_ratio
-        lhs = linexpr((n.links.loc[electric,"efficiency"]
-                       *n.links.loc[electric,'p_nom_ratio'],
-                       link_p_nom[electric]),
-                      (-n.links.loc[heat,"efficiency"].values,
-                       link_p_nom[heat].values))
+        lhs = linexpr((n.links.loc[electric_ext,"efficiency"]
+                       *n.links.loc[electric_ext,'p_nom_ratio'],
+                       link_p_nom[electric_ext]),
+                      (-n.links.loc[heat_ext,"efficiency"].values,
+                       link_p_nom[heat_ext].values))
         define_constraints(n, lhs, "=", 0, 'chplink', 'fix_p_nom_ratio')
+
+
+    if not electric.empty:
 
         link_p = get_var(n, "Link", "p")
 
@@ -149,12 +164,29 @@ def add_chp_constraints(n):
 
         define_constraints(n, lhs, "<=", 0, 'chplink', 'backpressure')
 
-        #top_iso_fuel_line
-        lhs = linexpr((1,link_p[heat]),
-                      (1,link_p[electric].values),
-                      (-1,link_p_nom[electric].values))
 
-        define_constraints(n, lhs, "<=", 0, 'chplink', 'top_iso_fuel_line')
+    if not electric_ext.empty:
+
+        link_p_nom = get_var(n, "Link", "p_nom")
+        link_p = get_var(n, "Link", "p")
+
+        #top_iso_fuel_line for extendable
+        lhs = linexpr((1,link_p[heat_ext]),
+                      (1,link_p[electric_ext].values),
+                      (-1,link_p_nom[electric_ext].values))
+
+        define_constraints(n, lhs, "<=", 0, 'chplink', 'top_iso_fuel_line_ext')
+
+
+    if not electric_fix.empty:
+
+        link_p = get_var(n, "Link", "p")
+
+        #top_iso_fuel_line for fixed
+        lhs = linexpr((1,link_p[heat_fix]),
+                      (1,link_p[electric_fix].values))
+
+        define_constraints(n, lhs, "<=", n.links.loc[electric_fix,"p_nom"].values, 'chplink', 'top_iso_fuel_line_fix')
 
 def add_land_use_constraint(n):
     for carrier in ['solar', 'onwind', 'offwind-ac', 'offwind-dc']:
