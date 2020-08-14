@@ -16,7 +16,7 @@ its dependencies. Clone the repository:
 
 .. code:: bash
 
-    projects % git clone git@github.com:PyPSA/pypsa-eur-sec.git
+    projects % git clone git@github.com:PyPSA/pypsa-eur.git
 
 then download and unpack all the PyPSA-Eur data files.
 

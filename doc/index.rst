@@ -116,6 +116,17 @@ Documentation
 
    installation
 
+**Myopic transition path**
+
+* :doc:`myopic`
+
+.. toctree::
+   :hidden:
+   :maxdepth: 1
+   :caption: Myopic transition path
+
+   myopic
+
 **References**
 
 * :doc:`release_notes`
