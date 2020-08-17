@@ -80,7 +80,10 @@ def prepare_network(n, solve_opts=None):
         nhours = solve_opts['nhours']
         n.set_snapshots(n.snapshots[:nhours])
         n.snapshot_weightings[:] = 8760./nhours
-
+    
+    if snakemake.config['foresight']=='myopic':
+        add_land_use_constraint(n)
+        
     return n
 
 def add_opts_constraints(n, opts=None):
@@ -191,21 +194,19 @@ def add_chp_constraints(n):
 def add_land_use_constraint(n):
     for carrier in ['solar', 'onwind', 'offwind-ac', 'offwind-dc']:
         gens = list(n.generators.index[n.generators.carrier==carrier])
-        gens_0=[gen for gen in gens if gen[-4:] not in snakemake.config['scenario']['planning_horizons']]
-        #total capacity installed in a country <= potential per country
-        lhs=linexpr((1, np.array([n.generators.loc[[gen for gen in gens if country[0:3] in gen],"p_nom"].sum() for country in gens_0])),
-                    (-1, n.generators.loc[gens_0,'p_nom_max'].values))
-
-        define_constraints(n, lhs, "<=", 0, "land use", carrier)
+        gens_ext=[gen for gen in gens if gen[-4:]==snakemake.wildcards.planning_horizons]
+        gens_fixed=[gen for gen in gens if gen not in gens_ext]
+        for gen in gens_ext:
+            #already installed capacity is substracted from maximum potential
+            n.generators.loc[gen,'p_nom_max']-=n.generators.loc[[x for x in gens_fixed if gen[0:3] in x],"p_nom"].sum()
+            n.generators.p_nom_max[n.generators.p_nom_max<0]=0   
+    return n
 
 def extra_functionality(n, snapshots):
     #add_opts_constraints(n, opts)
     #add_eps_storage_constraint(n)
     add_chp_constraints(n)
     add_battery_constraints(n)
-    if snakemake.config['foresight']=='myopic':
-        add_land_use_constraint(n)
-
 
 
 def fix_branches(n, lines_s_nom=None, links_p_nom=None):
@@ -369,15 +370,17 @@ if __name__ == "__main__":
     if 'snakemake' not in globals():
         from vresutils.snakemake import MockSnakemake, Dict
         snakemake = MockSnakemake(
-            wildcards=dict(network='elec', simpl='', clusters='37', lv='1.0',
+            wildcards=dict(network='elec', simpl='', clusters='39', lv='1.0',
                            sector_opts='Co2L0-168H-T-H-B-I-solar3-dist1',
-                           co2_budget_name='go', planning_horizons='2020'),
-            input=dict(network="pysa-eur-sec/results/test/prenetworks_bf/{network}_s{simpl}_{clusters}_lv{lv}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc"),
+                           co2_budget_name='b30b3', planning_horizons='2050'),
+            input=dict(network="pypsa-eur-sec/results/test/prenetworks_brownfield/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{co2_budget_name}_{planning_horizons}.nc"),
             output=["results/networks/s{simpl}_{clusters}_lv{lv}_{sector_opts}_{co2_budget_name}_{planning_horizons}-test.nc"],
             log=dict(gurobi="logs/{network}_s{simpl}_{clusters}_lv{lv}_{sector_opts}_{co2_budget_name}_{planning_horizons}_gurobi-test.log",
                      python="logs/{network}_s{simpl}_{clusters}_lv{lv}_{sector_opts}_{co2_budget_name}_{planning_horizons}_python-test.log")
         )
-#%%
+        import yaml
+        with open('config.yaml') as f:
+            snakemake.config = yaml.load(f)
     tmpdir = snakemake.config['solving'].get('tmpdir')
     if tmpdir is not None:
         patch_pyomo_tmpdir(tmpdir)
@@ -391,8 +394,10 @@ if __name__ == "__main__":
                           override_component_attrs=override_component_attrs)
 
         n = prepare_network(n)
+
         n = solve_network(n)
 
         n.export_to_netcdf(snakemake.output[0])
 
     logger.info("Maximum memory usage: {}".format(mem.mem_usage))
+
