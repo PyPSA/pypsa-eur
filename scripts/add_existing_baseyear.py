@@ -105,7 +105,7 @@ def add_existing_renewables(df_agg):
 
         #distribute capacities among nodes according to capacity factor
         #weighting with nodal_fraction
-        elec_buses = n.buses.index[n.buses.carrier == "AC"]
+        elec_buses = n.buses.index[n.buses.carrier == "AC"].union(n.buses.index[n.buses.carrier == "DC"])
         nodal_fraction = pd.Series(0.,elec_buses)
 
         for country in n.buses.loc[elec_buses,"country"].unique():
@@ -410,11 +410,13 @@ if __name__ == "__main__":
     if 'snakemake' not in globals():
         from vresutils.snakemake import MockSnakemake
         snakemake = MockSnakemake(
-            wildcards=dict(network='elec', simpl='', clusters='37', lv='1.0',
+            wildcards=dict(network='elec', simpl='', clusters='39', lv='1.0',
                            sector_opts='Co2L0-168H-T-H-B-I-solar3-dist1',
-                           co2_budget_name='go',
+                           co2_budget_name='b30b3',
                            planning_horizons='2020'),
             input=dict(network='pypsa-eur-sec/results/test/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{co2_budget_name}_{planning_horizons}.nc',
+                       powerplants='pypsa-eur/resources/powerplants.csv',
+                       clustermaps='pypsa-eur/resources/clustermaps_{network}_s{simpl}_{clusters}.h5',
                        costs='pypsa-eur-sec/data/costs/costs_{planning_horizons}.csv',
                        cop_air_total="pypsa-eur-sec/resources/cop_air_total_{network}_s{simpl}_{clusters}.nc",
                        cop_soil_total="pypsa-eur-sec/resources/cop_soil_total_{network}_s{simpl}_{clusters}.nc"),
