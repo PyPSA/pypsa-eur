@@ -6,18 +6,20 @@ Myopic transition path
 
 The myopic code can be used to investigate progressive changes in a network, for instance, those taking place throughout a transition path. The capacities installed in a certain time step are maintained in the network until their operational lifetime expires. 
 
-The myopic approach was initially developed and used in the paper [Early decarbonisation of the European Energy system pays off (2020)](https://arxiv.org/abs/2004.11009) but the current implementation complies with the pypsa-eur-sec standard working flow and is compatible with using the higher resolution electricity transmission model [PyPSA-Eur](https://github.com/PyPSA/pypsa-eur) rather than a one-node-per-country model, as well as including industry, industrial feedstocks, aviation, shipping, better carbon management, carbon capture and usage/sequestration, and gas networks.
+The myopic approach was initially developed and used in the paper `Early decarbonisation of the European Energy system pays off (2020) <https://arxiv.org/abs/2004.11009>`__ but the current implementation complies with the pypsa-eur-sec standard working flow and is compatible with using the higher resolution electricity transmission model `PyPSA-Eur <https://github.com/PyPSA/pypsa-eur>`__ rather than a one-node-per-country model.
 
 The current code applies the myopic approach to generators, storage technologies and links in the power sector and the space and water heating sector. 
 
-The transport sector and industry and are not affected by the myopic code. In essence, the electrification of road and rail transport, the percentage of electric vehicles that allow demand-side management and vehicle-to-grid services, and the transformation in the different industrial subsectors do not evolve with time. They are kept fixed at the values specified in the configuration file.  
+The transport sector and industry are not affected by the myopic code. In essence, the electrification of road and rail transport, the percentage of electric vehicles that allow demand-side management and vehicle-to-grid services, and the transformation in the different industrial subsectors do not evolve with time. They are kept fixed at the values specified in the configuration file. Including the transport sector and industry in the myopic code is planned for the near future. 
 
 
 
 Configuration
 =================
 
-PyPSA-Eur-Sec has several configuration options which are collected in a config.yaml file located in the root directory. Users should copy the provided default configuration (config.default.yaml) and amend their own modifications and assumptions in the user-specific configuration file (config.yaml). The following options included in the config.yaml file  are relevant for the myopic code.
+PyPSA-Eur-Sec has several configuration options which are collected in a config.yaml file located in the root directory. Users should copy the provided default configuration (`config.default.yaml <https://github.com/martavp/pypsa-eur-sec/blob/master/config.default.yaml>`__) and amend their own modifications and assumptions in the user-specific configuration file (config.yaml). 
+
+The following options included in the config.yaml file  are relevant for the myopic code.
 
 To activate the myopic option select
 
@@ -33,11 +35,13 @@ grouping_years: [1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2019]
 
 
 
+
 **threshold capacity**
 
-if for a technology and grouping bin, the capacity is lower than threshold_capacity, it is ignored 
+if for a technology, node, and grouping bin, the capacity is lower than threshold_capacity, it is ignored 
 
 threshold_capacity: 10
+
 
 
 
@@ -48,45 +52,43 @@ conventional carriers indicate carriers used in the existing conventional techno
 conventional_carriers: ['lignite', 'coal', 'oil', 'uranium']
 
 
+
 Wildcards
 ==============================
 
-**The {planning_horizons} wildcard**
+**{planning_horizons} wildcard**
 
 The {planning_horizons} wildcard indicates the timesteps in which the network is optimized, e.g. planning_horizons: [2020, 2030, 2040, 2050]
 
 
 
-**The {co2_budget_name} wildcard**
+**{co2_budget_name} wildcard**
 
 The {co2_budget_name} wildcard indicates the name of the co2 budget. 
 
-A csv file is used as input including the planning_horizons as index, the name of co2_budget as column name and the maximum co2 emissions (relative to 1990) as values.
+A csv file is used as input including the planning_horizons as index, the name of co2_budget as column name, and the maximum co2 emissions (relative to 1990) as values.
 
 Rules overview
 =================
 
-## General myopic code structure
+General myopic code structure
+===============================
 
-The myopic code solves the network for the time steps included in planning_horizons in a recursive loop, so that
+The myopic code solves the network for the time steps included in planning_horizons in a recursive loop, so that:
 
 1.The existing capacities (those installed before the base year are added as fixed capacities with p_nom=value, p_nom_extendable=False). E.g. for baseyear=2020, capacities installed before 2020 are added. In addition, the network comprises additional generator, storage, and link capacities with p_nom_extendable=True. The non-solved network is saved in ‘results/run_name/networks/prenetworks_bronwfield’.
 
-Base year is the first element in planning_horizons.
+The base year is the first element in planning_horizons. Step 1 is implemented with the rule add_baseyear for the base year and with the rule add_brownfield for the remaining planning_horizons.
+
+2.The 2020 network is optimized. The solved network is saved in ‘results/run_name/networks/postnetworks’
+
+3.For the next planning horizon, e.g. 2030, the capacities from a previous time step are added if they are still in operation (i.e., if they fulfil planning horizon <= commissioned year + lifetime). In addition, the network comprises additional generator, storage, and link capacities with p_nom_extendable=True. The non-solved network is saved in ‘results/run_name/networks/prenetworks_bronwfield’.
+
+Steps 2 and 3 are solved recursively for all the planning_horizons included in the configuration file.
 
 
-
-2.The 2020 network is optimized, and the optimized capacities are renamed eg. solar-2020, onwind-2020. The solved network is saved in ‘results/run_name/networks/postnetworks’
-
-
-
-3.For the next planning horizon, e.g. 2030, the capacities from a previous time step are added if they are still in operation (i.e., if they fulfil planning horizon < commissioned year + lifetime). In addition, the network comprises additional generator, storage, and link capacities with p_nom_extendable=True. The non-solved network is saved in ‘networks/prenetworks_bronwfield’.
-
-Steps 2 and 3 are solved recursively for all the planning_horizons included in the configuration file
-
-
-
-## **add_existing baseyear**
+rule add_existing baseyear
+=======================
 
 The rule add_existing_baseyear loads the network in ‘results/run_name/networks/prenetworks’ and performs the following operations:
 
@@ -94,17 +96,19 @@ The rule add_existing_baseyear loads the network in ‘results/run_name/networks
 
 2.Add the heating capacities that were installed before the base year. 
 
-The existing conventional generators are retrieved from the [powerplants.csv file](https://pypsa-eur.readthedocs.io/en/latest/preparation/build_powerplants.html?highlight=powerplants) generated by pypsa-eur which, in turn, is based on the [powerplantmatching](https://github.com/FRESNA/powerplantmatching) database.
+The existing conventional generators are retrieved from the `powerplants.csv file <https://pypsa-eur.readthedocs.io/en/latest/preparation/build_powerplants.html?highlight=powerplants>`__ generated by pypsa-eur which, in turn, is based on the `powerplantmatching <https://github.com/FRESNA/powerplantmatching>`__ database.
 
-Existing wind and solar capacities are retrieved from [IRENA annual statistics](https://www.irena.org/Statistics/Download-Data) and distributed among the nodes in a country proportional to capacity factor. (This will be updated to include capacity distribution closer to reality.)
+Existing wind and solar capacities are retrieved from `IRENA annual statistics <https://www.irena.org/Statistics/Download-Data>`__ and distributed among the nodes in a country proportional to capacity factor. (This will be updated to include capacity distributions closer to reality.)
 
-Existing heating capacity factors are retrieved from the report [Mapping and analyses of the current and future (2020 - 2030) heating/cooling fuel deployment (fossil/renewables)](https://ec.europa.eu/energy/studies/mapping-and-analyses-current-and-future-2020-2030-heatingcooling-fuel-deployment_en?redir=1)
+Existing heating capacities are retrieved from the report `Mapping and analyses of the current and future (2020 - 2030) heating/cooling fuel deployment (fossil/renewables) 
+<https://ec.europa.eu/energy/studies/mapping-and-analyses-current-and-future-2020-2030-heatingcooling-fuel-deployment_en?redir=1>`__
 
 The heating capacities are assumed to have a lifetime indicated by the parameter lifetime in the configuration file, e.g 25 years. They are assumed to be decommissioned linearly starting on the base year, e.g., from 2020 to 2045.
 
-Then, the resulting network is saved in ‘results/run_name/networks/prenetworks’ 
+Then, the resulting network is saved in ‘results/run_name/networks/prenetworks_brownfield’ 
 
-## **add_brownfield**
+rule add_brownfield
+================
 
 The rule add_brownfield loads the network in ‘results/run_name/networks/prenetworks’ and performs the following operation:
 
