@@ -353,7 +353,7 @@ def add_heating_capacities_installed_before_baseyear(n, baseyear, grouping_years
                    carrier="{} {} heat pump".format(name,heat_pump_type),
                    efficiency=efficiency,
                    capital_cost=costs.at[costs_name,'efficiency']*costs.at[costs_name,'fixed'],
-                   p_nom=p_nom[name]*ratio,
+                   p_nom=p_nom[name]*ratio/costs.at[costs_name,'efficiency'],
                    build_year=int(grouping_year),
                    lifetime=costs.at[costs_name,'lifetime'])
 
@@ -367,7 +367,7 @@ def add_heating_capacities_installed_before_baseyear(n, baseyear, grouping_years
                    carrier=name + " resistive heater",
                    efficiency=costs.at[name_type + ' resistive heater','efficiency'],
                    capital_cost=costs.at[name_type + ' resistive heater','efficiency']*costs.at[name_type + ' resistive heater','fixed'],
-                   p_nom=0.5*nodal_df['{} resistive heater'.format(heat_type)][nodes[name]]*ratio,
+                   p_nom=0.5*nodal_df['{} resistive heater'.format(heat_type)][nodes[name]]*ratio/costs.at[name_type + ' resistive heater','efficiency'],
                    build_year=int(grouping_year),
                    lifetime=costs.at[costs_name,'lifetime'])
 
@@ -381,7 +381,7 @@ def add_heating_capacities_installed_before_baseyear(n, baseyear, grouping_years
                    efficiency=costs.at[name_type + ' gas boiler','efficiency'],
                    efficiency2=costs.at['gas','CO2 intensity'],
                    capital_cost=costs.at[name_type + ' gas boiler','efficiency']*costs.at[name_type + ' gas boiler','fixed'],
-                   p_nom=0.5*nodal_df['{} gas boiler'.format(heat_type)][nodes[name]]*ratio,
+                   p_nom=0.5*nodal_df['{} gas boiler'.format(heat_type)][nodes[name]]*ratio/costs.at[name_type + ' gas boiler','efficiency'],
                    build_year=int(grouping_year),
                    lifetime=costs.at[name_type + ' gas boiler','lifetime'])
             n.madd("Link",
@@ -394,7 +394,7 @@ def add_heating_capacities_installed_before_baseyear(n, baseyear, grouping_years
                    efficiency=costs.at['decentral oil boiler','efficiency'],
                    efficiency2=costs.at['oil','CO2 intensity'],
                    capital_cost=costs.at['decentral oil boiler','efficiency']*costs.at['decentral oil boiler','fixed'],
-                   p_nom=0.5*nodal_df['{} oil boiler'.format(heat_type)][nodes[name]]*ratio,
+                   p_nom=0.5*nodal_df['{} oil boiler'.format(heat_type)][nodes[name]]*ratio/costs.at['decentral oil boiler','efficiency'],
                    build_year=int(grouping_year),
                    lifetime=costs.at[name_type + ' gas boiler','lifetime'])
 
