@@ -80,10 +80,10 @@ def prepare_network(n, solve_opts=None):
         nhours = solve_opts['nhours']
         n.set_snapshots(n.snapshots[:nhours])
         n.snapshot_weightings[:] = 8760./nhours
-    
+
     if snakemake.config['foresight']=='myopic':
         add_land_use_constraint(n)
-        
+
     return n
 
 def add_opts_constraints(n, opts=None):
@@ -192,15 +192,14 @@ def add_chp_constraints(n):
         define_constraints(n, lhs, "<=", n.links.loc[electric_fix,"p_nom"].values, 'chplink', 'top_iso_fuel_line_fix')
 
 def add_land_use_constraint(n):
+
+    #warning: this will miss existing offwind which is not classed AC-DC and has carrier 'offwind'
     for carrier in ['solar', 'onwind', 'offwind-ac', 'offwind-dc']:
-        gens = list(n.generators.index[n.generators.carrier==carrier])
-        gens_ext=[gen for gen in gens if gen[-4:]==snakemake.wildcards.planning_horizons]
-        gens_fixed=[gen for gen in gens if gen not in gens_ext]
-        for gen in gens_ext:
-            #already installed capacity is substracted from maximum potential
-            n.generators.loc[gen,'p_nom_max']-=n.generators.loc[[x for x in gens_fixed if gen[0:3] in x],"p_nom"].sum()
-            n.generators.p_nom_max[n.generators.p_nom_max<0]=0   
-    return n
+        existing_capacities = n.generators.loc[n.generators.carrier==carrier,"p_nom"].groupby(n.generators.bus.map(n.buses.location)).sum()
+        existing_capacities.index += " " + carrier + "-" + snakemake.wildcards.planning_horizons
+        n.generators.loc[existing_capacities.index,"p_nom_max"] -= existing_capacities
+
+    n.generators.p_nom_max[n.generators.p_nom_max<0]=0.
 
 def extra_functionality(n, snapshots):
     #add_opts_constraints(n, opts)
@@ -400,4 +399,3 @@ if __name__ == "__main__":
         n.export_to_netcdf(snakemake.output[0])
 
     logger.info("Maximum memory usage: {}".format(mem.mem_usage))
-
