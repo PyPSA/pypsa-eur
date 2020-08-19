@@ -22,9 +22,9 @@ rule all:
 
 
 
-rule solve_all_elec_networks:
+rule solve_all_networks:
     input:
-        expand(config['results_dir'] + config['run'] + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}.nc",
+        expand(config['results_dir'] + config['run'] + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc",
                **config['scenario'])
 
 rule test_script:
@@ -34,7 +34,7 @@ rule test_script:
 
 rule prepare_sector_networks:
     input:
-        expand(config['results_dir'] + config['run'] + "/prenetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}.nc",
+        expand(config['results_dir'] + config['run'] + "/prenetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc",
                  **config['scenario'])
 
 
