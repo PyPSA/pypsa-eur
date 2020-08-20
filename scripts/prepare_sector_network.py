@@ -62,7 +62,7 @@ def update_wind_solar_costs(n,costs):
     #when distribution grid is inserted
     n.generators.loc[n.generators.carrier=='solar','capital_cost'] = costs.at['solar-utility', 'fixed']
 
-    n.generators.loc[n.generators.carrier=='onwind','capital_cost'] = costs.at['onwind', 'fixed'] + costs.at['onwind-landcosts', 'fixed']
+    n.generators.loc[n.generators.carrier=='onwind','capital_cost'] = costs.at['onwind', 'fixed']
 
     #for offshore wind, need to calculated connection costs
 
