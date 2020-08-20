@@ -3,8 +3,6 @@ from six import iteritems
 
 import sys
 
-sys.path.append("../pypsa-eur/scripts")
-
 import pandas as pd
 
 import numpy as np
@@ -13,9 +11,7 @@ import pypsa
 
 from vresutils.costdata import annuity
 
-from prepare_sector_network import generate_periodic_profiles
-
-from add_electricity import load_costs
+from prepare_sector_network import generate_periodic_profiles, prepare_costs
 
 import yaml
 
@@ -192,10 +188,10 @@ def calculate_costs(n,label,costs):
 
     #add back in costs of links if there is a line volume limit
     if label[1] != "opt":
-        costs.loc[("links-added","capital","transmission lines"),label] = ((costs_db.at['HVDC overhead', 'capital_cost']*n.links.length + costs_db.at['HVDC inverter pair', 'capital_cost'])*n.links.p_nom_opt)[n.links.carrier == "DC"].sum()
-        costs.loc[("lines-added","capital","transmission lines"),label] = costs_db.at["HVAC overhead", "capital_cost"]*(n.lines.length*n.lines.s_nom_opt).sum()
+        costs.loc[("links-added","capital","transmission lines"),label] = ((costs_db.at['HVDC overhead', 'fixed']*n.links.length + costs_db.at['HVDC inverter pair', 'fixed'])*n.links.p_nom_opt)[n.links.carrier == "DC"].sum()
+        costs.loc[("lines-added","capital","transmission lines"),label] = costs_db.at["HVAC overhead", "fixed"]*(n.lines.length*n.lines.s_nom_opt).sum()
     else:
-        costs.loc[("links-added","capital","transmission lines"),label] = (costs_db.at['HVDC inverter pair', 'capital_cost']*n.links.p_nom_opt)[n.links.carrier == "DC"].sum()
+        costs.loc[("links-added","capital","transmission lines"),label] = (costs_db.at['HVDC inverter pair', 'fixed']*n.links.p_nom_opt)[n.links.carrier == "DC"].sum()
 
 
     #add back in all hydro
@@ -599,10 +595,14 @@ if __name__ == "__main__":
                      for lv in snakemake.config['scenario']['lv'] \
                      for co2_budget_name in snakemake.config['scenario']['co2_budget_name'] \
                      for planning_horizon in snakemake.config['scenario']['planning_horizons']}
-       
+
     print(networks_dict)
 
-    costs_db = load_costs(Nyears=1.,tech_costs="data/costs.csv",config=snakemake.config["costs"],elec_config=snakemake.config['electricity'])
+    Nyears = 1
+    costs_db = prepare_costs(snakemake.input.costs,
+                             snakemake.config['costs']['USD2013_to_EUR2013'],
+                             snakemake.config['costs']['discountrate'],
+                             Nyears)
 
     df = make_summaries(networks_dict)
 

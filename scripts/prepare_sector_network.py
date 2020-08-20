@@ -531,7 +531,6 @@ def prepare_data(network):
 def prepare_costs(cost_file, USD_to_EUR, discount_rate, Nyears):
 
     #set all asset costs and other parameters
-    #costs = pd.read_csv(snakemake.input.costs,index_col=list(range(3))).sort_index()
     costs = pd.read_csv(cost_file,index_col=list(range(2))).sort_index()
 
     #correct units to MW and EUR

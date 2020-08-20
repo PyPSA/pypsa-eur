@@ -185,7 +185,7 @@ rule prepare_sector_network:
         biomass_potentials='data/biomass_potentials.csv',
         timezone_mappings='data/timezone_mappings.csv',
         heat_profile="data/heat_load_profile_BDEW.csv",
-        costs=config['costs_dir'] + "costs_{planning_horizons}.csv", #"data/costs.csv"
+        costs=config['costs_dir'] + "costs_{planning_horizons}.csv",
         co2_budget="data/co2_budget.csv",
         profile_offwind_ac=pypsaeur("resources/profile_offwind-ac.nc"),
         profile_offwind_dc=pypsaeur("resources/profile_offwind-dc.nc"),
@@ -242,6 +242,7 @@ rule make_summary:
     input:
         networks=expand(config['results_dir'] + config['run'] + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc",
                  **config['scenario']),
+        costs=config['costs_dir'] + "costs_{}.csv".format(config['scenario']['planning_horizons'][0]),
         #plots=expand(config['results_dir'] + config['run'] + "/maps/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}-costs-all_{co2_budget_name}_{planning_horizons}.pdf",
         #       **config['scenario'])
         #heat_demand_name='data/heating/daily_heat_demand.h5'
