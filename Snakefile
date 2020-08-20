@@ -313,7 +313,7 @@ if config["foresight"] == "myopic":
             costs=config['costs_dir'] + "costs_{}.csv".format(config['scenario']['planning_horizons'][0]),
             cop_soil_total="resources/cop_soil_total_{network}_s{simpl}_{clusters}.nc",
             cop_air_total="resources/cop_air_total_{network}_s{simpl}_{clusters}.nc"
-        output: config['results_dir']  +  config['run'] + '/prenetworks_brownfield/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc'
+        output: config['results_dir']  +  config['run'] + '/prenetworks-brownfield/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc'
         wildcard_constraints:
             planning_horizons=config['scenario']['planning_horizons'][0] #only applies to baseyear
         threads: 1
@@ -333,7 +333,7 @@ if config["foresight"] == "myopic":
             cop_soil_total="resources/cop_soil_total_{network}_s{simpl}_{clusters}.nc",
             cop_air_total="resources/cop_air_total_{network}_s{simpl}_{clusters}.nc"
 
-        output: config['results_dir'] + config['run'] + "/prenetworks_brownfield/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc"
+        output: config['results_dir'] + config['run'] + "/prenetworks-brownfield/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc"
         threads: 4
         resources: mem_mb=2000
         script: "scripts/add_brownfield.py"
@@ -342,7 +342,7 @@ if config["foresight"] == "myopic":
 
     rule solve_network_myopic:
         input:
-            network=config['results_dir'] + config['run'] + "/prenetworks_brownfield/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc",
+            network=config['results_dir'] + config['run'] + "/prenetworks-brownfield/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc",
             costs=config['costs_dir'] + "costs_{planning_horizons}.csv",
             config=config['summary_dir'] + '/' + config['run'] + '/configs/config.yaml'
         output: config['results_dir'] + config['run'] + "/postnetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc"

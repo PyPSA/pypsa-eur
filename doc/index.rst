@@ -116,15 +116,17 @@ Documentation
 
    installation
 
-**Myopic transition path**
+**Foresight options**
 
+* :doc:`overnight`
 * :doc:`myopic`
 
 .. toctree::
    :hidden:
    :maxdepth: 1
-   :caption: Myopic transition path
+   :caption: Foresight options
 
+   overnight
    myopic
 
 **References**

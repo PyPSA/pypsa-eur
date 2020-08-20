@@ -7,8 +7,8 @@ Installation
 The subsequently described installation steps are demonstrated as shell commands, where the path before the ``%`` sign denotes the
 directory in which the commands following the ``%`` should be entered.
 
-Install PyPSA-Eur
-=================
+Install PyPSA-Eur and its data
+==============================
 
 First install `PyPSA-Eur <https://github.com/PyPSA/pypsa-eur>`_ and all
 its dependencies. Clone the repository:
@@ -19,6 +19,16 @@ its dependencies. Clone the repository:
     projects % git clone git@github.com:PyPSA/pypsa-eur.git
 
 then download and unpack all the PyPSA-Eur data files.
+
+
+Clone technology-data repository
+================================
+
+Create a parallel directory for the technology costs and other assumptions:
+
+.. code:: bash
+
+    projects % git clone git@github.com:PyPSA/technology-data.git
 
 
 Clone PyPSA-Eur-Sec repository
@@ -61,7 +71,10 @@ To download and extract it on the command line:
 Set up the default configuration
 ================================
 
-First make your own copy of the ``config.yaml``:
+First make your own copy of the ``config.yaml``. For overnight
+scenarios, use ``config.default.yaml``. For a pathway optimization
+with myopic foresight (which is still experimental), use
+``config.myopic.yaml``. For example:
 
 .. code:: bash
 
@@ -81,7 +94,7 @@ To run the full optimization with your settings:
 
 .. code:: bash
 
-    projects/pypsa-eur-sec % snakemake
+    projects/pypsa-eur-sec % snakemake -j1
 
 Warning: you may need a computer cluster for this (with e.g. 10-100 GB of RAM
 and several processors).
@@ -90,4 +103,4 @@ To only prepare the networks, you can run the scripts up to the point before opt
 
 .. code:: bash
 
-    projects/pypsa-eur-sec % snakemake prepare_sector_networks
+    projects/pypsa-eur-sec % snakemake -j1 prepare_sector_networks

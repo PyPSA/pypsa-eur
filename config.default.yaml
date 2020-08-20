@@ -2,7 +2,7 @@ logging_level: INFO
 
 results_dir: 'results/'
 summary_dir: results
-costs_dir: '../technology_data/outputs/'
+costs_dir: '../technology-data/outputs/'
 run: 'your-run-name'  # use this to keep track of runs with different settings
 foresight: 'overnight' #options are overnight, myopic, perfect (perfect is not yet implemented)
 
