@@ -4,7 +4,7 @@ results_dir: 'results/'
 summary_dir: results
 costs_dir: '../technology_data/outputs/'
 run: 'your-run-name'  # use this to keep track of runs with different settings
-foresight: 'overnight' #options are overnight, myopic, perfect (perfect is not yet implemented)
+foresight: 'myopic' #options are overnight, myopic, perfect (perfect is not yet implemented)
 
 
 scenario:
@@ -13,7 +13,7 @@ scenario:
   lv: [1.0,1.5]    # allowed transmission line volume expansion, can be any float >= 1.0 (today) or "opt"
   clusters: [45,50] # number of nodes in Europe, any integer between 37 (1 node per country-zone) and several hundred
   opts: ['']  # only relevant for PyPSA-Eur
-  sector_opts: [Co2L0-3H-T-H-B-I-solar3-dist1]  # this is where the main scenario settings are
+  sector_opts: [Co2L0-3H-H-B-solar3-dist1]  # this is where the main scenario settings are
   # to really understand the options here, look in scripts/prepare_sector_network.py
   # Co2Lx specifies the CO2 target in x% of the 1990 values; default will give default (5%);
   # Co2L0p25 will give 25% CO2 emissions; Co2Lm0p05 will give 5% negative emissions
@@ -22,7 +22,7 @@ scenario:
   # B for biomass supply, I for industry, shipping and aviation
   # solarx or onwindx changes the available installable potential by factor x
   # dist{n} includes distribution grids with investment cost of n times cost in data/costs.csv
-  planning_horizons : [2030] #investment years for myopic and perfect; or costs year for overnight
+  planning_horizons : [2020, 2030, 2040, 2050] #investment years for myopic and perfect; or costs year for overnight
   co2_budget_name: ['go'] #gives shape of CO2 budgets over planning horizon
 
 # snapshots are originally set in PyPSA-Eur/config.yaml but used again by PyPSA-Eur-Sec
