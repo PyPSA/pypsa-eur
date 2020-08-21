@@ -15,6 +15,7 @@ Upcoming Release
 
 * Add compatibility for pyomo 5.7.0 in :mod:`cluster_network` and :mod:`simplify_network`.
 
+
 PyPSA-Eur 0.2.0 (8th June 2020)
 ==================================
 
