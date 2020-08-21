@@ -24,7 +24,7 @@ then download and unpack all the PyPSA-Eur data files.
 Clone technology-data repository
 ================================
 
-Create a parallel directory for the technology costs and other assumptions:
+Next install the technology assumptions database `technology-data <https://github.com/PyPSA/technology-data>`_ by creating a parallel directory:
 
 .. code:: bash
 
@@ -34,7 +34,7 @@ Create a parallel directory for the technology costs and other assumptions:
 Clone PyPSA-Eur-Sec repository
 ==============================
 
-Create a parallel directory for PyPSA-Eur-Sec with:
+Create a parallel directory for `PyPSA-Eur-Sec <https://github.com/PyPSA/pypsa-eur-sec>`_ with:
 
 .. code:: bash
 

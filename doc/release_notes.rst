@@ -2,13 +2,28 @@
 Release Notes
 ##########################################
 
-PyPSA-Eur-Sec 0.2.0 (TBD)
-==================================
+PyPSA-Eur-Sec 0.2.0 (21st August 2020)
+======================================
 
-* Link to DEA cost database in another GitHub repository.
+This release introduces pathway optimization over many years (e.g. 2020, 2030, 2040, 2050) with myopic foresight, as well as outsourcing the technology assumptions to the `technology-data <https://github.com/PyPSA/technology-data>`_ repository.
 
-* Myopic investment planning from Aarhus University.
+It is known to work with PyPSA-Eur v0.1.0 (commit bb3477cd69), PyPSA v0.17.1 and technology-data v0.1.0.
 
+New features:
+
+* Option for pathway optimization with myopic foresight, based on the paper `Early decarbonisation of the European Energy system pays off (2020) <https://arxiv.org/abs/2004.11009>`_. Investments are optimized sequentially for multiple years (e.g. 2020, 2030, 2040, 2050) taking account of existing assets built in previous years and their lifetimes. The script uses data on the existing assets for electricity and building heating technologies, but there are no assumptions yet for existing transport and industry (if you include these, the model will greenfield them). To use myopic foresight, set ``foresight : 'myopic'`` in the ``config.yaml`` instead of the default ``foresight : 'overnight'``. An example configuration can be found in ``config.myopic.yaml``. More details on the implementation can be found in :doc:`myopic`.
+
+* Technology assumptions (costs, efficiencies, etc.) are no longer stored in the repository. Instead, you have to install the `technology-data <https://github.com/PyPSA/technology-data>`_ database in a parallel directory. These assumptions are largely based on the `Danish Energy Agency Technology Data <https://ens.dk/en/our-services/projections-and-models/technology-data>`_. More details on the installation can be found in :doc:`installation`.
+
+* Logs and benchmarks are now stored with the other model outputs in ``results/run-name/``.
+
+* All buses now have a ``location`` attribute, e.g. bus ``DE0 3 urban central heat`` has a ``location`` of ``DE0 3``.
+
+* All assets have a ``lifetime`` attribute (integer in years). For the myopic foresight, a ``build_year`` attribute is also stored.
+
+* Costs for solar and onshore and offshore wind are recalculated by PyPSA-Eur-Sec based on the investment year, including the AC or DC connection costs for offshore wind.
+
+Many thanks to Marta Victoria for implementing the myopic foresight, and Marta Victoria, Kun Zhu and Lisa Zeyen for developing the technology assumptions database.
 
 
 PyPSA-Eur-Sec 0.1.0 (8th July 2020)
@@ -49,8 +64,6 @@ the additional sectors.
 
 Release Process
 ===============
-
-* Checkout a new release branch ``git checkout -b release-v0.x.x``.
 
 * Finalise release notes at ``doc/release_notes.rst``.
 
