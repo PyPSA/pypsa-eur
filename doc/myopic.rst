@@ -12,7 +12,7 @@ The current code applies the myopic approach to generators, storage technologies
 
 The transport sector and industry are not affected by the myopic code. In essence, the electrification of road and rail transport, the percentage of electric vehicles that allow demand-side management and vehicle-to-grid services, and the transformation in the different industrial subsectors do not evolve with time. They are kept fixed at the values specified in the configuration file. Including the transport sector and industry in the myopic code is planned for the near future.
 
-
+See also other `outstanding issues <https://github.com/PyPSA/pypsa-eur-sec/issues/19#issuecomment-678194802>`_.
 
 Configuration
 =================
