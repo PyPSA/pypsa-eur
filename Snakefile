@@ -213,7 +213,7 @@ rule prepare_sector_network:
     output: config['results_dir']  +  config['run'] + '/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc'
     threads: 1
     resources: mem_mb=2000
-    benchmark: "benchmarks/prepare_network/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}"
+    benchmark: config['results_dir'] + config['run'] + "/benchmarks/prepare_network/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}"
     script: "scripts/prepare_sector_network.py"
 
 
@@ -243,8 +243,8 @@ rule make_summary:
         networks=expand(config['results_dir'] + config['run'] + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc",
                  **config['scenario']),
         costs=config['costs_dir'] + "costs_{}.csv".format(config['scenario']['planning_horizons'][0]),
-        #plots=expand(config['results_dir'] + config['run'] + "/maps/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}-costs-all_{co2_budget_name}_{planning_horizons}.pdf",
-        #       **config['scenario'])
+        plots=expand(config['results_dir'] + config['run'] + "/maps/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}-costs-all_{co2_budget_name}_{planning_horizons}.pdf",
+              **config['scenario'])
         #heat_demand_name='data/heating/daily_heat_demand.h5'
     output:
         nodal_costs=config['summary_dir'] + '/' + config['run'] + '/csvs/nodal_costs.csv',
@@ -276,7 +276,7 @@ rule plot_summary:
     output:
         costs=config['summary_dir'] + '/' + config['run'] + '/graphs/costs.pdf',
         energy=config['summary_dir'] + '/' + config['run'] + '/graphs/energy.pdf',
-        #balances=config['summary_dir'] + '/' + config['run'] + '/graphs/balances-energy.pdf'
+        balances=config['summary_dir'] + '/' + config['run'] + '/graphs/balances-energy.pdf'
     threads: 2
     resources: mem_mb=10000
     script:
@@ -292,10 +292,10 @@ if config["foresight"] == "overnight":
         output: config['results_dir'] + config['run'] + "/postnetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc"
         shadow: "shallow"
         log:
-            solver="logs/" + config['run'] + "/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}_solver.log",
-            python="logs/" + config['run'] + "/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}_python.log",
-            memory="logs/" + config['run'] + "/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}_memory.log"
-        benchmark: "benchmarks/solve_network/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}"
+            solver=config['results_dir'] + config['run'] + "/logs/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}_solver.log",
+            python=config['results_dir'] + config['run'] + "/logs/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}_python.log",
+            memory=config['results_dir'] + config['run'] + "/logs/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}_memory.log"
+        benchmark: config['results_dir'] + config['run'] + "/benchmarks/solve_network/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}"
         threads: 4
         resources: mem_mb=config['solving']['mem']
         # group: "solve" # with group, threads is ignored https://bitbucket.org/snakemake/snakemake/issues/971/group-job-description-does-not-contain
@@ -348,10 +348,10 @@ if config["foresight"] == "myopic":
         output: config['results_dir'] + config['run'] + "/postnetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}.nc"
         shadow: "shallow"
         log:
-            solver="logs/" + config['run'] + "/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}_solver.log",
-            python="logs/" + config['run'] + "/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}_python.log",
-            memory="logs/" + config['run'] + "/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}_memory.log"
-        benchmark: "benchmarks/solve_network/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}"
+            solver=config['results_dir'] + config['run'] + "/logs/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}_solver.log",
+            python=config['results_dir'] + config['run'] + "/logs/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}_python.log",
+            memory=config['results_dir'] + config['run'] + "/logs/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}_memory.log"
+        benchmark: config['results_dir'] + config['run'] + "/benchmarks/solve_network/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{co2_budget_name}_{planning_horizons}"
         threads: 4
         resources: mem_mb=config['solving']['mem']
         script: "scripts/solve_network.py"

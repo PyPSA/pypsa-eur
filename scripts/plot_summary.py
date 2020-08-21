@@ -188,18 +188,18 @@ def plot_balances():
         df = df/1e6
 
         #remove trailing link ports
-        df.index = [i[:-1] if i[-1:] in ["0","1","2","3"] else i for i in df.index]
+        df.index = [i[:-1] if ((i != "co2") and (i[-1:] in ["0","1","2","3"])) else i for i in df.index]
 
         df = df.groupby(df.index.map(rename_techs)).sum()
 
-        to_drop = df.index[df.abs().max(axis=1) < snakemake.config['plotting']['energy_threshold']]
+        to_drop = df.index[df.abs().max(axis=1) < snakemake.config['plotting']['energy_threshold']/10]
 
         print("dropping")
 
         print(df.loc[to_drop])
 
         df = df.drop(to_drop)
- 
+
         print(df.sum())
 
         if df.empty:
@@ -209,7 +209,7 @@ def plot_balances():
 
         new_columns = df.columns.sort_values()
 
-        
+
         fig, ax = plt.subplots()
         fig.set_size_inches((12,8))
 
@@ -255,10 +255,10 @@ if __name__ == "__main__":
             snakemake.output[item] = snakemake.config['summary_dir'] + '/{name}/graphs/{item}.pdf'.format(name=snakemake.config['run'],item=item)
         snakemake.input["balances"] = snakemake.config['summary_dir'] + '/test/csvs/supply_energy.csv'
         snakemake.output["balances"] = snakemake.config['summary_dir'] + '/test/graphs/balances-energy.csv'
-    
-    n_header = 5 
+
+    n_header = 5
     plot_costs()
 
     plot_energy()
-    
-    #plot_balances()
+
+    plot_balances()

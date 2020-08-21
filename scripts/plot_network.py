@@ -253,9 +253,7 @@ def plot_h2_map(network):
 
     elec = n.links.index[n.links.carrier == "H2 Electrolysis"]
 
-    bus_sizes = pd.Series(0., index=n.buses.index)
-    bus_sizes.loc[elec.str.replace(" H2 Electrolysis", "")] = \
-                        n.links.loc[elec, "p_nom_opt"].values / bus_size_factor
+    bus_sizes = n.links.loc[elec,"p_nom_opt"].groupby(n.links.loc[elec,"bus0"]).sum() / bus_size_factor
 
     # make a fake MultiIndex so that area is correct for legend
     bus_sizes.index = pd.MultiIndex.from_product(
