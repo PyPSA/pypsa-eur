@@ -275,6 +275,13 @@ def _apply_parameter_corrections(n):
                 inds = r.index.intersection(df.index)
                 df.loc[inds, attr] = r[inds].astype(df[attr].dtype)
 
+def _apply_sardinia_corsica_link_corrections(n):
+    for lk_keep, lk_remove in [("12998", "12997"),("5627", "5628")]:
+        n.links.at[lk_keep, "bus1"] = n.links.at[lk_remove, "bus0"]
+        n.links.at[lk_keep, "length"] += n.links.at[lk_remove, "length"]
+        n.remove("Link", lk_remove)
+    n.remove("Bus", "7276")
+
 def _set_electrical_parameters_lines(lines):
     v_noms = snakemake.config['electricity']['voltages']
     linetypes = snakemake.config['lines']['types']
@@ -547,6 +554,8 @@ def base_network():
     _set_lines_s_nom_from_linetypes(n)
 
     _apply_parameter_corrections(n)
+
+    _apply_sardinia_corsica_link_corrections(n)
 
     _set_countries_and_substations(n)
 

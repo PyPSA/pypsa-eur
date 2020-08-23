@@ -26,4 +26,8 @@ Link:
       "14537": 1000 # NEMO GB-BE
       "14538": 1000 # ALEGrO BE-DE
       "14556": 600  # Storebaelt
-      "12997": 1000 # Sardignia      
+      "12997": 1000 # Sardignia
+  bus1:
+    index:
+      "11511": "6240" # fix wrong bus allocation
+      "14559": "6240" # fix wrong bus allocation
