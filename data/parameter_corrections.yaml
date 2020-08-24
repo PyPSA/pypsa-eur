@@ -29,5 +29,16 @@ Link:
       "12997": 1000 # Sardignia
   bus1:
     index:
-      "11511": "6240" # fix wrong bus allocation
-      "14559": "6240" # fix wrong bus allocation
+      "11511": "6240" # fix wrong bus allocation from 6241
+      "14559": "6240" # fix wrong bus allocation from 6241
+      "12998": "1333" # combine link 12998 + 12997 in 12998
+      "5627": '2309' # combine link 5627 + 5628 in 5627
+  length: 
+    index:
+      "12998": 409.0 
+      "5627": 26.39
+  bus0: 
+    index: 
+      # set bus0 == bus1 for removing the link in remove_unconnected_components
+      "5628": "7276" 
+      "12997": "7276"
