@@ -5,9 +5,11 @@
 
 
 .. _cloudcomputing:
+
 ###########################
 Cloud Computing
 ###########################
+
 Google Cloud Platform (GCP)
 ===========================
 
@@ -125,4 +127,3 @@ If you use the GCP with the default PyPSA-Eur settings, your budget will be used
 - Always test using low resolution networks; i.e. a single country at 5 nodes and 24h resolution for 2 month of weather data.
 - Adjust your solver in the ``config.yaml`` file. Set ``solving: skip_iterations: true``.
   This will lead to a single solver iteration which is often precise enough. 
-
