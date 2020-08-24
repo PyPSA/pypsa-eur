@@ -17,6 +17,9 @@ Upcoming Release
 
 * Raise a warning if `tech_colors` in the config are not defined for all carriers.
 
+* Corrected HVDC link connections (a) between Norway and Denmark and (b) mainland Italy, Corsica (FR) and Sardinia (IT) (`#181 <https://github.com/PyPSA/pypsa-eur/pull/181>`_)
+
+
 PyPSA-Eur 0.2.0 (8th June 2020)
 ==================================
 
