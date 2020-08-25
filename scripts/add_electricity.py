@@ -144,9 +144,7 @@ def load_costs(Nyears=1., tech_costs=None, config=None, elec_config=None):
     costs = pd.read_csv(tech_costs, index_col=[0,1]).sort_index()
 
     # correct units to MW
-    to_mw_i = costs.query('unit == "EUR/kW"').index
-    costs.value.update(costs.value[to_mw_i] * 1e3)
-    costs.unit.update(pd.Series("EUR/MW", to_mw_i))
+    costs.loc[costs.unit.str.contains("/kW"),"value"] *= 1e3
 
     fill_values = {"CO2 intensity" : 0,
                    "FOM" : 0,
