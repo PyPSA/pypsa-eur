@@ -7,7 +7,7 @@
 Prepare PyPSA network for solving according to :ref:`opts` and :ref:`ll`, such as
 
 - adding an annual **limit** of carbon-dioxide emissions,
-- adding an exogenous **price** of carbon-dioxide emissions (or other kinds),
+- adding an exogenous **price** per tonne emissions of carbon-dioxide (or other kinds),
 - setting an **N-1 security margin** factor for transmission line capacities,
 - specifying a limit on the **cost** of transmission expansion,
 - specifying a limit on the **volume** of transmission expansion, and

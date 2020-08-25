@@ -13,6 +13,8 @@ Upcoming Release
 
 * ...
 
+* Corrected setting of exogenous emission price (in config -> cost -> emission price). This was not weighted by the efficiency and effective emission of the generators. Fixed in `#171 <https://github.com/PyPSA/pypsa-eur/pull/171>`_.
+
 
 PyPSA-Eur 0.2.0 (8th June 2020)
 ==================================
