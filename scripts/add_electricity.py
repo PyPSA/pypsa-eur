@@ -166,10 +166,12 @@ def load_costs(Nyears=1., tech_costs=None, config=None, elec_config=None):
 
     def costs_for_storage(store, link1, link2=None, max_hours=1.):
         capital_cost = link1['capital_cost'] + max_hours * store['capital_cost']
-        efficiency = link1['efficiency']**0.5
+        efficiency = link1['efficiency']
         if link2 is not None:
             capital_cost += link2['capital_cost']
-            efficiency *= link2['efficiency']**0.5
+            efficiency *= link2['efficiency']
+        else 
+            efficiency *= link1['efficiency']
         return pd.Series(dict(capital_cost=capital_cost,
                               marginal_cost=0.,
                               efficiency=efficiency,
