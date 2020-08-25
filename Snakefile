@@ -65,6 +65,8 @@ if config['enable'].get('retrieve_databundle', True):
         log: "logs/retrieve_databundle.log"
         script: 'scripts/retrieve_databundle.py'
 
+
+
 rule build_powerplants:
     input:
         base_network="networks/base.nc",
@@ -161,6 +163,13 @@ if config['enable'].get('retrieve_natura_raster', True):
         output: "resources/natura.tiff"
         log: "logs/retrieve_natura_raster.log"
         script: 'scripts/retrieve_natura_raster.py'
+
+rule retrieve_cost_data:
+    params:
+        year = config['costs']['year'],
+        version = config['costs']['version'],
+    output: COSTS
+    shell: 'curl https://raw.githubusercontent.com/PyPSA/technology-data/{params.version}/outputs/costs_{params.year}.csv -o {output}'
 
 rule build_renewable_profiles:
     input:
