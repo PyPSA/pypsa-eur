@@ -11,7 +11,17 @@ Release Notes
 Upcoming Release
 ================
 
-* ...
+* Added an option to alter the capital cost of carriers by a factor via ``carrier+factor`` in the ``{opts}`` wildcard. This can be useful for exploring uncertain cost parameters. Example: ``solar+0.5`` reduces the capital cost of solar to 50% of original values (`#167 <https://github.com/PyPSA/pypsa-eur/pull/167>`_).
+
+* Add compatibility for pyomo 5.7.0 in :mod:`cluster_network` and :mod:`simplify_network`.
+
+* Raise a warning if `tech_colors` in the config are not defined for all carriers.
+
+* Corrected HVDC link connections (a) between Norway and Denmark and (b) mainland Italy, Corsica (FR) and Sardinia (IT) (`#181 <https://github.com/PyPSA/pypsa-eur/pull/181>`_)
+
+* Added Google Cloud Platform tutorial (for Windows users).
+
+* Corrected setting of exogenous emission price (in config -> cost -> emission price). This was not weighted by the efficiency and effective emission of the generators. Fixed in `#171 <https://github.com/PyPSA/pypsa-eur/pull/171>`_.
 
 
 PyPSA-Eur 0.2.0 (8th June 2020)

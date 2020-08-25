@@ -7,7 +7,7 @@
 Prepare PyPSA network for solving according to :ref:`opts` and :ref:`ll`, such as
 
 - adding an annual **limit** of carbon-dioxide emissions,
-- adding an exogenous **price** of carbon-dioxide emissions (or other kinds),
+- adding an exogenous **price** per tonne emissions of carbon-dioxide (or other kinds),
 - setting an **N-1 security margin** factor for transmission line capacities,
 - specifying a limit on the **cost** of transmission expansion,
 - specifying a limit on the **volume** of transmission expansion, and
@@ -85,8 +85,10 @@ def add_emission_prices(n, emission_prices=None, exclude_co2=False):
     if exclude_co2: emission_prices.pop('co2')
     ep = (pd.Series(emission_prices).rename(lambda x: x+'_emissions') *
           n.carriers.filter(like='_emissions')).sum(axis=1)
-    n.generators['marginal_cost'] += n.generators.carrier.map(ep)
-    n.storage_units['marginal_cost'] += n.storage_units.carrier.map(ep)
+    gen_ep = n.generators.carrier.map(ep) / n.generators.efficiency
+    n.generators['marginal_cost'] += gen_ep
+    su_ep = n.storage_units.carrier.map(ep) / n.storage_units.efficiency_dispatch
+    n.storage_units['marginal_cost'] += su_ep
 
 def set_line_s_max_pu(n):
     # set n-1 security margin to 0.5 for 37 clusters and to 0.7 from 200 clusters
@@ -214,6 +216,19 @@ if __name__ == "__main__":
                 add_co2limit(n, Nyears, float(m[0]))
             else:
                 add_co2limit(n, Nyears)
+
+    for o in opts:
+        oo = o.split("+")
+        if oo[0].startswith(tuple(n.carriers.index)):
+            carrier = oo[0]
+            cost_factor = float(oo[1])
+            if carrier == "AC":  # lines do not have carrier
+                n.lines.capital_cost *= cost_factor
+            else:
+                comps = {"Generator", "Link", "StorageUnit"}
+                for c in n.iterate_components(comps):
+                    sel = c.df.carrier.str.contains(carrier)
+                    c.df.loc[sel,"capital_cost"] *= cost_factor
 
     if 'Ep' in opts:
         add_emission_prices(n)
