@@ -155,15 +155,23 @@ rule build_industry_sector_ratios:
     script: 'scripts/build_industry_sector_ratios.py'
 
 
-rule build_industrial_demand_per_country:
-    input:
-        industry_sector_ratios="resources/industry_sector_ratios.csv"
+rule build_industrial_production_per_country:
     output:
-        industrial_demand_per_country="resources/industrial_demand_per_country.csv",
+        industrial_production_per_country="resources/industrial_production_per_country.csv"
+    threads: 1
+    resources: mem_mb=1000
+    script: 'scripts/build_industrial_production_per_country.py'
+
+
+rule build_industrial_energy_demand_per_country:
+    input:
+        industry_sector_ratios="resources/industry_sector_ratios.csv",
+        industrial_production_per_country="resources/industrial_production_per_country.csv"
+    output:
         industrial_energy_demand_per_country="resources/industrial_energy_demand_per_country.csv"
     threads: 1
     resources: mem_mb=1000
-    script: 'scripts/build_industrial_demand_per_country.py'
+    script: 'scripts/build_industrial_energy_demand_per_country.py'
 
 
 rule build_industrial_demand:

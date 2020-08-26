@@ -1372,4 +1372,5 @@ sources=['elec','biomass', 'methane', 'hydrogen', 'heat','naphtha']
 df.loc[sources,sector] = df.loc[sources,sector]*conv_factor/s_out['Physical output (index)'] # unit MWh/t material
 
 
+df.index.name = "MWh/tMaterial"
 df.to_csv('resources/industry_sector_ratios.csv', sep=';')
