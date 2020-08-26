@@ -10,7 +10,7 @@ if not exists("config.yaml"):
 
 configfile: "config.yaml"
 
-COSTS="data/costs.csv"
+COSTS="resources/costs.csv"
 
 wildcard_constraints:
     ll="(v|c)([0-9\.]+|opt|all)|all", # line limit, can be volume or cost
@@ -164,12 +164,13 @@ if config['enable'].get('retrieve_natura_raster', True):
         log: "logs/retrieve_natura_raster.log"
         script: 'scripts/retrieve_natura_raster.py'
 
-rule retrieve_cost_data:
-    params:
-        year = config['costs']['year'],
-        version = config['costs']['version'],
-    output: COSTS
-    shell: 'curl https://raw.githubusercontent.com/PyPSA/technology-data/{params.version}/outputs/costs_{params.year}.csv -o {output}'
+if config['enable'].get('retrieve_cost_data', True):
+    rule retrieve_cost_data:
+        params:
+            year = config['costs']['year'],
+            version = config['costs']['version'],
+        output: COSTS
+        shell: 'curl https://raw.githubusercontent.com/PyPSA/technology-data/{params.version}/outputs/costs_{params.year}.csv -o {output}'
 
 rule build_renewable_profiles:
     input:
