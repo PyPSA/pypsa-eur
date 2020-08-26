@@ -163,10 +163,20 @@ rule build_industrial_production_per_country:
     script: 'scripts/build_industrial_production_per_country.py'
 
 
+rule build_industrial_production_per_country_tomorrow:
+    input:
+        industrial_production_per_country="resources/industrial_production_per_country.csv"
+    output:
+        industrial_production_per_country_tomorrow="resources/industrial_production_per_country_tomorrow.csv"
+    threads: 1
+    resources: mem_mb=1000
+    script: 'scripts/build_industrial_production_per_country_tomorrow.py'
+
+
 rule build_industrial_energy_demand_per_country:
     input:
         industry_sector_ratios="resources/industry_sector_ratios.csv",
-        industrial_production_per_country="resources/industrial_production_per_country.csv"
+        industrial_production_per_country="resources/industrial_production_per_country_tomorrow.csv"
     output:
         industrial_energy_demand_per_country="resources/industrial_energy_demand_per_country.csv"
     threads: 1

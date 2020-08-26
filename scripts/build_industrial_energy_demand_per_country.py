@@ -68,8 +68,6 @@ for country in countries_df.index:
 
         s_out = excel_out.iloc[27:48,-1]
         countries_df.loc[country, 'current electricity'] = s_out['Electricity']*ktoe_to_twh
-        print(countries_df.loc[country, 'current electricity'])
-
 
 
 rename_sectors = {'elec':'electricity',

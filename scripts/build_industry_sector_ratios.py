@@ -152,19 +152,18 @@ df.loc[['elec','heat','methane'],sector] = df.loc[['elec','heat','methane'],sect
 
 
 
-## Integrated steelworks is converted to Electric arc
-#
-#> Electric arc uses scrap metal and Direct Reduced Iron
-#
-#> We assume that when substituting Integrated Steelworks by Electric arc furnaces.
-#> 50% of Integrated steelworks is substituted by scrap metal + electric furnaces
-#> 50% of Integrated steelworks is substituted by Direct Reduce Iron (with Hydrogen) + electric furnaces
+## Integrated steelworks is not used in future
+## TODO Include integrated steelworks + CCS
 
-df['Integrated steelworks']=df['Electric arc']
+df['Integrated steelworks']= 0.
+
+
+## For primary route: DRI with H2 + EAF
+
+df['DRI + Electric arc'] = df['Electric arc']
 
 # adding the Hydrogen necessary for the Direct Reduction of Iron. consumption 1.7 MWh H2 /ton steel
-#(0.5 because only half of the steel requires DRI, the rest is scrap  metal)
-df.loc['hydrogen', 'Integrated steelworks'] =snakemake.config["industry"]["H2_DRI"] * snakemake.config["industry"]["DRI_ratio"]
+df.loc['hydrogen', 'DRI + Electric arc'] = snakemake.config["industry"]["H2_DRI"]
 
 
 ## Chemicals Industry
@@ -1052,9 +1051,6 @@ sources=['elec','biomass', 'methane', 'hydrogen', 'heat','naphtha']
 df.loc[sources,sector] = df.loc[sources,sector]*conv_factor/s_out['Aluminium - secondary production'] # unit MWh/t material
 # 1 ktoe = 11630 MWh
 
-# primary route is divided into 50% remains as today and 50% is transformed into secondary route
-df.loc[sources,'Aluminium - primary production'] = (1-snakemake.config["industry"]["Al_to_scrap"])*df.loc[sources,'Aluminium - primary production'] + snakemake.config["industry"]["Al_to_scrap"]*df.loc[sources,'Aluminium - secondary production']
-df.loc['process emission','Aluminium - primary production'] = (1-snakemake.config["industry"]["Al_to_scrap"])*df.loc['process emission','Aluminium - primary production']
 
 ### Other non-ferrous metals
 
