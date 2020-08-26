@@ -159,7 +159,8 @@ rule build_industrial_demand_per_country:
     input:
         industry_sector_ratios="resources/industry_sector_ratios.csv"
     output:
-        industrial_demand_per_country="resources/industrial_demand_per_country.csv"
+        industrial_demand_per_country="resources/industrial_demand_per_country.csv",
+        industrial_energy_demand_per_country="resources/industrial_energy_demand_per_country.csv"
     threads: 1
     resources: mem_mb=1000
     script: 'scripts/build_industrial_demand_per_country.py'
@@ -168,7 +169,7 @@ rule build_industrial_demand_per_country:
 rule build_industrial_demand:
     input:
         clustered_pop_layout="resources/pop_layout_{network}_s{simpl}_{clusters}.csv",
-        industrial_demand_per_country="resources/industrial_demand_per_country.csv"
+        industrial_demand_per_country="resources/industrial_energy_demand_per_country.csv"
     output:
         industrial_demand="resources/industrial_demand_{network}_s{simpl}_{clusters}.csv"
     threads: 1

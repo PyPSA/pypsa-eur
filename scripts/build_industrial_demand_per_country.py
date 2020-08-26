@@ -16,7 +16,7 @@ tj_to_ktoe = 0.0238845
 ktoe_to_twh = 0.01163
 
 # import EU ratios df as csv
-df=pd.read_csv('resources/industry_sector_ratios.csv', sep=';', index_col=0)
+df=pd.read_csv(snakemake.input.industry_sector_ratios, sep=';', index_col=0)
 
 
 
@@ -36,9 +36,6 @@ sub_sheet_name_dict = { 'Iron and steel':'ISI',
 
 index = ['elec','biomass','methane','hydrogen','heat','naphtha','process emission','process emission from feedstock']
 
-countries_df = pd.DataFrame(columns=index) #data frame final energy consumption per country and source
-
-
 non_EU = ['NO', 'CH', 'ME', 'MK', 'RS', 'BA', 'AL']
 
 rename = {"GR" : "EL",
@@ -49,7 +46,7 @@ eu28 = ['FR', 'DE', 'GB', 'IT', 'ES', 'PL', 'SE', 'NL', 'BE', 'FI', 'CZ',
         'HU', 'IE', 'SK', 'LT', 'HR', 'LU', 'SI'] + ['CY','MT']
 
 
-countries = non_EU + [rename.get(eu,eu) for eu in eu28[:-2]]
+countries = non_EU + [rename.get(eu,eu) for eu in eu28]
 
 
 sectors = ['Iron and steel','Chemicals Industry','Non-metallic mineral products',
@@ -68,6 +65,20 @@ sect2sub = {'Iron and steel':['Electric arc','Integrated steelworks'],
             'Textiles and leather': ['Textiles and leather'],
             'Wood and wood products' :['Wood and wood products'],
             'Other Industrial Sectors':['Other Industrial Sectors']}
+
+subsectors = [ss for s in sectors for ss in sect2sub[s]]
+
+#final energy consumption per country and industry (TWh/a)
+countries_df = pd.DataFrame(index=countries,
+                            columns=index,
+                            dtype=float)
+
+#material demand per country and industry (kton/a)
+countries_demand = pd.DataFrame(index=countries,
+                                columns=subsectors,
+                                dtype=float)
+
+
 
 out_dic ={'Electric arc': 'Electric arc',
           'Integrated steelworks': 'Integrated steelworks',
@@ -153,8 +164,9 @@ dic_Switzerland ={'Iron and steel': 7889.,
 
 dic_sec_position={}
 for country in countries:
-    countries_df.loc[country] = 0
-    print (country)
+    countries_df.loc[country] = 0.
+    countries_demand.loc[country] = 0.
+    print(country)
     for sector in sectors:
         if country in non_EU:
             if country == 'CH':
@@ -181,7 +193,7 @@ for country in countries:
 
             for subsector in sect2sub[sector]:
                 output = ratio_country_EU28*s_out[out_dic[subsector]]
-
+                countries_demand.loc[country,subsector] = output
                 for ind in index:
                     countries_df.loc[country, ind] += float(output*df.loc[ind, subsector]) # kton * MWh = GWh (# kton * tCO2 = ktCO2)
 
@@ -194,6 +206,7 @@ for country in countries:
 
             for subsector in sect2sub[sector]:
                 output = s_out[out_dic[subsector]]
+                countries_demand.loc[country,subsector] = output
                 for ind in index:
                     countries_df.loc[country, ind] += output*df.loc[ind, subsector] #kton * MWh = GWh (# kton * tCO2 = ktCO2)
 
@@ -234,5 +247,7 @@ rename_sectors = {'elec':'electricity',
 
 countries_df.rename(columns=rename_sectors,inplace=True)
 
-countries_df.to_csv('resources/industrial_demand_per_country.csv',
+countries_df.to_csv(snakemake.output.industrial_energy_demand_per_country,
                     float_format='%.2f')
+countries_demand.to_csv(snakemake.output.industrial_demand_per_country,
+                        float_format='%.2f')
