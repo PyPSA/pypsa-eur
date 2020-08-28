@@ -5,11 +5,11 @@ import numpy as np
 
 base_dir = "data/jrc-idees-2015"
 
-# year for wich data is retrieved
-year = 2015
-year = year-2016
+# year for which data is retrieved
+raw_year = 2015
+year = raw_year-2016
 
-conv_factor=11.630 #ktoe/kton -> MWh/ton
+conv_factor=11.630 #GWh/ktoe OR MWh/toe
 
 country = 'EU28'
 
@@ -185,6 +185,8 @@ excel_emi = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,c
 
 ### Basic chemicals
 
+## Ammonia is separate afterwards
+
 sector = 'Basic chemicals'
 
 df[sector] = 0
@@ -203,9 +205,8 @@ df.loc['heat',sector] += s_fec['Low enthalpy heat']
 #### Chemicals: Feedstock (energy used as raw material)
 #> There are Solids, Refinery gas, LPG, Diesel oil, Residual fuel oil, Other liquids, Naphtha, Natural gas for feedstock.
 #
-#>  Naphta represents 47%, methane 17%. LPG (18%) solids, refinery gas, diesel oil, residual fuel oils and other liquids are asimilated to Napthta
-#
-#> Following Lechtenbohmer 2016, the 85 TWh/year of methane for the ammonia industry are substited by hydrogen.
+#>  Naphta represents 47%, methane 17%. LPG (18%) solids, refinery gas, diesel oil, residual fuel oils and other liquids are asimilated to Naphtha
+
 
 subsector = 'Chemicals: Feedstock (energy used as raw material)'
 
@@ -218,10 +219,7 @@ assert s_fec.index[0] == subsector
 df.loc['naphtha',sector] += s_fec['Naphtha']
 
 # natural gas
-# 85 TWh/year of methane for the ammonia industry are substituted by hydrogen
-df.loc['methane',sector] += s_fec['Natural gas'] - snakemake.config["industry"]["H2_for_NH3"]/conv_factor
-df.loc['hydrogen',sector] += snakemake.config["industry"]["H2_for_NH3"]/conv_factor
-# 1 ktoe = 11630 MWh
+df.loc['methane',sector] += s_fec['Natural gas']
 
 # LPG and other feedstock materials are assimilated to naphtha since they will be produced trough Fischer-Tropsh process
 df.loc['naphtha',sector] += (s_fec['Solids'] + s_fec['Refinery gas'] + s_fec['LPG'] + s_fec['Diesel oil']
@@ -244,8 +242,10 @@ assert s_fec.index[0] == subsector
 # efficiency of biomass
 eff_bio = s_ued['Biomass']/s_fec['Biomass']
 
-# replace all fec by biomass
-df.loc['biomass',sector] += s_ued[subsector]/eff_bio
+# replace all non-methane fec by biomass
+df.loc['biomass',sector] += (s_ued[subsector]-s_ued['Natural gas (incl. biogas)'])/eff_bio
+
+df.loc['methane',sector] += s_fec['Natural gas (incl. biogas)']
 
 #### Chemicals: Furnaces
 #> assume fully electrified
@@ -297,9 +297,24 @@ s_emi = excel_emi.iloc[3:57,year]
 
 assert s_emi.index[0] == sector
 
+
+## Correct everything by subtracting 2015's ammonia demand and putting in ammonia demand for H2 and electricity separately
+
 s_out = excel_out.iloc[8:9,year]
 
 assert sector in str(s_out.index)
+
+ammonia = pd.read_csv(snakemake.input.ammonia_production,
+                      index_col=0)
+
+eu28 = ['FR', 'DE', 'GB', 'IT', 'ES', 'PL', 'SE', 'NL', 'BE', 'FI',
+        'DK', 'PT', 'RO', 'AT', 'BG', 'EE', 'GR', 'LV', 'CZ',
+        'HU', 'IE', 'SK', 'LT', 'HR', 'LU', 'SI', 'CY', 'MT']
+
+#ktNH3/a
+total_ammonia = ammonia.loc[ammonia.index.intersection(eu28),str(raw_year)].sum()
+
+s_out -= total_ammonia
 
 df.loc['process emission',sector] += (s_emi['Process emissions'] - snakemake.config["industry"]['petrochemical_process_emissions']*1e3 - snakemake.config["industry"]['NH3_process_emissions']*1e3)/s_out.values # unit tCO2/t material
 
@@ -310,8 +325,24 @@ df.loc['process emission from feedstock',sector] += (snakemake.config["industry"
 # final energy consumption per t
 sources=['elec','biomass', 'methane', 'hydrogen', 'heat','naphtha']
 
-df.loc[sources,sector] = df.loc[sources,sector]*conv_factor/s_out.values# unit MWh/t material
-# 1 ktoe = 11630 MWh
+#convert from ktoe/a to GWh/a
+df.loc[sources,sector] *= conv_factor
+
+df.loc['methane',sector] -= total_ammonia*snakemake.config['industry']['MWh_CH4_per_tNH3_SMR']
+df.loc['elec',sector] -= total_ammonia*snakemake.config['industry']['MWh_elec_per_tNH3_SMR']
+
+df.loc[sources,sector] = df.loc[sources,sector]/s_out.values # unit MWh/t material
+
+df.rename(columns={sector : sector + " (without ammonia)"},
+          inplace=True)
+
+sector = 'Ammonia'
+
+df[sector] = 0.
+
+df.loc['hydrogen',sector] = snakemake.config['industry']['MWh_H2_per_tNH3_electrolysis']
+df.loc['elec',sector] = snakemake.config['industry']['MWh_elec_per_tNH3_electrolysis']
+
 
 ### Other chemicals
 
@@ -404,7 +435,7 @@ df.loc['process emission',sector] += s_emi['Process emissions']/s_out.values # u
 # final energy consumption per t
 sources=['elec','biomass', 'methane', 'hydrogen', 'heat','naphtha']
 
-df.loc[sources,sector] = df.loc[sources,sector]*11.630/s_out.values # unit MWh/t material
+df.loc[sources,sector] = df.loc[sources,sector]*conv_factor/s_out.values # unit MWh/t material
 # 1 ktoe = 11630 MWh
 
 ### Pharmaceutical products etc.
@@ -494,7 +525,7 @@ df.loc['process emission',sector] += 0 # unit tCO2/t material
 # final energy consumption per t
 sources=['elec','biomass', 'methane', 'hydrogen', 'heat', 'naphtha']
 
-df.loc[sources,sector] = df.loc[sources,sector]*11.630/s_out.values # unit MWh/t material
+df.loc[sources,sector] = df.loc[sources,sector]*conv_factor/s_out.values # unit MWh/t material
 # 1 ktoe = 11630 MWh
 
 ## Non-metallic mineral products
@@ -634,7 +665,7 @@ df.loc['process emission',sector] += s_emi['Process emissions']/s_out.values # u
 # final energy consumption per t
 sources=['elec','biomass', 'methane', 'hydrogen', 'heat','naphtha']
 
-df.loc[sources,sector] = df.loc[sources,sector]*11.630/s_out.values # unit MWh/t material
+df.loc[sources,sector] = df.loc[sources,sector]*conv_factor/s_out.values # unit MWh/t material
 # 1 ktoe = 11630 MWh
 
 ### Glass production

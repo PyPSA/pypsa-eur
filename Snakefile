@@ -146,8 +146,19 @@ rule build_biomass_potentials:
     resources: mem_mb=1000
     script: 'scripts/build_biomass_potentials.py'
 
+rule build_ammonia_production:
+    input:
+        usgs="data/myb1-2017-nitro.xls"
+    output:
+        ammonia_production="resources/ammonia_production.csv"
+    threads: 1
+    resources: mem_mb=1000
+    script: 'scripts/build_ammonia_production.py'
+
 
 rule build_industry_sector_ratios:
+    input:
+        ammonia_production="resources/ammonia_production.csv"
     output:
         industry_sector_ratios="resources/industry_sector_ratios.csv"
     threads: 1
@@ -156,6 +167,8 @@ rule build_industry_sector_ratios:
 
 
 rule build_industrial_production_per_country:
+    input:
+        ammonia_production="resources/ammonia_production.csv"
     output:
         industrial_production_per_country="resources/industrial_production_per_country.csv"
     threads: 1
