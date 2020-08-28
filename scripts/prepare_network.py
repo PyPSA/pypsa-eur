@@ -123,12 +123,12 @@ def set_transmission_limit(n, ll_type, factor, Nyears=1):
         n.links.loc[links_dc_b, 'p_nom_min'] = n.links.loc[links_dc_b, 'p_nom']
         n.links.loc[links_dc_b, 'p_nom_extendable'] = True
 
-        if factor != 'opt':
-            con_type = 'expansion_cost' if ll_type == 'c' else 'volume_expansion'
-            rhs = float(factor) * ref
-            n.add('GlobalConstraint', f'l{ll_type}_factor',
-                  type=f'transmission_{con_type}_limit',
-                  sense='<=', constant=rhs, carrier_attribute='AC, DC')
+    if factor != 'opt':
+        con_type = 'expansion_cost' if ll_type == 'c' else 'volume_expansion'
+        rhs = float(factor) * ref
+        n.add('GlobalConstraint', f'l{ll_type}_factor',
+              type=f'transmission_{con_type}_limit',
+              sense='<=', constant=rhs, carrier_attribute='AC, DC')
     return n
 
 
@@ -154,7 +154,7 @@ if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
         snakemake = mock_snakemake('prepare_network', network='elec', simpl='',
-                                  clusters='40', ll='v1.3', opts='Co2L-24H')
+                                  clusters='40', ll='v0.3', opts='Co2L-24H')
     configure_logging(snakemake)
 
     opts = snakemake.wildcards.opts.split('-')
