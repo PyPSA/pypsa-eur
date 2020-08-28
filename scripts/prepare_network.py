@@ -248,7 +248,7 @@ if __name__ == "__main__":
     for o in opts:
         m = re.match(r'^\d+seg$', o, re.IGNORECASE)
         if m is not None:
-            n = apply_time_segmentation(n, m.group(0))
+            n = apply_time_segmentation(n, m.group(0)[:-3])
             break
 
     for o in opts:
