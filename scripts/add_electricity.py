@@ -170,7 +170,7 @@ def load_costs(Nyears=1., tech_costs=None, config=None, elec_config=None):
         if link2 is not None:
             capital_cost += link2['capital_cost']
             efficiency *= link2['efficiency']
-        else 
+        else: 
             efficiency *= link1['efficiency']
         return pd.Series(dict(capital_cost=capital_cost,
                               marginal_cost=0.,
