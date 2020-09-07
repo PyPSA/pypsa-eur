@@ -156,6 +156,8 @@ df['DRI + Electric arc'] = df['Electric arc']
 
 # adding the Hydrogen necessary for the Direct Reduction of Iron. consumption 1.7 MWh H2 /ton steel
 df.loc['hydrogen', 'DRI + Electric arc'] = snakemake.config["industry"]["H2_DRI"]
+# add electricity consumption in DRI shaft (0.322 MWh/tSl)
+df.loc['elec', 'DRI + Electric arc'] += snakemake.config["industry"]["elec_DRI"]
 
 
 ### Integrated steelworks (could be used in combination with CCS)
