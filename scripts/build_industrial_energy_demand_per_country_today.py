@@ -121,6 +121,20 @@ for ct in eu28:
 
 final_summary = pd.concat(summaries,axis=1)
 
+# add in the non-EU28 based on their output (which is derived from their energy too)
+# output in MtMaterial/a
+output = pd.read_csv(snakemake.input.industrial_production_per_country,
+                     index_col=0)/1e3
+
+eu28_averages = final_summary.groupby(level=1,axis=1).sum().divide(output.loc[eu28].sum(),axis=1)
+
+non_eu28 = output.index^eu28
+
+for ct in non_eu28:
+    print(ct)
+    final_summary = pd.concat((final_summary,pd.concat({ct : eu28_averages.multiply(output.loc[ct],axis=1)},axis=1)),axis=1)
+
+
 final_summary.index.name = 'TWh/a'
 
 final_summary.to_csv(snakemake.output.industrial_energy_demand_per_country_today)
