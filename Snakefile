@@ -185,6 +185,13 @@ rule build_industrial_production_per_country_tomorrow:
     resources: mem_mb=1000
     script: 'scripts/build_industrial_production_per_country_tomorrow.py'
 
+rule build_industrial_energy_demand_per_country_today:
+    output:
+        industrial_energy_demand_per_country_today="resources/industrial_energy_demand_per_country_today.csv"
+    threads: 1
+    resources: mem_mb=1000
+    script: 'scripts/build_industrial_energy_demand_per_country_today.py'
+
 
 rule build_industrial_energy_demand_per_country:
     input:
