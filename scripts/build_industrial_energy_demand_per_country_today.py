@@ -71,6 +71,11 @@ summaries = {}
 ois_subs = ['Mining and quarrying','Construction','Non-specified']
 
 
+#MtNH3/a
+ammonia = pd.read_csv(snakemake.input.ammonia_production,
+                      index_col=0)/1e3
+
+
 
 for ct in eu28:
     print(ct)
@@ -98,7 +103,21 @@ for ct in eu28:
     summary['Other Industrial Sectors'] = summary[ois_subs].sum(axis=1)
     summary.drop(columns=ois_subs,inplace=True)
 
-    summaries[ct] = summary*ktoe_to_twh
+    summary.drop(index=['all'],inplace=True)
+
+    summary *= ktoe_to_twh
+
+    summary['Basic chemicals'] += summary['Basic chemicals feedstock']
+    summary.drop(columns=['Basic chemicals feedstock'], inplace=True)
+
+    summary['Ammonia'] = 0.
+    summary.at['gas','Ammonia'] = snakemake.config['industry']['MWh_CH4_per_tNH3_SMR']*ammonia[str(year)].get(ct,0.)
+    summary.at['electricity','Ammonia'] = snakemake.config['industry']['MWh_elec_per_tNH3_SMR']*ammonia[str(year)].get(ct,0.)
+    summary['Basic chemicals (without ammonia)'] = summary['Basic chemicals'] - summary['Ammonia']
+    summary.loc[summary['Basic chemicals (without ammonia)'] < 0, 'Basic chemicals (without ammonia)'] = 0.
+    summary.drop(columns=['Basic chemicals'], inplace=True)
+
+    summaries[ct] = summary
 
 final_summary = pd.concat(summaries,axis=1)
 

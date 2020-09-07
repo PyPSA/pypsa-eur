@@ -186,6 +186,8 @@ rule build_industrial_production_per_country_tomorrow:
     script: 'scripts/build_industrial_production_per_country_tomorrow.py'
 
 rule build_industrial_energy_demand_per_country_today:
+    input:
+        ammonia_production="resources/ammonia_production.csv"
     output:
         industrial_energy_demand_per_country_today="resources/industrial_energy_demand_per_country_today.csv"
     threads: 1
