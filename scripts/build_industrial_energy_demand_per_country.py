@@ -10,7 +10,8 @@ eb_base_dir = "data/eurostat-energy_balances-may_2018_edition"
 jrc_base_dir = "data/jrc-idees-2015"
 
 # import EU ratios df as csv
-industry_sector_ratios=pd.read_csv(snakemake.input.industry_sector_ratios, sep=';', index_col=0)
+industry_sector_ratios=pd.read_csv(snakemake.input.industry_sector_ratios,
+                                   index_col=0)
 
 #material demand per country and industry (kton/a)
 countries_production = pd.read_csv(snakemake.input.industrial_production_per_country, index_col=0)
