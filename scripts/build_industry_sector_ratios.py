@@ -326,9 +326,9 @@ df.loc['naphtha',sector] += (s_fec['Solids'] + s_fec['Refinery gas'] + s_fec['LP
                             + s_fec['Residual fuel oil'] + s_fec['Other liquids'])
 
 #### Chemicals: Steam processing
-#> All the final energy consumption in the Stem processing is converted to biomass.
+#> All the final energy consumption in the Steam processing is converted to methane, since we need >1000 C temperatures here.
 #
-#> The current efficiency of biomass is assumed in the conversion.
+#> The current efficiency of methane is assumed in the conversion.
 
 subsector = 'Chemicals: Steam processing'
 
@@ -339,13 +339,11 @@ s_ued = excel_ued.iloc[22:33,year]
 
 assert s_fec.index[0] == subsector
 
-# efficiency of biomass
-eff_bio = s_ued['Biomass']/s_fec['Biomass']
+# efficiency of natural gas
+eff_ch4 = s_ued['Natural gas (incl. biogas)']/s_fec['Natural gas (incl. biogas)']
 
-# replace all non-methane fec by biomass
-df.loc['biomass',sector] += (s_ued[subsector]-s_ued['Natural gas (incl. biogas)'])/eff_bio
-
-df.loc['methane',sector] += s_fec['Natural gas (incl. biogas)']
+# replace all fec by methane
+df.loc['methane',sector] += s_ued[subsector]/eff_ch4
 
 #### Chemicals: Furnaces
 #> assume fully electrified
@@ -657,7 +655,7 @@ excel_emi = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,c
 #
 #> Temperatures above 1400C are required for procesing limestone and sand into clinker.
 #
-#> Everything (except current electricity and heat consumption) is transformed into biomass
+#> Everything (except current electricity and heat consumption and existing biomass) is transformed into methane for high T.
 
 sector = 'Cement'
 
@@ -676,10 +674,11 @@ df.loc['elec',sector] += s_fec[['Lighting','Air compressors','Motor drives','Fan
 # Low enthalpy heat
 df.loc['heat',sector] += s_fec['Low enthalpy heat']
 
-# Efficiency changes due to biomass
-eff_bio=s_ued['Biomass']/s_fec['Biomass']
+# pre-processing: keep existing elec and biomass, rest to methane
+df.loc['elec', sector] += s_fec['Cement: Grinding, milling of raw material']
+df.loc['biomass', sector] += s_fec['Biomass']
+df.loc['methane', sector] += s_fec['Cement: Pre-heating and pre-calcination'] - s_fec['Biomass']
 
-df.loc['biomass', sector] += s_ued[['Cement: Grinding, milling of raw material', 'Cement: Pre-heating and pre-calcination']].sum()/eff_bio
 
 #### Cement: Clinker production (kilns)
 
@@ -692,10 +691,10 @@ s_ued = excel_ued.iloc[34:43,year]
 
 assert s_fec.index[0] == subsector
 
-# Efficiency changes due to biomass
-eff_bio=s_ued['Biomass']/s_fec['Biomass']
+df.loc['biomass', sector] += s_fec['Biomass']
+df.loc['methane', sector] += s_fec['Cement: Clinker production (kilns)'] - s_fec['Biomass']
+df.loc['elec', sector] += s_fec['Cement: Grinding, packaging']
 
-df.loc['biomass', sector] += s_ued[['Cement: Clinker production (kilns)', 'Cement: Grinding, packaging']].sum()/eff_bio
 
 #### Process-emission came from the calcination of limestone to chemically reactive calcium oxide (lime).
 #> Calcium carbonate -> lime + CO2
@@ -837,7 +836,7 @@ excel_out = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,c
 #
 #> Includes three subcategories: (a) Wood preparation, grinding; (b) Pulping;  (c) Cleaning.
 #
-#> (b) Pulping is electrified. The efficiency is calculated from the pulping process that is already electric.
+#> (b) Pulping is either biomass or electric; left like this (dominated by biomass).
 #
 #> (a) Wood preparation, grinding and (c) Cleaning represent only 10% their current energy consumption is assumed to be electrified without any change in efficiency
 
@@ -859,14 +858,11 @@ df.loc['elec', sector] += s_fec[['Lighting','Air compressors','Motor drives','Fa
 df.loc['heat', sector] += s_fec['Low enthalpy heat']
 
 # Industry-specific
-df.loc['elec', sector] += s_fec[['Pulp: Wood preparation, grinding', 'Pulp: Cleaning']].sum()
+df.loc['elec', sector] += s_fec[['Pulp: Wood preparation, grinding', 'Pulp: Cleaning', 'Pulp: Pulping electric']].sum()
 
-# Efficiency changes due to electrification
-eff_elec=s_ued['Pulp: Pulping electric']/s_fec['Pulp: Pulping electric']
-df.loc['elec', sector] += s_ued['Pulp: Pulping thermal']/eff_elec
-
-# add electricity from process that is already electrified
-df.loc['elec', sector] += s_fec['Pulp: Pulping electric']
+# Efficiency changes due to biomass
+eff_bio=s_ued['Biomass']/s_fec['Biomass']
+df.loc['biomass', sector] += s_ued['Pulp: Pulping thermal']/eff_bio
 
 s_out = excel_out.iloc[8:9,year]
 
@@ -881,7 +877,7 @@ df.loc[sources,sector] = df.loc[sources,sector]*conv_factor/s_out['Pulp producti
 #
 #> Includes three subcategories: (a) Stock preparation; (b) Paper machine;  (c) Product finishing.
 #
-#> (b) Paper machine and (c) Product finishing are electrified. The efficiency is calculated from the pulping process that is already electric.
+#> (b) Paper machine and (c) Product finishing are left electric and thermal is moved to biomass. The efficiency is calculated from the pulping process that is already biomass.
 #
 #> (a) Stock preparation represents only 7% and its current energy consumption is assumed to be electrified without any change in efficiency.
 
@@ -905,15 +901,34 @@ df.loc['heat', sector] += s_fec['Low enthalpy heat']
 # Industry-specific
 df.loc['elec', sector] += s_fec['Paper: Stock preparation']
 
-# Efficiency changes due to electrification
-eff_elec=s_ued['Paper: Paper machine - Electricity']/s_fec['Paper: Paper machine - Electricity']
-df.loc['elec', sector] += s_ued['Paper: Paper machine - Steam use']/eff_elec
-
-eff_elec=s_ued['Paper: Product finishing - Electricity']/s_fec['Paper: Product finishing - Electricity']
-df.loc['elec', sector] += s_ued['Paper: Product finishing - Steam use']/eff_elec
-
 # add electricity from process that is already electrified
 df.loc['elec', sector] += s_fec['Paper: Paper machine - Electricity']
+
+# add electricity from process that is already electrified
+df.loc['elec', sector] += s_fec['Paper: Product finishing - Electricity']
+
+
+s_fec = excel_fec.iloc[53:64,year]
+
+s_ued = excel_ued.iloc[53:64,year]
+
+assert s_fec.index[0] == 'Paper: Paper machine - Steam use'
+
+# Efficiency changes due to biomass
+eff_bio=s_ued['Biomass']/s_fec['Biomass']
+df.loc['biomass', sector] += s_ued['Paper: Paper machine - Steam use']/eff_bio
+
+
+s_fec = excel_fec.iloc[66:77,year]
+
+s_ued = excel_ued.iloc[66:77,year]
+
+assert s_fec.index[0] == 'Paper: Product finishing - Steam use'
+
+# Efficiency changes due to biomass
+eff_bio=s_ued['Biomass']/s_fec['Biomass']
+df.loc['biomass', sector] += s_ued['Paper: Product finishing - Steam use']/eff_bio
+
 
 # read the corresponding lines
 s_out = excel_out.iloc[9:10,year]
@@ -1008,8 +1023,8 @@ df.loc['elec', sector] += s_ued['Food: Drying']/eff_elec
 eff_elec=s_ued['Food: Electric cooling']/s_fec['Food: Electric cooling']
 df.loc['elec', sector] += s_ued['Food: Process cooling and refrigeration']/eff_elec
 
-# Steam processing is electrified without change in efficiency
-df.loc['elec', sector] += s_fec['Food: Steam processing']
+# Steam processing goes all to biomass without change in efficiency
+df.loc['biomass', sector] += s_fec['Food: Steam processing']
 
 # add electricity from process that is already electrified
 df.loc['elec', sector] += s_fec['Food: Electric machinery']
