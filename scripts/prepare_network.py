@@ -55,18 +55,20 @@ Description
 """
 
 import logging
-logger = logging.getLogger(__name__)
 from _helpers import configure_logging
 
-from add_electricity import load_costs, update_transmission_costs
-from six import iteritems
-
-import numpy as np
 import re
 import pypsa
+import numpy as np
 import pandas as pd
+from six import iteritems
+
+from add_electricity import load_costs, update_transmission_costs
 
 idx = pd.IndexSlice
+
+logger = logging.getLogger(__name__)
+
 
 def add_co2limit(n, Nyears=1., factor=None):
 
@@ -129,8 +131,8 @@ def set_transmission_limit(n, ll_type, factor, Nyears=1):
         n.add('GlobalConstraint', f'l{ll_type}_limit',
               type=f'transmission_{con_type}_limit',
               sense='<=', constant=rhs, carrier_attribute='AC, DC')
+    
     return n
-
 
 
 def average_every_nhours(n, offset):
@@ -160,7 +162,7 @@ if __name__ == "__main__":
     opts = snakemake.wildcards.opts.split('-')
 
     n = pypsa.Network(snakemake.input[0])
-    Nyears = n.snapshot_weightings.sum()/8760.
+    Nyears = n.snapshot_weightings.sum() / 8760.
 
     set_line_s_max_pu(n)
 
@@ -179,6 +181,7 @@ if __name__ == "__main__":
                 add_co2limit(n, Nyears, float(m[0]))
             else:
                 add_co2limit(n, Nyears)
+            break
 
     for o in opts:
         oo = o.split("+")

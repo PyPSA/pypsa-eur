@@ -46,7 +46,6 @@ Description
 """
 
 import logging
-logger = logging.getLogger(__name__)
 from _helpers import configure_logging
 
 import pypsa
@@ -55,6 +54,8 @@ import numpy as np
 from pathlib import Path
 from vresutils.benchmark import memory_logger
 from solve_network import solve_network, prepare_network
+
+logger = logging.getLogger(__name__)
 
 def set_parameters_from_optimized(n, n_optim):
     lines_typed_i = n.lines.index[n.lines.type != '']
@@ -107,7 +108,8 @@ if __name__ == "__main__":
     opts = snakemake.wildcards.opts.split('-')
     config['solving']['options']['skip_iterations'] = False
 
-    with memory_logger(filename=getattr(snakemake.log, 'memory', None), interval=30.) as mem:
+    fn = getattr(snakemake.log, 'memory', None)
+    with memory_logger(filename=fn, interval=30.) as mem:
         n = prepare_network(n, solve_opts=snakemake.config['solving']['options'])
         n = solve_network(n, config, solver_dir=tmpdir,
                           solver_log=snakemake.log.solver, opts=opts)

@@ -18,16 +18,6 @@ what data to retrieve and what files to produce.
 Detailed explanations of how wildcards work in ``snakemake`` can be found in the
 `relevant section of the documentation <https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#wildcards>`_.
 
-.. _network:
-
-The ``{network}`` wildcard
-==========================
-
-The ``{network}`` wildcard specifies the considered energy sector(s)
-and, as currently only ``elec`` (for electricity) is included,
-it currently represents rather a placeholder wildcard to facilitate
-future extensions including multiple energy sectors at once.
-
 .. _simpl:
 
 The ``{simpl}`` wildcard
