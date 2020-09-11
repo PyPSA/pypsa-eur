@@ -307,7 +307,7 @@ def calculate_prices(n,label,prices):
 
 
 def calculate_weighted_prices(n,label,weighted_prices):
-    
+
     logger.warning("Weighted prices don't include storage units as loads")
 
     weighted_prices = weighted_prices.reindex(pd.Index(["electricity","heat","space heat","urban heat","space urban heat","gas","H2"]))

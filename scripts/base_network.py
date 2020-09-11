@@ -312,18 +312,18 @@ def _set_electrical_parameters_links(links):
     links['p_min_pu'] = -p_max_pu
 
     links_p_nom = pd.read_csv(snakemake.input.links_p_nom)
-    
-    # filter links that are not in operation anymore    
+
+    # filter links that are not in operation anymore
     removed_b = links_p_nom.Remarks.str.contains('Shut down|Replaced', na=False)
     links_p_nom = links_p_nom[~removed_b]
-    
-    # find closest link for all links in links_p_nom        
+
+    # find closest link for all links in links_p_nom
     links_p_nom['j'] = _find_closest_links(links, links_p_nom)
-        
-    links_p_nom = links_p_nom.groupby(['j'],as_index=False).agg({'Power (MW)': 'sum'})    
-        
+
+    links_p_nom = links_p_nom.groupby(['j'],as_index=False).agg({'Power (MW)': 'sum'})
+
     p_nom = links_p_nom.dropna(subset=["j"]).set_index("j")["Power (MW)"]
-   
+
     # Don't update p_nom if it's already set
     p_nom_unset = p_nom.drop(links.index[links.p_nom.notnull()], errors='ignore') if "p_nom" in links else p_nom
     links.loc[p_nom_unset.index, "p_nom"] = p_nom_unset

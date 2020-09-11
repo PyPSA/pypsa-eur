@@ -46,11 +46,11 @@ if config['enable'].get('prepare_links_p_nom', False):
         script: 'scripts/prepare_links_p_nom.py'
 
 
-datafiles = ['ch_cantons.csv', 'je-e-21.03.02.xls', 
-            'eez/World_EEZ_v8_2014.shp', 'EIA_hydro_generation_2000_2014.csv', 
-            'hydro_capacities.csv', 'naturalearth/ne_10m_admin_0_countries.shp', 
-            'NUTS_2013_60M_SH/data/NUTS_RG_60M_2013.shp', 'nama_10r_3popgdp.tsv.gz', 
-            'nama_10r_3gdp.tsv.gz', 'time_series_60min_singleindex_filtered.csv', 
+datafiles = ['ch_cantons.csv', 'je-e-21.03.02.xls',
+            'eez/World_EEZ_v8_2014.shp', 'EIA_hydro_generation_2000_2014.csv',
+            'hydro_capacities.csv', 'naturalearth/ne_10m_admin_0_countries.shp',
+            'NUTS_2013_60M_SH/data/NUTS_RG_60M_2013.shp', 'nama_10r_3popgdp.tsv.gz',
+            'nama_10r_3gdp.tsv.gz', 'time_series_60min_singleindex_filtered.csv',
             'corine/g250_clc06_V18_5.tif']
 
 
@@ -131,7 +131,7 @@ rule build_bus_regions:
     script: "scripts/build_bus_regions.py"
 
 
-if config['enable'].get('build_cutout', False):      
+if config['enable'].get('build_cutout', False):
     rule build_cutout:
         output: directory("cutouts/{cutout}")
         log: "logs/build_cutout/{cutout}.log"
@@ -148,9 +148,9 @@ if config['enable'].get('retrieve_cutout', True):
         script: 'scripts/retrieve_cutout.py'
 
 
-if config['enable'].get('build_natura_raster', False):        
+if config['enable'].get('build_natura_raster', False):
     rule build_natura_raster:
-        input: 
+        input:
             natura="data/bundle/natura/Natura2000_end2015.shp",
             cutouts=expand("cutouts/{cutouts}", **config['atlite'])
         output: "resources/natura.tiff"
@@ -179,7 +179,7 @@ rule build_renewable_profiles:
                            if w.technology in ('onwind', 'solar')
                            else "resources/regions_offshore.geojson"),
         cutout=lambda w: "cutouts/" + config["renewable"][w.technology]['cutout']
-    output: 
+    output:
         profile="resources/profile_{technology}.nc",
     log: "logs/build_renewable_profile_{technology}.log"
     benchmark: "benchmarks/build_renewable_profiles_{technology}"
@@ -210,7 +210,7 @@ rule add_electricity:
         geth_hydro_capacities='data/geth2015_hydro_capacities.csv',
         opsd_load='data/bundle/time_series_60min_singleindex_filtered.csv',
         nuts3_shapes='resources/nuts3_shapes.geojson',
-        **{'profile_' + tech: "resources/profile_" + tech + ".nc"
+        **{f"profile_{tech}": f"resources/profile_{tech}.nc"
            for tech in config['renewable']}
     output: "networks/elec.nc"
     log: "logs/add_electricity.log"

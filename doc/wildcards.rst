@@ -65,7 +65,7 @@ The wildcard, in general, consists of two parts:
 
     2. The second part can be
        ``opt`` or a float bigger than one (e.g. 1.25).
-       
+
        (a) If ``opt`` is chosen line expansion is optimised
            according to its capital cost
            (where the choice ``v`` only considers overhead costs for HVDC transmission lines, while
@@ -74,7 +74,7 @@ The wildcard, in general, consists of two parts:
 
        (b) ``v1.25`` will limit the total volume of line expansion
            to 25 % of currently installed capacities weighted by
-           individual line lengths; investment costs are neglected. 
+           individual line lengths; investment costs are neglected.
 
        (c) ``c1.25`` will allow to build a transmission network that
            costs no more than 25 % more than the current system.

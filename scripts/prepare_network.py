@@ -131,7 +131,7 @@ def set_transmission_limit(n, ll_type, factor, Nyears=1):
         n.add('GlobalConstraint', f'l{ll_type}_limit',
               type=f'transmission_{con_type}_limit',
               sense='<=', constant=rhs, carrier_attribute='AC, DC')
-    
+
     return n
 
 

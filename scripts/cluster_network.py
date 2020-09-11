@@ -115,7 +115,7 @@ Exemplary unsolved network clustered to 37 nodes:
 
 .. image:: ../img/elec_s_37.png
     :scale: 40  %
-    :align: center  
+    :align: center
 
 """
 

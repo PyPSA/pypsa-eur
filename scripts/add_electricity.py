@@ -373,7 +373,7 @@ def attach_hydro(n, costs, ppl):
                          .where(lambda df: df<=1., other=1.)))
 
     if 'PHS' in carriers and not phs.empty:
-        # fill missing max hours to config value and 
+        # fill missing max hours to config value and
         # assume no natural inflow due to lack of data
         phs = phs.replace({'max_hours': {0: c['PHS_max_hours']}})
         n.madd('StorageUnit', phs.index,
