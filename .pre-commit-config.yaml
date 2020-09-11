@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: CC0-1.0
+
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v2.4.0
@@ -8,3 +12,7 @@ repos:
     -   id: check-merge-conflict
     -   id: check-added-large-files
         args: ['--maxkb=2000']
+-   repo: https://github.com/fsfe/reuse-tool
+    rev: latest
+    hooks:
+    - id: reuse
