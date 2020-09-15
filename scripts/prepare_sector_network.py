@@ -732,6 +732,20 @@ def insert_electricity_distribution_grid(network):
                  p_nom_extendable=True,
                  lifetime=costs.at['battery inverter','lifetime'])
 
+
+def insert_gas_distribution_costs(network):
+    f_costs = options['gas_distribution_grid_cost_factor']
+    print("Inserting gas distribution grid with investment cost\
+          factor of", f_costs)
+
+    # gas boilers
+    gas_b = network.links[network.links.carrier.str.contains("gas boiler") &
+                          (~network.links.carrier.str.contains("urban central"))].index
+    network.links.loc[gas_b, "capital_cost"] += costs.loc['electricity distribution grid']["fixed"]
+    # micro CHPs
+    mchp = network.links.index[network.links.carrier.str.contains("micro gas")]
+    network.links.loc[mchp,  "capital_cost"] += costs.loc['electricity distribution grid']["fixed"]
+
 def add_electricity_grid_connection(network):
 
     carriers = ["onwind","solar"]
@@ -1834,6 +1848,8 @@ if __name__ == "__main__":
 
     if snakemake.config["sector"]['electricity_distribution_grid']:
         insert_electricity_distribution_grid(n)
+    if snakemake.config["sector"]['gas_distribution_grid']:
+        insert_gas_distribution_costs(n)
     if snakemake.config["sector"]['electricity_grid_connection']:
         add_electricity_grid_connection(n)
 
