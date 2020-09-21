@@ -25,6 +25,8 @@ Relevant Settings
         co2limit:
         extendable_carriers:
             Generator:
+        OPSD_VRES_countries:
+        include_renewable_capacities_from_OPSD:
         estimate_renewable_capacities_from_capacity_stats:
 
     load:
