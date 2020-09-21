@@ -130,9 +130,9 @@ rule build_energy_totals:
     input:
         nuts3_shapes=pypsaeur('resources/nuts3_shapes.geojson')
     output:
-        energy_name='data/energy_totals.csv',
-	co2_name='data/co2_totals.csv',
-	transport_name='data/transport_data.csv'
+        energy_name='resources/energy_totals.csv',
+	co2_name='resources/co2_totals.csv',
+	transport_name='resources/transport_data.csv'
     threads: 1
     resources: mem_mb=10000
     script: 'scripts/build_energy_totals.py'
@@ -141,7 +141,7 @@ rule build_biomass_potentials:
     input:
         jrc_potentials="data/biomass/JRC Biomass Potentials.xlsx"
     output:
-        biomass_potentials='data/biomass_potentials.csv'
+        biomass_potentials='resources/biomass_potentials.csv'
     threads: 1
     resources: mem_mb=1000
     script: 'scripts/build_biomass_potentials.py'
@@ -221,10 +221,10 @@ rule build_industrial_demand:
 rule prepare_sector_network:
     input:
         network=pypsaeur('networks/{network}_s{simpl}_{clusters}_ec_lv{lv}_{opts}.nc'),
-        energy_totals_name='data/energy_totals.csv',
-        co2_totals_name='data/co2_totals.csv',
-        transport_name='data/transport_data.csv',
-        biomass_potentials='data/biomass_potentials.csv',
+        energy_totals_name='resources/energy_totals.csv',
+        co2_totals_name='resources/co2_totals.csv',
+        transport_name='resources/transport_data.csv',
+        biomass_potentials='resources/biomass_potentials.csv',
         timezone_mappings='data/timezone_mappings.csv',
         heat_profile="data/heat_load_profile_BDEW.csv",
         costs=config['costs_dir'] + "costs_{planning_horizons}.csv",
