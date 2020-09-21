@@ -73,6 +73,7 @@ def update_wind_solar_costs(n,costs):
     #map simplified network -> clustered network
     busmap = pd.read_hdf(snakemake.input.clustermaps,
                          key="/busmap")
+    #map initial network -> clustered network
     clustermaps = busmap_s.map(busmap)
 
     #code adapted from pypsa-eur/scripts/add_electricity.py
@@ -90,7 +91,16 @@ def update_wind_solar_costs(n,costs):
 
             #convert to aggregated clusters with weighting
             weight = ds['weight'].to_pandas()
-            connection_cost = (connection_cost*weight).groupby(clustermaps).sum()/weight.groupby(clustermaps).sum()
+
+            #e.g. clusters == 37m means that VRE generators are left
+            #at clustering of simplified network, but that they are
+            #connected to 37-node network
+            if snakemake.wildcards.clusters[-1:] == "m":
+                genmap = busmap_s
+            else:
+                genmap = clustermaps
+
+            connection_cost = (connection_cost*weight).groupby(genmap).sum()/weight.groupby(genmap).sum()
 
             capital_cost = (costs.at['offwind', 'fixed'] +
                             costs.at[tech + '-station', 'fixed'] +
