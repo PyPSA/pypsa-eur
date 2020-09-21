@@ -22,7 +22,6 @@ then download and unpack all the PyPSA-Eur data files by running the following s
 
 .. code:: bash
 
-    projects/pypsa-eur % conda activate pypsa-eur
     projects/pypsa-eur % snakemake -j 1 retrieve_databundle
 
 
