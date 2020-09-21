@@ -25,7 +25,7 @@ Upcoming Release
 
 * Don't remove capital costs from lines and links, when imposing a line volume limit (wildcard ``lv``) or a line cost limit (``lc``). Previously, these were removed to move the expansion in direction of the limit. 
 
-* Add renewable assets from OPSD register to network for specified countries in the config file. Will overwrite heuristics from OPSD capacity stats, if latitide and longitude are given.
+* Add renewable assets from OPSD register to network for specified countries in the config file. Will overwrite heuristics from capacity stats, if latitide and longitude are given.
 
 PyPSA-Eur 0.2.0 (8th June 2020)
 ==================================
