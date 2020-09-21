@@ -43,3 +43,5 @@ gurobi.log
 config.yaml
 
 doc/_build
+
+*.xls

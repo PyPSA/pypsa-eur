@@ -655,7 +655,8 @@ def insert_electricity_distribution_grid(network):
                  lifetime=costs.at['electricity distribution grid','lifetime'],
                  capital_cost=costs.at['electricity distribution grid','fixed']*snakemake.config["sector"]['electricity_distribution_grid_cost_factor'])
 
-    loads = network.loads.index[network.loads.carrier=="electricity"]
+    #this catches regular electricity load and "industry new electricity"
+    loads = network.loads.index[network.loads.carrier.str.contains("electricity")]
     network.loads.loc[loads,"bus"] += " low voltage"
 
     bevs = network.links.index[network.links.carrier == "BEV charger"]
