@@ -21,6 +21,8 @@ Upcoming Release
 
 * Added Google Cloud Platform tutorial (for Windows users).
 
+*Corrected storage efficiency. The round-trip efficiency was not correctly assigned for the hydrogen storage. Further, battery input efficiency describes now one charge/discharge rather than the roundtrip efficiency.
+
 * Corrected setting of exogenous emission price (in config -> cost -> emission price). This was not weighted by the efficiency and effective emission of the generators. Fixed in `#171 <https://github.com/PyPSA/pypsa-eur/pull/171>`_.
 
 
