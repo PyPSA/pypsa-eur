@@ -65,8 +65,8 @@ To download and extract it on the command line:
 
 .. code:: bash
 
-    projects/pypsa-eur-sec/data % wget "https://nworbmot.org/pypsa-eur-sec-data-bundle-190719.tar.gz"
-    projects/pypsa-eur-sec/data % tar xvzf pypsa-eur-sec-data-bundle-190719.tar.gz
+    projects/pypsa-eur-sec/data % wget "https://nworbmot.org/pypsa-eur-sec-data-bundle-200921.tar.gz"
+    projects/pypsa-eur-sec/data % tar xvzf pypsa-eur-sec-data-bundle-200921.tar.gz
 
 Set up the default configuration
 ================================
