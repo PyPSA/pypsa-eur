@@ -141,6 +141,7 @@ rule build_biomass_potentials:
     input:
         jrc_potentials="data/biomass/JRC Biomass Potentials.xlsx"
     output:
+        biomass_potentials_all='resources/biomass_potentials_all.csv',
         biomass_potentials='resources/biomass_potentials.csv'
     threads: 1
     resources: mem_mb=1000
