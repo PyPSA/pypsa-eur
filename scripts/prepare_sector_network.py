@@ -741,10 +741,10 @@ def insert_gas_distribution_costs(network):
     # gas boilers
     gas_b = network.links[network.links.carrier.str.contains("gas boiler") &
                           (~network.links.carrier.str.contains("urban central"))].index
-    network.links.loc[gas_b, "capital_cost"] += costs.loc['electricity distribution grid']["fixed"]
+    network.links.loc[gas_b, "capital_cost"] += costs.loc['electricity distribution grid']["fixed"] * f_costs
     # micro CHPs
     mchp = network.links.index[network.links.carrier.str.contains("micro gas")]
-    network.links.loc[mchp,  "capital_cost"] += costs.loc['electricity distribution grid']["fixed"]
+    network.links.loc[mchp,  "capital_cost"] += costs.loc['electricity distribution grid']["fixed"] * f_costs
 
 def add_electricity_grid_connection(network):
 
