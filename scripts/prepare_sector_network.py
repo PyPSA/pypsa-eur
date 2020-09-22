@@ -772,10 +772,16 @@ def add_storage(network):
 
          h2_capital_cost = costs.at["hydrogen storage underground", "fixed"]
 
+         # assumptions: weight storage potential in a country by population
+         h2_pot = (h2_cavern_ct.loc[cavern_nodes.ct, "TWh"].astype(float)
+                   .reset_index().set_index(cavern_nodes.index))
+         h2_pot = h2_pot.TWh * cavern_nodes.fraction
+
          network.madd("Store",
                       cavern_nodes.index + " H2 Store",
                       bus=cavern_nodes.index + " H2",
                       e_nom_extendable=True,
+                      e_nom_max=h2_pot.values,
                       e_cyclic=True,
                       carrier="H2 Store",
                       capital_cost=h2_capital_cost)
