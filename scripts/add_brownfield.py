@@ -98,8 +98,8 @@ if __name__ == "__main__":
             output=['pypsa-eur-sec/results/test/prenetworks_brownfield/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{planning_horizons}.nc']
         )
         import yaml
-        with open('config.yaml') as f:
-            snakemake.config = yaml.load(f)
+        with open('config.yaml', encoding='utf8') as f:
+            snakemake.config = yaml.safe_load(f)
 
     print(snakemake.input.network_p)
     logging.basicConfig(level=snakemake.config['logging_level'])

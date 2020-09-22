@@ -33,7 +33,7 @@ if __name__ == "__main__":
         snakemake.input['industrial_demand_per_country']="resources/industrial_demand_per_country.csv"
         snakemake.output = Dict()
         snakemake.output['industrial_demand'] = "resources/industrial_demand_elec_s_128.csv"
-        with open('config.yaml') as f:
-            snakemake.config = yaml.load(f)
+        with open('config.yaml', encoding='utf8') as f:
+            snakemake.config = yaml.safe_load(f)
 
     build_industrial_demand()
