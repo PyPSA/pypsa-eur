@@ -1,26 +1,17 @@
 
-
-#%matplotlib inline
 import pandas as pd
 import numpy as np
 
 
+tj_to_ktoe = 0.0238845
+ktoe_to_twh = 0.01163
 
 jrc_base_dir = "data/jrc-idees-2015"
 eb_base_dir = "data/eurostat-energy_balances-may_2018_edition"
 
-
-
-tj_to_ktoe = 0.0238845
-
-ktoe_to_twh = 0.01163
-
-# import EU ratios df as csv
-df=pd.read_csv('resources/industry_sector_ratios.csv', sep=';', index_col=0)
-
-
-
-
+# year for which data is retrieved
+raw_year = 2015
+year = raw_year-2016
 
 sub_sheet_name_dict = { 'Iron and steel':'ISI',
                         'Chemicals Industry':'CHI',
@@ -36,20 +27,17 @@ sub_sheet_name_dict = { 'Iron and steel':'ISI',
 
 index = ['elec','biomass','methane','hydrogen','heat','naphtha','process emission','process emission from feedstock']
 
-countries_df = pd.DataFrame(columns=index) #data frame final energy consumption per country and source
-
-
 non_EU = ['NO', 'CH', 'ME', 'MK', 'RS', 'BA', 'AL']
 
-rename = {"GR" : "EL",
-          "GB" : "UK"}
+jrc_names = {"GR" : "EL",
+             "GB" : "UK"}
 
-eu28 = ['FR', 'DE', 'GB', 'IT', 'ES', 'PL', 'SE', 'NL', 'BE', 'FI', 'CZ',
-        'DK', 'PT', 'RO', 'AT', 'BG', 'EE', 'GR', 'LV',
-        'HU', 'IE', 'SK', 'LT', 'HR', 'LU', 'SI'] + ['CY','MT']
+eu28 = ['FR', 'DE', 'GB', 'IT', 'ES', 'PL', 'SE', 'NL', 'BE', 'FI',
+        'DK', 'PT', 'RO', 'AT', 'BG', 'EE', 'GR', 'LV', 'CZ',
+        'HU', 'IE', 'SK', 'LT', 'HR', 'LU', 'SI', 'CY', 'MT']
 
 
-countries = non_EU + [rename.get(eu,eu) for eu in eu28[:-2]]
+countries = non_EU + eu28
 
 
 sectors = ['Iron and steel','Chemicals Industry','Non-metallic mineral products',
@@ -68,6 +56,14 @@ sect2sub = {'Iron and steel':['Electric arc','Integrated steelworks'],
             'Textiles and leather': ['Textiles and leather'],
             'Wood and wood products' :['Wood and wood products'],
             'Other Industrial Sectors':['Other Industrial Sectors']}
+
+subsectors = [ss for s in sectors for ss in sect2sub[s]]
+
+#material demand per country and industry (kton/a)
+countries_demand = pd.DataFrame(index=countries,
+                                columns=subsectors,
+                                dtype=float)
+
 
 out_dic ={'Electric arc': 'Electric arc',
           'Integrated steelworks': 'Integrated steelworks',
@@ -117,10 +113,11 @@ dic_sec_summary = {'Iron and steel': 'Iron and steel',
                    'Other Industrial Sectors': ' Other Industrial Sectors'}
 
 #countries=['CH']
-dic_countries={'NO':'Norway', 'AL':'Albania', 'BA':'Bosnia and Herzegovina',
-              'MK':'FYR of Macedonia', 'GE':'Georgia', 'IS':'Iceland',
-              'KO':'Kosovo', 'MD':'Moldova', 'ME':'Montenegro', 'RS':'Serbia',
-               'UA':'Ukraine', 'TR':'Turkey', }
+eb_names={'NO':'Norway', 'AL':'Albania', 'BA':'Bosnia and Herzegovina',
+          'MK':'FYR of Macedonia', 'GE':'Georgia', 'IS':'Iceland',
+          'KO':'Kosovo', 'MD':'Moldova', 'ME':'Montenegro', 'RS':'Serbia',
+          'UA':'Ukraine', 'TR':'Turkey', }
+
 dic_sec ={'Iron and steel':'Iron & steel industry',
           'Chemicals Industry': 'Chemical and Petrochemical industry',
           'Non-metallic mineral products': 'Non-ferrous metal industry',
@@ -153,8 +150,8 @@ dic_Switzerland ={'Iron and steel': 7889.,
 
 dic_sec_position={}
 for country in countries:
-    countries_df.loc[country] = 0
-    print (country)
+    countries_demand.loc[country] = 0.
+    print(country)
     for sector in sectors:
         if country in non_EU:
             if country == 'CH':
@@ -162,14 +159,14 @@ for country in countries:
             else:
                 # estimate physical output
                 #energy consumption in the sector and country
-                excel_balances = pd.read_excel('{}/{}.XLSX'.format(eb_base_dir,dic_countries[country]),
+                excel_balances = pd.read_excel('{}/{}.XLSX'.format(eb_base_dir,eb_names[country]),
                                       sheet_name='2016', index_col=2,header=0, skiprows=1 ,squeeze=True)
                 e_country = excel_balances.loc[dic_sec[sector], 'Total all products']
 
             #energy consumption in the sector and EU28
             excel_sum_out = pd.read_excel('{}/JRC-IDEES-2015_Industry_EU28.xlsx'.format(jrc_base_dir),
                                   sheet_name='Ind_Summary', index_col=0,header=0,squeeze=True) # the summary sheet
-            s_sum_out = excel_sum_out.iloc[49:76,-1]
+            s_sum_out = excel_sum_out.iloc[49:76,year]
             e_EU28 = s_sum_out[dic_sec_summary[sector]]
 
             ratio_country_EU28=e_country/e_EU28
@@ -177,62 +174,45 @@ for country in countries:
             excel_out = pd.read_excel('{}/JRC-IDEES-2015_Industry_EU28.xlsx'.format(jrc_base_dir),
                                       sheet_name=sub_sheet_name_dict[sector],index_col=0,header=0,squeeze=True) # the summary sheet
 
-            s_out = excel_out.iloc[loc_dic[sector][0]:loc_dic[sector][1],-1]
+            s_out = excel_out.iloc[loc_dic[sector][0]:loc_dic[sector][1],year]
 
             for subsector in sect2sub[sector]:
-                output = ratio_country_EU28*s_out[out_dic[subsector]]
-
-                for ind in index:
-                    countries_df.loc[country, ind] += float(output*df.loc[ind, subsector]) # kton * MWh = GWh (# kton * tCO2 = ktCO2)
+                countries_demand.loc[country,subsector] = ratio_country_EU28*s_out[out_dic[subsector]]
 
         else:
 
             # read the input sheets
-            excel_out = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(jrc_base_dir,country), sheet_name=sub_sheet_name_dict[sector],index_col=0,header=0,squeeze=True) # the summary sheet
+            excel_out = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(jrc_base_dir,jrc_names.get(country,country)), sheet_name=sub_sheet_name_dict[sector],index_col=0,header=0,squeeze=True) # the summary sheet
 
-            s_out = excel_out.iloc[loc_dic[sector][0]:loc_dic[sector][1],-1]
+            s_out = excel_out.iloc[loc_dic[sector][0]:loc_dic[sector][1],year]
 
             for subsector in sect2sub[sector]:
-                output = s_out[out_dic[subsector]]
-                for ind in index:
-                    countries_df.loc[country, ind] += output*df.loc[ind, subsector] #kton * MWh = GWh (# kton * tCO2 = ktCO2)
-
-countries_df*= 0.001 #GWh -> TWh (ktCO2 -> MtCO2)
-
-# save current electricity consumption
-for country in countries:
-    if country in non_EU:
-        if country == 'CH':
-            countries_df.loc[country, 'current electricity']=dic_Switzerland['current electricity']*tj_to_ktoe*ktoe_to_twh
-        else:
-            excel_balances = pd.read_excel('{}/{}.XLSX'.format(eb_base_dir,dic_countries[country]),
-                                      sheet_name='2016', index_col=1,header=0, skiprows=1 ,squeeze=True)
-
-            countries_df.loc[country, 'current electricity'] = excel_balances.loc['Industry', 'Electricity']*ktoe_to_twh
-
-    else:
-
-        excel_out = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(jrc_base_dir,country),
-                                  sheet_name='Ind_Summary',index_col=0,header=0,squeeze=True) # the summary sheet
-
-        s_out = excel_out.iloc[27:48,-1]
-        countries_df.loc[country, 'current electricity'] = s_out['Electricity']*ktoe_to_twh
-        print(countries_df.loc[country, 'current electricity'])
+                countries_demand.loc[country,subsector] = s_out[out_dic[subsector]]
 
 
+#include ammonia demand separately and remove ammonia from basic chemicals
 
-# save df as csv
-for ind in index:
-    countries_df[ind]=countries_df[ind].astype('float')
-countries_df = countries_df.round(3)
+ammonia = pd.read_csv(snakemake.input.ammonia_production,
+                      index_col=0)
 
-countries_df.rename(index={value : key for key,value in rename.items()},inplace=True)
+there = ammonia.index.intersection(countries_demand.index)
+missing = countries_demand.index^there
 
-rename_sectors = {'elec':'electricity',
-                  'biomass':'solid biomass',
-                  'heat':'low-temperature heat'}
+print("Following countries have no ammonia demand:", missing)
 
-countries_df.rename(columns=rename_sectors,inplace=True)
+countries_demand.insert(2,"Ammonia",0.)
 
-countries_df.to_csv('resources/industrial_demand_per_country.csv',
-                    float_format='%.2f')
+countries_demand.loc[there,"Ammonia"] = ammonia.loc[there, str(raw_year)]
+
+countries_demand["Basic chemicals"] -= countries_demand["Ammonia"]
+
+#EE, HR and LT got negative demand through subtraction - poor data
+countries_demand.loc[countries_demand["Basic chemicals"] < 0.,"Basic chemicals"] = 0.
+
+countries_demand.rename(columns={"Basic chemicals" : "Basic chemicals (without ammonia)"},
+                        inplace=True)
+
+countries_demand.index.name = "kton/a"
+
+countries_demand.to_csv(snakemake.output.industrial_production_per_country,
+                        float_format='%.2f')

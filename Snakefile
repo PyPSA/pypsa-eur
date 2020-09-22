@@ -130,9 +130,9 @@ rule build_energy_totals:
     input:
         nuts3_shapes=pypsaeur('resources/nuts3_shapes.geojson')
     output:
-        energy_name='data/energy_totals.csv',
-	co2_name='data/co2_totals.csv',
-	transport_name='data/transport_data.csv'
+        energy_name='resources/energy_totals.csv',
+	co2_name='resources/co2_totals.csv',
+	transport_name='resources/transport_data.csv'
     threads: 1
     resources: mem_mb=10000
     script: 'scripts/build_energy_totals.py'
@@ -141,13 +141,25 @@ rule build_biomass_potentials:
     input:
         jrc_potentials="data/biomass/JRC Biomass Potentials.xlsx"
     output:
-        biomass_potentials='data/biomass_potentials.csv'
+        biomass_potentials_all='resources/biomass_potentials_all.csv',
+        biomass_potentials='resources/biomass_potentials.csv'
     threads: 1
     resources: mem_mb=1000
     script: 'scripts/build_biomass_potentials.py'
 
+rule build_ammonia_production:
+    input:
+        usgs="data/myb1-2017-nitro.xls"
+    output:
+        ammonia_production="resources/ammonia_production.csv"
+    threads: 1
+    resources: mem_mb=1000
+    script: 'scripts/build_ammonia_production.py'
+
 
 rule build_industry_sector_ratios:
+    input:
+        ammonia_production="resources/ammonia_production.csv"
     output:
         industry_sector_ratios="resources/industry_sector_ratios.csv"
     threads: 1
@@ -155,20 +167,51 @@ rule build_industry_sector_ratios:
     script: 'scripts/build_industry_sector_ratios.py'
 
 
-rule build_industrial_demand_per_country:
+rule build_industrial_production_per_country:
     input:
-        industry_sector_ratios="resources/industry_sector_ratios.csv"
+        ammonia_production="resources/ammonia_production.csv"
     output:
-        industrial_demand_per_country="resources/industrial_demand_per_country.csv"
+        industrial_production_per_country="resources/industrial_production_per_country.csv"
     threads: 1
     resources: mem_mb=1000
-    script: 'scripts/build_industrial_demand_per_country.py'
+    script: 'scripts/build_industrial_production_per_country.py'
+
+
+rule build_industrial_production_per_country_tomorrow:
+    input:
+        industrial_production_per_country="resources/industrial_production_per_country.csv"
+    output:
+        industrial_production_per_country_tomorrow="resources/industrial_production_per_country_tomorrow.csv"
+    threads: 1
+    resources: mem_mb=1000
+    script: 'scripts/build_industrial_production_per_country_tomorrow.py'
+
+rule build_industrial_energy_demand_per_country_today:
+    input:
+        ammonia_production="resources/ammonia_production.csv",
+        industrial_production_per_country="resources/industrial_production_per_country.csv"
+    output:
+        industrial_energy_demand_per_country_today="resources/industrial_energy_demand_per_country_today.csv"
+    threads: 1
+    resources: mem_mb=1000
+    script: 'scripts/build_industrial_energy_demand_per_country_today.py'
+
+
+rule build_industrial_energy_demand_per_country:
+    input:
+        industry_sector_ratios="resources/industry_sector_ratios.csv",
+        industrial_production_per_country="resources/industrial_production_per_country_tomorrow.csv"
+    output:
+        industrial_energy_demand_per_country="resources/industrial_energy_demand_per_country.csv"
+    threads: 1
+    resources: mem_mb=1000
+    script: 'scripts/build_industrial_energy_demand_per_country.py'
 
 
 rule build_industrial_demand:
     input:
         clustered_pop_layout="resources/pop_layout_{network}_s{simpl}_{clusters}.csv",
-        industrial_demand_per_country="resources/industrial_demand_per_country.csv"
+        industrial_demand_per_country="resources/industrial_energy_demand_per_country.csv"
     output:
         industrial_demand="resources/industrial_demand_{network}_s{simpl}_{clusters}.csv"
     threads: 1
@@ -179,10 +222,10 @@ rule build_industrial_demand:
 rule prepare_sector_network:
     input:
         network=pypsaeur('networks/{network}_s{simpl}_{clusters}_ec_lv{lv}_{opts}.nc'),
-        energy_totals_name='data/energy_totals.csv',
-        co2_totals_name='data/co2_totals.csv',
-        transport_name='data/transport_data.csv',
-        biomass_potentials='data/biomass_potentials.csv',
+        energy_totals_name='resources/energy_totals.csv',
+        co2_totals_name='resources/co2_totals.csv',
+        transport_name='resources/transport_data.csv',
+        biomass_potentials='resources/biomass_potentials.csv',
         timezone_mappings='data/timezone_mappings.csv',
         heat_profile="data/heat_load_profile_BDEW.csv",
         costs=config['costs_dir'] + "costs_{planning_horizons}.csv",

@@ -73,6 +73,7 @@ def update_wind_solar_costs(n,costs):
     #map simplified network -> clustered network
     busmap = pd.read_hdf(snakemake.input.clustermaps,
                          key="/busmap")
+    #map initial network -> clustered network
     clustermaps = busmap_s.map(busmap)
 
     #code adapted from pypsa-eur/scripts/add_electricity.py
@@ -90,7 +91,16 @@ def update_wind_solar_costs(n,costs):
 
             #convert to aggregated clusters with weighting
             weight = ds['weight'].to_pandas()
-            connection_cost = (connection_cost*weight).groupby(clustermaps).sum()/weight.groupby(clustermaps).sum()
+
+            #e.g. clusters == 37m means that VRE generators are left
+            #at clustering of simplified network, but that they are
+            #connected to 37-node network
+            if snakemake.wildcards.clusters[-1:] == "m":
+                genmap = busmap_s
+            else:
+                genmap = clustermaps
+
+            connection_cost = (connection_cost*weight).groupby(genmap).sum()/weight.groupby(genmap).sum()
 
             capital_cost = (costs.at['offwind', 'fixed'] +
                             costs.at[tech + '-station', 'fixed'] +
@@ -655,6 +665,8 @@ def insert_electricity_distribution_grid(network):
                  lifetime=costs.at['electricity distribution grid','lifetime'],
                  capital_cost=costs.at['electricity distribution grid','fixed']*snakemake.config["sector"]['electricity_distribution_grid_cost_factor'])
 
+
+    #this catches regular electricity load and "industry new electricity"
     loads = network.loads.index[network.loads.carrier.str.contains("electricity")]
     network.loads.loc[loads,"bus"] += " low voltage"
 
@@ -1722,8 +1734,8 @@ if __name__ == "__main__":
             output=['pypsa-eur-sec/results/test/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{co2_budget_name}_{planning_horizons}.nc']
         )
         import yaml
-        with open('config.yaml') as f:
-            snakemake.config = yaml.load(f)
+        with open('config.yaml', encoding='utf8') as f:
+            snakemake.config = yaml.safe_load(f)
 
 
     logging.basicConfig(level=snakemake.config['logging_level'])

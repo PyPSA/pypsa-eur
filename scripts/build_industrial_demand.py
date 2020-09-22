@@ -7,7 +7,7 @@ def build_industrial_demand():
     pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout,index_col=0)
     pop_layout["ct"] = pop_layout.index.str[:2]
     ct_total = pop_layout.total.groupby(pop_layout["ct"]).sum()
-    pop_layout["ct_total"] = pop_layout["ct"].map(ct_total.get)
+    pop_layout["ct_total"] = pop_layout["ct"].map(ct_total)
     pop_layout["fraction"] = pop_layout["total"]/pop_layout["ct_total"]
 
     industrial_demand_per_country = pd.read_csv(snakemake.input.industrial_demand_per_country,index_col=0)
@@ -33,7 +33,7 @@ if __name__ == "__main__":
         snakemake.input['industrial_demand_per_country']="resources/industrial_demand_per_country.csv"
         snakemake.output = Dict()
         snakemake.output['industrial_demand'] = "resources/industrial_demand_elec_s_128.csv"
-        with open('config.yaml') as f:
-            snakemake.config = yaml.load(f)
+        with open('config.yaml', encoding='utf8') as f:
+            snakemake.config = yaml.safe_load(f)
 
     build_industrial_demand()

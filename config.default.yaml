@@ -48,6 +48,10 @@ electricity:
 biomass:
   year: 2030
   scenario: "Med"
+  classes:
+    solid biomass: ['Primary agricultural residues', 'Forestry energy residue', 'Secondary forestry residues', 'Secondary Forestry residues – sawdust', 'Forestry residues from landscape care biomass', 'Municipal waste']
+    not included: ['Bioethanol sugar beet biomass', 'Rapeseeds for biodiesel', 'sunflower and soya for Biodiesel', 'Starchy crops biomass', 'Grassy crops biomass', 'Willow biomass', 'Poplar biomass potential', 'Roundwood fuelwood', 'Roundwood Chips & Pellets']
+    biogas: ['Manure biomass potential', 'Sludge biomass']
 
 # only relevant for foresight = myopic or perfect
 existing_capacities:
@@ -160,10 +164,14 @@ solving:
   mem: 30000 #memory in MB; 20 GB enough for 50+B+I+H2; 100 GB for 181+B+I+H2
 
 industry:
-  'DRI_ratio' : 0.5 #ratio of today's blast-furnace steel (60% primary route, 40% secondary) to future assumption (30% primary, 70% secondary), transformed into DRI + electric arc
-  'H2_DRI' : 1.7   #H2 consumption in Direct Reduced Iron (DRI),  MWh_H2/ton_Steel from Vogl et al (2018) doi:10.1016/j.jclepro.2018.08.279
-  'Al_to_scrap' : 0.5 # ratio of primary-route Aluminum transformed into scrap (today 40% to future 20% primary route)
-  'H2_for_NH3' : 85000 # H2 in GWh/a for 17 MtNH3/a transformed from SMR to electrolyzed-H2, following Lechtenböhmer(2016)
+  'St_primary_fraction' : 0.3 # fraction of steel produced via primary route (DRI + EAF) versus secondary route (EAF); today fraction is 0.6
+  'H2_DRI' : 1.7   #H2 consumption in Direct Reduced Iron (DRI),  MWh_H2,LHV/ton_Steel from Vogl et al (2018) doi:10.1016/j.jclepro.2018.08.279
+  'elec_DRI' : 0.322   #electricity consumption in Direct Reduced Iron (DRI) shaft, MWh/tSt HYBRIT brochure https://ssabwebsitecdn.azureedge.net/-/media/hybrit/files/hybrit_brochure.pdf
+  'Al_primary_fraction' : 0.2 # fraction of aluminium produced via the primary route versus scrap; today fraction is 0.4
+  'MWh_CH4_per_tNH3_SMR' : 10.8 # 2012's demand from https://ec.europa.eu/docsroom/documents/4165/attachments/1/translations/en/renditions/pdf
+  'MWh_elec_per_tNH3_SMR' : 0.7 # same source, assuming 94-6% split methane-elec of total energy demand 11.5 MWh/tNH3
+  'MWh_H2_per_tNH3_electrolysis' : 6.5 # from https://doi.org/10.1016/j.joule.2018.04.017, around 0.197 tH2/tHN3 (>3/17 since some H2 lost and used for energy)
+  'MWh_elec_per_tNH3_electrolysis' : 1.17 # from https://doi.org/10.1016/j.joule.2018.04.017 Table 13 (air separation and HB)
   'NH3_process_emissions' : 24.5 # in MtCO2/a from SMR for H2 production for NH3 from UNFCCC for 2015 for EU28
   'petrochemical_process_emissions' : 25.5 # in MtCO2/a for petrochemical and other from UNFCCC for 2015 for EU28
 

@@ -18,7 +18,11 @@ its dependencies. Clone the repository:
 
     projects % git clone git@github.com:PyPSA/pypsa-eur.git
 
-then download and unpack all the PyPSA-Eur data files.
+then download and unpack all the PyPSA-Eur data files by running the following snakemake rule:
+
+.. code:: bash
+
+    projects/pypsa-eur % snakemake -j 1 retrieve_databundle
 
 
 Clone technology-data repository
@@ -65,8 +69,8 @@ To download and extract it on the command line:
 
 .. code:: bash
 
-    projects/pypsa-eur-sec/data % wget "https://nworbmot.org/pypsa-eur-sec-data-bundle-190719.tar.gz"
-    projects/pypsa-eur-sec/data % tar xvzf pypsa-eur-sec-data-bundle-190719.tar.gz
+    projects/pypsa-eur-sec/data % wget "https://nworbmot.org/pypsa-eur-sec-data-bundle-200921.tar.gz"
+    projects/pypsa-eur-sec/data % tar xvzf pypsa-eur-sec-data-bundle-200921.tar.gz
 
 Set up the default configuration
 ================================

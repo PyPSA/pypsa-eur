@@ -19,29 +19,28 @@ def build_biomass_potentials():
     for i in range(36):
         df_dict[df.iloc[i*16,1]] = df.iloc[1+i*16:(i+1)*16].astype(float)
 
-    df_new = pd.concat(df_dict)
+    #convert from PJ to MWh
+    df_new = pd.concat(df_dict).rename({"UK" : "GB", "BH" : "BA"})/3.6*1e6
+    df_new.index.name = "MWh/a"
+    df_new.to_csv(snakemake.output.biomass_potentials_all)
 
     #  solid biomass includes: Primary agricultural residues (MINBIOAGRW1),
-    #  Forestry energy residue (MINBIOFRSF1), 
+    #  Forestry energy residue (MINBIOFRSF1),
     #  Secondary forestry residues (MINBIOWOOW1),
     #  Secondary Forestry residues – sawdust (MINBIOWOO1a)',
-    #  Forestry residues from landscape care biomass (MINBIOFRSF1a), 
+    #  Forestry residues from landscape care biomass (MINBIOFRSF1a),
     #  Municipal waste (MINBIOMUN1)',
-    
+
     # biogas includes : Manure biomass potential (MINBIOGAS1),
     # Sludge biomass (MINBIOSLU1)
-    
-    us_type = pd.Series(index=df_new.columns)
-    us_type.iloc[0:7] = "not included"
-    us_type.iloc[7:8] = "biogas"
-    us_type.iloc[8:9] = "solid biomass"
-    us_type.iloc[9:11] = "not included"
-    us_type.iloc[11:16] = "solid biomass"
-    us_type.iloc[16:17] = "biogas"
 
+    us_type = pd.Series("", df_new.columns)
 
-    #convert from PJ to MWh
-    biomass_potentials = df_new.loc[idx[:,snakemake.config['biomass']['year'],snakemake.config['biomass']['scenario']],:].groupby(us_type,axis=1).sum().groupby(level=0).sum().rename({"UK" : "GB", "BH" : "BA"})/3.6*1e6
+    for k,v in snakemake.config['biomass']['classes'].items():
+        us_type.loc[v] = k
+
+    biomass_potentials = df_new.swaplevel(0,2).loc[snakemake.config['biomass']['scenario'],snakemake.config['biomass']['year']].groupby(us_type,axis=1).sum()
+    biomass_potentials.index.name = "MWh/a"
     biomass_potentials.to_csv(snakemake.output.biomass_potentials)
 
 
@@ -58,7 +57,7 @@ if __name__ == "__main__":
         snakemake.input['jrc_potentials'] = "data/biomass/JRC Biomass Potentials.xlsx"
         snakemake.output = Dict()
         snakemake.output['biomass_potentials'] = 'data/biomass_potentials.csv'
-        with open('config.yaml') as f:
-            snakemake.config = yaml.load(f)
+        with open('config.yaml', encoding='utf8') as f:
+            snakemake.config = yaml.safe_load(f)
 
     build_biomass_potentials()
