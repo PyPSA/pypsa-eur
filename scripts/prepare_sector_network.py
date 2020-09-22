@@ -795,21 +795,42 @@ def add_storage(network):
                  capital_cost=costs.at["fuel cell","fixed"]*costs.at["fuel cell","efficiency"], #NB: fixed cost is per MWel
                  lifetime=costs.at['fuel cell','lifetime'])
 
+    cavern_nodes = pd.DataFrame()
+
     if options['hydrogen_underground_storage']:
-        h2_capital_cost = costs.at["gas storage","fixed"]
-        #TODO: change gas storage to hydrogen underground storage when cost database is updated
-        #h2_capital_cost = costs.at["hydrogen underground storage","fixed"]
-    else:
-        h2_capital_cost = costs.at["hydrogen storage","fixed"]
+         h2_salt_cavern_potential = pd.read_csv(snakemake.input.h2_cavern,
+                                               index_col=0, skiprows=[0],
+                                               names=["potential", "TWh"])
+         h2_cavern_ct = h2_salt_cavern_potential[h2_salt_cavern_potential.potential]
+         cavern_nodes = pop_layout[pop_layout.ct.isin(h2_cavern_ct.index)]
+
+         h2_capital_cost = costs.at["hydrogen storage underground", "fixed"]
+
+         # assumptions: weight storage potential in a country by population
+         h2_pot = (h2_cavern_ct.loc[cavern_nodes.ct, "TWh"].astype(float)
+                   .reset_index().set_index(cavern_nodes.index))
+         h2_pot = h2_pot.TWh * cavern_nodes.fraction
+
+         network.madd("Store",
+                      cavern_nodes.index + " H2 Store",
+                      bus=cavern_nodes.index + " H2",
+                      e_nom_extendable=True,
+                      e_nom_max=h2_pot.values,
+                      e_cyclic=True,
+                      carrier="H2 Store",
+                      capital_cost=h2_capital_cost)
+
+    # hydrogen stored overground
+    h2_capital_cost = costs.at["hydrogen storage tank", "fixed"]
+    nodes_overground = nodes ^ cavern_nodes.index
 
     network.madd("Store",
-                 nodes + " H2 Store",
-                 bus=nodes + " H2",
+                 nodes_overground + " H2 Store",
+                 bus=nodes_overground + " H2",
                  e_nom_extendable=True,
                  e_cyclic=True,
                  carrier="H2 Store",
-                 capital_cost=h2_capital_cost,
-                 lifetime=costs.at['gas storage','lifetime'])
+                 capital_cost=h2_capital_cost)
 
     h2_links = pd.DataFrame(columns=["bus0","bus1","length"])
     prefix = "H2 pipeline "
