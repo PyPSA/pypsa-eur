@@ -186,6 +186,7 @@ rule prepare_sector_network:
         timezone_mappings='data/timezone_mappings.csv',
         heat_profile="data/heat_load_profile_BDEW.csv",
         costs=config['costs_dir'] + "costs_{planning_horizons}.csv",
+	h2_cavern = "data/hydrogen_salt_cavern_potentials.csv",
         co2_budget="data/co2_budget.csv",
         profile_offwind_ac=pypsaeur("resources/profile_offwind-ac.nc"),
         profile_offwind_dc=pypsaeur("resources/profile_offwind-dc.nc"),
