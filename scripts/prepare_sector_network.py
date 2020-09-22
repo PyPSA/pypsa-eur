@@ -678,10 +678,7 @@ def insert_electricity_distribution_grid(network):
     network.generators.loc[solar, "capital_cost"] = costs.at['solar-utility',
                                                              'fixed']
     # add max solar rooftop potential assuming 1kW/person
-    potential = pd.concat([pop_layout.total.rename(index = lambda x: x + " solar"),
-                           network.generators.loc[solar, "p_nom_max"]],
-                          axis=1).min(axis=1)
-
+    potential = pop_layout.total.rename(index = lambda x: x + " solar")
 
     network.madd("Generator",
                  solar,
