@@ -665,6 +665,7 @@ def insert_electricity_distribution_grid(network):
                  lifetime=costs.at['electricity distribution grid','lifetime'],
                  capital_cost=costs.at['electricity distribution grid','fixed']*snakemake.config["sector"]['electricity_distribution_grid_cost_factor'])
 
+
     #this catches regular electricity load and "industry new electricity"
     loads = network.loads.index[network.loads.carrier.str.contains("electricity")]
     network.loads.loc[loads,"bus"] += " low voltage"
@@ -678,22 +679,30 @@ def insert_electricity_distribution_grid(network):
     hps = network.links.index[network.links.carrier.str.contains("heat pump")]
     network.links.loc[hps,"bus0"] += " low voltage"
 
+    rh = network.links.index[network.links.carrier.str.contains("resistive heater")]
+    network.links.loc[rh, "bus0"] += " low voltage"
+
+    mchp = network.links.index[network.links.carrier.str.contains("micro gas")]
+    network.links.loc[mchp, "bus1"] += " low voltage"
+
     #set existing solar to cost of utility cost rather the 50-50 rooftop-utility
     solar = network.generators.index[network.generators.carrier == "solar"]
-    network.generators.loc[solar,"capital_cost"] = costs.at['solar-utility','fixed']
+    network.generators.loc[solar, "capital_cost"] = costs.at['solar-utility',
+                                                             'fixed']
+    # add max solar rooftop potential assuming 1kW/person
+    potential = pop_layout.total.rename(index = lambda x: x + " solar")
 
-    network.madd("Generator", solar,
+    network.madd("Generator",
+                 solar,
                  suffix=" rooftop",
-                 bus=network.generators.loc[solar,"bus"] + " low voltage",
+                 bus=network.generators.loc[solar, "bus"] + " low voltage",
                  carrier="solar rooftop",
                  p_nom_extendable=True,
-                 p_nom_max=network.generators.loc[solar,"p_nom_max"],
+                 p_nom_max=potential,
                  marginal_cost=network.generators.loc[solar, 'marginal_cost'],
-                 capital_cost=costs.at['solar-rooftop','fixed'],
+                 capital_cost=costs.at['solar-rooftop', 'fixed'],
                  efficiency=network.generators.loc[solar, 'efficiency'],
-                 p_max_pu=network.generators_t.p_max_pu[solar],
-                 lifetime=costs.at['solar-rooftop','lifetime'])
-
+                 p_max_pu=network.generators_t.p_max_pu[solar])
 
 
     network.add("Carrier","home battery")
@@ -731,6 +740,20 @@ def insert_electricity_distribution_grid(network):
                  marginal_cost=options['marginal_cost_storage'],
                  p_nom_extendable=True,
                  lifetime=costs.at['battery inverter','lifetime'])
+
+
+def insert_gas_distribution_costs(network):
+    f_costs = options['gas_distribution_grid_cost_factor']
+    print("Inserting gas distribution grid with investment cost\
+          factor of", f_costs)
+
+    # gas boilers
+    gas_b = network.links[network.links.carrier.str.contains("gas boiler") &
+                          (~network.links.carrier.str.contains("urban central"))].index
+    network.links.loc[gas_b, "capital_cost"] += costs.loc['electricity distribution grid']["fixed"] * f_costs
+    # micro CHPs
+    mchp = network.links.index[network.links.carrier.str.contains("micro gas")]
+    network.links.loc[mchp,  "capital_cost"] += costs.loc['electricity distribution grid']["fixed"] * f_costs
 
 def add_electricity_grid_connection(network):
 
@@ -1693,7 +1716,7 @@ if __name__ == "__main__":
                        timezone_mappings='pypsa-eur-sec/data/timezone_mappings.csv',
                        co2_budget='pypsa-eur-sec/data/co2_budget.csv',
                        clustered_pop_layout='pypsa-eur-sec/resources/pop_layout_{network}_s{simpl}_{clusters}.csv',
-                       costs='pypsa-eur-sec/data/costs/costs_{planning_horizons}.csv',
+                       costs='technology-data/outputs/costs_{planning_horizons}.csv',
                        profile_offwind_ac='pypsa-eur/resources/profile_offwind-ac.nc',
                        profile_offwind_dc='pypsa-eur/resources/profile_offwind-dc.nc',
                        clustermaps="pypsa-eur/resources/clustermaps_{network}_s{simpl}_{clusters}.h5",
@@ -1834,6 +1857,8 @@ if __name__ == "__main__":
 
     if snakemake.config["sector"]['electricity_distribution_grid']:
         insert_electricity_distribution_grid(n)
+    if snakemake.config["sector"]['gas_distribution_grid']:
+        insert_gas_distribution_costs(n)
     if snakemake.config["sector"]['electricity_grid_connection']:
         add_electricity_grid_connection(n)
 
