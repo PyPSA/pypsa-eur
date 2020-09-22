@@ -58,6 +58,9 @@ electricity:
   #   Wind: [onwind, offwind-ac, offwind-dc]
   #   Solar: [solar]
 
+clustering:
+  custom_clustermaps: False
+
 atlite:
   nprocesses: 4
   cutouts:
