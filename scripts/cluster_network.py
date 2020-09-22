@@ -280,8 +280,18 @@ def clustering_for_n_clusters(n, n_clusters, aggregate_carriers=None,
         raise AttributeError("potential_mode should be one of 'simple' or 'conservative', "
                              "but is '{}'".format(potential_mode))
 
+    if snakemake.config['clustering'].get('custom_clustermaps', False):
+        assert os.path.isfile('data/custom_clustermaps_elec_s_{}.h5'.format(n_clusters)), (
+            "File for custom clustermaps does not exist but is expected in data/custom_clustermaps_elec_s_{}.h5"
+            .format(n_clusters))
+        with pd.HDFStore('data/custom_clustermaps_elec_s_{}.h5'.format(n_clusters), mode='r') as store:
+            busmapfornclusters = store.busmap
+        logger.info("imported custom clustermaps from data/custom_clustermaps_elec_s_{}.h5".format(n_clusters))
+    else:
+        busmapfornclusters = busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights, algorithm)
+
     clustering = get_clustering_from_busmap(
-        n, busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights, algorithm),
+        n, busmapfornclusters,
         bus_strategies=dict(country=_make_consense("Bus", "country")),
         aggregate_generators_weighted=True,
         aggregate_generators_carriers=aggregate_carriers,
