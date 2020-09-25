@@ -805,17 +805,18 @@ def add_storage(network):
 
     if options['hydrogen_underground_storage']:
          h2_salt_cavern_potential = pd.read_csv(snakemake.input.h2_cavern,
-                                               index_col=0, skiprows=[0],
-                                               names=["potential", "TWh"])
-         h2_cavern_ct = h2_salt_cavern_potential[h2_salt_cavern_potential.potential]
+                                                index_col=0,squeeze=True)
+         h2_cavern_ct = h2_salt_cavern_potential[~h2_salt_cavern_potential.isna()]
          cavern_nodes = pop_layout[pop_layout.ct.isin(h2_cavern_ct.index)]
 
          h2_capital_cost = costs.at["hydrogen storage underground", "fixed"]
 
          # assumptions: weight storage potential in a country by population
-         h2_pot = (h2_cavern_ct.loc[cavern_nodes.ct, "TWh"].astype(float)
-                   .reset_index().set_index(cavern_nodes.index))
-         h2_pot = h2_pot.TWh * cavern_nodes.fraction
+         # TODO: fix with real geographic potentials
+         #convert TWh to MWh with 1e6
+         h2_pot = h2_cavern_ct.loc[cavern_nodes.ct]
+         h2_pot.index = cavern_nodes.index
+         h2_pot = h2_pot * cavern_nodes.fraction * 1e6
 
          network.madd("Store",
                       cavern_nodes.index + " H2 Store",
