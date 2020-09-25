@@ -22,6 +22,9 @@ before_install:
   # install open-source solver
   - mamba install -c conda-forge ipopt glpk
 
+  # list packages for easier debugging
+  - conda list
+
 script:
   - cp ./test/config.test1.yaml ./config.yaml
   - snakemake -j all solve_all_elec_networks
