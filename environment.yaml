@@ -49,7 +49,7 @@ dependencies:
   - geopandas
   - rasterio
   - shapely
-  - libgdal<=3.0.2
+  - libgdal<=3.0.4
 
   # Solvers
   - gurobi:gurobi # until https://github.com/conda-forge/pypsa-feedstock/issues/4 closed
