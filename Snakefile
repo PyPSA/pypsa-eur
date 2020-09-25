@@ -62,6 +62,18 @@ rule build_clustered_population_layouts:
     script: "scripts/build_clustered_population_layouts.py"
 
 
+rule build_simplified_population_layouts:
+    input:
+        pop_layout_total="resources/pop_layout_total.nc",
+        pop_layout_urban="resources/pop_layout_urban.nc",
+        pop_layout_rural="resources/pop_layout_rural.nc",
+        regions_onshore=pypsaeur('resources/regions_onshore_{network}_s{simpl}.geojson')
+    output:
+        clustered_pop_layout="resources/pop_layout_{network}_s{simpl}.csv"
+    resources: mem_mb=10000
+    script: "scripts/build_clustered_population_layouts.py"
+
+
 rule build_heat_demands:
     input:
         pop_layout_total="resources/pop_layout_total.nc",
@@ -235,6 +247,7 @@ rule prepare_sector_network:
         profile_offwind_dc=pypsaeur("resources/profile_offwind-dc.nc"),
         clustermaps=pypsaeur('resources/clustermaps_{network}_s{simpl}_{clusters}.h5'),
         clustered_pop_layout="resources/pop_layout_{network}_s{simpl}_{clusters}.csv",
+        simplified_pop_layout="resources/pop_layout_{network}_s{simpl}.csv",
         industrial_demand="resources/industrial_demand_{network}_s{simpl}_{clusters}.csv",
         heat_demand_urban="resources/heat_demand_urban_{network}_s{simpl}_{clusters}.nc",
         heat_demand_rural="resources/heat_demand_rural_{network}_s{simpl}_{clusters}.nc",

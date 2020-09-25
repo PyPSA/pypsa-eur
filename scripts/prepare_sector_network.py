@@ -689,8 +689,14 @@ def insert_electricity_distribution_grid(network):
     solar = network.generators.index[network.generators.carrier == "solar"]
     network.generators.loc[solar, "capital_cost"] = costs.at['solar-utility',
                                                              'fixed']
-    # add max solar rooftop potential assuming 1kW/person
-    potential = pop_layout.total.rename(index = lambda x: x + " solar")
+    if snakemake.wildcards.clusters[-1:] == "m":
+        pop_solar = simplified_pop_layout.total.rename(index = lambda x: x + " solar")
+    else:
+        pop_solar = pop_layout.total.rename(index = lambda x: x + " solar")
+
+    # add max solar rooftop potential assuming 0.1 kW/m2 and 10 m2/person,
+    #i.e. 1 kW/person (population data is in thousands of people) so we get MW
+    potential = 0.1*10*pop_solar
 
     network.madd("Generator",
                  solar,
@@ -1777,6 +1783,8 @@ if __name__ == "__main__":
     ct_total = pop_layout.total.groupby(pop_layout["ct"]).sum()
     pop_layout["ct_total"] = pop_layout["ct"].map(ct_total.get)
     pop_layout["fraction"] = pop_layout["total"]/pop_layout["ct_total"]
+
+    simplified_pop_layout = pd.read_csv(snakemake.input.simplified_pop_layout,index_col=0)
 
     costs = prepare_costs(snakemake.input.costs,
                           snakemake.config['costs']['USD2013_to_EUR2013'],
