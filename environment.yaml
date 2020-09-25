@@ -27,7 +27,7 @@ dependencies:
   - pytables
   - lxml
   - powerplantmatching>=0.4.3
-  - numpy
+  - numpy<=1.19.0 # otherwise macos fails
 
   # Second order dependencies which should really be deps of atlite
   - xarray
