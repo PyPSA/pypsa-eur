@@ -126,7 +126,7 @@ def set_transmission_limit(n, ll_type, factor, Nyears=1):
     if factor != 'opt':
         con_type = 'expansion_cost' if ll_type == 'c' else 'volume_expansion'
         rhs = float(factor) * ref
-        n.add('GlobalConstraint', f'l{ll_type}_factor',
+        n.add('GlobalConstraint', f'l{ll_type}_limit',
               type=f'transmission_{con_type}_limit',
               sense='<=', constant=rhs, carrier_attribute='AC, DC')
     return n
@@ -203,7 +203,8 @@ if __name__ == "__main__":
 
     for o in opts:
         oo = o.split("+")
-        if oo[0].startswith(tuple(n.carriers.index)):
+        suptechs = map(lambda c: c.split("-", 2)[0], n.carriers.index)
+        if oo[0].startswith(tuple(suptechs)):
             carrier = oo[0]
             cost_factor = float(oo[1])
             if carrier == "AC":  # lines do not have carrier
