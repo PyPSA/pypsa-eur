@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 name: pypsa-eur
 channels:
   - conda-forge
@@ -6,21 +10,23 @@ channels:
 dependencies:
   - python
   - pip
+  - mamba # esp for windows build
 
-  # - pypsa>=0.16 # until PyPSA/a3c0991 released 
-  - atlite
+  - pypsa>=0.17.1
+  - atlite=0.0.3
 
   # Dependencies of the workflow itself
   - xlrd
   - scikit-learn
   - pycountry
   - seaborn
-  - snakemake-minimal
+  - snakemake-minimal<=5.24.2 # until https://github.com/snakemake/snakemake/issues/635 closed
   - memory_profiler
   - yaml
   - pytables
   - lxml
   - powerplantmatching>=0.4.3
+  - numpy<=1.19.0 # otherwise macos fails
 
   # Second order dependencies which should really be deps of atlite
   - xarray
@@ -43,7 +49,7 @@ dependencies:
   - geopandas<=0.6.3
   - rasterio
   - shapely
-  - libgdal
+  - libgdal<=3.0.4
   - descartes
 
   # Solvers
@@ -53,5 +59,4 @@ dependencies:
     - vresutils==0.3.1
     - git+https://github.com/PyPSA/glaes.git#egg=glaes
     - git+https://github.com/PyPSA/geokit.git#egg=geokit
-    - git+https://github.com/PyPSA/pypsa.git#egg=pypsa # until PyPSA/a3c0991 released 
     - cdsapi

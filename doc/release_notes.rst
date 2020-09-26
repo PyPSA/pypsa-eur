@@ -1,15 +1,66 @@
+..
+  SPDX-FileCopyrightText: 2019-2020 The PyPSA-Eur Authors
+
+  SPDX-License-Identifier: CC-BY-4.0
+
 ##########################################
 Release Notes
 ##########################################
 
-PyPSA-Eur 0.2.0 (TBD)
+
+Upcoming Release
+================
+
+* Added an option to alter the capital cost of carriers by a factor via ``carrier+factor`` in the ``{opts}`` wildcard. This can be useful for exploring uncertain cost parameters. Example: ``solar+0.5`` reduces the capital cost of solar to 50% of original values (`#167 <https://github.com/PyPSA/pypsa-eur/pull/167>`_).
+
+* Add compatibility for pyomo 5.7.0 in :mod:`cluster_network` and :mod:`simplify_network`.
+
+* Raise a warning if `tech_colors` in the config are not defined for all carriers.
+
+* Corrected HVDC link connections (a) between Norway and Denmark and (b) mainland Italy, Corsica (FR) and Sardinia (IT) (`#181 <https://github.com/PyPSA/pypsa-eur/pull/181>`_)
+
+* Added Google Cloud Platform tutorial (for Windows users).
+
+* Corrected setting of exogenous emission price (in config -> cost -> emission price). This was not weighted by the efficiency and effective emission of the generators. Fixed in `#171 <https://github.com/PyPSA/pypsa-eur/pull/171>`_.
+
+* Don't remove capital costs from lines and links, when imposing a line volume limit (wildcard ``lv``) or a line cost limit (``lc``). Previously, these were removed to move the expansion in direction of the limit. 
+
+* Fix bug of clustering offwind-{ac,dc} sites in the option of high-resolution sites for renewables. Now, there are more sites for offwind-{ac,dc} available than network nodes. Before, they were clustered to the resolution of the network. (e.g. elec_s1024_37m.nc: 37 network nodes, 1024 sites)
+
+* Use `mamba` (https://github.com/mamba-org/mamba) for faster Travis CI builds (`#196 <https://github.com/PyPSA/pypsa-eur/pull/196>`_)
+
+PyPSA-Eur 0.2.0 (8th June 2020)
 ==================================
 
 * The optimization is now performed using the ``pyomo=False`` setting in the :func:`pypsa.lopf.network_lopf`. This speeds up the solving process significantly and consumes much less memory. The inclusion of additional constraints were adjusted to the new implementation. They are all passed to the :func:`network_lopf` function via the ``extra_functionality`` argument. The rule ``trace_solve_network`` was integrated into the rule :mod:`solve_network` and can be activated via configuration with ``solving: options: track_iterations: true``. The charging and discharging capacities of batteries modelled as store-link combination are now coupled (`#116 <https://github.com/PyPSA/pypsa-eur/pull/116>`_).
 
-* Removed the `id` column for custom power plants in `data/custom_powerplants.csv` to avoid custom power plants with conflicting ids getting attached to the wrong bus (`#131 <https://github.com/PyPSA/pypsa-eur/pull/131>`_).
+* An updated extract of the `ENTSO-E Transmission System Map <https://www.entsoe.eu/data/map/>`_ (including Malta) was added to the repository using the `GridKit <https://github.com/PyPSA/GridKit>`_ tool. This tool has been updated to retrieve up-to-date map extracts using a single `script <https://github.com/PyPSA/GridKit/blob/master/entsoe/runall_in_docker.sh>`_. The update extract features 5322 buses, 6574 lines, 46 links. (`#118 <https://github.com/PyPSA/pypsa-eur/pull/118>`_).
+
+* Added `FSFE REUSE <https://reuse.software>`_ compliant license information. Documentation now licensed under CC-BY-4.0 (`#160 <https://github.com/PyPSA/pypsa-eur/pull/160>`_).
+
+* Added a 30 minute `video introduction <https://pypsa-eur.readthedocs.io/en/latest/introduction.html>`_ and a 20 minute `video tutorial <https://pypsa-eur.readthedocs.io/en/latest/tutorial.html>`_
+
+* Networks now store a color and a nicely formatted name for each carrier, accessible via ``n.carrier['color']`` and ``n.carrier['nice_name'] ``(networks after ``elec.nc``).
+
+* Added an option to skip iterative solving usually performed to update the line impedances of expanded lines at ``solving: options: skip_iterations:``.
 
 * ``snakemake`` rules for retrieving cutouts and the natura raster can now be disabled independently from their respective rules to build them; via ``config.*yaml`` (`#136 <https://github.com/PyPSA/pypsa-eur/pull/136>`_).
+
+* Removed the ``id`` column for custom power plants in ``data/custom_powerplants.csv`` to avoid custom power plants with conflicting ids getting attached to the wrong bus (`#131 <https://github.com/PyPSA/pypsa-eur/pull/131>`_).
+
+* Add option ``renewables: {carrier}: keep_all_available_areas:`` to use all availabe weather cells for renewable profile and potential generation. The default ignores weather cells where only less than 1 MW can be installed  (`#150 <https://github.com/PyPSA/pypsa-eur/pull/150>`_).
+
+* Added a function ``_helpers.load_network()`` which loads a network with overridden components specified in ``snakemake.config['override_components']`` (`#128 <https://github.com/PyPSA/pypsa-eur/pull/128>`_).
+
+* Bugfix in  :mod:`base_network` which now finds all closest links, not only the first entry (`#143 <https://github.com/PyPSA/pypsa-eur/pull/143>`_).
+
+* Bugfix in :mod:`cluster_network` which now skips recalculation of link parameters if there are no links  (`#149 <https://github.com/PyPSA/pypsa-eur/pull/149>`_).
+
+* Added information on pull requests to contribution guidelines (`#151 <https://github.com/PyPSA/pypsa-eur/pull/151>`_).
+
+* Improved documentation on open-source solver setup and added usage warnings.
+
+* Updated ``conda`` environment regarding ``pypsa``, ``pyproj``, ``gurobi``, ``lxml``. This release requires PyPSA v0.17.0.
 
 
 PyPSA-Eur 0.1.0 (9th January 2020)

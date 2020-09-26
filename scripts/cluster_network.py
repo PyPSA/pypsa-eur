@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # coding: utf-8
 """
 Creates networks clustered to ``{cluster}`` number of zones with aggregated buses, generators and transmission corridors.
@@ -88,6 +92,30 @@ Description
     The rule :mod:`cluster_all_networks` runs
     for all ``scenario`` s in the configuration file
     the rule :mod:`cluster_network`.
+
+Exemplary unsolved network clustered to 512 nodes:
+
+.. image:: ../img/elec_s_512.png
+    :scale: 40  %
+    :align: center
+
+Exemplary unsolved network clustered to 256 nodes:
+
+.. image:: ../img/elec_s_256.png
+    :scale: 40  %
+    :align: center
+
+Exemplary unsolved network clustered to 128 nodes:
+
+.. image:: ../img/elec_s_128.png
+    :scale: 40  %
+    :align: center
+
+Exemplary unsolved network clustered to 37 nodes:
+
+.. image:: ../img/elec_s_37.png
+    :scale: 40  %
+    :align: center  
 
 """
 
@@ -193,7 +221,7 @@ def distribute_clusters(n, n_clusters, focus_weights=None, solver_name=None):
         opt = po.SolverFactory('ipopt')
 
     results = opt.solve(m)
-    assert results['Solver'][0]['Status'].key == 'ok', "Solver returned non-optimally: {}".format(results)
+    assert results['Solver'][0]['Status'] == 'ok', "Solver returned non-optimally: {}".format(results)
 
     return pd.Series(m.n.get_values(), index=L.index).astype(int)
 
@@ -229,8 +257,8 @@ def busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights=None, algori
         else:
             raise ValueError(f"`algorithm` must be one of 'kmeans', 'spectral' or 'louvain'. Is {algorithm}.")
 
-    return (n.buses.groupby(['country', 'sub_network'], group_keys=False, squeeze=True)
-            .apply(busmap_for_country).rename('busmap'))
+    return (n.buses.groupby(['country', 'sub_network'], group_keys=False)
+            .apply(busmap_for_country).squeeze().rename('busmap'))
 
 def plot_busmap_for_n_clusters(n, n_clusters=50):
     busmap = busmap_for_n_clusters(n, n_clusters)
@@ -262,13 +290,15 @@ def clustering_for_n_clusters(n, n_clusters, aggregate_carriers=None,
         generator_strategies={'p_nom_max': p_nom_max_strategy},
         scale_link_capital_costs=False)
 
-    nc = clustering.network
-    nc.links['underwater_fraction'] = (n.links.eval('underwater_fraction * length')
-                                       .div(nc.links.length).dropna())
-    nc.links['capital_cost'] = (nc.links['capital_cost']
-                                .add((nc.links.length - n.links.length)
-                                      .clip(lower=0).mul(extended_link_costs),
-                                      fill_value=0))
+    if not n.links.empty:
+        nc = clustering.network
+        nc.links['underwater_fraction'] = (n.links.eval('underwater_fraction * length')
+                                        .div(nc.links.length).dropna())
+        nc.links['capital_cost'] = (nc.links['capital_cost']
+                                    .add((nc.links.length - n.links.length)
+                                        .clip(lower=0).mul(extended_link_costs),
+                                        fill_value=0))
+
     return clustering
 
 def save_to_geojson(s, fn):
@@ -303,7 +333,7 @@ if __name__ == "__main__":
 
     renewable_carriers = pd.Index([tech
                                    for tech in n.generators.carrier.unique()
-                                   if tech.split('-', 2)[0] in snakemake.config['renewable']])
+                                   if tech in snakemake.config['renewable']])
 
     if snakemake.wildcards.clusters.endswith('m'):
         n_clusters = int(snakemake.wildcards.clusters[:-1])

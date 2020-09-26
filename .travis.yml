@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 os:
   - windows
   - linux
@@ -11,11 +15,15 @@ before_install:
   - source conda4travis.sh
 
   # install conda environment
-  - conda env create -f ./environment.yaml
+  - conda install -c conda-forge mamba
+  - mamba env create -f ./environment.yaml
   - conda activate pypsa-eur
 
   # install open-source solver
-  - conda install -c conda-forge ipopt glpk
+  - mamba install -c conda-forge glpk ipopt
+
+  # list packages for easier debugging
+  - conda list
 
   # for debugging
   - conda list

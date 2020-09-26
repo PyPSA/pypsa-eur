@@ -1,6 +1,10 @@
+# SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # coding: utf-8
 """
-Creates the network topology from a `ENTSO-E map extract <https://github.com/PyPSA/GridKit/tree/master/entsoe>`_ (25 May 2018) as a PyPSA network.
+Creates the network topology from a `ENTSO-E map extract <https://github.com/PyPSA/GridKit/tree/master/entsoe>`_ (January 2020) as a PyPSA network.
 
 Relevant Settings
 -----------------
@@ -37,7 +41,7 @@ Relevant Settings
 Inputs
 ------
 
-- ``data/entsoegridkit``:  Extract from the geographical vector data of the online `ENTSO-E Interactive Map <https://www.entsoe.eu/data/map/>`_ by the `GridKit <https://github.com/pypsa/gridkit>`_ toolkit dating back to 25 May 2018.
+- ``data/entsoegridkit``:  Extract from the geographical vector data of the online `ENTSO-E Interactive Map <https://www.entsoe.eu/data/map/>`_ by the `GridKit <https://github.com/pypsa/gridkit>`_ toolkit dating back to January 2020.
 - ``data/parameter_corrections.yaml``: Corrections for ``data/entsoegridkit``
 - ``data/links_p_nom.csv``: confer :ref:`links`
 - ``data/links_tyndp.csv``: List of projects in the `TYNDP 2018 <https://tyndp.entsoe.eu/tyndp2018/>`_ that are at least *in permitting* with fields for start- and endpoint (names and coordinates), length, capacity, construction status, and project reference ID.
@@ -91,24 +95,19 @@ def _get_country(df):
         return pd.Series(np.nan, df.index)
 
 def _find_closest_links(links, new_links, distance_upper_bound=1.5):
-    tree = sp.spatial.KDTree(np.vstack([
-        new_links[['x1', 'y1', 'x2', 'y2']],
-        new_links[['x2', 'y2', 'x1', 'y1']]
-    ]))
-
-    dist, ind = tree.query(
-        np.asarray([np.asarray(shapely.wkt.loads(s))[[0, -1]].flatten()
-                    for s in links.geometry]),
-        distance_upper_bound=distance_upper_bound
-    )
-
-    found_b = ind < 2 * len(new_links)
-    return (
-        pd.DataFrame(dict(D=dist[found_b],
-                          i=new_links.index[ind[found_b] % len(new_links)]),
-                     index=links.index[found_b])
-        .groupby('i').D.idxmin()
-    )
+    treecoords = np.asarray([np.asarray(shapely.wkt.loads(s))[[0, -1]].flatten()
+                              for s in links.geometry])
+    querycoords = np.vstack([new_links[['x1', 'y1', 'x2', 'y2']],
+                            new_links[['x2', 'y2', 'x1', 'y1']]])
+    tree = sp.spatial.KDTree(treecoords)
+    dist, ind = tree.query(querycoords, distance_upper_bound=distance_upper_bound)
+    found_b = ind < len(links)
+    found_i = np.arange(len(new_links)*2)[found_b] % len(new_links)
+    return pd.DataFrame(dict(D=dist[found_b],
+                             i=links.index[ind[found_b] % len(links)]),
+                        index=new_links.index[found_i]).sort_values(by='D')\
+                        [lambda ds: ~ds.index.duplicated(keep='first')]\
+                         .sort_index()['i']
 
 def _load_buses_from_eg():
     buses = (pd.read_csv(snakemake.input.eg_buses, quotechar="'",
@@ -161,6 +160,9 @@ def _load_links_from_eg(buses):
 
     links['length'] /= 1e3
 
+    # hotfix
+    links.loc[links.bus1=='6271', 'bus1'] = '6273'
+
     links = _remove_dangling_branches(links, buses)
 
     # Add DC line parameters
@@ -199,8 +201,8 @@ def _add_links_from_tyndp(buses, links):
     buses = buses.loc[keep_b['Bus']]
     links = links.loc[keep_b['Link']]
 
-    links_tyndp["j"] = _find_closest_links(links, links_tyndp, distance_upper_bound=0.8)
-    # Corresponds approximately to 60km tolerances
+    links_tyndp["j"] = _find_closest_links(links, links_tyndp, distance_upper_bound=0.15)
+    # Corresponds approximately to 15km tolerances
 
     if links_tyndp["j"].notnull().any():
         logger.info("TYNDP links already in the dataset (skipping): " + ", ".join(links_tyndp.loc[links_tyndp["j"].notnull(), "Name"]))
@@ -298,9 +300,18 @@ def _set_electrical_parameters_links(links):
     links['p_min_pu'] = -p_max_pu
 
     links_p_nom = pd.read_csv(snakemake.input.links_p_nom)
-    links_p_nom["j"] = _find_closest_links(links, links_p_nom)
-
+    
+    #Filter links that are not in operation anymore    
+    removed_b = links_p_nom.Remarks.str.contains('Shut down|Replaced', na=False)
+    links_p_nom = links_p_nom[~removed_b]
+    
+    #find closest link for all links in links_p_nom        
+    links_p_nom['j'] = _find_closest_links(links, links_p_nom)
+        
+    links_p_nom = links_p_nom.groupby(['j'],as_index=False).agg({'Power (MW)': 'sum'})    
+        
     p_nom = links_p_nom.dropna(subset=["j"]).set_index("j")["Power (MW)"]
+   
     # Don't update p_nom if it's already set
     p_nom_unset = p_nom.drop(links.index[links.p_nom.notnull()], errors='ignore') if "p_nom" in links else p_nom
     links.loc[p_nom_unset.index, "p_nom"] = p_nom_unset
@@ -531,11 +542,11 @@ def base_network():
     n.import_components_from_dataframe(links, "Link")
     n.import_components_from_dataframe(converters, "Link")
 
-    n = _remove_unconnected_components(n)
-
     _set_lines_s_nom_from_linetypes(n)
 
     _apply_parameter_corrections(n)
+
+    n = _remove_unconnected_components(n)
 
     _set_countries_and_substations(n)
 

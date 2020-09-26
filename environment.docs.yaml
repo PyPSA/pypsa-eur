@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 name: pypsa-eur-docs
 channels:
   - conda-forge
@@ -5,8 +9,8 @@ channels:
 dependencies:
   #- python
   - pip
-  # - pypsa>=0.16 # until PyPSA/a3c0991 released 
-  - atlite
+  - pypsa>=0.17.1
+  - atlite=0.0.3
 
   # Dependencies of the workflow itself
   #- xlrd
@@ -47,7 +51,6 @@ dependencies:
     - vresutils==0.3.1
     - git+https://github.com/PyPSA/glaes.git#egg=glaes
     - git+https://github.com/PyPSA/geokit.git#egg=geokit
-    - git+https://github.com/PyPSA/pypsa.git#egg=pypsa # until PyPSA/a3c0991 released 
     - cdsapi
     - sphinx
     - sphinx_rtd_theme
