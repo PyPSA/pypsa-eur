@@ -2,6 +2,29 @@
 Release Notes
 ##########################################
 
+PyPSA-Eur-Sec 0.3.0 (27th September 2020)
+=========================================
+
+This releases focuses on improvements to industry demand and the generation of intermediate files for demand for basic materials. There are still inconsistencies with CCS and waste management that need to be improved.
+
+It is known to work with PyPSA-Eur v0.1.0 (commit bb3477cd69), PyPSA v0.17.1 and technology-data v0.1.0. Please note that the data bundle has also been updated.
+
+
+New features:
+
+* In previous version of PyPSA-Eur-Sec the energy demand for industry was calculated directly for each location. Now, instead, the production of each material (steel, cement, aluminium) at each location is calculated as an intermediate data file, before the energy demand is calculated from it. This allows us in future to have competing industrial processes for supplying the same material demand.
+* The script ``build_industrial_production_per_country_tomorrow.py`` determines the future industrial production of materials based on today's levels as well as assumed recycling and demand change measures.
+* The energy demand for each industry sector and each location in 2015 is also calculated, so that it can be later incorporated in the pathway optimization.
+* Ammonia production data is taken from the USGS and deducted from JRC-IDEES's "basic chemicals" so that it ammonia can be handled separately from the others (olefins, aromatics and chlorine).
+* Solid biomass is no longer allowed to be used for process heat in cement and basic chemicals, since the wastes and residues cannot be guaranteed to reach the high temperatures required. Instead, solid biomass is used in the paper and pulp as well as food, beverages and tobacco industries, where required temperatures are lower (see `DOI:10.1002/er.3436 <https://doi.org/10.1002/er.3436>`_ and `DOI:10.1007/s12053-017-9571-y <https://doi.org/10.1007/s12053-017-9571-y>`_).
+* National installable potentials for salt caverns are now applied.
+* When electricity distribution grids are activated, new industry electricity demand, resistive heaters and micro-CHPs are now connected to the lower voltage levels.
+* Gas distribution grid costs are included for gas boilers and micro-CHPs.
+* Installable potentials for rooftop PV are included with an assumption of 1 kWp per person.
+* Some intermediate files produced by scripts have been moved from the folder ``data`` to the folder ``resources``. Now ``data`` only includes input data, while ``resources`` only includes intermediate files necessary for building the network models. Please note that the data bundle has also been updated.
+* Biomass potentials for different years and scenarios from the JRC are generated in an intermediate file, so that a selection can be made more explicitly by specifying the biomass types from the ``config.yaml``.
+
+
 PyPSA-Eur-Sec 0.2.0 (21st August 2020)
 ======================================
 
@@ -75,7 +98,7 @@ Release Process
 
 * Send announcement on the `PyPSA mailing list <https://groups.google.com/forum/#!forum/pypsa>`_.
 
-To make a new release of the data bundle, do:
+To make a new release of the data bundle, make an archive of the files in ``data`` which are not already included in the git repository:
 
 .. code:: bash
 
