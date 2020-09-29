@@ -33,7 +33,7 @@ Inputs
 
 - ``resources/regions_onshore_{network}_s{simpl}.geojson``: confer :ref:`simplify`
 - ``resources/regions_offshore_{network}_s{simpl}.geojson``: confer :ref:`simplify`
-- ``resources/clustermaps_{network}_s{simpl}.h5``: confer :ref:`simplify`
+- ``resources/rmaps_{network}_s{simpl}.h5``: confer :ref:`simplify`
 - ``networks/{network}_s{simpl}.nc``: confer :ref:`simplify`
 
 Outputs
@@ -281,12 +281,9 @@ def clustering_for_n_clusters(n, n_clusters, aggregate_carriers=None,
                              "but is '{}'".format(potential_mode))
 
     if snakemake.config['clustering'].get('custom_clustermaps', False):
-        assert os.path.isfile('data/custom_clustermaps_elec_s_{}.h5'.format(n_clusters)), (
-            "File for custom clustermaps does not exist but is expected in data/custom_clustermaps_elec_s_{}.h5"
-            .format(n_clusters))
-        with pd.HDFStore('data/custom_clustermaps_elec_s_{}.h5'.format(n_clusters), mode='r') as store:
+        with pd.HDFStore(snakemake.input.custom_clustermaps, mode='r') as store:
             busmapfornclusters = store.busmap
-        logger.info("imported custom clustermaps from data/custom_clustermaps_elec_s_{}.h5".format(n_clusters))
+        logger.info("imported custom clustermaps from {}".format(snakemake.input.custom_clustermaps))
     else:
         busmapfornclusters = busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights, algorithm)
 
