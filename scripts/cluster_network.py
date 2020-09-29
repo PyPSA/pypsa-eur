@@ -33,8 +33,9 @@ Inputs
 
 - ``resources/regions_onshore_{network}_s{simpl}.geojson``: confer :ref:`simplify`
 - ``resources/regions_offshore_{network}_s{simpl}.geojson``: confer :ref:`simplify`
-- ``resources/rmaps_{network}_s{simpl}.h5``: confer :ref:`simplify`
+- ``resources/clustermaps_{network}_s{simpl}.h5``: confer :ref:`simplify`
 - ``networks/{network}_s{simpl}.nc``: confer :ref:`simplify`
+- ``data/custom_clustermaps_{network}_s{simpl}_{clusters}``: optional input
 
 Outputs
 -------
