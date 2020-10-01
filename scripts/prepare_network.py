@@ -93,8 +93,9 @@ def add_emission_prices(n, emission_prices=None, exclude_co2=False):
 
 
 def set_line_s_max_pu(n):
-    n.lines['s_max_pu'] = snakemake.config['lines']['s_max_pu']
-    logger.info("N-1 security margin set to {}".format(snakemake.config['lines']['s_max_pu']))
+    s_max_pu = snakemake.config['lines']['s_max_pu']
+    n.lines['s_max_pu'] = s_max_pu
+    logger.info(f"N-1 security margin of lines set to {s_max_pu}")
 
 
 def set_transmission_limit(n, ll_type, factor, Nyears=1):
