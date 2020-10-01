@@ -35,6 +35,8 @@ Upcoming Release
 
 * Use `mamba` (https://github.com/mamba-org/mamba) for faster Travis CI builds (`#196 <https://github.com/PyPSA/pypsa-eur/pull/196>`_)
 
+* N-1 security margin is fixed to provided value in config file, removed linear interpolation between 0.5 and 0.7 in the range of 37 to 200 nodes.
+
 PyPSA-Eur 0.2.0 (8th June 2020)
 ==================================
 
