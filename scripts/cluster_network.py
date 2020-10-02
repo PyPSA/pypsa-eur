@@ -33,9 +33,9 @@ Inputs
 
 - ``resources/regions_onshore_{network}_s{simpl}.geojson``: confer :ref:`simplify`
 - ``resources/regions_offshore_{network}_s{simpl}.geojson``: confer :ref:`simplify`
-- ``resources/clustermaps_{network}_s{simpl}.h5``: confer :ref:`simplify`
+- ``resources/busmap_{network}_s{simpl}.csv``: confer :ref:`simplify`
 - ``networks/{network}_s{simpl}.nc``: confer :ref:`simplify`
-- ``data/custom_clustermaps_{network}_s{simpl}_{clusters}``: optional input
+- ``data/custom_busmap_{network}_s{simpl}_{clusters}.csv``: optional input
 
 Outputs
 -------
@@ -50,7 +50,8 @@ Outputs
     .. image:: ../img/regions_offshore_elec_s_X.png
         :scale: 33 %
 
-- ``resources/clustermaps_{network}_s{simpl}_{clusters}.h5``: Mapping of buses and lines from ``networks/elec_s{simpl}.nc`` to ``networks/elec_s{simpl}_{clusters}.nc``; has keys ['/busmap', '/busmap_s', '/linemap', '/linemap_negative', '/linemap_positive']
+- ``resources/busmap_{network}_s{simpl}_{clusters}.csv``: Mapping of buses from ``networks/elec_s{simpl}.nc`` to ``networks/elec_s{simpl}_{clusters}.nc``;
+- ``resources/linemap_{network}_s{simpl}_{clusters}.csv``: Mapping of lines from ``networks/elec_s{simpl}.nc`` to ``networks/elec_s{simpl}_{clusters}.nc``;
 - ``networks/{network}_s{simpl}_{clusters}.nc``:
 
     .. image:: ../img/elec_s_X.png
@@ -282,9 +283,9 @@ def clustering_for_n_clusters(n, n_clusters, aggregate_carriers=None,
                              "but is '{}'".format(potential_mode))
 
     if snakemake.config['clustering'].get('custom_clustermaps', False):
-        with pd.HDFStore(snakemake.input.custom_clustermaps, mode='r') as store:
-            busmapfornclusters = store.busmap
-        logger.info("imported custom clustermaps from {}".format(snakemake.input.custom_clustermaps))
+        busmapfornclusters = (pd.read_csv(snakemake.input.custom_busmap, dtype={'name':'str'})
+                              .set_index('name')).squeeze()
+        logger.info(f"Imported custom busmap from {snakemake.input.custom_busmap}")
     else:
         busmapfornclusters = busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights, algorithm)
 
