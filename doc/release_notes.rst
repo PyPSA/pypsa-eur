@@ -37,6 +37,9 @@ Upcoming Release
 
 * The N-1 security margin for transmission lines is now fixed to a provided value in ``config.yaml``, removing an undocumented linear interpolation between 0.5 and 0.7 in the range between 37 and 200 nodes.
 
+* The mappings for clustered lines and buses produced by the ``simplify_network`` and ``cluster_network`` rules changed from Hierarchical Data Format (.h5) to Comma-Separated Values format (.csv) (`#198 <https://github.com/PyPSA/pypsa-eur/pull/198>`_)
+
+
 PyPSA-Eur 0.2.0 (8th June 2020)
 ==================================
 
