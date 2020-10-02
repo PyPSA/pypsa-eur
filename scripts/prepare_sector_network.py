@@ -68,11 +68,9 @@ def update_wind_solar_costs(n,costs):
 
     #assign clustered bus
     #map initial network -> simplified network
-    busmap_s = pd.read_hdf(snakemake.input.clustermaps,
-                           key="/busmap_s")
+    busmap_s = pd.read_csv(snakemake.input.busmap_s, index_col=0).squeeze()
     #map simplified network -> clustered network
-    busmap = pd.read_hdf(snakemake.input.clustermaps,
-                         key="/busmap")
+    busmap = pd.read_csv(snakemake.input.busmap, index_col=0).squeeze()
     #map initial network -> clustered network
     clustermaps = busmap_s.map(busmap)
 
@@ -1747,7 +1745,8 @@ if __name__ == "__main__":
                        costs='technology-data/outputs/costs_{planning_horizons}.csv',
                        profile_offwind_ac='pypsa-eur/resources/profile_offwind-ac.nc',
                        profile_offwind_dc='pypsa-eur/resources/profile_offwind-dc.nc',
-                       clustermaps="pypsa-eur/resources/clustermaps_{network}_s{simpl}_{clusters}.h5",
+                       busmap_s='pypsa-eur/resources/busmap_{network}_s{simpl}.csv',
+                       busmap='pypsa-eur/resources/busmap_{network}_s{simpl}_{clusters}.csv',
                        cop_air_total='pypsa-eur-sec/resources/cop_air_total_{network}_s{simpl}_{clusters}.nc',
                        cop_soil_total='pypsa-eur-sec/resources/cop_soil_total_{network}_s{simpl}_{clusters}.nc',
                        solar_thermal_total='pypsa-eur-sec/resources/solar_thermal_total_{network}_s{simpl}_{clusters}.nc',
