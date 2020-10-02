@@ -371,9 +371,7 @@ if __name__ == "__main__":
                                                focus_weights=focus_weights)
 
     clustering.network.export_to_netcdf(snakemake.output.network)
-    for attr in ('busmap', 'linemap', 'linemap_positive', 'linemap_negative'):
-        getattr(clustering, attr).to_csv("resources/{}_{}_s{}_{}.csv"
-                                         .format(attr, snakemake.wildcards.network,
-                                                 snakemake.wildcards.simpl, n_clusters))
+    for attr in ('busmap', 'linemap'): #also available: linemap_positive, linemap_negative
+        getattr(clustering, attr).to_csv(snakemake.output[attr])
 
     cluster_regions((clustering.busmap,))

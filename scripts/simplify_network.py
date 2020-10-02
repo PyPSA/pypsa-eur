@@ -356,7 +356,7 @@ if __name__ == "__main__":
 
     n.export_to_netcdf(snakemake.output.network)
 
-    (reduce(lambda x, y: x.map(y), busmaps[1:], busmaps[0])
-     .to_csv('resources/busmap_{}_s{}.csv'.format(snakemake.wildcards.network,snakemake.wildcards.simpl)))
+    busmap_s = reduce(lambda x, y: x.map(y), busmaps[1:], busmaps[0])
+    busmap_s.to_csv(snakemake.output.busmap)
 
     cluster_regions(busmaps, snakemake.input, snakemake.output)

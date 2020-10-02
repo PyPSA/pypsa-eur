@@ -246,9 +246,7 @@ rule cluster_network:
         regions_onshore="resources/regions_onshore_{network}_s{simpl}_{clusters}.geojson",
         regions_offshore="resources/regions_offshore_{network}_s{simpl}_{clusters}.geojson",
         busmap="resources/busmap_{network}_s{simpl}_{clusters}.csv",
-        linemap="resources/linemap_{network}_s{simpl}_{clusters}.csv",
-        linemap_positive="resources/linemap_positive_{network}_s{simpl}_{clusters}.csv",
-        linemap_negative="resources/linemap_negative_{network}_s{simpl}_{clusters}.csv"
+        linemap="resources/linemap_{network}_s{simpl}_{clusters}.csv"
     log: "logs/cluster_network/{network}_s{simpl}_{clusters}.log"
     benchmark: "benchmarks/cluster_network/{network}_s{simpl}_{clusters}"
     threads: 1
