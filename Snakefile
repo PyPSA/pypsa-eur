@@ -287,7 +287,7 @@ def memory(w):
     for o in w.opts.split('-'):
         m = re.match(r'^(\d+)seg$', o, re.IGNORECASE)
         if m is not None:
-            factor /= 8760 / int(m.group(1))
+            factor *= int(m.group(1)) / 8760
             break
     if w.clusters.endswith('m'):
         return int(factor * (18000 + 180 * int(w.clusters[:-1])))
