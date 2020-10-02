@@ -62,7 +62,7 @@ Outputs
     .. image:: ../img/regions_offshore_elec_s  .png
             :scale: 33 %
 
-- ``resources/clustermaps_{network}_s{simpl}.h5``: Mapping of buses from ``networks/elec.nc`` to ``networks/elec_s{simpl}.nc``; has keys ['/busmap_s']
+- ``resources/busmap_{network}_s{simpl}.csv``: Mapping of buses from ``networks/elec.nc`` to ``networks/elec_s{simpl}.nc``;
 - ``networks/{network}_s{simpl}.nc``:
 
     .. image:: ../img/elec_s.png
