@@ -11,6 +11,12 @@ Release Notes
 Upcoming Release
 ================
 
+* An option is introduced which adds constraints such that each country or node produces on average a minimal share of its total consumption itself.
+  For example ``EQ0.5c`` set in the ``{opts}`` wildcard requires each country to produce on average at least 50% of its consumption. Additionally,
+  the option ``ATK`` requires autarky at each node and removes all means of power transmission through lines and links. ``ATKc`` only removes
+  cross-border transfer capacities. Moreover, line and link capacities can be capped in the ``config.yaml`` at
+  ``lines: s_nom_max:`` and ``links: p_nom_max`` (`#166 <https://github.com/PyPSA/pypsa-eur/pull/166>`_).
+
 * Added an option to alter the capital cost of carriers by a factor via ``carrier+factor`` in the ``{opts}`` wildcard. This can be useful for exploring uncertain cost parameters. Example: ``solar+0.5`` reduces the capital cost of solar to 50% of original values (`#167 <https://github.com/PyPSA/pypsa-eur/pull/167>`_).
 
 * Add compatibility for pyomo 5.7.0 in :mod:`cluster_network` and :mod:`simplify_network`.
@@ -28,6 +34,8 @@ Upcoming Release
 * Fix bug of clustering offwind-{ac,dc} sites in the option of high-resolution sites for renewables. Now, there are more sites for offwind-{ac,dc} available than network nodes. Before, they were clustered to the resolution of the network. (e.g. elec_s1024_37m.nc: 37 network nodes, 1024 sites)
 
 * Use `mamba` (https://github.com/mamba-org/mamba) for faster Travis CI builds (`#196 <https://github.com/PyPSA/pypsa-eur/pull/196>`_)
+
+*  The mappings for clustered lines and buses produced by the ``simplify_network`` and ``cluster_network`` rules changed from Hierarchical Data Format (.h5) to Comma-Separated Values format (.csv) (`#198 <https://github.com/PyPSA/pypsa-eur/pull/198>`_)
 
 PyPSA-Eur 0.2.0 (8th June 2020)
 ==================================
@@ -61,7 +69,6 @@ PyPSA-Eur 0.2.0 (8th June 2020)
 * Improved documentation on open-source solver setup and added usage warnings.
 
 * Updated ``conda`` environment regarding ``pypsa``, ``pyproj``, ``gurobi``, ``lxml``. This release requires PyPSA v0.17.0.
-
 
 PyPSA-Eur 0.1.0 (9th January 2020)
 ==================================
