@@ -95,10 +95,9 @@ def add_emission_prices(n, emission_prices=None, exclude_co2=False):
 
 
 def set_line_s_max_pu(n):
-    # set n-1 security margin to 0.5 for 37 clusters and to 0.7 from 200 clusters
-    n_clusters = len(n.buses)
-    s_max_pu = np.clip(0.5 + 0.2 * (n_clusters - 37) / (200 - 37), 0.5, 0.7)
+    s_max_pu = snakemake.config['lines']['s_max_pu']
     n.lines['s_max_pu'] = s_max_pu
+    logger.info(f"N-1 security margin of lines set to {s_max_pu}")
 
 
 def set_transmission_limit(n, ll_type, factor, Nyears=1):
@@ -151,6 +150,27 @@ def average_every_nhours(n, offset):
 
     return m
 
+def enforce_autarky(n, only_crossborder=False):
+    if only_crossborder:
+        lines_rm = n.lines.loc[
+                        n.lines.bus0.map(n.buses.country) !=
+                        n.lines.bus1.map(n.buses.country)
+                    ].index
+        links_rm = n.links.loc[
+                        n.links.bus0.map(n.buses.country) !=
+                        n.links.bus1.map(n.buses.country)
+                    ].index
+    else:
+        lines_rm = n.lines.index
+        links_rm = n.links.index
+    n.mremove("Line", lines_rm)
+    n.mremove("Link", links_rm)
+
+def set_line_nom_max(n):
+    s_nom_max_set = snakemake.config["lines"].get("s_nom_max,", np.inf)
+    p_nom_max_set = snakemake.config["links"].get("p_nom_max", np.inf)
+    n.lines.s_nom_max.clip(upper=s_nom_max_set, inplace=True)
+    n.links.p_nom_max.clip(upper=p_nom_max_set, inplace=True)
 
 if __name__ == "__main__":
     if 'snakemake' not in globals():
@@ -202,5 +222,12 @@ if __name__ == "__main__":
 
     ll_type, factor = snakemake.wildcards.ll[0], snakemake.wildcards.ll[1:]
     set_transmission_limit(n, ll_type, factor, Nyears)
+
+    set_line_nom_max(n)
+
+    if "ATK" in opts:
+        enforce_autarky(n)
+    elif "ATKc" in opts:
+        enforce_autarky(n, only_crossborder=True)
 
     n.export_to_netcdf(snakemake.output[0])
