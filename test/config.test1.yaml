@@ -188,3 +188,83 @@ solving:
   #   solutiontype: 2 # non basic solution, ie no crossover
   #   barrier_convergetol: 1.e-5
   #   feasopt_tolerance: 1.e-6
+
+plotting:
+  map:
+    figsize: [7, 7]
+    boundaries: [-10.2, 29, 35,  72]
+    p_nom:
+      bus_size_factor: 5.e+4
+      linewidth_factor: 3.e+3
+
+  costs_max: 800
+  costs_threshold: 1
+
+  energy_max: 15000.
+  energy_min: -10000.
+  energy_threshold: 50.
+
+  vre_techs: ["onwind", "offwind-ac", "offwind-dc", "solar", "ror"]
+  conv_techs: ["OCGT", "CCGT", "Nuclear", "Coal"]
+  storage_techs: ["hydro+PHS", "battery", "H2"]
+  load_carriers: ["AC load"]
+  AC_carriers: ["AC line", "AC transformer"]
+  link_carriers: ["DC line", "Converter AC-DC"]
+  tech_colors:
+    "onwind" : "#235ebc"
+    "onshore wind" : "#235ebc"
+    'offwind' : "#6895dd"
+    'offwind-ac' : "#6895dd"
+    'offshore wind' : "#6895dd"
+    'offshore wind ac' : "#6895dd"
+    'offwind-dc' : "#74c6f2"
+    'offshore wind dc' : "#74c6f2"
+    "hydro" : "#08ad97"
+    "hydro+PHS" : "#08ad97"
+    "PHS" : "#08ad97"
+    "hydro reservoir" : "#08ad97"
+    'hydroelectricity' : '#08ad97'
+    "ror" : "#4adbc8"
+    "run of river" : "#4adbc8"
+    'solar' : "#f9d002"
+    'solar PV' : "#f9d002"
+    'solar thermal' : '#ffef60'
+    'biomass' : '#0c6013'
+    'solid biomass' : '#06540d'
+    'biogas' : '#23932d'
+    'waste' : '#68896b'
+    'geothermal' : '#ba91b1'
+    "OCGT" : "#d35050"
+    "gas" : "#d35050"
+    "natural gas" : "#d35050"
+    "CCGT" : "#b20101"
+    "nuclear" : "#ff9000"
+    "coal" : "#707070"
+    "lignite" : "#9e5a01"
+    "oil" : "#262626"
+    "H2" : "#ea048a"
+    "hydrogen storage" : "#ea048a"
+    "battery" : "#b8ea04"
+    "Electric load" : "#f9d002"
+    "electricity" : "#f9d002"
+    "lines" : "#70af1d"
+    "transmission lines" : "#70af1d"
+    "AC-AC" : "#70af1d"
+    "AC line" : "#70af1d"
+    "links" : "#8a1caf"
+    "HVDC links" : "#8a1caf"
+    "DC-DC" : "#8a1caf"
+    "DC link" : "#8a1caf"
+  nice_names:
+    OCGT: "Open-Cycle Gas"
+    CCGT: "Combined-Cycle Gas"
+    offwind-ac: "Offshore Wind (AC)"
+    offwind-dc: "Offshore Wind (DC)"
+    onwind: "Onshore Wind"
+    solar: "Solar"
+    PHS: "Pumped Hydro Storage"
+    hydro: "Reservoir & Dam"
+    battery: "Battery Storage"
+    H2: "Hydrogen Storage"
+    lines: "Transmission Lines"
+    ror: "Run of River"
