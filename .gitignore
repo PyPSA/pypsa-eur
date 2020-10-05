@@ -25,6 +25,7 @@ gurobi.log
 /data/transport_data.csv
 /data/switzerland*
 /data/.nfs*
+/data/Industrial_Database.csv
 
 *.org
 

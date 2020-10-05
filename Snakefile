@@ -198,6 +198,21 @@ rule build_industrial_production_per_country_tomorrow:
     resources: mem_mb=1000
     script: 'scripts/build_industrial_production_per_country_tomorrow.py'
 
+
+rule build_industrial_production_per_node:
+    input:
+        clustered_pop_layout="resources/pop_layout_{network}_s{simpl}_{clusters}.csv",
+        europe_shape=pypsaeur('resources/europe_shape.geojson'),
+        hotmaps_industrial_database="data/Industrial_Database.csv",
+        network=pypsaeur('networks/{network}_s{simpl}_{clusters}.nc'),
+        industrial_production_per_country_tomorrow="resources/industrial_production_per_country_tomorrow.csv"
+    output:
+        industrial_production_per_node="resources/industrial_production_{network}_s{simpl}_{clusters}.csv"
+    threads: 1
+    resources: mem_mb=1000
+    script: 'scripts/build_industrial_production_per_node.py'
+
+
 rule build_industrial_energy_demand_per_country_today:
     input:
         ammonia_production="resources/ammonia_production.csv",
