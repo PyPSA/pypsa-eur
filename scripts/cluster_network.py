@@ -257,8 +257,8 @@ def busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights=None, algori
         else:
             raise ValueError(f"`algorithm` must be one of 'kmeans', 'spectral' or 'louvain'. Is {algorithm}.")
 
-    return (n.buses.groupby(['country', 'sub_network'], group_keys=False, squeeze=True)
-            .apply(busmap_for_country).rename('busmap'))
+    return (n.buses.groupby(['country', 'sub_network'], group_keys=False)
+            .apply(busmap_for_country).squeeze().rename('busmap'))
 
 def plot_busmap_for_n_clusters(n, n_clusters=50):
     busmap = busmap_for_n_clusters(n, n_clusters)
@@ -371,11 +371,7 @@ if __name__ == "__main__":
                                                focus_weights=focus_weights)
 
     clustering.network.export_to_netcdf(snakemake.output.network)
-    with pd.HDFStore(snakemake.output.clustermaps, mode='w') as store:
-        with pd.HDFStore(snakemake.input.clustermaps, mode='r') as clustermaps:
-            for attr in clustermaps.keys():
-                store.put(attr, clustermaps[attr], format="table", index=False)
-        for attr in ('busmap', 'linemap', 'linemap_positive', 'linemap_negative'):
-            store.put(attr, getattr(clustering, attr), format="table", index=False)
+    for attr in ('busmap', 'linemap'): #also available: linemap_positive, linemap_negative
+        getattr(clustering, attr).to_csv(snakemake.output[attr])
 
     cluster_regions((clustering.busmap,))
