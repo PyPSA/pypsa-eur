@@ -106,7 +106,7 @@ def attach_stores(n, costs):
                bus1=h2_buses_i,
                carrier='H2 electrolysis',
                p_nom_extendable=True,
-               efficiency=costs.at["electrolysis", "efficiency"],
+               efficiency_store=costs.at["electrolysis", "efficiency_store"],
                capital_cost=costs.at["electrolysis", "capital_cost"])
 
         n.madd("Link", h2_buses_i + " Fuel Cell",
@@ -114,7 +114,7 @@ def attach_stores(n, costs):
                bus1=buses_i,
                carrier='H2 fuel cell',
                p_nom_extendable=True,
-               efficiency=costs.at["fuel cell", "efficiency"],
+               efficiency_dispatch=costs.at["fuel cell", "efficiency_dispatch"],
                #NB: fixed cost is per MWel
                capital_cost=costs.at["fuel cell", "capital_cost"] * costs.at["fuel cell", "efficiency"])
 
