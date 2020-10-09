@@ -47,23 +47,23 @@ Inputs
 - ``data/costs.csv``: The database of cost assumptions for all included technologies for specific years from various sources; e.g. discount rate, lifetime, investment (CAPEX), fixed operation and maintenance (FOM), variable operation and maintenance (VOM), fuel costs, efficiency, carbon-dioxide intensity.
 - ``resources/regions_onshore.geojson``: confer :ref:`busregions`
 - ``resources/regions_offshore.geojson``: confer :ref:`busregions`
-- ``networks/{network}.nc``: confer :ref:`electricity`
+- ``networks/elec.nc``: confer :ref:`electricity`
 
 Outputs
 -------
 
-- ``resources/regions_onshore_{network}_s{simpl}.geojson``:
+- ``resources/regions_onshore_elec_s{simpl}.geojson``:
 
     .. image:: ../img/regions_onshore_elec_s.png
             :scale: 33 %
 
-- ``resources/regions_offshore_{network}_s{simpl}.geojson``:
+- ``resources/regions_offshore_elec_s{simpl}.geojson``:
 
     .. image:: ../img/regions_offshore_elec_s  .png
             :scale: 33 %
 
-- ``resources/clustermaps_{network}_s{simpl}.h5``: Mapping of buses from ``networks/elec.nc`` to ``networks/elec_s{simpl}.nc``; has keys ['/busmap_s']
-- ``networks/{network}_s{simpl}.nc``:
+- ``resources/clustermaps_elec_s{simpl}.h5``: Mapping of buses from ``networks/elec.nc`` to ``networks/elec_s{simpl}.nc``; has keys ['/busmap_s']
+- ``networks/elec_s{simpl}.nc``:
 
     .. image:: ../img/elec_s.png
         :scale: 33 %
