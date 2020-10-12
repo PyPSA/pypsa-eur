@@ -226,6 +226,17 @@ rule build_industrial_production_per_node:
     script: 'scripts/build_industrial_production_per_node.py'
 
 
+rule build_industrial_energy_demand_per_node:
+    input:
+        industry_sector_ratios="resources/industry_sector_ratios.csv",
+        industrial_production_per_node="resources/industrial_production_{network}_s{simpl}_{clusters}.csv"
+    output:
+        industrial_energy_demand_per_node="resources/industrial_energy_demand_{network}_s{simpl}_{clusters}.csv"
+    threads: 1
+    resources: mem_mb=1000
+    script: 'scripts/build_industrial_energy_demand_per_node.py'
+
+
 rule build_industrial_energy_demand_per_country_today:
     input:
         ammonia_production="resources/ammonia_production.csv",
