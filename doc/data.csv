@@ -1,0 +1,19 @@
+description,file/folder,licence,source
+JRC IDEES database,jrc-idees-2015/,CC BY 4.0,https://ec.europa.eu/jrc/en/potencia/jrc-idees
+urban/rural fraction,urban_percent.csv,unknown,unknown
+JRC biomass potentials,biomass/,unknown,https://doi.org/10.2790/39014
+EEA emission statistics,eea/,unknown,https://www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-14
+Eurostat Energy Balances,eurostat-energy_balances-*/,Eurostat,https://ec.europa.eu/eurostat/web/energy/data/energy-balances
+Swiss energy statistics from Swiss Federal Office of Energy,switzerland-sfoe/,unknown,http://www.bfe.admin.ch/themen/00526/00541/00542/02167/index.html?dossier_id=02169
+BASt emobility statistics,emobility/,unknown,http://www.bast.de/DE/Verkehrstechnik/Fachthemen/v2-verkehrszaehlung/Stundenwerte.html?nn=626916
+timezone mappings,timezone_mappings.csv,CC BY 4.0,Tom Brown
+BDEW heating profile,heat_load_profile_BDEW.csv,unknown,https://github.com/oemof/demandlib
+heating profiles for Aarhus,heat_load_profile_DK_AdamJensen.csv,unknown,Adam Jensen MA thesis at Aarhus University
+George Lavidas wind/wave costs,WindWaveWEC_GLTB.xlsx,unknown,George Lavidas
+country codes,Country_codes.csv,CC BY 4.0,Marta Victoria
+co2 budgets,co2_budget.csv,CC BY 4.0,https://arxiv.org/abs/2004.11009
+existing heating potentials,existing_infrastructure/existing_heating_raw.csv,unknown,https://ec.europa.eu/energy/studies/mapping-and-analyses-current-and-future-2020-2030-heatingcooling-fuel-deployment_en?redir=1
+IRENA existing VRE capacities,existing_infrastructure/{solar|onwind|offwind}_capcity_IRENA.csv,unknown,https://www.irena.org/Statistics/Download-Data
+USGS ammonia production,myb1-2017-nitro.xls,unknown,https://www.usgs.gov/centers/nmic/nitrogen-statistics-and-information
+hydrogen salt cavern potentials,hydrogen_salt_cavern_potentials.csv,CC BY 4.0,https://doi.org/10.1016/j.ijhydene.2019.12.161
+hotmaps industrial site database,Industrial_Database.csv,CC BY 4.0,https://gitlab.com/hotmaps/industrial_sites/industrial_sites_Industrial_Database
