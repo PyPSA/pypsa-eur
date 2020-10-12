@@ -7,7 +7,12 @@ industry_sector_ratios=pd.read_csv(snakemake.input.industry_sector_ratios,
                                    index_col=0)
 
 #material demand per node and industry (kton/a)
-nodal_production = pd.read_csv(snakemake.input.industrial_production_per_node, index_col=0)
+nodal_production = pd.read_csv(snakemake.input.industrial_production_per_node,
+                               index_col=0)
+
+#energy demand today to get current electricity
+nodal_today = pd.read_csv(snakemake.input.industrial_energy_demand_per_node_today,
+                          index_col=0)
 
 #final energy consumption per node and industry (TWh/a)
 nodal_df = nodal_production.dot(industry_sector_ratios.T)
@@ -19,6 +24,8 @@ rename_sectors = {'elec':'electricity',
                   'heat':'low-temperature heat'}
 
 nodal_df.rename(columns=rename_sectors,inplace=True)
+
+nodal_df["current electricity"] = nodal_today["electricity"]
 
 nodal_df.index.name = "TWh/a (MtCO2/a)"
 

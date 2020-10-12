@@ -3,6 +3,7 @@ configfile: "config.yaml"
 
 wildcard_constraints:
     lv="[a-z0-9\.]+",
+    network="[a-zA-Z0-9]*",
     simpl="[a-zA-Z0-9]*",
     clusters="[0-9]+m?",
     sectors="[+a-zA-Z0-9]+",
@@ -229,7 +230,8 @@ rule build_industrial_production_per_node:
 rule build_industrial_energy_demand_per_node:
     input:
         industry_sector_ratios="resources/industry_sector_ratios.csv",
-        industrial_production_per_node="resources/industrial_production_{network}_s{simpl}_{clusters}.csv"
+        industrial_production_per_node="resources/industrial_production_{network}_s{simpl}_{clusters}.csv",
+        industrial_energy_demand_per_node_today="resources/industrial_energy_demand_today_{network}_s{simpl}_{clusters}.csv"
     output:
         industrial_energy_demand_per_node="resources/industrial_energy_demand_{network}_s{simpl}_{clusters}.csv"
     threads: 1
@@ -246,6 +248,18 @@ rule build_industrial_energy_demand_per_country_today:
     threads: 1
     resources: mem_mb=1000
     script: 'scripts/build_industrial_energy_demand_per_country_today.py'
+
+
+rule build_industrial_energy_demand_per_node_today:
+    input:
+        industrial_distribution_key="resources/industrial_distribution_key_{network}_s{simpl}_{clusters}.csv",
+        industrial_energy_demand_per_country_today="resources/industrial_energy_demand_per_country_today.csv"
+    output:
+        industrial_energy_demand_per_node_today="resources/industrial_energy_demand_today_{network}_s{simpl}_{clusters}.csv"
+    threads: 1
+    resources: mem_mb=1000
+    script: 'scripts/build_industrial_energy_demand_per_node_today.py'
+
 
 
 rule build_industrial_energy_demand_per_country:
@@ -287,7 +301,7 @@ rule prepare_sector_network:
         clustermaps=pypsaeur('resources/clustermaps_{network}_s{simpl}_{clusters}.h5'),
         clustered_pop_layout="resources/pop_layout_{network}_s{simpl}_{clusters}.csv",
         simplified_pop_layout="resources/pop_layout_{network}_s{simpl}.csv",
-        industrial_demand="resources/industrial_demand_{network}_s{simpl}_{clusters}.csv",
+        industrial_demand="resources/industrial_energy_demand_{network}_s{simpl}_{clusters}.csv",
         heat_demand_urban="resources/heat_demand_urban_{network}_s{simpl}_{clusters}.nc",
         heat_demand_rural="resources/heat_demand_rural_{network}_s{simpl}_{clusters}.nc",
         heat_demand_total="resources/heat_demand_total_{network}_s{simpl}_{clusters}.nc",
