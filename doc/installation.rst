@@ -58,19 +58,26 @@ atlite version 0.0.2.
 Data requirements
 =================
 
-The data requirements include the JRC-IDEES-2015 database, JRC biomass
-potentials, EEA emission statistics, Eurostat Energy Balances, urban
-district heating potentials, emobility statistics, timezone mappings
-and heating profiles.
+Small data files are included directly in the git repository, while
+larger ones are archived in a data bundle. The data bundle's size is
+around 640 MB.
 
-The data bundle is about 640 MB.
-
-To download and extract it on the command line:
+To download and extract the data bundle on the command line:
 
 .. code:: bash
 
     projects/pypsa-eur-sec/data % wget "https://nworbmot.org/pypsa-eur-sec-data-bundle-201012.tar.gz"
     projects/pypsa-eur-sec/data % tar xvzf pypsa-eur-sec-data-bundle-201012.tar.gz
+
+
+The data licences and sources are given in the following table.
+
+
+.. csv-table::
+   :header-rows: 1
+   :file: data.csv
+
+
 
 Set up the default configuration
 ================================
