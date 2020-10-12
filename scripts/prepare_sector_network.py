@@ -666,7 +666,7 @@ def insert_electricity_distribution_grid(network):
                  capital_cost=costs.at['electricity distribution grid','fixed']*snakemake.config["sector"]['electricity_distribution_grid_cost_factor'])
 
 
-    #this catches regular electricity load and "industry new electricity"
+    #this catches regular electricity load and "industry electricity"
     loads = network.loads.index[network.loads.carrier.str.contains("electricity")]
     network.loads.loc[loads,"bus"] += " low voltage"
 
@@ -1635,12 +1635,18 @@ def add_industry(network):
                  carrier="low-temperature heat for industry",
                  p_set=industrial_demand.loc[nodes,"low-temperature heat"]/8760.)
 
+    #remove today's industrial electricity demand by scaling down total electricity demand
+    for ct in n.buses.country.unique():
+        loads = n.loads.index[(n.loads.index.str[:2] == ct) & (n.loads.carrier == "electricity")]
+        factor = 1 - industrial_demand.loc[loads,"current electricity"].sum()/n.loads_t.p_set[loads].sum().sum()
+        n.loads_t.p_set[loads] *= factor
+
     network.madd("Load",
                  nodes,
-                 suffix=" industry new electricity",
+                 suffix=" industry electricity",
                  bus=nodes,
-                 carrier="industry new electricity",
-                 p_set = (industrial_demand.loc[nodes,"electricity"]-industrial_demand.loc[nodes,"current electricity"])/8760.)
+                 carrier="industry electricity",
+                 p_set=industrial_demand.loc[nodes,"electricity"]/8760.)
 
     network.madd("Bus",
                  ["process emissions"],
