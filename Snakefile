@@ -199,12 +199,25 @@ rule build_industrial_production_per_country_tomorrow:
     script: 'scripts/build_industrial_production_per_country_tomorrow.py'
 
 
-rule build_industrial_production_per_node:
+
+
+rule build_industrial_distribution_key:
     input:
         clustered_pop_layout="resources/pop_layout_{network}_s{simpl}_{clusters}.csv",
         europe_shape=pypsaeur('resources/europe_shape.geojson'),
         hotmaps_industrial_database="data/Industrial_Database.csv",
-        network=pypsaeur('networks/{network}_s{simpl}_{clusters}.nc'),
+        network=pypsaeur('networks/{network}_s{simpl}_{clusters}.nc')
+    output:
+        industrial_distribution_key="resources/industrial_distribution_key_{network}_s{simpl}_{clusters}.csv"
+    threads: 1
+    resources: mem_mb=1000
+    script: 'scripts/build_industrial_distribution_key.py'
+
+
+
+rule build_industrial_production_per_node:
+    input:
+        industrial_distribution_key="resources/industrial_distribution_key_{network}_s{simpl}_{clusters}.csv",
         industrial_production_per_country_tomorrow="resources/industrial_production_per_country_tomorrow.csv"
     output:
         industrial_production_per_node="resources/industrial_production_{network}_s{simpl}_{clusters}.csv"
