@@ -7,7 +7,9 @@
 Cost Assumptions
 ##################
 
-The database of cost assumptions is stored in ``data/costs.csv``.
+The database of cost assumptions is retrieved from the repository `PyPSA/technology-data <https://github.com/pypsa/technology-data>`_ and then saved to``resources/costs.csv``.
+
+The ``config.yaml` provides options to choose a reference year (``costs: year:``) and use a specific version of the repository ``costs: version:``.
 
 It includes cost assumptions for all included technologies for specific
 years from various sources, namely for
@@ -39,15 +41,6 @@ Modifying Cost Assumptions
 
 Some cost assumptions (e.g. marginal cost and capital cost) can be directly overwritten in the ``config.yaml`` (cf. Section  :ref:`costs_cf`  in :ref:`config`).
 
-To change cost assumptions in more detail, modify cost assumptions directly in ``data/costs.csv`` as this is not yet supported through the config file.
+To change cost assumptions in more detail, modify cost assumptions directly in ``resources/costs.csv`` as this is not yet supported through the config file.
 
-You can also build multiple different cost databases. Make a renamed copy of ``data/costs.csv`` (e.g. ``data/costs-optimistic.csv``) and set the variable ``COSTS=data/costs-optimistic.csv`` in the ``Snakefile``.
-
-
-Default Cost Assumptions
-========================
-
-.. csv-table::
-   :header-rows: 1
-   :widths: 10,3,5,4,6,8
-   :file: ../data/costs.csv
+You can also build multiple different cost databases. Make a renamed copy of ``resources/costs.csv`` (e.g. ``data/costs-optimistic.csv``) and set the variable ``COSTS=data/costs-optimistic.csv`` in the ``Snakefile``.

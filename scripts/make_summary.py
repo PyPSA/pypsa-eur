@@ -11,8 +11,9 @@ Relevant Settings
 .. code:: yaml
 
     costs:
-        USD2013_to_EUR2013:
-        discountrate:
+        year:
+        version:
+        fill_values:
         marginal_cost:
         capital_cost:
 

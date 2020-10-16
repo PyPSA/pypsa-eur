@@ -13,7 +13,7 @@ Relevant Settings
 
     costs:
         year:
-        USD2013_to_EUR2013:
+        version:
         dicountrate:
         emission_prices:
 
@@ -46,7 +46,7 @@ Relevant Settings
 Inputs
 ------
 
-- ``data/costs.csv``: The database of cost assumptions for all included technologies for specific years from various sources; e.g. discount rate, lifetime, investment (CAPEX), fixed operation and maintenance (FOM), variable operation and maintenance (VOM), fuel costs, efficiency, carbon-dioxide intensity.
+- ``resources/costs.csv``: The database of cost assumptions for all included technologies for specific years from various sources; e.g. discount rate, lifetime, investment (CAPEX), fixed operation and maintenance (FOM), variable operation and maintenance (VOM), fuel costs, efficiency, carbon-dioxide intensity.
 - ``data/bundle/hydro_capacities.csv``: Hydropower plant store/discharge power capacities, energy storage capacity, and average hourly inflow by country.
 
     .. image:: ../img/hydrocapacities.png
@@ -145,15 +145,9 @@ def load_costs(Nyears=1., tech_costs=None, config=None, elec_config=None):
 
     # correct units to MW
     costs.loc[costs.unit.str.contains("/kW"),"value"] *= 1e3
+    costs.unit = costs.unit.str.replace("/kW", "/MW")
 
-    fill_values = {"CO2 intensity" : 0,
-                   "FOM" : 0,
-                   "VOM" : 0,
-                   "discount rate" : config['discountrate'],
-                   "efficiency" : 1,
-                   "fuel" : 0,
-                   "investment" : 0,
-                   "lifetime" : 25}
+    fill_values = config["fill_values"]
     costs = costs.value.unstack().fillna(fill_values)
 
     costs["capital_cost"] = ((annuity(costs["lifetime"], costs["discount rate"]) +
@@ -170,8 +164,8 @@ def load_costs(Nyears=1., tech_costs=None, config=None, elec_config=None):
     costs.at['OCGT', 'co2_emissions'] = costs.at['gas', 'co2_emissions']
     costs.at['CCGT', 'co2_emissions'] = costs.at['gas', 'co2_emissions']
 
-    costs.at['solar', 'capital_cost'] = 0.5*(costs.at['solar-rooftop', 'capital_cost'] +
-                                             costs.at['solar-utility', 'capital_cost'])
+    costs.at['solar', 'capital_cost'] = config["rooftop_share"] * costs.at['solar-rooftop', 'capital_cost'] + \
+                                        (1-config["rooftop_share"]) * costs.at['solar-utility', 'capital_cost']
 
     def costs_for_storage(store, link1, link2=None, max_hours=1.):
         capital_cost = link1['capital_cost'] + max_hours * store['capital_cost']

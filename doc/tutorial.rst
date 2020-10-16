@@ -218,7 +218,7 @@ A job (here ``simplify_network``) will display its attributes and normally some 
 
     [<DATETIME>]
     rule simplify_network:
-        input: networks/elec.nc, data/costs.csv, resources/regions_onshore.geojson, resources/regions_offshore.geojson
+        input: networks/elec.nc, resources/costs.csv, resources/regions_onshore.geojson, resources/regions_offshore.geojson
         output: networks/elec_s.nc, resources/regions_onshore_elec_s.geojson, resources/regions_offshore_elec_s.geojson, resources/clustermaps_elec_s.h5
         jobid: 3
         benchmark: benchmarks/simplify_network/elec_s
