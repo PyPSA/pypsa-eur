@@ -77,8 +77,8 @@ def attach_storageunits(n, costs):
                p_nom_extendable=True,
                capital_cost=costs.at[carrier, 'capital_cost'],
                marginal_cost=costs.at[carrier, 'marginal_cost'],
-               efficiency_store=costs.at[carrier, 'efficiency'],
-               efficiency_dispatch=costs.at[carrier, 'efficiency'],
+               efficiency_store=costs.at[carrier, 'efficiency_store'],
+               efficiency_dispatch=costs.at[carrier, 'efficiency_dipatch'],
                max_hours=max_hours[carrier],
                cyclic_state_of_charge=True)
 
@@ -132,7 +132,7 @@ def attach_stores(n, costs):
                bus0=buses_i,
                bus1=b_buses_i,
                carrier='battery charger',
-               efficiency=costs.at['battery inverter', 'efficiency']**0.5,
+               efficiency=costs.at['battery inverter', 'efficiency'],
                capital_cost=costs.at['battery inverter', 'capital_cost'],
                p_nom_extendable=True)
 
@@ -140,7 +140,7 @@ def attach_stores(n, costs):
                bus0=b_buses_i,
                bus1=buses_i,
                carrier='battery discharger',
-               efficiency=costs.at['battery inverter','efficiency']**0.5,
+               efficiency=costs.at['battery inverter','efficiency'],
                capital_cost=costs.at['battery inverter', 'capital_cost'],
                p_nom_extendable=True)
 
