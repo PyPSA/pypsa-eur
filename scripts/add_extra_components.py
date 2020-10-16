@@ -99,7 +99,7 @@ def attach_stores(n, costs):
                carrier='H2',
                e_nom_extendable=True,
                e_cyclic=True,
-               capital_cost=costs.at["hydrogen storage", "capital_cost"])
+               capital_cost=costs.at["hydrogen storage tank", "capital_cost"])
 
         n.madd("Link", h2_buses_i + " Electrolysis",
                bus0=buses_i,
