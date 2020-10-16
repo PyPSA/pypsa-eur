@@ -78,7 +78,7 @@ def attach_storageunits(n, costs):
                capital_cost=costs.at[carrier, 'capital_cost'],
                marginal_cost=costs.at[carrier, 'marginal_cost'],
                efficiency_store=costs.at[carrier, 'efficiency_store'],
-               efficiency_dispatch=costs.at[carrier, 'efficiency_dipatch'],
+               efficiency_dispatch=costs.at[carrier, 'efficiency_dispatch'],
                max_hours=max_hours[carrier],
                cyclic_state_of_charge=True)
 
