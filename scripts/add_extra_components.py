@@ -70,6 +70,9 @@ def attach_storageunits(n, costs):
 
     buses_i = n.buses.index
 
+    lookup_store = {"H2": "electrolysis", "battery": "battery inverter"}
+    lookup_dispatch = {"H2": "fuel cell", "battery": "battery inverter"}
+
     for carrier in carriers:
         n.madd("StorageUnit", buses_i, ' ' + carrier,
                bus=buses_i,
@@ -77,8 +80,8 @@ def attach_storageunits(n, costs):
                p_nom_extendable=True,
                capital_cost=costs.at[carrier, 'capital_cost'],
                marginal_cost=costs.at[carrier, 'marginal_cost'],
-               efficiency_store=costs.at[carrier, 'efficiency'],
-               efficiency_dispatch=costs.at[carrier, 'efficiency'],
+               efficiency_store=costs.at[lookup_store[carrier], 'efficiency'],
+               efficiency_dispatch=costs.at[lookup_dispatch[carrier], 'efficiency'],
                max_hours=max_hours[carrier],
                cyclic_state_of_charge=True)
 
