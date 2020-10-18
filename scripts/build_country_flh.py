@@ -165,8 +165,8 @@ if __name__ == '__main__':
 
     config = snakemake.config['renewable'][snakemake.wildcards.technology]
 
-    year = int(snakemake.wildcards.year)
-    snapshots = dict(start=str(year), end=str(year+1), closed="left") if year else snakememake.config['snapshots']
+    year = snakemake.wildcards.year
+    snapshots = dict(start=year, end=str(int(year)+1), closed="left") if year else snakememake.config['snapshots']
     time = pd.date_range(freq='m', **snapshots)
     params = dict(years=slice(*time.year[[0, -1]]), months=slice(*time.month[[0, -1]]))
 

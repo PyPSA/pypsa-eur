@@ -52,18 +52,18 @@ Inputs
 Outputs
 -------
 
-- ``resources/regions_onshore_elec_s{simpl}.geojson``:
+- ``resources/regions_onshore_elec{year}_s{simpl}.geojson``:
 
     .. image:: ../img/regions_onshore_elec_s.png
             :scale: 33 %
 
-- ``resources/regions_offshore_elec_s{simpl}.geojson``:
+- ``resources/regions_offshore_elec{year}_s{simpl}.geojson``:
 
     .. image:: ../img/regions_offshore_elec_s  .png
             :scale: 33 %
 
-- ``resources/clustermaps_elec_s{simpl}.h5``: Mapping of buses from ``networks/elec.nc`` to ``networks/elec_s{simpl}.nc``; has keys ['/busmap_s']
-- ``networks/elec_s{simpl}.nc``:
+- ``resources/clustermaps_elec{year}_s{simpl}.h5``: Mapping of buses from ``networks/elec.nc`` to ``networks/elec{year}_s{simpl}.nc``; has keys ['/busmap_s']
+- ``networks/elec{year}_s{simpl}.nc``:
 
     .. image:: ../img/elec_s.png
         :scale: 33 %

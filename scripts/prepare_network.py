@@ -37,12 +37,12 @@ Inputs
 ------
 
 - ``data/costs.csv``: The database of cost assumptions for all included technologies for specific years from various sources; e.g. discount rate, lifetime, investment (CAPEX), fixed operation and maintenance (FOM), variable operation and maintenance (VOM), fuel costs, efficiency, carbon-dioxide intensity.
-- ``networks/elec_s{simpl}_{clusters}.nc``: confer :ref:`cluster`
+- ``networks/elec{year}_s{simpl}_{clusters}.nc``: confer :ref:`cluster`
 
 Outputs
 -------
 
-- ``networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc``: Complete PyPSA network that will be handed to the ``solve_network`` rule.
+- ``networks/elec{year}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc``: Complete PyPSA network that will be handed to the ``solve_network`` rule.
 
 Description
 -----------
