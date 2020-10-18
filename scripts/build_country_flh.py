@@ -165,7 +165,9 @@ if __name__ == '__main__':
 
     config = snakemake.config['renewable'][snakemake.wildcards.technology]
 
-    time = pd.date_range(freq='m', **snakemake.config['snapshots'])
+    year = int(snakemake.wildcards.year)
+    snapshots = dict(start=str(year), end=str(year+1), closed="left") if year else snakememake.config['snapshots']
+    time = pd.date_range(freq='m', **snapshots)
     params = dict(years=slice(*time.year[[0, -1]]), months=slice(*time.month[[0, -1]]))
 
     cutout = atlite.Cutout(config['cutout'],

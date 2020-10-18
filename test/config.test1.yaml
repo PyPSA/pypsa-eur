@@ -11,6 +11,7 @@ logging:
 summary_dir: results
 
 scenario:
+  year: ['']
   simpl: ['']
   ll: ['copt']
   clusters: [5]

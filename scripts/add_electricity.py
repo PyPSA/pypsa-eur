@@ -212,6 +212,7 @@ def attach_load(n):
     substation_lv_i = n.buses.index[n.buses['substation_lv']]
     regions = (gpd.read_file(snakemake.input.regions).set_index('name')
                .reindex(substation_lv_i))
+    # TODO: is there a fallback if year not in timeseries_opsd?
     opsd_load = (timeseries_opsd(slice(*n.snapshots[[0,-1]].year.astype(str)),
                                  snakemake.input.opsd_load) *
                  snakemake.config.get('load', {}).get('scaling_factor', 1.0))
@@ -522,6 +523,11 @@ if __name__ == "__main__":
     configure_logging(snakemake)
 
     n = pypsa.Network(snakemake.input.base_network)
+
+    year = int(snakemake.wildcards.year)
+    snapshots = dict(start=str(year), end=str(year+1), closed="left") if year else snakememake.config['snapshots']
+    n.set_snapshots(pd.date_range(freq='h', **snapshots))
+    n.snapshot_weightings[:] *= 8760. / n.snapshot_weightings.sum()
     Nyears = n.snapshot_weightings.sum() / 8760.
 
     costs = load_costs(Nyears)
