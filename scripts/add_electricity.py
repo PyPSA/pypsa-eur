@@ -494,10 +494,12 @@ def attach_OPSD_ppls_for_country(country, tech_map=None):
                     .get('include_renewable_capacities_from_OPSD', {}))
 
     capacities = (ppm.data.OPSD_VRE_country(country).powerplant.convert_country_to_alpha2()
+                  .astype({'Capacity': 'float'})
                   .groupby(['lat','lon','Fueltype','Technology']) # reduce input data
                   .agg({'Capacity': 'sum'})
                   .query('Capacity > 0.1') # only capacities above 100kW
                   .reset_index())
+
     # distinguish between onshore and offshore, if given:
     capacities.Fueltype = (capacities[['Fueltype','Technology']]
                            .apply(lambda b: b.Technology if b.Technology in ['Onshore', 'Offshore']
@@ -508,7 +510,7 @@ def attach_OPSD_ppls_for_country(country, tech_map=None):
         buses = n.buses[n.buses.country==country].index
         
         mapping = pd.Series(dtype='float')
-        for ppm_fueltype, techs in tech_map.items():          
+        for ppm_fueltype, techs in tech_map.items():
             for tech in techs:
                 tech_i = n.generators.query('carrier in @tech and bus in @buses').index
 
