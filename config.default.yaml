@@ -169,6 +169,7 @@ transformers:
 
 load:
   scaling_factor: 1.0
+  fallback_year: 2013
 
 costs:
   year: 2030

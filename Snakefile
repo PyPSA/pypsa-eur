@@ -166,6 +166,8 @@ if config['enable'].get('retrieve_natura_raster', True):
         script: 'scripts/retrieve_natura_raster.py'
 
 
+ruleorder: build_hydro_profile > build_renewable_profiles
+
 rule build_renewable_profiles:
     input:
         base_network="networks/base.nc",

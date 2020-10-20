@@ -75,15 +75,23 @@ if __name__ == "__main__":
         snakemake = mock_snakemake('build_hydro_profile')
     configure_logging(snakemake)
 
+    year = snakemake.wildcards.year
     config = snakemake.config['renewable']['hydro']
     cutout_dir = os.path.dirname(snakemake.input.cutout)
-    cutout = atlite.Cutout(config['cutout'], cutout_dir=cutout_dir)
+    cutout_config = config['cutout']
+    if year: cutout_config = cutout_config.format(year=year)
+
+    cutout = atlite.Cutout(cutout_config, cutout_dir=cutout_dir)
 
     countries = snakemake.config['countries']
     country_shapes = gpd.read_file(snakemake.input.country_shapes).set_index('name')['geometry'].reindex(countries)
     country_shapes.index.name = 'countries'
 
     eia_stats = vhydro.get_eia_annual_hydro_generation(snakemake.input.eia_hydro_generation).reindex(columns=countries)
+
+    if year not in eia_stats.index:
+        eia_stats.loc[year] = eia_stats.mean()
+
     inflow = cutout.runoff(shapes=country_shapes,
                            smooth=True,
                            lower_threshold_quantile=True,
