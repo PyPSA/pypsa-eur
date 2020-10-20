@@ -305,6 +305,7 @@ rule prepare_sector_network:
         heat_demand_urban="resources/heat_demand_urban_{network}_s{simpl}_{clusters}.nc",
         heat_demand_rural="resources/heat_demand_rural_{network}_s{simpl}_{clusters}.nc",
         heat_demand_total="resources/heat_demand_total_{network}_s{simpl}_{clusters}.nc",
+	traffic_data = "data/emobility/",
         temp_soil_total="resources/temp_soil_total_{network}_s{simpl}_{clusters}.nc",
         temp_soil_rural="resources/temp_soil_rural_{network}_s{simpl}_{clusters}.nc",
         temp_soil_urban="resources/temp_soil_urban_{network}_s{simpl}_{clusters}.nc",
