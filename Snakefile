@@ -291,6 +291,7 @@ rule prepare_sector_network:
         co2_totals_name='resources/co2_totals.csv',
         transport_name='resources/transport_data.csv',
         biomass_potentials='resources/biomass_potentials.csv',
+	biomass_transport='data/biomass/biomass_transport_costs.csv',
         timezone_mappings='data/timezone_mappings.csv',
         heat_profile="data/heat_load_profile_BDEW.csv",
         costs=config['costs_dir'] + "costs_{planning_horizons}.csv",
