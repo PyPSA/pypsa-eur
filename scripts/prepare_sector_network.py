@@ -1701,7 +1701,7 @@ def add_industry(network):
                  p_set=industrial_demand.loc[nodes,"low-temperature heat"]/8760.)
 
     #remove today's industrial electricity demand by scaling down total electricity demand
-    for ct in n.buses.country.unique():
+    for ct in n.buses.country.dropna().unique():
         loads = n.loads.index[(n.loads.index.str[:2] == ct) & (n.loads.carrier == "electricity")]
         factor = 1 - industrial_demand.loc[loads,"current electricity"].sum()/n.loads_t.p_set[loads].sum().sum()
         n.loads_t.p_set[loads] *= factor
@@ -1799,6 +1799,9 @@ def remove_h2_network(n):
            e_cyclic=True,
            carrier="H2 Store",
            capital_cost=h2_capital_cost)
+
+# def remove_biomass_transport(n):
+
 
 
 #%%
