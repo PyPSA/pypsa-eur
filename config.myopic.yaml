@@ -321,6 +321,7 @@ plotting:
     "shipping" : "#6495ED"
     "electricity distribution grid" : "#333333"
     'industry electricity': "black"
+    "solid biomass transport": "green"
   nice_names:
     # OCGT: "Gas"
     # OCGT marginal: "Gas (marginal)"
