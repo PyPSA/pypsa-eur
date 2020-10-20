@@ -320,6 +320,7 @@ plotting:
     "today" : "#D2691E"
     "shipping" : "#6495ED"
     "electricity distribution grid" : "#333333"
+    'industry electricity': "black"
   nice_names:
     # OCGT: "Gas"
     # OCGT marginal: "Gas (marginal)"
