@@ -51,6 +51,33 @@ def add_lifetime_wind_solar(n):
         n.generators.loc[[index for index in n.generators.index.to_list()
                         if carrier in index], 'lifetime']=costs.at[carrier_name,'lifetime']
 
+
+def create_network_topology(n, prefix):
+    """
+    create a network topology as the electric network,
+    returns a pandas dataframe with bus0, bus1 and length
+    """
+
+    topo = pd.DataFrame(columns=["bus0", "bus1", "length"])
+    connector = " -> "
+    attrs = ["bus0", "bus1", "length"]
+
+    candidates = pd.concat([n.lines[attrs],
+                            n.links.loc[n.links.carrier == "DC", attrs]])
+
+    positive_order = candidates.bus0 < candidates.bus1
+    candidates_p = candidates[positive_order]
+    candidates_n = (candidates[~ positive_order]
+                    .rename(columns={"bus0": "bus1", "bus1": "bus0"}))
+    candidates = pd.concat((candidates_p, candidates_n), sort=False)
+
+    topo = candidates.groupby(["bus0", "bus1"], as_index=False).mean()
+    topo.rename(index=lambda x: prefix + topo.at[x, "bus0"]
+                + connector + topo.at[x, "bus1"],
+                inplace=True)
+    return topo
+
+
 def update_wind_solar_costs(n,costs):
     """
     Update costs for wind and solar generators added with pypsa-eur to those
@@ -1354,6 +1381,16 @@ def add_biomass(network):
     biomass_potentials = pd.read_csv(snakemake.input.biomass_potentials,
                                      index_col=0)
 
+     # costs for biomass transport
+    transport_costs = pd.read_csv(snakemake.input.biomass_transport,
+                                  index_col=0)
+
+    # potential per node distributed within country by population
+    biomass_pot_node = (biomass_potentials.loc[pop_layout.ct]
+                        .set_index(pop_layout.index)
+                        .mul(pop_layout.fraction, axis="index"))
+
+
     network.add("Carrier","biogas")
     network.add("Carrier","solid biomass")
 
@@ -1363,8 +1400,7 @@ def add_biomass(network):
                  carrier="biogas")
 
     network.madd("Bus",
-                 ["EU solid biomass"],
-                 location="EU",
+                 biomass_pot_node.index + " solid biomass",
                  carrier="solid biomass")
 
     network.madd("Store",
@@ -1376,12 +1412,12 @@ def add_biomass(network):
                  e_initial=biomass_potentials.loc[cts,"biogas"].sum())
 
     network.madd("Store",
-                 ["EU solid biomass"],
-                 bus="EU solid biomass",
+                 biomass_pot_node.index + " solid biomass",
+                 bus=biomass_pot_node.index + " solid biomass",
                  carrier="solid biomass",
-                 e_nom=biomass_potentials.loc[cts,"solid biomass"].sum(),
-                 marginal_cost=costs.at['solid biomass','fuel'],
-                 e_initial=biomass_potentials.loc[cts,"solid biomass"].sum())
+                 e_nom=biomass_pot_node["solid biomass"].values,
+                 marginal_cost=costs.at['solid biomass', 'fuel'],
+                 e_initial=biomass_pot_node["solid biomass"].values)
 
     network.madd("Link",
                  ["biogas to gas"],
@@ -1389,8 +1425,37 @@ def add_biomass(network):
                  bus1="EU gas",
                  bus2="co2 atmosphere",
                  carrier="biogas to gas",
+                 capital_cost=costs.loc["biogas upgrading", "fixed"],
+                 marginal_cost=costs.loc["biogas upgrading", "VOM"],
                  efficiency2=-costs.at['gas','CO2 intensity'],
                  p_nom_extendable=True)
+
+    # add biomass transport
+    biomass_transport = create_network_topology(n, "Biomass transport ")
+
+    # make transport in both directions
+    df = biomass_transport.copy()
+    df["bus1"] = biomass_transport.bus0
+    df["bus0"] = biomass_transport.bus1
+    df.rename(index=lambda x: "Biomass transport " + df.at[x, "bus0"]
+                              + " -> " + df.at[x, "bus1"], inplace=True)
+    biomass_transport = pd.concat([biomass_transport, df])
+
+    # costs
+    bus0_costs = biomass_transport.bus0.apply(lambda x: transport_costs.loc[x[:2]])
+    bus1_costs = biomass_transport.bus1.apply(lambda x: transport_costs.loc[x[:2]])
+    biomass_transport["costs"] = pd.concat([bus0_costs, bus1_costs],
+                                           axis=1).mean(axis=1)
+
+    network.madd("Link",
+                 biomass_transport.index,
+                 bus0=biomass_transport.bus0 + " solid biomass",
+                 bus1=biomass_transport.bus1 + " solid biomass",
+                 p_nom_extendable=True,
+                 length=biomass_transport.length.values,
+                 marginal_cost=biomass_transport.costs * biomass_transport.length.values,
+                 capital_cost=1,
+                 carrier="solid biomass transport")
 
 
     #AC buses with district heating
@@ -1400,7 +1465,7 @@ def add_biomass(network):
 
         network.madd("Link",
                      urban_central + " urban central solid biomass CHP electric",
-                     bus0="EU solid biomass",
+                     bus0=urban_central + " solid biomass",
                      bus1=urban_central,
                      carrier="urban central solid biomass CHP electric",
                      p_nom_extendable=True,
@@ -1415,7 +1480,7 @@ def add_biomass(network):
 
         network.madd("Link",
                      urban_central + " urban central solid biomass CHP heat",
-                     bus0="EU solid biomass",
+                     bus0=urban_central + " solid biomass",
                      bus1=urban_central + " urban central heat",
                      carrier="urban central solid biomass CHP heat",
                      p_nom_extendable=True,
@@ -1425,7 +1490,7 @@ def add_biomass(network):
 
         network.madd("Link",
                      urban_central + " urban central solid biomass CHP CCS electric",
-                     bus0="EU solid biomass",
+                     bus0=urban_central + " solid biomass",
                      bus1=urban_central,
                      bus2="co2 atmosphere",
                      bus3="co2 stored",
@@ -1443,7 +1508,7 @@ def add_biomass(network):
 
         network.madd("Link",
                      urban_central + " urban central solid biomass CHP CCS heat",
-                     bus0="EU solid biomass",
+                     bus0=urban_central + " solid biomass",
                      bus1=urban_central + " urban central heat",
                      bus2="co2 atmosphere",
                      bus3="co2 stored",
@@ -1467,7 +1532,6 @@ def add_industry(network):
                                         index_col=0)
 
     solid_biomass_by_country = industrial_demand["solid biomass"].groupby(pop_layout.ct).sum()
-    countries = solid_biomass_by_country.index
 
     network.madd("Bus",
                  ["solid biomass for industry"],
@@ -1481,16 +1545,16 @@ def add_industry(network):
                  p_set=solid_biomass_by_country.sum()/8760.)
 
     network.madd("Link",
-                 ["solid biomass for industry"],
-                 bus0="EU solid biomass",
+                 nodes + " solid biomass for industry",
+                 bus0=nodes + " solid biomass",
                  bus1="solid biomass for industry",
                  carrier="solid biomass for industry",
                  p_nom_extendable=True,
                  efficiency=1.)
 
     network.madd("Link",
-                 ["solid biomass for industry CCS"],
-                 bus0="EU solid biomass",
+                 nodes + " solid biomass for industry CCS",
+                 bus0=nodes + " solid biomass",
                  bus1="solid biomass for industry",
                  bus2="co2 atmosphere",
                  bus3="co2 stored",
@@ -1753,6 +1817,7 @@ if __name__ == "__main__":
         co2_totals_name='resources/co2_totals.csv',
         transport_name='resources/transport_data.csv',
         biomass_potentials='resources/biomass_potentials.csv',
+        biomass_transport='data/biomass/biomass_transport_costs.csv',
         timezone_mappings='data/timezone_mappings.csv',
         heat_profile="data/heat_load_profile_BDEW.csv",
         costs="../technology-data/outputs/costs_{planning_horizons}.csv",
