@@ -1531,31 +1531,31 @@ def add_industry(network):
     industrial_demand = 1e6*pd.read_csv(snakemake.input.industrial_demand,
                                         index_col=0)
 
-    solid_biomass_by_country = industrial_demand["solid biomass"].groupby(pop_layout.ct).sum()
+    solid_biomass_by_country = industrial_demand["solid biomass"]
 
     network.madd("Bus",
-                 ["solid biomass for industry"],
-                 location="EU",
+                 industrial_demand.index + " solid biomass for industry",
                  carrier="solid biomass for industry")
 
+
     network.madd("Load",
-                 ["solid biomass for industry"],
-                 bus="solid biomass for industry",
+                 industrial_demand.index + " solid biomass for industry",
+                 bus=industrial_demand.index + " solid biomass for industry",
                  carrier="solid biomass for industry",
-                 p_set=solid_biomass_by_country.sum()/8760.)
+                 p_set=industrial_demand["solid biomass"]/8760.)
 
     network.madd("Link",
-                 nodes + " solid biomass for industry",
-                 bus0=nodes + " solid biomass",
-                 bus1="solid biomass for industry",
+                 industrial_demand.index + " solid biomass for industry",
+                 bus0=industrial_demand.index + " solid biomass",
+                 bus1=industrial_demand.index + " solid biomass for industry",
                  carrier="solid biomass for industry",
                  p_nom_extendable=True,
                  efficiency=1.)
 
     network.madd("Link",
-                 nodes + " solid biomass for industry CCS",
-                 bus0=nodes + " solid biomass",
-                 bus1="solid biomass for industry",
+                 industrial_demand.index + " solid biomass for industry CCS",
+                 bus0=industrial_demand.index + " solid biomass",
+                 bus1=industrial_demand.index + " solid biomass for industry",
                  bus2="co2 atmosphere",
                  bus3="co2 stored",
                  carrier="solid biomass for industry CCS",
