@@ -449,8 +449,8 @@ def prepare_data(network):
 
     ## Get overall demand curve for all vehicles
 
-    dir_name = "data/emobility/"
-    traffic = pd.read_csv(os.path.join(dir_name,"KFZ__count"),skiprows=2)["count"]
+    traffic = pd.read_csv(snakemake.input.traffic_data + "KFZ__count",
+                          skiprows=2)["count"]
 
     #Generate profiles
     transport_shape = generate_periodic_profiles(dt_index=network.snapshots.tz_localize("UTC"),
@@ -504,7 +504,8 @@ def prepare_data(network):
 
     ## derive plugged-in availability for PKW's (cars)
 
-    traffic = pd.read_csv(os.path.join(dir_name,"Pkw__count"),skiprows=2)["count"]
+    traffic = pd.read_csv(snakemake.input.traffic_data + "Pkw__count",
+                          skiprows=2)["count"]
 
     avail_max = 0.95
 
@@ -1780,6 +1781,7 @@ if __name__ == "__main__":
         cop_air_urban="resources/cop_air_urban_{network}_s{simpl}_{clusters}.nc",
         solar_thermal_total="resources/solar_thermal_total_{network}_s{simpl}_{clusters}.nc",
         solar_thermal_urban="resources/solar_thermal_urban_{network}_s{simpl}_{clusters}.nc",
+        traffic_data = "data/emobility/",
         solar_thermal_rural="resources/solar_thermal_rural_{network}_s{simpl}_{clusters}.nc",
         ),
             output=['pypsa-eur-sec/results/test/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{co2_budget_name}_{planning_horizons}.nc']
