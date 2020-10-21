@@ -456,8 +456,8 @@ def prepare_data(network):
 
     ## Get overall demand curve for all vehicles
 
-    dir_name = "data/emobility/"
-    traffic = pd.read_csv(os.path.join(dir_name,"KFZ__count"),skiprows=2)["count"]
+    traffic = pd.read_csv(snakemake.input.traffic_data + "KFZ__count",
+                          skiprows=2)["count"]
 
     #Generate profiles
     transport_shape = generate_periodic_profiles(dt_index=network.snapshots.tz_localize("UTC"),
@@ -511,7 +511,8 @@ def prepare_data(network):
 
     ## derive plugged-in availability for PKW's (cars)
 
-    traffic = pd.read_csv(os.path.join(dir_name,"Pkw__count"),skiprows=2)["count"]
+    traffic = pd.read_csv(snakemake.input.traffic_data + "Pkw__count",
+                          skiprows=2)["count"]
 
     avail_max = 0.95
 

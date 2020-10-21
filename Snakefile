@@ -290,6 +290,7 @@ rule prepare_sector_network:
         energy_totals_name='resources/energy_totals.csv',
         co2_totals_name='resources/co2_totals.csv',
         transport_name='resources/transport_data.csv',
+	traffic_data = "data/emobility/",
         biomass_potentials='resources/biomass_potentials.csv',
         timezone_mappings='data/timezone_mappings.csv',
         heat_profile="data/heat_load_profile_BDEW.csv",
