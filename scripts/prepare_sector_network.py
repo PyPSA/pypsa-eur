@@ -1056,7 +1056,21 @@ def add_heat(network):
 
     urban_fraction = options['central_fraction']*pop_layout["urban"]/(pop_layout[["urban","rural"]].sum(axis=1))
 
-    for name in ["residential rural","services rural","residential urban decentral","services urban decentral","urban central"]:
+    # building retrofitting, exogenously reduce space heat demand
+    if options["retrofitting"]["retro_exogen"]:
+        dE = options["retrofitting"]["dE"]
+        if snakemake.config["foresight"]=='myopic':
+            year = int(snakemake.wildcards.planning_horizons[-4:])
+            dE = dE[snakemake.config["scenario"]["planning_horizons"].index(year)]
+        print("retrofitting exogenously, assumed space heat reduction of ",
+              dE)
+        for sector in sectors:
+            heat_demand[sector + " space"] = heat_demand[sector + " space"].apply(lambda x: retro_exogen(x, dE))
+
+    heat_systems = ["residential rural", "services rural",
+                    "residential urban decentral","services urban decentral",
+                    "urban central"]
+    for name in heat_systems:
 
         name_type = "central" if name == "urban central" else "decentral"
 
@@ -1078,6 +1092,7 @@ def add_heat(network):
                 factor = None
             if sector in name:
                 heat_load = heat_demand[[sector + " water",sector + " space"]].groupby(level=1,axis=1).sum()[nodes[name]].multiply(factor)
+
 
         if name == "urban central":
             heat_load = heat_demand.groupby(level=1,axis=1).sum()[nodes[name]].multiply(urban_fraction[nodes[name]]*(1+options['district_heating_loss']))
@@ -1267,66 +1282,6 @@ def add_heat(network):
                              efficiency3=costs.at['gas','CO2 intensity'],
                              capital_cost=costs.at['micro CHP','fixed'],
                              lifetime=costs.at['micro CHP','lifetime'])
-
-
-    #NB: this currently doesn't work for pypsa-eur model
-    if options['retrofitting']:
-
-        retro_nodes = pd.Index(["DE"])
-
-        space_heat_demand = space_heat_demand[retro_nodes]
-
-        square_metres = population[retro_nodes]/population['DE']*5.7e9   #HPI 3.4e9m^2 for DE res, 2.3e9m^2 for tert https://doi.org/10.1016/j.rser.2013.09.012
-
-        space_peak = space_heat_demand.max()
-
-        space_pu = space_heat_demand.divide(space_peak)
-
-        network.add("Carrier", "retrofitting")
-
-        network.madd('Generator',
-                     retro_nodes,
-                     suffix=' retrofitting I',
-                     bus=retro_nodes+' heat',
-                     carrier="retrofitting",
-                     p_nom_extendable=True,
-                     p_nom_max=options['retroI-fraction']*space_peak*(1-urban_fraction),
-                     p_max_pu=space_pu,
-                     p_min_pu=space_pu,
-                     capital_cost=options['retrofitting-cost_factor']*costs.at['retrofitting I','fixed']*square_metres/(options['retroI-fraction']*space_peak))
-
-        network.madd('Generator',
-                     retro_nodes,
-                     suffix=' retrofitting II',
-                     bus=retro_nodes+' heat',
-                     carrier="retrofitting",
-                     p_nom_extendable=True,
-                     p_nom_max=options['retroII-fraction']*space_peak*(1-urban_fraction),
-                     p_max_pu=space_pu,
-                     p_min_pu=space_pu,
-                     capital_cost=options['retrofitting-cost_factor']*costs.at['retrofitting II','fixed']*square_metres/(options['retroII-fraction']*space_peak))
-
-        network.madd('Generator',
-                     retro_nodes,
-                     suffix=' urban retrofitting I',
-                     bus=retro_nodes+' urban heat',
-                     carrier="retrofitting",
-                     p_nom_extendable=True,
-                     p_nom_max=options['retroI-fraction']*space_peak*urban_fraction,
-                     p_max_pu=space_pu,
-                     p_min_pu=space_pu,
-                     capital_cost=options['retrofitting-cost_factor']*costs.at['retrofitting I','fixed']*square_metres/(options['retroI-fraction']*space_peak))
-
-        network.madd('Generator',
-                     retro_nodes,
-                     suffix=' urban retrofitting II',
-                     bus=retro_nodes+' urban heat',
-                     carrier="retrofitting",
-                     p_nom_extendable=True,
-                     p_nom_max=options['retroII-fraction']*space_peak*urban_fraction,
-                     p_max_pu=space_pu,
-                     p_min_pu=space_pu,
-                     capital_cost=options['retrofitting-cost_factor']*costs.at['retrofitting II','fixed']*square_metres/(options['retroII-fraction']*space_peak))
 
 
 def create_nodes_for_heat_sector():

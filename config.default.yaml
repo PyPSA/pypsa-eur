@@ -78,10 +78,11 @@ sector:
   'shipping_average_efficiency' : 0.4 #For conversion of fuel oil to propulsion in 2011
   'time_dep_hp_cop' : True
   'space_heating_fraction' : 1.0 #fraction of space heating active
-  'retrofitting' : False
-  'retroI-fraction' : 0.25
-  'retroII-fraction' : 0.55
-  'retrofitting-cost_factor' : 1.0
+  'retrofitting' :
+      'retro_exogen': True # space heat demand savings exogenously
+      'dE': 0.4            # reduction of space heat demand (applied before losses in DH)
+      'retro_endogen': False  # co-optimise space heat savings
+      'retrofitting-cost_factor' : 1.0
   'tes' : True
   'tes_tau' : 3.
   'boilers' : True
