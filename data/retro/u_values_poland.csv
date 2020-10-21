@@ -1,0 +1,9 @@
+component,Before 1945,1945 - 1969,1970 - 1979,1980 - 1989,1990 - 1999,2000 - 2010,Post 2010,sector
+Walls,1.7,1.4,0.9,0.9,0.6,0.4,1.7,residential
+Windows,4.6,3.6,2.6,2.6,2.1,2.1,2.1,residential
+Roof,0.8,0.7,0.6,0.6,0.6,0.4,0.33,residential
+Floor,1.9,1.4,1.2,1.1,0.9,0.6,0.45,residential
+Walls,1.3,1.3,1.3,0.8,0.6,0.6,0.6,services
+Windows,4.7,3.7,2.6,2.6,2.3,2.1,2.1,services
+Roof,1,0.9,0.7,0.5,0.3,0.3,0.3,services
+Floor,1.6,1.2,1.2,1.1,1,0.7,0.7,services

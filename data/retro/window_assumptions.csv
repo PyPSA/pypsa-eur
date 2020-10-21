@@ -1,0 +1,8 @@
+strength,u_value,cost,u_limit,comment
+[m],[W/m^2K],EUR/m^2,[W/m^2K],
+0.076,1.34,180.08,3.5,Double-glazing
+0.197,0.8,225,1.3,Triple-glazing
+,,,,
+"source: https://www.agora-energiewende.de/en/publications/building-sector-efficiency-a-crucial-component-of-the-energy-transition/
+p.115
+",,,,
