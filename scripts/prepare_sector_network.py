@@ -1287,24 +1287,18 @@ def add_heat(network):
     if options['retrofitting']['retro_endogen']:
 
         print("adding retrofitting endogenously")
+
         # resample heat demand to not overestimate retrofitting
         heat_demand_r =  heat_demand.resample(opts[1]).mean()
-
-        # get space heat demand
-        space_heat_demand = pd.concat([heat_demand_r["residential space"],
-                                       heat_demand_r["services space"]],
-                                      axis=1)
-
         # costs and floor area per country
         retro_cost = pd.read_csv(snakemake.input.retro_cost_energy,
                                  index_col=[0, 1], skipinitialspace=True,
                                  header=[0, 1])
         floor_area = pd.read_csv(snakemake.input.floor_area, index_col=[0, 1])
 
-        index = pd.MultiIndex.from_product([pop_layout.index, sectors + ["tot"]])
-        square_metres = pd.DataFrame(np.nan, index=index, columns=["m²"])
+        network.add("Carrier", "retrofitting")
 
-        # weighting for share of space heat demand
+        # share of space heat demand
         w_space = {}
         for sector in sectors:
             w_space[sector] = heat_demand_r[sector + " space"] / \
@@ -1313,79 +1307,61 @@ def add_heat(network):
                            heat_demand_r["residential space"]) /
                            heat_demand_r.groupby(level=[1], axis=1).sum())
 
-        network.add("Carrier", "retrofitting")
 
-        for node in list(heat_demand.columns.levels[1]):
-            retro_nodes = pd.Index([node])
-            space_heat_demand_node = space_heat_demand[retro_nodes]
-            space_heat_demand_node.columns = sectors
-            ct = node[:2]
-            square_metres = (pop_layout.loc[node].fraction
-                             * floor_area.loc[ct, "value"] * 10**6)
-            for carrier in heat_systems:
-                name = node + " " + carrier + " heat"
-                if (name in list(network.loads_t.p_set.columns)):
+        for name in network.loads[network.loads.carrier.isin([x + " heat" for x in heat_systems])].index:
 
-                    # if "urban central" in carrier:
-                    #     f = dist_fraction[node]
-                    # elif "urban decentral" in carrier:
-                    #     f = urban_fraction[node] - dist_fraction[node]
-                    if "urban" in carrier:
-                        f = urban_fraction[node]
-                    else:
-                        f = 1 - urban_fraction[node]
+            ct = name[:2]
+            node = name[:5]
 
-                    if f == 0:
-                        continue
+            f = urban_fraction[node] if "urban" in name else (urban_fraction[node])
+            if f == 0:
+                continue
+            # get sector (residential/services) or "tot" for "urban central"
+            sec = [x if x in name else "tot" for x in sectors][0]
 
-                    if "residential" in carrier:
-                        sec = "residential"
-                    elif "services" in carrier:
-                        sec = "services"
-                    else:
-                        sec = "tot"
+            # get square meters at node urban/rural
+            square_metres_node = ((pop_layout.loc[node].fraction
+                                  * floor_area.loc[ct, "value"] * 10**6).loc[sec] * f)
+            # total heat demand at node
+            demand = (network.loads_t.p_set[name].resample(opts[1])
+                      .mean())
+            # space heat demand at node
+            space_heat_demand = demand * w_space[sec][node]
+            # p_max_pu/p_min_pu of retrofitting generators
+            space_pu = (space_heat_demand / space_heat_demand.max()).to_frame(name=node)
 
-                    square_metres_c = (square_metres.loc[sec] * f)
-                    # weighting instead of taking space heat demand to
-                    # allow simulatounsly exogenous and optimised
-                    # retrofitting
-                    demand = (network.loads_t.p_set[name].resample(opts[1])
-                              .mean())
-                    space_heat_demand_c = demand * w_space[sec][node]
-                    space_peak_c = space_heat_demand_c.max()
-                    if space_peak_c == 0:
-                        continue
-                    space_pu_c = (space_heat_demand_c /
-                                  space_peak_c).to_frame(name=node)
+            # maximum heat savings at node
+            dE = retro_cost.loc[(ct, sec), ("dE")]
+            # get p_nom_max for different retrofitting strengths
+            dE_diff = abs(dE.diff()).fillna(1-dE.iloc[0])
+            # convert costs per m^2 to costs per MW
+            capital_cost =  retro_cost.loc[(ct, sec), ("cost")] * square_metres_node / \
+                            ((1 - dE) * space_heat_demand.max())
 
-                    dE = retro_cost.loc[(ct, sec), ("dE")]
-                    dE_diff = abs(dE.diff()).fillna(1-dE.iloc[0])
-                    cost_c = retro_cost.loc[(ct, sec), ("cost")]
-                    capital_cost = cost_c * square_metres_c / \
-                        ((1 - dE) * space_peak_c)
-                    steps = retro_cost.cost.columns
-                    if (capital_cost.diff() < 0).sum():
-                        print(
-                            "warning, costs are not linear for ", ct, " ", sec)
-                        s = capital_cost[(capital_cost.diff() < 0)].index
-                        steps = steps.drop(s)
+            strengths = retro_cost.columns.levels[1]
 
-                    space_pu_c = (space_pu_c.reindex(index=heat_demand.index)
-                                  .fillna(method="ffill"))
-                    for strength in steps:
-                        network.madd(
-                            'Generator',
-                            retro_nodes,
-                            suffix=' retrofitting ' + strength + " " + carrier,
-                            bus=node + " " + carrier + " heat",
-                            strength=' retrofitting ' + strength,
-                            type=carrier,
+            # check that stronger retrofitting has higher costs per MWh than lower retrofitting
+            if (capital_cost.diff() < 0).sum():
+                print(
+                    "warning, costs are not linear for ", ct, " ", sec)
+                s = capital_cost[(capital_cost.diff() < 0)].index
+                strengths = strengths.drop(s)
+
+            # reindex back to hourly resolution
+            space_pu = (space_pu.reindex(index=heat_demand.index)
+                          .fillna(method="ffill"))
+
+            for strength in strengths:
+                network.madd('Generator',
+                            [node],
+                            suffix=' retrofitting ' + strength + " " + name[6::],
+                            bus=name,
                             carrier="retrofitting",
                             p_nom_extendable=True,
-                            p_nom_max=dE_diff[strength] * space_peak_c,
+                            p_nom_max=dE_diff[strength] * space_heat_demand.max(),
                             dE=dE_diff[strength],
-                            p_max_pu=space_pu_c,
-                            p_min_pu=space_pu_c,
+                            p_max_pu=space_pu,
+                            p_min_pu=space_pu,
                             country=ct,
                             capital_cost=capital_cost[strength] * options['retrofitting']['cost_factor'])
 
