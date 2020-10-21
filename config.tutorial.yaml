@@ -51,7 +51,7 @@ electricity:
   conventional_carriers: [coal, CCGT] # [nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
 
 clustering:
-  custom_clustermaps: False
+  custom_busmap: False
 
 atlite:
   nprocesses: 4

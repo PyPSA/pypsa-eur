@@ -59,7 +59,7 @@ electricity:
   #   Solar: [solar]
 
 clustering:
-  custom_clustermaps: False
+  custom_busmap: False
 
 atlite:
   nprocesses: 4
