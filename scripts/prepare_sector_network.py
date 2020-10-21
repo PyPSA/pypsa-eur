@@ -69,8 +69,12 @@ def update_wind_solar_costs(n,costs):
     #assign clustered bus
     #map initial network -> simplified network
     busmap_s = pd.read_csv(snakemake.input.busmap_s, index_col=0).squeeze()
+    busmap_s.index = busmap_s.index.astype(str)
+    busmap_s = busmap_s.astype(str)
     #map simplified network -> clustered network
     busmap = pd.read_csv(snakemake.input.busmap, index_col=0).squeeze()
+    busmap.index = busmap.index.astype(str)
+    busmap = busmap.astype(str)
     #map initial network -> clustered network
     clustermaps = busmap_s.map(busmap)
 
