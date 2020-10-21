@@ -86,7 +86,7 @@ import logging
 logger = logging.getLogger(__name__)
 from _helpers import configure_logging
 
-from cluster_network import clustering_for_n_clusters, cluster_regions
+from cluster_network import clustering_for_n_clusters, cluster_regions, busmap_for_n_clusters
 from add_electricity import load_costs
 
 import pandas as pd
@@ -315,7 +315,7 @@ def remove_stubs(n):
     return n, busmap
 
 def cluster(n, n_clusters):
-    logger.info("Clustering to {} buses".format(n_clusters))
+    logger.info(f"Clustering to {n_clusters} buses")
 
     renewable_carriers = pd.Index([tech
                                     for tech in n.generators.carrier.unique()
@@ -329,7 +329,10 @@ def cluster(n, n_clusters):
     potential_mode = (consense(pd.Series([snakemake.config['renewable'][tech]['potential']
                                             for tech in renewable_carriers]))
                         if len(renewable_carriers) > 0 else 'conservative')
-    clustering = clustering_for_n_clusters(n, n_clusters, potential_mode=potential_mode,
+
+    busmapfornclusters = busmap_for_n_clusters(n, n_clusters, snakemake.config['solving']['solver']['name'])
+        
+    clustering = clustering_for_n_clusters(n, n_clusters, busmapfornclusters, potential_mode=potential_mode,
                                            solver_name=snakemake.config['solving']['solver']['name'])
 
     return clustering.network, clustering.busmap
