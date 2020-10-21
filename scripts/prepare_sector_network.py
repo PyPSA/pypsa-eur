@@ -1542,7 +1542,8 @@ def add_industry(network):
                  industrial_demand.index + " solid biomass for industry",
                  bus=industrial_demand.index + " solid biomass for industry",
                  carrier="solid biomass for industry",
-                 p_set=industrial_demand["solid biomass"]/8760.)
+                 p_set=(industrial_demand["solid biomass"]
+                        .rename(index=lambda x: x + " solid biomass for industry"))/8760.)
 
     network.madd("Link",
                  industrial_demand.index + " solid biomass for industry",
@@ -1800,8 +1801,76 @@ def remove_h2_network(n):
            carrier="H2 Store",
            capital_cost=h2_capital_cost)
 
-# def remove_biomass_transport(n):
+def remove_biomass_transport(n):
 
+    print("no transport of solid biomass considered")
+
+    # remove country specific biomass buses
+    n.buses = n.buses[~n.buses.carrier.str.contains("biomass")]
+    # biomass potential
+    biomass_pot = n.stores[n.stores.carrier=="solid biomass"].e_nom.sum()
+    # remove biomass store per country
+    n.stores = n.stores[n.stores.carrier!="solid biomass"]
+    # remove biomass transport links
+    n.links = n.links[n.links.carrier!="solid biomass transport"]
+    # total industry demand for biomass
+    biomass_demand = n.loads[n.loads.carrier=="solid biomass for industry"].p_set.sum()
+    # remove industry demand
+    n.loads = n.loads[n.loads.carrier!="solid biomass for industry"]
+    # drop transport and industry links
+    n.links = n.links[~n.links.carrier.isin(['solid biomass transport',
+                                             'solid biomass for industry',
+                                             'solid biomass for industry CCS'])]
+
+    # add back EU bus + load + store + industry links
+    n.madd("Bus",
+           ["EU solid biomass"],
+            location="EU",
+            carrier="solid biomass")
+
+    n.madd("Bus",
+           ["solid biomass for industry"],
+           location="EU",
+           carrier="solid biomass for industry")
+
+    n.madd("Load",
+           ["solid biomass for industry"],
+           bus="solid biomass for industry",
+           carrier="solid biomass for industry",
+           p_set=biomass_demand)
+
+    n.madd("Store",
+           ["EU solid biomass"],
+           bus="EU solid biomass",
+           carrier="solid biomass",
+           e_nom=biomass_pot,
+           marginal_cost=costs.at['solid biomass','fuel'],
+           e_initial=biomass_pot)
+
+    n.madd("Link",
+           ["solid biomass for industry"],
+           bus0="EU solid biomass",
+           bus1="solid biomass for industry",
+           carrier="solid biomass for industry",
+           p_nom_extendable=True,
+           efficiency=1.)
+
+    n.madd("Link",
+            ["solid biomass for industry CCS"],
+            bus0="EU solid biomass",
+            bus1="solid biomass for industry",
+            bus2="co2 atmosphere",
+            bus3="co2 stored",
+            carrier="solid biomass for industry CCS",
+            p_nom_extendable=True,
+            capital_cost=costs.at["industry CCS","fixed"]*costs.at['solid biomass','CO2 intensity']*8760, #8760 converts EUR/(tCO2/a) to EUR/(tCO2/h)
+            efficiency=0.9,
+            efficiency2=-costs.at['solid biomass','CO2 intensity']*options["ccs_fraction"],
+            efficiency3=costs.at['solid biomass','CO2 intensity']*options["ccs_fraction"],
+            lifetime=costs.at['industry CCS','lifetime'])
+
+    # set CHP buses from country to single EU bus
+    n.links.loc[n.links.carrier.str.contains("biomass CHP"), "bus0"] = "EU solid biomass"
 
 
 #%%
@@ -1916,6 +1985,8 @@ if __name__ == "__main__":
         if o[:4] == "dist":
             snakemake.config["sector"]['electricity_distribution_grid'] = True
             snakemake.config["sector"]['electricity_distribution_grid_cost_factor'] = float(o[4:].replace("p",".").replace("m","-"))
+        if o == "biomasstransport":
+            options["biomass_transport"] = True
 
     nodal_energy_totals, heat_demand, ashp_cop, gshp_cop, solar_thermal, transport, avail_profile, dsm_profile, co2_totals, nodal_transport_data = prepare_data(n)
 
@@ -1942,6 +2013,9 @@ if __name__ == "__main__":
 
     if "noH2network" in opts:
         remove_h2_network(n)
+
+    if not options["biomass_transport"]:
+        remove_biomass_transport(n)
 
     for o in opts:
         m = re.match(r'^\d+h$', o, re.IGNORECASE)
