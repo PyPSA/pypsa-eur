@@ -11,6 +11,7 @@ channels:
 dependencies:
   - python
   - pip
+  - pre-commit
   - mamba # esp for windows build
 
   - pypsa>=0.17.1
@@ -38,8 +39,7 @@ dependencies:
   - progressbar2
   - pyyaml>=5.1.0
 
-  # Include ipython so that one does not inadvertently drop out of the conda
-  # environment by calling ipython
+  # Keep in conda environment when calling ipython
   - ipython
 
   # GIS dependencies:

@@ -29,11 +29,11 @@ Upcoming Release
 
 * Corrected setting of exogenous emission price (in ``cost: emission price:``). This was not weighted by the efficiency and effective emission of the generators (`#171 <https://github.com/PyPSA/pypsa-eur/pull/171>`_).
 
-* Techno-economic parameters of technologies (e.g. costs and efficiencies) will now be retrieved from a separate repository `PyPSA/technology-data <https://github.com/pypsa/technology-data>`_ 
-  that collects assumptions from a variety of sources. It is activated by default with ``enable: retrieve_cost_data: true`` and controlled with ``costs: year:`` and ``costs: version:``. 
+* Techno-economic parameters of technologies (e.g. costs and efficiencies) will now be retrieved from a separate repository `PyPSA/technology-data <https://github.com/pypsa/technology-data>`_
+  that collects assumptions from a variety of sources. It is activated by default with ``enable: retrieve_cost_data: true`` and controlled with ``costs: year:`` and ``costs: version:``.
   The location of this data changed from ``data/costs.csv`` to ``resources/costs.csv`` (`#184 <https://github.com/PyPSA/pypsa-eur/pull/184>`_).
 
-* Don't remove capital costs from lines and links, when imposing a line volume limit (wildcard ``lv``) or a line cost limit (``lc``). Previously, these were removed to move the expansion in direction of the limit. 
+* Don't remove capital costs from lines and links, when imposing a line volume limit (wildcard ``lv``) or a line cost limit (``lc``). Previously, these were removed to move the expansion in direction of the limit.
 
 * Fix bug of clustering offwind-{ac,dc} sites in the option of high-resolution sites for renewables. Now, there are more sites for offwind-{ac,dc} available than network nodes. Before, they were clustered to the resolution of the network. (e.g. elec_s1024_37m.nc: 37 network nodes, 1024 sites)
 
@@ -108,7 +108,7 @@ This is the first release of PyPSA-Eur, a model of the European power system at 
 
 * Hydrogen pipelines (including cost assumptions) can now be added alongside clustered network connections in the rule :mod:`add_extra_components` . Set ``electricity: extendable_carriers: Link: [H2 pipeline]`` and ensure hydrogen storage is modelled as a ``Store``. This is a first simplified stage (`#108 <https://github.com/PyPSA/pypsa-eur/pull/108>`_).
 
-* Logfiles for all rules of the ``snakemake`` workflow are now written in the folder ``log/`` (`#102 <https://github.com/PyPSA/pypsa-eur/pull/102>`_). 
+* Logfiles for all rules of the ``snakemake`` workflow are now written in the folder ``log/`` (`#102 <https://github.com/PyPSA/pypsa-eur/pull/102>`_).
 
 * The new function ``_helpers.mock_snakemake`` creates a ``snakemake`` object which mimics the actual ``snakemake`` object produced by workflow by parsing the ``Snakefile`` and setting all paths for inputs, outputs, and logs. This allows running all scripts within a (I)python terminal (or just by calling ``python <script-name>``) and thereby facilitates developing and debugging scripts significantly (`#107 <https://github.com/PyPSA/pypsa-eur/pull/107>`_).
 
@@ -119,8 +119,8 @@ Release Process
 
 * Finalise release notes at ``doc/release_notes.rst``.
 
-* Update ``environment.fixedversions.yaml`` via
-  ``conda env export -n pypsa-eur -f environment.fixedversions.yaml --no-builds``
+* Update ``envs/environment.fixed.yaml`` via
+  ``conda env export -n pypsa-eur -f envs/environment.fixed.yaml --no-builds``
   from an up-to-date `pypsa-eur` environment.
 
 * Update version number in ``doc/conf.py`` and ``*config.*.yaml``.

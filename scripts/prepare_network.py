@@ -38,12 +38,12 @@ Inputs
 ------
 
 - ``resources/costs.csv``: The database of cost assumptions for all included technologies for specific years from various sources; e.g. discount rate, lifetime, investment (CAPEX), fixed operation and maintenance (FOM), variable operation and maintenance (VOM), fuel costs, efficiency, carbon-dioxide intensity.
-- ``networks/{network}_s{simpl}_{clusters}.nc``: confer :ref:`cluster`
+- ``networks/elec_s{simpl}_{clusters}.nc``: confer :ref:`cluster`
 
 Outputs
 -------
 
-- ``networks/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc``: Complete PyPSA network that will be handed to the ``solve_network`` rule.
+- ``networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc``: Complete PyPSA network that will be handed to the ``solve_network`` rule.
 
 Description
 -----------
@@ -56,20 +56,22 @@ Description
 """
 
 import logging
-logger = logging.getLogger(__name__)
 from _helpers import configure_logging
 
-from add_electricity import load_costs, update_transmission_costs
-from six import iteritems
-
-import numpy as np
 import re
 import pypsa
+import numpy as np
 import pandas as pd
+from six import iteritems
+
+from add_electricity import load_costs, update_transmission_costs
 
 import tsam.timeseriesaggregation as tsam
 
 idx = pd.IndexSlice
+
+logger = logging.getLogger(__name__)
+
 
 def add_co2limit(n, Nyears=1., factor=None):
 
@@ -131,8 +133,8 @@ def set_transmission_limit(n, ll_type, factor, Nyears=1):
         n.add('GlobalConstraint', f'l{ll_type}_limit',
               type=f'transmission_{con_type}_limit',
               sense='<=', constant=rhs, carrier_attribute='AC, DC')
-    return n
 
+    return n
 
 
 def average_every_nhours(n, offset):
@@ -179,7 +181,7 @@ def apply_time_segmentation(n, segments):
 
     n.set_snapshots(snapshots)
     n.snapshot_weightings = pd.Series(weightings, index=snapshots, name="weightings", dtype="float64")
-    
+
     segmented.index = snapshots
     n.generators_t.p_max_pu = segmented[n.generators_t.p_max_pu.columns]
     n.loads_t.p_set = segmented[n.loads_t.p_set.columns] * load_norm
@@ -219,7 +221,7 @@ if __name__ == "__main__":
     opts = snakemake.wildcards.opts.split('-')
 
     n = pypsa.Network(snakemake.input[0])
-    Nyears = n.snapshot_weightings.sum()/8760.
+    Nyears = n.snapshot_weightings.sum() / 8760.
 
     set_line_s_max_pu(n)
 
@@ -242,6 +244,7 @@ if __name__ == "__main__":
                 add_co2limit(n, Nyears, float(m[0]))
             else:
                 add_co2limit(n, Nyears)
+            break
 
     for o in opts:
         oo = o.split("+")
