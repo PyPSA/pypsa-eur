@@ -13,7 +13,7 @@ Relevant Settings
 
     costs:
         year:
-        USD2013_to_EUR2013:
+        version:
         dicountrate:
         emission_prices:
 
@@ -32,7 +32,7 @@ Relevant Settings
 Inputs
 ------
 
-- ``data/costs.csv``: The database of cost assumptions for all included technologies for specific years from various sources; e.g. discount rate, lifetime, investment (CAPEX), fixed operation and maintenance (FOM), variable operation and maintenance (VOM), fuel costs, efficiency, carbon-dioxide intensity.
+- ``resources/costs.csv``: The database of cost assumptions for all included technologies for specific years from various sources; e.g. discount rate, lifetime, investment (CAPEX), fixed operation and maintenance (FOM), variable operation and maintenance (VOM), fuel costs, efficiency, carbon-dioxide intensity.
 
 Outputs
 -------
@@ -102,7 +102,7 @@ def attach_stores(n, costs):
                carrier='H2',
                e_nom_extendable=True,
                e_cyclic=True,
-               capital_cost=costs.at["hydrogen storage", "capital_cost"])
+               capital_cost=costs.at["hydrogen storage tank", "capital_cost"])
 
         n.madd("Link", h2_buses_i + " Electrolysis",
                bus0=buses_i,

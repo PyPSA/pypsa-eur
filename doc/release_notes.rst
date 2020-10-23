@@ -27,7 +27,11 @@ Upcoming Release
 
 * Added Google Cloud Platform tutorial (for Windows users).
 
-* Corrected setting of exogenous emission price (in config -> cost -> emission price). This was not weighted by the efficiency and effective emission of the generators. Fixed in `#171 <https://github.com/PyPSA/pypsa-eur/pull/171>`_.
+* Corrected setting of exogenous emission price (in ``cost: emission price:``). This was not weighted by the efficiency and effective emission of the generators (`#171 <https://github.com/PyPSA/pypsa-eur/pull/171>`_).
+
+* Techno-economic parameters of technologies (e.g. costs and efficiencies) will now be retrieved from a separate repository `PyPSA/technology-data <https://github.com/pypsa/technology-data>`_ 
+  that collects assumptions from a variety of sources. It is activated by default with ``enable: retrieve_cost_data: true`` and controlled with ``costs: year:`` and ``costs: version:``. 
+  The location of this data changed from ``data/costs.csv`` to ``resources/costs.csv`` (`#184 <https://github.com/PyPSA/pypsa-eur/pull/184>`_).
 
 * Don't remove capital costs from lines and links, when imposing a line volume limit (wildcard ``lv``) or a line cost limit (``lc``). Previously, these were removed to move the expansion in direction of the limit. 
 
