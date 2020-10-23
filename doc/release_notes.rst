@@ -41,6 +41,8 @@ Upcoming Release
 
 * Parameter corrections for East-Western and Anglo-Scottish interconnectors (`#206 <https://github.com/PyPSA/pypsa-eur/pull/206>`_)
 
+* Modelling hydrogen and battery storage with Store and Link components is now the default, rather than using StorageUnit components with fixed power-to-energy ratio (`#205 <https://github.com/PyPSA/pypsa-eur/pull/205>`_).
+
 
 PyPSA-Eur 0.2.0 (8th June 2020)
 ==================================
