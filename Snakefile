@@ -273,7 +273,7 @@ rule prepare_network:
     output: 'networks/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc'
     log: "logs/prepare_network/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}.log"
     threads: 1
-    resources: mem=1000
+    resources: mem=10000
     # benchmark: "benchmarks/prepare_network/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}"
     script: "scripts/prepare_network.py"
 
@@ -283,6 +283,11 @@ def memory(w):
         m = re.match(r'^(\d+)h$', o, re.IGNORECASE)
         if m is not None:
             factor /= int(m.group(1))
+            break
+    for o in w.opts.split('-'):
+        m = re.match(r'^(\d+)seg$', o, re.IGNORECASE)
+        if m is not None:
+            factor /= 8760 / int(m.group(1))
             break
     if w.clusters.endswith('m'):
         return int(factor * (18000 + 180 * int(w.clusters[:-1])))
