@@ -32,13 +32,13 @@ Relevant Settings
 Inputs
 ------
 
-- ``networks/elec_s{simpl}_{clusters}.nc``: confer :ref:`cluster`
-- ``results/networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc``: confer :ref:`solve`
+- ``networks/elec{year}_s{simpl}_{clusters}.nc``: confer :ref:`cluster`
+- ``results/networks/elec{year}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc``: confer :ref:`solve`
 
 Outputs
 -------
 
-- ``results/networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op.nc``: Solved PyPSA network for optimal dispatch including optimisation results
+- ``results/networks/elec{year}_s{simpl}_{clusters}_ec_l{ll}_{opts}_op.nc``: Solved PyPSA network for optimal dispatch including optimisation results
 
 Description
 -----------

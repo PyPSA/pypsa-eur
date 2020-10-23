@@ -282,12 +282,16 @@ if __name__ == '__main__':
 
     pgb.streams.wrap_stderr()
 
+    year = snakemake.wildcards.year
     config = snakemake.config['renewable'][snakemake.wildcards.technology]
+    cutout_name = config['cutout']
+    if year: cutout_name = cutout_name.format(year=year)
 
-    time = pd.date_range(freq='m', **snakemake.config['snapshots'])
+    snapshots = dict(start=year, end=str(int(year)+1), closed="left") if year else snakememake.config['snapshots']
+    time = pd.date_range(freq='m', **snapshots)
     params = dict(years=slice(*time.year[[0, -1]]), months=slice(*time.month[[0, -1]]))
 
-    cutout = atlite.Cutout(config['cutout'],
+    cutout = atlite.Cutout(cutout_name,
                            cutout_dir=os.path.dirname(snakemake.input.cutout),
                            **params)
 

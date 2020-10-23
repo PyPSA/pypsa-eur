@@ -11,6 +11,7 @@ logging:
 summary_dir: results
 
 scenario:
+  year: ['']
   simpl: ['']
   ll: ['copt']
   clusters: [5]
@@ -147,6 +148,7 @@ transformers:
 
 load:
   scaling_factor: 1.0
+  fallback_year: 2013
 
 costs:
   year: 2030

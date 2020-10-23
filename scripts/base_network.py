@@ -11,8 +11,6 @@ Relevant Settings
 
 .. code:: yaml
 
-    snapshots:
-
     countries:
 
     electricity:
@@ -35,7 +33,7 @@ Relevant Settings
 
 .. seealso::
     Documentation of the configuration file ``config.yaml`` at
-    :ref:`snapshots_cf`, :ref:`toplevel_cf`, :ref:`electricity_cf`, :ref:`load_cf`,
+    :ref:`toplevel_cf`, :ref:`electricity_cf`, :ref:`load_cf`,
     :ref:`lines_cf`, :ref:`links_cf`, :ref:`transformers_cf`
 
 Inputs
@@ -553,9 +551,6 @@ def base_network():
 
     n = pypsa.Network()
     n.name = 'PyPSA-Eur'
-
-    n.set_snapshots(pd.date_range(freq='h', **snakemake.config['snapshots']))
-    n.snapshot_weightings[:] *= 8760. / n.snapshot_weightings.sum()
 
     n.import_components_from_dataframe(buses, "Bus")
     n.import_components_from_dataframe(lines, "Line")

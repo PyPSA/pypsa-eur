@@ -105,6 +105,7 @@ if __name__ == "__main__":
         snakemake = mock_snakemake('build_cutout', cutout='europe-2013-era5')
     configure_logging(snakemake)
 
+    # TODO make it accept year independent config
     cutout_params = snakemake.config['atlite']['cutouts'][snakemake.wildcards.cutout]
     for p in ('xs', 'ys', 'years', 'months'):
         if p in cutout_params:
