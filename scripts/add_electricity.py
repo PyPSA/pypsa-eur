@@ -542,7 +542,7 @@ if __name__ == "__main__":
     n = pypsa.Network(snakemake.input.base_network)
 
     year = snakemake.wildcards.year
-    snapshots = dict(start=year, end=str(int(year)+1), closed="left") if year else snakememake.config['snapshots']
+    snapshots = dict(start=year, end=str(int(year)+1), closed="left") if year else snakemake.config['snapshots']
     n.set_snapshots(pd.date_range(freq='h', **snapshots))
     n.snapshot_weightings[:] *= 8760. / n.snapshot_weightings.sum()
     Nyears = n.snapshot_weightings.sum() / 8760.
