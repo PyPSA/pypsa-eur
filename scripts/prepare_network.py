@@ -252,7 +252,7 @@ if __name__ == "__main__":
         if oo[0].startswith(tuple(suptechs)):
             carrier = oo[0]
             # handles only p_nom_max as stores and lines have no potentials
-            attr_lookup = {"p": "p_nom_max", "c": "cost"}
+            attr_lookup = {"p": "p_nom_max", "c": "capital_cost"}
             attr = attr_lookup[oo[1][0]]
             factor = float(oo[1][1:])
             if carrier == "AC":  # lines do not have carrier
