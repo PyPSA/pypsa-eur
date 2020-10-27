@@ -287,7 +287,7 @@ if __name__ == '__main__':
     cutout_name = config['cutout']
     if year: cutout_name = cutout_name.format(year=year)
 
-    snapshots = dict(start=year, end=str(int(year)+1), closed="left") if year else snakememake.config['snapshots']
+    snapshots = dict(start=year, end=str(int(year)+1), closed="left") if year else snakemake.config['snapshots']
     time = pd.date_range(freq='m', **snapshots)
     params = dict(years=slice(*time.year[[0, -1]]), months=slice(*time.month[[0, -1]]))
 
