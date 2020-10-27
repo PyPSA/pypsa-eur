@@ -89,7 +89,7 @@ if __name__ == "__main__":
 
     eia_stats = vhydro.get_eia_annual_hydro_generation(snakemake.input.eia_hydro_generation).reindex(columns=countries)
 
-    if year not in eia_stats.index:
+    if len(year) > 0 and year not in eia_stats.index:
         eia_stats.loc[year] = eia_stats.mean()
 
     inflow = cutout.runoff(shapes=country_shapes,
