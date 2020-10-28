@@ -1248,7 +1248,8 @@ def add_heat(network):
                              lifetime=costs.at['central gas CHP CCS','lifetime'])
 
             else:
-                network.madd("Link",
+                if options["micro_chp"]:
+                    network.madd("Link",
                              nodes[name] + " " + name + " micro gas CHP",
                              p_nom_extendable=True,
                              bus0="EU gas",
@@ -1883,16 +1884,23 @@ if __name__ == "__main__":
                 else:
                     limit = float(limit.replace("p",".").replace("m","-"))
                 add_co2limit(n, Nyears, limit)
-        # add_emission_prices(n, exclude_co2=True)
 
-    # if 'Ep' in opts:
-    #     add_emission_prices(n)
 
+    for o in opts:
         for tech in ["solar","onwind","offwind"]:
             if tech in o:
                 limit = o[o.find(tech)+len(tech):]
                 limit = float(limit.replace("p",".").replace("m","-"))
+                print("changing potential for",tech,"by factor",limit)
                 restrict_technology_potential(n,tech,limit)
+
+        if o[:10] == 'linemaxext':
+            maxext = float(o[10:])*1e3
+            print("limiting new HVAC and HVDC extensions to",maxext,"MW")
+            n.lines['s_nom_max'] = n.lines['s_nom'] + maxext
+            hvdc = n.links.index[n.links.carrier == 'DC']
+            n.links.loc[hvdc,'p_nom_max'] = n.links.loc[hvdc,'p_nom'] + maxext
+
 
     if snakemake.config["sector"]['electricity_distribution_grid']:
         insert_electricity_distribution_grid(n)

@@ -87,6 +87,7 @@ sector:
   'boilers' : True
   'oil_boilers': False
   'chp' : True
+  'micro_chp' : False
   'solar_thermal' : True
   'solar_cf_correction': 0.788457  # =  >>> 1/1.2683
   'marginal_cost_storage' : 0. #1e-4
@@ -174,6 +175,7 @@ industry:
   'MWh_elec_per_tNH3_electrolysis' : 1.17 # from https://doi.org/10.1016/j.joule.2018.04.017 Table 13 (air separation and HB)
   'NH3_process_emissions' : 24.5 # in MtCO2/a from SMR for H2 production for NH3 from UNFCCC for 2015 for EU28
   'petrochemical_process_emissions' : 25.5 # in MtCO2/a for petrochemical and other from UNFCCC for 2015 for EU28
+  'HVC_primary_fraction' : 1.0 #fraction of current non-ammonia basic chemicals produced via primary route
 
 plotting:
   map:
@@ -310,6 +312,7 @@ plotting:
     "electricity" : "k"
     "gas for industry" : "#333333"
     "solid biomass for industry" : "#555555"
+    "industry electricity" : "#222222"
     "industry new electricity" : "#222222"
     "process emissions to stored" : "#444444"
     "process emissions to atmosphere" : "#888888"

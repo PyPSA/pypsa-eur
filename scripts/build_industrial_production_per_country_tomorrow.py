@@ -22,6 +22,8 @@ fraction_primary_stays_primary = snakemake.config["industry"]["Al_primary_fracti
 industrial_production["Aluminium - primary production"] = fraction_primary_stays_primary*industrial_production["Aluminium - primary production"]
 industrial_production["Aluminium - secondary production"] = total_aluminium - industrial_production["Aluminium - primary production"]
 
+industrial_production["Basic chemicals (without ammonia)"] *= snakemake.config["industry"]['HVC_primary_fraction']
+
 
 industrial_production.to_csv(snakemake.output.industrial_production_per_country_tomorrow,
                              float_format='%.2f')
