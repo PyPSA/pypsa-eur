@@ -186,14 +186,6 @@ def calculate_costs(n,label,costs):
 
         costs.loc[marginal_costs_grouped.index,label] = marginal_costs_grouped
 
-    #add back in costs of links if there is a line volume limit
-    if label[1] != "opt":
-        costs.loc[("links-added","capital","transmission lines"),label] = ((costs_db.at['HVDC overhead', 'fixed']*n.links.length + costs_db.at['HVDC inverter pair', 'fixed'])*n.links.p_nom_opt)[n.links.carrier == "DC"].sum()
-        costs.loc[("lines-added","capital","transmission lines"),label] = costs_db.at["HVAC overhead", "fixed"]*(n.lines.length*n.lines.s_nom_opt).sum()
-    else:
-        costs.loc[("links-added","capital","transmission lines"),label] = (costs_db.at['HVDC inverter pair', 'fixed']*n.links.p_nom_opt)[n.links.carrier == "DC"].sum()
-
-
     #add back in all hydro
     #costs.loc[("storage_units","capital","hydro"),label] = (0.01)*2e6*n.storage_units.loc[n.storage_units.group=="hydro","p_nom"].sum()
     #costs.loc[("storage_units","capital","PHS"),label] = (0.01)*2e6*n.storage_units.loc[n.storage_units.group=="PHS","p_nom"].sum()
