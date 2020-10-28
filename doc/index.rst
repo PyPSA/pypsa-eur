@@ -78,27 +78,26 @@ For example:
 Electricity network: nodal.
 
 Electricity demand: nodal, distributed in each country based on
-population and GDP.
+population, GDP and location of industrial facilities.
 
 Building heating demand: nodal, distributed in each country based on
 population.
 
 Industry demand: nodal, distributed in each country based on
-population (will be corrected to real locations of industry, see
-github issue).
+locations of industry from `HotMaps database <https://gitlab.com/hotmaps/industrial_sites/industrial_sites_Industrial_Database>`_.
 
 Hydrogen network: nodal.
 
-Methane network: copper-plated for Europe, since future demand is so
+Methane network: single node for Europe, since future demand is so
 low and no bottlenecks are expected.
 
-Solid biomass: copper-plated until transport costs can be
+Solid biomass:  single node for Europe, until transport costs can be
 incorporated.
 
-CO2: copper-plated (but a transport and storage cost is added for
-sequestered CO2).
+CO2:  single node for Europe, but a transport and storage cost is added for
+sequestered CO2.
 
-Liquid hydrocarbons: copper-plated since transport costs are low.
+Liquid hydrocarbons:  single node for Europe, since transport costs are low.
 
 
 
