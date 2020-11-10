@@ -5,8 +5,11 @@ import pandas as pd
 import atlite
 import helper
 
+year = snakemake.wildcards.year
+cutout_name = snakemake.config['atlite']['cutout_name']
+if year: cutout_name = cutout_name.format(year=year)
 
-cutout = atlite.Cutout(snakemake.config['atlite']['cutout_name'],
+cutout = atlite.Cutout(cutout_name,
                        cutout_dir=snakemake.config['atlite']['cutout_dir'])
 
 

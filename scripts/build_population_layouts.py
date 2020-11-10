@@ -21,7 +21,11 @@ if 'snakemake' not in globals():
 
     snakemake.input["urban_percent"] = "data/urban_percent.csv"
 
-cutout = atlite.Cutout(snakemake.config['atlite']['cutout_name'],
+year = snakemake.wildcards.year
+cutout_name = snakemake.config['atlite']['cutout_name']
+if year: cutout_name = cutout_name.format(year=year)
+
+cutout = atlite.Cutout(cutout_name,
                        cutout_dir=snakemake.config['atlite']['cutout_dir'])
 
 grid_cells = cutout.grid_cells()

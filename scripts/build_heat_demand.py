@@ -15,10 +15,16 @@ if 'snakemake' not in globals():
     snakemake.input = Dict()
     snakemake.output = Dict()
 
-time = pd.date_range(freq='m', **snakemake.config['snapshots'])
+year = snakemake.wildcards.year
+
+snapshots = dict(start=year, end=str(int(year)+1), closed="left") if year else snakemake.config['snapshots']
+time = pd.date_range(freq='m', **snapshots)
 params = dict(years=slice(*time.year[[0, -1]]), months=slice(*time.month[[0, -1]]))
 
-cutout = atlite.Cutout(snakemake.config['atlite']['cutout_name'],
+cutout_name = snakemake.config['atlite']['cutout_name']
+if year: cutout_name = cutout_name.format(year=year)
+
+cutout = atlite.Cutout(cutout_name,
                        cutout_dir=snakemake.config['atlite']['cutout_dir'],
                        **params)
 
