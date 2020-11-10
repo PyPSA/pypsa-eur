@@ -86,16 +86,16 @@ if __name__ == "__main__":
     if 'snakemake' not in globals():
         from vresutils.snakemake import MockSnakemake
         snakemake = MockSnakemake(
-            wildcards=dict(network='elec', simpl='', clusters='37', lv='1.0',
+            wildcards=dict(simpl='', clusters='37', lv='1.0',
                            sector_opts='Co2L0-168H-T-H-B-I-solar3-dist1',
                            co2_budget_name='go',
                            planning_horizons='2030'),
-            input=dict(network='pypsa-eur-sec/results/test/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{co2_budget_name}_{planning_horizons}.nc',
-                       network_p='pypsa-eur-sec/results/test/postnetworks/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{co2_budget_name}_2020.nc',
+            input=dict(network='pypsa-eur-sec/results/test/prenetworks/elec_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{co2_budget_name}_{planning_horizons}.nc',
+                       network_p='pypsa-eur-sec/results/test/postnetworks/elec_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{co2_budget_name}_2020.nc',
                        costs='pypsa-eur-sec/data/costs/costs_{planning_horizons}.csv',
-                       cop_air_total="pypsa-eur-sec/resources/cop_air_total_{network}_s{simpl}_{clusters}.nc",
-                       cop_soil_total="pypsa-eur-sec/resources/cop_soil_total_{network}_s{simpl}_{clusters}.nc"),
-            output=['pypsa-eur-sec/results/test/prenetworks_brownfield/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{planning_horizons}.nc']
+                       cop_air_total="pypsa-eur-sec/resources/cop_air_total_elec_s{simpl}_{clusters}.nc",
+                       cop_soil_total="pypsa-eur-sec/resources/cop_soil_total_elec_s{simpl}_{clusters}.nc"),
+            output=['pypsa-eur-sec/results/test/prenetworks_brownfield/elec_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{planning_horizons}.nc']
         )
         import yaml
         with open('config.yaml', encoding='utf8') as f:
