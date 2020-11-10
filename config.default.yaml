@@ -11,6 +11,7 @@ foresight: 'overnight' #options are overnight, myopic, perfect (perfect is not y
 
 scenario:
   sectors: [E]  # ignore this legacy setting
+  year: [''] # weather year
   simpl: ['']  # only relevant for PyPSA-Eur
   lv: [1.0,1.5]    # allowed transmission line volume expansion, can be any float >= 1.0 (today) or "opt"
   clusters: [45,50] # number of nodes in Europe, any integer between 37 (1 node per country-zone) and several hundred
@@ -33,6 +34,8 @@ snapshots:
   start: "2013-01-01"
   end: "2014-01-01"
   closed: 'left' # end is not inclusive
+
+countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK']
 
 atlite:
   cutout_dir: '../pypsa-eur/cutouts'

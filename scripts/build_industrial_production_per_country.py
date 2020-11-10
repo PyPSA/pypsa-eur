@@ -39,6 +39,7 @@ eu28 = ['FR', 'DE', 'GB', 'IT', 'ES', 'PL', 'SE', 'NL', 'BE', 'FI',
 
 countries = non_EU + eu28
 
+countries = list(set(countries).intersection(snakemake.config["countries"]))
 
 sectors = ['Iron and steel','Chemicals Industry','Non-metallic mineral products',
            'Pulp, paper and printing', 'Food, beverages and tobacco', 'Non Ferrous Metals',

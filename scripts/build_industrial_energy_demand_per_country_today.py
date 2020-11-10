@@ -61,6 +61,8 @@ eu28 = ['FR', 'DE', 'GB', 'IT', 'ES', 'PL', 'SE', 'NL', 'BE', 'FI',
         'DK', 'PT', 'RO', 'AT', 'BG', 'EE', 'GR', 'LV', 'CZ',
         'HU', 'IE', 'SK', 'LT', 'HR', 'LU', 'SI', 'CY', 'MT']
 
+eu28 = list(set(eu28).intersection(snakemake.config["countries"]))
+
 jrc_names = {"GR" : "EL",
              "GB" : "UK"}
 
