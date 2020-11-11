@@ -1288,17 +1288,25 @@ def add_heat(network):
 
         print("adding retrofitting endogenously")
 
-        # resample heat demand to not overestimate retrofitting
-        heat_demand_r =  heat_demand.resample(opts[1]).mean()
-        # costs and floor area per country
-        retro_cost = pd.read_csv(snakemake.input.retro_cost_energy,
+        # resample heat demand temporal 'heat_demand_r' depending on in config
+        # specified temporal resolution, to not overestimate retrofitting
+        hours = list(filter(re.compile(r'^\d+h$', re.IGNORECASE).search, opts))
+        if len(hours)==0:
+            hours = [n.snapshots[1] - n.snapshots[0]]
+        heat_demand_r =  heat_demand.resample(hours[0]).mean()
+
+        # retrofitting data 'retro_data' with 'costs' [EUR/m^2] and heat
+        # demand 'dE' [per unit of original heat demand] for each country and
+        # different retrofitting strengths [additional insulation thickness in m]
+        retro_data = pd.read_csv(snakemake.input.retro_cost_energy,
                                  index_col=[0, 1], skipinitialspace=True,
                                  header=[0, 1])
+        # heated floor area [10^6 * m^2] per country
         floor_area = pd.read_csv(snakemake.input.floor_area, index_col=[0, 1])
 
         network.add("Carrier", "retrofitting")
 
-        # share of space heat demand
+        # share of space heat demand 'w_space' of total heat demand
         w_space = {}
         for sector in sectors:
             w_space[sector] = heat_demand_r[sector + " space"] / \
@@ -1310,47 +1318,53 @@ def add_heat(network):
 
         for name in network.loads[network.loads.carrier.isin([x + " heat" for x in heat_systems])].index:
 
-            ct = name[:2]
-            node = name[:5]
+            node = network.buses.loc[name, "location"]
+            ct = pop_layout.loc[node, "ct"]
 
-            f = urban_fraction[node] if "urban" in name else (urban_fraction[node])
+            # weighting 'f' depending on the size of the population at the node
+            f = urban_fraction[node] if "urban" in name else (1-urban_fraction[node])
             if f == 0:
                 continue
-            # get sector (residential/services) or "tot" for "urban central"
+            # get sector name ("residential"/"services"/or both "tot" for urban central)
             sec = [x if x in name else "tot" for x in sectors][0]
 
-            # get square meters at node urban/rural
-            square_metres_node = ((pop_layout.loc[node].fraction
+            # get floor aread at node and region (urban/rural) in m^2
+            floor_area_node = ((pop_layout.loc[node].fraction
                                   * floor_area.loc[ct, "value"] * 10**6).loc[sec] * f)
-            # total heat demand at node
-            demand = (network.loads_t.p_set[name].resample(opts[1])
+            # total heat demand at node [MWh]
+            demand = (network.loads_t.p_set[name].resample(hours[0])
                       .mean())
-            # space heat demand at node
+
+            # space heat demand at node [MWh]
             space_heat_demand = demand * w_space[sec][node]
+            # normed time profile of space heat demand 'space_pu' (values between 0-1),
             # p_max_pu/p_min_pu of retrofitting generators
             space_pu = (space_heat_demand / space_heat_demand.max()).to_frame(name=node)
 
-            # maximum heat savings at node
-            dE = retro_cost.loc[(ct, sec), ("dE")]
-            # get p_nom_max for different retrofitting strengths
+            # minimum heat demand 'dE' after retrofitting in units of original heat demand (values between 0-1)
+            dE = retro_data.loc[(ct, sec), ("dE")]
+            # get addtional energy savings 'dE_diff' between the different retrofitting strengths/generators at one node
             dE_diff = abs(dE.diff()).fillna(1-dE.iloc[0])
-            # convert costs per m^2 to costs per MW
-            capital_cost =  retro_cost.loc[(ct, sec), ("cost")] * square_metres_node / \
+            # convert costs Euro/m^2 -> Euro/MWh
+            capital_cost =  retro_data.loc[(ct, sec), ("cost")] * floor_area_node / \
                             ((1 - dE) * space_heat_demand.max())
+            # number of possible retrofitting measures 'strengths' (set in list at config.yaml 'l_strength')
+            # given in additional insulation thickness [m]
+            # for each measure, a retrofitting generator is added at the node
+            strengths = retro_data.columns.levels[1]
 
-            strengths = retro_cost.columns.levels[1]
-
-            # check that stronger retrofitting has higher costs per MWh than lower retrofitting
+            # check that ambitious retrofitting has higher costs per MWh than moderate retrofitting
             if (capital_cost.diff() < 0).sum():
                 print(
                     "warning, costs are not linear for ", ct, " ", sec)
                 s = capital_cost[(capital_cost.diff() < 0)].index
                 strengths = strengths.drop(s)
 
-            # reindex back to hourly resolution
+            # reindex normed time profile of space heat demand back to hourly resolution
             space_pu = (space_pu.reindex(index=heat_demand.index)
                           .fillna(method="ffill"))
 
+            # add for each retrofitting strength a generator with heat generation profile following the profile of the heat demand
             for strength in strengths:
                 network.madd('Generator',
                             [node],
@@ -1358,8 +1372,7 @@ def add_heat(network):
                             bus=name,
                             carrier="retrofitting",
                             p_nom_extendable=True,
-                            p_nom_max=dE_diff[strength] * space_heat_demand.max(),
-                            dE=dE_diff[strength],
+                            p_nom_max=dE_diff[strength] * space_heat_demand.max(), # maximum energy savings for this renovation strength
                             p_max_pu=space_pu,
                             p_min_pu=space_pu,
                             country=ct,
