@@ -378,12 +378,12 @@ def build_energy_totals():
     clean_df.loc[missing,"total aviation passenger"] = clean_df.loc[missing,["total domestic aviation passenger","total international aviation passenger"]].sum(axis=1)
     clean_df.loc[missing,"total aviation freight"] = clean_df.loc[missing,["total domestic aviation freight","total international aviation freight"]].sum(axis=1)
 
+    if "BA" in clean_df.index:
+        #fix missing data for BA (services and road energy data)
+        missing = (clean_df.loc["BA"] == 0.)
 
-    #fix missing data for BA (services and road energy data)
-    missing = (clean_df.loc["BA"] == 0.)
-
-    #add back in proportional to RS with ratio of total residential demand
-    clean_df.loc["BA",missing] = clean_df.loc["BA","total residential"]/clean_df.loc["RS","total residential"]*clean_df.loc["RS",missing]
+        #add back in proportional to RS with ratio of total residential demand
+        clean_df.loc["BA",missing] = clean_df.loc["BA","total residential"]/clean_df.loc["RS","total residential"]*clean_df.loc["RS",missing]
 
     clean_df.to_csv(snakemake.output.energy_name)
 
