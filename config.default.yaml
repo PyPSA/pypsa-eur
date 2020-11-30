@@ -73,8 +73,8 @@ existing_capacities:
 sector:
   'central' : True
   'central_fraction' : 0.6
-  'dsm_restriction_value' : 0.75  #Set to 0 for no restriction on BEV DSM
-  'dsm_restriction_time' : 7  #Time at which SOC of BEV has to be dsm_restriction_value
+  'bev_dsm_restriction_value' : 0.75  #Set to 0 for no restriction on BEV DSM
+  'bev_dsm_restriction_time' : 7  #Time at which SOC of BEV has to be dsm_restriction_value
   'transport_heating_deadband_upper' : 20.
   'transport_heating_deadband_lower' : 15.
   'ICE_lower_degree_factor' : 0.375    #in per cent increase in fuel consumption per degree above deadband
@@ -82,10 +82,22 @@ sector:
   'EV_lower_degree_factor' : 0.98
   'EV_upper_degree_factor' : 0.63
   'district_heating_loss' : 0.15
-  'bev' : True #turns on EV battery
+  'bev_dsm' : True #turns on EV battery
   'bev_availability' : 0.5  #How many cars do smart charging
   'v2g' : True #allows feed-in to grid from EV battery
-  'transport_fuel_cell_share' : 0.   #0 means all EVs, 1 means all FCs
+  #what is not EV or FCEV is fossil-fuelled
+  'land_transport_fuel_cell_share': # 1 means all FCEVs
+    2020: 0
+    2030: 0.05
+    2040: 0.1
+    2050: 0.15
+  'land_transport_electric_share': # 1 means all EVs
+    2020: 0
+    2030: 0.25
+    2040: 0.6
+    2050: 0.85
+  'transport_fuel_cell_efficiency': 0.5
+  'transport_internal_combustion_efficiency': 0.3
   'shipping_average_efficiency' : 0.4 #For conversion of fuel oil to propulsion in 2011
   'time_dep_hp_cop' : True
   'space_heating_fraction' : 1.0 #fraction of space heating active
@@ -293,6 +305,7 @@ plotting:
     "Fischer-Tropsch" : "#44DD33"
     "kerosene for aviation": "#44BB11"
     "naphtha for industry" : "#44FF55"
+    "land transport fossil" : "#44DD33"
     "water tanks" : "#BBBBBB"
     "hot water storage" : "#BBBBBB"
     "hot water charging" : "#BBBBBB"
@@ -304,7 +317,6 @@ plotting:
     "Ambient" : "k"
     "Electric load" : "b"
     "Heat load" : "r"
-    "Transport load" : "grey"
     "heat" : "darkred"
     "rural heat" : "#880000"
     "central heat" : "#b22222"
@@ -319,7 +331,7 @@ plotting:
     "building retrofitting" : "purple"
     "BEV charger" : "grey"
     "V2G" : "grey"
-    "transport" : "grey"
+    "land transport EV" : "grey"
     "electricity" : "k"
     "gas for industry" : "#333333"
     "solid biomass for industry" : "#555555"
@@ -328,7 +340,7 @@ plotting:
     "process emissions to stored" : "#444444"
     "process emissions to atmosphere" : "#888888"
     "process emissions" : "#222222"
-    "transport fuel cell" : "#AAAAAA"
+    "land transport fuel cell" : "#AAAAAA"
     "biogas" : "#800000"
     "solid biomass" : "#DAA520"
     "today" : "#D2691E"

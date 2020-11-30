@@ -520,7 +520,7 @@ def prepare_data(network):
 
     dsm_week = np.zeros((24*7,))
 
-    dsm_week[(np.arange(0,7,1)*24+options['dsm_restriction_time'])] = options['dsm_restriction_value']
+    dsm_week[(np.arange(0,7,1)*24+options['bev_dsm_restriction_time'])] = options['bev_dsm_restriction_value']
 
     dsm_profile = generate_periodic_profiles(dt_index=network.snapshots.tz_localize("UTC"),
                                              nodes=pop_layout.index,
@@ -963,78 +963,105 @@ def add_storage(network):
                      lifetime=costs.at['SMR','lifetime'])
 
 
-def add_transport(network):
-    print("adding transport")
+def add_land_transport(network):
+
+    print("adding land transport")
+
+    fuel_cell_share = get_parameter(options["land_transport_fuel_cell_share"])
+    electric_share = get_parameter(options["land_transport_electric_share"])
+    fossil_share = 1 - fuel_cell_share - electric_share
+
+    print("shares of FCEV, EV and ICEV are",
+          fuel_cell_share,
+          electric_share,
+          fossil_share)
+
+    if fossil_share < 0:
+        print("Error, more FCEV and EV share than 1.")
+        sys.exit()
+
     nodes = pop_layout.index
 
-    network.add("Carrier","Li ion")
 
-    network.madd("Bus",
-                 nodes,
-                 location=nodes,
-                 suffix=" EV battery",
-                 carrier="Li ion")
+    if electric_share > 0:
 
-    network.madd("Load",
-                 nodes,
-                 suffix=" transport",
-                 bus=nodes + " EV battery",
-                 carrier="transport",
-                 p_set=(1-options['transport_fuel_cell_share'])*(transport[nodes]+shift_df(transport[nodes],1)+shift_df(transport[nodes],2))/3.)
+        network.add("Carrier","Li ion")
 
-    p_nom = nodal_transport_data["number cars"]*0.011*(1-options['transport_fuel_cell_share'])  #3-phase charger with 11 kW * x% of time grid-connected
-
-    network.madd("Link",
-                 nodes,
-                 suffix= " BEV charger",
-                 bus0=nodes,
-                 bus1=nodes + " EV battery",
-                 p_nom=p_nom,
-                 carrier="BEV charger",
-                 p_max_pu=avail_profile[nodes],
-                 efficiency=0.9, #[B]
-                 #These were set non-zero to find LU infeasibility when availability = 0.25
-                 #p_nom_extendable=True,
-                 #p_nom_min=p_nom,
-                 #capital_cost=1e6,  #i.e. so high it only gets built where necessary
-    )
-
-    if options["v2g"]:
-
-        network.madd("Link",
+        network.madd("Bus",
                      nodes,
-                     suffix=" V2G",
-                     bus1=nodes,
-                     bus0=nodes + " EV battery",
-                     p_nom=p_nom,
-                     carrier="V2G",
-                     p_max_pu=avail_profile[nodes],
-                     efficiency=0.9)  #[B]
-
-
-
-    if options["bev"]:
-
-        network.madd("Store",
-                     nodes,
-                     suffix=" battery storage",
-                     bus=nodes + " EV battery",
-                     carrier="battery storage",
-                     e_cyclic=True,
-                     e_nom=nodal_transport_data["number cars"]*0.05*options["bev_availability"]*(1-options['transport_fuel_cell_share']), #50 kWh battery http://www.zeit.de/mobilitaet/2014-10/auto-fahrzeug-bestand
-                     e_max_pu=1,
-                     e_min_pu=dsm_profile[nodes])
-
-
-    if options['transport_fuel_cell_share'] != 0:
+                     location=nodes,
+                     suffix=" EV battery",
+                     carrier="Li ion")
 
         network.madd("Load",
                      nodes,
-                     suffix=" transport fuel cell",
-                     bus=nodes + " H2",
-                     carrier="transport fuel cell",
-                     p_set=options['transport_fuel_cell_share']/costs.at["fuel cell","efficiency"]*transport[nodes])
+                     suffix=" land transport EV",
+                     bus=nodes + " EV battery",
+                     carrier="land transport EV",
+                     p_set=electric_share*(transport[nodes]+shift_df(transport[nodes],1)+shift_df(transport[nodes],2))/3.)
 
+        p_nom = nodal_transport_data["number cars"]*0.011*electric_share  #3-phase charger with 11 kW * x% of time grid-connected
+
+        network.madd("Link",
+                     nodes,
+                     suffix= " BEV charger",
+                     bus0=nodes,
+                     bus1=nodes + " EV battery",
+                     p_nom=p_nom,
+                     carrier="BEV charger",
+                     p_max_pu=avail_profile[nodes],
+                     efficiency=0.9, #[B]
+                     #These were set non-zero to find LU infeasibility when availability = 0.25
+                     #p_nom_extendable=True,
+                     #p_nom_min=p_nom,
+                     #capital_cost=1e6,  #i.e. so high it only gets built where necessary
+        )
+
+        if options["v2g"]:
+
+            network.madd("Link",
+                         nodes,
+                         suffix=" V2G",
+                         bus1=nodes,
+                         bus0=nodes + " EV battery",
+                         p_nom=p_nom,
+                         carrier="V2G",
+                         p_max_pu=avail_profile[nodes],
+                         efficiency=0.9)  #[B]
+
+
+
+        if options["bev_dsm"]:
+
+            network.madd("Store",
+                         nodes,
+                         suffix=" battery storage",
+                         bus=nodes + " EV battery",
+                         carrier="battery storage",
+                         e_cyclic=True,
+                         e_nom=nodal_transport_data["number cars"]*0.05*options["bev_availability"]*electric_share, #50 kWh battery http://www.zeit.de/mobilitaet/2014-10/auto-fahrzeug-bestand
+                         e_max_pu=1,
+                         e_min_pu=dsm_profile[nodes])
+
+
+    if fuel_cell_share > 0:
+
+        network.madd("Load",
+                     nodes,
+                     suffix=" land transport fuel cell",
+                     bus=nodes + " H2",
+                     carrier="land transport fuel cell",
+                     p_set=fuel_cell_share/options['transport_fuel_cell_efficiency']*transport[nodes])
+
+
+    if fossil_share > 0:
+
+        network.madd("Load",
+                     nodes,
+                     suffix=" land transport fossil",
+                     bus="Fischer-Tropsch",
+                     carrier="land transport fossil",
+                     p_set=fossil_share/options['transport_internal_combustion_efficiency']*transport[nodes])
 
 
 
@@ -1738,6 +1765,13 @@ def remove_h2_network(n):
            carrier="H2 Store",
            capital_cost=h2_capital_cost)
 
+def get_parameter(item):
+    """Check whether it depends on investment year"""
+    if type(item) is dict:
+        return item[investment_year]
+    else:
+        return item
+
 
 
 if __name__ == "__main__":
@@ -1781,6 +1815,8 @@ if __name__ == "__main__":
     options = snakemake.config["sector"]
 
     opts = snakemake.wildcards.sector_opts.split('-')
+
+    investment_year=int(snakemake.wildcards.planning_horizons[-4:])
 
     n = pypsa.Network(snakemake.input.network,
                       override_component_attrs=override_component_attrs)
@@ -1838,7 +1874,7 @@ if __name__ == "__main__":
         options["central"] = False
 
     if "T" in opts:
-        add_transport(n)
+        add_land_transport(n)
 
     if "H" in opts:
         add_heat(n)
@@ -1867,11 +1903,7 @@ if __name__ == "__main__":
         logger.info("No resampling")
 
     #process CO2 limit
-    if type(snakemake.config["co2_budget"]) == dict:
-        year=int(snakemake.wildcards.planning_horizons[-4:])
-        limit=snakemake.config["co2_budget"][year]
-    else:
-        limit=snakemake.config["co2_budget"]
+    limit = get_parameter(snakemake.config["co2_budget"])
     print("CO2 limit set to",limit)
 
     for o in opts:
