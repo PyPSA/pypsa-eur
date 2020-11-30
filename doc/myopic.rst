@@ -17,11 +17,13 @@ See also other `outstanding issues <https://github.com/PyPSA/pypsa-eur-sec/issue
 Configuration
 =================
 
-PyPSA-Eur-Sec has several configuration options which are collected in a config.yaml file located in the root directory. For myopic optimization, users should copy the provided myopic configuration ``config.myopic.yaml`` and make their own modifications and assumptions in the user-specific configuration file (``config.yaml``).
+PyPSA-Eur-Sec has several configuration options which are collected in a config.yaml file located in the root directory. For myopic optimization, users should copy the provided default configuration ``config.default.yaml`` and make their own modifications and assumptions in the user-specific configuration file (``config.yaml``).
 
 The following options included in the config.yaml file  are relevant for the myopic code.
 
 To activate the myopic option select ``foresight: 'myopic'`` in ``config.yaml``.
+
+To set the investment years which are sequentially simulated for the myopic investment planning, select for example ``planning_horizons : [2020, 2030, 2040, 2050]`` in ``config.yaml``.
 
 
 

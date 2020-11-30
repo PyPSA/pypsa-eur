@@ -6,8 +6,8 @@ results_dir: 'results/'
 summary_dir: results
 costs_dir: '../technology-data/outputs/'
 run: 'your-run-name'  # use this to keep track of runs with different settings
-foresight: 'overnight' #options are overnight, myopic, perfect (perfect is not yet implemented)
-
+foresight: 'overnight' # options are overnight, myopic, perfect (perfect is not yet implemented)
+# if you use myopic or perfect foresight, set the investment years in "planning_horizons" below
 
 scenario:
   sectors: [E]  # ignore this legacy setting
@@ -24,8 +24,19 @@ scenario:
   # B for biomass supply, I for industry, shipping and aviation
   # solarx or onwindx changes the available installable potential by factor x
   # dist{n} includes distribution grids with investment cost of n times cost in data/costs.csv
-  planning_horizons : [2030] #investment years for myopic and perfect; or costs year for overnight
-  co2_budget_name: ['go'] #gives shape of CO2 budgets over planning horizon
+  planning_horizons : [2030] # investment years for myopic and perfect; or costs year for overnight
+  # for example, set to [2020, 2030, 2040, 2050] for myopic foresight
+
+# CO2 budget as a fraction of 1990 emissions
+# this is over-ridden if CO2Lx is set in sector_opts
+co2_budget:
+  2020: 0.7011648746
+  2025: 0.5241935484
+  2030: 0.2970430108
+  2035: 0.1500896057
+  2040: 0.0712365591
+  2045: 0.0322580645
+  2050: 0
 
 # snapshots are originally set in PyPSA-Eur/config.yaml but used again by PyPSA-Eur-Sec
 snapshots:
@@ -62,8 +73,8 @@ existing_capacities:
 sector:
   'central' : True
   'central_fraction' : 0.6
-  'dsm_restriction_value' : 0.75  #Set to 0 for no restriction on BEV DSM
-  'dsm_restriction_time' : 7  #Time at which SOC of BEV has to be dsm_restriction_value
+  'bev_dsm_restriction_value' : 0.75  #Set to 0 for no restriction on BEV DSM
+  'bev_dsm_restriction_time' : 7  #Time at which SOC of BEV has to be dsm_restriction_value
   'transport_heating_deadband_upper' : 20.
   'transport_heating_deadband_lower' : 15.
   'ICE_lower_degree_factor' : 0.375    #in per cent increase in fuel consumption per degree above deadband
@@ -71,10 +82,22 @@ sector:
   'EV_lower_degree_factor' : 0.98
   'EV_upper_degree_factor' : 0.63
   'district_heating_loss' : 0.15
-  'bev' : True #turns on EV battery
+  'bev_dsm' : True #turns on EV battery
   'bev_availability' : 0.5  #How many cars do smart charging
   'v2g' : True #allows feed-in to grid from EV battery
-  'transport_fuel_cell_share' : 0.   #0 means all EVs, 1 means all FCs
+  #what is not EV or FCEV is fossil-fuelled
+  'land_transport_fuel_cell_share': # 1 means all FCEVs
+    2020: 0
+    2030: 0.05
+    2040: 0.1
+    2050: 0.15
+  'land_transport_electric_share': # 1 means all EVs
+    2020: 0
+    2030: 0.25
+    2040: 0.6
+    2050: 0.85
+  'transport_fuel_cell_efficiency': 0.5
+  'transport_internal_combustion_efficiency': 0.3
   'shipping_average_efficiency' : 0.4 #For conversion of fuel oil to propulsion in 2011
   'time_dep_hp_cop' : True
   'space_heating_fraction' : 1.0 #fraction of space heating active
@@ -93,6 +116,7 @@ sector:
   'boilers' : True
   'oil_boilers': False
   'chp' : True
+  'micro_chp' : False
   'solar_thermal' : True
   'solar_cf_correction': 0.788457  # =  >>> 1/1.2683
   'marginal_cost_storage' : 0. #1e-4
@@ -112,7 +136,6 @@ sector:
   'gas_distribution_grid_cost_factor' : 1.0  #multiplies cost in data/costs.csv
 
 costs:
-  year: 2030
   lifetime: 25 #default lifetime
   # From a Lion Hirth paper, also reflects average of Noothout et al 2016
   discountrate: 0.07
@@ -171,7 +194,7 @@ solving:
 
 industry:
   'St_primary_fraction' : 0.3 # fraction of steel produced via primary route (DRI + EAF) versus secondary route (EAF); today fraction is 0.6
-  'H2_DRI' : 1.7   #H2 consumption in Direct Reduced Iron (DRI),  MWh_H2,LHV/ton_Steel from Vogl et al (2018) doi:10.1016/j.jclepro.2018.08.279
+  'H2_DRI' : 1.7   #H2 consumption in Direct Reduced Iron (DRI),  MWh_H2,LHV/ton_Steel from 51kgH2/tSt in Vogl et al (2018) doi:10.1016/j.jclepro.2018.08.279
   'elec_DRI' : 0.322   #electricity consumption in Direct Reduced Iron (DRI) shaft, MWh/tSt HYBRIT brochure https://ssabwebsitecdn.azureedge.net/-/media/hybrit/files/hybrit_brochure.pdf
   'Al_primary_fraction' : 0.2 # fraction of aluminium produced via the primary route versus scrap; today fraction is 0.4
   'MWh_CH4_per_tNH3_SMR' : 10.8 # 2012's demand from https://ec.europa.eu/docsroom/documents/4165/attachments/1/translations/en/renditions/pdf
@@ -180,6 +203,7 @@ industry:
   'MWh_elec_per_tNH3_electrolysis' : 1.17 # from https://doi.org/10.1016/j.joule.2018.04.017 Table 13 (air separation and HB)
   'NH3_process_emissions' : 24.5 # in MtCO2/a from SMR for H2 production for NH3 from UNFCCC for 2015 for EU28
   'petrochemical_process_emissions' : 25.5 # in MtCO2/a for petrochemical and other from UNFCCC for 2015 for EU28
+  'HVC_primary_fraction' : 1.0 #fraction of current non-ammonia basic chemicals produced via primary route
 
 plotting:
   map:
@@ -286,6 +310,7 @@ plotting:
     "Fischer-Tropsch" : "#44DD33"
     "kerosene for aviation": "#44BB11"
     "naphtha for industry" : "#44FF55"
+    "land transport fossil" : "#44DD33"
     "water tanks" : "#BBBBBB"
     "hot water storage" : "#BBBBBB"
     "hot water charging" : "#BBBBBB"
@@ -297,7 +322,6 @@ plotting:
     "Ambient" : "k"
     "Electric load" : "b"
     "Heat load" : "r"
-    "Transport load" : "grey"
     "heat" : "darkred"
     "rural heat" : "#880000"
     "central heat" : "#b22222"
@@ -312,15 +336,16 @@ plotting:
     "building retrofitting" : "purple"
     "BEV charger" : "grey"
     "V2G" : "grey"
-    "transport" : "grey"
+    "land transport EV" : "grey"
     "electricity" : "k"
     "gas for industry" : "#333333"
     "solid biomass for industry" : "#555555"
+    "industry electricity" : "#222222"
     "industry new electricity" : "#222222"
     "process emissions to stored" : "#444444"
     "process emissions to atmosphere" : "#888888"
     "process emissions" : "#222222"
-    "transport fuel cell" : "#AAAAAA"
+    "land transport fuel cell" : "#AAAAAA"
     "biogas" : "#800000"
     "solid biomass" : "#DAA520"
     "today" : "#D2691E"

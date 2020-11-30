@@ -351,7 +351,7 @@ def solve_network(n, config=None, solver_log=None, opts=None):
         #     fn = os.path.basename(snakemake.output[0])
         #     n.export_to_netcdf('/home/vres/data/jonas/playground/pypsa-eur/' + fn)
 
-    status, termination_condition = run_lopf(n, fix_ext_lines=True)
+    status, termination_condition = run_lopf(n, allow_warning_status=True, fix_ext_lines=True)
 
     # Drop zero lines from network
     # zero_lines_i = n.lines.index[(n.lines.s_nom_opt == 0.) & n.lines.s_nom_extendable]

@@ -68,11 +68,13 @@ def update_wind_solar_costs(n,costs):
 
     #assign clustered bus
     #map initial network -> simplified network
-    busmap_s = pd.read_hdf(snakemake.input.clustermaps,
-                           key="/busmap_s")
+    busmap_s = pd.read_csv(snakemake.input.busmap_s, index_col=0).squeeze()
+    busmap_s.index = busmap_s.index.astype(str)
+    busmap_s = busmap_s.astype(str)
     #map simplified network -> clustered network
-    busmap = pd.read_hdf(snakemake.input.clustermaps,
-                         key="/busmap")
+    busmap = pd.read_csv(snakemake.input.busmap, index_col=0).squeeze()
+    busmap.index = busmap.index.astype(str)
+    busmap = busmap.astype(str)
     #map initial network -> clustered network
     clustermaps = busmap_s.map(busmap)
 
@@ -526,7 +528,7 @@ def prepare_data(network):
 
     dsm_week = np.zeros((24*7,))
 
-    dsm_week[(np.arange(0,7,1)*24+options['dsm_restriction_time'])] = options['dsm_restriction_value']
+    dsm_week[(np.arange(0,7,1)*24+options['bev_dsm_restriction_time'])] = options['bev_dsm_restriction_value']
 
     dsm_profile = generate_periodic_profiles(dt_index=network.snapshots.tz_localize("UTC"),
                                              nodes=pop_layout.index,
@@ -546,7 +548,7 @@ def prepare_data(network):
 
 
 
-def prepare_costs(cost_file, USD_to_EUR, discount_rate, Nyears):
+def prepare_costs(cost_file, USD_to_EUR, discount_rate, Nyears, lifetime):
 
     #set all asset costs and other parameters
     costs = pd.read_csv(cost_file,index_col=list(range(2))).sort_index()
@@ -564,7 +566,7 @@ def prepare_costs(cost_file, USD_to_EUR, discount_rate, Nyears):
                           "efficiency" : 1,
                           "fuel" : 0,
                           "investment" : 0,
-                          "lifetime" : 25
+                          "lifetime" : lifetime
     })
 
     costs["fixed"] = [(annuity(v["lifetime"],v["discount rate"])+v["FOM"]/100.)*v["investment"]*Nyears for i,v in costs.iterrows()]
@@ -969,78 +971,105 @@ def add_storage(network):
                      lifetime=costs.at['SMR','lifetime'])
 
 
-def add_transport(network):
-    print("adding transport")
+def add_land_transport(network):
+
+    print("adding land transport")
+
+    fuel_cell_share = get_parameter(options["land_transport_fuel_cell_share"])
+    electric_share = get_parameter(options["land_transport_electric_share"])
+    fossil_share = 1 - fuel_cell_share - electric_share
+
+    print("shares of FCEV, EV and ICEV are",
+          fuel_cell_share,
+          electric_share,
+          fossil_share)
+
+    if fossil_share < 0:
+        print("Error, more FCEV and EV share than 1.")
+        sys.exit()
+
     nodes = pop_layout.index
 
-    network.add("Carrier","Li ion")
 
-    network.madd("Bus",
-                 nodes,
-                 location=nodes,
-                 suffix=" EV battery",
-                 carrier="Li ion")
+    if electric_share > 0:
 
-    network.madd("Load",
-                 nodes,
-                 suffix=" transport",
-                 bus=nodes + " EV battery",
-                 carrier="transport",
-                 p_set=(1-options['transport_fuel_cell_share'])*(transport[nodes]+shift_df(transport[nodes],1)+shift_df(transport[nodes],2))/3.)
+        network.add("Carrier","Li ion")
 
-    p_nom = nodal_transport_data["number cars"]*0.011*(1-options['transport_fuel_cell_share'])  #3-phase charger with 11 kW * x% of time grid-connected
-
-    network.madd("Link",
-                 nodes,
-                 suffix= " BEV charger",
-                 bus0=nodes,
-                 bus1=nodes + " EV battery",
-                 p_nom=p_nom,
-                 carrier="BEV charger",
-                 p_max_pu=avail_profile[nodes],
-                 efficiency=0.9, #[B]
-                 #These were set non-zero to find LU infeasibility when availability = 0.25
-                 #p_nom_extendable=True,
-                 #p_nom_min=p_nom,
-                 #capital_cost=1e6,  #i.e. so high it only gets built where necessary
-    )
-
-    if options["v2g"]:
-
-        network.madd("Link",
+        network.madd("Bus",
                      nodes,
-                     suffix=" V2G",
-                     bus1=nodes,
-                     bus0=nodes + " EV battery",
-                     p_nom=p_nom,
-                     carrier="V2G",
-                     p_max_pu=avail_profile[nodes],
-                     efficiency=0.9)  #[B]
-
-
-
-    if options["bev"]:
-
-        network.madd("Store",
-                     nodes,
-                     suffix=" battery storage",
-                     bus=nodes + " EV battery",
-                     carrier="battery storage",
-                     e_cyclic=True,
-                     e_nom=nodal_transport_data["number cars"]*0.05*options["bev_availability"]*(1-options['transport_fuel_cell_share']), #50 kWh battery http://www.zeit.de/mobilitaet/2014-10/auto-fahrzeug-bestand
-                     e_max_pu=1,
-                     e_min_pu=dsm_profile[nodes])
-
-
-    if options['transport_fuel_cell_share'] != 0:
+                     location=nodes,
+                     suffix=" EV battery",
+                     carrier="Li ion")
 
         network.madd("Load",
                      nodes,
-                     suffix=" transport fuel cell",
-                     bus=nodes + " H2",
-                     carrier="transport fuel cell",
-                     p_set=options['transport_fuel_cell_share']/costs.at["fuel cell","efficiency"]*transport[nodes])
+                     suffix=" land transport EV",
+                     bus=nodes + " EV battery",
+                     carrier="land transport EV",
+                     p_set=electric_share*(transport[nodes]+shift_df(transport[nodes],1)+shift_df(transport[nodes],2))/3.)
 
+        p_nom = nodal_transport_data["number cars"]*0.011*electric_share  #3-phase charger with 11 kW * x% of time grid-connected
+
+        network.madd("Link",
+                     nodes,
+                     suffix= " BEV charger",
+                     bus0=nodes,
+                     bus1=nodes + " EV battery",
+                     p_nom=p_nom,
+                     carrier="BEV charger",
+                     p_max_pu=avail_profile[nodes],
+                     efficiency=0.9, #[B]
+                     #These were set non-zero to find LU infeasibility when availability = 0.25
+                     #p_nom_extendable=True,
+                     #p_nom_min=p_nom,
+                     #capital_cost=1e6,  #i.e. so high it only gets built where necessary
+        )
+
+        if options["v2g"]:
+
+            network.madd("Link",
+                         nodes,
+                         suffix=" V2G",
+                         bus1=nodes,
+                         bus0=nodes + " EV battery",
+                         p_nom=p_nom,
+                         carrier="V2G",
+                         p_max_pu=avail_profile[nodes],
+                         efficiency=0.9)  #[B]
+
+
+
+        if options["bev_dsm"]:
+
+            network.madd("Store",
+                         nodes,
+                         suffix=" battery storage",
+                         bus=nodes + " EV battery",
+                         carrier="battery storage",
+                         e_cyclic=True,
+                         e_nom=nodal_transport_data["number cars"]*0.05*options["bev_availability"]*electric_share, #50 kWh battery http://www.zeit.de/mobilitaet/2014-10/auto-fahrzeug-bestand
+                         e_max_pu=1,
+                         e_min_pu=dsm_profile[nodes])
+
+
+    if fuel_cell_share > 0:
+
+        network.madd("Load",
+                     nodes,
+                     suffix=" land transport fuel cell",
+                     bus=nodes + " H2",
+                     carrier="land transport fuel cell",
+                     p_set=fuel_cell_share/options['transport_fuel_cell_efficiency']*transport[nodes])
+
+
+    if fossil_share > 0:
+
+        network.madd("Load",
+                     nodes,
+                     suffix=" land transport fossil",
+                     bus="Fischer-Tropsch",
+                     carrier="land transport fossil",
+                     p_set=fossil_share/options['transport_internal_combustion_efficiency']*transport[nodes])
 
 
 
@@ -1269,7 +1298,8 @@ def add_heat(network):
                              lifetime=costs.at['central gas CHP CCS','lifetime'])
 
             else:
-                network.madd("Link",
+                if options["micro_chp"]:
+                    network.madd("Link",
                              nodes[name] + " " + name + " micro gas CHP",
                              p_nom_extendable=True,
                              bus0="EU gas",
@@ -1794,6 +1824,13 @@ def remove_h2_network(n):
            carrier="H2 Store",
            capital_cost=h2_capital_cost)
 
+def get_parameter(item):
+    """Check whether it depends on investment year"""
+    if type(item) is dict:
+        return item[investment_year]
+    else:
+        return item
+
 
 
 if __name__ == "__main__":
@@ -1803,48 +1840,45 @@ if __name__ == "__main__":
         snakemake = MockSnakemake(
             wildcards=dict(network='elec', simpl='', clusters='37', lv='1.0',
                            opts='', planning_horizons='2020',
-                           co2_budget_name='go',
                            sector_opts='Co2L0-168H-T-H-B-I-solar3-dist1'),
-            input=dict(
-        network='../pypsa-eur/networks/{network}_s{simpl}_{clusters}_ec_lv{lv}_{opts}.nc',
-        energy_totals_name='resources/energy_totals.csv',
-        co2_totals_name='resources/co2_totals.csv',
-        transport_name='resources/transport_data.csv',
-        biomass_potentials='resources/biomass_potentials.csv',
-        biomass_transport='data/biomass/biomass_transport_costs.csv',
-        timezone_mappings='data/timezone_mappings.csv',
-        heat_profile="data/heat_load_profile_BDEW.csv",
-        costs="../technology-data/outputs/costs_{planning_horizons}.csv",
-	    h2_cavern = "data/hydrogen_salt_cavern_potentials.csv",
-        co2_budget="data/co2_budget.csv",
-        profile_offwind_ac="../pypsa-eur/resources/profile_offwind-ac.nc",
-        profile_offwind_dc="../pypsa-eur/resources/profile_offwind-dc.nc",
-        clustermaps='../pypsa-eur/resources/clustermaps_{network}_s{simpl}_{clusters}.h5',
-        clustered_pop_layout="resources/pop_layout_{network}_s{simpl}_{clusters}.csv",
-        simplified_pop_layout="resources/pop_layout_{network}_s{simpl}.csv",
-        industrial_demand="resources/industrial_energy_demand_{network}_s{simpl}_{clusters}.csv",
-        heat_demand_urban="resources/heat_demand_urban_{network}_s{simpl}_{clusters}.nc",
-        heat_demand_rural="resources/heat_demand_rural_{network}_s{simpl}_{clusters}.nc",
-        heat_demand_total="resources/heat_demand_total_{network}_s{simpl}_{clusters}.nc",
-        temp_soil_total="resources/temp_soil_total_{network}_s{simpl}_{clusters}.nc",
-        temp_soil_rural="resources/temp_soil_rural_{network}_s{simpl}_{clusters}.nc",
-        temp_soil_urban="resources/temp_soil_urban_{network}_s{simpl}_{clusters}.nc",
-        temp_air_total="resources/temp_air_total_{network}_s{simpl}_{clusters}.nc",
-        temp_air_rural="resources/temp_air_rural_{network}_s{simpl}_{clusters}.nc",
-        temp_air_urban="resources/temp_air_urban_{network}_s{simpl}_{clusters}.nc",
-        cop_soil_total="resources/cop_soil_total_{network}_s{simpl}_{clusters}.nc",
-        cop_soil_rural="resources/cop_soil_rural_{network}_s{simpl}_{clusters}.nc",
-        cop_soil_urban="resources/cop_soil_urban_{network}_s{simpl}_{clusters}.nc",
-        cop_air_total="resources/cop_air_total_{network}_s{simpl}_{clusters}.nc",
-        cop_air_rural="resources/cop_air_rural_{network}_s{simpl}_{clusters}.nc",
-        cop_air_urban="resources/cop_air_urban_{network}_s{simpl}_{clusters}.nc",
-        solar_thermal_total="resources/solar_thermal_total_{network}_s{simpl}_{clusters}.nc",
-        solar_thermal_urban="resources/solar_thermal_urban_{network}_s{simpl}_{clusters}.nc",
-        traffic_data = "data/emobility/",
-        solar_thermal_rural="resources/solar_thermal_rural_{network}_s{simpl}_{clusters}.nc",
-        retro_cost_energy = "resources/retro_cost_{network}_s{simpl}_{clusters}.csv",
-        floor_area = "resources/floor_area_{network}_s{simpl}_{clusters}.csv"
-        ),
+            input=dict(network='../pypsa-eur/networks/{network}_s{simpl}_{clusters}_ec_lv{lv}_{opts}.nc',
+                       energy_totals_name='resources/energy_totals.csv',
+                       co2_totals_name='resources/co2_totals.csv',
+                       transport_name='resources/transport_data.csv',
+                       biomass_potentials='resources/biomass_potentials.csv',
+                       biomass_transport='data/biomass/biomass_transport_costs.csv',
+                       timezone_mappings='data/timezone_mappings.csv',
+                       heat_profile="data/heat_load_profile_BDEW.csv",
+                       costs="../technology-data/outputs/costs_{planning_horizons}.csv",
+	               h2_cavern = "data/hydrogen_salt_cavern_potentials.csv",
+                       profile_offwind_ac="../pypsa-eur/resources/profile_offwind-ac.nc",
+                       profile_offwind_dc="../pypsa-eur/resources/profile_offwind-dc.nc",
+                       clustermaps='../pypsa-eur/resources/clustermaps_{network}_s{simpl}_{clusters}.h5',
+                       clustered_pop_layout="resources/pop_layout_{network}_s{simpl}_{clusters}.csv",
+                       simplified_pop_layout="resources/pop_layout_{network}_s{simpl}.csv",
+                       industrial_demand="resources/industrial_energy_demand_{network}_s{simpl}_{clusters}.csv",
+                       heat_demand_urban="resources/heat_demand_urban_{network}_s{simpl}_{clusters}.nc",
+                       heat_demand_rural="resources/heat_demand_rural_{network}_s{simpl}_{clusters}.nc",
+                       heat_demand_total="resources/heat_demand_total_{network}_s{simpl}_{clusters}.nc",
+                       temp_soil_total="resources/temp_soil_total_{network}_s{simpl}_{clusters}.nc",
+                       temp_soil_rural="resources/temp_soil_rural_{network}_s{simpl}_{clusters}.nc",
+                       temp_soil_urban="resources/temp_soil_urban_{network}_s{simpl}_{clusters}.nc",
+                       temp_air_total="resources/temp_air_total_{network}_s{simpl}_{clusters}.nc",
+                       temp_air_rural="resources/temp_air_rural_{network}_s{simpl}_{clusters}.nc",
+                       temp_air_urban="resources/temp_air_urban_{network}_s{simpl}_{clusters}.nc",
+                       cop_soil_total="resources/cop_soil_total_{network}_s{simpl}_{clusters}.nc",
+                       cop_soil_rural="resources/cop_soil_rural_{network}_s{simpl}_{clusters}.nc",
+                       cop_soil_urban="resources/cop_soil_urban_{network}_s{simpl}_{clusters}.nc",
+                       cop_air_total="resources/cop_air_total_{network}_s{simpl}_{clusters}.nc",
+                       cop_air_rural="resources/cop_air_rural_{network}_s{simpl}_{clusters}.nc",
+                       cop_air_urban="resources/cop_air_urban_{network}_s{simpl}_{clusters}.nc",
+                       solar_thermal_total="resources/solar_thermal_total_{network}_s{simpl}_{clusters}.nc",
+                       solar_thermal_urban="resources/solar_thermal_urban_{network}_s{simpl}_{clusters}.nc",
+                       traffic_data = "data/emobility/",
+                       solar_thermal_rural="resources/solar_thermal_rural_{network}_s{simpl}_{clusters}.nc",
+                       retro_cost_energy = "resources/retro_cost_{network}_s{simpl}_{clusters}.csv",
+                       floor_area = "resources/floor_area_{network}_s{simpl}_{clusters}.csv"
+            ),
             output=['pypsa-eur-sec/results/test/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{co2_budget_name}_{planning_horizons}.nc']
         )
         import yaml
@@ -1859,6 +1893,8 @@ if __name__ == "__main__":
     options = snakemake.config["sector"]
 
     opts = snakemake.wildcards.sector_opts.split('-')
+
+    investment_year=int(snakemake.wildcards.planning_horizons[-4:])
 
     n = pypsa.Network(snakemake.input.network,
                       override_component_attrs=override_component_attrs)
@@ -1876,7 +1912,8 @@ if __name__ == "__main__":
     costs = prepare_costs(snakemake.input.costs,
                           snakemake.config['costs']['USD2013_to_EUR2013'],
                           snakemake.config['costs']['discountrate'],
-                          Nyears)
+                          Nyears,
+                          snakemake.config['costs']['lifetime'])
 
     remove_elec_base_techs(n)
 
@@ -1916,7 +1953,7 @@ if __name__ == "__main__":
         options["central"] = False
 
     if "T" in opts:
-        add_transport(n)
+        add_land_transport(n)
 
     if "H" in opts:
         add_heat(n)
@@ -1944,32 +1981,35 @@ if __name__ == "__main__":
     else:
         logger.info("No resampling")
 
+    #process CO2 limit
+    limit = get_parameter(snakemake.config["co2_budget"])
+    print("CO2 limit set to",limit)
 
-    if snakemake.config["foresight"] == 'myopic':
-        co2_limits=pd.read_csv(snakemake.input.co2_budget, index_col=0)
-        year=snakemake.wildcards.planning_horizons[-4:]
-        limit=co2_limits.loc[int(year),snakemake.config["scenario"]["co2_budget_name"]]
-        add_co2limit(n, Nyears, limit)
-    else:
-        for o in opts:
-            if "Co2L" in o:
-                limit = o[o.find("Co2L")+4:]
-                print(o,limit)
-                if limit == "":
-                    limit = snakemake.config['co2_reduction']
-                else:
-                    limit = float(limit.replace("p",".").replace("m","-"))
-                add_co2limit(n, Nyears, limit)
-        # add_emission_prices(n, exclude_co2=True)
+    for o in opts:
+        if "Co2L" in o:
+            limit = o[o.find("Co2L")+4:]
+            limit = float(limit.replace("p",".").replace("m","-"))
+            print("overriding CO2 limit with scenario limit",limit)
 
-    # if 'Ep' in opts:
-    #     add_emission_prices(n)
+    print("adding CO2 budget limit as per unit of 1990 levels of",limit)
+    add_co2limit(n, Nyears, limit)
 
+
+    for o in opts:
         for tech in ["solar","onwind","offwind"]:
             if tech in o:
                 limit = o[o.find(tech)+len(tech):]
                 limit = float(limit.replace("p",".").replace("m","-"))
+                print("changing potential for",tech,"by factor",limit)
                 restrict_technology_potential(n,tech,limit)
+
+        if o[:10] == 'linemaxext':
+            maxext = float(o[10:])*1e3
+            print("limiting new HVAC and HVDC extensions to",maxext,"MW")
+            n.lines['s_nom_max'] = n.lines['s_nom'] + maxext
+            hvdc = n.links.index[n.links.carrier == 'DC']
+            n.links.loc[hvdc,'p_nom_max'] = n.links.loc[hvdc,'p_nom'] + maxext
+
 
     if snakemake.config["sector"]['electricity_distribution_grid']:
         insert_electricity_distribution_grid(n)

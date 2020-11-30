@@ -170,10 +170,8 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
     df_agg.Fueltype = df_agg.Fueltype.map(rename_fuel)
 
     #assign clustered bus
-    busmap_s = pd.read_hdf(snakemake.input.clustermaps,
-                           key="/busmap_s")
-    busmap = pd.read_hdf(snakemake.input.clustermaps,
-                         key="/busmap")
+    busmap_s = pd.read_csv(snakemake.input.busmap_s, index_col=0).squeeze()
+    busmap = pd.read_csv(snakemake.input.busmap, index_col=0).squeeze()
     clustermaps = busmap_s.map(busmap)
     clustermaps.index = clustermaps.index.astype(int)
 
@@ -416,7 +414,8 @@ if __name__ == "__main__":
                            planning_horizons='2020'),
             input=dict(network='pypsa-eur-sec/results/test/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{co2_budget_name}_{planning_horizons}.nc',
                        powerplants='pypsa-eur/resources/powerplants.csv',
-                       clustermaps='pypsa-eur/resources/clustermaps_{network}_s{simpl}_{clusters}.h5',
+                       busmap_s='pypsa-eur/resources/busmap_{network}_s{simpl}.csv',
+                       busmap='pypsa-eur/resources/busmap_{network}_s{simpl}_{clusters}.csv',
                        costs='pypsa-eur-sec/data/costs/costs_{planning_horizons}.csv',
                        cop_air_total="pypsa-eur-sec/resources/cop_air_total_{network}_s{simpl}_{clusters}.nc",
                        cop_soil_total="pypsa-eur-sec/resources/cop_soil_total_{network}_s{simpl}_{clusters}.nc"),
@@ -443,7 +442,8 @@ if __name__ == "__main__":
     costs = prepare_costs(snakemake.input.costs,
                           snakemake.config['costs']['USD2013_to_EUR2013'],
                           snakemake.config['costs']['discountrate'],
-                          Nyears)
+                          Nyears,
+                          snakemake.config['costs']['lifetime'])
 
     grouping_years=snakemake.config['existing_capacities']['grouping_years']
     add_power_capacities_installed_before_baseyear(n, grouping_years, costs, baseyear)
