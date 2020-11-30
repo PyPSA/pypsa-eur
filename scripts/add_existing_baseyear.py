@@ -442,7 +442,8 @@ if __name__ == "__main__":
     costs = prepare_costs(snakemake.input.costs,
                           snakemake.config['costs']['USD2013_to_EUR2013'],
                           snakemake.config['costs']['discountrate'],
-                          Nyears)
+                          Nyears,
+                          snakemake.config['costs']['lifetime'])
 
     grouping_years=snakemake.config['existing_capacities']['grouping_years']
     add_power_capacities_installed_before_baseyear(n, grouping_years, costs, baseyear)

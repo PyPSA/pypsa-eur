@@ -540,7 +540,7 @@ def prepare_data(network):
 
 
 
-def prepare_costs(cost_file, USD_to_EUR, discount_rate, Nyears):
+def prepare_costs(cost_file, USD_to_EUR, discount_rate, Nyears, lifetime):
 
     #set all asset costs and other parameters
     costs = pd.read_csv(cost_file,index_col=list(range(2))).sort_index()
@@ -558,7 +558,7 @@ def prepare_costs(cost_file, USD_to_EUR, discount_rate, Nyears):
                           "efficiency" : 1,
                           "fuel" : 0,
                           "investment" : 0,
-                          "lifetime" : 25
+                          "lifetime" : lifetime
     })
 
     costs["fixed"] = [(annuity(v["lifetime"],v["discount rate"])+v["FOM"]/100.)*v["investment"]*Nyears for i,v in costs.iterrows()]
@@ -1834,7 +1834,8 @@ if __name__ == "__main__":
     costs = prepare_costs(snakemake.input.costs,
                           snakemake.config['costs']['USD2013_to_EUR2013'],
                           snakemake.config['costs']['discountrate'],
-                          Nyears)
+                          Nyears,
+                          snakemake.config['costs']['lifetime'])
 
     remove_elec_base_techs(n)
 
