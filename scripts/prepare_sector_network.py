@@ -114,6 +114,13 @@ def update_wind_solar_costs(n,costs):
             n.generators.loc[n.generators.carrier==tech,'capital_cost'] = capital_cost.rename(index=lambda node: node + ' ' + tech)
 
 
+def retro_exogen(demand, dE):
+    """
+    reduces space heat demand exogenously
+    demand: current space heat demand
+    dE: energy savings
+    """
+    return demand * (1-dE)
 def add_carrier_buses(n, carriers):
     """
     Add buses to connect e.g. coal, nuclear and oil plants
@@ -451,8 +458,8 @@ def prepare_data(network):
 
     ## Get overall demand curve for all vehicles
 
-    dir_name = "data/emobility/"
-    traffic = pd.read_csv(os.path.join(dir_name,"KFZ__count"),skiprows=2)["count"]
+    traffic = pd.read_csv(snakemake.input.traffic_data + "KFZ__count",
+                          skiprows=2)["count"]
 
     #Generate profiles
     transport_shape = generate_periodic_profiles(dt_index=network.snapshots.tz_localize("UTC"),
@@ -506,7 +513,8 @@ def prepare_data(network):
 
     ## derive plugged-in availability for PKW's (cars)
 
-    traffic = pd.read_csv(os.path.join(dir_name,"Pkw__count"),skiprows=2)["count"]
+    traffic = pd.read_csv(snakemake.input.traffic_data + "Pkw__count",
+                          skiprows=2)["count"]
 
     avail_max = 0.95
 
@@ -540,7 +548,7 @@ def prepare_data(network):
 
 
 
-def prepare_costs(cost_file, USD_to_EUR, discount_rate, Nyears):
+def prepare_costs(cost_file, USD_to_EUR, discount_rate, Nyears, lifetime):
 
     #set all asset costs and other parameters
     costs = pd.read_csv(cost_file,index_col=list(range(2))).sort_index()
@@ -558,7 +566,7 @@ def prepare_costs(cost_file, USD_to_EUR, discount_rate, Nyears):
                           "efficiency" : 1,
                           "fuel" : 0,
                           "investment" : 0,
-                          "lifetime" : 25
+                          "lifetime" : lifetime
     })
 
     costs["fixed"] = [(annuity(v["lifetime"],v["discount rate"])+v["FOM"]/100.)*v["investment"]*Nyears for i,v in costs.iterrows()]
@@ -1077,7 +1085,21 @@ def add_heat(network):
 
     urban_fraction = options['central_fraction']*pop_layout["urban"]/(pop_layout[["urban","rural"]].sum(axis=1))
 
-    for name in ["residential rural","services rural","residential urban decentral","services urban decentral","urban central"]:
+    # building retrofitting, exogenously reduce space heat demand
+    if options["retrofitting"]["retro_exogen"]:
+        dE = options["retrofitting"]["dE"]
+        if snakemake.config["foresight"]=='myopic':
+            year = int(snakemake.wildcards.planning_horizons[-4:])
+            dE = dE[snakemake.config["scenario"]["planning_horizons"].index(year)]
+        print("retrofitting exogenously, assumed space heat reduction of ",
+              dE)
+        for sector in sectors:
+            heat_demand[sector + " space"] = heat_demand[sector + " space"].apply(lambda x: retro_exogen(x, dE))
+
+    heat_systems = ["residential rural", "services rural",
+                    "residential urban decentral","services urban decentral",
+                    "urban central"]
+    for name in heat_systems:
 
         name_type = "central" if name == "urban central" else "decentral"
 
@@ -1099,6 +1121,7 @@ def add_heat(network):
                 factor = None
             if sector in name:
                 heat_load = heat_demand[[sector + " water",sector + " space"]].groupby(level=1,axis=1).sum()[nodes[name]].multiply(factor)
+
 
         if name == "urban central":
             heat_load = heat_demand.groupby(level=1,axis=1).sum()[nodes[name]].multiply(urban_fraction[nodes[name]]*(1+options['district_heating_loss']))
@@ -1291,64 +1314,100 @@ def add_heat(network):
                              lifetime=costs.at['micro CHP','lifetime'])
 
 
-    #NB: this currently doesn't work for pypsa-eur model
-    if options['retrofitting']:
+    if options['retrofitting']['retro_endogen']:
 
-        retro_nodes = pd.Index(["DE"])
+        print("adding retrofitting endogenously")
 
-        space_heat_demand = space_heat_demand[retro_nodes]
+        # resample heat demand temporal 'heat_demand_r' depending on in config
+        # specified temporal resolution, to not overestimate retrofitting
+        hours = list(filter(re.compile(r'^\d+h$', re.IGNORECASE).search, opts))
+        if len(hours)==0:
+            hours = [n.snapshots[1] - n.snapshots[0]]
+        heat_demand_r =  heat_demand.resample(hours[0]).mean()
 
-        square_metres = population[retro_nodes]/population['DE']*5.7e9   #HPI 3.4e9m^2 for DE res, 2.3e9m^2 for tert https://doi.org/10.1016/j.rser.2013.09.012
-
-        space_peak = space_heat_demand.max()
-
-        space_pu = space_heat_demand.divide(space_peak)
+        # retrofitting data 'retro_data' with 'costs' [EUR/m^2] and heat
+        # demand 'dE' [per unit of original heat demand] for each country and
+        # different retrofitting strengths [additional insulation thickness in m]
+        retro_data = pd.read_csv(snakemake.input.retro_cost_energy,
+                                 index_col=[0, 1], skipinitialspace=True,
+                                 header=[0, 1])
+        # heated floor area [10^6 * m^2] per country
+        floor_area = pd.read_csv(snakemake.input.floor_area, index_col=[0, 1])
 
         network.add("Carrier", "retrofitting")
 
-        network.madd('Generator',
-                     retro_nodes,
-                     suffix=' retrofitting I',
-                     bus=retro_nodes+' heat',
-                     carrier="retrofitting",
-                     p_nom_extendable=True,
-                     p_nom_max=options['retroI-fraction']*space_peak*(1-urban_fraction),
-                     p_max_pu=space_pu,
-                     p_min_pu=space_pu,
-                     capital_cost=options['retrofitting-cost_factor']*costs.at['retrofitting I','fixed']*square_metres/(options['retroI-fraction']*space_peak))
+        # share of space heat demand 'w_space' of total heat demand
+        w_space = {}
+        for sector in sectors:
+            w_space[sector] = heat_demand_r[sector + " space"] / \
+                (heat_demand_r[sector + " space"] + heat_demand_r[sector + " water"])
+        w_space["tot"] = ((heat_demand_r["services space"] +
+                           heat_demand_r["residential space"]) /
+                           heat_demand_r.groupby(level=[1], axis=1).sum())
 
-        network.madd('Generator',
-                     retro_nodes,
-                     suffix=' retrofitting II',
-                     bus=retro_nodes+' heat',
-                     carrier="retrofitting",
-                     p_nom_extendable=True,
-                     p_nom_max=options['retroII-fraction']*space_peak*(1-urban_fraction),
-                     p_max_pu=space_pu,
-                     p_min_pu=space_pu,
-                     capital_cost=options['retrofitting-cost_factor']*costs.at['retrofitting II','fixed']*square_metres/(options['retroII-fraction']*space_peak))
 
-        network.madd('Generator',
-                     retro_nodes,
-                     suffix=' urban retrofitting I',
-                     bus=retro_nodes+' urban heat',
-                     carrier="retrofitting",
-                     p_nom_extendable=True,
-                     p_nom_max=options['retroI-fraction']*space_peak*urban_fraction,
-                     p_max_pu=space_pu,
-                     p_min_pu=space_pu,
-                     capital_cost=options['retrofitting-cost_factor']*costs.at['retrofitting I','fixed']*square_metres/(options['retroI-fraction']*space_peak))
+        for name in network.loads[network.loads.carrier.isin([x + " heat" for x in heat_systems])].index:
 
-        network.madd('Generator',
-                     retro_nodes,
-                     suffix=' urban retrofitting II',
-                     bus=retro_nodes+' urban heat',
-                     carrier="retrofitting",
-                     p_nom_extendable=True,
-                     p_nom_max=options['retroII-fraction']*space_peak*urban_fraction,
-                     p_max_pu=space_pu,
-                     p_min_pu=space_pu,
-                     capital_cost=options['retrofitting-cost_factor']*costs.at['retrofitting II','fixed']*square_metres/(options['retroII-fraction']*space_peak))
+            node = network.buses.loc[name, "location"]
+            ct = pop_layout.loc[node, "ct"]
+
+            # weighting 'f' depending on the size of the population at the node
+            f = urban_fraction[node] if "urban" in name else (1-urban_fraction[node])
+            if f == 0:
+                continue
+            # get sector name ("residential"/"services"/or both "tot" for urban central)
+            sec = [x if x in name else "tot" for x in sectors][0]
+
+            # get floor aread at node and region (urban/rural) in m^2
+            floor_area_node = ((pop_layout.loc[node].fraction
+                                  * floor_area.loc[ct, "value"] * 10**6).loc[sec] * f)
+            # total heat demand at node [MWh]
+            demand = (network.loads_t.p_set[name].resample(hours[0])
+                      .mean())
+
+            # space heat demand at node [MWh]
+            space_heat_demand = demand * w_space[sec][node]
+            # normed time profile of space heat demand 'space_pu' (values between 0-1),
+            # p_max_pu/p_min_pu of retrofitting generators
+            space_pu = (space_heat_demand / space_heat_demand.max()).to_frame(name=node)
+
+            # minimum heat demand 'dE' after retrofitting in units of original heat demand (values between 0-1)
+            dE = retro_data.loc[(ct, sec), ("dE")]
+            # get addtional energy savings 'dE_diff' between the different retrofitting strengths/generators at one node
+            dE_diff = abs(dE.diff()).fillna(1-dE.iloc[0])
+            # convert costs Euro/m^2 -> Euro/MWh
+            capital_cost =  retro_data.loc[(ct, sec), ("cost")] * floor_area_node / \
+                            ((1 - dE) * space_heat_demand.max())
+            # number of possible retrofitting measures 'strengths' (set in list at config.yaml 'l_strength')
+            # given in additional insulation thickness [m]
+            # for each measure, a retrofitting generator is added at the node
+            strengths = retro_data.columns.levels[1]
+
+            # check that ambitious retrofitting has higher costs per MWh than moderate retrofitting
+            if (capital_cost.diff() < 0).sum():
+                print(
+                    "warning, costs are not linear for ", ct, " ", sec)
+                s = capital_cost[(capital_cost.diff() < 0)].index
+                strengths = strengths.drop(s)
+
+            # reindex normed time profile of space heat demand back to hourly resolution
+            space_pu = (space_pu.reindex(index=heat_demand.index)
+                          .fillna(method="ffill"))
+
+            # add for each retrofitting strength a generator with heat generation profile following the profile of the heat demand
+            for strength in strengths:
+                network.madd('Generator',
+                            [node],
+                            suffix=' retrofitting ' + strength + " " + name[6::],
+                            bus=name,
+                            carrier="retrofitting",
+                            p_nom_extendable=True,
+                            p_nom_max=dE_diff[strength] * space_heat_demand.max(), # maximum energy savings for this renovation strength
+                            p_max_pu=space_pu,
+                            p_min_pu=space_pu,
+                            country=ct,
+                            capital_cost=capital_cost[strength] * options['retrofitting']['cost_factor'])
+
 
 
 def create_nodes_for_heat_sector():
@@ -1782,25 +1841,44 @@ if __name__ == "__main__":
             wildcards=dict(network='elec', simpl='', clusters='37', lv='1.0',
                            opts='', planning_horizons='2020',
                            sector_opts='Co2L0-168H-T-H-B-I-solar3-dist1'),
-            input=dict(network='pypsa-eur/networks/{network}_s{simpl}_{clusters}_ec_lv{lv}_{opts}.nc',
-                       timezone_mappings='pypsa-eur-sec/data/timezone_mappings.csv',
-                       clustered_pop_layout='pypsa-eur-sec/resources/pop_layout_{network}_s{simpl}_{clusters}.csv',
-                       costs='technology-data/outputs/costs_{planning_horizons}.csv',
-                       profile_offwind_ac='pypsa-eur/resources/profile_offwind-ac.nc',
-                       profile_offwind_dc='pypsa-eur/resources/profile_offwind-dc.nc',
-                       busmap_s='pypsa-eur/resources/busmap_{network}_s{simpl}.csv',
-                       busmap='pypsa-eur/resources/busmap_{network}_s{simpl}_{clusters}.csv',
-                       cop_air_total='pypsa-eur-sec/resources/cop_air_total_{network}_s{simpl}_{clusters}.nc',
-                       cop_soil_total='pypsa-eur-sec/resources/cop_soil_total_{network}_s{simpl}_{clusters}.nc',
-                       solar_thermal_total='pypsa-eur-sec/resources/solar_thermal_total_{network}_s{simpl}_{clusters}.nc',
-                       energy_totals_name='pypsa-eur-sec/data/energy_totals.csv',
-                       heat_demand_total='pypsa-eur-sec/resources/heat_demand_total_{network}_s{simpl}_{clusters}.nc',
-                       heat_profile='pypsa-eur-sec/data/heat_load_profile_BDEW.csv',
-                       transport_name='pypsa-eur-sec/data/transport_data.csv',
-                       temp_air_total='pypsa-eur-sec/resources/temp_air_total_{network}_s{simpl}_{clusters}.nc',
-                       co2_totals_name='pypsa-eur-sec/data/co2_totals.csv',
-                       biomass_potentials='pypsa-eur-sec/data/biomass_potentials.csv',
-                       industrial_demand='pypsa-eur-sec/resources/industrial_demand_{network}_s{simpl}_{clusters}.csv',),
+            input=dict(network='../pypsa-eur/networks/{network}_s{simpl}_{clusters}_ec_lv{lv}_{opts}.nc',
+                       energy_totals_name='resources/energy_totals.csv',
+                       co2_totals_name='resources/co2_totals.csv',
+                       transport_name='resources/transport_data.csv',
+                       biomass_potentials='resources/biomass_potentials.csv',
+                       biomass_transport='data/biomass/biomass_transport_costs.csv',
+                       timezone_mappings='data/timezone_mappings.csv',
+                       heat_profile="data/heat_load_profile_BDEW.csv",
+                       costs="../technology-data/outputs/costs_{planning_horizons}.csv",
+	               h2_cavern = "data/hydrogen_salt_cavern_potentials.csv",
+                       profile_offwind_ac="../pypsa-eur/resources/profile_offwind-ac.nc",
+                       profile_offwind_dc="../pypsa-eur/resources/profile_offwind-dc.nc",
+                       clustermaps='../pypsa-eur/resources/clustermaps_{network}_s{simpl}_{clusters}.h5',
+                       clustered_pop_layout="resources/pop_layout_{network}_s{simpl}_{clusters}.csv",
+                       simplified_pop_layout="resources/pop_layout_{network}_s{simpl}.csv",
+                       industrial_demand="resources/industrial_energy_demand_{network}_s{simpl}_{clusters}.csv",
+                       heat_demand_urban="resources/heat_demand_urban_{network}_s{simpl}_{clusters}.nc",
+                       heat_demand_rural="resources/heat_demand_rural_{network}_s{simpl}_{clusters}.nc",
+                       heat_demand_total="resources/heat_demand_total_{network}_s{simpl}_{clusters}.nc",
+                       temp_soil_total="resources/temp_soil_total_{network}_s{simpl}_{clusters}.nc",
+                       temp_soil_rural="resources/temp_soil_rural_{network}_s{simpl}_{clusters}.nc",
+                       temp_soil_urban="resources/temp_soil_urban_{network}_s{simpl}_{clusters}.nc",
+                       temp_air_total="resources/temp_air_total_{network}_s{simpl}_{clusters}.nc",
+                       temp_air_rural="resources/temp_air_rural_{network}_s{simpl}_{clusters}.nc",
+                       temp_air_urban="resources/temp_air_urban_{network}_s{simpl}_{clusters}.nc",
+                       cop_soil_total="resources/cop_soil_total_{network}_s{simpl}_{clusters}.nc",
+                       cop_soil_rural="resources/cop_soil_rural_{network}_s{simpl}_{clusters}.nc",
+                       cop_soil_urban="resources/cop_soil_urban_{network}_s{simpl}_{clusters}.nc",
+                       cop_air_total="resources/cop_air_total_{network}_s{simpl}_{clusters}.nc",
+                       cop_air_rural="resources/cop_air_rural_{network}_s{simpl}_{clusters}.nc",
+                       cop_air_urban="resources/cop_air_urban_{network}_s{simpl}_{clusters}.nc",
+                       solar_thermal_total="resources/solar_thermal_total_{network}_s{simpl}_{clusters}.nc",
+                       solar_thermal_urban="resources/solar_thermal_urban_{network}_s{simpl}_{clusters}.nc",
+                       traffic_data = "data/emobility/",
+                       solar_thermal_rural="resources/solar_thermal_rural_{network}_s{simpl}_{clusters}.nc",
+                       retro_cost_energy = "resources/retro_cost_{network}_s{simpl}_{clusters}.csv",
+                       floor_area = "resources/floor_area_{network}_s{simpl}_{clusters}.csv"
+            ),
             output=['pypsa-eur-sec/results/test/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{co2_budget_name}_{planning_horizons}.nc']
         )
         import yaml
@@ -1834,7 +1912,8 @@ if __name__ == "__main__":
     costs = prepare_costs(snakemake.input.costs,
                           snakemake.config['costs']['USD2013_to_EUR2013'],
                           snakemake.config['costs']['discountrate'],
-                          Nyears)
+                          Nyears,
+                          snakemake.config['costs']['lifetime'])
 
     remove_elec_base_techs(n)
 

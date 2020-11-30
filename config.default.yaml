@@ -101,10 +101,16 @@ sector:
   'shipping_average_efficiency' : 0.4 #For conversion of fuel oil to propulsion in 2011
   'time_dep_hp_cop' : True
   'space_heating_fraction' : 1.0 #fraction of space heating active
-  'retrofitting' : False
-  'retroI-fraction' : 0.25
-  'retroII-fraction' : 0.55
-  'retrofitting-cost_factor' : 1.0
+  'retrofitting' :
+      'retro_exogen': False # space heat demand savings exogenously
+      'dE': 0.4            # reduction of space heat demand (applied before losses in DH)
+      'retro_endogen': True  # co-optimise space heat savings
+      'cost_factor' : 1.0
+      'interest_rate': 0.04  # for investment in building components
+      'annualise_cost': True  # annualise the investment costs
+      'tax_weighting': False   # weight costs depending on taxes in countries
+      'construction_index': True   # weight costs depending on labour/material costs per ct
+      'l_strength': ["0.076", "0.197"] # additional insulation thickness[m], determines number of retro steps(=generators per bus) and maximum possible savings
   'tes' : True
   'tes_tau' : 3.
   'boilers' : True
@@ -130,7 +136,6 @@ sector:
   'gas_distribution_grid_cost_factor' : 1.0  #multiplies cost in data/costs.csv
 
 costs:
-  year: 2030
   lifetime: 25 #default lifetime
   # From a Lion Hirth paper, also reflects average of Noothout et al 2016
   discountrate: 0.07

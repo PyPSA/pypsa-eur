@@ -278,6 +278,23 @@ rule build_industrial_demand:
     resources: mem_mb=1000
     script: 'scripts/build_industrial_demand.py'
 
+if config['sector']['retrofitting'].get('retro_endogen', True):
+	rule build_retro_cost:
+	    input:
+    		building_stock="data/retro/data_building_stock.csv",
+    		u_values_PL="data/retro/u_values_poland.csv",
+    		tax_w="data/retro/electricity_taxes_eu.csv",
+    		construction_index="data/retro/comparative_level_investment.csv",
+    		average_surface="data/retro/average_surface_components.csv",
+    		floor_area_missing="data/retro/floor_area_missing.csv",
+    		clustered_pop_layout="resources/pop_layout_{network}_s{simpl}_{clusters}.csv",
+    		cost_germany="data/retro/retro_cost_germany.csv",
+    		window_assumptions="data/retro/window_assumptions.csv"
+	    output:
+    		retro_cost="resources/retro_cost_{network}_s{simpl}_{clusters}.csv",
+    		floor_area="resources/floor_area_{network}_s{simpl}_{clusters}.csv"
+	    script: "scripts/build_retro_cost.py"
+
 
 rule prepare_sector_network:
     input:
@@ -285,6 +302,7 @@ rule prepare_sector_network:
         energy_totals_name='resources/energy_totals.csv',
         co2_totals_name='resources/co2_totals.csv',
         transport_name='resources/transport_data.csv',
+	traffic_data = "data/emobility/",
         biomass_potentials='resources/biomass_potentials.csv',
         timezone_mappings='data/timezone_mappings.csv',
         heat_profile="data/heat_load_profile_BDEW.csv",
@@ -314,7 +332,9 @@ rule prepare_sector_network:
         cop_air_urban="resources/cop_air_urban_{network}_s{simpl}_{clusters}.nc",
         solar_thermal_total="resources/solar_thermal_total_{network}_s{simpl}_{clusters}.nc",
         solar_thermal_urban="resources/solar_thermal_urban_{network}_s{simpl}_{clusters}.nc",
-        solar_thermal_rural="resources/solar_thermal_rural_{network}_s{simpl}_{clusters}.nc"
+        solar_thermal_rural="resources/solar_thermal_rural_{network}_s{simpl}_{clusters}.nc",
+	retro_cost_energy = "resources/retro_cost_{network}_s{simpl}_{clusters}.csv",
+        floor_area = "resources/floor_area_{network}_s{simpl}_{clusters}.csv"
     output: config['results_dir']  +  config['run'] + '/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc'
     threads: 1
     resources: mem_mb=2000
