@@ -1747,11 +1747,9 @@ if __name__ == "__main__":
         snakemake = MockSnakemake(
             wildcards=dict(network='elec', simpl='', clusters='37', lv='1.0',
                            opts='', planning_horizons='2020',
-                           co2_budget_name='go',
                            sector_opts='Co2L0-168H-T-H-B-I-solar3-dist1'),
             input=dict(network='pypsa-eur/networks/{network}_s{simpl}_{clusters}_ec_lv{lv}_{opts}.nc',
                        timezone_mappings='pypsa-eur-sec/data/timezone_mappings.csv',
-                       co2_budget='pypsa-eur-sec/data/co2_budget.csv',
                        clustered_pop_layout='pypsa-eur-sec/resources/pop_layout_{network}_s{simpl}_{clusters}.csv',
                        costs='technology-data/outputs/costs_{planning_horizons}.csv',
                        profile_offwind_ac='pypsa-eur/resources/profile_offwind-ac.nc',
@@ -1868,22 +1866,22 @@ if __name__ == "__main__":
     else:
         logger.info("No resampling")
 
-
-    if snakemake.config["foresight"] == 'myopic':
-        co2_limits=pd.read_csv(snakemake.input.co2_budget, index_col=0)
-        year=snakemake.wildcards.planning_horizons[-4:]
-        limit=co2_limits.loc[int(year),snakemake.config["scenario"]["co2_budget_name"]]
-        add_co2limit(n, Nyears, limit)
+    #process CO2 limit
+    if type(snakemake.config["co2_budget"]) == dict:
+        year=int(snakemake.wildcards.planning_horizons[-4:])
+        limit=snakemake.config["co2_budget"][year]
     else:
-        for o in opts:
-            if "Co2L" in o:
-                limit = o[o.find("Co2L")+4:]
-                print(o,limit)
-                if limit == "":
-                    limit = snakemake.config['co2_reduction']
-                else:
-                    limit = float(limit.replace("p",".").replace("m","-"))
-                add_co2limit(n, Nyears, limit)
+        limit=snakemake.config["co2_budget"]
+    print("CO2 limit set to",limit)
+
+    for o in opts:
+        if "Co2L" in o:
+            limit = o[o.find("Co2L")+4:]
+            limit = float(limit.replace("p",".").replace("m","-"))
+            print("overriding CO2 limit with scenario limit",limit)
+
+    print("adding CO2 budget limit as per unit of 1990 levels of",limit)
+    add_co2limit(n, Nyears, limit)
 
 
     for o in opts:
