@@ -1,2 +1,4 @@
 ,Unit,Values,Description
+url,--,"https://data.open-power-system-data.org/time_series/latest/time_series_60min_singleindex.csv","Link to open power system data time series data"
+source,--,"One of {'ENTSOE_power_statistics': set source to 'ENTSOE_power_statistics', 'ENTSOE_transparency': set source to 'ENTSOE_transparency'}"
 scaling_factor,--,float,"Global correction factor for the load time series."
