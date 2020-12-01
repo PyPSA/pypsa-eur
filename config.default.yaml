@@ -100,17 +100,20 @@ sector:
   'transport_internal_combustion_efficiency': 0.3
   'shipping_average_efficiency' : 0.4 #For conversion of fuel oil to propulsion in 2011
   'time_dep_hp_cop' : True
-  'space_heating_fraction' : 1.0 #fraction of space heating active
   'retrofitting' :
-      'retro_exogen': False # space heat demand savings exogenously
-      'dE': 0.4            # reduction of space heat demand (applied before losses in DH)
-      'retro_endogen': True  # co-optimise space heat savings
-      'cost_factor' : 1.0
-      'interest_rate': 0.04  # for investment in building components
-      'annualise_cost': True  # annualise the investment costs
-      'tax_weighting': False   # weight costs depending on taxes in countries
-      'construction_index': True   # weight costs depending on labour/material costs per ct
-      'l_strength': ["0.076", "0.197"] # additional insulation thickness[m], determines number of retro steps(=generators per bus) and maximum possible savings
+    'retro_exogen': True # space heat demand savings exogenously
+    'dE': # reduction of space heat demand (applied before losses in DH)
+      2020 : 0.
+      2030 : 0.15
+      2040 : 0.3
+      2050 : 0.4
+    'retro_endogen': False  # co-optimise space heat savings
+    'cost_factor' : 1.0
+    'interest_rate': 0.04  # for investment in building components
+    'annualise_cost': True  # annualise the investment costs
+    'tax_weighting': False   # weight costs depending on taxes in countries
+    'construction_index': True   # weight costs depending on labour/material costs per ct
+    'l_strength': ["0.076", "0.197"] # additional insulation thickness[m], determines number of retro steps(=generators per bus) and maximum possible savings
   'tes' : True
   'tes_tau' : 3.
   'boilers' : True

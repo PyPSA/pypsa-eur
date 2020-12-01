@@ -114,13 +114,6 @@ def update_wind_solar_costs(n,costs):
             n.generators.loc[n.generators.carrier==tech,'capital_cost'] = capital_cost.rename(index=lambda node: node + ' ' + tech)
 
 
-def retro_exogen(demand, dE):
-    """
-    reduces space heat demand exogenously
-    demand: current space heat demand
-    dE: energy savings
-    """
-    return demand * (1-dE)
 def add_carrier_buses(n, carriers):
     """
     Add buses to connect e.g. coal, nuclear and oil plants
@@ -436,12 +429,10 @@ def prepare_data(network):
 
             if use == "space":
                 heat_demand_shape = daily_space_heat_demand*intraday_year_profile
-                factor = options['space_heating_fraction']
             else:
                 heat_demand_shape = intraday_year_profile
-                factor = 1.
 
-            heat_demand["{} {}".format(sector,use)] = factor*(heat_demand_shape/heat_demand_shape.sum()).multiply(nodal_energy_totals["total {} {}".format(sector,use)])*1e6
+            heat_demand["{} {}".format(sector,use)] = (heat_demand_shape/heat_demand_shape.sum()).multiply(nodal_energy_totals["total {} {}".format(sector,use)])*1e6
             electric_heat_supply["{} {}".format(sector,use)] = (heat_demand_shape/heat_demand_shape.sum()).multiply(nodal_energy_totals["electricity {} {}".format(sector,use)])*1e6
 
     heat_demand = pd.concat(heat_demand,axis=1)
@@ -458,7 +449,7 @@ def prepare_data(network):
 
     ## Get overall demand curve for all vehicles
 
-    traffic = pd.read_csv(snakemake.input.traffic_data + "KFZ__count",
+    traffic = pd.read_csv(os.path.join(snakemake.input.traffic_data,"KFZ__count"),
                           skiprows=2)["count"]
 
     #Generate profiles
@@ -513,7 +504,7 @@ def prepare_data(network):
 
     ## derive plugged-in availability for PKW's (cars)
 
-    traffic = pd.read_csv(snakemake.input.traffic_data + "Pkw__count",
+    traffic = pd.read_csv(os.path.join(snakemake.input.traffic_data,"Pkw__count"),
                           skiprows=2)["count"]
 
     avail_max = 0.95
@@ -1087,14 +1078,11 @@ def add_heat(network):
 
     # building retrofitting, exogenously reduce space heat demand
     if options["retrofitting"]["retro_exogen"]:
-        dE = options["retrofitting"]["dE"]
-        if snakemake.config["foresight"]=='myopic':
-            year = int(snakemake.wildcards.planning_horizons[-4:])
-            dE = dE[snakemake.config["scenario"]["planning_horizons"].index(year)]
+        dE = get_parameter(options["retrofitting"]["dE"])
         print("retrofitting exogenously, assumed space heat reduction of ",
               dE)
         for sector in sectors:
-            heat_demand[sector + " space"] = heat_demand[sector + " space"].apply(lambda x: retro_exogen(x, dE))
+            heat_demand[sector + " space"] = (1-dE)*heat_demand[sector + " space"]
 
     heat_systems = ["residential rural", "services rural",
                     "residential urban decentral","services urban decentral",
@@ -1934,11 +1922,6 @@ if __name__ == "__main__":
     add_storage(n)
 
     for o in opts:
-        if "space" in o:
-            limit = o[o.find("space")+5:]
-            limit = float(limit.replace("p",".").replace("m","-"))
-            print(o,limit)
-            options['space_heating_fraction'] = limit
         if o[:4] == "wave":
             wave_cost_factor = float(o[4:].replace("p",".").replace("m","-"))
             print("Including wave generators with cost factor of", wave_cost_factor)

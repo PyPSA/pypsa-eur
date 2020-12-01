@@ -278,22 +278,21 @@ rule build_industrial_demand:
     resources: mem_mb=1000
     script: 'scripts/build_industrial_demand.py'
 
-if config['sector']['retrofitting'].get('retro_endogen', True):
-	rule build_retro_cost:
-	    input:
-    		building_stock="data/retro/data_building_stock.csv",
-    		u_values_PL="data/retro/u_values_poland.csv",
-    		tax_w="data/retro/electricity_taxes_eu.csv",
-    		construction_index="data/retro/comparative_level_investment.csv",
-    		average_surface="data/retro/average_surface_components.csv",
-    		floor_area_missing="data/retro/floor_area_missing.csv",
-    		clustered_pop_layout="resources/pop_layout_{network}_s{simpl}_{clusters}.csv",
-    		cost_germany="data/retro/retro_cost_germany.csv",
-    		window_assumptions="data/retro/window_assumptions.csv"
-	    output:
-    		retro_cost="resources/retro_cost_{network}_s{simpl}_{clusters}.csv",
-    		floor_area="resources/floor_area_{network}_s{simpl}_{clusters}.csv"
-	    script: "scripts/build_retro_cost.py"
+rule build_retro_cost:
+    input:
+        building_stock="data/retro/data_building_stock.csv",
+        u_values_PL="data/retro/u_values_poland.csv",
+        tax_w="data/retro/electricity_taxes_eu.csv",
+        construction_index="data/retro/comparative_level_investment.csv",
+        average_surface="data/retro/average_surface_components.csv",
+        floor_area_missing="data/retro/floor_area_missing.csv",
+        clustered_pop_layout="resources/pop_layout_{network}_s{simpl}_{clusters}.csv",
+        cost_germany="data/retro/retro_cost_germany.csv",
+        window_assumptions="data/retro/window_assumptions.csv"
+    output:
+        retro_cost="resources/retro_cost_{network}_s{simpl}_{clusters}.csv",
+        floor_area="resources/floor_area_{network}_s{simpl}_{clusters}.csv"
+    script: "scripts/build_retro_cost.py"
 
 
 rule prepare_sector_network:
