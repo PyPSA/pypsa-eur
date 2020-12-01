@@ -169,10 +169,9 @@ transformers:
 
 load:
   url: https://data.open-power-system-data.org/time_series/latest/time_series_60min_singleindex.csv
-  source: ENTSOE_power_statistics #ENTSOE_transparency
-  gap_filling_threshold: 3 # Threshold for the automatic filling of gaps in hours.
-  adjust_gaps_manuel: true # false
-  scaling_factor: 1.0
+  interpolate_limit: 3 # data gaps up until this size are interpolated linearly
+  time_shift_for_large_gaps: 1w # data gaps up until this size are copied by copying from 
+  manual_adjustments: true # false
 
 costs:
   year: 2030
