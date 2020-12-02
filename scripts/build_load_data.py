@@ -28,7 +28,7 @@ Inputs
 Outputs
 -------
 
-- ``resource/load.csv``:
+- ``resource/time_series_60min_singleindex_filtered.csv``:
 
 
 """
