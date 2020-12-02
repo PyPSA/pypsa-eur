@@ -17,3 +17,10 @@ IRENA existing VRE capacities,existing_infrastructure/{solar|onwind|offwind}_cap
 USGS ammonia production,myb1-2017-nitro.xls,unknown,https://www.usgs.gov/centers/nmic/nitrogen-statistics-and-information
 hydrogen salt cavern potentials,hydrogen_salt_cavern_potentials.csv,CC BY 4.0,https://doi.org/10.1016/j.ijhydene.2019.12.161
 hotmaps industrial site database,Industrial_Database.csv,CC BY 4.0,https://gitlab.com/hotmaps/industrial_sites/industrial_sites_Industrial_Database
+Hotmaps building stock data,data_building_stock.csv,CC BY 4.0,https://gitlab.com/hotmaps/building-stock
+U-values Poland,u_values_poland.csv,unknown,https://data.europa.eu/euodp/de/data/dataset/building-stock-observatory
+Floor area missing in hotmaps building stock data,floor_area_missing.csv,unknown,https://data.europa.eu/euodp/de/data/dataset/building-stock-observatory
+Comparative level investment,comparative_level_investment.csv,Eurostat,https://ec.europa.eu/eurostat/statistics-explained/index.php?title=Comparative_price_levels_for_investment
+Electricity taxes,electricity_taxes_eu.csv,Eurostat,https://appsso.eurostat.ec.europa.eu/nui/show.do?dataset=nrg_pc_204&lang=en
+Average surface components,average_surface_components.csv,unknown,http://webtool.building-typology.eu/#bm
+Retrofitting thermal envelope costs for Germany,retro_cost_germany.csv,unkown,https://www.iwu.de/forschung/handlungslogiken/kosten-energierelevanter-bau-und-anlagenteile-bei-modernisierung/
