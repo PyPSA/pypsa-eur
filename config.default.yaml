@@ -53,6 +53,15 @@ electricity:
   custom_powerplants: false # use pandas query strings here, e.g. Country in ['Germany']
   conventional_carriers: [nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
 
+  # OPSD_VRES_countries: [CH, CZ, DE, DK, FR, GB, PL, SE]
+
+  # include_renewable_capacities_from_OPSD:
+  #    # ppm.data.OPSD_VRE_country sometimes discriminates between offshore and onshore wind; but does not for every country.
+  #   Onshore: [onwind]
+  #   Offshore: [offwind-ac, offwind-dc]
+  #   Wind: ['onwind', 'offwind-ac', 'offwind-dc']
+  #   Solar: [solar]
+
   # estimate_renewable_capacities_from_capacity_stats:
   #   # Wind is the Fueltype in ppm.data.Capacity_stats, onwind, offwind-{ac,dc} the carrier in PyPSA-Eur
   #   Wind: [onwind, offwind-ac, offwind-dc]
