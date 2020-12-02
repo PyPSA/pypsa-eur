@@ -105,10 +105,8 @@ import numpy as np
 import xarray as xr
 import geopandas as gpd
 import pypsa
-import powerplantmatching as ppm
-
-import multiprocessing
-from functools import partial
+import powerplantmatching as pm
+from powerplantmatching.export import map_country_bus
 
 idx = pd.IndexSlice
 
@@ -481,72 +479,40 @@ def attach_extendable_generators(n, costs, ppl):
                                       "'{tech}' is not implemented, yet. "
                                       "Only OCGT, CCGT and nuclear are allowed at the moment.")
 
-def map_ppls_to_bus(xy, buses, tech):
-    # map ppl with coordinates xy \in R^2 to closest bus (in buses) of the network;
-    idx = np.sqrt((n.buses.loc[buses].x-xy[1])**2+(n.buses.loc[buses].y-xy[0])**2).argmin()
-    return n.buses.loc[buses].iloc[idx].name + ' ' + tech
 
-def attach_OPSD_ppls_for_country(country, tech_map=None):
-    # retrieve databunde from OPSD (Open Power System Data) and map ppls to closest potential bus
 
-    if tech_map is None:
-        tech_map = (snakemake.config['electricity']
-                    .get('include_renewable_capacities_from_OPSD', {}))
+def attach_OPSD_renewables(n):
 
-    capacities = (ppm.data.OPSD_VRE_country(country).powerplant.convert_country_to_alpha2()
-                  .astype({'Capacity': 'float'})
-                  .groupby(['lat','lon','Fueltype','Technology']) # reduce input data
-                  .agg({'Capacity': 'sum'})
-                  .query('Capacity > 0.1') # only capacities above 100kW
-                  .reset_index())
+    available = ['DE', 'FR', 'PL', 'CH', 'DK', 'CZ', 'SE', 'GB']
+    tech_map = {'Onshore': 'onwind', 'Offshore': 'offwind', 'Solar': 'solar'}
+    countries = set(available) & set(n.buses.country)
+    techs = snakemake.config['electricity'].get('renewable_capacities_from_OPSD', [])
+    tech_map = {k: v for k, v in tech_map.items() if v in techs}
 
-    # distinguish between onshore and offshore, if given:
-    capacities.Fueltype = (capacities[['Fueltype','Technology']]
-                           .apply(lambda b: b.Technology if b.Technology in ['Onshore', 'Offshore']
-                                  else b.Fueltype, axis=1))
+    if not tech_map:
+        return
 
-    # retrieve a mapping ppl->bus if locations (lat/lon) for ppls are given:
-    if ~capacities[['lat','lon']].isna().stack().all():
-        buses = n.buses[n.buses.country==country].index
-        
-        mapping = pd.Series(dtype='float')
-        for ppm_fueltype, techs in tech_map.items():
-            for tech in techs:
-                tech_i = n.generators.query('carrier in @tech and bus in @buses').index
+    logger.info(f'Using OPSD renewable capacities in {", ".join(countries)} '
+                f'for technologies {", ".join(tech_map.values())}.')
 
-                # fix available buses in map_ppls_to_bus function:
-                map_ppls = partial(map_ppls_to_bus, buses=n.generators.loc[tech_i].bus, tech=tech)
+    df = pd.concat([pm.data.OPSD_VRE_country(c) for c in countries])
+    technology_b = ~df.Technology.isin(['Onshore', 'Offshore'])
+    df['Fueltype'] = df.Fueltype.where(technology_b, df.Technology)
+    df = df.query('Fueltype in @tech_map').powerplant.convert_country_to_alpha2()
 
-                # parallel assignment of ppls to buses; each process is independent to speed up
-                pool_buses = multiprocessing.Pool(processes=4)
-                mapping = (mapping.append(
-                    pd.Series((capacities.query('Fueltype in @ppm_fueltype').Capacity/len(techs)).values,
-                              (pool_buses.map(map_ppls,
-                                              np.array(capacities.query('Fueltype in @ppm_fueltype')[['lat','lon']]))))
-                    .groupby(level=0).sum())) # aggregate capacities per bus with groupby
-                
-        logger.info('Adding {} renewable assets in {} from OPSD'
-                .format(len(capacities), country))
-        return mapping
-    else: # if locations are not given, fall back to heuristics
-        logger.warning('lat and lon are not given for assets in {}; falling back to heuristics'
-                .format(country))
-        return pd.Series(dtype='float')
+    for fueltype, carrier_like in tech_map.items():
+        gens = n.generators[lambda df: df.carrier.str.contains(carrier_like)]
+        buses = n.buses.loc[gens.bus.unique()]
+        gens_per_bus = gens.groupby('bus').p_nom.count()
 
-def attach_OPSD_renewables(n, countries=None):
-    if countries is None:
-        countries = (snakemake.config['electricity']
-                     .get('OPSD_VRES_countries', {}))
+        caps = map_country_bus(df.query('Fueltype == @fueltype'), buses)
+        caps = caps.groupby(['bus']).Capacity.sum()
+        caps = caps / gens_per_bus.reindex(caps.index, fill_value=1)
 
-    if len(countries) == 0: return
+        n.generators.p_nom.update(gens.bus.map(caps).dropna())
 
-    for country in countries:
-        mapping = attach_OPSD_ppls_for_country(country)
-        n.generators.loc[mapping.index, 'p_nom'] = mapping
-        logger.info('overwriting renewable capacities in {} [MW] with precise locations\n{}'
-                    .format(country, n.generators.loc[mapping.index].groupby('carrier').sum().p_nom))
-    
-    
+
+
 def estimate_renewable_capacities(n, tech_map=None):
     if tech_map is None:
         tech_map = (snakemake.config['electricity']
@@ -554,14 +520,14 @@ def estimate_renewable_capacities(n, tech_map=None):
 
     if len(tech_map) == 0: return
 
-    capacities = (ppm.data.Capacity_stats().powerplant.convert_country_to_alpha2()
+    capacities = (pm.data.Capacity_stats().powerplant.convert_country_to_alpha2()
                   [lambda df: df.Energy_Source_Level_2]
                   .set_index(['Fueltype', 'Country']).sort_index())
 
     countries = n.buses.country.unique()
 
     if len(countries) == 0: return
-    
+
     logger.info('heuristics applied to distribute renewable capacities [MW] \n{}'
                 .format(capacities.query('Fueltype in @tech_map.keys() and Capacity >= 0.1')
                         .groupby('Country').agg({'Capacity': 'sum'})))
@@ -579,6 +545,7 @@ def estimate_renewable_capacities(n, tech_map=None):
              .groupby(n.generators.bus.map(n.buses.country)) # for each country
              .transform(lambda s: normed(s) * tech_capacities.at[s.name])
              .where(lambda s: s>0.1, 0.))  # only capacities above 100kW
+
 
 def add_nice_carrier_names(n, config=None):
     if config is None: config = snakemake.config
@@ -617,7 +584,7 @@ if __name__ == "__main__":
 
     estimate_renewable_capacities(n)
     attach_OPSD_renewables(n)
-    
+
     add_nice_carrier_names(n)
 
     n.export_to_netcdf(snakemake.output[0])
