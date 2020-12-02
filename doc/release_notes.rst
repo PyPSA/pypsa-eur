@@ -34,7 +34,7 @@ Upcoming Release
 
 * Don't remove capital costs from lines and links, when imposing a line volume limit (wildcard ``lv``) or a line cost limit (``lc``). Previously, these were removed to move the expansion in direction of the limit. 
 
-* Add renewable assets from OPSD register to network for specified countries in the config file. Will overwrite heuristics from capacity stats, if latitide and longitude are given.
+* Add renewable power plants from `OPSD <https://data.open-power-system-data.org/renewable_power_plants/2020-08-25>`_ to the network for specified technologies. This will  overwrite the capacities calculated from the heuristic approach in :func:`estimate_renewable_capacities()`.
 
 * Fix bug of clustering offwind-{ac,dc} sites in the option of high-resolution sites for renewables. Now, there are more sites for offwind-{ac,dc} available than network nodes. Before, they were clustered to the resolution of the network. (e.g. elec_s1024_37m.nc: 37 network nodes, 1024 sites)
 
