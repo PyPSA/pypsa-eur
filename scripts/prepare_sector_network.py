@@ -164,6 +164,14 @@ def remove_elec_base_techs(n):
         df.drop(df.index[df.carrier.isin(to_remove)],inplace=True)
 
 
+def remove_non_electric_buses(n):
+    """
+    remove buses from pypsa-eur with carriers which are not AC buses
+    """
+    print("drop buses from PyPSA-Eur with carrier: ", n.buses[~n.buses.carrier.isin(["AC", "DC"])].carrier.unique())
+    n.buses = n.buses[n.buses.carrier.isin(["AC", "DC"])]
+
+
 def add_co2_tracking(n):
 
 
@@ -1906,6 +1914,8 @@ if __name__ == "__main__":
     remove_elec_base_techs(n)
 
     n.loads["carrier"] = "electricity"
+
+    remove_non_electric_buses(n)
 
     n.buses["location"] = n.buses.index
 
