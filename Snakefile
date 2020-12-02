@@ -65,7 +65,7 @@ if config['enable'].get('retrieve_databundle', True):
         log: "logs/retrieve_databundle.log"
         script: 'scripts/retrieve_databundle.py'
 
-if config['enable'].get('build_load', False):
+if config['enable'].get('build_load_data', False):
     rule build_load_data:
         output: "resources/time_series_60min_singleindex_filtered.csv"
         log: "logs/build_load_data.log"
