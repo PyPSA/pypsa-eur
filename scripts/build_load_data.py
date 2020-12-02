@@ -1,7 +1,7 @@
 # coding: utf-8
 """
 
-This rule downloads the load data from `Open Power System Data Time series <https://data.open-power-system-data.org/time_series/>`. For all countries in the network, the per country load timeseries with suffix ``_load_actual_entsoe_transparency`` are extracted from the dataset. After filling small gaps linearly and large gaps by copying time-slice of a given period, the load data is exported to a ``.csv`` file.
+This rule downloads the load data from `Open Power System Data Time series <https://data.open-power-system-data.org/time_series/>`_. For all countries in the network, the per country load timeseries with suffix ``_load_actual_entsoe_transparency`` are extracted from the dataset. After filling small gaps linearly and large gaps by copying time-slice of a given period, the load data is exported to a ``.csv`` file.
 
 Relevant Settings
 -----------------
@@ -19,7 +19,7 @@ Relevant Settings
 
 .. seealso::
     Documentation of the configuration file ``config.yaml`` at
-    :ref:`load`
+    :ref:`load_cf`
 
 Inputs
 ------
