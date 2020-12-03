@@ -37,6 +37,12 @@ Upcoming Release
 
 *  The mappings for clustered lines and buses produced by the ``simplify_network`` and ``cluster_network`` rules changed from Hierarchical Data Format (.h5) to Comma-Separated Values format (.csv) (`#198 <https://github.com/PyPSA/pypsa-eur/pull/198>`_)
 
+* Added an option to the ``{opts}`` wildcard that applies a time series segmentation algorithm based on renewables, hydro inflow and load time series
+  to produce a given total number of adjacent snapshots of varying lengths.
+  This feature is an alternative to downsampling the temporal resolution by simply averaging and
+  uses the `tsam <https://tsam.readthedocs.io/en/latest/index.html>`_ package
+  (#186 <https://github.com/PyPSA/pypsa-eur/pull/186>`_).
+
 PyPSA-Eur 0.2.0 (8th June 2020)
 ==================================
 

@@ -273,7 +273,7 @@ rule prepare_network:
     output: 'networks/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc'
     log: "logs/prepare_network/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}.log"
     threads: 1
-    resources: mem=10000
+    resources: mem=4000
     # benchmark: "benchmarks/prepare_network/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}"
     script: "scripts/prepare_network.py"
 
