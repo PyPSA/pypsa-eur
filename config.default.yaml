@@ -32,6 +32,7 @@ enable:
   retrieve_cutout: true
   build_natura_raster: false
   retrieve_natura_raster: true
+  custom_busmap: false
 
 electricity:
   voltages: [220., 300., 380.]
@@ -57,9 +58,6 @@ electricity:
   #   # Wind is the Fueltype in ppm.data.Capacity_stats, onwind, offwind-{ac,dc} the carrier in PyPSA-Eur
   #   Wind: [onwind, offwind-ac, offwind-dc]
   #   Solar: [solar]
-
-clustering:
-  custom_busmap: False
 
 atlite:
   nprocesses: 4
