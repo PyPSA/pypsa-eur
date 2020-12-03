@@ -12,7 +12,7 @@ Prepare PyPSA network for solving according to :ref:`opts` and :ref:`ll`, such a
 - specifying an expansion limit on the **cost** of transmission expansion,
 - specifying an expansion limit on the **volume** of transmission expansion, and
 - reducing the **temporal** resolution by averaging over multiple hours
-  or segmenting time series into chunks of varying links using ``tsam``.
+  or segmenting time series into chunks of varying lengths using ``tsam``.
 
 Relevant Settings
 -----------------
