@@ -36,10 +36,10 @@ investment changes as more ambitious greenhouse-gas emission reduction targets a
 
 The ``scenario`` section is an extraordinary section of the config file
 that is strongly connected to the :ref:`wildcards` and is designed to
-facilitate running multiple scenarios through a single command 
+facilitate running multiple scenarios through a single command
 
 .. code:: bash
-    
+
     snakemake -j 1 solve_all_elec_networks
 
 For each wildcard, a **list of values** is provided. The rule ``solve_all_elec_networks`` will trigger the rules for creating ``results/networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc`` for **all combinations** of the provided wildcard values as defined by Python's `itertools.product(...) <https://docs.python.org/2/library/itertools.html#itertools.product>`_ function that snakemake's `expand(...) function <https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#targets>`_ uses.
@@ -218,7 +218,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 170-171
+   :lines: 170-174
 
 .. csv-table::
    :header-rows: 1
@@ -232,7 +232,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 173-185
+   :lines: 175-188
 
 .. csv-table::
    :header-rows: 1
@@ -254,7 +254,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 187-197
+   :lines: 190-200
 
 .. csv-table::
    :header-rows: 1
@@ -266,7 +266,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 187,198-214
+   :lines: 190,201-217
 
 .. csv-table::
    :header-rows: 1
@@ -280,7 +280,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 216-355
+   :lines: 219-358
 
 .. csv-table::
    :header-rows: 1

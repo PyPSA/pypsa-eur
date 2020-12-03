@@ -4,7 +4,6 @@
 
 name: pypsa-eur
 channels:
-  - defaults
   - conda-forge
   - bioconda
   - http://conda.anaconda.org/gurobi
@@ -38,8 +37,7 @@ dependencies:
   - progressbar2
   - pyyaml>=5.1.0
 
-  # Include ipython so that one does not inadvertently drop out of the conda
-  # environment by calling ipython
+  # Keep in conda environment when calling ipython
   - ipython
 
   # GIS dependencies:
@@ -51,12 +49,11 @@ dependencies:
   - rasterio
   - shapely
   - libgdal<=3.0.4
-
-  # Solvers
-  - gurobi:gurobi # until https://github.com/conda-forge/pypsa-feedstock/issues/4 closed
+  - descartes
 
   - pip:
     - vresutils==0.3.1
+    - tsam>=1.1.0
     - git+https://github.com/PyPSA/glaes.git#egg=glaes
     - git+https://github.com/PyPSA/geokit.git#egg=geokit
     - cdsapi
