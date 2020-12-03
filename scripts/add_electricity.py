@@ -199,14 +199,6 @@ def load_powerplants(ppl_fn=None):
             .rename(columns=str.lower).drop(columns=['efficiency'])
             .replace({'carrier': carrier_dict}))
 
-<<<<<<< HEAD
-=======
-# =============================================================================
-# Attach components
-# =============================================================================
-
-# ### Load
->>>>>>> master
 
 def attach_load(n):
     substation_lv_i = n.buses.index[n.buses['substation_lv']]
