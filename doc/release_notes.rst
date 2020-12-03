@@ -46,7 +46,7 @@ Upcoming Release
 
 * Modelling hydrogen and battery storage with Store and Link components is now the default, rather than using StorageUnit components with fixed power-to-energy ratio (`#205 <https://github.com/PyPSA/pypsa-eur/pull/205>`_).
 
-* Electricity consumption data can now be retrieved from the `OPSD website <https://data.open-power-system-data.org/time_series/2020-10-06>`_ using the rule ``build_load_data``. Enable it setting ``build_load_data`` to ``True``. 
+* Electricity consumption data is now directly retrieved from the `OPSD website <https://data.open-power-system-data.org/time_series/2019-06-05>`_ using the rule ``build_load_data``. The user can decide whether to take the ENTSOE power statistics data (defaul) or the ENTSOE transparency data.   
 
 
 
