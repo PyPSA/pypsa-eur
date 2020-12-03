@@ -372,7 +372,8 @@ if __name__ == "__main__":
             return v
         potential_mode = consense(pd.Series([snakemake.config['renewable'][tech]['potential']
                                              for tech in renewable_carriers]))
-        clustering = clustering_for_n_clusters(n, n_clusters, aggregate_carriers=aggregate_carriers,
+        custom_busmap = snakemake.config["clustering"]["custom_busmap"]
+        clustering = clustering_for_n_clusters(n, n_clusters, custom_busmap, aggregate_carriers,
                                                line_length_factor=line_length_factor,
                                                potential_mode=potential_mode,
                                                solver_name=snakemake.config['solving']['solver']['name'],
