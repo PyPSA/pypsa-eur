@@ -51,9 +51,6 @@ dependencies:
   - libgdal<=3.0.4
   - descartes
 
-  # Solvers
-  - gurobi:gurobi # until https://github.com/conda-forge/pypsa-feedstock/issues/4 closed
-
   - pip:
     - vresutils==0.3.1
     - tsam>=1.1.0
