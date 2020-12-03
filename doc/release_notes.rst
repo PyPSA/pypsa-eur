@@ -17,7 +17,10 @@ Upcoming Release
   cross-border transfer capacities. Moreover, line and link capacities can be capped in the ``config.yaml`` at
   ``lines: s_nom_max:`` and ``links: p_nom_max`` (`#166 <https://github.com/PyPSA/pypsa-eur/pull/166>`_).
 
-* Added an option to alter the capital cost of carriers by a factor via ``carrier+factor`` in the ``{opts}`` wildcard. This can be useful for exploring uncertain cost parameters. Example: ``solar+0.5`` reduces the capital cost of solar to 50% of original values (`#167 <https://github.com/PyPSA/pypsa-eur/pull/167>`_).
+* Added an option to alter the capital cost (``c``) or installable potentials (``p``) of carriers by a factor via ``carrier+{c,p}factor`` in the ``{opts}`` wildcard.
+  This can be useful for exploring uncertain cost parameters.
+  Example: ``solar+c0.5`` reduces the capital cost of solar to 50% of original values
+  (`#167 <https://github.com/PyPSA/pypsa-eur/pull/167>`_ and `#207 <https://github.com/PyPSA/pypsa-eur/pull/207>`_).
 
 * Add compatibility for pyomo 5.7.0 in :mod:`cluster_network` and :mod:`simplify_network`.
 
@@ -43,6 +46,13 @@ Upcoming Release
   Then, the rule looks for custom busmaps at ``data/custom_busmap_elec_s{simpl}_{clusters}.csv``,
   which should have the same format as ``resources/busmap_elec_s{simpl}_{clusters}.csv``.
   i.e. the index should contain the buses of ``networks/elec_s{simpl}.nc`` (`#193 <https://github.com/PyPSA/pypsa-eur/pull/193>`_).
+
+* Fixed a bug for storage units such that individual store and dispatch efficiencies are correctly taken account of rather than only their round-trip efficiencies.
+  In the cost database (``data/costs.csv``) the efficiency of battery inverters should be stated as per discharge/charge rather than per roundtrip (`#202 <https://github.com/PyPSA/pypsa-eur/pull/202>_).
+
+* Parameter corrections for East-Western and Anglo-Scottish interconnectors (`#206 <https://github.com/PyPSA/pypsa-eur/pull/206>`_)
+
+* Modelling hydrogen and battery storage with Store and Link components is now the default, rather than using StorageUnit components with fixed power-to-energy ratio (`#205 <https://github.com/PyPSA/pypsa-eur/pull/205>`_).
 
 PyPSA-Eur 0.2.0 (8th June 2020)
 ==================================
