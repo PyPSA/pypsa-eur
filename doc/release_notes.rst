@@ -39,6 +39,9 @@ Upcoming Release
 
 * The mappings for clustered lines and buses produced by the ``simplify_network`` and ``cluster_network`` rules changed from Hierarchical Data Format (.h5) to Comma-Separated Values format (.csv) (`#198 <https://github.com/PyPSA/pypsa-eur/pull/198>`_)
 
+* Multiple smaller changes: Removed unused ``{network}`` wildcard, moved environment files to dedicated ``envs`` folder,
+  removed sector-coupling components from configuration files, minor refactoring and code cleaning (`#190 <https://github.com/PyPSA/pypsa-eur/pull 190>`_).
+
 
 PyPSA-Eur 0.2.0 (8th June 2020)
 ==================================
