@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 def rename_techs(label):
-    elif "H2" in label:
+    if "H2" in label:
         label = "hydrogen storage"
     elif label == "solar":
         label = "solar PV"

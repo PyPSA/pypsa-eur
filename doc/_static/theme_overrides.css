@@ -20,4 +20,8 @@
     .wy-nav-content {
         max-width: 910px !important;
     }
+
+    .wy-side-nav-search, .wy-nav-top {
+      background: #c4e9e7;
+   }
  }
