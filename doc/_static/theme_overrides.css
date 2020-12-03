@@ -2,26 +2,78 @@
    SPDX-License-Identifier: GPL-3.0-or-later
 */
 
+.wy-side-nav-search {
+    background-color: #eeeeee;
+}
+
+.wy-side-nav-search .wy-dropdown>a,
+.wy-side-nav-search>a {
+    color: rgb(34, 97, 156)
+}
+
+.wy-side-nav-search>div.version {
+    color: rgb(34, 97, 156)
+}
+
+.wy-menu-vertical header,
+.wy-menu-vertical p.caption,
+.rst-versions a {
+    color: rgb(95, 95, 95);
+}
+
+.wy-menu-vertical a.reference:hover,
+.wy-menu-vertical a.reference.internal:hover {
+    background: #646464;
+    color: #fff;
+}
+
+.wy-nav-side {
+    background: rgb(240, 240, 240);
+}
+
+.wy-menu-vertical a.reference {
+    color: #000;
+}
+
+.rst-versions .rst-current-version,
+.wy-nav-top,
+.wy-menu-vertical li.toctree-l2.current li.toctree-l3>a:hover {
+    background: #002221;
+}
+
+.wy-nav-content .highlight {
+    background: #ffffff;
+}
+
+.wy-nav-content .highlight .nn,
+.wy-nav-content .admonition.warning a {
+    color: rgb(95, 95, 95);
+}
+
+.rst-content code.literal,
+.rst-content tt.literal {
+    color: rgb(34, 97, 156)
+}
+
+.wy-nav-content a.reference {
+    color: rgb(34, 97, 156);
+}
+
+
 /* override table width restrictions */
+
 @media screen and (min-width: 767px) {
-
     .wy-table-responsive table td {
-       /* !important prevents the common CSS stylesheets from overriding
+        /* !important prevents the common CSS stylesheets from overriding
           this as on RTD they are loaded after this stylesheet */
-       white-space: normal !important;
-       /* background: #eeeeee !important; */
+        white-space: normal !important;
+        /* background: #eeeeee !important; */
     }
-
     .wy-table-responsive {
-       max-width: 100%;
-       overflow: visible !important;
+        max-width: 100%;
+        overflow: visible !important;
     }
-
     .wy-nav-content {
         max-width: 910px !important;
     }
-
-    .wy-side-nav-search, .wy-nav-top {
-      background: #c4e9e7;
-   }
- }
+}
