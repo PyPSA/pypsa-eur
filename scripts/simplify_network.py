@@ -86,7 +86,7 @@ import logging
 logger = logging.getLogger(__name__)
 from _helpers import configure_logging
 
-from cluster_network import clustering_for_n_clusters, cluster_regions, busmap_for_n_clusters
+from cluster_network import clustering_for_n_clusters, cluster_regions
 from add_electricity import load_costs
 
 import pandas as pd
