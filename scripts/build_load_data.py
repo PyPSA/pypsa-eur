@@ -39,9 +39,11 @@ from _helpers import configure_logging
 
 import pandas as pd
 import numpy as np
+import dateutil
+from pandas import Timedelta as Delta
 
 
-def load_timeseries(fn, years, countries):
+def load_timeseries(fn, years, countries, powerstatistics=True):
     """
     Read load data from OPSD time-series package version 2020-10-06.
 
@@ -54,6 +56,10 @@ def load_timeseries(fn, years, countries):
         File name or url location (file format .csv)
     countries : listlike
         Countries for which to read load data.
+    powerstatistics: bool
+        Whether the electricity consumption data of the ENTSOE power
+        statistics (if true) or of the ENTSOE transparency map (if false)
+        should be parsed.
 
     Returns
     -------
@@ -62,9 +68,12 @@ def load_timeseries(fn, years, countries):
     """
     logger.info(f"Retrieving load data from '{fn}'.")
 
-    rename = lambda s: s[:-len('_load_actual_entsoe_transparency')]
-    return (pd.read_csv(fn, index_col=0, parse_dates=True)
-            .filter(like='_load_actual_entsoe_transparency')
+    pattern = 'power_statistics' if powerstatistics else '_transparency'
+    pattern = f'_load_actual_entsoe_{pattern}'
+    rename = lambda s: s[:-len(pattern)]
+    date_parser = lambda x: dateutil.parser.parse(x, ignoretz=True)
+    return (pd.read_csv(fn, index_col=0, parse_dates=[0], date_parser=date_parser)
+            .filter(like=pattern)
             .rename(columns=rename)
             .dropna(how="all", axis=0)
             .rename(columns={'GB_UKM' : 'GB'})
@@ -84,7 +93,7 @@ def fill_large_gaps(ds, shift):
 
     This function fills gaps ragning from 3 to 168 hours (one week).
     """
-    shift = pd.Timedelta(shift)
+    shift = Delta(shift)
     nhours = shift / np.timedelta64(1, 'h')
     if (consecutive_nans(ds) > nhours).any():
         logger.warning('There exist gaps larger then the time shift used for '
@@ -108,26 +117,37 @@ def nan_statistics(df):
 def copy_timeslice(load, cntry, start, stop, delta):
     start = pd.Timestamp(start)
     stop = pd.Timestamp(stop)
-    if start in load.index and stop in load.index:
+    if start-delta in load.index and stop in load.index and cntry in load:
         load.loc[start:stop, cntry] = load.loc[start-delta:stop-delta, cntry].values
-    return load
 
 
-def manual_adjustment(load, source="ENTSOE_power_statistics"):
+def manual_adjustment(load, powerstatistics):
     """
     Adjust gaps manual for load data from OPSD time-series package.
 
+    1. For the ENTSOE power statistics load data (if powerstatistics is True)
 
-    Albania and Macedonia do not exist in the data set. Both get the same load
-    curve as Montenegro,  scaled by correspoding ratio of total energy
-    consumptions reported by  <IEA Data browser `https://www.iea.org/data-and-statistics?country=WORLD&fuel=Electricity%20and%20heat&indicator=TotElecCons>`_ for the
-    year 2016.
+    Kosovo (KV) and Albania (AL) do not exist in the data set. Kosovo gets the
+    same load curve as Serbia and Albania the same as Macdedonia, both scaled
+    by the corresponding ratio of total energy consumptions reported by
+    IEA Data browser [0] for the year 2013.
+
+    2. For the ENTSOE transparency load data (if powerstatistics is False)
+
+    Albania (AL) and Macedonia (MK) do not exist in the data set. Both get the
+    same load curve as Montenegro,  scaled by the corresponding ratio of total energy
+    consumptions reported by  IEA Data browser [0] for the year 2016.
+
+    [0] https://www.iea.org/data-and-statistics?country=WORLD&fuel=Electricity%20and%20heat&indicator=TotElecCons
 
 
     Parameters
     ----------
     load : pd.DataFrame
         Load time-series with UTC timestamps x ISO-2 countries
+    powerstatistics: bool
+        Whether argument load comprises the electricity consumption data of
+        the ENTSOE power statistics or of the ENTSOE transparency map
 
     Returns
     -------
@@ -136,15 +156,32 @@ def manual_adjustment(load, source="ENTSOE_power_statistics"):
         timestamps x ISO-2 countries
     """
 
-    if 'ME' in load:
-        if 'AL' not in load and 'AL' in countries:
-            load['AL'] = load.ME * (5.7/2.9)
-        if 'MK' not in load and 'MK' in countries:
-            load['MK'] = load.ME * (6.7/2.9)
+    if powerstatistics:
+        if 'MK' in load.columns:
+            if 'AL' not in load.columns or load.AL.isnull().values.all():
+                load['AL'] = load['MK'] * (4.1 / 7.4)
+        if 'RS' in load.columns:
+            if 'KV' not in load.columns or load.KV.isnull().values.all():
+                load['KV'] = load['RS'] * (4.8 / 27.)
 
-    if 'BG' in load:
-        load = copy_timeslice(load, 'BG', '2018-10-27 21:00', '2018-10-28 22:00',
-                              pd.Timedelta(weeks=1))
+        copy_timeslice(load, 'GR', '2015-08-11 21:00', '2015-08-15 20:00', Delta(weeks=1))
+        copy_timeslice(load, 'AT', '2018-12-31 22:00', '2019-01-01 22:00', Delta(days=2))
+        copy_timeslice(load, 'CH', '2010-01-19 07:00', '2010-01-19 22:00', Delta(days=1))
+        copy_timeslice(load, 'CH', '2010-03-28 00:00', '2010-03-28 21:00', Delta(days=1))
+        # is a WE, so take WE before
+        copy_timeslice(load, 'CH', '2010-10-08 13:00', '2010-10-10 21:00', Delta(weeks=1))
+        copy_timeslice(load, 'CH', '2010-11-04 04:00', '2010-11-04 22:00', Delta(days=1))
+        copy_timeslice(load, 'NO', '2010-12-09 11:00', '2010-12-09 18:00', Delta(days=1))
+        # whole january missing
+        copy_timeslice(load, 'GB', '2009-12-31 23:00', '2010-01-31 23:00', Delta(days=-364))
+
+    else:
+        if 'ME' in load:
+            if 'AL' not in load and 'AL' in countries:
+                load['AL'] = load.ME * (5.7/2.9)
+            if 'MK' not in load and 'MK' in countries:
+                load['MK'] = load.ME * (6.7/2.9)
+        copy_timeslice(load, 'BG', '2018-10-27 21:00', '2018-10-28 22:00', Delta(weeks=1))
 
     return load
 
@@ -158,6 +195,7 @@ if __name__ == "__main__":
     configure_logging(snakemake)
 
     config = snakemake.config
+    powerstatistics = config['load']['power_statistics']
     url = config['load']['url']
     interpolate_limit = config['load']['interpolate_limit']
     countries = config['countries']
@@ -165,12 +203,12 @@ if __name__ == "__main__":
     years = slice(snapshots[0], snapshots[-1])
     time_shift = config['load']['time_shift_for_large_gaps']
 
-    load = load_timeseries(url, years, countries)
+    load = load_timeseries(url, years, countries, powerstatistics)
 
     if config['load']['manual_adjustments']:
-        load = manual_adjustment(load)
+        load = manual_adjustment(load, powerstatistics)
 
-    logger.info(f"Interpolate gaps of size {interpolate_limit} or less linearly.")
+    logger.info(f"Linearly interpolate gaps of size {interpolate_limit} and less.")
     load = load.interpolate(method='linear', limit=interpolate_limit)
 
     logger.info("Filling larger gaps by copying time-slices of period "

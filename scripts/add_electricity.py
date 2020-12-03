@@ -26,9 +26,9 @@ Relevant Settings
         extendable_carriers:
             Generator:
         estimate_renewable_capacities_from_capacity_stats:
-            
+
     load:
-        scaling_factor:           
+        scaling_factor:
 
     renewable: (keys)
         hydro:
@@ -209,17 +209,12 @@ def attach_load(n):
                .reindex(substation_lv_i))
     opsd_load = (pd.read_csv(snakemake.input.load, index_col=0, parse_dates=True)
                 .filter(items=snakemake.config['countries']))
-    
-    # Scalling data according to scalling factor in config.yaml
-    logger.info(f"Load data scalled with scalling factor {snakemake.config['load']['scaling_factor']}.")
-    opsd_load = opsd_load * snakemake.config.get('load', {}).get('scaling_factor', 1.0)
 
-    # Convert to naive UTC (has to be explicit since pandas 0.24)
-    opsd_load.index = opsd_load.index.tz_localize(None)
+    scaling = snakemake.config.get('load', {}).get('scaling_factor', 1.0)
+    logger.info(f"Load data scaled with scalling factor {scaling}.")
+    opsd_load *= scaling
 
     nuts3 = gpd.read_file(snakemake.input.nuts3_shapes).set_index('index')
-
-    def normed(x): return x.divide(x.sum())
 
     def upsample(cntry, group):
         l = opsd_load[cntry]
@@ -235,7 +230,8 @@ def attach_load(n):
                               index=group.index)
 
             # relative factors 0.6 and 0.4 have been determined from a linear
-            # regression on the country to continent load data (refer to vresutils.load._upsampling_weights)
+            # regression on the country to continent load data
+            # (refer to vresutils.load._upsampling_weights)
             factors = normed(0.6 * normed(gdp_n) + 0.4 * normed(pop_n))
             return pd.DataFrame(factors.values * l.values[:,np.newaxis],
                                 index=l.index, columns=factors.index)

@@ -53,8 +53,7 @@ datafiles = ['ch_cantons.csv', 'je-e-21.03.02.xls',
             'eez/World_EEZ_v8_2014.shp', 'EIA_hydro_generation_2000_2014.csv', 
             'hydro_capacities.csv', 'naturalearth/ne_10m_admin_0_countries.shp', 
             'NUTS_2013_60M_SH/data/NUTS_RG_60M_2013.shp', 'nama_10r_3popgdp.tsv.gz', 
-            'nama_10r_3gdp.tsv.gz', 'time_series_60min_singleindex_filtered.csv', 
-            'corine/g250_clc06_V18_5.tif']
+            'nama_10r_3gdp.tsv.gz', 'corine/g250_clc06_V18_5.tif']
 
 if not config.get('tutorial', False):
     datafiles.extend(["natura/Natura2000_end2015.shp", "GEBCO_2014_2D.nc"])
@@ -65,11 +64,10 @@ if config['enable'].get('retrieve_databundle', True):
         log: "logs/retrieve_databundle.log"
         script: 'scripts/retrieve_databundle.py'
 
-if config['enable'].get('build_load_data', False):
-    rule build_load_data:
-        output: "resources/time_series_60min_singleindex_filtered.csv"
-        log: "logs/build_load_data.log"
-        script: 'scripts/build_load_data.py'
+rule build_load_data:
+    output: "resources/load.csv"
+    log: "logs/build_load_data.log"
+    script: 'scripts/build_load_data.py'
     
 rule build_powerplants:
     input:
@@ -210,7 +208,7 @@ rule add_electricity:
         powerplants='resources/powerplants.csv',
         hydro_capacities='data/bundle/hydro_capacities.csv',
         geth_hydro_capacities='data/geth2015_hydro_capacities.csv',
-        load='resources/time_series_60min_singleindex_filtered.csv',
+        load='resources/load.csv',
         nuts3_shapes='resources/nuts3_shapes.geojson',
         **{'profile_' + t: "resources/profile_" + t + ".nc"
            for t in config['renewable']}
