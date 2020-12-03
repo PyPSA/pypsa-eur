@@ -281,13 +281,12 @@ def clustering_for_n_clusters(n, n_clusters, busmapfornclusters=None, aggregate_
         raise AttributeError("potential_mode should be one of 'simple' or 'conservative', "
                              "but is '{}'".format(potential_mode))
 
-    if busmapfornclusters is None: # make sure busmap is given outside of cluster_network.py
-        if snakemake.config['clustering']['custom_busmap']:
-            busmapfornclusters = (pd.read_csv(snakemake.input.custom_busmap, dtype={'name':'str'})
-                                  .set_index('name')).squeeze()
-            logger.info(f"Imported custom busmap from {snakemake.input.custom_busmap}")
-        else:
-            busmapfornclusters = busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights, algorithm)
+    if custom_busmap:
+        busmapfornclusters = (pd.read_csv(snakemake.input.custom_busmap, dtype={'name':'str'})
+                              .set_index('name')).squeeze()
+        logger.info(f"Imported custom busmap from {snakemake.input.custom_busmap}")
+    else:
+        busmapfornclusters = busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights, algorithm)
 
     clustering = get_clustering_from_busmap(
         n, busmapfornclusters,
