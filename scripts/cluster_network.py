@@ -282,14 +282,14 @@ def clustering_for_n_clusters(n, n_clusters, custom_busmap=False, aggregate_carr
                              "but is '{}'".format(potential_mode))
 
     if custom_busmap:
-        busmapfornclusters = (pd.read_csv(snakemake.input.custom_busmap, dtype={'name':'str'})
-                              .set_index('name')).squeeze()
+        busmap = pd.read_csv(snakemake.input.custom_busmap, index_col=0, squeeze=True)
+        busmap.index = busmap.index.astype(str)
         logger.info(f"Imported custom busmap from {snakemake.input.custom_busmap}")
     else:
-        busmapfornclusters = busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights, algorithm)
+        busmap = busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights, algorithm)
 
     clustering = get_clustering_from_busmap(
-        n, busmapfornclusters,
+        n, busmap,
         bus_strategies=dict(country=_make_consense("Bus", "country")),
         aggregate_generators_weighted=True,
         aggregate_generators_carriers=aggregate_carriers,
