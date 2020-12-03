@@ -39,6 +39,10 @@ Upcoming Release
 
 * The mappings for clustered lines and buses produced by the ``simplify_network`` and ``cluster_network`` rules changed from Hierarchical Data Format (.h5) to Comma-Separated Values format (.csv) (`#198 <https://github.com/PyPSA/pypsa-eur/pull/198>`_)
 
+* Added an option to use custom busmaps in rule :mod:`cluster_network`. To use this feature set ``enable: custom_busmap: true``.
+  Then, the rule looks for custom busmaps at ``data/custom_busmap_elec_s{simpl}_{clusters}.csv``,
+  which should have the same format as ``resources/busmap_elec_s{simpl}_{clusters}.csv``.
+  i.e. the index should contain the buses of ``networks/elec_s{simpl}.nc`` (`#193 <https://github.com/PyPSA/pypsa-eur/pull/193>`_).
 
 PyPSA-Eur 0.2.0 (8th June 2020)
 ==================================
