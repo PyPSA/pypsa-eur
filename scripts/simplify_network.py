@@ -329,10 +329,7 @@ def cluster(n, n_clusters):
     potential_mode = (consense(pd.Series([snakemake.config['renewable'][tech]['potential']
                                             for tech in renewable_carriers]))
                         if len(renewable_carriers) > 0 else 'conservative')
-
-    busmapfornclusters = busmap_for_n_clusters(n, n_clusters, snakemake.config['solving']['solver']['name'])
-        
-    clustering = clustering_for_n_clusters(n, n_clusters, busmapfornclusters, potential_mode=potential_mode,
+    clustering = clustering_for_n_clusters(n, n_clusters, custom_busmap=False, potential_mode=potential_mode,
                                            solver_name=snakemake.config['solving']['solver']['name'])
 
     return clustering.network, clustering.busmap
