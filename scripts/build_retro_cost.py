@@ -23,7 +23,6 @@ Structure:
 
 import pandas as pd
 import matplotlib.pyplot as plt
-pd.options.mode.chained_assignment = None
 
 #%% ************ FUCNTIONS ***************************************************
 
@@ -175,9 +174,9 @@ def prepare_building_stock_data():
     area = building_data[(building_data.type == 'Heated area [Mm²]') &
                          (building_data.subsector != "Total")]
     area_tot = area.groupby(["country", "sector"]).sum()
-    area["weight"] = area.apply(lambda x: x.value /
+    area = pd.concat([area, area.apply(lambda x: x.value /
                                           area_tot.value.loc[(x.country, x.sector)],
-                                axis=1)
+                                          axis=1).rename("weight")],axis=1)
     area = area.groupby(['country', 'sector', 'subsector', 'bage']).sum()
     area_tot.rename(index=country_iso_dic, inplace=True)
 
@@ -192,9 +191,9 @@ def prepare_building_stock_data():
     pop_layout["ct"] = pop_layout.index.str[:2]
     ct_total = pop_layout.total.groupby(pop_layout["ct"]).sum()
 
-    area_per_pop = area_tot.unstack().apply(lambda x: x / ct_total[x.index])
+    area_per_pop = area_tot.unstack().reindex(index=ct_total.index).apply(lambda x: x / ct_total[x.index])
     missing_area_ct = ct_total.index.difference(area_tot.index.levels[0])
-    for ct in missing_area_ct:
+    for ct in (missing_area_ct & ct_total.index):
         averaged_data = pd.DataFrame(
             area_per_pop.value.reindex(map_for_missings[ct]).mean()
             * ct_total[ct],
@@ -233,7 +232,7 @@ def prepare_building_stock_data():
     # smallest possible today u values for windows 0.8 (passive house standard)
     # maybe the u values for the glass and not the whole window including frame
     # for those types assumed in the dataset
-    u_values[(u_values.type=="Windows") & (u_values.value<0.8)]["value"] = 0.8
+    u_values.loc[(u_values.type=="Windows") & (u_values.value<0.8), "value"] = 0.8
     # drop unnecessary columns
     u_values.drop(['topic', 'feature','detail', 'estimated','unit'],
                   axis=1, inplace=True, errors="ignore")
@@ -314,8 +313,12 @@ def calculate_cost_energy_curve(u_values, l_strength, l_weight, average_surface_
 
     for l in l_strength:
         u_values[l] = calculate_new_u(u_values, l, l_weight)
-        energy_saved[l] = calculate_dE(u_values, l, average_surface_w)
-        costs[l] = calculate_costs(u_values, l, cost_retro, average_surface)
+        energy_saved = pd.concat([energy_saved,
+                                  calculate_dE(u_values, l, average_surface_w).rename(l)],
+                                 axis=1)
+        costs = pd.concat([costs,
+                           calculate_costs(u_values, l, cost_retro, average_surface).rename(l)],
+                          axis=1)
 
     # energy and costs per country, sector, subsector and year
     e_tot = energy_saved.groupby(['country', 'sector', 'subsector', 'bage']).sum()
@@ -334,11 +337,13 @@ def calculate_cost_energy_curve(u_values, l_strength, l_weight, average_surface_
                     axis=1, keys=["dE", "cost"])
     res.rename(index=country_iso_dic, inplace=True)
 
-    res = res.loc[countries]
+    res = res.reindex(index=countries, level=0)
+    # reset index because otherwise not considered countries still in index.levels[0]
+    res = res.reset_index().set_index(["country", "sector"])
 
     # map missing countries
-    for ct in map_for_missings.keys():
-        averaged_data = pd.DataFrame(res.loc[map_for_missings[ct], :].mean(level=1))
+    for ct in pd.Index(map_for_missings.keys()) & countries:
+        averaged_data = res.reindex(index=map_for_missings[ct], level=0).mean(level=1)
         index = pd.MultiIndex.from_product([[ct], averaged_data.index.to_list()])
         averaged_data.index = index
         if ct not in res.index.levels[0]:
@@ -436,12 +441,14 @@ if __name__ == "__main__":
 
     # for missing weighting of surfaces of building types assume MultiFamily houses
     u_values["assumed_subsector"] = u_values.subsector
-    u_values.assumed_subsector[
-        ~u_values.subsector.isin(average_surface.index)] = 'Multifamily houses'
+    u_values.loc[~u_values.subsector.isin(average_surface.index),
+                 "assumed_subsector"] = 'Multifamily houses'
 
     dE_and_cost =  calculate_cost_energy_curve(u_values, l_strength, l_weight,
                                           average_surface_w, average_surface, area,
                                           country_iso_dic, countries)
+    # reset index because otherwise not considered countries still in index.levels[0]
+    dE_and_cost = dE_and_cost.reset_index().set_index(["country", "sector"])
 
     # weights costs after construction index
     if construction_index:
