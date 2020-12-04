@@ -286,12 +286,4 @@ The solved networks can be analysed just like any other PyPSA network (e.g. in J
 
     network = pypsa.Network("results/networks/elec_s_6_ec_lcopt_Co2L-24H.nc")
 
-    ...
-
 For inspiration, read the `examples section in the PyPSA documentation <https://pypsa.readthedocs.io/en/latest/examples.html>`_.
-
-.. note::
-
-    There are rules for summaries and plotting available in the repository of PyPSA-Eur.
-
-    They are currently under revision and therefore not yet documented.
