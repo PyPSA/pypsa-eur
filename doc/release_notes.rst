@@ -46,7 +46,7 @@ More OPSD integration:
   The user can decide whether to take the ENTSO-E power statistics data (default) or the ENTSO-E transparency data
   [`#211 <https://github.com/PyPSA/pypsa-eur/pull/211>`_].
 
-Miscellaneous:
+Other:
 
 * Added an option to use custom busmaps in rule :mod:`cluster_network`. To use this feature set ``enable: custom_busmap: true``.
   Then, the rule looks for custom busmaps at ``data/custom_busmap_elec_s{simpl}_{clusters}.csv``,
