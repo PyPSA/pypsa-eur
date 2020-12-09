@@ -193,12 +193,10 @@ def add_co2_tracking(n):
            location="EU",
            carrier="co2 stored")
 
-    #TODO move cost to data/costs.csv
-    #TODO move maximum somewhere more transparent
     n.madd("Store",["co2 stored"],
-           e_nom_extendable = True,
-           e_nom_max=2e8,
-           capital_cost=20.,
+           e_nom_extendable=True,
+           e_nom_max=options['co2_sequestration_potential']*1e6,
+           capital_cost=options['co2_sequestration_cost'],
            carrier="co2 stored",
            bus="co2 stored")
 
