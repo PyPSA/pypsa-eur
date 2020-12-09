@@ -155,16 +155,15 @@ def remove_elec_base_techs(n):
     """remove conventional generators (e.g. OCGT) and storage units (e.g. batteries and H2)
     from base electricity-only network, since they're added here differently using links
     """
-    to_keep = {"generators" : snakemake.config["plotting"]["vre_techs"],
-               "storage_units" : snakemake.config["plotting"]["renewable_storage_techs"]}
 
-    n.carriers = n.carriers.loc[to_keep["generators"] + to_keep["storage_units"]]
-
-    for components, techs in iteritems(to_keep):
-        df = getattr(n,components)
-        to_remove = df.carrier.value_counts().index^techs
-        print("removing {} with carrier {}".format(components,to_remove))
-        df.drop(df.index[df.carrier.isin(to_remove)],inplace=True)
+    for c in n.iterate_components(snakemake.config["pypsa_eur"]):
+        to_keep = snakemake.config["pypsa_eur"][c.name]
+        to_remove = pd.Index(c.df.carrier.unique())^to_keep
+        print("Removing",c.list_name,"with carrier",to_remove)
+        names = c.df.index[c.df.carrier.isin(to_remove)]
+        print(names)
+        n.mremove(c.name, names)
+        n.carriers.drop(to_remove, inplace=True, errors="ignore")
 
 
 def add_co2_tracking(n):

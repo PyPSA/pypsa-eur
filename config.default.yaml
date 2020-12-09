@@ -56,6 +56,15 @@ electricity:
     battery: 6
     H2: 168
 
+# regulate what components with which carriers are kept from PyPSA-Eur;
+# some technologies are removed because they are implemented differently
+# or have different year-dependent costs in PyPSA-Eur-Sec
+pypsa_eur:
+  "Bus": ["AC"]
+  "Link": ["DC"]
+  "Generator": ["onwind", "offwind-ac", "offwind-dc", "solar", "ror"]
+  "StorageUnit": ["PHS","hydro"]
+
 biomass:
   year: 2030
   scenario: "Med"
