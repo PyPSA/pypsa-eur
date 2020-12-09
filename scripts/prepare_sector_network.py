@@ -1253,8 +1253,8 @@ def add_heat(network):
                              marginal_cost=costs.at['central gas CHP','VOM'],
                              efficiency=costs.at['central gas CHP','efficiency'] - costs.at['gas','CO2 intensity']*(costs.at['biomass CHP capture','electricity-input'] + costs.at['biomass CHP capture','compression-electricity-input']),
                              efficiency2=costs.at['central gas CHP','efficiency']/costs.at['central gas CHP','c_b'] + costs.at['gas','CO2 intensity']*(costs.at['biomass CHP capture','heat-output'] + costs.at['biomass CHP capture','compression-heat-output'] - costs.at['biomass CHP capture','heat-output']),
-                             efficiency3=costs.at['gas','CO2 intensity']*(1-options["cc_fraction"]),
-                             efficiency4=costs.at['gas','CO2 intensity']*options["cc_fraction"],
+                             efficiency3=costs.at['gas','CO2 intensity']*(1-costs.at['biomass CHP capture','capture_rate']),
+                             efficiency4=costs.at['gas','CO2 intensity']*costs.at['biomass CHP capture','capture_rate'],
                              lifetime=costs.at['central gas CHP','lifetime'])
 
             else:
@@ -1472,8 +1472,8 @@ def add_biomass(network):
                      marginal_cost=costs.at['central solid biomass CHP','VOM'],
                      efficiency=costs.at['central solid biomass CHP','efficiency'] - costs.at['solid biomass','CO2 intensity']*(costs.at['biomass CHP capture','electricity-input'] + costs.at['biomass CHP capture','compression-electricity-input']),
                      efficiency2=costs.at['central solid biomass CHP','efficiency-heat'] + costs.at['solid biomass','CO2 intensity']*(costs.at['biomass CHP capture','heat-output'] + costs.at['biomass CHP capture','compression-heat-output'] - costs.at['biomass CHP capture','heat-output']),
-                     efficiency3=-costs.at['solid biomass','CO2 intensity']*options["cc_fraction"],
-                     efficiency4=costs.at['solid biomass','CO2 intensity']*options["cc_fraction"],
+                     efficiency3=-costs.at['solid biomass','CO2 intensity']*costs.at['biomass CHP capture','capture_rate'],
+                     efficiency4=costs.at['solid biomass','CO2 intensity']*costs.at['biomass CHP capture','capture_rate'],
                      lifetime=costs.at['central solid biomass CHP','lifetime'])
 
 
