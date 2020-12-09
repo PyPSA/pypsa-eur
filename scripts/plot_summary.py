@@ -22,7 +22,7 @@ def rename_techs(label):
                                "retrofitting" : "building retrofitting",
                                "H2" : "hydrogen storage",
                                "battery" : "battery storage",
-                               "CCS" : "CCS"}
+                               "CC" : "CC"}
 
     rename = {"solar" : "solar PV",
               "Sabatier" : "methanation",

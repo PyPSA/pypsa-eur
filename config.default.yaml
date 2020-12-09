@@ -141,7 +141,7 @@ sector:
   'SMR' : True
   'co2_sequestration_potential' : 200  #MtCO2/a sequestration potential for Europe
   'co2_sequestration_cost' : 20   #EUR/tCO2 for transport and sequestration of CO2
-  'ccs_fraction' : 0.9
+  'cc_fraction' : 0.9  # default fraction of CO2 captured with post-combustion capture
   'hydrogen_underground_storage' : True
   'use_fischer_tropsch_waste_heat' : True
   'use_fuel_cell_waste_heat' : True
