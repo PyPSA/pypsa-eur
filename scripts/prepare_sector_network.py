@@ -208,17 +208,26 @@ def add_co2_tracking(n):
                efficiency=1.,
                p_nom_extendable=True)
 
-    if options['dac']:
-        #direct air capture consumes electricity to take CO2 from the air to the underground store
-        #TODO do with cost from Breyer - later use elec and heat and capital cost
-        n.madd("Link",["DAC"],
-               bus0="co2 atmosphere",
-               bus1="co2 stored",
-               carrier="DAC",
-               marginal_cost=75.,
-               efficiency=1.,
-               p_nom_extendable=True,
-               lifetime=costs.at['direct air capture','lifetime'])
+def add_dac(n):
+
+    heat_buses = n.buses.index[n.buses.carrier.isin(["urban central heat",
+                                                     "services urban decentral heat"])]
+    locations = n.buses.location[heat_buses]
+
+    n.madd("Link",
+           locations,
+           suffix=" DAC",
+           bus0="co2 atmosphere",
+           bus1="co2 stored",
+           bus2=locations.values,
+           bus3=heat_buses,
+           carrier="DAC",
+           capital_cost=costs.at['direct air capture','fixed'],
+           efficiency=1.,
+           efficiency2=-(costs.at['direct air capture','electricity-input'] + costs.at['direct air capture','compression-electricity-input']),
+           efficiency3=-(costs.at['direct air capture','heat-input'] - costs.at['direct air capture','compression-heat-output']),
+           p_nom_extendable=True,
+           lifetime=costs.at['direct air capture','lifetime'])
 
 
 def add_co2limit(n, Nyears=1.,limit=0.):
@@ -1895,6 +1904,9 @@ if __name__ == "__main__":
 
     if "I" in opts and "H" in opts:
         add_waste_heat(n)
+
+    if options['dac']:
+        add_dac(n)
 
     if "decentral" in opts:
         decentral(n)
