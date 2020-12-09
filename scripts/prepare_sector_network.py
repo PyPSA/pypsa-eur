@@ -1527,11 +1527,11 @@ def add_industry(network):
                  bus3="co2 stored",
                  carrier="solid biomass for industry CC",
                  p_nom_extendable=True,
-                 capital_cost=costs.at["industry CC","fixed"]*costs.at['solid biomass','CO2 intensity']*8760, #8760 converts EUR/(tCO2/a) to EUR/(tCO2/h)
+                 capital_cost=costs.at["cement capture","fixed"]*costs.at['solid biomass','CO2 intensity'],
                  efficiency=0.9,
-                 efficiency2=-costs.at['solid biomass','CO2 intensity']*options["cc_fraction"],
-                 efficiency3=costs.at['solid biomass','CO2 intensity']*options["cc_fraction"],
-                 lifetime=costs.at['industry CC','lifetime'])
+                 efficiency2=-costs.at['solid biomass','CO2 intensity']*costs.at["cement capture","capture_rate"],
+                 efficiency3=costs.at['solid biomass','CO2 intensity']*costs.at["cement capture","capture_rate"],
+                 lifetime=costs.at['cement capture','lifetime'])
 
 
     network.madd("Bus",
@@ -1563,11 +1563,11 @@ def add_industry(network):
                  bus3="co2 stored",
                  carrier="gas for industry CC",
                  p_nom_extendable=True,
-                 capital_cost=costs.at["industry CC","fixed"]*costs.at['gas','CO2 intensity']*8760, #8760 converts EUR/(tCO2/a) to EUR/(tCO2/h)
+                 capital_cost=costs.at["cement capture","fixed"]*costs.at['gas','CO2 intensity'],
                  efficiency=0.9,
-                 efficiency2=costs.at['gas','CO2 intensity']*(1-options["cc_fraction"]),
-                 efficiency3=costs.at['gas','CO2 intensity']*options["cc_fraction"],
-                 lifetime=costs.at['industry CC','lifetime'])
+                 efficiency2=costs.at['gas','CO2 intensity']*(1-costs.at["cement capture","capture_rate"]),
+                 efficiency3=costs.at['gas','CO2 intensity']**costs.at["cement capture","capture_rate"],
+                 lifetime=costs.at['cement capture','lifetime'])
 
 
     network.madd("Load",
@@ -1709,10 +1709,10 @@ def add_industry(network):
                  bus2="co2 stored",
                  carrier="process emissions CC",
                  p_nom_extendable=True,
-                 capital_cost=costs.at["industry CC","fixed"]*8760, #8760 converts EUR/(tCO2/a) to EUR/(tCO2/h)
-                 efficiency=(1-options["cc_fraction"]),
-                 efficiency2=options["cc_fraction"],
-                 lifetime=costs.at['industry CC','lifetime'])
+                 capital_cost=costs.at["cement capture","fixed"],
+                 efficiency=(1-costs.at["cement capture","capture_rate"]),
+                 efficiency2=costs.at["cement capture","capture_rate"],
+                 lifetime=costs.at['cement capture','lifetime'])
 
 
 

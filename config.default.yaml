@@ -316,7 +316,7 @@ plotting:
     "DAC" : "#E74C3C"
     "co2 stored" : "#123456"
     "CO2 sequestration" : "#123456"
-    "CCS" : "k"
+    "CC" : "k"
     "co2" : "#123456"
     "co2 vent" : "#654321"
     "solid biomass for industry co2 from atmosphere" : "#654321"
