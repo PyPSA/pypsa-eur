@@ -193,12 +193,10 @@ def add_co2_tracking(n):
            location="EU",
            carrier="co2 stored")
 
-    #TODO move cost to data/costs.csv
-    #TODO move maximum somewhere more transparent
     n.madd("Store",["co2 stored"],
-           e_nom_extendable = True,
-           e_nom_max=2e8,
-           capital_cost=20.,
+           e_nom_extendable=True,
+           e_nom_max=options['co2_sequestration_potential']*1e6,
+           capital_cost=options['co2_sequestration_cost'],
            carrier="co2 stored",
            bus="co2 stored")
 
@@ -210,17 +208,26 @@ def add_co2_tracking(n):
                efficiency=1.,
                p_nom_extendable=True)
 
-    if options['dac']:
-        #direct air capture consumes electricity to take CO2 from the air to the underground store
-        #TODO do with cost from Breyer - later use elec and heat and capital cost
-        n.madd("Link",["DAC"],
-               bus0="co2 atmosphere",
-               bus1="co2 stored",
-               carrier="DAC",
-               marginal_cost=75.,
-               efficiency=1.,
-               p_nom_extendable=True,
-               lifetime=costs.at['DAC','lifetime'])
+def add_dac(n):
+
+    heat_buses = n.buses.index[n.buses.carrier.isin(["urban central heat",
+                                                     "services urban decentral heat"])]
+    locations = n.buses.location[heat_buses]
+
+    n.madd("Link",
+           locations,
+           suffix=" DAC",
+           bus0="co2 atmosphere",
+           bus1="co2 stored",
+           bus2=locations.values,
+           bus3=heat_buses,
+           carrier="DAC",
+           capital_cost=costs.at['direct air capture','fixed'],
+           efficiency=1.,
+           efficiency2=-(costs.at['direct air capture','electricity-input'] + costs.at['direct air capture','compression-electricity-input']),
+           efficiency3=-(costs.at['direct air capture','heat-input'] - costs.at['direct air capture','compression-heat-output']),
+           p_nom_extendable=True,
+           lifetime=costs.at['direct air capture','lifetime'])
 
 
 def add_co2limit(n, Nyears=1.,limit=0.):
@@ -938,18 +945,18 @@ def add_storage(network):
 
     if options['SMR']:
         network.madd("Link",
-                     nodes + " SMR CCS",
+                     nodes + " SMR CC",
                      bus0=["EU gas"]*len(nodes),
                      bus1=nodes+" H2",
                      bus2="co2 atmosphere",
                      bus3="co2 stored",
                      p_nom_extendable=True,
-                     carrier="SMR CCS",
-                     efficiency=costs.at["SMR CCS","efficiency"],
-                     efficiency2=costs.at['gas','CO2 intensity']*(1-options["ccs_fraction"]),
-                     efficiency3=costs.at['gas','CO2 intensity']*options["ccs_fraction"],
-                     capital_cost=costs.at["SMR CCS","fixed"],
-                     lifetime=costs.at['SMR CCS','lifetime'])
+                     carrier="SMR CC",
+                     efficiency=costs.at["SMR CC","efficiency"],
+                     efficiency2=costs.at['gas','CO2 intensity']*(1-options["cc_fraction"]),
+                     efficiency3=costs.at['gas','CO2 intensity']*options["cc_fraction"],
+                     capital_cost=costs.at["SMR CC","fixed"],
+                     lifetime=costs.at['SMR CC','lifetime'])
 
         network.madd("Link",
                      nodes + " SMR",
@@ -1243,21 +1250,21 @@ def add_heat(network):
                              lifetime=costs.at['central gas CHP','lifetime'])
 
                 network.madd("Link",
-                             nodes[name] + " urban central gas CHP CCS",
+                             nodes[name] + " urban central gas CHP CC",
                              bus0="EU gas",
                              bus1=nodes[name],
                              bus2=nodes[name] + " urban central heat",
                              bus3="co2 atmosphere",
                              bus4="co2 stored",
-                             carrier="urban central gas CHP CCS",
+                             carrier="urban central gas CHP CC",
                              p_nom_extendable=True,
-                             capital_cost=costs.at['central gas CHP CCS','fixed']*costs.at['central gas CHP CCS','efficiency'],
-                             marginal_cost=costs.at['central gas CHP CCS','VOM'],
-                             efficiency=costs.at['central gas CHP CCS','efficiency'],
-                             efficiency2=costs.at['central gas CHP CCS','efficiency']/costs.at['central gas CHP CCS','c_b'],
-                             efficiency3=costs.at['gas','CO2 intensity']*(1-options["ccs_fraction"]),
-                             efficiency4=costs.at['gas','CO2 intensity']*options["ccs_fraction"],
-                             lifetime=costs.at['central gas CHP CCS','lifetime'])
+                             capital_cost=costs.at['central gas CHP','fixed']*costs.at['central gas CHP','efficiency'] + costs.at['biomass CHP capture','fixed']*costs.at['gas','CO2 intensity'],
+                             marginal_cost=costs.at['central gas CHP','VOM'],
+                             efficiency=costs.at['central gas CHP','efficiency'] - costs.at['gas','CO2 intensity']*(costs.at['biomass CHP capture','electricity-input'] + costs.at['biomass CHP capture','compression-electricity-input']),
+                             efficiency2=costs.at['central gas CHP','efficiency']/costs.at['central gas CHP','c_b'] + costs.at['gas','CO2 intensity']*(costs.at['biomass CHP capture','heat-output'] + costs.at['biomass CHP capture','compression-heat-output'] - costs.at['biomass CHP capture','heat-output']),
+                             efficiency3=costs.at['gas','CO2 intensity']*(1-costs.at['biomass CHP capture','capture_rate']),
+                             efficiency4=costs.at['gas','CO2 intensity']*costs.at['biomass CHP capture','capture_rate'],
+                             lifetime=costs.at['central gas CHP','lifetime'])
 
             else:
                 if options["micro_chp"]:
@@ -1462,21 +1469,21 @@ def add_biomass(network):
                      lifetime=costs.at['central solid biomass CHP','lifetime'])
 
         network.madd("Link",
-                     urban_central + " urban central solid biomass CHP CCS",
+                     urban_central + " urban central solid biomass CHP CC",
                      bus0="EU solid biomass",
                      bus1=urban_central,
                      bus2=urban_central + " urban central heat",
                      bus3="co2 atmosphere",
                      bus4="co2 stored",
-                     carrier="urban central solid biomass CHP CCS",
+                     carrier="urban central solid biomass CHP CC",
                      p_nom_extendable=True,
-                     capital_cost=costs.at['central solid biomass CHP CCS','fixed']*costs.at['central solid biomass CHP CCS','efficiency'],
-                     marginal_cost=costs.at['central solid biomass CHP CCS','VOM'],
-                     efficiency=costs.at['central solid biomass CHP CCS','efficiency'],
-                     efficiency2=costs.at['central solid biomass CHP CCS','efficiency-heat'],
-                     efficiency3=-costs.at['solid biomass','CO2 intensity']*options["ccs_fraction"],
-                     efficiency4=costs.at['solid biomass','CO2 intensity']*options["ccs_fraction"],
-                     lifetime=costs.at['central solid biomass CHP CCS','lifetime'])
+                     capital_cost=costs.at['central solid biomass CHP','fixed']*costs.at['central solid biomass CHP','efficiency'] + costs.at['biomass CHP capture','fixed']*costs.at['solid biomass','CO2 intensity'],
+                     marginal_cost=costs.at['central solid biomass CHP','VOM'],
+                     efficiency=costs.at['central solid biomass CHP','efficiency'] - costs.at['solid biomass','CO2 intensity']*(costs.at['biomass CHP capture','electricity-input'] + costs.at['biomass CHP capture','compression-electricity-input']),
+                     efficiency2=costs.at['central solid biomass CHP','efficiency-heat'] + costs.at['solid biomass','CO2 intensity']*(costs.at['biomass CHP capture','heat-output'] + costs.at['biomass CHP capture','compression-heat-output'] - costs.at['biomass CHP capture','heat-output']),
+                     efficiency3=-costs.at['solid biomass','CO2 intensity']*costs.at['biomass CHP capture','capture_rate'],
+                     efficiency4=costs.at['solid biomass','CO2 intensity']*costs.at['biomass CHP capture','capture_rate'],
+                     lifetime=costs.at['central solid biomass CHP','lifetime'])
 
 
 
@@ -1513,18 +1520,18 @@ def add_industry(network):
                  efficiency=1.)
 
     network.madd("Link",
-                 ["solid biomass for industry CCS"],
+                 ["solid biomass for industry CC"],
                  bus0="EU solid biomass",
                  bus1="solid biomass for industry",
                  bus2="co2 atmosphere",
                  bus3="co2 stored",
-                 carrier="solid biomass for industry CCS",
+                 carrier="solid biomass for industry CC",
                  p_nom_extendable=True,
-                 capital_cost=costs.at["industry CCS","fixed"]*costs.at['solid biomass','CO2 intensity']*8760, #8760 converts EUR/(tCO2/a) to EUR/(tCO2/h)
+                 capital_cost=costs.at["cement capture","fixed"]*costs.at['solid biomass','CO2 intensity'],
                  efficiency=0.9,
-                 efficiency2=-costs.at['solid biomass','CO2 intensity']*options["ccs_fraction"],
-                 efficiency3=costs.at['solid biomass','CO2 intensity']*options["ccs_fraction"],
-                 lifetime=costs.at['industry CCS','lifetime'])
+                 efficiency2=-costs.at['solid biomass','CO2 intensity']*costs.at["cement capture","capture_rate"],
+                 efficiency3=costs.at['solid biomass','CO2 intensity']*costs.at["cement capture","capture_rate"],
+                 lifetime=costs.at['cement capture','lifetime'])
 
 
     network.madd("Bus",
@@ -1549,18 +1556,18 @@ def add_industry(network):
                  efficiency2=costs.at['gas','CO2 intensity'])
 
     network.madd("Link",
-                 ["gas for industry CCS"],
+                 ["gas for industry CC"],
                  bus0="EU gas",
                  bus1="gas for industry",
                  bus2="co2 atmosphere",
                  bus3="co2 stored",
-                 carrier="gas for industry CCS",
+                 carrier="gas for industry CC",
                  p_nom_extendable=True,
-                 capital_cost=costs.at["industry CCS","fixed"]*costs.at['gas','CO2 intensity']*8760, #8760 converts EUR/(tCO2/a) to EUR/(tCO2/h)
+                 capital_cost=costs.at["cement capture","fixed"]*costs.at['gas','CO2 intensity'],
                  efficiency=0.9,
-                 efficiency2=costs.at['gas','CO2 intensity']*(1-options["ccs_fraction"]),
-                 efficiency3=costs.at['gas','CO2 intensity']*options["ccs_fraction"],
-                 lifetime=costs.at['industry CCS','lifetime'])
+                 efficiency2=costs.at['gas','CO2 intensity']*(1-costs.at["cement capture","capture_rate"]),
+                 efficiency3=costs.at['gas','CO2 intensity']**costs.at["cement capture","capture_rate"],
+                 lifetime=costs.at['cement capture','lifetime'])
 
 
     network.madd("Load",
@@ -1694,18 +1701,18 @@ def add_industry(network):
                  p_nom_extendable=True,
                  efficiency=1.)
 
-    #assume enough local waste heat for CCS
+    #assume enough local waste heat for CC
     network.madd("Link",
-                 ["process emissions CCS"],
+                 ["process emissions CC"],
                  bus0="process emissions",
                  bus1="co2 atmosphere",
                  bus2="co2 stored",
-                 carrier="process emissions CCS",
+                 carrier="process emissions CC",
                  p_nom_extendable=True,
-                 capital_cost=costs.at["industry CCS","fixed"]*8760, #8760 converts EUR/(tCO2/a) to EUR/(tCO2/h)
-                 efficiency=(1-options["ccs_fraction"]),
-                 efficiency2=options["ccs_fraction"],
-                 lifetime=costs.at['industry CCS','lifetime'])
+                 capital_cost=costs.at["cement capture","fixed"],
+                 efficiency=(1-costs.at["cement capture","capture_rate"]),
+                 efficiency2=costs.at["cement capture","capture_rate"],
+                 lifetime=costs.at['cement capture','lifetime'])
 
 
 
@@ -1897,6 +1904,9 @@ if __name__ == "__main__":
 
     if "I" in opts and "H" in opts:
         add_waste_heat(n)
+
+    if options['dac']:
+        add_dac(n)
 
     if "decentral" in opts:
         decentral(n)

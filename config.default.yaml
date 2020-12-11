@@ -139,7 +139,9 @@ sector:
   'dac' : True
   'co2_vent' : True
   'SMR' : True
-  'ccs_fraction' : 0.9
+  'co2_sequestration_potential' : 200  #MtCO2/a sequestration potential for Europe
+  'co2_sequestration_cost' : 20   #EUR/tCO2 for transport and sequestration of CO2
+  'cc_fraction' : 0.9  # default fraction of CO2 captured with post-combustion capture
   'hydrogen_underground_storage' : True
   'use_fischer_tropsch_waste_heat' : True
   'use_fuel_cell_waste_heat' : True
@@ -314,7 +316,7 @@ plotting:
     "DAC" : "#E74C3C"
     "co2 stored" : "#123456"
     "CO2 sequestration" : "#123456"
-    "CCS" : "k"
+    "CC" : "k"
     "co2" : "#123456"
     "co2 vent" : "#654321"
     "solid biomass for industry co2 from atmosphere" : "#654321"
