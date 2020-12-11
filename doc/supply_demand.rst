@@ -27,6 +27,15 @@ transmission model `PyPSA-Eur <https://github.com/PyPSA/pypsa-eur>`_,
 except that hydrogen storage is integrated into the hydrogen supply,
 demand and network, and PyPSA-Eur-Sec includes CHPs.
 
+Unlike PyPSA-Eur, PyPSA-Eur-Sec does not distribution electricity demand for industry according to population and GDP, but uses the
+geographical data from the `Hotmaps Industrial Database
+<https://gitlab.com/hotmaps/industrial_sites/industrial_sites_Industrial_Database>`_.
+
+Also unlike PyPSA-Eur, PyPSA-Eur-Sec subtracts existing electrified heating from the existing electricity demand, so that power-to-heat can be optimised separately.
+
+The remaining electricity demand for households and services is distributed inside each country proportional to GDP and population.
+
+
 Heat demand
 =============================
 
@@ -154,7 +163,11 @@ Fossil or Fischer-Tropsch.
 Industry demand
 ================
 
-Based on materials demand from JRC-IDEES and other sources.
+Based on materials demand from JRC-IDEES and other sources such as the USGS for ammonia.
+
+Industry is split into many sectors, including iron and steel, ammonia, other basic chemicals, cement, non-metalic minerals, alumuninium, other non-ferrous metals, pulp, paper and printing, food, beverages and tobacco, and other more minor sectors.
+
+Inside each country the industrial demand is distributed using the `Hotmaps Industrial Database <https://gitlab.com/hotmaps/industrial_sites/industrial_sites_Industrial_Database>`_.
 
 
 Industry supply
