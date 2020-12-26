@@ -125,7 +125,7 @@ def add_existing_renewables(df_agg):
                 if capacity > 0.:
                     df_agg.at[name,"Fueltype"] = tech
                     df_agg.at[name,"Capacity"] = capacity
-                    df_agg.at[name,"YearCommissioned"] = year
+                    df_agg.at[name,"DateIn"] = year
                     df_agg.at[name,"cluster_bus"] = node
 
 def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, baseyear):
@@ -182,7 +182,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
     add_existing_renewables(df_agg)
 
     df_agg["grouping_year"] = np.take(grouping_years,
-                                      np.digitize(df_agg.YearCommissioned,
+                                      np.digitize(df_agg.DateIn,
                                                   grouping_years,
                                                   right=True))
 
@@ -249,7 +249,7 @@ def add_heating_capacities_installed_before_baseyear(n, baseyear, grouping_years
 
     grouping_years : intervals to group existing capacities
 
-    linear decomissioning of heating capacities from 2020 to 2045 is
+    linear decommissioning of heating capacities from 2020 to 2045 is
     currently assumed
 
     heating capacities split between residential and services proportional
@@ -408,18 +408,18 @@ if __name__ == "__main__":
     if 'snakemake' not in globals():
         from vresutils.snakemake import MockSnakemake
         snakemake = MockSnakemake(
-            wildcards=dict(network='elec', simpl='', clusters='39', lv='1.0',
-                           sector_opts='Co2L0-168H-T-H-B-I-solar3-dist1',
-                           co2_budget_name='b30b3',
+            wildcards=dict(network='elec', simpl='', clusters='45', lv='1.0',
+                           sector_opts='Co2L0-3H-T-H-B-I-solar3-dist1',
                            planning_horizons='2020'),
-            input=dict(network='pypsa-eur-sec/results/test/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{co2_budget_name}_{planning_horizons}.nc',
+            input=dict(network='pypsa-eur-sec/results/version-2/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{planning_horizons}.nc',
                        powerplants='pypsa-eur/resources/powerplants.csv',
                        busmap_s='pypsa-eur/resources/busmap_{network}_s{simpl}.csv',
                        busmap='pypsa-eur/resources/busmap_{network}_s{simpl}_{clusters}.csv',
-                       costs='pypsa-eur-sec/data/costs/costs_{planning_horizons}.csv',
+                       costs='technology_data/outputs/costs_{planning_horizons}.csv',
                        cop_air_total="pypsa-eur-sec/resources/cop_air_total_{network}_s{simpl}_{clusters}.nc",
-                       cop_soil_total="pypsa-eur-sec/resources/cop_soil_total_{network}_s{simpl}_{clusters}.nc"),
-            output=['pypsa-eur-sec/results/test/prenetworks_brownfield/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{planning_horizons}.nc'],
+                       cop_soil_total="pypsa-eur-sec/resources/cop_soil_total_{network}_s{simpl}_{clusters}.nc",
+                       clustered_pop_layout="pypsa-eur-sec/resources/pop_layout_{network}_s{simpl}_{clusters}.csv",),
+            output=['pypsa-eur-sec/results/version-2/prenetworks_brownfield/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{planning_horizons}.nc'],
         )
         import yaml
         with open('config.yaml', encoding='utf8') as f:
