@@ -18,13 +18,17 @@ its dependencies. Clone the repository:
 
     projects % git clone git@github.com:PyPSA/pypsa-eur.git
 
-then download and unpack all the PyPSA-Eur data files.
+then download and unpack all the PyPSA-Eur data files by running the following snakemake rule:
+
+.. code:: bash
+
+    projects/pypsa-eur % snakemake -j 1 retrieve_databundle
 
 
 Clone technology-data repository
 ================================
 
-Create a parallel directory for the technology costs and other assumptions:
+Next install the technology assumptions database `technology-data <https://github.com/PyPSA/technology-data>`_ by creating a parallel directory:
 
 .. code:: bash
 
@@ -34,7 +38,7 @@ Create a parallel directory for the technology costs and other assumptions:
 Clone PyPSA-Eur-Sec repository
 ==============================
 
-Create a parallel directory for PyPSA-Eur-Sec with:
+Create a parallel directory for `PyPSA-Eur-Sec <https://github.com/PyPSA/pypsa-eur-sec>`_ with:
 
 .. code:: bash
 
@@ -54,19 +58,26 @@ atlite version 0.0.2.
 Data requirements
 =================
 
-The data requirements include the JRC-IDEES-2015 database, JRC biomass
-potentials, EEA emission statistics, Eurostat Energy Balances, urban
-district heating potentials, emobility statistics, timezone mappings
-and heating profiles.
+Small data files are included directly in the git repository, while
+larger ones are archived in a data bundle. The data bundle's size is
+around 640 MB.
 
-The data bundle is about 640 MB.
-
-To download and extract it on the command line:
+To download and extract the data bundle on the command line:
 
 .. code:: bash
 
-    projects/pypsa-eur-sec/data % wget "https://nworbmot.org/pypsa-eur-sec-data-bundle-190719.tar.gz"
-    projects/pypsa-eur-sec/data % tar xvzf pypsa-eur-sec-data-bundle-190719.tar.gz
+    projects/pypsa-eur-sec/data % wget "https://nworbmot.org/pypsa-eur-sec-data-bundle-201012.tar.gz"
+    projects/pypsa-eur-sec/data % tar xvzf pypsa-eur-sec-data-bundle-201012.tar.gz
+
+
+The data licences and sources are given in the following table.
+
+
+.. csv-table::
+   :header-rows: 1
+   :file: data.csv
+
+
 
 Set up the default configuration
 ================================

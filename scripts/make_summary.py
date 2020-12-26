@@ -28,10 +28,13 @@ opt_name = {"Store": "e", "Line" : "s", "Transformer" : "s"}
 override_component_attrs = pypsa.descriptors.Dict({k : v.copy() for k,v in pypsa.components.component_attrs.items()})
 override_component_attrs["Link"].loc["bus2"] = ["string",np.nan,np.nan,"2nd bus","Input (optional)"]
 override_component_attrs["Link"].loc["bus3"] = ["string",np.nan,np.nan,"3rd bus","Input (optional)"]
+override_component_attrs["Link"].loc["bus4"] = ["string",np.nan,np.nan,"4th bus","Input (optional)"]
 override_component_attrs["Link"].loc["efficiency2"] = ["static or series","per unit",1.,"2nd bus efficiency","Input (optional)"]
 override_component_attrs["Link"].loc["efficiency3"] = ["static or series","per unit",1.,"3rd bus efficiency","Input (optional)"]
+override_component_attrs["Link"].loc["efficiency4"] = ["static or series","per unit",1.,"4th bus efficiency","Input (optional)"]
 override_component_attrs["Link"].loc["p2"] = ["series","MW",0.,"2nd bus output","Output"]
 override_component_attrs["Link"].loc["p3"] = ["series","MW",0.,"3rd bus output","Output"]
+override_component_attrs["Link"].loc["p4"] = ["series","MW",0.,"4th bus output","Output"]
 override_component_attrs["StorageUnit"].loc["p_dispatch"] = ["series","MW",0.,"Storage discharging.","Output"]
 override_component_attrs["StorageUnit"].loc["p_store"] = ["series","MW",0.,"Storage charging.","Output"]
 
@@ -185,14 +188,6 @@ def calculate_costs(n,label,costs):
         costs = costs.reindex(marginal_costs_grouped.index|costs.index)
 
         costs.loc[marginal_costs_grouped.index,label] = marginal_costs_grouped
-
-    #add back in costs of links if there is a line volume limit
-    if label[1] != "opt":
-        costs.loc[("links-added","capital","transmission lines"),label] = ((costs_db.at['HVDC overhead', 'fixed']*n.links.length + costs_db.at['HVDC inverter pair', 'fixed'])*n.links.p_nom_opt)[n.links.carrier == "DC"].sum()
-        costs.loc[("lines-added","capital","transmission lines"),label] = costs_db.at["HVAC overhead", "fixed"]*(n.lines.length*n.lines.s_nom_opt).sum()
-    else:
-        costs.loc[("links-added","capital","transmission lines"),label] = (costs_db.at['HVDC inverter pair', 'fixed']*n.links.p_nom_opt)[n.links.carrier == "DC"].sum()
-
 
     #add back in all hydro
     #costs.loc[("storage_units","capital","hydro"),label] = (0.01)*2e6*n.storage_units.loc[n.storage_units.group=="hydro","p_nom"].sum()
@@ -530,7 +525,7 @@ outputs = ["nodal_costs",
 
 def make_summaries(networks_dict):
 
-    columns = pd.MultiIndex.from_tuples(networks_dict.keys(),names=["cluster","lv","opt", "co2_budget_name","planning_horizon"])
+    columns = pd.MultiIndex.from_tuples(networks_dict.keys(),names=["cluster","lv","opt","planning_horizon"])
 
     df = {}
 
@@ -565,8 +560,8 @@ if __name__ == "__main__":
         from vresutils import Dict
         import yaml
         snakemake = Dict()
-        with open('config.yaml') as f:
-            snakemake.config = yaml.load(f)
+        with open('config.yaml', encoding='utf8') as f:
+            snakemake.config = yaml.safe_load(f)
 
         #overwrite some options
         snakemake.config["run"] = "test"
@@ -579,21 +574,19 @@ if __name__ == "__main__":
         for item in outputs:
             snakemake.output[item] = snakemake.config['summary_dir'] + '/{name}/csvs/{item}.csv'.format(name=snakemake.config['run'],item=item)
 
-    networks_dict = {(cluster,lv,opt+sector_opt, co2_budget_name, planning_horizon) :
-                     snakemake.config['results_dir'] + snakemake.config['run'] + '/postnetworks/elec_s{simpl}_{cluster}_lv{lv}_{opt}_{sector_opt}_{co2_budget_name}_{planning_horizon}.nc'\
+    networks_dict = {(cluster, lv, opt+sector_opt, planning_horizon) :
+                     snakemake.config['results_dir'] + snakemake.config['run'] + '/postnetworks/elec_s{simpl}_{cluster}_lv{lv}_{opt}_{sector_opt}_{planning_horizon}.nc'\
                      .format(simpl=simpl,
                              cluster=cluster,
                              opt=opt,
                              lv=lv,
                              sector_opt=sector_opt,
-                             co2_budget_name=co2_budget_name,
                              planning_horizon=planning_horizon)\
                      for simpl in snakemake.config['scenario']['simpl'] \
                      for cluster in snakemake.config['scenario']['clusters'] \
                      for opt in snakemake.config['scenario']['opts'] \
                      for sector_opt in snakemake.config['scenario']['sector_opts'] \
                      for lv in snakemake.config['scenario']['lv'] \
-                     for co2_budget_name in snakemake.config['scenario']['co2_budget_name'] \
                      for planning_horizon in snakemake.config['scenario']['planning_horizons']}
 
     print(networks_dict)
@@ -602,7 +595,8 @@ if __name__ == "__main__":
     costs_db = prepare_costs(snakemake.input.costs,
                              snakemake.config['costs']['USD2013_to_EUR2013'],
                              snakemake.config['costs']['discountrate'],
-                             Nyears)
+                             Nyears,
+                             snakemake.config['costs']['lifetime'])
 
     df = make_summaries(networks_dict)
 

@@ -1,0 +1,7 @@
+,Dwelling,Ceilling,Standard component surfaces (m2),component,surfaces,(m2),,
+Building type,Space(m²),Height(m),Roof,Facade,Floor,Windows,,
+Single/two family house,120,2.5,90,166,63,29,,
+Large apartment house,1457,2.5,354,1189,354,380,,
+Apartment house,5276,,598.337,2992.1,598.337,756,tabula ,http://webtool.building-typology.eu/#pdfes
+,,,,,,,,
+"Source: https://link.springer.com/article/10.1007/s12053-010-9090-6  ,p.4",,,,,,,,

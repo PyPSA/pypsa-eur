@@ -253,9 +253,7 @@ def plot_h2_map(network):
 
     elec = n.links.index[n.links.carrier == "H2 Electrolysis"]
 
-    bus_sizes = pd.Series(0., index=n.buses.index)
-    bus_sizes.loc[elec.str.replace(" H2 Electrolysis", "")] = \
-                        n.links.loc[elec, "p_nom_opt"].values / bus_size_factor
+    bus_sizes = n.links.loc[elec,"p_nom_opt"].groupby(n.links.loc[elec,"bus0"]).sum() / bus_size_factor
 
     # make a fake MultiIndex so that area is correct for legend
     bus_sizes.index = pd.MultiIndex.from_product(
@@ -326,7 +324,7 @@ def plot_map_without(network):
     fig.set_size_inches(7, 6)
 
     # PDF has minimum width, so set these to zero
-    line_lower_threshold = 0.
+    line_lower_threshold = 200.
     line_upper_threshold = 1e4
     linewidth_factor = 2e3
     ac_color = "gray"
@@ -345,19 +343,19 @@ def plot_map_without(network):
         line_widths = n.lines.s_nom_min
         link_widths = n.links.p_nom_min
 
-    line_widths[line_widths < line_upper_threshold] = 0.
-    link_widths[link_widths < line_upper_threshold] = 0.
+    line_widths[line_widths < line_lower_threshold] = 0.
+    link_widths[link_widths < line_lower_threshold] = 0.
 
     line_widths[line_widths > line_upper_threshold] = line_upper_threshold
     link_widths[link_widths > line_upper_threshold] = line_upper_threshold
 
-    n.plot(bus_sizes=10,
-           bus_colors="k",
+    n.plot(bus_colors="k",
            line_colors=ac_color,
            link_colors=dc_color,
            line_widths=line_widths / linewidth_factor,
            link_widths=link_widths / linewidth_factor,
-           ax=ax,  boundaries=(-10, 30, 34, 70))
+           ax=ax,  boundaries=(-10, 30, 34, 70),
+           color_geomap={'ocean': 'lightblue', 'land': "palegoldenrod"})
 
     handles = []
     labels = []
