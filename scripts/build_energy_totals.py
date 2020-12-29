@@ -390,12 +390,12 @@ def build_energy_totals():
     return clean_df
 
 
-def build_eea_co2():
+def build_eea_co2(year=1990):
     # see ../notebooks/compute_1990_Europe_emissions_for_targets.ipynb
 
-    #https://www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-14
-    #downloaded 190222 (modified by EEA last on 181130)
-    fn = "data/eea/UNFCCC_v21.csv"
+    #https://www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-16
+    #downloaded 201228 (modified by EEA last on 201221)
+    fn = "data/eea/UNFCCC_v23.csv"
     df = pd.read_csv(fn, encoding="latin-1")
     df.loc[df["Year"] == "1985-1987","Year"] = 1986
     df["Year"] = df["Year"].astype(int)
@@ -418,15 +418,13 @@ def build_eea_co2():
     e['waste management'] = '5 - Waste management'
     e['other'] = '6 - Other Sector'
     e['indirect'] = 'ind_CO2 - Indirect CO2'
-    e["total wL"] = "Total (with LULUCF, with indirect CO2)"
-    e["total woL"] = "Total (without LULUCF, with indirect CO2)"
+    e["total wL"] = "Total (with LULUCF)"
+    e["total woL"] = "Total (without LULUCF)"
 
 
     pol = "CO2" #["All greenhouse gases - (CO2 equivalent)","CO2"]
 
     cts = ["CH","EUA","NO"] + eu28_eea
-
-    year = 1990
 
     emissions = df.loc[idx[cts,pol,year,e.values],"emissions"].unstack("Sector_name").rename(columns=pd.Series(e.index,e.values)).rename(index={"All greenhouse gases - (CO2 equivalent)" : "GHG"},level=1)
 
@@ -467,7 +465,7 @@ def build_eurostat_co2(year=1990):
     return eurostat_co2
 
 
-def build_co2_totals(year=1990):
+def build_co2_totals(eea_co2, eurostat_co2, year=1990):
 
     co2 = eea_co2.reindex(["EU28","NO","CH","BA","RS","AL","ME","MK"] + eu28)
 
@@ -485,10 +483,6 @@ def build_co2_totals(year=1990):
         co2.loc[ct,'industrial non-elec'] = eurostat_co2[ct,"+","Industry"].sum()
         #doesn't include non-energy emissions
         co2.loc[ct,'agriculture'] = eurostat_co2[ct,"+","+","Agriculture / Forestry"].sum()
-
-
-
-    co2.to_csv(snakemake.output.co2_name)
 
     return co2
 
@@ -547,7 +541,7 @@ if __name__ == "__main__":
         snakemake.output['transport_name'] = "data/transport_data.csv"
 
         snakemake.input = Dict()
-        snakemake.input['nuts3_shapes'] = 'resources/nuts3_shapes.geojson'
+        snakemake.input['nuts3_shapes'] = '../pypsa-eur/resources/nuts3_shapes.geojson'
 
     nuts3 = gpd.read_file(snakemake.input.nuts3_shapes).set_index('index')
     population = nuts3['pop'].groupby(nuts3.country).sum()
@@ -566,6 +560,7 @@ if __name__ == "__main__":
 
     eurostat_co2 = build_eurostat_co2()
 
-    build_co2_totals()
-
+    co2=build_co2_totals(eea_co2, eurostat_co2, year)
+    co2.to_csv(snakemake.output.co2_name)
+    
     build_transport_data()
