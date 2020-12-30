@@ -69,7 +69,7 @@ biomass:
   year: 2030
   scenario: "Med"
   classes:
-    solid biomass: ['Primary agricultural residues', 'Forestry energy residue', 'Secondary forestry residues', 'Secondary Forestry residues – sawdust', 'Forestry residues from landscape care biomass', 'Municipal waste']
+    solid biomass: ['Primary agricultural residues', 'Forestry energy residue', 'Secondary forestry residues', 'Secondary Forestry residues sawdust', 'Forestry residues from landscape care biomass', 'Municipal waste']
     not included: ['Bioethanol sugar beet biomass', 'Rapeseeds for biodiesel', 'sunflower and soya for Biodiesel', 'Starchy crops biomass', 'Grassy crops biomass', 'Willow biomass', 'Poplar biomass potential', 'Roundwood fuelwood', 'Roundwood Chips & Pellets']
     biogas: ['Manure biomass potential', 'Sludge biomass']
 
