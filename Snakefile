@@ -292,6 +292,7 @@ rule build_retro_cost:
     output:
         retro_cost="resources/retro_cost_{network}_s{simpl}_{clusters}.csv",
         floor_area="resources/floor_area_{network}_s{simpl}_{clusters}.csv"
+    resources: mem_mb=1000
     script: "scripts/build_retro_cost.py"
 
 
