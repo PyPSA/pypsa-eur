@@ -2,6 +2,9 @@
 Release Notes
 ##########################################
 
+Future release
+===================
+*For the myopic option, a carbon budget and a type of decay (exponential or beta) can be selected in the config file to distribute the budget across the planning_horizons.
 
 PyPSA-Eur-Sec 0.4.0 (11th December 2020)
 =========================================
