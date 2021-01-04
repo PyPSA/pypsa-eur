@@ -1984,8 +1984,8 @@ if __name__ == "__main__":
         from vresutils.snakemake import MockSnakemake
         snakemake = MockSnakemake(
             wildcards=dict(network='elec', simpl='', clusters='37', lv='1.0',
-                           opts='', planning_horizons='2020', 
-                           sector_opts='120H-T-H-B-I-solar3-dist1-cb40ex0'),
+                           opts='', planning_horizons='2050', 
+                           sector_opts='Co2L0-180H-T-H-B-I-solar3-dist1-solar+c0.5-Sabatier+c0.5'),
             input=dict( network='../pypsa-eur/networks/{network}_s{simpl}_{clusters}_ec_lv{lv}_{opts}.nc',
                         energy_totals_name='resources/energy_totals.csv',
                         co2_totals_name='resources/co2_totals.csv',
@@ -2024,7 +2024,7 @@ if __name__ == "__main__":
                 	    retro_cost_energy = "resources/retro_cost_{network}_s{simpl}_{clusters}.csv",
                         floor_area = "resources/floor_area_{network}_s{simpl}_{clusters}.csv"
             ),
-            output=['results/version-8/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{planning_horizons}.nc']
+            output=['results/version-0/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{planning_horizons}.nc']
         )
         import yaml
         with open('config.yaml', encoding='utf8') as f:
@@ -2150,11 +2150,10 @@ if __name__ == "__main__":
 
     print("adding CO2 budget limit as per unit of 1990 levels of",limit)
     add_co2limit(n, Nyears, limit)
-
-
+           
     for o in opts:
         for tech in ["solar","onwind","offwind"]:
-            if tech in o:
+            if tech in o and "+" not in o:
                 limit = o[o.find(tech)+len(tech):]
                 limit = float(limit.replace("p",".").replace("m","-"))
                 print("changing potential for",tech,"by factor",limit)
@@ -2170,6 +2169,28 @@ if __name__ == "__main__":
 
     if snakemake.config["sector"]['electricity_distribution_grid']:
         insert_electricity_distribution_grid(n)
+        
+    for o in opts:
+        if "+" in o:
+            oo = o.split("+")
+            carrier_list=np.hstack((n.generators.carrier.unique(), n.links.carrier.unique(), 
+                                    n.stores.carrier.unique(), n.storage_units.carrier.unique()))            
+            suptechs = map(lambda c: c.split("-", 2)[0], carrier_list) 
+            if oo[0].startswith(tuple(suptechs)):
+                carrier = oo[0]
+                # handles only p_nom_max as stores and lines have no potentials
+                attr_lookup = {"p": "p_nom_max", "c": "capital_cost"}
+                attr = attr_lookup[oo[1][0]]
+                factor = float(oo[1][1:])
+                if carrier == "AC":  # lines do not have carrier
+                    n.lines[attr] *= factor
+                else:
+                    comps = {"Generator", "Link", "StorageUnit", "Store"}
+                    for c in n.iterate_components(comps):
+                        sel = c.df.carrier.str.contains(carrier)
+                        c.df.loc[sel,attr] *= factor
+                print("changing", attr ,"for",carrier,"by factor",factor)
+            
     if snakemake.config["sector"]['gas_distribution_grid']:
         insert_gas_distribution_costs(n)
     if snakemake.config["sector"]['electricity_grid_connection']:

@@ -24,6 +24,7 @@ scenario:
   # B for biomass supply, I for industry, shipping and aviation
   # solarx or onwindx changes the available installable potential by factor x
   # dist{n} includes distribution grids with investment cost of n times cost in data/costs.csv
+  # solar+c0.5 reduces the capital cost of solar to 50\% of reference value
   # for myopic/perfect foresight cb states the carbon budget in GtCO2 (cumulative 
   # emissions throughout the transition path in the timeframe determined by the 
   # planning_horizons), be:beta decay; ex:exponential decay
