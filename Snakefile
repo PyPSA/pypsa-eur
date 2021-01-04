@@ -8,7 +8,7 @@ wildcard_constraints:
     clusters="[0-9]+m?",
     sectors="[+a-zA-Z0-9]+",
     opts="[-+a-zA-Z0-9]*",
-    sector_opts="[-+a-zA-Z0-9\.]*"
+    sector_opts="[-+a-zA-Z0-9\.\s]*"
 
 
 
