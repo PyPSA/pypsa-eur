@@ -205,9 +205,7 @@ def enforce_autarky(n, only_crossborder=False):
                     ].index
     else:
         lines_rm = n.lines.index
-        for i in n.links.index:
-            if n.links.loc[i,'carrier'] == 'DC':
-                links_rm.append(i)
+        links_rm = n.links.loc[n.links.carrier=="DC"].index
     n.mremove("Line", lines_rm)
     n.mremove("Link", links_rm)
 
