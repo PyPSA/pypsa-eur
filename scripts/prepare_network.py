@@ -193,7 +193,6 @@ def apply_time_segmentation(n, segments):
     return n
 
 def enforce_autarky(n, only_crossborder=False):
-    links_rm = []
     if only_crossborder:
         lines_rm = n.lines.loc[
                         n.lines.bus0.map(n.buses.country) !=
