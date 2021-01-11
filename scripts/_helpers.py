@@ -44,6 +44,7 @@ def configure_logging(snakemake, skip_handlers=False):
             })
     logging.basicConfig(**kwargs)
 
+
 def load_network(import_name=None, custom_components=None):
     """
     Helper for importing a pypsa.Network with additional custom components.
@@ -70,7 +71,6 @@ def load_network(import_name=None, custom_components=None):
     -------
     pypsa.Network
     """
-
     import pypsa
     from pypsa.descriptors import Dict
 
@@ -90,9 +90,11 @@ def load_network(import_name=None, custom_components=None):
                          override_components=override_components,
                          override_component_attrs=override_component_attrs)
 
+
 def pdbcast(v, h):
     return pd.DataFrame(v.values.reshape((-1, 1)) * h.values,
                         index=v.index, columns=h.index)
+
 
 def load_network_for_plots(fn, tech_costs, config, combine_hydro_ps=True):
     import pypsa
@@ -113,11 +115,11 @@ def load_network_for_plots(fn, tech_costs, config, combine_hydro_ps=True):
     if combine_hydro_ps:
         n.storage_units.loc[n.storage_units.carrier.isin({'PHS', 'hydro'}), 'carrier'] = 'hydro+PHS'
 
-    # #if the carrier was not set on the heat storage units
+    # if the carrier was not set on the heat storage units
     # bus_carrier = n.storage_units.bus.map(n.buses.carrier)
     # n.storage_units.loc[bus_carrier == "heat","carrier"] = "water tanks"
 
-    Nyears = n.snapshot_weightings.sum()/8760.
+    Nyears = n.snapshot_weightings.sum() / 8760.
     costs = load_costs(Nyears, tech_costs, config['costs'], config['electricity'])
     update_transmission_costs(n, costs)
 
@@ -168,6 +170,7 @@ def aggregate_costs(n, flatten=False, opts=None, existing_only=False):
         n.iterate_components(iterkeys(components), skip_empty=False),
         itervalues(components)
     ):
+        if c.df.empty: continue
         if not existing_only: p_nom += "_opt"
         costs[(c.list_name, 'capital')] = (c.df[p_nom] * c.df.capital_cost).groupby(c.df.carrier).sum()
         if p_attr is not None:

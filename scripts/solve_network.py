@@ -10,10 +10,6 @@ Relevant Settings
 
 .. code:: yaml
 
-    (electricity:)
-        (BAU_mincapacities:)
-        (SAFE_reservemargin:)
-
     solving:
         tmpdir:
         options:
@@ -28,10 +24,6 @@ Relevant Settings
             track_iterations:
         solver:
             name:
-            (solveroptions):
-
-    (plotting:)
-        (conv_techs:)
 
 .. seealso::
     Documentation of the configuration file ``config.yaml`` at
@@ -40,12 +32,12 @@ Relevant Settings
 Inputs
 ------
 
-- ``networks/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc``: confer :ref:`prepare`
+- ``networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc``: confer :ref:`prepare`
 
 Outputs
 -------
 
-- ``results/networks/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc``: Solved PyPSA network including optimisation results
+- ``results/networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc``: Solved PyPSA network including optimisation results
 
     .. image:: ../img/results.png
         :scale: 40 %
@@ -85,17 +77,21 @@ Details (and errors made through this heuristic) are discussed in the paper
 """
 
 import logging
-logger = logging.getLogger(__name__)
 from _helpers import configure_logging
 
 import numpy as np
 import pandas as pd
+import re
 
 import pypsa
 from pypsa.linopf import (get_var, define_constraints, linexpr, join_exprs,
                           network_lopf, ilopf)
+
 from pathlib import Path
 from vresutils.benchmark import memory_logger
+
+logger = logging.getLogger(__name__)
+
 
 def prepare_network(n, solve_opts):
 
@@ -167,6 +163,34 @@ def add_CCL_constraints(n, config):
                                            '<=', maximum, 'agg_p_nom', 'max')
 
 
+def add_EQ_constraints(n, o, scaling=1e-1):
+    float_regex = "[0-9]*\.?[0-9]+"
+    level = float(re.findall(float_regex, o)[0])
+    if o[-1] == 'c':
+        ggrouper = n.generators.bus.map(n.buses.country)
+        lgrouper = n.loads.bus.map(n.buses.country)
+        sgrouper = n.storage_units.bus.map(n.buses.country)
+    else:
+        ggrouper = n.generators.bus
+        lgrouper = n.loads.bus
+        sgrouper = n.storage_units.bus
+    load = n.snapshot_weightings @ \
+           n.loads_t.p_set.groupby(lgrouper, axis=1).sum()
+    inflow = n.snapshot_weightings @ \
+             n.storage_units_t.inflow.groupby(sgrouper, axis=1).sum()
+    inflow = inflow.reindex(load.index).fillna(0.)
+    rhs = scaling * ( level * load - inflow )
+    lhs_gen = linexpr((n.snapshot_weightings * scaling,
+                       get_var(n, "Generator", "p").T)
+              ).T.groupby(ggrouper, axis=1).apply(join_exprs)
+    lhs_spill = linexpr((-n.snapshot_weightings * scaling,
+                         get_var(n, "StorageUnit", "spill").T)
+                ).T.groupby(sgrouper, axis=1).apply(join_exprs)
+    lhs_spill = lhs_spill.reindex(lhs_gen.index).fillna("")
+    lhs = lhs_gen + lhs_spill
+    define_constraints(n, lhs, ">=", rhs, "equity", "min")
+
+
 def add_BAU_constraints(n, config):
     mincaps = pd.Series(config['electricity']['BAU_mincapacities'])
     lhs = (linexpr((1, get_var(n, 'Generator', 'p_nom')))
@@ -211,21 +235,25 @@ def extra_functionality(n, snapshots):
         add_SAFE_constraints(n, config)
     if 'CCL' in opts and n.generators.p_nom_extendable.any():
         add_CCL_constraints(n, config)
+    for o in opts:
+        if "EQ" in o:
+            add_EQ_constraints(n, o)
     add_battery_constraints(n)
 
 
 def solve_network(n, config, solver_log=None, opts='', **kwargs):
     solver_options = config['solving']['solver'].copy()
     solver_name = solver_options.pop('name')
-    track_iterations = config['solving']['options'].get('track_iterations', False)
-    min_iterations = config['solving']['options'].get('min_iterations', 4)
-    max_iterations = config['solving']['options'].get('max_iterations', 6)
+    cf_solving = config['solving']['options']
+    track_iterations = cf_solving.get('track_iterations', False)
+    min_iterations = cf_solving.get('min_iterations', 4)
+    max_iterations = cf_solving.get('max_iterations', 6)
 
     # add to network for extra_functionality
     n.config = config
     n.opts = opts
 
-    if config['solving']['options'].get('skip_iterations', False):
+    if cf_solving.get('skip_iterations', False):
         network_lopf(n, solver_name=solver_name, solver_options=solver_options,
                      extra_functionality=extra_functionality, **kwargs)
     else:
@@ -250,8 +278,8 @@ if __name__ == "__main__":
     opts = snakemake.wildcards.opts.split('-')
     solve_opts = snakemake.config['solving']['options']
 
-    with memory_logger(filename=getattr(snakemake.log, 'memory', None),
-                       interval=30.) as mem:
+    fn = getattr(snakemake.log, 'memory', None)
+    with memory_logger(filename=fn, interval=30.) as mem:
         n = pypsa.Network(snakemake.input[0])
         n = prepare_network(n, solve_opts)
         n = solve_network(n, config=snakemake.config, solver_dir=tmpdir,

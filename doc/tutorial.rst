@@ -1,6 +1,6 @@
 ..
   SPDX-FileCopyrightText: 2019-2020 The PyPSA-Eur Authors
-  
+
   SPDX-License-Identifier: CC-BY-4.0
 
 .. _tutorial:
@@ -47,47 +47,47 @@ The model can be adapted to only include selected countries (e.g. Germany) inste
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 16
-   
+   :lines: 20
+
 Likewise, the example's temporal scope can be restricted (e.g. to a single month).
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 18-21
+   :lines: 22-25
 
 It is also possible to allow less or more carbon-dioxide emissions. Here, we limit the emissions of Germany 100 Megatonnes per year.
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 33
+   :lines: 36,38
 
 PyPSA-Eur also includes a database of existing conventional powerplants.
 We can select which types of powerplants we like to be included with fixed capacities:
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 47
+   :lines: 36,52
 
 To accurately model the temporal and spatial availability of renewables such as wind and solar energy, we rely on historical weather data.
 It is advisable to adapt the required range of coordinates to the selection of countries.
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 49-57
+   :lines: 54-62
 
 We can also decide which weather data source should be used to calculate potentials and capacity factor time-series for each carrier.
 For example, we may want to use the ERA-5 dataset for solar and not the default SARAH-2 dataset.
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 59,102-103
+   :lines: 64,107-108
 
 Finally, it is possible to pick a solver. For instance, this tutorial uses the open-source solvers CBC and Ipopt and does not rely
 on the commercial solvers Gurobi or CPLEX (for which free academic licenses are available).
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 158,167-168
+   :lines: 170,180-181
 
 .. note::
 
@@ -119,8 +119,8 @@ orders ``snakemake`` to run the script ``solve_network`` that produces the solve
 .. code::
 
     rule solve_network:
-        input: "networks/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"
-        output: "results/networks/{network}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"
+        input: "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"
+        output: "results/networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"
         [...]
         script: "scripts/solve_network.py"
 
@@ -129,10 +129,10 @@ orders ``snakemake`` to run the script ``solve_network`` that produces the solve
 .. warning::
     On Windows the previous command may currently cause a ``MissingRuleException`` due to problems with output files in subfolders.
     This is an `open issue <https://github.com/snakemake/snakemake/issues/46>`_ at `snakemake <https://snakemake.readthedocs.io/>`_.
-    Windows users should add the option ``--keep-target-files`` to the command or instead run ``snakemake -j 1 solve_all_elec_networks``.
+    Windows users should add the option ``--keep-target-files`` to the command or instead run ``snakemake -j 1 solve_all_networks``.
 
 This triggers a workflow of multiple preceding jobs that depend on each rule's inputs and outputs:
-    
+
 .. graphviz::
     :align: center
 
@@ -184,7 +184,7 @@ This triggers a workflow of multiple preceding jobs that depend on each rule's i
         7 -> 11
         5 -> 11
         12 -> 11
-    } 
+    }
 
 |
 
@@ -229,8 +229,8 @@ A job (here ``simplify_network``) will display its attributes and normally some 
     INFO:__main__:Mapping all network lines onto a single 380kV layer
     INFO:__main__:Simplifying connected link components
     INFO:__main__:Removing stubs
-    INFO:__main__:Displacing offwind-ac generator(s) and adding connection costs to capital_costs: 20128 Eur/MW/a for `5718 offwind-ac` 
-    INFO:__main__:Displacing offwind-dc generator(s) and adding connection costs to capital_costs: 14994 Eur/MW/a for `5718 offwind-dc`, 26939 Eur/MW/a for `5724 offwind-dc`, 29621 Eur/MW/a for `5725 offwind-dc` 
+    INFO:__main__:Displacing offwind-ac generator(s) and adding connection costs to capital_costs: 20128 Eur/MW/a for `5718 offwind-ac`
+    INFO:__main__:Displacing offwind-dc generator(s) and adding connection costs to capital_costs: 14994 Eur/MW/a for `5718 offwind-dc`, 26939 Eur/MW/a for `5724 offwind-dc`, 29621 Eur/MW/a for `5725 offwind-dc`
     INFO:pypsa.io:Exported network elec_s.nc has lines, carriers, links, storage_units, loads, buses, generators
     [<DATETIME>]
     Finished job 3.
@@ -271,7 +271,7 @@ the wildcards given in ``scenario`` in the configuration file ``config.yaml`` ar
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 7-12
+   :lines: 14-18
 
 In this example we would not only solve a 6-node model of Germany but also a 2-node model.
 
@@ -286,12 +286,4 @@ The solved networks can be analysed just like any other PyPSA network (e.g. in J
 
     network = pypsa.Network("results/networks/elec_s_6_ec_lcopt_Co2L-24H.nc")
 
-    ...
-
 For inspiration, read the `examples section in the PyPSA documentation <https://pypsa.readthedocs.io/en/latest/examples.html>`_.
-
-.. note::
-
-    There are rules for summaries and plotting available in the repository of PyPSA-Eur.
-    
-    They are currently under revision and therefore not yet documented. 

@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
-version: 0.2.0
+version: 0.3.0
 tutorial: false
 
 logging:
@@ -12,7 +12,6 @@ logging:
 summary_dir: results
 
 scenario:
-  sectors: [E]
   simpl: ['']
   ll: ['copt']
   clusters: [37, 128, 256, 512, 1024]
@@ -32,6 +31,7 @@ enable:
   retrieve_cutout: true
   build_natura_raster: false
   retrieve_natura_raster: true
+  custom_busmap: false
 
 electricity:
   voltages: [220., 300., 380.]
@@ -41,8 +41,8 @@ electricity:
 
   extendable_carriers:
     Generator: []
-    StorageUnit: [battery, H2]
-    Store: [] # battery, H2
+    StorageUnit: [] # battery, H2
+    Store: [battery, H2]
     Link: []
 
   max_hours:
@@ -52,6 +52,7 @@ electricity:
   powerplants_filter: false # use pandas query strings here, e.g. Country not in ['Germany']
   custom_powerplants: false # use pandas query strings here, e.g. Country in ['Germany']
   conventional_carriers: [nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
+  renewable_capacities_from_OPSD: [] # onwind, offwind, solar
 
   # estimate_renewable_capacities_from_capacity_stats:
   #   # Wind is the Fueltype in ppm.data.Capacity_stats, onwind, offwind-{ac,dc} the carrier in PyPSA-Eur
@@ -142,8 +143,7 @@ renewable:
     cutout: europe-2013-era5
     carriers: [ror, PHS, hydro]
     PHS_max_hours: 6
-    hydro_max_hours: "energy_capacity_totals_by_country" # one of energy_capacity_totals_by_country,
-                                                         # estimate_by_large_installations or a float
+    hydro_max_hours: "energy_capacity_totals_by_country" # one of energy_capacity_totals_by_country, estimate_by_large_installations or a float
     clip_min_inflow: 1.0
 
 lines:
@@ -152,11 +152,13 @@ lines:
     300.: "Al/St 240/40 3-bundle 300.0"
     380.: "Al/St 240/40 4-bundle 380.0"
   s_max_pu: 0.7
+  s_nom_max: .inf
   length_factor: 1.25
   under_construction: 'zero' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
 
 links:
   p_max_pu: 1.0
+  p_nom_max: .inf
   include_tyndp: true
   under_construction: 'zero' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
 
@@ -166,6 +168,11 @@ transformers:
   type: ''
 
 load:
+  url: https://data.open-power-system-data.org/time_series/2019-06-05/time_series_60min_singleindex.csv
+  power_statistics: True # only for files from <2019; set false in order to get ENTSOE transparency data 
+  interpolate_limit: 3 # data gaps up until this size are interpolated linearly
+  time_shift_for_large_gaps: 1w # data gaps up until this size are copied by copying from 
+  manual_adjustments: true # false
   scaling_factor: 1.0
 
 costs:
@@ -179,7 +186,7 @@ costs:
     hydro: 0.
     H2: 0.
     battery: 0.
-  emission_prices: # only used with the option Ep
+  emission_prices: # in currency per tonne emission, only used with the option Ep
     co2: 0.
 
 solving:
@@ -257,67 +264,18 @@ plotting:
     'waste' : '#68896b'
     'geothermal' : '#ba91b1'
     "OCGT" : "#d35050"
-    "OCGT marginal" : "#d35050"
-    "OCGT-heat" : "#d35050"
-    "gas boiler" : "#d35050"
-    "gas boilers" : "#d35050"
-    "gas boiler marginal" : "#d35050"
-    "gas-to-power/heat" : "#d35050"
     "gas" : "#d35050"
     "natural gas" : "#d35050"
     "CCGT" : "#b20101"
-    "CCGT marginal" : "#b20101"
-    "Nuclear" : "#ff9000"
-    "Nuclear marginal" : "#ff9000"
     "nuclear" : "#ff9000"
     "coal" : "#707070"
-    "Coal" : "#707070"
-    "Coal marginal" : "#707070"
     "lignite" : "#9e5a01"
-    "Lignite" : "#9e5a01"
-    "Lignite marginal" : "#9e5a01"
-    "Oil" : "#262626"
     "oil" : "#262626"
     "H2" : "#ea048a"
     "hydrogen storage" : "#ea048a"
-    "Sabatier" : "#a31597"
-    "methanation" : "#a31597"
-    "helmeth" : "#a31597"
-    "DAC" : "#d284ff"
-    "co2 stored" : "#e5e5e5"
-    "CO2 sequestration" : "#e5e5e5"
     "battery" : "#b8ea04"
-    "battery storage" : "#b8ea04"
-    "Li ion" : "#b8ea04"
-    "BEV charger" : "#e2ff7c"
-    "V2G" : "#7a9618"
-    "transport fuel cell" : "#e884be"
-    "retrofitting" : "#e0d6a8"
-    "building retrofitting" : "#e0d6a8"
-    "heat pumps" : "#ff9768"
-    "heat pump" : "#ff9768"
-    "air heat pump" : "#ffbea0"
-    "ground heat pump" : "#ff7a3d"
-    "power-to-heat" : "#a59e7c"
-    "power-to-gas" : "#db8585"
-    "power-to-liquid" : "#a9acd1"
-    "Fischer-Tropsch" : "#a9acd1"
-    "resistive heater" : "#aa4925"
-    "water tanks" : "#401f75"
-    "hot water storage" : "#401f75"
-    "hot water charging" : "#351c5e"
-    "hot water discharging" : "#683ab2"
-    "CHP" : "#d80a56"
-    "CHP heat" : "#d80a56"
-    "CHP electric" : "#d80a56"
-    "district heating" : "#93864b"
-    "Ambient" : "#262626"
     "Electric load" : "#f9d002"
     "electricity" : "#f9d002"
-    "Heat load" : "#d35050"
-    "heat" : "#d35050"
-    "Transport load" : "#235ebc"
-    "transport" : "#235ebc"
     "lines" : "#70af1d"
     "transmission lines" : "#70af1d"
     "AC-AC" : "#70af1d"
@@ -337,18 +295,5 @@ plotting:
     hydro: "Reservoir & Dam"
     battery: "Battery Storage"
     H2: "Hydrogen Storage"
-    lines: "Transmission lines"
-    ror: "Run of river"
-  nice_names_n:
-    OCGT: "Open-Cycle\nGas"
-    CCGT: "Combined-Cycle\nGas"
-    offwind-ac: "Offshore\nWind (AC)"
-    offwind-dc: "Offshore\nWind (DC)"
-    onwind: "Onshore\nWind"
-    battery: "Battery\nStorage"
-    H2: "Hydrogen\nStorage"
-    lines: "Transmission\nlines"
-    ror: "Run of\nriver"
-    PHS: "Pumped Hydro\nStorage"
-    hydro: "Reservoir\n& Dam"
-
+    lines: "Transmission Lines"
+    ror: "Run of River"
