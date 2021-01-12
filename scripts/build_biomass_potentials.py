@@ -62,6 +62,7 @@ if __name__ == "__main__":
         with open('config.yaml', encoding='utf8') as f:
             snakemake.config = yaml.safe_load(f)
     
+    # This is a hack, to be replaced once snakemake is unicode-conform
     if 'Secondary Forestry residues sawdust' in snakemake.config['biomass']['classes']['solid biomass']:
         snakemake.config['biomass']['classes']['solid biomass'].remove('Secondary Forestry residues sawdust')
         snakemake.config['biomass']['classes']['solid biomass'].append('Secondary Forestry residues – sawdust')
