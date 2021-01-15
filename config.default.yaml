@@ -28,7 +28,7 @@ scenario:
   # emissions throughout the transition path in the timeframe determined by the 
   # planning_horizons), be:beta decay; ex:exponential decay
   # cb40ex0 distributes a carbon budget of 40 GtCO2 following an exponential 
-  # decay with initial growt rate 0
+  # decay with initial growth rate 0
   planning_horizons : [2030] # investment years for myopic and perfect; or costs year for overnight
   # for example, set to [2020, 2030, 2040, 2050] for myopic foresight
 
