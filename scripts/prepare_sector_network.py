@@ -1812,13 +1812,6 @@ def add_waste_heat(network):
             network.links.loc[urban_central + " H2 Fuel Cell","bus2"] = urban_central + " urban central heat"
             network.links.loc[urban_central + " H2 Fuel Cell","efficiency2"] = 0.95 - network.links.loc[urban_central + " H2 Fuel Cell","efficiency"]
 
-
-def restrict_technology_potential(n,tech,limit):
-    print("restricting potentials (p_nom_max) for {} to {} of technical potential".format(tech,limit))
-    gens = n.generators.index[n.generators.carrier.str.contains(tech)]
-    #beware if limit is 0 and p_nom_max is np.inf, 0*np.inf is nan
-    n.generators.loc[gens,"p_nom_max"] *=limit
-
 def decentral(n):
     n.lines.drop(n.lines.index,inplace=True)
     n.links.drop(n.links.index[n.links.carrier.isin(["DC","B2B"])],inplace=True)
@@ -1862,7 +1855,7 @@ if __name__ == "__main__":
         snakemake = MockSnakemake(
             wildcards=dict(network='elec', simpl='', clusters='37', lv='1.0',
                            opts='', planning_horizons='2020', 
-                           sector_opts='120H-T-H-B-I-solar3-dist1-cb48be3'),
+                           sector_opts='120H-T-H-B-I-onwind+p3-dist1-cb48be3'),
             input=dict( network='../pypsa-eur/networks/{network}_s{simpl}_{clusters}_ec_lv{lv}_{opts}.nc',
                         energy_totals_name='resources/energy_totals.csv',
                         co2_totals_name='resources/co2_totals.csv',
@@ -2028,15 +2021,7 @@ if __name__ == "__main__":
     print("adding CO2 budget limit as per unit of 1990 levels of",limit)
     add_co2limit(n, Nyears, limit)
 
-
     for o in opts:
-        for tech in ["solar","onwind","offwind"]:
-            if tech in o:
-                limit = o[o.find(tech)+len(tech):]
-                limit = float(limit.replace("p",".").replace("m","-"))
-                print("changing potential for",tech,"by factor",limit)
-                restrict_technology_potential(n,tech,limit)
-
         if o[:10] == 'linemaxext':
             maxext = float(o[10:])*1e3
             print("limiting new HVAC and HVDC extensions to",maxext,"MW")
@@ -2047,6 +2032,31 @@ if __name__ == "__main__":
 
     if snakemake.config["sector"]['electricity_distribution_grid']:
         insert_electricity_distribution_grid(n)
+        
+    for o in opts:
+        if "+" in o:
+            oo = o.split("+")
+            carrier_list=np.hstack((n.generators.carrier.unique(), n.links.carrier.unique(), 
+                                    n.stores.carrier.unique(), n.storage_units.carrier.unique()))            
+            suptechs = map(lambda c: c.split("-", 2)[0], carrier_list) 
+            if oo[0].startswith(tuple(suptechs)):
+                carrier = oo[0]
+                attr_lookup = {"p": "p_nom_max", "c": "capital_cost"}
+                attr = attr_lookup[oo[1][0]]
+                factor = float(oo[1][1:])
+                #beware if factor is 0 and p_nom_max is np.inf, 0*np.inf is nan
+                if carrier == "AC":  # lines do not have carrier
+                    n.lines[attr] *= factor
+                else:
+                    comps = {"Generator", "Link", "StorageUnit"} if attr=='p_nom_max' else {"Generator", "Link", "StorageUnit", "Store"}
+                    for c in n.iterate_components(comps):
+                        if carrier=='solar':
+                            sel = c.df.carrier.str.contains(carrier) & ~c.df.carrier.str.contains("solar rooftop")    
+                        else:
+                            sel = c.df.carrier.str.contains(carrier)
+                        c.df.loc[sel,attr] *= factor
+                print("changing", attr ,"for",carrier,"by factor",factor)
+                
     if snakemake.config["sector"]['gas_distribution_grid']:
         insert_gas_distribution_costs(n)
     if snakemake.config["sector"]['electricity_grid_connection']:
