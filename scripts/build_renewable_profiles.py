@@ -308,8 +308,7 @@ if __name__ == '__main__':
     with ProgressBar():
         available = available.compute()
 
-    area = gpd.GeoSeries(cutout.grid_cells, crs={'init': 'epsg:4326'})\
-              .to_crs({'proj': 'cea'}).area
+    area = cutout.grid.to_crs({'proj': 'cea'}).area
     area = xr.DataArray(area.values.reshape(cutout.shape),
                         [cutout.coords['y'], cutout.coords['x']])
     potmatrix = available * area * config['capacity_per_sqkm']
@@ -354,7 +353,7 @@ if __name__ == '__main__':
 
     # Determine weighted average distance from substation
     layoutmatrix = layoutmatrix.where(layoutmatrix!=0)
-    distances = haversine(regions[['x', 'y']],  cutout.grid_coordinates())
+    distances = haversine(regions[['x', 'y']],  cutout.grid[['x', 'y']])
     distances = layoutmatrix.copy(data=distances)
     average_distance = (layoutmatrix *distances / layoutmatrix.sum('spatial'))\
                         .sum('spatial')
