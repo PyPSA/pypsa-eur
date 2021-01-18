@@ -24,11 +24,17 @@ scenario:
   # B for biomass supply, I for industry, shipping and aviation
   # solarx or onwindx changes the available installable potential by factor x
   # dist{n} includes distribution grids with investment cost of n times cost in data/costs.csv
+  # for myopic/perfect foresight cb states the carbon budget in GtCO2 (cumulative 
+  # emissions throughout the transition path in the timeframe determined by the 
+  # planning_horizons), be:beta decay; ex:exponential decay
+  # cb40ex0 distributes a carbon budget of 40 GtCO2 following an exponential 
+  # decay with initial growth rate 0
   planning_horizons : [2030] # investment years for myopic and perfect; or costs year for overnight
   # for example, set to [2020, 2030, 2040, 2050] for myopic foresight
 
 # CO2 budget as a fraction of 1990 emissions
 # this is over-ridden if CO2Lx is set in sector_opts
+# this is also over-ridden if cb is set in sector_opts
 co2_budget:
   2020: 0.7011648746
   2025: 0.5241935484

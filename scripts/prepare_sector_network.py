@@ -20,6 +20,8 @@ import pytz
 
 from vresutils.costdata import annuity
 
+from scipy.stats import beta
+from build_energy_totals import build_eea_co2, build_eurostat_co2, build_co2_totals
 
 #First tell PyPSA that links can have multiple outputs by
 #overriding the component_attrs. This can be done for
@@ -45,6 +47,83 @@ override_component_attrs["Generator"].loc["lifetime"] = ["float","years",np.nan,
 override_component_attrs["Store"].loc["build_year"] = ["integer","year",np.nan,"build year","Input (optional)"]
 override_component_attrs["Store"].loc["lifetime"] = ["float","years",np.nan,"lifetime","Input (optional)"]
 
+
+def co2_emissions_year(cts, opts, year):
+    """
+    calculate co2 emissions in one specific year (e.g. 1990 or 2018).
+    """
+    eea_co2 = build_eea_co2(year)
+    
+    #TODO: read Eurostat data from year>2014, this only affects the estimation of 
+    # CO2 emissions for "BA","RS","AL","ME","MK"
+    if year > 2014:
+        eurostat_co2 = build_eurostat_co2(year=2014)
+    else:
+        eurostat_co2 = build_eurostat_co2(year)
+        
+    co2_totals=build_co2_totals(eea_co2, eurostat_co2, year)
+
+    co2_emissions = co2_totals.loc[cts, "electricity"].sum()
+
+    if "T" in opts:
+        co2_emissions += co2_totals.loc[cts, [i+ " non-elec" for i in ["rail","road"]]].sum().sum()
+    if "H" in opts:
+        co2_emissions += co2_totals.loc[cts, [i+ " non-elec" for i in ["residential","services"]]].sum().sum()
+    if "I" in opts:
+        co2_emissions += co2_totals.loc[cts, ["industrial non-elec","industrial processes",
+                                              "domestic aviation","international aviation",
+                                              "domestic navigation","international navigation"]].sum().sum()
+    co2_emissions *=0.001 #MtCO2 to GtCO2
+    return co2_emissions
+
+
+def build_carbon_budget(o):
+    #distribute carbon budget following beta or exponential transition path
+    if "be" in o:    
+        #beta decay
+        carbon_budget = float(o[o.find("cb")+2:o.find("be")])
+        be=float(o[o.find("be")+2:])        
+    if "ex" in o:   
+        #exponential decay
+        carbon_budget = float(o[o.find("cb")+2:o.find("ex")])
+        r=float(o[o.find("ex")+2:])
+    
+
+    pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
+    pop_layout["ct"] = pop_layout.index.str[:2]
+    cts = pop_layout.ct.value_counts().index          
+    
+    e_1990 = co2_emissions_year(cts, opts, year=1990) 
+            
+    #emissions at the beginning of the path (last year available 2018)
+    e_0 = co2_emissions_year(cts, opts, year=2018) 
+    #emissions in 2019 and 2020 assumed equal to 2018 and substracted
+    carbon_budget -= 2*e_0
+    planning_horizons = snakemake.config['scenario']['planning_horizons']
+    CO2_CAP = pd.DataFrame(index = pd.Series(data=planning_horizons, 
+                                             name='planning_horizon'),
+                                             columns=pd.Series(data=[],
+                                                              name='paths', 
+                                                              dtype='float'))
+    t_0 = planning_horizons[0]
+    if "be" in o: 
+        #beta decay                
+        t_f = t_0 + (2*carbon_budget/e_0).round(0) # final year in the path 
+        #emissions (relative to 1990)
+        CO2_CAP[o] = [(e_0/e_1990)*(1-beta.cdf((t-t_0)/(t_f-t_0), be, be)) for t in planning_horizons]
+            
+    if "ex" in o:   
+        #exponential decay without delay
+        T=carbon_budget/e_0
+        m=(1+np.sqrt(1+r*T))/T
+        CO2_CAP[o] = [(e_0/e_1990)*(1+(m+r)*(t-t_0))*np.exp(-m*(t-t_0)) for t in planning_horizons]
+                
+    CO2_CAP.to_csv(path_cb + 'carbon_budget_distribution.csv', sep=',', 
+                   line_terminator='\n',  float_format='%.3f') 
+    countries=pd.Series(data=cts)
+    countries.to_csv(path_cb + 'countries.csv', sep=',', 
+               line_terminator='\n',  float_format='%.3f')
+            
 def add_lifetime_wind_solar(n):
     """
     Add lifetime for solar and wind generators
@@ -1775,15 +1854,15 @@ def get_parameter(item):
         return item
 
 
-#%%
+
 if __name__ == "__main__":
     # Detect running outside of snakemake and mock snakemake for testing
     if 'snakemake' not in globals():
         from vresutils.snakemake import MockSnakemake
         snakemake = MockSnakemake(
             wildcards=dict(network='elec', simpl='', clusters='37', lv='1.0',
-                           opts='', planning_horizons='2030', co2_budget_name="go",
-                           sector_opts='Co2L0-120H-T-H-B-I-solar3-dist1'),
+                           opts='', planning_horizons='2020', 
+                           sector_opts='120H-T-H-B-I-solar3-dist1-cb48be3'),
             input=dict( network='../pypsa-eur/networks/{network}_s{simpl}_{clusters}_ec_lv{lv}_{opts}.nc',
                         energy_totals_name='resources/energy_totals.csv',
                         co2_totals_name='resources/co2_totals.csv',
@@ -1819,10 +1898,10 @@ if __name__ == "__main__":
                         solar_thermal_total="resources/solar_thermal_total_{network}_s{simpl}_{clusters}.nc",
                         solar_thermal_urban="resources/solar_thermal_urban_{network}_s{simpl}_{clusters}.nc",
                         solar_thermal_rural="resources/solar_thermal_rural_{network}_s{simpl}_{clusters}.nc",
-                	retro_cost_energy = "resources/retro_cost_{network}_s{simpl}_{clusters}.csv",
+                	    retro_cost_energy = "resources/retro_cost_{network}_s{simpl}_{clusters}.csv",
                         floor_area = "resources/floor_area_{network}_s{simpl}_{clusters}.csv"
             ),
-            output=['pypsa-eur-sec/results/test/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{co2_budget_name}_{planning_horizons}.nc']
+            output=['results/version-cb48be3/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{planning_horizons}.nc']
         )
         import yaml
         with open('config.yaml', encoding='utf8') as f:
@@ -1926,6 +2005,20 @@ if __name__ == "__main__":
     limit = get_parameter(snakemake.config["co2_budget"])
     print("CO2 limit set to",limit)
 
+    for o in opts:
+        if "cb" in o:    
+            path_cb = snakemake.config['results_dir'] + snakemake.config['run'] + '/csvs/'
+            if not os.path.exists(path_cb):
+                os.makedirs(path_cb)
+            try:
+                CO2_CAP=pd.read_csv(path_cb + 'carbon_budget_distribution.csv', index_col=0)
+            except:    
+                build_carbon_budget(o)
+                CO2_CAP=pd.read_csv(path_cb + 'carbon_budget_distribution.csv', index_col=0)
+            
+            limit=CO2_CAP.loc[investment_year]            
+            print("overriding CO2 limit with scenario limit",limit)
+            
     for o in opts:
         if "Co2L" in o:
             limit = o[o.find("Co2L")+4:]

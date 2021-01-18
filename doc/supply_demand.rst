@@ -106,7 +106,7 @@ Thermal energy storage using hot water tanks
 
 Small for decentral applications.
 
-Big pit storage for district heating.
+Big water pit storage for district heating.
 
 
 Hydrogen demand
@@ -122,7 +122,7 @@ Industry (ammonia, precursor to hydrocarbons for chemicals and iron/steel).
 Hydrogen supply
 =================
 
-SMR, SMR+CCS, electrolysers.
+Steam Methane Reforming (SMR), SMR+CCS, electrolysers.
 
 
 Methane demand
