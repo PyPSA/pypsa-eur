@@ -283,6 +283,12 @@ if __name__ == '__main__':
     config = snakemake.config['renewable'][snakemake.wildcards.technology]
     cutout = atlite.Cutout(snakemake.input.cutout)
 
+    resource = config['resource'] # pv panel config / wind turbine config
+    func = getattr(cutout, resource.pop('method'))
+    correction_factor = config.get('correction_factor', 1.)
+    if correction_factor != 1.:
+        logger.info(f'correction_factor is set as {correction_factor}')
+
     minx, maxx, miny, maxy = cutout.extent
     dx = cutout.dx
     dy = cutout.dy
@@ -297,36 +303,33 @@ if __name__ == '__main__':
     regions = gk.vector.extractFeatures(paths["regions"], onlyAttr=True)
     buses = regions.index.rename('bus')
     da = xr.DataArray(buses, dims=['bus']).chunk({'bus': 1})
-    available = xr.apply_ufunc(calculate_potential, da,
+    # calculate the elegible area per grid cell (per unit)
+    availability = xr.apply_ufunc(calculate_potential, da,
                                dask='parallelized', vectorize=True,
                                output_core_dims=[['y', 'x']],
-                               output_sizes={'y': len(cutout.data.y),
-                                             'x': len(cutout.data.x)},
+                               dask_gufunc_kwargs = dict(
+                                   output_sizes={'y': len(cutout.data.y),
+                                                 'x': len(cutout.data.x)}),
                                output_dtypes=[np.float32],
                               ).assign_coords(x=cutout.data.x, y=cutout.data.y)
     logger.info('GIS: Calculate elegible area per grid cell.')
     with ProgressBar():
-        available = available.compute()
+        availability = availability.compute()
 
-    area = cutout.grid.to_crs({'proj': 'cea'}).area
+    area = cutout.grid.to_crs({'proj': 'cea'}).area / 1e6
     area = xr.DataArray(area.values.reshape(cutout.shape),
                         [cutout.coords['y'], cutout.coords['x']])
-    potmatrix = available * area * config['capacity_per_sqkm']
+    capacity_potential = availability * area * config['capacity_per_sqkm']
+    capacity_potential.attrs['units'] = 'MW'
 
     if not config.get('keep_all_available_areas', False):
         # ignore grid cells where only less than 1 MW can be installed
-        potmatrix = potmatrix.where(potmatrix >= 1, 0)
+        capacity_potential = capacity_potential.where(capacity_potential >= 1, 0)
 
-    resource = config['resource']
-    func = getattr(cutout, resource.pop('method'))
-    correction_factor = config.get('correction_factor', 1.)
 
-    if correction_factor != 1.:
-        logger.warning(f'correction_factor is set as {correction_factor}')
-
-    layout = potmatrix.sum('bus')
+    layout = capacity_potential.sum('bus').assign_attrs(units = 'MW')
     capacity_factor = correction_factor * func(capacity_factor=True, **resource)
-    layoutmatrix = (potmatrix * capacity_factor).stack(spatial=['y','x'])
+    layoutmatrix = (capacity_potential * capacity_factor).stack(spatial=['y','x'])
 
     profile, capacities = func(matrix=layoutmatrix, index=buses,
                                per_unit=True, return_capacity=True, **resource)
@@ -334,18 +337,19 @@ if __name__ == '__main__':
     p_nom_max_meth = config.get('potential', 'conservative')
 
     if p_nom_max_meth == 'simple':
-        p_nom_max = potmatrix.sum(['x', 'y'])
+        p_nom_max = capacity_potential.sum(['x', 'y'])
     elif p_nom_max_meth == 'conservative':
         # p_nom_max is the minimal ratio between the available potential
-        # (potmatrix) and the normalised layout  (layoutmatrix /  capacities)
+        # (capacity_potential) and the normalised layout  (layoutmatrix /  capacities)
         # in a bus region. So we would like to calculate i.e.
-        #       min(potmatrix / (layoutmatrix / capacities)) ∀ busregions
+        #       min(capacity_potential / (layoutmatrix / capacities)) ∀ busregionslayout
         # Since
-        #       layoutmatrix = potmatrix * capacity_factor
+        #       layoutmatrix = capacity_potential * capacity_factor
         # this corresponds to
         #       capacities/max(capacity_factor) ∀ busregions
 
-        p_nom_max = capacities/capacity_factor.where(potmatrix!=0).max(['x', 'y'])
+        p_nom_max = (capacities /
+                     capacity_factor.where(capacity_potential!=0).max(['x', 'y']))
     else:
         raise AssertionError('Config key `potential` should be one of "simple" '
                               '(default) or "conservative",'
