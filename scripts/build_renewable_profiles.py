@@ -186,6 +186,7 @@ import geopandas as gpd
 from shapely.geometry import LineString
 from pypsa.geo import haversine
 import xarray as xr
+import pandas as pd
 import numpy as np
 import atlite
 import matplotlib.pyplot as plt
@@ -219,7 +220,7 @@ def downsample_to_coarse_grid(bounds, dx, dy, mask, data):
     return average
 
 
-def calculate_potential(gid, save_map=None):
+def calculate_potential(gid, paths, save_map=None):
     """
     Calculate the potential per grid cell for one region.
 
@@ -277,7 +278,7 @@ def calculate_potential(gid, save_map=None):
 if __name__ == '__main__':
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
-        snakemake = mock_snakemake('build_renewable_profiles', technology='solar')
+        snakemake = mock_snakemake('build_renewable_profiles', technology='offwind-ac')
     configure_logging(snakemake)
     pgb.streams.wrap_stderr()
     config = snakemake.config['renewable'][snakemake.wildcards.technology]
@@ -288,102 +289,99 @@ if __name__ == '__main__':
     correction_factor = config.get('correction_factor', 1.)
     if correction_factor != 1.:
         logger.info(f'correction_factor is set as {correction_factor}')
+    capacity_factor = correction_factor * func(capacity_factor=True, **resource)
+
+    if not config.get('keep_all_available_areas', True):
+        logger.warning("Argument `keep_all_available_areas` is ignored. "
+                       "Continue with keeping all areas.")
 
     minx, maxx, miny, maxy = cutout.extent
     dx = cutout.dx
     dy = cutout.dy
     bounds_xXyY = (minx - dx / 2., maxx + dx / 2., miny - dy / 2., maxy + dy / 2.)
     bounds = gk.Extent.from_xXyY(bounds_xXyY)
-    paths = dict(snakemake.input)
 
     if "max_depth" in config:
-        gebco = gk.raster.loadRaster(paths["gebco"])
+        gebco = gk.raster.loadRaster(snakemake.input.gebco)
         gebco.SetProjection(gk.srs.loadSRS(4326).ExportToWkt())
 
-    regions = gk.vector.extractFeatures(paths["regions"], onlyAttr=True)
-    buses = regions.index.rename('bus')
-    da = xr.DataArray(buses, dims=['bus']).chunk({'bus': 1})
-    # calculate the elegible area per grid cell (per unit)
-    availability = xr.apply_ufunc(calculate_potential, da,
-                               dask='parallelized', vectorize=True,
-                               output_core_dims=[['y', 'x']],
-                               dask_gufunc_kwargs = dict(
-                                   output_sizes={'y': len(cutout.data.y),
-                                                 'x': len(cutout.data.x)}),
-                               output_dtypes=[np.float32],
-                              ).assign_coords(x=cutout.data.x, y=cutout.data.y)
+    regions = gk.vector.extractFeatures(snakemake.input.regions, onlyAttr=True)
+    da = xr.DataArray(regions.index, dims=['bus']).chunk({'bus': 1})
+    buses = pd.Index(regions.name, name='bus')
+
     logger.info('GIS: Calculate elegible area per grid cell.')
+    availability = xr.apply_ufunc(calculate_potential, da,
+                                  kwargs = dict(paths = snakemake.input),
+                                  dask='parallelized', vectorize=True,
+                                  output_core_dims=[['y', 'x']],
+                                  dask_gufunc_kwargs = dict(
+                                      output_sizes={'y': len(cutout.data.y),
+                                                    'x': len(cutout.data.x)}),
+                                  output_dtypes=[np.float32])
+    availability = availability.assign_coords(x=cutout.data.x, y=cutout.data.y,
+                                              bus=buses)
     with ProgressBar():
         availability = availability.compute()
 
     area = cutout.grid.to_crs({'proj': 'cea'}).area / 1e6
     area = xr.DataArray(area.values.reshape(cutout.shape),
                         [cutout.coords['y'], cutout.coords['x']])
-    capacity_potential = availability * area * config['capacity_per_sqkm']
-    capacity_potential.attrs['units'] = 'MW'
 
-    if not config.get('keep_all_available_areas', False):
-        # ignore grid cells where only less than 1 MW can be installed
-        capacity_potential = capacity_potential.where(capacity_potential >= 1, 0)
-
-
-    layout = capacity_potential.sum('bus').assign_attrs(units = 'MW')
-    capacity_factor = correction_factor * func(capacity_factor=True, **resource)
-    layoutmatrix = (capacity_potential * capacity_factor).stack(spatial=['y','x'])
-
-    profile, capacities = func(matrix=layoutmatrix, index=buses,
+    capacity_potential = config['capacity_per_sqkm'] * availability @ area
+    layout = capacity_factor * area * config['capacity_per_sqkm']
+    profile, capacities = func(matrix=availability.stack(spatial=['y','x']),
+                               layout=layout, index=buses,
                                per_unit=True, return_capacity=True, **resource)
 
+
     p_nom_max_meth = config.get('potential', 'conservative')
-
     if p_nom_max_meth == 'simple':
-        p_nom_max = capacity_potential.sum(['x', 'y'])
+        p_nom_max = capacity_potential
     elif p_nom_max_meth == 'conservative':
-        # p_nom_max is the minimal ratio between the available potential
-        # (capacity_potential) and the normalised layout  (layoutmatrix /  capacities)
-        # in a bus region. So we would like to calculate i.e.
-        #       min(capacity_potential / (layoutmatrix / capacities)) ∀ busregionslayout
-        # Since
-        #       layoutmatrix = capacity_potential * capacity_factor
-        # this corresponds to
-        #       capacities/max(capacity_factor) ∀ busregions
-
-        p_nom_max = (capacities /
-                     capacity_factor.where(capacity_potential!=0).max(['x', 'y']))
+        max_cap_factor = capacity_factor.where(availability!=0).max(['x', 'y'])
+        p_nom_max = capacities / max_cap_factor
     else:
         raise AssertionError('Config key `potential` should be one of "simple" '
                               '(default) or "conservative",'
                               ' not "{}"'.format(p_nom_max_meth))
 
+
     # Determine weighted average distance from substation
-    layoutmatrix = layoutmatrix.where(layoutmatrix!=0)
+    layoutmatrix = (layout * availability).stack(spatial=['y','x'])
+    layoutmatrix = layoutmatrix.where(capacities!=0)
     distances = haversine(regions[['x', 'y']],  cutout.grid[['x', 'y']])
     distances = layoutmatrix.copy(data=distances)
-    average_distance = (layoutmatrix *distances / layoutmatrix.sum('spatial'))\
-                        .sum('spatial')
+    average_distance = (layoutmatrix.weighted(distances).sum('spatial') /
+                        layoutmatrix.sum('spatial'))
 
     ds = xr.merge([(correction_factor * profile).rename('profile'),
                     capacities.rename('weight'),
                     p_nom_max.rename('p_nom_max'),
-                    layout.rename('potential'),
+                    capacity_potential.rename('potential'),
                     average_distance.rename('average_distance')])
 
     if snakemake.wildcards.technology.startswith("offwind"):
-        offshore_shape = gpd.read_file(paths['offshore_shapes']).unary_union
+        offshore_shape = gpd.read_file(snakemake.input.offshore_shapes).unary_union
         underwater_fraction = []
-        for i in buses:
-            row = layoutmatrix.sel(bus=i).dropna('spatial')
-            coords = np.array([[s[1], s[0]] for s in row.spatial.data])
-            centre_of_mass = (coords.T * (row.data / row.data.sum())).sum(1)
-            line = LineString([centre_of_mass, regions.loc[i, ['x', 'y']]])
-            underwater_fraction.append(
-                line.intersection(offshore_shape).length / line.length)
+        for i in regions.index:
+            row = layoutmatrix.sel(bus=buses[i]).dropna('spatial')
+            if row.data.sum() == 0:
+                frac = 0
+            else:
+                coords = np.array([[s[1], s[0]] for s in row.spatial.data])
+                centre_of_mass = coords.T @ (row.data / row.data.sum())
+                line = LineString([centre_of_mass, regions.loc[i, ['x', 'y']]])
+                frac = line.intersection(offshore_shape).length/line.length
+            underwater_fraction.append(frac)
 
         ds['underwater_fraction'] = xr.DataArray(underwater_fraction, [buses])
 
     # select only buses with some capacity and minimal capacity factor
-    ds = ds.sel(bus=((ds['profile'].mean('time') > config.get('min_p_max_pu', 0.)) &
-                      (ds['p_nom_max'] > config.get('min_p_nom_max', 0.))))
+    min_p_max_pu = config.get('min_p_max_pu', 0.)
+    min_p_nom_max = config.get('min_p_nom_max', 0.)
+    if min_p_max_pu or min_p_nom_max:
+        ds = ds.sel(bus=((ds['profile'].mean('time') > min_p_max_pu) &
+                          (ds['p_nom_max'] > min_p_nom_max)))
 
     if 'clip_p_max_pu' in config:
         min_p_max_pu = config['clip_p_max_pu']

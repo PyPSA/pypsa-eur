@@ -64,15 +64,15 @@ atlite:
   cutouts:
     europe-2013-era5:
       module: era5
-      xs: [-12., 35.]
-      ys: [72., 33.]
-      years: [2013, 2013]
+      x: [-12., 35.]
+      y: [72., 33.]
+      time: ['2013', '2013']
     europe-2013-sarah:
       module: sarah
       resolution: 0.2
-      xs: [-12., 42.]
-      ys: [65., 33.]
-      years: [2013, 2013]
+      x: [-12., 42.]
+      y: [65., 33.]
+      time: ['2013', '2013']
 
 renewable:
   onwind:
