@@ -287,6 +287,7 @@ if __name__ == '__main__':
     resource = config['resource'] # pv panel config / wind turbine config
     func = getattr(cutout, resource.pop('method'))
     correction_factor = config.get('correction_factor', 1.)
+    capacity_per_sqkm = config['capacity_per_sqkm']
     if correction_factor != 1.:
         logger.info(f'correction_factor is set as {correction_factor}')
     capacity_factor = correction_factor * func(capacity_factor=True, **resource)
@@ -327,8 +328,8 @@ if __name__ == '__main__':
     area = xr.DataArray(area.values.reshape(cutout.shape),
                         [cutout.coords['y'], cutout.coords['x']])
 
-    capacity_potential = config['capacity_per_sqkm'] * availability @ area
-    layout = capacity_factor * area * config['capacity_per_sqkm']
+    capacity_potential = capacity_per_sqkm * availability.sum('bus') * area
+    layout = capacity_factor * area * capacity_per_sqkm
     profile, capacities = func(matrix=availability.stack(spatial=['y','x']),
                                layout=layout, index=buses,
                                per_unit=True, return_capacity=True, **resource)
@@ -336,7 +337,7 @@ if __name__ == '__main__':
 
     p_nom_max_meth = config.get('potential', 'conservative')
     if p_nom_max_meth == 'simple':
-        p_nom_max = capacity_potential
+        p_nom_max = capacity_per_sqkm * availability @ area
     elif p_nom_max_meth == 'conservative':
         max_cap_factor = capacity_factor.where(availability!=0).max(['x', 'y'])
         p_nom_max = capacities / max_cap_factor
