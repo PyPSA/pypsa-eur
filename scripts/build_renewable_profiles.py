@@ -313,7 +313,6 @@ if __name__ == '__main__':
 
     logger.info('GIS: Calculate eligible area per grid cell.')
     availability = xr.apply_ufunc(calculate_potential, da,
-                                  kwargs = dict(paths = snakemake.input),
                                   dask='parallelized', vectorize=True,
                                   output_core_dims=[['y', 'x']],
                                   dask_gufunc_kwargs = dict(
