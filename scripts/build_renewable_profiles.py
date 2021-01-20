@@ -278,7 +278,7 @@ def calculate_potential(gid, paths, save_map=None):
 if __name__ == '__main__':
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
-        snakemake = mock_snakemake('build_renewable_profiles', technology='offwind-ac')
+        snakemake = mock_snakemake('build_renewable_profiles', technology='offwind-dc')
     configure_logging(snakemake)
     pgb.streams.wrap_stderr()
     config = snakemake.config['renewable'][snakemake.wildcards.technology]
@@ -310,7 +310,7 @@ if __name__ == '__main__':
     da = xr.DataArray(regions.index, dims=['bus']).chunk({'bus': 1})
     buses = pd.Index(regions.name, name='bus')
 
-    logger.info('GIS: Calculate elegible area per grid cell.')
+    logger.info('GIS: Calculate eligible area per grid cell.')
     availability = xr.apply_ufunc(calculate_potential, da,
                                   kwargs = dict(paths = snakemake.input),
                                   dask='parallelized', vectorize=True,
@@ -378,11 +378,8 @@ if __name__ == '__main__':
         ds['underwater_fraction'] = xr.DataArray(underwater_fraction, [buses])
 
     # select only buses with some capacity and minimal capacity factor
-    min_p_max_pu = config.get('min_p_max_pu', 0.)
-    min_p_nom_max = config.get('min_p_nom_max', 0.)
-    if min_p_max_pu or min_p_nom_max:
-        ds = ds.sel(bus=((ds['profile'].mean('time') > min_p_max_pu) &
-                          (ds['p_nom_max'] > min_p_nom_max)))
+    ds = ds.sel(bus=((ds['profile'].mean('time') > config.get('min_p_max_pu', 0.)) &
+                     (ds['p_nom_max'] > config.get('min_p_nom_max', 0.))))
 
     if 'clip_p_max_pu' in config:
         min_p_max_pu = config['clip_p_max_pu']
