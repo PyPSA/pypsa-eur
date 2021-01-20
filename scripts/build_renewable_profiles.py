@@ -220,7 +220,7 @@ def downsample_to_coarse_grid(bounds, dx, dy, mask, data):
     return average
 
 
-def calculate_potential(gid, paths, save_map=None):
+def calculate_potential(gid, save_map=None):
     """
     Calculate the potential per grid cell for one region.
 
@@ -283,6 +283,7 @@ if __name__ == '__main__':
     pgb.streams.wrap_stderr()
     config = snakemake.config['renewable'][snakemake.wildcards.technology]
     cutout = atlite.Cutout(snakemake.input.cutout)
+    paths = snakemake.input
 
     resource = config['resource'] # pv panel config / wind turbine config
     func = getattr(cutout, resource.pop('method'))
