@@ -189,6 +189,7 @@ import xarray as xr
 import pandas as pd
 import numpy as np
 import atlite
+import dask
 import matplotlib.pyplot as plt
 import logging
 import glaes as gl
@@ -235,6 +236,7 @@ def calculate_potential(gid, save_map=None):
     clc.SetProjection(gk.srs.loadSRS(3035).ExportToWkt())
 
     natura = gk.raster.loadRaster(paths["natura"])
+
 
     corine = config.get("corine", {})
     if isinstance(corine, list):
@@ -311,18 +313,14 @@ if __name__ == '__main__':
     da = xr.DataArray(regions.index, dims=['bus']).chunk({'bus': 1})
     buses = pd.Index(regions.name, name='bus')
 
+    availability = [dask.delayed(calculate_potential)(i) for i in regions.index]
     logger.info('GIS: Calculate eligible area per grid cell.')
-    availability = xr.apply_ufunc(calculate_potential, da,
-                                  dask='parallelized', vectorize=True,
-                                  output_core_dims=[['y', 'x']],
-                                  dask_gufunc_kwargs = dict(
-                                      output_sizes={'y': len(cutout.data.y),
-                                                    'x': len(cutout.data.x)}),
-                                  output_dtypes=[np.float32])
-    availability = availability.assign_coords(x=cutout.data.x, y=cutout.data.y,
-                                              bus=buses)
     with ProgressBar():
-        availability = availability.compute()
+        availability = np.stack(*dask.compute(availability))
+
+    coords=[('bus', buses), ('y', cutout.data.y), ('x', cutout.data.x),]
+    availability = xr.DataArray(availability, coords=coords)
+
 
     area = cutout.grid.to_crs({'proj': 'cea'}).area / 1e6
     area = xr.DataArray(area.values.reshape(cutout.shape),
@@ -331,8 +329,8 @@ if __name__ == '__main__':
     capacity_potential = capacity_per_sqkm * availability.sum('bus') * area
     layout = capacity_factor * area * capacity_per_sqkm
     profile, capacities = func(matrix=availability.stack(spatial=['y','x']),
-                               layout=layout, index=buses,
-                               per_unit=True, return_capacity=True, **resource)
+                                layout=layout, index=buses,
+                                per_unit=True, return_capacity=True, **resource)
 
 
     p_nom_max_meth = config.get('potential', 'conservative')
@@ -379,7 +377,7 @@ if __name__ == '__main__':
 
     # select only buses with some capacity and minimal capacity factor
     ds = ds.sel(bus=((ds['profile'].mean('time') > config.get('min_p_max_pu', 0.)) &
-                     (ds['p_nom_max'] > config.get('min_p_nom_max', 0.))))
+                      (ds['p_nom_max'] > config.get('min_p_nom_max', 0.))))
 
     if 'clip_p_max_pu' in config:
         min_p_max_pu = config['clip_p_max_pu']
