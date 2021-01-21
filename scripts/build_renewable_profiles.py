@@ -190,6 +190,7 @@ import pandas as pd
 import numpy as np
 import atlite
 import dask
+import pyproj as proj
 import matplotlib.pyplot as plt
 import logging
 import glaes as gl
@@ -233,7 +234,7 @@ def calculate_potential(gid, save_map=None):
     ec = gl.ExclusionCalculator(feature.geom)
 
     clc = gk.raster.loadRaster(paths["corine"])
-    clc.SetProjection(gk.srs.loadSRS(3035).ExportToWkt())
+    clc.SetProjection(proj.CRS(3035).to_wkt())
 
     natura = gk.raster.loadRaster(paths["natura"])
 
