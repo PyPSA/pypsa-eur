@@ -25,10 +25,10 @@ scenario:
   # solar+c0.5 reduces the capital cost of solar to 50\% of reference value
   # solar+p3 multiplies the available installable potential by factor 3
   # dist{n} includes distribution grids with investment cost of n times cost in data/costs.csv
-  # for myopic/perfect foresight cb states the carbon budget in GtCO2 (cumulative 
-  # emissions throughout the transition path in the timeframe determined by the 
+  # for myopic/perfect foresight cb states the carbon budget in GtCO2 (cumulative
+  # emissions throughout the transition path in the timeframe determined by the
   # planning_horizons), be:beta decay; ex:exponential decay
-  # cb40ex0 distributes a carbon budget of 40 GtCO2 following an exponential 
+  # cb40ex0 distributes a carbon budget of 40 GtCO2 following an exponential
   # decay with initial growth rate 0
   planning_horizons : [2030] # investment years for myopic and perfect; or costs year for overnight
   # for example, set to [2020, 2030, 2040, 2050] for myopic foresight
@@ -71,6 +71,7 @@ pypsa_eur:
   "Link": ["DC"]
   "Generator": ["onwind", "offwind-ac", "offwind-dc", "solar", "ror"]
   "StorageUnit": ["PHS","hydro"]
+  "Store": []
 
 biomass:
   year: 2030

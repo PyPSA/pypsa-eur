@@ -4,8 +4,11 @@ Release Notes
 
 Future release
 ===================
-*For the myopic option, a carbon budget and a type of decay (exponential or beta) can be selected in the config file to distribute the budget across the planning_horizons.
-*Added an option to alter the capital cost or maximum capacity of carriers by a factor via ``carrier+factor`` in the ``{opts}`` wildcard. This can be useful for exploring uncertain cost parameters. Example: ``solar+c0.5`` reduces the capital cost of solar to 50\% of original values. Similarly ``solar+p3`` multiplies the p_nom_max by 3.
+* For the myopic option, a carbon budget and a type of decay (exponential or beta) can be selected in the config file to distribute the budget across the planning_horizons.
+* Added an option to alter the capital cost or maximum capacity of carriers by a factor via ``carrier+factor`` in the ``{opts}`` wildcard. This can be useful for exploring uncertain cost parameters. Example: ``solar+c0.5`` reduces the capital cost of solar to 50\% of original values. Similarly ``solar+p3`` multiplies the p_nom_max by 3.
+* Bugfix: Fix reading in of ``pypsa-eur/resources/powerplants.csv`` to PyPSA-Eur Version 0.3.0 (use ``DateIn`` instead of old ``YearDecommissioned``).
+* Bugfix: Make sure that ``Store`` components (battery and H2) are also removed from PyPSA-Eur, so they can be added later by PyPSA-Eur-Sec.
+
 
 PyPSA-Eur-Sec 0.4.0 (11th December 2020)
 =========================================
