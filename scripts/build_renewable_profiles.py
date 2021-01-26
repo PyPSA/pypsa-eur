@@ -324,7 +324,7 @@ if __name__ == '__main__':
     logger.info(f'GIS: Calculate eligible area per grid cell with {nprocesses}'
                 ' processes.')
     with ProgressBar():
-        kwargs = dict(scheduler='processes', num_workers=None)
+        kwargs = dict(scheduler='processes', num_workers=nprocesses)
         availability = np.stack(*dask.compute(availability, **kwargs))
 
     cutout = atlite.Cutout(paths.cutout)
@@ -344,7 +344,7 @@ if __name__ == '__main__':
                                layout=layout, index=buses,
                                per_unit=True, return_capacity=True, **resource)
 
-
+    logger.info(f"Calculating maximal capacity per bus (method '{p_nom_max_meth}')")
     if p_nom_max_meth == 'simple':
         p_nom_max = capacity_per_sqkm * availability @ area
     elif p_nom_max_meth == 'conservative':
@@ -352,8 +352,7 @@ if __name__ == '__main__':
         p_nom_max = capacities / max_cap_factor
     else:
         raise AssertionError('Config key `potential` should be one of "simple" '
-                              '(default) or "conservative",'
-                              ' not "{}"'.format(p_nom_max_meth))
+                        f'(default) or "conservative", not "{p_nom_max_meth}"')
 
 
     # Determine weighted average distance from substation
