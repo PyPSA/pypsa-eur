@@ -676,7 +676,7 @@ def add_generation(network):
                      capital_cost=0.) #could correct to e.g. 0.2 EUR/kWh * annuity and O&M
 
         network.add("Generator",
-                    "EU fossil " + carrier,
+                    "EU " + carrier,
                     bus="EU " + carrier,
                     p_nom_extendable=True,
                     carrier=carrier,
@@ -1056,14 +1056,14 @@ def add_land_transport(network):
 
     fuel_cell_share = get_parameter(options["land_transport_fuel_cell_share"])
     electric_share = get_parameter(options["land_transport_electric_share"])
-    fossil_share = 1 - fuel_cell_share - electric_share
+    ice_share = 1 - fuel_cell_share - electric_share
 
     print("shares of FCEV, EV and ICEV are",
           fuel_cell_share,
           electric_share,
-          fossil_share)
+          ice_share)
 
-    if fossil_share < 0:
+    if ice_share < 0:
         print("Error, more FCEV and EV share than 1.")
         sys.exit()
 
@@ -1141,14 +1141,14 @@ def add_land_transport(network):
                      p_set=fuel_cell_share/options['transport_fuel_cell_efficiency']*transport[nodes])
 
 
-    if fossil_share > 0:
+    if ice_share > 0:
 
         network.madd("Load",
                      nodes,
-                     suffix=" land transport fossil",
-                     bus="Fischer-Tropsch",
-                     carrier="land transport fossil",
-                     p_set=fossil_share/options['transport_internal_combustion_efficiency']*transport[nodes])
+                     suffix=" land transport oil",
+                     bus="EU oil",
+                     carrier="land transport oil",
+                     p_set=ice_share/options['transport_internal_combustion_efficiency']*transport[nodes])
 
 
 
@@ -1664,27 +1664,30 @@ def add_industry(network):
                  carrier="H2 for shipping",
                  p_set = nodal_energy_totals.loc[nodes,["total international navigation","total domestic navigation"]].sum(axis=1)*1e6*options['shipping_average_efficiency']/costs.at["fuel cell","efficiency"]/8760.)
 
-    network.madd("Bus",
-                 ["Fischer-Tropsch"],
-                 location="EU",
-                 carrier="Fischer-Tropsch")
+    if "EU oil" not in network.buses.index:
+        network.madd("Bus",
+                     ["EU oil"],
+                     location="EU",
+                     carrier="oil")
 
     #use madd to get carrier inserted
-    network.madd("Store",
-                 ["Fischer-Tropsch Store"],
-                 bus="Fischer-Tropsch",
-                 e_nom_extendable=True,
-                 e_cyclic=True,
-                 carrier="Fischer-Tropsch",
-                 capital_cost=0.) #could correct to e.g. 0.001 EUR/kWh * annuity and O&M
+    if "EU oil Store" not in network.stores.index:
+        network.madd("Store",
+                     ["EU oil Store"],
+                     bus="EU oil",
+                     e_nom_extendable=True,
+                     e_cyclic=True,
+                     carrier="oil",
+                     capital_cost=0.) #could correct to e.g. 0.001 EUR/kWh * annuity and O&M
 
-    network.add("Generator",
-                "fossil oil",
-                bus="Fischer-Tropsch",
-                p_nom_extendable=True,
-                carrier="oil",
-                capital_cost=0.,
-                marginal_cost=costs.at["oil",'fuel'])
+    if "EU oil" not in network.generators.index:
+        network.add("Generator",
+                    "EU oil",
+                    bus="EU oil",
+                    p_nom_extendable=True,
+                    carrier="oil",
+                    capital_cost=0.,
+                    marginal_cost=costs.at["oil",'fuel'])
 
     if options["oil_boilers"]:
 
@@ -1694,7 +1697,7 @@ def add_industry(network):
             network.madd("Link",
                          nodes_heat[name] + " " + name + " oil boiler",
                          p_nom_extendable=True,
-                         bus0=["Fischer-Tropsch"] * len(nodes_heat[name]),
+                         bus0="EU oil",
                          bus1=nodes_heat[name] + " " + name + " heat",
                          bus2="co2 atmosphere",
                          carrier=name + " oil boiler",
@@ -1707,7 +1710,7 @@ def add_industry(network):
     network.madd("Link",
                  nodes + " Fischer-Tropsch",
                  bus0=nodes + " H2",
-                 bus1="Fischer-Tropsch",
+                 bus1="EU oil",
                  bus2="co2 stored",
                  carrier="Fischer-Tropsch",
                  efficiency=costs.at["Fischer-Tropsch",'efficiency'],
@@ -1718,13 +1721,13 @@ def add_industry(network):
 
     network.madd("Load",
                  ["naphtha for industry"],
-                 bus="Fischer-Tropsch",
+                 bus="EU oil",
                  carrier="naphtha for industry",
                  p_set = industrial_demand.loc[nodes,"naphtha"].sum()/8760.)
 
     network.madd("Load",
                  ["kerosene for aviation"],
-                 bus="Fischer-Tropsch",
+                 bus="EU oil",
                  carrier="kerosene for aviation",
                  p_set = nodal_energy_totals.loc[nodes,["total international aviation","total domestic aviation"]].sum(axis=1).sum()*1e6/8760.)
 
@@ -1734,9 +1737,9 @@ def add_industry(network):
     co2 = network.loads.loc[["naphtha for industry","kerosene for aviation"],"p_set"].sum()*costs.at["oil",'CO2 intensity'] - industrial_demand.loc[nodes,"process emission from feedstock"].sum()/8760.
 
     network.madd("Load",
-                 ["Fischer-Tropsch emissions"],
+                 ["oil emissions"],
                  bus="co2 atmosphere",
-                 carrier="Fischer-Tropsch emissions",
+                 carrier="oil emissions",
                  p_set=-co2)
 
     network.madd("Load",

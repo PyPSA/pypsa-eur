@@ -102,7 +102,7 @@ sector:
   'bev_dsm' : True #turns on EV battery
   'bev_availability' : 0.5  #How many cars do smart charging
   'v2g' : True #allows feed-in to grid from EV battery
-  #what is not EV or FCEV is fossil-fuelled
+  #what is not EV or FCEV is oil-fuelled ICE
   'land_transport_fuel_cell_share': # 1 means all FCEVs
     2020: 0
     2030: 0.05
@@ -334,7 +334,7 @@ plotting:
     "Fischer-Tropsch" : "#44DD33"
     "kerosene for aviation": "#44BB11"
     "naphtha for industry" : "#44FF55"
-    "land transport fossil" : "#44DD33"
+    "land transport oil" : "#44DD33"
     "water tanks" : "#BBBBBB"
     "hot water storage" : "#BBBBBB"
     "hot water charging" : "#BBBBBB"
@@ -369,6 +369,7 @@ plotting:
     "process emissions to stored" : "#444444"
     "process emissions to atmosphere" : "#888888"
     "process emissions" : "#222222"
+    "oil emissions" : "#666666"
     "land transport fuel cell" : "#AAAAAA"
     "biogas" : "#800000"
     "solid biomass" : "#DAA520"
