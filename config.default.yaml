@@ -73,6 +73,8 @@ atlite:
       x: [-12., 42.]
       y: [65., 33.]
       time: ['2013', '2013']
+      sarah_interpolate: false
+      sarah_dir: 
 
 renewable:
   onwind:
