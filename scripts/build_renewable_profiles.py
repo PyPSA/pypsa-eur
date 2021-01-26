@@ -290,12 +290,12 @@ def calculate_potential(gid, save_map=None):
 if __name__ == '__main__':
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
-        snakemake = mock_snakemake('build_renewable_profiles', technology='onwind')
+        snakemake = mock_snakemake('build_renewable_profiles', technology='solar')
     # skip handlers due to process copying
     configure_logging(snakemake, skip_handlers=True)
     pgb.streams.wrap_stderr()
     paths = snakemake.input
-    num_processes = snakemake.config['atlite']['nprocesses']
+    nprocesses = snakemake.config['atlite'].get('nprocesses')
     config = snakemake.config['renewable'][snakemake.wildcards.technology]
     resource = config['resource'] # pv panel config / wind turbine config
     correction_factor = config.get('correction_factor', 1.)
@@ -321,17 +321,10 @@ if __name__ == '__main__':
     buses = pd.Index(regions.name, name='bus')
 
     availability = [dask.delayed(calculate_potential)(i) for i in regions.index]
-    if len(regions) < 25:
-        # 'threads' use the same gdal context, which impedes parallization.
-        scheduler = 'threads'
-        info = f'dask scheduler="{scheduler}"'
-    else:
-        # copying current process takes time, but then this is faster.
-        scheduler = 'processes'
-        info = f'dask scheduler="{scheduler}" and {num_processes} processes'
-    logger.info(f'GIS: Calculate eligible area per grid cell using {info}.')
+    logger.info(f'GIS: Calculate eligible area per grid cell with {nprocesses}'
+                ' processes.')
     with ProgressBar():
-        kwargs = dict(scheduler=scheduler, num_processes=num_processes)
+        kwargs = dict(scheduler='processes', num_workers=None)
         availability = np.stack(*dask.compute(availability, **kwargs))
 
     cutout = atlite.Cutout(paths.cutout)
@@ -348,8 +341,8 @@ if __name__ == '__main__':
     capacity_potential = capacity_per_sqkm * availability.sum('bus') * area
     layout = capacity_factor * area * capacity_per_sqkm
     profile, capacities = func(matrix=availability.stack(spatial=['y','x']),
-                                layout=layout, index=buses,
-                                per_unit=True, return_capacity=True, **resource)
+                               layout=layout, index=buses,
+                               per_unit=True, return_capacity=True, **resource)
 
 
     if p_nom_max_meth == 'simple':
