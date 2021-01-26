@@ -69,10 +69,11 @@ atlite:
       time: ['2013', '2013']
     europe-2013-sarah:
       module: sarah
-      resolution: 0.2
       x: [-12., 42.]
       y: [65., 33.]
       time: ['2013', '2013']
+      dx: 0.2
+      dy: 02
       sarah_interpolate: false
       sarah_dir: 
 
