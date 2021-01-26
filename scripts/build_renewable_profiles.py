@@ -295,6 +295,7 @@ if __name__ == '__main__':
     configure_logging(snakemake, skip_handlers=True)
     pgb.streams.wrap_stderr()
     paths = snakemake.input
+    num_processes = snakemake.config['atlite']['nprocesses']
     config = snakemake.config['renewable'][snakemake.wildcards.technology]
     resource = config['resource'] # pv panel config / wind turbine config
     correction_factor = config.get('correction_factor', 1.)
@@ -320,14 +321,18 @@ if __name__ == '__main__':
     buses = pd.Index(regions.name, name='bus')
 
     availability = [dask.delayed(calculate_potential)(i) for i in regions.index]
-    scheduler = 'threads' if len(regions) < 25 else 'processes'
-    # 'threads' use the same gdal context, which impedes parallization.
-    # 'processes' take time to set up if lot of things are in the memory
-    # (copies current process), but are faster in calculating.
-    logger.info('GIS: Calculate eligible area per grid cell using '
-                f'dask scheduler="{scheduler}".')
+    if len(regions) < 25:
+        # 'threads' use the same gdal context, which impedes parallization.
+        scheduler = 'threads'
+        info = f'dask scheduler="{scheduler}"'
+    else:
+        # copying current process takes time, but then this is faster.
+        scheduler = 'processes'
+        info = f'dask scheduler="{scheduler}" and {num_processes} processes'
+    logger.info(f'GIS: Calculate eligible area per grid cell using {info}.')
     with ProgressBar():
-        availability = np.stack(*dask.compute(availability, scheduler=scheduler))
+        kwargs = dict(scheduler=scheduler, num_processes=num_processes)
+        availability = np.stack(*dask.compute(availability, **kwargs))
 
     cutout = atlite.Cutout(paths.cutout)
     coords=[('bus', buses), ('y', cutout.data.y), ('x', cutout.data.x),]
