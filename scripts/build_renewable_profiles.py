@@ -370,6 +370,7 @@ if __name__ == '__main__':
                     average_distance.rename('average_distance')])
 
     if snakemake.wildcards.technology.startswith("offwind"):
+        logger.info('Calculate underwater fraction of connections.')
         offshore_shape = gpd.read_file(paths.offshore_shapes).unary_union
         underwater_fraction = []
         for i in regions.index:
