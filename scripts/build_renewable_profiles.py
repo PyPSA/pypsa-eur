@@ -193,9 +193,11 @@ import dask
 import pyproj as proj
 import matplotlib.pyplot as plt
 import logging
-import glaes as gl
 import geokit as gk
+import glaes as gl
 from osgeo import gdal as gdal
+
+
 from _helpers import configure_logging
 
 logger = logging.getLogger(__name__)
@@ -209,6 +211,7 @@ def downsample_to_coarse_grid(bounds, dx, dy, mask, data):
     of zero values of at least the size of one coarse cell around the
     original raster or it produces erroneous results
     """
+
     orig = mask.createRaster(data=data)
     padded_extent = mask.extent.castTo(bounds.srs).pad(max(dx, dy))\
                         .castTo(mask.srs)
@@ -230,14 +233,20 @@ def calculate_potential(gid, save_map=None):
     `path['regions']` with index `gid`. The resulting area is then projected
     onto the gridcells given in the cutout.
     """
+
     feature = gk.vector.extractFeature(paths["regions"], where=int(gid))
     ec = gl.ExclusionCalculator(feature.geom)
+
+    bounds = gk.Extent.from_xXyY(bounds_xXyY)
 
     clc = gk.raster.loadRaster(paths["corine"])
     clc.SetProjection(proj.CRS(3035).to_wkt())
 
     natura = gk.raster.loadRaster(paths["natura"])
 
+    if "max_depth" in config:
+        gebco = gk.raster.loadRaster(snakemake.input.gebco)
+        gebco.SetProjection(gk.srs.loadSRS(4326).ExportToWkt())
 
     corine = config.get("corine", {})
     if isinstance(corine, list):
@@ -281,44 +290,46 @@ def calculate_potential(gid, save_map=None):
 if __name__ == '__main__':
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
-        snakemake = mock_snakemake('build_renewable_profiles', technology='offwind-dc')
-    configure_logging(snakemake)
+        snakemake = mock_snakemake('build_renewable_profiles', technology='onwind')
+    # skip handlers due to process copying
+    configure_logging(snakemake, skip_handlers=True)
     pgb.streams.wrap_stderr()
-    config = snakemake.config['renewable'][snakemake.wildcards.technology]
-    cutout = atlite.Cutout(snakemake.input.cutout)
     paths = snakemake.input
-
+    config = snakemake.config['renewable'][snakemake.wildcards.technology]
     resource = config['resource'] # pv panel config / wind turbine config
-    func = getattr(cutout, resource.pop('method'))
     correction_factor = config.get('correction_factor', 1.)
     capacity_per_sqkm = config['capacity_per_sqkm']
+    p_nom_max_meth = config.get('potential', 'conservative')
+
     if correction_factor != 1.:
         logger.info(f'correction_factor is set as {correction_factor}')
-    capacity_factor = correction_factor * func(capacity_factor=True, **resource)
 
     if not config.get('keep_all_available_areas', True):
         logger.warning("Argument `keep_all_available_areas` is ignored. "
                        "Continue with keeping all areas.")
 
+
+    cutout = atlite.Cutout(paths.cutout)
     minx, maxx, miny, maxy = cutout.extent
     dx = cutout.dx
     dy = cutout.dy
     bounds_xXyY = (minx - dx / 2., maxx + dx / 2., miny - dy / 2., maxy + dy / 2.)
-    bounds = gk.Extent.from_xXyY(bounds_xXyY)
 
-    if "max_depth" in config:
-        gebco = gk.raster.loadRaster(snakemake.input.gebco)
-        gebco.SetProjection(gk.srs.loadSRS(4326).ExportToWkt())
-
-    regions = gk.vector.extractFeatures(snakemake.input.regions, onlyAttr=True)
+    regions = gpd.read_file(paths.regions).drop(columns='geometry')
     da = xr.DataArray(regions.index, dims=['bus']).chunk({'bus': 1})
     buses = pd.Index(regions.name, name='bus')
 
     availability = [dask.delayed(calculate_potential)(i) for i in regions.index]
-    logger.info('GIS: Calculate eligible area per grid cell.')
+    scheduler = 'threads' if len(regions) < 25 else 'processes'
+    # 'threads' use the same gdal context, which impedes parallization.
+    # 'processes' take time to set up if lot of things are in the memory
+    # (copies current process), but are faster in calculating.
+    logger.info('GIS: Calculate eligible area per grid cell using '
+                f'dask scheduler="{scheduler}".')
     with ProgressBar():
-        availability = np.stack(*dask.compute(availability))
+        availability = np.stack(*dask.compute(availability, scheduler=scheduler))
 
+    cutout = atlite.Cutout(paths.cutout)
     coords=[('bus', buses), ('y', cutout.data.y), ('x', cutout.data.x),]
     availability = xr.DataArray(availability, coords=coords)
 
@@ -327,6 +338,8 @@ if __name__ == '__main__':
     area = xr.DataArray(area.values.reshape(cutout.shape),
                         [cutout.coords['y'], cutout.coords['x']])
 
+    func = getattr(cutout, resource.pop('method'))
+    capacity_factor = correction_factor * func(capacity_factor=True, **resource)
     capacity_potential = capacity_per_sqkm * availability.sum('bus') * area
     layout = capacity_factor * area * capacity_per_sqkm
     profile, capacities = func(matrix=availability.stack(spatial=['y','x']),
@@ -334,7 +347,6 @@ if __name__ == '__main__':
                                 per_unit=True, return_capacity=True, **resource)
 
 
-    p_nom_max_meth = config.get('potential', 'conservative')
     if p_nom_max_meth == 'simple':
         p_nom_max = capacity_per_sqkm * availability @ area
     elif p_nom_max_meth == 'conservative':
@@ -361,7 +373,7 @@ if __name__ == '__main__':
                     average_distance.rename('average_distance')])
 
     if snakemake.wildcards.technology.startswith("offwind"):
-        offshore_shape = gpd.read_file(snakemake.input.offshore_shapes).unary_union
+        offshore_shape = gpd.read_file(paths.offshore_shapes).unary_union
         underwater_fraction = []
         for i in regions.index:
             row = layoutmatrix.sel(bus=buses[i]).dropna('spatial')
