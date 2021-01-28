@@ -89,25 +89,35 @@ Description
 
 import logging
 import atlite
+import geopandas as gpd
+import pandas as pd
 from _helpers import configure_logging
 
-logger = logging.getLogger(__name__)
 
+logger = logging.getLogger(__name__)
 
 logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
-        snakemake = mock_snakemake('build_cutout', cutout='europe-2013-era5')
+        snakemake = mock_snakemake('build_cutout', cutout='base')
     configure_logging(snakemake)
 
     cutout_params = snakemake.config['atlite']['cutouts'][snakemake.wildcards.cutout]
 
-    # atlite expects slices, not lists
-    for p in ('x', 'y', 'time'):
-        if p in cutout_params:
-            cutout_params[p] = slice(*cutout_params[p])
+    snapshots = pd.date_range(freq='h', **snakemake.config['snapshots'])
+    time = [snapshots[0], snapshots[-1]]
+    cutout_params['time'] = slice(*cutout_params.get('time', time))
+
+    if {'x', 'y', 'bounds'}.isdisjoint(cutout_params):
+        regions = (gpd.read_file(snakemake.input.regions_offshore).append(
+                   gpd.read_file(snakemake.input.regions_onshore)))
+        bounds = regions.total_bounds
+    elif {'x', 'y'}.issubset(cutout_params):
+        cutout_params['x'] = slice(*cutout_params['x'])
+        cutout_params['y'] = slice(*cutout_params['y'])
+
 
     logging.info(f"Preparing cutout with parameters {cutout_params}.")
 

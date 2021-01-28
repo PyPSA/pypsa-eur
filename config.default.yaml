@@ -62,24 +62,14 @@ electricity:
 atlite:
   nprocesses: 4
   cutouts:
-    europe-2013-era5:
-      module: era5
-      x: [-12., 35.]
-      y: [72., 33.]
-      time: ['2013', '2013']
-    europe-2013-sarah:
-      module: sarah
-      x: [-12., 42.]
-      y: [65., 33.]
-      time: ['2013', '2013']
-      dx: 0.2
-      dy: 02
+    europe-2013:
+      module: [era5, sarah]
       sarah_interpolate: false
       sarah_dir: 
 
 renewable:
   onwind:
-    cutout: europe-2013-era5
+    cutout: europe-2013
     resource:
       method: wind
       turbine: Vestas_V112_3MW
@@ -96,7 +86,7 @@ renewable:
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   offwind-ac:
-    cutout: europe-2013-era5
+    cutout: europe-2013
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_5MW_offshore
@@ -109,7 +99,7 @@ renewable:
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   offwind-dc:
-    cutout: europe-2013-era5
+    cutout: europe-2013
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_5MW_offshore
@@ -123,7 +113,7 @@ renewable:
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   solar:
-    cutout: europe-2013-sarah
+    cutout: europe-2013
     resource:
       method: pv
       panel: CSi
@@ -143,7 +133,7 @@ renewable:
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   hydro:
-    cutout: europe-2013-era5
+    cutout: europe-2013
     carriers: [ror, PHS, hydro]
     PHS_max_hours: 6
     hydro_max_hours: "energy_capacity_totals_by_country" # one of energy_capacity_totals_by_country, estimate_by_large_installations or a float
