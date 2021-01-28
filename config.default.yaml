@@ -71,7 +71,7 @@ atlite:
       module: [sarah, era5] # in priority order 
       x: [-12., 35.]
       y: [33., 72]
-      time: [2013, 2013]
+      time: ['2013', '2013']
       sarah_interpolate: false
       sarah_dir: 
 
