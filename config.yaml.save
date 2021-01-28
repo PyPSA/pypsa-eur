@@ -27,8 +27,8 @@ snapshots:
 enable:
   prepare_links_p_nom: false
   retrieve_databundle: true
-  build_cutout: false
-  retrieve_cutout: true
+  build_cutout: true
+  retrieve_cutout: false
   build_natura_raster: false
   retrieve_natura_raster: true
   custom_busmap: false
@@ -60,24 +60,24 @@ electricity:
   #   Solar: [solar]
 
 atlite:
-  nprocesses: 4
+  nprocesses: 
   cutouts:
-    # use 'base' to determine geographical bounds and time span from config
-    base: 
-      module: [sarah, era5] # in priority order, remove 'sarah' if not available  
-      sarah_interpolate: false
-      sarah_dir: 
-    europe-2013:
-      module: [sarah, era5] # in priority order 
+    europe-2013-era5:
+      module: era5
       x: [-12., 35.]
-      y: [33., 72]
-      time: [2013, 2013]
-      sarah_interpolate: false
-      sarah_dir: 
+      y: [72., 33.]
+      time: ['2013', '2013']
+    europe-2013-sarah:
+      module: sarah
+      resolution: 0.2
+      x: [-12., 42.]
+      y: [65., 33.]
+      time: ['2013', '2013']
+      sarah_dir: '/home/vres-climate/data/sarah_v2'
 
 renewable:
   onwind:
-    cutout: europe-2013
+    cutout: europe-2013-era5
     resource:
       method: wind
       turbine: Vestas_V112_3MW
@@ -94,7 +94,7 @@ renewable:
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   offwind-ac:
-    cutout: europe-2013
+    cutout: europe-2013-era5
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_5MW_offshore
@@ -107,7 +107,7 @@ renewable:
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   offwind-dc:
-    cutout: europe-2013
+    cutout: europe-2013-era5
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_5MW_offshore
@@ -121,7 +121,7 @@ renewable:
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   solar:
-    cutout: europe-2013
+    cutout: europe-2013-era5
     resource:
       method: pv
       panel: CSi
@@ -141,7 +141,7 @@ renewable:
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   hydro:
-    cutout: europe-2013
+    cutout: europe-2013-era5
     carriers: [ror, PHS, hydro]
     PHS_max_hours: 6
     hydro_max_hours: "energy_capacity_totals_by_country" # one of energy_capacity_totals_by_country, estimate_by_large_installations or a float
