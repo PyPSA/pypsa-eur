@@ -219,7 +219,6 @@ def init_globals(bounds_xXyY, n_dx, n_dy, n_config, n_paths):
     dy = n_dy
     config = n_config
     paths = n_paths
-    bounds = gk.Extent.from_xXyY(bounds_xXyY)
 
     if "max_depth" in config:
         gebco = gk.raster.loadRaster(paths["gebco"])
@@ -295,10 +294,8 @@ def calculate_potential(gid, save_map=None):
         plt.savefig(save_map, transparent=True)
         plt.close()
 
-    availability = downsample_to_coarse_grid(
-        bounds, dx, dy, ec.region, np.where(
-            ec.region.mask, ec._availability, 0))
-
+    data = np.where(ec.region.mask, ec._availability, 0)
+    availability = downsample_to_coarse_grid(bounds, dx, dy, ec.region, data)
     return gk.raster.extractMatrix(availability)[::-1] / 100
 
 
