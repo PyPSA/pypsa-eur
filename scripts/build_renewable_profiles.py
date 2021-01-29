@@ -341,8 +341,9 @@ if __name__ == '__main__':
               'initargs': (bounds_xXyY, dx, dy, config, paths),
               'maxtasksperchild': 20,
               'processes': nprocesses}
-    pool =  mp.Pool(**kwargs)
-    availability = list(progressbar(pool.imap(calculate_potential, regions.index)))
+    with mp.Pool(**kwargs) as pool:
+        imap = pool.imap(calculate_potential, regions.index)
+        availability = list(progressbar(imap))
 
     cutout = atlite.Cutout(paths.cutout)
     coords=[('bus', buses), ('y', cutout.data.y), ('x', cutout.data.x),]
