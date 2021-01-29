@@ -181,26 +181,54 @@ node (`p_nom_max`): ``simple`` and ``conservative``:
 
 """
 import progressbar as pgb
-from dask.diagnostics import ProgressBar
 import geopandas as gpd
-from shapely.geometry import LineString
-from pypsa.geo import haversine
+import multiprocessing as mp
 import xarray as xr
 import pandas as pd
 import numpy as np
 import atlite
-import dask
-import pyproj as proj
 import matplotlib.pyplot as plt
 import logging
-import geokit as gk
-import glaes as gl
-from osgeo import gdal as gdal
 
+from pypsa.geo import haversine
+from shapely.geometry import LineString
+from progressbar import ProgressBar
+from progressbar.widgets import Percentage, SimpleProgress, Bar, Timer, ETA
 
 from _helpers import configure_logging
 
 logger = logging.getLogger(__name__)
+
+
+
+def init_globals(bounds_xXyY, n_dx, n_dy, n_config, n_paths):
+    """
+    Import packages and defines variable for processes in multiprocess pool.
+
+    Especially, import packages with create a new GDAL Context, this can't be
+    shared over multiple processes.
+    """
+    global gl, gk, gdal
+    import glaes as gl
+    import geokit as gk
+    from osgeo import gdal as gdal
+
+    global bounds, dx, dy, config, paths, gebco, clc, natura
+    bounds = gk.Extent.from_xXyY(bounds_xXyY)
+    dx = n_dx
+    dy = n_dy
+    config = n_config
+    paths = n_paths
+    bounds = gk.Extent.from_xXyY(bounds_xXyY)
+
+    if "max_depth" in config:
+        gebco = gk.raster.loadRaster(paths["gebco"])
+        gebco.SetProjection(gk.srs.loadSRS(4326).ExportToWkt())
+
+    clc = gk.raster.loadRaster(paths["corine"])
+    clc.SetProjection(gk.srs.loadSRS(3035).ExportToWkt())
+
+    natura = gk.raster.loadRaster(paths["natura"])
 
 
 def downsample_to_coarse_grid(bounds, dx, dy, mask, data):
@@ -211,7 +239,6 @@ def downsample_to_coarse_grid(bounds, dx, dy, mask, data):
     of zero values of at least the size of one coarse cell around the
     original raster or it produces erroneous results
     """
-
     orig = mask.createRaster(data=data)
     padded_extent = mask.extent.castTo(bounds.srs).pad(max(dx, dy))\
                         .castTo(mask.srs)
@@ -233,20 +260,8 @@ def calculate_potential(gid, save_map=None):
     `path['regions']` with index `gid`. The resulting area is then projected
     onto the gridcells given in the cutout.
     """
-
     feature = gk.vector.extractFeature(paths["regions"], where=int(gid))
     ec = gl.ExclusionCalculator(feature.geom)
-
-    bounds = gk.Extent.from_xXyY(bounds_xXyY)
-
-    clc = gk.raster.loadRaster(paths["corine"])
-    clc.SetProjection(proj.CRS(3035).to_wkt())
-
-    natura = gk.raster.loadRaster(paths["natura"])
-
-    if "max_depth" in config:
-        gebco = gk.raster.loadRaster(snakemake.input.gebco)
-        gebco.SetProjection(gk.srs.loadSRS(4326).ExportToWkt())
 
     corine = config.get("corine", {})
     if isinstance(corine, list):
@@ -315,21 +330,26 @@ if __name__ == '__main__':
     dx = cutout.dx
     dy = cutout.dy
     bounds_xXyY = (minx - dx / 2., maxx + dx / 2., miny - dy / 2., maxy + dy / 2.)
-
     regions = gpd.read_file(paths.regions).drop(columns='geometry')
-    da = xr.DataArray(regions.index, dims=['bus']).chunk({'bus': 1})
     buses = pd.Index(regions.name, name='bus')
 
-    availability = [dask.delayed(calculate_potential)(i) for i in regions.index]
-    logger.info(f'GIS: Calculate eligible area per grid cell with {nprocesses}'
-                ' processes.')
-    with ProgressBar():
-        kwargs = dict(scheduler='processes', num_workers=nprocesses)
-        availability = np.stack(*dask.compute(availability, **kwargs))
+    progress = SimpleProgress(format='(%s)' %SimpleProgress.DEFAULT_FORMAT)
+    widgets = [Percentage(),' ',progress,' ',Bar(),' ',Timer(),' ', ETA()]
+    progressbar = ProgressBar(prefix='Compute GIS potentials: ',
+                              widgets=widgets, max_value=len(regions))
+
+    # Use the following for testing the default windows method on linux
+    # mp.set_start_method('spawn')
+    kwargs = {'initializer': init_globals,
+              'initargs': (bounds_xXyY, dx, dy, config, paths),
+              'maxtasksperchild': 20,
+              'processes': nprocesses}
+    pool =  mp.Pool(**kwargs)
+    availability = list(progressbar(pool.imap(calculate_potential, regions.index)))
 
     cutout = atlite.Cutout(paths.cutout)
     coords=[('bus', buses), ('y', cutout.data.y), ('x', cutout.data.x),]
-    availability = xr.DataArray(availability, coords=coords)
+    availability = xr.DataArray(np.stack(availability), coords=coords)
 
 
     area = cutout.grid.to_crs({'proj': 'cea'}).area / 1e6
