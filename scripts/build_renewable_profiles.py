@@ -189,9 +189,12 @@ import numpy as np
 import atlite
 import logging
 import rasterio as rio
-import rasterio.mask
-from rasterio.warp import reproject
 
+from rasterio.warp import reproject
+from rasterio.mask import mask
+from rasterio.enums import Resampling
+from scipy.ndimage.morphology import binary_dilation as dilation
+from numpy import empty_like as like, isin, empty
 from pypsa.geo import haversine
 from shapely.geometry import LineString
 from progressbar import ProgressBar
@@ -203,17 +206,7 @@ logger = logging.getLogger(__name__)
 
 
 def init_globals(transform_, shape_, epsg_, config_, paths_):
-    """
-    Import packages and defines variable for processes in multiprocess pool.
-    """
-    # import packages
-    global rio, Resampling, np, dilation
-    import rasterio as rio
-    from rasterio.enums import Resampling
-    import numpy as np
-    from scipy.ndimage.morphology import binary_dilation as dilation
-    import geopandas as gpd
-
+    """Define variable for processes in multiprocess pool."""
     # set destination geographical data
     global dst_transform, dst_shape, dst_crs
     dst_transform = rio.Affine(*transform_)
@@ -223,22 +216,22 @@ def init_globals(transform_, shape_, epsg_, config_, paths_):
     global config, regions
     config = config_
     paths = paths_
-    regions = gpd.read_file(paths['regions']).to_crs(crs)
+    regions = gpd.read_file(paths['regions'])
 
     # load rasters
     global gebco, clc, natura, crs, res
-    natura = rasterio.open(paths['natura'])
+    natura = rio.open(paths['natura'])
     crs = natura.crs
     res = natura.res # reference resolution
 
-    clc = rasterio.open(paths['corine'])
+    clc = rio.open(paths['corine'])
     # clc.SetProjection(gk.srs.loadSRS(3035).ExportToWkt())
 
     if "max_depth" in config:
-        gebco = rasterio.open(paths['gebco'])
+        gebco = rio.open(paths['gebco'])
         # gebco.SetProjection(gk.srs.loadSRS(4326).ExportToWkt())
 
-
+    regions = regions.to_crs(crs)
 
 
 
@@ -254,26 +247,26 @@ def calculate_potential(gid, save_map=None):
     geom = regions.geometry.loc[[gid]]
 
     if config.get("natura", False):
-        (natura_v,), transform = rio.mask.mask(natura, geom, crop=True, nodata=1)
+        (natura_v,), transform = mask(natura, geom, crop=True, nodata=1)
         exclusions.append(natura_v)
 
     # nodate has value 100 (corine codes go upto 44)
-    (corine_v,), corine_t = rio.mask.mask(clc, geom, crop=True, nodata=100)
+    (corine_v,), corine_t = mask(clc, geom, crop=True, nodata=100)
 
     # reproject to reference (natura projection)
     kwargs = {'src_transform': corine_t, 'dst_transform': transform,
               'src_crs': crs, 'dst_crs': crs}
-    corine_v, transform = reproject(corine_v, np.empty_like(natura_v), **kwargs)
+    corine_v, transform = reproject(corine_v, like(natura_v), **kwargs)
 
     corine = config.get("corine", {})
     if isinstance(corine, list):
         corine = {'grid_codes': corine}
     if "grid_codes" in corine:
         # select codes: 1 is excluded, 0 is eligible
-        ex = np.isin(corine_v, corine['grid_codes'] + [100]).astype(int)
+        ex = isin(corine_v, corine['grid_codes'] + [100]).astype(int)
         exclusions.append(ex)
     if corine.get("distance", 0.) > 0.:
-        ex = np.isin(corine_v, corine["distance_grid_codes"] + [100]).astype(int)
+        ex = isin(corine_v, corine["distance_grid_codes"] + [100]).astype(int)
         # use scipy dilation for buffer around exclusion values
         iterations = int(corine["distance"] / res[0])
         ex = dilation(ex, iterations=iterations).astype(int)
@@ -295,7 +288,7 @@ def calculate_potential(gid, save_map=None):
     #         buffer=config['min_shore_distance'])
 
     exclusion = (sum(exclusions) == 0).astype(float)
-    return reproject(np.ones_like(exclusion), np.empty(dst_shape),
+    return reproject(like(exclusion), empty(dst_shape),
                      resampling=Resampling.bilinear,
                      src_transform=transform, dst_transform=dst_transform,
                      src_crs=crs, dst_crs=dst_crs,)[0]
