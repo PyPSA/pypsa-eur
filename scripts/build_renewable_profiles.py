@@ -225,11 +225,11 @@ def init_globals(transform_, shape_, epsg_, config_, paths_):
     res = natura.res # reference resolution
 
     clc = rio.open(paths['corine'])
-    # clc.SetProjection(gk.srs.loadSRS(3035).ExportToWkt())
+    clc._crs = crs
 
     if "max_depth" in config:
         gebco = rio.open(paths['gebco'])
-        # gebco.SetProjection(gk.srs.loadSRS(4326).ExportToWkt())
+        gebco._crs = rio.crs.CRS.from_epsg(4326)
 
     regions = regions.to_crs(crs)
 
@@ -297,7 +297,7 @@ def calculate_potential(gid, save_map=None):
 if __name__ == '__main__':
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
-        snakemake = mock_snakemake('build_renewable_profiles', technology='solar')
+        snakemake = mock_snakemake('build_renewable_profiles', technology='offwind-ac')
     # skip handlers due to process copying
     configure_logging(snakemake, skip_handlers=True)
     pgb.streams.wrap_stderr()
@@ -321,7 +321,6 @@ if __name__ == '__main__':
     minx, maxx, miny, maxy = cutout.extent
     dx = cutout.dx
     dy = cutout.dy
-    # used for affine transform
     transform = [dx, 0, minx - dx / 2, 0, dy, miny - dy / 2]
 
     regions = gpd.read_file(paths['regions'])
@@ -387,7 +386,7 @@ if __name__ == '__main__':
 
     if snakemake.wildcards.technology.startswith("offwind"):
         logger.info('Calculate underwater fraction of connections.')
-        offshore_shape = gpd.read_file(paths.offshore_shapes).unary_union
+        offshore_shape = gpd.read_file(paths['offshore_shapes']).unary_union
         underwater_fraction = []
         for i in regions.index:
             row = layoutmatrix.sel(bus=buses[i]).dropna('spatial')
