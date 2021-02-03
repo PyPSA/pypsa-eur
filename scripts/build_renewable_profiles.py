@@ -187,8 +187,10 @@ import xarray as xr
 import pandas as pd
 import numpy as np
 import atlite
-import matplotlib.pyplot as plt
 import logging
+import rasterio as rio
+import rasterio.mask
+from rasterio.warp import reproject
 
 from pypsa.geo import haversine
 from shapely.geometry import LineString
@@ -200,55 +202,44 @@ from _helpers import configure_logging
 logger = logging.getLogger(__name__)
 
 
-
-def init_globals(bounds_xXyY, n_dx, n_dy, n_config, n_paths):
+def init_globals(transform_, shape_, epsg_, config_, paths_):
     """
     Import packages and defines variable for processes in multiprocess pool.
-
-    Especially, import packages with create a new GDAL Context, this can't be
-    shared over multiple processes.
     """
-    global gl, gk, gdal
-    import glaes as gl
-    import geokit as gk
-    from osgeo import gdal as gdal
+    # import packages
+    global rio, Resampling, np, dilation
+    import rasterio as rio
+    from rasterio.enums import Resampling
+    import numpy as np
+    from scipy.ndimage.morphology import binary_dilation as dilation
+    import geopandas as gpd
 
-    global bounds, dx, dy, config, paths, gebco, clc, natura
-    bounds = gk.Extent.from_xXyY(bounds_xXyY)
-    dx = n_dx
-    dy = n_dy
-    config = n_config
-    paths = n_paths
+    # set destination geographical data
+    global dst_transform, dst_shape, dst_crs
+    dst_transform = rio.Affine(*transform_)
+    dst_crs = rio.crs.CRS.from_epsg(epsg_)
+    dst_shape = shape_
+
+    global config, regions
+    config = config_
+    paths = paths_
+    regions = gpd.read_file(paths['regions']).to_crs(crs)
+
+    # load rasters
+    global gebco, clc, natura, crs, res
+    natura = rasterio.open(paths['natura'])
+    crs = natura.crs
+    res = natura.res # reference resolution
+
+    clc = rasterio.open(paths['corine'])
+    # clc.SetProjection(gk.srs.loadSRS(3035).ExportToWkt())
 
     if "max_depth" in config:
-        gebco = gk.raster.loadRaster(paths["gebco"])
-        gebco.SetProjection(gk.srs.loadSRS(4326).ExportToWkt())
-
-    clc = gk.raster.loadRaster(paths["corine"])
-    clc.SetProjection(gk.srs.loadSRS(3035).ExportToWkt())
-
-    natura = gk.raster.loadRaster(paths["natura"])
+        gebco = rasterio.open(paths['gebco'])
+        # gebco.SetProjection(gk.srs.loadSRS(4326).ExportToWkt())
 
 
-def downsample_to_coarse_grid(bounds, dx, dy, mask, data):
-    """
-    Downsample a fine-grained raster to a coarse grid (as in a cutout).
 
-    The GDAL warp function with the 'average' resample algorithm needs a band
-    of zero values of at least the size of one coarse cell around the
-    original raster or it produces erroneous results
-    """
-    orig = mask.createRaster(data=data)
-    padded_extent = mask.extent.castTo(bounds.srs).pad(max(dx, dy))\
-                        .castTo(mask.srs)
-    padded = padded_extent.fit(
-        (mask.pixelWidth, mask.pixelHeight)).warp(
-        orig, mask.pixelWidth, mask.pixelHeight)
-    orig = None  # free original raster
-    average = bounds.createRaster(dx, dy, dtype=gdal.GDT_Float32)
-    assert gdal.Warp(average, padded, resampleAlg='average') == 1, (
-            "gdal warp failed: %s" % gdal.GetLastErrorMsg())
-    return average
 
 
 def calculate_potential(gid, save_map=None):
@@ -259,44 +250,55 @@ def calculate_potential(gid, save_map=None):
     `path['regions']` with index `gid`. The resulting area is then projected
     onto the gridcells given in the cutout.
     """
-    feature = gk.vector.extractFeature(paths["regions"], where=int(gid))
-    ec = gl.ExclusionCalculator(feature.geom)
+    exclusions = []
+    geom = regions.geometry.loc[[gid]]
+
+    if config.get("natura", False):
+        (natura_v,), transform = rio.mask.mask(natura, geom, crop=True, nodata=1)
+        exclusions.append(natura_v)
+
+    # nodate has value 100 (corine codes go upto 44)
+    (corine_v,), corine_t = rio.mask.mask(clc, geom, crop=True, nodata=100)
+
+    # reproject to reference (natura projection)
+    kwargs = {'src_transform': corine_t, 'dst_transform': transform,
+              'src_crs': crs, 'dst_crs': crs}
+    corine_v, transform = reproject(corine_v, np.empty_like(natura_v), **kwargs)
 
     corine = config.get("corine", {})
     if isinstance(corine, list):
         corine = {'grid_codes': corine}
     if "grid_codes" in corine:
-        ec.excludeRasterType(clc, value=corine["grid_codes"], invert=True)
+        # select codes: 1 is excluded, 0 is eligible
+        ex = np.isin(corine_v, corine['grid_codes'] + [100]).astype(int)
+        exclusions.append(ex)
     if corine.get("distance", 0.) > 0.:
-        ec.excludeRasterType(
-            clc,
-            value=corine["distance_grid_codes"],
-            buffer=corine["distance"])
+        ex = np.isin(corine_v, corine["distance_grid_codes"] + [100]).astype(int)
+        # use scipy dilation for buffer around exclusion values
+        iterations = int(corine["distance"] / res[0])
+        ex = dilation(ex, iterations=iterations).astype(int)
+        exclusions.append(ex)
 
-    if config.get("natura", False):
-        ec.excludeRasterType(natura, value=1)
-    if "max_depth" in config:
-        ec.excludeRasterType(gebco, (None, -config["max_depth"]))
 
-    # TODO compute a distance field as a raster beforehand
-    if 'max_shore_distance' in config:
-        ec.excludeVectorType(
-            paths["country_shapes"],
-            buffer=config['max_shore_distance'],
-            invert=True)
-    if 'min_shore_distance' in config:
-        ec.excludeVectorType(
-            paths["country_shapes"],
-            buffer=config['min_shore_distance'])
+    # if "max_depth" in config:
+    #     ec.excludeRasterType(gebco, (None, -config["max_depth"]))
 
-    if save_map is not None:
-        ec.draw()
-        plt.savefig(save_map, transparent=True)
-        plt.close()
+    # # TODO compute a distance field as a raster beforehand
+    # if 'max_shore_distance' in config:
+    #     ec.excludeVectorType(
+    #         paths["country_shapes"],
+    #         buffer=config['max_shore_distance'],
+    #         invert=True)
+    # if 'min_shore_distance' in config:
+    #     ec.excludeVectorType(
+    #         paths["country_shapes"],
+    #         buffer=config['min_shore_distance'])
 
-    data = np.where(ec.region.mask, ec._availability, 0)
-    availability = downsample_to_coarse_grid(bounds, dx, dy, ec.region, data)
-    return gk.raster.extractMatrix(availability)[::-1] / 100
+    exclusion = (sum(exclusions) == 0).astype(float)
+    return reproject(np.ones_like(exclusion), np.empty(dst_shape),
+                     resampling=Resampling.bilinear,
+                     src_transform=transform, dst_transform=dst_transform,
+                     src_crs=crs, dst_crs=dst_crs,)[0]
 
 
 if __name__ == '__main__':
@@ -306,7 +308,7 @@ if __name__ == '__main__':
     # skip handlers due to process copying
     configure_logging(snakemake, skip_handlers=True)
     pgb.streams.wrap_stderr()
-    paths = snakemake.input
+    paths = dict(snakemake.input)
     nprocesses = snakemake.config['atlite'].get('nprocesses')
     config = snakemake.config['renewable'][snakemake.wildcards.technology]
     resource = config['resource'] # pv panel config / wind turbine config
@@ -322,12 +324,14 @@ if __name__ == '__main__':
                        "Continue with keeping all areas.")
 
 
-    cutout = atlite.Cutout(paths.cutout)
+    cutout = atlite.Cutout(paths['cutout'])
     minx, maxx, miny, maxy = cutout.extent
     dx = cutout.dx
     dy = cutout.dy
-    bounds_xXyY = (minx - dx / 2., maxx + dx / 2., miny - dy / 2., maxy + dy / 2.)
-    regions = gpd.read_file(paths.regions).drop(columns='geometry')
+    # used for affine transform
+    transform = [dx, 0, minx - dx / 2, 0, dy, miny - dy / 2]
+
+    regions = gpd.read_file(paths['regions'])
     buses = pd.Index(regions.name, name='bus')
 
     progress = SimpleProgress(format='(%s)' %SimpleProgress.DEFAULT_FORMAT)
@@ -337,15 +341,16 @@ if __name__ == '__main__':
 
     # Use the following for testing the default windows method on linux
     # mp.set_start_method('spawn')
+    epsg = cutout.crs.to_epsg()
     kwargs = {'initializer': init_globals,
-              'initargs': (bounds_xXyY, dx, dy, config, paths),
+              'initargs': (transform, cutout.shape, epsg, config, paths),
               'maxtasksperchild': 20,
               'processes': nprocesses}
     with mp.Pool(**kwargs) as pool:
         imap = pool.imap(calculate_potential, regions.index)
         availability = list(progressbar(imap))
 
-    cutout = atlite.Cutout(paths.cutout)
+
     coords=[('bus', buses), ('y', cutout.data.y), ('x', cutout.data.x),]
     availability = xr.DataArray(np.stack(availability), coords=coords)
 
@@ -359,8 +364,8 @@ if __name__ == '__main__':
     capacity_potential = capacity_per_sqkm * availability.sum('bus') * area
     layout = capacity_factor * area * capacity_per_sqkm
     profile, capacities = func(matrix=availability.stack(spatial=['y','x']),
-                               layout=layout, index=buses,
-                               per_unit=True, return_capacity=True, **resource)
+                                layout=layout, index=buses,
+                                per_unit=True, return_capacity=True, **resource)
 
     logger.info(f"Calculating maximal capacity per bus (method '{p_nom_max_meth}')")
     if p_nom_max_meth == 'simple':
