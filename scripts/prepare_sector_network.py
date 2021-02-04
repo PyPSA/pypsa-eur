@@ -48,13 +48,16 @@ override_component_attrs["Store"].loc["build_year"] = ["integer","year",np.nan,"
 override_component_attrs["Store"].loc["lifetime"] = ["float","years",np.nan,"lifetime","Input (optional)"]
 
 
+
 def co2_emissions_year(cts, opts, year):
+
     """
     calculate co2 emissions in one specific year (e.g. 1990 or 2018).
     """
     eea_co2 = build_eea_co2(year)
 
     #TODO: read Eurostat data from year>2014, this only affects the estimation of
+
     # CO2 emissions for "BA","RS","AL","ME","MK"
     if year > 2014:
         eurostat_co2 = build_eurostat_co2(year=2014)
@@ -62,6 +65,7 @@ def co2_emissions_year(cts, opts, year):
         eurostat_co2 = build_eurostat_co2(year)
 
     co2_totals=build_co2_totals(eea_co2, eurostat_co2, year)
+
 
     co2_emissions = co2_totals.loc[cts, "electricity"].sum()
 
@@ -75,6 +79,7 @@ def co2_emissions_year(cts, opts, year):
                                               "domestic navigation","international navigation"]].sum().sum()
     co2_emissions *=0.001 #MtCO2 to GtCO2
     return co2_emissions
+
 
 
 def build_carbon_budget(o):
@@ -118,11 +123,13 @@ def build_carbon_budget(o):
         m=(1+np.sqrt(1+r*T))/T
         CO2_CAP[o] = [(e_0/e_1990)*(1+(m+r)*(t-t_0))*np.exp(-m*(t-t_0)) for t in planning_horizons]
 
+
     CO2_CAP.to_csv(path_cb + 'carbon_budget_distribution.csv', sep=',',
                    line_terminator='\n',  float_format='%.3f')
     countries=pd.Series(data=cts)
     countries.to_csv(path_cb + 'countries.csv', sep=',',
                line_terminator='\n',  float_format='%.3f')
+
 
 def add_lifetime_wind_solar(n):
     """
@@ -1859,6 +1866,7 @@ if __name__ == "__main__":
             wildcards=dict(network='elec', simpl='', clusters='37', lv='1.0',
                            opts='', planning_horizons='2020',
                            sector_opts='120H-T-H-B-I-onwind+p3-dist1-cb48be3'),
+
             input=dict( network='../pypsa-eur/networks/{network}_s{simpl}_{clusters}_ec_lv{lv}_{opts}.nc',
                         energy_totals_name='resources/energy_totals.csv',
                         co2_totals_name='resources/co2_totals.csv',
@@ -1898,6 +1906,7 @@ if __name__ == "__main__":
                         floor_area = "resources/floor_area_{network}_s{simpl}_{clusters}.csv"
             ),
             output=['results/version-cb48be3/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{planning_horizons}.nc']
+    
         )
         import yaml
         with open('config.yaml', encoding='utf8') as f:
@@ -2002,6 +2011,7 @@ if __name__ == "__main__":
     print("CO2 limit set to",limit)
 
     for o in opts:
+
         if "cb" in o:
             path_cb = snakemake.config['results_dir'] + snakemake.config['run'] + '/csvs/'
             if not os.path.exists(path_cb):
@@ -2015,6 +2025,7 @@ if __name__ == "__main__":
             limit=CO2_CAP.loc[investment_year]
             print("overriding CO2 limit with scenario limit",limit)
 
+
     for o in opts:
         if "Co2L" in o:
             limit = o[o.find("Co2L")+4:]
@@ -2025,6 +2036,7 @@ if __name__ == "__main__":
     add_co2limit(n, Nyears, limit)
 
     for o in opts:
+
         if o[:10] == 'linemaxext':
             maxext = float(o[10:])*1e3
             print("limiting new HVAC and HVDC extensions to",maxext,"MW")
@@ -2035,7 +2047,6 @@ if __name__ == "__main__":
 
     if snakemake.config["sector"]['electricity_distribution_grid']:
         insert_electricity_distribution_grid(n)
-
     for o in opts:
         if "+" in o:
             oo = o.split("+")
@@ -2059,6 +2070,7 @@ if __name__ == "__main__":
                             sel = c.df.carrier.str.contains(carrier)
                         c.df.loc[sel,attr] *= factor
                 print("changing", attr ,"for",carrier,"by factor",factor)
+
 
     if snakemake.config["sector"]['gas_distribution_grid']:
         insert_gas_distribution_costs(n)
