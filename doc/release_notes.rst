@@ -4,8 +4,13 @@ Release Notes
 
 Future release
 ===================
-*For the myopic option, a carbon budget and a type of decay (exponential or beta) can be selected in the config file to distribute the budget across the planning_horizons.
-*Added an option to alter the capital cost of carriers by a factor via ``carrier+factor`` in the ``{opts}`` wildcard. This can be useful for exploring uncertain cost parameters. Example: ``solar+0.5`` reduces the capital cost of solar to 50\% of original values.
+
+* For the myopic investment option, a carbon budget and a type of decay (exponential or beta) can be selected in the ``config.yaml`` file to distribute the budget across the ``planning_horizons``. For example, ``cb40ex0`` in the ``{sector_opts}`` wildcard will distribute a carbon budget of 40 GtCO2 following an exponential decay with initial growth rate 0.
+* Added an option to alter the capital cost or maximum capacity of carriers by a factor via ``carrier+factor`` in the ``{sector_opts}`` wildcard. This can be useful for exploring uncertain cost parameters. Example: ``solar+c0.5`` reduces the ``capital_cost`` of solar to 50\% of original values. Similarly ``solar+p3`` multiplies the ``p_nom_max`` by 3.
+* Rename the bus for European liquid hydrocarbons from ``Fischer-Tropsch`` to ``EU oil``, since it can be supplied not just with the Fischer-Tropsch process, but also with fossil oil.
+* Bugfix: Fix reading in of ``pypsa-eur/resources/powerplants.csv`` to PyPSA-Eur Version 0.3.0 (use column attribute name ``DateIn`` instead of old ``YearDecommissioned``).
+* Bugfix: Make sure that ``Store`` components (battery and H2) are also removed from PyPSA-Eur, so they can be added later by PyPSA-Eur-Sec.
+
 
 PyPSA-Eur-Sec 0.4.0 (11th December 2020)
 =========================================
@@ -131,4 +136,4 @@ To make a new release of the data bundle, make an archive of the files in ``data
 
 .. code:: bash
 
-    data % tar pczf pypsa-eur-sec-data-bundle-date.tar.gz eea switzerland-sfoe biomass eurostat-energy_balances-* jrc-idees-2015 emobility urban_percent.csv timezone_mappings.csv heat_load_profile_DK_AdamJensen.csv WindWaveWEC_GLTB.xlsx myb1-2017-nitro.xls Industrial_Database.csv
+    data % tar pczf pypsa-eur-sec-data-bundle-YYMMDD.tar.gz eea/UNFCCC_v23.csv switzerland-sfoe biomass eurostat-energy_balances-* jrc-idees-2015 emobility urban_percent.csv timezone_mappings.csv heat_load_profile_DK_AdamJensen.csv WindWaveWEC_GLTB.xlsx myb1-2017-nitro.xls Industrial_Database.csv
