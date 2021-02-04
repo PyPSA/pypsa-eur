@@ -162,7 +162,16 @@ if config['enable'].get('build_natura_raster', False):
             cutouts=expand("cutouts/{cutouts}.nc", **config['atlite'])
         output: "resources/natura.tiff"
         log: "logs/build_natura_raster.log"
-        script: "scripts/build_natura_raster.py"
+        script: "scripts/build_raster.py"
+
+
+rule build_continental_raster:
+    input:
+        shapes="resources/country_shapes.geojson",
+        cutouts=expand("cutouts/{cutouts}.nc", **config['atlite'])
+    output: "resources/continental.tiff"
+    log: "logs/build_country_raster.log"
+    script: "scripts/build_raster.py"
 
 
 if config['enable'].get('retrieve_natura_raster', True):
@@ -170,6 +179,7 @@ if config['enable'].get('retrieve_natura_raster', True):
         output: "resources/natura.tiff"
         log: "logs/retrieve_natura_raster.log"
         script: 'scripts/retrieve_natura_raster.py'
+
 
 
 rule build_renewable_profiles:
@@ -180,7 +190,7 @@ rule build_renewable_profiles:
         gebco=lambda w: ("data/bundle/GEBCO_2014_2D.nc"
                          if "max_depth" in config["renewable"][w.technology].keys()
                          else []),
-        country_shapes='resources/country_shapes.geojson',
+        continental='resources/continental.tiff',
         offshore_shapes='resources/offshore_shapes.geojson',
         regions=lambda w: ("resources/regions_onshore.geojson"
                                    if w.technology in ('onwind', 'solar')
