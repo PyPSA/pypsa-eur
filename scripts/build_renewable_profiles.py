@@ -60,7 +60,7 @@ Inputs
     **Source:** `GEBCO <https://www.gebco.net/data_and_products/images/gebco_2019_grid_image.jpg>`_
 
 - ``resources/natura.tiff``: confer :ref:`natura`
-- ``resources/country_shapes.geojson``: confer :ref:`shapes`
+- ``resources/ohshore.tiff``: confer :ref:`onshore`
 - ``resources/offshore_shapes.geojson``: confer :ref:`shapes`
 - ``resources/regions_onshore.geojson``: (if not offshore wind), confer :ref:`busregions`
 - ``resources/regions_offshore.geojson``: (if offshore wind), :ref:`busregions`
@@ -213,25 +213,43 @@ def init_globals(transform_, shape_, epsg_, config_, paths_):
     dst_crs = rio.crs.CRS.from_epsg(epsg_)
     dst_shape = shape_
 
-    global config, regions
+    global crs, config, regions, regions_
+    crs = rio.crs.CRS.from_epsg(3035)
     config = config_
     paths = paths_
-    regions = gpd.read_file(paths['regions'])
+    regions_ = gpd.read_file(paths['regions']) # original crs for gebco
+    regions = regions_.to_crs(crs)
 
     # load rasters
-    global gebco, clc, natura, crs, res
+    global natura, clc, gebco, onshore
+
     natura = rio.open(paths['natura'])
-    crs = natura.crs
-    res = natura.res # reference resolution
+    assert crs == natura.crs
 
     clc = rio.open(paths['corine'])
-    clc._crs = crs
+    clc._crs = crs # should be asserted, but clc has no crs
 
     if "max_depth" in config:
         gebco = rio.open(paths['gebco'])
-        gebco._crs = rio.crs.CRS.from_epsg(4326)
+        gebco._crs = rio.crs.CRS.from_epsg(4326) # gebco crs is not defined
 
-    regions = regions.to_crs(crs)
+
+    if {'min_shore_distance', 'max_shore_distance'} & set(config):
+        onshore = rio.open(paths['onshore'])
+        assert crs == onshore.crs
+
+
+def projected_mask(raster, geom, transform=None, shape=None, crs=None):
+    """Load a mask and optionally project it to wanted resolution and shape."""
+    masked, transform_ = mask(raster, geom, crop=True, nodata=1, indexes=1)
+
+    if transform is None or (transform_ == transform):
+        return masked, transform_
+
+    assert shape is not None and crs is not None
+    return reproject(masked, shape, src_crs=raster.crs, dst_crs=crs,
+                     src_transform=transform_, dst_transform=transform)
+
 
 
 
@@ -242,54 +260,86 @@ def calculate_potential(gid, save_map=None):
     This function calculates the eligible area of the region stored in
     `path['regions']` with index `gid`. The resulting area is then projected
     onto the gridcells given in the cutout.
+
+
+    Considered rasters are
+        * natura (100m x 100m)
+        * onshore (100m x 100m) with possible distance limits
+        * corine (250m x 250m) with possible distance limits
+        * gebco (0.0013° x 0.0013°)
+
+    These and other variables have to be defined beforehand (see init_globals).
+    We use the rasterio mask function to define masks for the rasters that are
+    applied, starting with the highest resoluted masks (natura, onshore).
+    Each mask creation returns a tranform object, defining resolution and bounds
+    of the mask. When a new mask is added, it has to be adjusted to the
+    existing transform of previously loaded masks.
+
+    For calculating the distance of a specific area, we use the binary_dilation
+    function of scipy.
+
     """
     exclusions = []
     geom = regions.geometry.loc[[gid]]
+    transform = None
 
     if config.get("natura", False):
-        (natura_v,), transform = mask(natura, geom, crop=True, nodata=1)
-        exclusions.append(natura_v)
+        masked, transform = mask(natura, geom, crop=True, nodata=1, indexes=1)
+        exclusions.append(masked)
+
+
+    if {'min_shore_distance', 'max_shore_distance'} & set(config):
+        masked, transform_ = mask(onshore, geom, crop=True, nodata=1, indexes=1)
+        if transform_ != transform:
+            kwargs = {'src_transform': transform_, 'dst_transform': transform,
+                      'src_crs': onshore.crs, 'dst_crs': crs}
+            masked, transform = reproject(masked, like(exclusions[0]), **kwargs)
+    if 'min_shore_distance' in config:
+        iterations = int(config['min_shore_distance'] / transform[0])
+        masked = dilation(masked, iterations=iterations).astype(int)
+        exclusions.append(masked)
+    if 'max_shore_distance' in config:
+        iterations = int(config['max_shore_distance'] / transform[0])
+        masked = (dilation(masked, iterations=iterations) == 0).astype(int)
+        exclusions.append(masked)
+
 
     # nodate has value 100 (corine codes go upto 44)
-    (corine_v,), corine_t = mask(clc, geom, crop=True, nodata=100)
-
-    # reproject to reference (natura projection)
-    kwargs = {'src_transform': corine_t, 'dst_transform': transform,
-              'src_crs': crs, 'dst_crs': crs}
-    corine_v, transform = reproject(corine_v, like(natura_v), **kwargs)
+    masked, transform_ = mask(clc, geom, crop=True, nodata=100, indexes=1)
+    if transform:
+        # reproject to reference (natura projection)
+        kwargs = {'src_transform': transform_, 'dst_transform': transform,
+                  'src_crs': clc.crs, 'dst_crs': crs}
+        masked, transform = reproject(masked, like(exclusions[0]), **kwargs)
 
     corine = config.get("corine", {})
     if isinstance(corine, list):
         corine = {'grid_codes': corine}
     if "grid_codes" in corine:
         # select codes: 1 is excluded, 0 is eligible
-        ex = isin(corine_v, corine['grid_codes'] + [100]).astype(int)
-        exclusions.append(ex)
+        masked_ = isin(masked, corine['grid_codes'] + [100]).astype(int)
+        exclusions.append(masked_)
     if corine.get("distance", 0.) > 0.:
-        ex = isin(corine_v, corine["distance_grid_codes"] + [100]).astype(int)
-        # use scipy dilation for buffer around exclusion values
-        iterations = int(corine["distance"] / res[0])
-        ex = dilation(ex, iterations=iterations).astype(int)
-        exclusions.append(ex)
+        masked_ = isin(masked, corine["distance_grid_codes"] + [100]).astype(int)
+        iterations = int(corine["distance"] / transform[0])
+        masked_ = dilation(masked_, iterations=iterations).astype(int)
+        exclusions.append(masked_)
 
 
-    # if "max_depth" in config:
-    #     ec.excludeRasterType(gebco, (None, -config["max_depth"]))
+    if "max_depth" in config:
+        geom_ = regions_.geometry.loc[[gid]]
+        masked, transform_ = mask(gebco, geom_, crop=True, indexes=1)
+        if transform:
+            # reproject to reference (natura projection)
+            kwargs = {'src_transform': transform_, 'dst_transform': transform,
+                      'src_crs': gebco.crs, 'dst_crs': crs}
+            masked, transform = reproject(masked, like(exclusions[0]), **kwargs)
+        masked = (masked < config['max_depth']).astype(int)
+        exclusions.append(masked_)
 
-    # # TODO compute a distance field as a raster beforehand
-    # if 'max_shore_distance' in config:
-    #     ec.excludeVectorType(
-    #         paths["country_shapes"],
-    #         buffer=config['max_shore_distance'],
-    #         invert=True)
-    # if 'min_shore_distance' in config:
-    #     ec.excludeVectorType(
-    #         paths["country_shapes"],
-    #         buffer=config['min_shore_distance'])
 
-    exclusion = (sum(exclusions) == 0).astype(float)
-    return reproject(like(exclusion), empty(dst_shape),
-                     resampling=Resampling.bilinear,
+    available = (sum(exclusions) == 0).astype(float)
+    return reproject(available, empty(dst_shape), resampling=Resampling.bilinear,
                      src_transform=transform, dst_transform=dst_transform,
                      src_crs=crs, dst_crs=dst_crs,)[0]
 

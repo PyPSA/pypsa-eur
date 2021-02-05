@@ -62,7 +62,7 @@ def determine_cutout_xXyY(cutout_name):
 if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
-        snakemake = mock_snakemake('build_continental_raster')
+        snakemake = mock_snakemake('build_onshore_raster')
     configure_logging(snakemake)
 
 
@@ -79,6 +79,7 @@ if __name__ == "__main__":
     transform = rio.Affine(res, 0, left, 0, -res, top)
     shapes = gpd.read_file(snakemake.input.shapes).to_crs(3035)
     raster = ~geometry_mask(shapes.geometry, out_shape[::-1], transform)
+    raster = raster.astype(rio.uint8)
 
 
     with rio.open(snakemake.output[0], 'w', driver='GTiff', dtype=rio.uint8,
