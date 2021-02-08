@@ -194,22 +194,24 @@ from rasterio.warp import reproject
 from rasterio.mask import mask
 from rasterio.enums import Resampling
 from scipy.ndimage.morphology import binary_dilation as dilation
-from numpy import empty_like as like, isin, empty
+from numpy import isin, empty
 from pypsa.geo import haversine
 from shapely.geometry import LineString
 from progressbar import ProgressBar
 from progressbar.widgets import Percentage, SimpleProgress, Bar, Timer, ETA
+from rasterio.features import geometry_mask
 
+from build_natura_raster import get_transform_and_shape
 from _helpers import configure_logging
 
 logger = logging.getLogger(__name__)
 
 
-def init_globals(transform_, shape_, epsg_, config_, paths_):
+def init_globals(transform_args_, shape_, epsg_, config_, paths_):
     """Define variable for processes in multiprocess pool."""
     # set destination geographical data
     global dst_transform, dst_shape, dst_crs
-    dst_transform = rio.Affine(*transform_)
+    dst_transform = rio.Affine(*transform_args_)
     dst_crs = rio.crs.CRS.from_epsg(epsg_)
     dst_shape = shape_
 
@@ -221,7 +223,7 @@ def init_globals(transform_, shape_, epsg_, config_, paths_):
     regions = regions_.to_crs(crs)
 
     # load rasters
-    global natura, clc, gebco, onshore
+    global natura, clc, gebco, min_shore_shapes, max_shore_shapes
 
     natura = rio.open(paths['natura'])
     assert crs == natura.crs
@@ -233,23 +235,26 @@ def init_globals(transform_, shape_, epsg_, config_, paths_):
         gebco = rio.open(paths['gebco'])
         gebco._crs = rio.crs.CRS.from_epsg(4326) # gebco crs is not defined
 
+    if 'min_shore_distance' in config:
+        countries = gpd.read_file(paths['country_shapes']).to_crs(crs)
+        min_shore_shapes = countries.buffer(config['min_shore_distance'])
+    if 'max_shore_distance' in config:
+        countries = gpd.read_file(paths['country_shapes']).to_crs(crs)
+        max_shore_shapes = countries.buffer(config['max_shore_distance'])
 
-    if {'min_shore_distance', 'max_shore_distance'} & set(config):
-        onshore = rio.open(paths['onshore'])
-        assert crs == onshore.crs
 
 
-def projected_mask(raster, geom, transform=None, shape=None, crs=None):
-    """Load a mask and optionally project it to wanted resolution and shape."""
-    masked, transform_ = mask(raster, geom, crop=True, nodata=1, indexes=1)
+def projected_mask(raster, geom, transform=None, shape=None, crs=None, **kwargs):
+    """Load a mask and optionally project it to target resolution and shape."""
+    kwargs.setdefault('indexes', 1)
+    masked, transform_ = mask(raster, geom, crop=True, **kwargs)
 
     if transform is None or (transform_ == transform):
         return masked, transform_
 
     assert shape is not None and crs is not None
-    return reproject(masked, shape, src_crs=raster.crs, dst_crs=crs,
+    return reproject(masked, empty(shape), src_crs=raster.crs, dst_crs=crs,
                      src_transform=transform_, dst_transform=transform)
-
 
 
 
@@ -266,7 +271,7 @@ def calculate_potential(gid, save_map=None):
         * natura (100m x 100m)
         * onshore (100m x 100m) with possible distance limits
         * corine (250m x 250m) with possible distance limits
-        * gebco (0.0013° x 0.0013°)
+        * gebco (0.0083° x 0.0083°)
 
     These and other variables have to be defined beforehand (see init_globals).
     We use the rasterio mask function to define masks for the rasters that are
@@ -281,65 +286,47 @@ def calculate_potential(gid, save_map=None):
     """
     exclusions = []
     geom = regions.geometry.loc[[gid]]
-    transform = None
 
     if config.get("natura", False):
-        masked, transform = mask(natura, geom, crop=True, nodata=1, indexes=1)
+        masked, transform = projected_mask(natura, geom, nodata=1)
+        shape = masked.shape
         exclusions.append(masked)
+    else:
+        bounds = rio.features.bounds(geom)
+        transform, shape = get_transform_and_shape(bounds, res=100)
+        masked = geometry_mask(geom, shape, transform)
 
-
-    if {'min_shore_distance', 'max_shore_distance'} & set(config):
-        masked, transform_ = mask(onshore, geom, crop=True, nodata=1, indexes=1)
-        if transform_ != transform:
-            kwargs = {'src_transform': transform_, 'dst_transform': transform,
-                      'src_crs': onshore.crs, 'dst_crs': crs}
-            masked, transform = reproject(masked, like(exclusions[0]), **kwargs)
-    if 'min_shore_distance' in config:
-        iterations = int(config['min_shore_distance'] / transform[0])
-        masked = dilation(masked, iterations=iterations).astype(int)
-        exclusions.append(masked)
-    if 'max_shore_distance' in config:
-        iterations = int(config['max_shore_distance'] / transform[0])
-        masked = (dilation(masked, iterations=iterations) == 0).astype(int)
-        exclusions.append(masked)
-
-
-    # nodate has value 100 (corine codes go upto 44)
-    masked, transform_ = mask(clc, geom, crop=True, nodata=100, indexes=1)
-    if transform:
-        # reproject to reference (natura projection)
-        kwargs = {'src_transform': transform_, 'dst_transform': transform,
-                  'src_crs': clc.crs, 'dst_crs': crs}
-        masked, transform = reproject(masked, like(exclusions[0]), **kwargs)
-
+    masked, transform = projected_mask(clc, geom, transform, shape, crs)
+    shape = masked.shape
     corine = config.get("corine", {})
-    if isinstance(corine, list):
-        corine = {'grid_codes': corine}
     if "grid_codes" in corine:
         # select codes: 1 is excluded, 0 is eligible
-        masked_ = isin(masked, corine['grid_codes'] + [100]).astype(int)
+        masked_ = (~isin(masked, corine['grid_codes'])).astype(int)
         exclusions.append(masked_)
     if corine.get("distance", 0.) > 0.:
-        masked_ = isin(masked, corine["distance_grid_codes"] + [100]).astype(int)
+        masked_ = isin(masked, corine['distance_grid_codes']).astype(int)
         iterations = int(corine["distance"] / transform[0])
         masked_ = dilation(masked_, iterations=iterations).astype(int)
+        masked_[masked==255] = 1  # use the 255 values as a mask after dilating
         exclusions.append(masked_)
 
 
     if "max_depth" in config:
         geom_ = regions_.geometry.loc[[gid]]
-        masked, transform_ = mask(gebco, geom_, crop=True, indexes=1)
-        if transform:
-            # reproject to reference (natura projection)
-            kwargs = {'src_transform': transform_, 'dst_transform': transform,
-                      'src_crs': gebco.crs, 'dst_crs': crs}
-            masked, transform = reproject(masked, like(exclusions[0]), **kwargs)
-        masked = (masked < config['max_depth']).astype(int)
+        masked, transform = projected_mask(gebco, geom_, transform, shape, crs)
+        shape = masked.shape
+        masked = (masked > -config['max_depth']).astype(int)
         exclusions.append(masked_)
 
+    if 'min_shore_distance' in config:
+        masked = geometry_mask(min_shore_shapes, shape, transform, invert=True)
+        exclusions.append(masked.astype(int))
+    if 'max_shore_distance' in config:
+        masked = geometry_mask(max_shore_shapes, shape, transform)
+        exclusions.append(masked.astype(int))
 
     available = (sum(exclusions) == 0).astype(float)
-    return reproject(available, empty(dst_shape), resampling=Resampling.bilinear,
+    return reproject(available, empty(dst_shape), resampling=Resampling.average,
                      src_transform=transform, dst_transform=dst_transform,
                      src_crs=crs, dst_crs=dst_crs,)[0]
 
@@ -347,7 +334,7 @@ def calculate_potential(gid, save_map=None):
 if __name__ == '__main__':
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
-        snakemake = mock_snakemake('build_renewable_profiles', technology='offwind-ac')
+        snakemake = mock_snakemake('build_renewable_profiles', technology='solar')
     # skip handlers due to process copying
     configure_logging(snakemake, skip_handlers=True)
     pgb.streams.wrap_stderr()
@@ -358,6 +345,9 @@ if __name__ == '__main__':
     correction_factor = config.get('correction_factor', 1.)
     capacity_per_sqkm = config['capacity_per_sqkm']
     p_nom_max_meth = config.get('potential', 'conservative')
+
+    if isinstance(config.get("corine", {}), list):
+        config['corine'] = {'grid_codes': config['corine']}
 
     if correction_factor != 1.:
         logger.info(f'correction_factor is set as {correction_factor}')
@@ -371,7 +361,7 @@ if __name__ == '__main__':
     minx, maxx, miny, maxy = cutout.extent
     dx = cutout.dx
     dy = cutout.dy
-    transform = [dx, 0, minx - dx / 2, 0, dy, miny - dy / 2]
+    transform_args = [dx, 0, minx - dx / 2, 0, dy, miny - dy / 2]
 
     regions = gpd.read_file(paths['regions'])
     buses = pd.Index(regions.name, name='bus')
@@ -385,14 +375,12 @@ if __name__ == '__main__':
     # mp.set_start_method('spawn')
     epsg = cutout.crs.to_epsg()
     kwargs = {'initializer': init_globals,
-              'initargs': (transform, cutout.shape, epsg, config, paths),
+              'initargs': (transform_args, cutout.shape, epsg, config, paths),
               'maxtasksperchild': 20,
               'processes': nprocesses}
     with mp.Pool(**kwargs) as pool:
         imap = pool.imap(calculate_potential, regions.index)
         availability = list(progressbar(imap))
-
-
     coords=[('bus', buses), ('y', cutout.data.y), ('x', cutout.data.x),]
     availability = xr.DataArray(np.stack(availability), coords=coords)
 

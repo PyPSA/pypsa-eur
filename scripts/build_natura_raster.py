@@ -59,24 +59,27 @@ def determine_cutout_xXyY(cutout_name):
     return [x - dx/2., X + dx/2., y - dy/2., Y + dy/2.]
 
 
+def get_transform_and_shape(bounds, res):
+    left, bottom = [(b // res)* res for b in bounds[:2]]
+    right, top = [(b // res + 1) * res for b in bounds[2:]]
+    shape = int((top - bottom) // res), int((right - left) / res)
+    transform = rio.Affine(res, 0, left, 0, -res, top)
+    return transform, shape
+
+
 if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
-        snakemake = mock_snakemake('build_onshore_raster')
+        snakemake = mock_snakemake('build_natura_raster')
     configure_logging(snakemake)
 
 
     cutouts = snakemake.input.cutouts
     xs, Xs, ys, Ys = zip(*(determine_cutout_xXyY(cutout) for cutout in cutouts))
     bounds = transform_bounds(4326, 3035, min(xs), min(ys), max(Xs), max(Ys))
-    res = 100 # 100 meter resolution
+    transform, out_shape = get_transform_and_shape(bounds, res=100)
 
     # adjusted boundaries
-    left, bottom = [(b // res)* res for b in bounds[:2]]
-    right, top = [(b // res + 1) * res for b in bounds[2:]]
-    out_shape = int((right - left) / res), int((top - bottom) // res)
-
-    transform = rio.Affine(res, 0, left, 0, -res, top)
     shapes = gpd.read_file(snakemake.input.shapes).to_crs(3035)
     raster = ~geometry_mask(shapes.geometry, out_shape[::-1], transform)
     raster = raster.astype(rio.uint8)
