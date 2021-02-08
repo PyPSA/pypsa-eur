@@ -38,8 +38,6 @@ dependencies:
 
   - pip:
     - vresutils==0.3.1
-    - git+https://github.com/PyPSA/glaes.git#egg=glaes
-    - git+https://github.com/PyPSA/geokit.git#egg=geokit
     - cdsapi
     - sphinx
     - sphinx_rtd_theme
