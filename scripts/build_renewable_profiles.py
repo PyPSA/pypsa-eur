@@ -190,16 +190,15 @@ import atlite
 import logging
 import rasterio as rio
 
-from rasterio.warp import reproject
+from rasterio.warp import reproject, transform_bounds
 from rasterio.mask import mask
-from rasterio.enums import Resampling
+from rasterio.features import geometry_mask
 from scipy.ndimage.morphology import binary_dilation as dilation
 from numpy import isin, empty
 from pypsa.geo import haversine
 from shapely.geometry import LineString
 from progressbar import ProgressBar
 from progressbar.widgets import Percentage, SimpleProgress, Bar, Timer, ETA
-from rasterio.features import geometry_mask
 
 from build_natura_raster import get_transform_and_shape
 from _helpers import configure_logging
@@ -254,7 +253,17 @@ def projected_mask(raster, geom, transform=None, shape=None, crs=None, **kwargs)
 
     assert shape is not None and crs is not None
     return reproject(masked, empty(shape), src_crs=raster.crs, dst_crs=crs,
-                     src_transform=transform_, dst_transform=transform)
+                     src_transform=transform_, dst_transform=transform,
+                     resampling=5)
+
+
+def pad_extent(values, src_transform, dst_transform, src_crs, dst_crs):
+    """Ensure the array is large enough to not be treated as nodata."""
+    left, top, right, bottom = *(src_transform*(0,0)), *(src_transform*(1,1))
+    covered = transform_bounds(src_crs, dst_crs, left, bottom, right, top)
+    covered_res = min(covered[2] - covered[0], covered[3] - covered[1])
+    pad = int(dst_transform[0] // covered_res)
+    return rio.pad(values, src_transform, pad, 'constant', constant_values=0)
 
 
 
@@ -329,9 +338,10 @@ def calculate_potential(gid, save_map=None):
 
     # sum all masks together, only cells where all masks are 0 are eligible
     available = (sum(exclusions) == 0).astype(float)
-    return reproject(available, empty(dst_shape), resampling=Resampling.average,
-                     src_transform=transform, dst_transform=dst_transform,
-                     src_crs=crs, dst_crs=dst_crs,)[0]
+    kwargs = dict(src_transform=transform, dst_transform=dst_transform,
+                  src_crs=crs, dst_crs=dst_crs,)
+    available, transform = pad_extent(available, **kwargs)
+    return reproject(available, empty(dst_shape), resampling=5, **kwargs)[0]
 
 
 if __name__ == '__main__':
