@@ -269,20 +269,21 @@ def calculate_potential(gid, save_map=None):
 
     Considered rasters are
         * natura (100m x 100m)
-        * onshore (100m x 100m) with possible distance limits
         * corine (250m x 250m) with possible distance limits
         * gebco (0.0083° x 0.0083°)
+    Considered geometries are
+        * min_shore_shapes
+        * max_shore_shapes
 
-    These and other variables have to be defined beforehand (see init_globals).
-    We use the rasterio mask function to define masks for the rasters that are
-    applied, starting with the highest resoluted masks (natura, onshore).
-    Each mask creation returns a tranform object, defining resolution and bounds
-    of the mask. When a new mask is added, it has to be adjusted to the
-    existing transform of previously loaded masks.
+    Rasters, geometries and other variables and have to be defined beforehand
+    (see init_globals). We use the rasterio mask function to define masks
+    for the given region. Rasters are applied, starting with the highest
+    resoluted mask natura. Each mask creation returns a tranform object,
+    defining resolution and bounds of the mask. When a new mask is added, it
+    has to be adjusted to the existing transform of previously loaded masks.
 
     For calculating the distance of a specific area, we use the binary_dilation
     function of scipy.
-
     """
     exclusions = []
     geom = regions.geometry.loc[[gid]]
@@ -292,6 +293,7 @@ def calculate_potential(gid, save_map=None):
         shape = masked.shape
         exclusions.append(masked)
     else:
+        # since 255 is allowed in corine, mask region outside the shape explicitly
         bounds = rio.features.bounds(geom)
         transform, shape = get_transform_and_shape(bounds, res=100)
         masked = geometry_mask(geom, shape, transform)
@@ -325,6 +327,7 @@ def calculate_potential(gid, save_map=None):
         masked = geometry_mask(max_shore_shapes, shape, transform)
         exclusions.append(masked.astype(int))
 
+    # sum all masks together, only cells where all masks are 0 are eligible
     available = (sum(exclusions) == 0).astype(float)
     return reproject(available, empty(dst_shape), resampling=Resampling.average,
                      src_transform=transform, dst_transform=dst_transform,
