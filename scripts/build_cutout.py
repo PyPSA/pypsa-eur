@@ -113,7 +113,7 @@ if __name__ == "__main__":
     if {'x', 'y', 'bounds'}.isdisjoint(cutout_params):
         regions = (gpd.read_file(snakemake.input.regions_offshore).append(
                    gpd.read_file(snakemake.input.regions_onshore)))
-        cutout_params['bounds'] = regions.total_bounds
+        cutout_params['bounds'] = regions.cascaded_union.buffer(0.5).bounds
     elif {'x', 'y'}.issubset(cutout_params):
         cutout_params['x'] = slice(*cutout_params['x'])
         cutout_params['y'] = slice(*cutout_params['y'])

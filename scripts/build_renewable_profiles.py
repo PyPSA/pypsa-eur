@@ -262,9 +262,8 @@ def pad_extent(values, src_transform, dst_transform, src_crs, dst_crs):
     left, top, right, bottom = *(src_transform*(0,0)), *(src_transform*(1,1))
     covered = transform_bounds(src_crs, dst_crs, left, bottom, right, top)
     covered_res = min(covered[2] - covered[0], covered[3] - covered[1])
-    pad = int(dst_transform[0] // covered_res)
+    pad = int(dst_transform[0] // covered_res * 1.1)
     return rio.pad(values, src_transform, pad, 'constant', constant_values=0)
-
 
 
 def calculate_potential(gid, save_map=None):
@@ -305,7 +304,8 @@ def calculate_potential(gid, save_map=None):
         # since 255 is allowed in corine, mask region outside the shape explicitly
         bounds = rio.features.bounds(geom)
         transform, shape = get_transform_and_shape(bounds, res=100)
-        masked = geometry_mask(geom, shape, transform)
+        masked = geometry_mask(geom, shape, transform).astype(int)
+        exclusions.append(masked)
 
     masked, transform = projected_mask(clc, geom, transform, shape, crs)
     shape = masked.shape
@@ -340,7 +340,7 @@ def calculate_potential(gid, save_map=None):
     available = (sum(exclusions) == 0).astype(float)
     kwargs = dict(src_transform=transform, dst_transform=dst_transform,
                   src_crs=crs, dst_crs=dst_crs,)
-    available, transform = pad_extent(available, **kwargs)
+    available, kwargs['src_transform'] = pad_extent(available, **kwargs)
     return reproject(available, empty(dst_shape), resampling=5, **kwargs)[0]
 
 
@@ -374,7 +374,7 @@ if __name__ == '__main__':
     minx, maxx, miny, maxy = cutout.extent
     dx = cutout.dx
     dy = cutout.dy
-    transform_args = [dx, 0, minx - dx / 2, 0, dy, miny - dy / 2]
+    transform_args = [dx, 0, minx - dx/2, 0, cutout.dy, miny - dy/2]
 
     regions = gpd.read_file(paths['regions'])
     buses = pd.Index(regions.name, name='bus')
