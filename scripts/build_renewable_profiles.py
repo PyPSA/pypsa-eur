@@ -194,7 +194,7 @@ from rasterio.warp import reproject, transform_bounds
 from rasterio.mask import mask
 from rasterio.features import geometry_mask
 from scipy.ndimage.morphology import binary_dilation as dilation
-from numpy import isin, empty
+from numpy import isin, empty, where
 from pypsa.geo import haversine
 from shapely.geometry import LineString
 from progressbar import ProgressBar
@@ -253,8 +253,7 @@ def projected_mask(raster, geom, transform=None, shape=None, crs=None, **kwargs)
 
     assert shape is not None and crs is not None
     return reproject(masked, empty(shape), src_crs=raster.crs, dst_crs=crs,
-                     src_transform=transform_, dst_transform=transform,
-                     resampling=5)
+                     src_transform=transform_, dst_transform=transform)
 
 
 def pad_extent(values, src_transform, dst_transform, src_crs, dst_crs):
@@ -312,7 +311,7 @@ def calculate_potential(gid, save_map=None):
     corine = config.get("corine", {})
     if "grid_codes" in corine:
         # select codes: 1 is excluded, 0 is eligible
-        masked_ = (~isin(masked, corine['grid_codes'])).astype(int)
+        masked_ = where(isin(masked, corine['grid_codes']), 0, 1)
         exclusions.append(masked_)
     if corine.get("distance", 0.) > 0.:
         masked_ = isin(masked, corine['distance_grid_codes']).astype(int)
@@ -402,9 +401,9 @@ if __name__ == '__main__':
     area = xr.DataArray(area.values.reshape(cutout.shape),
                         [cutout.coords['y'], cutout.coords['x']])
 
+    potential = capacity_per_sqkm * availability.sum('bus') * area
     func = getattr(cutout, resource.pop('method'))
     capacity_factor = correction_factor * func(capacity_factor=True, **resource)
-    capacity_potential = capacity_per_sqkm * availability.sum('bus') * area
     layout = capacity_factor * area * capacity_per_sqkm
     profile, capacities = func(matrix=availability.stack(spatial=['y','x']),
                                 layout=layout, index=buses,
@@ -432,7 +431,7 @@ if __name__ == '__main__':
     ds = xr.merge([(correction_factor * profile).rename('profile'),
                     capacities.rename('weight'),
                     p_nom_max.rename('p_nom_max'),
-                    capacity_potential.rename('potential'),
+                    potential.rename('potential'),
                     average_distance.rename('average_distance')])
 
     if snakemake.wildcards.technology.startswith("offwind"):
