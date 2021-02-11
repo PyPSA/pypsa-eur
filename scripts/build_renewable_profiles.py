@@ -189,9 +189,11 @@ import numpy as np
 import atlite
 import logging
 import rasterio as rio
+import matplotlib.pyplot as plt
 
 from rasterio.warp import reproject, transform_bounds
 from rasterio.mask import mask
+from rasterio.plot import show
 from rasterio.features import geometry_mask
 from scipy.ndimage.morphology import binary_dilation as dilation
 from numpy import isin, empty, where
@@ -265,6 +267,18 @@ def pad_extent(values, src_transform, dst_transform, src_crs, dst_crs):
     return rio.pad(values, src_transform, pad, 'constant', constant_values=0)
 
 
+def plot_map(geom, available, transform):
+    fig, ax = plt.subplots()
+    geom.plot(color='None', edgecolor='k', ax=ax)
+    show(available, transform=transform, cmap='Reds', ax=ax)
+    area = available.sum() * transform[0]**2 / 1e6
+    share = area / (geom.area.item()/1e6) * 100
+    ax.set_title(f'Available area: {area:.2f} km² ({share:.2f} %)')
+    ax.set_ylabel('meter'); ax.set_xlabel('meter')
+    return fig, ax
+
+
+
 def calculate_potential(gid, save_map=None):
     """
     Calculate the potential per grid cell for one region.
@@ -315,7 +329,7 @@ def calculate_potential(gid, save_map=None):
         exclusions.append(masked_)
     if corine.get("distance", 0.) > 0.:
         masked_ = isin(masked, corine['distance_grid_codes']).astype(int)
-        iterations = int(corine["distance"] / transform[0])
+        iterations = int(corine["distance"] / transform[0]) + 1
         masked_ = dilation(masked_, iterations=iterations).astype(int)
         masked_[masked==255] = 1  # use the 255 values as a mask after dilating
         exclusions.append(masked_)
@@ -335,18 +349,25 @@ def calculate_potential(gid, save_map=None):
         masked = geometry_mask(max_shore_shapes, shape, transform)
         exclusions.append(masked.astype(int))
 
+
     # sum all masks together, only cells where all masks are 0 are eligible
     available = (sum(exclusions) == 0).astype(float)
-    kwargs = dict(src_transform=transform, dst_transform=dst_transform,
-                  src_crs=crs, dst_crs=dst_crs,)
-    available, kwargs['src_transform'] = pad_extent(available, **kwargs)
-    return reproject(available, empty(dst_shape), resampling=5, **kwargs)[0]
+    available, transform = pad_extent(available, transform, dst_transform,
+                                      crs, dst_crs)
+
+    if save_map is not None:
+        fig, ax = plot_map(geom, available, transform)
+        fig.savefig(save_map)
+
+    return reproject(available, empty(dst_shape), resampling=5,
+                     src_transform=transform, dst_transform=dst_transform,
+                     src_crs=crs, dst_crs=dst_crs,)[0]
 
 
 if __name__ == '__main__':
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
-        snakemake = mock_snakemake('build_renewable_profiles', technology='solar')
+        snakemake = mock_snakemake('build_renewable_profiles', technology='offwind-ac')
     # skip handlers due to process copying
     configure_logging(snakemake, skip_handlers=True)
     pgb.streams.wrap_stderr()
@@ -374,6 +395,7 @@ if __name__ == '__main__':
     dx = cutout.dx
     dy = cutout.dy
     transform_args = [dx, 0, minx - dx/2, 0, cutout.dy, miny - dy/2]
+    epsg = cutout.crs.to_epsg()
 
     regions = gpd.read_file(paths['regions'])
     buses = pd.Index(regions.name, name='bus')
@@ -382,10 +404,6 @@ if __name__ == '__main__':
     widgets = [Percentage(),' ',progress,' ',Bar(),' ',Timer(),' ', ETA()]
     progressbar = ProgressBar(prefix='Compute GIS potentials: ',
                               widgets=widgets, max_value=len(regions))
-
-    # Use the following for testing the default windows method on linux
-    # mp.set_start_method('spawn')
-    epsg = cutout.crs.to_epsg()
     kwargs = {'initializer': init_globals,
               'initargs': (transform_args, cutout.shape, epsg, config, paths),
               'maxtasksperchild': 20,
