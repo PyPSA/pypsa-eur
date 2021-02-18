@@ -182,197 +182,28 @@ node (`p_nom_max`): ``simple`` and ``conservative``:
 """
 import progressbar as pgb
 import geopandas as gpd
-import multiprocessing as mp
 import xarray as xr
-import pandas as pd
 import numpy as np
 import atlite
 import logging
-import rasterio as rio
-import matplotlib.pyplot as plt
-
-from rasterio.warp import reproject, transform_bounds
-from rasterio.mask import mask
-from rasterio.plot import show
-from rasterio.features import geometry_mask
-from scipy.ndimage.morphology import binary_dilation as dilation
-from numpy import isin, empty, where
 from pypsa.geo import haversine
 from shapely.geometry import LineString
-from progressbar import ProgressBar
-from progressbar.widgets import Percentage, SimpleProgress, Bar, Timer, ETA
+import time
 
-from build_natura_raster import get_transform_and_shape
 from _helpers import configure_logging
 
 logger = logging.getLogger(__name__)
 
 
-def init_globals(transform_args_, shape_, epsg_, config_, paths_):
-    """Define variable for processes in multiprocess pool."""
-    # set destination geographical data
-    global dst_transform, dst_shape, dst_crs
-    dst_transform = rio.Affine(*transform_args_)
-    dst_crs = rio.crs.CRS.from_epsg(epsg_)
-    dst_shape = shape_
-
-    global crs, config, regions, regions_
-    crs = rio.crs.CRS.from_epsg(3035)
-    config = config_
-    paths = paths_
-    regions_ = gpd.read_file(paths['regions']) # original crs for gebco
-    regions = regions_.to_crs(crs)
-
-    # load rasters
-    global natura, clc, gebco, min_shore_shapes, max_shore_shapes
-
-    natura = rio.open(paths['natura'])
-    assert crs == natura.crs
-
-    clc = rio.open(paths['corine'])
-    clc._crs = crs # should be asserted, but clc has no crs
-
-    if "max_depth" in config:
-        gebco = rio.open(paths['gebco'])
-        gebco._crs = rio.crs.CRS.from_epsg(4326) # gebco crs is not defined
-
-    if 'min_shore_distance' in config:
-        countries = gpd.read_file(paths['country_shapes']).to_crs(crs)
-        min_shore_shapes = countries.buffer(config['min_shore_distance'])
-    if 'max_shore_distance' in config:
-        countries = gpd.read_file(paths['country_shapes']).to_crs(crs)
-        max_shore_shapes = countries.buffer(config['max_shore_distance'])
-
-
-
-def projected_mask(raster, geom, transform=None, shape=None, crs=None, **kwargs):
-    """Load a mask and optionally project it to target resolution and shape."""
-    kwargs.setdefault('indexes', 1)
-    masked, transform_ = mask(raster, geom, crop=True, **kwargs)
-
-    if transform is None or (transform_ == transform):
-        return masked, transform_
-
-    assert shape is not None and crs is not None
-    return reproject(masked, empty(shape), src_crs=raster.crs, dst_crs=crs,
-                     src_transform=transform_, dst_transform=transform)
-
-
-def pad_extent(values, src_transform, dst_transform, src_crs, dst_crs):
-    """Ensure the array is large enough to not be treated as nodata."""
-    left, top, right, bottom = *(src_transform*(0,0)), *(src_transform*(1,1))
-    covered = transform_bounds(src_crs, dst_crs, left, bottom, right, top)
-    covered_res = min(covered[2] - covered[0], covered[3] - covered[1])
-    pad = int(dst_transform[0] // covered_res * 1.1)
-    return rio.pad(values, src_transform, pad, 'constant', constant_values=0)
-
-
-def plot_map(geom, available, transform):
-    fig, ax = plt.subplots()
-    geom.plot(color='None', edgecolor='k', ax=ax)
-    show(available, transform=transform, cmap='Reds', ax=ax)
-    area = available.sum() * transform[0]**2 / 1e6
-    share = area / (geom.area.item()/1e6) * 100
-    ax.set_title(f'Available area: {area:.2f} km² ({share:.2f} %)')
-    ax.set_ylabel('meter'); ax.set_xlabel('meter')
-    return fig, ax
-
-
-
-def calculate_potential(gid, save_map=None):
-    """
-    Calculate the potential per grid cell for one region.
-
-    This function calculates the eligible area of the region stored in
-    `path['regions']` with index `gid`. The resulting area is then projected
-    onto the gridcells given in the cutout.
-
-
-    Considered rasters are
-        * natura (100m x 100m)
-        * corine (250m x 250m) with possible distance limits
-        * gebco (0.0083° x 0.0083°)
-    Considered geometries are
-        * min_shore_shapes
-        * max_shore_shapes
-
-    Rasters, geometries and other variables and have to be defined beforehand
-    (see init_globals). We use the rasterio mask function to define masks
-    for the given region. Rasters are applied, starting with the highest
-    resoluted mask natura. Each mask creation returns a tranform object,
-    defining resolution and bounds of the mask. When a new mask is added, it
-    has to be adjusted to the existing transform of previously loaded masks.
-
-    For calculating the distance of a specific area, we use the binary_dilation
-    function of scipy.
-    """
-    exclusions = []
-    geom = regions.geometry.loc[[gid]]
-
-    if config.get("natura", False):
-        masked, transform = projected_mask(natura, geom, nodata=1)
-        shape = masked.shape
-        exclusions.append(masked)
-    else:
-        # since 255 is allowed in corine, mask region outside the shape explicitly
-        bounds = rio.features.bounds(geom)
-        transform, shape = get_transform_and_shape(bounds, res=100)
-        masked = geometry_mask(geom, shape, transform).astype(int)
-        exclusions.append(masked)
-
-    masked, transform = projected_mask(clc, geom, transform, shape, crs)
-    shape = masked.shape
-    corine = config.get("corine", {})
-    if "grid_codes" in corine:
-        # select codes: 1 is excluded, 0 is eligible
-        masked_ = where(isin(masked, corine['grid_codes']), 0, 1)
-        exclusions.append(masked_)
-    if corine.get("distance", 0.) > 0.:
-        masked_ = isin(masked, corine['distance_grid_codes']).astype(int)
-        iterations = int(corine["distance"] / transform[0]) + 1
-        masked_ = dilation(masked_, iterations=iterations).astype(int)
-        masked_[masked==255] = 1  # use the 255 values as a mask after dilating
-        exclusions.append(masked_)
-
-
-    if "max_depth" in config:
-        geom_ = regions_.geometry.loc[[gid]]
-        masked, transform = projected_mask(gebco, geom_, transform, shape, crs)
-        shape = masked.shape
-        masked = (masked > -config['max_depth']).astype(int)
-        exclusions.append(masked_)
-
-    if 'min_shore_distance' in config:
-        masked = geometry_mask(min_shore_shapes, shape, transform, invert=True)
-        exclusions.append(masked.astype(int))
-    if 'max_shore_distance' in config:
-        masked = geometry_mask(max_shore_shapes, shape, transform)
-        exclusions.append(masked.astype(int))
-
-
-    # sum all masks together, only cells where all masks are 0 are eligible
-    available = (sum(exclusions) == 0).astype(float)
-    available, transform = pad_extent(available, transform, dst_transform,
-                                      crs, dst_crs)
-
-    if save_map is not None:
-        fig, ax = plot_map(geom, available, transform)
-        fig.savefig(save_map)
-
-    return reproject(available, empty(dst_shape), resampling=5,
-                     src_transform=transform, dst_transform=dst_transform,
-                     src_crs=crs, dst_crs=dst_crs,)[0]
-
-
 if __name__ == '__main__':
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
-        snakemake = mock_snakemake('build_renewable_profiles', technology='offwind-ac')
-    # skip handlers due to process copying
-    configure_logging(snakemake, skip_handlers=True)
+        snakemake = mock_snakemake('build_renewable_profiles', technology='solar')
+    configure_logging(snakemake)
     pgb.streams.wrap_stderr()
-    paths = dict(snakemake.input)
+    paths = snakemake.input
     nprocesses = snakemake.config['atlite'].get('nprocesses')
+    noprogress = not snakemake.config['atlite'].get('show_progress', True)
     config = snakemake.config['renewable'][snakemake.wildcards.technology]
     resource = config['resource'] # pv panel config / wind turbine config
     correction_factor = config.get('correction_factor', 1.)
@@ -391,29 +222,43 @@ if __name__ == '__main__':
 
 
     cutout = atlite.Cutout(paths['cutout'])
-    minx, maxx, miny, maxy = cutout.extent
-    dx = cutout.dx
-    dy = cutout.dy
-    transform_args = [dx, 0, minx - dx/2, 0, cutout.dy, miny - dy/2]
-    epsg = cutout.crs.to_epsg()
+    regions = gpd.read_file(paths.regions).set_index('name').rename_axis('bus')
 
-    regions = gpd.read_file(paths['regions'])
-    buses = pd.Index(regions.name, name='bus')
+    excluder = atlite.ExclusionContainer(crs=3035, res=100)
 
-    progress = SimpleProgress(format='(%s)' %SimpleProgress.DEFAULT_FORMAT)
-    widgets = [Percentage(),' ',progress,' ',Bar(),' ',Timer(),' ', ETA()]
-    progressbar = ProgressBar(prefix='Compute GIS potentials: ',
-                              widgets=widgets, max_value=len(regions))
-    kwargs = {'initializer': init_globals,
-              'initargs': (transform_args, cutout.shape, epsg, config, paths),
-              'maxtasksperchild': 20,
-              'processes': nprocesses}
-    with mp.Pool(**kwargs) as pool:
-        imap = pool.imap(calculate_potential, regions.index)
-        availability = list(progressbar(imap))
-    coords=[('bus', buses), ('y', cutout.data.y), ('x', cutout.data.x),]
-    availability = xr.DataArray(np.stack(availability), coords=coords)
+    if config['natura']:
+        excluder.add_raster(paths.natura, nodata=1)
 
+    corine = config.get("corine", {})
+    if "grid_codes" in corine:
+        codes = corine["grid_codes"]
+        excluder.add_raster(paths.corine, codes=codes, invert=True, crs=3035)
+    if corine.get("distance", 0.) > 0.:
+        codes = corine["distance_grid_codes"]
+        buffer = buffer=corine["distance"]
+        excluder.add_raster(paths.corine, codes=codes, buffer=buffer, crs=3035)
+
+    if "max_depth" in config:
+        func = lambda v: v > -config['max_depth']
+        excluder.add_raster(paths.gebco, codes=func, crs=4236)
+
+    if 'min_shore_distance' in config:
+        buffer = config['min_shore_distance']
+        excluder.add_geometry(paths.country_shapes, buffer=buffer)
+
+    if 'max_shore_distance' in config:
+        buffer = config['max_shore_distance']
+        excluder.add_geometry(paths.country_shapes, buffer=buffer, invert=True)
+
+    args = (regions, excluder, nprocesses, noprogress)
+    if noprogress:
+        logger.info('Calculate landuse availabilities...')
+        start = time.time()
+        availability = cutout.availabilitymatrix(*args)
+        duration = time.time() - start
+        logger.info(f'Completed availability calculation ({duration:2.2f}s)')
+    else:
+        availability = cutout.availabilitymatrix(*args)
 
     area = cutout.grid.to_crs({'proj': 'cea'}).area / 1e6
     area = xr.DataArray(area.values.reshape(cutout.shape),
@@ -424,7 +269,7 @@ if __name__ == '__main__':
     capacity_factor = correction_factor * func(capacity_factor=True, **resource)
     layout = capacity_factor * area * capacity_per_sqkm
     profile, capacities = func(matrix=availability.stack(spatial=['y','x']),
-                                layout=layout, index=buses,
+                                layout=layout, index=regions.index,
                                 per_unit=True, return_capacity=True, **resource)
 
     logger.info(f"Calculating maximal capacity per bus (method '{p_nom_max_meth}')")
@@ -456,18 +301,18 @@ if __name__ == '__main__':
         logger.info('Calculate underwater fraction of connections.')
         offshore_shape = gpd.read_file(paths['offshore_shapes']).unary_union
         underwater_fraction = []
-        for i in regions.index:
-            row = layoutmatrix.sel(bus=buses[i]).dropna('spatial')
+        for bus in regions.index:
+            row = layoutmatrix.sel(bus=bus).dropna('spatial')
             if row.data.sum() == 0:
                 frac = 0
             else:
                 coords = np.array([[s[1], s[0]] for s in row.spatial.data])
                 centre_of_mass = coords.T @ (row.data / row.data.sum())
-                line = LineString([centre_of_mass, regions.loc[i, ['x', 'y']]])
+                line = LineString([centre_of_mass, regions.loc[bus, ['x', 'y']]])
                 frac = line.intersection(offshore_shape).length/line.length
             underwater_fraction.append(frac)
 
-        ds['underwater_fraction'] = xr.DataArray(underwater_fraction, [buses])
+        ds['underwater_fraction'] = xr.DataArray(underwater_fraction, [regions.index])
 
     # select only buses with some capacity and minimal capacity factor
     ds = ds.sel(bus=((ds['profile'].mean('time') > config.get('min_p_max_pu', 0.)) &
