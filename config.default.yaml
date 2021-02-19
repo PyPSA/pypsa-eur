@@ -101,7 +101,7 @@ renewable:
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   offwind-dc:
-    cutout: europe-2013
+    cutout: base
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_5MW_offshore
@@ -115,7 +115,7 @@ renewable:
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   solar:
-    cutout: europe-2013
+    cutout: base
     resource:
       method: pv
       panel: CSi
@@ -135,7 +135,7 @@ renewable:
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   hydro:
-    cutout: europe-2013
+    cutout: base
     carriers: [ror, PHS, hydro]
     PHS_max_hours: 6
     hydro_max_hours: "energy_capacity_totals_by_country" # one of energy_capacity_totals_by_country, estimate_by_large_installations or a float
