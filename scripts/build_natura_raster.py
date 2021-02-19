@@ -84,9 +84,8 @@ if __name__ == "__main__":
     raster = ~geometry_mask(shapes.geometry, out_shape[::-1], transform)
     raster = raster.astype(rio.uint8)
 
-
     with rio.open(snakemake.output[0], 'w', driver='GTiff', dtype=rio.uint8,
-                  count=1, transform=transform, crs=3035,
+                  count=1, transform=transform, crs=3035, compress='lzw',
                   width=raster.shape[1], height=raster.shape[0]) as dst:
         dst.write(raster, indexes=1)
 
