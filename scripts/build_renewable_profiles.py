@@ -198,7 +198,7 @@ logger = logging.getLogger(__name__)
 if __name__ == '__main__':
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
-        snakemake = mock_snakemake('build_renewable_profiles', technology='offwind-dc')
+        snakemake = mock_snakemake('build_renewable_profiles', technology='offwind-ac')
     configure_logging(snakemake)
     pgb.streams.wrap_stderr()
     paths = snakemake.input
@@ -239,8 +239,8 @@ if __name__ == '__main__':
         excluder.add_raster(paths.corine, codes=codes, buffer=buffer, crs=3035)
 
     if "max_depth" in config:
-        func = lambda v: v > -config['max_depth']
-        excluder.add_raster(paths.gebco, codes=func, crs=4236)
+        func = lambda v: v < -config['max_depth']
+        excluder.add_raster(paths.gebco, codes=func, crs=4236, nodata=-1000)
 
     if 'min_shore_distance' in config:
         buffer = config['min_shore_distance']
