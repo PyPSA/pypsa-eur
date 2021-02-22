@@ -198,7 +198,7 @@ logger = logging.getLogger(__name__)
 if __name__ == '__main__':
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
-        snakemake = mock_snakemake('build_renewable_profiles', technology='solar')
+        snakemake = mock_snakemake('build_renewable_profiles', technology='offwind-dc')
     configure_logging(snakemake)
     pgb.streams.wrap_stderr()
     paths = snakemake.input
@@ -227,7 +227,7 @@ if __name__ == '__main__':
     excluder = atlite.ExclusionContainer(crs=3035, res=100)
 
     if config['natura']:
-        excluder.add_raster(paths.natura, nodata=1)
+        excluder.add_raster(paths.natura, nodata=0, allow_no_overlap=True)
 
     corine = config.get("corine", {})
     if "grid_codes" in corine:
@@ -250,15 +250,15 @@ if __name__ == '__main__':
         buffer = config['max_shore_distance']
         excluder.add_geometry(paths.country_shapes, buffer=buffer, invert=True)
 
-    args = (regions, excluder, nprocesses, noprogress)
+    kwargs = dict(nprocesses=nprocesses, disable_progressbar=noprogress)
     if noprogress:
         logger.info('Calculate landuse availabilities...')
         start = time.time()
-        availability = cutout.availabilitymatrix(*args)
+        availability = cutout.availabilitymatrix(regions, excluder, **kwargs)
         duration = time.time() - start
         logger.info(f'Completed availability calculation ({duration:2.2f}s)')
     else:
-        availability = cutout.availabilitymatrix(*args)
+        availability = cutout.availabilitymatrix(regions, excluder, **kwargs)
 
     area = cutout.grid.to_crs({'proj': 'cea'}).area / 1e6
     area = xr.DataArray(area.values.reshape(cutout.shape),
