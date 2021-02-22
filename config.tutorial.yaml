@@ -56,10 +56,9 @@ atlite:
   cutouts:
     europe-2013-era5:
       module: era5
-      xs: [4., 15.]
-      ys: [56., 46.]
-      months: [3, 3]
-      years: [2013, 2013]
+      x: [4., 15.]
+      y: [56., 46.]
+      time: ["2013-03", "2013-03"]
 
 renewable:
   onwind:
