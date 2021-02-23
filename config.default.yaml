@@ -1,4 +1,4 @@
-version: 0.3.0
+version: 0.4.0
 
 logging_level: INFO
 
@@ -15,20 +15,27 @@ scenario:
   lv: [1.0,1.5]    # allowed transmission line volume expansion, can be any float >= 1.0 (today) or "opt"
   clusters: [45,50] # number of nodes in Europe, any integer between 37 (1 node per country-zone) and several hundred
   opts: ['']  # only relevant for PyPSA-Eur
-  sector_opts: [Co2L0-3H-T-H-B-I-solar3-dist1]  # this is where the main scenario settings are
+  sector_opts: [Co2L0-3H-T-H-B-I-solar+p3-dist1]  # this is where the main scenario settings are
   # to really understand the options here, look in scripts/prepare_sector_network.py
   # Co2Lx specifies the CO2 target in x% of the 1990 values; default will give default (5%);
   # Co2L0p25 will give 25% CO2 emissions; Co2Lm0p05 will give 5% negative emissions
   # xH is the temporal resolution; 3H is 3-hourly, i.e. one snapshot every 3 hours
   # single letters are sectors: T for land transport, H for building heating,
   # B for biomass supply, I for industry, shipping and aviation
-  # solarx or onwindx changes the available installable potential by factor x
+  # solar+c0.5 reduces the capital cost of solar to 50\% of reference value
+  # solar+p3 multiplies the available installable potential by factor 3
   # dist{n} includes distribution grids with investment cost of n times cost in data/costs.csv
+  # for myopic/perfect foresight cb states the carbon budget in GtCO2 (cumulative
+  # emissions throughout the transition path in the timeframe determined by the
+  # planning_horizons), be:beta decay; ex:exponential decay
+  # cb40ex0 distributes a carbon budget of 40 GtCO2 following an exponential
+  # decay with initial growth rate 0
   planning_horizons : [2030] # investment years for myopic and perfect; or costs year for overnight
   # for example, set to [2020, 2030, 2040, 2050] for myopic foresight
 
 # CO2 budget as a fraction of 1990 emissions
 # this is over-ridden if CO2Lx is set in sector_opts
+# this is also over-ridden if cb is set in sector_opts
 co2_budget:
   2020: 0.7011648746
   2025: 0.5241935484
@@ -56,11 +63,21 @@ electricity:
     battery: 6
     H2: 168
 
+# regulate what components with which carriers are kept from PyPSA-Eur;
+# some technologies are removed because they are implemented differently
+# or have different year-dependent costs in PyPSA-Eur-Sec
+pypsa_eur:
+  "Bus": ["AC"]
+  "Link": ["DC"]
+  "Generator": ["onwind", "offwind-ac", "offwind-dc", "solar", "ror"]
+  "StorageUnit": ["PHS","hydro"]
+  "Store": []
+
 biomass:
   year: 2030
   scenario: "Med"
   classes:
-    solid biomass: ['Primary agricultural residues', 'Forestry energy residue', 'Secondary forestry residues', 'Secondary Forestry residues – sawdust', 'Forestry residues from landscape care biomass', 'Municipal waste']
+    solid biomass: ['Primary agricultural residues', 'Forestry energy residue', 'Secondary forestry residues', 'Secondary Forestry residues sawdust', 'Forestry residues from landscape care biomass', 'Municipal waste']
     not included: ['Bioethanol sugar beet biomass', 'Rapeseeds for biodiesel', 'sunflower and soya for Biodiesel', 'Starchy crops biomass', 'Grassy crops biomass', 'Willow biomass', 'Poplar biomass potential', 'Roundwood fuelwood', 'Roundwood Chips & Pellets']
     biogas: ['Manure biomass potential', 'Sludge biomass']
 
@@ -85,7 +102,7 @@ sector:
   'bev_dsm' : True #turns on EV battery
   'bev_availability' : 0.5  #How many cars do smart charging
   'v2g' : True #allows feed-in to grid from EV battery
-  #what is not EV or FCEV is fossil-fuelled
+  #what is not EV or FCEV is oil-fuelled ICE
   'land_transport_fuel_cell_share': # 1 means all FCEVs
     2020: 0
     2030: 0.05
@@ -99,7 +116,9 @@ sector:
   'transport_fuel_cell_efficiency': 0.5
   'transport_internal_combustion_efficiency': 0.3
   'shipping_average_efficiency' : 0.4 #For conversion of fuel oil to propulsion in 2011
-  'time_dep_hp_cop' : True
+  'time_dep_hp_cop' : True #time dependent heat pump coefficient of performance
+  'heat_pump_sink_T' : 55. # Celsius, based on DTU / large area radiators; used in build_cop_profiles.py
+   # conservatively high to cover hot water and space heating in poorly-insulated buildings
   'retrofitting' :
     'retro_exogen': True # space heat demand savings exogenously
     'dE': # reduction of space heat demand (applied before losses in DH)
@@ -128,7 +147,9 @@ sector:
   'dac' : True
   'co2_vent' : True
   'SMR' : True
-  'ccs_fraction' : 0.9
+  'co2_sequestration_potential' : 200  #MtCO2/a sequestration potential for Europe
+  'co2_sequestration_cost' : 20   #EUR/tCO2 for transport and sequestration of CO2
+  'cc_fraction' : 0.9  # default fraction of CO2 captured with post-combustion capture
   'hydrogen_underground_storage' : True
   'use_fischer_tropsch_waste_heat' : True
   'use_fuel_cell_waste_heat' : True
@@ -303,7 +324,7 @@ plotting:
     "DAC" : "#E74C3C"
     "co2 stored" : "#123456"
     "CO2 sequestration" : "#123456"
-    "CCS" : "k"
+    "CC" : "k"
     "co2" : "#123456"
     "co2 vent" : "#654321"
     "solid biomass for industry co2 from atmosphere" : "#654321"
@@ -313,7 +334,7 @@ plotting:
     "Fischer-Tropsch" : "#44DD33"
     "kerosene for aviation": "#44BB11"
     "naphtha for industry" : "#44FF55"
-    "land transport fossil" : "#44DD33"
+    "land transport oil" : "#44DD33"
     "water tanks" : "#BBBBBB"
     "hot water storage" : "#BBBBBB"
     "hot water charging" : "#BBBBBB"
@@ -348,6 +369,7 @@ plotting:
     "process emissions to stored" : "#444444"
     "process emissions to atmosphere" : "#888888"
     "process emissions" : "#222222"
+    "oil emissions" : "#666666"
     "land transport fuel cell" : "#AAAAAA"
     "biogas" : "#800000"
     "solid biomass" : "#DAA520"

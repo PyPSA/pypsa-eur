@@ -28,10 +28,13 @@ from vresutils.benchmark import memory_logger
 override_component_attrs = pypsa.descriptors.Dict({k : v.copy() for k,v in pypsa.components.component_attrs.items()})
 override_component_attrs["Link"].loc["bus2"] = ["string",np.nan,np.nan,"2nd bus","Input (optional)"]
 override_component_attrs["Link"].loc["bus3"] = ["string",np.nan,np.nan,"3rd bus","Input (optional)"]
+override_component_attrs["Link"].loc["bus4"] = ["string",np.nan,np.nan,"4th bus","Input (optional)"]
 override_component_attrs["Link"].loc["efficiency2"] = ["static or series","per unit",1.,"2nd bus efficiency","Input (optional)"]
 override_component_attrs["Link"].loc["efficiency3"] = ["static or series","per unit",1.,"3rd bus efficiency","Input (optional)"]
+override_component_attrs["Link"].loc["efficiency4"] = ["static or series","per unit",1.,"4th bus efficiency","Input (optional)"]
 override_component_attrs["Link"].loc["p2"] = ["series","MW",0.,"2nd bus output","Output"]
 override_component_attrs["Link"].loc["p3"] = ["series","MW",0.,"3rd bus output","Output"]
+override_component_attrs["Link"].loc["p4"] = ["series","MW",0.,"4th bus output","Output"]
 
 
 
@@ -269,6 +272,7 @@ def solve_network(n, config=None, solver_log=None, opts=None):
                                                solver_name=solver_name,
                                                solver_logfile=solver_log,
                                                solver_options=solver_options,
+                                               solver_dir=tmpdir, 
                                                extra_functionality=extra_functionality,
                                                formulation=solve_opts['formulation'])
                                                #extra_postprocessing=extra_postprocessing

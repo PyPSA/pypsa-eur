@@ -9,16 +9,13 @@ import xarray as xr
 cop_f = {"air" : lambda d_t: 6.81 -0.121*d_t + 0.000630*d_t**2,
          "soil" : lambda d_t: 8.77 -0.150*d_t + 0.000734*d_t**2}
 
-sink_T = 55. # Based on DTU / large area radiators
-
-
 
 for area in ["total", "urban", "rural"]:
     for source in ["air", "soil"]:
 
         source_T = xr.open_dataarray(snakemake.input["temp_{}_{}".format(source,area)])
 
-        delta_T = sink_T - source_T
+        delta_T = snakemake.config['sector']['heat_pump_sink_T'] - source_T
 
         cop = cop_f[source](delta_T)
 

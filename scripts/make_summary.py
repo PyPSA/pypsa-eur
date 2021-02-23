@@ -28,10 +28,13 @@ opt_name = {"Store": "e", "Line" : "s", "Transformer" : "s"}
 override_component_attrs = pypsa.descriptors.Dict({k : v.copy() for k,v in pypsa.components.component_attrs.items()})
 override_component_attrs["Link"].loc["bus2"] = ["string",np.nan,np.nan,"2nd bus","Input (optional)"]
 override_component_attrs["Link"].loc["bus3"] = ["string",np.nan,np.nan,"3rd bus","Input (optional)"]
+override_component_attrs["Link"].loc["bus4"] = ["string",np.nan,np.nan,"4th bus","Input (optional)"]
 override_component_attrs["Link"].loc["efficiency2"] = ["static or series","per unit",1.,"2nd bus efficiency","Input (optional)"]
 override_component_attrs["Link"].loc["efficiency3"] = ["static or series","per unit",1.,"3rd bus efficiency","Input (optional)"]
+override_component_attrs["Link"].loc["efficiency4"] = ["static or series","per unit",1.,"4th bus efficiency","Input (optional)"]
 override_component_attrs["Link"].loc["p2"] = ["series","MW",0.,"2nd bus output","Output"]
 override_component_attrs["Link"].loc["p3"] = ["series","MW",0.,"3rd bus output","Output"]
+override_component_attrs["Link"].loc["p4"] = ["series","MW",0.,"4th bus output","Output"]
 override_component_attrs["StorageUnit"].loc["p_dispatch"] = ["series","MW",0.,"Storage discharging.","Output"]
 override_component_attrs["StorageUnit"].loc["p_store"] = ["series","MW",0.,"Storage charging.","Output"]
 
@@ -193,7 +196,25 @@ def calculate_costs(n,label,costs):
 
     return costs
 
+def calculate_cumulative_cost():        
+    planning_horizons = snakemake.config['scenario']['planning_horizons']
 
+    cumulative_cost = pd.DataFrame(index = df["costs"].sum().index,
+                                  columns=pd.Series(data=np.arange(0,0.1, 0.01), name='social discount rate'))
+    
+    #discount cost and express them in money value of planning_horizons[0]
+    for r in cumulative_cost.columns:
+        cumulative_cost[r]=[df["costs"].sum()[index]/((1+r)**(index[-1]-planning_horizons[0])) for index in cumulative_cost.index]
+    
+    #integrate cost throughout the transition path
+    for r in cumulative_cost.columns:       
+        for cluster in cumulative_cost.index.get_level_values(level=0).unique():
+            for lv in cumulative_cost.index.get_level_values(level=1).unique():
+                for sector_opts in cumulative_cost.index.get_level_values(level=2).unique():
+                    cumulative_cost.loc[(cluster, lv, sector_opts,'cumulative cost'),r] = np.trapz(cumulative_cost.loc[idx[cluster, lv, sector_opts,planning_horizons],r].values, x=planning_horizons)
+
+    return cumulative_cost 
+    
 def calculate_nodal_capacities(n,label,nodal_capacities):
     #Beware this also has extraneous locations for country (e.g. biomass) or continent-wide (e.g. fossil gas/oil) stuff
     for c in n.iterate_components(n.branch_components|n.controllable_one_port_components^{"Load"}):
@@ -561,16 +582,17 @@ if __name__ == "__main__":
             snakemake.config = yaml.safe_load(f)
 
         #overwrite some options
-        snakemake.config["run"] = "test"
+        snakemake.config["run"] = "version-8"
         snakemake.config["scenario"]["lv"] = [1.0]
-        snakemake.config["scenario"]["sector_opts"] = ["Co2L0-168H-T-H-B-I-solar3-dist1"]
+        snakemake.config["scenario"]["sector_opts"] = ["3H-T-H-B-I-solar3-dist1"]
         snakemake.config["planning_horizons"] = ['2020', '2030', '2040', '2050']
         snakemake.input = Dict()
         snakemake.input['heat_demand_name'] = 'data/heating/daily_heat_demand.h5'
+        snakemake.input['costs'] = snakemake.config['costs_dir'] + "costs_{}.csv".format(snakemake.config['scenario']['planning_horizons'][0])
         snakemake.output = Dict()
         for item in outputs:
             snakemake.output[item] = snakemake.config['summary_dir'] + '/{name}/csvs/{item}.csv'.format(name=snakemake.config['run'],item=item)
-
+        snakemake.output['cumulative_cost'] = snakemake.config['summary_dir'] + '/{name}/csvs/cumulative_cost.csv'.format(name=snakemake.config['run'])
     networks_dict = {(cluster, lv, opt+sector_opt, planning_horizon) :
                      snakemake.config['results_dir'] + snakemake.config['run'] + '/postnetworks/elec_s{simpl}_{cluster}_lv{lv}_{opt}_{sector_opt}_{planning_horizon}.nc'\
                      .format(simpl=simpl,
@@ -589,6 +611,7 @@ if __name__ == "__main__":
     print(networks_dict)
 
     Nyears = 1
+    
     costs_db = prepare_costs(snakemake.input.costs,
                              snakemake.config['costs']['USD2013_to_EUR2013'],
                              snakemake.config['costs']['discountrate'],
@@ -600,3 +623,10 @@ if __name__ == "__main__":
     df["metrics"].loc["total costs"] =  df["costs"].sum()
 
     to_csv(df)
+    
+    if snakemake.config["foresight"]=='myopic':
+        cumulative_cost=calculate_cumulative_cost()
+        cumulative_cost.to_csv(snakemake.config['summary_dir'] + '/' + snakemake.config['run'] + '/csvs/cumulative_cost.csv')
+
+
+                                                     

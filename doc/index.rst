@@ -66,41 +66,6 @@ PyPSA-Eur-Sec is designed to be imported into the open toolbox `PyPSA <https://w
 This project is maintained by the `Energy System Modelling group <https://www.iai.kit.edu/english/2338.php>`_ at the `Institute for Automation and Applied Informatics <https://www.iai.kit.edu/english/index.php>`_ at the `Karlsruhe Institute of Technology <http://www.kit.edu/english/index.php>`_. The group is funded by the `Helmholtz Association <https://www.helmholtz.de/en/>`_ until 2024. Previous versions were developed by the `Renewable Energy Group <https://fias.uni-frankfurt.de/physics/schramm/renewable-energy-system-and-network-analysis/>`_ at `FIAS <https://fias.uni-frankfurt.de/>`_ to carry out simulations for the `CoNDyNet project <http://condynet.de/>`_, financed by the `German Federal Ministry for Education and Research (BMBF) <https://www.bmbf.de/en/index.html>`_ as part of the `Stromnetze Research Initiative <http://forschung-stromnetze.info/projekte/grundlagen-und-konzepte-fuer-effiziente-dezentrale-stromnetze/>`_.
 
 
-Spatial resolution of sectors
-=============================
-
-Not all of the sectors are at the full nodal resolution, and some are
-distributed to nodes using heuristics that need to be corrected. Some
-networks are copper-plated to reduce computational times.
-
-For example:
-
-Electricity network: nodal.
-
-Electricity demand: nodal, distributed in each country based on
-population, GDP and location of industrial facilities.
-
-Building heating demand: nodal, distributed in each country based on
-population.
-
-Industry demand: nodal, distributed in each country based on
-locations of industry from `HotMaps database <https://gitlab.com/hotmaps/industrial_sites/industrial_sites_Industrial_Database>`_.
-
-Hydrogen network: nodal.
-
-Methane network: single node for Europe, since future demand is so
-low and no bottlenecks are expected.
-
-Solid biomass:  single node for Europe, until transport costs can be
-incorporated.
-
-CO2:  single node for Europe, but a transport and storage cost is added for
-sequestered CO2.
-
-Liquid hydrocarbons:  single node for Europe, since transport costs are low.
-
-
-
 Documentation
 =============
 
@@ -114,6 +79,20 @@ Documentation
    :caption: Getting Started
 
    installation
+
+**Implementation details**
+
+* :doc:`spatial_resolution`
+* :doc:`supply_demand`
+
+.. toctree::
+   :hidden:
+   :maxdepth: 1
+   :caption: Implementation details
+
+   spatial_resolution
+   supply_demand
+
 
 **Foresight options**
 

@@ -16,7 +16,7 @@ its dependencies. Clone the repository:
 
 .. code:: bash
 
-    projects % git clone git@github.com:PyPSA/pypsa-eur.git
+    projects % git clone https://github.com/PyPSA/pypsa-eur.git
 
 then download and unpack all the PyPSA-Eur data files by running the following snakemake rule:
 
@@ -32,7 +32,7 @@ Next install the technology assumptions database `technology-data <https://githu
 
 .. code:: bash
 
-    projects % git clone git@github.com:PyPSA/technology-data.git
+    projects % git clone https://github.com/PyPSA/technology-data.git
 
 
 Clone PyPSA-Eur-Sec repository
@@ -42,7 +42,7 @@ Create a parallel directory for `PyPSA-Eur-Sec <https://github.com/PyPSA/pypsa-e
 
 .. code:: bash
 
-    projects % git clone git@github.com:PyPSA/pypsa-eur-sec.git
+    projects % git clone https://github.com/PyPSA/pypsa-eur-sec.git
 
 Environment/package requirements
 ================================
@@ -54,6 +54,13 @@ The requirements are the same as `PyPSA-Eur <https://github.com/PyPSA/pypsa-eur>
 xarray version >= 0.15.1, you will need the latest master branch of
 atlite version 0.0.2.
 
+You can create an enviroment using the environment.yaml file in pypsa-eur/envs:
+
+.../pypsa-eur % conda env create -f envs/environment.yaml
+
+.../pypsa-eur % conda activate pypsa-eur
+
+See details in `PyPSA-Eur Installation <https://pypsa-eur.readthedocs.io/en/latest/installation.html>`_
 
 Data requirements
 =================
@@ -66,8 +73,8 @@ To download and extract the data bundle on the command line:
 
 .. code:: bash
 
-    projects/pypsa-eur-sec/data % wget "https://nworbmot.org/pypsa-eur-sec-data-bundle-201012.tar.gz"
-    projects/pypsa-eur-sec/data % tar xvzf pypsa-eur-sec-data-bundle-201012.tar.gz
+    projects/pypsa-eur-sec/data % wget "https://nworbmot.org/pypsa-eur-sec-data-bundle-210125.tar.gz"
+    projects/pypsa-eur-sec/data % tar xvzf pypsa-eur-sec-data-bundle-210125.tar.gz
 
 
 The data licences and sources are given in the following table.
