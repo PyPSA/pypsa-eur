@@ -285,7 +285,7 @@ if __name__ == '__main__':
 
     # Determine weighted average distance from substation
     layoutmatrix = (layout * availability).stack(spatial=['y','x'])
-    layoutmatrix = layoutmatrix.where(capacities!=0)
+    layoutmatrix = layoutmatrix.where(layoutmatrix!=0)
     distances = haversine(regions[['x', 'y']],  cutout.grid[['x', 'y']])
     distances = layoutmatrix.copy(data=distances)
     average_distance = (layoutmatrix.weighted(distances).sum('spatial') /
