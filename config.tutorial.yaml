@@ -57,7 +57,7 @@ atlite:
     europe-2013-era5:
       module: era5
       x: [4., 15.]
-      y: [56., 46.]
+      y: [46., 56.]
       time: ["2013-03", "2013-03"]
 
 renewable:

@@ -62,16 +62,30 @@ electricity:
 atlite:
   nprocesses: 4
   cutouts:
-    # if x, y, time are not specified, geographical bounds and time span are determined from config
+    # use 'base' to determine geographical bounds and time span from config
     base: 
-      module: [sarah, era5] # in priority order, remove 'sarah' if not available  
+      module: era5 # in priority order, remove 'sarah' if not available  
+    europe-2013-era5:
+      module: era5 # in priority order 
+      x: [-12., 35.]
+      y: [33., 72]
+      dx: 0.3
+      dy: 0.3
+      time: ['2013', '2013']
+    europe-2013-sarah:
+      module: [sarah, era5] # in priority order 
+      x: [-12., 45.]
+      y: [33., 65]
+      dx: 0.2
+      dy: 0.2
+      time: ['2013', '2013']
       sarah_interpolate: false
       sarah_dir: 
 
       
 renewable:
   onwind:
-    cutout: base
+    cutout: europe-2013-era5
     resource:
       method: wind
       turbine: Vestas_V112_3MW
@@ -88,7 +102,7 @@ renewable:
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   offwind-ac:
-    cutout: base
+    cutout: europe-2013-era5
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_5MW_offshore
@@ -101,7 +115,7 @@ renewable:
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   offwind-dc:
-    cutout: base
+    cutout: europe-2013-era5
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_5MW_offshore
@@ -115,7 +129,7 @@ renewable:
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   solar:
-    cutout: base
+    cutout: europe-2013-sarah
     resource:
       method: pv
       panel: CSi
@@ -135,7 +149,7 @@ renewable:
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   hydro:
-    cutout: base
+    cutout: europe-2013-era5
     carriers: [ror, PHS, hydro]
     PHS_max_hours: 6
     hydro_max_hours: "energy_capacity_totals_by_country" # one of energy_capacity_totals_by_country, estimate_by_large_installations or a float
