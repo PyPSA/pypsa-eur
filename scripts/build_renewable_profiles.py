@@ -239,7 +239,7 @@ if __name__ == '__main__':
         excluder.add_raster(paths.corine, codes=codes, buffer=buffer, crs=3035)
 
     if "max_depth" in config:
-        func = lambda v: v < -config['max_depth']
+        func = lambda v: v <= -config['max_depth']
         excluder.add_raster(paths.gebco, codes=func, crs=4236, nodata=-1000)
 
     if 'min_shore_distance' in config:
