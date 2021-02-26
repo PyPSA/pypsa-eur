@@ -236,7 +236,7 @@ if __name__ == '__main__':
         excluder.add_raster(paths.corine, codes=codes, invert=True, crs=3035)
     if corine.get("distance", 0.) > 0.:
         codes = corine["distance_grid_codes"]
-        buffer = buffer=corine["distance"]
+        buffer = corine["distance"]
         excluder.add_raster(paths.corine, codes=codes, buffer=buffer, crs=3035)
 
     if "max_depth" in config:
