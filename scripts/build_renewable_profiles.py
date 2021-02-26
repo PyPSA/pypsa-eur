@@ -198,7 +198,7 @@ logger = logging.getLogger(__name__)
 if __name__ == '__main__':
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
-        snakemake = mock_snakemake('build_renewable_profiles', technology='offwind-ac')
+        snakemake = mock_snakemake('build_renewable_profiles', technology='solar')
     configure_logging(snakemake)
     pgb.streams.wrap_stderr()
     paths = snakemake.input
@@ -223,6 +223,7 @@ if __name__ == '__main__':
 
     cutout = atlite.Cutout(paths['cutout'])
     regions = gpd.read_file(paths.regions).set_index('name').rename_axis('bus')
+    buses = regions.index
 
     excluder = atlite.ExclusionContainer(crs=3035, res=100)
 
@@ -266,10 +267,11 @@ if __name__ == '__main__':
 
     potential = capacity_per_sqkm * availability.sum('bus') * area
     func = getattr(cutout, resource.pop('method'))
+    resource['dask_kwargs'] = {'num_workers': nprocesses}
     capacity_factor = correction_factor * func(capacity_factor=True, **resource)
     layout = capacity_factor * area * capacity_per_sqkm
     profile, capacities = func(matrix=availability.stack(spatial=['y','x']),
-                                layout=layout, index=regions.index,
+                                layout=layout, index=buses,
                                 per_unit=True, return_capacity=True, **resource)
 
     logger.info(f"Calculating maximal capacity per bus (method '{p_nom_max_meth}')")
@@ -283,13 +285,27 @@ if __name__ == '__main__':
                         f'(default) or "conservative", not "{p_nom_max_meth}"')
 
 
-    # Determine weighted average distance from substation
+
+    logger.info('Calculate average distances.')
     layoutmatrix = (layout * availability).stack(spatial=['y','x'])
-    layoutmatrix = layoutmatrix.where(layoutmatrix!=0)
-    distances = haversine(regions[['x', 'y']],  cutout.grid[['x', 'y']])
-    distances = layoutmatrix.copy(data=distances)
-    average_distance = (layoutmatrix.weighted(distances).sum('spatial') /
-                        layoutmatrix.sum('spatial'))
+
+    coords = cutout.grid[['x', 'y']]
+    bus_coords = regions[['x', 'y']]
+
+    average_distance = []
+    centre_of_mass = []
+    for bus in buses:
+        row = layoutmatrix.sel(bus=bus).data
+        nz_b = row != 0
+        row = row[nz_b]
+        co = coords[nz_b]
+        distances = haversine(bus_coords.loc[bus],  co)
+        average_distance.append((distances * (row / row.sum())).sum())
+        centre_of_mass.append(co.values.T @ (row / row.sum()))
+
+    average_distance = xr.DataArray(average_distance, [buses])
+    centre_of_mass = xr.DataArray(centre_of_mass, [buses, ('spatial', ['x', 'y'])])
+
 
     ds = xr.merge([(correction_factor * profile).rename('profile'),
                     capacities.rename('weight'),
@@ -297,22 +313,18 @@ if __name__ == '__main__':
                     potential.rename('potential'),
                     average_distance.rename('average_distance')])
 
+
     if snakemake.wildcards.technology.startswith("offwind"):
         logger.info('Calculate underwater fraction of connections.')
         offshore_shape = gpd.read_file(paths['offshore_shapes']).unary_union
         underwater_fraction = []
-        for bus in regions.index:
-            row = layoutmatrix.sel(bus=bus).dropna('spatial')
-            if row.data.sum() == 0:
-                frac = 0
-            else:
-                coords = np.array([[s[1], s[0]] for s in row.spatial.data])
-                centre_of_mass = coords.T @ (row.data / row.data.sum())
-                line = LineString([centre_of_mass, regions.loc[bus, ['x', 'y']]])
-                frac = line.intersection(offshore_shape).length/line.length
+        for bus in buses:
+            p = centre_of_mass.sel(bus=bus).data
+            line = LineString([p, regions.loc[bus, ['x', 'y']]])
+            frac = line.intersection(offshore_shape).length/line.length
             underwater_fraction.append(frac)
 
-        ds['underwater_fraction'] = xr.DataArray(underwater_fraction, [regions.index])
+        ds['underwater_fraction'] = xr.DataArray(underwater_fraction, [buses])
 
     # select only buses with some capacity and minimal capacity factor
     ds = ds.sel(bus=((ds['profile'].mean('time') > config.get('min_p_max_pu', 0.)) &
