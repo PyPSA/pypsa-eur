@@ -14,6 +14,7 @@ dependencies:
 
   - pypsa>=0.17.1 
   - atlite>=0.2.1
+  - xarray==0.16.1 #temporary for atlite 0.2.1
 
   # Dependencies of the workflow itself
   - xlrd
