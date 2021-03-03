@@ -260,7 +260,7 @@ if __name__ == '__main__':
     else:
         availability = cutout.availabilitymatrix(regions, excluder, **kwargs)
 
-    area = cutout.grid.to_crs({'proj': 'cea'}).area / 1e6
+    area = cutout.grid.to_crs(3035).area / 1e6
     area = xr.DataArray(area.values.reshape(cutout.shape),
                         [cutout.coords['y'], cutout.coords['x']])
 
