@@ -60,7 +60,6 @@ Inputs
     **Source:** `GEBCO <https://www.gebco.net/data_and_products/images/gebco_2019_grid_image.jpg>`_
 
 - ``resources/natura.tiff``: confer :ref:`natura`
-- ``resources/ohshore.tiff``: confer :ref:`onshore`
 - ``resources/offshore_shapes.geojson``: confer :ref:`shapes`
 - ``resources/regions_onshore.geojson``: (if not offshore wind), confer :ref:`busregions`
 - ``resources/regions_offshore.geojson``: (if offshore wind), :ref:`busregions`

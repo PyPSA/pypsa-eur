@@ -389,29 +389,3 @@ rule plot_p_nom_max:
     log: "logs/plot_p_nom_max/elec_s{simpl}_{clusts}_{techs}_{country}_{ext}.log"
     script: "scripts/plot_p_nom_max.py"
 
-
-rule build_country_flh:
-    input:
-        base_network="networks/base.nc",
-        corine="data/bundle/corine/g250_clc06_V18_5.tif",
-        natura="resources/natura.tiff",
-        gebco=lambda w: ("data/bundle/GEBCO_2014_2D.nc"
-                         if "max_depth" in config["renewable"][w.technology].keys()
-                         else []),
-        country_shapes='resources/country_shapes.geojson',
-        offshore_shapes='resources/offshore_shapes.geojson',
-        pietzker="data/pietzker2014.xlsx",
-        regions=lambda w: ("resources/country_shapes.geojson"
-                           if w.technology in ('onwind', 'solar')
-                           else "resources/offshore_shapes.geojson"),
-        cutout=lambda w: "cutouts/" + config["renewable"][w.technology]['cutout']
-    output:
-        area="resources/country_flh_area_{technology}.csv",
-        aggregated="resources/country_flh_aggregated_{technology}.csv",
-        uncorrected="resources/country_flh_uncorrected_{technology}.csv",
-        plot="resources/country_flh_{technology}.pdf",
-        exclusion=directory("resources/country_exclusion_{technology}")
-    log: "logs/build_country_flh_{technology}.log"
-    resources: mem=10000
-    benchmark: "benchmarks/build_country_flh_{technology}"
-    script: "scripts/build_country_flh.py"
