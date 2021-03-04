@@ -1157,6 +1157,13 @@ def add_land_transport(network):
                      carrier="land transport oil",
                      p_set=ice_share/options['transport_internal_combustion_efficiency']*transport[nodes])
 
+        co2 = ice_share/options['transport_internal_combustion_efficiency']*transport[nodes].sum().sum()/8760.*costs.at["oil",'CO2 intensity']
+
+        network.madd("Load",
+                     ["land transport oil emissions"],
+                     bus="co2 atmosphere",
+                     carrier="land transport oil emissions",
+                     p_set=-co2)
 
 
 def add_heat(network):
@@ -1906,7 +1913,7 @@ if __name__ == "__main__":
                         floor_area = "resources/floor_area_{network}_s{simpl}_{clusters}.csv"
             ),
             output=['results/version-cb48be3/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{planning_horizons}.nc']
-    
+
         )
         import yaml
         with open('config.yaml', encoding='utf8') as f:
