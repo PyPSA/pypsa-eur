@@ -21,7 +21,7 @@ Top-level configuration
    :lines: 5-12,20,27-34
 
 .. csv-table::
-   :header-rows: 1   
+   :header-rows: 1
    :widths: 25,7,22,30
    :file: configtables/toplevel.csv
 
