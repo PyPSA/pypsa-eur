@@ -11,8 +11,9 @@ Release Notes
 Upcoming Release
 ================
 
-* Switch to new ``atlite`` version ``v0.2.1``. The version upgrade comes along with significant speed up for the rule ``build_renewable_profiles.py`` (~factor 2). A lot of the code which calculated the landuse availability is now outsourced and does not rely on ``glaes``, ``geokit`` anymore. This facilitates the environment building and version compatibility of ``gdal``, ``libgdal`` with other packages.     
-Also rule and script `build_country_flh` are removed as they're no longer used or maintained.
+* Switch to new major release, ``>=v0.2.1`` of ``atlite``.  The version upgrade comes along with significant speed up for the rule ``build_renewable_profiles.py`` (~factor 2). A lot of the code which calculated the landuse availability is now outsourced and does not rely on ``glaes``, ``geokit`` anymore. This facilitates the environment building and version compatibility of ``gdal``, ``libgdal`` with other packages. 
+* The minimum python version was set to ``3.8``.
+* The rule and script ``build_country_flh`` are removed as they're no longer used or maintained.
 
 PyPSA-Eur 0.3.0 (7th December 2020)
 ==================================
