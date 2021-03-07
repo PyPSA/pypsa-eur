@@ -10,7 +10,7 @@ Release Notes
 
 Upcoming Release
 ================
-
+* added cost parameters for gas powerplants
 
 PyPSA-Eur 0.3.0 (7th December 2020)
 ==================================

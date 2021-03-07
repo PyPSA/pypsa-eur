@@ -51,7 +51,7 @@ electricity:
 
   powerplants_filter: false # use pandas query strings here, e.g. Country not in ['Germany']
   custom_powerplants: false # use pandas query strings here, e.g. Country in ['Germany']
-  conventional_carriers: [nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
+  conventional_carriers: [nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass, gas]
   renewable_capacities_from_OPSD: [] # onwind, offwind, solar
 
   # estimate_renewable_capacities_from_capacity_stats:
