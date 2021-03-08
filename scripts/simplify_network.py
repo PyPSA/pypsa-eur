@@ -179,13 +179,21 @@ def _compute_connection_costs_to_bus(n, busmap, connection_costs_per_link=None, 
 
 
 def _adjust_capital_costs_using_connection_costs(n, connection_costs_to_bus):
+    addedCosts = list()
     for tech in connection_costs_to_bus:
         tech_b = n.generators.carrier == tech
         costs = n.generators.loc[tech_b, "bus"].map(connection_costs_to_bus[tech]).loc[lambda s: s>0]
         if not costs.empty:
             n.generators.loc[costs.index, "capital_cost"] += costs
+            cost_strings = []
+            for b, d in costs.iteritems():
+                cost_strings.append("{:.0f} Eur/MW/a for `{}`".format(d, b))
+                addedCosts.append((b, d))
             logger.info("Displacing {} generator(s) and adding connection costs to capital_costs: {} "
-                        .format(tech, ", ".join("{:.0f} Eur/MW/a for `{}`".format(d, b) for b, d in costs.iteritems())))
+                        .format(tech, ", ".join(cost_strings)))
+
+    addedCosts_df = pd.DataFrame(data=addedCosts, columns=["buses", "costs"])
+    addedCosts_df.to_csv("resources/addedCosts.csv", index=False)
 
 
 def _aggregate_and_move_components(n, busmap, connection_costs_to_bus, aggregate_one_ports={"Load", "StorageUnit"}):
