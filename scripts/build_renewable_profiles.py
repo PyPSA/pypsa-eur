@@ -215,10 +215,6 @@ if __name__ == '__main__':
     if correction_factor != 1.:
         logger.info(f'correction_factor is set as {correction_factor}')
 
-    if not config.get('keep_all_available_areas', True):
-        logger.warning("Argument `keep_all_available_areas` is ignored. "
-                       "Continue with keeping all areas.")
-
 
     cutout = atlite.Cutout(paths['cutout'])
     regions = gpd.read_file(paths.regions).set_index('name').rename_axis('bus')
