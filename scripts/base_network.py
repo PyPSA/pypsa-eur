@@ -434,7 +434,7 @@ def _set_countries_and_substations(n):
 
     c_nan_b = buses.country.isnull()
     if c_nan_b.sum() > 0:
-        c_tag = get_country(buses.loc[c_nan_b])
+        c_tag = _get_country(buses.loc[c_nan_b])
         c_tag.loc[~c_tag.isin(countries)] = np.nan
         n.buses.loc[c_nan_b, 'country'] = c_tag
 

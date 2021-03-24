@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import pandas as pd
+import numpy as np
 from pathlib import Path
 
 
