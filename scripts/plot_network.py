@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """
 Plots map with pie charts and cost box bar charts.
 
@@ -15,29 +19,23 @@ Description
 
 """
 
-import pypsa
-
-from _helpers import load_network, aggregate_p, aggregate_costs
-from vresutils import plot as vplot
-
-import os
-import pypsa
-import pandas as pd
-import geopandas as gpd
-import numpy as np
-from itertools import product, chain
-from six.moves import map, zip
-from six import itervalues, iterkeys
-from collections import OrderedDict as odict
 import logging
+from _helpers import (load_network_for_plots, aggregate_p, aggregate_costs,
+                      configure_logging)
+
+import pandas as pd
+import numpy as np
+from six.moves import zip
 
 import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from matplotlib.patches import Circle, Ellipse
 from matplotlib.legend_handler import HandlerPatch
-import seaborn as sns
 to_rgba = mpl.colors.colorConverter.to_rgba
+
+logger = logging.getLogger(__name__)
+
 
 def make_handler_map_to_scale_circles_as_in(ax, dont_resize_actively=False):
     fig = ax.get_figure()
@@ -61,8 +59,10 @@ def make_handler_map_to_scale_circles_as_in(ax, dont_resize_actively=False):
         return e
     return {Circle: HandlerPatch(patch_func=legend_circle_handler)}
 
+
 def make_legend_circles_for(sizes, scale=1.0, **kw):
     return [Circle((0,0), radius=(s/scale)**0.5, **kw) for s in sizes]
+
 
 def set_plot_style():
     plt.style.use(['classic', 'seaborn-white',
@@ -73,8 +73,8 @@ def set_plot_style():
                     'legend.fontsize': 'medium',
                     'lines.linewidth': 1.5,
                     'pdf.fonttype': 42,
-                    # 'font.family': 'Times New Roman'
                 }])
+
 
 def plot_map(n, ax=None, attribute='p_nom', opts={}):
     if ax is None:
@@ -82,7 +82,7 @@ def plot_map(n, ax=None, attribute='p_nom', opts={}):
 
     ## DATA
     line_colors = {'cur': "purple",
-                   'exp': to_rgba("red", 0.7)}
+                   'exp': mpl.colors.rgb2hex(to_rgba("red", 0.7), True)}
     tech_colors = opts['tech_colors']
 
     if attribute == 'p_nom':
@@ -92,7 +92,7 @@ def plot_map(n, ax=None, attribute='p_nom', opts={}):
         line_widths_exp = dict(Line=n.lines.s_nom_opt, Link=n.links.p_nom_opt)
         line_widths_cur = dict(Line=n.lines.s_nom_min, Link=n.links.p_nom_min)
     else:
-        raise 'plotting of {} has not been implemented yet'.format(plot)
+        raise 'plotting of {} has not been implemented yet'.format(attribute)
 
 
     line_colors_with_alpha = \
@@ -118,15 +118,10 @@ def plot_map(n, ax=None, attribute='p_nom', opts={}):
            bus_sizes=0,
            bus_colors=tech_colors,
            boundaries=map_boundaries,
-           geomap=True,   # TODO : Turn to False, after the release of PyPSA 0.14.2 (refer to https://github.com/PyPSA/PyPSA/issues/75)
+           geomap=False,
            ax=ax)
     ax.set_aspect('equal')
     ax.axis('off')
-
-    # x1, y1, x2, y2 = map_boundaries
-    # ax.set_xlim(x1, x2)
-    # ax.set_ylim(y1, y2)
-
 
     # Rasterize basemap
     # TODO : Check if this also works with cartopy
@@ -140,11 +135,11 @@ def plot_map(n, ax=None, attribute='p_nom', opts={}):
         handles.append(plt.Line2D([0],[0],color=line_colors['exp'],
                                 linewidth=s*1e3/linewidth_factor))
         labels.append("{} GW".format(s))
-    l1 = l1_1 = ax.legend(handles, labels,
-                loc="upper left", bbox_to_anchor=(0.24, 1.01),
-                frameon=False,
-                labelspacing=0.8, handletextpad=1.5,
-                title='Transmission Exist./Exp.             ')
+    l1_1 = ax.legend(handles, labels,
+                     loc="upper left", bbox_to_anchor=(0.24, 1.01),
+                     frameon=False,
+                     labelspacing=0.8, handletextpad=1.5,
+                     title='Transmission Exist./Exp.             ')
     ax.add_artist(l1_1)
 
     handles = []
@@ -180,13 +175,9 @@ def plot_map(n, ax=None, attribute='p_nom', opts={}):
 
     return fig
 
-#n = load_network(snakemake.input.network, opts, combine_hydro_ps=False)
-
 
 def plot_total_energy_pie(n, ax=None):
-    """Add total energy pie plot"""
-    if ax is None:
-        ax = plt.gca()
+    if ax is None: ax = plt.gca()
 
     ax.set_title('Energy per technology', fontdict=dict(fontsize="medium"))
 
@@ -194,21 +185,20 @@ def plot_total_energy_pie(n, ax=None):
 
     patches, texts, autotexts = ax.pie(e_primary,
         startangle=90,
-        labels = e_primary.rename(opts['nice_names_n']).index,
+        labels = e_primary.rename(opts['nice_names']).index,
         autopct='%.0f%%',
         shadow=False,
-            colors = [tech_colors[tech] for tech in e_primary.index])
+        colors = [opts['tech_colors'][tech] for tech in e_primary.index])
     for t1, t2, i in zip(texts, autotexts, e_primary.index):
         if e_primary.at[i] < 0.04 * e_primary.sum():
             t1.remove()
             t2.remove()
 
 def plot_total_cost_bar(n, ax=None):
-    """Add average system cost bar plot"""
-    if ax is None:
-        ax = plt.gca()
+    if ax is None: ax = plt.gca()
 
     total_load = (n.snapshot_weightings * n.loads_t.p.sum(axis=1)).sum()
+    tech_colors = opts['tech_colors']
 
     def split_costs(n):
         costs = aggregate_costs(n).reset_index(level=0, drop=True)
@@ -219,13 +209,15 @@ def plot_total_cost_bar(n, ax=None):
     costs, costs_cap_ex, costs_cap_new, costs_marg = split_costs(n)
 
     costs_graph = pd.DataFrame(dict(a=costs.drop('load', errors='ignore')),
-                            index=['AC-AC', 'AC line', 'onwind', 'offwind-ac', 'offwind-dc', 'solar', 'OCGT','CCGT', 'battery', 'H2']).dropna()
+                            index=['AC-AC', 'AC line', 'onwind', 'offwind-ac',
+                                   'offwind-dc', 'solar', 'OCGT','CCGT', 'battery', 'H2']).dropna()
     bottom = np.array([0., 0.])
     texts = []
 
     for i,ind in enumerate(costs_graph.index):
         data = np.asarray(costs_graph.loc[ind])/total_load
-        ax.bar([0.5], data, bottom=bottom, color=tech_colors[ind], width=0.7, zorder=-1)
+        ax.bar([0.5], data, bottom=bottom, color=tech_colors[ind],
+               width=0.7, zorder=-1)
         bottom_sub = bottom
         bottom = bottom+data
 
@@ -241,33 +233,23 @@ def plot_total_cost_bar(n, ax=None):
         if abs(data[-1]) < 5:
             continue
 
-        text = ax.text(1.1,(bottom-0.5*data)[-1]-3,opts['nice_names_n'].get(ind,ind))
+        text = ax.text(1.1,(bottom-0.5*data)[-1]-3,opts['nice_names'].get(ind,ind))
         texts.append(text)
 
     ax.set_ylabel("Average system cost [Eur/MWh]")
-    ax.set_ylim([0,80]) # opts['costs_max']])
-    ax.set_xlim([0,1])
-    #ax.set_xticks([0.5])
-    ax.set_xticklabels([]) #["w/o\nEp", "w/\nEp"])
+    ax.set_ylim([0, opts.get('costs_max', 80)])
+    ax.set_xlim([0, 1])
+    ax.set_xticklabels([])
     ax.grid(True, axis="y", color='k', linestyle='dotted')
 
 
 if __name__ == "__main__":
     if 'snakemake' not in globals():
-        from vresutils.snakemake import MockSnakemake, Dict
-        from snakemake.rules import expand
-
-        snakemake = Dict()
-        snakemake = MockSnakemake(
-            path='..',
-            wildcards=dict(network='elec', simpl='', clusters='90', lv='1.25', opts='Co2L-3H', attr='p_nom', ext="pdf"),
-            input=dict(network="results/networks/{network}_s{simpl}_{clusters}_lv{lv}_{opts}.nc",
-                    tech_costs="data/costs.csv"),
-            output=dict(only_map="results/plots/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{attr}.{ext}",
-                        ext="results/plots/{network}_s{simpl}_{clusters}_lv{lv}_{opts}_{attr}_ext.{ext}")
-        )
-
-    logging.basicConfig(level=snakemake.config['logging_level'])
+        from _helpers import mock_snakemake
+        snakemake = mock_snakemake('plot_network', network='elec', simpl='',
+                                  clusters='5', ll='copt', opts='Co2L-24H',
+                                  attr='p_nom', ext="pdf")
+    configure_logging(snakemake)
 
     set_plot_style()
 
@@ -275,23 +257,20 @@ if __name__ == "__main__":
     map_figsize = opts['map']['figsize']
     map_boundaries = opts['map']['boundaries']
 
-    n = load_network(snakemake.input.network, snakemake.input.tech_costs, snakemake.config)
+    n = load_network_for_plots(snakemake.input.network, snakemake.input.tech_costs, snakemake.config)
 
     scenario_opts = snakemake.wildcards.opts.split('-')
 
     fig, ax = plt.subplots(figsize=map_figsize, subplot_kw={"projection": ccrs.PlateCarree()})
     plot_map(n, ax, snakemake.wildcards.attr, opts)
 
-    fig.savefig(snakemake.output.only_map, dpi=150,
-                bbox_inches='tight', bbox_extra_artists=[l1,l2,l3])
+    fig.savefig(snakemake.output.only_map, dpi=150, bbox_inches='tight')
 
     ax1 = fig.add_axes([-0.115, 0.625, 0.2, 0.2])
     plot_total_energy_pie(n, ax1)
 
     ax2 = fig.add_axes([-0.075, 0.1, 0.1, 0.45])
     plot_total_cost_bar(n, ax2)
-
-    #fig.tight_layout()
 
     ll = snakemake.wildcards.ll
     ll_type = ll[0]
@@ -301,5 +280,4 @@ if __name__ == "__main__":
     fig.suptitle('Expansion to {amount} {label} at {clusters} clusters'
                 .format(amount=amnt, label=lbl, clusters=snakemake.wildcards.clusters))
 
-    fig.savefig(snakemake.output.ext, transparent=True,
-                bbox_inches='tight', bbox_extra_artists=[l1, l2, l3, ax1, ax2])
+    fig.savefig(snakemake.output.ext, transparent=True, bbox_inches='tight')

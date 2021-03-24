@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # coding: utf-8
 """
 Lifts electrical transmission network to a single 380 kV voltage layer,
@@ -32,7 +36,7 @@ Relevant Settings
         solver:
             name:
 
-.. seealso:: 
+.. seealso::
     Documentation of the configuration file ``config.yaml`` at
     :ref:`costs_cf`, :ref:`electricity_cf`, :ref:`renewable_cf`,
     :ref:`lines_cf`, :ref:`links_cf`, :ref:`solving_cf`
@@ -43,23 +47,23 @@ Inputs
 - ``data/costs.csv``: The database of cost assumptions for all included technologies for specific years from various sources; e.g. discount rate, lifetime, investment (CAPEX), fixed operation and maintenance (FOM), variable operation and maintenance (VOM), fuel costs, efficiency, carbon-dioxide intensity.
 - ``resources/regions_onshore.geojson``: confer :ref:`busregions`
 - ``resources/regions_offshore.geojson``: confer :ref:`busregions`
-- ``networks/{network}.nc``: confer :ref:`electricity`
+- ``networks/elec.nc``: confer :ref:`electricity`
 
 Outputs
 -------
 
-- ``resources/regions_onshore_{network}_s{simpl}.geojson``:
+- ``resources/regions_onshore_elec_s{simpl}.geojson``:
 
     .. image:: ../img/regions_onshore_elec_s.png
             :scale: 33 %
 
-- ``resources/regions_offshore_{network}_s{simpl}.geojson``:
+- ``resources/regions_offshore_elec_s{simpl}.geojson``:
 
     .. image:: ../img/regions_offshore_elec_s  .png
             :scale: 33 %
 
-- ``resources/clustermaps_{network}_s{simpl}.h5``: Mapping of buses from ``networks/elec.nc`` to ``networks/elec_s{simpl}.nc``; has keys ['/busmap_s']
-- ``networks/{network}_s{simpl}.nc``:
+- ``resources/busmap_elec_s{simpl}.csv``: Mapping of buses from ``networks/elec.nc`` to ``networks/elec_s{simpl}.nc``;
+- ``networks/elec_s{simpl}.nc``:
 
     .. image:: ../img/elec_s.png
         :scale: 33 %
@@ -78,21 +82,16 @@ The rule :mod:`simplify_network` does up to four things:
 4. Optionally, if an integer were provided for the wildcard ``{simpl}`` (e.g. ``networks/elec_s500.nc``), the network is clustered to this number of clusters with the routines from the ``cluster_network`` rule with the function ``cluster_network.cluster(...)``. This step is usually skipped!
 """
 
-import pandas as pd
-idx = pd.IndexSlice
-
 import logging
-logger = logging.getLogger(__name__)
+from _helpers import configure_logging
 
-import os
-import re
+from cluster_network import clustering_for_n_clusters, cluster_regions
+from add_electricity import load_costs
+
+import pandas as pd
 import numpy as np
 import scipy as sp
 from scipy.sparse.csgraph import connected_components, dijkstra
-import xarray as xr
-import geopandas as gpd
-import shapely
-import networkx as nx
 
 from six import iteritems
 from six.moves import reduce
@@ -101,8 +100,8 @@ import pypsa
 from pypsa.io import import_components_from_dataframe, import_series_from_dataframe
 from pypsa.networkclustering import busmap_by_stubs, aggregategenerators, aggregateoneport
 
-from cluster_network import clustering_for_n_clusters, cluster_regions
-from add_electricity import load_costs
+logger = logging.getLogger(__name__)
+
 
 def simplify_network_to_380(n):
     ## All goes to v_nom == 380
@@ -139,6 +138,7 @@ def simplify_network_to_380(n):
 
     return n, trafo_map
 
+
 def _prepare_connection_costs_per_link(n):
     if n.links.empty: return {}
 
@@ -156,6 +156,7 @@ def _prepare_connection_costs_per_link(n):
             )
 
     return connection_costs_per_link
+
 
 def _compute_connection_costs_to_bus(n, busmap, connection_costs_per_link=None, buses=None):
     if connection_costs_per_link is None:
@@ -176,6 +177,7 @@ def _compute_connection_costs_to_bus(n, busmap, connection_costs_per_link=None, 
 
     return connection_costs_to_bus
 
+
 def _adjust_capital_costs_using_connection_costs(n, connection_costs_to_bus):
     for tech in connection_costs_to_bus:
         tech_b = n.generators.carrier == tech
@@ -184,6 +186,7 @@ def _adjust_capital_costs_using_connection_costs(n, connection_costs_to_bus):
             n.generators.loc[costs.index, "capital_cost"] += costs
             logger.info("Displacing {} generator(s) and adding connection costs to capital_costs: {} "
                         .format(tech, ", ".join("{:.0f} Eur/MW/a for `{}`".format(d, b) for b, d in costs.iteritems())))
+
 
 def _aggregate_and_move_components(n, busmap, connection_costs_to_bus, aggregate_one_ports={"Load", "StorageUnit"}):
     def replace_components(n, c, df, pnl):
@@ -208,6 +211,7 @@ def _aggregate_and_move_components(n, busmap, connection_costs_to_bus, aggregate
     for c in n.branch_components:
         df = n.df(c)
         n.mremove(c, df.index[df.bus0.isin(buses_to_del) | df.bus1.isin(buses_to_del)])
+
 
 def simplify_links(n):
     ## Complex multi-node links are folded into end-points
@@ -304,6 +308,7 @@ def simplify_links(n):
     _aggregate_and_move_components(n, busmap, connection_costs_to_bus)
     return n, busmap
 
+
 def remove_stubs(n):
     logger.info("Removing stubs")
 
@@ -315,8 +320,9 @@ def remove_stubs(n):
 
     return n, busmap
 
+
 def cluster(n, n_clusters):
-    logger.info("Clustering to {} buses".format(n_clusters))
+    logger.info(f"Clustering to {n_clusters} buses")
 
     renewable_carriers = pd.Index([tech
                                     for tech in n.generators.carrier.unique()
@@ -330,33 +336,17 @@ def cluster(n, n_clusters):
     potential_mode = (consense(pd.Series([snakemake.config['renewable'][tech]['potential']
                                             for tech in renewable_carriers]))
                         if len(renewable_carriers) > 0 else 'conservative')
-    clustering = clustering_for_n_clusters(n, n_clusters, potential_mode=potential_mode,
+    clustering = clustering_for_n_clusters(n, n_clusters, custom_busmap=False, potential_mode=potential_mode,
                                            solver_name=snakemake.config['solving']['solver']['name'])
 
     return clustering.network, clustering.busmap
 
-if __name__ == "__main__":
-    # Detect running outside of snakemake and mock snakemake for testing
-    if 'snakemake' not in globals():
-        from vresutils.snakemake import MockSnakemake, Dict
-        snakemake = MockSnakemake(
-            path='..',
-            wildcards=Dict(simpl='1024', network='elec'),
-            input=Dict(
-                network='networks/{network}.nc',
-                tech_costs="data/costs.csv",
-                regions_onshore="resources/regions_onshore.geojson",
-                regions_offshore="resources/regions_offshore.geojson"
-            ),
-            output=Dict(
-                network='networks/{network}_s{simpl}.nc',
-                regions_onshore="resources/regions_onshore_{network}_s{simpl}.geojson",
-                regions_offshore="resources/regions_offshore_{network}_s{simpl}.geojson",
-                clustermaps='resources/clustermaps_{network}_s{simpl}.h5'
-            )
-        )
 
-    logging.basicConfig(level=snakemake.config['logging_level'])
+if __name__ == "__main__":
+    if 'snakemake' not in globals():
+        from _helpers import mock_snakemake
+        snakemake = mock_snakemake('simplify_network', simpl='', network='elec')
+    configure_logging(snakemake)
 
     n = pypsa.Network(snakemake.input.network)
 
@@ -374,8 +364,7 @@ if __name__ == "__main__":
 
     n.export_to_netcdf(snakemake.output.network)
 
-    busemap_s = reduce(lambda x, y: x.map(y), busmaps[1:], busmaps[0])
-    with pd.HDFStore(snakemake.output.clustermaps, mode='w') as store:
-        store.put('busmap_s', busemap_s, format="table", index=False)
+    busmap_s = reduce(lambda x, y: x.map(y), busmaps[1:], busmaps[0])
+    busmap_s.to_csv(snakemake.output.busmap)
 
     cluster_regions(busmaps, snakemake.input, snakemake.output)

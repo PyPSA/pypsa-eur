@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """
 Create cutouts with `atlite <https://atlite.readthedocs.io/en/latest/>`_.
 
@@ -20,7 +24,7 @@ Relevant Settings
         cutouts:
             {cutout}:
 
-.. seealso:: 
+.. seealso::
     Documentation of the configuration file ``config.yaml`` at
     :ref:`atlite_cf`
 
@@ -74,11 +78,11 @@ Outputs
     ===================  ==========  ==========  =========================================================
 
     .. image:: ../img/era5.png
-        :scale: 40 %    
-    
+        :scale: 40 %
+
 A **SARAH-2 cutout** can be used to amend the fields ``temperature``, ``influx_toa``, ``influx_direct``, ``albedo``,
 ``influx_diffuse`` of ERA5 using satellite-based radiation observations.
-    
+
     .. image:: ../img/sarah.png
         :scale: 40 %
 
@@ -86,13 +90,20 @@ Description
 -----------
 
 """
+
+import logging
+from _helpers import configure_logging
+
 import os
 import atlite
-import logging
+
 logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
-    logging.basicConfig(level=snakemake.config['logging_level'])
+    if 'snakemake' not in globals():
+        from _helpers import mock_snakemake
+        snakemake = mock_snakemake('build_cutout', cutout='europe-2013-era5')
+    configure_logging(snakemake)
 
     cutout_params = snakemake.config['atlite']['cutouts'][snakemake.wildcards.cutout]
     for p in ('xs', 'ys', 'years', 'months'):
@@ -103,4 +114,6 @@ if __name__ == "__main__":
                         cutout_dir=os.path.dirname(snakemake.output[0]),
                         **cutout_params)
 
-    cutout.prepare(nprocesses=snakemake.config['atlite'].get('nprocesses', 4))
+    nprocesses = snakemake.config['atlite'].get('nprocesses', 4)
+
+    cutout.prepare(nprocesses=nprocesses)

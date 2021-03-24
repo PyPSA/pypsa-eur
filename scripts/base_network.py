@@ -1,6 +1,10 @@
+# SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # coding: utf-8
 """
-Creates the network topology from the ENTSO-E map extracts as a PyPSA network.
+Creates the network topology from a `ENTSO-E map extract <https://github.com/PyPSA/GridKit/tree/master/entsoe>`_ (January 2020) as a PyPSA network.
 
 Relevant Settings
 -----------------
@@ -37,7 +41,7 @@ Relevant Settings
 Inputs
 ------
 
-- ``data/entsoegridkit``:  Extract from the geographical vector data of the online `ENTSO-E Interactive Map <https://www.entsoe.eu/data/map/>`_ by the `GridKit <https://github.com/pypsa/gridkit>`_ toolkit.
+- ``data/entsoegridkit``:  Extract from the geographical vector data of the online `ENTSO-E Interactive Map <https://www.entsoe.eu/data/map/>`_ by the `GridKit <https://github.com/pypsa/gridkit>`_ toolkit dating back to January 2020.
 - ``data/parameter_corrections.yaml``: Corrections for ``data/entsoegridkit``
 - ``data/links_p_nom.csv``: confer :ref:`links`
 - ``data/links_tyndp.csv``: List of projects in the `TYNDP 2018 <https://tyndp.entsoe.eu/tyndp2018/>`_ that are at least *in permitting* with fields for start- and endpoint (names and coordinates), length, capacity, construction status, and project reference ID.
@@ -58,11 +62,17 @@ Description
 
 """
 
+import logging
+from _helpers import configure_logging
+
+import pypsa
 import yaml
 import pandas as pd
 import geopandas as gpd
 import numpy as np
-import scipy as sp, scipy.spatial
+import scipy as sp
+import networkx as nx
+
 from scipy.sparse import csgraph
 from six import iteritems
 from itertools import product
@@ -70,12 +80,8 @@ from itertools import product
 from shapely.geometry import Point, LineString
 import shapely, shapely.prepared, shapely.wkt
 
-import networkx as nx
-
-import logging
 logger = logging.getLogger(__name__)
 
-import pypsa
 
 def _get_oid(df):
     if "tags" in df.columns:
@@ -83,31 +89,29 @@ def _get_oid(df):
     else:
         return pd.Series(np.nan, df.index)
 
-def get_country(df):
+
+def _get_country(df):
     if "tags" in df.columns:
         return df.tags.str.extract('"country"=>"([A-Z]{2})"', expand=False)
     else:
         return pd.Series(np.nan, df.index)
 
+
 def _find_closest_links(links, new_links, distance_upper_bound=1.5):
-    tree = sp.spatial.KDTree(np.vstack([
-        new_links[['x1', 'y1', 'x2', 'y2']],
-        new_links[['x2', 'y2', 'x1', 'y1']]
-    ]))
+    treecoords = np.asarray([np.asarray(shapely.wkt.loads(s))[[0, -1]].flatten()
+                              for s in links.geometry])
+    querycoords = np.vstack([new_links[['x1', 'y1', 'x2', 'y2']],
+                            new_links[['x2', 'y2', 'x1', 'y1']]])
+    tree = sp.spatial.KDTree(treecoords)
+    dist, ind = tree.query(querycoords, distance_upper_bound=distance_upper_bound)
+    found_b = ind < len(links)
+    found_i = np.arange(len(new_links)*2)[found_b] % len(new_links)
+    return pd.DataFrame(dict(D=dist[found_b],
+                             i=links.index[ind[found_b] % len(links)]),
+                        index=new_links.index[found_i]).sort_values(by='D')\
+                        [lambda ds: ~ds.index.duplicated(keep='first')]\
+                         .sort_index()['i']
 
-    dist, ind = tree.query(
-        np.asarray([np.asarray(shapely.wkt.loads(s))[[0, -1]].flatten()
-                    for s in links.geometry]),
-        distance_upper_bound=distance_upper_bound
-    )
-
-    found_b = ind < 2 * len(new_links)
-    return (
-        pd.DataFrame(dict(D=dist[found_b],
-                          i=new_links.index[ind[found_b] % len(new_links)]),
-                     index=links.index[found_b])
-        .groupby('i').D.idxmin()
-    )
 
 def _load_buses_from_eg():
     buses = (pd.read_csv(snakemake.input.eg_buses, quotechar="'",
@@ -130,6 +134,7 @@ def _load_buses_from_eg():
 
     return pd.DataFrame(buses.loc[buses_in_europe_b & buses_with_v_nom_to_keep_b])
 
+
 def _load_transformers_from_eg(buses):
     transformers = (pd.read_csv(snakemake.input.eg_transformers, quotechar="'",
                                 true_values='t', false_values='f',
@@ -139,6 +144,7 @@ def _load_transformers_from_eg(buses):
     transformers = _remove_dangling_branches(transformers, buses)
 
     return transformers
+
 
 def _load_converters_from_eg(buses):
     converters = (pd.read_csv(snakemake.input.eg_converters, quotechar="'",
@@ -159,6 +165,9 @@ def _load_links_from_eg(buses):
              .set_index('link_id'))
 
     links['length'] /= 1e3
+
+    # hotfix
+    links.loc[links.bus1=='6271', 'bus1'] = '6273'
 
     links = _remove_dangling_branches(links, buses)
 
@@ -198,8 +207,8 @@ def _add_links_from_tyndp(buses, links):
     buses = buses.loc[keep_b['Bus']]
     links = links.loc[keep_b['Link']]
 
-    links_tyndp["j"] = _find_closest_links(links, links_tyndp, distance_upper_bound=0.8)
-    # Corresponds approximately to 60km tolerances
+    links_tyndp["j"] = _find_closest_links(links, links_tyndp, distance_upper_bound=0.20)
+    # Corresponds approximately to 20km tolerances
 
     if links_tyndp["j"].notnull().any():
         logger.info("TYNDP links already in the dataset (skipping): " + ", ".join(links_tyndp.loc[links_tyndp["j"].notnull(), "Name"]))
@@ -216,7 +225,7 @@ def _add_links_from_tyndp(buses, links):
 
     links_tyndp_located_b = links_tyndp["bus0"].notnull() & links_tyndp["bus1"].notnull()
     if not links_tyndp_located_b.all():
-        logger.warn("Did not find connected buses for TYNDP links (skipping): " + ", ".join(links_tyndp.loc[~links_tyndp_located_b, "Name"]))
+        logger.warning("Did not find connected buses for TYNDP links (skipping): " + ", ".join(links_tyndp.loc[~links_tyndp_located_b, "Name"]))
         links_tyndp = links_tyndp.loc[links_tyndp_located_b]
 
     logger.info("Adding the following TYNDP links: " + ", ".join(links_tyndp["Name"]))
@@ -238,6 +247,7 @@ def _add_links_from_tyndp(buses, links):
 
     return buses, links.append(links_tyndp, sort=True)
 
+
 def _load_lines_from_eg(buses):
     lines = (pd.read_csv(snakemake.input.eg_lines, quotechar="'", true_values='t', false_values='f',
                          dtype=dict(line_id='str', bus0='str', bus1='str',
@@ -251,11 +261,13 @@ def _load_lines_from_eg(buses):
 
     return lines
 
+
 def _apply_parameter_corrections(n):
     with open(snakemake.input.parameter_corrections) as f:
         corrections = yaml.safe_load(f)
 
     if corrections is None: return
+
     for component, attrs in iteritems(corrections):
         df = n.df(component)
         oid = _get_oid(df)
@@ -272,6 +284,7 @@ def _apply_parameter_corrections(n):
                 inds = r.index.intersection(df.index)
                 df.loc[inds, attr] = r[inds].astype(df[attr].dtype)
 
+
 def _set_electrical_parameters_lines(lines):
     v_noms = snakemake.config['electricity']['voltages']
     linetypes = snakemake.config['lines']['types']
@@ -283,11 +296,13 @@ def _set_electrical_parameters_lines(lines):
 
     return lines
 
+
 def _set_lines_s_nom_from_linetypes(n):
     n.lines['s_nom'] = (
         np.sqrt(3) * n.lines['type'].map(n.line_types.i_nom) *
         n.lines['v_nom'] * n.lines.num_parallel
     )
+
 
 def _set_electrical_parameters_links(links):
     if links.empty: return links
@@ -297,14 +312,24 @@ def _set_electrical_parameters_links(links):
     links['p_min_pu'] = -p_max_pu
 
     links_p_nom = pd.read_csv(snakemake.input.links_p_nom)
-    links_p_nom["j"] = _find_closest_links(links, links_p_nom)
+
+    # filter links that are not in operation anymore
+    removed_b = links_p_nom.Remarks.str.contains('Shut down|Replaced', na=False)
+    links_p_nom = links_p_nom[~removed_b]
+
+    # find closest link for all links in links_p_nom
+    links_p_nom['j'] = _find_closest_links(links, links_p_nom)
+
+    links_p_nom = links_p_nom.groupby(['j'],as_index=False).agg({'Power (MW)': 'sum'})
 
     p_nom = links_p_nom.dropna(subset=["j"]).set_index("j")["Power (MW)"]
+
     # Don't update p_nom if it's already set
     p_nom_unset = p_nom.drop(links.index[links.p_nom.notnull()], errors='ignore') if "p_nom" in links else p_nom
     links.loc[p_nom_unset.index, "p_nom"] = p_nom_unset
 
     return links
+
 
 def _set_electrical_parameters_converters(converters):
     p_max_pu = snakemake.config['links'].get('p_max_pu', 1.)
@@ -319,6 +344,7 @@ def _set_electrical_parameters_converters(converters):
 
     return converters
 
+
 def _set_electrical_parameters_transformers(transformers):
     config = snakemake.config['transformers']
 
@@ -329,8 +355,10 @@ def _set_electrical_parameters_transformers(transformers):
 
     return transformers
 
+
 def _remove_dangling_branches(branches, buses):
     return pd.DataFrame(branches.loc[branches.bus0.isin(buses.index) & branches.bus1.isin(buses.index)])
+
 
 def _remove_unconnected_components(network):
     _, labels = csgraph.connected_components(network.adjacency_matrix(), directed=False)
@@ -343,6 +371,7 @@ def _remove_unconnected_components(network):
                 .format(len(components_to_remove), components_to_remove.max(), components_to_remove.sum()))
 
     return network[component == component_sizes.index[0]]
+
 
 def _set_countries_and_substations(n):
 
@@ -430,6 +459,7 @@ def _set_countries_and_substations(n):
 
     return buses
 
+
 def _replace_b2b_converter_at_country_border_by_link(n):
     # Affects only the B2B converter in Lithuania at the Polish border at the moment
     buscntry = n.buses.country
@@ -451,7 +481,7 @@ def _replace_b2b_converter_at_country_border_by_link(n):
         if busattr is not None:
             comp, line = next(iter(G[b0][b1]))
             if comp != "Line":
-                logger.warn("Unable to replace B2B `{}` expected a Line, but found a {}"
+                logger.warning("Unable to replace B2B `{}` expected a Line, but found a {}"
                             .format(i, comp))
                 continue
 
@@ -467,6 +497,7 @@ def _replace_b2b_converter_at_country_border_by_link(n):
             logger.info("Replacing B2B converter `{}` together with bus `{}` and line `{}` by an HVDC tie-line {}-{}"
                         .format(i, b0, line, linkcntry.at[i], buscntry.at[b1]))
 
+
 def _set_links_underwater_fraction(n):
     if n.links.empty: return
 
@@ -477,6 +508,7 @@ def _set_links_underwater_fraction(n):
         links = gpd.GeoSeries(n.links.geometry.dropna().map(shapely.wkt.loads))
         n.links['underwater_fraction'] = links.intersection(offshore_shape).length / links.length
 
+
 def _adjust_capacities_of_under_construction_branches(n):
     lines_mode = snakemake.config['lines'].get('under_construction', 'undef')
     if lines_mode == 'zero':
@@ -485,7 +517,7 @@ def _adjust_capacities_of_under_construction_branches(n):
     elif lines_mode == 'remove':
         n.mremove("Line", n.lines.index[n.lines.under_construction])
     elif lines_mode != 'keep':
-        logger.warn("Unrecognized configuration for `lines: under_construction` = `{}`. Keeping under construction lines.")
+        logger.warning("Unrecognized configuration for `lines: under_construction` = `{}`. Keeping under construction lines.")
 
     links_mode = snakemake.config['links'].get('under_construction', 'undef')
     if links_mode == 'zero':
@@ -493,13 +525,14 @@ def _adjust_capacities_of_under_construction_branches(n):
     elif links_mode == 'remove':
         n.mremove("Link", n.links.index[n.links.under_construction])
     elif links_mode != 'keep':
-        logger.warn("Unrecognized configuration for `links: under_construction` = `{}`. Keeping under construction links.")
+        logger.warning("Unrecognized configuration for `links: under_construction` = `{}`. Keeping under construction links.")
 
     if lines_mode == 'remove' or links_mode == 'remove':
         # We might need to remove further unconnected components
         n = _remove_unconnected_components(n)
 
     return n
+
 
 def base_network():
     buses = _load_buses_from_eg()
@@ -522,7 +555,7 @@ def base_network():
     n.name = 'PyPSA-Eur'
 
     n.set_snapshots(pd.date_range(freq='h', **snakemake.config['snapshots']))
-    n.snapshot_weightings[:] *= 8760./n.snapshot_weightings.sum()
+    n.snapshot_weightings[:] *= 8760. / n.snapshot_weightings.sum()
 
     n.import_components_from_dataframe(buses, "Bus")
     n.import_components_from_dataframe(lines, "Line")
@@ -530,11 +563,11 @@ def base_network():
     n.import_components_from_dataframe(links, "Link")
     n.import_components_from_dataframe(converters, "Link")
 
-    n = _remove_unconnected_components(n)
-
     _set_lines_s_nom_from_linetypes(n)
 
     _apply_parameter_corrections(n)
+
+    n = _remove_unconnected_components(n)
 
     _set_countries_and_substations(n)
 
@@ -547,29 +580,11 @@ def base_network():
     return n
 
 if __name__ == "__main__":
-    # Detect running outside of snakemake and mock snakemake for testing
     if 'snakemake' not in globals():
-        from vresutils.snakemake import MockSnakemake, Dict
-        snakemake = MockSnakemake(
-            path='..',
-            wildcards={},
-            input=Dict(
-                eg_buses='data/entsoegridkit/buses.csv',
-                eg_lines='data/entsoegridkit/lines.csv',
-                eg_links='data/entsoegridkit/links.csv',
-                eg_converters='data/entsoegridkit/converters.csv',
-                eg_transformers='data/entsoegridkit/transformers.csv',
-                parameter_corrections='data/parameter_corrections.yaml',
-                links_p_nom='data/links_p_nom.csv',
-                links_tyndp='data/links_tyndp.csv',
-                country_shapes='resources/country_shapes.geojson',
-                offshore_shapes='resources/offshore_shapes.geojson',
-                europe_shape='resources/europe_shape.geojson'
-            ),
-            output = ['networks/base.nc']
-        )
-
-    logging.basicConfig(level=snakemake.config['logging_level'])
+        from _helpers import mock_snakemake
+        snakemake = mock_snakemake('base_network')
+    configure_logging(snakemake)
 
     n = base_network()
+
     n.export_to_netcdf(snakemake.output[0])

@@ -1,4 +1,9 @@
 #!/usr/bin/env python
+
+# SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """Calculates for each network node the
 (i) installable capacity (based on land-use), (ii) the available generation time
 series (based on weather data), and (iii) the average distance from the node for
@@ -35,7 +40,7 @@ Relevant settings
             clip_p_max_pu:
             resource:
 
-.. seealso:: 
+.. seealso::
     Documentation of the configuration file ``config.yaml`` at
     :ref:`snapshots_cf`, :ref:`atlite_cf`, :ref:`renewable_cf`
 
@@ -91,26 +96,31 @@ Outputs
 
     .. image:: ../img/profile_ts.png
         :scale: 33 %
-    
+        :align: center
+
     - **p_nom_max**
 
     .. image:: ../img/p_nom_max_hist.png
         :scale: 33 %
-    
+        :align: center
+
     - **potential**
 
     .. image:: ../img/potential_heatmap.png
         :scale: 33 %
-    
+        :align: center
+
     - **average_distance**
-    
+
     .. image:: ../img/distance_hist.png
         :scale: 33 %
-    
+        :align: center
+
     - **underwater_fraction**
-    
+
     .. image:: ../img/underwater_hist.png
         :scale: 33 %
+        :align: center
 
 Description
 -----------
@@ -129,10 +139,30 @@ cutout grid cell and each node using the `GLAES
 <https://github.com/FZJ-IEK3-VSA/glaes>`_ library. This uses the CORINE land use data,
 Natura2000 nature reserves and GEBCO bathymetry data.
 
+.. image:: ../img/eligibility.png
+    :scale: 50 %
+    :align: center
+
 To compute the layout of generators in each node's Voronoi cell, the
 installable potential in each grid cell is multiplied with the capacity factor
 at each grid cell. This is done since we assume more generators are installed
 at cells with a higher capacity factor.
+
+.. image:: ../img/offwinddc-gridcell.png
+    :scale: 50 %
+    :align: center
+
+.. image:: ../img/offwindac-gridcell.png
+    :scale: 50 %
+    :align: center
+
+.. image:: ../img/onwind-gridcell.png
+    :scale: 50 %
+    :align: center
+
+.. image:: ../img/solar-gridcell.png
+    :scale: 50 %
+    :align: center
 
 This layout is then used to compute the generation availability time series
 from the weather data cutout from ``atlite``.
@@ -150,31 +180,36 @@ node (`p_nom_max`): ``simple`` and ``conservative``:
   reached.
 
 """
-
-import matplotlib.pyplot as plt
+import logging
+from _helpers import configure_logging
 
 import os
 import atlite
+
 import numpy as np
 import xarray as xr
 import pandas as pd
 import multiprocessing as mp
+import matplotlib.pyplot as plt
+import progressbar as pgb
 
-import glaes as gl
-import geokit as gk
-from osgeo import gdal
 from scipy.sparse import csr_matrix, vstack
-
 from pypsa.geo import haversine
 from vresutils import landuse as vlanduse
 from vresutils.array import spdiag
 
-import progressbar as pgb
-import logging
 logger = logging.getLogger(__name__)
 
 bounds = dx = dy = config = paths = gebco = clc = natura = None
+
+
 def init_globals(bounds_xXyY, n_dx, n_dy, n_config, n_paths):
+    # Late import so that the GDAL Context is only created in the new processes
+    global gl, gk, gdal
+    import glaes as gl
+    import geokit as gk
+    from osgeo import gdal as gdal
+
     # global in each process of the multiprocessing.Pool
     global bounds, dx, dy, config, paths, gebco, clc, natura
 
@@ -193,6 +228,7 @@ def init_globals(bounds_xXyY, n_dx, n_dy, n_config, n_paths):
 
     natura = gk.raster.loadRaster(paths["natura"])
 
+
 def downsample_to_coarse_grid(bounds, dx, dy, mask, data):
     # The GDAL warp function with the 'average' resample algorithm needs a band of zero values of at least
     # the size of one coarse cell around the original raster or it produces erroneous results
@@ -203,6 +239,7 @@ def downsample_to_coarse_grid(bounds, dx, dy, mask, data):
     average = bounds.createRaster(dx, dy, dtype=gdal.GDT_Float32)
     assert gdal.Warp(average, padded, resampleAlg='average') == 1, "gdal warp failed: %s" % gdal.GetLastErrorMsg()
     return average
+
 
 def calculate_potential(gid, save_map=None):
     feature = gk.vector.extractFeature(paths["regions"], where=gid)
@@ -238,8 +275,12 @@ def calculate_potential(gid, save_map=None):
 
 
 if __name__ == '__main__':
+    if 'snakemake' not in globals():
+        from _helpers import mock_snakemake
+        snakemake = mock_snakemake('build_renewable_profiles', technology='solar')
+    configure_logging(snakemake)
+
     pgb.streams.wrap_stderr()
-    logging.basicConfig(level=snakemake.config['logging_level'])
 
     config = snakemake.config['renewable'][snakemake.wildcards.technology]
 
@@ -262,6 +303,11 @@ if __name__ == '__main__':
     # mp.set_start_method('spawn')
     with mp.Pool(initializer=init_globals, initargs=(bounds_xXyY, dx, dy, config, paths),
                  maxtasksperchild=20, processes=snakemake.config['atlite'].get('nprocesses', 2)) as pool:
+
+        # The GDAL library creates a GDAL context on module import, which may not be shared over multiple
+        # processes or the PROJ4 library has a hickup, so we import only after forking.
+        import geokit as gk
+
         regions = gk.vector.extractFeatures(paths["regions"], onlyAttr=True)
         buses = pd.Index(regions['name'], name="bus")
         widgets = [
@@ -276,7 +322,8 @@ if __name__ == '__main__':
 
     potentials = config['capacity_per_sqkm'] * vlanduse._cutout_cell_areas(cutout)
     potmatrix = matrix * spdiag(potentials.ravel())
-    potmatrix.data[potmatrix.data < 1.] = 0 # ignore weather cells where only less than 1 MW can be installed
+    if not config.get('keep_all_available_areas', False):
+        potmatrix.data[potmatrix.data < 1.] = 0 # ignore weather cells where only less than 1 MW can be installed
     potmatrix.eliminate_zeros()
 
     resource = config['resource']

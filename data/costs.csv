@@ -16,8 +16,7 @@ lignite,2030,lifetime,40,years,IEA2010
 geothermal,2030,lifetime,40,years,IEA2010
 biomass,2030,lifetime,30,years,ECF2010 in DIW DataDoc http://hdl.handle.net/10419/80348
 oil,2030,lifetime,30,years,ECF2010 in DIW DataDoc http://hdl.handle.net/10419/80348
-onwind,2030,investment,1110,EUR/kWel,DEA https://ens.dk/en/our-services/projections-and-models/technology-data
-onwind-landcosts,2030,investment,200,EUR/kWel,Land costs and compensation payments conservatively estimated based on DEA https://ens.dk/en/our-services/projections-and-models/technology-data
+onwind,2030,investment,1040,EUR/kWel,DEA https://ens.dk/en/our-services/projections-and-models/technology-data
 offwind,2030,investment,1640,EUR/kWel,DEA https://ens.dk/en/our-services/projections-and-models/technology-data
 offwind-ac-station,2030,investment,250,EUR/kWel,DEA https://ens.dk/en/our-services/projections-and-models/technology-data
 offwind-ac-connection-submarine,2030,investment,2685,EUR/MW/km,DEA https://ens.dk/en/our-services/projections-and-models/technology-data
@@ -96,6 +95,12 @@ fuel cell,2030,lifetime,20,years,NREL http://www.nrel.gov/docs/fy09osti/45873.pd
 fuel cell,2030,efficiency,0.58,per unit,NREL http://www.nrel.gov/docs/fy09osti/45873.pdf; budischak2013 conservative 2020
 hydrogen storage,2030,investment,11.2,USD/kWh,budischak2013
 hydrogen storage,2030,lifetime,20,years,budischak2013
+hydrogen underground storage,2030,investment,0.5,EUR/kWh,maximum from https://www.nrel.gov/docs/fy10osti/46719.pdf
+hydrogen underground storage,2030,lifetime,40,years,http://www.acatech.de/fileadmin/user_upload/Baumstruktur_nach_Website/Acatech/root/de/Publikationen/Materialien/ESYS_Technologiesteckbrief_Energiespeicher.pdf
+H2 pipeline,2030,investment,267,EUR/MW/km,Welder et al https://doi.org/10.1016/j.ijhydene.2018.12.156
+H2 pipeline,2030,lifetime,40,years,Krieg2012 http://juser.fz-juelich.de/record/136392/files/Energie%26Umwelt_144.pdf
+H2 pipeline,2030,FOM,5,%/year,Krieg2012 http://juser.fz-juelich.de/record/136392/files/Energie%26Umwelt_144.pdf
+H2 pipeline,2030,efficiency,0.98,per unit,Krieg2012 http://juser.fz-juelich.de/record/136392/files/Energie%26Umwelt_144.pdf
 methanation,2030,investment,1000,EUR/kWH2,Schaber thesis
 methanation,2030,lifetime,25,years,Schaber thesis
 methanation,2030,FOM,3,%/year,Schaber thesis
@@ -109,7 +114,7 @@ DAC,2030,lifetime,30,years,Fasihi
 DAC,2030,FOM,4,%/year,Fasihi
 battery inverter,2030,investment,411,USD/kWel,budischak2013
 battery inverter,2030,lifetime,20,years,budischak2013
-battery inverter,2030,efficiency,0.81,per unit,budischak2013; Lund and Kempton (2008) http://dx.doi.org/10.1016/j.enpol.2008.06.007
+battery inverter,2030,efficiency,0.9,per unit charge/discharge,budischak2013; Lund and Kempton (2008) http://dx.doi.org/10.1016/j.enpol.2008.06.007
 battery inverter,2030,FOM,3,%/year,budischak2013
 battery storage,2030,investment,192,USD/kWh,budischak2013
 battery storage,2030,lifetime,15,years,budischak2013

@@ -1,3 +1,8 @@
+..
+  SPDX-FileCopyrightText: 2019-2020 The PyPSA-Eur Authors
+
+  SPDX-License-Identifier: CC-BY-4.0
+
 .. _config:
 
 ##########################################
@@ -13,7 +18,7 @@ Top-level configuration
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 1-5,13
+   :lines: 5-12,20,27-34
 
 .. csv-table::
    :header-rows: 1
@@ -31,13 +36,13 @@ investment changes as more ambitious greenhouse-gas emission reduction targets a
 
 The ``scenario`` section is an extraordinary section of the config file
 that is strongly connected to the :ref:`wildcards` and is designed to
-facilitate running multiple scenarios through a single command 
+facilitate running multiple scenarios through a single command
 
 .. code:: bash
-    
-    snakemake solve_all_elec_networks
 
-For each wildcard, a **list of values** is provided. The rule ``solve_all_elec_networks`` will trigger the rules for creating ``results/networks/elec_s{simpl}_{clusters}_l{ll}_{opts}.nc`` for **all combinations** of the provided wildcard values as defined by Python's `itertools.product(...) <https://docs.python.org/2/library/itertools.html#itertools.product>`_ function that snakemake's `expand(...) function <https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#targets>`_ uses.
+    snakemake -j 1 solve_all_networks
+
+For each wildcard, a **list of values** is provided. The rule ``solve_all_networks`` will trigger the rules for creating ``results/networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc`` for **all combinations** of the provided wildcard values as defined by Python's `itertools.product(...) <https://docs.python.org/2/library/itertools.html#itertools.product>`_ function that snakemake's `expand(...) function <https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#targets>`_ uses.
 
 An exemplary dependency graph (starting from the simplification rules) then looks like this:
 
@@ -45,7 +50,7 @@ An exemplary dependency graph (starting from the simplification rules) then look
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 6-11
+   :lines: 14-18
 
 .. csv-table::
    :header-rows: 1
@@ -61,7 +66,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 15-18
+   :lines: 22-25
 
 .. csv-table::
    :header-rows: 1
@@ -75,7 +80,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 24-37
+   :lines: 36-60
 
 .. csv-table::
    :header-rows: 1
@@ -106,7 +111,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 39-52
+   :lines: 62-75
 
 .. csv-table::
    :header-rows: 1
@@ -123,7 +128,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 54-71
+   :lines: 77-94
 
 .. csv-table::
    :header-rows: 1
@@ -135,7 +140,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 54,72-84
+   :lines: 77,95-107
 
 .. csv-table::
    :header-rows: 1
@@ -147,7 +152,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 54,85-98
+   :lines: 77,108-121
 
 .. csv-table::
    :header-rows: 1
@@ -159,7 +164,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 54,99-118
+   :lines: 77,122-141
 
 .. csv-table::
    :header-rows: 1
@@ -171,7 +176,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 54,119-125
+   :lines: 77,142-147
 
 .. csv-table::
    :header-rows: 1
@@ -185,7 +190,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 127-134
+   :lines: 149-157
 
 .. csv-table::
    :header-rows: 1
@@ -199,7 +204,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 136-139
+   :lines: 159-163
 
 .. csv-table::
    :header-rows: 1
@@ -213,7 +218,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 141-144
+   :lines: 165-168
 
 .. csv-table::
    :header-rows: 1
@@ -227,7 +232,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 146-147
+   :lines: 170-176
 
 .. csv-table::
    :header-rows: 1
@@ -241,7 +246,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 149-161
+   :lines: 178-190
 
 .. csv-table::
    :header-rows: 1
@@ -250,7 +255,6 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 .. note::
     To change cost assumptions in more detail (i.e. other than ``marginal_cost`` and ``capital_cost``), consider modifying cost assumptions directly in ``data/costs.csv`` as this is not yet supported through the config file.
-
     You can also build multiple different cost databases. Make a renamed copy of ``data/costs.csv`` (e.g. ``data/costs-optimistic.csv``) and set the variable ``COSTS=data/costs-optimistic.csv`` in the ``Snakefile``.
 
 .. _solving_cf:
@@ -263,7 +267,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 163-171
+   :lines: 192-202
 
 .. csv-table::
    :header-rows: 1
@@ -275,7 +279,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 163,172-188
+   :lines: 192,203-219
 
 .. csv-table::
    :header-rows: 1
@@ -289,7 +293,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 190-324
+   :lines: 221-299
 
 .. csv-table::
    :header-rows: 1

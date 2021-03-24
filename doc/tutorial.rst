@@ -1,8 +1,17 @@
+..
+  SPDX-FileCopyrightText: 2019-2020 The PyPSA-Eur Authors
+
+  SPDX-License-Identifier: CC-BY-4.0
+
 .. _tutorial:
 
 #####################
 Tutorial
 #####################
+
+.. raw:: html
+
+    <iframe width="832" height="468" src="https://www.youtube.com/embed/mAwhQnNRIvs" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 Before getting started with **PyPSA-Eur** it makes sense to be familiar
 with its general modelling framework `PyPSA <https://pypsa.readthedocs.io>`_.
@@ -38,47 +47,47 @@ The model can be adapted to only include selected countries (e.g. Germany) inste
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 13
-   
+   :lines: 20
+
 Likewise, the example's temporal scope can be restricted (e.g. to a single month).
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 15-18
+   :lines: 22-25
 
 It is also possible to allow less or more carbon-dioxide emissions. Here, we limit the emissions of Germany 100 Megatonnes per year.
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 26
+   :lines: 36,38
 
 PyPSA-Eur also includes a database of existing conventional powerplants.
 We can select which types of powerplants we like to be included with fixed capacities:
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 36
+   :lines: 36,52
 
 To accurately model the temporal and spatial availability of renewables such as wind and solar energy, we rely on historical weather data.
 It is advisable to adapt the required range of coordinates to the selection of countries.
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 38-47
+   :lines: 54-62
 
 We can also decide which weather data source should be used to calculate potentials and capacity factor time-series for each carrier.
 For example, we may want to use the ERA-5 dataset for solar and not the default SARAH-2 dataset.
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 48,91-92
+   :lines: 64,107-108
 
 Finally, it is possible to pick a solver. For instance, this tutorial uses the open-source solvers CBC and Ipopt and does not rely
 on the commercial solvers Gurobi or CPLEX (for which free academic licenses are available).
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 156-157
+   :lines: 170,180-181
 
 .. note::
 
@@ -103,20 +112,27 @@ clustered down to 6 buses and every 24 hours aggregated to one snapshot. The com
 
 .. code:: bash
 
-    .../pypsa-eur % snakemake results/networks/elec_s_6_lcopt_Co2L-24H.nc
+    .../pypsa-eur % snakemake -j 1 results/networks/elec_s_6_ec_lcopt_Co2L-24H.nc
 
-orders ``snakemake`` to run the script ``solve_network`` that produces the solved network and stores it in ``.../pypsa-eur/results/networks`` with the name ``elec_s_6_lcopt_Co2L-24H.nc``:
+orders ``snakemake`` to run the script ``solve_network`` that produces the solved network and stores it in ``.../pypsa-eur/results/networks`` with the name ``elec_s_6_ec_lcopt_Co2L-24H.nc``:
 
 .. code::
 
     rule solve_network:
-        input: "networks/{network}_s{simpl}_{clusters}_l{ll}_{opts}.nc"
-        output: "results/networks/{network}_s{simpl}_{clusters}_l{ll}_{opts}.nc"
+        input: "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"
+        output: "results/networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"
         [...]
         script: "scripts/solve_network.py"
 
+.. until https://github.com/snakemake/snakemake/issues/46 closed
+
+.. warning::
+    On Windows the previous command may currently cause a ``MissingRuleException`` due to problems with output files in subfolders.
+    This is an `open issue <https://github.com/snakemake/snakemake/issues/46>`_ at `snakemake <https://snakemake.readthedocs.io/>`_.
+    Windows users should add the option ``--keep-target-files`` to the command or instead run ``snakemake -j 1 solve_all_networks``.
+
 This triggers a workflow of multiple preceding jobs that depend on each rule's inputs and outputs:
-    
+
 .. graphviz::
     :align: center
 
@@ -168,7 +184,7 @@ This triggers a workflow of multiple preceding jobs that depend on each rule's i
         7 -> 11
         5 -> 11
         12 -> 11
-    } 
+    }
 
 |
 
@@ -213,8 +229,8 @@ A job (here ``simplify_network``) will display its attributes and normally some 
     INFO:__main__:Mapping all network lines onto a single 380kV layer
     INFO:__main__:Simplifying connected link components
     INFO:__main__:Removing stubs
-    INFO:__main__:Displacing offwind-ac generator(s) and adding connection costs to capital_costs: 20128 Eur/MW/a for `5718 offwind-ac` 
-    INFO:__main__:Displacing offwind-dc generator(s) and adding connection costs to capital_costs: 14994 Eur/MW/a for `5718 offwind-dc`, 26939 Eur/MW/a for `5724 offwind-dc`, 29621 Eur/MW/a for `5725 offwind-dc` 
+    INFO:__main__:Displacing offwind-ac generator(s) and adding connection costs to capital_costs: 20128 Eur/MW/a for `5718 offwind-ac`
+    INFO:__main__:Displacing offwind-dc generator(s) and adding connection costs to capital_costs: 14994 Eur/MW/a for `5718 offwind-dc`, 26939 Eur/MW/a for `5724 offwind-dc`, 29621 Eur/MW/a for `5725 offwind-dc`
     INFO:pypsa.io:Exported network elec_s.nc has lines, carriers, links, storage_units, loads, buses, generators
     [<DATETIME>]
     Finished job 3.
@@ -227,7 +243,7 @@ Once the whole worktree is finished, it should show state so in the terminal:
     Finished job 0.
     12 of 12 steps (100%) done
     Complete log: /home/XXXX/pypsa-eur/.snakemake/log/20XX-XX-XXTXX.snakemake.log
-    snakemake results/networks/elec_s_6_lcopt_Co2L-24H.nc  519,84s user 34,26s system 242% cpu 3:48,83 total
+    snakemake results/networks/elec_s_6_ec_lcopt_Co2L-24H.nc  519,84s user 34,26s system 242% cpu 3:48,83 total
 
 You will notice that many intermediate stages are saved, namely the outputs of each individual ``snakemake`` rule.
 
@@ -235,15 +251,15 @@ You can produce any output file occuring in the ``Snakefile`` by running
 
 .. code:: bash
 
-    .../pypsa-eur % snakemake <output file>
+    .../pypsa-eur % snakemake -j 1 <output file>
 
 For example, you can explore the evolution of the PyPSA networks by running
 
-#. ``.../pypsa-eur % snakemake networks/base.nc``
-#. ``.../pypsa-eur % snakemake networks/elec.nc``
-#. ``.../pypsa-eur % snakemake networks/elec_s.nc``
-#. ``.../pypsa-eur % snakemake networks/elec_s_6.nc``
-#. ``.../pypsa-eur % snakemake networks/elec_s_6_lcopt_Co2L-24H.nc``
+#. ``.../pypsa-eur % snakemake -j 1 networks/base.nc``
+#. ``.../pypsa-eur % snakemake -j 1 networks/elec.nc``
+#. ``.../pypsa-eur % snakemake -j 1 networks/elec_s.nc``
+#. ``.../pypsa-eur % snakemake -j 1 networks/elec_s_6.nc``
+#. ``.../pypsa-eur % snakemake -j 1 networks/elec_s_6_ec_lcopt_Co2L-24H.nc``
 
 There's a special rule: If you simply run
 
@@ -255,7 +271,7 @@ the wildcards given in ``scenario`` in the configuration file ``config.yaml`` ar
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 6-11
+   :lines: 14-18
 
 In this example we would not only solve a 6-node model of Germany but also a 2-node model.
 
@@ -268,14 +284,6 @@ The solved networks can be analysed just like any other PyPSA network (e.g. in J
 
     import pypsa
 
-    network = pypsa.Network("results/networks/elec_s_6_lcopt_Co2L-24H.nc")
-
-    ...
+    network = pypsa.Network("results/networks/elec_s_6_ec_lcopt_Co2L-24H.nc")
 
 For inspiration, read the `examples section in the PyPSA documentation <https://pypsa.readthedocs.io/en/latest/examples.html>`_.
-
-.. note::
-
-    There are rules for summaries and plotting available in the repository of PyPSA-Eur.
-    
-    They are currently under revision and therefore not yet documented. 

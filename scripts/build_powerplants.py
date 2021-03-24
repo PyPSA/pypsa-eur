@@ -1,6 +1,10 @@
+# SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # coding: utf-8
 """
-Retrieves conventional powerplant capacities and locations from `powerplantmatching <https://github.com/FRESNA/powerplantmatching>`_, assigns these to buses and creates a ``.csv`` file. It is possible to amend the powerplant database with custom entries provided in ``data/custom_powerplants.csv``. 
+Retrieves conventional powerplant capacities and locations from `powerplantmatching <https://github.com/FRESNA/powerplantmatching>`_, assigns these to buses and creates a ``.csv`` file. It is possible to amend the powerplant database with custom entries provided in ``data/custom_powerplants.csv``.
 
 Relevant Settings
 -----------------
@@ -50,7 +54,7 @@ The configuration options ``electricity: powerplants_filter`` and ``electricity:
         powerplants_filter: Country not in ['Germany']
         custom_powerplants: true
 
-    or 
+    or
 
     .. code:: yaml
 
@@ -68,11 +72,14 @@ The configuration options ``electricity: powerplants_filter`` and ``electricity:
 """
 
 import logging
-from scipy.spatial import cKDTree as KDTree
+from _helpers import configure_logging
 
 import pypsa
 import powerplantmatching as pm
 import pandas as pd
+import numpy as np
+
+from scipy.spatial import cKDTree as KDTree
 
 logger = logging.getLogger(__name__)
 
@@ -81,28 +88,24 @@ def add_custom_powerplants(ppl):
     custom_ppl_query = snakemake.config['electricity']['custom_powerplants']
     if not custom_ppl_query:
         return ppl
-    add_ppls = pd.read_csv(snakemake.input.custom_powerplants, index_col=0)
+    add_ppls = pd.read_csv(snakemake.input.custom_powerplants, index_col=0,
+                           dtype={'bus': 'str'})
     if isinstance(custom_ppl_query, str):
-        add_ppls.query(add_ppls, inplace=True)
-    return ppl.append(add_ppls, sort=False)
+        add_ppls.query(custom_ppl_query, inplace=True)
+    return ppl.append(add_ppls, sort=False, ignore_index=True, verify_integrity=True)
 
 
 if __name__ == "__main__":
     if 'snakemake' not in globals():
-        from vresutils.snakemake import MockSnakemake, Dict
-
-        snakemake = MockSnakemake(
-            input=Dict(base_network='networks/base.nc',
-                       custom_powerplants='data/custom_powerplants.csv'),
-            output=['resources/powerplants.csv']
-        )
-
-    logging.basicConfig(level=snakemake.config['logging_level'])
+        from _helpers import mock_snakemake
+        snakemake = mock_snakemake('build_powerplants')
+    configure_logging(snakemake)
 
     n = pypsa.Network(snakemake.input.base_network)
     countries = n.buses.country.unique()
 
     ppl = (pm.powerplants(from_url=True)
+           .powerplant.fill_missing_decommyears()
            .powerplant.convert_country_to_alpha2()
            .query('Fueltype not in ["Solar", "Wind"] and Country in @countries')
            .replace({'Technology': {'Steam Turbine': 'OCGT'}})
@@ -125,8 +128,8 @@ if __name__ == "__main__":
         kdtree = KDTree(n.buses.loc[substation_i, ['x','y']].values)
         ppl_i = ppl.query('Country == @c').index
 
-        ppl.loc[ppl_i, 'bus'] = substation_i[kdtree.query(ppl.loc[ppl_i,
-                                                          ['lon','lat']].values)[1]]
+        tree_i = kdtree.query(ppl.loc[ppl_i, ['lon','lat']].values)[1]
+        ppl.loc[ppl_i, 'bus'] = substation_i.append(pd.Index([np.nan]))[tree_i]
 
     if cntries_without_ppl:
         logging.warning(f"No powerplants known in: {', '.join(cntries_without_ppl)}")
