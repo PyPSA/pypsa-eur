@@ -69,6 +69,15 @@ rule build_simplified_population_layouts:
     resources: mem_mb=10000
     script: "scripts/build_clustered_population_layouts.py"
 
+rule build_gas_network:
+    input:
+        IGGINL_path='data/gas_network/IGGINL_PipeSegments.csv',
+        entsog_2019_path='data/gas_network/entsog_2019_dataset.csv',
+        EMAP_path='data/gas_network/EMAP_Raw_PipeSegments.csv'
+    output:
+        clustered_pop_layout="resources/gas_network_{clusters}.csv"
+    resources: mem_mb=10000
+    script: "scripts/build_gas_network.py"
 
 rule build_heat_demands:
     input:
