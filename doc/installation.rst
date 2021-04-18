@@ -73,8 +73,8 @@ To download and extract the data bundle on the command line:
 
 .. code:: bash
 
-    projects/pypsa-eur-sec/data % wget "https://nworbmot.org/pypsa-eur-sec-data-bundle-210125.tar.gz"
-    projects/pypsa-eur-sec/data % tar xvzf pypsa-eur-sec-data-bundle-210125.tar.gz
+    projects/pypsa-eur-sec/data % wget "https://nworbmot.org/pypsa-eur-sec-data-bundle-210418.tar.gz"
+    projects/pypsa-eur-sec/data % tar xvzf pypsa-eur-sec-data-bundle-210418.tar.gz
 
 
 The data licences and sources are given in the following table.
