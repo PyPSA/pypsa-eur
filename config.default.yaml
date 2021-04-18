@@ -132,6 +132,7 @@ sector:
     'annualise_cost': True  # annualise the investment costs
     'tax_weighting': False   # weight costs depending on taxes in countries
     'construction_index': True   # weight costs depending on labour/material costs per ct
+  'tes' : True
   'tes_tau' : 3.
   'boilers' : True
   'oil_boilers': False
