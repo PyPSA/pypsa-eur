@@ -1179,11 +1179,10 @@ def add_heat(network):
 
     urban_fraction = options['central_fraction']*pop_layout["urban"]/(pop_layout[["urban","rural"]].sum(axis=1))
 
-    # building retrofitting, exogenously reduce space heat demand
-    if options["retrofitting"]["retro_exogen"]:
-        dE = get_parameter(options["retrofitting"]["dE"])
-        print("retrofitting exogenously, assumed space heat reduction of ",
-              dE)
+    # exogenously reduce space heat demand
+    if options["vary_space_heat_exogenously"]:
+        dE = get_parameter(options["vary_space_heat_exogenously_factor"])
+        print("assumed space heat reduction of {} %".format(dE*100))
         for sector in sectors:
             heat_demand[sector + " space"] = (1-dE)*heat_demand[sector + " space"]
 
@@ -1914,7 +1913,7 @@ if __name__ == "__main__":
                         floor_area = "resources/floor_area_{network}_s{simpl}_{clusters}.csv"
             ),
             output=['results/version-cb48be3/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{planning_horizons}.nc']
-    
+
         )
         import yaml
         with open('config.yaml', encoding='utf8') as f:
