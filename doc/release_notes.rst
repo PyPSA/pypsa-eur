@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2019-2020 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: 2019-2021 The PyPSA-Eur Authors
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -10,6 +10,9 @@ Release Notes
 
 Upcoming Release
 ================
+
+* The raster of natural protection areas (``resources/natura.tiff``) has been updated
+  [`#234 <https://github.com/PyPSA/pypsa-eur/pull/234>`_].
 
 
 PyPSA-Eur 0.3.0 (7th December 2020)
