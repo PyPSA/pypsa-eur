@@ -43,7 +43,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 from pathlib import Path
-import tarfile
 from _helpers import progress_retrieve, configure_logging
 
 if __name__ == "__main__":
@@ -56,20 +55,12 @@ if __name__ == "__main__":
 
     configure_logging(snakemake) # TODO Make logging compatible with progressbar (see PR #102)
 
-    if snakemake.config['tutorial']:
-        url = "https://zenodo.org/record/3518020/files/pypsa-eur-tutorial-cutouts.tar.xz"
-    else:
-        url = "https://zenodo.org/record/3517949/files/pypsa-eur-cutouts.tar.xz"
+    cutout = snakemake.wildcards.cutout
 
-    # Save location
-    tarball_fn = Path(f"{rootpath}/cutouts.tar.xz")
+    # url = f"https://zenodo.org/record/3517949/files/{cutout}.nc"
+    url = f"https://sandbox.zenodo.org/record/795060/files/{cutout}.nc"
 
-    logger.info(f"Downloading cutouts from '{url}'.")
-    progress_retrieve(url, tarball_fn)
+    logger.info(f"Downloading cutout '{cutout}' from '{url}'.")
+    progress_retrieve(url, snakemake.output[0])
 
-    logger.info(f"Extracting cutouts.")
-    tarfile.open(tarball_fn).extractall(path=rootpath)
-
-    tarball_fn.unlink()
-
-    logger.info(f"Cutouts available in '{Path(tarball_fn.stem).stem}'.")
+    logger.info(f"Cutout '{cutout}' available as '{snakemake.output[0]}'.")

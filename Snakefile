@@ -150,8 +150,8 @@ if config['enable'].get('build_cutout', False):
 
 if config['enable'].get('retrieve_cutout', True):
     rule retrieve_cutout:
-        output: expand("cutouts/{cutouts}.nc", **config['atlite'])
-        log: "logs/retrieve_cutout.log"
+        output: "cutouts/{cutout}.nc"
+        log: "logs/retrieve_cutout_{cutout}.log"
         script: 'scripts/retrieve_cutout.py'
 
 
