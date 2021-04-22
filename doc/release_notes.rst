@@ -15,6 +15,7 @@ Upcoming Release
 * The minimum python version was set to ``3.8``.
 * The rule and script ``build_country_flh`` are removed as they're no longer used or maintained.
 * The flag ``keep_all_available_areas`` in the configuration for renewable potentials (config.yaml -> renewable -> {technology}) was deprecated and now defaults to ``True``. 
+* The tutorial cutout was renamed from ``cutouts/europe-2013-era5.nc`` to ``cutouts/europe-2013-era5-tutorial.nc`` to accomodate tutorial and productive cutouts side-by-side.
 
 PyPSA-Eur 0.3.0 (7th December 2020)
 ==================================
