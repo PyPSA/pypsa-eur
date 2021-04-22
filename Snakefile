@@ -5,6 +5,9 @@
 from os.path import normpath, exists
 from shutil import copyfile
 
+from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
+HTTP = HTTPRemoteProvider()
+
 if not exists("config.yaml"):
     copyfile("config.default.yaml", "config.yaml")
 
@@ -150,9 +153,9 @@ if config['enable'].get('build_cutout', False):
 
 if config['enable'].get('retrieve_cutout', True):
     rule retrieve_cutout:
+        input: HTTP.remote("sandbox.zenodo.org/record/795060/files/{cutout}.nc", keep_local=True)
         output: "cutouts/{cutout}.nc"
-        log: "logs/retrieve_cutout_{cutout}.log"
-        script: 'scripts/retrieve_cutout.py'
+        shell: "mv {input} {output}"
 
 
 if config['enable'].get('build_natura_raster', False):
@@ -167,9 +170,9 @@ if config['enable'].get('build_natura_raster', False):
 
 if config['enable'].get('retrieve_natura_raster', True):
     rule retrieve_natura_raster:
+        input: HTTP.remote("zenodo.org/record/3518215/files/natura.tiff", keep_local=True)
         output: "resources/natura.tiff"
-        log: "logs/retrieve_natura_raster.log"
-        script: 'scripts/retrieve_natura_raster.py'
+        shell: "mv {input} {output}"
 
 
 rule build_renewable_profiles:
