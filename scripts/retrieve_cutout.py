@@ -42,7 +42,6 @@ The :ref:`tutorial` uses smaller `cutouts <https://zenodo.org/record/3518020/fil
 import logging
 logger = logging.getLogger(__name__)
 
-from pathlib import Path
 from _helpers import progress_retrieve, configure_logging
 
 if __name__ == "__main__":
