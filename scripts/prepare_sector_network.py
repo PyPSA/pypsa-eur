@@ -50,22 +50,19 @@ override_component_attrs["Store"].loc["lifetime"] = ["float","years",np.nan,"lif
 
 
 def co2_emissions_year(cts, opts, year):
-
     """
-    calculate co2 emissions in one specific year (e.g. 1990 or 2018).
+    Calculate CO2 emissions in one specific year (e.g. 1990 or 2018).
     """
     eea_co2 = build_eea_co2(year)
 
-    #TODO: read Eurostat data from year>2014, this only affects the estimation of
-
+    # TODO: read Eurostat data from year>2014, this only affects the estimation of
     # CO2 emissions for "BA","RS","AL","ME","MK"
     if year > 2014:
         eurostat_co2 = build_eurostat_co2(year=2014)
     else:
         eurostat_co2 = build_eurostat_co2(year)
 
-    co2_totals=build_co2_totals(eea_co2, eurostat_co2, year)
-
+    co2_totals = build_co2_totals(eea_co2, eurostat_co2)
 
     co2_emissions = co2_totals.loc[cts, "electricity"].sum()
 
@@ -77,9 +74,9 @@ def co2_emissions_year(cts, opts, year):
         co2_emissions += co2_totals.loc[cts, ["industrial non-elec","industrial processes",
                                               "domestic aviation","international aviation",
                                               "domestic navigation","international navigation"]].sum().sum()
-    co2_emissions *=0.001 #MtCO2 to GtCO2
+	
+    co2_emissions *= 0.001  # Convert MtCO2 to GtCO2
     return co2_emissions
-
 
 
 def build_carbon_budget(o):
