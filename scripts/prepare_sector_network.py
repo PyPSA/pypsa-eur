@@ -6,9 +6,8 @@ import pandas as pd
 idx = pd.IndexSlice
 
 import numpy as np
-import scipy as sp
 import xarray as xr
-import re, os
+import re, os, sys
 
 from six import iteritems, string_types
 

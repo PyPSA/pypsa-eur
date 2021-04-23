@@ -182,7 +182,8 @@ def prepare_building_stock_data():
 
     # add for some missing countries floor area from other data sources
     area_missing = pd.read_csv(snakemake.input.floor_area_missing,
-                               index_col=[0, 1], usecols=[0, 1, 2, 3])
+                               index_col=[0, 1], usecols=[0, 1, 2, 3],
+                               encoding='ISO-8859-1')
     area_tot = area_tot.append(area_missing.unstack(level=-1).dropna().stack())
     area_tot = area_tot.loc[~area_tot.index.duplicated(keep='last')]
 
