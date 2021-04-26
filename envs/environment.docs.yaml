@@ -9,7 +9,7 @@ dependencies:
   - python<=3.7
   - pip
   - pypsa>=0.17.1
-  - atlite>=0.2.1
+  - atlite>=0.2.2
   - pre-commit
 
   # Dependencies of the workflow itself
