@@ -170,7 +170,7 @@ if config['enable'].get('build_natura_raster', False):
 
 if config['enable'].get('retrieve_natura_raster', True):
     rule retrieve_natura_raster:
-        input: HTTP.remote("zenodo.org/record/3518215/files/natura.tiff", keep_local=True)
+        input: HTTP.remote("zenodo.org/record/4706686/files/natura.tiff", keep_local=True)
         output: "resources/natura.tiff"
         shell: "mv {input} {output}"
 
