@@ -11,7 +11,7 @@ if 'snakemake' not in globals():
     import yaml
     snakemake = Dict()
     with open('config.yaml') as f:
-        snakemake.config = yaml.load(f)
+        snakemake.config = yaml.safe_load(f)
     snakemake.input = Dict()
     snakemake.output = Dict()
 
