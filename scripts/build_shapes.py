@@ -130,6 +130,8 @@ def eez(country_shapes):
     df['name'] = df['ISO_3digit'].map(lambda c: _get_country('alpha_2', alpha_3=c))
     s = df.set_index('name').geometry.map(lambda s: _simplify_polys(s, filterremote=False))
     s = gpd.GeoSeries({k:v for k,v in s.iteritems() if v.distance(country_shapes[k]) < 1e-3})
+    if s.empty:
+        s = gpd.GeoSeries( Polygon([(2, 0), (3, 0), (3, 1), (2, 1)]), index=["XX"])
     s.index.name = "name"
     return s
 
@@ -224,7 +226,7 @@ if __name__ == "__main__":
     save_to_geojson(country_shapes, out.country_shapes)
 
     offshore_shapes = eez(country_shapes)
-    save_to_geojson(offshore_shapes, out.offshore_shapes)
+    # save_to_geojson(offshore_shapes, out.offshore_shapes)
 
     europe_shape = country_cover(country_shapes, offshore_shapes)
     save_to_geojson(gpd.GeoSeries(europe_shape), out.europe_shape)

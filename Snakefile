@@ -46,10 +46,10 @@ if config['enable'].get('prepare_links_p_nom', False):
         script: 'scripts/prepare_links_p_nom.py'
 
 
-datafiles = ['ch_cantons.csv', 'je-e-21.03.02.xls', 
-            'eez/World_EEZ_v8_2014.shp', 'EIA_hydro_generation_2000_2014.csv', 
-            'hydro_capacities.csv', 'naturalearth/ne_10m_admin_0_countries.shp', 
-            'NUTS_2013_60M_SH/data/NUTS_RG_60M_2013.shp', 'nama_10r_3popgdp.tsv.gz', 
+datafiles = ['ch_cantons.csv', 'je-e-21.03.02.xls',
+            'eez/World_EEZ_v8_2014.shp', 'EIA_hydro_generation_2000_2014.csv',
+            'hydro_capacities.csv', 'naturalearth/ne_10m_admin_0_countries.shp',
+            'NUTS_2013_60M_SH/data/NUTS_RG_60M_2013.shp', 'nama_10r_3popgdp.tsv.gz',
             'nama_10r_3gdp.tsv.gz', 'corine/g250_clc06_V18_5.tif']
 
 
@@ -68,7 +68,7 @@ rule build_load_data:
     output: "resources/load.csv"
     log: "logs/build_load_data.log"
     script: 'scripts/build_load_data.py'
-    
+
 
 rule build_powerplants:
     input:
@@ -113,7 +113,7 @@ rule build_shapes:
         ch_popgdp='data/bundle/je-e-21.03.02.xls'
     output:
         country_shapes='resources/country_shapes.geojson',
-        offshore_shapes='resources/offshore_shapes.geojson',
+        # offshore_shapes='resources/offshore_shapes.geojson',
         europe_shape='resources/europe_shape.geojson',
         nuts3_shapes='resources/nuts3_shapes.geojson'
     log: "logs/build_shapes.log"
@@ -230,11 +230,11 @@ rule simplify_network:
         network='networks/elec.nc',
         tech_costs=COSTS,
         regions_onshore="resources/regions_onshore.geojson",
-        regions_offshore="resources/regions_offshore.geojson"
+        #regions_offshore="resources/regions_offshore.geojson"
     output:
         network='networks/elec_s{simpl}.nc',
         regions_onshore="resources/regions_onshore_elec_s{simpl}.geojson",
-        regions_offshore="resources/regions_offshore_elec_s{simpl}.geojson",
+        # regions_offshore="resources/regions_offshore_elec_s{simpl}.geojson",
         busmap='resources/busmap_elec_s{simpl}.csv'
     log: "logs/simplify_network/elec_s{simpl}.log"
     benchmark: "benchmarks/simplify_network/elec_s{simpl}"
@@ -247,7 +247,7 @@ rule cluster_network:
     input:
         network='networks/elec_s{simpl}.nc',
         regions_onshore="resources/regions_onshore_elec_s{simpl}.geojson",
-        regions_offshore="resources/regions_offshore_elec_s{simpl}.geojson",
+        #regions_offshore="resources/regions_offshore_elec_s{simpl}.geojson",
         busmap=ancient('resources/busmap_elec_s{simpl}.csv'),
         custom_busmap=("data/custom_busmap_elec_s{simpl}_{clusters}.csv"
                        if config["enable"].get("custom_busmap", False) else []),
@@ -255,7 +255,7 @@ rule cluster_network:
     output:
         network='networks/elec_s{simpl}_{clusters}.nc',
         regions_onshore="resources/regions_onshore_elec_s{simpl}_{clusters}.geojson",
-        regions_offshore="resources/regions_offshore_elec_s{simpl}_{clusters}.geojson",
+        #regions_offshore="resources/regions_offshore_elec_s{simpl}_{clusters}.geojson",
         busmap="resources/busmap_elec_s{simpl}_{clusters}.csv",
         linemap="resources/linemap_elec_s{simpl}_{clusters}.csv"
     log: "logs/cluster_network/elec_s{simpl}_{clusters}.log"

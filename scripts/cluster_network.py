@@ -311,12 +311,12 @@ def cluster_regions(busmaps, input=None, output=None):
 
     busmap = reduce(lambda x, y: x.map(y), busmaps[1:], busmaps[0])
 
-    for which in ('regions_onshore', 'regions_offshore'):
-        regions = gpd.read_file(getattr(input, which)).set_index('name')
-        geom_c = regions.geometry.groupby(busmap).apply(shapely.ops.cascaded_union)
-        regions_c = gpd.GeoDataFrame(dict(geometry=geom_c))
-        regions_c.index.name = 'name'
-        save_to_geojson(regions_c, getattr(output, which))
+    which = 'regions_onshore'
+    regions = gpd.read_file(getattr(input, which)).set_index('name')
+    geom_c = regions.geometry.groupby(busmap).apply(shapely.ops.cascaded_union)
+    regions_c = gpd.GeoDataFrame(dict(geometry=geom_c))
+    regions_c.index.name = 'name'
+    save_to_geojson(regions_c, getattr(output, which))
 
 
 def plot_busmap_for_n_clusters(n, n_clusters, fn=None):

@@ -105,4 +105,12 @@ if __name__ == "__main__":
 
     save_to_geojson(pd.concat(onshore_regions, ignore_index=True), snakemake.output.regions_onshore)
 
+    if len(offshore_regions)==0:
+        offshore_regions.append(gpd.GeoDataFrame({
+                'name': "XXXX",
+                'x': 0,
+                'y': 0,
+                'geometry': offshore_shapes,
+                'country': "XX"
+            }))
     save_to_geojson(pd.concat(offshore_regions, ignore_index=True), snakemake.output.regions_offshore)
