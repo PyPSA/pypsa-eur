@@ -34,7 +34,7 @@ Based on the parameters above the ``marginal_cost`` and ``capital_cost`` of the 
 
 .. note::
 
-    Another great resource for `cost assumptions <https://ens.dk/en/our-services/projections-and-models/technology-data`_ is the cost database from the Danish Energy Agency.
+    Another great resource for cost assumptions is the `cost database from the Danish Energy Agency <https://ens.dk/en/our-services/projections-and-models/technology-data>`_.
 
 Modifying Cost Assumptions
 ==========================
@@ -43,4 +43,11 @@ Some cost assumptions (e.g. marginal cost and capital cost) can be directly over
 
 To change cost assumptions in more detail, modify cost assumptions directly in ``resources/costs.csv`` as this is not yet supported through the config file.
 
+<<<<<<< HEAD
 You can also build multiple different cost databases. Make a renamed copy of ``resources/costs.csv`` (e.g. ``data/costs-optimistic.csv``) and set the variable ``COSTS=data/costs-optimistic.csv`` in the ``Snakefile``.
+=======
+.. csv-table::
+   :header-rows: 1
+   :widths: 10,3,5,4,6,8
+   :file: ../data/costs.csv
+>>>>>>> master

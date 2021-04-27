@@ -18,16 +18,6 @@ what data to retrieve and what files to produce.
 Detailed explanations of how wildcards work in ``snakemake`` can be found in the
 `relevant section of the documentation <https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#wildcards>`_.
 
-.. _network:
-
-The ``{network}`` wildcard
-==========================
-
-The ``{network}`` wildcard specifies the considered energy sector(s)
-and, as currently only ``elec`` (for electricity) is included,
-it currently represents rather a placeholder wildcard to facilitate
-future extensions including multiple energy sectors at once.
-
 .. _simpl:
 
 The ``{simpl}`` wildcard
@@ -36,9 +26,6 @@ The ``{simpl}`` wildcard
 The ``{simpl}`` wildcard specifies number of buses a detailed
 network model should be pre-clustered to in the rule
 :mod:`simplify_network` (before :mod:`cluster_network`).
-
-.. seealso::
-    :mod:`simplify_network`
 
 .. _clusters:
 
@@ -54,9 +41,6 @@ it has two asynchronous subnetworks (e.g. Denmark or Italy).
 If an `m` is placed behind the number of clusters (e.g. ``100m``),
 generators are only moved to the clustered buses but not aggregated
 by carrier; i.e. the clustered bus may have more than one e.g. wind generator.
-
-.. seealso::
-    :mod:`cluster_network`
 
 .. _ll:
 
@@ -75,7 +59,7 @@ The wildcard, in general, consists of two parts:
 
     2. The second part can be
        ``opt`` or a float bigger than one (e.g. 1.25).
-       
+
        (a) If ``opt`` is chosen line expansion is optimised
            according to its capital cost
            (where the choice ``v`` only considers overhead costs for HVDC transmission lines, while
@@ -84,13 +68,10 @@ The wildcard, in general, consists of two parts:
 
        (b) ``v1.25`` will limit the total volume of line expansion
            to 25 % of currently installed capacities weighted by
-           individual line lengths; investment costs are neglected. 
+           individual line lengths; investment costs are neglected.
 
        (c) ``c1.25`` will allow to build a transmission network that
            costs no more than 25 % more than the current system.
-
-.. seealso::
-    :mod:`prepare_network`
 
 .. _opts:
 
@@ -108,21 +89,18 @@ It may hold multiple triggers separated by ``-``, i.e. ``Co2L-3H`` contains the
    :widths: 10,20,10,10
    :file: configtables/opts.csv
 
-.. seealso::
-    :mod:`prepare_network`, :mod:`solve_network`
-
 .. _country:
 
 The ``{country}`` wildcard
 ==========================
 
-The rules ``make_summary`` and ``plot_summary`` (generating summaries of all or a subselection
-of the solved networks) as well as ``plot_p_nom_max`` (for plotting the cumulative
+The rules :mod:`make_summary` and :mod:`plot_summary` (generating summaries of all or a subselection
+of the solved networks) as well as :mod:`plot_p_nom_map` (for plotting the cumulative
 generation potentials for renewable technologies) can be narrowed to
 individual countries using the ``{country}`` wildcard.
 
-If ``country = all``, then the rule acts on the network for all countries
-defined in ``config.yaml``. If otherwise ``country = DE`` or another 2-letter
+If ``country=all``, then the rule acts on the network for all countries
+defined in ``config.yaml``. If otherwise ``country=DE`` or another 2-letter
 country code, then the network is narrowed to buses of this country
 for the rule. For example to get a summary of the energy generated
 in Germany (in the solution for Europe) use:
@@ -130,9 +108,6 @@ in Germany (in the solution for Europe) use:
 .. code:: bash
 
     snakemake -j 1 results/summaries/elec_s_all_lall_Co2L-3H_DE
-
-.. seealso::
-    :mod:`make_summary`, :mod:`plot_summary`, :mod:`plot_p_nom_max`
 
 .. _cutout_wc:
 
@@ -142,9 +117,6 @@ The ``{cutout}`` wildcard
 The ``{cutout}`` wildcard facilitates running the rule :mod:`build_cutout`
 for all cutout configurations specified under ``atlite: cutouts:``.
 These cutouts will be stored in a folder specified by ``{cutout}``.
-
-.. seealso::
-    :mod:`build_cutout`, :ref:`atlite_cf`
 
 .. _technology:
 
@@ -161,21 +133,15 @@ For instance ``{technology}`` can be used to plot regionally disaggregated poten
 with the rule :mod:`plot_p_nom_max` or to summarize a particular technology's
 full load hours in various countries with the rule :mod:`build_country_flh`.
 
-.. seealso::
-    :mod:`build_renewable_profiles`, :mod:`plot_p_nom_max`, :mod:`build_country_flh`
-
 .. _attr:
 
 The ``{attr}`` wildcard
 =======================
 
-The ``{attr}`` wildcard specifies which attribute are used for size
+The ``{attr}`` wildcard specifies which attribute is used for size
 representations of network components on a map plot produced by the rule
-``plot_network``. While it might be extended in the future, ``{attr}``
+:mod:`plot_network`. While it might be extended in the future, ``{attr}``
 currently only supports plotting of ``p_nom``.
-
-.. seealso::
-    :mod:`plot_network`
 
 .. _ext:
 
@@ -191,6 +157,3 @@ formats depends on the used backend. To query the supported file types on your s
 
     import matplotlib.pyplot as plt
     plt.gcf().canvas.get_supported_filetypes()
-
-.. seealso::
-    :mod:`plot_network`, :mod:`plot_summary`, :mod:`plot_p_nom_max`

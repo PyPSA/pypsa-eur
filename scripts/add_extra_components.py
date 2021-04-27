@@ -37,29 +37,32 @@ Inputs
 Outputs
 -------
 
-- ``networks/{network}_s{simpl}_{clusters}_ec.nc``:
+- ``networks/elec_s{simpl}_{clusters}_ec.nc``:
 
 
 Description
 -----------
 
-The rule :mod:`add_extra_components` attaches additional extendable components to the clustered and simplified network. These can be configured in the ``config.yaml`` at ``electricity: extendable_carriers: ``. It processes ``networks/{network}_s{simpl}_{clusters}.nc`` to build ``networks/{network}_s{simpl}_{clusters}_ec.nc``, which in contrast to the former (depending on the configuration) contain with **zero** initial capacity
+The rule :mod:`add_extra_components` attaches additional extendable components to the clustered and simplified network. These can be configured in the ``config.yaml`` at ``electricity: extendable_carriers:``. It processes ``networks/elec_s{simpl}_{clusters}.nc`` to build ``networks/elec_s{simpl}_{clusters}_ec.nc``, which in contrast to the former (depending on the configuration) contain with **zero** initial capacity
 
 - ``StorageUnits`` of carrier 'H2' and/or 'battery'. If this option is chosen, every bus is given an extendable ``StorageUnit`` of the corresponding carrier. The energy and power capacities are linked through a parameter that specifies the energy capacity as maximum hours at full dispatch power and is configured in ``electricity: max_hours:``. This linkage leads to one investment variable per storage unit. The default ``max_hours`` lead to long-term hydrogen and short-term battery storage units.
 
 - ``Stores`` of carrier 'H2' and/or 'battery' in combination with ``Links``. If this option is chosen, the script adds extra buses with corresponding carrier where energy ``Stores`` are attached and which are connected to the corresponding power buses via two links, one each for charging and discharging. This leads to three investment variables for the energy capacity, charging and discharging capacity of the storage unit.
 """
 import logging
-logger = logging.getLogger(__name__)
 from _helpers import configure_logging
 
+import pypsa
 import pandas as pd
 import numpy as np
-import pypsa
+
 from add_electricity import (load_costs, add_nice_carrier_names,
                              _add_missing_carriers_from_costs)
 
 idx = pd.IndexSlice
+
+logger = logging.getLogger(__name__)
+
 
 def attach_storageunits(n, costs):
     elec_opts = snakemake.config['electricity']
@@ -70,6 +73,9 @@ def attach_storageunits(n, costs):
 
     buses_i = n.buses.index
 
+    lookup_store = {"H2": "electrolysis", "battery": "battery inverter"}
+    lookup_dispatch = {"H2": "fuel cell", "battery": "battery inverter"}
+
     for carrier in carriers:
         n.madd("StorageUnit", buses_i, ' ' + carrier,
                bus=buses_i,
@@ -77,10 +83,11 @@ def attach_storageunits(n, costs):
                p_nom_extendable=True,
                capital_cost=costs.at[carrier, 'capital_cost'],
                marginal_cost=costs.at[carrier, 'marginal_cost'],
-               efficiency_store=costs.at[carrier, 'efficiency'],
-               efficiency_dispatch=costs.at[carrier, 'efficiency'],
+               efficiency_store=costs.at[lookup_store[carrier], 'efficiency'],
+               efficiency_dispatch=costs.at[lookup_dispatch[carrier], 'efficiency'],
                max_hours=max_hours[carrier],
                cyclic_state_of_charge=True)
+
 
 def attach_stores(n, costs):
     elec_opts = snakemake.config['electricity']
@@ -107,7 +114,8 @@ def attach_stores(n, costs):
                carrier='H2 electrolysis',
                p_nom_extendable=True,
                efficiency=costs.at["electrolysis", "efficiency"],
-               capital_cost=costs.at["electrolysis", "capital_cost"])
+               capital_cost=costs.at["electrolysis", "capital_cost"],
+               marginal_cost=costs.at["electrolysis", "marginal_cost"])
 
         n.madd("Link", h2_buses_i + " Fuel Cell",
                bus0=h2_buses_i,
@@ -116,7 +124,8 @@ def attach_stores(n, costs):
                p_nom_extendable=True,
                efficiency=costs.at["fuel cell", "efficiency"],
                #NB: fixed cost is per MWel
-               capital_cost=costs.at["fuel cell", "capital_cost"] * costs.at["fuel cell", "efficiency"])
+               capital_cost=costs.at["fuel cell", "capital_cost"] * costs.at["fuel cell", "efficiency"],
+               marginal_cost=costs.at["fuel cell", "marginal_cost"])
 
     if 'battery' in carriers:
         b_buses_i = n.madd("Bus", buses_i + " battery", carrier="battery", **bus_sub_dict)
@@ -126,23 +135,27 @@ def attach_stores(n, costs):
                carrier='battery',
                e_cyclic=True,
                e_nom_extendable=True,
-               capital_cost=costs.at['battery storage', 'capital_cost'])
+               capital_cost=costs.at['battery storage', 'capital_cost'],
+               marginal_cost=costs.at["battery", "marginal_cost"])
 
         n.madd("Link", b_buses_i + " charger",
                bus0=buses_i,
                bus1=b_buses_i,
                carrier='battery charger',
-               efficiency=costs.at['battery inverter', 'efficiency']**0.5,
+               efficiency=costs.at['battery inverter', 'efficiency'],
                capital_cost=costs.at['battery inverter', 'capital_cost'],
-               p_nom_extendable=True)
+               p_nom_extendable=True,
+               marginal_cost=costs.at["battery inverter", "marginal_cost"])
 
         n.madd("Link", b_buses_i + " discharger",
                bus0=b_buses_i,
                bus1=buses_i,
                carrier='battery discharger',
-               efficiency=costs.at['battery inverter','efficiency']**0.5,
+               efficiency=costs.at['battery inverter','efficiency'],
                capital_cost=costs.at['battery inverter', 'capital_cost'],
-               p_nom_extendable=True)
+               p_nom_extendable=True,
+               marginal_cost=costs.at["battery inverter", "marginal_cost"])
+
 
 def attach_hydrogen_pipelines(n, costs):
     elec_opts = snakemake.config['electricity']
@@ -176,6 +189,7 @@ def attach_hydrogen_pipelines(n, costs):
            efficiency=costs.at['H2 pipeline','efficiency'],
            carrier="H2 pipeline")
 
+
 if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
@@ -184,7 +198,7 @@ if __name__ == "__main__":
     configure_logging(snakemake)
 
     n = pypsa.Network(snakemake.input.network)
-    Nyears = n.snapshot_weightings.sum()/8760.
+    Nyears = n.snapshot_weightings.sum() / 8760.
     costs = load_costs(Nyears, tech_costs=snakemake.input.tech_costs,
                        config=snakemake.config['costs'],
                        elec_config=snakemake.config['electricity'])
