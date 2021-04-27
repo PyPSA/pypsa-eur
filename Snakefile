@@ -5,6 +5,9 @@
 from os.path import normpath, exists
 from shutil import copyfile
 
+from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
+HTTP = HTTPRemoteProvider()
+
 if not exists("config.yaml"):
     copyfile("config.default.yaml", "config.yaml")
 
@@ -172,8 +175,9 @@ if config['enable'].get('retrieve_cost_data', True):
         params:
             year = config['costs']['year'],
             version = config['costs']['version'],
+        input: HTTP.remote("raw.githubusercontent.com/PyPSA/technology-data/{params.version}/outputs/costs_{params.year}.csv", keep_local=True)
         output: COSTS
-        shell: 'curl https://raw.githubusercontent.com/PyPSA/technology-data/{params.version}/outputs/costs_{params.year}.csv -o {output}'
+        shell: 'mv {input} {output}'
 
 rule build_renewable_profiles:
     input:
