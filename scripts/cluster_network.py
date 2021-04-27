@@ -33,8 +33,9 @@ Inputs
 
 - ``resources/regions_onshore_elec{year}_s{simpl}.geojson``: confer :ref:`simplify`
 - ``resources/regions_offshore_elec{year}_s{simpl}.geojson``: confer :ref:`simplify`
-- ``resources/clustermaps_elec{year}_s{simpl}.h5``: confer :ref:`simplify`
 - ``networks/elec{year}_s{simpl}.nc``: confer :ref:`simplify`
+- ``resources/busmap_elec{year}_s{simpl}.csv``: confer :ref:`simplify`
+- ``data/custom_busmap_elec{year}_s{simpl}_{clusters}.csv``: optional input
 
 Outputs
 -------
@@ -49,7 +50,8 @@ Outputs
     .. image:: ../img/regions_offshore_elec_s_X.png
         :scale: 33 %
 
-- ``resources/clustermaps_elec{year}_s{simpl}_{clusters}.h5``: Mapping of buses and lines from ``networks/elec{year}_s{simpl}.nc`` to ``networks/elec{year}_s{simpl}_{clusters}.nc``; has keys ['/busmap', '/busmap_s', '/linemap', '/linemap_negative', '/linemap_positive']
+- ``resources/busmap_elec{year}_s{simpl}_{clusters}.csv``: Mapping of buses from ``networks/elec_s{simpl}.nc`` to ``networks/elec_s{simpl}_{clusters}.nc``;
+- ``resources/linemap{year}_elec_s{simpl}_{clusters}.csv``: Mapping of lines from ``networks/elec_s{simpl}.nc`` to ``networks/elec_s{simpl}_{clusters}.nc``;
 - ``networks/elec{year}_s{simpl}_{clusters}.nc``:
 
     .. image:: ../img/elec_s_X.png
@@ -255,10 +257,9 @@ def busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights=None, algori
             .apply(busmap_for_country).squeeze().rename('busmap'))
 
 
-def clustering_for_n_clusters(n, n_clusters, aggregate_carriers=None,
-                              line_length_factor=1.25, potential_mode='simple',
-                              solver_name="cbc", algorithm="kmeans",
-                              extended_link_costs=0, focus_weights=None):
+def clustering_for_n_clusters(n, n_clusters, custom_busmap=False, aggregate_carriers=None,
+                              line_length_factor=1.25, potential_mode='simple', solver_name="cbc",
+                              algorithm="kmeans", extended_link_costs=0, focus_weights=None):
 
     if potential_mode == 'simple':
         p_nom_max_strategy = np.sum
@@ -267,8 +268,15 @@ def clustering_for_n_clusters(n, n_clusters, aggregate_carriers=None,
     else:
         raise AttributeError(f"potential_mode should be one of 'simple' or 'conservative' but is '{potential_mode}'")
 
+    if custom_busmap:
+        busmap = pd.read_csv(snakemake.input.custom_busmap, index_col=0, squeeze=True)
+        busmap.index = busmap.index.astype(str)
+        logger.info(f"Imported custom busmap from {snakemake.input.custom_busmap}")
+    else:
+        busmap = busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights, algorithm)
+
     clustering = get_clustering_from_busmap(
-        n, busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights, algorithm),
+        n, busmap,
         bus_strategies=dict(country=_make_consense("Bus", "country")),
         aggregate_generators_weighted=True,
         aggregate_generators_carriers=aggregate_carriers,
@@ -363,7 +371,8 @@ if __name__ == "__main__":
             return v
         potential_mode = consense(pd.Series([snakemake.config['renewable'][tech]['potential']
                                              for tech in renewable_carriers]))
-        clustering = clustering_for_n_clusters(n, n_clusters, aggregate_carriers,
+        custom_busmap = snakemake.config["enable"].get("custom_busmap", False)
+        clustering = clustering_for_n_clusters(n, n_clusters, custom_busmap, aggregate_carriers,
                                                line_length_factor=line_length_factor,
                                                potential_mode=potential_mode,
                                                solver_name=snakemake.config['solving']['solver']['name'],

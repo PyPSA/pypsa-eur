@@ -62,7 +62,7 @@ Outputs
     .. image:: ../img/regions_offshore_elec_s  .png
             :scale: 33 %
 
-- ``resources/clustermaps_elec{year}_s{simpl}.h5``: Mapping of buses from ``networks/elec.nc`` to ``networks/elec{year}_s{simpl}.nc``; has keys ['/busmap_s']
+- ``resources/busmap_elec{year}_s{simpl}.h5``: Mapping of buses from ``networks/elec.nc`` to ``networks/elec{year}_s{simpl}.nc``; has keys ['/busmap_s']
 - ``networks/elec{year}_s{simpl}.nc``:
 
     .. image:: ../img/elec_s.png
@@ -322,7 +322,7 @@ def remove_stubs(n):
 
 
 def cluster(n, n_clusters):
-    logger.info("Clustering to {} buses".format(n_clusters))
+    logger.info(f"Clustering to {n_clusters} buses")
 
     renewable_carriers = pd.Index([tech
                                     for tech in n.generators.carrier.unique()
@@ -336,7 +336,7 @@ def cluster(n, n_clusters):
     potential_mode = (consense(pd.Series([snakemake.config['renewable'][tech]['potential']
                                             for tech in renewable_carriers]))
                         if len(renewable_carriers) > 0 else 'conservative')
-    clustering = clustering_for_n_clusters(n, n_clusters, potential_mode=potential_mode,
+    clustering = clustering_for_n_clusters(n, n_clusters, custom_busmap=False, potential_mode=potential_mode,
                                            solver_name=snakemake.config['solving']['solver']['name'])
 
     return clustering.network, clustering.busmap

@@ -51,8 +51,8 @@ datafiles = ['ch_cantons.csv', 'je-e-21.03.02.xls',
             'eez/World_EEZ_v8_2014.shp', 'EIA_hydro_generation_2000_2014.csv',
             'hydro_capacities.csv', 'naturalearth/ne_10m_admin_0_countries.shp',
             'NUTS_2013_60M_SH/data/NUTS_RG_60M_2013.shp', 'nama_10r_3popgdp.tsv.gz',
-            'nama_10r_3gdp.tsv.gz', 'time_series_60min_singleindex_filtered.csv',
-            'corine/g250_clc06_V18_5.tif']
+            'nama_10r_3gdp.tsv.gz', 'corine/g250_clc06_V18_5.tif']
+
 
 
 if not config.get('tutorial', False):
@@ -64,6 +64,12 @@ if config['enable'].get('retrieve_databundle', True):
         output: expand('data/bundle/{file}', file=datafiles)
         log: "logs/retrieve_databundle.log"
         script: 'scripts/retrieve_databundle.py'
+
+
+rule build_load_data:
+    output: "resources/load.csv"
+    log: "logs/build_load_data.log"
+    script: 'scripts/build_load_data.py'
 
 
 rule build_powerplants:
@@ -211,7 +217,7 @@ rule add_electricity:
         powerplants='resources/powerplants.csv',
         hydro_capacities='data/bundle/hydro_capacities.csv',
         geth_hydro_capacities='data/geth2015_hydro_capacities.csv',
-        opsd_load='data/bundle/time_series_60min_singleindex_filtered.csv',
+        load='resources/load.csv',
         nuts3_shapes='resources/nuts3_shapes.geojson',
         **{f"profile_{tech}": "resources/profile{year}_" + f"{tech}.nc"
            for tech in config['renewable']}
@@ -289,6 +295,11 @@ def memory(w):
         m = re.match(r'^(\d+)h$', o, re.IGNORECASE)
         if m is not None:
             factor /= int(m.group(1))
+            break
+    for o in w.opts.split('-'):
+        m = re.match(r'^(\d+)seg$', o, re.IGNORECASE)
+        if m is not None:
+            factor *= int(m.group(1)) / 8760
             break
     if w.clusters.endswith('m'):
         return int(factor * (18000 + 180 * int(w.clusters[:-1])))

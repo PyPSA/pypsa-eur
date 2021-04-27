@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
-version: 0.2.0
+version: 0.3.0
 tutorial: false
 
 logging:
@@ -32,17 +32,18 @@ enable:
   retrieve_cutout: true
   build_natura_raster: false
   retrieve_natura_raster: true
+  custom_busmap: false
 
 electricity:
   voltages: [220., 300., 380.]
   co2limit: 7.75e+7 # 0.05 * 3.1e9*0.5
-  co2base: 3.1e+9 # 1 * 3.1e9*0.5
+  co2base: 1.487e9
   agg_p_nom_limits: data/agg_p_nom_minmax.csv
 
   extendable_carriers:
     Generator: []
-    StorageUnit: [battery, H2]
-    Store: [] # battery, H2
+    StorageUnit: [] # battery, H2
+    Store: [battery, H2]
     Link: []
 
   max_hours:
@@ -52,6 +53,7 @@ electricity:
   powerplants_filter: false # use pandas query strings here, e.g. Country not in ['Germany']
   custom_powerplants: false # use pandas query strings here, e.g. Country in ['Germany']
   conventional_carriers: [nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
+  renewable_capacities_from_OPSD: [] # onwind, offwind, solar
 
   # estimate_renewable_capacities_from_capacity_stats:
   #   # Wind is the Fueltype in ppm.data.Capacity_stats, onwind, offwind-{ac,dc} the carrier in PyPSA-Eur
@@ -142,8 +144,7 @@ renewable:
     cutout: europe-2013-era5
     carriers: [ror, PHS, hydro]
     PHS_max_hours: 6
-    hydro_max_hours: "energy_capacity_totals_by_country" # one of energy_capacity_totals_by_country,
-                                                         # estimate_by_large_installations or a float
+    hydro_max_hours: "energy_capacity_totals_by_country" # one of energy_capacity_totals_by_country, estimate_by_large_installations or a float
     clip_min_inflow: 1.0
 
 lines:
@@ -168,6 +169,11 @@ transformers:
   type: ''
 
 load:
+  url: https://data.open-power-system-data.org/time_series/2019-06-05/time_series_60min_singleindex.csv
+  power_statistics: True # only for files from <2019; set false in order to get ENTSOE transparency data
+  interpolate_limit: 3 # data gaps up until this size are interpolated linearly
+  time_shift_for_large_gaps: 1w # data gaps up until this size are copied by copying from
+  manual_adjustments: true # false
   scaling_factor: 1.0
   fallback_year: 2013
 
@@ -175,13 +181,16 @@ costs:
   year: 2030
   discountrate: 0.07 # From a Lion Hirth paper, also reflects average of Noothout et al 2016
   USD2013_to_EUR2013: 0.7532 # [EUR/USD] ECB: https://www.ecb.europa.eu/stats/exchange/eurofxref/html/eurofxref-graph-usd.en.html
-  marginal_cost:
+  marginal_cost: # EUR/MWh
     solar: 0.01
     onwind: 0.015
     offwind: 0.015
     hydro: 0.
     H2: 0.
+    electrolysis: 0.
+    fuel cell: 0.
     battery: 0.
+    battery inverter: 0.
   emission_prices: # in currency per tonne emission, only used with the option Ep
     co2: 0.
 

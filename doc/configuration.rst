@@ -18,7 +18,7 @@ Top-level configuration
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 5-12,21,28-34
+   :lines: 5-12,20,27-34
 
 .. csv-table::
    :header-rows: 1
@@ -50,7 +50,7 @@ An exemplary dependency graph (starting from the simplification rules) then look
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 14-19
+   :lines: 14-18
 
 .. csv-table::
    :header-rows: 1
@@ -66,7 +66,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 23-26
+   :lines: 22-25
 
 .. csv-table::
    :header-rows: 1
@@ -80,7 +80,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 36-54
+   :lines: 36-60
 
 .. csv-table::
    :header-rows: 1
@@ -97,7 +97,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 61-74
+   :lines: 62-75
 
 .. csv-table::
    :header-rows: 1
@@ -114,7 +114,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 76-93
+   :lines: 77-94
 
 .. csv-table::
    :header-rows: 1
@@ -126,7 +126,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 76,94-106
+   :lines: 77,95-107
 
 .. csv-table::
    :header-rows: 1
@@ -138,7 +138,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 76,107-120
+   :lines: 77,108-121
 
 .. csv-table::
    :header-rows: 1
@@ -150,7 +150,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 76,121-140
+   :lines: 77,122-141
 
 .. csv-table::
    :header-rows: 1
@@ -162,7 +162,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 76,141-147
+   :lines: 77,142-147
 
 .. csv-table::
    :header-rows: 1
@@ -218,7 +218,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 170-171
+   :lines: 170-176
 
 .. csv-table::
    :header-rows: 1
@@ -232,7 +232,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 173-185
+   :lines: 178-190
 
 .. csv-table::
    :header-rows: 1
@@ -241,7 +241,6 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 .. note::
     To change cost assumptions in more detail (i.e. other than ``marginal_cost`` and ``capital_cost``), consider modifying cost assumptions directly in ``data/costs.csv`` as this is not yet supported through the config file.
-
     You can also build multiple different cost databases. Make a renamed copy of ``data/costs.csv`` (e.g. ``data/costs-optimistic.csv``) and set the variable ``COSTS=data/costs-optimistic.csv`` in the ``Snakefile``.
 
 .. _solving_cf:
@@ -254,7 +253,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 187-197
+   :lines: 192-202
 
 .. csv-table::
    :header-rows: 1
@@ -266,7 +265,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 187,198-214
+   :lines: 192,203-219
 
 .. csv-table::
    :header-rows: 1
@@ -280,7 +279,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 216-355
+   :lines: 221-299
 
 .. csv-table::
    :header-rows: 1

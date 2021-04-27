@@ -4,7 +4,6 @@
 
 name: pypsa-eur
 channels:
-  - defaults
   - conda-forge
   - bioconda
   - http://conda.anaconda.org/gurobi
@@ -19,15 +18,16 @@ dependencies:
 
   # Dependencies of the workflow itself
   - xlrd
+  - openpyxl
   - scikit-learn
   - pycountry
   - seaborn
-  - snakemake-minimal<=5.24.2 # until https://github.com/snakemake/snakemake/issues/635 closed
+  - snakemake-minimal
   - memory_profiler
   - yaml
   - pytables
   - lxml
-  - powerplantmatching>=0.4.3
+  - powerplantmatching>=0.4.8
   - numpy<=1.19.0 # otherwise macos fails
 
   # Second order dependencies which should really be deps of atlite
@@ -51,12 +51,11 @@ dependencies:
   - rasterio
   - shapely
   - libgdal<=3.0.4
-
-  # Solvers
-  - gurobi:gurobi # until https://github.com/conda-forge/pypsa-feedstock/issues/4 closed
+  - descartes
 
   - pip:
     - vresutils==0.3.1
+    - tsam>=1.1.0
     - git+https://github.com/PyPSA/glaes.git#egg=glaes
     - git+https://github.com/PyPSA/geokit.git#egg=geokit
     - cdsapi
