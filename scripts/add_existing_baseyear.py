@@ -411,15 +411,15 @@ if __name__ == "__main__":
             wildcards=dict(network='elec', simpl='', clusters='45', lv='1.0',
                            sector_opts='Co2L0-3H-T-H-B-I-solar3-dist1',
                            planning_horizons='2020'),
-            input=dict(network='pypsa-eur-sec/results/version-2/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{planning_horizons}.nc',
+            input=dict(network='pypsa-eur-sec/results/version-2/prenetworks/elec_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{planning_horizons}.nc',
                        powerplants='pypsa-eur/resources/powerplants.csv',
-                       busmap_s='pypsa-eur/resources/busmap_{network}_s{simpl}.csv',
-                       busmap='pypsa-eur/resources/busmap_{network}_s{simpl}_{clusters}.csv',
+                       busmap_s='pypsa-eur/resources/busmap_elec_s{simpl}.csv',
+                       busmap='pypsa-eur/resources/busmap_elec_s{simpl}_{clusters}.csv',
                        costs='technology_data/outputs/costs_{planning_horizons}.csv',
-                       cop_air_total="pypsa-eur-sec/resources/cop_air_total_{network}_s{simpl}_{clusters}.nc",
-                       cop_soil_total="pypsa-eur-sec/resources/cop_soil_total_{network}_s{simpl}_{clusters}.nc",
-                       clustered_pop_layout="pypsa-eur-sec/resources/pop_layout_{network}_s{simpl}_{clusters}.csv",),
-            output=['pypsa-eur-sec/results/version-2/prenetworks_brownfield/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{planning_horizons}.nc'],
+                       cop_air_total="pypsa-eur-sec/resources/cop_air_total_elec_s{simpl}_{clusters}.nc",
+                       cop_soil_total="pypsa-eur-sec/resources/cop_soil_total_elec_s{simpl}_{clusters}.nc",
+                       clustered_pop_layout="pypsa-eur-sec/resources/pop_layout_elec_s{simpl}_{clusters}.csv",),
+            output=['pypsa-eur-sec/results/version-2/prenetworks_brownfield/elec_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{planning_horizons}.nc'],
         )
         import yaml
         with open('config.yaml', encoding='utf8') as f:
