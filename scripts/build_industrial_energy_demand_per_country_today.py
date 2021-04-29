@@ -98,7 +98,7 @@ for ct in eu28:
 
             for fuel in fuels:
                 summary.at[fuel,sub] = s[fuels[fuel]].sum()
-                summary.at['other',sub] = summary.at['all',sub] - summary.loc[summary.index^['all','other'],sub].sum()
+                summary.at['other',sub] = summary.at['all',sub] - summary.loc[summary.index.symmetric_difference(['all','other']),sub].sum()
 
     summary['Other Industrial Sectors'] = summary[ois_subs].sum(axis=1)
     summary.drop(columns=ois_subs,inplace=True)
@@ -128,7 +128,7 @@ output = pd.read_csv(snakemake.input.industrial_production_per_country,
 
 eu28_averages = final_summary.groupby(level=1,axis=1).sum().divide(output.loc[eu28].sum(),axis=1)
 
-non_eu28 = output.index^eu28
+non_eu28 = output.index.symmetric_difference(eu28)
 
 for ct in non_eu28:
     print(ct)

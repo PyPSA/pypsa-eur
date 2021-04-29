@@ -194,7 +194,7 @@ def prepare_building_stock_data():
 
     area_per_pop = area_tot.unstack().reindex(index=ct_total.index).apply(lambda x: x / ct_total[x.index])
     missing_area_ct = ct_total.index.difference(area_tot.index.levels[0])
-    for ct in (missing_area_ct & ct_total.index):
+    for ct in missing_area_ct.intersection(ct_total.index):
         averaged_data = pd.DataFrame(
             area_per_pop.value.reindex(map_for_missings[ct]).mean()
             * ct_total[ct],
@@ -343,7 +343,7 @@ def calculate_cost_energy_curve(u_values, l_strength, l_weight, average_surface_
     res = res.reset_index().set_index(["country", "sector"])
 
     # map missing countries
-    for ct in pd.Index(map_for_missings.keys()) & countries:
+    for ct in pd.Index(map_for_missings.keys()).intersection(countries):
         averaged_data = res.reindex(index=map_for_missings[ct], level=0).mean(level=1)
         index = pd.MultiIndex.from_product([[ct], averaged_data.index.to_list()])
         averaged_data.index = index

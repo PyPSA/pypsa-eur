@@ -240,7 +240,7 @@ def remove_elec_base_techs(n):
 
     for c in n.iterate_components(snakemake.config["pypsa_eur"]):
         to_keep = snakemake.config["pypsa_eur"][c.name]
-        to_remove = pd.Index(c.df.carrier.unique())^to_keep
+        to_remove = pd.Index(c.df.carrier.unique()).symmetric_difference(to_keep)
         print("Removing",c.list_name,"with carrier",to_remove)
         names = c.df.index[c.df.carrier.isin(to_remove)]
         print(names)
@@ -921,7 +921,7 @@ def add_storage(network):
 
     # hydrogen stored overground
     h2_capital_cost = costs.at["hydrogen storage tank", "fixed"]
-    nodes_overground = nodes ^ cavern_nodes.index
+    nodes_overground = nodes.symmetric_difference(cavern_nodes.index)
 
     network.madd("Store",
                  nodes_overground + " H2 Store",
@@ -1484,7 +1484,7 @@ def create_nodes_for_heat_sector():
         else:
             nodes[sector + " urban decentral"] = pop_layout.index
     # for central nodes, residential and services are aggregated
-    nodes["urban central"] = pop_layout.index ^ nodes["residential urban decentral"]
+    nodes["urban central"] = pop_layout.index.symmetric_difference(nodes["residential urban decentral"])
     return nodes
 
 

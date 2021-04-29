@@ -196,7 +196,7 @@ ammonia = pd.read_csv(snakemake.input.ammonia_production,
                       index_col=0)
 
 there = ammonia.index.intersection(countries_demand.index)
-missing = countries_demand.index^there
+missing = countries_demand.index.symmetric_difference(there)
 
 print("Following countries have no ammonia demand:", missing)
 
