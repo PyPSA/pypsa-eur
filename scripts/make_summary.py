@@ -79,7 +79,7 @@ def calculate_nodal_cfs(n,label,nodal_cfs):
         cf_c = p_c/capacities_c
 
         index = pd.MultiIndex.from_tuples([(c.list_name,) + t for t in cf_c.index.to_list()])
-        nodal_cfs = nodal_cfs.reindex(index|nodal_cfs.index)
+        nodal_cfs = nodal_cfs.reindex(index.union(nodal_cfs.index))
         nodal_cfs.loc[index,label] = cf_c.values
 
     return nodal_cfs
@@ -106,7 +106,7 @@ def calculate_cfs(n,label,cfs):
 
         cf_c = pd.concat([cf_c], keys=[c.list_name])
 
-        cfs = cfs.reindex(cf_c.index|cfs.index)
+        cfs = cfs.reindex(cf_c.index.union(cfs.index))
 
         cfs.loc[cf_c.index,label] = cf_c
 
@@ -121,7 +121,7 @@ def calculate_nodal_costs(n,label,nodal_costs):
         c.df["capital_costs"] = c.df.capital_cost*c.df[opt_name.get(c.name,"p") + "_nom_opt"]
         capital_costs = c.df.groupby(["location","carrier"])["capital_costs"].sum()
         index = pd.MultiIndex.from_tuples([(c.list_name,"capital") + t for t in capital_costs.index.to_list()])
-        nodal_costs = nodal_costs.reindex(index|nodal_costs.index)
+        nodal_costs = nodal_costs.reindex(index.union(nodal_costs.index))
         nodal_costs.loc[index,label] = capital_costs.values
 
         if c.name == "Link":
@@ -143,7 +143,7 @@ def calculate_nodal_costs(n,label,nodal_costs):
         c.df["marginal_costs"] = p*c.df.marginal_cost
         marginal_costs = c.df.groupby(["location","carrier"])["marginal_costs"].sum()
         index = pd.MultiIndex.from_tuples([(c.list_name,"marginal") + t for t in marginal_costs.index.to_list()])
-        nodal_costs = nodal_costs.reindex(index|nodal_costs.index)
+        nodal_costs = nodal_costs.reindex(index.union(nodal_costs.index))
         nodal_costs.loc[index,label] = marginal_costs.values
 
     return nodal_costs
@@ -158,7 +158,7 @@ def calculate_costs(n,label,costs):
         capital_costs_grouped = pd.concat([capital_costs_grouped], keys=["capital"])
         capital_costs_grouped = pd.concat([capital_costs_grouped], keys=[c.list_name])
 
-        costs = costs.reindex(capital_costs_grouped.index|costs.index)
+        costs = costs.reindex(capital_costs_grouped.index.union(costs.index))
 
         costs.loc[capital_costs_grouped.index,label] = capital_costs_grouped
 
@@ -185,7 +185,7 @@ def calculate_costs(n,label,costs):
         marginal_costs_grouped = pd.concat([marginal_costs_grouped], keys=["marginal"])
         marginal_costs_grouped = pd.concat([marginal_costs_grouped], keys=[c.list_name])
 
-        costs = costs.reindex(marginal_costs_grouped.index|costs.index)
+        costs = costs.reindex(marginal_costs_grouped.index.union(costs.index))
 
         costs.loc[marginal_costs_grouped.index,label] = marginal_costs_grouped
 
@@ -220,7 +220,7 @@ def calculate_nodal_capacities(n,label,nodal_capacities):
     for c in n.iterate_components(n.branch_components|n.controllable_one_port_components^{"Load"}):
         nodal_capacities_c = c.df.groupby(["location","carrier"])[opt_name.get(c.name,"p") + "_nom_opt"].sum()
         index = pd.MultiIndex.from_tuples([(c.list_name,) + t for t in nodal_capacities_c.index.to_list()])
-        nodal_capacities = nodal_capacities.reindex(index|nodal_capacities.index)
+        nodal_capacities = nodal_capacities.reindex(index.union(nodal_capacities.index))
         nodal_capacities.loc[index,label] = nodal_capacities_c.values
 
     return nodal_capacities
@@ -234,7 +234,7 @@ def calculate_capacities(n,label,capacities):
         capacities_grouped = c.df[opt_name.get(c.name,"p") + "_nom_opt"].groupby(c.df.carrier).sum()
         capacities_grouped = pd.concat([capacities_grouped], keys=[c.list_name])
 
-        capacities = capacities.reindex(capacities_grouped.index|capacities.index)
+        capacities = capacities.reindex(capacities_grouped.index.union(capacities.index))
 
         capacities.loc[capacities_grouped.index,label] = capacities_grouped
 
@@ -267,7 +267,7 @@ def calculate_energy(n,label,energy):
 
         c_energies = pd.concat([c_energies], keys=[c.list_name])
 
-        energy = energy.reindex(c_energies.index|energy.index)
+        energy = energy.reindex(c_energies.index.union(energy.index))
 
         energy.loc[c_energies.index,label] = c_energies
 
@@ -294,7 +294,7 @@ def calculate_supply(n,label,supply):
             s = pd.concat([s], keys=[c.list_name])
             s = pd.concat([s], keys=[i])
 
-            supply = supply.reindex(s.index|supply.index)
+            supply = supply.reindex(s.index.union(supply.index))
             supply.loc[s.index,label] = s
 
 
@@ -313,7 +313,7 @@ def calculate_supply(n,label,supply):
                 s = pd.concat([s], keys=[c.list_name])
                 s = pd.concat([s], keys=[i])
 
-                supply = supply.reindex(s.index|supply.index)
+                supply = supply.reindex(s.index.union(supply.index))
                 supply.loc[s.index,label] = s
 
     return supply
@@ -339,7 +339,7 @@ def calculate_supply_energy(n,label,supply_energy):
             s = pd.concat([s], keys=[c.list_name])
             s = pd.concat([s], keys=[i])
 
-            supply_energy = supply_energy.reindex(s.index|supply_energy.index)
+            supply_energy = supply_energy.reindex(s.index.union(supply_energy.index))
             supply_energy.loc[s.index,label] = s
 
 
@@ -357,7 +357,7 @@ def calculate_supply_energy(n,label,supply_energy):
                 s = pd.concat([s], keys=[c.list_name])
                 s = pd.concat([s], keys=[i])
 
-                supply_energy = supply_energy.reindex(s.index|supply_energy.index)
+                supply_energy = supply_energy.reindex(s.index.union(supply_energy.index))
 
                 supply_energy.loc[s.index,label] = s
 
@@ -366,7 +366,7 @@ def calculate_supply_energy(n,label,supply_energy):
 
 def calculate_metrics(n,label,metrics):
 
-    metrics = metrics.reindex(pd.Index(["line_volume","line_volume_limit","line_volume_AC","line_volume_DC","line_volume_shadow","co2_shadow"])|metrics.index)
+    metrics = metrics.reindex(pd.Index(["line_volume","line_volume_limit","line_volume_AC","line_volume_DC","line_volume_shadow","co2_shadow"]).union(metrics.index))
 
     metrics.at["line_volume_DC",label] = (n.links.length*n.links.p_nom_opt)[n.links.carrier == "DC"].sum()
     metrics.at["line_volume_AC",label] = (n.lines.length*n.lines.s_nom_opt).sum()
@@ -384,7 +384,7 @@ def calculate_metrics(n,label,metrics):
 
 def calculate_prices(n,label,prices):
 
-    prices = prices.reindex(prices.index|n.buses.carrier.unique())
+    prices = prices.reindex(prices.index.union(n.buses.carrier.unique()))
 
     #WARNING: this is time-averaged, see weighted_prices for load-weighted average
     prices[label] = n.buses_t.marginal_price.mean().groupby(n.buses.carrier).mean()
@@ -467,7 +467,7 @@ def calculate_market_values(n, label, market_values):
 
     techs = n.generators.loc[generators,"carrier"].value_counts().index
 
-    market_values = market_values.reindex(market_values.index | techs)
+    market_values = market_values.reindex(market_values.index.union(techs))
 
 
     for tech in techs:
@@ -488,7 +488,7 @@ def calculate_market_values(n, label, market_values):
 
         techs = n.links.loc[all_links,"carrier"].value_counts().index
 
-        market_values = market_values.reindex(market_values.index | techs)
+        market_values = market_values.reindex(market_values.index.union(techs))
 
         for tech in techs:
             links = all_links[n.links.loc[all_links,"carrier"] == tech]
@@ -505,7 +505,7 @@ def calculate_market_values(n, label, market_values):
 def calculate_price_statistics(n, label, price_statistics):
 
 
-    price_statistics = price_statistics.reindex(price_statistics.index|pd.Index(["zero_hours","mean","standard_deviation"]))
+    price_statistics = price_statistics.reindex(price_statistics.index.union(pd.Index(["zero_hours","mean","standard_deviation"])))
 
     buses = n.buses.index[n.buses.carrier == "AC"]
 

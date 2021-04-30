@@ -375,6 +375,7 @@ plotting:
     "process emissions to atmosphere" : "#888888"
     "process emissions" : "#222222"
     "oil emissions" : "#666666"
+    "land transport oil emissions" : "#666666"
     "land transport fuel cell" : "#AAAAAA"
     "biogas" : "#800000"
     "solid biomass" : "#DAA520"

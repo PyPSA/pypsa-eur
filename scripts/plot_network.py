@@ -130,7 +130,7 @@ def plot_map(network, components=["links", "stores", "storage_units", "generator
 
     costs.drop(list(costs.columns[(costs == 0.).all()]), axis=1, inplace=True)
 
-    new_columns = ((preferred_order & costs.columns)
+    new_columns = (preferred_order.intersection(costs.columns)
                    .append(costs.columns.difference(preferred_order)))
     costs = costs[new_columns]
 
@@ -147,7 +147,7 @@ def plot_map(network, components=["links", "stores", "storage_units", "generator
         n.links.carrier != "B2B")], inplace=True)
 
     # drop non-bus
-    to_drop = costs.index.levels[0] ^ n.buses.index
+    to_drop = costs.index.levels[0].symmetric_difference(n.buses.index)
     if len(to_drop) != 0:
         print("dropping non-buses", to_drop)
         costs.drop(to_drop, level=0, inplace=True, axis=0)
@@ -463,7 +463,7 @@ def plot_series(network, carrier="AC", name="test"):
                                 "battery storage",
                                 "hot water storage"])
 
-    new_columns = ((preferred_order & supply.columns)
+    new_columns = (preferred_order.intersection(supply.columns)
                    .append(supply.columns.difference(preferred_order)))
 
     supply =  supply.groupby(supply.columns, axis=1).sum()

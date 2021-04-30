@@ -82,7 +82,7 @@ def plot_costs():
 
     print(df.sum())
 
-    new_index = (preferred_order&df.index).append(df.index.difference(preferred_order))
+    new_index = preferred_order.intersection(df.index).append(df.index.difference(preferred_order))
 
     new_columns = df.sum().sort_values().index
 
@@ -136,7 +136,7 @@ def plot_energy():
 
     print(df)
 
-    new_index = (preferred_order&df.index).append(df.index.difference(preferred_order))
+    new_index = preferred_order.intersection(df.index).append(df.index.difference(preferred_order))
 
     new_columns = df.columns.sort_values()
     #new_columns = df.sum().sort_values().index
@@ -177,7 +177,7 @@ def plot_balances():
     balances_df = pd.read_csv(snakemake.input.balances,index_col=list(range(3)),header=list(range(n_header)))
 
     balances = {i.replace(" ","_") : [i] for i in balances_df.index.levels[0]}
-    balances["energy"] = balances_df.index.levels[0]^co2_carriers
+    balances["energy"] = balances_df.index.levels[0].symmetric_difference(co2_carriers)
 
     for k,v in balances.items():
 
@@ -205,7 +205,7 @@ def plot_balances():
         if df.empty:
             continue
 
-        new_index = (preferred_order&df.index).append(df.index.difference(preferred_order))
+        new_index = preferred_order.intersection(df.index).append(df.index.difference(preferred_order))
 
         new_columns = df.columns.sort_values()
 

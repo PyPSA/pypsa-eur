@@ -774,6 +774,7 @@ def sample_dE_costs_area(area, area_tot, costs, dE_space, countries,
                                     .from_product([[ct], cost_dE.index.levels[1]])))
         cost_dE = cost_dE.append(averaged_data)
 
+
     # weights costs after construction index
     if construction_index:
         for ct in list(map_for_missings.keys() - cost_w.index):
@@ -844,12 +845,12 @@ if __name__ == "__main__":
                 tax_w="data/retro/electricity_taxes_eu.csv",
                 construction_index="data/retro/comparative_level_investment.csv",
                 floor_area_missing="data/retro/floor_area_missing.csv",
-                clustered_pop_layout="resources/pop_layout_{network}_s{simpl}_{clusters}.csv",
+                clustered_pop_layout="resources/pop_layout_elec_s{simpl}_{clusters}.csv",
                 cost_germany="data/retro/retro_cost_germany.csv",
                 window_assumptions="data/retro/window_assumptions.csv"),
             output=dict(
-                retro_cost="resources/retro_cost_{network}_s{simpl}_{clusters}.csv",
-                floor_area="resources/floor_area_{network}_s{simpl}_{clusters}.csv")
+                retro_cost="resources/retro_cost_elec_s{simpl}_{clusters}.csv",
+                floor_area="resources/floor_area_elec_s{simpl}_{clusters}.csv")
         )
         with open('config.yaml', encoding='utf8') as f:
             snakemake.config = yaml.safe_load(f)
