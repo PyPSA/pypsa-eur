@@ -119,11 +119,11 @@ sector:
   'time_dep_hp_cop' : True #time dependent heat pump coefficient of performance
   'heat_pump_sink_T' : 55. # Celsius, based on DTU / large area radiators; used in build_cop_profiles.py
    # conservatively high to cover hot water and space heating in poorly-insulated buildings
-  'vary_space_heat_exogenously': True  # reduces or increases space heat demand by a given factor (applied before losses in DH)
-  # this can represent e.g. increasing floor area, increased thermal comfort,
-  # population grow, climate change, building demolition, building  renovation
-  'vary_space_heat_exogenously_factor':
-  # the factor are determined by the LTS scenario from http://tool.european-calculator.eu/app/buildings/building-types-area/?levers=1ddd4444421213bdbbbddd44444ffffff11f411111221111211l212221
+  'reduce_space_heat_exogenously': True  # reduces space heat demand by a given factor (applied before losses in DH)
+  # this can represent e.g. building renovation, building demolition, or if
+  # the factor is negative: increasing floor area, increased thermal comfort, population growth
+  'reduce_space_heat_exogenously_factor': # per unit reduction in space heat demand
+  # the default factors are determined by the LTS scenario from http://tool.european-calculator.eu/app/buildings/building-types-area/?levers=1ddd4444421213bdbbbddd44444ffffff11f411111221111211l212221
           2020:    0.10  # this results in a space heat demand reduction of 10%
           2025:    0.09  # first heat demand increases compared to 2020 because of larger floor area per capita
           2030:    0.09

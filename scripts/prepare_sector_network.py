@@ -1180,8 +1180,8 @@ def add_heat(network):
     urban_fraction = options['central_fraction']*pop_layout["urban"]/(pop_layout[["urban","rural"]].sum(axis=1))
 
     # exogenously reduce space heat demand
-    if options["vary_space_heat_exogenously"]:
-        dE = get_parameter(options["vary_space_heat_exogenously_factor"])
+    if options["reduce_space_heat_exogenously"]:
+        dE = get_parameter(options["reduce_space_heat_exogenously_factor"])
         print("assumed space heat reduction of {} %".format(dE*100))
         for sector in sectors:
             heat_demand[sector + " space"] = (1-dE)*heat_demand[sector + " space"]
