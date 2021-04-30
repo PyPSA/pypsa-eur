@@ -108,6 +108,8 @@ Small for decentral applications.
 
 Big water pit storage for district heating.
 
+.. _retro:
+
 Retrofitting of the thermal envelope of buildings
 ===================================================
 Co-optimising building renovation is only enabled if in the ``config.yaml`` the
