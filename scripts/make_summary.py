@@ -196,25 +196,25 @@ def calculate_costs(n,label,costs):
 
     return costs
 
-def calculate_cumulative_cost():        
+def calculate_cumulative_cost():
     planning_horizons = snakemake.config['scenario']['planning_horizons']
 
     cumulative_cost = pd.DataFrame(index = df["costs"].sum().index,
                                   columns=pd.Series(data=np.arange(0,0.1, 0.01), name='social discount rate'))
-    
+
     #discount cost and express them in money value of planning_horizons[0]
     for r in cumulative_cost.columns:
         cumulative_cost[r]=[df["costs"].sum()[index]/((1+r)**(index[-1]-planning_horizons[0])) for index in cumulative_cost.index]
-    
+
     #integrate cost throughout the transition path
-    for r in cumulative_cost.columns:       
+    for r in cumulative_cost.columns:
         for cluster in cumulative_cost.index.get_level_values(level=0).unique():
             for lv in cumulative_cost.index.get_level_values(level=1).unique():
                 for sector_opts in cumulative_cost.index.get_level_values(level=2).unique():
                     cumulative_cost.loc[(cluster, lv, sector_opts,'cumulative cost'),r] = np.trapz(cumulative_cost.loc[idx[cluster, lv, sector_opts,planning_horizons],r].values, x=planning_horizons)
 
-    return cumulative_cost 
-    
+    return cumulative_cost
+
 def calculate_nodal_capacities(n,label,nodal_capacities):
     #Beware this also has extraneous locations for country (e.g. biomass) or continent-wide (e.g. fossil gas/oil) stuff
     for c in n.iterate_components(n.branch_components|n.controllable_one_port_components^{"Load"}):
@@ -285,7 +285,7 @@ def calculate_supply(n,label,supply):
 
         for c in n.iterate_components(n.one_port_components):
 
-            items = c.df.index[c.df.bus.map(bus_map)]
+            items = c.df.index[c.df.bus.map(bus_map).fillna(False)]
 
             if len(items) == 0:
                 continue
@@ -330,7 +330,7 @@ def calculate_supply_energy(n,label,supply_energy):
 
         for c in n.iterate_components(n.one_port_components):
 
-            items = c.df.index[c.df.bus.map(bus_map)]
+            items = c.df.index[c.df.bus.map(bus_map).fillna(False)]
 
             if len(items) == 0:
                 continue
@@ -611,7 +611,7 @@ if __name__ == "__main__":
     print(networks_dict)
 
     Nyears = 1
-    
+
     costs_db = prepare_costs(snakemake.input.costs,
                              snakemake.config['costs']['USD2013_to_EUR2013'],
                              snakemake.config['costs']['discountrate'],
@@ -623,10 +623,9 @@ if __name__ == "__main__":
     df["metrics"].loc["total costs"] =  df["costs"].sum()
 
     to_csv(df)
-    
+
     if snakemake.config["foresight"]=='myopic':
         cumulative_cost=calculate_cumulative_cost()
         cumulative_cost.to_csv(snakemake.config['summary_dir'] + '/' + snakemake.config['run'] + '/csvs/cumulative_cost.csv')
 
 
-                                                     

@@ -281,14 +281,15 @@ rule build_industrial_demand:
 rule build_retro_cost:
     input:
         building_stock="data/retro/data_building_stock.csv",
+        data_tabula="data/retro/tabula-calculator-calcsetbuilding.csv",
+        air_temperature = "resources/temp_air_total_{network}_s{simpl}_{clusters}.nc",
         u_values_PL="data/retro/u_values_poland.csv",
         tax_w="data/retro/electricity_taxes_eu.csv",
         construction_index="data/retro/comparative_level_investment.csv",
-        average_surface="data/retro/average_surface_components.csv",
         floor_area_missing="data/retro/floor_area_missing.csv",
         clustered_pop_layout="resources/pop_layout_elec_s{simpl}_{clusters}.csv",
         cost_germany="data/retro/retro_cost_germany.csv",
-        window_assumptions="data/retro/window_assumptions.csv"
+        window_assumptions="data/retro/window_assumptions.csv",
     output:
         retro_cost="resources/retro_cost_elec_s{simpl}_{clusters}.csv",
         floor_area="resources/floor_area_elec_s{simpl}_{clusters}.csv"

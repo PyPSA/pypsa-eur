@@ -248,6 +248,14 @@ def remove_elec_base_techs(n):
         n.carriers.drop(to_remove, inplace=True, errors="ignore")
 
 
+def remove_non_electric_buses(n):
+    """
+    remove buses from pypsa-eur with carriers which are not AC buses
+    """
+    print("drop buses from PyPSA-Eur with carrier: ", n.buses[~n.buses.carrier.isin(["AC", "DC"])].carrier.unique())
+    n.buses = n.buses[n.buses.carrier.isin(["AC", "DC"])]
+
+
 def add_co2_tracking(n):
 
 
@@ -1174,11 +1182,10 @@ def add_heat(network):
 
     urban_fraction = options['central_fraction']*pop_layout["urban"]/(pop_layout[["urban","rural"]].sum(axis=1))
 
-    # building retrofitting, exogenously reduce space heat demand
-    if options["retrofitting"]["retro_exogen"]:
-        dE = get_parameter(options["retrofitting"]["dE"])
-        print("retrofitting exogenously, assumed space heat reduction of ",
-              dE)
+    # exogenously reduce space heat demand
+    if options["reduce_space_heat_exogenously"]:
+        dE = get_parameter(options["reduce_space_heat_exogenously_factor"])
+        print("assumed space heat reduction of {} %".format(dE*100))
         for sector in sectors:
             heat_demand[sector + " space"] = (1-dE)*heat_demand[sector + " space"]
 
@@ -1908,8 +1915,7 @@ if __name__ == "__main__":
                 	    retro_cost_energy = "resources/retro_cost_elec_s{simpl}_{clusters}.csv",
                         floor_area = "resources/floor_area_elec_s{simpl}_{clusters}.csv"
             ),
-            output=['results/version-cb48be3/prenetworks/elec_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{planning_horizons}.nc']
-
+            output=['results/version-cb48be3/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{planning_horizons}.nc']
         )
         import yaml
         with open('config.yaml', encoding='utf8') as f:
@@ -1948,6 +1954,8 @@ if __name__ == "__main__":
     remove_elec_base_techs(n)
 
     n.loads["carrier"] = "electricity"
+
+    remove_non_electric_buses(n)
 
     n.buses["location"] = n.buses.index
 
