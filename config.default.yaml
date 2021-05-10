@@ -64,27 +64,27 @@ atlite:
   nprocesses: 4
   cutouts:
     # use 'base' to determine geographical bounds and time span from config
-    # base: 
-      # module: era5  
+    # base:
+      # module: era5
     europe-2013-era5:
-      module: era5 # in priority order 
+      module: era5 # in priority order
       x: [-12., 35.]
       y: [33., 72]
       dx: 0.3
       dy: 0.3
       time: ['2013', '2013']
     europe-2013-sarah:
-      module: [sarah, era5] # in priority order 
+      module: [sarah, era5] # in priority order
       x: [-12., 45.]
       y: [33., 65]
       dx: 0.2
       dy: 0.2
       time: ['2013', '2013']
       sarah_interpolate: false
-      sarah_dir: 
+      sarah_dir:
       features: [influx, temperature]
 
-      
+
 renewable:
   onwind:
     cutout: europe-2013-era5
@@ -180,16 +180,16 @@ transformers:
 
 load:
   url: https://data.open-power-system-data.org/time_series/2019-06-05/time_series_60min_singleindex.csv
-  power_statistics: True # only for files from <2019; set false in order to get ENTSOE transparency data 
+  power_statistics: True # only for files from <2019; set false in order to get ENTSOE transparency data
   interpolate_limit: 3 # data gaps up until this size are interpolated linearly
-  time_shift_for_large_gaps: 1w # data gaps up until this size are copied by copying from 
+  time_shift_for_large_gaps: 1w # data gaps up until this size are copied by copying from
   manual_adjustments: true # false
   scaling_factor: 1.0
 
 costs:
   year: 2030
   version: v0.1.0
-  rooftop_share: 0.5
+  rooftop_share: 0.14  # based on the potentials, assuming  (0.1 kW/m2 and 10 m2/person)
   fill_values:
     FOM: 0
     VOM: 0
