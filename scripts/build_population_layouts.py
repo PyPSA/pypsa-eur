@@ -15,7 +15,7 @@ if 'snakemake' not in globals():
     import yaml
     snakemake = Dict()
     with open('config.yaml') as f:
-        snakemake.config = yaml.load(f)
+        snakemake.config = yaml.safe_load(f)
     snakemake.input = Dict()
     snakemake.output = Dict()
 
@@ -46,7 +46,7 @@ urban_fraction = pd.read_csv(snakemake.input.urban_percent,
 #fill missing Balkans values
 missing = ["AL","ME","MK"]
 reference = ["RS","BA"]
-urban_fraction = urban_fraction.reindex(urban_fraction.index|missing)
+urban_fraction = urban_fraction.reindex(urban_fraction.index.union(missing))
 urban_fraction.loc[missing] = urban_fraction[reference].mean()
 
 
