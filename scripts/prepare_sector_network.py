@@ -1915,7 +1915,7 @@ if __name__ == "__main__":
                 	    retro_cost_energy = "resources/retro_cost_elec_s{simpl}_{clusters}.csv",
                         floor_area = "resources/floor_area_elec_s{simpl}_{clusters}.csv"
             ),
-            output=['results/version-cb48be3/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{planning_horizons}.nc']
+            output=['results/version-cb48be3/prenetworks/elec_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{planning_horizons}.nc']
         )
         import yaml
         with open('config.yaml', encoding='utf8') as f:
