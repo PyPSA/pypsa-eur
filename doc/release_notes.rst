@@ -20,6 +20,7 @@ Upcoming Release
 * Add option to include marginal costs of links representing fuel cells, electrolysis, and battery inverters 
   [`#232 <https://github.com/PyPSA/pypsa-eur/pull/232>`_].
 * Bugfix in `solve_operations_network`: now operations network includes all extendable links, not only 'DC' [`#244 <https://github.com/PyPSA/pypsa-eur/pull/244>`_].
+* The ``focus_weights`` are now also considered when pre-clustering in the :mod:`simplify_network` rule [`#241 <https://github.com/PyPSA/pypsa-eur/pull/241>`_].
 
 PyPSA-Eur 0.3.0 (7th December 2020)
 ==================================
