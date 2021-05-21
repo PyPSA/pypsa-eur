@@ -1,0 +1,42 @@
+name: Check code style and quality
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  snakefmt:
+    name: Check Snakefiles
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install package
+        run: pip install snakefmt
+      - name: Run snakefmt
+        id: changes
+        run: |
+          echo "Here's what snakefmt is saying:"
+          snakefmt --check .
+      - name: Call for action
+        if: failure()
+        run: |
+          text="snakemake rules not properly formatted. Run snakefmt on your code."
+          echo "::error::$text"
+          exit 1
+  lintYAML:
+    name: Lint YAML files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: yamllint action
+        uses: ibiqlik/action-yamllint@v3
+        with:
+          config_file: .yamllint.yml
+      - name: Call for action
+        if: failure()
+        run: |
+          text="YAML files not properly formatted. Run yamllint for details."
+          echo "::error::$text"
+          exit 1

@@ -1,0 +1,13 @@
+---
+
+extends: default
+
+rules:
+  document-start: disable
+  line-length:
+    max: 88                # black recommendation for flake8
+  comments:
+    require-starting-space: true
+    min-spaces-from-content: 1
+  truthy:
+    check-keys: false       # Disable truthy check hits on keys like "on": ...
