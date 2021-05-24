@@ -177,7 +177,7 @@ def plot_balances():
     balances_df = pd.read_csv(snakemake.input.balances,index_col=list(range(3)),header=list(range(n_header)))
 
     balances = {i.replace(" ","_") : [i] for i in balances_df.index.levels[0]}
-    balances["energy"] = balances_df.index.levels[0].symmetric_difference(co2_carriers)
+    balances["energy"] = [i for i in balances_df.index.levels[0] if i not in co2_carriers]
 
     for k,v in balances.items():
 
