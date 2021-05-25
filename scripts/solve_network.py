@@ -241,7 +241,7 @@ def extra_functionality(n, snapshots):
     add_battery_constraints(n)
 
 
-def solve_network(n, config, solver_log=None, opts='', **kwargs):
+def solve_network(n, config, opts='', **kwargs):
     solver_options = config['solving']['solver'].copy()
     solver_name = solver_options.pop('name')
     cf_solving = config['solving']['options']
@@ -255,11 +255,9 @@ def solve_network(n, config, solver_log=None, opts='', **kwargs):
 
     if cf_solving.get('skip_iterations', False):
         network_lopf(n, solver_name=solver_name, solver_options=solver_options,
-                     solver_logfile=solver_log,
                      extra_functionality=extra_functionality, **kwargs)
     else:
         ilopf(n, solver_name=solver_name, solver_options=solver_options,
-              solver_logfile=solver_log,
               track_iterations=track_iterations,
               min_iterations=min_iterations,
               max_iterations=max_iterations,
@@ -284,8 +282,9 @@ if __name__ == "__main__":
     with memory_logger(filename=fn, interval=30.) as mem:
         n = pypsa.Network(snakemake.input[0])
         n = prepare_network(n, solve_opts)
-        n = solve_network(n, config=snakemake.config, solver_dir=tmpdir,
-                          solver_log=snakemake.log.solver, opts=opts)
+        n = solve_network(n, config=snakemake.config, opts=opts,
+                          solver_dir=tmpdir,
+                          solver_logfile=snakemake.log.solver)
         n.export_to_netcdf(snakemake.output[0])
 
     logger.info("Maximum memory usage: {}".format(mem.mem_usage))
