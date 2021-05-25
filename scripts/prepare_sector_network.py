@@ -1548,6 +1548,8 @@ def add_biomass(network):
                  bus1="EU gas",
                  bus2="co2 atmosphere",
                  carrier="biogas to gas",
+                 capital_cost=costs.loc["biogas upgrading", "fixed"],
+                 marginal_cost=costs.loc["biogas upgrading", "VOM"],
                  efficiency2=-costs.at['gas','CO2 intensity'],
                  p_nom_extendable=True)
 
