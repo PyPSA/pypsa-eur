@@ -253,7 +253,8 @@ def prepare_building_stock_data():
                   axis=1, inplace=True, errors="ignore")
 
 
-    u_values = u_values.apply(lambda x: x.replace(rename_sectors))
+    u_values.subsector.replace(rename_sectors, inplace=True)
+    u_values.btype.replace(rename_sectors, inplace=True)
 
     # for missing weighting of surfaces of building types assume MFH
     u_values["assumed_subsector"] = u_values.subsector
