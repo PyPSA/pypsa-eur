@@ -255,9 +255,11 @@ def solve_network(n, config, solver_log=None, opts='', **kwargs):
 
     if cf_solving.get('skip_iterations', False):
         network_lopf(n, solver_name=solver_name, solver_options=solver_options,
+                     solver_logfile=solver_log,
                      extra_functionality=extra_functionality, **kwargs)
     else:
         ilopf(n, solver_name=solver_name, solver_options=solver_options,
+              solver_logfile=solver_log,
               track_iterations=track_iterations,
               min_iterations=min_iterations,
               max_iterations=max_iterations,
