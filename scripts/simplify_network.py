@@ -97,7 +97,7 @@ from functools import reduce
 
 import pypsa
 from pypsa.io import import_components_from_dataframe, import_series_from_dataframe
-from pypsa.networkclustering import busmap_by_stubs, aggregategenerators, aggregateoneport
+from pypsa.networkclustering import stubs_clustering, get_clustering_from_busmap
 
 logger = logging.getLogger(__name__)
 
@@ -137,187 +137,46 @@ def simplify_network_to_380(n):
 
     return n, trafo_map
 
-
-def _prepare_connection_costs_per_link(n):
-    if n.links.empty: return {}
-
-    costs = load_costs(n.snapshot_weightings.sum() / 8760, snakemake.input.tech_costs,
-                       snakemake.config['costs'], snakemake.config['electricity'])
-
-    connection_costs_per_link = {}
-
-    for tech in snakemake.config['renewable']:
-        if tech.startswith('offwind'):
-            connection_costs_per_link[tech] = (
-                n.links.length * snakemake.config['lines']['length_factor'] *
-                (n.links.underwater_fraction * costs.at[tech + '-connection-submarine', 'capital_cost'] +
-                 (1. - n.links.underwater_fraction) * costs.at[tech + '-connection-underground', 'capital_cost'])
-            )
-
-    return connection_costs_per_link
-
-
-def _compute_connection_costs_to_bus(n, busmap, connection_costs_per_link=None, buses=None):
-    if connection_costs_per_link is None:
-        connection_costs_per_link = _prepare_connection_costs_per_link(n)
-
-    if buses is None:
-        buses = busmap.index[busmap.index != busmap.values]
-
-    connection_costs_to_bus = pd.DataFrame(index=buses)
-
-    for tech in connection_costs_per_link:
-        adj = n.adjacency_matrix(weights=pd.concat(dict(Link=connection_costs_per_link[tech].reindex(n.links.index),
-                                                        Line=pd.Series(0., n.lines.index))))
-
-        costs_between_buses = dijkstra(adj, directed=False, indices=n.buses.index.get_indexer(buses))
-        connection_costs_to_bus[tech] = costs_between_buses[np.arange(len(buses)),
-                                                            n.buses.index.get_indexer(busmap.loc[buses])]
-
-    return connection_costs_to_bus
-
-
-def _adjust_capital_costs_using_connection_costs(n, connection_costs_to_bus):
-    for tech in connection_costs_to_bus:
-        tech_b = n.generators.carrier == tech
-        costs = n.generators.loc[tech_b, "bus"].map(connection_costs_to_bus[tech]).loc[lambda s: s>0]
-        if not costs.empty:
-            n.generators.loc[costs.index, "capital_cost"] += costs
-            logger.info("Displacing {} generator(s) and adding connection costs to capital_costs: {} "
-                        .format(tech, ", ".join("{:.0f} Eur/MW/a for `{}`".format(d, b) for b, d in costs.iteritems())))
-
-
-def _aggregate_and_move_components(n, busmap, connection_costs_to_bus, aggregate_one_ports={"Load", "StorageUnit"}):
-    def replace_components(n, c, df, pnl):
-        n.mremove(c, n.df(c).index)
-
-        import_components_from_dataframe(n, df, c)
-        for attr, df in pnl.items():
-            if not df.empty:
-                import_series_from_dataframe(n, df, c, attr)
-
-    _adjust_capital_costs_using_connection_costs(n, connection_costs_to_bus)
-
-    generators, generators_pnl = aggregategenerators(n, busmap)
-    replace_components(n, "Generator", generators, generators_pnl)
-
-    for one_port in aggregate_one_ports:
-        df, pnl = aggregateoneport(n, busmap, component=one_port)
-        replace_components(n, one_port, df, pnl)
-
-    buses_to_del = n.buses.index.difference(busmap)
-    n.mremove("Bus", buses_to_del)
-    for c in n.branch_components:
-        df = n.df(c)
-        n.mremove(c, df.index[df.bus0.isin(buses_to_del) | df.bus1.isin(buses_to_del)])
-
-
 def simplify_links(n):
-    ## Complex multi-node links are folded into end-points
     logger.info("Simplifying connected link components")
 
     if n.links.empty:
         return n, n.buses.index.to_series()
 
-    # Determine connected link components, ignore all links but DC
-    adjacency_matrix = n.adjacency_matrix(branch_components=['Link'],
-                                          weights=dict(Link=(n.links.carrier == 'DC').astype(float)))
-
-    _, labels = connected_components(adjacency_matrix, directed=False)
-    labels = pd.Series(labels, n.buses.index)
-
-    G = n.graph()
-
-    def split_links(nodes):
-        nodes = frozenset(nodes)
-
-        seen = set()
-        supernodes = {m for m in nodes
-                      if len(G.adj[m]) > 2 or (set(G.adj[m]) - nodes)}
-
-        for u in supernodes:
-            for m, ls in G.adj[u].items():
-                if m not in nodes or m in seen: continue
-
-                buses = [u, m]
-                links = [list(ls)] #[name for name in ls]]
-
-                while m not in (supernodes | seen):
-                    seen.add(m)
-                    for m2, ls in G.adj[m].items():
-                        if m2 in seen or m2 == u: continue
-                        buses.append(m2)
-                        links.append(list(ls)) # [name for name in ls])
-                        break
-                    else:
-                        # stub
-                        break
-                    m = m2
-                if m != u:
-                    yield pd.Index((u, m)), buses, links
-            seen.add(u)
-
     busmap = n.buses.index.to_series()
 
-    connection_costs_per_link = _prepare_connection_costs_per_link(n)
-    connection_costs_to_bus = pd.DataFrame(0., index=n.buses.index, columns=list(connection_costs_per_link))
+    n.buses.carrier = 'AC'
+    
+    c1_buses = []
+    for m in n.buses.index:
+        links = n.links[(n.links.bus0==m) | (n.links.bus1==m)].index
+        lines = n.lines[(n.lines.bus0==m) | (n.lines.bus1==m)].index
+        if (len(links) > 1) & (len(lines) == 0): # if == 1 -> remove_stubs
+            c1_buses.append(m)
+            link = n.links.loc[links].index[n.links.loc[links].length.argmin()]
+            candidates = set(n.links.loc[link][['bus0','bus1']])-set(c1_buses)
+            if len(candidates) == 0:
+                link = n.links.loc[links].index[n.links.loc[links].length.argmax()]
+                candidates = set(n.links.loc[link][['bus0','bus1']])-set(c1_buses)
+            print(m, c1_buses, len(links))
+            bus = list(candidates)[0]
+            if n.buses.loc[m].country == n.buses.loc[bus].country:
+                busmap[m] = bus
 
-    for lbl in labels.value_counts().loc[lambda s: s > 2].index:
+    busmap = busmap.map(busmap)
+    clustering = get_clustering_from_busmap(n, busmap, bus_strategies=dict(country=lambda x: x.value_counts().index[0]))
 
-        for b, buses, links in split_links(labels.index[labels == lbl]):
-            if len(buses) <= 2: continue
-
-            logger.debug('nodes = {}'.format(labels.index[labels == lbl]))
-            logger.debug('b = {}\nbuses = {}\nlinks = {}'.format(b, buses, links))
-
-            m = sp.spatial.distance_matrix(n.buses.loc[b, ['x', 'y']],
-                                           n.buses.loc[buses[1:-1], ['x', 'y']])
-            busmap.loc[buses] = b[np.r_[0, m.argmin(axis=0), 1]]
-            connection_costs_to_bus.loc[buses] += _compute_connection_costs_to_bus(n, busmap, connection_costs_per_link, buses)
-
-            all_links = [i for _, i in sum(links, [])]
-
-            p_max_pu = snakemake.config['links'].get('p_max_pu', 1.)
-            lengths = n.links.loc[all_links, 'length']
-            name = lengths.idxmax() + '+{}'.format(len(links) - 1)
-            params = dict(
-                carrier='DC',
-                bus0=b[0], bus1=b[1],
-                length=sum(n.links.loc[[i for _, i in l], 'length'].mean() for l in links),
-                p_nom=min(n.links.loc[[i for _, i in l], 'p_nom'].sum() for l in links),
-                underwater_fraction=sum(lengths/lengths.sum() * n.links.loc[all_links, 'underwater_fraction']),
-                p_max_pu=p_max_pu,
-                p_min_pu=-p_max_pu,
-                underground=False,
-                under_construction=False
-            )
-
-            logger.info("Joining the links {} connecting the buses {} to simple link {}".format(", ".join(all_links), ", ".join(buses), name))
-
-            n.mremove("Link", all_links)
-
-            static_attrs = n.components["Link"]["attrs"].loc[lambda df: df.static]
-            for attr, default in static_attrs.default.iteritems(): params.setdefault(attr, default)
-            n.links.loc[name] = pd.Series(params)
-
-            # n.add("Link", **params)
-
-    logger.debug("Collecting all components using the busmap")
-
-    _aggregate_and_move_components(n, busmap, connection_costs_to_bus)
-    return n, busmap
-
+    return clustering.network, busmap
+                
+            
 
 def remove_stubs(n):
     logger.info("Removing stubs")
 
-    busmap = busmap_by_stubs(n) #  ['country'])
-
-    connection_costs_to_bus = _compute_connection_costs_to_bus(n, busmap)
-
-    _aggregate_and_move_components(n, busmap, connection_costs_to_bus)
-
-    return n, busmap
+    n.buses.carrier = 'AC'
+    clustering = stubs_clustering(n)
+    
+    return clustering.network, clustering.busmap
 
 
 def cluster(n, n_clusters):
