@@ -75,7 +75,7 @@ The rule :mod:`simplify_network` does up to four things:
 
 1. Create an equivalent transmission network in which all voltage levels are mapped to the 380 kV level by the function ``simplify_network(...)``.
 
-2. DC only sub-networks that are connected at only two buses to the AC network are reduced to a single representative link in the function ``simplify_links(...)``. The components attached to buses in between are moved to the nearest endpoint. The grid connection cost of offshore wind generators are added to the captial costs of the generator.
+2. DC only sub-networks that are connected at only two buses to the AC network are reduced to a single representative link in the function ``simplify_links(...)``. The components attached to buses in between are moved to the nearest endpoint.
 
 3. Stub lines and links, i.e. dead-ends of the network, are sequentially removed from the network in the function ``remove_stubs(...)``. Components are moved along.
 
@@ -137,6 +137,7 @@ def simplify_network_to_380(n):
 
     return n, trafo_map
 
+
 def simplify_links(n):
     logger.info("Simplifying connected link components")
 
@@ -158,23 +159,25 @@ def simplify_links(n):
             if len(candidates) == 0:
                 link = n.links.loc[links].index[n.links.loc[links].length.argmax()]
                 candidates = set(n.links.loc[link][['bus0','bus1']])-set(c1_buses)
-            print(m, c1_buses, len(links))
             bus = list(candidates)[0]
             if n.buses.loc[m].country == n.buses.loc[bus].country:
                 busmap[m] = bus
 
-    busmap = busmap.map(busmap)
-    clustering = get_clustering_from_busmap(n, busmap, bus_strategies=dict(country=lambda x: x.value_counts().index[0]))
+    custom_bus_strategies = dict(country=lambda x: x.value_counts().index[0])
+    clustering = get_clustering_from_busmap(n, busmap.map(busmap), bus_strategies=custom_bus_strategies)
 
-    return clustering.network, busmap
+
+    return clustering.network, clustering.busmap
                 
             
-
 def remove_stubs(n):
     logger.info("Removing stubs")
 
     n.buses.carrier = 'AC'
     clustering = stubs_clustering(n)
+
+    custom_bus_strategies = dict(country=lambda x: x.value_counts().index[0])
+    clustering = stubs_clustering(n, bus_strategies=custom_bus_strategies)
     
     return clustering.network, clustering.busmap
 
