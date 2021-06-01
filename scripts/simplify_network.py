@@ -148,17 +148,17 @@ def simplify_links(n):
 
     n.buses.carrier = 'AC'
     
-    c1_buses = []
+    cluster_nodes = []
     for m in n.buses.index:
         links = n.links[(n.links.bus0==m) | (n.links.bus1==m)].index
         lines = n.lines[(n.lines.bus0==m) | (n.lines.bus1==m)].index
         if (len(links) > 1) & (len(lines) == 0): # if == 1 -> remove_stubs
-            c1_buses.append(m)
+            cluster_nodes.append(m)
             link = n.links.loc[links].index[n.links.loc[links].length.argmin()]
-            candidates = set(n.links.loc[link][['bus0','bus1']])-set(c1_buses)
+            candidates = set(n.links.loc[link][['bus0','bus1']])-set(cluster_nodes)
             if len(candidates) == 0:
                 link = n.links.loc[links].index[n.links.loc[links].length.argmax()]
-                candidates = set(n.links.loc[link][['bus0','bus1']])-set(c1_buses)
+                candidates = set(n.links.loc[link][['bus0','bus1']])-set(cluster_nodes)
             bus = list(candidates)[0]
             if n.buses.loc[m].country == n.buses.loc[bus].country:
                 busmap[m] = bus
