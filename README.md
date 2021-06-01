@@ -33,6 +33,14 @@ them:
 
 ![sector diagram](graphics/multisector_figure.png)
 
+Each of these sectors is built up on the transmission network nodes
+from [PyPSA-Eur](https://github.com/PyPSA/pypsa-eur):
+
+![network diagram](https://github.com/PyPSA/pypsa-eur/blob/master/doc/img/base.png?raw=true)
+
+For computational reasons the model is usually clustered down
+to 50-200 nodes.
+
 
 PyPSA-Eur-Sec was initially based on the model PyPSA-Eur-Sec-30 described
 in the paper [Synergies of sector coupling and transmission
