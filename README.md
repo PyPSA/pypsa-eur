@@ -14,7 +14,7 @@ problems that distort the results. See the github repository
 [issues](https://github.com/PyPSA/pypsa-eur-sec/issues) for some of
 the problems (please feel free to help or make suggestions). There is
 neither documentation nor a paper yet, but we hope to have a preprint
-out by summer 2020. We cannot support this model if you choose to use
+out by autumn 2021. We cannot support this model if you choose to use
 it.
 
 
