@@ -14,7 +14,7 @@ problems that distort the results. See the github repository
 [issues](https://github.com/PyPSA/pypsa-eur-sec/issues) for some of
 the problems (please feel free to help or make suggestions). There is
 neither documentation nor a paper yet, but we hope to have a preprint
-out by summer 2020. We cannot support this model if you choose to use
+out by autumn 2021. We cannot support this model if you choose to use
 it.
 
 
@@ -32,6 +32,14 @@ This diagram gives an overview of the sectors and the links between
 them:
 
 ![sector diagram](graphics/multisector_figure.png)
+
+Each of these sectors is built up on the transmission network nodes
+from [PyPSA-Eur](https://github.com/PyPSA/pypsa-eur):
+
+![network diagram](https://github.com/PyPSA/pypsa-eur/blob/master/doc/img/base.png?raw=true)
+
+For computational reasons the model is usually clustered down
+to 50-200 nodes.
 
 
 PyPSA-Eur-Sec was initially based on the model PyPSA-Eur-Sec-30 described

@@ -1,4 +1,4 @@
-version: 0.4.0
+version: 0.5.0
 
 logging_level: INFO
 
@@ -119,20 +119,25 @@ sector:
   'time_dep_hp_cop' : True #time dependent heat pump coefficient of performance
   'heat_pump_sink_T' : 55. # Celsius, based on DTU / large area radiators; used in build_cop_profiles.py
    # conservatively high to cover hot water and space heating in poorly-insulated buildings
-  'retrofitting' :
-    'retro_exogen': True # space heat demand savings exogenously
-    'dE': # reduction of space heat demand (applied before losses in DH)
-      2020 : 0.
-      2030 : 0.15
-      2040 : 0.3
-      2050 : 0.4
+  'reduce_space_heat_exogenously': True  # reduces space heat demand by a given factor (applied before losses in DH)
+  # this can represent e.g. building renovation, building demolition, or if
+  # the factor is negative: increasing floor area, increased thermal comfort, population growth
+  'reduce_space_heat_exogenously_factor': # per unit reduction in space heat demand
+  # the default factors are determined by the LTS scenario from http://tool.european-calculator.eu/app/buildings/building-types-area/?levers=1ddd4444421213bdbbbddd44444ffffff11f411111221111211l212221
+          2020:    0.10  # this results in a space heat demand reduction of 10%
+          2025:    0.09  # first heat demand increases compared to 2020 because of larger floor area per capita
+          2030:    0.09
+          2035:    0.11
+          2040:    0.16
+          2045:    0.21
+          2050:    0.29
+  'retrofitting' :  # co-optimises building renovation to reduce space heat demand
     'retro_endogen': False  # co-optimise space heat savings
-    'cost_factor' : 1.0
+    'cost_factor' : 1.0   # weight costs for building renovation
     'interest_rate': 0.04  # for investment in building components
     'annualise_cost': True  # annualise the investment costs
     'tax_weighting': False   # weight costs depending on taxes in countries
-    'construction_index': True   # weight costs depending on labour/material costs per ct
-    'l_strength': ["0.076", "0.197"] # additional insulation thickness[m], determines number of retro steps(=generators per bus) and maximum possible savings
+    'construction_index': True   # weight costs depending on labour/material costs per country
   'tes' : True
   'tes_tau' : 3.
   'boilers' : True
@@ -370,6 +375,7 @@ plotting:
     "process emissions to atmosphere" : "#888888"
     "process emissions" : "#222222"
     "oil emissions" : "#666666"
+    "land transport oil emissions" : "#666666"
     "land transport fuel cell" : "#AAAAAA"
     "biogas" : "#800000"
     "solid biomass" : "#DAA520"

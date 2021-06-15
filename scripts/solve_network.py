@@ -376,10 +376,10 @@ if __name__ == "__main__":
             wildcards=dict(network='elec', simpl='', clusters='39', lv='1.0',
                            sector_opts='Co2L0-168H-T-H-B-I-solar3-dist1',
                            co2_budget_name='b30b3', planning_horizons='2050'),
-            input=dict(network="pypsa-eur-sec/results/test/prenetworks_brownfield/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{co2_budget_name}_{planning_horizons}.nc"),
+            input=dict(network="pypsa-eur-sec/results/test/prenetworks_brownfield/elec_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{co2_budget_name}_{planning_horizons}.nc"),
             output=["results/networks/s{simpl}_{clusters}_lv{lv}_{sector_opts}_{co2_budget_name}_{planning_horizons}-test.nc"],
-            log=dict(gurobi="logs/{network}_s{simpl}_{clusters}_lv{lv}_{sector_opts}_{co2_budget_name}_{planning_horizons}_gurobi-test.log",
-                     python="logs/{network}_s{simpl}_{clusters}_lv{lv}_{sector_opts}_{co2_budget_name}_{planning_horizons}_python-test.log")
+            log=dict(gurobi="logs/elec_s{simpl}_{clusters}_lv{lv}_{sector_opts}_{co2_budget_name}_{planning_horizons}_gurobi-test.log",
+                     python="logs/elec_s{simpl}_{clusters}_lv{lv}_{sector_opts}_{co2_budget_name}_{planning_horizons}_python-test.log")
         )
         import yaml
         with open('config.yaml', encoding='utf8') as f:

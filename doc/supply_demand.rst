@@ -108,6 +108,43 @@ Small for decentral applications.
 
 Big water pit storage for district heating.
 
+.. _retro:
+
+Retrofitting of the thermal envelope of buildings
+===================================================
+Co-optimising building renovation is only enabled if in the ``config.yaml`` the
+option :mod:`retro_endogen: True`. To reduce the computational burden
+default setting is
+
+.. literalinclude:: ../config.default.yaml
+    :language: yaml
+    :lines: 134-135
+
+Renovation of the thermal envelope reduces the space heating demand and is
+optimised at each node for every heat bus. Renovation measures through additional
+insulation material and replacement of energy inefficient windows are considered.
+
+In a first step, costs per energy savings are estimated in :mod:`build_retro_cost.py`.
+They depend on the insulation condition of the building stock and costs for
+renovation of the building elements.
+In a second step, for those cost per energy savings two possible renovation
+strengths are determined: a moderate renovation with lower costs and lower
+maximum possible space heat savings, and an ambitious renovation with associated
+higher costs and higher efficiency gains. They are added by step-wise
+linearisation in form of two additional generations in
+:mod:`prepare_sector_network.py`.
+
+Settings in the config.yaml concerning the endogenously optimisation of building
+renovation
+
+.. literalinclude:: ../config.default.yaml
+    :language: yaml
+    :lines: 136-140
+
+Further information are given in the publication
+
+`Mitigating heat demand peaks in buildings in a highly renewable European energy system, (2021) <https://arxiv.org/abs/2012.01831>`_.
+
 
 Hydrogen demand
 ==================
