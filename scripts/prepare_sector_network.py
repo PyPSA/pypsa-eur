@@ -1682,13 +1682,25 @@ def add_industry(network):
                  p_set=industrial_demand.loc[nodes,"hydrogen"]/8760.)
 
 
+    shipping_hydrogen_share = get_parameter(options['shipping_hydrogen_share'])
     network.madd("Load",
                  nodes,
                  suffix=" H2 for shipping",
                  bus=nodes + " H2",
                  carrier="H2 for shipping",
-                 p_set = nodal_energy_totals.loc[nodes,["total international navigation","total domestic navigation"]].sum(axis=1)*1e6*options['shipping_average_efficiency']/costs.at["fuel cell","efficiency"]/8760.)
+                 p_set = shipping_hydrogen_share*nodal_energy_totals.loc[nodes,["total international navigation","total domestic navigation"]].sum(axis=1)*1e6*options['shipping_average_efficiency']/costs.at["fuel cell","efficiency"]/8760.)
 
+    if shipping_hydrogen_share < 1:
+        shipping_oil_share= 1 - shipping_hydrogen_share
+        co2 = shipping_oil_share*nodal_energy_totals.loc[nodes,["total international navigation","total domestic navigation"]].sum().sum()*1e6/8760.*costs.at["oil",'CO2 intensity']
+
+        network.madd("Load",
+                     ["shipping oil emissions"],
+                     bus="co2 atmosphere",
+                     carrier="shipping oil emissions",
+                     p_set=-co2)
+        
+        
     if "EU oil" not in network.buses.index:
         network.madd("Bus",
                      ["EU oil"],

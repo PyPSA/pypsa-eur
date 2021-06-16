@@ -116,6 +116,14 @@ sector:
   'transport_fuel_cell_efficiency': 0.5
   'transport_internal_combustion_efficiency': 0.3
   'shipping_average_efficiency' : 0.4 #For conversion of fuel oil to propulsion in 2011
+  'shipping_hydrogen_share': # 1 means all hydrogen FC
+    2020: 0
+    2025: 0
+    2030: 0.05
+    2035: 0.15
+    2040: 0.3
+    2045: 0.6
+    2050: 1
   'time_dep_hp_cop' : True #time dependent heat pump coefficient of performance
   'heat_pump_sink_T' : 55. # Celsius, based on DTU / large area radiators; used in build_cop_profiles.py
    # conservatively high to cover hot water and space heating in poorly-insulated buildings
@@ -381,6 +389,7 @@ plotting:
     "solid biomass" : "#DAA520"
     "today" : "#D2691E"
     "shipping" : "#6495ED"
+    "shipping oil emissions" : "#6495ED"
     "electricity distribution grid" : "#333333"
   nice_names:
     # OCGT: "Gas"

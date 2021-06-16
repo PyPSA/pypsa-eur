@@ -6,7 +6,7 @@ Future release
 ==============
 
 * Include new features here.
-
+The share of shipping transformed into hydrogen fuel cell can be now defined for different years in the ``config.yaml`` file. The carbon emission from the remaining share is treated as a negative load on the atmospheric carbon dioxide bus, just like aviation and land transport emissions.
 
 PyPSA-Eur-Sec 0.5.0 (21st May 2021)
 ===================================
