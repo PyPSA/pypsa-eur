@@ -230,10 +230,32 @@ solving:
   mem: 30000 #memory in MB; 20 GB enough for 50+B+I+H2; 100 GB for 181+B+I+H2
 
 industry:
-  'St_primary_fraction' : 0.3 # fraction of steel produced via primary route (DRI + EAF) versus secondary route (EAF); today fraction is 0.6
+  'St_primary_fraction' : # fraction of steel produced via primary route versus secondary route (scrap+EAF); today fraction is 0.6
+    2020: 0.6
+    2025: 0.55
+    2030: 0.5
+    2035: 0.45
+    2040: 0.4
+    2045: 0.35
+    2050: 0.3
+  'DRI_fraction' : # fraction of the primary route converted to DRI + EAF
+    2020: 0
+    2025: 0
+    2030: 0.05
+    2035: 0.2
+    2040: 0.4
+    2045: 0.7
+    2050: 1
   'H2_DRI' : 1.7   #H2 consumption in Direct Reduced Iron (DRI),  MWh_H2,LHV/ton_Steel from 51kgH2/tSt in Vogl et al (2018) doi:10.1016/j.jclepro.2018.08.279
   'elec_DRI' : 0.322   #electricity consumption in Direct Reduced Iron (DRI) shaft, MWh/tSt HYBRIT brochure https://ssabwebsitecdn.azureedge.net/-/media/hybrit/files/hybrit_brochure.pdf
-  'Al_primary_fraction' : 0.2 # fraction of aluminium produced via the primary route versus scrap; today fraction is 0.4
+  'Al_primary_fraction' : # fraction of aluminium produced via the primary route versus scrap; today fraction is 0.4
+    2020: 0.4
+    2025: 0.375
+    2030: 0.35
+    2035: 0.325
+    2040: 0.3
+    2045: 0.25
+    2050: 0.2
   'MWh_CH4_per_tNH3_SMR' : 10.8 # 2012's demand from https://ec.europa.eu/docsroom/documents/4165/attachments/1/translations/en/renditions/pdf
   'MWh_elec_per_tNH3_SMR' : 0.7 # same source, assuming 94-6% split methane-elec of total energy demand 11.5 MWh/tNH3
   'MWh_H2_per_tNH3_electrolysis' : 6.5 # from https://doi.org/10.1016/j.joule.2018.04.017, around 0.197 tH2/tHN3 (>3/17 since some H2 lost and used for energy)
