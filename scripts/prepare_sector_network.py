@@ -1154,6 +1154,12 @@ def add_land_transport(network):
 
     if ice_share > 0:
 
+        if "EU oil" not in network.buses.index:
+            network.madd("Bus",
+                         ["EU oil"],
+                         location="EU",
+                         carrier="oil")
+
         network.madd("Load",
                      nodes,
                      suffix=" land transport oil",
@@ -1542,6 +1548,8 @@ def add_biomass(network):
                  bus1="EU gas",
                  bus2="co2 atmosphere",
                  carrier="biogas to gas",
+                 capital_cost=costs.loc["biogas upgrading", "fixed"],
+                 marginal_cost=costs.loc["biogas upgrading", "VOM"],
                  efficiency2=-costs.at['gas','CO2 intensity'],
                  p_nom_extendable=True)
 
@@ -1769,6 +1777,7 @@ def add_industry(network):
     #remove today's industrial electricity demand by scaling down total electricity demand
     for ct in n.buses.country.unique():
         loads = n.loads.index[(n.loads.index.str[:2] == ct) & (n.loads.carrier == "electricity")]
+        if n.loads_t.p_set[loads].empty: continue
         factor = 1 - industrial_demand.loc[loads,"current electricity"].sum()/n.loads_t.p_set[loads].sum().sum()
         n.loads_t.p_set[loads] *= factor
 
@@ -1915,7 +1924,7 @@ if __name__ == "__main__":
                 	    retro_cost_energy = "resources/retro_cost_elec_s{simpl}_{clusters}.csv",
                         floor_area = "resources/floor_area_elec_s{simpl}_{clusters}.csv"
             ),
-            output=['results/version-cb48be3/prenetworks/{network}_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{planning_horizons}.nc']
+            output=['results/version-cb48be3/prenetworks/elec_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{planning_horizons}.nc']
         )
         import yaml
         with open('config.yaml', encoding='utf8') as f:

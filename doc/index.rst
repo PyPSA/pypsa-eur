@@ -4,8 +4,8 @@ PyPSA-Eur-Sec: A Sector-Coupled Open Optimisation Model of the European Energy S
 .. image:: https://img.shields.io/github/v/release/pypsa/pypsa-eur-sec?include_prereleases
     :alt: GitHub release (latest by date including pre-releases)
 
-.. image:: https://readthedocs.org/projects/pypsa-eur/badge/?version=latest
-    :target: https://pypsa-eur.readthedocs.io/en/latest/?badge=latest
+.. image:: https://readthedocs.org/projects/pypsa-eur-sec/badge/?version=latest
+    :target: https://pypsa-eur-sec.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
 .. image:: https://img.shields.io/github/license/pypsa/pypsa-eur-sec

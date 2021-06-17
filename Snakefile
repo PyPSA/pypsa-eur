@@ -188,7 +188,7 @@ rule build_industrial_production_per_country:
     input:
         ammonia_production="resources/ammonia_production.csv"
     output:
-        industrial_production_per_country="resources/industrial_production_per_country.csv"
+        industrial_production_per_country="resources/industrial_production_per_country.csv"  
     threads: 1
     resources: mem_mb=1000
     script: 'scripts/build_industrial_production_per_country.py'
@@ -291,7 +291,7 @@ rule build_retro_cost:
     input:
         building_stock="data/retro/data_building_stock.csv",
         data_tabula="data/retro/tabula-calculator-calcsetbuilding.csv",
-        air_temperature = "resources/temp_air_total_{network}_s{simpl}_{clusters}.nc",
+        air_temperature = "resources/temp_air_total_elec_s{simpl}_{clusters}.nc",
         u_values_PL="data/retro/u_values_poland.csv",
         tax_w="data/retro/electricity_taxes_eu.csv",
         construction_index="data/retro/comparative_level_investment.csv",
