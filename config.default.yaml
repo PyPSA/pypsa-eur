@@ -388,6 +388,8 @@ plotting:
     "biogas" : "#800000"
     "solid biomass" : "#DAA520"
     "today" : "#D2691E"
+    "H2 for industry" : "#222222"
+    "H2 for shipping" : "#6495ED"
     "shipping" : "#6495ED"
     "shipping oil emissions" : "#6495ED"
     "electricity distribution grid" : "#333333"
