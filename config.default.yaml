@@ -161,6 +161,7 @@ sector:
   'electricity_distribution_grid' : False
   'electricity_distribution_grid_cost_factor' : 1.0  #multiplies cost in data/costs.csv
   'electricity_grid_connection' : True  # only applies to onshore wind and utility PV
+  'gas_network' : True
   'gas_distribution_grid' : True
   'gas_distribution_grid_cost_factor' : 1.0  #multiplies cost in data/costs.csv
 
