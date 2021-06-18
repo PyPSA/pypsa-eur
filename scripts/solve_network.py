@@ -371,7 +371,7 @@ def solve_network(n, config=None, solver_log=None, opts=None):
 if __name__ == "__main__":
     # Detect running outside of snakemake and mock snakemake for testing
     if 'snakemake' not in globals():
-        from helpers import mock_snakemake
+        from helper import mock_snakemake
         snakemake = mock_snakemake('solve_network',
                                    network='elec', simpl='', clusters='37',
                                    lv='1.0', opts='', planning_horizons='2020',
