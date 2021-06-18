@@ -272,7 +272,7 @@ def solve_network(n, config=None, solver_log=None, opts=None):
                                                solver_name=solver_name,
                                                solver_logfile=solver_log,
                                                solver_options=solver_options,
-                                               solver_dir=tmpdir, 
+                                               solver_dir=tmpdir,
                                                extra_functionality=extra_functionality,
                                                formulation=solve_opts['formulation'])
                                                #extra_postprocessing=extra_postprocessing
@@ -371,19 +371,12 @@ def solve_network(n, config=None, solver_log=None, opts=None):
 if __name__ == "__main__":
     # Detect running outside of snakemake and mock snakemake for testing
     if 'snakemake' not in globals():
-        from vresutils.snakemake import MockSnakemake, Dict
-        snakemake = MockSnakemake(
-            wildcards=dict(network='elec', simpl='', clusters='39', lv='1.0',
-                           sector_opts='Co2L0-168H-T-H-B-I-solar3-dist1',
-                           co2_budget_name='b30b3', planning_horizons='2050'),
-            input=dict(network="pypsa-eur-sec/results/test/prenetworks_brownfield/elec_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{co2_budget_name}_{planning_horizons}.nc"),
-            output=["results/networks/s{simpl}_{clusters}_lv{lv}_{sector_opts}_{co2_budget_name}_{planning_horizons}-test.nc"],
-            log=dict(gurobi="logs/elec_s{simpl}_{clusters}_lv{lv}_{sector_opts}_{co2_budget_name}_{planning_horizons}_gurobi-test.log",
-                     python="logs/elec_s{simpl}_{clusters}_lv{lv}_{sector_opts}_{co2_budget_name}_{planning_horizons}_python-test.log")
-        )
-        import yaml
-        with open('config.yaml', encoding='utf8') as f:
-            snakemake.config = yaml.safe_load(f)
+        from helpers import mock_snakemake
+        snakemake = mock_snakemake('solve_network',
+                                   network='elec', simpl='', clusters='37',
+                                   lv='1.0', opts='', planning_horizons='2020',
+                                   sector_opts='168H-T-H-B-I')
+
     tmpdir = snakemake.config['solving'].get('tmpdir')
     if tmpdir is not None:
         patch_pyomo_tmpdir(tmpdir)
