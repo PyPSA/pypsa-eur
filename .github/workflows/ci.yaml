@@ -29,10 +29,10 @@ jobs:
           channels: conda-forge,defaults
           channel-priority: true
 
-# echo -ne "url: ${CDSAPI_URL}\nkey: ${CDSAPI_TOKEN}\n" > ~/.cdsapirc
     - name: Install dependencies  
       run: |
-        echo -e "  - coincbc\n  - ipopt'<3.13.3'" >> envs/environment.yaml
+        echo -ne "url: ${CDSAPI_URL}\nkey: ${CDSAPI_TOKEN}\n" > ~/.cdsapirc
+        echo -e "  - coincbc\n  - ipopt!=3.13.4" >> envs/environment.yaml
         mamba env update -f envs/environment.yaml --name test
         
     - name: Test snakemake workflow
