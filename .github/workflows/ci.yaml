@@ -31,10 +31,11 @@ jobs:
 
     - name: Install dependencies  
       run: |
-        echo "  - coincbc\n  - ipopt'<3.13.3'" >> envs/environment.yaml
+        echo "  - coincbc" >> envs/environment.yaml
+        echo "  - ipopt'<3.13.3'" >> envs/environment.yaml"
         mamba env update -f envs/environment.yaml --name test
         
-    - name: Test with pytest
+    - name: Test snakemake workflow
       run: |
         cp test/config.test1.yaml config.yaml
         snakemake -j all solve_all_networks
