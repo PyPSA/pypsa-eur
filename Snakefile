@@ -71,11 +71,12 @@ rule build_simplified_population_layouts:
 
 rule build_gas_network:
     input:
-        IGGINL_path='data/gas_network/IGGINL_PipeSegments.csv',
-        entsog_2019_path='data/gas_network/entsog_2019_dataset.csv',
-        EMAP_path='data/gas_network/EMAP_Raw_PipeSegments.csv'
+        gas_network="data/gas_network/gas_network_dataset.csv",
+        country_shapes=pypsaeur("resources/country_shapes.geojson"),
+        regions_onshore=pypsaeur("resources/regions_onshore_elec_s{simpl}_{clusters}.geojson"),
+        regions_offshore=pypsaeur("resources/regions_offshore_elec_s{simpl}_{clusters}.geojson")
     output:
-        clustered_pop_layout="resources/gas_network_{clusters}.csv"
+        clustered_gas_network="resources/gas_network_elec_s{simpl}_{clusters}.csv"
     resources: mem_mb=10000
     script: "scripts/build_gas_network.py"
 
@@ -188,7 +189,7 @@ rule build_industrial_production_per_country:
     input:
         ammonia_production="resources/ammonia_production.csv"
     output:
-        industrial_production_per_country="resources/industrial_production_per_country.csv"  
+        industrial_production_per_country="resources/industrial_production_per_country.csv"
     threads: 1
     resources: mem_mb=1000
     script: 'scripts/build_industrial_production_per_country.py'
@@ -312,6 +313,7 @@ rule prepare_sector_network:
         energy_totals_name='resources/energy_totals.csv',
         co2_totals_name='resources/co2_totals.csv',
         transport_name='resources/transport_data.csv',
+        clustered_gas_network="resources/gas_network_elec_s{simpl}_{clusters}.csv",
 	traffic_data = "data/emobility/",
         biomass_potentials='resources/biomass_potentials.csv',
         timezone_mappings='data/timezone_mappings.csv',
