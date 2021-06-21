@@ -162,6 +162,7 @@ sector:
   'electricity_distribution_grid_cost_factor' : 1.0  #multiplies cost in data/costs.csv
   'electricity_grid_connection' : True  # only applies to onshore wind and utility PV
   'gas_network' : True
+  'H2_retrofit' : True  # if set to True existing gas pipes can be retrofitted to H2 pipes
   'gas_distribution_grid' : True
   'gas_distribution_grid_cost_factor' : 1.0  #multiplies cost in data/costs.csv
 
@@ -291,8 +292,10 @@ plotting:
     "gas boiler marginal" : "orange"
     "gas-to-power/heat" : "orange"
     "gas" : "brown"
+    "Gas pipeline" : "brown"
     "natural gas" : "brown"
     "SMR" : "#4F4F2F"
+    "SMR CC": "#6f6f42"
     "oil" : "#B5A642"
     "oil boiler" : "#B5A677"
     "lines" : "k"
@@ -369,12 +372,15 @@ plotting:
     "land transport EV" : "grey"
     "electricity" : "k"
     "gas for industry" : "#333333"
+    "gas for industry CC" : "#404040"
     "solid biomass for industry" : "#555555"
+    "solid biomass for industry CC" : "#555555"
     "industry electricity" : "#222222"
     "industry new electricity" : "#222222"
     "process emissions to stored" : "#444444"
     "process emissions to atmosphere" : "#888888"
     "process emissions" : "#222222"
+    "process emissions CC" : "#484848"
     "oil emissions" : "#666666"
     "land transport oil emissions" : "#666666"
     "land transport fuel cell" : "#AAAAAA"
