@@ -150,7 +150,7 @@ def plot_map(network, components=["links", "stores", "storage_units", "generator
     to_drop = costs.index.levels[0].symmetric_difference(n.buses.index)
     if len(to_drop) != 0:
         print("dropping non-buses", to_drop)
-        costs.drop(to_drop, level=0, inplace=True, axis=0)
+        costs.drop(to_drop, level=0, inplace=True, axis=0, errors="ignore")
 
     # make sure they are removed from index
     costs.index = pd.MultiIndex.from_tuples(costs.index.values)
@@ -251,18 +251,18 @@ def plot_h2_map(network):
     # Drop non-electric buses so they don't clutter the plot
     n.buses.drop(n.buses.index[n.buses.carrier != "AC"], inplace=True)
 
-    elec = n.links.index[n.links.carrier == "H2 Electrolysis"]
+    elec = n.links[n.links.carrier.isin(["H2 Electrolysis", "H2 Fuel Cell"])].index
 
-    bus_sizes = n.links.loc[elec,"p_nom_opt"].groupby(n.links.loc[elec,"bus0"]).sum() / bus_size_factor
+    bus_sizes = n.links.loc[elec,"p_nom_opt"].groupby([n.links["bus0"], n.links.carrier]).sum() / bus_size_factor
 
     # make a fake MultiIndex so that area is correct for legend
-    bus_sizes.index = pd.MultiIndex.from_product(
-        [bus_sizes.index, ["electrolysis"]])
+    bus_sizes.rename(index=lambda x: x.replace(" H2", ""), level=0, inplace=True)
 
-    n.links.drop(n.links.index[n.links.carrier != "H2 pipeline"], inplace=True)
+    n.links.drop(n.links.index[~n.links.carrier.str.contains("H2 pipeline")], inplace=True)
 
     link_widths = n.links.p_nom_opt / linewidth_factor
     link_widths[n.links.p_nom_opt < line_lower_threshold] = 0.
+
 
     n.links.bus0 = n.links.bus0.str.replace(" H2", "")
     n.links.bus1 = n.links.bus1.str.replace(" H2", "")
@@ -276,7 +276,8 @@ def plot_h2_map(network):
     fig.set_size_inches(7, 6)
 
     n.plot(bus_sizes=bus_sizes,
-           bus_colors={"electrolysis": bus_color},
+           bus_colors={"H2 Electrolysis": bus_color,
+                       "H2 Fuel Cell": "slateblue"},
            link_colors=link_color,
            link_widths=link_widths,
            branch_components=["Link"],
@@ -311,6 +312,266 @@ def plot_h2_map(network):
                 bbox_inches="tight")
 
 
+def plot_ch4_map(network):
+
+    n = network.copy()
+
+    supply_energy = get_nodal_balance().droplevel([0,1]).sort_index()
+
+    if "Gas pipeline" not in n.links.carrier.unique():
+        return
+
+    assign_location(n)
+
+    bus_size_factor = 1e7
+    linewidth_factor = 1e4
+    # MW below which not drawn
+    line_lower_threshold = 5e3
+    bus_color = "maroon"
+    link_color = "lightcoral"
+
+    # Drop non-electric buses so they don't clutter the plot
+    n.buses.drop(n.buses.index[n.buses.carrier != "AC"], inplace=True)
+
+    elec = n.generators[n.generators.carrier=="gas"].index
+    methanation_i = n.links[n.links.carrier.isin(["helmeth", "Sabatier"])].index
+
+    bus_sizes = n.generators_t.p.loc[:,elec].mul(n.snapshot_weightings, axis=0).sum().groupby(n.generators.loc[elec,"bus"]).sum() / bus_size_factor
+    bus_sizes.rename(index=lambda x: x.replace(" gas", ""), inplace=True)
+    bus_sizes = bus_sizes.reindex(n.buses.index).fillna(0)
+    bus_sizes.index = pd.MultiIndex.from_product(
+    [bus_sizes.index, ["fossil gas"]])
+
+    methanation = abs(n.links_t.p1.loc[:,methanation_i].mul(n.snapshot_weightings, axis=0)).sum().groupby(n.links.loc[methanation_i,"bus1"]).sum() / bus_size_factor
+    methanation = methanation.groupby(methanation.index).sum().rename(index=lambda x: x.replace(" gas", ""))
+    # make a fake MultiIndex so that area is correct for legend
+    methanation.index = pd.MultiIndex.from_product(
+        [methanation.index, ["methanation"]])
+
+    biogas_i = n.stores[n.stores.carrier=="biogas"].index
+    biogas = n.stores_t.p.loc[:,biogas_i].mul(n.snapshot_weightings, axis=0).sum().groupby(n.stores.loc[biogas_i,"bus"]).sum() / bus_size_factor
+    biogas = biogas.groupby(biogas.index).sum().rename(index=lambda x: x.replace(" biogas", ""))
+    # make a fake MultiIndex so that area is correct for legend
+    biogas.index = pd.MultiIndex.from_product(
+        [biogas.index, ["biogas"]])
+
+    bus_sizes = pd.concat([bus_sizes, methanation, biogas])
+    bus_sizes.sort_index(inplace=True)
+
+    n.links.drop(n.links.index[n.links.carrier != "Gas pipeline"], inplace=True)
+
+    link_widths = n.links.p_nom_opt / linewidth_factor
+    link_widths[n.links.p_nom_opt < line_lower_threshold] = 0.
+
+    n.links.bus0 = n.links.bus0.str.replace(" gas", "")
+    n.links.bus1 = n.links.bus1.str.replace(" gas", "")
+
+    print(link_widths.sort_values())
+
+    print(n.links[["bus0", "bus1"]])
+
+    fig, ax = plt.subplots(subplot_kw={"projection": ccrs.PlateCarree()})
+
+    fig.set_size_inches(7, 6)
+
+    n.plot(bus_sizes=bus_sizes,
+           bus_colors={"fossil gas": bus_color,
+                       "methanation": "steelblue",
+                       "biogas": "seagreen"},
+           link_colors=link_color,
+           link_widths=link_widths,
+           branch_components=["Link"],
+           ax=ax,  boundaries=(-10, 30, 34, 70))
+
+    handles = make_legend_circles_for(
+        [200, 1000], scale=bus_size_factor, facecolor=bus_color)
+    labels = ["{} MW".format(s) for s in (200, 1000)]
+    l2 = ax.legend(handles, labels,
+                   loc="upper left", bbox_to_anchor=(0.01, 1.01),
+                   labelspacing=1.0,
+                   framealpha=1.,
+                   title='Biomass potential',
+                   handler_map=make_handler_map_to_scale_circles_as_in(ax))
+    ax.add_artist(l2)
+
+    handles = []
+    labels = []
+
+    for s in (50, 10):
+        handles.append(plt.Line2D([0], [0], color=link_color,
+                                  linewidth=s * 1e3 / linewidth_factor))
+        labels.append("{} GW".format(s))
+    l1_1 = ax.legend(handles, labels,
+                     loc="upper left", bbox_to_anchor=(0.30, 1.01),
+                     framealpha=1,
+                     labelspacing=0.8, handletextpad=1.5,
+                     title='CH4 pipeline capacity')
+    ax.add_artist(l1_1)
+
+    fig.savefig(snakemake.output.map.replace("-costs-all","-ch4_network"), transparent=True,
+                bbox_inches="tight")
+
+    ##################################################
+    supply_energy.drop("Gas pipeline", level=1, inplace=True)
+    supply_energy = supply_energy[abs(supply_energy)>5]
+    supply_energy.rename(index=lambda x: x.replace(" gas",""), level=0, inplace=True)
+
+
+    demand = supply_energy[supply_energy<0].groupby(level=[0,1]).sum()
+    supply = supply_energy[supply_energy>0].groupby(level=[0,1]).sum()
+
+    #### DEMAND #######################################
+    bus_size_factor = 2e7
+    bus_sizes = abs(demand) / bus_size_factor
+
+    fig, ax = plt.subplots(subplot_kw={"projection": ccrs.PlateCarree()})
+
+    fig.set_size_inches(7, 6)
+
+    n.plot(bus_sizes=bus_sizes,
+           bus_colors={"CHP": "r",
+                       "OCGT": "wheat",
+                       "SMR": "darkkhaki",
+                       "SMR CC": "tan",
+                       "gas boiler": "orange",
+                       "gas for industry": "grey",
+                       'gas for industry CC': "lightgrey"},
+           link_colors=link_color,
+           link_widths=link_widths,
+           branch_components=["Link"],
+           ax=ax,  boundaries=(-10, 30, 34, 70))
+
+    handles = make_legend_circles_for(
+        [10e6, 20e6], scale=bus_size_factor, facecolor=bus_color)
+    labels = ["{} TWh".format(s) for s in (10, 20)]
+    l2 = ax.legend(handles, labels,
+                   loc="upper left", bbox_to_anchor=(0.01, 1.01),
+                   labelspacing=1.0,
+                   framealpha=1.,
+                   title='CH4 demand',
+                   handler_map=make_handler_map_to_scale_circles_as_in(ax))
+    ax.add_artist(l2)
+
+    handles = []
+    labels = []
+
+    for s in (50, 10):
+        handles.append(plt.Line2D([0], [0], color=link_color,
+                                  linewidth=s * 1e3 / linewidth_factor))
+        labels.append("{} GW".format(s))
+    l1_1 = ax.legend(handles, labels,
+                     loc="upper left", bbox_to_anchor=(0.30, 1.01),
+                     framealpha=1,
+                     labelspacing=0.8, handletextpad=1.5,
+                     title='CH4 pipeline capacity')
+    ax.add_artist(l1_1)
+
+    fig.savefig(snakemake.output.map.replace("-costs-all","-ch4_demand"), transparent=True,
+                bbox_inches="tight")
+
+
+     #### SUPPLY #######################################
+    bus_size_factor = 2e7
+    bus_sizes = supply / bus_size_factor
+
+    fig, ax = plt.subplots(subplot_kw={"projection": ccrs.PlateCarree()})
+
+    fig.set_size_inches(7, 6)
+
+    n.plot(bus_sizes=bus_sizes,
+           bus_colors={"gas": "maroon",
+                       "methanation": "steelblue",
+                       "helmeth": "slateblue",
+                       "biogas": "seagreen"},
+           link_colors=link_color,
+           link_widths=link_widths,
+           branch_components=["Link"],
+           ax=ax,  boundaries=(-10, 30, 34, 70))
+
+    handles = make_legend_circles_for(
+        [10e6, 20e6], scale=bus_size_factor, facecolor="black")
+    labels = ["{} TWh".format(s) for s in (10, 20)]
+    l2 = ax.legend(handles, labels,
+                   loc="upper left", bbox_to_anchor=(0.01, 1.01),
+                   labelspacing=1.0,
+                   framealpha=1.,
+                   title='CH4 supply',
+                   handler_map=make_handler_map_to_scale_circles_as_in(ax))
+    ax.add_artist(l2)
+
+    handles = []
+    labels = []
+
+    for s in (50, 10):
+        handles.append(plt.Line2D([0], [0], color=link_color,
+                                  linewidth=s * 1e3 / linewidth_factor))
+        labels.append("{} GW".format(s))
+    l1_1 = ax.legend(handles, labels,
+                     loc="upper left", bbox_to_anchor=(0.30, 1.01),
+                     framealpha=1,
+                     labelspacing=0.8, handletextpad=1.5,
+                     title='CH4 pipeline capacity')
+    ax.add_artist(l1_1)
+
+    fig.savefig(snakemake.output.map.replace("-costs-all","-ch4_supply"), transparent=True,
+                bbox_inches="tight")
+
+    ###########################################################################
+    net = pd.concat([demand.groupby(level=0).sum().rename("demand"),
+                     supply.groupby(level=0).sum().rename("supply")], axis=1).sum(axis=1)
+    mask = net>0
+    net_importer = net.mask(mask).rename("net_importer")
+    net_exporter = net.mask(~mask).rename("net_exporter")
+
+    bus_size_factor = 2e7
+    linewidth_factor = 1e-1
+    bus_sizes = pd.concat([abs(net_importer), net_exporter], axis=1).fillna(0).stack() / bus_size_factor
+
+    link_widths = abs(n.links_t.p0).max().loc[n.links.index] / n.links.p_nom_opt
+    link_widths /= linewidth_factor
+
+
+    fig, ax = plt.subplots(subplot_kw={"projection": ccrs.PlateCarree()})
+
+    fig.set_size_inches(7, 6)
+
+    n.plot(bus_sizes=bus_sizes,
+           bus_colors={"net_importer": "r",
+                       "net_exporter": "darkgreen",
+                       },
+           link_colors="lightgrey",
+           link_widths=link_widths,
+           branch_components=["Link"],
+           ax=ax,  boundaries=(-10, 30, 34, 70))
+
+    handles = make_legend_circles_for(
+        [10e6, 20e6], scale=bus_size_factor, facecolor="black")
+    labels = ["{} TWh".format(s) for s in (10, 20)]
+    l2 = ax.legend(handles, labels,
+                   loc="upper left", bbox_to_anchor=(0.01, 1.01),
+                   labelspacing=1.0,
+                   framealpha=1.,
+                   title='Net Import/Export',
+                   handler_map=make_handler_map_to_scale_circles_as_in(ax))
+    ax.add_artist(l2)
+
+    handles = []
+    labels = []
+
+    for s in (0.5, 1):
+        handles.append(plt.Line2D([0], [0], color="lightgrey",
+                                  linewidth=s / linewidth_factor))
+        labels.append("{} per unit".format(s))
+    l1_1 = ax.legend(handles, labels,
+                     loc="upper left", bbox_to_anchor=(0.30, 1.01),
+                     framealpha=1,
+                     labelspacing=0.8, handletextpad=1.5,
+                     title='maximum used CH4 pipeline capacity')
+    ax.add_artist(l1_1)
+
+    fig.savefig(snakemake.output.map.replace("-costs-all","-ch4_net_balance"), transparent=True,
+                bbox_inches="tight")
+
 def plot_map_without(network):
 
     n = network.copy()
@@ -331,7 +592,8 @@ def plot_map_without(network):
     dc_color = "m"
 
     # hack because impossible to drop buses...
-    n.buses.loc["EU gas", ["x", "y"]] = n.buses.loc["DE0 0", ["x", "y"]]
+    if "EU gas" in n.buses.index:
+        n.buses.loc["EU gas", ["x", "y"]] = n.buses.loc["DE0 0", ["x", "y"]]
 
     n.links.drop(n.links.index[(n.links.carrier != "DC") & (
         n.links.carrier != "B2B")], inplace=True)
@@ -502,35 +764,59 @@ def plot_series(network, carrier="AC", name="test"):
         transparent=True)
 
 
+def get_nodal_balance(carrier="gas"):
+
+    bus_map = (n.buses.carrier == carrier)
+    bus_map.at[""] = False
+    supply_energy = pd.Series(dtype="float64")
+
+    for c in n.iterate_components(n.one_port_components):
+
+        items = c.df.index[c.df.bus.map(bus_map).fillna(False)]
+
+        if len(items) == 0:
+            continue
+
+        s = round(c.pnl.p.multiply(n.snapshot_weightings,axis=0).sum().multiply(c.df['sign']).loc[items]
+             .groupby([c.df.bus, c.df.carrier]).sum())
+        s = pd.concat([s], keys=[c.list_name])
+        s = pd.concat([s], keys=[carrier])
+
+        supply_energy = supply_energy.reindex(s.index.union(supply_energy.index))
+        supply_energy.loc[s.index] = s
+
+
+    for c in n.iterate_components(n.branch_components):
+
+        for end in [col[3:] for col in c.df.columns if col[:3] == "bus"]:
+
+            items = c.df.index[c.df["bus" + str(end)].map(bus_map,na_action=False)]
+
+            if len(items) == 0:
+                continue
+
+            s = ((-1)*c.pnl["p"+end][items].multiply(n.snapshot_weightings,axis=0).sum()
+                .groupby([c.df.loc[items,'bus{}'.format(end)], c.df.loc[items,'carrier']]).sum())
+            s.index = s.index
+            s = pd.concat([s], keys=[c.list_name])
+            s = pd.concat([s], keys=[carrier])
+
+            supply_energy = supply_energy.reindex(s.index.union(supply_energy.index))
+
+            supply_energy.loc[s.index] = s
+
+    supply_energy = supply_energy.rename(index=lambda x: rename_techs(x), level=3)
+    return supply_energy
+
 # %%
 if __name__ == "__main__":
     # Detect running outside of snakemake and mock snakemake for testing
     if 'snakemake' not in globals():
-        from vresutils import Dict
-        import yaml
-        snakemake = Dict()
-        with open('config.yaml') as f:
-            snakemake.config = yaml.safe_load(f)
-        snakemake.config['run'] = "retro_vs_noretro"
-        snakemake.wildcards = {"lv": "1.0"}  # lv1.0, lv1.25, lvopt
-        name = "elec_s_48_lv{}__Co2L0-3H-T-H-B".format(snakemake.wildcards["lv"])
-        suffix = "_retro_tes"
-        name = name + suffix
-        snakemake.input = Dict()
-        snakemake.output = Dict(
-            map=(snakemake.config['results_dir'] + snakemake.config['run']
-                 + "/maps/{}".format(name)),
-            today=(snakemake.config['results_dir'] + snakemake.config['run']
-                   + "/maps/{}.pdf".format(name)))
-        snakemake.input.scenario = "lv" + snakemake.wildcards["lv"]
-#        snakemake.config["run"] = "bio_costs"
-        path = snakemake.config['results_dir'] + snakemake.config['run']
-        snakemake.input.network = (path +
-                                   "/postnetworks/{}.nc"
-                                   .format(name))
-        snakemake.output.network = (path +
-                                    "/maps/{}"
-                                    .format(name))
+        from helper import mock_snakemake
+        snakemake = mock_snakemake('plot_network',
+                                   network='elec', simpl='', clusters='128',
+                                   lv='1.0', opts='', planning_horizons='2030',
+                                   sector_opts='Co2L0-168H-T-H-B-I-solar+p3-dist1')
 
     n = pypsa.Network(snakemake.input.network,
                       override_component_attrs=override_component_attrs)
@@ -539,6 +825,7 @@ if __name__ == "__main__":
              bus_size_factor=1.5e10, transmission=False)
 
     plot_h2_map(n)
+    plot_ch4_map(n)
     plot_map_without(n)
 
     #plot_series(n, carrier="AC", name=suffix)
