@@ -31,8 +31,8 @@ jobs:
 
     - name: Install dependencies  
       run: |
-        mamba env update -f ./envs/environment.yaml --name test
-        mamba install -c conda-forge glpk ipopt'<3.13.3' --name test
+        echo "  - coincbc\n  - ipopt'<3.13.3'" >> envs/environment.yaml
+        mamba env update -f envs/environment.yaml --name test
         
     - name: Test with pytest
       run: |
