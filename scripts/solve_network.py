@@ -204,11 +204,31 @@ def add_land_use_constraint(n):
 
     n.generators.p_nom_max[n.generators.p_nom_max<0]=0.
 
+
+def add_pipe_retrofit_constraint(n):
+    """Add constraint for retrofitting existing CH4 pipelines to H2 pipelines."""
+
+    gas_pipes_i = n.links[n.links.carrier=="Gas pipeline"].index
+    h2_retrofitted_i = n.links[n.links.carrier=='H2 pipeline retrofitted'].index
+
+    if h2_retrofitted_i.empty or gas_pipes_i.empty: return
+
+    link_p_nom = get_var(n, "Link", "p_nom")
+
+    pipe_capacity = n.links.loc[gas_pipes_i, 'p_nom']
+    # TODO
+    lhs = linexpr((3.06, link_p_nom.loc[h2_retrofitted_i].rename(index=lambda x: x.replace("H2 pipeline retrofitted", "Gas pipeline"))),
+                  (-1, link_p_nom.loc[gas_pipes_i]))
+
+    define_constraints(n, lhs, "=", 0., 'Link', 'pipe_retrofit')
+
+
 def extra_functionality(n, snapshots):
     #add_opts_constraints(n, opts)
     #add_eps_storage_constraint(n)
     add_chp_constraints(n)
     add_battery_constraints(n)
+    add_pipe_retrofit_constraint(n)
 
 
 def fix_branches(n, lines_s_nom=None, links_p_nom=None):
