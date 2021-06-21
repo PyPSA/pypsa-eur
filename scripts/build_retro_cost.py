@@ -441,7 +441,7 @@ def prepare_temperature_data():
         temperature_factor = (t_threshold - temperature_average_d_heat) * d_heat * 1/365
 
     """
-    temperature = xr.open_dataarray(snakemake.input.air_temperature).T.to_pandas()
+    temperature = xr.open_dataarray(snakemake.input.air_temperature).to_pandas()
     d_heat = (temperature.groupby(temperature.columns.str[:2], axis=1).mean()
            .resample("1D").mean()<t_threshold).sum()
     temperature_average_d_heat = (temperature.groupby(temperature.columns.str[:2], axis=1)
@@ -834,7 +834,7 @@ if __name__ == "__main__":
             wildcards=dict(
                 network='elec',
                 simpl='',
-                clusters='48',
+                clusters='50',
                 lv='1',
                 opts='Co2L-3H',
                 sector_opts="[Co2L0p0-168H-T-H-B-I]"),

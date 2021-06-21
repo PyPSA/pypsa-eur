@@ -18,11 +18,10 @@ if 'snakemake' not in globals():
         snakemake.config = yaml.safe_load(f)
     snakemake.input = Dict()
     snakemake.output = Dict()
-
     snakemake.input["urban_percent"] = "data/urban_percent.csv"
 
-cutout = atlite.Cutout(snakemake.config['atlite']['cutout_name'],
-                       cutout_dir=snakemake.config['atlite']['cutout_dir'])
+cutout_path = snakemake.config['atlite']['cutout_dir'] + "/" + snakemake.config['atlite']['cutout_name']+ ".nc"
+cutout = atlite.Cutout(path=cutout_path)
 
 grid_cells = cutout.grid_cells()
 
