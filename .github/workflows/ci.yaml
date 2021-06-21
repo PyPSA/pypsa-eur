@@ -32,7 +32,7 @@ jobs:
     - name: Install dependencies  
       run: |
         echo -ne "url: ${CDSAPI_URL}\nkey: ${CDSAPI_TOKEN}\n" > ~/.cdsapirc
-        echo -e "  - coincbc\n  - ipopt!=3.13.4" >> envs/environment.yaml
+        echo -e "  - glpk\n  - ipopt!=3.13.4" >> envs/environment.yaml
         mamba env update -f envs/environment.yaml --name test
         
     - name: Test snakemake workflow
