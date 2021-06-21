@@ -497,10 +497,10 @@ def prepare_data(network):
     ##############
 
 
-    ashp_cop = xr.open_dataarray(snakemake.input.cop_air_total).T.to_pandas().reindex(index=network.snapshots)
-    gshp_cop = xr.open_dataarray(snakemake.input.cop_soil_total).T.to_pandas().reindex(index=network.snapshots)
+    ashp_cop = xr.open_dataarray(snakemake.input.cop_air_total).to_pandas().reindex(index=network.snapshots)
+    gshp_cop = xr.open_dataarray(snakemake.input.cop_soil_total).to_pandas().reindex(index=network.snapshots)
 
-    solar_thermal = xr.open_dataarray(snakemake.input.solar_thermal_total).T.to_pandas().reindex(index=network.snapshots)
+    solar_thermal = xr.open_dataarray(snakemake.input.solar_thermal_total).to_pandas().reindex(index=network.snapshots)
     #1e3 converts from W/m^2 to MW/(1000m^2) = kW/m^2
     solar_thermal = options['solar_cf_correction'] * solar_thermal/1e3
 
@@ -511,7 +511,7 @@ def prepare_data(network):
     nodal_energy_totals = nodal_energy_totals.multiply(pop_layout.fraction,axis=0)
 
     #copy forward the daily average heat demand into each hour, so it can be multipled by the intraday profile
-    daily_space_heat_demand = xr.open_dataarray(snakemake.input.heat_demand_total).T.to_pandas().reindex(index=network.snapshots, method="ffill")
+    daily_space_heat_demand = xr.open_dataarray(snakemake.input.heat_demand_total).to_pandas().reindex(index=network.snapshots, method="ffill")
 
     intraday_profiles = pd.read_csv(snakemake.input.heat_profile,index_col=0)
 
@@ -576,7 +576,7 @@ def prepare_data(network):
 
 
     #get heating demand for correction to demand time series
-    temperature = xr.open_dataarray(snakemake.input.temp_air_total).T.to_pandas()
+    temperature = xr.open_dataarray(snakemake.input.temp_air_total).to_pandas()
 
     #correction factors for vehicle heating
     dd_ICE = transport_degree_factor(temperature,
@@ -876,7 +876,7 @@ def add_electricity_grid_connection(network):
     network.generators.loc[gens,"capital_cost"] += costs.at['electricity grid connection','fixed']
 
 def add_storage(network):
-    print("adding electricity storage")
+    print("adding electricity and hydrogen storage")
 
     nodes = pop_layout.index
 
@@ -980,6 +980,74 @@ def add_storage(network):
                  carrier="H2 pipeline",
                  lifetime=costs.at['H2 pipeline','lifetime'])
 
+    # CH4 pipe lines ##########################################
+    if options["gas_network"]:
+        logger.info("Add gas network")
+        cols = ["bus0", "bus1", "is_bothDirection", "pipe_capacity_MW", "id",
+                "length_km"]
+        gas_pipes = pd.read_csv(snakemake.input.clustered_gas_network)[cols]
+        index = "Gas pipeline " + gas_pipes["bus0"] + " -> " + gas_pipes["bus1"]
+        index[gas_pipes.is_bothDirection==1] = index[gas_pipes.is_bothDirection==1].str.replace("->", "<->")
+        gas_pipes.index = index
+
+        # group parallel pipes together ----
+        # number of parallel pipes
+        num_parallel = gas_pipes.groupby(gas_pipes.index).count().iloc[:,0]
+        gas_pipes = gas_pipes.groupby(gas_pipes.index).agg({'bus0':'first',
+                                                            'bus1': 'first',
+                                                            'is_bothDirection': 'first',
+                                                            "pipe_capacity_MW": 'sum',
+                                                            "length_km": 'sum',
+                                                            'id': ' '.join})
+
+        both_direction_i = gas_pipes[gas_pipes.is_bothDirection==1].index
+        # TODO capital cost from DEA energy transport data sheet 102 6
+        # lifetime 50 a, investment ~1 EUR/MW/km, FOM 0.12 EUR/MW/km/year, discountrate 7%
+        pipe_fixed_cost = 0.19   # EUR/MW/km/a (annualised investment costs)
+        gas_pipes["p_min_pu"] = 0.
+        gas_pipes.loc[both_direction_i, "p_min_pu"] = -1
+
+        network.madd("Link",
+                     gas_pipes.index,
+                     bus0=gas_pipes.bus0 + " gas",
+                     bus1=gas_pipes.bus1 + " gas",
+                     p_min_pu=gas_pipes.p_min_pu,
+                     p_nom=gas_pipes.pipe_capacity_MW,
+                     p_nom_extendable=False,
+                     length=gas_pipes.length_km,
+                     capital_cost=gas_pipes.length_km * pipe_fixed_cost,
+                     type=num_parallel,
+                     tags=gas_pipes.id,
+                     carrier="Gas pipeline",
+                     lifetime=50)
+        # remove fossil generators at all connected nodes
+        # TODO what should be assumed here? rather located at LNG terminals?
+        missing = nodes.difference(pd.concat([gas_pipes.bus0, gas_pipes.bus1]).unique())
+        remove_i = network.generators[(network.generators.carrier=="gas")
+                              & (~network.generators.bus.str.replace(" gas","").isin(missing))].index
+        network.generators.drop(remove_i, inplace=True)
+
+        #### retroftting existing CH4 pipes to H2 pipes #####################
+        if options["H2_retrofit"]:
+
+            gas_pipe_i = network.links[network.links.carrier=="Gas pipeline"].index
+            network.links.loc[gas_pipe_i, "p_nom_extendable"] = True
+            h2_pipes = gas_pipes.rename(index=lambda x:
+                                        x.replace("Gas pipeline", "H2 pipeline retrofitted"))
+
+            network.madd("Link",
+                         h2_pipes.index,
+                         bus0=h2_pipes.bus0 + " H2",
+                         bus1=h2_pipes.bus1 + " H2",
+                         p_min_pu=-1.,   # allow that H2 pipelines can be used in other direction
+                         p_nom_max=h2_pipes.pipe_capacity_MW,
+                         p_nom_extendable=True,
+                         length=h2_pipes.length_km,
+                         capital_cost=costs.at['H2 pipeline','fixed'] * h2_pipes.length_km * 0.3,   # TODO
+                         type=num_parallel,
+                         tags=h2_pipes.id,
+                         carrier="H2 pipeline retrofitted",
+                         lifetime=50)
 
     network.add("Carrier","battery")
 
@@ -1710,7 +1778,7 @@ def add_industry(network):
     network.madd("Link",
                  gas_nodes.str.replace("gas", "gas for industry CC"),
                  bus0=gas_nodes,
-                 bus1=gas_nodes.str.replace("gas", "gas for industry CC"),
+                 bus1=gas_nodes.str.replace("gas", "gas for industry"),
                  bus2=["co2 atmosphere"] * len(gas_nodes),
                  bus3=["co2 stored"] * len(gas_nodes),
                  carrier="gas for industry CC",
