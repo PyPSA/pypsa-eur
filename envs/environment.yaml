@@ -41,5 +41,3 @@ dependencies:
   - pip:
     - vresutils==0.3.1
     - tsam>=1.1.0
-  - coincbc
-  - ipopt'<3.13.3'
