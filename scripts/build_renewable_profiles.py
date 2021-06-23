@@ -240,7 +240,7 @@ if __name__ == '__main__':
         # use named function np.greater with partially frozen argument instead
         # to include only areas with depth > -max_depth
         func = functools.partial(np.greater,-config['max_depth'])
-        excluder.add_raster(paths.gebco, codes=func, invert=True, crs=4236, nodata=-1000)
+        excluder.add_raster(paths.gebco, codes=func, crs=4236, nodata=-1000)
 
     if 'min_shore_distance' in config:
         buffer = config['min_shore_distance']
