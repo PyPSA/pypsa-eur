@@ -216,9 +216,11 @@ def add_pipe_retrofit_constraint(n):
     link_p_nom = get_var(n, "Link", "p_nom")
 
     pipe_capacity = n.links.loc[gas_pipes_i, 'p_nom']
-    # TODO
-    lhs = linexpr((3.06, link_p_nom.loc[h2_retrofitted_i].rename(index=lambda x: x.replace("H2 pipeline retrofitted", "Gas pipeline"))),
-                  (-1, link_p_nom.loc[gas_pipes_i]))
+    # according to hydrogen backbone strategy (April, 2020) p.15
+    # https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf
+    # 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity
+    lhs = linexpr((1, link_p_nom.loc[h2_retrofitted_i].rename(index=lambda x: x.replace("H2 pipeline retrofitted", "Gas pipeline"))),
+                  (-0.6, link_p_nom.loc[gas_pipes_i]))
 
     define_constraints(n, lhs, "=", 0., 'Link', 'pipe_retrofit')
 
