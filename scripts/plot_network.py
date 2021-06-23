@@ -262,6 +262,8 @@ def plot_h2_map(network):
 
     link_widths = n.links.p_nom_opt / linewidth_factor
     link_widths[n.links.p_nom_opt < line_lower_threshold] = 0.
+    link_color = n.links.carrier.map({"H2 pipeline":"red",
+                                      "H2 pipeline retrofitted": "blue"})
 
 
     n.links.bus0 = n.links.bus0.str.replace(" H2", "")
@@ -298,7 +300,7 @@ def plot_h2_map(network):
     labels = []
 
     for s in (50, 10):
-        handles.append(plt.Line2D([0], [0], color=link_color,
+        handles.append(plt.Line2D([0], [0], color="black",
                                   linewidth=s * 1e3 / linewidth_factor))
         labels.append("{} GW".format(s))
     l1_1 = ax.legend(handles, labels,
@@ -814,7 +816,7 @@ if __name__ == "__main__":
     if 'snakemake' not in globals():
         from helper import mock_snakemake
         snakemake = mock_snakemake('plot_network',
-                                   network='elec', simpl='', clusters='128',
+                                   network='elec', simpl='', clusters='150',
                                    lv='1.0', opts='', planning_horizons='2030',
                                    sector_opts='Co2L0-168H-T-H-B-I-solar+p3-dist1')
 
