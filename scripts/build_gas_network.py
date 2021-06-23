@@ -45,6 +45,7 @@ import json
 from shapely.geometry import LineString,Point
 
 import geopandas as gpd
+import numpy as np
 
 #-----------------##########################################################
 # helper functions #
@@ -173,18 +174,54 @@ def check_missing(nodes, cross_buses_gas_network):
 
 def clean_dataset(cross_buses_gas_network):
     """Convert units and save only necessary data."""
-    cols = ['is_bothDirection', 'Capacity_GWh_h','buses_start',
+    inspect_pipe_capacity(cross_buses_gas_network)
+    cols = ['is_bothDirection', 'capacity_recalculated','buses_start',
             'buses_destination', 'id', 'length_km']
     clean_pipes = cross_buses_gas_network[cols].dropna()
 
+
     # convert GW -> MW
-    clean_pipes.loc[:, 'Capacity_GWh_h'] *= 1e3
+    clean_pipes.loc[:, 'capacity_recalculated'] *= 1e3
     # rename columns
-    clean_pipes.rename(columns={'Capacity_GWh_h': 'pipe_capacity_MW',
+    clean_pipes.rename(columns={'capacity_recalculated': 'pipe_capacity_MW',
                         'buses_start': 'bus0',
                         'buses_destination': 'bus1'}, inplace=True)
     return clean_pipes
 
+
+def recalculate_pipe_capacity(pipe_diameter_mm):
+    """Calculate pipe capacity based on diameter.
+
+    20 inch (500 mm)  50 bar -> 1.5   GW CH4 pipe capacity (LHV)
+    24 inch (600 mm)  50 bar -> 5     GW CH4 pipe capacity (LHV)
+    36 inch (900 mm)  50 bar -> 11.25 GW CH4 pipe capacity (LHV)
+    48 inch (1200 mm) 80 bar -> 21.7  GW CH4 pipe capacity (LHV)
+
+    Based on p.15 of (https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf"""
+    # slope
+    m0 = (5-1.5) / (600-500)
+    m1 = (11.25-5)/(900-600)
+    m2 = (21.7-11.25)/(1200-900)
+
+    if pipe_diameter_mm<500:
+        return np.nan
+    if pipe_diameter_mm<600 and pipe_diameter_mm>=500:
+        return -16 + m0 * pipe_diameter_mm
+    if pipe_diameter_mm<900 and pipe_diameter_mm>=600:
+        return -7.5 + m1 * pipe_diameter_mm
+    else:
+        return -20.1 + m2 * pipe_diameter_mm
+
+def inspect_pipe_capacity(gas_network):
+    """Check pipe capacity depending on diameter and pressure."""
+    gas_network["capacity_recalculated"] = gas_network.diameter_mm.apply(recalculate_pipe_capacity)
+    low_cap = gas_network.Capacity_GWh_h < 1.5
+    # if pipe capacity smaller than 1.5 GW take original pipe capacity
+    gas_network.loc[low_cap, "capacity_recalculated"] = gas_network.loc[low_cap, "capacity_recalculated"].fillna(gas_network.loc[low_cap,"Capacity_GWh_h"])
+    gas_network["capacity_recalculated"].fillna(1.5, inplace=True)
+    # nord stream take orginal data
+    nord_stream = gas_network[gas_network.max_pressure_bar==220].index
+    gas_network.loc[nord_stream, "capacity_recalculated"] = gas_network.loc[nord_stream, "Capacity_GWh_h"]
 
 # ----------- VISULAISATION --------------------------------------------------
 def create_view_object(cbgn_no_duplicate,buses_region):
