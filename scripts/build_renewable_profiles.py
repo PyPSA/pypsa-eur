@@ -238,7 +238,7 @@ if __name__ == '__main__':
     if "max_depth" in config:
         # lambda not supported for atlite + multiprocessing
         # use named function np.greater with partially frozen argument instead
-        # to include only areas with depth > -max_depth
+        # and exclude areas where: -max_depth > grid cell depth
         func = functools.partial(np.greater,-config['max_depth'])
         excluder.add_raster(paths.gebco, codes=func, crs=4236, nodata=-1000)
 
