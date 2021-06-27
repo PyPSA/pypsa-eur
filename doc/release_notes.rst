@@ -101,7 +101,7 @@ Many thanks to Marta Victoria for implementing the myopic foresight, and Marta V
 PyPSA-Eur-Sec 0.1.0 (8th July 2020)
 ===================================
 
-This is the first release of PyPSA-Eur-Sec, a model of the European energy system at the transmission network level that covers the full ENTSO-E area.
+This is the first proper release of PyPSA-Eur-Sec, a model of the European energy system at the transmission network level that covers the full ENTSO-E area.
 
 It is known to work with PyPSA-Eur v0.1.0 (commit bb3477cd69) and PyPSA v0.17.0.
 
@@ -114,7 +114,7 @@ heating, biomass, industry and industrial feedstocks. This completes
 the energy system and includes all greenhouse gas emitters except
 waste management, agriculture, forestry and land use.
 
-PyPSA-Eur-Sec was initially based on the model PyPSA-Eur-Sec-30 described
+PyPSA-Eur-Sec was initially based on the model PyPSA-Eur-Sec-30 (Version 0.0.1 below) described
 in the paper `Synergies of sector coupling and transmission
 reinforcement in a cost-optimised, highly renewable European energy
 system <https://arxiv.org/abs/1801.05290>`_ (2018) but it differs by
@@ -132,6 +132,40 @@ uses PyPSA-Eur to build the clustered transmission model along with
 wind, solar PV and hydroelectricity potentials and time series. Then
 PyPSA-Eur-Sec adds other conventional generators, storage units and
 the additional sectors.
+
+
+
+
+PyPSA-Eur-Sec 0.0.2 (4th September 2020)
+========================================
+
+This version, also called PyPSA-Eur-Sec-30-Path, built on
+PyPSA-Eur-Sec 0.0.1 (also called PyPSA-Eur-Sec-30) to include myopic
+pathway optimisation for the paper `Early decarbonisation of the
+European energy system pays off <https://arxiv.org/abs/2004.11009>`_
+(2020). The myopic pathway optimisation was then merged into the main
+PyPSA-Eur-Sec codebase in Version 0.2.0 above.
+
+This model has `its own github repository
+<https://github.com/martavp/pypsa-eur-sec-30-path>`_ and is `archived
+on Zenodo <https://zenodo.org/record/4014807>`_.
+
+
+
+PyPSA-Eur-Sec 0.0.1 (12th January 2018)
+========================================
+
+This is the first published version of PyPSA-Eur-Sec, also called
+PyPSA-Eur-Sec-30. It was first used in the research paper `Synergies of
+sector coupling and transmission reinforcement in a cost-optimised,
+highly renewable European energy system
+<https://arxiv.org/abs/1801.05290>`_ (2018). The model covers 30
+European countries with one node per country. It includes demand and
+supply for electricity, space and water heating in buildings, and land
+transport.
+
+It is `archived on Zenodo <https://zenodo.org/record/1146666>`_.
+
 
 
 Release Process
