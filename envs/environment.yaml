@@ -51,6 +51,7 @@ dependencies:
   - geopy
   - tqdm
   - pytz
+  - country_converter
 
   - pip:
     - vresutils==0.3.1
