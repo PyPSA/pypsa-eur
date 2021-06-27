@@ -19,7 +19,6 @@ dependencies:
   # Dependencies of the workflow itself
   - xlrd
   - openpyxl
-  - scikit-learn
   - pycountry
   - seaborn
   - snakemake-minimal
@@ -28,8 +27,17 @@ dependencies:
   - pytables
   - lxml
   - powerplantmatching>=0.4.8
-  - numpy<=1.19.0 # otherwise macos fails
-
+  - numpy
+  - pandas
+  - geopandas
+  - xarray
+  - netcdf4
+  - networkx
+  - scipy
+  - shapely
+  - progressbar2
+  - pyomo
+  - matplotlib
 
   # Keep in conda environment when calling ipython
   - ipython
@@ -37,6 +45,12 @@ dependencies:
   # GIS dependencies:
   - cartopy
   - descartes
+  - rasterio
+
+  # PyPSA-Eur-Sec Dependencies
+  - geopy
+  - tqdm
+  - pytz
 
   - pip:
     - vresutils==0.3.1
