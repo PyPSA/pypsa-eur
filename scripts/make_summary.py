@@ -400,7 +400,7 @@ def make_summaries(networks_dict, country='all'):
         if country != 'all':
             n = n[n.buses.country == country]
 
-        Nyears = n.snapshot_weightings.generators.sum() / 8760.
+        Nyears = n.snapshot_weightings.objective.sum() / 8760.
         costs = load_costs(Nyears, snakemake.input[0],
                            snakemake.config['costs'], snakemake.config['electricity'])
         update_transmission_costs(n, costs, simple_hvdc_costs=False)
