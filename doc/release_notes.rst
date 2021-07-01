@@ -57,6 +57,7 @@ Future release
 * New dependencies: ``tqdm``, ``atlite>=0.2.4``, ``pytz`` and ``geopy`` (optional).
   These are included in the environment specifications of PyPSA-Eur.
 * Consistent use of ``__main__`` block and further unspecific code cleaning.
+* Distinguish costs for home battery storage and inverter from utility-scale battery costs.
 
 
 
