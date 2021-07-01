@@ -1,42 +1,46 @@
+"""Build heat demand time series."""
 
 import geopandas as gpd
 import atlite
 import pandas as pd
 import xarray as xr
-import scipy as sp
-import helper
+import numpy as np
 
-if 'snakemake' not in globals():
-    from vresutils import Dict
-    import yaml
-    snakemake = Dict()
-    with open('config.yaml') as f:
-        snakemake.config = yaml.safe_load(f)
-    snakemake.input = Dict()
-    snakemake.output = Dict()
+if __name__ == '__main__':
+    if 'snakemake' not in globals():
+        from helper import mock_snakemake
+        snakemake = mock_snakemake(
+            'build_heat_demands',
+            simpl='',
+            clusters=48,
+        )
 
-time = pd.date_range(freq='m', **snakemake.config['snapshots'])
-params = dict(years=slice(*time.year[[0, -1]]), months=slice(*time.month[[0, -1]]))
+    if 'snakemake' not in globals():
+        from vresutils import Dict
+        import yaml
+        snakemake = Dict()
+        with open('config.yaml') as f:
+            snakemake.config = yaml.safe_load(f)
+        snakemake.input = Dict()
+        snakemake.output = Dict()
 
-cutout = atlite.Cutout(snakemake.config['atlite']['cutout_name'],
-                       cutout_dir=snakemake.config['atlite']['cutout_dir'],
-                       **params)
+    time = pd.date_range(freq='h', **snakemake.config['snapshots'])
+    cutout_config = snakemake.config['atlite']['cutout']
+    cutout = atlite.Cutout(cutout_config).sel(time=time)
 
-clustered_busregions_as_geopd = gpd.read_file(snakemake.input.regions_onshore).set_index('name', drop=True)
+    clustered_regions = gpd.read_file(
+        snakemake.input.regions_onshore).set_index('name').buffer(0).squeeze()
 
-clustered_busregions = pd.Series(clustered_busregions_as_geopd.geometry, index=clustered_busregions_as_geopd.index)
+    I = cutout.indicatormatrix(clustered_regions)
 
-helper.clean_invalid_geometries(clustered_busregions)
+    for area in ["rural", "urban", "total"]:
 
-I = cutout.indicatormatrix(clustered_busregions)
+        pop_layout = xr.open_dataarray(snakemake.input[f'pop_layout_{area}'])
 
+        stacked_pop = pop_layout.stack(spatial=('y', 'x'))
+        M = I.T.dot(np.diag(I.dot(stacked_pop)))
 
-for item in ["rural","urban","total"]:
+        heat_demand = cutout.heat_demand(
+            matrix=M.T, index=clustered_regions.index)
 
-    pop_layout = xr.open_dataarray(snakemake.input['pop_layout_'+item])
-
-    M = I.T.dot(sp.diag(I.dot(pop_layout.stack(spatial=('y', 'x')))))
-
-    heat_demand = cutout.heat_demand(matrix=M.T,index=clustered_busregions.index)
-
-    heat_demand.to_netcdf(snakemake.output["heat_demand_"+item])
+        heat_demand.to_netcdf(snakemake.output[f"heat_demand_{area}"])
