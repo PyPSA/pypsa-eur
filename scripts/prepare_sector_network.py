@@ -787,7 +787,7 @@ def insert_electricity_distribution_grid(n, costs):
         e_cyclic=True,
         e_nom_extendable=True,
         carrier="home battery",
-        capital_cost=costs.at['battery storage', 'fixed'],
+        capital_cost=costs.at['home battery storage', 'fixed'],
         lifetime=costs.at['battery storage', 'lifetime']
     )
 
@@ -797,7 +797,7 @@ def insert_electricity_distribution_grid(n, costs):
         bus1=nodes + " home battery",
         carrier="home battery charger",
         efficiency=costs.at['battery inverter', 'efficiency']**0.5,
-        capital_cost=costs.at['battery inverter', 'fixed'],
+        capital_cost=costs.at['home battery inverter', 'fixed'],
         p_nom_extendable=True,
         lifetime=costs.at['battery inverter', 'lifetime']
     )
