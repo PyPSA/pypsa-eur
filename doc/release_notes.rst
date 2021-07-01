@@ -9,7 +9,7 @@ Future release
   This unreleased version currently requires the master branches of PyPSA, PyPSA-Eur, and the technology-data repository.
 
 * Extended use of ``multiprocessing`` for much better performance
-   (from up to 20 minutes to less than one minute).
+  (from up to 20 minutes to less than one minute).
 * Compatibility with ``atlite>=0.2``. Older versions of ``atlite`` will no longer work.
 * Handle most input files (or base directories) via ``snakemake.input``.
 * Use of ``mock_snakemake`` from PyPSA-Eur.
@@ -33,7 +33,9 @@ Future release
 * Removed stale industry demand rules ``build_industrial_energy_demand_per_country``
   and ``build_industrial_demand``. These are superseded with more regionally resolved rules.
 * Use simpler and shorter ``gdf.sjoin()`` function to allocate industrial sites
-  from the Hotmaps database to onshore regions. This change also fixes a bug:
+  from the Hotmaps database to onshore regions.
+  
+  This change also fixes a bug:
   The previous version allocated sites to the closest bus,
   but at country borders (where Voronoi cells are distorted by the borders),
   this had resulted in e.g. a Spanish site close to the French border
