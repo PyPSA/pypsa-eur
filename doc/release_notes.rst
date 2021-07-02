@@ -24,6 +24,7 @@ Upcoming Release
 * The ``focus_weights`` are now also considered when pre-clustering in the :mod:`simplify_network` rule [`#241 <https://github.com/PyPSA/pypsa-eur/pull/241>`_].
 * Continuous integration testing switches to Github Actions from Travis CI [`#252 <https://github.com/PyPSA/pypsa-eur/pull/252>`_].
 * Bugfix in :mod:`build_renewable_profile` where offshore wind profiles could no longer be created [`#249 <https://github.com/PyPSA/pypsa-eur/pull/249>`_].
+* Implements changes to ``n.snapshot_weightings`` in upcoming PyPSA version (cf. `PyPSA/PyPSA/#227 <https://github.com/PyPSA/PyPSA/pull/227>`_) [`#259 <https://github.com/PyPSA/pypsa-eur/pull/259>`_].
 
 PyPSA-Eur 0.3.0 (7th December 2020)
 ==================================
