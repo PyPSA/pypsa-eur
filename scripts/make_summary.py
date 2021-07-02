@@ -144,8 +144,10 @@ def calculate_energy(n, label, energy):
 
     for c in n.iterate_components(n.one_port_components|n.branch_components):
 
-        if c.name in n.one_port_components:
+        if c.name in {'Generator', 'Load', 'ShuntImpedance'}:
             c_energies = c.pnl.p.multiply(n.snapshot_weightings.generators,axis=0).sum().multiply(c.df.sign).groupby(c.df.carrier).sum()
+        elif c.name in {'StorageUnit', 'Store'}:
+            c_energies = c.pnl.p.multiply(n.snapshot_weightings.stores,axis=0).sum().multiply(c.df.sign).groupby(c.df.carrier).sum()
         else:
             c_energies = (-c.pnl.p1.multiply(n.snapshot_weightings.generators,axis=0).sum() - c.pnl.p0.multiply(n.snapshot_weightings.generators,axis=0).sum()).groupby(c.df.carrier).sum()
 
