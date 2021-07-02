@@ -72,9 +72,7 @@ def create_network_topology(n, prefix):
     candidates = pd.concat((candidates_p, candidates_n), sort=False)
 
     topo = candidates.groupby(["bus0", "bus1"], as_index=False).mean()
-    topo.rename(index=lambda x: prefix + topo.at[x, "bus0"]
-                + connector + topo.at[x, "bus1"],
-                inplace=True)
+    topo.index = topo.apply(lambda x: prefix + x.bus0 + connector + x.bus1, axis=1)
     return topo
 
 
