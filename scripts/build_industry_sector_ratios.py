@@ -1,1520 +1,1460 @@
-
+"""Build industry sector ratios."""
 
 import pandas as pd
-import numpy as np
 
-base_dir = "data/jrc-idees-2015"
+# GWh/ktoe OR MWh/toe
+toe_to_MWh = 11.630
+
+eu28 = [
+    "FR",
+    "DE",
+    "GB",
+    "IT",
+    "ES",
+    "PL",
+    "SE",
+    "NL",
+    "BE",
+    "FI",
+    "DK",
+    "PT",
+    "RO",
+    "AT",
+    "BG",
+    "EE",
+    "GR",
+    "LV",
+    "CZ",
+    "HU",
+    "IE",
+    "SK",
+    "LT",
+    "HR",
+    "LU",
+    "SI",
+    "CY",
+    "MT",
+]
+
+sheet_names = {
+    "Iron and steel": "ISI",
+    "Chemicals Industry": "CHI",
+    "Non-metallic mineral products": "NMM",
+    "Pulp, paper and printing": "PPA",
+    "Food, beverages and tobacco": "FBT",
+    "Non Ferrous Metals": "NFM",
+    "Transport Equipment": "TRE",
+    "Machinery Equipment": "MAE",
+    "Textiles and leather": "TEL",
+    "Wood and wood products": "WWP",
+    "Other Industrial Sectors": "OIS",
+}
+
+
+index = [
+    "elec",
+    "coal",
+    "coke",
+    "biomass",
+    "methane",
+    "hydrogen",
+    "heat",
+    "naphtha",
+    "process emission",
+    "process emission from feedstock",
+]
+
+
+def load_idees_data(sector, country="EU28"):
+
+    suffixes = {"out": "", "fec": "_fec", "ued": "_ued", "emi": "_emi"}
+    sheets = {k: sheet_names[sector] + v for k, v in suffixes.items()}
+
+    def usecols(x):
+        return isinstance(x, str) or x == year
+
+    idees = pd.read_excel(
+        f"{snakemake.input.idees}/JRC-IDEES-2015_Industry_{country}.xlsx",
+        sheet_name=list(sheets.values()),
+        index_col=0,
+        header=0,
+        squeeze=True,
+        usecols=usecols,
+    )
+
+    for k, v in sheets.items():
+        idees[k] = idees.pop(v)
+
+    return idees
+
+
+def iron_and_steel():
+
+    # There are two different approaches to produce iron and steel:
+    # i.e., integrated steelworks and electric arc.
+    # Electric arc approach has higher efficiency and relies more on electricity.
+    # We assume that integrated steelworks will be replaced by electric arc entirely.
+
+    sector = "Iron and steel"
+    idees = load_idees_data(sector)
 
-# year for which data is retrieved
-raw_year = 2015
-year = raw_year-2016
+    df = pd.DataFrame(index=index)
 
-conv_factor=11.630 #GWh/ktoe OR MWh/toe
+    ## Electric arc
 
-country = 'EU28'
+    sector = "Electric arc"
 
+    df[sector] = 0.0
 
-sub_sheet_name_dict = { 'Iron and steel':'ISI',
-                        'Chemicals Industry':'CHI',
-                        'Non-metallic mineral products': 'NMM',
-                        'Pulp, paper and printing': 'PPA',
-                        'Food, beverages and tobacco': 'FBT',
-                        'Non Ferrous Metals' : 'NFM',
-                        'Transport Equipment': 'TRE',
-                        'Machinery Equipment': 'MAE',
-                        'Textiles and leather':'TEL',
-                        'Wood and wood products': 'WWP',
-                        'Other Industrial Sectors': 'OIS'}
+    s_fec = idees["fec"][51:57]
+    assert s_fec.index[0] == sector
 
-index = ['elec','coal','coke','biomass','methane','hydrogen','heat','naphtha','process emission','process emission from feedstock']
+    sel = ["Lighting", "Air compressors", "Motor drives", "Fans and pumps"]
+    df.at["elec", sector] += s_fec[sel].sum()
 
-df = pd.DataFrame(index=index)
+    df.at["heat", sector] += s_fec["Low enthalpy heat"]
 
+    subsector = "Steel: Smelters"
+    s_fec = idees["fec"][61:67]
+    s_ued = idees["ued"][61:67]
+    assert s_fec.index[0] == subsector
+    assert s_ued.index[0] == subsector
 
-## Iron and steel
-#
-#> There are two different approaches to produce iron and steel: i.e., integrated steelworks and electric arc.
-#
-#> Electric arc approach has higher efficiency and relies more on electricity.
-#
-#> We assume that integrated steelworks will be replaced by electric arc entirely.
+    # efficiency changes due to transforming all the smelters into methane
+    key = "Natural gas (incl. biogas)"
+    eff_met = s_ued[key] / s_fec[key]
 
-sector = 'Iron and steel'
+    df.at["methane", sector] += s_ued[subsector] / eff_met
 
-# read the input sheets
-excel_out = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector],
-                      index_col=0,header=0,squeeze=True) # the summary sheet
+    subsector = "Steel: Electric arc"
+    s_fec = idees["fec"][67:68]
+    assert s_fec.index[0] == subsector
 
-excel_fec = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector]+'_fec',
-                      index_col=0,header=0,squeeze=True) # the final energy consumption sheet
+    df.at["elec", sector] += s_fec[subsector]
 
-excel_ued = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector]+'_ued',
-                      index_col=0,header=0,squeeze=True) # the used energy sheet
+    subsector = "Steel: Furnaces, Refining and Rolling"
+    s_fec = idees["fec"][68:75]
+    s_ued = idees["ued"][68:75]
+    assert s_fec.index[0] == subsector
+    assert s_ued.index[0] == subsector
 
-excel_emi = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector]+'_emi',
-                      index_col=0,header=0,squeeze=True) # the emission sheet
+    key = "Steel: Furnaces, Refining and Rolling - Electric"
+    eff = s_ued[key] / s_fec[key]
 
-### Electric arc
+    # assume fully electrified, other processes scaled by used energy
+    df.at["elec", sector] += s_ued[subsector] / eff
 
-sector = 'Electric arc'
+    subsector = "Steel: Products finishing"
+    s_fec = idees["fec"][75:92]
+    s_ued = idees["ued"][75:92]
+    assert s_fec.index[0] == subsector
+    assert s_ued.index[0] == subsector
 
-df[sector] = 0.
+    key = "Steel: Products finishing - Electric"
+    eff = s_ued[key] / s_fec[key]
 
-# read the corresponding lines
-s_fec = excel_fec.iloc[51:57,year]
+    # assume fully electrified
+    df.at["elec", sector] += s_ued[subsector] / eff
 
-assert s_fec.index[0] == sector
+    # Process emissions (per physical output)
 
-# Lighting, Air compressors, Motor drives, Fans and pumps
-df.loc['elec',sector] += s_fec[['Lighting','Air compressors','Motor drives','Fans and pumps']].sum()
+    s_emi = idees["emi"][51:93]
+    assert s_emi.index[0] == sector
 
-# Low enthalpy heat
-df.loc['heat',sector] += s_fec['Low enthalpy heat']
+    s_out = idees["out"][7:8]
+    assert s_out.index[0] == sector
 
-#### Steel: Smelters
+    # tCO2/t material
+    df.loc["process emission", sector] += s_emi["Process emissions"] / s_out[sector]
 
-subsector = 'Steel: Smelters'
+    # final energy consumption MWh/t material
+    sel = ["elec", "heat", "methane"]
+    df.loc[sel, sector] = df.loc[sel, sector] * toe_to_MWh / s_out[sector]
 
-# read the corresponding lines
-s_fec = excel_fec.iloc[61:67,year]
+    ## DRI + Electric arc
+    # For primary route: DRI with H2 + EAF
 
-s_ued = excel_ued.iloc[61:67,year]
+    sector = "DRI + Electric arc"
 
-assert s_fec.index[0] == subsector
+    df[sector] = df["Electric arc"]
 
-# Efficiency changes due to transforming all the smelters into methane
-eff_met=s_ued['Natural gas (incl. biogas)']/s_fec['Natural gas (incl. biogas)']
+    # add H2 consumption for DRI at 1.7 MWh H2 /ton steel
+    df.at["hydrogen", sector] = config["H2_DRI"]
 
-df.loc['methane', sector] += s_ued[subsector]/eff_met
+    # add electricity consumption in DRI shaft (0.322 MWh/tSl)
+    df.at["elec", sector] += config["elec_DRI"]
 
-#### Steel: Electric arc
+    ## Integrated steelworks
+    # could be used in combination with CCS)
+    # Assume existing fuels are kept, except for furnaces, refining, rolling, finishing
+    # Ignore 'derived gases' since these are top gases from furnaces
 
-subsector = 'Steel: Electric arc'
+    sector = "Integrated steelworks"
 
-# read the corresponding lines
-s_fec = excel_fec.iloc[67:68,year]
+    df[sector] = 0.0
 
-assert s_fec.index[0] == subsector
+    s_fec = idees["fec"][3:9]
+    assert s_fec.index[0] == sector
 
-# only electricity
-df.loc['elec',sector] += s_fec[subsector]
+    sel = ["Lighting", "Air compressors", "Motor drives", "Fans and pumps"]
+    df.loc["elec", sector] += s_fec[sel].sum()
 
-#### Steel: Furnaces, Refining and Rolling
-#> assume fully electrified
-#
-#> other processes are scaled by the used energy
+    df.loc["heat", sector] += s_fec["Low enthalpy heat"]
 
-subsector = 'Steel: Furnaces, Refining and Rolling'
+    subsector = "Steel: Sinter/Pellet making"
 
-# read the corresponding lines
-s_fec = excel_fec.iloc[68:75,year]
+    s_fec = idees["fec"][13:19]
+    s_ued = idees["ued"][13:19]
+    assert s_fec.index[0] == subsector
+    assert s_ued.index[0] == subsector
 
-s_ued = excel_ued.iloc[68:75,year]
+    df.loc["elec", sector] += s_fec["Electricity"]
 
-assert s_fec.index[0] == subsector
+    sel = ["Natural gas (incl. biogas)", "Residual fuel oil"]
+    df.loc["methane", sector] += s_fec[sel].sum()
 
-# this process can be electrified
-eff = s_ued['Steel: Furnaces, Refining and Rolling - Electric']/s_fec['Steel: Furnaces, Refining and Rolling - Electric']
+    df.loc["coal", sector] += s_fec["Solids"]
 
-df.loc['elec',sector] += s_ued[subsector]/eff
+    subsector = "Steel: Blast /Basic oxygen furnace"
 
-#### Steel: Products finishing
-#> assume fully electrified
+    s_fec = idees["fec"][19:25]
+    s_ued = idees["ued"][19:25]
+    assert s_fec.index[0] == subsector
+    assert s_ued.index[0] == subsector
 
-subsector = 'Steel: Products finishing'
+    sel = ["Natural gas (incl. biogas)", "Residual fuel oil"]
+    df.loc["methane", sector] += s_fec[sel].sum()
 
-# read the corresponding lines
-s_fec = excel_fec.iloc[75:92,year]
+    df.loc["coal", sector] += s_fec["Solids"]
 
-s_ued = excel_ued.iloc[75:92,year]
+    df.loc["coke", sector] = s_fec["Coke"]
 
-assert s_fec.index[0] == subsector
+    subsector = "Steel: Furnaces, Refining and Rolling"
 
-# this process can be electrified
-eff = s_ued['Steel: Products finishing - Electric']/s_fec['Steel: Products finishing - Electric']
+    s_fec = idees["fec"][25:32]
+    s_ued = idees["ued"][25:32]
+    assert s_fec.index[0] == subsector
+    assert s_ued.index[0] == subsector
 
-df.loc['elec',sector] += s_ued[subsector]/eff
+    key = "Steel: Furnaces, Refining and Rolling - Electric"
+    eff = s_ued[key] / s_fec[key]
 
-#### Process emissions (per physical output)
+    # assume fully electrified, other processes scaled by used energy
+    df.loc["elec", sector] += s_ued[subsector] / eff
 
-s_emi = excel_emi.iloc[51:93,year]
+    subsector = "Steel: Products finishing"
 
-assert s_emi.index[0] == sector
+    s_fec = idees["fec"][32:49]
+    s_ued = idees["ued"][32:49]
+    assert s_fec.index[0] == subsector
+    assert s_ued.index[0] == subsector
 
-s_out = excel_out.iloc[7:8,year]
+    key = "Steel: Products finishing - Electric"
+    eff = s_ued[key] / s_fec[key]
 
-assert sector in str(s_out.index)
+    # assume fully electrified
+    df.loc["elec", sector] += s_ued[subsector] / eff
 
-df.loc['process emission',sector] = s_emi['Process emissions']/s_out[sector] # unit tCO2/t material
+    # Process emissions (per physical output)
 
-# final energy consumption per t
-df.loc[['elec','heat','methane'],sector] = df.loc[['elec','heat','methane'],sector]*conv_factor/s_out[sector] # unit MWh/t material
+    s_emi = idees["emi"][3:50]
+    assert s_emi.index[0] == sector
 
-### For primary route: DRI with H2 + EAF
+    s_out = idees["out"][6:7]
+    assert s_out.index[0] == sector
 
-df['DRI + Electric arc'] = df['Electric arc']
+    # tCO2/t material
+    df.loc["process emission", sector] = s_emi["Process emissions"] / s_out[sector]
 
-# adding the Hydrogen necessary for the Direct Reduction of Iron. consumption 1.7 MWh H2 /ton steel
-df.loc['hydrogen', 'DRI + Electric arc'] = snakemake.config["industry"]["H2_DRI"]
-# add electricity consumption in DRI shaft (0.322 MWh/tSl)
-df.loc['elec', 'DRI + Electric arc'] += snakemake.config["industry"]["elec_DRI"]
+    # final energy consumption MWh/t material
+    sel = ["elec", "heat", "methane", "coke", "coal"]
+    df.loc[sel, sector] = df.loc[sel, sector] * toe_to_MWh / s_out[sector]
 
+    return df
 
-### Integrated steelworks (could be used in combination with CCS)
-### Assume existing fuels are kept, except for furnaces, refining, rolling, finishing
-### Ignore 'derived gases' since these are top gases from furnaces
 
-sector = 'Integrated steelworks'
+def chemicals_industry():
+    sector = "Chemicals Industry"
+    idees = load_idees_data(sector)
 
-df['Integrated steelworks']= 0.
+    df = pd.DataFrame(index=index)
 
-# read the corresponding lines
-s_fec = excel_fec.iloc[3:9,year]
+    # Basid chemicals
 
-assert s_fec.index[0] == sector
+    sector = "Basic chemicals"
 
-# Lighting, Air compressors, Motor drives, Fans and pumps
-df.loc['elec',sector] += s_fec[['Lighting','Air compressors','Motor drives','Fans and pumps']].sum()
+    df[sector] = 0.0
 
-# Low enthalpy heat
-df.loc['heat',sector] += s_fec['Low enthalpy heat']
+    s_fec = idees["fec"][3:9]
+    assert s_fec.index[0] == sector
 
+    sel = ["Lighting", "Air compressors", "Motor drives", "Fans and pumps"]
+    df.loc["elec", sector] += s_fec[sel].sum()
 
-#### Steel: Sinter/Pellet making
+    df.loc["heat", sector] += s_fec["Low enthalpy heat"]
 
-subsector = 'Steel: Sinter/Pellet making'
+    subsector = "Chemicals: Feedstock (energy used as raw material)"
+    # There are Solids, Refinery gas, LPG, Diesel oil, Residual fuel oil,
+    # Other liquids, Naphtha, Natural gas for feedstock.
+    # Naphta represents 47%, methane 17%. LPG (18%) solids, refinery gas,
+    # diesel oil, residual fuel oils and other liquids are asimilated to Naphtha
 
-# read the corresponding lines
-s_fec = excel_fec.iloc[13:19,year]
+    s_fec = idees["fec"][13:22]
+    assert s_fec.index[0] == subsector
 
-s_ued = excel_ued.iloc[13:19,year]
+    df.loc["naphtha", sector] += s_fec["Naphtha"]
 
-assert s_fec.index[0] == subsector
+    df.loc["methane", sector] += s_fec["Natural gas"]
 
-df.loc['elec',sector] += s_fec['Electricity']
-df.loc['methane',sector] += s_fec['Natural gas (incl. biogas)']
-df.loc['methane',sector] += s_fec['Residual fuel oil']
-df.loc['coal',sector] += s_fec['Solids']
+    # LPG and other feedstock materials are assimilated to naphtha
+    # since they will be produced through Fischer-Tropsh process
+    sel = [
+        "Solids",
+        "Refinery gas",
+        "LPG",
+        "Diesel oil",
+        "Residual fuel oil",
+        "Other liquids",
+    ]
+    df.loc["naphtha", sector] += s_fec[sel].sum()
 
+    subsector = "Chemicals: Steam processing"
+    # All the final energy consumption in the steam processing is
+    # converted to methane, since we need >1000 C temperatures here.
+    # The current efficiency of methane is assumed in the conversion.
 
-#### Steel: Blast / Basic Oxygen Furnace
+    s_fec = idees["fec"][22:33]
+    s_ued = idees["ued"][22:33]
+    assert s_fec.index[0] == subsector
+    assert s_ued.index[0] == subsector
 
-subsector = 'Steel: Blast /Basic oxygen furnace'
+    # efficiency of natural gas
+    eff_ch4 = s_ued["Natural gas (incl. biogas)"] / s_fec["Natural gas (incl. biogas)"]
 
-# read the corresponding lines
-s_fec = excel_fec.iloc[19:25,year]
+    # replace all fec by methane
+    df.loc["methane", sector] += s_ued[subsector] / eff_ch4
 
-s_ued = excel_ued.iloc[19:25,year]
+    subsector = "Chemicals: Furnaces"
 
-assert s_fec.index[0] == subsector
+    s_fec = idees["fec"][33:41]
+    s_ued = idees["ued"][33:41]
+    assert s_fec.index[0] == subsector
+    assert s_ued.index[0] == subsector
 
-df.loc['methane',sector] += s_fec['Natural gas (incl. biogas)']
-df.loc['methane',sector] += s_fec['Residual fuel oil']
-df.loc['coal',sector] += s_fec['Solids']
-df.loc['coke',sector] += s_fec['Coke']
+    # efficiency of electrification
+    key = "Chemicals: Furnaces - Electric"
+    eff_elec = s_ued[key] / s_fec[key]
 
+    # assume fully electrified
+    df.loc["elec", sector] += s_ued[subsector] / eff_elec
 
-#### Steel: Furnaces, Refining and Rolling
-#> assume fully electrified
-#
-#> other processes are scaled by the used energy
+    subsector = "Chemicals: Process cooling"
 
-subsector = 'Steel: Furnaces, Refining and Rolling'
+    s_fec = idees["fec"][41:55]
+    s_ued = idees["ued"][41:55]
+    assert s_fec.index[0] == subsector
+    assert s_ued.index[0] == subsector
 
-# read the corresponding lines
-s_fec = excel_fec.iloc[25:32,year]
+    key = "Chemicals: Process cooling - Electric"
+    eff_elec = s_ued[key] / s_fec[key]
 
-s_ued = excel_ued.iloc[25:32,year]
+    # assume fully electrified
+    df.loc["elec", sector] += s_ued[subsector] / eff_elec
 
-assert s_fec.index[0] == subsector
+    subsector = "Chemicals: Generic electric process"
 
-# this process can be electrified
-eff = s_ued['Steel: Furnaces, Refining and Rolling - Electric']/s_fec['Steel: Furnaces, Refining and Rolling - Electric']
+    s_fec = idees["fec"][55:56]
+    assert s_fec.index[0] == subsector
 
-df.loc['elec',sector] += s_ued[subsector]/eff
+    df.loc["elec", sector] += s_fec[subsector]
 
-#### Steel: Products finishing
-#> assume fully electrified
+    # Process emissions
 
-subsector = 'Steel: Products finishing'
+    # Correct everything by subtracting 2015's ammonia demand and
+    # putting in ammonia demand for H2 and electricity separately
 
-# read the corresponding lines
-s_fec = excel_fec.iloc[32:49,year]
+    s_emi = idees["emi"][3:57]
+    s_out = idees["out"][8:9]
+    assert s_emi.index[0] == sector
+    assert sector in str(s_out.index)
 
-s_ued = excel_ued.iloc[32:49,year]
+    ammonia = pd.read_csv(snakemake.input.ammonia_production, index_col=0)
 
-assert s_fec.index[0] == subsector
+    # ktNH3/a
+    ammonia_total = ammonia.loc[ammonia.index.intersection(eu28), str(year)].sum()
 
-# this process can be electrified
-eff = s_ued['Steel: Products finishing - Electric']/s_fec['Steel: Products finishing - Electric']
+    s_out -= ammonia_total
 
-df.loc['elec',sector] += s_ued[subsector]/eff
+    # tCO2/t material
+    df.loc["process emission", sector] += (
+        s_emi["Process emissions"]
+        - config["petrochemical_process_emissions"] * 1e3
+        - config["NH3_process_emissions"] * 1e3
+    ) / s_out.values
 
+    # emissions originating from feedstock, could be non-fossil origin
+    # tCO2/t material
+    df.loc["process emission from feedstock", sector] += (
+        config["petrochemical_process_emissions"] * 1e3
+    ) / s_out.values
 
-#### Process emissions (per physical output)
+    # convert from ktoe/a to GWh/a
+    sources = ["elec", "biomass", "methane", "hydrogen", "heat", "naphtha"]
+    df.loc[sources, sector] *= toe_to_MWh
 
-s_emi = excel_emi.iloc[3:50,year]
+    df.loc["methane", sector] -= ammonia_total * config["MWh_CH4_per_tNH3_SMR"]
+    df.loc["elec", sector] -= ammonia_total * config["MWh_elec_per_tNH3_SMR"]
 
-assert s_emi.index[0] == sector
+    # MWh/t material
+    df.loc[sources, sector] = df.loc[sources, sector] / s_out.values
 
-s_out = excel_out.iloc[6:7,year]
+    to_rename = {sector: f"{sector} (without ammonia)"}
+    df.rename(columns=to_rename, inplace=True)
 
-assert sector in str(s_out.index)
+    # Ammonia
 
-df.loc['process emission',sector] = s_emi['Process emissions']/s_out[sector] # unit tCO2/t material
+    sector = "Ammonia"
 
-# final energy consumption per t
-df.loc[['elec','heat','methane','coke','coal'],sector] = df.loc[['elec','heat','methane','coke','coal'],sector]*conv_factor/s_out[sector] # unit MWh/t material
+    df[sector] = 0.0
 
+    df.loc["hydrogen", sector] = config["MWh_H2_per_tNH3_electrolysis"]
+    df.loc["elec", sector] = config["MWh_elec_per_tNH3_electrolysis"]
 
+    # Other chemicals
 
-## Chemicals Industry
+    sector = "Other chemicals"
 
-sector = 'Chemicals Industry'
+    df[sector] = 0.0
 
-# read the input sheets
-excel_out = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector],
-                      index_col=0,header=0,squeeze=True) # the summary sheet
+    s_fec = idees["fec"][58:64]
+    assert s_fec.index[0] == sector
 
-excel_fec = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector]+'_fec',
-                      index_col=0,header=0,squeeze=True) # the final energy consumption sheet
+    sel = ["Lighting", "Air compressors", "Motor drives", "Fans and pumps"]
+    df.loc["elec", sector] += s_fec[sel].sum()
 
-excel_ued = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector]+'_ued',
-                      index_col=0,header=0,squeeze=True) # the used energy sheet
+    df.loc["heat", sector] += s_fec["Low enthalpy heat"]
 
-excel_emi = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector]+'_emi',
-                      index_col=0,header=0,squeeze=True) # the emission sheet
+    subsector = "Chemicals: High enthalpy heat  processing"
 
-### Basic chemicals
+    s_fec = idees["fec"][68:81]
+    s_ued = idees["ued"][68:81]
+    assert s_fec.index[0] == subsector
+    assert s_ued.index[0] == subsector
 
-## Ammonia is separated afterwards
+    key = "High enthalpy heat  processing - Electric (microwave)"
+    eff_elec = s_ued[key] / s_fec[key]
 
-sector = 'Basic chemicals'
+    # assume fully electrified
+    df.loc["elec", sector] += s_ued[subsector] / eff_elec
 
-df[sector] = 0
+    subsector = "Chemicals: Furnaces"
 
-# read the corresponding lines
-s_fec = excel_fec.iloc[3:9,year]
+    s_fec = idees["fec"][81:89]
+    s_ued = idees["ued"][81:89]
+    assert s_fec.index[0] == subsector
+    assert s_ued.index[0] == subsector
 
-assert s_fec.index[0] == sector
+    key = "Chemicals: Furnaces - Electric"
+    eff_elec = s_ued[key] / s_fec[key]
 
-# Lighting, Air compressors, Motor drives, Fans and pumps
-df.loc['elec',sector] += s_fec[['Lighting','Air compressors','Motor drives','Fans and pumps']].sum()
+    # assume fully electrified
+    df.loc["elec", sector] += s_ued[subsector] / eff_elec
 
-# Low enthalpy heat
-df.loc['heat',sector] += s_fec['Low enthalpy heat']
+    subsector = "Chemicals: Process cooling"
 
-#### Chemicals: Feedstock (energy used as raw material)
-#> There are Solids, Refinery gas, LPG, Diesel oil, Residual fuel oil, Other liquids, Naphtha, Natural gas for feedstock.
-#
-#>  Naphta represents 47%, methane 17%. LPG (18%) solids, refinery gas, diesel oil, residual fuel oils and other liquids are asimilated to Naphtha
+    s_fec = idees["fec"][89:103]
+    s_ued = idees["ued"][89:103]
+    assert s_fec.index[0] == subsector
+    assert s_ued.index[0] == subsector
 
+    key = "Chemicals: Process cooling - Electric"
+    eff = s_ued[key] / s_fec[key]
 
-subsector = 'Chemicals: Feedstock (energy used as raw material)'
+    # assume fully electrified
+    df.loc["elec", sector] += s_ued[subsector] / eff
 
-# read the corresponding lines
-s_fec = excel_fec.iloc[13:22,year]
+    subsector = "Chemicals: Generic electric process"
 
-assert s_fec.index[0] == subsector
+    s_fec = idees["fec"][103:104]
+    assert s_fec.index[0] == subsector
 
-# naphtha
-df.loc['naphtha',sector] += s_fec['Naphtha']
+    df.loc["elec", sector] += s_fec[subsector]
 
-# natural gas
-df.loc['methane',sector] += s_fec['Natural gas']
+    # Process emissions
 
-# LPG and other feedstock materials are assimilated to naphtha since they will be produced trough Fischer-Tropsh process
-df.loc['naphtha',sector] += (s_fec['Solids'] + s_fec['Refinery gas'] + s_fec['LPG'] + s_fec['Diesel oil']
-                            + s_fec['Residual fuel oil'] + s_fec['Other liquids'])
+    s_emi = idees["emi"][58:105]
+    s_out = idees["out"][9:10]
+    assert s_emi.index[0] == sector
+    assert sector in str(s_out.index)
 
-#### Chemicals: Steam processing
-#> All the final energy consumption in the Steam processing is converted to methane, since we need >1000 C temperatures here.
-#
-#> The current efficiency of methane is assumed in the conversion.
+    # tCO2/t material
+    df.loc["process emission", sector] += s_emi["Process emissions"] / s_out.values
 
-subsector = 'Chemicals: Steam processing'
+    # MWh/t material
+    sources = ["elec", "biomass", "methane", "hydrogen", "heat", "naphtha"]
+    df.loc[sources, sector] = df.loc[sources, sector] * toe_to_MWh / s_out.values
 
-# read the corresponding lines
-s_fec = excel_fec.iloc[22:33,year]
+    # Pharmaceutical products
 
-s_ued = excel_ued.iloc[22:33,year]
+    sector = "Pharmaceutical products etc."
 
-assert s_fec.index[0] == subsector
+    df[sector] = 0.0
 
-# efficiency of natural gas
-eff_ch4 = s_ued['Natural gas (incl. biogas)']/s_fec['Natural gas (incl. biogas)']
+    s_fec = idees["fec"][106:112]
+    assert s_fec.index[0] == sector
 
-# replace all fec by methane
-df.loc['methane',sector] += s_ued[subsector]/eff_ch4
+    sel = ["Lighting", "Air compressors", "Motor drives", "Fans and pumps"]
+    df.loc["elec", sector] += s_fec[sel].sum()
 
-#### Chemicals: Furnaces
-#> assume fully electrified
+    df.loc["heat", sector] += s_fec["Low enthalpy heat"]
 
-subsector = 'Chemicals: Furnaces'
+    subsector = "Chemicals: High enthalpy heat  processing"
 
-# read the corresponding lines
-s_fec = excel_fec.iloc[33:41,year]
+    s_fec = idees["fec"][116:129]
+    s_ued = idees["ued"][116:129]
+    assert s_fec.index[0] == subsector
+    assert s_ued.index[0] == subsector
 
-s_ued = excel_ued.iloc[33:41,year]
+    key = "High enthalpy heat  processing - Electric (microwave)"
+    eff_elec = s_ued[key] / s_fec[key]
 
-assert s_fec.index[0] == subsector
+    # assume fully electrified
+    df.loc["elec", sector] += s_ued[subsector] / eff_elec
 
-#efficiency of electrification
-eff_elec = s_ued['Chemicals: Furnaces - Electric']/s_fec['Chemicals: Furnaces - Electric']
+    subsector = "Chemicals: Furnaces"
 
-df.loc['elec',sector] += s_ued[subsector]/eff_elec
+    s_fec = idees["fec"][129:137]
+    s_ued = idees["ued"][129:137]
+    assert s_fec.index[0] == subsector
+    assert s_ued.index[0] == subsector
 
-#### Chemicals: Process cooling
-#> assume fully electrified
+    key = "Chemicals: Furnaces - Electric"
+    eff = s_ued[key] / s_fec[key]
 
-subsector = 'Chemicals: Process cooling'
+    # assume fully electrified
+    df.loc["elec", sector] += s_ued[subsector] / eff
 
-# read the corresponding lines
-s_fec = excel_fec.iloc[41:55,year]
+    subsector = "Chemicals: Process cooling"
 
-s_ued = excel_ued.iloc[41:55,year]
+    s_fec = idees["fec"][137:151]
+    s_ued = idees["ued"][137:151]
+    assert s_fec.index[0] == subsector
+    assert s_ued.index[0] == subsector
 
-assert s_fec.index[0] == subsector
+    key = "Chemicals: Process cooling - Electric"
+    eff_elec = s_ued[key] / s_fec[key]
 
-eff_elec = s_ued['Chemicals: Process cooling - Electric']/s_fec['Chemicals: Process cooling - Electric']
+    # assume fully electrified
+    df.loc["elec", sector] += s_ued[subsector] / eff_elec
 
-df.loc['elec',sector] += s_ued[subsector]/eff_elec
+    subsector = "Chemicals: Generic electric process"
 
-#### Chemicals: Generic electric process
+    s_fec = idees["fec"][151:152]
+    s_out = idees["out"][10:11]
+    assert s_fec.index[0] == subsector
+    assert sector in str(s_out.index)
 
-subsector = 'Chemicals: Generic electric process'
+    df.loc["elec", sector] += s_fec[subsector]
 
-# read the corresponding lines
-s_fec = excel_fec.iloc[55:56,year]
+    # tCO2/t material
+    df.loc["process emission", sector] += 0.0
 
-assert s_fec.index[0] == subsector
+    # MWh/t material
+    sources = ["elec", "biomass", "methane", "hydrogen", "heat", "naphtha"]
+    df.loc[sources, sector] = df.loc[sources, sector] * toe_to_MWh / s_out.values
 
-df.loc['elec',sector] += s_fec[subsector]
+    return df
 
-#### Process emissions
 
-s_emi = excel_emi.iloc[3:57,year]
+def nonmetalic_mineral_products():
 
-assert s_emi.index[0] == sector
+    # This includes cement, ceramic and glass production.
+    # This includes process emissions related to the fabrication of clinker.
 
+    sector = "Non-metallic mineral products"
+    idees = load_idees_data(sector)
 
-## Correct everything by subtracting 2015's ammonia demand and putting in ammonia demand for H2 and electricity separately
+    df = pd.DataFrame(index=index)
 
-s_out = excel_out.iloc[8:9,year]
+    # Cement
 
-assert sector in str(s_out.index)
+    # This sector has process-emissions.
+    # Includes three subcategories:
+    # (a) Grinding, milling of raw material,
+    # (b) Pre-heating and pre-calcination,
+    # (c) clinker production (kilns),
+    # (d) Grinding, packaging.
+    # (b)+(c) represent 94% of fec. So (a) is joined to (b) and (d) is joined to (c).
+    # Temperatures above 1400C are required for procesing limestone and sand into clinker.
+    # Everything (except current electricity and heat consumption and existing biomass)
+    # is transformed into methane for high T.
 
-ammonia = pd.read_csv(snakemake.input.ammonia_production,
-                      index_col=0)
+    sector = "Cement"
 
-eu28 = ['FR', 'DE', 'GB', 'IT', 'ES', 'PL', 'SE', 'NL', 'BE', 'FI',
-        'DK', 'PT', 'RO', 'AT', 'BG', 'EE', 'GR', 'LV', 'CZ',
-        'HU', 'IE', 'SK', 'LT', 'HR', 'LU', 'SI', 'CY', 'MT']
+    df[sector] = 0.0
 
-#ktNH3/a
-total_ammonia = ammonia.loc[ammonia.index.intersection(eu28),str(raw_year)].sum()
+    s_fec = idees["fec"][3:25]
+    s_ued = idees["ued"][3:25]
+    assert s_fec.index[0] == sector
+    assert s_ued.index[0] == sector
 
-s_out -= total_ammonia
+    sel = ["Lighting", "Air compressors", "Motor drives", "Fans and pumps"]
+    df.loc["elec", sector] += s_fec[sel].sum()
 
-df.loc['process emission',sector] += (s_emi['Process emissions'] - snakemake.config["industry"]['petrochemical_process_emissions']*1e3 - snakemake.config["industry"]['NH3_process_emissions']*1e3)/s_out.values # unit tCO2/t material
+    df.loc["heat", sector] += s_fec["Low enthalpy heat"]
 
-#these are emissions originating from feedstock, i.e. could be non-fossil origin
-df.loc['process emission from feedstock',sector] += (snakemake.config["industry"]['petrochemical_process_emissions']*1e3)/s_out.values # unit tCO2/t material
+    # pre-processing: keep existing elec and biomass, rest to methane
+    df.loc["elec", sector] += s_fec["Cement: Grinding, milling of raw material"]
+    df.loc["biomass", sector] += s_fec["Biomass"]
+    df.loc["methane", sector] += (
+        s_fec["Cement: Pre-heating and pre-calcination"] - s_fec["Biomass"]
+    )
 
+    subsector = "Cement: Clinker production (kilns)"
 
-# final energy consumption per t
-sources=['elec','biomass', 'methane', 'hydrogen', 'heat','naphtha']
+    s_fec = idees["fec"][34:43]
+    s_ued = idees["ued"][34:43]
+    assert s_fec.index[0] == subsector
+    assert s_ued.index[0] == subsector
 
-#convert from ktoe/a to GWh/a
-df.loc[sources,sector] *= conv_factor
+    df.loc["biomass", sector] += s_fec["Biomass"]
+    df.loc["methane", sector] += (
+        s_fec["Cement: Clinker production (kilns)"] - s_fec["Biomass"]
+    )
+    df.loc["elec", sector] += s_fec["Cement: Grinding, packaging"]
 
-df.loc['methane',sector] -= total_ammonia*snakemake.config['industry']['MWh_CH4_per_tNH3_SMR']
-df.loc['elec',sector] -= total_ammonia*snakemake.config['industry']['MWh_elec_per_tNH3_SMR']
+    # Process emissions
 
-df.loc[sources,sector] = df.loc[sources,sector]/s_out.values # unit MWh/t material
+    # come from calcination of limestone to chemically reactive calcium oxide (lime).
+    # Calcium carbonate -> lime + CO2
+    # CaCO3  -> CaO + CO2
 
-df.rename(columns={sector : sector + " (without ammonia)"},
-          inplace=True)
+    s_emi = idees["emi"][3:44]
+    assert s_emi.index[0] == sector
 
-sector = 'Ammonia'
+    s_out = idees["out"][7:8]
+    assert sector in str(s_out.index)
 
-df[sector] = 0.
+    # tCO2/t material
+    df.loc["process emission", sector] += s_emi["Process emissions"] / s_out.values
 
-df.loc['hydrogen',sector] = snakemake.config['industry']['MWh_H2_per_tNH3_electrolysis']
-df.loc['elec',sector] = snakemake.config['industry']['MWh_elec_per_tNH3_electrolysis']
+    # MWh/t material
+    sources = ["elec", "biomass", "methane", "hydrogen", "heat", "naphtha"]
+    df.loc[sources, sector] = df.loc[sources, sector] * toe_to_MWh / s_out.values
 
+    # Ceramics & other NMM
 
-### Other chemicals
+    # This sector has process emissions.
+    # Includes four subcategories:
+    # (a) Mixing of raw material,
+    # (b) Drying and sintering of raw material,
+    # (c) Primary production process,
+    # (d) Product finishing.
+    # (b) represents 65% of fec and (a) 4%. So (a) is joined to (b).
+    # Everything is electrified
 
-sector = 'Other chemicals'
+    sector = "Ceramics & other NMM"
 
-df[sector] = 0
-# read the corresponding lines
-s_fec = excel_fec.iloc[58:64,year]
+    df[sector] = 0.0
 
-# check the position
-assert s_fec.index[0] == sector
+    s_fec = idees["fec"][45:94]
+    s_ued = idees["ued"][45:94]
+    assert s_fec.index[0] == sector
+    assert s_ued.index[0] == sector
 
-# Lighting, Air compressors, Motor drives, Fans and pumps
-df.loc['elec',sector] += s_fec[['Lighting','Air compressors','Motor drives','Fans and pumps']].sum()
+    sel = ["Lighting", "Air compressors", "Motor drives", "Fans and pumps"]
+    df.loc["elec", sector] += s_fec[sel].sum()
 
-# Low enthalpy heat
-df.loc['heat',sector] += s_fec['Low enthalpy heat']
+    df.loc["heat", sector] += s_fec["Low enthalpy heat"]
 
-#### Chemicals: High enthalpy heat  processing
-#> assume fully electrified
+    # Efficiency changes due to electrification
+    key = "Ceramics: Microwave drying and sintering"
+    eff_elec = s_ued[key] / s_fec[key]
 
-subsector = 'Chemicals: High enthalpy heat  processing'
+    sel = [
+        "Ceramics: Mixing of raw material",
+        "Ceramics: Drying and sintering of raw material",
+    ]
+    df.loc["elec", sector] += s_ued[sel].sum() / eff_elec
 
-# read the corresponding lines
-s_fec = excel_fec.iloc[68:81,year]
+    key = "Ceramics: Electric kiln"
+    eff_elec = s_ued[key] / s_fec[key]
 
-s_ued = excel_ued.iloc[68:81,year]
+    df.loc["elec", sector] += s_ued["Ceramics: Primary production process"] / eff_elec
 
-assert s_fec.index[0] == subsector
+    key = "Ceramics: Electric furnace"
+    eff_elec = s_ued[key] / s_fec[key]
 
-eff_elec = s_ued['High enthalpy heat  processing - Electric (microwave)']/s_fec['High enthalpy heat  processing - Electric (microwave)']
+    df.loc["elec", sector] += s_ued["Ceramics: Product finishing"] / eff_elec
 
-df.loc['elec',sector] += s_ued[subsector]/eff_elec
+    s_emi = idees["emi"][45:94]
+    assert s_emi.index[0] == sector
 
-#### Chemicals: Furnaces
-#> assume fully electrified
+    s_out = idees["out"][8:9]
+    assert sector in str(s_out.index)
 
-subsector = 'Chemicals: Furnaces'
+    # tCO2/t material
+    df.loc["process emission", sector] += s_emi["Process emissions"] / s_out.values
 
-# read the corresponding lines
-s_fec = excel_fec.iloc[81:89,year]
+    # MWh/t material
+    sources = ["elec", "biomass", "methane", "hydrogen", "heat", "naphtha"]
+    df.loc[sources, sector] = df.loc[sources, sector] * toe_to_MWh / s_out.values
 
-s_ued = excel_ued.iloc[81:89,year]
+    # Glass production
 
-assert s_fec.index[0] == subsector
+    # This sector has process emissions.
+    # Includes four subcategories:
+    # (a) Melting tank
+    # (b) Forming
+    # (c) Annealing
+    # (d) Finishing processes.
+    # (a) represents 73%. (b), (d) are joined to (c).
+    # Everything is electrified.
 
-eff_elec = s_ued['Chemicals: Furnaces - Electric']/s_fec['Chemicals: Furnaces - Electric']
+    sector = "Glass production"
 
-df.loc['elec',sector] += s_ued[subsector]/eff_elec
+    df[sector] = 0.0
 
-#### Chemicals: Process cooling
-#> assume fully electrified
+    s_fec = idees["fec"][95:123]
+    s_ued = idees["ued"][95:123]
+    assert s_fec.index[0] == sector
+    assert s_ued.index[0] == sector
 
-subsector = 'Chemicals: Process cooling'
+    sel = ["Lighting", "Air compressors", "Motor drives", "Fans and pumps"]
+    df.loc["elec", sector] += s_fec[sel].sum()
 
-# read the corresponding lines
-s_fec = excel_fec.iloc[89:103,year]
+    df.loc["heat", sector] += s_fec["Low enthalpy heat"]
 
-s_ued = excel_ued.iloc[89:103,year]
+    # Efficiency changes due to electrification
+    key = "Glass: Electric melting tank"
+    eff_elec = s_ued[key] / s_fec[key]
 
-assert s_fec.index[0] == subsector
+    df.loc["elec", sector] += s_ued["Glass: Melting tank"] / eff_elec
 
-eff = s_ued['Chemicals: Process cooling - Electric']/s_fec['Chemicals: Process cooling - Electric']
+    key = "Glass: Annealing - electric"
+    eff_elec = s_ued[key] / s_fec[key]
 
-df.loc['elec',sector] += s_ued[subsector]/eff
+    sel = ["Glass: Forming", "Glass: Annealing", "Glass: Finishing processes"]
+    df.loc["elec", sector] += s_ued[sel].sum() / eff_elec
 
-#### Chemicals: Generic electric process
+    s_emi = idees["emi"][95:124]
+    assert s_emi.index[0] == sector
 
-subsector = 'Chemicals: Generic electric process'
+    s_out = idees["out"][9:10]
+    assert sector in str(s_out.index)
 
-# read the corresponding lines
-s_fec = excel_fec.iloc[103:104,year]
+    # tCO2/t material
+    df.loc["process emission", sector] += s_emi["Process emissions"] / s_out.values
 
-assert s_fec.index[0] == subsector
+    # MWh/t material
+    sources = ["elec", "biomass", "methane", "hydrogen", "heat", "naphtha"]
+    df.loc[sources, sector] = df.loc[sources, sector] * toe_to_MWh / s_out.values
 
-df.loc['elec',sector] += s_fec[subsector]
+    return df
 
-#### Process emissions
 
-s_emi = excel_emi.iloc[58:105,year]
+def pulp_paper_printing():
 
-assert s_emi.index[0] == sector
+    # Pulp, paper and printing can be completely electrified.
+    # There are no process emissions associated to this sector.
 
-s_out = excel_out.iloc[9:10,year]
+    sector = "Pulp, paper and printing"
+    idees = load_idees_data(sector)
 
-assert sector in str(s_out.index)
+    df = pd.DataFrame(index=index)
 
-df.loc['process emission',sector] += s_emi['Process emissions']/s_out.values # unit tCO2/t material
+    # Pulp production
 
-# final energy consumption per t
-sources=['elec','biomass', 'methane', 'hydrogen', 'heat','naphtha']
+    # Includes three subcategories:
+    # (a) Wood preparation, grinding;
+    # (b) Pulping;
+    # (c) Cleaning.
+    #
+    # (b) Pulping is either biomass or electric; left like this (dominated by biomass).
+    # (a) Wood preparation, grinding and (c) Cleaning represent only 10% of their current
+    # energy consumption is assumed to be electrified without any change in efficiency
 
-df.loc[sources,sector] = df.loc[sources,sector]*conv_factor/s_out.values # unit MWh/t material
-# 1 ktoe = 11630 MWh
+    sector = "Pulp production"
 
-### Pharmaceutical products etc.
+    df[sector] = 0.0
 
-sector = 'Pharmaceutical products etc.'
+    s_fec = idees["fec"][3:28]
+    s_ued = idees["ued"][3:28]
+    assert s_fec.index[0] == sector
+    assert s_ued.index[0] == sector
 
-df[sector] = 0
+    sel = ["Lighting", "Air compressors", "Motor drives", "Fans and pumps"]
+    df.loc["elec", sector] += s_fec[sel].sum()
 
-# read the corresponding lines
-s_fec = excel_fec.iloc[106:112,year]
+    df.loc["heat", sector] += s_fec["Low enthalpy heat"]
 
-assert s_fec.index[0] == sector
+    # Industry-specific
+    sel = [
+        "Pulp: Wood preparation, grinding",
+        "Pulp: Cleaning",
+        "Pulp: Pulping electric",
+    ]
+    df.loc["elec", sector] += s_fec[sel].sum()
 
-# Lighting, Air compressors, Motor drives, Fans and pumps
-df.loc['elec',sector] += s_fec[['Lighting','Air compressors','Motor drives','Fans and pumps']].sum()
+    # Efficiency changes due to biomass
+    eff_bio = s_ued["Biomass"] / s_fec["Biomass"]
+    df.loc["biomass", sector] += s_ued["Pulp: Pulping thermal"] / eff_bio
 
-# Low enthalpy heat
-df.loc['heat',sector] += s_fec['Low enthalpy heat']
+    s_out = idees["out"][8:9]
+    assert sector in str(s_out.index)
 
-#### Chemicals: High enthalpy heat  processing
-#> assume fully electrified
+    # MWh/t material
+    sources = ["elec", "biomass", "methane", "hydrogen", "heat", "naphtha"]
+    df.loc[sources, sector] = (
+        df.loc[sources, sector] * toe_to_MWh / s_out["Pulp production (kt)"]
+    )
 
-subsector = 'Chemicals: High enthalpy heat  processing'
+    # Paper production
 
-# read the corresponding lines
-s_fec = excel_fec.iloc[116:129,year]
+    # Includes three subcategories:
+    # (a) Stock preparation;
+    # (b) Paper machine;
+    # (c) Product finishing.
+    #
+    # (b) Paper machine and (c) Product finishing are left electric
+    # and thermal is moved to biomass. The efficiency is calculated
+    # from the pulping process that is already biomass.
+    #
+    # (a) Stock preparation represents only 7% and its current energy
+    # consumption is assumed to be electrified without any change in efficiency.
 
-s_ued = excel_ued.iloc[116:129,year]
+    sector = "Paper production"
 
-assert s_fec.index[0] == subsector
+    df[sector] = 0.0
 
-eff_elec = s_ued['High enthalpy heat  processing - Electric (microwave)']/s_fec['High enthalpy heat  processing - Electric (microwave)']
+    s_fec = idees["fec"][29:78]
+    s_ued = idees["ued"][29:78]
+    assert s_fec.index[0] == sector
+    assert s_ued.index[0] == sector
 
-df.loc['elec',sector] += s_ued[subsector]/eff_elec
+    sel = ["Lighting", "Air compressors", "Motor drives", "Fans and pumps"]
+    df.loc["elec", sector] += s_fec[sel].sum()
 
-#### Chemicals: Furnaces
-#> assume fully electrified
+    df.loc["heat", sector] += s_fec["Low enthalpy heat"]
 
-subsector = 'Chemicals: Furnaces'
+    # Industry-specific
+    df.loc["elec", sector] += s_fec["Paper: Stock preparation"]
 
-# read the corresponding lines
-s_fec = excel_fec.iloc[129:137,year]
+    # add electricity from process that is already electrified
+    df.loc["elec", sector] += s_fec["Paper: Paper machine - Electricity"]
 
-s_ued = excel_ued.iloc[129:137,year]
+    # add electricity from process that is already electrified
+    df.loc["elec", sector] += s_fec["Paper: Product finishing - Electricity"]
 
-assert s_fec.index[0] == subsector
+    s_fec = idees["fec"][53:64]
+    s_ued = idees["ued"][53:64]
+    assert s_fec.index[0] == "Paper: Paper machine - Steam use"
+    assert s_ued.index[0] == "Paper: Paper machine - Steam use"
 
-eff = s_ued['Chemicals: Furnaces - Electric']/s_fec['Chemicals: Furnaces - Electric']
+    # Efficiency changes due to biomass
+    eff_bio = s_ued["Biomass"] / s_fec["Biomass"]
+    df.loc["biomass", sector] += s_ued["Paper: Paper machine - Steam use"] / eff_bio
 
-df.loc['elec',sector] += s_ued[subsector]/eff
+    s_fec = idees["fec"][66:77]
+    s_ued = idees["ued"][66:77]
+    assert s_fec.index[0] == "Paper: Product finishing - Steam use"
+    assert s_ued.index[0] == "Paper: Product finishing - Steam use"
 
-#### Chemicals: Process cooling
-#> assume fully electrified
+    # Efficiency changes due to biomass
+    eff_bio = s_ued["Biomass"] / s_fec["Biomass"]
+    df.loc["biomass", sector] += s_ued["Paper: Product finishing - Steam use"] / eff_bio
 
-subsector = 'Chemicals: Process cooling'
+    s_out = idees["out"][9:10]
+    assert sector in str(s_out.index)
 
-# read the corresponding lines
-s_fec = excel_fec.iloc[137:151,year]
+    # MWh/t material
+    sources = ["elec", "biomass", "methane", "hydrogen", "heat", "naphtha"]
+    df.loc[sources, sector] = df.loc[sources, sector] * toe_to_MWh / s_out.values
 
-s_ued = excel_ued.iloc[137:151,year]
+    # Printing and media reproduction
 
-assert s_fec.index[0] == subsector
+    # (a) Printing and publishing is assumed to be
+    # electrified without any change in efficiency.
 
-eff_elec = s_ued['Chemicals: Process cooling - Electric']/s_fec['Chemicals: Process cooling - Electric']
+    sector = "Printing and media reproduction"
 
-df.loc['elec',sector] += s_ued[subsector]/eff_elec
+    df[sector] = 0.0
 
-#### Chemicals: Generic electric process
+    s_fec = idees["fec"][79:90]
+    s_ued = idees["ued"][79:90]
+    assert s_fec.index[0] == sector
+    assert s_ued.index[0] == sector
 
-subsector = 'Chemicals: Generic electric process'
+    sel = ["Lighting", "Air compressors", "Motor drives", "Fans and pumps"]
+    df.loc["elec", sector] += s_fec[sel].sum()
+    df.loc["elec", sector] += s_ued[sel].sum()
 
-# read the corresponding lines
-s_fec = excel_fec.iloc[151:152,year]
+    df.loc["heat", sector] += s_fec["Low enthalpy heat"]
+    df.loc["heat", sector] += s_ued["Low enthalpy heat"]
 
-assert s_fec.index[0] == subsector
+    # Industry-specific
+    df.loc["elec", sector] += s_fec["Printing and publishing"]
+    df.loc["elec", sector] += s_ued["Printing and publishing"]
 
-df.loc['elec',sector] += s_fec[subsector]
+    s_out = idees["out"][10:11]
+    assert sector in str(s_out.index)
 
-# read the corresponding lines
-s_out = excel_out.iloc[10:11,year]
+    # MWh/t material
+    sources = ["elec", "biomass", "methane", "hydrogen", "heat", "naphtha"]
+    df.loc[sources, sector] = df.loc[sources, sector] * toe_to_MWh / s_out.values
 
-# check the position
-assert sector in str(s_out.index)
+    return df
 
-df.loc['process emission',sector] += 0 # unit tCO2/t material
 
-# final energy consumption per t
-sources=['elec','biomass', 'methane', 'hydrogen', 'heat', 'naphtha']
+def food_beverages_tobacco():
 
-df.loc[sources,sector] = df.loc[sources,sector]*conv_factor/s_out.values # unit MWh/t material
-# 1 ktoe = 11630 MWh
+    # Food, beverages and tobaco can be completely electrified.
+    # There are no process emissions associated to this sector.
 
-## Non-metallic mineral products
-#
-#> This includes cement, ceramic and glass production.
-#
-#> This sector includes process-emissions related to the fabrication of clinker.
+    sector = "Food, beverages and tobacco"
+    idees = load_idees_data(sector)
 
-sector = 'Non-metallic mineral products'
+    df = pd.DataFrame(index=index)
 
-# read the input sheets
-excel_fec = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector]+'_fec',
-                      index_col=0,header=0,squeeze=True)
+    df[sector] = 0.0
 
-excel_ued = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector]+'_ued',
-                      index_col=0,header=0,squeeze=True)
+    s_fec = idees["fec"][3:78]
+    s_ued = idees["ued"][3:78]
+    assert s_fec.index[0] == sector
+    assert s_ued.index[0] == sector
 
-excel_out = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector],
-                      index_col=0,header=0,squeeze=True)
+    sel = ["Lighting", "Air compressors", "Motor drives", "Fans and pumps"]
+    df.loc["elec", sector] += s_fec[sel].sum()
 
-excel_emi = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector]+'_emi',
-                      index_col=0,header=0,squeeze=True)
+    df.loc["heat", sector] += s_fec["Low enthalpy heat"]
 
-### Cement
-#
-#> This sector has process-emissions.
-#
-#> Includes three subcategories: (a) Grinding, milling of raw material, (b) Pre-heating and pre-calcination, (c) clinker production (kilns), (d) Grinding, packaging. (b)+(c) represent 94% of fec. So (a) is joined to (b) and (d) is joined to (c).
-#
-#> Temperatures above 1400C are required for procesing limestone and sand into clinker.
-#
-#> Everything (except current electricity and heat consumption and existing biomass) is transformed into methane for high T.
+    # Efficiency changes due to electrification
 
-sector = 'Cement'
+    key = "Food: Direct Heat - Electric"
+    eff_elec = s_ued[key] / s_fec[key]
+    df.loc["elec", sector] += s_ued["Food: Oven (direct heat)"] / eff_elec
 
-df[sector] = 0
+    key = "Food: Process Heat - Electric"
+    eff_elec = s_ued[key] / s_fec[key]
+    df.loc["elec", sector] += s_ued["Food: Specific process heat"] / eff_elec
 
-# read the corresponding lines
-s_fec = excel_fec.iloc[3:25,year]
+    key = "Food: Electric drying"
+    eff_elec = s_ued[key] / s_fec[key]
+    df.loc["elec", sector] += s_ued["Food: Drying"] / eff_elec
 
-s_ued = excel_ued.iloc[3:25,year]
+    key = "Food: Electric cooling"
+    eff_elec = s_ued[key] / s_fec[key]
+    df.loc["elec", sector] += (
+        s_ued["Food: Process cooling and refrigeration"] / eff_elec
+    )
 
-assert s_fec.index[0] == sector
+    # Steam processing goes all to biomass without change in efficiency
+    df.loc["biomass", sector] += s_fec["Food: Steam processing"]
 
-# Lighting, Air compressors, Motor drives, Fans and pumps
-df.loc['elec',sector] += s_fec[['Lighting','Air compressors','Motor drives','Fans and pumps']].sum()
+    # add electricity from process that is already electrified
+    df.loc["elec", sector] += s_fec["Food: Electric machinery"]
 
-# Low enthalpy heat
-df.loc['heat',sector] += s_fec['Low enthalpy heat']
+    s_out = idees["out"][3:4]
+    assert "Physical output" in str(s_out.index)
 
-# pre-processing: keep existing elec and biomass, rest to methane
-df.loc['elec', sector] += s_fec['Cement: Grinding, milling of raw material']
-df.loc['biomass', sector] += s_fec['Biomass']
-df.loc['methane', sector] += s_fec['Cement: Pre-heating and pre-calcination'] - s_fec['Biomass']
+    # MWh/t material
+    sources = ["elec", "biomass", "methane", "hydrogen", "heat", "naphtha"]
+    df.loc[sources, sector] = (
+        df.loc[sources, sector] * toe_to_MWh / s_out["Physical output (index)"]
+    )
 
+    return df
 
-#### Cement: Clinker production (kilns)
 
-subsector = 'Cement: Clinker production (kilns)'
+def non_ferrous_metals():
 
-# read the corresponding lines
-s_fec = excel_fec.iloc[34:43,year]
+    sector = "Non Ferrous Metals"
+    idees = load_idees_data(sector)
 
-s_ued = excel_ued.iloc[34:43,year]
+    df = pd.DataFrame(index=index)
 
-assert s_fec.index[0] == subsector
+    # Alumina
 
-df.loc['biomass', sector] += s_fec['Biomass']
-df.loc['methane', sector] += s_fec['Cement: Clinker production (kilns)'] - s_fec['Biomass']
-df.loc['elec', sector] += s_fec['Cement: Grinding, packaging']
+    # High enthalpy heat is converted to methane.
+    # Process heat at T>500ºC is required here.
+    # Refining is electrified.
+    # There are no process emissions associated to Alumina manufacturing.
 
+    sector = "Alumina production"
 
-#### Process-emission came from the calcination of limestone to chemically reactive calcium oxide (lime).
-#> Calcium carbonate -> lime + CO2
-#
-#> CaCO3  -> CaO + CO2
+    df[sector] = 0.0
 
-s_emi = excel_emi.iloc[3:44,year]
+    s_fec = idees["fec"][3:31]
+    s_ued = idees["ued"][3:31]
+    assert s_fec.index[0] == sector
+    assert s_ued.index[0] == sector
 
-assert s_emi.index[0] == sector
+    sel = ["Lighting", "Air compressors", "Motor drives", "Fans and pumps"]
+    df.loc["elec", sector] += s_fec[sel].sum()
 
-s_out = excel_out.iloc[7:8,year]
+    df.loc["heat", sector] += s_fec["Low enthalpy heat"]
 
-assert sector in str(s_out.index)
+    # High-enthalpy heat is transformed into methane
 
-df.loc['process emission',sector] +=s_emi['Process emissions']/s_out.values # unit tCO2/t material
+    s_fec = idees["fec"][13:24]
+    s_ued = idees["ued"][13:24]
+    assert s_fec.index[0] == "Alumina production: High enthalpy heat"
+    assert s_ued.index[0] == "Alumina production: High enthalpy heat"
 
-# final energy consumption per t
-sources=['elec','biomass', 'methane', 'hydrogen', 'heat','naphtha']
+    eff_met = s_ued["Natural gas (incl. biogas)"] / s_fec["Natural gas (incl. biogas)"]
+    df.loc["methane", sector] += (
+        s_fec["Alumina production: High enthalpy heat"] / eff_met
+    )
 
-df.loc[sources,sector] = df.loc[sources,sector]*conv_factor/s_out.values # unit MWh/t material
+    # Efficiency changes due to electrification
 
-### Ceramics & other NMM
-#
-#> This sector has process emissions.
-#
-#> Includes four subcategories: (a) Mixing of raw material, (b) Drying and sintering of raw material, (c) Primary production process, (d) Product finishing. (b)represents 65% of fec and (a) 4%. So (a) is joined to (b).
-#
-#> Everything is electrified
+    s_fec = idees["fec"][24:30]
+    s_ued = idees["ued"][24:30]
+    assert s_fec.index[0] == "Alumina production: Refining"
+    assert s_ued.index[0] == "Alumina production: Refining"
 
-sector = 'Ceramics & other NMM'
+    eff_elec = s_ued["Electricity"] / s_fec["Electricity"]
+    df.loc["elec", sector] += s_ued["Alumina production: Refining"] / eff_elec
 
-df[sector] = 0
+    s_out = idees["out"][9:10]
+    assert sector in str(s_out.index)
 
-# read the corresponding lines
-s_fec = excel_fec.iloc[45:94,year]
+    # MWh/t material
+    sources = ["elec", "biomass", "methane", "hydrogen", "heat", "naphtha"]
+    df.loc[sources, sector] = (
+        df.loc[sources, sector] * toe_to_MWh / s_out["Alumina production (kt)"]
+    )
 
-s_ued = excel_ued.iloc[45:94,year]
+    # Aluminium primary route
 
-assert s_fec.index[0] == sector
+    # Production through the primary route is divided into 50% remains
+    # as today and 50% is transformed into secondary route.
 
-# Lighting, Air compressors, Motor drives, Fans and pumps
-df.loc['elec', sector] += s_fec[['Lighting','Air compressors','Motor drives','Fans and pumps']].sum()
+    sector = "Aluminium - primary production"
 
-# Low enthalpy heat
-df.loc['heat', sector] += s_fec['Low enthalpy heat']
+    df[sector] = 0.0
 
-# Efficiency changes due to electrification
-eff_elec=s_ued['Ceramics: Microwave drying and sintering']/s_fec['Ceramics: Microwave drying and sintering']
-df.loc['elec', sector] += s_ued[['Ceramics: Mixing of raw material','Ceramics: Drying and sintering of raw material']].sum()/eff_elec
+    s_fec = idees["fec"][31:66]
+    s_ued = idees["ued"][31:66]
+    assert s_fec.index[0] == sector
+    assert s_ued.index[0] == sector
 
-eff_elec=s_ued['Ceramics: Electric kiln']/s_fec['Ceramics: Electric kiln']
-df.loc['elec', sector] += s_ued['Ceramics: Primary production process']/eff_elec
+    sel = ["Lighting", "Air compressors", "Motor drives", "Fans and pumps"]
+    df.loc["elec", sector] += s_fec[sel].sum()
 
-eff_elec=s_ued['Ceramics: Electric furnace']/s_fec['Ceramics: Electric furnace']
-df.loc['elec', sector] += s_ued['Ceramics: Product finishing']/eff_elec
+    df.loc["heat", sector] += s_fec["Low enthalpy heat"]
 
-s_emi = excel_emi.iloc[45:94,year]
+    # Add aluminium  electrolysis (smelting
+    df.loc["elec", sector] += s_fec["Aluminium electrolysis (smelting)"]
 
-assert s_emi.index[0] == sector
+    # Efficiency changes due to electrification
+    key = "Aluminium processing - Electric"
+    eff_elec = s_ued[key] / s_fec[key]
 
-s_out = excel_out.iloc[8:9,year]
+    key = "Aluminium processing  (metallurgy e.g. cast house, reheating)"
+    df.loc["elec", sector] += s_ued[key] / eff_elec
 
-assert sector in str(s_out.index)
+    key = "Aluminium finishing - Electric"
+    eff_elec = s_ued[key] / s_fec[key]
+    df.loc["elec", sector] += s_ued["Aluminium finishing"] / eff_elec
 
-df.loc['process emission',sector] += s_emi['Process emissions']/s_out.values # unit tCO2/t material
+    s_emi = idees["emi"][31:67]
+    assert s_emi.index[0] == sector
 
-# final energy consumption per t
-sources=['elec','biomass', 'methane', 'hydrogen', 'heat','naphtha']
+    s_out = idees["out"][11:12]
+    assert sector in str(s_out.index)
 
-df.loc[sources,sector] = df.loc[sources,sector]*conv_factor/s_out.values # unit MWh/t material
-# 1 ktoe = 11630 MWh
+    # tCO2/t material
+    df.loc["process emission", sector] = (
+        s_emi["Process emissions"] / s_out["Aluminium - primary production"]
+    )
 
-### Glass production
-#
-#> This sector has process emissions.
-#
-#> Includes four subcategories: (a) Melting tank, (b) Forming, (c) Annealing, (d) Finishing processes. (a)represents 73%. (b), (d) are joined to (c).
-#
-#> Everything is electrified.
+    # MWh/t material
+    sources = ["elec", "biomass", "methane", "hydrogen", "heat", "naphtha"]
+    df.loc[sources, sector] = (
+        df.loc[sources, sector] * toe_to_MWh / s_out["Aluminium - primary production"]
+    )
 
-sector = 'Glass production'
+    # Aluminium secondary route
 
-df[sector] = 0
+    # All is coverted into secondary route fully electrified.
 
-# read the corresponding lines
-s_fec = excel_fec.iloc[95:123,year]
+    sector = "Aluminium - secondary production"
 
-s_ued = excel_ued.iloc[95:123,year]
+    df[sector] = 0.0
 
-assert s_fec.index[0] == sector
+    s_fec = idees["fec"][68:109]
+    s_ued = idees["ued"][68:109]
+    assert s_fec.index[0] == sector
+    assert s_ued.index[0] == sector
 
-# Lighting, Air compressors, Motor drives, Fans and pumps
-df.loc['elec', sector] += s_fec[['Lighting','Air compressors','Motor drives','Fans and pumps']].sum()
+    sel = ["Lighting", "Air compressors", "Motor drives", "Fans and pumps"]
+    df.loc["elec", sector] += s_fec[sel].sum()
 
-# Low enthalpy heat
-df.loc['heat', sector] += s_fec['Low enthalpy heat']
+    df.loc["heat", sector] += s_fec["Low enthalpy heat"]
 
-# Efficiency changes due to electrification
-eff_elec=s_ued['Glass: Electric melting tank']/s_fec['Glass: Electric melting tank']
-df.loc['elec', sector] += s_ued['Glass: Melting tank']/eff_elec
+    # Efficiency changes due to electrification
+    key = "Secondary aluminium - Electric"
+    eff_elec = s_ued[key] / s_fec[key]
+    key = "Secondary aluminium (incl. pre-treatment, remelting)"
+    df.loc["elec", sector] += s_ued[key] / eff_elec
 
-eff_elec=s_ued['Glass: Annealing - electric']/s_fec['Glass: Annealing - electric']
-df.loc['elec', sector] += s_ued[['Glass: Forming','Glass: Annealing','Glass: Finishing processes']].sum()/eff_elec
+    key = "Aluminium processing - Electric"
+    eff_elec = s_ued[key] / s_fec[key]
+    key = "Aluminium processing  (metallurgy e.g. cast house, reheating)"
+    df.loc["elec", sector] += s_ued[key] / eff_elec
 
-s_emi = excel_emi.iloc[95:124,year]
+    key = "Aluminium finishing - Electric"
+    eff_elec = s_ued[key] / s_fec[key]
+    df.loc["elec", sector] += s_ued["Aluminium finishing"] / eff_elec
 
-assert s_emi.index[0] == sector
+    s_out = idees["out"][12:13]
+    assert sector in str(s_out.index)
 
-s_out = excel_out.iloc[9:10,year]
+    # MWh/t material
+    sources = ["elec", "biomass", "methane", "hydrogen", "heat", "naphtha"]
+    df.loc[sources, sector] = (
+        df.loc[sources, sector] * toe_to_MWh / s_out["Aluminium - secondary production"]
+    )
 
-assert sector in str(s_out.index)
+    # Other non-ferrous metals
 
-df.loc['process emission',sector] += s_emi['Process emissions']/s_out.values # unit tCO2/t material
+    sector = "Other non-ferrous metals"
 
-# final energy consumption per t
-sources=['elec','biomass', 'methane', 'hydrogen', 'heat','naphtha']
+    df[sector] = 0.0
 
-df.loc[sources,sector] = df.loc[sources,sector]*conv_factor/s_out.values # unit MWh/t material
+    s_fec = idees["fec"][110:152]
+    s_ued = idees["ued"][110:152]
+    assert s_fec.index[0] == sector
+    assert s_ued.index[0] == sector
 
-## Pulp, paper and printing
-#
-#> Pulp, paper and printing can be completely electrified.
-#
-#> There are no process emissions associated to this sector.
+    sel = ["Lighting", "Air compressors", "Motor drives", "Fans and pumps"]
+    df.loc["elec", sector] += s_fec[sel].sum()
 
-sector = 'Pulp, paper and printing'
+    df.loc["heat", sector] += s_fec["Low enthalpy heat"]
 
-# read the input sheets
-excel_fec = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector]+'_fec',
-                      index_col=0,header=0,squeeze=True)
+    # Efficiency changes due to electrification
+    key = "Metal production - Electric"
+    eff_elec = s_ued[key] / s_fec[key]
+    df.loc["elec", sector] += s_ued["Other Metals: production"] / eff_elec
 
-excel_ued = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector]+'_ued',
-                      index_col=0,header=0,squeeze=True)
+    key = "Metal processing - Electric"
+    eff_elec = s_ued[key] / s_fec[key]
+    key = "Metal processing  (metallurgy e.g. cast house, reheating)"
+    df.loc["elec", sector] += s_ued[key] / eff_elec
 
-excel_out = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector],
-                      index_col=0,header=0,squeeze=True)
+    key = "Metal finishing - Electric"
+    eff_elec = s_ued[key] / s_fec[key]
+    df.loc["elec", sector] += s_ued["Metal finishing"] / eff_elec
 
-### Pulp production
-#
-#> Includes three subcategories: (a) Wood preparation, grinding; (b) Pulping;  (c) Cleaning.
-#
-#> (b) Pulping is either biomass or electric; left like this (dominated by biomass).
-#
-#> (a) Wood preparation, grinding and (c) Cleaning represent only 10% their current energy consumption is assumed to be electrified without any change in efficiency
+    s_emi = idees["emi"][110:153]
+    assert s_emi.index[0] == sector
 
-sector = 'Pulp production'
+    s_out = idees["out"][13:14]
+    assert sector in str(s_out.index)
 
-df[sector] = 0
+    # tCO2/t material
+    df.loc["process emission", sector] = (
+        s_emi["Process emissions"] / s_out["Other non-ferrous metals (kt lead eq.)"]
+    )
 
-# read the corresponding lines
-s_fec = excel_fec.iloc[3:28,year]
+    # MWh/t material
+    sources = ["elec", "biomass", "methane", "hydrogen", "heat", "naphtha"]
+    df.loc[sources, sector] = (
+        df.loc[sources, sector]
+        * toe_to_MWh
+        / s_out["Other non-ferrous metals (kt lead eq.)"]
+    )
 
-s_ued = excel_ued.iloc[3:28,year]
+    return df
 
-assert s_fec.index[0] == sector
 
-# Lighting, Air compressors, Motor drives, Fans and pumps
-df.loc['elec', sector] += s_fec[['Lighting','Air compressors','Motor drives','Fans and pumps']].sum()
+def transport_equipment():
 
-# Low enthalpy heat
-df.loc['heat', sector] += s_fec['Low enthalpy heat']
+    sector = "Transport Equipment"
+    idees = load_idees_data(sector)
 
-# Industry-specific
-df.loc['elec', sector] += s_fec[['Pulp: Wood preparation, grinding', 'Pulp: Cleaning', 'Pulp: Pulping electric']].sum()
+    df = pd.DataFrame(index=index)
 
-# Efficiency changes due to biomass
-eff_bio=s_ued['Biomass']/s_fec['Biomass']
-df.loc['biomass', sector] += s_ued['Pulp: Pulping thermal']/eff_bio
+    df[sector] = 0.0
 
-s_out = excel_out.iloc[8:9,year]
+    s_fec = idees["fec"][3:45]
+    s_ued = idees["ued"][3:45]
+    assert s_fec.index[0] == sector
+    assert s_ued.index[0] == sector
 
-assert sector in str(s_out.index)
+    sel = ["Lighting", "Air compressors", "Motor drives", "Fans and pumps"]
+    df.loc["elec", sector] += s_fec[sel].sum()
 
-# final energy consumption per t
-sources=['elec','biomass', 'methane', 'hydrogen', 'heat','naphtha']
+    df.loc["heat", sector] += s_fec["Low enthalpy heat"]
 
-df.loc[sources,sector] = df.loc[sources,sector]*conv_factor/s_out['Pulp production (kt)'] # unit MWh/t material
+    # Efficiency changes due to electrification
+    key = "Trans. Eq.: Electric Foundries"
+    eff_elec = s_ued[key] / s_fec[key]
+    df.loc["elec", sector] += s_ued["Trans. Eq.: Foundries"] / eff_elec
 
-### Paper production
-#
-#> Includes three subcategories: (a) Stock preparation; (b) Paper machine;  (c) Product finishing.
-#
-#> (b) Paper machine and (c) Product finishing are left electric and thermal is moved to biomass. The efficiency is calculated from the pulping process that is already biomass.
-#
-#> (a) Stock preparation represents only 7% and its current energy consumption is assumed to be electrified without any change in efficiency.
+    key = "Trans. Eq.: Electric connection"
+    eff_elec = s_ued[key] / s_fec[key]
+    df.loc["elec", sector] += s_ued["Trans. Eq.: Connection techniques"] / eff_elec
 
-sector = 'Paper production'
+    key = "Trans. Eq.: Heat treatment - Electric"
+    eff_elec = s_ued[key] / s_fec[key]
+    df.loc["elec", sector] += s_ued["Trans. Eq.: Heat treatment"] / eff_elec
 
-df[sector] = 0
+    df.loc["elec", sector] += s_fec["Trans. Eq.: General machinery"]
+    df.loc["elec", sector] += s_fec["Trans. Eq.: Product finishing"]
 
-# read the corresponding lines
-s_fec = excel_fec.iloc[29:78,year]
+    # Steam processing is supplied with biomass
+    eff_biomass = s_ued["Biomass"] / s_fec["Biomass"]
+    df.loc["biomass", sector] += s_ued["Trans. Eq.: Steam processing"] / eff_biomass
 
-s_ued = excel_ued.iloc[29:78,year]
+    s_out = idees["out"][3:4]
+    assert "Physical output" in str(s_out.index)
 
-assert s_fec.index[0] == sector
+    # MWh/t material
+    sources = ["elec", "biomass", "methane", "hydrogen", "heat", "naphtha"]
+    df.loc[sources, sector] = (
+        df.loc[sources, sector] * toe_to_MWh / s_out["Physical output (index)"]
+    )
 
-# Lighting, Air compressors, Motor drives, Fans and pumps
-df.loc['elec', sector] += s_fec[['Lighting','Air compressors','Motor drives','Fans and pumps']].sum()
+    return df
 
-# Low enthalpy heat
-df.loc['heat', sector] += s_fec['Low enthalpy heat']
 
-# Industry-specific
-df.loc['elec', sector] += s_fec['Paper: Stock preparation']
+def machinery_equipment():
 
-# add electricity from process that is already electrified
-df.loc['elec', sector] += s_fec['Paper: Paper machine - Electricity']
+    sector = "Machinery Equipment"
 
-# add electricity from process that is already electrified
-df.loc['elec', sector] += s_fec['Paper: Product finishing - Electricity']
+    idees = load_idees_data(sector)
 
+    df = pd.DataFrame(index=index)
 
-s_fec = excel_fec.iloc[53:64,year]
+    df[sector] = 0.0
 
-s_ued = excel_ued.iloc[53:64,year]
+    s_fec = idees["fec"][3:45]
+    s_ued = idees["ued"][3:45]
+    assert s_fec.index[0] == sector
+    assert s_ued.index[0] == sector
 
-assert s_fec.index[0] == 'Paper: Paper machine - Steam use'
+    sel = ["Lighting", "Air compressors", "Motor drives", "Fans and pumps"]
+    df.loc["elec", sector] += s_fec[sel].sum()
 
-# Efficiency changes due to biomass
-eff_bio=s_ued['Biomass']/s_fec['Biomass']
-df.loc['biomass', sector] += s_ued['Paper: Paper machine - Steam use']/eff_bio
+    df.loc["heat", sector] += s_fec["Low enthalpy heat"]
 
+    # Efficiency changes due to electrification
+    key = "Mach. Eq.: Electric Foundries"
+    eff_elec = s_ued[key] / s_fec[key]
+    df.loc["elec", sector] += s_ued["Mach. Eq.: Foundries"] / eff_elec
 
-s_fec = excel_fec.iloc[66:77,year]
+    key = "Mach. Eq.: Electric connection"
+    eff_elec = s_ued[key] / s_fec[key]
+    df.loc["elec", sector] += s_ued["Mach. Eq.: Connection techniques"] / eff_elec
 
-s_ued = excel_ued.iloc[66:77,year]
+    key = "Mach. Eq.: Heat treatment - Electric"
+    eff_elec = s_ued[key] / s_fec[key]
 
-assert s_fec.index[0] == 'Paper: Product finishing - Steam use'
+    df.loc["elec", sector] += s_ued["Mach. Eq.: Heat treatment"] / eff_elec
 
-# Efficiency changes due to biomass
-eff_bio=s_ued['Biomass']/s_fec['Biomass']
-df.loc['biomass', sector] += s_ued['Paper: Product finishing - Steam use']/eff_bio
+    df.loc["elec", sector] += s_fec["Mach. Eq.: General machinery"]
+    df.loc["elec", sector] += s_fec["Mach. Eq.: Product finishing"]
 
+    # Steam processing is supplied with biomass
+    eff_biomass = s_ued["Biomass"] / s_fec["Biomass"]
+    df.loc["biomass", sector] += s_ued["Mach. Eq.: Steam processing"] / eff_biomass
 
-# read the corresponding lines
-s_out = excel_out.iloc[9:10,year]
+    s_out = idees["out"][3:4]
+    assert "Physical output" in str(s_out.index)
 
-assert sector in str(s_out.index)
+    # MWh/t material
+    sources = ["elec", "biomass", "methane", "hydrogen", "heat", "naphtha"]
+    df.loc[sources, sector] = (
+        df.loc[sources, sector] * toe_to_MWh / s_out["Physical output (index)"]
+    )
 
-# final energy consumption per t
-sources=['elec','biomass', 'methane', 'hydrogen', 'heat','naphtha']
+    return df
 
-df.loc[sources,sector] = df.loc[sources,sector]*conv_factor/s_out.values # unit MWh/t material\
 
-### Printing and media reproduction
-#
-#> (a) Printing and publishing is assumed to be electrified without any change in efficiency.
+def textiles_and_leather():
 
-sector='Printing and media reproduction'
+    sector = "Textiles and leather"
 
-df[sector] = 0
+    idees = load_idees_data(sector)
 
-# read the corresponding lines
-s_fec = excel_fec.iloc[79:90,year]
+    df = pd.DataFrame(index=index)
 
-s_ued = excel_ued.iloc[79:90,year]
+    df[sector] = 0.0
 
-assert s_fec.index[0] == sector
+    s_fec = idees["fec"][3:57]
+    s_ued = idees["ued"][3:57]
+    assert s_fec.index[0] == sector
+    assert s_ued.index[0] == sector
 
-# Lighting, Air compressors, Motor drives, Fans and pumps
-df.loc['elec',sector] += s_fec[['Lighting','Air compressors','Motor drives','Fans and pumps']].sum()
-df.loc['elec',sector] += s_ued[['Lighting','Air compressors','Motor drives','Fans and pumps']].sum()
+    sel = ["Lighting", "Air compressors", "Motor drives", "Fans and pumps"]
+    df.loc["elec", sector] += s_fec[sel].sum()
 
-# Low enthalpy heat
-df.loc['heat',sector] += s_fec['Low enthalpy heat']
-df.loc['heat',sector] += s_ued['Low enthalpy heat']
+    df.loc["heat", sector] += s_fec["Low enthalpy heat"]
 
-# Industry-specific
-df.loc['elec', sector] += s_fec['Printing and publishing']
-df.loc['elec', sector] += s_ued['Printing and publishing']
+    # Efficiency changes due to electrification
+    key = "Textiles: Electric drying"
+    eff_elec = s_ued[key] / s_fec[key]
+    df.loc["elec", sector] += s_ued["Textiles: Drying"] / eff_elec
 
-# read the corresponding lines
-s_out = excel_out.iloc[10:11,year]
+    df.loc["elec", sector] += s_fec["Textiles: Electric general machinery"]
+    df.loc["elec", sector] += s_fec["Textiles: Finishing Electric"]
 
-assert sector in str(s_out.index)
+    # Steam processing is supplied with biomass
+    eff_biomass = s_ued[15:26]["Biomass"] / s_fec[15:26]["Biomass"]
+    df.loc["biomass", sector] += (
+        s_ued["Textiles: Pretreatment with steam"] / eff_biomass
+    )
+    df.loc["biomass", sector] += (
+        s_ued["Textiles: Wet processing with steam"] / eff_biomass
+    )
 
-# final energy consumption per t
-sources=['elec','biomass', 'methane', 'hydrogen', 'heat','naphtha']
+    s_out = idees["out"][3:4]
+    assert "Physical output" in str(s_out.index)
 
-df.loc[sources,sector] = df.loc[sources,sector]*conv_factor/s_out.values # unit MWh/t material
+    # MWh/t material
+    sources = ["elec", "biomass", "methane", "hydrogen", "heat", "naphtha"]
+    df.loc[sources, sector] = (
+        df.loc[sources, sector] * toe_to_MWh / s_out["Physical output (index)"]
+    )
 
-## Food, beverages and tobaco
-#
-#> Food, beverages and tobaco can be completely electrified.
-#
-#> There are no process emissions associated to this sector.
+    return df
 
-sector = 'Food, beverages and tobacco'
 
-# read the input sheets
-excel_fec = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector]+'_fec',
-                      index_col=0,header=0,squeeze=True)
+def wood_and_wood_products():
 
-excel_ued = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector]+'_ued',
-                      index_col=0,header=0,squeeze=True)
+    sector = "Wood and wood products"
 
-excel_out = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector],
-                      index_col=0,header=0,squeeze=True)
+    idees = load_idees_data(sector)
 
-df[sector] = 0
+    df = pd.DataFrame(index=index)
 
-# read the corresponding lines
-s_fec = excel_fec.iloc[3:78,year]
+    df[sector] = 0.0
 
-s_ued = excel_ued.iloc[3:78,year]
+    s_fec = idees["fec"][3:46]
+    s_ued = idees["ued"][3:46]
+    assert s_fec.index[0] == sector
+    assert s_ued.index[0] == sector
 
-assert s_fec.index[0] == sector
+    sel = ["Lighting", "Air compressors", "Motor drives", "Fans and pumps"]
+    df.loc["elec", sector] += s_fec[sel].sum()
 
-# Lighting, Air compressors, Motor drives, Fans and pumps
-df.loc['elec', sector] += s_fec[['Lighting','Air compressors','Motor drives','Fans and pumps']].sum()
+    df.loc["heat", sector] += s_fec["Low enthalpy heat"]
 
-# Low enthalpy heat
-df.loc['heat', sector] += s_fec['Low enthalpy heat']
+    # Efficiency changes due to electrification
+    key = "Wood: Electric drying"
+    eff_elec = s_ued[key] / s_fec[key]
+    df.loc["elec", sector] += s_ued["Wood: Drying"] / eff_elec
 
-# Efficiency changes due to electrification
-eff_elec=s_ued['Food: Direct Heat - Electric']/s_fec['Food: Direct Heat - Electric']
-df.loc['elec', sector] += s_ued['Food: Oven (direct heat)']/eff_elec
+    df.loc["elec", sector] += s_fec["Wood: Electric mechanical processes"]
+    df.loc["elec", sector] += s_fec["Wood: Finishing Electric"]
 
-eff_elec=s_ued['Food: Process Heat - Electric']/s_fec['Food: Process Heat - Electric']
-df.loc['elec', sector] += s_ued['Food: Specific process heat']/eff_elec
+    # Steam processing is supplied with biomass
+    eff_biomass = s_ued[15:25]["Biomass"] / s_fec[15:25]["Biomass"]
+    df.loc["biomass", sector] += (
+        s_ued["Wood: Specific processes with steam"] / eff_biomass
+    )
 
-eff_elec=s_ued['Food: Electric drying']/s_fec['Food: Electric drying']
-df.loc['elec', sector] += s_ued['Food: Drying']/eff_elec
+    s_out = idees["out"][3:4]
+    assert "Physical output" in str(s_out.index)
 
-eff_elec=s_ued['Food: Electric cooling']/s_fec['Food: Electric cooling']
-df.loc['elec', sector] += s_ued['Food: Process cooling and refrigeration']/eff_elec
+    # MWh/t material
+    sources = ["elec", "biomass", "methane", "hydrogen", "heat", "naphtha"]
+    df.loc[sources, sector] = (
+        df.loc[sources, sector] * toe_to_MWh / s_out["Physical output (index)"]
+    )
 
-# Steam processing goes all to biomass without change in efficiency
-df.loc['biomass', sector] += s_fec['Food: Steam processing']
+    return df
 
-# add electricity from process that is already electrified
-df.loc['elec', sector] += s_fec['Food: Electric machinery']
 
-# read the corresponding lines
-s_out = excel_out.iloc[3:4,year]
+def other_industrial_sectors():
 
-# final energy consumption per t
-sources=['elec','biomass', 'methane', 'hydrogen', 'heat','naphtha']
+    sector = "Other Industrial Sectors"
 
-df.loc[sources,sector] = df.loc[sources,sector]*conv_factor/s_out['Physical output (index)'] # unit MWh/t material
+    idees = load_idees_data(sector)
 
-## Non Ferrous Metals
+    df = pd.DataFrame(index=index)
 
-sector = 'Non Ferrous Metals'
+    df[sector] = 0.0
 
-# read the input sheets
-excel_fec = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector]+'_fec',
-                      index_col=0,header=0,squeeze=True)
+    s_fec = idees["fec"][3:67]
+    s_ued = idees["ued"][3:67]
+    assert s_fec.index[0] == sector
+    assert s_ued.index[0] == sector
 
-excel_ued = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector]+'_ued',
-                      index_col=0,header=0,squeeze=True)
+    sel = ["Lighting", "Air compressors", "Motor drives", "Fans and pumps"]
+    df.loc["elec", sector] += s_fec[sel].sum()
 
-excel_out = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector],
-                      index_col=0,header=0,squeeze=True)
+    df.loc["heat", sector] += s_fec["Low enthalpy heat"]
 
-excel_emi = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector]+'_emi',
-                      index_col=0,header=0,squeeze=True) # the emission sheet
+    # Efficiency changes due to electrification
+    key = "Other Industrial sectors: Electric processing"
+    eff_elec = s_ued[key] / s_fec[key]
+    df.loc["elec", sector] += (
+        s_ued["Other Industrial sectors: Process heating"] / eff_elec
+    )
 
-### Alumina
-#
-#> High enthalpy heat is converted to methane. Process heat at T>500ºC is required here.
-#
-#> Refining is electrified.
-#
-#> There are no process emissions associated to Alumina manufacturing
+    key = "Other Industries: Electric drying"
+    eff_elec = s_ued[key] / s_fec[key]
+    df.loc["elec", sector] += s_ued["Other Industrial sectors: Drying"] / eff_elec
 
-sector = 'Alumina production'
+    key = "Other Industries: Electric cooling"
+    eff_elec = s_ued[key] / s_fec[key]
+    df.loc["elec", sector] += (
+        s_ued["Other Industrial sectors: Process Cooling"] / eff_elec
+    )
 
-df[sector] = 0
+    # Diesel motors are electrified
+    key = "Other Industrial sectors: Diesel motors (incl. biofuels)"
+    df.loc["elec", sector] += s_fec[key]
+    key = "Other Industrial sectors: Electric machinery"
+    df.loc["elec", sector] += s_fec[key]
 
-# read the corresponding lines
-s_fec = excel_fec.iloc[3:31,year]
+    # Steam processing is supplied with biomass
+    eff_biomass = s_ued[15:25]["Biomass"] / s_fec[15:25]["Biomass"]
+    df.loc["biomass", sector] += (
+        s_ued["Other Industrial sectors: Steam processing"] / eff_biomass
+    )
 
-s_ued = excel_ued.iloc[3:31,year]
+    s_out = idees["out"][3:4]
+    assert "Physical output" in str(s_out.index)
 
-assert s_fec.index[0] == sector
+    # MWh/t material
+    sources = ["elec", "biomass", "methane", "hydrogen", "heat", "naphtha"]
+    df.loc[sources, sector] = (
+        df.loc[sources, sector] * toe_to_MWh / s_out["Physical output (index)"]
+    )
 
-# Lighting, Air compressors, Motor drives, Fans and pumps
-df.loc['elec', sector] += s_fec[['Lighting','Air compressors','Motor drives','Fans and pumps']].sum()
+    return df
 
-# Low enthalpy heat
-df.loc['heat', sector] += s_fec['Low enthalpy heat']
 
-# High-enthalpy heat is transformed into methane
-s_fec = excel_fec.iloc[13:24,year]
+if __name__ == "__main__":
+    if 'snakemake' not in globals():
+        from helper import mock_snakemake
+        snakemake = mock_snakemake('build_industry_sector_ratios')
 
-s_ued = excel_ued.iloc[13:24,year]
+    # TODO make config option
+    year = 2015
 
-assert s_fec.index[0] == 'Alumina production: High enthalpy heat'
+    config = snakemake.config["industry"]
 
-eff_met=s_ued['Natural gas (incl. biogas)']/s_fec['Natural gas (incl. biogas)']
-df.loc['methane', sector] += s_fec['Alumina production: High enthalpy heat']/eff_met
+    df = pd.concat(
+        [
+            iron_and_steel(),
+            chemicals_industry(),
+            nonmetalic_mineral_products(),
+            pulp_paper_printing(),
+            food_beverages_tobacco(),
+            non_ferrous_metals(),
+            transport_equipment(),
+            machinery_equipment(),
+            textiles_and_leather(),
+            wood_and_wood_products(),
+            other_industrial_sectors(),
+        ],
+        axis=1,
+    )
 
-# Efficiency changes due to electrification
-s_fec = excel_fec.iloc[24:30,year]
-
-s_ued = excel_ued.iloc[24:30,year]
-
-assert s_fec.index[0] == 'Alumina production: Refining'
-
-eff_elec=s_ued['Electricity']/s_fec['Electricity']
-df.loc['elec', sector] += s_ued['Alumina production: Refining']/eff_elec
-
-# read the corresponding lines
-s_out = excel_out.iloc[9:10,year]
-
-assert sector in str(s_out.index)
-
-# final energy consumption per t
-sources=['elec','biomass', 'methane', 'hydrogen', 'heat','naphtha']
-df.loc[sources,sector] = df.loc[sources,sector]*conv_factor/s_out['Alumina production (kt)'] # unit MWh/t material
-
-### Aluminium primary route
-#
-#> Production through the primary route is divided into 50% remains as today and 50% is transformed into secondary route
-
-sector = 'Aluminium - primary production'
-
-df[sector] = 0
-
-# read the corresponding lines
-s_fec = excel_fec.iloc[31:66,year]
-
-s_ued = excel_ued.iloc[31:66,year]
-
-assert s_fec.index[0] == sector
-
-# Lighting, Air compressors, Motor drives, Fans and pumps
-df.loc['elec', sector] += s_fec[['Lighting','Air compressors','Motor drives','Fans and pumps']].sum()
-
-# Low enthalpy heat
-df.loc['heat', sector] += s_fec['Low enthalpy heat']
-
-# Add aluminium  electrolysis (smelting
-df.loc['elec', sector] += s_fec['Aluminium electrolysis (smelting)']
-
-# Efficiency changes due to electrification
-eff_elec=s_ued['Aluminium processing - Electric']/s_fec['Aluminium processing - Electric']
-df.loc['elec', sector] += s_ued['Aluminium processing  (metallurgy e.g. cast house, reheating)']/eff_elec
-
-# Efficiency changes due to electrification
-eff_elec=s_ued['Aluminium finishing - Electric']/s_fec['Aluminium finishing - Electric']
-df.loc['elec', sector] += s_ued['Aluminium finishing']/eff_elec
-
-s_emi = excel_emi.iloc[31:67,year]
-
-assert s_emi.index[0] == sector
-
-s_out = excel_out.iloc[11:12,year]
-
-assert sector in str(s_out.index)
-
-df.loc['process emission',sector] = s_emi['Process emissions']/s_out['Aluminium - primary production'] # unit tCO2/t material
-
-# final energy consumption per t
-sources=['elec','biomass', 'methane', 'hydrogen', 'heat','naphtha']
-df.loc[sources,sector] = df.loc[sources,sector]*conv_factor/s_out['Aluminium - primary production'] # unit MWh/t material
-
-### Aluminium secondary route
-#
-#> All is coverted into secondary route fully electrified
-
-sector = 'Aluminium - secondary production'
-
-df[sector] = 0
-
-# read the corresponding lines
-s_fec = excel_fec.iloc[68:109,year]
-
-s_ued = excel_ued.iloc[68:109,year]
-
-assert s_fec.index[0] == sector
-
-# Lighting, Air compressors, Motor drives, Fans and pumps
-df.loc['elec', sector] += s_fec[['Lighting','Air compressors','Motor drives','Fans and pumps']].sum()
-
-# Low enthalpy heat
-df.loc['heat', sector] += s_fec['Low enthalpy heat']
-
-# Efficiency changes due to electrification
-eff_elec=s_ued['Secondary aluminium - Electric']/s_fec['Secondary aluminium - Electric']
-df.loc['elec', sector] += s_ued['Secondary aluminium (incl. pre-treatment, remelting)']/eff_elec
-
-# Efficiency changes due to electrification
-eff_elec=s_ued['Aluminium processing - Electric']/s_fec['Aluminium processing - Electric']
-df.loc['elec', sector] += s_ued['Aluminium processing  (metallurgy e.g. cast house, reheating)']/eff_elec
-
-# Efficiency changes due to electrification
-eff_elec=s_ued['Aluminium finishing - Electric']/s_fec['Aluminium finishing - Electric']
-df.loc['elec', sector] += s_ued['Aluminium finishing']/eff_elec
-
-# read the corresponding lines
-s_out = excel_out.iloc[12:13,year]
-
-assert sector in str(s_out.index)
-
-# final energy consumption per t
-sources=['elec','biomass', 'methane', 'hydrogen', 'heat','naphtha']
-df.loc[sources,sector] = df.loc[sources,sector]*conv_factor/s_out['Aluminium - secondary production'] # unit MWh/t material
-# 1 ktoe = 11630 MWh
-
-
-### Other non-ferrous metals
-
-sector = 'Other non-ferrous metals'
-
-df[sector] = 0
-
-# read the corresponding lines
-s_fec = excel_fec.iloc[110:152,year]
-
-s_ued = excel_ued.iloc[110:152,year]
-
-assert s_fec.index[0] == sector
-
-# Lighting, Air compressors, Motor drives, Fans and pumps
-df.loc['elec', sector] += s_fec[['Lighting','Air compressors','Motor drives','Fans and pumps']].sum()
-
-# Low enthalpy heat
-df.loc['heat', sector] += s_fec['Low enthalpy heat']
-
-# Efficiency changes due to electrification
-eff_elec=s_ued['Metal production - Electric']/s_fec['Metal production - Electric']
-df.loc['elec', sector] += s_ued['Other Metals: production']/eff_elec
-
-# Efficiency changes due to electrification
-eff_elec=s_ued['Metal processing - Electric']/s_fec['Metal processing - Electric']
-df.loc['elec', sector] += s_ued['Metal processing  (metallurgy e.g. cast house, reheating)']/eff_elec
-
-# Efficiency changes due to electrification
-eff_elec=s_ued['Metal finishing - Electric']/s_fec['Metal finishing - Electric']
-df.loc['elec', sector] += s_ued['Metal finishing']/eff_elec
-
-s_emi = excel_emi.iloc[110:153,year]
-
-assert s_emi.index[0] == sector
-
-s_out = excel_out.iloc[13:14,year]
-
-assert sector in str(s_out.index)
-
-df.loc['process emission',sector] = s_emi['Process emissions']/s_out['Other non-ferrous metals (kt lead eq.)'] # unit tCO2/t material
-
-# final energy consumption per t
-sources=['elec','biomass', 'methane', 'hydrogen', 'heat','naphtha']
-df.loc[sources,sector] = df.loc[sources,sector]*conv_factor/s_out['Other non-ferrous metals (kt lead eq.)'] # unit MWh/t material
-
-## Transport Equipment
-
-sector = 'Transport Equipment'
-# read the input sheets
-excel_fec = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector]+'_fec',
-                      index_col=0,header=0,squeeze=True)
-
-excel_ued = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector]+'_ued',
-                      index_col=0,header=0,squeeze=True)
-
-excel_out = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector],
-                      index_col=0,header=0,squeeze=True)
-
-excel_emi = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector]+'_emi',
-                      index_col=0,header=0,squeeze=True) # the emission sheet
-
-df[sector] = 0
-
-# read the corresponding lines
-s_fec = excel_fec.iloc[3:45,year]
-
-s_ued = excel_ued.iloc[3:45,year]
-
-assert s_fec.index[0] == sector
-
-# Lighting, Air compressors, Motor drives, Fans and pumps
-df.loc['elec', sector] += s_fec[['Lighting','Air compressors','Motor drives','Fans and pumps']].sum()
-
-# Low enthalpy heat
-df.loc['heat', sector] += s_fec['Low enthalpy heat']
-
-# Efficiency changes due to electrification
-eff_elec=s_ued['Trans. Eq.: Electric Foundries']/s_fec['Trans. Eq.: Electric Foundries']
-df.loc['elec', sector] += s_ued['Trans. Eq.: Foundries']/eff_elec
-
-# Efficiency changes due to electrification
-eff_elec=s_ued['Trans. Eq.: Electric connection']/s_fec['Trans. Eq.: Electric connection']
-df.loc['elec', sector] += s_ued['Trans. Eq.: Connection techniques']/eff_elec
-
-# Efficiency changes due to electrification
-eff_elec=s_ued['Trans. Eq.: Heat treatment - Electric']/s_fec['Trans. Eq.: Heat treatment - Electric']
-df.loc['elec', sector] += s_ued['Trans. Eq.: Heat treatment']/eff_elec
-
-df.loc['elec', sector] += s_fec['Trans. Eq.: General machinery']
-df.loc['elec', sector] += s_fec['Trans. Eq.: Product finishing']
-
-# Steam processing is supplied with biomass
-eff_biomass=s_ued['Biomass']/s_fec['Biomass']
-df.loc['biomass', sector] += s_ued['Trans. Eq.: Steam processing']/eff_biomass
-
-# read the corresponding lines
-s_out = excel_out.iloc[3:4,year]
-# final energy consumption per t
-sources=['elec','biomass', 'methane', 'hydrogen', 'heat','naphtha']
-df.loc[sources,sector] = df.loc[sources,sector]*conv_factor/s_out['Physical output (index)'] # unit MWh/t material
-# 1 ktoe = 11630 MWh
-
-## Machinery Equipment
-
-sector = 'Machinery Equipment'
-
-# read the input sheets
-excel_fec = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector]+'_fec',
-                      index_col=0,header=0,squeeze=True)
-
-excel_ued = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector]+'_ued',
-                      index_col=0,header=0,squeeze=True)
-
-excel_out = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector],
-                      index_col=0,header=0,squeeze=True)
-
-excel_emi = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector]+'_emi',
-                      index_col=0,header=0,squeeze=True) # the emission sheet
-
-df[sector] = 0
-
-# read the corresponding lines
-s_fec = excel_fec.iloc[3:45,year]
-
-s_ued = excel_ued.iloc[3:45,year]
-
-assert s_fec.index[0] == sector
-
-# Lighting, Air compressors, Motor drives, Fans and pumps
-df.loc['elec', sector] += s_fec[['Lighting','Air compressors','Motor drives','Fans and pumps']].sum()
-
-# Low enthalpy heat
-df.loc['heat', sector] += s_fec['Low enthalpy heat']
-
-# Efficiency changes due to electrification
-eff_elec=s_ued['Mach. Eq.: Electric Foundries']/s_fec['Mach. Eq.: Electric Foundries']
-df.loc['elec', sector] += s_ued['Mach. Eq.: Foundries']/eff_elec
-
-# Efficiency changes due to electrification
-eff_elec=s_ued['Mach. Eq.: Electric connection']/s_fec['Mach. Eq.: Electric connection']
-df.loc['elec', sector] += s_ued['Mach. Eq.: Connection techniques']/eff_elec
-
-# Efficiency changes due to electrification
-eff_elec=s_ued['Mach. Eq.: Heat treatment - Electric']/s_fec['Mach. Eq.: Heat treatment - Electric']
-df.loc['elec', sector] += s_ued['Mach. Eq.: Heat treatment']/eff_elec
-
-df.loc['elec', sector] += s_fec['Mach. Eq.: General machinery']
-df.loc['elec', sector] += s_fec['Mach. Eq.: Product finishing']
-
-# Steam processing is supplied with biomass
-eff_biomass=s_ued['Biomass']/s_fec['Biomass']
-df.loc['biomass', sector] += s_ued['Mach. Eq.: Steam processing']/eff_biomass
-
-# read the corresponding lines
-s_out = excel_out.iloc[3:4,year]
-
-# final energy consumption per t
-sources=['elec','biomass', 'methane', 'hydrogen', 'heat','naphtha']
-df.loc[sources,sector] = df.loc[sources,sector]*conv_factor/s_out['Physical output (index)'] # unit MWh/t material
-
-## Textiles and leather
-
-sector = 'Textiles and leather'
-# read the input sheets
-excel_fec = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector]+'_fec',
-                      index_col=0,header=0,squeeze=True)
-
-excel_ued = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector]+'_ued',
-                      index_col=0,header=0,squeeze=True)
-
-excel_out = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector],
-                      index_col=0,header=0,squeeze=True)
-
-excel_emi = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector]+'_emi',
-                      index_col=0,header=0,squeeze=True) # the emission sheet
-
-df[sector] = 0
-
-# read the corresponding lines
-s_fec = excel_fec.iloc[3:57,year]
-
-s_ued = excel_ued.iloc[3:57,year]
-
-assert s_fec.index[0] == sector
-
-# Lighting, Air compressors, Motor drives, Fans and pumps
-df.loc['elec', sector] += s_fec[['Lighting','Air compressors','Motor drives','Fans and pumps']].sum()
-
-# Low enthalpy heat
-df.loc['heat', sector] += s_fec['Low enthalpy heat']
-
-# Efficiency changes due to electrification
-eff_elec=s_ued['Textiles: Electric drying']/s_fec['Textiles: Electric drying']
-df.loc['elec', sector] += s_ued['Textiles: Drying']/eff_elec
-
-df.loc['elec', sector] += s_fec['Textiles: Electric general machinery']
-df.loc['elec', sector] += s_fec['Textiles: Finishing Electric']
-
-# Steam processing is supplied with biomass
-eff_biomass=s_ued[15:26]['Biomass']/s_fec[15:26]['Biomass']
-df.loc['biomass', sector] += s_ued['Textiles: Pretreatment with steam']/eff_biomass
-df.loc['biomass', sector] += s_ued['Textiles: Wet processing with steam']/eff_biomass
-
-# read the corresponding lines
-s_out = excel_out.iloc[3:4,year]
-
-# final energy consumption per t
-sources=['elec','biomass', 'methane', 'hydrogen', 'heat','naphtha']
-df.loc[sources,sector] = df.loc[sources,sector]*conv_factor/s_out['Physical output (index)'] # unit MWh/t material
-
-## Wood and wood products
-
-sector = 'Wood and wood products'
-# read the input sheets
-excel_fec = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector]+'_fec',
-                      index_col=0,header=0,squeeze=True)
-
-excel_ued = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector]+'_ued',
-                      index_col=0,header=0,squeeze=True)
-
-excel_out = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector],
-                      index_col=0,header=0,squeeze=True)
-
-excel_emi = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector]+'_emi',
-                      index_col=0,header=0,squeeze=True) # the emission sheet
-
-df[sector] = 0
-
-# read the corresponding lines
-s_fec = excel_fec.iloc[3:46,year]
-
-s_ued = excel_ued.iloc[3:46,year]
-
-assert s_fec.index[0] == sector
-
-# Lighting, Air compressors, Motor drives, Fans and pumps
-df.loc['elec', sector] += s_fec[['Lighting','Air compressors','Motor drives','Fans and pumps']].sum()
-
-# Low enthalpy heat
-df.loc['heat', sector] += s_fec['Low enthalpy heat']
-
-# Efficiency changes due to electrification
-eff_elec=s_ued['Wood: Electric drying']/s_fec['Wood: Electric drying']
-df.loc['elec', sector] += s_ued['Wood: Drying']/eff_elec
-
-df.loc['elec', sector] += s_fec['Wood: Electric mechanical processes']
-df.loc['elec', sector] += s_fec['Wood: Finishing Electric']
-
-# Steam processing is supplied with biomass
-eff_biomass=s_ued[15:25]['Biomass']/s_fec[15:25]['Biomass']
-df.loc['biomass', sector] += s_ued['Wood: Specific processes with steam']/eff_biomass
-
-# read the corresponding lines
-s_out = excel_out.iloc[3:4,year]
-
-# final energy consumption per t
-sources=['elec','biomass', 'methane', 'hydrogen', 'heat','naphtha']
-df.loc[sources,sector] = df.loc[sources,sector]*conv_factor/s_out['Physical output (index)'] # unit MWh/t material
-
-##  Other Industrial Sectors
-
-sector = 'Other Industrial Sectors'
-# read the input sheets
-excel_fec = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector]+'_fec',
-                      index_col=0,header=0,squeeze=True)
-
-excel_ued = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector]+'_ued',
-                      index_col=0,header=0,squeeze=True)
-
-excel_out = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector],
-                      index_col=0,header=0,squeeze=True)
-
-excel_emi = pd.read_excel('{}/JRC-IDEES-2015_Industry_{}.xlsx'.format(base_dir,country), sheet_name=sub_sheet_name_dict[sector]+'_emi',
-                      index_col=0,header=0,squeeze=True) # the emission sheet
-
-df[sector] = 0
-
-# read the corresponding lines
-s_fec = excel_fec.iloc[3:67,year]
-
-s_ued = excel_ued.iloc[3:67,year]
-
-assert s_fec.index[0] == sector
-
-# Lighting, Air compressors, Motor drives, Fans and pumps
-df.loc['elec', sector] += s_fec[['Lighting','Air compressors','Motor drives','Fans and pumps']].sum()
-
-# Low enthalpy heat
-df.loc['heat', sector] += s_fec['Low enthalpy heat']
-
-# Efficiency changes due to electrification
-eff_elec=s_ued['Other Industrial sectors: Electric processing']/s_fec['Other Industrial sectors: Electric processing']
-df.loc['elec', sector] += s_ued['Other Industrial sectors: Process heating']/eff_elec
-
-eff_elec=s_ued['Other Industries: Electric drying']/s_fec['Other Industries: Electric drying']
-df.loc['elec', sector] += s_ued['Other Industrial sectors: Drying']/eff_elec
-
-eff_elec=s_ued['Other Industries: Electric cooling']/s_fec['Other Industries: Electric cooling']
-df.loc['elec', sector] += s_ued['Other Industrial sectors: Process Cooling']/eff_elec
-
-# Diesel motors are electrified
-df.loc['elec', sector] += s_fec['Other Industrial sectors: Diesel motors (incl. biofuels)']
-df.loc['elec', sector] += s_fec['Other Industrial sectors: Electric machinery']
-
-# Steam processing is supplied with biomass
-eff_biomass=s_ued[15:25]['Biomass']/s_fec[15:25]['Biomass']
-df.loc['biomass', sector] += s_ued['Other Industrial sectors: Steam processing']/eff_biomass
-
-# read the corresponding lines
-s_out = excel_out.iloc[3:4,year]
-
-# final energy consumption per t
-sources=['elec','biomass', 'methane', 'hydrogen', 'heat','naphtha']
-df.loc[sources,sector] = df.loc[sources,sector]*conv_factor/s_out['Physical output (index)'] # unit MWh/t material
-
-
-df.index.name = "MWh/tMaterial"
-df.to_csv('resources/industry_sector_ratios.csv')
+    df.index.name = "MWh/tMaterial"
+    df.to_csv(snakemake.output.industry_sector_ratios)

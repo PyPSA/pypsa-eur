@@ -1,49 +1,46 @@
+"""Build temperature profiles."""
 
 import geopandas as gpd
 import atlite
 import pandas as pd
 import xarray as xr
-import scipy as sp
-import helper
+import numpy as np
 
-if 'snakemake' not in globals():
-    from vresutils import Dict
-    import yaml
-    snakemake = Dict()
-    with open('config.yaml') as f:
-        snakemake.config = yaml.safe_load(f)
-    snakemake.input = Dict()
-    snakemake.output = Dict()
+if __name__ == '__main__':
+    if 'snakemake' not in globals():
+        from helper import mock_snakemake
+        snakemake = mock_snakemake(
+            'build_temperature_profiles',
+            simpl='',
+            clusters=48,
+        )
 
-time = pd.date_range(freq='m', **snakemake.config['snapshots'])
-params = dict(years=slice(*time.year[[0, -1]]), months=slice(*time.month[[0, -1]]))
+    time = pd.date_range(freq='h', **snakemake.config['snapshots'])
+    cutout_config = snakemake.config['atlite']['cutout']
+    cutout = atlite.Cutout(cutout_config).sel(time=time)
 
-cutout_path = snakemake.config['atlite']['cutout_dir'] + "/" + snakemake.config['atlite']['cutout_name']+ ".nc"
-cutout = atlite.Cutout(path=cutout_path,
-                       **params)
+    clustered_regions = gpd.read_file(
+        snakemake.input.regions_onshore).set_index('name').buffer(0).squeeze()
 
-clustered_busregions_as_geopd = gpd.read_file(snakemake.input.regions_onshore).set_index('name', drop=True)
+    I = cutout.indicatormatrix(clustered_regions)
 
-clustered_busregions = pd.Series(clustered_busregions_as_geopd.geometry, index=clustered_busregions_as_geopd.index)
+    for area in ["total", "rural", "urban"]:
 
-helper.clean_invalid_geometries(clustered_busregions)
+        pop_layout = xr.open_dataarray(snakemake.input[f'pop_layout_{area}'])
 
-I = cutout.indicatormatrix(clustered_busregions)
+        stacked_pop = pop_layout.stack(spatial=('y', 'x'))
+        M = I.T.dot(np.diag(I.dot(stacked_pop)))
 
+        nonzero_sum = M.sum(axis=0, keepdims=True)
+        nonzero_sum[nonzero_sum == 0.] = 1.
+        M_tilde = M / nonzero_sum
 
-for item in ["total","rural","urban"]:
+        temp_air = cutout.temperature(
+            matrix=M_tilde.T, index=clustered_regions.index)
 
-    pop_layout = xr.open_dataarray(snakemake.input['pop_layout_'+item])
+        temp_air.to_netcdf(snakemake.output[f"temp_air_{area}"])
 
-    M = I.T.dot(sp.diag(I.dot(pop_layout.stack(spatial=('y', 'x')))))
-    nonzero_sum = M.sum(axis=0, keepdims=True)
-    nonzero_sum[nonzero_sum == 0.] = 1.
-    M_tilde = M/nonzero_sum
+        temp_soil = cutout.soil_temperature(
+            matrix=M_tilde.T, index=clustered_regions.index)
 
-    temp_air = cutout.temperature(matrix=M_tilde.T,index=clustered_busregions.index)
-
-    temp_air.to_netcdf(snakemake.output["temp_air_"+item])
-
-    temp_soil = cutout.soil_temperature(matrix=M_tilde.T,index=clustered_busregions.index)
-
-    temp_soil.to_netcdf(snakemake.output["temp_soil_"+item])
+        temp_soil.to_netcdf(snakemake.output[f"temp_soil_{area}"])
