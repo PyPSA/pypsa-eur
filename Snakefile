@@ -180,6 +180,18 @@ rule build_biomass_potentials:
     script: 'scripts/build_biomass_potentials.py'
 
 
+rule build_biomass_transport_costs:
+    input: "data/biomass/biomass potentials in europe_web rev.pdf"
+    output:
+        supply_chain1="resources/biomass_transport_costs_supply_chain1.csv",
+        supply_chain2="resources/biomass_transport_costs_supply_chain2.csv",
+        transport_costs="resources/biomass_transport_costs.csv",
+    threads: 1
+    resources: mem_mb=1000
+    benchmark: "benchmarks/build_biomass_transport_costs"
+    script: 'scripts/build_biomass_transport_costs.py'
+
+
 rule build_ammonia_production:
     input:
         usgs="data/myb1-2017-nitro.xls"
@@ -321,10 +333,10 @@ rule prepare_sector_network:
         energy_totals_name='resources/energy_totals.csv',
         co2_totals_name='resources/co2_totals.csv',
         transport_name='resources/transport_data.csv',
-        traffic_data_KFZ = "data/emobility/KFZ__count",
-        traffic_data_Pkw = "data/emobility/Pkw__count",
+        traffic_data_KFZ="data/emobility/KFZ__count",
+        traffic_data_Pkw="data/emobility/Pkw__count",
         biomass_potentials='resources/biomass_potentials.csv',
-	    biomass_transport='data/biomass/biomass_transport_costs.csv',
+	    biomass_transport="resources/biomass_transport_costs.csv",
         heat_profile="data/heat_load_profile_BDEW.csv",
         costs=CDIR + "costs_{planning_horizons}.csv",
         profile_offwind_ac=pypsaeur("resources/profile_offwind-ac.nc"),
