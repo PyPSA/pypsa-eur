@@ -52,14 +52,12 @@ def add_lifetime_wind_solar(n):
                         if carrier in index], 'lifetime']=costs.at[carrier_name,'lifetime']
 
 
-def create_network_topology(n, prefix):
+def create_network_topology(n, prefix, connector=" -> "):
     """
     create a network topology as the electric network,
     returns a pandas dataframe with bus0, bus1 and length
     """
 
-    topo = pd.DataFrame(columns=["bus0", "bus1", "length"])
-    connector = " -> "
     attrs = ["bus0", "bus1", "length"]
 
     candidates = pd.concat([n.lines[attrs],
