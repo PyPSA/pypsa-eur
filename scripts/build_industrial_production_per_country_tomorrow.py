@@ -1,27 +1,39 @@
+"""Build future industrial production per country."""
 
 import pandas as pd
 
-industrial_production = pd.read_csv(snakemake.input.industrial_production_per_country,
-                                    index_col=0)
+if __name__ == '__main__':
+    if 'snakemake' not in globals():
+        from helper import mock_snakemake
+        snakemake = mock_snakemake('build_industrial_production_per_country_tomorrow')
 
-total_steel = industrial_production[["Integrated steelworks","Electric arc"]].sum(axis=1)
+    config = snakemake.config["industry"]
 
-fraction_primary_stays_primary = snakemake.config["industry"]["St_primary_fraction"]*total_steel.sum()/industrial_production["Integrated steelworks"].sum()
+    fn = snakemake.input.industrial_production_per_country
+    production = pd.read_csv(fn, index_col=0)
 
-industrial_production.insert(2, "DRI + Electric arc",
-                             fraction_primary_stays_primary*industrial_production["Integrated steelworks"])
+    keys = ["Integrated steelworks", "Electric arc"]
+    total_steel = production[keys].sum(axis=1)
 
-industrial_production["Electric arc"] = total_steel - industrial_production["DRI + Electric arc"]
-industrial_production["Integrated steelworks"] = 0.
+    int_steel = production["Integrated steelworks"].sum()
+    fraction_persistent_primary = config["St_primary_fraction"] * total_steel.sum() / int_steel
 
+    dri = fraction_persistent_primary * production["Integrated steelworks"]
+    production.insert(2, "DRI + Electric arc", dri)
 
-total_aluminium = industrial_production[["Aluminium - primary production","Aluminium - secondary production"]].sum(axis=1)
+    production["Electric arc"] = total_steel - production["DRI + Electric arc"]
+    production["Integrated steelworks"] = 0.
 
-fraction_primary_stays_primary = snakemake.config["industry"]["Al_primary_fraction"]*total_aluminium.sum()/industrial_production["Aluminium - primary production"].sum()
+    keys = ["Aluminium - primary production", "Aluminium - secondary production"]
+    total_aluminium = production[keys].sum(axis=1)
 
-industrial_production["Aluminium - primary production"] = fraction_primary_stays_primary*industrial_production["Aluminium - primary production"]
-industrial_production["Aluminium - secondary production"] = total_aluminium - industrial_production["Aluminium - primary production"]
+    key_pri = "Aluminium - primary production"
+    key_sec = "Aluminium - secondary production"
+    fraction_persistent_primary = config["Al_primary_fraction"] * total_aluminium.sum() / production[key_pri].sum()
+    production[key_pri] = fraction_persistent_primary * production[key_pri]
+    production[key_sec] = total_aluminium - production[key_pri]
 
+    production["Basic chemicals (without ammonia)"] *= config['HVC_primary_fraction']
 
-industrial_production.to_csv(snakemake.output.industrial_production_per_country_tomorrow,
-                             float_format='%.2f')
+    fn = snakemake.output.industrial_production_per_country_tomorrow
+    production.to_csv(fn, float_format='%.2f')

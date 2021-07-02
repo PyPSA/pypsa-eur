@@ -2,9 +2,10 @@
 .ipynb_checkpoints
 __pycache__
 gurobi.log
+.vscode
 
 /bak
-/resources
+/resources*
 /results
 /networks
 /benchmarks
@@ -26,6 +27,7 @@ gurobi.log
 /data/switzerland*
 /data/.nfs*
 /data/Industrial_Database.csv
+/data/retro/tabula-calculator-calcsetbuilding.csv
 
 *.org
 
