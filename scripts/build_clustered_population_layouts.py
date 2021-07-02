@@ -5,7 +5,6 @@ import xarray as xr
 import pandas as pd
 import atlite
 
-cutout_path = snakemake.config['atlite']['cutout_dir'] + "/" + snakemake.config['atlite']['cutout_name']+ ".nc"
 
 if __name__ == '__main__':
     if 'snakemake' not in globals():

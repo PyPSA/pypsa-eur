@@ -850,12 +850,12 @@ def add_electricity_grid_connection(n, costs):
     n.generators.loc[gens, "capital_cost"] += costs.at['electricity grid connection', 'fixed']
 
 
-def add_storage(network):
+def add_storage(n, costs):
     print("adding electricity and hydrogen storage")
 
     nodes = pop_layout.index
 
-    network.add("Carrier", "H2")
+    n.add("Carrier", "H2")
 
     n.madd("Bus",
         nodes + " H2",
@@ -934,9 +934,9 @@ def add_storage(network):
         buses.sort()
         name = f"H2 pipeline {buses[0]} -> {buses[1]}"
         if name not in h2_links.index:
-            h2_links.at[name,"bus0"] = buses[0]
-            h2_links.at[name,"bus1"] = buses[1]
-            h2_links.at[name,"length"] = candidates.at[candidate,"length"]
+            h2_links.at[name, "bus0"] = buses[0]
+            h2_links.at[name, "bus1"] = buses[1]
+            h2_links.at[name, "length"] = candidates.at[candidate, "length"]
 
     # TODO Add efficiency losses
     n.madd("Link",
