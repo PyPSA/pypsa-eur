@@ -235,7 +235,6 @@ sector:
 
 
 industry:
-  # St_primary_fraction: 0.3
   St_primary_fraction: # fraction of steel produced via primary route versus secondary route (scrap+EAF); today fraction is 0.6
     2020: 0.6
     2025: 0.55
@@ -254,7 +253,6 @@ industry:
     2050: 1
   H2_DRI: 1.7   #H2 consumption in Direct Reduced Iron (DRI),  MWh_H2,LHV/ton_Steel from 51kgH2/tSt in Vogl et al (2018) doi:10.1016/j.jclepro.2018.08.279
   elec_DRI: 0.322   #electricity consumption in Direct Reduced Iron (DRI) shaft, MWh/tSt HYBRIT brochure https://ssabwebsitecdn.azureedge.net/-/media/hybrit/files/hybrit_brochure.pdf
-  # Al_primary_fraction: 0.2 # fraction of aluminium produced via the primary route versus scrap; today fraction is 0.4
   Al_primary_fraction:  # fraction of aluminium produced via the primary route versus scrap; today fraction is 0.4
     2020: 0.4
     2025: 0.375
@@ -272,7 +270,6 @@ industry:
   HVC_primary_fraction: 1.0 #fraction of current non-ammonia basic chemicals produced via primary route
   hotmaps_locate_missing: false
   reference_year: 2015
-  industry:
 
 
 costs:

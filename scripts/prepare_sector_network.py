@@ -1716,7 +1716,7 @@ def add_industry(n, costs):
 
     all_navigation = ["total international navigation", "total domestic navigation"]
     efficiency = options['shipping_average_efficiency'] / costs.at["fuel cell", "efficiency"]
-    shipping_hydrogen_share = get_parameter(options['shipping_hydrogen_share'])
+    shipping_hydrogen_share = get(options['shipping_hydrogen_share'], investment_year)
     p_set = shipping_hydrogen_share * nodal_energy_totals.loc[nodes, all_navigation].sum(axis=1) * 1e6 * efficiency / 8760
 
     n.madd("Load",
