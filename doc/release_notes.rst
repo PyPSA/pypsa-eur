@@ -5,7 +5,61 @@ Release Notes
 Future release
 ==============
 
-* Include new features here.
+.. note::
+  This unreleased version currently requires the master branches of PyPSA, PyPSA-Eur, and the technology-data repository.
+
+* Extended use of ``multiprocessing`` for much better performance
+  (from up to 20 minutes to less than one minute).
+* Compatibility with ``atlite>=0.2``. Older versions of ``atlite`` will no longer work.
+* Handle most input files (or base directories) via ``snakemake.input``.
+* Use of ``mock_snakemake`` from PyPSA-Eur.
+* Update ``solve_network`` rule to match implementation in PyPSA-Eur by using ``n.ilopf()`` and remove outdated code using ``pyomo``.
+  Allows the new setting to skip iterated impedance updates with ``solving: options: skip_iterations: true``.
+* The component attributes that are to be overridden are now stored in the folder
+  ``data/override_component_attrs`` analogous to ``pypsa/component_attrs``.
+  This reduces verbosity and also allows circumventing the ``n.madd()`` hack
+  for individual components with non-default attributes.
+  This data is also tracked in the Snakefile.
+  
+  A function ``helper.override_component_attrs`` was added that loads this data
+  and can pass the overridden component attributes into ``pypsa.Network()``:
+  
+  >>> from helper import override_component_attrs
+  >>> overrides = override_component_attrs(snakemake.input.overrides)
+  >>> n = pypsa.Network("mynetwork.nc", override_component_attrs=overrides)
+  
+* Add various parameters to ``config.default.yaml`` which were previously hardcoded inside the scripts 
+  (e.g. energy reference years, BEV settings, solar thermal collector models, geomap colours).
+* Removed stale industry demand rules ``build_industrial_energy_demand_per_country``
+  and ``build_industrial_demand``. These are superseded with more regionally resolved rules.
+* Use simpler and shorter ``gdf.sjoin()`` function to allocate industrial sites
+  from the Hotmaps database to onshore regions.
+  
+  This change also fixes a bug:
+  The previous version allocated sites to the closest bus,
+  but at country borders (where Voronoi cells are distorted by the borders),
+  this had resulted in e.g. a Spanish site close to the French border
+  being wrongly allocated to the French bus if the bus center was closer. 
+* Bugfix: Corrected calculation of "gas for industry" carbon capture efficiency.
+* Retrofitting rule is now only triggered if endogeneously optimised.
+* Show progress in build rules with ``tqdm`` progress bars.
+* Reduced verbosity of ``Snakefile`` through directory prefixes.
+* Improve legibility of ``config.default.yaml`` and remove unused options.
+* Add optional function to use ``geopy`` to locate entries of the Hotmaps database of industrial sites 
+  with missing location based on city and country, which reduces missing entries by half. It can be
+  activated by setting ``industry: hotmaps_locate_missing: true``, takes a few minutes longer,
+  and should only be used if spatial resolution is coarser than city level.
+* Use the country-specific time zone mappings from ``pytz`` rather than a manual mapping.
+* A function ``add_carrier_buses()`` was added to the ``prepare_network`` rule to reduce code duplication.
+* In the ``prepare_network`` rule the cost and potential adjustment was moved into an
+  own function ``maybe_adjust_costs_and_potentials()``.
+* Use ``matplotlibrc`` to set the default plotting style and backend``.
+* Added benchmark files for each rule.
+* Implements changes to ``n.snapshot_weightings`` in upcoming PyPSA version (cf. `PyPSA/#227 <https://github.com/PyPSA/PyPSA/pull/227>`_).
+* New dependencies: ``tqdm``, ``atlite>=0.2.4``, ``pytz`` and ``geopy`` (optional).
+  These are included in the environment specifications of PyPSA-Eur.
+* Consistent use of ``__main__`` block and further unspecific code cleaning.
+* Distinguish costs for home battery storage and inverter from utility-scale battery costs.
 * The share of shipping transformed into hydrogen fuel cell can be now defined for different years in the ``config.yaml`` file. The carbon emission from the remaining share is treated as a negative load on the atmospheric carbon dioxide bus, just like aviation and land transport emissions.
 * The transformation of the Steel and Aluminium production can be now defined for different years in the ``config.yaml`` file.
 
@@ -102,7 +156,7 @@ Many thanks to Marta Victoria for implementing the myopic foresight, and Marta V
 PyPSA-Eur-Sec 0.1.0 (8th July 2020)
 ===================================
 
-This is the first release of PyPSA-Eur-Sec, a model of the European energy system at the transmission network level that covers the full ENTSO-E area.
+This is the first proper release of PyPSA-Eur-Sec, a model of the European energy system at the transmission network level that covers the full ENTSO-E area.
 
 It is known to work with PyPSA-Eur v0.1.0 (commit bb3477cd69) and PyPSA v0.17.0.
 
@@ -115,7 +169,7 @@ heating, biomass, industry and industrial feedstocks. This completes
 the energy system and includes all greenhouse gas emitters except
 waste management, agriculture, forestry and land use.
 
-PyPSA-Eur-Sec was initially based on the model PyPSA-Eur-Sec-30 described
+PyPSA-Eur-Sec was initially based on the model PyPSA-Eur-Sec-30 (Version 0.0.1 below) described
 in the paper `Synergies of sector coupling and transmission
 reinforcement in a cost-optimised, highly renewable European energy
 system <https://arxiv.org/abs/1801.05290>`_ (2018) but it differs by
@@ -133,6 +187,40 @@ uses PyPSA-Eur to build the clustered transmission model along with
 wind, solar PV and hydroelectricity potentials and time series. Then
 PyPSA-Eur-Sec adds other conventional generators, storage units and
 the additional sectors.
+
+
+
+
+PyPSA-Eur-Sec 0.0.2 (4th September 2020)
+========================================
+
+This version, also called PyPSA-Eur-Sec-30-Path, built on
+PyPSA-Eur-Sec 0.0.1 (also called PyPSA-Eur-Sec-30) to include myopic
+pathway optimisation for the paper `Early decarbonisation of the
+European energy system pays off <https://arxiv.org/abs/2004.11009>`_
+(2020). The myopic pathway optimisation was then merged into the main
+PyPSA-Eur-Sec codebase in Version 0.2.0 above.
+
+This model has `its own github repository
+<https://github.com/martavp/pypsa-eur-sec-30-path>`_ and is `archived
+on Zenodo <https://zenodo.org/record/4014807>`_.
+
+
+
+PyPSA-Eur-Sec 0.0.1 (12th January 2018)
+========================================
+
+This is the first published version of PyPSA-Eur-Sec, also called
+PyPSA-Eur-Sec-30. It was first used in the research paper `Synergies of
+sector coupling and transmission reinforcement in a cost-optimised,
+highly renewable European energy system
+<https://arxiv.org/abs/1801.05290>`_ (2018). The model covers 30
+European countries with one node per country. It includes demand and
+supply for electricity, space and water heating in buildings, and land
+transport.
+
+It is `archived on Zenodo <https://zenodo.org/record/1146666>`_.
+
 
 
 Release Process

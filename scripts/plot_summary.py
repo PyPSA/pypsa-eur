@@ -3,43 +3,60 @@
 import numpy as np
 import pandas as pd
 
-#allow plotting without Xwindows
-import matplotlib
-matplotlib.use('Agg')
-
 import matplotlib.pyplot as plt
+plt.style.use('ggplot')
 
 from prepare_sector_network import co2_emissions_year
 
 #consolidate and rename
 def rename_techs(label):
 
-    prefix_to_remove = ["residential ","services ","urban ","rural ","central ","decentral "]
+    prefix_to_remove = [
+        "residential ",
+        "services ",
+        "urban ",
+        "rural ",
+        "central ",
+        "decentral "
+    ]
 
-    rename_if_contains = ["CHP","gas boiler","biogas","solar thermal","air heat pump","ground heat pump","resistive heater","Fischer-Tropsch"]
+    rename_if_contains = [
+        "CHP",
+        "gas boiler",
+        "biogas",
+        "solar thermal",
+        "air heat pump",
+        "ground heat pump",
+        "resistive heater",
+        "Fischer-Tropsch"
+    ]
 
-    rename_if_contains_dict = {"water tanks" : "hot water storage",
-                               "retrofitting" : "building retrofitting",
-                               "H2 Electrolysis" : "hydrogen storage",
-                               "H2 Fuel Cell" : "hydrogen storage",
-                               "H2 pipeline" : "hydrogen storage",
-                               "battery" : "battery storage",
-                               "CC" : "CC"}
+    rename_if_contains_dict = {
+        "water tanks": "hot water storage",
+        "retrofitting": "building retrofitting",
+        "H2 Electrolysis": "hydrogen storage",
+        "H2 Fuel Cell": "hydrogen storage",
+        "H2 pipeline": "hydrogen storage",
+        "battery": "battery storage",
+        "CC": "CC"
+    }
 
-    rename = {"solar" : "solar PV",
-              "Sabatier" : "methanation",
-              "offwind" : "offshore wind",
-              "offwind-ac" : "offshore wind (AC)",
-              "offwind-dc" : "offshore wind (DC)",
-              "onwind" : "onshore wind",
-              "ror" : "hydroelectricity",
-              "hydro" : "hydroelectricity",
-              "PHS" : "hydroelectricity",
-              "co2 Store" : "DAC",
-              "co2 stored" : "CO2 sequestration",
-              "AC" : "transmission lines",
-              "DC" : "transmission lines",
-              "B2B" : "transmission lines"}
+    rename = {
+        "solar": "solar PV",
+        "Sabatier": "methanation",
+        "offwind": "offshore wind",
+        "offwind-ac": "offshore wind (AC)",
+        "offwind-dc": "offshore wind (DC)",
+        "onwind": "onshore wind",
+        "ror": "hydroelectricity",
+        "hydro": "hydroelectricity",
+        "PHS": "hydroelectricity",
+        "co2 Store": "DAC",
+        "co2 stored": "CO2 sequestration",
+        "AC": "transmission lines",
+        "DC": "transmission lines",
+        "B2B": "transmission lines"
+    }
 
     for ptr in prefix_to_remove:
         if label[:len(ptr)] == ptr:
@@ -59,18 +76,56 @@ def rename_techs(label):
     return label
 
 
-preferred_order = pd.Index(["transmission lines","hydroelectricity","hydro reservoir","run of river","pumped hydro storage","solid biomass","biogas","onshore wind","offshore wind","offshore wind (AC)","offshore wind (DC)","solar PV","solar thermal","solar","building retrofitting","ground heat pump","air heat pump","heat pump","resistive heater","power-to-heat","gas-to-power/heat","CHP","OCGT","gas boiler","gas","natural gas","helmeth","methanation","hydrogen storage","power-to-gas","power-to-liquid","battery storage","hot water storage","CO2 sequestration"])
+preferred_order = pd.Index([
+    "transmission lines",
+    "hydroelectricity",
+    "hydro reservoir",
+    "run of river",
+    "pumped hydro storage",
+    "solid biomass",
+    "biogas",
+    "onshore wind",
+    "offshore wind",
+    "offshore wind (AC)",
+    "offshore wind (DC)",
+    "solar PV",
+    "solar thermal",
+    "solar",
+    "building retrofitting",
+    "ground heat pump",
+    "air heat pump",
+    "heat pump",
+    "resistive heater",
+    "power-to-heat",
+    "gas-to-power/heat",
+    "CHP",
+    "OCGT",
+    "gas boiler",
+    "gas",
+    "natural gas",
+    "helmeth",
+    "methanation",
+    "hydrogen storage",
+    "power-to-gas",
+    "power-to-liquid",
+    "battery storage",
+    "hot water storage",
+    "CO2 sequestration"
+])
 
 def plot_costs():
 
 
-    cost_df = pd.read_csv(snakemake.input.costs,index_col=list(range(3)),header=list(range(n_header)))
-
+    cost_df = pd.read_csv(
+        snakemake.input.costs,
+        index_col=list(range(3)),
+        header=list(range(n_header))
+    )
 
     df = cost_df.groupby(cost_df.index.get_level_values(2)).sum()
 
     #convert to billions
-    df = df/1e9
+    df = df / 1e9
 
     df = df.groupby(df.index.map(rename_techs)).sum()
 
@@ -88,11 +143,14 @@ def plot_costs():
 
     new_columns = df.sum().sort_values().index
 
-    fig, ax = plt.subplots()
-    fig.set_size_inches((12,8))
+    fig, ax = plt.subplots(figsize=(12,8))
 
-    df.loc[new_index,new_columns].T.plot(kind="bar",ax=ax,stacked=True,color=[snakemake.config['plotting']['tech_colors'][i] for i in new_index])
-
+    df.loc[new_index,new_columns].T.plot(
+        kind="bar",
+        ax=ax,
+        stacked=True,
+        color=[snakemake.config['plotting']['tech_colors'][i] for i in new_index]
+    )
 
     handles,labels = ax.get_legend_handles_labels()
 
@@ -105,24 +163,25 @@ def plot_costs():
 
     ax.set_xlabel("")
 
-    ax.grid(axis="y")
+    ax.grid(axis='x')
 
-    ax.legend(handles,labels,ncol=4,loc="upper left")
+    ax.legend(handles, labels, ncol=1, loc="upper left", bbox_to_anchor=[1,1], frameon=False)
 
-
-    fig.tight_layout()
-
-    fig.savefig(snakemake.output.costs,transparent=True)
+    fig.savefig(snakemake.output.costs, bbox_inches='tight')
 
 
 def plot_energy():
 
-    energy_df = pd.read_csv(snakemake.input.energy,index_col=list(range(2)),header=list(range(n_header)))
+    energy_df = pd.read_csv(
+        snakemake.input.energy,
+        index_col=list(range(2)),
+        header=list(range(n_header))
+    )
 
     df = energy_df.groupby(energy_df.index.get_level_values(1)).sum()
 
     #convert MWh to TWh
-    df = df/1e6
+    df = df / 1e6
 
     df = df.groupby(df.index.map(rename_techs)).sum()
 
@@ -141,53 +200,57 @@ def plot_energy():
     new_index = preferred_order.intersection(df.index).append(df.index.difference(preferred_order))
 
     new_columns = df.columns.sort_values()
-    #new_columns = df.sum().sort_values().index
-    fig, ax = plt.subplots()
-    fig.set_size_inches((12,8))
+    
+    fig, ax = plt.subplots(figsize=(12,8))
 
-    print(df.loc[new_index,new_columns])
+    print(df.loc[new_index, new_columns])
 
-    df.loc[new_index,new_columns].T.plot(kind="bar",ax=ax,stacked=True,color=[snakemake.config['plotting']['tech_colors'][i] for i in new_index])
-
+    df.loc[new_index, new_columns].T.plot(
+        kind="bar",
+        ax=ax,
+        stacked=True,
+        color=[snakemake.config['plotting']['tech_colors'][i] for i in new_index]
+    )
 
     handles,labels = ax.get_legend_handles_labels()
 
     handles.reverse()
     labels.reverse()
 
-    ax.set_ylim([snakemake.config['plotting']['energy_min'],snakemake.config['plotting']['energy_max']])
+    ax.set_ylim([snakemake.config['plotting']['energy_min'], snakemake.config['plotting']['energy_max']])
 
     ax.set_ylabel("Energy [TWh/a]")
 
     ax.set_xlabel("")
 
-    ax.grid(axis="y")
+    ax.grid(axis="x")
 
-    ax.legend(handles,labels,ncol=4,loc="upper left")
+    ax.legend(handles, labels, ncol=1, loc="upper left", bbox_to_anchor=[1, 1], frameon=False)
 
-
-    fig.tight_layout()
-
-    fig.savefig(snakemake.output.energy,transparent=True)
+    fig.savefig(snakemake.output.energy, bbox_inches='tight')
 
 
 
 def plot_balances():
 
-    co2_carriers = ["co2","co2 stored","process emissions"]
+    co2_carriers = ["co2", "co2 stored", "process emissions"]
 
-    balances_df = pd.read_csv(snakemake.input.balances,index_col=list(range(3)),header=list(range(n_header)))
+    balances_df = pd.read_csv(
+        snakemake.input.balances,
+        index_col=list(range(3)),
+        header=list(range(n_header))
+    )
 
-    balances = {i.replace(" ","_") : [i] for i in balances_df.index.levels[0]}
+    balances = {i.replace(" ","_"): [i] for i in balances_df.index.levels[0]}
     balances["energy"] = [i for i in balances_df.index.levels[0] if i not in co2_carriers]
 
-    for k,v in balances.items():
+    for k, v in balances.items():
 
         df = balances_df.loc[v]
         df = df.groupby(df.index.get_level_values(2)).sum()
 
         #convert MWh to TWh
-        df = df/1e6
+        df = df / 1e6
 
         #remove trailing link ports
         df.index = [i[:-1] if ((i != "co2") and (i[-1:] in ["0","1","2","3"])) else i for i in df.index]
@@ -211,9 +274,7 @@ def plot_balances():
 
         new_columns = df.columns.sort_values()
 
-
-        fig, ax = plt.subplots()
-        fig.set_size_inches((12,8))
+        fig, ax = plt.subplots(figsize=(12,8))
 
         df.loc[new_index,new_columns].T.plot(kind="bar",ax=ax,stacked=True,color=[snakemake.config['plotting']['tech_colors'][i] for i in new_index])
 
@@ -230,14 +291,13 @@ def plot_balances():
 
         ax.set_xlabel("")
 
-        ax.grid(axis="y")
+        ax.grid(axis="x")
 
-        ax.legend(handles,labels,ncol=4,loc="upper left")
+        ax.legend(handles, labels, ncol=1, loc="upper left", bbox_to_anchor=[1, 1], frameon=False)
 
 
-        fig.tight_layout()
+        fig.savefig(snakemake.output.balances[:-10] + k + ".pdf", bbox_inches='tight')
 
-        fig.savefig(snakemake.output.balances[:-10] + k + ".pdf",transparent=True)
 
 def historical_emissions(cts):
     """
@@ -371,25 +431,11 @@ def plot_carbon_budget_distribution():
     path_cb_plot = snakemake.config['results_dir'] + snakemake.config['run'] + '/graphs/'             
     plt.savefig(path_cb_plot+'carbon_budget_plot.pdf', dpi=300) 
 
+
 if __name__ == "__main__":
-    # Detect running outside of snakemake and mock snakemake for testing
     if 'snakemake' not in globals():
-        from vresutils import Dict
-        import yaml
-        snakemake = Dict()
-        with open('config.yaml', encoding='utf8') as f:
-            snakemake.config = yaml.safe_load(f)
-        snakemake.input = Dict()
-        snakemake.output = Dict()
-        snakemake.wildcards = Dict()
-        #snakemake.wildcards['sector_opts']='3H-T-H-B-I-solar3-dist1-cb48be3'        
-        
-        for item in ["costs", "energy"]:
-            snakemake.input[item] = snakemake.config['summary_dir'] + '/{name}/csvs/{item}.csv'.format(name=snakemake.config['run'],item=item)
-            snakemake.output[item] = snakemake.config['summary_dir'] + '/{name}/graphs/{item}.pdf'.format(name=snakemake.config['run'],item=item)
-        snakemake.input["balances"] = snakemake.config['summary_dir'] + '/{name}/csvs/supply_energy.csv'.format(name=snakemake.config['run'],item=item)
-        snakemake.output["balances"] = snakemake.config['summary_dir'] + '/{name}/graphs/balances-energy.csv'.format(name=snakemake.config['run'],item=item)
-        
+        from helper import mock_snakemake
+        snakemake = mock_snakemake('plot_summary')
         
     n_header = 4
 
