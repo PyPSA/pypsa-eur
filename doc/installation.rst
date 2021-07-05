@@ -89,10 +89,8 @@ The data licences and sources are given in the following table.
 Set up the default configuration
 ================================
 
-First make your own copy of the ``config.yaml``. For overnight
-scenarios, use ``config.default.yaml``. For a pathway optimization
-with myopic foresight (which is still experimental), use
-``config.myopic.yaml``. For example:
+First make your own copy of the ``config.yaml`` based on 
+ ``config.default.yaml``. For example:
 
 .. code:: bash
 

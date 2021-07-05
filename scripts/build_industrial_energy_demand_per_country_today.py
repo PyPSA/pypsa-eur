@@ -1,140 +1,165 @@
+"""Build industrial energy demand per country."""
 
 import pandas as pd
-
-# sub-sectors as used in PyPSA-Eur-Sec and listed in JRC-IDEES industry sheets
-sub_sectors = {'Iron and steel' : ['Integrated steelworks','Electric arc'],
-               'Non-ferrous metals' : ['Alumina production','Aluminium - primary production','Aluminium - secondary production','Other non-ferrous metals'],
-               'Chemicals' : ['Basic chemicals', 'Other chemicals', 'Pharmaceutical products etc.', 'Basic chemicals feedstock'],
-               'Non-metalic mineral' : ['Cement','Ceramics & other NMM','Glass production'],
-               'Printing' : ['Pulp production','Paper production','Printing and media reproduction'],
-               'Food' : ['Food, beverages and tobacco'],
-               'Transport equipment' : ['Transport Equipment'],
-               'Machinery equipment' : ['Machinery Equipment'],
-               'Textiles and leather' : ['Textiles and leather'],
-               'Wood and wood products' : ['Wood and wood products'],
-               'Other Industrial Sectors' : ['Other Industrial Sectors'],
-}
-
-
-# name in JRC-IDEES Energy Balances
-eb_sheet_name = {'Integrated steelworks' : 'cisb',
-                 'Electric arc' : 'cise',
-                 'Alumina production' : 'cnfa',
-                 'Aluminium - primary production' : 'cnfp',
-                 'Aluminium - secondary production' : 'cnfs',
-                 'Other non-ferrous metals' : 'cnfo',
-                 'Basic chemicals' : 'cbch',
-                 'Other chemicals' : 'coch',
-                 'Pharmaceutical products etc.' : 'cpha',
-                 'Basic chemicals feedstock' : 'cpch',
-                 'Cement' : 'ccem',
-                 'Ceramics & other NMM' : 'ccer',
-                 'Glass production' : 'cgla',
-                 'Pulp production' : 'cpul',
-                 'Paper production' : 'cpap',
-                 'Printing and media reproduction' : 'cprp',
-                 'Food, beverages and tobacco' : 'cfbt',
-                 'Transport Equipment' : 'ctre',
-                 'Machinery Equipment' : 'cmae',
-                 'Textiles and leather' : 'ctel',
-                 'Wood and wood products' : 'cwwp',
-                 'Mining and quarrying' : 'cmiq',
-                 'Construction' : 'ccon',
-                 'Non-specified': 'cnsi',
-}
-
-
-
-fuels = {'all' : ['All Products'],
-         'solid' : ['Solid Fuels'],
-         'liquid' : ['Total petroleum products (without biofuels)'],
-         'gas' : ['Gases'],
-         'heat' : ['Nuclear heat','Derived heat'],
-         'biomass' : ['Biomass and Renewable wastes'],
-         'waste' : ['Wastes (non-renewable)'],
-         'electricity' : ['Electricity'],
-}
+import multiprocessing as mp
+from tqdm import tqdm
 
 ktoe_to_twh = 0.011630
+
+# name in JRC-IDEES Energy Balances
+sector_sheets = {'Integrated steelworks': 'cisb',
+                 'Electric arc': 'cise',
+                 'Alumina production': 'cnfa',
+                 'Aluminium - primary production': 'cnfp',
+                 'Aluminium - secondary production': 'cnfs',
+                 'Other non-ferrous metals': 'cnfo',
+                 'Basic chemicals': 'cbch',
+                 'Other chemicals': 'coch',
+                 'Pharmaceutical products etc.': 'cpha',
+                 'Basic chemicals feedstock': 'cpch',
+                 'Cement': 'ccem',
+                 'Ceramics & other NMM': 'ccer',
+                 'Glass production': 'cgla',
+                 'Pulp production': 'cpul',
+                 'Paper production': 'cpap',
+                 'Printing and media reproduction': 'cprp',
+                 'Food, beverages and tobacco': 'cfbt',
+                 'Transport Equipment': 'ctre',
+                 'Machinery Equipment': 'cmae',
+                 'Textiles and leather': 'ctel',
+                 'Wood and wood products': 'cwwp',
+                 'Mining and quarrying': 'cmiq',
+                 'Construction': 'ccon',
+                 'Non-specified': 'cnsi',
+                 }
+
+
+fuels = {'All Products': 'all',
+         'Solid Fuels': 'solid',
+         'Total petroleum products (without biofuels)': 'liquid',
+         'Gases': 'gas',
+         'Nuclear heat': 'heat',
+         'Derived heat': 'heat',
+         'Biomass and Renewable wastes': 'biomass',
+         'Wastes (non-renewable)': 'waste',
+         'Electricity': 'electricity'
+        }
 
 eu28 = ['FR', 'DE', 'GB', 'IT', 'ES', 'PL', 'SE', 'NL', 'BE', 'FI',
         'DK', 'PT', 'RO', 'AT', 'BG', 'EE', 'GR', 'LV', 'CZ',
         'HU', 'IE', 'SK', 'LT', 'HR', 'LU', 'SI', 'CY', 'MT']
 
-jrc_names = {"GR" : "EL",
-             "GB" : "UK"}
-
-year = 2015
-summaries = {}
-
-#for some reason the Energy Balances list Other Industrial Sectors separately
-ois_subs = ['Mining and quarrying','Construction','Non-specified']
+jrc_names = {"GR": "EL", "GB": "UK"}
 
 
-#MtNH3/a
-ammonia = pd.read_csv(snakemake.input.ammonia_production,
-                      index_col=0)/1e3
+def industrial_energy_demand_per_country(country):
+
+    jrc_dir = snakemake.input.jrc
+    jrc_country = jrc_names.get(country, country)
+    fn = f'{jrc_dir}/JRC-IDEES-2015_EnergyBalance_{jrc_country}.xlsx'
+
+    sheets = list(sector_sheets.values())
+    df_dict = pd.read_excel(fn, sheet_name=sheets, index_col=0)
+
+    def get_subsector_data(sheet):
+
+        df = df_dict[sheet][year].groupby(fuels).sum()
+
+        df['other'] = df['all'] - df.loc[df.index != 'all'].sum()
+
+        return df
+
+    df = pd.concat({sub: get_subsector_data(sheet)
+                    for sub, sheet in sector_sheets.items()}, axis=1)
+
+    sel = ['Mining and quarrying', 'Construction', 'Non-specified']
+    df['Other Industrial Sectors'] = df[sel].sum(axis=1)
+    df['Basic chemicals'] += df['Basic chemicals feedstock']
+
+    df.drop(columns=sel+['Basic chemicals feedstock'], index='all', inplace=True)
+
+    df *= ktoe_to_twh
+
+    return df
 
 
+def add_ammonia_energy_demand(demand):
 
-for ct in eu28:
-    print(ct)
-    filename = 'data/jrc-idees-2015/JRC-IDEES-2015_EnergyBalance_{}.xlsx'.format(jrc_names.get(ct,ct))
+    # MtNH3/a
+    fn = snakemake.input.ammonia_production
+    ammonia = pd.read_csv(fn, index_col=0)[str(year)] / 1e3
 
-    summary = pd.DataFrame(index=list(fuels.keys()) + ['other'])
+    def ammonia_by_fuel(x):
 
-    for sector in sub_sectors:
-        if sector == 'Other Industrial Sectors':
-            subs = ois_subs
-        else:
-            subs = sub_sectors[sector]
+        fuels = {'gas': config['MWh_CH4_per_tNH3_SMR'],
+                 'electricity': config['MWh_elec_per_tNH3_SMR']}
 
-        for sub in subs:
-            df = pd.read_excel(filename,
-                               sheet_name=eb_sheet_name[sub],
-                               index_col=0)
+        return pd.Series({k: x*v for k,v in fuels.items()})
 
-            s = df[year].astype(float)
+    ammonia = ammonia.apply(ammonia_by_fuel).T
 
-            for fuel in fuels:
-                summary.at[fuel,sub] = s[fuels[fuel]].sum()
-                summary.at['other',sub] = summary.at['all',sub] - summary.loc[summary.index.symmetric_difference(['all','other']),sub].sum()
+    demand['Ammonia'] = ammonia.unstack().reindex(index=demand.index, fill_value=0.)
 
-    summary['Other Industrial Sectors'] = summary[ois_subs].sum(axis=1)
-    summary.drop(columns=ois_subs,inplace=True)
+    demand['Basic chemicals (without ammonia)'] = demand["Basic chemicals"] - demand["Ammonia"]
 
-    summary.drop(index=['all'],inplace=True)
+    demand['Basic chemicals (without ammonia)'].clip(lower=0, inplace=True)
+    demand.drop(columns='Basic chemicals', inplace=True)
 
-    summary *= ktoe_to_twh
-
-    summary['Basic chemicals'] += summary['Basic chemicals feedstock']
-    summary.drop(columns=['Basic chemicals feedstock'], inplace=True)
-
-    summary['Ammonia'] = 0.
-    summary.at['gas','Ammonia'] = snakemake.config['industry']['MWh_CH4_per_tNH3_SMR']*ammonia[str(year)].get(ct,0.)
-    summary.at['electricity','Ammonia'] = snakemake.config['industry']['MWh_elec_per_tNH3_SMR']*ammonia[str(year)].get(ct,0.)
-    summary['Basic chemicals (without ammonia)'] = summary['Basic chemicals'] - summary['Ammonia']
-    summary.loc[summary['Basic chemicals (without ammonia)'] < 0, 'Basic chemicals (without ammonia)'] = 0.
-    summary.drop(columns=['Basic chemicals'], inplace=True)
-
-    summaries[ct] = summary
-
-final_summary = pd.concat(summaries,axis=1)
-
-# add in the non-EU28 based on their output (which is derived from their energy too)
-# output in MtMaterial/a
-output = pd.read_csv(snakemake.input.industrial_production_per_country,
-                     index_col=0)/1e3
-
-eu28_averages = final_summary.groupby(level=1,axis=1).sum().divide(output.loc[eu28].sum(),axis=1)
-
-non_eu28 = output.index.symmetric_difference(eu28)
-
-for ct in non_eu28:
-    print(ct)
-    final_summary = pd.concat((final_summary,pd.concat({ct : eu28_averages.multiply(output.loc[ct],axis=1)},axis=1)),axis=1)
+    return demand
 
 
-final_summary.index.name = 'TWh/a'
+def add_non_eu28_industrial_energy_demand(demand):
 
-final_summary.to_csv(snakemake.output.industrial_energy_demand_per_country_today)
+    # output in MtMaterial/a
+    fn = snakemake.input.industrial_production_per_country
+    production = pd.read_csv(fn, index_col=0) / 1e3
+
+    eu28_production = production.loc[eu28].sum()
+    eu28_energy = demand.groupby(level=1).sum()
+    eu28_averages = eu28_energy / eu28_production
+
+    non_eu28 = production.index.symmetric_difference(eu28)
+
+    demand_non_eu28 = pd.concat({k: v * eu28_averages
+        for k, v in production.loc[non_eu28].iterrows()})
+
+    return pd.concat([demand, demand_non_eu28])
+
+
+def industrial_energy_demand(countries):
+
+    nprocesses = snakemake.threads
+    func = industrial_energy_demand_per_country
+    tqdm_kwargs = dict(ascii=False, unit=' country', total=len(countries),
+                       desc="Build industrial energy demand")
+    with mp.Pool(processes=nprocesses) as pool:
+        demand_l = list(tqdm(pool.imap(func, countries), **tqdm_kwargs))
+
+    demand = pd.concat(demand_l, keys=countries)
+
+    return demand
+
+
+if __name__ == '__main__':
+    if 'snakemake' not in globals():
+        from helper import mock_snakemake
+        snakemake = mock_snakemake('build_industrial_energy_demand_per_country_today')
+
+    config = snakemake.config['industry']
+    year = config.get('reference_year', 2015)
+
+    demand = industrial_energy_demand(eu28)
+
+    demand = add_ammonia_energy_demand(demand)
+
+    demand = add_non_eu28_industrial_energy_demand(demand)
+
+    # for format compatibility
+    demand = demand.stack(dropna=False).unstack(level=[0,2])
+
+    # style and annotation
+    demand.index.name = 'TWh/a'
+    demand.sort_index(axis=1, inplace=True)
+
+    fn = snakemake.output.industrial_energy_demand_per_country_today
+    demand.to_csv(fn)

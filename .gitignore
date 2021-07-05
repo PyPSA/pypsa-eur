@@ -2,9 +2,10 @@
 .ipynb_checkpoints
 __pycache__
 gurobi.log
+.vscode
 
 /bak
-/resources
+/resources*
 /results
 /networks
 /benchmarks
