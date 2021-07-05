@@ -7,7 +7,7 @@ Future release
 
 .. note::
   This unreleased version currently requires the master branches of PyPSA, PyPSA-Eur, and the technology-data repository.
-
+* The myopic option can now be used together with different clustering for the generators and the network. The existing renewable capacities are split evenly among the regions in every country.
 * Extended use of ``multiprocessing`` for much better performance
   (from up to 20 minutes to less than one minute).
 * Compatibility with ``atlite>=0.2``. Older versions of ``atlite`` will no longer work.
