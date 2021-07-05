@@ -136,6 +136,7 @@ def add_chp_constraints(n):
 
         rhs = n.links.loc[electric_fix, "p_nom"].values
 
+<<<<<<< Updated upstream
         define_constraints(n, lhs, "<=", rhs, 'chplink', 'top_iso_fuel_line_fix')
 
     if not electric.empty:
@@ -148,6 +149,28 @@ def add_chp_constraints(n):
                        link_p[electric].values))
 
         define_constraints(n, lhs, "<=", 0, 'chplink', 'backpressure')
+=======
+def add_land_use_constraint(n):
+    if 'm' in snakemake.wildcards.clusters:
+        # if generators clustering is lower than network clustering, land_use
+        # accounting is at generators clusters
+        for carrier in ['solar', 'onwind', 'offwind-ac', 'offwind-dc']:
+            existing_capacities = n.generators.loc[n.generators.carrier==carrier,"p_nom"]
+            ind=list(set([i.split(sep=" ")[0] + ' ' + i.split(sep=" ")[1] for i in existing_capacities.index]))
+            previous_years= [str(y) for y in 
+                             snakemake.config["scenario"]["planning_horizons"] 
+                             + snakemake.config["existing_capacities"]["grouping_years"]
+                             if y < int(snakemake.wildcards.planning_horizons)]
+            for p_year in previous_years:
+                ind2 = [i for i in ind if  i + " " + carrier + "-" + p_year in existing_capacities.index]
+                n.generators.loc[[i + " " + carrier + "-" + snakemake.wildcards.planning_horizons for i in ind2], "p_nom_max"] -= existing_capacities.loc[[i + " " + carrier + "-" + p_year for i in ind2]].rename(lambda x: x[:-4]+snakemake.wildcards.planning_horizons) 
+    else:
+        #warning: this will miss existing offwind which is not classed AC-DC and has carrier 'offwind'
+        for carrier in ['solar', 'onwind', 'offwind-ac', 'offwind-dc']:
+            existing_capacities = n.generators.loc[n.generators.carrier==carrier,"p_nom"].groupby(n.generators.bus.map(n.buses.location)).sum()
+            existing_capacities.index += " " + carrier + "-" + snakemake.wildcards.planning_horizons
+            n.generators.loc[existing_capacities.index,"p_nom_max"] -= existing_capacities
+>>>>>>> Stashed changes
 
 
 def extra_functionality(n, snapshots):
@@ -181,6 +204,7 @@ def solve_network(n, config, opts='', **kwargs):
 
 if __name__ == "__main__":
     if 'snakemake' not in globals():
+<<<<<<< Updated upstream
         from helper import mock_snakemake
         snakemake = mock_snakemake(
             'solve_network',
@@ -189,6 +213,17 @@ if __name__ == "__main__":
             lv=1.0,
             sector_opts='Co2L0-168H-T-H-B-I-solar3-dist1',
             planning_horizons=2050,
+=======
+        from vresutils.snakemake import MockSnakemake, Dict
+        snakemake = MockSnakemake(
+            wildcards=dict(network='elec', simpl='148', clusters='37m', lv='1.0',
+                           sector_opts='168H-T-H-B-I-solar+p3-dist1-cb36.7ex0',
+                           co2_budget_name='', planning_horizons='2020'),
+            input=dict(network="pypsa-eur-sec/results/version-36.7ex0-168H/prenetworks_brownfield/elec_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{planning_horizons}.nc"),
+            output=["results/networks/s{simpl}_{clusters}_lv{lv}_{sector_opts}_{co2_budget_name}_{planning_horizons}-test.nc"],
+            log=dict(gurobi="logs/elec_s{simpl}_{clusters}_lv{lv}_{sector_opts}_{co2_budget_name}_{planning_horizons}_gurobi-test.log",
+                     python="logs/elec_s{simpl}_{clusters}_lv{lv}_{sector_opts}_{co2_budget_name}_{planning_horizons}_python-test.log")
+>>>>>>> Stashed changes
         )
 
     logging.basicConfig(filename=snakemake.log.python,
