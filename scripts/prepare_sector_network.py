@@ -1730,6 +1730,15 @@ def add_industry(n, costs):
     if shipping_hydrogen_share < 1:
 
         shipping_oil_share = 1 - shipping_hydrogen_share
+        
+        n.madd("Load",
+               nodes,
+               suffix=" shipping oil",
+               bus="EU oil",
+               carrier="shipping oil",
+               p_set=shipping_oil_share*nodal_energy_totals.loc[nodes,["total international navigation","total domestic navigation"]].sum(axis=1)*1e6/8760.
+               )
+        
         co2 = shipping_oil_share * nodal_energy_totals.loc[nodes, all_navigation].sum().sum() * 1e6 / 8760 * costs.at["oil", "CO2 intensity"]
 
         n.add("Load",

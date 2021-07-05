@@ -500,6 +500,7 @@ plotting:
     solid biomass: '#DAA520'
     today: '#D2691E'
     shipping: '#6495ED'
+    shipping oil: "#6495ED"
     shipping oil emissions: "#6495ED"
     electricity distribution grid: '#333333'
     H2 for industry: "#222222"
