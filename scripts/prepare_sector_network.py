@@ -44,7 +44,7 @@ def emission_sectors_from_opts(opts):
         ]
     if "A" in opts:
         sectors += [
-            "agriulture"
+            "agriculture"
         ]
 
     return sectors
