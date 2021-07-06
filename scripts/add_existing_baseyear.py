@@ -152,20 +152,14 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
     df_agg.drop(df_agg.index[df_agg.Technology.isin(technology_to_drop)], inplace=True)
     df_agg.Fueltype = df_agg.Fueltype.map(rename_fuel)
 
-<<<<<<< Updated upstream
     # assign clustered bus
     busmap_s = pd.read_csv(snakemake.input.busmap_s, index_col=0, squeeze=True)
     busmap = pd.read_csv(snakemake.input.busmap, index_col=0, squeeze=True)
-=======
-    #assign clustered bus
-    busmap_s = pd.read_csv(snakemake.input.busmap_s, index_col=0).squeeze()
-    busmap = pd.read_csv(snakemake.input.busmap, index_col=0).squeeze()
 
-    inv_busmap={}
-    for k,v in busmap.iteritems():
-        inv_busmap[v]=inv_busmap.get(v,[]) + [k]
+    inv_busmap = {}
+    for k, v in busmap.iteritems():
+        inv_busmap[v] = inv_busmap.get(v, []) + [k]
         
->>>>>>> Stashed changes
     clustermaps = busmap_s.map(busmap)
     clustermaps.index = clustermaps.index.astype(int)
 
@@ -203,62 +197,54 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
         capacity = capacity[capacity > snakemake.config['existing_capacities']['threshold_capacity']]
 
         if generator in ['solar', 'onwind', 'offwind']:
-<<<<<<< Updated upstream
-
-            rename = {"offwind": "offwind-ac"}
-            p_max_pu=n.generators_t.p_max_pu[capacity.index + ' ' + rename.get(generator, generator) + '-' + str(baseyear)]
-
-            n.madd("Generator",
-                capacity.index,
-                suffix=' ' + generator +"-"+ str(grouping_year),
-                bus=capacity.index,
-                carrier=generator,
-                p_nom=capacity,
-                marginal_cost=costs.at[generator, 'VOM'],
-                capital_cost=costs.at[generator, 'fixed'],
-                efficiency=costs.at[generator, 'efficiency'],
-                p_max_pu=p_max_pu.rename(columns=n.generators.bus),
-                build_year=grouping_year,
-                lifetime=costs.at[generator, 'lifetime']
-            )
         
-=======
-            suffix='-ac' if generator=='offwind' else ''
+            suffix = '-ac' if generator == 'offwind' else ''
+            name_suffix = f' {generator}{suffix}-{baseyear}'
+
             if 'm' in snakemake.wildcards.clusters:
+
                 for ind in capacity.index:
+
                     # existing capacities are split evenly among regions in every country
                     inv_ind = [i for i in inv_busmap[ind]]
+
                     # for offshore the spliting only inludes coastal regions
-                    inv_ind=[i for i in inv_ind if (i + ' ' + generator + suffix + '-' + str(baseyear)) in n.generators.index]
-                    p_max_pu = n.generators_t.p_max_pu[[i + ' ' + generator + suffix + '-' + str(baseyear) for i in inv_ind ]]
-                    p_max_pu.columns=[i + ' ' + generator + suffix + '-' + str(grouping_year) for i in inv_ind ]
+                    inv_ind = [i for i in inv_ind if (i + name_suffix) in n.generators.index]
+
+                    p_max_pu = n.generators_t.p_max_pu[[i + name_suffix for i in inv_ind]]
+                    p_max_pu.columns=[i + name_suffix for i in inv_ind ]
                 
                     n.madd("Generator",
-                           [i + ' ' + generator + suffix + '-' + str(grouping_year) for i in inv_ind ],
-                           bus=ind,
-                           carrier=generator,
-                           p_nom=capacity[ind]/len(inv_ind), #split among regions in a country
-                           marginal_cost=costs.at[generator,'VOM'],
-                           capital_cost=costs.at[generator,'fixed'],
-                           efficiency=costs.at[generator, 'efficiency'],
-                           p_max_pu=p_max_pu,
-                           build_year=grouping_year,
-                           lifetime=costs.at[generator,'lifetime'])
+                        [i + name_suffix for i in inv_ind],
+                        bus=ind,
+                        carrier=generator,
+                        p_nom=capacity[ind] / len(inv_ind), # split among regions in a country
+                        marginal_cost=costs.at[generator,'VOM'],
+                        capital_cost=costs.at[generator,'fixed'],
+                        efficiency=costs.at[generator, 'efficiency'],
+                        p_max_pu=p_max_pu,
+                        build_year=grouping_year,
+                        lifetime=costs.at[generator,'lifetime']
+                    )
+
             else:
-                p_max_pu=n.generators_t.p_max_pu[capacity.index + ' ' + generator + suffix + '-' + str(baseyear)]
+
+                p_max_pu = n.generators_t.p_max_pu[capacity.index + name_suffix]
+
                 n.madd("Generator",
-                       capacity.index,
-                       suffix = ' ' + generator +"-"+ str(grouping_year),
-                       bus=capacity.index,
-                       carrier=generator,
-                       p_nom=capacity,
-                       marginal_cost=costs.at[generator,'VOM'],
-                       capital_cost=costs.at[generator,'fixed'],
-                       efficiency=costs.at[generator, 'efficiency'],
-                       p_max_pu=p_max_pu.rename(columns=n.generators.bus),
-                       build_year=grouping_year,
-                       lifetime=costs.at[generator,'lifetime'])
->>>>>>> Stashed changes
+                    capacity.index,
+                    suffix=' ' + generator +"-"+ str(grouping_year),
+                    bus=capacity.index,
+                    carrier=generator,
+                    p_nom=capacity,
+                    marginal_cost=costs.at[generator, 'VOM'],
+                    capital_cost=costs.at[generator, 'fixed'],
+                    efficiency=costs.at[generator, 'efficiency'],
+                    p_max_pu=p_max_pu.rename(columns=n.generators.bus),
+                    build_year=grouping_year,
+                    lifetime=costs.at[generator, 'lifetime']
+                )
+
         else:
 
             n.madd("Link",
@@ -453,7 +439,6 @@ def add_heating_capacities_installed_before_baseyear(n, baseyear, grouping_years
 
 if __name__ == "__main__":
     if 'snakemake' not in globals():
-<<<<<<< Updated upstream
         from helper import mock_snakemake
         snakemake = mock_snakemake(
             'add_existing_baseyear',
@@ -462,22 +447,6 @@ if __name__ == "__main__":
             lv=1.0,
             sector_opts='Co2L0-168H-T-H-B-I-solar3-dist1',
             planning_horizons=2020,
-=======
-        from vresutils.snakemake import MockSnakemake
-        snakemake = MockSnakemake(
-            wildcards=dict(network='elec', simpl='148', clusters='37m', lv='1.0',
-                           sector_opts='168H-T-H-B-I-solar+p3-dist1-cb36.7ex0',
-                           planning_horizons='2020'),
-            input=dict(network='pypsa-eur-sec/results/version-36.7ex0-168H/prenetworks/elec_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{planning_horizons}.nc',
-                       powerplants='pypsa-eur/resources/powerplants.csv',
-                       busmap_s='pypsa-eur/resources/busmap_elec_s{simpl}.csv',
-                       busmap='pypsa-eur/resources/busmap_elec_s{simpl}_{clusters}.csv',
-                       costs='technology-data/outputs/costs_{planning_horizons}.csv',
-                       cop_air_total="pypsa-eur-sec/resources/cop_air_total_elec_s{simpl}_{clusters}.nc",
-                       cop_soil_total="pypsa-eur-sec/resources/cop_soil_total_elec_s{simpl}_{clusters}.nc",
-                       clustered_pop_layout="pypsa-eur-sec/resources/pop_layout_elec_s{simpl}_{clusters}.csv",),
-            output=['pypsa-eur-sec/results/version-36.7ex0-168H/prenetworks_brownfield/elec_s{simpl}_{clusters}_lv{lv}__{sector_opts}_{planning_horizons}.nc'],
->>>>>>> Stashed changes
         )
 
     logging.basicConfig(level=snakemake.config['logging_level'])
