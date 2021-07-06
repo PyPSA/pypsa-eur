@@ -173,6 +173,9 @@ sector:
     2050: 0.85
   transport_fuel_cell_efficiency: 0.5
   transport_internal_combustion_efficiency: 0.3
+  agriculture_machinery_electric_share: 0.12  # approximately as today
+  agriculture_machinery_fuel_efficiency: 0.7 # for conversion of fuel oil to use
+  agriculture_machinery_electric_efficiency: 0.3 # for conversion of electricity to use
   shipping_average_efficiency: 0.4 #For conversion of fuel oil to propulsion in 2011
   time_dep_hp_cop: true #time dependent heat pump coefficient of performance
   heat_pump_sink_T: 55. # Celsius, based on DTU / large area radiators; used in build_cop_profiles.py
