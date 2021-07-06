@@ -30,6 +30,7 @@ scenario:
   # B for biomass supply, I for industry, shipping and aviation
   # solar+c0.5 reduces the capital cost of solar to 50\% of reference value
   # solar+p3 multiplies the available installable potential by factor 3
+  # co2 stored+e2 multiplies the potential of CO2 sequestration by a factor 2
   # dist{n} includes distribution grids with investment cost of n times cost in data/costs.csv
   # for myopic/perfect foresight cb states the carbon budget in GtCO2 (cumulative
   # emissions throughout the transition path in the timeframe determined by the
