@@ -188,11 +188,14 @@ import logging
 from pypsa.geo import haversine
 from shapely.geometry import LineString
 import time
+import functools
 
 from _helpers import configure_logging
 
 logger = logging.getLogger(__name__)
 
+def func(v, max_depth):
+    return v <= -max_depth
 
 if __name__ == '__main__':
     if 'snakemake' not in globals():
@@ -235,8 +238,9 @@ if __name__ == '__main__':
         excluder.add_raster(paths.corine, codes=codes, buffer=buffer, crs=3035)
 
     if "max_depth" in config:
-        func = lambda v: v <= -config['max_depth']
-        excluder.add_raster(paths.gebco, codes=func, crs=4236, nodata=-1000)
+        #func = lambda v: v <= -config['max_depth']
+        func_p = functools.partial(func, max_depth= config["max_depth"])
+        excluder.add_raster(paths.gebco, codes=func_p, crs=4236, nodata=-1000)
 
     if 'min_shore_distance' in config:
         buffer = config['min_shore_distance']
