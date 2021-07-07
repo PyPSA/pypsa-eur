@@ -277,6 +277,18 @@ def patch_electricity_network(n):
 
 def add_co2_tracking(n, options):
 
+    if options["co2_network"]:
+        nodes = pop_layout.index
+        co2_nodes = nodes + " co2 stored"
+        co2_locations = nodes
+        co2_vents = nodes + " co2 vent"
+        co2_max_sequestration = np.inf
+    else:
+        co2_nodes = "co2 stored"
+        co2_locations = "EU"
+        co2_vents = "co2 vent"
+        co2_max_sequestration = np.inf # TODO should be nodal sequestration potentials
+
     # minus sign because opposite to how fossil fuels used:
     # CH4 burning puts CH4 down, atmosphere up
     n.add("Carrier", "co2",
@@ -299,31 +311,57 @@ def add_co2_tracking(n, options):
     )
 
     # this tracks CO2 stored, e.g. underground
-    n.add("Bus",
-        "co2 stored",
-        location="EU",
+    n.madd("Bus",
+        co2_nodes,
+        location=co2_locations,
         carrier="co2 stored"
     )
 
-    n.add("Store",
-        "co2 stored",
+    n.madd("Store",
+        co2_nodes,
         e_nom_extendable=True,
-        e_nom_max=options['co2_sequestration_potential'] * 1e6,
+        e_nom_max=co2_max_sequestration, 
         capital_cost=options['co2_sequestration_cost'],
         carrier="co2 stored",
-        bus="co2 stored"
+        bus=co2_nodes
     )
+
+    # TODO if nodally resolved total allowed sequestration needs to
+    # be an extra_functionality constraint
+    # (best to implement it this way for either case)
+    # let e_nom_max represent geological potential
+    # don't forget to log duals of extra functionality!
+    # options['co2_sequestration_potential'] * 1e6
 
     if options['co2_vent']:
 
-        n.add("Link",
-            "co2 vent",
-            bus0="co2 stored",
+        n.madd("Link",
+            co2_vents,
+            bus0=co2_nodes,
             bus1="co2 atmosphere",
             carrier="co2 vent",
             efficiency=1.,
             p_nom_extendable=True
         )
+
+
+def add_co2_network(n, costs):
+
+    # TODO create co2 network topology from electricity 
+    co2_links = pd.DataFrame()
+    
+    # assumed to be bidirectional
+    n.madd("Link",
+        co2_links.index,
+        bus0=co2_links.bus0.values + " co2 stored",
+        bus1=co2_links.bus1.values + " co2 stored",
+        p_min_pu=-1,
+        p_nom_extendable=True,
+        length=co2_links.length.values,
+        capital_cost=costs.at['CO2 pipeline', 'fixed'] * co2_links.length.values,
+        carrier="CO2 pipeline",
+        lifetime=costs.at['CO2 pipeline', 'lifetime']
+    )
 
 
 def add_dac(n, costs):
