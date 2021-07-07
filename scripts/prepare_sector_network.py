@@ -284,9 +284,9 @@ def add_co2_tracking(n, options):
         co2_vents = nodes + " co2 vent"
         co2_max_sequestration = np.inf
     else:
-        co2_nodes = "co2 stored"
+        co2_nodes = ["co2 stored"]
         co2_locations = "EU"
-        co2_vents = "co2 vent"
+        co2_vents = ["co2 vent"]
         co2_max_sequestration = np.inf # TODO should be nodal sequestration potentials
 
     # minus sign because opposite to how fossil fuels used:
@@ -2073,6 +2073,9 @@ if __name__ == "__main__":
 
     if "noH2network" in opts:
         remove_h2_network(n)
+
+    if options["co2_network"]:
+        add_co2_network(n, costs)
 
     for o in opts:
         m = re.match(r'^\d+h$', o, re.IGNORECASE)
