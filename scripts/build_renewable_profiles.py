@@ -189,7 +189,6 @@ import logging
 from pypsa.geo import haversine
 from shapely.geometry import LineString
 import time
-import functools
 
 from _helpers import configure_logging
 
