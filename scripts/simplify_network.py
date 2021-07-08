@@ -185,7 +185,7 @@ def _adjust_capital_costs_using_connection_costs(n, connection_costs_to_bus):
             n.generators.loc[costs.index, "capital_cost"] += costs
             logger.info("Displacing {} generator(s) and adding connection costs to capital_costs: {} "
                         .format(tech, ", ".join("{:.0f} Eur/MW/a for `{}`".format(d, b) for b, d in costs.iteritems())))
-    n.generators.loc[costs.index, "added_connection_capital_cost"] = costs
+            n.generators.loc[costs.index, "added_connection_capital_cost"] = costs
 
 
 def _aggregate_and_move_components(n, busmap, connection_costs_to_bus, aggregate_one_ports={"Load", "StorageUnit"}):
