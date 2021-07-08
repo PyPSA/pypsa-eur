@@ -75,7 +75,7 @@ def co2_emissions_year(countries, opts, year):
     co2_emissions = co2_totals.loc[countries, sectors].sum().sum()
 
     # convert MtCO2 to GtCO2
-    co2_emissions *= 0.001  
+    co2_emissions *= 0.001
 
     return co2_emissions
 
@@ -102,17 +102,17 @@ def build_carbon_budget(o, fn):
 
     #emissions at the beginning of the path (last year available 2018)
     e_0 = co2_emissions_year(countries, opts, year=2018)
-    
+
     #emissions in 2019 and 2020 assumed equal to 2018 and substracted
     carbon_budget -= 2 * e_0
-    
+
     planning_horizons = snakemake.config['scenario']['planning_horizons']
     t_0 = planning_horizons[0]
 
     if "be" in o:
 
         # final year in the path
-        t_f = t_0 + (2 * carbon_budget / e_0).round(0) 
+        t_f = t_0 + (2 * carbon_budget / e_0).round(0)
 
         def beta_decay(t):
             cdf_term = (t - t_0) / (t_f - t_0)
@@ -818,7 +818,7 @@ def insert_gas_distribution_costs(n, costs):
     # TODO options?
 
     f_costs = options['gas_distribution_grid_cost_factor']
-    
+
     print("Inserting gas distribution grid with investment cost factor of", f_costs)
 
     capital_cost = costs.loc['electricity distribution grid']["fixed"] * f_costs
@@ -827,7 +827,7 @@ def insert_gas_distribution_costs(n, costs):
     gas_b = n.links.index[n.links.carrier.str.contains("gas boiler") &
                           (~n.links.carrier.str.contains("urban central"))]
     n.links.loc[gas_b, "capital_cost"] += capital_cost
-    
+
     # micro CHPs
     mchp = n.links.index[n.links.carrier.str.contains("micro gas")]
     n.links.loc[mchp,  "capital_cost"] += capital_cost
@@ -1075,7 +1075,7 @@ def add_land_transport(n, costs):
             suffix=" EV battery",
             carrier="Li ion"
         )
-        
+
         p_set = electric_share * (transport[nodes] + cycling_shift(transport[nodes], 1) + cycling_shift(transport[nodes], 2)) / 3
 
         n.madd("Load",
@@ -1086,8 +1086,8 @@ def add_land_transport(n, costs):
             p_set=p_set
         )
 
-        
-        p_nom = nodal_transport_data["number cars"] * options.get("bev_charge_rate", 0.011) * electric_share  
+
+        p_nom = nodal_transport_data["number cars"] * options.get("bev_charge_rate", 0.011) * electric_share
 
         n.madd("Link",
             nodes,
@@ -1119,7 +1119,7 @@ def add_land_transport(n, costs):
 
     if electric_share > 0 and options["bev_dsm"]:
 
-        e_nom = nodal_transport_data["number cars"] * options.get("bev_energy", 0.05) * options["bev_availability"] * electric_share 
+        e_nom = nodal_transport_data["number cars"] * options.get("bev_energy", 0.05) * options["bev_availability"] * electric_share
 
         n.madd("Store",
             nodes,
@@ -1179,11 +1179,10 @@ def add_heat(n, costs):
 
     sectors = ["residential", "services"]
 
-    nodes = create_nodes_for_heat_sector()
+
+    nodes, dist_fraction, urban_fraction = create_nodes_for_heat_sector()
 
     #NB: must add costs of central heating afterwards (EUR 400 / kWpeak, 50a, 1% FOM from Fraunhofer ISE)
-
-    urban_fraction = options['central_fraction'] * pop_layout["urban"] / pop_layout[["urban", "rural"]].sum(axis=1)
 
     # exogenously reduce space heat demand
     if options["reduce_space_heat_exogenously"]:
@@ -1199,7 +1198,7 @@ def add_heat(n, costs):
         "services urban decentral",
         "urban central"
     ]
-    
+
     for name in heat_systems:
 
         name_type = "central" if name == "urban central" else "decentral"
@@ -1215,10 +1214,17 @@ def add_heat(n, costs):
         ## Add heat load
 
         for sector in sectors:
+            # heat demand weighting
             if "rural" in name:
                 factor = 1 - urban_fraction[nodes[name]]
-            elif "urban" in name:
-                factor = urban_fraction[nodes[name]]
+            elif "urban central" in name:
+                factor = dist_fraction[nodes[name]]
+            elif "urban decentral" in name:
+                factor = urban_fraction[nodes[name]] - \
+                    dist_fraction[nodes[name]]
+            else:
+                factor = None
+
             if sector in name:
                 heat_load = heat_demand[[sector + " water",sector + " space"]].groupby(level=1,axis=1).sum()[nodes[name]].multiply(factor)
 
@@ -1281,16 +1287,16 @@ def add_heat(n, costs):
                 p_nom_extendable=True
             )
 
-            
+
             if isinstance(options["tes_tau"], dict):
                 tes_time_constant_days = options["tes_tau"][name_type]
             else:
                 logger.warning("Deprecated: a future version will require you to specify 'tes_tau' ",
                                "for 'decentral' and 'central' separately.")
                 tes_time_constant_days = options["tes_tau"] if name_type == "decentral" else 180.
-            
+
             # conversion from EUR/m^3 to EUR/MWh for 40 K diff and 1.17 kWh/m^3/K
-            capital_cost = costs.at[name_type + ' water tank storage', 'fixed'] / 0.00117 / 40 
+            capital_cost = costs.at[name_type + ' water tank storage', 'fixed'] / 0.00117 / 40
 
             n.madd("Store",
                 nodes[name] + f" {name} water tanks",
@@ -1503,24 +1509,55 @@ def create_nodes_for_heat_sector():
     # rural are areas with low heating density and individual heating
     # urban are areas with high heating density
     # urban can be split into district heating (central) and individual heating (decentral)
-    
+
+    ct_urban = pop_layout.urban.groupby(pop_layout["ct"]).sum()
+    pop_layout["urban_ct_fraction"] = pop_layout["urban"] / \
+            pop_layout["ct"].map(ct_urban.get)
+    # todays district heating share per country
+    dist_heat_share_ct = pd.read_csv(snakemake.input.dh_share, index_col=0,
+                                  usecols=[0,1]).dropna()/100
+    dist_heat_share = pop_layout.ct.map(dist_heat_share_ct["district heating share"])
+
+
     sectors = ["residential", "services"]
-    
+
     nodes = {}
+    urban_fraction = pop_layout["urban"] / \
+                     (pop_layout[["urban", "rural"]].sum(axis=1))
+
     for sector in sectors:
         nodes[sector + " rural"] = pop_layout.index
+        nodes[sector + " urban decentral"] = pop_layout.index
 
-        if options["central"]:
-            # TODO: this looks hardcoded, move to config
-            urban_decentral_ct = pd.Index(["ES", "GR", "PT", "IT", "BG"])
-            nodes[sector + " urban decentral"] = pop_layout.index[pop_layout.ct.isin(urban_decentral_ct)]
-        else:
-            nodes[sector + " urban decentral"] = pop_layout.index
-    
-    # for central nodes, residential and services are aggregated
-    nodes["urban central"] = pop_layout.index.symmetric_difference(nodes["residential urban decentral"])
-    
-    return nodes
+    if options["central"] and not options['district_heating_increase']:
+        central_fraction = options['central_fraction']
+        dist_fraction = central_fraction * urban_fraction
+        nodes["urban central"] = dist_fraction.index
+
+    if options['district_heating_increase']:  # take current district heating share
+        dist_fraction = dist_heat_share * \
+            pop_layout["urban_ct_fraction"] / pop_layout["fraction"]
+        nodes["urban central"] = dist_fraction.index
+        # if district heating share larger than urban fraction -> set urban
+        # fraction to district heating share
+        urban_fraction = pd.concat([urban_fraction, dist_fraction],
+                                   axis=1).max(axis=1)
+        diff = urban_fraction - dist_fraction
+        dist_fraction += diff * get(options["dh_strength"], investment_year)
+        print("************************************")
+        print(
+            "the current DH share compared to the maximum possible is increased \
+               \n by a factor of ",
+            get(options["dh_strength"], investment_year),
+            "resulting DH share: ",
+            dist_fraction)
+        print("**********************************")
+
+    else:
+        dist_fraction = urban_fraction * 0
+        nodes["urban central"] = dist_fraction.index
+
+    return nodes, dist_fraction, urban_fraction
 
 
 def add_biomass(n, costs):
@@ -1730,9 +1767,9 @@ def add_industry(n, costs):
     if shipping_hydrogen_share < 1:
 
         shipping_oil_share = 1 - shipping_hydrogen_share
-        
+
         p_set = shipping_oil_share * nodal_energy_totals.loc[nodes, all_navigation].sum(axis=1) * 1e6 / 8760.
-        
+
         n.madd("Load",
             nodes,
             suffix=" shipping oil",
@@ -1740,7 +1777,7 @@ def add_industry(n, costs):
             carrier="shipping oil",
             p_set=p_set
         )
-        
+
         co2 = shipping_oil_share * nodal_energy_totals.loc[nodes, all_navigation].sum().sum() * 1e6 / 8760 * costs.at["oil", "CO2 intensity"]
 
         n.add("Load",
@@ -1759,7 +1796,7 @@ def add_industry(n, costs):
         )
 
     if "EU oil Store" not in n.stores.index:
-        
+
         #could correct to e.g. 0.001 EUR/kWh * annuity and O&M
         n.add("Store",
             "EU oil Store",
@@ -1781,7 +1818,7 @@ def add_industry(n, costs):
 
     if options["oil_boilers"]:
 
-        nodes_heat = create_nodes_for_heat_sector()
+        nodes_heat = create_nodes_for_heat_sector()[0]
 
         for name in ["residential rural", "services rural", "residential urban decentral", "services urban decentral"]:
 
@@ -1926,7 +1963,7 @@ def add_waste_heat(n):
 
 
 def decentral(n):
-    """Removes the electricity transmission system."""    
+    """Removes the electricity transmission system."""
     n.lines.drop(n.lines.index, inplace=True)
     n.links.drop(n.links.index[n.links.carrier.isin(["DC", "B2B"])], inplace=True)
 
@@ -1973,17 +2010,18 @@ def limit_individual_line_extension(n, maxext):
     hvdc = n.links.index[n.links.carrier == 'DC']
     n.links.loc[hvdc, 'p_nom_max'] = n.links.loc[hvdc, 'p_nom'] + maxext
 
-
+#%%
 if __name__ == "__main__":
     if 'snakemake' not in globals():
         from helper import mock_snakemake
         snakemake = mock_snakemake(
             'prepare_sector_network',
             simpl='',
-            clusters=48,
+            opts="",
+            clusters="37",
             lv=1.0,
             sector_opts='Co2L0-168H-T-H-B-I-solar3-dist1',
-            planning_horizons=2020,
+            planning_horizons="2020",
         )
 
     logging.basicConfig(level=snakemake.config['logging_level'])
@@ -1998,7 +2036,7 @@ if __name__ == "__main__":
     n = pypsa.Network(snakemake.input.network, override_component_attrs=overrides)
 
     pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
-    Nyears = n.snapshot_weightings.generators.sum() / 8760
+    Nyears = n.snapshot_weightings.sum() / 8760
 
     costs = prepare_costs(snakemake.input.costs,
                           snakemake.config['costs']['USD2013_to_EUR2013'],
@@ -2009,7 +2047,7 @@ if __name__ == "__main__":
     patch_electricity_network(n)
 
     if snakemake.config["foresight"] == 'myopic':
-        
+
         add_lifetime_wind_solar(n, costs)
 
         conventional = snakemake.config['existing_capacities']['conventional_carriers']

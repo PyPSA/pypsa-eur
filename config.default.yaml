@@ -141,6 +141,12 @@ existing_capacities:
 sector:
   central: true
   central_fraction: 0.6
+  district_heating_increase: true
+  dh_strength:
+    2020: 0   # starting at today's share
+    2030: 0.2
+    2040: 0.5
+    2050: 1    # maximum possible share defined in central fraction
   bev_dsm_restriction_value: 0.75  #Set to 0 for no restriction on BEV DSM
   bev_dsm_restriction_time: 7  #Time at which SOC of BEV has to be dsm_restriction_value
   transport_heating_deadband_upper: 20.
@@ -332,7 +338,7 @@ solving:
 
 plotting:
   map:
-    boundaries: [-11, 30, 34, 71] 
+    boundaries: [-11, 30, 34, 71]
     color_geomap:
       ocean: white
       land: whitesmoke
