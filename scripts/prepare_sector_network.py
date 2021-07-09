@@ -1229,7 +1229,7 @@ def add_heat(n, costs):
                 heat_load = heat_demand[[sector + " water",sector + " space"]].groupby(level=1,axis=1).sum()[nodes[name]].multiply(factor)
 
         if name == "urban central":
-            heat_load = heat_demand.groupby(level=1,axis=1).sum()[nodes[name]].multiply(urban_fraction[nodes[name]] * (1 + options['district_heating_loss']))
+            heat_load = heat_demand.groupby(level=1,axis=1).sum()[nodes[name]].multiply(factor * (1 + options['district_heating_loss']))
 
         n.madd("Load",
             nodes[name],
