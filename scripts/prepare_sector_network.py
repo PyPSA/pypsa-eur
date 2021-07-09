@@ -2075,6 +2075,8 @@ if __name__ == "__main__":
 
     patch_electricity_network(n)
 
+    define_spatial(pop_layout.index)
+
     if snakemake.config["foresight"] == 'myopic':
         
         add_lifetime_wind_solar(n, costs)
