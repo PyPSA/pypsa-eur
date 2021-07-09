@@ -100,12 +100,13 @@ def create_network_topology(n, prefix, connector=" -> "):
     pd.DataFrame with columns bus0, bus1 and length
     """
 
-    attrs = ["bus0", "bus1", "length"]
+    ln_attrs = ["bus0", "bus1", "length"]
+    lk_attrs = ["bus0", "bus1", "length", "underwater_fraction"]
 
     candidates = pd.concat([
-        n.lines[attrs],
-        n.links.loc[n.links.carrier == "DC", attrs]
-    ])
+        n.lines[ln_attrs],
+        n.links.loc[n.links.carrier == "DC", lk_attrs]
+    ]).fillna(0)
 
     positive_order = candidates.bus0 < candidates.bus1
     candidates_p = candidates[positive_order]
@@ -400,6 +401,10 @@ def add_co2_tracking(n, options):
 def add_co2_network(n, costs):
 
     co2_links = create_network_topology(n, "CO2 pipeline ")
+
+    cost_onshore = (1 - co2_links.underwater_fraction) * costs.at['CO2 pipeline', 'fixed'] * co2_links.length
+    cost_submarine = co2_links.underwater_fraction * costs.at['CO2 pipeline submarine', 'fixed'] * co2_links.length
+    capital_cost = cost_onshore + cost_submarine
     
     n.madd("Link",
         co2_links.index,
@@ -408,7 +413,7 @@ def add_co2_network(n, costs):
         p_min_pu=-1,
         p_nom_extendable=True,
         length=co2_links.length.values,
-        capital_cost=costs.at['CO2 pipeline', 'fixed'] * co2_links.length.values,
+        capital_cost=capital_cost.values,
         carrier="CO2 pipeline",
         lifetime=costs.at['CO2 pipeline', 'lifetime']
     )
