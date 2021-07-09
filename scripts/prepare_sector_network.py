@@ -54,6 +54,39 @@ def get(item, investment_year=None):
         return item
 
 
+def create_network_topology(n, prefix, connector=" -> "):
+    """
+    Create a network topology like the power transmission network.
+    
+    Parameters
+    ----------
+    n : pypsa.Network
+    prefix : str
+    connector : str
+        
+    Returns
+    -------
+    pd.DataFrame with columns bus0, bus1 and length
+    """
+
+    attrs = ["bus0", "bus1", "length"]
+
+    candidates = pd.concat([
+        n.lines[attrs],
+        n.links.loc[n.links.carrier == "DC", attrs]
+    ])
+
+    positive_order = candidates.bus0 < candidates.bus1
+    candidates_p = candidates[positive_order]
+    swap_buses = {"bus0": "bus1", "bus1": "bus0"}
+    candidates_n = candidates[~positive_order].rename(columns=swap_buses)
+    candidates = pd.concat([candidates_p, candidates_n])
+
+    topo = candidates.groupby(["bus0", "bus1"], as_index=False).mean()
+    topo.index = topo.apply(lambda c: prefix + c.bus0 + connector + c.bus1, axis=1)
+    return topo
+
+
 def co2_emissions_year(countries, opts, year):
     """
     Calculate CO2 emissions in one specific year (e.g. 1990 or 2018).
@@ -347,10 +380,8 @@ def add_co2_tracking(n, options):
 
 def add_co2_network(n, costs):
 
-    # TODO create co2 network topology from electricity 
-    co2_links = pd.DataFrame()
+    co2_links = create_network_topology(n, "CO2 pipeline ")
     
-    # assumed to be bidirectional
     n.madd("Link",
         co2_links.index,
         bus0=co2_links.bus0.values + " co2 stored",
