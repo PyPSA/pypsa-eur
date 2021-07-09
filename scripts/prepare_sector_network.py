@@ -1748,12 +1748,13 @@ def add_industry(n, costs):
         efficiency=1.
     )
 
-    n.add("Link",
-        "solid biomass for industry CC",
+    n.madd("Link",
+        spatial.co2.locations,
+        suffix=" solid biomass for industry CC",
         bus0="EU solid biomass",
         bus1="solid biomass for industry",
         bus2="co2 atmosphere",
-        bus3="co2 stored", # TODO co2: where to allocate if co2 is spatially resolved?
+        bus3=spatial.co2.nodes,
         carrier="solid biomass for industry CC",
         p_nom_extendable=True,
         capital_cost=costs.at["cement capture", "fixed"] * costs.at['solid biomass', 'CO2 intensity'],
@@ -1786,12 +1787,13 @@ def add_industry(n, costs):
         efficiency2=costs.at['gas', 'CO2 intensity']
     )
 
-    n.add("Link",
-        "gas for industry CC",
+    n.madd("Link",
+        spatial.co2.locations,
+        suffix=" gas for industry CC",
         bus0="EU gas",
         bus1="gas for industry",
         bus2="co2 atmosphere",
-        bus3="co2 stored",  # TODO co2: where to allocate if co2 is spatially resolved?
+        bus3=spatial.co2.nodes,
         carrier="gas for industry CC",
         p_nom_extendable=True,
         capital_cost=costs.at["cement capture", "fixed"] * costs.at['gas', 'CO2 intensity'],
@@ -1963,11 +1965,12 @@ def add_industry(n, costs):
     )
 
     #assume enough local waste heat for CC
-    n.add("Link",
-        "process emissions CC",
+    n.madd("Link",
+        spatial.co2.locations,
+        suffix=" process emissions CC",
         bus0="process emissions",
         bus1="co2 atmosphere",
-        bus2="co2 stored",  # TODO co2: where to allocate if co2 is spatially resolved?
+        bus2=spatial.co2.nodes,
         carrier="process emissions CC",
         p_nom_extendable=True,
         capital_cost=costs.at["cement capture", "fixed"],
