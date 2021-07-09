@@ -19,6 +19,37 @@ from helper import override_component_attrs
 import logging
 logger = logging.getLogger(__name__)
 
+from types import SimpleNamespace
+spatial = SimpleNamespace()
+
+
+def define_spatial(nodes):
+    """
+    Namespace for spatial
+    
+    Parameters
+    ----------
+    nodes : list-like
+    """
+    
+    global spatial
+    global options
+    
+    spatial.nodes = nodes
+    
+    spatial.co2 = SimpleNamespace()
+    
+    if options["co2_network"]:
+        spatial.co2.nodes = nodes + " co2 stored"
+        spatial.co2.locations = nodes
+        spatial.co2.vents = nodes + " co2 vent"
+    else:
+        spatial.co2.nodes = ["co2 stored"]
+        spatial.co2.locations = "EU"
+        spatial.co2.vents = ["co2 vent"]
+
+    spatial.co2.df = pd.DataFrame(vars(spatial.co2), index=nodes)
+
 
 def emission_sectors_from_opts(opts):
 
@@ -310,18 +341,6 @@ def patch_electricity_network(n):
 
 def add_co2_tracking(n, options):
 
-    if options["co2_network"]:
-        nodes = pop_layout.index
-        co2_nodes = nodes + " co2 stored"
-        co2_locations = nodes
-        co2_vents = nodes + " co2 vent"
-        co2_max_sequestration = np.inf
-    else:
-        co2_nodes = ["co2 stored"]
-        co2_locations = "EU"
-        co2_vents = ["co2 vent"]
-        co2_max_sequestration = np.inf # TODO should be nodal sequestration potentials
-
     # minus sign because opposite to how fossil fuels used:
     # CH4 burning puts CH4 down, atmosphere up
     n.add("Carrier", "co2",
@@ -345,18 +364,18 @@ def add_co2_tracking(n, options):
 
     # this tracks CO2 stored, e.g. underground
     n.madd("Bus",
-        co2_nodes,
-        location=co2_locations,
+        spatial.co2.nodes,
+        location=spatial.co2.locations,
         carrier="co2 stored"
     )
 
     n.madd("Store",
-        co2_nodes,
+        spatial.co2.nodes,
         e_nom_extendable=True,
-        e_nom_max=co2_max_sequestration, 
+        e_nom_max=np.inf, 
         capital_cost=options['co2_sequestration_cost'],
         carrier="co2 stored",
-        bus=co2_nodes
+        bus=spatial.co2.nodes
     )
 
     # TODO if nodally resolved total allowed sequestration needs to
@@ -369,8 +388,8 @@ def add_co2_tracking(n, options):
     if options['co2_vent']:
 
         n.madd("Link",
-            co2_vents,
-            bus0=co2_nodes,
+            spatial.co2.vents,
+            bus0=spatial.co2.nodes,
             bus1="co2 atmosphere",
             carrier="co2 vent",
             efficiency=1.,
@@ -408,7 +427,7 @@ def add_dac(n, costs):
         locations,
         suffix=" DAC",
         bus0="co2 atmosphere",
-        bus1="co2 stored",
+        bus1=spatial.co2.df.loc[locations, "nodes"].values,
         bus2=locations.values,
         bus3=heat_buses,
         carrier="DAC",
@@ -1058,10 +1077,11 @@ def add_storage(n, costs):
     if options['methanation']:
 
         n.madd("Link",
-            nodes + " Sabatier",
+            spatial.nodes,
+            suffix=" Sabatier",
             bus0=nodes + " H2",
             bus1="EU gas",
-            bus2="co2 stored",
+            bus2=spatial.co2.nodes,
             p_nom_extendable=True,
             carrier="Sabatier",
             efficiency=costs.at["methanation", "efficiency"],
@@ -1073,10 +1093,11 @@ def add_storage(n, costs):
     if options['helmeth']:
 
         n.madd("Link",
-            nodes + " helmeth",
+            spatial.nodes,
+            suffix=" helmeth",
             bus0=nodes,
             bus1="EU gas",
-            bus2="co2 stored",
+            bus2=spatial.co2.nodes,
             carrier="helmeth",
             p_nom_extendable=True,
             efficiency=costs.at["helmeth", "efficiency"],
@@ -1089,11 +1110,12 @@ def add_storage(n, costs):
     if options['SMR']:
 
         n.madd("Link",
-            nodes + " SMR CC",
+            spatial.nodes,
+            suffix=" SMR CC",
             bus0="EU gas",
             bus1=nodes + " H2",
             bus2="co2 atmosphere",
-            bus3="co2 stored",
+            bus3=spatial.co2.nodes,
             p_nom_extendable=True,
             carrier="SMR CC",
             efficiency=costs.at["SMR CC", "efficiency"],
@@ -1442,7 +1464,7 @@ def add_heat(n, costs):
                 bus1=nodes[name],
                 bus2=nodes[name] + " urban central heat",
                 bus3="co2 atmosphere",
-                bus4="co2 stored",
+                bus4=spatial.co2.df.loc[nodes[name], "nodes"].values,
                 carrier="urban central gas CHP CC",
                 p_nom_extendable=True,
                 capital_cost=costs.at['central gas CHP', 'fixed']*costs.at['central gas CHP', 'efficiency'] + costs.at['biomass CHP capture', 'fixed']*costs.at['gas', 'CO2 intensity'],
@@ -1675,7 +1697,7 @@ def add_biomass(n, costs):
             bus1=urban_central,
             bus2=urban_central + " urban central heat",
             bus3="co2 atmosphere",
-            bus4="co2 stored",
+            bus4=spatial.co2.df.loc[urban_central, "nodes"].values,
             carrier="urban central solid biomass CHP CC",
             p_nom_extendable=True,
             capital_cost=costs.at[key, 'fixed'] * costs.at[key, 'efficiency'] + costs.at['biomass CHP capture', 'fixed'] * costs.at['solid biomass', 'CO2 intensity'],
@@ -1726,7 +1748,7 @@ def add_industry(n, costs):
         bus0="EU solid biomass",
         bus1="solid biomass for industry",
         bus2="co2 atmosphere",
-        bus3="co2 stored",
+        bus3="co2 stored", # TODO co2: where to allocate if co2 is spatially resolved?
         carrier="solid biomass for industry CC",
         p_nom_extendable=True,
         capital_cost=costs.at["cement capture", "fixed"] * costs.at['solid biomass', 'CO2 intensity'],
@@ -1764,7 +1786,7 @@ def add_industry(n, costs):
         bus0="EU gas",
         bus1="gas for industry",
         bus2="co2 atmosphere",
-        bus3="co2 stored",
+        bus3="co2 stored",  # TODO co2: where to allocate if co2 is spatially resolved?
         carrier="gas for industry CC",
         p_nom_extendable=True,
         capital_cost=costs.at["cement capture", "fixed"] * costs.at['gas', 'CO2 intensity'],
@@ -1847,7 +1869,7 @@ def add_industry(n, costs):
         nodes + " Fischer-Tropsch",
         bus0=nodes + " H2",
         bus1="EU oil",
-        bus2="co2 stored",
+        bus2=spatial.co2.nodes,
         carrier="Fischer-Tropsch",
         efficiency=costs.at["Fischer-Tropsch", 'efficiency'],
         capital_cost=costs.at["Fischer-Tropsch", 'fixed'],
@@ -1940,7 +1962,7 @@ def add_industry(n, costs):
         "process emissions CC",
         bus0="process emissions",
         bus1="co2 atmosphere",
-        bus2="co2 stored",
+        bus2="co2 stored",  # TODO co2: where to allocate if co2 is spatially resolved?
         carrier="process emissions CC",
         p_nom_extendable=True,
         capital_cost=costs.at["cement capture", "fixed"],
