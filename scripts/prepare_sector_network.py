@@ -328,7 +328,7 @@ def add_co2_tracking(n, options):
 
 def add_dac(n, costs):
 
-    heat_carriers = ["urban central heat", "services urban decentral heat"]
+    heat_carriers = ["urban central heat"]
     heat_buses = n.buses.index[n.buses.carrier.isin(heat_carriers)]
     locations = n.buses.location[heat_buses]
 
