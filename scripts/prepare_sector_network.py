@@ -2246,7 +2246,7 @@ if __name__ == "__main__":
             lv=1.0,
             opts='',
             sector_opts='Co2L0-168H-T-H-B-I-solar3-dist1',
-            planning_horizons="2020",
+            planning_horizons="2030",
         )
 
     logging.basicConfig(level=snakemake.config['logging_level'])
