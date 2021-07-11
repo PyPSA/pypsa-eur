@@ -1527,9 +1527,6 @@ def add_biomass(n, costs):
 
     print("adding biomass")
 
-    # biomass distributed at country level - i.e. transport within country allowed
-    countries = n.buses.country.dropna().unique()
-
     biomass_potentials = pd.read_csv(snakemake.input.biomass_potentials, index_col=0)
 
     n.add("Carrier", "biogas")
@@ -1552,18 +1549,18 @@ def add_biomass(n, costs):
         "EU biogas",
         bus="EU biogas",
         carrier="biogas",
-        e_nom=biomass_potentials.loc[countries, "biogas"].sum(),
+        e_nom=biomass_potentials["biogas"].sum(),
         marginal_cost=costs.at['biogas', 'fuel'],
-        e_initial=biomass_potentials.loc[countries, "biogas"].sum()
+        e_initial=biomass_potentials["biogas"].sum()
     )
 
     n.add("Store",
         "EU solid biomass",
         bus="EU solid biomass",
         carrier="solid biomass",
-        e_nom=biomass_potentials.loc[countries, "solid biomass"].sum(),
+        e_nom=biomass_potentials["solid biomass"].sum(),
         marginal_cost=costs.at['solid biomass', 'fuel'],
-        e_initial=biomass_potentials.loc[countries, "solid biomass"].sum()
+        e_initial=biomass_potentials["solid biomass"].sum()
     )
 
     n.add("Link",

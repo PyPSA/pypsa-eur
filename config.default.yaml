@@ -99,28 +99,28 @@ energy:
 
 biomass:
   year: 2030
-  scenario: Med
+  scenario: ENS_Med
   classes:
     solid biomass:
-      - Primary agricultural residues
-      - Forestry energy residue
-      - Secondary forestry residues
-      - Secondary Forestry residues sawdust
-      - Forestry residues from landscape care biomass
+      - Argicultural waste
       - Municipal waste
+      - Residues from landscape care
+      - Sawdust
+      - Secondary Forestry residues - woodchips
     not included:
-      - Bioethanol sugar beet biomass
-      - Rapeseeds for biodiesel
-      - sunflower and soya for Biodiesel
-      - Starchy crops biomass
-      - Grassy crops biomass
-      - Willow biomass
-      - Poplar biomass potential
-      - Roundwood fuelwood
-      - Roundwood Chips & Pellets
+      - Bioethanol barley, wheat, grain maize, oats, other cereals and rye
+      - Fuelwood residues
+      - C&P_RW
+      - FuelwoodRW
+      - Rape seed
+      - Sugar from sugar beet
+      - Miscanthus, switchgrass, RCG
+      - "Sunflower, soya seed "
+      - Poplar
+      - Willow
     biogas:
-      - Manure biomass potential
-      - Sludge biomass
+      - Manure solid, liquid
+      - Sludge
 
 
 solar_thermal:
