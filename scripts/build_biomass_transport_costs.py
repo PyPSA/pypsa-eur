@@ -67,4 +67,4 @@ def build_biomass_transport_costs():
 
 if __name__ == "__main__":
 
-    prepare_biomass_transport_costs()
+    build_biomass_transport_costs()
