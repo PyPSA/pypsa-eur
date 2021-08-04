@@ -1934,7 +1934,7 @@ def maybe_adjust_costs_and_potentials(n, opts):
             else:
                 if attr == 'p_nom_max':
                     comps = {"Generator", "Link", "StorageUnit"}
-                elif attr = 'e_nom_max':
+                elif attr == 'e_nom_max':
                     comps = {"Store"}    
                 else:
                     comps = {"Generator", "Link", "StorageUnit", "Store"}
