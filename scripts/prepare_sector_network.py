@@ -20,6 +20,36 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+from types import SimpleNamespace
+spatial = SimpleNamespace()
+
+
+def define_spatial(nodes):
+    """
+    Namespace for spatial
+    
+    Parameters
+    ----------
+    nodes : list-like
+    """
+
+    global spatial
+    global options
+
+    spatial.nodes = nodes
+
+    spatial.gas = SimpleNamespace()
+
+    if options["gas_network"]:
+        spatial.gas.nodes = nodes + " gas"
+        spatial.gas.locations = nodes
+    else:
+        spatial.gas.nodes = ["EU gas"]
+        spatial.gas.locations = "EU"
+
+    spatial.gas.df = pd.DataFrame(vars(spatial.gas), index=nodes)
+
+
 def emission_sectors_from_opts(opts):
 
     sectors = ["electricity"]
@@ -651,7 +681,7 @@ def add_generation(n, costs):
     for generator, carrier in conventionals.items():
 
         if carrier == 'gas' and options["gas_network"]:
-            carrier_nodes = nodes + " " + carrier
+            carrier_nodes = spatial.gas.nodes
         else:
             carrier_nodes = ["EU " + carrier]
 
@@ -963,10 +993,13 @@ def add_storage(n, costs):
             "id",
             "length_km"
         ]
-        gas_pipes = pd.read_csv(snakemake.input.clustered_gas_network)[cols]
-        index = "Gas pipeline " + gas_pipes["bus0"] + " -> " + gas_pipes["bus1"]
-        index[gas_pipes.is_bothDirection==1] = index[gas_pipes.is_bothDirection==1].str.replace("->", "<->")
-        gas_pipes.index = index
+        gas_pipes = pd.read_csv("../resources/gas_network_elec_s_181.csv", usecols=cols)
+
+        def make_index(x):
+            connector = " <-> " if x.is_bothDirection else " -> "
+            return "Gas pipeline " + x.bus0 + connector + x.bus1
+
+        gas_pipes.index = gas_pipes.apply(make_index, axis=1)
 
         # group parallel pipes together
         strategies = {
@@ -977,15 +1010,10 @@ def add_storage(n, costs):
             "length_km": 'sum',
             'id': ' '.join,
         }
-        num_parallel = gas_pipes.groupby(gas_pipes.index).count().iloc[:,0]
         gas_pipes = gas_pipes.groupby(gas_pipes.index).agg(strategies)
 
-        both_direction_i = gas_pipes[gas_pipes.is_bothDirection==1].index
-        # TODO capital cost from DEA energy transport data sheet 102 6
-        # lifetime 50 a, investment ~1 EUR/MW/km, FOM 0.12 EUR/MW/km/year, discountrate 7%
-        pipe_fixed_cost = 0.19   # EUR/MW/km/a (annualised investment costs)
-        gas_pipes["p_min_pu"] = 0.
-        gas_pipes.loc[both_direction_i, "p_min_pu"] = -1
+        gas_pipes["num_parallel"] = gas_pipes.index.value_counts()
+        gas_pipes["p_min_pu"] = gas_pipes.apply(lambda x: -1 if x.is_bothDirection else 0, axis=1)
 
         n.madd("Link",
             gas_pipes.index,
@@ -995,8 +1023,8 @@ def add_storage(n, costs):
             p_nom=gas_pipes.pipe_capacity_MW,
             p_nom_extendable=False,
             length=gas_pipes.length_km,
-            capital_cost=gas_pipes.length_km * pipe_fixed_cost,
-            type=num_parallel,
+            capital_cost=gas_pipes.length_km * costs.at['CH4 (g) pipeline', 'fixed'],
+            type=gas_pipes.num_parallel,
             tags=gas_pipes.id,
             carrier="Gas pipeline",
             lifetime=50
@@ -1009,28 +1037,28 @@ def add_storage(n, costs):
                               & (~n.generators.bus.str.replace(" gas","").isin(missing))].index
         n.generators.drop(remove_i, inplace=True)
 
-        # retroftting existing CH4 pipes to H2 pipes
-        if options["H2_retrofit"]:
+    # retroftting existing CH4 pipes to H2 pipes
+    if options["gas_network"] and options["H2_retrofit"]:
 
-            gas_pipe_i = n.links[n.links.carrier=="Gas pipeline"].index
-            n.links.loc[gas_pipe_i, "p_nom_extendable"] = True
-            h2_pipes = gas_pipes.rename(index=lambda x:
-                                        x.replace("Gas pipeline", "H2 pipeline retrofitted"))
+        gas_pipe_i = n.links[n.links.carrier == "Gas pipeline"].index
+        n.links.loc[gas_pipe_i, "p_nom_extendable"] = True
+        h2_pipes = gas_pipes.rename(index=lambda x:
+                                    x.replace("Gas pipeline", "H2 pipeline retrofitted"))
 
-            n.madd("Link",
-                h2_pipes.index,
-                bus0=h2_pipes.bus0 + " H2",
-                bus1=h2_pipes.bus1 + " H2",
-                p_min_pu=-1.,  # allow that H2 pipelines can be used in other direction
-                p_nom_max=h2_pipes.pipe_capacity_MW,
-                p_nom_extendable=True,
-                length=h2_pipes.length_km,
-                capital_cost=costs.at['H2 pipeline','fixed'] * h2_pipes.length_km * 0.3,   # TODO
-                type=num_parallel,
-                tags=h2_pipes.id,
-                carrier="H2 pipeline retrofitted",
-                lifetime=50
-            )
+        n.madd("Link",
+            h2_pipes.index,
+            bus0=h2_pipes.bus0 + " H2",
+            bus1=h2_pipes.bus1 + " H2",
+            p_min_pu=-1.,  # allow that all H2 pipelines can be used in other direction
+            p_nom_max=h2_pipes.pipe_capacity_MW,
+            p_nom_extendable=True,
+            length=h2_pipes.length_km,
+            capital_cost=costs.at['H2 (g) pipeline','fixed'] * h2_pipes.length_km * 0.3,   # TODO
+            type=gas_pipes.num_parallel,
+            tags=h2_pipes.id,
+            carrier="H2 pipeline retrofitted",
+            lifetime=50
+        )
 
     n.add("Carrier", "battery")
 
