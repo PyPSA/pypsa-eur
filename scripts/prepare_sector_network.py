@@ -1053,7 +1053,7 @@ def add_storage(n, costs):
             p_nom_max=h2_pipes.pipe_capacity_MW * options["H2_retrofit_capacity_per_CH4"],
             p_nom_extendable=True,
             length=h2_pipes.length_km,
-            capital_cost=costs.at['H2 (g) pipeline','fixed'] * h2_pipes.length_km * 0.3,   # TODO
+            capital_cost=costs.at['H2 (g) pipeline repurposed', 'fixed'] * h2_pipes.length_km,
             type=gas_pipes.num_parallel,
             tags=h2_pipes.id,
             carrier="H2 pipeline retrofitted",
