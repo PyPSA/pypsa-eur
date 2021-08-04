@@ -222,6 +222,7 @@ sector:
   electricity_grid_connection: true  # only applies to onshore wind and utility PV
   gas_network: true
   H2_retrofit: true  # if set to True existing gas pipes can be retrofitted to H2 pipes
+  H2_retrofit_capacity_per_CH4: 0.6  # ratio for H2 capacity per original CH4 capacity of retrofitted pipelines
   gas_distribution_grid: true
   gas_distribution_grid_cost_factor: 1.0  #multiplies cost in data/costs.csv
   conventional_generation: # generator : carrier

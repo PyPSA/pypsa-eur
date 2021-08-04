@@ -1050,7 +1050,7 @@ def add_storage(n, costs):
             bus0=h2_pipes.bus0 + " H2",
             bus1=h2_pipes.bus1 + " H2",
             p_min_pu=-1.,  # allow that all H2 pipelines can be used in other direction
-            p_nom_max=h2_pipes.pipe_capacity_MW,
+            p_nom_max=h2_pipes.pipe_capacity_MW * options["H2_retrofit_capacity_per_CH4"],
             p_nom_extendable=True,
             length=h2_pipes.length_km,
             capital_cost=costs.at['H2 (g) pipeline','fixed'] * h2_pipes.length_km * 0.3,   # TODO
