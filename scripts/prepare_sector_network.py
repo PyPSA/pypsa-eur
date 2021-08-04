@@ -1656,8 +1656,6 @@ def add_biomass(n, costs):
 
     print("adding biomass")
 
-    nodes = pop_layout.index
-
     # biomass distributed at country level - i.e. transport within country allowed
     countries = n.buses.country.dropna().unique()
 
