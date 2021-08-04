@@ -43,9 +43,15 @@ def define_spatial(nodes):
     if options["gas_network"]:
         spatial.gas.nodes = nodes + " gas"
         spatial.gas.locations = nodes
+        spatial.gas.biogas = nodes + " biogas"
+        spatial.gas.industry = nodes + " gas for industry"
+        spatial.gas.industry_cc = nodes + " gas for industry CC"
     else:
         spatial.gas.nodes = ["EU gas"]
         spatial.gas.locations = "EU"
+        spatial.gas.biogas = ["EU biogas"]
+        spatial.gas.industry = ["gas for industry"]
+        spatial.gas.industry_cc = ["gas for industry CC"]
 
     spatial.gas.df = pd.DataFrame(vars(spatial.gas), index=nodes)
 
@@ -1111,17 +1117,12 @@ def add_storage(n, costs):
         lifetime=costs.at['battery inverter', 'lifetime']
     )
 
-    if options["gas_network"]:
-        gas_nodes = nodes + " gas"
-    else:
-        gas_nodes = pd.Index(["EU gas"])
-
     if options['methanation']:
 
         n.madd("Link",
             nodes + " Sabatier",
             bus0=nodes + " H2",
-            bus1=gas_nodes.repeat((len(nodes)//len(gas_nodes))),
+            bus1=spatial.gas.nodes,
             bus2="co2 stored",
             p_nom_extendable=True,
             carrier="Sabatier",
@@ -1136,7 +1137,7 @@ def add_storage(n, costs):
         n.madd("Link",
             nodes + " helmeth",
             bus0=nodes,
-            bus1=gas_nodes.repeat((len(nodes)//len(gas_nodes))),
+            bus1=spatial.gas.nodes,
             bus2="co2 stored",
             carrier="helmeth",
             p_nom_extendable=True,
@@ -1151,7 +1152,7 @@ def add_storage(n, costs):
 
         n.madd("Link",
             nodes + " SMR CC",
-            bus0=gas_nodes.repeat((len(nodes)//len(gas_nodes))),
+            bus0=spatial.gas.nodes,
             bus1=nodes + " H2",
             bus2="co2 atmosphere",
             bus3="co2 stored",
@@ -1166,7 +1167,7 @@ def add_storage(n, costs):
 
         n.madd("Link",
             nodes + " SMR",
-            bus0=gas_nodes.repeat((len(nodes)//len(gas_nodes))),
+            bus0=spatial.gas.nodes,
             bus1=nodes + " H2",
             bus2="co2 atmosphere",
             p_nom_extendable=True,
@@ -1302,19 +1303,12 @@ def add_land_transport(n, costs):
 
 
 def add_heat(n, costs):
-    # TODO options?
-    # TODO pop_layout?
 
     print("adding heat")
 
     sectors = ["residential", "services"]
 
     nodes = create_nodes_for_heat_sector()
-
-    if options["gas_network"]:
-        gas_nodes = pop_layout.index + " gas"
-    else:
-        gas_nodes = pd.Index(["EU gas"])
 
     #NB: must add costs of central heating afterwards (EUR 400 / kWpeak, 50a, 1% FOM from Fraunhofer ISE)
 
@@ -1336,12 +1330,6 @@ def add_heat(n, costs):
     ]
     
     for name in heat_systems:
-
-        if options["gas_network"]:
-            gas_nodes_region = gas_nodes[[gas_node.replace(" gas","")
-                                          in nodes[name] for gas_node in gas_nodes]]
-        else:
-            gas_nodes_region = gas_nodes
 
         name_type = "central" if name == "urban central" else "decentral"
 
@@ -1464,7 +1452,7 @@ def add_heat(n, costs):
             n.madd("Link",
                 nodes[name] + f" {name} gas boiler",
                 p_nom_extendable=True,
-                bus0=gas_nodes_region.repeat((len(nodes[name])//len(gas_nodes_region))),
+                bus0=spatial.gas.df.loc[nodes[name], "nodes"].values,
                 bus1=nodes[name] + f" {name} heat",
                 bus2="co2 atmosphere",
                 carrier=name + " gas boiler",
@@ -1494,7 +1482,7 @@ def add_heat(n, costs):
             # add gas CHP; biomass CHP is added in biomass section
             n.madd("Link",
                 nodes[name] + " urban central gas CHP",
-                bus0=gas_nodes_region,
+                bus0=spatial.gas.df.loc[nodes[name], "nodes"].values,
                 bus1=nodes[name],
                 bus2=nodes[name] + " urban central heat",
                 bus3="co2 atmosphere",
@@ -1510,7 +1498,7 @@ def add_heat(n, costs):
 
             n.madd("Link",
                 nodes[name] + " urban central gas CHP CC",
-                bus0=gas_nodes_region,
+                bus0=spatial.gas.df.loc[nodes[name], "nodes"].values,
                 bus1=nodes[name],
                 bus2=nodes[name] + " urban central heat",
                 bus3="co2 atmosphere",
@@ -1531,7 +1519,7 @@ def add_heat(n, costs):
             n.madd("Link",
                 nodes[name] + f" {name} micro gas CHP",
                 p_nom_extendable=True,
-                bus0=gas_nodes_region,
+                bus0=spatial.gas.df.loc[nodes[name], "nodes"].values,
                 bus1=nodes[name],
                 bus2=nodes[name] + f" {name} heat",
                 bus3="co2 atmosphere",
@@ -1677,14 +1665,13 @@ def add_biomass(n, costs):
 
     # potential per node distributed within country by population
     biogas_pot = (biomass_potentials.loc[pop_layout.ct]
-                        .set_index(pop_layout.index)
-                        .mul(pop_layout.fraction, axis="index")
-                        .rename(index=lambda x: x + " biogas"))["biogas"]
+        .set_index(pop_layout.index)
+        .mul(pop_layout.fraction, axis="index")
+        .rename(index=lambda x: x + " biogas")
+    )["biogas"]
 
-    if options["gas_network"]:
-        gas_nodes = nodes + " gas"
-    else:
-        gas_nodes = pd.Index(["EU gas"])
+    # need to aggregate potentials if gas not nodally resolved
+    if not options["gas_network"]:
         biogas_pot = biogas_pot.sum()
 
     n.add("Carrier", "biogas")
@@ -1692,8 +1679,8 @@ def add_biomass(n, costs):
     n.add("Carrier", "solid biomass")
 
     n.madd("Bus",
-        gas_nodes.str.replace("gas", "biogas"),
-        location=gas_nodes.str.replace(" gas", ""),
+        spatial.gas.biogas,
+        location=spatial.gas.locations,
         carrier="biogas"
     )
 
@@ -1704,8 +1691,8 @@ def add_biomass(n, costs):
     )
 
     n.madd("Store",
-        gas_nodes.str.replace("gas", "biogas"),
-        bus=gas_nodes.str.replace("gas", "biogas"),
+        spatial.gas.biogas,
+        bus=spatial.gas.biogas,
         carrier="biogas",
         e_nom=biogas_pot,
         marginal_cost=costs.at['biogas', 'fuel'],
@@ -1722,9 +1709,9 @@ def add_biomass(n, costs):
     )
 
     n.madd("Link",
-        gas_nodes.str.replace("gas", "") + "biogas to gas",
-        bus0=gas_nodes.str.replace("gas", "biogas"),
-        bus1=gas_nodes,
+        spatial.gas.locations + "biogas to gas",
+        bus0=spatial.gas.biogas,
+        bus1=spatial.gas.nodes,
         bus2="co2 atmosphere",
         carrier="biogas to gas",
         capital_cost=costs.loc["biogas upgrading", "fixed"],
@@ -1783,18 +1770,13 @@ def add_industry(n, costs):
     # 1e6 to convert TWh to MWh
     industrial_demand = pd.read_csv(snakemake.input.industrial_demand, index_col=0) * 1e6
 
-    methane_demand = ((industrial_demand.loc[nodes,"methane"]/8760)
-                  .rename(index=lambda x: x + " gas for industry"))
+    methane_demand = industrial_demand.loc[nodes, "methane"].div(8760).rename(index=lambda x: x + " gas for industry")
 
-    if options["gas_network"]:
-        gas_nodes = nodes + " gas"
-    else:
-        gas_nodes = pd.Index(["EU gas"])
+    # need to aggregate methane demand if gas not nodally resolved
+    if not options["gas_network"]:
         methane_demand = methane_demand.sum()
 
     solid_biomass_by_country = industrial_demand["solid biomass"].groupby(pop_layout.ct).sum()
-
-    countries = solid_biomass_by_country.index
 
     n.add("Bus",
         "solid biomass for industry",
@@ -1834,21 +1816,21 @@ def add_industry(n, costs):
     )
 
     n.madd("Bus",
-        gas_nodes.str.replace("gas", "gas for industry"),
-        location=gas_nodes.str.replace(" gas",""),
+        spatial.gas.industry,
+        location=spatial.gas.locations,
         carrier="gas for industry")
 
     n.madd("Load",
-        gas_nodes.str.replace("gas", "gas for industry"),
-        bus=gas_nodes.str.replace("gas", "gas for industry"),
+        spatial.gas.industry,
+        bus=spatial.gas.industry,
         carrier="gas for industry",
         p_set=methane_demand
     )
 
     n.madd("Link",
-        gas_nodes.str.replace("gas", "gas for industry"),
-        bus0=gas_nodes,
-        bus1=gas_nodes.str.replace("gas","gas for industry"),
+        spatial.gas.industry,
+        bus0=spatial.gas.nodes,
+        bus1=spatial.gas.industry,
         bus2="co2 atmosphere",
         carrier="gas for industry",
         p_nom_extendable=True,
@@ -1857,9 +1839,9 @@ def add_industry(n, costs):
     )
 
     n.madd("Link",
-        gas_nodes.str.replace("gas", "gas for industry CC"),
-        bus0=gas_nodes,
-        bus1=gas_nodes.str.replace("gas", "gas for industry"),
+        spatial.gas.industry_cc,
+        bus0=spatial.gas.nodes,
+        bus1=spatial.gas.industry,
         bus2="co2 atmosphere",
         bus3="co2 stored",
         carrier="gas for industry CC",
