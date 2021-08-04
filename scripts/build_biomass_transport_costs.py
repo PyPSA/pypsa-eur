@@ -22,7 +22,7 @@ ENERGY_CONTENT = 4.8  # unit MWh/tonne (assuming wood pellets)
 def build_biomass_transport_costs():
 
     df_list = tbl.read_pdf(
-        snakemake.input[0],
+        snakemake.input.transport_cost_data,
         pages="145-147",
         multiple_tables=True,
     )
