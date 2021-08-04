@@ -993,7 +993,7 @@ def add_storage(n, costs):
             "id",
             "length_km"
         ]
-        gas_pipes = pd.read_csv("../resources/gas_network_elec_s_181.csv", usecols=cols)
+        gas_pipes = pd.read_csv(snakemake.input.clustered_gas_network, usecols=cols)
 
         def make_index(x):
             connector = " <-> " if x.is_bothDirection else " -> "
@@ -1015,15 +1015,26 @@ def add_storage(n, costs):
         gas_pipes["num_parallel"] = gas_pipes.index.value_counts()
         gas_pipes["p_min_pu"] = gas_pipes.apply(lambda x: -1 if x.is_bothDirection else 0, axis=1)
 
+        if options["H2_retrofit"]:
+            gas_pipes["p_nom_max"] = gas_pipes.gas_pipes.pipe_capacity_MW
+            gas_pipes["p_nom_min"] = 0.
+            gas_pipes["capital_cost"] = 0.
+        else:
+            gas_pipes["p_nom_max"] = np.inf
+            gas_pipes["p_nom_min"] = gas_pipes.gas_pipes.pipe_capacity_MW
+            gas_pipes["capital_cost"] = gas_pipes.length_km * costs.at['CH4 (g) pipeline', 'fixed']
+
         n.madd("Link",
             gas_pipes.index,
             bus0=gas_pipes.bus0 + " gas",
             bus1=gas_pipes.bus1 + " gas",
             p_min_pu=gas_pipes.p_min_pu,
             p_nom=gas_pipes.pipe_capacity_MW,
-            p_nom_extendable=False,
+            p_nom_extendable=True,
+            p_nom_max=gas_pipes.p_nom_max,
+            p_nom_min=gas_pipes.p_nom_min,
             length=gas_pipes.length_km,
-            capital_cost=gas_pipes.length_km * costs.at['CH4 (g) pipeline', 'fixed'],
+            capital_cost=gas_pipes.capital_cost,
             type=gas_pipes.num_parallel,
             tags=gas_pipes.id,
             carrier="Gas pipeline",
