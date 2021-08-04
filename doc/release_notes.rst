@@ -60,8 +60,12 @@ Future release
   These are included in the environment specifications of PyPSA-Eur.
 * Consistent use of ``__main__`` block and further unspecific code cleaning.
 * Distinguish costs for home battery storage and inverter from utility-scale battery costs.
+* Added option for hydrogen liquefaction costs for hydrogen demand in shipping.
+  This introduces a new ``H2 liquid`` bus at each location.
+  It is activated via ``sector: shipping_hydrogen_liquefaction: true``.
 * The share of shipping transformed into hydrogen fuel cell can be now defined for different years in the ``config.yaml`` file. The carbon emission from the remaining share is treated as a negative load on the atmospheric carbon dioxide bus, just like aviation and land transport emissions.
 * The transformation of the Steel and Aluminium production can be now defined for different years in the ``config.yaml`` file.
+* Include the option to alter the maximum energy capacity of a store via the ``carrier+factor`` in the ``{sector_opts}`` wildcard. This can be useful for sensitivity analyses. Example: ``co2 stored+e2`` multiplies the ``e_nom_max`` by factor 2. In this example, ``e_nom_max`` represents the CO2 sequestration potential in Europe.
 
 PyPSA-Eur-Sec 0.5.0 (21st May 2021)
 ===================================

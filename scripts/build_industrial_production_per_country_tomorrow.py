@@ -27,7 +27,7 @@ if __name__ == '__main__':
     dri = dri_fraction * fraction_persistent_primary * production["Integrated steelworks"]
     production.insert(2, "DRI + Electric arc", dri)
 
-    not_dri = (1 - dri_fraction) * fraction_persistent_primary
+    not_dri = (1 - dri_fraction)
     production["Integrated steelworks"] = not_dri * fraction_persistent_primary * production["Integrated steelworks"]
     production["Electric arc"] = total_steel - production["DRI + Electric arc"] - production["Integrated steelworks"]
 
