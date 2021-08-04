@@ -1716,7 +1716,8 @@ def add_industry(n, costs):
 
     all_navigation = ["total international navigation", "total domestic navigation"]
     efficiency = options['shipping_average_efficiency'] / costs.at["fuel cell", "efficiency"]
-    p_set = nodal_energy_totals.loc[nodes, all_navigation].sum(axis=1) * 1e6 * efficiency / 8760
+    shipping_hydrogen_share = get(options['shipping_hydrogen_share'], investment_year)
+    p_set = shipping_hydrogen_share * nodal_energy_totals.loc[nodes, all_navigation].sum(axis=1) * 1e6 * efficiency / 8760
 
     n.madd("Load",
         nodes,
@@ -1725,6 +1726,29 @@ def add_industry(n, costs):
         carrier="H2 for shipping",
         p_set=p_set
     )
+
+    if shipping_hydrogen_share < 1:
+
+        shipping_oil_share = 1 - shipping_hydrogen_share
+        
+        p_set = shipping_oil_share * nodal_energy_totals.loc[nodes, all_navigation].sum(axis=1) * 1e6 / 8760.
+        
+        n.madd("Load",
+            nodes,
+            suffix=" shipping oil",
+            bus="EU oil",
+            carrier="shipping oil",
+            p_set=p_set
+        )
+        
+        co2 = shipping_oil_share * nodal_energy_totals.loc[nodes, all_navigation].sum().sum() * 1e6 / 8760 * costs.at["oil", "CO2 intensity"]
+
+        n.add("Load",
+            "shipping oil emissions",
+            bus="co2 atmosphere",
+            carrier="shipping oil emissions",
+            p_set=-co2
+        )
 
     if "EU oil" not in n.buses.index:
 
