@@ -169,7 +169,6 @@ def add_co2_sequestration_limit(n, sns):
 
 
 def extra_functionality(n, snapshots):
-    add_chp_constraints(n)
     add_battery_constraints(n)
     add_co2_sequestration_limit(n, snapshots)
 
