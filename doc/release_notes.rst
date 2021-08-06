@@ -60,6 +60,14 @@ Future release
   These are included in the environment specifications of PyPSA-Eur.
 * Consistent use of ``__main__`` block and further unspecific code cleaning.
 * Distinguish costs for home battery storage and inverter from utility-scale battery costs.
+* Add option to regionally resolve CO2 storage and add CO2 pipeline transport because geological storage potential,
+  CO2 utilisation sites and CO2 capture sites may be separated.
+  The CO2 network is built from zero based on the topology of the electricity grid (greenfield).
+  Pipelines are assumed to be bidirectional and lossless.
+  Furthermore, neither retrofitting of natural gas pipelines (required pressures are too high, 80-160 bar vs <80 bar)
+  nor other modes of CO2 transport (by ship, road or rail) are considered.
+  The regional representation of CO2 is activated with the config setting ``sector: co2_network: true`` but is deactivated by default.
+  The global limit for CO2 sequestration now applies to the sum of all CO2 stores via an ``extra_functionality`` constraint.
 
 
 
