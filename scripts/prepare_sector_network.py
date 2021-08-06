@@ -45,7 +45,7 @@ def define_spatial(nodes):
         spatial.co2.vents = nodes + " co2 vent"
     else:
         spatial.co2.nodes = ["co2 stored"]
-        spatial.co2.locations = "EU"
+        spatial.co2.locations = ["EU"]
         spatial.co2.vents = ["co2 vent"]
 
     spatial.co2.df = pd.DataFrame(vars(spatial.co2), index=nodes)
@@ -378,13 +378,6 @@ def add_co2_tracking(n, options):
         carrier="co2 stored",
         bus=spatial.co2.nodes
     )
-
-    # TODO if nodally resolved total allowed sequestration needs to
-    # be an extra_functionality constraint
-    # (best to implement it this way for either case)
-    # let e_nom_max represent geological potential
-    # don't forget to log duals of extra functionality!
-    # options['co2_sequestration_potential'] * 1e6
 
     if options['co2_vent']:
 
