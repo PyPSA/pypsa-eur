@@ -151,7 +151,6 @@ def add_chp_constraints(n):
 
 
 def extra_functionality(n, snapshots):
-    add_chp_constraints(n)
     add_battery_constraints(n)
 
 

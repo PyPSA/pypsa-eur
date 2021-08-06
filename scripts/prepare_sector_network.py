@@ -986,7 +986,7 @@ def add_storage(n, costs):
         )
 
     # hydrogen stored overground (where not already underground)
-    h2_capital_cost = costs.at["hydrogen storage tank", "fixed"]
+    h2_capital_cost = costs.at["hydrogen storage tank incl. compressor", "fixed"]
     nodes_overground = cavern_nodes.index.symmetric_difference(nodes)
 
     n.madd("Store",
@@ -1021,9 +1021,9 @@ def add_storage(n, costs):
         p_min_pu=-1,
         p_nom_extendable=True,
         length=h2_links.length.values,
-        capital_cost=costs.at['H2 pipeline', 'fixed'] * h2_links.length.values,
+        capital_cost=costs.at['H2 (g) pipeline', 'fixed'] * h2_links.length.values,
         carrier="H2 pipeline",
-        lifetime=costs.at['H2 pipeline', 'lifetime']
+        lifetime=costs.at['H2 (g) pipeline', 'lifetime']
     )
 
     n.add("Carrier", "battery")
@@ -1077,7 +1077,7 @@ def add_storage(n, costs):
             carrier="Sabatier",
             efficiency=costs.at["methanation", "efficiency"],
             efficiency2=-costs.at["methanation", "efficiency"] * costs.at['gas', 'CO2 intensity'],
-            capital_cost=costs.at["methanation", "fixed"],
+            capital_cost=costs.at["methanation", "fixed"] * costs.at["methanation", "efficiency"],  # costs given per kW_gas
             lifetime=costs.at['methanation', 'lifetime']
         )
 
@@ -1824,17 +1824,65 @@ def add_industry(n, costs):
         p_set=industrial_demand.loc[nodes, "hydrogen"] / 8760
     )
 
+    if options["shipping_hydrogen_liquefaction"]:
+
+        n.madd("Bus",
+            nodes,
+            suffix=" H2 liquid",
+            carrier="H2 liquid",
+            location=nodes
+        )
+
+        n.madd("Link",
+            nodes + " H2 liquefaction",
+            bus0=nodes + " H2",
+            bus1=nodes + " H2 liquid",
+            carrier="H2 liquefaction",
+            efficiency=costs.at["H2 liquefaction", 'efficiency'],
+            capital_cost=costs.at["H2 liquefaction", 'fixed'],
+            p_nom_extendable=True,
+            lifetime=costs.at['H2 liquefaction', 'lifetime']
+        )
+
+        shipping_bus = nodes + " H2 liquid"
+    else:
+        shipping_bus = nodes + " H2"
+
     all_navigation = ["total international navigation", "total domestic navigation"]
     efficiency = options['shipping_average_efficiency'] / costs.at["fuel cell", "efficiency"]
-    p_set = nodal_energy_totals.loc[nodes, all_navigation].sum(axis=1) * 1e6 * efficiency / 8760
+    shipping_hydrogen_share = get(options['shipping_hydrogen_share'], investment_year)
+    p_set = shipping_hydrogen_share * nodal_energy_totals.loc[nodes, all_navigation].sum(axis=1) * 1e6 * efficiency / 8760
 
     n.madd("Load",
         nodes,
         suffix=" H2 for shipping",
-        bus=nodes + " H2",
+        bus=shipping_bus,
         carrier="H2 for shipping",
         p_set=p_set
     )
+
+    if shipping_hydrogen_share < 1:
+
+        shipping_oil_share = 1 - shipping_hydrogen_share
+        
+        p_set = shipping_oil_share * nodal_energy_totals.loc[nodes, all_navigation].sum(axis=1) * 1e6 / 8760.
+        
+        n.madd("Load",
+            nodes,
+            suffix=" shipping oil",
+            bus="EU oil",
+            carrier="shipping oil",
+            p_set=p_set
+        )
+        
+        co2 = shipping_oil_share * nodal_energy_totals.loc[nodes, all_navigation].sum().sum() * 1e6 / 8760 * costs.at["oil", "CO2 intensity"]
+
+        n.add("Load",
+            "shipping oil emissions",
+            bus="co2 atmosphere",
+            carrier="shipping oil emissions",
+            p_set=-co2
+        )
 
     if "EU oil" not in n.buses.index:
 
@@ -2035,14 +2083,19 @@ def maybe_adjust_costs_and_potentials(n, opts):
         suptechs = map(lambda c: c.split("-", 2)[0], carrier_list)
         if oo[0].startswith(tuple(suptechs)):
             carrier = oo[0]
-            attr_lookup = {"p": "p_nom_max", "c": "capital_cost"}
+            attr_lookup = {"p": "p_nom_max", "e": "e_nom_max", "c": "capital_cost"}
             attr = attr_lookup[oo[1][0]]
             factor = float(oo[1][1:])
             #beware if factor is 0 and p_nom_max is np.inf, 0*np.inf is nan
             if carrier == "AC":  # lines do not have carrier
                 n.lines[attr] *= factor
             else:
-                comps = {"Generator", "Link", "StorageUnit"} if attr == 'p_nom_max' else {"Generator", "Link", "StorageUnit", "Store"}
+                if attr == 'p_nom_max':
+                    comps = {"Generator", "Link", "StorageUnit"}
+                elif attr == 'e_nom_max':
+                    comps = {"Store"}    
+                else:
+                    comps = {"Generator", "Link", "StorageUnit", "Store"}
                 for c in n.iterate_components(comps):
                     if carrier=='solar':
                         sel = c.df.carrier.str.contains(carrier) & ~c.df.carrier.str.contains("solar rooftop")
