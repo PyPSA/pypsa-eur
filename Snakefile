@@ -1,4 +1,7 @@
 
+from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
+HTTP = HTTPRemoteProvider()
+
 configfile: "config.yaml"
 
 
@@ -183,7 +186,7 @@ rule build_biomass_potentials:
 if config["sector"]["biomass_transport"]:
     rule build_biomass_transport_costs:
         input:
-            transport_cost_data="data/biomass/biomass potentials in europe_web rev.pdf"
+            transport_cost_data=HTTP.remote("https://publications.jrc.ec.europa.eu/repository/bitstream/JRC98626/biomass%20potentials%20in%20europe_web%20rev.pdf", keep_local=True)
         output:
             supply_chain1="resources/biomass_transport_costs_supply_chain1.csv",
             supply_chain2="resources/biomass_transport_costs_supply_chain2.csv",
@@ -369,7 +372,7 @@ rule prepare_sector_network:
         solar_thermal_total="resources/solar_thermal_total_elec_s{simpl}_{clusters}.nc",
         solar_thermal_urban="resources/solar_thermal_urban_elec_s{simpl}_{clusters}.nc",
         solar_thermal_rural="resources/solar_thermal_rural_elec_s{simpl}_{clusters}.nc",
-	    **build_retro_cost_output
+        **build_retro_cost_output,
         **build_biomass_transport_costs_output
     output: RDIR + '/prenetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc'
     threads: 1
