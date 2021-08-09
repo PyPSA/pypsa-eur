@@ -44,8 +44,10 @@ Hydrogen network: nodal.
 Methane network: single node for Europe, since future demand is so
 low and no bottlenecks are expected.
 
-Solid biomass:  single node for Europe, until transport costs can be
-incorporated.
+Solid biomass: choice between single node for Europe and nodal where biomass
+potential is regionally disaggregated (currently given per country,
+then distributed by population density within)
+and transport of solid biomass is possible.
 
 CO2:  single node for Europe, but a transport and storage cost is added for
 sequestered CO2.

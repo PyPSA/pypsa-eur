@@ -66,6 +66,12 @@ Future release
 * The share of shipping transformed into hydrogen fuel cell can be now defined for different years in the ``config.yaml`` file. The carbon emission from the remaining share is treated as a negative load on the atmospheric carbon dioxide bus, just like aviation and land transport emissions.
 * The transformation of the Steel and Aluminium production can be now defined for different years in the ``config.yaml`` file.
 * Include the option to alter the maximum energy capacity of a store via the ``carrier+factor`` in the ``{sector_opts}`` wildcard. This can be useful for sensitivity analyses. Example: ``co2 stored+e2`` multiplies the ``e_nom_max`` by factor 2. In this example, ``e_nom_max`` represents the CO2 sequestration potential in Europe.
+* Add option to regionally disaggregate biomass potential to individual nodes
+  (currently given per country, then distributed by population density within)
+  and allow the transport of solid biomass.
+  The transport costs are determined based on the `JRC-EU-Times Bioenergy report <http://dx.doi.org/10.2790/01017>`_
+  in the new optional rule ``build_biomass_transport_costs``.
+  Biomass transport can be activated with the setting ``sector: biomass_transport: true``.
 
 PyPSA-Eur-Sec 0.5.0 (21st May 2021)
 ===================================
