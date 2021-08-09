@@ -1616,9 +1616,10 @@ def add_biomass(n, costs):
         # potential per node distributed within country by population
         biomass_potentials_spatial = (biomass_potentials.loc[pop_layout.ct]
                             .set_index(pop_layout.index)
-                            .mul(pop_layout.fraction, axis="index"))
+                            .mul(pop_layout.fraction, axis="index")
+                            .rename(index=lambda x: x + " solid biomass"))
     else:
-        biomass_potentials_spatial = pd.DataFrame(biomass_potentials.sum()).T
+        biomass_potentials_spatial = biomass_potentials.sum()
 
     n.add("Carrier", "biogas")
     n.add("Carrier", "solid biomass")
@@ -1648,9 +1649,9 @@ def add_biomass(n, costs):
         spatial.biomass.nodes,
         bus=spatial.biomass.nodes,
         carrier="solid biomass",
-        e_nom=biomass_potentials_spatial["solid biomass"].values,
+        e_nom=biomass_potentials_spatial["solid biomass"],
         marginal_cost=costs.at['solid biomass', 'fuel'],
-        e_initial=biomass_potentials_spatial["solid biomass"].values
+        e_initial=biomass_potentials_spatial["solid biomass"]
     )
 
     n.add("Link",
