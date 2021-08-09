@@ -63,9 +63,6 @@ def build_biomass_transport_costs():
     sc1 = get_cost_per_tkm(146, countries)
     sc2 = get_cost_per_tkm(147, countries)
 
-    sc1.to_csv(snakemake.output.supply_chain1)
-    sc2.to_csv(snakemake.output.supply_chain2)
-
     # take mean of both supply chains
     to_concat = [sc1["EUR/km/ton"], sc2["EUR/km/ton"]]
     transport_costs = pd.concat(to_concat, axis=1).mean(axis=1)
