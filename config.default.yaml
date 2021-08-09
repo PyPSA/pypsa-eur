@@ -233,7 +233,7 @@ sector:
   electricity_grid_connection: true  # only applies to onshore wind and utility PV
   gas_distribution_grid: true
   gas_distribution_grid_cost_factor: 1.0  #multiplies cost in data/costs.csv
-  biomass_transport: false  # biomass potential per country + transport between countries
+  biomass_transport: false  # biomass transport between nodes
   conventional_generation: # generator : carrier
     OCGT: gas
 
