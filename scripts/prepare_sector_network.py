@@ -46,7 +46,7 @@ def define_spatial(nodes):
         spatial.biomass.industry_cc = nodes + " solid biomass for industry CC"
     else:
         spatial.biomass.nodes = ["EU solid biomass"]
-        spatial.biomass.locations = "EU"
+        spatial.biomass.locations = ["EU"]
         spatial.biomass.industry = ["solid biomass for industry"]
         spatial.biomass.industry_cc = ["solid biomass for industry CC"]
 
@@ -1612,16 +1612,13 @@ def add_biomass(n, costs):
 
     biomass_potentials = pd.read_csv(snakemake.input.biomass_potentials, index_col=0)
 
-    transport_costs = pd.read_csv(
-        snakemake.input.biomass_transport_costs,
-        index_col=0,
-        squeeze=True
-    )
-
-    # potential per node distributed within country by population
-    biomass_pot_node = (biomass_potentials.loc[pop_layout.ct]
-                        .set_index(pop_layout.index)
-                        .mul(pop_layout.fraction, axis="index"))
+    if options["biomass_transport"]:
+        # potential per node distributed within country by population
+        biomass_potentials_spatial = (biomass_potentials.loc[pop_layout.ct]
+                            .set_index(pop_layout.index)
+                            .mul(pop_layout.fraction, axis="index"))
+    else:
+        biomass_potentials_spatial = pd.DataFrame(biomass_potentials.sum()).T
 
     n.add("Carrier", "biogas")
     n.add("Carrier", "solid biomass")
@@ -1651,9 +1648,9 @@ def add_biomass(n, costs):
         spatial.biomass.nodes,
         bus=spatial.biomass.nodes,
         carrier="solid biomass",
-        e_nom=biomass_pot_node["solid biomass"].values,
+        e_nom=biomass_potentials_spatial["solid biomass"].values,
         marginal_cost=costs.at['solid biomass', 'fuel'],
-        e_initial=biomass_pot_node["solid biomass"].values
+        e_initial=biomass_potentials_spatial["solid biomass"].values
     )
 
     n.add("Link",
@@ -1669,6 +1666,12 @@ def add_biomass(n, costs):
     )
 
     if options["biomass_transport"]:
+
+        transport_costs = pd.read_csv(
+            snakemake.input.biomass_transport_costs,
+            index_col=0,
+            squeeze=True
+        )
         
         # add biomass transport
         biomass_transport = create_network_topology(n, "biomass transport ", bidirectional=False)
@@ -1739,33 +1742,36 @@ def add_industry(n, costs):
     industrial_demand = pd.read_csv(snakemake.input.industrial_demand, index_col=0) * 1e6
 
     n.madd("Bus",
-        spatial.biomass.df.loc[industrial_demand.index, "industry"].values,
-        location=spatial.biomass.df.loc[industrial_demand.index, "locations"].values,
+        spatial.biomass.industry,
+        location=spatial.biomass.locations,
         carrier="solid biomass for industry"
     )
 
-    p_set = industrial_demand["solid biomass"].rename(index=lambda x: x + " solid biomass for industry") / 8760
+    if options["biomass_transport"]:
+        p_set = industrial_demand.loc[spatial.biomass.locations, "solid biomass"].rename(index=lambda x: x + " solid biomass for industry") / 8760
+    else:
+        p_set = industrial_demand["solid biomass"].sum() / 8760
 
     n.madd("Load",
-        spatial.biomass.df.loc[industrial_demand.index, "industry"].values,
-        bus=spatial.biomass.df.loc[industrial_demand.index, "industry"].values,
+        spatial.biomass.industry,
+        bus=spatial.biomass.industry,
         carrier="solid biomass for industry",
         p_set=p_set
     )
 
     n.madd("Link",
-        spatial.biomass.df.loc[industrial_demand.index, "industry"].values,
-        bus0=spatial.biomass.df.loc[industrial_demand.index, "nodes"].values,
-        bus1=spatial.biomass.df.loc[industrial_demand.index, "industry"].values,
+        spatial.biomass.industry,
+        bus0=spatial.biomass.nodes,
+        bus1=spatial.biomass.industry,
         carrier="solid biomass for industry",
         p_nom_extendable=True,
         efficiency=1.
     )
 
     n.madd("Link",
-        spatial.biomass.df.loc[industrial_demand.index, "industry_cc"].values,
-        bus0=spatial.biomass.df.loc[industrial_demand.index, "nodes"].values,
-        bus1=spatial.biomass.df.loc[industrial_demand.index, "industry_cc"].values,
+        spatial.biomass.industry_cc,
+        bus0=spatial.biomass.nodes,
+        bus1=spatial.biomass.industry,
         bus2="co2 atmosphere",
         bus3="co2 stored",
         carrier="solid biomass for industry CC",
