@@ -16,52 +16,75 @@ assuming as an approximation energy content of wood pellets
 import pandas as pd
 import tabula as tbl
 
-ENERGY_CONTENT = 4.8  # unit MWh/tonne (assuming wood pellets)
+ENERGY_CONTENT = 4.8  # unit MWh/t (wood pellets)
+
+def get_countries():
+
+    pandas_options = dict(
+        skiprows=list(range(6)),
+        header=None,
+        index_col=0
+    )
+
+    return tbl.read_pdf(
+        str(snakemake.input.transport_cost_data),
+        pages="145",
+        multiple_tables=False,
+        pandas_options=pandas_options
+    )[0].index
+
+
+def get_cost_per_tkm(page, countries):
+    
+    pandas_options = dict(
+        skiprows=range(6),
+        header=0,
+        sep=' |,',
+        engine='python',
+        index_col=False,
+    )
+
+    sc = tbl.read_pdf(
+        str(snakemake.input.transport_cost_data),
+        pages=page,
+        multiple_tables=False,
+        pandas_options=pandas_options
+    )[0]
+    sc.index = countries
+    sc.columns = sc.columns.str.replace("€", "EUR")
+    
+    return sc
 
 
 def build_biomass_transport_costs():
 
-    df_list = tbl.read_pdf(
-        snakemake.input.transport_cost_data,
-        pages="145-147",
-        multiple_tables=True,
-    )
-    
-    countries = df_list[0][0].iloc[6:].rename(index=lambda x: x + 1)
+    countries = get_countries()
 
-    # supply chain 1
-    df = df_list[1].copy().rename(index=countries.to_dict())
-    df.rename(
-        columns=df.iloc[:6].apply(lambda col: col.str.cat(sep=" "), axis=0).to_dict(),
-        inplace=True,
-    )
-    df = df.iloc[6:]
-    df.loc[6] = df.loc[6].str.replace("€", "EUR")
+    sc1 = get_cost_per_tkm(146, countries)
+    sc2 = get_cost_per_tkm(147, countries)
 
-    # supply chain 2
-    df2 = df_list[2].copy().rename(index=countries.to_dict())
-    df2.rename(
-        columns=df2.iloc[:6].apply(lambda col: col.str.cat(sep=" "), axis=0).to_dict(),
-        inplace=True,
-    )
-    df2 = df2.iloc[6:]
-    df2.loc[6] = df2.loc[6].str.replace("€", "EUR")
+    sc1.to_csv(snakemake.output.supply_chain1)
+    sc2.to_csv(snakemake.output.supply_chain2)
 
-    df.to_csv(snakemake.output.supply_chain1)
-    df2.to_csv(snakemake.output.supply_chain1)
+    # take mean of both supply chains
+    to_concat = [sc1["EUR/km/ton"], sc2["EUR/km/ton"]]
+    transport_costs = pd.concat(to_concat, axis=1).mean(axis=1)
 
-    transport_costs = pd.concat([df["per km/ton"], df2["per km/ton"]], axis=1).drop(6)
-    transport_costs = transport_costs.astype(float, errors="ignore").mean(axis=1)
-
-    # convert unit to EUR/MWh
+    # convert tonnes to MWh
     transport_costs /= ENERGY_CONTENT
-    transport_costs = pd.DataFrame(transport_costs, columns=["cost [EUR/(km MWh)]"])
+    transport_costs.name = "EUR/km/MWh"
 
-    # rename
-    transport_costs.rename({"UK": "GB", "XK": "KO", "EL": "GR"}, inplace=True)
+    # rename country names
+    to_rename = {
+        "UK": "GB",
+        "XK": "KO",
+        "EL": "GR"
+    }
+    transport_costs.rename(to_rename, inplace=True)
 
-    # add missing Norway
-    transport_costs.loc["NO"] = transport_costs.loc["SE"]
+    # add missing Norway with data from Sweden
+    transport_costs["NO"] = transport_costs["SE"]
+
     transport_costs.to_csv(snakemake.output.transport_costs)
 
 

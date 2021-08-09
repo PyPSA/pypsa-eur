@@ -1613,7 +1613,7 @@ def add_biomass(n, costs):
     biomass_potentials = pd.read_csv(snakemake.input.biomass_potentials, index_col=0)
 
     transport_costs = pd.read_csv(
-        snakemake.input.biomass_transport,
+        snakemake.input.biomass_transport_costs,
         index_col=0,
         squeeze=True
     )

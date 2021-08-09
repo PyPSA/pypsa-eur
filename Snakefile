@@ -186,11 +186,11 @@ rule build_biomass_potentials:
 if config["sector"]["biomass_transport"]:
     rule build_biomass_transport_costs:
         input:
-            transport_cost_data=HTTP.remote("https://publications.jrc.ec.europa.eu/repository/bitstream/JRC98626/biomass%20potentials%20in%20europe_web%20rev.pdf", keep_local=True)
+            transport_cost_data=HTTP.remote("publications.jrc.ec.europa.eu/repository/bitstream/JRC98626/biomass potentials in europe_web rev.pdf", keep_local=True)
         output:
             supply_chain1="resources/biomass_transport_costs_supply_chain1.csv",
             supply_chain2="resources/biomass_transport_costs_supply_chain2.csv",
-            transport_costs="resources/biomass_transport_costs.csv",
+            biomass_transport_costs="resources/biomass_transport_costs.csv",
         threads: 1
         resources: mem_mb=1000
         benchmark: "benchmarks/build_biomass_transport_costs"
