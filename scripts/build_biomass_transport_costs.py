@@ -21,7 +21,7 @@ ENERGY_CONTENT = 4.8  # unit MWh/t (wood pellets)
 def get_countries():
 
     pandas_options = dict(
-        skiprows=list(range(6)),
+        skiprows=range(6),
         header=None,
         index_col=0
     )
