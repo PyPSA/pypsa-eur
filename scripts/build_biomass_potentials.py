@@ -43,7 +43,7 @@ def build_nuts_population_data(year=2013):
 def enspreso_biomass_potentials(year=2020, scenario="ENS_Low"):
     
     glossary = pd.read_excel(
-        snakemake.input.enspreso_biomass,
+        str(snakemake.input.enspreso_biomass),
         sheet_name="Glossary",
         usecols="B:D",
         skiprows=1,
@@ -51,7 +51,7 @@ def enspreso_biomass_potentials(year=2020, scenario="ENS_Low"):
     )
     
     df = pd.read_excel(
-        snakemake.input.enspreso_biomass,
+        str(snakemake.input.enspreso_biomass),
         sheet_name="ENER - NUTS2 BioCom E",
         usecols="A:H"
     )
