@@ -228,10 +228,10 @@ rule build_industrial_production_per_country_tomorrow:
     input:
         industrial_production_per_country="resources/industrial_production_per_country.csv"
     output:
-        industrial_production_per_country_tomorrow="resources/industrial_production_per_country_tomorrow.csv"
+        industrial_production_per_country_tomorrow="resources/industrial_production_per_country_tomorrow_{planning_horizons}.csv"
     threads: 1
     resources: mem_mb=1000
-    benchmark: "benchmarks/build_industrial_production_per_country_tomorrow"
+    benchmark: "benchmarks/build_industrial_production_per_country_tomorrow_{planning_horizons}"
     script: 'scripts/build_industrial_production_per_country_tomorrow.py'
 
 
@@ -251,25 +251,25 @@ rule build_industrial_distribution_key:
 rule build_industrial_production_per_node:
     input:
         industrial_distribution_key="resources/industrial_distribution_key_elec_s{simpl}_{clusters}.csv",
-        industrial_production_per_country_tomorrow="resources/industrial_production_per_country_tomorrow.csv"
+        industrial_production_per_country_tomorrow="resources/industrial_production_per_country_tomorrow_{planning_horizons}.csv"
     output:
-        industrial_production_per_node="resources/industrial_production_elec_s{simpl}_{clusters}.csv"
+        industrial_production_per_node="resources/industrial_production_elec_s{simpl}_{clusters}_{planning_horizons}.csv"
     threads: 1
     resources: mem_mb=1000
-    benchmark: "benchmarks/build_industrial_production_per_node/s{simpl}_{clusters}"
+    benchmark: "benchmarks/build_industrial_production_per_node/s{simpl}_{clusters}_{planning_horizons}"
     script: 'scripts/build_industrial_production_per_node.py'
 
 
 rule build_industrial_energy_demand_per_node:
     input:
         industry_sector_ratios="resources/industry_sector_ratios.csv",
-        industrial_production_per_node="resources/industrial_production_elec_s{simpl}_{clusters}.csv",
+        industrial_production_per_node="resources/industrial_production_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
         industrial_energy_demand_per_node_today="resources/industrial_energy_demand_today_elec_s{simpl}_{clusters}.csv"
     output:
-        industrial_energy_demand_per_node="resources/industrial_energy_demand_elec_s{simpl}_{clusters}.csv"
+        industrial_energy_demand_per_node="resources/industrial_energy_demand_elec_s{simpl}_{clusters}_{planning_horizons}.csv"
     threads: 1
     resources: mem_mb=1000
-    benchmark: "benchmarks/build_industrial_energy_demand_per_node/s{simpl}_{clusters}"
+    benchmark: "benchmarks/build_industrial_energy_demand_per_node/s{simpl}_{clusters}_{planning_horizons}"
     script: 'scripts/build_industrial_energy_demand_per_node.py'
 
 
@@ -341,7 +341,7 @@ rule prepare_sector_network:
         busmap=pypsaeur("resources/busmap_elec_s{simpl}_{clusters}.csv"),
         clustered_pop_layout="resources/pop_layout_elec_s{simpl}_{clusters}.csv",
         simplified_pop_layout="resources/pop_layout_elec_s{simpl}.csv",
-        industrial_demand="resources/industrial_energy_demand_elec_s{simpl}_{clusters}.csv",
+        industrial_demand="resources/industrial_energy_demand_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
         heat_demand_urban="resources/heat_demand_urban_elec_s{simpl}_{clusters}.nc",
         heat_demand_rural="resources/heat_demand_rural_elec_s{simpl}_{clusters}.nc",
         heat_demand_total="resources/heat_demand_total_elec_s{simpl}_{clusters}.nc",
