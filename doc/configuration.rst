@@ -50,7 +50,8 @@ An exemplary dependency graph (starting from the simplification rules) then look
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 14-18
+   :start-at: scenario:
+   :end-before: countries:
 
 .. csv-table::
    :header-rows: 1
@@ -66,7 +67,8 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 22-25
+   :start-at: snapshots:
+   :end-before: enable:
 
 .. csv-table::
    :header-rows: 1
@@ -80,7 +82,8 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 36-60
+   :start-at: electricity:
+   :end-before: atlite:
 
 .. csv-table::
    :header-rows: 1
@@ -117,7 +120,8 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 77-94
+   :start-at: renewable:
+   :end-before:   offwind-ac:
 
 .. csv-table::
    :header-rows: 1
