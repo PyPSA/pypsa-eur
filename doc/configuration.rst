@@ -247,7 +247,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :start-at: costs:
+   :start-after: scaling_factor:
    :end-before: solving:
 
 .. csv-table::
