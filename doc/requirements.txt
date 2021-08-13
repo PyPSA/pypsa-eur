@@ -1,24 +1,16 @@
 sphinx
 sphinx_rtd_theme
 
-# pypsa
-vresutils>=0.2.5
-powerplantmatching
+pypsa
+vresutils>=0.3.1
+powerplantmatching>=0.4.8
 atlite
+dask
 
 # cartopy
 scikit-learn
 pycountry
 seaborn
 memory_profiler
-xarray
-fiona
-pyproj
-pyshp
-geopandas
-rasterio
-shapely
-
-git+https://github.com/PyPSA/pypsa.git#egg=pypsa
-git+https://github.com/PyPSA/glaes.git#egg=glaes
-git+https://github.com/PyPSA/geokit.git#egg=geokit
+pytables
+descartes
