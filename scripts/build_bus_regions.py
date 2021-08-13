@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """
 Creates Voronoi shapes for each bus representing both onshore and offshore regions.
 
@@ -8,7 +12,7 @@ Relevant Settings
 
     countries:
 
-.. seealso:: 
+.. seealso::
     Documentation of the configuration file ``config.yaml`` at
     :ref:`toplevel_cf`
 
@@ -37,19 +41,31 @@ Description
 
 """
 
-import os
-from operator import attrgetter
+import logging
+from _helpers import configure_logging
 
+import pypsa
+import os
 import pandas as pd
 import geopandas as gpd
 
 from vresutils.graph import voronoi_partition_pts
 
-import pypsa
-import logging
+logger = logging.getLogger(__name__)
+
+
+def save_to_geojson(s, fn):
+    if os.path.exists(fn):
+        os.unlink(fn)
+    schema = {**gpd.io.file.infer_schema(s), 'geometry': 'Unknown'}
+    s.to_file(fn, driver='GeoJSON', schema=schema)
+
 
 if __name__ == "__main__":
-    logging.basicConfig(level=snakemake.config["logging_level"])
+    if 'snakemake' not in globals():
+        from _helpers import mock_snakemake
+        snakemake = mock_snakemake('build_bus_regions')
+    configure_logging(snakemake)
 
     countries = snakemake.config['countries']
 
@@ -67,31 +83,26 @@ if __name__ == "__main__":
         onshore_shape = country_shapes[country]
         onshore_locs = n.buses.loc[c_b & n.buses.substation_lv, ["x", "y"]]
         onshore_regions.append(gpd.GeoDataFrame({
+                'name': onshore_locs.index,
                 'x': onshore_locs['x'],
                 'y': onshore_locs['y'],
                 'geometry': voronoi_partition_pts(onshore_locs.values, onshore_shape),
                 'country': country
-            }, index=onshore_locs.index))
+            }))
 
         if country not in offshore_shapes.index: continue
         offshore_shape = offshore_shapes[country]
         offshore_locs = n.buses.loc[c_b & n.buses.substation_off, ["x", "y"]]
         offshore_regions_c = gpd.GeoDataFrame({
+                'name': offshore_locs.index,
                 'x': offshore_locs['x'],
                 'y': offshore_locs['y'],
                 'geometry': voronoi_partition_pts(offshore_locs.values, offshore_shape),
                 'country': country
-            }, index=offshore_locs.index)
+            })
         offshore_regions_c = offshore_regions_c.loc[offshore_regions_c.area > 1e-2]
         offshore_regions.append(offshore_regions_c)
 
-    def save_to_geojson(s, fn):
-        if os.path.exists(fn):
-            os.unlink(fn)
-        df = s.reset_index()
-        schema = {**gpd.io.file.infer_schema(df), 'geometry': 'Unknown'}
-        df.to_file(fn, driver='GeoJSON', schema=schema)
+    save_to_geojson(pd.concat(onshore_regions, ignore_index=True), snakemake.output.regions_onshore)
 
-    save_to_geojson(pd.concat(onshore_regions), snakemake.output.regions_onshore)
-
-    save_to_geojson(pd.concat(offshore_regions), snakemake.output.regions_offshore)
+    save_to_geojson(pd.concat(offshore_regions, ignore_index=True), snakemake.output.regions_offshore)

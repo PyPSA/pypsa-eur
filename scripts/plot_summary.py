@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """
 Plots energy and cost summaries for solved networks.
 
@@ -16,38 +20,20 @@ Description
 """
 
 import os
+import logging
+from _helpers import configure_logging
+
 import pandas as pd
 import matplotlib.pyplot as plt
 
-#consolidate and rename
-def rename_techs(label):
-    if label.startswith("central "):
-        label = label[len("central "):]
-    elif label.startswith("urban "):
-        label = label[len("urban "):]
+logger = logging.getLogger(__name__)
 
-    if "retrofitting" in label:
-        label = "building retrofitting"
-    elif "H2" in label:
+
+def rename_techs(label):
+    if "H2" in label:
         label = "hydrogen storage"
-    elif "CHP" in label:
-        label = "CHP"
-    elif "water tank" in label:
-        label = "water tanks"
-    elif label == "water tanks":
-        label = "hot water storage"
-    elif "gas" in label and label != "gas boiler":
-        label = "natural gas"
-    elif "solar thermal" in label:
-        label = "solar thermal"
     elif label == "solar":
         label = "solar PV"
-    elif label == "heat pump":
-        label = "air heat pump"
-    elif label == "Sabatier":
-        label = "methanation"
-    elif label == "offwind":
-        label = "offshore wind"
     elif label == "offwind-ac":
         label = "offshore wind ac"
     elif label == "offwind-dc":
@@ -60,15 +46,14 @@ def rename_techs(label):
         label = "hydroelectricity"
     elif label == "PHS":
         label = "hydroelectricity"
-    elif label == "co2 Store":
-        label = "DAC"
     elif "battery" in label:
         label = "battery storage"
 
     return label
 
 
-preferred_order = pd.Index(["transmission lines","hydroelectricity","hydro reservoir","run of river","pumped hydro storage","onshore wind","offshore wind ac", "offshore wind dc","solar PV","solar thermal","building retrofitting","ground heat pump","air heat pump","resistive heater","CHP","OCGT","gas boiler","gas","natural gas","methanation","hydrogen storage","battery storage","hot water storage"])
+preferred_order = pd.Index(["transmission lines","hydroelectricity","hydro reservoir","run of river","pumped hydro storage","onshore wind","offshore wind ac", "offshore wind dc","solar PV","solar thermal","OCGT","hydrogen storage","battery storage"])
+
 
 def plot_costs(infn, fn=None):
 
@@ -178,6 +163,13 @@ def plot_energy(infn, fn=None):
 
 
 if __name__ == "__main__":
+    if 'snakemake' not in globals():
+        from _helpers import mock_snakemake
+        snakemake = mock_snakemake('plot_summary', summary='energy', network='elec',
+                                  simpl='', clusters=5, ll='copt', opts='Co2L-24H',
+                                  attr='', ext='png', country='all')
+    configure_logging(snakemake)
+
     summary = snakemake.wildcards.summary
     try:
         func = globals()[f"plot_{summary}"]

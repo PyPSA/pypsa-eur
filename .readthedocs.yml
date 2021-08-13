@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: CC0-1.0
+
 version: 2
 
 python:
@@ -5,3 +9,6 @@ python:
   install:
     - requirements: doc/requirements.txt
   system_packages: true
+
+# conda:
+#     environment: envs/environment.docs.yaml

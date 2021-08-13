@@ -1,7 +1,13 @@
+# SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: CC0-1.0
+
 .snakemake*
 .ipynb_checkpoints
 __pycache__
+*dconf
 gurobi.log
+.vscode
 
 /bak
 /resources
@@ -15,3 +21,7 @@ gurobi.log
 /cutouts
 
 doc/_build
+
+config.yaml
+
+dconf

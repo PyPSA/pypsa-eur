@@ -1,5 +1,18 @@
+# SPDX-FileCopyrightText: : 2017-2021 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """
 Create cutouts with `atlite <https://atlite.readthedocs.io/en/latest/>`_.
+
+For this rule to work you must have
+
+- installed the `Copernicus Climate Data Store <https://cds.climate.copernicus.eu>`_ ``cdsapi`` package  (`install with `pip``) and
+- registered and setup your CDS API key as described `on their website <https://cds.climate.copernicus.eu/api-how-to>`_.
+
+.. seealso::
+    For details on the weather data read the `atlite documentation <https://atlite.readthedocs.io/en/latest/>`_.
+    If you need help specifically for creating cutouts `the corresponding section in the atlite documentation <https://atlite.readthedocs.io/en/latest/examples/create_cutout.html>`_ should be helpful.
 
 Relevant Settings
 -----------------
@@ -11,7 +24,7 @@ Relevant Settings
         cutouts:
             {cutout}:
 
-.. seealso:: 
+.. seealso::
     Documentation of the configuration file ``config.yaml`` at
     :ref:`atlite_cf`
 
@@ -65,36 +78,53 @@ Outputs
     ===================  ==========  ==========  =========================================================
 
     .. image:: ../img/era5.png
-        :scale: 40 %    
-    
-A **SARAH-2 cutout** can be used to amend the fields ``temperature``, ``influx_toa``, ``influx_direct``, ``albedo``,
-``influx_diffuse`` of ERA5 using satellite-based radiation observations.
-    
-    .. image:: ../img/sarah.png
         :scale: 40 %
 
-.. seealso::
-    For details on the weather data read the `atlite documentation <https://atlite.readthedocs.io/en/latest/>`_.
+A **SARAH-2 cutout** can be used to amend the fields ``temperature``, ``influx_toa``, ``influx_direct``, ``albedo``,
+``influx_diffuse`` of ERA5 using satellite-based radiation observations.
+
+    .. image:: ../img/sarah.png
+        :scale: 40 %
 
 Description
 -----------
 
 """
-import os
-import atlite
+
 import logging
+import atlite
+import geopandas as gpd
+import pandas as pd
+from _helpers import configure_logging
+
+
 logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
-    logging.basicConfig(level=snakemake.config['logging_level'])
+    if 'snakemake' not in globals():
+        from _helpers import mock_snakemake
+        snakemake = mock_snakemake('build_cutout', cutout='europe-2013-era5')
+    configure_logging(snakemake)
 
     cutout_params = snakemake.config['atlite']['cutouts'][snakemake.wildcards.cutout]
-    for p in ('xs', 'ys', 'years', 'months'):
-        if p in cutout_params:
-            cutout_params[p] = slice(*cutout_params[p])
 
-    cutout = atlite.Cutout(snakemake.wildcards.cutout,
-                        cutout_dir=os.path.dirname(snakemake.output[0]),
-                        **cutout_params)
+    snapshots = pd.date_range(freq='h', **snakemake.config['snapshots'])
+    time = [snapshots[0], snapshots[-1]]
+    cutout_params['time'] = slice(*cutout_params.get('time', time))
 
-    cutout.prepare(nprocesses=snakemake.config['atlite'].get('nprocesses', 4))
+    if {'x', 'y', 'bounds'}.isdisjoint(cutout_params):
+        # Determine the bounds from bus regions with a buffer of two grid cells
+        onshore = gpd.read_file(snakemake.input.regions_onshore)
+        offshore = gpd.read_file(snakemake.input.regions_offshore)
+        regions =  onshore.append(offshore)
+        d = max(cutout_params.get('dx', 0.25), cutout_params.get('dy', 0.25))*2
+        cutout_params['bounds'] = regions.total_bounds + [-d, -d, d, d]
+    elif {'x', 'y'}.issubset(cutout_params):
+        cutout_params['x'] = slice(*cutout_params['x'])
+        cutout_params['y'] = slice(*cutout_params['y'])
+
+
+    logging.info(f"Preparing cutout with parameters {cutout_params}.")
+    features = cutout_params.pop('features', None)
+    cutout = atlite.Cutout(snakemake.output[0], **cutout_params)
+    cutout.prepare(features=features)

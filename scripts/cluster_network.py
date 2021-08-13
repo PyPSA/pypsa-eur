@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # coding: utf-8
 """
 Creates networks clustered to ``{cluster}`` number of zones with aggregated buses, generators and transmission corridors.
@@ -6,6 +10,8 @@ Relevant Settings
 -----------------
 
 .. code:: yaml
+
+    focus_weights:
 
     renewable: (keys)
         {technology}:
@@ -18,33 +24,35 @@ Relevant Settings
     lines:
         length_factor:
 
-.. seealso:: 
+.. seealso::
     Documentation of the configuration file ``config.yaml`` at
-    :ref:`renewable_cf`, :ref:`solving_cf`, :ref:`lines_cf`
+    :ref:`toplevel_cf`, :ref:`renewable_cf`, :ref:`solving_cf`, :ref:`lines_cf`
 
 Inputs
 ------
 
-- ``resources/regions_onshore_{network}_s{simpl}.geojson``: confer :ref:`simplify`
-- ``resources/regions_offshore_{network}_s{simpl}.geojson``: confer :ref:`simplify`
-- ``resources/clustermaps_{network}_s{simpl}.h5``: confer :ref:`simplify`
-- ``networks/{network}_s{simpl}.nc``: confer :ref:`simplify`
+- ``resources/regions_onshore_elec_s{simpl}.geojson``: confer :ref:`simplify`
+- ``resources/regions_offshore_elec_s{simpl}.geojson``: confer :ref:`simplify`
+- ``resources/busmap_elec_s{simpl}.csv``: confer :ref:`simplify`
+- ``networks/elec_s{simpl}.nc``: confer :ref:`simplify`
+- ``data/custom_busmap_elec_s{simpl}_{clusters}.csv``: optional input
 
 Outputs
 -------
 
-- ``resources/regions_onshore_{network}_s{simpl}_{clusters}.geojson``:
+- ``resources/regions_onshore_elec_s{simpl}_{clusters}.geojson``:
 
     .. image:: ../img/regions_onshore_elec_s_X.png
         :scale: 33 %
 
-- ``resources/regions_offshore_{network}_s{simpl}_{clusters}.geojson``:
+- ``resources/regions_offshore_elec_s{simpl}_{clusters}.geojson``:
 
     .. image:: ../img/regions_offshore_elec_s_X.png
         :scale: 33 %
 
-- ``resources/clustermaps_{network}_s{simpl}_{clusters}.h5``: Mapping of buses and lines from ``networks/elec_s{simpl}.nc`` to ``networks/elec_s{simpl}_{clusters}.nc``; has keys ['/busmap', '/busmap_s', '/linemap', '/linemap_negative', '/linemap_positive']
-- ``networks/{network}_s{simpl}_{clusters}.nc``: 
+- ``resources/busmap_elec_s{simpl}_{clusters}.csv``: Mapping of buses from ``networks/elec_s{simpl}.nc`` to ``networks/elec_s{simpl}_{clusters}.nc``;
+- ``resources/linemap_elec_s{simpl}_{clusters}.csv``: Mapping of lines from ``networks/elec_s{simpl}.nc`` to ``networks/elec_s{simpl}_{clusters}.nc``;
+- ``networks/elec_s{simpl}_{clusters}.nc``:
 
     .. image:: ../img/elec_s_X.png
         :scale: 40  %
@@ -55,7 +63,7 @@ Description
 .. note::
 
     **Why is clustering used both in** ``simplify_network`` **and** ``cluster_network`` **?**
-    
+
         Consider for example a network ``networks/elec_s100_50.nc`` in which
         ``simplify_network`` clusters the network to 100 buses and in a second
         step ``cluster_network``` reduces it down to 50 buses.
@@ -84,39 +92,63 @@ Description
 
 .. tip::
     The rule :mod:`cluster_all_networks` runs
-    for all ``scenario`` s in the configuration file 
+    for all ``scenario`` s in the configuration file
     the rule :mod:`cluster_network`.
+
+Exemplary unsolved network clustered to 512 nodes:
+
+.. image:: ../img/elec_s_512.png
+    :scale: 40  %
+    :align: center
+
+Exemplary unsolved network clustered to 256 nodes:
+
+.. image:: ../img/elec_s_256.png
+    :scale: 40  %
+    :align: center
+
+Exemplary unsolved network clustered to 128 nodes:
+
+.. image:: ../img/elec_s_128.png
+    :scale: 40  %
+    :align: center
+
+Exemplary unsolved network clustered to 37 nodes:
+
+.. image:: ../img/elec_s_37.png
+    :scale: 40  %
+    :align: center
 
 """
 
-import pandas as pd
-idx = pd.IndexSlice
-
 import logging
-logger = logging.getLogger(__name__)
-
-import os
-import numpy as np
-import scipy as sp
-from scipy.sparse.csgraph import connected_components
-import xarray as xr
-import geopandas as gpd
-import shapely
-import networkx as nx
-from shutil import copyfile
-
-from six import iteritems
-from six.moves import reduce
-
-import pyomo.environ as po
+from _helpers import configure_logging, update_p_nom_max
 
 import pypsa
-from pypsa.io import import_components_from_dataframe, import_series_from_dataframe
-from pypsa.networkclustering import (busmap_by_stubs, busmap_by_kmeans,
-                                     _make_consense, get_clustering_from_busmap,
-                                     aggregategenerators, aggregateoneport)
-def normed(x):
-    return (x/x.sum()).fillna(0.)
+import os
+import shapely
+
+import pandas as pd
+import numpy as np
+import geopandas as gpd
+import pyomo.environ as po
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from functools import reduce
+
+from pypsa.networkclustering import (busmap_by_kmeans, busmap_by_spectral_clustering,
+                                     _make_consense, get_clustering_from_busmap)
+
+from add_electricity import load_costs
+
+idx = pd.IndexSlice
+
+logger = logging.getLogger(__name__)
+
+
+def normed(x): return (x/x.sum()).fillna(0.)
+
 
 def weighting_for_country(n, x):
     conv_carriers = {'OCGT','CCGT','PHS', 'hydro'}
@@ -134,22 +166,13 @@ def weighting_for_country(n, x):
     g = normed(gen.reindex(b_i, fill_value=0))
     l = normed(load.reindex(b_i, fill_value=0))
 
-    w= g + l
+    w = g + l
     return (w * (100. / w.max())).clip(lower=1.).astype(int)
 
 
-## Plot weighting for Germany
+def distribute_clusters(n, n_clusters, focus_weights=None, solver_name=None):
+    """Determine the number of clusters per country"""
 
-def plot_weighting(n, country, country_shape=None):
-    n.plot(bus_sizes=(2*weighting_for_country(n.buses.loc[n.buses.country == country])).reindex(n.buses.index, fill_value=1))
-    if country_shape is not None:
-        plt.xlim(country_shape.bounds[0], country_shape.bounds[2])
-        plt.ylim(country_shape.bounds[1], country_shape.bounds[3])
-
-
-# # Determining the number of clusters per country
-
-def distribute_clusters(n, n_clusters, solver_name=None):
     if solver_name is None:
         solver_name = snakemake.config['solving']['solver']['name']
 
@@ -161,7 +184,23 @@ def distribute_clusters(n, n_clusters, solver_name=None):
     N = n.buses.groupby(['country', 'sub_network']).size()
 
     assert n_clusters >= len(N) and n_clusters <= N.sum(), \
-        "Number of clusters must be {} <= n_clusters <= {} for this selection of countries.".format(len(N), N.sum())
+        f"Number of clusters must be {len(N)} <= n_clusters <= {N.sum()} for this selection of countries."
+
+    if focus_weights is not None:
+
+        total_focus = sum(list(focus_weights.values()))
+
+        assert total_focus <= 1.0, "The sum of focus weights must be less than or equal to 1."
+
+        for country, weight in focus_weights.items():
+            L[country] = weight / len(L[country])
+
+        remainder = [c not in focus_weights.keys() for c in L.index.get_level_values('country')]
+        L[remainder] = L.loc[remainder].pipe(normed) * (1 - total_focus)
+
+        logger.warning('Using custom focus weights for determining number of clusters.')
+
+    assert np.isclose(L.sum(), 1.0, rtol=1e-3), f"Country weights L must sum up to 1.0 when distributing clusters. Is {L.sum()}."
 
     m = po.ConcreteModel()
     def n_bounds(model, *n_id):
@@ -173,15 +212,16 @@ def distribute_clusters(n, n_clusters, solver_name=None):
 
     opt = po.SolverFactory(solver_name)
     if not opt.has_capability('quadratic_objective'):
-        logger.warn(f'The configured solver `{solver_name}` does not support quadratic objectives. Falling back to `ipopt`.')
+        logger.warning(f'The configured solver `{solver_name}` does not support quadratic objectives. Falling back to `ipopt`.')
         opt = po.SolverFactory('ipopt')
 
     results = opt.solve(m)
-    assert results['Solver'][0]['Status'].key == 'ok', "Solver returned non-optimally: {}".format(results)
+    assert results['Solver'][0]['Status'] == 'ok', f"Solver returned non-optimally: {results}"
 
     return pd.Series(m.n.get_values(), index=L.index).astype(int)
 
-def busmap_for_n_clusters(n, n_clusters, solver_name, algorithm="kmeans", **algorithm_kwds):
+
+def busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights=None, algorithm="kmeans", **algorithm_kwds):
     if algorithm == "kmeans":
         algorithm_kwds.setdefault('n_init', 1000)
         algorithm_kwds.setdefault('max_iter', 30000)
@@ -189,7 +229,7 @@ def busmap_for_n_clusters(n, n_clusters, solver_name, algorithm="kmeans", **algo
 
     n.determine_network_topology()
 
-    n_clusters = distribute_clusters(n, n_clusters, solver_name=solver_name)
+    n_clusters = distribute_clusters(n, n_clusters, focus_weights=focus_weights, solver_name=solver_name)
 
     def reduce_network(n, buses):
         nr = pypsa.Network()
@@ -199,7 +239,7 @@ def busmap_for_n_clusters(n, n_clusters, solver_name, algorithm="kmeans", **algo
 
     def busmap_for_country(x):
         prefix = x.name[0] + x.name[1] + ' '
-        logger.debug("Determining busmap for country {}".format(prefix[:-1]))
+        logger.debug(f"Determining busmap for country {prefix[:-1]}")
         if len(x) == 1:
             return pd.Series(prefix + '0', index=x.index)
         weight = weighting_for_country(n, x)
@@ -211,41 +251,51 @@ def busmap_for_n_clusters(n, n_clusters, solver_name, algorithm="kmeans", **algo
         elif algorithm == "louvain":
             return prefix + busmap_by_louvain(reduce_network(n, x), n_clusters[x.name], **algorithm_kwds)
         else:
-            raise ArgumentError("`algorithm` must be one of 'kmeans', 'spectral' or 'louvain'")
+            raise ValueError(f"`algorithm` must be one of 'kmeans', 'spectral' or 'louvain'. Is {algorithm}.")
 
-    return (n.buses.groupby(['country', 'sub_network'], group_keys=False, squeeze=True)
-            .apply(busmap_for_country).rename('busmap'))
+    return (n.buses.groupby(['country', 'sub_network'], group_keys=False)
+            .apply(busmap_for_country).squeeze().rename('busmap'))
 
-def plot_busmap_for_n_clusters(n, n_clusters=50):
-    busmap = busmap_for_n_clusters(n, n_clusters)
-    cs = busmap.unique()
-    cr = sns.color_palette("hls", len(cs))
-    n.plot(bus_colors=busmap.map(dict(zip(cs, cr))))
-    del cs, cr
 
-def clustering_for_n_clusters(n, n_clusters, aggregate_carriers=None,
-                              line_length_factor=1.25, potential_mode='simple',
-                              solver_name="cbc", algorithm="kmeans"):
+def clustering_for_n_clusters(n, n_clusters, custom_busmap=False, aggregate_carriers=None,
+                              line_length_factor=1.25, potential_mode='simple', solver_name="cbc",
+                              algorithm="kmeans", extended_link_costs=0, focus_weights=None):
 
     if potential_mode == 'simple':
         p_nom_max_strategy = np.sum
     elif potential_mode == 'conservative':
         p_nom_max_strategy = np.min
     else:
-        raise AttributeError("potential_mode should be one of 'simple' or 'conservative', "
-                             "but is '{}'".format(potential_mode))
+        raise AttributeError(f"potential_mode should be one of 'simple' or 'conservative' but is '{potential_mode}'")
+
+    if custom_busmap:
+        busmap = pd.read_csv(snakemake.input.custom_busmap, index_col=0, squeeze=True)
+        busmap.index = busmap.index.astype(str)
+        logger.info(f"Imported custom busmap from {snakemake.input.custom_busmap}")
+    else:
+        busmap = busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights, algorithm)
 
     clustering = get_clustering_from_busmap(
-        n, busmap_for_n_clusters(n, n_clusters, solver_name, algorithm),
+        n, busmap,
         bus_strategies=dict(country=_make_consense("Bus", "country")),
         aggregate_generators_weighted=True,
         aggregate_generators_carriers=aggregate_carriers,
         aggregate_one_ports=["Load", "StorageUnit"],
         line_length_factor=line_length_factor,
-        generator_strategies={'p_nom_max': p_nom_max_strategy}
-    )
+        generator_strategies={'p_nom_max': p_nom_max_strategy, 'p_nom_min': np.sum},
+        scale_link_capital_costs=False)
+
+    if not n.links.empty:
+        nc = clustering.network
+        nc.links['underwater_fraction'] = (n.links.eval('underwater_fraction * length')
+                                        .div(nc.links.length).dropna())
+        nc.links['capital_cost'] = (nc.links['capital_cost']
+                                    .add((nc.links.length - n.links.length)
+                                        .clip(lower=0).mul(extended_link_costs),
+                                        fill_value=0))
 
     return clustering
+
 
 def save_to_geojson(s, fn):
     if os.path.exists(fn):
@@ -253,6 +303,7 @@ def save_to_geojson(s, fn):
     df = s.reset_index()
     schema = {**gpd.io.file.infer_schema(df), 'geometry': 'Unknown'}
     df.to_file(fn, driver='GeoJSON', schema=schema)
+
 
 def cluster_regions(busmaps, input=None, output=None):
     if input is None: input = snakemake.input
@@ -267,33 +318,30 @@ def cluster_regions(busmaps, input=None, output=None):
         regions_c.index.name = 'name'
         save_to_geojson(regions_c, getattr(output, which))
 
-if __name__ == "__main__":
-    # Detect running outside of snakemake and mock snakemake for testing
-    if 'snakemake' not in globals():
-        from vresutils.snakemake import MockSnakemake, Dict
-        snakemake = MockSnakemake(
-            wildcards=Dict(network='elec', simpl='', clusters='45'),
-            input=Dict(
-                network='networks/{network}_s{simpl}.nc',
-                regions_onshore='resources/regions_onshore_{network}_s{simpl}.geojson',
-                regions_offshore='resources/regions_offshore_{network}_s{simpl}.geojson',
-                clustermaps='resources/clustermaps_{network}_s{simpl}.h5'
-            ),
-            output=Dict(
-                network='networks/{network}_s{simpl}_{clusters}.nc',
-                regions_onshore='resources/regions_onshore_{network}_s{simpl}_{clusters}.geojson',
-                regions_offshore='resources/regions_offshore_{network}_s{simpl}_{clusters}.geojson',
-                clustermaps='resources/clustermaps_{network}_s{simpl}_{clusters}.h5'
-            )
-        )
 
-    logging.basicConfig(level=snakemake.config['logging_level'])
+def plot_busmap_for_n_clusters(n, n_clusters, fn=None):
+    busmap = busmap_for_n_clusters(n, n_clusters)
+    cs = busmap.unique()
+    cr = sns.color_palette("hls", len(cs))
+    n.plot(bus_colors=busmap.map(dict(zip(cs, cr))))
+    if fn is not None:
+        plt.savefig(fn, bbox_inches='tight')
+    del cs, cr
+
+
+if __name__ == "__main__":
+    if 'snakemake' not in globals():
+        from _helpers import mock_snakemake
+        snakemake = mock_snakemake('cluster_network', network='elec', simpl='', clusters='5')
+    configure_logging(snakemake)
 
     n = pypsa.Network(snakemake.input.network)
 
+    focus_weights = snakemake.config.get('focus_weights', None)
+
     renewable_carriers = pd.Index([tech
                                    for tech in n.generators.carrier.unique()
-                                   if tech.split('-', 2)[0] in snakemake.config['renewable']])
+                                   if tech in snakemake.config['renewable']])
 
     if snakemake.wildcards.clusters.endswith('m'):
         n_clusters = int(snakemake.wildcards.clusters[:-1])
@@ -309,6 +357,11 @@ if __name__ == "__main__":
         clustering = pypsa.networkclustering.Clustering(n, busmap, linemap, linemap, pd.Series(dtype='O'))
     else:
         line_length_factor = snakemake.config['lines']['length_factor']
+        hvac_overhead_cost = (load_costs(n.snapshot_weightings.sum()/8760,
+                                   tech_costs=snakemake.input.tech_costs,
+                                   config=snakemake.config['costs'],
+                                   elec_config=snakemake.config['electricity'])
+                              .at['HVAC overhead', 'capital_cost'])
 
         def consense(x):
             v = x.iat[0]
@@ -318,17 +371,18 @@ if __name__ == "__main__":
             return v
         potential_mode = consense(pd.Series([snakemake.config['renewable'][tech]['potential']
                                              for tech in renewable_carriers]))
-        clustering = clustering_for_n_clusters(n, n_clusters, aggregate_carriers,
+        custom_busmap = snakemake.config["enable"].get("custom_busmap", False)
+        clustering = clustering_for_n_clusters(n, n_clusters, custom_busmap, aggregate_carriers,
                                                line_length_factor=line_length_factor,
                                                potential_mode=potential_mode,
-                                               solver_name=snakemake.config['solving']['solver']['name'])
+                                               solver_name=snakemake.config['solving']['solver']['name'],
+                                               extended_link_costs=hvac_overhead_cost,
+                                               focus_weights=focus_weights)
 
+    update_p_nom_max(n)
+    
     clustering.network.export_to_netcdf(snakemake.output.network)
-    with pd.HDFStore(snakemake.output.clustermaps, mode='w') as store:
-        with pd.HDFStore(snakemake.input.clustermaps, mode='r') as clustermaps:
-            for attr in clustermaps.keys():
-                store.put(attr, clustermaps[attr], format="table", index=False)
-        for attr in ('busmap', 'linemap', 'linemap_positive', 'linemap_negative'):
-            store.put(attr, getattr(clustering, attr), format="table", index=False)
+    for attr in ('busmap', 'linemap'): #also available: linemap_positive, linemap_negative
+        getattr(clustering, attr).to_csv(snakemake.output[attr])
 
     cluster_regions((clustering.busmap,))

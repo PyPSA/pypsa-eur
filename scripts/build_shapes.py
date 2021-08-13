@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """
 Creates GIS shape files of the countries, exclusive economic zones and `NUTS3 <https://en.wikipedia.org/wiki/Nomenclature_of_Territorial_Units_for_Statistics>`_ areas.
 
@@ -8,7 +12,7 @@ Relevant Settings
 
     countries:
 
-.. seealso:: 
+.. seealso::
     Documentation of the configuration file ``config.yaml`` at
     :ref:`toplevel_cf`
 
@@ -52,9 +56,9 @@ Outputs
 
     .. image:: ../img/europe_shape.png
         :scale: 33 %
-        
+
 - ``resources/nuts3_shapes.geojson``: NUTS3 shapes out of country selection including population and GDP data.
-        
+
     .. image:: ../img/nuts3_shapes.png
         :scale: 33 %
 
@@ -63,18 +67,23 @@ Description
 
 """
 
+import logging
+from _helpers import configure_logging
+
 import os
 import numpy as np
 from operator import attrgetter
-from six.moves import reduce
+from functools import reduce
 from itertools import takewhile
 
 import pandas as pd
 import geopandas as gpd
 from shapely.geometry import MultiPolygon, Polygon
 from shapely.ops import cascaded_union
-
 import pycountry as pyc
+
+logger = logging.getLogger(__name__)
+
 
 def _get_country(target, **keys):
     assert len(keys) == 1
@@ -82,6 +91,7 @@ def _get_country(target, **keys):
         return getattr(pyc.countries.get(**keys), target)
     except (KeyError, AttributeError):
         return np.nan
+
 
 def _simplify_polys(polys, minarea=0.1, tolerance=0.01, filterremote=True):
     if isinstance(polys, MultiPolygon):
@@ -96,6 +106,7 @@ def _simplify_polys(polys, minarea=0.1, tolerance=0.01, filterremote=True):
             polys = mainpoly
     return polys.simplify(tolerance=tolerance)
 
+
 def countries():
     cntries = snakemake.config['countries']
     if 'RS' in cntries: cntries.append('KV')
@@ -106,11 +117,12 @@ def countries():
     fieldnames = (df[x].where(lambda s: s!='-99') for x in ('ISO_A2', 'WB_A2', 'ADM0_A3'))
     df['name'] = reduce(lambda x,y: x.fillna(y), fieldnames, next(fieldnames)).str[0:2]
 
-    df = df.loc[df.name.isin(cntries) & (df['scalerank'] == 0)]
+    df = df.loc[df.name.isin(cntries) & ((df['scalerank'] == 0) | (df['scalerank'] == 5))]
     s = df.set_index('name')['geometry'].map(_simplify_polys)
     if 'RS' in cntries: s['RS'] = s['RS'].union(s.pop('KV'))
 
     return s
+
 
 def eez(country_shapes):
     df = gpd.read_file(snakemake.input.eez)
@@ -121,6 +133,7 @@ def eez(country_shapes):
     s.index.name = "name"
     return s
 
+
 def country_cover(country_shapes, eez_shapes=None):
     shapes = list(country_shapes)
     if eez_shapes is not None:
@@ -130,6 +143,7 @@ def country_cover(country_shapes, eez_shapes=None):
     if isinstance(europe_shape, MultiPolygon):
         europe_shape = max(europe_shape, key=attrgetter('area'))
     return Polygon(shell=europe_shape.exterior)
+
 
 def nuts3(country_shapes):
     df = gpd.read_file(snakemake.input.nuts3)
@@ -149,7 +163,6 @@ def nuts3(country_shapes):
            .applymap(lambda x: pd.to_numeric(x, errors='coerce'))
            .fillna(method='bfill', axis=1))['2014']
 
-    # Swiss data
     cantons = pd.read_csv(snakemake.input.ch_cantons)
     cantons = cantons.set_index(cantons['HASC'].str[3:])['NUTS']
     cantons = cantons.str.pad(5, side='right', fillchar='0')
@@ -182,11 +195,12 @@ def nuts3(country_shapes):
     manual['geometry'] = manual['country'].map(country_shapes)
     manual = manual.dropna()
 
-    df = df.append(manual)
+    df = df.append(manual, sort=False)
 
     df.loc['ME000', 'pop'] = 650.
 
     return df
+
 
 def save_to_geojson(df, fn):
     if os.path.exists(fn):
@@ -197,38 +211,23 @@ def save_to_geojson(df, fn):
     schema = {**gpd.io.file.infer_schema(df), 'geometry': 'Unknown'}
     df.to_file(fn, driver='GeoJSON', schema=schema)
 
+
 if __name__ == "__main__":
-    # Detect running outside of snakemake and mock snakemake for testing
     if 'snakemake' not in globals():
-        from vresutils.snakemake import MockSnakemake, Dict
-        snakemake = MockSnakemake(
-            path='..',
-            wildcards={},
-            input=Dict(
-                naturalearth='data/bundle/naturalearth/ne_10m_admin_0_countries.shp',
-                eez='data/bundle/eez/World_EEZ_v8_2014.shp',
-                nuts3='data/bundle/NUTS_2013_60M_SH/data/NUTS_RG_60M_2013.shp',
-                nuts3pop='data/bundle/nama_10r_3popgdp.tsv.gz',
-                nuts3gdp='data/bundle/nama_10r_3gdp.tsv.gz',
-                ch_cantons='data/bundle/ch_cantons.csv',
-                ch_popgdp='data/bundle/je-e-21.03.02.xls'
-            ),
-            output=Dict(
-                country_shapes='resources/country_shapes.geojson',
-                offshore_shapes='resource/offshore_shapes.geojson',
-                europe_shape='resources/europe_shape.geojson',
-                nuts3_shapes='resources/nuts3_shapes.geojson'
-            )
-        )
+        from _helpers import mock_snakemake
+        snakemake = mock_snakemake('build_shapes')
+    configure_logging(snakemake)
+
+    out = snakemake.output
 
     country_shapes = countries()
-    save_to_geojson(country_shapes, snakemake.output.country_shapes)
+    save_to_geojson(country_shapes, out.country_shapes)
 
     offshore_shapes = eez(country_shapes)
-    save_to_geojson(offshore_shapes, snakemake.output.offshore_shapes)
+    save_to_geojson(offshore_shapes, out.offshore_shapes)
 
     europe_shape = country_cover(country_shapes, offshore_shapes)
-    save_to_geojson(gpd.GeoSeries(europe_shape), snakemake.output.europe_shape)
+    save_to_geojson(gpd.GeoSeries(europe_shape), out.europe_shape)
 
     nuts3_shapes = nuts3(country_shapes)
-    save_to_geojson(nuts3_shapes, snakemake.output.nuts3_shapes)
+    save_to_geojson(nuts3_shapes, out.nuts3_shapes)
