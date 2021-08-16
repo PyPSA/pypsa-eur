@@ -27,7 +27,8 @@ scenario:
   # Co2L0p25 will give 25% CO2 emissions; Co2Lm0p05 will give 5% negative emissions
   # xH is the temporal resolution; 3H is 3-hourly, i.e. one snapshot every 3 hours
   # single letters are sectors: T for land transport, H for building heating,
-  # B for biomass supply, I for industry, shipping and aviation
+  # B for biomass supply, I for industry, shipping and aviation,
+  # A for agriculture, forestry and fishing
   # solar+c0.5 reduces the capital cost of solar to 50\% of reference value
   # solar+p3 multiplies the available installable potential by factor 3
   # co2 stored+e2 multiplies the potential of CO2 sequestration by a factor 2
