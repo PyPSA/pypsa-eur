@@ -175,8 +175,8 @@ sector:
   transport_fuel_cell_efficiency: 0.5
   transport_internal_combustion_efficiency: 0.3
   agriculture_machinery_electric_share: 0.12  # approximately as today
-  agriculture_machinery_fuel_efficiency: 0.7 # for conversion of fuel oil to use
-  agriculture_machinery_electric_efficiency: 0.3 # for conversion of electricity to use
+  agriculture_machinery_fuel_efficiency: 0.7 # fuel oil per use
+  agriculture_machinery_electric_efficiency: 0.3 # electricity per use
   shipping_average_efficiency: 0.4 #For conversion of fuel oil to propulsion in 2011
   shipping_hydrogen_liquefaction: true # whether to consider liquefaction costs for shipping H2 demands
   shipping_hydrogen_share: # 1 means all hydrogen FC
