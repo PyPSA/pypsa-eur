@@ -102,22 +102,22 @@ biomass:
   scenario: ENS_Med
   classes:
     solid biomass:
-      - Argicultural waste
-      - Municipal waste
-      - Residues from landscape care
-      - Sawdust
-      - Secondary Forestry residues - woodchips
-    not included:
-      - Bioethanol barley, wheat, grain maize, oats, other cereals and rye
+      - Agricultural waste
       - Fuelwood residues
-      - C&P_RW
-      - FuelwoodRW
-      - Rape seed
+      - Secondary Forestry residues - woodchips
+      - Sawdust
+      - Residues from landscape care
+      - Municipal waste
+    not included:
       - Sugar from sugar beet
-      - Miscanthus, switchgrass, RCG
+      - Rape seed
       - "Sunflower, soya seed "
-      - Poplar
+      - Bioethanol barley, wheat, grain maize, oats, other cereals and rye
+      - Miscanthus, switchgrass, RCG
       - Willow
+      - Poplar
+      - FuelwoodRW
+      - C&P_RW
     biogas:
       - Manure solid, liquid
       - Sludge
