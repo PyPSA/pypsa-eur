@@ -1965,7 +1965,7 @@ def add_agriculture(n, costs):
         suffix=" agriculture electricity",
         bus=nodes,
         carrier='agriculture electricity',
-        p_set=nodal_energy_totals.loc[nodes, "total agriculture electricity"] / 8760
+        p_set=nodal_energy_totals.loc[nodes, "total agriculture electricity"] * 1e6 / 8760
     )
 
     # heat
@@ -1975,7 +1975,7 @@ def add_agriculture(n, costs):
         suffix=" agriculture heat",
         bus=nodes + " services rural heat",
         carrier="agriculture heat",
-        p_set=nodal_energy_totals.loc[nodes, "total agriculture heat"] / 8760
+        p_set=nodal_energy_totals.loc[nodes, "total agriculture heat"] * 1e6 / 8760
     )
 
     # machinery
@@ -1995,7 +1995,7 @@ def add_agriculture(n, costs):
             suffix=" agriculture machinery electric",
             bus=nodes,
             carrier="agriculture machinery electric",
-            p_set=electric_share * efficiency_gain * machinery_nodal_energy / 8760,
+            p_set=electric_share / efficiency_gain * machinery_nodal_energy * 1e6 / 8760,
         )
 
     if ice_share > 0:
@@ -2004,10 +2004,10 @@ def add_agriculture(n, costs):
             "agriculture machinery oil",
             bus="EU oil",
             carrier="agriculture machinery oil",
-            p_set=ice_share * machinery_nodal_energy / 8760
+            p_set=ice_share * machinery_nodal_energy.sum() * 1e6 / 8760
         )
 
-        co2 = ice_share * machinery_nodal_energy / 8760 * costs.at["oil", 'CO2 intensity']
+        co2 = ice_share * machinery_nodal_energy.sum() * 1e6 / 8760 * costs.at["oil", 'CO2 intensity']
 
         n.add("Load",
             "agriculture machinery oil emissions",
