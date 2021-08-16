@@ -620,7 +620,7 @@ def build_co2_totals(countries, eea_co2, eurostat_co2):
             # does not include industrial process emissions or fuel processing/refining
             "industrial non-elec": (ct, "+", "Industry"),
             # does not include non-energy emissions
-            "agriculture": (eurostat_co2.index.get_level_values(0) == 'NL') & eurostat_co2.index.isin(["Agriculture / Forestry", "Fishing"], level=3),
+            "agriculture": (eurostat_co2.index.get_level_values(0) == ct) & eurostat_co2.index.isin(["Agriculture / Forestry", "Fishing"], level=3),
         }
 
         for i, mi in mappings.items():
