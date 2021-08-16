@@ -41,7 +41,24 @@ def build_nuts_population_data(year=2013):
 
 
 def enspreso_biomass_potentials(year=2020, scenario="ENS_Low"):
+    """
+    Loads the JRC ENSPRESO biomass potentials.
     
+    Parameters
+    ----------
+    year : int
+        The year for which potentials are to be taken.
+        Can be {2010, 2020, 2030, 2040, 2050}.
+    scenario : str
+        The scenario. Can be {"ENS_Low", "ENS_Med", "ENS_High"}.
+    
+    Returns
+    -------
+    pd.DataFrame
+        Biomass potentials for given year and scenario
+        in TWh/a by commodity and NUTS2 region.
+    """
+
     glossary = pd.read_excel(
         str(snakemake.input.enspreso_biomass),
         sheet_name="Glossary",
@@ -84,6 +101,20 @@ def enspreso_biomass_potentials(year=2020, scenario="ENS_Low"):
 
 
 def disaggregate_nuts0(bio):    
+    """
+    Some commodities are only given on NUTS0 level.
+    These are disaggregated here using the NUTS2
+    population as distribution key.
+    
+    Parameters
+    ----------
+    bio : pd.DataFrame
+        from enspreso_biomass_potentials()
+    
+    Returns
+    -------
+    pd.DataFrame
+    """
     
     pop = build_nuts_population_data()
     
@@ -125,6 +156,21 @@ def area(gdf):
 
 
 def convert_nuts2_to_regions(bio_nuts2, regions):
+    """
+    Converts biomass potentials given in NUTS2 to PyPSA-Eur regions based on the
+    overlay of both GeoDataFrames in proportion to the area.
+
+    Parameters
+    ----------
+    bio_nuts2 : gpd.GeoDataFrame
+        JRC ENSPRESO biomass potentials indexed by NUTS2 shapes.
+    regions : gpd.GeoDataFrame
+        PyPSA-Eur clustered onshore regions
+
+    Returns
+    -------
+    gpd.GeoDataFrame
+    """
     
     # calculate area of nuts2 regions
     bio_nuts2["area_nuts2"] = area(bio_nuts2)
