@@ -1956,6 +1956,8 @@ def add_waste_heat(n):
 
 def add_agriculture(n, costs):
 
+    logger.info('Add agriculture, forestry and fishing sector.')
+
     nodes = pop_layout.index
 
     # electricity
