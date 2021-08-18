@@ -101,7 +101,7 @@ def prepare_network(n, solve_opts):
 
     if solve_opts.get('load_shedding'):
         n.add("Carrier", "Load")
-        buses_i = n.buses.query('carrier not in @n.stores.carrier.unique()').index
+        buses_i = n.buses.query("carrier == 'AC'").index
         n.madd("Generator", buses_i, " load",
                bus=buses_i,
                carrier='load',
