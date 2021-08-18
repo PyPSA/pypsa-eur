@@ -90,8 +90,8 @@ if __name__ == '__main__':
 
     for key, pop in pop_cells.items():
 
-        ycoords = ('y', cutout.coords['y'])
-        xcoords = ('x', cutout.coords['x'])
+        ycoords = ('y', cutout.coords['y'].data)
+        xcoords = ('x', cutout.coords['x'].data)
         values = pop.values.reshape(cutout.shape)
         layout = xr.DataArray(values, [ycoords, xcoords])
 
