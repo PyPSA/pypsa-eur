@@ -1992,7 +1992,7 @@ def add_agriculture(n, costs):
 
         efficiency_gain = options["agriculture_machinery_fuel_efficiency"] / options["agriculture_machinery_electric_efficiency"]
 
-        n.add("Load",
+        n.madd("Load",
             nodes,
             suffix=" agriculture machinery electric",
             bus=nodes,
