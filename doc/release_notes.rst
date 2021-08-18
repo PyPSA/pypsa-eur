@@ -67,6 +67,10 @@ Future release
 * The transformation of the Steel and Aluminium production can be now defined for different years in the ``config.yaml`` file.
 * Include the option to alter the maximum energy capacity of a store via the ``carrier+factor`` in the ``{sector_opts}`` wildcard. This can be useful for sensitivity analyses. Example: ``co2 stored+e2`` multiplies the ``e_nom_max`` by factor 2. In this example, ``e_nom_max`` represents the CO2 sequestration potential in Europe.
 * Compatibility with ``xarray`` version 0.19.
+* Added option to include emissions and energy demands of agriculture, forestry and fishing sector via the letter ``A`` in the ``{sector_opts}`` wildcard.
+  Demands are separated into electricity, heat and oil for machinery.
+  Fuel-switching for machinery from oil to electricity can be set exogenously in the ``config.yaml``
+  `#147 <https://github.com/PyPSA/PyPSA/pull/147>`_.
 
 PyPSA-Eur-Sec 0.5.0 (21st May 2021)
 ===================================
