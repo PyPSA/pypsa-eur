@@ -265,7 +265,7 @@ def idees_per_country(ct, year):
     ]
     ct_totals["total agriculture machinery"] = df[rows].sum()
 
-    row = ["Agriculture, forestry and fishing"]
+    row = "Agriculture, forestry and fishing"
     ct_totals["total agriculture"] = df[row]
 
     # transport
@@ -569,7 +569,7 @@ def build_eea_co2(year=1990):
         "international aviation",
         "domestic navigation",
         "international navigation",
-        "agriculture, forstry and fishing"
+        "agriculture, forestry and fishing"
     ]
     emissions["industrial non-elec"] = emissions["total energy"] - emissions[to_subtract].sum(axis=1)
 
