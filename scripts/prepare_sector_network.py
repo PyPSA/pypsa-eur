@@ -770,7 +770,8 @@ def insert_electricity_distribution_grid(n, costs):
         marginal_cost=n.generators.loc[solar, 'marginal_cost'],
         capital_cost=costs.at['solar-rooftop', 'fixed'],
         efficiency=n.generators.loc[solar, 'efficiency'],
-        p_max_pu=n.generators_t.p_max_pu[solar]
+        p_max_pu=n.generators_t.p_max_pu[solar],
+        lifetime=costs.at['solar-rooftop', 'lifetime']   
     )
 
     n.add("Carrier", "home battery")
