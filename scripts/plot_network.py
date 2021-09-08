@@ -398,7 +398,8 @@ def plot_series(network, carrier="AC", name="test"):
 
     supply = pd.DataFrame(index=n.snapshots)
     for c in n.iterate_components(n.branch_components):
-        for i in range(2):
+        n_port = 4 if c.name=='Link' else 2
+        for i in range(n_port):
             supply = pd.concat((supply,
                                 (-1) * c.pnl["p" + str(i)].loc[:,
                                                                c.df.index[c.df["bus" + str(i)].isin(buses)]].groupby(c.df.carrier,
