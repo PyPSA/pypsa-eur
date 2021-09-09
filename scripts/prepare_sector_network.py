@@ -103,9 +103,6 @@ def build_carbon_budget(o, fn):
     #emissions at the beginning of the path (last year available 2018)
     e_0 = co2_emissions_year(countries, opts, year=2018)
     
-    #emissions in 2019 and 2020 assumed equal to 2018 and substracted
-    carbon_budget -= 2 * e_0
-    
     planning_horizons = snakemake.config['scenario']['planning_horizons']
     t_0 = planning_horizons[0]
 
