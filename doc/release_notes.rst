@@ -28,8 +28,8 @@ PyPSA-Eur 0.4.0 (15th September 2021)
   other packages [`#224 <https://github.com/PyPSA/pypsa-eur/pull/224>`_]. 
 
 * Implemented changes to ``n.snapshot_weightings`` in new PyPSA version v0.18
-  (cf. `PyPSA/PyPSA/#227 <https://github.com/PyPSA/PyPSA/pull/227>`_) [`#259
-  <https://github.com/PyPSA/pypsa-eur/pull/259>`_].
+  (cf. `PyPSA/PyPSA/#227 <https://github.com/PyPSA/PyPSA/pull/227>`_)
+  [`#259 <https://github.com/PyPSA/pypsa-eur/pull/259>`_].
 
 * Add option to pre-aggregate nodes without power injections (positive or
   negative, i.e. generation or demand) to electrically closest nodes or neighbors
@@ -37,19 +37,19 @@ PyPSA-Eur 0.4.0 (15th September 2021)
   substations or have no offshore connection.
 
 * In :mod:`simplify_network`, bus columns with no longer correct entries are
-  removed (symbol, tags, under_construction, substation_lv, substation_off) [`#219
-  <https://github.com/PyPSA/pypsa-eur/pull/219>`_]
+  removed (symbol, tags, under_construction, substation_lv, substation_off)
+  [`#219 <https://github.com/PyPSA/pypsa-eur/pull/219>`_]
 
 * Add option to include marginal costs of links representing fuel cells,
-  electrolysis, and battery inverters [`#232
-  <https://github.com/PyPSA/pypsa-eur/pull/232>`_].
+  electrolysis, and battery inverters
+  [`#232 <https://github.com/PyPSA/pypsa-eur/pull/232>`_].
 
 * The rule and script ``build_country_flh`` are removed as they are no longer
   used or maintained.
 
 * The connection cost of generators in :mod:`simplify_network` are now reported
-  in ``resources/connection_costs_s{simpl}.csv`` [`#261
-  <https://github.com/PyPSA/pypsa-eur/pull/261>`_].
+  in ``resources/connection_costs_s{simpl}.csv`` 
+  [`#261 <https://github.com/PyPSA/pypsa-eur/pull/261>`_].
 
 * The tutorial cutout was renamed from ``cutouts/europe-2013-era5.nc`` to
   ``cutouts/europe-2013-era5-tutorial.nc`` to accomodate tutorial and productive
@@ -58,8 +58,8 @@ PyPSA-Eur 0.4.0 (15th September 2021)
 * The flag ``keep_all_available_areas`` in the configuration for renewable
   potentials was deprecated and now defaults to ``True``. 
 
-* Update dependencies in ``envs/environment.yaml`` [`#257
-  <https://github.com/PyPSA/pypsa-eur/pull/257>`_]
+* Update dependencies in ``envs/environment.yaml`` 
+  [`#257 <https://github.com/PyPSA/pypsa-eur/pull/257>`_]
 
 * Continuous integration testing switches to Github Actions from Travis CI
   [`#252 <https://github.com/PyPSA/pypsa-eur/pull/252>`_].
@@ -72,38 +72,35 @@ PyPSA-Eur 0.4.0 (15th September 2021)
 **Bugs and Compatibility**
 
 
-* Support for PyPSA v0.18 [`#268
-  <https://github.com/PyPSA/pypsa-eur/pull/268>`_].
+* Support for PyPSA v0.18 [`#268 <https://github.com/PyPSA/pypsa-eur/pull/268>`_].
 
 * Minimum Python version set to ``3.8``.
 
-* Removed ``six`` dependency [`#245
-  <https://github.com/PyPSA/pypsa-eur/pull/245>`_].
+* Removed ``six`` dependency [`#245 <https://github.com/PyPSA/pypsa-eur/pull/245>`_].
 
 * Update :mod:`plot_network` and :mod:`make_summary` rules to latest PyPSA
   versions  [`#270 <https://github.com/PyPSA/pypsa-eur/pull/270>`_].
 
 * Bugfix: Keep converter links to store components when using the ``ATK``
-  wildcard and only remove DC links [`#214
-  <https://github.com/PyPSA/pypsa-eur/pull/214>`_].
+  wildcard and only remove DC links [`#214 <https://github.com/PyPSA/pypsa-eur/pull/214>`_].
 
 * Bugfix: Value for ``co2base`` in ``config.yaml`` adjusted to 1.487e9 t CO2-eq
   (from 3.1e9 t CO2-eq). The new value represents emissions related to the
   electricity sector for EU+UK+Balkan. The old value was too high and used when
-  the emissions wildcard in ``{opts}`` was used  [`#233
-  <https://github.com/PyPSA/pypsa-eur/pull/233>`_].
+  the emissions wildcard in ``{opts}`` was used 
+  [`#233 <https://github.com/PyPSA/pypsa-eur/pull/233>`_].
 
 * Bugfix: Add escape in :mod:`base_network` if all TYNDP links are already
-  contained in the network [`#246
-  <https://github.com/PyPSA/pypsa-eur/pull/246>`_].
+  contained in the network
+  [`#246 <https://github.com/PyPSA/pypsa-eur/pull/246>`_].
 
 * Bugfix: In :mod:`solve_operations_network` the optimised capacities are now
-  fixed for all extendable links, not only HVDC links [`#244
-  <https://github.com/PyPSA/pypsa-eur/pull/244>`_].
+  fixed for all extendable links, not only HVDC links 
+  [`#244 <https://github.com/PyPSA/pypsa-eur/pull/244>`_].
 
 * Bugfix: The ``focus_weights`` are now also considered when pre-clustering in
-  the :mod:`simplify_network` rule [`#241
-  <https://github.com/PyPSA/pypsa-eur/pull/241>`_].
+  the :mod:`simplify_network` rule 
+  [`#241 <https://github.com/PyPSA/pypsa-eur/pull/241>`_].
 
 * Bugfix: in :mod:`build_renewable_profile` where offshore wind profiles could
   no longer be created [`#249 <https://github.com/PyPSA/pypsa-eur/pull/249>`_].
@@ -122,8 +119,8 @@ PyPSA-Eur 0.4.0 (15th September 2021)
   load shedding generators are only added at the AC buses, excluding buses for H2
   and battery stores [`#269 <https://github.com/PyPSA/pypsa-eur/pull/269>`_].
 
-* Bugfix: Delete duplicated capital costs at battery discharge link [`#240
-  <https://github.com/PyPSA/pypsa-eur/pull/240>`_].
+* Bugfix: Delete duplicated capital costs at battery discharge link 
+  [`#240 <https://github.com/PyPSA/pypsa-eur/pull/240>`_].
 
 * Bugfix: Propagate the solver log file name to the solver. Previously, the
   PyPSA network solving functions were not told about the solver logfile specified
