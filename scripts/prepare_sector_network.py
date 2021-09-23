@@ -1668,6 +1668,7 @@ def create_nodes_for_heat_sector():
     # urban can be split into district heating (central) and individual heating (decentral)
 
     ct_urban = pop_layout.urban.groupby(pop_layout["ct"]).sum()
+    # distribution of urban population within a country
     pop_layout["urban_ct_fraction"] = pop_layout["urban"] / \
             pop_layout["ct"].map(ct_urban.get)
     # todays district heating share per country
@@ -1690,7 +1691,8 @@ def create_nodes_for_heat_sector():
         dist_fraction = central_fraction * urban_fraction
         nodes["urban central"] = dist_fraction.index
 
-    if options['district_heating_increase']:  # take current district heating share
+    # take current district heating share
+    if options['district_heating_increase']:
         dist_fraction = dist_heat_share * \
             pop_layout["urban_ct_fraction"] / pop_layout["fraction"]
         nodes["urban central"] = dist_fraction.index
