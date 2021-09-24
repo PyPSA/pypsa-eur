@@ -392,7 +392,8 @@ def add_co2_tracking(n, options):
 
 
 def add_co2_network(n, costs):
-
+    
+    logger.info("Adding CO2 network.")
     co2_links = create_network_topology(n, "CO2 pipeline ")
 
     cost_onshore = (1 - co2_links.underwater_fraction) * costs.at['CO2 pipeline', 'fixed'] * co2_links.length
