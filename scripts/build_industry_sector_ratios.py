@@ -419,6 +419,18 @@ def chemicals_industry():
     to_rename = {sector: "HVC"}
     df.rename(columns=to_rename, inplace=True)
 
+    # HVC mechanical recycling
+
+    sector = "HVC (mechanical recycling)"
+    df[sector] = 0.0
+    df.loc["elec", sector] = config["MWh_elec_per_tHVC_mechanical_recycling"]
+
+    # HVC chemical recycling
+
+    sector = "HVC (chemical recycling)"
+    df[sector] = 0.0
+    df.loc["elec", sector] = config["MWh_elec_per_tHVC_chemical_recycling"]
+
     # Ammonia
 
     sector = "Ammonia"

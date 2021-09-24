@@ -271,7 +271,11 @@ industry:
   NH3_process_emissions: 24.5 # in MtCO2/a from SMR for H2 production for NH3 from UNFCCC for 2015 for EU28
   petrochemical_process_emissions: 25.5 # in MtCO2/a for petrochemical and other from UNFCCC for 2015 for EU28
   HVC_primary_fraction: 1. # fraction of today's HVC produced via primary route
+  HVC_mechanical_recycling_fraction: 0. # fraction of today's HVC produced via mechanical recycling
+  HVC_chemical_recycling_fraction: 0. # fraction of today's HVC produced via chemical recycling
   HVC_production_today: 52. # MtHVC/a from DECHEMA (2017), Figure 16, page 107; includes ethylene, propylene and BTX
+  MWh_elec_per_tHVC_mechanical_recycling: 3. # estimate
+  MWh_elec_per_tHVC_chemical_recycling: 6.9 # Material Economics (2019), page 125; based on pyrolysis and steam cracking
   chlorine_production_today: 9.58 # MtCl/a from DECHEMA (2017), Table 7, page 43
   MWh_elec_per_tCl: 3.6 # DECHEMA (2017), Table 6, page 43
   MWh_H2_per_tCl: -0.9372  # DECHEMA (2017), page 43; negative since hydrogen produced in chloralkali process
@@ -282,6 +286,7 @@ industry:
   reference_year: 2015
   # references:
   # DECHEMA (2017): https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf
+  # Material Economics (2019): https://materialeconomics.com/latest-updates/industrial-transformation-2050
 
 costs:
   lifetime: 25 #default lifetime

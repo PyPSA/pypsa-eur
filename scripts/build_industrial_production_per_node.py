@@ -10,6 +10,8 @@ sector_mapping = {
     'DRI + Electric arc': 'Iron and steel',
     'Ammonia': 'Chemical industry',
     'HVC': 'Chemical industry',
+    'HVC (mechanical recycling)': 'Chemical industry',
+    'HVC (chemical recycling)': 'Chemical industry',
     'Methanol': 'Chemical industry',
     'Chlorine': 'Chemical industry',
     'Other chemicals': 'Chemical industry',
