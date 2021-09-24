@@ -467,6 +467,7 @@ plotting:
     hot water storage: '#BBBBBB'
     hot water charging: '#BBBBBB'
     hot water discharging: '#999999'
+    CO2 pipeline: '#999999'
     CHP: r
     CHP heat: r
     CHP electric: r
