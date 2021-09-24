@@ -82,7 +82,7 @@ def build_biomass_transport_costs():
     # add missing Norway with data from Sweden
     transport_costs["NO"] = transport_costs["SE"]
 
-    transport_costs.to_csv(snakemake.output.transport_costs)
+    transport_costs.to_csv(snakemake.output[0])
 
 
 if __name__ == "__main__":
