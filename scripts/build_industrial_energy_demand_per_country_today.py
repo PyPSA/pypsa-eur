@@ -114,6 +114,11 @@ def add_non_eu28_industrial_energy_demand(demand):
     fn = snakemake.input.industrial_production_per_country
     production = pd.read_csv(fn, index_col=0) / 1e3
 
+    #recombine HVC, Chlorine and Methanol to Basic chemicals (without ammonia)
+    chemicals = ["HVC", "Chlorine", "Methanol"]
+    production["Basic chemicals (without ammonia)"] = production[chemicals].sum(axis=1)
+    production.drop(columns=chemicals, inplace=True)
+
     eu28_production = production.loc[eu28].sum()
     eu28_energy = demand.groupby(level=1).sum()
     eu28_averages = eu28_energy / eu28_production
