@@ -9,7 +9,11 @@ sector_mapping = {
     'Integrated steelworks': 'Iron and steel',
     'DRI + Electric arc': 'Iron and steel',
     'Ammonia': 'Chemical industry',
-    'Basic chemicals (without ammonia)': 'Chemical industry',
+    'HVC': 'Chemical industry',
+    'HVC (mechanical recycling)': 'Chemical industry',
+    'HVC (chemical recycling)': 'Chemical industry',
+    'Methanol': 'Chemical industry',
+    'Chlorine': 'Chemical industry',
     'Other chemicals': 'Chemical industry',
     'Pharmaceutical products etc.': 'Chemical industry',
     'Cement': 'Cement',
@@ -40,12 +44,12 @@ def build_nodal_industrial_production():
 
     countries = keys.country.unique()
     sectors = industrial_production.columns
-    
+
     for country, sector in product(countries, sectors):
 
         buses = keys.index[keys.country == country]
         mapping = sector_mapping.get(sector, "population")
-        
+
         key = keys.loc[buses, mapping]
         nodal_production.loc[buses, sector] = industrial_production.at[country, sector] * key
 
