@@ -289,7 +289,7 @@ def plot_h2_map(network):
         title='Electrolyzer capacity',
         handler_map=make_handler_map_to_scale_circles_as_in(ax)
     )
-    
+
     ax.add_artist(l2)
 
     handles = []
@@ -523,10 +523,11 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             'plot_network',
             simpl='',
-            clusters=48,
-            lv=1.0,
-            sector_opts='Co2L0-168H-T-H-B-I-solar3-dist1',
-            planning_horizons=2050,
+            clusters=45,
+            lv=1.5,
+            opts='',
+            sector_opts='Co2L0-168H-T-H-B-I-solar+p3-dist1',
+            planning_horizons=2030,
         )
 
     overrides = override_component_attrs(snakemake.input.overrides)

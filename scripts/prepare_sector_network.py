@@ -75,7 +75,7 @@ def co2_emissions_year(countries, opts, year):
     co2_emissions = co2_totals.loc[countries, sectors].sum().sum()
 
     # convert MtCO2 to GtCO2
-    co2_emissions *= 0.001  
+    co2_emissions *= 0.001
 
     return co2_emissions
 
@@ -102,14 +102,14 @@ def build_carbon_budget(o, fn):
 
     #emissions at the beginning of the path (last year available 2018)
     e_0 = co2_emissions_year(countries, opts, year=2018)
-    
+
     planning_horizons = snakemake.config['scenario']['planning_horizons']
     t_0 = planning_horizons[0]
 
     if "be" in o:
 
         # final year in the path
-        t_f = t_0 + (2 * carbon_budget / e_0).round(0) 
+        t_f = t_0 + (2 * carbon_budget / e_0).round(0)
 
         def beta_decay(t):
             cdf_term = (t - t_0) / (t_f - t_0)
@@ -270,6 +270,9 @@ def patch_electricity_network(n):
     update_wind_solar_costs(n, costs)
     n.loads["carrier"] = "electricity"
     n.buses["location"] = n.buses.index
+    # remove trailing white space of load index until new PyPSA version after v0.18.
+    n.loads.rename(lambda x: x.strip(), inplace=True)
+    n.loads_t.p_set.rename(lambda x: x.strip(), axis=1, inplace=True)
 
 
 def add_co2_tracking(n, options):
@@ -768,7 +771,7 @@ def insert_electricity_distribution_grid(n, costs):
         capital_cost=costs.at['solar-rooftop', 'fixed'],
         efficiency=n.generators.loc[solar, 'efficiency'],
         p_max_pu=n.generators_t.p_max_pu[solar],
-        lifetime=costs.at['solar-rooftop', 'lifetime']   
+        lifetime=costs.at['solar-rooftop', 'lifetime']
     )
 
     n.add("Carrier", "home battery")
@@ -816,7 +819,7 @@ def insert_gas_distribution_costs(n, costs):
     # TODO options?
 
     f_costs = options['gas_distribution_grid_cost_factor']
-    
+
     print("Inserting gas distribution grid with investment cost factor of", f_costs)
 
     capital_cost = costs.loc['electricity distribution grid']["fixed"] * f_costs
@@ -825,7 +828,7 @@ def insert_gas_distribution_costs(n, costs):
     gas_b = n.links.index[n.links.carrier.str.contains("gas boiler") &
                           (~n.links.carrier.str.contains("urban central"))]
     n.links.loc[gas_b, "capital_cost"] += capital_cost
-    
+
     # micro CHPs
     mchp = n.links.index[n.links.carrier.str.contains("micro gas")]
     n.links.loc[mchp,  "capital_cost"] += capital_cost
@@ -1073,7 +1076,7 @@ def add_land_transport(n, costs):
             suffix=" EV battery",
             carrier="Li ion"
         )
-        
+
         p_set = electric_share * (transport[nodes] + cycling_shift(transport[nodes], 1) + cycling_shift(transport[nodes], 2)) / 3
 
         n.madd("Load",
@@ -1084,8 +1087,8 @@ def add_land_transport(n, costs):
             p_set=p_set
         )
 
-        
-        p_nom = nodal_transport_data["number cars"] * options.get("bev_charge_rate", 0.011) * electric_share  
+
+        p_nom = nodal_transport_data["number cars"] * options.get("bev_charge_rate", 0.011) * electric_share
 
         n.madd("Link",
             nodes,
@@ -1117,7 +1120,7 @@ def add_land_transport(n, costs):
 
     if electric_share > 0 and options["bev_dsm"]:
 
-        e_nom = nodal_transport_data["number cars"] * options.get("bev_energy", 0.05) * options["bev_availability"] * electric_share 
+        e_nom = nodal_transport_data["number cars"] * options.get("bev_energy", 0.05) * options["bev_availability"] * electric_share
 
         n.madd("Store",
             nodes,
@@ -1197,7 +1200,7 @@ def add_heat(n, costs):
         "services urban decentral",
         "urban central"
     ]
-    
+
     for name in heat_systems:
 
         name_type = "central" if name == "urban central" else "decentral"
@@ -1279,16 +1282,16 @@ def add_heat(n, costs):
                 p_nom_extendable=True
             )
 
-            
+
             if isinstance(options["tes_tau"], dict):
                 tes_time_constant_days = options["tes_tau"][name_type]
             else:
                 logger.warning("Deprecated: a future version will require you to specify 'tes_tau' ",
                                "for 'decentral' and 'central' separately.")
                 tes_time_constant_days = options["tes_tau"] if name_type == "decentral" else 180.
-            
+
             # conversion from EUR/m^3 to EUR/MWh for 40 K diff and 1.17 kWh/m^3/K
-            capital_cost = costs.at[name_type + ' water tank storage', 'fixed'] / 0.00117 / 40 
+            capital_cost = costs.at[name_type + ' water tank storage', 'fixed'] / 0.00117 / 40
 
             n.madd("Store",
                 nodes[name] + f" {name} water tanks",
@@ -1501,9 +1504,9 @@ def create_nodes_for_heat_sector():
     # rural are areas with low heating density and individual heating
     # urban are areas with high heating density
     # urban can be split into district heating (central) and individual heating (decentral)
-    
+
     sectors = ["residential", "services"]
-    
+
     nodes = {}
     for sector in sectors:
         nodes[sector + " rural"] = pop_layout.index
@@ -1514,10 +1517,10 @@ def create_nodes_for_heat_sector():
             nodes[sector + " urban decentral"] = pop_layout.index[pop_layout.ct.isin(urban_decentral_ct)]
         else:
             nodes[sector + " urban decentral"] = pop_layout.index
-    
+
     # for central nodes, residential and services are aggregated
     nodes["urban central"] = pop_layout.index.symmetric_difference(nodes["residential urban decentral"])
-    
+
     return nodes
 
 
@@ -1752,9 +1755,9 @@ def add_industry(n, costs):
     if shipping_hydrogen_share < 1:
 
         shipping_oil_share = 1 - shipping_hydrogen_share
-        
+
         p_set = shipping_oil_share * nodal_energy_totals.loc[nodes, all_navigation].sum(axis=1) * 1e6 / 8760.
-        
+
         n.madd("Load",
             nodes,
             suffix=" shipping oil",
@@ -1762,7 +1765,7 @@ def add_industry(n, costs):
             carrier="shipping oil",
             p_set=p_set
         )
-        
+
         co2 = shipping_oil_share * nodal_energy_totals.loc[nodes, all_navigation].sum().sum() * 1e6 / 8760 * costs.at["oil", "CO2 intensity"]
 
         n.add("Load",
@@ -1781,7 +1784,7 @@ def add_industry(n, costs):
         )
 
     if "EU oil Store" not in n.stores.index:
-        
+
         #could correct to e.g. 0.001 EUR/kWh * annuity and O&M
         n.add("Store",
             "EU oil Store",
@@ -1948,7 +1951,7 @@ def add_waste_heat(n):
 
 
 def decentral(n):
-    """Removes the electricity transmission system."""    
+    """Removes the electricity transmission system."""
     n.lines.drop(n.lines.index, inplace=True)
     n.links.drop(n.links.index[n.links.carrier.isin(["DC", "B2B"])], inplace=True)
 
@@ -1981,7 +1984,7 @@ def maybe_adjust_costs_and_potentials(n, opts):
                 if attr == 'p_nom_max':
                     comps = {"Generator", "Link", "StorageUnit"}
                 elif attr == 'e_nom_max':
-                    comps = {"Store"}    
+                    comps = {"Store"}
                 else:
                     comps = {"Generator", "Link", "StorageUnit", "Store"}
                 for c in n.iterate_components(comps):
@@ -2007,10 +2010,11 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             'prepare_sector_network',
             simpl='',
-            clusters=48,
+            clusters=45,
             lv=1.0,
+            opts='',
             sector_opts='Co2L0-168H-T-H-B-I-solar3-dist1',
-            planning_horizons=2020,
+            planning_horizons=2030,
         )
 
     logging.basicConfig(level=snakemake.config['logging_level'])
@@ -2036,7 +2040,7 @@ if __name__ == "__main__":
     patch_electricity_network(n)
 
     if snakemake.config["foresight"] == 'myopic':
-        
+
         add_lifetime_wind_solar(n, costs)
 
         conventional = snakemake.config['existing_capacities']['conventional_carriers']
