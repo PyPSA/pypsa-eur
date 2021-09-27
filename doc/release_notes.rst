@@ -8,6 +8,8 @@ Future release
 .. note::
   This unreleased version currently requires the master branches of PyPSA, PyPSA-Eur, and the technology-data repository.
 
+* With this release, we change the license from copyleft GPLv3 to the more
+  liberal MIT license with the consent of all contributors.
 * Extended use of ``multiprocessing`` for much better performance
   (from up to 20 minutes to less than one minute).
 * Compatibility with ``atlite>=0.2``. Older versions of ``atlite`` will no longer work.
