@@ -70,6 +70,7 @@ Future release
 * Include the option to alter the maximum energy capacity of a store via the ``carrier+factor`` in the ``{sector_opts}`` wildcard. This can be useful for sensitivity analyses. Example: ``co2 stored+e2`` multiplies the ``e_nom_max`` by factor 2. In this example, ``e_nom_max`` represents the CO2 sequestration potential in Europe.
 * Compatibility with ``xarray`` version 0.19.
 * Separate basic chemicals into HVC, chlorine, methanol and ammonia [`#166 <https://github.com/PyPSA/PyPSA-Eur-Sec/pull/166>`_].
+* Add option to specify reuse, primary production, and mechanical and chemical recycling fraction of platics [`#166 <https://github.com/PyPSA/PyPSA-Eur-Sec/pull/166>`_].
 
 PyPSA-Eur-Sec 0.5.0 (21st May 2021)
 ===================================
