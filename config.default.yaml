@@ -223,7 +223,8 @@ sector:
   co2_vent: true
   SMR: true
   co2_sequestration_potential: 200  #MtCO2/a sequestration potential for Europe
-  co2_sequestration_cost: 20   #EUR/tCO2 for transport and sequestration of CO2
+  co2_sequestration_cost: 10   #EUR/tCO2 for sequestration of CO2
+  co2_network: false
   cc_fraction: 0.9  # default fraction of CO2 captured with post-combustion capture
   hydrogen_underground_storage: true
   use_fischer_tropsch_waste_heat: true
@@ -467,6 +468,7 @@ plotting:
     hot water storage: '#BBBBBB'
     hot water charging: '#BBBBBB'
     hot water discharging: '#999999'
+    CO2 pipeline: '#999999'
     CHP: r
     CHP heat: r
     CHP electric: r
