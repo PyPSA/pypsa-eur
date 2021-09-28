@@ -1,4 +1,7 @@
 
+from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
+HTTP = HTTPRemoteProvider()
+
 configfile: "config.yaml"
 
 
@@ -180,6 +183,21 @@ rule build_biomass_potentials:
     script: 'scripts/build_biomass_potentials.py'
 
 
+if config["sector"]["biomass_transport"]:
+    rule build_biomass_transport_costs:
+        input:
+            transport_cost_data=HTTP.remote("publications.jrc.ec.europa.eu/repository/bitstream/JRC98626/biomass potentials in europe_web rev.pdf", keep_local=True)
+        output:
+            biomass_transport_costs="resources/biomass_transport_costs.csv",
+        threads: 1
+        resources: mem_mb=1000
+        benchmark: "benchmarks/build_biomass_transport_costs"
+        script: 'scripts/build_biomass_transport_costs.py'
+    build_biomass_transport_costs_output = rules.build_biomass_transport_costs.output
+else:
+    build_biomass_transport_costs_output = {}
+
+
 rule build_ammonia_production:
     input:
         usgs="data/myb1-2017-nitro.xls"
@@ -321,9 +339,9 @@ rule prepare_sector_network:
         energy_totals_name='resources/energy_totals.csv',
         co2_totals_name='resources/co2_totals.csv',
         transport_name='resources/transport_data.csv',
-        traffic_data_KFZ = "data/emobility/KFZ__count",
-        traffic_data_Pkw = "data/emobility/Pkw__count",
         dh_share = "data/district_heat_share.csv",
+        traffic_data_KFZ="data/emobility/KFZ__count",
+        traffic_data_Pkw="data/emobility/Pkw__count",
         biomass_potentials='resources/biomass_potentials.csv',
         heat_profile="data/heat_load_profile_BDEW.csv",
         costs=CDIR + "costs_{planning_horizons}.csv",
@@ -353,7 +371,8 @@ rule prepare_sector_network:
         solar_thermal_total="resources/solar_thermal_total_elec_s{simpl}_{clusters}.nc",
         solar_thermal_urban="resources/solar_thermal_urban_elec_s{simpl}_{clusters}.nc",
         solar_thermal_rural="resources/solar_thermal_rural_elec_s{simpl}_{clusters}.nc",
-	    **build_retro_cost_output
+        **build_retro_cost_output,
+        **build_biomass_transport_costs_output
     output: RDIR + '/prenetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc'
     threads: 1
     resources: mem_mb=2000
