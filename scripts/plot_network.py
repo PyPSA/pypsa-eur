@@ -289,7 +289,7 @@ def plot_h2_map(network):
         title='Electrolyzer capacity',
         handler_map=make_handler_map_to_scale_circles_as_in(ax)
     )
-    
+
     ax.add_artist(l2)
 
     handles = []
@@ -398,7 +398,8 @@ def plot_series(network, carrier="AC", name="test"):
 
     supply = pd.DataFrame(index=n.snapshots)
     for c in n.iterate_components(n.branch_components):
-        for i in range(2):
+        n_port = 4 if c.name=='Link' else 2
+        for i in range(n_port):
             supply = pd.concat((supply,
                                 (-1) * c.pnl["p" + str(i)].loc[:,
                                                                c.df.index[c.df["bus" + str(i)].isin(buses)]].groupby(c.df.carrier,
@@ -522,10 +523,11 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             'plot_network',
             simpl='',
-            clusters=48,
-            lv=1.0,
-            sector_opts='Co2L0-168H-T-H-B-I-solar3-dist1',
-            planning_horizons=2050,
+            clusters=45,
+            lv=1.5,
+            opts='',
+            sector_opts='Co2L0-168H-T-H-B-I-solar+p3-dist1',
+            planning_horizons=2030,
         )
 
     overrides = override_component_attrs(snakemake.input.overrides)

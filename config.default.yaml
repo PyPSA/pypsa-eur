@@ -72,7 +72,7 @@ electricity:
 
 # regulate what components with which carriers are kept from PyPSA-Eur;
 # some technologies are removed because they are implemented differently
-# (e.g. battery or H2 storage) or have different year-dependent costs 
+# (e.g. battery or H2 storage) or have different year-dependent costs
 # in PyPSA-Eur-Sec
 pypsa_eur:
   Bus:
@@ -223,7 +223,8 @@ sector:
   co2_vent: true
   SMR: true
   co2_sequestration_potential: 200  #MtCO2/a sequestration potential for Europe
-  co2_sequestration_cost: 20   #EUR/tCO2 for transport and sequestration of CO2
+  co2_sequestration_cost: 10   #EUR/tCO2 for sequestration of CO2
+  co2_network: false
   cc_fraction: 0.9  # default fraction of CO2 captured with post-combustion capture
   hydrogen_underground_storage: true
   use_fischer_tropsch_waste_heat: true
@@ -335,7 +336,7 @@ solving:
 
 plotting:
   map:
-    boundaries: [-11, 30, 34, 71] 
+    boundaries: [-11, 30, 34, 71]
     color_geomap:
       ocean: white
       land: whitesmoke
@@ -420,6 +421,7 @@ plotting:
     lines: k
     transmission lines: k
     H2: m
+    H2 liquefaction: m
     hydrogen storage: m
     battery: slategray
     battery storage: slategray
@@ -466,6 +468,7 @@ plotting:
     hot water storage: '#BBBBBB'
     hot water charging: '#BBBBBB'
     hot water discharging: '#999999'
+    CO2 pipeline: '#999999'
     CHP: r
     CHP heat: r
     CHP electric: r

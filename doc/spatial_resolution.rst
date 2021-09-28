@@ -50,7 +50,7 @@ then distributed by population density within)
 and transport of solid biomass is possible.
 
 CO2:  single node for Europe, but a transport and storage cost is added for
-sequestered CO2.
+sequestered CO2. Optionally: nodal, with CO2 transport via pipelines.
 
 Liquid hydrocarbons: single node for Europe, since transport costs for
 liquids are low.
