@@ -1688,8 +1688,7 @@ def add_biomass(n, costs):
 
     if options["biomass_transport"]:
         # potential per node distributed within country by population
-        biomass_potentials_spatial = (biomass_potentials.loc[pop_layout.ct]
-                            .set_index(pop_layout.index)
+        biomass_potentials_spatial = (biomass_potentials.loc[pop_layout.index]
                             .mul(pop_layout.fraction, axis="index")
                             .rename(index=lambda x: x + " solid biomass"))
     else:
@@ -2206,7 +2205,7 @@ if __name__ == "__main__":
             lv=1.0,
             opts='',
             sector_opts='Co2L0-168H-T-H-B-I-solar3-dist1',
-            planning_horizons=2030,
+            planning_horizons="2030",
         )
 
     logging.basicConfig(level=snakemake.config['logging_level'])
