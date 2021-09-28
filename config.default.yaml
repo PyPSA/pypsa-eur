@@ -175,7 +175,7 @@ sector:
   transport_fuel_cell_efficiency: 0.5
   transport_internal_combustion_efficiency: 0.3
   shipping_average_efficiency: 0.4 #For conversion of fuel oil to propulsion in 2011
-  shipping_hydrogen_liquefaction: true # whether to consider liquefaction costs for shipping H2 demands
+  shipping_hydrogen_liquefaction: false # whether to consider liquefaction costs for shipping H2 demands
   shipping_hydrogen_share: # 1 means all hydrogen FC
     2020: 0
     2025: 0
