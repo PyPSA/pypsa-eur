@@ -234,6 +234,7 @@ sector:
   electricity_grid_connection: true  # only applies to onshore wind and utility PV
   gas_distribution_grid: true
   gas_distribution_grid_cost_factor: 1.0  #multiplies cost in data/costs.csv
+  biomass_transport: false  # biomass transport between nodes
   conventional_generation: # generator : carrier
     OCGT: gas
 
@@ -274,7 +275,6 @@ industry:
   HVC_primary_fraction: 1.0 #fraction of current non-ammonia basic chemicals produced via primary route
   hotmaps_locate_missing: false
   reference_year: 2015
-
 
 costs:
   lifetime: 25 #default lifetime
@@ -509,5 +509,6 @@ plotting:
     shipping oil: "#6495ED"
     shipping oil emissions: "#6495ED"
     electricity distribution grid: '#333333'
+    solid biomass transport: green
     H2 for industry: "#222222"
     H2 for shipping: "#6495ED"
