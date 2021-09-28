@@ -103,6 +103,7 @@ def add_ammonia_energy_demand(demand):
     demand['Basic chemicals (without ammonia)'] = demand["Basic chemicals"] - demand["Ammonia"]
 
     demand['Basic chemicals (without ammonia)'].clip(lower=0, inplace=True)
+
     demand.drop(columns='Basic chemicals', inplace=True)
 
     return demand

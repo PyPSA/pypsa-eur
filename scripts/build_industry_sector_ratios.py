@@ -377,7 +377,7 @@ def chemicals_industry():
     assert s_emi.index[0] == sector
 
     # convert from MtHVC/a to ktHVC/a
-    s_out = config["HVC_production_today"]*1e3
+    s_out = config["HVC_production_today"] * 1e3
 
     # tCO2/t material
     df.loc["process emission", sector] += (
@@ -396,9 +396,8 @@ def chemicals_industry():
     sources = ["elec", "biomass", "methane", "hydrogen", "heat", "naphtha"]
     df.loc[sources, sector] *= toe_to_MWh
 
-    # subtract ammonia energy demand
+    # subtract ammonia energy demand (in ktNH3/a)
     ammonia = pd.read_csv(snakemake.input.ammonia_production, index_col=0)
-    # ktNH3/a
     ammonia_total = ammonia.loc[ammonia.index.intersection(eu28), str(year)].sum()
     df.loc["methane", sector] -= ammonia_total * config["MWh_CH4_per_tNH3_SMR"]
     df.loc["elec", sector] -= ammonia_total * config["MWh_elec_per_tNH3_SMR"]
@@ -416,8 +415,7 @@ def chemicals_industry():
     # MWh/t material
     df.loc[sources, sector] = df.loc[sources, sector] / s_out
 
-    to_rename = {sector: "HVC"}
-    df.rename(columns=to_rename, inplace=True)
+    df.rename(columns={sector: "HVC"}, inplace=True)
 
     # HVC mechanical recycling
 

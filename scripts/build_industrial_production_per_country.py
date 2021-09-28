@@ -180,7 +180,7 @@ def industry_production(countries):
 
 
 def separate_basic_chemicals(demand):
-    """Remove ammonia, chlorine and methanol from basic chemicals to get HVC."""
+    """Separate basic chemicals into ammonia, chlorine, methanol and HVC."""
 
     ammonia = pd.read_csv(snakemake.input.ammonia_production, index_col=0)
 
@@ -189,7 +189,7 @@ def separate_basic_chemicals(demand):
 
     print("Following countries have no ammonia demand:", missing)
 
-    demand.insert(2, "Ammonia", 0.)
+    demand["Ammonia"] = 0.
 
     demand.loc[there, "Ammonia"] = ammonia.loc[there, str(year)]
 
@@ -198,14 +198,11 @@ def separate_basic_chemicals(demand):
     # EE, HR and LT got negative demand through subtraction - poor data
     demand['Basic chemicals'].clip(lower=0., inplace=True)
 
-    demand.insert(2, "HVC", 0.)
-    demand.insert(3, "Chlorine", 0.)
-    demand.insert(4, "Methanol", 0.)
-
     # assume HVC, methanol, chlorine production proportional to non-ammonia basic chemicals
-    demand["HVC"] = config["HVC_production_today"]*1e3/demand["Basic chemicals"].sum()*demand["Basic chemicals"]
-    demand["Chlorine"] = config["chlorine_production_today"]*1e3/demand["Basic chemicals"].sum()*demand["Basic chemicals"]
-    demand["Methanol"] = config["methanol_production_today"]*1e3/demand["Basic chemicals"].sum()*demand["Basic chemicals"]
+    distribution_key = demand["Basic chemicals"] / demand["Basic chemicals"].sum()
+    demand["HVC"] = config["HVC_production_today"] * 1e3 * distribution_key
+    demand["Chlorine"] = config["chlorine_production_today"] * 1e3 * distribution_key
+    demand["Methanol"] = config["methanol_production_today"] * 1e3 * distribution_key
 
     demand.drop(columns=["Basic chemicals"], inplace=True)
 
