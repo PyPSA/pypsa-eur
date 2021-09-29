@@ -76,9 +76,18 @@ Future release
 * The share of shipping transformed into hydrogen fuel cell can be now defined for different years in the ``config.yaml`` file. The carbon emission from the remaining share is treated as a negative load on the atmospheric carbon dioxide bus, just like aviation and land transport emissions.
 * The transformation of the Steel and Aluminium production can be now defined for different years in the ``config.yaml`` file.
 * Include the option to alter the maximum energy capacity of a store via the ``carrier+factor`` in the ``{sector_opts}`` wildcard. This can be useful for sensitivity analyses. Example: ``co2 stored+e2`` multiplies the ``e_nom_max`` by factor 2. In this example, ``e_nom_max`` represents the CO2 sequestration potential in Europe.
+* Add option to regionally disaggregate biomass potential to individual nodes
+  (currently given per country, then distributed by population density within)
+  and allow the transport of solid biomass.
+  The transport costs are determined based on the `JRC-EU-Times Bioenergy report <http://dx.doi.org/10.2790/01017>`_
+  in the new optional rule ``build_biomass_transport_costs``.
+  Biomass transport can be activated with the setting ``sector: biomass_transport: true``.
 * Use `JRC ENSPRESO database <https://data.jrc.ec.europa.eu/dataset/74ed5a04-7d74-4807-9eab-b94774309d9f>`_ to
   spatially disaggregate biomass potentials to PyPSA-Eur regions based on overlaps with NUTS2 regions from ENSPRESO
   (proportional to area) (`#151 <https://github.com/PyPSA/pypsa-eur-sec/pull/151>`_).
+* Compatibility with ``xarray`` version 0.19.
+* Separate basic chemicals into HVC, chlorine, methanol and ammonia [`#166 <https://github.com/PyPSA/PyPSA-Eur-Sec/pull/166>`_].
+* Add option to specify reuse, primary production, and mechanical and chemical recycling fraction of platics [`#166 <https://github.com/PyPSA/PyPSA-Eur-Sec/pull/166>`_].
 
 PyPSA-Eur-Sec 0.5.0 (21st May 2021)
 ===================================
