@@ -1687,10 +1687,7 @@ def add_biomass(n, costs):
     biomass_potentials = pd.read_csv(snakemake.input.biomass_potentials, index_col=0)
 
     if options["biomass_transport"]:
-        # potential per node distributed within country by population
-        biomass_potentials_spatial = (biomass_potentials.loc[pop_layout.index]
-                            .mul(pop_layout.fraction, axis="index")
-                            .rename(index=lambda x: x + " solid biomass"))
+        biomass_potentials_spatial = biomass_potentials.rename(index=lambda x: x + " solid biomass")
     else:
         biomass_potentials_spatial = biomass_potentials.sum()
 
