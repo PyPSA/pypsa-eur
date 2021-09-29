@@ -26,7 +26,7 @@ spatial = SimpleNamespace()
 def define_spatial(nodes):
     """
     Namespace for spatial
-    
+
     Parameters
     ----------
     nodes : list-like
@@ -36,7 +36,7 @@ def define_spatial(nodes):
     global options
 
     spatial.nodes = nodes
-    
+
     # biomass
 
     spatial.biomass = SimpleNamespace()
@@ -53,11 +53,11 @@ def define_spatial(nodes):
         spatial.biomass.industry_cc = ["solid biomass for industry CC"]
 
     spatial.biomass.df = pd.DataFrame(vars(spatial.biomass), index=nodes)
-    
+
     # co2
 
     spatial.co2 = SimpleNamespace()
-    
+
     if options["co2_network"]:
         spatial.co2.nodes = nodes + " co2 stored"
         spatial.co2.locations = nodes
@@ -72,7 +72,7 @@ def define_spatial(nodes):
 
 def emission_sectors_from_opts(opts):
 
-    sectors = ["electricity"]   
+    sectors = ["electricity"]
     if "T" in opts:
         sectors += [
             "rail non-elec",
@@ -107,13 +107,13 @@ def get(item, investment_year=None):
 def create_network_topology(n, prefix, connector=" -> "):
     """
     Create a network topology like the power transmission network.
-    
+
     Parameters
     ----------
     n : pypsa.Network
     prefix : str
     connector : str
-        
+
     Returns
     -------
     pd.DataFrame with columns bus0, bus1 and length
@@ -228,7 +228,7 @@ def add_lifetime_wind_solar(n, costs):
 def create_network_topology(n, prefix, connector=" -> ", bidirectional=True):
     """
     Create a network topology like the power transmission network.
-    
+
     Parameters
     ----------
     n : pypsa.Network
@@ -237,7 +237,7 @@ def create_network_topology(n, prefix, connector=" -> ", bidirectional=True):
     bidirectional : bool, default True
         True: one link for each connection
         False: one link for each connection and direction (back and forth)
-        
+
     Returns
     -------
     pd.DataFrame with columns bus0, bus1 and length
@@ -256,19 +256,19 @@ def create_network_topology(n, prefix, connector=" -> ", bidirectional=True):
     swap_buses = {"bus0": "bus1", "bus1": "bus0"}
     candidates_n = candidates[~positive_order].rename(columns=swap_buses)
     candidates = pd.concat([candidates_p, candidates_n])
-    
+
     def make_index(c):
         return prefix + c.bus0 + connector + c.bus1
 
     topo = candidates.groupby(["bus0", "bus1"], as_index=False).mean()
     topo.index = topo.apply(make_index, axis=1)
-    
+
     if not bidirectional:
         topo_reverse = topo.copy()
         topo_reverse.rename(columns=swap_buses, inplace=True)
         topo_reverse.index = topo_reverse.apply(make_index, axis=1)
         topo = topo.append(topo_reverse)
-    
+
     return topo
 
 
@@ -439,7 +439,7 @@ def add_co2_tracking(n, options):
     n.madd("Store",
         spatial.co2.nodes,
         e_nom_extendable=True,
-        e_nom_max=np.inf, 
+        e_nom_max=np.inf,
         capital_cost=options['co2_sequestration_cost'],
         carrier="co2 stored",
         bus=spatial.co2.nodes
@@ -458,14 +458,14 @@ def add_co2_tracking(n, options):
 
 
 def add_co2_network(n, costs):
-    
+
     logger.info("Adding CO2 network.")
     co2_links = create_network_topology(n, "CO2 pipeline ")
 
     cost_onshore = (1 - co2_links.underwater_fraction) * costs.at['CO2 pipeline', 'fixed'] * co2_links.length
     cost_submarine = co2_links.underwater_fraction * costs.at['CO2 submarine pipeline', 'fixed'] * co2_links.length
     capital_cost = cost_onshore + cost_submarine
-    
+
     n.madd("Link",
         co2_links.index,
         bus0=co2_links.bus0.values + " co2 stored",
@@ -636,6 +636,9 @@ def prepare_data(n):
 
     nodal_energy_totals = energy_totals.loc[pop_layout.ct].fillna(0.)
     nodal_energy_totals.index = pop_layout.index
+    # district heat share not weighted by population
+    district_heat_share = round(nodal_energy_totals["district heat share"],
+                                ndigits=2)
     nodal_energy_totals = nodal_energy_totals.multiply(pop_layout.fraction, axis=0)
 
     # copy forward the daily average heat demand into each hour, so it can be multipled by the intraday profile
@@ -758,7 +761,7 @@ def prepare_data(n):
     )
 
 
-    return nodal_energy_totals, heat_demand, ashp_cop, gshp_cop, solar_thermal, transport, avail_profile, dsm_profile, nodal_transport_data
+    return nodal_energy_totals, heat_demand, ashp_cop, gshp_cop, solar_thermal, transport, avail_profile, dsm_profile, nodal_transport_data, district_heat_share
 
 
 # TODO checkout PyPSA-Eur script
@@ -1386,7 +1389,7 @@ def add_heat(n, costs):
                 heat_load = heat_demand[[sector + " water",sector + " space"]].groupby(level=1,axis=1).sum()[nodes[name]].multiply(factor)
 
         if name == "urban central":
-            heat_load = heat_demand.groupby(level=1,axis=1).sum()[nodes[name]].multiply(factor * (1 + options['district_heating_loss']))
+            heat_load = heat_demand.groupby(level=1,axis=1).sum()[nodes[name]].multiply(factor * (1 + options['district_heating']['district_heating_loss']))
 
         n.madd("Load",
             nodes[name],
@@ -1671,10 +1674,6 @@ def create_nodes_for_heat_sector():
     # distribution of urban population within a country
     pop_layout["urban_ct_fraction"] = pop_layout["urban"] / \
             pop_layout["ct"].map(ct_urban.get)
-    # todays district heating share per country
-    dist_heat_share_ct = pd.read_csv(snakemake.input.dh_share, index_col=0,
-                                  usecols=[0,1]).dropna()/100
-    dist_heat_share = pop_layout.ct.map(dist_heat_share_ct["district heating share"])
 
     sectors = ["residential", "services"]
 
@@ -1686,36 +1685,29 @@ def create_nodes_for_heat_sector():
         nodes[sector + " rural"] = pop_layout.index
         nodes[sector + " urban decentral"] = pop_layout.index
 
-    if options["central"] and not options['district_heating_increase']:
-        central_fraction = options['central_fraction']
-        dist_fraction = central_fraction * urban_fraction
-        nodes["urban central"] = dist_fraction.index
+    # maximum potential of urban demand covered by district heating
+    central_fraction = options['district_heating']["potential"]
+    # district heating share at each node
+    dist_fraction_node = district_heat_share * pop_layout["urban_ct_fraction"] / pop_layout["fraction"]
+    nodes["urban central"] = dist_fraction_node.index
+    # if district heating share larger than urban fraction -> set urban
+    # fraction to district heating share
+    urban_fraction = pd.concat([urban_fraction, dist_fraction_node],
+                               axis=1).max(axis=1)
+    # difference of max potential and today's share of district heating
+    diff = (urban_fraction * central_fraction) - dist_fraction_node
+    progress = get(options["district_heating"]["potential"], investment_year)
+    dist_fraction_node += diff * progress
+    print("************************************")
+    print(
+        "the current DH share compared to the maximum possible is increased \
+           \n by a progress factor of ",
+        progress,
+        "resulting DH share: ",
+        dist_fraction_node)
+    print("**********************************")
 
-    # take current district heating share
-    if options['district_heating_increase']:
-        dist_fraction = dist_heat_share * \
-            pop_layout["urban_ct_fraction"] / pop_layout["fraction"]
-        nodes["urban central"] = dist_fraction.index
-        # if district heating share larger than urban fraction -> set urban
-        # fraction to district heating share
-        urban_fraction = pd.concat([urban_fraction, dist_fraction],
-                                   axis=1).max(axis=1)
-        diff = urban_fraction - dist_fraction
-        dist_fraction += diff * get(options["dh_strength"], investment_year)
-        print("************************************")
-        print(
-            "the current DH share compared to the maximum possible is increased \
-               \n by a factor of ",
-            get(options["dh_strength"], investment_year),
-            "resulting DH share: ",
-            dist_fraction)
-        print("**********************************")
-
-    else:
-        dist_fraction = urban_fraction * 0
-        nodes["urban central"] = dist_fraction.index
-
-    return nodes, dist_fraction, urban_fraction
+    return nodes, dist_fraction_node, urban_fraction
 
 
 def add_biomass(n, costs):
@@ -1788,7 +1780,7 @@ def add_biomass(n, costs):
             index_col=0,
             squeeze=True
         )
-        
+
         # add biomass transport
         biomass_transport = create_network_topology(n, "biomass transport ", bidirectional=False)
 
@@ -2246,7 +2238,6 @@ if __name__ == "__main__":
             opts="",
             clusters="37",
             lv=1.0,
-            opts='',
             sector_opts='Co2L0-168H-T-H-B-I-solar3-dist1',
             planning_horizons="2030",
         )
@@ -2300,10 +2291,10 @@ if __name__ == "__main__":
         if o == "biomasstransport":
             options["biomass_transport"] = True
 
-    nodal_energy_totals, heat_demand, ashp_cop, gshp_cop, solar_thermal, transport, avail_profile, dsm_profile, nodal_transport_data = prepare_data(n)
+    nodal_energy_totals, heat_demand, ashp_cop, gshp_cop, solar_thermal, transport, avail_profile, dsm_profile, nodal_transport_data, district_heat_share = prepare_data(n)
 
     if "nodistrict" in opts:
-        options["central"] = False
+        options["district_heating"]["progress"] = 0.0
 
     if "T" in opts:
         add_land_transport(n, costs)
