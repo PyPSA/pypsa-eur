@@ -24,7 +24,6 @@ subworkflow pypsaeur:
     snakefile: "../pypsa-eur/Snakefile"
     configfile: "../pypsa-eur/config.yaml"
 
-
 rule all:
     input: SDIR + '/graphs/costs.pdf'
 
@@ -173,13 +172,19 @@ rule build_energy_totals:
 
 rule build_biomass_potentials:
     input:
-        jrc_potentials="data/biomass/JRC Biomass Potentials.xlsx"
+        enspreso_biomass=HTTP.remote("https://cidportal.jrc.ec.europa.eu/ftp/jrc-opendata/ENSPRESO/ENSPRESO_BIOMASS.xlsx", keep_local=True),
+        nuts2="data/nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson", # https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/#nuts21
+        regions_onshore=pypsaeur("resources/regions_onshore_elec_s{simpl}_{clusters}.geojson"),
+        nuts3_population="../pypsa-eur/data/bundle/nama_10r_3popgdp.tsv.gz",
+        swiss_cantons="../pypsa-eur/data/bundle/ch_cantons.csv",
+        swiss_population="../pypsa-eur/data/bundle/je-e-21.03.02.xls",
+        country_shapes=pypsaeur('resources/country_shapes.geojson')
     output:
-        biomass_potentials_all='resources/biomass_potentials_all.csv',
-        biomass_potentials='resources/biomass_potentials.csv'
+        biomass_potentials_all='resources/biomass_potentials_all_s{simpl}_{clusters}.csv',
+        biomass_potentials='resources/biomass_potentials_s{simpl}_{clusters}.csv'
     threads: 1
     resources: mem_mb=1000
-    benchmark: "benchmarks/build_biomass_potentials"
+    benchmark: "benchmarks/build_biomass_potentials_s{simpl}_{clusters}"
     script: 'scripts/build_biomass_potentials.py'
 
 
@@ -339,9 +344,9 @@ rule prepare_sector_network:
         energy_totals_name='resources/energy_totals.csv',
         co2_totals_name='resources/co2_totals.csv',
         transport_name='resources/transport_data.csv',
-        traffic_data_KFZ="data/emobility/KFZ__count",
-        traffic_data_Pkw="data/emobility/Pkw__count",
-        biomass_potentials='resources/biomass_potentials.csv',
+        traffic_data_KFZ = "data/emobility/KFZ__count",
+        traffic_data_Pkw = "data/emobility/Pkw__count",
+        biomass_potentials='resources/biomass_potentials_s{simpl}_{clusters}.csv',
         heat_profile="data/heat_load_profile_BDEW.csv",
         costs=CDIR + "costs_{planning_horizons}.csv",
         profile_offwind_ac=pypsaeur("resources/profile_offwind-ac.nc"),

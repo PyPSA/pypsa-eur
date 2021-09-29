@@ -2,6 +2,7 @@ description,file/folder,licence,source
 JRC IDEES database,jrc-idees-2015/,CC BY 4.0,https://ec.europa.eu/jrc/en/potencia/jrc-idees
 urban/rural fraction,urban_percent.csv,unknown,unknown
 JRC biomass potentials,biomass/,unknown,https://doi.org/10.2790/39014
+JRC ENSPRESO biomass potentials,remote,CC BY 4.0,https://data.jrc.ec.europa.eu/dataset/74ed5a04-7d74-4807-9eab-b94774309d9f
 EEA emission statistics,eea/UNFCCC_v23.csv,EEA standard re-use policy,https://www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-16
 Eurostat Energy Balances,eurostat-energy_balances-*/,Eurostat,https://ec.europa.eu/eurostat/web/energy/data/energy-balances
 Swiss energy statistics from Swiss Federal Office of Energy,switzerland-sfoe/,unknown,http://www.bfe.admin.ch/themen/00526/00541/00542/02167/index.html?dossier_id=02169

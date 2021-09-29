@@ -82,6 +82,9 @@ Future release
   The transport costs are determined based on the `JRC-EU-Times Bioenergy report <http://dx.doi.org/10.2790/01017>`_
   in the new optional rule ``build_biomass_transport_costs``.
   Biomass transport can be activated with the setting ``sector: biomass_transport: true``.
+* Use `JRC ENSPRESO database <https://data.jrc.ec.europa.eu/dataset/74ed5a04-7d74-4807-9eab-b94774309d9f>`_ to
+  spatially disaggregate biomass potentials to PyPSA-Eur regions based on overlaps with NUTS2 regions from ENSPRESO
+  (proportional to area) (`#151 <https://github.com/PyPSA/pypsa-eur-sec/pull/151>`_).
 * Compatibility with ``xarray`` version 0.19.
 * Separate basic chemicals into HVC, chlorine, methanol and ammonia [`#166 <https://github.com/PyPSA/PyPSA-Eur-Sec/pull/166>`_].
 * Add option to specify reuse, primary production, and mechanical and chemical recycling fraction of platics [`#166 <https://github.com/PyPSA/PyPSA-Eur-Sec/pull/166>`_].
