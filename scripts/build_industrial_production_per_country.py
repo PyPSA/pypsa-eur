@@ -179,8 +179,8 @@ def industry_production(countries):
     return demand
 
 
-def add_ammonia_demand_separately(demand):
-    """Include ammonia demand separately and remove ammonia from basic chemicals."""
+def separate_basic_chemicals(demand):
+    """Separate basic chemicals into ammonia, chlorine, methanol and HVC."""
 
     ammonia = pd.read_csv(snakemake.input.ammonia_production, index_col=0)
 
@@ -189,7 +189,7 @@ def add_ammonia_demand_separately(demand):
 
     print("Following countries have no ammonia demand:", missing)
 
-    demand.insert(2, "Ammonia", 0.)
+    demand["Ammonia"] = 0.
 
     demand.loc[there, "Ammonia"] = ammonia.loc[there, str(year)]
 
@@ -198,9 +198,13 @@ def add_ammonia_demand_separately(demand):
     # EE, HR and LT got negative demand through subtraction - poor data
     demand['Basic chemicals'].clip(lower=0., inplace=True)
 
-    to_rename = {"Basic chemicals": "Basic chemicals (without ammonia)"}
-    demand.rename(columns=to_rename, inplace=True)
+    # assume HVC, methanol, chlorine production proportional to non-ammonia basic chemicals
+    distribution_key = demand["Basic chemicals"] / demand["Basic chemicals"].sum()
+    demand["HVC"] = config["HVC_production_today"] * 1e3 * distribution_key
+    demand["Chlorine"] = config["chlorine_production_today"] * 1e3 * distribution_key
+    demand["Methanol"] = config["methanol_production_today"] * 1e3 * distribution_key
 
+    demand.drop(columns=["Basic chemicals"], inplace=True)
 
 if __name__ == '__main__':
     if 'snakemake' not in globals():
@@ -211,12 +215,14 @@ if __name__ == '__main__':
 
     year = snakemake.config['industry']['reference_year']
 
+    config = snakemake.config["industry"]
+
     jrc_dir = snakemake.input.jrc
     eurostat_dir = snakemake.input.eurostat
 
     demand = industry_production(countries)
 
-    add_ammonia_demand_separately(demand)
+    separate_basic_chemicals(demand)
 
     fn = snakemake.output.industrial_production_per_country
     demand.to_csv(fn, float_format='%.2f')

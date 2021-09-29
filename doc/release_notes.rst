@@ -83,6 +83,8 @@ Future release
   in the new optional rule ``build_biomass_transport_costs``.
   Biomass transport can be activated with the setting ``sector: biomass_transport: true``.
 * Compatibility with ``xarray`` version 0.19.
+* Separate basic chemicals into HVC, chlorine, methanol and ammonia [`#166 <https://github.com/PyPSA/PyPSA-Eur-Sec/pull/166>`_].
+* Add option to specify reuse, primary production, and mechanical and chemical recycling fraction of platics [`#166 <https://github.com/PyPSA/PyPSA-Eur-Sec/pull/166>`_].
 
 PyPSA-Eur-Sec 0.5.0 (21st May 2021)
 ===================================
