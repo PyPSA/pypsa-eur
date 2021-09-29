@@ -481,7 +481,7 @@ def add_co2_network(n, costs):
 
 def add_dac(n, costs):
 
-    heat_carriers = ["urban central heat"]
+    heat_carriers = ["urban central heat", "services urban decentral heat"]
     heat_buses = n.buses.index[n.buses.carrier.isin(heat_carriers)]
     locations = n.buses.location[heat_buses]
 
@@ -489,8 +489,7 @@ def add_dac(n, costs):
     efficiency3 = -(costs.at['direct air capture', 'heat-input'] - costs.at['direct air capture', 'compression-heat-output'])
 
     n.madd("Link",
-        locations,
-        suffix=" DAC",
+        heat_buses.str.replace(" heat", " DAC"),
         bus0="co2 atmosphere",
         bus1=spatial.co2.df.loc[locations, "nodes"].values,
         bus2=locations.values,
@@ -1383,7 +1382,7 @@ def add_heat(n, costs):
                 factor = urban_fraction[nodes[name]] - \
                     dist_fraction[nodes[name]]
             else:
-                factor = None
+                raise NotImplementedError(f" {name} not in " f"heat systems: {heat_systems}")
 
             if sector in name:
                 heat_load = heat_demand[[sector + " water",sector + " space"]].groupby(level=1,axis=1).sum()[nodes[name]].multiply(factor)
@@ -1670,16 +1669,14 @@ def create_nodes_for_heat_sector():
     # urban are areas with high heating density
     # urban can be split into district heating (central) and individual heating (decentral)
 
-    ct_urban = pop_layout.urban.groupby(pop_layout["ct"]).sum()
+    ct_urban = pop_layout.urban.groupby(pop_layout.ct).sum()
     # distribution of urban population within a country
-    pop_layout["urban_ct_fraction"] = pop_layout["urban"] / \
-            pop_layout["ct"].map(ct_urban.get)
+    pop_layout["urban_ct_fraction"] = pop_layout.urban / pop_layout.ct.map(ct_urban.get)
 
     sectors = ["residential", "services"]
 
     nodes = {}
-    urban_fraction = pop_layout["urban"] / \
-                     (pop_layout[["urban", "rural"]].sum(axis=1))
+    urban_fraction = pop_layout.urban / pop_layout[["rural", "urban"]].sum(axis=1)
 
     for sector in sectors:
         nodes[sector + " rural"] = pop_layout.index
@@ -2239,7 +2236,7 @@ if __name__ == "__main__":
             clusters="37",
             lv=1.0,
             sector_opts='Co2L0-168H-T-H-B-I-solar3-dist1',
-            planning_horizons="2030",
+            planning_horizons="2020",
         )
 
     logging.basicConfig(level=snakemake.config['logging_level'])
@@ -2254,7 +2251,7 @@ if __name__ == "__main__":
     n = pypsa.Network(snakemake.input.network, override_component_attrs=overrides)
 
     pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
-    Nyears = n.snapshot_weightings.sum() / 8760
+    Nyears = n.snapshot_weightings.generators.sum() / 8760
 
     costs = prepare_costs(snakemake.input.costs,
                           snakemake.config['costs']['USD2013_to_EUR2013'],
