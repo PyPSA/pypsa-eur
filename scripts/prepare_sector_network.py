@@ -1695,14 +1695,13 @@ def create_nodes_for_heat_sector():
     diff = (urban_fraction * central_fraction) - dist_fraction_node
     progress = get(options["district_heating"]["potential"], investment_year)
     dist_fraction_node += diff * progress
-    print("************************************")
-    print(
-        "the current DH share compared to the maximum possible is increased \
-           \n by a progress factor of ",
+    logger.info(
+        "The current district heating share compared to the maximum",
+        "possible is increased by a progress factor of ",
         progress,
-        "resulting DH share: ",
-        dist_fraction_node)
-    print("**********************************")
+        "resulting in a district heating share of ",
+        dist_fraction_node
+    )
 
     return nodes, dist_fraction_node, urban_fraction
 
@@ -2230,7 +2229,6 @@ if __name__ == "__main__":
             lv=1.0,
             sector_opts='Co2L0-168H-T-H-B-I-solar3-dist1',
             planning_horizons="2020",
-            planning_horizons="2030",
         )
 
     logging.basicConfig(level=snakemake.config['logging_level'])
