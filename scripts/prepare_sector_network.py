@@ -1711,17 +1711,10 @@ def add_biomass(n, costs):
 
     print("adding biomass")
 
-    # biomass distributed at country level - i.e. transport within country allowed
-    countries = n.buses.country.dropna().unique()
-
     biomass_potentials = pd.read_csv(snakemake.input.biomass_potentials, index_col=0)
 
     if options["biomass_transport"]:
-        # potential per node distributed within country by population
-        biomass_potentials_spatial = (biomass_potentials.loc[pop_layout.ct]
-                            .set_index(pop_layout.index)
-                            .mul(pop_layout.fraction, axis="index")
-                            .rename(index=lambda x: x + " solid biomass"))
+        biomass_potentials_spatial = biomass_potentials.rename(index=lambda x: x + " solid biomass")
     else:
         biomass_potentials_spatial = biomass_potentials.sum()
 
@@ -1744,9 +1737,9 @@ def add_biomass(n, costs):
         "EU biogas",
         bus="EU biogas",
         carrier="biogas",
-        e_nom=biomass_potentials.loc[countries, "biogas"].sum(),
+        e_nom=biomass_potentials["biogas"].sum(),
         marginal_cost=costs.at['biogas', 'fuel'],
-        e_initial=biomass_potentials.loc[countries, "biogas"].sum()
+        e_initial=biomass_potentials["biogas"].sum()
     )
 
     n.madd("Store",
@@ -2237,6 +2230,7 @@ if __name__ == "__main__":
             lv=1.0,
             sector_opts='Co2L0-168H-T-H-B-I-solar3-dist1',
             planning_horizons="2020",
+            planning_horizons="2030",
         )
 
     logging.basicConfig(level=snakemake.config['logging_level'])
