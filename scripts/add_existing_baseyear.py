@@ -28,7 +28,7 @@ def add_build_year_to_new_assets(n, baseyear):
     # Give assets with lifetimes and no build year the build year baseyear
     for c in n.iterate_components(["Link", "Generator", "Store"]):
 
-        assets = c.df.index[~c.df.lifetime.isna() & c.df.build_year.isna()]
+        assets = c.df.index[~c.df.lifetime.isna() & c.df.build_year==0]
         c.df.loc[assets, "build_year"] = baseyear
 
         # add -baseyear to name
@@ -60,7 +60,7 @@ def add_existing_renewables(df_agg):
     }
 
     for tech in ['solar', 'onwind', 'offwind']:
-        
+
         carrier = carriers[tech]
 
         df = pd.read_csv(snakemake.input[f"existing_{tech}"], index_col=0).fillna(0.)
@@ -112,9 +112,9 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
     Parameters
     ----------
     n : pypsa.Network
-    grouping_years : 
+    grouping_years :
         intervals to group existing capacities
-    costs : 
+    costs :
         to read lifetime to estimate YearDecomissioning
     baseyear : int
     """
@@ -303,7 +303,7 @@ def add_heating_capacities_installed_before_baseyear(n, baseyear, grouping_years
     df.fillna(0., inplace=True)
 
     # convert GW to MW
-    df *= 1e3 
+    df *= 1e3
 
     cc = pd.read_csv(snakemake.input.country_codes, index_col=0)
 
@@ -362,7 +362,7 @@ def add_heating_capacities_installed_before_baseyear(n, baseyear, grouping_years
             efficiency = cop[heat_pump_type][nodes[name]]
         else:
             efficiency = costs.at[costs_name, 'efficiency']
-        
+
         for i, grouping_year in enumerate(grouping_years):
 
             if int(grouping_year) + default_lifetime <= int(baseyear):
@@ -413,7 +413,7 @@ def add_heating_capacities_installed_before_baseyear(n, baseyear, grouping_years
                 build_year=int(grouping_year),
                 lifetime=costs.at[name_type + ' gas boiler', 'lifetime']
             )
-            
+
             n.madd("Link",
                 nodes[name],
                 suffix=f" {name} oil boiler-{grouping_year}",
@@ -445,7 +445,8 @@ if __name__ == "__main__":
             simpl='',
             clusters=45,
             lv=1.0,
-            sector_opts='Co2L0-168H-T-H-B-I-solar3-dist1',
+            opts='',
+            sector_opts='Co2L0-168H-T-H-B-I-solar+p3-dist1',
             planning_horizons=2020,
         )
 

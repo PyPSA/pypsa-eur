@@ -8,6 +8,8 @@ Future release
 .. note::
   This unreleased version currently requires the master branches of PyPSA, PyPSA-Eur, and the technology-data repository.
 * The myopic option can now be used together with different clustering for the generators and the network. The existing renewable capacities are split evenly among the regions in every country.
+* With this release, we change the license from copyleft GPLv3 to the more
+  liberal MIT license with the consent of all contributors.
 * Extended use of ``multiprocessing`` for much better performance
   (from up to 20 minutes to less than one minute).
 * Compatibility with ``atlite>=0.2``. Older versions of ``atlite`` will no longer work.
@@ -60,8 +62,32 @@ Future release
   These are included in the environment specifications of PyPSA-Eur.
 * Consistent use of ``__main__`` block and further unspecific code cleaning.
 * Distinguish costs for home battery storage and inverter from utility-scale battery costs.
-
-
+* Add option to regionally resolve CO2 storage and add CO2 pipeline transport because geological storage potential,
+  CO2 utilisation sites and CO2 capture sites may be separated.
+  The CO2 network is built from zero based on the topology of the electricity grid (greenfield).
+  Pipelines are assumed to be bidirectional and lossless.
+  Furthermore, neither retrofitting of natural gas pipelines (required pressures are too high, 80-160 bar vs <80 bar)
+  nor other modes of CO2 transport (by ship, road or rail) are considered.
+  The regional representation of CO2 is activated with the config setting ``sector: co2_network: true`` but is deactivated by default.
+  The global limit for CO2 sequestration now applies to the sum of all CO2 stores via an ``extra_functionality`` constraint.
+* Added option for hydrogen liquefaction costs for hydrogen demand in shipping.
+  This introduces a new ``H2 liquid`` bus at each location.
+  It is activated via ``sector: shipping_hydrogen_liquefaction: true``.
+* The share of shipping transformed into hydrogen fuel cell can be now defined for different years in the ``config.yaml`` file. The carbon emission from the remaining share is treated as a negative load on the atmospheric carbon dioxide bus, just like aviation and land transport emissions.
+* The transformation of the Steel and Aluminium production can be now defined for different years in the ``config.yaml`` file.
+* Include the option to alter the maximum energy capacity of a store via the ``carrier+factor`` in the ``{sector_opts}`` wildcard. This can be useful for sensitivity analyses. Example: ``co2 stored+e2`` multiplies the ``e_nom_max`` by factor 2. In this example, ``e_nom_max`` represents the CO2 sequestration potential in Europe.
+* Add option to regionally disaggregate biomass potential to individual nodes
+  (currently given per country, then distributed by population density within)
+  and allow the transport of solid biomass.
+  The transport costs are determined based on the `JRC-EU-Times Bioenergy report <http://dx.doi.org/10.2790/01017>`_
+  in the new optional rule ``build_biomass_transport_costs``.
+  Biomass transport can be activated with the setting ``sector: biomass_transport: true``.
+* Use `JRC ENSPRESO database <https://data.jrc.ec.europa.eu/dataset/74ed5a04-7d74-4807-9eab-b94774309d9f>`_ to
+  spatially disaggregate biomass potentials to PyPSA-Eur regions based on overlaps with NUTS2 regions from ENSPRESO
+  (proportional to area) (`#151 <https://github.com/PyPSA/pypsa-eur-sec/pull/151>`_).
+* Compatibility with ``xarray`` version 0.19.
+* Separate basic chemicals into HVC, chlorine, methanol and ammonia [`#166 <https://github.com/PyPSA/PyPSA-Eur-Sec/pull/166>`_].
+* Add option to specify reuse, primary production, and mechanical and chemical recycling fraction of platics [`#166 <https://github.com/PyPSA/PyPSA-Eur-Sec/pull/166>`_].
 
 PyPSA-Eur-Sec 0.5.0 (21st May 2021)
 ===================================
