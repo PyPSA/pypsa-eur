@@ -270,4 +270,4 @@ To make a new release of the data bundle, make an archive of the files in ``data
 
 .. code:: bash
 
-    data % tar pczf pypsa-eur-sec-data-bundle-YYMMDD.tar.gz eea/UNFCCC_v23.csv switzerland-sfoe biomass eurostat-energy_balances-* jrc-idees-2015 emobility urban_percent.csv timezone_mappings.csv heat_load_profile_DK_AdamJensen.csv WindWaveWEC_GLTB.xlsx myb1-2017-nitro.xls Industrial_Database.csv retro/tabula-calculator-calcsetbuilding.csv
+    data % tar pczf pypsa-eur-sec-data-bundle.tar.gz eea/UNFCCC_v23.csv switzerland-sfoe biomass eurostat-energy_balances-* jrc-idees-2015 emobility WindWaveWEC_GLTB.xlsx myb1-2017-nitro.xls Industrial_Database.csv retro/tabula-calculator-calcsetbuilding.csv nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson
