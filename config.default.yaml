@@ -141,8 +141,16 @@ existing_capacities:
 
 
 sector:
-  central: true
-  central_fraction: 0.6
+  district_heating:
+    potential: 0.6  # maximum fraction of urban demand which can be supplied by district heating
+     # increase of today's district heating demand to potential maximum district heating share
+     # progress = 0 means today's district heating share, progress = 1 means maximum fraction of urban demand is supplied by district heating
+    progress:
+      2020: 0.0
+      2030: 0.3
+      2040: 0.6
+      2050: 1.0
+    district_heating_loss: 0.15
   bev_dsm_restriction_value: 0.75  #Set to 0 for no restriction on BEV DSM
   bev_dsm_restriction_time: 7  #Time at which SOC of BEV has to be dsm_restriction_value
   transport_heating_deadband_upper: 20.
@@ -151,7 +159,6 @@ sector:
   ICE_upper_degree_factor: 1.6
   EV_lower_degree_factor: 0.98
   EV_upper_degree_factor: 0.63
-  district_heating_loss: 0.15
   bev_dsm: true #turns on EV battery
   bev_availability: 0.5  #How many cars do smart charging
   bev_energy: 0.05  #average battery size in MWh

@@ -159,6 +159,7 @@ rule build_energy_totals:
         co2="data/eea/UNFCCC_v23.csv",
         swiss="data/switzerland-sfoe/switzerland-new_format.csv",
         idees="data/jrc-idees-2015",
+        district_heat_share='data/district_heat_share.csv',
         eurostat=input_eurostat
     output:
         energy_name='resources/energy_totals.csv',
