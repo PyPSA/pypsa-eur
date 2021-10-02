@@ -216,7 +216,7 @@ def idees_per_country(ct, year):
     ct_totals["Derived heat residential"] = df[46]
 
     assert df.index[50] == 'Thermal uses'
-    ct_totals["Thermal uses residential"] = df[50]
+    ct_totals["thermal uses residential"] = df[50]
 
     # services
 
@@ -246,10 +246,10 @@ def idees_per_country(ct, year):
     ct_totals["electricity services"] = df[50]
 
     assert df.index[49] == "Derived heat"
-    ct_totals["Derived heat services"] = df[49]
+    ct_totals["derived heat services"] = df[49]
 
     assert df.index[53] == 'Thermal uses'
-    ct_totals["Thermal uses services"] = df[53]
+    ct_totals["thermal uses services"] = df[53]
 
     # transport
 
@@ -365,10 +365,10 @@ def build_idees(countries, year):
     totals.loc["passenger car efficiency"] *= 10
 
     # district heating share
-    district_heat = totals.loc[["Derived heat residential",
-                                "Derived heat services"]].sum()
-    total_heat = totals.loc[["Thermal uses residential",
-                             "Thermal uses services"]].sum()
+    district_heat = totals.loc[["derived heat residential",
+                                "derived heat services"]].sum()
+    total_heat = totals.loc[["thermal uses residential",
+                             "thermal uses services"]].sum()
     totals.loc["district heat share"] = district_heat.div(total_heat)
 
     return totals.T
