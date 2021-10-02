@@ -21,18 +21,23 @@ pypsa.pf.logger.setLevel(logging.WARNING)
 def add_land_use_constraint(n):
 
     if 'm' in snakemake.wildcards.clusters:
-        add_land_use_constraint_m(n)
+        _add_land_use_constraint_m(n)
     else:
-        #warning: this will miss existing offwind which is not classed AC-DC and has carrier 'offwind'
-        for carrier in ['solar', 'onwind', 'offwind-ac', 'offwind-dc']:
-            existing = n.generators.loc[n.generators.carrier==carrier,"p_nom"].groupby(n.generators.bus.map(n.buses.location)).sum()
-            existing.index += " " + carrier + "-" + snakemake.wildcards.planning_horizons
-            n.generators.loc[existing.index,"p_nom_max"] -= existing
+        _add_land_use_constraint(n)
 
+
+def _add_land_use_constraint(n):
+    #warning: this will miss existing offwind which is not classed AC-DC and has carrier 'offwind'
+
+    for carrier in ['solar', 'onwind', 'offwind-ac', 'offwind-dc']:
+        existing = n.generators.loc[n.generators.carrier==carrier,"p_nom"].groupby(n.generators.bus.map(n.buses.location)).sum()
+        existing.index += " " + carrier + "-" + snakemake.wildcards.planning_horizons
+        n.generators.loc[existing.index,"p_nom_max"] -= existing
+    
     n.generators.p_nom_max.clip(lower=0, inplace=True)
 
 
-def add_land_use_constraint_m(n):
+def _add_land_use_constraint_m(n):
     # if generators clustering is lower than network clustering, land_use accounting is at generators clusters
 
     planning_horizons = snakemake.config["scenario"]["planning_horizons"] 
@@ -55,6 +60,8 @@ def add_land_use_constraint_m(n):
             sel_current = [i + " " + carrier + "-" + current_horizon for i in ind2]
             sel_p_year = [i + " " + carrier + "-" + p_year for i in ind2]
             n.generators.loc[sel_current, "p_nom_max"] -= existing.loc[sel_p_year].rename(lambda x: x[:-4] + current_horizon) 
+    
+    n.generators.p_nom_max.clip(lower=0, inplace=True)
 
 
 def prepare_network(n, solve_opts=None):
