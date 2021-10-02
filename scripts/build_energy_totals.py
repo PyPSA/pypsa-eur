@@ -213,6 +213,12 @@ def idees_per_country(ct, year):
     assert df.index[47] == "Electricity"
     ct_totals["electricity residential"] = df[47]
 
+    assert df.index[46] == "Derived heat"
+    ct_totals["Derived heat residential"] = df[46]
+
+    assert df.index[50] == 'Thermal uses'
+    ct_totals["thermal uses residential"] = df[50]
+
     # services
 
     df = pd.read_excel(fn_tertiary, "SER_hh_fec", index_col=0)[year]
@@ -240,6 +246,13 @@ def idees_per_country(ct, year):
     assert df.index[50] == "Electricity"
     ct_totals["electricity services"] = df[50]
 
+    assert df.index[49] == "Derived heat"
+    ct_totals["derived heat services"] = df[49]
+
+    assert df.index[53] == 'Thermal uses'
+    ct_totals["thermal uses services"] = df[53]
+    
+    
     # agriculture, forestry and fishing
 
     start = "Detailed split of energy consumption (ktoe)"
@@ -371,6 +384,7 @@ def build_idees(countries, year):
     with mp.Pool(processes=nprocesses) as pool:
         totals_list = list(tqdm(pool.imap(func, countries), **tqdm_kwargs))
 
+
     totals = pd.concat(totals_list, axis=1)
 
     # convert ktoe to TWh
@@ -379,6 +393,13 @@ def build_idees(countries, year):
 
     # convert TWh/100km to kWh/km
     totals.loc["passenger car efficiency"] *= 10
+
+    # district heating share
+    district_heat = totals.loc[["derived heat residential",
+                                "derived heat services"]].sum()
+    total_heat = totals.loc[["thermal uses residential",
+                             "thermal uses services"]].sum()
+    totals.loc["district heat share"] = district_heat.div(total_heat)
 
     return totals.T
 
@@ -522,7 +543,7 @@ def build_energy_totals(countries, eurostat, swiss, idees):
 
     for purpose in ["passenger", "freight"]:
         attrs = [f"total domestic aviation {purpose}", f"total international aviation {purpose}"]
-        df.loc[missing, f"total aviation {purpose}"] = df.loc[missing, attrs].sum(axis=1)   
+        df.loc[missing, f"total aviation {purpose}"] = df.loc[missing, attrs].sum(axis=1)
 
     if "BA" in df.index:
         # fill missing data for BA (services and road energy data)
@@ -530,6 +551,14 @@ def build_energy_totals(countries, eurostat, swiss, idees):
         missing = df.loc["BA"] == 0.0
         ratio = df.at["BA", "total residential"] / df.at["RS", "total residential"]
         df.loc['BA', missing] = ratio * df.loc["RS", missing]
+
+    # Missing district heating share
+    dh_share = pd.read_csv(snakemake.input.district_heat_share,
+                           index_col=0, usecols=[0, 1])
+    # make conservative assumption and take minimum from both data sets
+    df["district heat share"] = (pd.concat([df["district heat share"],
+                                            dh_share.reindex(index=df.index)/100],
+                                           axis=1).min(axis=1))
 
     return df
 

@@ -28,7 +28,8 @@ gurobi.log
 /data/.nfs*
 /data/Industrial_Database.csv
 /data/retro/tabula-calculator-calcsetbuilding.csv
-/data
+/data/nuts*
+
 *.org
 
 *.nc

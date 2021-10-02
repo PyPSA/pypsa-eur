@@ -73,7 +73,7 @@ electricity:
 
 # regulate what components with which carriers are kept from PyPSA-Eur;
 # some technologies are removed because they are implemented differently
-# (e.g. battery or H2 storage) or have different year-dependent costs 
+# (e.g. battery or H2 storage) or have different year-dependent costs
 # in PyPSA-Eur-Sec
 pypsa_eur:
   Bus:
@@ -100,28 +100,28 @@ energy:
 
 biomass:
   year: 2030
-  scenario: Med
+  scenario: ENS_Med
   classes:
     solid biomass:
-      - Primary agricultural residues
-      - Forestry energy residue
-      - Secondary forestry residues
-      - Secondary Forestry residues sawdust
-      - Forestry residues from landscape care biomass
+      - Agricultural waste
+      - Fuelwood residues
+      - Secondary Forestry residues - woodchips
+      - Sawdust
+      - Residues from landscape care
       - Municipal waste
     not included:
-      - Bioethanol sugar beet biomass
-      - Rapeseeds for biodiesel
-      - sunflower and soya for Biodiesel
-      - Starchy crops biomass
-      - Grassy crops biomass
-      - Willow biomass
-      - Poplar biomass potential
-      - Roundwood fuelwood
-      - Roundwood Chips & Pellets
+      - Sugar from sugar beet
+      - Rape seed
+      - "Sunflower, soya seed "
+      - Bioethanol barley, wheat, grain maize, oats, other cereals and rye
+      - Miscanthus, switchgrass, RCG
+      - Willow
+      - Poplar
+      - FuelwoodRW
+      - C&P_RW
     biogas:
-      - Manure biomass potential
-      - Sludge biomass
+      - Manure solid, liquid
+      - Sludge
 
 
 solar_thermal:
@@ -142,8 +142,16 @@ existing_capacities:
 
 
 sector:
-  central: true
-  central_fraction: 0.6
+  district_heating:
+    potential: 0.6  # maximum fraction of urban demand which can be supplied by district heating
+     # increase of today's district heating demand to potential maximum district heating share
+     # progress = 0 means today's district heating share, progress = 1 means maximum fraction of urban demand is supplied by district heating
+    progress:
+      2020: 0.0
+      2030: 0.3
+      2040: 0.6
+      2050: 1.0
+    district_heating_loss: 0.15
   bev_dsm_restriction_value: 0.75  #Set to 0 for no restriction on BEV DSM
   bev_dsm_restriction_time: 7  #Time at which SOC of BEV has to be dsm_restriction_value
   transport_heating_deadband_upper: 20.
@@ -152,7 +160,6 @@ sector:
   ICE_upper_degree_factor: 1.6
   EV_lower_degree_factor: 0.98
   EV_upper_degree_factor: 0.63
-  district_heating_loss: 0.15
   bev_dsm: true #turns on EV battery
   bev_availability: 0.5  #How many cars do smart charging
   bev_energy: 0.05  #average battery size in MWh
@@ -179,7 +186,7 @@ sector:
   agriculture_machinery_fuel_efficiency: 0.7 # fuel oil per use
   agriculture_machinery_electric_efficiency: 0.3 # electricity per use
   shipping_average_efficiency: 0.4 #For conversion of fuel oil to propulsion in 2011
-  shipping_hydrogen_liquefaction: true # whether to consider liquefaction costs for shipping H2 demands
+  shipping_hydrogen_liquefaction: false # whether to consider liquefaction costs for shipping H2 demands
   shipping_hydrogen_share: # 1 means all hydrogen FC
     2020: 0
     2025: 0
@@ -227,7 +234,8 @@ sector:
   co2_vent: true
   SMR: true
   co2_sequestration_potential: 200  #MtCO2/a sequestration potential for Europe
-  co2_sequestration_cost: 20   #EUR/tCO2 for transport and sequestration of CO2
+  co2_sequestration_cost: 10   #EUR/tCO2 for sequestration of CO2
+  co2_network: false
   cc_fraction: 0.9  # default fraction of CO2 captured with post-combustion capture
   hydrogen_underground_storage: true
   use_fischer_tropsch_waste_heat: true
@@ -237,6 +245,7 @@ sector:
   electricity_grid_connection: true  # only applies to onshore wind and utility PV
   gas_distribution_grid: true
   gas_distribution_grid_cost_factor: 1.0  #multiplies cost in data/costs.csv
+  biomass_transport: false  # biomass transport between nodes
   conventional_generation: # generator : carrier
     OCGT: gas
 
@@ -274,10 +283,23 @@ industry:
   MWh_elec_per_tNH3_electrolysis: 1.17 # from https://doi.org/10.1016/j.joule.2018.04.017 Table 13 (air separation and HB)
   NH3_process_emissions: 24.5 # in MtCO2/a from SMR for H2 production for NH3 from UNFCCC for 2015 for EU28
   petrochemical_process_emissions: 25.5 # in MtCO2/a for petrochemical and other from UNFCCC for 2015 for EU28
-  HVC_primary_fraction: 1.0 #fraction of current non-ammonia basic chemicals produced via primary route
+  HVC_primary_fraction: 1. # fraction of today's HVC produced via primary route
+  HVC_mechanical_recycling_fraction: 0. # fraction of today's HVC produced via mechanical recycling
+  HVC_chemical_recycling_fraction: 0. # fraction of today's HVC produced via chemical recycling
+  HVC_production_today: 52. # MtHVC/a from DECHEMA (2017), Figure 16, page 107; includes ethylene, propylene and BTX
+  MWh_elec_per_tHVC_mechanical_recycling: 0.547 # from SI of https://doi.org/10.1016/j.resconrec.2020.105010, Table S5, for HDPE, PP, PS, PET. LDPE would be 0.756.
+  MWh_elec_per_tHVC_chemical_recycling: 6.9 # Material Economics (2019), page 125; based on pyrolysis and electric steam cracking
+  chlorine_production_today: 9.58 # MtCl/a from DECHEMA (2017), Table 7, page 43
+  MWh_elec_per_tCl: 3.6 # DECHEMA (2017), Table 6, page 43
+  MWh_H2_per_tCl: -0.9372  # DECHEMA (2017), page 43; negative since hydrogen produced in chloralkali process
+  methanol_production_today: 1.5 # MtMeOH/a from DECHEMA (2017), page 62
+  MWh_elec_per_tMeOH: 0.167 # DECHEMA (2017), Table 14, page 65
+  MWh_CH4_per_tMeOH: 10.25 # DECHEMA (2017), Table 14, page 65
   hotmaps_locate_missing: false
   reference_year: 2015
-
+  # references:
+  # DECHEMA (2017): https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf
+  # Material Economics (2019): https://materialeconomics.com/latest-updates/industrial-transformation-2050
 
 costs:
   lifetime: 25 #default lifetime
@@ -339,7 +361,7 @@ solving:
 
 plotting:
   map:
-    boundaries: [-11, 30, 34, 71] 
+    boundaries: [-11, 30, 34, 71]
     color_geomap:
       ocean: white
       land: whitesmoke
@@ -424,6 +446,7 @@ plotting:
     lines: k
     transmission lines: k
     H2: m
+    H2 liquefaction: m
     hydrogen storage: m
     battery: slategray
     battery storage: slategray
@@ -470,6 +493,7 @@ plotting:
     hot water storage: '#BBBBBB'
     hot water charging: '#BBBBBB'
     hot water discharging: '#999999'
+    CO2 pipeline: '#999999'
     CHP: r
     CHP heat: r
     CHP electric: r
@@ -510,5 +534,6 @@ plotting:
     shipping oil: "#6495ED"
     shipping oil emissions: "#6495ED"
     electricity distribution grid: '#333333'
+    solid biomass transport: green
     H2 for industry: "#222222"
     H2 for shipping: "#6495ED"

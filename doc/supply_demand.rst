@@ -183,7 +183,7 @@ Solid biomass provides process heat up to 500 Celsius in industry, as well as fe
 Solid biomass supply
 =====================
 
-Only wastes and residues from the JRC biomass dataset.
+Only wastes and residues from the JRC ENSPRESO biomass dataset.
 
 
 Oil product demand

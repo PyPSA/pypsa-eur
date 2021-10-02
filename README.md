@@ -65,6 +65,6 @@ the additional sectors.
 # Licence
 
 The code in PyPSA-Eur-Sec is released as free software under the
-[GPLv3](http://www.gnu.org/licenses/gpl-3.0.en.html), see LICENSE.txt.
+[MIT License](https://opensource.org/licenses/MIT), see `LICENSE.txt`.
 However, different licenses and terms of use may apply to the various
 input data.

@@ -3,6 +3,7 @@
 import pypsa
 
 import numpy as np
+import pandas as pd
 
 from pypsa.linopt import get_var, linexpr, define_constraints
 
@@ -19,12 +20,47 @@ pypsa.pf.logger.setLevel(logging.WARNING)
 
 def add_land_use_constraint(n):
 
-    #warning: this will miss existing offwind which is not classed AC-DC and has carrier 'offwind'
-    for carrier in ['solar', 'onwind', 'offwind-ac', 'offwind-dc']:
-        existing = n.generators.loc[n.generators.carrier == carrier, "p_nom"].groupby(n.generators.bus.map(n.buses.location)).sum()
-        existing.index += " " + carrier + "-" + snakemake.wildcards.planning_horizons
-        n.generators.loc[existing.index, "p_nom_max"] -= existing
+    if 'm' in snakemake.wildcards.clusters:
+        _add_land_use_constraint_m(n)
+    else:
+        _add_land_use_constraint(n)
 
+
+def _add_land_use_constraint(n):
+    #warning: this will miss existing offwind which is not classed AC-DC and has carrier 'offwind'
+
+    for carrier in ['solar', 'onwind', 'offwind-ac', 'offwind-dc']:
+        existing = n.generators.loc[n.generators.carrier==carrier,"p_nom"].groupby(n.generators.bus.map(n.buses.location)).sum()
+        existing.index += " " + carrier + "-" + snakemake.wildcards.planning_horizons
+        n.generators.loc[existing.index,"p_nom_max"] -= existing
+    
+    n.generators.p_nom_max.clip(lower=0, inplace=True)
+
+
+def _add_land_use_constraint_m(n):
+    # if generators clustering is lower than network clustering, land_use accounting is at generators clusters
+
+    planning_horizons = snakemake.config["scenario"]["planning_horizons"] 
+    grouping_years = snakemake.config["existing_capacities"]["grouping_years"]
+    current_horizon = snakemake.wildcards.planning_horizons
+
+    for carrier in ['solar', 'onwind', 'offwind-ac', 'offwind-dc']:
+
+        existing = n.generators.loc[n.generators.carrier==carrier,"p_nom"]
+        ind = list(set([i.split(sep=" ")[0] + ' ' + i.split(sep=" ")[1] for i in existing.index]))
+        
+        previous_years = [
+            str(y) for y in 
+            planning_horizons + grouping_years
+            if y < int(snakemake.wildcards.planning_horizons)
+        ]
+
+        for p_year in previous_years:
+            ind2 = [i for i in ind if i + " " + carrier + "-" + p_year in existing.index]
+            sel_current = [i + " " + carrier + "-" + current_horizon for i in ind2]
+            sel_p_year = [i + " " + carrier + "-" + p_year for i in ind2]
+            n.generators.loc[sel_current, "p_nom_max"] -= existing.loc[sel_p_year].rename(lambda x: x[:-4] + current_horizon) 
+    
     n.generators.p_nom_max.clip(lower=0, inplace=True)
 
 
@@ -150,8 +186,26 @@ def add_chp_constraints(n):
         define_constraints(n, lhs, "<=", 0, 'chplink', 'backpressure')
 
 
+def add_co2_sequestration_limit(n, sns):
+    
+    co2_stores = n.stores.loc[n.stores.carrier=='co2 stored'].index
+
+    if co2_stores.empty or ('Store', 'e') not in n.variables.index:
+        return
+    
+    vars_final_co2_stored = get_var(n, 'Store', 'e').loc[sns[-1], co2_stores]
+    
+    lhs = linexpr((1, vars_final_co2_stored)).sum()
+    rhs = n.config["sector"].get("co2_sequestration_potential", 200) * 1e6
+    
+    name = 'co2_sequestration_limit'
+    define_constraints(n, lhs, "<=", rhs, 'GlobalConstraint',
+                       'mu', axes=pd.Index([name]), spec=name)
+
+
 def extra_functionality(n, snapshots):
     add_battery_constraints(n)
+    add_co2_sequestration_limit(n, snapshots)
 
 
 def solve_network(n, config, opts='', **kwargs):
