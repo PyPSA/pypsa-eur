@@ -20,12 +20,47 @@ pypsa.pf.logger.setLevel(logging.WARNING)
 
 def add_land_use_constraint(n):
 
-    #warning: this will miss existing offwind which is not classed AC-DC and has carrier 'offwind'
-    for carrier in ['solar', 'onwind', 'offwind-ac', 'offwind-dc']:
-        existing = n.generators.loc[n.generators.carrier == carrier, "p_nom"].groupby(n.generators.bus.map(n.buses.location)).sum()
-        existing.index += " " + carrier + "-" + snakemake.wildcards.planning_horizons
-        n.generators.loc[existing.index, "p_nom_max"] -= existing
+    if 'm' in snakemake.wildcards.clusters:
+        _add_land_use_constraint_m(n)
+    else:
+        _add_land_use_constraint(n)
 
+
+def _add_land_use_constraint(n):
+    #warning: this will miss existing offwind which is not classed AC-DC and has carrier 'offwind'
+
+    for carrier in ['solar', 'onwind', 'offwind-ac', 'offwind-dc']:
+        existing = n.generators.loc[n.generators.carrier==carrier,"p_nom"].groupby(n.generators.bus.map(n.buses.location)).sum()
+        existing.index += " " + carrier + "-" + snakemake.wildcards.planning_horizons
+        n.generators.loc[existing.index,"p_nom_max"] -= existing
+    
+    n.generators.p_nom_max.clip(lower=0, inplace=True)
+
+
+def _add_land_use_constraint_m(n):
+    # if generators clustering is lower than network clustering, land_use accounting is at generators clusters
+
+    planning_horizons = snakemake.config["scenario"]["planning_horizons"] 
+    grouping_years = snakemake.config["existing_capacities"]["grouping_years"]
+    current_horizon = snakemake.wildcards.planning_horizons
+
+    for carrier in ['solar', 'onwind', 'offwind-ac', 'offwind-dc']:
+
+        existing = n.generators.loc[n.generators.carrier==carrier,"p_nom"]
+        ind = list(set([i.split(sep=" ")[0] + ' ' + i.split(sep=" ")[1] for i in existing.index]))
+        
+        previous_years = [
+            str(y) for y in 
+            planning_horizons + grouping_years
+            if y < int(snakemake.wildcards.planning_horizons)
+        ]
+
+        for p_year in previous_years:
+            ind2 = [i for i in ind if i + " " + carrier + "-" + p_year in existing.index]
+            sel_current = [i + " " + carrier + "-" + current_horizon for i in ind2]
+            sel_p_year = [i + " " + carrier + "-" + p_year for i in ind2]
+            n.generators.loc[sel_current, "p_nom_max"] -= existing.loc[sel_p_year].rename(lambda x: x[:-4] + current_horizon) 
+    
     n.generators.p_nom_max.clip(lower=0, inplace=True)
 
 

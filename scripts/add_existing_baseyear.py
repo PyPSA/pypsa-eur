@@ -155,6 +155,11 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
     # assign clustered bus
     busmap_s = pd.read_csv(snakemake.input.busmap_s, index_col=0, squeeze=True)
     busmap = pd.read_csv(snakemake.input.busmap, index_col=0, squeeze=True)
+
+    inv_busmap = {}
+    for k, v in busmap.iteritems():
+        inv_busmap[v] = inv_busmap.get(v, []) + [k]
+        
     clustermaps = busmap_s.map(busmap)
     clustermaps.index = clustermaps.index.astype(int)
 
@@ -192,23 +197,53 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
         capacity = capacity[capacity > snakemake.config['existing_capacities']['threshold_capacity']]
 
         if generator in ['solar', 'onwind', 'offwind']:
+        
+            suffix = '-ac' if generator == 'offwind' else ''
+            name_suffix = f' {generator}{suffix}-{baseyear}'
 
-            rename = {"offwind": "offwind-ac"}
-            p_max_pu=n.generators_t.p_max_pu[capacity.index + ' ' + rename.get(generator, generator) + '-' + str(baseyear)]
+            if 'm' in snakemake.wildcards.clusters:
 
-            n.madd("Generator",
-                capacity.index,
-                suffix=' ' + generator +"-"+ str(grouping_year),
-                bus=capacity.index,
-                carrier=generator,
-                p_nom=capacity,
-                marginal_cost=costs.at[generator, 'VOM'],
-                capital_cost=costs.at[generator, 'fixed'],
-                efficiency=costs.at[generator, 'efficiency'],
-                p_max_pu=p_max_pu.rename(columns=n.generators.bus),
-                build_year=grouping_year,
-                lifetime=costs.at[generator, 'lifetime']
-            )
+                for ind in capacity.index:
+
+                    # existing capacities are split evenly among regions in every country
+                    inv_ind = [i for i in inv_busmap[ind]]
+
+                    # for offshore the spliting only inludes coastal regions
+                    inv_ind = [i for i in inv_ind if (i + name_suffix) in n.generators.index]
+
+                    p_max_pu = n.generators_t.p_max_pu[[i + name_suffix for i in inv_ind]]
+                    p_max_pu.columns=[i + name_suffix for i in inv_ind ]
+                
+                    n.madd("Generator",
+                        [i + name_suffix for i in inv_ind],
+                        bus=ind,
+                        carrier=generator,
+                        p_nom=capacity[ind] / len(inv_ind), # split among regions in a country
+                        marginal_cost=costs.at[generator,'VOM'],
+                        capital_cost=costs.at[generator,'fixed'],
+                        efficiency=costs.at[generator, 'efficiency'],
+                        p_max_pu=p_max_pu,
+                        build_year=grouping_year,
+                        lifetime=costs.at[generator,'lifetime']
+                    )
+
+            else:
+
+                p_max_pu = n.generators_t.p_max_pu[capacity.index + name_suffix]
+
+                n.madd("Generator",
+                    capacity.index,
+                    suffix=' ' + generator +"-"+ str(grouping_year),
+                    bus=capacity.index,
+                    carrier=generator,
+                    p_nom=capacity,
+                    marginal_cost=costs.at[generator, 'VOM'],
+                    capital_cost=costs.at[generator, 'fixed'],
+                    efficiency=costs.at[generator, 'efficiency'],
+                    p_max_pu=p_max_pu.rename(columns=n.generators.bus),
+                    build_year=grouping_year,
+                    lifetime=costs.at[generator, 'lifetime']
+                )
 
         else:
 

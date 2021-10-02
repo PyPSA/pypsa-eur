@@ -89,6 +89,7 @@ Future release
 * Separate basic chemicals into HVC, chlorine, methanol and ammonia [`#166 <https://github.com/PyPSA/PyPSA-Eur-Sec/pull/166>`_].
 * Add option to specify reuse, primary production, and mechanical and chemical recycling fraction of platics [`#166 <https://github.com/PyPSA/PyPSA-Eur-Sec/pull/166>`_].
 * Include today's district heating shares in myopic optimisation and add option to specify exogenous path for district heating share increase under ``sector: district_heating:``  [`#149 <https://github.com/PyPSA/PyPSA-Eur-Sec/pull/149>`_].
+* The myopic option can now be used together with different clustering for the generators and the network. The existing renewable capacities are split evenly among the regions in every country [`#144 <https://github.com/PyPSA/PyPSA-Eur-Sec/pull/144>`_].
 
 PyPSA-Eur-Sec 0.5.0 (21st May 2021)
 ===================================
