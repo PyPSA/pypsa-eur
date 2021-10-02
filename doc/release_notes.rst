@@ -7,7 +7,7 @@ Future release
 
 .. note::
   This unreleased version currently requires the master branches of PyPSA, PyPSA-Eur, and the technology-data repository.
-* The myopic option can now be used together with different clustering for the generators and the network. The existing renewable capacities are split evenly among the regions in every country.
+
 * With this release, we change the license from copyleft GPLv3 to the more
   liberal MIT license with the consent of all contributors.
 * Extended use of ``multiprocessing`` for much better performance
@@ -88,6 +88,7 @@ Future release
 * Compatibility with ``xarray`` version 0.19.
 * Separate basic chemicals into HVC, chlorine, methanol and ammonia [`#166 <https://github.com/PyPSA/PyPSA-Eur-Sec/pull/166>`_].
 * Add option to specify reuse, primary production, and mechanical and chemical recycling fraction of platics [`#166 <https://github.com/PyPSA/PyPSA-Eur-Sec/pull/166>`_].
+* The myopic option can now be used together with different clustering for the generators and the network. The existing renewable capacities are split evenly among the regions in every country [`#144 <https://github.com/PyPSA/PyPSA-Eur-Sec/pull/144>`_].
 
 PyPSA-Eur-Sec 0.5.0 (21st May 2021)
 ===================================
