@@ -213,7 +213,7 @@ def idees_per_country(ct, year):
     ct_totals["electricity residential"] = df[47]
 
     assert df.index[46] == "Derived heat"
-    ct_totals["Derived heat residential"] = df[46]
+    ct_totals["derived heat residential"] = df[46]
 
     assert df.index[50] == 'Thermal uses'
     ct_totals["thermal uses residential"] = df[50]
