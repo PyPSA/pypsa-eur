@@ -30,6 +30,20 @@ PyPSA-Eur-Sec 0.6.0 (4 October 2021)
   recycling fraction of platics
   [`#166 <https://github.com/PyPSA/PyPSA-Eur-Sec/pull/166>`_].
 
+* Include energy demands and CO2 emissions for the agriculture, forestry and fishing sector.
+  It is included by default through the option ``A`` in the ``sector_opts`` wildcard.
+  Part of the emissions (1.A.4.c) was previously assigned to "industry non-elec" in the ``co2_totals.csv``.
+  Hence, excluding the agriculture sector will now lead to a tighter CO2 limit.
+  Energy demands are taken from the JRC IDEES database (missing countries filled with eurostat data)
+  and are split into
+  electricity (lighting, ventilation, specific electricity uses, pumping devices (electric)),
+  heat (specific heat uses, low enthalpy heat)
+  machinery oil (motor drives, farming machine drives, pumping devices (diesel)).
+  Heat demand is assigned at "services rural heat" buses.
+  Electricity demands are added to low-voltage buses.
+  Time series for demands are constant and distributed inside countries by population
+  [`#147 <https://github.com/PyPSA/PyPSA-Eur-Sec/pull/147>`_].
+
 * Include today's district heating shares in myopic optimisation and add option
   to specify exogenous path for district heating share increase under ``sector:
   district_heating:`` [`#149 <https://github.com/PyPSA/PyPSA-Eur-Sec/pull/149>`_].
