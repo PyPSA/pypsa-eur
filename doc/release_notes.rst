@@ -169,7 +169,7 @@ PyPSA-Eur-Sec 0.6.0 (4 October 2021)
 * Implemented changes to ``n.snapshot_weightings`` in PyPSA v0.18.0.
 
 * Compatibility with ``xarray`` version 0.19.
-* 
+
 * New dependencies: ``tqdm``, ``atlite>=0.2.4``, ``pytz`` and ``geopy`` (optional).
   These are included in the environment specifications of PyPSA-Eur v0.3.0.
 

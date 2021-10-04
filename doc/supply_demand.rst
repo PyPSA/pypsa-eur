@@ -43,7 +43,7 @@ Heat demand is split into:
 
 * ``urban central``: large-scale district heating networks in urban areas with dense heat demand
 * ``residential/services urban decentral``: heating for individual buildings in urban areas
-* ``residential/services rural``: heating for individual buildings in rural areas
+* ``residential/services rural``: heating for individual buildings in rural areas, agriculture heat uses
 
 
 Heat supply
@@ -189,7 +189,7 @@ Only wastes and residues from the JRC ENSPRESO biomass dataset.
 Oil product demand
 =====================
 
-Transport fuels and naphtha as a feedstock for the chemicals industry.
+Transport fuels, agriculture machinery and naphtha as a feedstock for the chemicals industry.
 
 Oil product supply
 ======================
