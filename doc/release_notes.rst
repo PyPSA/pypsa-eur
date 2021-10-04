@@ -11,6 +11,22 @@ Future release
 PyPSA-Eur-Sec 0.6.0 (4 October 2021)
 ====================================
 
+This release includes
+improvements regarding the basic chemical production,
+the addition of plastics recycling,
+the addition of the agriculture, forestry and fishing sector,
+more regionally resolved biomass potentials,
+CO2 pipeline transport and storage, and
+more options in setting exogenous transition paths,
+besides many performance improvements.
+
+This release is known to work with `PyPSA-Eur
+<https://github.com/PyPSA/pypsa-eur>`_ Version 0.4.0, `Technology Data
+<https://github.com/PyPSA/technology-data>`_ Version 0.3.0 and 
+`PyPSA <https://github.com/PyPSA/PyPSA>`_ Version 0.18.0.
+
+Please note that the data bundle has also been updated.
+
 
 **General**
 
@@ -159,6 +175,8 @@ PyPSA-Eur-Sec 0.6.0 (4 October 2021)
 
 * Consistent use of ``__main__`` block and further unspecific code cleaning.
 
+* Updated data bundle and moved data bundle to zenodo.org (`10.5281/zenodo.5546517 <https://doi.org/10.5281/zenodo.5546517>`_).
+
 
 **Bugfixes and Compatibility**
 
@@ -173,6 +191,7 @@ PyPSA-Eur-Sec 0.6.0 (4 October 2021)
 * New dependencies: ``tqdm``, ``atlite>=0.2.4``, ``pytz`` and ``geopy`` (optional).
   These are included in the environment specifications of PyPSA-Eur v0.3.0.
 
+Many thanks to all who contributed to this release!
 
 
 PyPSA-Eur-Sec 0.5.0 (21st May 2021)
