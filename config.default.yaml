@@ -21,7 +21,7 @@ scenario:
   opts: # only relevant for PyPSA-Eur
     - ''
   sector_opts: # this is where the main scenario settings are
-    - Co2L0-3H-T-H-B-I-solar+p3-dist1
+    - Co2L0-3H-T-H-B-I-A-solar+p3-dist1
   # to really understand the options here, look in scripts/prepare_sector_network.py
   # Co2Lx specifies the CO2 target in x% of the 1990 values; default will give default (5%);
   # Co2L0p25 will give 25% CO2 emissions; Co2Lm0p05 will give 5% negative emissions
@@ -481,6 +481,10 @@ plotting:
     CC: k
     co2: '#123456'
     co2 vent: '#654321'
+    agriculture heat: '#D07A7A'
+    agriculture machinery oil: '#1e1e1e'
+    agriculture machinery oil emissions: '#111111'
+    agriculture electricity: '#222222'
     solid biomass for industry co2 from atmosphere: '#654321'
     solid biomass for industry co2 to stored: '#654321'
     gas for industry co2 to atmosphere: '#654321'
