@@ -189,7 +189,7 @@ Please note that the data bundle has also been updated.
 * Compatibility with ``xarray`` version 0.19.
 
 * New dependencies: ``tqdm``, ``atlite>=0.2.4``, ``pytz`` and ``geopy`` (optional).
-  These are included in the environment specifications of PyPSA-Eur v0.3.0.
+  These are included in the environment specifications of PyPSA-Eur v0.4.0.
 
 Many thanks to all who contributed to this release!
 
