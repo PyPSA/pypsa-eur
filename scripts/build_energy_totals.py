@@ -214,7 +214,7 @@ def idees_per_country(ct, year):
     ct_totals["electricity residential"] = df[47]
 
     assert df.index[46] == "Derived heat"
-    ct_totals["Derived heat residential"] = df[46]
+    ct_totals["derived heat residential"] = df[46]
 
     assert df.index[50] == 'Thermal uses'
     ct_totals["thermal uses residential"] = df[50]
@@ -251,13 +251,13 @@ def idees_per_country(ct, year):
 
     assert df.index[53] == 'Thermal uses'
     ct_totals["thermal uses services"] = df[53]
-    
-    
+
+
     # agriculture, forestry and fishing
 
     start = "Detailed split of energy consumption (ktoe)"
     end = "Market shares of energy uses (%)"
-    
+
     df = pd.read_excel(fn_tertiary, "AGR_fec", index_col=0).loc[start:end, year]
 
     rows = [
