@@ -45,14 +45,14 @@ scenario:
 # CO2 budget as a fraction of 1990 emissions
 # this is over-ridden if CO2Lx is set in sector_opts
 # this is also over-ridden if cb is set in sector_opts
-# co2_budget:
-#   2020: 0.7011648746
-#   2025: 0.5241935484
-#   2030: 0.2970430108
-#   2035: 0.1500896057
-#   2040: 0.0712365591
-#   2045: 0.0322580645
-#   2050: 0
+co2_budget:
+  2020: 0.7011648746
+  2025: 0.5241935484
+  2030: 0.2970430108
+  2035: 0.1500896057
+  2040: 0.0712365591
+  2045: 0.0322580645
+  2050: 0
 
 # snapshots are originally set in PyPSA-Eur/config.yaml but used again by PyPSA-Eur-Sec
 snapshots:
