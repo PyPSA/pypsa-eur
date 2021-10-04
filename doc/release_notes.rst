@@ -86,6 +86,10 @@ Future release
   spatially disaggregate biomass potentials to PyPSA-Eur regions based on overlaps with NUTS2 regions from ENSPRESO
   (proportional to area) (`#151 <https://github.com/PyPSA/pypsa-eur-sec/pull/151>`_).
 * Compatibility with ``xarray`` version 0.19.
+* Added option to include emissions and energy demands of agriculture, forestry and fishing sector via the letter ``A`` in the ``{sector_opts}`` wildcard.
+  Demands are separated into electricity, heat and oil for machinery.
+  Fuel-switching for machinery from oil to electricity can be set exogenously in the ``config.yaml``
+  `#147 <https://github.com/PyPSA/PyPSA/pull/147>`_.
 * Separate basic chemicals into HVC, chlorine, methanol and ammonia [`#166 <https://github.com/PyPSA/PyPSA-Eur-Sec/pull/166>`_].
 * Add option to specify reuse, primary production, and mechanical and chemical recycling fraction of platics [`#166 <https://github.com/PyPSA/PyPSA-Eur-Sec/pull/166>`_].
 * Include today's district heating shares in myopic optimisation and add option to specify exogenous path for district heating share increase under ``sector: district_heating:``  [`#149 <https://github.com/PyPSA/PyPSA-Eur-Sec/pull/149>`_].

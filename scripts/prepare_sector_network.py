@@ -92,6 +92,10 @@ def emission_sectors_from_opts(opts):
             "domestic navigation",
             "international navigation"
         ]
+    if "A" in opts:
+        sectors += [
+            "agriculture"
+        ]
 
     return sectors
 
@@ -882,8 +886,9 @@ def insert_electricity_distribution_grid(n, costs):
         capital_cost=costs.at['electricity distribution grid', 'fixed'] * cost_factor
     )
 
-    # this catches regular electricity load and "industry electricity"
-    loads = n.loads.index[n.loads.carrier.str.contains("electricity")]
+    # this catches regular electricity load and "industry electricity" and
+    # "agriculture machinery electric" and "agriculture electricity"
+    loads = n.loads.index[n.loads.carrier.str.contains("electric")]
     n.loads.loc[loads, "bus"] += " low voltage"
 
     bevs = n.links.index[n.links.carrier == "BEV charger"]
@@ -1321,8 +1326,8 @@ def add_land_transport(n, costs):
 
         co2 = ice_share / ice_efficiency * transport[nodes].sum().sum() / 8760 * costs.at["oil", 'CO2 intensity']
 
-        n.madd("Load",
-            ["land transport oil emissions"],
+        n.add("Load",
+            "land transport oil emissions",
             bus="co2 atmosphere",
             carrier="land transport oil emissions",
             p_set=-co2
@@ -2161,6 +2166,71 @@ def add_waste_heat(n):
             n.links.loc[urban_central + " H2 Fuel Cell", "efficiency2"] = 0.95 - n.links.loc[urban_central + " H2 Fuel Cell", "efficiency"]
 
 
+def add_agriculture(n, costs):
+
+    logger.info('Add agriculture, forestry and fishing sector.')
+
+    nodes = pop_layout.index
+
+    # electricity
+
+    n.madd("Load",
+        nodes,
+        suffix=" agriculture electricity",
+        bus=nodes,
+        carrier='agriculture electricity',
+        p_set=nodal_energy_totals.loc[nodes, "total agriculture electricity"] * 1e6 / 8760
+    )
+
+    # heat
+
+    n.madd("Load",
+        nodes,
+        suffix=" agriculture heat",
+        bus=nodes + " services rural heat",
+        carrier="agriculture heat",
+        p_set=nodal_energy_totals.loc[nodes, "total agriculture heat"] * 1e6 / 8760
+    )
+
+    # machinery
+
+    electric_share = get(options["agriculture_machinery_electric_share"], investment_year)
+    assert electric_share <= 1.
+    ice_share = 1 - electric_share
+
+    machinery_nodal_energy = nodal_energy_totals.loc[nodes, "total agriculture machinery"]
+
+    if electric_share > 0:
+
+        efficiency_gain = options["agriculture_machinery_fuel_efficiency"] / options["agriculture_machinery_electric_efficiency"]
+
+        n.madd("Load",
+            nodes,
+            suffix=" agriculture machinery electric",
+            bus=nodes,
+            carrier="agriculture machinery electric",
+            p_set=electric_share / efficiency_gain * machinery_nodal_energy * 1e6 / 8760,
+        )
+
+    if ice_share > 0:
+
+        n.add("Load",
+            "agriculture machinery oil",
+            bus="EU oil",
+            carrier="agriculture machinery oil",
+            p_set=ice_share * machinery_nodal_energy.sum() * 1e6 / 8760
+        )
+
+        co2 = ice_share * machinery_nodal_energy.sum() * 1e6 / 8760 * costs.at["oil", 'CO2 intensity']
+
+        n.add("Load",
+            "agriculture machinery oil emissions",
+            bus="co2 atmosphere",
+            carrier="agriculture machinery oil emissions",
+            p_set=-co2
+        )
+
+
 def decentral(n):
     """Removes the electricity transmission system."""
     n.lines.drop(n.lines.index, inplace=True)
@@ -2296,6 +2366,9 @@ if __name__ == "__main__":
 
     if "I" in opts and "H" in opts:
         add_waste_heat(n)
+
+    if "A" in opts:  # requires H and I
+        add_agriculture(n, costs)
 
     if options['dac']:
         add_dac(n, costs)

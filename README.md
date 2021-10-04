@@ -21,9 +21,9 @@ it.
 PyPSA-Eur-Sec builds on the electricity generation and transmission
 model [PyPSA-Eur](https://github.com/PyPSA/pypsa-eur) to add demand
 and supply for the following sectors: transport, space and water
-heating, biomass, industry and industrial feedstocks. This completes
-the energy system and includes all greenhouse gas emitters except
-waste management, agriculture, forestry and land use.
+heating, biomass, industry and industrial feedstocks, agriculture,
+forestry and fishing. This completes the energy system and includes
+all greenhouse gas emitters except waste management and land use.
 
 Please see the [documentation](https://pypsa-eur-sec.readthedocs.io/)
 for installation instructions and other useful information about the snakemake workflow.

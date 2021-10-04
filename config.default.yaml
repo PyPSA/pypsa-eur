@@ -21,13 +21,14 @@ scenario:
   opts: # only relevant for PyPSA-Eur
     - ''
   sector_opts: # this is where the main scenario settings are
-    - Co2L0-3H-T-H-B-I-solar+p3-dist1
+    - Co2L0-3H-T-H-B-I-A-solar+p3-dist1
   # to really understand the options here, look in scripts/prepare_sector_network.py
   # Co2Lx specifies the CO2 target in x% of the 1990 values; default will give default (5%);
   # Co2L0p25 will give 25% CO2 emissions; Co2Lm0p05 will give 5% negative emissions
   # xH is the temporal resolution; 3H is 3-hourly, i.e. one snapshot every 3 hours
   # single letters are sectors: T for land transport, H for building heating,
-  # B for biomass supply, I for industry, shipping and aviation
+  # B for biomass supply, I for industry, shipping and aviation,
+  # A for agriculture, forestry and fishing
   # solar+c0.5 reduces the capital cost of solar to 50\% of reference value
   # solar+p3 multiplies the available installable potential by factor 3
   # co2 stored+e2 multiplies the potential of CO2 sequestration by a factor 2
@@ -181,6 +182,9 @@ sector:
     2050: 0.85
   transport_fuel_cell_efficiency: 0.5
   transport_internal_combustion_efficiency: 0.3
+  agriculture_machinery_electric_share: 0
+  agriculture_machinery_fuel_efficiency: 0.7 # fuel oil per use
+  agriculture_machinery_electric_efficiency: 0.3 # electricity per use
   shipping_average_efficiency: 0.4 #For conversion of fuel oil to propulsion in 2011
   shipping_hydrogen_liquefaction: false # whether to consider liquefaction costs for shipping H2 demands
   shipping_hydrogen_share: # 1 means all hydrogen FC
@@ -477,6 +481,10 @@ plotting:
     CC: k
     co2: '#123456'
     co2 vent: '#654321'
+    agriculture heat: '#D07A7A'
+    agriculture machinery oil: '#1e1e1e'
+    agriculture machinery oil emissions: '#111111'
+    agriculture electricity: '#222222'
     solid biomass for industry co2 from atmosphere: '#654321'
     solid biomass for industry co2 to stored: '#654321'
     gas for industry co2 to atmosphere: '#654321'
