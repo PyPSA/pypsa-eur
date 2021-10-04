@@ -11,88 +11,155 @@ Future release
 PyPSA-Eur-Sec 0.6.0 (4 October 2021)
 ====================================
 
+
+**General**
+
 * With this release, we change the license from copyleft GPLv3 to the more
   liberal MIT license with the consent of all contributors.
+
+
+**New features and functionality**
+
+* Distinguish costs for home battery storage and inverter from utility-scale
+  battery costs.
+
+* Separate basic chemicals into HVC (high-value chemicals), chlorine, methanol and ammonia
+  [`#166 <https://github.com/PyPSA/PyPSA-Eur-Sec/pull/166>`_].
+
+* Add option to specify reuse, primary production, and mechanical and chemical
+  recycling fraction of platics
+  [`#166 <https://github.com/PyPSA/PyPSA-Eur-Sec/pull/166>`_].
+
+* Include today's district heating shares in myopic optimisation and add option
+  to specify exogenous path for district heating share increase under ``sector:
+  district_heating:`` [`#149 <https://github.com/PyPSA/PyPSA-Eur-Sec/pull/149>`_].
+
+* Added option for hydrogen liquefaction costs for hydrogen demand in shipping.
+  This introduces a new ``H2 liquid`` bus at each location. It is activated via
+  ``sector: shipping_hydrogen_liquefaction: true``.
+
+* The share of shipping transformed into hydrogen fuel cell can be now defined
+  for different years in the ``config.yaml`` file. The carbon emission from the
+  remaining share is treated as a negative load on the atmospheric carbon dioxide
+  bus, just like aviation and land transport emissions.
+
+* The transformation of the Steel and Aluminium production can be now defined
+  for different years in the ``config.yaml`` file.
+
+* Include the option to alter the maximum energy capacity of a store via the
+  ``carrier+factor`` in the ``{sector_opts}`` wildcard. This can be useful for
+  sensitivity analyses. Example: ``co2 stored+e2`` multiplies the ``e_nom_max`` by
+  factor 2. In this example, ``e_nom_max`` represents the CO2 sequestration
+  potential in Europe.
+
+* Use `JRC ENSPRESO database <https://data.jrc.ec.europa.eu/dataset/74ed5a04-7d74-4807-9eab-b94774309d9f>`_ to
+  spatially disaggregate biomass potentials to PyPSA-Eur regions based on
+  overlaps with NUTS2 regions from ENSPRESO (proportional to area) (`#151
+  <https://github.com/PyPSA/pypsa-eur-sec/pull/151>`_).
+
+* Add option to regionally disaggregate biomass potential to individual nodes
+  (previously given per country, then distributed by population density within)
+  and allow the transport of solid biomass. The transport costs are determined
+  based on the `JRC-EU-Times Bioenergy report
+  <http://dx.doi.org/10.2790/01017>`_ in the new optional rule
+  ``build_biomass_transport_costs``. Biomass transport can be activated with the
+  setting ``sector: biomass_transport: true``.
+
+* Add option to regionally resolve CO2 storage and add CO2 pipeline transport
+  because geological storage potential,
+  CO2 utilisation sites and CO2 capture sites may be separated. The CO2 network
+  is built from zero based on the topology of the electricity grid (greenfield).
+  Pipelines are assumed to be bidirectional and lossless. Furthermore, neither
+  retrofitting of natural gas pipelines (required pressures are too high, 80-160
+  bar vs <80 bar) nor other modes of CO2 transport (by ship, road or rail) are
+  considered. The regional representation of CO2 is activated with the config
+  setting ``sector: co2_network: true`` but is deactivated by default. The
+  global limit for CO2 sequestration now applies to the sum of all CO2 stores
+  via an ``extra_functionality`` constraint.
+
+* The myopic option can now be used together with different clustering for the
+  generators and the network. The existing renewable capacities are split evenly
+  among the regions in every country [`#144 <https://github.com/PyPSA/PyPSA-Eur-Sec/pull/144>`_].
+
+* Add optional function to use ``geopy`` to locate entries of the Hotmaps
+  database of industrial sites with missing location based on city and country,
+  which reduces missing entries by half. It can be activated by setting
+  ``industry: hotmaps_locate_missing: true``, takes a few minutes longer, and
+  should only be used if spatial resolution is coarser than city level.
+
+
+**Performance and Structure**
+
 * Extended use of ``multiprocessing`` for much better performance
   (from up to 20 minutes to less than one minute).
-* Compatibility with ``atlite>=0.2``. Older versions of ``atlite`` will no longer work.
+
 * Handle most input files (or base directories) via ``snakemake.input``.
+
 * Use of ``mock_snakemake`` from PyPSA-Eur.
-* Update ``solve_network`` rule to match implementation in PyPSA-Eur by using ``n.ilopf()`` and remove outdated code using ``pyomo``.
-  Allows the new setting to skip iterated impedance updates with ``solving: options: skip_iterations: true``.
+
+* Update ``solve_network`` rule to match implementation in PyPSA-Eur by using
+  ``n.ilopf()`` and remove outdated code using ``pyomo``.
+  Allows the new setting to skip iterated impedance updates with ``solving:
+  options: skip_iterations: true``.
+
 * The component attributes that are to be overridden are now stored in the folder
   ``data/override_component_attrs`` analogous to ``pypsa/component_attrs``.
   This reduces verbosity and also allows circumventing the ``n.madd()`` hack
   for individual components with non-default attributes.
   This data is also tracked in the Snakefile.
-  
   A function ``helper.override_component_attrs`` was added that loads this data
-  and can pass the overridden component attributes into ``pypsa.Network()``:
-  
-  >>> from helper import override_component_attrs
-  >>> overrides = override_component_attrs(snakemake.input.overrides)
-  >>> n = pypsa.Network("mynetwork.nc", override_component_attrs=overrides)
-  
+  and can pass the overridden component attributes into ``pypsa.Network()``.
+
 * Add various parameters to ``config.default.yaml`` which were previously hardcoded inside the scripts 
   (e.g. energy reference years, BEV settings, solar thermal collector models, geomap colours).
+
 * Removed stale industry demand rules ``build_industrial_energy_demand_per_country``
   and ``build_industrial_demand``. These are superseded with more regionally resolved rules.
+
 * Use simpler and shorter ``gdf.sjoin()`` function to allocate industrial sites
-  from the Hotmaps database to onshore regions.
-  
+  from the Hotmaps database to onshore regions.  
   This change also fixes a bug:
   The previous version allocated sites to the closest bus,
   but at country borders (where Voronoi cells are distorted by the borders),
   this had resulted in e.g. a Spanish site close to the French border
   being wrongly allocated to the French bus if the bus center was closer. 
-* Bugfix: Corrected calculation of "gas for industry" carbon capture efficiency.
+
 * Retrofitting rule is now only triggered if endogeneously optimised.
+
 * Show progress in build rules with ``tqdm`` progress bars.
+
 * Reduced verbosity of ``Snakefile`` through directory prefixes.
+
 * Improve legibility of ``config.default.yaml`` and remove unused options.
-* Add optional function to use ``geopy`` to locate entries of the Hotmaps database of industrial sites 
-  with missing location based on city and country, which reduces missing entries by half. It can be
-  activated by setting ``industry: hotmaps_locate_missing: true``, takes a few minutes longer,
-  and should only be used if spatial resolution is coarser than city level.
+
 * Use the country-specific time zone mappings from ``pytz`` rather than a manual mapping.
+  
 * A function ``add_carrier_buses()`` was added to the ``prepare_network`` rule to reduce code duplication.
+
 * In the ``prepare_network`` rule the cost and potential adjustment was moved into an
   own function ``maybe_adjust_costs_and_potentials()``.
-* Use ``matplotlibrc`` to set the default plotting style and backend``.
+
+* Use ``matplotlibrc`` to set the default plotting style and backend.
+
 * Added benchmark files for each rule.
-* Implements changes to ``n.snapshot_weightings`` in upcoming PyPSA version (cf. `PyPSA/#227 <https://github.com/PyPSA/PyPSA/pull/227>`_).
-* New dependencies: ``tqdm``, ``atlite>=0.2.4``, ``pytz`` and ``geopy`` (optional).
-  These are included in the environment specifications of PyPSA-Eur.
+
 * Consistent use of ``__main__`` block and further unspecific code cleaning.
-* Distinguish costs for home battery storage and inverter from utility-scale battery costs.
-* Add option to regionally resolve CO2 storage and add CO2 pipeline transport because geological storage potential,
-  CO2 utilisation sites and CO2 capture sites may be separated.
-  The CO2 network is built from zero based on the topology of the electricity grid (greenfield).
-  Pipelines are assumed to be bidirectional and lossless.
-  Furthermore, neither retrofitting of natural gas pipelines (required pressures are too high, 80-160 bar vs <80 bar)
-  nor other modes of CO2 transport (by ship, road or rail) are considered.
-  The regional representation of CO2 is activated with the config setting ``sector: co2_network: true`` but is deactivated by default.
-  The global limit for CO2 sequestration now applies to the sum of all CO2 stores via an ``extra_functionality`` constraint.
-* Added option for hydrogen liquefaction costs for hydrogen demand in shipping.
-  This introduces a new ``H2 liquid`` bus at each location.
-  It is activated via ``sector: shipping_hydrogen_liquefaction: true``.
-* The share of shipping transformed into hydrogen fuel cell can be now defined for different years in the ``config.yaml`` file. The carbon emission from the remaining share is treated as a negative load on the atmospheric carbon dioxide bus, just like aviation and land transport emissions.
-* The transformation of the Steel and Aluminium production can be now defined for different years in the ``config.yaml`` file.
-* Include the option to alter the maximum energy capacity of a store via the ``carrier+factor`` in the ``{sector_opts}`` wildcard. This can be useful for sensitivity analyses. Example: ``co2 stored+e2`` multiplies the ``e_nom_max`` by factor 2. In this example, ``e_nom_max`` represents the CO2 sequestration potential in Europe.
-* Add option to regionally disaggregate biomass potential to individual nodes
-  (currently given per country, then distributed by population density within)
-  and allow the transport of solid biomass.
-  The transport costs are determined based on the `JRC-EU-Times Bioenergy report <http://dx.doi.org/10.2790/01017>`_
-  in the new optional rule ``build_biomass_transport_costs``.
-  Biomass transport can be activated with the setting ``sector: biomass_transport: true``.
-* Use `JRC ENSPRESO database <https://data.jrc.ec.europa.eu/dataset/74ed5a04-7d74-4807-9eab-b94774309d9f>`_ to
-  spatially disaggregate biomass potentials to PyPSA-Eur regions based on overlaps with NUTS2 regions from ENSPRESO
-  (proportional to area) (`#151 <https://github.com/PyPSA/pypsa-eur-sec/pull/151>`_).
+
+
+**Bugfixes and Compatibility**
+
+* Compatibility with ``atlite>=0.2``. Older versions of ``atlite`` will no longer work.
+
+* Corrected calculation of "gas for industry" carbon capture efficiency.
+
+* Implemented changes to ``n.snapshot_weightings`` in PyPSA v0.18.0.
+
 * Compatibility with ``xarray`` version 0.19.
-* Separate basic chemicals into HVC, chlorine, methanol and ammonia [`#166 <https://github.com/PyPSA/PyPSA-Eur-Sec/pull/166>`_].
-* Add option to specify reuse, primary production, and mechanical and chemical recycling fraction of platics [`#166 <https://github.com/PyPSA/PyPSA-Eur-Sec/pull/166>`_].
-* Include today's district heating shares in myopic optimisation and add option to specify exogenous path for district heating share increase under ``sector: district_heating:``  [`#149 <https://github.com/PyPSA/PyPSA-Eur-Sec/pull/149>`_].
-* The myopic option can now be used together with different clustering for the generators and the network. The existing renewable capacities are split evenly among the regions in every country [`#144 <https://github.com/PyPSA/PyPSA-Eur-Sec/pull/144>`_].
+* 
+* New dependencies: ``tqdm``, ``atlite>=0.2.4``, ``pytz`` and ``geopy`` (optional).
+  These are included in the environment specifications of PyPSA-Eur v0.3.0.
+
+
 
 PyPSA-Eur-Sec 0.5.0 (21st May 2021)
 ===================================
