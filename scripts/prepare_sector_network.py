@@ -1697,7 +1697,7 @@ def create_nodes_for_heat_sector():
                                axis=1).max(axis=1)
     # difference of max potential and today's share of district heating
     diff = (urban_fraction * central_fraction) - dist_fraction_node
-    progress = get(options["district_heating"]["potential"], investment_year)
+    progress = get(options["district_heating"]["progress"], investment_year)
     dist_fraction_node += diff * progress
     print(
         "The current district heating share compared to the maximum",
