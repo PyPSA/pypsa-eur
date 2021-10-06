@@ -449,11 +449,14 @@ plotting:
     gas for industry co2 to atmosphere: '#692e0a'
     gas for industry co2 to stored: '#8a3400'
     gas for industry: '#853403'
+    gas for industry CC: '#692e0a'
+    gas pipeline: '#ebbca0'
     # oil
     oil: '#c9c9c9'
     oil boiler: '#adadad'
     agriculture machinery oil: '#949494'
     shipping oil: "#808080"
+    land transport oil: '#afafaf'
     # nuclear
     Nuclear: '#ff8c00'
     Nuclear marginal: '#ff8c00'
@@ -471,6 +474,7 @@ plotting:
     solid biomass: '#baa741'
     solid biomass transport: '#baa741'
     solid biomass for industry: '#7a6d26'
+    solid biomass for industry CC: '#47411c'
     solid biomass for industry co2 from atmosphere: '#736412'
     solid biomass for industry co2 to stored: '#47411c'
     # power transmission
@@ -515,6 +519,7 @@ plotting:
     ground heat pump: '#2fb537'
     Ambient: '#98eb9d'
     CHP: '#8a5751'
+    CHP CC: '#634643'
     CHP heat: '#8a5751'
     CHP electric: '#8a5751'
     district heating: '#e8beac'
@@ -526,8 +531,13 @@ plotting:
     H2 for shipping: "#ebaee0"
     H2: '#bf13a0'
     SMR: '#870c71'
+    SMR CC: '#4f1745'
     H2 liquefaction: '#d647bd'
     hydrogen storage: '#bf13a0'
+    land transport fuel cell: '#6b3161'
+    H2 pipeline: '#f081dc'
+    H2 Fuel Cell: '#c251ae'
+    H2 Electrolysis: '#ff29d9'
     # syngas
     Sabatier: '#9850ad'
     methanation: '#c44ce6'
@@ -536,7 +546,6 @@ plotting:
     Fischer-Tropsch: '#25c49a'
     kerosene for aviation: '#1cfcc1'
     naphtha for industry: '#57ebc4'
-    land transport oil: '#02bf8d'
     # co2
     CC: '#9e132c'
     CO2 sequestration: '#9e132c'
@@ -546,6 +555,7 @@ plotting:
     co2 vent: '#ffd4dc'
     CO2 pipeline: '#f5627f'
     # emissions
+    process emissions: '#000000'
     process emissions: '#222222'
     process emissions to stored: '#444444'
     process emissions to atmosphere: '#888888'
@@ -554,7 +564,6 @@ plotting:
     land transport oil emissions: '#777777'
     agriculture machinery oil emissions: '#333333'
     # other
-    land transport fuel cell: '#0374ff'
     shipping: '#03a2ff'
     power-to-heat: '#cc1f1f'
     power-to-gas: '#c44ce6'
