@@ -1,0 +1,14 @@
+.snakemake
+.git
+.pytest_cache
+.ipynb_checkpoints
+.vscode
+.DS_Store
+__pycache__
+*.pyc
+*.pyo
+*.ipynb
+data
+notebooks
+benchmarks
+*.nc
