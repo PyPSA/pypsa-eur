@@ -523,7 +523,7 @@ plotting:
     CHP heat: '#8a5751'
     CHP electric: '#8a5751'
     district heating: '#e8beac'
-    resistive heater: '#c78536'
+    resistive heater: '#d8f9b8'
     retrofitting: '#8487e8'
     building retrofitting: '#8487e8'
     # hydrogen
@@ -565,7 +565,7 @@ plotting:
     agriculture machinery oil emissions: '#333333'
     # other
     shipping: '#03a2ff'
-    power-to-heat: '#cc1f1f'
+    power-to-heat: '#2fb537'
     power-to-gas: '#c44ce6'
     power-to-liquid: '#25c49a'
     gas-to-power/heat: '#ee8340'
