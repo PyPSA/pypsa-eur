@@ -5,7 +5,8 @@ files = [
     "config.yaml",
     "Snakefile",
     "scripts/solve_network.py",
-    "scripts/prepare_sector_network.py"
+    "scripts/prepare_sector_network.py",
+    "../pypsa-eur/config.yaml"
 ]
 
 if __name__ == '__main__':
