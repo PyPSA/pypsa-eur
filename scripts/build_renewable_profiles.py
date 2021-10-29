@@ -31,6 +31,7 @@ Relevant settings
             distance:
             natura:
             max_depth:
+            min_depth:
             max_shore_distance:
             min_shore_distance:
             capacity_per_sqkm:
@@ -241,6 +242,10 @@ if __name__ == '__main__':
         # and exclude areas where: -max_depth > grid cell depth
         func = functools.partial(np.greater,-config['max_depth'])
         excluder.add_raster(paths.gebco, codes=func, crs=4236, nodata=-1000)
+
+    if "min_depth" in config:
+        func = functools.partial(np.greater,-config['min_depth'])
+        excluder.add_raster(paths.gebco, codes=func, crs=4236, nodata=-1000, invert=True)
 
     if 'min_shore_distance' in config:
         buffer = config['min_shore_distance']
