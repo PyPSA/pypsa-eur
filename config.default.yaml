@@ -154,6 +154,7 @@ renewable:
     natura: true
     min_depth: 50
     max_depth: 500
+    max_shore_distance: 150000
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   solar:
