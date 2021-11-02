@@ -413,6 +413,7 @@ plotting:
     - solar thermal collector
     - central solar thermal collector
   tech_colors:
+    # wind
     onwind: "#235ebc"
     onshore wind: "#235ebc"
     offwind: "#6895dd"
@@ -421,123 +422,160 @@ plotting:
     offshore wind (AC): "#6895dd"
     offwind-dc: "#74c6f2"
     offshore wind (DC): "#74c6f2"
-    wave: '#004444'
-    hydro: '#3B5323'
-    hydro reservoir: '#3B5323'
-    ror: '#78AB46'
-    run of river: '#78AB46'
-    hydroelectricity: '#006400'
+    # water
+    hydro: '#298c81'
+    hydro reservoir: '#298c81'
+    ror: '#3dbfb0'
+    run of river: '#3dbfb0'
+    hydroelectricity: '#298c81'
+    PHS: '#51dbcc'
+    wave: '#a7d4cf'
+    # solar
     solar: "#f9d002"
     solar PV: "#f9d002"
-    solar thermal: coral
-    solar rooftop: '#ffef60'
-    OCGT: wheat
-    OCGT marginal: sandybrown
-    OCGT-heat: '#ee8340'
-    gas boiler: '#ee8340'
-    gas boilers: '#ee8340'
-    gas boiler marginal: '#ee8340'
-    gas-to-power/heat: '#ee8340'
-    gas: brown
-    natural gas: brown
-    SMR: '#4F4F2F'
-    oil: '#B5A642'
-    oil boiler: '#B5A677'
-    lines: k
-    transmission lines: k
-    H2: m
-    H2 liquefaction: m
-    hydrogen storage: m
-    battery: slategray
-    battery storage: slategray
-    home battery: '#614700'
-    home battery storage: '#614700'
-    Nuclear: r
-    Nuclear marginal: r
-    nuclear: r
-    uranium: r
-    Coal: k
-    coal: k
-    Coal marginal: k
-    Lignite: grey
-    lignite: grey
-    Lignite marginal: grey
-    CCGT: '#ee8340'
-    CCGT marginal: '#ee8340'
-    heat pumps: '#76EE00'
-    heat pump: '#76EE00'
-    air heat pump: '#76EE00'
-    ground heat pump: '#40AA00'
-    power-to-heat: '#40AA00'
-    resistive heater: pink
-    Sabatier: '#FF1493'
-    methanation: '#FF1493'
-    power-to-gas: '#FF1493'
-    power-to-liquid: '#FFAAE9'
-    helmeth: '#7D0552'
-    DAC: '#E74C3C'
-    co2 stored: '#123456'
-    CO2 sequestration: '#123456'
-    CC: k
-    co2: '#123456'
-    co2 vent: '#654321'
-    agriculture heat: '#D07A7A'
-    agriculture machinery oil: '#1e1e1e'
-    agriculture machinery oil emissions: '#111111'
-    agriculture electricity: '#222222'
-    solid biomass for industry co2 from atmosphere: '#654321'
-    solid biomass for industry co2 to stored: '#654321'
-    gas for industry co2 to atmosphere: '#654321'
-    gas for industry co2 to stored: '#654321'
-    Fischer-Tropsch: '#44DD33'
-    kerosene for aviation: '#44BB11'
-    naphtha for industry: '#44FF55'
-    land transport oil: '#44DD33'
-    water tanks: '#BBBBBB'
-    hot water storage: '#BBBBBB'
-    hot water charging: '#BBBBBB'
-    hot water discharging: '#999999'
-    CO2 pipeline: '#999999'
-    CHP: r
-    CHP heat: r
-    CHP electric: r
-    PHS: g
-    Ambient: k
-    Electric load: b
-    Heat load: r
-    heat: darkred
-    rural heat: '#880000'
-    central heat: '#b22222'
-    decentral heat: '#800000'
-    low-temperature heat for industry: '#991111'
-    process heat: '#FF3333'
-    heat demand: darkred
-    electric demand: k
-    Li ion: grey
-    district heating: '#CC4E5C'
-    retrofitting: purple
-    building retrofitting: purple
-    BEV charger: grey
-    V2G: grey
-    land transport EV: grey
-    electricity: k
-    gas for industry: '#333333'
-    solid biomass for industry: '#555555'
-    industry electricity: '#222222'
-    industry new electricity: '#222222'
+    solar thermal: '#ffbf2b'
+    solar rooftop: '#ffea80'
+    # gas
+    OCGT: '#e0986c'
+    OCGT marginal: '#e0986c'
+    OCGT-heat: '#e0986c'
+    gas boiler: '#db6a25'
+    gas boilers: '#db6a25'
+    gas boiler marginal: '#db6a25'
+    gas: '#e05b09'
+    natural gas: '#e05b09'
+    CCGT: '#a85522'
+    CCGT marginal: '#a85522'
+    gas for industry co2 to atmosphere: '#692e0a'
+    gas for industry co2 to stored: '#8a3400'
+    gas for industry: '#853403'
+    gas for industry CC: '#692e0a'
+    gas pipeline: '#ebbca0'
+    # oil
+    oil: '#c9c9c9'
+    oil boiler: '#adadad'
+    agriculture machinery oil: '#949494'
+    shipping oil: "#808080"
+    land transport oil: '#afafaf'
+    # nuclear
+    Nuclear: '#ff8c00'
+    Nuclear marginal: '#ff8c00'
+    nuclear: '#ff8c00'
+    uranium: '#ff8c00'
+    # coal
+    Coal: '#545454'
+    coal: '#545454'
+    Coal marginal: '#545454'
+    solid: '#545454'
+    Lignite: '#826837'
+    lignite: '#826837'
+    Lignite marginal: '#826837'
+    # biomass
+    biogas: '#e3d37d'
+    biomass: '#baa741'
+    solid biomass: '#baa741'
+    solid biomass transport: '#baa741'
+    solid biomass for industry: '#7a6d26'
+    solid biomass for industry CC: '#47411c'
+    solid biomass for industry co2 from atmosphere: '#736412'
+    solid biomass for industry co2 to stored: '#47411c'
+    # power transmission
+    lines: '#6c9459'
+    transmission lines: '#6c9459'
+    electricity distribution grid: '#97ad8c'
+    # electricity demand
+    Electric load: '#110d63'
+    electric demand: '#110d63'
+    electricity: '#110d63'
+    industry electricity: '#2d2a66'
+    industry new electricity: '#2d2a66'
+    agriculture electricity: '#494778'
+    # battery + EVs
+    battery: '#ace37f'
+    battery storage: '#ace37f'
+    home battery: '#80c944'
+    home battery storage: '#80c944'
+    BEV charger: '#baf238'
+    V2G: '#e5ffa8'
+    land transport EV: '#baf238'
+    Li ion: '#baf238'
+    # hot water storage
+    water tanks: '#e69487'
+    hot water storage: '#e69487'
+    hot water charging: '#e69487'
+    hot water discharging: '#e69487'
+    # heat demand
+    Heat load: '#cc1f1f'
+    heat: '#cc1f1f'
+    heat demand: '#cc1f1f'
+    rural heat: '#ff5c5c'
+    central heat: '#cc1f1f'
+    decentral heat: '#750606'
+    low-temperature heat for industry: '#8f2727'
+    process heat: '#ff0000'
+    agriculture heat: '#d9a5a5'
+    # heat supply
+    heat pumps: '#2fb537'
+    heat pump: '#2fb537'
+    air heat pump: '#36eb41'
+    ground heat pump: '#2fb537'
+    Ambient: '#98eb9d'
+    CHP: '#8a5751'
+    CHP CC: '#634643'
+    CHP heat: '#8a5751'
+    CHP electric: '#8a5751'
+    district heating: '#e8beac'
+    resistive heater: '#d8f9b8'
+    retrofitting: '#8487e8'
+    building retrofitting: '#8487e8'
+    # hydrogen
+    H2 for industry: "#f073da"
+    H2 for shipping: "#ebaee0"
+    H2: '#bf13a0'
+    hydrogen: '#bf13a0'
+    SMR: '#870c71'
+    SMR CC: '#4f1745'
+    H2 liquefaction: '#d647bd'
+    hydrogen storage: '#bf13a0'
+    H2 storage: '#bf13a0'
+    land transport fuel cell: '#6b3161'
+    H2 pipeline: '#f081dc'
+    H2 Fuel Cell: '#c251ae'
+    H2 Electrolysis: '#ff29d9'
+    # syngas
+    Sabatier: '#9850ad'
+    methanation: '#c44ce6'
+    methane: '#c44ce6'
+    helmeth: '#e899ff'
+    # synfuels
+    Fischer-Tropsch: '#25c49a'
+    liquid: '#25c49a'
+    kerosene for aviation: '#a1ffe6'
+    naphtha for industry: '#57ebc4'
+    # co2
+    CC: '#f29dae'
+    CCS: '#f29dae'
+    CO2 sequestration: '#f29dae'
+    DAC: '#ff5270'
+    co2 stored: '#f2385a'
+    co2: '#f29dae'
+    co2 vent: '#ffd4dc'
+    CO2 pipeline: '#f5627f'
+    # emissions
+    process emissions CC: '#000000'
+    process emissions: '#222222'
     process emissions to stored: '#444444'
     process emissions to atmosphere: '#888888'
-    process emissions: '#222222'
-    oil emissions: '#666666'
-    land transport oil emissions: '#666666'
-    land transport fuel cell: '#AAAAAA'
-    biogas: '#800000'
-    solid biomass: '#DAA520'
-    today: '#D2691E'
-    shipping: '#6495ED'
-    shipping oil: "#6495ED"
-    shipping oil emissions: "#6495ED"
-    electricity distribution grid: '#333333'
-    solid biomass transport: green
-    H2 for industry: "#222222"
-    H2 for shipping: "#6495ED"
+    oil emissions: '#aaaaaa'
+    shipping oil emissions: "#555555"
+    land transport oil emissions: '#777777'
+    agriculture machinery oil emissions: '#333333'
+    # other
+    shipping: '#03a2ff'
+    power-to-heat: '#2fb537'
+    power-to-gas: '#c44ce6'
+    power-to-H2: '#ff29d9'
+    power-to-liquid: '#25c49a'
+    gas-to-power/heat: '#ee8340'
+    waste: '#e3d37d'
+    other: '#000000'
