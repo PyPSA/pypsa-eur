@@ -34,6 +34,9 @@ def rename_techs(label):
     rename_if_contains_dict = {
         "water tanks": "hot water storage",
         "retrofitting": "building retrofitting",
+        # "H2 Electrolysis": "hydrogen storage",
+        # "H2 Fuel Cell": "hydrogen storage",
+        # "H2 pipeline": "hydrogen storage",
         "battery": "battery storage",
         # "CC": "CC"
     }
@@ -87,6 +90,7 @@ preferred_order = pd.Index([
     "offshore wind (DC)",
     "solar PV",
     "solar thermal",
+    "solar rooftop",
     "solar",
     "building retrofitting",
     "ground heat pump",
