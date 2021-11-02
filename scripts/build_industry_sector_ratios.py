@@ -279,7 +279,7 @@ def chemicals_industry():
 
     df = pd.DataFrame(index=index)
 
-    # Basid chemicals
+    # Basic chemicals
 
     sector = "Basic chemicals"
 
@@ -374,51 +374,81 @@ def chemicals_industry():
     # putting in ammonia demand for H2 and electricity separately
 
     s_emi = idees["emi"][3:57]
-    s_out = idees["out"][8:9]
     assert s_emi.index[0] == sector
-    assert sector in str(s_out.index)
 
-    ammonia = pd.read_csv(snakemake.input.ammonia_production, index_col=0)
-
-    # ktNH3/a
-    ammonia_total = ammonia.loc[ammonia.index.intersection(eu28), str(year)].sum()
-
-    s_out -= ammonia_total
+    # convert from MtHVC/a to ktHVC/a
+    s_out = config["HVC_production_today"] * 1e3
 
     # tCO2/t material
     df.loc["process emission", sector] += (
         s_emi["Process emissions"]
         - config["petrochemical_process_emissions"] * 1e3
         - config["NH3_process_emissions"] * 1e3
-    ) / s_out.values
+    ) / s_out
 
     # emissions originating from feedstock, could be non-fossil origin
     # tCO2/t material
     df.loc["process emission from feedstock", sector] += (
         config["petrochemical_process_emissions"] * 1e3
-    ) / s_out.values
+    ) / s_out
 
     # convert from ktoe/a to GWh/a
     sources = ["elec", "biomass", "methane", "hydrogen", "heat", "naphtha"]
     df.loc[sources, sector] *= toe_to_MWh
 
+    # subtract ammonia energy demand (in ktNH3/a)
+    ammonia = pd.read_csv(snakemake.input.ammonia_production, index_col=0)
+    ammonia_total = ammonia.loc[ammonia.index.intersection(eu28), str(year)].sum()
     df.loc["methane", sector] -= ammonia_total * config["MWh_CH4_per_tNH3_SMR"]
     df.loc["elec", sector] -= ammonia_total * config["MWh_elec_per_tNH3_SMR"]
 
-    # MWh/t material
-    df.loc[sources, sector] = df.loc[sources, sector] / s_out.values
+    # subtract chlorine demand
+    chlorine_total = config["chlorine_production_today"]
+    df.loc["hydrogen", sector] -= chlorine_total * config["MWh_H2_per_tCl"]
+    df.loc["elec", sector] -= chlorine_total * config["MWh_elec_per_tCl"]
 
-    to_rename = {sector: f"{sector} (without ammonia)"}
-    df.rename(columns=to_rename, inplace=True)
+    # subtract methanol demand
+    methanol_total = config["methanol_production_today"]
+    df.loc["methane", sector] -= methanol_total * config["MWh_CH4_per_tMeOH"]
+    df.loc["elec", sector] -= methanol_total * config["MWh_elec_per_tMeOH"]
+
+    # MWh/t material
+    df.loc[sources, sector] = df.loc[sources, sector] / s_out
+
+    df.rename(columns={sector: "HVC"}, inplace=True)
+
+    # HVC mechanical recycling
+
+    sector = "HVC (mechanical recycling)"
+    df[sector] = 0.0
+    df.loc["elec", sector] = config["MWh_elec_per_tHVC_mechanical_recycling"]
+
+    # HVC chemical recycling
+
+    sector = "HVC (chemical recycling)"
+    df[sector] = 0.0
+    df.loc["elec", sector] = config["MWh_elec_per_tHVC_chemical_recycling"]
 
     # Ammonia
 
     sector = "Ammonia"
-
     df[sector] = 0.0
-
     df.loc["hydrogen", sector] = config["MWh_H2_per_tNH3_electrolysis"]
     df.loc["elec", sector] = config["MWh_elec_per_tNH3_electrolysis"]
+
+    # Chlorine
+
+    sector = "Chlorine"
+    df[sector] = 0.0
+    df.loc["hydrogen", sector] = config["MWh_H2_per_tCl"]
+    df.loc["elec", sector] = config["MWh_elec_per_tCl"]
+
+    # Methanol
+
+    sector = "Methanol"
+    df[sector] = 0.0
+    df.loc["methane", sector] = config["MWh_CH4_per_tMeOH"]
+    df.loc["elec", sector] = config["MWh_elec_per_tMeOH"]
 
     # Other chemicals
 

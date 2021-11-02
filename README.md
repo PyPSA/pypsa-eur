@@ -9,21 +9,24 @@
 
 
 
-**WARNING**: This model is under construction and contains serious
-problems that distort the results. See the github repository
-[issues](https://github.com/PyPSA/pypsa-eur-sec/issues) for some of
-the problems (please feel free to help or make suggestions). There is
-neither documentation nor a paper yet, but we hope to have a preprint
-out by autumn 2021. We cannot support this model if you choose to use
-it.
+**WARNING**: This model is under construction and contains serious problems that
+distort the results. See the github repository
+[issues](https://github.com/PyPSA/pypsa-eur-sec/issues) for some of the problems
+(please feel free to help or make suggestions). There is neither a full
+documentation nor a paper yet, but we hope to have a preprint out by the end of 2021.
+You can find out more about the model capabilities in [a recent
+presentation at EMP-E](https://nworbmot.org/energy/brown-empe.pdf) or the
+following [preprint with a description of the industry
+sector](https://arxiv.org/abs/2109.09563). We cannot support this model if you
+choose to use it.
 
 
 PyPSA-Eur-Sec builds on the electricity generation and transmission
 model [PyPSA-Eur](https://github.com/PyPSA/pypsa-eur) to add demand
 and supply for the following sectors: transport, space and water
-heating, biomass, industry and industrial feedstocks. This completes
-the energy system and includes all greenhouse gas emitters except
-waste management, agriculture, forestry and land use.
+heating, biomass, industry and industrial feedstocks, agriculture,
+forestry and fishing. This completes the energy system and includes
+all greenhouse gas emitters except waste management and land use.
 
 Please see the [documentation](https://pypsa-eur-sec.readthedocs.io/)
 for installation instructions and other useful information about the snakemake workflow.
@@ -65,6 +68,6 @@ the additional sectors.
 # Licence
 
 The code in PyPSA-Eur-Sec is released as free software under the
-[GPLv3](http://www.gnu.org/licenses/gpl-3.0.en.html), see LICENSE.txt.
+[MIT License](https://opensource.org/licenses/MIT), see `LICENSE.txt`.
 However, different licenses and terms of use may apply to the various
 input data.

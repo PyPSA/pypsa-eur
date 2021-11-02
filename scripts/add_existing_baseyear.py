@@ -28,7 +28,7 @@ def add_build_year_to_new_assets(n, baseyear):
     # Give assets with lifetimes and no build year the build year baseyear
     for c in n.iterate_components(["Link", "Generator", "Store"]):
 
-        assets = c.df.index[~c.df.lifetime.isna() & c.df.build_year.isna()]
+        assets = c.df.index[~c.df.lifetime.isna() & c.df.build_year==0]
         c.df.loc[assets, "build_year"] = baseyear
 
         # add -baseyear to name
@@ -60,7 +60,7 @@ def add_existing_renewables(df_agg):
     }
 
     for tech in ['solar', 'onwind', 'offwind']:
-        
+
         carrier = carriers[tech]
 
         df = pd.read_csv(snakemake.input[f"existing_{tech}"], index_col=0).fillna(0.)
@@ -112,9 +112,9 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
     Parameters
     ----------
     n : pypsa.Network
-    grouping_years : 
+    grouping_years :
         intervals to group existing capacities
-    costs : 
+    costs :
         to read lifetime to estimate YearDecomissioning
     baseyear : int
     """
@@ -155,6 +155,11 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
     # assign clustered bus
     busmap_s = pd.read_csv(snakemake.input.busmap_s, index_col=0, squeeze=True)
     busmap = pd.read_csv(snakemake.input.busmap, index_col=0, squeeze=True)
+
+    inv_busmap = {}
+    for k, v in busmap.iteritems():
+        inv_busmap[v] = inv_busmap.get(v, []) + [k]
+        
     clustermaps = busmap_s.map(busmap)
     clustermaps.index = clustermaps.index.astype(int)
 
@@ -192,24 +197,54 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
         capacity = capacity[capacity > snakemake.config['existing_capacities']['threshold_capacity']]
 
         if generator in ['solar', 'onwind', 'offwind']:
-
-            rename = {"offwind": "offwind-ac"}
-            p_max_pu=n.generators_t.p_max_pu[capacity.index + ' ' + rename.get(generator, generator) + '-' + str(baseyear)]
-
-            n.madd("Generator",
-                capacity.index,
-                suffix=' ' + generator +"-"+ str(grouping_year),
-                bus=capacity.index,
-                carrier=generator,
-                p_nom=capacity,
-                marginal_cost=costs.at[generator, 'VOM'],
-                capital_cost=costs.at[generator, 'fixed'],
-                efficiency=costs.at[generator, 'efficiency'],
-                p_max_pu=p_max_pu.rename(columns=n.generators.bus),
-                build_year=grouping_year,
-                lifetime=costs.at[generator, 'lifetime']
-            )
         
+            suffix = '-ac' if generator == 'offwind' else ''
+            name_suffix = f' {generator}{suffix}-{baseyear}'
+
+            if 'm' in snakemake.wildcards.clusters:
+
+                for ind in capacity.index:
+
+                    # existing capacities are split evenly among regions in every country
+                    inv_ind = [i for i in inv_busmap[ind]]
+
+                    # for offshore the spliting only inludes coastal regions
+                    inv_ind = [i for i in inv_ind if (i + name_suffix) in n.generators.index]
+
+                    p_max_pu = n.generators_t.p_max_pu[[i + name_suffix for i in inv_ind]]
+                    p_max_pu.columns=[i + name_suffix for i in inv_ind ]
+                
+                    n.madd("Generator",
+                        [i + name_suffix for i in inv_ind],
+                        bus=ind,
+                        carrier=generator,
+                        p_nom=capacity[ind] / len(inv_ind), # split among regions in a country
+                        marginal_cost=costs.at[generator,'VOM'],
+                        capital_cost=costs.at[generator,'fixed'],
+                        efficiency=costs.at[generator, 'efficiency'],
+                        p_max_pu=p_max_pu,
+                        build_year=grouping_year,
+                        lifetime=costs.at[generator,'lifetime']
+                    )
+
+            else:
+
+                p_max_pu = n.generators_t.p_max_pu[capacity.index + name_suffix]
+
+                n.madd("Generator",
+                    capacity.index,
+                    suffix=' ' + generator +"-"+ str(grouping_year),
+                    bus=capacity.index,
+                    carrier=generator,
+                    p_nom=capacity,
+                    marginal_cost=costs.at[generator, 'VOM'],
+                    capital_cost=costs.at[generator, 'fixed'],
+                    efficiency=costs.at[generator, 'efficiency'],
+                    p_max_pu=p_max_pu.rename(columns=n.generators.bus),
+                    build_year=grouping_year,
+                    lifetime=costs.at[generator, 'lifetime']
+                )
+
         else:
 
             n.madd("Link",
@@ -268,7 +303,7 @@ def add_heating_capacities_installed_before_baseyear(n, baseyear, grouping_years
     df.fillna(0., inplace=True)
 
     # convert GW to MW
-    df *= 1e3 
+    df *= 1e3
 
     cc = pd.read_csv(snakemake.input.country_codes, index_col=0)
 
@@ -327,7 +362,7 @@ def add_heating_capacities_installed_before_baseyear(n, baseyear, grouping_years
             efficiency = cop[heat_pump_type][nodes[name]]
         else:
             efficiency = costs.at[costs_name, 'efficiency']
-        
+
         for i, grouping_year in enumerate(grouping_years):
 
             if int(grouping_year) + default_lifetime <= int(baseyear):
@@ -378,7 +413,7 @@ def add_heating_capacities_installed_before_baseyear(n, baseyear, grouping_years
                 build_year=int(grouping_year),
                 lifetime=costs.at[name_type + ' gas boiler', 'lifetime']
             )
-            
+
             n.madd("Link",
                 nodes[name],
                 suffix=f" {name} oil boiler-{grouping_year}",
@@ -410,7 +445,8 @@ if __name__ == "__main__":
             simpl='',
             clusters=45,
             lv=1.0,
-            sector_opts='Co2L0-168H-T-H-B-I-solar3-dist1',
+            opts='',
+            sector_opts='Co2L0-168H-T-H-B-I-solar+p3-dist1',
             planning_horizons=2020,
         )
 

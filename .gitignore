@@ -11,11 +11,8 @@ gurobi.log
 /benchmarks
 /logs
 /notebooks
-/data/timezone_mappings.csv
-/data/urban_percent.csv
 /data/links_p_nom.csv
 /data/*totals.csv
-/data/*Jensen.csv
 /data/biomass*
 /data/emobility/
 /data/eea*
@@ -28,6 +25,7 @@ gurobi.log
 /data/.nfs*
 /data/Industrial_Database.csv
 /data/retro/tabula-calculator-calcsetbuilding.csv
+/data/nuts*
 
 *.org
 

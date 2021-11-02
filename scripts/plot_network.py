@@ -19,9 +19,11 @@ def rename_techs_tyndp(tech):
     tech = rename_techs(tech)
     if "heat pump" in tech or "resistive heater" in tech:
         return "power-to-heat"
-    elif tech in ["methanation", "hydrogen storage", "helmeth"]:
+    elif tech in ["H2 Electrolysis", "methanation", "helmeth", "H2 liquefaction"]:
         return "power-to-gas"
-    elif tech in ["OCGT", "CHP", "gas boiler"]:
+    elif tech == "H2":
+        return "H2 storage"
+    elif tech in ["OCGT", "CHP", "gas boiler", "H2 Fuel Cell"]:
         return "gas-to-power/heat"
     elif "solar" in tech:
         return "solar"
@@ -29,6 +31,8 @@ def rename_techs_tyndp(tech):
         return "power-to-liquid"
     elif "offshore wind" in tech:
         return "offshore wind"
+    elif "CC" in tech or "sequestration" in tech:
+        return "CCS"
     else:
         return tech
 
@@ -286,13 +290,13 @@ def plot_h2_map(network):
     l2 = ax.legend(
         handles, labels,
         loc="upper left",
-        bbox_to_anchor=(0.01, 1.01),
+        bbox_to_anchor=(-0.03, 1.01),
         labelspacing=1.0,
         frameon=False,
         title='Electrolyzer capacity',
         handler_map=make_handler_map_to_scale_circles_as_in(ax)
     )
-    
+
     ax.add_artist(l2)
 
     handles = []
@@ -662,7 +666,8 @@ def plot_series(network, carrier="AC", name="test"):
 
     supply = pd.DataFrame(index=n.snapshots)
     for c in n.iterate_components(n.branch_components):
-        for i in range(2):
+        n_port = 4 if c.name=='Link' else 2
+        for i in range(n_port):
             supply = pd.concat((supply,
                                 (-1) * c.pnl["p" + str(i)].loc[:,
                                                                c.df.index[c.df["bus" + str(i)].isin(buses)]].groupby(c.df.carrier,
@@ -831,10 +836,11 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             'plot_network',
             simpl='',
-            clusters=48,
-            lv=1.0,
-            sector_opts='Co2L0-168H-T-H-B-I-solar3-dist1',
-            planning_horizons=2050,
+            clusters=45,
+            lv=1.5,
+            opts='',
+            sector_opts='Co2L0-168H-T-H-B-I-solar+p3-dist1',
+            planning_horizons=2030,
         )
 
     overrides = override_component_attrs(snakemake.input.overrides)

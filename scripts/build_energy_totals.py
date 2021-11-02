@@ -117,6 +117,7 @@ to_ipcc = {
     "total energy": "1 - Energy",
     "industrial processes": "2 - Industrial Processes and Product Use",
     "agriculture": "3 - Agriculture",
+    "agriculture, forestry and fishing": '1.A.4.c - Agriculture/Forestry/Fishing',
     "LULUCF": "4 - Land Use, Land-Use Change and Forestry",
     "waste management": "5 - Waste management",
     "other": "6 - Other Sector",
@@ -182,7 +183,7 @@ def idees_per_country(ct, year):
 
     ct_idees = idees_rename.get(ct, ct)
     fn_residential = f"{base_dir}/JRC-IDEES-2015_Residential_{ct_idees}.xlsx"
-    fn_services = f"{base_dir}/JRC-IDEES-2015_Tertiary_{ct_idees}.xlsx"
+    fn_tertiary = f"{base_dir}/JRC-IDEES-2015_Tertiary_{ct_idees}.xlsx"
     fn_transport = f"{base_dir}/JRC-IDEES-2015_Transport_{ct_idees}.xlsx"
 
     # residential
@@ -212,9 +213,15 @@ def idees_per_country(ct, year):
     assert df.index[47] == "Electricity"
     ct_totals["electricity residential"] = df[47]
 
+    assert df.index[46] == "Derived heat"
+    ct_totals["derived heat residential"] = df[46]
+
+    assert df.index[50] == 'Thermal uses'
+    ct_totals["thermal uses residential"] = df[50]
+
     # services
 
-    df = pd.read_excel(fn_services, "SER_hh_fec", index_col=0)[year]
+    df = pd.read_excel(fn_tertiary, "SER_hh_fec", index_col=0)[year]
 
     ct_totals["total services space"] = df["Space heating"]
 
@@ -231,13 +238,48 @@ def idees_per_country(ct, year):
     assert df.index[31] == "Electricity"
     ct_totals["electricity services cooking"] = df[31]
 
-    df = pd.read_excel(fn_services, "SER_summary", index_col=0)[year]
+    df = pd.read_excel(fn_tertiary, "SER_summary", index_col=0)[year]
 
     row = "Energy consumption by fuel - Eurostat structure (ktoe)"
     ct_totals["total services"] = df[row]
 
     assert df.index[50] == "Electricity"
     ct_totals["electricity services"] = df[50]
+
+    assert df.index[49] == "Derived heat"
+    ct_totals["derived heat services"] = df[49]
+
+    assert df.index[53] == 'Thermal uses'
+    ct_totals["thermal uses services"] = df[53]
+
+
+    # agriculture, forestry and fishing
+
+    start = "Detailed split of energy consumption (ktoe)"
+    end = "Market shares of energy uses (%)"
+
+    df = pd.read_excel(fn_tertiary, "AGR_fec", index_col=0).loc[start:end, year]
+
+    rows = [
+        "Lighting",
+        "Ventilation",
+        "Specific electricity uses",
+        "Pumping devices (electric)"
+    ]
+    ct_totals["total agriculture electricity"] = df[rows].sum()
+
+    rows = ["Specific heat uses", "Low enthalpy heat"]
+    ct_totals["total agriculture heat"] = df[rows].sum()
+
+    rows = [
+        "Motor drives",
+        "Farming machine drives (diesel oil incl. biofuels)",
+        "Pumping devices (diesel oil incl. biofuels)",
+    ]
+    ct_totals["total agriculture machinery"] = df[rows].sum()
+
+    row = "Agriculture, forestry and fishing"
+    ct_totals["total agriculture"] = df[row]
 
     # transport
 
@@ -342,6 +384,7 @@ def build_idees(countries, year):
     with mp.Pool(processes=nprocesses) as pool:
         totals_list = list(tqdm(pool.imap(func, countries), **tqdm_kwargs))
 
+
     totals = pd.concat(totals_list, axis=1)
 
     # convert ktoe to TWh
@@ -350,6 +393,13 @@ def build_idees(countries, year):
 
     # convert TWh/100km to kWh/km
     totals.loc["passenger car efficiency"] *= 10
+
+    # district heating share
+    district_heat = totals.loc[["derived heat residential",
+                                "derived heat services"]].sum()
+    total_heat = totals.loc[["thermal uses residential",
+                             "thermal uses services"]].sum()
+    totals.loc["district heat share"] = district_heat.div(total_heat)
 
     return totals.T
 
@@ -493,7 +543,7 @@ def build_energy_totals(countries, eurostat, swiss, idees):
 
     for purpose in ["passenger", "freight"]:
         attrs = [f"total domestic aviation {purpose}", f"total international aviation {purpose}"]
-        df.loc[missing, f"total aviation {purpose}"] = df.loc[missing, attrs].sum(axis=1)   
+        df.loc[missing, f"total aviation {purpose}"] = df.loc[missing, attrs].sum(axis=1)
 
     if "BA" in df.index:
         # fill missing data for BA (services and road energy data)
@@ -501,6 +551,14 @@ def build_energy_totals(countries, eurostat, swiss, idees):
         missing = df.loc["BA"] == 0.0
         ratio = df.at["BA", "total residential"] / df.at["RS", "total residential"]
         df.loc['BA', missing] = ratio * df.loc["RS", missing]
+
+    # Missing district heating share
+    dh_share = pd.read_csv(snakemake.input.district_heat_share,
+                           index_col=0, usecols=[0, 1])
+    # make conservative assumption and take minimum from both data sets
+    df["district heat share"] = (pd.concat([df["district heat share"],
+                                            dh_share.reindex(index=df.index)/100],
+                                           axis=1).min(axis=1))
 
     return df
 
@@ -540,10 +598,13 @@ def build_eea_co2(year=1990):
         "international aviation",
         "domestic navigation",
         "international navigation",
+        "agriculture, forestry and fishing"
     ]
     emissions["industrial non-elec"] = emissions["total energy"] - emissions[to_subtract].sum(axis=1)
 
-    to_drop = ["total energy", "total wL", "total woL"]
+    emissions["agriculture"] += emissions["agriculture, forestry and fishing"]
+
+    to_drop = ["total energy", "total wL", "total woL", "agriculture, forestry and fishing"]
     emissions.drop(columns=to_drop, inplace=True)
 
     # convert from Gg to Mt
@@ -588,7 +649,7 @@ def build_co2_totals(countries, eea_co2, eurostat_co2):
             # does not include industrial process emissions or fuel processing/refining
             "industrial non-elec": (ct, "+", "Industry"),
             # does not include non-energy emissions
-            "agriculture": (ct, "+", "+", "Agriculture / Forestry"),
+            "agriculture": (eurostat_co2.index.get_level_values(0) == ct) & eurostat_co2.index.isin(["Agriculture / Forestry", "Fishing"], level=3),
         }
 
         for i, mi in mappings.items():

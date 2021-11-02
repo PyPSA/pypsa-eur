@@ -1,4 +1,4 @@
-version: 0.5.0
+version: 0.6.0
 
 logging_level: INFO
 
@@ -21,15 +21,17 @@ scenario:
   opts: # only relevant for PyPSA-Eur
     - ''
   sector_opts: # this is where the main scenario settings are
-    - Co2L0-3H-T-H-B-I-solar+p3-dist1
+    - Co2L0-3H-T-H-B-I-A-solar+p3-dist1
   # to really understand the options here, look in scripts/prepare_sector_network.py
   # Co2Lx specifies the CO2 target in x% of the 1990 values; default will give default (5%);
   # Co2L0p25 will give 25% CO2 emissions; Co2Lm0p05 will give 5% negative emissions
   # xH is the temporal resolution; 3H is 3-hourly, i.e. one snapshot every 3 hours
   # single letters are sectors: T for land transport, H for building heating,
-  # B for biomass supply, I for industry, shipping and aviation
+  # B for biomass supply, I for industry, shipping and aviation,
+  # A for agriculture, forestry and fishing
   # solar+c0.5 reduces the capital cost of solar to 50\% of reference value
   # solar+p3 multiplies the available installable potential by factor 3
+  # co2 stored+e2 multiplies the potential of CO2 sequestration by a factor 2
   # dist{n} includes distribution grids with investment cost of n times cost in data/costs.csv
   # for myopic/perfect foresight cb states the carbon budget in GtCO2 (cumulative
   # emissions throughout the transition path in the timeframe determined by the
@@ -71,7 +73,8 @@ electricity:
 
 # regulate what components with which carriers are kept from PyPSA-Eur;
 # some technologies are removed because they are implemented differently
-# or have different year-dependent costs in PyPSA-Eur-Sec
+# (e.g. battery or H2 storage) or have different year-dependent costs
+# in PyPSA-Eur-Sec
 pypsa_eur:
   Bus:
     - AC
@@ -97,28 +100,28 @@ energy:
 
 biomass:
   year: 2030
-  scenario: Med
+  scenario: ENS_Med
   classes:
     solid biomass:
-      - Primary agricultural residues
-      - Forestry energy residue
-      - Secondary forestry residues
-      - Secondary Forestry residues sawdust
-      - Forestry residues from landscape care biomass
+      - Agricultural waste
+      - Fuelwood residues
+      - Secondary Forestry residues - woodchips
+      - Sawdust
+      - Residues from landscape care
       - Municipal waste
     not included:
-      - Bioethanol sugar beet biomass
-      - Rapeseeds for biodiesel
-      - sunflower and soya for Biodiesel
-      - Starchy crops biomass
-      - Grassy crops biomass
-      - Willow biomass
-      - Poplar biomass potential
-      - Roundwood fuelwood
-      - Roundwood Chips & Pellets
+      - Sugar from sugar beet
+      - Rape seed
+      - "Sunflower, soya seed "
+      - Bioethanol barley, wheat, grain maize, oats, other cereals and rye
+      - Miscanthus, switchgrass, RCG
+      - Willow
+      - Poplar
+      - FuelwoodRW
+      - C&P_RW
     biogas:
-      - Manure biomass potential
-      - Sludge biomass
+      - Manure solid, liquid
+      - Sludge
 
 
 solar_thermal:
@@ -139,8 +142,16 @@ existing_capacities:
 
 
 sector:
-  central: true
-  central_fraction: 0.6
+  district_heating:
+    potential: 0.6  # maximum fraction of urban demand which can be supplied by district heating
+     # increase of today's district heating demand to potential maximum district heating share
+     # progress = 0 means today's district heating share, progress = 1 means maximum fraction of urban demand is supplied by district heating
+    progress: 1
+      # 2020: 0.0
+      # 2030: 0.3
+      # 2040: 0.6
+      # 2050: 1.0
+    district_heating_loss: 0.15
   bev_dsm_restriction_value: 0.75  #Set to 0 for no restriction on BEV DSM
   bev_dsm_restriction_time: 7  #Time at which SOC of BEV has to be dsm_restriction_value
   transport_heating_deadband_upper: 20.
@@ -149,7 +160,6 @@ sector:
   ICE_upper_degree_factor: 1.6
   EV_lower_degree_factor: 0.98
   EV_upper_degree_factor: 0.63
-  district_heating_loss: 0.15
   bev_dsm: true #turns on EV battery
   bev_availability: 0.5  #How many cars do smart charging
   bev_energy: 0.05  #average battery size in MWh
@@ -160,34 +170,46 @@ sector:
   bev_avail_mean: 0.8
   v2g: true #allows feed-in to grid from EV battery
   #what is not EV or FCEV is oil-fuelled ICE
-  land_transport_fuel_cell_share: # 1 means all FCEVs
-    2020: 0
-    2030: 0.05
-    2040: 0.1
-    2050: 0.15
-  land_transport_electric_share: # 1 means all EVs
-    2020: 0
-    2030: 0.25
-    2040: 0.6
-    2050: 0.85
+  land_transport_fuel_cell_share: 0.15 # 1 means all FCEVs
+    # 2020: 0
+    # 2030: 0.05
+    # 2040: 0.1
+    # 2050: 0.15
+  land_transport_electric_share: 0.85 # 1 means all EVs
+    # 2020: 0
+    # 2030: 0.25
+    # 2040: 0.6
+    # 2050: 0.85
   transport_fuel_cell_efficiency: 0.5
   transport_internal_combustion_efficiency: 0.3
+  agriculture_machinery_electric_share: 0
+  agriculture_machinery_fuel_efficiency: 0.7 # fuel oil per use
+  agriculture_machinery_electric_efficiency: 0.3 # electricity per use
   shipping_average_efficiency: 0.4 #For conversion of fuel oil to propulsion in 2011
+  shipping_hydrogen_liquefaction: false # whether to consider liquefaction costs for shipping H2 demands
+  shipping_hydrogen_share: 1 # 1 means all hydrogen FC
+    # 2020: 0
+    # 2025: 0
+    # 2030: 0.05
+    # 2035: 0.15
+    # 2040: 0.3
+    # 2045: 0.6
+    # 2050: 1
   time_dep_hp_cop: true #time dependent heat pump coefficient of performance
   heat_pump_sink_T: 55. # Celsius, based on DTU / large area radiators; used in build_cop_profiles.py
    # conservatively high to cover hot water and space heating in poorly-insulated buildings
   reduce_space_heat_exogenously: true  # reduces space heat demand by a given factor (applied before losses in DH)
   # this can represent e.g. building renovation, building demolition, or if
   # the factor is negative: increasing floor area, increased thermal comfort, population growth
-  reduce_space_heat_exogenously_factor: # per unit reduction in space heat demand
+  reduce_space_heat_exogenously_factor: 0.29 # per unit reduction in space heat demand
   # the default factors are determined by the LTS scenario from http://tool.european-calculator.eu/app/buildings/building-types-area/?levers=1ddd4444421213bdbbbddd44444ffffff11f411111221111211l212221
-    2020: 0.10  # this results in a space heat demand reduction of 10%
-    2025: 0.09  # first heat demand increases compared to 2020 because of larger floor area per capita
-    2030: 0.09
-    2035: 0.11
-    2040: 0.16
-    2045: 0.21
-    2050: 0.29
+    # 2020: 0.10  # this results in a space heat demand reduction of 10%
+    # 2025: 0.09  # first heat demand increases compared to 2020 because of larger floor area per capita
+    # 2030: 0.09
+    # 2035: 0.11
+    # 2040: 0.16
+    # 2045: 0.21
+    # 2050: 0.29
   retrofitting :  # co-optimises building renovation to reduce space heat demand
     retro_endogen: false  # co-optimise space heat savings
     cost_factor: 1.0   # weight costs for building renovation
@@ -212,7 +234,8 @@ sector:
   co2_vent: true
   SMR: true
   co2_sequestration_potential: 200  #MtCO2/a sequestration potential for Europe
-  co2_sequestration_cost: 20   #EUR/tCO2 for transport and sequestration of CO2
+  co2_sequestration_cost: 10   #EUR/tCO2 for sequestration of CO2
+  co2_network: false
   cc_fraction: 0.9  # default fraction of CO2 captured with post-combustion capture
   hydrogen_underground_storage: true
   use_fischer_tropsch_waste_heat: true
@@ -228,25 +251,61 @@ sector:
   H2_retrofit_capacity_per_CH4: 0.6  # ratio for H2 capacity per original CH4 capacity of retrofitted pipelines
   gas_distribution_grid: true
   gas_distribution_grid_cost_factor: 1.0  #multiplies cost in data/costs.csv
+  biomass_transport: false  # biomass transport between nodes
   conventional_generation: # generator : carrier
     OCGT: gas
 
 
 industry:
-  St_primary_fraction: 0.3 # fraction of steel produced via primary route (DRI + EAF) versus secondary route (EAF); today fraction is 0.6
+  St_primary_fraction: 0.3 # fraction of steel produced via primary route versus secondary route (scrap+EAF); today fraction is 0.6
+    # 2020: 0.6
+    # 2025: 0.55
+    # 2030: 0.5
+    # 2035: 0.45
+    # 2040: 0.4
+    # 2045: 0.35
+    # 2050: 0.3
+  DRI_fraction: 1 # fraction of the primary route converted to DRI + EAF
+    # 2020: 0
+    # 2025: 0
+    # 2030: 0.05
+    # 2035: 0.2
+    # 2040: 0.4
+    # 2045: 0.7
+    # 2050: 1
   H2_DRI: 1.7   #H2 consumption in Direct Reduced Iron (DRI),  MWh_H2,LHV/ton_Steel from 51kgH2/tSt in Vogl et al (2018) doi:10.1016/j.jclepro.2018.08.279
   elec_DRI: 0.322   #electricity consumption in Direct Reduced Iron (DRI) shaft, MWh/tSt HYBRIT brochure https://ssabwebsitecdn.azureedge.net/-/media/hybrit/files/hybrit_brochure.pdf
   Al_primary_fraction: 0.2 # fraction of aluminium produced via the primary route versus scrap; today fraction is 0.4
+    # 2020: 0.4
+    # 2025: 0.375
+    # 2030: 0.35
+    # 2035: 0.325
+    # 2040: 0.3
+    # 2045: 0.25
+    # 2050: 0.2
   MWh_CH4_per_tNH3_SMR: 10.8 # 2012's demand from https://ec.europa.eu/docsroom/documents/4165/attachments/1/translations/en/renditions/pdf
   MWh_elec_per_tNH3_SMR: 0.7 # same source, assuming 94-6% split methane-elec of total energy demand 11.5 MWh/tNH3
   MWh_H2_per_tNH3_electrolysis: 6.5 # from https://doi.org/10.1016/j.joule.2018.04.017, around 0.197 tH2/tHN3 (>3/17 since some H2 lost and used for energy)
   MWh_elec_per_tNH3_electrolysis: 1.17 # from https://doi.org/10.1016/j.joule.2018.04.017 Table 13 (air separation and HB)
   NH3_process_emissions: 24.5 # in MtCO2/a from SMR for H2 production for NH3 from UNFCCC for 2015 for EU28
   petrochemical_process_emissions: 25.5 # in MtCO2/a for petrochemical and other from UNFCCC for 2015 for EU28
-  HVC_primary_fraction: 1.0 #fraction of current non-ammonia basic chemicals produced via primary route
+  HVC_primary_fraction: 1. # fraction of today's HVC produced via primary route
+  HVC_mechanical_recycling_fraction: 0. # fraction of today's HVC produced via mechanical recycling
+  HVC_chemical_recycling_fraction: 0. # fraction of today's HVC produced via chemical recycling
+  HVC_production_today: 52. # MtHVC/a from DECHEMA (2017), Figure 16, page 107; includes ethylene, propylene and BTX
+  MWh_elec_per_tHVC_mechanical_recycling: 0.547 # from SI of https://doi.org/10.1016/j.resconrec.2020.105010, Table S5, for HDPE, PP, PS, PET. LDPE would be 0.756.
+  MWh_elec_per_tHVC_chemical_recycling: 6.9 # Material Economics (2019), page 125; based on pyrolysis and electric steam cracking
+  chlorine_production_today: 9.58 # MtCl/a from DECHEMA (2017), Table 7, page 43
+  MWh_elec_per_tCl: 3.6 # DECHEMA (2017), Table 6, page 43
+  MWh_H2_per_tCl: -0.9372  # DECHEMA (2017), page 43; negative since hydrogen produced in chloralkali process
+  methanol_production_today: 1.5 # MtMeOH/a from DECHEMA (2017), page 62
+  MWh_elec_per_tMeOH: 0.167 # DECHEMA (2017), Table 14, page 65
+  MWh_CH4_per_tMeOH: 10.25 # DECHEMA (2017), Table 14, page 65
   hotmaps_locate_missing: false
   reference_year: 2015
-
+  # references:
+  # DECHEMA (2017): https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf
+  # Material Economics (2019): https://materialeconomics.com/latest-updates/industrial-transformation-2050
 
 costs:
   lifetime: 25 #default lifetime
@@ -308,7 +367,7 @@ solving:
 
 plotting:
   map:
-    boundaries: [-11, 30, 34, 71] 
+    boundaries: [-11, 30, 34, 71]
     color_geomap:
       ocean: white
       land: whitesmoke
@@ -360,6 +419,7 @@ plotting:
     - solar thermal collector
     - central solar thermal collector
   tech_colors:
+    # wind
     onwind: "#235ebc"
     onshore wind: "#235ebc"
     offwind: "#6895dd"
@@ -368,117 +428,161 @@ plotting:
     offshore wind (AC): "#6895dd"
     offwind-dc: "#74c6f2"
     offshore wind (DC): "#74c6f2"
-    wave: '#004444'
-    hydro: '#3B5323'
-    hydro reservoir: '#3B5323'
-    ror: '#78AB46'
-    run of river: '#78AB46'
-    hydroelectricity: '#006400'
+    # water
+    hydro: '#298c81'
+    hydro reservoir: '#298c81'
+    ror: '#3dbfb0'
+    run of river: '#3dbfb0'
+    hydroelectricity: '#298c81'
+    PHS: '#51dbcc'
+    wave: '#a7d4cf'
+    # solar
     solar: "#f9d002"
     solar PV: "#f9d002"
-    solar thermal: coral
-    solar rooftop: '#ffef60'
-    OCGT: wheat
-    OCGT marginal: sandybrown
-    OCGT-heat: '#ee8340'
-    gas boiler: '#ee8340'
-    gas boilers: '#ee8340'
-    gas boiler marginal: '#ee8340'
-    gas-to-power/heat: '#ee8340'
-    gas: brown
-    Gas pipeline : brown
-    natural gas: brown
-    SMR: '#4F4F2F'
-    SMR CC: '#6f6f42'
-    oil: '#B5A642'
-    oil boiler: '#B5A677'
-    lines: k
-    transmission lines: k
-    H2: m
-    hydrogen storage: m
-    battery: slategray
-    battery storage: slategray
-    home battery: '#614700'
-    home battery storage: '#614700'
-    Nuclear: r
-    Nuclear marginal: r
-    nuclear: r
-    uranium: r
-    Coal: k
-    coal: k
-    Coal marginal: k
-    Lignite: grey
-    lignite: grey
-    Lignite marginal: grey
-    CCGT: '#ee8340'
-    CCGT marginal: '#ee8340'
-    heat pumps: '#76EE00'
-    heat pump: '#76EE00'
-    air heat pump: '#76EE00'
-    ground heat pump: '#40AA00'
-    power-to-heat: '#40AA00'
-    resistive heater: pink
-    Sabatier: '#FF1493'
-    methanation: '#FF1493'
-    power-to-gas: '#FF1493'
-    power-to-liquid: '#FFAAE9'
-    helmeth: '#7D0552'
-    DAC: '#E74C3C'
-    co2 stored: '#123456'
-    CO2 sequestration: '#123456'
-    CC: k
-    co2: '#123456'
-    co2 vent: '#654321'
-    solid biomass for industry co2 from atmosphere: '#654321'
-    solid biomass for industry co2 to stored: '#654321'
-    gas for industry co2 to atmosphere: '#654321'
-    gas for industry co2 to stored: '#654321'
-    Fischer-Tropsch: '#44DD33'
-    kerosene for aviation: '#44BB11'
-    naphtha for industry: '#44FF55'
-    land transport oil: '#44DD33'
-    water tanks: '#BBBBBB'
-    hot water storage: '#BBBBBB'
-    hot water charging: '#BBBBBB'
-    hot water discharging: '#999999'
-    CHP: r
-    CHP heat: r
-    CHP electric: r
-    PHS: g
-    Ambient: k
-    Electric load: b
-    Heat load: r
-    heat: darkred
-    rural heat: '#880000'
-    central heat: '#b22222'
-    decentral heat: '#800000'
-    low-temperature heat for industry: '#991111'
-    process heat: '#FF3333'
-    heat demand: darkred
-    electric demand: k
-    Li ion: grey
-    district heating: '#CC4E5C'
-    retrofitting: purple
-    building retrofitting: purple
-    BEV charger: grey
-    V2G: grey
-    land transport EV: grey
-    electricity: k
-    gas for industry: '#333333'
-    gas for industry CC: '#404040'
-    solid biomass for industry: '#555555'
-    solid biomass for industry CC: '#555555'
-    industry electricity: '#222222'
-    industry new electricity: '#222222'
+    solar thermal: '#ffbf2b'
+    solar rooftop: '#ffea80'
+    # gas
+    OCGT: '#e0986c'
+    OCGT marginal: '#e0986c'
+    OCGT-heat: '#e0986c'
+    gas boiler: '#db6a25'
+    gas boilers: '#db6a25'
+    gas boiler marginal: '#db6a25'
+    gas: '#e05b09'
+    natural gas: '#e05b09'
+    CCGT: '#a85522'
+    CCGT marginal: '#a85522'
+    gas for industry co2 to atmosphere: '#692e0a'
+    gas for industry co2 to stored: '#8a3400'
+    gas for industry: '#853403'
+    gas for industry CC: '#692e0a'
+    gas pipeline: '#ebbca0'
+    Gas pipeline: '#ebbca0'
+    # oil
+    oil: '#c9c9c9'
+    oil boiler: '#adadad'
+    agriculture machinery oil: '#949494'
+    shipping oil: "#808080"
+    land transport oil: '#afafaf'
+    # nuclear
+    Nuclear: '#ff8c00'
+    Nuclear marginal: '#ff8c00'
+    nuclear: '#ff8c00'
+    uranium: '#ff8c00'
+    # coal
+    Coal: '#545454'
+    coal: '#545454'
+    Coal marginal: '#545454'
+    solid: '#545454'
+    Lignite: '#826837'
+    lignite: '#826837'
+    Lignite marginal: '#826837'
+    # biomass
+    biogas: '#e3d37d'
+    biomass: '#baa741'
+    solid biomass: '#baa741'
+    solid biomass transport: '#baa741'
+    solid biomass for industry: '#7a6d26'
+    solid biomass for industry CC: '#47411c'
+    solid biomass for industry co2 from atmosphere: '#736412'
+    solid biomass for industry co2 to stored: '#47411c'
+    # power transmission
+    lines: '#6c9459'
+    transmission lines: '#6c9459'
+    electricity distribution grid: '#97ad8c'
+    # electricity demand
+    Electric load: '#110d63'
+    electric demand: '#110d63'
+    electricity: '#110d63'
+    industry electricity: '#2d2a66'
+    industry new electricity: '#2d2a66'
+    agriculture electricity: '#494778'
+    # battery + EVs
+    battery: '#ace37f'
+    battery storage: '#ace37f'
+    home battery: '#80c944'
+    home battery storage: '#80c944'
+    BEV charger: '#baf238'
+    V2G: '#e5ffa8'
+    land transport EV: '#baf238'
+    Li ion: '#baf238'
+    # hot water storage
+    water tanks: '#e69487'
+    hot water storage: '#e69487'
+    hot water charging: '#e69487'
+    hot water discharging: '#e69487'
+    # heat demand
+    Heat load: '#cc1f1f'
+    heat: '#cc1f1f'
+    heat demand: '#cc1f1f'
+    rural heat: '#ff5c5c'
+    central heat: '#cc1f1f'
+    decentral heat: '#750606'
+    low-temperature heat for industry: '#8f2727'
+    process heat: '#ff0000'
+    agriculture heat: '#d9a5a5'
+    # heat supply
+    heat pumps: '#2fb537'
+    heat pump: '#2fb537'
+    air heat pump: '#36eb41'
+    ground heat pump: '#2fb537'
+    Ambient: '#98eb9d'
+    CHP: '#8a5751'
+    CHP CC: '#634643'
+    CHP heat: '#8a5751'
+    CHP electric: '#8a5751'
+    district heating: '#e8beac'
+    resistive heater: '#d8f9b8'
+    retrofitting: '#8487e8'
+    building retrofitting: '#8487e8'
+    # hydrogen
+    H2 for industry: "#f073da"
+    H2 for shipping: "#ebaee0"
+    H2: '#bf13a0'
+    hydrogen: '#bf13a0'
+    SMR: '#870c71'
+    SMR CC: '#4f1745'
+    H2 liquefaction: '#d647bd'
+    hydrogen storage: '#bf13a0'
+    H2 storage: '#bf13a0'
+    land transport fuel cell: '#6b3161'
+    H2 pipeline: '#f081dc'
+    H2 Fuel Cell: '#c251ae'
+    H2 Electrolysis: '#ff29d9'
+    # syngas
+    Sabatier: '#9850ad'
+    methanation: '#c44ce6'
+    methane: '#c44ce6'
+    helmeth: '#e899ff'
+    # synfuels
+    Fischer-Tropsch: '#25c49a'
+    liquid: '#25c49a'
+    kerosene for aviation: '#a1ffe6'
+    naphtha for industry: '#57ebc4'
+    # co2
+    CC: '#f29dae'
+    CCS: '#f29dae'
+    CO2 sequestration: '#f29dae'
+    DAC: '#ff5270'
+    co2 stored: '#f2385a'
+    co2: '#f29dae'
+    co2 vent: '#ffd4dc'
+    CO2 pipeline: '#f5627f'
+    # emissions
+    process emissions CC: '#000000'
+    process emissions: '#222222'
     process emissions to stored: '#444444'
     process emissions to atmosphere: '#888888'
-    process emissions: '#222222'
-    process emissions CC: '#484848'
-    oil emissions: '#666666'
-    land transport oil emissions: '#666666'
-    land transport fuel cell: '#AAAAAA'
-    biogas: '#800000'
-    solid biomass: '#DAA520'
-    today: '#D2691E'
-    shipping: '#6495ED'
-    electricity distribution grid: '#333333'
+    oil emissions: '#aaaaaa'
+    shipping oil emissions: "#555555"
+    land transport oil emissions: '#777777'
+    agriculture machinery oil emissions: '#333333'
+    # other
+    shipping: '#03a2ff'
+    power-to-heat: '#2fb537'
+    power-to-gas: '#c44ce6'
+    power-to-H2: '#ff29d9'
+    power-to-liquid: '#25c49a'
+    gas-to-power/heat: '#ee8340'
+    waste: '#e3d37d'
+    other: '#000000'
