@@ -78,16 +78,46 @@ rule build_simplified_population_layouts:
     benchmark: "benchmarks/build_clustered_population_layouts/s{simpl}"
     script: "scripts/build_clustered_population_layouts.py"
 
-rule build_gas_network:
-    input:
-        gas_network="data/gas_network/gas_network_dataset.csv",
-        country_shapes=pypsaeur("resources/country_shapes.geojson"),
-        regions_onshore=pypsaeur("resources/regions_onshore_elec_s{simpl}_{clusters}.geojson"),
-        regions_offshore=pypsaeur("resources/regions_offshore_elec_s{simpl}_{clusters}.geojson")
-    output:
-        clustered_gas_network="resources/gas_network_elec_s{simpl}_{clusters}.csv"
-    resources: mem_mb=10000
-    script: "scripts/build_gas_network.py"
+
+if config["sector"]["gas_network"]:
+
+    rule retrieve_gas_infrastructure_data:
+        output: "data/gas_network/scigrid-gas/data/IGGIELGN_LNGs.csv"
+        script: 'scripts/retrieve_gas_infrastructure_data.py'
+
+    rule build_gas_network:
+        input:
+            gas_network="data/gas_network/gas_network_dataset.csv"
+        output:
+            cleaned_gas_network="resources/gas_network.csv"
+        resources: mem_mb=4000
+        script: "scripts/build_gas_network.py"
+
+    rule build_gas_import_locations:
+        input:
+            lng="data/gas_network/scigrid-gas/data/IGGIELGN_LNGs.geojson"
+            entry="data/gas_network/scigrid-gas/data/IGGIELGN_BorderPoints.geojson"
+            production="data/gas_network/scigrid-gas/data/IGGIELGN_Productions.geojson"
+            regions_onshore=pypsaeur("resources/regions_onshore_elec_s{simpl}_{clusters}.geojson"),
+        output:
+            gas_input_nodes="resources/gas_input_nodes_s{simpl}_{clusters}.csv"
+        resources: mem_mb=2000,
+        script: "scripts/build_gas_import_locations.py"
+
+    rule cluster_gas_network:
+        input:
+            cleaned_gas_network="data/gas_network/gas_network_dataset.csv",
+            regions_onshore=pypsaeur("resources/regions_onshore_elec_s{simpl}_{clusters}.geojson"),
+            regions_offshore=pypsaeur("resources/regions_offshore_elec_s{simpl}_{clusters}.geojson")
+        output:
+            clustered_gas_network="resources/gas_network_elec_s{simpl}_{clusters}.csv"
+        resources: mem_mb=4000
+        script: "scripts/cluster_gas_network.py"
+
+    gas_infrastructure = {**rules.cluster_gas_network.output, **rules.build_gas_import_locations.output}
+else:
+    gas_infrastructure = {}
+
 
 rule build_heat_demands:
     input:
@@ -354,7 +384,6 @@ rule prepare_sector_network:
         energy_totals_name='resources/energy_totals.csv',
         co2_totals_name='resources/co2_totals.csv',
         transport_name='resources/transport_data.csv',
-        clustered_gas_network="resources/gas_network_elec_s{simpl}_{clusters}.csv",
         traffic_data_KFZ="data/emobility/KFZ__count",
         traffic_data_Pkw="data/emobility/Pkw__count",
         biomass_potentials='resources/biomass_potentials_s{simpl}_{clusters}.csv',
@@ -387,7 +416,8 @@ rule prepare_sector_network:
         solar_thermal_urban="resources/solar_thermal_urban_elec_s{simpl}_{clusters}.nc",
         solar_thermal_rural="resources/solar_thermal_rural_elec_s{simpl}_{clusters}.nc",
         **build_retro_cost_output,
-        **build_biomass_transport_costs_output
+        **build_biomass_transport_costs_output,
+        **gas_infrastructure
     output: RDIR + '/prenetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc'
     threads: 1
     resources: mem_mb=2000

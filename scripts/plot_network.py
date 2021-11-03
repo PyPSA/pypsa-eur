@@ -332,7 +332,7 @@ def plot_ch4_map(network):
 
     supply_energy = get_nodal_balance().droplevel([0,1]).sort_index()
 
-    if "Gas pipeline" not in n.links.carrier.unique():
+    if "gas pipeline" not in n.links.carrier.unique():
         return
 
     assign_location(n)
@@ -372,7 +372,7 @@ def plot_ch4_map(network):
     bus_sizes = pd.concat([bus_sizes, methanation, biogas])
     bus_sizes.sort_index(inplace=True)
 
-    n.links.drop(n.links.index[n.links.carrier != "Gas pipeline"], inplace=True)
+    n.links.drop(n.links.index[n.links.carrier != "gas pipeline"], inplace=True)
 
     link_widths = n.links.p_nom_opt / linewidth_factor
     link_widths[n.links.p_nom_opt < line_lower_threshold] = 0.
@@ -426,7 +426,7 @@ def plot_ch4_map(network):
                 bbox_inches="tight")
 
     ##################################################
-    supply_energy.drop("Gas pipeline", level=1, inplace=True)
+    supply_energy.drop("gas pipeline", level=1, inplace=True)
     supply_energy = supply_energy[abs(supply_energy)>5]
     supply_energy.rename(index=lambda x: x.replace(" gas",""), level=0, inplace=True)
 

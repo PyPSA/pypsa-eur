@@ -1033,8 +1033,8 @@ def add_electricity_grid_connection(n, costs):
     n.generators.loc[gens, "capital_cost"] += costs.at['electricity grid connection', 'fixed']
 
 
-def add_storage(n, costs):
-    print("adding electricity and hydrogen storage")
+def add_storage_and_grids(n, costs):
+    print("adding electricity and hydrogen storage as well as hydrogen and gas grids")
 
     nodes = pop_layout.index
 
@@ -1106,11 +1106,93 @@ def add_storage(n, costs):
         capital_cost=h2_capital_cost
     )
 
+    if options["gas_network"]:
+
+        logger.info("Add gas network")
+
+        cols = [
+            "bus0",
+            "bus1",
+            "p_min_pu",
+            "p_nom",
+            "tags",
+            "length"
+            "build_year"
+        ]
+        fn = snakemake.input.clustered_gas_network
+        gas_pipes = pd.read_csv(fn, usecols=cols, index_col=0)
+
+        if options["H2_retrofit"]:
+            gas_pipes["p_nom_max"] = gas_pipes.gas_pipes.p_nom
+            gas_pipes["p_nom_min"] = 0.
+            gas_pipes["capital_cost"] = 0.
+        else:
+            gas_pipes["p_nom_max"] = np.inf
+            gas_pipes["p_nom_min"] = gas_pipes.gas_pipes.p_nom
+            gas_pipes["capital_cost"] = gas_pipes.length * costs.at['CH4 (g) pipeline', 'fixed']
+
+        n.madd("Link",
+            gas_pipes.index,
+            bus0=gas_pipes.bus0 + " gas",
+            bus1=gas_pipes.bus1 + " gas",
+            p_min_pu=gas_pipes.p_min_pu,
+            p_nom=gas_pipes.p_nom,
+            p_nom_extendable=True,
+            p_nom_max=gas_pipes.p_nom_max,
+            p_nom_min=gas_pipes.p_nom_min,
+            length=gas_pipes.length,
+            capital_cost=gas_pipes.capital_cost,
+            tags=gas_pipes.tags,
+            carrier="gas pipeline",
+            lifetime=50
+        )
+        
+        # remove fossil generators where there is neither
+        # production, LNG terminal, nor entry-point beyond system scope
+        fn = snakemake.input.gas_input_nodes
+        gas_input_nodes = pd.read_csv(fn, index_col=0, squeeze=True).values
+        remove_i = n.generators[
+            (n.generators.carrier=="gas") &
+            ~n.generators.bus.map(n.buses.location).isin(gas_input_nodes)
+        ].index
+        n.generators.drop(remove_i, inplace=True)
+
+        # TODO candidate gas network topology
+
+
+    # retroftting existing CH4 pipes to H2 pipes
+    if options["gas_network"] and options["H2_retrofit"]:
+
+        gas_pipe_i = n.links[n.links.carrier == "gas pipeline"].index
+        n.links.loc[gas_pipe_i, "p_nom_extendable"] = True
+        h2_pipes = gas_pipes.rename(index=lambda x:
+                                    x.replace("gas pipeline", "H2 pipeline retrofitted"))
+
+        n.madd("Link",
+            h2_pipes.index,
+            bus0=h2_pipes.bus0 + " H2",
+            bus1=h2_pipes.bus1 + " H2",
+            p_min_pu=-1.,  # allow that all H2 pipelines can be used in other direction
+            p_nom_max=h2_pipes.pipe_capacity_MW * options["H2_retrofit_capacity_per_CH4"],
+            p_nom_extendable=True,
+            length=h2_pipes.length_km,
+            capital_cost=costs.at['H2 (g) pipeline repurposed', 'fixed'] * h2_pipes.length_km,
+            type=gas_pipes.num_parallel,
+            tags=h2_pipes.id,
+            carrier="H2 pipeline retrofitted",
+            lifetime=50
+        )
+
     attrs = ["bus0", "bus1", "length"]
     h2_links = pd.DataFrame(columns=attrs)
 
-    candidates = pd.concat({"lines": n.lines[attrs],
-                            "links": n.links.loc[n.links.carrier == "DC", attrs]})
+    lines_sel = n.lines[attrs]
+    links_sel = n.links.loc[n.links.carrier.isin(["DC", "gas pipeline"]), attrs]
+
+    candidates = pd.concat({
+        "lines": lines_sel,
+        "links": links_sel,
+    })
 
     for candidate in candidates.index:
         buses = [candidates.at[candidate, "bus0"], candidates.at[candidate, "bus1"]]
@@ -1133,96 +1215,6 @@ def add_storage(n, costs):
         carrier="H2 pipeline",
         lifetime=costs.at['H2 (g) pipeline', 'lifetime']
     )
-
-    if options["gas_network"]:
-
-        logger.info("Add gas network")
-
-        cols = [
-            "bus0",
-            "bus1",
-            "is_bothDirection",
-            "pipe_capacity_MW",
-            "id",
-            "length_km"
-        ]
-        gas_pipes = pd.read_csv(snakemake.input.clustered_gas_network, usecols=cols)
-
-        def make_index(x):
-            connector = " <-> " if x.is_bothDirection else " -> "
-            return "Gas pipeline " + x.bus0 + connector + x.bus1
-
-        gas_pipes.index = gas_pipes.apply(make_index, axis=1)
-
-        # group parallel pipes together
-        strategies = {
-            'bus0': 'first',
-            'bus1': 'first',
-            'is_bothDirection': 'first',
-            "pipe_capacity_MW": 'sum',
-            "length_km": 'sum',
-            'id': ' '.join,
-        }
-        gas_pipes = gas_pipes.groupby(gas_pipes.index).agg(strategies)
-
-        gas_pipes["num_parallel"] = gas_pipes.index.value_counts()
-        gas_pipes["p_min_pu"] = gas_pipes.apply(lambda x: -1 if x.is_bothDirection else 0, axis=1)
-
-        if options["H2_retrofit"]:
-            gas_pipes["p_nom_max"] = gas_pipes.gas_pipes.pipe_capacity_MW
-            gas_pipes["p_nom_min"] = 0.
-            gas_pipes["capital_cost"] = 0.
-        else:
-            gas_pipes["p_nom_max"] = np.inf
-            gas_pipes["p_nom_min"] = gas_pipes.gas_pipes.pipe_capacity_MW
-            gas_pipes["capital_cost"] = gas_pipes.length_km * costs.at['CH4 (g) pipeline', 'fixed']
-
-        n.madd("Link",
-            gas_pipes.index,
-            bus0=gas_pipes.bus0 + " gas",
-            bus1=gas_pipes.bus1 + " gas",
-            p_min_pu=gas_pipes.p_min_pu,
-            p_nom=gas_pipes.pipe_capacity_MW,
-            p_nom_extendable=True,
-            p_nom_max=gas_pipes.p_nom_max,
-            p_nom_min=gas_pipes.p_nom_min,
-            length=gas_pipes.length_km,
-            capital_cost=gas_pipes.capital_cost,
-            type=gas_pipes.num_parallel,
-            tags=gas_pipes.id,
-            carrier="Gas pipeline",
-            lifetime=50
-        )
-        
-        # remove fossil generators at all connected nodes
-        # TODO what should be assumed here? rather located at LNG terminals?
-        missing = nodes.difference(pd.concat([gas_pipes.bus0, gas_pipes.bus1]).unique())
-        remove_i = n.generators[(n.generators.carrier=="gas")
-                              & (~n.generators.bus.str.replace(" gas","").isin(missing))].index
-        n.generators.drop(remove_i, inplace=True)
-
-    # retroftting existing CH4 pipes to H2 pipes
-    if options["gas_network"] and options["H2_retrofit"]:
-
-        gas_pipe_i = n.links[n.links.carrier == "Gas pipeline"].index
-        n.links.loc[gas_pipe_i, "p_nom_extendable"] = True
-        h2_pipes = gas_pipes.rename(index=lambda x:
-                                    x.replace("Gas pipeline", "H2 pipeline retrofitted"))
-
-        n.madd("Link",
-            h2_pipes.index,
-            bus0=h2_pipes.bus0 + " H2",
-            bus1=h2_pipes.bus1 + " H2",
-            p_min_pu=-1.,  # allow that all H2 pipelines can be used in other direction
-            p_nom_max=h2_pipes.pipe_capacity_MW * options["H2_retrofit_capacity_per_CH4"],
-            p_nom_extendable=True,
-            length=h2_pipes.length_km,
-            capital_cost=costs.at['H2 (g) pipeline repurposed', 'fixed'] * h2_pipes.length_km,
-            type=gas_pipes.num_parallel,
-            tags=h2_pipes.id,
-            carrier="H2 pipeline retrofitted",
-            lifetime=50
-        )
 
     n.add("Carrier", "battery")
 
@@ -1963,14 +1955,6 @@ def add_industry(n, costs):
     # 1e6 to convert TWh to MWh
     industrial_demand = pd.read_csv(snakemake.input.industrial_demand, index_col=0) * 1e6
 
-    methane_demand = industrial_demand.loc[nodes, "methane"].div(8760).rename(index=lambda x: x + " gas for industry")
-
-    # need to aggregate methane demand if gas not nodally resolved
-    if not options["gas_network"]:
-        methane_demand = methane_demand.sum()
-
-    solid_biomass_by_country = industrial_demand["solid biomass"].groupby(pop_layout.ct).sum()
-
     n.madd("Bus",
         spatial.biomass.industry,
         location=spatial.biomass.locations,
@@ -2018,11 +2002,18 @@ def add_industry(n, costs):
         location=spatial.gas.locations,
         carrier="gas for industry")
 
+    gas_demand = industrial_demand.loc[nodes, "methane"] / 8760.
+
+    if options["gas_network"]:
+        spatial_gas_demand = gas_demand.rename(index=lambda x: x + " gas for industry")
+    else:
+        spatial_gas_demand = gas_demand.sum()
+
     n.madd("Load",
         spatial.gas.industry,
         bus=spatial.gas.industry,
         carrier="gas for industry",
-        p_set=methane_demand
+        p_set=spatial_gas_demand
     )
 
     n.madd("Link",
@@ -2463,7 +2454,7 @@ if __name__ == "__main__":
 
     add_generation(n, costs)
 
-    add_storage(n, costs)
+    add_storage_and_grids(n, costs)
 
     # TODO merge with opts cost adjustment below
     for o in opts:

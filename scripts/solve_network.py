@@ -189,7 +189,7 @@ def add_chp_constraints(n):
 def add_pipe_retrofit_constraint(n):
     """Add constraint for retrofitting existing CH4 pipelines to H2 pipelines."""
 
-    gas_pipes_i = n.links[n.links.carrier=="Gas pipeline"].index
+    gas_pipes_i = n.links[n.links.carrier=="gas pipeline"].index
     h2_retrofitted_i = n.links[n.links.carrier=='H2 pipeline retrofitted'].index
 
     if h2_retrofitted_i.empty or gas_pipes_i.empty: return
@@ -201,7 +201,7 @@ def add_pipe_retrofit_constraint(n):
     CH4_per_H2 = 1 / n.config["sector"]["H2_retrofit_capacity_per_CH4"]
 
     lhs = linexpr(
-        (CH4_per_H2, link_p_nom.loc[h2_retrofitted_i].rename(index=lambda x: x.replace("H2 pipeline retrofitted", "Gas pipeline"))),
+        (CH4_per_H2, link_p_nom.loc[h2_retrofitted_i].rename(index=lambda x: x.replace("H2 pipeline retrofitted", "gas pipeline"))),
         (1, link_p_nom.loc[gas_pipes_i])
     )
 
