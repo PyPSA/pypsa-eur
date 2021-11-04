@@ -1,5 +1,5 @@
 """
-Build import locations for fossil gas from entry-points and LNG terminals.
+Build import locations for fossil gas from entry-points, LNG terminals and production sites.
 """
 
 import logging
@@ -16,11 +16,8 @@ def read_scigrid_gas(fn):
     return df
 
 
-def build_gas_input_locations(lng_fn, entry_fn, prod_fn):
+def build_gas_input_locations(lng_fn, entry_fn, prod_fn, countries):
     
-    countries = snakemake.config["countries"]
-    countries[countries.index('GB')] = 'UK'
-
     # LNG terminals
     lng = read_scigrid_gas(lng_fn)
 
@@ -37,7 +34,8 @@ def build_gas_input_locations(lng_fn, entry_fn, prod_fn):
     prod = read_scigrid_gas(prod_fn)
     prod = prod.loc[
         (prod.geometry.y > 35) &
-        (prod.geometry.x < 30)
+        (prod.geometry.x < 30) &
+        (prod.country_code != "DE")
     ]
 
     return gpd.GeoDataFrame(
@@ -60,10 +58,13 @@ if __name__ == "__main__":
 
     onshore_regions = gpd.read_file(snakemake.input.regions_onshore).set_index('name')
 
+    countries = onshore_regions.index.str[:2].unique().str.replace("GB", "UK")
+
     gas_input_locations = build_gas_input_locations(
         snakemake.input.lng,
         snakemake.input.entry,
-        snakemake.input.production
+        snakemake.input.production,
+        countries
     )
 
     # recommended to use projected CRS rather than geographic CRS

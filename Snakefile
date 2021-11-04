@@ -81,8 +81,14 @@ rule build_simplified_population_layouts:
 
 if config["sector"]["gas_network"]:
 
+    datafiles = [
+        "IGGIELGN_LNGs.geojson",
+        "IGGIELGN_BorderPoints.geojson",
+        "IGGIELGN_Productions.geojson",
+    ]
+
     rule retrieve_gas_infrastructure_data:
-        output: "data/gas_network/scigrid-gas/data/IGGIELGN_LNGs.csv"
+        output: expand("data/gas_network/scigrid-gas/data/{files}", files=datafiles)
         script: 'scripts/retrieve_gas_infrastructure_data.py'
 
     rule build_gas_network:
@@ -93,20 +99,20 @@ if config["sector"]["gas_network"]:
         resources: mem_mb=4000
         script: "scripts/build_gas_network.py"
 
-    rule build_gas_import_locations:
+    rule build_gas_input_locations:
         input:
-            lng="data/gas_network/scigrid-gas/data/IGGIELGN_LNGs.geojson"
-            entry="data/gas_network/scigrid-gas/data/IGGIELGN_BorderPoints.geojson"
-            production="data/gas_network/scigrid-gas/data/IGGIELGN_Productions.geojson"
+            lng="data/gas_network/scigrid-gas/data/IGGIELGN_LNGs.geojson",
+            entry="data/gas_network/scigrid-gas/data/IGGIELGN_BorderPoints.geojson",
+            production="data/gas_network/scigrid-gas/data/IGGIELGN_Productions.geojson",
             regions_onshore=pypsaeur("resources/regions_onshore_elec_s{simpl}_{clusters}.geojson"),
         output:
-            gas_input_nodes="resources/gas_input_nodes_s{simpl}_{clusters}.csv"
+            gas_input_nodes="resources/gas_input_locations_s{simpl}_{clusters}.csv"
         resources: mem_mb=2000,
-        script: "scripts/build_gas_import_locations.py"
+        script: "scripts/build_gas_input_locations.py"
 
     rule cluster_gas_network:
         input:
-            cleaned_gas_network="data/gas_network/gas_network_dataset.csv",
+            cleaned_gas_network="resources/gas_network.csv",
             regions_onshore=pypsaeur("resources/regions_onshore_elec_s{simpl}_{clusters}.geojson"),
             regions_offshore=pypsaeur("resources/regions_offshore_elec_s{simpl}_{clusters}.geojson")
         output:
@@ -114,7 +120,7 @@ if config["sector"]["gas_network"]:
         resources: mem_mb=4000
         script: "scripts/cluster_gas_network.py"
 
-    gas_infrastructure = {**rules.cluster_gas_network.output, **rules.build_gas_import_locations.output}
+    gas_infrastructure = {**rules.cluster_gas_network.output, **rules.build_gas_input_locations.output}
 else:
     gas_infrastructure = {}
 

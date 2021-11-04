@@ -76,8 +76,9 @@ def aggregate_parallel_pipes(df):
         "diameter_mm": "mean",
         "length": 'mean',
         'tags': ' '.join,
+        "p_min_pu": 'min',
     }
-    df = df.groupby(df.index).agg(strategies)
+    return df.groupby(df.index).agg(strategies)
 
 
 if __name__ == "__main__":
@@ -105,6 +106,6 @@ if __name__ == "__main__":
     gas_network = build_clustered_gas_network(df, bus_regions)
 
     reindex_pipes(gas_network)
-    aggregate_parallel_pipes(gas_network)
+    gas_network = aggregate_parallel_pipes(gas_network)
 
     gas_network.to_csv(snakemake.output.clustered_gas_network)

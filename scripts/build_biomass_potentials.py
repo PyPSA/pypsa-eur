@@ -175,7 +175,7 @@ def convert_nuts2_to_regions(bio_nuts2, regions):
     # calculate area of nuts2 regions
     bio_nuts2["area_nuts2"] = area(bio_nuts2)
 
-    overlay = gpd.overlay(regions, bio_nuts2)
+    overlay = gpd.overlay(regions, bio_nuts2, keep_geom_type=True)
 
     # calculate share of nuts2 area inside region
     overlay["share"] = area(overlay) / overlay["area_nuts2"]
