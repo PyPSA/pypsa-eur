@@ -282,15 +282,10 @@ def plot_h2_map(network):
         subplot_kw={"projection": ccrs.PlateCarree()}
     )
     
-    bus_colors = {
-        "H2 Electrolysis": "m",
-        "H2 Fuel Cell": "slateblue"
-    }
-
     n.plot(
         bus_sizes=bus_sizes,
-        bus_colors=bus_colors,
-        link_colors='#afc6c7',
+        bus_colors=snakemake.config['plotting']['tech_colors'],
+        link_colors='#a2f0f2',
         link_widths=link_widths_total,
         branch_components=["Link"],
         ax=ax,
@@ -310,7 +305,7 @@ def plot_h2_map(network):
     handles = make_legend_circles_for(
         [50000, 10000],
         scale=bus_size_factor,
-        facecolor='k'
+        facecolor='grey'
     )
 
     labels = ["{} GW".format(s) for s in (50, 10)]
@@ -331,7 +326,7 @@ def plot_h2_map(network):
     labels = []
 
     for s in (50, 10):
-        handles.append(plt.Line2D([0], [0], color="black",
+        handles.append(plt.Line2D([0], [0], color="grey",
                                   linewidth=s * 1e3 / linewidth_factor))
         labels.append("{} GW".format(s))
 
@@ -349,7 +344,6 @@ def plot_h2_map(network):
 
     fig.savefig(
         snakemake.output.map.replace("-costs-all","-h2_network"),
-        transparent=True,
         bbox_inches="tight"
     )
 
@@ -363,7 +357,7 @@ def plot_ch4_map(network):
 
     assign_location(n)
 
-    bus_size_factor = 4e7
+    bus_size_factor = 6e7
     linewidth_factor = 1e4
     # MW below which not drawn
     line_lower_threshold = 500
@@ -371,12 +365,12 @@ def plot_ch4_map(network):
     # Drop non-electric buses so they don't clutter the plot
     n.buses.drop(n.buses.index[n.buses.carrier != "AC"], inplace=True)
 
-    elec = n.generators[n.generators.carrier=="gas"].index
-    
-    bus_sizes = n.generators_t.p.loc[:,elec].mul(n.snapshot_weightings.generators, axis=0).sum().groupby(n.generators.loc[elec,"bus"]).sum() / bus_size_factor
-    bus_sizes.rename(index=lambda x: x.replace(" gas", ""), inplace=True)
-    bus_sizes = bus_sizes.reindex(n.buses.index).fillna(0)
-    bus_sizes.index = pd.MultiIndex.from_product([bus_sizes.index, ["fossil gas"]])
+    fossil_gas_i = n.generators[n.generators.carrier=="gas"].index   
+    fossil_gas = n.generators_t.p.loc[:,fossil_gas_i].mul(n.snapshot_weightings.generators, axis=0).sum().groupby(n.generators.loc[fossil_gas_i,"bus"]).sum() / bus_size_factor
+    fossil_gas.rename(index=lambda x: x.replace(" gas", ""), inplace=True)
+    fossil_gas = fossil_gas.reindex(n.buses.index).fillna(0)
+    # make a fake MultiIndex so that area is correct for legend
+    fossil_gas.index = pd.MultiIndex.from_product([fossil_gas.index, ["fossil gas"]])
 
     methanation_i = n.links[n.links.carrier.isin(["helmeth", "Sabatier"])].index
     methanation = abs(n.links_t.p1.loc[:,methanation_i].mul(n.snapshot_weightings.generators, axis=0)).sum().groupby(n.links.loc[methanation_i,"bus1"]).sum() / bus_size_factor
@@ -390,7 +384,7 @@ def plot_ch4_map(network):
     # make a fake MultiIndex so that area is correct for legend
     biogas.index = pd.MultiIndex.from_product([biogas.index, ["biogas"]])
 
-    bus_sizes = pd.concat([bus_sizes, methanation, biogas])
+    bus_sizes = pd.concat([fossil_gas, methanation, biogas])
     bus_sizes.sort_index(inplace=True)
 
     to_remove = n.links.index[~n.links.carrier.str.contains("gas pipeline")]
@@ -402,15 +396,17 @@ def plot_ch4_map(network):
     link_widths_orig = n.links.p_nom / linewidth_factor  
     link_widths_orig[n.links.p_nom < line_lower_threshold] = 0.
 
-    link_color = n.links.carrier.map({"gas pipeline": "lightcoral",
-                                      "gas pipeline new": "red"})
+    link_color = n.links.carrier.map({"gas pipeline": "#f08080",
+                                      "gas pipeline new": "#c46868"})
 
     n.links.bus0 = n.links.bus0.str.replace(" gas", "")
     n.links.bus1 = n.links.bus1.str.replace(" gas", "")
 
+    tech_colors = snakemake.config['plotting']['tech_colors']
+
     bus_colors = {
-        "fossil gas": 'maroon',
-        "methanation": "steelblue",
+        "fossil gas": tech_colors["fossil gas"],
+        "methanation": tech_colors["methanation"],
         "biogas": "seagreen"
     }
 
@@ -437,11 +433,11 @@ def plot_ch4_map(network):
     )
 
     handles = make_legend_circles_for(
-        [200000, 1000000],
+        [10e6, 100e6],
         scale=bus_size_factor,
-        facecolor='k'
+        facecolor='grey'
     )
-    labels = ["{} MW".format(s) for s in (200, 1000)]
+    labels = ["{} TWh".format(s) for s in (10, 100)]
     
     l2 = ax.legend(
         handles, labels,
@@ -459,7 +455,7 @@ def plot_ch4_map(network):
     labels = []
 
     for s in (50, 10):
-        handles.append(plt.Line2D([0], [0], color="k", linewidth=s * 1e3 / linewidth_factor))
+        handles.append(plt.Line2D([0], [0], color="grey", linewidth=s * 1e3 / linewidth_factor))
         labels.append("{} GW".format(s))
     
     l1_1 = ax.legend(
