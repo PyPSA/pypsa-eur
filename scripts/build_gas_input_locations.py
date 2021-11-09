@@ -29,7 +29,7 @@ def build_gas_input_locations(lng_fn, entry_fn, prod_fn, countries):
         ~entry.name.str.contains("Tegelen") |  # malformed datapoint
         (entry.from_country == "NO")  # entries from NO to GB
     ]
-    
+
     # production sites inside the model scope
     prod = read_scigrid_gas(prod_fn)
     prod = prod.loc[
@@ -38,10 +38,17 @@ def build_gas_input_locations(lng_fn, entry_fn, prod_fn, countries):
         (prod.country_code != "DE")
     ]
 
-    return gpd.GeoDataFrame(
-        geometry=pd.concat([prod.geometry, entry.geometry, lng.geometry]).reset_index(drop=True),
-        crs=4326
-    )
+    lng["mcm_per_day"] = lng["max_cap_store2pipe_M_m3_per_d"]
+    entry["mcm_per_day"] = entry["max_cap_from_to_M_m3_per_d"]
+    prod["mcm_per_day"] = prod["max_supply_M_m3_per_d"]
+
+    lng["type"] = "lng"
+    entry["type"] = "entry"
+    prod["type"] = "production"
+
+    sel = ["geometry", "mcm_per_day", "type"]
+
+    return pd.concat([prod[sel], entry[sel], lng[sel]], ignore_index=True)
 
 
 if __name__ == "__main__":
@@ -72,6 +79,13 @@ if __name__ == "__main__":
         gas_input_locations.to_crs(3035),
         onshore_regions.to_crs(3035),
         how='left'
-    ).index_right.unique()
+    )
 
-    pd.Series(gas_input_nodes, name='gas_input_nodes').to_csv(snakemake.output.gas_input_nodes)
+    gas_input_nodes.rename(columns={"index_right": "bus"}, inplace=True)
+
+    gas_input_nodes.to_file(snakemake.output.gas_input_nodes, driver='GeoJSON')
+
+    gas_input_nodes_s = gas_input_nodes.groupby(["bus", "type"])["mcm_per_day"].sum().unstack()
+    gas_input_nodes_s.columns.name = "mcm_per_day"
+
+    gas_input_nodes_s.to_csv(snakemake.output.gas_input_nodes_simplified)
