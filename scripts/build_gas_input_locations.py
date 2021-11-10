@@ -7,6 +7,7 @@ logger = logging.getLogger(__name__)
 
 import pandas as pd
 import geopandas as gpd
+from shapely import wkt
 
 
 def read_scigrid_gas(fn):
@@ -16,10 +17,14 @@ def read_scigrid_gas(fn):
     return df
 
 
-def build_gas_input_locations(lng_fn, entry_fn, prod_fn, countries):
+def build_gas_input_locations(lng_fn, planned_lng_fn, entry_fn, prod_fn, countries):
     
     # LNG terminals
     lng = read_scigrid_gas(lng_fn)
+    planned_lng = pd.read_csv(planned_lng_fn)
+    planned_lng.geometry = planned_lng.geometry.apply(wkt.loads)
+    planned_lng = gpd.GeoDataFrame(planned_lng, crs=4326)
+    lng = lng.append(planned_lng, ignore_index=True)
 
     # Entry points from outside the model scope
     entry = read_scigrid_gas(entry_fn)
@@ -38,15 +43,16 @@ def build_gas_input_locations(lng_fn, entry_fn, prod_fn, countries):
         (prod.country_code != "DE")
     ]
 
-    lng["mcm_per_day"] = lng["max_cap_store2pipe_M_m3_per_d"]
-    entry["mcm_per_day"] = entry["max_cap_from_to_M_m3_per_d"]
-    prod["mcm_per_day"] = prod["max_supply_M_m3_per_d"]
+    conversion_factor = 437.5 # MCM/day to MWh/h
+    lng["p_nom"] = lng["max_cap_store2pipe_M_m3_per_d"] * conversion_factor
+    entry["p_nom"] = entry["max_cap_from_to_M_m3_per_d"] * conversion_factor
+    prod["p_nom"] = prod["max_supply_M_m3_per_d"] * conversion_factor
 
     lng["type"] = "lng"
-    entry["type"] = "entry"
+    entry["type"] = "pipeline"
     prod["type"] = "production"
 
-    sel = ["geometry", "mcm_per_day", "type"]
+    sel = ["geometry", "p_nom", "type"]
 
     return pd.concat([prod[sel], entry[sel], lng[sel]], ignore_index=True)
 
@@ -69,6 +75,7 @@ if __name__ == "__main__":
 
     gas_input_locations = build_gas_input_locations(
         snakemake.input.lng,
+        snakemake.input.planned_lng,
         snakemake.input.entry,
         snakemake.input.production,
         countries
@@ -85,7 +92,7 @@ if __name__ == "__main__":
 
     gas_input_nodes.to_file(snakemake.output.gas_input_nodes, driver='GeoJSON')
 
-    gas_input_nodes_s = gas_input_nodes.groupby(["bus", "type"])["mcm_per_day"].sum().unstack()
-    gas_input_nodes_s.columns.name = "mcm_per_day"
+    gas_input_nodes_s = gas_input_nodes.groupby(["bus", "type"])["p_nom"].sum().unstack()
+    gas_input_nodes_s.columns.name = "p_nom"
 
     gas_input_nodes_s.to_csv(snakemake.output.gas_input_nodes_simplified)
