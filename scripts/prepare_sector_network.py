@@ -1124,12 +1124,18 @@ def add_storage_and_grids(n, costs):
         # production, LNG terminal, nor entry-point beyond system scope
 
         fn = snakemake.input.gas_input_nodes
-        gas_input_nodes = pd.read_csv(fn, index_col=0).index.unique()
-        remove_i = n.generators[
-            (n.generators.carrier=="gas") &
-            ~n.generators.bus.map(n.buses.location).isin(gas_input_nodes)
-        ].index
+        gas_input_nodes = pd.read_csv(fn, index_col=0)
+
+        unique = gas_input_nodes.index.unique()
+        gas_i = n.generators.carrier == 'gas'
+        internal_i = ~n.generators.bus.map(n.buses.location).isin(unique)
+
+        remove_i = n.generators[gas_i & internal_i].index
         n.generators.drop(remove_i, inplace=True)
+
+        p_nom = gas_input_nodes.sum(axis=1).rename(lambda x: x + " gas")
+        n.generators.loc[gas_i, "p_nom_extendable"] = False
+        n.generators.loc[gas_i, "p_nom"] = p_nom
 
         # add candidates for new gas pipelines to achieve full connectivity
 
