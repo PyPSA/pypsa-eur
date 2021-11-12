@@ -104,7 +104,7 @@ if config["sector"]["gas_network"]:
             lng="data/gas_network/scigrid-gas/data/IGGIELGN_LNGs.geojson",
             entry="data/gas_network/scigrid-gas/data/IGGIELGN_BorderPoints.geojson",
             production="data/gas_network/scigrid-gas/data/IGGIELGN_Productions.geojson",
-            planned_lng="data/gas_network/planned_LNGs.csv"
+            planned_lng="data/gas_network/planned_LNGs.csv",
             regions_onshore=pypsaeur("resources/regions_onshore_elec_s{simpl}_{clusters}.geojson"),
         output:
             gas_input_nodes="resources/gas_input_locations_s{simpl}_{clusters}.geojson"
@@ -423,6 +423,7 @@ rule prepare_sector_network:
         solar_thermal_total="resources/solar_thermal_total_elec_s{simpl}_{clusters}.nc",
         solar_thermal_urban="resources/solar_thermal_urban_elec_s{simpl}_{clusters}.nc",
         solar_thermal_rural="resources/solar_thermal_rural_elec_s{simpl}_{clusters}.nc",
+        import_costs="data/import-costs.csv",
         **build_retro_cost_output,
         **build_biomass_transport_costs_output,
         **gas_infrastructure
