@@ -2361,6 +2361,52 @@ def remove_h2_network(n):
         n.stores.drop("EU H2 Store", inplace=True)
 
 
+def add_import_options(n, capacity_boost=3., options=["hvdc", "pipeline", "lng"]):
+
+    fn = snakemake.input.gas_input_nodes
+    import_nodes = pd.read_csv(fn, index_col=0)
+    import_nodes["hvdc"] = np.inf
+
+    translate = {
+        "pipeline-h2": "pipeline",
+        "shipping-lh2": "lng",
+        "hvdc": "hvdc",
+    }
+
+    bus_suffix = {
+        "pipeline": "H2",
+        "lng": "H2",
+        "hvdc": "",
+    }
+
+    import_costs = pd.read_csv(snakemake.input.import_costs)
+    import_costs.rename(columns={"value": "marginal_cost"}, inplace=True)
+    import_costs["esc"] = import_costs.esc.replace(translate)
+
+    for tech in options:
+
+        import_costs_tech = import_costs.query("esc == @tech").set_index('importer')
+
+        import_nodes_tech = import_nodes.loc[~import_nodes[tech].isna(), [tech]]
+        import_nodes_tech = import_nodes_tech.rename(columns={tech: "p_nom"}) * capacity_boost
+        
+        marginal_costs = import_nodes_tech.index.str[:2].map(import_costs_tech.marginal_cost)
+        import_nodes_tech["marginal_cost"] = marginal_costs
+        
+        import_nodes_tech.dropna(inplace=True)
+
+        suffix = bus_suffix[tech]
+
+        n.madd(
+            "Generator",
+            import_nodes_tech.index + f" {suffix} import {tech}",
+            bus=import_nodes_tech.index + suffix,
+            carrier=f"import {tech}",
+            marginal_cost=import_nodes_tech.marginal_cost,
+            p_nom=import_nodes_tech.p_nom,
+        )
+
+
 def maybe_adjust_costs_and_potentials(n, opts):
 
     for o in opts:
@@ -2498,6 +2544,13 @@ if __name__ == "__main__":
 
     if options["co2_network"]:
         add_co2_network(n, costs)
+
+    if "import" in opts:
+        add_import_options(
+            n,
+            capacity_boost=options["imports"]["capacity_boost"],
+            options=options["imports"]["options"]
+        )
 
     for o in opts:
         m = re.match(r'^\d+h$', o, re.IGNORECASE)

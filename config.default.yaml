@@ -256,6 +256,12 @@ sector:
   biomass_transport: false  # biomass transport between nodes
   conventional_generation: # generator : carrier
     OCGT: gas
+  import:
+    capacity_boost: 3
+    options:
+      - lng
+      - pipeline
+      - hvdc
 
 
 industry:
