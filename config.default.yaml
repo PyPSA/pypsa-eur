@@ -262,6 +262,7 @@ sector:
       - lng
       - pipeline
       - hvdc
+    limit: 1000 # TWh
 
 
 industry:

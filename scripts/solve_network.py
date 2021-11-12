@@ -225,10 +225,29 @@ def add_co2_sequestration_limit(n, sns):
                        'mu', axes=pd.Index([name]), spec=name)
 
 
+def add_energy_import_limit(n, sns):
+
+    import_gens = n.generators.loc[n.generators.carrier.str.contains("import")].index
+    import_opts = n.config["sector"]["import"]
+
+    if import_gens.empty or "limit" not in import_opts.keys(): return
+
+    weightings = n.snapshot_weightings.loc[sns]
+    p = get_var(n, "Generator", "p")[import_gens] 
+    lhs = linexpr((weightings.generators, p)).sum().sum()
+
+    rhs = import_opts["limit"] * 1e6
+
+    name = 'energy_import_limit'
+    define_constraints(n, lhs, '<=', rhs, 'GlobalConstraint',
+                       'mu', axes=pd.Index([name]), spec=name)
+
+
 def extra_functionality(n, snapshots):
     add_battery_constraints(n)
     add_pipe_retrofit_constraint(n)
     add_co2_sequestration_limit(n, snapshots)
+    add_energy_import_limit(n, snapshots)
 
 
 def solve_network(n, config, opts='', **kwargs):
