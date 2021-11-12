@@ -1123,7 +1123,7 @@ def add_storage_and_grids(n, costs):
         # remove fossil generators where there is neither
         # production, LNG terminal, nor entry-point beyond system scope
 
-        fn = snakemake.input.gas_input_nodes
+        fn = snakemake.input.gas_input_nodes_simplified
         gas_input_nodes = pd.read_csv(fn, index_col=0)
 
         unique = gas_input_nodes.index.unique()
