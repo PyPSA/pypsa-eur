@@ -1123,7 +1123,7 @@ def add_storage_and_grids(n, costs):
         # remove fossil generators where there is neither
         # production, LNG terminal, nor entry-point beyond system scope
 
-        fn = snakemake.input.gas_input_nodes
+        fn = snakemake.input.gas_input_nodes_simplified
         gas_input_nodes = pd.read_csv(fn, index_col=0)
 
         unique = gas_input_nodes.index.unique()
@@ -2363,9 +2363,9 @@ def remove_h2_network(n):
 
 def add_import_options(n, capacity_boost=3., options=["hvdc", "pipeline", "lng"]):
 
-    fn = snakemake.input.gas_input_nodes
+    fn = snakemake.input.gas_input_nodes_simplified
     import_nodes = pd.read_csv(fn, index_col=0)
-    import_nodes["hvdc"] = np.inf
+    import_nodes["hvdc"] = 1e6
 
     translate = {
         "pipeline-h2": "pipeline",
@@ -2374,9 +2374,9 @@ def add_import_options(n, capacity_boost=3., options=["hvdc", "pipeline", "lng"]
     }
 
     bus_suffix = {
-        "pipeline": "H2",
-        "lng": "H2",
-        "hvdc": "",
+        "pipeline": " H2",
+        "lng": " H2",
+        "hvdc": " DC",
     }
 
     import_costs = pd.read_csv(snakemake.input.import_costs)
@@ -2396,14 +2396,16 @@ def add_import_options(n, capacity_boost=3., options=["hvdc", "pipeline", "lng"]
         import_nodes_tech.dropna(inplace=True)
 
         suffix = bus_suffix[tech]
+        location = import_nodes_tech.index
+        buses = location if tech == 'hvdc' else location + suffix
 
         n.madd(
             "Generator",
-            import_nodes_tech.index + f" {suffix} import {tech}",
-            bus=import_nodes_tech.index + suffix,
+            import_nodes_tech.index + f"{suffix} import {tech}",
+            bus=buses,
             carrier=f"import {tech}",
-            marginal_cost=import_nodes_tech.marginal_cost,
-            p_nom=import_nodes_tech.p_nom,
+            marginal_cost=import_nodes_tech.marginal_cost.values,
+            p_nom=import_nodes_tech.p_nom.values,
         )
 
 
@@ -2548,8 +2550,8 @@ if __name__ == "__main__":
     if "import" in opts:
         add_import_options(
             n,
-            capacity_boost=options["imports"]["capacity_boost"],
-            options=options["imports"]["options"]
+            capacity_boost=options["import"]["capacity_boost"],
+            options=options["import"]["options"]
         )
 
     for o in opts:

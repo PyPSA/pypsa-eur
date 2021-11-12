@@ -597,3 +597,6 @@ plotting:
     gas-to-power/heat: '#ee8340'
     waste: '#e3d37d'
     other: '#000000'
+    import pipeline: '#fff7e3'
+    import lng: '#ded9ca'
+    import hvdc: '#b3ac9a'

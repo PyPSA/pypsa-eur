@@ -107,7 +107,7 @@ if config["sector"]["gas_network"]:
             planned_lng="data/gas_network/planned_LNGs.csv",
             regions_onshore=pypsaeur("resources/regions_onshore_elec_s{simpl}_{clusters}.geojson"),
         output:
-            gas_input_nodes="resources/gas_input_locations_s{simpl}_{clusters}.geojson"
+            gas_input_nodes="resources/gas_input_locations_s{simpl}_{clusters}.geojson",
             gas_input_nodes_simplified="resources/gas_input_locations_s{simpl}_{clusters}_simplified.csv"
         resources: mem_mb=2000,
         script: "scripts/build_gas_input_locations.py"
