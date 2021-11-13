@@ -1,38 +1,15 @@
-"""
-Preprocess gas network based on data from:
-
-    [1] the SciGRID Gas project
-        (https://www.gas.scigrid.de/)
-
-    [2] ENTSOG capacity map
-        (https://www.entsog.eu/sites/default/files/2019-10/Capacities%20for%20Transmission%20Capacity%20Map%20RTS008_NS%20-%20DWH_final.xlsx)
-"""
+"""Preprocess gas network based on data from bthe SciGRID Gas project (https://www.gas.scigrid.de/)."""
 
 import logging
 logger = logging.getLogger(__name__)
 
-import re
-import json
-
 import pandas as pd
+import geopandas as gpd
 from shapely.geometry import Point
 from pypsa.geo import haversine_pts
 
 
-def string2list(string, with_none=True):
-    """Convert string format to a list."""
-
-    if with_none:
-        p2 = re.compile('None')
-        string = p2.sub('\"None\"', string)
-    else:
-        p = re.compile('(?<!\\\\)\'')
-        string = p.sub('\"', string)
-
-    return json.loads(string)
-
-
-def diameter2capacity(pipe_diameter_mm):
+def diameter_to_capacity(pipe_diameter_mm):
     """Calculate pipe capacity in MW based on diameter in mm.
 
     20 inch (500 mm)  50 bar -> 1.5   GW CH4 pipe capacity (LHV)
@@ -65,75 +42,81 @@ def diameter2capacity(pipe_diameter_mm):
         return a3 + m3 * pipe_diameter_mm
 
 
-def find_terminal_points(df):
-    
-    latlon = []
-
-    for attr in ["lat", "long"]:
-    
-        s = df[attr].apply(string2list)
-
-        s = s.apply(lambda x: [x[0], x[-1]])
-
-        latlon.append(pd.DataFrame(s.to_list(),
-            columns=[f"{attr}0", f"{attr}1"]
-        ))
-    
-    latlon = pd.concat(latlon, axis=1)
-    
-    points = latlon.apply(
-        lambda x: {
-            "point0": Point(x.long0, x.lat0),
-            "point1": Point(x.long1, x.lat1)
-        },
-        axis=1,
-        result_type='expand'
-    )
-    
-    return pd.concat([df, points], axis=1)
-
-
-def process_gas_network_data(fn):
-
-    df = pd.read_csv(fn, sep=',')
-
-    df = find_terminal_points(df)
-
-    to_drop = ["name", "source_id", "country_code", "node_id",
-               "long", "lat", "lat_mean", "long_mean", "num_compressor"]
+def load_dataset(fn):
+    df = gpd.read_file(fn)
+    param = df.param.apply(pd.Series)
+    method = df.method.apply(pd.Series)[["diameter_mm", "max_cap_M_m3_per_d"]]
+    method.columns = method.columns + "_method"
+    df = pd.concat([df, param, method], axis=1)
+    to_drop = ["param", "uncertainty", "method", "tags"]
+    to_drop = df.columns.intersection(to_drop)
     df.drop(to_drop, axis=1, inplace=True)
+    return df
 
+
+def prepare_dataset(
+    df,
+    length_factor=1.5,
+    correction_threshold_length=4,
+    correction_threshold_p_nom=8,
+    bidirectional_below=10
+):
+
+    # extract start and end from LineString
+    df["point0"] = df.geometry.apply(lambda x: Point(x.coords[0]))
+    df["point1"] = df.geometry.apply(lambda x: Point(x.coords[-1]))
+
+    conversion_factor = 437.5 # MCM/day to MWh/h
+    df["p_nom"] = df.max_cap_M_m3_per_d * conversion_factor
+
+    # for inferred diameters, assume 500 mm rather than 900 mm (more conservative)
+    df.loc[df.diameter_mm_method != 'raw', "diameter_mm"] = 500.
+
+    keep = ["name", "diameter_mm", "is_H_gas", "is_bothDirection",
+            "length_km", "p_nom", "max_pressure_bar",
+            "start_year", "point0", "point1", "geometry"]
     to_rename = {
         "is_bothDirection": "bidirectional",
+        "is_H_gas": "H_gas",
         "start_year": "build_year",
         "length_km": "length",
-        "Capacity_GWh_h": "p_nom_data",
-        "id": "tags",
     }
-    df.rename(columns=to_rename, inplace=True)
-    
+    df = df[keep].rename(columns=to_rename)
+
     df.bidirectional = df.bidirectional.astype(bool)
+    df.H_gas = df.H_gas.astype(bool)
 
-    # convert from GWh/h to MW
-    df.p_nom_data *= 1e3
+    # short lines below 10 km are assumed to be bidirectional
+    short_lines = df["length"] < bidirectional_below
+    df.loc[short_lines, "bidirectional"] = True
 
-    # for pipes with missing diameter, assume 500 mm
-    df.loc[df.diameter_mm.isna(), "diameter_mm"] = 500.
+    # correct all capacities that deviate correction_threshold factor
+    # to diameter-based capacities, unless they are NordStream pipelines
+    # also all capacities below 0.5 GW are now diameter-based capacities
+    df["p_nom_diameter"] = df.diameter_mm.apply(diameter_to_capacity)
+    ratio = df.p_nom / df.p_nom_diameter
+    not_nordstream = df.max_pressure_bar < 220
+    df.p_nom.update(df.p_nom_diameter.where(
+        (df.p_nom <= 500) |
+        ((ratio > correction_threshold_p_nom) & not_nordstream) |
+        ((ratio < 1 / correction_threshold_p_nom) & not_nordstream)
+    ))
 
-    # for nord stream and small pipelines take original capacity data
-    # otherwise inferred values from pipe diameter
-    df["p_nom"] = df.diameter_mm.map(diameter2capacity)
-    df.p_nom.update(
-        df.p_nom_data.where((df.diameter_mm < 500) | (df.max_pressure_bar == 220))
-    )
-
+    # lines which have way too discrepant line lengths
+    # get assigned haversine length * length factor
     df["length_haversine"] = df.apply(
-        lambda p: 1.5 * haversine_pts([p.point0.x, p.point1.y], [p.point1.x, p.point1.y]),
-        axis=1
+        lambda p: length_factor * haversine_pts(
+            [p.point0.x, p.point1.y],
+            [p.point1.x, p.point1.y]
+        ), axis=1
     )
+    ratio = df.eval("length / length_haversine")
+    df["length"].update(df.length_haversine.where(
+        (df["length"] < 20) |
+        (ratio > correction_threshold_length) |
+        (ratio < 1 / correction_threshold_length)
+    ))
 
-    df.length.update(df.length_haversine.where(df.length.isna()))
-    
     return df
 
 
@@ -145,6 +128,8 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=snakemake.config['logging_level'])
 
-    gas_network = process_gas_network_data(snakemake.input.gas_network)
+    gas_network = load_dataset(snakemake.input.gas_network)
+
+    gas_network = prepare_dataset(gas_network)
 
     gas_network.to_csv(snakemake.output.cleaned_gas_network)

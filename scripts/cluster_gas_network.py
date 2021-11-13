@@ -70,12 +70,12 @@ def aggregate_parallel_pipes(df):
         'bus0': 'first',
         'bus1': 'first',
         "p_nom": 'sum',
-        "p_nom_data": 'sum',
+        "p_nom_diameter": 'sum',
         "max_pressure_bar": "mean",
         "build_year": "mean",
         "diameter_mm": "mean",
         "length": 'mean',
-        'tags': ' '.join,
+        'name': ' '.join,
         "p_min_pu": 'min',
     }
     return df.groupby(df.index).agg(strategies)
