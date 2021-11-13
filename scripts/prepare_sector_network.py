@@ -1115,7 +1115,7 @@ def add_storage_and_grids(n, costs):
             p_nom_min=gas_pipes.p_nom_min,
             length=gas_pipes.length,
             capital_cost=gas_pipes.capital_cost,
-            tags=gas_pipes.tags,
+            tags=gas_pipes.name,
             carrier="gas pipeline",
             lifetime=costs.at['CH4 (g) pipeline', 'lifetime']
         )
@@ -1190,7 +1190,7 @@ def add_storage_and_grids(n, costs):
             p_nom_extendable=True,
             length=h2_pipes.length,
             capital_cost=costs.at['H2 (g) pipeline repurposed', 'fixed'] * h2_pipes.length,
-            tags=h2_pipes.tags,
+            tags=h2_pipes.name,
             carrier="H2 pipeline retrofitted",
             lifetime=costs.at['H2 (g) pipeline repurposed', 'lifetime']
         )

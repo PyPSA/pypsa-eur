@@ -85,19 +85,23 @@ if config["sector"]["gas_network"]:
         "IGGIELGN_LNGs.geojson",
         "IGGIELGN_BorderPoints.geojson",
         "IGGIELGN_Productions.geojson",
+        "IGGIELGN_PipeSegments.geojson",
     ]
+
 
     rule retrieve_gas_infrastructure_data:
         output: expand("data/gas_network/scigrid-gas/data/{files}", files=datafiles)
         script: 'scripts/retrieve_gas_infrastructure_data.py'
 
+
     rule build_gas_network:
         input:
-            gas_network="data/gas_network/gas_network_dataset.csv"
+            gas_network="data/gas_network/scigrid-gas/data/IGGIELGN_PipeSegments.geojson"
         output:
             cleaned_gas_network="resources/gas_network.csv"
         resources: mem_mb=4000
         script: "scripts/build_gas_network.py"
+
 
     rule build_gas_input_locations:
         input:
@@ -112,6 +116,7 @@ if config["sector"]["gas_network"]:
         resources: mem_mb=2000,
         script: "scripts/build_gas_input_locations.py"
 
+
     rule cluster_gas_network:
         input:
             cleaned_gas_network="resources/gas_network.csv",
@@ -121,6 +126,7 @@ if config["sector"]["gas_network"]:
             clustered_gas_network="resources/gas_network_elec_s{simpl}_{clusters}.csv"
         resources: mem_mb=4000
         script: "scripts/cluster_gas_network.py"
+
 
     gas_infrastructure = {**rules.cluster_gas_network.output, **rules.build_gas_input_locations.output}
 else:
