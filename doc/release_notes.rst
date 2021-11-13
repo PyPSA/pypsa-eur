@@ -8,6 +8,52 @@ Future release
 .. note::
   This unreleased version currently may require the master branches of PyPSA, PyPSA-Eur, and the technology-data repository.
 
+This release includes the addition of the European gas transmission network and
+incorporates retrofitting options to hydrogen.
+
+**Gas Transmission Network**
+
+* New rule ``retrieve_gas_infrastructure_data`` that downloads and extracts the
+  SciGRID_gas `IGGIELGN <https://zenodo.org/record/4767098>`_ dataset from zenodo.
+  It includes data on the transmission routes, pipe diameters, capacities, pressure,
+  and whether the pipeline is bidirectional and carries H-Gas or L-Gas.
+
+* New rule ``build_gas_network`` processes and cleans the pipeline data from SciGRID_gas.
+  Missing or uncertain pipeline capacities can be inferred by diameter.
+
+* New rule ``build_gas_input_locations`` compiles the LNG import capacities
+  (including planned projects from gem.wiki), pipeline entry capacities and
+  local production capacities for each region of the model. These are the
+  regions where fossil gas can eventually enter the model. 
+
+* New rule ``cluster_gas_network`` that clusters the gas transmission network
+  data to the model resolution. Cross-regional pipeline capacities are aggregated
+  (while pressure and diameter compability is ignored), intra-regional pipelines
+  are dropped. Lengths are recalculated based on the regions' centroids.
+
+* With the option ``sector: gas_network:``, the existing gas network is
+  added with a lossless transport model. A length-weighted `k-edge augmentation
+  algorithm
+  <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_
+  can be run to add new candidate gas pipelines such that all regions of the
+  model can be connected to the gas network. The number of candidates can be
+  controlled via the setting ``sector: gas_network_connectivity_upgrade:``. When
+  the gas network is activated, all the gas demands are regionally disaggregated
+  as well.
+
+* New constraint allows retrofitting of gas pipelines to hydrogen pipelines.
+  This option is activated via the setting ``sector: H2_retrofit:``. For every
+  unit of gas pipeline capacity dismantled, ``sector:
+  H2_retrofit_capacity_per_CH4`` units are made available as hydrogen pipeline
+  capacity in the corresponding corridor. These repurposed hydrogen pipelines
+  have lower costs than new hydrogen pipelines. Both new and repurposed pipelines
+  can be built simultaneously.
+
+* New hydrogen pipelines can now be built where there are already power or gas
+  transmission routes. Previously, only the electricity transmission routes were
+  considered.
+
+
 PyPSA-Eur-Sec 0.6.0 (4 October 2021)
 ====================================
 
