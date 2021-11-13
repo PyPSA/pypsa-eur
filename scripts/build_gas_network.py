@@ -106,7 +106,7 @@ def prepare_dataset(
     # get assigned haversine length * length factor
     df["length_haversine"] = df.apply(
         lambda p: length_factor * haversine_pts(
-            [p.point0.x, p.point1.y],
+            [p.point0.x, p.point0.y],
             [p.point1.x, p.point1.y]
         ), axis=1
     )
