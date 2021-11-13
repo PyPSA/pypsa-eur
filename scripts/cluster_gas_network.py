@@ -7,6 +7,7 @@ import pandas as pd
 import geopandas as gpd
 
 from shapely import wkt
+from pypsa.geo import haversine_pts
 
 
 def concat_gdf(gdf_list, crs='EPSG:4326'):
@@ -25,7 +26,7 @@ def load_bus_regions(onshore_path, offshore_path):
     return bus_regions
 
 
-def build_clustered_gas_network(df, bus_regions):
+def build_clustered_gas_network(df, bus_regions, length_factor=1.25):
     
     for i in [0,1]:
 
@@ -34,17 +35,26 @@ def build_clustered_gas_network(df, bus_regions):
         bus_mapping = gpd.sjoin(gdf, bus_regions, how="left", op="within").index_right
         bus_mapping = bus_mapping.groupby(bus_mapping.index).first()
 
-        df[f"bus{i}"] = bus_mapping    
+        df[f"bus{i}"] = bus_mapping
 
-    df.drop(["point0", "point1"], axis=1, inplace=True)
+        df[f"point{i}"] = df[f"bus{i}"].map(bus_regions.centroid)
 
     # drop pipes where not both buses are inside regions
     df = df.loc[~df.bus0.isna() & ~df.bus1.isna()]
 
-    # drop pipes within one region
+    # drop pipes within the same region
     df = df.loc[df.bus1 != df.bus0]
 
-    # create new numbered index
+    # recalculate lengths as center to center * length factor
+    df["length"] = df.apply(
+        lambda p: length_factor * haversine_pts(
+            [p.point0.x, p.point0.y],
+            [p.point1.x, p.point1.y]
+        ), axis=1
+    )
+
+    # tidy and create new numbered index
+    df.drop(["point0", "point1"], axis=1, inplace=True)
     df.reset_index(drop=True, inplace=True)
 
     return df
