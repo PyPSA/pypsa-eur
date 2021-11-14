@@ -2,19 +2,19 @@
 #
 # SPDX-License-Identifier: MIT
 
-name: pypsa-eur
+name: pypsa-eur-nov14
 channels:
   - conda-forge
   - bioconda
   - http://conda.anaconda.org/gurobi
 dependencies:
-  - python>=3.8
+  - python=3.8 # fix because gurobi has no builds for python 3.9
   - pip
   - mamba # esp for windows build
 
   - pypsa>=0.18
   - atlite>=0.2.5
-  - dask<=2021.3.1 # until https://github.com/dask/dask/issues/7583 is solved
+  - dask #<=2021.3.1 # until https://github.com/dask/dask/issues/7583 is solved
 
   # Dependencies of the workflow itself
   - xlrd
@@ -28,7 +28,7 @@ dependencies:
   - lxml
   - powerplantmatching>=0.4.8
   - numpy
-  - pandas<1.3
+  - pandas #<1.3
   - geopandas
   - xarray
   - netcdf4
@@ -38,7 +38,7 @@ dependencies:
   - progressbar2
   - pyomo
   - matplotlib
-  - proj<8
+  - proj #<8
 
   # Keep in conda environment when calling ipython
   - ipython
