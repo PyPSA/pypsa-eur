@@ -9,6 +9,8 @@ import pandas as pd
 import geopandas as gpd
 from shapely import wkt
 
+from cluster_gas_network import load_bus_regions
+
 
 def read_scigrid_gas(fn):
     df = gpd.read_file(fn)
@@ -69,9 +71,19 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=snakemake.config['logging_level'])
 
-    onshore_regions = gpd.read_file(snakemake.input.regions_onshore).set_index('name')
+    regions = load_bus_regions(
+        snakemake.input.regions_onshore,
+        snakemake.input.regions_offshore
+    )
 
-    countries = onshore_regions.index.str[:2].unique().str.replace("GB", "UK")
+    # add a buffer to eastern countries because some
+    # entry points are still in Russian or Ukrainian territory.
+    buffer = 9000 # meters
+    eastern_countries = ['FI', 'EE', 'LT', 'LV', 'PL', 'SK', 'HU', 'RO']
+    add_buffer_b = regions.index.str[:2].isin(eastern_countries)
+    regions.loc[add_buffer_b] = regions[add_buffer_b].to_crs(3035).buffer(buffer).to_crs(4326)
+
+    countries = regions.index.str[:2].unique().str.replace("GB", "UK")
 
     gas_input_locations = build_gas_input_locations(
         snakemake.input.lng,
@@ -81,12 +93,7 @@ if __name__ == "__main__":
         countries
     )
 
-    # recommended to use projected CRS rather than geographic CRS
-    gas_input_nodes = gpd.sjoin_nearest(
-        gas_input_locations.to_crs(3035),
-        onshore_regions.to_crs(3035),
-        how='left'
-    )
+    gas_input_nodes = gpd.sjoin(gas_input_locations, regions, how='left')
 
     gas_input_nodes.rename(columns={"index_right": "bus"}, inplace=True)
 

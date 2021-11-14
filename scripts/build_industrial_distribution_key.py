@@ -3,7 +3,11 @@
 import uuid
 import pandas as pd
 import geopandas as gpd
+
 from itertools import product
+from distutils.version import StrictVersion
+
+gpd_version = StrictVersion(gpd.__version__)
 
 
 def locate_missing_industrial_sites(df):
@@ -69,7 +73,8 @@ def prepare_hotmaps_database(regions):
 
     gdf = gpd.GeoDataFrame(df, geometry='coordinates', crs="EPSG:4326")
 
-    gdf = gpd.sjoin(gdf, regions, how="inner", op='within')
+    kws = dict(op="within") if gpd_version < '0.10' else dict(predicate="within")
+    gdf = gpd.sjoin(gdf, regions, how="inner", **kws)
 
     gdf.rename(columns={"index_right": "bus"}, inplace=True)
     gdf["country"] = gdf.bus.str[:2]
