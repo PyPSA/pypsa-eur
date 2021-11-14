@@ -543,17 +543,6 @@ def average_every_nhours(n, offset):
     logger.info(f'Resampling the network to {offset}')
     m = n.copy(with_time=False)
 
-    # TODO is this still needed?
-    #fix copying of network attributes
-    #copied from pypsa/io.py, should be in pypsa/components.py#Network.copy()
-    allowed_types = (float, int, bool, str) + tuple(np.typeDict.values())
-    attrs = dict((attr, getattr(n, attr))
-                 for attr in dir(n)
-                 if (not attr.startswith("__") and
-                     isinstance(getattr(n,attr), allowed_types)))
-    for k,v in attrs.items():
-        setattr(m,k,v)
-
     snapshot_weightings = n.snapshot_weightings.resample(offset).sum()
     m.set_snapshots(snapshot_weightings.index)
     m.snapshot_weightings = snapshot_weightings
