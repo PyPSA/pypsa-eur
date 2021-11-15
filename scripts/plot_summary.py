@@ -254,7 +254,8 @@ def plot_balances():
         df = df / 1e6
 
         #remove trailing link ports
-        df.index = [i[:-1] if ((i != "co2") and (i[-1:] in ["0","1","2","3"])) else i for i in df.index]
+        forbidden = ["co2", "import shipping-lh2", "import pipeline-h2"]
+        df.index = [i[:-1] if ((i not in forbidden) and (i[-1:] in ["0","1","2","3"])) else i for i in df.index]
 
         df = df.groupby(df.index.map(rename_techs)).sum()
 
