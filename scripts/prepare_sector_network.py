@@ -2380,7 +2380,9 @@ def add_import_options(
     for k, v in translate.items():
         import_nodes[k] = import_nodes[v]
 
-    for tech in options:
+    regionalised_options = ["hvdc", "pipeline-h2", "shipping-lh2", "shipping-lch4"]
+
+    for tech in set(options).intersection(regionalised_options):
 
         import_costs_tech = import_costs.query("esc == @tech").groupby('importer').marginal_cost.min()
 
@@ -2405,16 +2407,19 @@ def add_import_options(
             p_nom=import_nodes_tech.p_nom.values,
         )
 
-    marginal_costs = import_costs.query("esc == 'shipping-ftfuel'").marginal_cost.min()
+    # need special handling for copperplated Fischer-Tropsch imports
+    if "shipping-ftfuel" in options:
 
-    n.add(
-        "Generator",
-        "EU oil import shipping-ftfuel",
-        bus="EU oil",
-        carrier="import shipping-ftfuel",
-        marginal_cost=marginal_costs,
-        p_nom=1e6
-    )
+        marginal_costs = import_costs.query("esc == 'shipping-ftfuel'").marginal_cost.min()
+
+        n.add(
+            "Generator",
+            "EU oil import shipping-ftfuel",
+            bus="EU oil",
+            carrier="import shipping-ftfuel",
+            marginal_cost=marginal_costs,
+            p_nom=1e6
+        )
 
 
 def maybe_adjust_costs_and_potentials(n, opts):
