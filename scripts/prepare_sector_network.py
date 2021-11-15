@@ -2350,7 +2350,11 @@ def remove_h2_network(n):
         n.stores.drop("EU H2 Store", inplace=True)
 
 
-def add_import_options(n, capacity_boost=3., options=["hvdc", "pipeline", "lng"]):
+def add_import_options(
+    n,
+    capacity_boost=3.,
+    options=["hvdc", "pipeline-h2", "shipping-lh2", "shipping-lch4", "shipping-ftfuel"]
+):
 
     fn = snakemake.input.gas_input_nodes_simplified
     import_nodes = pd.read_csv(fn, index_col=0)
@@ -2358,28 +2362,32 @@ def add_import_options(n, capacity_boost=3., options=["hvdc", "pipeline", "lng"]
 
     translate = {
         "pipeline-h2": "pipeline",
-        "shipping-lh2": "lng",
         "hvdc": "hvdc",
+        "shipping-lh2": "lng",
+        "shipping-lch4": "lng",
     }
 
     bus_suffix = {
-        "pipeline": " H2",
-        "lng": " H2",
-        "hvdc": " DC",
+        "pipeline-h2": " H2",
+        "hvdc": "",
+        "shipping-lh2": " H2",
+        "shipping-lch4": " gas",
     }
 
-    import_costs = pd.read_csv(snakemake.input.import_costs)
+    import_costs = pd.read_csv(snakemake.input.import_costs, index_col=0).reset_index(drop=True)
     import_costs.rename(columns={"value": "marginal_cost"}, inplace=True)
-    import_costs["esc"] = import_costs.esc.replace(translate)
+
+    for k, v in translate.items():
+        import_nodes[k] = import_nodes[v]
 
     for tech in options:
 
-        import_costs_tech = import_costs.query("esc == @tech").set_index('importer')
+        import_costs_tech = import_costs.query("esc == @tech").groupby('importer').marginal_cost.min()
 
         import_nodes_tech = import_nodes.loc[~import_nodes[tech].isna(), [tech]]
         import_nodes_tech = import_nodes_tech.rename(columns={tech: "p_nom"}) * capacity_boost
         
-        marginal_costs = import_nodes_tech.index.str[:2].map(import_costs_tech.marginal_cost)
+        marginal_costs = import_nodes_tech.index.str[:2].map(import_costs_tech)
         import_nodes_tech["marginal_cost"] = marginal_costs
         
         import_nodes_tech.dropna(inplace=True)
@@ -2396,6 +2404,17 @@ def add_import_options(n, capacity_boost=3., options=["hvdc", "pipeline", "lng"]
             marginal_cost=import_nodes_tech.marginal_cost.values,
             p_nom=import_nodes_tech.p_nom.values,
         )
+
+    marginal_costs = import_costs.query("esc == 'shipping-ftfuel'").marginal_cost.min()
+
+    n.add(
+        "Generator",
+        "EU oil import shipping-ftfuel",
+        bus="EU oil",
+        carrier="import shipping-ftfuel",
+        marginal_cost=marginal_costs,
+        p_nom=1e6
+    )
 
 
 def maybe_adjust_costs_and_potentials(n, opts):

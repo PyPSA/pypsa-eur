@@ -257,12 +257,14 @@ sector:
   conventional_generation: # generator : carrier
     OCGT: gas
   import:
-    capacity_boost: 3
+    capacity_boost: 2
     options:
-      - lng
-      - pipeline
+      - pipeline-h2
+      - shipping-lh2
+      - shipping-lch4
+      - shipping-ftfuel
       - hvdc
-    limit: 1000 # TWh
+    # limit: 100 # TWh
 
 
 industry:
@@ -597,6 +599,8 @@ plotting:
     gas-to-power/heat: '#ee8340'
     waste: '#e3d37d'
     other: '#000000'
-    import pipeline: '#fff7e3'
-    import lng: '#ded9ca'
-    import hvdc: '#b3ac9a'
+    import pipeline-h2: '#fff6e0'
+    import shipping-lh2: '#ebe1ca'
+    import shipping-lch4: '#d6cbb2'
+    import shipping-ftfuel: '#bdb093'
+    import hvdc: '#91856a'
