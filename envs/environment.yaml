@@ -2,17 +2,17 @@
 #
 # SPDX-License-Identifier: MIT
 
-name: pypsa-eur-nov14
+name: pypsa-eur
 channels:
   - conda-forge
   - bioconda
   - http://conda.anaconda.org/gurobi
 dependencies:
-  - python=3.8 # fix because gurobi has no builds for python 3.9
+  - python>=3.8
   - pip
   - mamba # esp for windows build
 
-  - pypsa>=0.18
+  - pypsa>=0.18.1
   - atlite>=0.2.5
   - dask
 
@@ -21,7 +21,7 @@ dependencies:
   - openpyxl
   - pycountry
   - seaborn
-  - snakemake-minimal
+  - snakemake-minimal<=6.8.0 # encoding issue maybe solved by https://github.com/snakemake/snakemake/pull/1146
   - memory_profiler
   - yaml
   - pytables
@@ -38,7 +38,7 @@ dependencies:
   - progressbar2
   - pyomo
   - matplotlib
-  - proj #<8
+  - proj
 
   # Keep in conda environment when calling ipython
   - ipython
