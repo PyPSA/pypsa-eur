@@ -138,7 +138,7 @@ import seaborn as sns
 from functools import reduce
 
 from pypsa.networkclustering import (busmap_by_kmeans, busmap_by_spectral_clustering,
-                                     _make_consense, get_clustering_from_busmap)
+                                     busmap_by_hac, _make_consense, get_clustering_from_busmap)
 
 from add_electricity import load_costs
 
@@ -168,6 +168,45 @@ def weighting_for_country(n, x):
 
     w = g + l
     return (w * (100. / w.max())).clip(lower=1.).astype(int)
+
+
+def get_feature_for_hac(n, buses_i, feature=None): #buses_i = n.buses.index
+
+    if feature is None:
+        feature = "solar+onwind-time"
+
+    carriers = feature.split('-')[0].split('+')
+    if "offwind" in carriers:
+        carriers.remove("offwind")
+        carriers = np.append(carriers, network.generators.carrier.filter(like='offwind').unique())
+
+    if feature.split('-')[1] == 'cap':
+        feature_data = pd.DataFrame(index=buses_i, columns=carriers)
+        for carrier in carriers:
+            try:
+                feature_data[carrier] = (n.generators_t.p_max_pu.filter(like=carrier).mean()
+                                         .rename(index=lambda x: x.split(' ')[0]))
+            except:
+                feature_data[carrier] = (n.generators_t.p_max_pu.filter(like=carrier).mean()
+                                         .rename(index=lambda x: x.split(' ')[0] + ' ' + x.split(' ')[1]))
+
+    if feature.split('-')[1] == 'time':
+        feature_data = pd.DataFrame(columns=buses_i)
+        for carrier in carriers:
+            try:
+                # without simpl wildcard (bus names are "X X"):
+                feature_data = feature_data.append(n.generators_t.p_max_pu.filter(like=carrier)
+                                                   .rename(columns=lambda x: x.split(' ')[0]))[buses_i]
+            except:
+                # with simpl wildcard (bus names are "X X X"):
+                feature_data = feature_data.append(n.generators_t.p_max_pu.filter(like=carrier)
+                                                   .rename(columns=lambda x: x.split(' ')[0] + ' ' + x.split(' ')[1]))[buses_i]
+        feature_data = feature_data.T
+        feature_data.columns = feature_data.columns.astype(str) # Timestamp will raise error in sklearn>=v1.2
+
+    feature_data = feature_data.fillna(0)
+
+    return feature_data
 
 
 def distribute_clusters(n, n_clusters, focus_weights=None, solver_name=None):
@@ -221,11 +260,17 @@ def distribute_clusters(n, n_clusters, focus_weights=None, solver_name=None):
     return pd.Series(m.n.get_values(), index=L.index).astype(int)
 
 
-def busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights=None, algorithm="kmeans", **algorithm_kwds):
+def busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights=None, algorithm="kmeans", feature=None, **algorithm_kwds):
     if algorithm == "kmeans":
         algorithm_kwds.setdefault('n_init', 1000)
         algorithm_kwds.setdefault('max_iter', 30000)
         algorithm_kwds.setdefault('tol', 1e-6)
+
+    if algorithm == "hac":
+        feature = get_feature_for_hac(n, buses_i=n.buses.index, feature=feature)
+    elif feature is not None:
+        logger.info(f"keyword argument feature is only valid for algorithm 'hac'."
+                    f"given feature {feature} will be ignored.")
 
     n.determine_network_topology()
 
@@ -250,8 +295,10 @@ def busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights=None, algori
             return prefix + busmap_by_spectral_clustering(reduce_network(n, x), n_clusters[x.name], **algorithm_kwds)
         elif algorithm == "louvain":
             return prefix + busmap_by_louvain(reduce_network(n, x), n_clusters[x.name], **algorithm_kwds)
+        elif algorithm == "hac":
+            return prefix + busmap_by_hac(n, n_clusters[x.name], buses_i=x.index, feature=feature.loc[x.index])
         else:
-            raise ValueError(f"`algorithm` must be one of 'kmeans', 'spectral' or 'louvain'. Is {algorithm}.")
+            raise ValueError(f"`algorithm` must be one of 'kmeans', 'hac', 'spectral' or 'louvain'. Is {algorithm}.")
 
     return (n.buses.groupby(['country', 'sub_network'], group_keys=False)
             .apply(busmap_for_country).squeeze().rename('busmap'))
@@ -259,7 +306,9 @@ def busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights=None, algori
 
 def clustering_for_n_clusters(n, n_clusters, custom_busmap=False, aggregate_carriers=None,
                               line_length_factor=1.25, potential_mode='simple', solver_name="cbc",
-                              algorithm="kmeans", extended_link_costs=0, focus_weights=None):
+                              algorithm="kmeans", feature=None, extended_link_costs=0, focus_weights=None):
+
+    logger.info(f"Clustering network using algorithm {algorithm} and feature {feature}...")
 
     if potential_mode == 'simple':
         p_nom_max_strategy = np.sum
@@ -273,7 +322,7 @@ def clustering_for_n_clusters(n, n_clusters, custom_busmap=False, aggregate_carr
         busmap.index = busmap.index.astype(str)
         logger.info(f"Imported custom busmap from {snakemake.input.custom_busmap}")
     else:
-        busmap = busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights, algorithm)
+        busmap = busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights, algorithm, feature)
 
     clustering = get_clustering_from_busmap(
         n, busmap,
@@ -313,7 +362,7 @@ def cluster_regions(busmaps, input=None, output=None):
 
     for which in ('regions_onshore', 'regions_offshore'):
         regions = gpd.read_file(getattr(input, which)).set_index('name')
-        geom_c = regions.geometry.groupby(busmap).apply(shapely.ops.cascaded_union)
+        geom_c = regions.geometry.groupby(busmap).apply(shapely.ops.unary_union)
         regions_c = gpd.GeoDataFrame(dict(geometry=geom_c))
         regions_c.index.name = 'name'
         save_to_geojson(regions_c, getattr(output, which))
@@ -377,6 +426,8 @@ if __name__ == "__main__":
                                                line_length_factor=line_length_factor,
                                                potential_mode=potential_mode,
                                                solver_name=snakemake.config['solving']['solver']['name'],
+                                               algorithm=snakemake.config.get('clustering', {}).get('cluster_network', {}).get('algorithm', 'kmeans'),
+                                               feature=snakemake.config.get('clustering', {}).get('cluster_network', {}).get('feature', None),
                                                extended_link_costs=hvac_overhead_cost,
                                                focus_weights=focus_weights)
 

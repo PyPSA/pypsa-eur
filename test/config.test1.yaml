@@ -19,8 +19,13 @@ scenario:
 countries: ['DE']
 
 clustering:
-  simplify:
-    to_substations: false # network is simplified to nodes with positive or negative power injection (i.e. substations or offwind connections)
+  simplify_network:
+    to_substations: true # network is simplified to nodes with positive or negative power injection (i.e. substations or offwind connections)
+    algorithm: hac
+    feature: solar+onwind-time
+  cluster_network:
+    algorithm: hac # choose from: [hac, kmeans]
+    feature: solar+onwind-time # only for hac. choose from: [solar+onwind-time, solar+onwind-cap, solar-time, solar-cap, solar+offwind-cap] etc.
 
 snapshots:
   start: "2013-03-01"

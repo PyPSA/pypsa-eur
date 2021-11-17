@@ -360,7 +360,7 @@ def aggregate_to_substations(n, buses_i=None):
     return clustering.network, busmap
 
 
-def cluster(n, n_clusters):
+def cluster(n, n_clusters, algorithm="kmeans", feature=None):
     logger.info(f"Clustering to {n_clusters} buses")
 
     focus_weights = snakemake.config.get('focus_weights', None)
@@ -377,8 +377,10 @@ def cluster(n, n_clusters):
     potential_mode = (consense(pd.Series([snakemake.config['renewable'][tech]['potential']
                                             for tech in renewable_carriers]))
                         if len(renewable_carriers) > 0 else 'conservative')
+
     clustering = clustering_for_n_clusters(n, n_clusters, custom_busmap=False, potential_mode=potential_mode,
                                            solver_name=snakemake.config['solving']['solver']['name'],
+                                           algorithm=algorithm, feature=feature,
                                            focus_weights=focus_weights)
 
     return clustering.network, clustering.busmap
@@ -400,12 +402,14 @@ if __name__ == "__main__":
 
     busmaps = [trafo_map, simplify_links_map, stub_map]
 
-    if snakemake.config.get('clustering', {}).get('simplify', {}).get('to_substations', False):
+    if snakemake.config.get('clustering', {}).get('simplify_network', {}).get('to_substations', False):
         n, substation_map = aggregate_to_substations(n)
         busmaps.append(substation_map)
 
     if snakemake.wildcards.simpl:
-        n, cluster_map = cluster(n, int(snakemake.wildcards.simpl))
+        n, cluster_map = cluster(n, int(snakemake.wildcards.simpl),
+                                 algorithm=snakemake.config.get('clustering', {}).get('simplify_network', {}).get('algorithm', 'hac'),
+                                 feature=snakemake.config.get('clustering', {}).get('simplify_network', {}).get('feature', None))
         busmaps.append(cluster_map)
 
     # some entries in n.buses are not updated in previous functions, therefore can be wrong. as they are not needed
