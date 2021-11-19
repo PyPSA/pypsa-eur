@@ -151,7 +151,7 @@ Hydrogen demand
 
 Stationary fuel cell CHP.
 
-Transport applications.
+Transport applications (heavy-duty road vehicles, liquid H2 in shipping).
 
 Industry (ammonia, precursor to hydrocarbons for chemicals and iron/steel).
 

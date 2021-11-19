@@ -243,12 +243,14 @@ sector:
   electricity_distribution_grid: false
   electricity_distribution_grid_cost_factor: 1.0  #multiplies cost in data/costs.csv
   electricity_grid_connection: true  # only applies to onshore wind and utility PV
+  H2_network: true
   gas_network: true
   H2_retrofit: true  # if set to True existing gas pipes can be retrofitted to H2 pipes
   # according to hydrogen backbone strategy (April, 2020) p.15
   # https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf
   # 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity
   H2_retrofit_capacity_per_CH4: 0.6  # ratio for H2 capacity per original CH4 capacity of retrofitted pipelines
+  gas_network_connectivity_upgrade: 3 # https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation
   gas_distribution_grid: true
   gas_distribution_grid_cost_factor: 1.0  #multiplies cost in data/costs.csv
   biomass_transport: false  # biomass transport between nodes
@@ -449,6 +451,7 @@ plotting:
     gas boilers: '#db6a25'
     gas boiler marginal: '#db6a25'
     gas: '#e05b09'
+    fossil gas: '#e05b09'
     natural gas: '#e05b09'
     CCGT: '#a85522'
     CCGT marginal: '#a85522'
@@ -457,7 +460,7 @@ plotting:
     gas for industry: '#853403'
     gas for industry CC: '#692e0a'
     gas pipeline: '#ebbca0'
-    Gas pipeline: '#ebbca0'
+    gas pipeline new: '#a87c62'
     # oil
     oil: '#c9c9c9'
     oil boiler: '#adadad'
@@ -547,6 +550,7 @@ plotting:
     H2 storage: '#bf13a0'
     land transport fuel cell: '#6b3161'
     H2 pipeline: '#f081dc'
+    H2 pipeline retrofitted: '#ba99b5'
     H2 Fuel Cell: '#c251ae'
     H2 Electrolysis: '#ff29d9'
     # syngas

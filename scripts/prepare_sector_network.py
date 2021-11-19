@@ -8,6 +8,7 @@ import pytz
 import pandas as pd
 import numpy as np
 import xarray as xr
+import networkx as nx
 
 from itertools import product
 from scipy.stats import beta
@@ -15,6 +16,10 @@ from vresutils.costdata import annuity
 
 from build_energy_totals import build_eea_co2, build_eurostat_co2, build_co2_totals
 from helper import override_component_attrs
+
+from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentation
+from networkx.algorithms import complement
+from pypsa.geo import haversine_pts
 
 import logging
 logger = logging.getLogger(__name__)
@@ -131,40 +136,6 @@ def get(item, investment_year=None):
         return item
 
 
-def create_network_topology(n, prefix, connector=" -> "):
-    """
-    Create a network topology like the power transmission network.
-
-    Parameters
-    ----------
-    n : pypsa.Network
-    prefix : str
-    connector : str
-
-    Returns
-    -------
-    pd.DataFrame with columns bus0, bus1 and length
-    """
-
-    ln_attrs = ["bus0", "bus1", "length"]
-    lk_attrs = ["bus0", "bus1", "length", "underwater_fraction"]
-
-    candidates = pd.concat([
-        n.lines[ln_attrs],
-        n.links.loc[n.links.carrier == "DC", lk_attrs]
-    ]).fillna(0)
-
-    positive_order = candidates.bus0 < candidates.bus1
-    candidates_p = candidates[positive_order]
-    swap_buses = {"bus0": "bus1", "bus1": "bus0"}
-    candidates_n = candidates[~positive_order].rename(columns=swap_buses)
-    candidates = pd.concat([candidates_p, candidates_n])
-
-    topo = candidates.groupby(["bus0", "bus1"], as_index=False).mean()
-    topo.index = topo.apply(lambda c: prefix + c.bus0 + connector + c.bus1, axis=1)
-    return topo
-
-
 def co2_emissions_year(countries, opts, year):
     """
     Calculate CO2 emissions in one specific year (e.g. 1990 or 2018).
@@ -252,14 +223,21 @@ def add_lifetime_wind_solar(n, costs):
         n.generators.loc[gen_i, "lifetime"] = costs.at[carrier, 'lifetime']
 
 
-def create_network_topology(n, prefix, connector=" -> ", bidirectional=True):
+def haversine(p):
+    coord0 = n.buses.loc[p.bus0, ['x', 'y']].values
+    coord1 = n.buses.loc[p.bus1, ['x', 'y']].values
+    return 1.5 * haversine_pts(coord0, coord1)
+
+
+def create_network_topology(n, prefix, carriers=["DC"], connector=" -> ", bidirectional=True):
     """
-    Create a network topology like the power transmission network.
+    Create a network topology from transmission lines and link carrier selection.
 
     Parameters
     ----------
     n : pypsa.Network
     prefix : str
+    carriers : list-like
     connector : str
     bidirectional : bool, default True
         True: one link for each connection
@@ -267,7 +245,7 @@ def create_network_topology(n, prefix, connector=" -> ", bidirectional=True):
 
     Returns
     -------
-    pd.DataFrame with columns bus0, bus1 and length
+    pd.DataFrame with columns bus0, bus1, length, underwater_fraction
     """
 
     ln_attrs = ["bus0", "bus1", "length"]
@@ -275,8 +253,12 @@ def create_network_topology(n, prefix, connector=" -> ", bidirectional=True):
 
     candidates = pd.concat([
         n.lines[ln_attrs],
-        n.links.loc[n.links.carrier == "DC", lk_attrs]
+        n.links.loc[n.links.carrier.isin(carriers), lk_attrs]
     ]).fillna(0)
+
+    # base network topology purely on location not carrier
+    candidates["bus0"] = candidates.bus0.map(n.buses.location)
+    candidates["bus1"] = candidates.bus1.map(n.buses.location)
 
     positive_order = candidates.bus0 < candidates.bus1
     candidates_p = candidates[positive_order]
@@ -560,17 +542,6 @@ def add_co2limit(n, Nyears=1., limit=0.):
 def average_every_nhours(n, offset):
     logger.info(f'Resampling the network to {offset}')
     m = n.copy(with_time=False)
-
-    # TODO is this still needed?
-    #fix copying of network attributes
-    #copied from pypsa/io.py, should be in pypsa/components.py#Network.copy()
-    allowed_types = (float, int, bool, str) + tuple(np.typeDict.values())
-    attrs = dict((attr, getattr(n, attr))
-                 for attr in dir(n)
-                 if (not attr.startswith("__") and
-                     isinstance(getattr(n,attr), allowed_types)))
-    for k,v in attrs.items():
-        setattr(m,k,v)
 
     snapshot_weightings = n.snapshot_weightings.resample(offset).sum()
     m.set_snapshots(snapshot_weightings.index)
@@ -1033,8 +1004,8 @@ def add_electricity_grid_connection(n, costs):
     n.generators.loc[gens, "capital_cost"] += costs.at['electricity grid connection', 'fixed']
 
 
-def add_storage(n, costs):
-    print("adding electricity and hydrogen storage")
+def add_storage_and_grids(n, costs):
+    print("adding electricity and hydrogen storage as well as hydrogen and gas grids")
 
     nodes = pop_layout.index
 
@@ -1106,122 +1077,128 @@ def add_storage(n, costs):
         capital_cost=h2_capital_cost
     )
 
-    attrs = ["bus0", "bus1", "length"]
-    h2_links = pd.DataFrame(columns=attrs)
-
-    candidates = pd.concat({"lines": n.lines[attrs],
-                            "links": n.links.loc[n.links.carrier == "DC", attrs]})
-
-    for candidate in candidates.index:
-        buses = [candidates.at[candidate, "bus0"], candidates.at[candidate, "bus1"]]
-        buses.sort()
-        name = f"H2 pipeline {buses[0]} -> {buses[1]}"
-        if name not in h2_links.index:
-            h2_links.at[name, "bus0"] = buses[0]
-            h2_links.at[name, "bus1"] = buses[1]
-            h2_links.at[name, "length"] = candidates.at[candidate, "length"]
-
-    # TODO Add efficiency losses
-    n.madd("Link",
-        h2_links.index,
-        bus0=h2_links.bus0.values + " H2",
-        bus1=h2_links.bus1.values + " H2",
-        p_min_pu=-1,
-        p_nom_extendable=True,
-        length=h2_links.length.values,
-        capital_cost=costs.at['H2 (g) pipeline', 'fixed'] * h2_links.length.values,
-        carrier="H2 pipeline",
-        lifetime=costs.at['H2 (g) pipeline', 'lifetime']
-    )
-
     if options["gas_network"]:
 
         logger.info("Add gas network")
 
-        cols = [
-            "bus0",
-            "bus1",
-            "is_bothDirection",
-            "pipe_capacity_MW",
-            "id",
-            "length_km"
-        ]
-        gas_pipes = pd.read_csv(snakemake.input.clustered_gas_network, usecols=cols)
-
-        def make_index(x):
-            connector = " <-> " if x.is_bothDirection else " -> "
-            return "Gas pipeline " + x.bus0 + connector + x.bus1
-
-        gas_pipes.index = gas_pipes.apply(make_index, axis=1)
-
-        # group parallel pipes together
-        strategies = {
-            'bus0': 'first',
-            'bus1': 'first',
-            'is_bothDirection': 'first',
-            "pipe_capacity_MW": 'sum',
-            "length_km": 'sum',
-            'id': ' '.join,
-        }
-        gas_pipes = gas_pipes.groupby(gas_pipes.index).agg(strategies)
-
-        gas_pipes["num_parallel"] = gas_pipes.index.value_counts()
-        gas_pipes["p_min_pu"] = gas_pipes.apply(lambda x: -1 if x.is_bothDirection else 0, axis=1)
+        fn = snakemake.input.clustered_gas_network
+        gas_pipes = pd.read_csv(fn, index_col=0)
 
         if options["H2_retrofit"]:
-            gas_pipes["p_nom_max"] = gas_pipes.gas_pipes.pipe_capacity_MW
+            gas_pipes["p_nom_max"] = gas_pipes.p_nom
             gas_pipes["p_nom_min"] = 0.
             gas_pipes["capital_cost"] = 0.
         else:
             gas_pipes["p_nom_max"] = np.inf
-            gas_pipes["p_nom_min"] = gas_pipes.gas_pipes.pipe_capacity_MW
-            gas_pipes["capital_cost"] = gas_pipes.length_km * costs.at['CH4 (g) pipeline', 'fixed']
+            gas_pipes["p_nom_min"] = gas_pipes.p_nom
+            gas_pipes["capital_cost"] = gas_pipes.length * costs.at['CH4 (g) pipeline', 'fixed']
 
         n.madd("Link",
             gas_pipes.index,
             bus0=gas_pipes.bus0 + " gas",
             bus1=gas_pipes.bus1 + " gas",
             p_min_pu=gas_pipes.p_min_pu,
-            p_nom=gas_pipes.pipe_capacity_MW,
+            p_nom=gas_pipes.p_nom,
             p_nom_extendable=True,
             p_nom_max=gas_pipes.p_nom_max,
             p_nom_min=gas_pipes.p_nom_min,
-            length=gas_pipes.length_km,
+            length=gas_pipes.length,
             capital_cost=gas_pipes.capital_cost,
-            type=gas_pipes.num_parallel,
-            tags=gas_pipes.id,
-            carrier="Gas pipeline",
-            lifetime=50
+            tags=gas_pipes.name,
+            carrier="gas pipeline",
+            lifetime=costs.at['CH4 (g) pipeline', 'lifetime']
         )
         
-        # remove fossil generators at all connected nodes
-        # TODO what should be assumed here? rather located at LNG terminals?
-        missing = nodes.difference(pd.concat([gas_pipes.bus0, gas_pipes.bus1]).unique())
-        remove_i = n.generators[(n.generators.carrier=="gas")
-                              & (~n.generators.bus.str.replace(" gas","").isin(missing))].index
+        # remove fossil generators where there is neither
+        # production, LNG terminal, nor entry-point beyond system scope
+
+        fn = snakemake.input.gas_input_nodes_simplified
+        gas_input_nodes = pd.read_csv(fn, index_col=0)
+
+        unique = gas_input_nodes.index.unique()
+        gas_i = n.generators.carrier == 'gas'
+        internal_i = ~n.generators.bus.map(n.buses.location).isin(unique)
+
+        remove_i = n.generators[gas_i & internal_i].index
         n.generators.drop(remove_i, inplace=True)
+
+        p_nom = gas_input_nodes.sum(axis=1).rename(lambda x: x + " gas")
+        n.generators.loc[gas_i, "p_nom_extendable"] = False
+        n.generators.loc[gas_i, "p_nom"] = p_nom
+
+        # add candidates for new gas pipelines to achieve full connectivity
+
+        G = nx.Graph()
+
+        gas_buses = n.buses.loc[n.buses.carrier=='gas', 'location']
+        G.add_nodes_from(np.unique(gas_buses.values))
+
+        sel = gas_pipes.p_nom > 1500
+        attrs = ["bus0", "bus1", "length"]
+        G.add_weighted_edges_from(gas_pipes.loc[sel, attrs].values)
+
+        # find all complement edges
+        complement_edges = pd.DataFrame(complement(G).edges, columns=["bus0", "bus1"])
+        complement_edges["length"] = complement_edges.apply(haversine, axis=1)
+
+        # apply k_edge_augmentation weighted by length of complement edges
+        k_edge = options.get("gas_network_connectivity_upgrade", 3)
+        augmentation = k_edge_augmentation(G, k_edge, avail=complement_edges.values)
+        new_gas_pipes = pd.DataFrame(augmentation, columns=["bus0", "bus1"])
+        new_gas_pipes["length"] = new_gas_pipes.apply(haversine, axis=1)
+
+        new_gas_pipes.index = new_gas_pipes.apply(
+            lambda x: f"gas pipeline new {x.bus0} <-> {x.bus1}", axis=1)
+
+        n.madd("Link",
+            new_gas_pipes.index,
+            bus0=new_gas_pipes.bus0 + " gas",
+            bus1=new_gas_pipes.bus1 + " gas",
+            p_min_pu=-1, # new gas pipes are bidirectional
+            p_nom_extendable=True,
+            length=new_gas_pipes.length,
+            capital_cost=new_gas_pipes.length * costs.at['CH4 (g) pipeline', 'fixed'],
+            carrier="gas pipeline new",
+            lifetime=costs.at['CH4 (g) pipeline', 'lifetime']
+        )
 
     # retroftting existing CH4 pipes to H2 pipes
     if options["gas_network"] and options["H2_retrofit"]:
 
-        gas_pipe_i = n.links[n.links.carrier == "Gas pipeline"].index
+        gas_pipe_i = n.links[n.links.carrier == "gas pipeline"].index
         n.links.loc[gas_pipe_i, "p_nom_extendable"] = True
         h2_pipes = gas_pipes.rename(index=lambda x:
-                                    x.replace("Gas pipeline", "H2 pipeline retrofitted"))
+                                    x.replace("gas pipeline", "H2 pipeline retrofitted"))
 
         n.madd("Link",
             h2_pipes.index,
             bus0=h2_pipes.bus0 + " H2",
             bus1=h2_pipes.bus1 + " H2",
-            p_min_pu=-1.,  # allow that all H2 pipelines can be used in other direction
-            p_nom_max=h2_pipes.pipe_capacity_MW * options["H2_retrofit_capacity_per_CH4"],
+            p_min_pu=-1.,  # allow that all H2 retrofit pipelines can be used in both directions
+            p_nom_max=h2_pipes.p_nom * options["H2_retrofit_capacity_per_CH4"],
             p_nom_extendable=True,
-            length=h2_pipes.length_km,
-            capital_cost=costs.at['H2 (g) pipeline repurposed', 'fixed'] * h2_pipes.length_km,
-            type=gas_pipes.num_parallel,
-            tags=h2_pipes.id,
+            length=h2_pipes.length,
+            capital_cost=costs.at['H2 (g) pipeline repurposed', 'fixed'] * h2_pipes.length,
+            tags=h2_pipes.name,
             carrier="H2 pipeline retrofitted",
-            lifetime=50
+            lifetime=costs.at['H2 (g) pipeline repurposed', 'lifetime']
+        )
+
+    if options.get("H2_network", True):
+
+        h2_pipes = create_network_topology(n, "H2 pipeline ", carriers=["DC", "gas pipeline"])
+
+        # TODO Add efficiency losses
+        n.madd("Link",
+            h2_pipes.index,
+            bus0=h2_pipes.bus0.values + " H2",
+            bus1=h2_pipes.bus1.values + " H2",
+            p_min_pu=-1,
+            p_nom_extendable=True,
+            length=h2_pipes.length.values,
+            capital_cost=costs.at['H2 (g) pipeline', 'fixed'] * h2_pipes.length.values,
+            carrier="H2 pipeline",
+            lifetime=costs.at['H2 (g) pipeline', 'lifetime']
         )
 
     n.add("Carrier", "battery")
@@ -1963,14 +1940,6 @@ def add_industry(n, costs):
     # 1e6 to convert TWh to MWh
     industrial_demand = pd.read_csv(snakemake.input.industrial_demand, index_col=0) * 1e6
 
-    methane_demand = industrial_demand.loc[nodes, "methane"].div(8760).rename(index=lambda x: x + " gas for industry")
-
-    # need to aggregate methane demand if gas not nodally resolved
-    if not options["gas_network"]:
-        methane_demand = methane_demand.sum()
-
-    solid_biomass_by_country = industrial_demand["solid biomass"].groupby(pop_layout.ct).sum()
-
     n.madd("Bus",
         spatial.biomass.industry,
         location=spatial.biomass.locations,
@@ -2018,11 +1987,18 @@ def add_industry(n, costs):
         location=spatial.gas.locations,
         carrier="gas for industry")
 
+    gas_demand = industrial_demand.loc[nodes, "methane"] / 8760.
+
+    if options["gas_network"]:
+        spatial_gas_demand = gas_demand.rename(index=lambda x: x + " gas for industry")
+    else:
+        spatial_gas_demand = gas_demand.sum()
+
     n.madd("Load",
         spatial.gas.industry,
         bus=spatial.gas.industry,
         carrier="gas for industry",
-        p_set=methane_demand
+        p_set=spatial_gas_demand
     )
 
     n.madd("Link",
@@ -2463,7 +2439,7 @@ if __name__ == "__main__":
 
     add_generation(n, costs)
 
-    add_storage(n, costs)
+    add_storage_and_grids(n, costs)
 
     # TODO merge with opts cost adjustment below
     for o in opts:
