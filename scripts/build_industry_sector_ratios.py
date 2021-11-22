@@ -1006,7 +1006,7 @@ def non_ferrous_metals():
     # Alumina
 
     # High enthalpy heat is converted to methane.
-    # Process heat at T>500ºC is required here.
+    # Process heat at T>500C is required here.
     # Refining is electrified.
     # There are no process emissions associated to Alumina manufacturing.
 
