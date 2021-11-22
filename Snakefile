@@ -1,6 +1,12 @@
 
+from os.path import exists
+from shutil import copyfile
+
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 HTTP = HTTPRemoteProvider()
+
+if not exists("config.yaml"):
+    copyfile("config.default.yaml", "config.yaml")
 
 configfile: "config.yaml"
 
