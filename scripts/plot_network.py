@@ -357,7 +357,7 @@ def plot_ch4_map(network):
 
     assign_location(n)
 
-    bus_size_factor = 6e7
+    bus_size_factor = 8e7
     linewidth_factor = 1e4
     # MW below which not drawn
     line_lower_threshold = 500
@@ -390,14 +390,18 @@ def plot_ch4_map(network):
     to_remove = n.links.index[~n.links.carrier.str.contains("gas pipeline")]
     n.links.drop(to_remove, inplace=True)
 
-    link_widths = n.links.p_nom_opt / linewidth_factor  
-    link_widths[n.links.p_nom_opt < line_lower_threshold] = 0.
+    link_widths_rem = n.links.p_nom_opt / linewidth_factor  
+    link_widths_rem[n.links.p_nom_opt < line_lower_threshold] = 0.
 
     link_widths_orig = n.links.p_nom / linewidth_factor  
     link_widths_orig[n.links.p_nom < line_lower_threshold] = 0.
 
-    link_color = n.links.carrier.map({"gas pipeline": "#f08080",
-                                      "gas pipeline new": "#c46868"})
+    max_usage = n.links_t.p.abs().max(axis=0)
+    link_widths_used =  max_usage / linewidth_factor
+    link_widths_used[max_usage < line_lower_threshold] = 0.
+
+    link_color_used = n.links.carrier.map({"gas pipeline": "#f08080",
+                                           "gas pipeline new": "#c46868"})
 
     n.links.bus0 = n.links.bus0.str.replace(" gas", "")
     n.links.bus1 = n.links.bus1.str.replace(" gas", "")
@@ -426,8 +430,18 @@ def plot_ch4_map(network):
         geomap=False,
         ax=ax,
         bus_sizes=0.,
-        link_colors=link_color,
-        link_widths=link_widths,
+        link_colors='#e8d1d1',
+        link_widths=link_widths_rem,
+        branch_components=["Link"],
+        **map_opts
+    )
+
+    n.plot(
+        geomap=False,
+        ax=ax,
+        bus_sizes=0.,
+        link_colors=link_color_used,
+        link_widths=link_widths_used,
         branch_components=["Link"],
         **map_opts
     )
@@ -465,7 +479,7 @@ def plot_ch4_map(network):
         frameon=False,
         labelspacing=0.8,
         handletextpad=1.5,
-        title='gas pipeline capacity'
+        title='gas pipeline used capacity'
     )
     
     ax.add_artist(l1_1)
