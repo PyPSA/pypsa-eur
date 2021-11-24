@@ -498,15 +498,21 @@ def _replace_b2b_converter_at_country_border_by_link(n):
                         .format(i, b0, line, linkcntry.at[i], buscntry.at[b1]))
 
 
-def _set_links_underwater_fraction(n):
-    if n.links.empty: return
+def _set_branch_underwater_fraction(n, components=["Line", "Link"]):
 
-    if not hasattr(n.links, 'geometry'):
-        n.links['underwater_fraction'] = 0.
-    else:
-        offshore_shape = gpd.read_file(snakemake.input.offshore_shapes).unary_union
-        links = gpd.GeoSeries(n.links.geometry.dropna().map(shapely.wkt.loads))
-        n.links['underwater_fraction'] = links.intersection(offshore_shape).length / links.length
+    offshore_shape = gpd.read_file(snakemake.input.offshore_shapes).unary_union
+
+    for c in components:
+
+        df = n.df(c)
+
+        if df.empty: return
+
+        if not hasattr(df, 'geometry'):
+            df['underwater_fraction'] = 0.
+        else:
+            branches = gpd.GeoSeries(df.geometry.dropna().map(shapely.wkt.loads))
+            df['underwater_fraction'] = branches.intersection(offshore_shape).length / branches.length
 
 
 def _adjust_capacities_of_under_construction_branches(n):
@@ -571,7 +577,7 @@ def base_network():
 
     _set_countries_and_substations(n)
 
-    _set_links_underwater_fraction(n)
+    _set_branch_underwater_fraction(n)
 
     _replace_b2b_converter_at_country_border_by_link(n)
 
