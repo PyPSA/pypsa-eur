@@ -396,7 +396,7 @@ def plot_ch4_map(network):
     link_widths_orig = n.links.p_nom / linewidth_factor  
     link_widths_orig[n.links.p_nom < line_lower_threshold] = 0.
 
-    max_usage = n.links_t.p.abs().max(axis=0)
+    max_usage = n.links_t.p0.abs().max(axis=0)
     link_widths_used =  max_usage / linewidth_factor
     link_widths_used[max_usage < line_lower_threshold] = 0.
 
