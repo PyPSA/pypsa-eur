@@ -89,3 +89,15 @@ def mock_snakemake(rulename, **wildcards):
 
     os.chdir(script_dir)
     return snakemake
+
+# from pypsa-eur/_helpers.py
+def progress_retrieve(url, file):
+    import urllib
+    from progressbar import ProgressBar
+
+    pbar = ProgressBar(0, 100)
+
+    def dlProgress(count, blockSize, totalSize):
+        pbar.update( int(count * blockSize * 100 / totalSize) )
+
+    urllib.request.urlretrieve(url, file, reporthook=dlProgress)

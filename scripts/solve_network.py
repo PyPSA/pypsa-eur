@@ -186,6 +186,28 @@ def add_chp_constraints(n):
         define_constraints(n, lhs, "<=", 0, 'chplink', 'backpressure')
 
 
+def add_pipe_retrofit_constraint(n):
+    """Add constraint for retrofitting existing CH4 pipelines to H2 pipelines."""
+
+    gas_pipes_i = n.links[n.links.carrier=="gas pipeline"].index
+    h2_retrofitted_i = n.links[n.links.carrier=='H2 pipeline retrofitted'].index
+
+    if h2_retrofitted_i.empty or gas_pipes_i.empty: return
+
+    link_p_nom = get_var(n, "Link", "p_nom")
+
+    pipe_capacity = n.links.loc[gas_pipes_i, 'p_nom']
+
+    CH4_per_H2 = 1 / n.config["sector"]["H2_retrofit_capacity_per_CH4"]
+
+    lhs = linexpr(
+        (CH4_per_H2, link_p_nom.loc[h2_retrofitted_i].rename(index=lambda x: x.replace("H2 pipeline retrofitted", "gas pipeline"))),
+        (1, link_p_nom.loc[gas_pipes_i])
+    )
+
+    define_constraints(n, lhs, "=", pipe_capacity, 'Link', 'pipe_retrofit')
+
+
 def add_co2_sequestration_limit(n, sns):
     
     co2_stores = n.stores.loc[n.stores.carrier=='co2 stored'].index
@@ -205,6 +227,7 @@ def add_co2_sequestration_limit(n, sns):
 
 def extra_functionality(n, snapshots):
     add_battery_constraints(n)
+    add_pipe_retrofit_constraint(n)
     add_co2_sequestration_limit(n, snapshots)
 
 
