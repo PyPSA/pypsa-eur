@@ -209,6 +209,19 @@ else:
     build_biomass_transport_costs_output = {}
 
 
+rule build_salt_cavern_potentials:
+    input:
+        salt_caverns="data/h2_salt_caverns_GWh_per_sqkm.geojson",
+        regions_onshore=pypsaeur("resources/regions_onshore_elec_s{simpl}_{clusters}.geojson"),
+        regions_offshore=pypsaeur("resources/regions_offshore_elec_s{simpl}_{clusters}.geojson"),
+    output:
+        h2_cavern_potential="resources/salt_cavern_potentials_s{simpl}_{clusters}.csv"
+    threads: 1
+    resources: mem_mb=2000
+    benchmark: "benchmarks/build_salt_cavern_potentials_s{simpl}_{clusters}"
+    script: "scripts/build_salt_cavern_potentials.py"
+
+
 rule build_ammonia_production:
     input:
         usgs="data/myb1-2017-nitro.xls"
@@ -357,7 +370,7 @@ rule prepare_sector_network:
         costs=CDIR + "costs_{planning_horizons}.csv",
         profile_offwind_ac=pypsaeur("resources/profile_offwind-ac.nc"),
         profile_offwind_dc=pypsaeur("resources/profile_offwind-dc.nc"),
-        h2_cavern="data/hydrogen_salt_cavern_potentials.csv",
+        h2_cavern="resources/salt_cavern_potentials_s{simpl}_{clusters}.csv",
         busmap_s=pypsaeur("resources/busmap_elec_s{simpl}.csv"),
         busmap=pypsaeur("resources/busmap_elec_s{simpl}_{clusters}.csv"),
         clustered_pop_layout="resources/pop_layout_elec_s{simpl}_{clusters}.csv",
