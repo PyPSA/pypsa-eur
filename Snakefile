@@ -44,6 +44,22 @@ rule prepare_sector_networks:
         expand(RDIR + "/prenetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc",
                **config['scenario'])
 
+datafiles = [
+    "eea/UNFCCC_v23.csv",
+    "switzerland-sfoe/switzerland-new_format.csv",
+    "nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson",
+    "myb1-2017-nitro.xls",
+    "Industrial_Database.csv",
+    "emobility/KFZ__count",
+    "emobility/Pkw__count",
+]
+
+if config.get('retrieve_sector_databundle', True):
+    rule retrieve_sector_databundle:
+        output:  expand('data/{file}', file=datafiles)
+        log: "logs/retrieve_sector_databundle.log"
+        script: 'scripts/retrieve_sector_databundle.py'
+
 
 rule build_population_layouts:
     input:
