@@ -41,13 +41,14 @@ incorporates retrofitting options to hydrogen.
   the gas network is activated, all the gas demands are regionally disaggregated
   as well.
 
-* New constraint allows retrofitting of gas pipelines to hydrogen pipelines.
+* New constraint allows endogenous retrofitting of gas pipelines to hydrogen pipelines.
   This option is activated via the setting ``sector: H2_retrofit:``. For every
   unit of gas pipeline capacity dismantled, ``sector:
   H2_retrofit_capacity_per_CH4`` units are made available as hydrogen pipeline
   capacity in the corresponding corridor. These repurposed hydrogen pipelines
   have lower costs than new hydrogen pipelines. Both new and repurposed pipelines
-  can be built simultaneously.
+  can be built simultaneously. The retrofitting option ``sector: H2_retrofit:`` also works 
+  with a copperplated methane infrastructure, i.e. when ``sector: gas_network: false``. 
 
 * New hydrogen pipelines can now be built where there are already power or gas
   transmission routes. Previously, only the electricity transmission routes were

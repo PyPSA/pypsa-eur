@@ -200,8 +200,10 @@ def add_pipe_retrofit_constraint(n):
 
     CH4_per_H2 = 1 / n.config["sector"]["H2_retrofit_capacity_per_CH4"]
 
+    fr = "H2 pipeline retrofitted"
+    to = "gas pipeline"
     lhs = linexpr(
-        (CH4_per_H2, link_p_nom.loc[h2_retrofitted_i].rename(index=lambda x: x.replace("H2 pipeline retrofitted", "gas pipeline"))),
+        (CH4_per_H2, link_p_nom.loc[h2_retrofitted_i].rename(index=lambda x: x.replace(fr, to))),
         (1, link_p_nom.loc[gas_pipes_i])
     )
 

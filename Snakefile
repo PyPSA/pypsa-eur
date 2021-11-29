@@ -101,7 +101,7 @@ rule build_simplified_population_layouts:
     script: "scripts/build_clustered_population_layouts.py"
 
 
-if config["sector"]["gas_network"]:
+if config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]:
 
     datafiles = [
         "IGGIELGN_LNGs.geojson",

@@ -256,7 +256,7 @@ sector:
   # https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf
   # 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity
   H2_retrofit_capacity_per_CH4: 0.6  # ratio for H2 capacity per original CH4 capacity of retrofitted pipelines
-  gas_network_connectivity_upgrade: 3 # https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation
+  gas_network_connectivity_upgrade: 1 # https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation
   gas_distribution_grid: true
   gas_distribution_grid_cost_factor: 1.0  #multiplies cost in data/costs.csv
   biomass_transport: false  # biomass transport between nodes
