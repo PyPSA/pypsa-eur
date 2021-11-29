@@ -1,6 +1,12 @@
 
+from os.path import exists
+from shutil import copyfile
+
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 HTTP = HTTPRemoteProvider()
+
+if not exists("config.yaml"):
+    copyfile("config.default.yaml", "config.yaml")
 
 configfile: "config.yaml"
 
@@ -37,6 +43,22 @@ rule prepare_sector_networks:
     input:
         expand(RDIR + "/prenetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc",
                **config['scenario'])
+
+datafiles = [
+    "eea/UNFCCC_v23.csv",
+    "switzerland-sfoe/switzerland-new_format.csv",
+    "nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson",
+    "myb1-2017-nitro.xls",
+    "Industrial_Database.csv",
+    "emobility/KFZ__count",
+    "emobility/Pkw__count",
+]
+
+if config.get('retrieve_sector_databundle', True):
+    rule retrieve_sector_databundle:
+        output:  expand('data/{file}', file=datafiles)
+        log: "logs/retrieve_sector_databundle.log"
+        script: 'scripts/retrieve_sector_databundle.py'
 
 
 rule build_population_layouts:
@@ -258,6 +280,19 @@ else:
     build_biomass_transport_costs_output = {}
 
 
+rule build_salt_cavern_potentials:
+    input:
+        salt_caverns="data/h2_salt_caverns_GWh_per_sqkm.geojson",
+        regions_onshore=pypsaeur("resources/regions_onshore_elec_s{simpl}_{clusters}.geojson"),
+        regions_offshore=pypsaeur("resources/regions_offshore_elec_s{simpl}_{clusters}.geojson"),
+    output:
+        h2_cavern_potential="resources/salt_cavern_potentials_s{simpl}_{clusters}.csv"
+    threads: 1
+    resources: mem_mb=2000
+    benchmark: "benchmarks/build_salt_cavern_potentials_s{simpl}_{clusters}"
+    script: "scripts/build_salt_cavern_potentials.py"
+
+
 rule build_ammonia_production:
     input:
         usgs="data/myb1-2017-nitro.xls"
@@ -406,7 +441,7 @@ rule prepare_sector_network:
         costs=CDIR + "costs_{planning_horizons}.csv",
         profile_offwind_ac=pypsaeur("resources/profile_offwind-ac.nc"),
         profile_offwind_dc=pypsaeur("resources/profile_offwind-dc.nc"),
-        h2_cavern="data/hydrogen_salt_cavern_potentials.csv",
+        h2_cavern="resources/salt_cavern_potentials_s{simpl}_{clusters}.csv",
         busmap_s=pypsaeur("resources/busmap_elec_s{simpl}.csv"),
         busmap=pypsaeur("resources/busmap_elec_s{simpl}_{clusters}.csv"),
         clustered_pop_layout="resources/pop_layout_elec_s{simpl}_{clusters}.csv",
@@ -524,7 +559,7 @@ if config["foresight"] == "overnight":
             solver=RDIR + "/logs/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}_solver.log",
             python=RDIR + "/logs/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}_python.log",
             memory=RDIR + "/logs/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}_memory.log"
-        threads: 4
+        threads: config['solving']['solver'].get('threads', 4)
         resources: mem_mb=config['solving']['mem']
         benchmark: RDIR + "/benchmarks/solve_network/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}"
         script: "scripts/solve_network.py"

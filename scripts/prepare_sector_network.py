@@ -1039,26 +1039,27 @@ def add_storage_and_grids(n, costs):
         lifetime=costs.at['fuel cell', 'lifetime']
     )
 
-    cavern_nodes = pd.DataFrame()
+    cavern_types = snakemake.config["sector"]["hydrogen_underground_storage_locations"]
+    h2_caverns = pd.read_csv(snakemake.input.h2_cavern, index_col=0)[cavern_types].sum(axis=1)
+
+    # only use sites with at least 2 TWh potential
+    h2_caverns = h2_caverns[h2_caverns > 2]
+    
+    # convert TWh to MWh
+    h2_caverns = h2_caverns * 1e6
+
+    # clip at 1000 TWh for one location
+    h2_caverns.clip(upper=1e9, inplace=True)
+
     if options['hydrogen_underground_storage']:
-         h2_salt_cavern_potential = pd.read_csv(snakemake.input.h2_cavern, index_col=0, squeeze=True)
-         h2_cavern_ct = h2_salt_cavern_potential[~h2_salt_cavern_potential.isna()]
-         cavern_nodes = pop_layout[pop_layout.ct.isin(h2_cavern_ct.index)]
 
-         h2_capital_cost = costs.at["hydrogen storage underground", "fixed"]
+        h2_capital_cost = costs.at["hydrogen storage underground", "fixed"]
 
-         # assumptions: weight storage potential in a country by population
-         # TODO: fix with real geographic potentials
-         # convert TWh to MWh with 1e6
-         h2_pot = h2_cavern_ct.loc[cavern_nodes.ct]
-         h2_pot.index = cavern_nodes.index
-         h2_pot = h2_pot * cavern_nodes.fraction * 1e6
-
-         n.madd("Store",
-            cavern_nodes.index + " H2 Store",
-            bus=cavern_nodes.index + " H2",
+        n.madd("Store",
+            h2_caverns.index + " H2 Store",
+            bus=h2_caverns.index + " H2",
             e_nom_extendable=True,
-            e_nom_max=h2_pot.values,
+            e_nom_max=h2_caverns.values,
             e_cyclic=True,
             carrier="H2 Store",
             capital_cost=h2_capital_cost
@@ -1066,7 +1067,7 @@ def add_storage_and_grids(n, costs):
 
     # hydrogen stored overground (where not already underground)
     h2_capital_cost = costs.at["hydrogen storage tank incl. compressor", "fixed"]
-    nodes_overground = cavern_nodes.index.symmetric_difference(nodes)
+    nodes_overground = h2_caverns.index.symmetric_difference(nodes)
 
     n.madd("Store",
         nodes_overground + " H2 Store",
