@@ -18,6 +18,20 @@ Upcoming Release
 * The default deployment density of AC- and DC-connected offshore wind capacity is reduced from 3 MW/sqkm
   to a more conservative estimate of 2 MW/sqkm [`#280 <https://github.com/PyPSA/pypsa-eur/pull/280>`_].
 
+* The configuration system was revised, to remove the need to update custom ``config.yaml`` files from
+  ``config.default.yaml`` with every PyPSA-EUR update and to make custom ``config.yaml`` files smaller and
+  thus easier to work with [`#292 <https://github.com/PyPSA/pypsa-eur/issues/292>`_].
+  Potentially breaking changes:
+    + Configuration files should now be placed inside the `config/` folder.
+    + The default configuration `config/config.default.yaml` now acts as the configuration base.
+    + Individual configurations only overwrite the default values, i.e. only need to specify the
+      values which should deviate from the default configuration.
+    + Individual configurations should be specified as `configfile` in the `Snakefile` (currennt system)
+      or provided via the `configfile=<path>` `snakemake` CLI.
+    + When updating from a previous version of PyPSA-EUR the upgrade should work out of the box if you have
+      previously used the `configfile` entry in `Snakefile` for your custom configuration.
+      Nevertheless please make sure the new configuration scheme works with your custom configuration setup properly.
+
 
 PyPSA-Eur 0.4.0 (22th September 2021)
 =====================================
