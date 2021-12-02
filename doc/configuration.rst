@@ -9,14 +9,16 @@
 Configuration
 ##########################################
 
-PyPSA-Eur has several configuration options which are documented in this section and are collected in a ``config.yaml`` file located in the root directory. Users should copy the provided default configuration (``config.default.yaml``) and amend their own modifications and assumptions in the user-specific configuration file (``config.yaml``); confer installation instructions at :ref:`defaultconfig`.
+PyPSA-Eur has several configuration options which are documented in this section and are collected in a ``config.yaml`` file located in the ``config/`` directory.
+Users can copy the default configuration (``config.default.yaml``) and create a user-specific configuration file (``config.yaml``) to overwrite the default
+model settings; confer installation instructions at :ref:`defaultconfig`.
 
 .. _toplevel_cf:
 
 Top-level configuration
 =======================
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :lines: 5-12,20,31-38
 
@@ -49,7 +51,7 @@ An exemplary dependency graph (starting from the simplification rules) then look
 
 .. image:: img/scenarios.png
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: scenario:
    :end-before: countries:
@@ -66,7 +68,7 @@ An exemplary dependency graph (starting from the simplification rules) then look
 
 Specifies the temporal range to build an energy system model for as arguments to `pandas.date_range <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.date_range.html>`_
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: snapshots:
    :end-before: enable:
@@ -81,7 +83,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 ``electricity``
 ===============
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: electricity:
    :end-before: atlite:
@@ -101,7 +103,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 Define and specify the ``atlite.Cutout`` used for calculating renewable potentials and time-series. All options except for ``features`` are directly used as `cutout parameters <https://atlite.readthedocs.io/en/latest/ref_api.html#cutout>`_.
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: atlite:
    :end-before: renewable:
@@ -119,7 +121,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 ``onwind``
 ----------
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: renewable:
    :end-before:   offwind-ac:
@@ -132,7 +134,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 ``offwind-ac``
 --------------
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at:   offwind-ac:
    :end-before:   offwind-dc:
@@ -145,7 +147,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 ``offwind-dc``
 ---------------
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at:   offwind-dc:
    :end-before:   solar:
@@ -158,7 +160,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 ``solar``
 ---------------
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at:   solar:
    :end-before:   hydro:
@@ -171,7 +173,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 ``hydro``
 ---------------
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at:   hydro:
    :end-before: lines:
@@ -186,7 +188,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 ``lines``
 =============
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: lines:
    :end-before: links:
@@ -201,7 +203,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 ``links``
 =============
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: links:
    :end-before: transformers:
@@ -216,7 +218,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 ``transformers``
 ================
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: transformers:
    :end-before: load:
@@ -231,7 +233,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 ``load``
 =============
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: load:
    :end-before: costs:
@@ -246,7 +248,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 ``costs``
 =============
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-after: scaling_factor:
    :end-before: solving:
@@ -268,7 +270,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 ``options``
 -----------
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: solving:
    :end-before:   solver:
@@ -281,7 +283,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 ``solver``
 ----------
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at:   solver:
    :end-before: plotting:
@@ -296,7 +298,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 ``plotting``
 =============
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: plotting:
 

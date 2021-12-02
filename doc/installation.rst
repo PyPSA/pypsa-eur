@@ -108,18 +108,41 @@ It might be the case that you can only retrieve solutions by using a commercial 
 Set Up the Default Configuration
 ================================
 
-PyPSA-Eur has several configuration options that must be specified in a ``config.yaml`` file located in the root directory.
-An example configuration ``config.default.yaml`` is maintained in the repository.
+PyPSA-Eur has several configuration options that are specified in a default configuration file 
+``config.default.yaml`` file located in the ``config/`` directory.
+A custom configuration file can be used to overwrite the default configuration as needed.
 More details on the configuration options are in :ref:`config`.
 
-Before first use, create a ``config.yaml`` by copying the example.
+By default PyPSA-EUR is setup to use the :ref:`tutorial` configuration.
+
+To start using a custom configuration, create a ``config.yaml`` file by copying ``config.default.yaml``.
 
 .. code:: bash
 
-    .../pypsa-eur % cp config.default.yaml config.yaml
+    .../pypsa-eur/config % cp config.default.yaml config.yaml
 
-Users are advised to regularly check their own ``config.yaml`` against changes in the ``config.default.yaml``
-when pulling a new version from the remote repository.
+Change all entries which should be overwritten with the ``config.yaml``.
+Remove all other entries which should take on their default values as contained in ``config.default.yaml``.
+   
+Lastly activate the custom configuration by changing the following line inside the main folder's `Snakefile`:
+   
+.. code:: python
+
+    # Specify your custom configuration file here
+    configfile: "config/config.tutorial.yaml"
+
+to
+
+.. code:: python
+
+    # Specify your custom configuration file here
+    configfile: "config/config.yaml"
+
+
+New configuration options may be added with future updates of PyPSA-EUR whenever you are updating the local
+repository by pulling from GitHub.
+The new options will be included in the ``config.default.yaml`` file and can then be overwritten using the ``config.yaml`` if necessary.
+Observe the :ref:`release_notes` for further information.
 
 .. Using PyPSA-Eur with Docker Images
 .. ==================================

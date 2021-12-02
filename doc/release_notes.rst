@@ -3,6 +3,8 @@
 
   SPDX-License-Identifier: CC-BY-4.0
 
+.. _release_notes:
+
 ##########################################
 Release Notes
 ##########################################
