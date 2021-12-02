@@ -1,17 +1,28 @@
-# SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2021 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
 from os.path import normpath, exists
 from shutil import copyfile
+from pathlib import Path
+from snakemake.utils import update_config
+from snakemake.io import load_configfile
 
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 HTTP = HTTPRemoteProvider()
 
-if not exists("config.yaml"):
-    copyfile("config.default.yaml", "config.yaml")
+## ++ Configuration setup ++ ##
+# Specify your custom configuration file here
+configfile: "config/config.tutorial.yaml"
 
-configfile: "config.yaml"
+# Default configuration - DO NOT CHANGE
+default_configfile="config/config.default.yaml"
+
+# Load default config and overwrite with specific config
+specific_config = config.copy()
+config = load_configfile(Path(default_configfile))
+update_config(config, specific_config)
+## -- Configuration setup -- ##
 
 COSTS="data/costs.csv"
 ATLITE_NPROCESSES = config['atlite'].get('nprocesses', 4)
@@ -22,7 +33,6 @@ wildcard_constraints:
     clusters="[0-9]+m?|all",
     ll="(v|c)([0-9\.]+|opt|all)|all",
     opts="[-+a-zA-Z0-9\.]*"
-
 
 rule cluster_all_networks:
     input: expand("networks/elec_s{simpl}_{clusters}.nc", **config['scenario'])
