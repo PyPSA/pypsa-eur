@@ -50,5 +50,7 @@ jobs:
     - name: Test snakemake workflow
       run: |
         conda list
-        snakemake --cores all --configfile="test/config.test1.yaml" solve_all_networks
+        rm config/config.tutorial.yaml
+        cp test/config.test1.yaml config/config.tutorial.yaml
+        snakemake --cores all sollve_all_networks
         rm -rf resources/*.nc resources/*.geojson resources/*.h5 networks results
