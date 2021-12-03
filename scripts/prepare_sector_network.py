@@ -84,12 +84,14 @@ def define_spatial(nodes):
         spatial.gas.biogas = nodes + " biogas"
         spatial.gas.industry = nodes + " gas for industry"
         spatial.gas.industry_cc = nodes + " gas for industry CC"
+        spatial.gas.biogas_to_gas = nodes + " biogas to gas"
     else:
         spatial.gas.nodes = ["EU gas"]
-        spatial.gas.locations = "EU"
+        spatial.gas.locations = ["EU"]
         spatial.gas.biogas = ["EU biogas"]
         spatial.gas.industry = ["gas for industry"]
         spatial.gas.industry_cc = ["gas for industry CC"]
+        spatial.gas.biogas_to_gas = ["EU biogas to gas"]
 
     spatial.gas.df = pd.DataFrame(vars(spatial.gas), index=nodes)
 
@@ -356,6 +358,9 @@ def add_carrier_buses(n, carrier, nodes=None):
     if carrier in n.carriers.index:
         return
 
+    if not isinstance(nodes, pd.Index):
+        nodes = pd.Index(nodes)
+
     n.add("Carrier", carrier)
 
     n.madd("Bus",
@@ -393,7 +398,6 @@ def remove_elec_base_techs(n):
         to_remove = pd.Index(c.df.carrier.unique()).symmetric_difference(to_keep)
         print("Removing", c.list_name, "with carrier", to_remove)
         names = c.df.index[c.df.carrier.isin(to_remove)]
-        print(names)
         n.mremove(c.name, names)
         n.carriers.drop(to_remove, inplace=True, errors="ignore")
 
@@ -518,7 +522,7 @@ def add_dac(n, costs):
 
 def add_co2limit(n, Nyears=1., limit=0.):
 
-    print("Adding CO2 budget limit as per unit of 1990 levels of", limit)
+    logger.info(f"Adding CO2 budget limit as per unit of 1990 levels of {limit}")
 
     countries = n.buses.country.dropna().unique()
 
@@ -793,7 +797,7 @@ def prepare_costs(cost_file, USD_to_EUR, discount_rate, Nyears, lifetime):
 
 def add_generation(n, costs):
 
-    print("adding electricity generation")
+    logger.info("adding electricity generation")
 
     nodes = pop_layout.index
 
@@ -802,7 +806,7 @@ def add_generation(n, costs):
 
     for generator, carrier in conventionals.items():
 
-        if carrier == 'gas' and options["gas_network"]:
+        if carrier == 'gas':
             carrier_nodes = spatial.gas.nodes
         else:
             carrier_nodes = ["EU " + carrier]
@@ -1005,7 +1009,8 @@ def add_electricity_grid_connection(n, costs):
 
 
 def add_storage_and_grids(n, costs):
-    print("adding electricity and hydrogen storage as well as hydrogen and gas grids")
+
+    logger.info("Add hydrogen storage")
 
     nodes = pop_layout.index
 
@@ -1053,6 +1058,8 @@ def add_storage_and_grids(n, costs):
 
     if options['hydrogen_underground_storage']:
 
+        logger.info("Add hydrogen underground storage")
+
         h2_capital_cost = costs.at["hydrogen storage underground", "fixed"]
 
         n.madd("Store",
@@ -1085,7 +1092,7 @@ def add_storage_and_grids(n, costs):
 
     if options["gas_network"]:
 
-        logger.info("Add gas infrastructure, incl. LNG terminals, production and entry-points.")
+        logger.info("Add natural gas infrastructure, incl. LNG terminals, production and entry-points.")
 
         if options["H2_retrofit"]:
             gas_pipes["p_nom_max"] = gas_pipes.p_nom
@@ -1315,7 +1322,7 @@ def add_storage_and_grids(n, costs):
 def add_land_transport(n, costs):
     # TODO options?
 
-    print("adding land transport")
+    logger.info("Add land transport")
 
     fuel_cell_share = get(options["land_transport_fuel_cell_share"], investment_year)
     electric_share = get(options["land_transport_electric_share"], investment_year)
@@ -1437,7 +1444,7 @@ def add_land_transport(n, costs):
 
 def add_heat(n, costs):
 
-    print("adding heat")
+    logger.info("Add heat sector")
 
     sectors = ["residential", "services"]
 
@@ -1673,7 +1680,7 @@ def add_heat(n, costs):
 
     if options['retrofitting']['retro_endogen']:
 
-        print("adding retrofitting endogenously")
+        logger.info("Add retrofitting endogenously")
 
         # resample heat demand temporal 'heat_demand_r' depending on in config
         # specified temporal resolution, to not overestimate retrofitting
@@ -1742,7 +1749,7 @@ def add_heat(n, costs):
 
             # check that ambitious retrofitting has higher costs per MWh than moderate retrofitting
             if (capital_cost.diff() < 0).sum():
-                print(f"Warning: costs are not linear for {ct} {sec}")
+                logger.warning(f"Costs are not linear for {ct} {sec}")
                 s = capital_cost[(capital_cost.diff() < 0)].index
                 strengths = strengths.drop(s)
 
@@ -1809,7 +1816,7 @@ def create_nodes_for_heat_sector():
 
 def add_biomass(n, costs):
 
-    print("adding biomass")
+    logger.info("Add biomass")
 
     biomass_potentials = pd.read_csv(snakemake.input.biomass_potentials, index_col=0)
 
@@ -1859,7 +1866,7 @@ def add_biomass(n, costs):
     )
 
     n.madd("Link",
-        spatial.gas.locations + "biogas to gas",
+        spatial.gas.biogas_to_gas,
         bus0=spatial.gas.biogas,
         bus1=spatial.gas.nodes,
         bus2="co2 atmosphere",
@@ -1939,7 +1946,7 @@ def add_biomass(n, costs):
 
 def add_industry(n, costs):
 
-    print("adding industrial demand")
+    logger.info("Add industrial demand")
 
     nodes = pop_layout.index
 
@@ -2260,7 +2267,7 @@ def add_industry(n, costs):
 def add_waste_heat(n):
     # TODO options?
 
-    print("adding possibility to use industrial waste heat in district heating")
+    logger.info("Add possibility to use industrial waste heat in district heating")
 
     #AC buses with district heating
     urban_central = n.buses.index[n.buses.carrier == "urban central heat"]
@@ -2390,7 +2397,7 @@ def maybe_adjust_costs_and_potentials(n, opts):
 
 # TODO this should rather be a config no wildcard
 def limit_individual_line_extension(n, maxext):
-    print(f"limiting new HVAC and HVDC extensions to {maxext} MW")
+    logger.info(f"limiting new HVAC and HVDC extensions to {maxext} MW")
     n.lines['s_nom_max'] = n.lines['s_nom'] + maxext
     hvdc = n.links.index[n.links.carrier == 'DC']
     n.links.loc[hvdc, 'p_nom_max'] = n.links.loc[hvdc, 'p_nom'] + maxext
@@ -2517,7 +2524,7 @@ if __name__ == "__main__":
         limit = o[o.find("Co2L")+4:]
         limit = float(limit.replace("p", ".").replace("m", "-"))
         break
-    print("add CO2 limit from", limit_type)
+    print("Add CO2 limit from", limit_type)
     add_co2limit(n, Nyears, limit)
 
     for o in opts:
