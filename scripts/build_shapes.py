@@ -108,7 +108,7 @@ def _simplify_polys(polys, minarea=0.1, tolerance=0.01, filterremote=True):
 
 
 def countries():
-    cntries = snakemake.config['countries']
+    cntries = snakemake.params.countries
     if 'RS' in cntries: cntries.append('KV')
 
     df = gpd.read_file(snakemake.input.naturalearth)
@@ -126,7 +126,7 @@ def countries():
 
 def eez(country_shapes):
     df = gpd.read_file(snakemake.input.eez)
-    df = df.loc[df['ISO_3digit'].isin([_get_country('alpha_3', alpha_2=c) for c in snakemake.config['countries']])]
+    df = df.loc[df['ISO_3digit'].isin([_get_country('alpha_3', alpha_2=c) for c in snakemake.params.countries])]
     df['name'] = df['ISO_3digit'].map(lambda c: _get_country('alpha_2', alpha_3=c))
     s = df.set_index('name').geometry.map(lambda s: _simplify_polys(s, filterremote=False))
     s = gpd.GeoSeries({k:v for k,v in s.iteritems() if v.distance(country_shapes[k]) < 1e-3})

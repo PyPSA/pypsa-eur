@@ -204,7 +204,7 @@ def attach_load(n):
     regions = (gpd.read_file(snakemake.input.regions).set_index('name')
                .reindex(substation_lv_i))
     opsd_load = (pd.read_csv(snakemake.input.load, index_col=0, parse_dates=True)
-                .filter(items=snakemake.config['countries']))
+                .filter(items=snakemake.params.countries))
 
     scaling = snakemake.config.get('load', {}).get('scaling_factor', 1.0)
     logger.info(f"Load data scaled with scalling factor {scaling}.")

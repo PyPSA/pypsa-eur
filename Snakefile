@@ -76,6 +76,8 @@ rule retrieve_load_data:
 rule build_load_data:
     input: "data/load_raw.csv"
     output: "resources/load.csv"
+    params:
+        countries=config["countries"]
     log: "logs/build_load_data.log"
     script: 'scripts/build_load_data.py'
     
@@ -105,6 +107,8 @@ rule base_network:
         offshore_shapes='resources/offshore_shapes.geojson',
         europe_shape='resources/europe_shape.geojson'
     output: "networks/base.nc"
+    params:
+        countries=config["countries"]
     log: "logs/base_network.log"
     benchmark: "benchmarks/base_network"
     threads: 1
@@ -126,6 +130,8 @@ rule build_shapes:
         offshore_shapes='resources/offshore_shapes.geojson',
         europe_shape='resources/europe_shape.geojson',
         nuts3_shapes='resources/nuts3_shapes.geojson'
+    params:
+        countries=config["countries"]
     log: "logs/build_shapes.log"
     threads: 1
     resources: mem=500
@@ -140,6 +146,8 @@ rule build_bus_regions:
     output:
         regions_onshore="resources/regions_onshore.geojson",
         regions_offshore="resources/regions_offshore.geojson"
+    params:
+        countries=config["countries"]
     log: "logs/build_bus_regions.log"
     threads: 1
     resources: mem=1000
@@ -151,6 +159,8 @@ if config['enable'].get('build_cutout', False):
             regions_onshore="resources/regions_onshore.geojson",
             regions_offshore="resources/regions_offshore.geojson"
         output: "cutouts/{cutout}.nc"
+        params:
+            cutout_params=lambda w: config['atlite']['cutouts'][w.cutout]
         log: "logs/build_cutout/{cutout}.log"
         benchmark: "benchmarks/build_cutout_{cutout}"
         threads: ATLITE_NPROCESSES
@@ -196,7 +206,11 @@ rule build_renewable_profiles:
                                    if w.technology in ('onwind', 'solar')
                                    else "resources/regions_offshore.geojson"),
         cutout=lambda w: "cutouts/" + config["renewable"][w.technology]['cutout'] + ".nc"
-    output: profile="resources/profile_{technology}.nc",
+    output:
+        profile="resources/profile_{technology}.nc",
+    params:
+        atlite=config["atlite"]
+        options=lambda w: config["renewable"][w.technology]
     log: "logs/build_renewable_profile_{technology}.log"
     benchmark: "benchmarks/build_renewable_profiles_{technology}"
     threads: ATLITE_NPROCESSES
@@ -211,6 +225,8 @@ if 'hydro' in config['renewable'].keys():
             eia_hydro_generation='data/bundle/EIA_hydro_generation_2000_2014.csv',
             cutout="cutouts/" + config["renewable"]['hydro']['cutout'] + ".nc"
         output: 'resources/profile_hydro.nc'
+        params:
+            countries=config["countries"]
         log: "logs/build_hydro_profile.log"
         resources: mem=5000
         script: 'scripts/build_hydro_profile.py'
@@ -229,6 +245,8 @@ rule add_electricity:
         **{f"profile_{tech}": f"resources/profile_{tech}.nc"
            for tech in config['renewable']}
     output: "networks/elec.nc"
+    params:
+        countries=config["countries"]
     log: "logs/add_electricity.log"
     benchmark: "benchmarks/add_electricity"
     threads: 1

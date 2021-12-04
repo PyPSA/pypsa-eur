@@ -386,7 +386,7 @@ def _set_countries_and_substations(n):
             index=buses.index
         )
 
-    countries = snakemake.config['countries']
+    countries = snakemake.params.countries
     country_shapes = gpd.read_file(snakemake.input.country_shapes).set_index('name')['geometry']
     offshore_shapes = gpd.read_file(snakemake.input.offshore_shapes).set_index('name')['geometry']
     substation_b = buses['symbol'].str.contains('substation|converter station', case=False)
@@ -554,7 +554,7 @@ def base_network():
     n = pypsa.Network()
     n.name = 'PyPSA-Eur'
 
-    n.set_snapshots(pd.date_range(freq='h', **snakemake.config['snapshots']))
+    n.set_snapshots(pd.date_range(freq='h', **snakemake.params.snapshots))
     n.snapshot_weightings[:] *= 8760. / n.snapshot_weightings.sum()
 
     n.import_components_from_dataframe(buses, "Bus")
