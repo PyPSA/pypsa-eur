@@ -95,6 +95,23 @@ def define_spatial(nodes):
 
     spatial.gas.df = pd.DataFrame(vars(spatial.gas), index=nodes)
 
+    # hydrogen
+
+    spatial.h2 = SimpleNamespace()
+
+    if options["H2_network"]:
+        spatial.h2.nodes = nodes + " H2"
+        spatial.h2.locations = nodes
+        spatial.h2.liquid = nodes + " H2 liquid"
+        spatial.h2.stores = nodes + " H2 Store"
+    else:
+        spatial.h2.nodes = ["EU H2"]
+        spatial.h2.locations = ["EU"]
+        spatial.h2.liquid = ["EU H2 liquid"]
+        spatial.h2.stores = ["EU H2 Store"]
+
+    spatial.h2.df = pd.DataFrame(vars(spatial.h2), index=nodes)
+
 
 from types import SimpleNamespace
 spatial = SimpleNamespace()
@@ -1017,14 +1034,15 @@ def add_storage_and_grids(n, costs):
     n.add("Carrier", "H2")
 
     n.madd("Bus",
-        nodes + " H2",
-        location=nodes,
+        spatial.h2.nodes,
+        location=spatial.h2.locations,
         carrier="H2"
     )
 
     n.madd("Link",
-        nodes + " H2 Electrolysis",
-        bus1=nodes + " H2",
+        nodes,
+        suffix=" H2 Electrolysis",
+        bus1=spatial.h2.nodes,
         bus0=nodes,
         p_nom_extendable=True,
         carrier="H2 Electrolysis",
@@ -1034,8 +1052,9 @@ def add_storage_and_grids(n, costs):
     )
 
     n.madd("Link",
-        nodes + " H2 Fuel Cell",
-        bus0=nodes + " H2",
+        nodes,
+        suffix=" H2 Fuel Cell",
+        bus0=spatial.h2.nodes,
         bus1=nodes,
         p_nom_extendable=True,
         carrier ="H2 Fuel Cell",
@@ -1056,6 +1075,16 @@ def add_storage_and_grids(n, costs):
     # clip at 1000 TWh for one location
     h2_caverns.clip(upper=1e9, inplace=True)
 
+    if options["H2_network"]:
+        nodes_cavern = spatial.h2.df.loc[h2_caverns.index, "nodes"].values
+        e_nom_max = h2_caverns.rename(index=lambda x: x + " H2 Store")
+        # hydrogen stored overground (where not already underground)
+        nodes_overground = h2_caverns.index.symmetric_difference(nodes)
+    else:
+        nodes_cavern = ["EU H2"]
+        e_nom_max = pd.Series({"EU H2": h2_caverns.sum()})
+        nodes_overground = pd.Index([])
+
     if options['hydrogen_underground_storage']:
 
         logger.info("Add hydrogen underground storage")
@@ -1063,27 +1092,29 @@ def add_storage_and_grids(n, costs):
         h2_capital_cost = costs.at["hydrogen storage underground", "fixed"]
 
         n.madd("Store",
-            h2_caverns.index + " H2 Store",
-            bus=h2_caverns.index + " H2",
+            nodes_cavern,
+            suffix=" Store",
+            bus=nodes_cavern,
             e_nom_extendable=True,
-            e_nom_max=h2_caverns.values,
+            e_nom_max=e_nom_max,
             e_cyclic=True,
             carrier="H2 Store",
             capital_cost=h2_capital_cost
         )
+ 
+    if not nodes_overground.empty:
 
-    # hydrogen stored overground (where not already underground)
-    h2_capital_cost = costs.at["hydrogen storage tank incl. compressor", "fixed"]
-    nodes_overground = h2_caverns.index.symmetric_difference(nodes)
-
-    n.madd("Store",
-        nodes_overground + " H2 Store",
-        bus=nodes_overground + " H2",
-        e_nom_extendable=True,
-        e_cyclic=True,
-        carrier="H2 Store",
-        capital_cost=h2_capital_cost
-    )
+        h2_capital_cost = costs.at["hydrogen storage tank incl. compressor", "fixed"]
+        
+        n.madd("Store",
+            nodes_overground,
+            suffix=" H2 Store",
+            bus=spatial.h2.df.loc[nodes_overground, "nodes"].values,
+            e_nom_extendable=True,
+            e_cyclic=True,
+            carrier="H2 Store",
+            capital_cost=h2_capital_cost
+        )
 
     if options["gas_network"] or options["H2_retrofit"]:
 
@@ -1257,9 +1288,9 @@ def add_storage_and_grids(n, costs):
     if options['methanation']:
 
         n.madd("Link",
-            spatial.nodes,
+            spatial.h2.nodes,
             suffix=" Sabatier",
-            bus0=nodes + " H2",
+            bus0=spatial.h2.nodes,
             bus1=spatial.gas.nodes,
             bus2=spatial.co2.nodes,
             p_nom_extendable=True,
@@ -1290,10 +1321,10 @@ def add_storage_and_grids(n, costs):
     if options['SMR']:
 
         n.madd("Link",
-            spatial.nodes,
+            spatial.h2.locations,
             suffix=" SMR CC",
             bus0=spatial.gas.nodes,
-            bus1=nodes + " H2",
+            bus1=spatial.h2.nodes,
             bus2="co2 atmosphere",
             bus3=spatial.co2.nodes,
             p_nom_extendable=True,
@@ -1306,9 +1337,10 @@ def add_storage_and_grids(n, costs):
         )
 
         n.madd("Link",
-            nodes + " SMR",
+            spatial.h2.locations, 
+            suffix=" SMR",
             bus0=spatial.gas.nodes,
-            bus1=nodes + " H2",
+            bus1=spatial.h2.nodes,
             bus2="co2 atmosphere",
             p_nom_extendable=True,
             carrier="SMR",
@@ -1405,12 +1437,19 @@ def add_land_transport(n, costs):
 
     if fuel_cell_share > 0:
 
+        p_set = fuel_cell_share / options['transport_fuel_cell_efficiency'] * transport[nodes]
+
+        if options["H2_network"]:
+            spatial_p_set = p_set
+        else:
+            spatial_p_set = pd.DataFrame(p_set.sum(axis=1), columns=["EU"])
+
         n.madd("Load",
-            nodes,
+            spatial.h2.locations,
             suffix=" land transport fuel cell",
-            bus=nodes + " H2",
+            bus=spatial.h2.nodes,
             carrier="land transport fuel cell",
-            p_set=fuel_cell_share / options['transport_fuel_cell_efficiency'] * transport[nodes]
+            p_set=spatial_p_set
         )
 
     if ice_share > 0:
@@ -2040,27 +2079,35 @@ def add_industry(n, costs):
         lifetime=costs.at['cement capture', 'lifetime']
     )
 
+    h2_demand = industrial_demand.loc[nodes, "hydrogen"] / 8760
+
+    if options["H2_network"]:
+        spatial_h2_demand = h2_demand.rename(index=lambda x: x + "H2 for industry")
+    else:
+        spatial_h2_demand = h2_demand.sum()
+
     n.madd("Load",
-        nodes,
+        spatial.h2.locations,
         suffix=" H2 for industry",
-        bus=nodes + " H2",
+        bus=spatial.h2.nodes,
         carrier="H2 for industry",
-        p_set=industrial_demand.loc[nodes, "hydrogen"] / 8760
+        p_set=spatial_h2_demand
     )
 
     if options["shipping_hydrogen_liquefaction"]:
 
         n.madd("Bus",
-            nodes,
+            spatial.h2.locations,
             suffix=" H2 liquid",
             carrier="H2 liquid",
-            location=nodes
+            location=spatial.h2.locations
         )
 
         n.madd("Link",
-            nodes + " H2 liquefaction",
-            bus0=nodes + " H2",
-            bus1=nodes + " H2 liquid",
+            spatial.h2.locations, 
+            suffix=" H2 liquefaction",
+            bus0=spatial.h2.nodes,
+            bus1=spatial.h2.liquid,
             carrier="H2 liquefaction",
             efficiency=costs.at["H2 liquefaction", 'efficiency'],
             capital_cost=costs.at["H2 liquefaction", 'fixed'],
@@ -2068,21 +2115,26 @@ def add_industry(n, costs):
             lifetime=costs.at['H2 liquefaction', 'lifetime']
         )
 
-        shipping_bus = nodes + " H2 liquid"
+        shipping_bus = spatial.h2.liquid
     else:
-        shipping_bus = nodes + " H2"
+        shipping_bus = spatial.h2.nodes
 
     all_navigation = ["total international navigation", "total domestic navigation"]
     efficiency = options['shipping_average_efficiency'] / costs.at["fuel cell", "efficiency"]
     shipping_hydrogen_share = get(options['shipping_hydrogen_share'], investment_year)
     p_set = shipping_hydrogen_share * nodal_energy_totals.loc[nodes, all_navigation].sum(axis=1) * 1e6 * efficiency / 8760
 
+    if options["H2_network"]:
+        spatial_p_set = p_set.rename(index=lambda x: x + "H2 for shipping")
+    else:
+        spatial_p_set = p_set.sum()
+
     n.madd("Load",
-        nodes,
+        spatial.h2.locations,
         suffix=" H2 for shipping",
         bus=shipping_bus,
         carrier="H2 for shipping",
-        p_set=p_set
+        p_set=spatial_p_set
     )
 
     if shipping_hydrogen_share < 1:
@@ -2157,8 +2209,9 @@ def add_industry(n, costs):
             )
 
     n.madd("Link",
-        nodes + " Fischer-Tropsch",
-        bus0=nodes + " H2",
+        spatial.h2.locations, 
+        suffix=" Fischer-Tropsch",
+        bus0=spatial.h2.nodes,
         bus1="EU oil",
         bus2=spatial.co2.nodes,
         carrier="Fischer-Tropsch",
@@ -2276,8 +2329,11 @@ def add_waste_heat(n):
 
         # TODO what is the 0.95 and should it be a config option?
         if options['use_fischer_tropsch_waste_heat']:
-            n.links.loc[urban_central + " Fischer-Tropsch", "bus3"] = urban_central + " urban central heat"
-            n.links.loc[urban_central + " Fischer-Tropsch", "efficiency3"] = 0.95 - n.links.loc[urban_central + " Fischer-Tropsch", "efficiency"]
+            if not options["H2_network"]:
+                logger.warning("The use of Fischer-Tropsch waste heat requires nodally resolved H2. Will be ignored.")
+            else:
+                n.links.loc[urban_central + " Fischer-Tropsch", "bus3"] = urban_central + " urban central heat"
+                n.links.loc[urban_central + " Fischer-Tropsch", "efficiency3"] = 0.95 - n.links.loc[urban_central + " Fischer-Tropsch", "efficiency"]
 
         if options['use_fuel_cell_waste_heat']:
             n.links.loc[urban_central + " H2 Fuel Cell", "bus2"] = urban_central + " urban central heat"
