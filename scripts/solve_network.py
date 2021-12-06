@@ -223,7 +223,12 @@ def add_co2_sequestration_limit(n, sns):
     rhs = n.config["sector"].get("co2_sequestration_potential", 200) * 1e6
     
     name = 'co2_sequestration_limit'
-    define_constraints(n, lhs, "<=", rhs, 'GlobalConstraint',
+    sense = "<="
+
+    n.add("GlobalConstraint", name, sense=sense, constant=rhs,
+          type=np.nan, carrier_attribute=np.nan)
+
+    define_constraints(n, lhs, sense, rhs, 'GlobalConstraint',
                        'mu', axes=pd.Index([name]), spec=name)
 
 
@@ -240,6 +245,7 @@ def solve_network(n, config, opts='', **kwargs):
     track_iterations = cf_solving.get('track_iterations', False)
     min_iterations = cf_solving.get('min_iterations', 4)
     max_iterations = cf_solving.get('max_iterations', 6)
+    keep_shadowprices = cf_solving.get('keep_shadowprices', True)
 
     # add to network for extra_functionality
     n.config = config
@@ -247,13 +253,16 @@ def solve_network(n, config, opts='', **kwargs):
 
     if cf_solving.get('skip_iterations', False):
         network_lopf(n, solver_name=solver_name, solver_options=solver_options,
-                     extra_functionality=extra_functionality, **kwargs)
+                     extra_functionality=extra_functionality, 
+                     keep_shadowprices=keep_shadowprices, **kwargs)
     else:
         ilopf(n, solver_name=solver_name, solver_options=solver_options,
               track_iterations=track_iterations,
               min_iterations=min_iterations,
               max_iterations=max_iterations,
-              extra_functionality=extra_functionality, **kwargs)
+              extra_functionality=extra_functionality,
+              keep_shadowprices=keep_shadowprices,
+              **kwargs)
     return n
 
 

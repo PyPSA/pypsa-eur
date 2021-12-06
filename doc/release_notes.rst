@@ -54,9 +54,16 @@ incorporates retrofitting options to hydrogen.
   transmission routes. Previously, only the electricity transmission routes were
   considered.
 
+**New features and functionality**
+
 * Option ``retrieve_sector_databundle`` to automatically retrieve and extract data bundle.
 
 * Add regionalised hydrogen salt cavern storage potentials from `Technical Potential of Salt Caverns for Hydrogen Storage in Europe <https://doi.org/10.20944/preprints201910.0187.v1>`_.
+
+**Bugfixes**
+
+* The CO2 sequestration limit implemented as GlobalConstraint (introduced in the previous version)
+  caused a failure to read in the shadow prices of other global constraints.
 
 
 PyPSA-Eur-Sec 0.6.0 (4 October 2021)
