@@ -36,6 +36,7 @@ renewable:
     cutout: europe-2013-era5-tutorial
   offwind-ac:
     cutout: europe-2013-era5-tutorial
+    max_depth: False
   offwind-dc:
     cutout: europe-2013-era5-tutorial
     max_depth: False
