@@ -198,7 +198,7 @@ rule build_renewable_profiles:
         corine="data/bundle/corine/g250_clc06_V18_5.tif",
         natura="resources/natura.tiff",
         gebco=lambda w: ("data/bundle/GEBCO_2014_2D.nc"
-                         if "max_depth" in config["renewable"][w.technology].keys()
+                         if config["renewable"][w.technology].get("max_depth", False)
                          else []),
         country_shapes='resources/country_shapes.geojson',
         offshore_shapes='resources/offshore_shapes.geojson',
