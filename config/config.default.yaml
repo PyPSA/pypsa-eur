@@ -213,6 +213,7 @@ costs:
 
 solving:
   options:
+    solver_name: gurobi
     formulation: kirchhoff
     load_shedding: false
     noisy_costs: true
@@ -222,23 +223,22 @@ solving:
     skip_iterations: false
     track_iterations: false
     #nhours: 10
-  solver:
-    name: gurobi
-    threads: 4
-    method: 2 # barrier
-    crossover: 0
-    BarConvTol: 1.e-5
-    FeasibilityTol: 1.e-6
-    AggFill: 0
-    PreDual: 0
-    GURO_PAR_BARDENSETHRESH: 200
-  # solver:
-  #   name: cplex
-  #   threads: 4
-  #   lpmethod: 4 # barrier
-  #   solutiontype: 2 # non basic solution, ie no crossover
-  #   barrier.convergetol: 1.e-5
-  #   feasopt.tolerance: 1.e-6
+  solver_options:
+    gurobi:
+        threads: 4
+        method: 2 # barrier
+        crossover: 0
+        BarConvTol: 1.e-5
+        FeasibilityTol: 1.e-6
+        AggFill: 0
+        PreDual: 0
+        GURO_PAR_BARDENSETHRESH: 200
+    cplex:
+        threads: 4
+        lpmethod: 4 # barrier
+        solutiontype: 2 # non basic solution, ie no crossover
+        barrier.convergetol: 1.e-5
+        feasopt.tolerance: 1.e-6
 
 plotting:
   map:
