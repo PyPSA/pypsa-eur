@@ -40,7 +40,7 @@ renewable:
     cutout: europe-2013-era5-tutorial
   offwind-dc:
     cutout: europe-2013-era5-tutorial
-    max_depth: None
+    max_depth: False
   solar:
     cutout: europe-2013-era5-tutorial
 
