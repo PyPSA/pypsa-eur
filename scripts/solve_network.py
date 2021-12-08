@@ -243,12 +243,11 @@ def extra_functionality(n, snapshots):
 
 
 def solve_network(n, config, opts='', **kwargs):
-    solver_options = config['solving']['solver'].copy()
-    solver_name = solver_options.pop('name')
-    cf_solving = config['solving']['options']
-    track_iterations = cf_solving.get('track_iterations', False)
-    min_iterations = cf_solving.get('min_iterations', 4)
-    max_iterations = cf_solving.get('max_iterations', 6)
+    solver_name = solver_options['solving']['options']['solver_name']
+    solver_options = config['solving']['solver_options'].get(solver_name, dict())
+    track_iterations = config['solving']['options']['track_iterations']
+    min_iterations = config['solving']['options']['min_iterations']
+    max_iterations = config['solving']['options']['max_iterations']
 
     # add to network for extra_functionality
     n.config = config
