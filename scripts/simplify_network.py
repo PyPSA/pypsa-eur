@@ -407,9 +407,10 @@ if __name__ == "__main__":
         busmaps.append(substation_map)
 
     if snakemake.wildcards.simpl:
+        cluster_config = snakemake.config.get('clustering', {}).get('simplify_network', {})
         n, cluster_map = cluster(n, int(snakemake.wildcards.simpl),
-                                 algorithm=snakemake.config.get('clustering', {}).get('simplify_network', {}).get('algorithm', 'hac'),
-                                 feature=snakemake.config.get('clustering', {}).get('simplify_network', {}).get('feature', None))
+                                 algorithm=cluster_config.get('algorithm', 'hac'),
+                                 feature=cluster_config.get('feature', None))
         busmaps.append(cluster_map)
 
     # some entries in n.buses are not updated in previous functions, therefore can be wrong. as they are not needed

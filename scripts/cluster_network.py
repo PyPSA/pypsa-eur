@@ -170,7 +170,10 @@ def weighting_for_country(n, x):
     return (w * (100. / w.max())).clip(lower=1.).astype(int)
 
 
-def get_feature_for_hac(n, buses_i, feature=None): #buses_i = n.buses.index
+def get_feature_for_hac(n, buses_i=None, feature=None):
+
+    if buses_i is None:
+        buses_i = n.buses.index
 
     if feature is None:
         feature = "solar+onwind-time"
@@ -269,8 +272,8 @@ def busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights=None, algori
     if algorithm == "hac":
         feature = get_feature_for_hac(n, buses_i=n.buses.index, feature=feature)
     elif feature is not None:
-        logger.info(f"keyword argument feature is only valid for algorithm 'hac'."
-                    f"given feature {feature} will be ignored.")
+        logger.warning(f"Keyword argument feature is only valid for algorithm 'hac'."
+                       f"given feature {feature} will be ignored.")
 
     n.determine_network_topology()
 
@@ -422,12 +425,13 @@ if __name__ == "__main__":
         potential_mode = consense(pd.Series([snakemake.config['renewable'][tech]['potential']
                                              for tech in renewable_carriers]))
         custom_busmap = snakemake.config["enable"].get("custom_busmap", False)
+        cluster_config = snakemake.config.get('clustering', {}).get('cluster_network', {})
         clustering = clustering_for_n_clusters(n, n_clusters, custom_busmap, aggregate_carriers,
                                                line_length_factor=line_length_factor,
                                                potential_mode=potential_mode,
                                                solver_name=snakemake.config['solving']['solver']['name'],
-                                               algorithm=snakemake.config.get('clustering', {}).get('cluster_network', {}).get('algorithm', 'kmeans'),
-                                               feature=snakemake.config.get('clustering', {}).get('cluster_network', {}).get('feature', None),
+                                               algorithm=cluster_config.get('algorithm', 'kmeans'),
+                                               feature=cluster_config.get('feature', None),
                                                extended_link_costs=hvac_overhead_cost,
                                                focus_weights=focus_weights)
 
