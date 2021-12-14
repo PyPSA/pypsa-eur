@@ -215,10 +215,22 @@ if 'hydro' in config['renewable'].keys():
         resources: mem=5000
         script: 'scripts/build_hydro_profile.py'
 
+if config['lines'].get('dynamic_line_rating', True):
+    rule build_line_rating:
+        input:
+            base_network="networks/base.nc",
+            cutout="cutouts/" + config["renewable"]['onwind']['cutout'] + ".nc"
+        output:
+            output="networks/base_line_rating.nc"
+    log: "logs/build_line_rating.log"
+    benchmark: "benchmarks/build_line_rating"
+    threads: 1
+    #resources: mem=3000
+    script: "scripts/build_line_rating.py"
 
 rule add_electricity:
     input:
-        base_network='networks/base.nc',
+        base_network = rules.build_line_rating.output[0] if config['lines'].get('dynamic_line_rating', True) else rules.base_network.output[0],
         tech_costs=COSTS,
         regions="resources/regions_onshore.geojson",
         powerplants='resources/powerplants.csv',
@@ -398,4 +410,3 @@ rule plot_p_nom_max:
     output: "results/plots/elec_s{simpl}_cum_p_nom_max_{clusts}_{techs}_{country}.{ext}"
     log: "logs/plot_p_nom_max/elec_s{simpl}_{clusts}_{techs}_{country}_{ext}.log"
     script: "scripts/plot_p_nom_max.py"
-
