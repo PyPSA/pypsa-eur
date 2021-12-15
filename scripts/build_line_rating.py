@@ -57,6 +57,7 @@ import numpy as np
 import geopandas as gpd
 from shapely.geometry import Point, LineString as Line
 import atlite
+import xarray as xr
 
 
 def add_line_rating(n):
@@ -66,9 +67,12 @@ def add_line_rating(n):
     shapes = [Line([Point(x[b0], y[b0]), Point(x[b1], y[b1])]) for (b0, b1) in buses]
     shapes = gpd.GeoSeries(shapes, index=n.lines.index)
     cutout = atlite.Cutout(snakemake.input.cutout)
-    s = np.sqrt(3) * cutout.line_rating(shapes, n.lines.r/n.lines.length) * 1e3 # in MW
-    n.lines_t.s_max_pu=s.to_pandas().transpose()/n.lines.s_nom
-    n.lines_t.s_max_pu.replace(np.inf, 1.0, inplace=True)
+    da = xr.DataArray(data=np.sqrt(3) * cutout.line_rating(shapes, n.lines.r/n.lines.length) * 1e3,
+                      attrs=dict(description="Maximal possible power for given line considering line rating")) # in MW
+    return da
+    #import netcdf file in add electricity.py
+    #n.lines_t.s_max_pu=s.to_pandas().transpose()/n.lines.s_nom
+    #n.lines_t.s_max_pu.replace(np.inf, 1.0, inplace=True)
 
 
 if __name__ == "__main__":
@@ -79,6 +83,6 @@ if __name__ == "__main__":
     configure_logging(snakemake)
 
     n = pypsa.Network(snakemake.input.base_network)    
-    add_line_rating(n)
+    da=add_line_rating(n)
 
-    n.export_to_netcdf(snakemake.output[0])
+    da.to_netcdf(snakemake.output[0])

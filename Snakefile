@@ -221,7 +221,7 @@ if config['lines'].get('line_rating', False):
             base_network="networks/base.nc",
             cutout="cutouts/" + config["lines"]['cutout'] + ".nc"
         output:
-            output="networks/base_lr.nc"
+            output="resources/line_rating.nc"
     log: "logs/build_line_rating.log"
     benchmark: "benchmarks/build_line_rating"
     threads: 1
@@ -230,9 +230,10 @@ if config['lines'].get('line_rating', False):
 
 rule add_electricity:
     input:
-        base_network = "networks/base_lr.nc" if config['lines'].get('line_rating', False) else "networks/base.nc",
+        base_network = "networks/base.nc",
         tech_costs=COSTS,
         regions="resources/regions_onshore.geojson",
+        line_rating="resources/line_rating.nc" if config['lines'].get('line_rating', False) else None,
         powerplants='resources/powerplants.csv',
         hydro_capacities='data/bundle/hydro_capacities.csv',
         geth_hydro_capacities='data/geth2015_hydro_capacities.csv',
