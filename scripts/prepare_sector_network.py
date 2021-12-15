@@ -2353,23 +2353,23 @@ def remove_h2_network(n):
 def add_import_options(
     n,
     capacity_boost=3.,
-    options=["hvdc", "pipeline-h2", "shipping-lh2", "shipping-lch4", "shipping-ftfuel"]
+    options=["hvdc-to-elec", "pipeline-h2", "shipping-lh2", "shipping-lch4", "shipping-ftfuel"]
 ):
 
     fn = snakemake.input.gas_input_nodes_simplified
     import_nodes = pd.read_csv(fn, index_col=0)
-    import_nodes["hvdc"] = 1e6
+    import_nodes["hvdc-to-elec"] = 1e6
 
     translate = {
         "pipeline-h2": "pipeline",
-        "hvdc": "hvdc",
+        "hvdc-to-elec": "hvdc-to-elec",
         "shipping-lh2": "lng",
         "shipping-lch4": "lng",
     }
 
     bus_suffix = {
         "pipeline-h2": " H2",
-        "hvdc": "",
+        "hvdc-to-elec": "",
         "shipping-lh2": " H2",
         "shipping-lch4": " gas",
     }
@@ -2380,7 +2380,7 @@ def add_import_options(
     for k, v in translate.items():
         import_nodes[k] = import_nodes[v]
 
-    regionalised_options = ["hvdc", "pipeline-h2", "shipping-lh2", "shipping-lch4"]
+    regionalised_options = ["hvdc-to-elec", "pipeline-h2", "shipping-lh2", "shipping-lch4"]
 
     for tech in set(options).intersection(regionalised_options):
 
@@ -2396,7 +2396,7 @@ def add_import_options(
 
         suffix = bus_suffix[tech]
         location = import_nodes_tech.index
-        buses = location if tech == 'hvdc' else location + suffix
+        buses = location if tech == 'hvdc-to-elec' else location + suffix
 
         n.madd(
             "Generator",
