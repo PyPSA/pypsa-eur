@@ -66,7 +66,6 @@ def add_line_rating(n):
     shapes = [Line([Point(x[b0], y[b0]), Point(x[b1], y[b1])]) for (b0, b1) in buses]
     shapes = gpd.GeoSeries(shapes, index=n.lines.index)
     cutout = atlite.Cutout(snakemake.input.cutout)
-    cutout.prepare(features=['temperature', "wnd100m", "height", "wnd_azimuth"])
     s = np.sqrt(3) * cutout.line_rating(shapes, n.lines.r/n.lines.length) * 1e3 # in MW
     n.lines_t.s_max_pu=s.to_pandas().transpose()/n.lines.s_nom
     n.lines_t.s_max_pu.replace(np.inf, 1.0, inplace=True)

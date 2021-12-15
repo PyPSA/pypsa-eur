@@ -215,13 +215,13 @@ if 'hydro' in config['renewable'].keys():
         resources: mem=5000
         script: 'scripts/build_hydro_profile.py'
 
-if config['lines'].get('dynamic_line_rating', True):
+if config['lines'].get('line_rating', False):
     rule build_line_rating:
         input:
             base_network="networks/base.nc",
-            cutout="cutouts/" + config["renewable"]['onwind']['cutout'] + ".nc"
+            cutout="cutouts/" + config["lines"]['cutout'] + ".nc"
         output:
-            output="networks/base_line_rating.nc"
+            output="networks/base_lr.nc"
     log: "logs/build_line_rating.log"
     benchmark: "benchmarks/build_line_rating"
     threads: 1
@@ -230,7 +230,7 @@ if config['lines'].get('dynamic_line_rating', True):
 
 rule add_electricity:
     input:
-        base_network = rules.build_line_rating.output[0] if config['lines'].get('dynamic_line_rating', True) else rules.base_network.output[0],
+        base_network = "networks/base_lr.nc" if config['lines'].get('line_rating', False) else "networks/base.nc",
         tech_costs=COSTS,
         regions="resources/regions_onshore.geojson",
         powerplants='resources/powerplants.csv',
