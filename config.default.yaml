@@ -241,8 +241,8 @@ sector:
   cc_fraction: 0.9  # default fraction of CO2 captured with post-combustion capture
   hydrogen_underground_storage: true
   hydrogen_underground_storage_locations:
-    - onshore  # more than 50 km from sea
-    # - nearshore  # within 50 km of sea
+    # - onshore  # more than 50 km from sea
+    - nearshore  # within 50 km of sea
     # - offshore
   use_fischer_tropsch_waste_heat: true
   use_fuel_cell_waste_heat: true
