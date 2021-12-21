@@ -539,6 +539,10 @@ def estimate_renewable_capacities(n, tech_map=None):
              .where(lambda s: s>0.1, 0.))  # only capacities above 100kW
         n.generators.loc[tech_i, 'p_nom_min'] = n.generators.loc[tech_i, 'p_nom']
 
+def attach_line_rating(n):
+    if snakemake.config["lines"]["line_rating"]:
+        s_max=xr.open_dataarray(snakemake.input.line_rating).to_pandas().transpose()
+        n.lines_t.s_max_pu=s_max/n.lines.loc[s_max.columns,:]['s_nom'] #only considers overhead lines
 
 def add_nice_carrier_names(n, config=None):
     if config is None: config = snakemake.config
@@ -575,9 +579,11 @@ if __name__ == "__main__":
     attach_hydro(n, costs, ppl)
     attach_extendable_generators(n, costs, ppl)
 
+
     estimate_renewable_capacities(n)
     attach_OPSD_renewables(n)
     update_p_nom_max(n)
+    attach_line_rating(n)
 
     add_nice_carrier_names(n)
 

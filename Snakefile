@@ -215,12 +215,25 @@ if 'hydro' in config['renewable'].keys():
         resources: mem=5000
         script: 'scripts/build_hydro_profile.py'
 
+if config['lines'].get('line_rating', False):
+    rule build_line_rating:
+        input:
+            base_network="networks/base.nc",
+            cutout="cutouts/" + config["lines"]['cutout'] + ".nc"
+        output:
+            output="resources/line_rating.nc"
+        log: "logs/build_line_rating.log"
+        benchmark: "benchmarks/build_line_rating"
+        threads: ATLITE_NPROCESSES
+        resources: mem=ATLITE_NPROCESSES * 1000
+        script: "scripts/build_line_rating.py"
 
 rule add_electricity:
     input:
-        base_network='networks/base.nc',
+        base_network = "networks/base.nc",
         tech_costs=COSTS,
         regions="resources/regions_onshore.geojson",
+        line_rating="resources/line_rating.nc" if config['lines'].get('line_rating', False) else None,
         powerplants='resources/powerplants.csv',
         hydro_capacities='data/bundle/hydro_capacities.csv',
         geth_hydro_capacities='data/geth2015_hydro_capacities.csv',
@@ -398,4 +411,3 @@ rule plot_p_nom_max:
     output: "results/plots/elec_s{simpl}_cum_p_nom_max_{clusts}_{techs}_{country}.{ext}"
     log: "logs/plot_p_nom_max/elec_s{simpl}_{clusts}_{techs}_{country}_{ext}.log"
     script: "scripts/plot_p_nom_max.py"
-
