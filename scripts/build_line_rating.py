@@ -11,8 +11,9 @@ Relevant Settings
 
 .. code:: yaml
 
-    lines_t:
-        s_max_pu
+    lines:
+        cutout:
+        line_rating:
 
 
 .. seealso::
@@ -26,7 +27,7 @@ Inputs
 Outputs
 -------
 
-- ``networks/base_with_line_rating.nc``
+- ``resources/line_rating.nc``
 
 
 Description
