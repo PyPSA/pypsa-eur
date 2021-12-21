@@ -233,7 +233,7 @@ rule add_electricity:
         base_network = "networks/base.nc",
         tech_costs=COSTS,
         regions="resources/regions_onshore.geojson",
-        line_rating="resources/line_rating.nc" if config['lines'].get('line_rating', False) else None,
+        line_rating="resources/line_rating.nc" if config['lines'].get('line_rating', False) else "None",
         powerplants='resources/powerplants.csv',
         hydro_capacities='data/bundle/hydro_capacities.csv',
         geth_hydro_capacities='data/geth2015_hydro_capacities.csv',
