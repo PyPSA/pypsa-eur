@@ -541,9 +541,8 @@ def estimate_renewable_capacities(n, tech_map=None):
 
 def attach_line_rating(n):
     if snakemake.config["lines"]["line_rating"]:
-        s=xr.open_dataarray(snakemake.input.line_rating)
-        n.lines_t.s_max_pu=s.to_pandas().transpose()/n.lines.s_nom
-        n.lines_t.s_max_pu.replace(np.inf, 1.0, inplace=True)
+        s_max=xr.open_dataarray(snakemake.input.line_rating).to_pandas().transpose()
+        n.lines_t.s_max_pu=s_max/n.lines.loc[s_max.columns,:]['s_nom'] #only considers overhead lines
 
 def add_nice_carrier_names(n, config=None):
     if config is None: config = snakemake.config

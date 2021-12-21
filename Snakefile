@@ -222,11 +222,11 @@ if config['lines'].get('line_rating', False):
             cutout="cutouts/" + config["lines"]['cutout'] + ".nc"
         output:
             output="resources/line_rating.nc"
-    log: "logs/build_line_rating.log"
-    benchmark: "benchmarks/build_line_rating"
-    threads: 1
-    #resources: mem=3000
-    script: "scripts/build_line_rating.py"
+        log: "logs/build_line_rating.log"
+        benchmark: "benchmarks/build_line_rating"
+        threads: ATLITE_NPROCESSES
+        resources: mem=ATLITE_NPROCESSES * 1000
+        script: "scripts/build_line_rating.py"
 
 rule add_electricity:
     input:

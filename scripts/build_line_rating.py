@@ -60,29 +60,30 @@ import atlite
 import xarray as xr
 
 
-def add_line_rating(n):
-    buses = n.lines[["bus0", "bus1"]].values
+def calculate_line_rating(n):
+    relevant_lines=n.lines[(n.lines['underground']==False) & (n.lines['under_construction']==False)] 
+    buses = relevant_lines[["bus0", "bus1"]].values
     x = n.buses.x
     y = n.buses.y
     shapes = [Line([Point(x[b0], y[b0]), Point(x[b1], y[b1])]) for (b0, b1) in buses]
-    shapes = gpd.GeoSeries(shapes, index=n.lines.index)
+    shapes = gpd.GeoSeries(shapes, index=relevant_lines.index)
     cutout = atlite.Cutout(snakemake.input.cutout)
-    da = xr.DataArray(data=np.sqrt(3) * cutout.line_rating(shapes, n.lines.r/n.lines.length) * 1e3,
-                      attrs=dict(description="Maximal possible power for given line considering line rating")) # in MW
+    if relevant_lines.r_pu.eq(0).all():
+        #Overwrite standard line resistance with line resistance obtained from line type 
+        relevant_lines["r_pu"]=relevant_lines.join(n.line_types["r_per_length"], on=["type"])['r_per_length']/1000 #in meters
+    Imax=cutout.line_rating(shapes, relevant_lines.r_pu)
+    da = xr.DataArray(data=np.sqrt(3) * Imax * relevant_lines["v_nom"].values.reshape(-1,1) * relevant_lines["num_parallel"].values.reshape(-1,1)/1e3, #in mW
+                      attrs=dict(description="Maximal possible power in MW for given line considering line rating"))
     return da
-    #import netcdf file in add electricity.py
-    #n.lines_t.s_max_pu=s.to_pandas().transpose()/n.lines.s_nom
-    #n.lines_t.s_max_pu.replace(np.inf, 1.0, inplace=True)
-
 
 if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
         snakemake = mock_snakemake('build_line_rating', network='elec', simpl='',
-                                  clusters='5', ll='copt', opts='Co2L-BAU-CCL-24H')
+                                  clusters='6', ll='copt', opts='Co2L-24H')
     configure_logging(snakemake)
 
-    n = pypsa.Network(snakemake.input.base_network)    
-    da=add_line_rating(n)
+    n = pypsa.Network(snakemake.input.base_network)  
+    da=calculate_line_rating(n)
 
     da.to_netcdf(snakemake.output[0])
