@@ -19,7 +19,7 @@ from _helpers import progress_retrieve, configure_logging
 if __name__ == "__main__":
     configure_logging(snakemake)
 
-    url = "https://zenodo.org/record/5546517/files/pypsa-eur-sec-data-bundle.tar.gz"
+    url = "https://zenodo.org/record/5824485/files/pypsa-eur-sec-data-bundle.tar.gz"
 
     tarball_fn = Path("sector-bundle.tar.gz")
     to_fn = Path("data")
