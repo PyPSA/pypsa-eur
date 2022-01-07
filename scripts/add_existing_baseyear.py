@@ -450,7 +450,7 @@ def add_heating_capacities_installed_before_baseyear(n, baseyear, grouping_years
             threshold = snakemake.config['existing_capacities']['threshold_capacity']
             n.mremove("Link", [index for index in n.links.index.to_list() if str(grouping_year) in index and n.links.p_nom[index] < threshold])
 
-#%%
+
 if __name__ == "__main__":
     if 'snakemake' not in globals():
         from helper import mock_snakemake

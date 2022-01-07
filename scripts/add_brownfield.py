@@ -83,9 +83,10 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             'add_brownfield',
             simpl='',
-            clusters=48,
+            clusters="45",
+            opts="",
             lv=1.0,
-            sector_opts='Co2L0-168H-T-H-B-I-solar3-dist1',
+            sector_opts='Co2L0-168H-T-H-B-I-A-solar3-dist1',
             planning_horizons=2030,
         )
 
