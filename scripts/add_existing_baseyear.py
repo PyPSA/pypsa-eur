@@ -201,6 +201,11 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
             suffix = '-ac' if generator == 'offwind' else ''
             name_suffix = f' {generator}{suffix}-{baseyear}'
 
+            # to consider electricity grid connection costs or a split between
+            # solar utility and rooftop as well, rather take cost assumptions
+            # from existing network than from the cost database
+            capital_cost = n.generators[n.generators.carrier==generator+suffix].capital_cost.mean()
+
             if 'm' in snakemake.wildcards.clusters:
 
                 for ind in capacity.index:
@@ -220,7 +225,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                         carrier=generator,
                         p_nom=capacity[ind] / len(inv_ind), # split among regions in a country
                         marginal_cost=costs.at[generator,'VOM'],
-                        capital_cost=costs.at[generator,'fixed'],
+                        capital_cost=capital_cost,
                         efficiency=costs.at[generator, 'efficiency'],
                         p_max_pu=p_max_pu,
                         build_year=grouping_year,
@@ -238,7 +243,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                     carrier=generator,
                     p_nom=capacity,
                     marginal_cost=costs.at[generator, 'VOM'],
-                    capital_cost=costs.at[generator, 'fixed'],
+                    capital_cost=capital_cost,
                     efficiency=costs.at[generator, 'efficiency'],
                     p_max_pu=p_max_pu.rename(columns=n.generators.bus),
                     build_year=grouping_year,
@@ -471,7 +476,7 @@ if __name__ == "__main__":
         snakemake.config['costs']['lifetime']
     )
 
-    grouping_years=snakemake.config['existing_capacities']['grouping_years']
+    grouping_years = snakemake.config['existing_capacities']['grouping_years']
     add_power_capacities_installed_before_baseyear(n, grouping_years, costs, baseyear)
 
     if "H" in opts:
