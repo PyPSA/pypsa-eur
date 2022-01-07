@@ -8,6 +8,7 @@ idx = pd.IndexSlice
 
 import pypsa
 import yaml
+import numpy as np
 
 from add_existing_baseyear import add_build_year_to_new_assets
 from helper import override_component_attrs
@@ -25,7 +26,7 @@ def add_brownfield(n, n_p, year):
         # CO2 or global EU values since these are already in n
         n_p.mremove(
             c.name,
-            c.df.index[c.df.lifetime.isna()]
+            c.df.index[c.df.lifetime==np.inf]
         )
 
         # remove assets whose build_year + lifetime < year
@@ -44,7 +45,7 @@ def add_brownfield(n, n_p, year):
         )]
 
         threshold = snakemake.config['existing_capacities']['threshold_capacity']
-        
+
         if not chp_heat.empty:
             threshold_chp_heat = (threshold
                 * c.df.efficiency[chp_heat.str.replace("heat", "electric")].values
@@ -55,7 +56,7 @@ def add_brownfield(n, n_p, year):
                 c.name,
                 chp_heat[c.df.loc[chp_heat, attr + "_nom_opt"] < threshold_chp_heat]
             )
-        
+
         n_p.mremove(
             c.name,
             c.df.index[c.df[attr + "_nom_extendable"] & ~c.df.index.isin(chp_heat) & (c.df[attr + "_nom_opt"] < threshold)]

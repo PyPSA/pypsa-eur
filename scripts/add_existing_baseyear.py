@@ -28,7 +28,7 @@ def add_build_year_to_new_assets(n, baseyear):
     # Give assets with lifetimes and no build year the build year baseyear
     for c in n.iterate_components(["Link", "Generator", "Store"]):
 
-        assets = c.df.index[~c.df.lifetime.isna() & c.df.build_year==0]
+        assets = c.df.index[(c.df.lifetime!=np.inf) & (c.df.build_year==0)]
         c.df.loc[assets, "build_year"] = baseyear
 
         # add -baseyear to name
