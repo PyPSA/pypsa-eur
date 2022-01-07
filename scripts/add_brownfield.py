@@ -76,7 +76,12 @@ def add_brownfield(n, n_p, year):
         for tattr in n.component_attrs[c.name].index[selection]:
             n.import_series_from_dataframe(c.pnl[tattr], c.name, tattr)
 
+        # deal with gas network
+        pipe_carrier = ['gas pipeline']
+        to_drop = n.links.carrier.isin(pipe_carrier) & (n.links.build_year!=year)
+        n.mremove("Link", n.links.loc[to_drop].index)
 
+#%%
 if __name__ == "__main__":
     if 'snakemake' not in globals():
         from helper import mock_snakemake
@@ -86,7 +91,7 @@ if __name__ == "__main__":
             clusters="45",
             opts="",
             lv=1.0,
-            sector_opts='Co2L0-168H-T-H-B-I-A-solar3-dist1',
+            sector_opts='168H-T-H-B-I-A-solar+p3-dist1',
             planning_horizons=2030,
         )
 
