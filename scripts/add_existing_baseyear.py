@@ -159,7 +159,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
     inv_busmap = {}
     for k, v in busmap.iteritems():
         inv_busmap[v] = inv_busmap.get(v, []) + [k]
-        
+
     clustermaps = busmap_s.map(busmap)
     clustermaps.index = clustermaps.index.astype(int)
 
@@ -197,7 +197,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
         capacity = capacity[capacity > snakemake.config['existing_capacities']['threshold_capacity']]
 
         if generator in ['solar', 'onwind', 'offwind']:
-        
+
             suffix = '-ac' if generator == 'offwind' else ''
             name_suffix = f' {generator}{suffix}-{baseyear}'
 
@@ -213,7 +213,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
 
                     p_max_pu = n.generators_t.p_max_pu[[i + name_suffix for i in inv_ind]]
                     p_max_pu.columns=[i + name_suffix for i in inv_ind ]
-                
+
                     n.madd("Generator",
                         [i + name_suffix for i in inv_ind],
                         bus=ind,
@@ -436,17 +436,17 @@ def add_heating_capacities_installed_before_baseyear(n, baseyear, grouping_years
             threshold = snakemake.config['existing_capacities']['threshold_capacity']
             n.mremove("Link", [index for index in n.links.index.to_list() if str(grouping_year) in index and n.links.p_nom[index] < threshold])
 
-
+#%%
 if __name__ == "__main__":
     if 'snakemake' not in globals():
         from helper import mock_snakemake
         snakemake = mock_snakemake(
             'add_existing_baseyear',
             simpl='',
-            clusters=45,
+            clusters="45",
             lv=1.0,
             opts='',
-            sector_opts='Co2L0-168H-T-H-B-I-solar+p3-dist1',
+            sector_opts='168H-T-H-B-I-A-solar+p3-dist1',
             planning_horizons=2020,
         )
 
