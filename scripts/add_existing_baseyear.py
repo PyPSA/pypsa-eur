@@ -251,11 +251,15 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                 )
 
         else:
+            bus0 = n.buses[(n.buses.carrier==carrier[generator])].index
+            if any(n.buses.loc[bus0,"location"]!="EU"):
+                bus0 = n.buses[n.buses.location.isin(capacity.index) &
+                               (n.buses.carrier==carrier[generator])].index
 
             n.madd("Link",
                 capacity.index,
                 suffix= " " + generator +"-" + str(grouping_year),
-                bus0="EU " + carrier[generator],
+                bus0=bus0,
                 bus1=capacity.index,
                 bus2="co2 atmosphere",
                 carrier=generator,
@@ -404,10 +408,15 @@ def add_heating_capacities_installed_before_baseyear(n, baseyear, grouping_years
                 lifetime=costs.at[costs_name, 'lifetime']
             )
 
+            bus0 = n.buses[(n.buses.carrier=="gas")].index
+            if any(n.buses.loc[bus0,"location"]!="EU"):
+                bus0 = n.buses[n.buses.location.isin(nodal_df[f'{heat_type} gas boiler'][nodes[name]].index) &
+                                (n.buses.carrier=="gas")].index
+
             n.madd("Link",
                 nodes[name],
                 suffix= f" {name} gas boiler-{grouping_year}",
-                bus0="EU gas",
+                bus0=bus0,
                 bus1=nodes[name] + " " + name + " heat",
                 bus2="co2 atmosphere",
                 carrier=name + " gas boiler",
