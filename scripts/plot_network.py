@@ -235,7 +235,7 @@ def plot_h2_map(network):
     bus_size_factor = 1e5
     linewidth_factor = 1e4
     # MW below which not drawn
-    line_lower_threshold = 1e3
+    line_lower_threshold = 1e2
 
     # Drop non-electric buses so they don't clutter the plot
     n.buses.drop(n.buses.index[n.buses.carrier != "AC"], inplace=True)
@@ -249,7 +249,7 @@ def plot_h2_map(network):
 
     n.links.drop(n.links.index[~n.links.carrier.str.contains("H2 pipeline")], inplace=True)
 
-    h2_new = n.links.loc[n.links.carrier=="H2 pipeline", "p_nom_opt"]
+    h2_new = n.links.loc[n.links.carrier=="H2 pipeline"]
 
     h2_retro = n.links.loc[n.links.carrier=='H2 pipeline retrofitted']
 
@@ -264,10 +264,18 @@ def plot_h2_map(network):
         axis=1
     )
 
-    h2_retro = h2_retro["p_nom_opt"]
+    h2_new.index = h2_new.apply(
+        lambda x: f"H2 pipeline {x.bus0.replace(' H2', '')} -> {x.bus1.replace(' H2', '')}"
+    ,axis=1)
 
+    h2_new = h2_new["p_nom_opt"].groupby(level=0).sum()
+    h2_retro = h2_retro["p_nom_opt"].groupby(level=0).sum()
+    h2_retro = h2_retro.groupby(level=0).sum().reindex(h2_new.index).fillna(0)
+
+    n.links.rename(index=lambda x: x.split("-2")[0], inplace=True)
+    n.links = n.links.groupby(level=0).first()
     link_widths_total = (h2_new + h2_retro) / linewidth_factor
-    link_widths_total = link_widths_total.groupby(level=0).sum().reindex(n.links.index).fillna(0.)
+    link_widths_total = link_widths_total.reindex(n.links.index).fillna(0.)
     link_widths_total[n.links.p_nom_opt < line_lower_threshold] = 0.
 
     retro = n.links.p_nom_opt.where(n.links.carrier=='H2 pipeline retrofitted', other=0.)
@@ -281,7 +289,7 @@ def plot_h2_map(network):
         figsize=(7, 6),
         subplot_kw={"projection": ccrs.PlateCarree()}
     )
-    
+
     n.plot(
         bus_sizes=bus_sizes,
         bus_colors=snakemake.config['plotting']['tech_colors'],
@@ -365,7 +373,7 @@ def plot_ch4_map(network):
     # Drop non-electric buses so they don't clutter the plot
     n.buses.drop(n.buses.index[n.buses.carrier != "AC"], inplace=True)
 
-    fossil_gas_i = n.generators[n.generators.carrier=="gas"].index   
+    fossil_gas_i = n.generators[n.generators.carrier=="gas"].index
     fossil_gas = n.generators_t.p.loc[:,fossil_gas_i].mul(n.snapshot_weightings.generators, axis=0).sum().groupby(n.generators.loc[fossil_gas_i,"bus"]).sum() / bus_size_factor
     fossil_gas.rename(index=lambda x: x.replace(" gas", ""), inplace=True)
     fossil_gas = fossil_gas.reindex(n.buses.index).fillna(0)
@@ -390,10 +398,10 @@ def plot_ch4_map(network):
     to_remove = n.links.index[~n.links.carrier.str.contains("gas pipeline")]
     n.links.drop(to_remove, inplace=True)
 
-    link_widths_rem = n.links.p_nom_opt / linewidth_factor  
+    link_widths_rem = n.links.p_nom_opt / linewidth_factor
     link_widths_rem[n.links.p_nom_opt < line_lower_threshold] = 0.
 
-    link_widths_orig = n.links.p_nom / linewidth_factor  
+    link_widths_orig = n.links.p_nom / linewidth_factor
     link_widths_orig[n.links.p_nom < line_lower_threshold] = 0.
 
     max_usage = n.links_t.p0.abs().max(axis=0)
@@ -422,7 +430,7 @@ def plot_ch4_map(network):
         link_colors='lightgrey',
         link_widths=link_widths_orig,
         branch_components=["Link"],
-        ax=ax, 
+        ax=ax,
         **map_opts
     )
 
@@ -452,7 +460,7 @@ def plot_ch4_map(network):
         facecolor='grey'
     )
     labels = ["{} TWh".format(s) for s in (10, 100)]
-    
+
     l2 = ax.legend(
         handles, labels,
         loc="upper left",
@@ -462,7 +470,7 @@ def plot_ch4_map(network):
         title='gas generation',
         handler_map=make_handler_map_to_scale_circles_as_in(ax)
     )
-    
+
     ax.add_artist(l2)
 
     handles = []
@@ -471,7 +479,7 @@ def plot_ch4_map(network):
     for s in (50, 10):
         handles.append(plt.Line2D([0], [0], color="grey", linewidth=s * 1e3 / linewidth_factor))
         labels.append("{} GW".format(s))
-    
+
     l1_1 = ax.legend(
         handles, labels,
         loc="upper left",
@@ -481,7 +489,7 @@ def plot_ch4_map(network):
         handletextpad=1.5,
         title='gas pipeline used capacity'
     )
-    
+
     ax.add_artist(l1_1)
 
     fig.savefig(
@@ -695,11 +703,11 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             'plot_network',
             simpl='',
-            clusters=45,
-            lv=1.5,
+            clusters="45",
+            lv=1.0,
             opts='',
-            sector_opts='Co2L0-168H-T-H-B-I-solar+p3-dist1',
-            planning_horizons=2030,
+            sector_opts='168H-T-H-B-I-A-solar+p3-dist1',
+            planning_horizons="2050",
         )
 
     overrides = override_component_attrs(snakemake.input.overrides)
