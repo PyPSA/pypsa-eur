@@ -26,7 +26,7 @@ repos:
   rev: v1.26.3
   hooks:
       - id: yamllint
-        args: [--format, parsable, --strict, -c=.yamllint]
+        args: [--format, parsable, -c=.yamllint]
 
 # Use yamlfmt to for formatting YAML files, something yamllint doesn't support
 - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
@@ -36,7 +36,7 @@ repos:
         args: [--mapping, '2',    # Indentation by 2 spaces
                --preserve-quotes, # Prevent parsing of e.g. Norway "NO" != False == NO
                --implicit_start,  # Add no start marker to YAML files
-               --width, '88']     # Line width from black
+              ]
 
 # Check for FSFE REUSE compliance (licensing)
 -   repo: https://github.com/fsfe/reuse-tool
