@@ -30,6 +30,8 @@ repos:
         args: [--format, parsable, -c=.yamllint]
 
 # Use yamlfmt to for formatting YAML files, something yamllint doesn't support
+# --preserve-quotes to prevent parsing of e.g. Norway "NO" != False == NO
+# --implicit_start to prevent adding a starting marker to YAML files
 - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
   rev: 0.1.0
   hooks:
