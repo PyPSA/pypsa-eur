@@ -37,7 +37,7 @@ rules:
   key-duplicates: {}
   line-length:
     level: warning
-    max: 80
+    max: 88
   new-line-at-end-of-file: enable
   truthy:
     check-keys: false       # Disable truthy check hits on keys like "on": ...
