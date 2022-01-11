@@ -5,12 +5,6 @@
 # Configuration is based on and overwrites 'default' configuration
 extends: default
 
-# Files to apply yamllint to
-yaml-files:
-  - '*.yaml'
-  - '*.yml'
-  - '.yamllint'
-
 rules:
   braces:
     # Do not allow flow mappings using curly braces "{" and "}"
@@ -22,6 +16,7 @@ rules:
     require-starting-space: true
     min-spaces-from-content: 1
   # Force correct indentation of comments
+  # yamllint disable-line rule:braces
   comments-indentation: {}
   # Do not require a specific document start marker
   document-start: disable
@@ -34,6 +29,7 @@ rules:
     # Consistent indent-sequences clash with environment.yaml exported by conda
     indent-sequences: whatever
   # Disallow duplicate keys in listings
+  # yamllint disable-line rule:braces
   key-duplicates: {}
   line-length:
     level: warning
