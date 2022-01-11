@@ -5,43 +5,49 @@
 exclude: "^LICENSES"
 
 repos:
-- repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.1.0
-  hooks:
-  - id: check-merge-conflict
-  - id: check-yaml
-  - id: end-of-file-fixer
-  - id: fix-encoding-pragma
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.1.0
+    hooks:
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: fix-encoding-pragma
 
 # Formatting with "black" coding style
-- repo: https://github.com/psf/black
-  rev: 21.12b0
-  hooks:
+  - repo: https://github.com/psf/black
+    rev: 21.12b0
+    hooks:
   # Format Python files
-  - id: black
+    - id: black
   # Format Jupyter Python notebooks
-  - id: black-jupyter
+    - id: black-jupyter
 
 # Use yamllint to check for valid YAML files and list syntax errors
-- repo: https://github.com/adrienverge/yamllint.git
-  rev: v1.26.3
-  hooks:
-  - id: yamllint
-    args: [--format, parsable, -c=.yamllint]
+  - repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.26.3
+    hooks:
+      - id: yamllint
+        args: [--format, parsable, -c=.yamllint]
 
-# Use yamlfmt to for formatting YAML files, something yamllint doesn't support
-# --preserve-quotes to prevent parsing of e.g. Norway "NO" != False == NO
-# --implicit_start to prevent adding a starting marker to YAML files
-- repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
-  rev: 0.1.0
-  hooks:
-  - id: yamlfmt
-    args: [--preserve-quotes, # Prevent parsing of e.g. Norway "NO" != False == NO
-           --implicit_start,  # Add no start marker to YAML files
-    ]
+  - repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
+    rev: v2.2.0
+    hooks:
+      - id: pretty-format-yaml
+        args: [--autofix, --indent, '2', --preserve-quotes]
+
+# Disable yamlfmt for no, as it creates more problems than it solves:
+# Creates invalid yaml files or files conflicting with yamllint rules
+## Use yamlfmt to for formatting YAML files, something yamllint doesn't support
+## --preserve-quotes to prevent parsing of e.g. Norway "NO" != False == NO
+## --implicit_start to prevent adding a starting marker to YAML files
+#    - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
+#      rev: 0.1.0
+#      hooks:
+#          - id: yamlfmt
+#            args: [--preserve-quotes, --implicit_start]
 
 # Check for FSFE REUSE compliance (licensing)
-- repo: https://github.com/fsfe/reuse-tool
-  rev: v0.14.0
-  hooks:
-  - id: reuse
+  - repo: https://github.com/fsfe/reuse-tool
+    rev: v0.14.0
+    hooks:
+      - id: reuse
