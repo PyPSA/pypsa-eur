@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2019-2020 Fabian Hofmann (FIAS)
 # SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
 #
@@ -42,15 +43,18 @@ logger = logging.getLogger(__name__)
 
 
 if __name__ == "__main__":
-    if 'snakemake' not in globals():
+    if "snakemake" not in globals():
         from _helpers import mock_snakemake
-        snakemake = mock_snakemake('retrieve_databundle')
-        rootpath = '..'
-    else:
-        rootpath = '.'
-    configure_logging(snakemake) # TODO Make logging compatible with progressbar (see PR #102)
 
-    if snakemake.config['tutorial']:
+        snakemake = mock_snakemake("retrieve_databundle")
+        rootpath = ".."
+    else:
+        rootpath = "."
+    configure_logging(
+        snakemake
+    )  # TODO Make logging compatible with progressbar (see PR #102)
+
+    if snakemake.config["tutorial"]:
         url = "https://zenodo.org/record/3517921/files/pypsa-eur-tutorial-data-bundle.tar.xz"
     else:
         url = "https://zenodo.org/record/3517935/files/pypsa-eur-data-bundle.tar.xz"

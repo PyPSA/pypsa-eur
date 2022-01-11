@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
@@ -85,51 +86,58 @@ logger = logging.getLogger(__name__)
 
 
 def add_custom_powerplants(ppl):
-    custom_ppl_query = snakemake.config['electricity']['custom_powerplants']
+    custom_ppl_query = snakemake.config["electricity"]["custom_powerplants"]
     if not custom_ppl_query:
         return ppl
-    add_ppls = pd.read_csv(snakemake.input.custom_powerplants, index_col=0,
-                           dtype={'bus': 'str'})
+    add_ppls = pd.read_csv(
+        snakemake.input.custom_powerplants, index_col=0, dtype={"bus": "str"}
+    )
     if isinstance(custom_ppl_query, str):
         add_ppls.query(custom_ppl_query, inplace=True)
     return ppl.append(add_ppls, sort=False, ignore_index=True, verify_integrity=True)
 
 
 if __name__ == "__main__":
-    if 'snakemake' not in globals():
+    if "snakemake" not in globals():
         from _helpers import mock_snakemake
-        snakemake = mock_snakemake('build_powerplants')
+
+        snakemake = mock_snakemake("build_powerplants")
     configure_logging(snakemake)
 
     n = pypsa.Network(snakemake.input.base_network)
     countries = n.buses.country.unique()
 
-    ppl = (pm.powerplants(from_url=True)
-           .powerplant.fill_missing_decommyears()
-           .powerplant.convert_country_to_alpha2()
-           .query('Fueltype not in ["Solar", "Wind"] and Country in @countries')
-           .replace({'Technology': {'Steam Turbine': 'OCGT'}})
-            .assign(Fueltype=lambda df: (
-                    df.Fueltype
-                      .where(df.Fueltype != 'Natural Gas',
-                             df.Technology.replace('Steam Turbine',
-                                                   'OCGT').fillna('OCGT')))))
+    ppl = (
+        pm.powerplants(from_url=True)
+        .powerplant.fill_missing_decommyears()
+        .powerplant.convert_country_to_alpha2()
+        .query('Fueltype not in ["Solar", "Wind"] and Country in @countries')
+        .replace({"Technology": {"Steam Turbine": "OCGT"}})
+        .assign(
+            Fueltype=lambda df: (
+                df.Fueltype.where(
+                    df.Fueltype != "Natural Gas",
+                    df.Technology.replace("Steam Turbine", "OCGT").fillna("OCGT"),
+                )
+            )
+        )
+    )
 
-    ppl_query = snakemake.config['electricity']['powerplants_filter']
+    ppl_query = snakemake.config["electricity"]["powerplants_filter"]
     if isinstance(ppl_query, str):
         ppl.query(ppl_query, inplace=True)
 
-    ppl = add_custom_powerplants(ppl) # add carriers from own powerplant files
+    ppl = add_custom_powerplants(ppl)  # add carriers from own powerplant files
 
     cntries_without_ppl = [c for c in countries if c not in ppl.Country.unique()]
 
     for c in countries:
-        substation_i = n.buses.query('substation_lv and country == @c').index
-        kdtree = KDTree(n.buses.loc[substation_i, ['x','y']].values)
-        ppl_i = ppl.query('Country == @c').index
+        substation_i = n.buses.query("substation_lv and country == @c").index
+        kdtree = KDTree(n.buses.loc[substation_i, ["x", "y"]].values)
+        ppl_i = ppl.query("Country == @c").index
 
-        tree_i = kdtree.query(ppl.loc[ppl_i, ['lon','lat']].values)[1]
-        ppl.loc[ppl_i, 'bus'] = substation_i.append(pd.Index([np.nan]))[tree_i]
+        tree_i = kdtree.query(ppl.loc[ppl_i, ["lon", "lat"]].values)[1]
+        ppl.loc[ppl_i, "bus"] = substation_i.append(pd.Index([np.nan]))[tree_i]
 
     if cntries_without_ppl:
         logging.warning(f"No powerplants known in: {', '.join(cntries_without_ppl)}")

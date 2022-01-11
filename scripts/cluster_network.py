@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
@@ -137,8 +138,12 @@ import seaborn as sns
 
 from functools import reduce
 
-from pypsa.networkclustering import (busmap_by_kmeans, busmap_by_spectral_clustering,
-                                     _make_consense, get_clustering_from_busmap)
+from pypsa.networkclustering import (
+    busmap_by_kmeans,
+    busmap_by_spectral_clustering,
+    _make_consense,
+    get_clustering_from_busmap,
+)
 
 from add_electricity import load_costs
 
@@ -147,19 +152,21 @@ idx = pd.IndexSlice
 logger = logging.getLogger(__name__)
 
 
-def normed(x): return (x/x.sum()).fillna(0.)
+def normed(x):
+    return (x / x.sum()).fillna(0.0)
 
 
 def weighting_for_country(n, x):
-    conv_carriers = {'OCGT','CCGT','PHS', 'hydro'}
-    gen = (n
-           .generators.loc[n.generators.carrier.isin(conv_carriers)]
-           .groupby('bus').p_nom.sum()
-           .reindex(n.buses.index, fill_value=0.) +
-           n
-           .storage_units.loc[n.storage_units.carrier.isin(conv_carriers)]
-           .groupby('bus').p_nom.sum()
-           .reindex(n.buses.index, fill_value=0.))
+    conv_carriers = {"OCGT", "CCGT", "PHS", "hydro"}
+    gen = n.generators.loc[n.generators.carrier.isin(conv_carriers)].groupby(
+        "bus"
+    ).p_nom.sum().reindex(n.buses.index, fill_value=0.0) + n.storage_units.loc[
+        n.storage_units.carrier.isin(conv_carriers)
+    ].groupby(
+        "bus"
+    ).p_nom.sum().reindex(
+        n.buses.index, fill_value=0.0
+    )
     load = n.loads_t.p_set.mean().groupby(n.loads.bus).sum()
 
     b_i = x.index
@@ -167,132 +174,188 @@ def weighting_for_country(n, x):
     l = normed(load.reindex(b_i, fill_value=0))
 
     w = g + l
-    return (w * (100. / w.max())).clip(lower=1.).astype(int)
+    return (w * (100.0 / w.max())).clip(lower=1.0).astype(int)
 
 
 def distribute_clusters(n, n_clusters, focus_weights=None, solver_name=None):
     """Determine the number of clusters per country"""
 
     if solver_name is None:
-        solver_name = snakemake.config['solving']['solver']['name']
+        solver_name = snakemake.config["solving"]["solver"]["name"]
 
-    L = (n.loads_t.p_set.mean()
-         .groupby(n.loads.bus).sum()
-         .groupby([n.buses.country, n.buses.sub_network]).sum()
-         .pipe(normed))
+    L = (
+        n.loads_t.p_set.mean()
+        .groupby(n.loads.bus)
+        .sum()
+        .groupby([n.buses.country, n.buses.sub_network])
+        .sum()
+        .pipe(normed)
+    )
 
-    N = n.buses.groupby(['country', 'sub_network']).size()
+    N = n.buses.groupby(["country", "sub_network"]).size()
 
-    assert n_clusters >= len(N) and n_clusters <= N.sum(), \
-        f"Number of clusters must be {len(N)} <= n_clusters <= {N.sum()} for this selection of countries."
+    assert (
+        n_clusters >= len(N) and n_clusters <= N.sum()
+    ), f"Number of clusters must be {len(N)} <= n_clusters <= {N.sum()} for this selection of countries."
 
     if focus_weights is not None:
 
         total_focus = sum(list(focus_weights.values()))
 
-        assert total_focus <= 1.0, "The sum of focus weights must be less than or equal to 1."
+        assert (
+            total_focus <= 1.0
+        ), "The sum of focus weights must be less than or equal to 1."
 
         for country, weight in focus_weights.items():
             L[country] = weight / len(L[country])
 
-        remainder = [c not in focus_weights.keys() for c in L.index.get_level_values('country')]
+        remainder = [
+            c not in focus_weights.keys() for c in L.index.get_level_values("country")
+        ]
         L[remainder] = L.loc[remainder].pipe(normed) * (1 - total_focus)
 
-        logger.warning('Using custom focus weights for determining number of clusters.')
+        logger.warning("Using custom focus weights for determining number of clusters.")
 
-    assert np.isclose(L.sum(), 1.0, rtol=1e-3), f"Country weights L must sum up to 1.0 when distributing clusters. Is {L.sum()}."
+    assert np.isclose(
+        L.sum(), 1.0, rtol=1e-3
+    ), f"Country weights L must sum up to 1.0 when distributing clusters. Is {L.sum()}."
 
     m = po.ConcreteModel()
+
     def n_bounds(model, *n_id):
         return (1, N[n_id])
+
     m.n = po.Var(list(L.index), bounds=n_bounds, domain=po.Integers)
     m.tot = po.Constraint(expr=(po.summation(m.n) == n_clusters))
-    m.objective = po.Objective(expr=sum((m.n[i] - L.loc[i]*n_clusters)**2 for i in L.index),
-                               sense=po.minimize)
+    m.objective = po.Objective(
+        expr=sum((m.n[i] - L.loc[i] * n_clusters) ** 2 for i in L.index),
+        sense=po.minimize,
+    )
 
     opt = po.SolverFactory(solver_name)
-    if not opt.has_capability('quadratic_objective'):
-        logger.warning(f'The configured solver `{solver_name}` does not support quadratic objectives. Falling back to `ipopt`.')
-        opt = po.SolverFactory('ipopt')
+    if not opt.has_capability("quadratic_objective"):
+        logger.warning(
+            f"The configured solver `{solver_name}` does not support quadratic objectives. Falling back to `ipopt`."
+        )
+        opt = po.SolverFactory("ipopt")
 
     results = opt.solve(m)
-    assert results['Solver'][0]['Status'] == 'ok', f"Solver returned non-optimally: {results}"
+    assert (
+        results["Solver"][0]["Status"] == "ok"
+    ), f"Solver returned non-optimally: {results}"
 
     return pd.Series(m.n.get_values(), index=L.index).astype(int)
 
 
-def busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights=None, algorithm="kmeans", **algorithm_kwds):
+def busmap_for_n_clusters(
+    n, n_clusters, solver_name, focus_weights=None, algorithm="kmeans", **algorithm_kwds
+):
     if algorithm == "kmeans":
-        algorithm_kwds.setdefault('n_init', 1000)
-        algorithm_kwds.setdefault('max_iter', 30000)
-        algorithm_kwds.setdefault('tol', 1e-6)
+        algorithm_kwds.setdefault("n_init", 1000)
+        algorithm_kwds.setdefault("max_iter", 30000)
+        algorithm_kwds.setdefault("tol", 1e-6)
 
     n.determine_network_topology()
 
-    n_clusters = distribute_clusters(n, n_clusters, focus_weights=focus_weights, solver_name=solver_name)
+    n_clusters = distribute_clusters(
+        n, n_clusters, focus_weights=focus_weights, solver_name=solver_name
+    )
 
     def reduce_network(n, buses):
         nr = pypsa.Network()
         nr.import_components_from_dataframe(buses, "Bus")
-        nr.import_components_from_dataframe(n.lines.loc[n.lines.bus0.isin(buses.index) & n.lines.bus1.isin(buses.index)], "Line")
+        nr.import_components_from_dataframe(
+            n.lines.loc[
+                n.lines.bus0.isin(buses.index) & n.lines.bus1.isin(buses.index)
+            ],
+            "Line",
+        )
         return nr
 
     def busmap_for_country(x):
-        prefix = x.name[0] + x.name[1] + ' '
+        prefix = x.name[0] + x.name[1] + " "
         logger.debug(f"Determining busmap for country {prefix[:-1]}")
         if len(x) == 1:
-            return pd.Series(prefix + '0', index=x.index)
+            return pd.Series(prefix + "0", index=x.index)
         weight = weighting_for_country(n, x)
 
         if algorithm == "kmeans":
-            return prefix + busmap_by_kmeans(n, weight, n_clusters[x.name], buses_i=x.index, **algorithm_kwds)
+            return prefix + busmap_by_kmeans(
+                n, weight, n_clusters[x.name], buses_i=x.index, **algorithm_kwds
+            )
         elif algorithm == "spectral":
-            return prefix + busmap_by_spectral_clustering(reduce_network(n, x), n_clusters[x.name], **algorithm_kwds)
+            return prefix + busmap_by_spectral_clustering(
+                reduce_network(n, x), n_clusters[x.name], **algorithm_kwds
+            )
         elif algorithm == "louvain":
-            return prefix + busmap_by_louvain(reduce_network(n, x), n_clusters[x.name], **algorithm_kwds)
+            return prefix + busmap_by_louvain(
+                reduce_network(n, x), n_clusters[x.name], **algorithm_kwds
+            )
         else:
-            raise ValueError(f"`algorithm` must be one of 'kmeans', 'spectral' or 'louvain'. Is {algorithm}.")
+            raise ValueError(
+                f"`algorithm` must be one of 'kmeans', 'spectral' or 'louvain'. Is {algorithm}."
+            )
 
-    return (n.buses.groupby(['country', 'sub_network'], group_keys=False)
-            .apply(busmap_for_country).squeeze().rename('busmap'))
+    return (
+        n.buses.groupby(["country", "sub_network"], group_keys=False)
+        .apply(busmap_for_country)
+        .squeeze()
+        .rename("busmap")
+    )
 
 
-def clustering_for_n_clusters(n, n_clusters, custom_busmap=False, aggregate_carriers=None,
-                              line_length_factor=1.25, potential_mode='simple', solver_name="cbc",
-                              algorithm="kmeans", extended_link_costs=0, focus_weights=None):
+def clustering_for_n_clusters(
+    n,
+    n_clusters,
+    custom_busmap=False,
+    aggregate_carriers=None,
+    line_length_factor=1.25,
+    potential_mode="simple",
+    solver_name="cbc",
+    algorithm="kmeans",
+    extended_link_costs=0,
+    focus_weights=None,
+):
 
-    if potential_mode == 'simple':
+    if potential_mode == "simple":
         p_nom_max_strategy = np.sum
-    elif potential_mode == 'conservative':
+    elif potential_mode == "conservative":
         p_nom_max_strategy = np.min
     else:
-        raise AttributeError(f"potential_mode should be one of 'simple' or 'conservative' but is '{potential_mode}'")
+        raise AttributeError(
+            f"potential_mode should be one of 'simple' or 'conservative' but is '{potential_mode}'"
+        )
 
     if custom_busmap:
         busmap = pd.read_csv(snakemake.input.custom_busmap, index_col=0, squeeze=True)
         busmap.index = busmap.index.astype(str)
         logger.info(f"Imported custom busmap from {snakemake.input.custom_busmap}")
     else:
-        busmap = busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights, algorithm)
+        busmap = busmap_for_n_clusters(
+            n, n_clusters, solver_name, focus_weights, algorithm
+        )
 
     clustering = get_clustering_from_busmap(
-        n, busmap,
+        n,
+        busmap,
         bus_strategies=dict(country=_make_consense("Bus", "country")),
         aggregate_generators_weighted=True,
         aggregate_generators_carriers=aggregate_carriers,
         aggregate_one_ports=["Load", "StorageUnit"],
         line_length_factor=line_length_factor,
-        generator_strategies={'p_nom_max': p_nom_max_strategy, 'p_nom_min': np.sum},
-        scale_link_capital_costs=False)
+        generator_strategies={"p_nom_max": p_nom_max_strategy, "p_nom_min": np.sum},
+        scale_link_capital_costs=False,
+    )
 
     if not n.links.empty:
         nc = clustering.network
-        nc.links['underwater_fraction'] = (n.links.eval('underwater_fraction * length')
-                                        .div(nc.links.length).dropna())
-        nc.links['capital_cost'] = (nc.links['capital_cost']
-                                    .add((nc.links.length - n.links.length)
-                                        .clip(lower=0).mul(extended_link_costs),
-                                        fill_value=0))
+        nc.links["underwater_fraction"] = (
+            n.links.eval("underwater_fraction * length").div(nc.links.length).dropna()
+        )
+        nc.links["capital_cost"] = nc.links["capital_cost"].add(
+            (nc.links.length - n.links.length).clip(lower=0).mul(extended_link_costs),
+            fill_value=0,
+        )
 
     return clustering
 
@@ -301,21 +364,23 @@ def save_to_geojson(s, fn):
     if os.path.exists(fn):
         os.unlink(fn)
     df = s.reset_index()
-    schema = {**gpd.io.file.infer_schema(df), 'geometry': 'Unknown'}
-    df.to_file(fn, driver='GeoJSON', schema=schema)
+    schema = {**gpd.io.file.infer_schema(df), "geometry": "Unknown"}
+    df.to_file(fn, driver="GeoJSON", schema=schema)
 
 
 def cluster_regions(busmaps, input=None, output=None):
-    if input is None: input = snakemake.input
-    if output is None: output = snakemake.output
+    if input is None:
+        input = snakemake.input
+    if output is None:
+        output = snakemake.output
 
     busmap = reduce(lambda x, y: x.map(y), busmaps[1:], busmaps[0])
 
-    for which in ('regions_onshore', 'regions_offshore'):
-        regions = gpd.read_file(getattr(input, which)).set_index('name')
+    for which in ("regions_onshore", "regions_offshore"):
+        regions = gpd.read_file(getattr(input, which)).set_index("name")
         geom_c = regions.geometry.groupby(busmap).apply(shapely.ops.cascaded_union)
         regions_c = gpd.GeoDataFrame(dict(geometry=geom_c))
-        regions_c.index.name = 'name'
+        regions_c.index.name = "name"
         save_to_geojson(regions_c, getattr(output, which))
 
 
@@ -325,65 +390,92 @@ def plot_busmap_for_n_clusters(n, n_clusters, fn=None):
     cr = sns.color_palette("hls", len(cs))
     n.plot(bus_colors=busmap.map(dict(zip(cs, cr))))
     if fn is not None:
-        plt.savefig(fn, bbox_inches='tight')
+        plt.savefig(fn, bbox_inches="tight")
     del cs, cr
 
 
 if __name__ == "__main__":
-    if 'snakemake' not in globals():
+    if "snakemake" not in globals():
         from _helpers import mock_snakemake
-        snakemake = mock_snakemake('cluster_network', network='elec', simpl='', clusters='5')
+
+        snakemake = mock_snakemake(
+            "cluster_network", network="elec", simpl="", clusters="5"
+        )
     configure_logging(snakemake)
 
     n = pypsa.Network(snakemake.input.network)
 
-    focus_weights = snakemake.config.get('focus_weights', None)
+    focus_weights = snakemake.config.get("focus_weights", None)
 
-    renewable_carriers = pd.Index([tech
-                                   for tech in n.generators.carrier.unique()
-                                   if tech in snakemake.config['renewable']])
+    renewable_carriers = pd.Index(
+        [
+            tech
+            for tech in n.generators.carrier.unique()
+            if tech in snakemake.config["renewable"]
+        ]
+    )
 
-    if snakemake.wildcards.clusters.endswith('m'):
+    if snakemake.wildcards.clusters.endswith("m"):
         n_clusters = int(snakemake.wildcards.clusters[:-1])
-        aggregate_carriers = pd.Index(n.generators.carrier.unique()).difference(renewable_carriers)
+        aggregate_carriers = pd.Index(n.generators.carrier.unique()).difference(
+            renewable_carriers
+        )
     else:
         n_clusters = int(snakemake.wildcards.clusters)
-        aggregate_carriers = None # All
+        aggregate_carriers = None  # All
 
     if n_clusters == len(n.buses):
         # Fast-path if no clustering is necessary
         busmap = n.buses.index.to_series()
         linemap = n.lines.index.to_series()
-        clustering = pypsa.networkclustering.Clustering(n, busmap, linemap, linemap, pd.Series(dtype='O'))
+        clustering = pypsa.networkclustering.Clustering(
+            n, busmap, linemap, linemap, pd.Series(dtype="O")
+        )
     else:
-        line_length_factor = snakemake.config['lines']['length_factor']
-        Nyears = n.snapshot_weightings.objective.sum()/8760
-        hvac_overhead_cost = (load_costs(Nyears,
-                                   tech_costs=snakemake.input.tech_costs,
-                                   config=snakemake.config['costs'],
-                                   elec_config=snakemake.config['electricity'])
-                              .at['HVAC overhead', 'capital_cost'])
+        line_length_factor = snakemake.config["lines"]["length_factor"]
+        Nyears = n.snapshot_weightings.objective.sum() / 8760
+        hvac_overhead_cost = load_costs(
+            Nyears,
+            tech_costs=snakemake.input.tech_costs,
+            config=snakemake.config["costs"],
+            elec_config=snakemake.config["electricity"],
+        ).at["HVAC overhead", "capital_cost"]
 
         def consense(x):
             v = x.iat[0]
-            assert ((x == v).all() or x.isnull().all()), (
-                "The `potential` configuration option must agree for all renewable carriers, for now!"
-            )
+            assert (
+                x == v
+            ).all() or x.isnull().all(), "The `potential` configuration option must agree for all renewable carriers, for now!"
             return v
-        potential_mode = consense(pd.Series([snakemake.config['renewable'][tech]['potential']
-                                             for tech in renewable_carriers]))
+
+        potential_mode = consense(
+            pd.Series(
+                [
+                    snakemake.config["renewable"][tech]["potential"]
+                    for tech in renewable_carriers
+                ]
+            )
+        )
         custom_busmap = snakemake.config["enable"].get("custom_busmap", False)
-        clustering = clustering_for_n_clusters(n, n_clusters, custom_busmap, aggregate_carriers,
-                                               line_length_factor=line_length_factor,
-                                               potential_mode=potential_mode,
-                                               solver_name=snakemake.config['solving']['solver']['name'],
-                                               extended_link_costs=hvac_overhead_cost,
-                                               focus_weights=focus_weights)
+        clustering = clustering_for_n_clusters(
+            n,
+            n_clusters,
+            custom_busmap,
+            aggregate_carriers,
+            line_length_factor=line_length_factor,
+            potential_mode=potential_mode,
+            solver_name=snakemake.config["solving"]["solver"]["name"],
+            extended_link_costs=hvac_overhead_cost,
+            focus_weights=focus_weights,
+        )
 
     update_p_nom_max(n)
-    
+
     clustering.network.export_to_netcdf(snakemake.output.network)
-    for attr in ('busmap', 'linemap'): #also available: linemap_positive, linemap_negative
+    for attr in (
+        "busmap",
+        "linemap",
+    ):  # also available: linemap_positive, linemap_negative
         getattr(clustering, attr).to_csv(snakemake.output[attr])
 
     cluster_regions((clustering.busmap,))

@@ -12,7 +12,7 @@ on:
     branches:
     - master
   schedule:
-    - cron: "0 5 * * TUE"
+  - cron: "0 5 * * TUE"
 
 jobs:
   build:
@@ -35,18 +35,18 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Setup Miniconda
-      uses: conda-incubator/setup-miniconda@v2.1.1 
+      uses: conda-incubator/setup-miniconda@v2.1.1
       with: # checks out environment 'test' by default
-          mamba-version: "*"
-          channels: conda-forge,defaults
-          channel-priority: true
+        mamba-version: "*"
+        channels: conda-forge,defaults
+        channel-priority: true
 
-    - name: Install dependencies  
+    - name: Install dependencies
       run: |
         echo -ne "url: ${CDSAPI_URL}\nkey: ${CDSAPI_TOKEN}\n" > ~/.cdsapirc
         echo -e "  - glpk\n  - ipopt<3.13.3" >> envs/environment.yaml
         mamba env update -f envs/environment.yaml --name test
-        
+
     - name: Test snakemake workflow
       run: |
         conda list

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 # SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
 #
@@ -69,27 +70,34 @@ from vresutils import hydro as vhydro
 logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
-    if 'snakemake' not in globals():
+    if "snakemake" not in globals():
         from _helpers import mock_snakemake
-        snakemake = mock_snakemake('build_hydro_profile')
+
+        snakemake = mock_snakemake("build_hydro_profile")
     configure_logging(snakemake)
 
-    config = snakemake.config['renewable']['hydro']
+    config = snakemake.config["renewable"]["hydro"]
     cutout = atlite.Cutout(snakemake.input.cutout)
 
-    countries = snakemake.config['countries']
-    country_shapes = (gpd.read_file(snakemake.input.country_shapes)
-                      .set_index('name')['geometry'].reindex(countries))
-    country_shapes.index.name = 'countries'
+    countries = snakemake.config["countries"]
+    country_shapes = (
+        gpd.read_file(snakemake.input.country_shapes)
+        .set_index("name")["geometry"]
+        .reindex(countries)
+    )
+    country_shapes.index.name = "countries"
 
     eia_stats = vhydro.get_eia_annual_hydro_generation(
-        snakemake.input.eia_hydro_generation).reindex(columns=countries)
-    inflow = cutout.runoff(shapes=country_shapes,
-                           smooth=True,
-                           lower_threshold_quantile=True,
-                           normalize_using_yearly=eia_stats)
+        snakemake.input.eia_hydro_generation
+    ).reindex(columns=countries)
+    inflow = cutout.runoff(
+        shapes=country_shapes,
+        smooth=True,
+        lower_threshold_quantile=True,
+        normalize_using_yearly=eia_stats,
+    )
 
-    if 'clip_min_inflow' in config:
-        inflow = inflow.where(inflow > config['clip_min_inflow'], 0)
+    if "clip_min_inflow" in config:
+        inflow = inflow.where(inflow > config["clip_min_inflow"], 0)
 
     inflow.to_netcdf(snakemake.output[0])

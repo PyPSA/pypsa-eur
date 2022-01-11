@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
@@ -56,11 +57,11 @@ def determine_cutout_xXyY(cutout_name):
     assert cutout.crs.to_epsg() == 4326
     x, X, y, Y = cutout.extent
     dx, dy = cutout.dx, cutout.dy
-    return [x - dx/2., X + dx/2., y - dy/2., Y + dy/2.]
+    return [x - dx / 2.0, X + dx / 2.0, y - dy / 2.0, Y + dy / 2.0]
 
 
 def get_transform_and_shape(bounds, res):
-    left, bottom = [(b // res)* res for b in bounds[:2]]
+    left, bottom = [(b // res) * res for b in bounds[:2]]
     right, top = [(b // res + 1) * res for b in bounds[2:]]
     shape = int((top - bottom) // res), int((right - left) / res)
     transform = rio.Affine(res, 0, left, 0, -res, top)
@@ -68,11 +69,11 @@ def get_transform_and_shape(bounds, res):
 
 
 if __name__ == "__main__":
-    if 'snakemake' not in globals():
+    if "snakemake" not in globals():
         from _helpers import mock_snakemake
-        snakemake = mock_snakemake('build_natura_raster')
-    configure_logging(snakemake)
 
+        snakemake = mock_snakemake("build_natura_raster")
+    configure_logging(snakemake)
 
     cutouts = snakemake.input.cutouts
     xs, Xs, ys, Ys = zip(*(determine_cutout_xXyY(cutout) for cutout in cutouts))
@@ -84,8 +85,16 @@ if __name__ == "__main__":
     raster = ~geometry_mask(shapes.geometry, out_shape[::-1], transform)
     raster = raster.astype(rio.uint8)
 
-    with rio.open(snakemake.output[0], 'w', driver='GTiff', dtype=rio.uint8,
-                  count=1, transform=transform, crs=3035, compress='lzw',
-                  width=raster.shape[1], height=raster.shape[0]) as dst:
+    with rio.open(
+        snakemake.output[0],
+        "w",
+        driver="GTiff",
+        dtype=rio.uint8,
+        count=1,
+        transform=transform,
+        crs=3035,
+        compress="lzw",
+        width=raster.shape[1],
+        height=raster.shape[0],
+    ) as dst:
         dst.write(raster, indexes=1)
-

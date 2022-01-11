@@ -2,59 +2,59 @@
 #
 # SPDX-License-Identifier: MIT
 
-name: pypsa-eur
+name: pypsa-eur-2
 channels:
-  - conda-forge
-  - bioconda
-  - http://conda.anaconda.org/gurobi
+- conda-forge
+- bioconda
+- http://conda.anaconda.org/gurobi
 dependencies:
-  - python>=3.8
-  - pip
-  - mamba # esp for windows build
+- python>=3.8
+- pip
+- mamba   # esp for windows build
 
-  - pypsa>=0.18
-  - atlite>=0.2.5
-  - dask<=2021.3.1 # until https://github.com/dask/dask/issues/7583 is solved
+- pypsa>=0.18
+- atlite>=0.2.5
+- dask<=2021.3.1   # until https://github.com/dask/dask/issues/7583 is solved
 
   # Dependencies of the workflow itself
-  - xlrd
-  - openpyxl
-  - pycountry
-  - seaborn
-  - snakemake-minimal
-  - memory_profiler
-  - yaml
-  - pytables
-  - lxml
-  - powerplantmatching>=0.4.8
-  - numpy
-  - pandas<1.3
-  - geopandas
-  - xarray
-  - netcdf4
-  - networkx
-  - scipy
-  - shapely
-  - progressbar2
-  - pyomo
-  - matplotlib
-  - proj<8
+- xlrd
+- openpyxl
+- pycountry
+- seaborn
+- snakemake-minimal
+- memory_profiler
+- yaml
+- pytables
+- lxml
+- powerplantmatching>=0.4.8
+- numpy
+- pandas<1.3
+- geopandas
+- xarray
+- netcdf4
+- networkx
+- scipy
+- shapely
+- progressbar2
+- pyomo
+- matplotlib
+- proj<8
 
   # Keep in conda environment when calling ipython
-  - ipython
+- ipython
 
   # GIS dependencies:
-  - cartopy
-  - descartes
-  - rasterio
+- cartopy
+- descartes
+- rasterio
 
   # PyPSA-Eur-Sec Dependencies
-  - geopy
-  - tqdm
-  - pytz
-  - country_converter
-  - tabula-py
+- geopy
+- tqdm
+- pytz
+- country_converter
+- tabula-py
 
-  - pip:
-    - vresutils==0.3.1
-    - tsam>=1.1.0
+- pip:
+  - vresutils==0.3.1
+  - tsam>=1.1.0
