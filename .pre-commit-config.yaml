@@ -35,16 +35,11 @@ repos:
   - id: pretty-format-yaml
     args: [--autofix, --indent, '2', --preserve-quotes]
 
-# Disable yamlfmt for no, as it creates more problems than it solves:
-# Creates invalid yaml files or files conflicting with yamllint rules
-## Use yamlfmt to for formatting YAML files, something yamllint doesn't support
-## --preserve-quotes to prevent parsing of e.g. Norway "NO" != False == NO
-## --implicit_start to prevent adding a starting marker to YAML files
-#    - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
-#      rev: 0.1.0
-#      hooks:
-#          - id: yamlfmt
-#            args: [--preserve-quotes, --implicit_start]
+# Format Snakemake rule / workflow files
+-   repo: https://github.com/snakemake/snakefmt
+    rev: 0.4.4
+    hooks:
+      - id: snakefmt
 
 # Check for FSFE REUSE compliance (licensing)
 - repo: https://github.com/fsfe/reuse-tool
