@@ -36,8 +36,7 @@ repos:
   rev: 0.1.0
   hooks:
   - id: yamlfmt
-    args: [--mapping, '2',    # Indentation by 2 spaces
-           --preserve-quotes, # Prevent parsing of e.g. Norway "NO" != False == NO
+    args: [--preserve-quotes, # Prevent parsing of e.g. Norway "NO" != False == NO
            --implicit_start,  # Add no start marker to YAML files
     ]
 
