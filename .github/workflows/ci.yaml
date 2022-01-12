@@ -48,7 +48,7 @@ jobs:
           miniforge-variant: Mambaforge
           use-mamba: true
           activate-environment: pypsa-eur           # Environment name from environment-file
-          environment-file: envs/environment.yaml   # Install dependencies from here
+          environment-file: envs/environment.fixed.yaml   # Install dependencies from here
 
     - name: List installed packages
       run: |
