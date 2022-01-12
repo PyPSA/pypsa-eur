@@ -247,7 +247,7 @@ Once the whole worktree is finished, it should show state so in the terminal:
 
 You will notice that many intermediate stages are saved, namely the outputs of each individual ``snakemake`` rule.
 
-You can produce any output file occuring in the ``Snakefile`` by running
+You can produce any output file occurring in the ``Snakefile`` by running
 
 .. code:: bash
 

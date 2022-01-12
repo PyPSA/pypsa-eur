@@ -19,7 +19,7 @@ to our `GitHub repository <https://github.com/PyPSA/PyPSA-Eur>`_.
 * We encourage you to use the `PEP 8 coding style <https://www.python.org/dev/peps/pep-0008/>`_.
 
 For all code contributions we follow the four eyes principle (two person principle), i.e. all suggested code
-including our own are reviewed by a second person before they are incoporated into our repository.
+including our own are reviewed by a second person before they are incorporated into our repository.
 
 If you are unfamiliar with pull requests, the GitHub help pages have a nice `guide <https://help.github.com/en/articles/about-pull-requests>`_.
 
