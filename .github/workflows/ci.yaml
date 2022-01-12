@@ -45,7 +45,7 @@ jobs:
     - name: Setup Mambaforge
       uses: conda-incubator/setup-miniconda@v2.1.1 
       with:
-          miniforge-variable: Mambaforge
+          miniforge-variant: Mambaforge
           use-mamba: true
           mamba-version: "*"
           channels: conda-forge,defaults            # conda-forge required for mamba
