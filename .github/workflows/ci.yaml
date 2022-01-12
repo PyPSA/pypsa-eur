@@ -34,24 +34,29 @@ jobs:
 
     - uses: actions/checkout@v2
 
+    - name: Setup secrets
+      run: |
+        echo -ne "url: ${CDSAPI_URL}\nkey: ${CDSAPI_TOKEN}\n" > ~/.cdsapirc
+
+    - name: Add solver to environment
+      run: |
+        echo -e "  - glpk\n  - ipopt<3.13.3" >> envs/environment.yaml
+
     - name: Setup Miniconda
       uses: conda-incubator/setup-miniconda@v2.1.1 
-      with: # checks out environment 'test' by default
+      with:
           mamba-version: "*"
-          channels: conda-forge,defaults
+          channels: conda-forge,defaults            # conda-forge required for mamba
           channel-priority: true
+          activate-environment: pypsa-eur           # Environment name from environment-file
+          environment-file: envs/environment.yaml   # Install dependencies from here
 
-    - name: Install dependencies  
-      run: |
-        conda activate base
-        echo -ne "url: ${CDSAPI_URL}\nkey: ${CDSAPI_TOKEN}\n" > ~/.cdsapirc
-        echo -e "  - glpk\n  - ipopt<3.13.3" >> envs/environment.yaml
-        mamba env update -f envs/environment.yaml --name test
-        conda activate test
-        
-    - name: Test snakemake workflow
+    - name: List installed packages
       run: |
         conda list
+
+    - name: Test snakemake workflow
+      run: |
         cp test/config.test1.yaml config.yaml
         snakemake --cores all solve_all_networks
         rm -rf resources/*.nc resources/*.geojson resources/*.h5 networks results
