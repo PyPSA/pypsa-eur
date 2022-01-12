@@ -39,11 +39,10 @@ Outputs
 import logging
 
 logger = logging.getLogger(__name__)
-from _helpers import configure_logging
-
-import pandas as pd
-import numpy as np
 import dateutil
+import numpy as np
+import pandas as pd
+from _helpers import configure_logging
 from pandas import Timedelta as Delta
 
 

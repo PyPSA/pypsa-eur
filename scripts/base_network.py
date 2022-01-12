@@ -64,21 +64,21 @@ Description
 """
 
 import logging
-from _helpers import configure_logging
-
-import pypsa
-import yaml
-import pandas as pd
-import geopandas as gpd
-import numpy as np
-import networkx as nx
-
-from scipy import spatial
-from scipy.sparse import csgraph
 from itertools import product
 
-from shapely.geometry import Point, LineString
-import shapely, shapely.prepared, shapely.wkt
+import geopandas as gpd
+import networkx as nx
+import numpy as np
+import pandas as pd
+import pypsa
+import shapely
+import shapely.prepared
+import shapely.wkt
+import yaml
+from _helpers import configure_logging
+from scipy import spatial
+from scipy.sparse import csgraph
+from shapely.geometry import LineString, Point
 
 logger = logging.getLogger(__name__)
 

@@ -69,19 +69,18 @@ Description
 """
 
 import logging
-from _helpers import configure_logging
-
 import os
-import numpy as np
-from operator import attrgetter
 from functools import reduce
 from itertools import takewhile
+from operator import attrgetter
 
-import pandas as pd
 import geopandas as gpd
+import numpy as np
+import pandas as pd
+import pycountry as pyc
+from _helpers import configure_logging
 from shapely.geometry import MultiPolygon, Polygon
 from shapely.ops import cascaded_union
-import pycountry as pyc
 
 logger = logging.getLogger(__name__)
 

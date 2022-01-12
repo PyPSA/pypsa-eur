@@ -21,21 +21,20 @@ Description
 """
 
 import logging
-from _helpers import (
-    load_network_for_plots,
-    aggregate_p,
-    aggregate_costs,
-    configure_logging,
-)
-
-import pandas as pd
-import numpy as np
 
 import cartopy.crs as ccrs
-import matplotlib.pyplot as plt
 import matplotlib as mpl
-from matplotlib.patches import Circle, Ellipse
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from _helpers import (
+    aggregate_costs,
+    aggregate_p,
+    configure_logging,
+    load_network_for_plots,
+)
 from matplotlib.legend_handler import HandlerPatch
+from matplotlib.patches import Circle, Ellipse
 
 to_rgba = mpl.colors.colorConverter.to_rgba
 

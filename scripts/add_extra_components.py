@@ -51,16 +51,15 @@ The rule :mod:`add_extra_components` attaches additional extendable components t
 - ``Stores`` of carrier 'H2' and/or 'battery' in combination with ``Links``. If this option is chosen, the script adds extra buses with corresponding carrier where energy ``Stores`` are attached and which are connected to the corresponding power buses via two links, one each for charging and discharging. This leads to three investment variables for the energy capacity, charging and discharging capacity of the storage unit.
 """
 import logging
-from _helpers import configure_logging
 
-import pypsa
-import pandas as pd
 import numpy as np
-
+import pandas as pd
+import pypsa
+from _helpers import configure_logging
 from add_electricity import (
-    load_costs,
-    add_nice_carrier_names,
     _add_missing_carriers_from_costs,
+    add_nice_carrier_names,
+    load_costs,
 )
 
 idx = pd.IndexSlice

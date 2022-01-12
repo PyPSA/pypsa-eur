@@ -57,13 +57,12 @@ Description
 """
 
 import logging
-from _helpers import configure_logging
-
 import re
-import pypsa
+
 import numpy as np
 import pandas as pd
-
+import pypsa
+from _helpers import configure_logging
 from add_electricity import load_costs, update_transmission_costs
 
 idx = pd.IndexSlice

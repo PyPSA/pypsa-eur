@@ -20,11 +20,11 @@ Description
 
 """
 import logging
-from _helpers import configure_logging
 
-import pypsa
-import pandas as pd
 import matplotlib.pyplot as plt
+import pandas as pd
+import pypsa
+from _helpers import configure_logging
 
 logger = logging.getLogger(__name__)
 

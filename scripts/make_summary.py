@@ -55,12 +55,11 @@ Replacing '/summaries/' with '/plots/' creates nice colored maps of the results.
 """
 
 import logging
-from _helpers import configure_logging
-
 import os
-import pypsa
-import pandas as pd
 
+import pandas as pd
+import pypsa
+from _helpers import configure_logging
 from add_electricity import load_costs, update_transmission_costs
 
 idx = pd.IndexSlice

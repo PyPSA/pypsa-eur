@@ -84,27 +84,24 @@ The rule :mod:`simplify_network` does up to four things:
 """
 
 import logging
-from _helpers import configure_logging, update_p_nom_max
-
-from cluster_network import clustering_for_n_clusters, cluster_regions
-from add_electricity import load_costs
-
-import pandas as pd
-import numpy as np
-import scipy as sp
-from scipy.sparse.csgraph import connected_components, dijkstra
-
 from functools import reduce
 
+import numpy as np
+import pandas as pd
 import pypsa
+import scipy as sp
+from _helpers import configure_logging, update_p_nom_max
+from add_electricity import load_costs
+from cluster_network import cluster_regions, clustering_for_n_clusters
 from pypsa.io import import_components_from_dataframe, import_series_from_dataframe
 from pypsa.networkclustering import (
-    busmap_by_stubs,
+    _make_consense,
     aggregategenerators,
     aggregateoneport,
+    busmap_by_stubs,
     get_clustering_from_busmap,
-    _make_consense,
 )
+from scipy.sparse.csgraph import connected_components, dijkstra
 
 logger = logging.getLogger(__name__)
 

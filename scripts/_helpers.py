@@ -3,8 +3,9 @@
 #
 # SPDX-License-Identifier: MIT
 
-import pandas as pd
 from pathlib import Path
+
+import pandas as pd
 
 
 def configure_logging(snakemake, skip_handlers=False):
@@ -111,7 +112,7 @@ def pdbcast(v, h):
 
 def load_network_for_plots(fn, tech_costs, config, combine_hydro_ps=True):
     import pypsa
-    from add_electricity import update_transmission_costs, load_costs
+    from add_electricity import load_costs, update_transmission_costs
 
     n = pypsa.Network(fn)
 
@@ -251,6 +252,7 @@ def aggregate_costs(n, flatten=False, opts=None, existing_only=False):
 
 def progress_retrieve(url, file):
     import urllib
+
     from progressbar import ProgressBar
 
     pbar = ProgressBar(0, 100)
@@ -277,8 +279,9 @@ def mock_snakemake(rulename, **wildcards):
         keyword arguments fixing the wildcards. Only necessary if wildcards are
         needed.
     """
-    import snakemake as sm
     import os
+
+    import snakemake as sm
     from pypsa.descriptors import Dict
     from snakemake.script import Snakemake
 

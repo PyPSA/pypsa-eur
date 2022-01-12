@@ -61,10 +61,10 @@ Description
 """
 
 import logging
-from _helpers import configure_logging
 
 import atlite
 import geopandas as gpd
+from _helpers import configure_logging
 from vresutils import hydro as vhydro
 
 logger = logging.getLogger(__name__)

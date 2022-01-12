@@ -47,14 +47,13 @@ Description
 """
 
 import logging
-from _helpers import configure_logging
-
-import pypsa
-import numpy as np
-
 from pathlib import Path
+
+import numpy as np
+import pypsa
+from _helpers import configure_logging
+from solve_network import prepare_network, solve_network
 from vresutils.benchmark import memory_logger
-from solve_network import solve_network, prepare_network
 
 logger = logging.getLogger(__name__)
 

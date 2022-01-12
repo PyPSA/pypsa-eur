@@ -93,11 +93,11 @@ Description
 """
 
 import logging
+
 import atlite
 import geopandas as gpd
 import pandas as pd
 from _helpers import configure_logging
-
 
 logger = logging.getLogger(__name__)
 

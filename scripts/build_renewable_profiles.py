@@ -180,18 +180,18 @@ node (`p_nom_max`): ``simple`` and ``conservative``:
   reached.
 
 """
-import progressbar as pgb
-import geopandas as gpd
-import xarray as xr
-import numpy as np
 import functools
-import atlite
 import logging
-from pypsa.geo import haversine
-from shapely.geometry import LineString
 import time
 
+import atlite
+import geopandas as gpd
+import numpy as np
+import progressbar as pgb
+import xarray as xr
 from _helpers import configure_logging
+from pypsa.geo import haversine
+from shapely.geometry import LineString
 
 logger = logging.getLogger(__name__)
 

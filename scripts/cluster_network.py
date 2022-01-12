@@ -123,29 +123,25 @@ Exemplary unsolved network clustered to 37 nodes:
 """
 
 import logging
-from _helpers import configure_logging, update_p_nom_max
-
-import pypsa
 import os
-import shapely
-
-import pandas as pd
-import numpy as np
-import geopandas as gpd
-import pyomo.environ as po
-import matplotlib.pyplot as plt
-import seaborn as sns
-
 from functools import reduce
 
+import geopandas as gpd
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import pyomo.environ as po
+import pypsa
+import seaborn as sns
+import shapely
+from _helpers import configure_logging, update_p_nom_max
+from add_electricity import load_costs
 from pypsa.networkclustering import (
+    _make_consense,
     busmap_by_kmeans,
     busmap_by_spectral_clustering,
-    _make_consense,
     get_clustering_from_busmap,
 )
-
-from add_electricity import load_costs
 
 idx = pd.IndexSlice
 

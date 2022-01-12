@@ -34,10 +34,10 @@ The :ref:`tutorial` uses a smaller `data bundle <https://zenodo.org/record/35179
 """
 
 import logging
-from _helpers import progress_retrieve, configure_logging
-
 import tarfile
 from pathlib import Path
+
+from _helpers import configure_logging, progress_retrieve
 
 logger = logging.getLogger(__name__)
 
