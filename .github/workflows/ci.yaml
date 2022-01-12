@@ -42,9 +42,11 @@ jobs:
       run: |
         echo -e "  - glpk\n  - ipopt<3.13.3" >> envs/environment.yaml
 
-    - name: Setup Miniconda
+    - name: Setup Mambaforge
       uses: conda-incubator/setup-miniconda@v2.1.1 
       with:
+          miniforge-variable: Mambaforge
+          use-mamba: true
           mamba-version: "*"
           channels: conda-forge,defaults            # conda-forge required for mamba
           channel-priority: true
