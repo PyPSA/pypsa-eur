@@ -38,20 +38,24 @@ jobs:
       run: |
         echo -ne "url: ${CDSAPI_URL}\nkey: ${CDSAPI_TOKEN}\n" > ~/.cdsapirc
 
-    - name: Add solver to environment
-      run: |
-        echo -e "  - glpk\n  - ipopt<3.13.3" >> envs/environment.yaml
-
     - name: Setup Mambaforge
       uses: conda-incubator/setup-miniconda@v2.1.1 
       with:
           miniforge-variant: Mambaforge
           use-mamba: true
-          activate-environment: pypsa-eur           # Environment name from environment-file
-          environment-file: envs/environment.fixed.yaml   # Install dependencies from here
+          auto-update-conda: false  # Stay in base environment for manual package installation
+          auto-activate-base: true
+          activate-environment: ""
 
-    - name: List installed packages
+    - name: Install packages
       run: |
+        # Add solver to environment
+        echo -e "  - glpk\n  - ipopt<3.13.3" >> envs/environment.yaml
+        mamba env create -f envs/environment.yaml
+
+    - name: Activate environment and list installed packages
+      run: |
+        conda activate pypsa-eur
         conda list
 
     - name: Test snakemake workflow
