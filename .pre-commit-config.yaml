@@ -9,9 +9,9 @@ repos:
   rev: v4.1.0
   hooks:
   - id: check-merge-conflict
-  - id: check-yaml
   - id: end-of-file-fixer
   - id: fix-encoding-pragma
+  - id: mixed-line-ending
 
 # Sort package imports alphabetically
 - repo: https://github.com/PyCQA/isort
