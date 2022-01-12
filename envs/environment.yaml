@@ -6,7 +6,6 @@ name: pypsa-eur
 channels:
   - conda-forge
   - bioconda
-  - http://conda.anaconda.org/gurobi
 dependencies:
   - python>=3.8
   - pip
