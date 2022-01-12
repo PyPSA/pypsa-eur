@@ -47,9 +47,6 @@ jobs:
       with:
           miniforge-variant: Mambaforge
           use-mamba: true
-          mamba-version: "*"
-          channels: conda-forge,defaults            # conda-forge required for mamba
-          channel-priority: true
           activate-environment: pypsa-eur           # Environment name from environment-file
           environment-file: envs/environment.yaml   # Install dependencies from here
 
