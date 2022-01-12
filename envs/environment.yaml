@@ -17,16 +17,16 @@ dependencies:
   # Dependencies of the workflow itself
   - xlrd
   - openpyxl
-  - pycountry
+  - pycountry>20.0
   - seaborn>0.10
-  - snakemake-minimal
-  - yaml>5.0
+  - snakemake-minimal>6
+  - yaml>0.2
   - pytables
-  - lxml
+  - lxml>4.0
   - powerplantmatching>=0.4.8
   - numpy>1.20
   - pandas<1.3
-  - geopandas
+  - geopandas>0.8
   - xarray>=0.19
   - netcdf4
   - networkx
@@ -38,7 +38,7 @@ dependencies:
   - proj<8
 
   # Keep in conda environment when calling ipython
-  - ipython
+  - ipython>7
 
   # GIS dependencies:
   - cartopy
