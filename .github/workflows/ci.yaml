@@ -50,7 +50,7 @@ jobs:
     - name: Install packages
       run: |
         # Add solver to environment
-        echo -e "  - glpk\n  - ipopt<3.13.3" >> envs/environment.yaml
+        echo -e "  - glpk\n  - ipopt" >> envs/environment.yaml
         mamba env create -f envs/environment.yaml
 
     - name: Test snakemake workflow
