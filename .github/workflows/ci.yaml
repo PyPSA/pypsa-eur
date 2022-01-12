@@ -43,8 +43,8 @@ jobs:
       with:
           miniforge-variant: Mambaforge
           use-mamba: true
-          auto-update-conda: false  # Stay in base environment for manual package installation
-          auto-activate-base: true
+          auto-update-conda: false
+          auto-activate-base: true  # Stay in base environment for manual package installation
           activate-environment: ""
 
     - name: Install packages
@@ -53,13 +53,9 @@ jobs:
         echo -e "  - glpk\n  - ipopt<3.13.3" >> envs/environment.yaml
         mamba env create -f envs/environment.yaml
 
-    - name: Activate environment and list installed packages
-      run: |
-        conda activate pypsa-eur
-        conda list
-
     - name: Test snakemake workflow
       run: |
+        conda activate pypsa-eur
         cp test/config.test1.yaml config.yaml
         snakemake --cores all solve_all_networks
         rm -rf resources/*.nc resources/*.geojson resources/*.h5 networks results
