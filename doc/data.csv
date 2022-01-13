@@ -15,7 +15,7 @@ co2 budgets,co2_budget.csv,CC BY 4.0,https://arxiv.org/abs/2004.11009
 existing heating potentials,existing_infrastructure/existing_heating_raw.csv,unknown,https://ec.europa.eu/energy/studies/mapping-and-analyses-current-and-future-2020-2030-heatingcooling-fuel-deployment_en?redir=1
 IRENA existing VRE capacities,existing_infrastructure/{solar|onwind|offwind}_capcity_IRENA.csv,unknown,https://www.irena.org/Statistics/Download-Data
 USGS ammonia production,myb1-2017-nitro.xls,unknown,https://www.usgs.gov/centers/nmic/nitrogen-statistics-and-information
-hydrogen salt cavern potentials,hydrogen_salt_cavern_potentials.csv,CC BY 4.0,https://doi.org/10.1016/j.ijhydene.2019.12.161
+hydrogen salt cavern potentials,h2_salt_caverns_GWh_per_sqkm.geojson,CC BY 4.0,https://doi.org/10.1016/j.ijhydene.2019.12.161 https://doi.org/10.20944/preprints201910.0187.v1
 hotmaps industrial site database,Industrial_Database.csv,CC BY 4.0,https://gitlab.com/hotmaps/industrial_sites/industrial_sites_Industrial_Database
 Hotmaps building stock data,data_building_stock.csv,CC BY 4.0,https://gitlab.com/hotmaps/building-stock
 U-values Poland,u_values_poland.csv,unknown,https://data.europa.eu/euodp/de/data/dataset/building-stock-observatory

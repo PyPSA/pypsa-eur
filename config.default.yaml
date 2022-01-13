@@ -2,6 +2,8 @@ version: 0.6.0
 
 logging_level: INFO
 
+retrieve_sector_databundle: true
+
 results_dir: results/
 summary_dir: results
 costs_dir: ../technology-data/outputs/
@@ -238,19 +240,23 @@ sector:
   co2_network: false
   cc_fraction: 0.9  # default fraction of CO2 captured with post-combustion capture
   hydrogen_underground_storage: true
+  hydrogen_underground_storage_locations:
+    # - onshore  # more than 50 km from sea
+    - nearshore  # within 50 km of sea
+    # - offshore
   use_fischer_tropsch_waste_heat: true
   use_fuel_cell_waste_heat: true
-  electricity_distribution_grid: false
+  electricity_distribution_grid: true
   electricity_distribution_grid_cost_factor: 1.0  #multiplies cost in data/costs.csv
   electricity_grid_connection: true  # only applies to onshore wind and utility PV
   H2_network: true
-  gas_network: true
-  H2_retrofit: true  # if set to True existing gas pipes can be retrofitted to H2 pipes
+  gas_network: false
+  H2_retrofit: false  # if set to True existing gas pipes can be retrofitted to H2 pipes
   # according to hydrogen backbone strategy (April, 2020) p.15
   # https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf
   # 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity
   H2_retrofit_capacity_per_CH4: 0.6  # ratio for H2 capacity per original CH4 capacity of retrofitted pipelines
-  gas_network_connectivity_upgrade: 3 # https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation
+  gas_network_connectivity_upgrade: 1 # https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation
   gas_distribution_grid: true
   gas_distribution_grid_cost_factor: 1.0  #multiplies cost in data/costs.csv
   biomass_transport: false  # biomass transport between nodes
@@ -354,6 +360,15 @@ solving:
     track_iterations: false
     min_iterations: 4
     max_iterations: 6
+    keep_shadowprices:
+      - Bus
+      - Line
+      - Link
+      - Transformer
+      - GlobalConstraint
+      - Generator
+      - Store
+      - StorageUnit
 
   solver:
     name: gurobi

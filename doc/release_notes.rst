@@ -41,17 +41,31 @@ incorporates retrofitting options to hydrogen.
   the gas network is activated, all the gas demands are regionally disaggregated
   as well.
 
-* New constraint allows retrofitting of gas pipelines to hydrogen pipelines.
+* New constraint allows endogenous retrofitting of gas pipelines to hydrogen pipelines.
   This option is activated via the setting ``sector: H2_retrofit:``. For every
   unit of gas pipeline capacity dismantled, ``sector:
   H2_retrofit_capacity_per_CH4`` units are made available as hydrogen pipeline
   capacity in the corresponding corridor. These repurposed hydrogen pipelines
   have lower costs than new hydrogen pipelines. Both new and repurposed pipelines
-  can be built simultaneously.
+  can be built simultaneously. The retrofitting option ``sector: H2_retrofit:`` also works 
+  with a copperplated methane infrastructure, i.e. when ``sector: gas_network: false``. 
 
 * New hydrogen pipelines can now be built where there are already power or gas
   transmission routes. Previously, only the electricity transmission routes were
   considered.
+
+**New features and functionality**
+
+* Option ``retrieve_sector_databundle`` to automatically retrieve and extract data bundle.
+
+* Add regionalised hydrogen salt cavern storage potentials from `Technical Potential of Salt Caverns for Hydrogen Storage in Europe <https://doi.org/10.20944/preprints201910.0187.v1>`_.
+
+* Add option to sweep the global CO2 sequestration potentials with keyword ``seq200`` in the ``{sector_opts}`` wildcard (for limit of 200 Mt CO2).
+
+**Bugfixes**
+
+* The CO2 sequestration limit implemented as GlobalConstraint (introduced in the previous version)
+  caused a failure to read in the shadow prices of other global constraints.
 
 
 PyPSA-Eur-Sec 0.6.0 (4 October 2021)

@@ -56,9 +56,11 @@ atlite version 0.0.2.
 
 You can create an enviroment using the environment.yaml file in pypsa-eur/envs:
 
-.../pypsa-eur % conda env create -f envs/environment.yaml
+.. code:: bash
 
-.../pypsa-eur % conda activate pypsa-eur
+    .../pypsa-eur % conda env create -f envs/environment.yaml
+
+    .../pypsa-eur % conda activate pypsa-eur
 
 See details in `PyPSA-Eur Installation <https://pypsa-eur.readthedocs.io/en/latest/installation.html>`_
 
@@ -72,9 +74,9 @@ The data bundle's size is around 640 MB.
 To download and extract the data bundle on the command line:
 
 .. code:: bash
-`
+
     projects/pypsa-eur-sec/data % wget "https://zenodo.org/record/5546517/files/pypsa-eur-sec-data-bundle.tar.gz"
-    projects/pypsa-eur-sec/data % tar xvzf pypsa-eur-sec-data-bundle.tar.gz
+    projects/pypsa-eur-sec/data % tar -xvzf pypsa-eur-sec-data-bundle.tar.gz
 
 
 The data licences and sources are given in the following table.

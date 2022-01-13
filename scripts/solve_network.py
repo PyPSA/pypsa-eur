@@ -200,8 +200,10 @@ def add_pipe_retrofit_constraint(n):
 
     CH4_per_H2 = 1 / n.config["sector"]["H2_retrofit_capacity_per_CH4"]
 
+    fr = "H2 pipeline retrofitted"
+    to = "gas pipeline"
     lhs = linexpr(
-        (CH4_per_H2, link_p_nom.loc[h2_retrofitted_i].rename(index=lambda x: x.replace("H2 pipeline retrofitted", "gas pipeline"))),
+        (CH4_per_H2, link_p_nom.loc[h2_retrofitted_i].rename(index=lambda x: x.replace(fr, to))),
         (1, link_p_nom.loc[gas_pipes_i])
     )
 
@@ -218,10 +220,20 @@ def add_co2_sequestration_limit(n, sns):
     vars_final_co2_stored = get_var(n, 'Store', 'e').loc[sns[-1], co2_stores]
     
     lhs = linexpr((1, vars_final_co2_stored)).sum()
-    rhs = n.config["sector"].get("co2_sequestration_potential", 200) * 1e6
+
+    limit = n.config["sector"].get("co2_sequestration_potential", 200) * 1e6
+    for o in opts:
+        if not "seq" in o: continue
+        limit = float(o[o.find("seq")+3:])
+        break
     
     name = 'co2_sequestration_limit'
-    define_constraints(n, lhs, "<=", rhs, 'GlobalConstraint',
+    sense = "<="
+
+    n.add("GlobalConstraint", name, sense=sense, constant=limit,
+          type=np.nan, carrier_attribute=np.nan)
+
+    define_constraints(n, lhs, sense, limit, 'GlobalConstraint',
                        'mu', axes=pd.Index([name]), spec=name)
 
 
@@ -257,6 +269,7 @@ def solve_network(n, config, opts='', **kwargs):
     track_iterations = cf_solving.get('track_iterations', False)
     min_iterations = cf_solving.get('min_iterations', 4)
     max_iterations = cf_solving.get('max_iterations', 6)
+    keep_shadowprices = cf_solving.get('keep_shadowprices', True)
 
     # add to network for extra_functionality
     n.config = config
@@ -264,13 +277,16 @@ def solve_network(n, config, opts='', **kwargs):
 
     if cf_solving.get('skip_iterations', False):
         network_lopf(n, solver_name=solver_name, solver_options=solver_options,
-                     extra_functionality=extra_functionality, **kwargs)
+                     extra_functionality=extra_functionality, 
+                     keep_shadowprices=keep_shadowprices, **kwargs)
     else:
         ilopf(n, solver_name=solver_name, solver_options=solver_options,
               track_iterations=track_iterations,
               min_iterations=min_iterations,
               max_iterations=max_iterations,
-              extra_functionality=extra_functionality, **kwargs)
+              extra_functionality=extra_functionality,
+              keep_shadowprices=keep_shadowprices,
+              **kwargs)
     return n
 
 
