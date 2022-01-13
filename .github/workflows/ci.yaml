@@ -83,6 +83,6 @@ jobs:
 
       - name: Test snakemake workflow
         run: |
-          mamba activate pypsa-eur
+          conda activate pypsa-eur
           cp test/config.test1.yaml config.yaml
           snakemake --cores all solve_all_networks
