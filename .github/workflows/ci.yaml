@@ -19,7 +19,7 @@ on:
     - cron: "0 5 * * TUE"
 
 env:
-  CACHE_NUMBER: 0 # Change this value to manually reset the environment cache
+  CACHE_NUMBER: 1 # Change this value to manually reset the environment cache
 
 jobs:
   build:
@@ -30,15 +30,15 @@ jobs:
           # Matrix required to handle caching with Mambaforge
           - os: ubuntu-latest
             label: ubuntu-latest
-            prefix: /usr/share/miniconda3/envs/my-env
+            prefix: /usr/share/miniconda3/envs/pypsa-eur
 
           - os: macos-latest
             label: macos-latest
-            prefix: /Users/runner/miniconda3/envs/my-env
+            prefix: /Users/runner/miniconda3/envs/pypsa-eur
 
           - os: windows-latest
             label: windows-latest
-            prefix: C:\Miniconda3\envs\my-env
+            prefix: C:\Miniconda3\envs\pypsa-eur
 
     name: ${{ matrix.label }}
 
