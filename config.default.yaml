@@ -269,7 +269,7 @@ sector:
       - shipping-lh2
       - shipping-lch4
       - shipping-ftfuel
-      - hvdc
+      - hvdc-to-elec
     # limit: 100 # TWh
 
 
