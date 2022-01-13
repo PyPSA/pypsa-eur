@@ -83,7 +83,6 @@ jobs:
 
       - name: Test snakemake workflow
         run: |
-          conda env list
           conda activate pypsa-eur
           conda list
           cp test/config.test1.yaml config.yaml
