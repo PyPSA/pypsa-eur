@@ -41,7 +41,13 @@ jobs:
             prefix: C:\Miniconda3\envs\my-env
 
     name: ${{ matrix.label }}
+
     runs-on: ${{ matrix.os }}
+    
+    defaults:
+      run:
+        shell: bash -l {0}
+        
     steps:
       - uses: actions/checkout@v2
       
