@@ -75,10 +75,10 @@ jobs:
         id: cache
         with:
           path: ${{ matrix.prefix }}
-          key: ${{ matrix.label }}-conda-${{ hashFiles('envs/environment.yml') }}-${{ env.DATE }}-${{ env.CACHE_NUMBER }}
+          key: ${{ matrix.label }}-conda-${{ hashFiles('envs/environment.yaml') }}-${{ env.DATE }}-${{ env.CACHE_NUMBER }}
 
       - name: Update environment due to outdated or unavaiable cache
-        run: mamba env update -n my-env -f environment.yml
+        run: mamba env update -n pypsa-eur -f envs/environment.yaml
         if: steps.cache.outputs.cache-hit != 'true'
 
       - name: Test snakemake workflow
