@@ -21,7 +21,7 @@ dependencies:
   - openpyxl
   - pycountry
   - seaborn
-  - snakemake-minimal<=6.8.0 # encoding issue maybe solved by https://github.com/snakemake/snakemake/pull/1146
+  - snakemake-minimal
   - memory_profiler
   - yaml
   - pytables
