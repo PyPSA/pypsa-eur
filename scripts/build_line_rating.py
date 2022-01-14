@@ -79,7 +79,7 @@ def calculate_resistance(T, R_ref, T_ref=20, alpha=0.00403):
     -------
     Resistance of at given temperature.
     """
-    R=R_ref+(1+alpha*(T-T_ref))
+    R=R_ref*(1+alpha*(T-T_ref))
     return R
 
 def calculate_line_rating(n):
@@ -111,8 +111,8 @@ def calculate_line_rating(n):
         R*=relevant_lines["n_bundle"]
         R=calculate_resistance(T=353, R_ref=R)
     Imax=cutout.line_rating(shapes, R, D=0.0218 ,Ts=353 , epsilon=0.8, alpha=0.8)
-    line_factor= relevant_lines.eval("v_nom * n_bundle * num_parallel")/1e3
-    da = xr.DataArray(data=np.sqrt(3) * Imax * line_factor.values.reshape(-1,1), #in mW
+    line_factor= relevant_lines.eval("v_nom * n_bundle * num_parallel")/1e3 #in mW
+    da = xr.DataArray(data=np.sqrt(3) * Imax * line_factor.values.reshape(-1,1), 
                       attrs=dict(description="Maximal possible power in MW for given line considering line rating"))
     return da
 
@@ -120,7 +120,7 @@ if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
         snakemake = mock_snakemake('build_line_rating', network='elec', simpl='',
-                                  clusters='6', ll='copt', opts='Co2L-24H')
+                                  clusters='40', ll='copt', opts='Co2L-4H')
     configure_logging(snakemake)
 
     n = pypsa.Network(snakemake.input.base_network)  
