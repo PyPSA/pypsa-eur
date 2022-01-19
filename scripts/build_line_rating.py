@@ -61,7 +61,7 @@ import atlite
 import xarray as xr
 import re
 
-def calculate_resistance(T, R_ref, T_ref=20, alpha=0.00403):
+def calculate_resistance(T, R_ref, T_ref=293, alpha=0.00403):
     """
     Calculates the resistance at other temperatures than the reference temperature.
 
