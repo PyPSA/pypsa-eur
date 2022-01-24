@@ -97,7 +97,7 @@ def _get_country(df):
 
 
 def _find_closest_links(links, new_links, distance_upper_bound=1.5):
-    treecoords = np.asarray([np.asarray(shapely.wkt.loads(s))[[0, -1]].flatten()
+    treecoords = np.asarray([np.asarray(shapely.wkt.loads(s).coords)[[0, -1]].flatten()
                               for s in links.geometry])
     querycoords = np.vstack([new_links[['x1', 'y1', 'x2', 'y2']],
                             new_links[['x2', 'y2', 'x1', 'y1']]])
@@ -128,8 +128,8 @@ def _load_buses_from_eg():
     europe_shape_prepped = shapely.prepared.prep(europe_shape)
     buses_in_europe_b = buses[['x', 'y']].apply(lambda p: europe_shape_prepped.contains(Point(p)), axis=1)
 
-    buses_with_v_nom_to_keep_b = buses.v_nom.isin(snakemake.params.electricity['voltages']) | buses.v_nom.isnull()
-    logger.info("Removing buses with voltages {}".format(pd.Index(buses.v_nom.unique()).dropna().difference(snakemake.params.electricity['voltages'])))
+    buses_with_v_nom_to_keep_b = buses.v_nom.isin(snakemake.config['electricity']['voltages']) | buses.v_nom.isnull()
+    logger.info("Removing buses with voltages {}".format(pd.Index(buses.v_nom.unique()).dropna().difference(snakemake.config['electricity']['voltages'])))
 
     return pd.DataFrame(buses.loc[buses_in_europe_b & buses_with_v_nom_to_keep_b])
 
@@ -286,13 +286,13 @@ def _apply_parameter_corrections(n):
 
 
 def _set_electrical_parameters_lines(lines):
-    v_noms = snakemake.params.electricity['voltages']
-    linetypes = snakemake.params.lines['types']
+    v_noms = snakemake.config['electricity']['voltages']
+    linetypes = snakemake.config['lines']['types']
 
     for v_nom in v_noms:
         lines.loc[lines["v_nom"] == v_nom, 'type'] = linetypes[v_nom]
 
-    lines['s_max_pu'] = snakemake.params.lines['s_max_pu']
+    lines['s_max_pu'] = snakemake.config['lines']['s_max_pu']
 
     return lines
 
@@ -307,7 +307,7 @@ def _set_lines_s_nom_from_linetypes(n):
 def _set_electrical_parameters_links(links):
     if links.empty: return links
 
-    p_max_pu = snakemake.params.links.get('p_max_pu', 1.)
+    p_max_pu = snakemake.config['links'].get('p_max_pu', 1.)
     links['p_max_pu'] = p_max_pu
     links['p_min_pu'] = -p_max_pu
 
@@ -332,7 +332,7 @@ def _set_electrical_parameters_links(links):
 
 
 def _set_electrical_parameters_converters(converters):
-    p_max_pu = snakemake.params.links.get('p_max_pu', 1.)
+    p_max_pu = snakemake.config['links'].get('p_max_pu', 1.)
     converters['p_max_pu'] = p_max_pu
     converters['p_min_pu'] = -p_max_pu
 
@@ -346,12 +346,12 @@ def _set_electrical_parameters_converters(converters):
 
 
 def _set_electrical_parameters_transformers(transformers):
-    transformers_params = snakemake.params.transformers
+    config = snakemake.config['transformers']
 
     ## Add transformer parameters
-    transformers["x"] = transformers_params.get('x', 0.1)
-    transformers["s_nom"] = transformers_params.get('s_nom', 2000)
-    transformers['type'] = transformers_params.get('type', '')
+    transformers["x"] = config.get('x', 0.1)
+    transformers["s_nom"] = config.get('s_nom', 2000)
+    transformers['type'] = config.get('type', '')
 
     return transformers
 
@@ -386,7 +386,7 @@ def _set_countries_and_substations(n):
             index=buses.index
         )
 
-    countries = snakemake.params.countries
+    countries = snakemake.config['countries']
     country_shapes = gpd.read_file(snakemake.input.country_shapes).set_index('name')['geometry']
     offshore_shapes = gpd.read_file(snakemake.input.offshore_shapes).set_index('name')['geometry']
     substation_b = buses['symbol'].str.contains('substation|converter station', case=False)
@@ -510,7 +510,7 @@ def _set_links_underwater_fraction(n):
 
 
 def _adjust_capacities_of_under_construction_branches(n):
-    lines_mode = snakemake.params.lines.get('under_construction', 'undef')
+    lines_mode = snakemake.config['lines'].get('under_construction', 'undef')
     if lines_mode == 'zero':
         n.lines.loc[n.lines.under_construction, 'num_parallel'] = 0.
         n.lines.loc[n.lines.under_construction, 's_nom'] = 0.
@@ -519,7 +519,7 @@ def _adjust_capacities_of_under_construction_branches(n):
     elif lines_mode != 'keep':
         logger.warning("Unrecognized configuration for `lines: under_construction` = `{}`. Keeping under construction lines.")
 
-    links_mode = snakemake.params.links.get('under_construction', 'undef')
+    links_mode = snakemake.config['links'].get('under_construction', 'undef')
     if links_mode == 'zero':
         n.links.loc[n.links.under_construction, "p_nom"] = 0.
     elif links_mode == 'remove':
@@ -538,7 +538,7 @@ def base_network():
     buses = _load_buses_from_eg()
 
     links = _load_links_from_eg(buses)
-    if snakemake.params.links.get('include_tyndp'):
+    if snakemake.config['links'].get('include_tyndp'):
         buses, links = _add_links_from_tyndp(buses, links)
 
     converters = _load_converters_from_eg(buses)
@@ -554,7 +554,7 @@ def base_network():
     n = pypsa.Network()
     n.name = 'PyPSA-Eur'
 
-    n.set_snapshots(pd.date_range(freq='h', **snakemake.params.snapshots))
+    n.set_snapshots(pd.date_range(freq='h', **snakemake.config['snapshots']))
     n.snapshot_weightings[:] *= 8760. / n.snapshot_weightings.sum()
 
     n.import_components_from_dataframe(buses, "Bus")

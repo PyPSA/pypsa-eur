@@ -67,7 +67,7 @@ if __name__ == "__main__":
         snakemake = mock_snakemake('build_bus_regions')
     configure_logging(snakemake)
 
-    countries = snakemake.params.countries
+    countries = snakemake.config['countries']
 
     n = pypsa.Network(snakemake.input.base_network)
 

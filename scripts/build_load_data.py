@@ -70,7 +70,7 @@ def load_timeseries(fn, years, countries, powerstatistics=True):
     """
     logger.info(f"Retrieving load data from '{fn}'.")
 
-    pattern = 'power_statistics' if powerstatistics else '_transparency'
+    pattern = 'power_statistics' if powerstatistics else 'transparency'
     pattern = f'_load_actual_entsoe_{pattern}'
     rename = lambda s: s[:-len(pattern)]
     date_parser = lambda x: dateutil.parser.parse(x, ignoretz=True)
@@ -196,17 +196,17 @@ if __name__ == "__main__":
 
     configure_logging(snakemake)
 
-    params = snakemake.params
-    powerstatistics = params.load['power_statistics']
-    interpolate_limit = params.load['interpolate_limit']
-    countries = params.countries
-    snapshots = pd.date_range(freq='h', **snakemake.params.snapshots)
+    config = snakemake.config
+    powerstatistics = config['load']['power_statistics']
+    interpolate_limit = config['load']['interpolate_limit']
+    countries = config['countries']
+    snapshots = pd.date_range(freq='h', **config['snapshots'])
     years = slice(snapshots[0], snapshots[-1])
-    time_shift = params.load['time_shift_for_large_gaps']
+    time_shift = config['load']['time_shift_for_large_gaps']
 
     load = load_timeseries(snakemake.input[0], years, countries, powerstatistics)
 
-    if params.load['manual_adjustments']:
+    if config['load']['manual_adjustments']:
         load = manual_adjustment(load, powerstatistics)
 
     logger.info(f"Linearly interpolate gaps of size {interpolate_limit} and less.")

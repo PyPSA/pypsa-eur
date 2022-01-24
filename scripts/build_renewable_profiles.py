@@ -202,16 +202,16 @@ if __name__ == '__main__':
     configure_logging(snakemake)
     pgb.streams.wrap_stderr()
     paths = snakemake.input
-    nprocesses = snakemake.params.atlite.get('nprocesses')
-    noprogress = not snakemake.params.atlite.get('show_progress', True)
-    option_params = snakemake.params.options
-    resource = option_params['resource'] # pv panel config / wind turbine config
-    correction_factor = option_params.get('correction_factor', 1.)
-    capacity_per_sqkm = option_params['capacity_per_sqkm']
-    p_nom_max_meth = option_params.get('potential', 'conservative')
+    nprocesses = snakemake.config['atlite'].get('nprocesses')
+    noprogress = not snakemake.config['atlite'].get('show_progress', True)
+    config = snakemake.config['renewable'][snakemake.wildcards.technology]
+    resource = config['resource'] # pv panel config / wind turbine config
+    correction_factor = config.get('correction_factor', 1.)
+    capacity_per_sqkm = config['capacity_per_sqkm']
+    p_nom_max_meth = config.get('potential', 'conservative')
 
-    if isinstance(option_params.get("corine", {}), list):
-        option_params['corine'] = {'grid_codes': option_params['corine']}
+    if isinstance(config.get("corine", {}), list):
+        config['corine'] = {'grid_codes': config['corine']}
 
     if correction_factor != 1.:
         logger.info(f'correction_factor is set as {correction_factor}')
@@ -223,10 +223,10 @@ if __name__ == '__main__':
 
     excluder = atlite.ExclusionContainer(crs=3035, res=100)
 
-    if option_params['natura']:
+    if config['natura']:
         excluder.add_raster(paths.natura, nodata=0, allow_no_overlap=True)
 
-    corine = option_params.get("corine", {})
+    corine = config.get("corine", {})
     if "grid_codes" in corine:
         codes = corine["grid_codes"]
         excluder.add_raster(paths.corine, codes=codes, invert=True, crs=3035)
@@ -235,19 +235,19 @@ if __name__ == '__main__':
         buffer = corine["distance"]
         excluder.add_raster(paths.corine, codes=codes, buffer=buffer, crs=3035)
 
-    if "max_depth" in option_params:
+    if "max_depth" in config:
         # lambda not supported for atlite + multiprocessing
         # use named function np.greater with partially frozen argument instead
         # and exclude areas where: -max_depth > grid cell depth
-        func = functools.partial(np.greater,-option_params['max_depth'])
+        func = functools.partial(np.greater,-config['max_depth'])
         excluder.add_raster(paths.gebco, codes=func, crs=4236, nodata=-1000)
 
-    if 'min_shore_distance' in option_params:
-        buffer = option_params['min_shore_distance']
+    if 'min_shore_distance' in config:
+        buffer = config['min_shore_distance']
         excluder.add_geometry(paths.country_shapes, buffer=buffer)
 
-    if 'max_shore_distance' in option_params:
-        buffer = option_params['max_shore_distance']
+    if 'max_shore_distance' in config:
+        buffer = config['max_shore_distance']
         excluder.add_geometry(paths.country_shapes, buffer=buffer, invert=True)
 
     kwargs = dict(nprocesses=nprocesses, disable_progressbar=noprogress)
@@ -326,11 +326,11 @@ if __name__ == '__main__':
         ds['underwater_fraction'] = xr.DataArray(underwater_fraction, [buses])
 
     # select only buses with some capacity and minimal capacity factor
-    ds = ds.sel(bus=((ds['profile'].mean('time') > option_params.get('min_p_max_pu', 0.)) &
-                      (ds['p_nom_max'] > option_params.get('min_p_nom_max', 0.))))
+    ds = ds.sel(bus=((ds['profile'].mean('time') > config.get('min_p_max_pu', 0.)) &
+                      (ds['p_nom_max'] > config.get('min_p_nom_max', 0.))))
 
-    if 'clip_p_max_pu' in option_params:
-        min_p_max_pu = option_params['clip_p_max_pu']
+    if 'clip_p_max_pu' in config:
+        min_p_max_pu = config['clip_p_max_pu']
         ds['profile'] = ds['profile'].where(ds['profile'] >= min_p_max_pu, 0)
 
     ds.to_netcdf(snakemake.output.profile)

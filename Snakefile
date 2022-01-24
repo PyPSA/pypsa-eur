@@ -323,7 +323,7 @@ rule cluster_network:
     log: "logs/cluster_network/elec_s{simpl}_{clusters}.log"
     benchmark: "benchmarks/cluster_network/elec_s{simpl}_{clusters}"
     threads: 1
-    resources: mem=3000
+    resources: mem=6000
     script: "scripts/cluster_network.py"
 
 

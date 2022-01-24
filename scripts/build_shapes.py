@@ -79,7 +79,7 @@ from itertools import takewhile
 import pandas as pd
 import geopandas as gpd
 from shapely.geometry import MultiPolygon, Polygon
-from shapely.ops import cascaded_union
+from shapely.ops import unary_union
 import pycountry as pyc
 
 logger = logging.getLogger(__name__)
@@ -95,7 +95,7 @@ def _get_country(target, **keys):
 
 def _simplify_polys(polys, minarea=0.1, tolerance=0.01, filterremote=True):
     if isinstance(polys, MultiPolygon):
-        polys = sorted(polys, key=attrgetter('area'), reverse=True)
+        polys = sorted(polys.geoms, key=attrgetter('area'), reverse=True)
         mainpoly = polys[0]
         mainlength = np.sqrt(mainpoly.area/(2.*np.pi))
         if mainpoly.area > minarea:
@@ -108,7 +108,7 @@ def _simplify_polys(polys, minarea=0.1, tolerance=0.01, filterremote=True):
 
 
 def countries():
-    cntries = snakemake.params.countries
+    cntries = snakemake.config['countries']
     if 'RS' in cntries: cntries.append('KV')
 
     df = gpd.read_file(snakemake.input.naturalearth)
@@ -126,7 +126,7 @@ def countries():
 
 def eez(country_shapes):
     df = gpd.read_file(snakemake.input.eez)
-    df = df.loc[df['ISO_3digit'].isin([_get_country('alpha_3', alpha_2=c) for c in snakemake.params.countries])]
+    df = df.loc[df['ISO_3digit'].isin([_get_country('alpha_3', alpha_2=c) for c in snakemake.config['countries']])]
     df['name'] = df['ISO_3digit'].map(lambda c: _get_country('alpha_2', alpha_3=c))
     s = df.set_index('name').geometry.map(lambda s: _simplify_polys(s, filterremote=False))
     s = gpd.GeoSeries({k:v for k,v in s.iteritems() if v.distance(country_shapes[k]) < 1e-3})
@@ -139,7 +139,7 @@ def country_cover(country_shapes, eez_shapes=None):
     if eez_shapes is not None:
         shapes += list(eez_shapes)
 
-    europe_shape = cascaded_union(shapes)
+    europe_shape = unary_union(shapes)
     if isinstance(europe_shape, MultiPolygon):
         europe_shape = max(europe_shape, key=attrgetter('area'))
     return Polygon(shell=europe_shape.exterior)
