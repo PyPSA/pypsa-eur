@@ -63,6 +63,7 @@ if not config.get('tutorial', False):
 if config['enable'].get('retrieve_databundle', True):
     rule retrieve_databundle:
         output: expand('data/bundle/{file}', file=datafiles)
+        params: tutorial = config["tutorial"]
         log: "logs/retrieve_databundle.log"
         script: 'scripts/retrieve_databundle.py'
 
@@ -77,7 +78,9 @@ rule build_load_data:
     input: "data/load_raw.csv"
     output: "resources/load.csv"
     params:
-        countries=config["countries"]
+        load=config["load"],
+        countries=config["countries"],
+        snapshots=config["snapshots"]
     log: "logs/build_load_data.log"
     script: 'scripts/build_load_data.py'
     
@@ -87,6 +90,7 @@ rule build_powerplants:
         base_network="networks/base.nc",
         custom_powerplants="data/custom_powerplants.csv"
     output: "resources/powerplants.csv"
+    params: electricity = config["electricity"]
     log: "logs/build_powerplants.log"
     threads: 1
     resources: mem=500
@@ -108,7 +112,12 @@ rule base_network:
         europe_shape='resources/europe_shape.geojson'
     output: "networks/base.nc"
     params:
-        countries=config["countries"]
+        electricity=config["electricity"],
+        lines=config["lines"],
+        links=config["links"],
+        transformers=config["transformers"],
+        countries=config["countries"],
+        snapshots=config["snapshots"]
     log: "logs/base_network.log"
     benchmark: "benchmarks/base_network"
     threads: 1
@@ -160,7 +169,8 @@ if config['enable'].get('build_cutout', False):
             regions_offshore="resources/regions_offshore.geojson"
         output: "cutouts/{cutout}.nc"
         params:
-            cutout_params=lambda w: config['atlite']['cutouts'][w.cutout]
+            cutout_params=lambda w: config['atlite']['cutouts'][w.cutout],
+            snapshots=config["snapshots"]
         log: "logs/build_cutout/{cutout}.log"
         benchmark: "benchmarks/build_cutout_{cutout}"
         threads: ATLITE_NPROCESSES
@@ -209,7 +219,7 @@ rule build_renewable_profiles:
     output:
         profile="resources/profile_{technology}.nc",
     params:
-        atlite=config["atlite"]
+        atlite=config["atlite"],
         options=lambda w: config["renewable"][w.technology]
     log: "logs/build_renewable_profile_{technology}.log"
     benchmark: "benchmarks/build_renewable_profiles_{technology}"
@@ -226,7 +236,8 @@ if 'hydro' in config['renewable'].keys():
             cutout="cutouts/" + config["renewable"]['hydro']['cutout'] + ".nc"
         output: 'resources/profile_hydro.nc'
         params:
-            countries=config["countries"]
+            countries=config["countries"],
+            hydro=config["renewable"]["hydro"]
         log: "logs/build_hydro_profile.log"
         resources: mem=5000
         script: 'scripts/build_hydro_profile.py'
@@ -246,7 +257,13 @@ rule add_electricity:
            for tech in config['renewable']}
     output: "networks/elec.nc"
     params:
-        countries=config["countries"]
+        countries=config["countries"],
+        costs=config["costs"],
+        electricity=config["electricity"],
+        load=config["load"],
+        renewable=config["renewable"],
+        lines=config["lines"],
+        plot=config["plotting"]
     log: "logs/add_electricity.log"
     benchmark: "benchmarks/add_electricity"
     threads: 1
@@ -266,6 +283,14 @@ rule simplify_network:
         regions_offshore="resources/regions_offshore_elec_s{simpl}.geojson",
         busmap='resources/busmap_elec_s{simpl}.csv',
         connection_costs='resources/connection_costs_s{simpl}.csv'
+    params:
+        electricity=config["electricity"],
+        costs=config["costs"],
+        renewable=config["renewable"],
+        lines=config["lines"],
+        links=config["links"],
+        solving=config["solving"],
+        clustering=config["clustering"]
     log: "logs/simplify_network/elec_s{simpl}.log"
     benchmark: "benchmarks/simplify_network/elec_s{simpl}"
     threads: 1
@@ -288,6 +313,13 @@ rule cluster_network:
         regions_offshore="resources/regions_offshore_elec_s{simpl}_{clusters}.geojson",
         busmap="resources/busmap_elec_s{simpl}_{clusters}.csv",
         linemap="resources/linemap_elec_s{simpl}_{clusters}.csv"
+    params:
+        solving=config["solving"],
+        renewable=config["renewable"],
+        lines=config["lines"],
+        enable=config["enable"],
+        costs=config["costs"],
+        electricity=config["electricity"]
     log: "logs/cluster_network/elec_s{simpl}_{clusters}.log"
     benchmark: "benchmarks/cluster_network/elec_s{simpl}_{clusters}"
     threads: 1
@@ -300,6 +332,10 @@ rule add_extra_components:
         network='networks/elec_s{simpl}_{clusters}.nc',
         tech_costs=COSTS,
     output: 'networks/elec_s{simpl}_{clusters}_ec.nc'
+    params:
+        costs=config["costs"],
+        electricity=config["electricity"],
+        plot=config["plotting"]
     log: "logs/add_extra_components/elec_s{simpl}_{clusters}.log"
     benchmark: "benchmarks/add_extra_components/elec_s{simpl}_{clusters}_ec"
     threads: 1
@@ -310,6 +346,12 @@ rule add_extra_components:
 rule prepare_network:
     input: 'networks/elec_s{simpl}_{clusters}_ec.nc', tech_costs=COSTS
     output: 'networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc'
+    params:
+        electricity=config["electricity"],
+        lines=config["lines"],
+        solving=config["solving"],
+        links=config["links"],
+        costs=config["costs"]
     log: "logs/prepare_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.log"
     benchmark: "benchmarks/prepare_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}"
     threads: 1
@@ -338,6 +380,9 @@ def memory(w):
 rule solve_network:
     input: "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"
     output: "results/networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"
+    params:
+        electricity=config["electricity"],
+        solving=config["solving"]
     log:
         solver=normpath("logs/solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_solver.log"),
         python="logs/solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_python.log",
@@ -354,6 +399,8 @@ rule solve_operations_network:
         unprepared="networks/elec_s{simpl}_{clusters}_ec.nc",
         optimized="results/networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"
     output: "results/networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op.nc"
+    params: 
+        solving=config["solving"]
     log:
         solver=normpath("logs/solve_operations_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op_solver.log"),
         python="logs/solve_operations_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op_python.log",

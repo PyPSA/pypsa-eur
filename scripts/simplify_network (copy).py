@@ -7,54 +7,78 @@
 Lifts electrical transmission network to a single 380 kV voltage layer,
 removes dead-ends of the network,
 and reduces multi-hop HVDC connections to a single link.
+
 Relevant Settings
 -----------------
+
 .. code:: yaml
+
     costs:
         USD2013_to_EUR2013:
         discountrate:
         marginal_cost:
         capital_cost:
+
     electricity:
         max_hours:
+
     renewables: (keys)
         {technology}:
             potential:
+
     lines:
         length_factor:
+
     links:
         p_max_pu:
+
     solving:
         solver:
             name:
+
 .. seealso::
     Documentation of the configuration file ``config.yaml`` at
     :ref:`costs_cf`, :ref:`electricity_cf`, :ref:`renewable_cf`,
     :ref:`lines_cf`, :ref:`links_cf`, :ref:`solving_cf`
+
 Inputs
 ------
+
 - ``data/costs.csv``: The database of cost assumptions for all included technologies for specific years from various sources; e.g. discount rate, lifetime, investment (CAPEX), fixed operation and maintenance (FOM), variable operation and maintenance (VOM), fuel costs, efficiency, carbon-dioxide intensity.
 - ``resources/regions_onshore.geojson``: confer :ref:`busregions`
 - ``resources/regions_offshore.geojson``: confer :ref:`busregions`
 - ``networks/elec.nc``: confer :ref:`electricity`
+
 Outputs
 -------
+
 - ``resources/regions_onshore_elec_s{simpl}.geojson``:
+
     .. image:: ../img/regions_onshore_elec_s.png
             :scale: 33 %
+
 - ``resources/regions_offshore_elec_s{simpl}.geojson``:
+
     .. image:: ../img/regions_offshore_elec_s  .png
             :scale: 33 %
+
 - ``resources/busmap_elec_s{simpl}.csv``: Mapping of buses from ``networks/elec.nc`` to ``networks/elec_s{simpl}.nc``;
 - ``networks/elec_s{simpl}.nc``:
+
     .. image:: ../img/elec_s.png
         :scale: 33 %
+
 Description
 -----------
+
 The rule :mod:`simplify_network` does up to four things:
+
 1. Create an equivalent transmission network in which all voltage levels are mapped to the 380 kV level by the function ``simplify_network(...)``.
+
 2. DC only sub-networks that are connected at only two buses to the AC network are reduced to a single representative link in the function ``simplify_links(...)``. The components attached to buses in between are moved to the nearest endpoint. The grid connection cost of offshore wind generators are added to the captial costs of the generator.
+
 3. Stub lines and links, i.e. dead-ends of the network, are sequentially removed from the network in the function ``remove_stubs(...)``. Components are moved along.
+
 4. Optionally, if an integer were provided for the wildcard ``{simpl}`` (e.g. ``networks/elec_s500.nc``), the network is clustered to this number of clusters with the routines from the ``cluster_network`` rule with the function ``cluster_network.cluster(...)``. This step is usually skipped!
 """
 
@@ -119,14 +143,14 @@ def _prepare_connection_costs_per_link(n):
 
     Nyears = n.snapshot_weightings.objective.sum() / 8760
     costs = load_costs(Nyears, snakemake.input.tech_costs,
-                       snakemake.config['costs'], snakemake.config['electricity'])
+                       snakemake.params.costs, snakemake.params.electricity)
 
     connection_costs_per_link = {}
 
-    for tech in snakemake.config['renewable']:
+    for tech in snakemake.params.renewable:
         if tech.startswith('offwind'):
             connection_costs_per_link[tech] = (
-                n.links.length * snakemake.config['lines']['length_factor'] *
+                n.links.length * snakemake.params.lines['length_factor'] *
                 (n.links.underwater_fraction * costs.at[tech + '-connection-submarine', 'capital_cost'] +
                  (1. - n.links.underwater_fraction) * costs.at[tech + '-connection-underground', 'capital_cost'])
             )
@@ -258,7 +282,7 @@ def simplify_links(n):
 
             all_links = [i for _, i in sum(links, [])]
 
-            p_max_pu = snakemake.config['links'].get('p_max_pu', 1.)
+            p_max_pu = snakemake.params.links.get('p_max_pu', 1.)
             lengths = n.links.loc[all_links, 'length']
             name = lengths.idxmax() + '+{}'.format(len(links) - 1)
             params = dict(
@@ -343,18 +367,18 @@ def cluster(n, n_clusters):
     
     renewable_carriers = pd.Index([tech
                                     for tech in n.generators.carrier.unique()
-                                    if tech.split('-', 2)[0] in snakemake.config['renewable']])
+                                    if tech.split('-', 2)[0] in snakemake.params.renewable])
     def consense(x):
         v = x.iat[0]
         assert ((x == v).all() or x.isnull().all()), (
             "The `potential` configuration option must agree for all renewable carriers, for now!"
         )
         return v
-    potential_mode = (consense(pd.Series([snakemake.config['renewable'][tech]['potential']
+    potential_mode = (consense(pd.Series([snakemake.params.renewable[tech]['potential']
                                             for tech in renewable_carriers]))
                         if len(renewable_carriers) > 0 else 'conservative')
     clustering = clustering_for_n_clusters(n, n_clusters, custom_busmap=False, potential_mode=potential_mode,
-                                           solver_name=snakemake.config['solving']['solver']['name'],
+                                           solver_name=snakemake.params.solving['solver']['name'],
                                            focus_weights=focus_weights)
 
     return clustering.network, clustering.busmap
@@ -376,7 +400,7 @@ if __name__ == "__main__":
 
     busmaps = [trafo_map, simplify_links_map, stub_map]
 
-    if snakemake.config.get('clustering', {}).get('simplify', {}).get('to_substations', False):
+    if snakemake.params.get('clustering', {}).get('simplify', {}).get('to_substations', False):
         n, substation_map = aggregate_to_substations(n)
         busmaps.append(substation_map)
 

@@ -74,7 +74,7 @@ if __name__ == "__main__":
         snakemake = mock_snakemake('build_hydro_profile')
     configure_logging(snakemake)
 
-    config = snakemake.config['renewable']['hydro']
+    hydro_params = snakemake.params.hydro
     cutout = atlite.Cutout(snakemake.input.cutout)
 
     countries = snakemake.params.countries
@@ -89,7 +89,7 @@ if __name__ == "__main__":
                            lower_threshold_quantile=True,
                            normalize_using_yearly=eia_stats)
 
-    if 'clip_min_inflow' in config:
-        inflow = inflow.where(inflow > config['clip_min_inflow'], 0)
+    if 'clip_min_inflow' in hydro_params:
+        inflow = inflow.where(inflow > hydro_params['clip_min_inflow'], 0)
 
     inflow.to_netcdf(snakemake.output[0])

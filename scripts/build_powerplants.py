@@ -85,7 +85,7 @@ logger = logging.getLogger(__name__)
 
 
 def add_custom_powerplants(ppl):
-    custom_ppl_query = snakemake.config['electricity']['custom_powerplants']
+    custom_ppl_query = snakemake.params.electricity['custom_powerplants']
     if not custom_ppl_query:
         return ppl
     add_ppls = pd.read_csv(snakemake.input.custom_powerplants, index_col=0,
@@ -115,7 +115,7 @@ if __name__ == "__main__":
                              df.Technology.replace('Steam Turbine',
                                                    'OCGT').fillna('OCGT')))))
 
-    ppl_query = snakemake.config['electricity']['powerplants_filter']
+    ppl_query = snakemake.params.electricity['powerplants_filter']
     if isinstance(ppl_query, str):
         ppl.query(ppl_query, inplace=True)
 

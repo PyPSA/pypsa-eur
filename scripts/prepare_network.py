@@ -73,9 +73,9 @@ logger = logging.getLogger(__name__)
 def add_co2limit(n, Nyears=1., factor=None):
 
     if factor is not None:
-        annual_emissions = factor*snakemake.config['electricity']['co2base']
+        annual_emissions = factor*snakemake.params.electricity['co2base']
     else:
-        annual_emissions = snakemake.config['electricity']['co2limit']
+        annual_emissions = snakemake.params.electricity['co2limit']
 
     n.add("GlobalConstraint", "CO2Limit",
           carrier_attribute="co2_emissions", sense="<=",
@@ -84,7 +84,7 @@ def add_co2limit(n, Nyears=1., factor=None):
 
 def add_emission_prices(n, emission_prices=None, exclude_co2=False):
     if emission_prices is None:
-        emission_prices = snakemake.config['costs']['emission_prices']
+        emission_prices = snakemake.params.costs['emission_prices']
     if exclude_co2: emission_prices.pop('co2')
     ep = (pd.Series(emission_prices).rename(lambda x: x+'_emissions') *
           n.carriers.filter(like='_emissions')).sum(axis=1)
@@ -95,7 +95,7 @@ def add_emission_prices(n, emission_prices=None, exclude_co2=False):
 
 
 def set_line_s_max_pu(n):
-    s_max_pu = snakemake.config['lines']['s_max_pu']
+    s_max_pu = snakemake.params.lines['s_max_pu']
     n.lines['s_max_pu'] = s_max_pu
     logger.info(f"N-1 security margin of lines set to {s_max_pu}")
 
@@ -113,8 +113,8 @@ def set_transmission_limit(n, ll_type, factor, Nyears=1):
            n.links.loc[links_dc_b, "p_nom"] @ n.links.loc[links_dc_b, col])
 
     costs = load_costs(Nyears, snakemake.input.tech_costs,
-                       snakemake.config['costs'],
-                       snakemake.config['electricity'])
+                       snakemake.params.costs,
+                       snakemake.params.electricity)
     update_transmission_costs(n, costs, simple_hvdc_costs=False)
 
     if factor == 'opt' or float(factor) > 1.0:
@@ -170,7 +170,7 @@ def apply_time_segmentation(n, segments):
 
     raw = pd.concat([p_max_pu, load, inflow], axis=1, sort=False)
 
-    solver_name = snakemake.config["solving"]["solver"]["name"]
+    solver_name = snakemake.params.solving["solver"]["name"]
 
     agg = tsam.TimeSeriesAggregation(raw, hoursPerPeriod=len(raw),
                                      noTypicalPeriods=1, noSegments=int(segments),
@@ -209,8 +209,8 @@ def enforce_autarky(n, only_crossborder=False):
     n.mremove("Link", links_rm)
 
 def set_line_nom_max(n):
-    s_nom_max_set = snakemake.config["lines"].get("s_nom_max,", np.inf)
-    p_nom_max_set = snakemake.config["links"].get("p_nom_max", np.inf)
+    s_nom_max_set = snakemake.params.lines.get("s_nom_max,", np.inf)
+    p_nom_max_set = snakemake.params.links.get("p_nom_max", np.inf)
     n.lines.s_nom_max.clip(upper=s_nom_max_set, inplace=True)
     n.links.p_nom_max.clip(upper=p_nom_max_set, inplace=True)
 
@@ -218,7 +218,7 @@ if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
         snakemake = mock_snakemake('prepare_network', network='elec', simpl='',
-                                  clusters='40', ll='v0.3', opts='Co2L-24H')
+                                  clusters='4', ll='v1.0', opts='Co2L-24H')
     configure_logging(snakemake)
 
     opts = snakemake.wildcards.opts.split('-')
