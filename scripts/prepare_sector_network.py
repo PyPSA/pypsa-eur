@@ -2357,7 +2357,7 @@ def decentral(n):
 
 def remove_h2_network(n):
 
-    n.links.drop(n.links.index[n.links.carrier == "H2 pipeline"], inplace=True)
+    n.links.drop(n.links.index[n.links.carrier.str.contains("H2 pipeline")], inplace=True)
 
     if "EU H2 Store" in n.stores.index:
         n.stores.drop("EU H2 Store", inplace=True)
