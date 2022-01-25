@@ -8,10 +8,10 @@ from shutil import copyfile
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 HTTP = HTTPRemoteProvider()
 
-if not exists("config.yaml"):
+if not exists("../config.yaml"):
     copyfile("config.default.yaml", "config.yaml")
 
-configfile: "config.yaml"
+configfile: "../config.yaml"
 
 COSTS="data/costs.csv"
 ATLITE_NPROCESSES = config['atlite'].get('nprocesses', 4)
@@ -245,7 +245,7 @@ rule add_electricity:
     log: "logs/add_electricity.log"
     benchmark: "benchmarks/add_electricity"
     threads: 1
-    resources: mem=3000
+    resources: mem=5000
     script: "scripts/add_electricity.py"
 
 
@@ -286,7 +286,7 @@ rule cluster_network:
     log: "logs/cluster_network/elec_s{simpl}_{clusters}.log"
     benchmark: "benchmarks/cluster_network/elec_s{simpl}_{clusters}"
     threads: 1
-    resources: mem=3000
+    resources: mem=6000
     script: "scripts/cluster_network.py"
 
 

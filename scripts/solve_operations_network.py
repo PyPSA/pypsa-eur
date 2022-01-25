@@ -97,7 +97,7 @@ if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
         snakemake = mock_snakemake('solve_operations_network', network='elec',
-                                  simpl='', clusters='5', ll='copt', opts='Co2L-BAU-24H')
+                                  simpl='', clusters='40', ll='v1.0', opts='Co2L-4H')
     configure_logging(snakemake)
 
     tmpdir = snakemake.config['solving'].get('tmpdir')
@@ -109,15 +109,13 @@ if __name__ == "__main__":
     n = set_parameters_from_optimized(n, n_optim)
     del n_optim
 
-    config = snakemake.config
     opts = snakemake.wildcards.opts.split('-')
-    config['solving']['options']['skip_iterations'] = False
+    snakemake.config['solving']['options']['skip_iterations'] = False
 
     fn = getattr(snakemake.log, 'memory', None)
     with memory_logger(filename=fn, interval=30.) as mem:
-        n = prepare_network(n, solve_opts=snakemake.config['solving']['options'])
-        n = solve_network(n, config=config, opts=opts,
-                          solver_dir=tmpdir,
+        n = prepare_network(n, snakemake.config['solving']['options'])
+        n = solve_network(n, snakemake.config, opts, solver_dir=tmpdir,
                           solver_logfile=snakemake.log.solver)
         n.export_to_netcdf(snakemake.output[0])
 

@@ -61,7 +61,7 @@ import atlite
 import xarray as xr
 import re
 
-def calculate_resistance(T, R_ref, T_ref=20, alpha=0.00403):
+def calculate_resistance(T, R_ref, T_ref=293, alpha=0.00403):
     """
     Calculates the resistance at other temperatures than the reference temperature.
 
@@ -79,7 +79,7 @@ def calculate_resistance(T, R_ref, T_ref=20, alpha=0.00403):
     -------
     Resistance of at given temperature.
     """
-    R=R_ref+(1+alpha*(T-T_ref))
+    R=R_ref*(1+alpha*(T-T_ref))
     return R
 
 def calculate_line_rating(n):
@@ -102,15 +102,17 @@ def calculate_line_rating(n):
     shapes = gpd.GeoSeries(shapes, index=relevant_lines.index)
     cutout = atlite.Cutout(snakemake.input.cutout)
     if relevant_lines.r_pu.eq(0).all():
-        #Overwrite standard line resistance with line resistance obtained from line type 
-        relevant_lines["r_pu"]=relevant_lines.join(n.line_types["r_per_length"], on=["type"])['r_per_length']/1000 #in meters
-        #Set default number of bundles per line
-        relevant_lines["n_bundle"]=1
+        #Overwrite standard line resistance with line resistance obtained from line type
+        R=relevant_lines.join(n.line_types["r_per_length"], on=["type"])['r_per_length']/1000 #in meters
         #If line type with bundles is given retrieve number of conductors per bundle
-        if relevant_lines["type"].str.contains("bundle").all():
-            relevant_lines["n_bundle"]=relevant_lines["type"].apply(lambda x: int(re.findall(r"(\d+)-bundle", x)[0]))
-    Imax=cutout.line_rating(shapes, relevant_lines.r_pu, D=0.0218 ,Ts=353 , epsilon=0.8, alpha=0.8)
-    da = xr.DataArray(data=np.sqrt(3) * Imax * relevant_lines["v_nom"].values.reshape(-1,1) * np.sqrt(relevant_lines["n_bundle"].values.reshape(-1,1)) * relevant_lines["num_parallel"].values.reshape(-1,1)/1e3, #in mW
+        relevant_lines["n_bundle"]=relevant_lines["type"].where(relevant_lines["type"].str.contains("bundle")).dropna().apply(lambda x: int(re.findall(r"(\d+)-bundle", x)[0]))
+        #Set default number of bundles per line
+        relevant_lines["n_bundle"].fillna(1, inplace=True)
+        R*=relevant_lines["n_bundle"]
+        R=calculate_resistance(T=353, R_ref=R)
+    Imax=cutout.line_rating(shapes, R, D=0.0218 ,Ts=353 , epsilon=0.8, alpha=0.8)
+    line_factor= relevant_lines.eval("v_nom * n_bundle * num_parallel")/1e3 #in mW
+    da = xr.DataArray(data=np.sqrt(3) * Imax * line_factor.values.reshape(-1,1), 
                       attrs=dict(description="Maximal possible power in MW for given line considering line rating"))
     return da
 
@@ -118,7 +120,7 @@ if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
         snakemake = mock_snakemake('build_line_rating', network='elec', simpl='',
-                                  clusters='6', ll='copt', opts='Co2L-24H')
+                                  clusters='40', ll='copt', opts='Co2L-4H')
     configure_logging(snakemake)
 
     n = pypsa.Network(snakemake.input.base_network)  

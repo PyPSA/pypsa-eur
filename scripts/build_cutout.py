@@ -103,7 +103,7 @@ logger = logging.getLogger(__name__)
 if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
-        snakemake = mock_snakemake('build_cutout', cutout='europe-2013-era5')
+        snakemake = mock_snakemake('build_cutout', cutout='europe-2013-era5-tutorial')
     configure_logging(snakemake)
 
     cutout_params = snakemake.config['atlite']['cutouts'][snakemake.wildcards.cutout]

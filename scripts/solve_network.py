@@ -270,7 +270,7 @@ if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
         snakemake = mock_snakemake('solve_network', network='elec', simpl='',
-                                  clusters='6', ll='copt', opts='Co2L-24H')
+                                  clusters='40', ll='v1.0', opts='Co2L-4H')
     configure_logging(snakemake)
 
     tmpdir = snakemake.config['solving'].get('tmpdir')
@@ -283,8 +283,7 @@ if __name__ == "__main__":
     with memory_logger(filename=fn, interval=30.) as mem:
         n = pypsa.Network(snakemake.input[0])
         n = prepare_network(n, solve_opts)
-        n = solve_network(n, config=snakemake.config, opts=opts,
-                          solver_dir=tmpdir,
+        n = solve_network(n, snakemake.config, opts, solver_dir=tmpdir,
                           solver_logfile=snakemake.log.solver)
         n.export_to_netcdf(snakemake.output[0])
 
