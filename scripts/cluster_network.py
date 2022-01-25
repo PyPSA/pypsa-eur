@@ -328,7 +328,7 @@ def plot_busmap_for_n_clusters(n, n_clusters, fn=None):
 if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
-        snakemake = mock_snakemake('cluster_network', network='elec', simpl='', clusters='5')
+        snakemake = mock_snakemake('cluster_network', network='elec', simpl='', clusters='40')
     configure_logging(snakemake)
 
     n = pypsa.Network(snakemake.input.network)

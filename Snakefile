@@ -8,10 +8,10 @@ from shutil import copyfile
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 HTTP = HTTPRemoteProvider()
 
-if not exists("config.yaml"):
+if not exists("../config.yaml"):
     copyfile("config.default.yaml", "config.yaml")
 
-configfile: "config.yaml"
+configfile: "../config.yaml"
 
 COSTS="data/costs.csv"
 ATLITE_NPROCESSES = config['atlite'].get('nprocesses', 4)
