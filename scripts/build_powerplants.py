@@ -84,15 +84,14 @@ from scipy.spatial import cKDTree as KDTree
 logger = logging.getLogger(__name__)
 
 
-def add_custom_powerplants(ppl):
-    custom_ppl_query = snakemake.config['electricity']['custom_powerplants']
+def add_custom_powerplants(ppl, custom_powerplants, custom_ppl_query=False):
     if not custom_ppl_query:
         return ppl
-    add_ppls = pd.read_csv(snakemake.input.custom_powerplants, index_col=0,
+    add_ppls = pd.read_csv(custom_powerplants, index_col=0,
                            dtype={'bus': 'str'})
     if isinstance(custom_ppl_query, str):
         add_ppls.query(custom_ppl_query, inplace=True)
-    return ppl.append(add_ppls, sort=False, ignore_index=True, verify_integrity=True)
+    return pd.concat([ppl, add_ppls], sort=False, ignore_index=True, verify_integrity=True)
 
 
 if __name__ == "__main__":
@@ -119,7 +118,9 @@ if __name__ == "__main__":
     if isinstance(ppl_query, str):
         ppl.query(ppl_query, inplace=True)
 
-    ppl = add_custom_powerplants(ppl) # add carriers from own powerplant files
+    # add carriers from own powerplant files:
+    custom_ppl_query = snakemake.config['electricity']['custom_powerplants']
+    ppl = add_custom_powerplants(ppl, snakemake.input.custom_powerplants, custom_ppl_query)
 
     cntries_without_ppl = [c for c in countries if c not in ppl.Country.unique()]
 

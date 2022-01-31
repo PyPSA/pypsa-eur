@@ -45,7 +45,7 @@ if config['enable'].get('prepare_links_p_nom', False):
         output: 'data/links_p_nom.csv'
         log: 'logs/prepare_links_p_nom.log'
         threads: 1
-        resources: mem=500
+        resources: mem_mb=500
         script: 'scripts/prepare_links_p_nom.py'
 
 
@@ -93,7 +93,7 @@ rule build_powerplants:
     params: electricity = config["electricity"]
     log: "logs/build_powerplants.log"
     threads: 1
-    resources: mem=500
+    resources: mem_mb=500
     script: "scripts/build_powerplants.py"
 
 
@@ -121,7 +121,7 @@ rule base_network:
     log: "logs/base_network.log"
     benchmark: "benchmarks/base_network"
     threads: 1
-    resources: mem=500
+    resources: mem_mb=500
     script: "scripts/base_network.py"
 
 
@@ -143,7 +143,7 @@ rule build_shapes:
         countries=config["countries"]
     log: "logs/build_shapes.log"
     threads: 1
-    resources: mem=500
+    resources: mem_mb=500
     script: "scripts/build_shapes.py"
 
 
@@ -159,7 +159,7 @@ rule build_bus_regions:
         countries=config["countries"]
     log: "logs/build_bus_regions.log"
     threads: 1
-    resources: mem=1000
+    resources: mem_mb=1000
     script: "scripts/build_bus_regions.py"
 
 if config['enable'].get('build_cutout', False):
@@ -174,7 +174,7 @@ if config['enable'].get('build_cutout', False):
         log: "logs/build_cutout/{cutout}.log"
         benchmark: "benchmarks/build_cutout_{cutout}"
         threads: ATLITE_NPROCESSES
-        resources: mem=ATLITE_NPROCESSES * 1000
+        resources: mem_mb=ATLITE_NPROCESSES * 1000
         script: "scripts/build_cutout.py"
 
 
@@ -224,7 +224,7 @@ rule build_renewable_profiles:
     log: "logs/build_renewable_profile_{technology}.log"
     benchmark: "benchmarks/build_renewable_profiles_{technology}"
     threads: ATLITE_NPROCESSES
-    resources: mem=ATLITE_NPROCESSES * 5000
+    resources: mem_mb=ATLITE_NPROCESSES * 5000
     script: "scripts/build_renewable_profiles.py"
 
 
@@ -239,7 +239,7 @@ if 'hydro' in config['renewable'].keys():
             countries=config["countries"],
             hydro=config["renewable"]["hydro"]
         log: "logs/build_hydro_profile.log"
-        resources: mem=5000
+        resources: mem_mb=5000
         script: 'scripts/build_hydro_profile.py'
 
 
@@ -267,7 +267,7 @@ rule add_electricity:
     log: "logs/add_electricity.log"
     benchmark: "benchmarks/add_electricity"
     threads: 1
-    resources: mem=3000
+    resources: mem_mb=5000
     script: "scripts/add_electricity.py"
 
 
@@ -294,7 +294,7 @@ rule simplify_network:
     log: "logs/simplify_network/elec_s{simpl}.log"
     benchmark: "benchmarks/simplify_network/elec_s{simpl}"
     threads: 1
-    resources: mem=4000
+    resources: mem_mb=4000
     script: "scripts/simplify_network.py"
 
 
@@ -323,7 +323,7 @@ rule cluster_network:
     log: "logs/cluster_network/elec_s{simpl}_{clusters}.log"
     benchmark: "benchmarks/cluster_network/elec_s{simpl}_{clusters}"
     threads: 1
-    resources: mem=6000
+    resources: mem_mb=6000
     script: "scripts/cluster_network.py"
 
 
@@ -339,7 +339,7 @@ rule add_extra_components:
     log: "logs/add_extra_components/elec_s{simpl}_{clusters}.log"
     benchmark: "benchmarks/add_extra_components/elec_s{simpl}_{clusters}_ec"
     threads: 1
-    resources: mem=3000
+    resources: mem_mb=3000
     script: "scripts/add_extra_components.py"
 
 
@@ -355,7 +355,7 @@ rule prepare_network:
     log: "logs/prepare_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.log"
     benchmark: "benchmarks/prepare_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}"
     threads: 1
-    resources: mem=4000
+    resources: mem_mb=4000
     script: "scripts/prepare_network.py"
 
 
@@ -389,8 +389,8 @@ rule solve_network:
         memory="logs/solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_memory.log"
     benchmark: "benchmarks/solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}"
     threads: 4
-    resources: mem=memory
-    shadow: "shallow"
+    resources: mem_mb=memory
+    shadow: "minimal"
     script: "scripts/solve_network.py"
 
 
@@ -407,8 +407,8 @@ rule solve_operations_network:
         memory="logs/solve_operations_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op_memory.log"
     benchmark: "benchmarks/solve_operations_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}"
     threads: 4
-    resources: mem=(lambda w: 5000 + 372 * int(w.clusters))
-    shadow: "shallow"
+    resources: mem_mb=(lambda w: 5000 + 372 * int(w.clusters))
+    shadow: "minimal"
     script: "scripts/solve_operations_network.py"
 
 
