@@ -19,6 +19,7 @@ scenario:
 countries: ['DE']
 
 clustering:
+  focus_weights: false
   simplify:
     to_substations: false # network is simplified to nodes with positive or negative power injection (i.e. substations or offwind connections)
 
@@ -39,6 +40,9 @@ enable:
 electricity:
   voltages: [220., 300., 380.]
   co2limit: 100.e+6
+  agg_p_nom_limits: false
+  BAU_mincapacities: false
+  SAFE_reservemargin: false
 
   extendable_carriers:
     Generator: [OCGT]
