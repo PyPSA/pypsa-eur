@@ -180,7 +180,8 @@ solving:
     min_iterations: 1
     max_iterations: 1
     clip_p_max_pu: 0.01
-    #nhours: 10
+    skip_iterations: false
+    track_iterations: false
   solver:
     name: glpk
   # solver:
