@@ -133,8 +133,8 @@ def prepare_network(n, solve_opts):
     return n
 
 
-def add_CCL_constraints(n, config):
-    agg_p_nom_limits = config['electricity'].get('agg_p_nom_limits')
+def add_CCL_constraints(n, params):
+    agg_p_nom_limits = params['agg_p_nom_limits']
 
     try:
         agg_p_nom_minmax = pd.read_csv(agg_p_nom_limits,
@@ -192,17 +192,17 @@ def add_EQ_constraints(n, o, scaling=1e-1):
     define_constraints(n, lhs, ">=", rhs, "equity", "min")
 
 
-def add_BAU_constraints(n, config):
-    mincaps = pd.Series(config['electricity']['BAU_mincapacities'])
+def add_BAU_constraints(n, params):
+    mincaps = pd.Series(params['BAU_mincapacities'])
     lhs = (linexpr((1, get_var(n, 'Generator', 'p_nom')))
            .groupby(n.generators.carrier).apply(join_exprs))
     define_constraints(n, lhs, '>=', mincaps[lhs.index], 'Carrier', 'bau_mincaps')
 
 
-def add_SAFE_constraints(n, config):
-    peakdemand = (1. + config['electricity']['SAFE_reservemargin']) *\
+def add_SAFE_constraints(n, params):
+    peakdemand = (1. + params['SAFE_reservemargin']) *\
                   n.loads_t.p_set.sum(axis=1).max()
-    conv_techs = config['plotting']['conv_techs']
+    conv_techs = params['conv_techs']
     exist_conv_caps = n.generators.query('~p_nom_extendable & carrier in @conv_techs')\
                        .p_nom.sum()
     ext_gens_i = n.generators.query('carrier in @conv_techs & p_nom_extendable').index
@@ -229,32 +229,31 @@ def extra_functionality(n, snapshots):
     The arguments ``opts`` and ``snakemake.config`` are expected to be attached to the network.
     """
     opts = n.opts
-    config = n.config
+    params=snakemake.params
     if 'BAU' in opts and n.generators.p_nom_extendable.any():
-        add_BAU_constraints(n, config)
+        add_BAU_constraints(n, params)
     if 'SAFE' in opts and n.generators.p_nom_extendable.any():
-        add_SAFE_constraints(n, config)
+        add_SAFE_constraints(n, params)
     if 'CCL' in opts and n.generators.p_nom_extendable.any():
-        add_CCL_constraints(n, config)
+        add_CCL_constraints(n, params)
     for o in opts:
         if "EQ" in o:
             add_EQ_constraints(n, o)
     add_battery_constraints(n)
 
 
-def solve_network(n, config, opts='', **kwargs):
-    solver_options = config['solving']['solver'].copy()
+def solve_network(n, config, params, opts='', **kwargs):
+    solver_options = params["solver_options"].copy()
     solver_name = solver_options.pop('name')
-    cf_solving = config['solving']['options']
-    track_iterations = cf_solving.get('track_iterations', False)
-    min_iterations = cf_solving.get('min_iterations', 4)
-    max_iterations = cf_solving.get('max_iterations', 6)
+    track_iterations = params['track_iterations']
+    min_iterations = params['min_iterations']
+    max_iterations = params['max_iterations']
 
     # add to network for extra_functionality
     n.config = config
     n.opts = opts
 
-    if cf_solving.get('skip_iterations', False):
+    if params['skip_iterations']:
         network_lopf(n, solver_name=solver_name, solver_options=solver_options,
                      extra_functionality=extra_functionality, **kwargs)
     else:
@@ -273,18 +272,18 @@ if __name__ == "__main__":
                                   clusters='5', ll='copt', opts='Co2L-BAU-CCL-24H')
     configure_logging(snakemake)
 
-    tmpdir = snakemake.config['solving'].get('tmpdir')
+    tmpdir = snakemake.params['solving'].get('tmpdir')
     if tmpdir is not None:
         Path(tmpdir).mkdir(parents=True, exist_ok=True)
     opts = snakemake.wildcards.opts.split('-')
-    solve_opts = snakemake.config['solving']['options']
+    solve_opts = snakemake.params['solving']['options']
 
     fn = getattr(snakemake.log, 'memory', None)
     with memory_logger(filename=fn, interval=30.) as mem:
         n = pypsa.Network(snakemake.input[0])
         n = prepare_network(n, solve_opts)
-        n = solve_network(n, snakemake.config, opts, solver_dir=tmpdir,
-                          solver_logfile=snakemake.log.solver)
+        n = solve_network(n, snakemake.config, snakemake.params ,opts, 
+                          solver_dir=tmpdir, solver_logfile=snakemake.log.solver)
         n.export_to_netcdf(snakemake.output[0])
 
     logger.info("Maximum memory usage: {}".format(mem.mem_usage))

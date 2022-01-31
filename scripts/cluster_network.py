@@ -173,7 +173,7 @@ def weighting_for_country(n, x):
     return (w * (100. / w.max())).clip(lower=1.).astype(int)
 
 
-def distribute_clusters(n, n_clusters, focus_weights=None, solver_name="cbc"):
+def distribute_clusters(n, n_clusters, focus_weights=False, solver_name="cbc"):
     """Determine the number of clusters per country"""
 
     L = (n.loads_t.p_set.mean()
@@ -186,7 +186,7 @@ def distribute_clusters(n, n_clusters, focus_weights=None, solver_name="cbc"):
     assert n_clusters >= len(N) and n_clusters <= N.sum(), \
         f"Number of clusters must be {len(N)} <= n_clusters <= {N.sum()} for this selection of countries."
 
-    if focus_weights is not None:
+    if focus_weights:
 
         total_focus = sum(list(focus_weights.values()))
 
@@ -221,7 +221,7 @@ def distribute_clusters(n, n_clusters, focus_weights=None, solver_name="cbc"):
     return pd.Series(m.n.get_values(), index=L.index).round().astype(int)
 
 
-def busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights=None, algorithm="kmeans", **algorithm_kwds):
+def busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights=False, algorithm="kmeans", **algorithm_kwds):
     if algorithm == "kmeans":
         algorithm_kwds.setdefault('n_init', 1000)
         algorithm_kwds.setdefault('max_iter', 30000)
@@ -259,7 +259,7 @@ def busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights=None, algori
 
 def clustering_for_n_clusters(n, n_clusters, custom_busmap=False, aggregate_carriers=None,
                               line_length_factor=1.25, potential_mode='simple', solver_name="cbc",
-                              algorithm="kmeans", extended_link_costs=0, focus_weights=None):
+                              algorithm="kmeans", extended_link_costs=0, focus_weights=False):
 
     if potential_mode == 'simple':
         p_nom_max_strategy = np.sum
@@ -333,11 +333,11 @@ if __name__ == "__main__":
 
     n = pypsa.Network(snakemake.input.network)
 
-    focus_weights = snakemake.config.get('focus_weights', None)
+    focus_weights = snakemake.params['focus_weights']
 
     renewable_carriers = pd.Index([tech
                                    for tech in n.generators.carrier.unique()
-                                   if tech in snakemake.config['renewable']])
+                                   if tech in snakemake.params['renewable']])
 
     if snakemake.wildcards.clusters.endswith('m'):
         n_clusters = int(snakemake.wildcards.clusters[:-1])
@@ -352,10 +352,10 @@ if __name__ == "__main__":
         linemap = n.lines.index.to_series()
         clustering = pypsa.networkclustering.Clustering(n, busmap, linemap, linemap, pd.Series(dtype='O'))
     else:
-        line_length_factor = snakemake.config['lines']['length_factor']
+        line_length_factor = snakemake.params['length_factor']
         Nyears = n.snapshot_weightings.objective.sum()/8760
 
-        hvac_overhead_cost = (load_costs(snakemake.input.tech_costs, snakemake.config['costs'], snakemake.config['electricity'], Nyears)
+        hvac_overhead_cost = (load_costs(snakemake.input.tech_costs, snakemake.params['costs'], snakemake.params['electricity'], Nyears)
                               .at['HVAC overhead', 'capital_cost'])
 
         def consense(x):
@@ -364,9 +364,9 @@ if __name__ == "__main__":
                 "The `potential` configuration option must agree for all renewable carriers, for now!"
             )
             return v
-        potential_mode = consense(pd.Series([snakemake.config['renewable'][tech]['potential']
+        potential_mode = consense(pd.Series([snakemake.params['renewable'][tech]['potential']
                                              for tech in renewable_carriers]))
-        custom_busmap = snakemake.config["enable"].get("custom_busmap", False)
+        custom_busmap = snakemake.params["custom_busmap"]
         if custom_busmap:
             custom_busmap = pd.read_csv(snakemake.input.custom_busmap, index_col=0, squeeze=True)
             custom_busmap.index = custom_busmap.index.astype(str)
@@ -374,7 +374,7 @@ if __name__ == "__main__":
 
         clustering = clustering_for_n_clusters(n, n_clusters, custom_busmap, aggregate_carriers,
                                                line_length_factor, potential_mode,
-                                               snakemake.config['solving']['solver']['name'],
+                                               snakemake.params['solver_name'],
                                                "kmeans", hvac_overhead_cost, focus_weights)
 
     update_p_nom_max(n)

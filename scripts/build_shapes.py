@@ -219,10 +219,10 @@ if __name__ == "__main__":
         snakemake = mock_snakemake('build_shapes')
     configure_logging(snakemake)
 
-    country_shapes = countries(snakemake.input.naturalearth, snakemake.config['countries'])
+    country_shapes = countries(snakemake.input.naturalearth, snakemake.params['countries'])
     save_to_geojson(country_shapes, snakemake.output.country_shapes)
 
-    offshore_shapes = eez(country_shapes, snakemake.input.eez, snakemake.config['countries'])
+    offshore_shapes = eez(country_shapes, snakemake.input.eez, snakemake.params['countries'])
     save_to_geojson(offshore_shapes, snakemake.output.offshore_shapes)
 
     europe_shape = country_cover(country_shapes, offshore_shapes)

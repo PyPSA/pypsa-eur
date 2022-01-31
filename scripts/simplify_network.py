@@ -139,15 +139,15 @@ def simplify_network_to_380(n):
     return n, trafo_map
 
 
-def _prepare_connection_costs_per_link(n, costs, config):
+def _prepare_connection_costs_per_link(n, costs, params):
     if n.links.empty: return {}
 
     connection_costs_per_link = {}
 
-    for tech in config['renewable']:
+    for tech in params['renewable']:
         if tech.startswith('offwind'):
             connection_costs_per_link[tech] = (
-                n.links.length * config['lines']['length_factor'] *
+                n.links.length * params['length_factor'] *
                 (n.links.underwater_fraction * costs.at[tech + '-connection-submarine', 'capital_cost'] +
                  (1. - n.links.underwater_fraction) * costs.at[tech + '-connection-underground', 'capital_cost'])
             )
@@ -155,9 +155,9 @@ def _prepare_connection_costs_per_link(n, costs, config):
     return connection_costs_per_link
 
 
-def _compute_connection_costs_to_bus(n, busmap, costs, config, connection_costs_per_link=None, buses=None):
+def _compute_connection_costs_to_bus(n, busmap, costs, params, connection_costs_per_link=None, buses=None):
     if connection_costs_per_link is None:
-        connection_costs_per_link = _prepare_connection_costs_per_link(n, costs, config)
+        connection_costs_per_link = _prepare_connection_costs_per_link(n, costs, params)
 
     if buses is None:
         buses = busmap.index[busmap.index != busmap.values]
@@ -214,7 +214,7 @@ def _aggregate_and_move_components(n, busmap, connection_costs_to_bus, output, a
         n.mremove(c, df.index[df.bus0.isin(buses_to_del) | df.bus1.isin(buses_to_del)])
 
 
-def simplify_links(n, costs, config, output):
+def simplify_links(n, costs, params, output):
     ## Complex multi-node links are folded into end-points
     logger.info("Simplifying connected link components")
 
@@ -261,7 +261,7 @@ def simplify_links(n, costs, config, output):
 
     busmap = n.buses.index.to_series()
 
-    connection_costs_per_link = _prepare_connection_costs_per_link(n, costs, config)
+    connection_costs_per_link = _prepare_connection_costs_per_link(n, costs, params)
     connection_costs_to_bus = pd.DataFrame(0., index=n.buses.index, columns=list(connection_costs_per_link))
 
     for lbl in labels.value_counts().loc[lambda s: s > 2].index:
@@ -275,14 +275,14 @@ def simplify_links(n, costs, config, output):
             m = sp.spatial.distance_matrix(n.buses.loc[b, ['x', 'y']],
                                            n.buses.loc[buses[1:-1], ['x', 'y']])
             busmap.loc[buses] = b[np.r_[0, m.argmin(axis=0), 1]]
-            connection_costs_to_bus.loc[buses] += _compute_connection_costs_to_bus(n, busmap, costs, config, connection_costs_per_link, buses)
+            connection_costs_to_bus.loc[buses] += _compute_connection_costs_to_bus(n, busmap, costs, params, connection_costs_per_link, buses)
 
             all_links = [i for _, i in sum(links, [])]
 
-            p_max_pu = config['links'].get('p_max_pu', 1.)
+            p_max_pu = params['p_max_pu']
             lengths = n.links.loc[all_links, 'length']
             name = lengths.idxmax() + '+{}'.format(len(links) - 1)
-            params = dict(
+            link_params = dict(
                 carrier='DC',
                 bus0=b[0], bus1=b[1],
                 length=sum(n.links.loc[[i for _, i in l], 'length'].mean() for l in links),
@@ -299,8 +299,8 @@ def simplify_links(n, costs, config, output):
             n.mremove("Link", all_links)
 
             static_attrs = n.components["Link"]["attrs"].loc[lambda df: df.static]
-            for attr, default in static_attrs.default.iteritems(): params.setdefault(attr, default)
-            n.links.loc[name] = pd.Series(params)
+            for attr, default in static_attrs.default.iteritems(): link_params.setdefault(attr, default)
+            n.links.loc[name] = pd.Series(link_params)
 
             # n.add("Link", **params)
 
@@ -309,12 +309,12 @@ def simplify_links(n, costs, config, output):
     _aggregate_and_move_components(n, busmap, connection_costs_to_bus, output)
     return n, busmap
 
-def remove_stubs(n, costs, config, output):
+def remove_stubs(n, costs, params, output):
     logger.info("Removing stubs")
 
     busmap = busmap_by_stubs(n) #  ['country'])
 
-    connection_costs_to_bus = _compute_connection_costs_to_bus(n, busmap, costs, config)
+    connection_costs_to_bus = _compute_connection_costs_to_bus(n, busmap, costs, params)
 
     _aggregate_and_move_components(n, busmap, connection_costs_to_bus, output)
 
@@ -357,25 +357,25 @@ def aggregate_to_substations(n, buses_i=None):
     return clustering.network, busmap
 
 
-def cluster(n, n_clusters, config):
+def cluster(n, n_clusters, params):
     logger.info(f"Clustering to {n_clusters} buses")
 
-    focus_weights = config.get('focus_weights', None)
+    focus_weights = params['focus_weights']
     
     renewable_carriers = pd.Index([tech
                                     for tech in n.generators.carrier.unique()
-                                    if tech.split('-', 2)[0] in config['renewable']])
+                                    if tech.split('-', 2)[0] in params['renewable']])
     def consense(x):
         v = x.iat[0]
         assert ((x == v).all() or x.isnull().all()), (
             "The `potential` configuration option must agree for all renewable carriers, for now!"
         )
         return v
-    potential_mode = (consense(pd.Series([config['renewable'][tech]['potential']
+    potential_mode = (consense(pd.Series([params['renewable'][tech]['potential']
                                             for tech in renewable_carriers]))
                         if len(renewable_carriers) > 0 else 'conservative')
     clustering = clustering_for_n_clusters(n, n_clusters, custom_busmap=False, potential_mode=potential_mode,
-                                           solver_name=config['solving']['solver']['name'],
+                                           solver_name=params['solver_name'],
                                            focus_weights=focus_weights)
 
     return clustering.network, clustering.busmap
@@ -393,20 +393,20 @@ if __name__ == "__main__":
 
     Nyears = n.snapshot_weightings.objective.sum() / 8760
 
-    technology_costs = load_costs(snakemake.input.tech_costs, snakemake.config['costs'], snakemake.config['electricity'], Nyears)
+    technology_costs = load_costs(snakemake.input.tech_costs, snakemake.params['costs'], snakemake.params['electricity'], Nyears)
 
-    n, simplify_links_map = simplify_links(n, technology_costs, snakemake.config, snakemake.output)
+    n, simplify_links_map = simplify_links(n, technology_costs, snakemake.params, snakemake.output)
 
-    n, stub_map = remove_stubs(n, technology_costs, snakemake.config, snakemake.output)
+    n, stub_map = remove_stubs(n, technology_costs, snakemake.params, snakemake.output)
 
     busmaps = [trafo_map, simplify_links_map, stub_map]
 
-    if snakemake.config.get('clustering', {}).get('simplify', {}).get('to_substations', False):
+    if snakemake.params['to_substations']:
         n, substation_map = aggregate_to_substations(n)
         busmaps.append(substation_map)
 
     if snakemake.wildcards.simpl:
-        n, cluster_map = cluster(n, int(snakemake.wildcards.simpl), snakemake.config)
+        n, cluster_map = cluster(n, int(snakemake.wildcards.simpl), snakemake.params)
         busmaps.append(cluster_map)
 
     # some entries in n.buses are not updated in previous functions, therefore can be wrong. as they are not needed

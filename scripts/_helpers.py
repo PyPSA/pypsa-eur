@@ -96,7 +96,7 @@ def pdbcast(v, h):
                         index=v.index, columns=h.index)
 
 
-def load_network_for_plots(fn, tech_costs, config, combine_hydro_ps=True):
+def load_network_for_plots(fn, tech_costs, params, combine_hydro_ps=True):
     import pypsa
     from add_electricity import update_transmission_costs, load_costs
 
@@ -120,7 +120,7 @@ def load_network_for_plots(fn, tech_costs, config, combine_hydro_ps=True):
     # n.storage_units.loc[bus_carrier == "heat","carrier"] = "water tanks"
 
     Nyears = n.snapshot_weightings.objective.sum() / 8760.
-    costs = load_costs(Nyears, tech_costs, config['costs'], config['electricity'])
+    costs = load_costs(tech_costs, params['costs'], params['electricity'], Nyears)
     update_transmission_costs(n, costs)
 
     return n

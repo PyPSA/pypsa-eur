@@ -20,8 +20,7 @@ Description
 """
 
 import logging
-from _helpers import (retrieve_snakemake_keys, load_network_for_plots,
-                      aggregate_p, aggregate_costs, configure_logging)
+from _helpers import (load_network_for_plots, aggregate_p, aggregate_costs, configure_logging)
 
 import pandas as pd
 import numpy as np
@@ -182,7 +181,7 @@ def plot_map(n, ax=None, attribute='p_nom', opts={}):
     return fig
 
 
-def plot_total_energy_pie(n, ax=None):
+def plot_total_energy_pie(n, opts ,ax=None):
     if ax is None: ax = plt.gca()
 
     ax.set_title('Energy per technology', fontdict=dict(fontsize="medium"))
@@ -200,7 +199,7 @@ def plot_total_energy_pie(n, ax=None):
             t1.remove()
             t2.remove()
 
-def plot_total_cost_bar(n, ax=None):
+def plot_total_cost_bar(n, opts, ax=None):
     if ax is None: ax = plt.gca()
 
     total_load = (n.snapshot_weightings.generators * n.loads_t.p.sum(axis=1)).sum()
@@ -259,25 +258,27 @@ if __name__ == "__main__":
 
     set_plot_style()
 
-    paths, config, wildcards, logs, out = retrieve_snakemake_keys(snakemake)
+    wildcards = snakemake.wildcards
+    logs = snakemake.log
 
-    map_figsize = config['map']['figsize']
-    map_boundaries = config['map']['boundaries']
+    params=snakemake.params
+    map_figsize = params['plotting']['map']['figsize']
+    map_boundaries = params['plotting']['map']['boundaries']
 
-    n = load_network_for_plots(paths.network, paths.tech_costs, config)
+    n = load_network_for_plots(snakemake.input.network, snakemake.input.tech_costs, params)
 
     scenario_opts = wildcards.opts.split('-')
 
     fig, ax = plt.subplots(figsize=map_figsize, subplot_kw={"projection": ccrs.PlateCarree()})
-    plot_map(n, ax, wildcards.attr, config)
+    plot_map(n, ax, wildcards.attr, params["plotting"])
 
-    fig.savefig(out.only_map, dpi=150, bbox_inches='tight')
+    fig.savefig(snakemake.output.only_map, dpi=150, bbox_inches='tight')
 
     ax1 = fig.add_axes([-0.115, 0.625, 0.2, 0.2])
-    plot_total_energy_pie(n, ax1)
+    plot_total_energy_pie(n, params['plotting'], ax1)
 
     ax2 = fig.add_axes([-0.075, 0.1, 0.1, 0.45])
-    plot_total_cost_bar(n, ax2)
+    plot_total_cost_bar(n, params['plotting'], ax2)
 
     ll = wildcards.ll
     ll_type = ll[0]
@@ -287,4 +288,4 @@ if __name__ == "__main__":
     fig.suptitle('Expansion to {amount} {label} at {clusters} clusters'
                 .format(amount=amnt, label=lbl, clusters=wildcards.clusters))
 
-    fig.savefig(out.ext, transparent=True, bbox_inches='tight')
+    fig.savefig(snakemake.output.ext, transparent=True, bbox_inches='tight')

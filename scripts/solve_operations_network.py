@@ -110,12 +110,12 @@ if __name__ == "__main__":
     del n_optim
 
     opts = snakemake.wildcards.opts.split('-')
-    snakemake.config['solving']['options']['skip_iterations'] = False
+    snakemake.params['skip_iterations'] = False
 
     fn = getattr(snakemake.log, 'memory', None)
     with memory_logger(filename=fn, interval=30.) as mem:
-        n = prepare_network(n, snakemake.config['solving']['options'])
-        n = solve_network(n, snakemake.config, opts, solver_dir=tmpdir,
+        n = prepare_network(n, snakemake.params['solving']['options'])
+        n = solve_network(n, snakemake.config, snakemake.params, opts, solver_dir=tmpdir,
                           solver_logfile=snakemake.log.solver)
         n.export_to_netcdf(snakemake.output[0])
 

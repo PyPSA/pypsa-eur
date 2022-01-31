@@ -114,12 +114,12 @@ if __name__ == "__main__":
                              df.Technology.replace('Steam Turbine',
                                                    'OCGT').fillna('OCGT')))))
 
-    ppl_query = snakemake.config['electricity']['powerplants_filter']
+    ppl_query = snakemake.params['powerplants_filter']
     if isinstance(ppl_query, str):
         ppl.query(ppl_query, inplace=True)
 
     # add carriers from own powerplant files:
-    custom_ppl_query = snakemake.config['electricity']['custom_powerplants']
+    custom_ppl_query = snakemake.params['custom_powerplants']
     ppl = add_custom_powerplants(ppl, snakemake.input.custom_powerplants, custom_ppl_query)
 
     cntries_without_ppl = [c for c in countries if c not in ppl.Country.unique()]

@@ -54,7 +54,7 @@ Replacing '/summaries/' with '/plots/' creates nice colored maps of the results.
 """
 
 import logging
-from _helpers import configure_logging, retrieve_snakemake_keys
+from _helpers import configure_logging
 
 import os
 import pypsa
@@ -378,7 +378,7 @@ outputs = ["costs",
            ]
 
 
-def make_summaries(networks_dict, paths, config, country='all'):
+def make_summaries(networks_dict, tech_costs, country='all'):
 
     columns = pd.MultiIndex.from_tuples(networks_dict.keys(),names=["simpl","clusters","ll","opts"])
 
@@ -403,7 +403,7 @@ def make_summaries(networks_dict, paths, config, country='all'):
             n = n[n.buses.country == country]
 
         Nyears = n.snapshot_weightings.objective.sum() / 8760.
-        costs = load_costs(paths[0], config['costs'], config['electricity'], Nyears)
+        costs = load_costs(tech_costs, snakemake.params['costs'], snakemake.params['electricity'], Nyears)
         update_transmission_costs(n, costs, simple_hvdc_costs=False)
 
         assign_carriers(n)
@@ -430,7 +430,8 @@ if __name__ == "__main__":
         network_dir = os.path.join('results', 'networks')
     configure_logging(snakemake)
 
-    paths, config, wildcards, logs, out = retrieve_snakemake_keys(snakemake)
+    config= snakemake.config
+    wildcards=snakemake.wildcards
 
     def expand_from_wildcard(key, config):
         w = getattr(wildcards, key)
@@ -451,6 +452,6 @@ if __name__ == "__main__":
                      for l in ll
                      for opts in expand_from_wildcard("opts", config)}
 
-    dfs = make_summaries(networks_dict, paths, config, country=wildcards.country)
+    dfs = make_summaries(networks_dict, snakemake.input[0], country=wildcards.country)
 
-    to_csv(dfs, out[0])
+    to_csv(dfs, snakemake.output[0])

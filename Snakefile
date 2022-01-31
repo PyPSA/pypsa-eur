@@ -90,7 +90,9 @@ rule build_powerplants:
         base_network="networks/base.nc",
         custom_powerplants="data/custom_powerplants.csv"
     output: "resources/powerplants.csv"
-    params: electricity = config["electricity"]
+    params: 
+        powerplants_filter = config["electricity"]["powerplants_filter"],
+        custom_powerplants = config["electricity"]["custom_powerplants"]
     log: "logs/build_powerplants.log"
     threads: 1
     resources: mem_mb=500
@@ -112,7 +114,7 @@ rule base_network:
         europe_shape='resources/europe_shape.geojson'
     output: "networks/base.nc"
     params:
-        electricity=config["electricity"],
+        voltages=config["electricity"]["voltages"],
         lines=config["lines"],
         links=config["links"],
         transformers=config["transformers"],
@@ -220,7 +222,7 @@ rule build_renewable_profiles:
         profile="resources/profile_{technology}.nc",
     params:
         atlite=config["atlite"],
-        options=lambda w: config["renewable"][w.technology]
+        tech_params=lambda w: config["renewable"][w.technology]
     log: "logs/build_renewable_profile_{technology}.log"
     benchmark: "benchmarks/build_renewable_profiles_{technology}"
     threads: ATLITE_NPROCESSES
@@ -257,13 +259,13 @@ rule add_electricity:
            for tech in config['renewable']}
     output: "networks/elec.nc"
     params:
-        countries=config["countries"],
         costs=config["costs"],
         electricity=config["electricity"],
-        load=config["load"],
+        countries=config["countries"],
+        scaling_factor=config["load"]["scaling_factor"],
+        length_factor=config["lines"]["length_factor"],
         renewable=config["renewable"],
-        lines=config["lines"],
-        plot=config["plotting"]
+        plotting=config["plotting"]
     log: "logs/add_electricity.log"
     benchmark: "benchmarks/add_electricity"
     threads: 1
@@ -287,10 +289,11 @@ rule simplify_network:
         electricity=config["electricity"],
         costs=config["costs"],
         renewable=config["renewable"],
-        lines=config["lines"],
-        links=config["links"],
-        solving=config["solving"],
-        clustering=config["clustering"]
+        length_factor=config['lines']['length_factor'],
+        p_max_pu=config["links"]['p_max_pu'],
+        solver_name=config["solving"]["solver"]["name"],
+        to_substations=config["clustering"]["simplify"]["to_substations"],
+        focus_weights=config["clustering"]["focus_weights"]
     log: "logs/simplify_network/elec_s{simpl}.log"
     benchmark: "benchmarks/simplify_network/elec_s{simpl}"
     threads: 1
@@ -314,12 +317,13 @@ rule cluster_network:
         busmap="resources/busmap_elec_s{simpl}_{clusters}.csv",
         linemap="resources/linemap_elec_s{simpl}_{clusters}.csv"
     params:
-        solving=config["solving"],
+        solver_name=config["solving"]["solver"]["name"],
         renewable=config["renewable"],
-        lines=config["lines"],
-        enable=config["enable"],
+        length_factor=config["lines"]["length_factor"],
+        custom_busmap=config["enable"]["custom_busmap"],
         costs=config["costs"],
-        electricity=config["electricity"]
+        electricity=config["electricity"],
+        focus_weights=config["clustering"]["focus_weights"]
     log: "logs/cluster_network/elec_s{simpl}_{clusters}.log"
     benchmark: "benchmarks/cluster_network/elec_s{simpl}_{clusters}"
     threads: 1
@@ -335,7 +339,7 @@ rule add_extra_components:
     params:
         costs=config["costs"],
         electricity=config["electricity"],
-        plot=config["plotting"]
+        plotting=config["plotting"]
     log: "logs/add_extra_components/elec_s{simpl}_{clusters}.log"
     benchmark: "benchmarks/add_extra_components/elec_s{simpl}_{clusters}_ec"
     threads: 1
@@ -348,9 +352,10 @@ rule prepare_network:
     output: 'networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc'
     params:
         electricity=config["electricity"],
-        lines=config["lines"],
-        solving=config["solving"],
-        links=config["links"],
+        s_max_pu=config["lines"]["s_max_pu"],
+        s_nom_max=config["lines"]["s_nom_max"],
+        p_nom_max=config["links"]["p_nom_max"],
+        solver_name=config["solving"]["solver"]["name"],
         costs=config["costs"]
     log: "logs/prepare_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.log"
     benchmark: "benchmarks/prepare_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}"
@@ -381,7 +386,15 @@ rule solve_network:
     input: "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"
     output: "results/networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"
     params:
-        electricity=config["electricity"],
+        agg_p_nom_limits=config["electricity"]["agg_p_nom_limits"],
+        BAU_mincapacities=config['electricity']['BAU_mincapacities'],
+        SAFE_reservemargin=config['electricity']['SAFE_reservemargin'],
+        conv_techs=config['electricity']['conventional_carriers'],        
+        solver_options=config["solving"]["solver"],
+        track_iterations=config["solving"]["options"]["track_iterations"],
+        min_iterations=config["solving"]["options"]["min_iterations"],
+        max_iterations=config["solving"]["options"]["max_iterations"],
+        skip_iterations=config["solving"]["options"]["skip_iterations"],
         solving=config["solving"]
     log:
         solver=normpath("logs/solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_solver.log"),
@@ -400,6 +413,15 @@ rule solve_operations_network:
         optimized="results/networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"
     output: "results/networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op.nc"
     params: 
+        agg_p_nom_limits=config["electricity"]["agg_p_nom_limits"],
+        BAU_mincapacities=config['electricity']['BAU_mincapacities'],
+        SAFE_reservemargin=config['electricity']['SAFE_reservemargin'],
+        conv_techs=config['electricity']['conventional_carriers'],        
+        solver_options=config["solving"]["solver"],
+        track_iterations=config["solving"]["options"]["track_iterations"],
+        min_iterations=config["solving"]["options"]["min_iterations"],
+        max_iterations=config["solving"]["options"]["max_iterations"],
+        skip_iterations=config["solving"]["options"]["skip_iterations"],
         solving=config["solving"]
     log:
         solver=normpath("logs/solve_operations_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op_solver.log"),
@@ -419,6 +441,10 @@ rule plot_network:
     output:
         only_map="results/plots/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}.{ext}",
         ext="results/plots/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}_ext.{ext}"
+    params:
+        plotting=config["plotting"],
+        electricity=config["electricity"],
+        costs=config["costs"]
     log: "logs/plot_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{attr}_{ext}.log"
     script: "scripts/plot_network.py"
 
@@ -441,6 +467,9 @@ def input_make_summary(w):
 rule make_summary:
     input: input_make_summary
     output: directory("results/summaries/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}")
+    params: 
+        electricity=config["electricity"],
+        costs=config["costs"]
     log: "logs/make_summary/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}.log",
     script: "scripts/make_summary.py"
 

@@ -112,7 +112,7 @@ def _find_closest_links(links, new_links, distance_upper_bound=1.5):
                          .sort_index()['i']
 
 
-def _load_buses_from_eg(eg_buses, europe_shape, config_elec):
+def _load_buses_from_eg(eg_buses, europe_shape, voltages):
     buses = (pd.read_csv(eg_buses, quotechar="'",
                          true_values=['t'], false_values=['f'],
                          dtype=dict(bus_id="str"))
@@ -128,8 +128,8 @@ def _load_buses_from_eg(eg_buses, europe_shape, config_elec):
     europe_shape_prepped = shapely.prepared.prep(europe_shape)
     buses_in_europe_b = buses[['x', 'y']].apply(lambda p: europe_shape_prepped.contains(Point(p)), axis=1)
 
-    buses_with_v_nom_to_keep_b = buses.v_nom.isin(config_elec['voltages']) | buses.v_nom.isnull()
-    logger.info("Removing buses with voltages {}".format(pd.Index(buses.v_nom.unique()).dropna().difference(config_elec['voltages'])))
+    buses_with_v_nom_to_keep_b = buses.v_nom.isin(voltages) | buses.v_nom.isnull()
+    logger.info("Removing buses with voltages {}".format(pd.Index(buses.v_nom.unique()).dropna().difference(voltages)))
 
     return pd.DataFrame(buses.loc[buses_in_europe_b & buses_with_v_nom_to_keep_b])
 
@@ -287,14 +287,14 @@ def _apply_parameter_corrections(n, parameter_corrections):
                 df.loc[inds, attr] = r[inds].astype(df[attr].dtype)
 
 
-def _set_electrical_parameters_lines(lines, config):
-    v_noms = config['electricity']['voltages']
-    linetypes = config['lines']['types']
+def _set_electrical_parameters_lines(lines, params):
+    v_noms = params['voltages']
+    linetypes = params['lines']['types']
 
     for v_nom in v_noms:
         lines.loc[lines["v_nom"] == v_nom, 'type'] = linetypes[v_nom]
 
-    lines['s_max_pu'] = config['lines']['s_max_pu']
+    lines['s_max_pu'] = params['lines']['s_max_pu']
 
     return lines
 
@@ -306,10 +306,10 @@ def _set_lines_s_nom_from_linetypes(n):
     )
 
 
-def _set_electrical_parameters_links(links, config, links_p_nom):
+def _set_electrical_parameters_links(links, params, links_p_nom):
     if links.empty: return links
 
-    p_max_pu = config['links'].get('p_max_pu', 1.)
+    p_max_pu = params['links'].get('p_max_pu', 1.)
     links['p_max_pu'] = p_max_pu
     links['p_min_pu'] = -p_max_pu
 
@@ -333,8 +333,8 @@ def _set_electrical_parameters_links(links, config, links_p_nom):
     return links
 
 
-def _set_electrical_parameters_converters(converters, config):
-    p_max_pu = config['links'].get('p_max_pu', 1.)
+def _set_electrical_parameters_converters(converters, params):
+    p_max_pu = params['links'].get('p_max_pu', 1.)
     converters['p_max_pu'] = p_max_pu
     converters['p_min_pu'] = -p_max_pu
 
@@ -347,13 +347,13 @@ def _set_electrical_parameters_converters(converters, config):
     return converters
 
 
-def _set_electrical_parameters_transformers(transformers, config):
-    config = config['transformers']
+def _set_electrical_parameters_transformers(transformers, params):
+    params = params['transformers']
 
     ## Add transformer parameters
-    transformers["x"] = config.get('x', 0.1)
-    transformers["s_nom"] = config.get('s_nom', 2000)
-    transformers['type'] = config.get('type', '')
+    transformers["x"] = params.get('x', 0.1)
+    transformers["s_nom"] = params.get('s_nom', 2000)
+    transformers['type'] = params.get('type', '')
 
     return transformers
 
@@ -375,7 +375,7 @@ def _remove_unconnected_components(network):
     return network[component == component_sizes.index[0]]
 
 
-def _set_countries_and_substations(n, config, country_shapes, offshore_shapes):
+def _set_countries_and_substations(n, params, country_shapes, offshore_shapes):
 
     buses = n.buses
 
@@ -388,7 +388,7 @@ def _set_countries_and_substations(n, config, country_shapes, offshore_shapes):
             index=buses.index
         )
 
-    countries = config['countries']
+    countries = params['countries']
     country_shapes = gpd.read_file(country_shapes).set_index('name')['geometry']
     offshore_shapes = gpd.read_file(offshore_shapes).set_index('name')['geometry']
     substation_b = buses['symbol'].str.contains('substation|converter station', case=False)
@@ -511,8 +511,8 @@ def _set_links_underwater_fraction(n, offshore_shapes):
         n.links['underwater_fraction'] = links.intersection(offshore_shape).length / links.length
 
 
-def _adjust_capacities_of_under_construction_branches(n, config):
-    lines_mode = config['lines'].get('under_construction', 'undef')
+def _adjust_capacities_of_under_construction_branches(n, params):
+    lines_mode = params['lines'].get('under_construction', 'undef')
     if lines_mode == 'zero':
         n.lines.loc[n.lines.under_construction, 'num_parallel'] = 0.
         n.lines.loc[n.lines.under_construction, 's_nom'] = 0.
@@ -521,7 +521,7 @@ def _adjust_capacities_of_under_construction_branches(n, config):
     elif lines_mode != 'keep':
         logger.warning("Unrecognized configuration for `lines: under_construction` = `{}`. Keeping under construction lines.")
 
-    links_mode = config['links'].get('under_construction', 'undef')
+    links_mode = params['links'].get('under_construction', 'undef')
     if links_mode == 'zero':
         n.links.loc[n.links.under_construction, "p_nom"] = 0.
     elif links_mode == 'remove':
@@ -538,12 +538,12 @@ def _adjust_capacities_of_under_construction_branches(n, config):
 
 def base_network(eg_buses, eg_converters, eg_transformers, eg_lines, eg_links,
                  links_p_nom, links_tyndp, europe_shape, country_shapes, offshore_shapes,
-                 parameter_corrections, config):
+                 parameter_corrections, params):
 
-    buses = _load_buses_from_eg(eg_buses, europe_shape, config['electricity'])
+    buses = _load_buses_from_eg(eg_buses, europe_shape, params['voltages'])
 
     links = _load_links_from_eg(buses, eg_links)
-    if config['links'].get('include_tyndp'):
+    if params['links'].get('include_tyndp'):
         buses, links = _add_links_from_tyndp(buses, links, links_tyndp, europe_shape)
 
     converters = _load_converters_from_eg(buses, eg_converters)
@@ -551,15 +551,15 @@ def base_network(eg_buses, eg_converters, eg_transformers, eg_lines, eg_links,
     lines = _load_lines_from_eg(buses, eg_lines)
     transformers = _load_transformers_from_eg(buses, eg_transformers)
 
-    lines = _set_electrical_parameters_lines(lines, config)
-    transformers = _set_electrical_parameters_transformers(transformers, config)
-    links = _set_electrical_parameters_links(links, config, links_p_nom)
-    converters = _set_electrical_parameters_converters(converters, config)
+    lines = _set_electrical_parameters_lines(lines, params)
+    transformers = _set_electrical_parameters_transformers(transformers, params)
+    links = _set_electrical_parameters_links(links, params, links_p_nom)
+    converters = _set_electrical_parameters_converters(converters, params)
 
     n = pypsa.Network()
     n.name = 'PyPSA-Eur'
 
-    n.set_snapshots(pd.date_range(freq='h', **config['snapshots']))
+    n.set_snapshots(pd.date_range(freq='h', **params['snapshots']))
 
     n.import_components_from_dataframe(buses, "Bus")
     n.import_components_from_dataframe(lines, "Line")
@@ -573,13 +573,13 @@ def base_network(eg_buses, eg_converters, eg_transformers, eg_lines, eg_links,
 
     n = _remove_unconnected_components(n)
 
-    _set_countries_and_substations(n, config, country_shapes, offshore_shapes)
+    _set_countries_and_substations(n, params, country_shapes, offshore_shapes)
 
     _set_links_underwater_fraction(n, offshore_shapes)
 
     _replace_b2b_converter_at_country_border_by_link(n)
 
-    n = _adjust_capacities_of_under_construction_branches(n, config)
+    n = _adjust_capacities_of_under_construction_branches(n, params)
 
     return n
 
@@ -591,6 +591,6 @@ if __name__ == "__main__":
 
     n = base_network(snakemake.input.eg_buses, snakemake.input.eg_converters, snakemake.input.eg_transformers, snakemake.input.eg_lines, snakemake.input.eg_links,
                      snakemake.input.links_p_nom, snakemake.input.links_tyndp, snakemake.input.europe_shape, snakemake.input.country_shapes, snakemake.input.offshore_shapes,
-                     snakemake.input.parameter_corrections, snakemake.config)
+                     snakemake.input.parameter_corrections, snakemake.params)
 
     n.export_to_netcdf(snakemake.output[0])

@@ -210,9 +210,9 @@ if __name__ == "__main__":
 
     n = pypsa.Network(snakemake.input[0])
     Nyears = n.snapshot_weightings.objective.sum() / 8760.
-    costs = load_costs(snakemake.input.tech_costs, snakemake.config['costs'], snakemake.config['electricity'], Nyears)
+    costs = load_costs(snakemake.input.tech_costs, snakemake.params['costs'], snakemake.params['electricity'], Nyears)
 
-    set_line_s_max_pu(n, snakemake.config['lines']['s_max_pu'])
+    set_line_s_max_pu(n, snakemake.params['s_max_pu'])
 
     for o in opts:
         m = re.match(r'^\d+h$', o, re.IGNORECASE)
@@ -223,7 +223,7 @@ if __name__ == "__main__":
     for o in opts:
         m = re.match(r'^\d+seg$', o, re.IGNORECASE)
         if m is not None:
-            solver_name = snakemake.config["solving"]["solver"]["name"]
+            solver_name = snakemake.params['solver_name']
             n = apply_time_segmentation(n, m.group(0)[:-3], solver_name)
             break
 
@@ -231,10 +231,10 @@ if __name__ == "__main__":
         if "Co2L" in o:
             m = re.findall("[0-9]*\.?[0-9]+$", o)
             if len(m) > 0:
-                co2limit = float(m[0]) * snakemake.config['electricity']['co2base']
+                co2limit = float(m[0]) * snakemake.params['electricity']['co2base']
                 add_co2limit(n, co2limit, Nyears)
             else:
-                add_co2limit(n, snakemake.config['electricity']['co2limit'], Nyears)
+                add_co2limit(n, snakemake.params['electricity']['co2limit'], Nyears)
             break
 
     for o in opts:
@@ -255,13 +255,12 @@ if __name__ == "__main__":
                     c.df.loc[sel,attr] *= factor
 
     if 'Ep' in opts:
-        add_emission_prices(n, snakemake.config['costs']['emission_prices'])
+        add_emission_prices(n, snakemake.params['costs']['emission_prices'])
 
     ll_type, factor = snakemake.wildcards.ll[0], snakemake.wildcards.ll[1:]
     set_transmission_limit(n, ll_type, factor, costs, Nyears)
 
-    set_line_nom_max(n, s_nom_max_set=snakemake.config["lines"].get("s_nom_max,", np.inf),
-                     p_nom_max_set=snakemake.config["links"].get("p_nom_max,", np.inf))
+    set_line_nom_max(n, snakemake.params["s_nom_max"], snakemake.params["p_nom_max"])
 
     if "ATK" in opts:
         enforce_autarky(n)
