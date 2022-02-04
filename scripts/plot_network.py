@@ -13,7 +13,7 @@ from make_summary import assign_carriers
 from plot_summary import rename_techs, preferred_order
 from helper import override_component_attrs
 
-plt.style.use(['ggplot', "../matplotlibrc"])
+plt.style.use(['ggplot', "matplotlibrc"])
 
 
 def rename_techs_tyndp(tech):
@@ -313,7 +313,7 @@ def plot_h2_map(network):
 
     n.links.drop(n.links.index[~n.links.carrier.str.contains("H2 pipeline")], inplace=True)
 
-    h2_new = n.links.loc[n.links.carrier=="H2 pipeline", "p_nom_opt"]
+    h2_new = n.links.loc[n.links.carrier=="H2 pipeline"]
 
     h2_retro = n.links.loc[n.links.carrier=='H2 pipeline retrofitted']
 
@@ -325,21 +325,28 @@ def plot_h2_map(network):
         h2_retro_n = h2_retro[~positive_order].rename(columns=swap_buses)
         h2_retro = pd.concat([h2_retro_p, h2_retro_n])
 
+        h2_retro["index_orig"] = h2_retro.index
         h2_retro.index = h2_retro.apply(
             lambda x: f"H2 pipeline {x.bus0.replace(' H2', '')} -> {x.bus1.replace(' H2', '')}",
             axis=1
         )
 
-        h2_retro = h2_retro["p_nom_opt"]
+        retro_w_new_i = h2_retro.index.intersection(h2_new.index)
+        h2_retro_w_new = h2_retro.loc[retro_w_new_i]
 
-        h2_total = h2_new + h2_retro
+        retro_wo_new_i = h2_retro.index.difference(h2_new.index)
+        h2_retro_wo_new = h2_retro.loc[retro_wo_new_i]
+        h2_retro_wo_new.index = h2_retro_wo_new.index_orig
+
+        to_concat = [h2_new, h2_retro_w_new, h2_retro_wo_new]
+        h2_total = pd.concat(to_concat).p_nom_opt.groupby(level=0).sum()
 
     else:
 
         h2_total = h2_new
 
     link_widths_total = h2_total / linewidth_factor
-    link_widths_total = link_widths_total.groupby(level=0).sum().reindex(n.links.index).fillna(0.)
+    link_widths_total = link_widths_total.reindex(n.links.index).fillna(0.)
     link_widths_total[n.links.p_nom_opt < line_lower_threshold] = 0.
 
     retro = n.links.p_nom_opt.where(n.links.carrier=='H2 pipeline retrofitted', other=0.)
