@@ -203,7 +203,7 @@ if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
         snakemake = mock_snakemake('prepare_network', network='elec', simpl='',
-                                  clusters='40', ll='v0.3', opts='Co2L-24H')
+                                  clusters='40', ll='v1.0', opts='Co2L-4H')
     configure_logging(snakemake)
 
     opts = snakemake.wildcards.opts.split('-')

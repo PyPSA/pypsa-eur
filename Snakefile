@@ -346,7 +346,7 @@ rule solve_network:
 
 rule solve_operations_network:
     input:
-        unprepared="networks/elec_s{simpl}_{clusters}_ec.nc",
+        unprepared="networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
         optimized="results/networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"
     output: "results/networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op.nc"
     log:

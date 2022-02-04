@@ -94,7 +94,7 @@ def calculate_line_rating(n):
     -------
     xarray DataArray object with maximal power.
     """
-    relevant_lines=n.lines[(n.lines['underground']==False) & (n.lines['under_construction']==False)] 
+    relevant_lines=n.lines[(n.lines['underground']==False)] 
     buses = relevant_lines[["bus0", "bus1"]].values
     x = n.buses.x
     y = n.buses.y
@@ -120,10 +120,11 @@ if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
         snakemake = mock_snakemake('build_line_rating', network='elec', simpl='',
-                                  clusters='40', ll='copt', opts='Co2L-4H')
+                                  clusters='40', ll='v1.0', opts='Co2L-4H')
     configure_logging(snakemake)
 
-    n = pypsa.Network(snakemake.input.base_network)  
-    da=calculate_line_rating(n)
+    n = pypsa.Network(snakemake.input.base_network)
+    s_max_pu_factor=snakemake.config["lines"]["s_max_pu"]  
+    da=calculate_line_rating(n)*s_max_pu_factor
 
     da.to_netcdf(snakemake.output[0])

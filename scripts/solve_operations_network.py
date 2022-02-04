@@ -80,6 +80,10 @@ def set_parameters_from_optimized(n, n_optim):
     n.generators.loc[gen_extend_i, 'p_nom'] = \
         n_optim.generators['p_nom_opt'].reindex(gen_extend_i, fill_value=0.)
     n.generators.loc[gen_extend_i, 'p_nom_extendable'] = False
+    #Use load shredding to avoid infeasibilites
+    n.generators.loc["dummy"]=n.generators.iloc[0]
+    n.generators.loc[["dummy"],["p_nom_extendable"]]=True
+    n.generators.loc[["dummy"],["marginal_cost"]]=3000
 
     stor_units_extend_i = n.storage_units.index[n.storage_units.p_nom_extendable]
     n.storage_units.loc[stor_units_extend_i, 'p_nom'] = \
