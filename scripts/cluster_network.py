@@ -272,6 +272,8 @@ def busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights=None, algori
         algorithm_kwds.setdefault('tol', 1e-6)
 
     def fix_country_assignment_for_hac(n):
+        from scipy.sparse import csgraph
+
         # overwrite country of nodes that are disconnected from their country-topology
         for country in n.buses.country.unique():
             m = n.copy()
@@ -288,19 +290,18 @@ def busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights=None, algori
                 neighbor_bus = n.lines.query("bus0 in @disconnected_bus or bus1 in @disconnected_bus").iloc[0][['bus0','bus1']]
                 new_country = list(set(n.buses.loc[neighbor_bus].country)-set([country]))[0]
 
-                logger.info(f"overwriting country ``{country}`` of bus ``{disconnected_bus}`` to new country ``{new_country}``, "
+                logger.info(f"overwriting country `{country}` of bus `{disconnected_bus}` to new country `{new_country}`, "
                             "because it is disconnected from its inital inter-country transmission grid.")
                 n.buses.at[disconnected_bus, "country"] = new_country
         return n
 
     if algorithm == "hac":
-        from scipy.sparse import csgraph
-
         feature = get_feature_for_hac(n, buses_i=n.buses.index, feature=feature)
         n = fix_country_assignment_for_hac(n)
-    elif feature is not None:
-        logger.warning(f"Keyword argument feature is only valid for algorithm 'hac'."
-                       f"given feature ``{feature}`` will be ignored.")
+
+    if (algorithm != "hac") and (feature is not None):
+        logger.warning(f"Keyword argument feature is only valid for algorithm `hac`. "
+                       f"Given feature `{feature}` will be ignored.")
 
     n.determine_network_topology()
 
@@ -338,7 +339,7 @@ def clustering_for_n_clusters(n, n_clusters, custom_busmap=False, aggregate_carr
                               line_length_factor=1.25, potential_mode='simple', solver_name="cbc",
                               algorithm="hac", feature=None, extended_link_costs=0, focus_weights=None):
 
-    logger.info(f"Clustering network using algorithm ``{algorithm}`` and feature ``{feature}``...")
+    logger.info(f"Clustering network using algorithm `{algorithm}` and feature `{feature}`...")
 
     if potential_mode == 'simple':
         p_nom_max_strategy = np.sum
@@ -348,7 +349,7 @@ def clustering_for_n_clusters(n, n_clusters, custom_busmap=False, aggregate_carr
         raise AttributeError(f"potential_mode should be one of 'simple' or 'conservative' but is '{potential_mode}'")
 
     if not custom_busmap:
-        busmap = busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights, algorithm)
+        busmap = busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights, algorithm, feature)
     else:
         busmap = custom_busmap
 

@@ -407,7 +407,21 @@ if __name__ == "__main__":
         n, substation_map = aggregate_to_substations(n)
         busmaps.append(substation_map)
 
+    # treatment of outliers (nodes without a profile for considered carrier) for "cluster_network"
+    if snakemake.config.get("clustering", {}).get("cluster_network", {}).get("algorithm", "hac") == "hac":
+        carriers = cluster_config.get("feature", "solar+onwind-time").split('-')[0].split('+')
+        buses_i = list(set(n.buses.index)-set(n.generators.query("carrier in @carriers").bus))
+        n, busmap_hac = aggregate_to_substations(n, buses_i)
+        busmaps.append(busmap_hac)
+
     if snakemake.wildcards.simpl:
+        # treatment of outliers (nodes without a profile for a considered carrier) for "simplify"
+        if cluster_config.get("algorithm", "hac") == "hac":
+            carriers = cluster_config.get("feature", "solar+onwind-time").split('-')[0].split('+')
+            buses_i = list(set(n.buses.index)-set(n.generators.query("carrier in @carriers").bus))
+            n, busmap_hac = aggregate_to_substations(n, buses_i)
+            busmaps.append(busmap_hac)
+        # conduct clustering
         n, cluster_map = cluster(n, int(snakemake.wildcards.simpl), snakemake.config,
                                  algorithm=cluster_config.get('algorithm', 'hac'),
                                  feature=cluster_config.get('feature', None))
