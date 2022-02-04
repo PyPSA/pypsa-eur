@@ -353,11 +353,10 @@ def aggregate_to_substations(n, buses_i=None):
                                             line_length_factor=1.0,
                                             generator_strategies={'p_nom_max': 'sum'},
                                             scale_link_capital_costs=False)
-        
     return clustering.network, busmap
 
 
-def cluster(n, n_clusters, config, algorithm="kmeans", feature=None):
+def cluster(n, n_clusters, config, algorithm="hac", feature=None):
     logger.info(f"Clustering to {n_clusters} buses")
 
     focus_weights = config.get('focus_weights', None)
@@ -403,7 +402,8 @@ if __name__ == "__main__":
 
     busmaps = [trafo_map, simplify_links_map, stub_map]
 
-    if snakemake.config.get('clustering', {}).get('simplify_network', {}).get('to_substations', False):
+    cluster_config = snakemake.config.get('clustering', {}).get('simplify_network', {})
+    if cluster_config.get('to_substations', False):
         n, substation_map = aggregate_to_substations(n)
         busmaps.append(substation_map)
 

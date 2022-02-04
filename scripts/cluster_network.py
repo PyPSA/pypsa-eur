@@ -190,9 +190,11 @@ def get_feature_for_hac(n, buses_i=None, feature=None):
         feature_data = pd.DataFrame(index=buses_i, columns=carriers)
         for carrier in carriers:
             try:
+                # without simpl wildcard (bus names are "X X"):
                 feature_data[carrier] = (n.generators_t.p_max_pu.filter(like=carrier).mean()
                                          .rename(index=lambda x: x.split(' ')[0]))
             except:
+                # with simpl wildcard (bus names are "X X X"):
                 feature_data[carrier] = (n.generators_t.p_max_pu.filter(like=carrier).mean()
                                          .rename(index=lambda x: x.split(' ')[0] + ' ' + x.split(' ')[1]))
 
@@ -208,7 +210,7 @@ def get_feature_for_hac(n, buses_i=None, feature=None):
                 feature_data = feature_data.append(n.generators_t.p_max_pu.filter(like=carrier)
                                                    .rename(columns=lambda x: x.split(' ')[0] + ' ' + x.split(' ')[1]))[buses_i]
         feature_data = feature_data.T
-        feature_data.columns = feature_data.columns.astype(str) # Timestamp will raise error in sklearn>=v1.2
+        feature_data.columns = feature_data.columns.astype(str) # timestamp raises error in sklearn>=v1.2
 
     feature_data = feature_data.fillna(0)
 
@@ -309,9 +311,9 @@ def busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights=None, algori
 
 def clustering_for_n_clusters(n, n_clusters, custom_busmap=False, aggregate_carriers=None,
                               line_length_factor=1.25, potential_mode='simple', solver_name="cbc",
-                              algorithm="kmeans", feature=None, extended_link_costs=0, focus_weights=None):
+                              algorithm="hac", feature=None, extended_link_costs=0, focus_weights=None):
 
-    logger.info(f"Clustering network using algorithm {algorithm} and feature {feature}...")
+    logger.info(f"Clustering network using algorithm ``{algorithm}`` and feature ``{feature}``...")
 
     if potential_mode == 'simple':
         p_nom_max_strategy = np.sum
@@ -424,10 +426,13 @@ if __name__ == "__main__":
             custom_busmap.index = custom_busmap.index.astype(str)
             logger.info(f"Imported custom busmap from {snakemake.input.custom_busmap}")
 
+        cluster_config = snakemake.config.get('clustering', {}).get('cluster_network', {})
         clustering = clustering_for_n_clusters(n, n_clusters, custom_busmap, aggregate_carriers,
                                                line_length_factor, potential_mode,
                                                snakemake.config['solving']['solver']['name'],
-                                               "kmeans", hvac_overhead_cost, focus_weights)
+                                               cluster_config.get("algorithm", "hac"),
+                                               cluster_config.get("feature", "solar+onwind-time"),
+                                               hvac_overhead_cost, focus_weights)
 
     update_p_nom_max(n)
     
