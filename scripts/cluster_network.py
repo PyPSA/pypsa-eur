@@ -271,11 +271,36 @@ def busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights=None, algori
         algorithm_kwds.setdefault('max_iter', 30000)
         algorithm_kwds.setdefault('tol', 1e-6)
 
+    def fix_country_assignment_for_hac(n):
+        # overwrite country of nodes that are disconnected from their country-topology
+        for country in n.buses.country.unique():
+            m = n.copy()
+            m.buses = m.buses.query("country in @country")
+            m.lines = m.lines.query("bus0 in @m.buses.index and bus1 in @m.buses.index")
+            m.links = m.links.query("bus0 in @m.buses.index and bus1 in @m.buses.index")
+
+            _, labels = csgraph.connected_components(m.adjacency_matrix(), directed=False)
+            component = pd.Series(labels, index=m.buses.index)
+            component_sizes = component.value_counts()
+
+            if len(component_sizes)>1:
+                disconnected_bus = component[component==component_sizes[component_sizes==component_sizes.min()].index[0]].index
+                neighbor_bus = n.lines.query("bus0 in @disconnected_bus or bus1 in @disconnected_bus").iloc[0][['bus0','bus1']]
+                new_country = list(set(n.buses.loc[neighbor_bus].country)-set([country]))[0]
+
+                logger.info(f"overwriting country ``{country}`` of bus ``{disconnected_bus}`` to new country ``{new_country}``, "
+                            "because it is disconnected from its inital inter-country transmission grid.")
+                n.buses.at[disconnected_bus, "country"] = new_country
+        return n
+
     if algorithm == "hac":
+        from scipy.sparse import csgraph
+
         feature = get_feature_for_hac(n, buses_i=n.buses.index, feature=feature)
+        n = fix_country_assignment_for_hac(n)
     elif feature is not None:
         logger.warning(f"Keyword argument feature is only valid for algorithm 'hac'."
-                       f"given feature {feature} will be ignored.")
+                       f"given feature ``{feature}`` will be ignored.")
 
     n.determine_network_topology()
 
