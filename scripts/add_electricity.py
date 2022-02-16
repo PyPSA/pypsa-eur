@@ -257,7 +257,7 @@ def update_transmission_costs(n, costs, length_factor=1.0, simple_hvdc_costs=Fal
 
 def attach_wind_and_solar(n, costs, input_profiles, technologies, line_length_factor=1):
     # TODO: rename tech -> carrier, technologies -> carriers
-    
+
     for tech in technologies:
         if tech == 'hydro': continue
 
@@ -526,9 +526,13 @@ def estimate_renewable_capacities(n, tech_map):
              .where(lambda s: s>0.1, 0.))  # only capacities above 100kW
         n.generators.loc[tech_i, 'p_nom_min'] = n.generators.loc[tech_i, 'p_nom']
 
-def attach_line_rating(n, fn):
+def attach_line_rating(n, fn, s_max_py_factor):
     s_max = xr.open_dataarray(fn).to_pandas().transpose()
     n.lines_t.s_max_pu = s_max / n.lines.s_nom[s_max.columns] #only considers overhead lines
+    # account for maximal voltage angles of maximally 30 degree.
+    x = n.lines.x_pu
+    s_max_pu_cap = np.pi / (6 * x * n.lines.s_nom)
+    n.lines_t.s_max_pu = n.lines_t.s_max_pu.clip(upper=s_max_pu_cap, lower=1)
 
 def add_nice_carrier_names(n, config):
     carrier_i = n.carriers.index
@@ -578,9 +582,10 @@ if __name__ == "__main__":
     attach_OPSD_renewables(n, techs)
 
     update_p_nom_max(n)
-    
+
     if snakemake.config["lines"]["line_rating"]:
-        attach_line_rating(n, snakemake.input.line_rating)
+        s_max_pu_factor = snakemake.config["lines"]["s_max_pu"]
+        attach_line_rating(n, snakemake.input.line_rating, s_max_pu_factor)
 
     add_nice_carrier_names(n, snakemake.config)
 

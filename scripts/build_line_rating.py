@@ -21,7 +21,7 @@ Relevant Settings
 Inputs
 ------
 
-- ``data/cutouts``: 
+- ``data/cutouts``:
 - ``networks/base.nc``: confer :ref:`base`
 
 Outputs
@@ -33,8 +33,8 @@ Outputs
 Description
 -----------
 
-The rule :mod:`build_line_rating` calculates the line rating for transmission lines. 
-The line rating provides the maximal capacity of a transmission line considering the heat exchange with the environment. 
+The rule :mod:`build_line_rating` calculates the line rating for transmission lines.
+The line rating provides the maximal capacity of a transmission line considering the heat exchange with the environment.
 
 The folloing heat gains and losses are considered:
 
@@ -42,10 +42,10 @@ The folloing heat gains and losses are considered:
 - heat gain trough solar radiation
 - heat loss through radiation of the trasnmission line
 - heat loss through forced convection with wind
-- heat loss through natural convection 
+- heat loss through natural convection
 
 
-With a heat balance considering the maximum temperature threshold of the tranmission line, 
+With a heat balance considering the maximum temperature threshold of the tranmission line,
 the maximal possible capacity factor "s_max_pu" for each transmission line at each time step is calculated.
 """
 
@@ -89,12 +89,12 @@ def calculate_line_rating(n):
     Parameters
     ----------
     n : pypsa.Network object containing information on grid
-    
+
     Returns
     -------
     xarray DataArray object with maximal power.
     """
-    relevant_lines=n.lines[(n.lines['underground']==False)] 
+    relevant_lines=n.lines[(n.lines['underground']==False)]
     buses = relevant_lines[["bus0", "bus1"]].values
     x = n.buses.x
     y = n.buses.y
@@ -112,7 +112,7 @@ def calculate_line_rating(n):
         R=calculate_resistance(T=353, R_ref=R)
     Imax=cutout.line_rating(shapes, R, D=0.0218 ,Ts=353 , epsilon=0.8, alpha=0.8)
     line_factor= relevant_lines.eval("v_nom * n_bundle * num_parallel")/1e3 #in mW
-    da = xr.DataArray(data=np.sqrt(3) * Imax * line_factor.values.reshape(-1,1), 
+    da = xr.DataArray(data=np.sqrt(3) * Imax * line_factor.values.reshape(-1,1),
                       attrs=dict(description="Maximal possible power in MW for given line considering line rating"))
     return da
 
@@ -124,7 +124,6 @@ if __name__ == "__main__":
     configure_logging(snakemake)
 
     n = pypsa.Network(snakemake.input.base_network)
-    s_max_pu_factor=snakemake.config["lines"]["s_max_pu"]  
-    da=calculate_line_rating(n)*s_max_pu_factor
 
+    da=calculate_line_rating(n)
     da.to_netcdf(snakemake.output[0])
