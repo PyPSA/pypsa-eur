@@ -14,7 +14,6 @@ SPDX-License-Identifier: CC-BY-4.0
 
 # PyPSA-Eur: An Open Optimisation Model of the European Transmission System
 
-Test
 PyPSA-Eur is an open model dataset of the European power system at the
 transmission network level that covers the full ENTSO-E area.
 The model is suitable both for operational studies and generation and transmission expansion planning studies.
