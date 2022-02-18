@@ -206,7 +206,7 @@ rule build_renewable_profiles:
         regions=lambda w: ("resources/regions_onshore.geojson"
                            if w.technology in ('onwind', 'solar')
                            else "resources/regions_offshore.geojson"),
-        cutout=lambda w: "cutouts/" + config["renewable"][w.technology]['cutout'] + ".nc"
+        cutout="cutouts/europe-{weatheryear}-era5.nc" #lambda w: "cutouts/" + config["renewable"][w.technology]['cutout'] + ".nc"
     output:
         profile="resources/profile{weather_year}_{technology}.nc",
     log: "logs/build_renewable_profile{weather_year}_{technology}.log"
@@ -221,7 +221,7 @@ if 'hydro' in config['renewable'].keys():
         input:
             country_shapes='resources/country_shapes.geojson',
             eia_hydro_generation='data/bundle/EIA_hydro_generation_2000_2014.csv',
-            cutout="cutouts/" + config["renewable"]['hydro']['cutout'] + ".nc"
+            cutout= "cutouts/europe-{weatheryear}-era5.nc" # "cutouts/" + config["renewable"]['hydro']['cutout'] + ".nc"
         output: 'resources/profile{weather_year}_hydro.nc'
         log: "logs/build_hydro_profile{weather_year}.log"
         resources: mem=5000

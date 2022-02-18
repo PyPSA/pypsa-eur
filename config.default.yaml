@@ -12,6 +12,7 @@ logging:
 summary_dir: results
 
 scenario:
+  weather_year: [''] # for backwards compatibility
   simpl: ['']
   ll: ['copt']
   clusters: [37, 128, 256, 512, 1024]
@@ -24,8 +25,8 @@ clustering:
     to_substations: false # network is simplified to nodes with positive or negative power injection (i.e. substations or offwind connections)
 
 snapshots:
-  start: "2013-01-01"
-  end: "2014-01-01"
+  start: "2011-01-01"
+  end: "2012-01-01"
   closed: 'left' # end is not inclusive
 
 enable:
@@ -90,7 +91,7 @@ atlite:
       
 renewable:
   onwind:
-    cutout: europe-2013-era5
+    # cutout: europe-2013-era5
     resource:
       method: wind
       turbine: Vestas_V112_3MW
@@ -107,7 +108,7 @@ renewable:
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   offwind-ac:
-    cutout: europe-2013-era5
+    # cutout: europe-2013-era5
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_5MW_offshore
@@ -123,7 +124,7 @@ renewable:
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   offwind-dc:
-    cutout: europe-2013-era5
+    # cutout: europe-2013-era5
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_5MW_offshore
@@ -140,7 +141,7 @@ renewable:
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   solar:
-    cutout: europe-2013-sarah
+    # cutout: europe-2013-sarah
     resource:
       method: pv
       panel: CSi
@@ -162,7 +163,7 @@ renewable:
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   hydro:
-    cutout: europe-2013-era5
+    # cutout: europe-2013-era5
     carriers: [ror, PHS, hydro]
     PHS_max_hours: 6
     hydro_max_hours: "energy_capacity_totals_by_country" # one of energy_capacity_totals_by_country, estimate_by_large_installations or a float
