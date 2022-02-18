@@ -5,10 +5,6 @@ import xarray as xr
 import pandas as pd
 import atlite
 
-year = snakemake.wildcards.weather_year
-cutout_name = snakemake.config['atlite']['cutout_name']
-if year: cutout_name = cutout_name.format(year=year)
-
 if __name__ == '__main__':
     if 'snakemake' not in globals():
         from helper import mock_snakemake
