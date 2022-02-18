@@ -12,7 +12,10 @@ from vresutils import shapes as vshapes
 if __name__ == '__main__':
     if 'snakemake' not in globals():
         from helper import mock_snakemake
-        snakemake = mock_snakemake('build_population_layouts', year='')
+        snakemake = mock_snakemake(
+            'build_population_layouts',
+            weather_year='',
+        )
 
     year = snakemake.wildcards.weather_year
     cutout_config = snakemake.config['atlite']['cutout']

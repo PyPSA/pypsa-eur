@@ -65,8 +65,6 @@ snapshots:
   end: "2014-01-01"
   closed: left # end is not inclusive
 
-countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK']
-
 atlite:
   cutout: ../pypsa-eur/cutouts/europe-2013-era5.nc
 

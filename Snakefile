@@ -12,7 +12,7 @@ configfile: "config.yaml"
 
 
 wildcard_constraints:
-    year="[0-9]*",
+    weather_year="[0-9]*",
     lv="[a-z0-9\.]+",
     simpl="[a-zA-Z0-9]*",
     clusters="[0-9]+m?",
