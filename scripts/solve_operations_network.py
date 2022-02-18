@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
 #
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: MIT
 
 """
 Solves linear optimal dispatch in hourly resolution
@@ -32,13 +32,13 @@ Relevant Settings
 Inputs
 ------
 
-- ``networks/elec{year}_s{simpl}_{clusters}.nc``: confer :ref:`cluster`
-- ``results/networks/elec{year}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc``: confer :ref:`solve`
+- ``networks/elec{weather_year}_s{simpl}_{clusters}.nc``: confer :ref:`cluster`
+- ``results/networks/elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc``: confer :ref:`solve`
 
 Outputs
 -------
 
-- ``results/networks/elec{year}_s{simpl}_{clusters}_ec_l{ll}_{opts}_op.nc``: Solved PyPSA network for optimal dispatch including optimisation results
+- ``results/networks/elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}_op.nc``: Solved PyPSA network for optimal dispatch including optimisation results
 
 Description
 -----------
@@ -71,7 +71,7 @@ def set_parameters_from_optimized(n, n_optim):
             n_optim.lines[attr].reindex(lines_untyped_i, fill_value=0.)
     n.lines['s_nom_extendable'] = False
 
-    links_dc_i = n.links.index[n.links.carrier == 'DC']
+    links_dc_i = n.links.index[n.links.p_nom_extendable]
     n.links.loc[links_dc_i, 'p_nom'] = \
         n_optim.links['p_nom_opt'].reindex(links_dc_i, fill_value=0.)
     n.links.loc[links_dc_i, 'p_nom_extendable'] = False
@@ -81,10 +81,15 @@ def set_parameters_from_optimized(n, n_optim):
         n_optim.generators['p_nom_opt'].reindex(gen_extend_i, fill_value=0.)
     n.generators.loc[gen_extend_i, 'p_nom_extendable'] = False
 
-    stor_extend_i = n.storage_units.index[n.storage_units.p_nom_extendable]
-    n.storage_units.loc[stor_extend_i, 'p_nom'] = \
-        n_optim.storage_units['p_nom_opt'].reindex(stor_extend_i, fill_value=0.)
-    n.storage_units.loc[stor_extend_i, 'p_nom_extendable'] = False
+    stor_units_extend_i = n.storage_units.index[n.storage_units.p_nom_extendable]
+    n.storage_units.loc[stor_units_extend_i, 'p_nom'] = \
+        n_optim.storage_units['p_nom_opt'].reindex(stor_units_extend_i, fill_value=0.)
+    n.storage_units.loc[stor_units_extend_i, 'p_nom_extendable'] = False
+
+    stor_extend_i = n.stores.index[n.stores.e_nom_extendable]
+    n.stores.loc[stor_extend_i, 'e_nom'] = \
+        n_optim.stores['e_nom_opt'].reindex(stor_extend_i, fill_value=0.)
+    n.stores.loc[stor_extend_i, 'e_nom_extendable'] = False
 
     return n
 
@@ -104,15 +109,14 @@ if __name__ == "__main__":
     n = set_parameters_from_optimized(n, n_optim)
     del n_optim
 
-    config = snakemake.config
     opts = snakemake.wildcards.opts.split('-')
-    config['solving']['options']['skip_iterations'] = False
+    snakemake.config['solving']['options']['skip_iterations'] = False
 
     fn = getattr(snakemake.log, 'memory', None)
     with memory_logger(filename=fn, interval=30.) as mem:
-        n = prepare_network(n, solve_opts=snakemake.config['solving']['options'])
-        n = solve_network(n, config, solver_dir=tmpdir,
-                          solver_log=snakemake.log.solver, opts=opts)
+        n = prepare_network(n, snakemake.config['solving']['options'])
+        n = solve_network(n, snakemake.config, opts, solver_dir=tmpdir,
+                          solver_logfile=snakemake.log.solver)
         n.export_to_netcdf(snakemake.output[0])
 
     logger.info("Maximum memory usage: {}".format(mem.mem_usage))

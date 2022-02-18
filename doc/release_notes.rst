@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2019-2020 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: 2019-2021 The PyPSA-Eur Authors
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -11,13 +11,140 @@ Release Notes
 Upcoming Release
 ================
 
-* Fix: Value for ``co2base`` in ``config.yaml`` adjusted to 1.487e9 t CO2-eq (from 3.1e9 t CO2-eq). The new value represents emissions related to the electricity sector for EU+UK. The old value was ~2x too high and used when the emissions wildcard in ``{opts}`` was used.
+* Add an efficiency factor of 88.55% to offshore wind capacity factors
+  as a proxy for wake losses. More rigorous modelling is `planned <https://github.com/PyPSA/pypsa-eur/issues/153>`_
+  [`#277 <https://github.com/PyPSA/pypsa-eur/pull/277>`_].
 
-* Add option to include marginal costs of links representing fuel cells, electrolysis, and battery inverters
+* The default deployment density of AC- and DC-connected offshore wind capacity is reduced from 3 MW/sqkm
+  to a more conservative estimate of 2 MW/sqkm [`#280 <https://github.com/PyPSA/pypsa-eur/pull/280>`_].
+
+* Following discussion in `#285 <https://github.com/PyPSA/pypsa-eur/issues/285>`_ we have disabled the
+  correction factor for solar PV capacity factors by default while satellite data is used.
+  A correction factor of 0.854337 is recommended if reanalysis data like ERA5 is used.
+
+* Resource definitions for memory usage now follow [Snakemake standard resource definition](https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#standard-resources) ```mem_mb`` rather than ``mem``.
+
+* Network building is made deterministic by supplying a fixed random state to network clustering routines.
+
+
+PyPSA-Eur 0.4.0 (22th September 2021)
+=====================================
+
+**New Features and Changes**
+
+* With this release, we change the license from copyleft GPLv3 to the more
+  liberal MIT license with the consent of all contributors
+  [`#276 <https://github.com/PyPSA/pypsa-eur/pull/276>`_].
+
+* Switch to the new major ``atlite`` release v0.2.  The version upgrade comes
+  along with significant speed up for the rule ``build_renewable_profiles.py``
+  (~factor 2). A lot of the code which calculated the land-use availability is now
+  outsourced and does not rely on ``glaes``, ``geokit`` anymore. This facilitates
+  the environment building and version compatibility of ``gdal``, ``libgdal`` with
+  other packages [`#224 <https://github.com/PyPSA/pypsa-eur/pull/224>`_]. 
+
+* Implemented changes to ``n.snapshot_weightings`` in new PyPSA version v0.18
+  (cf. `PyPSA/PyPSA/#227 <https://github.com/PyPSA/PyPSA/pull/227>`_)
+  [`#259 <https://github.com/PyPSA/pypsa-eur/pull/259>`_].
+
+* Add option to pre-aggregate nodes without power injections (positive or
+  negative, i.e. generation or demand) to electrically closest nodes or neighbors
+  in ``simplify_network``. Defaults to ``False``. This affects nodes that are no
+  substations or have no offshore connection.
+
+* In :mod:`simplify_network`, bus columns with no longer correct entries are
+  removed (symbol, tags, under_construction, substation_lv, substation_off)
+  [`#219 <https://github.com/PyPSA/pypsa-eur/pull/219>`_]
+
+* Add option to include marginal costs of links representing fuel cells,
+  electrolysis, and battery inverters
   [`#232 <https://github.com/PyPSA/pypsa-eur/pull/232>`_].
 
+* The rule and script ``build_country_flh`` are removed as they are no longer
+  used or maintained.
+
+* The connection cost of generators in :mod:`simplify_network` are now reported
+  in ``resources/connection_costs_s{simpl}.csv`` 
+  [`#261 <https://github.com/PyPSA/pypsa-eur/pull/261>`_].
+
+* The tutorial cutout was renamed from ``cutouts/europe-2013-era5.nc`` to
+  ``cutouts/europe-2013-era5-tutorial.nc`` to accomodate tutorial and productive
+  cutouts side-by-side.
+
+* The flag ``keep_all_available_areas`` in the configuration for renewable
+  potentials was deprecated and now defaults to ``True``. 
+
+* Update dependencies in ``envs/environment.yaml`` 
+  [`#257 <https://github.com/PyPSA/pypsa-eur/pull/257>`_]
+
+* Continuous integration testing switches to Github Actions from Travis CI
+  [`#252 <https://github.com/PyPSA/pypsa-eur/pull/252>`_].
+
+* Documentation on readthedocs.io is now built with ``pip`` only and no longer
+  requires ``conda`` [`#267 <https://github.com/PyPSA/pypsa-eur/pull/267>`_].
+
+* Use ``Citation.cff`` [`#273 <https://github.com/PyPSA/pypsa-eur/pull/273>`_].
+
+**Bugs and Compatibility**
+
+
+* Support for PyPSA v0.18 [`#268 <https://github.com/PyPSA/pypsa-eur/pull/268>`_].
+
+* Minimum Python version set to ``3.8``.
+
+* Removed ``six`` dependency [`#245 <https://github.com/PyPSA/pypsa-eur/pull/245>`_].
+
+* Update :mod:`plot_network` and :mod:`make_summary` rules to latest PyPSA
+  versions  [`#270 <https://github.com/PyPSA/pypsa-eur/pull/270>`_].
+
+* Keep converter links to store components when using the ``ATK``
+  wildcard and only remove DC links [`#214 <https://github.com/PyPSA/pypsa-eur/pull/214>`_].
+
+* Value for ``co2base`` in ``config.yaml`` adjusted to 1.487e9 t CO2-eq
+  (from 3.1e9 t CO2-eq). The new value represents emissions related to the
+  electricity sector for EU+UK+Balkan. The old value was too high and used when
+  the emissions wildcard in ``{opts}`` was used 
+  [`#233 <https://github.com/PyPSA/pypsa-eur/pull/233>`_].
+
+* Add escape in :mod:`base_network` if all TYNDP links are already
+  contained in the network
+  [`#246 <https://github.com/PyPSA/pypsa-eur/pull/246>`_].
+
+* In :mod:`solve_operations_network` the optimised capacities are now
+  fixed for all extendable links, not only HVDC links 
+  [`#244 <https://github.com/PyPSA/pypsa-eur/pull/244>`_].
+
+* The ``focus_weights`` are now also considered when pre-clustering in
+  the :mod:`simplify_network` rule 
+  [`#241 <https://github.com/PyPSA/pypsa-eur/pull/241>`_].
+
+* in :mod:`build_renewable_profile` where offshore wind profiles could
+  no longer be created [`#249 <https://github.com/PyPSA/pypsa-eur/pull/249>`_].
+
+* Lower expansion limit of extendable carriers is now set to the
+  existing capacity, i.e. ``p_nom_min = p_nom`` (0 before). Simultaneously, the
+  upper limit (``p_nom_max``) is now the maximum of the installed capacity
+  (``p_nom``) and the previous estimate based on land availability (``p_nom_max``)
+  [`#260 <https://github.com/PyPSA/pypsa-eur/pull/260>`_].
+
+* Solving an operations network now includes optimized store capacities
+  as well. Before only lines, links, generators and storage units were considered
+  [`#269 <https://github.com/PyPSA/pypsa-eur/pull/269>`_].
+
+* With ``load_shedding: true`` in the solving options of ``config.yaml``
+  load shedding generators are only added at the AC buses, excluding buses for H2
+  and battery stores [`#269 <https://github.com/PyPSA/pypsa-eur/pull/269>`_].
+
+* Delete duplicated capital costs at battery discharge link 
+  [`#240 <https://github.com/PyPSA/pypsa-eur/pull/240>`_].
+
+* Propagate the solver log file name to the solver. Previously, the
+  PyPSA network solving functions were not told about the solver logfile specified
+  in the Snakemake file [`#247 <https://github.com/PyPSA/pypsa-eur/pull/247>`_]
+
+
 PyPSA-Eur 0.3.0 (7th December 2020)
-==================================
+===================================
 
 **New Features**
 
@@ -39,6 +166,7 @@ Using the ``{opts}`` wildcard for scenarios:
   This feature is an alternative to downsampling the temporal resolution by simply averaging and
   uses the `tsam <https://tsam.readthedocs.io/en/latest/index.html>`_ package
   [`#186 <https://github.com/PyPSA/pypsa-eur/pull/186>`_].
+
 
 More OPSD integration:
 
@@ -197,7 +325,7 @@ Release Process
 
 * Tag a release on Github via ``git tag v0.x.x``, ``git push``, ``git push --tags``. Include release notes in the tag message.
 
-* Upload code to `zenodo code repository <https://doi.org/10.5281/zenodo.3520874>`_ with `GNU GPL 3.0 <https://www.gnu.org/licenses/gpl-3.0.en.html>`_ license.
+* Upload code to `zenodo code repository <https://doi.org/10.5281/zenodo.3520874>`_ with `MIT license <https://opensource.org/licenses/MIT>`_.
 
 * Create pre-built networks for ``config.default.yaml`` by running ``snakemake -j 1 extra_components_all_networks``.
 

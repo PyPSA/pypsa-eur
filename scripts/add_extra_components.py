@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
 #
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: MIT
 
 # coding: utf-8
 """
@@ -37,13 +37,13 @@ Inputs
 Outputs
 -------
 
-- ``networks/elec{year}_s{simpl}_{clusters}_ec.nc``:
+- ``networks/elec{weather_year}_s{simpl}_{clusters}_ec.nc``:
 
 
 Description
 -----------
 
-The rule :mod:`add_extra_components` attaches additional extendable components to the clustered and simplified network. These can be configured in the ``config.yaml`` at ``electricity: extendable_carriers: ``. It processes ``networks/elec{year}_s{simpl}_{clusters}.nc`` to build ``networks/elec{year}_s{simpl}_{clusters}_ec.nc``, which in contrast to the former (depending on the configuration) contain with **zero** initial capacity
+The rule :mod:`add_extra_components` attaches additional extendable components to the clustered and simplified network. These can be configured in the ``config.yaml`` at ``electricity: extendable_carriers: ``. It processes ``networks/elec{weather_year}_s{simpl}_{clusters}.nc`` to build ``networks/elec{weather_year}_s{simpl}_{clusters}_ec.nc``, which in contrast to the former (depending on the configuration) contain with **zero** initial capacity
 
 - ``StorageUnits`` of carrier 'H2' and/or 'battery'. If this option is chosen, every bus is given an extendable ``StorageUnit`` of the corresponding carrier. The energy and power capacities are linked through a parameter that specifies the energy capacity as maximum hours at full dispatch power and is configured in ``electricity: max_hours:``. This linkage leads to one investment variable per storage unit. The default ``max_hours`` lead to long-term hydrogen and short-term battery storage units.
 
@@ -64,8 +64,7 @@ idx = pd.IndexSlice
 logger = logging.getLogger(__name__)
 
 
-def attach_storageunits(n, costs):
-    elec_opts = snakemake.config['electricity']
+def attach_storageunits(n, costs, elec_opts):
     carriers = elec_opts['extendable_carriers']['StorageUnit']
     max_hours = elec_opts['max_hours']
 
@@ -89,8 +88,7 @@ def attach_storageunits(n, costs):
                cyclic_state_of_charge=True)
 
 
-def attach_stores(n, costs):
-    elec_opts = snakemake.config['electricity']
+def attach_stores(n, costs, elec_opts):
     carriers = elec_opts['extendable_carriers']['Store']
 
     _add_missing_carriers_from_costs(n, costs, carriers)
@@ -152,14 +150,11 @@ def attach_stores(n, costs):
                bus1=buses_i,
                carrier='battery discharger',
                efficiency=costs.at['battery inverter','efficiency'],
-               capital_cost=costs.at['battery inverter', 'capital_cost'],
                p_nom_extendable=True,
                marginal_cost=costs.at["battery inverter", "marginal_cost"])
 
 
-
-def attach_hydrogen_pipelines(n, costs):
-    elec_opts = snakemake.config['electricity']
+def attach_hydrogen_pipelines(n, costs, elec_opts):
     ext_carriers = elec_opts['extendable_carriers']
     as_stores = ext_carriers.get('Store', [])
 
@@ -199,15 +194,15 @@ if __name__ == "__main__":
     configure_logging(snakemake)
 
     n = pypsa.Network(snakemake.input.network)
-    Nyears = n.snapshot_weightings.sum() / 8760.
-    costs = load_costs(Nyears, tech_costs=snakemake.input.tech_costs,
-                       config=snakemake.config['costs'],
-                       elec_config=snakemake.config['electricity'])
+    elec_config = snakemake.config['electricity']
+    
+    Nyears = n.snapshot_weightings.objective.sum() / 8760.
+    costs = load_costs(snakemake.input.tech_costs, snakemake.config['costs'], elec_config, Nyears)
 
-    attach_storageunits(n, costs)
-    attach_stores(n, costs)
-    attach_hydrogen_pipelines(n, costs)
+    attach_storageunits(n, costs, elec_config)
+    attach_stores(n, costs, elec_config)
+    attach_hydrogen_pipelines(n, costs, elec_config)
 
-    add_nice_carrier_names(n, config=snakemake.config)
+    add_nice_carrier_names(n, snakemake.config)
 
     n.export_to_netcdf(snakemake.output[0])
