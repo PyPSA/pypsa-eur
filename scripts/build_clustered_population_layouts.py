@@ -1,35 +1,43 @@
+"""Build clustered population layouts."""
 
 import geopandas as gpd
 import xarray as xr
 import pandas as pd
 import atlite
-import helper
 
-year = snakemake.wildcards.year
+year = snakemake.wildcards.weather_year
 cutout_name = snakemake.config['atlite']['cutout_name']
 if year: cutout_name = cutout_name.format(year=year)
 
-cutout = atlite.Cutout(cutout_name,
-                       cutout_dir=snakemake.config['atlite']['cutout_dir'])
+if __name__ == '__main__':
+    if 'snakemake' not in globals():
+        from helper import mock_snakemake
+        snakemake = mock_snakemake(
+            'build_clustered_population_layouts',
+            weather_year='',
+            simpl='',
+            clusters=48,
+        )
 
+    year = snakemake.wildcards.weather_year
+    cutout_config = snakemake.config['atlite']['cutout']
+    if year: cutout_name = cutout_config.format(weather_year=year)
+    cutout = atlite.Cutout(cutout_config)
 
-clustered_busregions_as_geopd = gpd.read_file(snakemake.input.regions_onshore).set_index('name', drop=True)
+    clustered_regions = gpd.read_file(
+        snakemake.input.regions_onshore).set_index('name').buffer(0).squeeze()
 
-clustered_busregions = pd.Series(clustered_busregions_as_geopd.geometry, index=clustered_busregions_as_geopd.index)
+    I = cutout.indicatormatrix(clustered_regions)
 
-helper.clean_invalid_geometries(clustered_busregions)
+    pop = {}
+    for item in ["total", "urban", "rural"]:
+        pop_layout = xr.open_dataarray(snakemake.input[f'pop_layout_{item}'])
+        pop[item] = I.dot(pop_layout.stack(spatial=('y', 'x')))
 
-I = cutout.indicatormatrix(clustered_busregions)
+    pop = pd.DataFrame(pop, index=clustered_regions.index)
 
+    pop["ct"] = pop.index.str[:2]
+    country_population = pop.total.groupby(pop.ct).sum()
+    pop["fraction"] = pop.total / pop.ct.map(country_population)
 
-items = ["total","urban","rural"]
-
-pop = pd.DataFrame(columns=items,
-                   index=clustered_busregions.index)
-
-
-for item in items:
-    pop_layout = xr.open_dataarray(snakemake.input['pop_layout_'+item])
-    pop[item] = I.dot(pop_layout.stack(spatial=('y', 'x')))
-
-pop.to_csv(snakemake.output.clustered_pop_layout)
+    pop.to_csv(snakemake.output.clustered_pop_layout)

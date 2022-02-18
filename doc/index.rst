@@ -4,8 +4,8 @@ PyPSA-Eur-Sec: A Sector-Coupled Open Optimisation Model of the European Energy S
 .. image:: https://img.shields.io/github/v/release/pypsa/pypsa-eur-sec?include_prereleases
     :alt: GitHub release (latest by date including pre-releases)
 
-.. image:: https://readthedocs.org/projects/pypsa-eur/badge/?version=latest
-    :target: https://pypsa-eur.readthedocs.io/en/latest/?badge=latest
+.. image:: https://readthedocs.org/projects/pypsa-eur-sec/badge/?version=latest
+    :target: https://pypsa-eur-sec.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
 .. image:: https://img.shields.io/github/license/pypsa/pypsa-eur-sec
@@ -28,6 +28,11 @@ and supply for the following sectors: transport, space and water
 heating, biomass, industry and industrial feedstocks. This completes
 the energy system and includes all greenhouse gas emitters except
 waste management, agriculture, forestry and land use.
+
+.. note::
+    More about the current model capabilities and preliminary results
+    can be found in `a recent presentation at EMP-E <https://nworbmot.org/energy/brown-empe.pdf>`_
+    and the the following `preprint with a description of the industry sector <https://arxiv.org/abs/2109.09563>`_.
 
 This diagram gives an overview of the sectors and the links between
 them:
@@ -61,45 +66,25 @@ PyPSA-Eur-Sec is the different extra_functionality required to build
 storage and CHP constraints.
 
 
-PyPSA-Eur-Sec is designed to be imported into the open toolbox `PyPSA <https://www.pypsa.org>`_ for which `documentation <https://pypsa.org/doc>`_ is available as well.
+PyPSA-Eur-Sec is designed to be imported into the open toolbox `PyPSA
+<https://www.pypsa.org>`_ for which `documentation <https://pypsa.org/doc>`_ is
+available as well.
 
-This project is maintained by the `Energy System Modelling group <https://www.iai.kit.edu/english/2338.php>`_ at the `Institute for Automation and Applied Informatics <https://www.iai.kit.edu/english/index.php>`_ at the `Karlsruhe Institute of Technology <http://www.kit.edu/english/index.php>`_. The group is funded by the `Helmholtz Association <https://www.helmholtz.de/en/>`_ until 2024. Previous versions were developed by the `Renewable Energy Group <https://fias.uni-frankfurt.de/physics/schramm/renewable-energy-system-and-network-analysis/>`_ at `FIAS <https://fias.uni-frankfurt.de/>`_ to carry out simulations for the `CoNDyNet project <http://condynet.de/>`_, financed by the `German Federal Ministry for Education and Research (BMBF) <https://www.bmbf.de/en/index.html>`_ as part of the `Stromnetze Research Initiative <http://forschung-stromnetze.info/projekte/grundlagen-und-konzepte-fuer-effiziente-dezentrale-stromnetze/>`_.
-
-
-Spatial resolution of sectors
-=============================
-
-Not all of the sectors are at the full nodal resolution, and some are
-distributed to nodes using heuristics that need to be corrected. Some
-networks are copper-plated to reduce computational times.
-
-For example:
-
-Electricity network: nodal.
-
-Electricity demand: nodal, distributed in each country based on
-population and GDP.
-
-Building heating demand: nodal, distributed in each country based on
-population.
-
-Industry demand: nodal, distributed in each country based on
-population (will be corrected to real locations of industry, see
-github issue).
-
-Hydrogen network: nodal.
-
-Methane network: copper-plated for Europe, since future demand is so
-low and no bottlenecks are expected.
-
-Solid biomass: copper-plated until transport costs can be
-incorporated.
-
-CO2: copper-plated (but a transport and storage cost is added for
-sequestered CO2).
-
-Liquid hydrocarbons: copper-plated since transport costs are low.
-
+This project is currently maintained by the `Department of Digital
+Transformation in Energy Systems <https://tub-ensys.github.io>`_ at the
+`Technical University of Berlin <https://www.tu.berlin>`_. Previous versions
+were developed by the `Energy System Modelling group
+<https://www.iai.kit.edu/english/2338.php>`_ at the `Institute for Automation
+and Applied Informatics <https://www.iai.kit.edu/english/index.php>`_ at the
+`Karlsruhe Institute of Technology <http://www.kit.edu/english/index.php>`_
+which was funded by the `Helmholtz Association <https://www.helmholtz.de/en/>`_,
+and by the `Renewable Energy Group
+<https://fias.uni-frankfurt.de/physics/schramm/renewable-energy-system-and-network-analysis/>`_
+at `FIAS <https://fias.uni-frankfurt.de/>`_ to carry out simulations for the
+`CoNDyNet project <http://condynet.de/>`_, financed by the `German Federal
+Ministry for Education and Research (BMBF) <https://www.bmbf.de/en/index.html>`_
+as part of the `Stromnetze Research Initiative
+<http://forschung-stromnetze.info/projekte/grundlagen-und-konzepte-fuer-effiziente-dezentrale-stromnetze/>`_.
 
 
 Documentation
@@ -115,6 +100,20 @@ Documentation
    :caption: Getting Started
 
    installation
+
+**Implementation details**
+
+* :doc:`spatial_resolution`
+* :doc:`supply_demand`
+
+.. toctree::
+   :hidden:
+   :maxdepth: 1
+   :caption: Implementation details
+
+   spatial_resolution
+   supply_demand
+
 
 **Foresight options**
 
@@ -156,7 +155,7 @@ it.
 Licence
 =======
 
-The code in PyPSA-Eur-Sec is released as free software under the `GPLv3
-<http://www.gnu.org/licenses/gpl-3.0.en.html>`_, see
+The code in PyPSA-Eur-Sec is released as free software under the
+`MIT license <https://opensource.org/licenses/MIT>`_, see
 `LICENSE <https://github.com/PyPSA/pypsa-eur-sec/blob/master/LICENSE.txt>`_.
 However, different licenses and terms of use may apply to the various input data.

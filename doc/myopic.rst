@@ -6,7 +6,7 @@ Myopic transition path
 
 The myopic code can be used to investigate progressive changes in a network, for instance, those taking place throughout a transition path. The capacities installed in a certain time step are maintained in the network until their operational lifetime expires.
 
-The myopic approach was initially developed and used in the paper `Early decarbonisation of the European Energy system pays off (2020) <https://arxiv.org/abs/2004.11009>`__ but the current implementation complies with the pypsa-eur-sec standard working flow and is compatible with using the higher resolution electricity transmission model `PyPSA-Eur <https://github.com/PyPSA/pypsa-eur>`__ rather than a one-node-per-country model.
+The myopic approach was initially developed and used in the paper `Early decarbonisation of the European Energy system pays off (2020) <https://www.nature.com/articles/s41467-020-20015-4>`__ but the current implementation complies with the pypsa-eur-sec standard working flow and is compatible with using the higher resolution electricity transmission model `PyPSA-Eur <https://github.com/PyPSA/pypsa-eur>`__ rather than a one-node-per-country model.
 
 The current code applies the myopic approach to generators, storage technologies and links in the power sector and the space and water heating sector.
 
@@ -17,11 +17,13 @@ See also other `outstanding issues <https://github.com/PyPSA/pypsa-eur-sec/issue
 Configuration
 =================
 
-PyPSA-Eur-Sec has several configuration options which are collected in a config.yaml file located in the root directory. For myopic optimization, users should copy the provided myopic configuration ``config.myopic.yaml`` and make their own modifications and assumptions in the user-specific configuration file (``config.yaml``).
+PyPSA-Eur-Sec has several configuration options which are collected in a config.yaml file located in the root directory. For myopic optimization, users should copy the provided default configuration ``config.default.yaml`` and make their own modifications and assumptions in the user-specific configuration file (``config.yaml``).
 
 The following options included in the config.yaml file  are relevant for the myopic code.
 
 To activate the myopic option select ``foresight: 'myopic'`` in ``config.yaml``.
+
+To set the investment years which are sequentially simulated for the myopic investment planning, select for example ``planning_horizons : [2020, 2030, 2040, 2050]`` in ``config.yaml``.
 
 
 
@@ -59,12 +61,15 @@ Wildcards
 The {planning_horizons} wildcard indicates the timesteps in which the network is optimized, e.g. planning_horizons: [2020, 2030, 2040, 2050]
 
 
+Options
+=============
+The total carbon budget for the entire transition path can be indicated in the ``scenario.sector_opts`` in ``config.yaml``.
+The carbon budget can be split among the ``planning_horizons`` following an exponential or beta decay. 
+E.g. ``'cb40ex0'`` splits the a carbon budget equal to 40 GtCO_2 following an exponential decay whose initial linear growth rate $r$ is zero
 
-**{co2_budget_name} wildcard**
+$e(t) = e_0 (1+ (r+m)t) e^(-mt)$
 
-The {co2_budget_name} wildcard indicates the name of the co2 budget.
-
-A csv file is used as input including the planning_horizons as index, the name of co2_budget as column name, and the maximum co2 emissions (relative to 1990) as values.
+See details in Supplementary Note 1 of the paper `Early decarbonisation of the European Energy system pays off (2020) <https://www.nature.com/articles/s41467-020-20015-4>`__
 
 Rules overview
 =================
@@ -72,17 +77,17 @@ Rules overview
 General myopic code structure
 ===============================
 
-The myopic code solves the network for the time steps included in planning_horizons in a recursive loop, so that:
+The myopic code solves the network for the time steps included in ``planning_horizons`` in a recursive loop, so that:
 
 1.The existing capacities (those installed before the base year are added as fixed capacities with p_nom=value, p_nom_extendable=False). E.g. for baseyear=2020, capacities installed before 2020 are added. In addition, the network comprises additional generator, storage, and link capacities with p_nom_extendable=True. The non-solved network is saved in ``results/run_name/networks/prenetworks-brownfield``.
 
-The base year is the first element in planning_horizons. Step 1 is implemented with the rule add_baseyear for the base year and with the rule add_brownfield for the remaining planning_horizons.
+The base year is the first element in ``planning_horizons``. Step 1 is implemented with the rule add_baseyear for the base year and with the rule add_brownfield for the remaining planning_horizons.
 
-2.The 2020 network is optimized. The solved network is saved in ‘results/run_name/networks/postnetworks’
+2.The 2020 network is optimized. The solved network is saved in ``results/run_name/networks/postnetworks``
 
 3.For the next planning horizon, e.g. 2030, the capacities from a previous time step are added if they are still in operation (i.e., if they fulfil planning horizon <= commissioned year + lifetime). In addition, the network comprises additional generator, storage, and link capacities with p_nom_extendable=True. The non-solved network is saved in ``results/run_name/networks/prenetworks-brownfield``.
 
-Steps 2 and 3 are solved recursively for all the planning_horizons included in the configuration file.
+Steps 2 and 3 are solved recursively for all the planning_horizons included in ``config.yaml``.
 
 
 rule add_existing baseyear
@@ -108,8 +113,8 @@ Then, the resulting network is saved in ``results/run_name/networks/prenetworks-
 rule add_brownfield
 ===================
 
-The rule add_brownfield loads the network in ‘results/run_name/networks/prenetworks’ and performs the following operation:
+The rule add_brownfield loads the network in ``results/run_name/networks/prenetworks`` and performs the following operation:
 
-1.Read the capacities optimized in the previous time step and add them to the network if they are still in operation (i.e., if they fulfil planning horizon < commissioned year + lifetime)
+1.Read the capacities optimized in the previous time step and add them to the network if they are still in operation (i.e., if they fulfill planning horizon < commissioned year + lifetime)
 
 Then, the resulting network is saved in ``results/run_name/networks/prenetworks_brownfield``.

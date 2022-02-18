@@ -1,6 +1,4 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- Created with Inkscape (http://www.inkscape.org/) -->
-
 <svg
    xmlns:dc="http://purl.org/dc/elements/1.1/"
    xmlns:cc="http://creativecommons.org/ns#"
@@ -14,8 +12,8 @@
    viewBox="0 0 323.36667 299.03928"
    id="svg7114"
    version="1.1"
-   inkscape:version="0.92.4 (5da689c313, 2019-01-14)"
-   sodipodi:docname="20200223_multisector_figure.svg">
+   inkscape:version="1.0.1 (3bc2e813f5, 2020-09-07)"
+   sodipodi:docname="multisector_figure.svg">
   <defs
      id="defs7116">
     <marker
@@ -1603,16 +1601,17 @@
      inkscape:current-layer="layer1"
      showgrid="false"
      inkscape:window-width="1920"
-     inkscape:window-height="986"
-     inkscape:window-x="-11"
-     inkscape:window-y="-11"
+     inkscape:window-height="1017"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
      inkscape:window-maximized="1"
      inkscape:snap-nodes="true"
      inkscape:snap-bbox="true"
      fit-margin-top="0"
      fit-margin-left="0"
      fit-margin-right="0"
-     fit-margin-bottom="0" />
+     fit-margin-bottom="0"
+     inkscape:document-rotation="0" />
   <metadata
      id="metadata7119">
     <rdf:RDF>
@@ -1621,7 +1620,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -1643,14 +1642,12 @@
        style="font-variant:normal;font-weight:normal;line-height:0%;font-family:CMR7;-inkscape-font-specification:CMR7;writing-mode:lr-tb;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
        x="-430.54486"
        y="616.11395"
-       transform="rotate(-87.672184)">
-      <tspan
+       transform="rotate(-87.672184)"><tspan
          id="tspan5398"
          sodipodi:role="line"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:15px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif"
          x="-430.54486"
-         y="616.11395"> </tspan>
-    </text>
+         y="616.11395"> </tspan></text>
     <flowRoot
        xml:space="preserve"
        id="flowRoot14898"
@@ -1662,7 +1659,8 @@
            x="68.649437"
            y="368.36417" /></flowRegion><flowPara
          id="flowPara14904"
-         style="font-size:16px;line-height:1.25"> </flowPara></flowRoot>    <flowRoot
+         style="font-size:16px;line-height:1.25"> </flowPara></flowRoot>
+    <flowRoot
        xml:space="preserve"
        id="flowRoot14942"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0.01%;font-family:Calibri;-inkscape-font-specification:Calibri;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"><flowRegion
@@ -1673,7 +1671,8 @@
            x="54.919552"
            y="362.12329" /></flowRegion><flowPara
          id="flowPara14948"
-         style="font-size:16px;line-height:1.25"> </flowPara></flowRoot>    <flowRoot
+         style="font-size:16px;line-height:1.25"> </flowPara></flowRoot>
+    <flowRoot
        xml:space="preserve"
        id="flowRoot14965"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0.01%;font-family:Calibri;-inkscape-font-specification:Calibri;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"><flowRegion
@@ -1684,7 +1683,8 @@
            x="579.15161"
            y="491.93314" /></flowRegion><flowPara
          id="flowPara14971"
-         style="font-size:16px;line-height:1.25">Heating</flowPara></flowRoot>    <flowRoot
+         style="font-size:16px;line-height:1.25">Heating</flowPara></flowRoot>
+    <flowRoot
        xml:space="preserve"
        id="flowRoot14981"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0.01%;font-family:Calibri;-inkscape-font-specification:Calibri;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"><flowRegion
@@ -1695,7 +1695,8 @@
            x="537.96198"
            y="446.37488" /></flowRegion><flowPara
          id="flowPara14987"
-         style="font-size:16px;line-height:1.25"> </flowPara></flowRoot>    <rect
+         style="font-size:16px;line-height:1.25"> </flowPara></flowRoot>
+    <rect
        style="opacity:1;fill:#fdd776;fill-opacity:0.12690352;fill-rule:nonzero;stroke:none;stroke-width:1;stroke-miterlimit:10;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:0.6"
        id="rect65183-3-2"
        width="66.714935"
@@ -1902,12 +1903,6 @@
        sodipodi:nodetypes="cc" />
     <path
        inkscape:connector-curvature="0"
-       id="path4564-9"
-       style="fill:none;stroke:#73c375;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:0.8;marker-end:url(#marker49181)"
-       d="m 150.20089,531.26094 c -34.55152,11.02711 -39.15863,132.86736 -1.83802,118.31668"
-       sodipodi:nodetypes="cc" />
-    <path
-       inkscape:connector-curvature="0"
        id="path4588-5"
        style="fill:none;stroke:#2d7dbb;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:0.8;marker-end:url(#marker48123)"
        d="m 93.632965,615.63556 c 32.043515,5.16548 34.593945,-10.42693 54.942475,-21.05008"
@@ -2099,7 +2094,7 @@
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Calibri;-inkscape-font-specification:Calibri;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"><tspan
            id="tspan12800-5-8"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.50203133px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.50203px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif"
            y="419.47498"
            x="162.40887"
            sodipodi:role="line">Electricity</tspan></text>
@@ -2123,7 +2118,7 @@
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Calibri;-inkscape-font-specification:Calibri;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"><tspan
            id="tspan12800-9-5-0"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.50203133px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.50203px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif"
            y="486.03577"
            x="162.77518"
            sodipodi:role="line">Hydrogen</tspan></text>
@@ -2147,7 +2142,7 @@
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Calibri;-inkscape-font-specification:Calibri;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"><tspan
            id="tspan12800-9-9-7-0"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.50203133px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.50203px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif"
            y="544.11853"
            x="164.70747"
            sodipodi:role="line">Methane</tspan></text>
@@ -2171,7 +2166,7 @@
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Calibri;-inkscape-font-specification:Calibri;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"><tspan
            id="tspan12800-3-47-0"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.50203133px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.50203px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif"
            y="608.94104"
            x="152.22545"
            sodipodi:role="line">Carbon Dioxide</tspan></text>
@@ -2196,12 +2191,12 @@
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Calibri;-inkscape-font-specification:Calibri;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"><tspan
            id="tspan12800-3-4-0-3"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.45930576px;line-height:104.99999523%;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;text-anchor:middle"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.45931px;line-height:105%;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;text-anchor:middle"
            y="654.27313"
            x="183.16885"
            sodipodi:role="line">Liquid </tspan><tspan
            id="tspan15624-3"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.45930576px;line-height:104.99999523%;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;text-anchor:middle"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.45931px;line-height:105%;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;text-anchor:middle"
            y="662.10541"
            x="181.85765"
            sodipodi:role="line">hydrocarbons</tspan></text>
@@ -2229,7 +2224,7 @@
              sodipodi:role="line"
              x="574.67517"
              y="403.76138"
-             style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.50203133px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif"
+             style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.50203px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif"
              id="tspan12800-1-7">Electric devices</tspan></text>
       </g>
     </g>
@@ -2252,7 +2247,7 @@
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Calibri;-inkscape-font-specification:Calibri;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"><tspan
            id="tspan12800-9-8-4"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.50203133px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.50203px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif"
            y="441.01172"
            x="571.21356"
            sodipodi:role="line">Resistive heaters</tspan></text>
@@ -2276,7 +2271,7 @@
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Calibri;-inkscape-font-specification:Calibri;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"><tspan
            id="tspan12800-9-9-0-4"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.50203133px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.50203px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif"
            y="483.55722"
            x="580.99219"
            sodipodi:role="line">Heat pumps</tspan></text>
@@ -2304,7 +2299,7 @@
              sodipodi:role="line"
              x="583.1333"
              y="513.05054"
-             style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.50203133px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;fill:#000000;fill-opacity:1;fill-rule:nonzero"
+             style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.50203px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;fill:#000000;fill-opacity:1;fill-rule:nonzero"
              id="tspan12800-3-7-3">Gas boilers</tspan></text>
       </g>
     </g>
@@ -2327,7 +2322,7 @@
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Calibri;-inkscape-font-specification:Calibri;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"><tspan
            id="tspan12800-3-4-06-6"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.50203133px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.50203px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif"
            y="543.18433"
            x="595.68677"
            sodipodi:role="line">CHP</tspan></text>
@@ -2351,7 +2346,7 @@
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Calibri;-inkscape-font-specification:Calibri;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"><tspan
            id="tspan12800-3-4-6-8-6"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.50203133px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.50203px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif"
            y="574.36285"
            x="589.89905"
            sodipodi:role="line">Electric</tspan></text>
@@ -2375,7 +2370,7 @@
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Calibri;-inkscape-font-specification:Calibri;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"><tspan
            id="tspan12800-3-4-6-6-4-9"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.50203133px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.50203px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif"
            y="598.06342"
            x="589.20673"
            sodipodi:role="line">Fuel cell</tspan></text>
@@ -2403,7 +2398,7 @@
              sodipodi:role="line"
              x="601.85815"
              y="628.4361"
-             style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.50203133px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;text-anchor:middle"
+             style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.50203px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;text-anchor:middle"
              id="tspan12800-3-4-6-8-1-0">In<tspan
    id="tspan15170-7"
    style="line-height:100%;text-align:center;text-anchor:middle">ternal</tspan></tspan><tspan
@@ -2411,7 +2406,7 @@
              sodipodi:role="line"
              x="601.85815"
              y="636.87585"
-             style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.50203133px;line-height:100%;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;text-anchor:middle">combustion</tspan></text>
+             style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.50203px;line-height:100%;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;text-anchor:middle">combustion</tspan></text>
       </g>
     </g>
     <g
@@ -2433,7 +2428,7 @@
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Calibri;-inkscape-font-specification:Calibri;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"><tspan
            id="tspan12800-3-4-6-6-4-2-0"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.50203133px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.50203px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif"
            y="664.0799"
            x="587.80743"
            sodipodi:role="line">Industry </tspan></text>
@@ -2450,7 +2445,8 @@
            x="466.81619"
            y="701.00189" /></flowRegion><flowPara
          id="flowPara14979-2"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:8.75px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif">Heating</flowPara></flowRoot>    <flowRoot
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:8.75px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif">Heating</flowPara></flowRoot>
+    <flowRoot
        xml:space="preserve"
        id="flowRoot14973-8-9"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0.01%;font-family:Calibri;-inkscape-font-specification:Calibri;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
@@ -2462,7 +2458,8 @@
            x="466.81619"
            y="701.00189" /></flowRegion><flowPara
          id="flowPara14979-5-3"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:8.75px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif">Transport</flowPara></flowRoot>    <path
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:8.75px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif">Transport</flowPara></flowRoot>
+    <path
        style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="M 339.25489,613.5762 V 548.04719 H 338.6308"
        id="path15013-7"
@@ -2496,7 +2493,8 @@
            x="466.81619"
            y="701.00189" /></flowRegion><flowPara
          id="flowPara14979-5-3-2"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:8.75px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif">S O U R C E S</flowPara></flowRoot>    <flowRoot
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:8.75px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif">S O U R C E S</flowPara></flowRoot>
+    <flowRoot
        xml:space="preserve"
        id="flowRoot14973-8-9-4-4"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0.01%;font-family:Calibri;-inkscape-font-specification:Calibri;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
@@ -2508,9 +2506,10 @@
            x="466.81619"
            y="701.00189" /></flowRegion><flowPara
          id="flowPara74289"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:8.75px;line-height:110.00000238%;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;text-anchor:middle">G R I D S &amp; </flowPara><flowPara
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:8.75px;line-height:110%;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;text-anchor:middle">G R I D S &amp; </flowPara><flowPara
          id="flowPara74293"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:8.75px;line-height:110.00000238%;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;text-anchor:middle">S T O R A G E</flowPara></flowRoot>    <flowRoot
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:8.75px;line-height:110%;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;text-anchor:middle">S T O R A G E</flowPara></flowRoot>
+    <flowRoot
        xml:space="preserve"
        id="flowRoot14973-8-9-4-4-4"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0.01%;font-family:Calibri;-inkscape-font-specification:Calibri;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
@@ -2522,7 +2521,8 @@
            x="466.81619"
            y="701.00189" /></flowRegion><flowPara
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:8.75px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif"
-         id="flowPara65287">D E M A N D </flowPara></flowRoot>    <flowRoot
+         id="flowPara65287">D E M A N D </flowPara></flowRoot>
+    <flowRoot
        xml:space="preserve"
        id="flowRoot14973-9-1"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0.01%;font-family:Calibri;-inkscape-font-specification:Calibri;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
@@ -2534,7 +2534,8 @@
            x="466.81619"
            y="701.00189" /></flowRegion><flowPara
          id="flowPara14979-2-0"
-         style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:6.25px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic'">Electrolysis</flowPara></flowRoot>    <flowRoot
+         style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:6.25px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic'">Electrolysis</flowPara></flowRoot>
+    <flowRoot
        xml:space="preserve"
        id="flowRoot14973-9-1-0"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0.01%;font-family:Calibri;-inkscape-font-specification:Calibri;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
@@ -2546,7 +2547,8 @@
            x="466.81619"
            y="701.00189" /></flowRegion><flowPara
          id="flowPara14979-2-0-9"
-         style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:6.25px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic'">Fuel cell</flowPara></flowRoot>    <flowRoot
+         style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:6.25px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic'">Fuel cell</flowPara></flowRoot>
+    <flowRoot
        xml:space="preserve"
        id="flowRoot14973-9-1-06"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0.01%;font-family:Calibri;-inkscape-font-specification:Calibri;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
@@ -2558,7 +2560,8 @@
            x="142.3176"
            y="500.03418" /></flowRegion><flowPara
          id="flowPara14979-2-0-0"
-         style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5.625px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic'">Methanation</flowPara></flowRoot>    <flowRoot
+         style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5.625px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic'">Methanation</flowPara></flowRoot>
+    <flowRoot
        xml:space="preserve"
        id="flowRoot14973-9-1-0-2"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0.01%;font-family:Calibri;-inkscape-font-specification:Calibri;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
@@ -2570,9 +2573,10 @@
            x="168.19397"
            y="497.04517" /></flowRegion><flowPara
          id="flowPara14979-2-0-9-5"
-         style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5.625px;line-height:110.00000238%;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';text-align:center;text-anchor:middle">Steam </flowPara><flowPara
+         style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5.625px;line-height:110%;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';text-align:center;text-anchor:middle">Steam </flowPara><flowPara
          id="flowPara71153"
-         style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5.625px;line-height:110.00000238%;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';text-align:center;text-anchor:middle">reforming</flowPara></flowRoot>    <flowRoot
+         style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5.625px;line-height:110%;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';text-align:center;text-anchor:middle">reforming</flowPara></flowRoot>
+    <flowRoot
        xml:space="preserve"
        id="flowRoot14973-9-1-06-2"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0.01%;font-family:Calibri;-inkscape-font-specification:Calibri;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
@@ -2588,7 +2592,8 @@
    id="flowSpan81735"
    style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5.625px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';text-align:center;text-anchor:middle">D</flowSpan>irect air </flowPara><flowPara
          style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5.625px;line-height:100%;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';text-align:center;text-anchor:middle"
-         id="flowPara82397">capture</flowPara></flowRoot>    <flowRoot
+         id="flowPara82397">capture</flowPara></flowRoot>
+    <flowRoot
        xml:space="preserve"
        id="flowRoot14973-9-1-06-2-5"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0.01%;font-family:Calibri;-inkscape-font-specification:Calibri;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
@@ -2602,7 +2607,8 @@
          id="flowPara73681"
          style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5.625px;line-height:100%;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';text-align:center;text-anchor:middle">Carbon </flowPara><flowPara
          style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5.625px;line-height:100%;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';text-align:center;text-anchor:middle"
-         id="flowPara82399">capture</flowPara></flowRoot>    <flowRoot
+         id="flowPara82399">capture</flowPara></flowRoot>
+    <flowRoot
        transform="translate(197.17988,626.26405)"
        xml:space="preserve"
        id="flowRoot14973-9-1-06-2-5-9"
@@ -2614,7 +2620,8 @@
            x="-26.069321"
            y="-0.37959749" /></flowRegion><flowPara
          id="flowPara71403-5-5"
-         style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5.625px;line-height:100%;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';text-align:center;text-anchor:middle">Fischer-Tropsch</flowPara></flowRoot>    <text
+         style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5.625px;line-height:100%;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';text-align:center;text-anchor:middle">Fischer-Tropsch</flowPara></flowRoot>
+    <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Calibri;-inkscape-font-specification:Calibri;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        x="331.70709"

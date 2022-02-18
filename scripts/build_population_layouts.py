@@ -1,107 +1,101 @@
+"""Build mapping between grid cells and population (total, urban, rural)"""
 
-# Build mapping between grid cells and population (total, urban, rural)
-
+import multiprocessing as mp
 import atlite
+import numpy as np
 import pandas as pd
 import xarray as xr
+import geopandas as gpd
 
 from vresutils import shapes as vshapes
 
-import geopandas as gpd
+if __name__ == '__main__':
+    if 'snakemake' not in globals():
+        from helper import mock_snakemake
+        snakemake = mock_snakemake('build_population_layouts', year='')
 
+    year = snakemake.wildcards.weather_year
+    cutout_config = snakemake.config['atlite']['cutout']
+    if year: cutout_name = cutout_config.format(weather_year=year)
+    cutout = atlite.Cutout(cutout_config)
 
-if 'snakemake' not in globals():
-    from vresutils import Dict
-    import yaml
-    snakemake = Dict()
-    with open('config.yaml') as f:
-        snakemake.config = yaml.load(f)
-    snakemake.input = Dict()
-    snakemake.output = Dict()
+    grid_cells = cutout.grid_cells()
 
-    snakemake.input["urban_percent"] = "data/urban_percent.csv"
+    # nuts3 has columns country, gdp, pop, geometry
+    # population is given in dimensions of 1e3=k
+    nuts3 = gpd.read_file(snakemake.input.nuts3_shapes).set_index('index')
 
-year = snakemake.wildcards.year
-cutout_name = snakemake.config['atlite']['cutout_name']
-if year: cutout_name = cutout_name.format(year=year)
+    # Indicator matrix NUTS3 -> grid cells
+    I = atlite.cutout.compute_indicatormatrix(nuts3.geometry, grid_cells)
 
-cutout = atlite.Cutout(cutout_name,
-                       cutout_dir=snakemake.config['atlite']['cutout_dir'])
+    # Indicator matrix grid_cells -> NUTS3; inprinciple Iinv*I is identity
+    # but imprecisions mean not perfect
+    Iinv = cutout.indicatormatrix(nuts3.geometry)
 
-grid_cells = cutout.grid_cells()
+    countries = np.sort(nuts3.country.unique())
 
-#nuts3 has columns country, gdp, pop, geometry
-#population is given in dimensions of 1e3=k
-nuts3 = gpd.read_file(snakemake.input.nuts3_shapes).set_index('index')
+    urban_fraction = pd.read_csv(snakemake.input.urban_percent,
+                                header=None, index_col=0,
+                                names=['fraction'], squeeze=True) / 100.
 
+    # fill missing Balkans values
+    missing = ["AL", "ME", "MK"]
+    reference = ["RS", "BA"]
+    average = urban_fraction[reference].mean()
+    fill_values = pd.Series({ct: average for ct in missing})
+    urban_fraction = urban_fraction.append(fill_values)
 
-# Indicator matrix NUTS3 -> grid cells
-I = atlite.cutout.compute_indicatormatrix(nuts3.geometry, grid_cells)
+    # population in each grid cell
+    pop_cells = pd.Series(I.dot(nuts3['pop']))
 
-# Indicator matrix grid_cells -> NUTS3; inprinciple Iinv*I is identity
-# but imprecisions mean not perfect
-Iinv = cutout.indicatormatrix(nuts3.geometry)
+    # in km^2
+    with mp.Pool(processes=snakemake.threads) as pool:
+        cell_areas = pd.Series(pool.map(vshapes.area, grid_cells)) / 1e6
 
-countries = nuts3.country.value_counts().index.sort_values()
+    # pop per km^2
+    density_cells = pop_cells / cell_areas
 
-urban_fraction = pd.read_csv(snakemake.input.urban_percent,
-                             header=None,index_col=0,squeeze=True)/100.
+    # rural or urban population in grid cell
+    pop_rural = pd.Series(0., density_cells.index)
+    pop_urban = pd.Series(0., density_cells.index)
 
-#fill missing Balkans values
-missing = ["AL","ME","MK"]
-reference = ["RS","BA"]
-urban_fraction = urban_fraction.reindex(urban_fraction.index|missing)
-urban_fraction.loc[missing] = urban_fraction[reference].mean()
+    for ct in countries:
+        print(ct, urban_fraction[ct])
 
+        indicator_nuts3_ct = nuts3.country.apply(lambda x: 1. if x == ct else 0.)
 
-#population in each grid cell
-pop_cells = pd.Series(I.dot(nuts3['pop']))
+        indicator_cells_ct = pd.Series(Iinv.T.dot(indicator_nuts3_ct))
 
-#in km^2
-cell_areas = pd.Series(cutout.grid_cells()).map(vshapes.area)/1e6
+        density_cells_ct = indicator_cells_ct * density_cells
 
-#pop per km^2
-density_cells = pop_cells/cell_areas
+        pop_cells_ct = indicator_cells_ct * pop_cells
 
+        # correct for imprecision of Iinv*I
+        pop_ct = nuts3.loc[nuts3.country==ct,'pop'].sum()
+        pop_cells_ct *= pop_ct / pop_cells_ct.sum()
 
-#rural or urban population in grid cell
-pop_rural = pd.Series(0.,density_cells.index)
-pop_urban = pd.Series(0.,density_cells.index)
+        # The first low density grid cells to reach rural fraction are rural
+        asc_density_i = density_cells_ct.sort_values().index
+        asc_density_cumsum = pop_cells_ct[asc_density_i].cumsum() / pop_cells_ct.sum()
+        rural_fraction_ct = 1 - urban_fraction[ct]
+        pop_ct_rural_b = asc_density_cumsum < rural_fraction_ct
+        pop_ct_urban_b = ~pop_ct_rural_b
 
-for ct in countries:
-    print(ct,urban_fraction[ct])
+        pop_ct_rural_b[indicator_cells_ct == 0.] = False
+        pop_ct_urban_b[indicator_cells_ct == 0.] = False
 
-    indicator_nuts3_ct = pd.Series(0.,nuts3.index)
-    indicator_nuts3_ct[nuts3.index[nuts3.country==ct]] = 1.
+        pop_rural += pop_cells_ct.where(pop_ct_rural_b, 0.)
+        pop_urban += pop_cells_ct.where(pop_ct_urban_b, 0.)
 
-    indicator_cells_ct = pd.Series(Iinv.T.dot(indicator_nuts3_ct))
+    pop_cells = {"total": pop_cells}
+    pop_cells["rural"] = pop_rural
+    pop_cells["urban"] = pop_urban
 
-    density_cells_ct = indicator_cells_ct*density_cells
+    for key, pop in pop_cells.items():
 
-    pop_cells_ct = indicator_cells_ct*pop_cells
+        ycoords = ('y', cutout.coords['y'].data)
+        xcoords = ('x', cutout.coords['x'].data)
+        values = pop.values.reshape(cutout.shape)
+        layout = xr.DataArray(values, [ycoords, xcoords])
 
-    #correct for imprecision of Iinv*I
-    pop_ct = nuts3['pop'][indicator_nuts3_ct.index[indicator_nuts3_ct == 1.]].sum()
-    pop_cells_ct = pop_cells_ct*pop_ct/pop_cells_ct.sum()
-
-    # The first low density grid cells to reach rural fraction are rural
-    index_from_low_d_to_high_d = density_cells_ct.sort_values().index
-    pop_ct_rural_b = pop_cells_ct[index_from_low_d_to_high_d].cumsum()/pop_cells_ct.sum() < (1-urban_fraction[ct])
-    pop_ct_urban_b = ~pop_ct_rural_b
-
-    pop_ct_rural_b[indicator_cells_ct==0.] = False
-    pop_ct_urban_b[indicator_cells_ct==0.] = False
-
-    pop_rural += pop_cells_ct.where(pop_ct_rural_b,0.)
-    pop_urban += pop_cells_ct.where(pop_ct_urban_b,0.)
-
-pop_cells = {"total" : pop_cells}
-
-pop_cells["rural"] = pop_rural
-pop_cells["urban"] = pop_urban
-
-for key in pop_cells.keys():
-    layout = xr.DataArray(pop_cells[key].values.reshape(cutout.shape),
-                          [('y', cutout.coords['y']), ('x', cutout.coords['x'])])
-
-    layout.to_netcdf(snakemake.output["pop_layout_"+key])
+        layout.to_netcdf(snakemake.output[f"pop_layout_{key}"])

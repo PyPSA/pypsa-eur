@@ -1,0 +1,8 @@
+name,geometry,max_cap_store2pipe_M_m3_per_d,source
+Wilhelmshaven,"POINT(8.133 53.516)",27.4,https://www.gem.wiki/Wilhelmshaven_LNG_Terminal
+Brunsbüttel,"POINT(8.976 53.914)",19.2,https://www.gem.wiki/Brunsb%C3%BCttel_LNG_Terminal
+Stade,"POINT(9.510 53.652)",32.9,https://www.gem.wiki/Stade_LNG_Terminal
+Alexandroupolis,"POINT(25.843 40.775)",16.7,https://www.gem.wiki/Alexandroupolis_LNG_Terminal
+Shannon,"POINT(-9.442 52.581)",22.5,https://www.gem.wiki/Shannon_LNG_Terminal
+Gothenburg,"POINT(11.948 57.702)",1.4,https://www.gem.wiki/Gothenburg_LNG_Terminal
+Cork,"POINT(-8.323 51.831)",11.0,https://www.gem.wiki/Cork_LNG_Terminal 

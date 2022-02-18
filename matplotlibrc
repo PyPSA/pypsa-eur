@@ -1,0 +1,4 @@
+backend: Agg
+font.family: sans-serif
+font.sans-serif: Ubuntu, DejaVu Sans
+image.cmap: viridis
