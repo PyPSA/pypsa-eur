@@ -11,7 +11,7 @@ logging:
 summary_dir: results
 
 scenario:
-  year: ['']
+  weather_year: ['']
   simpl: ['']
   ll: ['copt']
   clusters: [5]

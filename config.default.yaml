@@ -12,7 +12,7 @@ logging:
 summary_dir: results
 
 scenario:
-  year: [''] # for backwards compatibility
+  weather_year: [''] # for backwards compatibility
   simpl: ['']
   ll: ['copt']
   clusters: [37, 128, 256, 512, 1024]
