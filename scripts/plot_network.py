@@ -263,7 +263,7 @@ def plot_map(network, components=["links", "stores", "storage_units", "generator
     )
     
     legend_kw = dict(
-        bbox_to_anchor=(1.55, 1.04),
+        bbox_to_anchor=(1.52, 1.04),
         frameon=False,
     )
 
@@ -361,13 +361,18 @@ def plot_h2_map(network):
         subplot_kw={"projection": ccrs.EqualEarth()}
     )
 
-    color_h2_pipe = '#a2f0f2'
-    color_retrofit = '#72d3d6'
+    color_h2_pipe = '#b3f3f4'
+    color_retrofit = '#54cacd'
     
+    bus_colors = {
+        "H2 Electrolysis": "#ff29d9",
+        "H2 Fuel Cell": "#6b3161",
+    }
+
     n.plot(
         geomap=True,
         bus_sizes=bus_sizes,
-        bus_colors=tech_colors,
+        bus_colors=bus_colors,
         link_colors=color_h2_pipe,
         link_widths=link_widths_total,
         branch_components=["Link"],
@@ -376,13 +381,13 @@ def plot_h2_map(network):
     )
 
     n.plot(
-        geomap=True, # set False in PyPSA 0.19
+        geomap=True,
         bus_sizes=0,
         link_colors=color_retrofit,
         link_widths=link_widths_retro,
         branch_components=["Link"],
         ax=ax,
-        # color_geomap=False, # needs PyPSA 0.19
+        color_geomap=False,
         boundaries=map_opts["boundaries"]
     )
 
@@ -424,7 +429,7 @@ def plot_h2_map(network):
         legend_kw=legend_kw,
     )
 
-    colors = [tech_colors[c] for c in carriers] + [color_h2_pipe, color_retrofit]
+    colors = [bus_colors[c] for c in carriers] + [color_h2_pipe, color_retrofit]
     labels = carriers + ["H2 pipeline (total)", "H2 pipeline (repurposed)"]
 
     legend_kw = dict(
@@ -533,24 +538,24 @@ def plot_ch4_map(network):
     )
 
     n.plot(
-        geomap=True, # set False in PyPSA 0.19
+        geomap=True,
         ax=ax,
         bus_sizes=0.,
         link_colors=pipe_colors['gas pipeline (available)'],
         link_widths=link_widths_rem,
         branch_components=["Link"],
-        # color_geomap=False, # needs PyPSA 0.19
+        color_geomap=False,
         boundaries=map_opts["boundaries"]
     )
 
     n.plot(
-        geomap=True, # set False in PyPSA 0.19
+        geomap=True,
         ax=ax,
         bus_sizes=0.,
         link_colors=link_color_used,
         link_widths=link_widths_used,
         branch_components=["Link"],
-        # color_geomap=False, # needs PyPSA 0.19
+        color_geomap=False,
         boundaries=map_opts["boundaries"]
     )
 
