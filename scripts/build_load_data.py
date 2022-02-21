@@ -200,7 +200,8 @@ if __name__ == "__main__":
     interpolate_limit = snakemake.config['load']['interpolate_limit']
     countries = snakemake.config['countries']
     snapshots = pd.date_range(freq='h', **snakemake.config['snapshots'])
-    years = slice(snapshots[0], snapshots[-1])
+    #years = slice(snapshots[0], snapshots[-1])
+    years = slice(str(snakemake.config['load']['year']) + '-01-01',str(snakemake.config['load']['year']+1) + '-01-01')
     time_shift = snakemake.config['load']['time_shift_for_large_gaps']
 
     load = load_timeseries(snakemake.input[0], years, countries, powerstatistics)

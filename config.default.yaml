@@ -12,7 +12,7 @@ logging:
 summary_dir: results
 
 scenario:
-  weather_year: [''] # for backwards compatibility
+  weather_year: ['2011']
   simpl: ['']
   ll: ['copt']
   clusters: [37, 128, 256, 512, 1024]
@@ -24,16 +24,16 @@ clustering:
   simplify:
     to_substations: false # network is simplified to nodes with positive or negative power injection (i.e. substations or offwind connections)
 
-snapshots:
-  start: "2011-01-01"
-  end: "2012-01-01"
-  closed: 'left' # end is not inclusive
+#snapshots: # Not used # Maybe use this instead for "load/year" in base_network.py to allow studies for more than one year
+ # start: "2011-01-01"
+ # end: "2012-01-01"
+ # closed: 'left' # end is not inclusive
 
 enable:
   prepare_links_p_nom: false
   retrieve_databundle: true
-  build_cutout: false
-  retrieve_cutout: true
+  build_cutout: true
+  retrieve_cutout: false
   build_natura_raster: false
   retrieve_natura_raster: true
   custom_busmap: false
@@ -64,26 +64,26 @@ electricity:
   #   Wind: [onwind, offwind-ac, offwind-dc]
   #   Solar: [solar]
 
+cutout: 'europe-era5' # Cutout used. Currently, we can only use era5 for multiyear-purpose.
+
 atlite:
   nprocesses: 4
   cutouts:
     # use 'base' to determine geographical bounds and time span from config
     # base: 
       # module: era5  
-    europe-2013-era5:
-      module: era5 # in priority order 
+    europe-era5:
+      module: era5
       x: [-12., 35.]
       y: [33., 72]
       dx: 0.3
       dy: 0.3
-      time: ['2013', '2013']
-    europe-2013-sarah:
-      module: [sarah, era5] # in priority order 
+    europe-sarah:
+      module: [sarah, era5]
       x: [-12., 45.]
       y: [33., 65]
       dx: 0.2
       dy: 0.2
-      time: ['2013', '2013']
       sarah_interpolate: false
       sarah_dir: 
       features: [influx, temperature]
@@ -91,7 +91,7 @@ atlite:
       
 renewable:
   onwind:
-    # cutout: europe-2013-era5
+    #cutout: europe-2013-era5
     resource:
       method: wind
       turbine: Vestas_V112_3MW
@@ -108,7 +108,7 @@ renewable:
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   offwind-ac:
-    # cutout: europe-2013-era5
+    #cutout: europe-2013-era5
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_5MW_offshore
@@ -124,7 +124,7 @@ renewable:
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   offwind-dc:
-    # cutout: europe-2013-era5
+    #cutout: europe-2013-era5
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_5MW_offshore
@@ -141,7 +141,7 @@ renewable:
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   solar:
-    # cutout: europe-2013-sarah
+    #cutout: europe-2013-sarah
     resource:
       method: pv
       panel: CSi
@@ -168,6 +168,7 @@ renewable:
     PHS_max_hours: 6
     hydro_max_hours: "energy_capacity_totals_by_country" # one of energy_capacity_totals_by_country, estimate_by_large_installations or a float
     clip_min_inflow: 1.0
+    normyear: 2013 # Hydro production year used for normalization of computed inflow. 
 
 lines:
   types:
@@ -191,6 +192,7 @@ transformers:
   type: ''
 
 load:
+  year: 2013
   power_statistics: True # only for files from <2019; set false in order to get ENTSOE transparency data 
   interpolate_limit: 3 # data gaps up until this size are interpolated linearly
   time_shift_for_large_gaps: 1w # data gaps up until this size are copied by copying from 

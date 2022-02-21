@@ -61,7 +61,7 @@ Description
 
 import logging
 from _helpers import configure_logging
-
+import pandas as pd
 import atlite
 import geopandas as gpd
 from vresutils import hydro as vhydro
@@ -82,12 +82,23 @@ if __name__ == "__main__":
                       .set_index('name')['geometry'].reindex(countries))
     country_shapes.index.name = 'countries'
 
+    if len(snakemake.wildcards.weather_year) > 0:
+        weather_year = snakemake.wildcards.weather_year
+    else:
+        weather_year = snakemake.config['load']['year']
+
     eia_stats = vhydro.get_eia_annual_hydro_generation(
         snakemake.input.eia_hydro_generation).reindex(columns=countries)
+
+    norm_year = snakemake.config['renewable']['hydro']['normyear'] # year used to normalize the computed inflow
+
+    hydro_norm = pd.DataFrame(eia_stats.loc[str(norm_year)]).T
+    hydro_norm.rename(index={str(norm_year):str(weather_year)},inplace=True)
+    
     inflow = cutout.runoff(shapes=country_shapes,
                            smooth=True,
                            lower_threshold_quantile=True,
-                           normalize_using_yearly=eia_stats)
+                           normalize_using_yearly=hydro_norm)
 
     if 'clip_min_inflow' in config_hydro:
         inflow = inflow.where(inflow > config_hydro['clip_min_inflow'], 0)

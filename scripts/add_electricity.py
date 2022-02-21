@@ -256,6 +256,8 @@ def update_transmission_costs(n, costs, length_factor=1.0, simple_hvdc_costs=Fal
 
 
 def attach_wind_and_solar(n, costs, input_profiles, technologies, line_length_factor=1):
+    t_index = pd.date_range(str(snakemake.config['load']['year']) + '-01-01',str(int(snakemake.config['load']['year'])+1) + '-01-01',freq='h')[0:-1]
+
     # TODO: rename tech -> carrier, technologies -> carriers
     
     for tech in technologies:
@@ -282,6 +284,13 @@ def attach_wind_and_solar(n, costs, input_profiles, technologies, line_length_fa
             else:
                 capital_cost = costs.at[tech, 'capital_cost']
 
+            prof = ds['profile'].transpose('time', 'bus').to_pandas()
+            print(prof)
+            prof_wo_ly = prof[~((prof.index.month == 2) & (prof.index.day == 29))] # remove 29th feb from leap year
+            print(prof_wo_ly)
+            prof_wo_ly.set_index(t_index,inplace=True)
+            print(prof_wo_ly)
+
             n.madd("Generator", ds.indexes['bus'], ' ' + tech,
                    bus=ds.indexes['bus'],
                    carrier=tech,
@@ -291,7 +300,7 @@ def attach_wind_and_solar(n, costs, input_profiles, technologies, line_length_fa
                    marginal_cost=costs.at[suptech, 'marginal_cost'],
                    capital_cost=capital_cost,
                    efficiency=costs.at[suptech, 'efficiency'],
-                   p_max_pu=ds['profile'].transpose('time', 'bus').to_pandas())
+                   p_max_pu=prof_wo_ly)
 
 
 def attach_conventional_generators(n, costs, ppl, carriers):
@@ -316,7 +325,8 @@ def attach_conventional_generators(n, costs, ppl, carriers):
 
 
 def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **config):
-
+    t_index = pd.date_range(str(snakemake.config['load']['year']) + '-01-01',str(int(snakemake.config['load']['year'])+1) + '-01-01',freq='h')[0:-1]
+    
     _add_missing_carriers_from_costs(n, costs, carriers)
 
     ppl = ppl.query('carrier == "hydro"').reset_index(drop=True)\
@@ -345,6 +355,12 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **con
                         .to_pandas()
                         .multiply(dist_key, axis=1))
 
+            print(inflow_t)
+            inflow_t_wo_ly = inflow_t[~((inflow_t.index.month == 2) & (inflow_t.index.day == 29))] # remove 29th feb from leap year
+            print(inflow_t_wo_ly)
+            inflow_t_wo_ly.set_index(t_index,inplace=True)
+            print(inflow_t_wo_ly)
+
     if 'ror' in carriers and not ror.empty:
         n.madd("Generator", ror.index,
                carrier='ror',
@@ -353,7 +369,7 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **con
                efficiency=costs.at['ror', 'efficiency'],
                capital_cost=costs.at['ror', 'capital_cost'],
                weight=ror['p_nom'],
-               p_max_pu=(inflow_t[ror.index]
+               p_max_pu=(inflow_t_wo_ly[ror.index]
                          .divide(ror['p_nom'], axis=1)
                          .where(lambda df: df<=1., other=1.)))
 
@@ -412,7 +428,7 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **con
                efficiency_dispatch=costs.at['hydro', 'efficiency'],
                efficiency_store=0.,
                cyclic_state_of_charge=True,
-               inflow=inflow_t.loc[:, hydro.index])
+               inflow=inflow_t_wo_ly.loc[:, hydro.index])
 
 
 def attach_extendable_generators(n, costs, ppl, carriers):

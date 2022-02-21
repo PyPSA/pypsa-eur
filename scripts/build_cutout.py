@@ -106,10 +106,15 @@ if __name__ == "__main__":
         snakemake = mock_snakemake('build_cutout', cutout='europe-2013-era5')
     configure_logging(snakemake)
 
-    cutout_params = snakemake.config['atlite']['cutouts'][snakemake.wildcards.cutout]
+    cutout_name = snakemake.config['cutout']
+    cutout_params = snakemake.config['atlite']['cutouts'][cutout_name]  
 
-    snapshots = pd.date_range(freq='h', **snakemake.config['snapshots'])
-    time = [snapshots[0], snapshots[-1]]
+    if len(snakemake.wildcards.weather_year) > 0:
+        weather_year = snakemake.wildcards.weather_year
+    else:
+        weather_year = snakemake.config['load']['year']
+
+    time = [str(int(weather_year)) + '-01-01',str(int(weather_year)) + '-12-31']
     cutout_params['time'] = slice(*cutout_params.get('time', time))
 
     if {'x', 'y', 'bounds'}.isdisjoint(cutout_params):
