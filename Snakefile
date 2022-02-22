@@ -19,7 +19,7 @@ ATLITE_NPROCESSES = config['atlite'].get('nprocesses', 4)
 
 wildcard_constraints:
     simpl="[a-zA-Z0-9]*|all",
-    weather_year="[0-9]+m?",
+    weather_year="[0-9]*", #"[a-zA-Z0-9]*", # "[0-9]+m?",
     clusters="[0-9]+m?|all",
     ll="(v|c)([0-9\.]+|opt|all)|all",
     opts="[-+a-zA-Z0-9\.]*"
@@ -151,17 +151,17 @@ rule build_bus_regions:
     script: "scripts/build_bus_regions.py"
 
 
-if config['enable'].get('build_cutout', False):
-    rule build_cutout:
-        input: 
-            regions_onshore="resources/regions_onshore.geojson",
-            regions_offshore="resources/regions_offshore.geojson"
-        output: "cutouts/europe-{weather_year}-era5.nc" # {cutout}")
-        log: "logs/build_cutout/europe-{weather_year}-era5.log"
-        benchmark: "benchmarks/build_cutout_europe-{weather_year}-era5"
-        threads: ATLITE_NPROCESSES
-        resources: mem_mb=ATLITE_NPROCESSES * 1000
-        script: "scripts/build_cutout.py"
+# if config['enable'].get('build_cutout', False):
+#         rule build_cutout:
+#             input: 
+#                 regions_onshore="resources/regions_onshore.geojson",
+#                 regions_offshore="resources/regions_offshore.geojson"
+#             output: "cutouts/europe-{weather_year}-" + "{}.nc".format(config['cutout'].split('-')[1])
+#             log: "logs/build_cutout/europe-{weather_year}-" + "{}.log".format(config['cutout'].split('-')[1])
+#             benchmark: "benchmarks/build_cutout_europe-{weather_year}-" + "{}".format(config['cutout'].split('-')[1])
+#             threads: ATLITE_NPROCESSES
+#             resources: mem_mb=ATLITE_NPROCESSES * 1000
+#             script: "scripts/build_cutout.py"
 
 
 if config['enable'].get('retrieve_cutout', True):
@@ -207,7 +207,8 @@ rule build_renewable_profiles:
         regions=lambda w: ("resources/regions_onshore.geojson"
                            if w.technology in ('onwind', 'solar')
                            else "resources/regions_offshore.geojson"),
-        cutout="cutouts/europe-{weather_year}-era5.nc" #lambda w: "cutouts/" + config["renewable"][w.technology]['cutout'] + ".nc"
+                
+        cutout="cutouts/europe-{weather_year}-" + "{}.nc".format(config['cutout'].split('-')[1])
     output:
         profile="resources/profile{weather_year}_{technology}.nc",
     log: "logs/build_renewable_profile{weather_year}_{technology}.log"
@@ -222,7 +223,7 @@ if 'hydro' in config['renewable'].keys():
         input:
             country_shapes='resources/country_shapes.geojson',
             eia_hydro_generation='data/bundle/EIA_hydro_generation_2000_2014.csv',
-            cutout= "cutouts/europe-{weather_year}-era5.nc" # "cutouts/" + config["renewable"]['hydro']['cutout'] + ".nc"
+            cutout="cutouts/europe-{weather_year}-" + "{}.nc".format(config['cutout'].split('-')[1])
         output: 'resources/profile{weather_year}_hydro.nc'
         log: "logs/build_hydro_profile{weather_year}.log"
         resources: mem_mb=5000
