@@ -526,13 +526,15 @@ def estimate_renewable_capacities(n, tech_map):
              .where(lambda s: s>0.1, 0.))  # only capacities above 100kW
         n.generators.loc[tech_i, 'p_nom_min'] = n.generators.loc[tech_i, 'p_nom']
 
-def attach_line_rating(n, fn, s_max_pu_factor,dlr_factor):
+def attach_line_rating(n, fn, s_max_pu_factor,dlr_factor, line_clipping):
     s_max = xr.open_dataarray(fn).to_pandas().transpose()
-    n.lines_t.s_max_pu = s_max / n.lines.s_nom[s_max.columns] #only considers overhead lines
+    n.lines_t.s_max_pu = (s_max / n.lines.s_nom[s_max.columns]) * dlr_factor #only considers overhead lines
     # account for maximal voltage angles of maximally 30 degree.
-    x_pu = n.lines.type.map(n.line_types["x_per_length"])*n.lines.length/(n.lines.v_nom**2)
-    s_max_pu_cap = (np.pi / (6 * x_pu * n.lines.s_nom)).clip(lower=1) # need to clip here as cap values are below 1 -> would mean the line cannot be operated at actual given pessimistic ampacity
-    n.lines_t.s_max_pu = n.lines_t.s_max_pu.clip(upper=s_max_pu_cap, lower=1, axis=1)*s_max_pu_factor*dlr_factor
+    if line_clipping:
+        x_pu = n.lines.type.map(n.line_types["x_per_length"])*n.lines.length/(n.lines.v_nom**2)
+        s_max_pu_cap = (np.pi / (6 * x_pu * n.lines.s_nom)).clip(lower=1) # need to clip here as cap values might be below 1 -> would mean the line cannot be operated at actual given pessimistic ampacity
+        n.lines_t.s_max_pu = n.lines_t.s_max_pu.clip(upper=s_max_pu_cap, lower=1, axis=1)
+    n.lines_t.s_max_pu*=s_max_pu_factor
 
 def add_nice_carrier_names(n, config):
     carrier_i = n.carriers.index
@@ -586,7 +588,8 @@ if __name__ == "__main__":
     if snakemake.config["lines"]["line_rating"]:
         s_max_pu_factor = snakemake.config["lines"]["s_max_pu"] #factor mainly used for N-1 security
         dlr_factor=snakemake.config["lines"]["dlr_factor"] #factor due to overestimation of the wind speed in hourly averaged wind data
-        attach_line_rating(n, snakemake.input.line_rating, s_max_pu_factor, dlr_factor)
+        line_clipping=snakemake.config["lines"]["line_clipping"]
+        attach_line_rating(n, snakemake.input.line_rating, s_max_pu_factor, dlr_factor, line_clipping)
 
     add_nice_carrier_names(n, snakemake.config)
 
