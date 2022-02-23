@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 from os.path import normpath, exists
-from shutil import copyfile
+from shutil import copyfile, move
 
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 HTTP = HTTPRemoteProvider()
@@ -74,7 +74,7 @@ rule retrieve_load_data:
     output: "data/load_raw.csv"
     log: "logs/retrieve_load_data.log"
     resources: mem_mb=5000
-    shell: "mv {input} {output}"
+    run: move(input[0], output[0])
 
 
 rule build_load_data:
@@ -170,7 +170,7 @@ if config['enable'].get('retrieve_cutout', True):
         output: "cutouts/{cutout}.nc"
         log: "logs/retrieve_cutout_{cutout}.log"
         resources: mem_mb=5000
-        shell: "mv {input} {output}"
+        run: move(input[0], output[0])
 
 
 if config['enable'].get('build_natura_raster', False):
@@ -190,7 +190,7 @@ if config['enable'].get('retrieve_natura_raster', True):
         output: "resources/natura.tiff"
         log: "logs/retrieve_natura_raster.log"
         resources: mem_mb=5000
-        shell: "mv {input} {output}"
+        run: move(input[0], output[0])
 
 ruleorder: build_hydro_profile > build_renewable_profiles
 
