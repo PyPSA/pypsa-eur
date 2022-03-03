@@ -100,7 +100,7 @@ def prepare_network(n, solve_opts):
             df.where(df>solve_opts['clip_p_max_pu'], other=0., inplace=True)
 
     if solve_opts.get('load_shedding'):
-        n.add("Carrier", "load", color='red', nice_name="Load shedding")
+        n.add("Carrier", "load", color="#dd2e23", nice_name="Load shedding")
         buses_i = n.buses.query("carrier == 'AC'").index
         n.madd("Generator", buses_i, " load",
                bus=buses_i,
