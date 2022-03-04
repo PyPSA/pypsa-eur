@@ -74,6 +74,7 @@ def load_timeseries(fn, years, countries, powerstatistics=True):
     pattern = f'_load_actual_entsoe_{pattern}'
     rename = lambda s: s[:-len(pattern)]
     date_parser = lambda x: dateutil.parser.parse(x, ignoretz=True)
+
     return (pd.read_csv(fn, index_col=0, parse_dates=[0], date_parser=date_parser)
             .filter(like=pattern)
             .rename(columns=rename)
@@ -123,7 +124,7 @@ def copy_timeslice(load, cntry, start, stop, delta):
         load.loc[start:stop, cntry] = load.loc[start-delta:stop-delta, cntry].values
 
 
-def manual_adjustment(load, powerstatistics):
+def manual_adjustment(load, powerstatistics, countries):
     """
     Adjust gaps manual for load data from OPSD time-series package.
 
@@ -185,6 +186,10 @@ def manual_adjustment(load, powerstatistics):
                 load['MK'] = load.ME * (6.7/2.9)
         copy_timeslice(load, 'BG', '2018-10-27 21:00', '2018-10-28 22:00', Delta(weeks=1))
 
+    if 'UA' in countries:
+        copy_timeslice(load, 'UA', '2013-01-25 14:00', '2013-01-28 21:00', Delta(weeks=1))
+        copy_timeslice(load, 'UA', '2013-10-28 03:00', '2013-10-28 20:00', Delta(weeks=1))
+
     return load
 
 
@@ -205,8 +210,13 @@ if __name__ == "__main__":
 
     load = load_timeseries(snakemake.input[0], years, countries, powerstatistics)
 
+    # attach load of UA to load (best data only for entsoe transparency)
+    load_ua = load_timeseries(snakemake.input[0], '2018', ['UA'], False)
+    load_ua.index = snapshots # hack indices (currently, UA is manually set to 2018)
+    load['UA'] = load_ua
+
     if snakemake.config['load']['manual_adjustments']:
-        load = manual_adjustment(load, powerstatistics)
+        load = manual_adjustment(load, powerstatistics, countries)
 
     logger.info(f"Linearly interpolate gaps of size {interpolate_limit} and less.")
     load = load.interpolate(method='linear', limit=interpolate_limit)
