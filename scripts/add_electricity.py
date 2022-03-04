@@ -90,6 +90,7 @@ import pypsa
 import pandas as pd
 import numpy as np
 import xarray as xr
+import xagg as xa
 import geopandas as gpd
 import powerplantmatching as pm
 from powerplantmatching.export import map_country_bus
@@ -189,13 +190,25 @@ def load_powerplants(ppl_fn):
             .replace({'carrier': carrier_dict}))
 
 
-def attach_load(n, regions, load, nuts3_shapes, countries, scaling=1.):
+def attach_load(n, regions, load, nuts3_shapes, gdp, countries, scaling=1.):
 
     substation_lv_i = n.buses.index[n.buses['substation_lv']]
     regions = (gpd.read_file(regions).set_index('name')
                .reindex(substation_lv_i))
     opsd_load = (pd.read_csv(load, index_col=0, parse_dates=True)
                 .filter(items=countries))
+
+    #ToDo: adapt time+slices from config etc. (cover all data)
+    gdp = (xr.open_dataset(gdp)
+           .sel(time=2015)
+           .sel(longitude=slice(10,30))
+           .sel(latitude=slice(50, 30)))
+    weightmap = xa.pixel_overlaps(gdp, regions.iloc[0:2])
+    aggregated = xa.aggregate(gdp, weightmap)
+
+    print(aggregated.to_dataset().name)
+    print(aggregated.to_dataset().GDP_per_capita_PPP)
+    print(martha)
 
     logger.info(f"Load data scaled with scalling factor {scaling}.")
     opsd_load *= scaling
@@ -204,6 +217,7 @@ def attach_load(n, regions, load, nuts3_shapes, countries, scaling=1.):
 
     def upsample(cntry, group):
         l = opsd_load[cntry]
+
         if len(group) == 1:
             return pd.DataFrame({group.index[0]: l})
         else:
@@ -218,11 +232,17 @@ def attach_load(n, regions, load, nuts3_shapes, countries, scaling=1.):
             # relative factors 0.6 and 0.4 have been determined from a linear
             # regression on the country to continent load data
             factors = normed(0.6 * normed(gdp_n) + 0.4 * normed(pop_n))
+            if cntry in ['UA', 'MD']:
+                #generate new factors in this case
+                print('ToDo: adjust load for UA and MD here')
+
             return pd.DataFrame(factors.values * l.values[:,np.newaxis],
                                 index=l.index, columns=factors.index)
 
     load = pd.concat([upsample(cntry, group) for cntry, group
                       in regions.geometry.groupby(regions.country)], axis=1)
+
+    print(some_error)
 
     n.madd("Load", substation_lv_i, bus=substation_lv_i, p_set=load)
 
@@ -257,7 +277,7 @@ def update_transmission_costs(n, costs, length_factor=1.0, simple_hvdc_costs=Fal
 
 def attach_wind_and_solar(n, costs, input_profiles, technologies, line_length_factor=1):
     # TODO: rename tech -> carrier, technologies -> carriers
-    
+
     for tech in technologies:
         if tech == 'hydro': continue
 
@@ -551,7 +571,7 @@ if __name__ == "__main__":
     ppl = load_powerplants(snakemake.input.powerplants)
 
     attach_load(n, snakemake.input.regions, snakemake.input.load, snakemake.input.nuts3_shapes,
-                snakemake.config['countries'], snakemake.config['load']['scaling_factor'])
+                snakemake.input.gdp, snakemake.config['countries'], snakemake.config['load']['scaling_factor'])
 
     update_transmission_costs(n, costs, snakemake.config['lines']['length_factor'])
 
