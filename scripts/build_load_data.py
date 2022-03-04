@@ -210,10 +210,13 @@ if __name__ == "__main__":
 
     load = load_timeseries(snakemake.input[0], years, countries, powerstatistics)
 
-    # attach load of UA to load (best data only for entsoe transparency)
+    # attach load of UA (best data only for entsoe transparency)
     load_ua = load_timeseries(snakemake.input[0], '2018', ['UA'], False)
     load_ua.index = snapshots # hack indices (currently, UA is manually set to 2018)
     load['UA'] = load_ua
+    # attach load of MD (no time-series available, use 2020-totals and distribute according to UA):
+    # https://www.iea.org/data-and-statistics/data-browser/?country=MOLDOVA&fuel=Energy%20consumption&indicator=TotElecCons
+    load['MD'] = 6.2e6*(load_ua/load_ua.sum())
 
     if snakemake.config['load']['manual_adjustments']:
         load = manual_adjustment(load, powerstatistics, countries)
