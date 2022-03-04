@@ -13,6 +13,7 @@ Up-Upcoming Release
 **Breaking Changes**
 
 * The config entry ``snapshots["closed"]`` was renamed to ``snapshots["inclusive"]`` to address the upstream deprecation with ``pandas=1.4``.
+  The previous setting ``None`` is no longer supported and replaced by ``both``, see the `pandas documentation <https://pandas.pydata.org/docs/reference/api/pandas.date_range.html>`_.
   Minimum ``pandas`` version now required is `>= 1.4`.
 
 Upcoming Release
