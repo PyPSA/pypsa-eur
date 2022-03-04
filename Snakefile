@@ -182,28 +182,6 @@ if config['enable'].get('retrieve_natura_raster', True):
         run: move(input[0], output[0])
 
 
-rule build_renewable_profiles:
-    input:
-        base_network="networks/base.nc",
-        corine="data/bundle/corine/g250_clc06_V18_5.tif",
-        natura="resources/natura.tiff",
-        gebco=lambda w: ("data/bundle/GEBCO_2014_2D.nc"
-                         if "max_depth" in config["renewable"][w.technology].keys()
-                         else []),
-        country_shapes='resources/country_shapes.geojson',
-        offshore_shapes='resources/offshore_shapes.geojson',
-        regions=lambda w: ("resources/regions_onshore.geojson"
-                                   if w.technology in ('onwind', 'solar')
-                                   else "resources/regions_offshore.geojson"),
-        cutout=lambda w: "cutouts/" + config["renewable"][w.technology]['cutout'] + ".nc"
-    output: profile="resources/profile_{technology}.nc",
-    log: "logs/build_renewable_profile_{technology}.log"
-    benchmark: "benchmarks/build_renewable_profiles_{technology}"
-    threads: ATLITE_NPROCESSES
-    resources: mem_mb=ATLITE_NPROCESSES * 5000
-    script: "scripts/build_renewable_profiles.py"
-
-
 if 'hydro' in config['renewable'].keys():
     rule build_hydro_profile:
         input:

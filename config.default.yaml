@@ -17,7 +17,7 @@ scenario:
   clusters: [37, 128, 256, 512, 1024]
   opts: [Co2L-3H]
 
-countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK']
+countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK', 'UA']
 
 clustering:
   simplify:
@@ -308,6 +308,7 @@ plotting:
     "HVDC links" : "#8a1caf"
     "DC-DC" : "#8a1caf"
     "DC link" : "#8a1caf"
+    "load": "#dd2e23"
   nice_names:
     OCGT: "Open-Cycle Gas"
     CCGT: "Combined-Cycle Gas"
@@ -321,3 +322,4 @@ plotting:
     H2: "Hydrogen Storage"
     lines: "Transmission Lines"
     ror: "Run of River"
+    load: "Load Shedding"
