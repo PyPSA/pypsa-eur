@@ -38,7 +38,7 @@ enable:
   custom_busmap: false
 
 electricity:
-  voltages: [220., 300., 380.]
+  voltages: [220., 300., 380., 750.]
   co2limit: 7.75e+7 # 0.05 * 3.1e9*0.5
   co2base: 1.487e+9
   agg_p_nom_limits: data/agg_p_nom_minmax.csv
@@ -169,6 +169,7 @@ lines:
     220.: "Al/St 240/40 2-bundle 220.0"
     300.: "Al/St 240/40 3-bundle 300.0"
     380.: "Al/St 240/40 4-bundle 380.0"
+    750.: "Al/St 240/40 4-bundle 380.0"
   s_max_pu: 0.7
   s_nom_max: .inf
   length_factor: 1.25
