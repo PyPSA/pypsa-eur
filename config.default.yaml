@@ -17,7 +17,7 @@ scenario:
   clusters: [37, 128, 256, 512, 1024]
   opts: [Co2L-3H]
 
-countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK', 'UA']
+countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MD', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK', 'UA']
 
 clustering:
   simplify:
@@ -71,15 +71,11 @@ atlite:
       # module: era5  
     europe-2013-era5:
       module: era5 # in priority order 
-      x: [-12., 35.]
-      y: [33., 72]
       dx: 0.3
       dy: 0.3
       time: ['2013', '2013']
     europe-2013-sarah:
       module: [sarah, era5] # in priority order 
-      x: [-12., 45.]
-      y: [33., 65]
       dx: 0.2
       dy: 0.2
       time: ['2013', '2013']
