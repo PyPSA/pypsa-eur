@@ -10,7 +10,7 @@ dependencies:
   - python>=3.8
   - pip
 
-  - pypsa>=0.18.1
+  - pypsa>=0.19.2
   - atlite>=0.2.5
   - dask
 
