@@ -1,8 +1,8 @@
 ,Unit,Values,Description
 simplify_network,,,
 -- to_substations,bool,"One of {'true','false'}","Aggregates all nodes without power injection (positive or negative, i.e. demand or generation) to electrically closest ones"
--- algorithm,str,"One of {‘kmenas’, ‘hac’}",
+-- algorithm,str,"One of {‘kmeans’, ‘hac’}",
 -- feature,str,"Str in the format ‘carrier1+carrier2+...+carrierN-X’, where CarrierI can be from {‘solar’, ‘onwind’, ‘offwind’, ‘ror’} and X is one of {‘cap’, ‘time’}.",
 cluster_network,,,
--- algorithm,str,"One of {‘kmenas’, ‘hac’}",
+-- algorithm,str,"One of {‘kmeans’, ‘hac’}",
 -- feature,str,"Str in the format ‘carrier1+carrier2+...+carrierN-X’, where CarrierI can be from {‘solar’, ‘onwind’, ‘offwind’, ‘ror’} and X is one of {‘cap’, ‘time’}.",

@@ -10,6 +10,7 @@ dependencies:
   - python>=3.8
   - pip
 
+  - pypsa>=0.19.1
   - atlite>=0.2.5
   - dask
 
@@ -53,6 +54,5 @@ dependencies:
   - tabula-py
 
   - pip:
-    - git+https://github.com/pypsa/pypsa.git#egg=pypsa
     - vresutils>=0.3.1
     - tsam>=1.1.0
