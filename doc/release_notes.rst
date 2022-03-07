@@ -24,6 +24,10 @@ Upcoming Release
 
 * Resource definitions for memory usage now follow [Snakemake standard resource definition](https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#standard-resources) ```mem_mb`` rather than ``mem``.
 
+* Network building is made deterministic by supplying a fixed random state to network clustering routines.
+
+* New network topology extracted from the ENTSO-E interactive map.
+
 
 PyPSA-Eur 0.4.0 (22th September 2021)
 =====================================

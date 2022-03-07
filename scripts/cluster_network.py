@@ -270,6 +270,7 @@ def busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights=None, algori
         algorithm_kwds.setdefault('n_init', 1000)
         algorithm_kwds.setdefault('max_iter', 30000)
         algorithm_kwds.setdefault('tol', 1e-6)
+        algorithm_kwds.setdefault('random_state', 0)
 
     def fix_country_assignment_for_hac(n):
         from scipy.sparse import csgraph
@@ -348,7 +349,7 @@ def clustering_for_n_clusters(n, n_clusters, custom_busmap=False, aggregate_carr
     else:
         raise AttributeError(f"potential_mode should be one of 'simple' or 'conservative' but is '{potential_mode}'")
 
-    if not custom_busmap:
+    if not isinstance(custom_busmap, pd.Series):
         busmap = busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights, algorithm, feature)
     else:
         busmap = custom_busmap
@@ -422,6 +423,9 @@ if __name__ == "__main__":
     if snakemake.wildcards.clusters.endswith('m'):
         n_clusters = int(snakemake.wildcards.clusters[:-1])
         aggregate_carriers = pd.Index(n.generators.carrier.unique()).difference(renewable_carriers)
+    elif snakemake.wildcards.clusters == 'all':
+        n_clusters = len(n.buses)
+        aggregate_carriers = None # All
     else:
         n_clusters = int(snakemake.wildcards.clusters)
         aggregate_carriers = None # All
