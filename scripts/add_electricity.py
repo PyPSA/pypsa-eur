@@ -90,7 +90,6 @@ import pypsa
 import pandas as pd
 import numpy as np
 import xarray as xr
-import xagg as xa
 import geopandas as gpd
 import powerplantmatching as pm
 from powerplantmatching.export import map_country_bus
