@@ -7,8 +7,8 @@ retrieve_sector_databundle: true
 results_dir: results/
 summary_dir: results
 costs_dir: ../technology-data/outputs/
-run: your-run-name  # use this to keep track of runs with different settings
-foresight: overnight # options are overnight, myopic, perfect (perfect is not yet implemented)
+run: norussian_gas  # use this to keep track of runs with different settings
+foresight: myopic # options are overnight, myopic, perfect (perfect is not yet implemented)
 # if you use myopic or perfect foresight, set the investment years in "planning_horizons" below
 
 scenario:
@@ -16,14 +16,12 @@ scenario:
     - ''
   lv: # allowed transmission line volume expansion, can be any float >= 1.0 (today) or "opt"
     - 1.0
-    - 1.5
   clusters: # number of nodes in Europe, any integer between 37 (1 node per country-zone) and several hundred
-    - 45
-    - 50
+    - 37
   opts: # only relevant for PyPSA-Eur
     - ''
   sector_opts: # this is where the main scenario settings are
-    - Co2L0-3H-T-H-B-I-A-solar+p3-dist1
+    - cb45ex0-168H-T-H-B-I-A-solar+p3-dist1
   # to really understand the options here, look in scripts/prepare_sector_network.py
   # Co2Lx specifies the CO2 target in x% of the 1990 values; default will give default (5%);
   # Co2L0p25 will give 25% CO2 emissions; Co2Lm0p05 will give 5% negative emissions
@@ -41,7 +39,13 @@ scenario:
   # cb40ex0 distributes a carbon budget of 40 GtCO2 following an exponential
   # decay with initial growth rate 0
   planning_horizons: # investment years for myopic and perfect; or costs year for overnight
+    - 2020
+    - 2025
     - 2030
+    # - 2035
+    # - 2040
+    # - 2045
+    # - 2050
   # for example, set to [2020, 2030, 2040, 2050] for myopic foresight
 
 # CO2 budget as a fraction of 1990 emissions
@@ -148,11 +152,14 @@ sector:
     potential: 0.6  # maximum fraction of urban demand which can be supplied by district heating
      # increase of today's district heating demand to potential maximum district heating share
      # progress = 0 means today's district heating share, progress = 1 means maximum fraction of urban demand is supplied by district heating
-    progress: 1
-      # 2020: 0.0
-      # 2030: 0.3
-      # 2040: 0.6
-      # 2050: 1.0
+    progress: # 1
+      2020: 0.0
+      2025: 0.15
+      2030: 0.3
+      2035: 0.45
+      2040: 0.6
+      2045: 0.8
+      2050: 1.0
     district_heating_loss: 0.15
   bev_dsm_restriction_value: 0.75  #Set to 0 for no restriction on BEV DSM
   bev_dsm_restriction_time: 7  #Time at which SOC of BEV has to be dsm_restriction_value
@@ -172,16 +179,24 @@ sector:
   bev_avail_mean: 0.8
   v2g: true #allows feed-in to grid from EV battery
   #what is not EV or FCEV is oil-fuelled ICE
-  land_transport_fuel_cell_share: 0.15 # 1 means all FCEVs
-    # 2020: 0
-    # 2030: 0.05
-    # 2040: 0.1
-    # 2050: 0.15
-  land_transport_electric_share: 0.85 # 1 means all EVs
-    # 2020: 0
-    # 2030: 0.25
-    # 2040: 0.6
-    # 2050: 0.85
+  land_transport_fuel_cell_share: # 0.15 # 1 means all FCEVs
+    2020: 0
+    2025: 0.025
+    2030: 0.05
+    2035: 0.075
+    2040: 0.1
+    2045: 0.125
+    2050: 0.15
+  land_transport_electric_share: # 0.85 # 1 means all EVs
+    2020: 0
+    2025: 0.1
+    2030: 0.25    # TODO EU currenlty aims for ~10%
+    # total cars Europe: 303e6 https://www.statista.com/statistics/452449/european-countries-number-of-registered-passenger-cars/
+    # aim EU: 30e6 https://www.reuters.com/article/us-climate-change-eu-transport-idUSKBN28E2KM
+    2035: 0.425
+    2040: 0.6
+    2045: 0.725
+    2050: 0.85
   transport_fuel_cell_efficiency: 0.5
   transport_internal_combustion_efficiency: 0.3
   agriculture_machinery_electric_share: 0
@@ -189,29 +204,29 @@ sector:
   agriculture_machinery_electric_efficiency: 0.3 # electricity per use
   shipping_average_efficiency: 0.4 #For conversion of fuel oil to propulsion in 2011
   shipping_hydrogen_liquefaction: false # whether to consider liquefaction costs for shipping H2 demands
-  shipping_hydrogen_share: 1 # 1 means all hydrogen FC
-    # 2020: 0
-    # 2025: 0
-    # 2030: 0.05
-    # 2035: 0.15
-    # 2040: 0.3
-    # 2045: 0.6
-    # 2050: 1
+  shipping_hydrogen_share: #1 # 1 means all hydrogen FC
+    2020: 0
+    2025: 0
+    2030: 0.05
+    2035: 0.15
+    2040: 0.3
+    2045: 0.6
+    2050: 1
   time_dep_hp_cop: true #time dependent heat pump coefficient of performance
   heat_pump_sink_T: 55. # Celsius, based on DTU / large area radiators; used in build_cop_profiles.py
    # conservatively high to cover hot water and space heating in poorly-insulated buildings
   reduce_space_heat_exogenously: true  # reduces space heat demand by a given factor (applied before losses in DH)
   # this can represent e.g. building renovation, building demolition, or if
   # the factor is negative: increasing floor area, increased thermal comfort, population growth
-  reduce_space_heat_exogenously_factor: 0.29 # per unit reduction in space heat demand
+  reduce_space_heat_exogenously_factor: # 0.29 # per unit reduction in space heat demand
   # the default factors are determined by the LTS scenario from http://tool.european-calculator.eu/app/buildings/building-types-area/?levers=1ddd4444421213bdbbbddd44444ffffff11f411111221111211l212221
-    # 2020: 0.10  # this results in a space heat demand reduction of 10%
-    # 2025: 0.09  # first heat demand increases compared to 2020 because of larger floor area per capita
-    # 2030: 0.09
-    # 2035: 0.11
-    # 2040: 0.16
-    # 2045: 0.21
-    # 2050: 0.29
+    2020: 0.10  # this results in a space heat demand reduction of 10%
+    2025: 0.09  # first heat demand increases compared to 2020 because of larger floor area per capita
+    2030: 0.09
+    2035: 0.11
+    2040: 0.16
+    2045: 0.21
+    2050: 0.29
   retrofitting :  # co-optimises building renovation to reduce space heat demand
     retro_endogen: false  # co-optimise space heat savings
     cost_factor: 1.0   # weight costs for building renovation
@@ -224,7 +239,7 @@ sector:
     decentral: 3
     central: 180
   boilers: true
-  oil_boilers: false
+  oil_boilers: true
   chp: true
   micro_chp: false
   solar_thermal: true
@@ -241,8 +256,8 @@ sector:
   cc_fraction: 0.9  # default fraction of CO2 captured with post-combustion capture
   hydrogen_underground_storage: true
   hydrogen_underground_storage_locations:
-    # - onshore  # more than 50 km from sea
-    - nearshore  # within 50 km of sea
+    - onshore  # more than 50 km from sea
+    # - nearshore  # within 50 km of sea
     # - offshore
   use_fischer_tropsch_waste_heat: true
   use_fuel_cell_waste_heat: true
@@ -250,7 +265,7 @@ sector:
   electricity_distribution_grid_cost_factor: 1.0  #multiplies cost in data/costs.csv
   electricity_grid_connection: true  # only applies to onshore wind and utility PV
   H2_network: true
-  gas_network: false
+  gas_network: true
   H2_retrofit: false  # if set to True existing gas pipes can be retrofitted to H2 pipes
   # according to hydrogen backbone strategy (April, 2020) p.15
   # https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf
@@ -265,32 +280,32 @@ sector:
 
 
 industry:
-  St_primary_fraction: 0.3 # fraction of steel produced via primary route versus secondary route (scrap+EAF); today fraction is 0.6
-    # 2020: 0.6
-    # 2025: 0.55
-    # 2030: 0.5
-    # 2035: 0.45
-    # 2040: 0.4
-    # 2045: 0.35
-    # 2050: 0.3
-  DRI_fraction: 1 # fraction of the primary route converted to DRI + EAF
-    # 2020: 0
-    # 2025: 0
-    # 2030: 0.05
-    # 2035: 0.2
-    # 2040: 0.4
-    # 2045: 0.7
-    # 2050: 1
+  St_primary_fraction: # 0.3 # fraction of steel produced via primary route versus secondary route (scrap+EAF); today fraction is 0.6
+    2020: 0.6
+    2025: 0.55
+    2030: 0.5
+    2035: 0.45
+    2040: 0.4
+    2045: 0.35
+    2050: 0.3
+  DRI_fraction: # 1 # fraction of the primary route converted to DRI + EAF
+    2020: 0
+    2025: 0
+    2030: 0.05
+    2035: 0.2
+    2040: 0.4
+    2045: 0.7
+    2050: 1
   H2_DRI: 1.7   #H2 consumption in Direct Reduced Iron (DRI),  MWh_H2,LHV/ton_Steel from 51kgH2/tSt in Vogl et al (2018) doi:10.1016/j.jclepro.2018.08.279
   elec_DRI: 0.322   #electricity consumption in Direct Reduced Iron (DRI) shaft, MWh/tSt HYBRIT brochure https://ssabwebsitecdn.azureedge.net/-/media/hybrit/files/hybrit_brochure.pdf
-  Al_primary_fraction: 0.2 # fraction of aluminium produced via the primary route versus scrap; today fraction is 0.4
-    # 2020: 0.4
-    # 2025: 0.375
-    # 2030: 0.35
-    # 2035: 0.325
-    # 2040: 0.3
-    # 2045: 0.25
-    # 2050: 0.2
+  Al_primary_fraction: # 0.2 # fraction of aluminium produced via the primary route versus scrap; today fraction is 0.4
+    2020: 0.4
+    2025: 0.375
+    2030: 0.35
+    2035: 0.325
+    2040: 0.3
+    2045: 0.25
+    2050: 0.2
   MWh_CH4_per_tNH3_SMR: 10.8 # 2012's demand from https://ec.europa.eu/docsroom/documents/4165/attachments/1/translations/en/renditions/pdf
   MWh_elec_per_tNH3_SMR: 0.7 # same source, assuming 94-6% split methane-elec of total energy demand 11.5 MWh/tNH3
   MWh_H2_per_tNH3_electrolysis: 6.5 # from https://doi.org/10.1016/j.joule.2018.04.017, around 0.197 tH2/tHN3 (>3/17 since some H2 lost and used for energy)
@@ -351,15 +366,6 @@ solving:
     track_iterations: false
     min_iterations: 4
     max_iterations: 6
-    keep_shadowprices:
-      - Bus
-      - Line
-      - Link
-      - Transformer
-      - GlobalConstraint
-      - Generator
-      - Store
-      - StorageUnit
 
   solver:
     name: gurobi
