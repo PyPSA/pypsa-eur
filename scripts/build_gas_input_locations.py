@@ -20,13 +20,13 @@ def read_scigrid_gas(fn):
 
 
 def build_gas_input_locations(lng_fn, planned_lng_fn, entry_fn, prod_fn, countries):
-    
+
     # LNG terminals
     lng = read_scigrid_gas(lng_fn)
-    planned_lng = pd.read_csv(planned_lng_fn)
-    planned_lng.geometry = planned_lng.geometry.apply(wkt.loads)
-    planned_lng = gpd.GeoDataFrame(planned_lng, crs=4326)
-    lng = lng.append(planned_lng, ignore_index=True)
+    # planned_lng = pd.read_csv(planned_lng_fn)
+    # planned_lng.geometry = planned_lng.geometry.apply(wkt.loads)
+    # planned_lng = gpd.GeoDataFrame(planned_lng, crs=4326)
+    # lng = lng.append(planned_lng, ignore_index=True)
 
     # Entry points from outside the model scope
     entry = read_scigrid_gas(entry_fn)
@@ -64,7 +64,7 @@ if __name__ == "__main__":
     if 'snakemake' not in globals():
         from helper import mock_snakemake
         snakemake = mock_snakemake(
-            'build_gas_import_locations',
+            'build_gas_input_locations',
             simpl='',
             clusters='37',
         )
