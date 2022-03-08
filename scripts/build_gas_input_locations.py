@@ -85,7 +85,7 @@ if __name__ == "__main__":
 
     # add a buffer to eastern countries because some
     # entry points are still in Russian or Ukrainian territory.
-    buffer = 9000 # meters
+    buffer = 0 # meters
     eastern_countries = ['FI', 'EE', 'LT', 'LV', 'PL', 'SK', 'HU', 'RO']
     add_buffer_b = regions.index.str[:2].isin(eastern_countries)
     regions.loc[add_buffer_b] = regions[add_buffer_b].to_crs(3035).buffer(buffer).to_crs(4326)
@@ -103,6 +103,7 @@ if __name__ == "__main__":
     gas_input_nodes = gpd.sjoin(gas_input_locations, regions, how='left')
 
     gas_input_nodes.rename(columns={"index_right": "bus"}, inplace=True)
+    gas_input_nodes.drop(gas_input_nodes[gas_input_nodes.bus.isna()].index, inplace=True)
 
     gas_input_nodes.to_file(snakemake.output.gas_input_nodes, driver='GeoJSON')
 
