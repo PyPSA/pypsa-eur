@@ -21,7 +21,7 @@ scenario:
   opts: # only relevant for PyPSA-Eur
     - ''
   sector_opts: # this is where the main scenario settings are
-    - cb45ex0-168H-T-H-B-I-A-solar+p3-dist1
+    - 168H-T-H-B-I-A-solar+p3-dist1
   # to really understand the options here, look in scripts/prepare_sector_network.py
   # Co2Lx specifies the CO2 target in x% of the 1990 values; default will give default (5%);
   # Co2L0p25 will give 25% CO2 emissions; Co2Lm0p05 will give 5% negative emissions
@@ -239,7 +239,7 @@ sector:
     decentral: 3
     central: 180
   boilers: true
-  oil_boilers: true
+  oil_boilers: false
   chp: true
   micro_chp: false
   solar_thermal: true
