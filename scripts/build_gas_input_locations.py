@@ -36,6 +36,13 @@ def build_gas_input_locations(lng_fn, planned_lng_fn, entry_fn, prod_fn, countri
         ~entry.name.str.contains("Tegelen") |  # malformed datapoint
         (entry.from_country == "NO")  # entries from NO to GB
     ]
+    # exclude imports from Russia, Ukraine, Belarus
+    exclude_cts = ["RU", "UA", "BY"]
+    exclude_tso = ["Gazprom", 'Ukrtransgaz', 'Nordstream']
+    entry = entry.loc[~entry.from_country.isin(exclude_cts)
+                      & ~entry.to_country.isin(exclude_cts)
+                      & ~entry.to_TSO.isin(exclude_tso)
+                      & ~entry.from_TSO.isin(exclude_tso)]
 
     # production sites inside the model scope
     prod = read_scigrid_gas(prod_fn)
