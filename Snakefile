@@ -131,6 +131,7 @@ if config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]:
             entry="data/gas_network/scigrid-gas/data/IGGIELGN_BorderPoints.geojson",
             production="data/gas_network/scigrid-gas/data/IGGIELGN_Productions.geojson",
             planned_lng="data/gas_network/planned_LNGs.csv",
+            storage="data/gas_network/scigrid-gas/data/IGGIELGN_Storages.geojson",
             regions_onshore=pypsaeur("resources/regions_onshore_elec_s{simpl}_{clusters}.geojson"),
             regions_offshore=pypsaeur('resources/regions_offshore_elec_s{simpl}_{clusters}.geojson')
         output:

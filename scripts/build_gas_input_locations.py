@@ -19,7 +19,7 @@ def read_scigrid_gas(fn):
     return df
 
 
-def build_gas_input_locations(lng_fn, planned_lng_fn, entry_fn, prod_fn, countries):
+def build_gas_input_locations(lng_fn, planned_lng_fn, entry_fn, prod_fn, stor_fn, countries):
 
     # LNG terminals
     lng = read_scigrid_gas(lng_fn)
@@ -52,18 +52,29 @@ def build_gas_input_locations(lng_fn, planned_lng_fn, entry_fn, prod_fn, countri
         (prod.country_code != "DE")
     ]
 
+    # storage sites
+    store = read_scigrid_gas(stor_fn)
+    store = store.loc[
+        (store.geometry.y > 35) &
+        (store.geometry.x < 30) &
+        ~(store.country_code.isin(exclude_cts))]
+
     conversion_factor = 437.5 # MCM/day to MWh/h
     lng["p_nom"] = lng["max_cap_store2pipe_M_m3_per_d"] * conversion_factor
     entry["p_nom"] = entry["max_cap_from_to_M_m3_per_d"] * conversion_factor
     prod["p_nom"] = prod["max_supply_M_m3_per_d"] * conversion_factor
+    store["p_nom"] = store[ 'max_cap_store2pipe_M_m3_per_d'] * conversion_factor
+    store["e_nom"] = store["max_cushionGas_M_m3"] * conversion_factor * 24
+    # TODO store e nom take max_cushionGas_M_m3 and convert to MWh
 
     lng["type"] = "lng"
     entry["type"] = "pipeline"
     prod["type"] = "production"
+    store["type"] = "store"
 
     sel = ["geometry", "p_nom", "type"]
 
-    return pd.concat([prod[sel], entry[sel], lng[sel]], ignore_index=True)
+    return pd.concat([prod[sel], entry[sel], lng[sel], store[sel]], ignore_index=True)
 
 
 if __name__ == "__main__":
@@ -97,6 +108,7 @@ if __name__ == "__main__":
         snakemake.input.planned_lng,
         snakemake.input.entry,
         snakemake.input.production,
+        snakemake.input.storage,
         countries
     )
 
