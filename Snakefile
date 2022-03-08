@@ -437,6 +437,7 @@ rule prepare_sector_network:
         transport_name='resources/transport_data.csv',
         traffic_data_KFZ="data/emobility/KFZ__count",
         traffic_data_Pkw="data/emobility/Pkw__count",
+        gas_entry="data/gas_network/bruegel_report.csv",
         biomass_potentials='resources/biomass_potentials_s{simpl}_{clusters}.csv',
         heat_profile="data/heat_load_profile_BDEW.csv",
         costs=CDIR + "costs_{planning_horizons}.csv",

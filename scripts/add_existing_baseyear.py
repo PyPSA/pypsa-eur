@@ -487,6 +487,12 @@ if __name__ == "__main__":
         snakemake.config['costs']['lifetime']
     )
 
+    # current price https://www.focus.de/finanzen/news/345-euro-fuer-die-megawattstunde-preis-fuer-erdgas-in-europa-schnellt-um-60-prozent-in-die-hoehe_id_64284386.html
+    # - natural gas 345 Euro/MWh
+    # - oil 139,13 Euro/Barrel , 1 Barrel = 1.6282 MWh -> 85,45 Eur/MWh
+    costs.loc["oil", "fuel"] = 85.45
+    costs.loc["gas", "fuel"] = 345
+
     grouping_years=snakemake.config['existing_capacities']['grouping_years']
     add_power_capacities_installed_before_baseyear(n, grouping_years, costs, baseyear)
 

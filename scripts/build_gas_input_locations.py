@@ -74,7 +74,8 @@ def build_gas_input_locations(lng_fn, planned_lng_fn, entry_fn, prod_fn, stor_fn
 
     sel = ["geometry", "p_nom", "type"]
 
-    return pd.concat([prod[sel], entry[sel], lng[sel], store[sel]], ignore_index=True)
+    return pd.concat([prod[sel], entry[sel], lng[sel], store[sel + ["e_nom"]]],
+                      ignore_index=True)
 
 
 if __name__ == "__main__":
@@ -119,7 +120,7 @@ if __name__ == "__main__":
 
     gas_input_nodes.to_file(snakemake.output.gas_input_nodes, driver='GeoJSON')
 
-    gas_input_nodes_s = gas_input_nodes.groupby(["bus", "type"])["p_nom"].sum().unstack()
-    gas_input_nodes_s.columns.name = "p_nom"
+    gas_input_nodes_s = gas_input_nodes.groupby(["bus", "type"]).sum().unstack()
+    # gas_input_nodes_s.columns.name = "p_nom"
 
     gas_input_nodes_s.to_csv(snakemake.output.gas_input_nodes_simplified)

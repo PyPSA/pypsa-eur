@@ -1124,19 +1124,67 @@ def add_storage_and_grids(n, costs):
         # production, LNG terminal, nor entry-point beyond system scope
 
         fn = snakemake.input.gas_input_nodes_simplified
-        gas_input_nodes = pd.read_csv(fn, index_col=0)
+        gas_input_nodes = pd.read_csv(fn, index_col=0, header=[0,1])["p_nom"]
 
-        unique = gas_input_nodes.index.unique()
+        # TODO LNG capacity seems to be too large
+        # 320 GW compared to 40 TWh/week = 238 GW
+        # https://www.bruegel.org/2022/01/can-europe-survive-painlessly-without-russian-gas/
+
+        # p_nom = gas_input_nodes[['lng', 'pipeline', 'production']].sum(axis=1).rename(lambda x: x + " gas")
+        # table 2 from https://www.bruegel.org/2022/01/can-europe-survive-painlessly-without-russian-gas/
+        p_nom = pd.read_csv(snakemake.input.gas_entry, index_col=0, header=[2])['Annual Capacity']
+        rename_to_iso = {
+            "Norway": "NO",
+            "North Africa": "IT",
+            "Azerbaijan": "IT",
+            "Belgium": "BE",
+            "France": "FR",
+            "Italy": "IT",
+            "Spain": "ES",
+            "Greece": "GR",
+            "Portugal": "PT",
+            "Netherlands": "NL",
+            "Lithuania": "LT",
+            "Poland": "PL",
+            "Croatia*": "HR"}
+        p_nom = p_nom.reindex(rename_to_iso.keys()).rename(rename_to_iso)
+        p_nom = p_nom.groupby(level=0).sum()
+        p_nom = (pop_layout.ct.map(p_nom) * pop_layout.fraction).dropna()
+
+        unique = p_nom.index.unique()
         gas_i = n.generators.carrier == 'gas'
         internal_i = ~n.generators.bus.map(n.buses.location).isin(unique)
 
         remove_i = n.generators[gas_i & internal_i].index
         n.generators.drop(remove_i, inplace=True)
 
-        p_nom = gas_input_nodes.sum(axis=1).rename(lambda x: x + " gas")
+        gas_i = n.generators.loc[p_nom.index + " gas"].index
+        n.generators.loc[gas_i, "p_nom"] = p_nom.values
         n.generators.loc[gas_i, "p_nom_extendable"] = False
-        n.generators.loc[gas_i, "p_nom"] = p_nom
 
+
+        # gas storage
+        store_i = gas_input_nodes.store.dropna().index
+        remove_i = n.stores[(n.stores.carrier=="gas")
+                            & ~(n.stores.bus.isin(store_i + " gas"))].index
+        n.mremove("Store", remove_i)
+        n.madd("Bus",
+               store_i + " gas store",
+               carrier="gas store")
+
+        p_nom_store = gas_input_nodes.loc[store_i, "store"].rename(lambda x: x + " gas store charger")
+        n.madd("Link",
+            store_i + " gas store charger",
+            bus0=store_i + " gas store",
+            bus1=store_i + " gas",
+            p_nom=p_nom_store,
+            p_min_pu=-1, # new gas pipes are bidirectional
+            p_nom_extendable=False,
+            carrier="gas store charger",
+        )
+        e_nom =  pd.read_csv(fn, index_col=0, header=[0,1])[("e_nom", "store")].dropna()
+        n.stores.loc[e_nom.index + " gas Store", "e_nom"] = e_nom.values
+        n.stores.loc[e_nom.index + " gas Store", "e_nom_extendable"] = False
         # add candidates for new gas pipelines to achieve full connectivity
 
         G = nx.Graph()
@@ -2435,6 +2483,12 @@ if __name__ == "__main__":
                           snakemake.config['costs']['discountrate'],
                           Nyears,
                           snakemake.config['costs']['lifetime'])
+
+    # current price https://www.focus.de/finanzen/news/345-euro-fuer-die-megawattstunde-preis-fuer-erdgas-in-europa-schnellt-um-60-prozent-in-die-hoehe_id_64284386.html
+    # - natural gas 345 Euro/MWh
+    # - oil 139,13 Euro/Barrel , 1 Barrel = 1.6282 MWh -> 85,45 Eur/MWh
+    costs.loc["oil", "fuel"] = 85.45
+    costs.loc["gas", "fuel"] = 345
 
     patch_electricity_network(n)
 
