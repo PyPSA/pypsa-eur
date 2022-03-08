@@ -73,7 +73,7 @@ def define_spatial(nodes):
         spatial.co2.vents = ["co2 vent"]
 
     spatial.co2.df = pd.DataFrame(vars(spatial.co2), index=nodes)
-    
+
     # gas
 
     spatial.gas = SimpleNamespace()
@@ -1049,7 +1049,7 @@ def add_storage_and_grids(n, costs):
 
     # only use sites with at least 2 TWh potential
     h2_caverns = h2_caverns[h2_caverns > 2]
-    
+
     # convert TWh to MWh
     h2_caverns = h2_caverns * 1e6
 
@@ -1119,7 +1119,7 @@ def add_storage_and_grids(n, costs):
             carrier="gas pipeline",
             lifetime=costs.at['CH4 (g) pipeline', 'lifetime']
         )
-        
+
         # remove fossil generators where there is neither
         # production, LNG terminal, nor entry-point beyond system scope
 
@@ -2412,7 +2412,7 @@ if __name__ == "__main__":
             opts="",
             clusters="37",
             lv=1.0,
-            sector_opts='Co2L0-168H-T-H-B-I-solar3-dist1',
+            sector_opts='168H-T-H-B-I-A-solar3-dist1',
             planning_horizons="2020",
         )
 

@@ -28,7 +28,7 @@ def add_build_year_to_new_assets(n, baseyear):
     # Give assets with lifetimes and no build year the build year baseyear
     for c in n.iterate_components(["Link", "Generator", "Store"]):
 
-        assets = c.df.index[~c.df.lifetime.isna() & c.df.build_year==0]
+        assets = c.df.index[(c.df.lifetime!=np.inf) & (c.df.build_year==0)]
         c.df.loc[assets, "build_year"] = baseyear
 
         # add -baseyear to name
@@ -201,6 +201,12 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
             suffix = '-ac' if generator == 'offwind' else ''
             name_suffix = f' {generator}{suffix}-{baseyear}'
 
+            # to consider electricity grid connection costs or a split between
+            # solar utility and rooftop as well, rather take cost assumptions
+            # from existing network than from the cost database
+            capital_cost = n.generators.loc[n.generators.carrier==generator+suffix,
+                                            "capital_cost"].mean()
+
             if 'm' in snakemake.wildcards.clusters:
 
                 for ind in capacity.index:
@@ -220,7 +226,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                         carrier=generator,
                         p_nom=capacity[ind] / len(inv_ind), # split among regions in a country
                         marginal_cost=costs.at[generator,'VOM'],
-                        capital_cost=costs.at[generator,'fixed'],
+                        capital_cost=capital_cost,
                         efficiency=costs.at[generator, 'efficiency'],
                         p_max_pu=p_max_pu,
                         build_year=grouping_year,
@@ -238,7 +244,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                     carrier=generator,
                     p_nom=capacity,
                     marginal_cost=costs.at[generator, 'VOM'],
-                    capital_cost=costs.at[generator, 'fixed'],
+                    capital_cost=capital_cost,
                     efficiency=costs.at[generator, 'efficiency'],
                     p_max_pu=p_max_pu.rename(columns=n.generators.bus),
                     build_year=grouping_year,
@@ -247,10 +253,15 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
 
         else:
 
+            bus0 = n.buses[(n.buses.carrier==carrier[generator])].index
+            if any(n.buses.loc[bus0,"location"]!="EU"):
+                bus0 = n.buses[n.buses.location.isin(capacity.index) &
+                               (n.buses.carrier==carrier[generator])].index
+
             n.madd("Link",
                 capacity.index,
                 suffix= " " + generator +"-" + str(grouping_year),
-                bus0="EU " + carrier[generator],
+                bus0=bus0,
                 bus1=capacity.index,
                 bus2="co2 atmosphere",
                 carrier=generator,
@@ -399,10 +410,15 @@ def add_heating_capacities_installed_before_baseyear(n, baseyear, grouping_years
                 lifetime=costs.at[costs_name, 'lifetime']
             )
 
+            bus0 = n.buses[(n.buses.carrier=="gas")].index
+            if any(n.buses.loc[bus0,"location"]!="EU"):
+                bus0 = n.buses[n.buses.location.isin(nodal_df[f'{heat_type} gas boiler'][nodes[name]].index) &
+                                (n.buses.carrier=="gas")].index
+
             n.madd("Link",
                 nodes[name],
                 suffix= f" {name} gas boiler-{grouping_year}",
-                bus0="EU gas",
+                bus0=bus0,
                 bus1=nodes[name] + " " + name + " heat",
                 bus2="co2 atmosphere",
                 carrier=name + " gas boiler",
@@ -443,7 +459,7 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             'add_existing_baseyear',
             simpl='',
-            clusters="45",
+            clusters="37",
             lv=1.0,
             opts='',
             sector_opts='168H-T-H-B-I-A-solar+p3-dist1',
