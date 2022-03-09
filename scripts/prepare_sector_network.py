@@ -1132,11 +1132,11 @@ def add_storage_and_grids(n, costs):
 
         # p_nom = gas_input_nodes[['lng', 'pipeline', 'production']].sum(axis=1).rename(lambda x: x + " gas")
         # table 2 from https://www.bruegel.org/2022/01/can-europe-survive-painlessly-without-russian-gas/
-        p_nom = pd.read_csv(snakemake.input.gas_entry, index_col=0, header=[2])['Annual Capacity']
+        entry_points = pd.read_csv(snakemake.input.gas_entry, index_col=0, header=[2])
         rename_to_iso = {
             "Norway": "NO",
-            "North Africa": "IT",
-            "Azerbaijan": "IT",
+            "North Africa": "IT",   # also ES
+            "Azerbaijan": "BG",   # pipe is connected to BG,IT, GR
             "Belgium": "BE",
             "France": "FR",
             "Italy": "IT",
@@ -1147,9 +1147,17 @@ def add_storage_and_grids(n, costs):
             "Lithuania": "LT",
             "Poland": "PL",
             "Croatia*": "HR"}
-        p_nom = p_nom.reindex(rename_to_iso.keys()).rename(rename_to_iso)
-        p_nom = p_nom.groupby(level=0).sum()
-        p_nom = (pop_layout.ct.map(p_nom) * pop_layout.fraction).dropna()
+        entry_points = entry_points.reindex(rename_to_iso.keys()).rename(rename_to_iso)
+        entry_points["Utilisation Rate"] = (pd.to_numeric(entry_points["Utilisation Rate"].str.replace("%", "")
+                                                   ,errors='coerce')/100).fillna(1.)
+        # in the report they write it would be unrealistic to assume full utilisation
+        entry_points["p_nom"] = entry_points["Annual Capacity"] * entry_points["Utilisation Rate"]
+        entry_points = entry_points.groupby(level=0).sum()
+        # convert TWh/year -> MW
+        conversion_factor = 1e6 / 8760
+        # TODO how to distribute entry points with multiple nodes per country
+        p_nom = (pop_layout.ct.map(entry_points.p_nom) * pop_layout.fraction).dropna() * conversion_factor
+        p_nom_max = (pop_layout.ct.map(entry_points["Annual Capacity"]) * pop_layout.fraction).dropna() * conversion_factor
 
         unique = p_nom.index.unique()
         gas_i = n.generators.carrier == 'gas'
@@ -1160,7 +1168,10 @@ def add_storage_and_grids(n, costs):
 
         gas_i = n.generators.loc[p_nom.index + " gas"].index
         n.generators.loc[gas_i, "p_nom"] = p_nom.values
-        n.generators.loc[gas_i, "p_nom_extendable"] = False
+        n.generators.loc[gas_i, "p_nom_max"] = p_nom_max.values
+        n.generators.loc[gas_i, "p_nom_min"] = p_nom.values
+        # just to put some price on additional capacity
+        n.generators.loc[gas_i, "capital_cost"] = 10.
 
 
         # gas storage
@@ -2487,8 +2498,8 @@ if __name__ == "__main__":
     # current price https://www.focus.de/finanzen/news/345-euro-fuer-die-megawattstunde-preis-fuer-erdgas-in-europa-schnellt-um-60-prozent-in-die-hoehe_id_64284386.html
     # - natural gas 345 Euro/MWh
     # - oil 139,13 Euro/Barrel , 1 Barrel = 1.6282 MWh -> 85,45 Eur/MWh
-    costs.loc["oil", "fuel"] = 85.45
-    costs.loc["gas", "fuel"] = 345
+    # costs.loc["oil", "fuel"] = 85.45
+    # costs.loc["gas", "fuel"] = 345
 
     patch_electricity_network(n)
 
