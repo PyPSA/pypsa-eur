@@ -8,10 +8,10 @@ from shutil import copyfile, move
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 HTTP = HTTPRemoteProvider()
 
-if not exists("../config.yaml"):
+if not exists("config.yaml"):
     copyfile("config.default.yaml", "config.yaml")
 
-configfile: "../config.yaml"
+configfile: "config.yaml"
 
 COSTS="data/costs.csv"
 ATLITE_NPROCESSES = config['atlite'].get('nprocesses', 4)
@@ -203,12 +203,17 @@ rule build_renewable_profiles:
     resources: mem_mb=ATLITE_NPROCESSES * 5000
     script: "scripts/build_renewable_profiles.py"
 
+def determine_hydro_input(w):
+    if int(config['snapshots']['end'][0:4])<2015:
+        return 'data/bundle/EIA_hydro_generation_2000_2014.csv'
+    if int(config['snapshots']['end'][0:4])>=2015:
+        return '../data/EIA_hydro_generation_2000_2020.csv'
 
 if 'hydro' in config['renewable'].keys():
     rule build_hydro_profile:
         input:
             country_shapes='resources/country_shapes.geojson',
-            eia_hydro_generation='data/bundle/EIA_hydro_generation_2000_2014.csv',
+            eia_hydro_generation=determine_hydro_input,
             cutout="cutouts/" + config["renewable"]['hydro']['cutout'] + ".nc"
         output: 'resources/profile_hydro.nc'
         log: "logs/build_hydro_profile.log"
