@@ -189,28 +189,20 @@ def get_feature_for_hac(n, buses_i=None, feature=None):
     if feature.split('-')[1] == 'cap':
         feature_data = pd.DataFrame(index=buses_i, columns=carriers)
         for carrier in carriers:
-            try:
-                # without simpl wildcard (bus names are "X X"):
-                feature_data[carrier] = (n.generators_t.p_max_pu.filter(like=carrier).mean()
-                                         .rename(index=lambda x: x.split(' ')[0]))
-            except:
-                # with simpl wildcard (bus names are "X X X"):
-                feature_data[carrier] = (n.generators_t.p_max_pu.filter(like=carrier).mean()
-                                         .rename(index=lambda x: x.split(' ')[0] + ' ' + x.split(' ')[1]))
+            gen_i = n.generators.query("carrier == @carrier").index
+            attach = n.generators_t.p_max_pu[gen_i].mean().rename(index = n.generators.loc[gen_i].bus)
+            feature_data[carrier] = attach
 
     if feature.split('-')[1] == 'time':
         feature_data = pd.DataFrame(columns=buses_i)
         for carrier in carriers:
-            try:
-                # without simpl wildcard (bus names are "X X"):
-                feature_data = feature_data.append(n.generators_t.p_max_pu.filter(like=carrier)
-                                                   .rename(columns=lambda x: x.split(' ')[0]))[buses_i]
-            except:
-                # with simpl wildcard (bus names are "X X X"):
-                feature_data = feature_data.append(n.generators_t.p_max_pu.filter(like=carrier)
-                                                   .rename(columns=lambda x: x.split(' ')[0] + ' ' + x.split(' ')[1]))[buses_i]
+            gen_i = n.generators.query("carrier == @carrier").index
+            attach = n.generators_t.p_max_pu[gen_i].rename(columns = n.generators.loc[gen_i].bus)
+            feature_data = pd.concat([feature_data, attach], axis=0)[buses_i]
+
         feature_data = feature_data.T
-        feature_data.columns = feature_data.columns.astype(str) # timestamp raises error in sklearn>=v1.2
+        # timestamp raises error in sklearn >= v1.2:
+        feature_data.columns = feature_data.columns.astype(str)
 
     feature_data = feature_data.fillna(0)
 
@@ -283,16 +275,24 @@ def busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights=None, algori
             m.links = m.links.query("bus0 in @m.buses.index and bus1 in @m.buses.index")
 
             _, labels = csgraph.connected_components(m.adjacency_matrix(), directed=False)
+
             component = pd.Series(labels, index=m.buses.index)
             component_sizes = component.value_counts()
 
             if len(component_sizes)>1:
-                disconnected_bus = component[component==component_sizes[component_sizes==component_sizes.min()].index[0]].index
-                neighbor_bus = n.lines.query("bus0 in @disconnected_bus or bus1 in @disconnected_bus").iloc[0][['bus0','bus1']]
+                disconnected_bus = component[component==component_sizes.index[-1]].index[0]
+
+                neighbor_bus = (
+                    n.lines.query("bus0 == @disconnected_bus or bus1 == @disconnected_bus")
+                    .iloc[0][['bus0', 'bus1']]
+                )
                 new_country = list(set(n.buses.loc[neighbor_bus].country)-set([country]))[0]
 
-                logger.info(f"overwriting country `{country}` of bus `{disconnected_bus}` to new country `{new_country}`, "
-                            "because it is disconnected from its inital inter-country transmission grid.")
+                logger.info(
+                    f"overwriting country `{country}` of bus `{disconnected_bus}` "
+                    f"to new country `{new_country}`, because it is disconnected "
+                    "from its inital inter-country transmission grid."
+                )
                 n.buses.at[disconnected_bus, "country"] = new_country
         return n
 
