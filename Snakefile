@@ -208,7 +208,7 @@ if 'hydro' in config['renewable'].keys():
     rule build_hydro_profile:
         input:
             country_shapes='resources/country_shapes.geojson',
-            eia_hydro_generation='data/bundle/EIA_hydro_generation_2000_2014.csv',
+            eia_hydro_generation='data/EIA_hydro_generation_2000_2014.csv',
             cutout="cutouts/" + config["renewable"]['hydro']['cutout'] + ".nc"
         output: 'resources/profile_hydro.nc'
         log: "logs/build_hydro_profile.log"
@@ -226,7 +226,7 @@ rule add_electricity:
         geth_hydro_capacities='data/geth2015_hydro_capacities.csv',
         load='resources/load.csv',
         nuts3_shapes='resources/nuts3_shapes.geojson',
-        ua_md_gdp='data/bundle/GDP_PPP_30arcsec_v3_mapped.csv',
+        ua_md_gdp='data/GDP_PPP_30arcsec_v3_mapped.csv',
         **{f"profile_{tech}": f"resources/profile_{tech}.nc"
            for tech in config['renewable']}
     output: "networks/elec.nc"
