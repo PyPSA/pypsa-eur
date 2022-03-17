@@ -189,9 +189,9 @@ def add_chp_constraints(n):
 def add_pipe_retrofit_constraint(n):
     """Add constraint for retrofitting existing CH4 pipelines to H2 pipelines."""
 
-    gas_pipes_i = n.links[n.links.carrier=="gas pipeline"].query("p_nom_extendable").index
-    h2_retrofitted_i = n.links[n.links.carrier=='H2 pipeline retrofitted'].query("p_nom_extendable").index
-    h2_retrofitted_fixed_i = n.links[n.links.carrier=='H2 pipeline retrofitted'].index.difference(h2_retrofitted_i)
+    gas_pipes_i = n.links.query("carrier == 'gas pipeline' and p_nom_extendable").index
+    h2_retrofitted_i = n.links.query("carrier == 'H2 pipeline retrofitted' and p_nom_extendable").index
+    h2_retrofitted_fixed_i = n.links.query("carrier == 'H2 pipeline retrofitted' and not p_nom_extendable").index
 
     if h2_retrofitted_i.empty or gas_pipes_i.empty: return
 
