@@ -76,8 +76,7 @@ rule download_copernicus_land_cover:
         ),
     output:
         "resources/Copernicus_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
-    shell:
-        "mv {input} {output}"
+    run: move(input[0], output[0])
 
 rule determine_availability_matrix_MD_UA:
     input:
