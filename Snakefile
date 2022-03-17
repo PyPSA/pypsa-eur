@@ -66,6 +66,42 @@ if config['enable'].get('retrieve_databundle', True):
         log: "logs/retrieve_databundle.log"
         script: 'scripts/retrieve_databundle.py'
 
+# Downloading Copernicus Global Land Cover for land cover and land use:
+# Website: https://land.copernicus.eu/global/products/lc
+rule download_copernicus_land_cover:
+    input:
+        HTTP.remote(
+            "zenodo.org/record/3939050/files/PROBAV_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
+            static=True,
+        ),
+    output:
+        "resources/Copernicus_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
+    run: move(input[0], output[0])
+
+rule determine_availability_matrix_MD_UA:
+    input:
+        copernicus="resources/Copernicus_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
+        gebco=lambda w: ("data/bundle/GEBCO_2014_2D.nc"
+                         if "max_depth" in config["renewable"][w.technology].keys()
+                         else []),
+        country_shapes='resources/country_shapes.geojson',
+        offshore_shapes='resources/offshore_shapes.geojson',
+        regions=lambda w: ("resources/regions_onshore.geojson"
+                                   if w.technology in ('onwind', 'solar')
+                                   else "resources/regions_offshore.geojson"),
+        cutout=lambda w: "cutouts/" + config["renewable"][w.technology]['cutout'] + ".nc"
+    output:
+        availability_matrix="resources/availability_matrix_MD-UA_{technology}.nc",
+    log:
+        "logs/determine_availability_matrix_MD_UA_{technology}.log",
+    benchmark:
+        "benchmarks/determine_availability_matrix_MD_UA_{technology}.log",
+    threads:
+        ATLITE_NPROCESSES
+    resources:
+        mem_mb=ATLITE_NPROCESSES * 5000
+    notebook:
+        "scripts/determine_availability_matrix_MD_UA.py.ipynb"
 
 rule retrieve_load_data:
     input: HTTP.remote("data.open-power-system-data.org/time_series/2019-06-05/time_series_60min_singleindex.csv", keep_local=True, static=True)
@@ -182,6 +218,14 @@ if config['enable'].get('retrieve_natura_raster', True):
         run: move(input[0], output[0])
 
 
+# Optional input when having Ukraine (UA) or Moldova (MD) in the countries list
+if {"UA", "MD"}.intersection(set(config["countries"])):
+    opt = {
+        "availability_matrix_MD_UA":"resources/availability_matrix_MD-UA_{technology}.nc"
+    }
+else:
+    opt = {}
+
 rule build_renewable_profiles:
     input:
         base_network="networks/base.nc",
@@ -195,7 +239,8 @@ rule build_renewable_profiles:
         regions=lambda w: ("resources/regions_onshore.geojson"
                                    if w.technology in ('onwind', 'solar')
                                    else "resources/regions_offshore.geojson"),
-        cutout=lambda w: "cutouts/" + config["renewable"][w.technology]['cutout'] + ".nc"
+        cutout=lambda w: "cutouts/" + config["renewable"][w.technology]['cutout'] + ".nc",
+        **opt,
     output: profile="resources/profile_{technology}.nc",
     log: "logs/build_renewable_profile_{technology}.log"
     benchmark: "benchmarks/build_renewable_profiles_{technology}"

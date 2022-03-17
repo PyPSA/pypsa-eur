@@ -260,6 +260,12 @@ if __name__ == '__main__':
     else:
         availability = cutout.availabilitymatrix(regions, excluder, **kwargs)
 
+    # For Moldova and Ukraine: Overwrite parts not covered by Corine with
+    # externally determined available areas
+    if "availability_matrix_MD_UA" in snakemake.input:
+        availability_MDUA = xr.open_dataarray(snakemake.input["availability_matrix_MD_UA"])
+        availability.loc[availability_MDUA.coords] = availability_MDUA
+        
     area = cutout.grid.to_crs(3035).area / 1e6
     area = xr.DataArray(area.values.reshape(cutout.shape),
                         [cutout.coords['y'], cutout.coords['x']])
