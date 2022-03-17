@@ -204,7 +204,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
             # to consider electricity grid connection costs or a split between
             # solar utility and rooftop as well, rather take cost assumptions
             # from existing network than from the cost database
-            capital_cost = n.generators[n.generators.carrier==generator+suffix].capital_cost.mean()
+            capital_cost = n.generators.loc[n.generators.carrier==generator+suffix, "capital_cost"].mean()
 
             if 'm' in snakemake.wildcards.clusters:
 
