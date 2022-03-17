@@ -8,12 +8,15 @@ Release Notes
 ##########################################
 
 Synchronisation Release - Ukraine and Moldova (17th March 2022)
-===================================================================
+===============================================================
 
 On March 16, 2022, the transmission networks of Ukraine and Moldova have
 successfully been `synchronised with the continental European grid <https://www.entsoe.eu/news/2022/03/16/continental-europe-successful-synchronisation-with-ukraine-and-moldova-power-systems/>`_. We have taken
 this as an opportunity to add the power systems of Ukraine and Moldova to
 PyPSA-Eur. This includes:
+
+.. image:: img/synchronisation.png
+  :width: 500
 
 * the transmission network topology from the `ENTSO-E interactive map <https://www.entsoe.eu/data/map/>`_.
 
