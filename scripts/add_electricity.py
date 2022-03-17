@@ -182,7 +182,7 @@ def load_costs(tech_costs, config, elec_config, Nyears=1.):
 
 def load_powerplants(ppl_fn):
     carrier_dict = {'ocgt': 'OCGT', 'ccgt': 'CCGT', 'bioenergy': 'biomass',
-                    'ccgt, thermal': 'CCGT', 'hard coal': 'coal'}
+                    'ccgt, thermal': 'CCGT', 'hard coal': 'coal', "natural gas": "OCGT"}
     return (pd.read_csv(ppl_fn, index_col=0, dtype={'bus': 'str'})
             .powerplant.to_pypsa_names()
             .rename(columns=str.lower).drop(columns=['efficiency'])
