@@ -114,6 +114,8 @@ def define_spatial(nodes, options):
     spatial.lignite.nodes = ["EU lignite"]
     spatial.lignite.locations = ["EU"]
 
+    return spatial
+
 
 from types import SimpleNamespace
 spatial = SimpleNamespace()
@@ -371,7 +373,8 @@ def add_carrier_buses(n, carrier, nodes=None):
     """
 
     if nodes is None:
-        nodes = ["EU " + carrier]
+        nodes = vars(spatial)[carrier].nodes
+    location = vars(spatial)[carrier].locations
 
     # skip if carrier already exists
     if carrier in n.carriers.index:
@@ -384,7 +387,7 @@ def add_carrier_buses(n, carrier, nodes=None):
 
     n.madd("Bus",
         nodes,
-        location=nodes.str.replace(" " + carrier, ""),
+        location=location,
         carrier=carrier
     )
 
@@ -825,10 +828,8 @@ def add_generation(n, costs):
 
     for generator, carrier in conventionals.items():
 
-        if carrier == 'gas':
-            carrier_nodes = spatial.gas.nodes
-        else:
-            carrier_nodes = ["EU " + carrier]
+
+        carrier_nodes = vars(spatial)[carrier].nodes
 
         add_carrier_buses(n, carrier, carrier_nodes)
 
@@ -1088,7 +1089,8 @@ def add_storage_and_grids(n, costs):
             e_nom_max=h2_caverns.values,
             e_cyclic=True,
             carrier="H2 Store",
-            capital_cost=h2_capital_cost
+            capital_cost=h2_capital_cost,
+            lifetime=costs.at["hydrogen storage underground", "lifetime"]
         )
 
     # hydrogen stored overground (where not already underground)
@@ -1434,10 +1436,10 @@ def add_land_transport(n, costs):
 
     if ice_share > 0:
 
-        if "EU oil" not in n.buses.index:
-            n.add("Bus",
-                "EU oil",
-                location="EU",
+        if "oil" not in n.buses.carrier.unique():
+            n.madd("Bus",
+                vars(spatial)["oil"].nodes,
+                location=vars(spatial)["oil"].locations,
                 carrier="oil"
             )
 
@@ -1446,7 +1448,7 @@ def add_land_transport(n, costs):
         n.madd("Load",
             nodes,
             suffix=" land transport oil",
-            bus="EU oil",
+            bus=vars(spatial)["oil"].nodes,
             carrier="land transport oil",
             p_set=ice_share / ice_efficiency * transport[nodes]
         )
@@ -2113,7 +2115,7 @@ def add_industry(n, costs):
         n.madd("Load",
             nodes,
             suffix=" shipping oil",
-            bus="EU oil",
+            bus=vars(spatial)["oil"].nodes,
             carrier="shipping oil",
             p_set=p_set
         )
@@ -2127,30 +2129,29 @@ def add_industry(n, costs):
             p_set=-co2
         )
 
-    if "EU oil" not in n.buses.index:
-
-        n.add("Bus",
-            "EU oil",
-            location="EU",
+    if "oil" not in n.buses.carrier.unique():
+        n.madd("Bus",
+            vars(spatial)["oil"].nodes,
+            location=vars(spatial)["oil"].locations,
             carrier="oil"
         )
 
-    if "EU oil Store" not in n.stores.index:
+    if "oil" not in n.stores.carrier.unique():
 
         #could correct to e.g. 0.001 EUR/kWh * annuity and O&M
-        n.add("Store",
-            "EU oil Store",
-            bus="EU oil",
+        n.madd("Store",
+            [oil_bus + " Store" for oil_bus in vars(spatial)["oil"].nodes],
+            bus=vars(spatial)["oil"].nodes,
             e_nom_extendable=True,
             e_cyclic=True,
             carrier="oil",
         )
 
-    if "EU oil" not in n.generators.index:
+    if "oil" not in n.generators.carrier.unique():
 
-        n.add("Generator",
-            "EU oil",
-            bus="EU oil",
+        n.madd("Generator",
+            vars(spatial)["oil"].nodes,
+            bus=vars(spatial)["oil"].nodes,
             p_nom_extendable=True,
             carrier="oil",
             marginal_cost=costs.at["oil", 'fuel']
@@ -2165,7 +2166,7 @@ def add_industry(n, costs):
             n.madd("Link",
                 nodes_heat[name] + f" {name} oil boiler",
                 p_nom_extendable=True,
-                bus0="EU oil",
+                bus0=vars(spatial)["oil"].nodes,
                 bus1=nodes_heat[name] + f" {name}  heat",
                 bus2="co2 atmosphere",
                 carrier=f"{name} oil boiler",
@@ -2178,7 +2179,7 @@ def add_industry(n, costs):
     n.madd("Link",
         nodes + " Fischer-Tropsch",
         bus0=nodes + " H2",
-        bus1="EU oil",
+        bus1=vars(spatial)["oil"].nodes,
         bus2=spatial.co2.nodes,
         carrier="Fischer-Tropsch",
         efficiency=costs.at["Fischer-Tropsch", 'efficiency'],
@@ -2188,9 +2189,9 @@ def add_industry(n, costs):
         lifetime=costs.at['Fischer-Tropsch', 'lifetime']
     )
 
-    n.add("Load",
-        "naphtha for industry",
-        bus="EU oil",
+    n.madd("Load",
+        ["naphtha for industry"],
+        bus=vars(spatial)["oil"].nodes,
         carrier="naphtha for industry",
         p_set=industrial_demand.loc[nodes, "naphtha"].sum() / 8760
     )
@@ -2198,9 +2199,9 @@ def add_industry(n, costs):
     all_aviation = ["total international aviation", "total domestic aviation"]
     p_set = nodal_energy_totals.loc[nodes, all_aviation].sum(axis=1).sum() * 1e6 / 8760
 
-    n.add("Load",
-        "kerosene for aviation",
-        bus="EU oil",
+    n.madd("Load",
+        ["kerosene for aviation"],
+        bus=vars(spatial)["oil"].nodes,
         carrier="kerosene for aviation",
         p_set=p_set
     )
@@ -2353,7 +2354,7 @@ def add_agriculture(n, costs):
 
         n.add("Load",
             "agriculture machinery oil",
-            bus="EU oil",
+            bus=vars(spatial)["oil"].nodes,
             carrier="agriculture machinery oil",
             p_set=ice_share * machinery_nodal_energy.sum() * 1e6 / 8760
         )
@@ -2457,7 +2458,7 @@ if __name__ == "__main__":
 
     patch_electricity_network(n)
 
-    define_spatial(pop_layout.index, options)
+    spatial = define_spatial(pop_layout.index, options)
 
     if snakemake.config["foresight"] == 'myopic':
 

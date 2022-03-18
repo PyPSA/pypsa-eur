@@ -253,10 +253,9 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                 )
 
         else:
-            bus0 = n.buses[(n.buses.carrier==carrier[generator])].index
-            if any(n.buses.loc[bus0,"location"]!="EU"):
-                bus0 = n.buses[n.buses.location.isin(capacity.index) &
-                               (n.buses.carrier==carrier[generator])].index
+            bus0 = vars(spatial)[carrier[generator]].nodes
+            if "EU" not in vars(spatial)[carrier[generator]].locations:
+                bus0 = bus0.intersection(capacity.index + " gas")
 
             n.madd("Link",
                 capacity.index,
@@ -410,10 +409,7 @@ def add_heating_capacities_installed_before_baseyear(n, baseyear, grouping_years
                 lifetime=costs.at[costs_name, 'lifetime']
             )
 
-            bus0 = n.buses[(n.buses.carrier=="gas")].index
-            if any(n.buses.loc[bus0,"location"]!="EU"):
-                bus0 = n.buses[n.buses.location.isin(nodal_df[f'{heat_type} gas boiler'][nodes[name]].index) &
-                                (n.buses.carrier=="gas")].index
+            bus0 = vars(spatial)["gas"].nodes
 
             n.madd("Link",
                 nodes[name],
@@ -452,17 +448,17 @@ def add_heating_capacities_installed_before_baseyear(n, baseyear, grouping_years
             threshold = snakemake.config['existing_capacities']['threshold_capacity']
             n.mremove("Link", [index for index in n.links.index.to_list() if str(grouping_year) in index and n.links.p_nom[index] < threshold])
 
-
+#%%
 if __name__ == "__main__":
     if 'snakemake' not in globals():
         from helper import mock_snakemake
         snakemake = mock_snakemake(
             'add_existing_baseyear',
             simpl='',
-            clusters="45",
+            clusters="37",
             lv=1.0,
             opts='',
-            sector_opts='168H-T-H-B-I-A-solar+p3-dist1',
+            sector_opts='Co2L0-168H-T-H-B-I-solar+p3-dist1',
             planning_horizons=2020,
         )
 
@@ -476,7 +472,7 @@ if __name__ == "__main__":
     overrides = override_component_attrs(snakemake.input.overrides)
     n = pypsa.Network(snakemake.input.network, override_component_attrs=overrides)
     # define spatial resolution of carriers
-    define_spatial(n.buses[n.buses.carrier=="AC"].index, options)
+    spatial = define_spatial(n.buses[n.buses.carrier=="AC"].index, options)
     add_build_year_to_new_assets(n, baseyear)
 
     Nyears = n.snapshot_weightings.generators.sum() / 8760.
