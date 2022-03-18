@@ -216,14 +216,22 @@ def add_minRenew_constraints(n, config, o):
     As renewable carriers the renewables from the configs listed under renewable are taken.
     To use this constraint simply add the wildcard RE{share} in the opts wildcard like RE0.8 for a 80% renewable share
     '''
-    renewables=list(config["renewable"].keys())
-    share=float(o[2:])
-    gen_factor=n.generators.apply(lambda x : (1-share) if x.carrier in renewables else -share, axis=1)
-    snapshots=n.snapshot_weightings.generators
-    coef=pd.DataFrame(np.outer(snapshots,gen_factor), index= snapshots.index, columns=gen_factor.index)
-    lhs = linexpr((coef, get_var(n, "Generator", "p"))).sum().sum()
-    rhs = 0
-    define_constraints(n, lhs, '>=', rhs, 'Carrier', 'minrenewables')
+    import operator 
+    renewables=list(config["electricity"]["renewable_aim"].keys())
+    if len(o)>2:
+        share=float(o[2:])
+        gen_factor=n.generators.apply(lambda x : (1-share) if any(tech in x.carrier for tech in renewables) else (-share), axis=1)
+        snapshots=n.snapshot_weightings.generators
+        coef=pd.DataFrame(np.outer(snapshots,gen_factor), index= snapshots.index, columns=gen_factor.index)
+        lhs = linexpr((coef, get_var(n, "Generator", "p"))).sum().sum()
+        rhs = 0
+        define_constraints(n, lhs, '>=', rhs, 'Carrier', 'min_generation_renewables')
+    else:
+        for tech in renewables:
+            filter = n.generators.query("carrier.str.match(@tech)").index
+            lhs= linexpr((1, get_var(n, "Generator", "p_nom").loc[filter])).sum()
+            rhs= config["electricity"]["renewable_aim"][tech] * 1000 #in GW
+            define_constraints(n, lhs, '>=', rhs, 'Carrier', f'min_capacity_{tech}')
 
 
 def add_battery_constraints(n):
@@ -287,7 +295,7 @@ if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
         snakemake = mock_snakemake('solve_network', network='elec', simpl='',
-                                  clusters='40', ll='v1.0', opts='Co2L-4H-RE0.8')
+                                  clusters='40', ll='v1.0', opts='Co2L-4H-RE')
     configure_logging(snakemake)
 
     tmpdir = snakemake.config['solving'].get('tmpdir')
