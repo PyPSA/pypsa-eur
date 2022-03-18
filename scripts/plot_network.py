@@ -223,6 +223,26 @@ def plot_map(network, components=["links", "stores", "storage_units", "generator
         bbox_inches="tight"
     )
 
+def group_pipes(df, drop_direction=False):
+    """Group pipes which connect same buses and return overall capacity.
+    """
+    if drop_direction:
+        positive_order = df.bus0 < df.bus1
+        df_p = df[positive_order]
+        swap_buses = {"bus0": "bus1", "bus1": "bus0"}
+        df_n = df[~positive_order].rename(columns=swap_buses)
+        df = pd.concat([df_p, df_n])
+
+    # there are pipes for each investment period rename to AC buses name for plotting
+    df.index = df.apply(
+        lambda x: f"H2 pipeline {x.bus0.replace(' H2', '')} -> {x.bus1.replace(' H2', '')}",
+        axis=1
+    )
+    # group pipe lines connecting the same buses and rename them for plotting
+    pipe_capacity = df["p_nom_opt"].groupby(level=0).sum()
+
+    return pipe_capacity
+
 
 def plot_h2_map(network):
 
@@ -246,31 +266,15 @@ def plot_h2_map(network):
 
     # make a fake MultiIndex so that area is correct for legend
     bus_sizes.rename(index=lambda x: x.replace(" H2", ""), level=0, inplace=True)
-
+    # frop all links which are not H2 pipelines
     n.links.drop(n.links.index[~n.links.carrier.str.contains("H2 pipeline")], inplace=True)
 
     h2_new = n.links.loc[n.links.carrier=="H2 pipeline"]
-
     h2_retro = n.links.loc[n.links.carrier=='H2 pipeline retrofitted']
+    # sum capacitiy for pipelines from different investment periods
+    h2_new = group_pipes(h2_new)
+    h2_retro = group_pipes(h2_retro, drop_direction=True).reindex(h2_new.index).fillna(0)
 
-    positive_order = h2_retro.bus0 < h2_retro.bus1
-    h2_retro_p = h2_retro[positive_order]
-    swap_buses = {"bus0": "bus1", "bus1": "bus0"}
-    h2_retro_n = h2_retro[~positive_order].rename(columns=swap_buses)
-    h2_retro = pd.concat([h2_retro_p, h2_retro_n])
-
-    h2_retro.index = h2_retro.apply(
-        lambda x: f"H2 pipeline {x.bus0.replace(' H2', '')} -> {x.bus1.replace(' H2', '')}",
-        axis=1
-    )
-
-    h2_new.index = h2_new.apply(
-        lambda x: f"H2 pipeline {x.bus0.replace(' H2', '')} -> {x.bus1.replace(' H2', '')}"
-    ,axis=1)
-
-    h2_new = h2_new["p_nom_opt"].groupby(level=0).sum()
-    h2_retro = h2_retro["p_nom_opt"].groupby(level=0).sum()
-    h2_retro = h2_retro.groupby(level=0).sum().reindex(h2_new.index).fillna(0)
 
     n.links.rename(index=lambda x: x.split("-2")[0], inplace=True)
     n.links = n.links.groupby(level=0).first()

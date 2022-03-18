@@ -185,6 +185,8 @@ def add_chp_constraints(n):
 
         define_constraints(n, lhs, "<=", 0, 'chplink', 'backpressure')
 
+def basename(x):
+     return x.split("-2")[0]
 
 def add_pipe_retrofit_constraint(n):
     """Add constraint for retrofitting existing CH4 pipelines to H2 pipelines."""
@@ -201,10 +203,9 @@ def add_pipe_retrofit_constraint(n):
     fr = "H2 pipeline retrofitted"
     to = "gas pipeline"
 
-    pipe_capacity = n.links.loc[gas_pipes_i, 'p_nom'].rename(index=lambda x: x.split("-2")[0])
+    pipe_capacity = n.links.loc[gas_pipes_i, 'p_nom'].rename(basename)
     already_retrofitted = (n.links.loc[h2_retrofitted_fixed_i, 'p_nom']
-                           .rename(index= lambda x: x.split("-2")[0]
-                                   .replace(fr, to)).groupby(level=0).sum())
+                           .rename(lambda x: basename(x).replace(fr, to)).groupby(level=0).sum())
     remaining_capacity = pipe_capacity - CH4_per_H2 * already_retrofitted.reindex(index=pipe_capacity.index).fillna(0)
 
     lhs = linexpr(
@@ -212,7 +213,7 @@ def add_pipe_retrofit_constraint(n):
         (1, link_p_nom.loc[gas_pipes_i])
     )
 
-    lhs.rename(index=lambda x: x.split("-2")[0], inplace=True)
+    lhs.rename(basename, inplace=True)
     define_constraints(n, lhs, "=", remaining_capacity, 'Link', 'pipe_retrofit')
 
 
@@ -284,7 +285,7 @@ if __name__ == "__main__":
             'solve_network_myopic',
             simpl='',
             opts="",
-            clusters="45",
+            clusters="37",
             lv=1.0,
             sector_opts='168H-T-H-B-I-A-solar+p3-dist1',
             planning_horizons="2030",
