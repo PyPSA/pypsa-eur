@@ -209,7 +209,7 @@ rule build_hydro_profile:
     input:
         country_shapes='resources/country_shapes.geojson',
         eia_hydro_generation='data/bundle/EIA_hydro_generation_2000_2014.csv',
-        cutout="cutouts/" + config["renewable"]['hydro']['cutout'] + ".nc"
+        cutout=f"cutouts/{config['renewable']['hydro']['cutout']}.nc" if "hydro" in config["renewable"] else "config['renewable']['hydro']['cutout'] not configured",
     output: 'resources/profile_hydro.nc'
     log: "logs/build_hydro_profile.log"
     resources: mem_mb=5000
