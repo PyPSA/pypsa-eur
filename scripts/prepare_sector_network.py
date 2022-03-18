@@ -28,7 +28,7 @@ from types import SimpleNamespace
 spatial = SimpleNamespace()
 
 
-def define_spatial(nodes):
+def define_spatial(nodes, options):
     """
     Namespace for spatial
 
@@ -38,7 +38,6 @@ def define_spatial(nodes):
     """
 
     global spatial
-    global options
 
     spatial.nodes = nodes
 
@@ -73,7 +72,7 @@ def define_spatial(nodes):
         spatial.co2.vents = ["co2 vent"]
 
     spatial.co2.df = pd.DataFrame(vars(spatial.co2), index=nodes)
-    
+
     # gas
 
     spatial.gas = SimpleNamespace()
@@ -94,6 +93,26 @@ def define_spatial(nodes):
         spatial.gas.biogas_to_gas = ["EU biogas to gas"]
 
     spatial.gas.df = pd.DataFrame(vars(spatial.gas), index=nodes)
+
+    # oil
+    spatial.oil = SimpleNamespace()
+    spatial.oil.nodes = ["EU oil"]
+    spatial.oil.locations = ["EU"]
+
+    # uranium
+    spatial.uranium = SimpleNamespace()
+    spatial.uranium.nodes = ["EU uranium"]
+    spatial.uranium.locations = ["EU"]
+
+    # coal
+    spatial.coal = SimpleNamespace()
+    spatial.coal.nodes = ["EU coal"]
+    spatial.coal.locations = ["EU"]
+
+    # lignite
+    spatial.lignite = SimpleNamespace()
+    spatial.lignite.nodes = ["EU lignite"]
+    spatial.lignite.locations = ["EU"]
 
 
 from types import SimpleNamespace
@@ -1049,7 +1068,7 @@ def add_storage_and_grids(n, costs):
 
     # only use sites with at least 2 TWh potential
     h2_caverns = h2_caverns[h2_caverns > 2]
-    
+
     # convert TWh to MWh
     h2_caverns = h2_caverns * 1e6
 
@@ -1119,7 +1138,7 @@ def add_storage_and_grids(n, costs):
             carrier="gas pipeline",
             lifetime=costs.at['CH4 (g) pipeline', 'lifetime']
         )
-        
+
         # remove fossil generators where there is neither
         # production, LNG terminal, nor entry-point beyond system scope
 
@@ -2438,7 +2457,7 @@ if __name__ == "__main__":
 
     patch_electricity_network(n)
 
-    define_spatial(pop_layout.index)
+    define_spatial(pop_layout.index, options)
 
     if snakemake.config["foresight"] == 'myopic':
 

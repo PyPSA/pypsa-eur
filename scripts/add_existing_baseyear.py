@@ -12,9 +12,11 @@ import xarray as xr
 import pypsa
 import yaml
 
-from prepare_sector_network import prepare_costs
+from prepare_sector_network import prepare_costs, define_spatial
 from helper import override_component_attrs
 
+from types import SimpleNamespace
+spatial = SimpleNamespace()
 
 def add_build_year_to_new_assets(n, baseyear):
     """
@@ -473,7 +475,8 @@ if __name__ == "__main__":
 
     overrides = override_component_attrs(snakemake.input.overrides)
     n = pypsa.Network(snakemake.input.network, override_component_attrs=overrides)
-
+    # define spatial resolution of carriers
+    define_spatial(n.buses[n.buses.carrier=="AC"].index, options)
     add_build_year_to_new_assets(n, baseyear)
 
     Nyears = n.snapshot_weightings.generators.sum() / 8760.
