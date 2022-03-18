@@ -13,6 +13,8 @@ dependencies:
   - pypsa>=0.19.2
   - atlite>=0.2.5
   - dask
+  - jupyter
+  - nbconvert
 
   # Dependencies of the workflow itself
   - xlrd
