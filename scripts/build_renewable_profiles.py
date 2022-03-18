@@ -262,7 +262,7 @@ if __name__ == '__main__':
 
     # For Moldova and Ukraine: Overwrite parts not covered by Corine with
     # externally determined available areas
-    if "availability_matrix_MD_UA" in snakemake.input:
+    if "availability_matrix_MD_UA" in snakemake.input.keys():
         availability_MDUA = xr.open_dataarray(snakemake.input["availability_matrix_MD_UA"])
         availability.loc[availability_MDUA.coords] = availability_MDUA
         
