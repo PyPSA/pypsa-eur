@@ -169,7 +169,9 @@ rule build_renewable_profiles:
     input:
         base_network="networks/base.nc",
         corine="data/bundle/corine/g250_clc06_V18_5.tif",
-        natura="data/bundle/natura/Natura2000_end2015.shp",
+        natura=lambda w: ("data/bundle/natura/Natura2000_end2015.shp"
+                          if config["renewable"][w.technology]["natura"]
+                          else []),
         gebco=lambda w: ("data/bundle/GEBCO_2014_2D.nc"
                          if "max_depth" in config["renewable"][w.technology].keys()
                          else []),

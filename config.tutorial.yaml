@@ -77,7 +77,7 @@ renewable:
                    24, 25, 26, 27, 28, 29, 31, 32]
       distance: 1000
       distance_grid_codes: [1, 2, 3, 4, 5, 6]
-    natura: true
+    natura: false
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   offwind-ac:
@@ -88,7 +88,7 @@ renewable:
     capacity_per_sqkm: 3
     # correction_factor: 0.93
     corine: [44, 255]
-    natura: true
+    natura: false
     max_shore_distance: 30000
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
@@ -101,7 +101,7 @@ renewable:
     capacity_per_sqkm: 3
     # correction_factor: 0.93
     corine: [44, 255]
-    natura: true
+    natura: false
     min_shore_distance: 30000
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
@@ -123,7 +123,7 @@ renewable:
     # correction_factor: 0.854337
     corine: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
              14, 15, 16, 17, 18, 19, 20, 26, 31, 32]
-    natura: true
+    natura: false
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
 
