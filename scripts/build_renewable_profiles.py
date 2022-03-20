@@ -224,7 +224,7 @@ if __name__ == '__main__':
     excluder = atlite.ExclusionContainer(crs=3035, res=100)
 
     if config['natura']:
-        excluder.add_raster(snakemake.input.natura, nodata=0, allow_no_overlap=True)
+        excluder.add_geometry(snakemake.input.natura)
 
     corine = config.get("corine", {})
     if "grid_codes" in corine:

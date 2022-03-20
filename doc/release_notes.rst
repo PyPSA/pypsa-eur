@@ -62,6 +62,8 @@ Upcoming Release
 
 * New network topology extracted from the ENTSO-E interactive map.
 
+* Remove rules to build or retrieve rasterized NATURA 2000 dataset. Renewable potential calculation now directly uses the shapefiles.
+
 
 PyPSA-Eur 0.4.0 (22th September 2021)
 =====================================

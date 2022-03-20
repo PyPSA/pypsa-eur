@@ -165,28 +165,11 @@ if config['enable'].get('retrieve_cutout', True):
         run: move(input[0], output[0])
 
 
-if config['enable'].get('build_natura_raster', False):
-    rule build_natura_raster:
-        input:
-            natura="data/bundle/natura/Natura2000_end2015.shp",
-            cutouts=expand("cutouts/{cutouts}.nc", **config['atlite'])
-        output: "resources/natura.tiff"
-        log: "logs/build_natura_raster.log"
-        script: "scripts/build_natura_raster.py"
-
-
-if config['enable'].get('retrieve_natura_raster', True):
-    rule retrieve_natura_raster:
-        input: HTTP.remote("zenodo.org/record/4706686/files/natura.tiff", keep_local=True, static=True)
-        output: "resources/natura.tiff"
-        run: move(input[0], output[0])
-
-
 rule build_renewable_profiles:
     input:
         base_network="networks/base.nc",
         corine="data/bundle/corine/g250_clc06_V18_5.tif",
-        natura="resources/natura.tiff",
+        natura="data/bundle/natura/Natura2000_end2015.shp",
         gebco=lambda w: ("data/bundle/GEBCO_2014_2D.nc"
                          if "max_depth" in config["renewable"][w.technology].keys()
                          else []),
