@@ -282,7 +282,7 @@ if __name__ == "__main__":
     if 'snakemake' not in globals():
         from helper import mock_snakemake
         snakemake = mock_snakemake(
-            'solve_network_myopic',
+            'solve_network',
             simpl='',
             opts="",
             clusters="37",

@@ -409,12 +409,11 @@ def add_heating_capacities_installed_before_baseyear(n, baseyear, grouping_years
                 lifetime=costs.at[costs_name, 'lifetime']
             )
 
-            bus0 = vars(spatial)["gas"].nodes
 
             n.madd("Link",
                 nodes[name],
                 suffix= f" {name} gas boiler-{grouping_year}",
-                bus0=bus0,
+                bus0=spatial.gas.nodes,
                 bus1=nodes[name] + " " + name + " heat",
                 bus2="co2 atmosphere",
                 carrier=name + " gas boiler",
@@ -429,7 +428,7 @@ def add_heating_capacities_installed_before_baseyear(n, baseyear, grouping_years
             n.madd("Link",
                 nodes[name],
                 suffix=f" {name} oil boiler-{grouping_year}",
-                bus0="EU oil",
+                bus0=spatial.oil.nodes,
                 bus1=nodes[name] + " " + name + " heat",
                 bus2="co2 atmosphere",
                 carrier=name + " oil boiler",
@@ -458,7 +457,7 @@ if __name__ == "__main__":
             clusters="37",
             lv=1.0,
             opts='',
-            sector_opts='Co2L0-168H-T-H-B-I-solar+p3-dist1',
+            sector_opts='168H-T-H-B-I-solar+p3-dist1',
             planning_horizons=2020,
         )
 

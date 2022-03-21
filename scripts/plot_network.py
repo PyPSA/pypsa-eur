@@ -266,7 +266,7 @@ def plot_h2_map(network):
 
     # make a fake MultiIndex so that area is correct for legend
     bus_sizes.rename(index=lambda x: x.replace(" H2", ""), level=0, inplace=True)
-    # frop all links which are not H2 pipelines
+    # drop all links which are not H2 pipelines
     n.links.drop(n.links.index[~n.links.carrier.str.contains("H2 pipeline")], inplace=True)
 
     h2_new = n.links.loc[n.links.carrier=="H2 pipeline"]

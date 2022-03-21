@@ -78,8 +78,14 @@ def add_brownfield(n, n_p, year):
 
         # deal with gas network
         pipe_carrier = ['gas pipeline']
-        to_drop = n.links.carrier.isin(pipe_carrier) & (n.links.build_year!=year)
-        n.mremove("Link", n.links.loc[to_drop].index)
+        if snakemake.config["sector"]['H2_retrofit']:
+            to_drop = n.links.carrier.isin(pipe_carrier) & (n.links.build_year!=year)
+            n.mremove("Link", n.links.loc[to_drop].index)
+        else:
+            new_pipes = n.links.carrier.isin(pipe_carrier) & (n.links.build_year==year)
+            n.links.loc[new_pipes, "p_nom"] = 0.
+            n.links.loc[new_pipes, "p_nom_min"] = 0.
+
 
 #%%
 if __name__ == "__main__":
