@@ -201,7 +201,7 @@ rule build_renewable_profiles:
     benchmark: "benchmarks/build_renewable_profiles_{technology}"
     threads: ATLITE_NPROCESSES
     resources: mem_mb=ATLITE_NPROCESSES * 5000
-    wildcard_constraints: technology="^(?!hydro).*$" # Any technology other than hydro
+    wildcard_constraints: technology="(?!hydro).*" # Any technology other than hydro
     script: "scripts/build_renewable_profiles.py"
 
 
