@@ -351,7 +351,7 @@ def aggregate_to_substations(n, buses_i=None):
                                             aggregate_generators_carriers=None,
                                             aggregate_one_ports=["Load", "StorageUnit"],
                                             line_length_factor=1.0,
-                                            generator_strategies={'p_nom_max': 'sum'},
+                                            generator_strategies={'p_nom_max': 'sum', 'p_nom_min': 'sum'},
                                             scale_link_capital_costs=False)
     return clustering.network, busmap
 
@@ -407,21 +407,20 @@ if __name__ == "__main__":
         n, substation_map = aggregate_to_substations(n)
         busmaps.append(substation_map)
 
-    # treatment of outliers (nodes without a profile for considered carrier) for "cluster_network"
-    if snakemake.config.get("clustering", {}).get("cluster_network", {}).get("algorithm", "hac") == "hac":
+    # treatment of outliers (nodes without a profile for considered carrier):
+    # all nodes that have no profile of the given carrier are being aggregated to closest neighbor
+    if (
+            snakemake.config.get("clustering", {}).get("cluster_network", {}).get("algorithm", "hac") == "hac" or
+            cluster_config.get("algorithm", "hac") == "hac"
+    ):
         carriers = cluster_config.get("feature", "solar+onwind-time").split('-')[0].split('+')
-        buses_i = list(set(n.buses.index)-set(n.generators.query("carrier in @carriers").bus))
-        n, busmap_hac = aggregate_to_substations(n, buses_i)
-        busmaps.append(busmap_hac)
-
-    if snakemake.wildcards.simpl:
-        # treatment of outliers (nodes without a profile for a considered carrier) for "simplify"
-        if cluster_config.get("algorithm", "hac") == "hac":
-            carriers = cluster_config.get("feature", "solar+onwind-time").split('-')[0].split('+')
-            buses_i = list(set(n.buses.index)-set(n.generators.query("carrier in @carriers").bus))
+        for carrier in carriers:
+            buses_i = list(set(n.buses.index)-set(n.generators.query("carrier == @carrier").bus))
+            logger.info(f'clustering preparaton (hac): aggregating {len(buses_i)} buses of type {carrier}.')
             n, busmap_hac = aggregate_to_substations(n, buses_i)
             busmaps.append(busmap_hac)
-        # conduct clustering
+
+    if snakemake.wildcards.simpl:
         n, cluster_map = cluster(n, int(snakemake.wildcards.simpl), snakemake.config,
                                  algorithm=cluster_config.get('algorithm', 'hac'),
                                  feature=cluster_config.get('feature', None))
