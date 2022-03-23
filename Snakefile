@@ -230,7 +230,7 @@ if config['lines'].get('line_rating', False):
         log: "logs/build_line_rating.log"
         benchmark: "benchmarks/build_line_rating"
         threads: ATLITE_NPROCESSES
-        resources: mem=ATLITE_NPROCESSES * 1000
+        resources: mem_mb=ATLITE_NPROCESSES * 1000
         script: "scripts/build_line_rating.py"
 
 rule add_electricity:
