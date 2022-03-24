@@ -67,6 +67,12 @@ if config['enable'].get('retrieve_databundle', True):
         script: 'scripts/retrieve_databundle.py'
 
 
+rule retrieve_natura_data:
+    input: HTTP.remote("sdi.eea.europa.eu/datashare/s/H6QGCybMdLLnywo/download?path=%2FNatura2000_end2020_gpkg&files=Natura2000_end2020.gpkg", keep_local=True, static=True)
+    output: "data/Natura2000_end2020.gpkg"
+    run: move(input[0], output[0])
+
+
 rule retrieve_load_data:
     input: HTTP.remote("data.open-power-system-data.org/time_series/2019-06-05/time_series_60min_singleindex.csv", keep_local=True, static=True)
     output: "data/load_raw.csv"
@@ -169,7 +175,7 @@ rule build_renewable_profiles:
     input:
         base_network="networks/base.nc",
         corine="data/bundle/corine/g250_clc06_V18_5.tif",
-        natura=lambda w: ("data/bundle/natura/Natura2000_end2015.shp"
+        natura=lambda w: ("data/Natura2000_end2020.gpkg"
                           if config["renewable"][w.technology]["natura"]
                           else []),
         gebco=lambda w: ("data/bundle/GEBCO_2014_2D.nc"
