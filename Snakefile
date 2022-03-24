@@ -219,7 +219,7 @@ rule build_renewable_profiles:
         base_network="networks/base.nc",
         corine="data/bundle/corine/g250_clc06_V18_5.tif",
         natura="resources/natura.tiff",
-        gebco=lambda w: ("data/bundle/GEBCO_2014_2D.nc"
+        gebco=lambda w: ("data/gebco/GEBCO_2021.nc"
                          if "max_depth" in config["renewable"][w.technology].keys()
                          else []),
         country_shapes='resources/country_shapes.geojson',
