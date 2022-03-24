@@ -560,8 +560,9 @@ def base_network(eg_buses, eg_converters, eg_transformers, eg_lines, eg_links,
     n = pypsa.Network()
     n.name = 'PyPSA-Eur'
 
-    n.set_snapshots(pd.date_range(freq='h', **config['snapshots']))
-
+    date_range = pd.date_range(str(snakemake.config['load']['year']) + '-01-01',str(int(snakemake.config['load']['year'])+1) + '-01-01',freq='h')[0:-1]
+    n.set_snapshots(date_range)
+    
     n.import_components_from_dataframe(buses, "Bus")
     n.import_components_from_dataframe(lines, "Line")
     n.import_components_from_dataframe(transformers, "Transformer")

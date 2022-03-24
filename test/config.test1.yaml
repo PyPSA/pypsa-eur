@@ -11,6 +11,7 @@ logging:
 summary_dir: results
 
 scenario:
+  weather_year: ['2011']
   simpl: ['']
   ll: ['copt']
   clusters: [5]
@@ -22,10 +23,6 @@ clustering:
   simplify:
     to_substations: false # network is simplified to nodes with positive or negative power injection (i.e. substations or offwind connections)
 
-snapshots:
-  start: "2013-03-01"
-  end: "2013-03-08"
-  closed: 'left' # end is not inclusive
 
 enable:
   prepare_links_p_nom: false
@@ -54,18 +51,18 @@ electricity:
   custom_powerplants: false # use pandas query strings here, e.g. Country in ['Germany']
   conventional_carriers: [coal, CCGT] # [nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
 
+cutout: 'tutorial-era5'
+
 atlite:
   nprocesses: 4
   cutouts:
-    europe-2013-era5-tutorial:
+    tutorial-era5:
       module: era5
       x: [4., 15.]
       y: [46., 56.]
-      time: ["2013-03-01", "2013-03-08"]
 
 renewable:
   onwind:
-    cutout: europe-2013-era5-tutorial
     resource:
       method: wind
       turbine: Vestas_V112_3MW
@@ -82,7 +79,6 @@ renewable:
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   offwind-ac:
-    cutout: europe-2013-era5-tutorial
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_5MW_offshore
@@ -94,7 +90,6 @@ renewable:
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   offwind-dc:
-    cutout: europe-2013-era5-tutorial
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_5MW_offshore
@@ -107,7 +102,6 @@ renewable:
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   solar:
-    cutout: europe-2013-era5-tutorial
     resource:
       method: pv
       panel: CSi
@@ -149,6 +143,7 @@ transformers:
   type: ''
 
 load:
+  year: 2013 # [2005, 2018]
   power_statistics: True # only for files from <2019; set false in order to get ENTSOE transparency data
   interpolate_limit: 3 # data gaps up until this size are interpolated linearly
   time_shift_for_large_gaps: 1w # data gaps up until this size are copied by copying from
