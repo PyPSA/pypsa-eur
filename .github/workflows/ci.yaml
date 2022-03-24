@@ -18,7 +18,7 @@ on:
 
 env:
   CONDA_CACHE_NUMBER: 1 # Change this value to manually reset the environment cache
-  BUNDLE_CACHE_NUMBER: 1
+  DATA_CACHE_NUMBER: 1
 
 jobs:
   build:
@@ -66,11 +66,13 @@ jobs:
             activate-environment: pypsa-eur
             use-mamba: true
 
-      - name: Cache data bundle
+      - name: Cache data and cutouts folders
         uses: actions/cache@v3
         with:
-          path: data/bundle
-          key: data-bundle-${{ env.BUNDLE_CACHE_NUMBER }}
+          path: |
+            data
+            cutouts
+          key: data-cutouts-${{ env.DATA_CACHE_NUMBER }}
 
       - name: Set cache date
         run: echo "DATE=$(date +'%Y%m%d')" >> $GITHUB_ENV
