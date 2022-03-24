@@ -13,8 +13,6 @@ on:
     branches:
     - master
   pull_request:
-    branches:
-    - master
   schedule:
     - cron: "0 5 * * TUE"
 
@@ -73,7 +71,7 @@ jobs:
         with:
           path: data/bundle
           key: data-bundle-${{ env.BUNDLE_CACHE_NUMBER }}
-            
+
       - name: Set cache date
         run: echo "DATE=$(date +'%Y%m%d')" >> $GITHUB_ENV
 
