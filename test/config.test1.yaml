@@ -16,7 +16,7 @@ scenario:
   clusters: [5]
   opts: [Co2L-24H]
 
-countries: ['DE']
+countries: ['BE']
 
 clustering:
   simplify:
