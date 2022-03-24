@@ -53,7 +53,7 @@ datafiles = ['ch_cantons.csv', 'je-e-21.03.02.xls',
             'eez/World_EEZ_v8_2014.shp', 'EIA_hydro_generation_2000_2014.csv', 
             'hydro_capacities.csv', 'naturalearth/ne_10m_admin_0_countries.shp', 
             'NUTS_2013_60M_SH/data/NUTS_RG_60M_2013.shp', 'nama_10r_3popgdp.tsv.gz', 
-            'nama_10r_3gdp.tsv.gz', 'corine/g250_clc06_V18_5.tif']
+            'nama_10r_3gdp.tsv.gz']
 
 
 if not config.get('tutorial', False):
@@ -65,6 +65,12 @@ if config['enable'].get('retrieve_databundle', True):
         output: expand('data/bundle/{file}', file=datafiles)
         log: "logs/retrieve_databundle.log"
         script: 'scripts/retrieve_databundle.py'
+
+
+rule retrieve_landcover_data:
+    input: HTTP.remote("jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/LUISA/EUROPE/Basemaps/LandUse/2018/LATEST/LUISA_basemap_020321_50m.tif", static=True)
+    output: "data/landcover/LUISA_basemap_020321_50m.tif"
+    run: move(input[0], output[0])
 
 
 rule retrieve_load_data:
@@ -185,7 +191,7 @@ if config['enable'].get('retrieve_natura_raster', True):
 rule build_renewable_profiles:
     input:
         base_network="networks/base.nc",
-        corine="data/bundle/corine/g250_clc06_V18_5.tif",
+        luisa="data/landcover/LUISA_basemap_020321_50m.tif",
         natura="resources/natura.tiff",
         gebco=lambda w: ("data/bundle/GEBCO_2014_2D.nc"
                          if "max_depth" in config["renewable"][w.technology].keys()

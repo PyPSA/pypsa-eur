@@ -26,7 +26,7 @@ Relevant settings
     renewable:
         {technology}:
             cutout:
-            corine:
+            luisa:
             grid_codes:
             distance:
             natura:
@@ -47,10 +47,7 @@ Relevant settings
 Inputs
 ------
 
-- ``data/bundle/corine/g250_clc06_V18_5.tif``: `CORINE Land Cover (CLC) <https://land.copernicus.eu/pan-european/corine-land-cover>`_ inventory on `44 classes <https://wiki.openstreetmap.org/wiki/Corine_Land_Cover#Tagging>`_ of land use (e.g. forests, arable land, industrial, urban areas).
-
-    .. image:: ../img/corine.png
-        :scale: 33 %
+- ``data/landcover/LUISA_basemap_020321_50m.tif``: TODO
 
 - ``data/bundle/GEBCO_2014_2D.nc``: A `bathymetric <https://en.wikipedia.org/wiki/Bathymetry>`_ data set with a global terrain model for ocean and land at 15 arc-second intervals by the `General Bathymetric Chart of the Oceans (GEBCO) <https://www.gebco.net/data_and_products/gridded_bathymetry_data/>`_.
 
@@ -134,8 +131,7 @@ taking account of a combination of the available land at each grid cell and the
 capacity factor there.
 
 First the script computes how much of the technology can be installed at each
-cutout grid cell and each node using the `GLAES
-<https://github.com/FZJ-IEK3-VSA/glaes>`_ library. This uses the CORINE land use data,
+cutout grid cell and each node using the atlite library. This uses the LUISA land use data,
 Natura2000 nature reserves and GEBCO bathymetry data.
 
 .. image:: ../img/eligibility.png
@@ -210,8 +206,8 @@ if __name__ == '__main__':
     capacity_per_sqkm = config['capacity_per_sqkm']
     p_nom_max_meth = config.get('potential', 'conservative')
 
-    if isinstance(config.get("corine", {}), list):
-        config['corine'] = {'grid_codes': config['corine']}
+    if isinstance(config.get("luisa", {}), list):
+        config['luisa'] = {'grid_codes': config['luisa']}
 
     if correction_factor != 1.:
         logger.info(f'correction_factor is set as {correction_factor}')
@@ -226,14 +222,14 @@ if __name__ == '__main__':
     if config['natura']:
         excluder.add_raster(snakemake.input.natura, nodata=0, allow_no_overlap=True)
 
-    corine = config.get("corine", {})
-    if "grid_codes" in corine:
-        codes = corine["grid_codes"]
-        excluder.add_raster(snakemake.input.corine, codes=codes, invert=True, crs=3035)
-    if corine.get("distance", 0.) > 0.:
-        codes = corine["distance_grid_codes"]
-        buffer = corine["distance"]
-        excluder.add_raster(snakemake.input.corine, codes=codes, buffer=buffer, crs=3035)
+    luisa = config.get("luisa", {})
+    if "grid_codes" in luisa:
+        codes = luisa["grid_codes"]
+        excluder.add_raster(snakemake.input.luisa, codes=codes, invert=True, crs=3035, nodata=0)
+    if luisa.get("distance", 0.) > 0.:
+        codes = luisa["distance_grid_codes"]
+        buffer = luisa["distance"]
+        excluder.add_raster(snakemake.input.luisa, codes=codes, buffer=buffer, crs=3035, nodata=0)
 
     if "max_depth" in config:
         # lambda not supported for atlite + multiprocessing
