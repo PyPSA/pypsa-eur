@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 from os.path import normpath, exists
-from shutil import copyfile, move
+from shutil import copyfile, move, unpack_archive
 
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 HTTP = HTTPRemoteProvider()
@@ -50,14 +50,9 @@ if config['enable'].get('prepare_links_p_nom', False):
 
 
 datafiles = ['ch_cantons.csv', 'je-e-21.03.02.xls', 
-            'eez/World_EEZ_v8_2014.shp', 'EIA_hydro_generation_2000_2014.csv', 
-            'hydro_capacities.csv', 'naturalearth/ne_10m_admin_0_countries.shp', 
+            'EIA_hydro_generation_2000_2014.csv', 'hydro_capacities.csv', 
             'NUTS_2013_60M_SH/data/NUTS_RG_60M_2013.shp', 'nama_10r_3popgdp.tsv.gz', 
             'nama_10r_3gdp.tsv.gz', 'corine/g250_clc06_V18_5.tif']
-
-
-if not config.get('tutorial', False):
-    datafiles.extend(["natura/Natura2000_end2015.shp", "GEBCO_2014_2D.nc"])
 
 
 if config['enable'].get('retrieve_databundle', True):
@@ -68,8 +63,6 @@ if config['enable'].get('retrieve_databundle', True):
 
 
 rule download_eez:
-    message:
-        """Download EEZ files from https://www.marineregions.org/download_file.php?name=World_EEZ_v11_20191118_gpkg.zip"""
     output:
         zip="data/eez/World_EEZ_v11_20191118_gpkg.zip",
         gpkg="data/eez/World_EEZ_v11_20191118_gpkg/eez_v11.gpkg",
@@ -81,9 +74,7 @@ rule download_eez:
         shell("unzip {output.zip} -d {output_folder}")
 
 
-rule download_gebco:
-    message:
-        """Download bathymetry data (GEBCO) from https://www.gebco.net/data_and_products/gridded_bathymetry_data/#global"""
+rule download_gebco_bathymetry:
     input:
         HTTP.remote(
             "www.bodc.ac.uk/data/open_download/gebco/gebco_2021/zip",
@@ -156,7 +147,7 @@ rule base_network:
 
 rule build_shapes:
     input:
-        naturalearth='data/bundle/naturalearth/ne_10m_admin_0_countries.shp',
+        naturalearth='data/naturalearth/ne_10m_admin_0_countries.shp',
         eez='data/eez/World_EEZ_v11_20191118_gpkg/eez_v11.gpkg',
         nuts3='data/bundle/NUTS_2013_60M_SH/data/NUTS_RG_60M_2013.shp',
         nuts3pop='data/bundle/nama_10r_3popgdp.tsv.gz',
