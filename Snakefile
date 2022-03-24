@@ -67,6 +67,38 @@ if config['enable'].get('retrieve_databundle', True):
         script: 'scripts/retrieve_databundle.py'
 
 
+rule download_eez:
+    message:
+        """Download EEZ files from https://www.marineregions.org/download_file.php?name=World_EEZ_v11_20191118_gpkg.zip"""
+    output:
+        zip="data/eez/World_EEZ_v11_20191118_gpkg.zip",
+        gpkg="data/eez/World_EEZ_v11_20191118_gpkg/eez_v11.gpkg",
+    run:
+        shell(
+            "curl  -X POST --data 'name=Name&organisation=Organisation&email=e.mail%40inter.net&country=Germany&user_category=academia&purpose_category=Research&agree=1' 'https://www.marineregions.org/download_file.php?name=World_EEZ_v11_20191118_gpkg.zip' --output '{output.zip}'"
+        )
+        output_folder = Path(output["zip"]).parent
+        shell("unzip {output.zip} -d {output_folder}")
+
+
+rule download_gebco:
+    message:
+        """Download bathymetry data (GEBCO) from https://www.gebco.net/data_and_products/gridded_bathymetry_data/#global"""
+    input:
+        HTTP.remote(
+            "www.bodc.ac.uk/data/open_download/gebco/gebco_2021/zip",
+            additional_request_string="/",
+            static=True,
+        ),
+    output:
+        zip="data/gebco/gebco_2021.zip",
+        gebco="data/gebco/GEBCO_2021.nc",
+    run:
+        shell("mv {input} {output.zip}")
+        output_folder = Path(output["gebco"]).parent
+        shell("unzip {output.zip} -d {output_folder}")
+
+
 rule retrieve_load_data:
     input: HTTP.remote("data.open-power-system-data.org/time_series/2019-06-05/time_series_60min_singleindex.csv", keep_local=True, static=True)
     output: "data/load_raw.csv"
