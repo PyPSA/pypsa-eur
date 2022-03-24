@@ -62,6 +62,8 @@ Upcoming Release
 
 * New network topology extracted from the ENTSO-E interactive map.
 
+* Iterative solving with impedance updates is skipped if there are no expandable lines.
+
 
 PyPSA-Eur 0.4.0 (22th September 2021)
 =====================================
