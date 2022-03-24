@@ -269,10 +269,7 @@ def busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights=None, algori
 
         # overwrite country of nodes that are disconnected from their country-topology
         for country in n.buses.country.unique():
-            m = n.copy()
-            m.buses = m.buses.query("country in @country")
-            m.lines = m.lines.query("bus0 in @m.buses.index and bus1 in @m.buses.index")
-            m.links = m.links.query("bus0 in @m.buses.index and bus1 in @m.buses.index")
+            m = n[n.buses.country ==country].copy()
 
             _, labels = csgraph.connected_components(m.adjacency_matrix(), directed=False)
 
