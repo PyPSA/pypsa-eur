@@ -62,6 +62,7 @@ Upcoming Release
 
 * New network topology extracted from the ENTSO-E interactive map.
 
+* The unused argument ``simple_hvdc_costs`` in :mod:`add_electricity` was removed.
 
 PyPSA-Eur 0.4.0 (22th September 2021)
 =====================================
