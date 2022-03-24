@@ -55,7 +55,6 @@ Inputs
 - ``data/geth2015_hydro_capacities.csv``: alternative to capacities above; not currently used!
 - ``resources/opsd_load.csv`` Hourly per-country load profiles.
 - ``resources/regions_onshore.geojson``: confer :ref:`busregions`
-- ``resources/nuts3_shapes.geojson``: confer :ref:`shapes`
 - ``resources/powerplants.csv``: confer :ref:`powerplants`
 - ``resources/profile_{}.nc``: all technologies in ``config["renewables"].keys()``, confer :ref:`renewableprofiles`.
 - ``networks/base.nc``: confer :ref:`base`
@@ -189,7 +188,7 @@ def load_powerplants(ppl_fn):
             .replace({'carrier': carrier_dict}))
 
 
-def attach_load(n, regions, load, nuts3_shapes, countries, scaling=1.):
+def attach_load(n, regions, load, countries, scaling=1.):
 
     substation_lv_i = n.buses.index[n.buses['substation_lv']]
     regions = (gpd.read_file(regions).set_index('name')
@@ -200,20 +199,13 @@ def attach_load(n, regions, load, nuts3_shapes, countries, scaling=1.):
     logger.info(f"Load data scaled with scalling factor {scaling}.")
     opsd_load *= scaling
 
-    nuts3 = gpd.read_file(nuts3_shapes).set_index('index')
-
     def upsample(cntry, group):
         l = opsd_load[cntry]
         if len(group) == 1:
             return pd.DataFrame({group.index[0]: l})
         else:
-            nuts3_cntry = nuts3.loc[nuts3.country == cntry]
-            transfer = vtransfer.Shapes2Shapes(group, nuts3_cntry.geometry,
-                                               normed=False).T.tocsr()
-            gdp_n = pd.Series(transfer.dot(nuts3_cntry['gdp'].fillna(1.).values),
-                              index=group.index)
-            pop_n = pd.Series(transfer.dot(nuts3_cntry['pop'].fillna(1.).values),
-                              index=group.index)
+            gdp_n = pd.Series(..., index=group.index)
+            pop_n = pd.Series(..., index=group.index)
 
             # relative factors 0.6 and 0.4 have been determined from a linear
             # regression on the country to continent load data
@@ -550,7 +542,7 @@ if __name__ == "__main__":
     costs = load_costs(snakemake.input.tech_costs, snakemake.config['costs'], snakemake.config['electricity'], Nyears)
     ppl = load_powerplants(snakemake.input.powerplants)
 
-    attach_load(n, snakemake.input.regions, snakemake.input.load, snakemake.input.nuts3_shapes,
+    attach_load(n, snakemake.input.regions, snakemake.input.load,
                 snakemake.config['countries'], snakemake.config['load']['scaling_factor'])
 
     update_transmission_costs(n, costs, snakemake.config['lines']['length_factor'])

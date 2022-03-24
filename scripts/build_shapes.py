@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 """
-Creates GIS shape files of the countries, exclusive economic zones and `NUTS3 <https://en.wikipedia.org/wiki/Nomenclature_of_Territorial_Units_for_Statistics>`_ areas.
+Creates GIS shape files of the countries and exclusive economic zones.
 
 Relevant Settings
 -----------------
@@ -29,16 +29,6 @@ Inputs
     .. image:: ../img/eez.png
         :scale: 33 %
 
-- ``data/bundle/NUTS_2013_60M_SH/data/NUTS_RG_60M_2013.shp``: Europe NUTS3 regions
-
-    .. image:: ../img/nuts3.png
-        :scale: 33 %
-
-- ``data/bundle/nama_10r_3popgdp.tsv.gz``: Average annual population by NUTS3 region (`eurostat <http://appsso.eurostat.ec.europa.eu/nui/show.do?dataset=nama_10r_3popgdp&lang=en>`__)
-- ``data/bundle/nama_10r_3gdp.tsv.gz``: Gross domestic product (GDP) by NUTS 3 regions (`eurostat <http://appsso.eurostat.ec.europa.eu/nui/show.do?dataset=nama_10r_3gdp&lang=en>`__)
-- ``data/bundle/ch_cantons.csv``: Mapping between Swiss Cantons and NUTS3 regions
-- ``data/bundle/je-e-21.03.02.xls``: Population and GDP data per Canton (`BFS - Swiss Federal Statistical Office <https://www.bfs.admin.ch/bfs/en/home/news/whats-new.assetdetail.7786557.html>`_ )
-
 Outputs
 -------
 
@@ -55,11 +45,6 @@ Outputs
 - ``resources/europe_shape.geojson``: Shape of Europe including countries and EEZ
 
     .. image:: ../img/europe_shape.png
-        :scale: 33 %
-
-- ``resources/nuts3_shapes.geojson``: NUTS3 shapes out of country selection including population and GDP data.
-
-    .. image:: ../img/nuts3_shapes.png
         :scale: 33 %
 
 Description
@@ -144,65 +129,6 @@ def country_cover(country_shapes, eez_shapes=None):
     return Polygon(shell=europe_shape.exterior)
 
 
-def nuts3(country_shapes, nuts3, nuts3pop, nuts3gdp, ch_cantons, ch_popgdp):
-    df = gpd.read_file(nuts3)
-    df = df.loc[df['STAT_LEVL_'] == 3]
-    df['geometry'] = df['geometry'].map(_simplify_polys)
-    df = df.rename(columns={'NUTS_ID': 'id'})[['id', 'geometry']].set_index('id')
-
-    pop = pd.read_table(nuts3pop, na_values=[':'], delimiter=' ?\t', engine='python')
-    pop = (pop
-           .set_index(pd.MultiIndex.from_tuples(pop.pop('unit,geo\\time').str.split(','))).loc['THS']
-           .applymap(lambda x: pd.to_numeric(x, errors='coerce'))
-           .fillna(method='bfill', axis=1))['2014']
-
-    gdp = pd.read_table(nuts3gdp, na_values=[':'], delimiter=' ?\t', engine='python')
-    gdp = (gdp
-           .set_index(pd.MultiIndex.from_tuples(gdp.pop('unit,geo\\time').str.split(','))).loc['EUR_HAB']
-           .applymap(lambda x: pd.to_numeric(x, errors='coerce'))
-           .fillna(method='bfill', axis=1))['2014']
-
-    cantons = pd.read_csv(ch_cantons)
-    cantons = cantons.set_index(cantons['HASC'].str[3:])['NUTS']
-    cantons = cantons.str.pad(5, side='right', fillchar='0')
-
-    swiss = pd.read_excel(ch_popgdp, skiprows=3, index_col=0)
-    swiss.columns = swiss.columns.to_series().map(cantons)
-
-    swiss_pop = pd.to_numeric(swiss.loc['Residents in 1000', 'CH040':])
-    pop = pd.concat([pop, swiss_pop])
-    swiss_gdp = pd.to_numeric(swiss.loc['Gross domestic product per capita in Swiss francs', 'CH040':])
-    gdp = pd.concat([gdp, swiss_gdp])
-
-    df = df.join(pd.DataFrame(dict(pop=pop, gdp=gdp)))
-
-    df['country'] = df.index.to_series().str[:2].replace(dict(UK='GB', EL='GR'))
-
-    excludenuts = pd.Index(('FRA10', 'FRA20', 'FRA30', 'FRA40', 'FRA50',
-                            'PT200', 'PT300',
-                            'ES707', 'ES703', 'ES704','ES705', 'ES706', 'ES708', 'ES709',
-                            'FI2', 'FR9'))
-    excludecountry = pd.Index(('MT', 'TR', 'LI', 'IS', 'CY', 'KV'))
-
-    df = df.loc[df.index.difference(excludenuts)]
-    df = df.loc[~df.country.isin(excludecountry)]
-
-    manual = gpd.GeoDataFrame(
-        [['BA1', 'BA', 3871.],
-         ['RS1', 'RS', 7210.],
-         ['AL1', 'AL', 2893.]],
-        columns=['NUTS_ID', 'country', 'pop']
-    ).set_index('NUTS_ID')
-    manual['geometry'] = manual['country'].map(country_shapes)
-    manual = manual.dropna()
-
-    df = pd.concat([df, manual], sort=False)
-
-    df.loc['ME000', 'pop'] = 650.
-
-    return df
-
-
 def save_to_geojson(df, fn):
     if os.path.exists(fn):
         os.unlink(fn)
@@ -228,7 +154,3 @@ if __name__ == "__main__":
     europe_shape = country_cover(country_shapes, offshore_shapes)
     save_to_geojson(gpd.GeoSeries(europe_shape), snakemake.output.europe_shape)
 
-    nuts3_shapes = nuts3(country_shapes, snakemake.input.nuts3, snakemake.input.nuts3pop,
-                         snakemake.input.nuts3gdp, snakemake.input.ch_cantons, snakemake.input.ch_popgdp)
-
-    save_to_geojson(nuts3_shapes, snakemake.output.nuts3_shapes)

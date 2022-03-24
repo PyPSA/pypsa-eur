@@ -7,7 +7,7 @@
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3517935.svg
    :target: https://doi.org/10.5281/zenodo.3517935
 
-The data bundle (1.4 GB) contains common GIS datasets like NUTS3 shapes, EEZ shapes, CORINE Landcover, Natura 2000 and also electricity specific summary statistics like historic per country yearly totals of hydro generation, GDP and POP on NUTS3 levels and per-country load time-series.
+The data bundle (1.4 GB) contains common GIS datasets like EEZ shapes, CORINE Landcover, Natura 2000 and also electricity specific summary statistics like historic per country yearly totals of hydro generation, and per-country load time-series.
 
 This rule downloads the data bundle from `zenodo <https://doi.org/10.5281/zenodo.3517935>`_ and extracts it in the ``data`` sub-directory, such that all files of the bundle are stored in the ``data/bundle`` subdirectory.
 
