@@ -66,6 +66,11 @@ jobs:
             activate-environment: pypsa-eur
             use-mamba: true
 
+      - name: Set cache dates
+        run: |
+          echo "DATE=$(date +'%Y%m%d')" >> $GITHUB_ENV
+          echo "WEEK=$(date +'%Y%U')" >> $GITHUB_ENV
+
       - name: Cache data and cutouts folders
         uses: actions/cache@v3
         with:
@@ -73,11 +78,6 @@ jobs:
             data
             cutouts
           key: data-cutouts-${{ env.WEEK }}-${{ env.DATA_CACHE_NUMBER }}
-
-      - name: Set cache dates
-        run: |
-          echo "DATE=$(date +'%Y%m%d')" >> $GITHUB_ENV
-          echo "WEEK=$(date +'%Y%U')" >> $GITHUB_ENV
 
       - name: Create environment cache
         uses: actions/cache@v2
