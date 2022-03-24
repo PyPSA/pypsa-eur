@@ -99,6 +99,16 @@ rule download_gebco:
         shell("unzip {output.zip} -d {output_folder}")
 
 
+rule download_naturalearth:
+    output:
+        zip="data/naturalearth/ne_10m_admin_0_countries.zip",
+        countries="data/naturalearth/ne_10m_admin_0_countries.shp"
+    run:
+        shell("curl -L 'https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/cultural/ne_10m_admin_0_countries.zip' -o {output.zip}")
+        output_folder = Path(output["countries"]).parent
+        unpack_archive(output["zip"], output_folder)
+
+
 rule retrieve_load_data:
     input: HTTP.remote("data.open-power-system-data.org/time_series/2019-06-05/time_series_60min_singleindex.csv", keep_local=True, static=True)
     output: "data/load_raw.csv"
