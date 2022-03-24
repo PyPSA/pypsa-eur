@@ -100,6 +100,22 @@ rule download_naturalearth:
         unpack_archive(output["zip"], output_folder)
 
 
+rule download_population_data:
+    input: HTTP.remote("data.worldpop.org/GIS/Population/Global_2000_2020/2013/0_Mosaicked/ppp_2013_1km_Aggregated.tif", static=True)
+    output: "data/worldpop/ppp_2013_1km_Aggregated.tif"
+    run: move(input[0], output[0])
+
+
+rule download_gdp_data:
+    output:
+        zip="data/gdp/doi_10.5061_dryad.dk1j0__v2.zip",
+        gdp="data/gdp/GDP_PPP_1990_2015_5arcmin_v2.nc"
+    run:
+        shell("curl -L 'uc3-s3mrt1001-prd.s3.us-west-2.amazonaws.com/46c3bb0e-0f11-4840-bc13-8e5dc638ee70/data?response-content-disposition=attachment%3B%20filename%3Ddoi_10.5061_dryad.dk1j0__v2.zip&response-content-type=application%2Fzip&X-Amz-Security-Token=IQoJb3JpZ2luX2VjENj%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLXdlc3QtMiJGMEQCICij0CvhkaOjICz3KIOho2ocU0RB3fPVVXIsr13vLb9sAiA%2B5m6gJzH1s54xneiaBvX05SQcrTCMcpqxgIy7YrTzPyr6AwhhEAAaDDQ1MTgyNjkxNDE1NyIMFkGm9SLucPFw6LqrKtcDrXbyQcNOLBjbWIgb2mQ%2FIxTyL%2F%2Bg4Gvyc9OaBGHMksBfX5Yr%2Bp8FT0JVyGx0JgO5THfYMz3%2FZtyNnzveR3cfNFlelTdewEZ6WTpp5ZgOVLGnjfMud9YihYbgxydFpkZDBcS7MMAOFLPBxOTAhs1Evc7q%2FGgNsREarozvJDf9ZLdOmlj3y3nyEgLcBEwO4GryKLDzpWXSOm85Rv3do1G%2F8wMAnyuPP3krUcEuJFZaXhs6Sg5ILyUUw%2BfgPd9INi4AT6mUQTc%2BzecYxM38KscxO%2BMOqWUrG%2B8xou13lyyJxv1AT0%2FxKq0521SOkhSp%2BmFFTrIq%2BrBIQteUVBa2S3ZJcfSXMd%2Fa9pJ04sW%2BcL5OWf6xvG9rnARPfPdrxNeNagjUUOLVb3UZO6sc%2BysicA61JPjphshb%2Bi5lESI7UBAgu8lrgIUOmmhcIiNWDpfjc2GZUDWW6%2Bh4%2FvVZvdf8Bwo0crxv5oQxVxpgQStDlDnZlQfr44JplErC%2FBHSdC4%2FAO2ty8fOykbljYCsk1Ge7ur8CRXysublCXIktT5L89EWhYfdCvbtKrHG%2FAZBunaf1iVqJH%2F1J35j9Nb8XXcZY8BwDZnABvfpxzz6yMx%2F%2FjL1z6oILlYCVGTHMMqi8pEGOqYBylvm4t6aaW%2F0RTO3TEYhVgAytwEvr6F1Iuqg87HGNwpTpnJDXrK1pJ8qI1w8QQ%2Bc%2BiEQ0CsVGsjx0gs66GWIH%2Bl9HaTMRklSJPFQY37sFc5px50hcUN8JFbSMxD%2B%2B3Mz%2BJk4CcDC%2FpKq3bUVsWKNJzYocoHWandENi6JRxOj70qjM6pyCHakTwNpDPP58k9v%2BFTvWACSRFbmL13IJxh3vJPfCw%2BIAQ%3D%3D&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20220324T172921Z&X-Amz-SignedHeaders=host&X-Amz-Expires=14399&X-Amz-Credential=ASIAWSMX3SNWYLQRXNKC%2F20220324%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Signature=c0205140c4fb9c18dd98cfc914ab246d15b742e3abe6bc0198c1579237ddbdfd' -o {output.zip}")
+        output_folder = Path(output["gdp"]).parent
+        shell("unzip {output.zip} -d {output_folder}")
+
+
 rule retrieve_load_data:
     input: HTTP.remote("data.open-power-system-data.org/time_series/2019-06-05/time_series_60min_singleindex.csv", keep_local=True, static=True)
     output: "data/load_raw.csv"
