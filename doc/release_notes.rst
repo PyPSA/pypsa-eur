@@ -64,6 +64,9 @@ Upcoming Release
 
 * Remove rules to build or retrieve rasterized NATURA 2000 dataset. Renewable potential calculation now directly uses the shapefiles.
 
+* Cache data and cutouts folders. This cache will be updated weekly.
+
+* Add rule to automatically retrieve Natura2000 natural protection areas. Switch of file format to GPKG.
 
 PyPSA-Eur 0.4.0 (22th September 2021)
 =====================================
