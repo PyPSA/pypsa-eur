@@ -123,12 +123,12 @@ def countries(naturalearth, country_list):
     return s
 
 
-def eez(country_shapes, eez, country_list):
+def eez(eez, country_list):
     df = gpd.read_file(eez)
-    df = df.loc[df['ISO_3digit'].isin([_get_country('alpha_3', alpha_2=c) for c in country_list])]
-    df['name'] = df['ISO_3digit'].map(lambda c: _get_country('alpha_2', alpha_3=c))
+    iso3_list = [_get_country('alpha_3', alpha_2=c) for c in country_list]
+    df = df.query("ISO_TER1 in @iso3_list and POL_TYPE == '200NM'")
+    df['name'] = df['ISO_TER1'].map(lambda c: _get_country('alpha_2', alpha_3=c))
     s = df.set_index('name').geometry.map(lambda s: _simplify_polys(s, filterremote=False))
-    s = gpd.GeoSeries({k:v for k,v in s.iteritems() if v.distance(country_shapes[k]) < 1e-3})
     s.index.name = "name"
     return s
 
@@ -222,7 +222,7 @@ if __name__ == "__main__":
     country_shapes = countries(snakemake.input.naturalearth, snakemake.config['countries'])
     save_to_geojson(country_shapes, snakemake.output.country_shapes)
 
-    offshore_shapes = eez(country_shapes, snakemake.input.eez, snakemake.config['countries'])
+    offshore_shapes = eez(snakemake.input.eez, snakemake.config['countries'])
     save_to_geojson(offshore_shapes, snakemake.output.offshore_shapes)
 
     europe_shape = country_cover(country_shapes, offshore_shapes)
