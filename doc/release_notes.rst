@@ -62,6 +62,8 @@ Upcoming Release
 
 * New network topology extracted from the ENTSO-E interactive map.
 
+* Iterative solving with impedance updates is skipped if there are no expandable lines.
+
 * Switch from Germany to Belgium for continuous integration and tutorial to save resources.
 
 * Use updated SARAH-2 and ERA5 cutouts with slightly wider scope to east and additional variables.
