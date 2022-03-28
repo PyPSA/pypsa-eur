@@ -45,6 +45,7 @@ dependencies:
   - cartopy
   - descartes
   - rasterio
+  - fiona # explicit for Windows
 
   # PyPSA-Eur-Sec Dependencies
   - geopy
