@@ -160,7 +160,7 @@ if config['enable'].get('build_cutout', False):
 
 if config['enable'].get('retrieve_cutout', True):
     rule retrieve_cutout:
-        input: HTTP.remote("zenodo.org/record/4709858/files/{cutout}.nc", keep_local=True, static=True)
+        input: HTTP.remote("zenodo.org/record/6382570/files/{cutout}.nc", keep_local=True, static=True)
         output: "cutouts/{cutout}.nc"
         run: move(input[0], output[0])
 
@@ -201,19 +201,19 @@ rule build_renewable_profiles:
     benchmark: "benchmarks/build_renewable_profiles_{technology}"
     threads: ATLITE_NPROCESSES
     resources: mem_mb=ATLITE_NPROCESSES * 5000
+    wildcard_constraints: technology="(?!hydro).*" # Any technology other than hydro
     script: "scripts/build_renewable_profiles.py"
 
 
-if 'hydro' in config['renewable'].keys():
-    rule build_hydro_profile:
-        input:
-            country_shapes='resources/country_shapes.geojson',
-            eia_hydro_generation='data/bundle/EIA_hydro_generation_2000_2014.csv',
-            cutout="cutouts/" + config["renewable"]['hydro']['cutout'] + ".nc"
-        output: 'resources/profile_hydro.nc'
-        log: "logs/build_hydro_profile.log"
-        resources: mem_mb=5000
-        script: 'scripts/build_hydro_profile.py'
+rule build_hydro_profile:
+    input:
+        country_shapes='resources/country_shapes.geojson',
+        eia_hydro_generation='data/bundle/EIA_hydro_generation_2000_2014.csv',
+        cutout=f"cutouts/{config['renewable']['hydro']['cutout']}.nc" if "hydro" in config["renewable"] else "config['renewable']['hydro']['cutout'] not configured",
+    output: 'resources/profile_hydro.nc'
+    log: "logs/build_hydro_profile.log"
+    resources: mem_mb=5000
+    script: 'scripts/build_hydro_profile.py'
 
 
 rule add_electricity:
