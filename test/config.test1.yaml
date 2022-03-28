@@ -16,7 +16,7 @@ scenario:
   clusters: [5]
   opts: [Co2L-24H]
 
-countries: ['DE']
+countries: ['BE']
 
 clustering:
   simplify:
@@ -55,7 +55,7 @@ electricity:
 atlite:
   nprocesses: 4
   cutouts:
-    europe-2013-era5-tutorial:
+    be-03-2013-era5:
       module: era5
       x: [4., 15.]
       y: [46., 56.]
@@ -63,7 +63,7 @@ atlite:
 
 renewable:
   onwind:
-    cutout: europe-2013-era5-tutorial
+    cutout: be-03-2013-era5
     resource:
       method: wind
       turbine: Vestas_V112_3MW
@@ -80,7 +80,7 @@ renewable:
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   offwind-ac:
-    cutout: europe-2013-era5-tutorial
+    cutout: be-03-2013-era5
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_5MW_offshore
@@ -92,7 +92,7 @@ renewable:
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   offwind-dc:
-    cutout: europe-2013-era5-tutorial
+    cutout: be-03-2013-era5
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_5MW_offshore
@@ -105,7 +105,7 @@ renewable:
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   solar:
-    cutout: europe-2013-era5-tutorial
+    cutout: be-03-2013-era5
     resource:
       method: pv
       panel: CSi
