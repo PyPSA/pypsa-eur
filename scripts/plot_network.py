@@ -181,7 +181,7 @@ def plot_map(n, ax=None, attribute='p_nom', opts={}):
     return fig
 
 
-def plot_total_energy_pie(n, ax=None, opts={}):
+def plot_total_energy_pie(n, opts, ax=None):
     if ax is None: ax = plt.gca()
 
     ax.set_title('Energy per technology', fontdict=dict(fontsize="medium"))
@@ -199,7 +199,7 @@ def plot_total_energy_pie(n, ax=None, opts={}):
             t1.remove()
             t2.remove()
 
-def plot_total_cost_bar(n, ax=None, opts={}):
+def plot_total_cost_bar(n, opts, ax=None):
     if ax is None: ax = plt.gca()
 
     total_load = (n.snapshot_weightings.generators * n.loads_t.p.sum(axis=1)).sum()
@@ -258,13 +258,7 @@ if __name__ == "__main__":
 
     set_plot_style()
 
-    paths, config, wildcards, logs, out = (
-        snakemake.input,
-        snakemake.config,
-        snakemake.wildcards,
-        snakemake.log,
-        snakemake.output,
-    )
+    config, wildcards = snakemake.config, snakemake.wildcards
 
     map_figsize = config["plotting"]['map']['figsize']
     map_boundaries = config["plotting"]['map']['boundaries']
