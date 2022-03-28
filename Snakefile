@@ -162,8 +162,6 @@ rule build_shapes:
     input:
         naturalearth='data/naturalearth/ne_10m_admin_0_countries.shp',
         eez='data/eez/World_EEZ_v11_20191118_gpkg/eez_v11.gpkg',
-        ch_cantons='data/bundle/ch_cantons.csv',
-        ch_popgdp='data/bundle/je-e-21.03.02.xls'
     output:
         country_shapes='resources/country_shapes.geojson',
         offshore_shapes='resources/offshore_shapes.geojson',
