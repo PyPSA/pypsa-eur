@@ -68,7 +68,7 @@ if config['enable'].get('retrieve_databundle', True):
 
 
 rule retrieve_natura_data:
-    input: HTTP.remote("sdi.eea.europa.eu/datashare/s/H6QGCybMdLLnywo/download?path=%2FNatura2000_end2020_gpkg&files=Natura2000_end2020.gpkg", keep_local=True, static=True)
+    input: HTTP.remote("sdi.eea.europa.eu/datashare/s/H6QGCybMdLLnywo/download", additional_request_string="?path=%2FNatura2000_end2020_gpkg&files=Natura2000_end2020.gpkg", static=True)
     output: "data/Natura2000_end2020.gpkg"
     run: move(input[0], output[0])
 
