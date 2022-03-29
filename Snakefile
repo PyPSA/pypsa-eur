@@ -67,11 +67,23 @@ rule download_eez:
         zip="data/eez/World_EEZ_v11_20191118_gpkg.zip",
         gpkg="data/eez/World_EEZ_v11_20191118_gpkg/eez_v11.gpkg",
     run:
-        shell(
-            "curl  -X POST --data 'name=Name&organisation=Organisation&email=e.mail%40inter.net&country=Germany&user_category=academia&purpose_category=Research&agree=1' 'https://www.marineregions.org/download_file.php?name=World_EEZ_v11_20191118_gpkg.zip' --output '{output.zip}'"
-        )
+        import requests
+
+        response = requests.post('https://www.marineregions.org/download_file.php', params={'name': 'World_EEZ_v11_20191118_gpkg.zip'},
+            data={
+                'name': 'Name',
+                'organisation': 'Organisation',
+                'email': 'e.mail@inter.net',
+                'country': 'Germany',
+                'user_category': 'academia',
+                'purpose_category': 'Research',
+                'agree': '1',
+            })
+
+        with open(output["zip"], 'wb') as f:
+            f.write(response.content)
         output_folder = Path(output["zip"]).parent
-        shell("unzip {output.zip} -d {output_folder}")
+        unpack_archive(output["zip"], output_folder)
 
 
 rule download_gebco_bathymetry:
@@ -85,17 +97,20 @@ rule download_gebco_bathymetry:
         zip="data/gebco/gebco_2021.zip",
         gebco="data/gebco/GEBCO_2021.nc",
     run:
-        shell("mv {input} {output.zip}")
+        move(input[0], output["zip"])
         output_folder = Path(output["gebco"]).parent
-        shell("unzip {output.zip} -d {output_folder}")
+        unpack_archive(output["zip"], output_folder)
 
-
+# Download directly from naciscdn.org which is a redirect from naturalearth.com
+# (https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-admin-0-countries/)
 rule download_naturalearth:
+    input:
+        HTTP.remote("https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_0_countries.zip", keep_local=True, static=True)
     output:
         zip="data/naturalearth/ne_10m_admin_0_countries.zip",
         countries="data/naturalearth/ne_10m_admin_0_countries.shp"
     run:
-        shell("curl -L 'https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/cultural/ne_10m_admin_0_countries.zip' -o {output.zip}")
+        move(input[0], output["zip"])
         output_folder = Path(output["countries"]).parent
         unpack_archive(output["zip"], output_folder)
 
@@ -193,7 +208,7 @@ if config['enable'].get('build_cutout', False):
 
 if config['enable'].get('retrieve_cutout', True):
     rule retrieve_cutout:
-        input: HTTP.remote("zenodo.org/record/4709858/files/{cutout}.nc", keep_local=True, static=True)
+        input: HTTP.remote("zenodo.org/record/6382570/files/{cutout}.nc", keep_local=True, static=True)
         output: "cutouts/{cutout}.nc"
         run: move(input[0], output[0])
 

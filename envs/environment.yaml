@@ -38,6 +38,7 @@ dependencies:
   - matplotlib
   - proj
   - country_converter
+  - fiona <= 1.18.20  # Till issue https://github.com/Toblerity/Fiona/issues/1085 is not solved
 
   # Keep in conda environment when calling ipython
   - ipython
