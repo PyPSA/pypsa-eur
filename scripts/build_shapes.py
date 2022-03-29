@@ -80,6 +80,7 @@ import pandas as pd
 import geopandas as gpd
 from shapely.geometry import MultiPolygon, Polygon
 from shapely.ops import unary_union
+from shapely.validation import make_valid
 import pycountry as pyc
 
 logger = logging.getLogger(__name__)
@@ -104,7 +105,13 @@ def _simplify_polys(polys, minarea=0.1, tolerance=0.01, filterremote=True):
                                   if not filterremote or (mainpoly.distance(p) < mainlength)])
         else:
             polys = mainpoly
-    return polys.simplify(tolerance=tolerance)
+
+    polys = polys.simplify(tolerance=tolerance)
+    
+    if not polys.is_valid:
+        polys = make_valid(polys)
+
+    return polys
 
 
 def countries(naturalearth, country_list):
@@ -119,6 +126,7 @@ def countries(naturalearth, country_list):
     df = df.loc[df.name.isin(country_list) & ((df['scalerank'] == 0) | (df['scalerank'] == 5))]
     s = df.set_index('name')['geometry'].map(_simplify_polys)
     if 'RS' in country_list: s['RS'] = s['RS'].union(s.pop('XK'))
+    s["RS"] = Polygon(s["RS"].exterior)
 
     return s
 
