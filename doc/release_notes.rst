@@ -62,6 +62,7 @@ Upcoming Release
 
 * New network topology extracted from the ENTSO-E interactive map.
 
+* Update of EIA hydroelectricity generation data, which is now stored directly in the repository.
 
 PyPSA-Eur 0.4.0 (22th September 2021)
 =====================================

@@ -37,6 +37,7 @@ dependencies:
   - pyomo
   - matplotlib
   - proj
+  - country_converter
 
   # Keep in conda environment when calling ipython
   - ipython
@@ -50,7 +51,6 @@ dependencies:
   - geopy
   - tqdm
   - pytz
-  - country_converter
   - tabula-py
 
   - pip:
