@@ -404,7 +404,7 @@ def make_summaries(networks_dict, paths, config, country='all'):
 
         Nyears = n.snapshot_weightings.objective.sum() / 8760.
         costs = load_costs(paths[0], config['costs'], config['electricity'], Nyears)
-        update_transmission_costs(n, costs, simple_hvdc_costs=False)
+        update_transmission_costs(n, costs)
 
         assign_carriers(n)
 
