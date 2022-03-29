@@ -62,6 +62,8 @@ Upcoming Release
 
 * New network topology extracted from the ENTSO-E interactive map.
 
+* Update of EIA hydroelectricity generation data, which is now stored directly in the repository.
+
 * Iterative solving with impedance updates is skipped if there are no expandable lines.
 
 * Switch from Germany to Belgium for continuous integration and tutorial to save resources.
