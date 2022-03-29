@@ -125,8 +125,9 @@ def countries(naturalearth, country_list):
 
     df = df.loc[df.name.isin(country_list) & ((df['scalerank'] == 0) | (df['scalerank'] == 5))]
     s = df.set_index('name')['geometry'].map(_simplify_polys)
-    if 'RS' in country_list: s['RS'] = s['RS'].union(s.pop('XK'))
-    s["RS"] = Polygon(s["RS"].exterior)
+    if 'RS' in country_list:
+        s['RS'] = s['RS'].union(s.pop('XK'))
+        s["RS"] = Polygon(s["RS"].exterior)
 
     return s
 
