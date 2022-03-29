@@ -49,10 +49,7 @@ if config['enable'].get('prepare_links_p_nom', False):
         script: 'scripts/prepare_links_p_nom.py'
 
 
-datafiles = ['ch_cantons.csv', 'je-e-21.03.02.xls', 
-            'EIA_hydro_generation_2000_2014.csv', 'hydro_capacities.csv', 
-            'NUTS_2013_60M_SH/data/NUTS_RG_60M_2013.shp', 'nama_10r_3popgdp.tsv.gz', 
-            'nama_10r_3gdp.tsv.gz', 'corine/g250_clc06_V18_5.tif']
+datafiles = ['EIA_hydro_generation_2000_2014.csv', 'hydro_capacities.csv', 'corine/g250_clc06_V18_5.tif']
 
 
 if config['enable'].get('retrieve_databundle', True):
@@ -115,6 +112,22 @@ rule download_naturalearth:
         unpack_archive(output["zip"], output_folder)
 
 
+rule download_population_data:
+    input: HTTP.remote("data.worldpop.org/GIS/Population/Global_2000_2020/2013/0_Mosaicked/ppp_2013_1km_Aggregated.tif", static=True)
+    output: "data/worldpop/ppp_2013_1km_Aggregated.tif"
+    run: move(input[0], output[0])
+
+
+rule download_gdp_data:
+    output:
+        zip="data/gdp/doi_10.5061_dryad.dk1j0__v2.zip",
+        gdp="data/gdp/GDP_PPP_1990_2015_5arcmin_v2.nc"
+    run:
+        shell("curl -L 'uc3-s3mrt1001-prd.s3.us-west-2.amazonaws.com/46c3bb0e-0f11-4840-bc13-8e5dc638ee70/data?response-content-disposition=attachment%3B%20filename%3Ddoi_10.5061_dryad.dk1j0__v2.zip&response-content-type=application%2Fzip&X-Amz-Security-Token=IQoJb3JpZ2luX2VjENj%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLXdlc3QtMiJGMEQCICij0CvhkaOjICz3KIOho2ocU0RB3fPVVXIsr13vLb9sAiA%2B5m6gJzH1s54xneiaBvX05SQcrTCMcpqxgIy7YrTzPyr6AwhhEAAaDDQ1MTgyNjkxNDE1NyIMFkGm9SLucPFw6LqrKtcDrXbyQcNOLBjbWIgb2mQ%2FIxTyL%2F%2Bg4Gvyc9OaBGHMksBfX5Yr%2Bp8FT0JVyGx0JgO5THfYMz3%2FZtyNnzveR3cfNFlelTdewEZ6WTpp5ZgOVLGnjfMud9YihYbgxydFpkZDBcS7MMAOFLPBxOTAhs1Evc7q%2FGgNsREarozvJDf9ZLdOmlj3y3nyEgLcBEwO4GryKLDzpWXSOm85Rv3do1G%2F8wMAnyuPP3krUcEuJFZaXhs6Sg5ILyUUw%2BfgPd9INi4AT6mUQTc%2BzecYxM38KscxO%2BMOqWUrG%2B8xou13lyyJxv1AT0%2FxKq0521SOkhSp%2BmFFTrIq%2BrBIQteUVBa2S3ZJcfSXMd%2Fa9pJ04sW%2BcL5OWf6xvG9rnARPfPdrxNeNagjUUOLVb3UZO6sc%2BysicA61JPjphshb%2Bi5lESI7UBAgu8lrgIUOmmhcIiNWDpfjc2GZUDWW6%2Bh4%2FvVZvdf8Bwo0crxv5oQxVxpgQStDlDnZlQfr44JplErC%2FBHSdC4%2FAO2ty8fOykbljYCsk1Ge7ur8CRXysublCXIktT5L89EWhYfdCvbtKrHG%2FAZBunaf1iVqJH%2F1J35j9Nb8XXcZY8BwDZnABvfpxzz6yMx%2F%2FjL1z6oILlYCVGTHMMqi8pEGOqYBylvm4t6aaW%2F0RTO3TEYhVgAytwEvr6F1Iuqg87HGNwpTpnJDXrK1pJ8qI1w8QQ%2Bc%2BiEQ0CsVGsjx0gs66GWIH%2Bl9HaTMRklSJPFQY37sFc5px50hcUN8JFbSMxD%2B%2B3Mz%2BJk4CcDC%2FpKq3bUVsWKNJzYocoHWandENi6JRxOj70qjM6pyCHakTwNpDPP58k9v%2BFTvWACSRFbmL13IJxh3vJPfCw%2BIAQ%3D%3D&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20220324T172921Z&X-Amz-SignedHeaders=host&X-Amz-Expires=14399&X-Amz-Credential=ASIAWSMX3SNWYLQRXNKC%2F20220324%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Signature=c0205140c4fb9c18dd98cfc914ab246d15b742e3abe6bc0198c1579237ddbdfd' -o {output.zip}")
+        output_folder = Path(output["gdp"]).parent
+        shell("unzip {output.zip} -d {output_folder}")
+
+
 rule retrieve_load_data:
     input: HTTP.remote("data.open-power-system-data.org/time_series/2019-06-05/time_series_60min_singleindex.csv", keep_local=True, static=True)
     output: "data/load_raw.csv"
@@ -164,16 +177,10 @@ rule build_shapes:
     input:
         naturalearth='data/naturalearth/ne_10m_admin_0_countries.shp',
         eez='data/eez/World_EEZ_v11_20191118_gpkg/eez_v11.gpkg',
-        nuts3='data/bundle/NUTS_2013_60M_SH/data/NUTS_RG_60M_2013.shp',
-        nuts3pop='data/bundle/nama_10r_3popgdp.tsv.gz',
-        nuts3gdp='data/bundle/nama_10r_3gdp.tsv.gz',
-        ch_cantons='data/bundle/ch_cantons.csv',
-        ch_popgdp='data/bundle/je-e-21.03.02.xls'
     output:
         country_shapes='resources/country_shapes.geojson',
         offshore_shapes='resources/offshore_shapes.geojson',
         europe_shape='resources/europe_shape.geojson',
-        nuts3_shapes='resources/nuts3_shapes.geojson'
     log: "logs/build_shapes.log"
     threads: 1
     resources: mem_mb=500
@@ -273,7 +280,6 @@ rule add_electricity:
         hydro_capacities='data/bundle/hydro_capacities.csv',
         geth_hydro_capacities='data/geth2015_hydro_capacities.csv',
         load='resources/load.csv',
-        nuts3_shapes='resources/nuts3_shapes.geojson',
         **{f"profile_{tech}": f"resources/profile_{tech}.nc"
            for tech in config['renewable']}
     output: "networks/elec.nc"
