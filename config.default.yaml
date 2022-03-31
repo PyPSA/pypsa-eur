@@ -42,6 +42,15 @@ electricity:
   co2limit: 7.75e+7 # 0.05 * 3.1e9*0.5
   co2base: 1.487e+9
   agg_p_nom_limits: data/agg_p_nom_minmax.csv
+  # parameters used for the min renewable constraint, can be used with the RE wildcard in opts
+  renewable_aim: # installed capacity aim 2030 of BMWi for Germany https://www.bmwi.de/Redaktion/DE/Downloads/Energie/220111_eroeffnungsbilanz_klimaschutz.pdf?__blob=publicationFile&v=22
+    onwind: 100 #GW
+    offwind: 30 #GW
+    solar: 200 #GW
+  # parameters used for the base load constraint, can be used with the BL wildcard in opts
+  base_load:
+    lignite: 0.2 #min_p_pu value for lignite
+    nuclear: 0.354
 
   extendable_carriers:
     Generator: []

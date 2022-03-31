@@ -233,6 +233,15 @@ def add_minRenew_constraints(n, config, o):
             rhs= config["electricity"]["renewable_aim"][tech] * 1000 #in GW
             define_constraints(n, lhs, '>=', rhs, 'Carrier', f'min_capacity_{tech}')
 
+def add_base_load_constraint(n, config):
+    '''
+    Adds the constraint that conventional carriers defined in the config have a base load namely p_min_pu.
+    To use this constraint simply add the wildcard BL in the opts wildcard.
+    '''
+    carriers=config["electricity"]["base_load"].keys()
+    for carrier in carriers:
+        filter=n.generators.query("carrier==@carrier").index
+        n.generators.loc[filter,"p_min_pu"]=config["electricity"]["base_load"][carrier]
 
 def add_battery_constraints(n):
     nodes = n.buses.index[n.buses.carrier == "battery"]
@@ -259,6 +268,8 @@ def extra_functionality(n, snapshots):
         add_SAFE_constraints(n, config)
     if 'CCL' in opts and n.generators.p_nom_extendable.any():
         add_CCL_constraints(n, config)
+    if "BL":
+        add_base_load_constraint(n, config)
     for o in opts:
         if "EQ" in o:
             add_EQ_constraints(n, o)
