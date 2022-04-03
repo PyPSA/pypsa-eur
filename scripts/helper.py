@@ -1,4 +1,5 @@
 import os
+import pytz
 import pandas as pd
 from pathlib import Path
 from pypsa.descriptors import Dict
@@ -101,3 +102,24 @@ def progress_retrieve(url, file):
         pbar.update( int(count * blockSize * 100 / totalSize) )
 
     urllib.request.urlretrieve(url, file, reporthook=dlProgress)
+
+
+def generate_periodic_profiles(dt_index, nodes, weekly_profile, localize=None):
+    """
+    Give a 24*7 long list of weekly hourly profiles, generate this for each
+    country for the period dt_index, taking account of time zones and summer time.
+    """
+
+    weekly_profile = pd.Series(weekly_profile, range(24*7))
+
+    week_df = pd.DataFrame(index=dt_index, columns=nodes)
+
+    for node in nodes:
+        timezone = pytz.timezone(pytz.country_timezones[node[:2]][0])
+        tz_dt_index = dt_index.tz_convert(timezone)
+        week_df[node] = [24 * dt.weekday() + dt.hour for dt in tz_dt_index]
+        week_df[node] = week_df[node].map(weekly_profile)
+
+    week_df = week_df.tz_localize(localize)
+
+    return week_df
