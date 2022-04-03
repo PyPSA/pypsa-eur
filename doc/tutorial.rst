@@ -53,41 +53,43 @@ Likewise, the example's temporal scope can be restricted (e.g. to a single month
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 24-27
+   :start-at: snapshots:
+   :end-before: enable:
 
 It is also possible to allow less or more carbon-dioxide emissions. Here, we limit the emissions of Germany 100 Megatonnes per year.
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 38,40
+   :lines: 40,42
 
 PyPSA-Eur also includes a database of existing conventional powerplants.
 We can select which types of powerplants we like to be included with fixed capacities:
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 38,54
+   :lines: 40,56
 
 To accurately model the temporal and spatial availability of renewables such as wind and solar energy, we rely on historical weather data.
 It is advisable to adapt the required range of coordinates to the selection of countries.
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 56-63
+   :start-at: atlite:
+   :end-before: renewable:
 
 We can also decide which weather data source should be used to calculate potentials and capacity factor time-series for each carrier.
 For example, we may want to use the ERA-5 dataset for solar and not the default SARAH-2 dataset.
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 65,108-109
+   :lines: 67,110,111
 
 Finally, it is possible to pick a solver. For instance, this tutorial uses the open-source solvers CBC and Ipopt and does not rely
 on the commercial solvers Gurobi or CPLEX (for which free academic licenses are available).
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 171,181-182
+   :lines: 173,183,184
 
 .. note::
 
@@ -125,11 +127,6 @@ orders ``snakemake`` to run the script ``solve_network`` that produces the solve
         script: "scripts/solve_network.py"
 
 .. until https://github.com/snakemake/snakemake/issues/46 closed
-
-.. warning::
-    On Windows the previous command may currently cause a ``MissingRuleException`` due to problems with output files in subfolders.
-    This is an `open issue <https://github.com/snakemake/snakemake/issues/46>`_ at `snakemake <https://snakemake.readthedocs.io/>`_.
-    Windows users should add the option ``--keep-target-files`` to the command or instead run ``snakemake -j 1 solve_all_networks``.
 
 This triggers a workflow of multiple preceding jobs that depend on each rule's inputs and outputs:
 
@@ -271,7 +268,8 @@ the wildcards given in ``scenario`` in the configuration file ``config.yaml`` ar
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 14-18
+   :start-at: scenario:
+   :end-before: countries:
 
 In this example we would not only solve a 6-node model of Germany but also a 2-node model.
 
