@@ -11,7 +11,7 @@ dependencies:
   - pip
 
   - pypsa>=0.18.1
-  - atlite>=0.2.5
+  - atlite>=0.2.6
   - dask
 
   # Dependencies of the workflow itself
