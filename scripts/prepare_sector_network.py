@@ -573,48 +573,6 @@ def cycling_shift(df, steps=1):
 
 
 
-def build_heat_demand(n):
-
-
-
-    # copy forward the daily average heat demand into each hour, so it can be multipled by the intraday profile
-    daily_space_heat_demand = xr.open_dataarray(snakemake.input.heat_demand_total).to_pandas().reindex(index=n.snapshots, method="ffill")
-
-    intraday_profiles = pd.read_csv(snakemake.input.heat_profile, index_col=0)
-
-    sectors = ["residential", "services"]
-    uses = ["water", "space"]
-
-    heat_demand = {}
-    electric_heat_supply = {}
-    for sector, use in product(sectors, uses):
-        weekday = list(intraday_profiles[f"{sector} {use} weekday"])
-        weekend = list(intraday_profiles[f"{sector} {use} weekend"])
-        weekly_profile = weekday * 5 + weekend * 2
-        intraday_year_profile = generate_periodic_profiles(
-            daily_space_heat_demand.index.tz_localize("UTC"),
-            nodes=daily_space_heat_demand.columns,
-            weekly_profile=weekly_profile
-        )
-
-        if use == "space":
-            heat_demand_shape = daily_space_heat_demand * intraday_year_profile
-        else:
-            heat_demand_shape = intraday_year_profile
-
-        heat_demand[f"{sector} {use}"] = (heat_demand_shape/heat_demand_shape.sum()).multiply(pop_weighted_energy_totals[f"total {sector} {use}"]) * 1e6
-        electric_heat_supply[f"{sector} {use}"] = (heat_demand_shape/heat_demand_shape.sum()).multiply(pop_weighted_energy_totals[f"electricity {sector} {use}"]) * 1e6
-
-    heat_demand = pd.concat(heat_demand, axis=1)
-    electric_heat_supply = pd.concat(electric_heat_supply, axis=1)
-
-    # subtract from electricity load since heat demand already in heat_demand
-    electric_nodes = n.loads.index[n.loads.carrier == "electricity"]
-    n.loads_t.p_set[electric_nodes] = n.loads_t.p_set[electric_nodes] - electric_heat_supply.groupby(level=1, axis=1).sum()[electric_nodes]
-
-    return heat_demand
-
-
 # TODO checkout PyPSA-Eur script
 def prepare_costs(cost_file, USD_to_EUR, discount_rate, Nyears, lifetime):
 
@@ -1294,12 +1252,53 @@ def add_land_transport(n, costs):
         )
 
 
+def build_heat_demand(n):
+
+    # copy forward the daily average heat demand into each hour, so it can be multipled by the intraday profile
+    daily_space_heat_demand = xr.open_dataarray(snakemake.input.heat_demand_total).to_pandas().reindex(index=n.snapshots, method="ffill")
+
+    intraday_profiles = pd.read_csv(snakemake.input.heat_profile, index_col=0)
+
+    sectors = ["residential", "services"]
+    uses = ["water", "space"]
+
+    heat_demand = {}
+    electric_heat_supply = {}
+    for sector, use in product(sectors, uses):
+        weekday = list(intraday_profiles[f"{sector} {use} weekday"])
+        weekend = list(intraday_profiles[f"{sector} {use} weekend"])
+        weekly_profile = weekday * 5 + weekend * 2
+        intraday_year_profile = generate_periodic_profiles(
+            daily_space_heat_demand.index.tz_localize("UTC"),
+            nodes=daily_space_heat_demand.columns,
+            weekly_profile=weekly_profile
+        )
+
+        if use == "space":
+            heat_demand_shape = daily_space_heat_demand * intraday_year_profile
+        else:
+            heat_demand_shape = intraday_year_profile
+
+        heat_demand[f"{sector} {use}"] = (heat_demand_shape/heat_demand_shape.sum()).multiply(pop_weighted_energy_totals[f"total {sector} {use}"]) * 1e6
+        electric_heat_supply[f"{sector} {use}"] = (heat_demand_shape/heat_demand_shape.sum()).multiply(pop_weighted_energy_totals[f"electricity {sector} {use}"]) * 1e6
+
+    heat_demand = pd.concat(heat_demand, axis=1)
+    electric_heat_supply = pd.concat(electric_heat_supply, axis=1)
+
+    # subtract from electricity load since heat demand already in heat_demand
+    electric_nodes = n.loads.index[n.loads.carrier == "electricity"]
+    n.loads_t.p_set[electric_nodes] = n.loads_t.p_set[electric_nodes] - electric_heat_supply.groupby(level=1, axis=1).sum()[electric_nodes]
+
+    return heat_demand
+
+
 def add_heat(n, costs):
 
     logger.info("Add heat sector")
 
     sectors = ["residential", "services"]
 
+    heat_demand = build_heat_demand(n)
 
     nodes, dist_fraction, urban_fraction = create_nodes_for_heat_sector()
 
@@ -2329,8 +2328,6 @@ if __name__ == "__main__":
             options['electricity_distribution_grid_cost_factor'] = float(o[4:].replace("p", ".").replace("m", "-"))
         if o == "biomasstransport":
             options["biomass_transport"] = True
-
-    heat_demand = build_heat_demand(n)
 
     if "nodistrict" in opts:
         options["district_heating"]["progress"] = 0.0
