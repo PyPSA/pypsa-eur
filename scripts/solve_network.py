@@ -268,7 +268,7 @@ def extra_functionality(n, snapshots):
         add_SAFE_constraints(n, config)
     if 'CCL' in opts and n.generators.p_nom_extendable.any():
         add_CCL_constraints(n, config)
-    if "BL":
+    if "BL" in opts:
         add_base_load_constraint(n, config)
     for o in opts:
         if "EQ" in o:

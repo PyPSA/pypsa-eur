@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2022 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
@@ -495,29 +495,29 @@ def attach_OPSD_renewables(n, techs):
 
 
 
-def estimate_renewable_capacities(n, tech_map):
+def estimate_renewable_capacities(n, config):
 
-    if len(tech_map) == 0: return
-
-    capacities = (pm.data.Capacity_stats().powerplant.convert_country_to_alpha2()
-                  [lambda df: df.Energy_Source_Level_2]
-                  .set_index(['Fueltype', 'Country']).sort_index())
-
-    countries = n.buses.country.unique()
+    if not config["electricity"]["estimate_renewable_capacities"]: return
+    
+    year = config["electricity"]["estimate_renewable_capacities"]["year"]
+    tech_map = config["electricity"]["estimate_renewable_capacities"]["technology_mapping"]
+    tech_keys = list(tech_map.keys())
+    countries = config["countries"]
+    expansion_limit = config["electricity"]["estimate_renewable_capacities"]["expansion_limit"]
 
     if len(countries) == 0: return
+    if len(tech_map) == 0: return
 
-    logger.info('heuristics applied to distribute renewable capacities [MW] \n{}'
-                .format(capacities.query('Fueltype in @tech_map.keys() and Capacity >= 0.1')
-                        .groupby('Country').agg({'Capacity': 'sum'})))
+    capacities = pm.data.IRENASTAT().powerplant.convert_country_to_alpha2()
+    capacities = capacities.query("Year == @year and Technology in @tech_keys and Country in @countries")
+    capacities = capacities.groupby(["Technology", "Country"]).Capacity.sum()
 
-    for ppm_fueltype, techs in tech_map.items():
-        tech_capacities = capacities.loc[ppm_fueltype, 'Capacity']\
-                                    .reindex(countries, fill_value=0.)
-        #tech_i = n.generators.query('carrier in @techs').index
-        tech_i = (n.generators.query('carrier in @techs')
-                  [n.generators.query('carrier in @techs')
-                   .bus.map(n.buses.country).isin(countries)].index)
+    logger.info(f"Heuristics applied to distribute renewable capacities [MW] "
+                f"{capacities.groupby('Country').sum()}")
+
+    for ppm_technology, techs in tech_map.items():
+        tech_capacities = capacities.loc[ppm_technology].reindex(countries, fill_value=0.)
+        tech_i = n.generators.query('carrier in @techs').index
         n.generators.loc[tech_i, 'p_nom'] = (
             (n.generators_t.p_max_pu[tech_i].mean() *
              n.generators.loc[tech_i, 'p_nom_max']) # maximal yearly generation
@@ -525,6 +525,10 @@ def estimate_renewable_capacities(n, tech_map):
              .transform(lambda s: normed(s) * tech_capacities.at[s.name])
              .where(lambda s: s>0.1, 0.))  # only capacities above 100kW
         n.generators.loc[tech_i, 'p_nom_min'] = n.generators.loc[tech_i, 'p_nom']
+        if expansion_limit:
+            assert np.isscalar(expansion_limit)
+            logger.info(f"Reducing capacity expansion limit to {expansion_limit*100:.2f}% of installed capacity.")
+            n.generators.loc[tech_i, 'p_nom_max'] = float(expansion_limit) * n.generators.loc[tech_i, 'p_nom_min']
 
 def attach_line_rating(n, fn, s_max_pu_factor,dlr_factor, line_clipping):
     s_max = xr.open_dataarray(fn).to_pandas().transpose()
@@ -535,6 +539,8 @@ def attach_line_rating(n, fn, s_max_pu_factor,dlr_factor, line_clipping):
         s_max_pu_cap = (np.pi / (6 * x_pu * n.lines.s_nom)).clip(lower=1) # need to clip here as cap values might be below 1 -> would mean the line cannot be operated at actual given pessimistic ampacity
         n.lines_t.s_max_pu = n.lines_t.s_max_pu.clip(upper=s_max_pu_cap, lower=1, axis=1)
     n.lines_t.s_max_pu*=s_max_pu_factor
+        
+
 
 def add_nice_carrier_names(n, config):
     carrier_i = n.carriers.index
@@ -578,11 +584,9 @@ if __name__ == "__main__":
     carriers = snakemake.config['electricity']['extendable_carriers']['Generator']
     attach_extendable_generators(n, costs, ppl, carriers)
 
-    tech_map = snakemake.config['electricity'].get('estimate_renewable_capacities_from_capacity_stats', {})
-    estimate_renewable_capacities(n, tech_map)
+    estimate_renewable_capacities(n, snakemake.config)
     techs = snakemake.config['electricity'].get('renewable_capacities_from_OPSD', [])
     attach_OPSD_renewables(n, techs)
-
     update_p_nom_max(n)
 
     if snakemake.config["lines"]["line_rating"]:

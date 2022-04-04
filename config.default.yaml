@@ -67,10 +67,20 @@ electricity:
   conventional_carriers: [nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
   renewable_capacities_from_OPSD: [] # onwind, offwind, solar
 
-  # estimate_renewable_capacities_from_capacity_stats:
-  #   # Wind is the Fueltype in ppm.data.Capacity_stats, onwind, offwind-{ac,dc} the carrier in PyPSA-Eur
-  #   Wind: [onwind, offwind-ac, offwind-dc]
-  #   Solar: [solar]
+  estimate_renewable_capacities:
+    # Renewable capacities are based on existing capacities reported by IRENA
+
+    # Reference year, any of 2000 to 2020
+    year: 2020
+    # Artificially limit maximum capacities to factor * (IRENA capacities),
+    # i.e. 110% of <years>'s capacities => expansion_limit: 1.1
+    # false: Use estimated renewable potentials determine by the workflow
+    expansion_limit: false
+    technology_mapping:
+      # Wind is the Fueltype in ppm.data.Capacity_stats, onwind, offwind-{ac,dc} the carrier in PyPSA-Eur
+      Offshore: [offwind-ac, offwind-dc]
+      Onshore: [onwind]
+      PV: [solar]
 
 atlite:
   nprocesses: 4
