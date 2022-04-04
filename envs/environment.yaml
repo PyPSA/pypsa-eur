@@ -24,7 +24,6 @@ dependencies:
   - yaml
   - pytables
   - lxml
-  - powerplantmatching>=0.4.8
   - numpy
   - pandas
   - geopandas
@@ -57,3 +56,4 @@ dependencies:
   - pip:
     - vresutils>=0.3.1
     - tsam>=1.1.0
+    - powerplantmatching>=0.5.1

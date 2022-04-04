@@ -104,7 +104,7 @@ if __name__ == "__main__":
     countries = n.buses.country.unique()
 
     ppl = (pm.powerplants(from_url=True)
-           .powerplant.fill_missing_decommyears()
+           .powerplant.fill_missing_decommissioning_years()
            .powerplant.convert_country_to_alpha2()
            .query('Fueltype not in ["Solar", "Wind"] and Country in @countries')
            .replace({'Technology': {'Steam Turbine': 'OCGT'}})
