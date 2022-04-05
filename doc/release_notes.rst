@@ -22,6 +22,8 @@ Energy Security Release (April 2022)
     * old: ``estimate_renewable_capacities_from_capacity_stats``
     * new: ``estimate_renewable_capacities``
 
+* Add function to add global constraint on use of gas in :mod:`prepare_network`. This can be activated with `electricity: gaslimit:` given in MWh. 
+
 * The powerplants that have been shut down before 2021 are filtered out. 
 
 **Bugs and Compatibility**
