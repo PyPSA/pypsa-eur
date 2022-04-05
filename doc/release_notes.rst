@@ -22,6 +22,7 @@ Energy Security Release (April 2022)
     * old: ``estimate_renewable_capacities_from_capacity_stats``
     * new: ``estimate_renewable_capacities``
 
+* The powerplants that have been shut down before 2021 are filtered out. 
 
 **Bugs and Compatibility**
   

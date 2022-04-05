@@ -94,6 +94,10 @@ def add_custom_powerplants(ppl, custom_powerplants, custom_ppl_query=False):
     return pd.concat([ppl, add_ppls], sort=False, ignore_index=True, verify_integrity=True)
 
 
+def replace_natural_gas_by_technology(df): 
+    return df.Fueltype.where(df.Fueltype != 'Natural Gas', df.Technology)
+
+
 if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
@@ -103,16 +107,13 @@ if __name__ == "__main__":
     n = pypsa.Network(snakemake.input.base_network)
     countries = n.buses.country.unique()
 
+
     ppl = (pm.powerplants(from_url=True)
            .powerplant.fill_missing_decommissioning_years()
            .powerplant.convert_country_to_alpha2()
            .query('Fueltype not in ["Solar", "Wind"] and Country in @countries')
-           .replace({'Technology': {'Steam Turbine': 'OCGT'}})
-            .assign(Fueltype=lambda df: (
-                    df.Fueltype
-                      .where(df.Fueltype != 'Natural Gas',
-                             df.Technology.replace('Steam Turbine',
-                                                   'OCGT').fillna('OCGT')))))
+           .replace({'Technology': {'Steam Turbine': 'OCGT', "Combustion Engine": "OCGT"}})
+           .assign(Fueltype=replace_natural_gas_by_technology))
 
     ppl_query = snakemake.config['electricity']['powerplants_filter']
     if isinstance(ppl_query, str):
