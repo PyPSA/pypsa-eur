@@ -64,11 +64,14 @@ Upcoming Release
 
 * Update of EIA hydroelectricity generation data, which is now stored directly in the repository.
 
+* The unused argument ``simple_hvdc_costs`` in :mod:`add_electricity` was removed.
+
 * Iterative solving with impedance updates is skipped if there are no expandable lines.
 
 * Switch from Germany to Belgium for continuous integration and tutorial to save resources.
 
 * Use updated SARAH-2 and ERA5 cutouts with slightly wider scope to east and additional variables.
+
 
 PyPSA-Eur 0.4.0 (22th September 2021)
 =====================================
