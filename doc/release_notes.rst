@@ -7,6 +7,26 @@
 Release Notes
 ##########################################
 
+Energy Security Release (April 2022)
+====================================
+
+**New Features and Changes**
+
+* Added existing renewable capacities for all countries based on IRENA statistics (IRENASTAT) using new ``powerplantmatching`` version:
+  * Configuration of reference year for capacities can be configured (default: ``2020``) 
+  * Uniform expansion limit of renewable build-up based on existing capacities can be configured using ``expansion_limit`` option
+    (default: ``false``; limited to determined renewable potentials)
+  * Distribution of country-level capacities proportional to maximum annual energy yield for each bus region
+  * This functionality was previously using OPSD data.
+  * The corresponding ``config`` entries changed, cf. ``config.default.yaml``:
+    * old: ``estimate_renewable_capacities_from_capacity_stats``
+    * new: ``estimate_renewable_capacities``
+
+
+**Bugs and Compatibility**
+  
+* ``powerplantmatching>=0.5.1`` is now required for ``IRENASTATS``.
+
 Synchronisation Release - Ukraine and Moldova (17th March 2022)
 ===============================================================
 
