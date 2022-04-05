@@ -196,14 +196,15 @@ def _add_links_from_tyndp(buses, links, links_tyndp, europe_shape):
             return buses, links
 
     has_replaces_b = links_tyndp.replaces.notnull()
-    oids = dict(Bus=_get_oid(buses), Link=_get_oid(links))
+    logger.info("TYNDP links replacing links in dataset (overwriting): " + ", ".join(links_tyndp.loc[has_replaces_b, "Name"]))
+    ids = dict(Bus=buses.index, Link=links.index)
     keep_b = dict(Bus=pd.Series(True, index=buses.index),
                   Link=pd.Series(True, index=links.index))
     for reps in links_tyndp.loc[has_replaces_b, 'replaces']:
         for comps in reps.split(':'):
-            oids_to_remove = comps.split('.')
-            c = oids_to_remove.pop(0)
-            keep_b[c] &= ~oids[c].isin(oids_to_remove)
+            ids_to_remove = comps.split('.')
+            c = ids_to_remove.pop(0)
+            keep_b[c] &= ~ids[c].isin(ids_to_remove)
     buses = buses.loc[keep_b['Bus']]
     links = links.loc[keep_b['Link']]
 
@@ -211,7 +212,7 @@ def _add_links_from_tyndp(buses, links, links_tyndp, europe_shape):
     # Corresponds approximately to 20km tolerances
 
     if links_tyndp["j"].notnull().any():
-        logger.info("TYNDP links already in the dataset (skipping): " + ", ".join(links_tyndp.loc[links_tyndp["j"].notnull(), "Name"]))
+        logger.info("Additional TYNDP links already in the dataset (skipping): " + ", ".join(links_tyndp.loc[links_tyndp["j"].notnull(), "Name"]))
         links_tyndp = links_tyndp.loc[links_tyndp["j"].isnull()]
         if links_tyndp.empty: return buses, links
 
