@@ -236,7 +236,7 @@ def _add_links_from_tyndp(buses, links, links_tyndp, europe_shape):
         carrier='DC',
         p_nom=links_tyndp["Power (MW)"],
         length=links_tyndp["Length (given) (km)"].fillna(links_tyndp["Length (distance*1.2) (km)"]),
-        under_construction=True,
+        under_construction=~(links_tyndp.status == 'built'),
         underground=False,
         geometry=(links_tyndp[["x1", "y1", "x2", "y2"]]
                   .apply(lambda s: str(LineString([[s.x1, s.y1], [s.x2, s.y2]])), axis=1)),
