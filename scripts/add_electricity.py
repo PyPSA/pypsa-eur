@@ -493,7 +493,7 @@ def attach_OPSD_renewables(n, techs):
 
 def estimate_renewable_capacities(n, config):
 
-    if not config["electricity"]["estimate_renewable_capacities"]: return
+    if not config["electricity"].get("estimate_renewable_capacities"): return
     
     year = config["electricity"]["estimate_renewable_capacities"]["year"]
     tech_map = config["electricity"]["estimate_renewable_capacities"]["technology_mapping"]
