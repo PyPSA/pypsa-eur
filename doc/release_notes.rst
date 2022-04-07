@@ -22,6 +22,9 @@ Energy Security Release (April 2022)
     * old: ``estimate_renewable_capacities_from_capacity_stats``
     * new: ``estimate_renewable_capacities``
 
+* Add operational reserve margin constraint analogous to `GenX implementation <https://genxproject.github.io/GenX/dev/core/#Reserves>`_.
+  Can be activated with config setting ``electricity: operational_reserve:``.
+
 * Add function to add global constraint on use of gas in :mod:`prepare_network`. This can be activated with `electricity: gaslimit:` given in MWh. 
 
 * The powerplants that have been shut down before 2021 are filtered out. 
