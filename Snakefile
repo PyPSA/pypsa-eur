@@ -216,6 +216,19 @@ rule build_hydro_profile:
     script: 'scripts/build_hydro_profile.py'
 
 
+rule build_heat_demand:
+    # TODO: Add commments
+    input:
+        cutout=f"cutouts/{config['renewable']['wind']['cutout']}.nc",
+        nuts3_shapes='resources/nuts3_shapes.geojson',
+        regions_onshore="resources/regions_onshore.geojson",
+    output:
+        heat_demand="resources/heat_demand.nc",
+    resources: mem_mb=20000
+    benchmark: "benchmarks/build_heat_demand"
+    script: "scripts/build_heat_demand.py"
+
+
 rule add_electricity:
     input:
         base_network='networks/base.nc',
@@ -228,6 +241,7 @@ rule add_electricity:
         nuts3_shapes='resources/nuts3_shapes.geojson',
         **{f"profile_{tech}": f"resources/profile_{tech}.nc"
            for tech in config['renewable']}
+        heat_demand="resources/heat_demand.nc",
     output: "networks/elec.nc"
     log: "logs/add_electricity.log"
     benchmark: "benchmarks/add_electricity"
@@ -277,6 +291,7 @@ rule cluster_network:
     script: "scripts/cluster_network.py"
 
 
+
 rule add_extra_components:
     input:
         network='networks/elec_s{simpl}_{clusters}.nc',
@@ -290,7 +305,7 @@ rule add_extra_components:
 
 
 rule prepare_network:
-    input: 'networks/elec_s{simpl}_{clusters}_ec.nc', tech_costs=COSTS
+    input: 'networks/elec_s{simpl}_{clusters}_ec.nc', tech_costs=COSTS,
     output: 'networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc'
     log: "logs/prepare_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.log"
     benchmark: "benchmarks/prepare_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}"
