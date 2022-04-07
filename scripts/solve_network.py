@@ -221,20 +221,16 @@ def add_operational_reserve_margin_constraint(n, config):
 
     # Reserve Variables 
     reserve = get_var(n, 'Generator', 'r')
+    lhs = linexpr((1, reserve)).sum(1)
 
     # Share of extendable renewable capacities
     ext_i = n.generators.query('p_nom_extendable').index
     vres_i = n.generators_t.p_max_pu.columns
-    capacity_factor = n.generators_t.p_max_pu[vres_i.intersection(ext_i)]
-    renewable_capacity_variables = get_var(n, 'Generator', 'p_nom')[vres_i.intersection(ext_i)]
+    if not ext_i.empty and not vres_i.empty:
+        capacity_factor = n.generators_t.p_max_pu[vres_i.intersection(ext_i)]
+        renewable_capacity_variables = get_var(n, 'Generator', 'p_nom')[vres_i.intersection(ext_i)]
+        lhs += linexpr((-EPSILON_VRES * capacity_factor, renewable_capacity_variables)).sum(1)
 
-    # Left-hand-side
-    lhs = (
-        linexpr((1, reserve)).sum(1) + 
-        linexpr((-EPSILON_VRES * capacity_factor, renewable_capacity_variables)).sum(1)
-    )
-
-    
     # Total demand at t
     demand =  n.loads_t.p.sum(1)
     
@@ -256,14 +252,16 @@ def update_capacity_constraint(n):
 
     dispatch = get_var(n, 'Generator', 'p')
     reserve = get_var(n, 'Generator', 'r')
-    
-    capacity_variable = get_var(n, 'Generator', 'p_nom')
+        
     capacity_fixed = n.generators.p_nom[fix_i]
     
     p_max_pu = get_as_dense(n, 'Generator', 'p_max_pu')
     
     lhs = linexpr((1, dispatch), (1, reserve))
-    lhs += linexpr((-p_max_pu[ext_i], capacity_variable)).reindex(columns=gen_i, fill_value='')
+    
+    if not ext_i.empty:
+        capacity_variable = get_var(n, 'Generator', 'p_nom')
+        lhs += linexpr((-p_max_pu[ext_i], capacity_variable)).reindex(columns=gen_i, fill_value='')
     
     rhs = (p_max_pu[fix_i] * capacity_fixed).reindex(columns=gen_i, fill_value=0)
     
