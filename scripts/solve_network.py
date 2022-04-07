@@ -304,7 +304,8 @@ def extra_functionality(n, snapshots):
         add_SAFE_constraints(n, config)
     if 'CCL' in opts and n.generators.p_nom_extendable.any():
         add_CCL_constraints(n, config)
-    if config["electricity"].get("operational_reserve"):
+    reserve = config["electricity"].get("operational_reserve", {})
+    if reserve.get("activate"):
         add_operational_reserve_margin(n, snapshots, config)
     for o in opts:
         if "EQ" in o:

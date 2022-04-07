@@ -45,6 +45,7 @@ electricity:
   agg_p_nom_limits: data/agg_p_nom_minmax.csv
 
   operational_reserve: # like https://genxproject.github.io/GenX/dev/core/#Reserves
+    activate: true
     epsilon_load: 0.02 # share of total load
     epsilon_vres: 0.02 # share of total renewable supply
     contingency: 4000 # fixed capacity in MW
