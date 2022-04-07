@@ -25,19 +25,19 @@ wildcard_constraints:
 
 
 rule cluster_all_networks:
-    input: expand(RDIR + "networks/elec_s{simpl}_{clusters}.nc", **config['scenario'])
+    input: expand(RDIR + "/prenetworks/elec_s{simpl}_{clusters}.nc", **config['scenario'])
 
 
 rule extra_components_all_networks:
-    input: expand(RDIR + "networks/elec_s{simpl}_{clusters}_ec.nc", **config['scenario'])
+    input: expand(RDIR + "/prenetworks/elec_s{simpl}_{clusters}_ec.nc", **config['scenario'])
 
 
 rule prepare_all_networks:
-    input: expand(RDIR + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc", **config['scenario'])
+    input: expand(RDIR + "/prenetworks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc", **config['scenario'])
 
 
 rule solve_all_networks:
-    input: expand(RDIR + "results/networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc", **config['scenario'])
+    input: expand(RDIR + "/postnetworks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc", **config['scenario'])
 
 
 if config['enable'].get('prepare_links_p_nom', False):
@@ -240,8 +240,8 @@ rule simplify_network:
     input:
         network=RDIR + '/prenetworks/elec.nc',
         tech_costs=COSTS,
-        regions_onshore="/resources/regions_onshore.geojson",
-        regions_offshore="/resources/regions_offshore.geojson"
+        regions_onshore="resources/regions_onshore.geojson",
+        regions_offshore="resources/regions_offshore.geojson"
     output:
         network=RDIR + '/prenetworks/elec_s{simpl}.nc',
         regions_onshore=RDIR + "/resources/regions_onshore_elec_s{simpl}.geojson",
@@ -337,7 +337,7 @@ rule solve_operations_network:
     input:
         unprepared=RDIR + "/prenetworks/elec_s{simpl}_{clusters}_ec.nc",
         optimized=RDIR + "/postnetworks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"
-    output: RDIR + "postnetworks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op.nc"
+    output: RDIR + "/postnetworks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op.nc"
     log:
         solver=normpath("logs/solve_operations_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op_solver.log"),
         python="logs/solve_operations_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op_python.log",
