@@ -249,9 +249,17 @@ if __name__ == "__main__":
                 logger.info("Setting CO2 limit according to config value.")
             break
 
-    gaslimit = snakemake.config["electricity"].get("gaslimit")
-    if gaslimit:
-        add_gaslimit(n, gaslimit, Nyears)
+    for o in opts:
+        if "CH4L" in o:
+            m = re.findall("[0-9]*\.?[0-9]+$", o)
+            if len(m) > 0:
+                limit = float(m[0]) * 1e6
+                add_gaslimit(n, limit, Nyears)
+                logger.info("Setting gas usage limit according to wildcard value.")
+            else:
+                add_gaslimit(n, snakemake.config["electricity"].get("gaslimit"), Nyears)
+                logger.info("Setting gas usage limit according to config value.")
+            break
 
     for o in opts:
         oo = o.split("+")
