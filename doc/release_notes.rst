@@ -25,7 +25,10 @@ Energy Security Release (April 2022)
 * Add operational reserve margin constraint analogous to `GenX implementation <https://genxproject.github.io/GenX/dev/core/#Reserves>`_.
   Can be activated with config setting ``electricity: operational_reserve:``.
 
-* Add function to add global constraint on use of gas in :mod:`prepare_network`. This can be activated with `electricity: gaslimit:` given in MWh. 
+* Add function to add global constraint on use of gas in :mod:`prepare_network`. This can be activated with `electricity: gaslimit:` given in MWh.
+
+* Add configuration option to implement Energy Availability Factors (EAFs) for conventional generation technologies.
+* Implement country-specific EAFs for nuclear power plants based on IAEA 2018-2020 reported country averages.
 
 * The powerplants that have been shut down before 2021 are filtered out. 
 
