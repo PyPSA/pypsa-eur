@@ -115,6 +115,14 @@ if __name__ == "__main__":
            .replace({'Technology': {'Steam Turbine': 'OCGT', "Combustion Engine": "OCGT"}})
            .assign(Fueltype=replace_natural_gas_by_technology))
 
+    # Correct bioenergy for countries where possible
+    opsd = pm.data.OPSD_VRE().powerplant.convert_country_to_alpha2()
+    opsd = opsd.query('Country in @countries and Fueltype == "Bioenergy"')
+    opsd['Fueltype'] = 'biomass'
+    available_countries = opsd.Country.unique()
+    ppl = ppl.query('not (Country in @available_countries and Fueltype == "Bioenergy")') 
+    ppl = pd.concat([ppl, opsd])
+    
     ppl_query = snakemake.config['electricity']['powerplants_filter']
     if isinstance(ppl_query, str):
         ppl.query(ppl_query, inplace=True)
