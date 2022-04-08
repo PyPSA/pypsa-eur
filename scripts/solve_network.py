@@ -100,17 +100,19 @@ def prepare_network(n, solve_opts):
         for df in (n.generators_t.p_max_pu, n.storage_units_t.inflow):
             df.where(df>solve_opts['clip_p_max_pu'], other=0., inplace=True)
 
-    if solve_opts.get('load_shedding'):
+    load_shedding = solve_opts.get('load_shedding')
+    if load_shedding:
         n.add("Carrier", "Load")
         buses_i = n.buses.query("carrier == 'AC'").index
+        if not np.isscalar(load_shedding): load_shedding = 1e2
+        # intersect between macroeconomic and surveybased
+        # willingness to pay
+        # http://journal.frontiersin.org/article/10.3389/fenrg.2015.00055/full)
         n.madd("Generator", buses_i, " load",
                bus=buses_i,
                carrier='load',
                sign=1e-3, # Adjust sign to measure p and p_nom in kW instead of MW
-               marginal_cost=1e2, # Eur/kWh
-               # intersect between macroeconomic and surveybased
-               # willingness to pay
-               # http://journal.frontiersin.org/article/10.3389/fenrg.2015.00055/full
+               marginal_cost=load_shedding, 
                p_nom=1e9 # kW
                )
 
