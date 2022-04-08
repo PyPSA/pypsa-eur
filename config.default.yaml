@@ -64,7 +64,30 @@ electricity:
   powerplants_filter: (DateOut >= 2022 or DateOut != DateOut)
   # use pandas query strings here, e.g. Country in ['Germany']
   custom_powerplants: false 
-  conventional_carriers: [nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
+  conventional_carriers:
+    technologies: [nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
+    # Limit energy availability from these sources -> p_max_pu
+    # syntax:
+    # <technology name>: <fixed value> or <country>: <value>
+    energy_availability_factors:
+      # From IAEA
+      # https://pris.iaea.org/PRIS/WorldStatistics/ThreeYrsEnergyAvailabilityFactor.aspx (2022-04-08)
+      nuclear:
+        BE: 0.65
+        BG: 0.89
+        CZ: 0.82
+        FI: 0.92
+        FR: 0.70
+        DE: 0.88
+        HU: 0.90
+        NL: 0.86
+        RO: 0.92
+        SK: 0.89
+        SI: 0.94
+        ES: 0.89
+        SE: 0.82
+        CH: 0.86
+        GB: 0.67
   renewable_capacities_from_OPSD: [] # onwind, offwind, solar
 
   estimate_renewable_capacities:
