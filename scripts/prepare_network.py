@@ -278,8 +278,16 @@ if __name__ == "__main__":
                     sel = c.df.carrier.str.contains(carrier)
                     c.df.loc[sel,attr] *= factor
 
-    if 'Ep' in opts:
-        add_emission_prices(n, snakemake.config['costs']['emission_prices'])
+    for o in opts:
+        if 'Ep' in o:
+            m = re.findall("[0-9]*\.?[0-9]+$", o)
+            if len(m) > 0:
+                logger.info("Setting emission prices according to wildcard value.")
+                add_emission_prices(n, dict(co2=float(m[0])))
+            else:
+                logger.info("Setting emission prices according to config value.")
+                add_emission_prices(n, snakemake.config['costs']['emission_prices'])
+            break
 
     ll_type, factor = snakemake.wildcards.ll[0], snakemake.wildcards.ll[1:]
     set_transmission_limit(n, ll_type, factor, costs, Nyears)
