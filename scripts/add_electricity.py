@@ -324,7 +324,7 @@ def attach_conventional_generators(n, costs, ppl, conventional_carriers):
 
             # Values affecting generators of technology k country-specific
             # First map generator buses to countries; then map countries to p_max_pu
-            n.generators["p_max_pu"] = n.generators.loc[idx]["bus"].replace(n.buses["country"]).replace(v)
+            n.generators.loc[idx, "p_max_pu"] = n.generators.loc[idx]["bus"].replace(n.buses["country"]).replace(v)
 
 
 
