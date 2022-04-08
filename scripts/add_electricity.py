@@ -290,8 +290,9 @@ def attach_wind_and_solar(n, costs, input_profiles, technologies, line_length_fa
                    p_max_pu=ds['profile'].transpose('time', 'bus').to_pandas())
 
 
-def attach_conventional_generators(n, costs, ppl, carriers):
+def attach_conventional_generators(n, costs, ppl, conventional_carriers):
 
+    carriers = conventional_carriers["technologies"]
     _add_missing_carriers_from_costs(n, costs, carriers)
 
     ppl = (ppl.query('carrier in @carriers').join(costs, on='carrier')
@@ -309,6 +310,22 @@ def attach_conventional_generators(n, costs, ppl, carriers):
            capital_cost=0)
 
     logger.warning(f'Capital costs for conventional generators put to 0 EUR/MW.')
+    
+    for k,v in conventional_carriers["energy_availability_factors"].items():
+
+        # Generators with technology affected
+        idx = n.generators.query("carrier == @k").index
+
+        if isinstance(v, float):
+            # Single value affecting all generators of technology k indiscriminantely of country
+            n.generators.loc[idx, "p_max_pu"] = v
+        elif isinstance(v, dict):
+            v = pd.Series(v)
+
+            # Values affecting generators of technology k country-specific
+            # First map generator buses to countries; then map countries to p_max_pu
+            n.generators["p_max_pu"] = n.generators.loc[idx]["bus"].replace(n.buses["country"]).replace(v)
+
 
 
 def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **config):
@@ -556,8 +573,7 @@ if __name__ == "__main__":
 
     update_transmission_costs(n, costs, snakemake.config['lines']['length_factor'])
 
-    carriers = snakemake.config['electricity']['conventional_carriers']
-    attach_conventional_generators(n, costs, ppl, carriers)
+    attach_conventional_generators(n, costs, ppl, snakemake.config["electricity"]["conventional_carriers"])
 
     carriers = snakemake.config['renewable']
     attach_wind_and_solar(n, costs, snakemake.input, carriers, snakemake.config['lines']['length_factor'])
