@@ -562,10 +562,10 @@ if __name__ == "__main__":
     carriers = snakemake.config['renewable']
     attach_wind_and_solar(n, costs, snakemake.input, carriers, snakemake.config['lines']['length_factor'])
 
-    # if 'hydro' in snakemake.config['renewable']:
-    #     carriers = snakemake.config['renewable']['hydro'].pop('carriers', [])
-    #     attach_hydro(n, costs, ppl, snakemake.input.profile_hydro, snakemake.input.hydro_capacities,
-    #                  carriers, **snakemake.config['renewable']['hydro'])
+    if 'hydro' in snakemake.config['renewable']:
+        carriers = snakemake.config['renewable']['hydro'].pop('carriers', [])
+        attach_hydro(n, costs, ppl, snakemake.input.profile_hydro, snakemake.input.hydro_capacities,
+                     carriers, **snakemake.config['renewable']['hydro'])
 
     carriers = snakemake.config['electricity']['extendable_carriers']['Generator']
     attach_extendable_generators(n, costs, ppl, carriers)
