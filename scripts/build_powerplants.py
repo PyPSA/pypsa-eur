@@ -79,6 +79,7 @@ import powerplantmatching as pm
 import pandas as pd
 import numpy as np
 
+from powerplantmatching.export import map_country_bus
 from scipy.spatial import cKDTree as KDTree
 
 logger = logging.getLogger(__name__)
@@ -87,8 +88,7 @@ logger = logging.getLogger(__name__)
 def add_custom_powerplants(ppl, custom_powerplants, custom_ppl_query=False):
     if not custom_ppl_query:
         return ppl
-    add_ppls = pd.read_csv(custom_powerplants, index_col=0,
-                           dtype={'bus': 'str'})
+    add_ppls = pd.read_csv(custom_powerplants, index_col=0, dtype={'bus': 'str'})
     if isinstance(custom_ppl_query, str):
         add_ppls.query(custom_ppl_query, inplace=True)
     return pd.concat([ppl, add_ppls], sort=False, ignore_index=True, verify_integrity=True)
@@ -131,18 +131,12 @@ if __name__ == "__main__":
     custom_ppl_query = snakemake.config['electricity']['custom_powerplants']
     ppl = add_custom_powerplants(ppl, snakemake.input.custom_powerplants, custom_ppl_query)
 
-    cntries_without_ppl = [c for c in countries if c not in ppl.Country.unique()]
+    countries_wo_ppl = [c for c in countries if c not in ppl.Country.unique()]
+    if countries_wo_ppl:
+        logging.warning(f"No powerplants known in: {', '.join(countries_wo_ppl)}")
 
-    for c in countries:
-        substation_i = n.buses.query('substation_lv and country == @c').index
-        kdtree = KDTree(n.buses.loc[substation_i, ['x','y']].values)
-        ppl_i = ppl.query('Country == @c').index
-
-        tree_i = kdtree.query(ppl.loc[ppl_i, ['lon','lat']].values)[1]
-        ppl.loc[ppl_i, 'bus'] = substation_i.append(pd.Index([np.nan]))[tree_i]
-
-    if cntries_without_ppl:
-        logging.warning(f"No powerplants known in: {', '.join(cntries_without_ppl)}")
+    substations = n.buses.query('substation_lv')
+    ppl = map_country_bus(ppl, substations)
 
     bus_null_b = ppl["bus"].isnull()
     if bus_null_b.any():
@@ -154,4 +148,4 @@ if __name__ == "__main__":
     cumcount = ppl.groupby(['bus', 'Fueltype']).cumcount() + 1
     ppl.Name = ppl.Name.where(cumcount == 1, ppl.Name + " " + cumcount.astype(str))
 
-    ppl.to_csv(snakemake.output[0])
+    ppl.reset_index(drop=True).to_csv(snakemake.output[0])
