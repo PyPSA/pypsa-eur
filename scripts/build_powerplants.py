@@ -146,7 +146,9 @@ if __name__ == "__main__":
 
     bus_null_b = ppl["bus"].isnull()
     if bus_null_b.any():
-        logging.warning(f"Couldn't find close bus for {bus_null_b.sum()} powerplants")
+        logging.warning(f"Couldn't find close bus for {bus_null_b.sum()} powerplants. "
+                        "Removing them from the powerplants list.")
+        ppl = ppl[~bus_null_b]
 
     # TODO: This has to fixed in PPM, some powerplants are still duplicated 
     cumcount = ppl.groupby(['bus', 'Fueltype']).cumcount() + 1
