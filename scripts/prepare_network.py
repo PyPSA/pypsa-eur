@@ -243,8 +243,10 @@ if __name__ == "__main__":
             if len(m) > 0:
                 co2limit = float(m[0]) * snakemake.config['electricity']['co2base']
                 add_co2limit(n, co2limit, Nyears)
+                logger.info("Setting CO2 limit according to wildcard value.")
             else:
                 add_co2limit(n, snakemake.config['electricity']['co2limit'], Nyears)
+                logger.info("Setting CO2 limit according to config value.")
             break
 
     gaslimit = snakemake.config["electricity"].get("gaslimit")
