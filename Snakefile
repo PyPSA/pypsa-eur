@@ -84,7 +84,7 @@ rule build_powerplants:
     input:
         base_network="networks/base.nc",
         custom_powerplants="data/custom_powerplants.csv"
-    output: "resources/powerplants.csv"
+    output: RDIR + "/resources/powerplants.csv"
     log: "logs/build_powerplants.log"
     threads: 1
     resources: mem_mb=500
@@ -221,7 +221,7 @@ rule add_electricity:
         base_network='networks/base.nc',
         tech_costs=COSTS,
         regions="resources/regions_onshore.geojson",
-        powerplants='resources/powerplants.csv',
+        powerplants=RDIR + '/resources/powerplants.csv',
         hydro_capacities='data/bundle/hydro_capacities.csv',
         geth_hydro_capacities='data/geth2015_hydro_capacities.csv',
         load='resources/load.csv',
@@ -268,7 +268,7 @@ rule cluster_network:
         network=RDIR + '/prenetworks/elec_s{simpl}_{clusters}.nc',
         regions_onshore=RDIR + "/resources/regions_onshore_elec_s{simpl}_{clusters}.geojson",
         regions_offshore=RDIR + "/resources/regions_offshore_elec_s{simpl}_{clusters}.geojson",
-        busmap=RDIR + "/resources/busmap_elec_s{simpl}_{clusters}.csv",
+        busmap=RDIR  + "/resources/busmap_elec_s{simpl}_{clusters}.csv",
         linemap=RDIR + "/resources/linemap_elec_s{simpl}_{clusters}.csv"
     log: "logs/cluster_network/elec_s{simpl}_{clusters}.log"
     benchmark: "benchmarks/cluster_network/elec_s{simpl}_{clusters}"
