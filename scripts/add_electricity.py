@@ -497,13 +497,16 @@ def attach_OPSD_renewables(n, techs):
 
 def estimate_renewable_capacities(n, config):
 
-    if not config["electricity"]["estimate_renewable_capacities"]: return
+    params = config["electricity"]["estimate_renewable_capacities"]
+
+    if not params: 
+        return
     
-    year = config["electricity"]["estimate_renewable_capacities"]["year"]
-    tech_map = config["electricity"]["estimate_renewable_capacities"]["technology_mapping"]
+    year = params["year"]
+    tech_map = params["technology_mapping"]
     tech_keys = list(tech_map.keys())
     countries = config["countries"]
-    expansion_limit = config["electricity"]["estimate_renewable_capacities"]["expansion_limit"]
+    expansion_limit = params["expansion_limit"]
 
     if len(countries) == 0: return
     if len(tech_map) == 0: return
@@ -512,18 +515,29 @@ def estimate_renewable_capacities(n, config):
     capacities = capacities.query("Year == @year and Technology in @tech_keys and Country in @countries")
     capacities = capacities.groupby(["Technology", "Country"]).Capacity.sum()
 
+    if "capacities" in params:
+        names = ['Technology', 'Country']
+        ds = pd.DataFrame(params['capacities']).unstack().rename_axis(names)
+        capacities.update(ds)
+    
     logger.info(f"Heuristics applied to distribute renewable capacities [MW] "
                 f"{capacities.groupby('Country').sum()}")
 
     for ppm_technology, techs in tech_map.items():
         tech_capacities = capacities.loc[ppm_technology].reindex(countries, fill_value=0.)
         tech_i = n.generators.query('carrier in @techs').index
+        if n.generators.p_nom[tech_i].sum() == 0:
+            # if no capacities exist, take potentials
+            base = n.generators_t.p_max_pu.mean() * n.generators.p_nom_max
+        else:
+            # if capacities exist, scale them
+            base = n.generators.p_nom
         n.generators.loc[tech_i, 'p_nom'] = (
-            (n.generators_t.p_max_pu[tech_i].mean() *
-             n.generators.loc[tech_i, 'p_nom_max']) # maximal yearly generation
-             .groupby(n.generators.bus.map(n.buses.country))
-             .transform(lambda s: normed(s) * tech_capacities.at[s.name])
-             .where(lambda s: s>0.1, 0.))  # only capacities above 100kW
+            base[tech_i]
+            .groupby(n.generators.bus.map(n.buses.country))
+            .transform(lambda s: normed(s) * tech_capacities.at[s.name])
+            .where(lambda s: s>0.1, 0.)  # only capacities above 100kW
+            ) 
         n.generators.loc[tech_i, 'p_nom_min'] = n.generators.loc[tech_i, 'p_nom']
         if expansion_limit:
             assert np.isscalar(expansion_limit)
@@ -584,9 +598,11 @@ if __name__ == "__main__":
     carriers = snakemake.config['electricity']['extendable_carriers']['Generator']
     attach_extendable_generators(n, costs, ppl, carriers)
 
-    estimate_renewable_capacities(n, snakemake.config)
     techs = snakemake.config['electricity'].get('renewable_capacities_from_OPSD', [])
     attach_OPSD_renewables(n, techs)
+
+    estimate_renewable_capacities(n, snakemake.config)
+
     update_p_nom_max(n)
 
     if snakemake.config["lines"]["line_rating"]:
