@@ -45,18 +45,22 @@ rule prepare_sector_networks:
                **config['scenario'])
 
 datafiles = [
-    "eea/UNFCCC_v23.csv",
-    "switzerland-sfoe/switzerland-new_format.csv",
-    "nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson",
-    "myb1-2017-nitro.xls",
-    "Industrial_Database.csv",
-    "emobility/KFZ__count",
-    "emobility/Pkw__count",
+    "data/eea/UNFCCC_v23.csv",
+    "data/switzerland-sfoe/switzerland-new_format.csv",
+    "data/nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson",
+    "data/myb1-2017-nitro.xls",
+    "data/Industrial_Database.csv",
+    "data/emobility/KFZ__count",
+    "data/emobility/Pkw__count",
+    "data/h2_salt_caverns_GWh_per_sqkm.geojson",
+    directory("data/eurostat-energy_balances-june_2016_edition"),
+    directory("data/eurostat-energy_balances-may_2018_edition"),
+    directory("data/jrc-idees-2015"),
 ]
 
 if config.get('retrieve_sector_databundle', True):
     rule retrieve_sector_databundle:
-        output:  expand('data/{file}', file=datafiles)
+        output: *datafiles
         log: "logs/retrieve_sector_databundle.log"
         script: 'scripts/retrieve_sector_databundle.py'
 
@@ -252,9 +256,9 @@ rule build_biomass_potentials:
         enspreso_biomass=HTTP.remote("https://cidportal.jrc.ec.europa.eu/ftp/jrc-opendata/ENSPRESO/ENSPRESO_BIOMASS.xlsx", keep_local=True),
         nuts2="data/nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson", # https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/#nuts21
         regions_onshore=pypsaeur("resources/regions_onshore_elec_s{simpl}_{clusters}.geojson"),
-        nuts3_population="../pypsa-eur/data/bundle/nama_10r_3popgdp.tsv.gz",
-        swiss_cantons="../pypsa-eur/data/bundle/ch_cantons.csv",
-        swiss_population="../pypsa-eur/data/bundle/je-e-21.03.02.xls",
+        nuts3_population=pypsaeur("data/bundle/nama_10r_3popgdp.tsv.gz"),
+        swiss_cantons=pypsaeur("data/bundle/ch_cantons.csv"),
+        swiss_population=pypsaeur("data/bundle/je-e-21.03.02.xls"),
         country_shapes=pypsaeur('resources/country_shapes.geojson')
     output:
         biomass_potentials_all='resources/biomass_potentials_all_s{simpl}_{clusters}.csv',

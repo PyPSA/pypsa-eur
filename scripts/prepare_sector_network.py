@@ -273,6 +273,7 @@ def create_network_topology(n, prefix, carriers=["DC"], connector=" -> ", bidire
 
     ln_attrs = ["bus0", "bus1", "length"]
     lk_attrs = ["bus0", "bus1", "length", "underwater_fraction"]
+    lk_attrs = n.links.columns.intersection(lk_attrs)
 
     candidates = pd.concat([
         n.lines[ln_attrs],
@@ -1065,18 +1066,20 @@ def add_storage_and_grids(n, costs):
     )
 
     cavern_types = snakemake.config["sector"]["hydrogen_underground_storage_locations"]
-    h2_caverns = pd.read_csv(snakemake.input.h2_cavern, index_col=0)[cavern_types].sum(axis=1)
+    h2_caverns = pd.read_csv(snakemake.input.h2_cavern, index_col=0)
+    
+    if not h2_caverns.empty and options['hydrogen_underground_storage']:
 
-    # only use sites with at least 2 TWh potential
-    h2_caverns = h2_caverns[h2_caverns > 2]
+        h2_caverns = h2_caverns[cavern_types].sum(axis=1)
 
-    # convert TWh to MWh
-    h2_caverns = h2_caverns * 1e6
+        # only use sites with at least 2 TWh potential
+        h2_caverns = h2_caverns[h2_caverns > 2]
+        
+        # convert TWh to MWh
+        h2_caverns = h2_caverns * 1e6
 
-    # clip at 1000 TWh for one location
-    h2_caverns.clip(upper=1e9, inplace=True)
-
-    if options['hydrogen_underground_storage']:
+        # clip at 1000 TWh for one location
+        h2_caverns.clip(upper=1e9, inplace=True)
 
         logger.info("Add hydrogen underground storage")
 
@@ -1176,23 +1179,26 @@ def add_storage_and_grids(n, costs):
         # apply k_edge_augmentation weighted by length of complement edges
         k_edge = options.get("gas_network_connectivity_upgrade", 3)
         augmentation = k_edge_augmentation(G, k_edge, avail=complement_edges.values)
-        new_gas_pipes = pd.DataFrame(augmentation, columns=["bus0", "bus1"])
-        new_gas_pipes["length"] = new_gas_pipes.apply(haversine, axis=1)
 
-        new_gas_pipes.index = new_gas_pipes.apply(
-            lambda x: f"gas pipeline new {x.bus0} <-> {x.bus1}", axis=1)
+        if list(augmentation):
 
-        n.madd("Link",
-            new_gas_pipes.index,
-            bus0=new_gas_pipes.bus0 + " gas",
-            bus1=new_gas_pipes.bus1 + " gas",
-            p_min_pu=-1, # new gas pipes are bidirectional
-            p_nom_extendable=True,
-            length=new_gas_pipes.length,
-            capital_cost=new_gas_pipes.length * costs.at['CH4 (g) pipeline', 'fixed'],
-            carrier="gas pipeline new",
-            lifetime=costs.at['CH4 (g) pipeline', 'lifetime']
-        )
+            new_gas_pipes = pd.DataFrame(augmentation, columns=["bus0", "bus1"])
+            new_gas_pipes["length"] = new_gas_pipes.apply(haversine, axis=1)
+
+            new_gas_pipes.index = new_gas_pipes.apply(
+                lambda x: f"gas pipeline new {x.bus0} <-> {x.bus1}", axis=1)
+
+            n.madd("Link",
+                new_gas_pipes.index,
+                bus0=new_gas_pipes.bus0 + " gas",
+                bus1=new_gas_pipes.bus1 + " gas",
+                p_min_pu=-1, # new gas pipes are bidirectional
+                p_nom_extendable=True,
+                length=new_gas_pipes.length,
+                capital_cost=new_gas_pipes.length * costs.at['CH4 (g) pipeline', 'fixed'],
+                carrier="gas pipeline new",
+                lifetime=costs.at['CH4 (g) pipeline', 'lifetime']
+            )
 
     if options["H2_retrofit"]:
 
@@ -2377,7 +2383,7 @@ def decentral(n):
 
 def remove_h2_network(n):
 
-    n.links.drop(n.links.index[n.links.carrier == "H2 pipeline"], inplace=True)
+    n.links.drop(n.links.index[n.links.carrier.str.contains("H2 pipeline")], inplace=True)
 
     if "EU H2 Store" in n.stores.index:
         n.stores.drop("EU H2 Store", inplace=True)
