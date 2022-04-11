@@ -118,7 +118,7 @@ if __name__ == "__main__":
     # Correct bioenergy for countries where possible
     opsd = pm.data.OPSD_VRE().powerplant.convert_country_to_alpha2()
     opsd = opsd.query('Country in @countries and Fueltype == "Bioenergy"')
-    opsd['Name'] = "Biomass" 
+    opsd['Name'] = "Biomass" + " " + pd.RangeIndex(len(opsd)).astype(str)
     available_countries = opsd.Country.unique()
     ppl = ppl.query('not (Country in @available_countries and Fueltype == "Bioenergy")') 
     ppl = pd.concat([ppl, opsd])
@@ -143,9 +143,5 @@ if __name__ == "__main__":
         logging.warning(f"Couldn't find close bus for {bus_null_b.sum()} powerplants. "
                         "Removing them from the powerplants list.")
         ppl = ppl[~bus_null_b]
-
-    # TODO: This has to fixed in PPM, some powerplants are still duplicated 
-    cumcount = ppl.groupby(['bus', 'Fueltype']).cumcount() + 1
-    ppl.Name = ppl.Name.where(cumcount == 1, ppl.Name + " " + cumcount.astype(str))
 
     ppl.reset_index(drop=True).to_csv(snakemake.output[0])
