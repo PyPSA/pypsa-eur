@@ -104,7 +104,7 @@ logger = logging.getLogger(__name__)
 def normed(s): return s/s.sum()
 
 
-def annuity(n, r):
+def calculate_annuity(n, r):
     """Calculate the annuity factor for an asset with lifetime n years and
     discount rate of r, e.g. annuity(20, 0.05) * 20 = 1.6"""
 
@@ -149,7 +149,7 @@ def load_costs(tech_costs, config, elec_config, Nyears=1.):
                           "investment" : 0,
                           "lifetime" : 25})
 
-    costs["capital_cost"] = ((annuity(costs["lifetime"], costs["discount rate"]) +
+    costs["capital_cost"] = ((calculate_annuity(costs["lifetime"], costs["discount rate"]) +
                              costs["FOM"]/100.) *
                              costs["investment"] * Nyears)
 
