@@ -79,10 +79,10 @@ def load_idees_data(sector, country="EU28"):
         index_col=0,
         header=0,
         usecols=usecols,
-    ).squeeze('columns')
+    )
 
     for k, v in sheets.items():
-        idees[k] = idees.pop(v)
+        idees[k] = idees.pop(v).squeeze()
 
     return idees
 
