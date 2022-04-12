@@ -19,6 +19,11 @@ def add_brownfield(n, n_p, year):
 
     print("adding brownfield")
 
+    # electric transmission grid set optimised capacities of previous as minimum
+    n.lines.s_nom_min = n_p.lines.s_nom_opt
+    dc_i = n.links[n.links.carrier=="DC"].index
+    n.links.loc[dc_i, "p_nom_min"] = n_p.links.loc[dc_i, "p_nom_opt"]
+
     for c in n_p.iterate_components(["Link", "Generator", "Store"]):
 
         attr = "e" if c.name == "Store" else "p"
@@ -101,6 +106,7 @@ def add_brownfield(n, n_p, year):
             new_pipes = n.links.carrier.isin(pipe_carrier) & (n.links.build_year==year)
             n.links.loc[new_pipes, "p_nom"] = 0.
             n.links.loc[new_pipes, "p_nom_min"] = 0.
+
 
 
 #%%
