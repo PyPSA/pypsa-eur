@@ -2,12 +2,12 @@ attribute,type,unit,default,description,status
 bus2,string,n/a,n/a,2nd bus,Input (optional)
 bus3,string,n/a,n/a,3rd bus,Input (optional)
 bus4,string,n/a,n/a,4th bus,Input (optional)
-efficiency2,static or series,per unit,1.,2nd bus efficiency,Input (optional)
-efficiency3,static or series,per unit,1.,3rd bus efficiency,Input (optional)
-efficiency4,static or series,per unit,1.,4th bus efficiency,Input (optional)
-p2,series,MW,0.,2nd bus output,Output
-p3,series,MW,0.,3rd bus output,Output
-p4,series,MW,0.,4th bus output,Output
-build_year,integer,year,n/a,build year,Input (optional)
-lifetime,float,years,n/a,lifetime,Input (optional)
+efficiency2,static or series,per unit,1,2nd bus efficiency,Input (optional)
+efficiency3,static or series,per unit,1,3rd bus efficiency,Input (optional)
+efficiency4,static or series,per unit,1,4th bus efficiency,Input (optional)
+p2,series,MW,0,2nd bus output,Output
+p3,series,MW,0,3rd bus output,Output
+p4,series,MW,0,4th bus output,Output
 carrier,string,n/a,n/a,carrier,Input (optional)
+lifetime,float,years,inf,lifetime,Input (optional)
+build_year,int,year ,0,build year,Input (optional)
