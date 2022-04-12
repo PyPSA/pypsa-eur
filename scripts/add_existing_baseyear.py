@@ -153,8 +153,8 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
     df_agg.Fueltype = df_agg.Fueltype.map(rename_fuel)
 
     # assign clustered bus
-    busmap_s = pd.read_csv(snakemake.input.busmap_s, index_col=0, squeeze=True)
-    busmap = pd.read_csv(snakemake.input.busmap, index_col=0, squeeze=True)
+    busmap_s = pd.read_csv(snakemake.input.busmap_s, index_col=0).squeeze()
+    busmap = pd.read_csv(snakemake.input.busmap, index_col=0).squeeze()
 
     inv_busmap = {}
     for k, v in busmap.iteritems():
