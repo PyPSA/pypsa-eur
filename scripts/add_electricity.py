@@ -238,7 +238,7 @@ def attach_load(n, regions, load, nuts3_shapes, countries, scaling=1.):
     n.madd("Load", substation_lv_i, bus=substation_lv_i, p_set=load)
 
 
-def update_transmission_costs(n, costs, length_factor=1.0, simple_hvdc_costs=False):
+def update_transmission_costs(n, costs, length_factor=1.0):
     # TODO: line length factor of lines is applied to lines and links.
     # Separate the function to distinguish.
 
@@ -253,16 +253,12 @@ def update_transmission_costs(n, costs, length_factor=1.0, simple_hvdc_costs=Fal
     # may be missing. Therefore we have to return here.
     if n.links.loc[dc_b].empty: return
 
-    if simple_hvdc_costs:
-        costs = (n.links.loc[dc_b, 'length'] * length_factor *
-                 costs.at['HVDC overhead', 'capital_cost'])
-    else:
-        costs = (n.links.loc[dc_b, 'length'] * length_factor *
-                ((1. - n.links.loc[dc_b, 'underwater_fraction']) *
-                costs.at['HVDC overhead', 'capital_cost'] +
-                n.links.loc[dc_b, 'underwater_fraction'] *
-                costs.at['HVDC submarine', 'capital_cost']) +
-                costs.at['HVDC inverter pair', 'capital_cost'])
+    costs = (n.links.loc[dc_b, 'length'] * length_factor *
+            ((1. - n.links.loc[dc_b, 'underwater_fraction']) *
+            costs.at['HVDC overhead', 'capital_cost'] +
+            n.links.loc[dc_b, 'underwater_fraction'] *
+            costs.at['HVDC submarine', 'capital_cost']) +
+            costs.at['HVDC inverter pair', 'capital_cost'])
     n.links.loc[dc_b, 'capital_cost'] = costs
 
 
