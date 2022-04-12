@@ -1067,14 +1067,14 @@ def add_storage_and_grids(n, costs):
 
     cavern_types = snakemake.config["sector"]["hydrogen_underground_storage_locations"]
     h2_caverns = pd.read_csv(snakemake.input.h2_cavern, index_col=0)
-    
+
     if not h2_caverns.empty and options['hydrogen_underground_storage']:
 
         h2_caverns = h2_caverns[cavern_types].sum(axis=1)
 
         # only use sites with at least 2 TWh potential
         h2_caverns = h2_caverns[h2_caverns > 2]
-        
+
         # convert TWh to MWh
         h2_caverns = h2_caverns * 1e6
 
@@ -1178,9 +1178,9 @@ def add_storage_and_grids(n, costs):
 
         # apply k_edge_augmentation weighted by length of complement edges
         k_edge = options.get("gas_network_connectivity_upgrade", 3)
-        augmentation = k_edge_augmentation(G, k_edge, avail=complement_edges.values)
+        augmentation = list(k_edge_augmentation(G, k_edge, avail=complement_edges.values))
 
-        if list(augmentation):
+        if augmentation:
 
             new_gas_pipes = pd.DataFrame(augmentation, columns=["bus0", "bus1"])
             new_gas_pipes["length"] = new_gas_pipes.apply(haversine, axis=1)
