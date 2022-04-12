@@ -193,7 +193,6 @@ def add_pipe_retrofit_constraint(n):
 
     gas_pipes_i = n.links.query("carrier == 'gas pipeline' and p_nom_extendable").index
     h2_retrofitted_i = n.links.query("carrier == 'H2 pipeline retrofitted' and p_nom_extendable").index
-    h2_retrofitted_fixed_i = n.links.query("carrier == 'H2 pipeline retrofitted' and not p_nom_extendable").index
 
     if h2_retrofitted_i.empty or gas_pipes_i.empty: return
 
@@ -204,9 +203,6 @@ def add_pipe_retrofit_constraint(n):
     to = "gas pipeline"
 
     pipe_capacity = n.links.loc[gas_pipes_i, 'p_nom'].rename(basename)
-    already_retrofitted = (n.links.loc[h2_retrofitted_fixed_i, 'p_nom']
-                           .rename(lambda x: basename(x).replace(fr, to)).groupby(level=0).sum())
-    remaining_capacity = pipe_capacity - CH4_per_H2 * already_retrofitted.reindex(index=pipe_capacity.index).fillna(0)
 
     lhs = linexpr(
         (CH4_per_H2, link_p_nom.loc[h2_retrofitted_i].rename(index=lambda x: x.replace(fr, to))),
@@ -214,7 +210,7 @@ def add_pipe_retrofit_constraint(n):
     )
 
     lhs.rename(basename, inplace=True)
-    define_constraints(n, lhs, "=", remaining_capacity, 'Link', 'pipe_retrofit')
+    define_constraints(n, lhs, "=", pipe_capacity, 'Link', 'pipe_retrofit')
 
 
 def add_co2_sequestration_limit(n, sns):
