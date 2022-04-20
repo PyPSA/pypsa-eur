@@ -165,7 +165,7 @@ if config['enable'].get('build_cutout', False):
 
 if config['enable'].get('retrieve_cutout', True):
     rule retrieve_cutout:
-        input: HTTP.remote("https://tubcloud.tu-berlin.de/s/J74eoqiLXnosBwX/download?path=%2F&files={cutout}.nc", keep_local=True, static=True)
+        input: HTTP.remote("https://tubcloud.tu-berlin.de/s/AJ43GAzGbo8SmBn/download?path=%2F&files={cutout}.nc", keep_local=True, static=True)
         output: "cutouts/{cutout}.nc"
         run: move(input[0], output[0])
 
