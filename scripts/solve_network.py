@@ -220,11 +220,12 @@ def add_minRenew_constraints(n, config, o):
     renewables=list(config["electricity"]["renewable_aim"].keys())
     if len(o)>2:
         share=float(o[2:])
-        gen_factor=n.generators.apply(lambda x : (1-share) if any(tech in x.carrier for tech in renewables) else (-share), axis=1)
-        snapshots=n.snapshot_weightings.generators
-        coef=pd.DataFrame(np.outer(snapshots,gen_factor), index= snapshots.index, columns=gen_factor.index)
-        lhs = linexpr((coef, get_var(n, "Generator", "p"))).sum().sum()
-        rhs = 0
+        renewables_i = n.generators.query('carrier in @renewables').index
+        weightings = n.snapshot_weightings.generators
+        coeff = pd.DataFrame({c: weightings for c in renewables_i})
+        vars = get_var(n, "Generator", "p")[renewables_i]
+        lhs = linexpr((coeff, vars)).sum().sum()
+        rhs = share * weightings @ n.loads_t.p_set.sum(1)
         define_constraints(n, lhs, '>=', rhs, 'Carrier', 'min_generation_renewables')
     else:
         for tech in renewables:
