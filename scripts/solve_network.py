@@ -220,7 +220,7 @@ def add_minRenew_constraints(n, config, o):
     renewables=list(config["electricity"]["renewable_aim"].keys())
     if len(o)>2:
         share=float(o[2:])
-        renewables_i = n.generators.query('carrier in @renewables').index
+        renewables_i = n.generators[n.generators.carrier.str.contains("|".join(renewables))].index
         weightings = n.snapshot_weightings.generators
         coeff = pd.DataFrame({c: weightings for c in renewables_i})
         vars = get_var(n, "Generator", "p")[renewables_i]
