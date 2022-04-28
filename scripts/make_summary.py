@@ -171,6 +171,9 @@ def calculate_capacity(n,label,capacity):
         if 'p_nom_opt' in c.df.columns:
             c_capacities = abs(c.df.p_nom_opt.multiply(c.df.sign)).groupby(c.df.carrier).sum()
             capacity = include_in_summary(capacity, [c.list_name], label, c_capacities)
+        elif 'e_nom_opt' in c.df.columns:
+            c_capacities = abs(c.df.e_nom_opt.multiply(c.df.sign)).groupby(c.df.carrier).sum()
+            capacity = include_in_summary(capacity, [c.list_name], label, c_capacities)
 
     for c in n.iterate_components(n.passive_branch_components):
         c_capacities = c.df['s_nom_opt'].groupby(c.df.carrier).sum()
