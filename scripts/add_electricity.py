@@ -312,7 +312,7 @@ def attach_conventional_generators(n, costs, ppl, carriers, extendable_carriers)
            p_nom_extendable=ppl.carrier.isin(extendable_carriers),
            efficiency=ppl.efficiency,
            marginal_cost=ppl.marginal_cost,
-           capital_cost=0)
+           capital_cost=ppl.capital_cost)
 
     logger.warning(f'Capital costs for conventional generators put to 0 EUR/MW.')
 
