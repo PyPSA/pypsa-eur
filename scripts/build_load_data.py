@@ -116,14 +116,20 @@ def nan_statistics(df):
                  keys=['total', 'consecutive', 'max_total_per_month'], axis=1)
 
 
-def copy_timeslice(load, cntry, start, stop, delta):
+def copy_timeslice(load, cntry, start, stop, delta, fn_load=None):
     start = pd.Timestamp(start)
     stop = pd.Timestamp(stop)
-    if start-delta in load.index and stop in load.index and cntry in load:
-        load.loc[start:stop, cntry] = load.loc[start-delta:stop-delta, cntry].values
+    if (start in load.index and stop in load.index):
+        if start-delta in load.index and stop-delta in load.index and cntry in load:
+            load.loc[start:stop, cntry] = load.loc[start-delta:stop-delta, cntry].values
+        elif fn_load is not None:
+            duration = pd.date_range(freq='h', start=start-delta, end=stop-delta)
+            load_raw = load_timeseries(fn_load, duration, [cntry], powerstatistics)
+            if start-delta in load_raw.index and stop-delta in load_raw.index and cntry in load_raw:
+                load.loc[start:stop, cntry] = load_raw.loc[start-delta:stop-delta, cntry].values
 
 
-def manual_adjustment(load, powerstatistics):
+def manual_adjustment(load, fn_load, powerstatistics):
     """
     Adjust gaps manual for load data from OPSD time-series package.
 
@@ -150,6 +156,8 @@ def manual_adjustment(load, powerstatistics):
     powerstatistics: bool
         Whether argument load comprises the electricity consumption data of
         the ENTSOE power statistics or of the ENTSOE transparency map
+   load_fn: str
+        File name or url location (file format .csv)
 
     Returns
     -------
@@ -175,7 +183,11 @@ def manual_adjustment(load, powerstatistics):
         copy_timeslice(load, 'CH', '2010-11-04 04:00', '2010-11-04 22:00', Delta(days=1))
         copy_timeslice(load, 'NO', '2010-12-09 11:00', '2010-12-09 18:00', Delta(days=1))
         # whole january missing
-        copy_timeslice(load, 'GB', '2009-12-31 23:00', '2010-01-31 23:00', Delta(days=-364))
+        copy_timeslice(load, 'GB', '2010-01-01 00:00', '2010-01-31 23:00', Delta(days=-365), fn_load)
+        # 1.1. at midnight gets special treatment
+        copy_timeslice(load, 'IE', '2016-01-01 00:00', '2016-01-01 01:00', Delta(days=-366), fn_load)
+        copy_timeslice(load, 'PT', '2016-01-01 00:00', '2016-01-01 01:00', Delta(days=-366), fn_load)
+        copy_timeslice(load, 'GB', '2016-01-01 00:00', '2016-01-01 01:00', Delta(days=-366), fn_load)
 
     else:
         if 'ME' in load:
@@ -206,7 +218,7 @@ if __name__ == "__main__":
     load = load_timeseries(snakemake.input[0], years, countries, powerstatistics)
 
     if snakemake.config['load']['manual_adjustments']:
-        load = manual_adjustment(load, powerstatistics)
+        load = manual_adjustment(load, snakemake.input[0], powerstatistics)
 
     logger.info(f"Linearly interpolate gaps of size {interpolate_limit} and less.")
     load = load.interpolate(method='linear', limit=interpolate_limit)
