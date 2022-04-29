@@ -188,11 +188,11 @@ def calculate_capacity(n,label,capacity):
 def calculate_supply(n, label, supply):
     """calculate the max dispatch of each component at the buses where the loads are attached"""
 
-    load_types = n.loads.carrier.value_counts().index
+    load_types = n.buses.carrier.unique()
 
     for i in load_types:
 
-        buses = n.loads.bus[n.loads.carrier == i].values
+        buses = n.buses.query("carrier == @i").index
 
         bus_map = pd.Series(False,index=n.buses.index)
 
