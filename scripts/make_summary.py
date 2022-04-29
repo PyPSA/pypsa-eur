@@ -235,11 +235,11 @@ def calculate_supply(n, label, supply):
 def calculate_supply_energy(n, label, supply_energy):
     """calculate the total dispatch of each component at the buses where the loads are attached"""
 
-    load_types = n.loads.carrier.value_counts().index
+    load_types = n.buses.carrier.unique()
 
     for i in load_types:
 
-        buses = n.loads.bus[n.loads.carrier == i].values
+        buses = n.buses.query("carrier == @i").index
 
         bus_map = pd.Series(False,index=n.buses.index)
 
