@@ -125,8 +125,7 @@ def copy_timeslice(load, cntry, start, stop, delta, fn_load=None):
         elif fn_load is not None:
             duration = pd.date_range(freq='h', start=start-delta, end=stop-delta)
             load_raw = load_timeseries(fn_load, duration, [cntry], powerstatistics)
-            if start-delta in load_raw.index and stop-delta in load_raw.index and cntry in load_raw:
-                load.loc[start:stop, cntry] = load_raw.loc[start-delta:stop-delta, cntry].values
+            load.loc[start:stop, cntry] = load_raw.loc[start-delta:stop-delta, cntry].values
 
 
 def manual_adjustment(load, fn_load, powerstatistics):
