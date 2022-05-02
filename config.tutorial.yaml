@@ -26,7 +26,7 @@ clustering:
 snapshots:
   start: "2013-03-01"
   end: "2013-04-01"
-  inclusive: 'left' # end is not inclusive
+  closed: 'left' # end is not inclusive
 
 enable:
   prepare_links_p_nom: false
