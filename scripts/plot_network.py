@@ -115,7 +115,9 @@ def plot_map(network, components=["links", "stores", "storage_units", "generator
     costs = costs.stack()  # .sort_index()
 
     # hack because impossible to drop buses...
-    n.buses.loc["EU gas", ["x", "y"]] = n.buses.loc["DE0 0", ["x", "y"]]
+    eu_location = snakemake.config["plotting"].get("eu_node_location", dict(x=-5.5, y=46))
+    n.buses.loc["EU gas", "x"] = eu_location["x"]
+    n.buses.loc["EU gas", "y"] = eu_location["y"]
 
     n.links.drop(n.links.index[(n.links.carrier != "DC") & (
         n.links.carrier != "B2B")], inplace=True)
@@ -524,7 +526,9 @@ def plot_map_without(network):
 
     # hack because impossible to drop buses...
     if "EU gas" in n.buses.index:
-        n.buses.loc["EU gas", ["x", "y"]] = n.buses.loc["DE0 0", ["x", "y"]]
+            eu_location = snakemake.config["plotting"].get("eu_node_location", dict(x=-5.5, y=46))
+            n.buses.loc["EU gas", "x"] = eu_location["x"]
+            n.buses.loc["EU gas", "y"] = eu_location["y"]
 
     to_drop = n.links.index[(n.links.carrier != "DC") & (n.links.carrier != "B2B")]
     n.links.drop(to_drop, inplace=True)

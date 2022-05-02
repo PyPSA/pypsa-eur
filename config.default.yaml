@@ -388,6 +388,9 @@ plotting:
     color_geomap:
       ocean: white
       land: whitesmoke
+  eu_node_location:
+    x: -5.5
+    y: 46.
   costs_max: 1000
   costs_threshold: 1
   energy_max: 20000
