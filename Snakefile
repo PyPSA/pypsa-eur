@@ -431,15 +431,45 @@ else:
     build_retro_cost_output = {}
 
 
+rule build_population_weighted_energy_totals:
+    input:
+        energy_totals='resources/energy_totals.csv',
+        clustered_pop_layout="resources/pop_layout_elec_s{simpl}_{clusters}.csv"
+    output: "resources/pop_weighted_energy_totals_s{simpl}_{clusters}.csv"
+    threads: 1
+    resources: mem_mb=2000
+    script: "scripts/build_population_weighted_energy_totals.py"
+
+
+rule build_transport_demand:
+    input: 
+        clustered_pop_layout="resources/pop_layout_elec_s{simpl}_{clusters}.csv",
+        pop_weighted_energy_totals="resources/pop_weighted_energy_totals_s{simpl}_{clusters}.csv",
+        transport_data='resources/transport_data.csv',
+        traffic_data_KFZ="data/emobility/KFZ__count",
+        traffic_data_Pkw="data/emobility/Pkw__count",
+        temp_air_total="resources/temp_air_total_elec_s{simpl}_{clusters}.nc",
+    output: 
+        transport_demand="resources/transport_demand_s{simpl}_{clusters}.csv",
+        transport_data="resources/transport_data_s{simpl}_{clusters}.csv",
+        avail_profile="resources/avail_profile_s{simpl}_{clusters}.csv",
+        dsm_profile="resources/dsm_profile_s{simpl}_{clusters}.csv"
+    threads: 1
+    resources: mem_mb=2000
+    script: "scripts/build_transport_demand.py"
+
+
 rule prepare_sector_network:
     input:
         overrides="data/override_component_attrs",
         network=pypsaeur('networks/elec_s{simpl}_{clusters}_ec_lv{lv}_{opts}.nc'),
         energy_totals_name='resources/energy_totals.csv',
+        pop_weighted_energy_totals="resources/pop_weighted_energy_totals_s{simpl}_{clusters}.csv",
+        transport_demand="resources/transport_demand_s{simpl}_{clusters}.csv",
+        transport_data="resources/transport_data_s{simpl}_{clusters}.csv",
+        avail_profile="resources/avail_profile_s{simpl}_{clusters}.csv",
+        dsm_profile="resources/dsm_profile_s{simpl}_{clusters}.csv",
         co2_totals_name='resources/co2_totals.csv',
-        transport_name='resources/transport_data.csv',
-        traffic_data_KFZ="data/emobility/KFZ__count",
-        traffic_data_Pkw="data/emobility/Pkw__count",
         biomass_potentials='resources/biomass_potentials_s{simpl}_{clusters}.csv',
         heat_profile="data/heat_load_profile_BDEW.csv",
         costs=CDIR + "costs_{planning_horizons}.csv",
