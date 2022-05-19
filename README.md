@@ -50,15 +50,15 @@ The dataset consists of:
 
 - A grid model based on a modified [GridKit](https://github.com/bdw/GridKit)
   extraction of the [ENTSO-E Transmission System
-  Map](https://www.entsoe.eu/data/map/). The grid model contains 6001 lines
+  Map](https://www.entsoe.eu/data/map/). The grid model contains 6763 lines
   (alternating current lines at and above 220kV voltage level and all high
-  voltage direct current lines) and 3657 substations.
+  voltage direct current lines) and 3642 substations.
 - The open power plant database
   [powerplantmatching](https://github.com/FRESNA/powerplantmatching).
 - Electrical demand time series from the
   [OPSD project](https://open-power-system-data.org/).
 - Renewable time series based on ERA5 and SARAH, assembled using the [atlite tool](https://github.com/FRESNA/atlite).
-- Geographical potentials for wind and solar generators based on land use (CORINE) and excluding nature reserves (Natura2000) are computed with the [vresutils library](https://github.com/FRESNA/vresutils) and the [glaes library](https://github.com/FZJ-IEK3-VSA/glaes).
+- Geographical potentials for wind and solar generators based on land use (CORINE) and excluding nature reserves (Natura2000) are computed with the [atlite library](https://github.com/PyPSA/atlite).
 
 Already-built versions of the model can be found in the accompanying [Zenodo
 repository](https://doi.org/10.5281/zenodo.3601881).

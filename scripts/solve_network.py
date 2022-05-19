@@ -254,7 +254,12 @@ def solve_network(n, config, opts='', **kwargs):
     n.config = config
     n.opts = opts
 
-    if cf_solving.get('skip_iterations', False):
+    skip_iterations = cf_solving.get('skip_iterations', False)
+    if not n.lines.s_nom_extendable.any():
+        skip_iterations = True
+        logger.info("No expandable lines found. Skipping iterative solving.")
+
+    if skip_iterations:
         network_lopf(n, solver_name=solver_name, solver_options=solver_options,
                      extra_functionality=extra_functionality, **kwargs)
     else:
@@ -283,8 +288,7 @@ if __name__ == "__main__":
     with memory_logger(filename=fn, interval=30.) as mem:
         n = pypsa.Network(snakemake.input[0])
         n = prepare_network(n, solve_opts)
-        n = solve_network(n, config=snakemake.config, opts=opts,
-                          solver_dir=tmpdir,
+        n = solve_network(n, snakemake.config, opts, solver_dir=tmpdir,
                           solver_logfile=snakemake.log.solver)
         n.export_to_netcdf(snakemake.output[0])
 

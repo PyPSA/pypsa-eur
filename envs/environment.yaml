@@ -6,15 +6,13 @@ name: pypsa-eur
 channels:
   - conda-forge
   - bioconda
-  - http://conda.anaconda.org/gurobi
 dependencies:
   - python>=3.8
   - pip
-  - mamba # esp for windows build
 
-  - pypsa>=0.18
-  - atlite>=0.2.5
-  - dask<=2021.3.1 # until https://github.com/dask/dask/issues/7583 is solved
+  - pypsa>=0.18.1
+  - atlite>=0.2.6
+  - dask
 
   # Dependencies of the workflow itself
   - xlrd
@@ -28,7 +26,7 @@ dependencies:
   - lxml
   - powerplantmatching>=0.4.8
   - numpy
-  - pandas<1.3
+  - pandas
   - geopandas
   - xarray
   - netcdf4
@@ -38,7 +36,8 @@ dependencies:
   - progressbar2
   - pyomo
   - matplotlib
-  - proj<8
+  - proj
+  - fiona <= 1.18.20  # Till issue https://github.com/Toblerity/Fiona/issues/1085 is not solved
 
   # Keep in conda environment when calling ipython
   - ipython
@@ -56,5 +55,5 @@ dependencies:
   - tabula-py
 
   - pip:
-    - vresutils==0.3.1
+    - vresutils>=0.3.1
     - tsam>=1.1.0

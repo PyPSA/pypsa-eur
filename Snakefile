@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 from os.path import normpath, exists
-from shutil import copyfile
+from shutil import copyfile, move
 
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 HTTP = HTTPRemoteProvider()
@@ -45,7 +45,7 @@ if config['enable'].get('prepare_links_p_nom', False):
         output: 'data/links_p_nom.csv'
         log: 'logs/prepare_links_p_nom.log'
         threads: 1
-        resources: mem=500
+        resources: mem_mb=500
         script: 'scripts/prepare_links_p_nom.py'
 
 
@@ -67,7 +67,14 @@ if config['enable'].get('retrieve_databundle', True):
         script: 'scripts/retrieve_databundle.py'
 
 
+rule retrieve_load_data:
+    input: HTTP.remote("data.open-power-system-data.org/time_series/2019-06-05/time_series_60min_singleindex.csv", keep_local=True, static=True)
+    output: "data/load_raw.csv"
+    run: move(input[0], output[0])
+
+
 rule build_load_data:
+    input: "data/load_raw.csv"
     output: "resources/load.csv"
     log: "logs/build_load_data.log"
     script: 'scripts/build_load_data.py'
@@ -80,7 +87,7 @@ rule build_powerplants:
     output: "resources/powerplants.csv"
     log: "logs/build_powerplants.log"
     threads: 1
-    resources: mem=500
+    resources: mem_mb=500
     script: "scripts/build_powerplants.py"
 
 
@@ -101,7 +108,7 @@ rule base_network:
     log: "logs/base_network.log"
     benchmark: "benchmarks/base_network"
     threads: 1
-    resources: mem=500
+    resources: mem_mb=500
     script: "scripts/base_network.py"
 
 
@@ -121,7 +128,7 @@ rule build_shapes:
         nuts3_shapes='resources/nuts3_shapes.geojson'
     log: "logs/build_shapes.log"
     threads: 1
-    resources: mem=500
+    resources: mem_mb=500
     script: "scripts/build_shapes.py"
 
 
@@ -135,7 +142,7 @@ rule build_bus_regions:
         regions_offshore="resources/regions_offshore.geojson"
     log: "logs/build_bus_regions.log"
     threads: 1
-    resources: mem=1000
+    resources: mem_mb=1000
     script: "scripts/build_bus_regions.py"
 
 if config['enable'].get('build_cutout', False):
@@ -147,15 +154,15 @@ if config['enable'].get('build_cutout', False):
         log: "logs/build_cutout/{cutout}.log"
         benchmark: "benchmarks/build_cutout_{cutout}"
         threads: ATLITE_NPROCESSES
-        resources: mem=ATLITE_NPROCESSES * 1000
+        resources: mem_mb=ATLITE_NPROCESSES * 1000
         script: "scripts/build_cutout.py"
 
 
 if config['enable'].get('retrieve_cutout', True):
     rule retrieve_cutout:
-        input: HTTP.remote("zenodo.org/record/4709858/files/{cutout}.nc", keep_local=True, static=True)
+        input: HTTP.remote("zenodo.org/record/6382570/files/{cutout}.nc", keep_local=True, static=True)
         output: "cutouts/{cutout}.nc"
-        shell: "mv {input} {output}"
+        run: move(input[0], output[0])
 
 
 if config['enable'].get('build_natura_raster', False):
@@ -172,7 +179,7 @@ if config['enable'].get('retrieve_natura_raster', True):
     rule retrieve_natura_raster:
         input: HTTP.remote("zenodo.org/record/4706686/files/natura.tiff", keep_local=True, static=True)
         output: "resources/natura.tiff"
-        shell: "mv {input} {output}"
+        run: move(input[0], output[0])
 
 
 rule build_renewable_profiles:
@@ -193,20 +200,20 @@ rule build_renewable_profiles:
     log: "logs/build_renewable_profile_{technology}.log"
     benchmark: "benchmarks/build_renewable_profiles_{technology}"
     threads: ATLITE_NPROCESSES
-    resources: mem=ATLITE_NPROCESSES * 5000
+    resources: mem_mb=ATLITE_NPROCESSES * 5000
+    wildcard_constraints: technology="(?!hydro).*" # Any technology other than hydro
     script: "scripts/build_renewable_profiles.py"
 
 
-if 'hydro' in config['renewable'].keys():
-    rule build_hydro_profile:
-        input:
-            country_shapes='resources/country_shapes.geojson',
-            eia_hydro_generation='data/bundle/EIA_hydro_generation_2000_2014.csv',
-            cutout="cutouts/" + config["renewable"]['hydro']['cutout'] + ".nc"
-        output: 'resources/profile_hydro.nc'
-        log: "logs/build_hydro_profile.log"
-        resources: mem=5000
-        script: 'scripts/build_hydro_profile.py'
+rule build_hydro_profile:
+    input:
+        country_shapes='resources/country_shapes.geojson',
+        eia_hydro_generation='data/bundle/EIA_hydro_generation_2000_2014.csv',
+        cutout=f"cutouts/{config['renewable']['hydro']['cutout']}.nc" if "hydro" in config["renewable"] else "config['renewable']['hydro']['cutout'] not configured",
+    output: 'resources/profile_hydro.nc'
+    log: "logs/build_hydro_profile.log"
+    resources: mem_mb=5000
+    script: 'scripts/build_hydro_profile.py'
 
 
 rule add_electricity:
@@ -225,7 +232,7 @@ rule add_electricity:
     log: "logs/add_electricity.log"
     benchmark: "benchmarks/add_electricity"
     threads: 1
-    resources: mem=3000
+    resources: mem_mb=5000
     script: "scripts/add_electricity.py"
 
 
@@ -244,7 +251,7 @@ rule simplify_network:
     log: "logs/simplify_network/elec_s{simpl}.log"
     benchmark: "benchmarks/simplify_network/elec_s{simpl}"
     threads: 1
-    resources: mem=4000
+    resources: mem_mb=4000
     script: "scripts/simplify_network.py"
 
 
@@ -266,7 +273,7 @@ rule cluster_network:
     log: "logs/cluster_network/elec_s{simpl}_{clusters}.log"
     benchmark: "benchmarks/cluster_network/elec_s{simpl}_{clusters}"
     threads: 1
-    resources: mem=3000
+    resources: mem_mb=6000
     script: "scripts/cluster_network.py"
 
 
@@ -278,7 +285,7 @@ rule add_extra_components:
     log: "logs/add_extra_components/elec_s{simpl}_{clusters}.log"
     benchmark: "benchmarks/add_extra_components/elec_s{simpl}_{clusters}_ec"
     threads: 1
-    resources: mem=3000
+    resources: mem_mb=3000
     script: "scripts/add_extra_components.py"
 
 
@@ -288,7 +295,7 @@ rule prepare_network:
     log: "logs/prepare_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.log"
     benchmark: "benchmarks/prepare_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}"
     threads: 1
-    resources: mem=4000
+    resources: mem_mb=4000
     script: "scripts/prepare_network.py"
 
 
@@ -306,6 +313,8 @@ def memory(w):
             break
     if w.clusters.endswith('m'):
         return int(factor * (18000 + 180 * int(w.clusters[:-1])))
+    elif w.clusters == "all":
+        return int(factor * (18000 + 180 * 4000))
     else:
         return int(factor * (10000 + 195 * int(w.clusters)))
 
@@ -319,8 +328,8 @@ rule solve_network:
         memory="logs/solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_memory.log"
     benchmark: "benchmarks/solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}"
     threads: 4
-    resources: mem=memory
-    shadow: "shallow"
+    resources: mem_mb=memory
+    shadow: "minimal"
     script: "scripts/solve_network.py"
 
 
@@ -335,8 +344,8 @@ rule solve_operations_network:
         memory="logs/solve_operations_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op_memory.log"
     benchmark: "benchmarks/solve_operations_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}"
     threads: 4
-    resources: mem=(lambda w: 5000 + 372 * int(w.clusters))
-    shadow: "shallow"
+    resources: mem_mb=(lambda w: 5000 + 372 * int(w.clusters))
+    shadow: "minimal"
     script: "scripts/solve_operations_network.py"
 
 
