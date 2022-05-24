@@ -37,6 +37,7 @@ dependencies:
   - pyomo
   - matplotlib
   - proj
+  - country_converter
   - fiona <= 1.18.20  # Till issue https://github.com/Toblerity/Fiona/issues/1085 is not solved
 
   # Keep in conda environment when calling ipython
@@ -51,7 +52,6 @@ dependencies:
   - geopy
   - tqdm
   - pytz
-  - country_converter
   - tabula-py
 
   - pip:

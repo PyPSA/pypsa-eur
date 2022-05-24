@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 from os.path import normpath, exists
-from shutil import copyfile, move
+from shutil import copyfile, move, unpack_archive
 
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 HTTP = HTTPRemoteProvider()
@@ -50,14 +50,9 @@ if config['enable'].get('prepare_links_p_nom', False):
 
 
 datafiles = ['ch_cantons.csv', 'je-e-21.03.02.xls', 
-            'eez/World_EEZ_v8_2014.shp', 'EIA_hydro_generation_2000_2014.csv', 
-            'hydro_capacities.csv', 'naturalearth/ne_10m_admin_0_countries.shp', 
+            'hydro_capacities.csv', 
             'NUTS_2013_60M_SH/data/NUTS_RG_60M_2013.shp', 'nama_10r_3popgdp.tsv.gz', 
             'nama_10r_3gdp.tsv.gz', 'corine/g250_clc06_V18_5.tif']
-
-
-if not config.get('tutorial', False):
-    datafiles.extend(["natura/Natura2000_end2015.shp", "GEBCO_2014_2D.nc"])
 
 
 if config['enable'].get('retrieve_databundle', True):
@@ -65,6 +60,59 @@ if config['enable'].get('retrieve_databundle', True):
         output: expand('data/bundle/{file}', file=datafiles)
         log: "logs/retrieve_databundle.log"
         script: 'scripts/retrieve_databundle.py'
+
+
+rule download_eez:
+    output:
+        zip="data/eez/World_EEZ_v11_20191118_gpkg.zip",
+        gpkg="data/eez/World_EEZ_v11_20191118_gpkg/eez_v11.gpkg",
+    run:
+        import requests
+
+        response = requests.post('https://www.marineregions.org/download_file.php', params={'name': 'World_EEZ_v11_20191118_gpkg.zip'},
+            data={
+                'name': 'Name',
+                'organisation': 'Organisation',
+                'email': 'e.mail@inter.net',
+                'country': 'Germany',
+                'user_category': 'academia',
+                'purpose_category': 'Research',
+                'agree': '1',
+            })
+
+        with open(output["zip"], 'wb') as f:
+            f.write(response.content)
+        output_folder = Path(output["zip"]).parent
+        unpack_archive(output["zip"], output_folder)
+
+
+rule download_gebco_bathymetry:
+    input:
+        HTTP.remote(
+            "www.bodc.ac.uk/data/open_download/gebco/gebco_2021/zip",
+            additional_request_string="/",
+            static=True,
+        ),
+    output:
+        zip="data/gebco/gebco_2021.zip",
+        gebco="data/gebco/GEBCO_2021.nc",
+    run:
+        move(input[0], output["zip"])
+        output_folder = Path(output["gebco"]).parent
+        unpack_archive(output["zip"], output_folder)
+
+# Download directly from naciscdn.org which is a redirect from naturalearth.com
+# (https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-admin-0-countries/)
+rule download_naturalearth:
+    input:
+        HTTP.remote("https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_0_countries.zip", keep_local=True, static=True)
+    output:
+        zip="data/naturalearth/ne_10m_admin_0_countries.zip",
+        countries="data/naturalearth/ne_10m_admin_0_countries.shp"
+    run:
+        move(input[0], output["zip"])
+        output_folder = Path(output["countries"]).parent
+        unpack_archive(output["zip"], output_folder)
 
 
 rule retrieve_load_data:
@@ -114,8 +162,8 @@ rule base_network:
 
 rule build_shapes:
     input:
-        naturalearth='data/bundle/naturalearth/ne_10m_admin_0_countries.shp',
-        eez='data/bundle/eez/World_EEZ_v8_2014.shp',
+        naturalearth='data/naturalearth/ne_10m_admin_0_countries.shp',
+        eez='data/eez/World_EEZ_v11_20191118_gpkg/eez_v11.gpkg',
         nuts3='data/bundle/NUTS_2013_60M_SH/data/NUTS_RG_60M_2013.shp',
         nuts3pop='data/bundle/nama_10r_3popgdp.tsv.gz',
         nuts3gdp='data/bundle/nama_10r_3gdp.tsv.gz',
@@ -187,7 +235,7 @@ rule build_renewable_profiles:
         base_network="networks/base.nc",
         corine="data/bundle/corine/g250_clc06_V18_5.tif",
         natura="resources/natura.tiff",
-        gebco=lambda w: ("data/bundle/GEBCO_2014_2D.nc"
+        gebco=lambda w: ("data/gebco/GEBCO_2021.nc"
                          if "max_depth" in config["renewable"][w.technology].keys()
                          else []),
         country_shapes='resources/country_shapes.geojson',
@@ -208,7 +256,7 @@ rule build_renewable_profiles:
 rule build_hydro_profile:
     input:
         country_shapes='resources/country_shapes.geojson',
-        eia_hydro_generation='data/bundle/EIA_hydro_generation_2000_2014.csv',
+        eia_hydro_generation='data/eia_hydro_annual_generation.csv',
         cutout=f"cutouts/{config['renewable']['hydro']['cutout']}.nc" if "hydro" in config["renewable"] else "config['renewable']['hydro']['cutout'] not configured",
     output: 'resources/profile_hydro.nc'
     log: "logs/build_hydro_profile.log"

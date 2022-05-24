@@ -62,6 +62,8 @@ Upcoming Release
 
 * New network topology extracted from the ENTSO-E interactive map.
 
+* Update of EIA hydroelectricity generation data, which is now stored directly in the repository.
+
 * The unused argument ``simple_hvdc_costs`` in :mod:`add_electricity` was removed.
 
 * Iterative solving with impedance updates is skipped if there are no expandable lines.
