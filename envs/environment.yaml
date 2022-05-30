@@ -24,7 +24,7 @@ dependencies:
   - yaml
   - pytables
   - lxml
-  - powerplantmatching>=0.4.8
+  - powerplantmatching>=0.5.3
   - numpy
   - pandas
   - geopandas
