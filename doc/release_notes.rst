@@ -72,6 +72,8 @@ Upcoming Release
 
 * Fix crs bug. Change crs 4236 to 4326.
 
+* Update rasterio version to correctly calculate exclusion raster
+
 
 PyPSA-Eur 0.4.0 (22th September 2021)
 =====================================
