@@ -29,10 +29,21 @@ heating, biomass, industry and industrial feedstocks. This completes
 the energy system and includes all greenhouse gas emitters except
 waste management, agriculture, forestry and land use.
 
+
+**WARNING**: PyPSA-Eur-Sec is under active development and has several
+`limitations <https://pypsa-eur-sec.readthedocs.io/en/latest/limitations.html>`_ which
+you should understand before using the model. The github repository
+`issues <https://github.com/PyPSA/pypsa-eur-sec/issues>`_ collects known
+topics we are working on (please feel free to help or make suggestions). There is neither a full
+documentation nor a paper yet, but we hope to have a preprint out by mid-2022.
+We cannot support this model if you
+choose to use it.
+
+
 .. note::
     More about the current model capabilities and preliminary results
     can be found in `a recent presentation at EMP-E <https://nworbmot.org/energy/brown-empe.pdf>`_
-    and the the following `preprint with a description of the industry sector <https://arxiv.org/abs/2109.09563>`_.
+    and the following `paper in Joule with a description of the industry sector <https://arxiv.org/abs/2109.09563>`_.
 
 This diagram gives an overview of the sectors and the links between
 them:
@@ -131,6 +142,7 @@ Documentation
 **References**
 
 * :doc:`release_notes`
+* :doc:`limitations`
 
 .. toctree::
    :hidden:
@@ -138,18 +150,7 @@ Documentation
    :caption: References
 
    release_notes
-
-
-Warnings
-========
-
-**WARNING**: This model is under construction and contains serious
-problems that distort the results. See the github repository
-`issues <https://github.com/PyPSA/pypsa-eur-sec/issues>`_ for some of
-the problems (please feel free to help or make suggestions). There is
-neither documentation nor a paper yet, but we hope to have a preprint
-out by summer 2020. We cannot support this model if you choose to use
-it.
+   limitations
 
 
 Licence
