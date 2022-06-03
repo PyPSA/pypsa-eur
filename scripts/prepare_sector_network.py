@@ -2217,8 +2217,8 @@ def add_agriculture(n, costs):
 
     if ice_share > 0:
 
-        n.add("Load",
-            "agriculture machinery oil",
+        n.madd("Load",
+            ["agriculture machinery oil"],
             bus=spatial.oil.nodes,
             carrier="agriculture machinery oil",
             p_set=ice_share * machinery_nodal_energy.sum() * 1e6 / 8760
