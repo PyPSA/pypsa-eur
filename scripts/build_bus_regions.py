@@ -117,9 +117,7 @@ def voronoi_partition_pts(points, outline, no_multipolygons=False):
             return poly
         polygons = [demultipolygon(poly) for poly in polygons]
 
-    polygons_arr = np.empty((len(polygons),), 'object')
-    polygons_arr[:] = polygons
-    return polygons_arr
+    return np.array(polygons, dtype=object)
 
 
 if __name__ == "__main__":
