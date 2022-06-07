@@ -107,15 +107,6 @@ def voronoi_partition_pts(points, outline, no_multipolygons=False):
 
             polygons.append(poly)
 
-    if no_multipolygons:
-        def demultipolygon(poly):
-            try:
-                # for a MultiPolygon pick the part with the largest area
-                poly = max(poly.geoms, key=lambda pg: pg.area)
-            except:
-                pass
-            return poly
-        polygons = [demultipolygon(poly) for poly in polygons]
 
     return np.array(polygons, dtype=object)
 
