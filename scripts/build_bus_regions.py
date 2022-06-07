@@ -71,8 +71,6 @@ def voronoi_partition_pts(points, outline):
     ----------
     points : Nx2 - ndarray[dtype=float]
     outline : Polygon
-    no_multipolygons : bool (default: False)
-        If true, replace each MultiPolygon by its largest component
     Returns
     -------
     polygons : N - ndarray[dtype=Polygon|MultiPolygon]
