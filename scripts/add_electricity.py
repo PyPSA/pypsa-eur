@@ -94,7 +94,6 @@ import geopandas as gpd
 import powerplantmatching as pm
 from powerplantmatching.export import map_country_bus
 
-from vresutils.costdata import annuity
 from vresutils import transfer as vtransfer
 
 idx = pd.IndexSlice
@@ -103,6 +102,18 @@ logger = logging.getLogger(__name__)
 
 
 def normed(s): return s/s.sum()
+
+
+def calculate_annuity(n, r):
+    """Calculate the annuity factor for an asset with lifetime n years and
+    discount rate of r, e.g. annuity(20, 0.05) * 20 = 1.6"""
+
+    if isinstance(r, pd.Series):
+        return pd.Series(1/n, index=r.index).where(r == 0, r/(1. - 1./(1.+r)**n))
+    elif r > 0:
+        return r / (1. - 1./(1.+r)**n)
+    else:
+        return 1 / n
 
 
 def _add_missing_carriers_from_costs(n, costs, carriers):
@@ -138,7 +149,7 @@ def load_costs(tech_costs, config, elec_config, Nyears=1.):
                           "investment" : 0,
                           "lifetime" : 25})
 
-    costs["capital_cost"] = ((annuity(costs["lifetime"], costs["discount rate"]) +
+    costs["capital_cost"] = ((calculate_annuity(costs["lifetime"], costs["discount rate"]) +
                              costs["FOM"]/100.) *
                              costs["investment"] * Nyears)
 
@@ -227,7 +238,7 @@ def attach_load(n, regions, load, nuts3_shapes, countries, scaling=1.):
     n.madd("Load", substation_lv_i, bus=substation_lv_i, p_set=load)
 
 
-def update_transmission_costs(n, costs, length_factor=1.0, simple_hvdc_costs=False):
+def update_transmission_costs(n, costs, length_factor=1.0):
     # TODO: line length factor of lines is applied to lines and links.
     # Separate the function to distinguish.
 
@@ -242,16 +253,12 @@ def update_transmission_costs(n, costs, length_factor=1.0, simple_hvdc_costs=Fal
     # may be missing. Therefore we have to return here.
     if n.links.loc[dc_b].empty: return
 
-    if simple_hvdc_costs:
-        costs = (n.links.loc[dc_b, 'length'] * length_factor *
-                 costs.at['HVDC overhead', 'capital_cost'])
-    else:
-        costs = (n.links.loc[dc_b, 'length'] * length_factor *
-                ((1. - n.links.loc[dc_b, 'underwater_fraction']) *
-                costs.at['HVDC overhead', 'capital_cost'] +
-                n.links.loc[dc_b, 'underwater_fraction'] *
-                costs.at['HVDC submarine', 'capital_cost']) +
-                costs.at['HVDC inverter pair', 'capital_cost'])
+    costs = (n.links.loc[dc_b, 'length'] * length_factor *
+            ((1. - n.links.loc[dc_b, 'underwater_fraction']) *
+            costs.at['HVDC overhead', 'capital_cost'] +
+            n.links.loc[dc_b, 'underwater_fraction'] *
+            costs.at['HVDC submarine', 'capital_cost']) +
+            costs.at['HVDC inverter pair', 'capital_cost'])
     n.links.loc[dc_b, 'capital_cost'] = costs
 
 

@@ -62,11 +62,18 @@ Upcoming Release
 
 * New network topology extracted from the ENTSO-E interactive map.
 
+* The unused argument ``simple_hvdc_costs`` in :mod:`add_electricity` was removed.
+
 * Iterative solving with impedance updates is skipped if there are no expandable lines.
 
 * Switch from Germany to Belgium for continuous integration and tutorial to save resources.
 
 * Use updated SARAH-2 and ERA5 cutouts with slightly wider scope to east and additional variables.
+
+* Fix crs bug. Change crs 4236 to 4326.
+
+* Update rasterio version to correctly calculate exclusion raster
+
 
 PyPSA-Eur 0.4.0 (22th September 2021)
 =====================================
