@@ -62,7 +62,7 @@ def save_to_geojson(s, fn):
     s.to_file(fn, driver='GeoJSON', schema=schema)
 
 
-def voronoi_partition_pts(points, outline, no_multipolygons=False):
+def voronoi_partition_pts(points, outline):
     """
     Compute the polygons of a voronoi partition of `points` within the
     polygon `outline`. Taken from
