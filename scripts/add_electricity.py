@@ -309,7 +309,7 @@ def attach_conventional_generators(n, costs, ppl, conventional_carriers, extenda
 
     ppl = (ppl.query('carrier in @carriers').join(costs, on='carrier', rsuffix='_r')
            .rename(index=lambda s: 'C' + str(s)))
-    ppl.efficiency.update(ppl.efficiency_r.dropna())
+    ppl["efficiency"] = ppl.efficiency.fillna(ppl.efficiency_r)
 
     logger.info('Adding {} generators with capacities [GW] \n{}'
                 .format(len(ppl), ppl.groupby('carrier').p_nom.sum().div(1e3).round(2)))

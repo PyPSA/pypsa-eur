@@ -281,7 +281,9 @@ def clustering_for_n_clusters(n, n_clusters, custom_busmap=False, aggregate_carr
         aggregate_generators_carriers=aggregate_carriers,
         aggregate_one_ports=["Load", "StorageUnit"],
         line_length_factor=line_length_factor,
-        generator_strategies={'p_nom_max': p_nom_max_strategy, 'p_nom_min': pd.Series.sum},
+        generator_strategies={'p_nom_max': p_nom_max_strategy, 'p_nom_min': pd.Series.sum, 
+                              'build_year': lambda x: 0, 'lifetime': lambda x: np.inf, 
+                              'efficiency': np.mean},
         scale_link_capital_costs=False)
 
     if not n.links.empty:
@@ -342,7 +344,7 @@ if __name__ == "__main__":
 
     if snakemake.wildcards.clusters.endswith('m'):
         n_clusters = int(snakemake.wildcards.clusters[:-1])
-        aggregate_carriers = pd.Index(n.generators.carrier.unique()).difference(renewable_carriers)
+        aggregate_carriers = None
     elif snakemake.wildcards.clusters == 'all':
         n_clusters = len(n.buses)
         aggregate_carriers = None # All

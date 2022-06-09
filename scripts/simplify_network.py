@@ -200,7 +200,14 @@ def _aggregate_and_move_components(n, busmap, connection_costs_to_bus, output, a
 
     _adjust_capital_costs_using_connection_costs(n, connection_costs_to_bus, output)
 
-    generators, generators_pnl = aggregategenerators(n, busmap, custom_strategies={'p_nom_min': np.sum})
+    strategies = {
+        'p_nom_min': np.sum, 
+        'p_nom_max': 'sum', 
+        'build_year': lambda x: 0, 
+        'lifetime': lambda x: np.inf, 
+        'efficiency': np.mean
+        }
+    generators, generators_pnl = aggregategenerators(n, busmap, custom_strategies=strategies)
     replace_components(n, "Generator", generators, generators_pnl)
 
     for one_port in aggregate_one_ports:
@@ -351,7 +358,11 @@ def aggregate_to_substations(n, buses_i=None):
                                             aggregate_generators_carriers=None,
                                             aggregate_one_ports=["Load", "StorageUnit"],
                                             line_length_factor=1.0,
-                                            generator_strategies={'p_nom_max': 'sum'},
+                                            generator_strategies={'p_nom_max': 'sum', 
+                                                                  'build_year': lambda x: 0, 
+                                                                  'lifetime': lambda x: np.inf, 
+                                                                  'efficiency': np.mean
+                                                                  },
                                             scale_link_capital_costs=False)
         
     return clustering.network, busmap
