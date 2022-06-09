@@ -25,7 +25,7 @@ Relevant Settings
         co2limit:
         extendable_carriers:
         estimate_renewable_capacities:
-            
+
 
     load:
         scaling_factor:
@@ -580,14 +580,16 @@ if __name__ == "__main__":
     if "renewable_carriers" in snakemake.config['electricity']:    
         renewable_carriers = set(snakemake.config['renewable'])
     else: 
-        logger.warning("Key `renewable_carriers` not found in config under tag `electricity`, "
-                       "falling back to carriers listed under `renewable`.")
+        logger.warning("Missing key `renewable_carriers` under config entry `electricity`. "
+                       "In future versions, this will raise an error. "
+                       "Falling back to carriers listed under `renewable`.")
         renewable_carriers = snakemake.config['renewable']
 
     extendable_carriers = snakemake.config['electricity']['extendable_carriers']
     if not (set(renewable_carriers) & set(extendable_carriers['Generator'])):
-        logger.warning(f"In future versions >= v0.0.6, extenable renewable carriers have to be "
-                       "explicitely mentioned in `extendable_carriers`.")
+        logger.warning("No renewables found in config entry `extendable_carriers`. "
+                       "In future versions, these have to be explicitely listed. "
+                       "Falling back to all renewables.")
     
     conventional_carriers = snakemake.config["electricity"]["conventional_carriers"]
 
@@ -606,19 +608,26 @@ if __name__ == "__main__":
         attach_hydro(n, costs, ppl, snakemake.input.profile_hydro, snakemake.input.hydro_capacities, 
                      conf.pop('carriers', []), **conf)
 
-    estimate_renewable_caps = snakemake.config['electricity'].get('estimate_renewable_capacities', {})
-    if not isinstance(estimate_renewable_caps, dict):
-        logger.warning("The config entry `estimate_renewable_capacities` was changed to a dictionary, "
-                       "please update your config yaml file accordingly.")
+    if "estimate_renewable_capacities" not in snakemake.config['electricity']:
+        logger.warning("Missing key `estimate_renewable_capacities` under config entry `electricity`."
+                       "In future versions, this will raise an error. ")
+        estimate_renewable_caps = {'enable': False}
+    if "enable" not in estimate_renewable_caps:
+        logger.warning("Missing key `enable` under config entry `estimate_renewable_capacities`."
+                       "In future versions, this will raise an error. Falling back to False.")
+        estimate_renewable_caps = {'enable': False}
+    if "from_opsd" not in estimate_renewable_caps:
+        logger.warning("Missing key `from_opsd` under config entry `estimate_renewable_capacities`."
+                       "In future versions, this will raise an error. "
+                       "Falling back to whether `renewable_capacities_from_opsd` is non-empty.")
         from_opsd = bool(snakemake.config["electricity"]["renewable_capacities_from_opsd"])
-        estimate_renewable_caps = {"enable": True, "from_opsd": from_opsd}
+        estimate_renewable_caps['from_opsd'] = from_opsd
+    
 
-    if estimate_renewable_caps["enable"]:
-        
+    if estimate_renewable_caps["enable"]:        
         if estimate_renewable_caps["from_opsd"]:
             tech_map = snakemake.config["electricity"]["estimate_renewable_capacities"]["technology_mapping"]
             attach_OPSD_renewables(n, tech_map)
-
         estimate_renewable_capacities(n, snakemake.config)
 
     update_p_nom_max(n)
