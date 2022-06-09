@@ -7,13 +7,38 @@
 Release Notes
 ##########################################
 
-Energy Security Release (April 2022)
-====================================
+Upcoming Release
+================
 
-**New Features and Changes**
+* Add an efficiency factor of 88.55% to offshore wind capacity factors
+  as a proxy for wake losses. More rigorous modelling is `planned <https://github.com/PyPSA/pypsa-eur/issues/153>`_
+  [`#277 <https://github.com/PyPSA/pypsa-eur/pull/277>`_].
+
+* The default deployment density of AC- and DC-connected offshore wind capacity is reduced from 3 MW/sqkm
+  to a more conservative estimate of 2 MW/sqkm [`#280 <https://github.com/PyPSA/pypsa-eur/pull/280>`_].
+
+* Following discussion in `#285 <https://github.com/PyPSA/pypsa-eur/issues/285>`_ we have disabled the
+  correction factor for solar PV capacity factors by default while satellite data is used.
+  A correction factor of 0.854337 is recommended if reanalysis data like ERA5 is used.
+
+* Resource definitions for memory usage now follow [Snakemake standard resource definition](https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#standard-resources) ```mem_mb`` rather than ``mem``.
+
+* Network building is made deterministic by supplying a fixed random state to network clustering routines.
+
+* New network topology extracted from the ENTSO-E interactive map.
+
+* The unused argument ``simple_hvdc_costs`` in :mod:`add_electricity` was removed.
+
+* Iterative solving with impedance updates is skipped if there are no expandable lines.
+
+* Switch from Germany to Belgium for continuous integration and tutorial to save resources.
+
+* Use updated SARAH-2 and ERA5 cutouts with slightly wider scope to east and additional variables.
 
 * Added existing renewable capacities for all countries based on IRENA statistics (IRENASTAT) using new ``powerplantmatching`` version:
+  * The estimation is endabled by setting ``enable`` to ``True``.
   * Configuration of reference year for capacities can be configured (default: ``2020``) 
+  * The list of renewables provided by the OPSD database can be used as a basis, using the tag ``from_opsd: True``. This adds the renewables from the database and fills up the missing capacities with the heuristic distribution. 
   * Uniform expansion limit of renewable build-up based on existing capacities can be configured using ``expansion_limit`` option
     (default: ``false``; limited to determined renewable potentials)
   * Distribution of country-level capacities proportional to maximum annual energy yield for each bus region
@@ -21,6 +46,8 @@ Energy Security Release (April 2022)
   * The corresponding ``config`` entries changed, cf. ``config.default.yaml``:
     * old: ``estimate_renewable_capacities_from_capacity_stats``
     * new: ``estimate_renewable_capacities``
+
+* The config key ``renewable_capacities_from_OPSD`` is deprecated and was moved under the section, ``estimate_renewable_capacities``. To enable it set ``from_opsd`` to `True`.
 
 * Add operational reserve margin constraint analogous to `GenX implementation <https://genxproject.github.io/GenX/dev/core/#Reserves>`_.
   Can be activated with config setting ``electricity: operational_reserve:``.
@@ -31,10 +58,21 @@ Energy Security Release (April 2022)
 * Implement country-specific EAFs for nuclear power plants based on IAEA 2018-2020 reported country averages.
 
 * The powerplants that have been shut down before 2021 are filtered out. 
-
-**Bugs and Compatibility**
   
 * ``powerplantmatching>=0.5.1`` is now required for ``IRENASTATS``.
+
+* The interpretation of ``extendable_carriers`` in the config was changed that all carriers that should be extendable have to be listed here. Before, renewable carriers were always set to be extendable. For backwards compatibility, the workflow is looking at both the listed carriers under the ``renewable`` key and the ``extendable`` key. But in the future, all of them have to be listed under ``extendable_carriers``. 
+
+* It is now possible to set conventional power plants as extendable by adding them to the list of extendable ``Generator`` carriers in the config.
+
+* By having carriers in the list of ``extendable_carriers`` but not in the list of ``conventional_carriers``, the corresponding conventional power plants are set extendable without a lower capacity bound of today's capacities.
+
+* Now, conventional carriers have an assigned capital cost by default.
+
+* The ``build_year`` and ``lifetime`` column are now defined for conventional power plants. 
+
+* A new section ``conventional`` was added to the config file. This section contains configurations for conventional carriers. Using the ``energy_availibility_factor`` key, the ``p_max_pu`` values for conventional power plants can be defined. 
+
 
 Synchronisation Release - Ukraine and Moldova (17th March 2022)
 ===============================================================
@@ -70,34 +108,6 @@ This release is not on the ``master`` branch. It can be used with
   git clone https://github.com/pypsa/pypsa-eur
   git checkout synchronisation-release
 
-
-Upcoming Release
-================
-
-* Add an efficiency factor of 88.55% to offshore wind capacity factors
-  as a proxy for wake losses. More rigorous modelling is `planned <https://github.com/PyPSA/pypsa-eur/issues/153>`_
-  [`#277 <https://github.com/PyPSA/pypsa-eur/pull/277>`_].
-
-* The default deployment density of AC- and DC-connected offshore wind capacity is reduced from 3 MW/sqkm
-  to a more conservative estimate of 2 MW/sqkm [`#280 <https://github.com/PyPSA/pypsa-eur/pull/280>`_].
-
-* Following discussion in `#285 <https://github.com/PyPSA/pypsa-eur/issues/285>`_ we have disabled the
-  correction factor for solar PV capacity factors by default while satellite data is used.
-  A correction factor of 0.854337 is recommended if reanalysis data like ERA5 is used.
-
-* Resource definitions for memory usage now follow [Snakemake standard resource definition](https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#standard-resources) ```mem_mb`` rather than ``mem``.
-
-* Network building is made deterministic by supplying a fixed random state to network clustering routines.
-
-* New network topology extracted from the ENTSO-E interactive map.
-
-* The unused argument ``simple_hvdc_costs`` in :mod:`add_electricity` was removed.
-
-* Iterative solving with impedance updates is skipped if there are no expandable lines.
-
-* Switch from Germany to Belgium for continuous integration and tutorial to save resources.
-
-* Use updated SARAH-2 and ERA5 cutouts with slightly wider scope to east and additional variables.
 
 
 PyPSA-Eur 0.4.0 (22th September 2021)
