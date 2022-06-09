@@ -24,8 +24,8 @@ Relevant Settings
         conventional_carriers:
         co2limit:
         extendable_carriers:
-        include_renewable_capacities_from_OPSD:
-        estimate_renewable_capacities_from_capacity_stats:
+        estimate_renewable_capacities:
+            
 
     load:
         scaling_factor:
@@ -185,7 +185,7 @@ def load_powerplants(ppl_fn):
                     'ccgt, thermal': 'CCGT', 'hard coal': 'coal'}
     return (pd.read_csv(ppl_fn, index_col=0, dtype={'bus': 'str'})
             .powerplant.to_pypsa_names()
-            .rename(columns=str.lower).drop(columns=['efficiency'])
+            .rename(columns=str.lower)
             .replace({'carrier': carrier_dict}))
 
 
@@ -251,13 +251,14 @@ def update_transmission_costs(n, costs, length_factor=1.0):
     n.links.loc[dc_b, 'capital_cost'] = costs
 
 
-def attach_wind_and_solar(n, costs, input_profiles, technologies, line_length_factor=1):
+def attach_wind_and_solar(n, costs, input_profiles, technologies, extendable_carriers, line_length_factor=1):
     # TODO: rename tech -> carrier, technologies -> carriers
-    
-    for tech in technologies:
-        if tech == 'hydro': continue
+    _add_missing_carriers_from_costs(n, costs, technologies)
 
-        n.add("Carrier", name=tech)
+    for tech in technologies:
+        if tech == 'hydro': 
+            continue
+
         with xr.open_dataset(getattr(input_profiles, 'profile_' + tech)) as ds:
             if ds.indexes['bus'].empty: continue
 
@@ -281,7 +282,7 @@ def attach_wind_and_solar(n, costs, input_profiles, technologies, line_length_fa
             n.madd("Generator", ds.indexes['bus'], ' ' + tech,
                    bus=ds.indexes['bus'],
                    carrier=tech,
-                   p_nom_extendable=True,
+                   p_nom_extendable=tech in extendable_carriers['Generator'],
                    p_nom_max=ds['p_nom_max'].to_pandas(),
                    weight=ds['weight'].to_pandas(),
                    marginal_cost=costs.at[suptech, 'marginal_cost'],
@@ -290,41 +291,45 @@ def attach_wind_and_solar(n, costs, input_profiles, technologies, line_length_fa
                    p_max_pu=ds['profile'].transpose('time', 'bus').to_pandas())
 
 
-def attach_conventional_generators(n, costs, ppl, conventional_carriers):
+def attach_conventional_generators(n, costs, ppl, conventional_carriers, extendable_carriers, **config):
 
-    carriers = conventional_carriers["technologies"]
+    carriers = set(conventional_carriers) | set(extendable_carriers['Generator'])
     _add_missing_carriers_from_costs(n, costs, carriers)
 
-    ppl = (ppl.query('carrier in @carriers').join(costs, on='carrier')
+    ppl = (ppl.query('carrier in @carriers').join(costs, on='carrier', rsuffix='_r')
            .rename(index=lambda s: 'C' + str(s)))
+    ppl.efficiency.update(ppl.efficiency_r.dropna())
 
-    logger.info('Adding {} generators with capacities [MW] \n{}'
-                .format(len(ppl), ppl.groupby('carrier').p_nom.sum()))
+    logger.info('Adding {} generators with capacities [GW] \n{}'
+                .format(len(ppl), ppl.groupby('carrier').p_nom.sum().div(1e3).round(2)))
 
     n.madd("Generator", ppl.index,
            carrier=ppl.carrier,
            bus=ppl.bus,
-           p_nom=ppl.p_nom,
+           p_nom_min=ppl.p_nom.where(ppl.carrier.isin(conventional_carriers), 0),
+           p_nom=ppl.p_nom.where(ppl.carrier.isin(conventional_carriers), 0),
+           p_nom_extendable=ppl.carrier.isin(extendable_carriers['Generator']),
            efficiency=ppl.efficiency,
            marginal_cost=ppl.marginal_cost,
-           capital_cost=0)
-
-    logger.warning(f'Capital costs for conventional generators put to 0 EUR/MW.')
+           capital_cost=ppl.capital_cost,
+           build_year=ppl.datein.fillna(0).astype(int),
+           lifetime=(ppl.dateout - ppl.datein).fillna(9999).astype(int),
+        )
     
-    for k,v in conventional_carriers["energy_availability_factors"].items():
-
+    for carrier in config:
+        
         # Generators with technology affected
-        idx = n.generators.query("carrier == @k").index
+        idx = n.generators.query("carrier == @carrier").index
+        factors = config[carrier].get("energy_availability_factors")
 
         if isinstance(v, float):
             # Single value affecting all generators of technology k indiscriminantely of country
             n.generators.loc[idx, "p_max_pu"] = v
         elif isinstance(v, dict):
             v = pd.Series(v)
-
             # Values affecting generators of technology k country-specific
             # First map generator buses to countries; then map countries to p_max_pu
-            n.generators.loc[idx, "p_max_pu"] = n.generators.loc[idx]["bus"].replace(n.buses["country"]).replace(v)
+            n.generators.p_max_pu.update(n.generators.loc[idx].bus.map(v).dropna())
 
 
 
@@ -429,7 +434,7 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **con
 
 
 def attach_extendable_generators(n, costs, ppl, carriers):
-
+    logger.warning("The function `attach_extendable_generators` is deprecated in v0.0.5.")
     _add_missing_carriers_from_costs(n, costs, carriers)
 
     for tech in carriers:
@@ -476,24 +481,18 @@ def attach_extendable_generators(n, costs, ppl, carriers):
 
 
 
-def attach_OPSD_renewables(n, techs):
+def attach_OPSD_renewables(n, tech_map):
 
-    tech_map = {'Onshore': 'onwind', 'Offshore': 'offwind', 'Solar': 'solar'}
-    tech_map = {k: v for k, v in tech_map.items() if v in techs}
-
-    if not tech_map:
-        return
-
-    tech_string = ", ".join(tech_map.values())
-    logger.info(f'Using OPSD renewable capacities for technologies {tech_string}.')
+    tech_string = ", ".join(sum(tech_map.values(), []))
+    logger.info(f'Using OPSD renewable capacities for carriers {tech_string}.')
 
     df = pm.data.OPSD_VRE().powerplant.convert_country_to_alpha2()
     technology_b = ~df.Technology.isin(['Onshore', 'Offshore'])
-    df['Fueltype'] = df.Fueltype.where(technology_b, df.Technology)
+    df['Fueltype'] = df.Fueltype.where(technology_b, df.Technology).replace({"Solar": "PV"})
     df = df.query('Fueltype in @tech_map').powerplant.convert_country_to_alpha2()
 
-    for fueltype, carrier_like in tech_map.items():
-        gens = n.generators[lambda df: df.carrier.str.contains(carrier_like)]
+    for fueltype, carriers in tech_map.items():
+        gens = n.generators[lambda df: df.carrier.isin(carriers)]
         buses = n.buses.loc[gens.bus.unique()]
         gens_per_bus = gens.groupby('bus').p_nom.count()
 
@@ -505,32 +504,27 @@ def attach_OPSD_renewables(n, techs):
         n.generators.p_nom_min.update(gens.bus.map(caps).dropna())
 
 
-
 def estimate_renewable_capacities(n, config):
 
-    if not config["electricity"].get("estimate_renewable_capacities"): return
-    
     year = config["electricity"]["estimate_renewable_capacities"]["year"]
     tech_map = config["electricity"]["estimate_renewable_capacities"]["technology_mapping"]
-    tech_keys = list(tech_map.keys())
     countries = config["countries"]
     expansion_limit = config["electricity"]["estimate_renewable_capacities"]["expansion_limit"]
 
-    if len(countries) == 0: return
-    if len(tech_map) == 0: return
+    if not len(countries) or not len(tech_map): return
 
     capacities = pm.data.IRENASTAT().powerplant.convert_country_to_alpha2()
-    capacities = capacities.query("Year == @year and Technology in @tech_keys and Country in @countries")
+    capacities = capacities.query("Year == @year and Technology in @tech_map and Country in @countries")
     capacities = capacities.groupby(["Technology", "Country"]).Capacity.sum()
 
-    logger.info(f"Heuristics applied to distribute renewable capacities [MW] "
-                f"{capacities.groupby('Country').sum()}")
+    logger.info(f"Heuristics applied to distribute renewable capacities [GW]: "
+                f"\n{capacities.groupby('Technology').sum().div(1e3).round(2)}")
 
     
     for ppm_technology, techs in tech_map.items():
         tech_i = n.generators.query('carrier in @techs').index
         stats = capacities.loc[ppm_technology].reindex(countries, fill_value=0.)
-        country = n.generators[tech_i].bus.map(n.buses.country)
+        country = n.generators.bus[tech_i].map(n.buses.country)
         existent = n.generators.p_nom[tech_i].groupby(country).sum()
         missing = stats - existent
         dist = n.generators_t.p_max_pu.mean() * n.generators.p_nom_max
@@ -571,29 +565,50 @@ if __name__ == "__main__":
 
     costs = load_costs(snakemake.input.tech_costs, snakemake.config['costs'], snakemake.config['electricity'], Nyears)
     ppl = load_powerplants(snakemake.input.powerplants)
+    
+    if "renewable_carriers" in snakemake.config['electricity']:    
+        renewable_carriers = set(snakemake.config['renewable'])
+    else: 
+        logger.warning("Key `renewable_carriers` not found in config under tag `electricity`, "
+                       "falling back to carriers listed under `renewable`.")
+        renewable_carriers = snakemake.config['renewable']
+
+    extendable_carriers = snakemake.config['electricity']['extendable_carriers']
+    if not (set(renewable_carriers) & set(extendable_carriers['Generator'])):
+        logger.warning(f"In future versions >= v0.0.6, extenable renewable carriers have to be "
+                       "explicitely mentioned in `extendable_carriers`.")
+    
+    conventional_carriers = snakemake.config["electricity"]["conventional_carriers"]
+
 
     attach_load(n, snakemake.input.regions, snakemake.input.load, snakemake.input.nuts3_shapes,
                 snakemake.config['countries'], snakemake.config['load']['scaling_factor'])
 
     update_transmission_costs(n, costs, snakemake.config['lines']['length_factor'])
 
-    attach_conventional_generators(n, costs, ppl, snakemake.config["electricity"]["conventional_carriers"])
+    attach_conventional_generators(n, costs, ppl, conventional_carriers, extendable_carriers)
 
-    carriers = snakemake.config['renewable']
-    attach_wind_and_solar(n, costs, snakemake.input, carriers, snakemake.config['lines']['length_factor'])
+    attach_wind_and_solar(n, costs, snakemake.input, renewable_carriers, extendable_carriers, snakemake.config['lines']['length_factor'])
 
-    if 'hydro' in snakemake.config['renewable']:
-        carriers = snakemake.config['renewable']['hydro'].pop('carriers', [])
-        attach_hydro(n, costs, ppl, snakemake.input.profile_hydro, snakemake.input.hydro_capacities,
-                     carriers, **snakemake.config['renewable']['hydro'])
+    if 'hydro' in renewable_carriers:
+        conf = snakemake.config['renewable']['hydro']
+        attach_hydro(n, costs, ppl, snakemake.input.profile_hydro, snakemake.input.hydro_capacities, 
+                     conf.pop('carriers', []), **conf)
 
-    carriers = snakemake.config['electricity']['extendable_carriers']['Generator']
-    attach_extendable_generators(n, costs, ppl, carriers)
+    estimate_renewable_caps = snakemake.config['electricity'].get('estimate_renewable_capacities', {})
+    if not isinstance(estimate_renewable_caps, dict):
+        logger.warning("The config entry `estimate_renewable_capacities` was changed to a dictionary, "
+                       "please update your config yaml file accordingly.")
+        from_opsd = bool(snakemake.config["electricity"]["renewable_capacities_from_opsd"])
+        estimate_renewable_caps = {"enable": True, "from_opsd": from_opsd}
 
-    techs = snakemake.config['electricity'].get('renewable_capacities_from_OPSD', [])
-    attach_OPSD_renewables(n, techs)
+    if estimate_renewable_caps["enable"]:
+        
+        if estimate_renewable_caps["from_opsd"]:
+            tech_map = snakemake.config["electricity"]["estimate_renewable_capacities"]["technology_mapping"]
+            attach_OPSD_renewables(n, tech_map)
 
-    estimate_renewable_capacities(n, snakemake.config)
+        estimate_renewable_capacities(n, snakemake.config)
 
     update_p_nom_max(n)
 

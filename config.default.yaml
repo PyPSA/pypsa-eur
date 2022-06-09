@@ -9,8 +9,6 @@ logging:
   level: INFO
   format: '%(levelname)s:%(name)s:%(message)s'
 
-results_dir: results/your-run-name
-
 scenario:
   simpl: ['']
   ll: ['copt']
@@ -50,57 +48,36 @@ electricity:
     epsilon_vres: 0.02 # share of total renewable supply
     contingency: 4000 # fixed capacity in MW
 
-  extendable_carriers:
-    Generator: []
-    StorageUnit: [] # battery, H2
-    Store: [battery, H2]
-    Link: []
-
   max_hours:
     battery: 6
     H2: 168
+
+  extendable_carriers:
+    Generator: [solar, onwind, offwind-ac, offwind-dc, OCGT]
+    StorageUnit: [] # battery, H2
+    Store: [battery, H2]
+    Link: [AC, DC]
 
   # use pandas query strings here, e.g. Country not in ['Germany']
   powerplants_filter: (DateOut >= 2022 or DateOut != DateOut)
   # use pandas query strings here, e.g. Country in ['Germany']
   custom_powerplants: false 
-  conventional_carriers:
-    technologies: [nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
-    # Limit energy availability from these sources -> p_max_pu
-    # syntax:
-    # <technology name>: <fixed value> or <country>: <value>
-    energy_availability_factors:
-      # From IAEA
-      # https://pris.iaea.org/PRIS/WorldStatistics/ThreeYrsEnergyAvailabilityFactor.aspx (2022-04-08)
-      nuclear:
-        BE: 0.65
-        BG: 0.89
-        CZ: 0.82
-        FI: 0.92
-        FR: 0.70
-        DE: 0.88
-        HU: 0.90
-        NL: 0.86
-        RO: 0.92
-        SK: 0.89
-        SI: 0.94
-        ES: 0.89
-        SE: 0.82
-        CH: 0.86
-        GB: 0.67
-  renewable_capacities_from_OPSD: [] # onwind, offwind, solar
+
+  conventional_carriers: [nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
+  renewable_carriers: [solar, onwind, offwind-ac, offwind-dc, hydro]
 
   estimate_renewable_capacities:
+    enable: true
+    # Add capacities from OPSD data
+    from_opsd: true
     # Renewable capacities are based on existing capacities reported by IRENA
-
-    # Reference year, any of 2000 to 2020
     year: 2020
     # Artificially limit maximum capacities to factor * (IRENA capacities),
     # i.e. 110% of <years>'s capacities => expansion_limit: 1.1
     # false: Use estimated renewable potentials determine by the workflow
     expansion_limit: false
     technology_mapping:
-      # Wind is the Fueltype in ppm.data.Capacity_stats, onwind, offwind-{ac,dc} the carrier in PyPSA-Eur
+      # Wind is the Fueltype in powerplantmatching, onwind, offwind-{ac,dc} the carrier in PyPSA-Eur
       Offshore: [offwind-ac, offwind-dc]
       Onshore: [onwind]
       PV: [solar]
@@ -209,6 +186,27 @@ renewable:
     PHS_max_hours: 6
     hydro_max_hours: "energy_capacity_totals_by_country" # one of energy_capacity_totals_by_country, estimate_by_large_installations or a float
     clip_min_inflow: 1.0
+
+conventional: 
+  nuclear:
+    energy_availability_factors:
+    # From IAEA
+    # https://pris.iaea.org/PRIS/WorldStatistics/ThreeYrsEnergyAvailabilityFactor.aspx (2022-04-08)
+      BE: 0.65
+      BG: 0.89
+      CZ: 0.82
+      FI: 0.92
+      FR: 0.70
+      DE: 0.88
+      HU: 0.90
+      NL: 0.86
+      RO: 0.92
+      SK: 0.89
+      SI: 0.94
+      ES: 0.89
+      SE: 0.82
+      CH: 0.86
+      GB: 0.67
 
 lines:
   types:
