@@ -91,9 +91,6 @@ Specifies the temporal range to build an energy system model for as arguments to
    :widths: 25,7,22,30
    :file: configtables/electricity.csv
 
-.. warning::
-    Carriers in ``conventional_carriers`` must not also be in ``extendable_carriers``.
-
 .. _atlite_cf:
 
 ``atlite``

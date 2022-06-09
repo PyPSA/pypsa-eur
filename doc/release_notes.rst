@@ -36,42 +36,44 @@ Upcoming Release
 * Use updated SARAH-2 and ERA5 cutouts with slightly wider scope to east and additional variables.
 
 * Added existing renewable capacities for all countries based on IRENA statistics (IRENASTAT) using new ``powerplantmatching`` version:
-  * The estimation is endabled by setting ``enable`` to ``True``.
-  * Configuration of reference year for capacities can be configured (default: ``2020``) 
-  * The list of renewables provided by the OPSD database can be used as a basis, using the tag ``from_opsd: True``. This adds the renewables from the database and fills up the missing capacities with the heuristic distribution. 
-  * Uniform expansion limit of renewable build-up based on existing capacities can be configured using ``expansion_limit`` option
-    (default: ``false``; limited to determined renewable potentials)
-  * Distribution of country-level capacities proportional to maximum annual energy yield for each bus region
-  * This functionality was previously using OPSD data.
-  * The corresponding ``config`` entries changed, cf. ``config.default.yaml``:
-    * old: ``estimate_renewable_capacities_from_capacity_stats``
-    * new: ``estimate_renewable_capacities``
+  * The corresponding ``config`` entries changed, cf. ``config.default.yaml``:	
+    * old: ``estimate_renewable_capacities_from_capacity_stats``	
+    * new: ``estimate_renewable_capacities``	
+  * The estimation is endabled by setting the subkey ``enable`` to ``True``.	
+  * Configuration of reference year for capacities can be configured (default: ``2020``) 	
+  * The list of renewables provided by the OPSD database can be used as a basis, using the tag ``from_opsd: True``. This adds the renewables from the database and fills up the missing capacities with the heuristic distribution. 	
+  * Uniform expansion limit of renewable build-up based on existing capacities can be configured using ``expansion_limit`` option	
+    (default: ``false``; limited to determined renewable potentials)	
+  * Distribution of country-level capacities proportional to maximum annual energy yield for each bus region	
 
-* The config key ``renewable_capacities_from_OPSD`` is deprecated and was moved under the section, ``estimate_renewable_capacities``. To enable it set ``from_opsd`` to `True`.
+* The config key ``renewable_capacities_from_OPSD`` is deprecated and was moved under the section, ``estimate_renewable_capacities``. To enable it, set ``from_opsd`` to `True`.	
 
-* Add operational reserve margin constraint analogous to `GenX implementation <https://genxproject.github.io/GenX/dev/core/#Reserves>`_.
-  Can be activated with config setting ``electricity: operational_reserve:``.
+* Add operational reserve margin constraint analogous to `GenX implementation <https://genxproject.github.io/GenX/dev/core/#Reserves>`_.	
+  Can be activated with config setting ``electricity: operational_reserve:``.	
 
-* Add function to add global constraint on use of gas in :mod:`prepare_network`. This can be activated with `electricity: gaslimit:` given in MWh.
+* Add function to add global constraint on use of gas in :mod:`prepare_network`. This can be activated with `electricity: gaslimit:` given in MWh.	
 
-* Add configuration option to implement Energy Availability Factors (EAFs) for conventional generation technologies.
-* Implement country-specific EAFs for nuclear power plants based on IAEA 2018-2020 reported country averages.
+* Add configuration option to implement Energy Availability Factors (EAFs) for conventional generation technologies.	
 
-* The powerplants that have been shut down before 2021 are filtered out. 
-  
-* ``powerplantmatching>=0.5.1`` is now required for ``IRENASTATS``.
+* A new section ``conventional`` was added to the config file. This section contains configurations for conventional carriers.  
 
-* The interpretation of ``extendable_carriers`` in the config was changed that all carriers that should be extendable have to be listed here. Before, renewable carriers were always set to be extendable. For backwards compatibility, the workflow is looking at both the listed carriers under the ``renewable`` key and the ``extendable`` key. But in the future, all of them have to be listed under ``extendable_carriers``. 
+* Implement country-specific EAFs for nuclear power plants based on IAEA 2018-2020 reported country averages. These are specified under the ``energy_availibility_factor`` key in the config entry ``conventional`` and specify the static `p_max_pu` values.
 
-* It is now possible to set conventional power plants as extendable by adding them to the list of extendable ``Generator`` carriers in the config.
+* The powerplants that have been shut down before 2021 are filtered out. 	
 
-* By having carriers in the list of ``extendable_carriers`` but not in the list of ``conventional_carriers``, the corresponding conventional power plants are set extendable without a lower capacity bound of today's capacities.
+* ``powerplantmatching>=0.5.1`` is now required for ``IRENASTATS``.	
 
-* Now, conventional carriers have an assigned capital cost by default.
+* The inclusion of renewable carriers is now specified in the config entry ``renewable_carriers``. Before this was done by commenting/uncommenting sub-sections in the `renewable` config section. 
 
-* The ``build_year`` and ``lifetime`` column are now defined for conventional power plants. 
+* Now, all carriers that should be extendable have to be listed in the config entry ``extendable_carriers``. Before, renewable carriers were always set to be extendable. For backwards compatibility, the workflow is still looking at the listed carriers under the ``renewable`` key. In the future, all of them have to be listed under ``extendable_carriers``. 	
 
-* A new section ``conventional`` was added to the config file. This section contains configurations for conventional carriers. Using the ``energy_availibility_factor`` key, the ``p_max_pu`` values for conventional power plants can be defined. 
+* It is now possible to set conventional power plants as extendable by adding them to the list of extendable ``Generator`` carriers in the config.	
+
+* Listing conventional carriers in ``extendable_carriers`` but not in ``conventional_carriers``, sets the corresponding conventional power plants as extendable without a lower capacity bound of today's capacities.	
+
+* Now, conventional carriers have an assigned capital cost by default.	
+
+* The ``build_year`` and ``lifetime`` column are now defined for conventional power plants. 	
 
 * Fix crs bug. Change crs 4236 to 4326.
 
