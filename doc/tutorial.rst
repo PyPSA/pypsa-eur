@@ -43,7 +43,7 @@ For more information on the data dependencies of PyPSA-Eur, continue reading :re
 How to customise PyPSA-Eur?
 ===========================
 
-The model can be adapted to only include selected countries (e.g. Germany) instead of all European countries to limit the spatial scope.
+The model can be adapted to only include selected countries (e.g. Belgium) instead of all European countries to limit the spatial scope.
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml

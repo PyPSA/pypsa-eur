@@ -73,6 +73,10 @@ Upcoming Release
 
 * A new section ``conventional`` was added to the config file. This section contains configurations for conventional carriers. Using the ``energy_availibility_factor`` key, the ``p_max_pu`` values for conventional power plants can be defined. 
 
+* Fix crs bug. Change crs 4236 to 4326.
+
+* Update rasterio version to correctly calculate exclusion raster
+
 
 Synchronisation Release - Ukraine and Moldova (17th March 2022)
 ===============================================================
