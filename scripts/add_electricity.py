@@ -609,18 +609,22 @@ if __name__ == "__main__":
                      conf.pop('carriers', []), **conf)
 
     if "estimate_renewable_capacities" not in snakemake.config['electricity']:
-        logger.warning("Missing key `estimate_renewable_capacities` under config entry `electricity`."
-                       "In future versions, this will raise an error. ")
-        estimate_renewable_caps = {'enable': False}
+        logger.warning("Missing key `estimate_renewable_capacities` under config entry `electricity`. "
+                       "In future versions, this will raise an error. "
+                       "Falling back to whether ``estimate_renewable_capacities_from_capacity_stats`` is in the config.")
+        if "estimate_renewable_capacities_from_capacity_stats" in snakemake.config['electricity']:
+            estimate_renewable_caps = {'enable': True, **snakemake.config['electricity']["estimate_renewable_capacities_from_capacity_stats"]}
+        else:
+            estimate_renewable_caps = {'enable': False}
     if "enable" not in estimate_renewable_caps:
-        logger.warning("Missing key `enable` under config entry `estimate_renewable_capacities`."
+        logger.warning("Missing key `enable` under config entry `estimate_renewable_capacities`. "
                        "In future versions, this will raise an error. Falling back to False.")
         estimate_renewable_caps = {'enable': False}
     if "from_opsd" not in estimate_renewable_caps:
-        logger.warning("Missing key `from_opsd` under config entry `estimate_renewable_capacities`."
+        logger.warning("Missing key `from_opsd` under config entry `estimate_renewable_capacities`. "
                        "In future versions, this will raise an error. "
                        "Falling back to whether `renewable_capacities_from_opsd` is non-empty.")
-        from_opsd = bool(snakemake.config["electricity"]["renewable_capacities_from_opsd"])
+        from_opsd = bool(snakemake.config["electricity"].get("renewable_capacities_from_opsd", False))
         estimate_renewable_caps['from_opsd'] = from_opsd
     
 
