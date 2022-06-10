@@ -93,6 +93,18 @@ def define_spatial(nodes, options):
 
     spatial.gas.df = pd.DataFrame(vars(spatial.gas), index=nodes)
 
+    # ammonia
+
+    spatial.ammonia = SimpleNamespace()
+    if options["ammonia"] == "regional":
+        spatial.ammonia.nodes = nodes + " NH3"
+        spatial.ammonia.locations = nodes
+    else:
+        spatial.ammonia.nodes = ["EU ammonia"]
+        spatial.ammonia.locations = ["EU"]
+
+    spatial.ammonia.df = pd.DataFrame(vars(spatial.ammonia), index=nodes)
+
     # oil
     spatial.oil = SimpleNamespace()
     spatial.oil.nodes = ["EU oil"]
@@ -656,7 +668,7 @@ def add_generation(n, costs):
 
 def add_ammonia(n, costs):
 
-    logger.info("adding ammonia carrier")
+    logger.info("adding ammonia carrier with synthesis, cracking and storage")
 
     nodes = pop_layout.index
 
@@ -665,8 +677,8 @@ def add_ammonia(n, costs):
     n.add("Carrier", "NH3")
 
     n.madd("Bus",
-        nodes + " NH3",
-        location=nodes,
+        spatial.ammonia.nodes,
+        location=spatial.ammonia.locations,
         carrier="NH3"
     )
 
@@ -674,7 +686,7 @@ def add_ammonia(n, costs):
         nodes,
         suffix=" Haber-Bosch",
         bus0=nodes,
-        bus1=nodes + " NH3",
+        bus1=spatial.ammonia.nodes,
         bus2=nodes + " H2",
         p_nom_extendable=True,
         carrier="Haber-Bosch",
@@ -687,7 +699,7 @@ def add_ammonia(n, costs):
     n.madd("Link",
         nodes,
         suffix=" ammonia cracker",
-        bus0=nodes + " NH3",
+        bus0=spatial.ammonia.nodes,
         bus1=nodes + " H2",
         p_nom_extendable=True,
         carrier="ammonia cracker",
@@ -698,9 +710,9 @@ def add_ammonia(n, costs):
 
     # Ammonia Storage
     n.madd("Store",
-        nodes,
+        spatial.ammonia.nodes,
         suffix=" ammonia store",
-        bus=nodes + " NH3",
+        bus=spatial.ammonia.nodes,
         e_nom_extendable=True,
         e_cyclic=True,
         carrier="ammonia store",
@@ -2205,9 +2217,8 @@ def add_industry(n, costs):
 
     if options["ammonia"]:
         n.madd("Load",
-            nodes,
-            suffix=" NH3",
-            bus=nodes + " NH3",
+            spatial.ammonia.nodes,
+            bus=spatial.ammonia.nodes,
             carrier="NH3",
             p_set=industrial_demand.loc[nodes, "ammonia"] / 8760
         )
