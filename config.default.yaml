@@ -244,6 +244,7 @@ sector:
     # - onshore  # more than 50 km from sea
     - nearshore  # within 50 km of sea
     # - offshore
+  ammonia: false
   use_fischer_tropsch_waste_heat: true
   use_fuel_cell_waste_heat: true
   electricity_distribution_grid: true
@@ -291,6 +292,7 @@ industry:
     # 2040: 0.3
     # 2045: 0.25
     # 2050: 0.2
+  MWh_NH3_per_tNH3: 5.166 # LHV
   MWh_CH4_per_tNH3_SMR: 10.8 # 2012's demand from https://ec.europa.eu/docsroom/documents/4165/attachments/1/translations/en/renditions/pdf
   MWh_elec_per_tNH3_SMR: 0.7 # same source, assuming 94-6% split methane-elec of total energy demand 11.5 MWh/tNH3
   MWh_H2_per_tNH3_electrolysis: 6.5 # from https://doi.org/10.1016/j.joule.2018.04.017, around 0.197 tH2/tHN3 (>3/17 since some H2 lost and used for energy)

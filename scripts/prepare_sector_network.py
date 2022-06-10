@@ -654,6 +654,59 @@ def add_generation(n, costs):
         )
 
 
+def add_ammonia(n, costs):
+
+    logger.info("adding ammonia carrier")
+
+    nodes = pop_layout.index
+
+    n.add("Carrier", "NH3")
+
+    n.madd("Bus",
+        nodes + " NH3",
+        location=nodes,
+        carrier="NH3"
+    )
+
+    n.madd("Link",
+        nodes,
+        suffix=" Haber-Bosch",
+        bus0=nodes,
+        bus1=nodes + " NH3",
+        bus2=nodes + " H2",
+        p_nom_extendable=True,
+        carrier="Haber-Bosch",
+        efficiency=+0.221, #MWh_e/MWh_NH3 0.247 https://github.com/euronion/trace/blob/44a5ff8401762edbef80eff9cfe5a47c8d3c8be4/data/efficiencies.csv
+        efficiency2=-1.226, #MWh_H2/MWh_NH3 1.148 https://github.com/euronion/trace/blob/44a5ff8401762edbef80eff9cfe5a47c8d3c8be4/data/efficiencies.csv
+        capital_cost=costs.at["Haber-Bosch synthesis", "fixed"],
+        lifetime=costs.at["Haber-Bosch synthesis", 'lifetime']
+    )
+
+    n.madd("Link",
+        nodes,
+        suffix=" ammonia cracker",
+        bus0=nodes + " NH3",
+        bus1=nodes + " H2",
+        p_nom_extendable=True,
+        carrier ="ammonia cracker",
+        efficiency=0.685, #MWh_H2/MWh_NH3 https://github.com/euronion/trace/blob/44a5ff8401762edbef80eff9cfe5a47c8d3c8be4/data/efficiencies.csv
+        capital_cost=costs.at["Ammonia cracker", "fixed"] * 0.685, # given per MWh_H2
+        lifetime=costs.at['Ammonia cracker', 'lifetime']
+    )
+
+    # Ammonia Storage
+    n.madd("Store",
+        nodes,
+        suffix=" ammonia store",
+        bus=nodes + " NH3",
+        e_nom_extendable=True,
+        e_cyclic=True,
+        carrier="ammonia store",
+        capital_cost=costs.at["NH3 (l) storage tank incl. liquefaction", "fixed"],
+        lifetime=costs.at['NH3 (l) storage tank incl. liquefaction', 'lifetime']
+    )
+
+
 def add_wave(n, wave_cost_factor):
 
     # TODO: handle in Snakefile
@@ -2148,6 +2201,15 @@ def add_industry(n, costs):
         lifetime=costs.at['cement capture', 'lifetime']
     )
 
+    if options["ammonia"]:
+        n.madd("Load",
+            nodes,
+            suffix=" NH3",
+            bus=nodes + " NH3",
+            carrier="NH3",
+            p_set=industrial_demand.loc[nodes, "ammonia"] / 8760
+        )
+
 
 def add_waste_heat(n):
     # TODO options?
@@ -2376,6 +2438,9 @@ if __name__ == "__main__":
 
     if options['dac']:
         add_dac(n, costs)
+
+    if options['ammonia']:
+        add_ammonia(n, costs)
 
     if "decentral" in opts:
         decentral(n)
