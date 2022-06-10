@@ -2216,11 +2216,17 @@ def add_industry(n, costs):
     )
 
     if options["ammonia"]:
+
+        if options["ammonia"] == 'regional':
+            p_set = industrial_demand.loc[spatial.ammonia.locations, "ammonia"].rename(index=lambda x: x + " NH3") / 8760
+        else:
+            p_set = industrial_demand["ammonia"].sum() / 8760
+
         n.madd("Load",
             spatial.ammonia.nodes,
             bus=spatial.ammonia.nodes,
             carrier="NH3",
-            p_set=industrial_demand.loc[nodes, "ammonia"] / 8760
+            p_set=p_set
         )
 
 
