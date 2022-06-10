@@ -660,6 +660,8 @@ def add_ammonia(n, costs):
 
     nodes = pop_layout.index
 
+    cf_industry = snakemake.config["industry"]
+
     n.add("Carrier", "NH3")
 
     n.madd("Bus",
@@ -676,8 +678,8 @@ def add_ammonia(n, costs):
         bus2=nodes + " H2",
         p_nom_extendable=True,
         carrier="Haber-Bosch",
-        efficiency=+0.221, #MWh_e/MWh_NH3 0.247 https://github.com/euronion/trace/blob/44a5ff8401762edbef80eff9cfe5a47c8d3c8be4/data/efficiencies.csv
-        efficiency2=-1.226, #MWh_H2/MWh_NH3 1.148 https://github.com/euronion/trace/blob/44a5ff8401762edbef80eff9cfe5a47c8d3c8be4/data/efficiencies.csv
+        efficiency=1 / (cf_industry["MWh_elec_per_tNH3_electrolysis"] / cf_industry["MWh_NH3_per_tNH3"]) # output: MW_NH3 per MW_elec
+        efficiency2=-cf_industry["MWh_H2_per_tNH3_electrolysis"] / cf_industry["MWh_elec_per_tNH3_electrolysis"] # input: MW_H2 per MW_elec
         capital_cost=costs.at["Haber-Bosch synthesis", "fixed"],
         lifetime=costs.at["Haber-Bosch synthesis", 'lifetime']
     )
@@ -688,9 +690,9 @@ def add_ammonia(n, costs):
         bus0=nodes + " NH3",
         bus1=nodes + " H2",
         p_nom_extendable=True,
-        carrier ="ammonia cracker",
-        efficiency=0.685, #MWh_H2/MWh_NH3 https://github.com/euronion/trace/blob/44a5ff8401762edbef80eff9cfe5a47c8d3c8be4/data/efficiencies.csv
-        capital_cost=costs.at["Ammonia cracker", "fixed"] * 0.685, # given per MWh_H2
+        carrier="ammonia cracker",
+        efficiency=1 / cf_industry["MWh_NH3_per_MWh_H2_cracker"]
+        capital_cost=costs.at["Ammonia cracker", "fixed"] / cf_industry["MWh_NH3_per_MWh_H2_cracker"], # given per MW_H2
         lifetime=costs.at['Ammonia cracker', 'lifetime']
     )
 
