@@ -616,6 +616,8 @@ if __name__ == "__main__":
             estimate_renewable_caps = {'enable': True, **snakemake.config['electricity']["estimate_renewable_capacities_from_capacity_stats"]}
         else:
             estimate_renewable_caps = {'enable': False}
+    else:
+        estimate_renewable_caps = snakemake.config['electricity']["estimate_renewable_capacities"]
     if "enable" not in estimate_renewable_caps:
         logger.warning("Missing key `enable` under config entry `estimate_renewable_capacities`. "
                        "In future versions, this will raise an error. Falling back to False.")
