@@ -51,6 +51,7 @@ def rename_techs(label):
         "ror": "hydroelectricity",
         "hydro": "hydroelectricity",
         "PHS": "hydroelectricity",
+        "NH3": "ammonia"
         "co2 Store": "DAC",
         "co2 stored": "CO2 sequestration",
         "AC": "transmission lines",
@@ -106,6 +107,7 @@ preferred_order = pd.Index([
     "natural gas",
     "helmeth",
     "methanation",
+    "ammonia",
     "hydrogen storage",
     "power-to-gas",
     "power-to-liquid",

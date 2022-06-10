@@ -573,6 +573,11 @@ plotting:
     H2 pipeline retrofitted: '#ba99b5'
     H2 Fuel Cell: '#c251ae'
     H2 Electrolysis: '#ff29d9'
+    # ammonia
+    NH3: '#46caf0'
+    ammonia store: '#00ace0'
+    ammonia cracker: '#87d0e6'
+    Haber-Bosch: '#076987'
     # syngas
     Sabatier: '#9850ad'
     methanation: '#c44ce6'
