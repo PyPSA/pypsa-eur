@@ -203,7 +203,7 @@ if __name__ == '__main__':
     pgb.streams.wrap_stderr()
 
     nprocesses = int(snakemake.threads)
-    noprogress = not snakemake.config['atlite'].get('show_progress', True)
+    noprogress = not snakemake.config['atlite'].get('show_progress', False)
     config = snakemake.config['renewable'][snakemake.wildcards.technology]
     resource = config['resource'] # pv panel config / wind turbine config
     correction_factor = config.get('correction_factor', 1.)
