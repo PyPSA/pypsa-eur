@@ -199,7 +199,7 @@ logger = logging.getLogger(__name__)
 if __name__ == '__main__':
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
-        snakemake = mock_snakemake('build_renewable_profiles', technology='solar')
+        snakemake = mock_snakemake('build_renewable_profiles', technology='offwind-float')
     configure_logging(snakemake)
     pgb.streams.wrap_stderr()
 
@@ -245,7 +245,7 @@ if __name__ == '__main__':
 
     if "min_depth" in config:
         func = functools.partial(np.greater,-config['min_depth'])
-        excluder.add_raster(paths.gebco, codes=func, crs=4236, nodata=-1000, invert=True)
+        excluder.add_raster(snakemake.input.gebco, codes=func, crs=4236, nodata=-1000, invert=True)
 
     if 'min_shore_distance' in config:
         buffer = config['min_shore_distance']
@@ -317,12 +317,15 @@ if __name__ == '__main__':
                     potential.rename('potential'),
                     average_distance.rename('average_distance')])
 
-
-    if snakemake.wildcards.technology.startswith("offwind"):
-        with xr.open_dataset(snakemake.input.gebco) as gebco:
-            lon, lat, bus=ds.indexes['x'], ds.indexes['y'], ds.indexes['bus']
-            water_depth=gebco.elevation.interp(lon=lon,lat=lat, method="nearest").rename({"lon":"x", "lat":"y"})
-            water_depth=water_depth@availability
+    tech=snakemake.wildcards.technology
+    if tech.startswith("offwind"):
+        if tech.endswith!= "float":
+            with xr.open_dataset(snakemake.input.gebco) as gebco:
+                from rasterio.warp import Resampling
+                gebco=gebco.rename({"lon":"x", "lat":"y"})
+                water_depth=atlite.gis.regrid(gebco.elevation,cutout.data.x, cutout.data.y,resampling=Resampling.average)
+                water_depth=water_depth@availability
+                ds['water_depth'] = xr.DataArray(water_depth, [buses])
         logger.info('Calculate underwater fraction of connections.')
         offshore_shape = gpd.read_file(snakemake.input['offshore_shapes']).unary_union
         underwater_fraction = []
@@ -331,7 +334,6 @@ if __name__ == '__main__':
             line = LineString([p, regions.loc[bus, ['x', 'y']]])
             frac = line.intersection(offshore_shape).length/line.length
             underwater_fraction.append(frac)
-        ds['water_depth'] = xr.DataArray(water_depth, [buses])
         ds['underwater_fraction'] = xr.DataArray(underwater_fraction, [buses])
 
     # select only buses with some capacity and minimal capacity factor

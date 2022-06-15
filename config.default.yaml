@@ -144,7 +144,7 @@ renewable:
     cutout: europe-2013-era5
     resource:
       method: wind
-      turbine: 2020ATB_NREL_Reference_4MW_150
+      turbine: NREL_ReferenceTurbine_5MW_offshore
     # ScholzPhd Tab 4.3.1: 10MW/km^2
     capacity_per_sqkm: 2
     correction_factor: 0.8855
@@ -220,7 +220,8 @@ costs:
   marginal_cost: # EUR/MWh
     solar: 0.01
     onwind: 0.015
-    offwind: 0.015
+    offwind-ac: 0.015
+    offwind-dc: 0.015
     hydro: 0.
     H2: 0.
     electrolysis: 0.

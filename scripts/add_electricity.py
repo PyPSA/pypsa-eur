@@ -287,7 +287,7 @@ def attach_wind_and_solar(n, costs, input_profiles, technologies, line_length_fa
                 calculate_capex=technologies[tech].get("calculate_cost", False)
                 capital_cost = ((get_capex() 
                                 if calculate_capex 
-                                else costs.at['offwind', 'capital_cost'])  +
+                                else costs.at[tech, 'capital_cost'])  +
                                 costs.at[tech + '-station', 'capital_cost'] +
                                 connection_cost)
                 logger.info("Added connection cost of {:0.0f}-{:0.0f} Eur/MW/a to {}"
@@ -301,9 +301,9 @@ def attach_wind_and_solar(n, costs, input_profiles, technologies, line_length_fa
                    p_nom_extendable=True,
                    p_nom_max=ds['p_nom_max'].to_pandas(),
                    weight=ds['weight'].to_pandas(),
-                   marginal_cost=costs.at[suptech, 'marginal_cost'],
+                   marginal_cost=costs.at[tech, 'marginal_cost'],
                    capital_cost=capital_cost,
-                   efficiency=costs.at[suptech, 'efficiency'],
+                   efficiency=costs.at[tech, 'efficiency'],
                    p_max_pu=ds['profile'].transpose('time', 'bus').to_pandas())
 
 
