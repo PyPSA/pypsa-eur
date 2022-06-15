@@ -192,11 +192,11 @@ if __name__ == "__main__":
 
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
-        snakemake = mock_snakemake('build_load_data')
+        snakemake = mock_snakemake('build_load_data', weather_year='')
 
     configure_logging(snakemake)
 
-    weather_year = snakemake.wildcard.weather_year
+    weather_year = snakemake.wildcards.weather_year
     if weather_year:
         snapshots = dict(
             start=weather_year,

@@ -550,7 +550,7 @@ def add_nice_carrier_names(n, config):
 if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
-        snakemake = mock_snakemake('add_electricity')
+        snakemake = mock_snakemake('add_electricity', weather_year='')
     configure_logging(snakemake)
 
     n = pypsa.Network(snakemake.input.base_network)

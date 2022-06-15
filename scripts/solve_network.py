@@ -274,7 +274,7 @@ def solve_network(n, config, opts='', **kwargs):
 if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
-        snakemake = mock_snakemake('solve_network', network='elec', simpl='',
+        snakemake = mock_snakemake('solve_network', weather_year='', simpl='',
                                   clusters='5', ll='copt', opts='Co2L-BAU-CCL-24H')
     configure_logging(snakemake)
 

@@ -165,9 +165,9 @@ def plot_energy(infn, config, fn=None):
 if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
-        snakemake = mock_snakemake('plot_summary', summary='energy', network='elec',
+        snakemake = mock_snakemake('plot_summary', summary='energy',
                                   simpl='', clusters=5, ll='copt', opts='Co2L-24H',
-                                  attr='', ext='png', country='all')
+                                  attr='', ext='png', country='all', weather_year='')
     configure_logging(snakemake)
 
     config = snakemake.config

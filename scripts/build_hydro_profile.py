@@ -71,7 +71,7 @@ logger = logging.getLogger(__name__)
 if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
-        snakemake = mock_snakemake('build_hydro_profile')
+        snakemake = mock_snakemake('build_hydro_profile', weather_year='')
     configure_logging(snakemake)
 
     config_hydro = snakemake.config['renewable']['hydro']
