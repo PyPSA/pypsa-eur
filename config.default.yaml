@@ -66,7 +66,8 @@ snapshots:
   closed: left # end is not inclusive
 
 atlite:
-  cutout: ../pypsa-eur/cutouts/europe-2013-era5.nc
+  cutout: europe-era5-{weather_year}
+  drop_leap_day: false
 
 # this information is NOT used but needed as an argument for
 # pypsa-eur/scripts/add_electricity.py/load_costs in make_summary.py

@@ -16,22 +16,21 @@ if __name__ == '__main__':
             clusters=48,
         )
 
-    if 'snakemake' not in globals():
-        from vresutils import Dict
-        import yaml
-        snakemake = Dict()
-        with open('config.yaml') as f:
-            snakemake.config = yaml.safe_load(f)
-        snakemake.input = Dict()
-        snakemake.output = Dict()
-
+    cutout_name = snakemake.input.cutout
     year = snakemake.wildcards.weather_year
-    snapshots = dict(start=year, end=str(int(year)+1), closed="left") if year else snakemake.config['snapshots']
-    time = pd.date_range(freq='m', **snapshots)
+    drop_leap_day = snakemake.config["atlite"].get("drop_leap_day", False)
 
-    cutout_config = snakemake.config['atlite']['cutout']
-    if year: cutout_name = cutout_config.format(weather_year=year)
-    cutout = atlite.Cutout(cutout_config).sel(time=time)
+    if year:
+        snapshots = dict(start=year, end=str(int(year)+1), closed="left")
+        cutout_name = cutout_name.format(weather_year=year)
+    else:
+        snapshots = snakemake.config['snapshots']
+    
+    time = pd.date_range(freq='m', **snapshots)
+    if drop_leap_day:
+        time = time[~((time.month == 2) & (time.day == 29))]
+
+    cutout = atlite.Cutout(cutout_name).sel(time=time)
 
     clustered_regions = gpd.read_file(
         snakemake.input.regions_onshore).set_index('name').buffer(0).squeeze()

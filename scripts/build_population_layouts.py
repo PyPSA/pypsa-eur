@@ -17,10 +17,10 @@ if __name__ == '__main__':
             weather_year='',
         )
 
+    cutout_name = snakemake.input.cutout
     year = snakemake.wildcards.weather_year
-    cutout_config = snakemake.config['atlite']['cutout']
-    if year: cutout_name = cutout_config.format(weather_year=year)
-    cutout = atlite.Cutout(cutout_config)
+    if year: cutout_name = cutout_name.format(weather_year=year)
+    cutout = atlite.Cutout(cutout_name)
 
     grid_cells = cutout.grid_cells()
 

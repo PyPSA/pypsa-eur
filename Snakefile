@@ -12,7 +12,7 @@ configfile: "config.yaml"
 
 
 wildcard_constraints:
-    weather_year="[0-9]*",
+    weather_year="[0-9]{4}|",
     lv="[a-z0-9\.]+",
     simpl="[a-zA-Z0-9]*",
     clusters="[0-9]+m?",
@@ -68,6 +68,7 @@ if config.get('retrieve_sector_databundle', True):
 
 rule build_population_layouts:
     input:
+        cutout=pypsaeur("cutouts/" + snakemake.config['atlite']['cutout'] + ".nc"),
         nuts3_shapes=pypsaeur('resources/nuts3_shapes.geojson'),
         urban_percent="data/urban_percent.csv"
     output:
@@ -82,6 +83,7 @@ rule build_population_layouts:
 
 rule build_clustered_population_layouts:
     input:
+        cutout=pypsaeur("cutouts/" + snakemake.config['atlite']['cutout'] + ".nc"),
         pop_layout_total="resources/pop_layout_total{weather_year}.nc",
         pop_layout_urban="resources/pop_layout_urban{weather_year}.nc",
         pop_layout_rural="resources/pop_layout_rural{weather_year}.nc",
@@ -163,6 +165,7 @@ else:
 
 rule build_heat_demands:
     input:
+        cutout=pypsaeur("cutouts/" + snakemake.config['atlite']['cutout'] + ".nc"),
         pop_layout_total="resources/pop_layout_total{weather_year}.nc",
         pop_layout_urban="resources/pop_layout_urban{weather_year}.nc",
         pop_layout_rural="resources/pop_layout_rural{weather_year}.nc",
@@ -178,6 +181,7 @@ rule build_heat_demands:
 
 rule build_temperature_profiles:
     input:
+        cutout=pypsaeur("cutouts/" + snakemake.config['atlite']['cutout'] + ".nc"),
         pop_layout_total="resources/pop_layout_total{weather_year}.nc",
         pop_layout_urban="resources/pop_layout_urban{weather_year}.nc",
         pop_layout_rural="resources/pop_layout_rural{weather_year}.nc",
@@ -216,6 +220,7 @@ rule build_cop_profiles:
 
 rule build_solar_thermal_profiles:
     input:
+        cutout=pypsaeur("cutouts/" + snakemake.config['atlite']['cutout'] + ".nc"),
         pop_layout_total="resources/pop_layout_total{weather_year}.nc",
         pop_layout_urban="resources/pop_layout_urban{weather_year}.nc",
         pop_layout_rural="resources/pop_layout_rural{weather_year}.nc",

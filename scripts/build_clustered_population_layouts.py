@@ -15,10 +15,10 @@ if __name__ == '__main__':
             clusters=48,
         )
 
+    cutout_name = snakemake.input.cutout
     year = snakemake.wildcards.weather_year
-    cutout_config = snakemake.config['atlite']['cutout']
-    if year: cutout_name = cutout_config.format(weather_year=year)
-    cutout = atlite.Cutout(cutout_config)
+    if year: cutout_name = cutout_name.format(weather_year=year)
+    cutout = atlite.Cutout(cutout_name)
 
     clustered_regions = gpd.read_file(
         snakemake.input.regions_onshore).set_index('name').buffer(0).squeeze()
