@@ -240,7 +240,7 @@ rule add_electricity:
         powerplants='resources/powerplants.csv',
         hydro_capacities='data/bundle/hydro_capacities.csv',
         geth_hydro_capacities='data/geth2015_hydro_capacities.csv',
-        load='resources/load.csv',
+        load='resources/load{weather_year}.csv',
         nuts3_shapes='resources/nuts3_shapes.geojson',
         **{f"profile_{tech}": "resources/profile{weather_year}_" + f"{tech}.nc"
            for tech in config['renewable']}
