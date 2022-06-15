@@ -625,4 +625,8 @@ if __name__ == "__main__":
 
     add_nice_carrier_names(n, snakemake.config)
 
+    if snakemake.config['enable'].get('drop_leap_days', True):
+        leap_days = (n.snapshots.day == 29) & (n.snapshots.month == 2)
+        n.set_snapshots(n.snapshots[~leap_days])
+
     n.export_to_netcdf(snakemake.output[0])

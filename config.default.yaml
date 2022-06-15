@@ -37,6 +37,7 @@ enable:
   build_natura_raster: false
   retrieve_natura_raster: true
   custom_busmap: false
+  drop_leap_days: true
 
 electricity:
   voltages: [220., 300., 380.]
