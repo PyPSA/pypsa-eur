@@ -207,37 +207,11 @@ def attach_load(n, regions, load, nuts3_shapes, countries, scaling=1.):
     regions = (gpd.read_file(regions).set_index('name')
                .reindex(substation_lv_i))
 
-# ------------- TO MERGE --------------
-    available_years = range(2011,2016)
-    requested_years = n.snapshots.year[[0,-1]]
-    use_fallback = any(year not in available_years for year in requested_years)
-
-    if use_fallback:
-        fallback_year = str(snakemake.config["load"]["fallback_year"])
-        load_years = [fallback_year, fallback_year]
-        logger.warning(f"Requested years {list(requested_years.unique().values)} "
-                       f"for load time series not in available years {list(available_years)}. "
-                       f"Falling back to year {fallback_year}.")
-    else:
-        load_years = requested_years.astype(str)
-
-    opsd_load = (timeseries_opsd(slice(*load_years),
-                                 snakemake.input.opsd_load) *
-                 snakemake.config.get('load', {}).get('scaling_factor', 1.0))
-
-    if use_fallback:
-        assert len(requested_years.unique()) == 1, "Fallback for load time series requires single year!"
-        opsd_load.index = opsd_load.index.map(lambda t: t.replace(year=requested_years[0]))
-
-    # Convert to naive UTC (has to be explicit since pandas 0.24)
-    opsd_load.index = opsd_load.index.tz_localize(None)
-
     opsd_load = (pd.read_csv(load, index_col=0, parse_dates=True)
                 .filter(items=countries))
 
     logger.info(f"Load data scaled with scalling factor {scaling}.")
     opsd_load *= scaling
-# ------------- TO MERGE --------------
 
     nuts3 = gpd.read_file(nuts3_shapes).set_index('index')
 
