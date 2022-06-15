@@ -68,7 +68,7 @@ if config.get('retrieve_sector_databundle', True):
 
 rule build_population_layouts:
     input:
-        cutout=pypsaeur("cutouts/" + snakemake.config['atlite']['cutout'] + ".nc"),
+        cutout=pypsaeur("cutouts/" + config['atlite']['cutout'] + ".nc"),
         nuts3_shapes=pypsaeur('resources/nuts3_shapes.geojson'),
         urban_percent="data/urban_percent.csv"
     output:
@@ -83,7 +83,7 @@ rule build_population_layouts:
 
 rule build_clustered_population_layouts:
     input:
-        cutout=pypsaeur("cutouts/" + snakemake.config['atlite']['cutout'] + ".nc"),
+        cutout=pypsaeur("cutouts/" + config['atlite']['cutout'] + ".nc"),
         pop_layout_total="resources/pop_layout_total{weather_year}.nc",
         pop_layout_urban="resources/pop_layout_urban{weather_year}.nc",
         pop_layout_rural="resources/pop_layout_rural{weather_year}.nc",
@@ -138,8 +138,8 @@ if config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]:
             entry="data/gas_network/scigrid-gas/data/IGGIELGN_BorderPoints.geojson",
             production="data/gas_network/scigrid-gas/data/IGGIELGN_Productions.geojson",
             planned_lng="data/gas_network/planned_LNGs.csv",
-            regions_onshore=pypsaeur("resources/regions_onshore_elec_s{simpl}_{clusters}.geojson"),
-            regions_offshore=pypsaeur('resources/regions_offshore_elec_s{simpl}_{clusters}.geojson')
+            regions_onshore=pypsaeur("resources/regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson"),
+            regions_offshore=pypsaeur('resources/regions_offshore{weather_year}_elec_s{simpl}_{clusters}.geojson')
         output:
             gas_input_nodes="resources/gas_input_locations_s{simpl}_{clusters}.geojson",
             gas_input_nodes_simplified="resources/gas_input_locations_s{simpl}_{clusters}_simplified.csv"
@@ -150,8 +150,8 @@ if config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]:
     rule cluster_gas_network:
         input:
             cleaned_gas_network="resources/gas_network.csv",
-            regions_onshore=pypsaeur("resources/regions_onshore_elec_s{simpl}_{clusters}.geojson"),
-            regions_offshore=pypsaeur("resources/regions_offshore_elec_s{simpl}_{clusters}.geojson")
+            regions_onshore=pypsaeur("resources/regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson"),
+            regions_offshore=pypsaeur("resources/regions_offshore_elec{weather_year}_s{simpl}_{clusters}.geojson")
         output:
             clustered_gas_network="resources/gas_network_elec_s{simpl}_{clusters}.csv"
         resources: mem_mb=4000
@@ -165,7 +165,7 @@ else:
 
 rule build_heat_demands:
     input:
-        cutout=pypsaeur("cutouts/" + snakemake.config['atlite']['cutout'] + ".nc"),
+        cutout=pypsaeur("cutouts/" + config['atlite']['cutout'] + ".nc"),
         pop_layout_total="resources/pop_layout_total{weather_year}.nc",
         pop_layout_urban="resources/pop_layout_urban{weather_year}.nc",
         pop_layout_rural="resources/pop_layout_rural{weather_year}.nc",
@@ -181,7 +181,7 @@ rule build_heat_demands:
 
 rule build_temperature_profiles:
     input:
-        cutout=pypsaeur("cutouts/" + snakemake.config['atlite']['cutout'] + ".nc"),
+        cutout=pypsaeur("cutouts/" + config['atlite']['cutout'] + ".nc"),
         pop_layout_total="resources/pop_layout_total{weather_year}.nc",
         pop_layout_urban="resources/pop_layout_urban{weather_year}.nc",
         pop_layout_rural="resources/pop_layout_rural{weather_year}.nc",
@@ -220,7 +220,7 @@ rule build_cop_profiles:
 
 rule build_solar_thermal_profiles:
     input:
-        cutout=pypsaeur("cutouts/" + snakemake.config['atlite']['cutout'] + ".nc"),
+        cutout=pypsaeur("cutouts/" + config['atlite']['cutout'] + ".nc"),
         pop_layout_total="resources/pop_layout_total{weather_year}.nc",
         pop_layout_urban="resources/pop_layout_urban{weather_year}.nc",
         pop_layout_rural="resources/pop_layout_rural{weather_year}.nc",
@@ -476,7 +476,7 @@ rule prepare_sector_network:
         avail_profile="resources/avail_profile{weather_year}_s{simpl}_{clusters}.csv",
         dsm_profile="resources/dsm_profile{weather_year}_s{simpl}_{clusters}.csv",
         co2_totals_name='resources/co2_totals.csv',
-        biomass_potentials='resources/biomass_potentials_s{simpl}_{clusters}.csv',
+        biomass_potentials='resources/biomass_potentials{weather_year}_s{simpl}_{clusters}.csv',
         heat_profile="data/heat_load_profile_BDEW.csv",
         costs=CDIR + "costs_{planning_horizons}.csv",
         profile_offwind_ac=pypsaeur("resources/profile{weather_year}_offwind-ac.nc"),
