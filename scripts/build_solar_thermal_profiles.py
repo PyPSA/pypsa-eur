@@ -20,7 +20,6 @@ if __name__ == '__main__':
     
     cutout_name = snakemake.input.cutout
     year = snakemake.wildcards.weather_year
-    drop_leap_day = snakemake.config["atlite"].get("drop_leap_day", False)
 
     if year:
         snapshots = dict(start=year, end=str(int(year)+1), closed="left")
@@ -29,7 +28,7 @@ if __name__ == '__main__':
         snapshots = snakemake.config['snapshots']
     
     time = pd.date_range(freq='m', **snapshots)
-    if drop_leap_day:
+    if snakemake.config["atlite"].get("drop_leap_day", False):
         time = time[~((time.month == 2) & (time.day == 29))]
 
     cutout = atlite.Cutout(cutout_name).sel(time=time)
