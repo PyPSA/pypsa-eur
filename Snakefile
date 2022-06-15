@@ -18,7 +18,7 @@ ATLITE_NPROCESSES = config['atlite'].get('nprocesses', 4)
 
 
 wildcard_constraints:
-    weather_year="[0-9]*",
+    weather_year="[0-9]{4}|$",
     simpl="[a-zA-Z0-9]*|all",
     clusters="[0-9]+m?|all",
     ll="(v|c)([0-9\.]+|opt|all)|all",
@@ -148,6 +148,9 @@ rule build_bus_regions:
     script: "scripts/build_bus_regions.py"
 
 if config['enable'].get('build_cutout', False):
+
+    ruleorder: build_cutout_year > build_cutout
+
     rule build_cutout:
         input: 
             regions_onshore="resources/regions_onshore.geojson",
@@ -159,6 +162,14 @@ if config['enable'].get('build_cutout', False):
         resources: mem_mb=ATLITE_NPROCESSES * 1000
         script: "scripts/build_cutout.py"
 
+    rule build_cutout_year:
+        input: rules.build_cutout.input
+        output: "cutouts/{cutout}-{weather_year}.nc"
+        log: "logs/build_cutout/{cutout}-{weather_year}.log"
+        benchmark: "benchmarks/build_cutout_{cutout}-{weather_year}"
+        threads: ATLITE_NPROCESSES
+        resources: mem_mb=ATLITE_NPROCESSES * 1000
+        script: "scripts/build_cutout.py"
 
 if config['enable'].get('retrieve_cutout', True):
     rule retrieve_cutout:

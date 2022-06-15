@@ -103,15 +103,21 @@ logger = logging.getLogger(__name__)
 if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
-        snakemake = mock_snakemake('build_cutout', cutout='europe-2013-era5')
+        # snakemake = mock_snakemake('build_cutout_year', cutout='europe-era5', weather_year=2011)
+        snakemake = mock_snakemake('build_cutout', cutout='europe-era5')
     configure_logging(snakemake)
 
-    # TODO make it accept year independent config
     cutout_params = snakemake.config['atlite']['cutouts'][snakemake.wildcards.cutout]
 
-    snapshots = pd.date_range(freq='h', **snakemake.config['snapshots'])
-    time = [snapshots[0], snapshots[-1]]
-    cutout_params['time'] = slice(*cutout_params.get('time', time))
+    if hasattr(snakemake.wildcards, 'weather_year'): 
+        time = snakemake.wildcards.weather_year
+        cutout_params["time"] = [time, time]
+
+    if "time" not in cutout_params:
+        snapshots = pd.date_range(freq='h', **snakemake.config['snapshots'])
+        cutout_params["time"]  = [snapshots[0], snapshots[-1]]
+
+    cutout_params['time'] = slice(*cutout_params['time'])
 
     if {'x', 'y', 'bounds'}.isdisjoint(cutout_params):
         # Determine the bounds from bus regions with a buffer of two grid cells
