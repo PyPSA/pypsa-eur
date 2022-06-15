@@ -5,3 +5,4 @@ interpolate_limit,hours,integer,"Maximum gap size (consecutive nans) which inter
 time_shift_for_large_gaps,string,string,"Periods which are used for copying time-slices in order to fill large gaps of nans. Have to be valid ``pandas`` period strings."
 manual_adjustments,bool,"{true, false}","Whether to adjust the load data manually according to the function in :func:`manual_adjustment`."
 scaling_factor,--,float,"Global correction factor for the load time series."
+fixed_year,--,Year or False,"To specify a fixed year for the load time series that deviates from the snapshots' year"
