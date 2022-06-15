@@ -84,8 +84,12 @@ if __name__ == "__main__":
 
     eia_stats = vhydro.get_eia_annual_hydro_generation(snakemake.input.eia_hydro_generation).reindex(columns=countries)
 
-    if len(year) > 0 and year not in eia_stats.index:
-        eia_stats.loc[year] = eia_stats.mean()
+    weather_year = snakemake.wildcards.weather_year
+    norm_year = snakemake.config['renewable']['hydro'].get('norm_year')
+    if norm_year:
+        eia_stats.loc[weather_year] = eia_stats.loc[norm_year]
+    elif weather_year and weather_year not in eia_stats.index:
+        eia_stats.loc[weather_year] = eia_stats.median()
 
     inflow = cutout.runoff(shapes=country_shapes,
                            smooth=True,
