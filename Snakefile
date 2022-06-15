@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 from os.path import normpath, exists
-from shutil import copyfile
+from shutil import copyfile, move
 
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 HTTP = HTTPRemoteProvider()
@@ -72,7 +72,7 @@ if config['enable'].get('retrieve_databundle', True):
 rule retrieve_load_data:
     input: HTTP.remote("data.open-power-system-data.org/time_series/2019-06-05/time_series_60min_singleindex.csv", keep_local=True, static=True)
     output: "data/load_raw.csv"
-    shell: "mv {input} {output}"
+    run: move(input[0], output[0])
 
 
 rule build_load_data:
@@ -162,9 +162,9 @@ if config['enable'].get('build_cutout', False):
 
 if config['enable'].get('retrieve_cutout', True):
     rule retrieve_cutout:
-        input: HTTP.remote("zenodo.org/record/4709858/files/{cutout}.nc", keep_local=True, static=True)
+        input: HTTP.remote("zenodo.org/record/6382570/files/{cutout}.nc", keep_local=True, static=True)
         output: "cutouts/{cutout}.nc"
-        shell: "mv {input} {output}"
+        run: move(input[0], output[0])
 
 
 if config['enable'].get('build_natura_raster', False):
@@ -181,7 +181,7 @@ if config['enable'].get('retrieve_natura_raster', True):
     rule retrieve_natura_raster:
         input: HTTP.remote("zenodo.org/record/4706686/files/natura.tiff", keep_local=True, static=True)
         output: "resources/natura.tiff"
-        shell: "mv {input} {output}"
+        run: move(input[0], output[0])
 
 
 ruleorder: build_hydro_profile > build_renewable_profiles
@@ -206,19 +206,19 @@ rule build_renewable_profiles:
     benchmark: "benchmarks/build_renewable_profiles{weather_year}_{technology}"
     threads: ATLITE_NPROCESSES
     resources: mem_mb=ATLITE_NPROCESSES * 5000
+    wildcard_constraints: technology="(?!hydro).*" # Any technology other than hydro
     script: "scripts/build_renewable_profiles.py"
 
 
-if 'hydro' in config['renewable'].keys():
-    rule build_hydro_profile:
-        input:
-            country_shapes='resources/country_shapes.geojson',
-            eia_hydro_generation='data/bundle/EIA_hydro_generation_2000_2014.csv',
-            cutout="cutouts/" + config["renewable"]['hydro']['cutout'] + ".nc"
-        output: 'resources/profile{weather_year}_hydro.nc'
-        log: "logs/build_hydro_profile{weather_year}.log"
-        resources: mem=5000
-        script: 'scripts/build_hydro_profile.py'
+rule build_hydro_profile:
+    input:
+        country_shapes='resources/country_shapes.geojson',
+        eia_hydro_generation='data/bundle/EIA_hydro_generation_2000_2014.csv',
+        cutout=f"cutouts/{config['renewable']['hydro']['cutout']}.nc" if "hydro" in config["renewable"] else "config['renewable']['hydro']['cutout'] not configured",
+    output: 'resources/profile{weather_year}_hydro.nc'
+    log: "logs/build_hydro_profile{weather_year}.log"
+    resources: mem_mb=5000
+    script: 'scripts/build_hydro_profile.py'
 
 
 rule add_electricity:
@@ -316,6 +316,8 @@ def memory(w):
             break
     if w.clusters.endswith('m'):
         return int(factor * (18000 + 180 * int(w.clusters[:-1])))
+    elif w.clusters == "all":
+        return int(factor * (18000 + 180 * 4000))
     else:
         return int(factor * (10000 + 195 * int(w.clusters)))
 
