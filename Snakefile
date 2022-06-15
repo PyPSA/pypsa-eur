@@ -398,7 +398,7 @@ rule make_summary:
 
 rule plot_summary:
     input: "results/summaries/elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}"
-    output: "results/plots/{weather_year}/summary_{summary}_elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}.{ext}"
+    output: "results/plots/summary_{summary}_elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}.{ext}"
     log: "logs/plot_summary/{summary}_elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}_{ext}.log"
     script: "scripts/plot_summary.py"
 
