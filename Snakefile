@@ -77,8 +77,8 @@ rule retrieve_load_data:
 
 rule build_load_data:
     input: "data/load_raw.csv"
-    output: "resources/load.csv"
-    log: "logs/build_load_data.log"
+    output: "resources/load{weather_year}.csv"
+    log: "logs/build_load_data{weather_year}.log"
     script: 'scripts/build_load_data.py'
 
 
