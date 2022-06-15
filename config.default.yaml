@@ -110,7 +110,7 @@ renewable:
     cutout: europe-2013-era5
     resource:
       method: wind
-      turbine: NREL_ReferenceTurbine_5MW_offshore
+      turbine: NREL_ReferenceTurbine_2020ATB_12MW_offshore
     capacity_per_sqkm: 2
     correction_factor: 0.8855
     # proxy for wake losses
@@ -118,16 +118,16 @@ renewable:
     # until done more rigorously in #153
     corine: [44, 255]
     natura: true
-    max_depth: 50
+    max_depth: 60
     max_shore_distance: 30000
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
+    calculate_cost: true
   offwind-dc:
     cutout: europe-2013-era5
     resource:
       method: wind
-      turbine: NREL_ReferenceTurbine_5MW_offshore
-    # ScholzPhd Tab 4.3.1: 10MW/km^2
+      turbine: NREL_ReferenceTurbine_2020ATB_12MW_offshore
     capacity_per_sqkm: 2
     correction_factor: 0.8855
     # proxy for wake losses
@@ -135,15 +135,16 @@ renewable:
     # until done more rigorously in #153
     corine: [44, 255]
     natura: true
-    max_depth: 50
-    min_shore_distance: 30000
+    max_depth: 60
+    max_shore_distance: 30000
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
+    calculate_cost: true
   offwind-float:
     cutout: europe-2013-era5
     resource:
       method: wind
-      turbine: NREL_ReferenceTurbine_5MW_offshore
+      turbine: 2020ATB_NREL_Reference_4MW_150
     # ScholzPhd Tab 4.3.1: 10MW/km^2
     capacity_per_sqkm: 2
     correction_factor: 0.8855
@@ -152,9 +153,7 @@ renewable:
     # until done more rigorously in #153
     corine: [44, 255]
     natura: true
-    min_depth: 50
-    max_depth: 500
-    max_shore_distance: 150000
+    min_depth: 60
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   solar:

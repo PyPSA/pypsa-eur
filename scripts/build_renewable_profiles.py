@@ -319,6 +319,10 @@ if __name__ == '__main__':
 
 
     if snakemake.wildcards.technology.startswith("offwind"):
+        with xr.open_dataset(snakemake.input.gebco) as gebco:
+            lon, lat, bus=ds.indexes['x'], ds.indexes['y'], ds.indexes['bus']
+            water_depth=gebco.elevation.interp(lon=lon,lat=lat, method="nearest").rename({"lon":"x", "lat":"y"})
+            water_depth=water_depth@availability
         logger.info('Calculate underwater fraction of connections.')
         offshore_shape = gpd.read_file(snakemake.input['offshore_shapes']).unary_union
         underwater_fraction = []
@@ -327,7 +331,7 @@ if __name__ == '__main__':
             line = LineString([p, regions.loc[bus, ['x', 'y']]])
             frac = line.intersection(offshore_shape).length/line.length
             underwater_fraction.append(frac)
-
+        ds['water_depth'] = xr.DataArray(water_depth, [buses])
         ds['underwater_fraction'] = xr.DataArray(underwater_fraction, [buses])
 
     # select only buses with some capacity and minimal capacity factor

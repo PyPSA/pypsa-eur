@@ -263,6 +263,7 @@ def update_transmission_costs(n, costs, length_factor=1.0):
 
 
 def attach_wind_and_solar(n, costs, input_profiles, technologies, line_length_factor=1):
+    from _helpers import calculate_offwind_cost
     # TODO: rename tech -> carrier, technologies -> carriers
     
     for tech in technologies:
@@ -274,14 +275,19 @@ def attach_wind_and_solar(n, costs, input_profiles, technologies, line_length_fa
 
             suptech = tech.split('-', 2)[0]
             if suptech == 'offwind':
+                def get_capex():
+                    return calculate_offwind_cost(ds["water_depth"]).to_pandas()
                 underwater_fraction = ds['underwater_fraction'].to_pandas()
                 connection_cost = (line_length_factor *
-                                   ds['average_distance'].to_pandas() *
-                                   (underwater_fraction *
+                                ds['average_distance'].to_pandas() *
+                                (underwater_fraction *
                                     costs.at[tech + '-connection-submarine', 'capital_cost'] +
                                     (1. - underwater_fraction) *
                                     costs.at[tech + '-connection-underground', 'capital_cost']))
-                capital_cost = (costs.at['offwind', 'capital_cost'] +
+                calculate_capex=technologies[tech].get("calculate_cost", False)
+                capital_cost = ((get_capex() 
+                                if calculate_capex 
+                                else costs.at['offwind', 'capital_cost'])  +
                                 costs.at[tech + '-station', 'capital_cost'] +
                                 connection_cost)
                 logger.info("Added connection cost of {:0.0f}-{:0.0f} Eur/MW/a to {}"

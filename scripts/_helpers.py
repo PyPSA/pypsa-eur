@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 import pandas as pd
+import numpy as np
 from pathlib import Path
 
 
@@ -198,6 +199,46 @@ def aggregate_costs(n, flatten=False, opts=None, existing_only=False):
         )
 
     return costs
+
+def calculate_offwind_cost(WD, MW=12, no=54, D=236, HH=138, SP=343, DT=8):
+    """
+    Helper calculating offshore wind capex considering the average water depth of the region.
+
+    Parameters
+    ----------
+    WD : xarray
+        Average water depth of the different regions
+    MW : float
+        Power of the wind turbine in MW
+    no: int
+        Average number of wind turbines in farm
+    D: int
+        Rotor diameter of wind turbine in meters
+    HH: int
+        Hub height of wind turbine in meters
+    SP: int
+        Specific power of wind turbine in W/m2
+    DT: int
+        Distance between the wind turbine in number of rotor diameters
+
+    Returns
+    -------
+    capex: xarray
+        Capex of the wind turbine in the different regions
+    """
+    RA=(D/2)**2*np.pi
+    IA=DT*D
+    wind_turbine_invest=(-0.6*SP+750+(0.53*HH*RA+5500)/(1000*MW))*1.1
+    wind_turbine_install= 300*MW**(-0.6)
+    foundation_invest=(8*np.abs(WD)+30)*(1+(0.003*(350-np.min([400,SP]))))
+    foundation_install=2.5*np.abs(WD)+600*MW**(-0.6)
+    array_cable=IA*500/MW/1000 
+    turbine_transport=50
+    insurance=100
+    finance_cost=100
+    continences=50
+    capex=np.sum([wind_turbine_invest,wind_turbine_install, foundation_invest, foundation_install, array_cable, turbine_transport, insurance, finance_cost, continences])
+    return capex
 
 def progress_retrieve(url, file):
     import urllib
