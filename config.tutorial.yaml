@@ -157,7 +157,7 @@ load:
   time_shift_for_large_gaps: 1w # data gaps up until this size are copied by copying from
   manual_adjustments: true # false
   scaling_factor: 1.0
-  fallback_year: 2013
+  fixed_year: 2013
 
 costs:
   year: 2030
