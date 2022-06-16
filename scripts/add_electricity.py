@@ -563,7 +563,7 @@ if __name__ == "__main__":
             closed="left"
         )
     else:
-        snakemake.config['snapshots']
+        snapshots = snakemake.config['snapshots']
     n.set_snapshots(pd.date_range(freq='h', **snapshots))
     
     Nyears = n.snapshot_weightings.objective.sum() / 8760.
