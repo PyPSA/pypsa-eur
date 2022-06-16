@@ -547,6 +547,15 @@ def add_nice_carrier_names(n, config):
         logger.warning(f'tech_colors for carriers {missing_i} not defined in config.')
     n.carriers['color'] = colors
 
+
+def drop_leap_day(n):
+    if not n.snapshots.is_leap_year.any(): return
+    leap_days = (n.snapshots.day == 29) & (n.snapshots.month == 2)
+    n.set_snapshots(n.snapshots[~leap_days])
+    n.snapshot_weightings[:] = 8760/len(n.snapshots)
+    logger.info("Dropped February 29 from leap year.")
+
+
 if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
@@ -600,7 +609,6 @@ if __name__ == "__main__":
     add_nice_carrier_names(n, snakemake.config)
 
     if snakemake.config['enable'].get('drop_leap_days', True):
-        leap_days = (n.snapshots.day == 29) & (n.snapshots.month == 2)
-        n.set_snapshots(n.snapshots[~leap_days])
+        drop_leap_day(n)
 
     n.export_to_netcdf(snakemake.output[0])
