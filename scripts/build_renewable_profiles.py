@@ -203,7 +203,7 @@ if __name__ == '__main__':
     pgb.streams.wrap_stderr()
 
     nprocesses = int(snakemake.threads)
-    noprogress = not snakemake.config['atlite'].get('show_progress', True)
+    noprogress = not snakemake.config['atlite'].get('show_progress', False)
     config = snakemake.config['renewable'][snakemake.wildcards.technology]
     resource = config['resource'] # pv panel config / wind turbine config
     correction_factor = config.get('correction_factor', 1.)
@@ -240,7 +240,7 @@ if __name__ == '__main__':
         # use named function np.greater with partially frozen argument instead
         # and exclude areas where: -max_depth > grid cell depth
         func = functools.partial(np.greater,-config['max_depth'])
-        excluder.add_raster(snakemake.input.gebco, codes=func, crs=4236, nodata=-1000)
+        excluder.add_raster(snakemake.input.gebco, codes=func, crs=4326, nodata=-1000)
 
     if 'min_shore_distance' in config:
         buffer = config['min_shore_distance']
