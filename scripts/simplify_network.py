@@ -13,6 +13,10 @@ Relevant Settings
 
 .. code:: yaml
 
+    clustering:
+      simplify:
+      aggregation_strategies:
+
     costs:
         USD2013_to_EUR2013:
         discountrate:
@@ -21,10 +25,6 @@ Relevant Settings
 
     electricity:
         max_hours:
-
-    renewables: (keys)
-        {technology}:
-            potential:
 
     lines:
         length_factor:
@@ -320,7 +320,7 @@ def remove_stubs(n, costs, config, output):
 
     return n, busmap
 
-def aggregate_to_substations(n, buses_i=None):
+def aggregate_to_substations(n, config, aggregation_strategies=dict(), buses_i=None):
     # can be used to aggregate a selection of buses to electrically closest neighbors
     # if no buses are given, nodes that are no substations or without offshore connection are aggregated
     
@@ -345,19 +345,29 @@ def aggregate_to_substations(n, buses_i=None):
     busmap = n.buses.index.to_series()
     busmap.loc[buses_i] = dist.idxmin(1)
 
+    # default aggregation strategies must be specified within the function, otherwise (when defaults are passed in
+    # the function's definition) they get lost in case custom values for different variables are specified in the config
+    bus_strategies = dict(country=_make_consense("Bus", "country"))
+    bus_strategies.update(aggregation_strategies.get("buses", {}))
+    generator_strategies = aggregation_strategies.get("generators", {"p_nom_max": "sum"})
+
+    # this snippet supports compatibility of PyPSA and PyPSA-EUR:
+    if "p_nom_max" in generator_strategies:
+        if generator_strategies["p_nom_max"] == "min": generator_strategies["p_nom_max"] = np.min
+
     clustering = get_clustering_from_busmap(n, busmap,
-                                            bus_strategies=dict(country=_make_consense("Bus", "country")),
+                                            bus_strategies=bus_strategies,
                                             aggregate_generators_weighted=True,
                                             aggregate_generators_carriers=None,
                                             aggregate_one_ports=["Load", "StorageUnit"],
                                             line_length_factor=1.0,
-                                            generator_strategies={'p_nom_max': 'sum'},
+                                            generator_strategies=generator_strategies,
                                             scale_link_capital_costs=False)
         
     return clustering.network, busmap
 
 
-def cluster(n, n_clusters, config):
+def cluster(n, n_clusters, config, aggregation_strategies=dict()):
     logger.info(f"Clustering to {n_clusters} buses")
 
     focus_weights = config.get('focus_weights', None)
@@ -365,16 +375,9 @@ def cluster(n, n_clusters, config):
     renewable_carriers = pd.Index([tech
                                     for tech in n.generators.carrier.unique()
                                     if tech.split('-', 2)[0] in config['renewable']])
-    def consense(x):
-        v = x.iat[0]
-        assert ((x == v).all() or x.isnull().all()), (
-            "The `potential` configuration option must agree for all renewable carriers, for now!"
-        )
-        return v
-    potential_mode = (consense(pd.Series([config['renewable'][tech]['potential']
-                                            for tech in renewable_carriers]))
-                        if len(renewable_carriers) > 0 else 'conservative')
-    clustering = clustering_for_n_clusters(n, n_clusters, custom_busmap=False, potential_mode=potential_mode,
+
+    clustering = clustering_for_n_clusters(n, n_clusters, custom_busmap=False,
+                                           aggregation_strategies=aggregation_strategies,
                                            solver_name=config['solving']['solver']['name'],
                                            focus_weights=focus_weights)
 
@@ -389,6 +392,8 @@ if __name__ == "__main__":
 
     n = pypsa.Network(snakemake.input.network)
 
+    aggregation_strategies = snakemake.config["clustering"].get("aggregation_strategies", {})
+
     n, trafo_map = simplify_network_to_380(n)
 
     Nyears = n.snapshot_weightings.objective.sum() / 8760
@@ -402,11 +407,11 @@ if __name__ == "__main__":
     busmaps = [trafo_map, simplify_links_map, stub_map]
 
     if snakemake.config.get('clustering', {}).get('simplify', {}).get('to_substations', False):
-        n, substation_map = aggregate_to_substations(n)
+        n, substation_map = aggregate_to_substations(n, snakemake.config, aggregation_strategies)
         busmaps.append(substation_map)
 
     if snakemake.wildcards.simpl:
-        n, cluster_map = cluster(n, int(snakemake.wildcards.simpl), snakemake.config)
+        n, cluster_map = cluster(n, int(snakemake.wildcards.simpl), snakemake.config, aggregation_strategies)
         busmaps.append(cluster_map)
 
     # some entries in n.buses are not updated in previous functions, therefore can be wrong. as they are not needed

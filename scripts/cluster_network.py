@@ -11,11 +11,10 @@ Relevant Settings
 
 .. code:: yaml
 
-    focus_weights:
+    clustering:
+      aggregation_strategies:
 
-    renewable: (keys)
-        {technology}:
-            potential:
+    focus_weights:
 
     solving:
         solver:
@@ -259,15 +258,16 @@ def busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights=None, algori
 
 
 def clustering_for_n_clusters(n, n_clusters, custom_busmap=False, aggregate_carriers=None,
-                              line_length_factor=1.25, potential_mode='simple', solver_name="cbc",
+                              line_length_factor=1.25, aggregation_strategies=dict(), solver_name="cbc",
                               algorithm="kmeans", extended_link_costs=0, focus_weights=None):
 
-    if potential_mode == 'simple':
-        p_nom_max_strategy = pd.Series.sum
-    elif potential_mode == 'conservative':
-        p_nom_max_strategy = pd.Series.min
-    else:
-        raise AttributeError(f"potential_mode should be one of 'simple' or 'conservative' but is '{potential_mode}'")
+    bus_strategies = dict(country=_make_consense("Bus", "country"))
+    bus_strategies.update(aggregation_strategies.get("buses", {}))
+    generator_strategies = aggregation_strategies.get("generators", {"p_nom_max": "sum"})
+
+    # this snippet supports compatibility of PyPSA and PyPSA-EUR:
+    if "p_nom_max" in generator_strategies:
+        if generator_strategies["p_nom_max"] == "min": generator_strategies["p_nom_max"] = np.min
 
     if not isinstance(custom_busmap, pd.Series):
         busmap = busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights, algorithm)
@@ -276,19 +276,12 @@ def clustering_for_n_clusters(n, n_clusters, custom_busmap=False, aggregate_carr
 
     clustering = get_clustering_from_busmap(
         n, busmap,
-        bus_strategies=dict(country=_make_consense("Bus", "country")),
+        bus_strategies=bus_strategies,
         aggregate_generators_weighted=True,
         aggregate_generators_carriers=aggregate_carriers,
         aggregate_one_ports=["Load", "StorageUnit"],
         line_length_factor=line_length_factor,
-        generator_strategies={'p_nom_max': p_nom_max_strategy, 
-                              'p_nom_min': pd.Series.sum, 
-                              'p_min_pu': pd.Series.mean, 
-                              'marginal_cost': pd.Series.mean, 
-                              'committable': np.any, 
-                              'ramp_limit_up': pd.Series.max, 
-                              'ramp_limit_down': pd.Series.max,
-                              },
+        generator_strategies=generator_strategies,
         scale_link_capital_costs=False)
 
     if not n.links.empty:
@@ -375,8 +368,8 @@ if __name__ == "__main__":
                 "The `potential` configuration option must agree for all renewable carriers, for now!"
             )
             return v
-        potential_mode = consense(pd.Series([snakemake.config['renewable'][tech]['potential']
-                                             for tech in renewable_carriers]))
+        aggregation_strategies = snakemake.config["clustering"].get("aggregation_strategies", {})
+
         custom_busmap = snakemake.config["enable"].get("custom_busmap", False)
         if custom_busmap:
             custom_busmap = pd.read_csv(snakemake.input.custom_busmap, index_col=0, squeeze=True)
@@ -384,12 +377,12 @@ if __name__ == "__main__":
             logger.info(f"Imported custom busmap from {snakemake.input.custom_busmap}")
 
         clustering = clustering_for_n_clusters(n, n_clusters, custom_busmap, aggregate_carriers,
-                                               line_length_factor, potential_mode,
+                                               line_length_factor, aggregation_strategies,
                                                snakemake.config['solving']['solver']['name'],
                                                "kmeans", hvac_overhead_cost, focus_weights)
-
-    update_p_nom_max(n)
     
+    update_p_nom_max(clustering.network)
+
     clustering.network.export_to_netcdf(snakemake.output.network)
     for attr in ('busmap', 'linemap'): #also available: linemap_positive, linemap_negative
         getattr(clustering, attr).to_csv(snakemake.output[attr])

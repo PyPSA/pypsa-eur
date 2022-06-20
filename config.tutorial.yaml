@@ -22,6 +22,10 @@ countries: ['BE']
 clustering:
   simplify:
     to_substations: false # network is simplified to nodes with positive or negative power injection (i.e. substations or offwind connections)
+  aggregation_strategies:
+    generators:
+      p_nom_max: "sum" # use "min" for more conservative assumptions
+      p_nom_min: "sum"
 
 snapshots:
   start: "2013-03-01"
