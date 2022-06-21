@@ -241,7 +241,7 @@ def mock_snakemake(rulename, **wildcards):
         if os.path.exists(p):
             snakefile = p
             break
-    kwargs=dict(rerun_triggers=[]) if parse(sm.__version__) > Version("7.7.0") else {}
+    kwargs = dict(rerun_triggers=[]) if parse(sm.__version__) > Version("7.7.0") else {}
     workflow = sm.Workflow(snakefile, overwrite_configfiles=[], **kwargs)
     workflow.include(snakefile)
     workflow.global_resources = {}
