@@ -384,6 +384,8 @@ def cluster(n, n_clusters, config):
 if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
+        import os
+        os.chdir(os.path.dirname(os.path.abspath(__file__)))
         snakemake = mock_snakemake('simplify_network', simpl='', network='elec')
     configure_logging(snakemake)
 
