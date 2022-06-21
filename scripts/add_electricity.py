@@ -86,6 +86,7 @@ It further adds extendable ``generators`` with **zero** capacity for
 import logging
 from _helpers import configure_logging, update_p_nom_max
 
+import os
 import pypsa
 import pandas as pd
 import numpy as np
@@ -548,6 +549,7 @@ def add_nice_carrier_names(n, config):
 if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
+        os.chdir(os.path.dirname(os.path.abspath(__file__)))
         snakemake = mock_snakemake('add_electricity')
     configure_logging(snakemake)
 
@@ -566,6 +568,10 @@ if __name__ == "__main__":
     attach_conventional_generators(n, costs, ppl, carriers)
 
     carriers = snakemake.config['renewable']
+    if os.stat(snakemake.input.offshore_region).st_size == 0:
+        logger.info("No offshore file exist. Remove offshore carriers")
+        carriers.pop("offwind-ac")
+        carriers.pop("offwind-dc")
     attach_wind_and_solar(n, costs, snakemake.input, carriers, snakemake.config['lines']['length_factor'])
 
     if 'hydro' in snakemake.config['renewable']:
