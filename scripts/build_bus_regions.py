@@ -121,7 +121,6 @@ if __name__ == "__main__":
     else:
         offshore_shapes = gpd.read_file(offshore_shapes).set_index('name')['geometry']
 
-    onshore_regions = []
     offshore_regions = []
 
     for country in countries:
@@ -136,7 +135,7 @@ if __name__ == "__main__":
                 'geometry': voronoi_partition_pts(onshore_locs.values, onshore_shape),
                 'country': country
             })
-        onshore_regions = pd.concat([onshore_regions, onshore_regions_c], ignore_index=True)
+        onshore_regions = pd.concat([onshore_regions_c], ignore_index=True)
 
         if os.stat(offshore_shapes).st_size == 0:
             logger.info("No offshore file exist. Landlock country only.")
