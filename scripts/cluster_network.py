@@ -303,12 +303,20 @@ def clustering_for_n_clusters(n, n_clusters, custom_busmap=False, aggregate_carr
     return clustering
 
 
-def save_to_geojson(s, fn):
+def save_to_geojson(df, fn):
     if os.path.exists(fn):
         os.unlink(fn)
-    df = s.reset_index()
-    schema = {**gpd.io.file.infer_schema(df), 'geometry': 'Unknown'}
-    df.to_file(fn, driver='GeoJSON', schema=schema)
+    if not isinstance(df, gpd.GeoDataFrame):
+        df = gpd.GeoDataFrame(dict(geometry=df))
+    # if geodataframe is not empty. Save shapes.
+    if df.shape[0] > 0:
+        df = df.reset_index()
+        schema = {**gpd.io.file.infer_schema(df), "geometry": "Unknown"}
+        df.to_file(fn, driver="GeoJSON", schema=schema)
+    # if geodataframe is empty, save empty file. See issue 265.
+    else:
+        with open(fn, "w") as fp:
+            pass
 
 
 def cluster_regions(busmaps, input=None, output=None):
@@ -316,11 +324,17 @@ def cluster_regions(busmaps, input=None, output=None):
     busmap = reduce(lambda x, y: x.map(y), busmaps[1:], busmaps[0])
 
     for which in ('regions_onshore', 'regions_offshore'):
-        regions = gpd.read_file(getattr(input, which)).set_index('name')
-        geom_c = regions.geometry.groupby(busmap).apply(shapely.ops.unary_union)
-        regions_c = gpd.GeoDataFrame(dict(geometry=geom_c))
-        regions_c.index.name = 'name'
-        save_to_geojson(regions_c, getattr(output, which))
+        input_path = getattr(input, which)
+        output_path = getattr(output, which)
+        if os.stat(input_path).st_size == 0:
+            logger.info(f"No file exist. Remove offshore shape")
+            save_to_geojson(regions_c, output_path)
+        else:
+            regions = gpd.read_file(getattr(input, which)).set_index('name')
+            geom_c = regions.geometry.groupby(busmap).apply(shapely.ops.unary_union)
+            regions_c = gpd.GeoDataFrame(dict(geometry=geom_c))
+            regions_c.index.name = 'name'
+            save_to_geojson(regions_c, output_path)
 
 
 def plot_busmap_for_n_clusters(n, n_clusters, fn=None):
