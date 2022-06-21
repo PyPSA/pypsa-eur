@@ -136,9 +136,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 from functools import reduce
-
 from pypsa.networkclustering import (busmap_by_kmeans, busmap_by_spectral_clustering,
                                      _make_consense, get_clustering_from_busmap)
+from _helpers import save_to_geojson
 
 import warnings
 warnings.filterwarnings(action='ignore', category=UserWarning)
@@ -301,22 +301,6 @@ def clustering_for_n_clusters(n, n_clusters, custom_busmap=False, aggregate_carr
                                         fill_value=0))
 
     return clustering
-
-
-def save_to_geojson(df, fn):
-    if os.path.exists(fn):
-        os.unlink(fn)
-    if not isinstance(df, gpd.GeoDataFrame):
-        df = gpd.GeoDataFrame(dict(geometry=df))
-    # if geodataframe is not empty. Save shapes.
-    if df.shape[0] > 0:
-        df = df.reset_index()
-        schema = {**gpd.io.file.infer_schema(df), "geometry": "Unknown"}
-        df.to_file(fn, driver="GeoJSON", schema=schema)
-    # if geodataframe is empty, save empty file. See issue 265.
-    else:
-        with open(fn, "w") as fp:
-            pass
 
 
 def cluster_regions(busmaps, input=None, output=None):

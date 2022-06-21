@@ -72,15 +72,16 @@ from _helpers import configure_logging
 
 import os
 import numpy as np
+import pandas as pd
+import geopandas as gpd
+import pycountry as pyc
+
 from operator import attrgetter
 from functools import reduce
 from itertools import takewhile
-
-import pandas as pd
-import geopandas as gpd
 from shapely.geometry import MultiPolygon, Polygon
 from shapely.ops import unary_union
-import pycountry as pyc
+from _helpers import save_to_geojson
 
 logger = logging.getLogger(__name__)
 
@@ -202,21 +203,6 @@ def nuts3(country_shapes, nuts3, nuts3pop, nuts3gdp, ch_cantons, ch_popgdp):
 
     return df
 
-
-def save_to_geojson(df, fn):
-    if os.path.exists(fn):
-        os.unlink(fn)
-    if not isinstance(df, gpd.GeoDataFrame):
-        df = gpd.GeoDataFrame(dict(geometry=df))
-    # if geodataframe is not empty. Save shapes.
-    if df.shape[0] > 0:
-        df = df.reset_index()
-        schema = {**gpd.io.file.infer_schema(df), "geometry": "Unknown"}
-        df.to_file(fn, driver="GeoJSON", schema=schema)
-    # if geodataframe is empty, save empty file. See issue 265.
-    else:
-        with open(fn, "w") as fp:
-            pass
 
 if __name__ == "__main__":
     if 'snakemake' not in globals():

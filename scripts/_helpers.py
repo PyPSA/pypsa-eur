@@ -211,6 +211,39 @@ def progress_retrieve(url, file):
     urllib.request.urlretrieve(url, file, reporthook=dlProgress)
 
 
+def save_to_geojson(df, fn):
+    """
+    This function saves a geodataframe. If a file does not exist e.g. the
+    offshore shape for a land-lock country. It saves an empty file.
+
+    Parameters
+    ----------
+    df: pandas or geopandas dataframe 
+        dataframe with geometry column that should be saved
+    fn: str
+        filename of the store location
+    
+    Example
+    --------
+    save_to_geojson(country_shapes, snakemake.output.country_shapes)
+    """
+    import os
+    import geopandas as gpd
+    if os.path.exists(fn):
+        os.unlink(fn)
+    if not isinstance(df, gpd.GeoDataFrame):
+        df = gpd.GeoDataFrame(dict(geometry=df))
+    # if geodataframe is not empty. Save shapes.
+    if df.shape[0] > 0:
+        df = df.reset_index()
+        schema = {**gpd.io.file.infer_schema(df), "geometry": "Unknown"}
+        df.to_file(fn, driver="GeoJSON", schema=schema)
+    else:
+        logger.info(f"Write empty file as {fn} because of land-lock country")
+        with open(fn, "w") as fp:
+            pass
+
+
 def mock_snakemake(rulename, **wildcards):
     """
     This function is expected to be executed from the 'scripts'-directory of '
