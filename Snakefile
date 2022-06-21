@@ -221,6 +221,7 @@ rule add_electricity:
         base_network='networks/base.nc',
         tech_costs=COSTS,
         regions="resources/regions_onshore.geojson",
+        offshore_region="resources/regions_offshore.geojson",
         powerplants='resources/powerplants.csv',
         hydro_capacities='data/bundle/hydro_capacities.csv',
         geth_hydro_capacities='data/geth2015_hydro_capacities.csv',
