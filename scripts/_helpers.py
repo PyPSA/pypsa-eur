@@ -239,7 +239,6 @@ def save_to_geojson(df, fn):
         schema = {**gpd.io.file.infer_schema(df), "geometry": "Unknown"}
         df.to_file(fn, driver="GeoJSON", schema=schema)
     else:
-        logger.info(f"Write empty file as {fn} because of land-lock country")
         with open(fn, "w") as fp:
             pass
 
