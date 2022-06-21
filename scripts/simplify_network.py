@@ -320,7 +320,7 @@ def remove_stubs(n, costs, config, output):
 
     return n, busmap
 
-def aggregate_to_substations(n, config, aggregation_strategies=dict(), buses_i=None):
+def aggregate_to_substations(n, aggregation_strategies=dict(), buses_i=None):
     # can be used to aggregate a selection of buses to electrically closest neighbors
     # if no buses are given, nodes that are no substations or without offshore connection are aggregated
     
@@ -345,15 +345,13 @@ def aggregate_to_substations(n, config, aggregation_strategies=dict(), buses_i=N
     busmap = n.buses.index.to_series()
     busmap.loc[buses_i] = dist.idxmin(1)
 
-    # default aggregation strategies must be specified within the function, otherwise (when defaults are passed in
-    # the function's definition) they get lost in case custom values for different variables are specified in the config
+    # default aggregation strategies must be specified within the function, otherwise (when defaults
+    # are passed in the function's definition) they get lost in case custom values for different
+    # variables are specified in the config.
     bus_strategies = dict(country=_make_consense("Bus", "country"))
     bus_strategies.update(aggregation_strategies.get("buses", {}))
-    generator_strategies = aggregation_strategies.get("generators", {"p_nom_max": "sum"})
 
-    # this snippet supports compatibility of PyPSA and PyPSA-EUR:
-    if "p_nom_max" in generator_strategies:
-        if generator_strategies["p_nom_max"] == "min": generator_strategies["p_nom_max"] = np.min
+    generator_strategies = aggregation_strategies.get("generators", {"p_nom_max": "sum"})
 
     clustering = get_clustering_from_busmap(n, busmap,
                                             bus_strategies=bus_strategies,
@@ -393,6 +391,11 @@ if __name__ == "__main__":
     n = pypsa.Network(snakemake.input.network)
 
     aggregation_strategies = snakemake.config["clustering"].get("aggregation_strategies", {})
+    # translate str entries of aggregation_strategies to pd.Series functions:
+    aggregation_strategies = {
+        p: {k: getattr(pd.Series, v) for k,v in aggregation_strategies[p].items()}
+        for p in aggregation_strategies.keys()
+    }
 
     n, trafo_map = simplify_network_to_380(n)
 
@@ -407,7 +410,7 @@ if __name__ == "__main__":
     busmaps = [trafo_map, simplify_links_map, stub_map]
 
     if snakemake.config.get('clustering', {}).get('simplify', {}).get('to_substations', False):
-        n, substation_map = aggregate_to_substations(n, snakemake.config, aggregation_strategies)
+        n, substation_map = aggregate_to_substations(n, aggregation_strategies)
         busmaps.append(substation_map)
 
     if snakemake.wildcards.simpl:

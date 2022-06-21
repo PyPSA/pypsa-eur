@@ -263,11 +263,8 @@ def clustering_for_n_clusters(n, n_clusters, custom_busmap=False, aggregate_carr
 
     bus_strategies = dict(country=_make_consense("Bus", "country"))
     bus_strategies.update(aggregation_strategies.get("buses", {}))
-    generator_strategies = aggregation_strategies.get("generators", {"p_nom_max": "sum"})
 
-    # this snippet supports compatibility of PyPSA and PyPSA-EUR:
-    if "p_nom_max" in generator_strategies:
-        if generator_strategies["p_nom_max"] == "min": generator_strategies["p_nom_max"] = np.min
+    generator_strategies = aggregation_strategies.get("generators", {"p_nom_max": "sum"})
 
     if not isinstance(custom_busmap, pd.Series):
         busmap = busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights, algorithm)
@@ -369,6 +366,12 @@ if __name__ == "__main__":
             )
             return v
         aggregation_strategies = snakemake.config["clustering"].get("aggregation_strategies", {})
+        aggregation_strategies = {}
+        # translate str entries of aggregation_strategies to pd.Series functions:
+        aggregation_strategies = {
+            p: {k: getattr(pd.Series, v) for k,v in aggregation_strategies[p].items()}
+            for p in aggregation_strategies.keys()
+        }
 
         custom_busmap = snakemake.config["enable"].get("custom_busmap", False)
         if custom_busmap:
