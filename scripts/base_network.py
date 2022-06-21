@@ -71,6 +71,7 @@ import pandas as pd
 import geopandas as gpd
 import numpy as np
 import networkx as nx
+import os
 
 from scipy import spatial
 from scipy.sparse import csgraph
@@ -391,7 +392,10 @@ def _set_countries_and_substations(n, config, country_shapes, offshore_shapes):
 
     countries = config['countries']
     country_shapes = gpd.read_file(country_shapes).set_index('name')['geometry']
-    offshore_shapes = gpd.read_file(offshore_shapes).set_index('name')['geometry']
+    if os.stat(offshore_shapes).st_size == 0:
+        logger.info("No offshore file exist. Landlock country only.")  
+    else:
+        offshore_shapes = gpd.read_file(offshore_shapes).set_index('name')['geometry']
     substation_b = buses['symbol'].str.contains('substation|converter station', case=False)
 
     def prefer_voltage(x, which):
@@ -420,11 +424,14 @@ def _set_countries_and_substations(n, config, country_shapes, offshore_shapes):
 
         buses.loc[onshore_country_b, 'country'] = country
 
-        if country not in offshore_shapes.index: continue
-        offshore_country_b = buses_in_shape(offshore_shapes[country])
-        offshore_b |= offshore_country_b
+        if os.stat(offshore_shapes).st_size == 0:
+            logger.info("No offshore file exist. Landlock country only.")
+        else:
+            if country not in offshore_shapes.index: continue
+            offshore_country_b = buses_in_shape(offshore_shapes[country])
+            offshore_b |= offshore_country_b
 
-        buses.loc[offshore_country_b, 'country'] = country
+            buses.loc[offshore_country_b, 'country'] = country
 
     # Only accept buses as low-voltage substations (where load is attached), if
     # they have at least one connection which is not under_construction
@@ -433,7 +440,10 @@ def _set_countries_and_substations(n, config, country_shapes, offshore_shapes):
         has_connections_b |= ~ df.groupby(b).under_construction.min()
 
     buses['substation_lv'] = lv_b & onshore_b & (~ buses['under_construction']) & has_connections_b
-    buses['substation_off'] = (offshore_b | (hv_b & onshore_b)) & (~ buses['under_construction'])
+    if os.stat(offshore_shapes).st_size == 0:
+        logger.info("No offshore file exist. Landlock country only.")
+    else:
+        buses['substation_off'] = (offshore_b | (hv_b & onshore_b)) & (~ buses['under_construction'])
 
     c_nan_b = buses.country.isnull()
     if c_nan_b.sum() > 0:
