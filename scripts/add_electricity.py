@@ -329,6 +329,10 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **con
 
     ppl = ppl.query('carrier == "hydro"').reset_index(drop=True)\
              .rename(index=lambda s: str(s) + ' hydro')
+    if len(ppl.loc[ppl.bus.isna()])>0:
+        # TODO: Why some hydro plants don't have a bus?
+        logger.warning(f"Remove hydro powerplants with no bus: {ppl.loc[ppl.bus.isna()].index}")
+        ppl = ppl.loc[~ppl.bus.isna()]
     ror = ppl.query('technology == "Run-Of-River"')
     phs = ppl.query('technology == "Pumped Storage"')
     hydro = ppl.query('technology == "Reservoir"')
