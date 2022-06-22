@@ -96,7 +96,7 @@ def define_spatial(nodes, options):
     # ammonia
 
     spatial.ammonia = SimpleNamespace()
-    if options["ammonia"] == "regional":
+    if options.get("ammonia") == "regional":
         spatial.ammonia.nodes = nodes + " NH3"
         spatial.ammonia.locations = nodes
     else:
@@ -2215,7 +2215,7 @@ def add_industry(n, costs):
         lifetime=costs.at['cement capture', 'lifetime']
     )
 
-    if options["ammonia"]:
+    if options.get("ammonia"):
 
         if options["ammonia"] == 'regional':
             p_set = industrial_demand.loc[spatial.ammonia.locations, "ammonia"].rename(index=lambda x: x + " NH3") / 8760
