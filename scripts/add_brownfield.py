@@ -8,14 +8,21 @@ idx = pd.IndexSlice
 
 import pypsa
 import yaml
+import numpy as np
 
 from add_existing_baseyear import add_build_year_to_new_assets
 from helper import override_component_attrs
+from solve_network import basename
 
 
 def add_brownfield(n, n_p, year):
 
     print("adding brownfield")
+
+    # electric transmission grid set optimised capacities of previous as minimum
+    n.lines.s_nom_min = n_p.lines.s_nom_opt
+    dc_i = n.links[n.links.carrier=="DC"].index
+    n.links.loc[dc_i, "p_nom_min"] = n_p.links.loc[dc_i, "p_nom_opt"]
 
     for c in n_p.iterate_components(["Link", "Generator", "Store"]):
 
@@ -25,7 +32,7 @@ def add_brownfield(n, n_p, year):
         # CO2 or global EU values since these are already in n
         n_p.mremove(
             c.name,
-            c.df.index[c.df.lifetime.isna()]
+            c.df.index[c.df.lifetime==np.inf]
         )
 
         # remove assets whose build_year + lifetime < year
@@ -44,7 +51,7 @@ def add_brownfield(n, n_p, year):
         )]
 
         threshold = snakemake.config['existing_capacities']['threshold_capacity']
-        
+
         if not chp_heat.empty:
             threshold_chp_heat = (threshold
                 * c.df.efficiency[chp_heat.str.replace("heat", "electric")].values
@@ -55,7 +62,7 @@ def add_brownfield(n, n_p, year):
                 c.name,
                 chp_heat[c.df.loc[chp_heat, attr + "_nom_opt"] < threshold_chp_heat]
             )
-        
+
         n_p.mremove(
             c.name,
             c.df.index[c.df[attr + "_nom_extendable"] & ~c.df.index.isin(chp_heat) & (c.df[attr + "_nom_opt"] < threshold)]
@@ -75,16 +82,44 @@ def add_brownfield(n, n_p, year):
         for tattr in n.component_attrs[c.name].index[selection]:
             n.import_series_from_dataframe(c.pnl[tattr], c.name, tattr)
 
+        # deal with gas network
+        pipe_carrier = ['gas pipeline']
+        if snakemake.config["sector"]['H2_retrofit']:
+            # drop capacities of previous year to avoid duplicating
+            to_drop = n.links.carrier.isin(pipe_carrier) & (n.links.build_year!=year)
+            n.mremove("Link", n.links.loc[to_drop].index)
 
+            # subtract the already retrofitted from today's gas grid capacity
+            h2_retrofitted_fixed_i = n.links[(n.links.carrier=='H2 pipeline retrofitted') & (n.links.build_year!=year)].index
+            gas_pipes_i =  n.links[n.links.carrier.isin(pipe_carrier)].index
+            CH4_per_H2 = 1 / snakemake.config["sector"]["H2_retrofit_capacity_per_CH4"]
+            fr = "H2 pipeline retrofitted"
+            to = "gas pipeline"
+            # today's pipe capacity
+            pipe_capacity = n.links.loc[gas_pipes_i, 'p_nom']
+            # already retrofitted capacity from gas -> H2
+            already_retrofitted = (n.links.loc[h2_retrofitted_fixed_i, 'p_nom']
+                                   .rename(lambda x: basename(x).replace(fr, to)).groupby(level=0).sum())
+            remaining_capacity = pipe_capacity - CH4_per_H2 * already_retrofitted.reindex(index=pipe_capacity.index).fillna(0)
+            n.links.loc[gas_pipes_i, "p_nom"] = remaining_capacity
+        else:
+            new_pipes = n.links.carrier.isin(pipe_carrier) & (n.links.build_year==year)
+            n.links.loc[new_pipes, "p_nom"] = 0.
+            n.links.loc[new_pipes, "p_nom_min"] = 0.
+
+
+
+#%%
 if __name__ == "__main__":
     if 'snakemake' not in globals():
         from helper import mock_snakemake
         snakemake = mock_snakemake(
             'add_brownfield',
             simpl='',
-            clusters=48,
+            clusters="37",
+            opts="",
             lv=1.0,
-            sector_opts='Co2L0-168H-T-H-B-I-solar3-dist1',
+            sector_opts='168H-T-H-B-I-solar+p3-dist1',
             planning_horizons=2030,
         )
 

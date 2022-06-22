@@ -1,3 +1,4 @@
 attribute,type,unit,default,description,status
-build_year,integer,year,n/a,build year,Input (optional)
-lifetime,float,years,n/a,lifetime,Input (optional) 
+carrier,string,n/a,n/a,carrier,Input (optional)
+lifetime,float,years,inf,lifetime,Input (optional)
+build_year,int,year ,0,build year,Input (optional)

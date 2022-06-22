@@ -7,7 +7,7 @@ retrieve_sector_databundle: true
 results_dir: results/
 summary_dir: results
 costs_dir: ../technology-data/outputs/
-run: your-run-name  # use this to keep track of runs with different settings
+run: test-overnight  # use this to keep track of runs with different settings
 foresight: overnight # options are overnight, myopic, perfect (perfect is not yet implemented)
 # if you use myopic or perfect foresight, set the investment years in "planning_horizons" below
 
@@ -15,15 +15,13 @@ scenario:
   simpl: # only relevant for PyPSA-Eur
     - ''
   lv: # allowed transmission line volume expansion, can be any float >= 1.0 (today) or "opt"
-    - 1.0
     - 1.5
   clusters: # number of nodes in Europe, any integer between 37 (1 node per country-zone) and several hundred
-    - 45
-    - 50
+    - 5
   opts: # only relevant for PyPSA-Eur
     - ''
   sector_opts: # this is where the main scenario settings are
-    - Co2L0-3H-T-H-B-I-A-solar+p3-dist1
+    - CO2L0-191H-T-H-B-I-A-solar+p3-dist1
   # to really understand the options here, look in scripts/prepare_sector_network.py
   # Co2Lx specifies the CO2 target in x% of the 1990 values; default will give default (5%);
   # Co2L0p25 will give 25% CO2 emissions; Co2Lm0p05 will give 5% negative emissions
@@ -59,12 +57,12 @@ co2_budget:
 # snapshots are originally set in PyPSA-Eur/config.yaml but used again by PyPSA-Eur-Sec
 snapshots:
   # arguments to pd.date_range
-  start: "2013-01-01"
-  end: "2014-01-01"
+  start: "2013-03-01"
+  end: "2013-04-01"
   closed: left # end is not inclusive
 
 atlite:
-  cutout: ../pypsa-eur/cutouts/europe-2013-era5.nc
+  cutout: ../pypsa-eur/cutouts/be-03-2013-era5.nc
 
 # this information is NOT used but needed as an argument for
 # pypsa-eur/scripts/add_electricity.py/load_costs in make_summary.py
@@ -250,8 +248,8 @@ sector:
   electricity_distribution_grid_cost_factor: 1.0  #multiplies cost in data/costs.csv
   electricity_grid_connection: true  # only applies to onshore wind and utility PV
   H2_network: true
-  gas_network: false
-  H2_retrofit: false  # if set to True existing gas pipes can be retrofitted to H2 pipes
+  gas_network: true
+  H2_retrofit: true  # if set to True existing gas pipes can be retrofitted to H2 pipes
   # according to hydrogen backbone strategy (April, 2020) p.15
   # https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf
   # 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity
@@ -262,15 +260,6 @@ sector:
   biomass_transport: false  # biomass transport between nodes
   conventional_generation: # generator : carrier
     OCGT: gas
-  import:
-    capacity_boost: 2
-    options:
-      - pipeline-h2
-      - shipping-lh2
-      - shipping-lch4
-      - shipping-ftfuel
-      - hvdc-to-elec
-    # limit: 100 # TWh
 
 
 industry:
@@ -371,15 +360,15 @@ solving:
       - StorageUnit
 
   solver:
-    name: gurobi
-    threads: 4
-    method: 2 # barrier
-    crossover: 0
-    BarConvTol: 1.e-6
-    Seed: 123
-    AggFill: 0
-    PreDual: 0
-    GURO_PAR_BARDENSETHRESH: 200
+    name: cbc
+    # threads: 4
+    # method: 2 # barrier
+    # crossover: 0
+    # BarConvTol: 1.e-6
+    # Seed: 123
+    # AggFill: 0
+    # PreDual: 0
+    # GURO_PAR_BARDENSETHRESH: 200
     #FeasibilityTol: 1.e-6
 
     #name: cplex
@@ -388,7 +377,7 @@ solving:
     #solutiontype: 2 # non basic solution, ie no crossover
     #barrier_convergetol: 1.e-5
     #feasopt_tolerance: 1.e-6
-  mem: 30000 #memory in MB; 20 GB enough for 50+B+I+H2; 100 GB for 181+B+I+H2
+  mem: 4000 #memory in MB; 20 GB enough for 50+B+I+H2; 100 GB for 181+B+I+H2
 
 
 plotting:
@@ -397,9 +386,6 @@ plotting:
     color_geomap:
       ocean: white
       land: whitesmoke
-  eu_node_location:
-    x: -5.5
-    y: 46.
   costs_max: 1000
   costs_threshold: 1
   energy_max: 20000
@@ -617,8 +603,3 @@ plotting:
     gas-to-power/heat: '#ee8340'
     waste: '#e3d37d'
     other: '#000000'
-    import pipeline-h2: '#fff6e0'
-    import shipping-lh2: '#ebe1ca'
-    import shipping-lch4: '#d6cbb2'
-    import shipping-ftfuel: '#bdb093'
-    import hvdc: '#91856a'
