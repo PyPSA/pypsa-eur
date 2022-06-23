@@ -121,7 +121,6 @@ if __name__ == "__main__":
     else:
         offshore_shapes = gpd.read_file(offshore_shapes).set_index('name')['geometry']
 
-    offshore_regions = []
 
     for country in countries:
         c_b = n.buses.country == country
@@ -137,8 +136,9 @@ if __name__ == "__main__":
             })
         onshore_regions = pd.concat([onshore_regions_c], ignore_index=True)
 
-        if os.stat(offshore_shapes).st_size == 0:
+        if type(offshore_shapes) == type("path"):
             logger.info("No offshore file exist. Landlock country only.")
+            offshore_regions=[]
         else:  
             if country not in offshore_shapes.index: continue
             offshore_shape = offshore_shapes[country]
@@ -151,7 +151,7 @@ if __name__ == "__main__":
                     'country': country
                 })
             offshore_regions_c = offshore_regions_c.loc[offshore_regions_c.area > 1e-2]
-            offshore_regions = pd.concat([offshore_regions, offshore_regions_c], ignore_index=True)
+            offshore_regions = pd.concat([offshore_regions_c], ignore_index=True)
 
     save_to_geojson(onshore_regions, snakemake.output.regions_onshore)
 

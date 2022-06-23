@@ -424,7 +424,7 @@ def _set_countries_and_substations(n, config, country_shapes, offshore_shapes):
 
         buses.loc[onshore_country_b, 'country'] = country
 
-        if os.stat(offshore_shapes).st_size == 0:
+        if type(offshore_shapes) == type("path"):
             logger.info("No offshore file exist. Landlock country only.")
         else:
             if country not in offshore_shapes.index: continue
@@ -440,7 +440,7 @@ def _set_countries_and_substations(n, config, country_shapes, offshore_shapes):
         has_connections_b |= ~ df.groupby(b).under_construction.min()
 
     buses['substation_lv'] = lv_b & onshore_b & (~ buses['under_construction']) & has_connections_b
-    if os.stat(offshore_shapes).st_size == 0:
+    if type(offshore_shapes) == type("path"):
         logger.info("No offshore file exist. Landlock country only.")
     else:
         buses['substation_off'] = (offshore_b | (hv_b & onshore_b)) & (~ buses['under_construction'])
@@ -597,6 +597,7 @@ def base_network(eg_buses, eg_converters, eg_transformers, eg_lines, eg_links,
 if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
+        os.chdir(os.path.dirname(os.path.abspath(__file__)))
         snakemake = mock_snakemake('base_network')
     configure_logging(snakemake)
 
