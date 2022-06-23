@@ -576,6 +576,7 @@ plotting:
     H2 Electrolysis: '#ff29d9'
     # ammonia
     NH3: '#46caf0'
+    ammonia: '#46caf0'
     ammonia store: '#00ace0'
     ammonia cracker: '#87d0e6'
     Haber-Bosch: '#076987'
