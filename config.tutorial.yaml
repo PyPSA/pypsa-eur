@@ -9,7 +9,6 @@ logging:
   level: INFO
   format: '%(levelname)s:%(name)s:%(message)s'
 
-results_dir: results/your-run-name
 
 scenario:
   simpl: ['']
