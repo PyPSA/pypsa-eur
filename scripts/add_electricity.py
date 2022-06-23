@@ -600,7 +600,7 @@ if __name__ == "__main__":
 
     update_transmission_costs(n, costs, snakemake.config['lines']['length_factor'])
 
-    attach_conventional_generators(n, costs, ppl, conventional_carriers, extendable_carriers, **snakemake.config["conventional"])
+    attach_conventional_generators(n, costs, ppl, conventional_carriers, extendable_carriers, snakemake.config.get("conventional", {}))
 
     attach_wind_and_solar(n, costs, snakemake.input, renewable_carriers, extendable_carriers, snakemake.config['lines']['length_factor'])
 
