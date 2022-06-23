@@ -45,6 +45,8 @@ This release is not on the ``master`` branch. It can be used with
 Upcoming Release
 ================
 
+* The workflow now supports to run a selection of countries which do not have any offshore regions assigned. Therefore the offshore technologies need to be disabled, otherwise the workflow will raise an error.
+
 * Add an efficiency factor of 88.55% to offshore wind capacity factors
   as a proxy for wake losses. More rigorous modelling is `planned <https://github.com/PyPSA/pypsa-eur/issues/153>`_
   [`#277 <https://github.com/PyPSA/pypsa-eur/pull/277>`_].
