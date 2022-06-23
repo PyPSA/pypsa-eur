@@ -302,7 +302,7 @@ def attach_wind_and_solar(n, costs, input_profiles, technologies, extendable_car
                    p_max_pu=ds['profile'].transpose('time', 'bus').to_pandas())
 
 
-def attach_conventional_generators(n, costs, ppl, conventional_carriers, extendable_carriers, **config):
+def attach_conventional_generators(n, costs, ppl, conventional_carriers, extendable_carriers, conventional_config):
 
     carriers = set(conventional_carriers) | set(extendable_carriers['Generator'])
     _add_missing_carriers_from_costs(n, costs, carriers)
@@ -327,20 +327,21 @@ def attach_conventional_generators(n, costs, ppl, conventional_carriers, extenda
            lifetime=(ppl.dateout - ppl.datein).fillna(9999).astype(int),
         )
     
-    for carrier in config:
+    for carrier in conventional_config:
         
         # Generators with technology affected
         idx = n.generators.query("carrier == @carrier").index
-        factors = config[carrier].get("energy_availability_factors")
+        factors = conventional_config[carrier].get("energy_availability_factors")
 
-        if isinstance(v, float):
+        if isinstance(factors, float):
             # Single value affecting all generators of technology k indiscriminantely of country
-            n.generators.loc[idx, "p_max_pu"] = v
-        elif isinstance(v, dict):
-            v = pd.Series(v)
+            n.generators.loc[idx, "p_max_pu"] = factors
+        elif isinstance(factors, str):
+            factors = pd.read_file(factors, index_col=0)
             # Values affecting generators of technology k country-specific
             # First map generator buses to countries; then map countries to p_max_pu
-            n.generators.p_max_pu.update(n.generators.loc[idx].bus.map(v).dropna())
+            bus_factors = n.buses.country.map(factors)
+            n.generators.p_max_pu.update(n.generators.loc[idx].bus.map(bus_factors).dropna())
 
 
 
