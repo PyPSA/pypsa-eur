@@ -95,15 +95,16 @@ def define_spatial(nodes, options):
 
     # ammonia
 
-    spatial.ammonia = SimpleNamespace()
-    if options.get("ammonia") == "regional":
-        spatial.ammonia.nodes = nodes + " NH3"
-        spatial.ammonia.locations = nodes
-    else:
-        spatial.ammonia.nodes = ["EU NH3"]
-        spatial.ammonia.locations = ["EU"]
+    if options.get('ammonia'):
+        spatial.ammonia = SimpleNamespace()
+        if options.get("ammonia") == "regional":
+            spatial.ammonia.nodes = nodes + " NH3"
+            spatial.ammonia.locations = nodes
+        else:
+            spatial.ammonia.nodes = ["EU NH3"]
+            spatial.ammonia.locations = ["EU"]
 
-    spatial.ammonia.df = pd.DataFrame(vars(spatial.ammonia), index=nodes)
+        spatial.ammonia.df = pd.DataFrame(vars(spatial.ammonia), index=nodes)
 
     # oil
     spatial.oil = SimpleNamespace()
