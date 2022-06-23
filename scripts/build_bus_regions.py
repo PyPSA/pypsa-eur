@@ -118,9 +118,10 @@ if __name__ == "__main__":
     country_shapes = gpd.read_file(snakemake.input.country_shapes).set_index('name')['geometry']
     if os.stat(offshore_shapes).st_size == 0:
         logger.info("No offshore file exist. Landlock country only.") 
+        offshore_exists = False
     else:
         offshore_shapes = gpd.read_file(offshore_shapes).set_index('name')['geometry']
-
+        offshore_exists = True
 
     for country in countries:
         c_b = n.buses.country == country
@@ -136,7 +137,7 @@ if __name__ == "__main__":
             })
         onshore_regions = pd.concat([onshore_regions_c], ignore_index=True)
 
-        if type(offshore_shapes) == type("path"):
+        if not offshore_exists:
             logger.info("No offshore file exist. Landlock country only.")
             offshore_regions=[]
         else:  
