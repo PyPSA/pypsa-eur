@@ -62,6 +62,11 @@ incorporates retrofitting options to hydrogen.
 
 * Add option to sweep the global CO2 sequestration potentials with keyword ``seq200`` in the ``{sector_opts}`` wildcard (for limit of 200 Mt CO2).
 
+* Add option to resolve ammonia as separate energy carrier with Haber-Bosch
+  synthesis, ammonia cracking, storage and industrial demand. The ammonia
+  carrier can be nodally resolved or copperplated across Europe. This feature is
+  controlled by ``sector: ammonia:``.
+
 * Updated `data bundle <https://zenodo.org/record/5824485/files/pypsa-eur-sec-data-bundle.tar.gz>`_ that includes the hydrogan salt cavern storage potentials.
 
 **Bugfixes**
