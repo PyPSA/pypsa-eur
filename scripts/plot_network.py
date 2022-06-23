@@ -309,7 +309,7 @@ def plot_h2_map(network):
     )
 
     n.plot(
-        geomap=False,
+        # geomap=False,
         bus_sizes=0,
         link_colors='#72d3d6',
         link_widths=link_widths_retro,
@@ -443,7 +443,7 @@ def plot_ch4_map(network):
     )
 
     n.plot(
-        geomap=False,
+        # geomap=False,
         ax=ax,
         bus_sizes=0.,
         link_colors='#e8d1d1',
@@ -453,7 +453,7 @@ def plot_ch4_map(network):
     )
 
     n.plot(
-        geomap=False,
+        # geomap=False,
         ax=ax,
         bus_sizes=0.,
         link_colors=link_color_used,

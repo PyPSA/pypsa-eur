@@ -100,7 +100,7 @@ def define_spatial(nodes, options):
         spatial.ammonia.nodes = nodes + " NH3"
         spatial.ammonia.locations = nodes
     else:
-        spatial.ammonia.nodes = ["EU ammonia"]
+        spatial.ammonia.nodes = ["EU NH3"]
         spatial.ammonia.locations = ["EU"]
 
     spatial.ammonia.df = pd.DataFrame(vars(spatial.ammonia), index=nodes)
@@ -690,8 +690,8 @@ def add_ammonia(n, costs):
         bus2=nodes + " H2",
         p_nom_extendable=True,
         carrier="Haber-Bosch",
-        efficiency=1 / (cf_industry["MWh_elec_per_tNH3_electrolysis"] / cf_industry["MWh_NH3_per_tNH3"]) # output: MW_NH3 per MW_elec
-        efficiency2=-cf_industry["MWh_H2_per_tNH3_electrolysis"] / cf_industry["MWh_elec_per_tNH3_electrolysis"] # input: MW_H2 per MW_elec
+        efficiency=1 / (cf_industry["MWh_elec_per_tNH3_electrolysis"] / cf_industry["MWh_NH3_per_tNH3"]), # output: MW_NH3 per MW_elec
+        efficiency2=-cf_industry["MWh_H2_per_tNH3_electrolysis"] / cf_industry["MWh_elec_per_tNH3_electrolysis"], # input: MW_H2 per MW_elec
         capital_cost=costs.at["Haber-Bosch synthesis", "fixed"],
         lifetime=costs.at["Haber-Bosch synthesis", 'lifetime']
     )
@@ -703,7 +703,7 @@ def add_ammonia(n, costs):
         bus1=nodes + " H2",
         p_nom_extendable=True,
         carrier="ammonia cracker",
-        efficiency=1 / cf_industry["MWh_NH3_per_MWh_H2_cracker"]
+        efficiency=1 / cf_industry["MWh_NH3_per_MWh_H2_cracker"],
         capital_cost=costs.at["Ammonia cracker", "fixed"] / cf_industry["MWh_NH3_per_MWh_H2_cracker"], # given per MW_H2
         lifetime=costs.at['Ammonia cracker', 'lifetime']
     )
