@@ -116,6 +116,11 @@ if __name__ == "__main__":
     n = pypsa.Network(snakemake.input.base_network)
 
     country_shapes = gpd.read_file(snakemake.input.country_shapes).set_index('name')['geometry']
+
+    # inialize onshore regions for countries loop with concat
+    offshore_regions = pd.DataFrame()
+    onshore_regions = pd.DataFrame()
+    
     if os.stat(offshore_shapes).st_size == 0:
         logger.info("No offshore file exist. Landlock country only.") 
         offshore_exists = False
@@ -135,7 +140,7 @@ if __name__ == "__main__":
                 'geometry': voronoi_partition_pts(onshore_locs.values, onshore_shape),
                 'country': country
             })
-        onshore_regions = pd.concat([onshore_regions_c], ignore_index=True)
+        onshore_regions = pd.concat([onshore_regions, onshore_regions_c], ignore_index=True)
 
         if not offshore_exists:
             logger.info("No offshore file exist. Landlock country only.")
@@ -152,7 +157,7 @@ if __name__ == "__main__":
                     'country': country
                 })
             offshore_regions_c = offshore_regions_c.loc[offshore_regions_c.area > 1e-2]
-            offshore_regions = pd.concat([offshore_regions_c], ignore_index=True)
+            offshore_regions = pd.concat([offshore_regions, offshore_regions_c], ignore_index=True)
 
     save_to_geojson(onshore_regions, snakemake.output.regions_onshore)
 

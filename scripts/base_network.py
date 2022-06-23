@@ -394,8 +394,10 @@ def _set_countries_and_substations(n, config, country_shapes, offshore_shapes):
     country_shapes = gpd.read_file(country_shapes).set_index('name')['geometry']
     if os.stat(offshore_shapes).st_size == 0:
         logger.info("No offshore file exist. Landlock country only.")  
+        offshore_exists = False
     else:
         offshore_shapes = gpd.read_file(offshore_shapes).set_index('name')['geometry']
+        offshore_exists = True
     substation_b = buses['symbol'].str.contains('substation|converter station', case=False)
 
     def prefer_voltage(x, which):
@@ -424,7 +426,7 @@ def _set_countries_and_substations(n, config, country_shapes, offshore_shapes):
 
         buses.loc[onshore_country_b, 'country'] = country
 
-        if type(offshore_shapes) == type("path"):
+        if not offshore_exists:
             logger.info("No offshore file exist. Landlock country only.")
         else:
             if country not in offshore_shapes.index: continue
@@ -440,7 +442,7 @@ def _set_countries_and_substations(n, config, country_shapes, offshore_shapes):
         has_connections_b |= ~ df.groupby(b).under_construction.min()
 
     buses['substation_lv'] = lv_b & onshore_b & (~ buses['under_construction']) & has_connections_b
-    if type(offshore_shapes) == type("path"):
+    if not offshore_exists:
         logger.info("No offshore file exist. Landlock country only.")
     else:
         buses['substation_off'] = (offshore_b | (hv_b & onshore_b)) & (~ buses['under_construction'])
