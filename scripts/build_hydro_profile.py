@@ -78,8 +78,6 @@ def get_eia_annual_hydro_generation(fn, countries):
 
     df.loc["Germany"] = df.filter(like='Germany', axis=0).sum()
     df.loc["Serbia"] += df.loc["Kosovo"]
-    df = df.loc[~df.index.str.contains('Former')]
-    df.drop(["Europe", "Germany, West", "Germany, East"], inplace=True)
 
     df.index = cc.convert(df.index, to='iso2')
     df.index.name = 'countries'
