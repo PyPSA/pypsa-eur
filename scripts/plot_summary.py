@@ -21,7 +21,7 @@ Description
 
 import os
 import logging
-from _helpers import configure_logging, retrieve_snakemake_keys
+from _helpers import configure_logging
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -170,12 +170,12 @@ if __name__ == "__main__":
                                   attr='', ext='png', country='all')
     configure_logging(snakemake)
 
-    paths, config, wildcards, logs, out = retrieve_snakemake_keys(snakemake)
+    config = snakemake.config
 
-    summary = wildcards.summary
+    summary = snakemake.wildcards.summary
     try:
         func = globals()[f"plot_{summary}"]
     except KeyError:
         raise RuntimeError(f"plotting function for {summary} has not been defined")
 
-    func(os.path.join(paths[0], f"{summary}.csv"), config, out[0])
+    func(os.path.join(snakemake.input[0], f"{summary}.csv"), config, snakemake.output[0])

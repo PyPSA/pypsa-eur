@@ -100,7 +100,7 @@ def prepare_network(n, solve_opts):
             df.where(df>solve_opts['clip_p_max_pu'], other=0., inplace=True)
 
     if solve_opts.get('load_shedding'):
-        n.add("Carrier", "Load")
+        n.add("Carrier", "load", color="#dd2e23", nice_name="Load shedding")
         buses_i = n.buses.query("carrier == 'AC'").index
         n.madd("Generator", buses_i, " load",
                bus=buses_i,
@@ -254,7 +254,12 @@ def solve_network(n, config, opts='', **kwargs):
     n.config = config
     n.opts = opts
 
-    if cf_solving.get('skip_iterations', False):
+    skip_iterations = cf_solving.get('skip_iterations', False)
+    if not n.lines.s_nom_extendable.any():
+        skip_iterations = True
+        logger.info("No expandable lines found. Skipping iterative solving.")
+
+    if skip_iterations:
         network_lopf(n, solver_name=solver_name, solver_options=solver_options,
                      extra_functionality=extra_functionality, **kwargs)
     else:

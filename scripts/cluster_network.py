@@ -358,7 +358,14 @@ def clustering_for_n_clusters(n, n_clusters, custom_busmap=False, aggregate_carr
         aggregate_generators_carriers=aggregate_carriers,
         aggregate_one_ports=["Load", "StorageUnit"],
         line_length_factor=line_length_factor,
-        generator_strategies={'p_nom_max': p_nom_max_strategy, 'p_nom_min': pd.Series.sum},
+        generator_strategies={'p_nom_max': p_nom_max_strategy, 
+                              'p_nom_min': pd.Series.sum, 
+                              'p_min_pu': pd.Series.mean, 
+                              'marginal_cost': pd.Series.mean, 
+                              'committable': np.any, 
+                              'ramp_limit_up': pd.Series.max, 
+                              'ramp_limit_down': pd.Series.max,
+                              },
         scale_link_capital_costs=False)
 
     if not n.links.empty:
