@@ -189,6 +189,7 @@ import logging
 from pypsa.geo import haversine
 from shapely.geometry import LineString
 import time
+from dask.distributed import Client, LocalCluster
 
 from _helpers import configure_logging
 
@@ -203,7 +204,7 @@ if __name__ == '__main__':
     pgb.streams.wrap_stderr()
 
     nprocesses = int(snakemake.threads)
-    noprogress = not snakemake.config['atlite'].get('show_progress', True)
+    noprogress = not snakemake.config['atlite'].get('show_progress', False)
     config = snakemake.config['renewable'][snakemake.wildcards.technology]
     resource = config['resource'] # pv panel config / wind turbine config
     correction_factor = config.get('correction_factor', 1.)
@@ -216,7 +217,9 @@ if __name__ == '__main__':
     if correction_factor != 1.:
         logger.info(f'correction_factor is set as {correction_factor}')
 
-
+    cluster = LocalCluster(n_workers=nprocesses, threads_per_worker=1)
+    client = Client(cluster, asynchronous=True)
+ 
     cutout = atlite.Cutout(snakemake.input['cutout'])
     regions = gpd.read_file(snakemake.input.regions).set_index('name').rename_axis('bus')
     buses = regions.index
@@ -242,7 +245,7 @@ if __name__ == '__main__':
         # use named function np.greater with partially frozen argument instead
         # and exclude areas where: -max_depth > grid cell depth
         func = functools.partial(np.greater,-config['max_depth'])
-        excluder.add_raster(snakemake.input.gebco, codes=func, crs=4236, nodata=-1000)
+        excluder.add_raster(snakemake.input.gebco, codes=func, crs=4326, nodata=-1000)
 
     if 'min_shore_distance' in config:
         buffer = config['min_shore_distance']
@@ -268,7 +271,7 @@ if __name__ == '__main__':
 
     potential = capacity_per_sqkm * availability.sum('bus') * area
     func = getattr(cutout, resource.pop('method'))
-    resource['dask_kwargs'] = {'num_workers': nprocesses}
+    resource['dask_kwargs'] = {"scheduler": client}
     capacity_factor = correction_factor * func(capacity_factor=True, **resource)
     layout = capacity_factor * area * capacity_per_sqkm
     profile, capacities = func(matrix=availability.stack(spatial=['y','x']),

@@ -37,7 +37,7 @@ Description
 """
 
 import logging
-from _helpers import configure_logging, retrieve_snakemake_keys
+from _helpers import configure_logging
 
 import pandas as pd
 
@@ -63,8 +63,6 @@ if __name__ == "__main__":
         snakemake = mock_snakemake('prepare_links_p_nom', simpl='', network='elec')
     configure_logging(snakemake)
 
-    paths, config, wildcards, logs, out = retrieve_snakemake_keys(snakemake)
-
     links_p_nom = pd.read_html('https://en.wikipedia.org/wiki/List_of_HVDC_projects', header=0, match="SwePol")[0]
 
     mw = "Power (MW)"
@@ -76,4 +74,4 @@ if __name__ == "__main__":
     links_p_nom['x1'], links_p_nom['y1'] = extract_coordinates(links_p_nom['Converterstation 1'])
     links_p_nom['x2'], links_p_nom['y2'] = extract_coordinates(links_p_nom['Converterstation 2'])
 
-    links_p_nom.dropna(subset=['x1', 'y1', 'x2', 'y2']).to_csv(out[0], index=False)
+    links_p_nom.dropna(subset=['x1', 'y1', 'x2', 'y2']).to_csv(snakemake.output[0], index=False)

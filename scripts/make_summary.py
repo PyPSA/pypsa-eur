@@ -171,6 +171,9 @@ def calculate_capacity(n,label,capacity):
         if 'p_nom_opt' in c.df.columns:
             c_capacities = abs(c.df.p_nom_opt.multiply(c.df.sign)).groupby(c.df.carrier).sum()
             capacity = include_in_summary(capacity, [c.list_name], label, c_capacities)
+        elif 'e_nom_opt' in c.df.columns:
+            c_capacities = abs(c.df.e_nom_opt.multiply(c.df.sign)).groupby(c.df.carrier).sum()
+            capacity = include_in_summary(capacity, [c.list_name], label, c_capacities)
 
     for c in n.iterate_components(n.passive_branch_components):
         c_capacities = c.df['s_nom_opt'].groupby(c.df.carrier).sum()
@@ -185,11 +188,11 @@ def calculate_capacity(n,label,capacity):
 def calculate_supply(n, label, supply):
     """calculate the max dispatch of each component at the buses where the loads are attached"""
 
-    load_types = n.loads.carrier.value_counts().index
+    load_types = n.buses.carrier.unique()
 
     for i in load_types:
 
-        buses = n.loads.bus[n.loads.carrier == i].values
+        buses = n.buses.query("carrier == @i").index
 
         bus_map = pd.Series(False,index=n.buses.index)
 
@@ -232,11 +235,11 @@ def calculate_supply(n, label, supply):
 def calculate_supply_energy(n, label, supply_energy):
     """calculate the total dispatch of each component at the buses where the loads are attached"""
 
-    load_types = n.loads.carrier.value_counts().index
+    load_types = n.buses.carrier.unique()
 
     for i in load_types:
 
-        buses = n.loads.bus[n.loads.carrier == i].values
+        buses = n.buses.query("carrier == @i").index
 
         bus_map = pd.Series(False,index=n.buses.index)
 
@@ -404,7 +407,7 @@ def make_summaries(networks_dict, paths, config, country='all'):
 
         Nyears = n.snapshot_weightings.objective.sum() / 8760.
         costs = load_costs(paths[0], config['costs'], config['electricity'], Nyears)
-        update_transmission_costs(n, costs, simple_hvdc_costs=False)
+        update_transmission_costs(n, costs)
 
         assign_carriers(n)
 

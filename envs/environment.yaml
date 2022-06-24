@@ -11,7 +11,7 @@ dependencies:
   - pip
 
   - pypsa>=0.18.1
-  - atlite>=0.2.5
+  - atlite>=0.2.6
   - dask
 
   # Dependencies of the workflow itself
@@ -24,7 +24,7 @@ dependencies:
   - yaml
   - pytables
   - lxml
-  - powerplantmatching>=0.4.8
+  - powerplantmatching>=0.5.3
   - numpy
   - pandas
   - geopandas
@@ -37,7 +37,7 @@ dependencies:
   - pyomo
   - matplotlib
   - proj
-  - fiona <= 1.18.20  # Till issue https://github.com/Toblerity/Fiona/issues/1085 is not solved
+  - fiona<=1.18.20  # Till issue https://github.com/Toblerity/Fiona/issues/1085 is not solved
 
   # Keep in conda environment when calling ipython
   - ipython
@@ -45,8 +45,8 @@ dependencies:
   # GIS dependencies:
   - cartopy
   - descartes
-  - rasterio
   - fiona # explicit for Windows
+  - rasterio<=1.2.9  # 1.2.10 creates error https://github.com/PyPSA/atlite/issues/238
 
   # PyPSA-Eur-Sec Dependencies
   - geopy
