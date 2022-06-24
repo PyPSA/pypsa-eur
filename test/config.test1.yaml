@@ -30,6 +30,7 @@ clustering:
       committable: any
       ramp_limit_up: max
       ramp_limit_down: max
+      efficiency: mean
 
 snapshots:
   start: "2013-03-01"

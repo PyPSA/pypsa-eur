@@ -189,7 +189,10 @@ def _adjust_capital_costs_using_connection_costs(n, connection_costs_to_bus, out
             
 
 
-def _aggregate_and_move_components(n, busmap, connection_costs_to_bus, output, aggregate_one_ports={"Load", "StorageUnit"}):
+def _aggregate_and_move_components(n, busmap, connection_costs_to_bus, output,
+                                   aggregate_one_ports={"Load", "StorageUnit"},
+                                   aggregation_strategies=dict()):
+
     def replace_components(n, c, df, pnl):
         n.mremove(c, n.df(c).index)
 
@@ -200,7 +203,12 @@ def _aggregate_and_move_components(n, busmap, connection_costs_to_bus, output, a
 
     _adjust_capital_costs_using_connection_costs(n, connection_costs_to_bus, output)
 
-    generators, generators_pnl = aggregategenerators(n, busmap, custom_strategies={'p_nom_min': np.sum})
+    generator_strategies = {'build_year': lambda x: 0, 'lifetime': lambda x: np.inf}
+    generator_strategies.update(aggregation_strategies.get("generators", {}))
+
+    generators, generators_pnl = aggregategenerators(
+        n, busmap, custom_strategies=generator_strategies
+    )
     replace_components(n, "Generator", generators, generators_pnl)
 
     for one_port in aggregate_one_ports:
@@ -214,7 +222,7 @@ def _aggregate_and_move_components(n, busmap, connection_costs_to_bus, output, a
         n.mremove(c, df.index[df.bus0.isin(buses_to_del) | df.bus1.isin(buses_to_del)])
 
 
-def simplify_links(n, costs, config, output):
+def simplify_links(n, costs, config, output, aggregation_strategies=dict()):
     ## Complex multi-node links are folded into end-points
     logger.info("Simplifying connected link components")
 
@@ -306,17 +314,19 @@ def simplify_links(n, costs, config, output):
 
     logger.debug("Collecting all components using the busmap")
 
-    _aggregate_and_move_components(n, busmap, connection_costs_to_bus, output)
+    _aggregate_and_move_components(n, busmap, connection_costs_to_bus, output,
+                                   aggregation_strategies=aggregation_strategies)
     return n, busmap
 
-def remove_stubs(n, costs, config, output):
+def remove_stubs(n, costs, config, output, aggregation_strategies=dict()):
     logger.info("Removing stubs")
 
     busmap = busmap_by_stubs(n) #  ['country'])
 
     connection_costs_to_bus = _compute_connection_costs_to_bus(n, busmap, costs, config)
 
-    _aggregate_and_move_components(n, busmap, connection_costs_to_bus, output)
+    _aggregate_and_move_components(n, busmap, connection_costs_to_bus, output,
+                                   aggregation_strategies=aggregation_strategies)
 
     return n, busmap
 
@@ -345,13 +355,14 @@ def aggregate_to_substations(n, aggregation_strategies=dict(), buses_i=None):
     busmap = n.buses.index.to_series()
     busmap.loc[buses_i] = dist.idxmin(1)
 
-    # default aggregation strategies must be specified within the function, otherwise (when defaults
-    # are passed in the function's definition) they get lost in case custom values for different
-    # variables are specified in the config.
+    # default aggregation strategies that cannot be defined in .yaml format must be specified within
+    # the function, otherwise (when defaults are passed in the function's definition) they get lost
+    # in case custom values for different variables are specified in the config.
     bus_strategies = dict(country=_make_consense("Bus", "country"))
     bus_strategies.update(aggregation_strategies.get("buses", {}))
 
-    generator_strategies = aggregation_strategies.get("generators", {"p_nom_max": "sum"})
+    generator_strategies = {'build_year': lambda x: 0, 'lifetime': lambda x: np.inf}
+    generator_strategies.update(aggregation_strategies.get("generators", {}))
 
     clustering = get_clustering_from_busmap(n, busmap,
                                             bus_strategies=bus_strategies,
@@ -403,9 +414,11 @@ if __name__ == "__main__":
 
     technology_costs = load_costs(snakemake.input.tech_costs, snakemake.config['costs'], snakemake.config['electricity'], Nyears)
 
-    n, simplify_links_map = simplify_links(n, technology_costs, snakemake.config, snakemake.output)
+    n, simplify_links_map = simplify_links(n, technology_costs, snakemake.config, snakemake.output,
+                                           aggregation_strategies)
 
-    n, stub_map = remove_stubs(n, technology_costs, snakemake.config, snakemake.output)
+    n, stub_map = remove_stubs(n, technology_costs, snakemake.config, snakemake.output,
+                               aggregation_strategies=aggregation_strategies)
 
     busmaps = [trafo_map, simplify_links_map, stub_map]
 

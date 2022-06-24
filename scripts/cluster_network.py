@@ -264,7 +264,8 @@ def clustering_for_n_clusters(n, n_clusters, custom_busmap=False, aggregate_carr
     bus_strategies = dict(country=_make_consense("Bus", "country"))
     bus_strategies.update(aggregation_strategies.get("buses", {}))
 
-    generator_strategies = aggregation_strategies.get("generators", {"p_nom_max": "sum"})
+    generator_strategies = {'build_year': lambda x: 0, 'lifetime': lambda x: np.inf}
+    generator_strategies.update(aggregation_strategies.get("generators", {}))
 
     if not isinstance(custom_busmap, pd.Series):
         busmap = busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights, algorithm)
@@ -366,7 +367,6 @@ if __name__ == "__main__":
             )
             return v
         aggregation_strategies = snakemake.config["clustering"].get("aggregation_strategies", {})
-        aggregation_strategies = {}
         # translate str entries of aggregation_strategies to pd.Series functions:
         aggregation_strategies = {
             p: {k: getattr(pd.Series, v) for k,v in aggregation_strategies[p].items()}
@@ -383,7 +383,7 @@ if __name__ == "__main__":
                                                line_length_factor, aggregation_strategies,
                                                snakemake.config['solving']['solver']['name'],
                                                "kmeans", hvac_overhead_cost, focus_weights)
-    
+
     update_p_nom_max(clustering.network)
 
     clustering.network.export_to_netcdf(snakemake.output.network)
