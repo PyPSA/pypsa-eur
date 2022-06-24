@@ -120,7 +120,7 @@ def load_network_for_plots(fn, tech_costs, config, combine_hydro_ps=True):
     # n.storage_units.loc[bus_carrier == "heat","carrier"] = "water tanks"
 
     Nyears = n.snapshot_weightings.objective.sum() / 8760.
-    costs = load_costs(Nyears, tech_costs, config['costs'], config['electricity'])
+    costs = load_costs(tech_costs, config['costs'], config['electricity'], Nyears)
     update_transmission_costs(n, costs)
 
     return n
@@ -231,6 +231,7 @@ def mock_snakemake(rulename, **wildcards):
     import os
     from pypsa.descriptors import Dict
     from snakemake.script import Snakemake
+    from packaging.version import Version, parse
 
     script_dir = Path(__file__).parent.resolve()
     assert Path.cwd().resolve() == script_dir, \
@@ -240,7 +241,8 @@ def mock_snakemake(rulename, **wildcards):
         if os.path.exists(p):
             snakefile = p
             break
-    workflow = sm.Workflow(snakefile, overwrite_configfiles=[])
+    kwargs = dict(rerun_triggers=[]) if parse(sm.__version__) > Version("7.7.0") else {}
+    workflow = sm.Workflow(snakefile, overwrite_configfiles=[], **kwargs)
     workflow.include(snakefile)
     workflow.global_resources = {}
     rule = workflow.get_rule(rulename)

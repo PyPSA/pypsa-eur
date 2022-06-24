@@ -263,9 +263,9 @@ def clustering_for_n_clusters(n, n_clusters, custom_busmap=False, aggregate_carr
                               algorithm="kmeans", extended_link_costs=0, focus_weights=None):
 
     if potential_mode == 'simple':
-        p_nom_max_strategy = np.sum
+        p_nom_max_strategy = pd.Series.sum
     elif potential_mode == 'conservative':
-        p_nom_max_strategy = np.min
+        p_nom_max_strategy = pd.Series.min
     else:
         raise AttributeError(f"potential_mode should be one of 'simple' or 'conservative' but is '{potential_mode}'")
 
@@ -281,7 +281,14 @@ def clustering_for_n_clusters(n, n_clusters, custom_busmap=False, aggregate_carr
         aggregate_generators_carriers=aggregate_carriers,
         aggregate_one_ports=["Load", "StorageUnit"],
         line_length_factor=line_length_factor,
-        generator_strategies={'p_nom_max': p_nom_max_strategy, 'p_nom_min': np.sum},
+        generator_strategies={'p_nom_max': p_nom_max_strategy, 
+                              'p_nom_min': pd.Series.sum, 
+                              'p_min_pu': pd.Series.mean, 
+                              'marginal_cost': pd.Series.mean, 
+                              'committable': np.any, 
+                              'ramp_limit_up': pd.Series.max, 
+                              'ramp_limit_down': pd.Series.max,
+                              },
         scale_link_capital_costs=False)
 
     if not n.links.empty:
@@ -343,6 +350,9 @@ if __name__ == "__main__":
     if snakemake.wildcards.clusters.endswith('m'):
         n_clusters = int(snakemake.wildcards.clusters[:-1])
         aggregate_carriers = pd.Index(n.generators.carrier.unique()).difference(renewable_carriers)
+    elif snakemake.wildcards.clusters == 'all':
+        n_clusters = len(n.buses)
+        aggregate_carriers = None # All
     else:
         n_clusters = int(snakemake.wildcards.clusters)
         aggregate_carriers = None # All

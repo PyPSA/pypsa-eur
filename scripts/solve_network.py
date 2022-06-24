@@ -254,7 +254,12 @@ def solve_network(n, config, opts='', **kwargs):
     n.config = config
     n.opts = opts
 
-    if cf_solving.get('skip_iterations', False):
+    skip_iterations = cf_solving.get('skip_iterations', False)
+    if not n.lines.s_nom_extendable.any():
+        skip_iterations = True
+        logger.info("No expandable lines found. Skipping iterative solving.")
+
+    if skip_iterations:
         network_lopf(n, solver_name=solver_name, solver_options=solver_options,
                      extra_functionality=extra_functionality, **kwargs)
     else:
