@@ -14,6 +14,6 @@ max_hours,,,
 powerplants_filter,--,"use `pandas.query <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.query.html>`_ strings here, e.g. Country not in ['Germany']",Filter query for the default powerplant database.
 custom_powerplants,--,"use `pandas.query <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.query.html>`_ strings here, e.g. Country in ['Germany']",Filter query for the custom powerplant database.
 conventional_carriers,--,"Any subset of {nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass}",List of conventional power plants to include in the model from ``resources/powerplants.csv``. If an included carrier is also listed in `extendable_carriers`, the capacity is taken as a lower bound. 
-renewable_carriers,--,"Any subset of {solar, offwind-ac, offwind-dc, hydro}",List of renewable generators to include in the model.
+renewable_carriers,--,"Any subset of {solar, onwind, offwind-ac, offwind-dc, hydro}",List of renewable generators to include in the model.
 estimate_renewable_capacities,,,
 "-- Fueltype [ppm], e.g. Wind",,"list of fueltypes strings in PyPSA-Eur, e.g. [onwind, offwind-ac, offwind-dc]",converts ppm Fueltype to PyPSA-EUR Fueltype

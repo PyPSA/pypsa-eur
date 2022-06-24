@@ -131,7 +131,7 @@ if __name__ == "__main__":
     custom_ppl_query = snakemake.config['electricity']['custom_powerplants']
     ppl = add_custom_powerplants(ppl, snakemake.input.custom_powerplants, custom_ppl_query)
 
-    countries_wo_ppl = [c for c in countries if c not in ppl.Country.unique()]
+    countries_wo_ppl = set(countries)-set(ppl.Country.unique())
     if countries_wo_ppl:
         logging.warning(f"No powerplants known in: {', '.join(countries_wo_ppl)}")
 
