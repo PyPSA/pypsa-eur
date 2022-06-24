@@ -57,7 +57,7 @@ Upcoming Release
 
 * A new section ``conventional`` was added to the config file. This section contains configurations for conventional carriers.  
 
-* Implement country-specific EAFs for nuclear power plants based on IAEA 2018-2020 reported country averages. These are specified under the ``energy_availibility_factor`` key in the config entry ``conventional`` and specify the static `p_max_pu` values.
+* Implement country-specific EAFs for nuclear power plants based on IAEA 2018-2020 reported country averages. These are specified `data/nuclear_eafs.csv` and translate to static `p_max_pu` values.
 
 * The powerplants that have been shut down before 2021 are filtered out. 	
 
