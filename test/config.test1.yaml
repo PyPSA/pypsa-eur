@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
-version: 0.3.0
+version: 0.4.0
 tutorial: true
 logging:
   level: INFO
@@ -16,11 +16,15 @@ scenario:
   clusters: [5]
   opts: [Co2L-24H]
 
-countries: ['DE']
+countries: ['BE']
+
+clustering:
+  simplify:
+    to_substations: false # network is simplified to nodes with positive or negative power injection (i.e. substations or offwind connections)
 
 snapshots:
   start: "2013-03-01"
-  end: "2014-04-01"
+  end: "2013-03-08"
   closed: 'left' # end is not inclusive
 
 enable:
@@ -29,8 +33,6 @@ enable:
   retrieve_cost_data: true
   build_cutout: false
   retrieve_cutout: true
-  build_natura_raster: false
-  retrieve_natura_raster: true
   custom_busmap: false
 
 electricity:
@@ -54,15 +56,15 @@ electricity:
 atlite:
   nprocesses: 4
   cutouts:
-    europe-2013-era5-tutorial:
+    be-03-2013-era5:
       module: era5
       x: [4., 15.]
       y: [46., 56.]
-      time: ["2013-03", "2013-03"]
+      time: ["2013-03-01", "2013-03-08"]
 
 renewable:
   onwind:
-    cutout: europe-2013-era5-tutorial
+    cutout: be-03-2013-era5
     resource:
       method: wind
       turbine: Vestas_V112_3MW
@@ -79,7 +81,7 @@ renewable:
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   offwind-ac:
-    cutout: europe-2013-era5-tutorial
+    cutout: be-03-2013-era5
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_5MW_offshore
@@ -91,7 +93,7 @@ renewable:
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   offwind-dc:
-    cutout: europe-2013-era5-tutorial
+    cutout: be-03-2013-era5
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_5MW_offshore
@@ -104,7 +106,7 @@ renewable:
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   solar:
-    cutout: europe-2013-era5-tutorial
+    cutout: be-03-2013-era5
     resource:
       method: pv
       panel: CSi
@@ -146,7 +148,6 @@ transformers:
   type: ''
 
 load:
-  url: https://data.open-power-system-data.org/time_series/2019-06-05/time_series_60min_singleindex.csv
   power_statistics: True # only for files from <2019; set false in order to get ENTSOE transparency data
   interpolate_limit: 3 # data gaps up until this size are interpolated linearly
   time_shift_for_large_gaps: 1w # data gaps up until this size are copied by copying from
@@ -201,8 +202,8 @@ solving:
   #   threads: 4
   #   lpmethod: 4 # barrier
   #   solutiontype: 2 # non basic solution, ie no crossover
-  #   barrier_convergetol: 1.e-5
-  #   feasopt_tolerance: 1.e-6
+  #   barrier.convergetol: 1.e-5
+  #   feasopt.tolerance: 1.e-6
 
 plotting:
   map:

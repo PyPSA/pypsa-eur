@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: : 2020 @JanFrederickUnnewehr, The PyPSA-Eur Authors
 #
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: MIT
 
 """
 
@@ -14,7 +14,6 @@ Relevant Settings
     snapshots:
 
     load:
-        url:
         interpolate_limit:
         time_shift_for_large_gaps:
         manual_adjustments:
@@ -71,7 +70,7 @@ def load_timeseries(fn, years, countries, powerstatistics=True):
     """
     logger.info(f"Retrieving load data from '{fn}'.")
 
-    pattern = 'power_statistics' if powerstatistics else '_transparency'
+    pattern = 'power_statistics' if powerstatistics else 'transparency'
     pattern = f'_load_actual_entsoe_{pattern}'
     rename = lambda s: s[:-len(pattern)]
     date_parser = lambda x: dateutil.parser.parse(x, ignoretz=True)
@@ -117,14 +116,19 @@ def nan_statistics(df):
                  keys=['total', 'consecutive', 'max_total_per_month'], axis=1)
 
 
-def copy_timeslice(load, cntry, start, stop, delta):
+def copy_timeslice(load, cntry, start, stop, delta, fn_load=None):
     start = pd.Timestamp(start)
     stop = pd.Timestamp(stop)
-    if start-delta in load.index and stop in load.index and cntry in load:
-        load.loc[start:stop, cntry] = load.loc[start-delta:stop-delta, cntry].values
+    if (start in load.index and stop in load.index):
+        if start-delta in load.index and stop-delta in load.index and cntry in load:
+            load.loc[start:stop, cntry] = load.loc[start-delta:stop-delta, cntry].values
+        elif fn_load is not None:
+            duration = pd.date_range(freq='h', start=start-delta, end=stop-delta)
+            load_raw = load_timeseries(fn_load, duration, [cntry], powerstatistics)
+            load.loc[start:stop, cntry] = load_raw.loc[start-delta:stop-delta, cntry].values
 
 
-def manual_adjustment(load, powerstatistics):
+def manual_adjustment(load, fn_load, powerstatistics):
     """
     Adjust gaps manual for load data from OPSD time-series package.
 
@@ -151,6 +155,8 @@ def manual_adjustment(load, powerstatistics):
     powerstatistics: bool
         Whether argument load comprises the electricity consumption data of
         the ENTSOE power statistics or of the ENTSOE transparency map
+   load_fn: str
+        File name or url location (file format .csv)
 
     Returns
     -------
@@ -176,7 +182,11 @@ def manual_adjustment(load, powerstatistics):
         copy_timeslice(load, 'CH', '2010-11-04 04:00', '2010-11-04 22:00', Delta(days=1))
         copy_timeslice(load, 'NO', '2010-12-09 11:00', '2010-12-09 18:00', Delta(days=1))
         # whole january missing
-        copy_timeslice(load, 'GB', '2009-12-31 23:00', '2010-01-31 23:00', Delta(days=-364))
+        copy_timeslice(load, 'GB', '2010-01-01 00:00', '2010-01-31 23:00', Delta(days=-365), fn_load)
+        # 1.1. at midnight gets special treatment
+        copy_timeslice(load, 'IE', '2016-01-01 00:00', '2016-01-01 01:00', Delta(days=-366), fn_load)
+        copy_timeslice(load, 'PT', '2016-01-01 00:00', '2016-01-01 01:00', Delta(days=-366), fn_load)
+        copy_timeslice(load, 'GB', '2016-01-01 00:00', '2016-01-01 01:00', Delta(days=-366), fn_load)
 
     else:
         if 'ME' in load:
@@ -197,19 +207,17 @@ if __name__ == "__main__":
 
     configure_logging(snakemake)
 
-    config = snakemake.config
-    powerstatistics = config['load']['power_statistics']
-    url = config['load']['url']
-    interpolate_limit = config['load']['interpolate_limit']
-    countries = config['countries']
-    snapshots = pd.date_range(freq='h', **config['snapshots'])
+    powerstatistics = snakemake.config['load']['power_statistics']
+    interpolate_limit = snakemake.config['load']['interpolate_limit']
+    countries = snakemake.config['countries']
+    snapshots = pd.date_range(freq='h', **snakemake.config['snapshots'])
     years = slice(snapshots[0], snapshots[-1])
-    time_shift = config['load']['time_shift_for_large_gaps']
+    time_shift = snakemake.config['load']['time_shift_for_large_gaps']
 
-    load = load_timeseries(url, years, countries, powerstatistics)
+    load = load_timeseries(snakemake.input[0], years, countries, powerstatistics)
 
-    if config['load']['manual_adjustments']:
-        load = manual_adjustment(load, powerstatistics)
+    if snakemake.config['load']['manual_adjustments']:
+        load = manual_adjustment(load, snakemake.input[0], powerstatistics)
 
     logger.info(f"Linearly interpolate gaps of size {interpolate_limit} and less.")
     load = load.interpolate(method='linear', limit=interpolate_limit)

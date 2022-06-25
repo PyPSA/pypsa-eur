@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
 #
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: MIT
 
 import pandas as pd
 from pathlib import Path
@@ -119,11 +119,19 @@ def load_network_for_plots(fn, tech_costs, config, combine_hydro_ps=True):
     # bus_carrier = n.storage_units.bus.map(n.buses.carrier)
     # n.storage_units.loc[bus_carrier == "heat","carrier"] = "water tanks"
 
-    Nyears = n.snapshot_weightings.sum() / 8760.
-    costs = load_costs(Nyears, tech_costs, config['costs'], config['electricity'])
+    Nyears = n.snapshot_weightings.objective.sum() / 8760.
+    costs = load_costs(tech_costs, config['costs'], config['electricity'], Nyears)
     update_transmission_costs(n, costs)
 
     return n
+
+def update_p_nom_max(n):
+    # if extendable carriers (solar/onwind/...) have capacity >= 0,
+    # e.g. existing assets from the OPSD project are included to the network,
+    # the installed capacity might exceed the expansion limit.
+    # Hence, we update the assumptions.
+    
+    n.generators.p_nom_max = n.generators[['p_nom_min', 'p_nom_max']].max(1)
 
 def aggregate_p_nom(n):
     return pd.concat([
@@ -156,7 +164,6 @@ def aggregate_p_curtailed(n):
     ])
 
 def aggregate_costs(n, flatten=False, opts=None, existing_only=False):
-    from six import iterkeys, itervalues
 
     components = dict(Link=("p_nom", "p0"),
                       Generator=("p_nom", "p"),
@@ -167,8 +174,8 @@ def aggregate_costs(n, flatten=False, opts=None, existing_only=False):
 
     costs = {}
     for c, (p_nom, p_attr) in zip(
-        n.iterate_components(iterkeys(components), skip_empty=False),
-        itervalues(components)
+        n.iterate_components(components.keys(), skip_empty=False),
+        components.values()
     ):
         if c.df.empty: continue
         if not existing_only: p_nom += "_opt"
@@ -224,6 +231,7 @@ def mock_snakemake(rulename, **wildcards):
     import os
     from pypsa.descriptors import Dict
     from snakemake.script import Snakemake
+    from packaging.version import Version, parse
 
     script_dir = Path(__file__).parent.resolve()
     assert Path.cwd().resolve() == script_dir, \
@@ -233,7 +241,8 @@ def mock_snakemake(rulename, **wildcards):
         if os.path.exists(p):
             snakefile = p
             break
-    workflow = sm.Workflow(snakefile)
+    kwargs = dict(rerun_triggers=[]) if parse(sm.__version__) > Version("7.7.0") else {}
+    workflow = sm.Workflow(snakefile, overwrite_configfiles=[], **kwargs)
     workflow.include(snakefile)
     workflow.global_resources = {}
     rule = workflow.get_rule(rulename)

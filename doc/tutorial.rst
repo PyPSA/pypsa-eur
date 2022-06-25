@@ -14,7 +14,7 @@ Tutorial
     <iframe width="832" height="468" src="https://www.youtube.com/embed/mAwhQnNRIvs" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 Before getting started with **PyPSA-Eur** it makes sense to be familiar
-with its general modelling framework `PyPSA <https://pypsa.readthedocs.io>`_.
+with its general modelling framework `PyPSA <https://pypsa.readthedocs.io>`__.
 
 Running the tutorial requires limited computational resources compared to the full model,
 which allows the user to explore most of its functionalities on a local machine.
@@ -35,15 +35,15 @@ To run the tutorial, use this as your configuration file ``config.yaml``.
 
     .../pypsa-eur % cp config.tutorial.yaml config.yaml
 
-This configuration is set to download a reduced data set via the rules :mod:`retrieve_databundle`,
-:mod:`retrieve_natura_raster`, :mod:`retrieve_cutout` totalling at less than 250 MB.
+This configuration is set to download a reduced data set via the rules :mod:`retrieve_databundle`
+and :mod:`retrieve_cutout` totalling at less than 250 MB.
 The full set of data dependencies would consume 5.3 GB.
 For more information on the data dependencies of PyPSA-Eur, continue reading :ref:`data`.
 
 How to customise PyPSA-Eur?
 ===========================
 
-The model can be adapted to only include selected countries (e.g. Germany) instead of all European countries to limit the spatial scope.
+The model can be adapted to only include selected countries (e.g. Belgium) instead of all European countries to limit the spatial scope.
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
@@ -53,41 +53,43 @@ Likewise, the example's temporal scope can be restricted (e.g. to a single month
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 22-25
+   :start-at: snapshots:
+   :end-before: enable:
 
 It is also possible to allow less or more carbon-dioxide emissions. Here, we limit the emissions of Germany 100 Megatonnes per year.
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 36,38
+   :lines: 40,42
 
 PyPSA-Eur also includes a database of existing conventional powerplants.
 We can select which types of powerplants we like to be included with fixed capacities:
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 36,52
+   :lines: 40,56
 
 To accurately model the temporal and spatial availability of renewables such as wind and solar energy, we rely on historical weather data.
 It is advisable to adapt the required range of coordinates to the selection of countries.
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 54-62
+   :start-at: atlite:
+   :end-before: renewable:
 
 We can also decide which weather data source should be used to calculate potentials and capacity factor time-series for each carrier.
 For example, we may want to use the ERA-5 dataset for solar and not the default SARAH-2 dataset.
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 64,107-108
+   :lines: 67,110,111
 
 Finally, it is possible to pick a solver. For instance, this tutorial uses the open-source solvers CBC and Ipopt and does not rely
 on the commercial solvers Gurobi or CPLEX (for which free academic licenses are available).
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 170,180-181
+   :lines: 173,183,184
 
 .. note::
 
@@ -125,11 +127,6 @@ orders ``snakemake`` to run the script ``solve_network`` that produces the solve
         script: "scripts/solve_network.py"
 
 .. until https://github.com/snakemake/snakemake/issues/46 closed
-
-.. warning::
-    On Windows the previous command may currently cause a ``MissingRuleException`` due to problems with output files in subfolders.
-    This is an `open issue <https://github.com/snakemake/snakemake/issues/46>`_ at `snakemake <https://snakemake.readthedocs.io/>`_.
-    Windows users should add the option ``--keep-target-files`` to the command or instead run ``snakemake -j 1 solve_all_networks``.
 
 This triggers a workflow of multiple preceding jobs that depend on each rule's inputs and outputs:
 
@@ -271,7 +268,8 @@ the wildcards given in ``scenario`` in the configuration file ``config.yaml`` ar
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 14-18
+   :start-at: scenario:
+   :end-before: countries:
 
 In this example we would not only solve a 6-node model of Germany but also a 2-node model.
 

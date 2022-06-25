@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
 #
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: MIT
 
 """
 Creates summaries of aggregated energy and costs as ``.csv`` files.
@@ -61,7 +61,6 @@ import os
 import pypsa
 import pandas as pd
 
-from six import iteritems
 from add_electricity import load_costs, update_transmission_costs
 
 idx = pd.IndexSlice
@@ -113,15 +112,15 @@ def calculate_costs(n, label, costs):
         costs.loc[idx[raw_index],label] = capital_costs_grouped.values
 
         if c.name == "Link":
-            p = c.pnl.p0.multiply(n.snapshot_weightings,axis=0).sum()
+            p = c.pnl.p0.multiply(n.snapshot_weightings.generators,axis=0).sum()
         elif c.name == "Line":
             continue
         elif c.name == "StorageUnit":
-            p_all = c.pnl.p.multiply(n.snapshot_weightings,axis=0)
+            p_all = c.pnl.p.multiply(n.snapshot_weightings.generators,axis=0)
             p_all[p_all < 0.] = 0.
             p = p_all.sum()
         else:
-            p = c.pnl.p.multiply(n.snapshot_weightings,axis=0).sum()
+            p = c.pnl.p.multiply(n.snapshot_weightings.generators,axis=0).sum()
 
         marginal_costs = p*c.df.marginal_cost
 
@@ -146,10 +145,12 @@ def calculate_energy(n, label, energy):
 
     for c in n.iterate_components(n.one_port_components|n.branch_components):
 
-        if c.name in n.one_port_components:
-            c_energies = c.pnl.p.multiply(n.snapshot_weightings,axis=0).sum().multiply(c.df.sign).groupby(c.df.carrier).sum()
+        if c.name in {'Generator', 'Load', 'ShuntImpedance'}:
+            c_energies = c.pnl.p.multiply(n.snapshot_weightings.generators,axis=0).sum().multiply(c.df.sign).groupby(c.df.carrier).sum()
+        elif c.name in {'StorageUnit', 'Store'}:
+            c_energies = c.pnl.p.multiply(n.snapshot_weightings.stores,axis=0).sum().multiply(c.df.sign).groupby(c.df.carrier).sum()
         else:
-            c_energies = (-c.pnl.p1.multiply(n.snapshot_weightings,axis=0).sum() - c.pnl.p0.multiply(n.snapshot_weightings,axis=0).sum()).groupby(c.df.carrier).sum()
+            c_energies = (-c.pnl.p1.multiply(n.snapshot_weightings.generators,axis=0).sum() - c.pnl.p0.multiply(n.snapshot_weightings.generators,axis=0).sum()).groupby(c.df.carrier).sum()
 
         energy = include_in_summary(energy, [c.list_name], label, c_energies)
 
@@ -171,6 +172,9 @@ def calculate_capacity(n,label,capacity):
         if 'p_nom_opt' in c.df.columns:
             c_capacities = abs(c.df.p_nom_opt.multiply(c.df.sign)).groupby(c.df.carrier).sum()
             capacity = include_in_summary(capacity, [c.list_name], label, c_capacities)
+        elif 'e_nom_opt' in c.df.columns:
+            c_capacities = abs(c.df.e_nom_opt.multiply(c.df.sign)).groupby(c.df.carrier).sum()
+            capacity = include_in_summary(capacity, [c.list_name], label, c_capacities)
 
     for c in n.iterate_components(n.passive_branch_components):
         c_capacities = c.df['s_nom_opt'].groupby(c.df.carrier).sum()
@@ -185,11 +189,11 @@ def calculate_capacity(n,label,capacity):
 def calculate_supply(n, label, supply):
     """calculate the max dispatch of each component at the buses where the loads are attached"""
 
-    load_types = n.loads.carrier.value_counts().index
+    load_types = n.buses.carrier.unique()
 
     for i in load_types:
 
-        buses = n.loads.bus[n.loads.carrier == i].values
+        buses = n.buses.query("carrier == @i").index
 
         bus_map = pd.Series(False,index=n.buses.index)
 
@@ -232,11 +236,11 @@ def calculate_supply(n, label, supply):
 def calculate_supply_energy(n, label, supply_energy):
     """calculate the total dispatch of each component at the buses where the loads are attached"""
 
-    load_types = n.loads.carrier.value_counts().index
+    load_types = n.buses.carrier.unique()
 
     for i in load_types:
 
-        buses = n.loads.bus[n.loads.carrier == i].values
+        buses = n.buses.query("carrier == @i").index
 
         bus_map = pd.Series(False,index=n.buses.index)
 
@@ -378,7 +382,7 @@ outputs = ["costs",
            ]
 
 
-def make_summaries(networks_dict, country='all'):
+def make_summaries(networks_dict, paths, config, country='all'):
 
     columns = pd.MultiIndex.from_tuples(networks_dict.keys(),names=["simpl","clusters","ll","opts"])
 
@@ -387,7 +391,7 @@ def make_summaries(networks_dict, country='all'):
     for output in outputs:
         dfs[output] = pd.DataFrame(columns=columns,dtype=float)
 
-    for label, filename in iteritems(networks_dict):
+    for label, filename in networks_dict.items():
         print(label, filename)
         if not os.path.exists(filename):
             print("does not exist!!")
@@ -402,10 +406,9 @@ def make_summaries(networks_dict, country='all'):
         if country != 'all':
             n = n[n.buses.country == country]
 
-        Nyears = n.snapshot_weightings.sum() / 8760.
-        costs = load_costs(Nyears, snakemake.input[0],
-                           snakemake.config['costs'], snakemake.config['electricity'])
-        update_transmission_costs(n, costs, simple_hvdc_costs=False)
+        Nyears = n.snapshot_weightings.objective.sum() / 8760.
+        costs = load_costs(paths[0], config['costs'], config['electricity'], Nyears)
+        update_transmission_costs(n, costs)
 
         assign_carriers(n)
 
@@ -415,10 +418,9 @@ def make_summaries(networks_dict, country='all'):
     return dfs
 
 
-def to_csv(dfs):
-    dir = snakemake.output[0]
+def to_csv(dfs, dir):
     os.makedirs(dir, exist_ok=True)
-    for key, df in iteritems(dfs):
+    for key, df in dfs.items():
         df.to_csv(os.path.join(dir, f"{key}.csv"))
 
 
@@ -432,25 +434,28 @@ if __name__ == "__main__":
         network_dir = os.path.join('results', 'networks')
     configure_logging(snakemake)
 
-    def expand_from_wildcard(key):
-        w = getattr(snakemake.wildcards, key)
-        return snakemake.config["scenario"][key] if w == "all" else [w]
+    config = snakemake.config
+    wildcards = snakemake.wildcards
 
-    if snakemake.wildcards.ll.endswith("all"):
-        ll = snakemake.config["scenario"]["ll"]
-        if len(snakemake.wildcards.ll) == 4:
-            ll = [l for l in ll if l[0] == snakemake.wildcards.ll[0]]
+    def expand_from_wildcard(key, config):
+        w = getattr(wildcards, key)
+        return config["scenario"][key] if w == "all" else [w]
+
+    if wildcards.ll.endswith("all"):
+        ll = config["scenario"]["ll"]
+        if len(wildcards.ll) == 4:
+            ll = [l for l in ll if l[0] == wildcards.ll[0]]
     else:
-        ll = [snakemake.wildcards.ll]
+        ll = [wildcards.ll]
 
     networks_dict = {(simpl,clusters,l,opts) :
-        os.path.join(network_dir, f'{snakemake.wildcards.network}_s{simpl}_'
+        os.path.join(network_dir, f'elec_s{simpl}_'
                                   f'{clusters}_ec_l{l}_{opts}.nc')
-                     for simpl in expand_from_wildcard("simpl")
-                     for clusters in expand_from_wildcard("clusters")
+                     for simpl in expand_from_wildcard("simpl", config)
+                     for clusters in expand_from_wildcard("clusters", config)
                      for l in ll
-                     for opts in expand_from_wildcard("opts")}
+                     for opts in expand_from_wildcard("opts", config)}
 
-    dfs = make_summaries(networks_dict, country=snakemake.wildcards.country)
+    dfs = make_summaries(networks_dict, snakemake.input, config, country=wildcards.country)
 
-    to_csv(dfs)
+    to_csv(dfs, snakemake.output[0])

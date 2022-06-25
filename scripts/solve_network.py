@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
 #
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: MIT
 
 """
 Solves linear optimal power flow for a network iteratively while updating reactances.
@@ -100,9 +100,10 @@ def prepare_network(n, solve_opts):
             df.where(df>solve_opts['clip_p_max_pu'], other=0., inplace=True)
 
     if solve_opts.get('load_shedding'):
-        n.add("Carrier", "Load")
-        n.madd("Generator", n.buses.index, " load",
-               bus=n.buses.index,
+        n.add("Carrier", "load", color="#dd2e23", nice_name="Load shedding")
+        buses_i = n.buses.query("carrier == 'AC'").index
+        n.madd("Generator", buses_i, " load",
+               bus=buses_i,
                carrier='load',
                sign=1e-3, # Adjust sign to measure p and p_nom in kW instead of MW
                marginal_cost=1e2, # Eur/kWh
@@ -127,7 +128,7 @@ def prepare_network(n, solve_opts):
     if solve_opts.get('nhours'):
         nhours = solve_opts['nhours']
         n.set_snapshots(n.snapshots[:nhours])
-        n.snapshot_weightings[:] = 8760./nhours
+        n.snapshot_weightings[:] = 8760. / nhours
 
     return n
 
@@ -174,16 +175,16 @@ def add_EQ_constraints(n, o, scaling=1e-1):
         ggrouper = n.generators.bus
         lgrouper = n.loads.bus
         sgrouper = n.storage_units.bus
-    load = n.snapshot_weightings @ \
+    load = n.snapshot_weightings.generators @ \
            n.loads_t.p_set.groupby(lgrouper, axis=1).sum()
-    inflow = n.snapshot_weightings @ \
+    inflow = n.snapshot_weightings.stores @ \
              n.storage_units_t.inflow.groupby(sgrouper, axis=1).sum()
     inflow = inflow.reindex(load.index).fillna(0.)
     rhs = scaling * ( level * load - inflow )
-    lhs_gen = linexpr((n.snapshot_weightings * scaling,
+    lhs_gen = linexpr((n.snapshot_weightings.generators * scaling,
                        get_var(n, "Generator", "p").T)
               ).T.groupby(ggrouper, axis=1).apply(join_exprs)
-    lhs_spill = linexpr((-n.snapshot_weightings * scaling,
+    lhs_spill = linexpr((-n.snapshot_weightings.stores * scaling,
                          get_var(n, "StorageUnit", "spill").T)
                 ).T.groupby(sgrouper, axis=1).apply(join_exprs)
     lhs_spill = lhs_spill.reindex(lhs_gen.index).fillna("")
@@ -241,7 +242,7 @@ def extra_functionality(n, snapshots):
     add_battery_constraints(n)
 
 
-def solve_network(n, config, solver_log=None, opts='', **kwargs):
+def solve_network(n, config, opts='', **kwargs):
     solver_options = config['solving']['solver'].copy()
     solver_name = solver_options.pop('name')
     cf_solving = config['solving']['options']
@@ -253,7 +254,12 @@ def solve_network(n, config, solver_log=None, opts='', **kwargs):
     n.config = config
     n.opts = opts
 
-    if cf_solving.get('skip_iterations', False):
+    skip_iterations = cf_solving.get('skip_iterations', False)
+    if not n.lines.s_nom_extendable.any():
+        skip_iterations = True
+        logger.info("No expandable lines found. Skipping iterative solving.")
+
+    if skip_iterations:
         network_lopf(n, solver_name=solver_name, solver_options=solver_options,
                      extra_functionality=extra_functionality, **kwargs)
     else:
@@ -282,8 +288,8 @@ if __name__ == "__main__":
     with memory_logger(filename=fn, interval=30.) as mem:
         n = pypsa.Network(snakemake.input[0])
         n = prepare_network(n, solve_opts)
-        n = solve_network(n, config=snakemake.config, solver_dir=tmpdir,
-                          solver_log=snakemake.log.solver, opts=opts)
+        n = solve_network(n, snakemake.config, opts, solver_dir=tmpdir,
+                          solver_logfile=snakemake.log.solver)
         n.export_to_netcdf(snakemake.output[0])
 
     logger.info("Maximum memory usage: {}".format(mem.mem_usage))

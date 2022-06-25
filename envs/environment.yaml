@@ -1,25 +1,22 @@
 # SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
 #
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: MIT
 
 name: pypsa-eur
 channels:
   - conda-forge
   - bioconda
-  - http://conda.anaconda.org/gurobi
 dependencies:
   - python>=3.8
   - pip
-  - mamba # esp for windows build
 
-  - pypsa>=0.17.1 
-  - atlite>=0.2.2
-  - dask<=2021.3.1 # until https://github.com/dask/dask/issues/7583 is solved
+  - pypsa>=0.18.1
+  - atlite>=0.2.6
+  - dask
 
   # Dependencies of the workflow itself
   - xlrd
   - openpyxl
-  - scikit-learn
   - pycountry
   - seaborn
   - snakemake-minimal
@@ -27,9 +24,20 @@ dependencies:
   - yaml
   - pytables
   - lxml
-  - powerplantmatching>=0.4.8
-  - numpy<=1.19.0 # otherwise macos fails
-
+  - powerplantmatching>=0.5.3
+  - numpy
+  - pandas
+  - geopandas
+  - xarray
+  - netcdf4
+  - networkx
+  - scipy
+  - shapely
+  - progressbar2
+  - pyomo
+  - matplotlib
+  - proj
+  - fiona<=1.18.20  # Till issue https://github.com/Toblerity/Fiona/issues/1085 is not solved
 
   # Keep in conda environment when calling ipython
   - ipython
@@ -37,7 +45,16 @@ dependencies:
   # GIS dependencies:
   - cartopy
   - descartes
+  - fiona # explicit for Windows
+  - rasterio<=1.2.9  # 1.2.10 creates error https://github.com/PyPSA/atlite/issues/238
+
+  # PyPSA-Eur-Sec Dependencies
+  - geopy
+  - tqdm
+  - pytz
+  - country_converter
+  - tabula-py
 
   - pip:
-    - vresutils==0.3.1
+    - vresutils>=0.3.1
     - tsam>=1.1.0

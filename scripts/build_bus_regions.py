@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
 #
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: MIT
 
 """
 Creates Voronoi shapes for each bus representing both onshore and offshore regions.
@@ -47,9 +47,10 @@ from _helpers import configure_logging
 import pypsa
 import os
 import pandas as pd
+import numpy as np
 import geopandas as gpd
-
-from vresutils.graph import voronoi_partition_pts
+from shapely.geometry import Polygon
+from scipy.spatial import Voronoi
 
 logger = logging.getLogger(__name__)
 
@@ -59,6 +60,53 @@ def save_to_geojson(s, fn):
         os.unlink(fn)
     schema = {**gpd.io.file.infer_schema(s), 'geometry': 'Unknown'}
     s.to_file(fn, driver='GeoJSON', schema=schema)
+
+
+def voronoi_partition_pts(points, outline):
+    """
+    Compute the polygons of a voronoi partition of `points` within the
+    polygon `outline`. Taken from
+    https://github.com/FRESNA/vresutils/blob/master/vresutils/graph.py
+    Attributes
+    ----------
+    points : Nx2 - ndarray[dtype=float]
+    outline : Polygon
+    Returns
+    -------
+    polygons : N - ndarray[dtype=Polygon|MultiPolygon]
+    """
+
+    points = np.asarray(points)
+
+    if len(points) == 1:
+        polygons = [outline]
+    else:
+        xmin, ymin = np.amin(points, axis=0)
+        xmax, ymax = np.amax(points, axis=0)
+        xspan = xmax - xmin
+        yspan = ymax - ymin
+
+        # to avoid any network positions outside all Voronoi cells, append
+        # the corners of a rectangle framing these points
+        vor = Voronoi(np.vstack((points,
+                                 [[xmin-3.*xspan, ymin-3.*yspan],
+                                  [xmin-3.*xspan, ymax+3.*yspan],
+                                  [xmax+3.*xspan, ymin-3.*yspan],
+                                  [xmax+3.*xspan, ymax+3.*yspan]])))
+
+        polygons = []
+        for i in range(len(points)):
+            poly = Polygon(vor.vertices[vor.regions[vor.point_region[i]]])
+
+            if not poly.is_valid:
+                poly = poly.buffer(0)
+
+            poly = poly.intersection(outline)
+
+            polygons.append(poly)
+
+
+    return np.array(polygons, dtype=object)
 
 
 if __name__ == "__main__":

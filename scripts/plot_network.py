@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
 #
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: MIT
 
 """
 Plots map with pie charts and cost box bar charts.
@@ -20,12 +20,10 @@ Description
 """
 
 import logging
-from _helpers import (load_network_for_plots, aggregate_p, aggregate_costs,
-                      configure_logging)
+from _helpers import (load_network_for_plots, aggregate_p, aggregate_costs, configure_logging)
 
 import pandas as pd
 import numpy as np
-from six.moves import zip
 
 import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
@@ -76,7 +74,7 @@ def set_plot_style():
                 }])
 
 
-def plot_map(n, ax=None, attribute='p_nom', opts={}):
+def plot_map(n, opts, ax=None, attribute='p_nom'):
     if ax is None:
         ax = plt.gca()
 
@@ -89,36 +87,43 @@ def plot_map(n, ax=None, attribute='p_nom', opts={}):
         # bus_sizes = n.generators_t.p.sum().loc[n.generators.carrier == "load"].groupby(n.generators.bus).sum()
         bus_sizes = pd.concat((n.generators.query('carrier != "load"').groupby(['bus', 'carrier']).p_nom_opt.sum(),
                                n.storage_units.groupby(['bus', 'carrier']).p_nom_opt.sum()))
-        line_widths_exp = dict(Line=n.lines.s_nom_opt, Link=n.links.p_nom_opt)
-        line_widths_cur = dict(Line=n.lines.s_nom_min, Link=n.links.p_nom_min)
+        line_widths_exp = n.lines.s_nom_opt
+        line_widths_cur = n.lines.s_nom_min
+        link_widths_exp = n.links.p_nom_opt
+        link_widths_cur = n.links.p_nom_min
     else:
         raise 'plotting of {} has not been implemented yet'.format(attribute)
 
 
     line_colors_with_alpha = \
-    dict(Line=(line_widths_cur['Line'] / n.lines.s_nom > 1e-3)
-        .map({True: line_colors['cur'], False: to_rgba(line_colors['cur'], 0.)}),
-        Link=(line_widths_cur['Link'] / n.links.p_nom > 1e-3)
+        ((line_widths_cur / n.lines.s_nom > 1e-3)
+         .map({True: line_colors['cur'], False: to_rgba(line_colors['cur'], 0.)}))
+    link_colors_with_alpha = \
+        ((link_widths_cur / n.links.p_nom > 1e-3)
         .map({True: line_colors['cur'], False: to_rgba(line_colors['cur'], 0.)}))
+    
 
     ## FORMAT
     linewidth_factor = opts['map'][attribute]['linewidth_factor']
     bus_size_factor  = opts['map'][attribute]['bus_size_factor']
 
     ## PLOT
-    n.plot(line_widths=pd.concat(line_widths_exp)/linewidth_factor,
-           line_colors=dict(Line=line_colors['exp'], Link=line_colors['exp']),
+    n.plot(line_widths=line_widths_exp/linewidth_factor,
+           link_widths=link_widths_exp/linewidth_factor,
+           line_colors=line_colors['exp'],
+           link_colors=line_colors['exp'],
            bus_sizes=bus_sizes/bus_size_factor,
            bus_colors=tech_colors,
            boundaries=map_boundaries,
-           geomap=True,
+           color_geomap=True, geomap=True,
            ax=ax)
-    n.plot(line_widths=pd.concat(line_widths_cur)/linewidth_factor,
-           line_colors=pd.concat(line_colors_with_alpha),
+    n.plot(line_widths=line_widths_cur/linewidth_factor,
+           link_widths=link_widths_cur/linewidth_factor,
+           line_colors=line_colors_with_alpha,
+           link_colors=link_colors_with_alpha,
            bus_sizes=0,
-           bus_colors=tech_colors,
            boundaries=map_boundaries,
-           geomap=False,
+           color_geomap=True, geomap=False,
            ax=ax)
     ax.set_aspect('equal')
     ax.axis('off')
@@ -139,7 +144,7 @@ def plot_map(n, ax=None, attribute='p_nom', opts={}):
                      loc="upper left", bbox_to_anchor=(0.24, 1.01),
                      frameon=False,
                      labelspacing=0.8, handletextpad=1.5,
-                     title='Transmission Exist./Exp.             ')
+                     title='Transmission Exp./Exist.             ')
     ax.add_artist(l1_1)
 
     handles = []
@@ -176,7 +181,7 @@ def plot_map(n, ax=None, attribute='p_nom', opts={}):
     return fig
 
 
-def plot_total_energy_pie(n, ax=None):
+def plot_total_energy_pie(n, opts, ax=None):
     if ax is None: ax = plt.gca()
 
     ax.set_title('Energy per technology', fontdict=dict(fontsize="medium"))
@@ -194,10 +199,10 @@ def plot_total_energy_pie(n, ax=None):
             t1.remove()
             t2.remove()
 
-def plot_total_cost_bar(n, ax=None):
+def plot_total_cost_bar(n, opts, ax=None):
     if ax is None: ax = plt.gca()
 
-    total_load = (n.snapshot_weightings * n.loads_t.p.sum(axis=1)).sum()
+    total_load = (n.snapshot_weightings.generators * n.loads_t.p.sum(axis=1)).sum()
     tech_colors = opts['tech_colors']
 
     def split_costs(n):
@@ -253,31 +258,32 @@ if __name__ == "__main__":
 
     set_plot_style()
 
-    opts = snakemake.config['plotting']
-    map_figsize = opts['map']['figsize']
-    map_boundaries = opts['map']['boundaries']
+    config, wildcards = snakemake.config, snakemake.wildcards
 
-    n = load_network_for_plots(snakemake.input.network, snakemake.input.tech_costs, snakemake.config)
+    map_figsize = config["plotting"]['map']['figsize']
+    map_boundaries = config["plotting"]['map']['boundaries']
 
-    scenario_opts = snakemake.wildcards.opts.split('-')
+    n = load_network_for_plots(snakemake.input.network, snakemake.input.tech_costs, config)
+
+    scenario_opts = wildcards.opts.split('-')
 
     fig, ax = plt.subplots(figsize=map_figsize, subplot_kw={"projection": ccrs.PlateCarree()})
-    plot_map(n, ax, snakemake.wildcards.attr, opts)
+    plot_map(n, config["plotting"], ax=ax, attribute=wildcards.attr)
 
     fig.savefig(snakemake.output.only_map, dpi=150, bbox_inches='tight')
 
     ax1 = fig.add_axes([-0.115, 0.625, 0.2, 0.2])
-    plot_total_energy_pie(n, ax1)
+    plot_total_energy_pie(n, config["plotting"], ax=ax1)
 
     ax2 = fig.add_axes([-0.075, 0.1, 0.1, 0.45])
-    plot_total_cost_bar(n, ax2)
+    plot_total_cost_bar(n, config["plotting"], ax=ax2)
 
-    ll = snakemake.wildcards.ll
+    ll = wildcards.ll
     ll_type = ll[0]
     ll_factor = ll[1:]
     lbl = dict(c='line cost', v='line volume')[ll_type]
     amnt = '{ll} x today\'s'.format(ll=ll_factor) if ll_factor != 'opt' else 'optimal'
     fig.suptitle('Expansion to {amount} {label} at {clusters} clusters'
-                .format(amount=amnt, label=lbl, clusters=snakemake.wildcards.clusters))
+                .format(amount=amnt, label=lbl, clusters=wildcards.clusters))
 
     fig.savefig(snakemake.output.ext, transparent=True, bbox_inches='tight')
