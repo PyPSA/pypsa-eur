@@ -169,7 +169,7 @@ def load_costs(tech_costs, config, elec_config, Nyears=1.):
         costs_for_storage(costs.loc["battery storage"], costs.loc["battery inverter"],
                           max_hours=max_hours['battery'])
     costs.loc["H2"] = \
-        costs_for_storage(costs.loc["hydrogen storage tank"], costs.loc["fuel cell"],
+        costs_for_storage(costs.loc["hydrogen storage underground"], costs.loc["fuel cell"],
                           costs.loc["electrolysis"], max_hours=max_hours['H2'])
 
     for attr in ('marginal_cost', 'capital_cost'):

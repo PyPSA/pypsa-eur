@@ -173,9 +173,9 @@ if config['enable'].get('retrieve_cost_data', True):
         params:
             year = config['costs']['year'],
             version = config['costs']['version'],
-        input: HTTP.remote("raw.githubusercontent.com/PyPSA/technology-data/{params.version}/outputs/costs_{params.year}.csv", keep_local=True)
+        input: HTTP.remote(f"raw.githubusercontent.com/PyPSA/technology-data/{params.version}/outputs/costs_{params.year}.csv", keep_local=True)
         output: COSTS
-        shell: 'mv {input} {output}'
+        run: move(input[0], output[0])
 
 rule build_renewable_profiles:
     input:

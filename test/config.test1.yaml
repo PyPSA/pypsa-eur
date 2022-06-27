@@ -157,7 +157,7 @@ load:
 costs:
   year: 2030
   version: v0.1.0
-  rooftop_share: 0.5
+  rooftop_share: 0.14
   fill_values:
     FOM: 0
     VOM: 0

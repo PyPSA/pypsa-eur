@@ -76,28 +76,19 @@ def attach_storageunits(n, costs, elec_opts):
     lookup_dispatch = {"H2": "fuel cell", "battery": "battery inverter"}
 
     for carrier in carriers:
-        if carrier=="battery":
-            n.madd("StorageUnit", buses_i, ' ' + carrier,
-                   bus=buses_i,
-                   carrier=carrier,
-                   p_nom_extendable=True,
-                   capital_cost=costs.at[carrier, 'capital_cost'],
-                   marginal_cost=costs.at[carrier, 'marginal_cost'],
-                   efficiency_store=costs.at[lookup_store[carrier], 'efficiency']**0.5,
-                   efficiency_dispatch=costs.at[lookup_dispatch[carrier], 'efficiency']**0.5,
-                   max_hours=max_hours[carrier],
-                   cyclic_state_of_charge=True)
-        else:
-            n.madd("StorageUnit", buses_i, ' ' + carrier,
-                   bus=buses_i,
-                   carrier=carrier,
-                   p_nom_extendable=True,
-                   capital_cost=costs.at[carrier, 'capital_cost'],
-                   marginal_cost=costs.at[carrier, 'marginal_cost'],
-                   efficiency_store=costs.at[lookup_store[carrier], 'efficiency'],
-                   efficiency_dispatch=costs.at[lookup_dispatch[carrier], 'efficiency'],
-                   max_hours=max_hours[carrier],
-                   cyclic_state_of_charge=True)
+        roundtrip_correction = 0.5 if carrier == "battery" else 1
+        
+        n.madd("StorageUnit", buses_i, ' ' + carrier,
+               bus=buses_i,
+               carrier=carrier,
+               p_nom_extendable=True,
+               capital_cost=costs.at[carrier, 'capital_cost'],
+               marginal_cost=costs.at[carrier, 'marginal_cost'],
+               efficiency_store=costs.at[lookup_store[carrier], 'efficiency']**roundtrip_correction,
+               efficiency_dispatch=costs.at[lookup_dispatch[carrier], 'efficiency']**roundtrip_correction,
+               max_hours=max_hours[carrier],
+               cyclic_state_of_charge=True
+        )
 
 
 def attach_stores(n, costs, elec_opts):

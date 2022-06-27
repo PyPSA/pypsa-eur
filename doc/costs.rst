@@ -7,9 +7,9 @@
 Cost Assumptions
 ##################
 
-The database of cost assumptions is retrieved from the repository `PyPSA/technology-data <https://github.com/pypsa/technology-data>`_ and then saved to``resources/costs.csv``.
+The database of cost assumptions is retrieved from the repository `PyPSA/technology-data <https://github.com/pypsa/technology-data>`_ and then saved to``resources/costs.csv``. Cost assumptions of previous PyPSA-Eur versions can be restored by setting in the ``Snakefile``: ``COSTS="data/costs.csv".
 
-The ``config.yaml` provides options to choose a reference year (``costs: year:``) and use a specific version of the repository ``costs: version:``.
+The ``config.yaml`` provides options to choose a reference year (``costs: year:``) and use a specific version of the repository ``costs: version:``.
 
 It includes cost assumptions for all included technologies for specific
 years from various sources, namely for
