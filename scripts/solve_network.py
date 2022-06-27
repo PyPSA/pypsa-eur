@@ -102,7 +102,7 @@ def prepare_network(n, solve_opts):
 
     load_shedding = solve_opts.get('load_shedding')
     if load_shedding:
-        n.add("Carrier", "Load")
+        n.add("Carrier", "load", color="#dd2e23", nice_name="Load shedding")
         buses_i = n.buses.query("carrier == 'AC'").index
         if not np.isscalar(load_shedding): load_shedding = 1e2
         # intersect between macroeconomic and surveybased
