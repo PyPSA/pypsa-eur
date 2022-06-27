@@ -83,7 +83,7 @@ The rule :mod:`simplify_network` does up to four things:
 """
 
 import logging
-from _helpers import configure_logging, update_p_nom_max
+from _helpers import configure_logging, update_p_nom_max, get_aggregation_strategies
 
 from cluster_network import clustering_for_n_clusters, cluster_regions
 from add_electricity import load_costs
@@ -203,8 +203,7 @@ def _aggregate_and_move_components(n, busmap, connection_costs_to_bus, output,
 
     _adjust_capital_costs_using_connection_costs(n, connection_costs_to_bus, output)
 
-    generator_strategies = {'build_year': lambda x: 0, 'lifetime': lambda x: np.inf}
-    generator_strategies.update(aggregation_strategies.get("generators", {}))
+    _, generator_strategies = get_aggregation_strategies(aggregation_strategies)
 
     generators, generators_pnl = aggregategenerators(
         n, busmap, custom_strategies=generator_strategies
@@ -355,14 +354,7 @@ def aggregate_to_substations(n, aggregation_strategies=dict(), buses_i=None):
     busmap = n.buses.index.to_series()
     busmap.loc[buses_i] = dist.idxmin(1)
 
-    # default aggregation strategies that cannot be defined in .yaml format must be specified within
-    # the function, otherwise (when defaults are passed in the function's definition) they get lost
-    # in case custom values for different variables are specified in the config.
-    bus_strategies = dict(country=_make_consense("Bus", "country"))
-    bus_strategies.update(aggregation_strategies.get("buses", {}))
-
-    generator_strategies = {'build_year': lambda x: 0, 'lifetime': lambda x: np.inf}
-    generator_strategies.update(aggregation_strategies.get("generators", {}))
+    bus_strategies, generator_strategies = get_aggregation_strategies(aggregation_strategies)
 
     clustering = get_clustering_from_busmap(n, busmap,
                                             bus_strategies=bus_strategies,

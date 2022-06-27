@@ -121,7 +121,7 @@ Exemplary unsolved network clustered to 37 nodes:
 """
 
 import logging
-from _helpers import configure_logging, update_p_nom_max
+from _helpers import configure_logging, update_p_nom_max, get_aggregation_strategies
 
 import pypsa
 import os
@@ -261,11 +261,7 @@ def clustering_for_n_clusters(n, n_clusters, custom_busmap=False, aggregate_carr
                               line_length_factor=1.25, aggregation_strategies=dict(), solver_name="cbc",
                               algorithm="kmeans", extended_link_costs=0, focus_weights=None):
 
-    bus_strategies = dict(country=_make_consense("Bus", "country"))
-    bus_strategies.update(aggregation_strategies.get("buses", {}))
-
-    generator_strategies = {'build_year': lambda x: 0, 'lifetime': lambda x: np.inf}
-    generator_strategies.update(aggregation_strategies.get("generators", {}))
+    bus_strategies, generator_strategies = get_aggregation_strategies(aggregation_strategies)
 
     if not isinstance(custom_busmap, pd.Series):
         busmap = busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights, algorithm)
