@@ -21,7 +21,7 @@ Upcoming Release
   correction factor for solar PV capacity factors by default while satellite data is used.
   A correction factor of 0.854337 is recommended if reanalysis data like ERA5 is used.
 
-* Resource definitions for memory usage now follow [Snakemake standard resource definition](https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#standard-resources) ```mem_mb`` rather than ``mem``.
+* Resource definitions for memory usage now follow `Snakemake standard resource definition <https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#standard-resources>`_ ``mem_mb`` rather than ``mem``.
 
 * Network building is made deterministic by supplying a fixed random state to network clustering routines.
 
@@ -51,13 +51,13 @@ Upcoming Release
 * Add operational reserve margin constraint analogous to `GenX implementation <https://genxproject.github.io/GenX/dev/core/#Reserves>`_.	
   Can be activated with config setting ``electricity: operational_reserve:``.	
 
-* Add function to add global constraint on use of gas in :mod:`prepare_network`. This can be activated with `electricity: gaslimit:` given in MWh.	
+* Add function to add global constraint on use of gas in :mod:`prepare_network`. This can be activated by including the keyword ``CH4L`` in the ``{opts}`` wildcard which enforces the limit set in ``electricity: gaslimit:`` given in MWh thermal. Alternatively, it is possible to append a number in the `{opts}` wildcard, e.g. `CH4L200` which limits the gas use to 200 TWh thermal.
 
 * Add configuration option to implement Energy Availability Factors (EAFs) for conventional generation technologies.	
 
 * A new section ``conventional`` was added to the config file. This section contains configurations for conventional carriers.  
 
-* Implement country-specific EAFs for nuclear power plants based on IAEA 2018-2020 reported country averages. These are specified `data/nuclear_eafs.csv` and translate to static `p_max_pu` values.
+* Implement country-specific EAFs for nuclear power plants based on IAEA 2018-2020 reported country averages. These are specified ``data/nuclear_eafs.csv`` and translate to static ``p_max_pu`` values.
 
 * The powerplants that have been shut down before 2021 are filtered out. 	
 
@@ -84,7 +84,9 @@ Upcoming Release
 * Cache data and cutouts folders. This cache will be updated weekly.
 
 * Add rule to automatically retrieve Natura2000 natural protection areas. Switch of file format to GPKG.
+* Add option to set CO2 emission prices through `{opts}` wildcard: `Ep<number>`, e.g. `Ep180`, will set the EUR/tCO2 price.
 
+* Add option to alter marginal costs of a carrier through `{opts}` wildcard: `<carrier>+m<factor>`, e.g. `gas+m2.5`, will multiply the default marginal cost for gas by factor 2.5.
 
 Synchronisation Release - Ukraine and Moldova (17th March 2022)
 ===============================================================

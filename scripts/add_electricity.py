@@ -324,7 +324,7 @@ def attach_conventional_generators(n, costs, ppl, conventional_carriers, extenda
            marginal_cost=ppl.marginal_cost,
            capital_cost=ppl.capital_cost,
            build_year=ppl.datein.fillna(0).astype(int),
-           lifetime=(ppl.dateout - ppl.datein).fillna(9999).astype(int),
+           lifetime=(ppl.dateout - ppl.datein).fillna(np.inf),
         )
     
     for carrier in conventional_config:
@@ -446,7 +446,7 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **con
 
 
 def attach_extendable_generators(n, costs, ppl, carriers):
-    logger.warning("The function `attach_extendable_generators` is deprecated in v0.0.5.")
+    logger.warning("The function `attach_extendable_generators` is deprecated in v0.5.0.")
     _add_missing_carriers_from_costs(n, costs, carriers)
 
     for tech in carriers:
