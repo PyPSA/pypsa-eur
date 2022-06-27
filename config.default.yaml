@@ -187,7 +187,7 @@ renewable:
 
 conventional: 
   nuclear:
-    energy_availability_factors: "data/nuclear-eafs.csv" # float of file name
+    p_max_pu: "data/nuclear_p_max_pu.csv" # float of file name
 
 lines:
   types:

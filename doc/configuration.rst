@@ -171,7 +171,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 .. literalinclude:: ../config.default.yaml
    :language: yaml
    :start-at:   hydro:
-   :end-before: lines:
+   :end-before: conventional:
 
 .. csv-table::
    :header-rows: 1
@@ -179,6 +179,17 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
    :file: configtables/hydro.csv
 
 .. _lines_cf:
+
+``conventional``
+=============
+
+Define additional generator attribute for conventional carrier types. If a scalar value is given it is applied to all generators. However if a string starting with "data/" is given, the value is interpreted as a path to a csv file with country specific values. Then, the values are read in and applied to all generators of the given carrier in the given country. Note that the value(s) overwrite the existing values in the corresponding section of the ``generators`` dataframe.   
+
+.. literalinclude:: ../config.default.yaml
+   :language: yaml
+   :start-at:   conventional:
+   :end-before: lines:
+
 
 ``lines``
 =============
