@@ -79,6 +79,7 @@ Upcoming Release
 
 * Update rasterio version to correctly calculate exclusion raster
 
+* Clustering strategies for generators and buses have moved from distinct scripts to configurables to unify the process and make it more transparent.
 
 PyPSA-Eur 0.4.0 (22th September 2021)
 =====================================
