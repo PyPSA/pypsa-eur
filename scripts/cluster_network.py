@@ -12,6 +12,7 @@ Relevant Settings
 .. code:: yaml
 
     clustering:
+      cluster_network:
       aggregation_strategies:
 
     focus_weights:

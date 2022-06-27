@@ -14,7 +14,8 @@ Relevant Settings
 .. code:: yaml
 
     clustering:
-      simplify:
+      simplify_network:
+      cluster_network:
       aggregation_strategies:
 
     costs:
@@ -415,7 +416,7 @@ if __name__ == "__main__":
     busmaps = [trafo_map, simplify_links_map, stub_map]
 
     cluster_config = snakemake.config.get('clustering', {}).get('simplify_network', {})
-    if cluster_config.get('clustering', {}).get('simplify', {}).get('to_substations', False):
+    if cluster_config.get('clustering', {}).get('simplify_network', {}).get('to_substations', False):
         n, substation_map = aggregate_to_substations(n, aggregation_strategies)
         busmaps.append(substation_map)
 
@@ -429,7 +430,7 @@ if __name__ == "__main__":
         for carrier in carriers:
             buses_i = list(set(n.buses.index)-set(n.generators.query("carrier == @carrier").bus))
             logger.info(f'clustering preparaton (hac): aggregating {len(buses_i)} buses of type {carrier}.')
-            n, busmap_hac = aggregate_to_substations(n, buses_i)
+            n, busmap_hac = aggregate_to_substations(n, aggregation_strategies, buses_i)
             busmaps.append(busmap_hac)
 
     if snakemake.wildcards.simpl:
