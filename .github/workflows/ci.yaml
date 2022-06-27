@@ -13,12 +13,13 @@ on:
     branches:
     - master
   pull_request:
+    branches:
+    - master
   schedule:
     - cron: "0 5 * * TUE"
 
 env:
-  CONDA_CACHE_NUMBER: 1 # Change this value to manually reset the environment cache
-  DATA_CACHE_NUMBER: 1
+  CACHE_NUMBER: 1 # Change this value to manually reset the environment cache
 
 jobs:
   build:
@@ -65,26 +66,16 @@ jobs:
             miniforge-version: latest
             activate-environment: pypsa-eur
             use-mamba: true
-
-      - name: Set cache dates
-        run: |
-          echo "DATE=$(date +'%Y%m%d')" >> $GITHUB_ENV
-          echo "WEEK=$(date +'%Y%U')" >> $GITHUB_ENV
-
-      - name: Cache data and cutouts folders
-        uses: actions/cache@v3
-        with:
-          path: |
-            data
-            cutouts
-          key: data-cutouts-${{ env.WEEK }}-${{ env.DATA_CACHE_NUMBER }}
+            
+      - name: Set cache date
+        run: echo "DATE=$(date +'%Y%m%d')" >> $GITHUB_ENV
 
       - name: Create environment cache
         uses: actions/cache@v2
         id: cache
         with:
           path: ${{ matrix.prefix }}
-          key: ${{ matrix.label }}-conda-${{ hashFiles('envs/environment.yaml') }}-${{ env.DATE }}-${{ env.CONDA_CACHE_NUMBER }}
+          key: ${{ matrix.label }}-conda-${{ hashFiles('envs/environment.yaml') }}-${{ env.DATE }}-${{ env.CACHE_NUMBER }}
 
       - name: Update environment due to outdated or unavailable cache
         run: mamba env update -n pypsa-eur -f envs/environment.yaml

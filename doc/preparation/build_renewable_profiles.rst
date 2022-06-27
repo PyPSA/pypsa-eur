@@ -41,6 +41,9 @@ Rule ``build_renewable_profiles``
         8	 [color="0.00 0.6 0.85",
             label=build_shapes];
         8 -> 9;
+        12	 [color="0.31 0.6 0.85",
+            label=build_natura_raster];
+        12 -> 9;
         13	 [color="0.56 0.6 0.85",
             label=build_cutout];
         13 -> 9;

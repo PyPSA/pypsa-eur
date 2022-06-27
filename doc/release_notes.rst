@@ -62,11 +62,6 @@ Upcoming Release
 
 * New network topology extracted from the ENTSO-E interactive map.
 
-* Remove rules to build or retrieve rasterized NATURA 2000 dataset. Renewable potential calculation now directly uses the shapefiles.
-
-* Cache data and cutouts folders. This cache will be updated weekly.
-
-* Add rule to automatically retrieve Natura2000 natural protection areas. Switch of file format to GPKG.
 * The unused argument ``simple_hvdc_costs`` in :mod:`add_electricity` was removed.
 
 * Iterative solving with impedance updates is skipped if there are no expandable lines.
