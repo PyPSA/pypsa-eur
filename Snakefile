@@ -170,10 +170,7 @@ if config['enable'].get('retrieve_cutout', True):
 
 if config['enable'].get('retrieve_cost_data', True):
     rule retrieve_cost_data:
-        params:
-            year = config['costs']['year'],
-            version = config['costs']['version'],
-        input: HTTP.remote(f"raw.githubusercontent.com/PyPSA/technology-data/{params.version}/outputs/costs_{params.year}.csv", keep_local=True)
+        input: HTTP.remote(f"raw.githubusercontent.com/PyPSA/technology-data/{config['costs']['version']}/outputs/costs_{config['costs']['year']}.csv", keep_local=True)
         output: COSTS
         run: move(input[0], output[0])
 
