@@ -22,11 +22,11 @@ countries: ['BE']
 clustering:
   simplify_network:
     to_substations: false # network is simplified to nodes with positive or negative power injection (i.e. substations or offwind connections)
-    algorithm: hac
-    feature: solar+onwind-time
-  cluster_network:
-    algorithm: hac # choose from: [hac, kmeans]
+    algorithm: kmeans # choose from: [hac, kmeans]
     feature: solar+onwind-time # only for hac. choose from: [solar+onwind-time, solar+onwind-cap, solar-time, solar-cap, solar+offwind-cap] etc.
+  cluster_network:
+    algorithm: kmeans
+    feature: solar+onwind-time
   aggregation_strategies:
     generators:
       p_nom_max: sum # use "min" for more conservative assumptions
