@@ -35,8 +35,8 @@ To run the tutorial, use this as your configuration file ``config.yaml``.
 
     .../pypsa-eur % cp config.tutorial.yaml config.yaml
 
-This configuration is set to download a reduced data set via the rules :mod:`retrieve_databundle`,
-:mod:`retrieve_natura_raster`, :mod:`retrieve_cutout` totalling at less than 250 MB.
+This configuration is set to download a reduced data set via the rules :mod:`retrieve_databundle`
+and :mod:`retrieve_cutout` totalling at less than 250 MB.
 The full set of data dependencies would consume 5.3 GB.
 For more information on the data dependencies of PyPSA-Eur, continue reading :ref:`data`.
 
