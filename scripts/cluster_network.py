@@ -11,11 +11,11 @@ Relevant Settings
 
 .. code:: yaml
 
-    focus_weights:
+    clustering:
+      cluster_network:
+      aggregation_strategies:
 
-    renewable: (keys)
-        {technology}:
-            potential:
+    focus_weights:
 
     solving:
         solver:
@@ -122,7 +122,7 @@ Exemplary unsolved network clustered to 37 nodes:
 """
 
 import logging
-from _helpers import configure_logging, update_p_nom_max, REGION_COLS
+from _helpers import configure_logging, update_p_nom_max, get_aggregation_strategies, REGION_COLS
 
 import pypsa
 import os
@@ -138,7 +138,7 @@ import seaborn as sns
 from functools import reduce
 
 from pypsa.networkclustering import (busmap_by_kmeans, busmap_by_spectral_clustering,
-                                     _make_consense, get_clustering_from_busmap)
+                                     busmap_by_hac, _make_consense, get_clustering_from_busmap)
 
 import warnings
 warnings.filterwarnings(action='ignore', category=UserWarning)
@@ -171,6 +171,42 @@ def weighting_for_country(n, x):
 
     w = g + l
     return (w * (100. / w.max())).clip(lower=1.).astype(int)
+
+
+def get_feature_for_hac(n, buses_i=None, feature=None):
+
+    if buses_i is None:
+        buses_i = n.buses.index
+
+    if feature is None:
+        feature = "solar+onwind-time"
+
+    carriers = feature.split('-')[0].split('+')
+    if "offwind" in carriers:
+        carriers.remove("offwind")
+        carriers = np.append(carriers, network.generators.carrier.filter(like='offwind').unique())
+
+    if feature.split('-')[1] == 'cap':
+        feature_data = pd.DataFrame(index=buses_i, columns=carriers)
+        for carrier in carriers:
+            gen_i = n.generators.query("carrier == @carrier").index
+            attach = n.generators_t.p_max_pu[gen_i].mean().rename(index = n.generators.loc[gen_i].bus)
+            feature_data[carrier] = attach
+
+    if feature.split('-')[1] == 'time':
+        feature_data = pd.DataFrame(columns=buses_i)
+        for carrier in carriers:
+            gen_i = n.generators.query("carrier == @carrier").index
+            attach = n.generators_t.p_max_pu[gen_i].rename(columns = n.generators.loc[gen_i].bus)
+            feature_data = pd.concat([feature_data, attach], axis=0)[buses_i]
+
+        feature_data = feature_data.T
+        # timestamp raises error in sklearn >= v1.2:
+        feature_data.columns = feature_data.columns.astype(str)
+
+    feature_data = feature_data.fillna(0)
+
+    return feature_data
 
 
 def distribute_clusters(n, n_clusters, focus_weights=None, solver_name="cbc"):
@@ -221,12 +257,49 @@ def distribute_clusters(n, n_clusters, focus_weights=None, solver_name="cbc"):
     return pd.Series(m.n.get_values(), index=L.index).round().astype(int)
 
 
-def busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights=None, algorithm="kmeans", **algorithm_kwds):
+def busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights=None, algorithm="kmeans", feature=None, **algorithm_kwds):
     if algorithm == "kmeans":
         algorithm_kwds.setdefault('n_init', 1000)
         algorithm_kwds.setdefault('max_iter', 30000)
         algorithm_kwds.setdefault('tol', 1e-6)
         algorithm_kwds.setdefault('random_state', 0)
+
+    def fix_country_assignment_for_hac(n):
+        from scipy.sparse import csgraph
+
+        # overwrite country of nodes that are disconnected from their country-topology
+        for country in n.buses.country.unique():
+            m = n[n.buses.country ==country].copy()
+
+            _, labels = csgraph.connected_components(m.adjacency_matrix(), directed=False)
+
+            component = pd.Series(labels, index=m.buses.index)
+            component_sizes = component.value_counts()
+
+            if len(component_sizes)>1:
+                disconnected_bus = component[component==component_sizes.index[-1]].index[0]
+
+                neighbor_bus = (
+                    n.lines.query("bus0 == @disconnected_bus or bus1 == @disconnected_bus")
+                    .iloc[0][['bus0', 'bus1']]
+                )
+                new_country = list(set(n.buses.loc[neighbor_bus].country)-set([country]))[0]
+
+                logger.info(
+                    f"overwriting country `{country}` of bus `{disconnected_bus}` "
+                    f"to new country `{new_country}`, because it is disconnected "
+                    "from its inital inter-country transmission grid."
+                )
+                n.buses.at[disconnected_bus, "country"] = new_country
+        return n
+
+    if algorithm == "hac":
+        feature = get_feature_for_hac(n, buses_i=n.buses.index, feature=feature)
+        n = fix_country_assignment_for_hac(n)
+
+    if (algorithm != "hac") and (feature is not None):
+        logger.warning(f"Keyword argument feature is only valid for algorithm `hac`. "
+                       f"Given feature `{feature}` will be ignored.")
 
     n.determine_network_topology()
 
@@ -251,44 +324,34 @@ def busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights=None, algori
             return prefix + busmap_by_spectral_clustering(reduce_network(n, x), n_clusters[x.name], **algorithm_kwds)
         elif algorithm == "louvain":
             return prefix + busmap_by_louvain(reduce_network(n, x), n_clusters[x.name], **algorithm_kwds)
+        elif algorithm == "hac":
+            return prefix + busmap_by_hac(n, n_clusters[x.name], buses_i=x.index, feature=feature.loc[x.index])
         else:
-            raise ValueError(f"`algorithm` must be one of 'kmeans', 'spectral' or 'louvain'. Is {algorithm}.")
+            raise ValueError(f"`algorithm` must be one of 'kmeans', 'hac', 'spectral' or 'louvain'. Is {algorithm}.")
 
     return (n.buses.groupby(['country', 'sub_network'], group_keys=False)
             .apply(busmap_for_country).squeeze().rename('busmap'))
 
 
 def clustering_for_n_clusters(n, n_clusters, custom_busmap=False, aggregate_carriers=None,
-                              line_length_factor=1.25, potential_mode='simple', solver_name="cbc",
-                              algorithm="kmeans", extended_link_costs=0, focus_weights=None):
+                              line_length_factor=1.25, aggregation_strategies=dict(), solver_name="cbc",
+                              algorithm="hac", feature=None, extended_link_costs=0, focus_weights=None):
 
-    if potential_mode == 'simple':
-        p_nom_max_strategy = pd.Series.sum
-    elif potential_mode == 'conservative':
-        p_nom_max_strategy = pd.Series.min
-    else:
-        raise AttributeError(f"potential_mode should be one of 'simple' or 'conservative' but is '{potential_mode}'")
+    bus_strategies, generator_strategies = get_aggregation_strategies(aggregation_strategies)
 
     if not isinstance(custom_busmap, pd.Series):
-        busmap = busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights, algorithm)
+        busmap = busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights, algorithm, feature)
     else:
         busmap = custom_busmap
 
     clustering = get_clustering_from_busmap(
         n, busmap,
-        bus_strategies=dict(country=_make_consense("Bus", "country")),
+        bus_strategies=bus_strategies,
         aggregate_generators_weighted=True,
         aggregate_generators_carriers=aggregate_carriers,
         aggregate_one_ports=["Load", "StorageUnit"],
         line_length_factor=line_length_factor,
-        generator_strategies={'p_nom_max': p_nom_max_strategy, 
-                              'p_nom_min': pd.Series.sum, 
-                              'p_min_pu': pd.Series.mean, 
-                              'marginal_cost': pd.Series.mean, 
-                              'committable': np.any, 
-                              'ramp_limit_up': pd.Series.max, 
-                              'ramp_limit_down': pd.Series.max,
-                              },
+        generator_strategies=generator_strategies,
         scale_link_capital_costs=False)
 
     if not n.links.empty:
@@ -369,21 +432,29 @@ if __name__ == "__main__":
                 "The `potential` configuration option must agree for all renewable carriers, for now!"
             )
             return v
-        potential_mode = consense(pd.Series([snakemake.config['renewable'][tech]['potential']
-                                             for tech in renewable_carriers]))
+        aggregation_strategies = snakemake.config["clustering"].get("aggregation_strategies", {})
+        # translate str entries of aggregation_strategies to pd.Series functions:
+        aggregation_strategies = {
+            p: {k: getattr(pd.Series, v) for k,v in aggregation_strategies[p].items()}
+            for p in aggregation_strategies.keys()
+        }
+
         custom_busmap = snakemake.config["enable"].get("custom_busmap", False)
         if custom_busmap:
             custom_busmap = pd.read_csv(snakemake.input.custom_busmap, index_col=0, squeeze=True)
             custom_busmap.index = custom_busmap.index.astype(str)
             logger.info(f"Imported custom busmap from {snakemake.input.custom_busmap}")
 
+        cluster_config = snakemake.config.get('clustering', {}).get('cluster_network', {})
         clustering = clustering_for_n_clusters(n, n_clusters, custom_busmap, aggregate_carriers,
-                                               line_length_factor, potential_mode,
+                                               line_length_factor, aggregation_strategies,
                                                snakemake.config['solving']['solver']['name'],
-                                               "kmeans", hvac_overhead_cost, focus_weights)
+                                               cluster_config.get("algorithm", "hac"),
+                                               cluster_config.get("feature", "solar+onwind-time"),
+                                               hvac_overhead_cost, focus_weights)
 
-    update_p_nom_max(n)
-    
+    update_p_nom_max(clustering.network)
+
     clustering.network.export_to_netcdf(snakemake.output.network)
     for attr in ('busmap', 'linemap'): #also available: linemap_positive, linemap_negative
         getattr(clustering, attr).to_csv(snakemake.output[attr])
