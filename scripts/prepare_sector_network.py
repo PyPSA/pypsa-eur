@@ -388,7 +388,8 @@ def add_carrier_buses(n, carrier, nodes=None):
     n.madd("Bus",
         nodes,
         location=location,
-        carrier=carrier
+        carrier=carrier,
+        unit='MWh_th'
     )
 
     #capital cost could be corrected to e.g. 0.2 EUR/kWh * annuity and O&M
@@ -439,6 +440,7 @@ def patch_electricity_network(n):
     update_wind_solar_costs(n, costs)
     n.loads["carrier"] = "electricity"
     n.buses["location"] = n.buses.index
+    n.buses["unit"] = "MWh_el"
     # remove trailing white space of load index until new PyPSA version after v0.18.
     n.loads.rename(lambda x: x.strip(), inplace=True)
     n.loads_t.p_set.rename(lambda x: x.strip(), axis=1, inplace=True)
@@ -455,7 +457,8 @@ def add_co2_tracking(n, options):
     n.add("Bus",
         "co2 atmosphere",
         location="EU",
-        carrier="co2"
+        carrier="co2",
+        unit="t_co2"
     )
 
     # can also be negative
@@ -471,7 +474,8 @@ def add_co2_tracking(n, options):
     n.madd("Bus",
         spatial.co2.nodes,
         location=spatial.co2.locations,
-        carrier="co2 stored"
+        carrier="co2 stored",
+        unit="t_co2"
     )
 
     n.madd("Store",
@@ -703,7 +707,8 @@ def insert_electricity_distribution_grid(n, costs):
     n.madd("Bus",
         nodes + " low voltage",
         location=nodes,
-        carrier="low voltage"
+        carrier="low voltage",
+        unit="MWh_el"
     )
 
     n.madd("Link",
@@ -770,7 +775,8 @@ def insert_electricity_distribution_grid(n, costs):
     n.madd("Bus",
         nodes + " home battery",
         location=nodes,
-        carrier="home battery"
+        carrier="home battery",
+        unit="MWh_el"
     )
 
     n.madd("Store",
@@ -845,7 +851,8 @@ def add_storage_and_grids(n, costs):
     n.madd("Bus",
         nodes + " H2",
         location=nodes,
-        carrier="H2"
+        carrier="H2",
+        unit="MWh_LHV"
     )
 
     n.madd("Link",
@@ -1051,7 +1058,8 @@ def add_storage_and_grids(n, costs):
     n.madd("Bus",
         nodes + " battery",
         location=nodes,
-        carrier="battery"
+        carrier="battery",
+        unit="MWh_el"
     )
 
     n.madd("Store",
@@ -1199,7 +1207,8 @@ def add_land_transport(n, costs):
             nodes,
             location=nodes,
             suffix=" EV battery",
-            carrier="Li ion"
+            carrier="Li ion",
+            unit="MWh_el"
         )
 
         p_set = electric_share * (transport[nodes] + cycling_shift(transport[nodes], 1) + cycling_shift(transport[nodes], 2)) / 3
@@ -1273,7 +1282,8 @@ def add_land_transport(n, costs):
             n.madd("Bus",
                 spatial.oil.nodes,
                 location=spatial.oil.locations,
-                carrier="oil"
+                carrier="oil",
+                unit="MWh_th"
             )
 
         ice_efficiency = options['transport_internal_combustion_efficiency']
@@ -1381,7 +1391,8 @@ def add_heat(n, costs):
         n.madd("Bus",
             nodes[name] + f" {name} heat",
             location=nodes[name],
-            carrier=name + " heat"
+            carrier=name + " heat",
+            unit="MWh_th"
         )
 
         ## Add heat load
@@ -1438,7 +1449,8 @@ def add_heat(n, costs):
             n.madd("Bus",
                 nodes[name] + f" {name} water tanks",
                 location=nodes[name],
-                carrier=name + " water tanks"
+                carrier=name + " water tanks",
+                unit="MWh_th"
             )
 
             n.madd("Link",
@@ -1743,13 +1755,15 @@ def add_biomass(n, costs):
     n.madd("Bus",
         spatial.gas.biogas,
         location=spatial.gas.locations,
-        carrier="biogas"
+        carrier="biogas",
+        unit="MWh_th"
     )
 
     n.madd("Bus",
         spatial.biomass.nodes,
         location=spatial.biomass.locations,
-        carrier="solid biomass"
+        carrier="solid biomass",
+        unit="MWh_th"
     )
 
     n.madd("Store",
@@ -1860,7 +1874,8 @@ def add_industry(n, costs):
     n.madd("Bus",
         spatial.biomass.industry,
         location=spatial.biomass.locations,
-        carrier="solid biomass for industry"
+        carrier="solid biomass for industry",
+        unit="MWh_th"
     )
 
     if options["biomass_transport"]:
@@ -1902,7 +1917,8 @@ def add_industry(n, costs):
     n.madd("Bus",
         spatial.gas.industry,
         location=spatial.gas.locations,
-        carrier="gas for industry")
+        carrier="gas for industry",
+        unit="MWh_LHV")
 
     gas_demand = industrial_demand.loc[nodes, "methane"] / 8760.
 
@@ -1958,7 +1974,8 @@ def add_industry(n, costs):
             nodes,
             suffix=" H2 liquid",
             carrier="H2 liquid",
-            location=nodes
+            location=nodes,
+            unit="MWh_LHV"
         )
 
         n.madd("Link",
@@ -2016,7 +2033,8 @@ def add_industry(n, costs):
         n.madd("Bus",
             spatial.oil.nodes,
             location=spatial.oil.locations,
-            carrier="oil"
+            carrier="oil",
+            unit="MWh_th"
         )
 
     if "oil" not in n.stores.carrier.unique():
@@ -2130,7 +2148,8 @@ def add_industry(n, costs):
     n.add("Bus",
         "process emissions",
         location="EU",
-        carrier="process emissions"
+        carrier="process emissions",
+        unit="t_co2"
     )
 
     # this should be process emissions fossil+feedstock
@@ -2314,7 +2333,7 @@ if __name__ == "__main__":
             simpl='',
             opts="",
             clusters="37",
-            lv=1.0,
+            lv=1.5,
             sector_opts='Co2L0-168H-T-H-B-I-solar3-dist1',
             planning_horizons="2020",
         )
@@ -2448,3 +2467,5 @@ if __name__ == "__main__":
         add_electricity_grid_connection(n, costs)
 
     n.export_to_netcdf(snakemake.output[0])
+
+# %%
