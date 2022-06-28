@@ -332,7 +332,7 @@ def attach_conventional_generators(n, costs, ppl, conventional_carriers, extenda
         # Generators with technology affected
         idx = n.generators.query("carrier == @carrier").index
 
-        for key in list(set(conventional_carriers[carrier]) & set(n.generators)):
+        for key in list(set(conventional_config[carrier]) & set(n.generators)):
 
             values = conventional_config[carrier][key]
 
