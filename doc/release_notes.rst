@@ -76,6 +76,8 @@ Upcoming Release
 
 * Clustering strategies for generators and buses have moved from distinct scripts to configurables to unify the process and make it more transparent.
 
+* Hierarchical clustering was introduced. Distance metric is calculated from renewable potentials on hourly (feature entry ends with `-time`) or annual (feature entry in config end with `-cap`) values.
+
 PyPSA-Eur 0.4.0 (22th September 2021)
 =====================================
 

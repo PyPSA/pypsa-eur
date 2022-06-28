@@ -14,7 +14,8 @@ Relevant Settings
 .. code:: yaml
 
     clustering:
-      simplify:
+      simplify_network:
+      cluster_network:
       aggregation_strategies:
 
     costs:
@@ -364,11 +365,10 @@ def aggregate_to_substations(n, aggregation_strategies=dict(), buses_i=None):
                                             line_length_factor=1.0,
                                             generator_strategies=generator_strategies,
                                             scale_link_capital_costs=False)
-        
     return clustering.network, busmap
 
 
-def cluster(n, n_clusters, config, aggregation_strategies=dict()):
+def cluster(n, n_clusters, config, algorithm="hac", feature=None, aggregation_strategies=dict()):
     logger.info(f"Clustering to {n_clusters} buses")
 
     focus_weights = config.get('focus_weights', None)
@@ -380,6 +380,7 @@ def cluster(n, n_clusters, config, aggregation_strategies=dict()):
     clustering = clustering_for_n_clusters(n, n_clusters, custom_busmap=False,
                                            aggregation_strategies=aggregation_strategies,
                                            solver_name=config['solving']['solver']['name'],
+                                           algorithm=algorithm, feature=feature,
                                            focus_weights=focus_weights)
 
     return clustering.network, clustering.busmap
@@ -414,12 +415,29 @@ if __name__ == "__main__":
 
     busmaps = [trafo_map, simplify_links_map, stub_map]
 
-    if snakemake.config.get('clustering', {}).get('simplify', {}).get('to_substations', False):
+    cluster_config = snakemake.config.get('clustering', {}).get('simplify_network', {})
+    if cluster_config.get('clustering', {}).get('simplify_network', {}).get('to_substations', False):
         n, substation_map = aggregate_to_substations(n, aggregation_strategies)
         busmaps.append(substation_map)
 
+    # treatment of outliers (nodes without a profile for considered carrier):
+    # all nodes that have no profile of the given carrier are being aggregated to closest neighbor
+    if (
+            snakemake.config.get("clustering", {}).get("cluster_network", {}).get("algorithm", "hac") == "hac" or
+            cluster_config.get("algorithm", "hac") == "hac"
+    ):
+        carriers = cluster_config.get("feature", "solar+onwind-time").split('-')[0].split('+')
+        for carrier in carriers:
+            buses_i = list(set(n.buses.index)-set(n.generators.query("carrier == @carrier").bus))
+            logger.info(f'clustering preparaton (hac): aggregating {len(buses_i)} buses of type {carrier}.')
+            n, busmap_hac = aggregate_to_substations(n, aggregation_strategies, buses_i)
+            busmaps.append(busmap_hac)
+
     if snakemake.wildcards.simpl:
-        n, cluster_map = cluster(n, int(snakemake.wildcards.simpl), snakemake.config, aggregation_strategies)
+        n, cluster_map = cluster(n, int(snakemake.wildcards.simpl), snakemake.config,
+                                 cluster_config.get('algorithm', 'hac'),
+                                 cluster_config.get('feature', None),
+                                 aggregation_strategies)
         busmaps.append(cluster_map)
 
     # some entries in n.buses are not updated in previous functions, therefore can be wrong. as they are not needed
