@@ -391,7 +391,9 @@ def _set_countries_and_substations(n, config, country_shapes, offshore_shapes):
 
     countries = config['countries']
     country_shapes = gpd.read_file(country_shapes).set_index('name')['geometry']
-    offshore_shapes = gpd.read_file(offshore_shapes).set_index('name')['geometry']
+    # reindexing necessary for supporting empty geo-dataframes
+    offshore_shapes = gpd.read_file(offshore_shapes)
+    offshore_shapes = offshore_shapes.reindex(columns=['name', 'geometry']).set_index('name')['geometry']
     substation_b = buses['symbol'].str.contains('substation|converter station', case=False)
 
     def prefer_voltage(x, which):

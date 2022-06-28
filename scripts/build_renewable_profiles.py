@@ -221,15 +221,17 @@ if __name__ == '__main__':
     client = Client(cluster, asynchronous=True)
  
     cutout = atlite.Cutout(snakemake.input['cutout'])
-    regions = gpd.read_file(snakemake.input.regions).set_index('name').rename_axis('bus')
+    regions = gpd.read_file(snakemake.input.regions)
+    assert not regions.empty, (f"List of regions in {snakemake.input.regions} is empty, please "
+                               "disable the corresponding renewable technology")
+    # do not pull up, set_index does not work if geo dataframe is empty
+    regions = regions.set_index('name').rename_axis('bus')
     buses = regions.index
 
     excluder = atlite.ExclusionContainer(crs=3035, res=100)
 
     if config['natura']:
-        mask = regions.to_crs(3035).buffer(0) # buffer to avoid invalid geometry
-        natura = gpd.read_file(snakemake.input.natura, mask=mask)
-        excluder.add_geometry(natura.geometry)
+        excluder.add_raster(snakemake.input.natura, nodata=0, allow_no_overlap=True)
 
     corine = config.get("corine", {})
     if "grid_codes" in corine:

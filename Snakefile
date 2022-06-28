@@ -66,12 +66,6 @@ if config['enable'].get('retrieve_databundle', True):
         script: 'scripts/retrieve_databundle.py'
 
 
-rule retrieve_natura_data:
-    input: HTTP.remote("sdi.eea.europa.eu/datashare/s/H6QGCybMdLLnywo/download", additional_request_string="?path=%2FNatura2000_end2020_gpkg&files=Natura2000_end2020.gpkg", static=True)
-    output: "data/Natura2000_end2020.gpkg"
-    run: move(input[0], output[0])
-
-
 rule retrieve_load_data:
     input: HTTP.remote("data.open-power-system-data.org/time_series/2019-06-05/time_series_60min_singleindex.csv", keep_local=True, static=True)
     output: "data/load_raw.csv"
@@ -167,6 +161,23 @@ if config['enable'].get('retrieve_cutout', True):
     rule retrieve_cutout:
         input: HTTP.remote("zenodo.org/record/6382570/files/{cutout}.nc", keep_local=True, static=True)
         output: "cutouts/{cutout}.nc"
+        run: move(input[0], output[0])
+
+
+if config['enable'].get('build_natura_raster', False):
+    rule build_natura_raster:
+        input:
+            natura="data/bundle/natura/Natura2000_end2015.shp",
+            cutouts=expand("cutouts/{cutouts}.nc", **config['atlite'])
+        output: "resources/natura.tiff"
+        log: "logs/build_natura_raster.log"
+        script: "scripts/build_natura_raster.py"
+
+
+if config['enable'].get('retrieve_natura_raster', True):
+    rule retrieve_natura_raster:
+        input: HTTP.remote("zenodo.org/record/4706686/files/natura.tiff", keep_local=True, static=True)
+        output: "resources/natura.tiff"
         run: move(input[0], output[0])
 
 
