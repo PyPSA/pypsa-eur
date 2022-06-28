@@ -88,6 +88,11 @@ Upcoming Release
 
 * Add option to alter marginal costs of a carrier through `{opts}` wildcard: `<carrier>+m<factor>`, e.g. `gas+m2.5`, will multiply the default marginal cost for gas by factor 2.5.
 
+* Clustering strategies for generators and buses have moved from distinct scripts to configurables to unify the process and make it more transparent.
+
+* Hierarchical clustering was introduced. Distance metric is calculated from renewable potentials on hourly (feature entry ends with `-time`) or annual (feature entry in config end with `-cap`) values.
+
+
 Synchronisation Release - Ukraine and Moldova (17th March 2022)
 ===============================================================
 

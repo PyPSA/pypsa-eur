@@ -27,6 +27,7 @@ With these and the externally extracted ENTSO-E online map topology
 Then the process continues by calculating conventional power plant capacities, potentials, and per-unit availability time series for variable renewable energy carriers and hydro power plants with the following rules:
 
 - :mod:`build_powerplants` for today's thermal power plant capacities using `powerplantmatching <https://github.com/FRESNA/powerplantmatching>`_ allocating these to the closest substation for each powerplant,
+- :mod:`build_natura_raster` for rasterising NATURA2000 natural protection areas,
 - :mod:`build_renewable_profiles` for the hourly capacity factors and installation potentials constrained by land-use in each substation's Voronoi cell for PV, onshore and offshore wind, and
 - :mod:`build_hydro_profile` for the hourly per-unit hydro power availability time series.
 
@@ -40,6 +41,7 @@ together into a detailed PyPSA network stored in ``networks/elec.nc``.
    preparation/build_shapes
    preparation/build_load_data
    preparation/build_cutout
+   preparation/build_natura_raster
    preparation/prepare_links_p_nom
    preparation/base_network
    preparation/build_bus_regions
