@@ -122,7 +122,7 @@ Exemplary unsolved network clustered to 37 nodes:
 """
 
 import logging
-from _helpers import configure_logging, update_p_nom_max, get_aggregation_strategies
+from _helpers import configure_logging, update_p_nom_max, get_aggregation_strategies, REGION_COLS
 
 import pypsa
 import os
@@ -366,24 +366,18 @@ def clustering_for_n_clusters(n, n_clusters, custom_busmap=False, aggregate_carr
     return clustering
 
 
-def save_to_geojson(s, fn):
-    if os.path.exists(fn):
-        os.unlink(fn)
-    df = s.reset_index()
-    schema = {**gpd.io.file.infer_schema(df), 'geometry': 'Unknown'}
-    df.to_file(fn, driver='GeoJSON', schema=schema)
-
-
 def cluster_regions(busmaps, input=None, output=None):
 
     busmap = reduce(lambda x, y: x.map(y), busmaps[1:], busmaps[0])
 
     for which in ('regions_onshore', 'regions_offshore'):
-        regions = gpd.read_file(getattr(input, which)).set_index('name')
-        geom_c = regions.geometry.groupby(busmap).apply(shapely.ops.unary_union)
-        regions_c = gpd.GeoDataFrame(dict(geometry=geom_c))
+        regions = gpd.read_file(getattr(input, which))
+        regions = regions.reindex(columns=REGION_COLS).set_index('name')
+        aggfunc = dict(x="mean", y="mean", country="first")
+        regions_c = regions.dissolve(busmap, aggfunc=aggfunc)
         regions_c.index.name = 'name'
-        save_to_geojson(regions_c, getattr(output, which))
+        regions_c = regions_c.reset_index()
+        regions_c.to_file(getattr(output, which))
 
 
 def plot_busmap_for_n_clusters(n, n_clusters, fn=None):

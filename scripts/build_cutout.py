@@ -116,7 +116,7 @@ if __name__ == "__main__":
         # Determine the bounds from bus regions with a buffer of two grid cells
         onshore = gpd.read_file(snakemake.input.regions_onshore)
         offshore = gpd.read_file(snakemake.input.regions_offshore)
-        regions =  onshore.append(offshore)
+        regions =  pd.concat([onshore, offshore])
         d = max(cutout_params.get('dx', 0.25), cutout_params.get('dy', 0.25))*2
         cutout_params['bounds'] = regions.total_bounds + [-d, -d, d, d]
     elif {'x', 'y'}.issubset(cutout_params):

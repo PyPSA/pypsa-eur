@@ -4,7 +4,9 @@
 
 import pandas as pd
 from pathlib import Path
+from collections import OrderedDict
 
+REGION_COLS = ['geometry', 'name', 'x', 'y', 'country']
 
 def configure_logging(snakemake, skip_handlers=False):
     """
