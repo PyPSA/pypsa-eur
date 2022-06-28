@@ -302,7 +302,7 @@ def attach_wind_and_solar(n, costs, input_profiles, technologies, extendable_car
                    p_max_pu=ds['profile'].transpose('time', 'bus').to_pandas())
 
 
-def attach_conventional_generators(n, costs, ppl, conventional_carriers, extendable_carriers, conventional_config):
+def attach_conventional_generators(n, costs, ppl, conventional_carriers, extendable_carriers, conventional_config, conventional_inputs):
 
     carriers = set(conventional_carriers) | set(extendable_carriers['Generator'])
     _add_missing_carriers_from_costs(n, costs, carriers)
@@ -332,19 +332,19 @@ def attach_conventional_generators(n, costs, ppl, conventional_carriers, extenda
         # Generators with technology affected
         idx = n.generators.query("carrier == @carrier").index
 
-        for key in list(set(conventional_carriers[carrier]) & set(n.generators)):
+        for attr in list(set(conventional_config[carrier]) & set(n.generators)):
 
-            values = conventional_config[carrier][key]
+            values = conventional_config[carrier][attr]
 
-            if isinstance(values, str) and str(values).startswith("data/"):
+            if f"conventional_{carrier}_{attr}" in conventional_inputs:
                 # Values affecting generators of technology k country-specific
                 # First map generator buses to countries; then map countries to p_max_pu
                 values = pd.read_csv(values, index_col=0).iloc[:, 0]
                 bus_values = n.buses.country.map(values)
-                n.generators[key].update(n.generators.loc[idx].bus.map(bus_values).dropna())
+                n.generators[attr].update(n.generators.loc[idx].bus.map(bus_values).dropna())
             else:
                 # Single value affecting all generators of technology k indiscriminantely of country
-                n.generators.loc[idx, key] = values
+                n.generators.loc[idx, attr] = values
 
 
 
@@ -603,7 +603,8 @@ if __name__ == "__main__":
 
     update_transmission_costs(n, costs, snakemake.config['lines']['length_factor'])
 
-    attach_conventional_generators(n, costs, ppl, conventional_carriers, extendable_carriers, snakemake.config.get("conventional", {}))
+    conventional_inputs = {k: v for k, v in snakemake.input.items() if k.startswith("conventional_")}
+    attach_conventional_generators(n, costs, ppl, conventional_carriers, extendable_carriers, snakemake.config.get("conventional", {}), conventional_inputs)
 
     attach_wind_and_solar(n, costs, snakemake.input, renewable_carriers, extendable_carriers, snakemake.config['lines']['length_factor'])
 
