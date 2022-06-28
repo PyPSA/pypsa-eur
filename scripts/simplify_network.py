@@ -209,6 +209,7 @@ def _aggregate_and_move_components(n, busmap, connection_costs_to_bus, output,
     generators, generators_pnl = aggregategenerators(
         n, busmap, custom_strategies=generator_strategies
     )
+
     replace_components(n, "Generator", generators, generators_pnl)
 
     for one_port in aggregate_one_ports:

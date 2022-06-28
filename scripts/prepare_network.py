@@ -77,6 +77,16 @@ def add_co2limit(n, co2limit, Nyears=1.):
           constant=co2limit * Nyears)
 
 
+def add_gaslimit(n, gaslimit, Nyears=1.):
+
+    sel = n.carriers.index.intersection(["OCGT", "CCGT", "CHP"])
+    n.carriers.loc[sel, "gas_usage"] = 1.
+
+    n.add("GlobalConstraint", "GasLimit",
+          carrier_attribute="gas_usage", sense="<=",
+          constant=gaslimit * Nyears)
+
+
 def add_emission_prices(n, emission_prices={'co2': 0.}, exclude_co2=False):
     if exclude_co2: emission_prices.pop('co2')
     ep = (pd.Series(emission_prices).rename(lambda x: x+'_emissions') *
@@ -233,8 +243,22 @@ if __name__ == "__main__":
             if len(m) > 0:
                 co2limit = float(m[0]) * snakemake.config['electricity']['co2base']
                 add_co2limit(n, co2limit, Nyears)
+                logger.info("Setting CO2 limit according to wildcard value.")
             else:
                 add_co2limit(n, snakemake.config['electricity']['co2limit'], Nyears)
+                logger.info("Setting CO2 limit according to config value.")
+            break
+
+    for o in opts:
+        if "CH4L" in o:
+            m = re.findall("[0-9]*\.?[0-9]+$", o)
+            if len(m) > 0:
+                limit = float(m[0]) * 1e6
+                add_gaslimit(n, limit, Nyears)
+                logger.info("Setting gas usage limit according to wildcard value.")
+            else:
+                add_gaslimit(n, snakemake.config["electricity"].get("gaslimit"), Nyears)
+                logger.info("Setting gas usage limit according to config value.")
             break
 
     for o in opts:
@@ -243,7 +267,7 @@ if __name__ == "__main__":
         if oo[0].startswith(tuple(suptechs)):
             carrier = oo[0]
             # handles only p_nom_max as stores and lines have no potentials
-            attr_lookup = {"p": "p_nom_max", "c": "capital_cost"}
+            attr_lookup = {"p": "p_nom_max", "c": "capital_cost", "m": "marginal_cost"}
             attr = attr_lookup[oo[1][0]]
             factor = float(oo[1][1:])
             if carrier == "AC":  # lines do not have carrier
@@ -254,8 +278,16 @@ if __name__ == "__main__":
                     sel = c.df.carrier.str.contains(carrier)
                     c.df.loc[sel,attr] *= factor
 
-    if 'Ep' in opts:
-        add_emission_prices(n, snakemake.config['costs']['emission_prices'])
+    for o in opts:
+        if 'Ep' in o:
+            m = re.findall("[0-9]*\.?[0-9]+$", o)
+            if len(m) > 0:
+                logger.info("Setting emission prices according to wildcard value.")
+                add_emission_prices(n, dict(co2=float(m[0])))
+            else:
+                logger.info("Setting emission prices according to config value.")
+                add_emission_prices(n, snakemake.config['costs']['emission_prices'])
+            break
 
     ll_type, factor = snakemake.wildcards.ll[0], snakemake.wildcards.ll[1:]
     set_transmission_limit(n, ll_type, factor, costs, Nyears)
