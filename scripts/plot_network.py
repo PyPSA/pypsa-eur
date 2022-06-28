@@ -2,6 +2,7 @@ import pypsa
 
 import numpy as np
 import pandas as pd
+import geopandas as gpd
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 
@@ -63,7 +64,6 @@ def add_legend_circles(ax, sizes, labels, scale=1, srid=None, patch_kw={}, legen
     
     if srid is not None:
         area_correction = projected_area_factor(ax, n.srid)**2 
-        print(area_correction)
         sizes = [s * area_correction for s in sizes]
     
     handles = make_legend_circles_for(sizes, scale, **patch_kw)
@@ -113,7 +113,9 @@ def assign_location(n):
 
 
 def plot_map(network, components=["links", "stores", "storage_units", "generators"],
-             bus_size_factor=1.7e10, transmission=False):
+             bus_size_factor=1.7e10, transmission=False, with_legend=True):
+
+    tech_colors = snakemake.config['plotting']['tech_colors']
 
     tech_colors = snakemake.config['plotting']['tech_colors']
 
@@ -174,9 +176,9 @@ def plot_map(network, components=["links", "stores", "storage_units", "generator
     # PDF has minimum width, so set these to zero
     line_lower_threshold = 500.
     line_upper_threshold = 1e4
-    linewidth_factor = 2e3
-    ac_color = "gray"
-    dc_color = "m"
+    linewidth_factor = 4e3
+    ac_color = "rosybrown"
+    dc_color = "darkseagreen"
 
     if snakemake.wildcards["lv"] == "1.0":
         # should be zero
@@ -221,6 +223,7 @@ def plot_map(network, components=["links", "stores", "storage_units", "generator
 
     sizes = [20, 10, 5]
     labels = [f"{s} bEUR/a" for s in sizes]
+    sizes = [s/bus_size_factor*1e9 for s in sizes]
 
     legend_kw = dict(
         loc="upper left",
@@ -235,7 +238,6 @@ def plot_map(network, components=["links", "stores", "storage_units", "generator
         ax,
         sizes,
         labels,
-        scale=bus_size_factor/1e9,
         srid=n.srid,
         patch_kw=dict(facecolor="lightgrey"),
         legend_kw=legend_kw
@@ -267,15 +269,17 @@ def plot_map(network, components=["links", "stores", "storage_units", "generator
         frameon=False,
     )
 
-    colors = [tech_colors[c] for c in carriers] + [ac_color, dc_color]
-    labels = carriers + ["HVAC line", "HVDC link"]
+    if with_legend:
 
-    add_legend_patches(
-        ax,
-        colors,
-        labels,
-        legend_kw=legend_kw,
-    )
+        colors = [tech_colors[c] for c in carriers] + [ac_color, dc_color]
+        labels = carriers + ["HVAC line", "HVDC link"]
+
+        add_legend_patches(
+            ax,
+            colors,
+            labels,
+            legend_kw=legend_kw,
+        )
 
     fig.savefig(
         snakemake.output.map,
@@ -284,7 +288,7 @@ def plot_map(network, components=["links", "stores", "storage_units", "generator
     )
 
 
-def plot_h2_map(network):
+def plot_h2_map(network, regions):
 
     tech_colors = snakemake.config['plotting']['tech_colors']
 
@@ -293,6 +297,10 @@ def plot_h2_map(network):
         return
 
     assign_location(n)
+
+    h2_storage = n.stores.query("carrier == 'H2'")
+    regions["H2"] = h2_storage.rename(index=h2_storage.bus.map(n.buses.location)).e_nom_opt.div(1e6) # TWh
+    regions["H2"] = regions["H2"].where(regions["H2"] > 0.1)
 
     bus_size_factor = 1e5
     linewidth_factor = 1e4
@@ -356,17 +364,20 @@ def plot_h2_map(network):
     n.links.bus0 = n.links.bus0.str.replace(" H2", "")
     n.links.bus1 = n.links.bus1.str.replace(" H2", "")
 
+    proj = ccrs.EqualEarth()
+    regions = regions.to_crs(proj.proj4_init)
+
     fig, ax = plt.subplots(
         figsize=(7, 6),
-        subplot_kw={"projection": ccrs.EqualEarth()}
+        subplot_kw={"projection": proj}
     )
 
     color_h2_pipe = '#b3f3f4'
-    color_retrofit = '#54cacd'
+    color_retrofit = '#499a9c'
     
     bus_colors = {
         "H2 Electrolysis": "#ff29d9",
-        "H2 Fuel Cell": "#6b3161",
+        "H2 Fuel Cell": '#805394'
     }
 
     n.plot(
@@ -391,8 +402,24 @@ def plot_h2_map(network):
         boundaries=map_opts["boundaries"]
     )
 
+    regions.plot(
+        ax=ax,
+        column="H2",
+        cmap='Blues',
+        linewidths=0,
+        legend=True,
+        vmax=10,
+        vmin=0,
+        legend_kwds={
+            "label": "Hydrogen Storage [TWh]",
+            "shrink": 0.7,
+            "extend": "max",
+        },
+    )
+
     sizes = [50, 10]
     labels = [f"{s} GW" for s in sizes]
+    sizes = [s/bus_size_factor*1e3 for s in sizes]
 
     legend_kw = dict(
         loc="upper left",
@@ -403,7 +430,6 @@ def plot_h2_map(network):
     )
 
     add_legend_circles(ax, sizes, labels,
-        scale=bus_size_factor/1e3,
         srid=n.srid,
         patch_kw=dict(facecolor='lightgrey'),
         legend_kw=legend_kw
@@ -445,6 +471,9 @@ def plot_h2_map(network):
         labels,
         legend_kw=legend_kw
     )
+
+    plt.gca().outline_patch.set_visible(False)
+    ax.set_facecolor("white")
 
     fig.savefig(
         snakemake.output.map.replace("-costs-all","-h2_network"),
@@ -561,6 +590,7 @@ def plot_ch4_map(network):
 
     sizes = [100, 10]
     labels = [f"{s} TWh" for s in sizes]
+    sizes = [s/bus_size_factor*1e6 for s in sizes]
     
     legend_kw = dict(
         loc="upper left",
@@ -575,7 +605,6 @@ def plot_ch4_map(network):
         ax,
         sizes,
         labels,
-        scale=bus_size_factor/1e6,
         srid=n.srid,
         patch_kw=dict(facecolor='lightgrey'),
         legend_kw=legend_kw,
@@ -648,8 +677,8 @@ def plot_map_without(network):
     line_lower_threshold = 200.
     line_upper_threshold = 1e4
     linewidth_factor = 3e3
-    ac_color = "gray"
-    dc_color = "m"
+    ac_color = "rosybrown"
+    dc_color = "darkseagreen"
 
     # hack because impossible to drop buses...
     if "EU gas" in n.buses.index:
@@ -846,6 +875,8 @@ if __name__ == "__main__":
     overrides = override_component_attrs(snakemake.input.overrides)
     n = pypsa.Network(snakemake.input.network, override_component_attrs=overrides)
 
+    regions = gpd.read_file(snakemake.input.regions).set_index("name")
+
     map_opts = snakemake.config['plotting']['map']
 
     plot_map(n,
@@ -854,7 +885,7 @@ if __name__ == "__main__":
         transmission=False
     )
 
-    plot_h2_map(n)
+    plot_h2_map(n, regions)
     plot_ch4_map(n)
     plot_map_without(n)
 
