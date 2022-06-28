@@ -232,6 +232,7 @@ sector:
   marginal_cost_storage: 0. #1e-4
   methanation: true
   helmeth: true
+  coal_cc: false
   dac: true
   co2_vent: true
   SMR: true

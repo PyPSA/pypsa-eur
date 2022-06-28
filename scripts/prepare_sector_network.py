@@ -1118,6 +1118,24 @@ def add_storage_and_grids(n, costs):
             lifetime=costs.at['helmeth', 'lifetime']
         )
 
+    if options.get('coal_cc'):
+
+        n.madd("Link",
+            spatial.nodes,
+            suffix=" coal CC",
+            bus0=spatial.coal.nodes,
+            bus1=spatial.nodes,
+            bus2="co2 atmosphere",
+            bus3="co2 stored",
+            marginal_cost=costs.at['coal', 'efficiency'] * costs.at['coal', 'VOM'], #NB: VOM is per MWel
+            capital_cost=costs.at['coal', 'efficiency'] * costs.at['coal', 'fixed'] + costs.at['biomass CHP capture', 'fixed'] * costs.at['coal', 'CO2 intensity'], #NB: fixed cost is per MWel
+            p_nom_extendable=True,
+            carrier="coal",
+            efficiency=costs.at['coal', 'efficiency'],
+            efficiency2=costs.at['coal', 'CO2 intensity'] * (1 - costs.at['biomass CHP capture','capture_rate']),
+            efficiency3=costs.at['coal', 'CO2 intensity'] * costs.at['biomass CHP capture','capture_rate'],
+            lifetime=costs.at['coal','lifetime']
+        )
 
     if options['SMR']:
 
