@@ -104,7 +104,7 @@ def prepare_network(n, solve_opts):
     if load_shedding:
         n.add("Carrier", "load", color="#dd2e23", nice_name="Load shedding")
         buses_i = n.buses.query("carrier == 'AC'").index
-        if not np.isscalar(load_shedding): load_shedding = 1e2
+        if not np.isscalar(load_shedding): load_shedding = 1e2 # Eur/kWh
         # intersect between macroeconomic and surveybased
         # willingness to pay
         # http://journal.frontiersin.org/article/10.3389/fenrg.2015.00055/full)
