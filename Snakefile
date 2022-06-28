@@ -217,7 +217,8 @@ rule add_electricity:
         load='resources/load.csv',
         nuts3_shapes='resources/nuts3_shapes.geojson',
         **{f"profile_{tech}": f"resources/profile_{tech}.nc"
-           for tech in config['renewable']}
+           for tech in config['renewable']},
+        **{"conventional_{carrier}_{attrs}": fn for carrier in config.get('conventional', {None: {}}).values() for fn in carrier.values() if str(fn).startswith("data/")}, 
     output: "networks/elec.nc"
     log: "logs/add_electricity.log"
     benchmark: "benchmarks/add_electricity"

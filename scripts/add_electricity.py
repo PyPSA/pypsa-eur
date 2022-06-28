@@ -331,17 +331,20 @@ def attach_conventional_generators(n, costs, ppl, conventional_carriers, extenda
         
         # Generators with technology affected
         idx = n.generators.query("carrier == @carrier").index
-        factors = conventional_config[carrier].get("energy_availability_factors")
 
-        if isinstance(factors, float):
-            # Single value affecting all generators of technology k indiscriminantely of country
-            n.generators.loc[idx, "p_max_pu"] = factors
-        elif isinstance(factors, str):
-            factors = pd.read_csv(factors, index_col=0)['factor']
-            # Values affecting generators of technology k country-specific
-            # First map generator buses to countries; then map countries to p_max_pu
-            bus_factors = n.buses.country.map(factors)
-            n.generators.p_max_pu.update(n.generators.loc[idx].bus.map(bus_factors).dropna())
+        for key in list(set(conventional_carriers[carrier]) & set(n.generators)):
+
+            values = conventional_config[carrier][key]
+
+            if isinstance(values, str) and str(values).startswith("data/"):
+                # Values affecting generators of technology k country-specific
+                # First map generator buses to countries; then map countries to p_max_pu
+                values = pd.read_csv(values, index_col=0).iloc[:, 0]
+                bus_values = n.buses.country.map(values)
+                n.generators[key].update(n.generators.loc[idx].bus.map(bus_values).dropna())
+            else:
+                # Single value affecting all generators of technology k indiscriminantely of country
+                n.generators.loc[idx, key] = values
 
 
 
