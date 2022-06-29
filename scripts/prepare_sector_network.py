@@ -385,11 +385,13 @@ def add_carrier_buses(n, carrier, nodes=None):
 
     n.add("Carrier", carrier)
 
+    unit="MWh_LHV" if carrier=="gas" else "MWH_th"
+
     n.madd("Bus",
         nodes,
         location=location,
         carrier=carrier,
-        unit='MWh_th'
+        unit=unit
     )
 
     #capital cost could be corrected to e.g. 0.2 EUR/kWh * annuity and O&M
