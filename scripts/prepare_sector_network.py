@@ -385,7 +385,7 @@ def add_carrier_buses(n, carrier, nodes=None):
 
     n.add("Carrier", carrier)
 
-    unit="MWh_LHV" if carrier=="gas" else "MWH_th"
+    unit = "MWh_LHV" if carrier == "gas" else "MWh_th"
 
     n.madd("Bus",
         nodes,
