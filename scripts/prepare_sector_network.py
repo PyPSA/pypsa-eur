@@ -1285,7 +1285,7 @@ def add_land_transport(n, costs):
                 spatial.oil.nodes,
                 location=spatial.oil.locations,
                 carrier="oil",
-                unit="MWh_th"
+                unit="MWh_LHV"
             )
 
         ice_efficiency = options['transport_internal_combustion_efficiency']
@@ -1758,14 +1758,14 @@ def add_biomass(n, costs):
         spatial.gas.biogas,
         location=spatial.gas.locations,
         carrier="biogas",
-        unit="MWh_th"
+        unit="MWh_LHV"
     )
 
     n.madd("Bus",
         spatial.biomass.nodes,
         location=spatial.biomass.locations,
         carrier="solid biomass",
-        unit="MWh_th"
+        unit="MWh_LHV"
     )
 
     n.madd("Store",
@@ -1877,7 +1877,7 @@ def add_industry(n, costs):
         spatial.biomass.industry,
         location=spatial.biomass.locations,
         carrier="solid biomass for industry",
-        unit="MWh_th"
+        unit="MWh_LHV"
     )
 
     if options["biomass_transport"]:
@@ -2036,7 +2036,7 @@ def add_industry(n, costs):
             spatial.oil.nodes,
             location=spatial.oil.locations,
             carrier="oil",
-            unit="MWh_th"
+            unit="MWh_LHV"
         )
 
     if "oil" not in n.stores.carrier.unique():
