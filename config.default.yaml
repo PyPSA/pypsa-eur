@@ -17,25 +17,6 @@ scenario:
 
 countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK']
 
-clustering:
-  simplify_network:
-    to_substations: false # network is simplified to nodes with positive or negative power injection (i.e. substations or offwind connections)
-    algorithm: kmeans # choose from: [hac, kmeans]
-    feature: solar+onwind-time # only for hac. choose from: [solar+onwind-time, solar+onwind-cap, solar-time, solar-cap, solar+offwind-cap] etc.
-  cluster_network:
-    algorithm: kmeans
-    feature: solar+onwind-time
-  aggregation_strategies:
-    generators:
-      p_nom_max: sum # use "min" for more conservative assumptions
-      p_nom_min: sum
-      p_min_pu: mean
-      marginal_cost: mean
-      committable: any
-      ramp_limit_up: max
-      ramp_limit_down: max
-      efficiency: mean
-
 snapshots:
   start: "2013-01-01"
   end: "2014-01-01"
@@ -250,6 +231,25 @@ costs:
     battery inverter: 0.
   emission_prices: # in currency per tonne emission, only used with the option Ep
     co2: 0.
+
+clustering:
+  simplify_network:
+    to_substations: false # network is simplified to nodes with positive or negative power injection (i.e. substations or offwind connections)
+    algorithm: kmeans # choose from: [hac, kmeans]
+    feature: solar+onwind-time # only for hac. choose from: [solar+onwind-time, solar+onwind-cap, solar-time, solar-cap, solar+offwind-cap] etc.
+  cluster_network:
+    algorithm: kmeans
+    feature: solar+onwind-time
+  aggregation_strategies:
+    generators:
+      p_nom_max: sum # use "min" for more conservative assumptions
+      p_nom_min: sum
+      p_min_pu: mean
+      marginal_cost: mean
+      committable: any
+      ramp_limit_up: max
+      ramp_limit_down: max
+      efficiency: mean
 
 solving:
   options:
