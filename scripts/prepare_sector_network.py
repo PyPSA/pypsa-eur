@@ -2447,4 +2447,5 @@ if __name__ == "__main__":
     if options['electricity_grid_connection']:
         add_electricity_grid_connection(n, costs)
 
+    n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     n.export_to_netcdf(snakemake.output[0])
