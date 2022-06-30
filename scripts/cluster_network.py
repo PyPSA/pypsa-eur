@@ -393,7 +393,7 @@ def plot_busmap_for_n_clusters(n, n_clusters, fn=None):
 if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
-        snakemake = mock_snakemake('cluster_network', network='elec', simpl='', clusters='5')
+        snakemake = mock_snakemake('cluster_network', simpl='', clusters='5')
     configure_logging(snakemake)
 
     n = pypsa.Network(snakemake.input.network)
@@ -455,6 +455,7 @@ if __name__ == "__main__":
 
     update_p_nom_max(clustering.network)
 
+    clustering.network.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     clustering.network.export_to_netcdf(snakemake.output.network)
     for attr in ('busmap', 'linemap'): #also available: linemap_positive, linemap_negative
         getattr(clustering, attr).to_csv(snakemake.output[attr])
