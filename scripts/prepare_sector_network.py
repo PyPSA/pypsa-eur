@@ -2469,5 +2469,3 @@ if __name__ == "__main__":
         add_electricity_grid_connection(n, costs)
 
     n.export_to_netcdf(snakemake.output[0])
-
-# %%
