@@ -33,7 +33,7 @@ if __name__ == '__main__':
 
     urban_fraction = pd.read_csv(snakemake.input.urban_percent,
                                 header=None, index_col=0,
-                                names=['fraction'], squeeze=True) / 100.
+                                names=['fraction']).squeeze() / 100.
 
     # fill missing Balkans values
     missing = ["AL", "ME", "MK"]

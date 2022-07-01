@@ -1,0 +1,109 @@
+# SPDX-FileCopyrightText: : 2021 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: CC0-1.0
+
+name: CI
+
+# Caching method based on and described by:
+# epassaro (2021): https://dev.to/epassaro/caching-anaconda-environments-in-github-actions-5hde
+# and code in GitHub repo: https://github.com/epassaro/cache-conda-envs
+
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+    branches:
+    - master
+  schedule:
+    - cron: "0 5 * * TUE"
+
+env:
+  CONDA_CACHE_NUMBER: 1 # Change this value to manually reset the environment cache
+  DATA_CACHE_NUMBER: 1
+
+jobs:
+  build:
+
+    strategy:
+      matrix:
+        include:
+          # Matrix required to handle caching with Mambaforge
+          - os: ubuntu-latest
+            label: ubuntu-latest
+            prefix: /usr/share/miniconda3/envs/pypsa-eur
+
+          # - os: macos-latest
+          #   label: macos-latest
+          #   prefix: /Users/runner/miniconda3/envs/pypsa-eur
+
+          # - os: windows-latest
+          #   label: windows-latest
+          #   prefix: C:\Miniconda3\envs\pypsa-eur
+
+    name: ${{ matrix.label }}
+
+    runs-on: ${{ matrix.os }}
+    
+    defaults:
+      run:
+        shell: bash -l {0}
+        
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Clone pypsa-eur and technology-data repositories
+        run: |
+          git clone https://github.com/pypsa/pypsa-eur ../pypsa-eur
+          git clone https://github.com/pypsa/technology-data ../technology-data
+          cp ../pypsa-eur/test/config.test1.yaml ../pypsa-eur/config.yaml
+      
+      - name: Setup secrets
+        run: |
+          echo -ne "url: ${CDSAPI_URL}\nkey: ${CDSAPI_TOKEN}\n" > ~/.cdsapirc
+
+      - name: Add solver to environment
+        run: |
+          echo -e "  - coincbc\n  - ipopt<3.13.3" >> ../pypsa-eur/envs/environment.yaml
+
+      - name: Setup Mambaforge
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+            miniforge-variant: Mambaforge
+            miniforge-version: latest
+            activate-environment: pypsa-eur
+            use-mamba: true
+            
+      - name: Set cache dates
+        run: |
+          echo "DATE=$(date +'%Y%m%d')" >> $GITHUB_ENV
+          echo "WEEK=$(date +'%Y%U')" >> $GITHUB_ENV
+
+      - name: Cache data and cutouts folders
+        uses: actions/cache@v3
+        with:
+          path: |
+            data
+            ../pypsa-eur/cutouts
+            ../pypsa-eur/data
+          key: data-cutouts-${{ env.WEEK }}-${{ env.DATA_CACHE_NUMBER }}
+
+      - name: Create environment cache
+        uses: actions/cache@v2
+        id: cache
+        with:
+          path: ${{ matrix.prefix }}
+          key: ${{ matrix.label }}-conda-${{ env.DATE }}-${{ env.CONDA_CACHE_NUMBER }}
+
+      - name: Update environment due to outdated or unavailable cache
+        run: mamba env update -n pypsa-eur -f ../pypsa-eur/envs/environment.yaml
+        if: steps.cache.outputs.cache-hit != 'true'
+
+      - name: Test snakemake workflow
+        run: |
+          conda activate pypsa-eur
+          conda list
+          cp test/config.overnight.yaml config.yaml
+          snakemake -call
+          cp test/config.myopic.yaml config.yaml
+          snakemake -call

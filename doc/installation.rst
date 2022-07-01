@@ -68,14 +68,14 @@ Data requirements
 =================
 
 Small data files are included directly in the git repository, while
-larger ones are archived in a data bundle on zenodo (`10.5281/zenodo.5546517 <https://doi.org/10.5281/zenodo.5546517>`_).
+larger ones are archived in a data bundle on zenodo (`10.5281/zenodo.5824485 <https://doi.org/10.5281/zenodo.5824485>`_).
 The data bundle's size is around 640 MB.
 
 To download and extract the data bundle on the command line:
 
 .. code:: bash
 
-    projects/pypsa-eur-sec/data % wget "https://zenodo.org/record/5546517/files/pypsa-eur-sec-data-bundle.tar.gz"
+    projects/pypsa-eur-sec/data % wget "https://zenodo.org/record/5824485/files/pypsa-eur-sec-data-bundle.tar.gz"
     projects/pypsa-eur-sec/data % tar -xvzf pypsa-eur-sec-data-bundle.tar.gz
 
 
