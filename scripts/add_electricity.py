@@ -53,7 +53,7 @@ Inputs
         :scale: 34 %
 
 - ``data/geth2015_hydro_capacities.csv``: alternative to capacities above; not currently used!
-- ``resources/opsd_load.csv`` Hourly per-country load profiles.
+- ``resources/load.csv`` Hourly per-country load profiles.
 - ``resources/regions_onshore.geojson``: confer :ref:`busregions`
 - ``resources/nuts3_shapes.geojson``: confer :ref:`shapes`
 - ``resources/powerplants.csv``: confer :ref:`powerplants`
