@@ -28,7 +28,7 @@ The :ref:`tutorial` uses a smaller `data bundle <https://zenodo.org/record/35179
 
 **Outputs**
 
-- ``cutouts/bundle``: input data collected from various sources
+- ``data/bundle``: input data collected from various sources
 
 """
 
