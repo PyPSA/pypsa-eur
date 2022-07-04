@@ -28,7 +28,6 @@ Inputs
 
 - ``data/load_raw.csv``:
 
-
 Outputs
 -------
 
