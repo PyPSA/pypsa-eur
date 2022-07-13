@@ -92,6 +92,8 @@ Upcoming Release
 
 * Hierarchical clustering was introduced. Distance metric is calculated from renewable potentials on hourly (feature entry ends with `-time`) or annual (feature entry in config end with `-cap`) values.
 
+* Greedy modularity clustering was introduced. Distance metric is based on electrical distance taking into account the impedance of all transmission lines of the network.
+
 
 Synchronisation Release - Ukraine and Moldova (17th March 2022)
 ===============================================================
