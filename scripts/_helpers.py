@@ -237,7 +237,7 @@ def calculate_offwind_cost(WD, MW=12, no=54, D=236, HH=138, SP=343, DT=8):
     insurance=100
     finance_cost=100
     continences=50
-    capex=np.sum([wind_turbine_invest,wind_turbine_install, foundation_invest, foundation_install, array_cable, turbine_transport, insurance, finance_cost, continences])
+    capex=np.sum([wind_turbine_invest,wind_turbine_install, foundation_invest, foundation_install, array_cable, turbine_transport, insurance, finance_cost, continences])*1000 # in €/MW
     return capex
 
 def progress_retrieve(url, file):

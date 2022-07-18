@@ -36,6 +36,7 @@ enable:
   build_natura_raster: false
   retrieve_natura_raster: true
   custom_busmap: false
+  split_offshore_regions: True #splits big offshore regions into smaller regions
 
 electricity:
   voltages: [220., 300., 380.]
@@ -111,7 +112,7 @@ renewable:
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_2020ATB_12MW_offshore
-    capacity_per_sqkm: 2
+    capacity_per_sqkm: 2.5
     correction_factor: 0.8855
     # proxy for wake losses
     # from 10.1016/j.energy.2018.08.153
@@ -122,13 +123,13 @@ renewable:
     max_shore_distance: 30000
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
-    calculate_cost: true
+    calculate_topology_cost: true
   offwind-dc:
     cutout: europe-2013-era5
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_2020ATB_12MW_offshore
-    capacity_per_sqkm: 2
+    capacity_per_sqkm: 3.5 # from DEA
     correction_factor: 0.8855
     # proxy for wake losses
     # from 10.1016/j.energy.2018.08.153
@@ -136,10 +137,10 @@ renewable:
     corine: [44, 255]
     natura: true
     max_depth: 60
-    max_shore_distance: 30000
+    min_shore_distance: 30000
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
-    calculate_cost: true
+    calculate_topology_cost: true
   offwind-float:
     cutout: europe-2013-era5
     resource:

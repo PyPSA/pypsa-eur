@@ -114,10 +114,10 @@ def fill_shape_with_points(shape, oversize_factor, num=10):
         else:
             #perturb bounds that not the same points are added again
             num+=1
-            x_min += abs(x_max-x_min)/0.01
-            x_max -= abs(x_max-x_min)/0.01
-            y_min += abs(y_max-y_min)/0.01
-            y_max -= abs(y_max-y_min)/0.01
+            x_min += abs(x_max-x_min)*0.01
+            x_max -= abs(x_max-x_min)*0.01
+            y_min += abs(y_max-y_min)*0.01
+            y_max -= abs(y_max-y_min)*0.01
     return inner_points
 
 def build_voronoi_cells(shape, points):
@@ -189,9 +189,10 @@ if __name__ == "__main__":
                 'country': country
             })
         offshore_regions_c = offshore_regions_c.loc[offshore_regions_c.area > 1e-2]
-        split_offshore_regions=True
-        if split_offshore_regions:
-            threshold=1000 # km2
+        split_offshore_regions=snakemake.config["enable"].get('split_offshore_regions', False)
+        offshore_regions_c.drop_duplicates(subset="geometry", inplace=True) # some regions are duplicated
+        if not offshore_regions_c.empty and split_offshore_regions:
+            threshold=15000 #km2 threshold at which regions are splitted 
             region_oversize=offshore_regions_c.geometry.map(lambda x: calculate_area(x)/threshold)
             for bus, region in offshore_regions_c[region_oversize>1].iterrows():
                 shape=region.geometry
@@ -202,8 +203,8 @@ if __name__ == "__main__":
                 inner_regions.set_index(pd.Index([f"{bus}_{i}" for i in inner_regions.index], name="Bus"), inplace=True)
                 inner_regions['name']=inner_regions.index
                 inner_regions['country']=country
-                offshore_regions_c=offshore_regions_c.drop(bus).append(inner_regions)
-            
+                offshore_regions_c=pd.concat([offshore_regions_c.drop(bus),inner_regions])
+        offshore_regions_c["area"]=offshore_regions_c.geometry.apply(lambda x: calculate_area(x))    
         offshore_regions.append(offshore_regions_c)
 
     save_to_geojson(pd.concat(onshore_regions, ignore_index=True), snakemake.output.regions_onshore)
