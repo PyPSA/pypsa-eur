@@ -24,8 +24,12 @@ scenario:
     - ''
   sector_opts: # this is where the main scenario settings are
     - Co2L0-3H-T-H-B-I-A-solar+p3-dist1
-  # to really understand the options here, look in scripts/prepare_sector_network.py
-  # Co2Lx specifies the CO2 target in x% of the 1990 values; default will give default (5%);
+  # multiple scenarios can be run for e.g. parameter sweeps
+  # the scenario strings are used to modify the config.yaml file for each run
+  # scripts/generate_scenarios.py translates the strings into config.yaml changes
+  # scripts/prepare_sector_network.py translates the config.yaml into a network
+  # Co2Lx will override the carbon budgets for each planning horizon given below;
+  # Co2Lx specifies the CO2 target in x% of the 1990 values;
   # Co2L0p25 will give 25% CO2 emissions; Co2Lm0p05 will give 5% negative emissions
   # xH is the temporal resolution; 3H is 3-hourly, i.e. one snapshot every 3 hours
   # single letters are sectors: T for land transport, H for building heating,
@@ -62,6 +66,7 @@ snapshots:
   start: "2013-01-01"
   end: "2014-01-01"
   closed: left # end is not inclusive
+  temporal_resolution: 1H
 
 atlite:
   cutout: ../pypsa-eur/cutouts/europe-2013-era5.nc
@@ -142,8 +147,29 @@ existing_capacities:
     - oil
     - uranium
 
+renewable:
+  solar:
+    cost_factor: 1.
+    potential_factor: 1.
+  solar-rooftop:
+    cost_factor: 1.
+    potential_factor: 1.
+  onwind:
+    cost_factor: 1.
+    potential_factor: 1.
+  offwind-dc:
+    cost_factor: 1.
+    potential_factor: 1.
+  offwind-ac:
+    cost_factor: 1.
+    potential_factor: 1.
 
 sector:
+  transport: true
+  heating: true
+  biomass: true
+  industry: true
+  agriculture: true
   district_heating:
     potential: 0.6  # maximum fraction of urban demand which can be supplied by district heating
      # increase of today's district heating demand to potential maximum district heating share
@@ -250,6 +276,9 @@ sector:
   electricity_distribution_grid: true
   electricity_distribution_grid_cost_factor: 1.0  #multiplies cost in data/costs.csv
   electricity_grid_connection: true  # only applies to onshore wind and utility PV
+  electricity_transmission_network: true
+  line_extension_limit: false
+  line_extension_maximum: 10000.  # float in MW
   H2_network: true
   gas_network: false
   H2_retrofit: false  # if set to True existing gas pipes can be retrofitted to H2 pipes
@@ -263,7 +292,8 @@ sector:
   biomass_transport: false  # biomass transport between nodes
   conventional_generation: # generator : carrier
     OCGT: gas
-
+  wave: false   #include wave energy
+  wave_cost_factor: 1.0
 
 industry:
   St_primary_fraction: 0.3 # fraction of steel produced via primary route versus secondary route (scrap+EAF); today fraction is 0.6

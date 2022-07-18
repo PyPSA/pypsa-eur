@@ -6,7 +6,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 
-from prepare_sector_network import co2_emissions_year
+from generate_scenarios import co2_emissions_year
 
 #consolidate and rename
 def rename_techs(label):

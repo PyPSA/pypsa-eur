@@ -1,8 +1,8 @@
 # coding: utf-8
 
 import pypsa
-import re
 import os
+import yaml
 
 import pandas as pd
 import numpy as np
@@ -13,7 +13,6 @@ from itertools import product
 from scipy.stats import beta
 from vresutils.costdata import annuity
 
-from build_energy_totals import build_eea_co2, build_eurostat_co2, build_co2_totals
 from helper import override_component_attrs, generate_periodic_profiles
 
 from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentation
@@ -120,20 +119,20 @@ from types import SimpleNamespace
 spatial = SimpleNamespace()
 
 
-def emission_sectors_from_opts(opts):
+def emission_sectors():
 
     sectors = ["electricity"]
-    if "T" in opts:
+    if options["transport"]:
         sectors += [
             "rail non-elec",
             "road non-elec"
         ]
-    if "H" in opts:
+    if  options["heating"]:
         sectors += [
             "residential non-elec",
             "services non-elec"
         ]
-    if "I" in opts:
+    if  options["industry"]:
         sectors += [
             "industrial non-elec",
             "industrial processes",
@@ -142,7 +141,7 @@ def emission_sectors_from_opts(opts):
             "domestic navigation",
             "international navigation"
         ]
-    if "A" in opts:
+    if  options["agriculture"]:
         sectors += [
             "agriculture"
         ]
@@ -156,86 +155,6 @@ def get(item, investment_year=None):
         return item[investment_year]
     else:
         return item
-
-
-def co2_emissions_year(countries, opts, year):
-    """
-    Calculate CO2 emissions in one specific year (e.g. 1990 or 2018).
-    """
-
-    eea_co2 = build_eea_co2(year)
-
-    # TODO: read Eurostat data from year > 2014
-    # this only affects the estimation of CO2 emissions for BA, RS, AL, ME, MK
-    if year > 2014:
-        eurostat_co2 = build_eurostat_co2(year=2014)
-    else:
-        eurostat_co2 = build_eurostat_co2(year)
-
-    co2_totals = build_co2_totals(eea_co2, eurostat_co2)
-
-    sectors = emission_sectors_from_opts(opts)
-
-    co2_emissions = co2_totals.loc[countries, sectors].sum().sum()
-
-    # convert MtCO2 to GtCO2
-    co2_emissions *= 0.001
-
-    return co2_emissions
-
-
-# TODO: move to own rule with sector-opts wildcard?
-def build_carbon_budget(o, fn):
-    """
-    Distribute carbon budget following beta or exponential transition path.
-    """
-    # opts?
-
-    if "be" in o:
-        #beta decay
-        carbon_budget = float(o[o.find("cb")+2:o.find("be")])
-        be = float(o[o.find("be")+2:])
-    if "ex" in o:
-        #exponential decay
-        carbon_budget = float(o[o.find("cb")+2:o.find("ex")])
-        r = float(o[o.find("ex")+2:])
-
-    countries = n.buses.country.dropna().unique()
-
-    e_1990 = co2_emissions_year(countries, opts, year=1990)
-
-    #emissions at the beginning of the path (last year available 2018)
-    e_0 = co2_emissions_year(countries, opts, year=2018)
-
-    planning_horizons = snakemake.config['scenario']['planning_horizons']
-    t_0 = planning_horizons[0]
-
-    if "be" in o:
-
-        # final year in the path
-        t_f = t_0 + (2 * carbon_budget / e_0).round(0)
-
-        def beta_decay(t):
-            cdf_term = (t - t_0) / (t_f - t_0)
-            return (e_0 / e_1990) * (1 - beta.cdf(cdf_term, be, be))
-
-        #emissions (relative to 1990)
-        co2_cap = pd.Series({t: beta_decay(t) for t in planning_horizons}, name=o)
-
-    if "ex" in o:
-
-        T = carbon_budget / e_0
-        m = (1 + np.sqrt(1 + r * T)) / T
-
-        def exponential_decay(t):
-            return (e_0 / e_1990) * (1 + (m + r) * (t - t_0)) * np.exp(-m * (t - t_0))
-
-        co2_cap = pd.Series({t: exponential_decay(t) for t in planning_horizons}, name=o)
-
-    # TODO log in Snakefile
-    if not os.path.exists(fn):
-        os.makedirs(fn)
-    co2_cap.to_csv(fn, float_format='%.3f')
 
 
 def add_lifetime_wind_solar(n, costs):
@@ -554,7 +473,7 @@ def add_co2limit(n, Nyears=1., limit=0.):
 
     countries = n.buses.country.dropna().unique()
 
-    sectors = emission_sectors_from_opts(opts)
+    sectors = emission_sectors()
 
     # convert Mt to tCO2
     co2_totals = 1e6 * pd.read_csv(snakemake.input.co2_totals_name, index_col=0)
@@ -1598,10 +1517,7 @@ def add_heat(n, costs):
 
         # resample heat demand temporal 'heat_demand_r' depending on in config
         # specified temporal resolution, to not overestimate retrofitting
-        hours = list(filter(re.compile(r'^\d+h$', re.IGNORECASE).search, opts))
-        if len(hours)==0:
-            hours = [n.snapshots[1] - n.snapshots[0]]
-        heat_demand_r =  heat_demand.resample(hours[0]).mean()
+        heat_demand_r =  heat_demand.resample(config["snapshots"]["temporal_resolution"]).mean()
 
         # retrofitting data 'retro_data' with 'costs' [EUR/m^2] and heat
         # demand 'dE' [per unit of original heat demand] for each country and
@@ -1640,7 +1556,7 @@ def add_heat(n, costs):
             floor_area_node = ((pop_layout.loc[node].fraction
                                   * floor_area.loc[ct, "value"] * 10**6).loc[sec] * f)
             # total heat demand at node [MWh]
-            demand = (n.loads_t.p_set[name].resample(hours[0])
+            demand = (n.loads_t.p_set[name].resample(config["snapshots"]["temporal_resolution"])
                       .mean())
 
             # space heat demand at node [MWh]
@@ -2276,45 +2192,6 @@ def decentral(n):
     n.links.drop(n.links.index[n.links.carrier.isin(["DC", "B2B"])], inplace=True)
 
 
-def remove_h2_network(n):
-
-    n.links.drop(n.links.index[n.links.carrier.str.contains("H2 pipeline")], inplace=True)
-
-    if "EU H2 Store" in n.stores.index:
-        n.stores.drop("EU H2 Store", inplace=True)
-
-
-def maybe_adjust_costs_and_potentials(n, opts):
-
-    for o in opts:
-        if "+" not in o: continue
-        oo = o.split("+")
-        carrier_list = np.hstack((n.generators.carrier.unique(), n.links.carrier.unique(),
-                                n.stores.carrier.unique(), n.storage_units.carrier.unique()))
-        suptechs = map(lambda c: c.split("-", 2)[0], carrier_list)
-        if oo[0].startswith(tuple(suptechs)):
-            carrier = oo[0]
-            attr_lookup = {"p": "p_nom_max", "e": "e_nom_max", "c": "capital_cost"}
-            attr = attr_lookup[oo[1][0]]
-            factor = float(oo[1][1:])
-            #beware if factor is 0 and p_nom_max is np.inf, 0*np.inf is nan
-            if carrier == "AC":  # lines do not have carrier
-                n.lines[attr] *= factor
-            else:
-                if attr == 'p_nom_max':
-                    comps = {"Generator", "Link", "StorageUnit"}
-                elif attr == 'e_nom_max':
-                    comps = {"Store"}
-                else:
-                    comps = {"Generator", "Link", "StorageUnit", "Store"}
-                for c in n.iterate_components(comps):
-                    if carrier=='solar':
-                        sel = c.df.carrier.str.contains(carrier) & ~c.df.carrier.str.contains("solar rooftop")
-                    else:
-                        sel = c.df.carrier.str.contains(carrier)
-                    c.df.loc[sel,attr] *= factor
-            print("changing", attr , "for", carrier, "by factor", factor)
-
 
 # TODO this should rather be a config no wildcard
 def limit_individual_line_extension(n, maxext):
@@ -2339,9 +2216,10 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=snakemake.config['logging_level'])
 
-    options = snakemake.config["sector"]
+    with open(snakemake.input.config, "r") as input_file:
+        config = yaml.safe_load(input_file)
 
-    opts = snakemake.wildcards.sector_opts.split('-')
+    options = config["sector"]
 
     investment_year = int(snakemake.wildcards.planning_horizons[-4:])
 
@@ -2377,92 +2255,55 @@ if __name__ == "__main__":
 
     add_storage_and_grids(n, costs)
 
-    # TODO merge with opts cost adjustment below
-    for o in opts:
-        if o[:4] == "wave":
-            wave_cost_factor = float(o[4:].replace("p", ".").replace("m", "-"))
-            print("Including wave generators with cost factor of", wave_cost_factor)
-            add_wave(n, wave_cost_factor)
-        if o[:4] == "dist":
-            options['electricity_distribution_grid'] = True
-            options['electricity_distribution_grid_cost_factor'] = float(o[4:].replace("p", ".").replace("m", "-"))
-        if o == "biomasstransport":
-            options["biomass_transport"] = True
+    if options["wave"]:
+        print("Including wave generators with cost factor of", options["wave_cost_factor"])
+        add_wave(n, options["wave_cost_factor"])
 
-    if "nodistrict" in opts:
-        options["district_heating"]["progress"] = 0.0
-
-    if "T" in opts:
+    if options["transport"]:
         add_land_transport(n, costs)
 
-    if "H" in opts:
+    if options["heating"]:
         add_heat(n, costs)
 
-    if "B" in opts:
+    if options["biomass"]:
         add_biomass(n, costs)
 
-    if "I" in opts:
+    if options["industry"]:
         add_industry(n, costs)
 
-    if "I" in opts and "H" in opts:
+    if options["industry"] and options["heating"]:
         add_waste_heat(n)
 
-    if "A" in opts:  # requires H and I
+    if options["agriculture"]:  # requires H and I
         add_agriculture(n, costs)
 
     if options['dac']:
         add_dac(n, costs)
 
-    if "decentral" in opts:
+    if not options["electricity_transmission_network"]:
         decentral(n)
-
-    if "noH2network" in opts:
-        remove_h2_network(n)
 
     if options["co2_network"]:
         add_co2_network(n, costs)
 
-    for o in opts:
-        m = re.match(r'^\d+h$', o, re.IGNORECASE)
-        if m is not None:
-            n = average_every_nhours(n, m.group(0))
-            break
+    n = average_every_nhours(n, config["snapshots"]["temporal_resolution"])
 
-    limit_type = "config"
-    limit = get(snakemake.config["co2_budget"], investment_year)
-    for o in opts:
-        if not "cb" in o: continue
-        limit_type = "carbon budget"
-        fn = snakemake.config['results_dir'] + snakemake.config['run'] + '/csvs/carbon_budget_distribution.csv'
-        if not os.path.exists(fn):
-            build_carbon_budget(o, fn)
-        co2_cap = pd.read_csv(fn, index_col=0).squeeze()
-        limit = co2_cap[investment_year]
-        break
-    for o in opts:
-        if not "Co2L" in o: continue
-        limit_type = "wildcard"
-        limit = o[o.find("Co2L")+4:]
-        limit = float(limit.replace("p", ".").replace("m", "-"))
-        break
-    print("Add CO2 limit from", limit_type)
-    add_co2limit(n, Nyears, limit)
+    add_co2limit(n, Nyears, get(config["co2_budget"], investment_year))
 
-    for o in opts:
-        if not o[:10] == 'linemaxext': continue
-        maxext = float(o[10:]) * 1e3
-        limit_individual_line_extension(n, maxext)
-        break
+    if options["line_extension_limit"]:
+        limit_individual_line_extension(n, options["line_extension_maximum"])
 
     if options['electricity_distribution_grid']:
         insert_electricity_distribution_grid(n, costs)
-
-    maybe_adjust_costs_and_potentials(n, opts)
 
     if options['gas_distribution_grid']:
         insert_gas_distribution_costs(n, costs)
 
     if options['electricity_grid_connection']:
         add_electricity_grid_connection(n, costs)
+
+    for tech in config["renewable"]:
+        n.generators.loc[n.generators.carrier == tech, "p_nom_max"] *= config["renewable"][tech]["potential_factor"]
+        n.generators.loc[n.generators.carrier == tech, "capital_cost"] *= config["renewable"][tech]["cost_factor"]
 
     n.export_to_netcdf(snakemake.output[0])

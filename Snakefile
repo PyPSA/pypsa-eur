@@ -459,10 +459,21 @@ rule build_transport_demand:
     script: "scripts/build_transport_demand.py"
 
 
+rule generate_scenarios:
+    input:
+        config="config.yaml"
+    output:
+        config=SDIR + '/configs/config_{sector_opts}.yaml'
+    threads: 1
+    resources: mem_mb=1000
+    script: "scripts/generate_scenarios.py"
+
+
 rule prepare_sector_network:
     input:
         overrides="data/override_component_attrs",
         network=pypsaeur('networks/elec_s{simpl}_{clusters}_ec_lv{lv}_{opts}.nc'),
+        config=SDIR + '/configs/config_{sector_opts}.yaml',
         energy_totals_name='resources/energy_totals.csv',
         pop_weighted_energy_totals="resources/pop_weighted_energy_totals_s{simpl}_{clusters}.csv",
         transport_demand="resources/transport_demand_s{simpl}_{clusters}.csv",
