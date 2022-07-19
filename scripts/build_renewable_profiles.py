@@ -324,8 +324,8 @@ if __name__ == '__main__':
                 from rasterio.warp import Resampling
                 gebco=gebco.rename({"lon":"x", "lat":"y"})
                 water_depth=atlite.gis.regrid(gebco.elevation,cutout.data.x, cutout.data.y,resampling=Resampling.average)
-                water_depth=water_depth@availability
-                ds['water_depth'] = xr.DataArray(water_depth, [buses])
+                water_depth=(water_depth*availability.where(availability!=0)).mean(["x", "y"])
+                ds['water_depth'] = xr.DataArray(water_depth, [buses]).fillna(0).clip(max=0)
         logger.info('Calculate underwater fraction of connections.')
         offshore_shape = gpd.read_file(snakemake.input['offshore_shapes']).unary_union
         underwater_fraction = []
