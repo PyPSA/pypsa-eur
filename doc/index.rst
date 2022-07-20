@@ -33,17 +33,20 @@ waste management, agriculture, forestry and land use.
 **WARNING**: PyPSA-Eur-Sec is under active development and has several
 `limitations <https://pypsa-eur-sec.readthedocs.io/en/latest/limitations.html>`_ which
 you should understand before using the model. The github repository
-`issues <https://github.com/PyPSA/pypsa-eur-sec/issues>`_ collects known
-topics we are working on (please feel free to help or make suggestions). There is neither a full
-documentation nor a paper yet, but we hope to have a preprint out by mid-2022.
-We cannot support this model if you
-choose to use it.
-
+`issues <https://github.com/PyPSA/pypsa-eur-sec/issues>`_ collect known
+topics we are working on (please feel free to help or make suggestions).
+The `documentation <https://pypsa-eur-sec.readthedocs.io/>`_ remains somewhat
+patchy.
+We cannot support this model if you choose to use it.
 
 .. note::
-    More about the current model capabilities and preliminary results
-    can be found in `a recent presentation at EMP-E <https://nworbmot.org/energy/brown-empe.pdf>`_
-    and the following `paper in Joule with a description of the industry sector <https://arxiv.org/abs/2109.09563>`_.
+    You can find showcases of the model's capabilities in the
+    preprint `Benefits of a Hydrogen Network in Europe
+    <https://arxiv.org/abs/2207.05816>`_, a `paper in Joule with a
+    description of the industry sector
+    <https://arxiv.org/abs/2109.09563>`_, or in `a 2021 presentation
+    at EMP-E <https://nworbmot.org/energy/brown-empe.pdf>`_.
+
 
 This diagram gives an overview of the sectors and the links between
 them:
