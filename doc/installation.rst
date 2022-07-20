@@ -102,6 +102,8 @@ It might be the case that you can only retrieve solutions by using a commercial 
         conda activate pypsa-eur
         conda install -c conda-forge ipopt glpk
 
+.. warning::
+    On Windows, new versions of ``ipopt`` have caused problems. Consider downgrading to version 3.11.1.
 
 .. _defaultconfig:
 

@@ -189,6 +189,7 @@ import logging
 from pypsa.geo import haversine
 from shapely.geometry import LineString
 import time
+from dask.distributed import Client, LocalCluster
 
 from _helpers import configure_logging
 
@@ -216,9 +217,15 @@ if __name__ == '__main__':
     if correction_factor != 1.:
         logger.info(f'correction_factor is set as {correction_factor}')
 
-
+    cluster = LocalCluster(n_workers=nprocesses, threads_per_worker=1)
+    client = Client(cluster, asynchronous=True)
+ 
     cutout = atlite.Cutout(snakemake.input['cutout'])
-    regions = gpd.read_file(snakemake.input.regions).set_index('name').rename_axis('bus')
+    regions = gpd.read_file(snakemake.input.regions)
+    assert not regions.empty, (f"List of regions in {snakemake.input.regions} is empty, please "
+                               "disable the corresponding renewable technology")
+    # do not pull up, set_index does not work if geo dataframe is empty
+    regions = regions.set_index('name').rename_axis('bus')
     buses = regions.index
 
     excluder = atlite.ExclusionContainer(crs=3035, res=100)
@@ -266,7 +273,7 @@ if __name__ == '__main__':
 
     potential = capacity_per_sqkm * availability.sum('bus') * area
     func = getattr(cutout, resource.pop('method'))
-    resource['dask_kwargs'] = {'num_workers': nprocesses}
+    resource['dask_kwargs'] = {"scheduler": client}
     capacity_factor = correction_factor * func(capacity_factor=True, **resource)
     layout = capacity_factor * area * capacity_per_sqkm
     profile, capacities = func(matrix=availability.stack(spatial=['y','x']),

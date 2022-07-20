@@ -129,14 +129,15 @@ def eez(country_shapes, eez, country_list):
     df['name'] = df['ISO_3digit'].map(lambda c: _get_country('alpha_2', alpha_3=c))
     s = df.set_index('name').geometry.map(lambda s: _simplify_polys(s, filterremote=False))
     s = gpd.GeoSeries({k:v for k,v in s.iteritems() if v.distance(country_shapes[k]) < 1e-3})
+    s = s.to_frame("geometry")
     s.index.name = "name"
     return s
 
 
 def country_cover(country_shapes, eez_shapes=None):
-    shapes = list(country_shapes)
+    shapes = country_shapes
     if eez_shapes is not None:
-        shapes += list(eez_shapes)
+        shapes = pd.concat([shapes, eez_shapes])
 
     europe_shape = unary_union(shapes)
     if isinstance(europe_shape, MultiPolygon):
@@ -203,16 +204,6 @@ def nuts3(country_shapes, nuts3, nuts3pop, nuts3gdp, ch_cantons, ch_popgdp):
     return df
 
 
-def save_to_geojson(df, fn):
-    if os.path.exists(fn):
-        os.unlink(fn)
-    if not isinstance(df, gpd.GeoDataFrame):
-        df = gpd.GeoDataFrame(dict(geometry=df))
-    df = df.reset_index()
-    schema = {**gpd.io.file.infer_schema(df), 'geometry': 'Unknown'}
-    df.to_file(fn, driver='GeoJSON', schema=schema)
-
-
 if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
@@ -220,15 +211,14 @@ if __name__ == "__main__":
     configure_logging(snakemake)
 
     country_shapes = countries(snakemake.input.naturalearth, snakemake.config['countries'])
-    save_to_geojson(country_shapes, snakemake.output.country_shapes)
+    country_shapes.reset_index().to_file(snakemake.output.country_shapes)
 
     offshore_shapes = eez(country_shapes, snakemake.input.eez, snakemake.config['countries'])
-    save_to_geojson(offshore_shapes, snakemake.output.offshore_shapes)
+    offshore_shapes.reset_index().to_file(snakemake.output.offshore_shapes)
 
-    europe_shape = country_cover(country_shapes, offshore_shapes)
-    save_to_geojson(gpd.GeoSeries(europe_shape), snakemake.output.europe_shape)
+    europe_shape = gpd.GeoDataFrame(geometry=[country_cover(country_shapes, offshore_shapes.geometry)])
+    europe_shape.reset_index().to_file(snakemake.output.europe_shape)
 
     nuts3_shapes = nuts3(country_shapes, snakemake.input.nuts3, snakemake.input.nuts3pop,
                          snakemake.input.nuts3gdp, snakemake.input.ch_cantons, snakemake.input.ch_popgdp)
-
-    save_to_geojson(nuts3_shapes, snakemake.output.nuts3_shapes)
+    nuts3_shapes.reset_index().to_file(snakemake.output.nuts3_shapes)

@@ -16,7 +16,6 @@ configfile: "config.yaml"
 COSTS="data/costs.csv"
 ATLITE_NPROCESSES = config['atlite'].get('nprocesses', 4)
 
-
 wildcard_constraints:
     weather_year="[0-9]{4}|",
     simpl="[a-zA-Z0-9]*|all",
@@ -50,10 +49,10 @@ if config['enable'].get('prepare_links_p_nom', False):
         script: 'scripts/prepare_links_p_nom.py'
 
 
-datafiles = ['ch_cantons.csv', 'je-e-21.03.02.xls',
-            'eez/World_EEZ_v8_2014.shp', 'EIA_hydro_generation_2000_2014.csv',
-            'hydro_capacities.csv', 'naturalearth/ne_10m_admin_0_countries.shp',
-            'NUTS_2013_60M_SH/data/NUTS_RG_60M_2013.shp', 'nama_10r_3popgdp.tsv.gz',
+datafiles = ['ch_cantons.csv', 'je-e-21.03.02.xls', 
+            'eez/World_EEZ_v8_2014.shp', 
+            'hydro_capacities.csv', 'naturalearth/ne_10m_admin_0_countries.shp', 
+            'NUTS_2013_60M_SH/data/NUTS_RG_60M_2013.shp', 'nama_10r_3popgdp.tsv.gz', 
             'nama_10r_3gdp.tsv.gz', 'corine/g250_clc06_V18_5.tif']
 
 
@@ -201,7 +200,9 @@ rule build_renewable_profiles:
     input:
         base_network="networks/base.nc",
         corine="data/bundle/corine/g250_clc06_V18_5.tif",
-        natura="resources/natura.tiff",
+        natura=lambda w: ("resources/natura.tiff"
+                          if config["renewable"][w.technology]["natura"]
+                          else []),
         gebco=lambda w: ("data/bundle/GEBCO_2014_2D.nc"
                          if "max_depth" in config["renewable"][w.technology].keys()
                          else []),
@@ -224,7 +225,7 @@ rule build_renewable_profiles:
 rule build_hydro_profile:
     input:
         country_shapes='resources/country_shapes.geojson',
-        eia_hydro_generation='data/bundle/EIA_hydro_generation_2000_2014.csv',
+        eia_hydro_generation='data/eia_hydro_annual_generation.csv',
         cutout=f"cutouts/{config['renewable']['hydro']['cutout']}.nc" if "hydro" in config["renewable"] else "config['renewable']['hydro']['cutout'] not configured",
     output: 'resources/profile{weather_year}_hydro.nc'
     log: "logs/build_hydro_profile{weather_year}.log"
@@ -243,7 +244,8 @@ rule add_electricity:
         load='resources/load{weather_year}.csv',
         nuts3_shapes='resources/nuts3_shapes.geojson',
         **{f"profile_{tech}": "resources/profile{weather_year}_" + f"{tech}.nc"
-           for tech in config['renewable']}
+           for tech in config['renewable']},
+        **{f"conventional_{carrier}_{attr}": fn for carrier, d in config.get('conventional', {None: {}}).items() for attr, fn in d.items() if str(fn).startswith("data/")}, 
     output: "networks/elec{weather_year}.nc"
     log: "logs/add_electricity{weather_year}.log"
     benchmark: "benchmarks/add_electricity{weather_year}"
@@ -404,7 +406,7 @@ rule plot_summary:
 
 
 def input_plot_p_nom_max(w):
-    return [("networks/elec{weather_year}_s{simpl}{maybe_cluster}.nc"
+    return [("results/elec{weather_year}_s{simpl}{maybe_cluster}.nc"
              .format(maybe_cluster=('' if c == 'full' else ('_' + c)), **w))
             for c in w.clusts.split(",")]
 
