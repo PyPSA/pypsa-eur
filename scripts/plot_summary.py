@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 
 from prepare_sector_network import co2_emissions_year
+from helper import update_config_with_sector_opts
 
 #consolidate and rename
 def rename_techs(label):
@@ -437,7 +438,9 @@ if __name__ == "__main__":
     if 'snakemake' not in globals():
         from helper import mock_snakemake
         snakemake = mock_snakemake('plot_summary')
-        
+    
+    update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
+
     n_header = 4
 
     plot_costs()

@@ -1,7 +1,9 @@
 import os
+import yaml
 import pytz
 import pandas as pd
 from pathlib import Path
+from mergedeep import merge
 from pypsa.descriptors import Dict
 from pypsa.components import components, component_attrs
 
@@ -125,3 +127,17 @@ def generate_periodic_profiles(dt_index, nodes, weekly_profile, localize=None):
     week_df = week_df.tz_localize(localize)
 
     return week_df
+
+
+def parse(l):
+    if len(l) == 1:
+        return yaml.safe_load(l[0])
+    else:
+        return {l.pop(0): parse(l)}
+
+
+def update_config_with_sector_opts(config, sector_opts):
+    for o in sector_opts.split("-"):
+        if o.startswith("CF:"):
+            l = o.split(":")[1:]
+            merge(config, parse(l))

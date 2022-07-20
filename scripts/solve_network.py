@@ -11,7 +11,7 @@ from pypsa.linopf import network_lopf, ilopf
 
 from vresutils.benchmark import memory_logger
 
-from helper import override_component_attrs
+from helper import override_component_attrs, update_config_with_sector_opts
 
 import logging
 logger = logging.getLogger(__name__)
@@ -289,6 +289,8 @@ if __name__ == "__main__":
 
     logging.basicConfig(filename=snakemake.log.python,
                         level=snakemake.config['logging_level'])
+
+    update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
 
     tmpdir = snakemake.config['solving'].get('tmpdir')
     if tmpdir is not None:

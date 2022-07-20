@@ -14,7 +14,7 @@ from scipy.stats import beta
 from vresutils.costdata import annuity
 
 from build_energy_totals import build_eea_co2, build_eurostat_co2, build_co2_totals
-from helper import override_component_attrs, generate_periodic_profiles
+from helper import override_component_attrs, generate_periodic_profiles, update_config_with_sector_opts
 
 from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentation
 from networkx.algorithms import complement
@@ -2338,6 +2338,8 @@ if __name__ == "__main__":
         )
 
     logging.basicConfig(level=snakemake.config['logging_level'])
+
+    update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
 
     options = snakemake.config["sector"]
 
