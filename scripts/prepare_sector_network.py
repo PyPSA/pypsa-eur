@@ -1481,9 +1481,6 @@ def add_heat(n, costs):
                                "for 'decentral' and 'central' separately.")
                 tes_time_constant_days = options["tes_tau"] if name_type == "decentral" else 180.
 
-            # conversion from EUR/m^3 to EUR/MWh for 40 K diff and 1.17 kWh/m^3/K
-            capital_cost = costs.at[name_type + ' water tank storage', 'fixed'] / 0.00117 / 40
-
             n.madd("Store",
                 nodes[name] + f" {name} water tanks",
                 bus=nodes[name] + f" {name} water tanks",
@@ -1491,7 +1488,7 @@ def add_heat(n, costs):
                 e_nom_extendable=True,
                 carrier=name + " water tanks",
                 standing_loss=1 - np.exp(- 1 / 24 / tes_time_constant_days),
-                capital_cost=capital_cost,
+                capital_cost=costs.at[name_type + ' water tank storage', 'fixed'],
                 lifetime=costs.at[name_type + ' water tank storage', 'lifetime']
             )
 
