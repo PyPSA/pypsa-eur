@@ -220,7 +220,7 @@ if __name__ == "__main__":
     snapshots = pd.date_range(freq='h', **snapshots)
 
     fixed_year = snakemake.config["load"].get("fixed_year", False)
-    years = slice(fixed_year, fixed_year) if fixed_year else slice(snapshots[0], snapshots[-1])
+    years = slice(str(fixed_year), str(fixed_year)) if fixed_year else slice(snapshots[0], snapshots[-1])
 
     powerstatistics = snakemake.config['load']['power_statistics']
     interpolate_limit = snakemake.config['load']['interpolate_limit']
