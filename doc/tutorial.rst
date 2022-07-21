@@ -35,8 +35,8 @@ To run the tutorial, use this as your configuration file ``config.yaml``.
 
     .../pypsa-eur % cp config.tutorial.yaml config.yaml
 
-This configuration is set to download a reduced data set via the rules :mod:`retrieve_databundle`
-and :mod:`retrieve_cutout` totalling at less than 250 MB.
+This configuration is set to download a reduced data set via the rules :mod:`retrieve_databundle`,
+:mod:`retrieve_natura_raster`, :mod:`retrieve_cutout` totalling at less than 250 MB.
 The full set of data dependencies would consume 5.3 GB.
 For more information on the data dependencies of PyPSA-Eur, continue reading :ref:`data`.
 
@@ -47,7 +47,8 @@ The model can be adapted to only include selected countries (e.g. Belgium) inste
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 20
+   :start-at: countries:
+   :end-before: snapshots:
 
 Likewise, the example's temporal scope can be restricted (e.g. to a single month).
 
@@ -60,14 +61,14 @@ It is also possible to allow less or more carbon-dioxide emissions. Here, we lim
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 40,42
+   :lines: 35,37
 
 PyPSA-Eur also includes a database of existing conventional powerplants.
-We can select which types of powerplants we like to be included with fixed capacities:
+We can select which types of powerplants we like to be included:
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 40,56
+   :lines: 35,51
 
 To accurately model the temporal and spatial availability of renewables such as wind and solar energy, we rely on historical weather data.
 It is advisable to adapt the required range of coordinates to the selection of countries.
@@ -82,14 +83,14 @@ For example, we may want to use the ERA-5 dataset for solar and not the default 
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 67,110,111
+   :lines: 62,105,106
 
 Finally, it is possible to pick a solver. For instance, this tutorial uses the open-source solvers CBC and Ipopt and does not rely
 on the commercial solvers Gurobi or CPLEX (for which free academic licenses are available).
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 173,183,184
+   :lines: 187,197,198
 
 .. note::
 
@@ -284,4 +285,4 @@ The solved networks can be analysed just like any other PyPSA network (e.g. in J
 
     network = pypsa.Network("results/networks/elec_s_6_ec_lcopt_Co2L-24H.nc")
 
-For inspiration, read the `examples section in the PyPSA documentation <https://pypsa.readthedocs.io/en/latest/examples.html>`_.
+For inspiration, read the `examples section in the PyPSA documentation <https://pypsa.readthedocs.io/en/latest/examples-basic.html>`_.

@@ -42,7 +42,7 @@ Description
 """
 
 import logging
-from _helpers import configure_logging
+from _helpers import configure_logging, REGION_COLS
 
 import pypsa
 import os
@@ -53,13 +53,6 @@ from shapely.geometry import Polygon
 from scipy.spatial import Voronoi
 
 logger = logging.getLogger(__name__)
-
-
-def save_to_geojson(s, fn):
-    if os.path.exists(fn):
-        os.unlink(fn)
-    schema = {**gpd.io.file.infer_schema(s), 'geometry': 'Unknown'}
-    s.to_file(fn, driver='GeoJSON', schema=schema)
 
 
 def voronoi_partition_pts(points, outline):
@@ -120,7 +113,8 @@ if __name__ == "__main__":
     n = pypsa.Network(snakemake.input.base_network)
 
     country_shapes = gpd.read_file(snakemake.input.country_shapes).set_index('name')['geometry']
-    offshore_shapes = gpd.read_file(snakemake.input.offshore_shapes).set_index('name')['geometry']
+    offshore_shapes = gpd.read_file(snakemake.input.offshore_shapes)
+    offshore_shapes = offshore_shapes.reindex(columns=REGION_COLS).set_index('name')['geometry']
 
     onshore_regions = []
     offshore_regions = []
@@ -151,6 +145,8 @@ if __name__ == "__main__":
         offshore_regions_c = offshore_regions_c.loc[offshore_regions_c.area > 1e-2]
         offshore_regions.append(offshore_regions_c)
 
-    save_to_geojson(pd.concat(onshore_regions, ignore_index=True), snakemake.output.regions_onshore)
-
-    save_to_geojson(pd.concat(offshore_regions, ignore_index=True), snakemake.output.regions_offshore)
+    pd.concat(onshore_regions, ignore_index=True).to_file(snakemake.output.regions_onshore)
+    if offshore_regions:
+        pd.concat(offshore_regions, ignore_index=True).to_file(snakemake.output.regions_offshore)
+    else:
+        offshore_shapes.to_frame().to_file(snakemake.output.regions_offshore)

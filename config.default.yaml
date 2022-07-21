@@ -9,8 +9,6 @@ logging:
   level: INFO
   format: '%(levelname)s:%(name)s:%(message)s'
 
-summary_dir: results
-
 scenario:
   simpl: ['']
   ll: ['copt']
@@ -18,10 +16,6 @@ scenario:
   opts: [Co2L-3H]
 
 countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK']
-
-clustering:
-  simplify:
-    to_substations: false # network is simplified to nodes with positive or negative power injection (i.e. substations or offwind connections)
 
 snapshots:
   start: "2013-01-01"
@@ -34,33 +28,56 @@ enable:
   retrieve_cost_data: true
   build_cutout: false
   retrieve_cutout: true
+  build_natura_raster: false
+  retrieve_natura_raster: true
   custom_busmap: false
 
 electricity:
   voltages: [220., 300., 380.]
+  gaslimit: false # global gas usage limit of X MWh_th
   co2limit: 7.75e+7 # 0.05 * 3.1e9*0.5
   co2base: 1.487e+9
   agg_p_nom_limits: data/agg_p_nom_minmax.csv
 
-  extendable_carriers:
-    Generator: []
-    StorageUnit: [] # battery, H2
-    Store: [battery, H2]
-    Link: []
+  operational_reserve: # like https://genxproject.github.io/GenX/dev/core/#Reserves
+    activate: false
+    epsilon_load: 0.02 # share of total load
+    epsilon_vres: 0.02 # share of total renewable supply
+    contingency: 4000 # fixed capacity in MW
 
   max_hours:
     battery: 6
-    H2: 168
+    H2: 168 
 
-  powerplants_filter: false # use pandas query strings here, e.g. Country not in ['Germany']
-  custom_powerplants: false # use pandas query strings here, e.g. Country in ['Germany']
+  extendable_carriers:
+    Generator: [solar, onwind, offwind-ac, offwind-dc, OCGT]
+    StorageUnit: [] # battery, H2
+    Store: [battery, H2]
+    Link: [AC, DC]
+
+  # use pandas query strings here, e.g. Country not in ['Germany']
+  powerplants_filter: (DateOut >= 2022 or DateOut != DateOut)
+  # use pandas query strings here, e.g. Country in ['Germany']
+  custom_powerplants: false 
+
   conventional_carriers: [nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
-  renewable_capacities_from_OPSD: [] # onwind, offwind, solar
+  renewable_carriers: [solar, onwind, offwind-ac, offwind-dc, hydro]
 
-  # estimate_renewable_capacities_from_capacity_stats:
-  #   # Wind is the Fueltype in ppm.data.Capacity_stats, onwind, offwind-{ac,dc} the carrier in PyPSA-Eur
-  #   Wind: [onwind, offwind-ac, offwind-dc]
-  #   Solar: [solar]
+  estimate_renewable_capacities:
+    enable: true
+    # Add capacities from OPSD data
+    from_opsd: true
+    # Renewable capacities are based on existing capacities reported by IRENA
+    year: 2020
+    # Artificially limit maximum capacities to factor * (IRENA capacities),
+    # i.e. 110% of <years>'s capacities => expansion_limit: 1.1
+    # false: Use estimated renewable potentials determine by the workflow
+    expansion_limit: false
+    technology_mapping:
+      # Wind is the Fueltype in powerplantmatching, onwind, offwind-{ac,dc} the carrier in PyPSA-Eur
+      Offshore: [offwind-ac, offwind-dc]
+      Onshore: [onwind]
+      PV: [solar]
 
 atlite:
   nprocesses: 4
@@ -167,6 +184,10 @@ renewable:
     hydro_max_hours: "energy_capacity_totals_by_country" # one of energy_capacity_totals_by_country, estimate_by_large_installations or a float
     clip_min_inflow: 1.0
 
+conventional: 
+  nuclear:
+    p_max_pu: "data/nuclear_p_max_pu.csv" # float of file name
+
 lines:
   types:
     220.: "Al/St 240/40 2-bundle 220.0"
@@ -220,6 +241,25 @@ costs:
     battery inverter: 0.
   emission_prices: # in currency per tonne emission, only used with the option Ep
     co2: 0.
+
+clustering:
+  simplify_network:
+    to_substations: false # network is simplified to nodes with positive or negative power injection (i.e. substations or offwind connections)
+    algorithm: kmeans # choose from: [hac, kmeans]
+    feature: solar+onwind-time # only for hac. choose from: [solar+onwind-time, solar+onwind-cap, solar-time, solar-cap, solar+offwind-cap] etc.
+  cluster_network:
+    algorithm: kmeans
+    feature: solar+onwind-time
+  aggregation_strategies:
+    generators:
+      p_nom_max: sum # use "min" for more conservative assumptions
+      p_nom_min: sum
+      p_min_pu: mean
+      marginal_cost: mean
+      committable: any
+      ramp_limit_up: max
+      ramp_limit_down: max
+      efficiency: mean
 
 solving:
   options:

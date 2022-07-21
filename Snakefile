@@ -49,7 +49,7 @@ if config['enable'].get('prepare_links_p_nom', False):
 
 
 datafiles = ['ch_cantons.csv', 'je-e-21.03.02.xls', 
-            'eez/World_EEZ_v8_2014.shp', 'EIA_hydro_generation_2000_2014.csv', 
+            'eez/World_EEZ_v8_2014.shp', 
             'hydro_capacities.csv', 'naturalearth/ne_10m_admin_0_countries.shp', 
             'NUTS_2013_60M_SH/data/NUTS_RG_60M_2013.shp', 'nama_10r_3popgdp.tsv.gz', 
             'nama_10r_3gdp.tsv.gz', 'corine/g250_clc06_V18_5.tif']
@@ -64,12 +64,6 @@ if config['enable'].get('retrieve_databundle', True):
         output: expand('data/bundle/{file}', file=datafiles)
         log: "logs/retrieve_databundle.log"
         script: 'scripts/retrieve_databundle.py'
-
-
-rule retrieve_natura_data:
-    input: HTTP.remote("sdi.eea.europa.eu/datashare/s/H6QGCybMdLLnywo/download", additional_request_string="?path=%2FNatura2000_end2020_gpkg&files=Natura2000_end2020.gpkg", static=True)
-    output: "data/Natura2000_end2020.gpkg"
-    run: move(input[0], output[0])
 
 
 rule retrieve_load_data:
@@ -174,11 +168,28 @@ if config['enable'].get('retrieve_cost_data', True):
         output: COSTS
         run: move(input[0], output[0])
 
+if config['enable'].get('build_natura_raster', False):
+    rule build_natura_raster:
+        input:
+            natura="data/bundle/natura/Natura2000_end2015.shp",
+            cutouts=expand("cutouts/{cutouts}.nc", **config['atlite'])
+        output: "resources/natura.tiff"
+        log: "logs/build_natura_raster.log"
+        script: "scripts/build_natura_raster.py"
+
+
+if config['enable'].get('retrieve_natura_raster', True):
+    rule retrieve_natura_raster:
+        input: HTTP.remote("zenodo.org/record/4706686/files/natura.tiff", keep_local=True, static=True)
+        output: "resources/natura.tiff"
+        run: move(input[0], output[0])
+
+
 rule build_renewable_profiles:
     input:
         base_network="networks/base.nc",
         corine="data/bundle/corine/g250_clc06_V18_5.tif",
-        natura=lambda w: ("data/Natura2000_end2020.gpkg"
+        natura=lambda w: ("resources/natura.tiff"
                           if config["renewable"][w.technology]["natura"]
                           else []),
         gebco=lambda w: ("data/bundle/GEBCO_2014_2D.nc"
@@ -202,7 +213,7 @@ rule build_renewable_profiles:
 rule build_hydro_profile:
     input:
         country_shapes='resources/country_shapes.geojson',
-        eia_hydro_generation='data/bundle/EIA_hydro_generation_2000_2014.csv',
+        eia_hydro_generation='data/eia_hydro_annual_generation.csv',
         cutout=f"cutouts/{config['renewable']['hydro']['cutout']}.nc" if "hydro" in config["renewable"] else "config['renewable']['hydro']['cutout'] not configured",
     output: 'resources/profile_hydro.nc'
     log: "logs/build_hydro_profile.log"
@@ -221,7 +232,8 @@ rule add_electricity:
         load='resources/load.csv',
         nuts3_shapes='resources/nuts3_shapes.geojson',
         **{f"profile_{tech}": f"resources/profile_{tech}.nc"
-           for tech in config['renewable']}
+           for tech in config['renewable']},
+        **{f"conventional_{carrier}_{attr}": fn for carrier, d in config.get('conventional', {None: {}}).items() for attr, fn in d.items() if str(fn).startswith("data/")}, 
     output: "networks/elec.nc"
     log: "logs/add_electricity.log"
     benchmark: "benchmarks/add_electricity"
@@ -384,7 +396,7 @@ rule plot_summary:
 
 
 def input_plot_p_nom_max(w):
-    return [("networks/elec_s{simpl}{maybe_cluster}.nc"
+    return [("results/networks/elec_s{simpl}{maybe_cluster}.nc"
              .format(maybe_cluster=('' if c == 'full' else ('_' + c)), **w))
             for c in w.clusts.split(",")]
 

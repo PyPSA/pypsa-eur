@@ -9,7 +9,6 @@ logging:
   level: INFO
   format: '%(levelname)s:%(name)s:%(message)s'
 
-summary_dir: results
 
 scenario:
   simpl: ['']
@@ -18,10 +17,6 @@ scenario:
   opts: [Co2L-24H]
 
 countries: ['BE']
-
-clustering:
-  simplify:
-    to_substations: false # network is simplified to nodes with positive or negative power injection (i.e. substations or offwind connections)
 
 snapshots:
   start: "2013-03-01"
@@ -34,6 +29,8 @@ enable:
   retrieve_cost_data: true
   build_cutout: false
   retrieve_cutout: true
+  build_natura_raster: false
+  retrieve_natura_raster: true
   custom_busmap: false
 
 electricity:
@@ -78,7 +75,7 @@ renewable:
                    24, 25, 26, 27, 28, 29, 31, 32]
       distance: 1000
       distance_grid_codes: [1, 2, 3, 4, 5, 6]
-    natura: false
+    natura: true
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   offwind-ac:
@@ -89,7 +86,7 @@ renewable:
     capacity_per_sqkm: 3
     # correction_factor: 0.93
     corine: [44, 255]
-    natura: false
+    natura: true
     max_shore_distance: 30000
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
@@ -102,7 +99,7 @@ renewable:
     capacity_per_sqkm: 3
     # correction_factor: 0.93
     corine: [44, 255]
-    natura: false
+    natura: true
     min_shore_distance: 30000
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
@@ -124,7 +121,7 @@ renewable:
     # correction_factor: 0.854337
     corine: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
              14, 15, 16, 17, 18, 19, 20, 26, 31, 32]
-    natura: false
+    natura: true
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
 
@@ -177,6 +174,25 @@ costs:
     battery: 0.
   emission_prices: # in currency per tonne emission, only used with the option Ep
     co2: 0.
+
+clustering:
+  simplify_network:
+    to_substations: false # network is simplified to nodes with positive or negative power injection (i.e. substations or offwind connections)
+    algorithm: kmeans # choose from: [hac, kmeans]
+    feature: solar+onwind-time # only for hac. choose from: [solar+onwind-time, solar+onwind-cap, solar-time, solar-cap, solar+offwind-cap] etc.
+  cluster_network:
+    algorithm: kmeans
+    feature: solar+onwind-time
+  aggregation_strategies:
+    generators:
+      p_nom_max: sum # use "min" for more conservative assumptions
+      p_nom_min: sum
+      p_min_pu: mean
+      marginal_cost: mean
+      committable: any
+      ramp_limit_up: max
+      ramp_limit_down: max
+      efficiency: mean
 
 solving:
   options:
