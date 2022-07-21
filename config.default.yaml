@@ -52,7 +52,7 @@ electricity:
     Generator: [solar, onwind, offwind-ac, offwind-dc, OCGT]
     StorageUnit: [] # battery, H2
     Store: [battery, H2]
-    Link: [AC, DC]
+    Link: [] # H2 pipeline
 
   # use pandas query strings here, e.g. Country not in ['Germany']
   powerplants_filter: (DateOut >= 2022 or DateOut != DateOut)
