@@ -76,10 +76,32 @@ def get_eia_annual_hydro_generation(fn, countries):
     df = pd.read_csv(fn, skiprows=2, index_col=1, na_values=[u' ','--']).iloc[1:, 1:]
     df.index = df.index.str.strip()
 
+    former_countries = {
+        "Former Czechoslovakia": dict(
+            countries=["Czech Republic", "Slovakia"],
+            start=1980, end=1992),
+        "Former Serbia and Montenegro": dict(
+            countries=["Serbia", "Montenegro"],
+            start=1992, end=2005),
+        "Former Yugoslavia": dict(
+            countries=["Slovenia", "Croatia", "Bosnia and Herzegovina", "Serbia", "Montenegro", "North Macedonia"],
+            start=1980, end=1991),
+    }
+
+    for k, v in former_countries.items():
+        period = [str(i) for i in range(v["start"], v["end"]+1)]
+        ratio = df.loc[v['countries']].T.dropna().sum()
+        ratio /= ratio.sum()
+        for country in v['countries']:
+            df.loc[country, period] = df.loc[k, period] * ratio[country]
+
+    baltic_states = ["Latvia", "Estonia", "Lithuania"]
+    df.loc[baltic_states] = df.loc[baltic_states].T.fillna(df.loc[baltic_states].mean(axis=1)).T
+
     df.loc["Germany"] = df.filter(like='Germany', axis=0).sum()
-    df.loc["Serbia"] += df.loc["Kosovo"]
+    df.loc["Serbia"] += df.loc["Kosovo"].fillna(0.)
     df = df.loc[~df.index.str.contains('Former')]
-    df.drop(["Europe", "Germany, West", "Germany, East"], inplace=True)
+    df.drop(["Europe", "Germany, West", "Germany, East", "Kosovo"], inplace=True)
 
     df.index = cc.convert(df.index, to='iso2')
     df.index.name = 'countries'
