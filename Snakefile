@@ -97,6 +97,7 @@ rule build_clustered_population_layouts:
 
 rule build_simplified_population_layouts:
     input:
+        cutout=pypsaeur("cutouts/" + config['atlite']['cutout'] + ".nc"),
         pop_layout_total="resources/pop_layout_total{weather_year}.nc",
         pop_layout_urban="resources/pop_layout_urban{weather_year}.nc",
         pop_layout_rural="resources/pop_layout_rural{weather_year}.nc",
