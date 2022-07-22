@@ -11,9 +11,9 @@ if __name__ == '__main__':
         from helper import mock_snakemake
         snakemake = mock_snakemake(
             'build_heat_demands',
-            weather_year='',
+            weather_year='1969',
             simpl='',
-            clusters=48,
+            clusters=37,
         )
 
     cutout_name = snakemake.input.cutout
@@ -25,7 +25,7 @@ if __name__ == '__main__':
     else:
         snapshots = snakemake.config['snapshots']
     
-    time = pd.date_range(freq='m', **snapshots)
+    time = pd.date_range(freq='h', **snapshots)
     if snakemake.config["atlite"].get("drop_leap_day", False):
         time = time[~((time.month == 2) & (time.day == 29))]
 

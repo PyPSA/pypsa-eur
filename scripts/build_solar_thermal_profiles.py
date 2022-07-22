@@ -27,7 +27,7 @@ if __name__ == '__main__':
     else:
         snapshots = snakemake.config['snapshots']
     
-    time = pd.date_range(freq='m', **snapshots)
+    time = pd.date_range(freq='h', **snapshots)
     if snakemake.config["atlite"].get("drop_leap_day", False):
         time = time[~((time.month == 2) & (time.day == 29))]
 
