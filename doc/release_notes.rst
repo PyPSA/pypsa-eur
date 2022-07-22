@@ -92,6 +92,11 @@ Upcoming Release
 
 * Hierarchical clustering was introduced. Distance metric is calculated from renewable potentials on hourly (feature entry ends with `-time`) or annual (feature entry in config end with `-cap`) values.
 
+* Techno-economic parameters of technologies (e.g. costs and efficiencies) will now be retrieved from a separate repository `PyPSA/technology-data <https://github.com/pypsa/technology-data>`_ 
+  that collects assumptions from a variety of sources. It is activated by default with ``enable: retrieve_cost_data: true`` and controlled with ``costs: year:`` and ``costs: version:``. 
+  The location of this data changed from ``data/costs.csv`` to ``resources/costs.csv`` 
+  [`#184 <https://github.com/PyPSA/pypsa-eur/pull/184>`_].
+
 
 Synchronisation Release - Ukraine and Moldova (17th March 2022)
 ===============================================================
@@ -242,7 +247,6 @@ PyPSA-Eur 0.4.0 (22th September 2021)
 * Propagate the solver log file name to the solver. Previously, the
   PyPSA network solving functions were not told about the solver logfile specified
   in the Snakemake file [`#247 <https://github.com/PyPSA/pypsa-eur/pull/247>`_]
-
 
 PyPSA-Eur 0.3.0 (7th December 2020)
 ===================================

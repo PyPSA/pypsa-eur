@@ -13,7 +13,7 @@ Relevant Settings
 
     costs:
         year:
-        USD2013_to_EUR2013:
+        version:
         dicountrate:
         emission_prices:
 
@@ -32,7 +32,7 @@ Relevant Settings
 Inputs
 ------
 
-- ``data/costs.csv``: The database of cost assumptions for all included technologies for specific years from various sources; e.g. discount rate, lifetime, investment (CAPEX), fixed operation and maintenance (FOM), variable operation and maintenance (VOM), fuel costs, efficiency, carbon-dioxide intensity.
+- ``resources/costs.csv``: The database of cost assumptions for all included technologies for specific years from various sources; e.g. discount rate, lifetime, investment (CAPEX), fixed operation and maintenance (FOM), variable operation and maintenance (VOM), fuel costs, efficiency, carbon-dioxide intensity.
 
 Outputs
 -------
@@ -76,16 +76,19 @@ def attach_storageunits(n, costs, elec_opts):
     lookup_dispatch = {"H2": "fuel cell", "battery": "battery inverter"}
 
     for carrier in carriers:
+        roundtrip_correction = 0.5 if carrier == "battery" else 1
+        
         n.madd("StorageUnit", buses_i, ' ' + carrier,
                bus=buses_i,
                carrier=carrier,
                p_nom_extendable=True,
                capital_cost=costs.at[carrier, 'capital_cost'],
                marginal_cost=costs.at[carrier, 'marginal_cost'],
-               efficiency_store=costs.at[lookup_store[carrier], 'efficiency'],
-               efficiency_dispatch=costs.at[lookup_dispatch[carrier], 'efficiency'],
+               efficiency_store=costs.at[lookup_store[carrier], 'efficiency']**roundtrip_correction,
+               efficiency_dispatch=costs.at[lookup_dispatch[carrier], 'efficiency']**roundtrip_correction,
                max_hours=max_hours[carrier],
-               cyclic_state_of_charge=True)
+               cyclic_state_of_charge=True
+        )
 
 
 def attach_stores(n, costs, elec_opts):
@@ -104,7 +107,7 @@ def attach_stores(n, costs, elec_opts):
                carrier='H2',
                e_nom_extendable=True,
                e_cyclic=True,
-               capital_cost=costs.at["hydrogen storage", "capital_cost"])
+               capital_cost=costs.at["hydrogen storage underground", "capital_cost"])
 
         n.madd("Link", h2_buses_i + " Electrolysis",
                bus0=buses_i,
@@ -140,7 +143,8 @@ def attach_stores(n, costs, elec_opts):
                bus0=buses_i,
                bus1=b_buses_i,
                carrier='battery charger',
-               efficiency=costs.at['battery inverter', 'efficiency'],
+               # the efficiencies are "round trip efficiencies"
+               efficiency=costs.at['battery inverter', 'efficiency']**0.5,
                capital_cost=costs.at['battery inverter', 'capital_cost'],
                p_nom_extendable=True,
                marginal_cost=costs.at["battery inverter", "marginal_cost"])
@@ -149,7 +153,7 @@ def attach_stores(n, costs, elec_opts):
                bus0=b_buses_i,
                bus1=buses_i,
                carrier='battery discharger',
-               efficiency=costs.at['battery inverter','efficiency'],
+               efficiency=costs.at['battery inverter','efficiency']**0.5,
                p_nom_extendable=True,
                marginal_cost=costs.at["battery inverter", "marginal_cost"])
 

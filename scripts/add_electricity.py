@@ -13,7 +13,7 @@ Relevant Settings
 
     costs:
         year:
-        USD2013_to_EUR2013:
+        version:
         dicountrate:
         emission_prices:
 
@@ -46,7 +46,7 @@ Relevant Settings
 Inputs
 ------
 
-- ``data/costs.csv``: The database of cost assumptions for all included technologies for specific years from various sources; e.g. discount rate, lifetime, investment (CAPEX), fixed operation and maintenance (FOM), variable operation and maintenance (VOM), fuel costs, efficiency, carbon-dioxide intensity.
+- ``resources/costs.csv``: The database of cost assumptions for all included technologies for specific years from various sources; e.g. discount rate, lifetime, investment (CAPEX), fixed operation and maintenance (FOM), variable operation and maintenance (VOM), fuel costs, efficiency, carbon-dioxide intensity.
 - ``data/bundle/hydro_capacities.csv``: Hydropower plant store/discharge power capacities, energy storage capacity, and average hourly inflow by country.
 
     .. image:: ../img/hydrocapacities.png
@@ -94,7 +94,6 @@ import geopandas as gpd
 
 import powerplantmatching as pm
 from powerplantmatching.export import map_country_bus
-
 from vresutils import transfer as vtransfer
 
 idx = pd.IndexSlice
@@ -132,23 +131,14 @@ def _add_missing_carriers_from_costs(n, costs, carriers):
 def load_costs(tech_costs, config, elec_config, Nyears=1.):
 
     # set all asset costs and other parameters
-    costs = pd.read_csv(tech_costs, index_col=list(range(3))).sort_index()
+    costs = pd.read_csv(tech_costs, index_col=[0,1]).sort_index()
 
-    # correct units to MW and EUR
+    # correct units to MW
     costs.loc[costs.unit.str.contains("/kW"),"value"] *= 1e3
-    costs.loc[costs.unit.str.contains("USD"),"value"] *= config['USD2013_to_EUR2013']
+    costs.unit = costs.unit.str.replace("/kW", "/MW")
 
-    costs = (costs.loc[idx[:,config['year'],:], "value"]
-             .unstack(level=2).groupby("technology").sum(min_count=1))
-
-    costs = costs.fillna({"CO2 intensity" : 0,
-                          "FOM" : 0,
-                          "VOM" : 0,
-                          "discount rate" : config['discountrate'],
-                          "efficiency" : 1,
-                          "fuel" : 0,
-                          "investment" : 0,
-                          "lifetime" : 25})
+    fill_values = config["fill_values"]
+    costs = costs.value.unstack().fillna(fill_values)
 
     costs["capital_cost"] = ((calculate_annuity(costs["lifetime"], costs["discount rate"]) +
                              costs["FOM"]/100.) *
@@ -164,8 +154,8 @@ def load_costs(tech_costs, config, elec_config, Nyears=1.):
     costs.at['OCGT', 'co2_emissions'] = costs.at['gas', 'co2_emissions']
     costs.at['CCGT', 'co2_emissions'] = costs.at['gas', 'co2_emissions']
 
-    costs.at['solar', 'capital_cost'] = 0.5*(costs.at['solar-rooftop', 'capital_cost'] +
-                                             costs.at['solar-utility', 'capital_cost'])
+    costs.at['solar', 'capital_cost'] = config["rooftop_share"] * costs.at['solar-rooftop', 'capital_cost'] + \
+                                        (1-config["rooftop_share"]) * costs.at['solar-utility', 'capital_cost']
 
     def costs_for_storage(store, link1, link2=None, max_hours=1.):
         capital_cost = link1['capital_cost'] + max_hours * store['capital_cost']
@@ -180,7 +170,7 @@ def load_costs(tech_costs, config, elec_config, Nyears=1.):
         costs_for_storage(costs.loc["battery storage"], costs.loc["battery inverter"],
                           max_hours=max_hours['battery'])
     costs.loc["H2"] = \
-        costs_for_storage(costs.loc["hydrogen storage"], costs.loc["fuel cell"],
+        costs_for_storage(costs.loc["hydrogen storage underground"], costs.loc["fuel cell"],
                           costs.loc["electrolysis"], max_hours=max_hours['H2'])
 
     for attr in ('marginal_cost', 'capital_cost'):
