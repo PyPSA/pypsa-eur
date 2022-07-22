@@ -154,7 +154,7 @@ if config['enable'].get('build_cutout', False):
         input: 
             regions_onshore="resources/regions_onshore.geojson",
             regions_offshore="resources/regions_offshore.geojson"
-        output: "cutouts/{cutout}.nc"
+        output: protected("cutouts/{cutout}.nc")
         log: "logs/build_cutout/{cutout}.log"
         benchmark: "benchmarks/build_cutout_{cutout}"
         threads: ATLITE_NPROCESSES
@@ -163,7 +163,7 @@ if config['enable'].get('build_cutout', False):
 
     rule build_cutout_year:
         input: rules.build_cutout.input
-        output: "cutouts/{cutout}-{weather_year}.nc"
+        output: protected("cutouts/{cutout}-{weather_year}.nc")
         log: "logs/build_cutout/{cutout}-{weather_year}.log"
         benchmark: "benchmarks/build_cutout_{cutout}-{weather_year}"
         threads: ATLITE_NPROCESSES
@@ -226,6 +226,8 @@ rule build_hydro_profile:
     input:
         country_shapes='resources/country_shapes.geojson',
         eia_hydro_generation='data/eia_hydro_annual_generation.csv',
+        eia_hydro_capacity='data/eia_hydro_annual_capacity.csv',
+        era5_runoff='data/era5-annual-runoff-per-country.csv',
         cutout=f"cutouts/{config['renewable']['hydro']['cutout']}.nc" if "hydro" in config["renewable"] else "config['renewable']['hydro']['cutout'] not configured",
     output: 'resources/profile{weather_year}_hydro.nc'
     log: "logs/build_hydro_profile{weather_year}.log"

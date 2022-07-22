@@ -39,6 +39,7 @@ dependencies:
   - proj
   - fiona <= 1.18.20  # Till issue https://github.com/Toblerity/Fiona/issues/1085 is not solved
   - country_converter
+  - scikit-learn
 
   # Keep in conda environment when calling ipython
   - ipython
