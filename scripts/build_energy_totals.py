@@ -717,5 +717,6 @@ if __name__ == "__main__":
     co2 = build_co2_totals(countries, eea_co2, eurostat_co2)
     co2.to_csv(snakemake.output.co2_name)
 
-    transport = build_transport_data(countries, population, idees)
+    idees_transport = idees.xs(data_year, level='year')
+    transport = build_transport_data(countries, population, idees_transport)
     transport.to_csv(snakemake.output.transport_name)
