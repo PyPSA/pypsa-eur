@@ -17,55 +17,6 @@ def reverse(dictionary):
     """reverses a keys and values of a dictionary"""
     return {v: k for k, v in dictionary.items()}
 
-
-# translations for Eurostat
-eurostat_country_to_alpha2 = {
-    "EU28": "EU",
-    "EA19": "EA",
-    "Belgium": "BE",
-    "Bulgaria": "BG",
-    "Czech Republic": "CZ",
-    "Denmark": "DK",
-    "Germany": "DE",
-    "Estonia": "EE",
-    "Ireland": "IE",
-    "Greece": "GR",
-    "Spain": "ES",
-    "France": "FR",
-    "Croatia": "HR",
-    "Italy": "IT",
-    "Cyprus": "CY",
-    "Latvia": "LV",
-    "Lithuania": "LT",
-    "Luxembourg": "LU",
-    "Hungary": "HU",
-    "Malta": "MA",
-    "Netherlands": "NL",
-    "Austria": "AT",
-    "Poland": "PL",
-    "Portugal": "PT",
-    "Romania": "RO",
-    "Slovenia": "SI",
-    "Slovakia": "SK",
-    "Finland": "FI",
-    "Sweden": "SE",
-    "United Kingdom": "GB",
-    "Iceland": "IS",
-    "Norway": "NO",
-    "Montenegro": "ME",
-    "FYR of Macedonia": "MK",
-    "Albania": "AL",
-    "Serbia": "RS",
-    "Turkey": "TU",
-    "Bosnia and Herzegovina": "BA",
-    "Kosovo\n(UNSCR 1244/99)": "KO",  # 2017 version
-    # 2016 version
-    "Kosovo\n(under United Nations Security Council Resolution 1244/99)": "KO",
-    "Moldova": "MO",
-    "Ukraine": "UK",
-    "Switzerland": "CH",
-}
-
 non_EU = ["NO", "CH", "ME", "MK", "RS", "BA", "AL"]
 
 idees_rename = {"GR": "EL", "GB": "UK"}
@@ -127,47 +78,68 @@ to_ipcc = {
 }
 
 
-def build_eurostat(countries, year):
-    """Return multi-index for all countries' energy data in TWh/a."""
+def eurostat_per_country(country):
+    
+    country_fn = idees_rename.get(country, country)
+    fn = snakemake.input.eurostat + f"/{country_fn}-Energy-balance-sheets-June-2021-edition.xlsb"
 
-    report_year = snakemake.config["energy"]["eurostat_report_year"]
-    filenames = {
-        2016: f"/{year}-Energy-Balances-June2016edition.xlsx",
-        2017: f"/{year}-ENERGY-BALANCES-June2017edition.xlsx"
-    }
-
-    dfs = pd.read_excel(
-        snakemake.input.eurostat + filenames[report_year],
+    df = pd.read_excel(
+        fn,
         sheet_name=None,
-        skiprows=1,
-        index_col=list(range(4)),
+        skiprows=4,
+        index_col=list(range(3)),
+        na_values=["+", "-", "=", "Z", ":"],
     )
 
-    # sorted_index necessary for slicing
-    lookup = eurostat_country_to_alpha2
-    labelled_dfs = {lookup[df.columns[0]]: df
-                    for df in dfs.values()
-                    if lookup[df.columns[0]] in countries}
-    df = pd.concat(labelled_dfs, sort=True).sort_index()
+    df.pop("Cover")
 
-    # drop non-numeric and country columns
-    non_numeric_cols = df.columns[df.dtypes != float]
-    country_cols = df.columns.intersection(lookup.keys())
-    to_drop = non_numeric_cols.union(country_cols)
-    df.drop(to_drop, axis=1, inplace=True)
+    return pd.concat(df)
+
+
+def build_eurostat(countries, year=None):
+    """Return multi-index for all countries' energy data in TWh/a."""
+
+    nprocesses = snakemake.threads
+    tqdm_kwargs = dict(ascii=False, unit=' country', total=len(countries),
+                    desc='Build from eurostat database')
+    with mp.Pool(processes=nprocesses) as pool:
+        dfs = list(tqdm(pool.imap(eurostat_per_country, countries), **tqdm_kwargs))
+
+    index_names = ['country', 'year', 'lvl1', 'lvl2', 'lvl3']
+    df = pd.concat(dfs, keys=countries, names=index_names)
+
+    df.dropna(how='all', axis=0, inplace=True)
+    df.dropna(how='all', axis=1, inplace=True)
+    df = df[df.index.get_level_values('lvl1') != 'ktoe']
+
+    i = df.index.to_frame(index=False)
+    i.loc[i.lvl2 == 'Primary production', ['lvl1', 'lvl3']] = 'Main'
+    i.loc[i.lvl2 == 'Gross electricity production', 'lvl1'] = "Gross production"
+    i.ffill(inplace=True)
+    df.index = pd.MultiIndex.from_frame(i)
+
+    df.drop(list(range(1990, 2020)), axis=1, inplace=True)
+    df.drop("Unnamed: 7", axis=1, inplace=True)
+    df.fillna(0., inplace=True)
 
     # convert ktoe/a to TWh/a
     df *= 11.63 / 1e3
 
+    if year:
+        df = df.xs(str(year), level='year')
+
     return df
 
 
-def build_swiss(year):
+def build_swiss(year=None):
     """Return a pd.Series of Swiss energy data in TWh/a"""
 
     fn = snakemake.input.swiss
 
-    df = pd.read_csv(fn, index_col=[0,1]).loc["CH", str(year)]
+    df = pd.read_csv(fn, index_col=[0,1]).loc["CH"]
+
+    if year:
+        df = df[str(year)]
 
     # convert PJ/a to TWh/a
     df /= 3.6
@@ -406,8 +378,17 @@ def build_idees(countries, year):
 
 def build_energy_totals(countries, eurostat, swiss, idees):
 
-    eurostat_fuels = {"electricity": "Electricity",
-                      "total": "Total all products"}
+    eurostat_fuels = dict(
+        electricity="Electricity",
+        total="Total"
+    )
+
+    eurostat_sectors = dict(
+        residential="Households",
+        services="Commercial & public services",
+        road="Road",
+        rail="Rail"
+    )
 
     to_drop = ["passenger cars", "passenger car efficiency"]
     df = idees.reindex(countries).drop(to_drop, axis=1)
@@ -417,8 +398,8 @@ def build_energy_totals(countries, eurostat, swiss, idees):
 
     # add international navigation
 
-    slicer = idx[in_eurostat, :, "Bunkers", :]
-    fill_values = eurostat.loc[slicer, "Total all products"].groupby(level=0).sum()
+    slicer = idx[in_eurostat, :, "International maritime bunkers", :]
+    fill_values = eurostat.loc[slicer, "Total"].groupby(level=0).sum()
     df.loc[in_eurostat, "total international navigation"] = fill_values
 
     # add swiss energy data
@@ -434,12 +415,10 @@ def build_energy_totals(countries, eurostat, swiss, idees):
 
     for sector in ["residential", "services", "road", "rail"]:
 
-        eurostat_sector = sector.capitalize()
-
         # fuel use
 
         for fuel in ["electricity", "total"]:
-            slicer = idx[to_fill, :, :, eurostat_sector]
+            slicer = idx[to_fill, :, :, eurostat_sectors[sector]]
             fill_values = eurostat.loc[slicer, eurostat_fuels[fuel]].groupby(level=0).sum()
             df.loc[to_fill, f"{fuel} {sector}"] = fill_values
 
@@ -489,17 +468,17 @@ def build_energy_totals(countries, eurostat, swiss, idees):
     # Missing aviation
 
     slicer = idx[to_fill, :, :, "Domestic aviation"]
-    fill_values = eurostat.loc[slicer, "Total all products"].groupby(level=0).sum()
+    fill_values = eurostat.loc[slicer, "Total"].groupby(level=0).sum()
     df.loc[to_fill, "total domestic aviation"] = fill_values
 
-    slicer = idx[to_fill, :, :, "International aviation"]
-    fill_values = eurostat.loc[slicer, "Total all products"].groupby(level=0).sum()
+    slicer = idx[to_fill, :, "International aviation", :]
+    fill_values = eurostat.loc[slicer, "Total"].groupby(level=0).sum()
     df.loc[to_fill, "total international aviation"] = fill_values
 
     # missing domestic navigation
 
-    slicer = idx[to_fill, :, :, "Domestic Navigation"]
-    fill_values = eurostat.loc[slicer, "Total all products"].groupby(level=0).sum()
+    slicer = idx[to_fill, :, :, "Domestic navigation"]
+    fill_values = eurostat.loc[slicer, "Total"].groupby(level=0).sum()
     df.loc[to_fill, "total domestic navigation"] = fill_values
 
     # split road traffic for non-IDEES
@@ -702,7 +681,7 @@ if __name__ == "__main__":
     idees_countries = countries.intersection(eu28)
 
     data_year = config["energy_totals_year"]
-    eurostat = build_eurostat(countries, data_year)
+    eurostat = build_eurostat(countries.difference(['CH']), data_year)
     swiss = build_swiss(data_year)
     idees = build_idees(idees_countries, data_year)
 

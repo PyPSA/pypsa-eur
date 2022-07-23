@@ -54,8 +54,7 @@ datafiles = [
     "data/emobility/KFZ__count",
     "data/emobility/Pkw__count",
     "data/h2_salt_caverns_GWh_per_sqkm.geojson",
-    directory("data/eurostat-energy_balances-june_2016_edition"),
-    directory("data/eurostat-energy_balances-may_2018_edition"),
+    directory("data/eurostat-energy_balances-april_2022_edition"),
     directory("data/jrc-idees-2015"),
 ]
 
@@ -235,11 +234,6 @@ rule build_solar_thermal_profiles:
     script: "scripts/build_solar_thermal_profiles.py"
 
 
-def input_eurostat(w):
-    # 2016 includes BA, 2017 does not
-    report_year = config["energy"]["eurostat_report_year"]
-    return f"data/eurostat-energy_balances-june_{report_year}_edition"
-
 rule build_energy_totals:
     input:
         nuts3_shapes=pypsaeur('resources/nuts3_shapes.geojson'),
@@ -247,7 +241,7 @@ rule build_energy_totals:
         swiss="data/switzerland-sfoe/switzerland-new_format.csv",
         idees="data/jrc-idees-2015",
         district_heat_share='data/district_heat_share.csv',
-        eurostat=input_eurostat
+        eurostat=directory("data/eurostat-energy_balances-june_2021_edition"),
     output:
         energy_name='resources/energy_totals.csv',
 	    co2_name='resources/co2_totals.csv',
