@@ -606,23 +606,26 @@ def build_eea_co2(year=1990):
     return emissions / 1e3
 
 
-def build_eurostat_co2(countries, year=1990):
+def build_eurostat_co2(countries, eurostat=None, year=1990):
 
-    eurostat = build_eurostat(countries, year)
+    if eurostat is None:
+        df = build_eurostat(countries, year)
+    else:
+        df = eurostat.xs(year, level='year')
 
-    specific_emissions = pd.Series(index=eurostat.columns, dtype=float)
+    specific_emissions = pd.Series(index=df.columns, dtype=float)
 
     # emissions in tCO2_equiv per MWh_th
-    specific_emissions["Solid fuels"] = 0.36  # Approximates coal
-    specific_emissions["Oil (total)"] = 0.285  # Average of distillate and residue
-    specific_emissions["Gas"] = 0.2  # For natural gas
+    specific_emissions["Solid fossil fuels"] = 0.36  # Approximates coal
+    specific_emissions["Oil and petroleum products"] = 0.285  # Average of distillate and residue
+    specific_emissions["Natural gas"] = 0.2  # For natural gas
 
     # oil values from https://www.eia.gov/tools/faqs/faq.cfm?id=74&t=11
     # Distillate oil (No. 2)  0.276
     # Residual oil (No. 6)  0.298
     # https://www.eia.gov/electricity/annual/html/epa_a_03.html
 
-    return eurostat.multiply(specific_emissions).sum(axis=1)
+    return df.multiply(specific_emissions).sum(axis=1)
 
 
 def build_co2_totals(countries, eea_co2, eurostat_co2):
@@ -632,19 +635,19 @@ def build_co2_totals(countries, eea_co2, eurostat_co2):
     for ct in countries.intersection(["BA", "RS", "AL", "ME", "MK"]):
 
         mappings = {
-            "electricity": (ct, "+", "Conventional Thermal Power Stations", "of which From Coal"),
-            "residential non-elec": (ct, "+", "+", "Residential"),
-            "services non-elec": (ct, "+", "+", "Services"),
-            "road non-elec": (ct, "+", "+", "Road"),
-            "rail non-elec": (ct, "+", "+", "Rail"),
-            "domestic navigation": (ct, "+", "+", "Domestic Navigation"),
-            "international navigation": (ct, "-", "Bunkers"),
-            "domestic aviation": (ct, "+", "+", "Domestic aviation"),
-            "international aviation": (ct, "+", "+", "International aviation"),
+            "electricity": (ct, "Transformation input", "Electricity & heat generation", "Main"),
+            "residential non-elec": (ct, "Final energy consumption", "Other sectors", "Households"),
+            "services non-elec": (ct, "Final energy consumption", "Other sectors", "Commercial & public services"),
+            "road non-elec": (ct, "Final energy consumption", "Transport sector", "Road"),
+            "rail non-elec": (ct, "Final energy consumption", "Transport sector", "Rail"),
+            "domestic navigation": (ct, "Final energy consumption", "Transport sector", "Domestic navigation"),
+            "international navigation": (ct, "Main", "International maritime bunkers"),
+            "domestic aviation": (ct, "Final energy consumption", "Transport sector", "Domestic aviation"),
+            "international aviation": (ct, "Main", "International aviation"),
             # does not include industrial process emissions or fuel processing/refining
-            "industrial non-elec": (ct, "+", "Industry"),
+            "industrial non-elec": (ct, "Final energy consumption", "Industry sector", "Non-energy use in industry sector"),
             # does not include non-energy emissions
-            "agriculture": (eurostat_co2.index.get_level_values(0) == ct) & eurostat_co2.index.isin(["Agriculture / Forestry", "Fishing"], level=3),
+            "agriculture": (eurostat_co2.index.get_level_values(0) == ct) & eurostat_co2.index.isin(["Agriculture & forestry", "Fishing"], level=3),
         }
 
         for i, mi in mappings.items():
@@ -709,7 +712,7 @@ if __name__ == "__main__":
 
     base_year_emissions = config["base_emissions_year"]
     eea_co2 = build_eea_co2(base_year_emissions)
-    eurostat_co2 = build_eurostat_co2(countries, base_year_emissions)
+    eurostat_co2 = build_eurostat_co2(countries, eurostat, base_year_emissions)
 
     co2 = build_co2_totals(countries, eea_co2, eurostat_co2)
     co2.to_csv(snakemake.output.co2_name)
