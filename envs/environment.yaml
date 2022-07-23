@@ -54,6 +54,7 @@ dependencies:
   - pytz
   - tabula-py
   - mergedeep
+  - pyxlsb
 
   - pip:
     - vresutils>=0.3.1
