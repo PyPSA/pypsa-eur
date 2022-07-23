@@ -243,6 +243,7 @@ rule build_energy_totals:
         district_heat_share='data/district_heat_share.csv',
         eurostat=directory("data/eurostat-energy_balances-june_2021_edition"),
     output:
+        energy_name_full='resources/energy_totals_full.csv',
         energy_name='resources/energy_totals.csv',
 	    co2_name='resources/co2_totals.csv',
 	    transport_name='resources/transport_data.csv'
