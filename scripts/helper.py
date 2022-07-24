@@ -3,7 +3,7 @@ import yaml
 import pytz
 import pandas as pd
 from pathlib import Path
-from mergedeep import merge
+from snakemake.utils import update_config
 from pypsa.descriptors import Dict
 from pypsa.components import components, component_attrs
 
@@ -140,4 +140,4 @@ def update_config_with_sector_opts(config, sector_opts):
     for o in sector_opts.split("-"):
         if o.startswith("CF:"):
             l = o.split(":")[1:]
-            merge(config, parse(l))
+            update_config(config, parse(l))
