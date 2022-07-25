@@ -236,7 +236,7 @@ rule build_hydro_profile:
         cutout=f"cutouts/{config['renewable']['hydro']['cutout']}.nc" if "hydro" in config["renewable"] else "config['renewable']['hydro']['cutout'] not configured",
     output: 
         profile='resources/profile{weather_year}_hydro.nc',
-        eia_hydro='resources/eia_hydro_annual_generation.csv',
+        eia_hydro='resources/eia_hydro_annual_generation{weather_year}.csv',
     log: "logs/build_hydro_profile{weather_year}.log"
     resources: mem_mb=5000
     script: 'scripts/build_hydro_profile.py'
