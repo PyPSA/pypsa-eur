@@ -54,7 +54,7 @@ datafiles = [
     "data/emobility/KFZ__count",
     "data/emobility/Pkw__count",
     "data/h2_salt_caverns_GWh_per_sqkm.geojson",
-    directory("data/eurostat-energy_balances-april_2022_edition"),
+    directory("data/eurostat-energy_balances-june_2021_edition"),
     directory("data/jrc-idees-2015"),
 ]
 
