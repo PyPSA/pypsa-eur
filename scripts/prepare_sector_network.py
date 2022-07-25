@@ -2359,6 +2359,8 @@ if __name__ == "__main__":
                           snakemake.config['costs']['lifetime'])
 
     pop_weighted_energy_totals = pd.read_csv(snakemake.input.pop_weighted_energy_totals, index_col=0)
+    pop_weighted_heat_totals = pd.read_csv(snakemake.input.pop_weighted_heat_totals, index_col=0)
+    pop_weighted_energy_totals.update(pop_weighted_heat_totals)
 
     patch_electricity_network(n)
 

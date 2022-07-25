@@ -243,7 +243,6 @@ rule build_energy_totals:
         district_heat_share='data/district_heat_share.csv',
         eurostat=directory("data/eurostat-energy_balances-june_2021_edition"),
     output:
-        energy_name_full='resources/energy_totals_full.csv',
         energy_name='resources/energy_totals.csv',
 	    co2_name='resources/co2_totals.csv',
 	    transport_name='resources/transport_data.csv'
@@ -251,6 +250,18 @@ rule build_energy_totals:
     resources: mem_mb=10000
     benchmark: "benchmarks/build_energy_totals"
     script: 'scripts/build_energy_totals.py'
+
+
+rule build_heat_totals:
+    input:
+        hdd="data/era5-annual-HDD-per-country.csv",
+        energy_totals="resources/energy_totals.csv",
+    output:
+        heat_totals="resources/heat_totals.csv"
+    threads: 1
+    resources: mem_mb=2000
+    benchmark: "benchmarks/build_heat_totals"
+    script: "scripts/build_heat_totals.py"
 
 
 rule build_biomass_potentials:
@@ -435,9 +446,9 @@ else:
 
 rule build_population_weighted_energy_totals:
     input:
-        energy_totals='resources/energy_totals.csv',
+        totals='resources/{kind}_totals.csv',
         clustered_pop_layout="resources/pop_layout_elec{weather_year}_s{simpl}_{clusters}.csv"
-    output: "resources/pop_weighted_energy_totals{weather_year}_s{simpl}_{clusters}.csv"
+    output: "resources/pop_weighted_{kind}_totals{weather_year}_s{simpl}_{clusters}.csv"
     threads: 1
     resources: mem_mb=2000
     script: "scripts/build_population_weighted_energy_totals.py"
@@ -465,8 +476,8 @@ rule prepare_sector_network:
     input:
         overrides="data/override_component_attrs",
         network=pypsaeur('networks/elec{weather_year}_s{simpl}_{clusters}_ec_lv{lv}_{opts}.nc'),
-        energy_totals_name='resources/energy_totals.csv',
         pop_weighted_energy_totals="resources/pop_weighted_energy_totals{weather_year}_s{simpl}_{clusters}.csv",
+        pop_weighted_heat_totals="resources/pop_weighted_heat_totals{weather_year}_s{simpl}_{clusters}.csv",
         transport_demand="resources/transport_demand{weather_year}_s{simpl}_{clusters}.csv",
         transport_data="resources/transport_data{weather_year}_s{simpl}_{clusters}.csv",
         avail_profile="resources/avail_profile{weather_year}_s{simpl}_{clusters}.csv",

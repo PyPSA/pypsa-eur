@@ -705,9 +705,6 @@ if __name__ == "__main__":
     idees = build_idees(idees_countries)
 
     energy = build_energy_totals(countries, eurostat, swiss, idees)
-    energy.to_csv(snakemake.output.energy_name_full)
-    
-    energy = energy.xs(data_year, level='year')
     energy.to_csv(snakemake.output.energy_name)
 
     base_year_emissions = config["base_emissions_year"]
