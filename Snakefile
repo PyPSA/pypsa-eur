@@ -234,7 +234,9 @@ rule build_hydro_profile:
         eia_hydro_capacity='data/eia_hydro_annual_capacity.csv',
         era5_runoff='data/era5-annual-runoff-per-country.csv',
         cutout=f"cutouts/{config['renewable']['hydro']['cutout']}.nc" if "hydro" in config["renewable"] else "config['renewable']['hydro']['cutout'] not configured",
-    output: 'resources/profile{weather_year}_hydro.nc'
+    output: 
+        profile='resources/profile{weather_year}_hydro.nc',
+        eia_hydro='resources/eia_hydro_annual_generation.csv',
     log: "logs/build_hydro_profile{weather_year}.log"
     resources: mem_mb=5000
     script: 'scripts/build_hydro_profile.py'

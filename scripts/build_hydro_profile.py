@@ -180,6 +180,8 @@ if __name__ == "__main__":
         fn = snakemake.input.era5_runoff
         eia_stats = approximate_missing_eia_stats(eia_stats, fn, countries)
 
+    eia_stats.to_csv(snakemake.output.eia_hydro)
+
     weather_year = snakemake.wildcards.weather_year
     norm_year = config_hydro.get('eia_norm_year')
     if norm_year:
@@ -195,4 +197,4 @@ if __name__ == "__main__":
     if 'clip_min_inflow' in config_hydro:
         inflow = inflow.where(inflow > config_hydro['clip_min_inflow'], 0)
 
-    inflow.to_netcdf(snakemake.output[0])
+    inflow.to_netcdf(snakemake.output.profile)
