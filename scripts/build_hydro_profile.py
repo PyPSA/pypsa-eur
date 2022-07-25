@@ -66,7 +66,7 @@ import atlite
 import geopandas as gpd
 import pandas as pd
 
-from sklearn.linear_model import LinearRegression
+from numpy.polynomial import Polynomial
 
 import country_converter as coco
 cc = coco.CountryConverter()
@@ -138,17 +138,16 @@ def approximate_missing_eia_stats(eia_stats, runoff_fn, countries):
 
     for c in countries:
 
-        X = runoff_eia[c].values.reshape(-1, 1)
-        Y = eia_stats[c].values.reshape(-1, 1)
+        X = runoff_eia[c]
+        Y = eia_stats[c]
 
         to_predict = runoff.index.difference(eia_stats.index)
-        X_pred = runoff.loc[to_predict, c].values.reshape(-1, 1)
+        X_pred = runoff.loc[to_predict, c]
 
-        linear_regressor = LinearRegression()
-        linear_regressor.fit(X, Y)
-        Y_pred = linear_regressor.predict(X_pred)
+        p = Polynomial.fit(X, Y, 1)
+        Y_pred = p(X_pred)
 
-        eia_stats_approximated[c] = pd.Series(Y_pred.T[0], index=to_predict)
+        eia_stats_approximated[c] = pd.Series(Y_pred, index=to_predict)
 
     eia_stats_approximated = pd.DataFrame(eia_stats_approximated)
     return pd.concat([eia_stats, eia_stats_approximated]).sort_index()
