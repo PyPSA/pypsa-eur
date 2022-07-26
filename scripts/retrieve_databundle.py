@@ -1,4 +1,4 @@
-# Copyright 2019-2022 Fabian Hofmann (FIAS)
+# Copyright 2019-2022 Fabian Hofmann (TUB, FIAS)
 # SPDX-FileCopyrightText: : 2017-2022 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT

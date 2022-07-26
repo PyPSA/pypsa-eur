@@ -4,11 +4,11 @@ Upstream-Contact: Tom Brown <tom.brown@kit.edu>
 Source: https://github.com/pypsa/pypsa-eur
 
 Files: doc/img/*
-Copyright: 2019 Fabian Neumann (KIT)
+Copyright: 2019 Fabian Neumann (TUB, KIT)
 License: CC-BY-4.0
 
 Files: doc/configtables/*
-Copyright: 2019 Fabian Neumann (KIT)
+Copyright: 2019 Fabian Neumann (TUB, KIT)
 License: CC-BY-4.0
 
 Files: data/*
