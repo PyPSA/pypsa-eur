@@ -13,7 +13,7 @@ if not exists("config.yaml"):
 
 configfile: "config.yaml"
 
-COSTS="data/costs.csv"
+COSTS="resources/costs.csv"
 ATLITE_NPROCESSES = config['atlite'].get('nprocesses', 4)
 
 wildcard_constraints:
@@ -77,7 +77,6 @@ rule build_load_data:
     output: "resources/load.csv"
     log: "logs/build_load_data.log"
     script: 'scripts/build_load_data.py'
-    
 
 rule build_powerplants:
     input:
@@ -163,6 +162,11 @@ if config['enable'].get('retrieve_cutout', True):
         output: "cutouts/{cutout}.nc"
         run: move(input[0], output[0])
 
+if config['enable'].get('retrieve_cost_data', True):
+    rule retrieve_cost_data:
+        input: HTTP.remote(f"raw.githubusercontent.com/PyPSA/technology-data/{config['costs']['version']}/outputs/costs_{config['costs']['year']}.csv", keep_local=True)
+        output: COSTS
+        run: move(input[0], output[0])
 
 if config['enable'].get('build_natura_raster', False):
     rule build_natura_raster:
