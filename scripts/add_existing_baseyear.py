@@ -13,7 +13,7 @@ import pypsa
 import yaml
 
 from prepare_sector_network import prepare_costs, define_spatial
-from helper import override_component_attrs
+from helper import override_component_attrs, update_config_with_sector_opts
 
 from types import SimpleNamespace
 spatial = SimpleNamespace()
@@ -462,6 +462,8 @@ if __name__ == "__main__":
         )
 
     logging.basicConfig(level=snakemake.config['logging_level'])
+
+    update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
 
     options = snakemake.config["sector"]
     opts = snakemake.wildcards.sector_opts.split('-')
