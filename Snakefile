@@ -88,7 +88,7 @@ rule build_powerplants:
     output: "resources/powerplants.csv"
     log: "logs/build_powerplants.log"
     threads: 1
-    resources: mem_mb=500
+    resources: mem_mb=2000
     script: "scripts/build_powerplants.py"
 
 
@@ -222,7 +222,7 @@ rule build_renewable_profiles:
     log: "logs/build_renewable_profile{weather_year}_{technology}.log"
     benchmark: "benchmarks/build_renewable_profiles{weather_year}_{technology}"
     threads: ATLITE_NPROCESSES
-    resources: mem_mb=ATLITE_NPROCESSES * 5000
+    resources: mem_mb=ATLITE_NPROCESSES * 4000
     wildcard_constraints: technology="(?!hydro).*" # Any technology other than hydro
     script: "scripts/build_renewable_profiles.py"
 
@@ -238,7 +238,7 @@ rule build_hydro_profile:
         profile='resources/profile{weather_year}_hydro.nc',
         eia_hydro='resources/eia_hydro_annual_generation{weather_year}.csv',
     log: "logs/build_hydro_profile{weather_year}.log"
-    resources: mem_mb=5000
+    resources: mem_mb=2000
     script: 'scripts/build_hydro_profile.py'
 
 
