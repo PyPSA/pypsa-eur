@@ -11,7 +11,7 @@ The data bundle (1.4 GB) contains common GIS datasets like NUTS3 shapes, EEZ sha
 
 This rule downloads the data bundle from `zenodo <https://doi.org/10.5281/zenodo.3517935>`_ and extracts it in the ``data`` sub-directory, such that all files of the bundle are stored in the ``data/bundle`` subdirectory.
 
-The :ref:`tutorial` uses a smaller `data bundle <https://zenodo.org/record/3517921/files/pypsa-eur-tutorial-data-bundle.tar.xz>`_ than required for the full model (19 MB)
+The :ref:`tutorial` uses a smaller `data bundle <https://zenodo.org/record/3517921/files/pypsa-eur-tutorial-data-bundle.tar.xz>`_ than required for the full model (188 MB)
 
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3517921.svg
     :target: https://doi.org/10.5281/zenodo.3517921
@@ -28,7 +28,7 @@ The :ref:`tutorial` uses a smaller `data bundle <https://zenodo.org/record/35179
 
 **Outputs**
 
-- ``cutouts/bundle``: input data collected from various sources
+- ``data/bundle``: input data collected from various sources
 
 """
 

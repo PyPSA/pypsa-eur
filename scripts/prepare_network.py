@@ -20,9 +20,10 @@ Relevant Settings
 .. code:: yaml
 
     costs:
+        year:
+        version:
+        fill_values:
         emission_prices:
-        USD2013_to_EUR2013:
-        discountrate:
         marginal_cost:
         capital_cost:
 
@@ -37,7 +38,7 @@ Relevant Settings
 Inputs
 ------
 
-- ``data/costs.csv``: The database of cost assumptions for all included technologies for specific years from various sources; e.g. discount rate, lifetime, investment (CAPEX), fixed operation and maintenance (FOM), variable operation and maintenance (VOM), fuel costs, efficiency, carbon-dioxide intensity.
+- ``resources/costs.csv``: The database of cost assumptions for all included technologies for specific years from various sources; e.g. discount rate, lifetime, investment (CAPEX), fixed operation and maintenance (FOM), variable operation and maintenance (VOM), fuel costs, efficiency, carbon-dioxide intensity.
 - ``networks/elec_s{simpl}_{clusters}.nc``: confer :ref:`cluster`
 
 Outputs

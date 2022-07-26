@@ -17,25 +17,6 @@ scenario:
 
 countries: ['BE']
 
-clustering:
-  simplify_network:
-    to_substations: false # network is simplified to nodes with positive or negative power injection (i.e. substations or offwind connections)
-    algorithm: kmeans # choose from: [hac, kmeans]
-    feature: solar+onwind-time # only for hac. choose from: [solar+onwind-time, solar+onwind-cap, solar-time, solar-cap, solar+offwind-cap] etc.
-  cluster_network:
-    algorithm: kmeans
-    feature: solar+onwind-time
-  aggregation_strategies:
-    generators:
-      p_nom_max: sum # use "min" for more conservative assumptions
-      p_nom_min: sum
-      p_min_pu: mean
-      marginal_cost: mean
-      committable: any
-      ramp_limit_up: max
-      ramp_limit_down: max
-      efficiency: mean
-
 snapshots:
   start: "2013-03-01"
   end: "2013-03-08"
@@ -44,6 +25,7 @@ snapshots:
 enable:
   prepare_links_p_nom: false
   retrieve_databundle: true
+  retrieve_cost_data: true
   build_cutout: false
   retrieve_cutout: true
   build_natura_raster: false
@@ -171,8 +153,17 @@ load:
 
 costs:
   year: 2030
-  discountrate: 0.07 # From a Lion Hirth paper, also reflects average of Noothout et al 2016
-  USD2013_to_EUR2013: 0.7532 # [EUR/USD] ECB: https://www.ecb.europa.eu/stats/exchange/eurofxref/html/eurofxref-graph-usd.en.html
+  version: v0.1.0
+  rooftop_share: 0.14
+  fill_values:
+    FOM: 0
+    VOM: 0
+    efficiency: 1
+    fuel: 0
+    investment: 0
+    lifetime: 25
+    "CO2 intensity": 0
+    "discount rate": 0.07
   marginal_cost:
     solar: 0.01
     onwind: 0.015
@@ -181,6 +172,25 @@ costs:
     battery: 0.
   emission_prices: # only used with the option Ep
     co2: 0.
+
+clustering:
+  simplify_network:
+    to_substations: false # network is simplified to nodes with positive or negative power injection (i.e. substations or offwind connections)
+    algorithm: kmeans # choose from: [hac, kmeans]
+    feature: solar+onwind-time # only for hac. choose from: [solar+onwind-time, solar+onwind-cap, solar-time, solar-cap, solar+offwind-cap] etc.
+  cluster_network:
+    algorithm: kmeans
+    feature: solar+onwind-time
+  aggregation_strategies:
+    generators:
+      p_nom_max: sum # use "min" for more conservative assumptions
+      p_nom_min: sum
+      p_min_pu: mean
+      marginal_cost: mean
+      committable: any
+      ramp_limit_up: max
+      ramp_limit_down: max
+      efficiency: mean
 
 solving:
   options:

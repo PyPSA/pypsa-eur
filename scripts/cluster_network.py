@@ -122,7 +122,7 @@ Exemplary unsolved network clustered to 37 nodes:
 """
 
 import logging
-from _helpers import configure_logging, update_p_nom_max, get_aggregation_strategies, REGION_COLS
+from _helpers import configure_logging, update_p_nom_max, get_aggregation_strategies
 
 import pypsa
 import os
@@ -372,9 +372,8 @@ def cluster_regions(busmaps, input=None, output=None):
 
     for which in ('regions_onshore', 'regions_offshore'):
         regions = gpd.read_file(getattr(input, which))
-        regions = regions.reindex(columns=REGION_COLS).set_index('name')
-        aggfunc = dict(x="mean", y="mean", country="first")
-        regions_c = regions.dissolve(busmap, aggfunc=aggfunc)
+        regions = regions.reindex(columns=["name", "geometry"]).set_index('name')
+        regions_c = regions.dissolve(busmap)
         regions_c.index.name = 'name'
         regions_c = regions_c.reset_index()
         regions_c.to_file(getattr(output, which))
