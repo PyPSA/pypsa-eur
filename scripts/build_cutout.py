@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2017-2021 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2022 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
