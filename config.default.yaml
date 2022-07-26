@@ -64,7 +64,7 @@ electricity:
   renewable_carriers: [solar, onwind, offwind-ac, offwind-dc, hydro]
 
   estimate_renewable_capacities:
-    enable: true
+    enable: false
     # Add capacities from OPSD data
     from_opsd: true
     # Renewable capacities are based on existing capacities reported by IRENA
@@ -218,7 +218,7 @@ load:
 
 costs:
   year: 2030
-  version: v0.1.0
+  version: v0.4.0
   rooftop_share: 0.14  # based on the potentials, assuming  (0.1 kW/m2 and 10 m2/person)
   fill_values:
     FOM: 0

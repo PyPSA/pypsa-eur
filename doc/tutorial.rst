@@ -83,14 +83,14 @@ For example, we may want to use the ERA-5 dataset for solar and not the default 
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 62,105,106
+   :lines: 63,106,107
 
 Finally, it is possible to pick a solver. For instance, this tutorial uses the open-source solvers CBC and Ipopt and does not rely
 on the commercial solvers Gurobi or CPLEX (for which free academic licenses are available).
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 187,197,198
+   :lines: 188,198,199
 
 .. note::
 
@@ -271,8 +271,6 @@ the wildcards given in ``scenario`` in the configuration file ``config.yaml`` ar
    :language: yaml
    :start-at: scenario:
    :end-before: countries:
-
-In this example we would not only solve a 6-node model of Germany but also a 2-node model.
 
 How to analyse solved networks?
 ===============================
