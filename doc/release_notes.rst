@@ -12,7 +12,7 @@ Upcoming Release
 
 * new feature
 
-PyPSA-Eur 0.5.0 (26th July 2022)
+PyPSA-Eur 0.5.0 (27th July 2022)
 =====================================
 
 **New Features**
