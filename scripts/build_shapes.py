@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2022 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
@@ -70,7 +70,6 @@ Description
 import logging
 from _helpers import configure_logging
 
-import os
 import numpy as np
 from operator import attrgetter
 from functools import reduce
