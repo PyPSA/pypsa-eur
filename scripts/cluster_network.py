@@ -135,7 +135,8 @@ import seaborn as sns
 
 from functools import reduce
 
-from pypsa.networkclustering import (busmap_by_kmeans, busmap_by_hac, get_clustering_from_busmap)
+from pypsa.networkclustering import (busmap_by_kmeans, busmap_by_hac,
+                                     busmap_by_greedy_modularity, get_clustering_from_busmap)
 
 import warnings
 warnings.filterwarnings(action='ignore', category=UserWarning)
@@ -313,6 +314,8 @@ def busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights=None, algori
             return prefix + busmap_by_kmeans(n, weight, n_clusters[x.name], buses_i=x.index, **algorithm_kwds)
         elif algorithm == "hac":
             return prefix + busmap_by_hac(n, n_clusters[x.name], buses_i=x.index, feature=feature.loc[x.index])
+        elif algorithm == "modularity":
+            return prefix + busmap_by_greedy_modularity(n, n_clusters[x.name], buses_i=x.index)
         else:
             raise ValueError(f"`algorithm` must be one of 'kmeans' or 'hac'. Is {algorithm}.")
 
