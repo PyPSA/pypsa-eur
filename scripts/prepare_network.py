@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2022 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
@@ -213,7 +213,7 @@ def set_line_nom_max(n, s_nom_max_set=np.inf, p_nom_max_set=np.inf):
 if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
-        snakemake = mock_snakemake('prepare_network', network='elec', simpl='',
+        snakemake = mock_snakemake('prepare_network', simpl='',
                                   clusters='40', ll='v0.3', opts='Co2L-24H')
     configure_logging(snakemake)
 
@@ -301,4 +301,5 @@ if __name__ == "__main__":
     elif "ATKc" in opts:
         enforce_autarky(n, only_crossborder=True)
 
+    n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     n.export_to_netcdf(snakemake.output[0])

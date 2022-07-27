@@ -1,10 +1,9 @@
-# SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2022 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
 import pandas as pd
 from pathlib import Path
-from collections import OrderedDict
 
 REGION_COLS = ['geometry', 'name', 'x', 'y', 'country']
 
@@ -29,7 +28,7 @@ def configure_logging(snakemake, skip_handlers=False):
 
     import logging
 
-    kwargs = snakemake.config.get('logging', dict())
+    kwargs = snakemake.config.get('logging', dict()).copy()
     kwargs.setdefault("level", "INFO")
 
     if skip_handlers is False:

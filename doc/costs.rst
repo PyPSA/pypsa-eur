@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2019-2020 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: 2019-2022 The PyPSA-Eur Authors
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -7,7 +7,11 @@
 Cost Assumptions
 ##################
 
-The database of cost assumptions is retrieved from the repository `PyPSA/technology-data <https://github.com/pypsa/technology-data>`_ and then saved to``resources/costs.csv``. Cost assumptions of previous PyPSA-Eur versions can be restored by setting in the ``Snakefile``: ``COSTS="data/costs.csv".
+The database of cost assumptions is retrieved from the repository
+`PyPSA/technology-data <https://github.com/pypsa/technology-data>`_ and then
+saved to ``resources/costs.csv``. Cost assumptions of previous PyPSA-Eur
+versions can be restored by setting in the ``Snakefile``:
+``COSTS="data/costs.csv"``.
 
 The ``config.yaml`` provides options to choose a reference year (``costs: year:``) and use a specific version of the repository ``costs: version:``.
 
@@ -32,9 +36,6 @@ with a discount rate of :math:`r` over the economic lifetime :math:`n` using the
 
 Based on the parameters above the ``marginal_cost`` and ``capital_cost`` of the system components are calculated.
 
-.. note::
-
-    Another great resource for cost assumptions is the `cost database from the Danish Energy Agency <https://ens.dk/en/our-services/projections-and-models/technology-data>`_.
 
 Modifying Cost Assumptions
 ==========================

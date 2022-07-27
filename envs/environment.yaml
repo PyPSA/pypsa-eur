@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2022 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
@@ -10,7 +10,7 @@ dependencies:
   - python>=3.8
   - pip
 
-  - pypsa>=0.19.1
+  - pypsa>=0.20
   - atlite>=0.2.6
   - dask
 
@@ -53,7 +53,6 @@ dependencies:
   - tqdm
   - pytz
   - tabula-py
-  - mergedeep
   - pyxlsb
 
   - pip:

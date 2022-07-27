@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2022 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
@@ -99,7 +99,7 @@ from functools import reduce
 
 import pypsa
 from pypsa.io import import_components_from_dataframe, import_series_from_dataframe
-from pypsa.networkclustering import busmap_by_stubs, aggregategenerators, aggregateoneport, get_clustering_from_busmap, _make_consense
+from pypsa.networkclustering import busmap_by_stubs, aggregategenerators, aggregateoneport, get_clustering_from_busmap
 
 logger = logging.getLogger(__name__)
 
@@ -391,7 +391,7 @@ def cluster(n, n_clusters, config, algorithm="hac", feature=None, aggregation_st
 if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
-        snakemake = mock_snakemake('simplify_network', simpl='', network='elec')
+        snakemake = mock_snakemake('simplify_network', simpl='f')
     configure_logging(snakemake)
 
     n = pypsa.Network(snakemake.input.network)
@@ -448,7 +448,8 @@ if __name__ == "__main__":
     n.buses = n.buses.drop(buses_c, axis=1)
 
     update_p_nom_max(n)
-        
+
+    n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     n.export_to_netcdf(snakemake.output.network)
 
     busmap_s = reduce(lambda x, y: x.map(y), busmaps[1:], busmaps[0])

@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2022 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
@@ -349,7 +349,7 @@ def solve_network(n, config, opts='', **kwargs):
 if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
-        snakemake = mock_snakemake('solve_network', network='elec', simpl='',
+        snakemake = mock_snakemake('solve_network', simpl='',
                                   clusters='5', ll='copt', opts='Co2L-BAU-CCL-24H')
     configure_logging(snakemake)
 
@@ -365,6 +365,7 @@ if __name__ == "__main__":
         n = prepare_network(n, solve_opts)
         n = solve_network(n, snakemake.config, opts, solver_dir=tmpdir,
                           solver_logfile=snakemake.log.solver)
+        n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
         n.export_to_netcdf(snakemake.output[0])
 
     logger.info("Maximum memory usage: {}".format(mem.mem_usage))
