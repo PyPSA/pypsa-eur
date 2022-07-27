@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2019-2020 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: 2019-2022 The PyPSA-Eur Authors
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -71,6 +71,7 @@ PyPSA is known to work with the free software
 - `Ipopt <https://coin-or.github.io/Ipopt/INSTALL.html>`_
 - `Cbc <https://projects.coin-or.org/Cbc#DownloadandInstall>`_
 - `GLPK <https://www.gnu.org/software/glpk/>`_ (`WinGLKP <http://winglpk.sourceforge.net/>`_)
+- `HiGHS <https://highs.dev/>`_
 
 and the non-free, commercial software (for some of which free academic licenses are available)
 

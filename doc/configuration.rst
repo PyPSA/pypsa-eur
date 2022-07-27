@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2019-2020 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: 2019-2022 The PyPSA-Eur Authors
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -241,8 +241,7 @@ Define additional generator attribute for conventional carrier types. If a scala
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :start-at: load:
-   :end-before: costs:
+   :lines: 212-217
 
 .. csv-table::
    :header-rows: 1
@@ -257,7 +256,7 @@ Define additional generator attribute for conventional carrier types. If a scala
 .. literalinclude:: ../config.default.yaml
    :language: yaml
    :start-after: scaling_factor:
-   :end-before: solving:
+   :end-before: clustering:
 
 .. csv-table::
    :header-rows: 1
@@ -267,6 +266,23 @@ Define additional generator attribute for conventional carrier types. If a scala
 .. note::
     To change cost assumptions in more detail (i.e. other than ``marginal_cost`` and ``capital_cost``), consider modifying cost assumptions directly in ``resources/costs.csv`` as this is not yet supported through the config file.
     You can also build multiple different cost databases. Make a renamed copy of ``resources/costs.csv`` (e.g. ``data/costs-optimistic.csv``) and set the variable ``COSTS=data/costs-optimistic.csv`` in the ``Snakefile``.
+
+
+.. _clustering_cf:
+
+``clustering``
+==============
+
+.. literalinclude:: ../config.default.yaml
+   :language: yaml
+   :start-after:     co2:
+   :end-before: solving:
+
+.. csv-table::
+   :header-rows: 1
+   :widths: 25,7,22,30
+   :file: configtables/clustering.csv
+
 
 .. _solving_cf:
 

@@ -66,8 +66,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'PyPSA-Eur'
-copyright = u'2017-2020 Jonas Hoersch (KIT, FIAS), Fabian Hofmann (FIAS), David Schlachtberger (FIAS), Tom Brown (KIT, FIAS); 2019-2020 Fabian Neumann (KIT)'
-author = u'Jonas Hoersch (KIT, FIAS), Fabian Hofmann (FIAS), David Schlachtberger (FIAS), Tom Brown (KIT, FIAS), Fabian Neumann (KIT)'
+copyright = u'2017-2022 Jonas Hoersch (KIT, FIAS), Fabian Hofmann (TUB, FIAS), David Schlachtberger (FIAS), Tom Brown (TUB, KIT, FIAS); 2019-2022 Fabian Neumann (TUB, KIT)'
+author = u'Jonas Hoersch (KIT, FIAS), Fabian Hofmann (TUB, FIAS), David Schlachtberger (FIAS), Tom Brown (TUB, KIT, FIAS), Fabian Neumann (TUB, KIT)'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

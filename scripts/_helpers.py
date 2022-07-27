@@ -1,10 +1,9 @@
-# SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2022 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
 import pandas as pd
 from pathlib import Path
-from collections import OrderedDict
 
 REGION_COLS = ['geometry', 'name', 'x', 'y', 'country']
 
