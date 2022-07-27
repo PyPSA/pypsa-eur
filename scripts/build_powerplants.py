@@ -77,10 +77,8 @@ from _helpers import configure_logging
 import pypsa
 import powerplantmatching as pm
 import pandas as pd
-import numpy as np
 
 from powerplantmatching.export import map_country_bus
-from scipy.spatial import cKDTree as KDTree
 
 logger = logging.getLogger(__name__)
 

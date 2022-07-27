@@ -125,8 +125,6 @@ import logging
 from _helpers import configure_logging, update_p_nom_max, get_aggregation_strategies
 
 import pypsa
-import os
-import shapely
 
 import pandas as pd
 import numpy as np
@@ -137,8 +135,7 @@ import seaborn as sns
 
 from functools import reduce
 
-from pypsa.networkclustering import (busmap_by_kmeans, busmap_by_spectral_clustering,
-                                     busmap_by_hac, _make_consense, get_clustering_from_busmap)
+from pypsa.networkclustering import (busmap_by_kmeans, busmap_by_hac, get_clustering_from_busmap)
 
 import warnings
 warnings.filterwarnings(action='ignore', category=UserWarning)
@@ -305,12 +302,6 @@ def busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights=None, algori
 
     n_clusters = distribute_clusters(n, n_clusters, focus_weights=focus_weights, solver_name=solver_name)
 
-    def reduce_network(n, buses):
-        nr = pypsa.Network()
-        nr.import_components_from_dataframe(buses, "Bus")
-        nr.import_components_from_dataframe(n.lines.loc[n.lines.bus0.isin(buses.index) & n.lines.bus1.isin(buses.index)], "Line")
-        return nr
-
     def busmap_for_country(x):
         prefix = x.name[0] + x.name[1] + ' '
         logger.debug(f"Determining busmap for country {prefix[:-1]}")
@@ -320,14 +311,10 @@ def busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights=None, algori
 
         if algorithm == "kmeans":
             return prefix + busmap_by_kmeans(n, weight, n_clusters[x.name], buses_i=x.index, **algorithm_kwds)
-        elif algorithm == "spectral":
-            return prefix + busmap_by_spectral_clustering(reduce_network(n, x), n_clusters[x.name], **algorithm_kwds)
-        elif algorithm == "louvain":
-            return prefix + busmap_by_louvain(reduce_network(n, x), n_clusters[x.name], **algorithm_kwds)
         elif algorithm == "hac":
             return prefix + busmap_by_hac(n, n_clusters[x.name], buses_i=x.index, feature=feature.loc[x.index])
         else:
-            raise ValueError(f"`algorithm` must be one of 'kmeans', 'hac', 'spectral' or 'louvain'. Is {algorithm}.")
+            raise ValueError(f"`algorithm` must be one of 'kmeans' or 'hac'. Is {algorithm}.")
 
     return (n.buses.groupby(['country', 'sub_network'], group_keys=False)
             .apply(busmap_for_country).squeeze().rename('busmap'))

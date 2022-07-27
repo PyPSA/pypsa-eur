@@ -70,7 +70,6 @@ Description
 import logging
 from _helpers import configure_logging
 
-import os
 import numpy as np
 from operator import attrgetter
 from functools import reduce

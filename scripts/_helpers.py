@@ -4,7 +4,6 @@
 
 import pandas as pd
 from pathlib import Path
-from collections import OrderedDict
 
 REGION_COLS = ['geometry', 'name', 'x', 'y', 'country']
 
