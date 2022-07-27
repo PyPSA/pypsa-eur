@@ -502,7 +502,7 @@ Release Process
   ``conda env export -n pypsa-eur -f envs/environment.fixed.yaml --no-builds``
   from an up-to-date `pypsa-eur` environment.
 
-* Update version number in ``doc/conf.py`` and ``*config.*.yaml``.
+* Update version number in ``doc/conf.py``, ``CITATION.cff`` and ``*config.*.yaml``.
 
 * Open, review and merge pull request for branch ``release-v0.x.x``.
   Make sure to close issues and PRs or the release milestone with it (e.g. closes #X).
