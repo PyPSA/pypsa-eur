@@ -635,4 +635,5 @@ if __name__ == "__main__":
 
     add_nice_carrier_names(n, snakemake.config)
 
+    n.meta = snakemake.config
     n.export_to_netcdf(snakemake.output[0])

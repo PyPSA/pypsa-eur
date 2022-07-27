@@ -596,4 +596,5 @@ if __name__ == "__main__":
                      snakemake.input.links_p_nom, snakemake.input.links_tyndp, snakemake.input.europe_shape, snakemake.input.country_shapes, snakemake.input.offshore_shapes,
                      snakemake.input.parameter_corrections, snakemake.config)
 
+    n.meta = snakemake.config
     n.export_to_netcdf(snakemake.output[0])

@@ -193,7 +193,7 @@ def attach_hydrogen_pipelines(n, costs, elec_opts):
 if __name__ == "__main__":
     if 'snakemake' not in globals():
         from _helpers import mock_snakemake
-        snakemake = mock_snakemake('add_extra_components', network='elec',
+        snakemake = mock_snakemake('add_extra_components',
                                   simpl='', clusters=5)
     configure_logging(snakemake)
 
@@ -209,4 +209,5 @@ if __name__ == "__main__":
 
     add_nice_carrier_names(n, snakemake.config)
 
+    n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     n.export_to_netcdf(snakemake.output[0])
