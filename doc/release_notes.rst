@@ -38,7 +38,7 @@ PyPSA-Eur 0.5.0 (27th July 2022)
     energy yield for each bus region	
   * The config key ``renewable_capacities_from_OPSD`` is deprecated and was moved
     under the section, ``estimate_renewable_capacities``. To enable it, set
-    ``from_opsd`` to `True`.	
+    ``from_opsd`` to ``True``.	
 
 * Add operational reserve margin constraint analogous to `GenX implementation
   <https://genxproject.github.io/GenX/dev/core/#Reserves>`_. Can be activated
@@ -52,16 +52,16 @@ PyPSA-Eur 0.5.0 (27th July 2022)
 * Add function to add global constraint on use of gas in :mod:`prepare_network`.
   This can be activated by including the keyword ``CH4L`` in the ``{opts}``
   wildcard which enforces the limit set in ``electricity: gaslimit:`` given in
-  MWh thermal. Alternatively, it is possible to append a number in the `{opts}`
-  wildcard, e.g. `CH4L200` which limits the gas use to 200 TWh thermal.
+  MWh thermal. Alternatively, it is possible to append a number in the ``{opts}``
+  wildcard, e.g. ``CH4L200`` which limits the gas use to 200 TWh thermal.
 
-* Add option to alter marginal costs of a carrier through `{opts}` wildcard:
-  `<carrier>+m<factor>`, e.g. `gas+m2.5`, will multiply the default marginal
+* Add option to alter marginal costs of a carrier through ``{opts}`` wildcard:
+  ``<carrier>+m<factor>``, e.g. ``gas+m2.5``, will multiply the default marginal
   cost for gas by factor 2.5.
 
 * Hierarchical clustering was introduced. Distance metric is calculated from
-  renewable potentials on hourly (feature entry ends with `-time`) or annual
-  (feature entry in config end with `-cap`) values.
+  renewable potentials on hourly (feature entry ends with ``-time``) or annual
+  (feature entry in config end with ``-cap``) values.
   
 * Greedy modularity clustering was introduced. Distance metric is based on electrical distance taking into account the impedance of all transmission lines of the network.
 
@@ -80,8 +80,8 @@ PyPSA-Eur 0.5.0 (27th July 2022)
 * Add configuration option to implement arbitrary generator attributes for
   conventional generation technologies.
 
-* Add option to set CO2 emission prices through `{opts}` wildcard: `Ep<number>`,
-  e.g. `Ep180`, will set the EUR/tCO2 price.
+* Add option to set CO2 emission prices through ``{opts}`` wildcard: ``Ep<number>``,
+  e.g. ``Ep180``, will set the EUR/tCO2 price.
 
 **Changes**
 
@@ -102,7 +102,7 @@ PyPSA-Eur 0.5.0 (27th July 2022)
 
 * The inclusion of renewable carriers is now specified in the config entry
   ``renewable_carriers``. Before this was done by commenting/uncommenting
-  sub-sections in the `renewable` config section. 
+  sub-sections in the ``renewable`` config section. 
 
 * Now, all carriers that should be extendable have to be listed in the config
   entry ``extendable_carriers``. Before, renewable carriers were always set to
@@ -502,7 +502,7 @@ Release Process
   ``conda env export -n pypsa-eur -f envs/environment.fixed.yaml --no-builds``
   from an up-to-date `pypsa-eur` environment.
 
-* Update version number in ``doc/conf.py`` and ``*config.*.yaml``.
+* Update version number in ``doc/conf.py``, ``CITATION.cff`` and ``*config.*.yaml``.
 
 * Open, review and merge pull request for branch ``release-v0.x.x``.
   Make sure to close issues and PRs or the release milestone with it (e.g. closes #X).
