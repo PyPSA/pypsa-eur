@@ -51,13 +51,13 @@ if __name__ == "__main__":
 
     cutouts = snakemake.input.cutouts
     xs, Xs, ys, Ys = zip(*(determine_cutout_xXyY(cutout) for cutout in cutouts))
-    
+
     with zipfile.ZipFile(snakemake.input.ship_density) as zip_f:
         zip_f.extract("shipdensity_global.tif")
-        ship_density=xarray.open_dataarray("shipdensity_global.tif", engine="rasterio")
+        ship_density=xarray.open_rasterio("shipdensity_global.tif")
         os.remove("shipdensity_global.tif") 
 
-    ship_density=ship_density.drop("band").sel(x=slice(min(xs),max(Xs)), y=slice(max(Ys),min(ys)))
-    
+    ship_density=ship_density.drop(["band"]).sel(x=slice(min(xs),max(Xs)), y=slice(max(Ys),min(ys)))
+
     ship_density.to_netcdf(snakemake.output[0])
 
