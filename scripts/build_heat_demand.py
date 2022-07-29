@@ -25,9 +25,12 @@ if __name__ == '__main__':
     else:
         snapshots = snakemake.config['snapshots']
     
+    drop_leap_day = snakemake.config["atlite"].get("drop_leap_day", False)
     time = pd.date_range(freq='h', **snapshots)
-    if snakemake.config["atlite"].get("drop_leap_day", False):
+    daily = pd.date_range(freq='D', **snapshots)
+    if drop_leap_day:
         time = time[~((time.month == 2) & (time.day == 29))]
+        daily = daily[~((daily.month == 2) & (daily.day == 29))]
 
     cutout = atlite.Cutout(cutout_name).sel(time=time)
 
@@ -44,6 +47,6 @@ if __name__ == '__main__':
         M = I.T.dot(np.diag(I.dot(stacked_pop)))
 
         heat_demand = cutout.heat_demand(
-            matrix=M.T, index=clustered_regions.index)
+            matrix=M.T, index=clustered_regions.index).sel(time=daily)
 
         heat_demand.to_netcdf(snakemake.output[f"heat_demand_{area}"])
