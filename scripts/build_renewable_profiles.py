@@ -243,8 +243,8 @@ if __name__ == '__main__':
         excluder.add_raster(snakemake.input.corine, codes=codes, buffer=buffer, crs=3035)
     
     if "ship_threshold" in config:
-        shipping_threshold=config["ship_threshold"]*8760*6 # approximation because 6 years of data which is hourly collected
-        func = functools.partial(np.less,shipping_threshold)
+        shipping_threshold=config["ship_threshold"] * 8760 * 6 # approximation because 6 years of data which is hourly collected
+        func = functools.partial(np.less, shipping_threshold)
         excluder.add_raster(snakemake.input.ship_density, codes=func, crs=4326, allow_no_overlap=True)
 
     if "max_depth" in config:

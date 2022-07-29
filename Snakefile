@@ -52,7 +52,7 @@ datafiles = ['ch_cantons.csv', 'je-e-21.03.02.xls',
             'eez/World_EEZ_v8_2014.shp', 
             'hydro_capacities.csv', 'naturalearth/ne_10m_admin_0_countries.shp', 
             'NUTS_2013_60M_SH/data/NUTS_RG_60M_2013.shp', 'nama_10r_3popgdp.tsv.gz', 
-            'nama_10r_3gdp.tsv.gz', 'corine/g250_clc06_V18_5.tif']
+            'nama_10r_3gdp.tsv.gz', 'corine/g250_clc06_V18_5.tif', 'shipdensity/shipdensity_global.zip']
 
 
 if not config.get('tutorial', False):
@@ -197,7 +197,7 @@ if config['enable'].get('build_ship_raster', False):
 
 if config['enable'].get('retrieve_ship_raster', True):
     rule retrieve_ship_raster:
-        input: HTTP.remote("path-to-file", keep_local=True, static=True)
+        input: HTTP.remote("https://sandbox.zenodo.org/record/1089563/files/europe_shipdensity_raster.nc", keep_local=True, static=True)
         output: "resources/europe_shipdensity_raster.nc"
         run: move(input[0], output[0])
 
