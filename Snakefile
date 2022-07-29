@@ -197,7 +197,7 @@ if config['enable'].get('build_ship_raster', False):
 
 if config['enable'].get('retrieve_ship_raster', True):
     rule retrieve_ship_raster:
-        input: HTTP.remote("https://tubcloud.tu-berlin.de/s/P9HArMwKbTH48Tf", keep_local=True, static=True)
+        input: HTTP.remote("path-to-file", keep_local=True, static=True)
         output: "resources/europe_shipdensity_raster.nc"
         run: move(input[0], output[0])
 
