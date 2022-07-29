@@ -29,6 +29,8 @@ enable:
   retrieve_cost_data: true
   build_cutout: false
   retrieve_cutout: true
+  retrieve_opsd_load_data: true
+  retrieve_artificial_load_data: false
   build_natura_raster: false
   retrieve_natura_raster: true
   custom_busmap: false
