@@ -571,7 +571,7 @@ def add_co2limit(n, Nyears=1., limit=0.):
     )
 
 # TODO PyPSA-Eur merge issue
-def average_every_nhours(n, offset):
+def average_every_nhours(n, offset, drop_leap_day=False):
     logger.info(f'Resampling the network to {offset}')
     m = n.copy(with_time=False)
 
@@ -589,6 +589,10 @@ def average_every_nhours(n, offset):
                     pnl[k] = df.resample(offset).max()
                 else:
                     pnl[k] = df.resample(offset).mean()
+
+    if drop_leap_day:
+        sns = m.snapshots[~((m.snapshots.month == 2) & (m.snapshots.day == 29))]
+        m.set_snapshots(sns)
 
     return m
 
@@ -2428,7 +2432,8 @@ if __name__ == "__main__":
     for o in opts:
         m = re.match(r'^\d+h$', o, re.IGNORECASE)
         if m is not None:
-            n = average_every_nhours(n, m.group(0))
+            drop_leap_day = snakemake.config["atlite"].get("drop_leap_day", False)
+            n = average_every_nhours(n, m.group(0), drop_leap_day)
             break
 
     limit_type = "config"
