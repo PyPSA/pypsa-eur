@@ -299,6 +299,8 @@ rule cluster_network:
         regions_onshore="resources/regions_onshore_elec{weather_year}_s{simpl}.geojson",
         regions_offshore="resources/regions_offshore_elec{weather_year}_s{simpl}.geojson",
         busmap=ancient('resources/busmap_elec{weather_year}_s{simpl}.csv'),
+        custom_busmap=("data/custom_busmap_elec_s{simpl}_{clusters}.csv"
+                       if config["enable"].get("custom_busmap", False) else []),
         tech_costs=COSTS
     output:
         network='networks/elec{weather_year}_s{simpl}_{clusters}.nc',
