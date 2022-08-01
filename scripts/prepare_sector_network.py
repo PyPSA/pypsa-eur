@@ -2496,12 +2496,24 @@ if __name__ == "__main__":
     if options["co2_network"]:
         add_co2_network(n, costs)
 
-    if "import" in opts:
-        add_import_options(
-            n,
+    translate = dict(
+        H2=["pipeline-h2", "shipping-lh2"],
+        AC=["hvdc-to-elec"],
+        CH4=["shipping-lch4"],
+        FT=["shipping-ftfuel"],
+    )
+    for o in opts:
+        if not o.startswith("imp"): continue
+        subsets = o.split("+")[1:]
+        if len(subsets):
+            carriers = sum([translate[s] for s in subsets], [])
+        else:
+            carriers = options["import"]["options"]
+        add_import_options(n,
             capacity_boost=options["import"]["capacity_boost"],
-            options=options["import"]["options"]
+            options=carriers
         )
+        break
 
     for o in opts:
         m = re.match(r'^\d+h$', o, re.IGNORECASE)
