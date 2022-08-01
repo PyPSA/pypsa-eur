@@ -1522,12 +1522,12 @@ def add_heat(n, costs):
                 lifetime=costs.at[key, 'lifetime']
             )
             
-            if options["pellet_boiler"]:
+            if options["biomass_boiler"] and name not in ["urban central"]:
                 #TODO: Add surcharge for pellets
                 n.madd("Link",
-                    nodes[name] + " biomass boiler",
+                    nodes[name] + f" {name} biomass boiler",
                     p_nom_extendable=True,
-                    bus0=spatial.biomass.nodes,
+                    bus0=spatial.biomass.df.loc[nodes[name], "nodes"].values,
                     bus1=nodes[name] + f" {name} heat",
                     bus2="co2 atmosphere",
                     carrier=name + " biomass boiler",
