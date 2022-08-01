@@ -139,4 +139,5 @@ if __name__ == "__main__":
 
     add_brownfield(n, n_p, year)
 
+    n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     n.export_to_netcdf(snakemake.output[0])
