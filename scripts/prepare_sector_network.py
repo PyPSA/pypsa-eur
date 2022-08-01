@@ -2564,6 +2564,10 @@ if __name__ == "__main__":
     if options['electricity_grid_connection']:
         add_electricity_grid_connection(n, costs)
 
-    if options["cluster_heat_buses"]:
+    first_year_myopic = ((snakemake.config["foresight"] == 'myopic') and
+                         (snakemake.config["scenario"]["planning_horizons"][0]==investment_year))
+
+    if options["cluster_heat_buses"] and not first_year_myopic:
         cluster_heat_buses(n)
+
     n.export_to_netcdf(snakemake.output[0])
