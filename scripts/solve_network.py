@@ -71,7 +71,7 @@ def prepare_network(n, solve_opts=None):
             df.where(df>solve_opts['clip_p_max_pu'], other=0., inplace=True)
 
     if solve_opts.get('load_shedding'):
-        n.add("Carrier", "Load")
+        n.add("Carrier", "load")
         n.madd("Generator", n.buses.index, " load",
                bus=n.buses.index,
                carrier='load',
@@ -246,7 +246,7 @@ def extra_functionality(n, snapshots):
     add_co2_sequestration_limit(n, snapshots)
 
 
-def solve_network(n, config, opts='', **kwargs):
+def solve_network(n, config, opts='', snapshots=None, **kwargs):
     solver_options = config['solving']['solver'].copy()
     solver_name = solver_options.pop('name')
     cf_solving = config['solving']['options']
@@ -259,12 +259,15 @@ def solve_network(n, config, opts='', **kwargs):
     n.config = config
     n.opts = opts
 
+    if snapshots is None:
+        snapshots = n.snapshots
+
     if cf_solving.get('skip_iterations', False):
-        network_lopf(n, solver_name=solver_name, solver_options=solver_options,
+        network_lopf(n, snapshots, solver_name=solver_name, solver_options=solver_options,
                      extra_functionality=extra_functionality,
                      keep_shadowprices=keep_shadowprices, **kwargs)
     else:
-        ilopf(n, solver_name=solver_name, solver_options=solver_options,
+        ilopf(n, snapshots, solver_name=solver_name, solver_options=solver_options,
               track_iterations=track_iterations,
               min_iterations=min_iterations,
               max_iterations=max_iterations,
@@ -295,7 +298,7 @@ if __name__ == "__main__":
     if tmpdir is not None:
         from pathlib import Path
         Path(tmpdir).mkdir(parents=True, exist_ok=True)
-    opts = snakemake.wildcards.opts.split('-')
+    opts = snakemake.wildcards.sector_opts.split('-')
     solve_opts = snakemake.config['solving']['options']
 
     fn = getattr(snakemake.log, 'memory', None)

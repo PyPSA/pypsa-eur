@@ -13,6 +13,7 @@ configfile: "config.yaml"
 
 wildcard_constraints:
     weather_year="[0-9]{4}|",
+    capacity_year="[0-9]{4}|",
     lv="[a-z0-9\.]+",
     simpl="[a-zA-Z0-9]*",
     clusters="[0-9]+m?",
@@ -680,3 +681,39 @@ if config["foresight"] == "myopic":
         resources: mem_mb=config['solving']['mem']
         benchmark: RDIR + "/benchmarks/solve_network/elec{weather_year}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}"
         script: "scripts/solve_network.py"
+
+
+rule solve_operations_network:
+    input:
+        pre=RDIR + "/prenetworks/elec{weather_year}_s_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        post=RDIR + "/postnetworks/elec{capacity_year}_s_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc",
+    output: "elec{capacity_year}_s_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}_{weather_year}.nc"
+    shadow: "shallow"
+    log:
+        solver=RDIR + "/logs/elec{capacity_year}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}_{weather_year}_solver.log",
+        python=RDIR + "/logs/elec{capacity_year}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}_{weather_year}_python.log",
+    threads: 4
+    resources: mem_mb=10000
+    benchmark: RDIR + "/benchmarks/solve_operations_network/elec{capacity_year}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}_{weather_year}"
+    script: "scripts/solve_operations_network.py"
+
+
+def solved_previous_year(wildcards):
+    previous_year = int(wildcards.weather_year) - 1
+    return RDIR + "/postnetworks/elec" + previous_year + "_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc"
+
+
+rule solve_operations_network_myopic:
+    input:
+        pre=RDIR + "/prenetworks/elec{weather_year}_s_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        post=RDIR + "/postnetworks/elec{capacity_year}_s_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        previous=solved_previous_year
+    output: "elec{capacity_year}_s_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}_{weather_year}_myopic.nc"
+    shadow: "shallow"
+    log:
+        solver=RDIR + "/logs/elec{capacity_year}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}_{weather_year}_solver.log",
+        python=RDIR + "/logs/elec{capacity_year}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}_{weather_year}_python.log",
+    threads: 4
+    resources: mem_mb=10000
+    benchmark: RDIR + "/benchmarks/solve_operations_network_myopic/elec{capacity_year}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}_{weather_year}"
+    script: "scripts/solve_operations_network_myopic.py"
