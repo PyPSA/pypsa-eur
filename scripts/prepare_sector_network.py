@@ -1861,7 +1861,7 @@ def add_biomass(n, costs):
         )
         
     #Solid biomass to liquid fuel
-    if options["biomass"]["biomass_to_liquid"]
+    if options["biomass_to_liquid"]
         n.madd("Link",
            spatial.biomass.nodes + " biomass to liquid",
            bus0=spatial.biomass.nodes,
