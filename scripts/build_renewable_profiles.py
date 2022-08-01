@@ -228,7 +228,8 @@ if __name__ == '__main__':
     regions = regions.set_index('name').rename_axis('bus')
     buses = regions.index
 
-    excluder = atlite.ExclusionContainer(crs=3035, res=100)
+    res = config.get("excluder_resolution", 100)
+    excluder = atlite.ExclusionContainer(crs=3035, res=res)
 
     if config['natura']:
         excluder.add_raster(snakemake.input.natura, nodata=0, allow_no_overlap=True)
