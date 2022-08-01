@@ -687,7 +687,7 @@ rule solve_operations_network:
     input:
         pre=RDIR + "/prenetworks/elec{weather_year}_s_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc",
         post=RDIR + "/postnetworks/elec{capacity_year}_s_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc",
-    output: "elec{capacity_year}_s_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}_{weather_year}.nc"
+    output: RDIR + "/operations/elec{capacity_year}_s_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}_{weather_year}.nc"
     shadow: "shallow"
     log:
         solver=RDIR + "/logs/elec{capacity_year}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}_{weather_year}_solver.log",
@@ -708,7 +708,7 @@ rule solve_operations_network_myopic:
         pre=RDIR + "/prenetworks/elec{weather_year}_s_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc",
         post=RDIR + "/postnetworks/elec{capacity_year}_s_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc",
         previous=solved_previous_year
-    output: "elec{capacity_year}_s_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}_{weather_year}_myopic.nc"
+    output: RDIR + "/operations/elec{capacity_year}_s_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}_{weather_year}_myopic.nc"
     shadow: "shallow"
     log:
         solver=RDIR + "/logs/elec{capacity_year}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}_{weather_year}_solver.log",
