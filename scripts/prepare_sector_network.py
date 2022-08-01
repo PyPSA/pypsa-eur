@@ -1859,6 +1859,40 @@ def add_biomass(n, costs):
             efficiency4=costs.at['solid biomass', 'CO2 intensity'] * costs.at['biomass CHP capture', 'capture_rate'],
             lifetime=costs.at[key, 'lifetime']
         )
+        
+    #Solid biomass to liquid fuel
+    if options["biomass"]["biomass_to_liquid"]
+        n.madd("Link",
+           spatial.biomass.nodes + " biomass to liquid",
+           bus0=spatial.biomass.nodes,
+           bus1="EU oil",
+           bus3="co2 atmosphere",
+           carrier="biomass to liquid",
+           lifetime=costs.at['BtL', 'lifetime'],
+           efficiency=costs.at['BtL', 'efficiency'],
+           efficiency3=-costs.at['solid biomass', 'CO2 intensity'] + costs.at['BtL', 'CO2 stored'],
+           p_nom_extendable=True,
+           capital_cost=costs.at['BtL', 'fixed'],
+           marginal_cost=costs.at['BtL', 'efficiency']*costs.loc["BtL", "VOM"]
+           )
+
+        #TODO: Update with energy penalty
+        n.madd("Link",
+               spatial.biomass.nodes + " biomass to liquid CC",
+               bus0=spatial.biomass.nodes,
+               bus1="EU oil",
+               bus2="co2 stored",
+               bus3="co2 atmosphere",
+               carrier="biomass to liquid",
+               lifetime=costs.at['BtL', 'lifetime'],
+               efficiency=costs.at['BtL', 'efficiency'],
+               efficiency2=costs.at['BtL', 'CO2 stored'] * costs.at['BtL', 'capture rate'],
+               efficiency3=-costs.at['solid biomass', 'CO2 intensity'] + costs.at['BtL', 'CO2 stored'] * (1 - costs.at['BtL', 'capture rate']),
+               p_nom_extendable=True,
+               capital_cost=costs.at['BtL', 'fixed'] + costs.at['biomass CHP capture', 'fixed'] * costs.at[
+                   "BtL", "CO2 stored"],
+               marginal_cost=costs.at['BtL', 'efficiency'] * costs.loc["BtL", "VOM"]
+               )
 
 
 def add_industry(n, costs):
