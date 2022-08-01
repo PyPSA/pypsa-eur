@@ -442,14 +442,14 @@ rule build_population_weighted_energy_totals:
 
 
 rule build_transport_demand:
-    input: 
+    input:
         clustered_pop_layout="resources/pop_layout_elec_s{simpl}_{clusters}.csv",
         pop_weighted_energy_totals="resources/pop_weighted_energy_totals_s{simpl}_{clusters}.csv",
         transport_data='resources/transport_data.csv',
         traffic_data_KFZ="data/emobility/KFZ__count",
         traffic_data_Pkw="data/emobility/Pkw__count",
         temp_air_total="resources/temp_air_total_elec_s{simpl}_{clusters}.nc",
-    output: 
+    output:
         transport_demand="resources/transport_demand_s{simpl}_{clusters}.csv",
         transport_data="resources/transport_data_s{simpl}_{clusters}.csv",
         avail_profile="resources/avail_profile_s{simpl}_{clusters}.csv",
@@ -464,12 +464,14 @@ rule prepare_sector_network:
         overrides="data/override_component_attrs",
         network=pypsaeur('networks/elec_s{simpl}_{clusters}_ec_lv{lv}_{opts}.nc'),
         energy_totals_name='resources/energy_totals.csv',
+        eurostat=input_eurostat,
         pop_weighted_energy_totals="resources/pop_weighted_energy_totals_s{simpl}_{clusters}.csv",
         transport_demand="resources/transport_demand_s{simpl}_{clusters}.csv",
         transport_data="resources/transport_data_s{simpl}_{clusters}.csv",
         avail_profile="resources/avail_profile_s{simpl}_{clusters}.csv",
         dsm_profile="resources/dsm_profile_s{simpl}_{clusters}.csv",
         co2_totals_name='resources/co2_totals.csv',
+        co2="data/eea/UNFCCC_v23.csv",
         biomass_potentials='resources/biomass_potentials_s{simpl}_{clusters}.csv',
         heat_profile="data/heat_load_profile_BDEW.csv",
         costs=CDIR + "costs_{planning_horizons}.csv",
@@ -568,7 +570,8 @@ rule plot_summary:
     input:
         costs=SDIR + '/csvs/costs.csv',
         energy=SDIR + '/csvs/energy.csv',
-        balances=SDIR + '/csvs/supply_energy.csv'
+        balances=SDIR + '/csvs/supply_energy.csv',
+        clustered_pop_layout="resources/pop_layout_elec_s{simpl}_{clusters}.csv",
     output:
         costs=SDIR + '/graphs/costs.pdf',
         energy=SDIR + '/graphs/energy.pdf',
