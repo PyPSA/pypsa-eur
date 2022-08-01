@@ -154,6 +154,7 @@ sector:
       # 2040: 0.6
       # 2050: 1.0
     district_heating_loss: 0.15
+  cluster_heat_buses: False # cluster residential and service heat buses to one to save memory
   bev_dsm_restriction_value: 0.75  #Set to 0 for no restriction on BEV DSM
   bev_dsm_restriction_time: 7  #Time at which SOC of BEV has to be dsm_restriction_value
   transport_heating_deadband_upper: 20.
