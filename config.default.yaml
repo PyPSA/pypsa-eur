@@ -263,6 +263,7 @@ sector:
   biomass_transport: false  # biomass transport between nodes
   conventional_generation: # generator : carrier
     OCGT: gas
+  pellet_boiler: true
 
 
 industry:
