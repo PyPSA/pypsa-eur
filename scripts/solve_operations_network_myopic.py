@@ -84,7 +84,7 @@ def solve_network_myopic(n, config, opts='', **kwargs):
         n.storage_units.state_of_charge_initial = n.storage_units_t.state_of_charge.loc[last_kept]
 
     # final segment until end of year
-    snapshots = n.snapshots[(i + 1) * kept - 1:]
+    snapshots = n.snapshots[(i + 1) * kept:]
     n = solve_network(n, config, opts=opts, snapshots=snapshots, **kwargs)
 
     return n
