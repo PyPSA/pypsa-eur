@@ -21,9 +21,11 @@ def prepare_myopic(n, config, store_soc, storage_unit_soc):
     biomass_stores = n.stores.carrier.str.isin(["solid biomass", "biogas"])
     biomass_potential = n.stores.loc[biomass_stores, "e_initial"]
 
+    # storage level contiguity across years
     n.stores.e_initial = store_soc
     n.storage_units.state_of_charge_initial = storage_unit_soc
 
+    # replace co2 limit with co2 price
     n.remove("GlobalConstraint", "CO2Limit")
     n.stores.at["co2 atmosphere", "marginal_cost"] = -config["co2_price"]
 
@@ -44,7 +46,6 @@ def prepare_myopic(n, config, store_soc, storage_unit_soc):
     n.stores.loc[biomass_stores, "e_initial"] = biomass_potential
 
     # set storage bidding prices
-    # TODO bidding prices for Fischer-Tropsch, Methanation for H2?
     bidding_prices = config["bidding_prices"]
     for c in n.iterate_components({"Store", "Link", "StorageUnit"}):
         c.df.marginal_cost.update(c.df.carrier.map(bidding_prices).dropna())
