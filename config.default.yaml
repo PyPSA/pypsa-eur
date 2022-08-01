@@ -385,6 +385,20 @@ solving:
     #feasopt_tolerance: 1.e-6
   mem: 30000 #memory in MB; 20 GB enough for 50+B+I+H2; 100 GB for 181+B+I+H2
 
+operations:
+  rolling_horizon:
+    window: 10 # days
+    overlap: 8 # days
+  bidding_prices: # EUR/MW
+    H2 Electrolysis: -10
+    H2 Fuel Cell: 200
+    urban central water tanks charger: -10
+    urban central water tanks discharger: 10
+    hydro: 70
+    solid biomass: 150
+    biogas: 100
+  co2_price: 500 # EUR/t
+  co2_sequestation_limit: 200 # Mt/a
 
 plotting:
   map:
