@@ -134,7 +134,7 @@ solar_thermal:
 
 # only relevant for foresight = myopic or perfect
 existing_capacities:
-  grouping_years: [1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2019]
+  grouping_years: [1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2020, 2025, 2030]
   threshold_capacity: 10
   conventional_carriers:
     - lignite
@@ -232,8 +232,9 @@ sector:
   marginal_cost_storage: 0. #1e-4
   methanation: true
   helmeth: true
+  coal_cc: false
   dac: true
-  co2_vent: true
+  co2_vent: false
   SMR: true
   co2_sequestration_potential: 200  #MtCO2/a sequestration potential for Europe
   co2_sequestration_cost: 10   #EUR/tCO2 for sequestration of CO2

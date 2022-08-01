@@ -24,7 +24,7 @@ incorporates retrofitting options to hydrogen.
 * New rule ``build_gas_input_locations`` compiles the LNG import capacities
   (including planned projects from gem.wiki), pipeline entry capacities and
   local production capacities for each region of the model. These are the
-  regions where fossil gas can eventually enter the model. 
+  regions where fossil gas can eventually enter the model.
 
 * New rule ``cluster_gas_network`` that clusters the gas transmission network
   data to the model resolution. Cross-regional pipeline capacities are aggregated
@@ -47,14 +47,16 @@ incorporates retrofitting options to hydrogen.
   H2_retrofit_capacity_per_CH4`` units are made available as hydrogen pipeline
   capacity in the corresponding corridor. These repurposed hydrogen pipelines
   have lower costs than new hydrogen pipelines. Both new and repurposed pipelines
-  can be built simultaneously. The retrofitting option ``sector: H2_retrofit:`` also works 
-  with a copperplated methane infrastructure, i.e. when ``sector: gas_network: false``. 
+  can be built simultaneously. The retrofitting option ``sector: H2_retrofit:`` also works
+  with a copperplated methane infrastructure, i.e. when ``sector: gas_network: false``.
 
 * New hydrogen pipelines can now be built where there are already power or gas
   transmission routes. Previously, only the electricity transmission routes were
   considered.
 
 **New features and functionality**
+
+* Units are assigned to the buses. These only provide a better understanding. The specifications of the units are not taken into account in the optimisation, which means that no automatic conversion of units takes place.
 
 * Option ``retrieve_sector_databundle`` to automatically retrieve and extract data bundle.
 
@@ -84,7 +86,7 @@ besides many performance improvements.
 
 This release is known to work with `PyPSA-Eur
 <https://github.com/PyPSA/pypsa-eur>`_ Version 0.4.0, `Technology Data
-<https://github.com/PyPSA/technology-data>`_ Version 0.3.0 and 
+<https://github.com/PyPSA/technology-data>`_ Version 0.3.0 and
 `PyPSA <https://github.com/PyPSA/PyPSA>`_ Version 0.18.0.
 
 Please note that the data bundle has also been updated.
@@ -202,19 +204,19 @@ Please note that the data bundle has also been updated.
   A function ``helper.override_component_attrs`` was added that loads this data
   and can pass the overridden component attributes into ``pypsa.Network()``.
 
-* Add various parameters to ``config.default.yaml`` which were previously hardcoded inside the scripts 
+* Add various parameters to ``config.default.yaml`` which were previously hardcoded inside the scripts
   (e.g. energy reference years, BEV settings, solar thermal collector models, geomap colours).
 
 * Removed stale industry demand rules ``build_industrial_energy_demand_per_country``
   and ``build_industrial_demand``. These are superseded with more regionally resolved rules.
 
 * Use simpler and shorter ``gdf.sjoin()`` function to allocate industrial sites
-  from the Hotmaps database to onshore regions.  
+  from the Hotmaps database to onshore regions.
   This change also fixes a bug:
   The previous version allocated sites to the closest bus,
   but at country borders (where Voronoi cells are distorted by the borders),
   this had resulted in e.g. a Spanish site close to the French border
-  being wrongly allocated to the French bus if the bus center was closer. 
+  being wrongly allocated to the French bus if the bus center was closer.
 
 * Retrofitting rule is now only triggered if endogeneously optimised.
 
@@ -225,7 +227,7 @@ Please note that the data bundle has also been updated.
 * Improve legibility of ``config.default.yaml`` and remove unused options.
 
 * Use the country-specific time zone mappings from ``pytz`` rather than a manual mapping.
-  
+
 * A function ``add_carrier_buses()`` was added to the ``prepare_network`` rule to reduce code duplication.
 
 * In the ``prepare_network`` rule the cost and potential adjustment was moved into an

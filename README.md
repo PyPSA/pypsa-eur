@@ -7,19 +7,8 @@
 
 # PyPSA-Eur-Sec: A Sector-Coupled Open Optimisation Model of the European Energy System
 
-
-
-**WARNING**: This model is under construction and contains serious problems that
-distort the results. See the github repository
-[issues](https://github.com/PyPSA/pypsa-eur-sec/issues) for some of the problems
-(please feel free to help or make suggestions). There is neither a full
-documentation nor a paper yet, but we hope to have a preprint out by the end of 2021.
-You can find out more about the model capabilities in [a recent
-presentation at EMP-E](https://nworbmot.org/energy/brown-empe.pdf) or the
-following [preprint with a description of the industry
-sector](https://arxiv.org/abs/2109.09563). We cannot support this model if you
-choose to use it.
-
+PyPSA-Eur-Sec is an open model dataset of the European energy system at the
+transmission network level that covers the full ENTSO-E area.
 
 PyPSA-Eur-Sec builds on the electricity generation and transmission
 model [PyPSA-Eur](https://github.com/PyPSA/pypsa-eur) to add demand
@@ -27,6 +16,20 @@ and supply for the following sectors: transport, space and water
 heating, biomass, industry and industrial feedstocks, agriculture,
 forestry and fishing. This completes the energy system and includes
 all greenhouse gas emitters except waste management and land use.
+
+**WARNING**: PyPSA-Eur-Sec is under active development and has several
+[limitations](https://pypsa-eur-sec.readthedocs.io/en/latest/limitations.html) which
+you should understand before using the model. The github repository
+[issues](https://github.com/PyPSA/pypsa-eur-sec/issues) collect known
+topics we are working on (please feel free to help or make suggestions).
+The [documentation](https://pypsa-eur-sec.readthedocs.io/) remains somewhat
+patchy.
+You can find showcases of the model's capabilities in the preprint
+[Benefits of a Hydrogen Network in Europe](https://arxiv.org/abs/2207.05816),
+a [paper in Joule with a description of the industry
+sector](https://arxiv.org/abs/2109.09563), or in [a 2021
+presentation at EMP-E](https://nworbmot.org/energy/brown-empe.pdf).
+We cannot support this model if you choose to use it.
 
 Please see the [documentation](https://pypsa-eur-sec.readthedocs.io/)
 for installation instructions and other useful information about the snakemake workflow.

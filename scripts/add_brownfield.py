@@ -11,7 +11,7 @@ import yaml
 import numpy as np
 
 from add_existing_baseyear import add_build_year_to_new_assets
-from helper import override_component_attrs
+from helper import override_component_attrs, update_config_with_sector_opts
 from solve_network import basename
 
 
@@ -122,6 +122,8 @@ if __name__ == "__main__":
             sector_opts='168H-T-H-B-I-solar+p3-dist1',
             planning_horizons=2030,
         )
+
+    update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
 
     print(snakemake.input.network_p)
     logging.basicConfig(level=snakemake.config['logging_level'])

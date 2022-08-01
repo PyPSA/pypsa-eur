@@ -14,7 +14,7 @@ from scipy.stats import beta
 from vresutils.costdata import annuity
 
 from build_energy_totals import build_eea_co2, build_eurostat_co2, build_co2_totals
-from helper import override_component_attrs, generate_periodic_profiles
+from helper import override_component_attrs, generate_periodic_profiles, update_config_with_sector_opts
 
 from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentation
 from networkx.algorithms import complement
@@ -385,10 +385,13 @@ def add_carrier_buses(n, carrier, nodes=None):
 
     n.add("Carrier", carrier)
 
+    unit = "MWh_LHV" if carrier == "gas" else "MWh_th"
+
     n.madd("Bus",
         nodes,
         location=location,
-        carrier=carrier
+        carrier=carrier,
+        unit=unit
     )
 
     #capital cost could be corrected to e.g. 0.2 EUR/kWh * annuity and O&M
@@ -439,6 +442,7 @@ def patch_electricity_network(n):
     update_wind_solar_costs(n, costs)
     n.loads["carrier"] = "electricity"
     n.buses["location"] = n.buses.index
+    n.buses["unit"] = "MWh_el"
     # remove trailing white space of load index until new PyPSA version after v0.18.
     n.loads.rename(lambda x: x.strip(), inplace=True)
     n.loads_t.p_set.rename(lambda x: x.strip(), axis=1, inplace=True)
@@ -455,7 +459,8 @@ def add_co2_tracking(n, options):
     n.add("Bus",
         "co2 atmosphere",
         location="EU",
-        carrier="co2"
+        carrier="co2",
+        unit="t_co2"
     )
 
     # can also be negative
@@ -471,7 +476,8 @@ def add_co2_tracking(n, options):
     n.madd("Bus",
         spatial.co2.nodes,
         location=spatial.co2.locations,
-        carrier="co2 stored"
+        carrier="co2 stored",
+        unit="t_co2"
     )
 
     n.madd("Store",
@@ -703,7 +709,8 @@ def insert_electricity_distribution_grid(n, costs):
     n.madd("Bus",
         nodes + " low voltage",
         location=nodes,
-        carrier="low voltage"
+        carrier="low voltage",
+        unit="MWh_el"
     )
 
     n.madd("Link",
@@ -770,7 +777,8 @@ def insert_electricity_distribution_grid(n, costs):
     n.madd("Bus",
         nodes + " home battery",
         location=nodes,
-        carrier="home battery"
+        carrier="home battery",
+        unit="MWh_el"
     )
 
     n.madd("Store",
@@ -845,7 +853,8 @@ def add_storage_and_grids(n, costs):
     n.madd("Bus",
         nodes + " H2",
         location=nodes,
-        carrier="H2"
+        carrier="H2",
+        unit="MWh_LHV"
     )
 
     n.madd("Link",
@@ -1051,7 +1060,8 @@ def add_storage_and_grids(n, costs):
     n.madd("Bus",
         nodes + " battery",
         location=nodes,
-        carrier="battery"
+        carrier="battery",
+        unit="MWh_el"
     )
 
     n.madd("Store",
@@ -1118,6 +1128,24 @@ def add_storage_and_grids(n, costs):
             lifetime=costs.at['helmeth', 'lifetime']
         )
 
+    if options.get('coal_cc'):
+
+        n.madd("Link",
+            spatial.nodes,
+            suffix=" coal CC",
+            bus0=spatial.coal.nodes,
+            bus1=spatial.nodes,
+            bus2="co2 atmosphere",
+            bus3="co2 stored",
+            marginal_cost=costs.at['coal', 'efficiency'] * costs.at['coal', 'VOM'], #NB: VOM is per MWel
+            capital_cost=costs.at['coal', 'efficiency'] * costs.at['coal', 'fixed'] + costs.at['biomass CHP capture', 'fixed'] * costs.at['coal', 'CO2 intensity'], #NB: fixed cost is per MWel
+            p_nom_extendable=True,
+            carrier="coal",
+            efficiency=costs.at['coal', 'efficiency'],
+            efficiency2=costs.at['coal', 'CO2 intensity'] * (1 - costs.at['biomass CHP capture','capture_rate']),
+            efficiency3=costs.at['coal', 'CO2 intensity'] * costs.at['biomass CHP capture','capture_rate'],
+            lifetime=costs.at['coal','lifetime']
+        )
 
     if options['SMR']:
 
@@ -1181,7 +1209,8 @@ def add_land_transport(n, costs):
             nodes,
             location=nodes,
             suffix=" EV battery",
-            carrier="Li ion"
+            carrier="Li ion",
+            unit="MWh_el"
         )
 
         p_set = electric_share * (transport[nodes] + cycling_shift(transport[nodes], 1) + cycling_shift(transport[nodes], 2)) / 3
@@ -1255,7 +1284,8 @@ def add_land_transport(n, costs):
             n.madd("Bus",
                 spatial.oil.nodes,
                 location=spatial.oil.locations,
-                carrier="oil"
+                carrier="oil",
+                unit="MWh_LHV"
             )
 
         ice_efficiency = options['transport_internal_combustion_efficiency']
@@ -1363,7 +1393,8 @@ def add_heat(n, costs):
         n.madd("Bus",
             nodes[name] + f" {name} heat",
             location=nodes[name],
-            carrier=name + " heat"
+            carrier=name + " heat",
+            unit="MWh_th"
         )
 
         ## Add heat load
@@ -1420,7 +1451,8 @@ def add_heat(n, costs):
             n.madd("Bus",
                 nodes[name] + f" {name} water tanks",
                 location=nodes[name],
-                carrier=name + " water tanks"
+                carrier=name + " water tanks",
+                unit="MWh_th"
             )
 
             n.madd("Link",
@@ -1449,9 +1481,6 @@ def add_heat(n, costs):
                                "for 'decentral' and 'central' separately.")
                 tes_time_constant_days = options["tes_tau"] if name_type == "decentral" else 180.
 
-            # conversion from EUR/m^3 to EUR/MWh for 40 K diff and 1.17 kWh/m^3/K
-            capital_cost = costs.at[name_type + ' water tank storage', 'fixed'] / 0.00117 / 40
-
             n.madd("Store",
                 nodes[name] + f" {name} water tanks",
                 bus=nodes[name] + f" {name} water tanks",
@@ -1459,7 +1488,7 @@ def add_heat(n, costs):
                 e_nom_extendable=True,
                 carrier=name + " water tanks",
                 standing_loss=1 - np.exp(- 1 / 24 / tes_time_constant_days),
-                capital_cost=capital_cost,
+                capital_cost=costs.at[name_type + ' water tank storage', 'fixed'],
                 lifetime=costs.at[name_type + ' water tank storage', 'lifetime']
             )
 
@@ -1725,13 +1754,15 @@ def add_biomass(n, costs):
     n.madd("Bus",
         spatial.gas.biogas,
         location=spatial.gas.locations,
-        carrier="biogas"
+        carrier="biogas",
+        unit="MWh_LHV"
     )
 
     n.madd("Bus",
         spatial.biomass.nodes,
         location=spatial.biomass.locations,
-        carrier="solid biomass"
+        carrier="solid biomass",
+        unit="MWh_LHV"
     )
 
     n.madd("Store",
@@ -1842,7 +1873,8 @@ def add_industry(n, costs):
     n.madd("Bus",
         spatial.biomass.industry,
         location=spatial.biomass.locations,
-        carrier="solid biomass for industry"
+        carrier="solid biomass for industry",
+        unit="MWh_LHV"
     )
 
     if options["biomass_transport"]:
@@ -1884,7 +1916,8 @@ def add_industry(n, costs):
     n.madd("Bus",
         spatial.gas.industry,
         location=spatial.gas.locations,
-        carrier="gas for industry")
+        carrier="gas for industry",
+        unit="MWh_LHV")
 
     gas_demand = industrial_demand.loc[nodes, "methane"] / 8760.
 
@@ -1940,7 +1973,8 @@ def add_industry(n, costs):
             nodes,
             suffix=" H2 liquid",
             carrier="H2 liquid",
-            location=nodes
+            location=nodes,
+            unit="MWh_LHV"
         )
 
         n.madd("Link",
@@ -1998,7 +2032,8 @@ def add_industry(n, costs):
         n.madd("Bus",
             spatial.oil.nodes,
             location=spatial.oil.locations,
-            carrier="oil"
+            carrier="oil",
+            unit="MWh_LHV"
         )
 
     if "oil" not in n.stores.carrier.unique():
@@ -2112,7 +2147,8 @@ def add_industry(n, costs):
     n.add("Bus",
         "process emissions",
         location="EU",
-        carrier="process emissions"
+        carrier="process emissions",
+        unit="t_co2"
     )
 
     # this should be process emissions fossil+feedstock
@@ -2217,8 +2253,8 @@ def add_agriculture(n, costs):
 
     if ice_share > 0:
 
-        n.add("Load",
-            "agriculture machinery oil",
+        n.madd("Load",
+            ["agriculture machinery oil"],
             bus=spatial.oil.nodes,
             carrier="agriculture machinery oil",
             p_set=ice_share * machinery_nodal_energy.sum() * 1e6 / 8760
@@ -2368,12 +2404,14 @@ if __name__ == "__main__":
             simpl='',
             opts="",
             clusters="37",
-            lv=1.0,
+            lv=1.5,
             sector_opts='Co2L0-168H-T-H-B-I-solar3-dist1',
             planning_horizons="2020",
         )
 
     logging.basicConfig(level=snakemake.config['logging_level'])
+
+    update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
 
     options = snakemake.config["sector"]
 
