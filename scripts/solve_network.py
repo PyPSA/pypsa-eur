@@ -225,7 +225,7 @@ def add_co2_sequestration_limit(n, sns):
     lhs = linexpr((1, vars_final_co2_stored)).sum()
 
     limit = n.config["sector"].get("co2_sequestration_potential", 200) * 1e6
-    for o in opts:
+    for o in n.opts:
         if not "seq" in o: continue
         limit = float(o[o.find("seq")+3:])
         break
@@ -243,18 +243,22 @@ def add_co2_sequestration_limit(n, sns):
 def add_energy_import_limit(n, sns):
 
     import_gens = n.generators.loc[n.generators.carrier.str.contains("import")].index
-    import_opts = n.config["sector"]["import"]
 
-    if import_gens.empty or "limit" not in import_opts.keys(): return
+    limit = n.config["sector"].get('import', {}).get('limit', None)
+    for o in n.opts:
+        if not o.startswith("imp"): continue
+        match = o.split("+")[0][3:]
+        if match: limit = float(match)
+        break
+
+    if import_gens.empty or limit is None: return
 
     weightings = n.snapshot_weightings.loc[sns]
     p = get_var(n, "Generator", "p")[import_gens] 
     lhs = linexpr((weightings.generators, p)).sum().sum()
 
-    rhs = import_opts["limit"] * 1e6
-
     name = 'energy_import_limit'
-    define_constraints(n, lhs, '<=', rhs, 'GlobalConstraint',
+    define_constraints(n, lhs, '<=', limit * 1e6, 'GlobalConstraint',
                        'mu', axes=pd.Index([name]), spec=name)
 
 
@@ -315,7 +319,7 @@ if __name__ == "__main__":
     if tmpdir is not None:
         from pathlib import Path
         Path(tmpdir).mkdir(parents=True, exist_ok=True)
-    opts = snakemake.wildcards.opts.split('-')
+    opts = snakemake.wildcards.sector_opts.split('-')
     solve_opts = snakemake.config['solving']['options']
 
     fn = getattr(snakemake.log, 'memory', None)
