@@ -158,18 +158,16 @@ def get(item, investment_year=None):
         return item
 
 
-def co2_emissions_year(opts, year):
+def co2_emissions_year(countries, input_eurostat, opts, year):
     """
     Calculate CO2 emissions in one specific year (e.g. 1990 or 2018).
     """
     emissions_scope = snakemake.config["energy"]["emissions"]
     eea_co2 = build_eea_co2(snakemake.input.co2, year, emissions_scope)
-    input_eurostat = snakemake.input.eurostat
 
     # TODO: read Eurostat data from year > 2014
     # this only affects the estimation of CO2 emissions for BA, RS, AL, ME, MK
     report_year = snakemake.config["energy"]["eurostat_report_year"]
-    countries =  pd.Index(pop_layout.ct.unique())
     if year > 2014:
         eurostat_co2 = build_eurostat_co2(input_eurostat, countries, report_year, year=2014)
     else:
@@ -205,10 +203,10 @@ def build_carbon_budget(o, fn):
 
     countries = n.buses.country.dropna().unique()
 
-    e_1990 = co2_emissions_year( opts, year=1990)
+    e_1990 = co2_emissions_year(countries, snakemake.input.eurostat, opts, year=1990)
 
     #emissions at the beginning of the path (last year available 2018)
-    e_0 = co2_emissions_year(opts, year=2018)
+    e_0 = co2_emissions_year(countries, snakemake.input.eurostat, opts, year=2018)
 
     planning_horizons = snakemake.config['scenario']['planning_horizons']
     t_0 = planning_horizons[0]

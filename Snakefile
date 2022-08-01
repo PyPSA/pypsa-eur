@@ -571,7 +571,8 @@ rule plot_summary:
         costs=SDIR + '/csvs/costs.csv',
         energy=SDIR + '/csvs/energy.csv',
         balances=SDIR + '/csvs/supply_energy.csv',
-        clustered_pop_layout="resources/pop_layout_elec_s{simpl}_{clusters}.csv",
+        eurostat=input_eurostat,
+        country_codes='data/Country_codes.csv',
     output:
         costs=SDIR + '/graphs/costs.pdf',
         energy=SDIR + '/graphs/energy.pdf',
