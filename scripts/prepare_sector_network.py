@@ -1860,6 +1860,40 @@ def add_biomass(n, costs):
             lifetime=costs.at[key, 'lifetime']
         )
 
+    #BioSNG from solid biomass
+    if options["biosng"]:
+        n.madd("Link",
+           spatial.biomass.nodes + " solid biomass to gas",
+           bus0=spatial.biomass.nodes,
+           bus1=spatial.gas.nodes,
+           bus3="co2 atmosphere",
+           carrier="BioSNG",
+           lifetime=costs.at['BioSNG', 'lifetime'],
+           efficiency=costs.at['BioSNG', 'efficiency'],
+           efficiency3=-costs.at['solid biomass', 'CO2 intensity'] + costs.at['BioSNG', 'CO2 stored'],
+           p_nom_extendable=True,
+           capital_cost=costs.at['BioSNG', 'fixed'],
+           marginal_cost=costs.at['BioSNG', 'efficiency']*costs.loc["BioSNG", "VOM"]
+           )
+
+        #TODO: Update with energy penalty for CC
+        n.madd("Link",
+           spatial.biomass.nodes + " solid biomass to gas CC",
+           bus0=spatial.biomass.nodes,
+           bus1=spatial.gas.nodes,
+           bus2=spatial.co2.nodes,
+           bus3="co2 atmosphere",
+           carrier="BioSNG",
+           lifetime=costs.at['BioSNG', 'lifetime'],
+           efficiency=costs.at['BioSNG', 'efficiency'],
+           efficiency2=costs.at['BioSNG', 'CO2 stored'] * costs.at['BioSNG', 'capture rate'],
+           efficiency3=-costs.at['solid biomass', 'CO2 intensity'] + costs.at['BioSNG', 'CO2 stored'] * (1 - costs.at['BioSNG', 'capture rate']),
+           p_nom_extendable=True,
+           capital_cost=costs.at['BioSNG', 'fixed'] + costs.at['biomass CHP capture', 'fixed'] * costs.at[
+               "BioSNG", "CO2 stored"],
+           marginal_cost=costs.at['BioSNG', 'efficiency']*costs.loc["BioSNG", "VOM"]
+           )
+
 
 def add_industry(n, costs):
 
