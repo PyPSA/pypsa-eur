@@ -385,9 +385,8 @@ def plot_carbon_budget_distribution(input_eurostat):
     ax1.set_xlim([1990,snakemake.config['scenario']['planning_horizons'][-1]+1])
 
     path_cb = snakemake.config['results_dir'] + snakemake.config['run'] + '/csvs/'
-    pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
-    countries=pd.read_csv(snakemake.input.country_codes, index_col=1)
-    cts=countries.index.to_list()
+    countries = pd.read_csv(snakemake.input.country_codes, index_col=1)
+    cts = countries.index.to_list()
     e_1990 = co2_emissions_year(cts, input_eurostat, opts, year=1990)
     CO2_CAP=pd.read_csv(path_cb + 'carbon_budget_distribution.csv',
                         index_col=0)
