@@ -185,6 +185,22 @@ if config['enable'].get('retrieve_natura_raster', True):
         run: move(input[0], output[0])
 
 
+rule retrieve_ship_raster:
+    input: HTTP.remote("https://zenodo.org/record/6953563/files/shipdensity_global.zip", keep_local=True, static=True)
+    output: "data/shipdensity_global.zip"
+    run: move(input[0], output[0])
+
+
+rule build_ship_raster:
+    input:
+        ship_density="data/shipdensity_global.zip",
+        cutouts=expand("cutouts/{cutouts}.nc", **config['atlite'])
+    output: "resources/shipdensity_raster.nc"
+    log: "logs/build_ship_raster.log"
+    benchmark: "benchmarks/build_ship_raster"
+    script: "scripts/build_ship_raster.py"
+
+
 rule build_renewable_profiles:
     input:
         base_network="networks/base.nc",
@@ -194,6 +210,9 @@ rule build_renewable_profiles:
                           else []),
         gebco=lambda w: ("data/bundle/GEBCO_2014_2D.nc"
                          if "max_depth" in config["renewable"][w.technology].keys()
+                         else []),
+        ship_density= lambda w: ("resources/shipdensity_raster.nc"
+                         if "ship_threshold" in config["renewable"][w.technology].keys()
                          else []),
         country_shapes='resources/country_shapes.geojson',
         offshore_shapes='resources/offshore_shapes.geojson',

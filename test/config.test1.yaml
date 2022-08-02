@@ -87,6 +87,7 @@ renewable:
     # correction_factor: 0.93
     corine: [44, 255]
     natura: true
+    ship_threshold: 400
     max_shore_distance: 30000
     excluder_resolution: 200
     potential: simple # or conservative
@@ -101,6 +102,7 @@ renewable:
     # correction_factor: 0.93
     corine: [44, 255]
     natura: true
+    ship_threshold: 400
     min_shore_distance: 30000
     excluder_resolution: 200
     potential: simple # or conservative

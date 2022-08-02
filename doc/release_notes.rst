@@ -10,7 +10,7 @@ Release Notes
 Upcoming Release
 ================
 
-* new feature
+* Add functionality to consider shipping routes when calculating the available area for offshore technologies. Data for the shipping density comes from the `Global Shipping Traffic Density dataset <https://datacatalog.worldbank.org/search/dataset/0037580/Global-Shipping-Traffic-Density>`
 
 PyPSA-Eur 0.5.0 (27th July 2022)
 =====================================
