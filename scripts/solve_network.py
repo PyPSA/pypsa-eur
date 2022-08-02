@@ -255,7 +255,7 @@ def add_energy_import_limit(n, sns):
 
     weightings = n.snapshot_weightings.loc[sns]
     p = get_var(n, "Generator", "p")[import_gens] 
-    lhs = linexpr((weightings.generators, p)).sum().sum()
+    lhs = linexpr((weightings.generators, p.T)).sum().sum()
 
     name = 'energy_import_limit'
     define_constraints(n, lhs, '<=', limit * 1e6, 'GlobalConstraint',
