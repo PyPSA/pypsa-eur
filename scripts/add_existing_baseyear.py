@@ -294,7 +294,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                 )
 
 
-def add_heating_capacities_installed_before_baseyear(n, baseyear, ashp_cop, gshp_cop, time_dep_hp_cop, costs, default_lifetime):
+def add_heating_capacities_installed_before_baseyear(n, baseyear, grouping_years, ashp_cop, gshp_cop, time_dep_hp_cop, costs, default_lifetime):
     """
     Parameters
     ----------
@@ -314,7 +314,7 @@ def add_heating_capacities_installed_before_baseyear(n, baseyear, ashp_cop, gshp
     # https://ec.europa.eu/energy/studies/mapping-and-analyses-current-and-future-2020-2030-heatingcooling-fuel-deployment_en?redir=1
     # file: "WP2_DataAnnex_1_BuildingTechs_ForPublication_201603.xls" -> "existing_heating_raw.csv".
     # TODO start from original file
-    grouping_years = [1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2019]
+
     # retrieve existing heating capacities
     techs = [
         'gas boiler',
@@ -505,14 +505,16 @@ if __name__ == "__main__":
         snakemake.config['costs']['lifetime']
     )
 
-    grouping_years = snakemake.config['existing_capacities']['grouping_years']
-    add_power_capacities_installed_before_baseyear(n, grouping_years, costs, baseyear)
+    grouping_years_power = snakemake.config['existing_capacities']['grouping_years_power']
+    grouping_years_heat = snakemake.config['existing_capacities']['grouping_years_heat']
+    add_power_capacities_installed_before_baseyear(n, grouping_years_power, costs, baseyear)
 
     if "H" in opts:
         time_dep_hp_cop = options["time_dep_hp_cop"]
         ashp_cop = xr.open_dataarray(snakemake.input.cop_air_total).to_pandas().reindex(index=n.snapshots)
         gshp_cop = xr.open_dataarray(snakemake.input.cop_soil_total).to_pandas().reindex(index=n.snapshots)
         default_lifetime = snakemake.config['costs']['lifetime']
-        add_heating_capacities_installed_before_baseyear(n, baseyear, ashp_cop, gshp_cop, time_dep_hp_cop, costs, default_lifetime)
+        add_heating_capacities_installed_before_baseyear(n, baseyear, grouping_years_heat,
+                                                         ashp_cop, gshp_cop, time_dep_hp_cop, costs, default_lifetime)
 
     n.export_to_netcdf(snakemake.output[0])
