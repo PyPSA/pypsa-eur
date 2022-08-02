@@ -31,8 +31,6 @@ enable:
   retrieve_cutout: true
   build_natura_raster: false
   retrieve_natura_raster: true
-  build_ship_raster: false
-  retrieve_ship_raster: true
   custom_busmap: false
 
 electricity:

@@ -52,7 +52,7 @@ datafiles = ['ch_cantons.csv', 'je-e-21.03.02.xls',
             'eez/World_EEZ_v8_2014.shp', 
             'hydro_capacities.csv', 'naturalearth/ne_10m_admin_0_countries.shp', 
             'NUTS_2013_60M_SH/data/NUTS_RG_60M_2013.shp', 'nama_10r_3popgdp.tsv.gz', 
-            'nama_10r_3gdp.tsv.gz', 'corine/g250_clc06_V18_5.tif', 'shipdensity/shipdensity_global.zip']
+            'nama_10r_3gdp.tsv.gz', 'corine/g250_clc06_V18_5.tif']
 
 
 if not config.get('tutorial', False):
@@ -185,21 +185,21 @@ if config['enable'].get('retrieve_natura_raster', True):
         run: move(input[0], output[0])
 
 
-if config['enable'].get('build_ship_raster', False):
-    rule build_ship_raster:
-        input:
-            ship_density="data/bundle/shipdensity/shipdensity_global.zip",
-            cutouts=expand("cutouts/{cutouts}.nc", **config['atlite'])
-        output: "resources/europe_shipdensity_raster.nc"
-        log: "logs/build_ship_raster.log"
-        script: "scripts/build_ship_raster.py"
+rule retrieve_ship_raster:
+    input: HTTP.remote("https://zenodo.org/record/6953563/files/shipdensity_global.zip", keep_local=True, static=True)
+    output: "data/shipdensity_global.zip"
+    run: move(input[0], output[0])
 
 
-if config['enable'].get('retrieve_ship_raster', True):
-    rule retrieve_ship_raster:
-        input: HTTP.remote("https://sandbox.zenodo.org/record/1089563/files/europe_shipdensity_raster.nc", keep_local=True, static=True)
-        output: "resources/europe_shipdensity_raster.nc"
-        run: move(input[0], output[0])
+rule build_ship_raster:
+    input:
+        ship_density="data/shipdensity_global.zip",
+        cutouts=expand("cutouts/{cutouts}.nc", **config['atlite'])
+    output: "resources/shipdensity_raster.nc"
+    log: "logs/build_ship_raster.log"
+    benchmark: "benchmarks/build_ship_raster"
+    script: "scripts/build_ship_raster.py"
+
 
 rule build_renewable_profiles:
     input:
@@ -211,7 +211,7 @@ rule build_renewable_profiles:
         gebco=lambda w: ("data/bundle/GEBCO_2014_2D.nc"
                          if "max_depth" in config["renewable"][w.technology].keys()
                          else []),
-        ship_density= lambda w: ("resources/europe_shipdensity_raster.nc"
+        ship_density= lambda w: ("resources/shipdensity_raster.nc"
                          if "ship_threshold" in config["renewable"][w.technology].keys()
                          else []),
         country_shapes='resources/country_shapes.geojson',
