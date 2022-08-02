@@ -59,6 +59,3 @@ if __name__ == "__main__":
     da = ship_density.drop(["band"]).sel(x=slice(min(xs),max(Xs)), y=slice(max(Ys),min(ys)))
 
     da.to_netcdf(snakemake.output[0])
-    
-    del ship_density
-    os.remove("shipdensity_global.tif") 
