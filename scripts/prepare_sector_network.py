@@ -158,7 +158,7 @@ def get(item, investment_year=None):
         return item
 
 
-def co2_emissions_year(countries, input_eurostat, opts, year):
+def co2_emissions_year(countries, input_eurostat, opts, emissions_scope, report_year, year):
     """
     Calculate CO2 emissions in one specific year (e.g. 1990 or 2018).
     """
@@ -186,7 +186,7 @@ def co2_emissions_year(countries, input_eurostat, opts, year):
 
 
 # TODO: move to own rule with sector-opts wildcard?
-def build_carbon_budget(o, fn):
+def build_carbon_budget(o, input_eurostat, fn, emissions_scope, report_year):
     """
     Distribute carbon budget following beta or exponential transition path.
     """
@@ -203,10 +203,12 @@ def build_carbon_budget(o, fn):
 
     countries = n.buses.country.dropna().unique()
 
-    e_1990 = co2_emissions_year(countries, snakemake.input.eurostat, opts, year=1990)
+    e_1990 = co2_emissions_year(countries, input_eurostat, opts, emissions_scope,
+                                report_year, year=1990)
 
     #emissions at the beginning of the path (last year available 2018)
-    e_0 = co2_emissions_year(countries, snakemake.input.eurostat, opts, year=2018)
+    e_0 = co2_emissions_year(countries, input_eurostat, opts, emissions_scope,
+                             report_year,year=2018)
 
     planning_horizons = snakemake.config['scenario']['planning_horizons']
     t_0 = planning_horizons[0]
@@ -2439,7 +2441,9 @@ if __name__ == "__main__":
         limit_type = "carbon budget"
         fn = snakemake.config['results_dir'] + snakemake.config['run'] + '/csvs/carbon_budget_distribution.csv'
         if not os.path.exists(fn):
-            build_carbon_budget(o, fn)
+            emissions_scope = snakemake.config["energy"]["emissions"]
+            report_year = snakemake.config["energy"]["eurostat_report_year"]
+            build_carbon_budget(o, snakemake.input.eurostat, fn, emissions_scope, report_year)
         co2_cap = pd.read_csv(fn, index_col=0).squeeze()
         limit = co2_cap.loc[investment_year]
         break
