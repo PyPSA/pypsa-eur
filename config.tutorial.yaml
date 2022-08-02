@@ -78,6 +78,7 @@ renewable:
       distance: 1000
       distance_grid_codes: [1, 2, 3, 4, 5, 6]
     natura: true
+    excluder_resolution: 200
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   offwind-ac:
@@ -91,6 +92,7 @@ renewable:
     natura: true
     ship_threshold: 400
     max_shore_distance: 30000
+    excluder_resolution: 200
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   offwind-dc:
@@ -105,6 +107,7 @@ renewable:
     natura: true
     ship_threshold: 400
     min_shore_distance: 30000
+    excluder_resolution: 200
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   solar:
@@ -126,6 +129,7 @@ renewable:
     corine: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
              14, 15, 16, 17, 18, 19, 20, 26, 31, 32]
     natura: true
+    excluder_resolution: 200
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
 
