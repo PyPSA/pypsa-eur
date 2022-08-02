@@ -27,9 +27,9 @@ logger = logging.getLogger(__name__)
 from types import SimpleNamespace
 spatial = SimpleNamespace()
 
-from distutils.version import LooseVersion
-pd_version = LooseVersion(pd.__version__)
-agg_group_kwargs = dict(numeric_only=False) if pd_version >= "1.3" else {}
+from packaging.version import Version, parse
+pd_version = parse(pd.__version__)
+agg_group_kwargs = dict(numeric_only=False) if pd_version >= Version("1.3") else {}
 
 def define_spatial(nodes, options):
     """
