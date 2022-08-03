@@ -2289,10 +2289,10 @@ def add_import_options(
     capacity_boost=3.,
     options=["hvdc-to-elec", "pipeline-h2", "shipping-lh2", "shipping-lch4", "shipping-ftfuel"]
 ):
-
+    logger.info("Add import options: " + " ".join(options))
     fn = snakemake.input.gas_input_nodes_simplified
     import_nodes = pd.read_csv(fn, index_col=0)
-    import_nodes["hvdc-to-elec"] = 1e6
+    import_nodes["hvdc-to-elec"] = 15000
 
     translate = {
         "pipeline-h2": "pipeline",
@@ -2308,13 +2308,18 @@ def add_import_options(
         "shipping-lch4": " gas",
     }
 
+    co2_intensity = {
+        "shipping-lch4": 'gas',
+        "shipping-ftfuel": 'oil',
+    }
+
     import_costs = pd.read_csv(snakemake.input.import_costs, index_col=0).reset_index(drop=True)
     import_costs.rename(columns={"value": "marginal_cost"}, inplace=True)
 
     for k, v in translate.items():
         import_nodes[k] = import_nodes[v]
 
-    regionalised_options = ["hvdc-to-elec", "pipeline-h2", "shipping-lh2", "shipping-lch4"]
+    regionalised_options = {"hvdc-to-elec", "pipeline-h2", "shipping-lh2", "shipping-lch4"}
 
     for tech in set(options).intersection(regionalised_options):
 
@@ -2322,44 +2327,95 @@ def add_import_options(
 
         import_nodes_tech = import_nodes.loc[~import_nodes[tech].isna(), [tech]]
         import_nodes_tech = import_nodes_tech.rename(columns={tech: "p_nom"}) * capacity_boost
-        
+
         marginal_costs = import_nodes_tech.index.str[:2].map(import_costs_tech)
         import_nodes_tech["marginal_cost"] = marginal_costs
-        
+
         import_nodes_tech.dropna(inplace=True)
 
         suffix = bus_suffix[tech]
-        location = import_nodes_tech.index
-        buses = location if tech == 'hvdc-to-elec' else location + suffix
 
-        n.madd(
-            "Generator",
-            import_nodes_tech.index + f"{suffix} import {tech}",
-            bus=buses,
-            carrier=f"import {tech}",
-            marginal_cost=import_nodes_tech.marginal_cost.values,
-            p_nom=import_nodes_tech.p_nom.values,
-        )
+        if tech in co2_intensity.keys():
+
+            buses = import_nodes_tech.index + f"{suffix} import {tech}"
+
+            n.madd("Bus",
+                buses + " bus",
+                carrier=f"import {tech}"
+            )
+
+            n.madd("Store",
+                buses + " store",
+                bus=buses + " bus",
+                e_nom_extendable=True,
+                e_nom_min=-np.inf,
+                e_nom_max=0,
+                e_min_pu=1,
+                e_max_pu=0,
+            )
+
+            n.madd("Link",
+                buses,
+                bus0=buses + " bus",
+                bus1=import_nodes_tech.index + suffix,
+                bus2="co2 atmosphere",
+                carrier=f"import {tech}",
+                efficiency2=-costs.at[co2_intensity[tech], 'CO2 intensity'],
+                marginal_cost=import_nodes_tech.marginal_cost.values,
+                p_nom=import_nodes_tech.p_nom.values,
+            )
+
+        else:
+
+            location = import_nodes_tech.index
+            buses = location if tech == 'hvdc-to-elec' else location + suffix
+
+            n.madd(
+                "Generator",
+                import_nodes_tech.index + f"{suffix} import {tech}",
+                bus=buses,
+                carrier=f"import {tech}",
+                marginal_cost=import_nodes_tech.marginal_cost.values,
+                p_nom=import_nodes_tech.p_nom.values,
+            )
 
     # need special handling for copperplated Fischer-Tropsch imports
     if "shipping-ftfuel" in options:
 
         marginal_costs = import_costs.query("esc == 'shipping-ftfuel'").marginal_cost.min()
 
-        n.add(
-            "Generator",
-            "EU oil import shipping-ftfuel",
-            bus="EU oil",
+        n.add("Bus",
+            "EU import shipping-ftfuel bus",
+            carrier="import shipping-ftfuel"
+        )
+
+        n.add("Store",
+            "EU import shipping-ftfuel store",
+            bus='EU import shipping-ftfuel bus',
+            e_nom_extendable=True,
+            e_nom_min=-np.inf,
+            e_nom_max=0,
+            e_min_pu=1,
+            e_max_pu=0,
+        )
+
+        n.add("Link",
+            "EU import shipping-ftfuel",
+            bus0="EU import shipping-ftfuel bus",
+            bus1="EU oil",
+            bus2="co2 atmosphere",
             carrier="import shipping-ftfuel",
+            efficiency2=-costs.at["oil", 'CO2 intensity'],
             marginal_cost=marginal_costs,
-            p_nom=1e6
+            p_nom=1e7,
         )
 
 
 def maybe_adjust_costs_and_potentials(n, opts):
 
     for o in opts:
-        if "+" not in o: continue
+        flags = ["+e", "+p", "+m"]
+        if all(flag not in o for flag in flags): continue
         oo = o.split("+")
         carrier_list = np.hstack((n.generators.carrier.unique(), n.links.carrier.unique(),
                                 n.stores.carrier.unique(), n.storage_units.carrier.unique()))

@@ -622,4 +622,4 @@ plotting:
     import shipping-lh2: '#ebe1ca'
     import shipping-lch4: '#d6cbb2'
     import shipping-ftfuel: '#bdb093'
-    import hvdc: '#91856a'
+    import hvdc-to-elec: '#91856a'

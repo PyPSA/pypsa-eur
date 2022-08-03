@@ -243,6 +243,7 @@ def add_co2_sequestration_limit(n, sns):
 def add_energy_import_limit(n, sns):
 
     import_gens = n.generators.loc[n.generators.carrier.str.contains("import")].index
+    import_links = n.links.loc[n.links.carrier.str.contains("import")].index
 
     limit = n.config["sector"].get('import', {}).get('limit', None)
     for o in n.opts:
@@ -251,10 +252,12 @@ def add_energy_import_limit(n, sns):
         if match: limit = float(match)
         break
 
-    if import_gens.empty or limit is None: return
+    if (import_gens.empty and import_links.empty) or limit is None: return
 
     weightings = n.snapshot_weightings.loc[sns]
-    p = get_var(n, "Generator", "p")[import_gens] 
+    p_gens = get_var(n, "Generator", "p")[import_gens]
+    p_links = get_var(n, "Link", "p")[import_links]
+    p = pd.concat([p_gens, p_links], axis=1)
     lhs = linexpr((weightings.generators, p.T)).sum().sum()
 
     name = 'energy_import_limit'
