@@ -296,7 +296,7 @@ if __name__ == "__main__":
     if tmpdir is not None:
         from pathlib import Path
         Path(tmpdir).mkdir(parents=True, exist_ok=True)
-    opts = snakemake.wildcards.opts.split('-')
+    opts = snakemake.wildcards.sector_opts.split('-')
     solve_opts = snakemake.config['solving']['options']
 
     fn = getattr(snakemake.log, 'memory', None)
