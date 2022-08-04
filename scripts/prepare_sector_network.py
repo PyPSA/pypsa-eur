@@ -1860,6 +1860,7 @@ def add_biomass(n, costs):
             lifetime=costs.at[key, 'lifetime']
         )
 
+
     #Solid biomass to liquid fuel
     if options["biomass_to_liquid"]:
         n.madd("Link",
@@ -1894,6 +1895,42 @@ def add_biomass(n, costs):
            capital_cost=costs.at['BtL', 'fixed'] + costs.at['biomass CHP capture', 'fixed'] * costs.at[
                "BtL", "CO2 stored"],
            marginal_cost=costs.at['BtL', 'efficiency'] * costs.loc["BtL", "VOM"]
+
+    #BioSNG from solid biomass
+    if options["biosng"]:
+        n.madd("Link",
+            spatial.biomass.nodes,
+            suffix=" solid biomass to gas",
+            bus0=spatial.biomass.nodes,
+            bus1=spatial.gas.nodes,
+            bus3="co2 atmosphere",
+            carrier="BioSNG",
+            lifetime=costs.at['BioSNG', 'lifetime'],
+            efficiency=costs.at['BioSNG', 'efficiency'],
+            efficiency3=-costs.at['solid biomass', 'CO2 intensity'] + costs.at['BioSNG', 'CO2 stored'],
+            p_nom_extendable=True,
+            capital_cost=costs.at['BioSNG', 'fixed'],
+            marginal_cost=costs.at['BioSNG', 'efficiency']*costs.loc["BioSNG", "VOM"]
+        )
+
+        #TODO: Update with energy penalty for CC
+        n.madd("Link",
+            spatial.biomass.nodes,
+            suffix=" solid biomass to gas CC",
+            bus0=spatial.biomass.nodes,
+            bus1=spatial.gas.nodes,
+            bus2=spatial.co2.nodes,
+            bus3="co2 atmosphere",
+            carrier="BioSNG",
+            lifetime=costs.at['BioSNG', 'lifetime'],
+            efficiency=costs.at['BioSNG', 'efficiency'],
+            efficiency2=costs.at['BioSNG', 'CO2 stored'] * costs.at['BioSNG', 'capture rate'],
+            efficiency3=-costs.at['solid biomass', 'CO2 intensity'] + costs.at['BioSNG', 'CO2 stored'] * (1 - costs.at['BioSNG', 'capture rate']),
+            p_nom_extendable=True,
+            capital_cost=costs.at['BioSNG', 'fixed'] + costs.at['biomass CHP capture', 'fixed'] * costs.at[
+                "BioSNG", "CO2 stored"],
+            marginal_cost=costs.at['BioSNG', 'efficiency']*costs.loc["BioSNG", "VOM"]
+
         )
 
 
@@ -2503,4 +2540,5 @@ if __name__ == "__main__":
     if options['electricity_grid_connection']:
         add_electricity_grid_connection(n, costs)
 
+    n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     n.export_to_netcdf(snakemake.output[0])
