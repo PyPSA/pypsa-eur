@@ -225,6 +225,7 @@ sector:
     central: 180
   boilers: true
   oil_boilers: false
+  biomass_boiler: true
   chp: true
   micro_chp: false
   solar_thermal: true
@@ -511,6 +512,7 @@ plotting:
     solid biomass for industry CC: '#47411c'
     solid biomass for industry co2 from atmosphere: '#736412'
     solid biomass for industry co2 to stored: '#47411c'
+    biomass boiler: '#8A9A5B'
     biomass to liquid: '#32CD32'
     BioSNG: '#123456'
     # power transmission
