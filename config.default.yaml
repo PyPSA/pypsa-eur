@@ -225,6 +225,7 @@ sector:
     central: 180
   boilers: true
   oil_boilers: false
+  biomass_boiler: true
   chp: true
   micro_chp: false
   solar_thermal: true
@@ -263,7 +264,6 @@ sector:
   biomass_transport: false  # biomass transport between nodes
   conventional_generation: # generator : carrier
     OCGT: gas
-  biomass_boiler: true
 
 
 industry:
