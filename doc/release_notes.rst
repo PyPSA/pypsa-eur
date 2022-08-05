@@ -56,6 +56,8 @@ incorporates retrofitting options to hydrogen.
 
 **New features and functionality**
 
+* Add option for biomass boilers (wood pellets) for decentral heating
+
 * Units are assigned to the buses. These only provide a better understanding. The specifications of the units are not taken into account in the optimisation, which means that no automatic conversion of units takes place.
 
 * Option ``retrieve_sector_databundle`` to automatically retrieve and extract data bundle.
