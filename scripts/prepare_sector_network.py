@@ -1861,7 +1861,7 @@ def add_biomass(n, costs):
             lifetime=costs.at[key, 'lifetime']
         )
 
-    if options["pellet_boiler"]:
+    if options["biomass_boiler"]:
         #TODO: Add surcharge for pellets
         nodes_heat = create_nodes_for_heat_sector()[0]
         for name in ["residential rural", "services rural",
@@ -1911,7 +1911,7 @@ def add_biomass(n, costs):
            p_nom_extendable=True,
            capital_cost=costs.at['BtL', 'fixed'] + costs.at['biomass CHP capture', 'fixed'] * costs.at[
                "BtL", "CO2 stored"],
-           marginal_cost=costs.at['BtL', 'efficiency'] * costs.loc["BtL", "VOM"]
+           marginal_cost=costs.at['BtL', 'efficiency'] * costs.loc["BtL", "VOM"])
 
     #BioSNG from solid biomass
     if options["biosng"]:
