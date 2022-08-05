@@ -1522,19 +1522,6 @@ def add_heat(n, costs):
                 lifetime=costs.at[key, 'lifetime']
             )
 
-            if options["biomass_boiler"] and name not in ["urban central"]:
-                #TODO: Add surcharge for pellets
-                n.madd("Link",
-                    nodes[name] + f" {name} biomass boiler",
-                    p_nom_extendable=True,
-                    bus0=spatial.biomass.df.loc[nodes[name], "nodes"].values,
-                    bus1=nodes[name] + f" {name} heat",
-                    carrier=name + " biomass boiler",
-                    efficiency=costs.at['biomass boiler', 'efficiency'],
-                    capital_cost=costs.at['biomass boiler', 'efficiency'] * costs.at['biomass boiler', 'fixed'],
-                    lifetime=costs.at['biomass boiler', 'lifetime']
-                )
-
 
         if options["solar_thermal"]:
 
@@ -1874,6 +1861,22 @@ def add_biomass(n, costs):
             lifetime=costs.at[key, 'lifetime']
         )
 
+    if options["pellet_boiler"]:
+        #TODO: Add surcharge for pellets
+        nodes_heat = create_nodes_for_heat_sector()[0]
+        for name in ["residential rural", "services rural",
+                     "residential urban decentral", "services urban decentral"]:
+
+            n.madd("Link",
+                nodes_heat[name] + f" {name} biomass boiler",
+                p_nom_extendable=True,
+                bus0=spatial.biomass.df.loc[nodes_heat[name], "nodes"].values,
+                bus1=nodes_heat[name] + f" {name} heat",
+                carrier=name + " biomass boiler",
+                efficiency=costs.at['biomass boiler', 'efficiency'],
+                capital_cost=costs.at['biomass boiler', 'efficiency'] * costs.at['biomass boiler', 'fixed'],
+                lifetime=costs.at['biomass boiler', 'lifetime']
+            )
 
 def add_industry(n, costs):
 
