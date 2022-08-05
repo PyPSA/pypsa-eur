@@ -264,6 +264,9 @@ sector:
   biomass_transport: false  # biomass transport between nodes
   conventional_generation: # generator : carrier
     OCGT: gas
+  biomass_to_liquid: false
+  biosng: false
+
 
 
 industry:
@@ -510,6 +513,8 @@ plotting:
     solid biomass for industry co2 from atmosphere: '#736412'
     solid biomass for industry co2 to stored: '#47411c'
     biomass boiler: '#8A9A5B'
+    biomass to liquid: '#32CD32'
+    BioSNG: '#123456'
     # power transmission
     lines: '#6c9459'
     transmission lines: '#6c9459'

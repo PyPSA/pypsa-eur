@@ -56,7 +56,12 @@ incorporates retrofitting options to hydrogen.
 
 **New features and functionality**
 
+
 * Add option for biomass boilers (wood pellets) for decentral heating
+
+* Add option for BioSNG (methane from biomass) with and without CC 
+
+* Add option for BtL (Biomass to liquid fuel/oil) with and without CC 
 
 * Units are assigned to the buses. These only provide a better understanding. The specifications of the units are not taken into account in the optimisation, which means that no automatic conversion of units takes place.
 
