@@ -153,8 +153,10 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
     # drop assets which are already phased out / decomissioned
     phased_out = df_agg[df_agg["DateOut"]<baseyear].index
     df_agg.drop(phased_out, inplace=True)
-    # calculate remaining lifetime before phase-out
-    df_agg["lifetime"] = df_agg.DateOut-baseyear
+    # calculate remaining lifetime before phase-out (+1 because assumming
+    # phase out date at the end of the year)
+    df_agg["lifetime"] = df_agg.DateOut - df_agg.DateIn + 1
+    # drop unused fueltyps and technologies
     df_agg.drop(df_agg.index[df_agg.Fueltype.isin(fueltype_to_drop)], inplace=True)
     df_agg.drop(df_agg.index[df_agg.Technology.isin(technology_to_drop)], inplace=True)
     df_agg.Fueltype = df_agg.Fueltype.map(rename_fuel)
@@ -187,13 +189,21 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
         aggfunc='sum'
     )
 
+    lifetime = df_agg.pivot_table(
+        index=["grouping_year", 'Fueltype'],
+        columns='cluster_bus',
+        values='lifetime',
+        aggfunc='mean'  # currently taken mean for clustering lifetimes
+    )
+
     carrier = {
         "OCGT": "gas",
         "CCGT": "gas",
         "coal": "coal",
         "oil": "oil",
         "lignite": "lignite",
-        "nuclear": "uranium"
+        "nuclear": "uranium",
+        'urban central solid biomass CHP': "biomass",
     }
 
     for grouping_year, generator in df.index:
@@ -204,7 +214,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
         capacity = capacity[~capacity.isna()]
         capacity = capacity[capacity > snakemake.config['existing_capacities']['threshold_capacity']]
         suffix = '-ac' if generator == 'offwind' else ''
-        name_suffix = f' {generator}{suffix}-{baseyear}'
+        name_suffix = f' {generator}{suffix}-{grouping_year}'
         asset_i = capacity.index + name_suffix
         if generator in ['solar', 'onwind', 'offwind']:
 
@@ -250,12 +260,12 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
 
             else:
 
-                p_max_pu = n.generators_t.p_max_pu[capacity.index + name_suffix]
+                p_max_pu = n.generators_t.p_max_pu[capacity.index + f' {generator}{suffix}-{baseyear}']
 
                 if not new_build.empty:
                     n.madd("Generator",
                         new_capacity.index,
-                        suffix=' ' + generator + name_suffix,
+                        suffix=' ' + name_suffix,
                         bus=new_capacity.index,
                         carrier=generator,
                         p_nom=new_capacity,
@@ -274,6 +284,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
 
             already_build = n.links.index.intersection(asset_i)
             new_build = asset_i.difference(n.links.index)
+            lifetime_assets = lifetime.loc[grouping_year,generator].dropna()
 
             # this is for the year 2020
             if not already_build.empty:
@@ -282,21 +293,39 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
             if not new_build.empty:
                 new_capacity = capacity.loc[new_build.str.replace(name_suffix, "")]
 
-                n.madd("Link",
-                    new_capacity.index,
-                    suffix= name_suffix,
-                    bus0=bus0,
-                    bus1=new_capacity.index,
-                    bus2="co2 atmosphere",
-                    carrier=generator,
-                    marginal_cost=costs.at[generator, 'efficiency'] * costs.at[generator, 'VOM'], #NB: VOM is per MWel
-                    capital_cost=costs.at[generator, 'efficiency'] * costs.at[generator, 'fixed'], #NB: fixed cost is per MWel
-                    p_nom=capacity / costs.at[generator, 'efficiency'],
-                    efficiency=costs.at[generator, 'efficiency'],
-                    efficiency2=costs.at[carrier[generator], 'CO2 intensity'],
-                    build_year=grouping_year,
-                    lifetime=costs.at[generator, 'lifetime']
-                )
+                if generator!="urban central solid biomass CHP":
+                    n.madd("Link",
+                        new_capacity.index,
+                        suffix= name_suffix,
+                        bus0=bus0,
+                        bus1=new_capacity.index,
+                        bus2="co2 atmosphere",
+                        carrier=generator,
+                        marginal_cost=costs.at[generator, 'efficiency'] * costs.at[generator, 'VOM'], #NB: VOM is per MWel
+                        capital_cost=costs.at[generator, 'efficiency'] * costs.at[generator, 'fixed'], #NB: fixed cost is per MWel
+                        p_nom=new_capacity / costs.at[generator, 'efficiency'],
+                        efficiency=costs.at[generator, 'efficiency'],
+                        efficiency2=costs.at[carrier[generator], 'CO2 intensity'],
+                        build_year=grouping_year,
+                        lifetime=lifetime_assets.loc[new_capacity.index],
+                    )
+                else:
+                    key = 'central solid biomass CHP'
+                    n.madd("Link",
+                        new_capacity.index,
+                        suffix= name_suffix,
+                        bus0=spatial.biomass.df.loc[new_capacity.index]["nodes"].values,
+                        bus1=new_capacity.index,
+                        bus2=new_capacity.index + " urban central heat",
+                        carrier=generator,
+                        p_nom=new_capacity / costs.at[key, 'efficiency'],
+                        capital_cost=costs.at[key, 'fixed'] * costs.at[key, 'efficiency'],
+                        marginal_cost=costs.at[key, 'VOM'],
+                        efficiency=costs.at[key, 'efficiency'],
+                        build_year=grouping_year,
+                        efficiency2=costs.at[key, 'efficiency-heat'],
+                        lifetime=lifetime_assets.loc[new_capacity.index]
+                    )
 
 
 def add_heating_capacities_installed_before_baseyear(n, baseyear, grouping_years, ashp_cop, gshp_cop, time_dep_hp_cop, costs, default_lifetime):
