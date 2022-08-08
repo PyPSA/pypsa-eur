@@ -131,7 +131,8 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
         'Oil': 'oil',
         'OCGT': 'OCGT',
         'CCGT': 'CCGT',
-        'Natural Gas': 'gas'
+        'Natural Gas': 'gas',
+        'Bioenergy': 'urban central solid biomass CHP',
     }
 
     fueltype_to_drop = [
@@ -139,7 +140,6 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
         'Wind',
         'Solar',
         'Geothermal',
-        'Bioenergy',
         'Waste',
         'Other',
         'CCGT, Thermal'
@@ -150,6 +150,11 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
         'Storage Technologies'
     ]
 
+    # drop assets which are already phased out / decomissioned
+    phased_out = df_agg[df_agg["DateOut"]<baseyear].index
+    df_agg.drop(phased_out, inplace=True)
+    # calculate remaining lifetime before phase-out
+    df_agg["lifetime"] = df_agg.DateOut-baseyear
     df_agg.drop(df_agg.index[df_agg.Fueltype.isin(fueltype_to_drop)], inplace=True)
     df_agg.drop(df_agg.index[df_agg.Technology.isin(technology_to_drop)], inplace=True)
     df_agg.Fueltype = df_agg.Fueltype.map(rename_fuel)
@@ -477,7 +482,7 @@ if __name__ == "__main__":
             clusters="45",
             lv=1.0,
             opts='',
-            sector_opts='cb40ex0-365H-T-H-B-I-A-solar+p3-dist1',
+            sector_opts='365H-T-H-B-I-A-solar+p3-dist1',
             planning_horizons=2020,
         )
 
@@ -488,7 +493,7 @@ if __name__ == "__main__":
     options = snakemake.config["sector"]
     opts = snakemake.wildcards.sector_opts.split('-')
 
-    baseyear= snakemake.config['scenario']["planning_horizons"][0]
+    baseyear = snakemake.config['scenario']["planning_horizons"][0]
 
     overrides = override_component_attrs(snakemake.input.overrides)
     n = pypsa.Network(snakemake.input.network, override_component_attrs=overrides)
