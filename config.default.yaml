@@ -42,7 +42,12 @@ scenario:
   # decay with initial growth rate 0
   planning_horizons: # investment years for myopic and perfect; or costs year for overnight
     - 2030
-  # for example, set to [2020, 2030, 2040, 2050] for myopic foresight
+  # for example, set to
+  # - 2020
+  # - 2030
+  # - 2040
+  # - 2050
+  # for myopic foresight
 
 # CO2 budget as a fraction of 1990 emissions
 # this is over-ridden if CO2Lx is set in sector_opts

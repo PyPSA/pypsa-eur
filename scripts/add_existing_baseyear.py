@@ -157,12 +157,12 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
 
     # Intermediate fix for DateIn & DateOut
     # Fill missing DateIn
-    Biomass = df_agg.loc[df_agg.Fueltype=='urban central solid biomass CHP'].index
-    mean = df_agg.loc[Biomass, 'DateIn'].mean()
-    df_agg.loc[Biomass, 'DateIn'] = df_agg.loc[Biomass, 'DateIn'].fillna(int(mean))
+    biomass_i = df_agg.loc[df_agg.Fueltype=='urban central solid biomass CHP'].index
+    mean = df_agg.loc[biomass_i, 'DateIn'].mean()
+    df_agg.loc[biomass_i, 'DateIn'] = df_agg.loc[biomass_i, 'DateIn'].fillna(int(mean))
     # Fill missing DateOut
-    dateout = df_agg.loc[Biomass, 'DateIn'] + snakemake.config['costs']['lifetime']
-    df_agg.loc[Biomass, 'DateOut'] = df_agg.loc[Biomass, 'DateOut'].fillna(dateout)
+    dateout = df_agg.loc[biomass_i, 'DateIn'] + snakemake.config['costs']['lifetime']
+    df_agg.loc[biomass_i, 'DateOut'] = df_agg.loc[biomass_i, 'DateOut'].fillna(dateout)
 
 
     # drop assets which are already phased out / decomissioned
@@ -442,10 +442,10 @@ def add_heating_capacities_installed_before_baseyear(n, baseyear, grouping_years
         for i, grouping_year in enumerate(grouping_years):
 
             if int(grouping_year) + default_lifetime <= int(baseyear):
-                ratio = 0
-            else:
-                # installation is assumed to be linear for the past 25 years (default lifetime)
-                ratio = (int(grouping_year) - int(grouping_years[i-1])) / default_lifetime
+                continue
+
+            # installation is assumed to be linear for the past 25 years (default lifetime)
+            ratio = (int(grouping_year) - int(grouping_years[i-1])) / default_lifetime
 
             n.madd("Link",
                 nodes[name],
@@ -509,7 +509,7 @@ def add_heating_capacities_installed_before_baseyear(n, baseyear, grouping_years
             # delete links with p_nom=nan corresponding to extra nodes in country
             n.mremove("Link", [index for index in n.links.index.to_list() if str(grouping_year) in index and np.isnan(n.links.p_nom[index])])
 
-            # delete links if their lifetime is over and p_nom=0
+            # delete links with capacities below threshold
             threshold = snakemake.config['existing_capacities']['threshold_capacity']
             n.mremove("Link", [index for index in n.links.index.to_list() if str(grouping_year) in index and n.links.p_nom[index] < threshold])
 
@@ -524,7 +524,7 @@ if __name__ == "__main__":
             lv=1.0,
             opts='',
             sector_opts='365H-T-H-B-I-A-solar+p3-dist1',
-            planning_horizons=2020,
+            planning_horizons=2030,
         )
 
     logging.basicConfig(level=snakemake.config['logging_level'])
