@@ -158,21 +158,22 @@ def get(item, investment_year=None):
         return item
 
 
-def co2_emissions_year(countries, opts, year):
+def co2_emissions_year(countries, input_eurostat, opts, emissions_scope, report_year, year):
     """
     Calculate CO2 emissions in one specific year (e.g. 1990 or 2018).
     """
-
-    eea_co2 = build_eea_co2(year)
+    emissions_scope = snakemake.config["energy"]["emissions"]
+    eea_co2 = build_eea_co2(snakemake.input.co2, year, emissions_scope)
 
     # TODO: read Eurostat data from year > 2014
     # this only affects the estimation of CO2 emissions for BA, RS, AL, ME, MK
+    report_year = snakemake.config["energy"]["eurostat_report_year"]
     if year > 2014:
-        eurostat_co2 = build_eurostat_co2(year=2014)
+        eurostat_co2 = build_eurostat_co2(input_eurostat, countries, report_year, year=2014)
     else:
-        eurostat_co2 = build_eurostat_co2(year)
+        eurostat_co2 = build_eurostat_co2(input_eurostat, countries, report_year, year)
 
-    co2_totals = build_co2_totals(eea_co2, eurostat_co2)
+    co2_totals = build_co2_totals(countries, eea_co2, eurostat_co2)
 
     sectors = emission_sectors_from_opts(opts)
 
@@ -185,7 +186,7 @@ def co2_emissions_year(countries, opts, year):
 
 
 # TODO: move to own rule with sector-opts wildcard?
-def build_carbon_budget(o, fn):
+def build_carbon_budget(o, input_eurostat, fn, emissions_scope, report_year):
     """
     Distribute carbon budget following beta or exponential transition path.
     """
@@ -202,10 +203,12 @@ def build_carbon_budget(o, fn):
 
     countries = n.buses.country.dropna().unique()
 
-    e_1990 = co2_emissions_year(countries, opts, year=1990)
+    e_1990 = co2_emissions_year(countries, input_eurostat, opts, emissions_scope,
+                                report_year, year=1990)
 
     #emissions at the beginning of the path (last year available 2018)
-    e_0 = co2_emissions_year(countries, opts, year=2018)
+    e_0 = co2_emissions_year(countries, input_eurostat, opts, emissions_scope,
+                             report_year,year=2018)
 
     planning_horizons = snakemake.config['scenario']['planning_horizons']
     t_0 = planning_horizons[0]
@@ -233,8 +236,9 @@ def build_carbon_budget(o, fn):
         co2_cap = pd.Series({t: exponential_decay(t) for t in planning_horizons}, name=o)
 
     # TODO log in Snakefile
-    if not os.path.exists(fn):
-        os.makedirs(fn)
+    csvs_folder = fn.rsplit("/", 1)[0]
+    if not os.path.exists(csvs_folder):
+        os.makedirs(csvs_folder)
     co2_cap.to_csv(fn, float_format='%.3f')
 
 
@@ -2423,7 +2427,7 @@ if __name__ == "__main__":
             opts="",
             clusters="37",
             lv=1.5,
-            sector_opts='Co2L0-168H-T-H-B-I-solar3-dist1',
+            sector_opts='cb40ex0-365H-T-H-B-I-A-solar+p3-dist1',
             planning_horizons="2020",
         )
 
@@ -2527,9 +2531,11 @@ if __name__ == "__main__":
         limit_type = "carbon budget"
         fn = snakemake.config['results_dir'] + snakemake.config['run'] + '/csvs/carbon_budget_distribution.csv'
         if not os.path.exists(fn):
-            build_carbon_budget(o, fn)
+            emissions_scope = snakemake.config["energy"]["emissions"]
+            report_year = snakemake.config["energy"]["eurostat_report_year"]
+            build_carbon_budget(o, snakemake.input.eurostat, fn, emissions_scope, report_year)
         co2_cap = pd.read_csv(fn, index_col=0).squeeze()
-        limit = co2_cap[investment_year]
+        limit = co2_cap.loc[investment_year]
         break
     for o in opts:
         if not "Co2L" in o: continue

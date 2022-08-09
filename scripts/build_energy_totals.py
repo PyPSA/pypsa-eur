@@ -127,17 +127,16 @@ to_ipcc = {
 }
 
 
-def build_eurostat(countries, year):
+def build_eurostat(input_eurostat, countries, report_year,  year):
     """Return multi-index for all countries' energy data in TWh/a."""
 
-    report_year = snakemake.config["energy"]["eurostat_report_year"]
     filenames = {
         2016: f"/{year}-Energy-Balances-June2016edition.xlsx",
         2017: f"/{year}-ENERGY-BALANCES-June2017edition.xlsx"
     }
 
     dfs = pd.read_excel(
-        snakemake.input.eurostat + filenames[report_year],
+        input_eurostat + filenames[report_year],
         sheet_name=None,
         skiprows=1,
         index_col=list(range(4)),
@@ -563,18 +562,18 @@ def build_energy_totals(countries, eurostat, swiss, idees):
     return df
 
 
-def build_eea_co2(year=1990):
+def build_eea_co2(input_co2, year=1990, emissions_scope="CO2"):
 
     # https://www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-16
     # downloaded 201228 (modified by EEA last on 201221)
-    df = pd.read_csv(snakemake.input.co2, encoding="latin-1")
+    df = pd.read_csv(input_co2, encoding="latin-1")
 
     df.replace(dict(Year="1985-1987"), 1986, inplace=True)
     df.Year = df.Year.astype(int)
     index_col = ["Country_code", "Pollutant_name", "Year", "Sector_name"]
     df = df.set_index(index_col).sort_index()
 
-    emissions_scope = snakemake.config["energy"]["emissions"]
+    emissions_scope = emissions_scope
 
     cts = ["CH", "EUA", "NO"] + eu28_eea
 
@@ -611,9 +610,9 @@ def build_eea_co2(year=1990):
     return emissions / 1e3
 
 
-def build_eurostat_co2(countries, year=1990):
+def build_eurostat_co2(input_eurostat, countries, report_year, year=1990):
 
-    eurostat = build_eurostat(countries, year)
+    eurostat = build_eurostat(input_eurostat, countries, report_year, year)
 
     specific_emissions = pd.Series(index=eurostat.columns, dtype=float)
 
@@ -702,7 +701,9 @@ if __name__ == "__main__":
     idees_countries = countries.intersection(eu28)
 
     data_year = config["energy_totals_year"]
-    eurostat = build_eurostat(countries, data_year)
+    report_year = snakemake.config["energy"]["eurostat_report_year"]
+    input_eurostat = snakemake.input.eurostat
+    eurostat = build_eurostat(input_eurostat, countries, report_year, data_year)
     swiss = build_swiss(data_year)
     idees = build_idees(idees_countries, data_year)
 
@@ -710,8 +711,9 @@ if __name__ == "__main__":
     energy.to_csv(snakemake.output.energy_name)
 
     base_year_emissions = config["base_emissions_year"]
-    eea_co2 = build_eea_co2(base_year_emissions)
-    eurostat_co2 = build_eurostat_co2(countries, base_year_emissions)
+    emissions_scope = snakemake.config["energy"]["emissions"]
+    eea_co2 = build_eea_co2(snakemake.input.co2, base_year_emissions, emissions_scope)
+    eurostat_co2 = build_eurostat_co2(input_eurostat, countries, report_year, base_year_emissions)
 
     co2 = build_co2_totals(countries, eea_co2, eurostat_co2)
     co2.to_csv(snakemake.output.co2_name)

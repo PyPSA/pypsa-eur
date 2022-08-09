@@ -42,7 +42,12 @@ scenario:
   # decay with initial growth rate 0
   planning_horizons: # investment years for myopic and perfect; or costs year for overnight
     - 2030
-  # for example, set to [2020, 2030, 2040, 2050] for myopic foresight
+  # for example, set to
+  # - 2020
+  # - 2030
+  # - 2040
+  # - 2050
+  # for myopic foresight
 
 # CO2 budget as a fraction of 1990 emissions
 # this is over-ridden if CO2Lx is set in sector_opts
@@ -134,7 +139,8 @@ solar_thermal:
 
 # only relevant for foresight = myopic or perfect
 existing_capacities:
-  grouping_years: [1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2020, 2025, 2030]
+  grouping_years_power: [1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2020, 2025, 2030]
+  grouping_years_heat: [1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2019] # these should not extend 2020
   threshold_capacity: 10
   conventional_carriers:
     - lignite
