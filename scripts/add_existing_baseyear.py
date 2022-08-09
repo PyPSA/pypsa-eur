@@ -150,16 +150,28 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
         'Storage Technologies'
     ]
 
-    # drop assets which are already phased out / decomissioned
-    phased_out = df_agg[df_agg["DateOut"]<baseyear].index
-    df_agg.drop(phased_out, inplace=True)
-    # calculate remaining lifetime before phase-out (+1 because assumming
-    # phase out date at the end of the year)
-    df_agg["lifetime"] = df_agg.DateOut - df_agg.DateIn + 1
     # drop unused fueltyps and technologies
     df_agg.drop(df_agg.index[df_agg.Fueltype.isin(fueltype_to_drop)], inplace=True)
     df_agg.drop(df_agg.index[df_agg.Technology.isin(technology_to_drop)], inplace=True)
     df_agg.Fueltype = df_agg.Fueltype.map(rename_fuel)
+
+    # Intermediate fix for DateIn & DateOut
+    # Fill missing DateIn
+    Biomass = df_agg.loc[df_agg.Fueltype=='urban central solid biomass CHP'].index
+    mean = df_agg.loc[Biomass, 'DateIn'].mean()
+    df_agg.loc[Biomass, 'DateIn'] = df_agg.loc[Biomass, 'DateIn'].fillna(int(mean))
+    # Fill missing DateOut
+    dateout = df_agg.loc[Biomass, 'DateIn'] + snakemake.config['costs']['lifetime']
+    df_agg.loc[Biomass, 'DateOut'] = df_agg.loc[Biomass, 'DateOut'].fillna(dateout)
+
+
+    # drop assets which are already phased out / decomissioned
+    phased_out = df_agg[df_agg["DateOut"]<baseyear].index
+    df_agg.drop(phased_out, inplace=True)
+
+    # calculate remaining lifetime before phase-out (+1 because assumming
+    # phase out date at the end of the year)
+    df_agg["lifetime"] = df_agg.DateOut - df_agg.DateIn + 1
 
     # assign clustered bus
     busmap_s = pd.read_csv(snakemake.input.busmap_s, index_col=0).squeeze()
