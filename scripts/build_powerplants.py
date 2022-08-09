@@ -92,9 +92,15 @@ def add_custom_powerplants(ppl, custom_powerplants, custom_ppl_query=False):
     return pd.concat([ppl, add_ppls], sort=False, ignore_index=True, verify_integrity=True)
 
 
-def replace_natural_gas_by_technology(df): 
-    return df.Fueltype.where(df.Fueltype != 'Natural Gas', df.Technology)
+def replace_natural_gas_technology(df):
+    mapping = {'Steam Turbine': 'OCGT', "Combustion Engine": "OCGT"}
+    tech = df.Technology.replace(mapping).fillna('OCGT')
+    return df.Technology.where(df.Fueltype != 'Natural Gas', tech)
 
+
+def replace_natural_gas_fueltype(df): 
+    return df.Fueltype.where(df.Fueltype != 'Natural Gas', df.Technology)
+ 
 
 if __name__ == "__main__":
     if 'snakemake' not in globals():
@@ -110,8 +116,8 @@ if __name__ == "__main__":
            .powerplant.fill_missing_decommissioning_years()
            .powerplant.convert_country_to_alpha2()
            .query('Fueltype not in ["Solar", "Wind"] and Country in @countries')
-           .replace({'Technology': {'Steam Turbine': 'OCGT', "Combustion Engine": "OCGT"}})
-           .assign(Fueltype=replace_natural_gas_by_technology))
+           .assign(Technology=replace_natural_gas_technology)
+           .assign(Fueltype=replace_natural_gas_fueltype))
 
     # Correct bioenergy for countries where possible
     opsd = pm.data.OPSD_VRE().powerplant.convert_country_to_alpha2()
