@@ -25,9 +25,10 @@ transmission network level that covers the full ENTSO-E area.
 PyPSA-Eur-Sec builds on the electricity generation and transmission
 model `PyPSA-Eur <https://github.com/PyPSA/pypsa-eur>`_ to add demand
 and supply for the following sectors: transport, space and water
-heating, biomass, industry and industrial feedstocks. This completes
-the energy system and includes all greenhouse gas emitters except
-waste management, agriculture, forestry and land use.
+heating, biomass, energy consumption in the agriculture, industry 
+and industrial feedstocks. This completes the energy system and includes 
+all greenhouse gas emitters except waste management, agriculture, 
+forestry and land use.
 
 
 **WARNING**: PyPSA-Eur-Sec is under active development and has several
