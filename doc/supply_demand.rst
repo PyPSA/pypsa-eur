@@ -210,15 +210,26 @@ Solid biomass supply
 Only wastes and residues from the JRC ENSPRESO biomass dataset.
 
 
-Oil product demand
-=====================
+Oil-based products demand
+========================
+Naphtha is used as a feedstock in the chemicals industry[LINK TO CHEMICAL INDUSTRY]. Furthermore, kerosene is used as transport fuel in the aviation sector[LINK TO AVIATION SECTOR]. Non-electrified agriculture machinery also consumes gasoline. 
+Land transport [LINK TO LAND TRANSPORT]  that is not electrified or converted into using H2-fuel cells also consumes oil-based products. While there is regional distribution of demand, the carrier is copperplated in the model, which means that transport costs and constraints are neglected. 
 
-Transport fuels, agriculture machinery and naphtha as a feedstock for the chemicals industry.
 
-Oil product supply
-======================
+Oil-based products supply 
+======================== 							
+Oil-based products can be either of fossil origin or synthetically produced by combining H2 [link to hydrogen] and captured CO2 [link to carbon capture] in Fischer-Tropsch plants		
 
-Fossil or Fischer-Tropsch.
+$$
+𝑛CO+(2𝑛+1)H_2 → C_{n}H_{2n + 2}  +𝑛H_2O
+$$
+
+with costs as included from the `technology-data repository <https://github.com/PyPSA/technology-data/blob/master/latex_tables/tables_in_latex.pdf>`_. The waste heat from the Fischer-Tropsch process is supplied to `district heating networks <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L255>`_. The share of fossil and synthetic oil is an optimisation result depending on the techno-economic assumptions.
+
+
+Oil-based transport
+======================== 		
+Liquid hydrocarbons are assumed to be transported freely among the model region since future demand is predicted to be low, transport costs for liquids are low and no bottlenecks are expected. 
 
 
 Industry demand
