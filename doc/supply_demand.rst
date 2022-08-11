@@ -245,6 +245,7 @@ Higher temperatures are met with methane.
 
 Transportation
 =========================
+Annual energy demands for land transport, aviation and shipping for every country are retrieved from `JRC-IDEES data set <http://data.europa.eu/89h/jrc-10110-10001>`_. Below, the details of how each of these categories are treated is explained.
 
 Land transport
 -----------------
