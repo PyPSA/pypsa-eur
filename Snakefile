@@ -63,12 +63,14 @@ if config['enable'].get('retrieve_databundle', True):
     rule retrieve_databundle:
         output: expand('data/bundle/{file}', file=datafiles)
         log: "logs/retrieve_databundle.log"
+        resources: mem_mb=1000
         script: 'scripts/retrieve_databundle.py'
 
 
 rule retrieve_load_data:
     input: HTTP.remote("data.open-power-system-data.org/time_series/2019-06-05/time_series_60min_singleindex.csv", keep_local=True, static=True)
     output: "data/load_raw.csv"
+    resources: mem_mb=5000
     run: move(input[0], output[0])
 
 
@@ -76,6 +78,7 @@ rule build_load_data:
     input: "data/load_raw.csv"
     output: "resources/load.csv"
     log: "logs/build_load_data.log"
+    resources: mem_mb=5000
     script: 'scripts/build_load_data.py'
 
 rule build_powerplants:
@@ -85,7 +88,7 @@ rule build_powerplants:
     output: "resources/powerplants.csv"
     log: "logs/build_powerplants.log"
     threads: 1
-    resources: mem_mb=500
+    resources: mem_mb=5000
     script: "scripts/build_powerplants.py"
 
 
@@ -160,12 +163,16 @@ if config['enable'].get('retrieve_cutout', True):
     rule retrieve_cutout:
         input: HTTP.remote("zenodo.org/record/6382570/files/{cutout}.nc", keep_local=True, static=True)
         output: "cutouts/{cutout}.nc"
+        log: "logs/retrieve_cutout_{cutout}.log"
+        resources: mem_mb=5000
         run: move(input[0], output[0])
 
 if config['enable'].get('retrieve_cost_data', True):
     rule retrieve_cost_data:
         input: HTTP.remote(f"raw.githubusercontent.com/PyPSA/technology-data/{config['costs']['version']}/outputs/costs_{config['costs']['year']}.csv", keep_local=True)
         output: COSTS
+        log: "logs/retrieve_cost_data.log"
+        resources: mem_mb=5000
         run: move(input[0], output[0])
 
 if config['enable'].get('build_natura_raster', False):
@@ -174,6 +181,7 @@ if config['enable'].get('build_natura_raster', False):
             natura="data/bundle/natura/Natura2000_end2015.shp",
             cutouts=expand("cutouts/{cutouts}.nc", **config['atlite'])
         output: "resources/natura.tiff"
+        resources: mem_mb=5000
         log: "logs/build_natura_raster.log"
         script: "scripts/build_natura_raster.py"
 
@@ -182,12 +190,14 @@ if config['enable'].get('retrieve_natura_raster', True):
     rule retrieve_natura_raster:
         input: HTTP.remote("zenodo.org/record/4706686/files/natura.tiff", keep_local=True, static=True)
         output: "resources/natura.tiff"
+        resources: mem_mb=5000
         run: move(input[0], output[0])
 
 
 rule retrieve_ship_raster:
     input: HTTP.remote("https://zenodo.org/record/6953563/files/shipdensity_global.zip", keep_local=True, static=True)
     output: "data/shipdensity_global.zip"
+    resources: mem_mb=5000
     run: move(input[0], output[0])
 
 
@@ -197,6 +207,7 @@ rule build_ship_raster:
         cutouts=expand("cutouts/{cutouts}.nc", **config['atlite'])
     output: "resources/shipdensity_raster.nc"
     log: "logs/build_ship_raster.log"
+    resources: mem_mb=5000
     benchmark: "benchmarks/build_ship_raster"
     script: "scripts/build_ship_raster.py"
 
@@ -404,6 +415,7 @@ rule make_summary:
     input: input_make_summary
     output: directory("results/summaries/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}")
     log: "logs/make_summary/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}.log",
+    resources: mem_mb=500
     script: "scripts/make_summary.py"
 
 
@@ -411,6 +423,7 @@ rule plot_summary:
     input: "results/summaries/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}"
     output: "results/plots/summary_{summary}_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}.{ext}"
     log: "logs/plot_summary/{summary}_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}_{ext}.log"
+    resources: mem_mb=500
     script: "scripts/plot_summary.py"
 
 
@@ -424,5 +437,6 @@ rule plot_p_nom_max:
     input: input_plot_p_nom_max
     output: "results/plots/elec_s{simpl}_cum_p_nom_max_{clusts}_{techs}_{country}.{ext}"
     log: "logs/plot_p_nom_max/elec_s{simpl}_{clusts}_{techs}_{country}_{ext}.log"
+    resources: mem_mb=500
     script: "scripts/plot_p_nom_max.py"
 
