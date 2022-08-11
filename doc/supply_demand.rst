@@ -162,17 +162,31 @@ Hydrogen supply
 Steam Methane Reforming (SMR), SMR+CCS, electrolysers.
 
 
-Methane demand
-==================
+Methane demand  
+====================================
+                  
+Methane is used in individual and large-scale gas boilers, in CHP plants with and without carbon capture, in OCGT and CCGT power plants, and in some industry subsectors for the provision of high temperature heat[LINK TO INDUSTRY OVERVIEW]. Methane is not used in the trans- port sector because of engine slippage.
 
-Can be used in boilers, in CHPs, in industry for high temperature heat, in OCGT.
+Methane supply                          
+===================================
 
-Not used in transport because of engine slippage.
+In addition to methane from fossil origins, the model also considers biogenic and synthetic sources. `The gas network can either be modeled, or it can be assumed that gas transport is not limited <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L261>`_. If gas infrastructure is regionally resolved, fossil gas can enter the system only at existing and planned LNG terminals, pipeline entry-points, and intra- European gas extraction sites, which are retrieved from the SciGRID Gas IGGIELGN dataset and the GEM Wiki. 
+Biogas can be upgraded to methane. 
+Synthetic methane can be produced by processing hydrogen and captures CO2 in the Sabatier reaction 
 
-Methane supply
-=================
+$$                   
+CO_2 + 4H_2 → CH_4 + 2H_2O
+$$
 
-Fossil, biogas, Sabatier (hydrogen to methane), HELMETH (directly power to methane with efficient heat integration).
+Direct power-to-methane conversion with efficient heat integration developed in the HELMETH project is also an option. The share of synthetic, biogenic and fossil methane is an optimisation result depending on the techno-economic assumptions.
+                
+*Methane transport*
+            
+The existing European gas transmission network is represented based on the SciGRID Gas IGGIELGN dataset. This dataset is based on compiled and merged data from the ENTSOG maps  and other publicly available data sources. It includes data on the capacity, diameter, pressure, length, and directionality of pipelines. Missing capacity data is conservatively inferred from the pipe diameter following conversion factors derived from an EHB report. The gas network is clustered to the selected number of model regions. Gas pipelines can be endogenously expanded or repurposed for hydrogen transport. Gas flows are represented by a lossless transport model. Methane is assumed to be transmitted without cost or capacity constraints because future demand is predicted to be low compared to available transport capacities.
+
+The following figure shows the unclustered European gas transmission network based on the SciGRID Gas IGGIELGN dataset. Pipelines are color-coded by estimated capacities. Markers indicate entry-points, sites of fossil resource extraction, and LNG terminals.            
+    
+.. image:: ../graphics/gas_pipeline_figure.png
 
 
 Solid biomass demand
