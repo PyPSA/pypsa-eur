@@ -55,7 +55,9 @@ Oil and gas boilers
 Heat pumps
 -------------
 
-Either air-to-water or ground-to-water heat pumps are implemented.
+
+
+Air-to-water heatpumps are used in urban central bus. 
 
 They have coefficient of performance (COP) based on either the
 external air or the soil hourly temperature.
