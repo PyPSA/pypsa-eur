@@ -177,7 +177,7 @@ Methane supply
 Fossil, biogas, Sabatier (hydrogen to methane), HELMETH (directly power to methane with efficient heat integration).
 
 
-Solid biomass demand
+Solid biomass demand (not up to date until Gorm makes the next commit. It will be great!)
 =====================
 
 Solid biomass provides process heat up to 500 Celsius in industry, as well as feeding CHP plants in district heating networks.
