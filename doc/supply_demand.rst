@@ -243,6 +243,17 @@ Solid biomass is used for up to 500 Celsius, mostly in paper and pulp and food a
 
 Higher temperatures are met with methane.
 
+Transportation
+=========================
+
+Land transport
+-----------------
+
+Aviation
+-----------------
+
+Shipping
+-----------------
 
 Carbon dioxide capture, usage and sequestration (CCU/S)
 =========================================================
