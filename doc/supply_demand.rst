@@ -145,12 +145,15 @@ Further information are given in the publication
 
 `Mitigating heat demand peaks in buildings in a highly renewable European energy system, (2021) <https://arxiv.org/abs/2012.01831>`_.
 
-## Hydrogen demand
+Hydrogen demand
+=============================
 
 Hydrogen is consumed in the industry sector (link to industry) to produce ammonia [link to ammonia industry section] and direct reduced iron (DRI) [link to DRI industry section]. Hydrogen is also consumed to produce synthetic methane [link to section “Methane supply”] and liquid hydrocarbons [link to fossil-oil based supply”] which have multiple uses in industry and other sectors. 
 Hydrogen is also used for transport applications (link to transport), where it is exogenously fixed. It is used in [heavy-duty land transport](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L181) and as liquified hydrogen in the shipping sector [add link to shipping sector]. Furthermore, stationary fuel cells may re-electrify hydrogen (with waste heat as a byproduct) to balance renewable fluctuations [Add a link to the section where we describe the Electricity sector and how storage is modelled there]. The waste heat from the stationary fuel cells can be used in [district-heating systems](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L256).
 
-## Hydrogen supply
+Hydrogen supply
+=============================
+
 Today, most of the H2 consumed globally is produced from natural gas by steam methane reforming (SMR)
 
 $$
