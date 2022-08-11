@@ -149,7 +149,7 @@ Hydrogen demand
 =============================
 
 Hydrogen is consumed in the industry sector (link to industry) to produce ammonia [link to ammonia industry section] and direct reduced iron (DRI) [link to DRI industry section]. Hydrogen is also consumed to produce synthetic methane [link to section “Methane supply”] and liquid hydrocarbons [link to fossil-oil based supply”] which have multiple uses in industry and other sectors. 
-Hydrogen is also used for transport applications (link to transport), where it is exogenously fixed. It is used in [heavy-duty land transport](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L181) and as liquified hydrogen in the shipping sector [add link to shipping sector]. Furthermore, stationary fuel cells may re-electrify hydrogen (with waste heat as a byproduct) to balance renewable fluctuations [Add a link to the section where we describe the Electricity sector and how storage is modelled there]. The waste heat from the stationary fuel cells can be used in [district-heating systems](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L256).
+Hydrogen is also used for transport applications (link to transport), where it is exogenously fixed. It is used in `heavy-duty land transport <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L181>`_ and as liquified hydrogen in the shipping sector [add link to shipping sector]. Furthermore, stationary fuel cells may re-electrify hydrogen (with waste heat as a byproduct) to balance renewable fluctuations [Add a link to the section where we describe the Electricity sector and how storage is modelled there]. The waste heat from the stationary fuel cells can be used in `district-heating systems <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L256>`_.
 
 Hydrogen supply
 =============================
@@ -166,7 +166,7 @@ $$
 CO + H_2O → CO_2 + H_2
 $$
 
-SMR is included [here](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L245). 
+SMR is included `here <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L245>`_. 
 PyPSA-Eur-Sec allows this route of H2 production with and without [carbon capture (CC)] (Link to section on Carbon Capture Storage and Utilization). These routes are often referred to as blue and grey hydrogen. Here, methane input can be both of fossil or synthetic origin.
 
 Green hydrogen can be produced by electrolysis to split water into hydrogen and oxygen
@@ -179,12 +179,12 @@ For the electrolysis, alkaline electrolysers are chosen since they have lower co
 
 *Transport*
 
-Hydrogen is transported by pipelines. H2 pipelines are endogenously generated, either via a  greenfield H2 network, or by [retrofitting natural gas pipelines](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L262). Retrofitting is implemented in such a way that for every unit of decommissioned gas pipeline, a share (60% is used in [link to H2 backbone study]) of its nominal capacity (exogenously determined in the [config file](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L266)) is available for hydrogen transport. When the gas network is not resolved, this input denotes the potential for gas pipelines repurposed into hydrogen pipelines.
+Hydrogen is transported by pipelines. H2 pipelines are endogenously generated, either via a  greenfield H2 network, or by `retrofitting natural gas pipelines <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L262>`_). Retrofitting is implemented in such a way that for every unit of decommissioned gas pipeline, a share (60% is used in [link to H2 backbone study]) of its nominal capacity (exogenously determined in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L266>`_.) is available for hydrogen transport. When the gas network is not resolved, this input denotes the potential for gas pipelines repurposed into hydrogen pipelines.
 New pipelines can be built additionally on all routes where there currently is a gas or electricity network connection. These new pipelines will be built where no sufficient retrofitting options are available. The capacities of new and repurposed pipelines are a result of the optimisation.
 
 *Storage*
 
-Hydrogen can be stored in overground steel tanks or [underground salt caverns](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L250). For the latter, energy storage capacities in every country are limited to the potential estimation for onshore salt caverns within [50 km](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L251) of shore to avoid environmental issues associated with brine solution disposal. Underground storage potentials for hydrogen in European salt caverns is acquired from [Caglayan et al.](https://doi.org/10.1016/j.ijhydene.2019.12.161).
+Hydrogen can be stored in overground steel tanks or `underground salt caverns <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L250>`_. For the latter, energy storage capacities in every country are limited to the potential estimation for onshore salt caverns within `50 km <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L251>`_ of shore to avoid environmental issues associated with brine solution disposal. Underground storage potentials for hydrogen in European salt caverns is acquired from `Caglayan et al. <https://doi.org/10.1016/j.ijhydene.2019.12.161>`_
 
 Methane demand
 ==================
