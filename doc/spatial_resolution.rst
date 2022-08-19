@@ -15,7 +15,7 @@ Exemplary unsolved network clustered to 37 nodes:
 .. image:: ../graphics/elec_s_37.png
 
 The total number of nodes for Europe is set in the config.yaml file under `clusters <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L20>`_.  The number of nodes can vary between 37, the number of independent countries/ synchronous areas, and several hundred. With 200-300 nodes, the model needs 100-150 GB RAM to solve with a commercial solver like Gurobi.
-Not all of the sectors are at the full nodal resolution, and some demand for some sectors is distributed to nodes using heuristics (Example?) that need to be corrected. Some networks (Example?) are copper-plated to reduce computational times.
+Not all of the sectors are at the full nodal resolution, and some demand for some sectors is distributed to nodes using heuristics that need to be corrected. Some networks are copper-plated to reduce computational times.
 
 Here are some examples of how spatial resolution is set for different sectors in PyPSA-Eur-Sec:
 
@@ -23,7 +23,7 @@ Here are some examples of how spatial resolution is set for different sectors in
 
 •	Electricity residential and commercial demand: Modeled as nodal, distributed in each country based on population and GDP.
 
-•	Electricity distribution network: Not included in the model, but a link per node can be used to represent energy transferred between distribution and transmission levels. (explained more in detail below)
+•	Electricity distribution network: Not included in the model, but a link per node can be used to represent energy transferred between distribution and transmission levels (explained more in detail below).
 
 •	Residential and commercial building heating demand: Modeled as nodal, distributed in each country based on population.
 
