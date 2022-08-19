@@ -388,9 +388,36 @@ The user can toggle if the energy demand for liquefaction of the hydrogen used f
 Carbon dioxide capture, usage and sequestration (CCU/S)
 =========================================================
 
-Carbon dioxide can be captured from industry process emissions,
-emissions related to industry process heat, combined heat and power
-plants, and directly from the air (DAC).
+PyPSA-Eur-Sec includes carbon capture from air (i.e., direct air capture (DAC)), electricity generators and industrial facilities. It furthermore includes carbon dioxide storage and transport, the usage of carbon dioxide in synthetic methane and oil products, as well as the sequestration of carbon dioxide underground.
 
-Carbon dioxide can be used as an input for methanation and
-Fischer-Tropsch fuels, or it can be sequestered underground.
+**Carbon dioxide capture**
+
+For the following point source emissions, carbon capture is applicable: 
+
+•	Industry process emissions, e.g., from limestone in cement production
+
+•	Methane or biomass used for process heat in the industry
+
+•	Hydrogen production by SMR  
+
+•	CHP plants using biomass or methane
+
+•	`Coal power plants <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L242>`_.
+
+Point source emissions are captured assuming a capture rate, e.g. 90%, which can be specified in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L249>`_. The electricity and heat demand of process emission carbon capture
+is currently ignored.
+
+DAC (if `included <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L243>`_) includes the adsorption phase where electricity and heat consumptionsare required to assist the adsorption process and regenerate the adsorbent. It also includes the drying and compression of CO2 prior to storage which consumes electricity and rejects heat. 
+
+*Carbon dioxide usage*
+
+Captured CO2 can be used to produce synthetic methane and synthetic oil products (e.g.
+naphtha). If captured carbon is used, the CO2 emissions of the synthetic fuels are net-neutral. 
+
+*Carbon dioxide sequestration*
+
+Captured CO2 can also be sequestered underground up to an annual sequestration limit of 200 MtCO2/a. This limit can be chosen in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L246>`_. As stored carbon dioxide is modelled as a single node for Europe, CO2 transport constraints are neglected. Since CO2 sequestration is an immature technology, the cost assumption is defined in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L247>`_.
+
+*Carbon dioxide transport*
+
+Carbon dioxide can be modelled as a single node for Europe (in this case, CO2 transport constraints are neglected). A network for modelling the transport of CO2 among the different nodes can also be created if selected in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L248>`_. 
