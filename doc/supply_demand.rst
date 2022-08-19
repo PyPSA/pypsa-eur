@@ -392,7 +392,7 @@ The share of all land transport that is specified to be be FCEV will be converte
 
 FCEVs are typically used to simulate demand for transport that is hard to electrify directly, e.g. heavy construction machinery. But it may also be used to investigate a more widespread adoption of the technology.
 
-*Internal combustion engine vehicles (ICE)* Ready for review
+*Internal combustion engine vehicles (ICE)* 
 
 All land transport that is not specified to be either BEV or FCEV will be treated as conventional ICEs. The transport demand is converted to a demand for oil products [link to oil products] using the `ICE effeciency
 <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L192>`_.
