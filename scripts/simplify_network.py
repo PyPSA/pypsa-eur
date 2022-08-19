@@ -112,7 +112,12 @@ def simplify_network_to_380(n):
 
     linetype_380, = n.lines.loc[n.lines.v_nom == 380., 'type'].unique()
     lines_v_nom_b = n.lines.v_nom != 380.
-    n.lines.loc[lines_v_nom_b, 'num_parallel'] *= (n.lines.loc[lines_v_nom_b, 'v_nom'] / 380.)**2
+    n.lines.loc[lines_v_nom_b, 'num_parallel'] *= (
+        n.lines.loc[lines_v_nom_b, "type"].map(n.line_types.i_nom)
+        / n.line_types.loc[linetype_380, "i_nom"]
+        * n.lines.loc[lines_v_nom_b, "v_nom"]
+        / 380.0
+    )
     n.lines.loc[lines_v_nom_b, 'v_nom'] = 380.
     n.lines.loc[lines_v_nom_b, 'type'] = linetype_380
     n.lines.loc[lines_v_nom_b, 's_nom'] = (
