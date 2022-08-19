@@ -134,6 +134,7 @@ Documentation
 
 * :doc:`overnight`
 * :doc:`myopic`
+* :doc:`perfect`
 
 .. toctree::
    :hidden:
