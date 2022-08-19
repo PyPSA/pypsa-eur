@@ -344,16 +344,26 @@ Inside each country the industrial demand is then distributed using the `Hotmaps
 .. image:: ../graphics/hotmaps.png
 
 
-Industry supply
-================
+*Iron and Steel*
 
-Process switching (e.g. from blast furnaces to direct reduction and electric arc furnaces for steel) is defined exogenously.
+*Chemicals Industry*
 
-Fuel switching for process heat is mostly also done exogenously.
+The chemicals industry includes a wide range of diverse industries, including the production of basic organic compounds (olefins, alcohols, aromatics), basic inorganic compounds (ammonia, chlorine), polymers (plastics), and end-user products (cosmetics, pharmaceutics).
 
-Solid biomass is used for up to 500 Celsius, mostly in paper and pulp and food and beverages.
+The chemicals industry includes a wide range of diverse industries, including the production of basic organic compounds (olefins, alcohols, aromatics), basic inorganic compounds (ammonia, chlorine), polymers (plastics), and end-user products (cosmetics, pharmaceutics).
+				
+The chemicals industry consumes large amounts of fossil-fuel based feedstocks (see `Levi et. al <https://pubs.acs.org/doi/10.1021/acs.est.7b04573>`_), which can also be produced from renewables as outlined for hydrogen (LINK TO HYDROGEN SUPPLY), for methane (LINK TO METHANE SUPPLY), and for oil-based products (LINK TO OIL-BASED PRODUCTS SUPPLY). The ratio between synthetic and fossil-based fuels used in the industry is an endogenous result of the opti- misation.
+					
+The basic chemicals consumption data from the `JRC IDEES  <https://op.europa.eu/en/publication-detail/-/publication/989282db-ad65-11e7-837e-01aa75ed71a1/language-en>`_ database comprises high- value chemicals (ethylene, propylene and BTX), chlorine, methanol and ammonia. However, it is necessary to separate out these chemicals because their current and future production routes are different.
+					
+Statistics for the production of ammonia, which is commonly used as a fertilizer, are taken from the `USGS <https://www.usgs.gov/media/files/nitrogen-2017-xlsx>`_ for every country. Ammonia can be made from hydrogen and nitrogen using the Haber-Bosch process.
+					
+$$
+N_2 + 3H_2 → 2NH_3
+$$
 
-Higher temperatures are met with methane.
+
+The Haber-Bosch process is not explicitly represented in the model, such that demand for ammonia enters the model as a demand for hydrogen ($6.5 MWh_{H_2}$/$t_{NH_3}$) and electricity (1.17 MWhel/tNH3) (see `Wang et. al <https://doi.org/10.1016/j.joule.2018.04.017>`_. Today, natural gas dominates in Europe as the source for the hydrogen used in the Haber-Bosch process, but the model can choose among the various hydrogen supply options described in the hydrogen section (LINK TO HYDROGEN SUPPLY)
 
 Transportation
 =========================
