@@ -407,4 +407,4 @@ plants, and directly from the air (DAC).
 Carbon dioxide can be used as an input for methanation and
 Fischer-Tropsch fuels, or it can be sequestered underground.
 
-[test] <a href="doc/supply_demand.rst#L397">
+[test] <a href="pypsa-eur-sec/doc/supply_demand.rst">doc/supply_demand.rst</a>
