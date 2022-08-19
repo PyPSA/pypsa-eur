@@ -58,7 +58,9 @@ Further information are given in the publication :
 *Water heating*
 
 Hot water demand is assumed to be constant throughout the year.
+
 *Urban and rural heating*
+
 For every country, heat demand is split between low and high population density areas. These country-level totals are then distributed to each region in proportion to their rural and urban populations respectively. Urban areas with dense heat demand can be supplied with large-scale district heating systems. The percent of urban heat demand that can be supplied by district heating networks as well as lump-sum losses in district heating systems is exogenously determined in the `Config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L153>`_. 
 
 *Cooling demand*
