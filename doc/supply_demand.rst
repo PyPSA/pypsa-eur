@@ -388,7 +388,7 @@ The user can toggle if the energy demand for liquefaction of the hydrogen used f
 Carbon dioxide capture, usage and sequestration (CCU/S)
 =========================================================
 
-PyPSA-Eur-Sec includes carbon capture from air (i.e., direct air capture (DAC)), electricity generators and industrial facilities. It furthermore includes carbon dioxide storage and transport, the usage of carbon dioxide in synthetic methane and oil products, as well as the sequestration of carbon dioxide underground.
+PyPSA-Eur-Sec includes carbon capture from air (i.e., direct air capture (DAC)), electricity generators, and industrial facilities. It furthermore includes carbon dioxide storage and transport, the usage of carbon dioxide in synthetic methane and oil products, as well as the sequestration of carbon dioxide underground.
 
 **Carbon dioxide capture**
 
