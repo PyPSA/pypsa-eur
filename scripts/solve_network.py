@@ -4,6 +4,7 @@ import pypsa
 
 import numpy as np
 import pandas as pd
+import math
 
 from pypsa.linopt import get_var, linexpr, define_constraints
 
@@ -297,6 +298,34 @@ def add_co2_sequestration_limit(n, sns):
                        'mu', axes=pd.Index([name]), spec=name)
 
 
+
+def add_carbon_constraint(n, snapshots):
+    glcs = n.global_constraints.query('type == "Co2constraint"')
+    if glcs.empty:
+        return
+    for name, glc in glcs.iterrows():
+        rhs = glc.constant
+        sense = glc.sense
+        carattr = glc.carrier_attribute
+        emissions = n.carriers.query(f"{carattr} != 0")[carattr]
+        if emissions.empty:
+            continue
+
+        # stores
+        n.stores["carrier"] = n.stores.bus.map(n.buses.carrier)
+        stores = n.stores.query("carrier in @emissions.index and not e_cyclic")
+        if not stores.empty:
+            time_valid = int(glc.loc["investment_period"]) if not math.isnan(glc.loc["investment_period"]) else n.snapshots.levels[0]
+            time_weightings = n.investment_period_weightings.loc[time_valid, "years"]
+            if type(time_weightings) == pd.Series:
+                time_weightings = expand_series(time_weightings, stores.index)
+            final_e = get_var(n, "Store", "e").groupby(level=0).last().loc[time_valid, stores.index]
+
+            lhs = linexpr((time_weightings, final_e))
+            define_constraints(n, lhs,  sense, rhs,  "GlobalConstraint", "mu",
+                               axes=pd.Index([name]), spec=name)
+
+
 def extra_functionality(n, snapshots):
     add_battery_constraints(n)
     add_pipe_retrofit_constraint(n)
@@ -304,6 +333,7 @@ def extra_functionality(n, snapshots):
 
     if snakemake.config['foresight']=="perfect":
         add_land_use_constraint_perfect(n)
+        add_carbon_constraint(n, snapshots)
 
 
 
@@ -349,7 +379,7 @@ if __name__ == "__main__":
             opts="",
             clusters="45",
             lv=1.0,
-            sector_opts='365H-T-H-B-I-A-solar+p3-dist1',
+            sector_opts='365H-T-H-B-I-A-solar+p3-dist1-co2min',
         )
 
     logging.basicConfig(filename=snakemake.log.python,

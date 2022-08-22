@@ -14,6 +14,7 @@ from pypsa.io import import_components_from_dataframe
 from add_existing_baseyear import add_build_year_to_new_assets
 from six import iterkeys
 from pypsa.descriptors import expand_series
+import re
 import logging
 logger = logging.getLogger(__name__)
 
@@ -163,6 +164,60 @@ def set_all_phase_outs(n):
     # remove assets which are already phased out
     remove_i = n.links[n.links[["build_year", "lifetime"]].sum(axis=1)<years[0]].index
     n.mremove("Link", remove_i)
+
+
+def set_carbon_constraints(n, opts):
+    """Add global constraints for carbon emissions."""
+    budget = (
+        snakemake.config["co2_budget"]["1p7"] * 1e9
+    )  # budget for + 1.7 Celsius for Europe
+    for o in opts:
+        # temporal clustering
+        m = re.match(r"^\d+p\d$", o, re.IGNORECASE)
+        if m is not None:
+            budget = snakemake.config["co2_budget"][m.group(0)] * 1e9
+    logger.info("add carbon budget of {}".format(budget))
+    n.add(
+        "GlobalConstraint",
+        "Budget",
+        type="Co2constraint",
+        carrier_attribute="co2_emissions",
+        sense="<=",
+        constant=budget,
+    )
+
+    if not "noco2neutral" in opts:
+        logger.info("Add carbon neutrality constraint.")
+        n.add(
+            "GlobalConstraint",
+            "Co2neutral",
+            type="Co2constraint",
+            carrier_attribute="co2_emissions",
+            investment_period=n.snapshots.levels[0][-1],
+            sense="<=",
+            constant=0,
+        )
+
+    if "co2min" in opts:
+        emissions_1990 = 4.53693
+        emissions_2019 = 3.344096
+        target_2030 = 0.45*emissions_1990
+        annual_reduction = (emissions_2019-target_2030)/11
+        first_year = n.snapshots.levels[0][0]
+        time_weightings = n.investment_period_weightings.loc[first_year, "years"]
+        co2min = emissions_2019-((first_year-2019)*annual_reduction)
+        logger.info("add minimum emissions for {} of {} t CO2/a".format(first_year, co2min))
+        n.add(
+            "GlobalConstraint",
+            "Co2min",
+            type="Co2constraint",
+            carrier_attribute="co2_emissions",
+            sense=">=",
+            investment_period=first_year,
+            constant=co2min*1e9*time_weightings,
+        )
+
+    return n
 #%%
 if __name__ == "__main__":
     if 'snakemake' not in globals():
@@ -173,7 +228,7 @@ if __name__ == "__main__":
             opts="",
             clusters="45",
             lv=1.0,
-            sector_opts='365H-T-H-B-I-A-solar+p3-dist1',
+            sector_opts='365H-T-H-B-I-A-solar+p3-dist1-co2min',
         )
 
     update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
@@ -190,6 +245,10 @@ if __name__ == "__main__":
     set_all_phase_outs(n)
     # adjust stores to multi period investment
     n = adjust_stores(n)
+
+    # set carbon constraints
+    opts = snakemake.wildcards.sector_opts.split('-')
+    n = set_carbon_constraints(n, opts)
 
     # export network
     n.export_to_netcdf(snakemake.output[0])
