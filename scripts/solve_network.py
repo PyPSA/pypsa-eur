@@ -9,9 +9,16 @@ from pypsa.linopt import get_var, linexpr, define_constraints
 
 from pypsa.linopf import network_lopf, ilopf
 
+from pypsa.descriptors import get_active_assets, expand_series
+
 from vresutils.benchmark import memory_logger
 
 from helper import override_component_attrs, update_config_with_sector_opts
+
+from packaging.version import Version, parse
+agg_group_kwargs = (
+    dict(numeric_only=False) if parse(pd.__version__) >= Version("1.3") else {}
+)
 
 import logging
 logger = logging.getLogger(__name__)
@@ -20,11 +27,56 @@ pypsa.pf.logger.setLevel(logging.WARNING)
 
 def add_land_use_constraint(n):
 
+    if (snakemake.config["foresight"] == "perfect") and ('m' in snakemake.wildcards.clusters):
+        raise NotImplementedError(
+            "The clustermethod  m is not implemented for perfect foresight"
+        )
+
     if 'm' in snakemake.wildcards.clusters:
         _add_land_use_constraint_m(n)
     else:
         _add_land_use_constraint(n)
 
+def add_land_use_constraint_perfect(n):
+    c, attr = "Generator", "p_nom"
+    investments = n.snapshots.levels[0]
+    df = n.df(c).copy()
+    res = df[df.p_nom_max!=np.inf].carrier.unique()
+    # extendable assets
+    ext_i = n.df(c)[(n.df(c)["carrier"].isin(res)) & (n.df(c)["p_nom_extendable"])].index
+    # dataframe when assets are active
+    active_i =  pd.concat([get_active_assets(n, c, inv_p).rename(inv_p)
+                           for inv_p in investments],axis=1).astype(int)
+    # extendable and active assets
+    ext_and_active = active_i.T[active_i.index.intersection(ext_i)]
+    if ext_and_active.empty:
+        return
+    p_nom = get_var(n, c, attr)[ext_and_active.columns]
+    # sum over each bus and carrier should be smaller than p_nom_max
+    lhs = (
+        linexpr((ext_and_active, p_nom))
+        .T.groupby([n.df(c).carrier, n.df(c).bus])
+        .sum(**agg_group_kwargs)
+        .T
+    )
+    # maximum technical potential
+    p_nom_max_w = n.df(c).p_nom_max.loc[ext_and_active.columns]
+    p_nom_max_t = expand_series(p_nom_max_w, investments).T
+
+    rhs = (
+        p_nom_max_t.mul(ext_and_active)
+        .groupby([n.df(c).carrier, n.df(c).bus], axis=1)
+        .max(**agg_group_kwargs)
+    ).reindex(columns=lhs.columns)
+
+    # TODO this currently leads to infeasibilities in ES and DE
+    # rename existing offwind to reduce technical potential
+   # df.carrier.replace({"offwind":"offwind-ac"},inplace=True)
+    #existing_p_nom = df.groupby([df.carrier, df.bus]).sum().p_nom.loc[rhs.columns]
+    #rhs -= existing_p_nom
+    # make sure that rhs is not negative because existing capacities > tech potential
+    #rhs.clip(lower=0, inplace=True)
+    define_constraints(n, lhs, "<=", rhs, "GlobalConstraint", "land_use_constraint")
 
 def _add_land_use_constraint(n):
     #warning: this will miss existing offwind which is not classed AC-DC and has carrier 'offwind'
@@ -100,7 +152,7 @@ def prepare_network(n, solve_opts=None):
         n.set_snapshots(n.snapshots[:nhours])
         n.snapshot_weightings[:] = 8760./nhours
 
-    if snakemake.config['foresight'] == 'myopic':
+    if snakemake.config['foresight']=="myopic":
         add_land_use_constraint(n)
 
     return n
@@ -214,15 +266,20 @@ def add_pipe_retrofit_constraint(n):
 
 
 def add_co2_sequestration_limit(n, sns):
-
+    # TODO isn't it better to have the limit on the e_nom instead of last sn e?
     co2_stores = n.stores.loc[n.stores.carrier=='co2 stored'].index
 
     if co2_stores.empty or ('Store', 'e') not in n.variables.index:
         return
+    if snakemake.config["foresight"]:
+        last_sn = (n.snapshot_weightings.loc[sns].reset_index(level=1, drop=False)
+                   .groupby(level=0).last().reset_index()
+                   .set_index(["period", "timestep"]).index)
+    else:
+        last_sn = sns[-1]
+    vars_final_co2_stored = get_var(n, 'Store', 'e').loc[last_sn, co2_stores]
 
-    vars_final_co2_stored = get_var(n, 'Store', 'e').loc[sns[-1], co2_stores]
-
-    lhs = linexpr((1, vars_final_co2_stored)).sum()
+    lhs = linexpr((1, vars_final_co2_stored)).sum(axis=1)
 
     limit = n.config["sector"].get("co2_sequestration_potential", 200) * 1e6
     for o in opts:
@@ -245,15 +302,22 @@ def extra_functionality(n, snapshots):
     add_pipe_retrofit_constraint(n)
     add_co2_sequestration_limit(n, snapshots)
 
+    if snakemake.config['foresight']=="perfect":
+        add_land_use_constraint_perfect(n)
+
+
 
 def solve_network(n, config, opts='', **kwargs):
     solver_options = config['solving']['solver'].copy()
     solver_name = solver_options.pop('name')
     cf_solving = config['solving']['options']
+    if snakemake.config["foresight"] == "perfect":
+        cf_solving["multi_investment_periods"] = True
     track_iterations = cf_solving.get('track_iterations', False)
     min_iterations = cf_solving.get('min_iterations', 4)
     max_iterations = cf_solving.get('max_iterations', 6)
     keep_shadowprices = cf_solving.get('keep_shadowprices', True)
+    multi_investment = cf_solving.get("multi_investment_periods", False)
 
     # add to network for extra_functionality
     n.config = config
@@ -262,7 +326,8 @@ def solve_network(n, config, opts='', **kwargs):
     if cf_solving.get('skip_iterations', False):
         network_lopf(n, solver_name=solver_name, solver_options=solver_options,
                      extra_functionality=extra_functionality,
-                     keep_shadowprices=keep_shadowprices, **kwargs)
+                     keep_shadowprices=keep_shadowprices,
+                     multi_investment_periods=multi_investment, **kwargs)
     else:
         ilopf(n, solver_name=solver_name, solver_options=solver_options,
               track_iterations=track_iterations,
@@ -270,21 +335,21 @@ def solve_network(n, config, opts='', **kwargs):
               max_iterations=max_iterations,
               extra_functionality=extra_functionality,
               keep_shadowprices=keep_shadowprices,
+              multi_investment_periods=multi_investment,
               **kwargs)
     return n
 
-
+#%%
 if __name__ == "__main__":
     if 'snakemake' not in globals():
         from helper import mock_snakemake
         snakemake = mock_snakemake(
-            'solve_network',
+            'solve_network_perfect',
             simpl='',
             opts="",
-            clusters="37",
+            clusters="45",
             lv=1.0,
-            sector_opts='168H-T-H-B-I-A-solar+p3-dist1',
-            planning_horizons="2030",
+            sector_opts='365H-T-H-B-I-A-solar+p3-dist1',
         )
 
     logging.basicConfig(filename=snakemake.log.python,
@@ -316,6 +381,11 @@ if __name__ == "__main__":
             n.line_volume_limit_dual = n.global_constraints.at["lv_limit", "mu"]
 
         n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
+
+        # rename columns since multi columns not working with pypsa.io
+        for key in n.global_constraints_t.keys():
+            n.global_constraints_t[key].columns = ['{} {}'.format(i, j) for i, j in n.global_constraints_t[key].columns]
+
         n.export_to_netcdf(snakemake.output[0])
 
     logger.info("Maximum memory usage: {}".format(mem.mem_usage))

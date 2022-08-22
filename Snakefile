@@ -29,14 +29,15 @@ subworkflow pypsaeur:
     snakefile: "../pypsa-eur/Snakefile"
     configfile: "../pypsa-eur/config.yaml"
 
-rule all:
-    input: SDIR + '/graphs/costs.pdf'
+if config["foresight"] in ["myopic", "overnight"]:
+    rule all:
+        input: SDIR + '/graphs/costs.pdf'
 
 
-rule solve_all_networks:
-    input:
-        expand(RDIR + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc",
-               **config['scenario'])
+    rule solve_all_networks:
+        input:
+            expand(RDIR + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc",
+                   **config['scenario'])
 
 
 rule prepare_sector_networks:
@@ -511,17 +512,18 @@ rule prepare_sector_network:
     script: "scripts/prepare_sector_network.py"
 
 
-rule plot_network:
-    input:
-        overrides="data/override_component_attrs",
-        network=RDIR + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc"
-    output:
-        map=RDIR + "/maps/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
-        today=RDIR + "/maps/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}-today.pdf"
-    threads: 2
-    resources: mem_mb=10000
-    benchmark: RDIR + "/benchmarks/plot_network/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}"
-    script: "scripts/plot_network.py"
+if config["foresight"] in ["myopic", "overnight"]:
+    rule plot_network:
+        input:
+            overrides="data/override_component_attrs",
+            network=RDIR + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc"
+        output:
+            map=RDIR + "/maps/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
+            today=RDIR + "/maps/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}-today.pdf"
+        threads: 2
+        resources: mem_mb=10000
+        benchmark: RDIR + "/benchmarks/plot_network/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}"
+        script: "scripts/plot_network.py"
 
 
 rule copy_config:
@@ -531,56 +533,56 @@ rule copy_config:
     benchmark: SDIR + "/benchmarks/copy_config"
     script: "scripts/copy_config.py"
 
+if config["foresight"] in ["myopic", "overnight"]:
+    rule make_summary:
+        input:
+            overrides="data/override_component_attrs",
+            networks=expand(
+                RDIR + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc",
+                **config['scenario']
+            ),
+            costs=CDIR + "costs_{}.csv".format(config['scenario']['planning_horizons'][0]),
+            plots=expand(
+                RDIR + "/maps/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
+                **config['scenario']
+            )
+        output:
+            nodal_costs=SDIR + '/csvs/nodal_costs.csv',
+            nodal_capacities=SDIR + '/csvs/nodal_capacities.csv',
+            nodal_cfs=SDIR + '/csvs/nodal_cfs.csv',
+            cfs=SDIR + '/csvs/cfs.csv',
+            costs=SDIR + '/csvs/costs.csv',
+            capacities=SDIR + '/csvs/capacities.csv',
+            curtailment=SDIR + '/csvs/curtailment.csv',
+            energy=SDIR + '/csvs/energy.csv',
+            supply=SDIR + '/csvs/supply.csv',
+            supply_energy=SDIR + '/csvs/supply_energy.csv',
+            prices=SDIR + '/csvs/prices.csv',
+            weighted_prices=SDIR + '/csvs/weighted_prices.csv',
+            market_values=SDIR + '/csvs/market_values.csv',
+            price_statistics=SDIR + '/csvs/price_statistics.csv',
+            metrics=SDIR + '/csvs/metrics.csv'
+        threads: 2
+        resources: mem_mb=10000
+        benchmark: SDIR + "/benchmarks/make_summary"
+        script: "scripts/make_summary.py"
 
-rule make_summary:
-    input:
-        overrides="data/override_component_attrs",
-        networks=expand(
-            RDIR + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc",
-            **config['scenario']
-        ),
-        costs=CDIR + "costs_{}.csv".format(config['scenario']['planning_horizons'][0]),
-        plots=expand(
-            RDIR + "/maps/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
-            **config['scenario']
-        )
-    output:
-        nodal_costs=SDIR + '/csvs/nodal_costs.csv',
-        nodal_capacities=SDIR + '/csvs/nodal_capacities.csv',
-        nodal_cfs=SDIR + '/csvs/nodal_cfs.csv',
-        cfs=SDIR + '/csvs/cfs.csv',
-        costs=SDIR + '/csvs/costs.csv',
-        capacities=SDIR + '/csvs/capacities.csv',
-        curtailment=SDIR + '/csvs/curtailment.csv',
-        energy=SDIR + '/csvs/energy.csv',
-        supply=SDIR + '/csvs/supply.csv',
-        supply_energy=SDIR + '/csvs/supply_energy.csv',
-        prices=SDIR + '/csvs/prices.csv',
-        weighted_prices=SDIR + '/csvs/weighted_prices.csv',
-        market_values=SDIR + '/csvs/market_values.csv',
-        price_statistics=SDIR + '/csvs/price_statistics.csv',
-        metrics=SDIR + '/csvs/metrics.csv'
-    threads: 2
-    resources: mem_mb=10000
-    benchmark: SDIR + "/benchmarks/make_summary"
-    script: "scripts/make_summary.py"
 
-
-rule plot_summary:
-    input:
-        costs=SDIR + '/csvs/costs.csv',
-        energy=SDIR + '/csvs/energy.csv',
-        balances=SDIR + '/csvs/supply_energy.csv',
-        eurostat=input_eurostat,
-        country_codes='data/Country_codes.csv',
-    output:
-        costs=SDIR + '/graphs/costs.pdf',
-        energy=SDIR + '/graphs/energy.pdf',
-        balances=SDIR + '/graphs/balances-energy.pdf'
-    threads: 2
-    resources: mem_mb=10000
-    benchmark: SDIR + "/benchmarks/plot_summary"
-    script: "scripts/plot_summary.py"
+    rule plot_summary:
+        input:
+            costs=SDIR + '/csvs/costs.csv',
+            energy=SDIR + '/csvs/energy.csv',
+            balances=SDIR + '/csvs/supply_energy.csv',
+            eurostat=input_eurostat,
+            country_codes='data/Country_codes.csv',
+        output:
+            costs=SDIR + '/graphs/costs.pdf',
+            energy=SDIR + '/graphs/energy.pdf',
+            balances=SDIR + '/graphs/balances-energy.pdf'
+        threads: 2
+        resources: mem_mb=10000
+        benchmark: SDIR + "/benchmarks/plot_summary"
+        script: "scripts/plot_summary.py"
 
 
 if config["foresight"] == "overnight":
@@ -603,7 +605,7 @@ if config["foresight"] == "overnight":
         script: "scripts/solve_network.py"
 
 
-if config["foresight"] == "myopic":
+if config["foresight"] in ["myopic","perfect"]:
 
     rule add_existing_baseyear:
         input:
@@ -630,6 +632,9 @@ if config["foresight"] == "myopic":
         script: "scripts/add_existing_baseyear.py"
 
 
+if config["foresight"] == "myopic":
+
+
     def solved_previous_horizon(wildcards):
         planning_horizons = config["scenario"]["planning_horizons"]
         i = planning_horizons.index(int(wildcards.planning_horizons))
@@ -654,7 +659,6 @@ if config["foresight"] == "myopic":
 
     ruleorder: add_existing_baseyear > add_brownfield
 
-
     rule solve_network_myopic:
         input:
             overrides="data/override_component_attrs",
@@ -671,3 +675,85 @@ if config["foresight"] == "myopic":
         resources: mem_mb=config['solving']['mem']
         benchmark: RDIR + "/benchmarks/solve_network/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}"
         script: "scripts/solve_network.py"
+
+if config["foresight"] == "perfect":
+    rule prepare_perfect_foresight:
+        input:
+            network=expand(RDIR + "/prenetworks/" + "elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc", **config['scenario']),
+            brownfield_network = lambda w: (RDIR + "/prenetworks-brownfield/" + "elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_" + "{}.nc"
+                                            .format(str(config['scenario']["planning_horizons"][0]))),
+            overrides="data/override_component_attrs",
+        output: RDIR + "/prenetworks-brownfield/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_brownfield_all_years.nc"
+        threads: 2
+        resources: mem_mb=10000
+        script: "scripts/prepare_perfect_foresight.py"
+
+    rule solve_network_perfect:
+        input:
+            overrides="data/override_component_attrs",
+            network= RDIR + "/prenetworks-brownfield/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_brownfield_all_years.nc",
+            costs=CDIR + "costs_2030.csv",
+            config=SDIR + '/configs/config.yaml'
+        output: RDIR + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_brownfield_all_years.nc"
+        shadow: "shallow"
+        log:
+            solver=RDIR + "/logs/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_brownfield_all_years_solver.log",
+            python=RDIR + "/logs/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_brownfield_all_years_python.log",
+            memory=RDIR + "/logs/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_brownfield_all_years_memory.log"
+        threads: 4
+        resources: mem_mb=config['solving']['mem']
+        benchmark: RDIR + "/benchmarks/solve_network/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_brownfield_all_years"
+        script: "scripts/solve_network.py"
+
+    rule make_summary_perfect:
+        input:
+            networks=expand(RDIR + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_brownfield_all_years.nc",
+                     **config['scenario']),
+            costs=CDIR + "costs_2020.csv",
+            overrides="data/override_component_attrs",
+        output:
+            nodal_costs="results" + '/' + config['run'] + '/csvs/nodal_costs.csv',
+            nodal_capacities="results"  + '/' + config['run'] + '/csvs/nodal_capacities.csv',
+            nodal_cfs="results"  + '/' + config['run'] + '/csvs/nodal_cfs.csv',
+            cfs="results"  + '/' + config['run'] + '/csvs/cfs.csv',
+            costs="results"  + '/' + config['run'] + '/csvs/costs.csv',
+            capacities="results"  + '/' + config['run'] + '/csvs/capacities.csv',
+            curtailment="results"  + '/' + config['run'] + '/csvs/curtailment.csv',
+            capital_cost="results"  + '/' + config['run'] + '/csvs/capital_cost.csv',
+            energy="results"  + '/' + config['run'] + '/csvs/energy.csv',
+            supply="results"  + '/' + config['run'] + '/csvs/supply.csv',
+            supply_energy="results"  + '/' + config['run'] + '/csvs/supply_energy.csv',
+            prices="results"  + '/' + config['run'] + '/csvs/prices.csv',
+            weighted_prices="results"  + '/' + config['run'] + '/csvs/weighted_prices.csv',
+            market_values="results"  + '/' + config['run'] + '/csvs/market_values.csv',
+            price_statistics="results"  + '/' + config['run'] + '/csvs/price_statistics.csv',
+            metrics="results"  + '/' + config['run'] + '/csvs/metrics.csv',
+            co2_emissions="results"  + '/' + config['run'] + '/csvs/co2_emissions.csv',
+        threads: 2
+        resources: mem_mb=10000
+        script:
+            'scripts/make_summary_perfect.py'
+
+    rule plot_summary_perfect:
+        input:
+            costs_csv="results"  + '/' + config['run'] + '/csvs/costs.csv',
+            costs=CDIR,
+            energy="results"  + '/' + config['run'] + '/csvs/energy.csv',
+            balances="results"  + '/' + config['run'] + '/csvs/supply_energy.csv',
+            eea ="data/eea/UNFCCC_v24.csv",
+            countries="results"  + '/' + config['run'] + '/csvs/nodal_capacities.csv',
+            co2_emissions="results"  + '/' + config['run'] + '/csvs/co2_emissions.csv',
+            capacities="results"  + '/' + config['run'] + '/csvs/capacities.csv',
+            capital_cost="results"  + '/' + config['run'] + '/csvs/capital_cost.csv',
+        output:
+            costs1="results"  + '/' + config['run'] + '/graphs/costs.pdf',
+            costs2="results"  + '/' + config['run'] + '/graphs/costs2.pdf',
+            costs3="results"  + '/' + config['run'] + '/graphs/total_costs_per_year.pdf',
+            # energy="results"  + '/' + config['run'] + '/graphs/energy.pdf',
+            balances="results"  + '/' + config['run'] + '/graphs/balances-energy.pdf',
+            co2_emissions="results"  + '/' + config['run'] + '/graphs/carbon_budget_plot.pdf',
+            capacities="results"  + '/' + config['run'] + '/graphs/capacities.pdf',
+        threads: 2
+        resources: mem_mb=10000
+        script:
+            'scripts/plot_summary_perfect.py'

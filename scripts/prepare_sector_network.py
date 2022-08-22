@@ -490,7 +490,8 @@ def add_co2_tracking(n, options):
         e_nom_max=np.inf,
         capital_cost=options['co2_sequestration_cost'],
         carrier="co2 stored",
-        bus=spatial.co2.nodes
+        bus=spatial.co2.nodes,
+        lifetime=30, # from DEA TODO add to technology-data
     )
 
     if options['co2_vent']:
@@ -924,7 +925,8 @@ def add_storage_and_grids(n, costs):
         e_nom_extendable=True,
         e_cyclic=True,
         carrier="H2 Store",
-        capital_cost=h2_capital_cost
+        capital_cost=h2_capital_cost,
+        lifetime=costs.at["hydrogen storage tank incl. compressor", "lifetime"],
     )
 
     if options["gas_network"] or options["H2_retrofit"]:
@@ -1238,6 +1240,7 @@ def add_land_transport(n, costs):
             carrier="BEV charger",
             p_max_pu=avail_profile[nodes],
             efficiency=options.get("bev_charge_efficiency", 0.9),
+            lifetime=1,
             #These were set non-zero to find LU infeasibility when availability = 0.25
             #p_nom_extendable=True,
             #p_nom_min=p_nom,
@@ -1255,6 +1258,7 @@ def add_land_transport(n, costs):
             carrier="V2G",
             p_max_pu=avail_profile[nodes],
             efficiency=options.get("bev_charge_efficiency", 0.9),
+            lifetime=1,
         )
 
     if electric_share > 0 and options["bev_dsm"]:
@@ -1269,6 +1273,7 @@ def add_land_transport(n, costs):
             e_cyclic=True,
             e_nom=e_nom,
             e_max_pu=1,
+            lifetime=1,
             e_min_pu=dsm_profile[nodes]
         )
 
@@ -1776,7 +1781,8 @@ def add_biomass(n, costs):
         carrier="biogas",
         e_nom=biogas_potentials_spatial,
         marginal_cost=costs.at['biogas', 'fuel'],
-        e_initial=biogas_potentials_spatial
+        e_initial=biogas_potentials_spatial,
+        lifetime=1,
     )
 
     n.madd("Store",
@@ -1785,7 +1791,8 @@ def add_biomass(n, costs):
         carrier="solid biomass",
         e_nom=solid_biomass_potentials_spatial,
         marginal_cost=costs.at['solid biomass', 'fuel'],
-        e_initial=solid_biomass_potentials_spatial
+        e_initial=solid_biomass_potentials_spatial,
+        lifetime=1,
     )
 
     n.madd("Link",
@@ -2425,9 +2432,9 @@ if __name__ == "__main__":
             'prepare_sector_network',
             simpl='',
             opts="",
-            clusters="37",
-            lv=1.5,
-            sector_opts='cb40ex0-365H-T-H-B-I-A-solar+p3-dist1',
+            clusters="45",
+            lv=1.0,
+            sector_opts='365H-T-H-B-I-A-solar+p3-dist1',
             planning_horizons="2020",
         )
 
@@ -2459,7 +2466,7 @@ if __name__ == "__main__":
 
     spatial = define_spatial(pop_layout.index, options)
 
-    if snakemake.config["foresight"] == 'myopic':
+    if snakemake.config["foresight"] in ['myopic', 'perfect']:
 
         add_lifetime_wind_solar(n, costs)
 
