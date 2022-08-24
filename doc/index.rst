@@ -120,6 +120,7 @@ Documentation
 
 * :doc:`spatial_resolution`
 * :doc:`supply_demand`
+* :doc:`technology_assumptions`
 
 .. toctree::
    :hidden:
@@ -128,7 +129,7 @@ Documentation
 
    spatial_resolution
    supply_demand
-
+   technology_assumptions
 
 **Foresight options**
 
@@ -143,6 +144,7 @@ Documentation
 
    overnight
    myopic
+   perfect
 
 **References**
 
