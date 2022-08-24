@@ -361,12 +361,15 @@ Inside each country the industrial demand is then distributed using the `Hotmaps
 $$ 
 CO_2 + C→ 2 CO
 $$ 
+
 $$ 
 3 Fe_2O_3 + CO → 2 Fe_3O_4 + CO
 $$ 
+
 $$
 Fe_3O_4 + CO −−−→ 3 FeO + CO_2
 $$
+
 $$
 FeO + CO −−−→ Fe + CO_2
 $$
