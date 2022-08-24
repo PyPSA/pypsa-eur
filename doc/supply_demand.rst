@@ -358,6 +358,7 @@ Inside each country the industrial demand is then distributed using the `Hotmaps
 
 *Iron and Steel*
 
+
 $$ 
 CO_2 + C→ 2 CO
 $$ 
