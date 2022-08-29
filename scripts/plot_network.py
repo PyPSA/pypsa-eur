@@ -123,7 +123,7 @@ def plot_map(n, opts, ax=None, attribute='p_nom'):
            link_colors=link_colors_with_alpha,
            bus_sizes=0,
            boundaries=map_boundaries,
-           color_geomap=True, geomap=False,
+           color_geomap=True, geomap=True,
            ax=ax)
     ax.set_aspect('equal')
     ax.axis('off')
