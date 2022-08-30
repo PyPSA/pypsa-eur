@@ -358,8 +358,11 @@ Inside each country the industrial demand is then distributed using the `Hotmaps
 
 *Iron and Steel*
 
-
-$$ 
+Two alternative routes are used today to manufacture steel in Europe. The primary route (integrated steelworks) represents 60% of steel production, while the secondary route (electric arc furnaces, EAF), represents the other 40% `(Lechtenböhmer et. al) <https://doi.org/10.1016/j.energy.2016.07.110>`_.
+					
+The primary route uses blast furnaces in which coke is used to reduce iron ore into molten iron, which is then converted into steel:
+					
+$$
 CO_2 + C→ 2 CO
 $$ 
 
@@ -368,12 +371,37 @@ $$
 $$ 
 
 $$
-Fe_3O_4 + CO −−−→ 3 FeO + CO_2
+Fe_3O_4 + CO → 3 FeO + CO_2
 $$
 
 $$
-FeO + CO −−−→ Fe + CO_2
+FeO + CO→ Fe + CO_2
 $$
+					
+The primary route of steelmaking implies large process emissions of 0.22 t $_{CO_2}$ /t of steel, amounting to 7% of global greenhouse gas emissions `(Vogl et. al) <https://doi.org/10.1016/j.joule.2021.09.007>`_. 
+					
+In the secondary route, electric arc furnaces are used to melt scrap metal. This limits the CO$_2$ emissions to the burning of graphite electrodes `(Friedrichsen et. al) <https://www.umweltbundesamt.de/en/publikationen/comparative-analysis-of-options-potential-for>`_, and reduces process emissions to 0.03 t $_{CO_2}$ /t of steel.
+					
+We assume that the primary route can be replaced by a third route in 2050, using direct reduced iron (DRI) and subsequent processing in an EAF.
+					
+$$
+3 Fe_2O_3 + H_2→ 2 Fe_3O_4 + H_2O
+$$
+
+$$
+Fe_3O_4 +H_2 →3FeO+H_2O
+$$
+
+$$
+FeO + H_2 → Fe + H_2O
+$$	
+
+This circumvents the process emissions associated with the use of coke. For hydrogen- based DRI, we assume energy requirements of 1.7 MWh $_{H_2}$ /t steel `(Vogl et. al) <https://doi.org/10.1016/j.jclepro.2018.08.279>`_ and 0.322 MWh $_{el}$ /t steel `(HYBRIT 2016) <https://dh5k8ug1gwbyz.cloudfront.net/uploads/2021/02/Hybrit-broschure-engelska.pdf>`_. 
+								
+					
+The share of steel produced via the primary route is exogenously set in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L279>`_. The share of steel obtained via hydrogen-based DRI plus EAF is also set exogenously in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L287>`_. The remaining share is manufactured through the secondary route using scrap metal in EAF. Bioenergy as alternative to coke in blast furnaces is not considered in the model (`Mandova et.al <https://doi.org/10.1016/j.biombioe.2018.04.021>`_, `Suopajärvi et.al <https://doi.org/10.1016/j.apenergy.2018.01.060>`_).
+					
+For the remaining subprocesses in this sector, the following transformations are assumed. Methane is used as energy source for the smelting process. Activities associated with furnaces, refining and rolling, and product finishing are electrified assuming the current efficiency values for these cases. These transformations result in changes in process emissions as outlined in the process emissions figure presented in the industry overview section (add link to the overview section). 
 
 *Chemicals Industry*
 
