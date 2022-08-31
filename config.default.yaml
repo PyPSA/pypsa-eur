@@ -40,7 +40,7 @@ scenario:
   # planning_horizons), be:beta decay; ex:exponential decay
   # cb40ex0 distributes a carbon budget of 40 GtCO2 following an exponential
   # decay with initial growth rate 0
-  planning_horizons: # investment years for myopic and perfect; or costs year for overnight
+  planning_horizons: # investment years for myopic and perfect; for overnight, year of cost assumptions can be different and is defined under 'costs'
     - 2030
   # for example, set to
   # - 2020
@@ -327,6 +327,7 @@ industry:
   # Material Economics (2019): https://materialeconomics.com/latest-updates/industrial-transformation-2050
 
 costs:
+  year: 2030
   lifetime: 25 #default lifetime
   # From a Lion Hirth paper, also reflects average of Noothout et al 2016
   discountrate: 0.07

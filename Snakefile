@@ -474,7 +474,7 @@ rule prepare_sector_network:
         co2="data/eea/UNFCCC_v23.csv",
         biomass_potentials='resources/biomass_potentials_s{simpl}_{clusters}.csv',
         heat_profile="data/heat_load_profile_BDEW.csv",
-        costs=CDIR + "costs_{planning_horizons}.csv",
+        costs=CDIR + "costs_{}.csv".format(config['costs']['year']) if config["foresight"] == "overnight" else CDIR + "costs_{planning_horizons}.csv",
         profile_offwind_ac=pypsaeur("resources/profile_offwind-ac.nc"),
         profile_offwind_dc=pypsaeur("resources/profile_offwind-dc.nc"),
         h2_cavern="resources/salt_cavern_potentials_s{simpl}_{clusters}.csv",
@@ -539,7 +539,7 @@ rule make_summary:
             RDIR + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc",
             **config['scenario']
         ),
-        costs=CDIR + "costs_{}.csv".format(config['scenario']['planning_horizons'][0]),
+        costs=CDIR + "costs_{}.csv".format(config['costs']['year']) if config["foresight"] == "overnight" else CDIR + "costs_{}.csv".format(config['scenario']['planning_horizons'][0]),
         plots=expand(
             RDIR + "/maps/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
             **config['scenario']
@@ -589,7 +589,7 @@ if config["foresight"] == "overnight":
         input:
             overrides="data/override_component_attrs",
             network=RDIR + "/prenetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc",
-            costs=CDIR + "costs_{planning_horizons}.csv",
+            costs=CDIR + "costs_{}.csv".format(config['costs']['year']),
             config=SDIR + '/configs/config.yaml'
         output: RDIR + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc"
         shadow: "shallow"
