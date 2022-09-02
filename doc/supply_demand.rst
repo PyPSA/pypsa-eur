@@ -37,7 +37,8 @@ The remaining electricity demand for households and services is distributed insi
 
 
 Heat demand
-=============================
+===========
+
 Building heating in residential and services sectors is resolved regionally, both for individual buildings and district heating systems, which include different supply options [To do:link to next section]
 Annual heat demands per country are retrieved from `JRC-IDEES  <https://op.europa.eu/en/publication-detail/-/publication/989282db-ad65-11e7-837e-01aa75ed71a1/language-en>`_ and split into space and water heating. For space heating, the annual demands are converted to daily values based on the population-weighted Heating Degree Day (HDD) using the `atlite tool <https://github.com/PyPSA/atlite>`_, where space heat demand is proportional to the difference between the daily average ambient temperature (read from `ERA5 <https://doi.org/10.1002/qj.3803>`_) and a threshold temperature above which space heat demand is zero. A threshold temperature of 15 °C is assumed by default. The daily space heat demand is distributed to the hours of the day following heat demand profiles from `BDEW <https://github.com/oemof/demandlib>`_. These differ for weekdays and weekends/holidays and between residential and services demand.  
 
@@ -58,7 +59,9 @@ Further information are given in the publication :
 *Water heating*
 
 Hot water demand is assumed to be constant throughout the year.
+
 *Urban and rural heating*
+
 For every country, heat demand is split between low and high population density areas. These country-level totals are then distributed to each region in proportion to their rural and urban populations respectively. Urban areas with dense heat demand can be supplied with large-scale district heating systems. The percent of urban heat demand that can be supplied by district heating networks as well as lump-sum losses in district heating systems is exogenously determined in the `Config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L153>`_. 
 
 *Cooling demand*
@@ -255,22 +258,31 @@ Biomass demand
 =====================
 
 
-The desired scenario can be selected in the pypsa-eur-sec `configuration <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L108>`_. The script for building the biomass potentials from the JREC ENSPRESO data base is located `here <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/scripts/build_biomass_potentials.py#L43>`_. Consult the script to see the keywords that specify the scenario options.
+Biomass supply potentials for every NUTS2 region are taken from the `JRC ENSPRESO database <http://data.europa.eu/89h/74ed5a04-7d74-4807-9eab-b94774309d9f>`_ where data is available for various years (2010, 2020, 2030, 2040 and 2050) and different availability scenarios (low, medium, high). No biomass import from outside Europe is assumed. More information on the data set can be found `here <https://publications.jrc.ec.europa.eu/repository/handle/JRC98626>`_. The data for NUTS2 regions is mapped to PyPSA-Eur-Sec model regions in proportion to the area overlap.
 
-The `configuration <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L108>`_ also allows the user to define how the various types of biomass are used in the model by using the categories : biogas, solid biomass, and not included.
-Feedstocks categorized as biogas, typically manure and sludge waste, are available to the model as biogas (that is upgraded to biomethane). More details below.
 
-Feedstocks categorized as solid biomass, e.g. secondary forest residues or municipal waste can be used directly or converted to gas or liquid fuels. More details below.
+The desired scenario can be selected in the pypsa-eur-sec `configuration <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L108>`_. The script for building the biomass potentials from the JRC ENSPRESO data base is located `here <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/scripts/build_biomass_potentials.py#L43>`_. Consult the script to see the keywords that specify the scenario options.
+
+
+The `configuration <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L108>`_ also allows the user to define how the various types of biomass are used in the model by using the following categories: biogas, solid biomass, and not included.Feedstocks categorized as biogas, typically manure and sludge waste, are available to the model as biogas, which can be upgraded to biomethane. Feedstocks categorized as solid biomass, e.g. secondary forest residues or municipal waste . are available for combustion in combined-heat-and power (CHP) plants and for medium temperature heat (below 500 °C) applications in industry. It can also converted to gas or liquid fuels.
+
 
 Feedstocks labeled as not included are ignored by the model.
-A `typical use case for biomass <https://arxiv.org/abs/2109.09563>`_ would be the medium availability scenario for 2030 where only residues from agriculture and forestry as well as biodegradable municipal waste are considered as energy feedstocks. Fuel crops are avoided because they compete with scarce land for food production, while primary wood, as well as wood chips and pellets, are avoided because of concerns about sustainability . See the supporting materials of the `paper <https://www.sciencedirect.com/science/article/pii/S1364032117302034>`_ for more details.
+
+
+A `typical use case for biomass <https://arxiv.org/abs/2109.09563>`_ would be the medium availability scenario for 2030 where only residues from agriculture and forestry as well as biodegradable municipal waste are considered as energy feedstocks. Fuel crops are avoided because they compete with scarce land for food production, while primary wood, as well as wood chips and pellets, are avoided because of concerns about sustainability. See the supporting materials of the `paper <https://www.sciencedirect.com/science/article/pii/S1364032117302034>`_ for more details.
+
 
 *Solid biomass conversion and use*
 
-Solid biomass can be used directly to provide process heat up to 500 C in the industry. It can also be burnt in CHP plants and boilers associated with heating systems. These technologies are described elsewhere [link to heat and industry sections].
+Solid biomass can be used directly to provide process heat up to 500˚C in the industry. It can also be burned in CHP plants and boilers associated with heating systems. These technologies are described elsewhere [link to heat and industry sections].
+
 
 Solid biomass can be converted to syngas if the option is enabled in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L274>`_. In this case the model will enable the technology BioSNG both with and without the option for carbon capture [link to technology data].
+
+
 Liquefaction of solid biomass `can be enabled <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L273>`_ allowing the model to convert it into liquid hydrocarbons that can replace conventional oil products. This technology also comes with and without carbon capture [link to technology data].
+
 
 *Transport of solid biomass*
 
@@ -345,6 +357,51 @@ Inside each country the industrial demand is then distributed using the `Hotmaps
 
 
 *Iron and Steel*
+
+Two alternative routes are used today to manufacture steel in Europe. The primary route (integrated steelworks) represents 60% of steel production, while the secondary route (electric arc furnaces, EAF), represents the other 40% `(Lechtenböhmer et. al) <https://doi.org/10.1016/j.energy.2016.07.110>`_.
+					
+The primary route uses blast furnaces in which coke is used to reduce iron ore into molten iron, which is then converted into steel:
+					
+$$
+CO_2 + C→ 2 CO
+$$ 
+
+$$ 
+3 Fe_2O_3 + CO → 2 Fe_3O_4 + CO
+$$ 
+
+$$
+Fe_3O_4 + CO → 3 FeO + CO_2
+$$
+
+$$
+FeO + CO→ Fe + CO_2
+$$
+					
+The primary route of steelmaking implies large process emissions of 0.22 t $_{CO_2}$ /t of steel, amounting to 7% of global greenhouse gas emissions `(Vogl et. al) <https://doi.org/10.1016/j.joule.2021.09.007>`_. 
+					
+In the secondary route, electric arc furnaces are used to melt scrap metal. This limits the CO$_2$ emissions to the burning of graphite electrodes `(Friedrichsen et. al) <https://www.umweltbundesamt.de/en/publikationen/comparative-analysis-of-options-potential-for>`_, and reduces process emissions to 0.03 t $_{CO_2}$ /t of steel.
+					
+We assume that the primary route can be replaced by a third route in 2050, using direct reduced iron (DRI) and subsequent processing in an EAF.
+					
+$$
+3 Fe_2O_3 + H_2→ 2 Fe_3O_4 + H_2O
+$$
+
+$$
+Fe_3O_4 +H_2 →3FeO+H_2O
+$$
+
+$$
+FeO + H_2 → Fe + H_2O
+$$	
+
+This circumvents the process emissions associated with the use of coke. For hydrogen- based DRI, we assume energy requirements of 1.7 MWh $_{H_2}$ /t steel `(Vogl et. al) <https://doi.org/10.1016/j.jclepro.2018.08.279>`_ and 0.322 MWh $_{el}$ /t steel `(HYBRIT 2016) <https://dh5k8ug1gwbyz.cloudfront.net/uploads/2021/02/Hybrit-broschure-engelska.pdf>`_. 
+								
+					
+The share of steel produced via the primary route is exogenously set in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L279>`_. The share of steel obtained via hydrogen-based DRI plus EAF is also set exogenously in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L287>`_. The remaining share is manufactured through the secondary route using scrap metal in EAF. Bioenergy as alternative to coke in blast furnaces is not considered in the model (`Mandova et.al <https://doi.org/10.1016/j.biombioe.2018.04.021>`_, `Suopajärvi et.al <https://doi.org/10.1016/j.apenergy.2018.01.060>`_).
+					
+For the remaining subprocesses in this sector, the following transformations are assumed. Methane is used as energy source for the smelting process. Activities associated with furnaces, refining and rolling, and product finishing are electrified assuming the current efficiency values for these cases. These transformations result in changes in process emissions as outlined in the process emissions figure presented in the industry overview section (add link to the overview section). 
 
 *Chemicals Industry*
 
