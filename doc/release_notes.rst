@@ -12,6 +12,8 @@ Upcoming Release
 
 * Add functionality to consider shipping routes when calculating the available area for offshore technologies. Data for the shipping density comes from the `Global Shipping Traffic Density dataset <https://datacatalog.worldbank.org/search/dataset/0037580/Global-Shipping-Traffic-Density>`
 
+* When fixing line voltages to 380kV, the workflow now preserves the transmission capacity instead of the electrical impedance and reactance. 
+
 PyPSA-Eur 0.5.0 (27th July 2022)
 =====================================
 

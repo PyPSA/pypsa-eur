@@ -105,26 +105,30 @@ logger = logging.getLogger(__name__)
 
 
 def simplify_network_to_380(n):
-    ## All goes to v_nom == 380
+    """
+    Fix all lines to a voltage level of 380 kV and remove all transformers.
+
+    The function preserves the transmission capacity for each line while updating
+    its voltage level, line type and number of parallel bundles (num_parallel).
+
+    Transformers are removed and connected components are moved from their
+    starting bus to their ending bus. The corresponing starting buses are
+    removed as well.
+    """
     logger.info("Mapping all network lines onto a single 380kV layer")
 
     n.buses['v_nom'] = 380.
 
     linetype_380, = n.lines.loc[n.lines.v_nom == 380., 'type'].unique()
-    lines_v_nom_b = n.lines.v_nom != 380.
-    n.lines.loc[lines_v_nom_b, 'num_parallel'] *= (n.lines.loc[lines_v_nom_b, 'v_nom'] / 380.)**2
-    n.lines.loc[lines_v_nom_b, 'v_nom'] = 380.
-    n.lines.loc[lines_v_nom_b, 'type'] = linetype_380
-    n.lines.loc[lines_v_nom_b, 's_nom'] = (
-        np.sqrt(3) * n.lines['type'].map(n.line_types.i_nom) *
-        n.lines.bus0.map(n.buses.v_nom) * n.lines.num_parallel
-    )
+    n.lines['type'] = linetype_380
+    n.lines["v_nom"] = 380
+    n.lines["i_nom"] = n.line_types.i_nom[linetype_380]
+    n.lines['num_parallel'] = n.lines.eval("s_nom / (sqrt(3) * v_nom * i_nom)")
 
-    # Replace transformers by lines
-    trafo_map = pd.Series(n.transformers.bus1.values, index=n.transformers.bus0.values)
+    trafo_map = pd.Series(n.transformers.bus1.values, n.transformers.bus0.values)
     trafo_map = trafo_map[~trafo_map.index.duplicated(keep='first')]
     several_trafo_b = trafo_map.isin(trafo_map.index)
-    trafo_map.loc[several_trafo_b] = trafo_map.loc[several_trafo_b].map(trafo_map)
+    trafo_map[several_trafo_b] = trafo_map[several_trafo_b].map(trafo_map)
     missing_buses_i = n.buses.index.difference(trafo_map.index)
     missing = pd.Series(missing_buses_i, missing_buses_i)
     trafo_map = pd.concat([trafo_map, missing])
@@ -187,8 +191,8 @@ def _adjust_capital_costs_using_connection_costs(n, connection_costs_to_bus, out
             logger.info("Displacing {} generator(s) and adding connection costs to capital_costs: {} "
                         .format(tech, ", ".join("{:.0f} Eur/MW/a for `{}`".format(d, b) for b, d in costs.iteritems())))
             connection_costs[tech] = costs
-    pd.DataFrame(connection_costs).to_csv(output.connection_costs) 
-            
+    pd.DataFrame(connection_costs).to_csv(output.connection_costs)
+
 
 
 def _aggregate_and_move_components(n, busmap, connection_costs_to_bus, output,
@@ -335,7 +339,7 @@ def remove_stubs(n, costs, config, output, aggregation_strategies=dict()):
 def aggregate_to_substations(n, aggregation_strategies=dict(), buses_i=None):
     # can be used to aggregate a selection of buses to electrically closest neighbors
     # if no buses are given, nodes that are no substations or without offshore connection are aggregated
-    
+
     if buses_i is None:
         logger.info("Aggregating buses that are no substations or have no valid offshore connection")
         buses_i = list(set(n.buses.index)-set(n.generators.bus)-set(n.loads.bus))
@@ -374,7 +378,7 @@ def cluster(n, n_clusters, config, algorithm="hac", feature=None, aggregation_st
     logger.info(f"Clustering to {n_clusters} buses")
 
     focus_weights = config.get('focus_weights', None)
-    
+
     renewable_carriers = pd.Index([tech
                                     for tech in n.generators.carrier.unique()
                                     if tech.split('-', 2)[0] in config['renewable']])
