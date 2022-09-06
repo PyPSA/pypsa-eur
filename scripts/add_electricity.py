@@ -546,17 +546,19 @@ def estimate_renewable_capacities(n, config):
             logger.info(f"Reducing capacity expansion limit to {expansion_limit*100:.2f}% of installed capacity.")
             n.generators.loc[tech_i, 'p_nom_max'] = float(expansion_limit) * n.generators.loc[tech_i, 'p_nom_min']
 
-def attach_line_rating(n, fn, s_max_pu_factor,dlr_factor, line_clipping):
-    s_max = xr.open_dataarray(fn).to_pandas().transpose()
-    n.lines_t.s_max_pu = (s_max / n.lines.s_nom[s_max.columns]) * dlr_factor #only considers overhead lines
-    # account for maximal voltage angles of maximally 30 degree.
-    if line_clipping:
+def attach_line_rating(n, rating, s_max_pu, correction_factor, max_voltage_difference, max_line_rating):
+    # TODO: Only considers overhead lines
+    n.lines_t.s_max_pu = (rating / n.lines.s_nom[rating.columns]) * correction_factor 
+    if max_voltage_difference:
         x_pu = n.lines.type.map(n.line_types["x_per_length"])*n.lines.length/(n.lines.v_nom**2)
-        s_max_pu_cap = (np.pi / (6 * x_pu * n.lines.s_nom)).clip(lower=1) # need to clip here as cap values might be below 1 -> would mean the line cannot be operated at actual given pessimistic ampacity
-        n.lines_t.s_max_pu = n.lines_t.s_max_pu.clip(upper=s_max_pu_cap, lower=1, axis=1)
-    n.lines_t.s_max_pu*=s_max_pu_factor
+        # need to clip here as cap values might be below 1 
+        # -> would mean the line cannot be operated at actual given pessimistic ampacity
+        s_max_pu_cap = (np.pi / (6 * x_pu * n.lines.s_nom)).clip(lower=1) 
+        n.lines_t.s_max_pu = n.lines_t.s_max_pu.clip(lower=1, upper=s_max_pu_cap, axis=1)
+    if max_line_rating:
+        n.lines_t.s_max_pu = n.lines_t.s_max_pu.clip(upper=max_line_rating)
+    n.lines_t.s_max_pu *= s_max_pu
         
-
 
 def add_nice_carrier_names(n, config):
     carrier_i = n.carriers.index
@@ -605,11 +607,27 @@ if __name__ == "__main__":
 
     update_p_nom_max(n)
 
-    if snakemake.config["lines"]["line_rating"]:
-        s_max_pu_factor = snakemake.config["lines"]["s_max_pu"] #factor mainly used for N-1 security
-        dlr_factor=snakemake.config["lines"]["dlr_factor"] #factor due to overestimation of the wind speed in hourly averaged wind data
-        line_clipping=snakemake.config["lines"]["line_clipping"]
-        attach_line_rating(n, snakemake.input.line_rating, s_max_pu_factor, dlr_factor, line_clipping)
+    line_rating_config = snakemake.config["lines"]["dynamic_line_rating"]
+    if line_rating_config["activate"]:
+        rating = xr.open_dataarray(snakemake.input.line_rating).to_pandas().transpose()
+        s_max_pu = snakemake.config["lines"]["s_max_pu"] 
+        correction_factor = line_rating_config['correction_factor'] 
+        max_voltage_difference = line_rating_config['max_voltage_difference']
+        max_line_rating = line_rating_config['max_line_rating']
+
+        if "DLR" in snakemake.wildcards['opts']:
+            opts = snakemake.wildcards['opts'].split("-")
+            max_line_rating = float([opt[3:] for opt in opts if "DLR" in opt ].pop())
+            logger.info(f"Adjusting maximal relative line rating to {max_line_rating}.")
+
+        attach_line_rating(
+            n, 
+            rating, 
+            s_max_pu, 
+            correction_factor, 
+            max_voltage_difference, 
+            max_line_rating
+        )
 
     add_nice_carrier_names(n, snakemake.config)
 

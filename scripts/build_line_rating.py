@@ -84,7 +84,7 @@ def calculate_resistance(T, R_ref, T_ref=293, alpha=0.00403):
     return R
 
 
-def calculate_line_rating(n):
+def calculate_line_rating(n, cutout):
     """
     Calculates the maximal allowed power flow in each line for each time step considering the maximal temperature.
 
@@ -102,7 +102,6 @@ def calculate_line_rating(n):
     y = n.buses.y
     shapes = [Line([Point(x[b0], y[b0]), Point(x[b1], y[b1])]) for (b0, b1) in buses]
     shapes = gpd.GeoSeries(shapes, index=relevant_lines.index)
-    cutout = atlite.Cutout(snakemake.input.cutout)
     if relevant_lines.r_pu.eq(0).all():
         # Overwrite standard line resistance with line resistance obtained from line type
         r_per_length = n.line_types["r_per_length"]
@@ -146,6 +145,7 @@ if __name__ == "__main__":
     configure_logging(snakemake)
 
     n = pypsa.Network(snakemake.input.base_network)
+    cutout = atlite.Cutout(snakemake.input.cutout)
 
-    da = calculate_line_rating(n)
+    da = calculate_line_rating(n, cutout)
     da.to_netcdf(snakemake.output[0])
