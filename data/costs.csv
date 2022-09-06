@@ -75,7 +75,7 @@ General liquid hydrocarbon storage (crude),2020,lifetime,30.0,years,"Stelter and
 General liquid hydrocarbon storage (product),2020,FOM,6.25,%/year,"Stelter and Nishida 2013: https://webstore.iea.org/insights-series-2013-focus-on-energy-security , figure 7 and pg. 12 .",
 General liquid hydrocarbon storage (product),2020,investment,169.79,EUR/m^3,"Stelter and Nishida 2013: https://webstore.iea.org/insights-series-2013-focus-on-energy-security , pg. 8F .",
 General liquid hydrocarbon storage (product),2020,lifetime,30.0,years,"Stelter and Nishida 2013: https://webstore.iea.org/insights-series-2013-focus-on-energy-security , pg. 11.",
-H2 (g) fill compressor station,2020,FOM,1.7,%/year,"Guidehouse 2020: European Hydrogen Backbone report, https://guidehouse.com/-/media/www/site/downloads/energy/2020/gh_european-hydrogen-backbone_report.pdf (table 3, table 5)",
+H2 (g) fill compressor station,2020,FOM,1.7,%/year,"Guidehouse 2020: European Hydrogen Backbone report, https://guidehouse.com/-/media/www/site/downloads/energy/2020/gh_european-hydrogen-backbone_report.pdf (table 3, table 5) ",
 H2 (g) fill compressor station,2020,investment,4478.0,EUR/MW_H2,"Danish Energy Agency, Technology Data for Energy Transport (2021), pg. 164, Figure 14 (Fill compressor).",
 H2 (g) fill compressor station,2020,lifetime,20.0,years,"Danish Energy Agency, Technology Data for Energy Transport (2021), pg. 168, Figure 24 (Fill compressor).",
 H2 (g) pipeline,2020,FOM,4.0,%/year,"Danish Energy Agency, Technology Data for Energy Transport (2021), Excel datasheet: H2 140.",
@@ -420,8 +420,8 @@ hydro,2020,FOM,1.0,%/year,DIW DataDoc http://hdl.handle.net/10419/80348," from o
 hydro,2020,efficiency,0.9,per unit,DIW DataDoc http://hdl.handle.net/10419/80348," from old pypsa cost assumptions"
 hydro,2020,investment,2208.16,EUR/kWel,DIW DataDoc http://hdl.handle.net/10419/80348," from old pypsa cost assumptions"
 hydro,2020,lifetime,80.0,years,IEA2010," from old pypsa cost assumptions"
-hydrogen storage tank,2020,investment,11.2,USD/kWh,budischak2013," from old pypsa cost assumptions"
-hydrogen storage tank,2020,lifetime,20.0,years,budischak2013," from old pypsa cost assumptions"
+hydrogen storage,2020,investment,11.2,USD/kWh,budischak2013," from old pypsa cost assumptions"
+hydrogen storage,2020,lifetime,20.0,years,budischak2013," from old pypsa cost assumptions"
 hydrogen storage tank incl. compressor,2020,FOM,1.05,%/year,"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx",151a Hydrogen Storage - Tanks:  Fixed O&M
 hydrogen storage tank incl. compressor,2020,investment,57.0,EUR/kWh,"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx",151a Hydrogen Storage - Tanks:  Specific investment
 hydrogen storage tank incl. compressor,2020,lifetime,25.0,years,"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx",151a Hydrogen Storage - Tanks:  Technical lifetime
@@ -950,8 +950,8 @@ hydro,2030,FOM,1.0,%/year,DIW DataDoc http://hdl.handle.net/10419/80348," from o
 hydro,2030,efficiency,0.9,per unit,DIW DataDoc http://hdl.handle.net/10419/80348," from old pypsa cost assumptions"
 hydro,2030,investment,2208.16,EUR/kWel,DIW DataDoc http://hdl.handle.net/10419/80348," from old pypsa cost assumptions"
 hydro,2030,lifetime,80.0,years,IEA2010," from old pypsa cost assumptions"
-hydrogen storage tank,2030,investment,11.2,USD/kWh,budischak2013," from old pypsa cost assumptions"
-hydrogen storage tank,2030,lifetime,20.0,years,budischak2013," from old pypsa cost assumptions"
+hydrogen storage,2030,investment,11.2,USD/kWh,budischak2013," from old pypsa cost assumptions"
+hydrogen storage,2030,lifetime,20.0,years,budischak2013," from old pypsa cost assumptions"
 hydrogen storage tank incl. compressor,2030,FOM,1.11,%/year,"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx",151a Hydrogen Storage - Tanks:  Fixed O&M
 hydrogen storage tank incl. compressor,2030,investment,44.91,EUR/kWh,"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx",151a Hydrogen Storage - Tanks:  Specific investment
 hydrogen storage tank incl. compressor,2030,lifetime,30.0,years,"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx",151a Hydrogen Storage - Tanks:  Technical lifetime
