@@ -615,11 +615,6 @@ if __name__ == "__main__":
         max_voltage_difference = line_rating_config['max_voltage_difference']
         max_line_rating = line_rating_config['max_line_rating']
 
-        if "DLR" in snakemake.wildcards['opts']:
-            opts = snakemake.wildcards['opts'].split("-")
-            max_line_rating = float([opt[3:] for opt in opts if "DLR" in opt ].pop())
-            logger.info(f"Adjusting maximal relative line rating to {max_line_rating}.")
-
         attach_line_rating(
             n, 
             rating, 
