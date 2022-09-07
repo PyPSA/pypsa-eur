@@ -93,6 +93,19 @@ def define_spatial(nodes, options):
 
     spatial.gas.df = pd.DataFrame(vars(spatial.gas), index=nodes)
 
+    # ammonia
+
+    if options.get('ammonia'):
+        spatial.ammonia = SimpleNamespace()
+        if options.get("ammonia") == "regional":
+            spatial.ammonia.nodes = nodes + " NH3"
+            spatial.ammonia.locations = nodes
+        else:
+            spatial.ammonia.nodes = ["EU NH3"]
+            spatial.ammonia.locations = ["EU"]
+
+        spatial.ammonia.df = pd.DataFrame(vars(spatial.ammonia), index=nodes)
+
     # oil
     spatial.oil = SimpleNamespace()
     spatial.oil.nodes = ["EU oil"]
@@ -658,6 +671,61 @@ def add_generation(n, costs):
             efficiency2=costs.at[carrier, 'CO2 intensity'],
             lifetime=costs.at[generator, 'lifetime']
         )
+
+
+def add_ammonia(n, costs):
+
+    logger.info("adding ammonia carrier with synthesis, cracking and storage")
+
+    nodes = pop_layout.index
+
+    cf_industry = snakemake.config["industry"]
+
+    n.add("Carrier", "NH3")
+
+    n.madd("Bus",
+        spatial.ammonia.nodes,
+        location=spatial.ammonia.locations,
+        carrier="NH3"
+    )
+
+    n.madd("Link",
+        nodes,
+        suffix=" Haber-Bosch",
+        bus0=nodes,
+        bus1=spatial.ammonia.nodes,
+        bus2=nodes + " H2",
+        p_nom_extendable=True,
+        carrier="Haber-Bosch",
+        efficiency=1 / (cf_industry["MWh_elec_per_tNH3_electrolysis"] / cf_industry["MWh_NH3_per_tNH3"]), # output: MW_NH3 per MW_elec
+        efficiency2=-cf_industry["MWh_H2_per_tNH3_electrolysis"] / cf_industry["MWh_elec_per_tNH3_electrolysis"], # input: MW_H2 per MW_elec
+        capital_cost=costs.at["Haber-Bosch synthesis", "fixed"],
+        lifetime=costs.at["Haber-Bosch synthesis", 'lifetime']
+    )
+
+    n.madd("Link",
+        nodes,
+        suffix=" ammonia cracker",
+        bus0=spatial.ammonia.nodes,
+        bus1=nodes + " H2",
+        p_nom_extendable=True,
+        carrier="ammonia cracker",
+        efficiency=1 / cf_industry["MWh_NH3_per_MWh_H2_cracker"],
+        capital_cost=costs.at["Ammonia cracker", "fixed"] / cf_industry["MWh_NH3_per_MWh_H2_cracker"], # given per MW_H2
+        lifetime=costs.at['Ammonia cracker', 'lifetime']
+    )
+
+    # Ammonia Storage
+    n.madd("Store",
+        spatial.ammonia.nodes,
+        suffix=" ammonia store",
+        bus=spatial.ammonia.nodes,
+        e_nom_extendable=True,
+        e_cyclic=True,
+        carrier="ammonia store",
+        capital_cost=costs.at["NH3 (l) storage tank incl. liquefaction", "fixed"],
+        lifetime=costs.at['NH3 (l) storage tank incl. liquefaction', 'lifetime']
+    )
 
 
 def add_wave(n, wave_cost_factor):
@@ -2184,6 +2252,20 @@ def add_industry(n, costs):
         lifetime=costs.at['cement capture', 'lifetime']
     )
 
+    if options.get("ammonia"):
+
+        if options["ammonia"] == 'regional':
+            p_set = industrial_demand.loc[spatial.ammonia.locations, "ammonia"].rename(index=lambda x: x + " NH3") / 8760
+        else:
+            p_set = industrial_demand["ammonia"].sum() / 8760
+
+        n.madd("Load",
+            spatial.ammonia.nodes,
+            bus=spatial.ammonia.nodes,
+            carrier="NH3",
+            p_set=p_set
+        )
+
 
 def add_waste_heat(n):
     # TODO options?
@@ -2552,6 +2634,9 @@ if __name__ == "__main__":
 
     if options['dac']:
         add_dac(n, costs)
+
+    if options['ammonia']:
+        add_ammonia(n, costs)
 
     if "decentral" in opts:
         decentral(n)

@@ -9,6 +9,7 @@ if __name__ == '__main__':
             'build_industrial_energy_demand_per_node',
             simpl='',
             clusters=48,
+            planning_horizons=2030,
         )
         
     # import EU ratios df as csv

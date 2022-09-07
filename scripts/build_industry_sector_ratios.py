@@ -60,6 +60,7 @@ index = [
     "hydrogen",
     "heat",
     "naphtha",
+    "ammonia",
     "process emission",
     "process emission from feedstock",
 ]
@@ -432,8 +433,11 @@ def chemicals_industry():
 
     sector = "Ammonia"
     df[sector] = 0.0
-    df.loc["hydrogen", sector] = config["MWh_H2_per_tNH3_electrolysis"]
-    df.loc["elec", sector] = config["MWh_elec_per_tNH3_electrolysis"]
+    if snakemake.config["sector"].get("ammonia", False):
+        df.loc["ammonia", sector] = config["MWh_NH3_per_tNH3"]
+    else:
+        df.loc["hydrogen", sector] = config["MWh_H2_per_tNH3_electrolysis"]
+        df.loc["elec", sector] = config["MWh_elec_per_tNH3_electrolysis"]
 
     # Chlorine
 
