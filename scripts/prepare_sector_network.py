@@ -2429,7 +2429,7 @@ def add_import_options(
 
         suffix = bus_suffix[tech]
 
-        if tech in co2_intensity.keys():
+        if tech, carrier in co2_intensity:
 
             buses = import_nodes_tech.index + f"{suffix} import {tech}"
 
@@ -2454,7 +2454,7 @@ def add_import_options(
                 bus1=import_nodes_tech.index + suffix,
                 bus2="co2 atmosphere",
                 carrier=f"import {tech}",
-                efficiency2=-costs.at[co2_intensity[tech], 'CO2 intensity'],
+                efficiency2=-costs.at[carrier, 'CO2 intensity'],
                 marginal_cost=import_nodes_tech.marginal_cost.values,
                 p_nom=import_nodes_tech.p_nom.values,
             )
