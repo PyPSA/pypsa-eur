@@ -2369,7 +2369,7 @@ def remove_h2_network(n):
 def add_import_options(
     n,
     capacity_boost=3.,
-    options=["hvdc-to-elec", "pipeline-h2", "shipping-lh2", "shipping-lch4", "shipping-ftfuel"]
+    options=["hvdc-to-elec", "pipeline-h2", "shipping-lh2", "shipping-lch4", "shipping-ftfuel", "shipping-lnh3"]
 ):
     logger.info("Add import options: " + " ".join(options))
     fn = snakemake.input.gas_input_nodes_simplified
@@ -2383,6 +2383,7 @@ def add_import_options(
         "hvdc-to-elec": "hvdc-to-elec",
         "shipping-lh2": "lng",
         "shipping-lch4": "lng",
+        "shipping-lnh3": "lng",
     }
 
     bus_suffix = {
@@ -2390,6 +2391,7 @@ def add_import_options(
         "hvdc-to-elec": "",
         "shipping-lh2": " H2",
         "shipping-lch4": " gas",
+        "shipping-lnh3": " NH3",
     }
 
     co2_intensity = {
@@ -2498,6 +2500,18 @@ def add_import_options(
             bus2="co2 atmosphere",
             carrier="import shipping-ftfuel",
             efficiency2=-costs.at["oil", 'CO2 intensity'],
+            marginal_cost=marginal_costs,
+            p_nom=1e7,
+        )
+
+    if "shipping-lnh3" in options and "shipping-lnh3" not in regionalised_options:
+
+        marginal_costs = import_costs.query("esc == 'shipping-lnh3'").marginal_cost.min()
+
+        n.add("Generator",
+            "EU import shipping-lnh3",
+            bus="EU NH3",
+            carrier="import shipping-lnh3",
             marginal_cost=marginal_costs,
             p_nom=1e7,
         )
@@ -2651,6 +2665,7 @@ if __name__ == "__main__":
         H2=["pipeline-h2", "shipping-lh2"],
         AC=["hvdc-to-elec"],
         CH4=["shipping-lch4"],
+        NH3=["shipping-lnh3"],
         FT=["shipping-ftfuel"],
     )
     for o in opts:

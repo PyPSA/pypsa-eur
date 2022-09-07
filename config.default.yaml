@@ -270,6 +270,7 @@ sector:
       - pipeline-h2
       - shipping-lh2
       - shipping-lch4
+      - shipping-lnh3
       - shipping-ftfuel
       - hvdc-to-elec
     # limit: 100 # TWh
@@ -630,5 +631,6 @@ plotting:
     import pipeline-h2: '#fff6e0'
     import shipping-lh2: '#ebe1ca'
     import shipping-lch4: '#d6cbb2'
+    import shipping-lnh3: '#c6c093'
     import shipping-ftfuel: '#bdb093'
     import hvdc-to-elec: '#91856a'
