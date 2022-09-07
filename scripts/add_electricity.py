@@ -553,7 +553,7 @@ def attach_line_rating(n, rating, s_max_pu, correction_factor, max_voltage_diffe
         x_pu = n.lines.type.map(n.line_types["x_per_length"])*n.lines.length/(n.lines.v_nom**2)
         # need to clip here as cap values might be below 1 
         # -> would mean the line cannot be operated at actual given pessimistic ampacity
-        s_max_pu_cap = (np.pi / (6 * x_pu * n.lines.s_nom)).clip(lower=1) 
+        s_max_pu_cap = (np.deg2rad(max_voltage_difference) / ( x_pu * n.lines.s_nom)).clip(lower=1) 
         n.lines_t.s_max_pu = n.lines_t.s_max_pu.clip(lower=1, upper=s_max_pu_cap, axis=1)
     if max_line_rating:
         n.lines_t.s_max_pu = n.lines_t.s_max_pu.clip(upper=max_line_rating)
