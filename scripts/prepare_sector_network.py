@@ -2294,6 +2294,8 @@ def add_import_options(
     import_nodes = pd.read_csv(fn, index_col=0)
     import_nodes["hvdc-to-elec"] = 15000
 
+    ports = pd.read_csv(snakemake.input.ports, index_col=0)
+
     translate = {
         "pipeline-h2": "pipeline",
         "hvdc-to-elec": "hvdc-to-elec",
@@ -2313,11 +2315,14 @@ def add_import_options(
         "shipping-ftfuel": 'oil',
     }
 
-    import_costs = pd.read_csv(snakemake.input.import_costs, index_col=0).reset_index(drop=True)
+    import_costs = pd.read_csv(snakemake.input.import_costs, delimiter=";")
+    cols = ["esc", "exporter", "importer", "value"]
+    import_costs = import_costs.query("subcategory == 'Cost per MWh delivered'")[cols]
     import_costs.rename(columns={"value": "marginal_cost"}, inplace=True)
 
     for k, v in translate.items():
         import_nodes[k] = import_nodes[v]
+        ports[k] = ports.get(v)
 
     regionalised_options = {"hvdc-to-elec", "pipeline-h2", "shipping-lh2", "shipping-lch4"}
 
@@ -2325,10 +2330,15 @@ def add_import_options(
 
         import_costs_tech = import_costs.query("esc == @tech").groupby('importer').marginal_cost.min()
 
-        import_nodes_tech = import_nodes.loc[~import_nodes[tech].isna(), [tech]]
+        sel = ~import_nodes[tech].isna()
+        if tech == 'pipeline-h2':
+            forbidden_pipelines = ["DE", "BE", "FR", "GB"]
+            sel &= ~import_nodes.index.str[:2].isin(forbidden_pipelines)
+        import_nodes_tech = import_nodes.loc[sel, [tech]]
+
         import_nodes_tech = import_nodes_tech.rename(columns={tech: "p_nom"}) * capacity_boost
 
-        marginal_costs = import_nodes_tech.index.str[:2].map(import_costs_tech)
+        marginal_costs = ports[tech].dropna().map(import_costs_tech)
         import_nodes_tech["marginal_cost"] = marginal_costs
 
         import_nodes_tech.dropna(inplace=True)

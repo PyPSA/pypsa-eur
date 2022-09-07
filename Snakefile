@@ -136,10 +136,13 @@ if config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]:
             production="data/gas_network/scigrid-gas/data/IGGIELGN_Productions.geojson",
             planned_lng="data/gas_network/planned_LNGs.csv",
             regions_onshore=pypsaeur("resources/regions_onshore_elec_s{simpl}_{clusters}.geojson"),
-            regions_offshore=pypsaeur('resources/regions_offshore_elec_s{simpl}_{clusters}.geojson')
+            regions_offshore=pypsaeur('resources/regions_offshore_elec_s{simpl}_{clusters}.geojson'),
+            europe_shape=pypsaeur("resources/europe_shape.geojson"),
+            reference_import_sites="data/import-sites.csv",
         output:
             gas_input_nodes="resources/gas_input_locations_s{simpl}_{clusters}.geojson",
-            gas_input_nodes_simplified="resources/gas_input_locations_s{simpl}_{clusters}_simplified.csv"
+            gas_input_nodes_simplified="resources/gas_input_locations_s{simpl}_{clusters}_simplified.csv",
+            ports="resources/ports_s{simpl}_{clusters}.csv",
         resources: mem_mb=2000,
         script: "scripts/build_gas_input_locations.py"
 
@@ -499,7 +502,7 @@ rule prepare_sector_network:
         solar_thermal_total="resources/solar_thermal_total_elec_s{simpl}_{clusters}.nc",
         solar_thermal_urban="resources/solar_thermal_urban_elec_s{simpl}_{clusters}.nc",
         solar_thermal_rural="resources/solar_thermal_rural_elec_s{simpl}_{clusters}.nc",
-        import_costs="data/import-costs.csv",
+        import_costs="../../../data/results.csv", # TODO: host file on zenodo or elsewhere
         **build_retro_cost_output,
         **build_biomass_transport_costs_output,
         **gas_infrastructure
