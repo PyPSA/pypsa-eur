@@ -2420,17 +2420,17 @@ def add_endogenous_hvdc_import_options(n):
 
         p_max_pu_tech = p_max_pu.sel(technology=tech).to_pandas().dropna()
 
-        exporters_tech = exporters.index.intersection(p_max_pu_tech.index)
+        exporters_tech_i = exporters.index.intersection(p_max_pu_tech.index)
 
         n.madd("Generator",
-            exporters_tech.index,
+            exporters_tech_i,
             suffix=" " + tech,
             bus=exporters.index,
             carrier=f"external {tech}",
             p_nom_extendable=True,
             capital_cost=costs[tech, "fixed"],
             lifetime=costs[tech, "lifetime"],
-            p_max_pu=p_max_pu_tech.reindex(exporters_tech.index),
+            p_max_pu=p_max_pu_tech.reindex(exporters_tech_i),
         )
 
     # hydrogen storage
