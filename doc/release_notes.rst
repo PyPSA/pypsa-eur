@@ -14,6 +14,8 @@ Upcoming Release
 
 * When fixing line voltages to 380kV, the workflow now preserves the transmission capacity instead of the electrical impedance and reactance. 
 
+* The software now supports running the workflow with different settings within the same directory. A new config section ``run`` was created that specifies under which scenario ``name`` the created resources, networks and results should be stored. If ``name`` is not specified, the workflow uses the default paths. The entry ``dedicated_cutouts`` specifies whether the run should use cutouts from the default root directory and use run-specific cutouts.
+
 PyPSA-Eur 0.5.0 (27th July 2022)
 =====================================
 

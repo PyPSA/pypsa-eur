@@ -28,12 +28,23 @@ Top-level configuration
 
 .. _scenario:
 
-``scenario``
-============
+``run``
+=======
 
 It is common conduct to analyse energy system optimisation models for **multiple scenarios** for a variety of reasons,
 e.g. assessing their sensitivity towards changing the temporal and/or geographical resolution or investigating how
 investment changes as more ambitious greenhouse-gas emission reduction targets are applied.
+
+The ``run`` section is used for running and storing scenarios with different configurations which are not covered by :ref:`wildcards`. It determines the path at which resources, networks and results are stored. Therefore the user can run different configurations within the same directory. If a run with a non empty name should use the default cutouts, set ``dedicated_cutouts`` to `false`.       
+
+.. literalinclude:: ../config.default.yaml
+   :language: yaml
+   :start-at: run:
+   :end-before: scenario:
+
+
+``scenario``
+============
 
 The ``scenario`` section is an extraordinary section of the config file
 that is strongly connected to the :ref:`wildcards` and is designed to
@@ -96,7 +107,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 ``atlite``
 ==========
 
-Define and specify the ``atlite.Cutout`` used for calculating renewable potentials and time-series. All options except for ``features`` are directly used as `cutout parameters <https://atlite.readthedocs.io/en/latest/ref_api.html#cutout>`_.
+Define and specify the ``atlite.Cutout`` used for calculating renewable potentials and time-series. All options except for ``features`` are directly used as `cutout parameters <https://atlite.readthedocs.io/en/latest/ref_api.html#cutout>`_. 
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
