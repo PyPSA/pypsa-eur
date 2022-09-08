@@ -703,8 +703,8 @@ def add_ammonia(n, costs):
         carrier="Haber-Bosch",
         efficiency=1 / (cf_industry["MWh_elec_per_tNH3_electrolysis"] / cf_industry["MWh_NH3_per_tNH3"]), # output: MW_NH3 per MW_elec
         efficiency2=-cf_industry["MWh_H2_per_tNH3_electrolysis"] / cf_industry["MWh_elec_per_tNH3_electrolysis"], # input: MW_H2 per MW_elec
-        capital_cost=costs.at["Haber-Bosch synthesis", "fixed"],
-        lifetime=costs.at["Haber-Bosch synthesis", 'lifetime']
+        capital_cost=costs.at["Haber-Bosch", "fixed"],
+        lifetime=costs.at["Haber-Bosch", 'lifetime']
     )
 
     n.madd("Link",
@@ -2830,7 +2830,8 @@ if __name__ == "__main__":
             carriers = options["import"]["options"]
         add_import_options(n,
             capacity_boost=options["import"]["capacity_boost"],
-            import_options=carriers
+            import_options=carriers,
+            endogenous_hvdc=options["import"]["endogenous_hvdc_import"]["enable"]
         )
         break
 
