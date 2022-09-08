@@ -266,6 +266,7 @@ sector:
     OCGT: gas
   import:
     capacity_boost: 2
+    limit: false # bool or number in TWh
     options:
       - pipeline-h2
       - shipping-lh2

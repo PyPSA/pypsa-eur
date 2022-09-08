@@ -245,14 +245,14 @@ def add_energy_import_limit(n, sns):
     import_gens = n.generators.loc[n.generators.carrier.str.contains("import")].index
     import_links = n.links.loc[n.links.carrier.str.contains("import")].index
 
-    limit = n.config["sector"].get('import', {}).get('limit', None)
+    limit = n.config["sector"].get('import', {}).get('limit', False)
     for o in n.opts:
         if not o.startswith("imp"): continue
         match = o.split("+")[0][3:]
         if match: limit = float(match)
         break
 
-    if (import_gens.empty and import_links.empty) or limit is None: return
+    if (import_gens.empty and import_links.empty) or not limit: return
 
     weightings = n.snapshot_weightings.loc[sns]
     p_gens = get_var(n, "Generator", "p")[import_gens]
