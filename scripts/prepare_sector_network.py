@@ -2396,8 +2396,8 @@ def add_endogenous_hvdc_import_options(n):
     import_links = pd.concat(import_links)
 
     hvdc_cost = (
-        import_links.values * cf["length_factor"] * costs.at['HVDC submarine', 'capital_cost'] +
-        costs.at['HVDC inverter pair', 'capital_cost']
+        import_links.values * cf["length_factor"] * costs.at['HVDC submarine', 'fixed'] +
+        costs.at['HVDC inverter pair', 'fixed']
     )
 
     buses_i = exporters.index
