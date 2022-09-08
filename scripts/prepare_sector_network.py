@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 import xarray as xr
 import networkx as nx
+import geopandas as gpd
 
 from itertools import product
 from scipy.stats import beta
@@ -19,6 +20,9 @@ from helper import override_component_attrs, generate_periodic_profiles, update_
 from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentation
 from networkx.algorithms import complement
 from pypsa.geo import haversine_pts
+
+from geopy.geocoders import Nominatim
+geolocator = Nominatim(user_agent="locate-exporting-region")
 
 import logging
 logger = logging.getLogger(__name__)
