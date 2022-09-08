@@ -2428,8 +2428,8 @@ def add_endogenous_hvdc_import_options(n):
             bus=exporters.index,
             carrier=f"external {tech}",
             p_nom_extendable=True,
-            capital_cost=costs[tech, "fixed"],
-            lifetime=costs[tech, "lifetime"],
+            capital_cost=costs.at[tech, "fixed"],
+            lifetime=costs.at[tech, "lifetime"],
             p_max_pu=p_max_pu_tech.reindex(exporters_tech_i),
         )
 
