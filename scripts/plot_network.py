@@ -35,6 +35,8 @@ def rename_techs_tyndp(tech):
         return "offshore wind"
     elif "CC" in tech or "sequestration" in tech:
         return "CCS"
+    elif "external" in tech:
+        return "import hvdc-to-elec"
     else:
         return tech
 
