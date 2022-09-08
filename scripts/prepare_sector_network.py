@@ -2369,9 +2369,10 @@ def remove_h2_network(n):
 def add_import_options(
     n,
     capacity_boost=3.,
-    options=["hvdc-to-elec", "pipeline-h2", "shipping-lh2", "shipping-lch4", "shipping-ftfuel", "shipping-lnh3"]
+    import_options=["hvdc-to-elec", "pipeline-h2", "shipping-lh2", "shipping-lch4", "shipping-ftfuel", "shipping-lnh3"],
+    endogenous_hvdc=False,
 ):
-    logger.info("Add import options: " + " ".join(options))
+    logger.info("Add import options: " + " ".join(import_options))
     fn = snakemake.input.gas_input_nodes_simplified
     import_nodes = pd.read_csv(fn, index_col=0)
     import_nodes["hvdc-to-elec"] = 15000
@@ -2474,7 +2475,7 @@ def add_import_options(
             )
 
     # need special handling for copperplated Fischer-Tropsch imports
-    if "shipping-ftfuel" in options:
+    if "shipping-ftfuel" in import_options:
 
         marginal_costs = import_costs.query("esc == 'shipping-ftfuel'").marginal_cost.min()
 
@@ -2504,7 +2505,7 @@ def add_import_options(
             p_nom=1e7,
         )
 
-    if "shipping-lnh3" in options and "shipping-lnh3" not in regionalised_options:
+    if "shipping-lnh3" in import_options and "shipping-lnh3" not in regionalised_options:
 
         marginal_costs = import_costs.query("esc == 'shipping-lnh3'").marginal_cost.min()
 
@@ -2677,7 +2678,7 @@ if __name__ == "__main__":
             carriers = options["import"]["options"]
         add_import_options(n,
             capacity_boost=options["import"]["capacity_boost"],
-            options=carriers
+            import_options=carriers
         )
         break
 
