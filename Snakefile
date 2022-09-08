@@ -503,6 +503,8 @@ rule prepare_sector_network:
         solar_thermal_urban="resources/solar_thermal_urban_elec_s{simpl}_{clusters}.nc",
         solar_thermal_rural="resources/solar_thermal_rural_elec_s{simpl}_{clusters}.nc",
         import_costs="../../../data/results.csv", # TODO: host file on zenodo or elsewhere
+        import_p_max_pu="../../../data/hvdc-to-elec_aggregated-time-series_p-max-pu_.nc", # TODO: host file on zenodo or elsewhere
+        regions_onshore=pypsaeur("resources/regions_onshore_elec_s{simpl}_{clusters}.geojson"),
         **build_retro_cost_output,
         **build_biomass_transport_costs_output,
         **gas_infrastructure

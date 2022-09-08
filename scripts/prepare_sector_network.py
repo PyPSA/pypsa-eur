@@ -2366,6 +2366,150 @@ def remove_h2_network(n):
         n.stores.drop("EU H2 Store", inplace=True)
 
 
+def add_endogenous_hvdc_import_options(n):
+
+    cf = snakemake.config["sector"]["import"].get("endogenous_hvdc_import", {})
+    if not cf["enable"]: return
+
+    regions = gpd.read_file(snakemake.input.regions_onshore).set_index('name')
+
+    p_max_pu = xr.open_dataset(snakemake.input.import_p_max_pu).p_max_pu.sel(importer='EUE')
+
+    def _coordinates(ct):
+        loc = geolocator.geocode(ct.split('-')[0])
+        return [loc.longitude, loc.latitude]
+
+    exporters = pd.DataFrame({ct: _coordinates(ct) for ct in cf["exporters"]}, index=['x', 'y']).T
+    geometry = gpd.points_from_xy(exporters.x, exporters.y)
+    exporters = gpd.GeoDataFrame(exporters, geometry=geometry, crs=4326)
+
+    import_links = {}
+    a = regions.representative_point().to_crs(3857)
+    for ct in exporters.index:
+        b = exporters.to_crs(3857).loc[ct].geometry
+        d = a.distance(b)
+        import_links[ct] = d.where(d < d.quantile(cf["distance_threshold"])).div(1e3).dropna() # km
+    import_links = pd.concat(import_links)
+
+    hvdc_cost = (
+        import_links.values * cf["length_factor"] * costs.at['HVDC submarine', 'capital_cost'] +
+        costs.at['HVDC inverter pair', 'capital_cost']
+    )
+
+    buses_i = exporters.index
+
+    n.madd("Bus", buses_i, **exporters.drop('geometry', axis=1))
+
+    n.madd("Link",
+        ["import hvdc-to-elec " + ' '.join(idx).strip() for idx in import_links.index],
+        bus0=import_links.index.get_level_values(0),
+        bus1=import_links.index.get_level_values(1),
+        carrier="import hvdc-to-elec",
+        p_min_pu=0,
+        p_nom_extendable=True,
+        length=import_links.values,
+        capital_cost=hvdc_cost,
+        efficiency=1 - import_links.values * cf["hvdc_losses"],
+    )
+
+    for tech in ["solar-utility", "onwind", "offwind"]:
+
+        p_max_pu_tech = p_max_pu.sel(technology=tech).to_pandas().dropna()
+
+        exporters_tech = exporters.index.intersection(p_max_pu_tech.index)
+
+        n.madd("Generator",
+            exporters_tech.index,
+            suffix=" " + tech,
+            bus=exporters.index,
+            carrier=f"external {tech}",
+            p_nom_extendable=True,
+            capital_cost=costs[tech, "fixed"],
+            lifetime=costs[tech, "lifetime"],
+            p_max_pu=p_max_pu_tech.reindex(exporters_tech.index),
+        )
+
+    # hydrogen storage
+
+    h2_buses_i = n.madd("Bus",
+        buses_i,
+        suffix=" H2",
+        carrier="external H2",
+        location=buses_i
+    )
+
+    n.madd("Store",
+        h2_buses_i,
+        bus=h2_buses_i,
+        carrier='external H2',
+        e_nom_extendable=True,
+        e_cyclic=True,
+        capital_cost=costs.at["hydrogen storage tank incl. compressor", "fixed"]
+    )
+
+    n.madd("Link",
+        h2_buses_i + " Electrolysis",
+        bus0=buses_i,
+        bus1=h2_buses_i,
+        carrier='external H2 Electrolysis',
+        p_nom_extendable=True,
+        efficiency=costs.at["electrolysis", "efficiency"],
+        capital_cost=costs.at["electrolysis", "fixed"],
+        lifetime=costs.at["electrolysis", "lifetime"]
+    )
+
+    n.madd("Link",
+        h2_buses_i + " Fuel Cell",
+        bus0=h2_buses_i,
+        bus1=buses_i,
+        carrier='external H2 Fuel Cell',
+        p_nom_extendable=True,
+        efficiency=costs.at["fuel cell", "efficiency"],
+        capital_cost=costs.at["fuel cell", "fixed"] * costs.at["fuel cell", "efficiency"],
+        lifetime=costs.at["fuel cell", "lifetime"]
+    )
+
+    # battery storage
+
+    b_buses_i = n.madd("Bus",
+        buses_i,
+        suffix=" battery",
+        carrier="external battery",
+        location=buses_i
+    )
+
+    n.madd("Store",
+        b_buses_i,
+        bus=b_buses_i,
+        carrier='external battery',
+        e_cyclic=True,
+        e_nom_extendable=True,
+        capital_cost=costs.at['battery storage', 'fixed'],
+        lifetime=costs.at['battery storage', 'lifetime']
+    )
+
+    n.madd("Link",
+        b_buses_i + " charger",
+        bus0=buses_i,
+        bus1=b_buses_i,
+        carrier='external battery charger',
+        efficiency=costs.at['battery inverter', 'efficiency']**0.5,
+        capital_cost=costs.at['battery inverter', 'fixed'],
+        p_nom_extendable=True,
+        lifetime=costs.at['battery inverter', 'lifetime']
+    )
+
+    n.madd("Link",
+        b_buses_i + " discharger",
+        bus0=b_buses_i,
+        bus1=buses_i,
+        carrier='external battery discharger',
+        efficiency=costs.at['battery inverter','efficiency']**0.5,
+        p_nom_extendable=True,
+        lifetime=costs.at['battery inverter', 'lifetime']
+    )
+
+
 def add_import_options(
     n,
     capacity_boost=3.,
@@ -2411,7 +2555,11 @@ def add_import_options(
 
     regionalised_options = {"hvdc-to-elec", "pipeline-h2", "shipping-lh2", "shipping-lch4"}
 
-    for tech in set(options).intersection(regionalised_options):
+    if endogenous_hvdc and 'hvdc-to-elec' in import_options:
+        import_options = [o for o in import_options if o != 'hvdc-to-elec']
+        add_endogenous_hvdc_import_options(n)
+
+    for tech in set(import_options).intersection(regionalised_options):
 
         import_costs_tech = import_costs.query("esc == @tech").groupby('importer').marginal_cost.min()
 
