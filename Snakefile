@@ -15,7 +15,7 @@ configfile: "config.yaml"
 
 run = config.get("run", {})
 RDIR = run.get("name", "") + "/" if run.get("name", "") else ""
-CDIR = "" if run.get("dedicated_cutouts", True) else RDIR
+CDIR = RDIR if run.get("dedicated_cutouts", True) else ""
 
 COSTS = "resources/" + RDIR + "costs.csv"
 ATLITE_NPROCESSES = config['atlite'].get('nprocesses', 4)
