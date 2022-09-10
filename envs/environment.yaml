@@ -7,11 +7,11 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - python>=3.8
+  - python==3.9
   - pip
 
   - pypsa>=0.20
-  - atlite>=0.2.6
+  - atlite>=0.2.9
   - dask
 
   # Dependencies of the workflow itself
@@ -24,7 +24,7 @@ dependencies:
   - yaml
   - pytables
   - lxml
-  - powerplantmatching>=0.5.3
+  - powerplantmatching>=0.5.4
   - numpy
   - pandas
   - geopandas>=0.11.0
@@ -32,19 +32,19 @@ dependencies:
   - netcdf4
   - networkx
   - scipy
-  - shapely
+  - shapely<2.0 # need to address deprecations
   - progressbar2
   - pyomo
   - matplotlib
   - proj
-  - fiona <= 1.18.20  # Till issue https://github.com/Toblerity/Fiona/issues/1085 is not solved
+  - fiona # <= 1.18.20  # Till issue https://github.com/Toblerity/Fiona/issues/1085 is not solved
   - country_converter
 
   # Keep in conda environment when calling ipython
   - ipython
 
   # GIS dependencies:
-  - cartopy
+  - cartopy>=0.16
   - descartes
   - rasterio<=1.2.9  # 1.2.10 creates error https://github.com/PyPSA/atlite/issues/238
 
