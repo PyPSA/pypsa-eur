@@ -685,6 +685,7 @@ if config["foresight"] == "myopic":
 
 rule solve_operations_network:
     input:
+        overrides="data/override_component_attrs",
         pre=RDIR + "/prenetworks/elec{weather_year}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc",
         post=RDIR + "/postnetworks/elec{capacity_year}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc",
     output: RDIR + "/operations/elec{capacity_year}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}_{weather_year}.nc"
@@ -705,6 +706,7 @@ def solved_previous_year(wildcards):
 
 rule solve_operations_network_myopic:
     input:
+        overrides="data/override_component_attrs",
         pre=RDIR + "/prenetworks/elec{weather_year}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc",
         post=RDIR + "/postnetworks/elec{capacity_year}_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc",
         previous=solved_previous_year
