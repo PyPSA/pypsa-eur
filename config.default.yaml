@@ -650,3 +650,8 @@ plotting:
     import shipping-lnh3: '#c6c093'
     import shipping-ftfuel: '#bdb093'
     import hvdc-to-elec: '#91856a'
+    external H2: '#f7cdf0'
+    external battery: '#dff7cb'
+    external offwind: '#d0e8f5'
+    external onwind: '#accbfc'
+    external solar: '#fcf1c7'

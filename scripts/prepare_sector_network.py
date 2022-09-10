@@ -22,7 +22,7 @@ from networkx.algorithms import complement
 from pypsa.geo import haversine_pts
 
 from geopy.geocoders import Nominatim
-geolocator = Nominatim(user_agent="locate-exporting-region")
+geolocator = Nominatim(user_agent="locate-exporting-region", timeout=10)
 
 import logging
 logger = logging.getLogger(__name__)
@@ -2372,6 +2372,7 @@ def remove_h2_network(n):
 
 def add_endogenous_hvdc_import_options(n):
 
+    logger.info("Add import options: endogenous hvdc-to-elec")
     cf = snakemake.config["sector"]["import"].get("endogenous_hvdc_import", {})
     if not cf["enable"]: return
 
@@ -2418,19 +2419,19 @@ def add_endogenous_hvdc_import_options(n):
 
     for tech in ["solar-utility", "onwind", "offwind"]:
 
-        p_max_pu_tech = p_max_pu.sel(technology=tech).to_pandas().dropna()
+        p_max_pu_tech = p_max_pu.sel(technology=tech).to_pandas().dropna().T
 
-        exporters_tech_i = exporters.index.intersection(p_max_pu_tech.index)
+        exporters_tech_i = exporters.index.intersection(p_max_pu_tech.columns)
 
         n.madd("Generator",
             exporters_tech_i,
             suffix=" " + tech,
-            bus=exporters.index,
+            bus=exporters_tech_i,
             carrier=f"external {tech}",
             p_nom_extendable=True,
             capital_cost=costs.at[tech, "fixed"],
             lifetime=costs.at[tech, "lifetime"],
-            p_max_pu=p_max_pu_tech.reindex(exporters_tech_i),
+            p_max_pu=p_max_pu_tech.reindex(columns=exporters_tech_i),
         )
 
     # hydrogen storage

@@ -412,7 +412,7 @@ def calculate_weighted_prices(n, label, weighted_prices):
         elif carrier[:5] == "space":
             load = heat_demand_df[buses.str[:2]].rename(columns=lambda i: str(i)+suffix)
         else:
-            load = n.loads_t.p_set[buses]
+            load = n.loads_t.p_set[buses.intersection(n.loads_t.p_set.columns)].reindex(columns=buses).fillna(0.)
 
         for tech in link_loads[carrier]:
 
