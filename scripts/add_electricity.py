@@ -255,7 +255,7 @@ def update_transmission_costs(n, costs, length_factor=1.0, simple_hvdc_costs=Fal
     n.links.loc[dc_b, 'capital_cost'] = costs
 
 
-def attach_wind_and_solar(n, costs, input_profiles, technologies, line_length_factor=1):
+def attach_wind_and_solar(n, costs, input_profiles, technologies, extendable_carriers, line_length_factor=1):
     # TODO: rename tech -> carrier, technologies -> carriers
 
     for tech in technologies:
@@ -285,7 +285,7 @@ def attach_wind_and_solar(n, costs, input_profiles, technologies, line_length_fa
             n.madd("Generator", ds.indexes['bus'], ' ' + tech,
                    bus=ds.indexes['bus'],
                    carrier=tech,
-                   p_nom_extendable=True,
+                   p_nom_extendable=tech in extendable_carriers['Generator'],
                    p_nom_max=ds['p_nom_max'].to_pandas(),
                    weight=ds['weight'].to_pandas(),
                    marginal_cost=costs.at[suptech, 'marginal_cost'],
@@ -593,7 +593,8 @@ if __name__ == "__main__":
     attach_conventional_generators(n, costs, ppl, carriers, extendable_carriers)
 
     carriers = snakemake.config['renewable']
-    attach_wind_and_solar(n, costs, snakemake.input, carriers, snakemake.config['lines']['length_factor'])
+    extendable_carriers = snakemake.config['extendable_carriers']
+    attach_wind_and_solar(n, costs, snakemake.input, carriers, extendable_carriers, snakemake.config['lines']['length_factor'])
 
     if 'hydro' in snakemake.config['renewable']:
         carriers = snakemake.config['renewable']['hydro'].pop('carriers', [])
