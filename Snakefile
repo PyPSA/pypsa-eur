@@ -81,7 +81,7 @@ if config["enable"].get('retrieve_opsd_load_data', True):
 
 if config["enable"].get('retrieve_artificial_load_data', False):
     rule retrieve_artificial_load_data:
-        input: HTTP.remote("https://sandbox.zenodo.org/record/1089549/files/demand_hourly.csv", keep_local=True, static=True)
+        input: HTTP.remote("https://zenodo.org/record/7070438/files/demand_hourly.csv", keep_local=True, static=True)
         output: "data/load_artificial_raw.csv"
         run: move(input[0], output[0])
 
