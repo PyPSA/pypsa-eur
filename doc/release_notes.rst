@@ -10,9 +10,29 @@ Release Notes
 Upcoming Release
 ================
 
-* Add functionality to consider shipping routes when calculating the available area for offshore technologies. Data for the shipping density comes from the `Global Shipping Traffic Density dataset <https://datacatalog.worldbank.org/search/dataset/0037580/Global-Shipping-Traffic-Density>`
+* new feature
 
-* When fixing line voltages to 380kV, the workflow now preserves the transmission capacity instead of the electrical impedance and reactance. 
+
+PyPSA-Eur 0.6.0 (10th September 2022)
+=====================================
+
+* Functionality to consider shipping routes when calculating the available area
+  for offshore technologies were added. Data for the shipping density comes from
+  the `Global Shipping Traffic Density dataset
+  <https://datacatalog.worldbank.org/search/dataset/0037580/Global-Shipping-Traffic-Density>`_.
+
+* When transforming all transmission lines to a unified voltage level of 380kV,
+  the workflow now preserves the transmission capacity rather than electrical
+  impedance and reactance. 
+
+* Memory resources are now specified for all rules.
+
+* Filtering of power plant data was adjusted to new versions of
+  ``powerplantmatching``.
+
+* The resolution of land exclusion calculation is now a configurable option. See
+  setting ``excluder_resolution``.
+
 
 * The software now supports running the workflow with different settings within the same directory. A new config section ``run`` was created that specifies under which scenario ``name`` the created resources, networks and results should be stored. If ``name`` is not specified, the workflow uses the default paths. The entry ``dedicated_cutouts`` specifies whether the run should use cutouts from the default root directory and use run-specific cutouts.
 
