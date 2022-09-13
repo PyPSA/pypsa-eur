@@ -14,7 +14,7 @@ if not exists("config.yaml"):
 configfile: "config.yaml"
 
 run = config.get("run", {})
-RDIR = run.get("name", "") + "/" if run.get("name", "") else ""
+RDIR = run["name"] + "/" if run.get("name") else ""
 CDIR = RDIR if run.get("dedicated_cutouts", True) else ""
 
 COSTS = "resources/" + RDIR + "costs.csv"
