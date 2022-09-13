@@ -11,7 +11,7 @@ logging:
 
 run: 
   name: "" # use this to keep track of runs with different settings
-  dedicated_cutouts: True # set to false to use the default cutout(s)
+  shared_cutouts: false # set to true to share the default cutout(s) across runs
 
 
 scenario:

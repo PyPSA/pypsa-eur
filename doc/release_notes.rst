@@ -34,7 +34,7 @@ PyPSA-Eur 0.6.0 (10th September 2022)
   setting ``excluder_resolution``.
 
 
-* The software now supports running the workflow with different settings within the same directory. A new config section ``run`` was created that specifies under which scenario ``name`` the created resources, networks and results should be stored. If ``name`` is not specified, the workflow uses the default paths. The entry ``dedicated_cutouts`` specifies whether the run should use cutouts from the default root directory and use run-specific cutouts.
+* The software now supports running the workflow with different settings within the same directory. A new config section ``run`` was created that specifies under which scenario ``name`` the created resources, networks and results should be stored. If ``name`` is not specified, the workflow uses the default paths. The entry ``shared_cutouts`` specifies whether the run should use cutouts from the default root directory or use run-specific cutouts.
 
 PyPSA-Eur 0.5.0 (27th July 2022)
 =====================================

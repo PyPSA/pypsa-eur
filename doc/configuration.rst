@@ -35,7 +35,7 @@ It is common conduct to analyse energy system optimisation models for **multiple
 e.g. assessing their sensitivity towards changing the temporal and/or geographical resolution or investigating how
 investment changes as more ambitious greenhouse-gas emission reduction targets are applied.
 
-The ``run`` section is used for running and storing scenarios with different configurations which are not covered by :ref:`wildcards`. It determines the path at which resources, networks and results are stored. Therefore the user can run different configurations within the same directory. If a run with a non-empty name should use cutouts shared across runs, set ``shared_cutouts`` to `true`.       
+The ``run`` section is used for running and storing scenarios with different configurations which are not covered by :ref:`wildcards`. It determines the path at which resources, networks and results are stored. Therefore the user can run different configurations within the same directory. If a run with a non-empty name should use cutouts shared across runs, set ``shared_cutouts`` to `true`.    
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
