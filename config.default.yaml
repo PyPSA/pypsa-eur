@@ -9,6 +9,11 @@ logging:
   level: INFO
   format: '%(levelname)s:%(name)s:%(message)s'
 
+run: 
+  name: "" # use this to keep track of runs with different settings
+  shared_cutouts: false # set to true to share the default cutout(s) across runs
+
+
 scenario:
   simpl: ['']
   ll: ['copt']
