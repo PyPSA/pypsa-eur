@@ -309,7 +309,7 @@ def attach_conventional_generators(n, costs, ppl, carriers, extendable_carriers)
            bus=ppl.bus,
            p_nom=ppl.p_nom,
            p_nom_min=ppl.p_nom,
-           p_nom_extendable=ppl.carrier.isin(extendable_carriers),
+           p_nom_extendable=ppl.carrier.isin(extendable_carriers['Generator']),
            efficiency=ppl.efficiency,
            marginal_cost=ppl.marginal_cost,
            capital_cost=ppl.capital_cost)
@@ -588,12 +588,11 @@ if __name__ == "__main__":
 
     update_transmission_costs(n, costs, snakemake.config['lines']['length_factor'])
 
-    extendable_carriers = snakemake.config['electricity']['extendable_carriers']['Generator']
+    extendable_carriers = snakemake.config['extendable_carriers']
     carriers = snakemake.config['electricity']['conventional_carriers']
     attach_conventional_generators(n, costs, ppl, carriers, extendable_carriers)
 
     carriers = snakemake.config['renewable']
-    extendable_carriers = snakemake.config['extendable_carriers']
     attach_wind_and_solar(n, costs, snakemake.input, carriers, extendable_carriers, snakemake.config['lines']['length_factor'])
 
     if 'hydro' in snakemake.config['renewable']:
