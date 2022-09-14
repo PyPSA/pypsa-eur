@@ -2415,7 +2415,7 @@ def limit_individual_line_extension(n, maxext):
 
 
 def apply_time_segmentation(n, segments, solver_name="cbc",
-                            overwrite_time_dependent=False):
+                            overwrite_time_dependent=True):
     """Aggregating time series to segments with different lengths
 
     Input:
@@ -2435,12 +2435,12 @@ def apply_time_segmentation(n, segments, solver_name="cbc",
     # get all time-dependent data
     columns = pd.MultiIndex.from_tuples([],names=['component', 'key', 'asset'])
     raw = pd.DataFrame(index=n.snapshots,columns=columns)
-    for component in n.all_components:
-        pnl = n.pnl(component)
-        for key in pnl.keys():
-            if not pnl[key].empty:
-                df = pnl[key].copy()
-                df.columns = pd.MultiIndex.from_product([[component], [key], df.columns])
+    for c in n.iterate_components():
+        for attr, pnl in c.pnl.items():
+            # exclude e_min_pu which is used for SOC of EVs in the morning
+            if not pnl.empty and attr != 'e_min_pu':
+                df = pnl.copy()
+                df.columns = pd.MultiIndex.from_product([[c.name], [attr], df.columns])
                 raw = pd.concat([raw, df], axis=1)
 
     # normalise all time-dependent data
@@ -2478,18 +2478,22 @@ def set_temporal_aggregation(n, opts, solver_name):
         m = re.match(r"^\d+h$", o, re.IGNORECASE)
         if m is not None:
             n = average_every_nhours(n, m.group(0))
+            break
         # representive snapshots
-        m = re.match(r"^\d+sn$", o, re.IGNORECASE)
+        m = re.match(r"(^\d+)sn$", o, re.IGNORECASE)
         if m is not None:
-            sn = int(m.group(0).split("sn")[0])
-            logger.info("use every {} snapshot as representative".format(sn))
+            sn = int(m[1])
+            logger.info(f"use every {sn} snapshot as representative")
             n.set_snapshots(n.snapshots[::sn])
             n.snapshot_weightings *= sn
+            break
         # segments with package tsam
-        if "SEG" in o:
-            segments = int(o.replace("SEG",""))
-            logger.info("use temporal segmentation with {} segments".format(segments))
+        m = re.match(r"^(\d+)seg$", o, re.IGNORECASE)
+        if m is not None:
+            segments = int(m[1])
+            logger.info(f"use temporal segmentation with {segments} segments")
             n = apply_time_segmentation(n, segments, solver_name=solver_name)
+            break
     return n
 #%%
 if __name__ == "__main__":
