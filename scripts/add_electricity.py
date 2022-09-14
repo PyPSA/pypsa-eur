@@ -588,7 +588,7 @@ if __name__ == "__main__":
 
     update_transmission_costs(n, costs, snakemake.config['lines']['length_factor'])
 
-    extendable_carriers = snakemake.config['extendable_carriers']
+    extendable_carriers = snakemake.config['electricity']['extendable_carriers']
     carriers = snakemake.config['electricity']['conventional_carriers']
     attach_conventional_generators(n, costs, ppl, carriers, extendable_carriers)
 
