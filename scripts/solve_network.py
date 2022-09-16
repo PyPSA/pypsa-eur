@@ -246,6 +246,7 @@ def add_energy_import_limit(n, sns):
     import_links = n.links.loc[n.links.carrier.str.contains("import")].index
 
     limit = n.config["sector"].get('import', {}).get('limit', False)
+    limit_sense = n.config["sector"].get('import', {}).get('limit_sense', '<=')
     for o in n.opts:
         if not o.startswith("imp"): continue
         match = o.split("+")[0][3:]
@@ -261,7 +262,7 @@ def add_energy_import_limit(n, sns):
     lhs = linexpr((weightings.generators, p.T)).sum().sum()
 
     name = 'energy_import_limit'
-    define_constraints(n, lhs, '<=', limit * 1e6, 'GlobalConstraint',
+    define_constraints(n, lhs, limit_sense, limit * 1e6, 'GlobalConstraint',
                        'mu', axes=pd.Index([name]), spec=name)
 
 

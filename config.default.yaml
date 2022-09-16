@@ -267,6 +267,7 @@ sector:
   import:
     capacity_boost: 2
     limit: false # bool or number in TWh
+    limit_sense: "=="
     options:
       - pipeline-h2
       - shipping-lh2
