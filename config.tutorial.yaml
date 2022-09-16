@@ -2,13 +2,15 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
-version: 0.5.0
+version: 0.6.0
 tutorial: true
 
 logging:
   level: INFO
   format: '%(levelname)s:%(name)s:%(message)s'
 
+run: 
+  name: ""
 
 scenario:
   simpl: ['']

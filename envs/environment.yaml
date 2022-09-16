@@ -11,7 +11,7 @@ dependencies:
   - pip
 
   - pypsa>=0.20
-  - atlite>=0.2.6
+  - atlite>=0.2.9
   - dask
 
   # Dependencies of the workflow itself
@@ -24,7 +24,7 @@ dependencies:
   - yaml
   - pytables
   - lxml
-  - powerplantmatching>=0.5.3
+  - powerplantmatching>=0.5.4
   - numpy
   - pandas
   - geopandas>=0.11.0
@@ -32,7 +32,7 @@ dependencies:
   - netcdf4
   - networkx
   - scipy
-  - shapely
+  - shapely<2.0 # need to address deprecations
   - progressbar2
   - pyomo
   - matplotlib
