@@ -197,7 +197,7 @@ def _adjust_capital_costs_using_connection_costs(n, connection_costs_to_bus, out
 
 def _aggregate_and_move_components(n, busmap, connection_costs_to_bus, output,
                                    aggregate_one_ports={"Load", "StorageUnit"},
-                                   aggregation_strategies=dict()):
+                                   aggregation_strategies=dict(), exclude_carriers=None):
 
     def replace_components(n, c, df, pnl):
         n.mremove(c, n.df(c).index)
@@ -210,9 +210,10 @@ def _aggregate_and_move_components(n, busmap, connection_costs_to_bus, output,
     _adjust_capital_costs_using_connection_costs(n, connection_costs_to_bus, output)
 
     _, generator_strategies = get_aggregation_strategies(aggregation_strategies)
-
+   
+    carriers=set(n.carriers.index)-set(exclude_carriers)
     generators, generators_pnl = aggregategenerators(
-        n, busmap, custom_strategies=generator_strategies
+        n, busmap, carriers=carriers, custom_strategies=generator_strategies
     )
 
     replace_components(n, "Generator", generators, generators_pnl)
@@ -320,8 +321,9 @@ def simplify_links(n, costs, config, output, aggregation_strategies=dict()):
 
     logger.debug("Collecting all components using the busmap")
 
+    exclude_carriers=config["clustering"]["exclude_carriers"]
     _aggregate_and_move_components(n, busmap, connection_costs_to_bus, output,
-                                   aggregation_strategies=aggregation_strategies)
+                                   aggregation_strategies=aggregation_strategies, exclude_carriers=exclude_carriers)
     return n, busmap
 
 def remove_stubs(n, costs, config, output, aggregation_strategies=dict()):
@@ -331,8 +333,9 @@ def remove_stubs(n, costs, config, output, aggregation_strategies=dict()):
 
     connection_costs_to_bus = _compute_connection_costs_to_bus(n, busmap, costs, config)
 
+    exclude_carriers=config["clustering"]["exclude_carriers"]
     _aggregate_and_move_components(n, busmap, connection_costs_to_bus, output,
-                                   aggregation_strategies=aggregation_strategies)
+                                   aggregation_strategies=aggregation_strategies, exclude_carriers=exclude_carriers)
 
     return n, busmap
 
