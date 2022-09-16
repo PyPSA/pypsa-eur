@@ -155,4 +155,5 @@ formats depends on the used backend. To query the supported file types on your s
 .. code:: python
 
     import matplotlib.pyplot as plt
+
     plt.gcf().canvas.get_supported_filetypes()
