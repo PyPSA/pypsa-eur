@@ -286,7 +286,7 @@ def busmap_for_n_clusters(n, n_clusters, solver_name, focus_weights=None, algori
                 logger.info(
                     f"overwriting country `{country}` of bus `{disconnected_bus}` "
                     f"to new country `{new_country}`, because it is disconnected "
-                    "from its inital inter-country transmission grid."
+                    "from its initial inter-country transmission grid."
                 )
                 n.buses.at[disconnected_bus, "country"] = new_country
         return n

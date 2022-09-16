@@ -77,7 +77,7 @@ The rule :mod:`simplify_network` does up to four things:
 
 1. Create an equivalent transmission network in which all voltage levels are mapped to the 380 kV level by the function ``simplify_network(...)``.
 
-2. DC only sub-networks that are connected at only two buses to the AC network are reduced to a single representative link in the function ``simplify_links(...)``. The components attached to buses in between are moved to the nearest endpoint. The grid connection cost of offshore wind generators are added to the captial costs of the generator.
+2. DC only sub-networks that are connected at only two buses to the AC network are reduced to a single representative link in the function ``simplify_links(...)``. The components attached to buses in between are moved to the nearest endpoint. The grid connection cost of offshore wind generators are added to the capital costs of the generator.
 
 3. Stub lines and links, i.e. dead-ends of the network, are sequentially removed from the network in the function ``remove_stubs(...)``. Components are moved along.
 
@@ -112,7 +112,7 @@ def simplify_network_to_380(n):
     its voltage level, line type and number of parallel bundles (num_parallel).
 
     Transformers are removed and connected components are moved from their
-    starting bus to their ending bus. The corresponing starting buses are
+    starting bus to their ending bus. The corresponding starting buses are
     removed as well.
     """
     logger.info("Mapping all network lines onto a single 380kV layer")

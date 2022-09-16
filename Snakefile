@@ -71,7 +71,8 @@ rule retrieve_load_data:
     input: HTTP.remote("data.open-power-system-data.org/time_series/2019-06-05/time_series_60min_singleindex.csv", keep_local=True, static=True)
     output: "data/load_raw.csv"
     resources: mem_mb=5000
-    run: move(input[0], output[0])
+    run:
+        move(input[0], output[0])
 
 
 rule build_load_data:
@@ -165,7 +166,8 @@ if config['enable'].get('retrieve_cutout', True):
         output: "cutouts/{cutout}.nc"
         log: "logs/retrieve_cutout_{cutout}.log"
         resources: mem_mb=5000
-        run: move(input[0], output[0])
+        run:
+            move(input[0], output[0])
 
 if config['enable'].get('retrieve_cost_data', True):
     rule retrieve_cost_data:
@@ -173,7 +175,8 @@ if config['enable'].get('retrieve_cost_data', True):
         output: COSTS
         log: "logs/retrieve_cost_data.log"
         resources: mem_mb=5000
-        run: move(input[0], output[0])
+        run:
+            move(input[0], output[0])
 
 if config['enable'].get('build_natura_raster', False):
     rule build_natura_raster:
@@ -191,14 +194,16 @@ if config['enable'].get('retrieve_natura_raster', True):
         input: HTTP.remote("zenodo.org/record/4706686/files/natura.tiff", keep_local=True, static=True)
         output: "resources/natura.tiff"
         resources: mem_mb=5000
-        run: move(input[0], output[0])
+        run:
+            move(input[0], output[0])
 
 
 rule retrieve_ship_raster:
     input: HTTP.remote("https://zenodo.org/record/6953563/files/shipdensity_global.zip", keep_local=True, static=True)
     output: "data/shipdensity_global.zip"
     resources: mem_mb=5000
-    run: move(input[0], output[0])
+    run:
+        move(input[0], output[0])
 
 
 rule build_ship_raster:

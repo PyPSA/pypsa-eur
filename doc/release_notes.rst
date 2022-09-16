@@ -166,7 +166,7 @@ PyPSA-Eur 0.5.0 (27th July 2022)
 
 * Enable parallel computing with new dask version.
 
-* Restore compatibility of ``mock_snakemake`` with lastest Snakemake versions.
+* Restore compatibility of ``mock_snakemake`` with latest Snakemake versions.
 
 * Script ``build_bus_regions``: move voronoi partition from vresutils to script.
 
@@ -255,7 +255,7 @@ PyPSA-Eur 0.4.0 (22th September 2021)
   [`#261 <https://github.com/PyPSA/pypsa-eur/pull/261>`_].
 
 * The tutorial cutout was renamed from ``cutouts/europe-2013-era5.nc`` to
-  ``cutouts/be-03-2013-era5.nc`` to accomodate tutorial and productive
+  ``cutouts/be-03-2013-era5.nc`` to accommodate tutorial and productive
   cutouts side-by-side.
 
 * The flag ``keep_all_available_areas`` in the configuration for renewable
@@ -448,7 +448,7 @@ PyPSA-Eur 0.2.0 (8th June 2020)
 
 * Removed the ``id`` column for custom power plants in ``data/custom_powerplants.csv`` to avoid custom power plants with conflicting ids getting attached to the wrong bus [`#131 <https://github.com/PyPSA/pypsa-eur/pull/131>`_].
 
-* Add option ``renewables: {carrier}: keep_all_available_areas:`` to use all availabe weather cells for renewable profile and potential generation. The default ignores weather cells where only less than 1 MW can be installed  [`#150 <https://github.com/PyPSA/pypsa-eur/pull/150>`_].
+* Add option ``renewables: {carrier}: keep_all_available_areas:`` to use all available weather cells for renewable profile and potential generation. The default ignores weather cells where only less than 1 MW can be installed  [`#150 <https://github.com/PyPSA/pypsa-eur/pull/150>`_].
 
 * Added a function ``_helpers.load_network()`` which loads a network with overridden components specified in ``snakemake.config['override_components']`` [`#128 <https://github.com/PyPSA/pypsa-eur/pull/128>`_].
 

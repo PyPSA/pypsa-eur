@@ -119,13 +119,9 @@ clustered down to 6 buses and every 24 hours aggregated to one snapshot. The com
 
 orders ``snakemake`` to run the script ``solve_network`` that produces the solved network and stores it in ``.../pypsa-eur/results/networks`` with the name ``elec_s_6_ec_lcopt_Co2L-24H.nc``:
 
-.. code::
-
-    rule solve_network:
-        input: "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"
-        output: "results/networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"
-        [...]
-        script: "scripts/solve_network.py"
+.. literalinclude:: ../Snakefile
+   :start-at: rule solve_network:
+   :end-before: rule solve_operations_network:
 
 .. until https://github.com/snakemake/snakemake/issues/46 closed
 
@@ -245,7 +241,7 @@ Once the whole worktree is finished, it should show state so in the terminal:
 
 You will notice that many intermediate stages are saved, namely the outputs of each individual ``snakemake`` rule.
 
-You can produce any output file occuring in the ``Snakefile`` by running
+You can produce any output file occurring in the ``Snakefile`` by running
 
 .. code:: bash
 

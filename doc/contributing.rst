@@ -29,7 +29,7 @@ use `pre-commit <https://pre-commit.com/index.html>`_:
 Note that installing `pre-commit` locally is not strictly necessary. If you create a Pull Request the `pre-commit CI` will be triggered automatically and take care of the checks.
 
 For all code contributions we follow the four eyes principle (two person principle), i.e. all suggested code
-including our own are reviewed by a second person before they are incoporated into our repository.
+including our own are reviewed by a second person before they are incorporated into our repository.
 
 If you are unfamiliar with pull requests, the GitHub help pages have a nice `guide <https://help.github.com/en/articles/about-pull-requests>`_.
 

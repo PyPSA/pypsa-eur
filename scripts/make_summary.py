@@ -33,9 +33,9 @@ Outputs
 Description
 -----------
 
-The following rule can be used to summarize the results in seperate .csv files:
+The following rule can be used to summarize the results in separate .csv files:
 
-.. code::
+.. code:: bash
 
     snakemake results/summaries/elec_s_all_lall_Co2L-3H_all
                                          clusters
@@ -46,7 +46,7 @@ The following rule can be used to summarize the results in seperate .csv files:
 the line volume/cost cap field can be set to one of the following:
 * ``lv1.25`` for a particular line volume extension by 25%
 * ``lc1.25`` for a line cost extension by 25 %
-* ``lall`` for all evalutated caps
+* ``lall`` for all evaluated caps
 * ``lvall`` for all line volume caps
 * ``lcall`` for all line cost caps
 
