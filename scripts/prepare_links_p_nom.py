@@ -6,7 +6,8 @@
 # SPDX-License-Identifier: MIT
 
 """
-Extracts capacities of HVDC links from `Wikipedia
+Extracts capacities of HVDC links from `Wikipedia.
+
 <https://en.wikipedia.org/wiki/List_of_HVDC_projects>`_.
 
 Relevant Settings

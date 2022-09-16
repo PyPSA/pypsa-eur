@@ -4,7 +4,8 @@
 # SPDX-License-Identifier: MIT
 
 """
-This rule downloads the load data from `Open Power System Data Time series
+This rule downloads the load data from `Open Power System Data Time series.
+
 <https://data.open-power-system-data.org/time_series/>`_. For all countries in
 the network, the per country load timeseries with suffix
 ``_load_actual_entsoe_transparency`` are extracted from the dataset. After

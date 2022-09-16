@@ -4,7 +4,8 @@
 # SPDX-License-Identifier: MIT
 
 """
-Rasters the vector data of the `Natura 2000
+Rasters the vector data of the `Natura 2000.
+
 <https://en.wikipedia.org/wiki/Natura_2000>`_ natural protection areas onto all
 cutout regions.
 

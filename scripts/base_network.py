@@ -5,7 +5,8 @@
 
 # coding: utf-8
 """
-Creates the network topology from a `ENTSO-E map extract
+Creates the network topology from a `ENTSO-E map extract.
+
 <https://github.com/PyPSA/GridKit/tree/master/entsoe>`_ (March 2022) as a PyPSA
 network.
 
