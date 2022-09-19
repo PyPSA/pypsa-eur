@@ -83,6 +83,7 @@ In practice, in PyPSA-Eur-Sec, there are heat demand buses to which the correspo
 5)	Services rural heat: heating for residential services buildings in rural areas with low population density. Heat demand from agriculture  sector is also included here. 
 
 .. _heat-supply:
+
 Heat supply
 =======================
 
@@ -98,6 +99,10 @@ Supply options in individual buildings include gas and oil boilers, air- and gro
 Ground-source heat pumps are only allowed in rural areas because of space constraints. Thus, only air- source heat pumps are allowed in urban areas. This is a conservative assumption, since there are many possible sources of low-temperature heat that could be tapped in cities (e.g. waste water, ground water, or natural bodies of water). Costs, lifetimes and efficiencies for these technologies are retrieved from the `Technology-data repository <https://github.com/PyPSA/technology-data>`_.
 
 Below are more detailed explanations for each heating supply component, all of which are modeled as `Links <https://pypsa.readthedocs.io/en/latest/components.html?highlight=distribution#link>`_. in PyPSA-Eue-Sec.
+
+.. _Large-scale CHP:
+
+*Large-scale CHP*
 
 Large Combined Heat and Power plants are included in the model if it is specified in the `config file. <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L235>`_.
  
@@ -204,7 +209,7 @@ CO + H_2O → CO_2 + H_2
 $$
 
 SMR is included `here <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L245>`_. 
-PyPSA-Eur-Sec allows this route of H2 production with and without [carbon capture (CC)] (Link to section on Carbon Capture Storage and Utilization). These routes are often referred to as blue and grey hydrogen. Here, methane input can be both of fossil or synthetic origin.
+PyPSA-Eur-Sec allows this route of H2 production with and without [carbon capture (CC)] (see :ref:`Carbon dioxide capture, usage and sequestration (CCU/S)`). These routes are often referred to as blue and grey hydrogen. Here, methane input can be both of fossil or synthetic origin.
 
 Green hydrogen can be produced by electrolysis to split water into hydrogen and oxygen
 
@@ -226,9 +231,10 @@ Hydrogen can be stored in overground steel tanks or `underground salt caverns <h
 Methane demand  
 ====================================
                   
-Methane is used in individual and large-scale gas boilers, in CHP plants with and without carbon capture, in OCGT and CCGT power plants, and in some industry subsectors for the provision of high temperature heat[LINK TO INDUSTRY OVERVIEW]. Methane is not used in the trans- port sector because of engine slippage.
+Methane is used in individual and large-scale gas boilers, in CHP plants with and without carbon capture, in OCGT and CCGT power plants, and in some industry subsectors for the provision of high temperature heat (see :ref:`Industry demand`). Methane is not used in the trans- port sector because of engine slippage.
 
 .. _Methane supply:
+
 Methane supply                          
 ===================================
 
@@ -276,13 +282,13 @@ A `typical use case for biomass <https://arxiv.org/abs/2109.09563>`_ would be th
 
 *Solid biomass conversion and use*
 
-Solid biomass can be used directly to provide process heat up to 500˚C in the industry. It can also be burned in CHP plants and boilers associated with heating systems. These technologies are described elsewhere [link to heat and industry sections].
+Solid biomass can be used directly to provide process heat up to 500˚C in the industry. It can also be burned in CHP plants and boilers associated with heating systems. These technologies are described elsewhere (see :ref:`Large-scale CHP` and :ref:`Industry demand`).
 
 
-Solid biomass can be converted to syngas if the option is enabled in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L274>`_. In this case the model will enable the technology BioSNG both with and without the option for carbon capture [link to technology data].
+Solid biomass can be converted to syngas if the option is enabled in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L274>`_. In this case the model will enable the technology BioSNG both with and without the option for carbon capture (see `Technology-data repository <https://github.com/PyPSA/technology-data>`_ ).
 
 
-Liquefaction of solid biomass `can be enabled <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L273>`_ allowing the model to convert it into liquid hydrocarbons that can replace conventional oil products. This technology also comes with and without carbon capture [link to technology data].
+Liquefaction of solid biomass `can be enabled <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L273>`_ allowing the model to convert it into liquid hydrocarbons that can replace conventional oil products. This technology also comes with and without carbon capture (see `Technology-data repository <https://github.com/PyPSA/technology-data>`_ ).
 
 
 *Transport of solid biomass*
@@ -292,20 +298,20 @@ The transport of solid biomass can either be assumed unlimited between countries
 *Biogas transport and use*
 
 Biogas will be aggregated into a common European resources if a gas network is not modeled explicitly, i.e., the `gas_network <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L261>`_ option is set to false. If, on the other hand, a gas network is included, the biogas potential will be associated with each node of origin.
-The model can only use biogas by first upgrading it to natural gas quality [link to tech description] (bio methane) which is fed into the general gas network.
+The model can only use biogas by first upgrading it to natural gas quality [see :ref:`Methane supply`] (bio methane) which is fed into the general gas network.
 
 
 
 Oil-based products demand
 ========================
-Naphtha is used as a feedstock in the chemicals industry[LINK TO CHEMICAL INDUSTRY]. Furthermore, kerosene is used as transport fuel in the aviation sector[LINK TO AVIATION SECTOR]. Non-electrified agriculture machinery also consumes gasoline. 
-Land transport [LINK TO LAND TRANSPORT]  that is not electrified or converted into using H2-fuel cells also consumes oil-based products. While there is regional distribution of demand, the carrier is copperplated in the model, which means that transport costs and constraints are neglected. 
+Naphtha is used as a feedstock in the chemicals industry (see :ref:`Chemicals Industry`). Furthermore, kerosene is used as transport fuel in the aviation sector (see :ref:`Aviation`). Non-electrified agriculture machinery also consumes gasoline. 
+Land transport [(see :ref:`Land transport`)  that is not electrified or converted into using H2-fuel cells also consumes oil-based products. While there is regional distribution of demand, the carrier is copperplated in the model, which means that transport costs and constraints are neglected. 
 
 .. _Oil-based products supply:
 
 Oil-based products supply 
 ======================== 							
-Oil-based products can be either of fossil origin or synthetically produced by combining H2 [link to hydrogen] and captured CO2 [link to carbon capture] in Fischer-Tropsch plants		
+Oil-based products can be either of fossil origin or synthetically produced by combining H2 (see :ref:`Hydrogen supply`) and captured CO2 (see :ref:`Carbon dioxide capture, usage and sequestration (CCU/S)`) in Fischer-Tropsch plants		
 
 $$
 𝑛CO+(2𝑛+1)H_2 → C_{n}H_{2n + 2}  +𝑛H_2O
@@ -326,7 +332,9 @@ Industry demand
 Industry demand is split into a dozen different sectors with specific energy demands, process
 emissions of carbon dioxide, as well as existing and prospective mitigation strategies.
 
-Subsection overview (link to section overview) provides a general description of the modelling approach for the industry sector. The following subsections describe the current energy demands, available mitigation strategies, and whether mitigation is exogenously fixed or co-optimised with the other components of the model for each industry subsector in more detail. See details for Iron and Steel (link to subsection Iron and Steel), Chemicals Industry (link to subsection Chemicals Industry), Ammonia (link to subsection Ammonia), Non-metallic Mineral products (link to subsection Non-metallic products), Non-ferrous Metals (link to subsection Non-ferrous Metals), Other Industry Subsectors (link to subsection Other Industry Subsectors).
+The Subsection overview below provides a general description of the modelling approach for the industry sector. The following subsections describe the current energy demands, available mitigation strategies, and whether mitigation is exogenously fixed or co-optimised with the other components of the model for each industry subsector in more detail. See details for Iron and Steel (see :ref:`Iron and Steel`), Chemicals Industry and Ammonia (see :ref:`Chemicals Industry`), Non-metallic Mineral products , Non-ferrous Metals , and other Industry Subsectors.
+
+.. _Overview:
 
 *Overview*
 
@@ -404,7 +412,7 @@ This circumvents the process emissions associated with the use of coke. For hydr
 					
 The share of steel produced via the primary route is exogenously set in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L279>`_. The share of steel obtained via hydrogen-based DRI plus EAF is also set exogenously in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L287>`_. The remaining share is manufactured through the secondary route using scrap metal in EAF. Bioenergy as alternative to coke in blast furnaces is not considered in the model (`Mandova et.al <https://doi.org/10.1016/j.biombioe.2018.04.021>`_, `Suopajärvi et.al <https://doi.org/10.1016/j.apenergy.2018.01.060>`_).
 					
-For the remaining subprocesses in this sector, the following transformations are assumed. Methane is used as energy source for the smelting process. Activities associated with furnaces, refining and rolling, and product finishing are electrified assuming the current efficiency values for these cases. These transformations result in changes in process emissions as outlined in the process emissions figure presented in the industry overview section (add link to the overview section). 
+For the remaining subprocesses in this sector, the following transformations are assumed. Methane is used as energy source for the smelting process. Activities associated with furnaces, refining and rolling, and product finishing are electrified assuming the current efficiency values for these cases. These transformations result in changes in process emissions as outlined in the process emissions figure presented in the industry overview section (see :ref:`Overview`). 
 
 *Chemicals Industry*
 
