@@ -46,7 +46,7 @@ dependencies:
   # GIS dependencies:
 - cartopy
 - descartes
-- rasterio<=1.2.9    # 1.2.10 creates error https://github.com/PyPSA/atlite/issues/238
+- rasterio!=1.2.10
 
   # PyPSA-Eur-Sec Dependencies
 - geopy
