@@ -4,57 +4,57 @@
 
 name: pypsa-eur
 channels:
-  - conda-forge
-  - bioconda
+- conda-forge
+- bioconda
 dependencies:
-  - python>=3.8
-  - pip
+- python>=3.8
+- pip
 
-  - pypsa>=0.20
-  - atlite>=0.2.9
-  - dask
+- pypsa>=0.20
+- atlite>=0.2.9
+- dask
 
   # Dependencies of the workflow itself
-  - xlrd
-  - openpyxl
-  - pycountry
-  - seaborn
-  - snakemake-minimal
-  - memory_profiler
-  - yaml
-  - pytables
-  - lxml
-  - powerplantmatching>=0.5.4
-  - numpy
-  - pandas
-  - geopandas>=0.11.0
-  - xarray
-  - netcdf4
-  - networkx
-  - scipy
-  - shapely<2.0 # need to address deprecations
-  - progressbar2
-  - pyomo
-  - matplotlib
-  - proj
-  - fiona <= 1.18.20  # Till issue https://github.com/Toblerity/Fiona/issues/1085 is not solved
-  - country_converter
+- xlrd
+- openpyxl
+- pycountry
+- seaborn
+- snakemake-minimal
+- memory_profiler
+- yaml
+- pytables
+- lxml
+- powerplantmatching>=0.5.4
+- numpy
+- pandas
+- geopandas>=0.11.0
+- xarray
+- netcdf4
+- networkx
+- scipy
+- shapely<2.0   # need to address deprecations
+- progressbar2
+- pyomo
+- matplotlib
+- proj
+- fiona <= 1.18.20    # Till issue https://github.com/Toblerity/Fiona/issues/1085 is not solved
+- country_converter
 
   # Keep in conda environment when calling ipython
-  - ipython
+- ipython
 
   # GIS dependencies:
-  - cartopy
-  - descartes
-  - rasterio!=1.2.10
+- cartopy
+- descartes
+- rasterio!=1.2.10
 
   # PyPSA-Eur-Sec Dependencies
-  - geopy
-  - tqdm
-  - pytz
-  - tabula-py
-  - pyxlsb
+- geopy
+- tqdm
+- pytz
+- tabula-py
+- pyxlsb
 
-  - pip:
-    - vresutils>=0.3.1
-    - tsam>=1.1.0
+- pip:
+  - vresutils>=0.3.1
+  - tsam>=1.1.0

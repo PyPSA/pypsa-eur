@@ -195,7 +195,7 @@ The included ``.nc`` files are PyPSA network files which can be imported with Py
 
     import pypsa
 
-    filename = "elec_s_1024_ec.nc" # example
+    filename = "elec_s_1024_ec.nc"  # example
     n = pypsa.Network(filename)
 
 Licence

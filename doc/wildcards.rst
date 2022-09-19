@@ -123,7 +123,7 @@ These cutouts will be stored in a folder specified by ``{cutout}``.
 The ``{technology}`` wildcard
 =============================
 
-The ``{technology}`` wildcard specifies for which renewable energy technology to produce availablity time
+The ``{technology}`` wildcard specifies for which renewable energy technology to produce availability time
 series and potentials using the rule :mod:`build_renewable_profiles`.
 It can take the values ``onwind``, ``offwind-ac``, ``offwind-dc``, and ``solar`` but **not** ``hydro``
 (since hydroelectric plant profiles are created by a different rule).
@@ -155,4 +155,5 @@ formats depends on the used backend. To query the supported file types on your s
 .. code:: python
 
     import matplotlib.pyplot as plt
+
     plt.gcf().canvas.get_supported_filetypes()

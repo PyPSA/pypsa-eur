@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # SPDX-FileCopyrightText: : 2017-2022 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
@@ -16,15 +17,14 @@ Outputs
 
 Description
 -----------
-
 """
 
-import os
 import logging
-from _helpers import configure_logging
+import os
 
-import pandas as pd
 import matplotlib.pyplot as plt
+import pandas as pd
+from _helpers import configure_logging
 
 logger = logging.getLogger(__name__)
 
@@ -52,22 +52,37 @@ def rename_techs(label):
     return label
 
 
-preferred_order = pd.Index(["transmission lines","hydroelectricity","hydro reservoir","run of river","pumped hydro storage","onshore wind","offshore wind ac", "offshore wind dc","solar PV","solar thermal","OCGT","hydrogen storage","battery storage"])
+preferred_order = pd.Index(
+    [
+        "transmission lines",
+        "hydroelectricity",
+        "hydro reservoir",
+        "run of river",
+        "pumped hydro storage",
+        "onshore wind",
+        "offshore wind ac",
+        "offshore wind dc",
+        "solar PV",
+        "solar thermal",
+        "OCGT",
+        "hydrogen storage",
+        "battery storage",
+    ]
+)
 
 
 def plot_costs(infn, config, fn=None):
-
     ## For now ignore the simpl header
-    cost_df = pd.read_csv(infn,index_col=list(range(3)),header=[1,2,3])
+    cost_df = pd.read_csv(infn, index_col=list(range(3)), header=[1, 2, 3])
 
     df = cost_df.groupby(cost_df.index.get_level_values(2)).sum()
 
-    #convert to billions
-    df = df/1e9
+    # convert to billions
+    df = df / 1e9
 
     df = df.groupby(df.index.map(rename_techs)).sum()
 
-    to_drop = df.index[df.max(axis=1) < config['plotting']['costs_threshold']]
+    to_drop = df.index[df.max(axis=1) < config["plotting"]["costs_threshold"]]
 
     print("dropping")
 
@@ -77,22 +92,28 @@ def plot_costs(infn, config, fn=None):
 
     print(df.sum())
 
-    new_index = (preferred_order&df.index).append(df.index.difference(preferred_order))
+    new_index = (preferred_order & df.index).append(
+        df.index.difference(preferred_order)
+    )
 
     new_columns = df.sum().sort_values().index
 
     fig, ax = plt.subplots()
-    fig.set_size_inches((12,8))
+    fig.set_size_inches((12, 8))
 
-    df.loc[new_index,new_columns].T.plot(kind="bar",ax=ax,stacked=True,color=[config['plotting']['tech_colors'][i] for i in new_index])
+    df.loc[new_index, new_columns].T.plot(
+        kind="bar",
+        ax=ax,
+        stacked=True,
+        color=[config["plotting"]["tech_colors"][i] for i in new_index],
+    )
 
-
-    handles,labels = ax.get_legend_handles_labels()
+    handles, labels = ax.get_legend_handles_labels()
 
     handles.reverse()
     labels.reverse()
 
-    ax.set_ylim([0,config['plotting']['costs_max']])
+    ax.set_ylim([0, config["plotting"]["costs_max"]])
 
     ax.set_ylabel("System Cost [EUR billion per year]")
 
@@ -100,8 +121,7 @@ def plot_costs(infn, config, fn=None):
 
     ax.grid(axis="y")
 
-    ax.legend(handles,labels,ncol=4,loc="upper left")
-
+    ax.legend(handles, labels, ncol=4, loc="upper left")
 
     fig.tight_layout()
 
@@ -110,17 +130,16 @@ def plot_costs(infn, config, fn=None):
 
 
 def plot_energy(infn, config, fn=None):
-
-    energy_df = pd.read_csv(infn, index_col=list(range(2)),header=[1,2,3])
+    energy_df = pd.read_csv(infn, index_col=list(range(2)), header=[1, 2, 3])
 
     df = energy_df.groupby(energy_df.index.get_level_values(1)).sum()
 
-    #convert MWh to TWh
-    df = df/1e6
+    # convert MWh to TWh
+    df = df / 1e6
 
     df = df.groupby(df.index.map(rename_techs)).sum()
 
-    to_drop = df.index[df.abs().max(axis=1) < config['plotting']['energy_threshold']]
+    to_drop = df.index[df.abs().max(axis=1) < config["plotting"]["energy_threshold"]]
 
     print("dropping")
 
@@ -130,22 +149,28 @@ def plot_energy(infn, config, fn=None):
 
     print(df.sum())
 
-    new_index = (preferred_order&df.index).append(df.index.difference(preferred_order))
+    new_index = (preferred_order & df.index).append(
+        df.index.difference(preferred_order)
+    )
 
     new_columns = df.columns.sort_values()
 
     fig, ax = plt.subplots()
-    fig.set_size_inches((12,8))
+    fig.set_size_inches((12, 8))
 
-    df.loc[new_index,new_columns].T.plot(kind="bar",ax=ax,stacked=True,color=[config['plotting']['tech_colors'][i] for i in new_index])
+    df.loc[new_index, new_columns].T.plot(
+        kind="bar",
+        ax=ax,
+        stacked=True,
+        color=[config["plotting"]["tech_colors"][i] for i in new_index],
+    )
 
-
-    handles,labels = ax.get_legend_handles_labels()
+    handles, labels = ax.get_legend_handles_labels()
 
     handles.reverse()
     labels.reverse()
 
-    ax.set_ylim([config['plotting']['energy_min'], config['plotting']['energy_max']])
+    ax.set_ylim([config["plotting"]["energy_min"], config["plotting"]["energy_max"]])
 
     ax.set_ylabel("Energy [TWh/a]")
 
@@ -153,8 +178,7 @@ def plot_energy(infn, config, fn=None):
 
     ax.grid(axis="y")
 
-    ax.legend(handles,labels,ncol=4,loc="upper left")
-
+    ax.legend(handles, labels, ncol=4, loc="upper left")
 
     fig.tight_layout()
 
@@ -163,11 +187,20 @@ def plot_energy(infn, config, fn=None):
 
 
 if __name__ == "__main__":
-    if 'snakemake' not in globals():
+    if "snakemake" not in globals():
         from _helpers import mock_snakemake
-        snakemake = mock_snakemake('plot_summary', summary='energy',
-                                  simpl='', clusters=5, ll='copt', opts='Co2L-24H',
-                                  attr='', ext='png', country='all')
+
+        snakemake = mock_snakemake(
+            "plot_summary",
+            summary="energy",
+            simpl="",
+            clusters=5,
+            ll="copt",
+            opts="Co2L-24H",
+            attr="",
+            ext="png",
+            country="all",
+        )
     configure_logging(snakemake)
 
     config = snakemake.config
@@ -178,4 +211,6 @@ if __name__ == "__main__":
     except KeyError:
         raise RuntimeError(f"plotting function for {summary} has not been defined")
 
-    func(os.path.join(snakemake.input[0], f"{summary}.csv"), config, snakemake.output[0])
+    func(
+        os.path.join(snakemake.input[0], f"{summary}.csv"), config, snakemake.output[0]
+    )

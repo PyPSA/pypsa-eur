@@ -30,7 +30,7 @@ The :ref:`tutorial` uses a smaller cutout than required for the full model (30 M
 
 .. note::
     To download cutouts yourself from the `ECMWF ERA5 <https://software.ecmwf.int/wiki/display/CKB/ERA5+data+documentation>`_ you need to `set up the CDS API <https://cds.climate.copernicus.eu/api-how-to>`_.
-  
+
 
 **Relevant Settings**
 
