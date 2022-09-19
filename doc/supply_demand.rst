@@ -35,6 +35,7 @@ Also unlike PyPSA-Eur, PyPSA-Eur-Sec subtracts existing electrified heating from
 
 The remaining electricity demand for households and services is distributed inside each country proportional to GDP and population.
 
+.. _Heat demand:
 
 Heat demand
 ===========
@@ -186,12 +187,15 @@ renovation include `cost factor <https://github.com/PyPSA/pypsa-eur-sec/blob/3da
 
 Further information are given in the study by Zeyen et al. : `Mitigating heat demand peaks in buildings in a highly renewable European energy system, (2021) <https://arxiv.org/abs/2012.01831>`_.
 
+.. _Hydrogen demand:
 
 Hydrogen demand
 =============================
 
 Hydrogen is consumed in the industry sector (see :ref:`Industry demand`) to produce ammonia (see :ref:`Chemicals Industry`) and direct reduced iron (DRI) (see :ref:`Iron and Steel`). Hydrogen is also consumed to produce synthetic methane (see :ref:`Methane supply`) and liquid hydrocarbons (see :ref:`Oil-based products supply`) which have multiple uses in industry and other sectors. 
 Hydrogen is also used for transport applications (see :ref:`Transportation`), where it is exogenously fixed. It is used in `heavy-duty land transport <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L181>`_ and as liquified hydrogen in the shipping sector (see :ref:`Shipping`). Furthermore, stationary fuel cells may re-electrify hydrogen (with waste heat as a byproduct) to balance renewable fluctuations (see :ref:`Electricity supply and demand`). The waste heat from the stationary fuel cells can be used in `district-heating systems <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L256>`_.
+
+.. _Hydrogen supply:
 
 Hydrogen supply
 =============================
@@ -228,6 +232,8 @@ New pipelines can be built additionally on all routes where there currently is a
 
 Hydrogen can be stored in overground steel tanks or `underground salt caverns <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L250>`_. For the latter, energy storage capacities in every country are limited to the potential estimation for onshore salt caverns within `50 km <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L251>`_ of shore to avoid environmental issues associated with brine solution disposal. Underground storage potentials for hydrogen in European salt caverns is acquired from `Caglayan et al. <https://doi.org/10.1016/j.ijhydene.2019.12.161>`_
 
+.. _Methane demand:
+
 Methane demand  
 ====================================
                   
@@ -256,10 +262,13 @@ The following figure shows the unclustered European gas transmission network bas
     
 .. image:: ../graphics/gas_pipeline_figure.png
 
+.. _Biomass supply:
 
 Biomass Supply
 =====================
 Biomass supply potentials for each European country are taken from the `JRC ENSPRESO database <http://data.europa.eu/89h/74ed5a04-7d74-4807-9eab-b94774309d9f>`_ where data is available for various years (2010, 2020, 2030, 2040 and 2050) and scenarios (low, medium, high). No biomass import from outside Europe is assumed. More information on the data set can be found `here <https://publications.jrc.ec.europa.eu/repository/handle/JRC98626>`_.
+
+.. _Biomass demand:
 
 Biomass demand
 =====================
@@ -300,6 +309,7 @@ The transport of solid biomass can either be assumed unlimited between countries
 Biogas will be aggregated into a common European resources if a gas network is not modeled explicitly, i.e., the `gas_network <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L261>`_ option is set to false. If, on the other hand, a gas network is included, the biogas potential will be associated with each node of origin.
 The model can only use biogas by first upgrading it to natural gas quality [see :ref:`Methane supply`] (bio methane) which is fed into the general gas network.
 
+.. _Oil-based products demand:
 
 
 Oil-based products demand
@@ -367,6 +377,8 @@ Inside each country the industrial demand is then distributed using the `Hotmaps
 .. image:: ../graphics/hotmaps.png
 
 
+.. _Iron and Steel:
+
 *Iron and Steel*
 
 Two alternative routes are used today to manufacture steel in Europe. The primary route (integrated steelworks) represents 60% of steel production, while the secondary route (electric arc furnaces, EAF), represents the other 40% `(Lechtenböhmer et. al) <https://doi.org/10.1016/j.energy.2016.07.110>`_.
@@ -414,6 +426,8 @@ The share of steel produced via the primary route is exogenously set in the `con
 					
 For the remaining subprocesses in this sector, the following transformations are assumed. Methane is used as energy source for the smelting process. Activities associated with furnaces, refining and rolling, and product finishing are electrified assuming the current efficiency values for these cases. These transformations result in changes in process emissions as outlined in the process emissions figure presented in the industry overview section (see :ref:`Overview`). 
 
+.. _Chemicals Industry:
+
 *Chemicals Industry*
 
 The chemicals industry includes a wide range of diverse industries, including the production of basic organic compounds (olefins, alcohols, aromatics), basic inorganic compounds (ammonia, chlorine), polymers (plastics), and end-user products (cosmetics, pharmaceutics).
@@ -438,12 +452,15 @@ Agriculture demand
 
 Energy demands for the agriculture, forestry and fishing sector per country are taken from the `JRC-IDEES database <http://data.europa.eu/89h/jrc-10110-10001>`_. Missing countries are filled with `Eurostat data <https://ec.europa.eu/eurostat/web/energy/data/energy-balances>`_. Agricultural energy demands are split into electricity (lighting, ventilation, specific electricity uses, electric pumping devices), heat (specific heat uses, low enthalpy heat), and machinery oil (motor drives, farming machine drives, diesel-fueled pumping devices). Heat demand is assigned at “services rural heat” buses. Time series for demands are assumed to be constant and distributed inside countries by population.
 
+.. _Transportation:
 
 Transportation
 =========================
 Annual energy demands for land transport, aviation and shipping for every country are retrieved from `JRC-IDEES data set <http://data.europa.eu/89h/jrc-10110-10001>`_. Below, the details of how each of these categories are treated is explained.
 
-*Land transport*
+.. _Land transport:
+
+**Land transport**
 
 Both road and rail transport is combined as `land transport demand <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/scripts/build_transport_demand.py#L74>`_ although electrified rail transport is excluded because that demand is included in the current electricity demand.
 
@@ -471,12 +488,15 @@ FCEVs are typically used to simulate demand for transport that is hard to electr
 All land transport that is not specified to be either BEV or FCEV will be treated as conventional ICEs. The transport demand is converted to a demand for oil products (see :ref:`Oil-based products supply`) using the `ICE efficiency
 <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L192>`_.
 
-*Aviation*
+.. _Aviation:
+
+**Aviation**
 
 The ‘demand for aviation <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/scripts/prepare_sector_network.py#L2193>`_ includes international and domestic use. It is modeled as an oil demand since aviation consumes kerosene. This can be produced synthetically or have fossil-origin (see :ref:`Oil-based products supply`).
 
+.. _Shipping:
 
-*Shipping*
+**Shipping**
 
 Shipping energy demand is covered by a combination of oil and hydrogen. Other fuel options, like methanol or ammonia, are currently not included in PyPSA-Eur-Sec.The share of shipping that is assumed to be supplied by hydrogen can be selected in the config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L198>`_.
 
@@ -486,7 +506,7 @@ The consumed hydrogen comes from the general hydrogen bus where it can be produc
 
 The energy demand for liquefaction of the hydrogen used for shipping can be `included  <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L197>`_. If this option is selected, liquifaction will happen at the `node where the shipping demand occurs <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/scripts/prepare_sector_network.py#L2064>`_.
 
-
+.. _Carbon dioxide capture, usage and sequestration (CCU/S):
 
 Carbon dioxide capture, usage and sequestration (CCU/S)
 =========================================================
