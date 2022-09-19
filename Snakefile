@@ -380,12 +380,18 @@ rule build_renewable_profiles:
 rule build_hydro_profile:
     input:
         country_shapes="resources/" + RDIR + "country_shapes.geojson",
-        eia_hydro_generation='data/eia_hydro_annual_generation.csv',
-        cutout=f"cutouts/" + CDIR + config['renewable']['hydro']['cutout'] + ".nc" if "hydro" in config["renewable"] else [],
-    output: "resources/" + RDIR + "profile_hydro.nc"
-    log: "logs/" + RDIR + "build_hydro_profile.log"
-    resources: mem_mb=5000
-    script: 'scripts/build_hydro_profile.py'
+        eia_hydro_generation="data/eia_hydro_annual_generation.csv",
+        cutout=f"cutouts/" + CDIR + config["renewable"]["hydro"]["cutout"] + ".nc"
+        if "hydro" in config["renewable"]
+        else [],
+    output:
+        "resources/" + RDIR + "profile_hydro.nc",
+    log:
+        "logs/" + RDIR + "build_hydro_profile.log",
+    resources:
+        mem_mb=5000,
+    script:
+        "scripts/build_hydro_profile.py"
 
 
 rule add_electricity:
