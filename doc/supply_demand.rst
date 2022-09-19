@@ -357,6 +357,7 @@ Inside each country the industrial demand is then distributed using the `Hotmaps
 
 .. image:: ../graphics/hotmaps.png
 
+.. _Iron and Steel:
 
 *Iron and Steel*
 
@@ -405,6 +406,8 @@ The share of steel produced via the primary route is exogenously set in the `con
 					
 For the remaining subprocesses in this sector, the following transformations are assumed. Methane is used as energy source for the smelting process. Activities associated with furnaces, refining and rolling, and product finishing are electrified assuming the current efficiency values for these cases. These transformations result in changes in process emissions as outlined in the process emissions figure presented in the industry overview section (add link to the overview section). 
 
+.. _Chemicals Industry:
+
 *Chemicals Industry*
 
 The chemicals industry includes a wide range of diverse industries, including the production of basic organic compounds (olefins, alcohols, aromatics), basic inorganic compounds (ammonia, chlorine), polymers (plastics), and end-user products (cosmetics, pharmaceutics).
@@ -423,6 +426,8 @@ $$
 
 
 The Haber-Bosch process is not explicitly represented in the model, such that demand for ammonia enters the model as a demand for hydrogen ( $6.5 MWh_{H_2}$ / t $_{NH_3}$ ) and electricity ( $1.17 MWh_{el}$ /t $_{NH_3}$ ) (see `Wang et. al <https://doi.org/10.1016/j.joule.2018.04.017>`_). Today, natural gas dominates in Europe as the source for the hydrogen used in the Haber-Bosch process, but the model can choose among the various hydrogen supply options described in the hydrogen section (LINK TO HYDROGEN SUPPLY)
+
+.. _Transportation:
 
 Transportation
 =========================
@@ -460,6 +465,7 @@ All land transport that is not specified to be either BEV or FCEV will be treate
 
 The ‘demand for aviation <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/scripts/prepare_sector_network.py#L2193>`_ includes international and domestic use. It is modeled as an oil demand since aviation consumes kerosene. This can be produced synthetically or have fossil-origin [link to oil product].
 
+.. _Shipping:
 
 *Shipping*
 
