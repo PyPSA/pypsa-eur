@@ -39,7 +39,7 @@ The remaining electricity demand for households and services is distributed insi
 Heat demand
 ===========
 
-Building heating in residential and services sectors is resolved regionally, both for individual buildings and district heating systems, which include different supply options [To do:link to next section]
+Building heating in residential and services sectors is resolved regionally, both for individual buildings and district heating systems, which include different supply options (see :ref:`heat-supply`.)
 Annual heat demands per country are retrieved from `JRC-IDEES  <https://op.europa.eu/en/publication-detail/-/publication/989282db-ad65-11e7-837e-01aa75ed71a1/language-en>`_ and split into space and water heating. For space heating, the annual demands are converted to daily values based on the population-weighted Heating Degree Day (HDD) using the `atlite tool <https://github.com/PyPSA/atlite>`_, where space heat demand is proportional to the difference between the daily average ambient temperature (read from `ERA5 <https://doi.org/10.1002/qj.3803>`_) and a threshold temperature above which space heat demand is zero. A threshold temperature of 15 °C is assumed by default. The daily space heat demand is distributed to the hours of the day following heat demand profiles from `BDEW <https://github.com/oemof/demandlib>`_. These differ for weekdays and weekends/holidays and between residential and services demand.  
 
 *Space heating*
@@ -82,7 +82,7 @@ In practice, in PyPSA-Eur-Sec, there are heat demand buses to which the correspo
 4)	Residential rural heat: heating for residential buildings in rural areas with low population density.
 5)	Services rural heat: heating for residential services buildings in rural areas with low population density. Heat demand from agriculture  sector is also included here. 
 
-
+.. _heat-supply:
 Heat supply
 =======================
 
@@ -90,7 +90,7 @@ Different supply options are available depending on whether demand is met centra
 
 *Urban central heat*
 
-For large-scale district heating systems the following options are available: combined heat and power (CHP) plants consuming gas or biomass from waste and residues with and without carbon capture (CC), large- scale air-sourced heat pumps, gas and oil boilers, resistive heaters, and fuel cell CHPs. Additionally, waste heat from the `Fischer-Tropsch <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L255>`_  and `Sabatier <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L240>`_ processes for the production of synthetic hydrocarbons can supply district heating systems. 
+For large-scale district heating systems the following options are available: combined heat and power (CHP) plants consuming gas or biomass from waste and residues with and without carbon capture (CC), large- scale air-sourced heat pumps, gas and oil boilers, resistive heaters, and fuel cell CHPs. Additionally, waste heat from the `Fischer-Tropsch <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L255>`_  and `Sabatier <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L240>`_ processes for the production of synthetic hydrocarbons can supply district heating systems. For more setailed explanation of these processes, see :ref:`Oil-based products supply` and :ref:`Methane supply`
 
 *Residential and Urban decentral heat*
 
@@ -228,6 +228,7 @@ Methane demand
                   
 Methane is used in individual and large-scale gas boilers, in CHP plants with and without carbon capture, in OCGT and CCGT power plants, and in some industry subsectors for the provision of high temperature heat[LINK TO INDUSTRY OVERVIEW]. Methane is not used in the trans- port sector because of engine slippage.
 
+.. _Methane supply:
 Methane supply                          
 ===================================
 
@@ -300,6 +301,7 @@ Oil-based products demand
 Naphtha is used as a feedstock in the chemicals industry[LINK TO CHEMICAL INDUSTRY]. Furthermore, kerosene is used as transport fuel in the aviation sector[LINK TO AVIATION SECTOR]. Non-electrified agriculture machinery also consumes gasoline. 
 Land transport [LINK TO LAND TRANSPORT]  that is not electrified or converted into using H2-fuel cells also consumes oil-based products. While there is regional distribution of demand, the carrier is copperplated in the model, which means that transport costs and constraints are neglected. 
 
+.. _Oil-based products supply:
 
 Oil-based products supply 
 ======================== 							
