@@ -35,7 +35,7 @@ It is common conduct to analyse energy system optimisation models for **multiple
 e.g. assessing their sensitivity towards changing the temporal and/or geographical resolution or investigating how
 investment changes as more ambitious greenhouse-gas emission reduction targets are applied.
 
-The ``run`` section is used for running and storing scenarios with different configurations which are not covered by :ref:`wildcards`. It determines the path at which resources, networks and results are stored. Therefore the user can run different configurations within the same directory. If a run with a non-empty name should use cutouts shared across runs, set ``shared_cutouts`` to `true`.    
+The ``run`` section is used for running and storing scenarios with different configurations which are not covered by :ref:`wildcards`. It determines the path at which resources, networks and results are stored. Therefore the user can run different configurations within the same directory. If a run with a non-empty name should use cutouts shared across runs, set ``shared_cutouts`` to `true`.
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
@@ -107,7 +107,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 ``atlite``
 ==========
 
-Define and specify the ``atlite.Cutout`` used for calculating renewable potentials and time-series. All options except for ``features`` are directly used as `cutout parameters <https://atlite.readthedocs.io/en/latest/ref_api.html#cutout>`_. 
+Define and specify the ``atlite.Cutout`` used for calculating renewable potentials and time-series. All options except for ``features`` are directly used as `cutout parameters <https://atlite.readthedocs.io/en/latest/ref_api.html#cutout>`_.
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
@@ -194,7 +194,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 ``conventional``
 =============
 
-Define additional generator attribute for conventional carrier types. If a scalar value is given it is applied to all generators. However if a string starting with "data/" is given, the value is interpreted as a path to a csv file with country specific values. Then, the values are read in and applied to all generators of the given carrier in the given country. Note that the value(s) overwrite the existing values in the corresponding section of the ``generators`` dataframe.   
+Define additional generator attribute for conventional carrier types. If a scalar value is given it is applied to all generators. However if a string starting with "data/" is given, the value is interpreted as a path to a csv file with country specific values. Then, the values are read in and applied to all generators of the given carrier in the given country. Note that the value(s) overwrite the existing values in the corresponding section of the ``generators`` dataframe.
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml

@@ -1,10 +1,12 @@
+# -*- coding: utf-8 -*-
 # SPDX-FileCopyrightText: : 2017-2022 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
 # coding: utf-8
 """
-Prepare PyPSA network for solving according to :ref:`opts` and :ref:`ll`, such as
+Prepare PyPSA network for solving according to :ref:`opts` and :ref:`ll`, such
+as.
 
 - adding an annual **limit** of carbon-dioxide emissions,
 - adding an exogenous **price** per tonne emissions of carbon-dioxide (or other kinds),
@@ -53,17 +55,15 @@ Description
     The rule :mod:`prepare_all_networks` runs
     for all ``scenario`` s in the configuration file
     the rule :mod:`prepare_network`.
-
 """
 
 import logging
-from _helpers import configure_logging
-
 import re
-import pypsa
+
 import numpy as np
 import pandas as pd
-
+import pypsa
+from _helpers import configure_logging
 from add_electricity import load_costs, update_transmission_costs
 
 idx = pd.IndexSlice
@@ -71,65 +71,84 @@ idx = pd.IndexSlice
 logger = logging.getLogger(__name__)
 
 
-def add_co2limit(n, co2limit, Nyears=1.):
+def add_co2limit(n, co2limit, Nyears=1.0):
+    n.add(
+        "GlobalConstraint",
+        "CO2Limit",
+        carrier_attribute="co2_emissions",
+        sense="<=",
+        constant=co2limit * Nyears,
+    )
 
-    n.add("GlobalConstraint", "CO2Limit",
-          carrier_attribute="co2_emissions", sense="<=",
-          constant=co2limit * Nyears)
 
-
-def add_gaslimit(n, gaslimit, Nyears=1.):
-
+def add_gaslimit(n, gaslimit, Nyears=1.0):
     sel = n.carriers.index.intersection(["OCGT", "CCGT", "CHP"])
-    n.carriers.loc[sel, "gas_usage"] = 1.
+    n.carriers.loc[sel, "gas_usage"] = 1.0
 
-    n.add("GlobalConstraint", "GasLimit",
-          carrier_attribute="gas_usage", sense="<=",
-          constant=gaslimit * Nyears)
+    n.add(
+        "GlobalConstraint",
+        "GasLimit",
+        carrier_attribute="gas_usage",
+        sense="<=",
+        constant=gaslimit * Nyears,
+    )
 
 
-def add_emission_prices(n, emission_prices={'co2': 0.}, exclude_co2=False):
-    if exclude_co2: emission_prices.pop('co2')
-    ep = (pd.Series(emission_prices).rename(lambda x: x+'_emissions') *
-          n.carriers.filter(like='_emissions')).sum(axis=1)
+def add_emission_prices(n, emission_prices={"co2": 0.0}, exclude_co2=False):
+    if exclude_co2:
+        emission_prices.pop("co2")
+    ep = (
+        pd.Series(emission_prices).rename(lambda x: x + "_emissions")
+        * n.carriers.filter(like="_emissions")
+    ).sum(axis=1)
     gen_ep = n.generators.carrier.map(ep) / n.generators.efficiency
-    n.generators['marginal_cost'] += gen_ep
+    n.generators["marginal_cost"] += gen_ep
     su_ep = n.storage_units.carrier.map(ep) / n.storage_units.efficiency_dispatch
-    n.storage_units['marginal_cost'] += su_ep
+    n.storage_units["marginal_cost"] += su_ep
 
 
-def set_line_s_max_pu(n, s_max_pu = 0.7):
-    n.lines['s_max_pu'] = s_max_pu
+def set_line_s_max_pu(n, s_max_pu=0.7):
+    n.lines["s_max_pu"] = s_max_pu
     logger.info(f"N-1 security margin of lines set to {s_max_pu}")
 
 
 def set_transmission_limit(n, ll_type, factor, costs, Nyears=1):
-    links_dc_b = n.links.carrier == 'DC' if not n.links.empty else pd.Series()
+    links_dc_b = n.links.carrier == "DC" if not n.links.empty else pd.Series()
 
-    _lines_s_nom = (np.sqrt(3) * n.lines.type.map(n.line_types.i_nom) *
-                   n.lines.num_parallel *  n.lines.bus0.map(n.buses.v_nom))
-    lines_s_nom = n.lines.s_nom.where(n.lines.type == '', _lines_s_nom)
+    _lines_s_nom = (
+        np.sqrt(3)
+        * n.lines.type.map(n.line_types.i_nom)
+        * n.lines.num_parallel
+        * n.lines.bus0.map(n.buses.v_nom)
+    )
+    lines_s_nom = n.lines.s_nom.where(n.lines.type == "", _lines_s_nom)
 
-
-    col = 'capital_cost' if ll_type == 'c' else 'length'
-    ref = (lines_s_nom @ n.lines[col] +
-           n.links.loc[links_dc_b, "p_nom"] @ n.links.loc[links_dc_b, col])
+    col = "capital_cost" if ll_type == "c" else "length"
+    ref = (
+        lines_s_nom @ n.lines[col]
+        + n.links.loc[links_dc_b, "p_nom"] @ n.links.loc[links_dc_b, col]
+    )
 
     update_transmission_costs(n, costs)
 
-    if factor == 'opt' or float(factor) > 1.0:
-        n.lines['s_nom_min'] = lines_s_nom
-        n.lines['s_nom_extendable'] = True
+    if factor == "opt" or float(factor) > 1.0:
+        n.lines["s_nom_min"] = lines_s_nom
+        n.lines["s_nom_extendable"] = True
 
-        n.links.loc[links_dc_b, 'p_nom_min'] = n.links.loc[links_dc_b, 'p_nom']
-        n.links.loc[links_dc_b, 'p_nom_extendable'] = True
+        n.links.loc[links_dc_b, "p_nom_min"] = n.links.loc[links_dc_b, "p_nom"]
+        n.links.loc[links_dc_b, "p_nom_extendable"] = True
 
-    if factor != 'opt':
-        con_type = 'expansion_cost' if ll_type == 'c' else 'volume_expansion'
+    if factor != "opt":
+        con_type = "expansion_cost" if ll_type == "c" else "volume_expansion"
         rhs = float(factor) * ref
-        n.add('GlobalConstraint', f'l{ll_type}_limit',
-              type=f'transmission_{con_type}_limit',
-              sense='<=', constant=rhs, carrier_attribute='AC, DC')
+        n.add(
+            "GlobalConstraint",
+            f"l{ll_type}_limit",
+            type=f"transmission_{con_type}_limit",
+            sense="<=",
+            constant=rhs,
+            carrier_attribute="AC, DC",
+        )
 
     return n
 
@@ -143,7 +162,7 @@ def average_every_nhours(n, offset):
     m.snapshot_weightings = snapshot_weightings
 
     for c in n.iterate_components():
-        pnl = getattr(m, c.list_name+"_t")
+        pnl = getattr(m, c.list_name + "_t")
         for k, df in c.pnl.items():
             if not df.empty:
                 pnl[k] = df.resample(offset).mean()
@@ -156,23 +175,29 @@ def apply_time_segmentation(n, segments, solver_name="cbc"):
     try:
         import tsam.timeseriesaggregation as tsam
     except:
-        raise ModuleNotFoundError("Optional dependency 'tsam' not found."
-                                  "Install via 'pip install tsam'")
+        raise ModuleNotFoundError(
+            "Optional dependency 'tsam' not found." "Install via 'pip install tsam'"
+        )
 
     p_max_pu_norm = n.generators_t.p_max_pu.max()
     p_max_pu = n.generators_t.p_max_pu / p_max_pu_norm
 
     load_norm = n.loads_t.p_set.max()
     load = n.loads_t.p_set / load_norm
-    
+
     inflow_norm = n.storage_units_t.inflow.max()
     inflow = n.storage_units_t.inflow / inflow_norm
 
     raw = pd.concat([p_max_pu, load, inflow], axis=1, sort=False)
 
-    agg = tsam.TimeSeriesAggregation(raw, hoursPerPeriod=len(raw),
-                                     noTypicalPeriods=1, noSegments=int(segments),
-                                     segmentation=True, solver=solver_name)
+    agg = tsam.TimeSeriesAggregation(
+        raw,
+        hoursPerPeriod=len(raw),
+        noTypicalPeriods=1,
+        noSegments=int(segments),
+        segmentation=True,
+        solver=solver_name,
+    )
 
     segmented = agg.createTypicalPeriods()
 
@@ -180,9 +205,11 @@ def apply_time_segmentation(n, segments, solver_name="cbc"):
     offsets = np.insert(np.cumsum(weightings[:-1]), 0, 0)
     snapshots = [n.snapshots[0] + pd.Timedelta(f"{offset}h") for offset in offsets]
 
-    n.set_snapshots(pd.DatetimeIndex(snapshots, name='name'))
-    n.snapshot_weightings = pd.Series(weightings, index=snapshots, name="weightings", dtype="float64")
-    
+    n.set_snapshots(pd.DatetimeIndex(snapshots, name="name"))
+    n.snapshot_weightings = pd.Series(
+        weightings, index=snapshots, name="weightings", dtype="float64"
+    )
+
     segmented.index = snapshots
     n.generators_t.p_max_pu = segmented[n.generators_t.p_max_pu.columns] * p_max_pu_norm
     n.loads_t.p_set = segmented[n.loads_t.p_set.columns] * load_norm
@@ -190,49 +217,57 @@ def apply_time_segmentation(n, segments, solver_name="cbc"):
 
     return n
 
+
 def enforce_autarky(n, only_crossborder=False):
     if only_crossborder:
         lines_rm = n.lines.loc[
-                        n.lines.bus0.map(n.buses.country) !=
-                        n.lines.bus1.map(n.buses.country)
-                    ].index
+            n.lines.bus0.map(n.buses.country) != n.lines.bus1.map(n.buses.country)
+        ].index
         links_rm = n.links.loc[
-                        n.links.bus0.map(n.buses.country) !=
-                        n.links.bus1.map(n.buses.country)
-                    ].index
+            n.links.bus0.map(n.buses.country) != n.links.bus1.map(n.buses.country)
+        ].index
     else:
         lines_rm = n.lines.index
-        links_rm = n.links.loc[n.links.carrier=="DC"].index
+        links_rm = n.links.loc[n.links.carrier == "DC"].index
     n.mremove("Line", lines_rm)
     n.mremove("Link", links_rm)
+
 
 def set_line_nom_max(n, s_nom_max_set=np.inf, p_nom_max_set=np.inf):
     n.lines.s_nom_max.clip(upper=s_nom_max_set, inplace=True)
     n.links.p_nom_max.clip(upper=p_nom_max_set, inplace=True)
 
+
 if __name__ == "__main__":
-    if 'snakemake' not in globals():
+    if "snakemake" not in globals():
         from _helpers import mock_snakemake
-        snakemake = mock_snakemake('prepare_network', simpl='',
-                                  clusters='40', ll='v0.3', opts='Co2L-24H')
+
+        snakemake = mock_snakemake(
+            "prepare_network", simpl="", clusters="40", ll="v0.3", opts="Co2L-24H"
+        )
     configure_logging(snakemake)
 
-    opts = snakemake.wildcards.opts.split('-')
+    opts = snakemake.wildcards.opts.split("-")
 
     n = pypsa.Network(snakemake.input[0])
-    Nyears = n.snapshot_weightings.objective.sum() / 8760.
-    costs = load_costs(snakemake.input.tech_costs, snakemake.config['costs'], snakemake.config['electricity'], Nyears)
+    Nyears = n.snapshot_weightings.objective.sum() / 8760.0
+    costs = load_costs(
+        snakemake.input.tech_costs,
+        snakemake.config["costs"],
+        snakemake.config["electricity"],
+        Nyears,
+    )
 
-    set_line_s_max_pu(n, snakemake.config['lines']['s_max_pu'])
+    set_line_s_max_pu(n, snakemake.config["lines"]["s_max_pu"])
 
     for o in opts:
-        m = re.match(r'^\d+h$', o, re.IGNORECASE)
+        m = re.match(r"^\d+h$", o, re.IGNORECASE)
         if m is not None:
             n = average_every_nhours(n, m.group(0))
             break
 
     for o in opts:
-        m = re.match(r'^\d+seg$', o, re.IGNORECASE)
+        m = re.match(r"^\d+seg$", o, re.IGNORECASE)
         if m is not None:
             solver_name = snakemake.config["solving"]["solver"]["name"]
             n = apply_time_segmentation(n, m.group(0)[:-3], solver_name)
@@ -242,11 +277,11 @@ if __name__ == "__main__":
         if "Co2L" in o:
             m = re.findall("[0-9]*\.?[0-9]+$", o)
             if len(m) > 0:
-                co2limit = float(m[0]) * snakemake.config['electricity']['co2base']
+                co2limit = float(m[0]) * snakemake.config["electricity"]["co2base"]
                 add_co2limit(n, co2limit, Nyears)
                 logger.info("Setting CO2 limit according to wildcard value.")
             else:
-                add_co2limit(n, snakemake.config['electricity']['co2limit'], Nyears)
+                add_co2limit(n, snakemake.config["electricity"]["co2limit"], Nyears)
                 logger.info("Setting CO2 limit according to config value.")
             break
 
@@ -277,24 +312,27 @@ if __name__ == "__main__":
                 comps = {"Generator", "Link", "StorageUnit", "Store"}
                 for c in n.iterate_components(comps):
                     sel = c.df.carrier.str.contains(carrier)
-                    c.df.loc[sel,attr] *= factor
+                    c.df.loc[sel, attr] *= factor
 
     for o in opts:
-        if 'Ep' in o:
+        if "Ep" in o:
             m = re.findall("[0-9]*\.?[0-9]+$", o)
             if len(m) > 0:
                 logger.info("Setting emission prices according to wildcard value.")
                 add_emission_prices(n, dict(co2=float(m[0])))
             else:
                 logger.info("Setting emission prices according to config value.")
-                add_emission_prices(n, snakemake.config['costs']['emission_prices'])
+                add_emission_prices(n, snakemake.config["costs"]["emission_prices"])
             break
 
     ll_type, factor = snakemake.wildcards.ll[0], snakemake.wildcards.ll[1:]
     set_transmission_limit(n, ll_type, factor, costs, Nyears)
 
-    set_line_nom_max(n, s_nom_max_set=snakemake.config["lines"].get("s_nom_max,", np.inf),
-                     p_nom_max_set=snakemake.config["links"].get("p_nom_max,", np.inf))
+    set_line_nom_max(
+        n,
+        s_nom_max_set=snakemake.config["lines"].get("s_nom_max,", np.inf),
+        p_nom_max_set=snakemake.config["links"].get("p_nom_max,", np.inf),
+    )
 
     if "ATK" in opts:
         enforce_autarky(n)
