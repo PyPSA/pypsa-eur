@@ -433,6 +433,12 @@ $$
 
 The Haber-Bosch process is not explicitly represented in the model, such that demand for ammonia enters the model as a demand for hydrogen ( $6.5 MWh_{H_2}$ / t $_{NH_3}$ ) and electricity ( $1.17 MWh_{el}$ /t $_{NH_3}$ ) (see `Wang et. al <https://doi.org/10.1016/j.joule.2018.04.017>`_). Today, natural gas dominates in Europe as the source for the hydrogen used in the Haber-Bosch process, but the model can choose among the various hydrogen supply options described in the hydrogen section (see :ref:`Hydrogen supply`)
 
+Agriculture demand
+=========================
+
+Energy demands for the agriculture, forestry and fishing sector per country are taken from the `JRC-IDEES database <http://data.europa.eu/89h/jrc-10110-10001>`_. Missing countries are filled with `Eurostat data <https://ec.europa.eu/eurostat/web/energy/data/energy-balances>`_. Agricultural energy demands are split into electricity (lighting, ventilation, specific electricity uses, electric pumping devices), heat (specific heat uses, low enthalpy heat) machinery oil (motor drives, farming machine drives, diesel-fueled pumping devices). Heat demand is assigned at “services rural heat” buses. Time series for demands are assumed to be constant and distributed inside countries by population.
+
+
 Transportation
 =========================
 Annual energy demands for land transport, aviation and shipping for every country are retrieved from `JRC-IDEES data set <http://data.europa.eu/89h/jrc-10110-10001>`_. Below, the details of how each of these categories are treated is explained.
