@@ -59,6 +59,16 @@ jobs:
       run: |
         echo -e "- glpk\n- ipopt" >> envs/environment.yaml
 
+    - name: Add solver to environment
+      run: |
+        echo -e "- glpk\n- ipopt<3.13.3" >> envs/environment.yaml
+      if: ${{ matrix.label }} == 'windows-latest'
+
+    - name: Add solver to environment
+      run: |
+        echo -e "- glpk\n- ipopt" >> envs/environment.yaml
+      if: ${{ matrix.label }} != 'windows-latest'
+
     - name: Setup Mambaforge
       uses: conda-incubator/setup-miniconda@v2
       with:
