@@ -12,7 +12,7 @@ Upcoming Release
 
 * Individual commits are now tested against pre-commit hooks. This includes black style formatting, sorting of package imports, Snakefile formatting and others. Installation instructions can for the pre-commit can be found `here <https://pre-commit.com/>`_.
 * Pre-commit CI is now part of the repository's CI.
-
+* The heuristic distribution of today's renewable installations is now enable per default.
 
 PyPSA-Eur 0.6.0 (10th September 2022)
 =====================================

@@ -69,7 +69,7 @@ electricity:
   renewable_carriers: [solar, onwind, offwind-ac, offwind-dc, hydro]
 
   estimate_renewable_capacities:
-    enable: false
+    enable: true
     # Add capacities from OPSD data
     from_opsd: true
     # Renewable capacities are based on existing capacities reported by IRENA
