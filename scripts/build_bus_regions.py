@@ -1,9 +1,11 @@
+# -*- coding: utf-8 -*-
 # SPDX-FileCopyrightText: : 2017-2022 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
 """
-Creates Voronoi shapes for each bus representing both onshore and offshore regions.
+Creates Voronoi shapes for each bus representing both onshore and offshore
+regions.
 
 Relevant Settings
 -----------------
@@ -38,19 +40,18 @@ Outputs
 
 Description
 -----------
-
 """
 
 import logging
-from _helpers import configure_logging, REGION_COLS
-
-import pypsa
 import os
-import pandas as pd
-import numpy as np
+
 import geopandas as gpd
-from shapely.geometry import Polygon
+import numpy as np
+import pandas as pd
+import pypsa
+from _helpers import REGION_COLS, configure_logging
 from scipy.spatial import Voronoi
+from shapely.geometry import Polygon
 
 logger = logging.getLogger(__name__)
 
@@ -81,11 +82,19 @@ def voronoi_partition_pts(points, outline):
 
         # to avoid any network positions outside all Voronoi cells, append
         # the corners of a rectangle framing these points
-        vor = Voronoi(np.vstack((points,
-                                 [[xmin-3.*xspan, ymin-3.*yspan],
-                                  [xmin-3.*xspan, ymax+3.*yspan],
-                                  [xmax+3.*xspan, ymin-3.*yspan],
-                                  [xmax+3.*xspan, ymax+3.*yspan]])))
+        vor = Voronoi(
+            np.vstack(
+                (
+                    points,
+                    [
+                        [xmin - 3.0 * xspan, ymin - 3.0 * yspan],
+                        [xmin - 3.0 * xspan, ymax + 3.0 * yspan],
+                        [xmax + 3.0 * xspan, ymin - 3.0 * yspan],
+                        [xmax + 3.0 * xspan, ymax + 3.0 * yspan],
+                    ],
+                )
+            )
+        )
 
         polygons = []
         for i in range(len(points)):
@@ -98,23 +107,27 @@ def voronoi_partition_pts(points, outline):
 
             polygons.append(poly)
 
-
     return np.array(polygons, dtype=object)
 
 
 if __name__ == "__main__":
-    if 'snakemake' not in globals():
+    if "snakemake" not in globals():
         from _helpers import mock_snakemake
-        snakemake = mock_snakemake('build_bus_regions')
+
+        snakemake = mock_snakemake("build_bus_regions")
     configure_logging(snakemake)
 
-    countries = snakemake.config['countries']
+    countries = snakemake.config["countries"]
 
     n = pypsa.Network(snakemake.input.base_network)
 
-    country_shapes = gpd.read_file(snakemake.input.country_shapes).set_index('name')['geometry']
+    country_shapes = gpd.read_file(snakemake.input.country_shapes).set_index("name")[
+        "geometry"
+    ]
     offshore_shapes = gpd.read_file(snakemake.input.offshore_shapes)
-    offshore_shapes = offshore_shapes.reindex(columns=REGION_COLS).set_index('name')['geometry']
+    offshore_shapes = offshore_shapes.reindex(columns=REGION_COLS).set_index("name")[
+        "geometry"
+    ]
 
     onshore_regions = []
     offshore_regions = []
@@ -124,29 +137,42 @@ if __name__ == "__main__":
 
         onshore_shape = country_shapes[country]
         onshore_locs = n.buses.loc[c_b & n.buses.substation_lv, ["x", "y"]]
-        onshore_regions.append(gpd.GeoDataFrame({
-                'name': onshore_locs.index,
-                'x': onshore_locs['x'],
-                'y': onshore_locs['y'],
-                'geometry': voronoi_partition_pts(onshore_locs.values, onshore_shape),
-                'country': country
-            }))
+        onshore_regions.append(
+            gpd.GeoDataFrame(
+                {
+                    "name": onshore_locs.index,
+                    "x": onshore_locs["x"],
+                    "y": onshore_locs["y"],
+                    "geometry": voronoi_partition_pts(
+                        onshore_locs.values, onshore_shape
+                    ),
+                    "country": country,
+                }
+            )
+        )
 
-        if country not in offshore_shapes.index: continue
+        if country not in offshore_shapes.index:
+            continue
         offshore_shape = offshore_shapes[country]
         offshore_locs = n.buses.loc[c_b & n.buses.substation_off, ["x", "y"]]
-        offshore_regions_c = gpd.GeoDataFrame({
-                'name': offshore_locs.index,
-                'x': offshore_locs['x'],
-                'y': offshore_locs['y'],
-                'geometry': voronoi_partition_pts(offshore_locs.values, offshore_shape),
-                'country': country
-            })
+        offshore_regions_c = gpd.GeoDataFrame(
+            {
+                "name": offshore_locs.index,
+                "x": offshore_locs["x"],
+                "y": offshore_locs["y"],
+                "geometry": voronoi_partition_pts(offshore_locs.values, offshore_shape),
+                "country": country,
+            }
+        )
         offshore_regions_c = offshore_regions_c.loc[offshore_regions_c.area > 1e-2]
         offshore_regions.append(offshore_regions_c)
 
-    pd.concat(onshore_regions, ignore_index=True).to_file(snakemake.output.regions_onshore)
+    pd.concat(onshore_regions, ignore_index=True).to_file(
+        snakemake.output.regions_onshore
+    )
     if offshore_regions:
-        pd.concat(offshore_regions, ignore_index=True).to_file(snakemake.output.regions_offshore)
+        pd.concat(offshore_regions, ignore_index=True).to_file(
+            snakemake.output.regions_offshore
+        )
     else:
         offshore_shapes.to_frame().to_file(snakemake.output.regions_offshore)

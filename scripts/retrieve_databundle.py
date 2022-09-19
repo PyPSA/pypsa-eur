@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2019-2022 Fabian Hofmann (TUB, FIAS)
 # SPDX-FileCopyrightText: : 2017-2022 The PyPSA-Eur Authors
 #
@@ -33,24 +34,27 @@ The :ref:`tutorial` uses a smaller `data bundle <https://zenodo.org/record/35179
 """
 
 import logging
-from _helpers import progress_retrieve, configure_logging
-
 import tarfile
 from pathlib import Path
+
+from _helpers import configure_logging, progress_retrieve
 
 logger = logging.getLogger(__name__)
 
 
 if __name__ == "__main__":
-    if 'snakemake' not in globals():
+    if "snakemake" not in globals():
         from _helpers import mock_snakemake
-        snakemake = mock_snakemake('retrieve_databundle')
-        rootpath = '..'
-    else:
-        rootpath = '.'
-    configure_logging(snakemake) # TODO Make logging compatible with progressbar (see PR #102)
 
-    if snakemake.config['tutorial']:
+        snakemake = mock_snakemake("retrieve_databundle")
+        rootpath = ".."
+    else:
+        rootpath = "."
+    configure_logging(
+        snakemake
+    )  # TODO Make logging compatible with progressbar (see PR #102)
+
+    if snakemake.config["tutorial"]:
         url = "https://zenodo.org/record/3517921/files/pypsa-eur-tutorial-data-bundle.tar.xz"
     else:
         url = "https://zenodo.org/record/3517935/files/pypsa-eur-data-bundle.tar.xz"

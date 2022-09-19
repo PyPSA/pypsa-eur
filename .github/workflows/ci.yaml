@@ -16,7 +16,7 @@ on:
     branches:
     - master
   schedule:
-    - cron: "0 5 * * TUE"
+  - cron: "0 5 * * TUE"
 
 env:
   CACHE_NUMBER: 1 # Change this value to manually reset the environment cache
@@ -28,63 +28,73 @@ jobs:
       matrix:
         include:
           # Matrix required to handle caching with Mambaforge
-          - os: ubuntu-latest
-            label: ubuntu-latest
-            prefix: /usr/share/miniconda3/envs/pypsa-eur
+        - os: ubuntu-latest
+          label: ubuntu-latest
+          prefix: /usr/share/miniconda3/envs/pypsa-eur
 
-          - os: macos-latest
-            label: macos-latest
-            prefix: /Users/runner/miniconda3/envs/pypsa-eur
+        - os: macos-latest
+          label: macos-latest
+          prefix: /Users/runner/miniconda3/envs/pypsa-eur
 
-          - os: windows-latest
-            label: windows-latest
-            prefix: C:\Miniconda3\envs\pypsa-eur
+        - os: windows-latest
+          label: windows-latest
+          prefix: C:\Miniconda3\envs\pypsa-eur
 
     name: ${{ matrix.label }}
 
     runs-on: ${{ matrix.os }}
-    
+
     defaults:
       run:
         shell: bash -l {0}
-        
+
     steps:
-      - uses: actions/checkout@v2
-      
-      - name: Setup secrets
-        run: |
-          echo -ne "url: ${CDSAPI_URL}\nkey: ${CDSAPI_TOKEN}\n" > ~/.cdsapirc
+    - uses: actions/checkout@v2
 
-      - name: Add solver to environment
-        run: |
-          echo -e "  - glpk\n  - ipopt<3.13.3" >> envs/environment.yaml
+    - name: Setup secrets
+      run: |
+        echo -ne "url: ${CDSAPI_URL}\nkey: ${CDSAPI_TOKEN}\n" > ~/.cdsapirc
 
-      - name: Setup Mambaforge
-        uses: conda-incubator/setup-miniconda@v2
-        with:
-            miniforge-variant: Mambaforge
-            miniforge-version: latest
-            activate-environment: pypsa-eur
-            use-mamba: true
-            
-      - name: Set cache date
-        run: echo "DATE=$(date +'%Y%m%d')" >> $GITHUB_ENV
+    - name: Add solver to environment
+      run: |
+        echo -e "- glpk\n- ipopt" >> envs/environment.yaml
 
-      - name: Create environment cache
-        uses: actions/cache@v2
-        id: cache
-        with:
-          path: ${{ matrix.prefix }}
-          key: ${{ matrix.label }}-conda-${{ hashFiles('envs/environment.yaml') }}-${{ env.DATE }}-${{ env.CACHE_NUMBER }}
+    - name: Add solver to environment
+      run: |
+        echo -e "- glpk\n- ipopt<3.13.3" >> envs/environment.yaml
+      if: ${{ matrix.label }} == 'windows-latest'
 
-      - name: Update environment due to outdated or unavailable cache
-        run: mamba env update -n pypsa-eur -f envs/environment.yaml
-        if: steps.cache.outputs.cache-hit != 'true'
+    - name: Add solver to environment
+      run: |
+        echo -e "- glpk\n- ipopt" >> envs/environment.yaml
+      if: ${{ matrix.label }} != 'windows-latest'
 
-      - name: Test snakemake workflow
-        run: |
-          conda activate pypsa-eur
-          conda list
-          cp test/config.test1.yaml config.yaml
-          snakemake --cores all solve_all_networks
-          rm -rf resources/*.nc resources/*.geojson resources/*.h5 networks results
+    - name: Setup Mambaforge
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        miniforge-variant: Mambaforge
+        miniforge-version: latest
+        activate-environment: pypsa-eur
+        use-mamba: true
+
+    - name: Set cache date
+      run: echo "DATE=$(date +'%Y%m%d')" >> $GITHUB_ENV
+
+    - name: Create environment cache
+      uses: actions/cache@v2
+      id: cache
+      with:
+        path: ${{ matrix.prefix }}
+        key: ${{ matrix.label }}-conda-${{ hashFiles('envs/environment.yaml') }}-${{ env.DATE }}-${{ env.CACHE_NUMBER }}
+
+    - name: Update environment due to outdated or unavailable cache
+      run: mamba env update -n pypsa-eur -f envs/environment.yaml
+      if: steps.cache.outputs.cache-hit != 'true'
+
+    - name: Test snakemake workflow
+      run: |
+        conda activate pypsa-eur
+        conda list
+        cp test/config.test1.yaml config.yaml
+        snakemake --cores all solve_all_networks
+        rm -rf resources/*.nc resources/*.geojson resources/*.h5 networks results

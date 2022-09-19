@@ -8,7 +8,7 @@ logging:
   level: INFO
   format: '%(levelname)s:%(name)s:%(message)s'
 
-run: 
+run:
   name: ""
 
 scenario:
@@ -72,8 +72,7 @@ renewable:
     corine:
       # Scholz, Y. (2012). Renewable energy based electricity supply at low costs:
       #  development of the REMix model and application for Europe. ( p.42 / p.28)
-      grid_codes: [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
-                   24, 25, 26, 27, 28, 29, 31, 32]
+      grid_codes: [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 31, 32]
       distance: 1000
       distance_grid_codes: [1, 2, 3, 4, 5, 6]
     natura: true
@@ -124,8 +123,7 @@ renewable:
     # sector: The economic potential of photovoltaics and concentrating solar
     # power." Applied Energy 135 (2014): 704-720.
     correction_factor: 0.854337
-    corine: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
-             14, 15, 16, 17, 18, 19, 20, 26, 31, 32]
+    corine: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 26, 31, 32]
     natura: true
     excluder_resolution: 200
     potential: simple # or conservative
@@ -153,7 +151,7 @@ transformers:
   type: ''
 
 load:
-  power_statistics: True # only for files from <2019; set false in order to get ENTSOE transparency data
+  power_statistics: true # only for files from <2019; set false in order to get ENTSOE transparency data
   interpolate_limit: 3 # data gaps up until this size are interpolated linearly
   time_shift_for_large_gaps: 1w # data gaps up until this size are copied by copying from
   manual_adjustments: true # false
@@ -233,7 +231,7 @@ solving:
 plotting:
   map:
     figsize: [7, 7]
-    boundaries: [-10.2, 29, 35,  72]
+    boundaries: [-10.2, 29, 35, 72]
     p_nom:
       bus_size_factor: 5.e+4
       linewidth_factor: 3.e+3
@@ -252,50 +250,50 @@ plotting:
   AC_carriers: ["AC line", "AC transformer"]
   link_carriers: ["DC line", "Converter AC-DC"]
   tech_colors:
-    "onwind" : "#235ebc"
-    "onshore wind" : "#235ebc"
-    'offwind' : "#6895dd"
-    'offwind-ac' : "#6895dd"
-    'offshore wind' : "#6895dd"
-    'offshore wind ac' : "#6895dd"
-    'offwind-dc' : "#74c6f2"
-    'offshore wind dc' : "#74c6f2"
-    "hydro" : "#08ad97"
-    "hydro+PHS" : "#08ad97"
-    "PHS" : "#08ad97"
-    "hydro reservoir" : "#08ad97"
-    'hydroelectricity' : '#08ad97'
-    "ror" : "#4adbc8"
-    "run of river" : "#4adbc8"
-    'solar' : "#f9d002"
-    'solar PV' : "#f9d002"
-    'solar thermal' : '#ffef60'
-    'biomass' : '#0c6013'
-    'solid biomass' : '#06540d'
-    'biogas' : '#23932d'
-    'waste' : '#68896b'
-    'geothermal' : '#ba91b1'
-    "OCGT" : "#d35050"
-    "gas" : "#d35050"
-    "natural gas" : "#d35050"
-    "CCGT" : "#b20101"
-    "nuclear" : "#ff9000"
-    "coal" : "#707070"
-    "lignite" : "#9e5a01"
-    "oil" : "#262626"
-    "H2" : "#ea048a"
-    "hydrogen storage" : "#ea048a"
-    "battery" : "#b8ea04"
-    "Electric load" : "#f9d002"
-    "electricity" : "#f9d002"
-    "lines" : "#70af1d"
-    "transmission lines" : "#70af1d"
-    "AC-AC" : "#70af1d"
-    "AC line" : "#70af1d"
-    "links" : "#8a1caf"
-    "HVDC links" : "#8a1caf"
-    "DC-DC" : "#8a1caf"
-    "DC link" : "#8a1caf"
+    "onwind": "#235ebc"
+    "onshore wind": "#235ebc"
+    'offwind': "#6895dd"
+    'offwind-ac': "#6895dd"
+    'offshore wind': "#6895dd"
+    'offshore wind ac': "#6895dd"
+    'offwind-dc': "#74c6f2"
+    'offshore wind dc': "#74c6f2"
+    "hydro": "#08ad97"
+    "hydro+PHS": "#08ad97"
+    "PHS": "#08ad97"
+    "hydro reservoir": "#08ad97"
+    'hydroelectricity': '#08ad97'
+    "ror": "#4adbc8"
+    "run of river": "#4adbc8"
+    'solar': "#f9d002"
+    'solar PV': "#f9d002"
+    'solar thermal': '#ffef60'
+    'biomass': '#0c6013'
+    'solid biomass': '#06540d'
+    'biogas': '#23932d'
+    'waste': '#68896b'
+    'geothermal': '#ba91b1'
+    "OCGT": "#d35050"
+    "gas": "#d35050"
+    "natural gas": "#d35050"
+    "CCGT": "#b20101"
+    "nuclear": "#ff9000"
+    "coal": "#707070"
+    "lignite": "#9e5a01"
+    "oil": "#262626"
+    "H2": "#ea048a"
+    "hydrogen storage": "#ea048a"
+    "battery": "#b8ea04"
+    "Electric load": "#f9d002"
+    "electricity": "#f9d002"
+    "lines": "#70af1d"
+    "transmission lines": "#70af1d"
+    "AC-AC": "#70af1d"
+    "AC line": "#70af1d"
+    "links": "#8a1caf"
+    "HVDC links": "#8a1caf"
+    "DC-DC": "#8a1caf"
+    "DC link": "#8a1caf"
   nice_names:
     OCGT: "Open-Cycle Gas"
     CCGT: "Combined-Cycle Gas"
