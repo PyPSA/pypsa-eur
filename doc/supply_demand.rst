@@ -436,7 +436,7 @@ The Haber-Bosch process is not explicitly represented in the model, such that de
 Agriculture demand
 =========================
 
-Energy demands for the agriculture, forestry and fishing sector per country are taken from the `JRC-IDEES database <http://data.europa.eu/89h/jrc-10110-10001>`_. Missing countries are filled with `Eurostat data <https://ec.europa.eu/eurostat/web/energy/data/energy-balances>`_. Agricultural energy demands are split into electricity (lighting, ventilation, specific electricity uses, electric pumping devices), heat (specific heat uses, low enthalpy heat) machinery oil (motor drives, farming machine drives, diesel-fueled pumping devices). Heat demand is assigned at “services rural heat” buses. Time series for demands are assumed to be constant and distributed inside countries by population.
+Energy demands for the agriculture, forestry and fishing sector per country are taken from the `JRC-IDEES database <http://data.europa.eu/89h/jrc-10110-10001>`_. Missing countries are filled with `Eurostat data <https://ec.europa.eu/eurostat/web/energy/data/energy-balances>`_. Agricultural energy demands are split into electricity (lighting, ventilation, specific electricity uses, electric pumping devices), heat (specific heat uses, low enthalpy heat), and machinery oil (motor drives, farming machine drives, diesel-fueled pumping devices). Heat demand is assigned at “services rural heat” buses. Time series for demands are assumed to be constant and distributed inside countries by population.
 
 
 Transportation
