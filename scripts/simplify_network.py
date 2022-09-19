@@ -245,7 +245,7 @@ def _aggregate_and_move_components(
     _adjust_capital_costs_using_connection_costs(n, connection_costs_to_bus, output)
 
     _, generator_strategies = get_aggregation_strategies(aggregation_strategies)
-   
+
     carriers = set(n.generators.carrier) - set(exclude_carriers)
     generators, generators_pnl = aggregategenerators(
         n, busmap, carriers=carriers, custom_strategies=generator_strategies
@@ -377,7 +377,9 @@ def simplify_links(n, costs, config, output, aggregation_strategies=dict()):
 
     logger.debug("Collecting all components using the busmap")
 
-    exclude_carriers = config["clustering"]["simplify_network"].get("exclude_carriers", [])
+    exclude_carriers = config["clustering"]["simplify_network"].get(
+        "exclude_carriers", []
+    )
 
     _aggregate_and_move_components(
         n,
@@ -397,7 +399,9 @@ def remove_stubs(n, costs, config, output, aggregation_strategies=dict()):
 
     connection_costs_to_bus = _compute_connection_costs_to_bus(n, busmap, costs, config)
 
-    exclude_carriers = config["clustering"]["simplify_network"].get("exclude_carriers", [])
+    exclude_carriers = config["clustering"]["simplify_network"].get(
+        "exclude_carriers", []
+    )
 
     _aggregate_and_move_components(
         n,
