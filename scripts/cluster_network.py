@@ -393,7 +393,8 @@ if __name__ == "__main__":
                                    for tech in n.generators.carrier.unique()
                                    if tech in snakemake.config['renewable']])
 
-    aggregate_carriers=set(n.carriers.index)-set(snakemake.config["clustering"]["exclude_carriers"])
+    exclude_carriers = snakemake.config["clustering"]["cluster_network"].get("exclude_carriers", [])
+    aggregate_carriers = set(n.generators.carrier) - set(exclude_carriers)
     if snakemake.wildcards.clusters.endswith('m'):
         n_clusters = int(snakemake.wildcards.clusters[:-1])
         aggregate_carriers = snakemake.config["electricity"].get("conventional_carriers")

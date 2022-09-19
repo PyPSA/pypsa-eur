@@ -3,9 +3,11 @@ simplify_network,,,
 -- to_substations,bool,"{'true','false'}","Aggregates all nodes without power injection (positive or negative, i.e. demand or generation) to electrically closest ones"
 -- algorithm,str,"One of {‘kmeans’, ‘hac’, ‘modularity‘}",
 -- feature,str,"Str in the format ‘carrier1+carrier2+...+carrierN-X’, where CarrierI can be from {‘solar’, ‘onwind’, ‘offwind’, ‘ror’} and X is one of {‘cap’, ‘time’}.",
-cluster_network
+-- exclude_carriers,list,"List of Str like [ 'solar', 'onwind'] or empy list []","List of carriers which will not be aggregated. If empty, all carriers will be aggregated."
+cluster_network,,,
 -- algorithm,str,"One of {‘kmeans’, ‘hac’}",
 -- feature,str,"Str in the format ‘carrier1+carrier2+...+carrierN-X’, where CarrierI can be from {‘solar’, ‘onwind’, ‘offwind’, ‘ror’} and X is one of {‘cap’, ‘time’}.",
+-- exclude_carriers,list,"List of Str like [ 'solar', 'onwind'] or empy list []","List of carriers which will not be aggregated. If empty, all carriers will be aggregated."
 aggregation_strategies,,,
 -- generators,,,
 -- -- {key},str,"{key} can be any of the component of the generator (str). It’s value can be any that can be converted to pandas.Series using getattr(). For example one of {min, max, sum}.","Aggregates the component according to the given strategy. For example, if sum, then all values within each cluster are summed to represent the new generator."
