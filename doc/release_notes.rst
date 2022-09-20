@@ -10,10 +10,31 @@ Release Notes
 Upcoming Release
 ================
 
-* Individual commits are now tested against pre-commit hooks. This includes black style formatting, sorting of package imports, Snakefile formatting and others. Installation instructions can for the pre-commit can be found `here <https://pre-commit.com/>`_.
+* new feature
+
+PyPSA-Eur 0.6.1 (20th September 2022)
+=====================================
+
+* Individual commits are now tested against pre-commit hooks. This includes
+  black style formatting, sorting of package imports, Snakefile formatting and
+  others. Installation instructions can for the pre-commit can be found `here
+  <https://pre-commit.com/>`_.
+
 * Pre-commit CI is now part of the repository's CI.
-* The heuristic distribution of today's renewable installations is now enable per default.
-* Marginal costs of conventional generators are now taking the plant-specific efficiency into account.
+
+* The software now supports running the workflow with different settings within
+  the same directory. A new config section ``run`` was created that specifies
+  under which scenario ``name`` the created resources, networks and results
+  should be stored. If ``name`` is not specified, the workflow uses the default
+  paths. The entry ``shared_cutouts`` specifies whether the run should use
+  cutouts from the default root directory or use run-specific cutouts.
+
+* The heuristic distribution of today's renewable capacity installations is now
+  enabled by default.
+
+* The marginal costs of conventional generators are now taking the plant-specific
+  efficiency into account where available.
+
 
 PyPSA-Eur 0.6.0 (10th September 2022)
 =====================================
@@ -35,8 +56,6 @@ PyPSA-Eur 0.6.0 (10th September 2022)
 * The resolution of land exclusion calculation is now a configurable option. See
   setting ``excluder_resolution``.
 
-
-* The software now supports running the workflow with different settings within the same directory. A new config section ``run`` was created that specifies under which scenario ``name`` the created resources, networks and results should be stored. If ``name`` is not specified, the workflow uses the default paths. The entry ``shared_cutouts`` specifies whether the run should use cutouts from the default root directory or use run-specific cutouts.
 
 PyPSA-Eur 0.5.0 (27th July 2022)
 =====================================
