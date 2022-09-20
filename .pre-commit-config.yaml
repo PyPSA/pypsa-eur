@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: : 2022 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: CC0-1.0
 exclude: "^LICENSES"
 
 repos:
@@ -35,14 +38,14 @@ repos:
     files: ^(scripts|doc)/
 
   # Make docstrings PEP 257 compliant
-- repo: https://github.com/myint/docformatter
+- repo: https://github.com/PyCQA/docformatter
   rev: v1.5.0
   hooks:
   - id: docformatter
     args: ["--in-place", "--make-summary-multi-line", "--pre-summary-newline"]
 
 - repo: https://github.com/keewis/blackdoc
-  rev: v0.3.5
+  rev: v0.3.7
   hooks:
   - id: blackdoc
 
@@ -71,7 +74,7 @@ repos:
 
   # Format Snakemake rule / workflow files
 - repo: https://github.com/snakemake/snakefmt
-  rev: 0.4.4
+  rev: v0.6.1
   hooks:
   - id: snakefmt
 
@@ -81,3 +84,9 @@ repos:
   hooks:
   - id: jupyter-notebook-cleanup
     exclude: examples/solve-on-remote.ipynb
+
+# Check for FSFE REUSE compliance (licensing)
+- repo: https://github.com/fsfe/reuse-tool
+  rev: v0.14.0
+  hooks:
+  - id: reuse

@@ -1,0 +1,7 @@
+# SPDX-FileCopyrightText: : 2022 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: CC0-1.0
+
+# Exclude pre-commit applications
+5d1ef8a64055a039aa4a0834d2d26fe7752fe9a0
+92080b1cd2ca5f123158571481722767b99c2b27
