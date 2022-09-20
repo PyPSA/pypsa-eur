@@ -14,6 +14,7 @@ Upcoming Release
 * Pre-commit CI is now part of the repository's CI.
 * The heuristic distribution of today's renewable installations is now enable per default.
 * Marginal costs of conventional generators are now taking the plant-specific efficiency into account.
+* Carriers of generators can now be excluded from aggregation in clustering network and simplify network.
 
 PyPSA-Eur 0.6.0 (10th September 2022)
 =====================================
