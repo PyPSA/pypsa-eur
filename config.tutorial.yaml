@@ -10,7 +10,7 @@ logging:
   format: '%(levelname)s:%(name)s:%(message)s'
 
 run:
-  name: tutorial
+  name: ""
   shared_cutouts: false
 
 scenario:
