@@ -37,7 +37,7 @@ It contains alternating current lines at and above 220 kV voltage level and all 
 
 The model is suitable both for operational studies and generation and transmission expansion planning studies. The continental scope and highly resolved spatial scale enables a proper description of the long-range smoothing effects for renewable power generation and their varying resource availability.
 
-.. image:: img/base.png
+.. image:: img/elec.png
     :width: 50%
     :align: center
 
