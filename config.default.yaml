@@ -115,7 +115,9 @@ renewable:
     resource:
       method: wind
       turbine: Vestas_V112_3MW
-    capacity_per_sqkm: 3 # ScholzPhd Tab 4.3.1: 10MW/km^2
+    capacity_per_sqkm: 3 # ScholzPhd Tab 4.3.1: 10MW/km^2 and assuming 30% fraction of the already restricted
+    # area is available for installation of wind generators due to competing land use and likely public
+    # acceptance issues.
     # correction_factor: 0.93
     corine:
       # Scholz, Y. (2012). Renewable energy based electricity supply at low costs:
@@ -132,7 +134,9 @@ renewable:
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_5MW_offshore
-    capacity_per_sqkm: 2
+    capacity_per_sqkm: 2 # ScholzPhd Tab 4.3.1: 10MW/km^2 and assuming 20% fraction of the already restricted
+    # area is available for installation of wind generators due to competing land use and likely public
+    # acceptance issues.
     correction_factor: 0.8855
     # proxy for wake losses
     # from 10.1016/j.energy.2018.08.153
@@ -150,8 +154,9 @@ renewable:
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_5MW_offshore
-    # ScholzPhd Tab 4.3.1: 10MW/km^2
-    capacity_per_sqkm: 2
+    capacity_per_sqkm: 2 # ScholzPhd Tab 4.3.1: 10MW/km^2 and assuming 30% fraction of the already restricted
+    # area is available for installation of wind generators due to competing land use and likely public
+    # acceptance issues.
     correction_factor: 0.8855
     # proxy for wake losses
     # from 10.1016/j.energy.2018.08.153
@@ -172,7 +177,7 @@ renewable:
       orientation:
         slope: 35.
         azimuth: 180.
-    capacity_per_sqkm: 1.7 # ScholzPhd Tab 4.3.1: 170 MW/km^2
+    capacity_per_sqkm: 1.7 # ScholzPhd Tab 4.3.1: 170 MW/km^2 and assuming 1% of the area can be used for solar PV panels
     # Correction factor determined by comparing uncorrected area-weighted full-load hours to those
     # published in Supplementary Data to
     # Pietzcker, Robert Carl, et al. "Using the sun to decarbonize the power
