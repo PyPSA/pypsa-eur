@@ -154,7 +154,7 @@ renewable:
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_5MW_offshore
-    capacity_per_sqkm: 2 # ScholzPhd Tab 4.3.1: 10MW/km^2 and assuming 30% fraction of the already restricted
+    capacity_per_sqkm: 2 # ScholzPhd Tab 4.3.1: 10MW/km^2 and assuming 20% fraction of the already restricted
     # area is available for installation of wind generators due to competing land use and likely public
     # acceptance issues.
     correction_factor: 0.8855
