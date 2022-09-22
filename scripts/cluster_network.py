@@ -475,6 +475,10 @@ if __name__ == "__main__":
         ]
     )
 
+    exclude_carriers = snakemake.config["clustering"]["cluster_network"].get(
+        "exclude_carriers", []
+    )
+    aggregate_carriers = set(n.generators.carrier) - set(exclude_carriers)
     if snakemake.wildcards.clusters.endswith("m"):
         n_clusters = int(snakemake.wildcards.clusters[:-1])
         aggregate_carriers = snakemake.config["electricity"].get(
@@ -482,10 +486,8 @@ if __name__ == "__main__":
         )
     elif snakemake.wildcards.clusters == "all":
         n_clusters = len(n.buses)
-        aggregate_carriers = None  # All
     else:
         n_clusters = int(snakemake.wildcards.clusters)
-        aggregate_carriers = None  # All
 
     if n_clusters == len(n.buses):
         # Fast-path if no clustering is necessary
