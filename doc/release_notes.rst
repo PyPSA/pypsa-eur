@@ -10,7 +10,7 @@ Release Notes
 Upcoming Release
 ================
 
-* new feature
+* Carriers of generators can now be excluded from aggregation in clustering network and simplify network.
 
 PyPSA-Eur 0.6.1 (20th September 2022)
 =====================================
@@ -34,7 +34,6 @@ PyPSA-Eur 0.6.1 (20th September 2022)
 
 * The marginal costs of conventional generators are now taking the plant-specific
   efficiency into account where available.
-
 
 PyPSA-Eur 0.6.0 (10th September 2022)
 =====================================

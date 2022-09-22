@@ -187,6 +187,7 @@ clustering:
   cluster_network:
     algorithm: kmeans
     feature: solar+onwind-time
+  exclude_carriers: ["OCGT", "offwind-ac", "coal"]
   aggregation_strategies:
     generators:
       p_nom_max: sum # use "min" for more conservative assumptions
