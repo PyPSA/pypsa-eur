@@ -18,6 +18,8 @@ gurobi.log
 /notebooks
 /data
 /data/links_p_nom.csv
+# Exception for TYNDP 2020
+!/data/tyndp2020
 /cutouts
 /dask-worker-space
 
