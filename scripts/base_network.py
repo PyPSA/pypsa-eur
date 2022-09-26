@@ -680,6 +680,53 @@ def _adjust_capacities_of_under_construction_branches(n, config):
     return n
 
 
+def _integrate_tyndp_2020(buses,
+                          lines,
+                          links,
+                          new_buses,
+                          new_lines,
+                          new_links,
+                          upg_buses,
+                          upg_lines,
+                          upg_links,
+                          config):
+    allowed_statuses = config["TYNDP2020"].get("allowed_statuses")
+
+    new_buses = _read_drop_statusbased(new_buses, allowed_statuses)
+    new_lines = _read_drop_statusbased(new_lines, allowed_statuses)
+    new_links = _read_drop_statusbased(new_links, allowed_statuses)
+    upg_buses = _read_drop_statusbased(upg_buses, allowed_statuses)
+    upg_lines = _read_drop_statusbased(upg_lines, allowed_statuses)
+    upg_links = _read_drop_statusbased(upg_links, allowed_statuses)
+
+    # add standard values for lines without v_nom
+    # TODO: search for standard approach in code
+    # new_lines.loc[:, 'v_nom'] = new_lines.loc[:, 'v_nom'].fillna(380)
+    # upg_lines.loc[:, 'v_nom'] = upg_lines.loc[:, 'v_nom'].fillna(380)
+    # new_links.loc[:, 'v_nom'] = new_links.loc[:, 'v_nom'].fillna(380)
+    # upg_links.loc[:, 'v_nom'] = upg_links.loc[:, 'v_nom'].fillna(380)
+
+    # append new assets
+    buses = pd.concat([buses, new_buses])
+    lines = pd.concat([lines, new_lines])
+    links = pd.concat([links, new_links])
+
+    # upgrade existing assets
+    buses.update(upg_buses)
+    lines.update(upg_lines)
+    links.update(upg_links)
+
+    return buses, lines, links
+
+
+def _read_drop_statusbased(tyndp_file, allowed_statuses):
+    df = pd.read_csv(tyndp_file, index_col=0)
+    df.index = df.index.astype(str)
+    df = df.loc[df['tyndp_status'].isin(allowed_statuses)]
+    df = df.drop('tyndp_status', axis=1)
+    return df
+
+
 def base_network(
     eg_buses,
     eg_converters,
@@ -692,6 +739,12 @@ def base_network(
     country_shapes,
     offshore_shapes,
     parameter_corrections,
+    tyndp2020_new_buses,
+    tyndp2020_new_lines,
+    tyndp2020_new_links,
+    tyndp2020_upg_buses,
+    tyndp2020_upg_lines,
+    tyndp2020_upg_links,
     config,
 ):
 
@@ -705,6 +758,18 @@ def base_network(
 
     lines = _load_lines_from_eg(buses, eg_lines)
     transformers = _load_transformers_from_eg(buses, eg_transformers)
+
+    if config["TYNDP2020"].get("include"):
+        buses, lines, links = _integrate_tyndp_2020(buses,
+                                                    lines,
+                                                    links,
+                                                    tyndp2020_new_buses,
+                                                    tyndp2020_new_lines,
+                                                    tyndp2020_new_links,
+                                                    tyndp2020_upg_buses,
+                                                    tyndp2020_upg_lines,
+                                                    tyndp2020_upg_links,
+                                                    config)
 
     lines = _set_electrical_parameters_lines(lines, config)
     transformers = _set_electrical_parameters_transformers(transformers, config)
@@ -758,6 +823,12 @@ if __name__ == "__main__":
         snakemake.input.country_shapes,
         snakemake.input.offshore_shapes,
         snakemake.input.parameter_corrections,
+        snakemake.input.tyndp2020_new_buses,
+        snakemake.input.tyndp2020_new_lines,
+        snakemake.input.tyndp2020_new_links,
+        snakemake.input.tyndp2020_upg_buses,
+        snakemake.input.tyndp2020_upg_lines,
+        snakemake.input.tyndp2020_upg_links,
         snakemake.config,
     )
 
