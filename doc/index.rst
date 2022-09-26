@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2019-2020 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: 2019-2022 The PyPSA-Eur Authors
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -22,10 +22,6 @@ PyPSA-Eur: An Open Optimisation Model of the European Transmission System
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3520874.svg
     :target: https://doi.org/10.5281/zenodo.3520874
 
-.. image:: https://badges.gitter.im/PyPSA/community.svg
-    :target: https://gitter.im/PyPSA/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge
-    :alt: Chat on Gitter
-
 .. image:: https://img.shields.io/badge/snakemake-≥5.0.0-brightgreen.svg?style=flat
     :target: https://snakemake.readthedocs.io
     :alt: Snakemake
@@ -41,7 +37,7 @@ It contains alternating current lines at and above 220 kV voltage level and all 
 
 The model is suitable both for operational studies and generation and transmission expansion planning studies. The continental scope and highly resolved spatial scale enables a proper description of the long-range smoothing effects for renewable power generation and their varying resource availability.
 
-.. image:: img/base.png
+.. image:: img/elec.png
     :width: 50%
     :align: center
 
@@ -199,7 +195,7 @@ The included ``.nc`` files are PyPSA network files which can be imported with Py
 
     import pypsa
 
-    filename = "elec_s_1024_ec.nc" # example
+    filename = "elec_s_1024_ec.nc"  # example
     n = pypsa.Network(filename)
 
 Licence

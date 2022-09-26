@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: 2017-2020 The PyPSA-Eur Authors
+SPDX-FileCopyrightText: 2017-2022 The PyPSA-Eur Authors
 SPDX-License-Identifier: CC-BY-4.0
 -->
 
@@ -8,7 +8,6 @@ SPDX-License-Identifier: CC-BY-4.0
 [![Documentation](https://readthedocs.org/projects/pypsa-eur/badge/?version=latest)](https://pypsa-eur.readthedocs.io/en/latest/?badge=latest)
 ![Size](https://img.shields.io/github/repo-size/pypsa/pypsa-eur)
 [![Zenodo](https://zenodo.org/badge/DOI/10.5281/zenodo.3520874.svg)](https://doi.org/10.5281/zenodo.3520874)
-[![Gitter](https://badges.gitter.im/PyPSA/community.svg)](https://gitter.im/PyPSA/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![Snakemake](https://img.shields.io/badge/snakemake-≥5.0.0-brightgreen.svg?style=flat)](https://snakemake.readthedocs.io)
 [![REUSE status](https://api.reuse.software/badge/github.com/pypsa/pypsa-eur)](https://api.reuse.software/info/github.com/pypsa/pypsa-eur)
 
@@ -38,9 +37,7 @@ curtailment. We recommend to cluster the network to a couple of
 hundred nodes to remove these local inconsistencies. See the
 discussion in Section 3.4 "Model validation" of the paper.
 
-![PyPSA-Eur Grid Model](doc/img/base.png)
-
-![PyPSA-Eur Grid Model Simplified](doc/img/elec_s_X.png)
+![PyPSA-Eur Grid Model](doc/img/elec.png)
 
 The model building routines are defined through a snakemake workflow. The model is designed to be imported into the open toolbox
 [PyPSA](https://github.com/PyPSA/PyPSA) for operational studies as

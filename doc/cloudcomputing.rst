@@ -72,7 +72,7 @@ Step 3 - Installation of Cloud SDK
 
 - Download Google Cloud SDK `SDK <https://cloud.google.com/sdk>`_. Check that you are logged in in your Google account. The link should lead you to the Windows installation of Google Cloud SDK.
 - Follow the "Quickstart for Windows - Before you begin" steps.
-- After the successfull installation and initialization, close the Google Cloud SDK reopen it again. Type the following command into the "Google Cloud SDK Shell":
+- After the successful installation and initialization, close the Google Cloud SDK reopen it again. Type the following command into the "Google Cloud SDK Shell":
 
     .. code:: bash
 
@@ -107,7 +107,7 @@ Make sure that your instance is operating for the next steps.
 - Click on the advanced setting. SSH -> Authentication.
 - Option 1. Click on the Tools button and "Install Public Key into Server..". Somewhere in your folder structure must be a public key. I found it with the following folder syntax on my local windows computer -> :\Users\...\.ssh (there should be a PKK file).
 - Option 2. Click on the Tools button and "Generate new key pair...". Save the private key at a folder you remember and add it to the "private key file" field in WinSCP. Upload the public key to the metadeta of your instance.
-- Click ok and save. Then click Login. If successfull WinSCP will open on the left side your local computer folder structure and on the right side the folder strucutre of your VM. (If you followed Option 2 and its not initially working. Stop your instance, refresh the website, reopen the WinSCP field. Afterwards your your Login should be successfull)
+- Click ok and save. Then click Login. If successful WinSCP will open on the left side your local computer folder structure and on the right side the folder structure of your VM. (If you followed Option 2 and its not initially working. Stop your instance, refresh the website, reopen the WinSCP field. Afterwards your your Login should be successful)
 
 If you had struggle with the above steps, you could also try `this video <https://www.youtube.com/watch?v=lYx1oQkEF0E>`_.
 

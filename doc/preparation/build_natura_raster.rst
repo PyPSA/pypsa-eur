@@ -3,10 +3,10 @@
 
   SPDX-License-Identifier: CC-BY-4.0
 
-.. _prepare:
+.. _natura:
 
-Rule ``prepare_network``
-===========================
+Rule ``build_natura_raster``
+===============================
 
 .. graphviz::
     :align: center
@@ -25,18 +25,15 @@ Rule ``prepare_network``
         edge [color=grey,
             penwidth=2
         ];
-        0	 [color="0.53 0.6 0.85",
-            label=solve_network];
-        1	 [color="0.50 0.6 0.85",
+        9	 [color="0.22 0.6 0.85",
+            label=build_renewable_profiles];
+        12	 [color="0.31 0.6 0.85",
             fillcolor=gray,
-            label=prepare_network,
+            label=build_natura_raster,
             style=filled];
-        1 -> 0;
-        2	 [color="0.36 0.6 0.85",
-            label=cluster_network];
-        2 -> 1;
+        12 -> 9;
     }
 
 |
 
-.. automodule:: prepare_network
+.. automodule:: build_natura_raster
