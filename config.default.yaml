@@ -1,15 +1,18 @@
-# SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2022 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: CC0-1.0
 
-version: 0.4.0
+version: 0.6.1
 tutorial: false
 
 logging:
   level: INFO
   format: '%(levelname)s:%(name)s:%(message)s'
 
-summary_dir: results
+run:
+  name: "" # use this to keep track of runs with different settings
+  shared_cutouts: false # set to true to share the default cutout(s) across runs
+
 
 scenario:
   simpl: ['']
@@ -19,10 +22,6 @@ scenario:
 
 countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK']
 
-clustering:
-  simplify:
-    to_substations: false # network is simplified to nodes with positive or negative power injection (i.e. substations or offwind connections)
-
 snapshots:
   start: "2013-01-01"
   end: "2014-01-01"
@@ -31,6 +30,7 @@ snapshots:
 enable:
   prepare_links_p_nom: false
   retrieve_databundle: true
+  retrieve_cost_data: true
   build_cutout: false
   retrieve_cutout: true
   build_natura_raster: false
@@ -39,71 +39,94 @@ enable:
 
 electricity:
   voltages: [220., 300., 380.]
+  gaslimit: false # global gas usage limit of X MWh_th
   co2limit: 7.75e+7 # 0.05 * 3.1e9*0.5
   co2base: 1.487e+9
   agg_p_nom_limits: data/agg_p_nom_minmax.csv
 
-  extendable_carriers:
-    Generator: []
-    StorageUnit: [] # battery, H2
-    Store: [battery, H2]
-    Link: []
+  operational_reserve: # like https://genxproject.github.io/GenX/dev/core/#Reserves
+    activate: false
+    epsilon_load: 0.02 # share of total load
+    epsilon_vres: 0.02 # share of total renewable supply
+    contingency: 4000 # fixed capacity in MW
 
   max_hours:
     battery: 6
     H2: 168
 
-  powerplants_filter: false # use pandas query strings here, e.g. Country not in ['Germany']
-  custom_powerplants: false # use pandas query strings here, e.g. Country in ['Germany']
-  conventional_carriers: [nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
-  renewable_capacities_from_OPSD: [] # onwind, offwind, solar
+  extendable_carriers:
+    Generator: [solar, onwind, offwind-ac, offwind-dc, OCGT]
+    StorageUnit: [] # battery, H2
+    Store: [battery, H2]
+    Link: [] # H2 pipeline
 
-  # estimate_renewable_capacities_from_capacity_stats:
-  #   # Wind is the Fueltype in ppm.data.Capacity_stats, onwind, offwind-{ac,dc} the carrier in PyPSA-Eur
-  #   Wind: [onwind, offwind-ac, offwind-dc]
-  #   Solar: [solar]
+  # use pandas query strings here, e.g. Country not in ['Germany']
+  powerplants_filter: (DateOut >= 2022 or DateOut != DateOut)
+  # use pandas query strings here, e.g. Country in ['Germany']
+  custom_powerplants: false
+
+  conventional_carriers: [nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
+  renewable_carriers: [solar, onwind, offwind-ac, offwind-dc, hydro]
+
+  estimate_renewable_capacities:
+    enable: true
+    # Add capacities from OPSD data
+    from_opsd: true
+    # Renewable capacities are based on existing capacities reported by IRENA
+    year: 2020
+    # Artificially limit maximum capacities to factor * (IRENA capacities),
+    # i.e. 110% of <years>'s capacities => expansion_limit: 1.1
+    # false: Use estimated renewable potentials determine by the workflow
+    expansion_limit: false
+    technology_mapping:
+      # Wind is the Fueltype in powerplantmatching, onwind, offwind-{ac,dc} the carrier in PyPSA-Eur
+      Offshore: [offwind-ac, offwind-dc]
+      Onshore: [onwind]
+      PV: [solar]
 
 atlite:
   nprocesses: 4
   cutouts:
     # use 'base' to determine geographical bounds and time span from config
-    # base: 
-      # module: era5  
+    # base:
+      # module: era5
     europe-2013-era5:
-      module: era5 # in priority order 
+      module: era5 # in priority order
       x: [-12., 35.]
       y: [33., 72]
       dx: 0.3
       dy: 0.3
       time: ['2013', '2013']
     europe-2013-sarah:
-      module: [sarah, era5] # in priority order 
+      module: [sarah, era5] # in priority order
       x: [-12., 45.]
       y: [33., 65]
       dx: 0.2
       dy: 0.2
       time: ['2013', '2013']
       sarah_interpolate: false
-      sarah_dir: 
+      sarah_dir:
       features: [influx, temperature]
 
-      
+
 renewable:
   onwind:
     cutout: europe-2013-era5
     resource:
       method: wind
       turbine: Vestas_V112_3MW
-    capacity_per_sqkm: 3 # ScholzPhd Tab 4.3.1: 10MW/km^2
+    capacity_per_sqkm: 3 # ScholzPhd Tab 4.3.1: 10MW/km^2 and assuming 30% fraction of the already restricted
+    # area is available for installation of wind generators due to competing land use and likely public
+    # acceptance issues.
     # correction_factor: 0.93
     corine:
       # Scholz, Y. (2012). Renewable energy based electricity supply at low costs:
       #  development of the REMix model and application for Europe. ( p.42 / p.28)
-      grid_codes: [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
-                   24, 25, 26, 27, 28, 29, 31, 32]
+      grid_codes: [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 31, 32]
       distance: 1000
       distance_grid_codes: [1, 2, 3, 4, 5, 6]
     natura: true
+    excluder_resolution: 100
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   offwind-ac:
@@ -111,15 +134,19 @@ renewable:
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_5MW_offshore
-    capacity_per_sqkm: 2
+    capacity_per_sqkm: 2 # ScholzPhd Tab 4.3.1: 10MW/km^2 and assuming 20% fraction of the already restricted
+    # area is available for installation of wind generators due to competing land use and likely public
+    # acceptance issues.
     correction_factor: 0.8855
     # proxy for wake losses
     # from 10.1016/j.energy.2018.08.153
     # until done more rigorously in #153
     corine: [44, 255]
     natura: true
+    ship_threshold: 400
     max_depth: 50
     max_shore_distance: 30000
+    excluder_resolution: 200
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   offwind-dc:
@@ -127,16 +154,19 @@ renewable:
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_5MW_offshore
-    # ScholzPhd Tab 4.3.1: 10MW/km^2
-    capacity_per_sqkm: 2
+    capacity_per_sqkm: 2 # ScholzPhd Tab 4.3.1: 10MW/km^2 and assuming 20% fraction of the already restricted
+    # area is available for installation of wind generators due to competing land use and likely public
+    # acceptance issues.
     correction_factor: 0.8855
     # proxy for wake losses
     # from 10.1016/j.energy.2018.08.153
     # until done more rigorously in #153
     corine: [44, 255]
     natura: true
+    ship_threshold: 400
     max_depth: 50
     min_shore_distance: 30000
+    excluder_resolution: 200
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   solar:
@@ -147,7 +177,7 @@ renewable:
       orientation:
         slope: 35.
         azimuth: 180.
-    capacity_per_sqkm: 1.7 # ScholzPhd Tab 4.3.1: 170 MW/km^2
+    capacity_per_sqkm: 1.7 # ScholzPhd Tab 4.3.1: 170 MW/km^2 and assuming 1% of the area can be used for solar PV panels
     # Correction factor determined by comparing uncorrected area-weighted full-load hours to those
     # published in Supplementary Data to
     # Pietzcker, Robert Carl, et al. "Using the sun to decarbonize the power
@@ -156,9 +186,9 @@ renewable:
     # This correction factor of 0.854337 may be in order if using reanalysis data.
     # for discussion refer to https://github.com/PyPSA/pypsa-eur/pull/304
     # correction_factor: 0.854337
-    corine: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
-             14, 15, 16, 17, 18, 19, 20, 26, 31, 32]
+    corine: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 26, 31, 32]
     natura: true
+    excluder_resolution: 100
     potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   hydro:
@@ -167,6 +197,10 @@ renewable:
     PHS_max_hours: 6
     hydro_max_hours: "energy_capacity_totals_by_country" # one of energy_capacity_totals_by_country, estimate_by_large_installations or a float
     clip_min_inflow: 1.0
+
+conventional:
+  nuclear:
+    p_max_pu: "data/nuclear_p_max_pu.csv" # float of file name
 
 lines:
   types:
@@ -190,17 +224,26 @@ transformers:
   type: ''
 
 load:
-  power_statistics: True # only for files from <2019; set false in order to get ENTSOE transparency data 
+  power_statistics: true # only for files from <2019; set false in order to get ENTSOE transparency data
   interpolate_limit: 3 # data gaps up until this size are interpolated linearly
-  time_shift_for_large_gaps: 1w # data gaps up until this size are copied by copying from 
+  time_shift_for_large_gaps: 1w # data gaps up until this size are copied by copying from
   manual_adjustments: true # false
   scaling_factor: 1.0
 
 costs:
   year: 2030
-  discountrate: 0.07 # From a Lion Hirth paper, also reflects average of Noothout et al 2016
-  USD2013_to_EUR2013: 0.7532 # [EUR/USD] ECB: https://www.ecb.europa.eu/stats/exchange/eurofxref/html/eurofxref-graph-usd.en.html
-  marginal_cost: # EUR/MWh
+  version: v0.4.0
+  rooftop_share: 0.14  # based on the potentials, assuming  (0.1 kW/m2 and 10 m2/person)
+  fill_values:
+    FOM: 0
+    VOM: 0
+    efficiency: 1
+    fuel: 0
+    investment: 0
+    lifetime: 25
+    "CO2 intensity": 0
+    "discount rate": 0.07
+  marginal_cost:
     solar: 0.01
     onwind: 0.015
     offwind: 0.015
@@ -212,6 +255,27 @@ costs:
     battery inverter: 0.
   emission_prices: # in currency per tonne emission, only used with the option Ep
     co2: 0.
+
+clustering:
+  simplify_network:
+    to_substations: false # network is simplified to nodes with positive or negative power injection (i.e. substations or offwind connections)
+    algorithm: kmeans # choose from: [hac, kmeans]
+    feature: solar+onwind-time # only for hac. choose from: [solar+onwind-time, solar+onwind-cap, solar-time, solar-cap, solar+offwind-cap] etc.
+    exclude_carriers: []
+  cluster_network:
+    algorithm: kmeans
+    feature: solar+onwind-time
+    exclude_carriers: []
+  aggregation_strategies:
+    generators:
+      p_nom_max: sum # use "min" for more conservative assumptions
+      p_nom_min: sum
+      p_min_pu: mean
+      marginal_cost: mean
+      committable: any
+      ramp_limit_up: max
+      ramp_limit_down: max
+      efficiency: mean
 
 solving:
   options:
@@ -245,7 +309,7 @@ solving:
 plotting:
   map:
     figsize: [7, 7]
-    boundaries: [-10.2, 29, 35,  72]
+    boundaries: [-10.2, 29, 35, 72]
     p_nom:
       bus_size_factor: 5.e+4
       linewidth_factor: 3.e+3
@@ -264,50 +328,50 @@ plotting:
   AC_carriers: ["AC line", "AC transformer"]
   link_carriers: ["DC line", "Converter AC-DC"]
   tech_colors:
-    "onwind" : "#235ebc"
-    "onshore wind" : "#235ebc"
-    'offwind' : "#6895dd"
-    'offwind-ac' : "#6895dd"
-    'offshore wind' : "#6895dd"
-    'offshore wind ac' : "#6895dd"
-    'offwind-dc' : "#74c6f2"
-    'offshore wind dc' : "#74c6f2"
-    "hydro" : "#08ad97"
-    "hydro+PHS" : "#08ad97"
-    "PHS" : "#08ad97"
-    "hydro reservoir" : "#08ad97"
-    'hydroelectricity' : '#08ad97'
-    "ror" : "#4adbc8"
-    "run of river" : "#4adbc8"
-    'solar' : "#f9d002"
-    'solar PV' : "#f9d002"
-    'solar thermal' : '#ffef60'
-    'biomass' : '#0c6013'
-    'solid biomass' : '#06540d'
-    'biogas' : '#23932d'
-    'waste' : '#68896b'
-    'geothermal' : '#ba91b1'
-    "OCGT" : "#d35050"
-    "gas" : "#d35050"
-    "natural gas" : "#d35050"
-    "CCGT" : "#b20101"
-    "nuclear" : "#ff9000"
-    "coal" : "#707070"
-    "lignite" : "#9e5a01"
-    "oil" : "#262626"
-    "H2" : "#ea048a"
-    "hydrogen storage" : "#ea048a"
-    "battery" : "#b8ea04"
-    "Electric load" : "#f9d002"
-    "electricity" : "#f9d002"
-    "lines" : "#70af1d"
-    "transmission lines" : "#70af1d"
-    "AC-AC" : "#70af1d"
-    "AC line" : "#70af1d"
-    "links" : "#8a1caf"
-    "HVDC links" : "#8a1caf"
-    "DC-DC" : "#8a1caf"
-    "DC link" : "#8a1caf"
+    "onwind": "#235ebc"
+    "onshore wind": "#235ebc"
+    'offwind': "#6895dd"
+    'offwind-ac': "#6895dd"
+    'offshore wind': "#6895dd"
+    'offshore wind ac': "#6895dd"
+    'offwind-dc': "#74c6f2"
+    'offshore wind dc': "#74c6f2"
+    "hydro": "#08ad97"
+    "hydro+PHS": "#08ad97"
+    "PHS": "#08ad97"
+    "hydro reservoir": "#08ad97"
+    'hydroelectricity': '#08ad97'
+    "ror": "#4adbc8"
+    "run of river": "#4adbc8"
+    'solar': "#f9d002"
+    'solar PV': "#f9d002"
+    'solar thermal': '#ffef60'
+    'biomass': '#0c6013'
+    'solid biomass': '#06540d'
+    'biogas': '#23932d'
+    'waste': '#68896b'
+    'geothermal': '#ba91b1'
+    "OCGT": "#d35050"
+    "gas": "#d35050"
+    "natural gas": "#d35050"
+    "CCGT": "#b20101"
+    "nuclear": "#ff9000"
+    "coal": "#707070"
+    "lignite": "#9e5a01"
+    "oil": "#262626"
+    "H2": "#ea048a"
+    "hydrogen storage": "#ea048a"
+    "battery": "#b8ea04"
+    "Electric load": "#f9d002"
+    "electricity": "#f9d002"
+    "lines": "#70af1d"
+    "transmission lines": "#70af1d"
+    "AC-AC": "#70af1d"
+    "AC line": "#70af1d"
+    "links": "#8a1caf"
+    "HVDC links": "#8a1caf"
+    "DC-DC": "#8a1caf"
+    "DC link": "#8a1caf"
   nice_names:
     OCGT: "Open-Cycle Gas"
     CCGT: "Combined-Cycle Gas"

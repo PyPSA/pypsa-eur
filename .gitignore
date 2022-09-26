@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2022 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: CC0-1.0
 
@@ -19,6 +19,7 @@ gurobi.log
 /data
 /data/links_p_nom.csv
 /cutouts
+/dask-worker-space
 
 doc/_build
 
