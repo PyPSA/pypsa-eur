@@ -699,12 +699,10 @@ def _integrate_tyndp_2020(buses,
     upg_lines = _read_drop_statusbased(upg_lines, allowed_statuses)
     upg_links = _read_drop_statusbased(upg_links, allowed_statuses)
 
-    # add standard values for lines without v_nom
-    # TODO: search for standard approach in code
-    # new_lines.loc[:, 'v_nom'] = new_lines.loc[:, 'v_nom'].fillna(380)
-    # upg_lines.loc[:, 'v_nom'] = upg_lines.loc[:, 'v_nom'].fillna(380)
-    # new_links.loc[:, 'v_nom'] = new_links.loc[:, 'v_nom'].fillna(380)
-    # upg_links.loc[:, 'v_nom'] = upg_links.loc[:, 'v_nom'].fillna(380)
+    # add 'commissioning_year' to existing assets (beginning of UNIX time)
+    buses.loc[:, 'commissioning_year'] = pd.to_datetime(0)
+    lines.loc[:, 'commissioning_year'] = pd.to_datetime(0)
+    links.loc[:, 'commissioning_year'] = pd.to_datetime(0)
 
     # append new assets
     buses = pd.concat([buses, new_buses])
@@ -716,14 +714,30 @@ def _integrate_tyndp_2020(buses,
     lines.update(upg_lines)
     links.update(upg_links)
 
+    # Drop lines or links if their 'bus0' or 'bus1' columns contain
+    # buses that were dropped due to their 'tyndp_status'.
+    lines = lines.loc[lines.bus0.isin(buses)
+                      & lines.bus1.isin(buses)]
+    links = links.loc[links.bus0.isin(buses)
+                      & links.bus1.isin(buses)]
+
     return buses, lines, links
 
 
 def _read_drop_statusbased(tyndp_file, allowed_statuses):
-    df = pd.read_csv(tyndp_file, index_col=0)
+    df = pd.read_csv(tyndp_file,
+                     index_col=0,
+                     dtype={
+                         "bus0": "str",
+                         "bus1": "str",
+                         "underground": "bool"
+                     })
     df.index = df.index.astype(str)
+    df.loc[:, 'commissioning_year'] = pd.to_datetime(df['commissioning_year'],
+                                                     format="%Y")
     df = df.loc[df['tyndp_status'].isin(allowed_statuses)]
     df = df.drop('tyndp_status', axis=1)
+    df['under_construction'] = True
     return df
 
 
