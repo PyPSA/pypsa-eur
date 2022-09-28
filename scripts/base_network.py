@@ -713,13 +713,12 @@ def _integrate_tyndp_2020(buses,
     buses.update(upg_buses)
     lines.update(upg_lines)
     links.update(upg_links)
-
     # Drop lines or links if their 'bus0' or 'bus1' columns contain
     # buses that were dropped due to their 'tyndp_status'.
-    lines = lines.loc[lines.bus0.isin(buses)
-                      & lines.bus1.isin(buses)]
-    links = links.loc[links.bus0.isin(buses)
-                      & links.bus1.isin(buses)]
+    lines = lines.loc[lines.bus0.isin(buses.index)
+                      & lines.bus1.isin(buses.index)]
+    links = links.loc[links.bus0.isin(buses.index)
+                      & links.bus1.isin(buses.index)]
 
     return buses, lines, links
 
@@ -727,11 +726,7 @@ def _integrate_tyndp_2020(buses,
 def _read_drop_statusbased(tyndp_file, allowed_statuses):
     df = pd.read_csv(tyndp_file,
                      index_col=0,
-                     dtype={
-                         "bus0": "str",
-                         "bus1": "str",
-                         "underground": "bool"
-                     })
+                     dtype={"bus0": "str", "bus1": "str"})
     df.index = df.index.astype(str)
     df.loc[:, 'commissioning_year'] = pd.to_datetime(df['commissioning_year'],
                                                      format="%Y")
