@@ -104,6 +104,6 @@ jobs:
           conda activate pypsa-eur
           conda list
           cp test/config.overnight.yaml config.yaml
-          snakemake -call solve_all_networks
+          snakemake -call
           cp test/config.myopic.yaml config.yaml
-          snakemake -call solve_all_networks
+          snakemake -call

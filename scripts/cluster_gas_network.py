@@ -8,9 +8,8 @@ import geopandas as gpd
 
 from shapely import wkt
 from pypsa.geo import haversine_pts
-from distutils.version import StrictVersion
+from packaging.version import Version, parse
 
-gpd_version = StrictVersion(gpd.__version__)
 
 def concat_gdf(gdf_list, crs='EPSG:4326'):
     """Concatenate multiple geopandas dataframes with common coordinate reference system (crs)."""
@@ -34,7 +33,7 @@ def build_clustered_gas_network(df, bus_regions, length_factor=1.25):
 
         gdf = gpd.GeoDataFrame(geometry=df[f"point{i}"], crs="EPSG:4326")
 
-        kws = dict(op="within") if gpd_version < '0.10' else dict(predicate="within")
+        kws = dict(op="within") if parse(gpd.__version__) < Version('0.10') else dict(predicate="within")
         bus_mapping = gpd.sjoin(gdf, bus_regions, how="left", **kws).index_right
         bus_mapping = bus_mapping.groupby(bus_mapping.index).first()
 

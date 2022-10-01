@@ -260,6 +260,9 @@ sector:
   biomass_transport: false  # biomass transport between nodes
   conventional_generation: # generator : carrier
     OCGT: gas
+  biomass_boiler: false
+  biomass_to_liquid: false
+  biosng: false
 
 
 industry:
@@ -314,6 +317,7 @@ industry:
   # Material Economics (2019): https://materialeconomics.com/latest-updates/industrial-transformation-2050
 
 costs:
+  year: 2030
   lifetime: 25 #default lifetime
   # From a Lion Hirth paper, also reflects average of Noothout et al 2016
   discountrate: 0.07

@@ -1,7 +1,9 @@
 import os
+import yaml
 import pytz
 import pandas as pd
 from pathlib import Path
+from snakemake.utils import update_config
 from pypsa.descriptors import Dict
 from pypsa.components import components, component_attrs
 
@@ -58,6 +60,7 @@ def mock_snakemake(rulename, **wildcards):
     import os
     from pypsa.descriptors import Dict
     from snakemake.script import Snakemake
+    from packaging.version import Version, parse
 
     script_dir = Path(__file__).parent.resolve()
     assert Path.cwd().resolve() == script_dir, \
@@ -67,7 +70,8 @@ def mock_snakemake(rulename, **wildcards):
         if os.path.exists(p):
             snakefile = p
             break
-    workflow = sm.Workflow(snakefile, overwrite_configfiles=[])
+    kwargs = dict(rerun_triggers=[]) if parse(sm.__version__) > Version("7.7.0") else {}
+    workflow = sm.Workflow(snakefile, overwrite_configfiles=[], **kwargs)
     workflow.include(snakefile)
     workflow.global_resources = {}
     rule = workflow.get_rule(rulename)
@@ -123,3 +127,17 @@ def generate_periodic_profiles(dt_index, nodes, weekly_profile, localize=None):
     week_df = week_df.tz_localize(localize)
 
     return week_df
+
+
+def parse(l):
+    if len(l) == 1:
+        return yaml.safe_load(l[0])
+    else:
+        return {l.pop(0): parse(l)}
+
+
+def update_config_with_sector_opts(config, sector_opts):
+    for o in sector_opts.split("-"):
+        if o.startswith("CF:"):
+            l = o.split("+")[1:]
+            update_config(config, parse(l))
