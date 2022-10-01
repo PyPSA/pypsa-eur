@@ -52,6 +52,7 @@ def rename_techs(label):
         "ror": "hydroelectricity",
         "hydro": "hydroelectricity",
         "PHS": "hydroelectricity",
+        "NH3": "ammonia",
         "co2 Store": "DAC",
         "co2 stored": "CO2 sequestration",
         "AC": "transmission lines",
@@ -107,6 +108,7 @@ preferred_order = pd.Index([
     "natural gas",
     "helmeth",
     "methanation",
+    "ammonia",
     "hydrogen storage",
     "power-to-gas",
     "power-to-liquid",
@@ -255,7 +257,7 @@ def plot_balances():
         df = df / 1e6
 
         #remove trailing link ports
-        df.index = [i[:-1] if ((i != "co2") and (i[-1:] in ["0","1","2","3"])) else i for i in df.index]
+        df.index = [i[:-1] if ((i not in ["co2", "NH3"]) and (i[-1:] in ["0","1","2","3"])) else i for i in df.index]
 
         df = df.groupby(df.index.map(rename_techs)).sum()
 

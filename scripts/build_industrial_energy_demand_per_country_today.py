@@ -65,6 +65,8 @@ def industrial_energy_demand_per_country(country):
 
         df = df_dict[sheet][year].groupby(fuels).sum()
 
+        df["ammonia"] = 0.
+
         df['other'] = df['all'] - df.loc[df.index != 'all'].sum()
 
         return df
@@ -89,18 +91,21 @@ def add_ammonia_energy_demand(demand):
     fn = snakemake.input.ammonia_production
     ammonia = pd.read_csv(fn, index_col=0)[str(year)] / 1e3
 
-    def ammonia_by_fuel(x):
+    def get_ammonia_by_fuel(x):
 
         fuels = {'gas': config['MWh_CH4_per_tNH3_SMR'],
                  'electricity': config['MWh_elec_per_tNH3_SMR']}
 
         return pd.Series({k: x*v for k,v in fuels.items()})
 
-    ammonia = ammonia.apply(ammonia_by_fuel).T
+    ammonia_by_fuel = ammonia.apply(get_ammonia_by_fuel).T
+    ammonia_by_fuel = ammonia_by_fuel.unstack().reindex(index=demand.index, fill_value=0.)
+
+    ammonia = pd.DataFrame({"ammonia": ammonia * config['MWh_NH3_per_tNH3']}).T
 
     demand['Ammonia'] = ammonia.unstack().reindex(index=demand.index, fill_value=0.)
 
-    demand['Basic chemicals (without ammonia)'] = demand["Basic chemicals"] - demand["Ammonia"]
+    demand['Basic chemicals (without ammonia)'] = demand["Basic chemicals"] - ammonia_by_fuel
 
     demand['Basic chemicals (without ammonia)'].clip(lower=0, inplace=True)
 
