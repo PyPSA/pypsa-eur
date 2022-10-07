@@ -162,7 +162,7 @@ For the myopic transition paths, capacities already existing for technologies su
 Activated in Config from the `tes <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L228>`_ option.
 
 Thermal energy can be stored in large water pits associated with district heating systems and individual thermal energy storage (TES), i.e., small water tanks. Water tanks are modelled as `stores <https://pypsa.readthedocs.io/en/latest/components.html?highlight=distribution#store,  which are connected to heat demand buses through water charger/discharger links>`_.
-A thermal energy density of 46.8 kWh $_{th}$/m3 is assumed, corresponding to a temperature difference of 40 K. The decay of thermal energy in the stores: 1- $e^{-1/24τ}$ is assumed to have a time constant  of  t=180 days for central TES and  t=3 days for individual TES, both modifiable through `tes_tau <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L229>`_ in config file. Charging and discharging efficiencies are 90% due to pipe losses.
+A thermal energy density of 46.8 kWh $_{th}$/m3 is assumed, corresponding to a temperature difference of 40 K. The decay of thermal energy in the stores: 1- $e^{-1/24τ}$ is assumed to have a time constant  of  τ=180 days for central TES and  τ=3 days for individual TES, both modifiable through `tes_tau <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L229>`_ in config file. Charging and discharging efficiencies are 90% due to pipe losses.
 
 **Retrofitting of the thermal envelope of buildings**
 
@@ -468,7 +468,7 @@ This subsector includes the manufacturing of cement, ceramics, and glass.
 
 *Cement*
 
-Cement is used in construction to make concrete. The production of cement involves high energy consumption and large process emissions. The calcination of limestone to chemically reactive calcium oxide, also known as lime, involves process emissions of 0.54 t$_{CO_2}$ /t cement (see `Akhtar et al. <https://doi.org/10.1109/CITCON.2013.6525276>`_.		
+Cement is used in construction to make concrete. The production of cement involves high energy consumption and large process emissions. The calcination of limestone to chemically reactive calcium oxide, also known as lime, involves process emissions of 0.54 t $_{CO_2}$ /t cement (see `Akhtar et al. <https://doi.org/10.1109/CITCON.2013.6525276>`_.		
 
 
 $$
@@ -484,18 +484,18 @@ With the exception of electricity demand and biomass demand for low-temperature 
 
 *Ceramics*
 
-The ceramics sector is assumed to be fully electrified based on the current efficiency of already electrified processes which include microwave drying and sintering of raw ma- terials, electric kilns for primary production processes, electric furnaces for the `product finishing <https://data.europa.eu/doi/10.2760/182725>`_. In total, the final electricity consumption is 0.44 MWh/t of ceramic. The manufacturing of ceramics includes process emissions of 0.03 t $_{CO_2} $/t of ceramic. For a detailed overview of the ceramics industry sector see `Furszyfer Del Rio et al <https://doi.org/10.1016/j.rser.2021.111885>`_.
+The ceramics sector is assumed to be fully electrified based on the current efficiency of already electrified processes which include microwave drying and sintering of raw materials, electric kilns for primary production processes, electric furnaces for the `product finishing <https://data.europa.eu/doi/10.2760/182725>`_. In total, the final electricity consumption is 0.44 MWh/t of ceramic. The manufacturing of ceramics includes process emissions of 0.03 t $_{CO_2} $/t of ceramic. For a detailed overview of the ceramics industry sector see `Furszyfer Del Rio et al <https://doi.org/10.1016/j.rser.2021.111885>`_.
 
 *Glass*
 
-The production of glass is assumed to be fully electrified based on the current efficiency of electric melting tanks and electric annealing which adds up to an electricity demand of 2.07 MWh$_{el}l/t of `glass <https://doi.org/10/f9df2m>`_. The manufacturing of glass incurs process emissions of 0.1 t $_{CO_2} $/t of glass. Potential efficiency improvements, which according to `Lechtenböhmer et al <https://doi.org/10/f9df2m>`_ could reduce energy demands to 0.85 MW $_{el}$/t of glass, have not been considered. For a detailed overview of the glass industry sector see `Furszyfer Del Rio et al <https://doi.org/10.1016/j.rser.2021.111885>`_.
+The production of glass is assumed to be fully electrified based on the current efficiency of electric melting tanks and electric annealing which adds up to an electricity demand of 2.07 MWh $_{el}l/t of `glass <https://doi.org/10/f9df2m>`_. The manufacturing of glass incurs process emissions of 0.1 t $_{CO_2} $/t of glass. Potential efficiency improvements, which according to `Lechtenböhmer et al <https://doi.org/10/f9df2m>`_ could reduce energy demands to 0.85 MW $_{el}$/t of glass, have not been considered. For a detailed overview of the glass industry sector see `Furszyfer Del Rio et al <https://doi.org/10.1016/j.rser.2021.111885>`_.
 
 
 **Non-ferrous Metals**
 
 The non-ferrous metal subsector includes the manufacturing of base metals (aluminium, copper, lead, zink), precious metals (gold, silver), and technology metals (molybdenum, cobalt, silicon).					
 
-The manufacturing of aluminium accounts for more than half of the final energy con- sumption of this subsector. Two alternative processing routes are used today to manu- facture aluminium in Europe. The primary route represents 40% of the aluminium pro- duction, while the secondary route represents the remaining 60%.		
+The manufacturing of aluminium accounts for more than half of the final energy consumption of this subsector. Two alternative processing routes are used today to manufacture aluminium in Europe. The primary route represents 40% of the aluminium pro- duction, while the secondary route represents the remaining 60%.		
 
 The primary route involves two energy-intensive processes: the production of alumina from bauxite (aluminium ore) and the electrolysis to transform alumina into aluminium via the Hall-Héroult process
 
@@ -507,7 +507,7 @@ The primary route requires high-enthalpy heat (2.3 MWh/t) to produce alumina whi
 					
 In the secondary route, scrap aluminium is remelted. The energy demand for this process is only 10% of the primary route and there are no associated process emissions. Assuming all subprocesses are electrified, the secondary route requires 1.7 MWh/t of aluminium. The share of aliminum manufactured by the primary and secondary route can be selected in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L297>`_]
 	
-For the other non-ferrous metals, we assume the electrification of the entire manufactur- ing process with an average electricity demand of 3.2 MWh $_{el}$/t lead equivalent. 			
+For the other non-ferrous metals, we assume the electrification of the entire manufacturing process with an average electricity demand of 3.2 MWh $_{el}$/t lead equivalent. 			
 
 **Other Industry Subsectors**
 
@@ -536,7 +536,7 @@ The most important settings for land transport are the exogenously fixed fuel mi
 
 *Battery Electric vehicles (BEV)*
 
-For the electrified land transport, country-specific factors are computed by comparing the `current car final energy consumption per km in <https://www.sciencedirect.com/science/article/pii/S0360544216310295>`_ (average for Europe 0.7 kWh/km) to the 0.18 kWh/km value assumed for battery-to-wheels efficiency in EVs. The characteristic `weekly profile <https://www.bast.de/DE/Verkehrstechnik/Fachthemen/v2-verkehrszaehlung/zaehl_node.html>`_ provided by the German Federal Highway Research Institute (BASt) is used to obtain hourly time series for European countries taking into account the corresponding local times. Furthermore, a temperature dependence is included in the time series to account for heating/cooling demand in transport. For temperatures `below <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L166>`_/`above <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L165>`_ certain threshold values, e.g. 15C/20C, `temperature coefficients <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L169>`_ of typically 0.98%/C and 0.63%/C are assumed, based on the `paper <https://www.sciencedirect.com/science/article/pii/S036054421831288X>`_.
+For the electrified land transport, country-specific factors are computed by comparing the `current car final energy consumption per km in <https://www.sciencedirect.com/science/article/pii/S0360544216310295>`_ (average for Europe 0.7 kWh/km) to the 0.18 kWh/km value assumed for battery-to-wheels efficiency in EVs. The characteristic `weekly profile <https://www.bast.de/DE/Verkehrstechnik/Fachthemen/v2-verkehrszaehlung/zaehl_node.html>`_ provided by the German Federal Highway Research Institute (BASt) is used to obtain hourly time series for European countries taking into account the corresponding local times. Furthermore, a temperature dependence is included in the time series to account for heating/cooling demand in transport. For temperatures `below <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L166>`_/`above <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L165>`_ certain threshold values, e.g. 15 °C/20 °C, `temperature coefficients <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L169>`_ of typically 0.98%/°C and 0.63%/°C are assumed, based on the `paper <https://www.sciencedirect.com/science/article/pii/S036054421831288X>`_.
 
 For BEVs the user can define the `storage energy capacity <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L173>`_, `charging power capacity <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L176>`_, and `charging efficiency <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L174>`_.
 
@@ -607,7 +607,7 @@ naphtha). If captured carbon is used, the $CO_2$ emissions of the synthetic fuel
 
 *Carbon dioxide sequestration*
 
-Captured $CO_2$ can also be sequestered underground up to an annual sequestration limit of 200 Mt$_{CO_2}$/a. This limit can be chosen in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L246>`_. As stored carbon dioxide is modelled as a single node for Europe, $CO_2$ transport constraints are neglected. Since $CO_2$ sequestration is an immature technology, the cost assumption is defined in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L247>`_.
+Captured $CO_2$ can also be sequestered underground up to an annual sequestration limit of 200 Mt $_{CO_2}$/a. This limit can be chosen in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L246>`_. As stored carbon dioxide is modelled as a single node for Europe, $CO_2$ transport constraints are neglected. Since $CO_2$ sequestration is an immature technology, the cost assumption is defined in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L247>`_.
 
 *Carbon dioxide transport*
 
