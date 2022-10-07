@@ -354,7 +354,7 @@ The overarching modelling procedure can be described as follows. First, the ener
 
 Missing or too coarsely aggregated data in the JRC-IDEES database is supplemented with additional datasets: `Eurostat energy balances <https://ec.europa.eu/eurostat/web/energy/data/energy-balances>`_, `United States <https://www.usgs.gov/media/files/%20nitrogen-2017-xlsx>`_,  `Geological Survey <https://www.usgs.gov/media/files/%20nitrogen-2017-xlsx>`_ for ammonia production, `DECHEMA <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry.pdf>`_ for methanol and chlorine, and `national statistics from Switzerland <https://www.bfe.admin.ch/bfe/de/home/versorgung/statistik-und-geodaten/energiestatistiken.html>`_. 
 
-
+:ref:`process-emissions`	
 Where there are fossil and electrified alternatives for the same process (e.g. in glass manufacture or drying), we assume that the process is completely electrified. Current electricity demands (lighting, air compressors, motor drives, fans, pumps) will remain electric. Processes that require temperatures below 500 °C are supplied with solid biomass, since we assume that residues and wastes are not suitable for high-temperature applications. We see solid biomass use primarily in the pulp and paper industry, where it is already widespread, and in food, beverages and tobacco, where it replaces natural gas. Industries which require high temperatures (above 500 °C), such as metals, chemicals and non-metallic minerals are either electrified where suitable processes already exist, or the heat is provided with synthetic methane. 
 
 Hydrogen for high-temperature process heat is not part of the model currently. 
@@ -368,6 +368,8 @@ The following figure shows the final consumption of energy and non-energy feedst
 
 The following figure shows the process emissions in industry today (top bar) and in 2050 without
 carbon capture (bottom bar) assumed in `Neumann et al <https://arxiv.org/abs/2207.05816>`_. 
+
+. _process-emissions:
 
 .. image:: ../graphics/process-emissions.png
 
