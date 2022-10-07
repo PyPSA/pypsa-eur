@@ -201,7 +201,7 @@ Hydrogen is also used for transport applications (see :ref:`Transportation`), wh
 Hydrogen supply
 =============================
 
-Today, most of the H2 consumed globally is produced from natural gas by steam methane reforming (SMR)
+Today, most of the H $_2$ consumed globally is produced from natural gas by steam methane reforming (SMR)
 
 $$
 CH_4 + H_2O → CO + 3H_2
@@ -214,7 +214,7 @@ CO + H_2O → CO_2 + H_2
 $$
 
 SMR is included `here <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L245>`_. 
-PyPSA-Eur-Sec allows this route of H2 production with and without [carbon capture (CC)] (see :ref:`Carbon dioxide capture, usage and sequestration (CCU/S)`). These routes are often referred to as blue and grey hydrogen. Here, methane input can be both of fossil or synthetic origin.
+PyPSA-Eur-Sec allows this route of H $_2$ production with and without [carbon capture (CC)] (see :ref:`Carbon dioxide capture, usage and sequestration (CCU/S)`). These routes are often referred to as blue and grey hydrogen. Here, methane input can be both of fossil or synthetic origin.
 
 Green hydrogen can be produced by electrolysis to split water into hydrogen and oxygen
 
@@ -224,12 +224,12 @@ $$
 
 For the electrolysis, alkaline electrolysers are chosen since they have lower cost and higher cumulative installed capacity than polymer electrolyte membrane (PEM) electrolysers. The techno-economic assumptions are taken from the technology-data repository. Waste heat from electrolysis is not leveraged in the model.
 
-*Transport*
+**Transport**
 
-Hydrogen is transported by pipelines. H2 pipelines are endogenously generated, either via a  greenfield H2 network, or by `retrofitting natural gas pipelines <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L262>`_). Retrofitting is implemented in such a way that for every unit of decommissioned gas pipeline, a share (60% is used in the study by  `Neumann et al. <https://arxiv.org/abs/2207.05816>`_) of its nominal capacity (exogenously determined in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L266>`_.) is available for hydrogen transport. When the gas network is not resolved, this input denotes the potential for gas pipelines repurposed into hydrogen pipelines.
+Hydrogen is transported by pipelines. H $_2$ pipelines are endogenously generated, either via a  greenfield H $_2$ network, or by `retrofitting natural gas pipelines <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L262>`_). Retrofitting is implemented in such a way that for every unit of decommissioned gas pipeline, a share (60% is used in the study by  `Neumann et al. <https://arxiv.org/abs/2207.05816>`_) of its nominal capacity (exogenously determined in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L266>`_.) is available for hydrogen transport. When the gas network is not resolved, this input denotes the potential for gas pipelines repurposed into hydrogen pipelines.
 New pipelines can be built additionally on all routes where there currently is a gas or electricity network connection. These new pipelines will be built where no sufficient retrofitting options are available. The capacities of new and repurposed pipelines are a result of the optimisation.
 
-*Storage*
+**Storage**
 
 Hydrogen can be stored in overground steel tanks or `underground salt caverns <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L250>`_. For the latter, energy storage capacities in every country are limited to the potential estimation for onshore salt caverns within `50 km <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L251>`_ of shore to avoid environmental issues associated with brine solution disposal. Underground storage potentials for hydrogen in European salt caverns is acquired from `Caglayan et al. <https://doi.org/10.1016/j.ijhydene.2019.12.161>`_
 
@@ -247,7 +247,7 @@ Methane supply
 
 In addition to methane from fossil origins, the model also considers biogenic and synthetic sources. `The gas network can either be modelled, or it can be assumed that gas transport is not limited <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L261>`_. If gas infrastructure is regionally resolved, fossil gas can enter the system only at existing and planned LNG terminals, pipeline entry-points, and intra- European gas extraction sites, which are retrieved from the SciGRID Gas IGGIELGN dataset and the GEM Wiki. 
 Biogas can be upgraded to methane. 
-Synthetic methane can be produced by processing hydrogen and captures CO$_2$ in the Sabatier reaction 
+Synthetic methane can be produced by processing hydrogen and captures CO $_2$ in the Sabatier reaction 
 
 $$                   
 CO_2 + 4H_2 → CH_4 + 2H_2O
@@ -316,13 +316,13 @@ The model can only use biogas by first upgrading it to natural gas quality [see 
 Oil-based products demand
 ========================
 Naphtha is used as a feedstock in the chemicals industry (see :ref:`Chemicals Industry`). Furthermore, kerosene is used as transport fuel in the aviation sector (see :ref:`Aviation`). Non-electrified agriculture machinery also consumes gasoline. 
-Land transport [(see :ref:`Land transport`)  that is not electrified or converted into using H2-fuel cells also consumes oil-based products. While there is regional distribution of demand, the carrier is copperplated in the model, which means that transport costs and constraints are neglected. 
+Land transport [(see :ref:`Land transport`)  that is not electrified or converted into using H $_2$-fuel cells also consumes oil-based products. While there is regional distribution of demand, the carrier is copperplated in the model, which means that transport costs and constraints are neglected. 
 
 .. _Oil-based products supply:
 
 Oil-based products supply 
 ======================== 							
-Oil-based products can be either of fossil origin or synthetically produced by combining H2 (see :ref:`Hydrogen supply`) and captured CO$_2$ (see :ref:`Carbon dioxide capture, usage and sequestration (CCU/S)`) in Fischer-Tropsch plants		
+Oil-based products can be either of fossil origin or synthetically produced by combining H $_2$ (see :ref:`Hydrogen supply`) and captured CO $_2$ (see :ref:`Carbon dioxide capture, usage and sequestration (CCU/S)`) in Fischer-Tropsch plants		
 
 $$
 𝑛CO+(2𝑛+1)H_2 → C_{n}H_{2n + 2}  +𝑛H_2O
@@ -408,7 +408,7 @@ $$
 					
 The primary route of steelmaking implies large process emissions of 0.22 t $_{CO_2}$ /t of steel, amounting to 7% of global greenhouse gas emissions `(Vogl et. al) <https://doi.org/10.1016/j.joule.2021.09.007>`_. 
 					
-In the secondary route, electric arc furnaces are used to melt scrap metal. This limits the CO$_2$ emissions to the burning of graphite electrodes `(Friedrichsen et. al) <https://www.umweltbundesamt.de/en/publikationen/comparative-analysis-of-options-potential-for>`_, and reduces process emissions to 0.03 t $_{CO_2}$ /t of steel.
+In the secondary route, electric arc furnaces are used to melt scrap metal. This limits the CO $_2$ emissions to the burning of graphite electrodes `(Friedrichsen et. al) <https://www.umweltbundesamt.de/en/publikationen/comparative-analysis-of-options-potential-for>`_, and reduces process emissions to 0.03 t $_{CO_2}$ /t of steel.
 					
 We assume that the primary route can be replaced by a third route in 2050, using direct reduced iron (DRI) and subsequent processing in an EAF.
 					
@@ -450,15 +450,15 @@ $$
 
 The Haber-Bosch process is not explicitly represented in the model, such that demand for ammonia enters the model as a demand for hydrogen ( $6.5 MWh_{H_2}$ / t $_{NH_3}$ ) and electricity ( $1.17 MWh_{el}$ /t $_{NH_3}$ ) (see `Wang et. al <https://doi.org/10.1016/j.joule.2018.04.017>`_). Today, natural gas dominates in Europe as the source for the hydrogen used in the Haber-Bosch process, but the model can choose among the various hydrogen supply options described in the hydrogen section (see :ref:`Hydrogen supply`)
 
-The total production and specific energy consumption of chlorine and methanol is taken from a `DECHEMA report <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry.pdf>`_. According to this source, the production of chlorine amounts to 9.58 MtCl/a, which is assumed to require electricity at 3.6 MWhel/t of chlorine and yield hydrogen at 0.937 MWhH2/t of chlorine in the chloralkali process. The production of methanol adds up to 1.5 MtMeOH/a, requiring electricity at 0.167 MWhel/t of methanol and methane at 10.25 MWhCH4/t of methanol.
+The total production and specific energy consumption of chlorine and methanol is taken from a `DECHEMA report <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry.pdf>`_. According to this source, the production of chlorine amounts to 9.58 MtCl/a, which is assumed to require electricity at 3.6 MWh $_{el}$/t of chlorine and yield hydrogen at 0.937 MWh $_{H_2}$/t of chlorine in the chloralkali process. The production of methanol adds up to 1.5 MtMeOH/a, requiring electricity at 0.167 MWh $_{el}$/t of methanol and methane at 10.25 MWhCH4/t of methanol.
 		 	 	 		
 						
-The production of ammonia, methanol, and chlorine production is deducted from the JRC IDEES basic chemicals, leaving the production totals of high-value chemicals. For this, we assume that the liquid hydrocarbon feedstock comes from synthetic or fossil- origin naphtha (14 MWhnaphtha/t of HVC, similar to `Lechtenböhmer et al <https://doi.org/10.1016/j.energy.2016.07.110>`_), ignoring the methanol-to-olefin route. Furthermore, we assume the following transformations of the energy-consuming processes in the production of plastics: the final energy consumption in steam processing is converted to methane since requires temperature above 500 °C (4.1 MWhCH4 /t of HVC, see `Rehfeldt et al. <https://doi.org/10.1007/s12053-017-9571-y>`_); and the remaining processes are electrified using the current efficiency of microwave for high-enthalpy heat processing, electric furnaces, electric process cooling and electric generic processes (2.85 MWhel/t of HVC).
+The production of ammonia, methanol, and chlorine production is deducted from the JRC IDEES basic chemicals, leaving the production totals of high-value chemicals. For this, we assume that the liquid hydrocarbon feedstock comes from synthetic or fossil- origin naphtha (14 MWhnaphtha/t of HVC, similar to `Lechtenböhmer et al <https://doi.org/10.1016/j.energy.2016.07.110>`_), ignoring the methanol-to-olefin route. Furthermore, we assume the following transformations of the energy-consuming processes in the production of plastics: the final energy consumption in steam processing is converted to methane since requires temperature above 500 °C (4.1 MWhCH4 /t of HVC, see `Rehfeldt et al. <https://doi.org/10.1007/s12053-017-9571-y>`_); and the remaining processes are electrified using the current efficiency of microwave for high-enthalpy heat processing, electric furnaces, electric process cooling and electric generic processes (2.85 MWh $_{el}$/t of HVC).
 					
-The process emissions from feedstock in the chemical industry are as high as 0.369 t$_{CO_2}$/t of ethylene equivalent. We consider process emissions for all the material output, which is a conservative approach since it assumes that all plastic-embedded CO$_2$ will eventually be released into the atmosphere. However, plastic disposal in landfilling will avoid, or at least delay, associated CO$_2$ emissions. 
+The process emissions from feedstock in the chemical industry are as high as 0.369 t$_{CO_2}$/t of ethylene equivalent. We consider process emissions for all the material output, which is a conservative approach since it assumes that all plastic-embedded CO $_2$ will eventually be released into the atmosphere. However, plastic disposal in landfilling will avoid, or at least delay, associated CO $_2$ emissions. 
 		 	 	 					
 					
-Circular economy practices drastically reduce the amount of primary feedstock needed for the production of plastics in the model (see `Kullmann et al. <https://doi.org/10.1016/j.energy.2022.124660>`_, `Meys et al. (2021) <https://doi.org/10.1126/science.abg9853>`_, `Meys et al. (2020) <https://doi.org/10/gmxv6z>`_, `Gu et al. <https://doi.org/10/gf8n9w>`_) and consequently, also the energy demands and level of process emission (LINK TO PROCESS EMISSIONS FIGURE). We assume that 30% of plastics are mechanically recycled requiring 0.547 MWhel/t of HVC (`Meys et al. (2020) <https://doi.org/10/gmxv6z>`_), 15% of plastics are chemically recycled requiring 6.9 MWhel/t of HVC based on pyrolysis and electric steam cracking (see `Materials Economics <https://materialeconomics.com/publications/industrial-transformation-2050>`_ report, and 10% of plastics are reused (equivalent to reduction in demand). The remaining 45% need to be produced from primary feedstock. In comparison, Material Economics presents a scenario with circular economy scenario with 27% primary production, 18% mechanical recycling, 28% chemical recycling, and 27% reuse. Another new-processes scenario has 33% primary production, 14% mechanical recycling, 40% chemical recycling, and 13% reuse. 
+Circular economy practices drastically reduce the amount of primary feedstock needed for the production of plastics in the model (see `Kullmann et al. <https://doi.org/10.1016/j.energy.2022.124660>`_, `Meys et al. (2021) <https://doi.org/10.1126/science.abg9853>`_, `Meys et al. (2020) <https://doi.org/10/gmxv6z>`_, `Gu et al. <https://doi.org/10/gf8n9w>`_) and consequently, also the energy demands and level of process emission (LINK TO PROCESS EMISSIONS FIGURE). We assume that 30% of plastics are mechanically recycled requiring 0.547 MWh $_{el}$/t of HVC (`Meys et al. (2020) <https://doi.org/10/gmxv6z>`_), 15% of plastics are chemically recycled requiring 6.9 MWh $_{el}$/t of HVC based on pyrolysis and electric steam cracking (see `Materials Economics <https://materialeconomics.com/publications/industrial-transformation-2050>`_ report, and 10% of plastics are reused (equivalent to reduction in demand). The remaining 45% need to be produced from primary feedstock. In comparison, Material Economics presents a scenario with circular economy scenario with 27% primary production, 18% mechanical recycling, 28% chemical recycling, and 27% reuse. Another new-processes scenario has 33% primary production, 14% mechanical recycling, 40% chemical recycling, and 13% reuse. 
 
 
 
@@ -475,7 +475,7 @@ $$
 CaCO_3 → CaO + CO_2 
 $$
 
-Additionally, CO$_2$ is emitted from the combustion of fossil fuels to provide process heat. Thereby, cement constitutes the biggest source of industry process emissions in Europe.
+Additionally, CO $_2$ is emitted from the combustion of fossil fuels to provide process heat. Thereby, cement constitutes the biggest source of industry process emissions in Europe.
 
 Cement process emissions can be captured assuming a capture rate of 90%. Whether emissions are captured is decided by the model taking into account the capital costs of carbon capture modules. The electricity and heat demand of process emission carbon capture is currently ignored. For net-zero emission scenarios, the remaining process emissions need to be compensated by negative emissions. 		
 
@@ -598,17 +598,17 @@ For the following point source emissions, carbon capture is applicable:
 Point source emissions are captured assuming a capture rate, e.g. 90%, which can be specified in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L249>`_. The electricity and heat demand of process emission carbon capture
 is currently ignored.
 
-DAC (if `included <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L243>`_) includes the adsorption phase where electricity and heat consumptionsare required to assist the adsorption process and regenerate the adsorbent. It also includes the drying and compression of CO$_2$ prior to storage which consumes electricity and rejects heat. 
+DAC (if `included <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L243>`_) includes the adsorption phase where electricity and heat consumptionsare required to assist the adsorption process and regenerate the adsorbent. It also includes the drying and compression of CO $_2$ prior to storage which consumes electricity and rejects heat. 
 
 *Carbon dioxide usage*
 
-Captured CO$_2$ can be used to produce synthetic methane and synthetic oil products (e.g.
-naphtha). If captured carbon is used, the CO$_2$ emissions of the synthetic fuels are net-neutral. 
+Captured CO $_2$ can be used to produce synthetic methane and synthetic oil products (e.g.
+naphtha). If captured carbon is used, the CO $_2$ emissions of the synthetic fuels are net-neutral. 
 
 *Carbon dioxide sequestration*
 
-Captured CO$_2$ can also be sequestered underground up to an annual sequestration limit of 200 Mt$_{CO_2}$/a. This limit can be chosen in the `Config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L246>`_. As stored carbon dioxide is modelled as a single node for Europe, CO$_2$ transport constraints are neglected. Since CO$_2$ sequestration is an immature technology, the cost assumption is defined in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L247>`_.
+Captured CO $_2$ can also be sequestered underground up to an annual sequestration limit of 200 Mt$_{CO_2}$/a. This limit can be chosen in the `Config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L246>`_. As stored carbon dioxide is modelled as a single node for Europe, CO $_2$ transport constraints are neglected. Since CO $_2$ sequestration is an immature technology, the cost assumption is defined in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L247>`_.
 
 *Carbon dioxide transport*
 
-Carbon dioxide can be modelled as a single node for Europe (in this case, CO$_2$ transport constraints are neglected). A network for modelling the transport of CO$_2$ among the different nodes can also be created if selected in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L248>`_. 
+Carbon dioxide can be modelled as a single node for Europe (in this case, CO $_2$ transport constraints are neglected). A network for modelling the transport of CO $_2$ among the different nodes can also be created if selected in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L248>`_. 
