@@ -451,6 +451,21 @@ $$
 
 The Haber-Bosch process is not explicitly represented in the model, such that demand for ammonia enters the model as a demand for hydrogen ( $6.5 MWh_{H_2}$ / t $_{NH_3}$ ) and electricity ( $1.17 MWh_{el}$ /t $_{NH_3}$ ) (see `Wang et. al <https://doi.org/10.1016/j.joule.2018.04.017>`_). Today, natural gas dominates in Europe as the source for the hydrogen used in the Haber-Bosch process, but the model can choose among the various hydrogen supply options described in the hydrogen section (see :ref:`Hydrogen supply`)
 
+The total production and specific energy consumption of chlorine and methanol is taken from a `DECHEMA report <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry.pdf>`_. According to this source, the production of chlorine amounts to 9.58 MtCl/a, which is assumed to require electricity at 3.6 MWhel/t of chlorine and yield hydrogen at 0.937 MWhH2/t of chlorine in the chloralkali process. The production of methanol adds up to 1.5 MtMeOH/a, requiring electricity at 0.167 MWhel/t of methanol and methane at 10.25 MWhCH4/t of methanol.
+
+		 	 	 		
+			
+				
+					
+The production of ammonia, methanol, and chlorine production is deducted from the JRC IDEES basic chemicals, leaving the production totals of high-value chemicals. For this, we assume that the liquid hydrocarbon feedstock comes from synthetic or fossil- origin naphtha (14 MWhnaphtha/t of HVC, similar to `Lechtenböhmer et al <https://doi.org/10.1016/j.energy.2016.07.110>`_), ignoring the methanol-to-olefin route. Furthermore, we assume the following transformations of the energy-consuming processes in the production of plastics: the final energy consumption in steam processing is converted to methane since requires temperature above 500 °C (4.1 MWhCH4 /t of HVC, see `Rehfeldt et al. <https://doi.org/10.1007/s12053-017-9571-y>`_); and the remaining processes are electrified using the current efficiency of microwave for high-enthalpy heat processing, electric furnaces, electric process cooling and electric generic processes (2.85 MWhel/t of HVC).
+					
+The process emissions from feedstock in the chemical industry are as high as 0.369 tCO2 /t of ethylene equivalent. We consider process emissions for all the material output, which is a conservative approach since it assumes that all plastic-embedded CO2 will eventually be released into the atmosphere. However, plastic disposal in landfilling will avoid, or at least delay, associated CO2 emissions. 
+		 	 	 		
+			
+				
+					
+Circular economy practices drastically reduce the amount of primary feedstock needed for the production of plastics in the model (see `Kullmann et al. <https://doi.org/10.1016/j.energy.2022.124660>`_, `Meys et al. (2021) <https://doi.org/10.1126/science.abg9853>`_, `Meys et al. (2020) <https://doi.org/10/gmxv6z>`_, `Gu et al. <https://doi.org/10/gf8n9w>`_) and consequently, also the energy demands and level of process emission (LINK TO PROCESS EMISSIONS FIGURE). We assume that 30% of plastics are mechanically recycled requiring 0.547 MWhel/t of HVC (`Meys et al. (2020) <https://doi.org/10/gmxv6z>`_), 15% of plastics are chemically recycled requiring 6.9 MWhel/t of HVC based on pyrolysis and electric steam cracking (see `Materials Economics <https://materialeconomics.com/publications/industrial-transformation-2050>`_ report, and 10% of plastics are reused (equivalent to reduction in demand). The remaining 45% need to be produced from primary feedstock. In comparison, Material Economics presents a scenario with circular economy scenario with 27% primary production, 18% mechanical recycling, 28% chemical recycling, and 27% reuse. Another new-processes scenario has 33% primary production, 14% mechanical recycling, 40% chemical recycling, and 13% reuse. 
+
 Agriculture demand
 =========================
 
