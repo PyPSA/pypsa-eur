@@ -246,7 +246,7 @@ Methane supply
 
 In addition to methane from fossil origins, the model also considers biogenic and synthetic sources. `The gas network can either be modeled, or it can be assumed that gas transport is not limited <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L261>`_. If gas infrastructure is regionally resolved, fossil gas can enter the system only at existing and planned LNG terminals, pipeline entry-points, and intra- European gas extraction sites, which are retrieved from the SciGRID Gas IGGIELGN dataset and the GEM Wiki. 
 Biogas can be upgraded to methane. 
-Synthetic methane can be produced by processing hydrogen and captures CO2 in the Sabatier reaction 
+Synthetic methane can be produced by processing hydrogen and captures CO$_2$ in the Sabatier reaction 
 
 $$                   
 CO_2 + 4H_2 → CH_4 + 2H_2O
@@ -321,7 +321,7 @@ Land transport [(see :ref:`Land transport`)  that is not electrified or converte
 
 Oil-based products supply 
 ======================== 							
-Oil-based products can be either of fossil origin or synthetically produced by combining H2 (see :ref:`Hydrogen supply`) and captured CO2 (see :ref:`Carbon dioxide capture, usage and sequestration (CCU/S)`) in Fischer-Tropsch plants		
+Oil-based products can be either of fossil origin or synthetically produced by combining H2 (see :ref:`Hydrogen supply`) and captured CO$_2$ (see :ref:`Carbon dioxide capture, usage and sequestration (CCU/S)`) in Fischer-Tropsch plants		
 
 $$
 𝑛CO+(2𝑛+1)H_2 → C_{n}H_{2n + 2}  +𝑛H_2O
@@ -435,8 +435,6 @@ For the remaining subprocesses in this sector, the following transformations are
 *Chemicals Industry*
 
 The chemicals industry includes a wide range of diverse industries, including the production of basic organic compounds (olefins, alcohols, aromatics), basic inorganic compounds (ammonia, chlorine), polymers (plastics), and end-user products (cosmetics, pharmaceutics).
-
-The chemicals industry includes a wide range of diverse industries, including the production of basic organic compounds (olefins, alcohols, aromatics), basic inorganic compounds (ammonia, chlorine), polymers (plastics), and end-user products (cosmetics, pharmaceutics).
 				
 The chemicals industry consumes large amounts of fossil-fuel based feedstocks (see `Levi et. al <https://pubs.acs.org/doi/10.1021/acs.est.7b04573>`_), which can also be produced from renewables as outlined for hydrogen (see :ref:`Hydrogen supply`), for methane (see :ref:`Methane supply`), and for oil-based products (see :ref:`Oil-based products supply`). The ratio between synthetic and fossil-based fuels used in the industry is an endogenous result of the opti- misation.
 					
@@ -456,18 +454,26 @@ The total production and specific energy consumption of chlorine and methanol is
 						
 The production of ammonia, methanol, and chlorine production is deducted from the JRC IDEES basic chemicals, leaving the production totals of high-value chemicals. For this, we assume that the liquid hydrocarbon feedstock comes from synthetic or fossil- origin naphtha (14 MWhnaphtha/t of HVC, similar to `Lechtenböhmer et al <https://doi.org/10.1016/j.energy.2016.07.110>`_), ignoring the methanol-to-olefin route. Furthermore, we assume the following transformations of the energy-consuming processes in the production of plastics: the final energy consumption in steam processing is converted to methane since requires temperature above 500 °C (4.1 MWhCH4 /t of HVC, see `Rehfeldt et al. <https://doi.org/10.1007/s12053-017-9571-y>`_); and the remaining processes are electrified using the current efficiency of microwave for high-enthalpy heat processing, electric furnaces, electric process cooling and electric generic processes (2.85 MWhel/t of HVC).
 					
-The process emissions from feedstock in the chemical industry are as high as 0.369 tCO2 /t of ethylene equivalent. We consider process emissions for all the material output, which is a conservative approach since it assumes that all plastic-embedded CO2 will eventually be released into the atmosphere. However, plastic disposal in landfilling will avoid, or at least delay, associated CO2 emissions. 
+The process emissions from feedstock in the chemical industry are as high as 0.369 t$_{CO_2}$/t of ethylene equivalent. We consider process emissions for all the material output, which is a conservative approach since it assumes that all plastic-embedded CO$_2$ will eventually be released into the atmosphere. However, plastic disposal in landfilling will avoid, or at least delay, associated CO$_2$ emissions. 
 		 	 	 					
 					
 Circular economy practices drastically reduce the amount of primary feedstock needed for the production of plastics in the model (see `Kullmann et al. <https://doi.org/10.1016/j.energy.2022.124660>`_, `Meys et al. (2021) <https://doi.org/10.1126/science.abg9853>`_, `Meys et al. (2020) <https://doi.org/10/gmxv6z>`_, `Gu et al. <https://doi.org/10/gf8n9w>`_) and consequently, also the energy demands and level of process emission (LINK TO PROCESS EMISSIONS FIGURE). We assume that 30% of plastics are mechanically recycled requiring 0.547 MWhel/t of HVC (`Meys et al. (2020) <https://doi.org/10/gmxv6z>`_), 15% of plastics are chemically recycled requiring 6.9 MWhel/t of HVC based on pyrolysis and electric steam cracking (see `Materials Economics <https://materialeconomics.com/publications/industrial-transformation-2050>`_ report, and 10% of plastics are reused (equivalent to reduction in demand). The remaining 45% need to be produced from primary feedstock. In comparison, Material Economics presents a scenario with circular economy scenario with 27% primary production, 18% mechanical recycling, 28% chemical recycling, and 27% reuse. Another new-processes scenario has 33% primary production, 14% mechanical recycling, 40% chemical recycling, and 13% reuse. 
 
-*Non-metallic Mineral Products*
 
+Non-metallic Mineral Products
+=========================
 This subsector includes the manufacturing of cement, ceramics, and glass. 
 
+*Cement*
+
+Cement is used in construction to make concrete. The production of cement involves high energy consumption and large process emissions. The calcination of limestone to chemically reactive calcium oxide, also known as lime, involves process emissions of 0.54 t$_{CO_2}$ /t cement (see `Akhtar et al. <https://doi.org/10.1109/CITCON.2013.6525276>`_.		
 
 
+$$
+CaCO_3 → CaO + CO_2 
+$$
 
+Additionally, CO$_2$ is emitted from the combustion of fossil fuels to provide process heat. Thereby, cement constitutes the biggest source of industry process emissions in Europe.
 
 Agriculture demand
 =========================
@@ -552,17 +558,17 @@ For the following point source emissions, carbon capture is applicable:
 Point source emissions are captured assuming a capture rate, e.g. 90%, which can be specified in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L249>`_. The electricity and heat demand of process emission carbon capture
 is currently ignored.
 
-DAC (if `included <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L243>`_) includes the adsorption phase where electricity and heat consumptionsare required to assist the adsorption process and regenerate the adsorbent. It also includes the drying and compression of CO2 prior to storage which consumes electricity and rejects heat. 
+DAC (if `included <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L243>`_) includes the adsorption phase where electricity and heat consumptionsare required to assist the adsorption process and regenerate the adsorbent. It also includes the drying and compression of CO$_2$ prior to storage which consumes electricity and rejects heat. 
 
 *Carbon dioxide usage*
 
-Captured CO2 can be used to produce synthetic methane and synthetic oil products (e.g.
-naphtha). If captured carbon is used, the CO2 emissions of the synthetic fuels are net-neutral. 
+Captured CO$_2$ can be used to produce synthetic methane and synthetic oil products (e.g.
+naphtha). If captured carbon is used, the CO$_2$ emissions of the synthetic fuels are net-neutral. 
 
 *Carbon dioxide sequestration*
 
-Captured CO2 can also be sequestered underground up to an annual sequestration limit of 200 MtCO2/a. This limit can be chosen in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L246>`_. As stored carbon dioxide is modelled as a single node for Europe, CO2 transport constraints are neglected. Since CO2 sequestration is an immature technology, the cost assumption is defined in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L247>`_.
+Captured CO$_2$ can also be sequestered underground up to an annual sequestration limit of 200 Mt$_{CO_2}$/a. This limit can be chosen in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L246>`_. As stored carbon dioxide is modelled as a single node for Europe, CO$_2$ transport constraints are neglected. Since CO$_2$ sequestration is an immature technology, the cost assumption is defined in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L247>`_.
 
 *Carbon dioxide transport*
 
-Carbon dioxide can be modelled as a single node for Europe (in this case, CO2 transport constraints are neglected). A network for modelling the transport of CO2 among the different nodes can also be created if selected in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L248>`_. 
+Carbon dioxide can be modelled as a single node for Europe (in this case, CO$_2$ transport constraints are neglected). A network for modelling the transport of CO$_2$ among the different nodes can also be created if selected in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L248>`_. 
