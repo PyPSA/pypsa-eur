@@ -346,7 +346,7 @@ The Subsection overview below provides a general description of the modelling ap
 
 .. _Overview:
 
-*Overview*
+**Overview**
 
 Greenhouse gas emissions associated with industry can be classified into energy-related and process-related emissions. Today, fossil fuels are used for process heat energy in the chemicals industry, but also as a non-energy feedstock for chemicals like ammonia (NH3), ethylene (C2H4) and methanol (CH3OH). Energy-related emissions can be curbed by using low-emission energy sources. The only option to reduce process-related emissions is by using an alternative manufacturing process or by assuming a certain rate of recycling so that a lower amount of virgin material is needed.
 
@@ -383,7 +383,7 @@ Inside each country the industrial demand is then distributed using the `Hotmaps
 
 .. _Iron and Steel:
 
-*Iron and Steel*
+**Iron and Steel**
 
 Two alternative routes are used today to manufacture steel in Europe. The primary route (integrated steelworks) represents 60% of steel production, while the secondary route (electric arc furnaces, EAF), represents the other 40% `(Lechtenböhmer et. al) <https://doi.org/10.1016/j.energy.2016.07.110>`_.
 					
@@ -432,7 +432,7 @@ For the remaining subprocesses in this sector, the following transformations are
 
 .. _Chemicals Industry:
 
-*Chemicals Industry*
+**Chemicals Industry**
 
 The chemicals industry includes a wide range of diverse industries, including the production of basic organic compounds (olefins, alcohols, aromatics), basic inorganic compounds (ammonia, chlorine), polymers (plastics), and end-user products (cosmetics, pharmaceutics).
 				
@@ -460,8 +460,9 @@ The process emissions from feedstock in the chemical industry are as high as 0.3
 Circular economy practices drastically reduce the amount of primary feedstock needed for the production of plastics in the model (see `Kullmann et al. <https://doi.org/10.1016/j.energy.2022.124660>`_, `Meys et al. (2021) <https://doi.org/10.1126/science.abg9853>`_, `Meys et al. (2020) <https://doi.org/10/gmxv6z>`_, `Gu et al. <https://doi.org/10/gf8n9w>`_) and consequently, also the energy demands and level of process emission (LINK TO PROCESS EMISSIONS FIGURE). We assume that 30% of plastics are mechanically recycled requiring 0.547 MWhel/t of HVC (`Meys et al. (2020) <https://doi.org/10/gmxv6z>`_), 15% of plastics are chemically recycled requiring 6.9 MWhel/t of HVC based on pyrolysis and electric steam cracking (see `Materials Economics <https://materialeconomics.com/publications/industrial-transformation-2050>`_ report, and 10% of plastics are reused (equivalent to reduction in demand). The remaining 45% need to be produced from primary feedstock. In comparison, Material Economics presents a scenario with circular economy scenario with 27% primary production, 18% mechanical recycling, 28% chemical recycling, and 27% reuse. Another new-processes scenario has 33% primary production, 14% mechanical recycling, 40% chemical recycling, and 13% reuse. 
 
 
-Non-metallic Mineral Products
-=========================
+
+**Non-metallic Mineral Products**
+
 This subsector includes the manufacturing of cement, ceramics, and glass. 
 
 *Cement*
@@ -475,6 +476,21 @@ $$
 
 Additionally, CO$_2$ is emitted from the combustion of fossil fuels to provide process heat. Thereby, cement constitutes the biggest source of industry process emissions in Europe.
 
+Cement process emissions can be captured assuming a capture rate of 90%. Whether emissions are captured is decided by the model taking into account the capital costs of carbon capture modules. The electricity and heat demand of process emission carbon capture is currently ignored. For net-zero emission scenarios, the remaining process emissions need to be compensated by negative emissions. 		
+
+With the exception of electricity demand and biomass demand for low-temperature heat (0.06 MWh/t and 0.2 MWh/t), the final energy consumption of this subsector is assumed to be supplied by methane (0.52 MWh/t), which is capable of delivering the required high-temperature heat. This implies a switch from burning solid fuels to burning gas which will require adjustments of the `kilns <10.1109/CITCON.2013.6525276>`_. The share of fossil vs. synthetic methane consumed is a result of the optimisation
+
+
+*Ceramics*
+
+The ceramics sector is assumed to be fully electrified based on the current efficiency of already electrified processes which include microwave drying and sintering of raw ma- terials, electric kilns for primary production processes, electric furnaces for the `product finishing <https://data.europa.eu/doi/10.2760/182725>`_. In total, the final electricity consumption is 0.44 MWh/t of ceramic. The manufacturing of ceramics includes process emissions of 0.03 t$_{CO_2} $/t of ceramic. For a detailed overview of the ceramics industry sector see `Furszyfer Del Rio et al <https://doi.org/10.1016/j.rser.2021.111885>`_.
+
+*Glass*
+
+The production of glass is assumed to be fully electrified based on the current efficiency of electric melting tanks and electric annealing which adds up to an electricity demand of 2.07 MWh$_{el}l/t of `glass <https://doi.org/10/f9df2m>`_. The manufacturing of glass incurs process emissions of 0.1 t$_{CO_2} $/t of glass. Potential efficiency improvements, which according to `Lechtenböhmer et al <https://doi.org/10/f9df2m>`_ could reduce energy demands to 0.85 MWh$_{el}$/t of glass, have not been considered. For a detailed overview of the glass industry sector see `Furszyfer Del Rio et al <https://doi.org/10.1016/j.rser.2021.111885>`_.
+
+
+**Non-ferrous Metals**
 Agriculture demand
 =========================
 
