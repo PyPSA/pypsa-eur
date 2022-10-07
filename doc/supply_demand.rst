@@ -491,6 +491,29 @@ The production of glass is assumed to be fully electrified based on the current 
 
 
 **Non-ferrous Metals**
+
+The non-ferrous metal subsector includes the manufacturing of base metals (aluminium, copper, lead, zink), precious metals (gold, silver), and technology metals (molybdenum, cobalt, silicon).					
+
+The manufacturing of aluminium accounts for more than half of the final energy con- sumption of this subsector. Two alternative processing routes are used today to manu- facture aluminium in Europe. The primary route represents 40% of the aluminium pro- duction, while the secondary route represents the remaining 60%.		
+
+The primary route involves two energy-intensive processes: the production of alumina from bauxite (aluminium ore) and the electrolysis to transform alumina into aluminium via the Hall-Héroult process
+
+$$
+2Al_2O_3 +3C → 4Al+3CO_2	
+$$
+
+The primary route requires high-enthalpy heat (2.3 MWh/t) to produce alumina which is supplied by methane and causes process emissions of 1.5 t$_{CO_2}$/t aluminium. According to `Friedrichsen et al. <http://www.umweltbundesamt.de/en/publikationen/comparative-analysis-of-options-potential-for>`_, inert anodes might become commercially available by 2030 that would eliminate the process emissions, but they are not included in the model. Assuming all subprocesses are electrified, the primary route requires 15.4 MWh$_{el}$/t of aluminium.
+					
+In the secondary route, scrap aluminium is remelted. The energy demand for this process is only 10% of the primary route and there are no associated process emissions. Assuming all subprocesses are electrified, the secondary route requires 1.7 MWh/t of aluminium. The share of aliminum manufactured by the primary and secondary route can be selected in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L297>`_]
+	
+For the other non-ferrous metals, we assume the electrification of the entire manufactur- ing process with an average electricity demand of 3.2 MWh$_{el}$/t lead equivalent. 			
+
+**Other Industry Subsectors**
+
+The remaining industry subsectors include (a) pulp, paper, printing, (b) food, beverages, tobacco, (c) textiles and leather, (d) machinery equipment, (e) transport equipment, (f) wood and wood products, (g) others. Low- and mid-temperature process heat in these industries is assumed to be `supplied by biomass <https://doi.org/10.1016/j.rser.2021.110856>`_  while the remaining processes are electrified. None of the subsectors involve process emissions.
+
+Energy demands for the agriculture, forestry and fishing sector per country are taken from the `JRC IDEES database <https://op.europa.eu/en/publication-detail/-/publication/989282db-ad65-11e7-837e-01aa75ed71a1/language-en>`_.  Missing countries are filled with `eurostat data <https://ec.europa.eu/eurostat/web/energy/data/energy-balances>`_. Agricultural energy demands are split into electricity (lighting, ventilation, specific electricity uses, electric pumping devices), heat (specific heat uses, low enthalpy heat) machinery oil (motor drives, farming machine drives, diesel-fueled pumping devices). Heat demand is for this sector is classified as services rural heat. Time series for demands are assumed to be constant and distributed inside countries in proportion to population. 
+
 Agriculture demand
 =========================
 
