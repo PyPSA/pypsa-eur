@@ -63,7 +63,7 @@ Hot water demand is assumed to be constant throughout the year.
 
 *Urban and rural heating*
 
-For every country, heat demand is split between low and high population density areas. These country-level totals are then distributed to each region in proportion to their rural and urban populations respectively. Urban areas with dense heat demand can be supplied with large-scale district heating systems. The percent of urban heat demand that can be supplied by district heating networks as well as lump-sum losses in district heating systems is exogenously determined in the `Config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L153>`_. 
+For every country, heat demand is split between low and high population density areas. These country-level totals are then distributed to each region in proportion to their rural and urban populations respectively. Urban areas with dense heat demand can be supplied with large-scale district heating systems. The percent of urban heat demand that can be supplied by district heating networks as well as lump-sum losses in district heating systems is exogenously determined in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L153>`_. 
 
 *Cooling demand*
 Cooling is electrified and is included in the electricity demand. Cooling demand is assumed to remain at current levels.  An example of regional distribution of the total heat demand for network 181 regions is depicted below.
@@ -90,11 +90,11 @@ Heat supply
 
 Different supply options are available depending on whether demand is met centrally through district heating systems, or decentrally through appliances in individual buildings. 
 
-*Urban central heat*
+**Urban central heat**
 
 For large-scale district heating systems the following options are available: combined heat and power (CHP) plants consuming gas or biomass from waste and residues with and without carbon capture (CC), large- scale air-sourced heat pumps, gas and oil boilers, resistive heaters, and fuel cell CHPs. Additionally, waste heat from the `Fischer-Tropsch <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L255>`_  and `Sabatier <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L240>`_ processes for the production of synthetic hydrocarbons can supply district heating systems. For more setailed explanation of these processes, see :ref:`Oil-based products supply` and :ref:`Methane supply`
 
-*Residential and Urban decentral heat*
+**Residential and Urban decentral heat**
 
 Supply options in individual buildings include gas and oil boilers, air- and ground-sourced heat pumps, resistive heaters, and solar thermal collectors.
 Ground-source heat pumps are only allowed in rural areas because of space constraints. Thus, only air- source heat pumps are allowed in urban areas. This is a conservative assumption, since there are many possible sources of low-temperature heat that could be tapped in cities (e.g. waste water, ground water, or natural bodies of water). Costs, lifetimes and efficiencies for these technologies are retrieved from the `Technology-data repository <https://github.com/PyPSA/technology-data>`_.
@@ -103,7 +103,7 @@ Below are more detailed explanations for each heating supply component, all of w
 
 .. _Large-scale CHP:
 
-*Large-scale CHP*
+**Large-scale CHP**
 
 Large Combined Heat and Power plants are included in the model if it is specified in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L235>`_.
  
@@ -115,11 +115,11 @@ The methane CHP is modeled on the Danish Energy Agency (DEA) “Gas turbine simp
 
 NB: The old PyPSA-Eur-Sec-30 model assumed an extraction plant (like the DEA coal CHP) for gas which has flexible production of heat and electricity within the feasibility diagram of Figure 4 in the study by `Brown et al. <https://arxiv.org/abs/1801.05290>`_ We have switched to the DEA back pressure plants since these are more common for smaller plants for biomass, and because the extraction plants were on the back pressure line for 99.5% of the time anyway. The plants were all changed to back pressure in PyPSA-Eur-Sec v0.4.0.
 
-*Micro-CHP*
+**Micro-CHP**
 
 Pypsa-eur-sec allows individual buildings to make use of `micro gas CHPs <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L236>`_ that are assumed to be installed at the distribution grid level.
 
-*Heat pumps*
+**Heat pumps**
 
 The coefficient of performance (COP) of air- and ground-sourced heat pumps depends on the ambient or soil temperature respectively. Hence, the COP is a time-varying parameter (refer to `Config <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L206>`_ file). Generally, the COP will be lower during winter when temperatures are low. Because the ambient temperature is more volatile than the soil temperature, the COP of ground-sourced heat pumps is less variable. Moreover, the COP depends on the difference between the source and sink temperatures:
 
@@ -141,7 +141,7 @@ Resistive heaters produce heat with a fixed conversion efficiency (refer to `Tec
 *Gas, oil, and biomass boilers* 
 
 Can be activated in Config from the `boilers <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L232>`_ , `oil boilers <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L233>`_ , and `biomass boiler <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L234>`_ option.
-Similar to resistive heaters, boilers have a fixed efficiency and produce heat using gas ,oil or biomass.
+Similar to resistive heaters, boilers have a fixed efficiency and produce heat using gas, oil or biomass.
 
 *Solar thermal collectors* 
 
@@ -606,7 +606,7 @@ naphtha). If captured carbon is used, the CO$_2$ emissions of the synthetic fuel
 
 *Carbon dioxide sequestration*
 
-Captured CO$_2$ can also be sequestered underground up to an annual sequestration limit of 200 Mt$_{CO_2}$/a. This limit can be chosen in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L246>`_. As stored carbon dioxide is modelled as a single node for Europe, CO$_2$ transport constraints are neglected. Since CO$_2$ sequestration is an immature technology, the cost assumption is defined in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L247>`_.
+Captured CO$_2$ can also be sequestered underground up to an annual sequestration limit of 200 Mt$_{CO_2}$/a. This limit can be chosen in the `Config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L246>`_. As stored carbon dioxide is modelled as a single node for Europe, CO$_2$ transport constraints are neglected. Since CO$_2$ sequestration is an immature technology, the cost assumption is defined in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L247>`_.
 
 *Carbon dioxide transport*
 
