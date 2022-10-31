@@ -84,7 +84,7 @@ if __name__ == "__main__":
 
     # adjusted boundaries
     shapes = gpd.read_file(snakemake.input.natura).to_crs(3035)
-    raster = ~geometry_mask(shapes.geometry, out_shape[::-1], transform)
+    raster = ~geometry_mask(shapes.geometry, out_shape, transform)
     raster = raster.astype(rio.uint8)
 
     with rio.open(
