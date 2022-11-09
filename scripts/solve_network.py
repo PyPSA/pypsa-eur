@@ -224,11 +224,12 @@ def add_minRenew_constraints(n, config, o):
         renewables_i = n.generators[renewables_b].index
         conventionals_i = n.generators[~renewables_b].index
         weightings = n.snapshot_weightings.generators
-        coeff = pd.DataFrame({c: weightings for c in renewables_i})
+        coeff_vres = pd.DataFrame({c: weightings for c in renewables_i})
+        coeff_conv = pd.DataFrame({c: weightings for c in conventionals_i})
         vres = get_var(n, "Generator", "p")[renewables_i]
         conv = get_var(n, "Generator", "p")[conventionals_i]
-        lhs = linexpr(((1 - share) * coeff, vres)).sum().sum()
-        lhs += linexpr((- share * coeff, conv)).sum().sum()
+        lhs = linexpr(((1 - share) * coeff_vres, vres)).sum().sum()
+        lhs += linexpr((- share * coeff_conv, conv)).sum().sum()
         rhs = 0
         define_constraints(n, lhs, '>=', rhs, 'Carrier', 'min_generation_renewables')
     else:
