@@ -212,20 +212,24 @@ def add_SAFE_constraints(n, config):
 
 def add_minRenew_constraints(n, config, o):
     '''
-    Adds the constraint to have a minimum share of renewable energy production. 
+    Adds the constraint to have a minimum share of renewable energy production.
     As renewable carriers the renewables from the configs listed under renewable are taken.
     To use this constraint simply add the wildcard RE{share} in the opts wildcard like RE0.8 for a 80% renewable share
     '''
-    import operator 
+    import operator
     renewables=list(config["electricity"]["renewable_aim"].keys())
     if len(o)>2:
         share=float(o[2:])
-        renewables_i = n.generators[n.generators.carrier.str.contains("|".join(renewables))].index
+        renewables_b = n.generators.carrier.str.contains("|".join(renewables))
+        renewables_i = n.generators[renewables_b].index
+        conventionals_i = n.generators[~renewables_b].index
         weightings = n.snapshot_weightings.generators
         coeff = pd.DataFrame({c: weightings for c in renewables_i})
-        vars = get_var(n, "Generator", "p")[renewables_i]
-        lhs = linexpr((coeff, vars)).sum().sum()
-        rhs = share * weightings @ n.loads_t.p_set.sum(1)
+        vres = get_var(n, "Generator", "p")[renewables_i]
+        conv = get_var(n, "Generator", "p")[conventionals_i]
+        lhs = linexpr(((1 - share) * coeff, vres)).sum().sum()
+        lhs += linexpr((- share * coeff, conv)).sum().sum()
+        rhs = 0
         define_constraints(n, lhs, '>=', rhs, 'Carrier', 'min_generation_renewables')
     else:
         for tech in renewables:
