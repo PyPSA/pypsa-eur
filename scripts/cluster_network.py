@@ -137,8 +137,7 @@ import seaborn as sns
 
 from functools import reduce
 
-from pypsa.networkclustering import (busmap_by_kmeans, busmap_by_spectral_clustering,
-                                     _make_consense, get_clustering_from_busmap)
+from pypsa.networkclustering import (busmap_by_kmeans, _make_consense, get_clustering_from_busmap)
 
 import warnings
 warnings.filterwarnings(action='ignore', category=UserWarning)
