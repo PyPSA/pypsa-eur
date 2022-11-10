@@ -30,7 +30,7 @@ repos:
 
   # Find common spelling mistakes in comments and docstrings
 - repo: https://github.com/codespell-project/codespell
-  rev: v2.2.1
+  rev: v2.2.2
   hooks:
   - id: codespell
     args: ['--ignore-regex="(\b[A-Z]+\b)"', '--ignore-words-list=fom'] # Ignore capital case words, e.g. country codes
@@ -45,13 +45,13 @@ repos:
     args: ["--in-place", "--make-summary-multi-line", "--pre-summary-newline"]
 
 - repo: https://github.com/keewis/blackdoc
-  rev: v0.3.7
+  rev: v0.3.8
   hooks:
   - id: blackdoc
 
   # Formatting with "black" coding style
 - repo: https://github.com/psf/black
-  rev: 22.8.0
+  rev: 22.10.0
   hooks:
       # Format Python files
   - id: black

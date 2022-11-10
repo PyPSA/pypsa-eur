@@ -61,14 +61,16 @@ It is also possible to allow less or more carbon-dioxide emissions. Here, we lim
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 35,37
+   :start-at: electricity:
+   :end-before: exentable_carriers:
 
 PyPSA-Eur also includes a database of existing conventional powerplants.
 We can select which types of powerplants we like to be included:
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 35,51
+   :start-at: extendable_carriers:
+   :end-before: max_hours:
 
 To accurately model the temporal and spatial availability of renewables such as wind and solar energy, we rely on historical weather data.
 It is advisable to adapt the required range of coordinates to the selection of countries.
@@ -83,14 +85,21 @@ For example, we may want to use the ERA-5 dataset for solar and not the default 
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 63,106,107
+   :start-at: be-03-2013-era5:
+   :end-at: module:
+
+.. literalinclude:: ../config.tutorial.yaml
+   :language: yaml
+   :start-at: solar:
+   :end-at: cutout:
 
 Finally, it is possible to pick a solver. For instance, this tutorial uses the open-source solvers CBC and Ipopt and does not rely
 on the commercial solvers Gurobi or CPLEX (for which free academic licenses are available).
 
 .. literalinclude:: ../config.tutorial.yaml
    :language: yaml
-   :lines: 188,198,199
+   :start-at: solver:
+   :end-before: plotting:
 
 .. note::
 
