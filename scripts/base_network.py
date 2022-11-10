@@ -302,7 +302,8 @@ def _add_links_from_tyndp(buses, links, links_tyndp, europe_shape):
             + links_tyndp["Name"]
             + '", '
             + '"ref"=>"'
-            + links_tyndp["Ref"]
+            + links_tyndp["Ref"
+                          ]
             + '", '
             + '"status"=>"'
             + links_tyndp["status"]
@@ -698,6 +699,14 @@ def _integrate_tyndp_2020(buses,
     upg_buses = _read_drop_statusbased(upg_buses, allowed_statuses)
     upg_lines = _read_drop_statusbased(upg_lines, allowed_statuses)
     upg_links = _read_drop_statusbased(upg_links, allowed_statuses)
+
+    # set carrier for new assets
+    new_buses['carrier'] = new_buses.pop("dc").map({True: "DC", False: "AC"})
+    new_lines['carrier'] = "AC"
+    new_links['carrier'] = "DC"
+
+    # TODO: have to check whether sth has changed?
+    upg_buses['carrier'] = upg_buses.pop("dc").map({True: "DC", False: "AC"})
 
     # add 'commissioning_year' to existing assets (beginning of UNIX time)
     buses.loc[:, 'commissioning_year'] = pd.to_datetime(0)
