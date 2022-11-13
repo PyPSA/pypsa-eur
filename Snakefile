@@ -441,6 +441,18 @@ rule build_population_weighted_energy_totals:
     script: "scripts/build_population_weighted_energy_totals.py"
 
 
+rule build_shipping_demand:
+    input:
+        ports="data/attributed_ports.json",
+        scope=pypsaeur("resources/europe_shape.geojson"),
+        regions=pypsaeur("resources/regions_onshore_elec_s{simpl}_{clusters}.geojson"),
+        demand="resources/energy_totals.csv"
+    output: "resources/shipping_demand_s{simpl}_{clusters}.csv"
+    threads: 1
+    resources: mem_mb=2000
+    script: "scripts/build_shipping_demand.py"
+
+
 rule build_transport_demand:
     input:
         clustered_pop_layout="resources/pop_layout_elec_s{simpl}_{clusters}.csv",
@@ -466,6 +478,7 @@ rule prepare_sector_network:
         energy_totals_name='resources/energy_totals.csv',
         eurostat=input_eurostat,
         pop_weighted_energy_totals="resources/pop_weighted_energy_totals_s{simpl}_{clusters}.csv",
+        shipping_demand="resources/shipping_demand_s{simpl}_{clusters}.csv",
         transport_demand="resources/transport_demand_s{simpl}_{clusters}.csv",
         transport_data="resources/transport_data_s{simpl}_{clusters}.csv",
         avail_profile="resources/avail_profile_s{simpl}_{clusters}.csv",

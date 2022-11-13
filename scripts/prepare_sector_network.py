@@ -2154,24 +2154,29 @@ def add_industry(n, costs):
     else:
         shipping_bus = nodes + " H2"
 
-    all_navigation = ["total international navigation", "total domestic navigation"]
-    efficiency = options['shipping_average_efficiency'] / costs.at["fuel cell", "efficiency"]
-    shipping_hydrogen_share = get(options['shipping_hydrogen_share'], investment_year)
-    p_set = shipping_hydrogen_share * pop_weighted_energy_totals.loc[nodes, all_navigation].sum(axis=1) * 1e6 * efficiency / 8760
+    domestic_navigation = pop_weighted_energy_totals.loc[nodes, "total domestic navigation"]
+    international_navigation = pd.read_csv(snakemake.input.shipping_demand, index_col=0)
+    all_navigation = domestic_navigation + international_navigation
 
-    n.madd("Load",
-        nodes,
-        suffix=" H2 for shipping",
-        bus=shipping_bus,
-        carrier="H2 for shipping",
-        p_set=p_set
-    )
+    if shipping_hydrogen_share > 0:
+
+        efficiency = options['shipping_average_efficiency'] / costs.at["fuel cell", "efficiency"]
+        shipping_hydrogen_share = get(options['shipping_hydrogen_share'], investment_year)
+        p_set = shipping_hydrogen_share * all_navigation * 1e6 * efficiency / 8760
+
+        n.madd("Load",
+            nodes,
+            suffix=" H2 for shipping",
+            bus=shipping_bus,
+            carrier="H2 for shipping",
+            p_set=p_set
+        )
 
     if shipping_hydrogen_share < 1:
 
         shipping_oil_share = 1 - shipping_hydrogen_share
 
-        p_set = shipping_oil_share * pop_weighted_energy_totals.loc[nodes, all_navigation].sum(axis=1) * 1e6 / 8760.
+        p_set = shipping_oil_share * all_navigation * 1e6 / 8760.
 
         n.madd("Load",
             nodes,
@@ -2181,7 +2186,7 @@ def add_industry(n, costs):
             p_set=p_set
         )
 
-        co2 = shipping_oil_share * pop_weighted_energy_totals.loc[nodes, all_navigation].sum().sum() * 1e6 / 8760 * costs.at["oil", "CO2 intensity"]
+        co2 = shipping_oil_share * all_navigation.sum() * 1e6 / 8760 * costs.at["oil", "CO2 intensity"]
 
         n.add("Load",
             "shipping oil emissions",
