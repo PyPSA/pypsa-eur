@@ -106,6 +106,16 @@ def define_spatial(nodes, options):
 
         spatial.ammonia.df = pd.DataFrame(vars(spatial.ammonia), index=nodes)
 
+    # hydrogen
+    spatial.h2 = SimpleNamespace()
+    spatial.h2.nodes = nodes + " H2"
+    spatial.h2.locations = nodes
+
+    # methanol
+    spatial.methanol = SimpleNamespace()
+    spatial.methanol.nodes = ["EU methanol"]
+    spatial.methanol.locations = ["EU"]
+
     # oil
     spatial.oil = SimpleNamespace()
     spatial.oil.nodes = ["EU oil"]
@@ -2154,6 +2164,31 @@ def add_industry(n, costs):
     else:
         shipping_bus = nodes + " H2"
 
+    if options.get("shipping_methanol"):
+
+        n.madd("Bus",
+            spatial.methanol.nodes,
+            carrier="methanol",
+            location=spatial.methanol.locations,
+            unit="MWh_LHV"
+        )
+
+        # methanolisation
+        n.madd(
+            spatial.h2.locations + "methanolisation",
+            bus0=spatial.h2.nodes,
+            bus1=spatial.methanol.nodes,
+            bus2=nodes,
+            bus3=spatial.co2.nodes,
+            carrier="methanolisation",
+            p_nom_extendable=True,
+            capital_cost=costs.at["methanolisation", 'fixed'] * 0.8787, # EUR/MW_H2/a
+            lifetime=costs.at["methanolisation", 'lifetime'],
+            efficiency=options["MWh_MeOH_per_MWh_H2"],
+            efficiency2=- options["MWh_MeOH_per_MWh_H2"] / options["MWh_MeOH_per_tCO2"],
+            efficiency3=- options["MWh_MeOH_per_MWh_H2"] / options["MWh_MeOH_per_MWh_e"],
+        )
+
     all_navigation = ["total international navigation", "total domestic navigation"]
     efficiency = options['shipping_average_efficiency'] / costs.at["fuel cell", "efficiency"]
     shipping_hydrogen_share = get(options['shipping_hydrogen_share'], investment_year)
@@ -2245,7 +2280,7 @@ def add_industry(n, costs):
         bus2=spatial.co2.nodes,
         carrier="Fischer-Tropsch",
         efficiency=costs.at["Fischer-Tropsch", 'efficiency'],
-        capital_cost=costs.at["Fischer-Tropsch", 'fixed'],
+        capital_cost=costs.at["Fischer-Tropsch", 'fixed'] * costs.at["Fischer-Tropsch", 'efficiency'], # EUR/MW_H2/a
         efficiency2=-costs.at["oil", 'CO2 intensity'] * costs.at["Fischer-Tropsch", 'efficiency'],
         p_nom_extendable=True,
         lifetime=costs.at['Fischer-Tropsch', 'lifetime']
