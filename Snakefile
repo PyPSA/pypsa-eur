@@ -532,6 +532,14 @@ rule copy_config:
     script: "scripts/copy_config.py"
 
 
+rule copy_conda_env:
+    output: SDIR + '/configs/environment.yaml'
+    threads: 1
+    resources: mem_mb=500
+    benchmark: SDIR + "/benchmarks/copy_conda_env"
+    shell: "conda env export -f {output} --no-builds"
+
+
 rule make_summary:
     input:
         overrides="data/override_component_attrs",
@@ -591,6 +599,7 @@ if config["foresight"] == "overnight":
             network=RDIR + "/prenetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc",
             costs=CDIR + "costs_{}.csv".format(config['costs']['year']),
             config=SDIR + '/configs/config.yaml'
+            env=SDIR + '/configs/environment.yaml'
         output: RDIR + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc"
         shadow: "shallow"
         log:
