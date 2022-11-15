@@ -25,7 +25,7 @@ countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'F
 snapshots:
   start: "2013-01-01"
   end: "2014-01-01"
-  closed: 'left' # end is not inclusive
+  inclusive: 'left' # end is not inclusive
 
 enable:
   prepare_links_p_nom: false

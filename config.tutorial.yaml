@@ -24,7 +24,7 @@ countries: ['BE']
 snapshots:
   start: "2013-03-01"
   end: "2013-04-01"
-  closed: 'left' # end is not inclusive
+  inclusive: 'left' # end is not inclusive
 
 enable:
   prepare_links_p_nom: false
