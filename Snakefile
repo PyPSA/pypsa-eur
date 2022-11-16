@@ -598,8 +598,8 @@ if config["foresight"] == "overnight":
             overrides="data/override_component_attrs",
             network=RDIR + "/prenetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc",
             costs=CDIR + "costs_{}.csv".format(config['costs']['year']),
-            config=SDIR + '/configs/config.yaml'
-            env=SDIR + '/configs/environment.yaml'
+            config=SDIR + '/configs/config.yaml',
+            env=SDIR + '/configs/environment.yaml',
         output: RDIR + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc"
         shadow: "shallow"
         log:
