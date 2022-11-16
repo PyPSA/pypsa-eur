@@ -247,8 +247,8 @@ def extra_functionality(n, snapshots):
 
 
 def solve_network(n, config, opts='', **kwargs):
-    solver_options = config['solving']['solver'].copy()
-    solver_name = solver_options.pop('name')
+    solver_options = config['solving']['solver']['options']
+    solver_name = config['solving']['solver']['name']
     cf_solving = config['solving']['options']
     track_iterations = cf_solving.get('track_iterations', False)
     min_iterations = cf_solving.get('min_iterations', 4)
@@ -290,6 +290,7 @@ if __name__ == "__main__":
     logging.basicConfig(filename=snakemake.log.python,
                         level=snakemake.config['logging_level'])
 
+    print(snakemake.config)
     update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
 
     tmpdir = snakemake.config['solving'].get('tmpdir')

@@ -386,22 +386,23 @@ solving:
 
   solver:
     name: gurobi
-    threads: 4
-    method: 2 # barrier
-    crossover: 0
-    BarConvTol: 1.e-6
-    Seed: 123
-    AggFill: 0
-    PreDual: 0
-    GURO_PAR_BARDENSETHRESH: 200
-    #FeasibilityTol: 1.e-6
+    options:
+      threads: 4
+      method: 2 # barrier
+      crossover: 0
+      BarConvTol: 1.e-6
+      Seed: 123
+      AggFill: 0
+      PreDual: 0
+      GURO_PAR_BARDENSETHRESH: 200
+      #FeasibilityTol: 1.e-6
 
-    #name: cplex
-    #threads: 4
-    #lpmethod: 4 # barrier
-    #solutiontype: 2 # non basic solution, ie no crossover
-    #barrier_convergetol: 1.e-5
-    #feasopt_tolerance: 1.e-6
+      #name: cplex
+      #threads: 4
+      #lpmethod: 4 # barrier
+      #solutiontype: 2 # non basic solution, ie no crossover
+      #barrier_convergetol: 1.e-5
+      #feasopt_tolerance: 1.e-6
   mem: 30000 #memory in MB; 20 GB enough for 50+B+I+H2; 100 GB for 181+B+I+H2
 
 
