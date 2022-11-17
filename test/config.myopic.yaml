@@ -25,59 +25,7 @@ existing_capacities:
   grouping_years: [1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2019]
 
 sector:
-  land_transport_fuel_cell_share:
-    2020: 0
-    2030: 0.05
-    2040: 0.1
-    2050: 0.15
-  land_transport_electric_share:
-    2020: 0
-    2030: 0.25
-    2040: 0.6
-    2050: 0.85
-  shipping_hydrogen_share:
-    2020: 0
-    2025: 0
-    2030: 0.05
-    2035: 0.15
-    2040: 0.3
-    2045: 0.6
-    2050: 1
-  reduce_space_heat_exogenously_factor: 
-    2020: 0.10  # this results in a space heat demand reduction of 10%
-    2025: 0.09  # first heat demand increases compared to 2020 because of larger floor area per capita
-    2030: 0.09
-    2035: 0.11
-    2040: 0.16
-    2045: 0.21
-    2050: 0.29
   co2_vent: true
-
-industry:
-  St_primary_fraction: # fraction of steel produced via primary route versus secondary route (scrap+EAF); today fraction is 0.6
-    2020: 0.6
-    2025: 0.55
-    2030: 0.5
-    2035: 0.45
-    2040: 0.4
-    2045: 0.35
-    2050: 0.3
-  DRI_fraction: # fraction of the primary route converted to DRI + EAF
-    2020: 0
-    2025: 0
-    2030: 0.05
-    2035: 0.2
-    2040: 0.4
-    2045: 0.7
-    2050: 1
-  Al_primary_fraction: # fraction of aluminium produced via the primary route versus scrap; today fraction is 0.4
-    2020: 0.4
-    2025: 0.375
-    2030: 0.35
-    2035: 0.325
-    2040: 0.3
-    2045: 0.25
-    2050: 0.2
 
 solving:
   solver:

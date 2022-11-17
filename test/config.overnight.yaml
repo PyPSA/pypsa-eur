@@ -22,22 +22,11 @@ atlite:
 
 
 sector:
-  district_heating:
-    progress: 1
-  land_transport_fuel_cell_share: 0.15 # 1 means all FCEVs
-  land_transport_electric_share: 0.85 # 1 means all EVs
-  shipping_hydrogen_share: 1 # 1 means all hydrogen FC
-  reduce_space_heat_exogenously_factor: 0.29 # per unit reduction in space heat demand
   co2_vent: true
   gas_network: true
   H2_retrofit: true  # if set to True existing gas pipes can be retrofitted to H2 pipes
   biomass_boiler: false
 
-
-industry:
-  St_primary_fraction: 0.3 # fraction of steel produced via primary route versus secondary route (scrap+EAF); today fraction is 0.6
-  DRI_fraction: 1 # fraction of the primary route converted to DRI + EAF
-  Al_primary_fraction: 0.2 # fraction of aluminium produced via the primary route versus scrap; today fraction is 0.4
 
 solving:
   solver:

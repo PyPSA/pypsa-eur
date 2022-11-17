@@ -290,7 +290,6 @@ if __name__ == "__main__":
     logging.basicConfig(filename=snakemake.log.python,
                         level=snakemake.config['logging_level'])
 
-    print(snakemake.config)
     update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
 
     tmpdir = snakemake.config['solving'].get('tmpdir')
