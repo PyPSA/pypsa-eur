@@ -288,6 +288,7 @@ def solve_network(n, config, opts='', **kwargs):
 
     if cf_solving.get('skip_iterations', False):
         network_lopf(n, solver_name=solver_name, solver_options=solver_options,
+                     transmission_losses=config["sector"]["electricity_grid_transmission_losses"],
                      extra_functionality=extra_functionality,
                      keep_shadowprices=keep_shadowprices, **kwargs)
     else:
@@ -295,6 +296,7 @@ def solve_network(n, config, opts='', **kwargs):
               track_iterations=track_iterations,
               min_iterations=min_iterations,
               max_iterations=max_iterations,
+              transmission_losses=config["sector"]["electricity_grid_transmission_losses"],
               extra_functionality=extra_functionality,
               keep_shadowprices=keep_shadowprices,
               **kwargs)
