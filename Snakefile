@@ -23,6 +23,13 @@ SDIR = config['summary_dir'] + '/' + config['run']
 RDIR = config['results_dir'] + config['run']
 CDIR = config['costs_dir']
 
+# Requires clone of this version of trace
+# https://github.com/euronion/trace/commit/646d48b2e7a889594338bc376e0a6ecc5d18998f
+# in parallel directory to /pypsa-eur-sec
+subworkflow trace:
+    workdir: "../trace"
+    snakefile: "../trace/Snakefile"
+    configfile: "../trace/config/config.default.yaml"
 
 subworkflow pypsaeur:
     workdir: "../pypsa-eur"
@@ -502,8 +509,8 @@ rule prepare_sector_network:
         solar_thermal_total="resources/solar_thermal_total_elec_s{simpl}_{clusters}.nc",
         solar_thermal_urban="resources/solar_thermal_urban_elec_s{simpl}_{clusters}.nc",
         solar_thermal_rural="resources/solar_thermal_rural_elec_s{simpl}_{clusters}.nc",
-        import_costs="../../../data/results.csv", # TODO: host file on zenodo or elsewhere
-        import_p_max_pu="../../../data/hvdc-to-elec_aggregated-time-series_p-max-pu_.nc", # TODO: host file on zenodo or elsewhere
+        import_costs=trace("results/results.csv"), # TODO: host file on zenodo or elsewhere
+        import_p_max_pu=trace("results/combined_weighted_generator_timeseries.nc"), # TODO: host file on zenodo or elsewhere
         regions_onshore=pypsaeur("resources/regions_onshore_elec_s{simpl}_{clusters}.geojson"),
         **build_retro_cost_output,
         **build_biomass_transport_costs_output,
