@@ -251,6 +251,7 @@ sector:
   electricity_distribution_grid: true
   electricity_distribution_grid_cost_factor: 1.0  #multiplies cost in data/costs.csv
   electricity_grid_connection: true  # only applies to onshore wind and utility PV
+  electricity_grid_transmission_losses: 3 # Enable (=3) or disable (= 0) transmission losses in electricity grid
   H2_network: true
   gas_network: false
   H2_retrofit: false  # if set to True existing gas pipes can be retrofitted to H2 pipes
