@@ -23,7 +23,7 @@ Floor area missing in hotmaps building stock data,floor_area_missing.csv,unknown
 Comparative level investment,comparative_level_investment.csv,Eurostat,https://ec.europa.eu/eurostat/statistics-explained/index.php?title=Comparative_price_levels_for_investment
 Electricity taxes,electricity_taxes_eu.csv,Eurostat,https://appsso.eurostat.ec.europa.eu/nui/show.do?dataset=nrg_pc_204&lang=en
 Building topologies and corresponding standard values,tabula-calculator-calcsetbuilding.csv,unknown,https://episcope.eu/fileadmin/tabula/public/calc/tabula-calculator.xlsx
-Retrofitting thermal envelope costs for Germany,retro_cost_germany.csv,unkown,https://www.iwu.de/forschung/handlungslogiken/kosten-energierelevanter-bau-und-anlagenteile-bei-modernisierung/
+Retrofitting thermal envelope costs for Germany,retro_cost_germany.csv,unknown,https://www.iwu.de/forschung/handlungslogiken/kosten-energierelevanter-bau-und-anlagenteile-bei-modernisierung/
 District heating most countries,jrc-idees-2015/,CC BY 4.0,https://ec.europa.eu/jrc/en/potencia/jrc-idees,,
-District heating missing countries,district_heat_share.csv,unkown,https://www.euroheat.org/knowledge-hub/country-profiles,,
+District heating missing countries,district_heat_share.csv,unknown,https://www.euroheat.org/knowledge-hub/country-profiles,,
 
