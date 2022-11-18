@@ -1382,7 +1382,7 @@ def add_land_transport(n, costs):
 
 def build_heat_demand(n):
 
-    # copy forward the daily average heat demand into each hour, so it can be multipled by the intraday profile
+    # copy forward the daily average heat demand into each hour, so it can be multiplied by the intraday profile
     daily_space_heat_demand = xr.open_dataarray(snakemake.input.heat_demand_total).to_pandas().reindex(index=n.snapshots, method="ffill")
 
     intraday_profiles = pd.read_csv(snakemake.input.heat_profile, index_col=0)
@@ -1724,7 +1724,7 @@ def add_heat(n, costs):
 
             # minimum heat demand 'dE' after retrofitting in units of original heat demand (values between 0-1)
             dE = retro_data.loc[(ct, sec), ("dE")]
-            # get addtional energy savings 'dE_diff' between the different retrofitting strengths/generators at one node
+            # get additional energy savings 'dE_diff' between the different retrofitting strengths/generators at one node
             dE_diff = abs(dE.diff()).fillna(1-dE.iloc[0])
             # convert costs Euro/m^2 -> Euro/MWh
             capital_cost =  retro_data.loc[(ct, sec), ("cost")] * floor_area_node / \
@@ -2565,7 +2565,7 @@ def set_temporal_aggregation(n, opts, solver_name):
         if m is not None:
             n = average_every_nhours(n, m.group(0))
             break
-        # representive snapshots
+        # representative snapshots
         m = re.match(r"(^\d+)sn$", o, re.IGNORECASE)
         if m is not None:
             sn = int(m[1])

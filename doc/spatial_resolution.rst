@@ -15,7 +15,7 @@ The total number of nodes for Europe is set in the ``config.yaml`` file
 under ``clusters``. The number of nodes can vary between 37, the number
 of independent countries / synchronous areas, and several
 hundred. With 200-300 nodes the model needs 100-150 GB RAM to solve
-with a commerical solver like Gurobi.
+with a commercial solver like Gurobi.
 
 
 Not all of the sectors are at the full nodal resolution, and some
