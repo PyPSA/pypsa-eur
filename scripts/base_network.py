@@ -691,22 +691,23 @@ def _integrate_tyndp_2020(buses,
                           upg_lines,
                           upg_links,
                           config):
+    new_buses = _read_tyndp2020_buses(new_buses)
+    new_lines = _read_tyndp2020_lines(new_lines)
+    new_links = _read_tyndp2020_links(new_links)
+
+    upg_buses = _read_tyndp2020_buses(upg_buses)
+    upg_lines = _read_tyndp2020_lines(upg_lines)
+    upg_links = _read_tyndp2020_links(upg_links)
+
     allowed_statuses = config["TYNDP2020"].get("allowed_statuses")
 
-    new_buses = _read_drop_statusbased(new_buses, allowed_statuses)
-    new_lines = _read_drop_statusbased(new_lines, allowed_statuses)
-    new_links = _read_drop_statusbased(new_links, allowed_statuses)
-    upg_buses = _read_drop_statusbased(upg_buses, allowed_statuses)
-    upg_lines = _read_drop_statusbased(upg_lines, allowed_statuses)
-    upg_links = _read_drop_statusbased(upg_links, allowed_statuses)
+    new_buses = _handle_status(new_buses, allowed_statuses)
+    new_lines = _handle_status(new_lines, allowed_statuses)
+    new_links = _handle_status(new_links, allowed_statuses)
 
-    # set carrier for new assets
-    new_buses['carrier'] = new_buses.pop("dc").map({True: "DC", False: "AC"})
-    new_lines['carrier'] = "AC"
-    new_links['carrier'] = "DC"
-
-    # TODO: have to check whether sth has changed?
-    upg_buses['carrier'] = upg_buses.pop("dc").map({True: "DC", False: "AC"})
+    upg_buses = _handle_status(upg_buses, allowed_statuses)
+    upg_lines = _handle_status(upg_lines, allowed_statuses)
+    upg_links = _handle_status(upg_links, allowed_statuses)
 
     # add 'commissioning_year' to existing assets (beginning of UNIX time)
     buses.loc[:, 'commissioning_year'] = pd.to_datetime(0)
@@ -719,9 +720,10 @@ def _integrate_tyndp_2020(buses,
     links = pd.concat([links, new_links])
 
     # upgrade existing assets
-    buses.update(upg_buses)
-    lines.update(upg_lines)
-    links.update(upg_links)
+    buses.loc[upg_buses.index, :] = upg_buses
+    lines.loc[upg_lines.index, :] = upg_lines
+    links.loc[upg_links.index, :] = upg_links
+
     # Drop lines or links if their 'bus0' or 'bus1' columns contain
     # buses that were dropped due to their 'tyndp_status'.
     lines = lines.loc[lines.bus0.isin(buses.index)
@@ -732,17 +734,51 @@ def _integrate_tyndp_2020(buses,
     return buses, lines, links
 
 
-def _read_drop_statusbased(tyndp_file, allowed_statuses):
+def _read_tyndp2020_buses(tyndp_file):
+    df = pd.read_csv(tyndp_file,
+                     index_col=0)
+    df.index = df.index.astype(str)
+    df.index.name = "bus_id"
+    df["carrier"] = df.pop("dc").map({True: "DC", False: "AC"})
+    df["commissioning_year"] = pd.to_datetime(df['commissioning_year'],
+                                              format="%Y")
+    df["symbol"] = "substation"
+
+    return df
+
+
+def _read_tyndp2020_lines(tyndp_file):
     df = pd.read_csv(tyndp_file,
                      index_col=0,
                      dtype={"bus0": "str", "bus1": "str"})
     df.index = df.index.astype(str)
-    df.loc[:, 'commissioning_year'] = pd.to_datetime(df['commissioning_year'],
-                                                     format="%Y")
-    df = df.loc[df['tyndp_status'].isin(allowed_statuses)]
-    df = df.drop('tyndp_status', axis=1)
-    df['under_construction'] = True
+    df.index.name = "line_id"
+    df["commissioning_year"] = pd.to_datetime(df['commissioning_year'],
+                                              format="%Y")
+    df["v_nom"] = df["v_nom"].replace(np.nan, 220)
+    df["v_nom"] = df["v_nom"].astype(int)
+    df["num_parallel"] = 1
     return df
+
+
+def _read_tyndp2020_links(tyndp_file):
+    df = pd.read_csv(tyndp_file,
+                     index_col=0,
+                     dtype={"bus0": "str", "bus1": "str"})
+    df.index = df.index.astype(str)
+    df.index.name = "link_id"
+    df["carrier"] = "DC"
+    df["commissioning_year"] = pd.to_datetime(df['commissioning_year'],
+                                              format="%Y")
+    df = df.drop("v_nom", axis=1)
+    return df
+
+
+def _handle_status(df, allowed_statuses):
+    df = df.loc[df['tyndp_status'].isin(allowed_statuses)]
+    # TODO: maybe set this depending on whether date has passed?
+    df['under_construction'] = True
+    return df.drop('tyndp_status', axis=1)
 
 
 def base_network(
