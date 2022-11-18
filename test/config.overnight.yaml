@@ -1,4 +1,4 @@
-run: test-overnight  # use this to keep track of runs with different settings
+run: test-overnight # use this to keep track of runs with different settings
 
 scenario:
   lv: # allowed transmission line volume expansion, can be any float >= 1.0 (today) or "opt"
@@ -20,18 +20,15 @@ snapshots:
 atlite:
   cutout: ../pypsa-eur/cutouts/be-03-2013-era5.nc
 
-
 sector:
   co2_vent: true
   gas_network: true
-  H2_retrofit: true  # if set to True existing gas pipes can be retrofitted to H2 pipes
+  H2_retrofit: true # if set to True existing gas pipes can be retrofitted to H2 pipes
   biomass_boiler: false
-
 
 solving:
   solver:
     name: cbc
     options: {}
   mem: 4000 #memory in MB; 20 GB enough for 50+B+I+H2; 100 GB for 181+B+I+H2
-
 
