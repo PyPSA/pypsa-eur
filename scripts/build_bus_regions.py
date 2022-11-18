@@ -107,7 +107,7 @@ def voronoi_partition_pts(points, outline):
 
             polygons.append(poly)
 
-    return np.array(polygons, dtype=object)
+    return polygons
 
 
 if __name__ == "__main__":
