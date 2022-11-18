@@ -62,6 +62,10 @@ def plot_map(network, components=["links", "stores", "storage_units", "generator
 
     for comp in components:
         df_c = getattr(n, comp)
+
+        if df_c.empty:
+            continue
+
         df_c["nice_group"] = df_c.carrier.map(rename_techs_tyndp)
 
         attr = "e_nom_opt" if comp == "stores" else "p_nom_opt"
