@@ -36,7 +36,7 @@ Here are some examples of how spatial resolution is set for different sectors in
 
 •	Solid biomass: It can be modeled as a single node for Europe or it can be nodally resolved if activated in the `config <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L270>`_. Nodal modeling includes modeling biomass potential per country (given per country, then distributed by population density within) and the transport of solid biomass between countries.
 
-•	CO2: It can be modeled as a single node for Europe or it can be nodally resolved with CO2 transport pipelines if activated in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L248>`_ . It should mentioned that in single node mode a transport and storage cost is added for sequestered CO2, the cost of which can be adjusted in the `Config <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L247>`_ file. 
+•	CO2: It can be modeled as a single node for Europe or it can be nodally resolved with CO2 transport pipelines if activated in the `config <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L248>`_. It should mentioned that in single node mode a transport and storage cost is added for sequestered CO2, the cost of which can be adjusted in the `config <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L247>`_. 
 
 •	Liquid hydrocarbons: Modeled as a single node for Europe, since transport costs for liquids are low and no bottlenecks are expected.
 
