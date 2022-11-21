@@ -32,7 +32,7 @@ Here are some examples of how spatial resolution is set for different sectors in
 •	Industry demand (heat, chemicals, etc.) : Modeled as nodal, distributed in each country based on locations of industry from HotMaps database.
 •	Hydrogen network: Modeled as nodal (if activated in the `Config <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L260>`_ file).
 
-•	Methane network: It can be modeled as a single node for Europe or it can be nodally resolved if activated in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L266>`_ . One node can be considered reasonable since future demand is expected to be low and no bottlenecks are expected. Also, the nodally resolved methane grid is based on SciGRID_gas data.
+•	Methane network: It can be modeled as a single node for Europe or it can be nodally resolved if activated in the `config <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L266>`_. One node can be considered reasonable since future demand is expected to be low and no bottlenecks are expected. Also, the nodally resolved methane grid is based on SciGRID_gas data.
 
 •	Solid biomass: It can be modeled as a single node for Europe or it can be nodally resolved if activated in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L270>`_. Nodal modeling includes modeling biomass potential per country (given per country, then distributed by population density within) and the transport of solid biomass between countries.
 
