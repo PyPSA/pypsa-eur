@@ -52,7 +52,7 @@ Grouping years indicates the bins limits for grouping the existing capacities of
 
 **threshold capacity**
 
-If for a technology, node, and grouping bin, the capacity is lower than threshold_capacity, it is ignored
+If for a technology, node, and grouping bin, the capacity is lower than threshold_capacity, it is ignored.
 
 ``threshold_capacity: 10``
 
