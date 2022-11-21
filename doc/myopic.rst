@@ -61,7 +61,7 @@ If for a technology, node, and grouping bin, the capacity is lower than threshol
 
 **conventional carriers**
 
-conventional carriers indicate carriers used in the existing conventional technologies
+Conventional carriers indicate carriers used in the existing conventional technologies.
 
     conventional_carriers:
     
