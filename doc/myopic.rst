@@ -11,7 +11,9 @@ The myopic approach was initially developed and used in the paper `Early decarbo
 The current code applies the myopic approach to generators, storage technologies and links in the power sector. It furthermore applies it to the space and water heating sector (e.g., the share of district heating and reduced space heat demand), industry processes (e.g., steel, direct reduced iron, and aluminum production via primary route), the share of fuel cell and battery electric vehicles in land transport, and the hydrogen share in shipping (see :doc:`supply_demand` for further information).
 
 The following subjects within the land transport and biomass currently do not evolve with the myopic approach:
-- The percentage of electric vehicles that allow demand-side management and vehicle-to-grid services
+
+- The percentage of electric vehicles that allow demand-side management and vehicle-to-grid services.
+
 - The annual biomass potential (default year and scenario for which potential is taken is 2030, defined `here <https://github.com/PyPSA/pypsa-eur-sec/blob/413254e241fb37f55b41caba7264644805ad8e97/config.default.yaml#L109>`_)
 
 Configuration
