@@ -612,3 +612,8 @@ Captured $CO_2$ can also be sequestered underground up to an annual sequestratio
 *Carbon dioxide transport*
 
 Carbon dioxide can be modelled as a single node for Europe (in this case, $CO_2$ transport constraints are neglected). A network for modelling the transport of $CO_2$ among the different nodes can also be created if selected in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L248>`_. 
+
+
+Test |H20|
+
+|H2O| replace:: H\ :sub:`2`\ O
