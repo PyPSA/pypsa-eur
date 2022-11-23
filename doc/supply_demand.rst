@@ -6,8 +6,16 @@ Supply and demand
 
 
 Test |H2O|
+|CH4|
+3|H2|
 
 .. |H2O| replace:: H\ :sub:`2`\ O
+.. |CH4| replace:: CH\ :sub:`4`
+.. |H2| replace:: H\ :sub:`2`
+
+
+
+CH_4 + H_2O → CO + 3H_2
 An initial orientation to the supply and demand options in the model
 PyPSA-Eur-Sec can be found in the description of the model
 PyPSA-Eur-Sec-30 in the paper `Synergies of sector coupling and
