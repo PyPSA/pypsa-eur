@@ -11,7 +11,7 @@ Test |H2O|
 
 This is a test
 
-.. math:: \ce{(2Na+,SO4^2- ) + (Ba^2+, 2Cl- ) -> BaSO4 v + 2NaCl}
+.. chemistry:: \ce{(2Na+,SO4^2- ) + (Ba^2+, 2Cl- ) -> BaSO4 v + 2NaCl}
 
 .. |H2O| replace:: H\ :sub:`2`\ O
 .. |CH4| replace:: CH\ :sub:`4`
