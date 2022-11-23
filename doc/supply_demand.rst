@@ -7,7 +7,9 @@ Supply and demand
 
 Test |H2O|
 |CH4|
-3|H2|
+3 |H2|
+
+This is a test
 
 .. |H2O| replace:: H\ :sub:`2`\ O
 .. |CH4| replace:: CH\ :sub:`4`
