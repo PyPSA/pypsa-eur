@@ -616,4 +616,4 @@ Carbon dioxide can be modelled as a single node for Europe (in this case, $CO_2$
 
 Test |H2O|
 
-|H2O| replace:: H\ :sub:`2`\ O
+..|H2O| replace:: H\ :sub:`2`\ O
