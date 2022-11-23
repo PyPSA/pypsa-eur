@@ -12,7 +12,10 @@ Test |H2O|
 This is a test
 
 .. math:: 
-	CH_4 + H_2O → CO + 3H_2
+	CH_4 + H_2O→ CO + 3H_2
+	
+.. math::
+   \frac{ \sum_{t=0}^{N}f(t,k) }{N}
 
 .. |H2O| replace:: H\ :sub:`2`\ O
 .. |CH4| replace:: CH\ :sub:`4`
