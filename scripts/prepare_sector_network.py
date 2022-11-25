@@ -2879,4 +2879,11 @@ if __name__ == "__main__":
     if options['electricity_grid_connection']:
         add_electricity_grid_connection(n, costs)
 
+    # Workaround: Remove lines with conflicting (and unrealistic) properties
+    # cf. https://github.com/PyPSA/pypsa-eur/issues/444
+    if options['electricity_grid_transmission_losses']:
+        idx = n.lines.query("num_parallel == 0").index
+        logger.info(f"Removing {len(idx)} line(s) with properties conflicting with transmission losses functionality.")
+        n.mremove("Line", idx)
+
     n.export_to_netcdf(snakemake.output[0])
