@@ -389,10 +389,7 @@ def solve_network(n, config, opts="", **kwargs):
 
     if skip_iterations:
         network_lopf(
-            n,
-            solver_name=solver_name,
-            solver_options=solver_options,
-            **kwargs
+            n, solver_name=solver_name, solver_options=solver_options, **kwargs
         )
     else:
         ilopf(
