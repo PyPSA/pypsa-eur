@@ -392,7 +392,6 @@ def solve_network(n, config, opts="", **kwargs):
             n,
             solver_name=solver_name,
             solver_options=solver_options,
-            extra_functionality=extra_functionality,
             **kwargs
         )
     else:
@@ -403,7 +402,6 @@ def solve_network(n, config, opts="", **kwargs):
             track_iterations=track_iterations,
             min_iterations=min_iterations,
             max_iterations=max_iterations,
-            extra_functionality=extra_functionality,
             **kwargs
         )
     return n
@@ -432,6 +430,7 @@ if __name__ == "__main__":
             n,
             snakemake.config,
             opts,
+            extra_functionality=extra_functionality,
             solver_dir=tmpdir,
             solver_logfile=snakemake.log.solver,
         )
