@@ -44,11 +44,11 @@ Annual heat demands per country are retrieved from `JRC-IDEES  <https://op.europ
 
 *Space heating*
 
-The space heating demand can be exogenously reduced by retrofitting measures that improve the buildings’ thermal envelopes [Refer to PyPSA-Eur-Sec config file, `line 212 <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L212>`_.
+The space heating demand can be exogenously reduced by retrofitting measures that improve the buildings’ thermal envelopes.
 
 .. literalinclude:: ../config.default.yaml
     :language: yaml
-    :lines: 212
+    :lines: 205
 
 Co-optimsing of building renovation is also possible, if it is activated in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L222>`_.
 Renovation of the thermal envelope reduces the space heating demand and is optimised at each node for every heat bus. Renovation measures through additional insulation material and replacement of energy inefficient windows are considered.
@@ -394,19 +394,19 @@ Two alternative routes are used today to manufacture steel in Europe. The primar
 The primary route uses blast furnaces in which coke is used to reduce iron ore into molten iron, which is then converted into steel:
 					
 .. math::
-CO_2 + C \xrightarrow{} 2 CO
+   CO_2 + C \xrightarrow{} 2 CO
 
 
 .. math::
-3 Fe_2O_3 + CO  \xrightarrow{} 2 Fe_3O_4 + CO
+   3 Fe_2O_3 + CO  \xrightarrow{} 2 Fe_3O_4 + CO
 
 
 .. math::
-Fe_3O_4 + CO  \xrightarrow{} 3 FeO + CO_2
+   Fe_3O_4 + CO  \xrightarrow{} 3 FeO + CO_2
 
 
 .. math::
-FeO + CO  \xrightarrow{} Fe + CO_2
+   FeO + CO  \xrightarrow{} Fe + CO_2
 
 					
 The primary route of steelmaking implies large process emissions of 0.22 t :math:`_{CO_2}` /t of steel, amounting to 7% of global greenhouse gas emissions `(Vogl et. al) <https://doi.org/10.1016/j.joule.2021.09.007>`_. 

@@ -85,7 +85,8 @@ E.g. ``'cb40ex0'`` splits a carbon budget equal to 40 GtCO_2 following an expone
 They can also follow some user-specified path, if defined `here <https://github.com/PyPSA/pypsa-eur-sec/blob/413254e241fb37f55b41caba7264644805ad8e97/config.default.yaml#L56>`_.
 The paper `Speed of technological transformations required in Europe to achieve different climate goals (2022) <https://doi.org/10.1016/j.joule.2022.04.016>`__ defines CO_2 budgets corresponding to global temperature increases (1.5C – 2C) as response to the emissions. Here, global carbon budgets are converted to European budgets assuming equal-per capita distribution which translates into a 6.43% share for Europe. The carbon budgets are in this paper distributed throughout the transition paths assuming an exponential decay. Emissions e(t) in every year t are limited by
 
-$e(t) = e_0 (1+ (r+m)t) e^(-mt)$
+.. math::
+  e(t) = e_0 (1+ (r+m)t) e^(-mt)
 
 where r is the initial linear growth rate, which here is assumed to be r=0, and the decay parameter m is determined by imposing the integral of the path to be equal to the budget for Europe. Following this approach, the CO_2 budget is defined. Following the same approach as in this paper, add the following to the ``scenario.sector_opts``
 E.g.  ``-cb25.7ex0`` (1.5C increase)
@@ -98,13 +99,12 @@ General myopic code structure
 
 The myopic code solves the network for the time steps included in ``planning_horizons`` in a recursive loop, so that:
 
-1.The existing capacities (those installed before the base year are added as fixed capacities with p_nom=value, p_nom_extendable=False). E.g. for baseyear=2020, capacities installed before 2020 are added. In addition, the network comprises additional generator, storage, and link capacities with p_nom_extendable=True. The non-solved network is saved in ``results/run_name/networks/prenetworks-brownfield``.
-
+1. The existing capacities (those installed before the base year are added as fixed capacities with p_nom=value, p_nom_extendable=False). E.g. for baseyear=2020, capacities installed before 2020 are added. In addition, the network comprises additional generator, storage, and link capacities with p_nom_extendable=True. The non-solved network is saved in ``results/run_name/networks/prenetworks-brownfield``. 
 The base year is the first element in ``planning_horizons``. Step 1 is implemented with the rule add_baseyear for the base year and with the rule add_brownfield for the remaining planning_horizons.
 
-2.The 2020 network is optimized. The solved network is saved in ``results/run_name/networks/postnetworks``
+2. The 2020 network is optimized. The solved network is saved in ``results/run_name/networks/postnetworks``
 
-3.For the next planning horizon, e.g. 2030, the capacities from a previous time step are added if they are still in operation (i.e., if they fulfil planning horizon <= commissioned year + lifetime). In addition, the network comprises additional generator, storage, and link capacities with p_nom_extendable=True. The non-solved network is saved in ``results/run_name/networks/prenetworks-brownfield``.
+3. For the next planning horizon, e.g. 2030, the capacities from a previous time step are added if they are still in operation (i.e., if they fulfil planning horizon <= commissioned year + lifetime). In addition, the network comprises additional generator, storage, and link capacities with p_nom_extendable=True. The non-solved network is saved in ``results/run_name/networks/prenetworks-brownfield``.
 
 Steps 2 and 3 are solved recursively for all the planning_horizons included in ``config.yaml``.
 
