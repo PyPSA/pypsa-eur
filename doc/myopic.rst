@@ -89,7 +89,7 @@ $e(t) = e_0 (1+ (r+m)t) e^(-mt)$
 
 where r is the initial linear growth rate, which here is assumed to be r=0, and the decay parameter m is determined by imposing the integral of the path to be equal to the budget for Europe. Following this approach, the CO_2 budget is defined. Following the same approach as in this paper, add the following to the ``scenario.sector_opts``
 E.g.  ``-cb25.7ex0`` (1.5C increase)
-Or ``cb73.9ex0`` (2C increase)
+Or ``cb73.9ex0`` (2C increase).
 See details in Supplemental Note S1 `Speed of technological transformations required in Europe to achieve different climate goals (2022) <https://doi.org/10.1016/j.joule.2022.04.016>`__
 
 
