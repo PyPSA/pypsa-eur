@@ -117,7 +117,7 @@ NB: The old PyPSA-Eur-Sec-30 model assumed an extraction plant (like the DEA coa
 
 **Micro-CHP**
 
-Pypsa-eur-sec allows individual buildings to make use of `micro gas CHPs <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L236>`_ that are assumed to be installed at the distribution grid level.
+PyPSA-Eur-Sec allows individual buildings to make use of `micro gas CHPs <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L236>`_ that are assumed to be installed at the distribution grid level.
 
 **Heat pumps**
 
