@@ -227,7 +227,7 @@ def add_co2_sequestration_limit(n, sns):
     limit = n.config["sector"].get("co2_sequestration_potential", 200) * 1e6
     for o in opts:
         if not "seq" in o: continue
-        limit = float(o[o.find("seq")+3:])
+        limit = float(o[o.find("seq")+3:]) * 1e6
         break
 
     name = 'co2_sequestration_limit'

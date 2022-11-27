@@ -165,11 +165,11 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
     df_agg.loc[biomass_i, 'DateOut'] = df_agg.loc[biomass_i, 'DateOut'].fillna(dateout)
 
 
-    # drop assets which are already phased out / decomissioned
+    # drop assets which are already phased out / decommissioned
     phased_out = df_agg[df_agg["DateOut"]<baseyear].index
     df_agg.drop(phased_out, inplace=True)
 
-    # calculate remaining lifetime before phase-out (+1 because assumming
+    # calculate remaining lifetime before phase-out (+1 because assuming
     # phase out date at the end of the year)
     df_agg["lifetime"] = df_agg.DateOut - df_agg.DateIn + 1
 
@@ -251,7 +251,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                     # existing capacities are split evenly among regions in every country
                     inv_ind = [i for i in inv_busmap[ind]]
 
-                    # for offshore the spliting only inludes coastal regions
+                    # for offshore the splitting only includes coastal regions
                     inv_ind = [i for i in inv_ind if (i + name_suffix) in n.generators.index]
 
                     p_max_pu = n.generators_t.p_max_pu[[i + name_suffix for i in inv_ind]]
