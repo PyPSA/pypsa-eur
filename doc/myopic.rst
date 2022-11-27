@@ -11,7 +11,9 @@ The myopic approach was initially developed and used in the paper `Early decarbo
 The current code applies the myopic approach to generators, storage technologies and links in the power sector. It furthermore applies it to the space and water heating sector (e.g., the share of district heating and reduced space heat demand), industry processes (e.g., steel, direct reduced iron, and aluminum production via primary route), the share of fuel cell and battery electric vehicles in land transport, and the hydrogen share in shipping (see :doc:`supply_demand` for further information).
 
 The following subjects within the land transport and biomass currently do not evolve with the myopic approach:
-- The percentage of electric vehicles that allow demand-side management and vehicle-to-grid services
+
+- The percentage of electric vehicles that allow demand-side management and vehicle-to-grid services.
+
 - The annual biomass potential (default year and scenario for which potential is taken is 2030, defined `here <https://github.com/PyPSA/pypsa-eur-sec/blob/413254e241fb37f55b41caba7264644805ad8e97/config.default.yaml#L109>`_)
 
 Configuration
@@ -52,7 +54,7 @@ Grouping years indicates the bins limits for grouping the existing capacities of
 
 **threshold capacity**
 
-If for a technology, node, and grouping bin, the capacity is lower than threshold_capacity, it is ignored
+If for a technology, node, and grouping bin, the capacity is lower than threshold_capacity, it is ignored.
 
 ``threshold_capacity: 10``
 
@@ -61,7 +63,7 @@ If for a technology, node, and grouping bin, the capacity is lower than threshol
 
 **conventional carriers**
 
-conventional carriers indicate carriers used in the existing conventional technologies
+Conventional carriers indicate carriers used in the existing conventional technologies.
 
     conventional_carriers:
     
@@ -79,16 +81,16 @@ conventional carriers indicate carriers used in the existing conventional techno
 Options
 =============
 The total carbon budget for the entire transition path can be indicated in the `sector_opts <https://github.com/PyPSA/pypsa-eur-sec/blob/f13902510010b734c510c38c4cae99356f683058/config.default.yaml#L25>`_ in ``config.yaml``. The carbon budget can be split among the ``planning_horizons`` following an exponential or beta decay. 
-E.g. ``'cb40ex0'`` splits a carbon budget equal to 40 GtCO_2 following an exponential decay whose initial linear growth rate $r$ is zero
+E.g. ``'cb40ex0'`` splits a carbon budget equal to 40 GtCO_2 following an exponential decay whose initial linear growth rate $r$ is zero.
 They can also follow some user-specified path, if defined `here <https://github.com/PyPSA/pypsa-eur-sec/blob/413254e241fb37f55b41caba7264644805ad8e97/config.default.yaml#L56>`_.
-The paper `Speed of technological transformations required in Europe to achieve different climate goals (2022) <https://doi.org/10.1016/j.joule.2022.04.016>`__ defines CO_2 budgets corresponding to global temperature increases (1.5C – 2C) as response to the emissions. Here, global carbon budgets are converted to European budgets assuming equal-per capita distribution which translates into a 6.43% share for Europe. The carbon budgets are in this paper distributed hroughout the transition paths assuming an exponential decay. Emissions e(t) in every year t are limited by
+The paper `Speed of technological transformations required in Europe to achieve different climate goals (2022) <https://doi.org/10.1016/j.joule.2022.04.016>`__ defines CO_2 budgets corresponding to global temperature increases (1.5C – 2C) as response to the emissions. Here, global carbon budgets are converted to European budgets assuming equal-per capita distribution which translates into a 6.43% share for Europe. The carbon budgets are in this paper distributed throughout the transition paths assuming an exponential decay. Emissions e(t) in every year t are limited by
 
 $e(t) = e_0 (1+ (r+m)t) e^(-mt)$
 
 where r is the initial linear growth rate, which here is assumed to be r=0, and the decay parameter m is determined by imposing the integral of the path to be equal to the budget for Europe. Following this approach, the CO_2 budget is defined. Following the same approach as in this paper, add the following to the ``scenario.sector_opts``
 E.g.  ``-cb25.7ex0`` (1.5C increase)
-Or ``cb73.9ex0`` (2C increase)
-See details in Supplemental Note S1 `Speed of technological transformations required in Europe to achieve different climate goals (2022) <https://doi.org/10.1016/j.joule.2022.04.016>`__
+Or ``cb73.9ex0`` (2C increase).
+See details in Supplemental Note S1 `Speed of technological transformations required in Europe to achieve different climate goals (2022) <https://doi.org/10.1016/j.joule.2022.04.016>`__.
 
 
 General myopic code structure
@@ -122,7 +124,7 @@ Rule overview
   Existing wind and solar capacities are retrieved from `IRENA annual statistics <https://www.irena.org/Statistics/Download-Data>`__ and distributed among the nodes in a country proportional to capacity factor. (This will be updated to include capacity distributions closer to reality.)
 
   Existing heating capacities are retrieved from the report `Mapping and analyses of the current and future (2020 - 2030) heating/cooling fuel deployment (fossil/renewables)
-  <https://ec.europa.eu/energy/studies/mapping-and-analyses-current-and-future-2020-2030-heatingcooling-fuel-deployment_en?redir=1>`__
+  <https://ec.europa.eu/energy/studies/mapping-and-analyses-current-and-future-2020-2030-heatingcooling-fuel-deployment_en?redir=1>`__.
 
   The heating capacities are assumed to have a lifetime indicated by the parameter lifetime in the configuration file, e.g 25 years. They are assumed to be decommissioned linearly starting on the base year, e.g., from 2020 to 2045.
 

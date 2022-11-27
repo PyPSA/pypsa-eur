@@ -33,7 +33,7 @@ The basic equations:
 
         E_space = H_losses - H_gains
 
-    Heat losses constitute from the losses through heat trasmission (H_tr [W/m²K])
+    Heat losses constitute from the losses through heat transmission (H_tr [W/m²K])
     (this includes heat transfer through building elements and thermal bridges)
     and losses by ventilation (H_ve [W/m²K]):
 
@@ -71,7 +71,7 @@ import xarray as xr
 
 # thermal conductivity standard value
 k = 0.035
-# strenght of relative retrofitting depending on the component
+# strength of relative retrofitting depending on the component
 # determined by historical data of insulation thickness for retrofitting
 l_weight = pd.DataFrame({"weight": [1.95, 1.48, 1.]},
                         index=["Roof", "Wall", "Floor"])
@@ -89,8 +89,8 @@ tau_H_0 = 30
 # constant parameter alpha_H_0 [-] according to EN 13790 seasonal method
 alpha_H_0 = 0.8
 
-# paramter for solar heat load during heating season -------------------------
-# tabular standard values table p.8 in documenation
+# parameter for solar heat load during heating season -------------------------
+# tabular standard values table p.8 in documentation
 external_shading = 0.6     # vertical orientation: fraction of window area shaded [-]
 frame_area_fraction = 0.3  # fraction of frame area of window [-]
 non_perpendicular = 0.9    # reduction factor, considering radiation non perpendicular to the glazing[-]
@@ -279,7 +279,7 @@ def prepare_building_stock_data():
 def prepare_building_topology(u_values, same_building_topology=True):
     """
     reads in typical building topologies (e.g. average surface of building elements)
-    and typical losses trough thermal bridging and air ventilation
+    and typical losses through thermal bridging and air ventilation
     """
 
     data_tabula = pd.read_csv(snakemake.input.data_tabula,
@@ -585,7 +585,7 @@ def map_to_lstrength(l_strength, df):
 
 def calculate_heat_losses(u_values, data_tabula, l_strength, temperature_factor):
     """
-    calculates total annual heat losses Q_ht for different insulation thiknesses
+    calculates total annual heat losses Q_ht for different insulation thicknesses
     (l_strength), depening on current insulation state (u_values), standard
     building topologies and air ventilation from TABULA (data_tabula) and
     the accumulated difference between internal and external temperature
@@ -790,7 +790,7 @@ def sample_dE_costs_area(area, area_tot, costs, dE_space, countries,
 
     # drop not considered countries
     cost_dE = cost_dE.reindex(countries,level=0)
-    # get share of residential and sevice floor area
+    # get share of residential and service floor area
     sec_w = area_tot.value / area_tot.value.groupby(level=0).sum()
     # get the total cost-energy-savings weight by sector area
     tot = (cost_dE.mul(sec_w, axis=0).groupby(level="country_code").sum()
@@ -863,7 +863,7 @@ if __name__ == "__main__":
     data_tabula = prepare_building_topology(u_values)
     # costs for retrofitting -------------------------------------------------
     cost_retro, window_assumptions, cost_w, tax_w = prepare_cost_retro(country_iso_dic)
-    # temperature dependend parameters
+    # temperature dependent parameters
     d_heat, temperature_factor = prepare_temperature_data()
 
 

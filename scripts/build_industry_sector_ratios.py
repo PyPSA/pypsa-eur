@@ -618,7 +618,7 @@ def nonmetalic_mineral_products():
     # (c) clinker production (kilns),
     # (d) Grinding, packaging.
     # (b)+(c) represent 94% of fec. So (a) is joined to (b) and (d) is joined to (c).
-    # Temperatures above 1400C are required for procesing limestone and sand into clinker.
+    # Temperatures above 1400C are required for processing limestone and sand into clinker.
     # Everything (except current electricity and heat consumption and existing biomass)
     # is transformed into methane for high T.
 
@@ -1110,7 +1110,7 @@ def non_ferrous_metals():
 
     # Aluminium secondary route
 
-    # All is coverted into secondary route fully electrified.
+    # All is converted into secondary route fully electrified.
 
     sector = "Aluminium - secondary production"
 
