@@ -242,7 +242,7 @@ Hydrogen can be stored in overground steel tanks or `underground salt caverns <h
 Methane demand  
 ====================================
                   
-Methane is used in individual and large-scale gas boilers, in CHP plants with and without carbon capture, in OCGT and CCGT power plants, and in some industry subsectors for the provision of high temperature heat (see :ref:`Industry demand`). Methane is not used in the trans- port sector because of engine slippage.
+Methane is used in individual and large-scale gas boilers, in CHP plants with and without carbon capture, in OCGT and CCGT power plants, and in some industry subsectors for the provision of high temperature heat (see :ref:`Industry demand`). Methane is not used in the transport sector because of engine slippage.
 
 .. _Methane supply:
 
