@@ -4,7 +4,7 @@
 Spatial resolution
 ##########################################
 
-The default nodal resolution of the model follows the electricity generation and transmission model `PyPSA-Eur <https://github.com/PyPSA/pypsa-eur>`_ , which clusters down the electricity transmission substations in each European country based on the k-means algorithm (See `cluster_network <https://pypsa-eur.readthedocs.io/en/latest/simplification/cluster_network.html#rule-cluster-network>`_ for a complete explanation). This gives nodes which correspond to major load and generation centres (typically cities).
+The default nodal resolution of the model follows the electricity generation and transmission model `PyPSA-Eur <https://github.com/PyPSA/pypsa-eur>`_, which clusters down the electricity transmission substations in each European country based on the k-means algorithm (See `cluster_network <https://pypsa-eur.readthedocs.io/en/latest/simplification/cluster_network.html#rule-cluster-network>`_ for a complete explanation). This gives nodes which correspond to major load and generation centres (typically cities).
 
 Exemplary unsolved network clustered to 512 nodes:
 
