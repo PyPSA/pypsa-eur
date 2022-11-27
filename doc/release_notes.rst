@@ -80,6 +80,8 @@ incorporates retrofitting options to hydrogen.
 
 * Updated `data bundle <https://zenodo.org/record/5824485/files/pypsa-eur-sec-data-bundle.tar.gz>`_ that includes the hydrogan salt cavern storage potentials.
 
+* Updated and extended documentation in <https://pypsa-eur-sec.readthedocs.io/en/latest/>
+
 * Shipping demand now defaults to (synthetic) oil rather than liquefied hydrogen until 2050.
 
 **Bugfixes**
