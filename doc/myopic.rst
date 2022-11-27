@@ -124,7 +124,7 @@ Rule overview
   Existing wind and solar capacities are retrieved from `IRENA annual statistics <https://www.irena.org/Statistics/Download-Data>`__ and distributed among the nodes in a country proportional to capacity factor. (This will be updated to include capacity distributions closer to reality.)
 
   Existing heating capacities are retrieved from the report `Mapping and analyses of the current and future (2020 - 2030) heating/cooling fuel deployment (fossil/renewables)
-  <https://ec.europa.eu/energy/studies/mapping-and-analyses-current-and-future-2020-2030-heatingcooling-fuel-deployment_en?redir=1>`__
+  <https://ec.europa.eu/energy/studies/mapping-and-analyses-current-and-future-2020-2030-heatingcooling-fuel-deployment_en?redir=1>`__.
 
   The heating capacities are assumed to have a lifetime indicated by the parameter lifetime in the configuration file, e.g 25 years. They are assumed to be decommissioned linearly starting on the base year, e.g., from 2020 to 2045.
 
