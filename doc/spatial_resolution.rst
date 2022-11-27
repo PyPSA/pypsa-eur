@@ -19,7 +19,7 @@ Not all of the sectors are at the full nodal resolution, and some demand for som
 
 Here are some examples of how spatial resolution is set for different sectors in PyPSA-Eur-Sec:
 
-•	Electricity network: Modeled as nodal
+•	Electricity network: Modeled as nodal.
 
 •	Electricity residential and commercial demand: Modeled as nodal, distributed in each country based on population and GDP.
 
