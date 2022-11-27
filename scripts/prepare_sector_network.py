@@ -2182,7 +2182,7 @@ def add_industry(n, costs):
             bus3=spatial.co2.nodes,
             carrier="methanolisation",
             p_nom_extendable=True,
-            capital_cost=costs.at["methanolisation", 'fixed'] * 0.8787, # EUR/MW_H2/a
+            capital_cost=costs.at["methanolisation", 'fixed'] * options["MWh_MeOH_per_MWh_H2"], # EUR/MW_H2/a
             lifetime=costs.at["methanolisation", 'lifetime'],
             efficiency=options["MWh_MeOH_per_MWh_H2"],
             efficiency2=- options["MWh_MeOH_per_MWh_H2"] / options["MWh_MeOH_per_tCO2"],
