@@ -516,7 +516,6 @@ For the other non-ferrous metals, we assume the electrification of the entire ma
 
 The remaining industry subsectors include (a) pulp, paper, printing, (b) food, beverages, tobacco, (c) textiles and leather, (d) machinery equipment, (e) transport equipment, (f) wood and wood products, (g) others. Low- and mid-temperature process heat in these industries is assumed to be `supplied by biomass <https://doi.org/10.1016/j.rser.2021.110856>`_  while the remaining processes are electrified. None of the subsectors involve process emissions.
 
-Energy demands for the agriculture, forestry and fishing sector per country are taken from the `JRC IDEES database <https://op.europa.eu/en/publication-detail/-/publication/989282db-ad65-11e7-837e-01aa75ed71a1/language-en>`_.  Missing countries are filled with `eurostat data <https://ec.europa.eu/eurostat/web/energy/data/energy-balances>`_. Agricultural energy demands are split into electricity (lighting, ventilation, specific electricity uses, electric pumping devices), heat (specific heat uses, low enthalpy heat) machinery oil (motor drives, farming machine drives, diesel-fueled pumping devices). Heat demand is for this sector is classified as services rural heat. Time series for demands are assumed to be constant and distributed inside countries in proportion to population. 
 
 Agriculture demand
 =========================
