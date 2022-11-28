@@ -234,7 +234,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
             # solar utility and rooftop as well, rather take cost assumptions
             # from existing network than from the cost database
             capital_cost = n.generators.loc[n.generators.carrier==generator+suffix, "capital_cost"].mean()
-
+            marginal_cost = n.generators.loc[n.generators.carrier==generator+suffix, "marginal_cost"].mean()
             # check if assets are already in network (e.g. for 2020)
             already_build = n.generators.index.intersection(asset_i)
             new_build = asset_i.difference(n.generators.index)
@@ -262,7 +262,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                         bus=ind,
                         carrier=generator,
                         p_nom=new_capacity[ind] / len(inv_ind), # split among regions in a country
-                        marginal_cost=costs.at[generator,'VOM'],
+                        marginal_cost=marginal_cost,
                         capital_cost=capital_cost,
                         efficiency=costs.at[generator, 'efficiency'],
                         p_max_pu=p_max_pu,
@@ -281,7 +281,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                         bus=new_capacity.index,
                         carrier=generator,
                         p_nom=new_capacity,
-                        marginal_cost=costs.at[generator, 'VOM'],
+                        marginal_cost=marginal_cost,
                         capital_cost=capital_cost,
                         efficiency=costs.at[generator, 'efficiency'],
                         p_max_pu=p_max_pu.rename(columns=n.generators.bus),
@@ -520,10 +520,10 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             'add_existing_baseyear',
             simpl='',
-            clusters="45",
+            clusters="37",
             lv=1.0,
             opts='',
-            sector_opts='365H-T-H-B-I-A-solar+p3-dist1',
+            sector_opts='800sn-T-H-B-I-A-solar+p3-dist1-co2min-1p7',
             planning_horizons=2030,
         )
 
