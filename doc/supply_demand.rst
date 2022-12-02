@@ -490,7 +490,7 @@ The ceramics sector is assumed to be fully electrified based on the current effi
 
 *Glass*
 
-The production of glass is assumed to be fully electrified based on the current efficiency of electric melting tanks and electric annealing which adds up to an electricity demand of 2.07 MWh :math:`_{el}l/t` of `glass <https://doi.org/10/f9df2m>`_. The manufacturing of glass incurs process emissions of 0.1 t :math:`_{CO_2} `/t of glass. Potential efficiency improvements, which according to `Lechtenböhmer et al <https://doi.org/10/f9df2m>`_ could reduce energy demands to 0.85 MW :math:`_{el}`/t of glass, have not been considered. For a detailed overview of the glass industry sector see `Furszyfer Del Rio et al <https://doi.org/10.1016/j.rser.2021.111885>`_.
+The production of glass is assumed to be fully electrified based on the current efficiency of electric melting tanks and electric annealing which adds up to an electricity demand of 2.07 MWh :math:`_{el}`/t of `glass <https://doi.org/10/f9df2m>`_. The manufacturing of glass incurs process emissions of 0.1 t :math:`_{CO_2}`/t of glass. Potential efficiency improvements, which according to `Lechtenböhmer et al <https://doi.org/10/f9df2m>`_ could reduce energy demands to 0.85 MW :math:`_{el}`/t of glass, have not been considered. For a detailed overview of the glass industry sector see `Furszyfer Del Rio et al <https://doi.org/10.1016/j.rser.2021.111885>`_.
 
 
 **Non-ferrous Metals**
