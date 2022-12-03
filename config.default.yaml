@@ -266,6 +266,7 @@ sector:
     OCGT: gas
   biomass_to_liquid: false
   biosng: false
+  endogenous_steel: false
 
 
 
