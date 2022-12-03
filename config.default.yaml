@@ -193,20 +193,15 @@ sector:
   agriculture_machinery_electric_share: 0
   agriculture_machinery_fuel_efficiency: 0.7 # fuel oil per use
   agriculture_machinery_electric_efficiency: 0.3 # electricity per use
-  shipping_methanol: true
   MWh_MeOH_per_MWh_H2: 0.8787 # in LHV, source: DECHEMA (2017): Low carbon energy and feedstock for the European chemical industry , pg. 64.
   MWh_MeOH_per_tCO2: 4.0321 # in LHV, source: DECHEMA (2017): Low carbon energy and feedstock for the European chemical industry , pg. 64.
   MWh_MeOH_per_MWh_e: 3.6907 # in LHV, source: DECHEMA (2017): Low carbon energy and feedstock for the European chemical industry , pg. 64.
-  shipping_average_efficiency: 0.4 #For conversion of fuel oil to propulsion in 2011
   shipping_hydrogen_liquefaction: false # whether to consider liquefaction costs for shipping H2 demands
-  shipping_hydrogen_share:  # 1 means all hydrogen FC
-    2020: 0
-    2025: 0
-    2030: 0.05
-    2035: 0.15
-    2040: 0.3
-    2045: 0.6
-    2050: 1
+  shipping_hydrogen_share: 0
+  shippint_methanol_share: 1
+  shipping_oil_share: 0
+  shipping_methanol_efficiency: 0.46 # 10-15% higher https://www.iea-amf.org/app/webroot/files/file/Annex%20Reports/AMF_Annex_56.pdf, https://users.ugent.be/~lsileghe/documents/extended_abstract.pdf
+  shipping_oil_efficiency: 0.40 #For conversion of fuel oil to propulsion in 2011
   time_dep_hp_cop: true #time dependent heat pump coefficient of performance
   heat_pump_sink_T: 55. # Celsius, based on DTU / large area radiators; used in build_cop_profiles.py
    # conservatively high to cover hot water and space heating in poorly-insulated buildings
