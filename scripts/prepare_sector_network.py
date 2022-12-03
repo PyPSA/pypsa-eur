@@ -2069,7 +2069,12 @@ def add_industry(n, costs):
 
         n.madd("Link",
             nodes,
-            suffix=" DRI + Electric arc"
+            suffix=f" {sector}",
+            carrier=sector,
+            p_nom_extendable=True,
+            p_min_pu=1,
+            capital_cost=0,
+            lifetime=99,
             bus0=nodes,
             bus1="EU steel",
             bus2=nodes + " H2",
