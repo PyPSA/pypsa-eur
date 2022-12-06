@@ -86,15 +86,27 @@ import pandas as pd
 import pypsa
 from _helpers import configure_logging
 from pypsa.descriptors import get_switchable_as_dense as get_as_dense
-from pypsa.linopf import (
-    define_constraints,
-    define_variables,
-    get_var,
-    ilopf,
-    join_exprs,
-    linexpr,
-    network_lopf,
-)
+from pypsa.linopf import ilopf, network_lopf
+from pypsa.optimization.abstract import optimize_transmission_expansion_iteratively
+
+# TODO: is this a good idea?
+if snakemake.config["solver"]["linopy"]:
+    from pypsa.optimization.compat import (
+        define_constraints,
+        define_variables,
+        get_var,
+        join_exprs,
+        linexpr,
+    )
+else:
+    from pypsa.linopt import (
+        define_constraints,
+        define_variables,
+        get_var,
+        join_exprs,
+        linexpr,
+    )
+
 from vresutils.benchmark import memory_logger
 
 logger = logging.getLogger(__name__)
@@ -387,25 +399,33 @@ def solve_network(n, config, opts="", **kwargs):
         skip_iterations = True
         logger.info("No expandable lines found. Skipping iterative solving.")
 
-    if skip_iterations:
-        network_lopf(
-            n,
-            solver_name=solver_name,
-            solver_options=solver_options,
-            extra_functionality=extra_functionality,
-            **kwargs
-        )
+    if linopy:
+        if skip_iterations:
+            n.optimize(...)
+        else:
+            optimize_transmission_expansion_iteratively(n, ....)
+
     else:
-        ilopf(
-            n,
-            solver_name=solver_name,
-            solver_options=solver_options,
-            track_iterations=track_iterations,
-            min_iterations=min_iterations,
-            max_iterations=max_iterations,
-            extra_functionality=extra_functionality,
-            **kwargs
-        )
+        logger.warning("Using of n.lopf() is deprecated. Do this ... to restore long-term functionality.")
+        if skip_iterations:
+            network_lopf(
+                n,
+                solver_name=solver_name,
+                solver_options=solver_options,
+                extra_functionality=extra_functionality,
+                **kwargs
+            )
+        else:
+            ilopf(
+                n,
+                solver_name=solver_name,
+                solver_options=solver_options,
+                track_iterations=track_iterations,
+                min_iterations=min_iterations,
+                max_iterations=max_iterations,
+                extra_functionality=extra_functionality,
+                **kwargs
+            )
     return n
 
 
