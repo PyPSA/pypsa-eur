@@ -18,15 +18,34 @@ def read_scigrid_gas(fn):
     df.drop(["param", "uncertainty", "method"], axis=1, inplace=True)
     return df
 
+def read_lng_gem(fn):
+    df = pd.read_excel(fn, sheet_name = 'LNG terminals - data')
+    df = df.set_index("ComboID")
 
-def build_gas_input_locations(lng_fn, planned_lng_fn, entry_fn, prod_fn, countries):
+    remove_status = ['Cancelled']
+    remove_country = ['Cyprus','Turkey']
+    remove_terminal = ['Puerto de la Luz LNG Terminal','Gran Canaria LNG Terminal']
+
+    for index in df.index:
+        if df.Status[index] in remove_status:
+            df = df.drop([index])
+        elif df.Country[index] in remove_country:
+            df = df.drop([index])
+        elif df.TerminalName[index] in remove_terminal:
+            df = df.drop([index])
+        elif df.CapacityInMtpa[index] == "--":
+            df = df.drop([index])
+        else:
+            continue
+    
+    geometry = gpd.points_from_xy(df['Longitude'], df['Latitude'])
+    gdf = gpd.GeoDataFrame(df, geometry=geometry, crs="EPSG:4326")
+    return gdf
+
+def build_gas_input_locations(lng_fn, entry_fn, prod_fn, countries):
     
     # LNG terminals
-    lng = read_scigrid_gas(lng_fn)
-    planned_lng = pd.read_csv(planned_lng_fn)
-    planned_lng.geometry = planned_lng.geometry.apply(wkt.loads)
-    planned_lng = gpd.GeoDataFrame(planned_lng, crs=4326)
-    lng = pd.concat([lng, planned_lng], ignore_index=True)
+    lng = read_lng_gem(lng_fn)
 
     # Entry points from outside the model scope
     entry = read_scigrid_gas(entry_fn)
@@ -46,7 +65,8 @@ def build_gas_input_locations(lng_fn, planned_lng_fn, entry_fn, prod_fn, countri
     ]
 
     conversion_factor = 437.5 # MCM/day to MWh/h
-    lng["p_nom"] = lng["max_cap_store2pipe_M_m3_per_d"] * conversion_factor
+    conversion_factor_lng = 1649.224 # mtpa to MWh/h
+    lng["p_nom"] = lng["CapacityInMtpa"] * conversion_factor_lng
     entry["p_nom"] = entry["max_cap_from_to_M_m3_per_d"] * conversion_factor
     prod["p_nom"] = prod["max_supply_M_m3_per_d"] * conversion_factor
 
@@ -87,7 +107,6 @@ if __name__ == "__main__":
 
     gas_input_locations = build_gas_input_locations(
         snakemake.input.lng,
-        snakemake.input.planned_lng,
         snakemake.input.entry,
         snakemake.input.production,
         countries
