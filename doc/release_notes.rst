@@ -12,6 +12,8 @@ Upcoming Release
 
 * Carriers of generators can now be excluded from aggregation in clustering network and simplify network.
 
+* Add option to solve PyPSA-Eur with Linopy
+
 PyPSA-Eur 0.6.1 (20th September 2022)
 =====================================
 
