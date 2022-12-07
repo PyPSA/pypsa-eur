@@ -409,7 +409,7 @@ if __name__ == "__main__":
         import os
         os.chdir(os.path.dirname(os.path.abspath(__file__)))
         snakemake = mock_snakemake(
-            "solve_network", simpl="", clusters="5", ll="copt", opts="Co2L-24H"  #-BAU-CCL-24H"
+            "solve_network", simpl="", clusters="5", ll="copt", opts="Co2L-24H"
         )
     configure_logging(snakemake)
 
