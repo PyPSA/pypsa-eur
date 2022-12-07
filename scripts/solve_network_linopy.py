@@ -95,7 +95,6 @@ from pypsa.optimization.compat import (
     join_exprs,
     linexpr,
 )
-
 from vresutils.benchmark import memory_logger
 
 logger = logging.getLogger(__name__)
@@ -307,7 +306,11 @@ def update_capacity_constraint(n):
     if not ext_i.empty:
         capacity_variable = get_var(n, "Generator", "p_nom")
         lhs = lhs + linexpr((-p_max_pu[ext_i], capacity_variable)).reindex(
-         {"Generator": gen_i, "Generator-ext": gen_i,}, fill_value=0
+            {
+                "Generator": gen_i,
+                "Generator-ext": gen_i,
+            },
+            fill_value=0,
         )
     rhs = (p_max_pu[fix_i] * capacity_fixed).reindex(columns=gen_i, fill_value=0)
 
@@ -332,7 +335,7 @@ def add_battery_constraints(n):
     eff = n.links.loc[nodes + " discharger", "efficiency"]
     lhs = linexpr(
         (1, vars_link.sel({"Link-ext": nodes + " charger"})),
-        (-eff, vars_link.sel({"Link-ext": nodes + " discharger"}))
+        (-eff, vars_link.sel({"Link-ext": nodes + " discharger"})),
     )
     define_constraints(n, lhs, "=", 0, "Link", attr="charger_ratio")
 
@@ -405,8 +408,10 @@ def solve_network(n, config, opts="", **kwargs):
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
         import os
+
+        from _helpers import mock_snakemake
+
         os.chdir(os.path.dirname(os.path.abspath(__file__)))
         snakemake = mock_snakemake(
             "solve_network", simpl="", clusters="5", ll="copt", opts="Co2L-24H"

@@ -541,7 +541,8 @@ def memory(w):
         return int(factor * (10000 + 195 * int(w.clusters)))
 
 
-if config["solving"]["options"].get("linopy", False)==True:
+if config["solving"]["options"].get("linopy", False) == True:
+
     rule solve_network:
         input:
             "networks/" + RDIR + "elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
@@ -560,7 +561,11 @@ if config["solving"]["options"].get("linopy", False)==True:
             + RDIR
             + "solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_memory.log",
         benchmark:
-            "benchmarks/" + RDIR + "solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}"
+            (
+                "benchmarks/"
+                + RDIR
+                + "solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}"
+            )
         threads: 4
         resources:
             mem_mb=memory,
@@ -571,6 +576,7 @@ if config["solving"]["options"].get("linopy", False)==True:
 
 
 else:
+
     rule solve_network:
         input:
             "networks/" + RDIR + "elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
@@ -589,7 +595,11 @@ else:
             + RDIR
             + "solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_memory.log",
         benchmark:
-            "benchmarks/" + RDIR + "solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}"
+            (
+                "benchmarks/"
+                + RDIR
+                + "solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}"
+            )
         threads: 4
         resources:
             mem_mb=memory,
