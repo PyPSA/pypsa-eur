@@ -95,6 +95,7 @@ from pypsa.optimization.compat import (
     join_exprs,
     linexpr,
 )
+import linopy
 
 from vresutils.benchmark import memory_logger
 
@@ -234,9 +235,10 @@ def add_EQ_constraints(n, o, scaling=1e-1):
 
 def add_BAU_constraints(n, config):
     mincaps = pd.Series(config["electricity"]["BAU_mincapacities"])
+    test = get_var(n, "Generator", "p_nom")
     lhs = (
         linexpr((1, get_var(n, "Generator", "p_nom")))
-        .groupby(n.generators.carrier)
+        .groupby_sum(n.generators.carrier)
         .apply(join_exprs)
     )
     define_constraints(n, lhs, ">=", mincaps[lhs.index], "Carrier", "bau_mincaps")
@@ -256,30 +258,31 @@ def add_SAFE_constraints(n, config):
     define_constraints(n, lhs, ">=", rhs, "Safe", "mintotalcap")
 
 
-def add_operational_reserve_margin_constraint(n, config):
+def add_operational_reserve_margin_constraint(n, sns, config):
     reserve_config = config["electricity"]["operational_reserve"]
     EPSILON_LOAD = reserve_config["epsilon_load"]
     EPSILON_VRES = reserve_config["epsilon_vres"]
     CONTINGENCY = reserve_config["contingency"]
 
     # Reserve Variables
-    reserve = get_var(n, "Generator", "r")
-    lhs = linexpr((1, reserve)).sum("snapshot")
+    n.model.add_variables(0, np.inf, coords=[sns, n.generators.index], name="Generator-r")
+    reserve = n.model["Generator-r"]
+    lhs = linopy.LinearExpression.from_tuples((1, reserve))
 
     # Share of extendable renewable capacities
     ext_i = n.generators.query("p_nom_extendable").index
     vres_i = n.generators_t.p_max_pu.columns
     if not ext_i.empty and not vres_i.empty:
         capacity_factor = n.generators_t.p_max_pu[vres_i.intersection(ext_i)]
-        renewable_capacity_variables = get_var(n, "Generator", "p_nom").sel(
+        renewable_capacity_variables = n.model["Generator-p_nom"].sel(
             {"Generator-ext": vres_i.intersection(ext_i)}
         )
-        lhs += linexpr(
+        lhs = lhs + linopy.LinearExpression.from_tuples(
             (-EPSILON_VRES * capacity_factor, renewable_capacity_variables)
         ).sum("snapshot")
 
     # Total demand at t
-    demand = n.loads_t.p.sum(1)
+    demand = n.loads_t.p_set.sum(1)
 
     # VRES potential of non extendable generators
     capacity_factor = n.generators_t.p_max_pu[vres_i.difference(ext_i)]
@@ -289,7 +292,7 @@ def add_operational_reserve_margin_constraint(n, config):
     # Right-hand-side
     rhs = EPSILON_LOAD * demand + EPSILON_VRES * potential + CONTINGENCY
 
-    define_constraints(n, lhs, ">=", rhs, "Reserve margin")
+    n.model.add_constraints(lhs, ">=", rhs, name="Reserve-margin")
 
 
 def update_capacity_constraint(n):
@@ -297,44 +300,54 @@ def update_capacity_constraint(n):
     ext_i = n.generators.query("p_nom_extendable").index
     fix_i = n.generators.query("not p_nom_extendable").index
 
-    dispatch = get_var(n, "Generator", "p")
-    reserve = get_var(n, "Generator", "r")
+    dispatch = n.model["Generator-p"]
+    reserve = n.model["Generator-r"]
     capacity_fixed = n.generators.p_nom[fix_i]
     p_max_pu = get_as_dense(n, "Generator", "p_max_pu")
 
-    lhs = linexpr((1, dispatch), (1, reserve))
-
+    lhs = linopy.LinearExpression.from_tuples((1, dispatch), (1, reserve))
+    
     if not ext_i.empty:
-        capacity_variable = get_var(n, "Generator", "p_nom")
-        lhs = lhs + linexpr((-p_max_pu[ext_i], capacity_variable)).reindex(
-         {"Generator": gen_i, "Generator-ext": gen_i,}, fill_value=0
-        )
+        capacity_variable = n.model["Generator-p_nom"].reindex({"Generator-ext": gen_i,})
+        lhs = lhs + linopy.LinearExpression.from_tuples(
+            (-p_max_pu[ext_i], capacity_variable))
+        lhs["coeffs"] = lhs.coeffs.fillna(0)
+
+    # if not ext_i.empty:
+    #     capacity_variable = n.model["Generator-p_nom"]
+    #     lhs = lhs + linopy.LinearExpression.from_tuples(
+    #         (-p_max_pu[ext_i], capacity_variable)).reindex(
+    #             {"Generator": gen_i, "Generator-ext": ext_i,},
+    #             fill_value=0
+    #             )
+
     rhs = (p_max_pu[fix_i] * capacity_fixed).reindex(columns=gen_i, fill_value=0)
-
-    define_constraints(n, lhs, "<=", rhs, "Generators", "updated_capacity_constraint")
-
+    n.model.add_constraints(lhs, "<=", rhs, name="Generators-updated_capacity_constraint")
 
 def add_operational_reserve_margin(n, sns, config):
     """
     Build reserve margin constraints based on the formulation given in
     https://genxproject.github.io/GenX/dev/core/#Reserves.
     """
-    define_variables(n, 0, np.inf, "Generator", "r", axes=[sns, n.generators.index])
-    add_operational_reserve_margin_constraint(n, config)
+    add_operational_reserve_margin_constraint(n, sns, config)
     update_capacity_constraint(n)
 
 
 def add_battery_constraints(n):
+    """
+    Add constraints to ensure that the ratio between the charger and discharger
+    1 * charger_size - efficiency * discharger_size = 0
+    """
     nodes = n.buses.index[n.buses.carrier == "battery"]
     if nodes.empty:
         return
-    vars_link = get_var(n, "Link", "p_nom")
+    vars_link = n.model["Link-p_nom"]
     eff = n.links.loc[nodes + " discharger", "efficiency"]
-    lhs = linexpr(
+    lhs = linopy.LinearExpression.from_tuples(
         (1, vars_link.sel({"Link-ext": nodes + " charger"})),
-        (-eff, vars_link.sel({"Link-ext": nodes + " discharger"}))
+        (-eff, vars_link.sel({"Link-ext": nodes + " discharger"})),
     )
-    define_constraints(n, lhs, "=", 0, "Link", attr="charger_ratio")
+    n.model.add_constraints(lhs, "=", 0, name="Link-charger_ratio")
 
 
 def extra_functionality(n, snapshots):
@@ -382,15 +395,13 @@ def solve_network(n, config, opts="", **kwargs):
 
     if skip_iterations:
         n.optimize(
-            n,
             solver_name=solver_name,
             solver_options=solver_options,
             extra_functionality=extra_functionality,
             **kwargs
         )
     else:
-        optimize_transmission_expansion_iteratively(
-            n,
+        n.optimize.optimize_transmission_expansion_iteratively(
             solver_name=solver_name,
             solver_options=solver_options,
             track_iterations=track_iterations,
@@ -409,7 +420,7 @@ if __name__ == "__main__":
         import os
         os.chdir(os.path.dirname(os.path.abspath(__file__)))
         snakemake = mock_snakemake(
-            "solve_network", simpl="", clusters="5", ll="copt", opts="Co2L-24H"
+            "solve_network", simpl="", clusters="5", ll="copt", opts="Co2L-24H"  #Co2L-BAU-CCL-24H"
         )
     configure_logging(snakemake)
 
