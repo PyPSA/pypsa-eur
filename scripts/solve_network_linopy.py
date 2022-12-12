@@ -234,13 +234,7 @@ def add_EQ_constraints(n, o, scaling=1e-1):
 
 def add_BAU_constraints(n, config):
     """
-<<<<<<< HEAD
     Add a per-carrier minimal overall capacity.
-=======
-    Constraint enforces minimum generation expansion shared between carriers.
-
-    Requires to specify BAU_mincapacities in config.yaml.
->>>>>>> f14d8e8aa7a100e07e4958fd65628cba3c6cc079
 
     Parameters
     ----------
