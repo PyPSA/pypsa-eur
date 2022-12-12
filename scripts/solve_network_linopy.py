@@ -236,26 +236,26 @@ def add_BAU_constraints(n, config):
     """
     Add a per-carrier minimal overall capacity.
 
-        Parameters
-        ----------
-        n : pypsa.Network
-        config : dict
+    Parameters
+    ----------
+    n : pypsa.Network
+    config : dict
 
-        Example
-        -------
-        config.yaml requires to specify BAU_mincapacities and opts.
+    Example
+    -------
+    config.yaml requires to specify BAU_mincapacities and opts.
 
-        scenario:
-            opts: [Co2L-BAU-24H]
-        electricity:
-            BAU_mincapacities:
-                solar: 0
-                onwind: 0
-                OCGT: 100000
-                offwind-ac: 0
-                offwind-dc: 0
-        Which sets minimum expansion across all nodes e.g. in Europe to 100GW.
-        OCGT bus 1 + OCGT bus 2 + ... > 100000
+    scenario:
+        opts: [Co2L-BAU-24H]
+    electricity:
+        BAU_mincapacities:
+            solar: 0
+            onwind: 0
+            OCGT: 100000
+            offwind-ac: 0
+            offwind-dc: 0
+    Which sets minimum expansion across all nodes e.g. in Europe to 100GW.
+    OCGT bus 1 + OCGT bus 2 + ... > 100000
     """
     mincaps = pd.Series(config["electricity"]["BAU_mincapacities"])
     capacity_variable = n.model["Generator-p_nom"]
