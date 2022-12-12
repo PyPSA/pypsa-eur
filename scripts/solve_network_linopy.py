@@ -234,7 +234,7 @@ def add_EQ_constraints(n, o, scaling=1e-1):
 
 def add_BAU_constraints(n, config):
     """
-    Add a per-carrier minimal overall capacity. Requires BAU_mincapacities configuration. 
+    Add a per-carrier minimal overall capacity.
 
     Parameters
     ----------
@@ -243,9 +243,11 @@ def add_BAU_constraints(n, config):
     
     Example
     -------
-    config.yaml requires to specify BAU_mincapacities:
-        electricity:
-        <other inputs>
+    config.yaml requires to specify BAU_mincapacities and opts.
+
+    scenario:
+        opts: [Co2L-BAU-24H]
+    electricity:
         BAU_mincapacities:
             solar: 0
             onwind: 0
@@ -268,17 +270,40 @@ def add_BAU_constraints(n, config):
 
 
 def add_SAFE_constraints(n, config):
-    peakdemand = (
-        1.0 + config["electricity"]["SAFE_reservemargin"]
-    ) * n.loads_t.p_set.sum(axis=1).max()
+    """
+    Add a capacity reserve margin of a certain fraction above the peak demand.
+    Renewable generators and storage do not contribute. Ignores network.
+
+    Parameters
+    ----------
+        n : pypsa.Network
+        config : dict
+
+    Example
+    -------
+    config.yaml requires to specify opts:
+    
+    scenario:
+        opts: [Co2L-SAFE-24H]
+    electricity:
+        SAFE_reservemargin: 0.1
+    Which sets a reserve margin of 10% above the peak demand.
+    """
+    peakdemand = n.loads_t.p_set.sum(axis=1).max()
+    margin = 1.0 + config["electricity"]["SAFE_reservemargin"]
+    reserve_margin = peakdemand * margin
     conv_techs = config["plotting"]["conv_techs"]
+    ext_gens_i = n.generators.query("carrier in @conv_techs & p_nom_extendable").index
+    capacity_variable = n.model["Generator-p_nom"]
+    ext_cap_var = capacity_variable.sel({"Generator-ext": ext_gens_i})
+    lhs = linopy.LinearExpression.from_tuples(
+        (1, ext_cap_var)
+        ).sum()
     exist_conv_caps = n.generators.query(
         "~p_nom_extendable & carrier in @conv_techs"
     ).p_nom.sum()
-    ext_gens_i = n.generators.query("carrier in @conv_techs & p_nom_extendable").index
-    lhs = linexpr((1, get_var(n, "Generator", "p_nom")[ext_gens_i])).sum()
-    rhs = peakdemand - exist_conv_caps
-    define_constraints(n, lhs, ">=", rhs, "Safe", "mintotalcap")
+    rhs = reserve_margin - exist_conv_caps
+    n.model.add_constraints(lhs, ">=", rhs, "Safe-mintotalcap")
 
 
 def add_operational_reserve_margin_constraint(n, sns, config):
@@ -461,7 +486,7 @@ if __name__ == "__main__":
             simpl="",
             clusters="5",
             ll="copt",
-            opts="Co2L-BAU-24H",  # Co2L-BAU-CCL-24H"
+            opts="Co2L-SAFE-24H",  # Co2L-BAU-CCL-24H"
         )
     configure_logging(snakemake)
 
