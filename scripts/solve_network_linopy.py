@@ -234,14 +234,40 @@ def add_EQ_constraints(n, o, scaling=1e-1):
 
 
 def add_BAU_constraints(n, config):
+    """
+    Constraint enforces minimum generation expansion shared between carriers.
+
+    Requires to specify BAU_mincapacities in config.yaml. 
+
+    Parameters
+    ----------
+    n : pypsa.Network
+    config : dict
+    
+    Example
+    -------
+    config.yaml requires to specify BAU_mincapacities:
+        electricity:
+        <other inputs>
+        BAU_mincapacities:
+            solar: 0
+            onwind: 0
+            OCGT: 100000
+            offwind-ac: 0
+            offwind-dc: 0
+    Which sets minimum expansion across all nodes e.g.
+    OCGT bus 1 + OCGT bus 2 > 100000
+    """
     mincaps = pd.Series(config["electricity"]["BAU_mincapacities"])
-    test = get_var(n, "Generator", "p_nom")
+    capacity_variable = n.model["Generator-p_nom"]
+    ext_i = n.generators.query("p_nom_extendable")
+    ext_carrier_i = ext_i.carrier.rename_axis("Generator-ext").rename("Generator-ext")
     lhs = (
-        linexpr((1, get_var(n, "Generator", "p_nom")))
-        .groupby_sum(n.generators.carrier)
-        .apply(join_exprs)
+        linopy.LinearExpression.from_tuples((1, capacity_variable))
+        .groupby_sum(ext_carrier_i)
     )
-    define_constraints(n, lhs, ">=", mincaps[lhs.index], "Carrier", "bau_mincaps")
+    rhs = mincaps[lhs.coords["Generator-ext"].values].rename_axis("Generator-ext")
+    n.model.add_constraints(lhs, ">=", rhs, "bau_mincaps")
 
 
 def add_SAFE_constraints(n, config):
@@ -330,7 +356,7 @@ def add_operational_reserve_margin(n, sns, config):
     https://genxproject.github.io/GenX/dev/core/#Reserves.
     """
     add_operational_reserve_margin_constraint(n, sns, config)
-    update_capacity_constraint(n)
+    #update_capacity_constraint(n)
 
 
 def add_battery_constraints(n):
@@ -422,7 +448,7 @@ if __name__ == "__main__":
 
         os.chdir(os.path.dirname(os.path.abspath(__file__)))
         snakemake = mock_snakemake(
-            "solve_network", simpl="", clusters="5", ll="copt", opts="Co2L-24H"  #Co2L-BAU-CCL-24H"
+            "solve_network", simpl="", clusters="5", ll="copt", opts="Co2L-BAU-24H"  #Co2L-BAU-CCL-24H"
         )
     configure_logging(snakemake)
 
