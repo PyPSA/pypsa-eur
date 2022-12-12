@@ -81,6 +81,7 @@ import logging
 import re
 from pathlib import Path
 
+import linopy
 import numpy as np
 import pandas as pd
 import pypsa
@@ -95,8 +96,6 @@ from pypsa.optimization.compat import (
     join_exprs,
     linexpr,
 )
-import linopy
-
 from vresutils.benchmark import memory_logger
 
 logger = logging.getLogger(__name__)
@@ -265,7 +264,9 @@ def add_operational_reserve_margin_constraint(n, sns, config):
     CONTINGENCY = reserve_config["contingency"]
 
     # Reserve Variables
-    n.model.add_variables(0, np.inf, coords=[sns, n.generators.index], name="Generator-r")
+    n.model.add_variables(
+        0, np.inf, coords=[sns, n.generators.index], name="Generator-r"
+    )
     reserve = n.model["Generator-r"]
     lhs = linopy.LinearExpression.from_tuples((1, reserve))
 
@@ -306,11 +307,16 @@ def update_capacity_constraint(n):
     p_max_pu = get_as_dense(n, "Generator", "p_max_pu")
 
     lhs = linopy.LinearExpression.from_tuples((1, dispatch), (1, reserve))
-    
+
     if not ext_i.empty:
-        capacity_variable = n.model["Generator-p_nom"].reindex({"Generator-ext": gen_i,})
+        capacity_variable = n.model["Generator-p_nom"].reindex(
+            {
+                "Generator-ext": gen_i,
+            }
+        )
         lhs = lhs + linopy.LinearExpression.from_tuples(
-            (-p_max_pu[ext_i], capacity_variable))
+            (-p_max_pu[ext_i], capacity_variable)
+        )
         lhs["coeffs"] = lhs.coeffs.fillna(0)
 
     # if not ext_i.empty:
@@ -322,7 +328,10 @@ def update_capacity_constraint(n):
     #             )
 
     rhs = (p_max_pu[fix_i] * capacity_fixed).reindex(columns=gen_i, fill_value=0)
-    n.model.add_constraints(lhs, "<=", rhs, name="Generators-updated_capacity_constraint")
+    n.model.add_constraints(
+        lhs, "<=", rhs, name="Generators-updated_capacity_constraint"
+    )
+
 
 def add_operational_reserve_margin(n, sns, config):
     """
@@ -335,7 +344,9 @@ def add_operational_reserve_margin(n, sns, config):
 
 def add_battery_constraints(n):
     """
-    Add constraints to ensure that the ratio between the charger and discharger
+    Add constraints to ensure that the ratio between the charger and
+    discharger.
+
     1 * charger_size - efficiency * discharger_size = 0
     """
     nodes = n.buses.index[n.buses.carrier == "battery"]
@@ -422,7 +433,11 @@ if __name__ == "__main__":
 
         os.chdir(os.path.dirname(os.path.abspath(__file__)))
         snakemake = mock_snakemake(
-            "solve_network", simpl="", clusters="5", ll="copt", opts="Co2L-24H"  #Co2L-BAU-CCL-24H"
+            "solve_network",
+            simpl="",
+            clusters="5",
+            ll="copt",
+            opts="Co2L-24H",  # Co2L-BAU-CCL-24H"
         )
     configure_logging(snakemake)
 
