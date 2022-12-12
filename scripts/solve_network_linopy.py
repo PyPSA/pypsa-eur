@@ -234,34 +234,34 @@ def add_EQ_constraints(n, o, scaling=1e-1):
 
 def add_BAU_constraints(n, config):
     """
-<<<<<<< HEAD
-    Add a per-carrier minimal overall capacity.
-=======
-    Constraint enforces minimum generation expansion shared between carriers.
+    <<<<<<< HEAD
+        Add a per-carrier minimal overall capacity.
+    =======
+        Constraint enforces minimum generation expansion shared between carriers.
 
-    Requires to specify BAU_mincapacities in config.yaml.
->>>>>>> f14d8e8aa7a100e07e4958fd65628cba3c6cc079
+        Requires to specify BAU_mincapacities in config.yaml.
+    >>>>>>> f14d8e8aa7a100e07e4958fd65628cba3c6cc079
 
-    Parameters
-    ----------
-    n : pypsa.Network
-    config : dict
+        Parameters
+        ----------
+        n : pypsa.Network
+        config : dict
 
-    Example
-    -------
-    config.yaml requires to specify BAU_mincapacities and opts.
+        Example
+        -------
+        config.yaml requires to specify BAU_mincapacities and opts.
 
-    scenario:
-        opts: [Co2L-BAU-24H]
-    electricity:
-        BAU_mincapacities:
-            solar: 0
-            onwind: 0
-            OCGT: 100000
-            offwind-ac: 0
-            offwind-dc: 0
-    Which sets minimum expansion across all nodes e.g. in Europe to 100GW.
-    OCGT bus 1 + OCGT bus 2 + ... > 100000
+        scenario:
+            opts: [Co2L-BAU-24H]
+        electricity:
+            BAU_mincapacities:
+                solar: 0
+                onwind: 0
+                OCGT: 100000
+                offwind-ac: 0
+                offwind-dc: 0
+        Which sets minimum expansion across all nodes e.g. in Europe to 100GW.
+        OCGT bus 1 + OCGT bus 2 + ... > 100000
     """
     mincaps = pd.Series(config["electricity"]["BAU_mincapacities"])
     capacity_variable = n.model["Generator-p_nom"]
@@ -287,7 +287,7 @@ def add_SAFE_constraints(n, config):
     Example
     -------
     config.yaml requires to specify opts:
-    
+
     scenario:
         opts: [Co2L-SAFE-24H]
     electricity:
@@ -301,9 +301,7 @@ def add_SAFE_constraints(n, config):
     ext_gens_i = n.generators.query("carrier in @conv_techs & p_nom_extendable").index
     capacity_variable = n.model["Generator-p_nom"]
     ext_cap_var = capacity_variable.sel({"Generator-ext": ext_gens_i})
-    lhs = linopy.LinearExpression.from_tuples(
-        (1, ext_cap_var)
-        ).sum()
+    lhs = linopy.LinearExpression.from_tuples((1, ext_cap_var)).sum()
     exist_conv_caps = n.generators.query(
         "~p_nom_extendable & carrier in @conv_techs"
     ).p_nom.sum()
