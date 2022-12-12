@@ -234,9 +234,7 @@ def add_EQ_constraints(n, o, scaling=1e-1):
 
 def add_BAU_constraints(n, config):
     """
-    Constraint enforces minimum generation expansion shared between carriers.
-
-    Requires to specify BAU_mincapacities in config.yaml. 
+    Add a per-carrier minimal overall capacity. Requires BAU_mincapacities configuration. 
 
     Parameters
     ----------
@@ -254,8 +252,8 @@ def add_BAU_constraints(n, config):
             OCGT: 100000
             offwind-ac: 0
             offwind-dc: 0
-    Which sets minimum expansion across all nodes e.g.
-    OCGT bus 1 + OCGT bus 2 > 100000
+    Which sets minimum expansion across all nodes e.g. in Europe to 100GW.
+    OCGT bus 1 + OCGT bus 2 + ... > 100000
     """
     mincaps = pd.Series(config["electricity"]["BAU_mincapacities"])
     capacity_variable = n.model["Generator-p_nom"]
