@@ -128,10 +128,13 @@ if config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]:
         resources: mem_mb=4000
         script: "scripts/build_gas_network.py"
 
+    rule retrieve_gas_input_locations:
+        output: "data/gas_network/Europe-Gas-Tracker-August-2022.geojson"
+        script: 'scripts/retrieve_gas_input_locations.py'
 
     rule build_gas_input_locations:
         input:
-            lng="data/gas_network/Europe-Gas-Tracker-August-2022.xlsx",
+            lng="data/gas_network/Europe-Gas-Tracker-August-2022.geojson",
             entry="data/gas_network/scigrid-gas/data/IGGIELGN_BorderPoints.geojson",
             production="data/gas_network/scigrid-gas/data/IGGIELGN_Productions.geojson",
             regions_onshore=pypsaeur("resources/regions_onshore_elec_s{simpl}_{clusters}.geojson"),
