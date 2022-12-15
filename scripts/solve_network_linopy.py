@@ -190,6 +190,26 @@ def add_CCL_constraints(n, config):
 
 
 def add_EQ_constraints(n, o, scaling=1e-1):
+    """
+    Add equality constraints to the network.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+    o : str
+
+    Example
+    -------
+    config.yaml requires to specify opts.
+
+    scenario:
+        opts: [Co2L-EQ0.7-24H]
+
+    Require each country or node to on average produce a minimal share
+    of its total consumption itself. Example: EQ0.7c demands each country
+    to produce on average at least 70% of its consumption; EQ0.7 demands
+    each node to produce on average at least 70% of its consumption.
+    """
     float_regex = "[0-9]*\.?[0-9]+"
     level = float(re.findall(float_regex, o)[0])
     if o[-1] == "c":
@@ -210,26 +230,29 @@ def add_EQ_constraints(n, o, scaling=1e-1):
     )
     inflow = inflow.reindex(load.index).fillna(0.0)
     rhs = scaling * (level * load - inflow)
+    dispatch_variable = n.model["Generator-p"].T
     lhs_gen = (
-        linexpr(
-            (n.snapshot_weightings.generators * scaling, get_var(n, "Generator", "p").T)
-        )
-        .T.groupby(ggrouper, axis=1)
-        .apply(join_exprs)
-    )
-    lhs_spill = (
-        linexpr(
+        linopy.LinearExpression.from_tuples(
             (
-                -n.snapshot_weightings.stores * scaling,
-                get_var(n, "StorageUnit", "spill").T,
+                n.snapshot_weightings.generators * scaling,
+                dispatch_variable
             )
-        )
-        .T.groupby(sgrouper, axis=1)
-        .apply(join_exprs)
+        ).groupby_sum(ggrouper).sum("snapshot")
     )
-    lhs_spill = lhs_spill.reindex(lhs_gen.index).fillna("")
-    lhs = lhs_gen + lhs_spill
-    define_constraints(n, lhs, ">=", rhs, "equity", "min")
+    if not n.storage_units_t.inflow.empty:
+        spillage_variable = n.model["StorageUnit-spill"]
+        lhs_spill = (
+            linopy.LinearExpression.from_tuples(
+                (
+                    -n.snapshot_weightings.stores * scaling,
+                    spillage_variable
+                )
+            ).groupby_sum(sgrouper).sum("snapshot")
+        )
+        lhs = lhs_gen + lhs_spill
+    else:
+        lhs = lhs_gen
+    n.model.add_constraints(lhs, ">=", rhs, "equity-min")
 
 
 def add_BAU_constraints(n, config):
@@ -260,11 +283,11 @@ def add_BAU_constraints(n, config):
     mincaps = pd.Series(config["electricity"]["BAU_mincapacities"])
     capacity_variable = n.model["Generator-p_nom"]
     ext_i = n.generators.query("p_nom_extendable")
-    ext_carrier_i = ext_i.carrier.rename_axis("Generator-ext").rename("Generator-ext")
+    ext_carrier_i = ext_i.carrier.rename_axis("Generator-ext")
     lhs = linopy.LinearExpression.from_tuples((1, capacity_variable)).groupby_sum(
         ext_carrier_i
     )
-    rhs = mincaps[lhs.coords["Generator-ext"].values].rename_axis("Generator-ext")
+    rhs = mincaps[lhs.coords["carrier"].values].rename_axis("carrier")
     n.model.add_constraints(lhs, ">=", rhs, "bau_mincaps")
 
 
@@ -483,7 +506,7 @@ if __name__ == "__main__":
             simpl="",
             clusters="5",
             ll="copt",
-            opts="Co2L-SAFE-24H",  # Co2L-BAU-CCL-24H"
+            opts="Co2L-EQ0.7-24H",  # Co2L-BAU-CCL-24H"
         )
     configure_logging(snakemake)
 
