@@ -11,6 +11,9 @@ from shapely import wkt
 
 from cluster_gas_network import load_bus_regions
 
+import warnings
+warnings.filterwarnings('ignore')
+
 
 def read_scigrid_gas(fn):
     df = gpd.read_file(fn)
@@ -22,6 +25,9 @@ def build_gas_input_locations(lng_fn, entry_fn, prod_fn, countries):
     
     # LNG terminals
     lng = gpd.read_file(lng_fn)
+
+    for index in lng.index:
+        lng.CapacityInMtpa[index] = float(lng.CapacityInMtpa[index])
 
     # Entry points from outside the model scope
     entry = read_scigrid_gas(entry_fn)
