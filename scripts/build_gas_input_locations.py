@@ -21,6 +21,7 @@ def read_scigrid_gas(fn):
     df.drop(["param", "uncertainty", "method"], axis=1, inplace=True)
     return df
 
+
 def build_gas_input_locations(lng_fn, entry_fn, prod_fn, countries):
     
     # LNG terminals
