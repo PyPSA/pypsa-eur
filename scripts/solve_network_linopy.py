@@ -327,6 +327,23 @@ def add_SAFE_constraints(n, config):
 
 
 def add_operational_reserve_margin_constraint(n, sns, config):
+    """ 
+    Define minimum operational reserve margin for a given snapshot.
+
+    Parameters
+    ----------
+        n : pypsa.Network
+        config : dict
+
+    Example:
+    --------
+    config.yaml requires to specify operational_reserve:
+    operational_reserve: # like https://genxproject.github.io/GenX/dev/core/#Reserves
+        activate: true
+        epsilon_load: 0.02 # percentage of load at each snapshot
+        epsilon_vres: 0.02 # percentage of VRES at each snapshot
+        contingency: 400000 # MW
+    """
     reserve_config = config["electricity"]["operational_reserve"]
     EPSILON_LOAD = reserve_config["epsilon_load"]
     EPSILON_VRES = reserve_config["epsilon_vres"]
@@ -337,7 +354,7 @@ def add_operational_reserve_margin_constraint(n, sns, config):
         0, np.inf, coords=[sns, n.generators.index], name="Generator-r"
     )
     reserve = n.model["Generator-r"]
-    lhs = linopy.LinearExpression.from_tuples((1, reserve))
+    lhs = linopy.LinearExpression.from_tuples((1, reserve)).sum("Generator")
 
     # Share of extendable renewable capacities
     ext_i = n.generators.query("p_nom_extendable").index
@@ -349,9 +366,9 @@ def add_operational_reserve_margin_constraint(n, sns, config):
         )
         lhs = lhs + linopy.LinearExpression.from_tuples(
             (-EPSILON_VRES * capacity_factor, renewable_capacity_variables)
-        ).sum("snapshot")
+        ).sum(["Generator", "Generator-ext"])
 
-    # Total demand at t
+    # Total demand per t
     demand = n.loads_t.p_set.sum(1)
 
     # VRES potential of non extendable generators
@@ -366,35 +383,28 @@ def add_operational_reserve_margin_constraint(n, sns, config):
 
 
 def update_capacity_constraint(n):
+    """
+    Update the capacity constraint to include the new capacity variables.
+
+    Parameters
+    ----------
+        n : pypsa.Network
+    """
     gen_i = n.generators.index
     ext_i = n.generators.query("p_nom_extendable").index
     fix_i = n.generators.query("not p_nom_extendable").index
 
     dispatch = n.model["Generator-p"]
     reserve = n.model["Generator-r"]
-    capacity_fixed = n.generators.p_nom[fix_i]
     p_max_pu = get_as_dense(n, "Generator", "p_max_pu")
-
+    capacity_fixed = n.generators.p_nom[fix_i]
+    
     lhs = linopy.LinearExpression.from_tuples((1, dispatch), (1, reserve))
 
     if not ext_i.empty:
-        capacity_variable = n.model["Generator-p_nom"].reindex(
-            {
-                "Generator-ext": gen_i,
-            }
-        )
+        capacity_variable = n.model["Generator-p_nom"]
         lhs = lhs + linopy.LinearExpression.from_tuples(
-            (-p_max_pu[ext_i], capacity_variable)
-        )
-        lhs["coeffs"] = lhs.coeffs.fillna(0)
-
-    # if not ext_i.empty:
-    #     capacity_variable = n.model["Generator-p_nom"]
-    #     lhs = lhs + linopy.LinearExpression.from_tuples(
-    #         (-p_max_pu[ext_i], capacity_variable)).reindex(
-    #             {"Generator": gen_i, "Generator-ext": ext_i,},
-    #             fill_value=0
-    #             )
+            (-p_max_pu[ext_i], capacity_variable.rename({"Generator-ext":"Generator"})))
 
     rhs = (p_max_pu[fix_i] * capacity_fixed).reindex(columns=gen_i, fill_value=0)
     n.model.add_constraints(
@@ -406,9 +416,15 @@ def add_operational_reserve_margin(n, sns, config):
     """
     Build reserve margin constraints based on the formulation given in
     https://genxproject.github.io/GenX/dev/core/#Reserves.
+
+    Parameters
+    ----------
+        n : pypsa.Network
+        sns: pd.DatetimeIndex
+        config : dict
     """
     add_operational_reserve_margin_constraint(n, sns, config)
-    # update_capacity_constraint(n)
+    update_capacity_constraint(n)
 
 
 def add_battery_constraints(n):
@@ -506,7 +522,7 @@ if __name__ == "__main__":
             simpl="",
             clusters="5",
             ll="copt",
-            opts="Co2L-EQ0.7-24H",  # Co2L-BAU-CCL-24H"
+            opts="Co2L-24H",  # Co2L-BAU-CCL-24H"
         )
     configure_logging(snakemake)
 
