@@ -281,7 +281,7 @@ def add_operational_reserve_margin_constraint(n, config):
         ).sum(1)
 
     # Total demand at t
-    demand = n.loads_t.p.sum(1)
+    demand = n.loads_t.p_set.sum(1)
 
     # VRES potential of non extendable generators
     capacity_factor = n.generators_t.p_max_pu[vres_i.difference(ext_i)]

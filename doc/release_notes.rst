@@ -14,6 +14,8 @@ Upcoming Release
 
 * Fix EQ constraint for the case no hydro inflow is available
 
+* Bugfix in the reserve constraint will increase demand related reserve requirements
+
 PyPSA-Eur 0.6.1 (20th September 2022)
 =====================================
 
