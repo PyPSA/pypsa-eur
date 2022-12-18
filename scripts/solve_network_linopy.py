@@ -85,6 +85,8 @@ import linopy
 import numpy as np
 import pandas as pd
 import pypsa
+import linopy
+import os
 from _helpers import configure_logging
 from pypsa.descriptors import get_switchable_as_dense as get_as_dense
 from pypsa.linopf import ilopf, network_lopf
@@ -149,49 +151,67 @@ def prepare_network(n, solve_opts):
 
 
 def add_CCL_constraints(n, config):
-    agg_p_nom_limits = config["electricity"].get("agg_p_nom_limits")
+    """
+    Add CCL (country & carrier limit) constraint to the network.
+    
+    Add minimum and maximum levels of generator nominal capacity per carrier
+    for individual countries. Opts and path for agg_p_nom_minmax.csv must be defined
+    in config.yaml. Default file is available at data/agg_p_nom_minmax.csv.
 
+    Parameters
+    ----------
+    n : pypsa.Network
+    config : dict
+
+    Example
+    -------
+    scenario:
+        opts: [Co2L-CCL-24H]
+    electricity:
+        agg_p_nom_limits: data/agg_p_nom_minmax.csv
+    """
+    pypsa_eur_path = os.path.dirname(os.getcwd()) 
+    agg_p_nom_limits = os.path.join(pypsa_eur_path, config["electricity"].get("agg_p_nom_limits")) 
     try:
         agg_p_nom_minmax = pd.read_csv(agg_p_nom_limits, index_col=list(range(2)))
     except IOError:
         logger.exception(
             "Need to specify the path to a .csv file containing "
-            "aggregate capacity limits per country in "
-            "config['electricity']['agg_p_nom_limit']."
+            "aggregate capacity limits per country. "
+            "Path specified in config['electricity']['agg_p_nom_limit']. "
+            f"Currently read path is 'pypsa-eur/{agg_p_nom_limits}'."
         )
     logger.info(
         "Adding per carrier generation capacity constraints for " "individual countries"
     )
+    capacity_variable = n.model["Generator-p_nom"]
+    carrier_grouper = n.generators.query("p_nom_extendable").carrier.rename_axis("Generator-ext")
+    country_grouper = n.generators.query("p_nom_extendable").bus.map(n.buses.country).rename_axis("Generator-ext")
+    # ccgrouper = pd.concat([carrier_grouper, country_grouper], axis=1)
 
-    gen_country = n.generators.bus.map(n.buses.country)
-    # cc means country and carrier
-    p_nom_per_cc = (
-        pd.DataFrame(
-            {
-                "p_nom": linexpr((1, get_var(n, "Generator", "p_nom"))),
-                "country": gen_country,
-                "carrier": n.generators.carrier,
-            }
-        )
-        .dropna(subset=["p_nom"])
-        .groupby(["country", "carrier"])
-        .p_nom.apply(join_exprs)
+    lhs_carrier = (
+        linopy.LinearExpression.from_tuples(
+            (1,capacity_variable)
+        ).groupby_sum(carrier_grouper)
     )
-    minimum = agg_p_nom_minmax["min"].dropna()
-    if not minimum.empty:
-        minconstraint = define_constraints(
-            n, p_nom_per_cc[minimum.index], ">=", minimum, "agg_p_nom", "min"
-        )
-    maximum = agg_p_nom_minmax["max"].dropna()
-    if not maximum.empty:
-        maxconstraint = define_constraints(
-            n, p_nom_per_cc[maximum.index], "<=", maximum, "agg_p_nom", "max"
-        )
+    lhs_country = (
+        linopy.LinearExpression.from_tuples(
+            (1,capacity_variable)
+        ).groupby_sum(country_grouper)
+    )
+    lhs = lhs_country + lhs_carrier
+    lhs = lhs.drop_sel(_term=range(0,len(capacity_variable)))
+
+    minmax_matrix = agg_p_nom_minmax.unstack().loc[config.get("countries")].rename_axis("bus")
+    n.model.add_constraints(lhs, ">=", minmax_matrix["min"].reindex(lhs.carrier.values, axis=1).fillna(0), "agg_p_nom-min")
+    n.model.add_constraints(lhs, "<=", minmax_matrix["max"].reindex(lhs.carrier.values, axis=1).fillna(np.inf), "agg_p_nom-max")
 
 
 def add_EQ_constraints(n, o, scaling=1e-1):
     """
     Add equality constraints to the network.
+
+    Opts must be specified in the config.yaml.
 
     Parameters
     ----------
@@ -200,8 +220,6 @@ def add_EQ_constraints(n, o, scaling=1e-1):
 
     Example
     -------
-    config.yaml requires to specify opts.
-
     scenario:
         opts: [Co2L-EQ0.7-24H]
 
@@ -258,6 +276,8 @@ def add_EQ_constraints(n, o, scaling=1e-1):
 def add_BAU_constraints(n, config):
     """
     Add a per-carrier minimal overall capacity.
+    
+    BAU_mincapacities and opts must be adjusted in the config.yaml.
 
     Parameters
     ----------
@@ -266,8 +286,6 @@ def add_BAU_constraints(n, config):
 
     Example
     -------
-    config.yaml requires to specify BAU_mincapacities and opts.
-
     scenario:
         opts: [Co2L-BAU-24H]
     electricity:
@@ -512,8 +530,6 @@ def solve_network(n, config, opts="", **kwargs):
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        import os
-
         from _helpers import mock_snakemake
 
         os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -522,7 +538,7 @@ if __name__ == "__main__":
             simpl="",
             clusters="5",
             ll="copt",
-            opts="Co2L-24H",  # Co2L-BAU-CCL-24H"
+            opts="Co2L-CCL-24H",  # Co2L-BAU-CCL-24H"
         )
     configure_logging(snakemake)
 
