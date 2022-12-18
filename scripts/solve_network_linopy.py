@@ -78,6 +78,7 @@ Details (and errors made through this heuristic) are discussed in the paper
 """
 
 import logging
+import os
 import re
 from pathlib import Path
 
@@ -85,8 +86,6 @@ import linopy
 import numpy as np
 import pandas as pd
 import pypsa
-import linopy
-import os
 from _helpers import configure_logging
 from pypsa.descriptors import get_switchable_as_dense as get_as_dense
 from pypsa.linopf import ilopf, network_lopf
@@ -153,7 +152,7 @@ def prepare_network(n, solve_opts):
 def add_CCL_constraints(n, config):
     """
     Add CCL (country & carrier limit) constraint to the network.
-    
+
     Add minimum and maximum levels of generator nominal capacity per carrier
     for individual countries. Opts and path for agg_p_nom_minmax.csv must be defined
     in config.yaml. Default file is available at data/agg_p_nom_minmax.csv.
@@ -170,8 +169,10 @@ def add_CCL_constraints(n, config):
     electricity:
         agg_p_nom_limits: data/agg_p_nom_minmax.csv
     """
-    pypsa_eur_path = os.path.dirname(os.getcwd()) 
-    agg_p_nom_limits = os.path.join(pypsa_eur_path, config["electricity"].get("agg_p_nom_limits")) 
+    pypsa_eur_path = os.path.dirname(os.getcwd())
+    agg_p_nom_limits = os.path.join(
+        pypsa_eur_path, config["electricity"].get("agg_p_nom_limits")
+    )
     try:
         agg_p_nom_minmax = pd.read_csv(agg_p_nom_limits, index_col=list(range(2)))
     except IOError:
@@ -185,26 +186,40 @@ def add_CCL_constraints(n, config):
         "Adding per carrier generation capacity constraints for " "individual countries"
     )
     capacity_variable = n.model["Generator-p_nom"]
-    carrier_grouper = n.generators.query("p_nom_extendable").carrier.rename_axis("Generator-ext")
-    country_grouper = n.generators.query("p_nom_extendable").bus.map(n.buses.country).rename_axis("Generator-ext")
+    carrier_grouper = n.generators.query("p_nom_extendable").carrier.rename_axis(
+        "Generator-ext"
+    )
+    country_grouper = (
+        n.generators.query("p_nom_extendable")
+        .bus.map(n.buses.country)
+        .rename_axis("Generator-ext")
+    )
     # ccgrouper = pd.concat([carrier_grouper, country_grouper], axis=1)
 
-    lhs_carrier = (
-        linopy.LinearExpression.from_tuples(
-            (1,capacity_variable)
-        ).groupby_sum(carrier_grouper)
-    )
-    lhs_country = (
-        linopy.LinearExpression.from_tuples(
-            (1,capacity_variable)
-        ).groupby_sum(country_grouper)
-    )
+    lhs_carrier = linopy.LinearExpression.from_tuples(
+        (1, capacity_variable)
+    ).groupby_sum(carrier_grouper)
+    lhs_country = linopy.LinearExpression.from_tuples(
+        (1, capacity_variable)
+    ).groupby_sum(country_grouper)
     lhs = lhs_country + lhs_carrier
-    lhs = lhs.drop_sel(_term=range(0,len(capacity_variable)))
+    lhs = lhs.drop_sel(_term=range(0, len(capacity_variable)))
 
-    minmax_matrix = agg_p_nom_minmax.unstack().loc[config.get("countries")].rename_axis("bus")
-    n.model.add_constraints(lhs, ">=", minmax_matrix["min"].reindex(lhs.carrier.values, axis=1).fillna(0), "agg_p_nom-min")
-    n.model.add_constraints(lhs, "<=", minmax_matrix["max"].reindex(lhs.carrier.values, axis=1).fillna(np.inf), "agg_p_nom-max")
+    minmax_matrix = (
+        agg_p_nom_minmax.unstack().loc[config.get("countries")].rename_axis("bus")
+    )
+    n.model.add_constraints(
+        lhs,
+        ">=",
+        minmax_matrix["min"].reindex(lhs.carrier.values, axis=1).fillna(0),
+        "agg_p_nom-min",
+    )
+    n.model.add_constraints(
+        lhs,
+        "<=",
+        minmax_matrix["max"].reindex(lhs.carrier.values, axis=1).fillna(np.inf),
+        "agg_p_nom-max",
+    )
 
 
 def add_EQ_constraints(n, o, scaling=1e-1):
@@ -251,21 +266,19 @@ def add_EQ_constraints(n, o, scaling=1e-1):
     dispatch_variable = n.model["Generator-p"].T
     lhs_gen = (
         linopy.LinearExpression.from_tuples(
-            (
-                n.snapshot_weightings.generators * scaling,
-                dispatch_variable
-            )
-        ).groupby_sum(ggrouper).sum("snapshot")
+            (n.snapshot_weightings.generators * scaling, dispatch_variable)
+        )
+        .groupby_sum(ggrouper)
+        .sum("snapshot")
     )
     if not n.storage_units_t.inflow.empty:
         spillage_variable = n.model["StorageUnit-spill"]
         lhs_spill = (
             linopy.LinearExpression.from_tuples(
-                (
-                    -n.snapshot_weightings.stores * scaling,
-                    spillage_variable
-                )
-            ).groupby_sum(sgrouper).sum("snapshot")
+                (-n.snapshot_weightings.stores * scaling, spillage_variable)
+            )
+            .groupby_sum(sgrouper)
+            .sum("snapshot")
         )
         lhs = lhs_gen + lhs_spill
     else:
@@ -276,7 +289,7 @@ def add_EQ_constraints(n, o, scaling=1e-1):
 def add_BAU_constraints(n, config):
     """
     Add a per-carrier minimal overall capacity.
-    
+
     BAU_mincapacities and opts must be adjusted in the config.yaml.
 
     Parameters
@@ -345,7 +358,7 @@ def add_SAFE_constraints(n, config):
 
 
 def add_operational_reserve_margin_constraint(n, sns, config):
-    """ 
+    """
     Define minimum operational reserve margin for a given snapshot.
 
     Parameters
@@ -416,13 +429,14 @@ def update_capacity_constraint(n):
     reserve = n.model["Generator-r"]
     p_max_pu = get_as_dense(n, "Generator", "p_max_pu")
     capacity_fixed = n.generators.p_nom[fix_i]
-    
+
     lhs = linopy.LinearExpression.from_tuples((1, dispatch), (1, reserve))
 
     if not ext_i.empty:
         capacity_variable = n.model["Generator-p_nom"]
         lhs = lhs + linopy.LinearExpression.from_tuples(
-            (-p_max_pu[ext_i], capacity_variable.rename({"Generator-ext":"Generator"})))
+            (-p_max_pu[ext_i], capacity_variable.rename({"Generator-ext": "Generator"}))
+        )
 
     rhs = (p_max_pu[fix_i] * capacity_fixed).reindex(columns=gen_i, fill_value=0)
     n.model.add_constraints(
@@ -512,7 +526,7 @@ def solve_network(n, config, opts="", **kwargs):
             solver_name=solver_name,
             solver_options=solver_options,
             extra_functionality=extra_functionality,
-            **kwargs
+            **kwargs,
         )
     else:
         n.optimize.optimize_transmission_expansion_iteratively(
@@ -522,7 +536,7 @@ def solve_network(n, config, opts="", **kwargs):
             min_iterations=min_iterations,
             max_iterations=max_iterations,
             extra_functionality=extra_functionality,
-            **kwargs
+            **kwargs,
         )
 
     return n
