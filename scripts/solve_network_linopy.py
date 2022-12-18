@@ -82,21 +82,14 @@ import os
 import re
 from pathlib import Path
 
-import linopy
 import numpy as np
 import pandas as pd
 import pypsa
 from _helpers import configure_logging
 from pypsa.descriptors import get_switchable_as_dense as get_as_dense
-from pypsa.linopf import ilopf, network_lopf
+from pypsa.optimization.optimize import optimize
 from pypsa.optimization.abstract import optimize_transmission_expansion_iteratively
-from pypsa.optimization.compat import (
-    define_constraints,
-    define_variables,
-    get_var,
-    join_exprs,
-    linexpr,
-)
+from linopy import LinearExpression
 from vresutils.benchmark import memory_logger
 
 logger = logging.getLogger(__name__)
@@ -186,20 +179,15 @@ def add_CCL_constraints(n, config):
         "Adding per carrier generation capacity constraints for " "individual countries"
     )
     capacity_variable = n.model["Generator-p_nom"]
-    carrier_grouper = n.generators.query("p_nom_extendable").carrier.rename_axis(
-        "Generator-ext"
-    )
-    country_grouper = (
-        n.generators.query("p_nom_extendable")
-        .bus.map(n.buses.country)
-        .rename_axis("Generator-ext")
-    )
+    ext_g = n.generators.query("p_nom_extendable")
+    carrier_grouper = ext_g.carrier.rename_axis("Generator-ext")
+    country_grouper = (ext_g.bus.map(n.buses.country).rename_axis("Generator-ext"))
     # ccgrouper = pd.concat([carrier_grouper, country_grouper], axis=1)
 
-    lhs_carrier = linopy.LinearExpression.from_tuples(
+    lhs_carrier = LinearExpression.from_tuples(
         (1, capacity_variable)
     ).groupby_sum(carrier_grouper)
-    lhs_country = linopy.LinearExpression.from_tuples(
+    lhs_country = LinearExpression.from_tuples(
         (1, capacity_variable)
     ).groupby_sum(country_grouper)
     lhs = lhs_country + lhs_carrier
@@ -208,18 +196,11 @@ def add_CCL_constraints(n, config):
     minmax_matrix = (
         agg_p_nom_minmax.unstack().loc[config.get("countries")].rename_axis("bus")
     )
-    n.model.add_constraints(
-        lhs,
-        ">=",
-        minmax_matrix["min"].reindex(lhs.carrier.values, axis=1).fillna(0),
-        "agg_p_nom-min",
-    )
-    n.model.add_constraints(
-        lhs,
-        "<=",
-        minmax_matrix["max"].reindex(lhs.carrier.values, axis=1).fillna(np.inf),
-        "agg_p_nom-max",
-    )
+
+    rhs_min = minmax_matrix["min"].reindex(lhs.carrier.values, axis=1).fillna(0)
+    n.model.add_constraints(lhs, ">=", rhs_min, "agg_p_nom-min")
+    rhs_max = minmax_matrix["max"].reindex(lhs.carrier.values, axis=1).fillna(np.inf)
+    n.model.add_constraints(lhs, "<=", rhs_max, "agg_p_nom-max")
 
 
 def add_EQ_constraints(n, o, scaling=1e-1):
@@ -265,7 +246,7 @@ def add_EQ_constraints(n, o, scaling=1e-1):
     rhs = scaling * (level * load - inflow)
     dispatch_variable = n.model["Generator-p"].T
     lhs_gen = (
-        linopy.LinearExpression.from_tuples(
+        LinearExpression.from_tuples(
             (n.snapshot_weightings.generators * scaling, dispatch_variable)
         )
         .groupby_sum(ggrouper)
@@ -274,7 +255,7 @@ def add_EQ_constraints(n, o, scaling=1e-1):
     if not n.storage_units_t.inflow.empty:
         spillage_variable = n.model["StorageUnit-spill"]
         lhs_spill = (
-            linopy.LinearExpression.from_tuples(
+            LinearExpression.from_tuples(
                 (-n.snapshot_weightings.stores * scaling, spillage_variable)
             )
             .groupby_sum(sgrouper)
@@ -315,7 +296,7 @@ def add_BAU_constraints(n, config):
     capacity_variable = n.model["Generator-p_nom"]
     ext_i = n.generators.query("p_nom_extendable")
     ext_carrier_i = ext_i.carrier.rename_axis("Generator-ext")
-    lhs = linopy.LinearExpression.from_tuples((1, capacity_variable)).groupby_sum(
+    lhs = LinearExpression.from_tuples((1, capacity_variable)).groupby_sum(
         ext_carrier_i
     )
     rhs = mincaps[lhs.coords["carrier"].values].rename_axis("carrier")
@@ -349,7 +330,7 @@ def add_SAFE_constraints(n, config):
     ext_gens_i = n.generators.query("carrier in @conv_techs & p_nom_extendable").index
     capacity_variable = n.model["Generator-p_nom"]
     ext_cap_var = capacity_variable.sel({"Generator-ext": ext_gens_i})
-    lhs = linopy.LinearExpression.from_tuples((1, ext_cap_var)).sum()
+    lhs = LinearExpression.from_tuples((1, ext_cap_var)).sum()
     exist_conv_caps = n.generators.query(
         "~p_nom_extendable & carrier in @conv_techs"
     ).p_nom.sum()
@@ -385,7 +366,7 @@ def add_operational_reserve_margin_constraint(n, sns, config):
         0, np.inf, coords=[sns, n.generators.index], name="Generator-r"
     )
     reserve = n.model["Generator-r"]
-    lhs = linopy.LinearExpression.from_tuples((1, reserve)).sum("Generator")
+    lhs = LinearExpression.from_tuples((1, reserve)).sum("Generator")
 
     # Share of extendable renewable capacities
     ext_i = n.generators.query("p_nom_extendable").index
@@ -395,7 +376,7 @@ def add_operational_reserve_margin_constraint(n, sns, config):
         renewable_capacity_variables = n.model["Generator-p_nom"].sel(
             {"Generator-ext": vres_i.intersection(ext_i)}
         )
-        lhs = lhs + linopy.LinearExpression.from_tuples(
+        lhs = lhs + LinearExpression.from_tuples(
             (-EPSILON_VRES * capacity_factor, renewable_capacity_variables)
         ).sum(["Generator", "Generator-ext"])
 
@@ -430,11 +411,11 @@ def update_capacity_constraint(n):
     p_max_pu = get_as_dense(n, "Generator", "p_max_pu")
     capacity_fixed = n.generators.p_nom[fix_i]
 
-    lhs = linopy.LinearExpression.from_tuples((1, dispatch), (1, reserve))
+    lhs = LinearExpression.from_tuples((1, dispatch), (1, reserve))
 
     if not ext_i.empty:
         capacity_variable = n.model["Generator-p_nom"]
-        lhs = lhs + linopy.LinearExpression.from_tuples(
+        lhs = lhs + LinearExpression.from_tuples(
             (-p_max_pu[ext_i], capacity_variable.rename({"Generator-ext": "Generator"}))
         )
 
@@ -471,7 +452,7 @@ def add_battery_constraints(n):
         return
     vars_link = n.model["Link-p_nom"]
     eff = n.links.loc[nodes + " discharger", "efficiency"]
-    lhs = linopy.LinearExpression.from_tuples(
+    lhs = LinearExpression.from_tuples(
         (1, vars_link.sel({"Link-ext": nodes + " charger"})),
         (-eff, vars_link.sel({"Link-ext": nodes + " discharger"})),
     )
@@ -522,14 +503,16 @@ def solve_network(n, config, opts="", **kwargs):
         logger.info("No expandable lines found. Skipping iterative solving.")
 
     if skip_iterations:
-        n.optimize(
+        optimize(
+            n,
             solver_name=solver_name,
             solver_options=solver_options,
             extra_functionality=extra_functionality,
             **kwargs,
         )
     else:
-        n.optimize.optimize_transmission_expansion_iteratively(
+        optimize_transmission_expansion_iteratively(
+            n,
             solver_name=solver_name,
             solver_options=solver_options,
             track_iterations=track_iterations,
