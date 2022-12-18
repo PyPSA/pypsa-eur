@@ -14,6 +14,8 @@ Upcoming Release
 
 * Add option to solve PyPSA-Eur with Linopy
 
+* Bugfix in the reserve constraint will increase demand related reserve requirements
+
 PyPSA-Eur 0.6.1 (20th September 2022)
 =====================================
 
