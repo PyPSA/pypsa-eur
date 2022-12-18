@@ -86,10 +86,10 @@ import numpy as np
 import pandas as pd
 import pypsa
 from _helpers import configure_logging
-from pypsa.descriptors import get_switchable_as_dense as get_as_dense
-from pypsa.optimization.optimize import optimize
-from pypsa.optimization.abstract import optimize_transmission_expansion_iteratively
 from linopy import LinearExpression
+from pypsa.descriptors import get_switchable_as_dense as get_as_dense
+from pypsa.optimization.abstract import optimize_transmission_expansion_iteratively
+from pypsa.optimization.optimize import optimize
 from vresutils.benchmark import memory_logger
 
 logger = logging.getLogger(__name__)
@@ -181,15 +181,15 @@ def add_CCL_constraints(n, config):
     capacity_variable = n.model["Generator-p_nom"]
     ext_g = n.generators.query("p_nom_extendable")
     carrier_grouper = ext_g.carrier.rename_axis("Generator-ext")
-    country_grouper = (ext_g.bus.map(n.buses.country).rename_axis("Generator-ext"))
+    country_grouper = ext_g.bus.map(n.buses.country).rename_axis("Generator-ext")
     # ccgrouper = pd.concat([carrier_grouper, country_grouper], axis=1)
 
-    lhs_carrier = LinearExpression.from_tuples(
-        (1, capacity_variable)
-    ).groupby_sum(carrier_grouper)
-    lhs_country = LinearExpression.from_tuples(
-        (1, capacity_variable)
-    ).groupby_sum(country_grouper)
+    lhs_carrier = LinearExpression.from_tuples((1, capacity_variable)).groupby_sum(
+        carrier_grouper
+    )
+    lhs_country = LinearExpression.from_tuples((1, capacity_variable)).groupby_sum(
+        country_grouper
+    )
     lhs = lhs_country + lhs_carrier
     lhs = lhs.drop_sel(_term=range(0, len(capacity_variable)))
 
