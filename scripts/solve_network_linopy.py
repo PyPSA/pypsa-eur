@@ -373,9 +373,11 @@ def add_operational_reserve_margin_constraint(n, sns, config):
     vres_i = n.generators_t.p_max_pu.columns
     if not ext_i.empty and not vres_i.empty:
         capacity_factor = n.generators_t.p_max_pu[vres_i.intersection(ext_i)]
-        renewable_capacity_variables = n.model["Generator-p_nom"].sel(
-            {"Generator-ext": vres_i.intersection(ext_i)}
-        ).rename({"Generator-ext": "Generator"})
+        renewable_capacity_variables = (
+            n.model["Generator-p_nom"]
+            .sel({"Generator-ext": vres_i.intersection(ext_i)})
+            .rename({"Generator-ext": "Generator"})
+        )
         lhs = lhs + LinearExpression.from_tuples(
             (-EPSILON_VRES * capacity_factor, renewable_capacity_variables)
         ).sum(["Generator"])
