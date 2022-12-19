@@ -375,10 +375,10 @@ def add_operational_reserve_margin_constraint(n, sns, config):
         capacity_factor = n.generators_t.p_max_pu[vres_i.intersection(ext_i)]
         renewable_capacity_variables = n.model["Generator-p_nom"].sel(
             {"Generator-ext": vres_i.intersection(ext_i)}
-        )
+        ).rename({"Generator-ext": "Generator"})
         lhs = lhs + LinearExpression.from_tuples(
             (-EPSILON_VRES * capacity_factor, renewable_capacity_variables)
-        ).sum(["Generator", "Generator-ext"])
+        ).sum(["Generator"])
 
     # Total demand per t
     demand = n.loads_t.p_set.sum(1)
@@ -535,7 +535,7 @@ if __name__ == "__main__":
             simpl="",
             clusters="5",
             ll="copt",
-            opts="Co2L-CCL-24H",  # Co2L-BAU-CCL-24H"
+            opts="Co2L-BAU-CCL-24H",
         )
     configure_logging(snakemake)
 
