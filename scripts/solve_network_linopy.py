@@ -184,16 +184,26 @@ def add_CCL_constraints(n, config):
     ext_carriers = n.generators.query("p_nom_extendable").carrier.unique()
     for c in ext_carriers:
         ext_carrier = n.generators.query("p_nom_extendable and carrier == @c")
-        country_grouper = ext_carrier.bus.map(n.buses.country).rename_axis("Generator-ext").rename("country")
-        ext_carrier_per_country = capacity_variable.loc[country_grouper.index].groupby_sum(country_grouper)
+        country_grouper = (
+            ext_carrier.bus.map(n.buses.country)
+            .rename_axis("Generator-ext")
+            .rename("country")
+        )
+        ext_carrier_per_country = capacity_variable.loc[
+            country_grouper.index
+        ].groupby_sum(country_grouper)
         lhs.append(ext_carrier_per_country)
     lhs = merge(lhs, dim=pd.Index(ext_carriers, name="carrier"))
 
-    min_matrix = agg_p_nom_minmax['min'].to_xarray().unstack().reindex_like(lhs)
-    max_matrix = agg_p_nom_minmax['max'].to_xarray().unstack().reindex_like(lhs)
+    min_matrix = agg_p_nom_minmax["min"].to_xarray().unstack().reindex_like(lhs)
+    max_matrix = agg_p_nom_minmax["max"].to_xarray().unstack().reindex_like(lhs)
 
-    n.model.add_constraints(lhs >= min_matrix, name="agg_p_nom_min", mask=min_matrix.notnull())
-    n.model.add_constraints(lhs <= max_matrix, name="agg_p_nom_max", mask=max_matrix.notnull())
+    n.model.add_constraints(
+        lhs >= min_matrix, name="agg_p_nom_min", mask=min_matrix.notnull()
+    )
+    n.model.add_constraints(
+        lhs <= max_matrix, name="agg_p_nom_max", mask=max_matrix.notnull()
+    )
 
 
 def add_EQ_constraints(n, o, scaling=1e-1):
@@ -239,13 +249,17 @@ def add_EQ_constraints(n, o, scaling=1e-1):
     rhs = scaling * (level * load - inflow)
     dispatch_variable = n.model["Generator-p"].T
     lhs_gen = (
-            dispatch_variable * (n.snapshot_weightings.generators * scaling)
-        ).groupby_sum(ggrouper).sum("snapshot")
+        (dispatch_variable * (n.snapshot_weightings.generators * scaling))
+        .groupby_sum(ggrouper)
+        .sum("snapshot")
+    )
     if not n.storage_units_t.inflow.empty:
         spillage_variable = n.model["StorageUnit-spill"]
         lhs_spill = (
-            spillage_variable * (-n.snapshot_weightings.stores * scaling)
-            ).groupby_sum(sgrouper).sum("snapshot")
+            (spillage_variable * (-n.snapshot_weightings.stores * scaling))
+            .groupby_sum(sgrouper)
+            .sum("snapshot")
+        )
         lhs = merge(lhs_gen, lhs_spill)
     else:
         lhs = lhs_gen
@@ -281,9 +295,7 @@ def add_BAU_constraints(n, config):
     capacity_variable = n.model["Generator-p_nom"]
     ext_i = n.generators.query("p_nom_extendable")
     ext_carrier_i = ext_i.carrier.rename_axis("Generator-ext")
-    lhs = capacity_variable.groupby_sum(
-        ext_carrier_i
-    )
+    lhs = capacity_variable.groupby_sum(ext_carrier_i)
     rhs = mincaps[lhs.coords["carrier"].values].rename_axis("carrier")
     n.model.add_constraints(lhs >= rhs, name="bau_mincaps")
 
@@ -358,12 +370,16 @@ def add_operational_reserve_margin_constraint(n, sns, config):
     vres_i = n.generators_t.p_max_pu.columns
     if not ext_i.empty and not vres_i.empty:
         capacity_factor = n.generators_t.p_max_pu[vres_i.intersection(ext_i)]
-        renewable_capacity_variables = n.model["Generator-p_nom"].sel(
-            {"Generator-ext": vres_i.intersection(ext_i)}
-        ).rename({"Generator-ext": "Generator"})
+        renewable_capacity_variables = (
+            n.model["Generator-p_nom"]
+            .sel({"Generator-ext": vres_i.intersection(ext_i)})
+            .rename({"Generator-ext": "Generator"})
+        )
         lhs = merge(
             lhs,
-            (renewable_capacity_variables * (-EPSILON_VRES * capacity_factor)).sum(["Generator"]),
+            (renewable_capacity_variables * (-EPSILON_VRES * capacity_factor)).sum(
+                ["Generator"]
+            ),
         )
 
     # Total demand per t
@@ -400,14 +416,14 @@ def update_capacity_constraint(n):
     lhs = merge(
         dispatch * 1,
         reserve * 1,
-        )
+    )
 
     if not ext_i.empty:
         capacity_variable = n.model["Generator-p_nom"]
         lhs = merge(
             lhs,
-            capacity_variable.rename({"Generator-ext": "Generator"}) * -p_max_pu[ext_i]
-            )
+            capacity_variable.rename({"Generator-ext": "Generator"}) * -p_max_pu[ext_i],
+        )
 
     rhs = (p_max_pu[fix_i] * capacity_fixed).reindex(columns=gen_i)
     n.model.add_constraints(
