@@ -86,7 +86,7 @@ import numpy as np
 import pandas as pd
 import pypsa
 from _helpers import configure_logging
-from linopy import LinearExpression
+from linopy import merge
 from pypsa.descriptors import get_switchable_as_dense as get_as_dense
 from pypsa.optimization.abstract import optimize_transmission_expansion_iteratively
 from pypsa.optimization.optimize import optimize
@@ -179,28 +179,21 @@ def add_CCL_constraints(n, config):
         "Adding per carrier generation capacity constraints for " "individual countries"
     )
     capacity_variable = n.model["Generator-p_nom"]
-    ext_g = n.generators.query("p_nom_extendable")
-    carrier_grouper = ext_g.carrier.rename_axis("Generator-ext")
-    country_grouper = ext_g.bus.map(n.buses.country).rename_axis("Generator-ext")
-    # ccgrouper = pd.concat([carrier_grouper, country_grouper], axis=1)
 
-    lhs_carrier = LinearExpression.from_tuples((1, capacity_variable)).groupby_sum(
-        carrier_grouper
-    )
-    lhs_country = LinearExpression.from_tuples((1, capacity_variable)).groupby_sum(
-        country_grouper
-    )
-    lhs = lhs_country + lhs_carrier
-    lhs = lhs.drop_sel(_term=range(0, len(capacity_variable)))
+    lhs = []
+    ext_carriers = n.generators.query("p_nom_extendable").carrier.unique()
+    for c in ext_carriers:
+        ext_carrier = n.generators.query("p_nom_extendable and carrier == @c")
+        country_grouper = ext_carrier.bus.map(n.buses.country).rename_axis("Generator-ext").rename("country")
+        ext_carrier_per_country = capacity_variable.loc[country_grouper.index].groupby_sum(country_grouper)
+        lhs.append(ext_carrier_per_country)
+    lhs = merge(lhs, dim=pd.Index(ext_carriers, name="carrier"))
 
-    minmax_matrix = (
-        agg_p_nom_minmax.unstack().loc[config.get("countries")].rename_axis("bus")
-    )
+    min_matrix = agg_p_nom_minmax['min'].to_xarray().unstack().reindex_like(lhs)
+    max_matrix = agg_p_nom_minmax['max'].to_xarray().unstack().reindex_like(lhs)
 
-    rhs_min = minmax_matrix["min"].reindex(lhs.carrier.values, axis=1).fillna(0)
-    n.model.add_constraints(lhs, ">=", rhs_min, "agg_p_nom-min")
-    rhs_max = minmax_matrix["max"].reindex(lhs.carrier.values, axis=1).fillna(np.inf)
-    n.model.add_constraints(lhs, "<=", rhs_max, "agg_p_nom-max")
+    n.model.add_constraints(lhs >= min_matrix, name="agg_p_nom_min", mask=min_matrix.notnull())
+    n.model.add_constraints(lhs <= max_matrix, name="agg_p_nom_max", mask=max_matrix.notnull())
 
 
 def add_EQ_constraints(n, o, scaling=1e-1):
@@ -246,25 +239,17 @@ def add_EQ_constraints(n, o, scaling=1e-1):
     rhs = scaling * (level * load - inflow)
     dispatch_variable = n.model["Generator-p"].T
     lhs_gen = (
-        LinearExpression.from_tuples(
-            (n.snapshot_weightings.generators * scaling, dispatch_variable)
-        )
-        .groupby_sum(ggrouper)
-        .sum("snapshot")
-    )
+            dispatch_variable * (n.snapshot_weightings.generators * scaling)
+        ).groupby_sum(ggrouper).sum("snapshot")
     if not n.storage_units_t.inflow.empty:
         spillage_variable = n.model["StorageUnit-spill"]
         lhs_spill = (
-            LinearExpression.from_tuples(
-                (-n.snapshot_weightings.stores * scaling, spillage_variable)
-            )
-            .groupby_sum(sgrouper)
-            .sum("snapshot")
-        )
-        lhs = lhs_gen + lhs_spill
+            spillage_variable * (-n.snapshot_weightings.stores * scaling)
+            ).groupby_sum(sgrouper).sum("snapshot")
+        lhs = merge(lhs_gen, lhs_spill)
     else:
         lhs = lhs_gen
-    n.model.add_constraints(lhs, ">=", rhs, "equity-min")
+    n.model.add_constraints(lhs >= rhs, name="equity_min")
 
 
 def add_BAU_constraints(n, config):
@@ -296,11 +281,11 @@ def add_BAU_constraints(n, config):
     capacity_variable = n.model["Generator-p_nom"]
     ext_i = n.generators.query("p_nom_extendable")
     ext_carrier_i = ext_i.carrier.rename_axis("Generator-ext")
-    lhs = LinearExpression.from_tuples((1, capacity_variable)).groupby_sum(
+    lhs = capacity_variable.groupby_sum(
         ext_carrier_i
     )
     rhs = mincaps[lhs.coords["carrier"].values].rename_axis("carrier")
-    n.model.add_constraints(lhs, ">=", rhs, "bau_mincaps")
+    n.model.add_constraints(lhs >= rhs, name="bau_mincaps")
 
 
 def add_SAFE_constraints(n, config):
@@ -330,12 +315,12 @@ def add_SAFE_constraints(n, config):
     ext_gens_i = n.generators.query("carrier in @conv_techs & p_nom_extendable").index
     capacity_variable = n.model["Generator-p_nom"]
     ext_cap_var = capacity_variable.sel({"Generator-ext": ext_gens_i})
-    lhs = LinearExpression.from_tuples((1, ext_cap_var)).sum()
+    lhs = ext_cap_var.sum()
     exist_conv_caps = n.generators.query(
         "~p_nom_extendable & carrier in @conv_techs"
     ).p_nom.sum()
     rhs = reserve_margin - exist_conv_caps
-    n.model.add_constraints(lhs, ">=", rhs, "Safe-mintotalcap")
+    n.model.add_constraints(lhs >= rhs, name="safe_mintotalcap")
 
 
 def add_operational_reserve_margin_constraint(n, sns, config):
@@ -366,7 +351,7 @@ def add_operational_reserve_margin_constraint(n, sns, config):
         0, np.inf, coords=[sns, n.generators.index], name="Generator-r"
     )
     reserve = n.model["Generator-r"]
-    lhs = LinearExpression.from_tuples((1, reserve)).sum("Generator")
+    lhs = reserve.sum("Generator")
 
     # Share of extendable renewable capacities
     ext_i = n.generators.query("p_nom_extendable").index
@@ -376,9 +361,10 @@ def add_operational_reserve_margin_constraint(n, sns, config):
         renewable_capacity_variables = n.model["Generator-p_nom"].sel(
             {"Generator-ext": vres_i.intersection(ext_i)}
         ).rename({"Generator-ext": "Generator"})
-        lhs = lhs + LinearExpression.from_tuples(
-            (-EPSILON_VRES * capacity_factor, renewable_capacity_variables)
-        ).sum(["Generator"])
+        lhs = merge(
+            lhs,
+            (renewable_capacity_variables * (-EPSILON_VRES * capacity_factor)).sum(["Generator"]),
+        )
 
     # Total demand per t
     demand = n.loads_t.p_set.sum(1)
@@ -391,7 +377,7 @@ def add_operational_reserve_margin_constraint(n, sns, config):
     # Right-hand-side
     rhs = EPSILON_LOAD * demand + EPSILON_VRES * potential + CONTINGENCY
 
-    n.model.add_constraints(lhs, ">=", rhs, name="Reserve-margin")
+    n.model.add_constraints(lhs >= rhs, name="reserve_margin")
 
 
 def update_capacity_constraint(n):
@@ -411,17 +397,21 @@ def update_capacity_constraint(n):
     p_max_pu = get_as_dense(n, "Generator", "p_max_pu")
     capacity_fixed = n.generators.p_nom[fix_i]
 
-    lhs = LinearExpression.from_tuples((1, dispatch), (1, reserve))
+    lhs = merge(
+        dispatch * 1,
+        reserve * 1,
+        )
 
     if not ext_i.empty:
         capacity_variable = n.model["Generator-p_nom"]
-        lhs = lhs + LinearExpression.from_tuples(
-            (-p_max_pu[ext_i], capacity_variable.rename({"Generator-ext": "Generator"}))
-        )
+        lhs = merge(
+            lhs,
+            capacity_variable.rename({"Generator-ext": "Generator"}) * -p_max_pu[ext_i]
+            )
 
-    rhs = (p_max_pu[fix_i] * capacity_fixed).reindex(columns=gen_i, fill_value=0)
+    rhs = (p_max_pu[fix_i] * capacity_fixed).reindex(columns=gen_i)
     n.model.add_constraints(
-        lhs, "<=", rhs, name="Generators-updated_capacity_constraint"
+        lhs <= rhs, name="gen_updated_capacity_constraint", mask=rhs.notnull()
     )
 
 
@@ -452,11 +442,11 @@ def add_battery_constraints(n):
         return
     vars_link = n.model["Link-p_nom"]
     eff = n.links.loc[nodes + " discharger", "efficiency"]
-    lhs = LinearExpression.from_tuples(
-        (1, vars_link.sel({"Link-ext": nodes + " charger"})),
-        (-eff, vars_link.sel({"Link-ext": nodes + " discharger"})),
+    lhs = merge(
+        vars_link.sel({"Link-ext": nodes + " charger"}) * 1,
+        vars_link.sel({"Link-ext": nodes + " discharger"}) * -eff,
     )
-    n.model.add_constraints(lhs, "=", 0, name="Link-charger_ratio")
+    n.model.add_constraints(lhs == 0, name="link_charger_ratio")
 
 
 def extra_functionality(n, snapshots):
@@ -535,7 +525,7 @@ if __name__ == "__main__":
             simpl="",
             clusters="5",
             ll="copt",
-            opts="Co2L-BAU-CCL-24H",
+            opts="Co2L-BAU-24H",
         )
     configure_logging(snakemake)
 
