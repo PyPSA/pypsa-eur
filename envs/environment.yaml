@@ -25,7 +25,7 @@ dependencies:
 - pytables
 - lxml
 - powerplantmatching>=0.5.5
-- numpy
+- numpy<1.24
 - pandas
 - geopandas>=0.11.0
 - xarray
@@ -56,5 +56,5 @@ dependencies:
 - pyxlsb
 
 - pip:
-  - git+https://github.com/fresna/vresutils.git#egg=vresutils
+  - vresutils>=0.3.1
   - tsam>=1.1.0
