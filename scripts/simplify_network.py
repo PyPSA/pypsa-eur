@@ -217,7 +217,7 @@ def _adjust_capital_costs_using_connection_costs(n, connection_costs_to_bus, out
                     tech,
                     ", ".join(
                         "{:.0f} Eur/MW/a for `{}`".format(d, b)
-                        for b, d in costs.iteritems()
+                        for b, d in costs.items()
                     ),
                 )
             )
@@ -369,7 +369,7 @@ def simplify_links(n, costs, config, output, aggregation_strategies=dict()):
             n.mremove("Link", all_links)
 
             static_attrs = n.components["Link"]["attrs"].loc[lambda df: df.static]
-            for attr, default in static_attrs.default.iteritems():
+            for attr, default in static_attrs.default.items():
                 params.setdefault(attr, default)
             n.links.loc[name] = pd.Series(params)
 
