@@ -278,7 +278,7 @@ def add_operational_reserve_margin_constraint(n, config):
         ).sum(1)
 
     # Total demand at t
-    demand = n.loads_t.p.sum(1)
+    demand = n.loads_t.p_set.sum(1)
 
     # VRES potential of non extendable generators
     capacity_factor = n.generators_t.p_max_pu[vres_i.difference(ext_i)]
@@ -389,11 +389,7 @@ def solve_network(n, config, opts="", **kwargs):
 
     if skip_iterations:
         network_lopf(
-            n,
-            solver_name=solver_name,
-            solver_options=solver_options,
-            extra_functionality=extra_functionality,
-            **kwargs
+            n, solver_name=solver_name, solver_options=solver_options, **kwargs
         )
     else:
         ilopf(
@@ -403,7 +399,6 @@ def solve_network(n, config, opts="", **kwargs):
             track_iterations=track_iterations,
             min_iterations=min_iterations,
             max_iterations=max_iterations,
-            extra_functionality=extra_functionality,
             **kwargs
         )
     return n
@@ -432,6 +427,7 @@ if __name__ == "__main__":
             n,
             snakemake.config,
             opts,
+            extra_functionality=extra_functionality,
             solver_dir=tmpdir,
             solver_logfile=snakemake.log.solver,
         )
