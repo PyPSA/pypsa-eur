@@ -1392,7 +1392,7 @@ def add_land_transport(n, costs):
 
 def build_heat_demand(n):
 
-    # copy forward the daily average heat demand into each hour, so it can be multipled by the intraday profile
+    # copy forward the daily average heat demand into each hour, so it can be multiplied by the intraday profile
     daily_space_heat_demand = xr.open_dataarray(snakemake.input.heat_demand_total).to_pandas().reindex(index=n.snapshots, method="ffill")
 
     intraday_profiles = pd.read_csv(snakemake.input.heat_profile, index_col=0)
@@ -1734,7 +1734,7 @@ def add_heat(n, costs):
 
             # minimum heat demand 'dE' after retrofitting in units of original heat demand (values between 0-1)
             dE = retro_data.loc[(ct, sec), ("dE")]
-            # get addtional energy savings 'dE_diff' between the different retrofitting strengths/generators at one node
+            # get additional energy savings 'dE_diff' between the different retrofitting strengths/generators at one node
             dE_diff = abs(dE.diff()).fillna(1-dE.iloc[0])
             # convert costs Euro/m^2 -> Euro/MWh
             capital_cost =  retro_data.loc[(ct, sec), ("cost")] * floor_area_node / \
@@ -2147,10 +2147,15 @@ def add_industry(n, costs):
     if total_share != 1:
         logger.warning(f"Total shipping shares sum up to {total_share*100}%, corresponding to increased or decreased demand assumptions.")
 
-    all_navigation = ["total international navigation", "total domestic navigation"]
-    p_set = pop_weighted_energy_totals.loc[nodes, all_navigation].sum(axis=1) * 1e6  / 8760
+    domestic_navigation = pop_weighted_energy_totals.loc[nodes, "total domestic navigation"]
+    international_navigation = pd.read_csv(snakemake.input.shipping_demand, index_col=0)
+    all_navigation = domestic_navigation + international_navigation
+    p_set = all_navigation * 1e6 / 8760
 
     if shipping_hydrogen_share:
+
+        efficiency = options['shipping_average_efficiency'] / costs.at["fuel cell", "efficiency"]
+        shipping_hydrogen_share = get(options['shipping_hydrogen_share'], investment_year)
 
         if options["shipping_hydrogen_liquefaction"]:
 
@@ -2629,7 +2634,7 @@ def set_temporal_aggregation(n, opts, solver_name):
         if m is not None:
             n = average_every_nhours(n, m.group(0))
             break
-        # representive snapshots
+        # representative snapshots
         m = re.match(r"(^\d+)sn$", o, re.IGNORECASE)
         if m is not None:
             sn = int(m[1])

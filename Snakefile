@@ -256,9 +256,9 @@ rule build_biomass_potentials:
         enspreso_biomass=HTTP.remote("https://cidportal.jrc.ec.europa.eu/ftp/jrc-opendata/ENSPRESO/ENSPRESO_BIOMASS.xlsx", keep_local=True),
         nuts2="data/nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson", # https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/#nuts21
         regions_onshore=pypsaeur("resources/regions_onshore_elec_s{simpl}_{clusters}.geojson"),
-        nuts3_population="../pypsa-eur/data/bundle/nama_10r_3popgdp.tsv.gz",
-        swiss_cantons="../pypsa-eur/data/bundle/ch_cantons.csv",
-        swiss_population="../pypsa-eur/data/bundle/je-e-21.03.02.xls",
+        nuts3_population=pypsaeur("data/bundle/nama_10r_3popgdp.tsv.gz"),
+        swiss_cantons=pypsaeur("data/bundle/ch_cantons.csv"),
+        swiss_population=pypsaeur("data/bundle/je-e-21.03.02.xls"),
         country_shapes=pypsaeur('resources/country_shapes.geojson')
     output:
         biomass_potentials_all='resources/biomass_potentials_all_s{simpl}_{clusters}.csv',
@@ -441,6 +441,18 @@ rule build_population_weighted_energy_totals:
     script: "scripts/build_population_weighted_energy_totals.py"
 
 
+rule build_shipping_demand:
+    input:
+        ports="data/attributed_ports.json",
+        scope=pypsaeur("resources/europe_shape.geojson"),
+        regions=pypsaeur("resources/regions_onshore_elec_s{simpl}_{clusters}.geojson"),
+        demand="resources/energy_totals.csv"
+    output: "resources/shipping_demand_s{simpl}_{clusters}.csv"
+    threads: 1
+    resources: mem_mb=2000
+    script: "scripts/build_shipping_demand.py"
+
+
 rule build_transport_demand:
     input:
         clustered_pop_layout="resources/pop_layout_elec_s{simpl}_{clusters}.csv",
@@ -466,6 +478,7 @@ rule prepare_sector_network:
         energy_totals_name='resources/energy_totals.csv',
         eurostat=input_eurostat,
         pop_weighted_energy_totals="resources/pop_weighted_energy_totals_s{simpl}_{clusters}.csv",
+        shipping_demand="resources/shipping_demand_s{simpl}_{clusters}.csv",
         transport_demand="resources/transport_demand_s{simpl}_{clusters}.csv",
         transport_data="resources/transport_data_s{simpl}_{clusters}.csv",
         avail_profile="resources/avail_profile_s{simpl}_{clusters}.csv",
@@ -532,6 +545,14 @@ rule copy_config:
     script: "scripts/copy_config.py"
 
 
+rule copy_conda_env:
+    output: SDIR + '/configs/environment.yaml'
+    threads: 1
+    resources: mem_mb=500
+    benchmark: SDIR + "/benchmarks/copy_conda_env"
+    shell: "conda env export -f {output} --no-builds"
+
+
 rule make_summary:
     input:
         overrides="data/override_component_attrs",
@@ -590,7 +611,8 @@ if config["foresight"] == "overnight":
             overrides="data/override_component_attrs",
             network=RDIR + "/prenetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc",
             costs=CDIR + "costs_{}.csv".format(config['costs']['year']),
-            config=SDIR + '/configs/config.yaml'
+            config=SDIR + '/configs/config.yaml',
+            env=SDIR + '/configs/environment.yaml',
         output: RDIR + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc"
         shadow: "shallow"
         log:

@@ -401,7 +401,7 @@ def plot_carbon_budget_distribution(input_eurostat):
 
     ax1.plot(emissions, color='black', linewidth=3, label=None)
 
-    #plot commited and uder-discussion targets
+    #plot committed and uder-discussion targets
     #(notice that historical emissions include all countries in the
     # network, but targets refer to EU)
     ax1.plot([2020],[0.8*emissions[1990]],
@@ -427,7 +427,7 @@ def plot_carbon_budget_distribution(input_eurostat):
 
     ax1.plot([2050],[0.125*emissions[1990]],'ro',
                      marker='*', markersize=12, markerfacecolor='black',
-                     markeredgecolor='black', label='EU commited target')
+                     markeredgecolor='black', label='EU committed target')
 
     ax1.legend(fancybox=True, fontsize=18, loc=(0.01,0.01),
                        facecolor='white', frameon=True)

@@ -54,7 +54,7 @@ The requirements are the same as `PyPSA-Eur <https://github.com/PyPSA/pypsa-eur>
 xarray version >= 0.15.1, you will need the latest master branch of
 atlite version 0.0.2.
 
-You can create an enviroment using the environment.yaml file in pypsa-eur/envs:
+You can create an environment using the environment.yaml file in pypsa-eur/envs:
 
 .. code:: bash
 
