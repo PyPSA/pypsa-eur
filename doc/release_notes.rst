@@ -86,6 +86,8 @@ incorporates retrofitting options to hydrogen.
 
 * Shipping demand now defaults to (synthetic) oil rather than liquefied hydrogen until 2050.
 
+* Improved network plots including better legends, hydrogen retrofitting network display, and change to EqualEarth projection.
+
 **Bugfixes**
 
 * The CO2 sequestration limit implemented as GlobalConstraint (introduced in the previous version)
