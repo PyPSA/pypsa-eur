@@ -500,9 +500,9 @@ rule prepare_sector_network:
         cop_air_total="resources/cop_air_total_elec_s{simpl}_{clusters}.nc",
         cop_air_rural="resources/cop_air_rural_elec_s{simpl}_{clusters}.nc",
         cop_air_urban="resources/cop_air_urban_elec_s{simpl}_{clusters}.nc",
-        solar_thermal_total="resources/solar_thermal_total_elec_s{simpl}_{clusters}.nc",
-        solar_thermal_urban="resources/solar_thermal_urban_elec_s{simpl}_{clusters}.nc",
-        solar_thermal_rural="resources/solar_thermal_rural_elec_s{simpl}_{clusters}.nc",
+        solar_thermal_total="resources/solar_thermal_total_elec_s{simpl}_{clusters}.nc" if config["sector"]["solar_thermal"] else [],
+        solar_thermal_urban="resources/solar_thermal_urban_elec_s{simpl}_{clusters}.nc" if config["sector"]["solar_thermal"] else [],
+        solar_thermal_rural="resources/solar_thermal_rural_elec_s{simpl}_{clusters}.nc" if config["sector"]["solar_thermal"] else [],
         **build_retro_cost_output,
         **build_biomass_transport_costs_output,
         **gas_infrastructure
