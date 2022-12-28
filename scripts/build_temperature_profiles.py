@@ -5,6 +5,7 @@ import atlite
 import pandas as pd
 import xarray as xr
 import numpy as np
+from dask.distributed import Client, LocalCluster
 
 if __name__ == '__main__':
     if 'snakemake' not in globals():
@@ -15,6 +16,10 @@ if __name__ == '__main__':
             clusters=48,
         )
 
+    nprocesses = int(snakemake.threads)
+    cluster = LocalCluster(n_workers=nprocesses, threads_per_worker=1)
+    client = Client(cluster, asynchronous=True)
+
     time = pd.date_range(freq='h', **snakemake.config['snapshots'])
     cutout_config = snakemake.config['atlite']['cutout']
     cutout = atlite.Cutout(cutout_config).sel(time=time)
@@ -24,23 +29,25 @@ if __name__ == '__main__':
 
     I = cutout.indicatormatrix(clustered_regions)
 
-    for area in ["total", "rural", "urban"]:
+    pop_layout = xr.open_dataarray(snakemake.input.pop_layout)
 
-        pop_layout = xr.open_dataarray(snakemake.input[f'pop_layout_{area}'])
+    stacked_pop = pop_layout.stack(spatial=('y', 'x'))
+    M = I.T.dot(np.diag(I.dot(stacked_pop)))
 
-        stacked_pop = pop_layout.stack(spatial=('y', 'x'))
-        M = I.T.dot(np.diag(I.dot(stacked_pop)))
+    nonzero_sum = M.sum(axis=0, keepdims=True)
+    nonzero_sum[nonzero_sum == 0.] = 1.
+    M_tilde = M / nonzero_sum
 
-        nonzero_sum = M.sum(axis=0, keepdims=True)
-        nonzero_sum[nonzero_sum == 0.] = 1.
-        M_tilde = M / nonzero_sum
+    temp_air = cutout.temperature(
+        matrix=M_tilde.T, index=clustered_regions.index,
+        dask_kwargs=dict(scheduler=client),
+        show_progress=False)
 
-        temp_air = cutout.temperature(
-            matrix=M_tilde.T, index=clustered_regions.index)
+    temp_air.to_netcdf(snakemake.output.temp_air)
 
-        temp_air.to_netcdf(snakemake.output[f"temp_air_{area}"])
+    temp_soil = cutout.soil_temperature(
+        matrix=M_tilde.T, index=clustered_regions.index,
+        dask_kwargs=dict(scheduler=client),
+        show_progress=False)
 
-        temp_soil = cutout.soil_temperature(
-            matrix=M_tilde.T, index=clustered_regions.index)
-
-        temp_soil.to_netcdf(snakemake.output[f"temp_soil_{area}"])
+    temp_soil.to_netcdf(snakemake.output.temp_soil)

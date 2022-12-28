@@ -162,34 +162,26 @@ else:
 
 rule build_heat_demands:
     input:
-        pop_layout_total="resources/pop_layout_total.nc",
-        pop_layout_urban="resources/pop_layout_urban.nc",
-        pop_layout_rural="resources/pop_layout_rural.nc",
+        pop_layout="resources/pop_layout_{scope}.nc",
         regions_onshore=pypsaeur("resources/regions_onshore_elec_s{simpl}_{clusters}.geojson")
     output:
-        heat_demand_urban="resources/heat_demand_urban_elec_s{simpl}_{clusters}.nc",
-        heat_demand_rural="resources/heat_demand_rural_elec_s{simpl}_{clusters}.nc",
-        heat_demand_total="resources/heat_demand_total_elec_s{simpl}_{clusters}.nc"
+        heat_demand="resources/heat_demand_{scope}_elec_s{simpl}_{clusters}.nc"
     resources: mem_mb=20000
-    benchmark: "benchmarks/build_heat_demands/s{simpl}_{clusters}"
+    threads: 8
+    benchmark: "benchmarks/build_heat_demands/{scope}_s{simpl}_{clusters}"
     script: "scripts/build_heat_demand.py"
 
 
 rule build_temperature_profiles:
     input:
-        pop_layout_total="resources/pop_layout_total.nc",
-        pop_layout_urban="resources/pop_layout_urban.nc",
-        pop_layout_rural="resources/pop_layout_rural.nc",
+        pop_layout="resources/pop_layout_{scope}.nc",
         regions_onshore=pypsaeur("resources/regions_onshore_elec_s{simpl}_{clusters}.geojson")
     output:
-        temp_soil_total="resources/temp_soil_total_elec_s{simpl}_{clusters}.nc",
-        temp_soil_rural="resources/temp_soil_rural_elec_s{simpl}_{clusters}.nc",
-        temp_soil_urban="resources/temp_soil_urban_elec_s{simpl}_{clusters}.nc",
-        temp_air_total="resources/temp_air_total_elec_s{simpl}_{clusters}.nc",
-        temp_air_rural="resources/temp_air_rural_elec_s{simpl}_{clusters}.nc",
-        temp_air_urban="resources/temp_air_urban_elec_s{simpl}_{clusters}.nc"
+        temp_soil="resources/temp_soil_{scope}_elec_s{simpl}_{clusters}.nc",
+        temp_air="resources/temp_air_{scope}_elec_s{simpl}_{clusters}.nc",
     resources: mem_mb=20000
-    benchmark: "benchmarks/build_temperature_profiles/s{simpl}_{clusters}"
+    threads: 8
+    benchmark: "benchmarks/build_temperature_profiles/{scope}_s{simpl}_{clusters}"
     script: "scripts/build_temperature_profiles.py"
 
 
@@ -215,16 +207,13 @@ rule build_cop_profiles:
 
 rule build_solar_thermal_profiles:
     input:
-        pop_layout_total="resources/pop_layout_total.nc",
-        pop_layout_urban="resources/pop_layout_urban.nc",
-        pop_layout_rural="resources/pop_layout_rural.nc",
+        pop_layout="resources/pop_layout_{scope}.nc",
         regions_onshore=pypsaeur("resources/regions_onshore_elec_s{simpl}_{clusters}.geojson")
     output:
-        solar_thermal_total="resources/solar_thermal_total_elec_s{simpl}_{clusters}.nc",
-        solar_thermal_urban="resources/solar_thermal_urban_elec_s{simpl}_{clusters}.nc",
-        solar_thermal_rural="resources/solar_thermal_rural_elec_s{simpl}_{clusters}.nc"
+        solar_thermal="resources/solar_thermal_{scope}_elec_s{simpl}_{clusters}.nc",
     resources: mem_mb=20000
-    benchmark: "benchmarks/build_solar_thermal_profiles/s{simpl}_{clusters}"
+    threads: 16
+    benchmark: "benchmarks/build_solar_thermal_profiles/{scope}_s{simpl}_{clusters}"
     script: "scripts/build_solar_thermal_profiles.py"
 
 
