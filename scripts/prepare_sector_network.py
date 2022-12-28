@@ -2148,8 +2148,8 @@ def add_industry(n, costs):
     if total_share != 1:
         logger.warning(f"Total shipping shares sum up to {total_share*100}%, corresponding to increased or decreased demand assumptions.")
 
-    domestic_navigation = pop_weighted_energy_totals.loc[nodes, "total domestic navigation"]
-    international_navigation = pd.read_csv(snakemake.input.shipping_demand, index_col=0)
+    domestic_navigation = pop_weighted_energy_totals.loc[nodes, "total domestic navigation"].squeeze()
+    international_navigation = pd.read_csv(snakemake.input.shipping_demand, index_col=0).squeeze()
     all_navigation = domestic_navigation + international_navigation
     p_set = all_navigation * 1e6 / 8760
 
@@ -2204,7 +2204,7 @@ def add_industry(n, costs):
         )
 
         n.madd("Link",
-            spatial.h2.locations + "methanolisation",
+            spatial.h2.locations + " methanolisation",
             bus0=spatial.h2.nodes,
             bus1=spatial.methanol.nodes,
             bus2=nodes,
