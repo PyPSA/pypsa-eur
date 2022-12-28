@@ -29,7 +29,7 @@ def rename_techs_tyndp(tech):
         return "gas-to-power/heat"
     elif "solar" in tech:
         return "solar"
-    elif tech == "Fischer-Tropsch":
+    elif tech in ["Fischer-Tropsch", "methanolisation"]:
         return "power-to-liquid"
     elif "offshore wind" in tech:
         return "offshore wind"
