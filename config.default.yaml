@@ -86,6 +86,7 @@ electricity:
 
 atlite:
   nprocesses: 4
+  show_progress: false # false saves time
   cutouts:
     # use 'base' to determine geographical bounds and time span from config
     # base:
