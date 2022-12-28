@@ -119,8 +119,6 @@ def plot_map(network, components=["links", "stores", "storage_units", "generator
 
     tech_colors = snakemake.config['plotting']['tech_colors']
 
-    tech_colors = snakemake.config['plotting']['tech_colors']
-
     n = network.copy()
     assign_location(n)
     # Drop non-electric buses so they don't clutter the plot
@@ -173,7 +171,7 @@ def plot_map(network, components=["links", "stores", "storage_units", "generator
     costs.index = pd.MultiIndex.from_tuples(costs.index.values)
 
     threshold = 100e6 # 100 mEUR/a
-    carriers = costs.sum(level=1)
+    carriers = costs.groupby(level=1).sum()
     carriers = carriers.where(carriers > threshold).dropna()
     carriers = list(carriers.index)
 
