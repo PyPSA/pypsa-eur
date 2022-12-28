@@ -49,6 +49,7 @@ Link:
       "8394": "6695"
       "14813": "7052"
       "8009": "5939"
+      "5601": "7052" # Link Sweden - Lübeck
   length:
     index:
       "5582": 26.39 # new length of combined links (sum)
