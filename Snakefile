@@ -162,16 +162,13 @@ else:
 
 rule build_heat_demands:
     input:
-        pop_layout_total="resources/pop_layout_total.nc",
-        pop_layout_urban="resources/pop_layout_urban.nc",
-        pop_layout_rural="resources/pop_layout_rural.nc",
+        pop_layout="resources/pop_layout_{scope}.nc",
         regions_onshore=pypsaeur("resources/regions_onshore_elec_s{simpl}_{clusters}.geojson")
     output:
-        heat_demand_urban="resources/heat_demand_urban_elec_s{simpl}_{clusters}.nc",
-        heat_demand_rural="resources/heat_demand_rural_elec_s{simpl}_{clusters}.nc",
-        heat_demand_total="resources/heat_demand_total_elec_s{simpl}_{clusters}.nc"
+        heat_demand="resources/heat_demand_{scope}_elec_s{simpl}_{clusters}.nc"
     resources: mem_mb=20000
-    benchmark: "benchmarks/build_heat_demands/s{simpl}_{clusters}"
+    threads: 8
+    benchmark: "benchmarks/build_heat_demands/{scope}_s{simpl}_{clusters}"
     script: "scripts/build_heat_demand.py"
 
 
