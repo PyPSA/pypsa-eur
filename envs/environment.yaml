@@ -54,6 +54,7 @@ dependencies:
 - pytz
 - tabula-py
 - pyxlsb
+- pygeos
 
 - pip:
   - vresutils>=0.3.1
