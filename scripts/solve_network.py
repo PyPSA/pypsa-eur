@@ -11,7 +11,7 @@ from pypsa.linopf import network_lopf, ilopf
 
 from vresutils.benchmark import memory_logger
 
-from helper import override_component_attrs
+from helper import override_component_attrs, update_config_with_sector_opts
 
 import logging
 logger = logging.getLogger(__name__)
@@ -227,7 +227,7 @@ def add_co2_sequestration_limit(n, sns):
     limit = n.config["sector"].get("co2_sequestration_potential", 200) * 1e6
     for o in opts:
         if not "seq" in o: continue
-        limit = float(o[o.find("seq")+3:])
+        limit = float(o[o.find("seq")+3:]) * 1e6
         break
 
     name = 'co2_sequestration_limit'
@@ -290,11 +290,13 @@ if __name__ == "__main__":
     logging.basicConfig(filename=snakemake.log.python,
                         level=snakemake.config['logging_level'])
 
+    update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
+
     tmpdir = snakemake.config['solving'].get('tmpdir')
     if tmpdir is not None:
         from pathlib import Path
         Path(tmpdir).mkdir(parents=True, exist_ok=True)
-    opts = snakemake.wildcards.opts.split('-')
+    opts = snakemake.wildcards.sector_opts.split('-')
     solve_opts = snakemake.config['solving']['options']
 
     fn = getattr(snakemake.log, 'memory', None)
@@ -313,6 +315,7 @@ if __name__ == "__main__":
             n.line_volume_limit = n.global_constraints.at["lv_limit", "constant"]
             n.line_volume_limit_dual = n.global_constraints.at["lv_limit", "mu"]
 
+        n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
         n.export_to_netcdf(snakemake.output[0])
 
     logger.info("Maximum memory usage: {}".format(mem.mem_usage))

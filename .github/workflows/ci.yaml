@@ -64,7 +64,7 @@ jobs:
 
       - name: Add solver to environment
         run: |
-          echo -e "  - coincbc\n  - ipopt<3.13.3" >> ../pypsa-eur/envs/environment.yaml
+          echo -e "- coincbc\n- ipopt<3.13.3" >> ../pypsa-eur/envs/environment.yaml
 
       - name: Setup Mambaforge
         uses: conda-incubator/setup-miniconda@v2

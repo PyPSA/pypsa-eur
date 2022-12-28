@@ -28,7 +28,7 @@ incorporates retrofitting options to hydrogen.
 
 * New rule ``cluster_gas_network`` that clusters the gas transmission network
   data to the model resolution. Cross-regional pipeline capacities are aggregated
-  (while pressure and diameter compability is ignored), intra-regional pipelines
+  (while pressure and diameter compatibility is ignored), intra-regional pipelines
   are dropped. Lengths are recalculated based on the regions' centroids.
 
 * With the option ``sector: gas_network:``, the existing gas network is
@@ -56,6 +56,15 @@ incorporates retrofitting options to hydrogen.
 
 **New features and functionality**
 
+
+* Add option to aggregate network temporally using representative snapshots or segments (with tsam package)
+
+* Add option for biomass boilers (wood pellets) for decentral heating
+
+* Add option for BioSNG (methane from biomass) with and without CC
+
+* Add option for BtL (Biomass to liquid fuel/oil) with and without CC
+
 * Units are assigned to the buses. These only provide a better understanding. The specifications of the units are not taken into account in the optimisation, which means that no automatic conversion of units takes place.
 
 * Option ``retrieve_sector_databundle`` to automatically retrieve and extract data bundle.
@@ -64,12 +73,25 @@ incorporates retrofitting options to hydrogen.
 
 * Add option to sweep the global CO2 sequestration potentials with keyword ``seq200`` in the ``{sector_opts}`` wildcard (for limit of 200 Mt CO2).
 
+* Add option to resolve ammonia as separate energy carrier with Haber-Bosch
+  synthesis, ammonia cracking, storage and industrial demand. The ammonia
+  carrier can be nodally resolved or copperplated across Europe. This feature is
+  controlled by ``sector: ammonia:``.
+
+* Add methanol as energy carrier, methanolisation as process, and option for methanol demand in shipping sector.
+
 * Updated `data bundle <https://zenodo.org/record/5824485/files/pypsa-eur-sec-data-bundle.tar.gz>`_ that includes the hydrogan salt cavern storage potentials.
+
+* Updated and extended documentation in <https://pypsa-eur-sec.readthedocs.io/en/latest/>
+
+* Shipping demand now defaults to (synthetic) oil rather than liquefied hydrogen until 2050.
 
 **Bugfixes**
 
 * The CO2 sequestration limit implemented as GlobalConstraint (introduced in the previous version)
   caused a failure to read in the shadow prices of other global constraints.
+
+* Correct capital cost of Fischer-Tropsch according to new units in ``technology-data``.
 
 
 PyPSA-Eur-Sec 0.6.0 (4 October 2021)

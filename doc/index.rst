@@ -25,25 +25,29 @@ transmission network level that covers the full ENTSO-E area.
 PyPSA-Eur-Sec builds on the electricity generation and transmission
 model `PyPSA-Eur <https://github.com/PyPSA/pypsa-eur>`_ to add demand
 and supply for the following sectors: transport, space and water
-heating, biomass, industry and industrial feedstocks. This completes
-the energy system and includes all greenhouse gas emitters except
-waste management, agriculture, forestry and land use.
+heating, biomass, energy consumption in the agriculture, industry 
+and industrial feedstocks, carbon management, carbon capture and usage/sequestration. 
+This completes the energy system and includes all greenhouse gas emitters except waste management, agriculture, 
+forestry and land use.
 
 
 **WARNING**: PyPSA-Eur-Sec is under active development and has several
 `limitations <https://pypsa-eur-sec.readthedocs.io/en/latest/limitations.html>`_ which
 you should understand before using the model. The github repository
-`issues <https://github.com/PyPSA/pypsa-eur-sec/issues>`_ collects known
-topics we are working on (please feel free to help or make suggestions). There is neither a full
-documentation nor a paper yet, but we hope to have a preprint out by mid-2022.
-We cannot support this model if you
-choose to use it.
-
+`issues <https://github.com/PyPSA/pypsa-eur-sec/issues>`_ collect known
+topics we are working on (please feel free to help or make suggestions).
+The `documentation <https://pypsa-eur-sec.readthedocs.io/>`_ remains somewhat
+patchy.
+We cannot support this model if you choose to use it.
 
 .. note::
-    More about the current model capabilities and preliminary results
-    can be found in `a recent presentation at EMP-E <https://nworbmot.org/energy/brown-empe.pdf>`_
-    and the following `paper in Joule with a description of the industry sector <https://arxiv.org/abs/2109.09563>`_.
+    You can find showcases of the model's capabilities in the Supplementary Materials of the 
+    preprint `Benefits of a Hydrogen Network in Europe
+    <https://arxiv.org/abs/2207.05816>`_, the Supplementary Materials of the `paper in Joule with a
+    description of the industry sector
+    <https://arxiv.org/abs/2109.09563>`_, or in `a 2021 presentation
+    at EMP-E <https://nworbmot.org/energy/brown-empe.pdf>`_.
+
 
 This diagram gives an overview of the sectors and the links between
 them:
@@ -116,6 +120,7 @@ Documentation
 
 * :doc:`spatial_resolution`
 * :doc:`supply_demand`
+* :doc:`technology_assumptions`
 
 .. toctree::
    :hidden:
@@ -124,12 +129,13 @@ Documentation
 
    spatial_resolution
    supply_demand
-
+   technology_assumptions
 
 **Foresight options**
 
 * :doc:`overnight`
 * :doc:`myopic`
+* :doc:`perfect`
 
 .. toctree::
    :hidden:
@@ -138,6 +144,7 @@ Documentation
 
    overnight
    myopic
+   perfect
 
 **References**
 
