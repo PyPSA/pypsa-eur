@@ -35,7 +35,7 @@ dependencies:
 - shapely<2.0
 - progressbar2
 - pyomo
-- matplotlib
+- matplotlib<3.6
 - proj
 - fiona
 - country_converter
