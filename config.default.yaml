@@ -401,7 +401,7 @@ plotting:
     boundaries: [-11, 30, 34, 71]
     color_geomap:
       ocean: white
-      land: whitesmoke
+      land: white
   eu_node_location:
     x: -5.5
     y: 46.
