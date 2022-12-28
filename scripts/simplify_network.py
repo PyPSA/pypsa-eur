@@ -395,7 +395,9 @@ def simplify_links(n, costs, config, output, aggregation_strategies=dict()):
 def remove_stubs(n, costs, config, output, aggregation_strategies=dict()):
     logger.info("Removing stubs")
 
-    busmap = busmap_by_stubs(n)  #  ['country'])
+    across_borders = config["clustering"]["simplify_network"].get("remove_stubs_across_borders", True)
+    matching_attrs = [] if across_borders else ['country']
+    busmap = busmap_by_stubs(n, matching_attrs)
 
     connection_costs_to_bus = _compute_connection_costs_to_bus(n, busmap, costs, config)
 
@@ -530,22 +532,20 @@ if __name__ == "__main__":
         n, technology_costs, snakemake.config, snakemake.output, aggregation_strategies
     )
 
-    n, stub_map = remove_stubs(
-        n,
-        technology_costs,
-        snakemake.config,
-        snakemake.output,
-        aggregation_strategies=aggregation_strategies,
-    )
+    busmaps = [trafo_map, simplify_links_map]
 
-    busmaps = [trafo_map, simplify_links_map, stub_map]
+    cluster_config = snakemake.config["clustering"]["simplify_network"]
+    if cluster_config.get("remove_stubs", True):
+        n, stub_map = remove_stubs(
+            n,
+            technology_costs,
+            snakemake.config,
+            snakemake.output,
+            aggregation_strategies=aggregation_strategies,
+        )
+        busmaps.append(stub_map)
 
-    cluster_config = snakemake.config.get("clustering", {}).get("simplify_network", {})
-    if (
-        cluster_config.get("clustering", {})
-        .get("simplify_network", {})
-        .get("to_substations", False)
-    ):
+    if cluster_config.get("to_substations", False):
         n, substation_map = aggregate_to_substations(n, aggregation_strategies)
         busmaps.append(substation_map)
 
