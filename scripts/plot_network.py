@@ -1,14 +1,11 @@
 import pypsa
 
-import numpy as np
 import pandas as pd
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 
-from matplotlib.legend_handler import HandlerPatch
-from matplotlib.patches import Circle, Patch
-from pypsa.plot import projected_area_factor
+from pypsa.plot import add_legend_circles, add_legend_patches, add_legend_lines
 
 from make_summary import assign_carriers
 from plot_summary import rename_techs, preferred_order
@@ -39,69 +36,6 @@ def rename_techs_tyndp(tech):
         return "CCS"
     else:
         return tech
-
-class HandlerCircle(HandlerPatch):
-    """
-    Legend Handler used to create circles for legend entries. 
-    
-    This handler resizes the circles in order to match the same dimensional 
-    scaling as in the applied axis.
-    """
-    def create_artists(
-        self, legend, orig_handle, xdescent, ydescent, width, height, fontsize, trans
-    ):
-        fig = legend.get_figure()
-        ax = legend.axes
-
-        unit = np.diff(ax.transData.transform([(0, 0), (1, 1)]), axis=0)[0][1]
-        radius = orig_handle.get_radius() * unit * (72 / fig.dpi)
-        center = 5 - xdescent, 3 - ydescent
-        p = plt.Circle(center, radius)
-        self.update_prop(p, orig_handle, legend)
-        p.set_transform(trans)
-        return [p]
-
-
-def add_legend_circles(ax, sizes, labels, scale=1, srid=None, patch_kw={}, legend_kw={}):
-    
-    if srid is not None:
-        area_correction = projected_area_factor(ax, n.srid)**2 
-        sizes = [s * area_correction for s in sizes]
-    
-    handles = make_legend_circles_for(sizes, scale, **patch_kw)
-    
-    legend = ax.legend(
-        handles, labels,
-        handler_map={Circle: HandlerCircle()},
-        **legend_kw
-    )
-
-    ax.add_artist(legend)
-    
-
-def add_legend_lines(ax, sizes, labels, scale=1, patch_kw={}, legend_kw={}):
-    
-    handles = [plt.Line2D([0], [0], linewidth=s/scale, **patch_kw) for s in sizes]
-    
-    legend = ax.legend(
-        handles, labels,
-        **legend_kw
-    )
-    
-    ax.add_artist(legend)
-
-
-def add_legend_patches(ax, colors, labels, patch_kw={}, legend_kw={}):
-    
-    handles = [Patch(facecolor=c, **patch_kw) for c in colors]
-    
-    legend = ax.legend(handles, labels, **legend_kw)
-
-    ax.add_artist(legend)
-
-
-def make_legend_circles_for(sizes, scale=1.0, **kw):
-    return [Circle((0, 0), radius=(s / scale)**0.5, **kw) for s in sizes]
 
 
 def assign_location(n):
@@ -186,23 +120,23 @@ def plot_map(network, components=["links", "stores", "storage_units", "generator
         # should be zero
         line_widths = n.lines.s_nom_opt - n.lines.s_nom
         link_widths = n.links.p_nom_opt - n.links.p_nom
-        title = "Added grid"
+        title = "added grid"
 
         if transmission:
             line_widths = n.lines.s_nom_opt
             link_widths = n.links.p_nom_opt
             linewidth_factor = 2e3
             line_lower_threshold = 0.
-            title = "Today's grid"
+            title = "current grid"
     else:
         line_widths = n.lines.s_nom_opt - n.lines.s_nom_min
         link_widths = n.links.p_nom_opt - n.links.p_nom_min
-        title = "Added grid"
+        title = "added grid"
 
         if transmission:
             line_widths = n.lines.s_nom_opt
             link_widths = n.links.p_nom_opt
-            title = "Total grid"
+            title = "total grid"
 
     line_widths[line_widths < line_lower_threshold] = 0.
     link_widths[link_widths < line_lower_threshold] = 0.
@@ -233,7 +167,7 @@ def plot_map(network, components=["links", "stores", "storage_units", "generator
         labelspacing=0.8,
         frameon=False,
         handletextpad=0,
-        title='System cost',
+        title='system cost',
     )
 
     add_legend_circles(
@@ -247,6 +181,8 @@ def plot_map(network, components=["links", "stores", "storage_units", "generator
 
     sizes = [10, 5]
     labels = [f"{s} GW" for s in sizes]
+    scale = 1e3 / linewidth_factor
+    sizes = [s*scale for s in sizes]
 
     legend_kw = dict(
         loc="upper left",
@@ -261,7 +197,6 @@ def plot_map(network, components=["links", "stores", "storage_units", "generator
         ax,
         sizes,
         labels,
-        scale=linewidth_factor/1e3,
         patch_kw=dict(color='lightgrey'),
         legend_kw=legend_kw
     )
@@ -312,8 +247,6 @@ def group_pipes(df, drop_direction=False):
 
 def plot_h2_map(network, regions):
 
-    tech_colors = snakemake.config['plotting']['tech_colors']
-
     n = network.copy()
     if "H2 pipeline" not in n.links.carrier.unique():
         return
@@ -345,9 +278,11 @@ def plot_h2_map(network, regions):
 
     h2_new = n.links.loc[n.links.carrier=="H2 pipeline"]
     h2_retro = n.links.loc[n.links.carrier=='H2 pipeline retrofitted']
-    # sum capacitiy for pipelines from different investment periods
-    h2_new = group_pipes(h2_new)
-    h2_retro = group_pipes(h2_retro, drop_direction=True).reindex(h2_new.index).fillna(0)
+
+    if snakemake.config['foresight'] == 'myopic':
+        # sum capacitiy for pipelines from different investment periods
+        h2_new = group_pipes(h2_new)
+        h2_retro = group_pipes(h2_retro, drop_direction=True).reindex(h2_new.index).fillna(0)
 
     if not h2_retro.empty:
 
@@ -419,6 +354,7 @@ def plot_h2_map(network, regions):
     )
 
     n.plot(
+        geomap=True,
         bus_sizes=0,
         link_colors=color_retrofit,
         link_widths=link_widths_retro,
@@ -461,8 +397,10 @@ def plot_h2_map(network, regions):
         legend_kw=legend_kw
     )
 
-    sizes = [50, 10]
+    sizes = [30, 10]
     labels = [f"{s} GW" for s in sizes]
+    scale = 1e3 / linewidth_factor
+    sizes = [s*scale for s in sizes]
 
     legend_kw = dict(
         loc="upper left",
@@ -476,7 +414,6 @@ def plot_h2_map(network, regions):
         ax,
         sizes,
         labels,
-        scale=linewidth_factor/1e3,
         patch_kw=dict(color='lightgrey'),
         legend_kw=legend_kw,
     )
@@ -498,7 +435,6 @@ def plot_h2_map(network, regions):
         legend_kw=legend_kw
     )
 
-    plt.gca().outline_patch.set_visible(False)
     ax.set_facecolor("white")
 
     fig.savefig(
@@ -564,7 +500,7 @@ def plot_ch4_map(network):
     pipe_colors = {
         "gas pipeline": "#f08080",
         "gas pipeline new": "#c46868",
-        "gas pipeline (2020)": 'lightgrey',
+        "gas pipeline (in 2020)": 'lightgrey',
         "gas pipeline (available)": '#e8d1d1',
     }
 
@@ -584,7 +520,7 @@ def plot_ch4_map(network):
     n.plot(
         bus_sizes=bus_sizes,
         bus_colors=bus_colors,
-        link_colors=pipe_colors['gas pipeline (2020)'],
+        link_colors=pipe_colors['gas pipeline (in 2020)'],
         link_widths=link_widths_orig,
         branch_components=["Link"],
         ax=ax,
@@ -621,7 +557,7 @@ def plot_ch4_map(network):
         labelspacing=0.8,
         frameon=False,
         handletextpad=1,
-        title='Gas Sources',
+        title='gas sources',
     )
     
     add_legend_circles(
@@ -635,6 +571,8 @@ def plot_ch4_map(network):
 
     sizes = [50, 10]
     labels = [f"{s} GW" for s in sizes]
+    scale = 1e3 / linewidth_factor
+    sizes = [s*scale for s in sizes]
     
     legend_kw = dict(
         loc="upper left",
@@ -642,14 +580,13 @@ def plot_ch4_map(network):
         frameon=False,
         labelspacing=0.8,
         handletextpad=1,
-        title='Gas Pipeline'
+        title='gas pipeline'
     )
     
     add_legend_lines(
         ax,
         sizes,
         labels,
-        scale=linewidth_factor/1e3,
         patch_kw=dict(color='lightgrey'),
         legend_kw=legend_kw,
     )
@@ -740,7 +677,7 @@ def plot_map_without(network):
     for s in (10, 5):
         handles.append(plt.Line2D([0], [0], color=ac_color,
                                   linewidth=s * 1e3 / linewidth_factor))
-        labels.append("{} GW".format(s))
+        labels.append(f"{s} GW")
     l1_1 = ax.legend(handles, labels,
                      loc="upper left", bbox_to_anchor=(0.05, 1.01),
                      frameon=False,
@@ -890,10 +827,10 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             'plot_network',
             simpl='',
-            clusters="45",
-            lv=1.0,
+            clusters="181",
+            lv='opt',
             opts='',
-            sector_opts='168H-T-H-B-I-A-solar+p3-dist1',
+            sector_opts='Co2L0-730H-T-H-B-I-A-solar+p3-linemaxext10',
             planning_horizons="2050",
         )
 

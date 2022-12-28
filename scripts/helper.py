@@ -45,7 +45,9 @@ def mock_snakemake(rulename, **wildcards):
     This function is expected to be executed from the 'scripts'-directory of '
     the snakemake project. It returns a snakemake.script.Snakemake object,
     based on the Snakefile.
+
     If a rule has wildcards, you have to specify them in **wildcards.
+
     Parameters
     ----------
     rulename: str
