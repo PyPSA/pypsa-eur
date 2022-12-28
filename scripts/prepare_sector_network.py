@@ -1462,9 +1462,10 @@ def add_heat(n, costs):
         "ground": xr.open_dataarray(snakemake.input.cop_soil_total).to_pandas().reindex(index=n.snapshots)
     }
 
-    solar_thermal = xr.open_dataarray(snakemake.input.solar_thermal_total).to_pandas().reindex(index=n.snapshots)
-    # 1e3 converts from W/m^2 to MW/(1000m^2) = kW/m^2
-    solar_thermal = options['solar_cf_correction'] * solar_thermal / 1e3
+    if options["solar_thermal"]:
+        solar_thermal = xr.open_dataarray(snakemake.input.solar_thermal_total).to_pandas().reindex(index=n.snapshots)
+        # 1e3 converts from W/m^2 to MW/(1000m^2) = kW/m^2
+        solar_thermal = options['solar_cf_correction'] * solar_thermal / 1e3
 
     for name in heat_systems:
 
