@@ -78,6 +78,8 @@ incorporates retrofitting options to hydrogen.
   carrier can be nodally resolved or copperplated across Europe. This feature is
   controlled by ``sector: ammonia:``.
 
+* Add methanol as energy carrier, methanolisation as process, and option for methanol demand in shipping sector.
+
 * Updated `data bundle <https://zenodo.org/record/5824485/files/pypsa-eur-sec-data-bundle.tar.gz>`_ that includes the hydrogan salt cavern storage potentials.
 
 * Updated and extended documentation in <https://pypsa-eur-sec.readthedocs.io/en/latest/>
@@ -88,6 +90,8 @@ incorporates retrofitting options to hydrogen.
 
 * The CO2 sequestration limit implemented as GlobalConstraint (introduced in the previous version)
   caused a failure to read in the shadow prices of other global constraints.
+
+* Correct capital cost of Fischer-Tropsch according to new units in ``technology-data``.
 
 
 PyPSA-Eur-Sec 0.6.0 (4 October 2021)
