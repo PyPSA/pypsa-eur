@@ -27,8 +27,7 @@ def build_gas_input_locations(lng_fn, entry_fn, prod_fn, countries):
     # LNG terminals
     lng = gpd.read_file(lng_fn)
 
-    for index in lng.index:
-        lng.CapacityInMtpa[index] = float(lng.CapacityInMtpa[index])
+    lng.CapacityInMtpa = lng.CapacityInMtpa.astype(float)
 
     # Entry points from outside the model scope
     entry = read_scigrid_gas(entry_fn)

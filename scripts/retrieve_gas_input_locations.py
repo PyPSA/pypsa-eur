@@ -28,17 +28,10 @@ if __name__ == "__main__":
     remove_country = ['Cyprus','Turkey']
     remove_terminal = ['Puerto de la Luz LNG Terminal','Gran Canaria LNG Terminal']
 
-    for index in df.index:
-        if df.Status[index] in remove_status:
-            df = df.drop([index])
-        elif df.Country[index] in remove_country:
-            df = df.drop([index])
-        elif df.TerminalName[index] in remove_terminal:
-            df = df.drop([index])
-        elif df.CapacityInMtpa[index] == "--":
-            df = df.drop([index])
-        else:
-            continue
+    df = df.query("Status != 'Cancelled' \
+              & Country != @remove_country \
+              & TerminalName != @remove_terminal \
+              & CapacityInMtpa != '--'")
     
     geometry = gpd.points_from_xy(df['Longitude'], df['Latitude'])
     lng = gpd.GeoDataFrame(df, geometry=geometry, crs="EPSG:4326")
