@@ -178,19 +178,25 @@ sector:
   bev_avail_mean: 0.8
   v2g: true #allows feed-in to grid from EV battery
   #what is not EV or FCEV is oil-fuelled ICE
-  land_transport_fuel_cell_share:  # 1 means all FCEVs
+  land_transport_fuel_cell_share:
     2020: 0
     2030: 0.05
     2040: 0.1
     2050: 0.15
-  land_transport_electric_share:  # 1 means all EVs
+  land_transport_electric_share:
     2020: 0
     2030: 0.25
     2040: 0.6
     2050: 0.85
+  land_transport_ice_share:
+    2020: 1
+    2030: 0.7
+    2040: 0.3
+    2050: 0
   transport_fuel_cell_efficiency: 0.5
   transport_internal_combustion_efficiency: 0.3
   agriculture_machinery_electric_share: 0
+  agriculture_machinery_oil_share: 1
   agriculture_machinery_fuel_efficiency: 0.7 # fuel oil per use
   agriculture_machinery_electric_efficiency: 0.3 # electricity per use
   MWh_MeOH_per_MWh_H2: 0.8787 # in LHV, source: DECHEMA (2017): Low carbon energy and feedstock for the European chemical industry , pg. 64.
@@ -202,6 +208,8 @@ sector:
   shipping_oil_share: 0
   shipping_methanol_efficiency: 0.46 # 10-15% higher https://www.iea-amf.org/app/webroot/files/file/Annex%20Reports/AMF_Annex_56.pdf, https://users.ugent.be/~lsileghe/documents/extended_abstract.pdf
   shipping_oil_efficiency: 0.40 #For conversion of fuel oil to propulsion in 2011
+  aviation_demand_factor: 1. # relative aviation demand compared to today
+  HVC_demand_factor: 1. # relative HVC demand compared to today
   time_dep_hp_cop: true #time dependent heat pump coefficient of performance
   heat_pump_sink_T: 55. # Celsius, based on DTU / large area radiators; used in build_cop_profiles.py
    # conservatively high to cover hot water and space heating in poorly-insulated buildings

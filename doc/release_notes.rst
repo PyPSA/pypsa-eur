@@ -88,6 +88,11 @@ incorporates retrofitting options to hydrogen.
 
 * Improved network plots including better legends, hydrogen retrofitting network display, and change to EqualEarth projection.
 
+* New config options for changing energy demands in aviation
+  (``aviation_demand_factor``) and HVC industry (``HVC_demand_factor``), as well
+  as explicit ICE shares for land transport (``land_transport_ice_share``) and
+  agriculture machinery (``agriculture_machinery_oil_share``).
+
 **Bugfixes**
 
 * The CO2 sequestration limit implemented as GlobalConstraint (introduced in the previous version)

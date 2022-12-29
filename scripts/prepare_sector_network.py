@@ -1273,13 +1273,15 @@ def add_land_transport(n, costs):
 
     fuel_cell_share = get(options["land_transport_fuel_cell_share"], investment_year)
     electric_share = get(options["land_transport_electric_share"], investment_year)
-    ice_share = 1 - fuel_cell_share - electric_share
+    ice_share = get(options["land_transport_ice_share"], investment_year)
+    
+    total_share = fuel_cell_share + electric_share + ice_share
+    if total_share != 1:
+        logger.warning(f"Total land transport shares sum up to {total_share*100}%, corresponding to increased or decreased demand assumptions.")
 
-    print("FCEV share", fuel_cell_share)
-    print("EV share", electric_share)
-    print("ICEV share", ice_share)
-
-    assert ice_share >= 0, "Error, more FCEV and EV share than 1."
+    logger.info(f"FCEV share: {fuel_cell_share*100}%")
+    logger.info(f"EV share: {electric_share*100}%")
+    logger.info(f"ICEV share: {ice_share*100}%")
 
     nodes = pop_layout.index
 
@@ -2321,15 +2323,23 @@ def add_industry(n, costs):
         lifetime=costs.at['Fischer-Tropsch', 'lifetime']
     )
 
+    demand_factor = options.get("HVC_demand_factor", 1)
+    p_set = demand_factor * industrial_demand.loc[nodes, "naphtha"].sum() / 8760
+    if demand_factor != 1:
+        logger.warning(f"Changing HVC demand by {demand_factor*100-100:+.2f}%.")
+
     n.madd("Load",
         ["naphtha for industry"],
         bus=spatial.oil.nodes,
         carrier="naphtha for industry",
-        p_set=industrial_demand.loc[nodes, "naphtha"].sum() / 8760
+        p_set=p_set
     )
 
+    demand_factor = options.get("aviation_demand_factor", 1)
     all_aviation = ["total international aviation", "total domestic aviation"]
-    p_set = pop_weighted_energy_totals.loc[nodes, all_aviation].sum(axis=1).sum() * 1e6 / 8760
+    p_set = demand_factor * pop_weighted_energy_totals.loc[nodes, all_aviation].sum(axis=1).sum() * 1e6 / 8760
+    if demand_factor != 1:
+        logger.warning(f"Changing aviation demand by {demand_factor*100-100:+.2f}%.")
 
     n.madd("Load",
         ["kerosene for aviation"],
@@ -2480,8 +2490,11 @@ def add_agriculture(n, costs):
     # machinery
 
     electric_share = get(options["agriculture_machinery_electric_share"], investment_year)
-    assert electric_share <= 1.
-    ice_share = 1 - electric_share
+    oil_share = get(options["agriculture_machinery_oil_share"], investment_year)
+
+    total_share = electric_share + oil_share
+    if total_share != 1:
+        logger.warning(f"Total agriculture machinery shares sum up to {total_share*100}%, corresponding to increased or decreased demand assumptions.")
 
     machinery_nodal_energy = pop_weighted_energy_totals.loc[nodes, "total agriculture machinery"]
 
@@ -2497,16 +2510,16 @@ def add_agriculture(n, costs):
             p_set=electric_share / efficiency_gain * machinery_nodal_energy * 1e6 / 8760,
         )
 
-    if ice_share > 0:
+    if oil_share > 0:
 
         n.madd("Load",
             ["agriculture machinery oil"],
             bus=spatial.oil.nodes,
             carrier="agriculture machinery oil",
-            p_set=ice_share * machinery_nodal_energy.sum() * 1e6 / 8760
+            p_set=oil_share * machinery_nodal_energy.sum() * 1e6 / 8760
         )
 
-        co2 = ice_share * machinery_nodal_energy.sum() * 1e6 / 8760 * costs.at["oil", 'CO2 intensity']
+        co2 = oil_share * machinery_nodal_energy.sum() * 1e6 / 8760 * costs.at["oil", 'CO2 intensity']
 
         n.add("Load",
             "agriculture machinery oil emissions",
