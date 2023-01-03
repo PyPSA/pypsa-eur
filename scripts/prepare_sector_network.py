@@ -2157,7 +2157,8 @@ def add_industry(n, costs):
 
     if shipping_hydrogen_share:
 
-        efficiency = options['shipping_average_efficiency'] / costs.at["fuel cell", "efficiency"]
+        oil_efficiency = options.get('shipping_oil_efficiency', options.get('shipping_average_efficiency', 0.4))
+        efficiency = oil_efficiency / costs.at["fuel cell", "efficiency"]
         shipping_hydrogen_share = get(options['shipping_hydrogen_share'], investment_year)
 
         if options["shipping_hydrogen_liquefaction"]:
