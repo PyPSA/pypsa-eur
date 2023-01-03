@@ -260,7 +260,7 @@ def plot_h2_map(network, regions):
     bus_size_factor = 1e5
     linewidth_factor = 1e4
     # MW below which not drawn
-    line_lower_threshold = 1e2
+    line_lower_threshold = 1e3
 
     # Drop non-electric buses so they don't clutter the plot
     n.buses.drop(n.buses.index[n.buses.carrier != "AC"], inplace=True)
