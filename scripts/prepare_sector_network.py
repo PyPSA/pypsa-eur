@@ -2206,6 +2206,15 @@ def add_industry(n, costs):
             unit="MWh_LHV"
         )
 
+        n.madd("Store",
+            spatial.methanol.nodes,
+            suffix=" Store",
+            bus=spatial.methanol.nodes,
+            e_nom_extendable=True,
+            e_cyclic=True,
+            carrier="methanol",
+        )
+
         n.madd("Link",
             spatial.h2.locations + " methanolisation",
             bus0=spatial.h2.nodes,
