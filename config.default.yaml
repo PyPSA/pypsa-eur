@@ -92,11 +92,11 @@ atlite:
     # base:
       # module: era5
     europe-2013-era5:
-      module: era5 # in priority order 
+      module: era5 # in priority order
       dx: 0.3
       dy: 0.3
     europe-2013-sarah:
-      module: [sarah, era5] # in priority order 
+      module: [sarah, era5] # in priority order
       dx: 0.2
       dy: 0.2
       sarah_interpolate: false
