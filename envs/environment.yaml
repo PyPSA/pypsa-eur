@@ -1,60 +1,62 @@
-# SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2022 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
 name: pypsa-eur
 channels:
-  - conda-forge
-  - bioconda
+- conda-forge
+- bioconda
 dependencies:
-  - python>=3.8
-  - pip
+- python>=3.8
+- pip
 
-  - pypsa>=0.19.2
-  - atlite>=0.2.5
-  - dask
-  - jupyter
-  - nbconvert
+- pypsa>=0.21.3
+- atlite>=0.2.9
+- dask
+- jupyter
+- nbconvert
 
   # Dependencies of the workflow itself
-  - xlrd
-  - openpyxl
-  - pycountry
-  - seaborn
-  - snakemake-minimal
-  - memory_profiler
-  - yaml
-  - pytables
-  - lxml
-  - powerplantmatching>=0.4.8
-  - numpy
-  - pandas
-  - geopandas
-  - xarray
-  - netcdf4
-  - networkx
-  - scipy
-  - shapely
-  - progressbar2
-  - pyomo
-  - matplotlib
-  - proj
+- xlrd
+- openpyxl
+- pycountry
+- seaborn
+- snakemake-minimal
+- memory_profiler
+- yaml
+- pytables
+- lxml
+- powerplantmatching>=0.5.5
+- numpy<1.24
+- pandas
+- geopandas>=0.11.0
+- xarray
+- netcdf4
+- networkx
+- scipy
+- shapely<2.0
+- progressbar2
+- pyomo
+- matplotlib<3.6
+- proj
+- fiona
+- country_converter
 
   # Keep in conda environment when calling ipython
-  - ipython
+- ipython
 
   # GIS dependencies:
-  - cartopy
-  - descartes
-  - rasterio
+- cartopy
+- descartes
+- rasterio!=1.2.10
 
   # PyPSA-Eur-Sec Dependencies
-  - geopy
-  - tqdm
-  - pytz
-  - country_converter
-  - tabula-py
+- geopy
+- tqdm
+- pytz
+- tabula-py
+- pyxlsb
 
-  - pip:
-    - vresutils>=0.3.1
-    - tsam>=1.1.0
+- pip:
+  - vresutils>=0.3.1
+  - tsam>=1.1.0

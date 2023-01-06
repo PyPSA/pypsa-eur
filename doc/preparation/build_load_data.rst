@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2020-2021 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: 2020-2022 The PyPSA-Eur Authors
 
   SPDX-License-Identifier: CC-BY-4.0
 

@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2019-2020 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: 2019-2022 The PyPSA-Eur Authors
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -71,6 +71,7 @@ PyPSA is known to work with the free software
 - `Ipopt <https://coin-or.github.io/Ipopt/INSTALL.html>`_
 - `Cbc <https://projects.coin-or.org/Cbc#DownloadandInstall>`_
 - `GLPK <https://www.gnu.org/software/glpk/>`_ (`WinGLKP <http://winglpk.sourceforge.net/>`_)
+- `HiGHS <https://highs.dev/>`_
 
 and the non-free, commercial software (for some of which free academic licenses are available)
 
@@ -102,6 +103,8 @@ It might be the case that you can only retrieve solutions by using a commercial 
         conda activate pypsa-eur
         conda install -c conda-forge ipopt glpk
 
+.. warning::
+    On Windows, new versions of ``ipopt`` have caused problems. Consider downgrading to version 3.11.1.
 
 .. _defaultconfig:
 

@@ -1,19 +1,29 @@
 ,Unit,Values,Description
-voltages,kV,"Any subset of {220., 300., 380.}",Voltage levels to consider when
+voltages,kV,"Any subset of {220., 300., 380.}",Voltage levels to consider
+gaslimit,MWhth,"float or false",Global gas usage limit
 co2limit,:math:`t_{CO_2-eq}/a`,float,Cap on total annual system carbon dioxide emissions
 co2base,:math:`t_{CO_2-eq}/a`,float,Reference value of total annual system carbon dioxide emissions if relative emission reduction target is specified in ``{opts}`` wildcard.
 agg_p_nom_limits,file,path,Reference to ``.csv`` file specifying per carrier generator nominal capacity constraints for individual countries if ``'CCL'`` is in ``{opts}`` wildcard. Defaults to ``data/agg_p_nom_minmax.csv``.
-extendable_carriers,,,
--- Generator,--,"Any subset  of {'OCGT','CCGT'}",Places extendable conventional power plants (OCGT and/or CCGT) where gas power plants are located today without capacity limits.
--- StorageUnit,--,"Any subset of {'battery','H2'}",Adds extendable storage units (battery and/or hydrogen) at every node/bus after clustering without capacity limits and with zero initial capacity.
--- Store,--,"Any subset of {'battery','H2'}",Adds extendable storage units (battery and/or hydrogen) at every node/bus after clustering without capacity limits and with zero initial capacity.
--- Link,--,Any subset of {'H2 pipeline'},Adds extendable links (H2 pipelines only) at every connection where there are lines or HVDC links without capacity limits and with zero initial capacity. Hydrogen pipelines require hydrogen storage to be modelled as ``Store``.
+operational_reserve,,,"Settings for reserve requirements following like `GenX <https://genxproject.github.io/GenX/dev/core/#Reserves>`_"
+-- activate,bool,"true or false","Whether to take operational reserve requirements into account during optimisation"
+-- epsilon_load,--,float,share of total load
+-- epsilon_vres,--,float,share of total renewable supply
+-- contingency,MW,float,fixed reserve capacity
 max_hours,,,
 -- battery,h,float,Maximum state of charge capacity of the battery in terms of hours at full output capacity ``p_nom``. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.
 -- H2,h,float,Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity ``p_nom``. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.
+extendable_carriers,,,
+-- Generator,--,"Any extendable carrier","Defines existing or non-existing conventional and renewable power plants to be extendable during the optimization. Conventional generators can only be built/expanded where already existent today. If a listed conventional carrier is not included in the ``conventional_carriers`` list, the lower limit of the capacity expansion is set to 0."
+-- StorageUnit,--,"Any subset of {'battery','H2'}",Adds extendable storage units (battery and/or hydrogen) at every node/bus after clustering without capacity limits and with zero initial capacity.
+-- Store,--,"Any subset of {'battery','H2'}",Adds extendable storage units (battery and/or hydrogen) at every node/bus after clustering without capacity limits and with zero initial capacity.
+-- Link,--,Any subset of {'H2 pipeline'},Adds extendable links (H2 pipelines only) at every connection where there are lines or HVDC links without capacity limits and with zero initial capacity. Hydrogen pipelines require hydrogen storage to be modelled as ``Store``.
 powerplants_filter,--,"use `pandas.query <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.query.html>`_ strings here, e.g. Country not in ['Germany']",Filter query for the default powerplant database.
 custom_powerplants,--,"use `pandas.query <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.query.html>`_ strings here, e.g. Country in ['Germany']",Filter query for the custom powerplant database.
-conventional_carriers,--,"Any subset of {nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass}",List of conventional power plants to include in the model from ``resources/powerplants.csv``.
-renewable_capacities_from_OPSD,,"[solar, onwind, offwind]",List of carriers (offwind-ac and offwind-dc are included in offwind) whose capacities 'p_nom' are aligned to the `OPSD renewable power plant list <https://data.open-power-system-data.org/renewable_power_plants/>`_
-estimate_renewable_capacities_from_capacitiy_stats,,,
-"-- Fueltype [ppm], e.g. Wind",,"list of fueltypes strings in PyPSA-Eur, e.g. [onwind, offwind-ac, offwind-dc]",converts ppm Fueltype to PyPSA-EUR Fueltype
+conventional_carriers,--,"Any subset of {nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass}","List of conventional power plants to include in the model from ``resources/powerplants.csv``. If an included carrier is also listed in `extendable_carriers`, the capacity is taken as a lower bound."
+renewable_carriers,--,"Any subset of {solar, onwind, offwind-ac, offwind-dc, hydro}",List of renewable generators to include in the model.
+estimate_renewable_capacities,,,
+-- enable,,bool,"Activate routine to estimate renewable capacities"
+-- from_opsd,--,bool,"Add capacities from OPSD data"
+-- year,--,bool,"Renewable capacities are based on existing capacities reported by IRENA for the specified year"
+-- expansion_limit,--,float or false,"Artificially limit maximum capacities to factor * (IRENA capacities), i.e. 110% of <years>'s capacities => expansion_limit: 1.1 false: Use estimated renewable potentials determine by the workflow"
+-- technology_mapping,,,"Mapping between powerplantmatching and PyPSA-Eur technology names"
