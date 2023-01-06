@@ -728,10 +728,6 @@ if __name__ == "__main__":
     )
     ppl = load_powerplants(snakemake.input.powerplants)
 
-<<<<<<< HEAD
-    attach_load(n, snakemake.input.regions, snakemake.input.load, snakemake.input.nuts3_shapes,
-                snakemake.input.ua_md_gdp, snakemake.config['countries'], snakemake.config['load']['scaling_factor'])
-=======
     if "renewable_carriers" in snakemake.config["electricity"]:
         renewable_carriers = set(snakemake.config["renewable"])
     else:
@@ -741,7 +737,6 @@ if __name__ == "__main__":
             "Falling back to carriers listed under `renewable`."
         )
         renewable_carriers = snakemake.config["renewable"]
->>>>>>> master
 
     extendable_carriers = snakemake.config["electricity"]["extendable_carriers"]
     if not (set(renewable_carriers) & set(extendable_carriers["Generator"])):
@@ -758,6 +753,7 @@ if __name__ == "__main__":
         snakemake.input.regions,
         snakemake.input.load,
         snakemake.input.nuts3_shapes,
+        snakemake.input.ua_md_gdp,
         snakemake.config["countries"],
         snakemake.config["load"]["scaling_factor"],
     )
