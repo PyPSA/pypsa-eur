@@ -223,7 +223,7 @@ def attach_load(n, regions, load, nuts3_shapes, ua_md_gdp, countries, scaling=1.
     regions = gpd.read_file(regions).set_index("name").reindex(substation_lv_i)
     opsd_load = pd.read_csv(load, index_col=0, parse_dates=True).filter(items=countries)
 
-    ua_md_gdp = pd.read_csv(ua_md_gdp, dtype={'name': 'str'}).set_index('name')
+    ua_md_gdp = pd.read_csv(ua_md_gdp, dtype={"name": "str"}).set_index("name")
 
     logger.info(f"Load data scaled with scalling factor {scaling}.")
     opsd_load *= scaling
@@ -250,7 +250,7 @@ def attach_load(n, regions, load, nuts3_shapes, ua_md_gdp, countries, scaling=1.
             # relative factors 0.6 and 0.4 have been determined from a linear
             # regression on the country to continent load data
             factors = normed(0.6 * normed(gdp_n) + 0.4 * normed(pop_n))
-            if cntry in ['UA', 'MD']:
+            if cntry in ["UA", "MD"]:
                 # overwrite factor because nuts3 provides no data for UA+MD
                 factors = normed(ua_md_gdp.loc[group.index, "GDP_PPP"].squeeze())
 
