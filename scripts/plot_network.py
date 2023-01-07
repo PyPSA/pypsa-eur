@@ -258,9 +258,9 @@ def plot_h2_map(network, regions):
     regions["H2"] = regions["H2"].where(regions["H2"] > 0.1)
 
     bus_size_factor = 1e5
-    linewidth_factor = 1e4
+    linewidth_factor = 7e3
     # MW below which not drawn
-    line_lower_threshold = 1e3
+    line_lower_threshold = 750
 
     # Drop non-electric buses so they don't clutter the plot
     n.buses.drop(n.buses.index[n.buses.carrier != "AC"], inplace=True)
@@ -370,7 +370,7 @@ def plot_h2_map(network, regions):
         cmap='Blues',
         linewidths=0,
         legend=True,
-        vmax=10,
+        vmax=6,
         vmin=0,
         legend_kwds={
             "label": "Hydrogen Storage [TWh]",
@@ -455,7 +455,7 @@ def plot_ch4_map(network):
     bus_size_factor = 8e7
     linewidth_factor = 1e4
     # MW below which not drawn
-    line_lower_threshold = 500
+    line_lower_threshold = 1e3
 
     # Drop non-electric buses so they don't clutter the plot
     n.buses.drop(n.buses.index[n.buses.carrier != "AC"], inplace=True)
