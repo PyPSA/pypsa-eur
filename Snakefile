@@ -44,6 +44,13 @@ rule prepare_sector_networks:
         expand(RDIR + "/prenetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc",
                **config['scenario'])
 
+
+rule plot_all_networks:
+    input:
+        expand(RDIR + "/maps/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
+               **config['scenario'])
+
+
 datafiles = [
     "data/eea/UNFCCC_v23.csv",
     "data/switzerland-sfoe/switzerland-new_format.csv",
@@ -245,9 +252,9 @@ rule build_biomass_potentials:
         enspreso_biomass=HTTP.remote("https://cidportal.jrc.ec.europa.eu/ftp/jrc-opendata/ENSPRESO/ENSPRESO_BIOMASS.xlsx", keep_local=True),
         nuts2="data/nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson", # https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/#nuts21
         regions_onshore=pypsaeur("resources/regions_onshore_elec_s{simpl}_{clusters}.geojson"),
-        nuts3_population=pypsaeur("data/bundle/nama_10r_3popgdp.tsv.gz"),
-        swiss_cantons=pypsaeur("data/bundle/ch_cantons.csv"),
-        swiss_population=pypsaeur("data/bundle/je-e-21.03.02.xls"),
+        nuts3_population="../pypsa-eur/data/bundle/nama_10r_3popgdp.tsv.gz",
+        swiss_cantons="../pypsa-eur/data/bundle/ch_cantons.csv",
+        swiss_population="../pypsa-eur/data/bundle/je-e-21.03.02.xls",
         country_shapes=pypsaeur('resources/country_shapes.geojson')
     output:
         biomass_potentials_all='resources/biomass_potentials_all_s{simpl}_{clusters}.csv',
@@ -602,7 +609,7 @@ if config["foresight"] == "overnight":
             network=RDIR + "/prenetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc",
             costs=CDIR + "costs_{}.csv".format(config['costs']['year']),
             config=SDIR + '/configs/config.yaml',
-            env=SDIR + '/configs/environment.yaml',
+            #env=SDIR + '/configs/environment.yaml',
         output: RDIR + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc"
         shadow: "shallow"
         log:
