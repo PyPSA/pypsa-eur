@@ -129,6 +129,8 @@ def countries(naturalearth, country_list):
     s = df.set_index("name")["geometry"].map(_simplify_polys)
     if "RS" in country_list:
         s["RS"] = s["RS"].union(s.pop("KV"))
+        # cleanup shape union
+        s["RS"] = Polygon(s["RS"].exterior.coords)
 
     return s
 
@@ -145,7 +147,7 @@ def eez(country_shapes, eez, country_list):
         lambda s: _simplify_polys(s, filterremote=False)
     )
     s = gpd.GeoSeries(
-        {k: v for k, v in s.iteritems() if v.distance(country_shapes[k]) < 1e-3}
+        {k: v for k, v in s.items() if v.distance(country_shapes[k]) < 1e-3}
     )
     s = s.to_frame("geometry")
     s.index.name = "name"
