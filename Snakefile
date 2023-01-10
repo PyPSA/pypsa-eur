@@ -574,7 +574,6 @@ if config["solving"]["options"].get("linopy", False) == True:
         script:
             "scripts/solve_network_linopy.py"
 
-
 else:
 
     rule solve_network:
