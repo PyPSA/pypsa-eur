@@ -11,9 +11,6 @@ from shapely import wkt
 
 from cluster_gas_network import load_bus_regions
 
-import warnings
-warnings.filterwarnings('ignore')
-
 
 def read_scigrid_gas(fn):
     df = gpd.read_file(fn)
