@@ -4,8 +4,10 @@ import pypsa
 
 import numpy as np
 import pandas as pd
+import xarray as xr
 
 from pypsa.linopt import get_var, linexpr, define_constraints
+from linopy import merge
 
 from pypsa.linopf import network_lopf, ilopf
 
@@ -107,110 +109,79 @@ def prepare_network(n, solve_opts=None):
 
 
 def add_battery_constraints(n):
-
-    chargers_b = n.links.carrier.str.contains("battery charger")
-    chargers = n.links.index[chargers_b & n.links.p_nom_extendable]
-    dischargers = chargers.str.replace("charger", "discharger")
-
-    if chargers.empty or ('Link', 'p_nom') not in n.variables.index:
+    """
+    Add constraints to ensure that the ratio between the charger and
+    discharger.
+    1 * charger_size - efficiency * discharger_size = 0
+    """
+    nodes = n.buses.index[n.buses.carrier == "battery"]
+    if nodes.empty:
         return
-
-    link_p_nom = get_var(n, "Link", "p_nom")
-
-    lhs = linexpr((1,link_p_nom[chargers]),
-                  (-n.links.loc[dischargers, "efficiency"].values,
-                   link_p_nom[dischargers].values))
-
-    define_constraints(n, lhs, "=", 0, 'Link', 'charger_ratio')
+    link_p_nom = n.model["Link-p_nom"]
+    eff = n.links.efficiency[nodes + " discharger"].values
+    lhs = link_p_nom.loc[nodes + ' charger'] - link_p_nom.loc[nodes + ' discharger'] * eff
+    n.model.add_constraints(lhs == 0, name="Link-charger_ratio")
 
 
 def add_chp_constraints(n):
 
-    electric_bool = (n.links.index.str.contains("urban central")
-                     & n.links.index.str.contains("CHP")
-                     & n.links.index.str.contains("electric"))
-    heat_bool = (n.links.index.str.contains("urban central")
-                 & n.links.index.str.contains("CHP")
-                 & n.links.index.str.contains("heat"))
+    electric = (n.links.index.str.contains("urban central")
+                & n.links.index.str.contains("CHP")
+                & n.links.index.str.contains("electric"))
+    heat = (n.links.index.str.contains("urban central")
+            & n.links.index.str.contains("CHP")
+            & n.links.index.str.contains("heat"))
 
-    electric = n.links.index[electric_bool]
-    heat = n.links.index[heat_bool]
+    electric_ext = n.links[electric].query("p_nom_extendable").index
+    heat_ext = n.links[heat].query("p_nom_extendable").index
 
-    electric_ext = n.links.index[electric_bool & n.links.p_nom_extendable]
-    heat_ext = n.links.index[heat_bool & n.links.p_nom_extendable]
+    electric_fix = n.links[electric].query("~p_nom_extendable").index
+    heat_fix = n.links[heat].query("~p_nom_extendable").index
 
-    electric_fix = n.links.index[electric_bool & ~n.links.p_nom_extendable]
-    heat_fix = n.links.index[heat_bool & ~n.links.p_nom_extendable]
+    p = n.model["Link-p"] # dimension: [time, link]
 
-    link_p = get_var(n, "Link", "p")
-
+    # output ratio between heat and electricity and top_iso_fuel_line for extendable
     if not electric_ext.empty:
+        p_nom = n.model["Link-p_nom"]
 
-        link_p_nom = get_var(n, "Link", "p_nom")
+        lhs = (p_nom.loc[electric_ext] * (n.links.p_nom_ratio * n.links.efficiency)[electric_ext].values -
+               p_nom.loc[heat_ext] * n.links.efficiency[heat_ext].values)
+        n.model.add_constraints(lhs == 0, name='chplink-fix_p_nom_ratio')
 
-        #ratio of output heat to electricity set by p_nom_ratio
-        lhs = linexpr((n.links.loc[electric_ext, "efficiency"]
-                       *n.links.loc[electric_ext, "p_nom_ratio"],
-                       link_p_nom[electric_ext]),
-                      (-n.links.loc[heat_ext, "efficiency"].values,
-                       link_p_nom[heat_ext].values))
+        rename = {"Link-ext": "Link"}
+        lhs = p.loc[:, electric_ext] + p.loc[:, heat_ext] - p_nom.rename(rename).loc[electric_ext]
+        n.model.add_constraints(lhs <= 0, name='chplink-top_iso_fuel_line_ext')
 
-        define_constraints(n, lhs, "=", 0, 'chplink', 'fix_p_nom_ratio')
 
-        #top_iso_fuel_line for extendable
-        lhs = linexpr((1,link_p[heat_ext]),
-                      (1,link_p[electric_ext].values),
-                      (-1,link_p_nom[electric_ext].values))
-
-        define_constraints(n, lhs, "<=", 0, 'chplink', 'top_iso_fuel_line_ext')
-
+    # top_iso_fuel_line for fixed
     if not electric_fix.empty:
+        lhs = p.loc[:, electric_fix] + p.loc[:, heat_fix]
+        rhs = n.links.p_nom[electric_fix]
+        n.model.add_constraints(lhs <= rhs, name='chplink-top_iso_fuel_line_fix')
 
-        #top_iso_fuel_line for fixed
-        lhs = linexpr((1,link_p[heat_fix]),
-                      (1,link_p[electric_fix].values))
-
-        rhs = n.links.loc[electric_fix, "p_nom"].values
-
-        define_constraints(n, lhs, "<=", rhs, 'chplink', 'top_iso_fuel_line_fix')
-
+    # back-pressure
     if not electric.empty:
+        lhs = (p.loc[:, heat] * (n.links.efficiency[heat] * n.links.c_b[electric].values) -
+               p.loc[:, electric] * n.links.efficiency[electric])
+        n.model.add_constraints(lhs <= rhs, name='chplink-backpressure')
 
-        #backpressure
-        lhs = linexpr((n.links.loc[electric, "c_b"].values
-                       *n.links.loc[heat, "efficiency"],
-                       link_p[heat]),
-                      (-n.links.loc[electric, "efficiency"].values,
-                       link_p[electric].values))
-
-        define_constraints(n, lhs, "<=", 0, 'chplink', 'backpressure')
-
-def basename(x):
-     return x.split("-2")[0]
 
 def add_pipe_retrofit_constraint(n):
     """Add constraint for retrofitting existing CH4 pipelines to H2 pipelines."""
-
     gas_pipes_i = n.links.query("carrier == 'gas pipeline' and p_nom_extendable").index
     h2_retrofitted_i = n.links.query("carrier == 'H2 pipeline retrofitted' and p_nom_extendable").index
 
-    if h2_retrofitted_i.empty or gas_pipes_i.empty: return
+    if h2_retrofitted_i.empty or gas_pipes_i.empty:
+        return
 
-    link_p_nom = get_var(n, "Link", "p_nom")
+    p_nom = n.model["Link-p_nom"]
 
     CH4_per_H2 = 1 / n.config["sector"]["H2_retrofit_capacity_per_CH4"]
-    fr = "H2 pipeline retrofitted"
-    to = "gas pipeline"
+    lhs = p_nom.loc[gas_pipes_i] + CH4_per_H2 * p_nom.loc[h2_retrofitted_i]
+    rhs = n.links.p_nom[gas_pipes_i].rename_axis("Link-ext")
 
-    pipe_capacity = n.links.loc[gas_pipes_i, 'p_nom'].rename(basename)
+    n.model.add_constraints(lhs == rhs, name='Link-pipe_retrofit')
 
-    lhs = linexpr(
-        (CH4_per_H2, link_p_nom.loc[h2_retrofitted_i].rename(index=lambda x: x.replace(fr, to))),
-        (1, link_p_nom.loc[gas_pipes_i])
-    )
-
-    lhs.rename(basename, inplace=True)
-    define_constraints(n, lhs, "=", pipe_capacity, 'Link', 'pipe_retrofit')
 
 
 def add_co2_sequestration_limit(n, sns):
@@ -243,35 +214,46 @@ def add_co2_sequestration_limit(n, sns):
 def extra_functionality(n, snapshots):
     add_battery_constraints(n)
     add_pipe_retrofit_constraint(n)
-    add_co2_sequestration_limit(n, snapshots)
+    # add_co2_sequestration_limit(n, snapshots)
 
 
-def solve_network(n, config, opts='', **kwargs):
-    solver_options = config['solving']['solver'].copy()
-    solver_name = solver_options.pop('name')
-    cf_solving = config['solving']['options']
-    track_iterations = cf_solving.get('track_iterations', False)
-    min_iterations = cf_solving.get('min_iterations', 4)
-    max_iterations = cf_solving.get('max_iterations', 6)
-    keep_shadowprices = cf_solving.get('keep_shadowprices', True)
+def solve_network(n, config, opts="", **kwargs):
+    solver_options = config["solving"]["solver"].copy()
+    solver_name = solver_options.pop("name")
+    cf_solving = config["solving"]["options"]
+    track_iterations = cf_solving.get("track_iterations", False)
+    min_iterations = cf_solving.get("min_iterations", 4)
+    max_iterations = cf_solving.get("max_iterations", 6)
 
     # add to network for extra_functionality
     n.config = config
     n.opts = opts
 
-    if cf_solving.get('skip_iterations', False):
-        network_lopf(n, solver_name=solver_name, solver_options=solver_options,
-                     extra_functionality=extra_functionality,
-                     keep_shadowprices=keep_shadowprices, **kwargs)
+    skip_iterations = cf_solving.get("skip_iterations", False)
+    if not n.lines.s_nom_extendable.any():
+        skip_iterations = True
+        logger.info("No expandable lines found. Skipping iterative solving.")
+
+    if skip_iterations:
+        n.optimize(
+            solver_name=solver_name,
+            solver_options=solver_options,
+            extra_functionality=extra_functionality,
+            **kwargs,
+        )
     else:
-        ilopf(n, solver_name=solver_name, solver_options=solver_options,
-              track_iterations=track_iterations,
-              min_iterations=min_iterations,
-              max_iterations=max_iterations,
-              extra_functionality=extra_functionality,
-              keep_shadowprices=keep_shadowprices,
-              **kwargs)
+        n.optimize.optimize_transmission_expansion_iteratively(
+            solver_name=solver_name,
+            solver_options=solver_options,
+            track_iterations=track_iterations,
+            min_iterations=min_iterations,
+            max_iterations=max_iterations,
+            extra_functionality=extra_functionality,
+            **kwargs,
+        )
+
     return n
+
 
 
 if __name__ == "__main__":
@@ -281,10 +263,10 @@ if __name__ == "__main__":
             'solve_network',
             simpl='',
             opts="",
-            clusters="37",
+            clusters="45",
             lv=1.0,
-            sector_opts='168H-T-H-B-I-A-solar+p3-dist1',
-            planning_horizons="2030",
+            sector_opts='Co2L0-3H-T-H-B-I-A-solar+p3-dist1',
+            planning_horizons="2050",
         )
 
     logging.basicConfig(filename=snakemake.log.python,
@@ -306,6 +288,7 @@ if __name__ == "__main__":
         n = pypsa.Network(snakemake.input.network, override_component_attrs=overrides)
 
         n = prepare_network(n, solve_opts)
+        n.snapshots = n.snapshots[:20]
 
         n = solve_network(n, config=snakemake.config, opts=opts,
                           solver_dir=tmpdir,
