@@ -28,7 +28,6 @@ def configure_logging(snakemake, skip_handlers=False):
     skip_handlers : True | False (default)
         Do (not) skip the default handlers created for redirecting output to STDERR and file.
     """
-
     import logging
 
     kwargs = snakemake.config.get("logging", dict()).copy()

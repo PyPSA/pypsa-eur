@@ -111,11 +111,15 @@ def simplify_network_to_380(n):
     """
     Fix all lines to a voltage level of 380 kV and remove all transformers.
 
-    The function preserves the transmission capacity for each line while updating
-    its voltage level, line type and number of parallel bundles (num_parallel).
+    The function preserves the transmission capacity for each line while
+    updating
+    its voltage level, line type and number of parallel bundles
+    (num_parallel).
 
-    Transformers are removed and connected components are moved from their
-    starting bus to their ending bus. The corresponding starting buses are
+    Transformers are removed and connected components are moved from
+    their
+    starting bus to their ending bus. The corresponding starting buses
+    are
     removed as well.
     """
     logger.info("Mapping all network lines onto a single 380kV layer")
@@ -395,8 +399,10 @@ def simplify_links(n, costs, config, output, aggregation_strategies=dict()):
 def remove_stubs(n, costs, config, output, aggregation_strategies=dict()):
     logger.info("Removing stubs")
 
-    across_borders = config["clustering"]["simplify_network"].get("remove_stubs_across_borders", True)
-    matching_attrs = [] if across_borders else ['country']
+    across_borders = config["clustering"]["simplify_network"].get(
+        "remove_stubs_across_borders", True
+    )
+    matching_attrs = [] if across_borders else ["country"]
     busmap = busmap_by_stubs(n, matching_attrs)
 
     connection_costs_to_bus = _compute_connection_costs_to_bus(n, busmap, costs, config)

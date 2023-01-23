@@ -222,7 +222,6 @@ def distribute_clusters(n, n_clusters, focus_weights=None, solver_name="cbc"):
     """
     Determine the number of clusters per country.
     """
-
     L = (
         n.loads_t.p_set.mean()
         .groupby(n.loads.bus)
