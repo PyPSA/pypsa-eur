@@ -111,7 +111,6 @@ def calculate_annuity(n, r):
 
     discount rate of r, e.g. annuity(20, 0.05) * 20 = 1.6
     """
-
     if isinstance(r, pd.Series):
         return pd.Series(1 / n, index=r.index).where(
             r == 0, r / (1.0 - 1.0 / (1.0 + r) ** n)

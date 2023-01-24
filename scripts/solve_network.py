@@ -321,7 +321,6 @@ def add_operational_reserve_margin(n, sns, config):
     Build reserve margin constraints based on the formulation given in
     https://genxproject.github.io/GenX/dev/core/#Reserves.
     """
-
     define_variables(n, 0, np.inf, "Generator", "r", axes=[sns, n.generators.index])
 
     add_operational_reserve_margin_constraint(n, config)
