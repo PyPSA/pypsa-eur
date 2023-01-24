@@ -283,7 +283,7 @@ else:
 if config["sector"].get("sequestration_potential", False):
     rule build_sequestration_potentials:
         input:
-            sequestration_potential="data/complete_map_2020_unit_Mt.geojson",
+            sequestration_potential=HTTP.remote("https://raw.githubusercontent.com/ericzhou571/Co2Storage/main/resources/complete_map_2020_unit_Mt.geojson", keep_local=True),
             regions_onshore=pypsaeur("resources/regions_onshore_elec_s{simpl}_{clusters}.geojson"),
             regions_offshore=pypsaeur("resources/regions_offshore_elec_s{simpl}_{clusters}.geojson"),
         output:
