@@ -280,6 +280,23 @@ else:
     build_biomass_transport_costs_output = {}
 
 
+if config["sector"].get("sequestration_potential", False):
+    rule build_sequestration_potentials:
+        input:
+            sequestration_potential="data/complete_map_2020_unit_Mt.geojson",
+            regions_onshore=pypsaeur("resources/regions_onshore_elec_s{simpl}_{clusters}.geojson"),
+            regions_offshore=pypsaeur("resources/regions_offshore_elec_s{simpl}_{clusters}.geojson"),
+        output:
+            sequestration_potential="resources/co2_sequestration_potential_elec_s{simpl}_{clusters}.csv"
+        threads: 1
+        resources: mem_mb=4000
+        benchmark: "benchmarks/build_sequestration_potentials_s{simpl}_{clusters}"
+        script: "scripts/build_sequestration_potentials.py"
+    build_sequestration_potentials_output = rules.build_sequestration_potentials.output
+else:
+    build_sequestration_potentials_output = {}
+
+
 rule build_salt_cavern_potentials:
     input:
         salt_caverns="data/h2_salt_caverns_GWh_per_sqkm.geojson",
@@ -512,7 +529,8 @@ rule prepare_sector_network:
         solar_thermal_rural="resources/solar_thermal_rural_elec_s{simpl}_{clusters}.nc" if config["sector"]["solar_thermal"] else [],
         **build_retro_cost_output,
         **build_biomass_transport_costs_output,
-        **gas_infrastructure
+        **gas_infrastructure,
+        **build_sequestration_potentials_output
     output: RDIR + '/prenetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc'
     threads: 1
     resources: mem_mb=2000

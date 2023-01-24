@@ -250,9 +250,11 @@ sector:
   dac: true
   co2_vent: false
   SMR: true
+  sequestration_potential: true  # geological co2 storage potential
   co2_sequestration_potential: 200  #MtCO2/a sequestration potential for Europe
   co2_sequestration_cost: 10   #EUR/tCO2 for sequestration of CO2
-  co2_network: false
+  co2_spatial: false
+  co2network: false
   cc_fraction: 0.9  # default fraction of CO2 captured with post-combustion capture
   hydrogen_underground_storage: true
   hydrogen_underground_storage_locations:
@@ -275,6 +277,7 @@ sector:
   gas_network_connectivity_upgrade: 1 # https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation
   gas_distribution_grid: true
   gas_distribution_grid_cost_factor: 1.0  #multiplies cost in data/costs.csv
+  biomass_spatial: false  # biomass transport between nodes
   biomass_transport: false  # biomass transport between nodes
   conventional_generation: # generator : carrier
     OCGT: gas

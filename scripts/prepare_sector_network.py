@@ -44,7 +44,7 @@ def define_spatial(nodes, options):
 
     spatial.biomass = SimpleNamespace()
 
-    if options["biomass_transport"]:
+    if options.get("biomass_spatial", options["biomass_transport"]):
         spatial.biomass.nodes = nodes + " solid biomass"
         spatial.biomass.locations = nodes
         spatial.biomass.industry = nodes + " solid biomass for industry"
@@ -61,7 +61,7 @@ def define_spatial(nodes, options):
 
     spatial.co2 = SimpleNamespace()
 
-    if options["co2_network"]:
+    if options.get("co2_spatial", options["co2network"]):
         spatial.co2.nodes = nodes + " co2 stored"
         spatial.co2.locations = nodes
         spatial.co2.vents = nodes + " co2 vent"
@@ -88,8 +88,11 @@ def define_spatial(nodes, options):
         spatial.gas.locations = ["EU"]
         spatial.gas.biogas = ["EU biogas"]
         spatial.gas.industry = ["gas for industry"]
-        spatial.gas.industry_cc = ["gas for industry CC"]
         spatial.gas.biogas_to_gas = ["EU biogas to gas"]
+        if options.get("co2_spatial", options["co2network"]):
+            spatial.gas.industry_cc = nodes + " gas for industry CC"
+        else:
+            spatial.gas.industry_cc = ["gas for industry CC"]
 
     spatial.gas.df = pd.DataFrame(vars(spatial.gas), index=nodes)
 
@@ -507,10 +510,18 @@ def add_co2_tracking(n, options):
         unit="t_co2"
     )
 
+    if options["sequestration_potential"]:
+        # TODO make configurable options
+        upper_limit = 25000 # Mt
+        annualiser = 25 # TODO research suitable value
+        e_nom_max = pd.read_csv(snakemake.input.sequestration_potential, index_col=0).squeeze()
+        e_nom_max = e_nom_max.reindex(spatial.co2.locations).fillna(0.).clip(upper=upper_limit).mul(1e6) / annualiser # t
+        e_nom_max = e_nom_max.rename(index=lambda x: x + " co2 stored")
+
     n.madd("Store",
         spatial.co2.nodes,
         e_nom_extendable=True,
-        e_nom_max=np.inf,
+        e_nom_max=e_nom_max,
         capital_cost=options['co2_sequestration_cost'],
         carrier="co2 stored",
         bus=spatial.co2.nodes
@@ -1218,7 +1229,7 @@ def add_storage_and_grids(n, costs):
             bus0=spatial.coal.nodes,
             bus1=spatial.nodes,
             bus2="co2 atmosphere",
-            bus3="co2 stored",
+            bus3=spatial.co2.nodes,
             marginal_cost=costs.at['coal', 'efficiency'] * costs.at['coal', 'VOM'], #NB: VOM is per MWel
             capital_cost=costs.at['coal', 'efficiency'] * costs.at['coal', 'fixed'] + costs.at['biomass CHP capture', 'fixed'] * costs.at['coal', 'CO2 intensity'], #NB: fixed cost is per MWel
             p_nom_extendable=True,
@@ -1828,7 +1839,7 @@ def add_biomass(n, costs):
     else:
         biogas_potentials_spatial = biomass_potentials["biogas"].sum()
 
-    if options["biomass_transport"]:
+    if options.get("biomass_spatial", options["biomass_transport"]):
         solid_biomass_potentials_spatial = biomass_potentials["solid biomass"].rename(index=lambda x: x + " solid biomass")
     else:
         solid_biomass_potentials_spatial = biomass_potentials["solid biomass"].sum()
@@ -2052,7 +2063,7 @@ def add_industry(n, costs):
         unit="MWh_LHV"
     )
 
-    if options["biomass_transport"]:
+    if options.get("biomass_spatial", options["biomass_transport"]):
         p_set = industrial_demand.loc[spatial.biomass.locations, "solid biomass"].rename(index=lambda x: x + " solid biomass for industry") / 8760
     else:
         p_set = industrial_demand["solid biomass"].sum() / 8760
@@ -2775,7 +2786,7 @@ if __name__ == "__main__":
     if "noH2network" in opts:
         remove_h2_network(n)
 
-    if options["co2_network"]:
+    if options["co2network"]:
         add_co2_network(n, costs)
 
     solver_name = snakemake.config["solving"]["solver"]["name"]
