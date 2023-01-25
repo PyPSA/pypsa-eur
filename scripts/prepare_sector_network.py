@@ -1911,10 +1911,10 @@ def add_biomass(n, costs):
             biomass_transport.index,
             bus0=biomass_transport.bus0 + " solid biomass",
             bus1=biomass_transport.bus1 + " solid biomass",
-            p_nom_extendable=True,
+            p_nom_extendable=False,
+            p_nom=5e4,
             length=biomass_transport.length.values,
             marginal_cost=biomass_transport.costs * biomass_transport.length.values,
-            capital_cost=1,
             carrier="solid biomass transport"
         )
 
