@@ -165,11 +165,11 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
     df_agg.loc[biomass_i, 'DateOut'] = df_agg.loc[biomass_i, 'DateOut'].fillna(dateout)
 
 
-    # drop assets which are already phased out / decomissioned
+    # drop assets which are already phased out / decommissioned
     phased_out = df_agg[df_agg["DateOut"]<baseyear].index
     df_agg.drop(phased_out, inplace=True)
 
-    # calculate remaining lifetime before phase-out (+1 because assumming
+    # calculate remaining lifetime before phase-out (+1 because assuming
     # phase out date at the end of the year)
     df_agg["lifetime"] = df_agg.DateOut - df_agg.DateIn + 1
 
@@ -234,7 +234,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
             # solar utility and rooftop as well, rather take cost assumptions
             # from existing network than from the cost database
             capital_cost = n.generators.loc[n.generators.carrier==generator+suffix, "capital_cost"].mean()
-
+            marginal_cost = n.generators.loc[n.generators.carrier==generator+suffix, "marginal_cost"].mean()
             # check if assets are already in network (e.g. for 2020)
             already_build = n.generators.index.intersection(asset_i)
             new_build = asset_i.difference(n.generators.index)
@@ -251,7 +251,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                     # existing capacities are split evenly among regions in every country
                     inv_ind = [i for i in inv_busmap[ind]]
 
-                    # for offshore the spliting only inludes coastal regions
+                    # for offshore the splitting only includes coastal regions
                     inv_ind = [i for i in inv_ind if (i + name_suffix) in n.generators.index]
 
                     p_max_pu = n.generators_t.p_max_pu[[i + name_suffix for i in inv_ind]]
@@ -262,7 +262,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                         bus=ind,
                         carrier=generator,
                         p_nom=new_capacity[ind] / len(inv_ind), # split among regions in a country
-                        marginal_cost=costs.at[generator,'VOM'],
+                        marginal_cost=marginal_cost,
                         capital_cost=capital_cost,
                         efficiency=costs.at[generator, 'efficiency'],
                         p_max_pu=p_max_pu,
@@ -281,7 +281,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                         bus=new_capacity.index,
                         carrier=generator,
                         p_nom=new_capacity,
-                        marginal_cost=costs.at[generator, 'VOM'],
+                        marginal_cost=marginal_cost,
                         capital_cost=capital_cost,
                         efficiency=costs.at[generator, 'efficiency'],
                         p_max_pu=p_max_pu.rename(columns=n.generators.bus),
@@ -520,10 +520,10 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             'add_existing_baseyear',
             simpl='',
-            clusters="45",
+            clusters="37",
             lv=1.0,
             opts='',
-            sector_opts='365H-T-H-B-I-A-solar+p3-dist1',
+            sector_opts='800sn-T-H-B-I-A-solar+p3-dist1-co2min-1p7',
             planning_horizons=2030,
         )
 

@@ -52,6 +52,7 @@ def rename_techs(label):
         "ror": "hydroelectricity",
         "hydro": "hydroelectricity",
         "PHS": "hydroelectricity",
+        "NH3": "ammonia",
         "co2 Store": "DAC",
         "co2 stored": "CO2 sequestration",
         "AC": "transmission lines",
@@ -107,6 +108,7 @@ preferred_order = pd.Index([
     "natural gas",
     "helmeth",
     "methanation",
+    "ammonia",
     "hydrogen storage",
     "power-to-gas",
     "power-to-liquid",
@@ -255,7 +257,7 @@ def plot_balances():
         df = df / 1e6
 
         #remove trailing link ports
-        df.index = [i[:-1] if ((i != "co2") and (i[-1:] in ["0","1","2","3"])) else i for i in df.index]
+        df.index = [i[:-1] if ((i not in ["co2", "NH3"]) and (i[-1:] in ["0","1","2","3"])) else i for i in df.index]
 
         df = df.groupby(df.index.map(rename_techs)).sum()
 
@@ -399,7 +401,7 @@ def plot_carbon_budget_distribution(input_eurostat):
 
     ax1.plot(emissions, color='black', linewidth=3, label=None)
 
-    #plot commited and uder-discussion targets
+    #plot committed and uder-discussion targets
     #(notice that historical emissions include all countries in the
     # network, but targets refer to EU)
     ax1.plot([2020],[0.8*emissions[1990]],
@@ -425,7 +427,7 @@ def plot_carbon_budget_distribution(input_eurostat):
 
     ax1.plot([2050],[0.125*emissions[1990]],'ro',
                      marker='*', markersize=12, markerfacecolor='black',
-                     markeredgecolor='black', label='EU commited target')
+                     markeredgecolor='black', label='EU committed target')
 
     ax1.legend(fancybox=True, fontsize=18, loc=(0.01,0.01),
                        facecolor='white', frameon=True)

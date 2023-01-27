@@ -1,18 +1,17 @@
 import pypsa
 
-import numpy as np
 import pandas as pd
+import geopandas as gpd
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 
-from matplotlib.legend_handler import HandlerPatch
-from matplotlib.patches import Circle, Ellipse
+from pypsa.plot import add_legend_circles, add_legend_patches, add_legend_lines
 
 from make_summary import assign_carriers
 from plot_summary import rename_techs, preferred_order
 from helper import override_component_attrs
 
-plt.style.use('ggplot')
+plt.style.use(['ggplot', "matplotlibrc"])
 
 
 def rename_techs_tyndp(tech):
@@ -23,11 +22,13 @@ def rename_techs_tyndp(tech):
         return "power-to-gas"
     elif tech == "H2":
         return "H2 storage"
+    elif tech in ["NH3", "Haber-Bosch", "ammonia cracker", "ammonia store"]:
+        return "ammonia"
     elif tech in ["OCGT", "CHP", "gas boiler", "H2 Fuel Cell"]:
         return "gas-to-power/heat"
-    elif "solar" in tech:
-        return "solar"
-    elif tech == "Fischer-Tropsch":
+    # elif "solar" in tech:
+    #     return "solar"
+    elif tech in ["Fischer-Tropsch", "methanolisation"]:
         return "power-to-liquid"
     elif "offshore wind" in tech:
         return "offshore wind"
@@ -35,36 +36,6 @@ def rename_techs_tyndp(tech):
         return "CCS"
     else:
         return tech
-
-
-def make_handler_map_to_scale_circles_as_in(ax, dont_resize_actively=False):
-    fig = ax.get_figure()
-
-    def axes2pt():
-        return np.diff(ax.transData.transform([(0, 0), (1, 1)]), axis=0)[0] * (72. / fig.dpi)
-
-    ellipses = []
-    if not dont_resize_actively:
-        def update_width_height(event):
-            dist = axes2pt()
-            for e, radius in ellipses:
-                e.width, e.height = 2. * radius * dist
-        fig.canvas.mpl_connect('resize_event', update_width_height)
-        ax.callbacks.connect('xlim_changed', update_width_height)
-        ax.callbacks.connect('ylim_changed', update_width_height)
-
-    def legend_circle_handler(legend, orig_handle, xdescent, ydescent,
-                              width, height, fontsize):
-        w, h = 2. * orig_handle.get_radius() * axes2pt()
-        e = Ellipse(xy=(0.5 * width - 0.5 * xdescent, 0.5 *
-                        height - 0.5 * ydescent), width=w, height=w)
-        ellipses.append((e, orig_handle.get_radius()))
-        return e
-    return {Circle: HandlerPatch(patch_func=legend_circle_handler)}
-
-
-def make_legend_circles_for(sizes, scale=1.0, **kw):
-    return [Circle((0, 0), radius=(s / scale)**0.5, **kw) for s in sizes]
 
 
 def assign_location(n):
@@ -78,7 +49,9 @@ def assign_location(n):
 
 
 def plot_map(network, components=["links", "stores", "storage_units", "generators"],
-             bus_size_factor=1.7e10, transmission=False):
+             bus_size_factor=1.7e10, transmission=False, with_legend=True):
+
+    tech_colors = snakemake.config['plotting']['tech_colors']
 
     n = network.copy()
     assign_location(n)
@@ -109,7 +82,7 @@ def plot_map(network, components=["links", "stores", "storage_units", "generator
     costs = costs[new_columns]
 
     for item in new_columns:
-        if item not in snakemake.config['plotting']['tech_colors']:
+        if item not in tech_colors:
             print("Warning!",item,"not in config/plotting/tech_colors")
 
     costs = costs.stack()  # .sort_index()
@@ -131,34 +104,39 @@ def plot_map(network, components=["links", "stores", "storage_units", "generator
     # make sure they are removed from index
     costs.index = pd.MultiIndex.from_tuples(costs.index.values)
 
+    threshold = 100e6 # 100 mEUR/a
+    carriers = costs.groupby(level=1).sum()
+    carriers = carriers.where(carriers > threshold).dropna()
+    carriers = list(carriers.index)
+
     # PDF has minimum width, so set these to zero
     line_lower_threshold = 500.
     line_upper_threshold = 1e4
-    linewidth_factor = 2e3
-    ac_color = "gray"
-    dc_color = "m"
+    linewidth_factor = 4e3
+    ac_color = "rosybrown"
+    dc_color = "darkseagreen"
 
     if snakemake.wildcards["lv"] == "1.0":
         # should be zero
         line_widths = n.lines.s_nom_opt - n.lines.s_nom
         link_widths = n.links.p_nom_opt - n.links.p_nom
-        title = "Transmission reinforcement"
+        title = "added grid"
 
         if transmission:
             line_widths = n.lines.s_nom_opt
             link_widths = n.links.p_nom_opt
             linewidth_factor = 2e3
             line_lower_threshold = 0.
-            title = "Today's transmission"
+            title = "current grid"
     else:
         line_widths = n.lines.s_nom_opt - n.lines.s_nom_min
         link_widths = n.links.p_nom_opt - n.links.p_nom_min
-        title = "Transmission reinforcement"
+        title = "added grid"
 
         if transmission:
             line_widths = n.lines.s_nom_opt
             link_widths = n.links.p_nom_opt
-            title = "Total transmission"
+            title = "total grid"
 
     line_widths[line_widths < line_lower_threshold] = 0.
     link_widths[link_widths < line_lower_threshold] = 0.
@@ -166,12 +144,12 @@ def plot_map(network, components=["links", "stores", "storage_units", "generator
     line_widths[line_widths > line_upper_threshold] = line_upper_threshold
     link_widths[link_widths > line_upper_threshold] = line_upper_threshold
 
-    fig, ax = plt.subplots(subplot_kw={"projection": ccrs.PlateCarree()})
+    fig, ax = plt.subplots(subplot_kw={"projection": ccrs.EqualEarth()})
     fig.set_size_inches(7, 6)
 
     n.plot(
         bus_sizes=costs / bus_size_factor,
-        bus_colors=snakemake.config['plotting']['tech_colors'],
+        bus_colors=tech_colors,
         line_colors=ac_color,
         link_colors=dc_color,
         line_widths=line_widths / linewidth_factor,
@@ -179,45 +157,66 @@ def plot_map(network, components=["links", "stores", "storage_units", "generator
         ax=ax,  **map_opts
     )
 
-    handles = make_legend_circles_for(
-        [5e9, 1e9],
-        scale=bus_size_factor,
-        facecolor="gray"
-    )
+    sizes = [20, 10, 5]
+    labels = [f"{s} bEUR/a" for s in sizes]
+    sizes = [s/bus_size_factor*1e9 for s in sizes]
 
-    labels = ["{} bEUR/a".format(s) for s in (5, 1)]
-
-    l2 = ax.legend(
-        handles, labels,
+    legend_kw = dict(
         loc="upper left",
-        bbox_to_anchor=(0.01, 1.01),
-        labelspacing=1.0,
+        bbox_to_anchor=(0.01, 1.06),
+        labelspacing=0.8,
         frameon=False,
-        title='System cost',
-        handler_map=make_handler_map_to_scale_circles_as_in(ax)
+        handletextpad=0,
+        title='system cost',
     )
 
-    ax.add_artist(l2)
+    add_legend_circles(
+        ax,
+        sizes,
+        labels,
+        srid=n.srid,
+        patch_kw=dict(facecolor="lightgrey"),
+        legend_kw=legend_kw
+    )
 
-    handles = []
-    labels = []
+    sizes = [10, 5]
+    labels = [f"{s} GW" for s in sizes]
+    scale = 1e3 / linewidth_factor
+    sizes = [s*scale for s in sizes]
 
-    for s in (10, 5):
-        handles.append(plt.Line2D([0], [0], color=ac_color,
-                                  linewidth=s * 1e3 / linewidth_factor))
-        labels.append("{} GW".format(s))
-
-    l1_1 = ax.legend(
-        handles, labels,
+    legend_kw = dict(
         loc="upper left",
-        bbox_to_anchor=(0.22, 1.01),
+        bbox_to_anchor=(0.27, 1.06),
         frameon=False,
         labelspacing=0.8,
-        handletextpad=1.5,
+        handletextpad=1,
         title=title
     )
 
-    ax.add_artist(l1_1)
+    add_legend_lines(
+        ax,
+        sizes,
+        labels,
+        patch_kw=dict(color='lightgrey'),
+        legend_kw=legend_kw
+    )
+    
+    legend_kw = dict(
+        bbox_to_anchor=(1.52, 1.04),
+        frameon=False,
+    )
+
+    if with_legend:
+
+        colors = [tech_colors[c] for c in carriers] + [ac_color, dc_color]
+        labels = carriers + ["HVAC line", "HVDC link"]
+
+        add_legend_patches(
+            ax,
+            colors,
+            labels,
+            legend_kw=legend_kw,
+        )
 
     fig.savefig(
         snakemake.output.map,
@@ -246,7 +245,7 @@ def group_pipes(df, drop_direction=False):
     return pipe_capacity
 
 
-def plot_h2_map(network):
+def plot_h2_map(network, regions):
 
     n = network.copy()
     if "H2 pipeline" not in n.links.carrier.unique():
@@ -254,15 +253,21 @@ def plot_h2_map(network):
 
     assign_location(n)
 
+    h2_storage = n.stores.query("carrier == 'H2'")
+    regions["H2"] = h2_storage.rename(index=h2_storage.bus.map(n.buses.location)).e_nom_opt.div(1e6) # TWh
+    regions["H2"] = regions["H2"].where(regions["H2"] > 0.1)
+
     bus_size_factor = 1e5
-    linewidth_factor = 1e4
+    linewidth_factor = 7e3
     # MW below which not drawn
-    line_lower_threshold = 1e2
+    line_lower_threshold = 750
 
     # Drop non-electric buses so they don't clutter the plot
     n.buses.drop(n.buses.index[n.buses.carrier != "AC"], inplace=True)
 
-    elec = n.links[n.links.carrier.isin(["H2 Electrolysis", "H2 Fuel Cell"])].index
+    carriers = ["H2 Electrolysis", "H2 Fuel Cell"]
+
+    elec = n.links[n.links.carrier.isin(carriers)].index
 
     bus_sizes = n.links.loc[elec,"p_nom_opt"].groupby([n.links["bus0"], n.links.carrier]).sum() / bus_size_factor
 
@@ -273,14 +278,44 @@ def plot_h2_map(network):
 
     h2_new = n.links.loc[n.links.carrier=="H2 pipeline"]
     h2_retro = n.links.loc[n.links.carrier=='H2 pipeline retrofitted']
-    # sum capacitiy for pipelines from different investment periods
-    h2_new = group_pipes(h2_new)
-    h2_retro = group_pipes(h2_retro, drop_direction=True).reindex(h2_new.index).fillna(0)
 
+    if snakemake.config['foresight'] == 'myopic':
+        # sum capacitiy for pipelines from different investment periods
+        h2_new = group_pipes(h2_new)
+        h2_retro = group_pipes(h2_retro, drop_direction=True).reindex(h2_new.index).fillna(0)
+
+    if not h2_retro.empty:
+
+        positive_order = h2_retro.bus0 < h2_retro.bus1
+        h2_retro_p = h2_retro[positive_order]
+        swap_buses = {"bus0": "bus1", "bus1": "bus0"}
+        h2_retro_n = h2_retro[~positive_order].rename(columns=swap_buses)
+        h2_retro = pd.concat([h2_retro_p, h2_retro_n])
+
+        h2_retro["index_orig"] = h2_retro.index
+        h2_retro.index = h2_retro.apply(
+            lambda x: f"H2 pipeline {x.bus0.replace(' H2', '')} -> {x.bus1.replace(' H2', '')}",
+            axis=1
+        )
+
+        retro_w_new_i = h2_retro.index.intersection(h2_new.index)
+        h2_retro_w_new = h2_retro.loc[retro_w_new_i]
+
+        retro_wo_new_i = h2_retro.index.difference(h2_new.index)
+        h2_retro_wo_new = h2_retro.loc[retro_wo_new_i]
+        h2_retro_wo_new.index = h2_retro_wo_new.index_orig
+
+        to_concat = [h2_new, h2_retro_w_new, h2_retro_wo_new]
+        h2_total = pd.concat(to_concat).p_nom_opt.groupby(level=0).sum()
+
+    else:
+
+        h2_total = h2_new
+
+    link_widths_total = h2_total / linewidth_factor
 
     n.links.rename(index=lambda x: x.split("-2")[0], inplace=True)
     n.links = n.links.groupby(level=0).first()
-    link_widths_total = (h2_new + h2_retro) / linewidth_factor
     link_widths_total = link_widths_total.reindex(n.links.index).fillna(0.)
     link_widths_total[n.links.p_nom_opt < line_lower_threshold] = 0.
 
@@ -291,15 +326,27 @@ def plot_h2_map(network):
     n.links.bus0 = n.links.bus0.str.replace(" H2", "")
     n.links.bus1 = n.links.bus1.str.replace(" H2", "")
 
+    proj = ccrs.EqualEarth()
+    regions = regions.to_crs(proj.proj4_init)
+
     fig, ax = plt.subplots(
         figsize=(7, 6),
-        subplot_kw={"projection": ccrs.PlateCarree()}
+        subplot_kw={"projection": proj}
     )
 
+    color_h2_pipe = '#b3f3f4'
+    color_retrofit = '#499a9c'
+    
+    bus_colors = {
+        "H2 Electrolysis": "#ff29d9",
+        "H2 Fuel Cell": '#805394'
+    }
+
     n.plot(
+        geomap=True,
         bus_sizes=bus_sizes,
-        bus_colors=snakemake.config['plotting']['tech_colors'],
-        link_colors='#a2f0f2',
+        bus_colors=bus_colors,
+        link_colors=color_h2_pipe,
         link_widths=link_widths_total,
         branch_components=["Link"],
         ax=ax,
@@ -307,53 +354,88 @@ def plot_h2_map(network):
     )
 
     n.plot(
+        geomap=True,
         bus_sizes=0,
-        link_colors='#72d3d6',
+        link_colors=color_retrofit,
         link_widths=link_widths_retro,
         branch_components=["Link"],
         ax=ax,
-        **map_opts
+        color_geomap=False,
+        boundaries=map_opts["boundaries"]
     )
 
-    handles = make_legend_circles_for(
-        [50000, 10000],
-        scale=bus_size_factor,
-        facecolor='grey'
+    regions.plot(
+        ax=ax,
+        column="H2",
+        cmap='Blues',
+        linewidths=0,
+        legend=True,
+        vmax=6,
+        vmin=0,
+        legend_kwds={
+            "label": "Hydrogen Storage [TWh]",
+            "shrink": 0.7,
+            "extend": "max",
+        },
     )
 
-    labels = ["{} GW".format(s) for s in (50, 10)]
+    sizes = [50, 10]
+    labels = [f"{s} GW" for s in sizes]
+    sizes = [s/bus_size_factor*1e3 for s in sizes]
 
-    l2 = ax.legend(
-        handles, labels,
+    legend_kw = dict(
         loc="upper left",
-        bbox_to_anchor=(-0.03, 1.01),
-        labelspacing=1.0,
+        bbox_to_anchor=(0, 1),
+        labelspacing=0.8,
+        handletextpad=0,
         frameon=False,
-        title='Electrolyzer capacity',
-        handler_map=make_handler_map_to_scale_circles_as_in(ax)
     )
 
-    ax.add_artist(l2)
+    add_legend_circles(ax, sizes, labels,
+        srid=n.srid,
+        patch_kw=dict(facecolor='lightgrey'),
+        legend_kw=legend_kw
+    )
 
-    handles = []
-    labels = []
+    sizes = [30, 10]
+    labels = [f"{s} GW" for s in sizes]
+    scale = 1e3 / linewidth_factor
+    sizes = [s*scale for s in sizes]
 
-    for s in (50, 10):
-        handles.append(plt.Line2D([0], [0], color="grey",
-                                  linewidth=s * 1e3 / linewidth_factor))
-        labels.append("{} GW".format(s))
-
-    l1_1 = ax.legend(
-        handles, labels,
+    legend_kw = dict(
         loc="upper left",
-        bbox_to_anchor=(0.28, 1.01),
+        bbox_to_anchor=(0.23, 1),
         frameon=False,
         labelspacing=0.8,
-        handletextpad=1.5,
-        title='H2 pipeline capacity'
+        handletextpad=1,
     )
 
-    ax.add_artist(l1_1)
+    add_legend_lines(
+        ax,
+        sizes,
+        labels,
+        patch_kw=dict(color='lightgrey'),
+        legend_kw=legend_kw,
+    )
+
+    colors = [bus_colors[c] for c in carriers] + [color_h2_pipe, color_retrofit]
+    labels = carriers + ["H2 pipeline (total)", "H2 pipeline (repurposed)"]
+
+    legend_kw = dict(
+        loc="upper left",
+        bbox_to_anchor=(0, 1.13),
+        ncol=2,
+        frameon=False,
+    )
+
+    add_legend_patches(
+        ax,
+        colors,
+        labels,
+        legend_kw=legend_kw
+    )
+
+    ax.set_facecolor("white")
 
     fig.savefig(
         snakemake.output.map.replace("-costs-all","-h2_network"),
@@ -373,7 +455,7 @@ def plot_ch4_map(network):
     bus_size_factor = 8e7
     linewidth_factor = 1e4
     # MW below which not drawn
-    line_lower_threshold = 500
+    line_lower_threshold = 1e3
 
     # Drop non-electric buses so they don't clutter the plot
     n.buses.drop(n.buses.index[n.buses.carrier != "AC"], inplace=True)
@@ -413,13 +495,19 @@ def plot_ch4_map(network):
     link_widths_used =  max_usage / linewidth_factor
     link_widths_used[max_usage < line_lower_threshold] = 0.
 
-    link_color_used = n.links.carrier.map({"gas pipeline": "#f08080",
-                                           "gas pipeline new": "#c46868"})
+    tech_colors = snakemake.config['plotting']['tech_colors']
+
+    pipe_colors = {
+        "gas pipeline": "#f08080",
+        "gas pipeline new": "#c46868",
+        "gas pipeline (in 2020)": 'lightgrey',
+        "gas pipeline (available)": '#e8d1d1',
+    }
+
+    link_color_used = n.links.carrier.map(pipe_colors)
 
     n.links.bus0 = n.links.bus0.str.replace(" gas", "")
     n.links.bus1 = n.links.bus1.str.replace(" gas", "")
-
-    tech_colors = snakemake.config['plotting']['tech_colors']
 
     bus_colors = {
         "fossil gas": tech_colors["fossil gas"],
@@ -427,12 +515,12 @@ def plot_ch4_map(network):
         "biogas": "seagreen"
     }
 
-    fig, ax = plt.subplots(figsize=(7,6), subplot_kw={"projection": ccrs.PlateCarree()})
+    fig, ax = plt.subplots(figsize=(7,6), subplot_kw={"projection": ccrs.EqualEarth()})
 
     n.plot(
         bus_sizes=bus_sizes,
         bus_colors=bus_colors,
-        link_colors='lightgrey',
+        link_colors=pipe_colors['gas pipeline (in 2020)'],
         link_widths=link_widths_orig,
         branch_components=["Link"],
         ax=ax,
@@ -442,10 +530,11 @@ def plot_ch4_map(network):
     n.plot(
         ax=ax,
         bus_sizes=0.,
-        link_colors='#e8d1d1',
+        link_colors=pipe_colors['gas pipeline (available)'],
         link_widths=link_widths_rem,
         branch_components=["Link"],
-        **map_opts
+        color_geomap=False,
+        boundaries=map_opts["boundaries"]
     )
 
     n.plot(
@@ -454,46 +543,76 @@ def plot_ch4_map(network):
         link_colors=link_color_used,
         link_widths=link_widths_used,
         branch_components=["Link"],
-        **map_opts
+        color_geomap=False,
+        boundaries=map_opts["boundaries"]
     )
 
-    handles = make_legend_circles_for(
-        [10e6, 100e6],
-        scale=bus_size_factor,
-        facecolor='grey'
-    )
-    labels = ["{} TWh".format(s) for s in (10, 100)]
-
-    l2 = ax.legend(
-        handles, labels,
+    sizes = [100, 10]
+    labels = [f"{s} TWh" for s in sizes]
+    sizes = [s/bus_size_factor*1e6 for s in sizes]
+    
+    legend_kw = dict(
         loc="upper left",
-        bbox_to_anchor=(-0.03, 1.01),
-        labelspacing=1.0,
+        bbox_to_anchor=(0, 1.03),
+        labelspacing=0.8,
         frameon=False,
-        title='gas generation',
-        handler_map=make_handler_map_to_scale_circles_as_in(ax)
+        handletextpad=1,
+        title='gas sources',
+    )
+    
+    add_legend_circles(
+        ax,
+        sizes,
+        labels,
+        srid=n.srid,
+        patch_kw=dict(facecolor='lightgrey'),
+        legend_kw=legend_kw,
     )
 
-    ax.add_artist(l2)
-
-    handles = []
-    labels = []
-
-    for s in (50, 10):
-        handles.append(plt.Line2D([0], [0], color="grey", linewidth=s * 1e3 / linewidth_factor))
-        labels.append("{} GW".format(s))
-
-    l1_1 = ax.legend(
-        handles, labels,
+    sizes = [50, 10]
+    labels = [f"{s} GW" for s in sizes]
+    scale = 1e3 / linewidth_factor
+    sizes = [s*scale for s in sizes]
+    
+    legend_kw = dict(
         loc="upper left",
-        bbox_to_anchor=(0.28, 1.01),
+        bbox_to_anchor=(0.25, 1.03),
         frameon=False,
         labelspacing=0.8,
-        handletextpad=1.5,
-        title='gas pipeline used capacity'
+        handletextpad=1,
+        title='gas pipeline'
+    )
+    
+    add_legend_lines(
+        ax,
+        sizes,
+        labels,
+        patch_kw=dict(color='lightgrey'),
+        legend_kw=legend_kw,
     )
 
-    ax.add_artist(l1_1)
+    colors = list(pipe_colors.values()) + list(bus_colors.values())
+    labels = list(pipe_colors.keys()) + list(bus_colors.keys())
+  
+    # legend on the side
+    # legend_kw = dict(
+    #     bbox_to_anchor=(1.47, 1.04),
+    #     frameon=False,
+    # )
+
+    legend_kw = dict(
+        loc='upper left',
+        bbox_to_anchor=(0, 1.24),
+        ncol=2,
+        frameon=False,
+    )
+
+    add_legend_patches(
+        ax,
+        colors,
+        labels,
+        legend_kw=legend_kw,
+    )
 
     fig.savefig(
         snakemake.output.map.replace("-costs-all","-ch4_network"),
@@ -511,15 +630,15 @@ def plot_map_without(network):
 
     fig, ax = plt.subplots(
         figsize=(7, 6),
-        subplot_kw={"projection": ccrs.PlateCarree()}
+        subplot_kw={"projection": ccrs.EqualEarth()}
     )
 
     # PDF has minimum width, so set these to zero
     line_lower_threshold = 200.
     line_upper_threshold = 1e4
-    linewidth_factor = 2e3
-    ac_color = "gray"
-    dc_color = "m"
+    linewidth_factor = 3e3
+    ac_color = "rosybrown"
+    dc_color = "darkseagreen"
 
     # hack because impossible to drop buses...
     if "EU gas" in n.buses.index:
@@ -558,7 +677,7 @@ def plot_map_without(network):
     for s in (10, 5):
         handles.append(plt.Line2D([0], [0], color=ac_color,
                                   linewidth=s * 1e3 / linewidth_factor))
-        labels.append("{} GW".format(s))
+        labels.append(f"{s} GW")
     l1_1 = ax.legend(handles, labels,
                      loc="upper left", bbox_to_anchor=(0.05, 1.01),
                      frameon=False,
@@ -708,25 +827,27 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             'plot_network',
             simpl='',
-            clusters="45",
-            lv=1.0,
+            clusters="181",
+            lv='opt',
             opts='',
-            sector_opts='168H-T-H-B-I-A-solar+p3-dist1',
+            sector_opts='Co2L0-730H-T-H-B-I-A-solar+p3-linemaxext10',
             planning_horizons="2050",
         )
 
     overrides = override_component_attrs(snakemake.input.overrides)
     n = pypsa.Network(snakemake.input.network, override_component_attrs=overrides)
 
+    regions = gpd.read_file(snakemake.input.regions).set_index("name")
+
     map_opts = snakemake.config['plotting']['map']
 
     plot_map(n,
         components=["generators", "links", "stores", "storage_units"],
-        bus_size_factor=1.5e10,
+        bus_size_factor=2e10,
         transmission=False
     )
 
-    plot_h2_map(n)
+    plot_h2_map(n, regions)
     plot_ch4_map(n)
     plot_map_without(n)
 
