@@ -12,6 +12,8 @@ Upcoming Release
 
 * Carriers of generators can now be excluded from aggregation in clustering network and simplify network.
 
+* Fix EQ constraint for the case no hydro inflow is available
+
 * Bugfix in the reserve constraint will increase demand related reserve requirements
 
 PyPSA-Eur 0.6.1 (20th September 2022)
