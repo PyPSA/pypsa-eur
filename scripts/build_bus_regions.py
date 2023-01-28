@@ -69,7 +69,6 @@ def voronoi_partition_pts(points, outline):
     -------
     polygons : N - ndarray[dtype=Polygon|MultiPolygon]
     """
-
     points = np.asarray(points)
 
     if len(points) == 1:
