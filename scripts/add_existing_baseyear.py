@@ -12,7 +12,7 @@ import xarray as xr
 import pypsa
 import yaml
 
-from prepare_sector_network import prepare_costs, define_spatial
+from prepare_sector_network import prepare_costs, define_spatial, cluster_heat_buses
 from helper import override_component_attrs, update_config_with_sector_opts
 
 from types import SimpleNamespace
@@ -563,5 +563,9 @@ if __name__ == "__main__":
         add_heating_capacities_installed_before_baseyear(n, baseyear, grouping_years_heat,
                                                          ashp_cop, gshp_cop, time_dep_hp_cop, costs, default_lifetime)
 
+    if options.get("cluster_heat_buses", False):
+        cluster_heat_buses(n)
+
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
+
     n.export_to_netcdf(snakemake.output[0])
