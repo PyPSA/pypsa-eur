@@ -216,18 +216,21 @@ def add_EQ_constraints(n, o, scaling=1e-1):
         .T.groupby(ggrouper, axis=1)
         .apply(join_exprs)
     )
-    lhs_spill = (
-        linexpr(
-            (
-                -n.snapshot_weightings.stores * scaling,
-                get_var(n, "StorageUnit", "spill").T,
+    if not n.storage_units_t.inflow.empty:
+        lhs_spill = (
+            linexpr(
+                (
+                    -n.snapshot_weightings.stores * scaling,
+                    get_var(n, "StorageUnit", "spill").T,
+                )
             )
+            .T.groupby(sgrouper, axis=1)
+            .apply(join_exprs)
         )
-        .T.groupby(sgrouper, axis=1)
-        .apply(join_exprs)
-    )
-    lhs_spill = lhs_spill.reindex(lhs_gen.index).fillna("")
-    lhs = lhs_gen + lhs_spill
+        lhs_spill = lhs_spill.reindex(lhs_gen.index).fillna("")
+        lhs = lhs_gen + lhs_spill
+    else:
+        lhs = lhs_gen
     define_constraints(n, lhs, ">=", rhs, "equity", "min")
 
 
@@ -321,7 +324,6 @@ def add_operational_reserve_margin(n, sns, config):
     Build reserve margin constraints based on the formulation given in
     https://genxproject.github.io/GenX/dev/core/#Reserves.
     """
-
     define_variables(n, 0, np.inf, "Generator", "r", axes=[sns, n.generators.index])
 
     add_operational_reserve_margin_constraint(n, config)

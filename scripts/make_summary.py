@@ -235,7 +235,6 @@ def calculate_supply(n, label, supply):
     calculate the max dispatch of each component at the buses where the loads
     are attached.
     """
-
     load_types = n.buses.carrier.unique()
 
     for i in load_types:
@@ -296,7 +295,6 @@ def calculate_supply_energy(n, label, supply_energy):
     calculate the total dispatch of each component at the buses where the loads
     are attached.
     """
-
     load_types = n.buses.carrier.unique()
 
     for i in load_types:
