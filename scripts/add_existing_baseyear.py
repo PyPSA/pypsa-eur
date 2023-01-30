@@ -563,6 +563,9 @@ if __name__ == "__main__":
         add_heating_capacities_installed_before_baseyear(n, baseyear, grouping_years_heat,
                                                          ashp_cop, gshp_cop, time_dep_hp_cop, costs, default_lifetime)
 
+    if options.get("cluster_heat_buses", False):
+        cluster_heat_buses(n)
+
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
 
     n.export_to_netcdf(snakemake.output[0])
