@@ -2920,7 +2920,7 @@ if __name__ == "__main__":
     first_year_myopic = ((snakemake.config["foresight"] == 'myopic') and
                          (snakemake.config["scenario"]["planning_horizons"][0]==investment_year))
 
-    if options["cluster_heat_buses"] and not first_year_myopic:
+    if options.get("cluster_heat_buses", False) and not first_year_myopic:
         cluster_heat_buses(n)
 
 
