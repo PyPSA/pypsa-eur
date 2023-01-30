@@ -44,6 +44,13 @@ rule prepare_sector_networks:
         expand(RDIR + "/prenetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc",
                **config['scenario'])
 
+
+rule plot_all_networks:
+    input:
+        expand(RDIR + "/maps/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
+               **config['scenario'])
+
+
 datafiles = [
     "data/eea/UNFCCC_v23.csv",
     "data/switzerland-sfoe/switzerland-new_format.csv",
@@ -162,34 +169,26 @@ else:
 
 rule build_heat_demands:
     input:
-        pop_layout_total="resources/pop_layout_total.nc",
-        pop_layout_urban="resources/pop_layout_urban.nc",
-        pop_layout_rural="resources/pop_layout_rural.nc",
+        pop_layout="resources/pop_layout_{scope}.nc",
         regions_onshore=pypsaeur("resources/regions_onshore_elec_s{simpl}_{clusters}.geojson")
     output:
-        heat_demand_urban="resources/heat_demand_urban_elec_s{simpl}_{clusters}.nc",
-        heat_demand_rural="resources/heat_demand_rural_elec_s{simpl}_{clusters}.nc",
-        heat_demand_total="resources/heat_demand_total_elec_s{simpl}_{clusters}.nc"
+        heat_demand="resources/heat_demand_{scope}_elec_s{simpl}_{clusters}.nc"
     resources: mem_mb=20000
-    benchmark: "benchmarks/build_heat_demands/s{simpl}_{clusters}"
+    threads: 8
+    benchmark: "benchmarks/build_heat_demands/{scope}_s{simpl}_{clusters}"
     script: "scripts/build_heat_demand.py"
 
 
 rule build_temperature_profiles:
     input:
-        pop_layout_total="resources/pop_layout_total.nc",
-        pop_layout_urban="resources/pop_layout_urban.nc",
-        pop_layout_rural="resources/pop_layout_rural.nc",
+        pop_layout="resources/pop_layout_{scope}.nc",
         regions_onshore=pypsaeur("resources/regions_onshore_elec_s{simpl}_{clusters}.geojson")
     output:
-        temp_soil_total="resources/temp_soil_total_elec_s{simpl}_{clusters}.nc",
-        temp_soil_rural="resources/temp_soil_rural_elec_s{simpl}_{clusters}.nc",
-        temp_soil_urban="resources/temp_soil_urban_elec_s{simpl}_{clusters}.nc",
-        temp_air_total="resources/temp_air_total_elec_s{simpl}_{clusters}.nc",
-        temp_air_rural="resources/temp_air_rural_elec_s{simpl}_{clusters}.nc",
-        temp_air_urban="resources/temp_air_urban_elec_s{simpl}_{clusters}.nc"
+        temp_soil="resources/temp_soil_{scope}_elec_s{simpl}_{clusters}.nc",
+        temp_air="resources/temp_air_{scope}_elec_s{simpl}_{clusters}.nc",
     resources: mem_mb=20000
-    benchmark: "benchmarks/build_temperature_profiles/s{simpl}_{clusters}"
+    threads: 8
+    benchmark: "benchmarks/build_temperature_profiles/{scope}_s{simpl}_{clusters}"
     script: "scripts/build_temperature_profiles.py"
 
 
@@ -215,16 +214,13 @@ rule build_cop_profiles:
 
 rule build_solar_thermal_profiles:
     input:
-        pop_layout_total="resources/pop_layout_total.nc",
-        pop_layout_urban="resources/pop_layout_urban.nc",
-        pop_layout_rural="resources/pop_layout_rural.nc",
+        pop_layout="resources/pop_layout_{scope}.nc",
         regions_onshore=pypsaeur("resources/regions_onshore_elec_s{simpl}_{clusters}.geojson")
     output:
-        solar_thermal_total="resources/solar_thermal_total_elec_s{simpl}_{clusters}.nc",
-        solar_thermal_urban="resources/solar_thermal_urban_elec_s{simpl}_{clusters}.nc",
-        solar_thermal_rural="resources/solar_thermal_rural_elec_s{simpl}_{clusters}.nc"
+        solar_thermal="resources/solar_thermal_{scope}_elec_s{simpl}_{clusters}.nc",
     resources: mem_mb=20000
-    benchmark: "benchmarks/build_solar_thermal_profiles/s{simpl}_{clusters}"
+    threads: 16
+    benchmark: "benchmarks/build_solar_thermal_profiles/{scope}_s{simpl}_{clusters}"
     script: "scripts/build_solar_thermal_profiles.py"
 
 
@@ -441,15 +437,27 @@ rule build_population_weighted_energy_totals:
     script: "scripts/build_population_weighted_energy_totals.py"
 
 
+rule build_shipping_demand:
+    input:
+        ports="data/attributed_ports.json",
+        scope=pypsaeur("resources/europe_shape.geojson"),
+        regions=pypsaeur("resources/regions_onshore_elec_s{simpl}_{clusters}.geojson"),
+        demand="resources/energy_totals.csv"
+    output: "resources/shipping_demand_s{simpl}_{clusters}.csv"
+    threads: 1
+    resources: mem_mb=2000
+    script: "scripts/build_shipping_demand.py"
+
+
 rule build_transport_demand:
-    input: 
+    input:
         clustered_pop_layout="resources/pop_layout_elec_s{simpl}_{clusters}.csv",
         pop_weighted_energy_totals="resources/pop_weighted_energy_totals_s{simpl}_{clusters}.csv",
         transport_data='resources/transport_data.csv',
         traffic_data_KFZ="data/emobility/KFZ__count",
         traffic_data_Pkw="data/emobility/Pkw__count",
         temp_air_total="resources/temp_air_total_elec_s{simpl}_{clusters}.nc",
-    output: 
+    output:
         transport_demand="resources/transport_demand_s{simpl}_{clusters}.csv",
         transport_data="resources/transport_data_s{simpl}_{clusters}.csv",
         avail_profile="resources/avail_profile_s{simpl}_{clusters}.csv",
@@ -464,15 +472,18 @@ rule prepare_sector_network:
         overrides="data/override_component_attrs",
         network=pypsaeur('networks/elec_s{simpl}_{clusters}_ec_lv{lv}_{opts}.nc'),
         energy_totals_name='resources/energy_totals.csv',
+        eurostat=input_eurostat,
         pop_weighted_energy_totals="resources/pop_weighted_energy_totals_s{simpl}_{clusters}.csv",
+        shipping_demand="resources/shipping_demand_s{simpl}_{clusters}.csv",
         transport_demand="resources/transport_demand_s{simpl}_{clusters}.csv",
         transport_data="resources/transport_data_s{simpl}_{clusters}.csv",
         avail_profile="resources/avail_profile_s{simpl}_{clusters}.csv",
         dsm_profile="resources/dsm_profile_s{simpl}_{clusters}.csv",
         co2_totals_name='resources/co2_totals.csv',
+        co2="data/eea/UNFCCC_v23.csv",
         biomass_potentials='resources/biomass_potentials_s{simpl}_{clusters}.csv',
         heat_profile="data/heat_load_profile_BDEW.csv",
-        costs=CDIR + "costs_{planning_horizons}.csv",
+        costs=CDIR + "costs_{}.csv".format(config['costs']['year']) if config["foresight"] == "overnight" else CDIR + "costs_{planning_horizons}.csv",
         profile_offwind_ac=pypsaeur("resources/profile_offwind-ac.nc"),
         profile_offwind_dc=pypsaeur("resources/profile_offwind-dc.nc"),
         h2_cavern="resources/salt_cavern_potentials_s{simpl}_{clusters}.csv",
@@ -496,9 +507,9 @@ rule prepare_sector_network:
         cop_air_total="resources/cop_air_total_elec_s{simpl}_{clusters}.nc",
         cop_air_rural="resources/cop_air_rural_elec_s{simpl}_{clusters}.nc",
         cop_air_urban="resources/cop_air_urban_elec_s{simpl}_{clusters}.nc",
-        solar_thermal_total="resources/solar_thermal_total_elec_s{simpl}_{clusters}.nc",
-        solar_thermal_urban="resources/solar_thermal_urban_elec_s{simpl}_{clusters}.nc",
-        solar_thermal_rural="resources/solar_thermal_rural_elec_s{simpl}_{clusters}.nc",
+        solar_thermal_total="resources/solar_thermal_total_elec_s{simpl}_{clusters}.nc" if config["sector"]["solar_thermal"] else [],
+        solar_thermal_urban="resources/solar_thermal_urban_elec_s{simpl}_{clusters}.nc" if config["sector"]["solar_thermal"] else [],
+        solar_thermal_rural="resources/solar_thermal_rural_elec_s{simpl}_{clusters}.nc" if config["sector"]["solar_thermal"] else [],
         **build_retro_cost_output,
         **build_biomass_transport_costs_output,
         **gas_infrastructure
@@ -512,7 +523,8 @@ rule prepare_sector_network:
 rule plot_network:
     input:
         overrides="data/override_component_attrs",
-        network=RDIR + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc"
+        network=RDIR + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        regions=pypsaeur('resources/regions_onshore_elec_s{simpl}_{clusters}.geojson')
     output:
         map=RDIR + "/maps/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
         today=RDIR + "/maps/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}-today.pdf"
@@ -530,6 +542,14 @@ rule copy_config:
     script: "scripts/copy_config.py"
 
 
+rule copy_conda_env:
+    output: SDIR + '/configs/environment.yaml'
+    threads: 1
+    resources: mem_mb=500
+    benchmark: SDIR + "/benchmarks/copy_conda_env"
+    shell: "conda env export -f {output} --no-builds"
+
+
 rule make_summary:
     input:
         overrides="data/override_component_attrs",
@@ -537,7 +557,7 @@ rule make_summary:
             RDIR + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc",
             **config['scenario']
         ),
-        costs=CDIR + "costs_{}.csv".format(config['scenario']['planning_horizons'][0]),
+        costs=CDIR + "costs_{}.csv".format(config['costs']['year']) if config["foresight"] == "overnight" else CDIR + "costs_{}.csv".format(config['scenario']['planning_horizons'][0]),
         plots=expand(
             RDIR + "/maps/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
             **config['scenario']
@@ -568,7 +588,9 @@ rule plot_summary:
     input:
         costs=SDIR + '/csvs/costs.csv',
         energy=SDIR + '/csvs/energy.csv',
-        balances=SDIR + '/csvs/supply_energy.csv'
+        balances=SDIR + '/csvs/supply_energy.csv',
+        eurostat=input_eurostat,
+        country_codes='data/Country_codes.csv',
     output:
         costs=SDIR + '/graphs/costs.pdf',
         energy=SDIR + '/graphs/energy.pdf',
@@ -585,8 +607,9 @@ if config["foresight"] == "overnight":
         input:
             overrides="data/override_component_attrs",
             network=RDIR + "/prenetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc",
-            costs=CDIR + "costs_{planning_horizons}.csv",
-            config=SDIR + '/configs/config.yaml'
+            costs=CDIR + "costs_{}.csv".format(config['costs']['year']),
+            config=SDIR + '/configs/config.yaml',
+            #env=SDIR + '/configs/environment.yaml',
         output: RDIR + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc"
         shadow: "shallow"
         log:
