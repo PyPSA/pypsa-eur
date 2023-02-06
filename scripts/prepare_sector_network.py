@@ -2416,13 +2416,19 @@ def add_industry(n, costs):
         unit="t_co2"
     )
 
+    sel = ["process emission", "process emission from feedstock"]
+    if options.get("co2_spatial", options["co2network"]):
+        p_set = -industrial_demand.loc[nodes, sel].sum(axis=1).rename(index=lambda x: x + " process emissions") / 8760
+    else:
+        p_set = -industrial_demand.loc[nodes, sel].sum(axis=1).sum() / 8760
+
     # this should be process emissions fossil+feedstock
     # then need load on atmosphere for feedstock emissions that are currently going to atmosphere via Link Fischer-Tropsch demand
     n.add("Load",
         spatial.co2.process_emissions,
         bus=spatial.co2.process_emissions,
         carrier="process emissions",
-        p_set=-industrial_demand.loc[nodes,["process emission", "process emission from feedstock"]].sum(axis=1).sum() / 8760
+        p_set=p_set,
     )
 
     n.add("Link",
