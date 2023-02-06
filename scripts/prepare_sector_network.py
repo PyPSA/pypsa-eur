@@ -65,10 +65,12 @@ def define_spatial(nodes, options):
         spatial.co2.nodes = nodes + " co2 stored"
         spatial.co2.locations = nodes
         spatial.co2.vents = nodes + " co2 vent"
+        spatial.co2.process_emissions = nodes + " process emissions"
     else:
         spatial.co2.nodes = ["co2 stored"]
         spatial.co2.locations = ["EU"]
         spatial.co2.vents = ["co2 vent"]
+        spatial.co2.process_emissions = ["process emissions"]
 
     spatial.co2.df = pd.DataFrame(vars(spatial.co2), index=nodes)
 
@@ -2408,8 +2410,8 @@ def add_industry(n, costs):
     )
 
     n.add("Bus",
-        "process emissions",
-        location="EU",
+        spatial.co2.process_emissions,
+        location=spatial.co2.locations,
         carrier="process emissions",
         unit="t_co2"
     )
@@ -2417,15 +2419,15 @@ def add_industry(n, costs):
     # this should be process emissions fossil+feedstock
     # then need load on atmosphere for feedstock emissions that are currently going to atmosphere via Link Fischer-Tropsch demand
     n.add("Load",
-        "process emissions",
-        bus="process emissions",
+        spatial.co2.process_emissions,
+        bus=spatial.co2.process_emissions,
         carrier="process emissions",
         p_set=-industrial_demand.loc[nodes,["process emission", "process emission from feedstock"]].sum(axis=1).sum() / 8760
     )
 
     n.add("Link",
-        "process emissions",
-        bus0="process emissions",
+        spatial.co2.process_emissions,
+        bus0=spatial.co2.process_emissions,
         bus1="co2 atmosphere",
         carrier="process emissions",
         p_nom_extendable=True,
@@ -2436,7 +2438,7 @@ def add_industry(n, costs):
     n.madd("Link",
         spatial.co2.locations,
         suffix=" process emissions CC",
-        bus0="process emissions",
+        bus0=spatial.co2.process_emissions,
         bus1="co2 atmosphere",
         bus2=spatial.co2.nodes,
         carrier="process emissions CC",
