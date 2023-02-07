@@ -509,8 +509,8 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **con
                 hydro_stats["E_store[TWh]"] * 1e3 / hydro_stats["p_nom_discharge[GW]"]
             )
 
-        max_hours_country.clip(0, inplace = True)
-        
+        max_hours_country.clip(0, inplace=True)
+
         missing_countries = pd.Index(hydro["country"].unique()).difference(
             max_hours_country.dropna().index
         )
