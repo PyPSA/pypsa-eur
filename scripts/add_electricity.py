@@ -394,12 +394,10 @@ def attach_conventional_generators(
     )
 
     for carrier in conventional_config:
-
         # Generators with technology affected
         idx = n.generators.query("carrier == @carrier").index
 
         for attr in list(set(conventional_config[carrier]) & set(n.generators)):
-
             values = conventional_config[carrier][attr]
 
             if f"conventional_{carrier}_{attr}" in conventional_inputs:

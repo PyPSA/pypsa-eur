@@ -164,7 +164,6 @@ def calculate_curtailment(n, label, curtailment):
 
 def calculate_energy(n, label, energy):
     for c in n.iterate_components(n.one_port_components | n.branch_components):
-
         if c.name in {"Generator", "Load", "ShuntImpedance"}:
             c_energies = (
                 c.pnl.p.multiply(n.snapshot_weightings.generators, axis=0)
@@ -238,7 +237,6 @@ def calculate_supply(n, label, supply):
     load_types = n.buses.carrier.unique()
 
     for i in load_types:
-
         buses = n.buses.query("carrier == @i").index
 
         bus_map = pd.Series(False, index=n.buses.index)
@@ -246,7 +244,6 @@ def calculate_supply(n, label, supply):
         bus_map.loc[buses] = True
 
         for c in n.iterate_components(n.one_port_components):
-
             items = c.df.index[c.df.bus.map(bus_map)]
 
             if len(items) == 0 or c.pnl.p.empty:
@@ -267,9 +264,7 @@ def calculate_supply(n, label, supply):
             supply.loc[idx[raw_index], label] = s.values
 
         for c in n.iterate_components(n.branch_components):
-
             for end in ["0", "1"]:
-
                 items = c.df.index[c.df["bus" + end].map(bus_map)]
 
                 if len(items) == 0 or c.pnl["p" + end].empty:
@@ -298,7 +293,6 @@ def calculate_supply_energy(n, label, supply_energy):
     load_types = n.buses.carrier.unique()
 
     for i in load_types:
-
         buses = n.buses.query("carrier == @i").index
 
         bus_map = pd.Series(False, index=n.buses.index)
@@ -306,7 +300,6 @@ def calculate_supply_energy(n, label, supply_energy):
         bus_map.loc[buses] = True
 
         for c in n.iterate_components(n.one_port_components):
-
             items = c.df.index[c.df.bus.map(bus_map)]
 
             if len(items) == 0 or c.pnl.p.empty:
@@ -327,9 +320,7 @@ def calculate_supply_energy(n, label, supply_energy):
             supply_energy.loc[idx[raw_index], label] = s.values
 
         for c in n.iterate_components(n.branch_components):
-
             for end in ["0", "1"]:
-
                 items = c.df.index[c.df["bus" + end].map(bus_map)]
 
                 if len(items) == 0 or c.pnl["p" + end].empty:
@@ -431,7 +422,6 @@ def calculate_weighted_prices(n, label, weighted_prices):
     }
 
     for carrier in link_loads:
-
         if carrier == "electricity":
             suffix = ""
         elif carrier[:5] == "space":
@@ -454,7 +444,6 @@ def calculate_weighted_prices(n, label, weighted_prices):
             load = n.loads_t.p_set[buses]
 
         for tech in link_loads[carrier]:
-
             names = n.links.index[n.links.index.to_series().str[-len(tech) :] == tech]
 
             if names.empty:
