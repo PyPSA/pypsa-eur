@@ -263,7 +263,6 @@ if __name__ == "__main__":
     )
     offshore_shapes.reset_index().to_file(snakemake.output.offshore_shapes)
 
-
     europe_shape = gpd.GeoDataFrame(
         geometry=[country_cover(country_shapes, offshore_shapes.geometry)]
     )
