@@ -92,7 +92,7 @@ def plot_costs(infn, config, fn=None):
 
     print(df.sum())
 
-    new_index = (preferred_order & df.index).append(
+    new_index = (preferred_order.intersection(df.index)).append(
         df.index.difference(preferred_order)
     )
 
@@ -149,7 +149,7 @@ def plot_energy(infn, config, fn=None):
 
     print(df.sum())
 
-    new_index = (preferred_order & df.index).append(
+    new_index = (preferred_order.intersection(df.index)).append(
         df.index.difference(preferred_order)
     )
 

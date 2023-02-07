@@ -54,6 +54,7 @@ electricity:
 
 atlite:
   nprocesses: 4
+  show_progress: false # false saves time
   cutouts:
     be-03-2013-era5:
       module: era5

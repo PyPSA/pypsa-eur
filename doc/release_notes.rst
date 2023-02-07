@@ -10,6 +10,10 @@ Release Notes
 Upcoming Release
 ================
 
+* Fix EQ constraint for the case no hydro inflow is available
+
+* Bugfix in the reserve constraint will increase demand related reserve requirements
+
 **New Features**
 
 * Carriers of generators can now be excluded from aggregation in clustering network and simplify network.

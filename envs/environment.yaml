@@ -10,7 +10,7 @@ dependencies:
 - python>=3.8
 - pip
 
-- pypsa>=0.20
+- pypsa>=0.21.3
 - atlite>=0.2.9
 - dask
 
@@ -25,19 +25,19 @@ dependencies:
 - pytables
 - lxml
 - powerplantmatching>=0.5.4
-- numpy
+- numpy<1.24
 - pandas>=1.4
 - geopandas>=0.11.0
 - xarray
 - netcdf4
 - networkx
 - scipy
-- shapely<2.0   # need to address deprecations
+- shapely<2.0
 - progressbar2
 - pyomo
-- matplotlib
+- matplotlib<3.6
 - proj
-- fiona <= 1.18.20    # Till issue https://github.com/Toblerity/Fiona/issues/1085 is not solved
+- fiona
 - country_converter
 
   # Keep in conda environment when calling ipython

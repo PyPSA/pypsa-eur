@@ -36,12 +36,20 @@ Link:
       "5583": "7428" # bus0 == bus1 to remove link in remove_unconnected_components (Sardinia)
       "13588": "7428" # bus0 == bus1 to remove link in remove_unconnected_components (Sardinia)
       "T23": "6355" # bus0 == bus1 to remove link in remove_unconnected_components (NordBalt)
+      "14815": "5939" # Kainachtal
+      "8706": "6448"
   bus1:
     index:
       "12931": "8152" # BorWin3
       "5582": "2382" # combine link 5583 + 5582 in 5582 (Sardinia)
       "13589": "1349" # combine link 13589 + 13588 in 13589 (Sardinia)
       "14820": "6354" # NordBalt
+      "14810": "6365" # Skagerrak
+      "8708": "6448"
+      "8394": "6695"
+      "14813": "7052"
+      "8009": "5939"
+      "5601": "7052" # Link Sweden - Lübeck
   length:
     index:
       "5582": 26.39 # new length of combined links (sum)
@@ -53,6 +61,7 @@ Line:
   bus0:
     index:
       "14573": "7179" #fix bus-id substation in PT (220/380kV issue)
+      "14756": "8577" # Deeside connection
   v_nom:
     index:
       "14573": 220 # 220/380kV issue of substation in PT

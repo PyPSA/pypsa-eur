@@ -235,7 +235,6 @@ def calculate_supply(n, label, supply):
     calculate the max dispatch of each component at the buses where the loads
     are attached.
     """
-
     load_types = n.buses.carrier.unique()
 
     for i in load_types:
@@ -296,7 +295,6 @@ def calculate_supply_energy(n, label, supply_energy):
     calculate the total dispatch of each component at the buses where the loads
     are attached.
     """
-
     load_types = n.buses.carrier.unique()
 
     for i in load_types:
@@ -556,9 +554,13 @@ if __name__ == "__main__":
             opts="Co2L-24H",
             country="all",
         )
-        network_dir = os.path.join("..", "results", "networks")
+        network_dir = os.path.join(
+            "..", "results", "networks", snakemake.config["run"]["name"]
+        )
     else:
-        network_dir = os.path.join("results", "networks")
+        network_dir = os.path.join(
+            "results", "networks", snakemake.config["run"]["name"]
+        )
     configure_logging(snakemake)
 
     config = snakemake.config

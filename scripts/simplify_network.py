@@ -111,11 +111,15 @@ def simplify_network_to_380(n):
     """
     Fix all lines to a voltage level of 380 kV and remove all transformers.
 
-    The function preserves the transmission capacity for each line while updating
-    its voltage level, line type and number of parallel bundles (num_parallel).
+    The function preserves the transmission capacity for each line while
+    updating
+    its voltage level, line type and number of parallel bundles
+    (num_parallel).
 
-    Transformers are removed and connected components are moved from their
-    starting bus to their ending bus. The corresponding starting buses are
+    Transformers are removed and connected components are moved from
+    their
+    starting bus to their ending bus. The corresponding starting buses
+    are
     removed as well.
     """
     logger.info("Mapping all network lines onto a single 380kV layer")
@@ -217,7 +221,7 @@ def _adjust_capital_costs_using_connection_costs(n, connection_costs_to_bus, out
                     tech,
                     ", ".join(
                         "{:.0f} Eur/MW/a for `{}`".format(d, b)
-                        for b, d in costs.iteritems()
+                        for b, d in costs.items()
                     ),
                 )
             )
@@ -369,7 +373,7 @@ def simplify_links(n, costs, config, output, aggregation_strategies=dict()):
             n.mremove("Link", all_links)
 
             static_attrs = n.components["Link"]["attrs"].loc[lambda df: df.static]
-            for attr, default in static_attrs.default.iteritems():
+            for attr, default in static_attrs.default.items():
                 params.setdefault(attr, default)
             n.links.loc[name] = pd.Series(params)
 
@@ -395,7 +399,11 @@ def simplify_links(n, costs, config, output, aggregation_strategies=dict()):
 def remove_stubs(n, costs, config, output, aggregation_strategies=dict()):
     logger.info("Removing stubs")
 
-    busmap = busmap_by_stubs(n)  #  ['country'])
+    across_borders = config["clustering"]["simplify_network"].get(
+        "remove_stubs_across_borders", True
+    )
+    matching_attrs = [] if across_borders else ["country"]
+    busmap = busmap_by_stubs(n, matching_attrs)
 
     connection_costs_to_bus = _compute_connection_costs_to_bus(n, busmap, costs, config)
 
@@ -530,22 +538,20 @@ if __name__ == "__main__":
         n, technology_costs, snakemake.config, snakemake.output, aggregation_strategies
     )
 
-    n, stub_map = remove_stubs(
-        n,
-        technology_costs,
-        snakemake.config,
-        snakemake.output,
-        aggregation_strategies=aggregation_strategies,
-    )
+    busmaps = [trafo_map, simplify_links_map]
 
-    busmaps = [trafo_map, simplify_links_map, stub_map]
+    cluster_config = snakemake.config["clustering"]["simplify_network"]
+    if cluster_config.get("remove_stubs", True):
+        n, stub_map = remove_stubs(
+            n,
+            technology_costs,
+            snakemake.config,
+            snakemake.output,
+            aggregation_strategies=aggregation_strategies,
+        )
+        busmaps.append(stub_map)
 
-    cluster_config = snakemake.config.get("clustering", {}).get("simplify_network", {})
-    if (
-        cluster_config.get("clustering", {})
-        .get("simplify_network", {})
-        .get("to_substations", False)
-    ):
+    if cluster_config.get("to_substations", False):
         n, substation_map = aggregate_to_substations(n, aggregation_strategies)
         busmaps.append(substation_map)
 
