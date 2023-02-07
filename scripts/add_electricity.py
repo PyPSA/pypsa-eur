@@ -496,7 +496,7 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **con
         e_target = hydro_stats["E_store[TWh]"].clip(lower=0.2) * 1e6
         e_installed = hydro.eval("p_nom * max_hours").groupby(hydro.country).sum()
         e_missing = e_target - e_installed
-        missing_mh_i = hydro.query("max_hours == 0").index
+        missing_mh_i = hydro.query("max_hours.isnull()").index
 
         if hydro_max_hours == "energy_capacity_totals_by_country":
             # watch out some p_nom values like IE's are totally underrepresented
@@ -508,6 +508,8 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **con
             max_hours_country = (
                 hydro_stats["E_store[TWh]"] * 1e3 / hydro_stats["p_nom_discharge[GW]"]
             )
+
+        max_hours_country.clip(0, inplace=True)
 
         missing_countries = pd.Index(hydro["country"].unique()).difference(
             max_hours_country.dropna().index
