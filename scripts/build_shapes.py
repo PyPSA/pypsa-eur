@@ -80,7 +80,6 @@ import pandas as pd
 import pycountry as pyc
 from _helpers import configure_logging
 from shapely.geometry import MultiPolygon, Polygon
-from shapely.ops import unary_union
 
 logger = logging.getLogger(__name__)
 
@@ -158,8 +157,7 @@ def country_cover(country_shapes, eez_shapes=None):
     shapes = country_shapes
     if eez_shapes is not None:
         shapes = pd.concat([shapes, eez_shapes])
-
-    europe_shape = unary_union(shapes)
+    europe_shape = shapes.unary_union
     if isinstance(europe_shape, MultiPolygon):
         europe_shape = max(europe_shape, key=attrgetter("area"))
     return Polygon(shell=europe_shape.exterior)
