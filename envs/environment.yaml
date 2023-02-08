@@ -28,7 +28,6 @@ dependencies:
 - numpy<1.24
 - pandas
 - geopandas>=0.11.0
-- pygeos>=0.10.0
 - xarray
 - netcdf4
 - networkx
