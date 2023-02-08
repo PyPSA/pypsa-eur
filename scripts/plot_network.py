@@ -244,7 +244,7 @@ def group_pipes(df, drop_direction=False):
         axis=1
     )
     # group pipe lines connecting the same buses and rename them for plotting
-    pipe_capacity = df["p_nom_opt"].groupby(level=0).sum()
+    pipe_capacity = df.groupby(level=0).agg({"p_nom_opt": sum, "bus0": "first", "bus1": "first"})
 
     return pipe_capacity
 
@@ -280,13 +280,16 @@ def plot_h2_map(network, regions):
     # drop all links which are not H2 pipelines
     n.links.drop(n.links.index[~n.links.carrier.str.contains("H2 pipeline")], inplace=True)
 
-    h2_new = n.links.loc[n.links.carrier=="H2 pipeline"]
-    h2_retro = n.links.loc[n.links.carrier=='H2 pipeline retrofitted']
+    h2_new = n.links[n.links.carrier=="H2 pipeline"]
+    h2_retro = n.links[n.links.carrier=='H2 pipeline retrofitted']
 
     if snakemake.config['foresight'] == 'myopic':
         # sum capacitiy for pipelines from different investment periods
         h2_new = group_pipes(h2_new)
-        h2_retro = group_pipes(h2_retro, drop_direction=True).reindex(h2_new.index).fillna(0)
+
+        if not h2_retro.empty:
+            h2_retro = group_pipes(h2_retro, drop_direction=True).reindex(h2_new.index).fillna(0)
+
 
     if not h2_retro.empty:
 
@@ -314,7 +317,7 @@ def plot_h2_map(network, regions):
 
     else:
 
-        h2_total = h2_new
+        h2_total = h2_new.p_nom_opt
 
     link_widths_total = h2_total / linewidth_factor
 
