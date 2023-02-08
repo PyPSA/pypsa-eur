@@ -1,18 +1,9 @@
 """Solve network."""
 
 import pypsa
-
 import numpy as np
-import pandas as pd
-import xarray as xr
-
-from pypsa.linopt import get_var, linexpr, define_constraints
-from linopy import merge
-
-from pypsa.linopf import network_lopf, ilopf
 
 from vresutils.benchmark import memory_logger
-
 from helper import override_component_attrs, update_config_with_sector_opts
 
 import logging
@@ -73,15 +64,14 @@ def prepare_network(n, solve_opts=None):
             df.where(df>solve_opts['clip_p_max_pu'], other=0., inplace=True)
 
     if solve_opts.get('load_shedding'):
+        # intersect between macroeconomic and surveybased willingness to pay
+        # http://journal.frontiersin.org/article/10.3389/fenrg.2015.00055/full
         n.add("Carrier", "Load")
         n.madd("Generator", n.buses.index, " load",
                bus=n.buses.index,
                carrier='load',
                sign=1e-3, # Adjust sign to measure p and p_nom in kW instead of MW
                marginal_cost=1e2, # Eur/kWh
-               # intersect between macroeconomic and surveybased
-               # willingness to pay
-               # http://journal.frontiersin.org/article/10.3389/fenrg.2015.00055/full
                p_nom=1e9 # kW
         )
 
@@ -188,12 +178,8 @@ def add_co2_sequestration_limit(n, sns):
 
     co2_stores = n.stores.loc[n.stores.carrier=='co2 stored'].index
 
-    if co2_stores.empty or ('Store', 'e') not in n.variables.index:
+    if co2_stores.empty or 'Store-e' not in n.model.variables:
         return
-
-    vars_final_co2_stored = get_var(n, 'Store', 'e').loc[sns[-1], co2_stores]
-
-    lhs = linexpr((1, vars_final_co2_stored)).sum()
 
     limit = n.config["sector"].get("co2_sequestration_potential", 200) * 1e6
     for o in opts:
@@ -201,14 +187,8 @@ def add_co2_sequestration_limit(n, sns):
         limit = float(o[o.find("seq")+3:]) * 1e6
         break
 
-    name = 'co2_sequestration_limit'
-    sense = "<="
-
-    n.add("GlobalConstraint", name, sense=sense, constant=limit,
-          type=np.nan, carrier_attribute=np.nan)
-
-    define_constraints(n, lhs, sense, limit, 'GlobalConstraint',
-                       'mu', axes=pd.Index([name]), spec=name)
+    n.add("GlobalConstraint", 'co2_sequestration_limit', sense="<=", constant=limit,
+          type=np.nan, carrier_attribute="co2 stored")
 
 
 def extra_functionality(n, snapshots):
@@ -288,7 +268,6 @@ if __name__ == "__main__":
         n = pypsa.Network(snakemake.input.network, override_component_attrs=overrides)
 
         n = prepare_network(n, solve_opts)
-        n.snapshots = n.snapshots[:20]
 
         n = solve_network(n, config=snakemake.config, opts=opts,
                           solver_dir=tmpdir,
