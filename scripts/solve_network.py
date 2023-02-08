@@ -100,16 +100,18 @@ def prepare_network(n, solve_opts=None):
 
 def add_battery_constraints(n):
     """
-    Add constraints to ensure that the ratio between the charger and
-    discharger.
-    1 * charger_size - efficiency * discharger_size = 0
+    Add constraint ensuring that charger = discharger:
+        1 * charger_size - efficiency * discharger_size = 0
     """
-    nodes = n.buses.index[n.buses.carrier == "battery"]
-    if nodes.empty:
-        return
-    link_p_nom = n.model["Link-p_nom"]
-    eff = n.links.efficiency[nodes + " discharger"].values
-    lhs = link_p_nom.loc[nodes + ' charger'] - link_p_nom.loc[nodes + ' discharger'] * eff
+    discharger_bool = n.links.index.str.contains("battery discharger")
+    charger_bool = n.links.index.str.contains("battery charger")
+
+    dischargers_ext= n.links[discharger_bool].query("p_nom_extendable").index
+    chargers_ext= n.links[charger_bool].query("p_nom_extendable").index
+
+    eff = n.links.efficiency[dischargers_ext].values
+    lhs = n.model["Link-p_nom"].loc[chargers_ext] - n.model["Link-p_nom"].loc[dischargers_ext] * eff
+    
     n.model.add_constraints(lhs == 0, name="Link-charger_ratio")
 
 
@@ -194,7 +196,7 @@ def add_co2_sequestration_limit(n, sns):
 def extra_functionality(n, snapshots):
     add_battery_constraints(n)
     add_pipe_retrofit_constraint(n)
-    # add_co2_sequestration_limit(n, snapshots)
+    add_co2_sequestration_limit(n, snapshots)
 
 
 def solve_network(n, config, opts="", **kwargs):
