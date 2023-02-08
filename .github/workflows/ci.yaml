@@ -103,7 +103,5 @@ jobs:
         run: |
           conda activate pypsa-eur
           conda list
-          cp test/config.overnight.yaml config.yaml
-          snakemake -call
-          cp test/config.myopic.yaml config.yaml
-          snakemake -call
+          snakemake -call --configfile test/config.overnight.yaml
+          snakemake -call --configfile test/config.myopic.yaml
