@@ -31,7 +31,7 @@ if __name__ == "__main__":
     threshold = 3
     include_onshore = False
 
-    gdf = gpd.read_file(snakemake.input.sequestration_potential)
+    gdf = gpd.read_file(snakemake.input.sequestration_potential[0])
 
     regions = gpd.read_file(snakemake.input.regions_offshore)
     if include_onshore:

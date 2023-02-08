@@ -61,7 +61,7 @@ def define_spatial(nodes, options):
 
     spatial.co2 = SimpleNamespace()
 
-    if options.get("co2_spatial", options["co2network"]):
+    if options["co2_spatial"]:
         spatial.co2.nodes = nodes + " co2 stored"
         spatial.co2.locations = nodes
         spatial.co2.vents = nodes + " co2 vent"
@@ -433,6 +433,7 @@ def add_carrier_buses(n, carrier, nodes=None):
         e_nom_extendable=True,
         e_cyclic=True,
         carrier=carrier,
+        capital_cost=0.2 * costs.at[carrier, "discount rate"] # preliminary value to avoid zeros
     )
 
     n.madd("Generator",
@@ -562,6 +563,28 @@ def add_co2_network(n, costs):
         lifetime=costs.at['CO2 pipeline', 'lifetime']
     )
 
+
+def add_allam(n, costs):  
+  
+    logger.info("Adding Allam cycle generators")  
+    
+    nodes = pop_layout.index  
+    
+    n.madd("Link",  
+    nodes + " allam",  
+    bus0=spatial.gas.df.loc[nodes, "nodes"].values,  
+    bus1=nodes,  
+    bus2=spatial.co2.df.loc[nodes, "nodes"].values,  
+    carrier="allam",  
+    p_nom_extendable=True,  
+    # TODO: add costs to technology-data
+    capital_cost=0.6*1.5e6*0.1, # efficiency * EUR/MW * annuity  
+    marginal_cost=2,  
+    efficiency=0.6,  
+    efficiency2=costs.at['gas', 'CO2 intensity'],  
+    lifetime=30.,
+    )  
+  
 
 def add_dac(n, costs):
 
@@ -2409,7 +2432,7 @@ def add_industry(n, costs):
         p_set=industrial_demand.loc[nodes, "electricity"] / 8760
     )
 
-    n.add("Bus",
+    n.madd("Bus",
         spatial.co2.process_emissions,
         location=spatial.co2.locations,
         carrier="process emissions",
@@ -2417,21 +2440,21 @@ def add_industry(n, costs):
     )
 
     sel = ["process emission", "process emission from feedstock"]
-    if options.get("co2_spatial", options["co2network"]):
+    if options["co2_spatial"] or options["co2network"]:
         p_set = -industrial_demand.loc[nodes, sel].sum(axis=1).rename(index=lambda x: x + " process emissions") / 8760
     else:
         p_set = -industrial_demand.loc[nodes, sel].sum(axis=1).sum() / 8760
 
     # this should be process emissions fossil+feedstock
     # then need load on atmosphere for feedstock emissions that are currently going to atmosphere via Link Fischer-Tropsch demand
-    n.add("Load",
+    n.madd("Load",
         spatial.co2.process_emissions,
         bus=spatial.co2.process_emissions,
         carrier="process emissions",
         p_set=p_set,
     )
 
-    n.add("Link",
+    n.madd("Link",
         spatial.co2.process_emissions,
         bus0=spatial.co2.process_emissions,
         bus1="co2 atmosphere",
@@ -2796,6 +2819,7 @@ if __name__ == "__main__":
 
     if options["co2network"]:
         add_co2_network(n, costs)
+        add_allam(n, costs)
 
     solver_name = snakemake.config["solving"]["solver"]["name"]
     n = set_temporal_aggregation(n, opts, solver_name)
