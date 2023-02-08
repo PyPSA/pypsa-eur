@@ -1,4 +1,5 @@
-run: test-overnight # use this to keep track of runs with different settings
+run: test-overnight  # use this to keep track of runs with different settings
+foresight: overnight # options are overnight, myopic, perfect (perfect is not yet implemented)
 
 scenario:
   lv: # allowed transmission line volume expansion, can be any float >= 1.0 (today) or "opt"
