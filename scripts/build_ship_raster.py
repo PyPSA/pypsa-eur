@@ -41,7 +41,7 @@ import logging
 import os
 import zipfile
 
-import xarray as xr
+import rioxarray as rio
 from _helpers import configure_logging
 from build_natura_raster import determine_cutout_xXyY
 
@@ -59,7 +59,7 @@ if __name__ == "__main__":
 
     with zipfile.ZipFile(snakemake.input.ship_density) as zip_f:
         zip_f.extract("shipdensity_global.tif")
-        with xr.open_rasterio("shipdensity_global.tif") as ship_density:
+        with rio.open_rasterio("shipdensity_global.tif") as ship_density:
             ship_density = ship_density.drop(["band"]).sel(
                 x=slice(min(xs), max(Xs)), y=slice(max(Ys), min(ys))
             )
