@@ -200,8 +200,8 @@ def extra_functionality(n, snapshots):
 
 
 def solve_network(n, config, opts="", **kwargs):
-    options = config['solving']['solver']['options']
-    solver_options = config['solving']["solver_options"][options] if options else None
+    set_of_options = config['solving']['solver']['options']
+    solver_options = config['solving']["solver_options"][set_of_options] if set_of_options else {}
     solver_name = config['solving']['solver']['name']
     cf_solving = config["solving"]["options"]
     track_iterations = cf_solving.get("track_iterations", False)
@@ -220,18 +220,18 @@ def solve_network(n, config, opts="", **kwargs):
     if skip_iterations:
         n.optimize(
             solver_name=solver_name,
-            solver_options=solver_options,
             extra_functionality=extra_functionality,
+            **solver_options,
             **kwargs,
         )
     else:
         n.optimize.optimize_transmission_expansion_iteratively(
             solver_name=solver_name,
-            solver_options=solver_options,
             track_iterations=track_iterations,
             min_iterations=min_iterations,
             max_iterations=max_iterations,
             extra_functionality=extra_functionality,
+            **solver_options,
             **kwargs,
         )
 
@@ -272,9 +272,7 @@ if __name__ == "__main__":
 
         n = prepare_network(n, solve_opts)
 
-        n = solve_network(n, config=snakemake.config, opts=opts,
-                          solver_dir=tmpdir,
-                          solver_logfile=snakemake.log.solver)
+        n = solve_network(n, config=snakemake.config, opts=opts, log_fn=snakemake.log.solver)
 
         if "lv_limit" in n.global_constraints.index:
             n.line_volume_limit = n.global_constraints.at["lv_limit", "constant"]
