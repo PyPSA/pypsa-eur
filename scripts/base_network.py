@@ -694,7 +694,6 @@ def base_network(
     parameter_corrections,
     config,
 ):
-
     buses = _load_buses_from_eg(eg_buses, europe_shape, config["electricity"])
 
     links = _load_links_from_eg(buses, eg_links)

@@ -238,7 +238,6 @@ def distribute_clusters(n, n_clusters, focus_weights=None, solver_name="cbc"):
     ), f"Number of clusters must be {len(N)} <= n_clusters <= {N.sum()} for this selection of countries."
 
     if focus_weights is not None:
-
         total_focus = sum(list(focus_weights.values()))
 
         assert (
@@ -396,7 +395,6 @@ def clustering_for_n_clusters(
     extended_link_costs=0,
     focus_weights=None,
 ):
-
     bus_strategies, generator_strategies = get_aggregation_strategies(
         aggregation_strategies
     )
