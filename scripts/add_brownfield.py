@@ -12,7 +12,6 @@ import numpy as np
 
 from add_existing_baseyear import add_build_year_to_new_assets
 from helper import override_component_attrs, update_config_with_sector_opts
-from solve_network import basename
 
 
 def add_brownfield(n, n_p, year):
@@ -99,7 +98,7 @@ def add_brownfield(n, n_p, year):
             pipe_capacity = n.links.loc[gas_pipes_i, 'p_nom']
             # already retrofitted capacity from gas -> H2
             already_retrofitted = (n.links.loc[h2_retrofitted_fixed_i, 'p_nom']
-                                   .rename(lambda x: basename(x).replace(fr, to)).groupby(level=0).sum())
+                                   .rename(lambda x: x.split("-2")[0].replace(fr, to)).groupby(level=0).sum())
             remaining_capacity = pipe_capacity - CH4_per_H2 * already_retrofitted.reindex(index=pipe_capacity.index).fillna(0)
             n.links.loc[gas_pipes_i, "p_nom"] = remaining_capacity
         else:
