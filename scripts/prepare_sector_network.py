@@ -1285,7 +1285,7 @@ def add_land_transport(n, costs):
     
     total_share = fuel_cell_share + electric_share + ice_share
     if total_share != 1:
-        logger.warning(f"Total land transport shares sum up to {total_share*100}%, corresponding to increased or decreased demand assumptions.")
+        logger.warning(f"Total land transport shares sum up to {total_share:.2%}, corresponding to increased or decreased demand assumptions.")
 
     logger.info(f"FCEV share: {fuel_cell_share*100}%")
     logger.info(f"EV share: {electric_share*100}%")
@@ -1816,7 +1816,7 @@ def create_nodes_for_heat_sector():
     progress = get(options["district_heating"]["progress"], investment_year)
     dist_fraction_node += diff * progress
     logger.info(
-        "Increase district heating share by a progress factor of {progress:.2%} "
+        f"Increase district heating share by a progress factor of {progress:.2%} "
         f"resulting in new average share of {dist_fraction_node.mean():.2%}"
     )
 
@@ -2155,7 +2155,7 @@ def add_industry(n, costs):
 
     total_share = shipping_hydrogen_share + shipping_methanol_share + shipping_oil_share
     if total_share != 1:
-        logger.warning(f"Total shipping shares sum up to {total_share*100}%, corresponding to increased or decreased demand assumptions.")
+        logger.warning(f"Total shipping shares sum up to {total_share:.2%}, corresponding to increased or decreased demand assumptions.")
 
     domestic_navigation = pop_weighted_energy_totals.loc[nodes, "total domestic navigation"].squeeze()
     international_navigation = pd.read_csv(snakemake.input.shipping_demand, index_col=0).squeeze()
@@ -2511,7 +2511,7 @@ def add_agriculture(n, costs):
 
     total_share = electric_share + oil_share
     if total_share != 1:
-        logger.warning(f"Total agriculture machinery shares sum up to {total_share*100}%, corresponding to increased or decreased demand assumptions.")
+        logger.warning(f"Total agriculture machinery shares sum up to {total_share:.2%}, corresponding to increased or decreased demand assumptions.")
 
     machinery_nodal_energy = pop_weighted_energy_totals.loc[nodes, "total agriculture machinery"]
 
