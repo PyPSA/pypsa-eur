@@ -27,6 +27,10 @@ gurobi.log
 /data/retro/tabula-calculator-calcsetbuilding.csv
 /data/nuts*
 data/gas_network/scigrid-gas/
+data/costs_*.csv
+
+dask-worker-space
+
 
 *.org
 
