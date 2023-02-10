@@ -135,6 +135,8 @@ def concat_networks(years):
     return n
 
 def adjust_stores(n):
+    """Make sure that stores still behave cyclic over one year and not whole
+    modelling horizon."""
     # cylclic constraint
     cyclic_i = n.stores[n.stores.e_cyclic].index
     n.stores.loc[cyclic_i, "e_cyclic_per_period"] = True
@@ -146,11 +148,17 @@ def adjust_stores(n):
     return n
 
 def set_phase_out(n, carrier, ct, phase_out_year):
+    """Set planned phase outs for given carrier,country (ct) and planned year
+    of phase out (phase_out_year)."""
     df = n.links[(n.links.carrier.isin(carrier))& (n.links.bus1.str[:2]==ct)]
+    # assets which are going to be phased out before end of their lifetime
     assets_i = df[df[["build_year", "lifetime"]].sum(axis=1) > phase_out_year].index
-    n.links.loc[assets_i, "lifetime"] = (phase_out_year - n.links.loc[assets_i, "build_year"]).astype(float)
+    build_year = n.links.loc[assets_i, "build_year"]
+    # adjust lifetime
+    n.links.loc[assets_i, "lifetime"] = (phase_out_year - build_year).astype(float)
 
 def set_all_phase_outs(n):
+    # TODO move this to a csv or to the config
     planned= [(["nuclear"], "DE", 2022),
               (["nuclear"], "BE", 2025),
               (["nuclear"], "ES", 2027),
@@ -172,7 +180,7 @@ def set_carbon_constraints(n, opts):
         snakemake.config["co2_budget"]["1p7"] * 1e9
     )  # budget for + 1.7 Celsius for Europe
     for o in opts:
-        # temporal clustering
+        # other budgets
         m = re.match(r"^\d+p\d$", o, re.IGNORECASE)
         if m is not None:
             budget = snakemake.config["co2_budget"][m.group(0)] * 1e9
@@ -197,7 +205,7 @@ def set_carbon_constraints(n, opts):
             sense="<=",
             constant=0,
         )
-
+    # set minimum CO2 emission constraint to avoid too fast reduction
     if "co2min" in opts:
         emissions_1990 = 4.53693
         emissions_2019 = 3.344096

@@ -272,12 +272,12 @@ def add_co2_sequestration_limit(n, sns):
 
     if co2_stores.empty or ('Store', 'e') not in n.variables.index:
         return
-    if snakemake.config["foresight"]:
+    if snakemake.config["foresight"]=="perfect":
         last_sn = (n.snapshot_weightings.loc[sns].reset_index(level=1, drop=False)
                    .groupby(level=0).last().reset_index()
                    .set_index(["period", "timestep"]).index)
     else:
-        last_sn = sns[-1]
+        last_sn = sns[-1:]
     vars_final_co2_stored = get_var(n, 'Store', 'e').loc[last_sn, co2_stores]
 
     lhs = linexpr((1, vars_final_co2_stored)).sum(axis=1)
@@ -374,12 +374,13 @@ if __name__ == "__main__":
     if 'snakemake' not in globals():
         from helper import mock_snakemake
         snakemake = mock_snakemake(
-            'solve_network_perfect',
+            'solve_network_myopic',
             simpl='',
             opts="",
             clusters="45",
             lv=1.0,
-            sector_opts='365H-T-H-B-I-A-solar+p3-dist1-co2min',
+            planning_horizons="2020",
+            sector_opts='Co2L0-365H-T-H-B-I-A-solar+p3-dist1',
         )
 
     logging.basicConfig(filename=snakemake.log.python,

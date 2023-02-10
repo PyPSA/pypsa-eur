@@ -542,6 +542,13 @@ rule copy_config:
     benchmark: SDIR + "/benchmarks/copy_config"
     script: "scripts/copy_config.py"
 
+rule copy_conda_env:
+    output: SDIR + '/configs/environment.yaml'
+    threads: 1
+    resources: mem_mb=500
+    benchmark: SDIR + "/benchmarks/copy_conda_env"
+    shell: "conda env export -f {output} --no-builds"
+    
 if config["foresight"] in ["myopic", "overnight"]:
     rule make_summary:
         input:
@@ -575,13 +582,6 @@ if config["foresight"] in ["myopic", "overnight"]:
         resources: mem_mb=10000
         benchmark: SDIR + "/benchmarks/make_summary"
         script: "scripts/make_summary.py"
-
-rule copy_conda_env:
-    output: SDIR + '/configs/environment.yaml'
-    threads: 1
-    resources: mem_mb=500
-    benchmark: SDIR + "/benchmarks/copy_conda_env"
-    shell: "conda env export -f {output} --no-builds"
 
     rule plot_summary:
         input:
