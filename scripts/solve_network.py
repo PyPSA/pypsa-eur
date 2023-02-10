@@ -57,7 +57,22 @@ def _add_land_use_constraint_m(n):
     n.generators.p_nom_max.clip(lower=0, inplace=True)
 
 
-def prepare_network(n, solve_opts=None):
+def add_co2_sequestration_limit(n, limit=200):
+    """Add a global constraint on the amount of Mt CO2 that can be sequestered."""
+    n.carriers.loc["co2 stored", "co2_absorptions"] = -1
+    n.carriers.co2_absorptions = n.carriers.co2_absorptions.fillna(0)
+
+    limit = limit * 1e6
+    for o in opts:
+        if not "seq" in o: continue
+        limit = float(o[o.find("seq")+3:]) * 1e6
+        break
+
+    n.add("GlobalConstraint", 'co2_sequestration_limit', sense="<=", constant=limit,
+            type="primary_energy", carrier_attribute="co2_absorptions")
+
+
+def prepare_network(n, solve_opts=None, config=None):
 
     if 'clip_p_max_pu' in solve_opts:
         for df in (n.generators_t.p_max_pu, n.generators_t.p_min_pu, n.storage_units_t.inflow):
@@ -95,6 +110,10 @@ def prepare_network(n, solve_opts=None):
     if snakemake.config['foresight'] == 'myopic':
         add_land_use_constraint(n)
 
+    if n.stores.carrier.eq('co2 stored').any():
+        limit = config["sector"].get("co2_sequestration_potential", 200)
+        add_co2_sequestration_limit(n, limit=limit)
+
     return n
 
 
@@ -111,7 +130,7 @@ def add_battery_constraints(n):
 
     eff = n.links.efficiency[dischargers_ext].values
     lhs = n.model["Link-p_nom"].loc[chargers_ext] - n.model["Link-p_nom"].loc[dischargers_ext] * eff
-    
+
     n.model.add_constraints(lhs == 0, name="Link-charger_ratio")
 
 
@@ -175,28 +194,9 @@ def add_pipe_retrofit_constraint(n):
     n.model.add_constraints(lhs == rhs, name='Link-pipe_retrofit')
 
 
-
-def add_co2_sequestration_limit(n, sns):
-
-    co2_stores = n.stores.loc[n.stores.carrier=='co2 stored'].index
-
-    if co2_stores.empty or 'Store-e' not in n.model.variables:
-        return
-
-    limit = n.config["sector"].get("co2_sequestration_potential", 200) * 1e6
-    for o in opts:
-        if not "seq" in o: continue
-        limit = float(o[o.find("seq")+3:]) * 1e6
-        break
-
-    n.add("GlobalConstraint", 'co2_sequestration_limit', sense="<=", constant=limit,
-          type=np.nan, carrier_attribute="co2 stored")
-
-
 def extra_functionality(n, snapshots):
     add_battery_constraints(n)
     add_pipe_retrofit_constraint(n)
-    add_co2_sequestration_limit(n, snapshots)
 
 
 def solve_network(n, config, opts="", **kwargs):
@@ -270,7 +270,7 @@ if __name__ == "__main__":
         overrides = override_component_attrs(snakemake.input.overrides)
         n = pypsa.Network(snakemake.input.network, override_component_attrs=overrides)
 
-        n = prepare_network(n, solve_opts)
+        n = prepare_network(n, solve_opts, config=snakemake.config)
 
         n = solve_network(n, config=snakemake.config, opts=opts, log_fn=snakemake.log.solver)
 

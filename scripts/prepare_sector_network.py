@@ -524,6 +524,8 @@ def add_co2_tracking(n, options):
         bus=spatial.co2.nodes
     )
 
+    n.add("Carrier", "co2 stored")
+
     if options['co2_vent']:
 
         n.madd("Link",
