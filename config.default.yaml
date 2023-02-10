@@ -339,7 +339,7 @@ industry:
 
 costs:
   year: 2030
-  version: v0.4.0
+  version: v0.5.0
   lifetime: 25 #default lifetime
   # From a Lion Hirth paper, also reflects average of Noothout et al 2016
   discountrate: 0.07
