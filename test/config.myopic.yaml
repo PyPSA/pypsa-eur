@@ -61,7 +61,7 @@ snapshots:
   # arguments to pd.date_range
   start: "2013-03-01"
   end: "2013-04-01"
-  closed: left # end is not inclusive
+  inclusive: left # end is not inclusive
 
 atlite:
   cutout: ../pypsa-eur/cutouts/be-03-2013-era5.nc
