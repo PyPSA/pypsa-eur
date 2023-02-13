@@ -52,10 +52,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Clone pypsa-eur and technology-data repositories
+      - name: Clone pypsa-eur subworkflow
         run: |
           git clone https://github.com/pypsa/pypsa-eur ../pypsa-eur
-          git clone https://github.com/pypsa/technology-data ../technology-data
           cp ../pypsa-eur/test/config.test1.yaml ../pypsa-eur/config.yaml
       
       - name: Setup secrets

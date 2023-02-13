@@ -1,6 +1,6 @@
 
 from os.path import exists
-from shutil import copyfile
+from shutil import copyfile, move
 
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 HTTP = HTTPRemoteProvider()
@@ -71,6 +71,15 @@ if config.get('retrieve_sector_databundle', True):
         output: *datafiles
         log: "logs/retrieve_sector_databundle.log"
         script: 'scripts/retrieve_sector_databundle.py'
+
+
+if config.get("retrieve_cost_data", True):
+    rule retrieve_cost_data:
+        input: HTTP.remote("raw.githubusercontent.com/PyPSA/technology-data/{}/outputs/".format(config['costs']['version']) + "costs_{year}.csv", keep_local=True)
+        output: "data/costs_{year}.csv"
+        log: "logs/" + RDIR + "retrieve_cost_data_{year}.log",
+        resources: mem_mb=1000,
+        run: move(input[0], output[0])
 
 
 rule build_population_layouts:
@@ -606,7 +615,7 @@ if config["foresight"] == "overnight":
         input:
             overrides="data/override_component_attrs",
             network=RDIR + "/prenetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc",
-            costs=CDIR + "costs_{}.csv".format(config['costs']['year']),
+            costs="data/costs_{}.csv".format(config['costs']['year']),
             config=SDIR + '/configs/config.yaml',
             #env=SDIR + '/configs/environment.yaml',
         output: RDIR + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc"
@@ -631,7 +640,7 @@ if config["foresight"] in ["myopic","perfect"]:
             busmap_s=pypsaeur("resources/busmap_elec_s{simpl}.csv"),
             busmap=pypsaeur("resources/busmap_elec_s{simpl}_{clusters}.csv"),
             clustered_pop_layout="resources/pop_layout_elec_s{simpl}_{clusters}.csv",
-            costs=CDIR + "costs_{}.csv".format(config['scenario']['planning_horizons'][0]),
+            costs="data/costs_{}.csv".format(config['scenario']['planning_horizons'][0]),
             cop_soil_total="resources/cop_soil_total_elec_s{simpl}_{clusters}.nc",
             cop_air_total="resources/cop_air_total_elec_s{simpl}_{clusters}.nc",
             existing_heating='data/existing_infrastructure/existing_heating_raw.csv',
@@ -663,7 +672,7 @@ if config["foresight"] == "myopic":
             overrides="data/override_component_attrs",
             network=RDIR + '/prenetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc',
             network_p=solved_previous_horizon, #solved network at previous time step
-            costs=CDIR + "costs_{planning_horizons}.csv",
+            costs="data/costs_{planning_horizons}.csv",
             cop_soil_total="resources/cop_soil_total_elec_s{simpl}_{clusters}.nc",
             cop_air_total="resources/cop_air_total_elec_s{simpl}_{clusters}.nc"
         output: RDIR + "/prenetworks-brownfield/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc"
@@ -679,7 +688,7 @@ if config["foresight"] == "myopic":
         input:
             overrides="data/override_component_attrs",
             network=RDIR + "/prenetworks-brownfield/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc",
-            costs=CDIR + "costs_{planning_horizons}.csv",
+            costs="data/costs_{planning_horizons}.csv",
             config=SDIR + '/configs/config.yaml'
         output: RDIR + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc"
         shadow: "shallow"

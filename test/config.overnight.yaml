@@ -3,10 +3,10 @@ version: 0.6.0
 logging_level: INFO
 
 retrieve_sector_databundle: true
+retrieve_cost_data: true
 
 results_dir: results/
 summary_dir: results
-costs_dir: ../technology-data/outputs/
 run: test-overnight  # use this to keep track of runs with different settings
 foresight: overnight # options are overnight, myopic, perfect (perfect is not yet implemented)
 # if you use myopic or perfect foresight, set the investment years in "planning_horizons" below
@@ -59,7 +59,7 @@ snapshots:
   # arguments to pd.date_range
   start: "2013-03-01"
   end: "2013-04-01"
-  closed: left # end is not inclusive
+  inclusive: left # end is not inclusive
 
 atlite:
   cutout: ../pypsa-eur/cutouts/be-03-2013-era5.nc
@@ -318,6 +318,7 @@ industry:
 
 costs:
   year: 2030
+  version: v0.5.0
   lifetime: 25 #default lifetime
   # From a Lion Hirth paper, also reflects average of Noothout et al 2016
   discountrate: 0.07

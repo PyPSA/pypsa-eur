@@ -19,6 +19,7 @@ from helper import override_component_attrs, generate_periodic_profiles, update_
 from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentation
 from networkx.algorithms import complement
 from pypsa.geo import haversine_pts
+from pypsa.io import import_components_from_dataframe
 
 import logging
 logger = logging.getLogger(__name__)
@@ -26,6 +27,9 @@ logger = logging.getLogger(__name__)
 from types import SimpleNamespace
 spatial = SimpleNamespace()
 
+from packaging.version import Version, parse
+pd_version = parse(pd.__version__)
+agg_group_kwargs = dict(numeric_only=False) if pd_version >= Version("1.3") else {}
 
 def define_spatial(nodes, options):
     """
@@ -994,7 +998,7 @@ def add_storage_and_grids(n, costs):
         )
 
     # hydrogen stored overground (where not already underground)
-    h2_capital_cost = costs.at["hydrogen storage tank incl. compressor", "fixed"]
+    h2_capital_cost = costs.at["hydrogen storage tank type 1 including compressor", "fixed"]
     nodes_overground = h2_caverns.index.symmetric_difference(nodes)
 
     n.madd("Store",
@@ -2600,6 +2604,98 @@ def limit_individual_line_extension(n, maxext):
     n.links.loc[hvdc, 'p_nom_max'] = n.links.loc[hvdc, 'p_nom'] + maxext
 
 
+aggregate_dict = {
+    "p_nom": "sum",
+    "s_nom": "sum",
+    "v_nom": "max",
+    "v_mag_pu_max": "min",
+    "v_mag_pu_min": "max",
+    "p_nom_max": "sum",
+    "s_nom_max": "sum",
+    "p_nom_min": "sum",
+    "s_nom_min": "sum",
+    'v_ang_min': "max",
+    "v_ang_max":"min",
+    "terrain_factor":"mean",
+    "num_parallel": "sum",
+    "p_set": "sum",
+    "e_initial": "sum",
+    "e_nom": "sum",
+    "e_nom_max": "sum",
+    "e_nom_min": "sum",
+    "state_of_charge_initial": "sum",
+    "state_of_charge_set": "sum",
+    "inflow": "sum",
+    "p_max_pu": "first",
+    "x": "mean",
+    "y": "mean"
+}
+
+def cluster_heat_buses(n):
+    """Cluster residential and service heat buses to one representative bus.
+    This can be done to save memory and speed up optimisation
+    """
+
+    def define_clustering(attributes, aggregate_dict):
+        """Define how attributes should be clustered.
+        Input:
+            attributes    : pd.Index()
+            aggregate_dict: dictionary (key: name of attribute, value
+                                        clustering method)
+
+        Returns:
+            agg           : clustering dictionary
+        """
+        keys = attributes.intersection(aggregate_dict.keys())
+        agg = dict(
+            zip(
+                attributes.difference(keys),
+                ["first"] * len(df.columns.difference(keys)),
+            )
+        )
+        for key in keys:
+            agg[key] = aggregate_dict[key]
+        return agg
+
+    logger.info("Cluster residential and service heat buses.")
+    components = ["Bus", "Carrier", "Generator", "Link", "Load", "Store"]
+
+    for c in n.iterate_components(components):
+        df = c.df
+        cols = df.columns[df.columns.str.contains("bus") | (df.columns=="carrier")]
+
+        # rename columns and index
+        df[cols] = (df[cols]
+                         .apply(lambda x: x.str.replace("residential ","")
+                                .str.replace("services ", ""), axis=1))
+        df = df.rename(index=lambda x: x.replace("residential ","")
+                       .replace("services ", ""))
+
+
+        # cluster heat nodes
+        # static dataframe
+        agg = define_clustering(df.columns, aggregate_dict)
+        df = df.groupby(level=0).agg(agg, **agg_group_kwargs)
+        # time-varying data
+        pnl = c.pnl
+        agg = define_clustering(pd.Index(pnl.keys()), aggregate_dict)
+        for k in pnl.keys():
+            pnl[k].rename(columns=lambda x: x.replace("residential ","")
+                           .replace("services ", ""), inplace=True)
+            pnl[k] = (
+                 pnl[k]
+                .groupby(level=0, axis=1)
+                .agg(agg[k], **agg_group_kwargs)
+            )
+
+        # remove unclustered assets of service/residential
+        to_drop = c.df.index.difference(df.index)
+        n.mremove(c.name, to_drop)
+        # add clustered assets
+        to_add = df.index.difference(c.df.index)
+        import_components_from_dataframe(n, df.loc[to_add], c.name)
+
+
 def apply_time_segmentation(n, segments, solver_name="cbc",
                             overwrite_time_dependent=True):
     """Aggregating time series to segments with different lengths
@@ -2681,6 +2777,7 @@ def set_temporal_aggregation(n, opts, solver_name):
             n = apply_time_segmentation(n, segments, solver_name=solver_name)
             break
     return n
+
 #%%
 if __name__ == "__main__":
     if 'snakemake' not in globals():
@@ -2827,5 +2924,13 @@ if __name__ == "__main__":
     if options['electricity_grid_connection']:
         add_electricity_grid_connection(n, costs)
 
+    first_year_myopic = ((snakemake.config["foresight"] == 'myopic') and
+                         (snakemake.config["scenario"]["planning_horizons"][0]==investment_year))
+
+    if options.get("cluster_heat_buses", False) and not first_year_myopic:
+        cluster_heat_buses(n)
+
+
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
+
     n.export_to_netcdf(snakemake.output[0])
