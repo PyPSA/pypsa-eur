@@ -350,6 +350,7 @@ costs:
   discountrate: 0.07
   # [EUR/USD] ECB: https://www.ecb.europa.eu/stats/exchange/eurofxref/html/eurofxref-graph-usd.en.html # noqa: E501
   USD2013_to_EUR2013: 0.7532
+  social_discountrate: 0.02
 
   # Marginal and capital costs can be overwritten
   # capital_cost:
