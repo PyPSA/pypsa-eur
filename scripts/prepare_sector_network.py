@@ -1008,7 +1008,7 @@ def add_storage_and_grids(n, costs):
         e_cyclic=True,
         carrier="H2 Store",
         capital_cost=h2_capital_cost,
-        lifetime=costs.at["hydrogen storage tank incl. compressor", "lifetime"],
+        lifetime=costs.at["hydrogen storage tank type 1 including compressor", "lifetime"],
     )
 
     if options["gas_network"] or options["H2_retrofit"]:
@@ -1280,7 +1280,7 @@ def add_land_transport(n, costs):
     fuel_cell_share = get(options["land_transport_fuel_cell_share"], investment_year)
     electric_share = get(options["land_transport_electric_share"], investment_year)
     ice_share = get(options["land_transport_ice_share"], investment_year)
-    
+
     total_share = fuel_cell_share + electric_share + ice_share
     if total_share != 1:
         logger.warning(f"Total land transport shares sum up to {total_share*100}%, corresponding to increased or decreased demand assumptions.")
