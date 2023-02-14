@@ -21,7 +21,7 @@ wildcard_constraints:
 
 SDIR = config['summary_dir'] + '/' + config['run']
 RDIR = config['results_dir'] + config['run']
-CDIR = config['costs_dir']
+
 
 
 subworkflow pypsaeur:
@@ -493,7 +493,7 @@ rule prepare_sector_network:
         co2="data/eea/UNFCCC_v23.csv",
         biomass_potentials='resources/biomass_potentials_s{simpl}_{clusters}.csv',
         heat_profile="data/heat_load_profile_BDEW.csv",
-        costs=CDIR + "costs_{}.csv".format(config['costs']['year']) if config["foresight"] == "overnight" else CDIR + "costs_{planning_horizons}.csv",
+        costs= "data/costs_{}.csv".format(config['costs']['year']) if config["foresight"] == "overnight" else "data/costs_{planning_horizons}.csv",
         profile_offwind_ac=pypsaeur("resources/profile_offwind-ac.nc"),
         profile_offwind_dc=pypsaeur("resources/profile_offwind-dc.nc"),
         h2_cavern="resources/salt_cavern_potentials_s{simpl}_{clusters}.csv",
@@ -557,7 +557,7 @@ rule copy_conda_env:
     resources: mem_mb=500
     benchmark: SDIR + "/benchmarks/copy_conda_env"
     shell: "conda env export -f {output} --no-builds"
-    
+
 if config["foresight"] in ["myopic", "overnight"]:
     rule make_summary:
         input:
@@ -566,7 +566,7 @@ if config["foresight"] in ["myopic", "overnight"]:
                 RDIR + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc",
                 **config['scenario']
             ),
-            costs=CDIR + "costs_{}.csv".format(config['scenario']['planning_horizons'][0]),
+            costs= "data/costs_{}.csv".format(config['scenario']['planning_horizons'][0]),
             plots=expand(
                 RDIR + "/maps/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
                 **config['scenario']
@@ -704,7 +704,8 @@ if config["foresight"] == "myopic":
 if config["foresight"] == "perfect":
     rule prepare_perfect_foresight:
         input:
-            network=expand(RDIR + "/prenetworks/" + "elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_{planning_horizons}.nc", **config['scenario']),
+            **{f"network_{year}": RDIR + "/prenetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_" + f"{year}.nc"
+             for year in config['scenario']["planning_horizons"][1:]},
             brownfield_network = lambda w: (RDIR + "/prenetworks-brownfield/" + "elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_" + "{}.nc"
                                             .format(str(config['scenario']["planning_horizons"][0]))),
             overrides="data/override_component_attrs",
@@ -717,7 +718,7 @@ if config["foresight"] == "perfect":
         input:
             overrides="data/override_component_attrs",
             network= RDIR + "/prenetworks-brownfield/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_brownfield_all_years.nc",
-            costs=CDIR + "costs_2030.csv",
+            costs="data/costs_2030.csv",
             config=SDIR + '/configs/config.yaml'
         output: RDIR + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_brownfield_all_years.nc"
         shadow: "shallow"
@@ -732,9 +733,14 @@ if config["foresight"] == "perfect":
 
     rule make_summary_perfect:
         input:
-            networks=expand(RDIR + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_brownfield_all_years.nc",
-                     **config['scenario']),
-            costs=CDIR + "costs_2020.csv",
+            **{f"networks_{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}":
+             RDIR + f"/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_brownfield_all_years.nc"
+                    for simpl in config['scenario']['simpl']
+                    for clusters in config['scenario']['clusters']
+                    for opts in config['scenario']['opts']
+                    for sector_opts in config['scenario']['sector_opts']
+                    for lv in config['scenario']['lv']},
+            costs="data/costs_2020.csv",
             overrides="data/override_component_attrs",
         output:
             nodal_costs="results" + '/' + config['run'] + '/csvs/nodal_costs.csv',
@@ -762,7 +768,8 @@ if config["foresight"] == "perfect":
     rule plot_summary_perfect:
         input:
             costs_csv="results"  + '/' + config['run'] + '/csvs/costs.csv',
-            costs=CDIR,
+            **{f"costs_{year}": f"data/costs_{year}.csv"
+             for year in config['scenario']["planning_horizons"]},
             energy="results"  + '/' + config['run'] + '/csvs/energy.csv',
             balances="results"  + '/' + config['run'] + '/csvs/supply_energy.csv',
             eea ="data/eea/UNFCCC_v24.csv",

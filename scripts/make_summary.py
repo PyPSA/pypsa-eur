@@ -1,6 +1,5 @@
 
 import sys
-import yaml
 import pypsa
 
 import numpy as np
@@ -409,8 +408,6 @@ def calculate_weighted_prices(n, label, weighted_prices):
 
         if carrier in ["H2", "gas"]:
             load = pd.DataFrame(index=n.snapshots, columns=buses, data=0.)
-        elif carrier[:5] == "space":
-            load = heat_demand_df[buses.str[:2]].rename(columns=lambda i: str(i)+suffix)
         else:
             load = n.loads_t.p_set[buses]
 
@@ -526,15 +523,29 @@ def make_summaries(networks_dict):
         "metrics",
     ]
 
-    columns = pd.MultiIndex.from_tuples(
-        networks_dict.keys(),
-        names=["cluster", "lv", "opt", "planning_horizon"]
-    )
+    network_paths = [key     for key in snakemake.input.keys()
+                                         if "networks" in key]
+
+    cols = pd.MultiIndex.from_tuples([key.split("_")
+                                         for key in network_paths])
+    cols = cols.droplevel([0,1,4])
+
+    networks_dict = {cols[i] : snakemake.input[network_path]
+                     for i, network_path in enumerate(network_paths)}
+
+    print(networks_dict)
+
+    # add planning horizons column
+    if snakemake.config["foresight"]=="perfect":
+        years = snakemake.config["scenario"]['planning_horizons']
+        cols = pd.MultiIndex.from_product([cols.levels[0], cols.levels[1],
+                                           cols.levels[2], years])
+
 
     df = {}
 
     for output in outputs:
-        df[output] = pd.DataFrame(columns=columns, dtype=float)
+        df[output] = pd.DataFrame(columns=cols, dtype=float)
 
     for label, filename in networks_dict.items():
         print(label, filename)
@@ -555,24 +566,13 @@ def to_csv(df):
     for key in df:
         df[key].to_csv(snakemake.output[key])
 
-
+#%%
 if __name__ == "__main__":
     if 'snakemake' not in globals():
         from helper import mock_snakemake
-        snakemake = mock_snakemake('make_summary')
-    
-    networks_dict = {
-        (cluster, lv, opt+sector_opt, planning_horizon) :
-        snakemake.config['results_dir'] + snakemake.config['run'] + f'/postnetworks/elec_s{simpl}_{cluster}_lv{lv}_{opt}_{sector_opt}_{planning_horizon}.nc' \
-        for simpl in snakemake.config['scenario']['simpl'] \
-        for cluster in snakemake.config['scenario']['clusters'] \
-        for opt in snakemake.config['scenario']['opts'] \
-        for sector_opt in snakemake.config['scenario']['sector_opts'] \
-        for lv in snakemake.config['scenario']['lv'] \
-        for planning_horizon in snakemake.config['scenario']['planning_horizons']
-    }
+        snakemake = mock_snakemake('make_summary_perfect')
 
-    print(networks_dict)
+
 
     Nyears = 1
 
@@ -593,5 +593,3 @@ if __name__ == "__main__":
     if snakemake.config["foresight"]=='myopic':
         cumulative_cost=calculate_cumulative_cost()
         cumulative_cost.to_csv(snakemake.config['summary_dir'] + '/' + snakemake.config['run'] + '/csvs/cumulative_cost.csv')
-
-
