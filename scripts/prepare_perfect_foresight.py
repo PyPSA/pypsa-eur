@@ -62,10 +62,11 @@ def concat_networks(years):
         """
 
     # input paths of sector coupling networks
-    network_paths = [snakemake.input.brownfield_network] + snakemake.input.network[1:]
+    network_paths = [snakemake.input.brownfield_network] + [
+                    snakemake.input[f"network_{year}"] for year in years[1:]]
     # final concatenated network
     overrides = override_component_attrs(snakemake.input.overrides)
-    n = pypsa.Network( override_component_attrs=overrides)
+    n = pypsa.Network(override_component_attrs=overrides)
 
 
     # iterate over single year networks and concat to perfect foresight network
@@ -236,7 +237,7 @@ if __name__ == "__main__":
             opts="",
             clusters="45",
             lv=1.0,
-            sector_opts='365H-T-H-B-I-A-solar+p3-dist1-co2min',
+            sector_opts='1p7-365H-T-H-B-I-A-solar+p3-dist1',
         )
 
     update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
