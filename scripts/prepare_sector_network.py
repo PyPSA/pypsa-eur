@@ -2227,6 +2227,7 @@ def add_industry(n, costs):
             bus3=spatial.co2.nodes,
             carrier="methanolisation",
             p_nom_extendable=True,
+            p_min_pu=options.get("min_part_load_methanolisation", 0),
             capital_cost=costs.at["methanolisation", 'fixed'] * options["MWh_MeOH_per_MWh_H2"], # EUR/MW_H2/a
             lifetime=costs.at["methanolisation", 'lifetime'],
             efficiency=options["MWh_MeOH_per_MWh_H2"],
@@ -2334,6 +2335,7 @@ def add_industry(n, costs):
         capital_cost=costs.at["Fischer-Tropsch", 'fixed'] * costs.at["Fischer-Tropsch", 'efficiency'], # EUR/MW_H2/a
         efficiency2=-costs.at["oil", 'CO2 intensity'] * costs.at["Fischer-Tropsch", 'efficiency'],
         p_nom_extendable=True,
+        p_min_pu=options.get("min_part_load_fischer_tropsch", 0),
         lifetime=costs.at['Fischer-Tropsch', 'lifetime']
     )
 
