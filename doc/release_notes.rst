@@ -65,6 +65,8 @@ incorporates retrofitting options to hydrogen.
 
 * Add option for BtL (Biomass to liquid fuel/oil) with and without CC
 
+* Add option for minimum part load for Fischer-Tropsch plants (default: 90%) and methanolisation plants (default: 50%).
+
 * Units are assigned to the buses. These only provide a better understanding. The specifications of the units are not taken into account in the optimisation, which means that no automatic conversion of units takes place.
 
 * Option ``retrieve_sector_databundle`` to automatically retrieve and extract data bundle.

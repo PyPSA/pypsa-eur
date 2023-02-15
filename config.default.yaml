@@ -261,6 +261,8 @@ sector:
     - nearshore  # within 50 km of sea
     # - offshore
   ammonia: false # can be false (no NH3 carrier), true (copperplated NH3), "regional" (regionalised NH3 without network)
+  min_part_load_fischer_tropsch: 0.9 # p_min_pu
+  min_part_load_methanolisation: 0.5 # p_min_pu
   use_fischer_tropsch_waste_heat: true
   use_fuel_cell_waste_heat: true
   electricity_distribution_grid: true
