@@ -237,9 +237,11 @@ def nuts3(country_shapes, nuts3, nuts3pop, nuts3gdp, ch_cantons, ch_popgdp):
     manual = gpd.GeoDataFrame(
         [["BA1", "BA", 3871.0], ["RS1", "RS", 7210.0], ["AL1", "AL", 2893.0]],
         columns=["NUTS_ID", "country", "pop"],
-    ).set_index("NUTS_ID")
+    )
     manual["geometry"] = manual["country"].map(country_shapes)
     manual = manual.dropna()
+    manual = manual.set_index("NUTS_ID")
+    manual = manual.set_crs('ETRS89')
 
     df = pd.concat([df, manual], sort=False)
 
