@@ -3,10 +3,10 @@ version: 0.6.0
 logging_level: INFO
 
 retrieve_sector_databundle: true
+retrieve_cost_data: true
 
 results_dir: results/
 summary_dir: results
-costs_dir: ../technology-data/outputs/
 run: your-run-name  # use this to keep track of runs with different settings
 foresight: overnight # options are overnight, myopic, perfect (perfect is not yet implemented)
 # if you use myopic or perfect foresight, set the investment years in "planning_horizons" below
@@ -66,7 +66,7 @@ snapshots:
   # arguments to pd.date_range
   start: "2013-01-01"
   end: "2014-01-01"
-  closed: left # end is not inclusive
+  inclusive: left # end is not inclusive
 
 atlite:
   cutout: ../pypsa-eur/cutouts/europe-2013-era5.nc
@@ -160,6 +160,7 @@ sector:
       2040: 0.6
       2050: 1.0
     district_heating_loss: 0.15
+  cluster_heat_buses: false # cluster residential and service heat buses to one to save memory
   bev_dsm_restriction_value: 0.75  #Set to 0 for no restriction on BEV DSM
   bev_dsm_restriction_time: 7  #Time at which SOC of BEV has to be dsm_restriction_value
   transport_heating_deadband_upper: 20.
@@ -262,8 +263,11 @@ sector:
     - nearshore  # within 50 km of sea
     # - offshore
   ammonia: false # can be false (no NH3 carrier), true (copperplated NH3), "regional" (regionalised NH3 without network)
+  min_part_load_fischer_tropsch: 0.9 # p_min_pu
+  min_part_load_methanolisation: 0.5 # p_min_pu
   use_fischer_tropsch_waste_heat: true
   use_fuel_cell_waste_heat: true
+  use_electrolysis_waste_heat: false
   electricity_distribution_grid: true
   electricity_distribution_grid_cost_factor: 1.0  #multiplies cost in data/costs.csv
   electricity_grid_connection: true  # only applies to onshore wind and utility PV
@@ -341,6 +345,7 @@ industry:
 
 costs:
   year: 2030
+  version: v0.5.0
   lifetime: 25 #default lifetime
   # From a Lion Hirth paper, also reflects average of Noothout et al 2016
   discountrate: 0.07

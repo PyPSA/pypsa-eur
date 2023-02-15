@@ -65,9 +65,13 @@ incorporates retrofitting options to hydrogen.
 
 * Add option for BtL (Biomass to liquid fuel/oil) with and without CC
 
+* Add option for minimum part load for Fischer-Tropsch plants (default: 90%) and methanolisation plants (default: 50%).
+
 * Units are assigned to the buses. These only provide a better understanding. The specifications of the units are not taken into account in the optimisation, which means that no automatic conversion of units takes place.
 
 * Option ``retrieve_sector_databundle`` to automatically retrieve and extract data bundle.
+
+* Add option to use waste heat of electrolysis in district heating networks (``use_electrolysis_waste_heat``).
 
 * Add regionalised hydrogen salt cavern storage potentials from `Technical Potential of Salt Caverns for Hydrogen Storage in Europe <https://doi.org/10.20944/preprints201910.0187.v1>`_.
 

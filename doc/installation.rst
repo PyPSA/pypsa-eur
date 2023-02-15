@@ -25,15 +25,6 @@ then download and unpack all the PyPSA-Eur data files by running the following s
     projects/pypsa-eur % snakemake -j 1 retrieve_databundle
 
 
-Clone technology-data repository
-================================
-
-Next install the technology assumptions database `technology-data <https://github.com/PyPSA/technology-data>`_ by creating a parallel directory:
-
-.. code:: bash
-
-    projects % git clone https://github.com/PyPSA/technology-data.git
-
 
 Clone PyPSA-Eur-Sec repository
 ==============================
