@@ -241,7 +241,7 @@ def nuts3(country_shapes, nuts3, nuts3pop, nuts3gdp, ch_cantons, ch_popgdp):
     manual["geometry"] = manual["country"].map(country_shapes)
     manual = manual.dropna()
     manual = manual.set_index("NUTS_ID")
-    manual = manual.set_crs('ETRS89')
+    manual = manual.set_crs("ETRS89")
 
     df = pd.concat([df, manual], sort=False)
 
