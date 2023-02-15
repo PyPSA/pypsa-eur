@@ -265,6 +265,7 @@ sector:
   min_part_load_methanolisation: 0.5 # p_min_pu
   use_fischer_tropsch_waste_heat: true
   use_fuel_cell_waste_heat: true
+  use_electrolysis_waste_heat: false
   electricity_distribution_grid: true
   electricity_distribution_grid_cost_factor: 1.0  #multiplies cost in data/costs.csv
   electricity_grid_connection: true  # only applies to onshore wind and utility PV
