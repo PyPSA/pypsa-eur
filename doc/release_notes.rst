@@ -69,6 +69,8 @@ incorporates retrofitting options to hydrogen.
 
 * Option ``retrieve_sector_databundle`` to automatically retrieve and extract data bundle.
 
+* Add option to use waste heat of electrolysis in district heating networks (``use_electrolysis_waste_heat``).
+
 * Add regionalised hydrogen salt cavern storage potentials from `Technical Potential of Salt Caverns for Hydrogen Storage in Europe <https://doi.org/10.20944/preprints201910.0187.v1>`_.
 
 * Add option to sweep the global CO2 sequestration potentials with keyword ``seq200`` in the ``{sector_opts}`` wildcard (for limit of 200 Mt CO2).
