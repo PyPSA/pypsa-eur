@@ -288,7 +288,7 @@ else:
     build_biomass_transport_costs_output = {}
 
 
-if config["sector"].get("sequestration_potential", False):
+if config["sector"]["regional_co2_sequestration_potential"]["enable"]:
     rule build_sequestration_potentials:
         input:
             sequestration_potential=HTTP.remote("https://raw.githubusercontent.com/ericzhou571/Co2Storage/main/resources/complete_map_2020_unit_Mt.geojson", keep_local=True),

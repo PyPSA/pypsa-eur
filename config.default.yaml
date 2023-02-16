@@ -250,8 +250,15 @@ sector:
   coal_cc: false
   dac: true
   co2_vent: false
+  allam_cycle: false
   SMR: true
-  sequestration_potential: true  # geological co2 storage potential
+  regional_co2_sequestration_potential:
+    enable: false  # enable regionally resolved geological co2 storage potential
+    attribute: 'conservative estimate Mt'
+    include_onshore: false  # include onshore sequestration potentials
+    min_size: 3 # Gt, sites with lower potential will be excluded
+    max_size: 25 # Gt, max sequestration potential for any one site, TODO research suitable value
+    years_of_storage: 25 # years until potential exhausted at optimised annual rate
   co2_sequestration_potential: 200  #MtCO2/a sequestration potential for Europe
   co2_sequestration_cost: 10   #EUR/tCO2 for sequestration of CO2
   co2_spatial: false
@@ -281,8 +288,8 @@ sector:
   gas_network_connectivity_upgrade: 1 # https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation
   gas_distribution_grid: true
   gas_distribution_grid_cost_factor: 1.0  #multiplies cost in data/costs.csv
-  biomass_spatial: false  # biomass transport between nodes
-  biomass_transport: false  # biomass transport between nodes
+  biomass_spatial: false  # regionally resolve biomass (e.g. potentials)
+  biomass_transport: false  # allow transport of solid biomass between nodes
   conventional_generation: # generator : carrier
     OCGT: gas
   biomass_to_liquid: false

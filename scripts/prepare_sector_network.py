@@ -517,10 +517,9 @@ def add_co2_tracking(n, options):
         unit="t_co2"
     )
 
-    if options["sequestration_potential"]:
-        # TODO make configurable options
-        upper_limit = 25000 # Mt
-        annualiser = 25 # TODO research suitable value
+    if options["regional_co2_sequestration_potential"]["enable"]:
+        upper_limit = options["regional_co2_sequestration_potential"]["max_size"] * 1e3 # Mt
+        annualiser = options["regional_co2_sequestration_potential"]["years_of_storage"]
         e_nom_max = pd.read_csv(snakemake.input.sequestration_potential, index_col=0).squeeze()
         e_nom_max = e_nom_max.reindex(spatial.co2.locations).fillna(0.).clip(upper=upper_limit).mul(1e6) / annualiser # t
         e_nom_max = e_nom_max.rename(index=lambda x: x + " co2 stored")
@@ -570,24 +569,25 @@ def add_co2_network(n, costs):
 
 def add_allam(n, costs):  
   
-    logger.info("Adding Allam cycle generators")  
+    logger.info("Adding Allam cycle gas power plants.")  
     
     nodes = pop_layout.index  
     
     n.madd("Link",  
-    nodes + " allam",  
-    bus0=spatial.gas.df.loc[nodes, "nodes"].values,  
-    bus1=nodes,  
-    bus2=spatial.co2.df.loc[nodes, "nodes"].values,  
-    carrier="allam",  
-    p_nom_extendable=True,  
-    # TODO: add costs to technology-data
-    capital_cost=0.6*1.5e6*0.1, # efficiency * EUR/MW * annuity  
-    marginal_cost=2,  
-    efficiency=0.6,  
-    efficiency2=costs.at['gas', 'CO2 intensity'],  
-    lifetime=30.,
-    )  
+        nodes,
+        suffix=" allam",  
+        bus0=spatial.gas.df.loc[nodes, "nodes"].values,  
+        bus1=nodes,  
+        bus2=spatial.co2.df.loc[nodes, "nodes"].values,  
+        carrier="allam",  
+        p_nom_extendable=True,  
+        # TODO: add costs to technology-data
+        capital_cost=0.6*1.5e6*0.1, # efficiency * EUR/MW * annuity  
+        marginal_cost=2,  
+        efficiency=0.6,  
+        efficiency2=costs.at['gas', 'CO2 intensity'],  
+        lifetime=30.,
+    )
   
 
 def add_dac(n, costs):
@@ -2923,6 +2923,8 @@ if __name__ == "__main__":
 
     if options["co2network"]:
         add_co2_network(n, costs)
+
+    if options["allam_cycle"]:
         add_allam(n, costs)
 
     solver_name = snakemake.config["solving"]["solver"]["name"]

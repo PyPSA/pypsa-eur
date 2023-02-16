@@ -27,22 +27,17 @@ if __name__ == "__main__":
             clusters="181"
         )
 
-    # TODO move to config.yaml
-    threshold = 3
-    include_onshore = False
+    cf = snakemake.config["sector"]["regional_co2_sequestration_potential"]
 
     gdf = gpd.read_file(snakemake.input.sequestration_potential[0])
 
     regions = gpd.read_file(snakemake.input.regions_offshore)
-    if include_onshore:
+    if cf["include_onshore"]:
         onregions = gpd.read_file(snakemake.input.regions_onshore)
         regions = pd.concat([regions, onregions]).dissolve(by='name').reset_index()
 
-    attr = snakemake.config['sector']["sequestration_potential"]
-    kwargs = dict(attr=attr, threshold=threshold) if isinstance(attr, str) else {}
+    s = allocate_sequestration_potential(gdf, regions, attr=cf["attribute"], threshold=cf["min_size"])
 
-    s = allocate_sequestration_potential(gdf, regions, **kwargs)
-
-    s = s.where(s>threshold).dropna()
+    s = s.where(s>cf["min_size"]).dropna()
 
     s.to_csv(snakemake.output.sequestration_potential)

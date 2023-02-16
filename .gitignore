@@ -51,3 +51,7 @@ doc/_build
 *.xls
 
 *.geojson
+
+*.ipynb
+
+data/costs_*
