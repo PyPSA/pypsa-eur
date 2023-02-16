@@ -16,13 +16,31 @@ snapshots:
   # arguments to pd.date_range
   start: "2013-03-01"
   end: "2013-04-01"
-  closed: left # end is not inclusive
+  inclusive: left # end is not inclusive
 
 atlite:
   cutout: ../pypsa-eur/cutouts/be-03-2013-era5.nc
 
 sector:
   co2_vent: true
+  SMR: true
+  regional_co2_sequestration_potential:
+    enable: false
+  co2_sequestration_potential: 200  #MtCO2/a sequestration potential for Europe
+  co2_sequestration_cost: 10   #EUR/tCO2 for sequestration of CO2
+  co2_network: false
+  cc_fraction: 0.9  # default fraction of CO2 captured with post-combustion capture
+  hydrogen_underground_storage: true
+  hydrogen_underground_storage_locations:
+    # - onshore  # more than 50 km from sea
+    - nearshore  # within 50 km of sea
+    # - offshore
+  use_fischer_tropsch_waste_heat: true
+  use_fuel_cell_waste_heat: true
+  electricity_distribution_grid: true
+  electricity_distribution_grid_cost_factor: 1.0  #multiplies cost in data/costs.csv
+  electricity_grid_connection: true  # only applies to onshore wind and utility PV
+  H2_network: true
   gas_network: true
   H2_retrofit: true # if set to True existing gas pipes can be retrofitted to H2 pipes
   biomass_boiler: false

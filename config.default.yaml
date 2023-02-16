@@ -66,7 +66,7 @@ snapshots:
   # arguments to pd.date_range
   start: "2013-01-01"
   end: "2014-01-01"
-  closed: left # end is not inclusive
+  inclusive: left # end is not inclusive
 
 atlite:
   cutout: ../pypsa-eur/cutouts/europe-2013-era5.nc
@@ -250,10 +250,19 @@ sector:
   coal_cc: false
   dac: true
   co2_vent: false
+  allam_cycle: false
   SMR: true
+  regional_co2_sequestration_potential:
+    enable: false  # enable regionally resolved geological co2 storage potential
+    attribute: 'conservative estimate Mt'
+    include_onshore: false  # include onshore sequestration potentials
+    min_size: 3 # Gt, sites with lower potential will be excluded
+    max_size: 25 # Gt, max sequestration potential for any one site, TODO research suitable value
+    years_of_storage: 25 # years until potential exhausted at optimised annual rate
   co2_sequestration_potential: 200  #MtCO2/a sequestration potential for Europe
   co2_sequestration_cost: 10   #EUR/tCO2 for sequestration of CO2
-  co2_network: false
+  co2_spatial: false
+  co2network: false
   cc_fraction: 0.9  # default fraction of CO2 captured with post-combustion capture
   hydrogen_underground_storage: true
   hydrogen_underground_storage_locations:
@@ -261,8 +270,11 @@ sector:
     - nearshore  # within 50 km of sea
     # - offshore
   ammonia: false # can be false (no NH3 carrier), true (copperplated NH3), "regional" (regionalised NH3 without network)
+  min_part_load_fischer_tropsch: 0.9 # p_min_pu
+  min_part_load_methanolisation: 0.5 # p_min_pu
   use_fischer_tropsch_waste_heat: true
   use_fuel_cell_waste_heat: true
+  use_electrolysis_waste_heat: false
   electricity_distribution_grid: true
   electricity_distribution_grid_cost_factor: 1.0  #multiplies cost in data/costs.csv
   electricity_grid_connection: true  # only applies to onshore wind and utility PV
@@ -276,7 +288,8 @@ sector:
   gas_network_connectivity_upgrade: 1 # https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation
   gas_distribution_grid: true
   gas_distribution_grid_cost_factor: 1.0  #multiplies cost in data/costs.csv
-  biomass_transport: false  # biomass transport between nodes
+  biomass_spatial: false  # regionally resolve biomass (e.g. potentials)
+  biomass_transport: false  # allow transport of solid biomass between nodes
   conventional_generation: # generator : carrier
     OCGT: gas
   biomass_to_liquid: false

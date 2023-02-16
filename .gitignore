@@ -31,6 +31,8 @@ data/costs_*.csv
 
 dask-worker-space
 
+dask-worker-space/
+publications.jrc.ec.europa.eu/
 
 *.org
 
@@ -53,3 +55,7 @@ doc/_build
 *.xls
 
 *.geojson
+
+*.ipynb
+
+data/costs_*
