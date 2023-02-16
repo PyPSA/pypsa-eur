@@ -1,8 +1,8 @@
-# SPDX-FileCopyrightText: : 2017-2022 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: CC0-1.0
 
-version: 0.6.1
+version: 0.7.0
 tutorial: false
 
 logging:
@@ -233,7 +233,7 @@ load:
 
 costs:
   year: 2030
-  version: v0.4.0
+  version: v0.5.0
   rooftop_share: 0.14  # based on the potentials, assuming  (0.1 kW/m2 and 10 m2/person)
   fill_values:
     FOM: 0
@@ -288,7 +288,7 @@ solving:
     min_iterations: 4
     max_iterations: 6
     clip_p_max_pu: 0.01
-    skip_iterations: false
+    skip_iterations: true
     track_iterations: false
     #nhours: 10
   solver:

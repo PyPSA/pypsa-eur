@@ -1,8 +1,8 @@
-# SPDX-FileCopyrightText: : 2017-2022 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: CC0-1.0
 
-version: 0.6.1
+version: 0.7.0
 tutorial: true
 
 logging:
@@ -50,9 +50,29 @@ electricity:
     battery: 6
     H2: 168
 
-  powerplants_filter: false # use pandas query strings here, e.g. Country not in ['Germany']
-  custom_powerplants: false # use pandas query strings here, e.g. Country in ['Germany']
-  conventional_carriers: [coal, CCGT] # [nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
+  # use pandas query strings here, e.g. Country not in ['Germany']
+  powerplants_filter: (DateOut >= 2022 or DateOut != DateOut)
+  # use pandas query strings here, e.g. Country in ['Germany']
+  custom_powerplants: false
+
+  conventional_carriers: [nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
+  renewable_carriers: [solar, onwind, offwind-ac, offwind-dc, hydro]
+
+  estimate_renewable_capacities:
+    enable: true
+    # Add capacities from OPSD data
+    from_opsd: true
+    # Renewable capacities are based on existing capacities reported by IRENA
+    year: 2020
+    # Artificially limit maximum capacities to factor * (IRENA capacities),
+    # i.e. 110% of <years>'s capacities => expansion_limit: 1.1
+    # false: Use estimated renewable potentials determine by the workflow
+    expansion_limit: false
+    technology_mapping:
+      # Wind is the Fueltype in powerplantmatching, onwind, offwind-{ac,dc} the carrier in PyPSA-Eur
+      Offshore: [offwind-ac, offwind-dc]
+      Onshore: [onwind]
+      PV: [solar]
 
 atlite:
   nprocesses: 4
@@ -163,7 +183,7 @@ load:
 
 costs:
   year: 2030
-  version: v0.4.0
+  version: v0.5.0
   rooftop_share: 0.14
   fill_values:
     FOM: 0

@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2019-2022 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: 2019-2023 The PyPSA-Eur Authors
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -10,19 +10,80 @@ Release Notes
 Upcoming Release
 ================
 
-* Fix EQ constraint for the case no hydro inflow is available
+* new features
 
-* Bugfix in the reserve constraint will increase demand related reserve requirements
+
+PyPSA-Eur 0.7.0 (16th February 2023)
+====================================
+
 
 **New Features**
 
-* Carriers of generators can now be excluded from aggregation in clustering network and simplify network.
+* Carriers of generators can now be excluded from aggregation in clustering
+  network and simplify network (see ``exclude_carriers``).
+
+* Added control for removing stubs in  :mod:`simplify_network` with options
+  ``remove_stubs`` and ``remove_stubs_across_countries``.
+
+* Add control for showing a progressbar in ``atlite`` processes
+  (``show_progress``). Disabling the progressbar saves a lot of time.
+
+* Added control for resolution of land eligibility analysis (see
+  ``excluder_resolution``).
+
 
 **Breaking Changes**
 
-* The config entry ``snapshots["closed"]`` was renamed to ``snapshots["inclusive"]`` to address the upstream deprecation with ``pandas=1.4``.
-  The previous setting ``None`` is no longer supported and replaced by ``both``, see the `pandas documentation <https://pandas.pydata.org/docs/reference/api/pandas.date_range.html>`_.
-  Minimum ``pandas`` version now required is `>= 1.4`.
+* The config entry ``snapshots: closed:`` was renamed to ``snapshots:
+  inclusive:`` to address the upstream deprecation with ``pandas=1.4``. The
+  previous setting ``None`` is no longer supported and replaced by ``both``, see
+  the `pandas documentation
+  <https://pandas.pydata.org/docs/reference/api/pandas.date_range.html>`_.
+  Minimum version is now ``pandas>=1.4``.
+
+* The configuration setting ``summary_dir`` was removed.
+
+
+**Changes**
+
+* Configuration defaults to new ``technology-data`` version 0.5.0.
+
+* Fixed CRS warnings when projection of datasets was not specified.
+
+* Cleaned shape unary unions.
+
+* Increased resource requirements for some rules.
+
+* Updated documentation.
+
+* The documentation now uses the ``sphinx_book_theme``.
+
+
+**Bugs and Compatibility**
+
+
+* Bugfix: Corrected extent of natural protection areas in :mod:`build_natura_raster`.
+
+* Bugfix: Use correct load variables for formulating reserve constraints.
+
+* Bugfix: Use all available energy-to-power ratios for hydropower plants.
+
+* Bugfix: The most recent processing of the ``entsoegridkit`` extract required
+  further manual corrections. Also, the connection points of TYNDP links were
+  corrected.
+
+* Bugfix: Handle absence of hydropower inflow in ``EQ`` constraint.
+
+* Compatibility with ``pyomo>=6.4.3`` in :mod:`cluster_network`.
+
+* Upgrade to ``shapely>=2``.
+
+* Updated version of CI cache action to version 3.
+*
+* Updated dependency constraints in ``environment.yaml``.
+
+* Address various deprecation warnings.
+
 
 
 PyPSA-Eur 0.6.1 (20th September 2022)
@@ -75,27 +136,20 @@ PyPSA-Eur 0.5.0 (27th July 2022)
 **New Features**
 
 * New network topology extracted from the ENTSO-E interactive map.
-
 * Added existing renewable capacities for all countries based on IRENA
   statistics (IRENASTAT) using new ``powerplantmatching`` version:
-  * The corresponding ``config`` entries changed, cf. ``config.default.yaml``:
-    * old: ``estimate_renewable_capacities_from_capacity_stats``
-    * new: ``estimate_renewable_capacities``
-  * The estimation is endabled by setting the subkey ``enable`` to ``True``.
-  * Configuration of reference year for capacities can be configured (default:
-    ``2020``)
-  * The list of renewables provided by the OPSD database can be used as a basis,
-    using the tag ``from_opsd: True``. This adds the renewables from the
-    database and fills up the missing capacities with the heuristic
-    distribution.
-  * Uniform expansion limit of renewable build-up based on existing capacities
-    can be configured using ``expansion_limit`` option (default: ``false``;
-    limited to determined renewable potentials)
-  * Distribution of country-level capacities proportional to maximum annual
-    energy yield for each bus region
-  * The config key ``renewable_capacities_from_OPSD`` is deprecated and was moved
-    under the section, ``estimate_renewable_capacities``. To enable it, set
-    ``from_opsd`` to ``True``.
+* The corresponding ``config`` entries changed from ``estimate_renewable_capacities_from_capacity_stats`` to ``estimate_renewable_capacities``.
+* The estimation is endabled by setting the subkey ``enable`` to ``True``.
+* Configuration of reference year for capacities can be configured (default: ``2020``)
+* The list of renewables provided by the OPSD database can be used as a basis, using the tag ``from_opsd: True``. This adds the renewables from the database and fills up the missing capacities with the heuristic distribution.
+* Uniform expansion limit of renewable build-up based on existing capacities
+  can be configured using ``expansion_limit`` option (default: ``false``;
+  limited to determined renewable potentials)
+* Distribution of country-level capacities proportional to maximum annual
+  energy yield for each bus region
+* The config key ``renewable_capacities_from_OPSD`` is deprecated and was moved
+  under the section, ``estimate_renewable_capacities``. To enable it, set
+  ``from_opsd`` to ``True``.
 
 * Add operational reserve margin constraint analogous to `GenX implementation
   <https://genxproject.github.io/GenX/dev/core/#Reserves>`_. Can be activated
@@ -557,7 +611,7 @@ Release Process
 
 * Update ``envs/environment.fixed.yaml`` via
   ``conda env export -n pypsa-eur -f envs/environment.fixed.yaml --no-builds``
-  from an up-to-date `pypsa-eur` environment.
+  from an up-to-date ``pypsa-eur`` environment.
 
 * Update version number in ``doc/conf.py``, ``CITATION.cff`` and ``*config.*.yaml``.
 
@@ -568,7 +622,7 @@ Release Process
 
 * Upload code to `zenodo code repository <https://doi.org/10.5281/zenodo.3520874>`_ with `MIT license <https://opensource.org/licenses/MIT>`_.
 
-* Create pre-built networks for ``config.default.yaml`` by running ``snakemake -j 1 extra_components_all_networks``.
+* Create pre-built networks for ``config.default.yaml`` by running ``snakemake -call extra_components_all_networks``.
 
 * Upload pre-built networks to `zenodo data repository <https://doi.org/10.5281/zenodo.3601881>`_ with `CC BY 4.0 <https://creativecommons.org/licenses/by/4.0/>`_ license.
 

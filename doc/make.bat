@@ -1,4 +1,4 @@
-REM SPDX-FileCopyrightText: 2019-2022 The PyPSA-Eur Authors
+REM SPDX-FileCopyrightText: 2019-2023 The PyPSA-Eur Authors
 REM SPDX-License-Identifier: MIT
 
 @ECHO OFF
