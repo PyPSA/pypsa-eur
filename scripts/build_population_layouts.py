@@ -40,7 +40,7 @@ if __name__ == '__main__':
     reference = ["RS", "BA"]
     average = urban_fraction[reference].mean()
     fill_values = pd.Series({ct: average for ct in missing})
-    urban_fraction = urban_fraction.append(fill_values)
+    urban_fraction = pd.concat([urban_fraction, fill_values])
 
     # population in each grid cell
     pop_cells = pd.Series(I.dot(nuts3['pop']))

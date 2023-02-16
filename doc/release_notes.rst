@@ -8,6 +8,11 @@ Future release
 .. note::
   This unreleased version currently may require the master branches of PyPSA, PyPSA-Eur, and the technology-data repository.
 
+* new feature
+
+PyPSA-Eur-Sec 0.7.0 (16th February 2023)
+========================================
+
 This release includes the addition of the European gas transmission network and
 incorporates retrofitting options to hydrogen.
 
