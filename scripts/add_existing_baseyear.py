@@ -178,7 +178,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
     busmap = pd.read_csv(snakemake.input.busmap, index_col=0).squeeze()
 
     inv_busmap = {}
-    for k, v in busmap.iteritems():
+    for k, v in busmap.items():
         inv_busmap[v] = inv_busmap.get(v, []) + [k]
 
     clustermaps = busmap_s.map(busmap)

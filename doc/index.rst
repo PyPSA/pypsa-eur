@@ -101,6 +101,15 @@ Ministry for Education and Research (BMBF) <https://www.bmbf.de/en/index.html>`_
 as part of the `Stromnetze Research Initiative
 <http://forschung-stromnetze.info/projekte/grundlagen-und-konzepte-fuer-effiziente-dezentrale-stromnetze/>`_.
 
+Workflow Outline
+================
+
+.. image:: ../graphics/workflow.png
+
+.. note::
+    The graph above was generated using
+    ``snakemake --rulegraph -F | sed -n "/digraph/,/}/p" | dot -Tpng -o workflow.png``
+
 
 Documentation
 =============
