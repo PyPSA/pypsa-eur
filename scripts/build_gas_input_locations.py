@@ -18,12 +18,27 @@ def read_scigrid_gas(fn):
     df.drop(["param", "uncertainty", "method"], axis=1, inplace=True)
     return df
 
+def retrieve_gem_lng_data(lng_url):
+    df = pd.read_excel(lng_url,storage_options={'User-Agent': 'Mozilla/5.0'}, sheet_name = 'LNG terminals - data')
+    df = df.set_index("ComboID")
 
-def build_gas_input_locations(lng_fn, entry_fn, prod_fn, countries):
+    remove_status = ['Cancelled']
+    remove_country = ['Cyprus','Turkey']
+    remove_terminal = ['Puerto de la Luz LNG Terminal','Gran Canaria LNG Terminal']
+
+    df = df.query("Status != 'Cancelled' \
+              & Country != @remove_country \
+              & TerminalName != @remove_terminal \
+              & CapacityInMtpa != '--'")
+    
+    geometry = gpd.points_from_xy(df['Longitude'], df['Latitude'])
+    return gpd.GeoDataFrame(df, geometry=geometry, crs="EPSG:4326")
+
+
+def build_gas_input_locations(lng_url, entry_fn, prod_fn, countries):
     
     # LNG terminals
-    lng = gpd.read_file(lng_fn)
-
+    lng = retrieve_gem_lng_data(lng_url)
     lng.CapacityInMtpa = lng.CapacityInMtpa.astype(float)
 
     # Entry points from outside the model scope
