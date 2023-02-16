@@ -18,28 +18,30 @@ def read_scigrid_gas(fn):
     df.drop(["param", "uncertainty", "method"], axis=1, inplace=True)
     return df
 
-def retrieve_gem_lng_data(lng_url):
-    df = pd.read_excel(lng_url,storage_options={'User-Agent': 'Mozilla/5.0'}, sheet_name = 'LNG terminals - data')
+
+def build_gem_lng_data(lng_fn):
+    df = pd.read_excel(lng_fn[0], sheet_name='LNG terminals - data')
     df = df.set_index("ComboID")
 
     remove_status = ['Cancelled']
     remove_country = ['Cyprus','Turkey']
-    remove_terminal = ['Puerto de la Luz LNG Terminal','Gran Canaria LNG Terminal']
+    remove_terminal = ['Puerto de la Luz LNG Terminal', 'Gran Canaria LNG Terminal']
 
     df = df.query("Status != 'Cancelled' \
               & Country != @remove_country \
               & TerminalName != @remove_terminal \
               & CapacityInMtpa != '--'")
     
+    df.CapacityInMtpa = df.CapacityInMtpa.astype(float)
+
     geometry = gpd.points_from_xy(df['Longitude'], df['Latitude'])
     return gpd.GeoDataFrame(df, geometry=geometry, crs="EPSG:4326")
 
 
-def build_gas_input_locations(lng_url, entry_fn, prod_fn, countries):
+def build_gas_input_locations(lng_fn, entry_fn, prod_fn, countries):
     
     # LNG terminals
-    lng = retrieve_gem_lng_data(lng_url)
-    lng.CapacityInMtpa = lng.CapacityInMtpa.astype(float)
+    lng = build_gem_lng_data(lng_fn)
 
     # Entry points from outside the model scope
     entry = read_scigrid_gas(entry_fn)
@@ -58,11 +60,11 @@ def build_gas_input_locations(lng_url, entry_fn, prod_fn, countries):
         (prod.country_code != "DE")
     ]
 
-    conversion_factor = 437.5 # MCM/day to MWh/h
-    conversion_factor_lng = 1649.224 # mtpa to MWh/h
-    lng["p_nom"] = lng["CapacityInMtpa"] * conversion_factor_lng
-    entry["p_nom"] = entry["max_cap_from_to_M_m3_per_d"] * conversion_factor
-    prod["p_nom"] = prod["max_supply_M_m3_per_d"] * conversion_factor
+    mcm_per_day_to_mw = 437.5 # MCM/day to MWh/h
+    mtpa_to_mw = 1649.224 # mtpa to MWh/h
+    lng["p_nom"] = lng["CapacityInMtpa"] * mtpa_to_mw
+    entry["p_nom"] = entry["max_cap_from_to_M_m3_per_d"] * mcm_per_day_to_mw
+    prod["p_nom"] = prod["max_supply_M_m3_per_d"] * mcm_per_day_to_mw
 
     lng["type"] = "lng"
     entry["type"] = "pipeline"
@@ -78,7 +80,7 @@ if __name__ == "__main__":
     if 'snakemake' not in globals():
         from helper import mock_snakemake
         snakemake = mock_snakemake(
-            'build_gas_import_locations',
+            'build_gas_input_locations',
             simpl='',
             clusters='37',
         )
