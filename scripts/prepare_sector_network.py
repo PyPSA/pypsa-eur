@@ -458,7 +458,9 @@ def remove_elec_base_techs(n):
     for c in n.iterate_components(snakemake.config["pypsa_eur"]):
         to_keep = snakemake.config["pypsa_eur"][c.name]
         to_remove = pd.Index(c.df.carrier.unique()).symmetric_difference(to_keep)
-        print("Removing", c.list_name, "with carrier", to_remove)
+        if to_remove.empty:
+            continue
+        logger.info(f"Removing {c.list_name} with carrier {list(to_remove)}")
         names = c.df.index[c.df.carrier.isin(to_remove)]
         n.mremove(c.name, names)
         n.carriers.drop(to_remove, inplace=True, errors="ignore")
@@ -469,8 +471,10 @@ def remove_non_electric_buses(n):
     """
     remove buses from pypsa-eur with carriers which are not AC buses
     """
-    print("drop buses from PyPSA-Eur with carrier: ", n.buses[~n.buses.carrier.isin(["AC", "DC"])].carrier.unique())
-    n.buses = n.buses[n.buses.carrier.isin(["AC", "DC"])]
+    to_drop = list(n.buses.query("carrier not in ['AC', 'DC']").carrier.unique())
+    if to_drop:
+        logger.info(f"Drop buses from PyPSA-Eur with carrier: {to_drop}")
+        n.buses = n.buses[n.buses.carrier.isin(["AC", "DC"])]
 
 
 def patch_electricity_network(n):
@@ -532,6 +536,8 @@ def add_co2_tracking(n, options):
         carrier="co2 stored",
         bus=spatial.co2.nodes
     )
+
+    n.add("Carrier", "co2 stored")
 
     if options['co2_vent']:
 
@@ -821,12 +827,12 @@ def insert_electricity_distribution_grid(n, costs):
     # TODO pop_layout?
     # TODO options?
 
-    print("Inserting electricity distribution grid with investment cost factor of",
-          options['electricity_distribution_grid_cost_factor'])
+    cost_factor = options['electricity_distribution_grid_cost_factor']
+
+    logger.info(f"Inserting electricity distribution grid with investment cost factor of {cost_factor:.2f}")
 
     nodes = pop_layout.index
 
-    cost_factor = options['electricity_distribution_grid_cost_factor']
 
     n.madd("Bus",
         nodes + " low voltage",
@@ -941,7 +947,7 @@ def insert_gas_distribution_costs(n, costs):
 
     f_costs = options['gas_distribution_grid_cost_factor']
 
-    print("Inserting gas distribution grid with investment cost factor of", f_costs)
+    logger.info(f"Inserting gas distribution grid with investment cost factor of {f_costs}")
 
     capital_cost = costs.loc['electricity distribution grid']["fixed"] * f_costs
 
@@ -1317,7 +1323,7 @@ def add_land_transport(n, costs):
     
     total_share = fuel_cell_share + electric_share + ice_share
     if total_share != 1:
-        logger.warning(f"Total land transport shares sum up to {total_share*100}%, corresponding to increased or decreased demand assumptions.")
+        logger.warning(f"Total land transport shares sum up to {total_share:.2%}, corresponding to increased or decreased demand assumptions.")
 
     logger.info(f"FCEV share: {fuel_cell_share*100}%")
     logger.info(f"EV share: {electric_share*100}%")
@@ -1487,7 +1493,7 @@ def add_heat(n, costs):
     # exogenously reduce space heat demand
     if options["reduce_space_heat_exogenously"]:
         dE = get(options["reduce_space_heat_exogenously_factor"], investment_year)
-        print(f"assumed space heat reduction of {dE*100} %")
+        logger.info(f"assumed space heat reduction of {dE:.2%}")
         for sector in sectors:
             heat_demand[sector + " space"] = (1 - dE) * heat_demand[sector + " space"]
 
@@ -1847,10 +1853,9 @@ def create_nodes_for_heat_sector():
     diff = (urban_fraction * central_fraction) - dist_fraction_node
     progress = get(options["district_heating"]["progress"], investment_year)
     dist_fraction_node += diff * progress
-    print(
-        "The current district heating share compared to the maximum",
-        f"possible is increased by a progress factor of\n{progress}",
-        f"resulting in a district heating share of\n{dist_fraction_node}"
+    logger.info(
+        f"Increase district heating share by a progress factor of {progress:.2%} "
+        f"resulting in new average share of {dist_fraction_node.mean():.2%}"
     )
 
     return nodes, dist_fraction_node, urban_fraction
@@ -2188,7 +2193,7 @@ def add_industry(n, costs):
 
     total_share = shipping_hydrogen_share + shipping_methanol_share + shipping_oil_share
     if total_share != 1:
-        logger.warning(f"Total shipping shares sum up to {total_share*100}%, corresponding to increased or decreased demand assumptions.")
+        logger.warning(f"Total shipping shares sum up to {total_share:.2%}, corresponding to increased or decreased demand assumptions.")
 
     domestic_navigation = pop_weighted_energy_totals.loc[nodes, "total domestic navigation"].squeeze()
     international_navigation = pd.read_csv(snakemake.input.shipping_demand, index_col=0).squeeze()
@@ -2557,7 +2562,7 @@ def add_agriculture(n, costs):
 
     total_share = electric_share + oil_share
     if total_share != 1:
-        logger.warning(f"Total agriculture machinery shares sum up to {total_share*100}%, corresponding to increased or decreased demand assumptions.")
+        logger.warning(f"Total agriculture machinery shares sum up to {total_share:.2%}, corresponding to increased or decreased demand assumptions.")
 
     machinery_nodal_energy = pop_weighted_energy_totals.loc[nodes, "total agriculture machinery"]
 
@@ -2635,7 +2640,7 @@ def maybe_adjust_costs_and_potentials(n, opts):
                     else:
                         sel = c.df.carrier.str.contains(carrier)
                     c.df.loc[sel,attr] *= factor
-            print("changing", attr , "for", carrier, "by factor", factor)
+            logger.info(f"changing {attr} for {carrier} by factor {factor}")
 
 
 # TODO this should rather be a config no wildcard
@@ -2880,7 +2885,7 @@ if __name__ == "__main__":
     for o in opts:
         if o[:4] == "wave":
             wave_cost_factor = float(o[4:].replace("p", ".").replace("m", "-"))
-            print("Including wave generators with cost factor of", wave_cost_factor)
+            logger.info(f"Including wave generators with cost factor of {wave_cost_factor}")
             add_wave(n, wave_cost_factor)
         if o[:4] == "dist":
             options['electricity_distribution_grid'] = True
@@ -2949,7 +2954,7 @@ if __name__ == "__main__":
         limit = o[o.find("Co2L")+4:]
         limit = float(limit.replace("p", ".").replace("m", "-"))
         break
-    print("Add CO2 limit from", limit_type)
+    logger.info(f"Add CO2 limit from {limit_type}")
     add_co2limit(n, Nyears, limit)
 
     for o in opts:
