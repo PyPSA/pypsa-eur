@@ -97,6 +97,30 @@ incorporates retrofitting options to hydrogen.
   as explicit ICE shares for land transport (``land_transport_ice_share``) and
   agriculture machinery (``agriculture_machinery_oil_share``).
 
+* Add option to spatially resolve carrier representing stored carbon dioxide
+  (``co2_spatial``). This allows for more detailed modelling of CCUTS, e.g.
+  regarding the capturing of industrial process emissions, usage as feedstock
+  for electrofuels, transport of carbon dioxide, and geological sequestration sites.
+
+* Add option for planning a new carbon dioxide network (``co2network``).
+
+
+* Add option for regionally-resolved geological carbon dioxide sequestration
+  potentials through new rule ``build_sequestration_potentials`` based on
+  `CO2StoP <https://setis.ec.europa.eu/european-co2-storage-database_en>`_. This
+  can be controlled in the section ``regional_co2_sequestration_potential`` of
+  the ``config.yaml``. It includes options to select the level of conservatism,
+  whether onshore potentials should be included, the respective upper and lower
+  limits per region, and an annualisation parameter for the cumulative
+  potential. The defaults are preliminary and will be validated the next
+  release.
+
+* Separate option to regionally resolve biomass (``biomass_spatial``) from
+  option to allow biomass transport (``biomass_transport``).
+
+* Add option to include `Allam cycle gas power plants
+  <https://en.wikipedia.org/wiki/Allam_power_cycle>`_ (``allam_cycle``).
+
 **Bugfixes**
 
 * The CO2 sequestration limit implemented as GlobalConstraint (introduced in the previous version)

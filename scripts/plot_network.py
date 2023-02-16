@@ -310,7 +310,7 @@ def plot_h2_map(network, regions):
 
     else:
 
-        h2_total = h2_new
+        h2_total = h2_new.p_nom_opt
 
     link_widths_total = h2_total / linewidth_factor
 
