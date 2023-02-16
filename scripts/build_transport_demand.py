@@ -28,8 +28,8 @@ def build_transport_demand(traffic_fn, airtemp_fn, nodes, nodal_transport_data):
     ## Get overall demand curve for all vehicles
 
     traffic = pd.read_csv(
-        traffic_fn, skiprows=2, usecols=["count"], squeeze=True
-    )
+        traffic_fn, skiprows=2, usecols=["count"]
+    ).squeeze("columns")
 
     transport_shape = generate_periodic_profiles(
         dt_index=snapshots,
@@ -118,7 +118,7 @@ def bev_availability_profile(fn, snapshots, nodes, options):
     Derive plugged-in availability for passenger electric vehicles.
     """
 
-    traffic = pd.read_csv(fn, skiprows=2, usecols=["count"], squeeze=True)
+    traffic = pd.read_csv(fn, skiprows=2, usecols=["count"]).squeeze("columns")
 
     avail_max = options["bev_avail_max"]
     avail_mean = options["bev_avail_mean"]

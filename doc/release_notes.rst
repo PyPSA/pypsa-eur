@@ -8,31 +8,49 @@ Future release
 .. note::
   This unreleased version currently may require the master branches of PyPSA, PyPSA-Eur, and the technology-data repository.
 
-This release includes the addition of the European gas transmission network and
-incorporates retrofitting options to hydrogen.
+* new feature
+
+
+PyPSA-Eur-Sec 0.7.0 (16th February 2023)
+========================================
+
+This release includes many new features. Highlights include new gas
+infrastructure data with retrofitting options for hydrogen transport, improved
+carbon management and infrastructure planning, regionalised potentials for
+hydrogen underground storage and carbon sequestration, new applications for
+biomass, and explicit modelling of methanol and ammonia as separate energy
+carriers.
+
+This release is known to work with `PyPSA-Eur
+<https://github.com/PyPSA/pypsa-eur>`_ Version 0.7.0 and `Technology Data
+<https://github.com/PyPSA/technology-data>`_ Version 0.5.0.
 
 **Gas Transmission Network**
 
 * New rule ``retrieve_gas_infrastructure_data`` that downloads and extracts the
-  SciGRID_gas `IGGIELGN <https://zenodo.org/record/4767098>`_ dataset from zenodo.
-  It includes data on the transmission routes, pipe diameters, capacities, pressure,
-  and whether the pipeline is bidirectional and carries H-Gas or L-Gas.
+  SciGRID_gas `IGGIELGN <https://zenodo.org/record/4767098>`_ dataset from
+  zenodo. It includes data on the transmission routes, pipe diameters,
+  capacities, pressure, and whether the pipeline is bidirectional and carries
+  H-Gas or L-Gas.
 
-* New rule ``build_gas_network`` processes and cleans the pipeline data from SciGRID_gas.
-  Missing or uncertain pipeline capacities can be inferred by diameter.
+* New rule ``build_gas_network`` processes and cleans the pipeline data from
+  SciGRID_gas. Missing or uncertain pipeline capacities can be inferred by
+  diameter.
 
 * New rule ``build_gas_input_locations`` compiles the LNG import capacities
-  (including planned projects from gem.wiki), pipeline entry capacities and
-  local production capacities for each region of the model. These are the
-  regions where fossil gas can eventually enter the model.
+  (from the Global Energy Monitor's `Europe Gas Tracker
+  <https://globalenergymonitor.org/projects/europe-gas-tracker/>`_, pipeline
+  entry capacities and local production capacities for each region of the model.
+  These are the regions where fossil gas can eventually enter the model.
 
 * New rule ``cluster_gas_network`` that clusters the gas transmission network
-  data to the model resolution. Cross-regional pipeline capacities are aggregated
-  (while pressure and diameter compatibility is ignored), intra-regional pipelines
-  are dropped. Lengths are recalculated based on the regions' centroids.
+  data to the model resolution. Cross-regional pipeline capacities are
+  aggregated (while pressure and diameter compatibility is ignored),
+  intra-regional pipelines are dropped. Lengths are recalculated based on the
+  regions' centroids.
 
-* With the option ``sector: gas_network:``, the existing gas network is
-  added with a lossless transport model. A length-weighted `k-edge augmentation
+* With the option ``sector: gas_network:``, the existing gas network is added
+  with a lossless transport model. A length-weighted `k-edge augmentation
   algorithm
   <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_
   can be run to add new candidate gas pipelines such that all regions of the
@@ -41,69 +59,27 @@ incorporates retrofitting options to hydrogen.
   the gas network is activated, all the gas demands are regionally disaggregated
   as well.
 
-* New constraint allows endogenous retrofitting of gas pipelines to hydrogen pipelines.
-  This option is activated via the setting ``sector: H2_retrofit:``. For every
-  unit of gas pipeline capacity dismantled, ``sector:
+* New constraint allows endogenous retrofitting of gas pipelines to hydrogen
+  pipelines. This option is activated via the setting ``sector: H2_retrofit:``.
+  For every unit of gas pipeline capacity dismantled, ``sector:
   H2_retrofit_capacity_per_CH4`` units are made available as hydrogen pipeline
   capacity in the corresponding corridor. These repurposed hydrogen pipelines
-  have lower costs than new hydrogen pipelines. Both new and repurposed pipelines
-  can be built simultaneously. The retrofitting option ``sector: H2_retrofit:`` also works
-  with a copperplated methane infrastructure, i.e. when ``sector: gas_network: false``.
+  have lower costs than new hydrogen pipelines. Both new and repurposed
+  pipelines can be built simultaneously. The retrofitting option ``sector:
+  H2_retrofit:`` also works with a copperplated methane infrastructure, i.e.
+  when ``sector: gas_network: false``.
 
 * New hydrogen pipelines can now be built where there are already power or gas
   transmission routes. Previously, only the electricity transmission routes were
   considered.
 
-**New features and functionality**
-
-
-* Add option to aggregate network temporally using representative snapshots or segments (with tsam package)
-
-* Add option for biomass boilers (wood pellets) for decentral heating
-
-* Add option for BioSNG (methane from biomass) with and without CC
-
-* Add option for BtL (Biomass to liquid fuel/oil) with and without CC
-
-* Add option for minimum part load for Fischer-Tropsch plants (default: 90%) and methanolisation plants (default: 50%).
-
-* Units are assigned to the buses. These only provide a better understanding. The specifications of the units are not taken into account in the optimisation, which means that no automatic conversion of units takes place.
-
-* Option ``retrieve_sector_databundle`` to automatically retrieve and extract data bundle.
-
-* Add option to use waste heat of electrolysis in district heating networks (``use_electrolysis_waste_heat``).
-
-* Add regionalised hydrogen salt cavern storage potentials from `Technical Potential of Salt Caverns for Hydrogen Storage in Europe <https://doi.org/10.20944/preprints201910.0187.v1>`_.
-
-* Add option to sweep the global CO2 sequestration potentials with keyword ``seq200`` in the ``{sector_opts}`` wildcard (for limit of 200 Mt CO2).
-
-* Add option to resolve ammonia as separate energy carrier with Haber-Bosch
-  synthesis, ammonia cracking, storage and industrial demand. The ammonia
-  carrier can be nodally resolved or copperplated across Europe. This feature is
-  controlled by ``sector: ammonia:``.
-
-* Add methanol as energy carrier, methanolisation as process, and option for methanol demand in shipping sector.
-
-* Updated `data bundle <https://zenodo.org/record/5824485/files/pypsa-eur-sec-data-bundle.tar.gz>`_ that includes the hydrogan salt cavern storage potentials.
-
-* Updated and extended documentation in <https://pypsa-eur-sec.readthedocs.io/en/latest/>
-
-* Shipping demand now defaults to (synthetic) oil rather than liquefied hydrogen until 2050.
-
-* Improved network plots including better legends, hydrogen retrofitting network display, and change to EqualEarth projection.
-
-* New config options for changing energy demands in aviation
-  (``aviation_demand_factor``) and HVC industry (``HVC_demand_factor``), as well
-  as explicit ICE shares for land transport (``land_transport_ice_share``) and
-  agriculture machinery (``agriculture_machinery_oil_share``).
+**Carbon Management and Biomass**
 
 * Add option to spatially resolve carrier representing stored carbon dioxide
   (``co2_spatial``). This allows for more detailed modelling of CCUTS, e.g.
   regarding the capturing of industrial process emissions, usage as feedstock
-  for electrofuels, transport of carbon dioxide, and geological sequestration sites.
-
-* Add option for planning a new carbon dioxide network (``co2network``).
-
+  for electrofuels, transport of carbon dioxide, and geological sequestration
+  sites.
 
 * Add option for regionally-resolved geological carbon dioxide sequestration
   potentials through new rule ``build_sequestration_potentials`` based on
@@ -115,18 +91,135 @@ incorporates retrofitting options to hydrogen.
   potential. The defaults are preliminary and will be validated the next
   release.
 
-* Separate option to regionally resolve biomass (``biomass_spatial``) from
-  option to allow biomass transport (``biomass_transport``).
+* Add option to sweep the global CO2 sequestration potentials with keyword
+  ``seq200`` in the ``{sector_opts}`` wildcard (for limit of 200 Mt CO2).
 
 * Add option to include `Allam cycle gas power plants
   <https://en.wikipedia.org/wiki/Allam_power_cycle>`_ (``allam_cycle``).
 
+* Add option for planning a new carbon dioxide network (``co2network``).
+
+* Separate option to regionally resolve biomass (``biomass_spatial``) from
+  option to allow biomass transport (``biomass_transport``).
+
+* Add option for biomass boilers (wood pellets) for decentral heating.
+
+* Add option for BioSNG (methane from biomass) with and without carbon capture.
+
+* Add option for BtL (biomass to liquid fuel/oil) with and without carbon
+  capture.
+
+
+**Other new features**
+
+* Add regionalised hydrogen salt cavern storage potentials from `Technical
+  Potential of Salt Caverns for Hydrogen Storage in Europe
+  <https://doi.org/10.20944/preprints201910.0187.v1>`_. This data is compiled in
+  a new rule ``build_salt_cavern_potentials``.
+
+* Add option to resolve ammonia as separate energy carrier with Haber-Bosch
+  synthesis, ammonia cracking, storage and industrial demand. The ammonia
+  carrier can be nodally resolved or copperplated across Europe (see
+  ``ammonia``).
+
+* Add methanol as energy carrier, methanolisation as process, and option for
+  methanol demand in shipping sector.
+
+* Shipping demand now defaults to methanol rather than liquefied hydrogen
+  until 2050.
+
+* Demand for liquid hydrogen in international shipping is now geographically
+  distributed by port trade volumes in a new rule ``build_shipping_demand``
+  using data from the `World Bank Data Catalogue
+  <https://datacatalog.worldbank.org/search/dataset/0038118/Global---International-Ports>`_.
+  Domestic shipping remains distributed by population.
+
+* Add option to aggregate network temporally using representative snapshots or
+  segments (with `tsam <https://github.com/FZJ-IEK3-VSA/tsam>`_).
+
+* Add option for minimum part load for Fischer-Tropsch plants (default: 90%) and
+  methanolisation plants (default: 50%).
+
+* Add option to use waste heat of electrolysis in district heating networks
+  (``use_electrolysis_waste_heat``).
+
+* Add option for coal CHPs with carbon capture (see ``coal_cc``).
+
+* In overnight optimisation, it is now possible to specify a year for the
+  technology cost projections separate from the planning horizon.
+
+* New config options for changing energy demands in aviation
+  (``aviation_demand_factor``) and HVC industry (``HVC_demand_factor``), as well
+  as explicit ICE shares for land transport (``land_transport_ice_share``) and
+  agriculture machinery (``agriculture_machinery_oil_share``).
+
+* It is now possible to merge residential and services heat buses to reduce the
+  problem size (see ``cluster_heat_nodes``).
+
+* Added option to tweak (almost) any configuration parameter through the
+  ``{sector_opts}`` wildcard. The regional_co2_sequestration_potential is
+  triggered by the prefix ``CF+`` after which it is possible to pipe to any
+  setting that does not contain underscores (``_``). Example:
+  ``CF+sector+v2g+false`` disables vehicle-to-grid flexibility.
+
+* Option ``retrieve_sector_databundle`` to automatically retrieve and extract
+  data bundle.
+
+* Removed the need to clone ``technology-data`` repository in a parallel
+  directory. The new approach automatically retrieves the technology data from
+  remote in the rule ``retrieve_cost_data``.
+
+* Improved network plots including better legends, hydrogen retrofitting network
+  display, and change to EqualEarth projection. A new color scheme for
+  technologies was also introduced.
+
+* Add two new rules ``build_transport_demand`` and
+  ``build_population_weighted_energy_totals`` using code previously contained in
+  ``prepare_sector_network``.
+
+* Rules that convert weather data with ``atlite`` now largely run separately for
+  categories residential, rural and total.
+
+* Units are assigned to the buses. These only provide a better understanding.
+  The specifications of the units are not taken into account in the
+  optimisation, which means that no automatic conversion of units takes place.
+
+* Configuration file and wildcards are now stored under ``n.meta`` in every
+  PyPSA network.
+
+* Updated `data bundle
+  <https://zenodo.org/record/5824485/files/pypsa-eur-sec-data-bundle.tar.gz>`_
+  that includes the hydrogan salt cavern storage potentials.
+
+* Updated and extended documentation in
+  <https://pypsa-eur-sec.readthedocs.io/en/latest/>
+
+* Added new rule ``copy_conda_env`` that exports a list of packages with which
+  the workflow was executed.
+
+* Add basic continuous integration using Github Actions.
+
+* Add basic ``rsync`` setup.
+
 **Bugfixes**
 
-* The CO2 sequestration limit implemented as GlobalConstraint (introduced in the previous version)
-  caused a failure to read in the shadow prices of other global constraints.
+* The CO2 sequestration limit implemented as GlobalConstraint (introduced in the
+  previous version) caused a failure to read in the shadow prices of other
+  global constraints.
 
-* Correct capital cost of Fischer-Tropsch according to new units in ``technology-data``.
+* Correct capital cost of Fischer-Tropsch according to new units in
+  ``technology-data`` repository.
+
+* Fix unit conversion error for thermal energy storage.
+
+* For myopic pathway optimisation, set optimised capacities of power grid
+  expansion of previous iteration as minimum capacity for next iteration.
+
+* Further rather minor bugfixes for myopic optimisation code (see `#256
+  <https://github.com/PyPSA/pypsa-eur-sec/pull/256>`_).
+
+
+Many thanks to all who contributed to this release!
 
 
 PyPSA-Eur-Sec 0.6.0 (4 October 2021)
