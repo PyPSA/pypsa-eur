@@ -81,7 +81,7 @@ jobs:
       run: echo "DATE=$(date +'%Y%m%d')" >> $GITHUB_ENV
 
     - name: Create environment cache
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       id: cache
       with:
         path: ${{ matrix.prefix }}
