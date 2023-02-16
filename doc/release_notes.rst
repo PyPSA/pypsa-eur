@@ -65,9 +65,13 @@ incorporates retrofitting options to hydrogen.
 
 * Add option for BtL (Biomass to liquid fuel/oil) with and without CC
 
+* Add option for minimum part load for Fischer-Tropsch plants (default: 90%) and methanolisation plants (default: 50%).
+
 * Units are assigned to the buses. These only provide a better understanding. The specifications of the units are not taken into account in the optimisation, which means that no automatic conversion of units takes place.
 
 * Option ``retrieve_sector_databundle`` to automatically retrieve and extract data bundle.
+
+* Add option to use waste heat of electrolysis in district heating networks (``use_electrolysis_waste_heat``).
 
 * Add regionalised hydrogen salt cavern storage potentials from `Technical Potential of Salt Caverns for Hydrogen Storage in Europe <https://doi.org/10.20944/preprints201910.0187.v1>`_.
 
@@ -78,16 +82,51 @@ incorporates retrofitting options to hydrogen.
   carrier can be nodally resolved or copperplated across Europe. This feature is
   controlled by ``sector: ammonia:``.
 
+* Add methanol as energy carrier, methanolisation as process, and option for methanol demand in shipping sector.
+
 * Updated `data bundle <https://zenodo.org/record/5824485/files/pypsa-eur-sec-data-bundle.tar.gz>`_ that includes the hydrogan salt cavern storage potentials.
 
 * Updated and extended documentation in <https://pypsa-eur-sec.readthedocs.io/en/latest/>
 
 * Shipping demand now defaults to (synthetic) oil rather than liquefied hydrogen until 2050.
 
+* Improved network plots including better legends, hydrogen retrofitting network display, and change to EqualEarth projection.
+
+* New config options for changing energy demands in aviation
+  (``aviation_demand_factor``) and HVC industry (``HVC_demand_factor``), as well
+  as explicit ICE shares for land transport (``land_transport_ice_share``) and
+  agriculture machinery (``agriculture_machinery_oil_share``).
+
+* Add option to spatially resolve carrier representing stored carbon dioxide
+  (``co2_spatial``). This allows for more detailed modelling of CCUTS, e.g.
+  regarding the capturing of industrial process emissions, usage as feedstock
+  for electrofuels, transport of carbon dioxide, and geological sequestration sites.
+
+* Add option for planning a new carbon dioxide network (``co2network``).
+
+
+* Add option for regionally-resolved geological carbon dioxide sequestration
+  potentials through new rule ``build_sequestration_potentials`` based on
+  `CO2StoP <https://setis.ec.europa.eu/european-co2-storage-database_en>`_. This
+  can be controlled in the section ``regional_co2_sequestration_potential`` of
+  the ``config.yaml``. It includes options to select the level of conservatism,
+  whether onshore potentials should be included, the respective upper and lower
+  limits per region, and an annualisation parameter for the cumulative
+  potential. The defaults are preliminary and will be validated the next
+  release.
+
+* Separate option to regionally resolve biomass (``biomass_spatial``) from
+  option to allow biomass transport (``biomass_transport``).
+
+* Add option to include `Allam cycle gas power plants
+  <https://en.wikipedia.org/wiki/Allam_power_cycle>`_ (``allam_cycle``).
+
 **Bugfixes**
 
 * The CO2 sequestration limit implemented as GlobalConstraint (introduced in the previous version)
   caused a failure to read in the shadow prices of other global constraints.
+
+* Correct capital cost of Fischer-Tropsch according to new units in ``technology-data``.
 
 
 PyPSA-Eur-Sec 0.6.0 (4 October 2021)

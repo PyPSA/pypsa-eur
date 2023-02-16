@@ -138,6 +138,6 @@ def parse(l):
 
 def update_config_with_sector_opts(config, sector_opts):
     for o in sector_opts.split("-"):
-        if o.startswith("CF:"):
+        if o.startswith("CF+"):
             l = o.split("+")[1:]
             update_config(config, parse(l))

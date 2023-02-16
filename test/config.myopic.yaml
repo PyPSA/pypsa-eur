@@ -3,10 +3,10 @@ version: 0.6.0
 logging_level: INFO
 
 retrieve_sector_databundle: true
+retrieve_cost_data: true
 
 results_dir: results/
 summary_dir: results
-costs_dir: ../technology-data/outputs/
 run: test-myopic  # use this to keep track of runs with different settings
 foresight: myopic # options are overnight, myopic, perfect (perfect is not yet implemented)
 # if you use myopic or perfect foresight, set the investment years in "planning_horizons" below
@@ -61,7 +61,7 @@ snapshots:
   # arguments to pd.date_range
   start: "2013-03-01"
   end: "2013-04-01"
-  closed: left # end is not inclusive
+  inclusive: left # end is not inclusive
 
 atlite:
   cutout: ../pypsa-eur/cutouts/be-03-2013-era5.nc
@@ -235,6 +235,8 @@ sector:
   dac: true
   co2_vent: true
   SMR: true
+  regional_co2_sequestration_potential:
+    enable: false
   co2_sequestration_potential: 200  #MtCO2/a sequestration potential for Europe
   co2_sequestration_cost: 10   #EUR/tCO2 for sequestration of CO2
   co2_network: false
@@ -320,6 +322,7 @@ industry:
 
 costs:
   year: 2030
+  version: v0.5.0
   lifetime: 25 #default lifetime
   # From a Lion Hirth paper, also reflects average of Noothout et al 2016
   discountrate: 0.07

@@ -81,12 +81,12 @@ Conventional carriers indicate carriers used in the existing conventional techno
 Options
 =============
 The total carbon budget for the entire transition path can be indicated in the `sector_opts <https://github.com/PyPSA/pypsa-eur-sec/blob/f13902510010b734c510c38c4cae99356f683058/config.default.yaml#L25>`_ in ``config.yaml``. The carbon budget can be split among the ``planning_horizons`` following an exponential or beta decay. 
-E.g. ``'cb40ex0'`` splits a carbon budget equal to 40 GtCO_2 following an exponential decay whose initial linear growth rate $r$ is zero.
+E.g. ``'cb40ex0'`` splits a carbon budget equal to 40 Gt :math:`_{CO_2}` following an exponential decay whose initial linear growth rate r is zero.
 They can also follow some user-specified path, if defined `here <https://github.com/PyPSA/pypsa-eur-sec/blob/413254e241fb37f55b41caba7264644805ad8e97/config.default.yaml#L56>`_.
 The paper `Speed of technological transformations required in Europe to achieve different climate goals (2022) <https://doi.org/10.1016/j.joule.2022.04.016>`__ defines CO_2 budgets corresponding to global temperature increases (1.5C – 2C) as response to the emissions. Here, global carbon budgets are converted to European budgets assuming equal-per capita distribution which translates into a 6.43% share for Europe. The carbon budgets are in this paper distributed throughout the transition paths assuming an exponential decay. Emissions e(t) in every year t are limited by
 
 .. math::
-  e(t) = e_0 (1+ (r+m)t) e^(-mt)
+  e(t) = e_0 (1+ (r+m)t) e^{-mt}
 
 where r is the initial linear growth rate, which here is assumed to be r=0, and the decay parameter m is determined by imposing the integral of the path to be equal to the budget for Europe. Following this approach, the CO_2 budget is defined. Following the same approach as in this paper, add the following to the ``scenario.sector_opts``
 E.g.  ``-cb25.7ex0`` (1.5C increase)

@@ -26,6 +26,9 @@ gurobi.log
 /data/Industrial_Database.csv
 /data/retro/tabula-calculator-calcsetbuilding.csv
 /data/nuts*
+data/gas_network/scigrid-gas/
+dask-worker-space/
+publications.jrc.ec.europa.eu/
 
 *.org
 
@@ -48,3 +51,7 @@ doc/_build
 *.xls
 
 *.geojson
+
+*.ipynb
+
+data/costs_*
