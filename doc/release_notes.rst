@@ -14,6 +14,8 @@ Upcoming Release
 
 * Bugfix in the reserve constraint will increase demand related reserve requirements
 
+* Instead of converting the raster for shipping routes to netcdf, the raster is now directly read in as a tif file.
+
 **New Features**
 
 * Carriers of generators can now be excluded from aggregation in clustering network and simplify network.

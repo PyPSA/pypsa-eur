@@ -39,11 +39,13 @@ Description
 
 import logging
 import zipfile
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
+    output = Path(snakemake.output[0])
     import zipfile
 
     with zipfile.ZipFile(snakemake.input[0]) as zip_f:
-        zip_f.extract("shipdensity_global.tif", snakemake.output[0])
+        zip_f.extract(output.name, path=output.parent)

@@ -309,27 +309,11 @@ rule retrieve_ship_raster:
             static=True,
         ),
     output:
-        "data/shipdensity_global.zip",
+        "data/shipdensity_global.tif",
     resources:
         mem_mb=5000,
-    run:
-        move(input[0], output[0])
-
-
-rule build_ship_raster:
-    input:
-        ship_density="data/shipdensity_global.zip",
-        cutouts=expand("cutouts/" + CDIR + "{cutouts}.nc", **config["atlite"]),
-    output:
-        "resources/" + RDIR + "shipdensity_raster.nc",
-    log:
-        "logs/" + RDIR + "build_ship_raster.log",
-    resources:
-        mem_mb=5000,
-    benchmark:
-        "benchmarks/" + RDIR + "build_ship_raster"
     script:
-        "scripts/build_ship_raster.py"
+        "scripts/retrieve_ship_raster.py"
 
 
 rule build_renewable_profiles:
@@ -347,7 +331,7 @@ rule build_renewable_profiles:
             else []
         ),
         ship_density=lambda w: (
-            "resources/" + RDIR + "shipdensity_raster.nc"
+            "data/shipdensity_global.tif"
             if "ship_threshold" in config["renewable"][w.technology].keys()
             else []
         ),

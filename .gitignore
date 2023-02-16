@@ -20,6 +20,8 @@ gurobi.log
 /data/links_p_nom.csv
 /cutouts
 /dask-worker-space
+/scripts/dask-worker-space
+/zenodo.org/
 
 doc/_build
 
