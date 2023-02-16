@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2019-2022 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: 2019-2023 The PyPSA-Eur Authors
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -10,9 +10,16 @@ Release Notes
 Upcoming Release
 ================
 
-* Fix EQ constraint for the case no hydro inflow is available
+* Fix EQ constraint for the case no hydro inflow is available.
 
-* Bugfix in the reserve constraint will increase demand related reserve requirements
+* Bugfix in the reserve constraint will increase demand related reserve requirements.
+
+* Configuration defaults to new ``technology-data`` version 0.5.0.
+
+* Updated documentation.
+
+* Added control for resolution of land eligibility analysis.
+
 
 **New Features**
 
@@ -23,6 +30,8 @@ Upcoming Release
 * The config entry ``snapshots["closed"]`` was renamed to ``snapshots["inclusive"]`` to address the upstream deprecation with ``pandas=1.4``.
   The previous setting ``None`` is no longer supported and replaced by ``both``, see the `pandas documentation <https://pandas.pydata.org/docs/reference/api/pandas.date_range.html>`_.
   Minimum ``pandas`` version now required is `>= 1.4`.
+
+* The configuration setting ``summary_dir`` was removed.
 
 
 PyPSA-Eur 0.6.1 (20th September 2022)

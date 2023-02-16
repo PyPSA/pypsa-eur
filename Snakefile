@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2017-2022 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
@@ -9,8 +9,8 @@ from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 
 HTTP = HTTPRemoteProvider()
 
-if not exists("config.yaml"):
-    copyfile("config.default.yaml", "config.yaml")
+# if not exists("config.yaml"):
+#     copyfile("config.default.yaml", "config.yaml")
 
 
 configfile: "config.yaml"

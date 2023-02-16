@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2019-2022 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: 2019-2023 The PyPSA-Eur Authors
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -37,7 +37,7 @@ To run the tutorial, use this as your configuration file ``config.yaml``.
 
 This configuration is set to download a reduced data set via the rules :mod:`retrieve_databundle`,
 :mod:`retrieve_natura_raster`, :mod:`retrieve_cutout` totalling at less than 250 MB.
-The full set of data dependencies would consume 5.3 GB.
+The full set of data dependencies would take 5.3 GB.
 For more information on the data dependencies of PyPSA-Eur, continue reading :ref:`data`.
 
 How to customise PyPSA-Eur?
@@ -107,8 +107,8 @@ on the commercial solvers Gurobi or CPLEX (for which free academic licenses are 
 
     Alternatively, choose another installed solver in the ``config.yaml`` at ``solving: solver:``.
 
-Note, that we only note major changes to the provided default configuration that is comprehensibly documented in :ref:`config`.
-There are many more configuration options beyond what is adapted for the tutorial!
+Note, that we only focus on changes relative to the default configuration.
+There are many more configuration options, which are documented at :ref:`config`.
 
 How to use the ``snakemake`` rules?
 ===================================
@@ -131,8 +131,6 @@ orders ``snakemake`` to run the script ``solve_network`` that produces the solve
 .. literalinclude:: ../Snakefile
    :start-at: rule solve_network:
    :end-before: rule solve_operations_network:
-
-.. until https://github.com/snakemake/snakemake/issues/46 closed
 
 This triggers a workflow of multiple preceding jobs that depend on each rule's inputs and outputs:
 
@@ -196,57 +194,47 @@ In the terminal, this will show up as a list of jobs to be run:
 .. code:: bash
 
     Building DAG of jobs...
-    Using shell: /bin/bash
-    Provided cores: 1
-    Rules claiming more threads will be scaled down.
-    Unlimited resources: mem
-    Job counts:
-        count	jobs
-        1	add_electricity
-        1	base_network
-        1	build_bus_regions
-        4	build_renewable_profiles
-        1	build_shapes
-        1	cluster_network
-        1	prepare_network
-        1	simplify_network
-        1	solve_network
-        12
+    Job stats:
+    job                         count    min threads    max threads
+    ------------------------  -------  -------------  -------------
+    add_electricity                 1              1              1
+    add_extra_components            1              1              1
+    base_network                    1              1              1
+    build_bus_regions               1              1              1
+    build_hydro_profile             1              1              1
+    build_load_data                 1              1              1
+    build_powerplants               1              1              1
+    build_renewable_profiles        4              1              1
+    build_shapes                    1              1              1
+    build_ship_raster               1              1              1
+    cluster_network                 1              1              1
+    prepare_network                 1              1              1
+    retrieve_cost_data              1              1              1
+    retrieve_databundle             1              1              1
+    retrieve_natura_raster          1              1              1
+    simplify_network                1              1              1
+    solve_network                   1              1              1
+    total                          20              1              1
+
 
 ``snakemake`` then runs these jobs in the correct order.
 
-A job (here ``simplify_network``) will display its attributes and normally some logs in the terminal:
+A job (here ``simplify_network``) will display its attributes and normally some logs below this block:
 
 .. code:: bash
 
-    [<DATETIME>]
+    [Mon Jan 1 00:00:00 2023]
     rule simplify_network:
         input: networks/elec.nc, resources/costs.csv, resources/regions_onshore.geojson, resources/regions_offshore.geojson
-        output: networks/elec_s.nc, resources/regions_onshore_elec_s.geojson, resources/regions_offshore_elec_s.geojson, resources/clustermaps_elec_s.h5
-        jobid: 3
+        output: networks/elec_s.nc, resources/regions_onshore_elec_s.geojson, resources/regions_offshore_elec_s.geojson, resources/busmap_elec_s.csv, resources/connection_costs_s.csv
+        log: logs/simplify_network/elec_s.log
+        jobid: 4
         benchmark: benchmarks/simplify_network/elec_s
-        wildcards: network=elec, simpl=
-        resources: mem=4000
+        reason: Missing output files: resources/busmap_elec_s.csv, resources/regions_onshore_elec_s.geojson, networks/elec_s.nc, resources/regions_offshore_elec_s.geojson; Input files updated by another job: resources/regions_offshore.geojson, resources/regions_onshore.geojson, resources/costs.csv, networks/elec.nc
+        wildcards: simpl=
+        resources: tmpdir=/tmp, mem_mb=4000, mem_mib=3815
 
-    INFO:pypsa.io:Imported network elec.nc has buses, carriers, generators, lines, links, loads, storage_units, transformers
-    INFO:__main__:Mapping all network lines onto a single 380kV layer
-    INFO:__main__:Simplifying connected link components
-    INFO:__main__:Removing stubs
-    INFO:__main__:Displacing offwind-ac generator(s) and adding connection costs to capital_costs: 20128 Eur/MW/a for `5718 offwind-ac`
-    INFO:__main__:Displacing offwind-dc generator(s) and adding connection costs to capital_costs: 14994 Eur/MW/a for `5718 offwind-dc`, 26939 Eur/MW/a for `5724 offwind-dc`, 29621 Eur/MW/a for `5725 offwind-dc`
-    INFO:pypsa.io:Exported network elec_s.nc has lines, carriers, links, storage_units, loads, buses, generators
-    [<DATETIME>]
-    Finished job 3.
-    9 of 12 steps (75%) done
-
-Once the whole worktree is finished, it should show state so in the terminal:
-
-.. code:: bash
-
-    Finished job 0.
-    12 of 12 steps (100%) done
-    Complete log: /home/XXXX/pypsa-eur/.snakemake/log/20XX-XX-XXTXX.snakemake.log
-    snakemake results/networks/elec_s_6_ec_lcopt_Co2L-24H.nc  519,84s user 34,26s system 242% cpu 3:48,83 total
+Once the whole worktree is finished, it should state so in the terminal.
 
 You will notice that many intermediate stages are saved, namely the outputs of each individual ``snakemake`` rule.
 

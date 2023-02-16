@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2019-2022 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: 2019-2023 The PyPSA-Eur Authors
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -18,7 +18,7 @@ Top-level configuration
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 5-12,20,31-38
+   :lines: 5-11,23,30-38
 
 
 .. csv-table::
@@ -252,7 +252,8 @@ Define additional generator attribute for conventional carrier types. If a scala
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 212-217
+   :start-at: load:
+   :end-before: costs:
 
 .. csv-table::
    :header-rows: 1

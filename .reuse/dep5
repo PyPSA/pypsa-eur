@@ -12,7 +12,7 @@ Copyright: 2019 Fabian Neumann (TUB, KIT)
 License: CC-BY-4.0
 
 Files: data/*
-Copyright: 2017-2022 The PyPSA-Eur Authors
+Copyright: 2017-2023 The PyPSA-Eur Authors
 License: CC-BY-4.0
 
 Files: .github/*
@@ -20,9 +20,9 @@ Copyright: 2019 The PyPSA-Eur Authors
 License: CC0-1.0
 
 Files: matplotlibrc
-Copyright: : 2017-2022 The PyPSA-Eur Authors
+Copyright: : 2017-2023 The PyPSA-Eur Authors
 License: CC0-1.0
 
 Files: borg-it
-Copyright: : 2017-2022 The PyPSA-Eur Authors
+Copyright: : 2017-2023 The PyPSA-Eur Authors
 License: CC0-1.0

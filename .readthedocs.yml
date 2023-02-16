@@ -1,11 +1,11 @@
-# SPDX-FileCopyrightText: : 2017-2022 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: CC0-1.0
 
 version: 2
 
 python:
-  version: 3.8
+  version: "3.10"
   install:
   - requirements: doc/requirements.txt
   system_packages: true

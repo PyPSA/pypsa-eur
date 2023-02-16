@@ -1,15 +1,15 @@
-# SPDX-FileCopyrightText: : 2019-2022 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2019-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: CC0-1.0
 
 sphinx
-sphinx_rtd_theme
+sphinx_book_theme
 
 pypsa
 vresutils>=0.3.1
-powerplantmatching>=0.4.8
-atlite>=0.2.2
-dask<=2021.3.1
+powerplantmatching>=0.5.5
+atlite>=0.2.9
+dask
 
 # cartopy
 scikit-learn
