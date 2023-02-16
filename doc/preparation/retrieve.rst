@@ -111,7 +111,7 @@ This rule downloads techno-economic assumptions from the `technology-data reposi
 
 .. seealso::
     Documentation of the configuration file ``config.yaml`` at
-    :ref:`_costs_cf`
+    :ref:`costs_cf`
 
 **Outputs**
 

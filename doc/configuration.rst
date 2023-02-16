@@ -52,7 +52,7 @@ facilitate running multiple scenarios through a single command
 
 .. code:: bash
 
-    snakemake -j 1 solve_all_networks
+    snakemake -call solve_all_networks
 
 For each wildcard, a **list of values** is provided. The rule ``solve_all_networks`` will trigger the rules for creating ``results/networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc`` for **all combinations** of the provided wildcard values as defined by Python's `itertools.product(...) <https://docs.python.org/2/library/itertools.html#itertools.product>`_ function that snakemake's `expand(...) function <https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#targets>`_ uses.
 
@@ -192,7 +192,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 .. _lines_cf:
 
 ``conventional``
-=============
+================
 
 Define additional generator attribute for conventional carrier types. If a scalar value is given it is applied to all generators. However if a string starting with "data/" is given, the value is interpreted as a path to a csv file with country specific values. Then, the values are read in and applied to all generators of the given carrier in the given country. Note that the value(s) overwrite the existing values in the corresponding section of the ``generators`` dataframe.
 

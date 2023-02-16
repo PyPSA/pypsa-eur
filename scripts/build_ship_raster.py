@@ -26,15 +26,17 @@ Relevant Settings
 Inputs
 ------
 
-- ``data/bundle/shipdensity/shipdensity_global.zip``: `Global ship density from
-  <https://datacatalog.worldbank.org/search/dataset/0037580/Global-Shipping-Traffic-Density>`_.
+- ``data/bundle/shipdensity/shipdensity_global.zip``: Global shipping traffic
+  density from `World Bank Data Catalogue
+  <https://datacatalog.worldbank.org/search/dataset/0037580/>`_.
 
 Outputs
 -------
 
-- ``resources/europe_shipdensity_raster.nc``: Reduced version of `Global ship
-  density from <https://datacatalog.worldbank.org/search/dataset/0037580/`_ to
-  reduce computation time.
+- ``resources/europe_shipdensity_raster.nc``: Reduced version of global shipping
+  traffic density from `World Bank Data Catalogue
+  <https://datacatalog.worldbank.org/search/dataset/0037580/>`_ to reduce
+  computation time.
 
 Description
 -----------

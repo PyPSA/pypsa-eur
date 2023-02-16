@@ -136,6 +136,7 @@ html_theme = "sphinx_book_theme"
 html_theme_options = {
     "repository_url": "https://github.com/pypsa/pypsa-eur",
     "use_repository_button": True,
+    "show_navbar_depth": 2,
 }
 
 
@@ -144,7 +145,7 @@ html_theme_options = {
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
-html_title = "PyPSA-Eur: An Open Optimisation Model of the European Transmission System"
+html_title = "PyPSA-Eur"
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
 # html_short_title = None
@@ -159,7 +160,7 @@ html_logo = "img/pypsa-logo.png"
 # html_favicon = None
 
 # These folders are copied to the documentation's HTML output
-html_static_path = ["_static"]
+# html_static_path = ["_static"]
 
 # These paths are either relative to html_static_path
 # or fully qualified paths (eg. https://...)
