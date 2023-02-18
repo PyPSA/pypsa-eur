@@ -1,4 +1,5 @@
 import os
+import sys
 import yaml
 import pytz
 import pandas as pd
@@ -10,6 +11,10 @@ from pypsa.components import components, component_attrs
 import logging
 logger = logging.getLogger(__name__)
 
+def mute():
+    """hide irrelevant outputs of subprocess in multiprocessing pools.
+    also hide irrelevant outputs caused by pd.read_excel"""
+    sys.stdout = open(os.devnull, 'w')
 
 def override_component_attrs(directory):
     """Tell PyPSA that links can have multiple outputs by

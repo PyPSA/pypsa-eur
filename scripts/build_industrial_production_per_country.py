@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import multiprocessing as mp
 from tqdm import tqdm
-
+from helper import mute
 
 tj_to_ktoe = 0.0238845
 ktoe_to_twh = 0.01163
@@ -99,7 +99,6 @@ e_switzerland = pd.Series({'Iron and steel': 7889.,
                    'Other Industrial Sectors': 10825.,
                    'current electricity': 53760.})
 
-
 def find_physical_output(df):
     start = np.where(df.index.str.contains('Physical output', na=''))[0][0]
     empty_row = np.where(df.index.isnull())[0]
@@ -169,7 +168,7 @@ def industry_production(countries):
     func = industry_production_per_country
     tqdm_kwargs = dict(ascii=False, unit=' country', total=len(countries),
                        desc="Build industry production")
-    with mp.Pool(processes=nprocesses) as pool:
+    with mp.Pool(processes=nprocesses, initializer=mute) as pool:
         demand_l = list(tqdm(pool.imap(func, countries), **tqdm_kwargs))
 
     demand = pd.concat(demand_l, axis=1).T
