@@ -218,14 +218,14 @@ def solve_network(n, config, opts="", **kwargs):
         logger.info("No expandable lines found. Skipping iterative solving.")
 
     if skip_iterations:
-        n.optimize(
+        status, condition = n.optimize(
             solver_name=solver_name,
             extra_functionality=extra_functionality,
             **solver_options,
             **kwargs,
         )
     else:
-        n.optimize.optimize_transmission_expansion_iteratively(
+        status, condition = n.optimize.optimize_transmission_expansion_iteratively(
             solver_name=solver_name,
             track_iterations=track_iterations,
             min_iterations=min_iterations,
@@ -234,6 +234,9 @@ def solve_network(n, config, opts="", **kwargs):
             **solver_options,
             **kwargs,
         )
+
+    if status != "ok":
+        logger.warning(f"Solving status '{status}' with termination condition '{condition}'")
 
     return n
 
@@ -246,7 +249,7 @@ if __name__ == "__main__":
             'solve_network',
             simpl='',
             opts="",
-            clusters="45",
+            clusters="5",
             lv=1.0,
             sector_opts='Co2L0-3H-T-H-B-I-A-solar+p3-dist1',
             planning_horizons="2050",
