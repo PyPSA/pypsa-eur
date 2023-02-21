@@ -14,10 +14,6 @@ PyPSA-Eur-Sec: A Sector-Coupled Open Optimisation Model of the European Energy S
 .. image:: https://img.shields.io/github/repo-size/pypsa/pypsa-eur-sec
     :alt: GitHub repo size
 
-.. image:: https://badges.gitter.im/PyPSA/community.svg
-    :target: https://gitter.im/PyPSA/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge
-    :alt: Chat on Gitter
-
 
 PyPSA-Eur-Sec is an open model dataset of the European energy system at the
 transmission network level that covers the full ENTSO-E area.
@@ -100,6 +96,15 @@ at `FIAS <https://fias.uni-frankfurt.de/>`_ to carry out simulations for the
 Ministry for Education and Research (BMBF) <https://www.bmbf.de/en/index.html>`_
 as part of the `Stromnetze Research Initiative
 <http://forschung-stromnetze.info/projekte/grundlagen-und-konzepte-fuer-effiziente-dezentrale-stromnetze/>`_.
+
+Workflow Outline
+================
+
+.. image:: ../graphics/workflow.png
+
+.. note::
+    The graph above was generated using
+    ``snakemake --rulegraph -F | sed -n "/digraph/,/}/p" | dot -Tpng -o workflow.png``
 
 
 Documentation

@@ -1,4 +1,4 @@
-version: 0.6.0
+version: 0.7.0
 
 logging_level: INFO
 
@@ -538,6 +538,7 @@ plotting:
     natural gas: '#e05b09'
     CCGT: '#a85522'
     CCGT marginal: '#a85522'
+    allam: '#B98F76'
     gas for industry co2 to atmosphere: '#692e0a'
     gas for industry co2 to stored: '#8a3400'
     gas for industry: '#853403'

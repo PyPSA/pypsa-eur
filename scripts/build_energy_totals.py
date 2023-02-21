@@ -1,5 +1,6 @@
 from functools import partial
 from tqdm import tqdm
+from helper import mute
 
 import multiprocessing as mp
 import pandas as pd
@@ -7,6 +8,8 @@ import geopandas as gpd
 import numpy as np
 
 idx = pd.IndexSlice
+
+mute()
 
 def cartesian(s1, s2):
     """Cartesian product of two pd.Series"""
@@ -125,7 +128,6 @@ to_ipcc = {
     "total wL": "Total (with LULUCF)",
     "total woL": "Total (without LULUCF)",
 }
-
 
 def build_eurostat(input_eurostat, countries, report_year,  year):
     """Return multi-index for all countries' energy data in TWh/a."""
@@ -380,7 +382,7 @@ def build_idees(countries, year):
     func = partial(idees_per_country, year=year)
     tqdm_kwargs = dict(ascii=False, unit=' country', total=len(countries),
                        desc='Build from IDEES database')
-    with mp.Pool(processes=nprocesses) as pool:
+    with mp.Pool(processes=nprocesses, initializer=mute) as pool:
         totals_list = list(tqdm(pool.imap(func, countries), **tqdm_kwargs))
 
 

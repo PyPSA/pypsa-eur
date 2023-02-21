@@ -527,6 +527,8 @@ def add_co2_tracking(n, options):
         e_nom_max = pd.read_csv(snakemake.input.sequestration_potential, index_col=0).squeeze()
         e_nom_max = e_nom_max.reindex(spatial.co2.locations).fillna(0.).clip(upper=upper_limit).mul(1e6) / annualiser # t
         e_nom_max = e_nom_max.rename(index=lambda x: x + " co2 stored")
+    else:
+        e_nom_max = np.inf
 
     n.madd("Store",
         spatial.co2.nodes,
@@ -759,8 +761,8 @@ def add_ammonia(n, costs):
         carrier="Haber-Bosch",
         efficiency=1 / (cf_industry["MWh_elec_per_tNH3_electrolysis"] / cf_industry["MWh_NH3_per_tNH3"]), # output: MW_NH3 per MW_elec
         efficiency2=-cf_industry["MWh_H2_per_tNH3_electrolysis"] / cf_industry["MWh_elec_per_tNH3_electrolysis"], # input: MW_H2 per MW_elec
-        capital_cost=costs.at["Haber-Bosch synthesis", "fixed"],
-        lifetime=costs.at["Haber-Bosch synthesis", 'lifetime']
+        capital_cost=costs.at["Haber-Bosch", "fixed"],
+        lifetime=costs.at["Haber-Bosch", 'lifetime']
     )
 
     n.madd("Link",
@@ -2905,6 +2907,9 @@ if __name__ == "__main__":
     if "B" in opts:
         add_biomass(n, costs)
 
+    if options['ammonia']:
+        add_ammonia(n, costs)
+
     if "I" in opts:
         add_industry(n, costs)
 
@@ -2916,9 +2921,6 @@ if __name__ == "__main__":
 
     if options['dac']:
         add_dac(n, costs)
-
-    if options['ammonia']:
-        add_ammonia(n, costs)
 
     if "decentral" in opts:
         decentral(n)
