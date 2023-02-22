@@ -254,7 +254,7 @@ def aggregate_costs(n, flatten=False, opts=None, existing_only=False):
 
 def progress_retrieve(url, file):
     with tqdm(
-        unit="B", unit_scale=True, unit_divisor=1024, miniters=1, position=0, leave=True
+        unit="B", unit_scale=True, unit_divisor=1024, miniters=1
     ) as t:
 
         def update_to(b=1, bsize=1, tsize=None):
