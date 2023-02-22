@@ -28,7 +28,7 @@ def build_nuts_population_data(year=2013):
     swiss = [swiss.groupby(swiss.index.str[:i]).sum() for i in range(2, 6)]
 
     # merge Europe + Switzerland
-    pop = pd.DataFrame(pop.append(swiss), columns=["total"])
+    pop = pd.concat([pop, pd.concat(swiss)]).to_frame("total")
     
     # add missing manually
     pop["AL"] = 2893

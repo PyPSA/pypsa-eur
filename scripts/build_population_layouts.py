@@ -16,7 +16,7 @@ if __name__ == '__main__':
 
     cutout = atlite.Cutout(snakemake.config['atlite']['cutout'])
 
-    grid_cells = cutout.grid_cells()
+    grid_cells = cutout.grid.geometry
 
     # nuts3 has columns country, gdp, pop, geometry
     # population is given in dimensions of 1e3=k
