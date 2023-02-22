@@ -37,8 +37,10 @@ renewable:
     cutout: be-03-2013-era5
   offwind-ac:
     cutout: be-03-2013-era5
+    max_depth: false
   offwind-dc:
     cutout: be-03-2013-era5
+    max_depth: false
   solar:
     cutout: be-03-2013-era5
 

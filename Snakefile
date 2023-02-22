@@ -343,7 +343,7 @@ rule build_renewable_profiles:
         ),
         gebco=lambda w: (
             "data/bundle/GEBCO_2014_2D.nc"
-            if "max_depth" in config["renewable"][w.technology].keys()
+            if config["renewable"][w.technology].get("max_depth")
             else []
         ),
         ship_density=lambda w: (
