@@ -4,7 +4,8 @@
 # SPDX-License-Identifier: MIT
 
 from pathlib import Path
-
+import urllib
+from tqdm import tqdm
 import pandas as pd
 
 REGION_COLS = ["geometry", "name", "x", "y", "country"]
@@ -251,16 +252,14 @@ def aggregate_costs(n, flatten=False, opts=None, existing_only=False):
 
 
 def progress_retrieve(url, file):
-    import urllib
-
-    from progressbar import ProgressBar
-
-    pbar = ProgressBar(0, 100)
-
-    def dlProgress(count, blockSize, totalSize):
-        pbar.update(int(count * blockSize * 100 / totalSize))
-
-    urllib.request.urlretrieve(url, file, reporthook=dlProgress)
+    
+    with tqdm(unit='B', unit_scale=True, unit_divisor=1024, miniters=1, position=0, leave=True) as t:
+        def update_to(b=1, bsize=1, tsize=None):
+            if tsize is not None:
+                t.total = tsize
+            t.update(b * bsize - t.n)
+        
+        urllib.request.urlretrieve(url, file, reporthook=update_to)
 
 
 def get_aggregation_strategies(aggregation_strategies):
