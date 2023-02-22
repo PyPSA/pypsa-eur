@@ -1,53 +1,29 @@
-run: test-overnight  # use this to keep track of runs with different settings
-foresight: overnight # options are overnight, myopic, perfect (perfect is not yet implemented)
+run: test-overnight
+foresight: overnight
 
 scenario:
-  lv: # allowed transmission line volume expansion, can be any float >= 1.0 (today) or "opt"
+  lv:
     - 1.5
-  clusters: # number of nodes in Europe, any integer between 37 (1 node per country-zone) and several hundred
+  clusters:
     - 5
-  sector_opts: # this is where the main scenario settings are
+  sector_opts:
     - CO2L0-191H-T-H-B-I-A-solar+p3-dist1
-  planning_horizons: # investment years for myopic and perfect; or costs year for overnight
+  planning_horizons:
     - 2030
-  # for example, set to [2020, 2030, 2040, 2050] for myopic foresight
 
 snapshots:
-  # arguments to pd.date_range
   start: "2013-03-01"
   end: "2013-04-01"
-  inclusive: left # end is not inclusive
 
 atlite:
   cutout: ../pypsa-eur/cutouts/be-03-2013-era5.nc
 
 sector:
-  co2_vent: true
-  SMR: true
-  regional_co2_sequestration_potential:
-    enable: false
-  co2_sequestration_potential: 200  #MtCO2/a sequestration potential for Europe
-  co2_sequestration_cost: 10   #EUR/tCO2 for sequestration of CO2
-  co2_network: false
-  cc_fraction: 0.9  # default fraction of CO2 captured with post-combustion capture
-  hydrogen_underground_storage: true
-  hydrogen_underground_storage_locations:
-    # - onshore  # more than 50 km from sea
-    - nearshore  # within 50 km of sea
-    # - offshore
-  use_fischer_tropsch_waste_heat: true
-  use_fuel_cell_waste_heat: true
-  electricity_distribution_grid: true
-  electricity_distribution_grid_cost_factor: 1.0  #multiplies cost in data/costs.csv
-  electricity_grid_connection: true  # only applies to onshore wind and utility PV
-  H2_network: true
   gas_network: true
-  H2_retrofit: true # if set to True existing gas pipes can be retrofitted to H2 pipes
-  biomass_boiler: false
+  H2_retrofit: true
 
 solving:
   solver:
     name: cbc
     options: cbc-default
-  mem: 4000 #memory in MB; 20 GB enough for 50+B+I+H2; 100 GB for 181+B+I+H2
-
+  mem: 4000
