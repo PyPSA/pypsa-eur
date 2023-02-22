@@ -1,9 +1,7 @@
 """Build industry sector ratios."""
 
 import pandas as pd
-from helper import mute
-
-mute()
+from helper import mute_print
 
 # GWh/ktoe OR MWh/toe
 toe_to_MWh = 11.630
@@ -77,13 +75,14 @@ def load_idees_data(sector, country="EU28"):
     def usecols(x):
         return isinstance(x, str) or x == year
 
-    idees = pd.read_excel(
-        f"{snakemake.input.idees}/JRC-IDEES-2015_Industry_{country}.xlsx",
-        sheet_name=list(sheets.values()),
-        index_col=0,
-        header=0,
-        usecols=usecols,
-    )
+    with mute_print():
+        idees = pd.read_excel(
+            f"{snakemake.input.idees}/JRC-IDEES-2015_Industry_{country}.xlsx",
+            sheet_name=list(sheets.values()),
+            index_col=0,
+            header=0,
+            usecols=usecols,
+        )
 
     for k, v in sheets.items():
         idees[k] = idees.pop(v).squeeze()

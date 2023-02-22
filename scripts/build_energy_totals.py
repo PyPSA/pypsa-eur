@@ -1,6 +1,6 @@
 from functools import partial
 from tqdm import tqdm
-from helper import mute
+from helper import mute_print
 
 import multiprocessing as mp
 import pandas as pd
@@ -9,7 +9,6 @@ import numpy as np
 
 idx = pd.IndexSlice
 
-mute()
 
 def cartesian(s1, s2):
     """Cartesian product of two pd.Series"""
@@ -137,12 +136,13 @@ def build_eurostat(input_eurostat, countries, report_year,  year):
         2017: f"/{year}-ENERGY-BALANCES-June2017edition.xlsx"
     }
 
-    dfs = pd.read_excel(
-        input_eurostat + filenames[report_year],
-        sheet_name=None,
-        skiprows=1,
-        index_col=list(range(4)),
-    )
+    with mute_print():
+        dfs = pd.read_excel(
+            input_eurostat + filenames[report_year],
+            sheet_name=None,
+            skiprows=1,
+            index_col=list(range(4)),
+        )
 
     # sorted_index necessary for slicing
     lookup = eurostat_country_to_alpha2
@@ -379,11 +379,13 @@ def idees_per_country(ct, year):
 def build_idees(countries, year):
 
     nprocesses = snakemake.threads
+
     func = partial(idees_per_country, year=year)
     tqdm_kwargs = dict(ascii=False, unit=' country', total=len(countries),
                        desc='Build from IDEES database')
-    with mp.Pool(processes=nprocesses, initializer=mute) as pool:
-        totals_list = list(tqdm(pool.imap(func, countries), **tqdm_kwargs))
+    with mute_print():
+        with mp.Pool(processes=nprocesses) as pool:
+            totals_list = list(tqdm(pool.imap(func, countries), **tqdm_kwargs))
 
 
     totals = pd.concat(totals_list, axis=1)
@@ -568,7 +570,7 @@ def build_eea_co2(input_co2, year=1990, emissions_scope="CO2"):
 
     # https://www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-16
     # downloaded 201228 (modified by EEA last on 201221)
-    df = pd.read_csv(input_co2, encoding="latin-1")
+    df = pd.read_csv(input_co2, encoding="latin-1", low_memory=False)
 
     df.replace(dict(Year="1985-1987"), 1986, inplace=True)
     df.Year = df.Year.astype(int)
