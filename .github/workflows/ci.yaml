@@ -20,6 +20,7 @@ on:
 
 env:
   CACHE_NUMBER: 1 # Change this value to manually reset the environment cache
+  PYTHONUNBUFFERED: 1 # to flush progress bars
 
 jobs:
   build:
