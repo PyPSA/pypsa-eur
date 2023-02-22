@@ -31,8 +31,6 @@ def build_gem_lng_data(lng_fn):
               & Country != @remove_country \
               & TerminalName != @remove_terminal \
               & CapacityInMtpa != '--'")
-    
-    df.CapacityInMtpa = df.CapacityInMtpa.astype(float)
 
     geometry = gpd.points_from_xy(df['Longitude'], df['Latitude'])
     return gpd.GeoDataFrame(df, geometry=geometry, crs="EPSG:4326")
