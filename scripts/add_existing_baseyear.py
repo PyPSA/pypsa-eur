@@ -338,7 +338,12 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                         efficiency2=costs.at[key, 'efficiency-heat'],
                         lifetime=lifetime_assets.loc[new_capacity.index]
                     )
-
+        # check if existing capacities are larger than technical potential
+        existing_large = n.generators[n.generators["p_nom_min"] > n.generators["p_nom_max"]].index
+        if len(existing_large):
+            logger.warning(f"Existing capacities larger than technical potential for {existing_large},\
+                           adjust technical potential to existing capacities")
+            n.generators.loc[existing_large, "p_nom_max"] =  n.generators.loc[existing_large, "p_nom_min"]
 
 def add_heating_capacities_installed_before_baseyear(n, baseyear, grouping_years, ashp_cop, gshp_cop, time_dep_hp_cop, costs, default_lifetime):
     """
@@ -520,11 +525,11 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             'add_existing_baseyear',
             simpl='',
-            clusters="37",
+            clusters="45",
             lv=1.0,
             opts='',
-            sector_opts='800sn-T-H-B-I-A-solar+p3-dist1-co2min-1p7',
-            planning_horizons=2030,
+            sector_opts='8760H-T-H-B-I-A-solar+p3-dist1',
+            planning_horizons=2020,
         )
 
     logging.basicConfig(level=snakemake.config['logging_level'])
