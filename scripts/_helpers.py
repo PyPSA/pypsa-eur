@@ -3,10 +3,11 @@
 #
 # SPDX-License-Identifier: MIT
 
-from pathlib import Path
 import urllib
-from tqdm import tqdm
+from pathlib import Path
+
 import pandas as pd
+from tqdm import tqdm
 
 REGION_COLS = ["geometry", "name", "x", "y", "country"]
 
@@ -252,13 +253,15 @@ def aggregate_costs(n, flatten=False, opts=None, existing_only=False):
 
 
 def progress_retrieve(url, file):
-    
-    with tqdm(unit='B', unit_scale=True, unit_divisor=1024, miniters=1, position=0, leave=True) as t:
+    with tqdm(
+        unit="B", unit_scale=True, unit_divisor=1024, miniters=1, position=0, leave=True
+    ) as t:
+
         def update_to(b=1, bsize=1, tsize=None):
             if tsize is not None:
                 t.total = tsize
             t.update(b * bsize - t.n)
-        
+
         urllib.request.urlretrieve(url, file, reporthook=update_to)
 
 
