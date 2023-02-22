@@ -187,7 +187,6 @@ import time
 import atlite
 import geopandas as gpd
 import numpy as np
-import progressbar as pgb
 import xarray as xr
 from _helpers import configure_logging
 from dask.distributed import Client, LocalCluster
@@ -203,7 +202,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_renewable_profiles", technology="solar")
     configure_logging(snakemake)
-    pgb.streams.wrap_stderr()
 
     nprocesses = int(snakemake.threads)
     noprogress = not snakemake.config["atlite"].get("show_progress", False)
