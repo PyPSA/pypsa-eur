@@ -7,8 +7,6 @@ import pandas as pd
 import xarray as xr
 import geopandas as gpd
 
-from vresutils import shapes as vshapes
-
 if __name__ == '__main__':
     if 'snakemake' not in globals():
         from helper import mock_snakemake
@@ -46,8 +44,7 @@ if __name__ == '__main__':
     pop_cells = pd.Series(I.dot(nuts3['pop']))
 
     # in km^2
-    with mp.Pool(processes=snakemake.threads) as pool:
-        cell_areas = pd.Series(pool.map(vshapes.area, grid_cells)) / 1e6
+    cell_areas = grid_cells.to_crs(3035).area / 1e6
 
     # pop per km^2
     density_cells = pop_cells / cell_areas
