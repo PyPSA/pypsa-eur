@@ -95,4 +95,4 @@ jobs:
       run: |
         conda activate pypsa-eur
         conda list
-        snakemake -call solve_all_networks --configfile config.test1.yaml
+        snakemake -call solve_all_networks --configfile test/config.test1.yaml
