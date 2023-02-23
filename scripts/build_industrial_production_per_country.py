@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import multiprocessing as mp
 from tqdm import tqdm
-
+from helper import mute_print
 
 tj_to_ktoe = 0.0238845
 ktoe_to_twh = 0.01163
@@ -99,7 +99,6 @@ e_switzerland = pd.Series({'Iron and steel': 7889.,
                    'Other Industrial Sectors': 10825.,
                    'current electricity': 53760.})
 
-
 def find_physical_output(df):
     start = np.where(df.index.str.contains('Physical output', na=''))[0][0]
     empty_row = np.where(df.index.isnull())[0]
@@ -114,15 +113,17 @@ def get_energy_ratio(country):
     else:
         # estimate physical output, energy consumption in the sector and country
         fn = f"{eurostat_dir}/{eb_names[country]}.XLSX"
-        df = pd.read_excel(fn, sheet_name='2016', index_col=2,
-                           header=0, skiprows=1).squeeze('columns')
+        with mute_print():
+            df = pd.read_excel(fn, sheet_name='2016', index_col=2,
+                            header=0, skiprows=1).squeeze('columns')
         e_country = df.loc[eb_sectors.keys(
         ), 'Total all products'].rename(eb_sectors)
 
     fn = f'{jrc_dir}/JRC-IDEES-2015_Industry_EU28.xlsx'
 
-    df = pd.read_excel(fn, sheet_name='Ind_Summary',
-                       index_col=0, header=0).squeeze('columns')
+    with mute_print():
+        df = pd.read_excel(fn, sheet_name='Ind_Summary',
+                        index_col=0, header=0).squeeze('columns')
 
     assert df.index[48] == "by sector"
     year_i = df.columns.get_loc(year)
@@ -141,8 +142,9 @@ def industry_production_per_country(country):
         jrc_country = jrc_names.get(country, country)
         fn = f'{jrc_dir}/JRC-IDEES-2015_Industry_{jrc_country}.xlsx'
         sheet = sub_sheet_name_dict[sector]
-        df = pd.read_excel(fn, sheet_name=sheet,
-                           index_col=0, header=0).squeeze('columns')
+        with mute_print():
+            df = pd.read_excel(fn, sheet_name=sheet,
+                            index_col=0, header=0).squeeze('columns')
 
         year_i = df.columns.get_loc(year)
         df = df.iloc[find_physical_output(df), year_i]

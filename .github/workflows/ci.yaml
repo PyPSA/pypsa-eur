@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2021 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2021-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: CC0-1.0
 
@@ -52,10 +52,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Clone pypsa-eur and technology-data repositories
+      - name: Clone pypsa-eur subworkflow
         run: |
           git clone https://github.com/pypsa/pypsa-eur ../pypsa-eur
-          git clone https://github.com/pypsa/technology-data ../technology-data
           cp ../pypsa-eur/test/config.test1.yaml ../pypsa-eur/config.yaml
       
       - name: Setup secrets
@@ -64,7 +63,7 @@ jobs:
 
       - name: Add solver to environment
         run: |
-          echo -e "  - coincbc\n  - ipopt<3.13.3" >> ../pypsa-eur/envs/environment.yaml
+          echo -e "- coincbc\n- ipopt<3.13.3" >> ../pypsa-eur/envs/environment.yaml
 
       - name: Setup Mambaforge
         uses: conda-incubator/setup-miniconda@v2
@@ -103,7 +102,5 @@ jobs:
         run: |
           conda activate pypsa-eur
           conda list
-          cp test/config.overnight.yaml config.yaml
-          snakemake -call
-          cp test/config.myopic.yaml config.yaml
-          snakemake -call
+          snakemake -call --configfile test/config.overnight.yaml
+          snakemake -call --configfile test/config.myopic.yaml

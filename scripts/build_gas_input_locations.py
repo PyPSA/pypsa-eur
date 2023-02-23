@@ -19,14 +19,27 @@ def read_scigrid_gas(fn):
     return df
 
 
-def build_gas_input_locations(lng_fn, planned_lng_fn, entry_fn, prod_fn, countries):
+def build_gem_lng_data(lng_fn):
+    df = pd.read_excel(lng_fn[0], sheet_name='LNG terminals - data')
+    df = df.set_index("ComboID")
+
+    remove_status = ['Cancelled']
+    remove_country = ['Cyprus','Turkey']
+    remove_terminal = ['Puerto de la Luz LNG Terminal', 'Gran Canaria LNG Terminal']
+
+    df = df.query("Status != 'Cancelled' \
+              & Country != @remove_country \
+              & TerminalName != @remove_terminal \
+              & CapacityInMtpa != '--'")
+
+    geometry = gpd.points_from_xy(df['Longitude'], df['Latitude'])
+    return gpd.GeoDataFrame(df, geometry=geometry, crs="EPSG:4326")
+
+
+def build_gas_input_locations(lng_fn, entry_fn, prod_fn, countries):
     
     # LNG terminals
-    lng = read_scigrid_gas(lng_fn)
-    planned_lng = pd.read_csv(planned_lng_fn)
-    planned_lng.geometry = planned_lng.geometry.apply(wkt.loads)
-    planned_lng = gpd.GeoDataFrame(planned_lng, crs=4326)
-    lng = pd.concat([lng, planned_lng], ignore_index=True)
+    lng = build_gem_lng_data(lng_fn)
 
     # Entry points from outside the model scope
     entry = read_scigrid_gas(entry_fn)
@@ -45,10 +58,11 @@ def build_gas_input_locations(lng_fn, planned_lng_fn, entry_fn, prod_fn, countri
         (prod.country_code != "DE")
     ]
 
-    conversion_factor = 437.5 # MCM/day to MWh/h
-    lng["p_nom"] = lng["max_cap_store2pipe_M_m3_per_d"] * conversion_factor
-    entry["p_nom"] = entry["max_cap_from_to_M_m3_per_d"] * conversion_factor
-    prod["p_nom"] = prod["max_supply_M_m3_per_d"] * conversion_factor
+    mcm_per_day_to_mw = 437.5 # MCM/day to MWh/h
+    mtpa_to_mw = 1649.224 # mtpa to MWh/h
+    lng["p_nom"] = lng["CapacityInMtpa"] * mtpa_to_mw
+    entry["p_nom"] = entry["max_cap_from_to_M_m3_per_d"] * mcm_per_day_to_mw
+    prod["p_nom"] = prod["max_supply_M_m3_per_d"] * mcm_per_day_to_mw
 
     lng["type"] = "lng"
     entry["type"] = "pipeline"
@@ -64,7 +78,7 @@ if __name__ == "__main__":
     if 'snakemake' not in globals():
         from helper import mock_snakemake
         snakemake = mock_snakemake(
-            'build_gas_import_locations',
+            'build_gas_input_locations',
             simpl='',
             clusters='37',
         )
@@ -87,7 +101,6 @@ if __name__ == "__main__":
 
     gas_input_locations = build_gas_input_locations(
         snakemake.input.lng,
-        snakemake.input.planned_lng,
         snakemake.input.entry,
         snakemake.input.production,
         countries

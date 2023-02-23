@@ -1,4 +1,6 @@
 import os
+import sys
+import contextlib
 import yaml
 import pytz
 import pandas as pd
@@ -11,6 +13,14 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+# Define a context manager to temporarily mute print statements
+@contextlib.contextmanager
+def mute_print():
+    with open(os.devnull, 'w') as devnull:
+        with contextlib.redirect_stdout(devnull):
+            yield
+            
+            
 def override_component_attrs(directory):
     """Tell PyPSA that links can have multiple outputs by
     overriding the component_attrs. This can be done for
@@ -25,7 +35,7 @@ def override_component_attrs(directory):
 
     Returns
     -------
-    Dictionary of overriden component attributes.
+    Dictionary of overridden component attributes.
     """
 
     attrs = Dict({k : v.copy() for k,v in component_attrs.items()})
@@ -138,6 +148,6 @@ def parse(l):
 
 def update_config_with_sector_opts(config, sector_opts):
     for o in sector_opts.split("-"):
-        if o.startswith("CF:"):
+        if o.startswith("CF+"):
             l = o.split("+")[1:]
             update_config(config, parse(l))

@@ -52,6 +52,7 @@ def rename_techs(label):
         "ror": "hydroelectricity",
         "hydro": "hydroelectricity",
         "PHS": "hydroelectricity",
+        "NH3": "ammonia",
         "co2 Store": "DAC",
         "co2 stored": "CO2 sequestration",
         "AC": "transmission lines",
@@ -107,6 +108,7 @@ preferred_order = pd.Index([
     "natural gas",
     "helmeth",
     "methanation",
+    "ammonia",
     "hydrogen storage",
     "power-to-gas",
     "power-to-liquid",
@@ -202,7 +204,7 @@ def plot_energy():
     new_index = preferred_order.intersection(df.index).append(df.index.difference(preferred_order))
 
     new_columns = df.columns.sort_values()
-    
+
     fig, ax = plt.subplots(figsize=(12,8))
 
     print(df.loc[new_index, new_columns])
@@ -255,7 +257,7 @@ def plot_balances():
         df = df / 1e6
 
         #remove trailing link ports
-        df.index = [i[:-1] if ((i != "co2") and (i[-1:] in ["0","1","2","3"])) else i for i in df.index]
+        df.index = [i[:-1] if ((i not in ["co2", "NH3"]) and (i[-1:] in ["0","1","2","3"])) else i for i in df.index]
 
         df = df.groupby(df.index.map(rename_techs)).sum()
 
@@ -363,7 +365,7 @@ def historical_emissions(cts):
 
 
 
-def plot_carbon_budget_distribution():
+def plot_carbon_budget_distribution(input_eurostat):
     """
     Plot historical carbon emissions in the EU and decarbonization path
     """
@@ -385,9 +387,9 @@ def plot_carbon_budget_distribution():
     ax1.set_xlim([1990,snakemake.config['scenario']['planning_horizons'][-1]+1])
 
     path_cb = snakemake.config['results_dir'] + snakemake.config['run'] + '/csvs/'
-    countries=pd.read_csv(path_cb + 'countries.csv',  index_col=1)
-    cts=countries.index.to_list()
-    e_1990 = co2_emissions_year(cts, opts, year=1990)
+    countries = pd.read_csv(snakemake.input.country_codes, index_col=1)
+    cts = countries.index.to_list()
+    e_1990 = co2_emissions_year(cts, input_eurostat, opts, year=1990)
     CO2_CAP=pd.read_csv(path_cb + 'carbon_budget_distribution.csv',
                         index_col=0)
 
@@ -399,7 +401,7 @@ def plot_carbon_budget_distribution():
 
     ax1.plot(emissions, color='black', linewidth=3, label=None)
 
-    #plot commited and uder-discussion targets
+    #plot committed and uder-discussion targets
     #(notice that historical emissions include all countries in the
     # network, but targets refer to EU)
     ax1.plot([2020],[0.8*emissions[1990]],
@@ -425,7 +427,7 @@ def plot_carbon_budget_distribution():
 
     ax1.plot([2050],[0.125*emissions[1990]],'ro',
                      marker='*', markersize=12, markerfacecolor='black',
-                     markeredgecolor='black', label='EU commited target')
+                     markeredgecolor='black', label='EU committed target')
 
     ax1.legend(fancybox=True, fontsize=18, loc=(0.01,0.01),
                        facecolor='white', frameon=True)
@@ -438,8 +440,7 @@ if __name__ == "__main__":
     if 'snakemake' not in globals():
         from helper import mock_snakemake
         snakemake = mock_snakemake('plot_summary')
-    
-    # update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
+
 
     n_header = 4
 
@@ -453,4 +454,4 @@ if __name__ == "__main__":
         opts=sector_opts.split('-')
         for o in opts:
             if "cb" in o:
-                plot_carbon_budget_distribution()
+                plot_carbon_budget_distribution(snakemake.input.eurostat)

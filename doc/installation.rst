@@ -25,15 +25,6 @@ then download and unpack all the PyPSA-Eur data files by running the following s
     projects/pypsa-eur % snakemake -j 1 retrieve_databundle
 
 
-Clone technology-data repository
-================================
-
-Next install the technology assumptions database `technology-data <https://github.com/PyPSA/technology-data>`_ by creating a parallel directory:
-
-.. code:: bash
-
-    projects % git clone https://github.com/PyPSA/technology-data.git
-
 
 Clone PyPSA-Eur-Sec repository
 ==============================
@@ -54,7 +45,7 @@ The requirements are the same as `PyPSA-Eur <https://github.com/PyPSA/pypsa-eur>
 xarray version >= 0.15.1, you will need the latest master branch of
 atlite version 0.0.2.
 
-You can create an enviroment using the environment.yaml file in pypsa-eur/envs:
+You can create an environment using the environment.yaml file in pypsa-eur/envs:
 
 .. code:: bash
 

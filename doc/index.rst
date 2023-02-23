@@ -14,10 +14,6 @@ PyPSA-Eur-Sec: A Sector-Coupled Open Optimisation Model of the European Energy S
 .. image:: https://img.shields.io/github/repo-size/pypsa/pypsa-eur-sec
     :alt: GitHub repo size
 
-.. image:: https://badges.gitter.im/PyPSA/community.svg
-    :target: https://gitter.im/PyPSA/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge
-    :alt: Chat on Gitter
-
 
 PyPSA-Eur-Sec is an open model dataset of the European energy system at the
 transmission network level that covers the full ENTSO-E area.
@@ -25,9 +21,10 @@ transmission network level that covers the full ENTSO-E area.
 PyPSA-Eur-Sec builds on the electricity generation and transmission
 model `PyPSA-Eur <https://github.com/PyPSA/pypsa-eur>`_ to add demand
 and supply for the following sectors: transport, space and water
-heating, biomass, industry and industrial feedstocks. This completes
-the energy system and includes all greenhouse gas emitters except
-waste management, agriculture, forestry and land use.
+heating, biomass, energy consumption in the agriculture, industry 
+and industrial feedstocks, carbon management, carbon capture and usage/sequestration. 
+This completes the energy system and includes all greenhouse gas emitters except waste management, agriculture, 
+forestry and land use.
 
 
 **WARNING**: PyPSA-Eur-Sec is under active development and has several
@@ -40,9 +37,9 @@ patchy.
 We cannot support this model if you choose to use it.
 
 .. note::
-    You can find showcases of the model's capabilities in the
+    You can find showcases of the model's capabilities in the Supplementary Materials of the 
     preprint `Benefits of a Hydrogen Network in Europe
-    <https://arxiv.org/abs/2207.05816>`_, a `paper in Joule with a
+    <https://arxiv.org/abs/2207.05816>`_, the Supplementary Materials of the `paper in Joule with a
     description of the industry sector
     <https://arxiv.org/abs/2109.09563>`_, or in `a 2021 presentation
     at EMP-E <https://nworbmot.org/energy/brown-empe.pdf>`_.
@@ -100,6 +97,15 @@ Ministry for Education and Research (BMBF) <https://www.bmbf.de/en/index.html>`_
 as part of the `Stromnetze Research Initiative
 <http://forschung-stromnetze.info/projekte/grundlagen-und-konzepte-fuer-effiziente-dezentrale-stromnetze/>`_.
 
+Workflow Outline
+================
+
+.. image:: ../graphics/workflow.png
+
+.. note::
+    The graph above was generated using
+    ``snakemake --rulegraph -F | sed -n "/digraph/,/}/p" | dot -Tpng -o workflow.png``
+
 
 Documentation
 =============
@@ -119,6 +125,7 @@ Documentation
 
 * :doc:`spatial_resolution`
 * :doc:`supply_demand`
+* :doc:`technology_assumptions`
 
 .. toctree::
    :hidden:
@@ -127,12 +134,13 @@ Documentation
 
    spatial_resolution
    supply_demand
-
+   technology_assumptions
 
 **Foresight options**
 
 * :doc:`overnight`
 * :doc:`myopic`
+* :doc:`perfect`
 
 .. toctree::
    :hidden:
@@ -141,6 +149,7 @@ Documentation
 
    overnight
    myopic
+   perfect
 
 **References**
 
