@@ -1,5 +1,8 @@
 """Build industrial production per country."""
 
+import logging
+logger = logging.getLogger(__name__)
+
 import pandas as pd
 import numpy as np
 import multiprocessing as mp
@@ -189,7 +192,7 @@ def separate_basic_chemicals(demand):
     there = ammonia.index.intersection(demand.index)
     missing = demand.index.symmetric_difference(there)
 
-    print("Following countries have no ammonia demand:", missing)
+    logger.info(f"Following countries have no ammonia demand: {missing.tolist()}")
 
     demand["Ammonia"] = 0.
 
@@ -212,6 +215,8 @@ if __name__ == '__main__':
     if 'snakemake' not in globals():
         from helper import mock_snakemake
         snakemake = mock_snakemake('build_industrial_production_per_country')
+
+    logging.basicConfig(level=snakemake.config['logging_level'])
 
     countries = non_EU + eu28
 

@@ -1,3 +1,6 @@
+import logging
+logger = logging.getLogger(__name__)
+
 from functools import partial
 from tqdm import tqdm
 from helper import mute_print
@@ -454,7 +457,7 @@ def build_energy_totals(countries, eurostat, swiss, idees):
             fuel_use = df[f"electricity {sector} {use}"]
             fuel = df[f"electricity {sector}"]
             avg = fuel_use.div(fuel).mean()
-            print(f"{sector}: average fraction of electricity for {use} is {avg:.3f}")
+            logger.debug(f"{sector}: average fraction of electricity for {use} is {avg:.3f}")
             df.loc[to_fill, f"electricity {sector} {use}"] = avg * df.loc[to_fill, f"electricity {sector}"]
 
         # non-electric use
@@ -463,7 +466,7 @@ def build_energy_totals(countries, eurostat, swiss, idees):
             nonelectric_use = df[f"total {sector} {use}"] - df[f"electricity {sector} {use}"]
             nonelectric = df[f"total {sector}"] - df[f"electricity {sector}"]
             avg = nonelectric_use.div(nonelectric).mean()
-            print(f"{sector}: average fraction of non-electric for {use} is {avg:.3f}")
+            logger.debug(f"{sector}: average fraction of non-electric for {use} is {avg:.3f}")
             electric_use = df.loc[to_fill, f"electricity {sector} {use}"]
             nonelectric = df.loc[to_fill, f"total {sector}"] - df.loc[to_fill, f"electricity {sector}"]
             df.loc[to_fill, f"total {sector} {use}"] = electric_use + avg * nonelectric
@@ -673,7 +676,7 @@ def build_transport_data(countries, population, idees):
     transport_data.at["CH", "number cars"] = 4.136e6
 
     missing = transport_data.index[transport_data["number cars"].isna()]
-    print(f"Missing data on cars from:\n{list(missing)}\nFilling gaps with averaged data.")
+    logger.info(f"Missing data on cars from:\n{list(missing)}\nFilling gaps with averaged data.")
 
     cars_pp = transport_data["number cars"] / population
     transport_data.loc[missing, "number cars"] = cars_pp.mean() * population
@@ -683,7 +686,7 @@ def build_transport_data(countries, population, idees):
     transport_data["average fuel efficiency"] = idees["passenger car efficiency"]
 
     missing = transport_data.index[transport_data["average fuel efficiency"].isna()]
-    print(f"Missing data on fuel efficiency from:\n{list(missing)}\nFilling gapswith averaged data.")
+    logger.info(f"Missing data on fuel efficiency from:\n{list(missing)}\nFilling gapswith averaged data.")
 
     fill_values = transport_data["average fuel efficiency"].mean()
     transport_data.loc[missing, "average fuel efficiency"] = fill_values
@@ -695,6 +698,8 @@ if __name__ == "__main__":
     if 'snakemake' not in globals():
         from helper import mock_snakemake
         snakemake = mock_snakemake('build_energy_totals')
+
+    logging.basicConfig(level=snakemake.config['logging_level'])
 
     config = snakemake.config["energy"]
 

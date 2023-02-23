@@ -1,3 +1,6 @@
+import logging
+logger = logging.getLogger(__name__)
+
 import pypsa
 
 import pandas as pd
@@ -75,7 +78,7 @@ def plot_map(network, components=["links", "stores", "storage_units", "generator
                    .unstack().fillna(0.))
         costs = pd.concat([costs, costs_c], axis=1)
 
-        print(comp, costs)
+        logger.debug(f"{comp}, {costs}")
 
     costs = costs.groupby(costs.columns, axis=1).sum()
 
@@ -87,7 +90,7 @@ def plot_map(network, components=["links", "stores", "storage_units", "generator
 
     for item in new_columns:
         if item not in tech_colors:
-            print("Warning!",item,"not in config/plotting/tech_colors")
+            logger.warning(f"{item} not in config/plotting/tech_colors")
 
     costs = costs.stack()  # .sort_index()
 
@@ -102,7 +105,7 @@ def plot_map(network, components=["links", "stores", "storage_units", "generator
     # drop non-bus
     to_drop = costs.index.levels[0].symmetric_difference(n.buses.index)
     if len(to_drop) != 0:
-        print("dropping non-buses", to_drop)
+        logger.info(f"dropping non-buses {to_drop.tolist()}")
         costs.drop(to_drop, level=0, inplace=True, axis=0, errors="ignore")
 
     # make sure they are removed from index
@@ -751,7 +754,7 @@ def plot_series(network, carrier="AC", name="test"):
     to_drop = supply.columns[(abs(supply) < threshold).all()]
 
     if len(to_drop) != 0:
-        print("dropping", to_drop)
+        logger.info(f"dropping {to_drop.tolist()} from supply")
         supply.drop(columns=to_drop, inplace=True)
 
     supply.index.name = None
@@ -840,6 +843,8 @@ if __name__ == "__main__":
             sector_opts='Co2L0-730H-T-H-B-I-A-solar+p3-linemaxext10',
             planning_horizons="2050",
         )
+
+    logging.basicConfig(level=snakemake.config['logging_level'])
 
     overrides = override_component_attrs(snakemake.input.overrides)
     n = pypsa.Network(snakemake.input.network, override_component_attrs=overrides)

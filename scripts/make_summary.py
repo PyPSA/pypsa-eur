@@ -1,3 +1,5 @@
+import logging
+logger = logging.getLogger(__name__)
 
 import sys
 import yaml
@@ -431,8 +433,9 @@ def calculate_weighted_prices(n, label, weighted_prices):
 
         weighted_prices.loc[carrier,label] = (load * n.buses_t.marginal_price[buses]).sum().sum() / load.sum().sum()
 
+        # still have no idea what this is for, only for debug reasons.
         if carrier[:5] == "space":
-            print(load * n.buses_t.marginal_price[buses])
+            logger.debug(load * n.buses_t.marginal_price[buses])
 
     return weighted_prices
 
@@ -537,7 +540,7 @@ def make_summaries(networks_dict):
         df[output] = pd.DataFrame(columns=columns, dtype=float)
 
     for label, filename in networks_dict.items():
-        print(label, filename)
+        logger.info(f"make summary for scenario {label}, using {filename}")
 
         overrides = override_component_attrs(snakemake.input.overrides)
         n = pypsa.Network(filename, override_component_attrs=overrides)
@@ -561,6 +564,8 @@ if __name__ == "__main__":
         from helper import mock_snakemake
         snakemake = mock_snakemake('make_summary')
     
+    logging.basicConfig(level=snakemake.config['logging_level'])
+
     networks_dict = {
         (cluster, lv, opt+sector_opt, planning_horizon) :
         snakemake.config['results_dir'] + snakemake.config['run'] + f'/postnetworks/elec_s{simpl}_{cluster}_lv{lv}_{opt}_{sector_opt}_{planning_horizon}.nc' \
@@ -571,8 +576,6 @@ if __name__ == "__main__":
         for lv in snakemake.config['scenario']['lv'] \
         for planning_horizon in snakemake.config['scenario']['planning_horizons']
     }
-
-    print(networks_dict)
 
     Nyears = 1
 

@@ -1,5 +1,8 @@
 """Build mapping between grid cells and population (total, urban, rural)"""
 
+import logging
+logger = logging.getLogger(__name__)
+
 import multiprocessing as mp
 import atlite
 import numpy as np
@@ -13,6 +16,8 @@ if __name__ == '__main__':
     if 'snakemake' not in globals():
         from helper import mock_snakemake
         snakemake = mock_snakemake('build_population_layouts')
+
+    logging.basicConfig(level=snakemake.config['logging_level'])
 
     cutout = atlite.Cutout(snakemake.config['atlite']['cutout'])
 
@@ -57,7 +62,7 @@ if __name__ == '__main__':
     pop_urban = pd.Series(0., density_cells.index)
 
     for ct in countries:
-        print(ct, urban_fraction[ct])
+        logger.debug(f"The urbanization rate for {ct} is {round(urban_fraction[ct]*100)}%")
 
         indicator_nuts3_ct = nuts3.country.apply(lambda x: 1. if x == ct else 0.)
 

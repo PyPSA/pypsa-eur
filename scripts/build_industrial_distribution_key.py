@@ -1,5 +1,8 @@
 """Build industrial distribution keys from hotmaps database."""
 
+import logging
+logger = logging.getLogger(__name__)
+
 import uuid
 import pandas as pd
 import geopandas as gpd
@@ -33,7 +36,7 @@ def locate_missing_industrial_sites(df):
 
         loc = geocode([s.City, s.Country], geometry='wkt')
         if loc is not None:
-            print(f"Found:\t{loc}\nFor:\t{s['City']}, {s['Country']}\n")
+            logger.debug(f"Found:\t{loc}\nFor:\t{s['City']}, {s['Country']}\n")
             return f"POINT({loc.longitude} {loc.latitude})"
         else:
             return None
@@ -46,8 +49,7 @@ def locate_missing_industrial_sites(df):
     num_found = len(missing) - num_still_missing
     share_missing = len(missing) / len(df) * 100
     share_still_missing = num_still_missing / len(df) * 100
-    print(f"Found {num_found} missing locations.",
-          f"Share of missing locations reduced from {share_missing:.2f}% to {share_still_missing:.2f}%.")
+    logger.warning(f"Found {num_found} missing locations. \nShare of missing locations reduced from {share_missing:.2f}% to {share_still_missing:.2f}%.")
 
     return df
 
@@ -124,6 +126,8 @@ if __name__ == "__main__":
             simpl='',
             clusters=48,
         )
+
+    logging.basicConfig(level=snakemake.config['logging_level'])
 
     regions = gpd.read_file(snakemake.input.regions_onshore).set_index('name')
 
