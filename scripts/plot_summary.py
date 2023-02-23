@@ -439,7 +439,7 @@ if __name__ == "__main__":
         from helper import mock_snakemake
         snakemake = mock_snakemake('plot_summary')
     
-    update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
+    # update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
 
     n_header = 4
 
