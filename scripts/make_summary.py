@@ -540,7 +540,7 @@ def make_summaries(networks_dict):
         df[output] = pd.DataFrame(columns=columns, dtype=float)
 
     for label, filename in networks_dict.items():
-        logger.info(f"make summary for scenario {label}, using {filename}")
+        logger.info(f"Make summary for scenario {label}, using {filename}")
 
         overrides = override_component_attrs(snakemake.input.overrides)
         n = pypsa.Network(filename, override_component_attrs=overrides)

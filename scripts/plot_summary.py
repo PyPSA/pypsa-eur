@@ -136,7 +136,7 @@ def plot_costs():
 
     to_drop = df.index[df.max(axis=1) < snakemake.config['plotting']['costs_threshold']]
 
-    logger.info(f"dropping technology with costs below {snakemake.config['plotting']['costs_threshold']} EUR billion per year")
+    logger.info(f"Dropping technology with costs below {snakemake.config['plotting']['costs_threshold']} EUR billion per year")
     logger.debug(df.loc[to_drop])
 
     df = df.drop(to_drop)
@@ -191,7 +191,7 @@ def plot_energy():
 
     to_drop = df.index[df.abs().max(axis=1) < snakemake.config['plotting']['energy_threshold']]
 
-    logger.info(f"dropping all technology with energy consumption or production below {snakemake.config['plotting']['energy_threshold']} TWh/a")
+    logger.info(f"Dropping all technology with energy consumption or production below {snakemake.config['plotting']['energy_threshold']} TWh/a")
     logger.debug(df.loc[to_drop])
 
     df = df.drop(to_drop)
@@ -265,7 +265,7 @@ def plot_balances():
         else:
             units = "TWh/a"
 
-        logger.info(f"dropping technology energy balance smaller than {snakemake.config['plotting']['energy_threshold']/10} {units}")
+        logger.info(f"Dropping technology energy balance smaller than {snakemake.config['plotting']['energy_threshold']/10} {units}")
         logger.debug(df.loc[to_drop])
 
         df = df.drop(to_drop)

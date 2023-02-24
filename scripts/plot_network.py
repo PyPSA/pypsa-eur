@@ -105,7 +105,7 @@ def plot_map(network, components=["links", "stores", "storage_units", "generator
     # drop non-bus
     to_drop = costs.index.levels[0].symmetric_difference(n.buses.index)
     if len(to_drop) != 0:
-        logger.info(f"dropping non-buses {to_drop.tolist()}")
+        logger.info(f"Dropping non-buses {to_drop.tolist()}")
         costs.drop(to_drop, level=0, inplace=True, axis=0, errors="ignore")
 
     # make sure they are removed from index
@@ -754,7 +754,7 @@ def plot_series(network, carrier="AC", name="test"):
     to_drop = supply.columns[(abs(supply) < threshold).all()]
 
     if len(to_drop) != 0:
-        logger.info(f"dropping {to_drop.tolist()} from supply")
+        logger.info(f"Dropping {to_drop.tolist()} from supply")
         supply.drop(columns=to_drop, inplace=True)
 
     supply.index.name = None
