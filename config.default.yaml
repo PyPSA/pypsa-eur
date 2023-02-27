@@ -305,7 +305,7 @@ sector:
   conventional_generation: # generator : carrier
     OCGT: gas
   industry_t:  # heat supply industry
-    endogen: true  # if heat supply for industry should be enodgenously optimised
+    endogen: false  # if heat supply for industry should be enodgenously optimised
     must_run: 0.8 # NB: industrial heat demand is in reality supplied at site by discrete plants
     # which follow the local demand and therefore cannot be dispatched too much.
     # Thus, p_min_pu is set to must run to avoid too much dispatch behaviour. Improvements welcome!
