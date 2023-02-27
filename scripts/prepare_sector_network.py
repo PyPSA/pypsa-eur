@@ -2084,10 +2084,13 @@ def add_biomass(n, costs):
         )
 
 
-def add_low_t_industry(n, nodes, industrial_demand, costs):
+def add_low_t_industry(n, nodes, industrial_demand, costs, must_run):
     """Add low temperature heat for industry.
     """
+
     logger.info("Add low temperature industry demand.")
+
+
     n.madd("Bus",
            nodes + " lowT industry",
            location=nodes,
@@ -2101,9 +2104,6 @@ def add_low_t_industry(n, nodes, industrial_demand, costs):
            carrier="lowT industry",
            p_set=industrial_demand.loc[nodes, "solid biomass"] / 8760.)
 
-    #NB: industrial heat demand is in reality supplied at site by discrete plants
-    # which follow the local demand and therefore cannot be dispatched too much.
-    # Thus, p_min_pu is set to 0.8 to avoid too much dispatch behaviour. Improvements welcome!
     if options["industry_t"]['low_T']["biomass"] or not options["industry_t"]['endogen']:
         n.madd("Link",
                nodes,
@@ -2113,7 +2113,7 @@ def add_low_t_industry(n, nodes, industrial_demand, costs):
                bus3="co2 atmosphere",
                carrier="lowT industry solid biomass",
                p_nom_extendable=True,
-               p_min_pu=0.8,
+               p_min_pu=must_run,
                efficiency=costs.at['solid biomass boiler steam', 'efficiency'],
                efficiency3=costs.at['solid biomass', 'CO2 intensity'] - costs.at[
                    'solid biomass', 'CO2 intensity'],
@@ -2130,7 +2130,7 @@ def add_low_t_industry(n, nodes, industrial_demand, costs):
               bus2="co2 stored",
               carrier="lowT industry solid biomass CC",
               p_nom_extendable=True,
-              p_min_pu=0.8,
+              p_min_pu=must_run,
               efficiency=costs.at['solid biomass boiler steam CC', 'efficiency'],
               capital_cost=costs.at['solid biomass boiler steam CC', 'fixed'] * costs.at[
                   'solid biomass boiler steam CC', 'efficiency'] + costs.at[
@@ -2153,7 +2153,7 @@ def add_low_t_industry(n, nodes, industrial_demand, costs):
                bus3="co2 atmosphere",
                carrier="lowT industry methane",
                p_nom_extendable=True,
-               p_min_pu=0.8,
+               p_min_pu=must_run,
                efficiency=costs.at['gas boiler steam', 'efficiency'],
                capital_cost=costs.at['gas boiler steam', 'fixed'] * costs.at['gas boiler steam', 'efficiency'],
                marginal_cost=costs.at['gas boiler steam', 'VOM'],
@@ -2170,7 +2170,7 @@ def add_low_t_industry(n, nodes, industrial_demand, costs):
                bus2="co2 stored",
                carrier="lowT industry methane CC",
                p_nom_extendable=True,
-               p_min_pu=0.8,
+               p_min_pu=must_run,
                efficiency=eta,
                capital_cost=costs.at['gas boiler steam', 'fixed'] * costs.at['gas boiler steam', 'efficiency'] +
                             costs.at['biomass CHP capture', 'fixed'] * costs.at['gas', 'CO2 intensity'],
@@ -2188,7 +2188,7 @@ def add_low_t_industry(n, nodes, industrial_demand, costs):
                bus1=nodes + " lowT industry",
                carrier="lowT industry heat pump",
                p_nom_extendable=True,
-               p_min_pu=0.8,
+               p_min_pu=must_run,
                efficiency=eta,
                capital_cost=costs.at['industrial heat pump high temperature', 'fixed'] * eta,
                marginal_cost=costs.at['industrial heat pump high temperature', 'VOM'],
@@ -2202,7 +2202,7 @@ def add_low_t_industry(n, nodes, industrial_demand, costs):
                bus1=nodes + " lowT industry",
                carrier="lowT industry electricity",
                p_nom_extendable=True,
-               p_min_pu=0.8,
+               p_min_pu=must_run,
                efficiency=costs.at['electric boiler steam', 'efficiency'],
                capital_cost=costs.at['electric boiler steam', 'fixed'] * costs.at[
                    'electric boiler steam', 'efficiency'],
@@ -2211,10 +2211,11 @@ def add_low_t_industry(n, nodes, industrial_demand, costs):
 
 
 
-def add_medium_t_industry(n, nodes, industrial_demand, costs):
+def add_medium_t_industry(n, nodes, industrial_demand, costs, must_run):
     """Add medium temperature heat for industry.
     """
-    logger.info("Add medium temperature industry demand.")
+
+    logger.info("Add medium temperature industry demand")
 
     n.madd("Bus",
            nodes + " mediumT industry",
@@ -2239,7 +2240,7 @@ def add_medium_t_industry(n, nodes, industrial_demand, costs):
                bus3="co2 atmosphere",
                carrier="solid biomass for mediumT industry",
                p_nom_extendable=True,
-               p_min_pu=0.8,
+               p_min_pu=must_run,
                efficiency=costs.at['direct firing solid fuels', 'efficiency'],
                efficiency3=costs.at['solid biomass', 'CO2 intensity'] - costs.at['solid biomass', 'CO2 intensity'],
                capital_cost=costs.at['direct firing solid fuels', 'fixed'] * costs.at['direct firing solid fuels', 'efficiency'],
@@ -2255,7 +2256,7 @@ def add_medium_t_industry(n, nodes, industrial_demand, costs):
               bus2="co2 stored",
               carrier="solid biomass for mediumT industry CC",
               p_nom_extendable=True,
-              p_min_pu=0.8,
+              p_min_pu=must_run,
               efficiency=costs.at['direct firing solid fuels CC', 'efficiency'],
               capital_cost=costs.at['direct firing solid fuels CC', 'fixed'] * costs.at[
                   'direct firing solid fuels CC', 'efficiency'] + costs.at[
@@ -2281,7 +2282,7 @@ def add_medium_t_industry(n, nodes, industrial_demand, costs):
                bus3="co2 atmosphere",
                carrier="gas for mediumT industry",
                p_nom_extendable=True,
-               p_min_pu=0.8,
+               p_min_pu=must_run,
                efficiency=costs.at['direct firing gas', 'efficiency'],
                efficiency3=costs.at['gas', 'CO2 intensity'],
                capital_cost=costs.at['direct firing gas', 'fixed'] * costs.at['direct firing gas', 'efficiency'],
@@ -2299,7 +2300,7 @@ def add_medium_t_industry(n, nodes, industrial_demand, costs):
                bus2="co2 stored",
                carrier="gas for mediumT industry CC",
                p_nom_extendable=True,
-               p_min_pu=0.8,
+               p_min_pu=must_run,
                efficiency=eta,
                efficiency3=costs.at['gas', 'CO2 intensity'] * (1 - costs.at['biomass CHP capture', 'capture_rate']),
                efficiency2=costs.at['gas', 'CO2 intensity'] * costs.at['biomass CHP capture', 'capture_rate'],
@@ -2319,14 +2320,15 @@ def add_medium_t_industry(n, nodes, industrial_demand, costs):
                capital_cost=10 * costs.at['direct firing gas', 'fixed'] * costs.at['direct firing gas', 'efficiency'],
                marginal_cost=10 * costs.at['direct firing gas', 'VOM'],
                p_nom_extendable=True,
-               p_min_pu=0.8,
+               p_min_pu=must_run,
                efficiency=costs.at['direct firing gas', 'efficiency'])
 
 
-def add_high_t_industry(n, nodes, industrial_demand, costs):
+def add_high_t_industry(n, nodes, industrial_demand, costs, must_run):
     """Add high temperature heat for industry.
     """
-    logger.info("Add high temperature industry demand.")
+
+    logger.info(f"Add high temperature industry demand.")
 
     n.madd("Bus",
            nodes + " highT industry",
@@ -2351,7 +2353,7 @@ def add_high_t_industry(n, nodes, industrial_demand, costs):
                bus3="co2 atmosphere",
                carrier="gas for highT industry",
                p_nom_extendable=True,
-               p_min_pu=0.8,
+               p_min_pu=must_run,
                efficiency=costs.at['direct firing gas', 'efficiency'],
                efficiency3=costs.at['gas', 'CO2 intensity'],
                capital_cost=costs.at['direct firing gas', 'fixed'] * costs.at['direct firing gas', 'efficiency'],
@@ -2369,7 +2371,7 @@ def add_high_t_industry(n, nodes, industrial_demand, costs):
                bus2="co2 stored",
                carrier="gas for highT industry CC",
                p_nom_extendable=True,
-               p_min_pu=0.8,
+               p_min_pu=must_run,
                efficiency=eta,
                efficiency3=costs.at['gas', 'CO2 intensity'] * (1 - costs.at['biomass CHP capture', 'capture_rate']),
                efficiency2=costs.at['gas', 'CO2 intensity'] * costs.at['biomass CHP capture', 'capture_rate'],
@@ -2391,8 +2393,106 @@ def add_high_t_industry(n, nodes, industrial_demand, costs):
                capital_cost=10 * costs.at['direct firing gas', 'fixed'] * costs.at['direct firing gas', 'efficiency'],
                marginal_cost=10 * costs.at['direct firing gas', 'VOM'],
                p_nom_extendable=True,
-               p_min_pu=0.8,
+               p_min_pu=must_run,
                efficiency=costs.at['direct firing gas', 'efficiency'])
+
+
+def add_exogen_t_industry(n, nodes, industrial_demand, costs):
+    """Add heat demand for industry with exogenous supply.
+
+    low temperature is supplied by biomass
+    medium and high temperature is supplied by gas
+    """
+
+    n.madd("Bus",
+        spatial.biomass.industry,
+        location=spatial.biomass.locations,
+        carrier="solid biomass for industry",
+        unit="MWh_LHV"
+    )
+
+    if options.get("biomass_spatial", options["biomass_transport"]):
+        p_set = industrial_demand.loc[spatial.biomass.locations, "solid biomass"].rename(index=lambda x: x + " solid biomass for industry") / 8760
+    else:
+        p_set = industrial_demand["solid biomass"].sum() / 8760
+
+    n.madd("Load",
+        spatial.biomass.industry,
+        bus=spatial.biomass.industry,
+        carrier="solid biomass for industry",
+        p_set=p_set
+    )
+
+    n.madd("Link",
+        spatial.biomass.industry,
+        bus0=spatial.biomass.nodes,
+        bus1=spatial.biomass.industry,
+        carrier="solid biomass for industry",
+        p_nom_extendable=True,
+        efficiency=1.
+    )
+
+    n.madd("Link",
+        spatial.biomass.industry_cc,
+        bus0=spatial.biomass.nodes,
+        bus1=spatial.biomass.industry,
+        bus2="co2 atmosphere",
+        bus3=spatial.co2.nodes,
+        carrier="solid biomass for industry CC",
+        p_nom_extendable=True,
+        capital_cost=costs.at["cement capture", "fixed"] * costs.at['solid biomass', 'CO2 intensity'],
+        efficiency=0.9, # TODO: make config option
+        efficiency2=-costs.at['solid biomass', 'CO2 intensity'] * costs.at["cement capture", "capture_rate"],
+        efficiency3=costs.at['solid biomass', 'CO2 intensity'] * costs.at["cement capture", "capture_rate"],
+        lifetime=costs.at['cement capture', 'lifetime']
+    )
+
+    n.madd("Bus",
+        spatial.gas.industry,
+        location=spatial.gas.locations,
+        carrier="gas for industry",
+        unit="MWh_LHV")
+
+    gas_demand = industrial_demand.loc[nodes, "methane"] / 8760.
+
+    if options["gas_network"]:
+        spatial_gas_demand = gas_demand.rename(index=lambda x: x + " gas for industry")
+    else:
+        spatial_gas_demand = gas_demand.sum()
+
+    n.madd("Load",
+        spatial.gas.industry,
+        bus=spatial.gas.industry,
+        carrier="gas for industry",
+        p_set=spatial_gas_demand
+    )
+
+    n.madd("Link",
+        spatial.gas.industry,
+        bus0=spatial.gas.nodes,
+        bus1=spatial.gas.industry,
+        bus2="co2 atmosphere",
+        carrier="gas for industry",
+        p_nom_extendable=True,
+        efficiency=1.,
+        efficiency2=costs.at['gas', 'CO2 intensity']
+    )
+
+    n.madd("Link",
+        spatial.gas.industry_cc,
+        bus0=spatial.gas.nodes,
+        bus1=spatial.gas.industry,
+        bus2="co2 atmosphere",
+        bus3=spatial.co2.nodes,
+        carrier="gas for industry CC",
+        p_nom_extendable=True,
+        capital_cost=costs.at["cement capture", "fixed"] * costs.at['gas', 'CO2 intensity'],
+        efficiency=0.9,
+        efficiency2=costs.at['gas', 'CO2 intensity'] * (1 - costs.at["cement capture", "capture_rate"]),
+        efficiency3=costs.at['gas', 'CO2 intensity'] * costs.at["cement capture", "capture_rate"],
+        lifetime=costs.at['cement capture', 'lifetime']
+    )
+
 
 def add_industry(n, costs):
 
@@ -2403,11 +2503,18 @@ def add_industry(n, costs):
     # 1e6 to convert TWh to MWh
     industrial_demand = pd.read_csv(snakemake.input.industrial_demand, index_col=0) * 1e6
 
-    add_low_t_industry(n, nodes, industrial_demand, costs)
+    # endogenous heat supply for industry
+    if options["industry_t"]["endogen"]:
+        must_run = options["industry_t"]["must_run"]
+        logger.info(f"Endogenise heat supply of indutry with must run condition {must_run}")
 
-    add_medium_t_industry(n, nodes, industrial_demand, costs)
+        add_low_t_industry(n, nodes, industrial_demand, costs, must_run)
 
-    add_high_t_industry(n, nodes, industrial_demand, costs)
+        add_medium_t_industry(n, nodes, industrial_demand, costs, must_run)
+
+        add_high_t_industry(n, nodes, industrial_demand, costs, must_run)
+    else:
+        add_exogen_t_industry(n, nodes, industrial_demand, costs)
 
     n.madd("Load",
         nodes,
