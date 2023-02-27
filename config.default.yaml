@@ -304,14 +304,26 @@ sector:
   biomass_transport: false  # allow transport of solid biomass between nodes
   conventional_generation: # generator : carrier
     OCGT: gas
-  industry_steam_biomass: true
-  industry_steam_heat_pumps: true
-  industry_steam_electric_boiler: true
-  industry_steam_methane: true
-  industry_mediumT_biomass: true
-  industry_mediumT_methane: true
-  industry_mediumT_hydrogen: true
-  industry_highT_hydrogen: true
+  industry_t:  # heat supply industry
+    endogen: true  # if heat supply for industry should be enodgenously optimised
+    must_run: 0.8 # NB: industrial heat demand is in reality supplied at site by discrete plants
+    # which follow the local demand and therefore cannot be dispatched too much.
+    # Thus, p_min_pu is set to must run to avoid too much dispatch behaviour. Improvements welcome!
+    share_medium: 0.3  # TODO
+    share_high: 0.7
+    # Options in case of endogenous industry heat supply
+    low_T:
+      biomass: true
+      heat_pumps: true
+      electric_boiler: true
+      methane: true
+    medium_T:
+      biomass: true
+      methane: true
+      hydrogen: true
+    high_T:
+      hydrogen: true
+      methane: true
   biomass_to_liquid: false
   biosng: false
 
