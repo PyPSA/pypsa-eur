@@ -576,28 +576,28 @@ def add_co2_network(n, costs):
     )
 
 
-def add_allam(n, costs):  
-  
-    logger.info("Adding Allam cycle gas power plants.")  
-    
-    nodes = pop_layout.index  
-    
-    n.madd("Link",  
+def add_allam(n, costs):
+
+    logger.info("Adding Allam cycle gas power plants.")
+
+    nodes = pop_layout.index
+
+    n.madd("Link",
         nodes,
-        suffix=" allam",  
-        bus0=spatial.gas.df.loc[nodes, "nodes"].values,  
-        bus1=nodes,  
-        bus2=spatial.co2.df.loc[nodes, "nodes"].values,  
-        carrier="allam",  
-        p_nom_extendable=True,  
+        suffix=" allam",
+        bus0=spatial.gas.df.loc[nodes, "nodes"].values,
+        bus1=nodes,
+        bus2=spatial.co2.df.loc[nodes, "nodes"].values,
+        carrier="allam",
+        p_nom_extendable=True,
         # TODO: add costs to technology-data
-        capital_cost=0.6*1.5e6*0.1, # efficiency * EUR/MW * annuity  
-        marginal_cost=2,  
-        efficiency=0.6,  
-        efficiency2=costs.at['gas', 'CO2 intensity'],  
+        capital_cost=0.6*1.5e6*0.1, # efficiency * EUR/MW * annuity
+        marginal_cost=2,
+        efficiency=0.6,
+        efficiency2=costs.at['gas', 'CO2 intensity'],
         lifetime=30.,
     )
-  
+
 
 def add_dac(n, costs):
 
@@ -1323,7 +1323,7 @@ def add_land_transport(n, costs):
     fuel_cell_share = get(options["land_transport_fuel_cell_share"], investment_year)
     electric_share = get(options["land_transport_electric_share"], investment_year)
     ice_share = get(options["land_transport_ice_share"], investment_year)
-    
+
     total_share = fuel_cell_share + electric_share + ice_share
     if total_share != 1:
         logger.warning(f"Total land transport shares sum up to {total_share:.2%}, corresponding to increased or decreased demand assumptions.")
@@ -2094,16 +2094,16 @@ def add_industry(n, costs):
     industrial_demand = pd.read_csv(snakemake.input.industrial_demand, index_col=0) * 1e6
 
     n.madd("Bus",
-           nodes + " industry process steam",
+           nodes + " lowT industry",
            location=nodes,
-           carrier="industry process steam",
+           carrier="lowT industry",
            unit="MWh_LHV")
 
     n.madd("Load",
            nodes,
-           suffix=" industry process steam",
-           bus=nodes + " industry process steam",
-           carrier="industry process steam",
+           suffix=" lowT industry",
+           bus=nodes + " lowT industry",
+           carrier="lowT industry",
            p_set=industrial_demand.loc[nodes, "solid biomass"] / 8760.)
 
     n.madd("Bus",
@@ -2140,9 +2140,9 @@ def add_industry(n, costs):
                nodes,
                suffix=" solid biomass for lowT industry",
                bus0=spatial.biomass.nodes,
-               bus1=nodes + " industry process steam",
+               bus1=nodes + " lowT industry",
                bus3="co2 atmosphere",
-               carrier="industry process steam solid biomass",
+               carrier="lowT industry solid biomass",
                p_nom_extendable=True,
                p_min_pu=0.8,
                efficiency=costs.at['solid biomass boiler steam', 'efficiency'],
@@ -2156,10 +2156,10 @@ def add_industry(n, costs):
               nodes,
               suffix=" solid biomass for lowT industry CC",
               bus0=spatial.biomass.nodes,
-              bus1=nodes + " industry process steam",
+              bus1=nodes + " lowT industry",
               bus3="co2 atmosphere",
               bus2="co2 stored",
-              carrier="industry process steam solid biomass CC",
+              carrier="lowT industry solid biomass CC",
               p_nom_extendable=True,
               p_min_pu=0.8,
               efficiency=costs.at['solid biomass boiler steam CC', 'efficiency'],
@@ -2220,9 +2220,9 @@ def add_industry(n, costs):
                nodes,
                suffix=" gas for lowT industry",
                bus0=spatial.gas.nodes,
-               bus1=nodes + " industry process steam",
+               bus1=nodes + " lowT industry",
                bus3="co2 atmosphere",
-               carrier="industry process steam methane",
+               carrier="lowT industry methane",
                p_nom_extendable=True,
                p_min_pu=0.8,
                efficiency=costs.at['gas boiler steam', 'efficiency'],
@@ -2236,10 +2236,10 @@ def add_industry(n, costs):
                nodes,
                suffix=" gas for lowT industry CC",
                bus0=spatial.gas.nodes,
-               bus1=nodes + " industry process steam",
+               bus1=nodes + " lowT industry",
                bus3="co2 atmosphere",
                bus2="co2 stored",
-               carrier="industry process steam methane CC",
+               carrier="lowT industry methane CC",
                p_nom_extendable=True,
                p_min_pu=0.8,
                efficiency=eta,
@@ -2256,8 +2256,8 @@ def add_industry(n, costs):
                nodes,
                suffix=" industrial heat pump steam for lowT industry",
                bus0=nodes,
-               bus1=nodes + " industry process steam",
-               carrier="industry process steam heat pump",
+               bus1=nodes + " lowT industry",
+               carrier="lowT industry heat pump",
                p_nom_extendable=True,
                p_min_pu=0.8,
                efficiency=eta,
@@ -2270,8 +2270,8 @@ def add_industry(n, costs):
                nodes,
                suffix=" electricity for lowT industry",
                bus0=nodes,
-               bus1=nodes + " industry process steam",
-               carrier="industry process steam electricity",
+               bus1=nodes + " lowT industry",
+               carrier="lowT industry electricity",
                p_nom_extendable=True,
                p_min_pu=0.8,
                efficiency=costs.at['electric boiler steam', 'efficiency'],
@@ -3037,10 +3037,10 @@ if __name__ == "__main__":
             'prepare_sector_network',
             simpl='',
             opts="",
-            clusters="37",
-            lv=1.5,
-            sector_opts='cb40ex0-365H-T-H-B-I-A-solar+p3-dist1',
-            planning_horizons="2020",
+            clusters="45",
+            lv=1.0,
+            sector_opts='Co2L0-365H-T-H-B-I-A-solar+p3-dist1',
+            planning_horizons="2050",
         )
 
     logging.basicConfig(level=snakemake.config['logging_level'])

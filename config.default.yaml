@@ -706,21 +706,21 @@ plotting:
     gas-to-power/heat: '#ee8340'
     waste: '#e3d37d'
     other: '#000000'
-    industry process steam: "#555555"
+    lowT industry: "#555555"
     mediumT industry: "yellow"
     highT industry: "brown"
-    industry process steam solid biomass: "green"
-    industry process steam solid biomass CC: "green"
-    industry process steam methane: "yellow"
-    industry process steam methane CC: "yellow"
-    industry process steam H2: "blue"
+    lowT industry solid biomass: "green"
+    lowT industry solid biomass CC: "green"
+    lowT industry methane: "yellow"
+    lowT industry methane CC: "yellow"
+    lowT industry H2: "blue"
     gas for mediumT industry: '#333666'
     gas for mediumT industry CC: '#333666'
     gas for highT industry: '#333333'
     gas for highT industry CC: '#333333'
     hydrogen for mediumT industry: '#993666'
     hydrogen for highT industry: '#993333'
-    industry process steam electricity: "pink"
-    industry process steam heat pump: "purple"
+    lowT industry electricity: "pink"
+    lowT industry heat pump: "purple"
     solid biomass for mediumT industry: '#009E60'
     solid biomass for mediumT industry CC: '#009E60'
