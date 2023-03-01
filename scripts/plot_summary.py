@@ -244,6 +244,8 @@ def plot_balances():
 
     balances = {i.replace(" ","_"): [i] for i in balances_df.index.levels[0]}
     balances["energy"] = [i for i in balances_df.index.levels[0] if i not in co2_carriers]
+    
+    fig, ax = plt.subplots(figsize=(12,8))
 
     for k, v in balances.items():
 
@@ -265,12 +267,12 @@ def plot_balances():
         else:
             units = "TWh/a"
 
-        logger.info(f"Dropping technology energy balance smaller than {snakemake.config['plotting']['energy_threshold']/10} {units}")
+        logger.debug(f"Dropping technology energy balance smaller than {snakemake.config['plotting']['energy_threshold']/10} {units}")
         logger.debug(df.loc[to_drop])
 
         df = df.drop(to_drop)
 
-        logger.info(f"Total energy balance for {v} of {round(df.sum()[0],2)} {units}")
+        logger.debug(f"Total energy balance for {v} of {round(df.sum()[0],2)} {units}")
 
         if df.empty:
             continue
@@ -278,8 +280,6 @@ def plot_balances():
         new_index = preferred_order.intersection(df.index).append(df.index.difference(preferred_order))
 
         new_columns = df.columns.sort_values()
-
-        fig, ax = plt.subplots(figsize=(12,8))
 
         df.loc[new_index,new_columns].T.plot(kind="bar",ax=ax,stacked=True,color=[snakemake.config['plotting']['tech_colors'][i] for i in new_index])
 
@@ -302,6 +302,8 @@ def plot_balances():
 
 
         fig.savefig(snakemake.output.balances[:-10] + k + ".pdf", bbox_inches='tight')
+        
+        plt.cla()
 
 
 def historical_emissions(cts):
