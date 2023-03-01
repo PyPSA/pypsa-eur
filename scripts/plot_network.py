@@ -144,12 +144,12 @@ def plot_map(network, components=["links", "stores", "storage_units", "generator
             line_widths = n.lines.s_nom_opt
             link_widths = n.links.p_nom_opt
             title = "total grid"
+    
+    line_widths = line_widths.clip(line_lower_threshold,line_upper_threshold)
+    link_widths = link_widths.clip(line_lower_threshold,line_upper_threshold)
 
-    line_widths[line_widths < line_lower_threshold] = 0.
-    link_widths[link_widths < line_lower_threshold] = 0.
-
-    line_widths[line_widths > line_upper_threshold] = line_upper_threshold
-    link_widths[link_widths > line_upper_threshold] = line_upper_threshold
+    line_widths = line_widths.replace(line_lower_threshold,0)
+    link_widths = link_widths.replace(line_lower_threshold,0)
 
     fig, ax = plt.subplots(subplot_kw={"projection": ccrs.EqualEarth()})
     fig.set_size_inches(7, 6)
@@ -666,11 +666,11 @@ def plot_map_without(network):
         line_widths = n.lines.s_nom_min
         link_widths = n.links.p_nom_min
 
-    line_widths[line_widths < line_lower_threshold] = 0.
-    link_widths[link_widths < line_lower_threshold] = 0.
+    line_widths = line_widths.clip(line_lower_threshold,line_upper_threshold)
+    link_widths = link_widths.clip(line_lower_threshold,line_upper_threshold)
 
-    line_widths[line_widths > line_upper_threshold] = line_upper_threshold
-    link_widths[link_widths > line_upper_threshold] = line_upper_threshold
+    line_widths = line_widths.replace(line_lower_threshold,0)
+    link_widths = link_widths.replace(line_lower_threshold,0)
 
     n.plot(
         bus_colors="k",
