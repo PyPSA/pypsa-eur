@@ -309,8 +309,10 @@ sector:
     must_run: 0.8 # NB: industrial heat demand is in reality supplied at site by discrete plants
     # which follow the local demand and therefore cannot be dispatched too much.
     # Thus, p_min_pu is set to must run to avoid too much dispatch behaviour. Improvements welcome!
-    share_medium: 0.3  # TODO
-    share_high: 0.7
+    # share of medium and high temperature for process heat based on table 3 for EU28 in  https://doi.org/10.1002/er.3436
+    # TODO: should be improved and split up by country and sector
+    share_medium: 0.36
+    share_high: 0.64
     # Options in case of endogenous industry heat supply
     low_T:
       biomass: true
