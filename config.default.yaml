@@ -416,6 +416,7 @@ solving:
 
   solver_options:
     highs-default:
+      # refer to https://ergo-code.github.io/HiGHS/options/definitions.html#solver
       threads: 4
       solver: "ipm"
       run_crossover: "off"
