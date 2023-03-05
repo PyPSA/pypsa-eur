@@ -706,7 +706,7 @@ def prepare_costs(cost_file, USD_to_EUR, discount_rate, Nyears, lifetime):
 
 def add_generation(n, costs):
 
-    logger.info("adding electricity generation")
+    logger.info("Adding electricity generation")
 
     nodes = pop_layout.index
 
@@ -737,7 +737,7 @@ def add_generation(n, costs):
 
 def add_ammonia(n, costs):
 
-    logger.info("adding ammonia carrier with synthesis, cracking and storage")
+    logger.info("Adding ammonia carrier with synthesis, cracking and storage")
 
     nodes = pop_layout.index
 
@@ -1495,7 +1495,7 @@ def add_heat(n, costs):
     # exogenously reduce space heat demand
     if options["reduce_space_heat_exogenously"]:
         dE = get(options["reduce_space_heat_exogenously_factor"], investment_year)
-        logger.info(f"assumed space heat reduction of {dE:.2%}")
+        logger.info(f"Assumed space heat reduction of {dE:.2%}")
         for sector in sectors:
             heat_demand[sector + " space"] = (1 - dE) * heat_demand[sector + " space"]
 
@@ -2647,7 +2647,7 @@ def maybe_adjust_costs_and_potentials(n, opts):
 
 # TODO this should rather be a config no wildcard
 def limit_individual_line_extension(n, maxext):
-    logger.info(f"limiting new HVAC and HVDC extensions to {maxext} MW")
+    logger.info(f"Limiting new HVAC and HVDC extensions to {maxext} MW")
     n.lines['s_nom_max'] = n.lines['s_nom'] + maxext
     hvdc = n.links.index[n.links.carrier == 'DC']
     n.links.loc[hvdc, 'p_nom_max'] = n.links.loc[hvdc, 'p_nom'] + maxext
@@ -2814,7 +2814,7 @@ def set_temporal_aggregation(n, opts, solver_name):
         m = re.match(r"(^\d+)sn$", o, re.IGNORECASE)
         if m is not None:
             sn = int(m[1])
-            logger.info(f"use every {sn} snapshot as representative")
+            logger.info(f"Use every {sn} snapshot as representative")
             n.set_snapshots(n.snapshots[::sn])
             n.snapshot_weightings *= sn
             break
@@ -2822,7 +2822,7 @@ def set_temporal_aggregation(n, opts, solver_name):
         m = re.match(r"^(\d+)seg$", o, re.IGNORECASE)
         if m is not None:
             segments = int(m[1])
-            logger.info(f"use temporal segmentation with {segments} segments")
+            logger.info(f"Use temporal segmentation with {segments} segments")
             n = apply_time_segmentation(n, segments, solver_name=solver_name)
             break
     return n

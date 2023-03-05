@@ -1,4 +1,5 @@
-
+import logging
+logger = logging.getLogger(__name__)
 
 import numpy as np
 import pandas as pd
@@ -135,13 +136,12 @@ def plot_costs():
 
     to_drop = df.index[df.max(axis=1) < snakemake.config['plotting']['costs_threshold']]
 
-    print("dropping")
-
-    print(df.loc[to_drop])
+    logger.info(f"Dropping technology with costs below {snakemake.config['plotting']['costs_threshold']} EUR billion per year")
+    logger.debug(df.loc[to_drop])
 
     df = df.drop(to_drop)
 
-    print(df.sum())
+    logger.info(f"Total system cost of {round(df.sum()[0])} EUR billion per year")
 
     new_index = preferred_order.intersection(df.index).append(df.index.difference(preferred_order))
 
@@ -191,15 +191,12 @@ def plot_energy():
 
     to_drop = df.index[df.abs().max(axis=1) < snakemake.config['plotting']['energy_threshold']]
 
-    print("dropping")
-
-    print(df.loc[to_drop])
+    logger.info(f"Dropping all technology with energy consumption or production below {snakemake.config['plotting']['energy_threshold']} TWh/a")
+    logger.debug(df.loc[to_drop])
 
     df = df.drop(to_drop)
 
-    print(df.sum())
-
-    print(df)
+    logger.info(f"Total energy of {round(df.sum()[0])} TWh/a")
 
     new_index = preferred_order.intersection(df.index).append(df.index.difference(preferred_order))
 
@@ -207,7 +204,7 @@ def plot_energy():
 
     fig, ax = plt.subplots(figsize=(12,8))
 
-    print(df.loc[new_index, new_columns])
+    logger.debug(df.loc[new_index, new_columns])
 
     df.loc[new_index, new_columns].T.plot(
         kind="bar",
@@ -247,6 +244,8 @@ def plot_balances():
 
     balances = {i.replace(" ","_"): [i] for i in balances_df.index.levels[0]}
     balances["energy"] = [i for i in balances_df.index.levels[0] if i not in co2_carriers]
+    
+    fig, ax = plt.subplots(figsize=(12,8))
 
     for k, v in balances.items():
 
@@ -263,13 +262,17 @@ def plot_balances():
 
         to_drop = df.index[df.abs().max(axis=1) < snakemake.config['plotting']['energy_threshold']/10]
 
-        print("dropping")
+        if v[0] in co2_carriers:
+            units = "MtCO2/a"
+        else:
+            units = "TWh/a"
 
-        print(df.loc[to_drop])
+        logger.debug(f"Dropping technology energy balance smaller than {snakemake.config['plotting']['energy_threshold']/10} {units}")
+        logger.debug(df.loc[to_drop])
 
         df = df.drop(to_drop)
 
-        print(df.sum())
+        logger.debug(f"Total energy balance for {v} of {round(df.sum()[0],2)} {units}")
 
         if df.empty:
             continue
@@ -277,8 +280,6 @@ def plot_balances():
         new_index = preferred_order.intersection(df.index).append(df.index.difference(preferred_order))
 
         new_columns = df.columns.sort_values()
-
-        fig, ax = plt.subplots(figsize=(12,8))
 
         df.loc[new_index,new_columns].T.plot(kind="bar",ax=ax,stacked=True,color=[snakemake.config['plotting']['tech_colors'][i] for i in new_index])
 
@@ -301,6 +302,8 @@ def plot_balances():
 
 
         fig.savefig(snakemake.output.balances[:-10] + k + ".pdf", bbox_inches='tight')
+        
+        plt.cla()
 
 
 def historical_emissions(cts):
@@ -441,6 +444,7 @@ if __name__ == "__main__":
         from helper import mock_snakemake
         snakemake = mock_snakemake('plot_summary')
 
+    logging.basicConfig(level=snakemake.config['logging_level'])
 
     n_header = 4
 

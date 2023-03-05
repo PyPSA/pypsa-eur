@@ -120,7 +120,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
         to read lifetime to estimate YearDecomissioning
     baseyear : int
     """
-    print("adding power capacities installed before baseyear from powerplants.csv")
+    logger.debug(f"Adding power capacities installed before {baseyear} from powerplants.csv")
 
     df_agg = pd.read_csv(snakemake.input.powerplants, index_col=0)
 
@@ -357,7 +357,7 @@ def add_heating_capacities_installed_before_baseyear(n, baseyear, grouping_years
         services proportional to heating load in both 50% capacities
         in rural busess 50% in urban buses
     """
-    print("adding heating capacities installed before baseyear")
+    logger.debug(f"Adding heating capacities installed before {baseyear}")
 
     # Add existing heating capacities, data comes from the study
     # "Mapping and analyses of the current and future (2020 - 2030)

@@ -16,7 +16,7 @@ from helper import override_component_attrs, update_config_with_sector_opts
 
 def add_brownfield(n, n_p, year):
 
-    print("adding brownfield")
+    logger.info(f"Preparing brownfield for the year {year}")
 
     # electric transmission grid set optimised capacities of previous as minimum
     n.lines.s_nom_min = n_p.lines.s_nom_opt
@@ -122,10 +122,11 @@ if __name__ == "__main__":
             planning_horizons=2030,
         )
 
+    logging.basicConfig(level=snakemake.config['logging_level'])
+    
     update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
 
-    print(snakemake.input.network_p)
-    logging.basicConfig(level=snakemake.config['logging_level'])
+    logger.info(f"Preparing brownfield from the file {snakemake.input.network_p}")
 
     year = int(snakemake.wildcards.planning_horizons)
 
