@@ -256,7 +256,7 @@ if __name__ == "__main__":
             snakemake.input.ship_density, codes=func, crs=4326, allow_no_overlap=True
         )
 
-    if config.get('max_depth'):
+    if config.get("max_depth"):
         # lambda not supported for atlite + multiprocessing
         # use named function np.greater with partially frozen argument instead
         # and exclude areas where: -max_depth > grid cell depth
