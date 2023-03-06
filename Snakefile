@@ -1252,7 +1252,7 @@ if config["foresight"] == "myopic":
             planning_horizons=config['scenario']['planning_horizons'][0] #only applies to baseyear
         threads: 1
         resources: mem_mb=2000
-        benchmark: RDIR + '/benchmarks/add_existing_baseyear/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}'
+        benchmark: RDIR + 'benchmarks/add_existing_baseyear/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}'
         script: "scripts/add_existing_baseyear.py"
 
 
@@ -1274,7 +1274,7 @@ if config["foresight"] == "myopic":
         output: "results/" + RDIR + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc"
         threads: 4
         resources: mem_mb=10000
-        benchmark: RDIR + '/benchmarks/add_brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}'
+        benchmark: RDIR + 'benchmarks/add_brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}'
         script: "scripts/add_brownfield.py"
 
 
