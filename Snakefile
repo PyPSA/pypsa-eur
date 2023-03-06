@@ -568,7 +568,7 @@ rule solve_network:
     input:
         "resources/" + RDIR + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
     output:
-        "results/networks/" + RDIR + "elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+        "results/" + RDIR + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
     log:
         solver=normpath(
             "logs/"
@@ -595,11 +595,11 @@ rule solve_network:
 rule solve_operations_network:
     input:
         unprepared="resources/" + RDIR + "networks/elec_s{simpl}_{clusters}_ec.nc",
-        optimized="results/networks/"
+        optimized="results/"
         + RDIR
-        + "elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+        + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
     output:
-        "results/networks/" + RDIR + "elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op.nc",
+        "results/" + RDIR + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op.nc",
     log:
         solver=normpath(
             "logs/"
@@ -1206,7 +1206,7 @@ rule plot_summary:
 
 if config["foresight"] == "overnight":
 
-    rule solve_network:
+    rule solve_sector_network:
         input:
             overrides="data/override_component_attrs",
             network="results/" + RDIR + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
@@ -1221,8 +1221,8 @@ if config["foresight"] == "overnight":
             memory=RDIR + "logs/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_memory.log"
         threads: config['solving']['solver'].get('threads', 4)
         resources: mem_mb=config['solving']['mem']
-        benchmark: RDIR + "benchmarks/solve_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
-        script: "scripts/solve_network.py"
+        benchmark: RDIR + "benchmarks/solve_sector_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+        script: "scripts/solve_sector_network.py"
 
 
 if config["foresight"] == "myopic":
@@ -1277,7 +1277,7 @@ if config["foresight"] == "myopic":
     ruleorder: add_existing_baseyear > add_brownfield
 
 
-    rule solve_network_myopic:
+    rule solve_sector_network_myopic:
         input:
             overrides="data/override_component_attrs",
             network="results/" + RDIR + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
@@ -1291,5 +1291,5 @@ if config["foresight"] == "myopic":
             memory=RDIR + "logs/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_memory.log"
         threads: 4
         resources: mem_mb=config['solving']['mem']
-        benchmark: RDIR + "benchmarks/solve_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
-        script: "scripts/solve_network.py"
+        benchmark: RDIR + "benchmarks/solve_sector_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+        script: "scripts/solve_sector_network.py"

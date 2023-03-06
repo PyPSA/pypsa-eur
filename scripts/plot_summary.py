@@ -1,56 +1,4 @@
 # -*- coding: utf-8 -*-
-<<<<<<< HEAD
-# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
-#
-# SPDX-License-Identifier: MIT
-
-"""
-Plots energy and cost summaries for solved networks.
-
-Relevant Settings
------------------
-
-Inputs
-------
-
-Outputs
--------
-
-Description
------------
-"""
-
-import logging
-import os
-
-import matplotlib.pyplot as plt
-import pandas as pd
-from _helpers import configure_logging
-
-logger = logging.getLogger(__name__)
-
-
-def rename_techs(label):
-    if "H2" in label:
-        label = "hydrogen storage"
-    elif label == "solar":
-        label = "solar PV"
-    elif label == "offwind-ac":
-        label = "offshore wind ac"
-    elif label == "offwind-dc":
-        label = "offshore wind dc"
-    elif label == "onwind":
-        label = "onshore wind"
-    elif label == "ror":
-        label = "hydroelectricity"
-    elif label == "hydro":
-        label = "hydroelectricity"
-    elif label == "PHS":
-        label = "hydroelectricity"
-    elif "battery" in label:
-        label = "battery storage"
-
-=======
 import logging
 
 logger = logging.getLogger(__name__)
@@ -130,7 +78,6 @@ def rename_techs(label):
     for old, new in rename.items():
         if old == label:
             label = new
->>>>>>> pypsa-eur-sec/master
     return label
 
 
@@ -141,16 +88,6 @@ preferred_order = pd.Index(
         "hydro reservoir",
         "run of river",
         "pumped hydro storage",
-<<<<<<< HEAD
-        "onshore wind",
-        "offshore wind ac",
-        "offshore wind dc",
-        "solar PV",
-        "solar thermal",
-        "OCGT",
-        "hydrogen storage",
-        "battery storage",
-=======
         "solid biomass",
         "biogas",
         "onshore wind",
@@ -182,21 +119,14 @@ preferred_order = pd.Index(
         "battery storage",
         "hot water storage",
         "CO2 sequestration",
->>>>>>> pypsa-eur-sec/master
     ]
 )
 
 
-<<<<<<< HEAD
-def plot_costs(infn, config, fn=None):
-    ## For now ignore the simpl header
-    cost_df = pd.read_csv(infn, index_col=list(range(3)), header=[1, 2, 3])
-=======
 def plot_costs():
     cost_df = pd.read_csv(
         snakemake.input.costs, index_col=list(range(3)), header=list(range(n_header))
     )
->>>>>>> pypsa-eur-sec/master
 
     df = cost_df.groupby(cost_df.index.get_level_values(2)).sum()
 
@@ -205,19 +135,6 @@ def plot_costs():
 
     df = df.groupby(df.index.map(rename_techs)).sum()
 
-<<<<<<< HEAD
-    to_drop = df.index[df.max(axis=1) < config["plotting"]["costs_threshold"]]
-
-    print("dropping")
-
-    print(df.loc[to_drop])
-
-    df = df.drop(to_drop)
-
-    print(df.sum())
-
-    new_index = (preferred_order.intersection(df.index)).append(
-=======
     to_drop = df.index[df.max(axis=1) < snakemake.config["plotting"]["costs_threshold"]]
 
     logger.info(
@@ -230,28 +147,18 @@ def plot_costs():
     logger.info(f"Total system cost of {round(df.sum()[0])} EUR billion per year")
 
     new_index = preferred_order.intersection(df.index).append(
->>>>>>> pypsa-eur-sec/master
         df.index.difference(preferred_order)
     )
 
     new_columns = df.sum().sort_values().index
 
-<<<<<<< HEAD
-    fig, ax = plt.subplots()
-    fig.set_size_inches((12, 8))
-=======
     fig, ax = plt.subplots(figsize=(12, 8))
->>>>>>> pypsa-eur-sec/master
 
     df.loc[new_index, new_columns].T.plot(
         kind="bar",
         ax=ax,
         stacked=True,
-<<<<<<< HEAD
-        color=[config["plotting"]["tech_colors"][i] for i in new_index],
-=======
         color=[snakemake.config["plotting"]["tech_colors"][i] for i in new_index],
->>>>>>> pypsa-eur-sec/master
     )
 
     handles, labels = ax.get_legend_handles_labels()
@@ -259,30 +166,12 @@ def plot_costs():
     handles.reverse()
     labels.reverse()
 
-<<<<<<< HEAD
-    ax.set_ylim([0, config["plotting"]["costs_max"]])
-=======
     ax.set_ylim([0, snakemake.config["plotting"]["costs_max"]])
->>>>>>> pypsa-eur-sec/master
 
     ax.set_ylabel("System Cost [EUR billion per year]")
 
     ax.set_xlabel("")
 
-<<<<<<< HEAD
-    ax.grid(axis="y")
-
-    ax.legend(handles, labels, ncol=4, loc="upper left")
-
-    fig.tight_layout()
-
-    if fn is not None:
-        fig.savefig(fn, transparent=True)
-
-
-def plot_energy(infn, config, fn=None):
-    energy_df = pd.read_csv(infn, index_col=list(range(2)), header=[1, 2, 3])
-=======
     ax.grid(axis="x")
 
     ax.legend(
@@ -296,7 +185,6 @@ def plot_energy():
     energy_df = pd.read_csv(
         snakemake.input.energy, index_col=list(range(2)), header=list(range(n_header))
     )
->>>>>>> pypsa-eur-sec/master
 
     df = energy_df.groupby(energy_df.index.get_level_values(1)).sum()
 
@@ -305,19 +193,6 @@ def plot_energy():
 
     df = df.groupby(df.index.map(rename_techs)).sum()
 
-<<<<<<< HEAD
-    to_drop = df.index[df.abs().max(axis=1) < config["plotting"]["energy_threshold"]]
-
-    print("dropping")
-
-    print(df.loc[to_drop])
-
-    df = df.drop(to_drop)
-
-    print(df.sum())
-
-    new_index = (preferred_order.intersection(df.index)).append(
-=======
     to_drop = df.index[
         df.abs().max(axis=1) < snakemake.config["plotting"]["energy_threshold"]
     ]
@@ -332,30 +207,20 @@ def plot_energy():
     logger.info(f"Total energy of {round(df.sum()[0])} TWh/a")
 
     new_index = preferred_order.intersection(df.index).append(
->>>>>>> pypsa-eur-sec/master
         df.index.difference(preferred_order)
     )
 
     new_columns = df.columns.sort_values()
 
-<<<<<<< HEAD
-    fig, ax = plt.subplots()
-    fig.set_size_inches((12, 8))
-=======
     fig, ax = plt.subplots(figsize=(12, 8))
 
     logger.debug(df.loc[new_index, new_columns])
->>>>>>> pypsa-eur-sec/master
 
     df.loc[new_index, new_columns].T.plot(
         kind="bar",
         ax=ax,
         stacked=True,
-<<<<<<< HEAD
-        color=[config["plotting"]["tech_colors"][i] for i in new_index],
-=======
         color=[snakemake.config["plotting"]["tech_colors"][i] for i in new_index],
->>>>>>> pypsa-eur-sec/master
     )
 
     handles, labels = ax.get_legend_handles_labels()
@@ -363,31 +228,17 @@ def plot_energy():
     handles.reverse()
     labels.reverse()
 
-<<<<<<< HEAD
-    ax.set_ylim([config["plotting"]["energy_min"], config["plotting"]["energy_max"]])
-=======
     ax.set_ylim(
         [
             snakemake.config["plotting"]["energy_min"],
             snakemake.config["plotting"]["energy_max"],
         ]
     )
->>>>>>> pypsa-eur-sec/master
 
     ax.set_ylabel("Energy [TWh/a]")
 
     ax.set_xlabel("")
 
-<<<<<<< HEAD
-    ax.grid(axis="y")
-
-    ax.legend(handles, labels, ncol=4, loc="upper left")
-
-    fig.tight_layout()
-
-    if fn is not None:
-        fig.savefig(fn, transparent=True)
-=======
     ax.grid(axis="x")
 
     ax.legend(
@@ -684,39 +535,10 @@ def plot_carbon_budget_distribution(input_eurostat):
         snakemake.config["results_dir"] + snakemake.config["run"] + "/graphs/"
     )
     plt.savefig(path_cb_plot + "carbon_budget_plot.pdf", dpi=300)
->>>>>>> pypsa-eur-sec/master
 
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-<<<<<<< HEAD
-        from _helpers import mock_snakemake
-
-        snakemake = mock_snakemake(
-            "plot_summary",
-            summary="energy",
-            simpl="",
-            clusters=5,
-            ll="copt",
-            opts="Co2L-24H",
-            attr="",
-            ext="png",
-            country="all",
-        )
-    configure_logging(snakemake)
-
-    config = snakemake.config
-
-    summary = snakemake.wildcards.summary
-    try:
-        func = globals()[f"plot_{summary}"]
-    except KeyError:
-        raise RuntimeError(f"plotting function for {summary} has not been defined")
-
-    func(
-        os.path.join(snakemake.input[0], f"{summary}.csv"), config, snakemake.output[0]
-    )
-=======
         from helper import mock_snakemake
 
         snakemake = mock_snakemake("plot_summary")
@@ -736,4 +558,3 @@ if __name__ == "__main__":
         for o in opts:
             if "cb" in o:
                 plot_carbon_budget_distribution(snakemake.input.eurostat)
->>>>>>> pypsa-eur-sec/master
