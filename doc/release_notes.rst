@@ -12,9 +12,11 @@ Upcoming Release
 
 * new features
 
+PyPSA-Eur Releases (pre-merge)
+==============================
 
 PyPSA-Eur 0.7.0 (16th February 2023)
-====================================
+------------------------------------
 
 
 **New Features**
@@ -87,7 +89,7 @@ PyPSA-Eur 0.7.0 (16th February 2023)
 
 
 PyPSA-Eur 0.6.1 (20th September 2022)
-=====================================
+-------------------------------------
 
 * Individual commits are now tested against pre-commit hooks. This includes
   black style formatting, sorting of package imports, Snakefile formatting and
@@ -110,7 +112,7 @@ PyPSA-Eur 0.6.1 (20th September 2022)
   efficiency into account where available.
 
 PyPSA-Eur 0.6.0 (10th September 2022)
-=====================================
+-------------------------------------
 
 * Functionality to consider shipping routes when calculating the available area
   for offshore technologies were added. Data for the shipping density comes from
@@ -131,7 +133,7 @@ PyPSA-Eur 0.6.0 (10th September 2022)
 
 
 PyPSA-Eur 0.5.0 (27th July 2022)
-=====================================
+--------------------------------
 
 **New Features**
 
@@ -289,7 +291,7 @@ PyPSA-Eur 0.5.0 (27th July 2022)
 
 
 Synchronisation Release - Ukraine and Moldova (17th March 2022)
-===============================================================
+---------------------------------------------------------------
 
 On March 16, 2022, the transmission networks of Ukraine and Moldova have
 successfully been `synchronised with the continental European grid <https://www.entsoe.eu/news/2022/03/16/continental-europe-successful-synchronisation-with-ukraine-and-moldova-power-systems/>`_. We have taken
@@ -324,7 +326,7 @@ This release is not on the ``master`` branch. It can be used with
 
 
 PyPSA-Eur 0.4.0 (22th September 2021)
-=====================================
+-------------------------------------
 
 **New Features and Changes**
 
@@ -439,7 +441,7 @@ PyPSA-Eur 0.4.0 (22th September 2021)
   in the Snakemake file [`#247 <https://github.com/PyPSA/pypsa-eur/pull/247>`_]
 
 PyPSA-Eur 0.3.0 (7th December 2020)
-===================================
+-----------------------------------
 
 **New Features**
 
@@ -539,7 +541,7 @@ Other:
 
 
 PyPSA-Eur 0.2.0 (8th June 2020)
-==================================
+-------------------------------
 
 * The optimization is now performed using the ``pyomo=False`` setting in the :func:`pypsa.lopf.network_lopf`. This speeds up the solving process significantly and consumes much less memory. The inclusion of additional constraints were adjusted to the new implementation. They are all passed to the :func:`network_lopf` function via the ``extra_functionality`` argument. The rule ``trace_solve_network`` was integrated into the rule :mod:`solve_network` and can be activated via configuration with ``solving: options: track_iterations: true``. The charging and discharging capacities of batteries modelled as store-link combination are now coupled [`#116 <https://github.com/PyPSA/pypsa-eur/pull/116>`_].
 
@@ -572,7 +574,7 @@ PyPSA-Eur 0.2.0 (8th June 2020)
 * Updated ``conda`` environment regarding ``pypsa``, ``pyproj``, ``gurobi``, ``lxml``. This release requires PyPSA v0.17.0.
 
 PyPSA-Eur 0.1.0 (9th January 2020)
-==================================
+----------------------------------
 
 This is the first release of PyPSA-Eur, a model of the European power system at the transmission network level. Recent changes include:
 
@@ -603,8 +605,8 @@ This is the first release of PyPSA-Eur, a model of the European power system at 
 * The new function ``_helpers.mock_snakemake`` creates a ``snakemake`` object which mimics the actual ``snakemake`` object produced by workflow by parsing the ``Snakefile`` and setting all paths for inputs, outputs, and logs. This allows running all scripts within a (I)python terminal (or just by calling ``python <script-name>``) and thereby facilitates developing and debugging scripts significantly [`#107 <https://github.com/PyPSA/pypsa-eur/pull/107>`_].
 
 
-PyPSA-Eur-Sec Releases
-======================
+PyPSA-Eur-Sec Releases (pre-merge)
+==================================
 
 PyPSA-Eur-Sec 0.7.0 (16th February 2023)
 ----------------------------------------
