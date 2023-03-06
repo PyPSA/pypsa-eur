@@ -700,21 +700,15 @@ solving:
 
 plotting:
   map:
-    figsize: [7, 7]
     boundaries: [-11, 30, 34, 71]
-    p_nom:
-      bus_size_factor: 5.e+4
-      linewidth_factor: 3.e+3
     color_geomap:
       ocean: white
       land: white
   eu_node_location:
     x: -5.5
     y: 46.
-
   costs_max: 1000
   costs_threshold: 1
-
   energy_max: 20000
   energy_min: -20000
   energy_threshold: 50.
