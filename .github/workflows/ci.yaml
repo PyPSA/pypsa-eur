@@ -33,13 +33,13 @@ jobs:
           label: ubuntu-latest
           prefix: /usr/share/miniconda3/envs/pypsa-eur
 
-        - os: macos-latest
-          label: macos-latest
-          prefix: /Users/runner/miniconda3/envs/pypsa-eur
+        # - os: macos-latest
+        #   label: macos-latest
+        #   prefix: /Users/runner/miniconda3/envs/pypsa-eur
 
-        - os: windows-latest
-          label: windows-latest
-          prefix: C:\Miniconda3\envs\pypsa-eur
+        # - os: windows-latest
+        #   label: windows-latest
+        #   prefix: C:\Miniconda3\envs\pypsa-eur
 
     name: ${{ matrix.label }}
 
