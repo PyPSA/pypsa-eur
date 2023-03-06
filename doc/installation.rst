@@ -126,4 +126,3 @@ Before first use, create a ``config.yaml`` by copying the example.
 
 Users are advised to regularly check their own ``config.yaml`` against changes in the ``config.default.yaml``
 when pulling a new version from the remote repository.
-
