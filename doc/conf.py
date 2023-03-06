@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
+<<<<<<< HEAD
 # SPDX-FileCopyrightText: 20017-2020 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
 # -*- coding: utf-8 -*-
+=======
+>>>>>>> pypsa-eur-sec/master
 #
 # PyPSA documentation build configuration file, created by
 # sphinx-quickstart on Tue Jan  5 10:04:42 2016.
@@ -37,6 +40,10 @@ sys.path.insert(0, os.path.abspath("../scripts"))
 extensions = [
     #'sphinx.ext.autodoc',
     #'sphinx.ext.autosummary',
+<<<<<<< HEAD
+=======
+    "sphinx.ext.autosectionlabel",
+>>>>>>> pypsa-eur-sec/master
     "sphinx.ext.intersphinx",
     "sphinx.ext.todo",
     "sphinx.ext.mathjax",
@@ -66,9 +73,15 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
+<<<<<<< HEAD
 project = "PyPSA-Eur"
 copyright = "2017-2023 Jonas Hoersch (KIT, FIAS), Fabian Hofmann (TUB, FIAS), David Schlachtberger (FIAS), Tom Brown (TUB, KIT, FIAS); 2019-2023 Fabian Neumann (TUB, KIT)"
 author = "Jonas Hoersch (KIT, FIAS), Fabian Hofmann (TUB, FIAS), David Schlachtberger (FIAS), Tom Brown (TUB, KIT, FIAS), Fabian Neumann (TUB, KIT)"
+=======
+project = "PyPSA-Eur-Sec"
+copyright = "2019-2023 Tom Brown (KIT, TUB), Marta Victoria (Aarhus University), Lisa Zeyen (KIT, TUB), Fabian Neumann (TUB)"
+author = "2019-2023 Tom Brown (KIT, TUB), Marta Victoria (Aarhus University), Lisa Zeyen (KIT, TUB), Fabian Neumann (TUB)"
+>>>>>>> pypsa-eur-sec/master
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -84,7 +97,11 @@ release = "0.7.0"
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
+<<<<<<< HEAD
 language = "en"
+=======
+language = None
+>>>>>>> pypsa-eur-sec/master
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
@@ -128,15 +145,24 @@ todo_include_todos = True
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
+<<<<<<< HEAD
 html_theme = "sphinx_book_theme"
+=======
+html_theme = "sphinx_rtd_theme"
+>>>>>>> pypsa-eur-sec/master
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 html_theme_options = {
+<<<<<<< HEAD
     "repository_url": "https://github.com/pypsa/pypsa-eur",
     "use_repository_button": True,
     "show_navbar_depth": 2,
+=======
+    "display_version": True,
+    "sticky_navigation": True,
+>>>>>>> pypsa-eur-sec/master
 }
 
 
@@ -145,26 +171,47 @@ html_theme_options = {
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
+<<<<<<< HEAD
 html_title = "PyPSA-Eur"
+=======
+# html_title = None
+>>>>>>> pypsa-eur-sec/master
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
 # html_short_title = None
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
+<<<<<<< HEAD
 html_logo = "img/pypsa-logo.png"
+=======
+# html_logo = None
+>>>>>>> pypsa-eur-sec/master
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
 # pixels large.
 # html_favicon = None
 
+<<<<<<< HEAD
 # These folders are copied to the documentation's HTML output
 # html_static_path = ["_static"]
 
 # These paths are either relative to html_static_path
 # or fully qualified paths (eg. https://...)
 # html_css_files = ["theme_overrides.css"]
+=======
+# Add any paths that contain custom static files (such as style sheets) here,
+# relative to this directory. They are copied after the builtin static files,
+# so a file named "default.css" will overwrite the builtin "default.css".
+html_static_path = ["_static"]
+
+html_context = {
+    "css_files": [
+        "_static/theme_overrides.css",  # override wide tables in RTD theme
+    ],
+}
+>>>>>>> pypsa-eur-sec/master
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
@@ -227,7 +274,11 @@ html_logo = "img/pypsa-logo.png"
 # html_search_scorer = 'scorer.js'
 
 # Output file base name for HTML help builder.
+<<<<<<< HEAD
 htmlhelp_basename = "PyPSAEurdoc"
+=======
+htmlhelp_basename = "PyPSAEurSecdoc"
+>>>>>>> pypsa-eur-sec/master
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -246,7 +297,17 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
+<<<<<<< HEAD
     (master_doc, "PyPSA-Eur.tex", "PyPSA-Eur Documentation", "author", "manual"),
+=======
+    (
+        master_doc,
+        "PyPSA-Eur-Sec.tex",
+        "PyPSA-Eur-Sec Documentation",
+        "author",
+        "manual",
+    ),
+>>>>>>> pypsa-eur-sec/master
 ]
 
 
@@ -254,8 +315,13 @@ latex_documents = [
 rinoh_documents = [
     (
         master_doc,  # top-level file (index.rst)
+<<<<<<< HEAD
         "PyPSA-Eur",  # output (target.pdf)
         "PyPSA-Eur Documentation",  # document title
+=======
+        "PyPSA-Eur-Sec",  # output (target.pdf)
+        "PyPSA-Eur-Sec Documentation",  # document title
+>>>>>>> pypsa-eur-sec/master
         "author",
     )
 ]  # document author
@@ -286,7 +352,11 @@ rinoh_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
+<<<<<<< HEAD
 man_pages = [(master_doc, "pypsa-eur", "PyPSA-Eur Documentation", [author], 1)]
+=======
+man_pages = [(master_doc, "pypsa-eur-sec", "PyPSA-Eur-Sec Documentation", [author], 1)]
+>>>>>>> pypsa-eur-sec/master
 
 # If true, show URL addresses after external links.
 # man_show_urls = False
@@ -300,10 +370,17 @@ man_pages = [(master_doc, "pypsa-eur", "PyPSA-Eur Documentation", [author], 1)]
 texinfo_documents = [
     (
         master_doc,
+<<<<<<< HEAD
         "PyPSA-Eur",
         "PyPSA-Eur Documentation",
         author,
         "PyPSA-Eur",
+=======
+        "PyPSA-Eur-Sec",
+        "PyPSA-Eur-Sec Documentation",
+        author,
+        "PyPSA-Eur-Sec",
+>>>>>>> pypsa-eur-sec/master
         "One line description of project.",
         "Miscellaneous",
     ),

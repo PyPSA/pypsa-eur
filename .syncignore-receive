@@ -15,5 +15,6 @@ __pycache__
 notebooks
 doc
 cutouts
-data/bundle
+data
+benchmarks
 *.nc
