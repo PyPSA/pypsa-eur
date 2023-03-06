@@ -437,17 +437,6 @@ def plot_carbon_budget_distribution(input_eurostat):
     Plot historical carbon emissions in the EU and decarbonization path.
     """
 
-<<<<<<< HEAD
-    import seaborn as sns; sns.set()
-    sns.set_style('ticks')
-    plt.style.use('seaborn-ticks')
-    plt.rcParams['xtick.direction'] = 'in'
-    plt.rcParams['ytick.direction'] = 'in'
-    plt.rcParams['xtick.labelsize'] = 20
-    plt.rcParams['ytick.labelsize'] = 20
-=======
-    import matplotlib.gridspec as gridspec
-
     import seaborn as sns
 
     sns.set()
@@ -457,7 +446,6 @@ def plot_carbon_budget_distribution(input_eurostat):
     plt.rcParams["ytick.direction"] = "in"
     plt.rcParams["xtick.labelsize"] = 20
     plt.rcParams["ytick.labelsize"] = 20
->>>>>>> 13769f90af4500948b0376d57df4cceaa13e78b5
 
     plt.figure(figsize=(10, 7))
     gs1 = gridspec.GridSpec(1, 1)
