@@ -720,7 +720,7 @@ if __name__ == "__main__":
     ppl = load_powerplants(snakemake.input.powerplants)
 
     if "renewable_carriers" in snakemake.config["electricity"]:
-        renewable_carriers = set(snakemake.config["renewable"])
+        renewable_carriers = set(snakemake.config["electricity"]["renewable_carriers"])
     else:
         logger.warning(
             "Missing key `renewable_carriers` under config entry `electricity`. "
