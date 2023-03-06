@@ -599,8 +599,6 @@ costs:
     battery inverter: 0.
   emission_prices: # in currency per tonne emission, only used with the option Ep
     co2: 0.
-  lines:
-    length_factor: 1.25 #to estimate offwind connection costs
 
 clustering:
   simplify_network:
