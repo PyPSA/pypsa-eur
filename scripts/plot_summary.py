@@ -3,12 +3,10 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
-import matplotlib.gridspec as gridspec
-import matplotlib.pyplot as plt
 
 plt.style.use("ggplot")
 
@@ -447,7 +445,6 @@ def plot_carbon_budget_distribution(input_eurostat):
     plt.rcParams['ytick.labelsize'] = 20
 =======
     import matplotlib.gridspec as gridspec
-
     import seaborn as sns
 
     sns.set()
