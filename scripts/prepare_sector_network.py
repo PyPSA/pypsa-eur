@@ -3343,11 +3343,7 @@ if __name__ == "__main__":
         if not "cb" in o:
             continue
         limit_type = "carbon budget"
-        fn = (
-            "results/"
-            + snakemake.params.RDIR
-            + "/csvs/carbon_budget_distribution.csv"
-        )
+        fn = "results/" + snakemake.params.RDIR + "/csvs/carbon_budget_distribution.csv"
         if not os.path.exists(fn):
             emissions_scope = snakemake.config["energy"]["emissions"]
             report_year = snakemake.config["energy"]["eurostat_report_year"]

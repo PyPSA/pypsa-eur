@@ -676,8 +676,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=snakemake.config["logging"]["level"])
 
     networks_dict = {
-        (cluster, lv, opt + sector_opt, planning_horizon): 
-        "results/"
+        (cluster, lv, opt + sector_opt, planning_horizon): "results/"
         + snakemake.params.RDIR
         + f"/postnetworks/elec_s{simpl}_{cluster}_lv{lv}_{opt}_{sector_opt}_{planning_horizon}.nc"
         for simpl in snakemake.config["scenario"]["simpl"]
