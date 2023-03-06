@@ -1134,7 +1134,7 @@ rule plot_network:
         today="results/" + RDIR + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}-today.pdf"
     threads: 2
     resources: mem_mb=10000
-    benchmark: RDIR + "benchmarks/plot_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+    benchmark: "results/" + RDIR + "benchmarks/plot_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
     script: "scripts/plot_network.py"
 
 
@@ -1143,7 +1143,7 @@ rule copy_config:
     output: "results/" + RDIR + 'configs/config.yaml'
     threads: 1
     resources: mem_mb=1000
-    benchmark: RDIR + "benchmarks/copy_config"
+    benchmark: "results/" + RDIR + "benchmarks/copy_config"
     script: "scripts/copy_config.py"
 
 
@@ -1186,7 +1186,7 @@ rule make_summary:
         metrics="results/" + RDIR + 'csvs/metrics.csv'
     threads: 2
     resources: mem_mb=10000
-    benchmark: RDIR + "benchmarks/make_summary"
+    benchmark: "results/" + RDIR + "benchmarks/make_summary"
     script: "scripts/make_summary.py"
 
 
@@ -1204,7 +1204,7 @@ rule plot_summary:
         balances="results/" + RDIR + 'graphs/balances-energy.pdf'
     threads: 2
     resources: mem_mb=10000
-    benchmark: RDIR + "benchmarks/plot_summary"
+    benchmark: "results/" + RDIR + "benchmarks/plot_summary"
     script: "scripts/plot_summary.py"
 
 
@@ -1220,12 +1220,12 @@ if config["foresight"] == "overnight":
         output: "results/" + RDIR + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc"
         shadow: "shallow"
         log:
-            solver=RDIR + "logs/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_solver.log",
-            python=RDIR + "logs/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_python.log",
-            memory=RDIR + "logs/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_memory.log"
+            solver="logs/" + RDIR + "elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_solver.log",
+            python="logs/" + RDIR + "elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_python.log",
+            memory="logs/" + RDIR + "elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_memory.log"
         threads: config['solving']['solver'].get('threads', 4)
         resources: mem_mb=config['solving']['mem']
-        benchmark: RDIR + "benchmarks/solve_sector_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+        benchmark: "results/" + RDIR + "benchmarks/solve_sector_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
         script: "scripts/solve_sector_network.py"
 
 
@@ -1252,7 +1252,7 @@ if config["foresight"] == "myopic":
             planning_horizons=config['scenario']['planning_horizons'][0] #only applies to baseyear
         threads: 1
         resources: mem_mb=2000
-        benchmark: RDIR + 'benchmarks/add_existing_baseyear/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}'
+        benchmark: "results/" + RDIR + 'benchmarks/add_existing_baseyear/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}'
         script: "scripts/add_existing_baseyear.py"
 
 
@@ -1274,7 +1274,7 @@ if config["foresight"] == "myopic":
         output: "results/" + RDIR + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc"
         threads: 4
         resources: mem_mb=10000
-        benchmark: RDIR + 'benchmarks/add_brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}'
+        benchmark: "results/" + RDIR + 'benchmarks/add_brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}'
         script: "scripts/add_brownfield.py"
 
 
@@ -1290,10 +1290,10 @@ if config["foresight"] == "myopic":
         output: "results/" + RDIR + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc"
         shadow: "shallow"
         log:
-            solver=RDIR + "logs/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_solver.log",
-            python=RDIR + "logs/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_python.log",
-            memory=RDIR + "logs/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_memory.log"
+            solver="logs/" + RDIR + "elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_solver.log",
+            python="logs/" + RDIR + "elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_python.log",
+            memory="logs/" + RDIR + "elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_memory.log"
         threads: 4
         resources: mem_mb=config['solving']['mem']
-        benchmark: RDIR + "benchmarks/solve_sector_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+        benchmark: "results/" + RDIR + "benchmarks/solve_sector_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
         script: "scripts/solve_sector_network.py"
