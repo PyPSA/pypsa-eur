@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+# SPDX-FileCopyrightText: : 2023 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: MIT
 """
 Build regional demand for international navigation based on outflow volume of
 ports.

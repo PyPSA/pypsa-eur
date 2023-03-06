@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: MIT
+
 """
 Preprocess gas network based on data from bthe SciGRID Gas project
 (https://www.gas.scigrid.de/).

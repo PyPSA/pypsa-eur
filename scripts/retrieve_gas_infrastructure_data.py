@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+# SPDX-FileCopyrightText: : 2021-2023 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: MIT
 """
 Retrieve gas infrastructure data from
 https://zenodo.org/record/4767098/files/IGGIELGN.zip.

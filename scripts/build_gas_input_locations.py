@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+# SPDX-FileCopyrightText: : 2021-2023 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: MIT
+
 """
 Build import locations for fossil gas from entry-points, LNG terminals and
 production sites.

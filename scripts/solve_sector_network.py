@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: MIT
 """
 Solve network.
 """

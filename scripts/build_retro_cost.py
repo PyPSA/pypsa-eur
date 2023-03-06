@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: MIT
+
 """
 Created on Fri Jan 22 10:36:39 2021.
 
