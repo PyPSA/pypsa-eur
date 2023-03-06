@@ -3,12 +3,10 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
-import matplotlib.gridspec as gridspec
-import matplotlib.pyplot as plt
 
 plt.style.use("ggplot")
 
