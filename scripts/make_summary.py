@@ -704,5 +704,5 @@ if __name__ == "__main__":
     if snakemake.config["foresight"] == "myopic":
         cumulative_cost = calculate_cumulative_cost()
         cumulative_cost.to_csv(
-            f"results" + snakemake.params.RDIR + "/csvs/cumulative_cost.csv"
+            f"results/" + snakemake.params.RDIR + "/csvs/cumulative_cost.csv"
         )
