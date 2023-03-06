@@ -12,13 +12,6 @@ Upcoming Release
 
 * new features
 
-Future release
-==============
-
-.. note::
-  This unreleased version currently may require the master branches of PyPSA, PyPSA-Eur, and the technology-data repository.
-
-* new feature
 
 PyPSA-Eur 0.7.0 (16th February 2023)
 ====================================
