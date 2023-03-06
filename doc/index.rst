@@ -53,7 +53,7 @@ resolved spatial scale enables a proper description of the long-range smoothing
 effects for renewable power generation and their varying resource availability.
 
 .. image:: img/elec.png
-    :width: 50%
+    :width: 70%
     :align: center
 
 The restriction to freely available and open data encourages the open exchange
@@ -99,6 +99,8 @@ This diagram gives an overview of the sectors and the links between
 them:
 
 .. image:: ../graphics/multisector_figure.png
+    :width: 70%
+    :align: center
 
 The sector-coupled extension of PyPSA-Eur (previously PyPSA-Eur-Sec) was
 initially described in the paper `Synergies of sector coupling and transmission
