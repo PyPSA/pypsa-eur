@@ -144,7 +144,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_gas_network")
 
-    logging.basicConfig(level=snakemake.config["logging_level"])
+    logging.basicConfig(level=snakemake.config["logging"]["level"])
 
     gas_network = load_dataset(snakemake.input.gas_network)
 

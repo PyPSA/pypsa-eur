@@ -134,7 +134,7 @@ if __name__ == "__main__":
             planning_horizons=2030,
         )
 
-    logging.basicConfig(level=snakemake.config["logging_level"])
+    logging.basicConfig(level=snakemake.config["logging"]["level"])
 
     update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
 

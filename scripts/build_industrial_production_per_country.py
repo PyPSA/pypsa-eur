@@ -294,7 +294,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_industrial_production_per_country")
 
-    logging.basicConfig(level=snakemake.config["logging_level"])
+    logging.basicConfig(level=snakemake.config["logging"]["level"])
 
     countries = non_EU + eu28
 

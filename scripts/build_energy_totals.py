@@ -751,7 +751,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_energy_totals")
 
-    logging.basicConfig(level=snakemake.config["logging_level"])
+    logging.basicConfig(level=snakemake.config["logging"]["level"])
 
     config = snakemake.config["energy"]
 

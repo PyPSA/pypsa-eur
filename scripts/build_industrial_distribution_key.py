@@ -142,7 +142,7 @@ if __name__ == "__main__":
             clusters=48,
         )
 
-    logging.basicConfig(level=snakemake.config["logging_level"])
+    logging.basicConfig(level=snakemake.config["logging"]["level"])
 
     regions = gpd.read_file(snakemake.input.regions_onshore).set_index("name")
 

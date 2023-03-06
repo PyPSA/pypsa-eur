@@ -328,7 +328,7 @@ if __name__ == "__main__":
         )
 
     logging.basicConfig(
-        filename=snakemake.log.python, level=snakemake.config["logging_level"]
+        filename=snakemake.log.python, level=snakemake.config["logging"]["level"]
     )
 
     update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
