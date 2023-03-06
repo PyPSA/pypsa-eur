@@ -107,11 +107,6 @@ def load_network(import_name=None, custom_components=None):
     )
 
 
-def pdbcast(v, h):
-    return pd.DataFrame(
-        v.values.reshape((-1, 1)) * h.values, index=v.index, columns=h.index
-    )
-
 
 def load_network_for_plots(fn, tech_costs, config, combine_hydro_ps=True):
     import pypsa
