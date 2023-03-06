@@ -19,7 +19,7 @@ run = config.get("run", {})
 RDIR = run["name"] + "/" if run.get("name") else ""
 CDIR = RDIR if not run.get("shared_cutouts") else ""
 
-COSTS = "resources/" + RDIR + f"costs_{config['costs']['year']}.csv"
+COSTS = "data/" + RDIR + f"costs_{config['costs']['year']}.csv"
 ATLITE_NPROCESSES = config["atlite"].get("nprocesses", 4)
 
 
