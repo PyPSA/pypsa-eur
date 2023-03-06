@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 """
-Reads biomass transport costs for different countries of the JRC report
+Reads biomass transport costs for different countries of the JRC report.
 
     "The JRC-EU-TIMES model.
     Bioenergy potentials
@@ -18,29 +19,24 @@ import tabula as tbl
 
 ENERGY_CONTENT = 4.8  # unit MWh/t (wood pellets)
 
-def get_countries():
 
-    pandas_options = dict(
-        skiprows=range(6),
-        header=None,
-        index_col=0
-    )
+def get_countries():
+    pandas_options = dict(skiprows=range(6), header=None, index_col=0)
 
     return tbl.read_pdf(
         str(snakemake.input.transport_cost_data),
         pages="145",
         multiple_tables=False,
-        pandas_options=pandas_options
+        pandas_options=pandas_options,
     )[0].index
 
 
 def get_cost_per_tkm(page, countries):
-    
     pandas_options = dict(
         skiprows=range(6),
         header=0,
-        sep=' |,',
-        engine='python',
+        sep=" |,",
+        engine="python",
         index_col=False,
     )
 
@@ -48,16 +44,15 @@ def get_cost_per_tkm(page, countries):
         str(snakemake.input.transport_cost_data),
         pages=page,
         multiple_tables=False,
-        pandas_options=pandas_options
+        pandas_options=pandas_options,
     )[0]
     sc.index = countries
     sc.columns = sc.columns.str.replace("€", "EUR")
-    
+
     return sc
 
 
 def build_biomass_transport_costs():
-
     countries = get_countries()
 
     sc1 = get_cost_per_tkm(146, countries)
@@ -72,11 +67,7 @@ def build_biomass_transport_costs():
     transport_costs.name = "EUR/km/MWh"
 
     # rename country names
-    to_rename = {
-        "UK": "GB",
-        "XK": "KO",
-        "EL": "GR"
-    }
+    to_rename = {"UK": "GB", "XK": "KO", "EL": "GR"}
     transport_costs.rename(to_rename, inplace=True)
 
     # add missing Norway with data from Sweden
@@ -86,5 +77,4 @@ def build_biomass_transport_costs():
 
 
 if __name__ == "__main__":
-
     build_biomass_transport_costs()

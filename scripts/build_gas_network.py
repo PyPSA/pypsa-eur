@@ -1,16 +1,22 @@
-"""Preprocess gas network based on data from bthe SciGRID Gas project (https://www.gas.scigrid.de/)."""
+# -*- coding: utf-8 -*-
+"""
+Preprocess gas network based on data from bthe SciGRID Gas project
+(https://www.gas.scigrid.de/).
+"""
 
 import logging
+
 logger = logging.getLogger(__name__)
 
-import pandas as pd
 import geopandas as gpd
-from shapely.geometry import Point
+import pandas as pd
 from pypsa.geo import haversine_pts
+from shapely.geometry import Point
 
 
 def diameter_to_capacity(pipe_diameter_mm):
-    """Calculate pipe capacity in MW based on diameter in mm.
+    """
+    Calculate pipe capacity in MW based on diameter in mm.
 
     20 inch (500 mm)  50 bar -> 1.5   GW CH4 pipe capacity (LHV)
     24 inch (600 mm)  50 bar -> 5     GW CH4 pipe capacity (LHV)
@@ -59,22 +65,31 @@ def prepare_dataset(
     length_factor=1.5,
     correction_threshold_length=4,
     correction_threshold_p_nom=8,
-    bidirectional_below=10
+    bidirectional_below=10,
 ):
-
     # extract start and end from LineString
     df["point0"] = df.geometry.apply(lambda x: Point(x.coords[0]))
     df["point1"] = df.geometry.apply(lambda x: Point(x.coords[-1]))
 
-    conversion_factor = 437.5 # MCM/day to MWh/h
+    conversion_factor = 437.5  # MCM/day to MWh/h
     df["p_nom"] = df.max_cap_M_m3_per_d * conversion_factor
 
     # for inferred diameters, assume 500 mm rather than 900 mm (more conservative)
-    df.loc[df.diameter_mm_method != 'raw', "diameter_mm"] = 500.
+    df.loc[df.diameter_mm_method != "raw", "diameter_mm"] = 500.0
 
-    keep = ["name", "diameter_mm", "is_H_gas", "is_bothDirection",
-            "length_km", "p_nom", "max_pressure_bar",
-            "start_year", "point0", "point1", "geometry"]
+    keep = [
+        "name",
+        "diameter_mm",
+        "is_H_gas",
+        "is_bothDirection",
+        "length_km",
+        "p_nom",
+        "max_pressure_bar",
+        "start_year",
+        "point0",
+        "point1",
+        "geometry",
+    ]
     to_rename = {
         "is_bothDirection": "bidirectional",
         "is_H_gas": "H_gas",
@@ -96,37 +111,40 @@ def prepare_dataset(
     df["p_nom_diameter"] = df.diameter_mm.apply(diameter_to_capacity)
     ratio = df.p_nom / df.p_nom_diameter
     not_nordstream = df.max_pressure_bar < 220
-    df.p_nom.update(df.p_nom_diameter.where(
-        (df.p_nom <= 500) |
-        ((ratio > correction_threshold_p_nom) & not_nordstream) |
-        ((ratio < 1 / correction_threshold_p_nom) & not_nordstream)
-    ))
+    df.p_nom.update(
+        df.p_nom_diameter.where(
+            (df.p_nom <= 500)
+            | ((ratio > correction_threshold_p_nom) & not_nordstream)
+            | ((ratio < 1 / correction_threshold_p_nom) & not_nordstream)
+        )
+    )
 
     # lines which have way too discrepant line lengths
     # get assigned haversine length * length factor
     df["length_haversine"] = df.apply(
-        lambda p: length_factor * haversine_pts(
-            [p.point0.x, p.point0.y],
-            [p.point1.x, p.point1.y]
-        ), axis=1
+        lambda p: length_factor
+        * haversine_pts([p.point0.x, p.point0.y], [p.point1.x, p.point1.y]),
+        axis=1,
     )
     ratio = df.eval("length / length_haversine")
-    df["length"].update(df.length_haversine.where(
-        (df["length"] < 20) |
-        (ratio > correction_threshold_length) |
-        (ratio < 1 / correction_threshold_length)
-    ))
+    df["length"].update(
+        df.length_haversine.where(
+            (df["length"] < 20)
+            | (ratio > correction_threshold_length)
+            | (ratio < 1 / correction_threshold_length)
+        )
+    )
 
     return df
 
 
 if __name__ == "__main__":
-
-    if 'snakemake' not in globals():
+    if "snakemake" not in globals():
         from helper import mock_snakemake
-        snakemake = mock_snakemake('build_gas_network')
 
-    logging.basicConfig(level=snakemake.config['logging_level'])
+        snakemake = mock_snakemake("build_gas_network")
+
+    logging.basicConfig(level=snakemake.config["logging_level"])
 
     gas_network = load_dataset(snakemake.input.gas_network)
 

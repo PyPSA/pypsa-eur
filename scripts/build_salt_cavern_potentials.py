@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Build salt cavern potentials for hydrogen storage.
 
@@ -22,29 +23,35 @@ import geopandas as gpd
 import pandas as pd
 
 
-def concat_gdf(gdf_list, crs='EPSG:4326'):
-    """Concatenate multiple geopandas dataframes with common coordinate reference system (crs)."""
+def concat_gdf(gdf_list, crs="EPSG:4326"):
+    """
+    Concatenate multiple geopandas dataframes with common coordinate reference
+    system (crs).
+    """
     return gpd.GeoDataFrame(pd.concat(gdf_list), crs=crs)
 
 
 def load_bus_regions(onshore_path, offshore_path):
-    """Load pypsa-eur on- and offshore regions and concat."""
+    """
+    Load pypsa-eur on- and offshore regions and concat.
+    """
 
     bus_regions_offshore = gpd.read_file(offshore_path)
     bus_regions_onshore = gpd.read_file(onshore_path)
     bus_regions = concat_gdf([bus_regions_offshore, bus_regions_onshore])
-    bus_regions = bus_regions.dissolve(by='name', aggfunc='sum')
+    bus_regions = bus_regions.dissolve(by="name", aggfunc="sum")
 
     return bus_regions
 
 
 def area(gdf):
-    """Returns area of GeoDataFrame geometries in square kilometers."""
+    """
+    Returns area of GeoDataFrame geometries in square kilometers.
+    """
     return gdf.to_crs(epsg=3035).area.div(1e6)
 
 
 def salt_cavern_potential_by_region(caverns, regions):
-
     # calculate area of caverns shapes
     caverns["area_caverns"] = area(caverns)
 
@@ -53,18 +60,24 @@ def salt_cavern_potential_by_region(caverns, regions):
     # calculate share of cavern area inside region
     overlay["share"] = area(overlay) / overlay["area_caverns"]
 
-    overlay["e_nom"] = overlay.eval("capacity_per_area * share * area_caverns / 1000") # TWh
+    overlay["e_nom"] = overlay.eval(
+        "capacity_per_area * share * area_caverns / 1000"
+    )  # TWh
 
-    caverns_regions = overlay.groupby(['name', "storage_type"]).e_nom.sum().unstack("storage_type")
-    
+    caverns_regions = (
+        overlay.groupby(["name", "storage_type"]).e_nom.sum().unstack("storage_type")
+    )
+
     return caverns_regions
 
 
-if __name__ == '__main__':
-    if 'snakemake' not in globals():
+if __name__ == "__main__":
+    if "snakemake" not in globals():
         from helper import mock_snakemake
-        snakemake = mock_snakemake('build_salt_cavern_potentials', simpl='', clusters='37')
 
+        snakemake = mock_snakemake(
+            "build_salt_cavern_potentials", simpl="", clusters="37"
+        )
 
     fn_onshore = snakemake.input.regions_onshore
     fn_offshore = snakemake.input.regions_offshore

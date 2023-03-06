@@ -82,7 +82,7 @@ The data licences and sources are given in the following table.
 Set up the default configuration
 ================================
 
-First make your own copy of the ``config.yaml`` based on 
+First make your own copy of the ``config.yaml`` based on
  ``config.default.yaml``. For example:
 
 .. code:: bash

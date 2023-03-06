@@ -1,27 +1,29 @@
-import pandas as pd
+# -*- coding: utf-8 -*-
 import geopandas as gpd
+import pandas as pd
 
 
 def build_nuts_population_data(year=2013):
-
     pop = pd.read_csv(
         snakemake.input.nuts3_population,
-        sep=r'\,| \t|\t',
-        engine='python',
+        sep=r"\,| \t|\t",
+        engine="python",
         na_values=[":"],
-        index_col=1
+        index_col=1,
     )[str(year)]
-    
+
     # only countries
     pop.drop("EU28", inplace=True)
 
     # mapping from Cantons to NUTS3
     cantons = pd.read_csv(snakemake.input.swiss_cantons)
     cantons = cantons.set_index(cantons.HASC.str[3:]).NUTS
-    cantons = cantons.str.pad(5, side='right', fillchar='0')
+    cantons = cantons.str.pad(5, side="right", fillchar="0")
 
     # get population by NUTS3
-    swiss = pd.read_excel(snakemake.input.swiss_population, skiprows=3, index_col=0).loc["Residents in 1000"]
+    swiss = pd.read_excel(
+        snakemake.input.swiss_population, skiprows=3, index_col=0
+    ).loc["Residents in 1000"]
     swiss = swiss.rename(cantons).filter(like="CH")
 
     # aggregate also to higher order NUTS levels
@@ -29,21 +31,21 @@ def build_nuts_population_data(year=2013):
 
     # merge Europe + Switzerland
     pop = pd.concat([pop, pd.concat(swiss)]).to_frame("total")
-    
+
     # add missing manually
     pop["AL"] = 2893
     pop["BA"] = 3871
     pop["RS"] = 7210
-    
+
     pop["ct"] = pop.index.str[:2]
-    
+
     return pop
 
 
 def enspreso_biomass_potentials(year=2020, scenario="ENS_Low"):
     """
     Loads the JRC ENSPRESO biomass potentials.
-    
+
     Parameters
     ----------
     year : int
@@ -51,7 +53,7 @@ def enspreso_biomass_potentials(year=2020, scenario="ENS_Low"):
         Can be {2010, 2020, 2030, 2040, 2050}.
     scenario : str
         The scenario. Can be {"ENS_Low", "ENS_Med", "ENS_High"}.
-    
+
     Returns
     -------
     pd.DataFrame
@@ -64,13 +66,13 @@ def enspreso_biomass_potentials(year=2020, scenario="ENS_Low"):
         sheet_name="Glossary",
         usecols="B:D",
         skiprows=1,
-        index_col=0
+        index_col=0,
     )
-    
+
     df = pd.read_excel(
         str(snakemake.input.enspreso_biomass),
         sheet_name="ENER - NUTS2 BioCom E",
-        usecols="A:H"
+        usecols="A:H",
     )
 
     df["group"] = df["E-Comm"].map(glossary.group)
@@ -81,9 +83,9 @@ def enspreso_biomass_potentials(year=2020, scenario="ENS_Low"):
         "NUST2": "NUTS2",
     }
     df.rename(columns=to_rename, inplace=True)
-    
+
     # fill up with NUTS0 if NUTS2 is not given
-    df.NUTS2 = df.apply(lambda x: x.NUTS0 if x.NUTS2 == '-' else x.NUTS2, axis=1)
+    df.NUTS2 = df.apply(lambda x: x.NUTS0 if x.NUTS2 == "-" else x.NUTS2, axis=1)
 
     # convert PJ to TWh
     df.potential /= 3.6
@@ -92,32 +94,31 @@ def enspreso_biomass_potentials(year=2020, scenario="ENS_Low"):
     dff = df.query("Year == @year and Scenario == @scenario")
 
     bio = dff.groupby(["NUTS2", "commodity"]).potential.sum().unstack()
-    
+
     # currently Serbia and Kosovo not split, so aggregate
     bio.loc["RS"] += bio.loc["XK"]
     bio.drop("XK", inplace=True)
-    
+
     return bio
 
 
-def disaggregate_nuts0(bio):    
+def disaggregate_nuts0(bio):
     """
-    Some commodities are only given on NUTS0 level.
-    These are disaggregated here using the NUTS2
-    population as distribution key.
-    
+    Some commodities are only given on NUTS0 level. These are disaggregated
+    here using the NUTS2 population as distribution key.
+
     Parameters
     ----------
     bio : pd.DataFrame
         from enspreso_biomass_potentials()
-    
+
     Returns
     -------
     pd.DataFrame
     """
-    
+
     pop = build_nuts_population_data()
-    
+
     # get population in nuts2
     pop_nuts2 = pop.loc[pop.index.str.len() == 4]
     by_country = pop_nuts2.total.groupby(pop_nuts2.ct).sum()
@@ -130,7 +131,7 @@ def disaggregate_nuts0(bio):
 
     # update inplace
     bio.update(bio_nodal)
-    
+
     return bio
 
 
@@ -141,9 +142,11 @@ def build_nuts2_shapes():
     - consistently name ME, MK
     """
 
-    nuts2 = gpd.GeoDataFrame(gpd.read_file(snakemake.input.nuts2).set_index('id').geometry)
+    nuts2 = gpd.GeoDataFrame(
+        gpd.read_file(snakemake.input.nuts2).set_index("id").geometry
+    )
 
-    countries = gpd.read_file(snakemake.input.country_shapes).set_index('name')
+    countries = gpd.read_file(snakemake.input.country_shapes).set_index("name")
     missing_iso2 = countries.index.intersection(["AL", "RS", "BA"])
     missing = countries.loc[missing_iso2]
 
@@ -153,14 +156,16 @@ def build_nuts2_shapes():
 
 
 def area(gdf):
-    """Returns area of GeoDataFrame geometries in square kilometers."""
+    """
+    Returns area of GeoDataFrame geometries in square kilometers.
+    """
     return gdf.to_crs(epsg=3035).area.div(1e6)
 
 
 def convert_nuts2_to_regions(bio_nuts2, regions):
     """
-    Converts biomass potentials given in NUTS2 to PyPSA-Eur regions based on the
-    overlay of both GeoDataFrames in proportion to the area.
+    Converts biomass potentials given in NUTS2 to PyPSA-Eur regions based on
+    the overlay of both GeoDataFrames in proportion to the area.
 
     Parameters
     ----------
@@ -173,7 +178,7 @@ def convert_nuts2_to_regions(bio_nuts2, regions):
     -------
     gpd.GeoDataFrame
     """
-    
+
     # calculate area of nuts2 regions
     bio_nuts2["area_nuts2"] = area(bio_nuts2)
 
@@ -183,22 +188,25 @@ def convert_nuts2_to_regions(bio_nuts2, regions):
     overlay["share"] = area(overlay) / overlay["area_nuts2"]
 
     # multiply all nuts2-level values with share of nuts2 inside region
-    adjust_cols = overlay.columns.difference({"name", "area_nuts2", "geometry", "share"})
+    adjust_cols = overlay.columns.difference(
+        {"name", "area_nuts2", "geometry", "share"}
+    )
     overlay[adjust_cols] = overlay[adjust_cols].multiply(overlay["share"], axis=0)
 
     bio_regions = overlay.groupby("name").sum()
 
     bio_regions.drop(["area_nuts2", "share"], axis=1, inplace=True)
-    
+
     return bio_regions
 
 
 if __name__ == "__main__":
-    if 'snakemake' not in globals():
+    if "snakemake" not in globals():
         from helper import mock_snakemake
-        snakemake = mock_snakemake('build_biomass_potentials', simpl='', clusters='5')
 
-    config = snakemake.config['biomass']
+        snakemake = mock_snakemake("build_biomass_potentials", simpl="", clusters="5")
+
+    config = snakemake.config["biomass"]
     year = config["year"]
     scenario = config["scenario"]
 
@@ -219,7 +227,7 @@ if __name__ == "__main__":
     grouper = {v: k for k, vv in config["classes"].items() for v in vv}
     df = df.groupby(grouper, axis=1).sum()
 
-    df *= 1e6 # TWh/a to MWh/a
+    df *= 1e6  # TWh/a to MWh/a
     df.index.name = "MWh/a"
 
     df.to_csv(snakemake.output.biomass_potentials)

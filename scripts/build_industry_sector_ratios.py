@@ -1,4 +1,7 @@
-"""Build industry sector ratios."""
+# -*- coding: utf-8 -*-
+"""
+Build industry sector ratios.
+"""
 
 import pandas as pd
 from helper import mute_print
@@ -68,7 +71,6 @@ index = [
 
 
 def load_idees_data(sector, country="EU28"):
-
     suffixes = {"out": "", "fec": "_fec", "ued": "_ued", "emi": "_emi"}
     sheets = {k: sheet_names[sector] + v for k, v in suffixes.items()}
 
@@ -91,7 +93,6 @@ def load_idees_data(sector, country="EU28"):
 
 
 def iron_and_steel():
-
     # There are two different approaches to produce iron and steel:
     # i.e., integrated steelworks and electric arc.
     # Electric arc approach has higher efficiency and relies more on electricity.
@@ -602,7 +603,6 @@ def chemicals_industry():
 
 
 def nonmetalic_mineral_products():
-
     # This includes cement, ceramic and glass production.
     # This includes process emissions related to the fabrication of clinker.
 
@@ -789,7 +789,6 @@ def nonmetalic_mineral_products():
 
 
 def pulp_paper_printing():
-
     # Pulp, paper and printing can be completely electrified.
     # There are no process emissions associated to this sector.
 
@@ -942,7 +941,6 @@ def pulp_paper_printing():
 
 
 def food_beverages_tobacco():
-
     # Food, beverages and tobaco can be completely electrified.
     # There are no process emissions associated to this sector.
 
@@ -1002,7 +1000,6 @@ def food_beverages_tobacco():
 
 
 def non_ferrous_metals():
-
     sector = "Non Ferrous Metals"
     idees = load_idees_data(sector)
 
@@ -1205,7 +1202,6 @@ def non_ferrous_metals():
 
 
 def transport_equipment():
-
     sector = "Transport Equipment"
     idees = load_idees_data(sector)
 
@@ -1256,7 +1252,6 @@ def transport_equipment():
 
 
 def machinery_equipment():
-
     sector = "Machinery Equipment"
 
     idees = load_idees_data(sector)
@@ -1309,7 +1304,6 @@ def machinery_equipment():
 
 
 def textiles_and_leather():
-
     sector = "Textiles and leather"
 
     idees = load_idees_data(sector)
@@ -1358,7 +1352,6 @@ def textiles_and_leather():
 
 
 def wood_and_wood_products():
-
     sector = "Wood and wood products"
 
     idees = load_idees_data(sector)
@@ -1404,7 +1397,6 @@ def wood_and_wood_products():
 
 
 def other_industrial_sectors():
-
     sector = "Other Industrial Sectors"
 
     idees = load_idees_data(sector)
@@ -1465,9 +1457,10 @@ def other_industrial_sectors():
 
 
 if __name__ == "__main__":
-    if 'snakemake' not in globals():
+    if "snakemake" not in globals():
         from helper import mock_snakemake
-        snakemake = mock_snakemake('build_industry_sector_ratios')
+
+        snakemake = mock_snakemake("build_industry_sector_ratios")
 
     # TODO make config option
     year = 2015
