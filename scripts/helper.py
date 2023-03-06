@@ -55,20 +55,6 @@ def override_component_attrs(directory):
     return attrs
 
 
-# from pypsa-eur/_helpers.py
-def progress_retrieve(url, file):
-    import urllib
-
-    from progressbar import ProgressBar
-
-    pbar = ProgressBar(0, 100)
-
-    def dlProgress(count, blockSize, totalSize):
-        pbar.update(int(count * blockSize * 100 / totalSize))
-
-    urllib.request.urlretrieve(url, file, reporthook=dlProgress)
-
-
 def generate_periodic_profiles(dt_index, nodes, weekly_profile, localize=None):
     """
     Give a 24*7 long list of weekly hourly profiles, generate this for each
