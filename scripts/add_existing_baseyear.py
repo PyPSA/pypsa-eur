@@ -630,9 +630,8 @@ if __name__ == "__main__":
     Nyears = n.snapshot_weightings.generators.sum() / 8760.0
     costs = prepare_costs(
         snakemake.input.costs,
-        snakemake.config["costs"]["discountrate"],
+        snakemake.config["costs"],
         Nyears,
-        snakemake.config["costs"]["lifetime"],
     )
 
     grouping_years_power = snakemake.config["existing_capacities"][

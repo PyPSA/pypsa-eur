@@ -693,9 +693,8 @@ if __name__ == "__main__":
 
     costs_db = prepare_costs(
         snakemake.input.costs,
-        snakemake.config["costs"]["discountrate"],
+        snakemake.config["costs"],
         Nyears,
-        snakemake.config["costs"]["lifetime"],
     )
 
     df = make_summaries(networks_dict)

@@ -724,8 +724,7 @@ def cycling_shift(df, steps=1):
     return df
 
 
-# TODO checkout PyPSA-Eur script
-def prepare_costs(cost_file, discount_rate, Nyears, lifetime):
+def prepare_costs(cost_file, config, Nyears):
     # set all asset costs and other parameters
     costs = pd.read_csv(cost_file, index_col=[0, 1]).sort_index()
 
@@ -736,18 +735,8 @@ def prepare_costs(cost_file, discount_rate, Nyears, lifetime):
     costs = (
         costs.loc[:, "value"].unstack(level=1).groupby("technology").sum(min_count=1)
     )
-    costs = costs.fillna(
-        {
-            "CO2 intensity": 0,
-            "FOM": 0,
-            "VOM": 0,
-            "discount rate": discount_rate,
-            "efficiency": 1,
-            "fuel": 0,
-            "investment": 0,
-            "lifetime": lifetime,
-        }
-    )
+
+    costs = costs.fillna(config["fill_values"])
 
     annuity_factor = (
         lambda v: annuity(v["lifetime"], v["discount rate"]) + v["FOM"] / 100
@@ -3265,9 +3254,8 @@ if __name__ == "__main__":
 
     costs = prepare_costs(
         snakemake.input.costs,
-        snakemake.config["costs"]["discountrate"],
+        snakemake.config["costs"],
         Nyears,
-        snakemake.config["costs"]["lifetime"],
     )
 
     pop_weighted_energy_totals = pd.read_csv(
