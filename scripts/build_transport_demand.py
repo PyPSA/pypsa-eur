@@ -1,13 +1,15 @@
-"""Build transport demand."""
+# -*- coding: utf-8 -*-
+"""
+Build transport demand.
+"""
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 import xarray as xr
 from helper import generate_periodic_profiles
 
 
 def build_nodal_transport_data(fn, pop_layout):
-
     transport_data = pd.read_csv(fn, index_col=0)
 
     nodal_transport_data = transport_data.loc[pop_layout.ct].fillna(0.0)
@@ -24,12 +26,9 @@ def build_nodal_transport_data(fn, pop_layout):
 
 
 def build_transport_demand(traffic_fn, airtemp_fn, nodes, nodal_transport_data):
-
     ## Get overall demand curve for all vehicles
 
-    traffic = pd.read_csv(
-        traffic_fn, skiprows=2, usecols=["count"]
-    ).squeeze("columns")
+    traffic = pd.read_csv(traffic_fn, skiprows=2, usecols=["count"]).squeeze("columns")
 
     transport_shape = generate_periodic_profiles(
         dt_index=snapshots,
@@ -94,9 +93,11 @@ def transport_degree_factor(
     upper_degree_factor=1.6,
 ):
     """
-    Work out how much energy demand in vehicles increases due to heating and cooling.
-    There is a deadband where there is no increase.
-    Degree factors are % increase in demand compared to no heating/cooling fuel consumption.
+    Work out how much energy demand in vehicles increases due to heating and
+    cooling.
+
+    There is a deadband where there is no increase. Degree factors are %
+    increase in demand compared to no heating/cooling fuel consumption.
     Returns per unit increase in demand for each place and time
     """
 
@@ -137,7 +138,6 @@ def bev_availability_profile(fn, snapshots, nodes, options):
 
 
 def bev_dsm_profile(snapshots, nodes, options):
-
     dsm_week = np.zeros((24 * 7,))
 
     dsm_week[(np.arange(0, 7, 1) * 24 + options["bev_dsm_restriction_time"])] = options[
@@ -173,24 +173,23 @@ if __name__ == "__main__":
 
     options = snakemake.config["sector"]
 
-    snapshots = pd.date_range(freq='h', **snakemake.config["snapshots"], tz="UTC")
+    snapshots = pd.date_range(freq="h", **snakemake.config["snapshots"], tz="UTC")
 
     Nyears = 1
 
     nodal_transport_data = build_nodal_transport_data(
-        snakemake.input.transport_data,
-        pop_layout
+        snakemake.input.transport_data, pop_layout
     )
 
     transport_demand = build_transport_demand(
         snakemake.input.traffic_data_KFZ,
         snakemake.input.temp_air_total,
-        nodes, nodal_transport_data
+        nodes,
+        nodal_transport_data,
     )
 
     avail_profile = bev_availability_profile(
-        snakemake.input.traffic_data_Pkw,
-        snapshots, nodes, options
+        snakemake.input.traffic_data_Pkw, snapshots, nodes, options
     )
 
     dsm_profile = bev_dsm_profile(snapshots, nodes, options)

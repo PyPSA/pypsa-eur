@@ -28,13 +28,13 @@ To activate the myopic option select ``foresight: 'myopic'`` in ``config.yaml``.
 The {planning_horizons} wildcard indicates the year in which the network is optimized. For a myopic optimization, this is equivalent to the investment year. To set the investment years which are sequentially simulated for the myopic investment planning, select for example:
 
     planning_horizons:
-    
+
     \- 2020
-    
+
     \- 2030
-    
+
     \- 2040
-    
+
     \- 2050
 
 in ``config.yaml``.
@@ -42,7 +42,7 @@ in ``config.yaml``.
 
 **existing capacities**
 
-Grouping years indicates the bins limits for grouping the existing capacities of different technologies. Note that separate bins are defined for the power and heating plants due to different data sources. 
+Grouping years indicates the bins limits for grouping the existing capacities of different technologies. Note that separate bins are defined for the power and heating plants due to different data sources.
 
 ``grouping_years_power: [1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2020, 2025, 2030]``
 
@@ -66,13 +66,13 @@ If for a technology, node, and grouping bin, the capacity is lower than threshol
 Conventional carriers indicate carriers used in the existing conventional technologies.
 
     conventional_carriers:
-    
+
     \- lignite
-    
+
     \- coal
-    
+
     \- oil
-    
+
     \- uranium
 
 
@@ -80,7 +80,7 @@ Conventional carriers indicate carriers used in the existing conventional techno
 
 Options
 =============
-The total carbon budget for the entire transition path can be indicated in the `sector_opts <https://github.com/PyPSA/pypsa-eur-sec/blob/f13902510010b734c510c38c4cae99356f683058/config.default.yaml#L25>`_ in ``config.yaml``. The carbon budget can be split among the ``planning_horizons`` following an exponential or beta decay. 
+The total carbon budget for the entire transition path can be indicated in the `sector_opts <https://github.com/PyPSA/pypsa-eur-sec/blob/f13902510010b734c510c38c4cae99356f683058/config.default.yaml#L25>`_ in ``config.yaml``. The carbon budget can be split among the ``planning_horizons`` following an exponential or beta decay.
 E.g. ``'cb40ex0'`` splits a carbon budget equal to 40 Gt :math:`_{CO_2}` following an exponential decay whose initial linear growth rate r is zero.
 They can also follow some user-specified path, if defined `here <https://github.com/PyPSA/pypsa-eur-sec/blob/413254e241fb37f55b41caba7264644805ad8e97/config.default.yaml#L56>`_.
 The paper `Speed of technological transformations required in Europe to achieve different climate goals (2022) <https://doi.org/10.1016/j.joule.2022.04.016>`__ defines CO_2 budgets corresponding to global temperature increases (1.5C – 2C) as response to the emissions. Here, global carbon budgets are converted to European budgets assuming equal-per capita distribution which translates into a 6.43% share for Europe. The carbon budgets are in this paper distributed throughout the transition paths assuming an exponential decay. Emissions e(t) in every year t are limited by
@@ -99,7 +99,7 @@ General myopic code structure
 
 The myopic code solves the network for the time steps included in ``planning_horizons`` in a recursive loop, so that:
 
-1. The existing capacities (those installed before the base year are added as fixed capacities with p_nom=value, p_nom_extendable=False). E.g. for baseyear=2020, capacities installed before 2020 are added. In addition, the network comprises additional generator, storage, and link capacities with p_nom_extendable=True. The non-solved network is saved in ``results/run_name/networks/prenetworks-brownfield``. 
+1. The existing capacities (those installed before the base year are added as fixed capacities with p_nom=value, p_nom_extendable=False). E.g. for baseyear=2020, capacities installed before 2020 are added. In addition, the network comprises additional generator, storage, and link capacities with p_nom_extendable=True. The non-solved network is saved in ``results/run_name/networks/prenetworks-brownfield``.
 The base year is the first element in ``planning_horizons``. Step 1 is implemented with the rule add_baseyear for the base year and with the rule add_brownfield for the remaining planning_horizons.
 
 2. The 2020 network is optimized. The solved network is saved in ``results/run_name/networks/postnetworks``

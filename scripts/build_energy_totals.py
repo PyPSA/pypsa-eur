@@ -1,25 +1,31 @@
+# -*- coding: utf-8 -*-
 import logging
+
 logger = logging.getLogger(__name__)
 
-from functools import partial
-from tqdm import tqdm
-from helper import mute_print
-
 import multiprocessing as mp
-import pandas as pd
+from functools import partial
+
 import geopandas as gpd
 import numpy as np
+import pandas as pd
+from helper import mute_print
+from tqdm import tqdm
 
 idx = pd.IndexSlice
 
 
 def cartesian(s1, s2):
-    """Cartesian product of two pd.Series"""
+    """
+    Cartesian product of two pd.Series.
+    """
     return pd.DataFrame(np.outer(s1, s2), index=s1.index, columns=s2.index)
 
 
 def reverse(dictionary):
-    """reverses a keys and values of a dictionary"""
+    """
+    Reverses a keys and values of a dictionary.
+    """
     return {v: k for k, v in dictionary.items()}
 
 
@@ -122,7 +128,7 @@ to_ipcc = {
     "total energy": "1 - Energy",
     "industrial processes": "2 - Industrial Processes and Product Use",
     "agriculture": "3 - Agriculture",
-    "agriculture, forestry and fishing": '1.A.4.c - Agriculture/Forestry/Fishing',
+    "agriculture, forestry and fishing": "1.A.4.c - Agriculture/Forestry/Fishing",
     "LULUCF": "4 - Land Use, Land-Use Change and Forestry",
     "waste management": "5 - Waste management",
     "other": "6 - Other Sector",
@@ -131,12 +137,15 @@ to_ipcc = {
     "total woL": "Total (without LULUCF)",
 }
 
-def build_eurostat(input_eurostat, countries, report_year,  year):
-    """Return multi-index for all countries' energy data in TWh/a."""
+
+def build_eurostat(input_eurostat, countries, report_year, year):
+    """
+    Return multi-index for all countries' energy data in TWh/a.
+    """
 
     filenames = {
         2016: f"/{year}-Energy-Balances-June2016edition.xlsx",
-        2017: f"/{year}-ENERGY-BALANCES-June2017edition.xlsx"
+        2017: f"/{year}-ENERGY-BALANCES-June2017edition.xlsx",
     }
 
     with mute_print():
@@ -149,9 +158,11 @@ def build_eurostat(input_eurostat, countries, report_year,  year):
 
     # sorted_index necessary for slicing
     lookup = eurostat_country_to_alpha2
-    labelled_dfs = {lookup[df.columns[0]]: df
-                    for df in dfs.values()
-                    if lookup[df.columns[0]] in countries}
+    labelled_dfs = {
+        lookup[df.columns[0]]: df
+        for df in dfs.values()
+        if lookup[df.columns[0]] in countries
+    }
     df = pd.concat(labelled_dfs, sort=True).sort_index()
 
     # drop non-numeric and country columns
@@ -167,11 +178,13 @@ def build_eurostat(input_eurostat, countries, report_year,  year):
 
 
 def build_swiss(year):
-    """Return a pd.Series of Swiss energy data in TWh/a"""
+    """
+    Return a pd.Series of Swiss energy data in TWh/a.
+    """
 
     fn = snakemake.input.swiss
 
-    df = pd.read_csv(fn, index_col=[0,1]).loc["CH", str(year)]
+    df = pd.read_csv(fn, index_col=[0, 1]).loc["CH", str(year)]
 
     # convert PJ/a to TWh/a
     df /= 3.6
@@ -180,7 +193,6 @@ def build_swiss(year):
 
 
 def idees_per_country(ct, year):
-
     base_dir = snakemake.input.idees
 
     ct_totals = {}
@@ -220,7 +232,7 @@ def idees_per_country(ct, year):
     assert df.index[46] == "Derived heat"
     ct_totals["derived heat residential"] = df[46]
 
-    assert df.index[50] == 'Thermal uses'
+    assert df.index[50] == "Thermal uses"
     ct_totals["thermal uses residential"] = df[50]
 
     # services
@@ -253,9 +265,8 @@ def idees_per_country(ct, year):
     assert df.index[49] == "Derived heat"
     ct_totals["derived heat services"] = df[49]
 
-    assert df.index[53] == 'Thermal uses'
+    assert df.index[53] == "Thermal uses"
     ct_totals["thermal uses services"] = df[53]
-
 
     # agriculture, forestry and fishing
 
@@ -268,7 +279,7 @@ def idees_per_country(ct, year):
         "Lighting",
         "Ventilation",
         "Specific electricity uses",
-        "Pumping devices (electric)"
+        "Pumping devices (electric)",
     ]
     ct_totals["total agriculture electricity"] = df[rows].sum()
 
@@ -352,7 +363,7 @@ def idees_per_country(ct, year):
 
     assert df.index[8] == "International - Intra-EU"
     assert df.index[9] == "International - Extra-EU"
-    ct_totals["total international aviation passenger"] = df[[8,9]].sum()
+    ct_totals["total international aviation passenger"] = df[[8, 9]].sum()
 
     assert df.index[11] == "Domestic and International - Intra-EU"
     ct_totals["total domestic aviation freight"] = df[11]
@@ -360,11 +371,15 @@ def idees_per_country(ct, year):
     assert df.index[12] == "International - Extra-EU"
     ct_totals["total international aviation freight"] = df[12]
 
-    ct_totals["total domestic aviation"] = ct_totals["total domestic aviation freight"] \
-                                         + ct_totals["total domestic aviation passenger"]
+    ct_totals["total domestic aviation"] = (
+        ct_totals["total domestic aviation freight"]
+        + ct_totals["total domestic aviation passenger"]
+    )
 
-    ct_totals["total international aviation"] = ct_totals["total international aviation freight"] \
-                                              + ct_totals["total international aviation passenger"]
+    ct_totals["total international aviation"] = (
+        ct_totals["total international aviation freight"]
+        + ct_totals["total international aviation passenger"]
+    )
 
     df = pd.read_excel(fn_transport, "TrNavi_ene", index_col=0)[year]
 
@@ -380,16 +395,18 @@ def idees_per_country(ct, year):
 
 
 def build_idees(countries, year):
-
     nprocesses = snakemake.threads
 
     func = partial(idees_per_country, year=year)
-    tqdm_kwargs = dict(ascii=False, unit=' country', total=len(countries),
-                       desc='Build from IDEES database')
+    tqdm_kwargs = dict(
+        ascii=False,
+        unit=" country",
+        total=len(countries),
+        desc="Build from IDEES database",
+    )
     with mute_print():
         with mp.Pool(processes=nprocesses) as pool:
             totals_list = list(tqdm(pool.imap(func, countries), **tqdm_kwargs))
-
 
     totals = pd.concat(totals_list, axis=1)
 
@@ -401,19 +418,17 @@ def build_idees(countries, year):
     totals.loc["passenger car efficiency"] *= 10
 
     # district heating share
-    district_heat = totals.loc[["derived heat residential",
-                                "derived heat services"]].sum()
-    total_heat = totals.loc[["thermal uses residential",
-                             "thermal uses services"]].sum()
+    district_heat = totals.loc[
+        ["derived heat residential", "derived heat services"]
+    ].sum()
+    total_heat = totals.loc[["thermal uses residential", "thermal uses services"]].sum()
     totals.loc["district heat share"] = district_heat.div(total_heat)
 
     return totals.T
 
 
 def build_energy_totals(countries, eurostat, swiss, idees):
-
-    eurostat_fuels = {"electricity": "Electricity",
-                      "total": "Total all products"}
+    eurostat_fuels = {"electricity": "Electricity", "total": "Total all products"}
 
     to_drop = ["passenger cars", "passenger car efficiency"]
     df = idees.reindex(countries).drop(to_drop, axis=1)
@@ -439,36 +454,47 @@ def build_energy_totals(countries, eurostat, swiss, idees):
     uses = ["space", "cooking", "water"]
 
     for sector in ["residential", "services", "road", "rail"]:
-
         eurostat_sector = sector.capitalize()
 
         # fuel use
 
         for fuel in ["electricity", "total"]:
             slicer = idx[to_fill, :, :, eurostat_sector]
-            fill_values = eurostat.loc[slicer, eurostat_fuels[fuel]].groupby(level=0).sum()
+            fill_values = (
+                eurostat.loc[slicer, eurostat_fuels[fuel]].groupby(level=0).sum()
+            )
             df.loc[to_fill, f"{fuel} {sector}"] = fill_values
 
     for sector in ["residential", "services"]:
-
         # electric use
 
         for use in uses:
             fuel_use = df[f"electricity {sector} {use}"]
             fuel = df[f"electricity {sector}"]
             avg = fuel_use.div(fuel).mean()
-            logger.debug(f"{sector}: average fraction of electricity for {use} is {avg:.3f}")
-            df.loc[to_fill, f"electricity {sector} {use}"] = avg * df.loc[to_fill, f"electricity {sector}"]
+            logger.debug(
+                f"{sector}: average fraction of electricity for {use} is {avg:.3f}"
+            )
+            df.loc[to_fill, f"electricity {sector} {use}"] = (
+                avg * df.loc[to_fill, f"electricity {sector}"]
+            )
 
         # non-electric use
 
         for use in uses:
-            nonelectric_use = df[f"total {sector} {use}"] - df[f"electricity {sector} {use}"]
+            nonelectric_use = (
+                df[f"total {sector} {use}"] - df[f"electricity {sector} {use}"]
+            )
             nonelectric = df[f"total {sector}"] - df[f"electricity {sector}"]
             avg = nonelectric_use.div(nonelectric).mean()
-            logger.debug(f"{sector}: average fraction of non-electric for {use} is {avg:.3f}")
+            logger.debug(
+                f"{sector}: average fraction of non-electric for {use} is {avg:.3f}"
+            )
             electric_use = df.loc[to_fill, f"electricity {sector} {use}"]
-            nonelectric = df.loc[to_fill, f"total {sector}"] - df.loc[to_fill, f"electricity {sector}"]
+            nonelectric = (
+                df.loc[to_fill, f"total {sector}"]
+                - df.loc[to_fill, f"electricity {sector}"]
+            )
             df.loc[to_fill, f"total {sector} {use}"] = electric_use + avg * nonelectric
 
     # Fix Norway space and water heating fractions
@@ -480,17 +506,25 @@ def build_energy_totals(countries, eurostat, swiss, idees):
     no_norway = df.drop("NO")
 
     for sector in ["residential", "services"]:
-
         # assume non-electric is heating
-        nonelectric = df.loc["NO", f"total {sector}"] - df.loc["NO", f"electricity {sector}"]
+        nonelectric = (
+            df.loc["NO", f"total {sector}"] - df.loc["NO", f"electricity {sector}"]
+        )
         total_heating = nonelectric / (1 - elec_fraction)
 
         for use in uses:
-            nonelectric_use = no_norway[f"total {sector} {use}"] - no_norway[f"electricity {sector} {use}"]
-            nonelectric = no_norway[f"total {sector}"] - no_norway[f"electricity {sector}"]
+            nonelectric_use = (
+                no_norway[f"total {sector} {use}"]
+                - no_norway[f"electricity {sector} {use}"]
+            )
+            nonelectric = (
+                no_norway[f"total {sector}"] - no_norway[f"electricity {sector}"]
+            )
             fraction = nonelectric_use.div(nonelectric).mean()
             df.loc["NO", f"total {sector} {use}"] = total_heating * fraction
-            df.loc["NO", f"electricity {sector} {use}"] = total_heating * fraction * elec_fraction
+            df.loc["NO", f"electricity {sector} {use}"] = (
+                total_heating * fraction * elec_fraction
+            )
 
     # Missing aviation
 
@@ -517,10 +551,7 @@ def build_energy_totals(countries, eurostat, swiss, idees):
             f"{fuel} light duty road freight",
         ]
         if fuel == "total":
-            selection.extend([
-                f"{fuel} two-wheel",
-                f"{fuel} heavy duty road freight"
-            ])
+            selection.extend([f"{fuel} two-wheel", f"{fuel} heavy duty road freight"])
         road = df[selection].sum()
         road_fraction = road / road.sum()
         fill_values = cartesian(df.loc[missing, f"{fuel} road"], road_fraction)
@@ -544,33 +575,40 @@ def build_energy_totals(countries, eurostat, swiss, idees):
         ]
         aviation = df[selection].sum()
         aviation_fraction = aviation / aviation.sum()
-        fill_values = cartesian(df.loc[missing, f"total {destination} aviation"], aviation_fraction)
+        fill_values = cartesian(
+            df.loc[missing, f"total {destination} aviation"], aviation_fraction
+        )
         df.loc[missing, aviation_fraction.index] = fill_values
 
     for purpose in ["passenger", "freight"]:
-        attrs = [f"total domestic aviation {purpose}", f"total international aviation {purpose}"]
-        df.loc[missing, f"total aviation {purpose}"] = df.loc[missing, attrs].sum(axis=1)
+        attrs = [
+            f"total domestic aviation {purpose}",
+            f"total international aviation {purpose}",
+        ]
+        df.loc[missing, f"total aviation {purpose}"] = df.loc[missing, attrs].sum(
+            axis=1
+        )
 
     if "BA" in df.index:
         # fill missing data for BA (services and road energy data)
         # proportional to RS with ratio of total residential demand
         missing = df.loc["BA"] == 0.0
         ratio = df.at["BA", "total residential"] / df.at["RS", "total residential"]
-        df.loc['BA', missing] = ratio * df.loc["RS", missing]
+        df.loc["BA", missing] = ratio * df.loc["RS", missing]
 
     # Missing district heating share
-    dh_share = pd.read_csv(snakemake.input.district_heat_share,
-                           index_col=0, usecols=[0, 1])
+    dh_share = pd.read_csv(
+        snakemake.input.district_heat_share, index_col=0, usecols=[0, 1]
+    )
     # make conservative assumption and take minimum from both data sets
-    df["district heat share"] = (pd.concat([df["district heat share"],
-                                            dh_share.reindex(index=df.index)/100],
-                                           axis=1).min(axis=1))
+    df["district heat share"] = pd.concat(
+        [df["district heat share"], dh_share.reindex(index=df.index) / 100], axis=1
+    ).min(axis=1)
 
     return df
 
 
 def build_eea_co2(input_co2, year=1990, emissions_scope="CO2"):
-
     # https://www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-16
     # downloaded 201228 (modified by EEA last on 201221)
     df = pd.read_csv(input_co2, encoding="latin-1", low_memory=False)
@@ -589,7 +627,7 @@ def build_eea_co2(input_co2, year=1990, emissions_scope="CO2"):
         df.loc[slicer, "emissions"]
         .unstack("Sector_name")
         .rename(columns=reverse(to_ipcc))
-        .droplevel([1,2])
+        .droplevel([1, 2])
     )
 
     emissions.rename(index={"EUA": "EU28", "UK": "GB"}, inplace=True)
@@ -604,13 +642,20 @@ def build_eea_co2(input_co2, year=1990, emissions_scope="CO2"):
         "international aviation",
         "domestic navigation",
         "international navigation",
-        "agriculture, forestry and fishing"
+        "agriculture, forestry and fishing",
     ]
-    emissions["industrial non-elec"] = emissions["total energy"] - emissions[to_subtract].sum(axis=1)
+    emissions["industrial non-elec"] = emissions["total energy"] - emissions[
+        to_subtract
+    ].sum(axis=1)
 
     emissions["agriculture"] += emissions["agriculture, forestry and fishing"]
 
-    to_drop = ["total energy", "total wL", "total woL", "agriculture, forestry and fishing"]
+    to_drop = [
+        "total energy",
+        "total wL",
+        "total woL",
+        "agriculture, forestry and fishing",
+    ]
     emissions.drop(columns=to_drop, inplace=True)
 
     # convert from Gg to Mt
@@ -618,7 +663,6 @@ def build_eea_co2(input_co2, year=1990, emissions_scope="CO2"):
 
 
 def build_eurostat_co2(input_eurostat, countries, report_year, year=1990):
-
     eurostat = build_eurostat(input_eurostat, countries, report_year, year)
 
     specific_emissions = pd.Series(index=eurostat.columns, dtype=float)
@@ -637,13 +681,16 @@ def build_eurostat_co2(input_eurostat, countries, report_year, year=1990):
 
 
 def build_co2_totals(countries, eea_co2, eurostat_co2):
-
     co2 = eea_co2.reindex(countries)
 
     for ct in countries.intersection(["BA", "RS", "AL", "ME", "MK"]):
-
         mappings = {
-            "electricity": (ct, "+", "Conventional Thermal Power Stations", "of which From Coal"),
+            "electricity": (
+                ct,
+                "+",
+                "Conventional Thermal Power Stations",
+                "of which From Coal",
+            ),
             "residential non-elec": (ct, "+", "+", "Residential"),
             "services non-elec": (ct, "+", "+", "Services"),
             "road non-elec": (ct, "+", "+", "Road"),
@@ -655,7 +702,8 @@ def build_co2_totals(countries, eea_co2, eurostat_co2):
             # does not include industrial process emissions or fuel processing/refining
             "industrial non-elec": (ct, "+", "Industry"),
             # does not include non-energy emissions
-            "agriculture": (eurostat_co2.index.get_level_values(0) == ct) & eurostat_co2.index.isin(["Agriculture / Forestry", "Fishing"], level=3),
+            "agriculture": (eurostat_co2.index.get_level_values(0) == ct)
+            & eurostat_co2.index.isin(["Agriculture / Forestry", "Fishing"], level=3),
         }
 
         for i, mi in mappings.items():
@@ -665,7 +713,6 @@ def build_co2_totals(countries, eea_co2, eurostat_co2):
 
 
 def build_transport_data(countries, population, idees):
-
     transport_data = pd.DataFrame(index=countries)
 
     # collect number of cars
@@ -676,7 +723,9 @@ def build_transport_data(countries, population, idees):
     transport_data.at["CH", "number cars"] = 4.136e6
 
     missing = transport_data.index[transport_data["number cars"].isna()]
-    logger.info(f"Missing data on cars from:\n{list(missing)}\nFilling gaps with averaged data.")
+    logger.info(
+        f"Missing data on cars from:\n{list(missing)}\nFilling gaps with averaged data."
+    )
 
     cars_pp = transport_data["number cars"] / population
     transport_data.loc[missing, "number cars"] = cars_pp.mean() * population
@@ -686,7 +735,9 @@ def build_transport_data(countries, population, idees):
     transport_data["average fuel efficiency"] = idees["passenger car efficiency"]
 
     missing = transport_data.index[transport_data["average fuel efficiency"].isna()]
-    logger.info(f"Missing data on fuel efficiency from:\n{list(missing)}\nFilling gapswith averaged data.")
+    logger.info(
+        f"Missing data on fuel efficiency from:\n{list(missing)}\nFilling gapswith averaged data."
+    )
 
     fill_values = transport_data["average fuel efficiency"].mean()
     transport_data.loc[missing, "average fuel efficiency"] = fill_values
@@ -695,11 +746,12 @@ def build_transport_data(countries, population, idees):
 
 
 if __name__ == "__main__":
-    if 'snakemake' not in globals():
+    if "snakemake" not in globals():
         from helper import mock_snakemake
-        snakemake = mock_snakemake('build_energy_totals')
 
-    logging.basicConfig(level=snakemake.config['logging_level'])
+        snakemake = mock_snakemake("build_energy_totals")
+
+    logging.basicConfig(level=snakemake.config["logging_level"])
 
     config = snakemake.config["energy"]
 
@@ -722,7 +774,9 @@ if __name__ == "__main__":
     base_year_emissions = config["base_emissions_year"]
     emissions_scope = snakemake.config["energy"]["emissions"]
     eea_co2 = build_eea_co2(snakemake.input.co2, base_year_emissions, emissions_scope)
-    eurostat_co2 = build_eurostat_co2(input_eurostat, countries, report_year, base_year_emissions)
+    eurostat_co2 = build_eurostat_co2(
+        input_eurostat, countries, report_year, base_year_emissions
+    )
 
     co2 = build_co2_totals(countries, eea_co2, eurostat_co2)
     co2.to_csv(snakemake.output.co2_name)

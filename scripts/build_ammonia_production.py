@@ -1,4 +1,7 @@
-"""Build ammonia production."""
+# -*- coding: utf-8 -*-
+"""
+Build ammonia production.
+"""
 
 import pandas as pd
 
@@ -27,17 +30,20 @@ country_to_alpha2 = {
     "United Kingdom": "GB",
 }
 
-if __name__ == '__main__':
-    if 'snakemake' not in globals():
+if __name__ == "__main__":
+    if "snakemake" not in globals():
         from helper import mock_snakemake
-        snakemake = mock_snakemake('build_ammonia_production')
 
-    ammonia = pd.read_excel(snakemake.input.usgs,
-                            sheet_name="T12",
-                            skiprows=5,
-                            header=0,
-                            index_col=0,
-                            skipfooter=19)
+        snakemake = mock_snakemake("build_ammonia_production")
+
+    ammonia = pd.read_excel(
+        snakemake.input.usgs,
+        sheet_name="T12",
+        skiprows=5,
+        header=0,
+        index_col=0,
+        skipfooter=19,
+    )
 
     ammonia.rename(country_to_alpha2, inplace=True)
 

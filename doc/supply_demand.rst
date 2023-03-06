@@ -40,7 +40,7 @@ Heat demand
 ===========
 
 Building heating in residential and services sectors is resolved regionally, both for individual buildings and district heating systems, which include different supply options (see :ref:`heat-supply`.)
-Annual heat demands per country are retrieved from `JRC-IDEES  <https://op.europa.eu/en/publication-detail/-/publication/989282db-ad65-11e7-837e-01aa75ed71a1/language-en>`_ and split into space and water heating. For space heating, the annual demands are converted to daily values based on the population-weighted Heating Degree Day (HDD) using the `atlite tool <https://github.com/PyPSA/atlite>`_, where space heat demand is proportional to the difference between the daily average ambient temperature (read from `ERA5 <https://doi.org/10.1002/qj.3803>`_) and a threshold temperature above which space heat demand is zero. A threshold temperature of 15 °C is assumed by default. The daily space heat demand is distributed to the hours of the day following heat demand profiles from `BDEW <https://github.com/oemof/demandlib>`_. These differ for weekdays and weekends/holidays and between residential and services demand.  
+Annual heat demands per country are retrieved from `JRC-IDEES  <https://op.europa.eu/en/publication-detail/-/publication/989282db-ad65-11e7-837e-01aa75ed71a1/language-en>`_ and split into space and water heating. For space heating, the annual demands are converted to daily values based on the population-weighted Heating Degree Day (HDD) using the `atlite tool <https://github.com/PyPSA/atlite>`_, where space heat demand is proportional to the difference between the daily average ambient temperature (read from `ERA5 <https://doi.org/10.1002/qj.3803>`_) and a threshold temperature above which space heat demand is zero. A threshold temperature of 15 °C is assumed by default. The daily space heat demand is distributed to the hours of the day following heat demand profiles from `BDEW <https://github.com/oemof/demandlib>`_. These differ for weekdays and weekends/holidays and between residential and services demand.
 
 *Space heating*
 
@@ -62,7 +62,7 @@ Hot water demand is assumed to be constant throughout the year.
 
 *Urban and rural heating*
 
-For every country, heat demand is split between low and high population density areas. These country-level totals are then distributed to each region in proportion to their rural and urban populations respectively. Urban areas with dense heat demand can be supplied with large-scale district heating systems. The percentage of urban heat demand that can be supplied by district heating networks as well as lump-sum losses in district heating systems is exogenously determined in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L153>`_. 
+For every country, heat demand is split between low and high population density areas. These country-level totals are then distributed to each region in proportion to their rural and urban populations respectively. Urban areas with dense heat demand can be supplied with large-scale district heating systems. The percentage of urban heat demand that can be supplied by district heating networks as well as lump-sum losses in district heating systems is exogenously determined in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L153>`_.
 
 *Cooling demand*
 
@@ -74,21 +74,21 @@ As below figure shows, the current total heat demand in Europe is similar to the
 
 .. image:: ../graphics/Heat_and_el_demand_timeseries.png
 
-In practice, in PyPSA-Eur-Sec, there are heat demand buses to which the corresponding heat demands are added. 
+In practice, in PyPSA-Eur-Sec, there are heat demand buses to which the corresponding heat demands are added.
 
 
 1)	Urban central heat: large-scale district heating networks in urban areas with dense heat population. Residential and services demand in these areas are added as demands to this bus
 2)	Residential urban decentral heat: heating for residential buildings in urban areas not using district heating
 3)	Services urban decentral heat: heating for services buildings in urban areas not using district heating
 4)	Residential rural heat: heating for residential buildings in rural areas with low population density.
-5)	Services rural heat: heating for residential services buildings in rural areas with low population density. Heat demand from agriculture  sector is also included here. 
+5)	Services rural heat: heating for residential services buildings in rural areas with low population density. Heat demand from agriculture  sector is also included here.
 
 .. _heat-supply:
 
 Heat supply
 =======================
 
-Different supply options are available depending on whether demand is met centrally through district heating systems, or decentrally through appliances in individual buildings. 
+Different supply options are available depending on whether demand is met centrally through district heating systems, or decentrally through appliances in individual buildings.
 
 **Urban central heat**
 
@@ -106,7 +106,7 @@ Below are more detailed explanations for each heating supply component, all of w
 **Large-scale CHP**
 
 Large Combined Heat and Power plants are included in the model if it is specified in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L235>`_.
- 
+
 CHPs are based on back pressure plants operating with a fixed ratio of electricity to heat output. The efficiencies of each are given on the back pressure line, where the back pressure coefficient cb is the electricity output divided by the heat output. (For a more complete explanation of the operation of CHPs refer to the study by Dahl et al. : `Cost sensitivity of optimal sector-coupled district heating production systems <https://arxiv.org/pdf/1804.07557.pdf>`_.
 
 PyPSA-Eur-Sec includes CHP plants fueled by methane and solid biomass from waste and residues. Hydrogen fuel cells also produce both electricity and heat.
@@ -129,37 +129,37 @@ The coefficient of performance (COP) of air- and ground-sourced heat pumps depen
 For the sink water temperature Tsink we assume 55 °C [`Config <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L207>`_ file]. For the time- and location-dependent source temperatures Tsource, we rely on the `ERA5 <https://doi.org/10.1002/qj.3803>`_ reanalysis weather data. The temperature differences are converted into COP time series using results from a regression analysis performed in the study by `Stafell et al. <https://pubs.rsc.org/en/content/articlelanding/2012/EE/c2ee22653g>`_. For air-sourced heat pumps (ASHP), we use the function:
 
 .. math::
-   COP (\Delta T) = 6.81 + 0.121\Delta T + 0.000630\Delta T^2 
+   COP (\Delta T) = 6.81 + 0.121\Delta T + 0.000630\Delta T^2
 
 for ground-sourced heat pumps (GSHP), we use the function:
 
 .. math::
-   COP(\Delta T) = 8.77 + 0.150\Delta T + 0.000734\Delta T^2     
+   COP(\Delta T) = 8.77 + 0.150\Delta T + 0.000734\Delta T^2
 
 **Resistive heaters**
 
 Can be activated in Config from the `boilers <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L232>`_ option.
-Resistive heaters produce heat with a fixed conversion efficiency (refer to `Technology-data repository <https://github.com/PyPSA/technology-data>`_ ). 
+Resistive heaters produce heat with a fixed conversion efficiency (refer to `Technology-data repository <https://github.com/PyPSA/technology-data>`_ ).
 
 **Gas, oil, and biomass boilers**
 
 Can be activated in Config from the `boilers <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L232>`_ , `oil boilers <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L233>`_ , and `biomass boiler <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L234>`_ option.
 Similar to resistive heaters, boilers have a fixed efficiency and produce heat using gas, oil or biomass.
 
-**Solar thermal collectors** 
+**Solar thermal collectors**
 
 Can be activated in the config file from the `solar_thermal <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L237>`_ option.
 Solar thermal profiles are built based on weather data and also have the `options <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L134>`_ for setting the sky model and the orientation of the panel in the config file, which are then used by the atlite tool to calculate the solar resource time series.
 
 **Waste heat from Fuel Cells, Methanation and Fischer-Tropsch plants**
 
-Waste heat from `fuel cells <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L256>`_ in addition to processes like `Fischer-Tropsch <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L255>`_, methanation, and Direct Air Capture (DAC) is dumped into  district heating networks. 
+Waste heat from `fuel cells <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L256>`_ in addition to processes like `Fischer-Tropsch <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L255>`_, methanation, and Direct Air Capture (DAC) is dumped into  district heating networks.
 
 **Existing heating capacities and decommissioning**
 
 For the myopic transition paths, capacities already existing for technologies supplying heat are retrieved from `“Mapping and analyses of the current and future (2020 - 2030)” <https://ec.europa.eu/energy/en/studies/mapping-and-analyses-current-and-future-2020-2030-heatingcooling-fuel-deployment>`_ . For the sake of simplicity, coal, oil and gas boiler capacities are assimilated to gas boilers. Besides that, existing capacities for heat resistors, air-sourced and ground-sourced heat pumps are included in the model. For heating capacities, 25% of existing capacities in 2015 are assumed to be decommissioned in every 5-year time step after 2020.
 
-**Thermal Energy Storage** 
+**Thermal Energy Storage**
 
 Activated in Config from the `tes <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L228>`_ option.
 
@@ -195,7 +195,7 @@ Further information are given in the study by Zeyen et al. : `Mitigating heat de
 Hydrogen demand
 =============================
 
-Hydrogen is consumed in the industry sector (see :ref:`Industry demand`) to produce ammonia (see :ref:`Chemicals Industry`) and direct reduced iron (DRI) (see :ref:`Iron and Steel`). Hydrogen is also consumed to produce synthetic methane (see :ref:`Methane supply`) and liquid hydrocarbons (see :ref:`Oil-based products supply`) which have multiple uses in industry and other sectors. 
+Hydrogen is consumed in the industry sector (see :ref:`Industry demand`) to produce ammonia (see :ref:`Chemicals Industry`) and direct reduced iron (DRI) (see :ref:`Iron and Steel`). Hydrogen is also consumed to produce synthetic methane (see :ref:`Methane supply`) and liquid hydrocarbons (see :ref:`Oil-based products supply`) which have multiple uses in industry and other sectors.
 Hydrogen is also used for transport applications (see :ref:`Transportation`), where it is exogenously fixed. It is used in `heavy-duty land transport <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L181>`_ and as liquified hydrogen in the shipping sector (see :ref:`Shipping`). Furthermore, stationary fuel cells may re-electrify hydrogen (with waste heat as a byproduct) to balance renewable fluctuations (see :ref:`Electricity supply and demand`). The waste heat from the stationary fuel cells can be used in `district-heating systems <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L256>`_.
 
 .. _Hydrogen supply:
@@ -205,7 +205,7 @@ Hydrogen supply
 
 Today, most of the :math:`H_2` consumed globally is produced from natural gas by steam methane reforming (SMR)
 
-.. math:: 
+.. math::
 
    CH_4 + H_2O \xrightarrow{} CO + 3H_2
 
@@ -216,12 +216,12 @@ combined with a water-gas shift reaction
    CO + H_2O \xrightarrow{} CO_2 + H_2
 
 
-SMR is included `here <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L245>`_. 
+SMR is included `here <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L245>`_.
 PyPSA-Eur-Sec allows this route of :math:`H_2` production with and without [carbon capture (CC)] (see :ref:`Carbon dioxide capture, usage and sequestration (CCU/S)`). These routes are often referred to as blue and grey hydrogen. Here, methane input can be both of fossil or synthetic origin.
 
 Green hydrogen can be produced by electrolysis to split water into hydrogen and oxygen
 
-.. math:: 
+.. math::
 
    2H_2O \xrightarrow{} 2H_2 + O_2
 
@@ -239,32 +239,32 @@ Hydrogen can be stored in overground steel tanks or `underground salt caverns <h
 
 .. _Methane demand:
 
-Methane demand  
+Methane demand
 ====================================
-                  
+
 Methane is used in individual and large-scale gas boilers, in CHP plants with and without carbon capture, in OCGT and CCGT power plants, and in some industry subsectors for the provision of high temperature heat (see :ref:`Industry demand`). Methane is not used in the transport sector because of engine slippage.
 
 .. _Methane supply:
 
-Methane supply                          
+Methane supply
 ===================================
 
-In addition to methane from fossil origins, the model also considers biogenic and synthetic sources. `The gas network can either be modelled, or it can be assumed that gas transport is not limited <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L261>`_. If gas infrastructure is regionally resolved, fossil gas can enter the system only at existing and planned LNG terminals, pipeline entry-points, and intra- European gas extraction sites, which are retrieved from the SciGRID Gas IGGIELGN dataset and the GEM Wiki. 
-Biogas can be upgraded to methane. 
-Synthetic methane can be produced by processing hydrogen and captures :math:`CO_2` in the Sabatier reaction 
+In addition to methane from fossil origins, the model also considers biogenic and synthetic sources. `The gas network can either be modelled, or it can be assumed that gas transport is not limited <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L261>`_. If gas infrastructure is regionally resolved, fossil gas can enter the system only at existing and planned LNG terminals, pipeline entry-points, and intra- European gas extraction sites, which are retrieved from the SciGRID Gas IGGIELGN dataset and the GEM Wiki.
+Biogas can be upgraded to methane.
+Synthetic methane can be produced by processing hydrogen and captures :math:`CO_2` in the Sabatier reaction
 
-.. math::              
+.. math::
    CO_2 + 4H_2 \xrightarrow{} CH_4 + 2H_2O
 
 
 Direct power-to-methane conversion with efficient heat integration developed in the HELMETH project is also an option. The share of synthetic, biogenic and fossil methane is an optimisation result depending on the techno-economic assumptions.
-                
+
 *Methane transport*
-            
+
 The existing European gas transmission network is represented based on the SciGRID Gas IGGIELGN dataset. This dataset is based on compiled and merged data from the ENTSOG maps  and other publicly available data sources. It includes data on the capacity, diameter, pressure, length, and directionality of pipelines. Missing capacity data is conservatively inferred from the pipe diameter following conversion factors derived from an EHB report. The gas network is clustered to the selected number of model regions. Gas pipelines can be endogenously expanded or repurposed for hydrogen transport. Gas flows are represented by a lossless transport model. Methane is assumed to be transmitted without cost or capacity constraints because future demand is predicted to be low compared to available transport capacities.
 
-The following figure shows the unclustered European gas transmission network based on the SciGRID Gas IGGIELGN dataset. Pipelines are color-coded by estimated capacities. Markers indicate entry-points, sites of fossil resource extraction, and LNG terminals.            
-    
+The following figure shows the unclustered European gas transmission network based on the SciGRID Gas IGGIELGN dataset. Pipelines are color-coded by estimated capacities. Markers indicate entry-points, sites of fossil resource extraction, and LNG terminals.
+
 .. image:: ../graphics/gas_pipeline_figure.png
 
 .. _Biomass supply:
@@ -319,14 +319,14 @@ The model can only use biogas by first upgrading it to natural gas quality [see 
 
 Oil-based products demand
 ========================
-Naphtha is used as a feedstock in the chemicals industry (see :ref:`Chemicals Industry`). Furthermore, kerosene is used as transport fuel in the aviation sector (see :ref:`Aviation`). Non-electrified agriculture machinery also consumes gasoline. 
-Land transport [(see :ref:`Land transport`)  that is not electrified or converted into using :math:`H_2`-fuel cells also consumes oil-based products. While there is regional distribution of demand, the carrier is copperplated in the model, which means that transport costs and constraints are neglected. 
+Naphtha is used as a feedstock in the chemicals industry (see :ref:`Chemicals Industry`). Furthermore, kerosene is used as transport fuel in the aviation sector (see :ref:`Aviation`). Non-electrified agriculture machinery also consumes gasoline.
+Land transport [(see :ref:`Land transport`)  that is not electrified or converted into using :math:`H_2`-fuel cells also consumes oil-based products. While there is regional distribution of demand, the carrier is copperplated in the model, which means that transport costs and constraints are neglected.
 
 .. _Oil-based products supply:
 
-Oil-based products supply 
-======================== 							
-Oil-based products can be either of fossil origin or synthetically produced by combining :math:`H_2` (see :ref:`Hydrogen supply`) and captured :math:`CO_2` (see :ref:`Carbon dioxide capture, usage and sequestration (CCU/S)`) in Fischer-Tropsch plants		
+Oil-based products supply
+========================
+Oil-based products can be either of fossil origin or synthetically produced by combining :math:`H_2` (see :ref:`Hydrogen supply`) and captured :math:`CO_2` (see :ref:`Carbon dioxide capture, usage and sequestration (CCU/S)`) in Fischer-Tropsch plants
 
 .. math::
    𝑛CO+(2𝑛+1)H_2 → C_{n}H_{2n + 2}  +𝑛H_2O
@@ -336,8 +336,8 @@ with costs as included from the `technology-data repository <https://github.com/
 
 
 *Oil-based transport*
-	
-Liquid hydrocarbons are assumed to be transported freely among the model region since future demand is predicted to be low, transport costs for liquids are low and no bottlenecks are expected. 
+
+Liquid hydrocarbons are assumed to be transported freely among the model region since future demand is predicted to be low, transport costs for liquids are low and no bottlenecks are expected.
 
 .. _Industry demand:
 
@@ -357,22 +357,22 @@ Greenhouse gas emissions associated with industry can be classified into energy-
 
 The overarching modelling procedure can be described as follows. First, the energy demands and process emissions for every unit of material output are estimated based on data from the `JRC-IDEES database <https://data.europa.eu/doi/10.2760/182725>`_ and the fuel and process switching described in the subsequent sections. Second, the 2050 energy demands and process emissions are calculated using the per-unit-of-material ratios based on the industry transformations and the `country-level material production in 2015 <https://data.europa.eu/doi/10.2760/182725>`_, assuming constant material demand.
 
-Missing or too coarsely aggregated data in the JRC-IDEES database is supplemented with additional datasets: `Eurostat energy balances <https://ec.europa.eu/eurostat/web/energy/data/energy-balances>`_, `United States <https://www.usgs.gov/media/files/%20nitrogen-2017-xlsx>`_,  `Geological Survey <https://www.usgs.gov/media/files/%20nitrogen-2017-xlsx>`_ for ammonia production, `DECHEMA <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry.pdf>`_ for methanol and chlorine, and `national statistics from Switzerland <https://www.bfe.admin.ch/bfe/de/home/versorgung/statistik-und-geodaten/energiestatistiken.html>`_. 
+Missing or too coarsely aggregated data in the JRC-IDEES database is supplemented with additional datasets: `Eurostat energy balances <https://ec.europa.eu/eurostat/web/energy/data/energy-balances>`_, `United States <https://www.usgs.gov/media/files/%20nitrogen-2017-xlsx>`_,  `Geological Survey <https://www.usgs.gov/media/files/%20nitrogen-2017-xlsx>`_ for ammonia production, `DECHEMA <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry.pdf>`_ for methanol and chlorine, and `national statistics from Switzerland <https://www.bfe.admin.ch/bfe/de/home/versorgung/statistik-und-geodaten/energiestatistiken.html>`_.
 
 
-Where there are fossil and electrified alternatives for the same process (e.g. in glass manufacture or drying), we assume that the process is completely electrified. Current electricity demands (lighting, air compressors, motor drives, fans, pumps) will remain electric. Processes that require temperatures below 500 °C are supplied with solid biomass, since we assume that residues and wastes are not suitable for high-temperature applications. We see solid biomass use primarily in the pulp and paper industry, where it is already widespread, and in food, beverages and tobacco, where it replaces natural gas. Industries which require high temperatures (above 500 °C), such as metals, chemicals and non-metallic minerals are either electrified where suitable processes already exist, or the heat is provided with synthetic methane. 
+Where there are fossil and electrified alternatives for the same process (e.g. in glass manufacture or drying), we assume that the process is completely electrified. Current electricity demands (lighting, air compressors, motor drives, fans, pumps) will remain electric. Processes that require temperatures below 500 °C are supplied with solid biomass, since we assume that residues and wastes are not suitable for high-temperature applications. We see solid biomass use primarily in the pulp and paper industry, where it is already widespread, and in food, beverages and tobacco, where it replaces natural gas. Industries which require high temperatures (above 500 °C), such as metals, chemicals and non-metallic minerals are either electrified where suitable processes already exist, or the heat is provided with synthetic methane.
 
-Hydrogen for high-temperature process heat is not part of the model currently. 
+Hydrogen for high-temperature process heat is not part of the model currently.
 
-Where process heat is required, our approach depends on the necessary temperature. For example, due to the high share of high-temperature process heat demand  (see `Naegler et al. <https://doi.org/10.1002/er.3436>`_ and `Rehfeldt el al. <https://link.springer.com/article/10.1007/s12053-017-9571-y>`_), we disregard geothermal and solar thermal energy as sources for process heat since they cannot attain high-temperature heat. 
+Where process heat is required, our approach depends on the necessary temperature. For example, due to the high share of high-temperature process heat demand  (see `Naegler et al. <https://doi.org/10.1002/er.3436>`_ and `Rehfeldt el al. <https://link.springer.com/article/10.1007/s12053-017-9571-y>`_), we disregard geothermal and solar thermal energy as sources for process heat since they cannot attain high-temperature heat.
 
-The following figure shows the final consumption of energy and non-energy feedstocks in industry today in comparison to the scenario in 2050 assumed in `Neumann et al <https://arxiv.org/abs/2207.05816>`_. 
+The following figure shows the final consumption of energy and non-energy feedstocks in industry today in comparison to the scenario in 2050 assumed in `Neumann et al <https://arxiv.org/abs/2207.05816>`_.
 
 .. image:: ../graphics/fec_industry_today_tomorrow.png
 
 
 The following figure shows the process emissions in industry today (top bar) and in 2050 without
-carbon capture (bottom bar) assumed in `Neumann et al <https://arxiv.org/abs/2207.05816>`_. 
+carbon capture (bottom bar) assumed in `Neumann et al <https://arxiv.org/abs/2207.05816>`_.
 
 
 
@@ -390,9 +390,9 @@ Inside each country the industrial demand is then distributed using the `Hotmaps
 **Iron and Steel**
 
 Two alternative routes are used today to manufacture steel in Europe. The primary route (integrated steelworks) represents 60% of steel production, while the secondary route (electric arc furnaces, EAF), represents the other 40% `(Lechtenböhmer et. al) <https://doi.org/10.1016/j.energy.2016.07.110>`_.
-					
+
 The primary route uses blast furnaces in which coke is used to reduce iron ore into molten iron, which is then converted into steel:
-					
+
 .. math::
    CO_2 + C \xrightarrow{} 2 CO
 
@@ -408,13 +408,13 @@ The primary route uses blast furnaces in which coke is used to reduce iron ore i
 .. math::
    FeO + CO  \xrightarrow{} Fe + CO_2
 
-					
-The primary route of steelmaking implies large process emissions of 0.22 t :math:`_{CO_2}` /t of steel, amounting to 7% of global greenhouse gas emissions `(Vogl et. al) <https://doi.org/10.1016/j.joule.2021.09.007>`_. 
-					
+
+The primary route of steelmaking implies large process emissions of 0.22 t :math:`_{CO_2}` /t of steel, amounting to 7% of global greenhouse gas emissions `(Vogl et. al) <https://doi.org/10.1016/j.joule.2021.09.007>`_.
+
 In the secondary route, electric arc furnaces are used to melt scrap metal. This limits the :math:`CO_2` emissions to the burning of graphite electrodes `(Friedrichsen et. al) <https://www.umweltbundesamt.de/en/publikationen/comparative-analysis-of-options-potential-for>`_, and reduces process emissions to 0.03 t :math:`_{CO_2}` /t of steel.
-					
+
 We assume that the primary route can be replaced by a third route in 2050, using direct reduced iron (DRI) and subsequent processing in an EAF.
-					
+
 .. math::
    3 Fe_2O_3 + H_2 \xrightarrow{} 2 Fe_3O_4 + H_2O
 
@@ -427,25 +427,25 @@ We assume that the primary route can be replaced by a third route in 2050, using
    FeO + H_2  \xrightarrow{} Fe + H_2O
 
 
-This circumvents the process emissions associated with the use of coke. For hydrogen- based DRI, we assume energy requirements of 1.7 MWh :math:`_{H_2}` /t steel `(Vogl et. al) <https://doi.org/10.1016/j.jclepro.2018.08.279>`_ and 0.322 MWh :math:`_{el}`/t steel `(HYBRIT 2016) <https://dh5k8ug1gwbyz.cloudfront.net/uploads/2021/02/Hybrit-broschure-engelska.pdf>`_. 
-								
-					
+This circumvents the process emissions associated with the use of coke. For hydrogen- based DRI, we assume energy requirements of 1.7 MWh :math:`_{H_2}` /t steel `(Vogl et. al) <https://doi.org/10.1016/j.jclepro.2018.08.279>`_ and 0.322 MWh :math:`_{el}`/t steel `(HYBRIT 2016) <https://dh5k8ug1gwbyz.cloudfront.net/uploads/2021/02/Hybrit-broschure-engelska.pdf>`_.
+
+
 The share of steel produced via the primary route is exogenously set in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L279>`_. The share of steel obtained via hydrogen-based DRI plus EAF is also set exogenously in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L287>`_. The remaining share is manufactured through the secondary route using scrap metal in EAF. Bioenergy as alternative to coke in blast furnaces is not considered in the model (`Mandova et.al <https://doi.org/10.1016/j.biombioe.2018.04.021>`_, `Suopajärvi et.al <https://doi.org/10.1016/j.apenergy.2018.01.060>`_).
-					
-For the remaining subprocesses in this sector, the following transformations are assumed. Methane is used as energy source for the smelting process. Activities associated with furnaces, refining and rolling, and product finishing are electrified assuming the current efficiency values for these cases. These transformations result in changes in process emissions as outlined in the process emissions figure presented in the industry overview section (see :ref:`Overview`). 
+
+For the remaining subprocesses in this sector, the following transformations are assumed. Methane is used as energy source for the smelting process. Activities associated with furnaces, refining and rolling, and product finishing are electrified assuming the current efficiency values for these cases. These transformations result in changes in process emissions as outlined in the process emissions figure presented in the industry overview section (see :ref:`Overview`).
 
 .. _Chemicals Industry:
 
 **Chemicals Industry**
 
 The chemicals industry includes a wide range of diverse industries, including the production of basic organic compounds (olefins, alcohols, aromatics), basic inorganic compounds (ammonia, chlorine), polymers (plastics), and end-user products (cosmetics, pharmaceutics).
-				
+
 The chemicals industry consumes large amounts of fossil-fuel based feedstocks (see `Levi et. al <https://pubs.acs.org/doi/10.1021/acs.est.7b04573>`_), which can also be produced from renewables as outlined for hydrogen (see :ref:`Hydrogen supply`), for methane (see :ref:`Methane supply`), and for oil-based products (see :ref:`Oil-based products supply`). The ratio between synthetic and fossil-based fuels used in the industry is an endogenous result of the optimisation.
-					
+
 The basic chemicals consumption data from the `JRC IDEES  <https://op.europa.eu/en/publication-detail/-/publication/989282db-ad65-11e7-837e-01aa75ed71a1/language-en>`_ database comprises high- value chemicals (ethylene, propylene and BTX), chlorine, methanol and ammonia. However, it is necessary to separate out these chemicals because their current and future production routes are different.
-					
+
 Statistics for the production of ammonia, which is commonly used as a fertilizer, are taken from the `USGS <https://www.usgs.gov/media/files/nitrogen-2017-xlsx>`_ for every country. Ammonia can be made from hydrogen and nitrogen using the Haber-Bosch process.
-					
+
 .. math::
    N_2 + 3H_2 \xrightarrow{}  2NH_3
 
@@ -454,32 +454,32 @@ Statistics for the production of ammonia, which is commonly used as a fertilizer
 The Haber-Bosch process is not explicitly represented in the model, such that demand for ammonia enters the model as a demand for hydrogen ( 6.5 MWh :math:`_{H_2}` / t :math:`_{NH_3}` ) and electricity ( 1.17 MWh :math:`_{el}` /t :math:`_{NH_3}` ) (see `Wang et. al <https://doi.org/10.1016/j.joule.2018.04.017>`_). Today, natural gas dominates in Europe as the source for the hydrogen used in the Haber-Bosch process, but the model can choose among the various hydrogen supply options described in the hydrogen section (see :ref:`Hydrogen supply`)
 
 The total production and specific energy consumption of chlorine and methanol is taken from a `DECHEMA report <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry.pdf>`_. According to this source, the production of chlorine amounts to 9.58 MtCl/a, which is assumed to require electricity at 3.6 MWh :math:`_{el}`/t of chlorine and yield hydrogen at 0.937 MWh :math:`_{H_2}`/t of chlorine in the chloralkali process. The production of methanol adds up to 1.5 MtMeOH/a, requiring electricity at 0.167 MWh :math:`_{el}`/t of methanol and methane at 10.25 MWh :math:`_{CH_4}`/t of methanol.
-		 	 	 		
-						
+
+
 The production of ammonia, methanol, and chlorine production is deducted from the JRC IDEES basic chemicals, leaving the production totals of high-value chemicals. For this, we assume that the liquid hydrocarbon feedstock comes from synthetic or fossil- origin naphtha (14 MWh :math:`_{naphtha}`/t of HVC, similar to `Lechtenböhmer et al <https://doi.org/10.1016/j.energy.2016.07.110>`_), ignoring the methanol-to-olefin route. Furthermore, we assume the following transformations of the energy-consuming processes in the production of plastics: the final energy consumption in steam processing is converted to methane since requires temperature above 500 °C (4.1 MWh :math:`_{CH_4}` /t of HVC, see `Rehfeldt et al. <https://doi.org/10.1007/s12053-017-9571-y>`_); and the remaining processes are electrified using the current efficiency of microwave for high-enthalpy heat processing, electric furnaces, electric process cooling and electric generic processes (2.85 MWh :math:`_{el}`/t of HVC).
-					
-The process emissions from feedstock in the chemical industry are as high as 0.369 t :math:`_{CO_2}`/t of ethylene equivalent. We consider process emissions for all the material output, which is a conservative approach since it assumes that all plastic-embedded :math:`CO_2` will eventually be released into the atmosphere. However, plastic disposal in landfilling will avoid, or at least delay, associated :math:`CO_2` emissions. 
-		 	 	 					
-Circular economy practices drastically reduce the amount of primary feedstock needed for the production of plastics in the model (see `Kullmann et al. <https://doi.org/10.1016/j.energy.2022.124660>`_, `Meys et al. (2021) <https://doi.org/10.1126/science.abg9853>`_, `Meys et al. (2020) <https://doi.org/10/gmxv6z>`_, `Gu et al. <https://doi.org/10/gf8n9w>`_) and consequently, also the energy demands and level of process emission. The percentage of plastics that are assumed to be mechanically recycled can be selected in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/776596ab9ac6a6cc93422ccfd0383abeffb0baa9/config.default.yaml#L315>`_, as well as 
-the percentage that is chemically recycled, see `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/776596ab9ac6a6cc93422ccfd0383abeffb0baa9/config.default.yaml#L316>`_ The energy consumption for those recycling processes are respectively 0.547 MWh :math:`_{el}`/t of HVC (as indicated in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/776596ab9ac6a6cc93422ccfd0383abeffb0baa9/config.default.yaml#L318>`_) (`Meys et al. (2020) <https://doi.org/10/gmxv6z>`_), and 6.9 MWh :math:`_{el}`/t of HVC (as indicated in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/776596ab9ac6a6cc93422ccfd0383abeffb0baa9/config.default.yaml#L319>`_) based on pyrolysis and electric steam cracking (see `Materials Economics <https://materialeconomics.com/publications/industrial-transformation-2050>`_ report). 
+
+The process emissions from feedstock in the chemical industry are as high as 0.369 t :math:`_{CO_2}`/t of ethylene equivalent. We consider process emissions for all the material output, which is a conservative approach since it assumes that all plastic-embedded :math:`CO_2` will eventually be released into the atmosphere. However, plastic disposal in landfilling will avoid, or at least delay, associated :math:`CO_2` emissions.
+
+Circular economy practices drastically reduce the amount of primary feedstock needed for the production of plastics in the model (see `Kullmann et al. <https://doi.org/10.1016/j.energy.2022.124660>`_, `Meys et al. (2021) <https://doi.org/10.1126/science.abg9853>`_, `Meys et al. (2020) <https://doi.org/10/gmxv6z>`_, `Gu et al. <https://doi.org/10/gf8n9w>`_) and consequently, also the energy demands and level of process emission. The percentage of plastics that are assumed to be mechanically recycled can be selected in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/776596ab9ac6a6cc93422ccfd0383abeffb0baa9/config.default.yaml#L315>`_, as well as
+the percentage that is chemically recycled, see `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/776596ab9ac6a6cc93422ccfd0383abeffb0baa9/config.default.yaml#L316>`_ The energy consumption for those recycling processes are respectively 0.547 MWh :math:`_{el}`/t of HVC (as indicated in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/776596ab9ac6a6cc93422ccfd0383abeffb0baa9/config.default.yaml#L318>`_) (`Meys et al. (2020) <https://doi.org/10/gmxv6z>`_), and 6.9 MWh :math:`_{el}`/t of HVC (as indicated in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/776596ab9ac6a6cc93422ccfd0383abeffb0baa9/config.default.yaml#L319>`_) based on pyrolysis and electric steam cracking (see `Materials Economics <https://materialeconomics.com/publications/industrial-transformation-2050>`_ report).
 
 
 **Non-metallic Mineral Products**
 
-This subsector includes the manufacturing of cement, ceramics, and glass. 
+This subsector includes the manufacturing of cement, ceramics, and glass.
 
 *Cement*
 
-Cement is used in construction to make concrete. The production of cement involves high energy consumption and large process emissions. The calcination of limestone to chemically reactive calcium oxide, also known as lime, involves process emissions of 0.54 t :math:`_{CO_2}` /t cement (see `Akhtar et al. <https://doi.org/10.1109/CITCON.2013.6525276>`_.		
+Cement is used in construction to make concrete. The production of cement involves high energy consumption and large process emissions. The calcination of limestone to chemically reactive calcium oxide, also known as lime, involves process emissions of 0.54 t :math:`_{CO_2}` /t cement (see `Akhtar et al. <https://doi.org/10.1109/CITCON.2013.6525276>`_.
 
 
 .. math::
-   CaCO_3 \xrightarrow{}  CaO + CO_2 
+   CaCO_3 \xrightarrow{}  CaO + CO_2
 
 
 Additionally, :math:`CO_2` is emitted from the combustion of fossil fuels to provide process heat. Thereby, cement constitutes the biggest source of industry process emissions in Europe.
 
-Cement process emissions can be captured assuming a capture rate of 90%. Whether emissions are captured is decided by the model taking into account the capital costs of carbon capture modules. The electricity and heat demand of process emission carbon capture is currently ignored. For net-zero emission scenarios, the remaining process emissions need to be compensated by negative emissions. 		
+Cement process emissions can be captured assuming a capture rate of 90%. Whether emissions are captured is decided by the model taking into account the capital costs of carbon capture modules. The electricity and heat demand of process emission carbon capture is currently ignored. For net-zero emission scenarios, the remaining process emissions need to be compensated by negative emissions.
 
 With the exception of electricity demand and biomass demand for low-temperature heat (0.06 MWh/t and 0.2 MWh/t), the final energy consumption of this subsector is assumed to be supplied by methane (0.52 MWh/t), which is capable of delivering the required high-temperature heat. This implies a switch from burning solid fuels to burning gas which will require adjustments of the `kilns <10.1109/CITCON.2013.6525276>`_. The share of fossil vs. synthetic methane consumed is a result of the optimisation
 
@@ -495,21 +495,21 @@ The production of glass is assumed to be fully electrified based on the current 
 
 **Non-ferrous Metals**
 
-The non-ferrous metal subsector includes the manufacturing of base metals (aluminium, copper, lead, zink), precious metals (gold, silver), and technology metals (molybdenum, cobalt, silicon).					
+The non-ferrous metal subsector includes the manufacturing of base metals (aluminium, copper, lead, zinc), precious metals (gold, silver), and technology metals (molybdenum, cobalt, silicon).
 
-The manufacturing of aluminium accounts for more than half of the final energy consumption of this subsector. Two alternative processing routes are used today to manufacture aluminium in Europe. The primary route represents 40% of the aluminium pro- duction, while the secondary route represents the remaining 60%.		
+The manufacturing of aluminium accounts for more than half of the final energy consumption of this subsector. Two alternative processing routes are used today to manufacture aluminium in Europe. The primary route represents 40% of the aluminium pro- duction, while the secondary route represents the remaining 60%.
 
 The primary route involves two energy-intensive processes: the production of alumina from bauxite (aluminium ore) and the electrolysis to transform alumina into aluminium via the Hall-Héroult process
 
 .. math::
-   2Al_2O_3 +3C \xrightarrow{}  4Al+3CO_2	
+   2Al_2O_3 +3C \xrightarrow{}  4Al+3CO_2
 
 
 The primary route requires high-enthalpy heat (2.3 MWh/t) to produce alumina which is supplied by methane and causes process emissions of 1.5 t :math:`_{CO_2}`/t aluminium. According to `Friedrichsen et al. <http://www.umweltbundesamt.de/en/publikationen/comparative-analysis-of-options-potential-for>`_, inert anodes might become commercially available by 2030 that would eliminate the process emissions, but they are not included in the model. Assuming all subprocesses are electrified, the primary route requires 15.4 MWh :math:`_{el}`/t of aluminium.
-					
+
 In the secondary route, scrap aluminium is remelted. The energy demand for this process is only 10% of the primary route and there are no associated process emissions. Assuming all subprocesses are electrified, the secondary route requires 1.7 MWh/t of aluminium. The share of aliminum manufactured by the primary and secondary route can be selected in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L297>`_]
-	
-For the other non-ferrous metals, we assume the electrification of the entire manufacturing process with an average electricity demand of 3.2 MWh :math:`_{el}`/t lead equivalent. 			
+
+For the other non-ferrous metals, we assume the electrification of the entire manufacturing process with an average electricity demand of 3.2 MWh :math:`_{el}`/t lead equivalent.
 
 **Other Industry Subsectors**
 
@@ -552,7 +552,7 @@ The share of all land transport that is specified to be be FCEV will be converte
 
 FCEVs are typically used to simulate demand for transport that is hard to electrify directly, e.g. heavy construction machinery. But it may also be used to investigate a more widespread adoption of the technology.
 
-*Internal combustion engine vehicles (ICE)* 
+*Internal combustion engine vehicles (ICE)*
 
 All land transport that is not specified to be either BEV or FCEV will be treated as conventional ICEs. The transport demand is converted to a demand for oil products (see :ref:`Oil-based products supply`) using the `ICE efficiency
 <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L192>`_.
@@ -584,13 +584,13 @@ PyPSA-Eur-Sec includes carbon capture from air (i.e., direct air capture (DAC)),
 
 **Carbon dioxide capture**
 
-For the following point source emissions, carbon capture is applicable: 
+For the following point source emissions, carbon capture is applicable:
 
 •	Industry process emissions, e.g., from limestone in cement production
 
 •	Methane or biomass used for process heat in the industry
 
-•	Hydrogen production by SMR  
+•	Hydrogen production by SMR
 
 •	CHP plants using biomass or methane
 
@@ -599,12 +599,12 @@ For the following point source emissions, carbon capture is applicable:
 Point source emissions are captured assuming a capture rate, e.g. 90%, which can be specified in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L249>`_. The electricity and heat demand of process emission carbon capture
 is currently ignored.
 
-DAC (if `included <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L243>`_) includes the adsorption phase where electricity and heat consumptionsare required to assist the adsorption process and regenerate the adsorbent. It also includes the drying and compression of :math:`CO_2` prior to storage which consumes electricity and rejects heat. 
+DAC (if `included <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L243>`_) includes the adsorption phase where electricity and heat consumptionsare required to assist the adsorption process and regenerate the adsorbent. It also includes the drying and compression of :math:`CO_2` prior to storage which consumes electricity and rejects heat.
 
 *Carbon dioxide usage*
 
 Captured :math:`CO_2` can be used to produce synthetic methane and synthetic oil products (e.g.
-naphtha). If captured carbon is used, the :math:`CO_2` emissions of the synthetic fuels are net-neutral. 
+naphtha). If captured carbon is used, the :math:`CO_2` emissions of the synthetic fuels are net-neutral.
 
 *Carbon dioxide sequestration*
 
@@ -612,7 +612,4 @@ Captured :math:`CO_2` can also be sequestered underground up to an annual seques
 
 *Carbon dioxide transport*
 
-Carbon dioxide can be modelled as a single node for Europe (in this case, :math:`CO_2` transport constraints are neglected). A network for modelling the transport of :math:`CO_2` among the different nodes can also be created if selected in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L248>`_. 
-
-
-
+Carbon dioxide can be modelled as a single node for Europe (in this case, :math:`CO_2` transport constraints are neglected). A network for modelling the transport of :math:`CO_2` among the different nodes can also be created if selected in the `config file <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L248>`_.
