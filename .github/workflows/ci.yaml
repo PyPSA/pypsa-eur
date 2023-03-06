@@ -95,6 +95,4 @@ jobs:
       run: |
         conda activate pypsa-eur
         conda list
-        cp test/config.test1.yaml config.yaml
-        snakemake --cores all solve_all_networks
-        rm -rf resources/*.nc resources/*.geojson resources/*.h5 networks results
+        snakemake -call solve_all_networks --configfile test/config.test1.yaml
