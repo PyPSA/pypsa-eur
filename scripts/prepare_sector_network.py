@@ -3227,7 +3227,7 @@ def set_temporal_aggregation(n, opts, solver_name):
 # %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from helper import mock_snakemake
+        from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "prepare_sector_network",

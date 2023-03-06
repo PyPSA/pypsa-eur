@@ -206,7 +206,7 @@ def convert_nuts2_to_regions(bio_nuts2, regions):
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from helper import mock_snakemake
+        from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_biomass_potentials", simpl="", clusters="5")
 

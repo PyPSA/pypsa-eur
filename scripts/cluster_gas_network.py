@@ -108,7 +108,7 @@ def aggregate_parallel_pipes(df):
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from helper import mock_snakemake
+        from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("cluster_gas_network", simpl="", clusters="37")
 

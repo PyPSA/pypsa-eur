@@ -35,7 +35,7 @@ country_to_alpha2 = {
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from helper import mock_snakemake
+        from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_ammonia_production")
 

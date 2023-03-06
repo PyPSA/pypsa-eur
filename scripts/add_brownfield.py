@@ -125,7 +125,7 @@ def add_brownfield(n, n_p, year):
 # %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from helper import mock_snakemake
+        from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "add_brownfield",

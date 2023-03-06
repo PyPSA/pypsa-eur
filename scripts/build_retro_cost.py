@@ -1032,7 +1032,7 @@ def sample_dE_costs_area(
 # %% --- MAIN --------------------------------------------------------------
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from helper import mock_snakemake
+        from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "build_retro_cost",
