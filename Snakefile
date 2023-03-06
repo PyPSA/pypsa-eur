@@ -686,7 +686,8 @@ rule build_simplified_population_layouts:
         pop_layout_total="resources/" + RDIR + "pop_layout_total.nc",
         pop_layout_urban="resources/" + RDIR + "pop_layout_urban.nc",
         pop_layout_rural="resources/" + RDIR + "pop_layout_rural.nc",
-        regions_onshore='resources/' + RDIR + 'regions_onshore_elec_s{simpl}.geojson'
+        regions_onshore='resources/' + RDIR + 'regions_onshore_elec_s{simpl}.geojson',
+        cutout="cutouts/" + CDIR + config["atlite"]["default_cutout"] + ".nc",
     output:
         clustered_pop_layout="resources/" + RDIR + "pop_layout_elec_s{simpl}.csv"
     resources: mem_mb=10000
