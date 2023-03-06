@@ -10,7 +10,7 @@ Release Notes
 Upcoming Release
 ================
 
-* new features
+* The solver configuration in `config.default.yaml` are now modularized. To change the set of solver options, change to value in `solving`: `solver`: `options` to one of the keys `solving`: `solver_options`.
 
 PyPSA-Eur Releases (pre-merge)
 ==============================
