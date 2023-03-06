@@ -64,7 +64,7 @@ rule all:
 rule solve_all_elec_networks:
     input:
         expand(
-            "results/networks/" + RDIR + "elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+            "results/" + RDIR + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
             **config["scenario"]
         ),
 
