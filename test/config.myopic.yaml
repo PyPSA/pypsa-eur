@@ -4,6 +4,7 @@
 
 run:
   name: "test-sector-myopic"
+  shared_cutouts: true
 
 foresight: myopic
 
@@ -24,6 +25,9 @@ countries: ['BE']
 snapshots:
   start: "2013-03-01"
   end: "2013-04-01"
+
+electricity:
+  renewable_carriers: [solar, onwind, offwind-ac, offwind-dc]
 
 atlite:
   default_cutout: be-03-2013-era5

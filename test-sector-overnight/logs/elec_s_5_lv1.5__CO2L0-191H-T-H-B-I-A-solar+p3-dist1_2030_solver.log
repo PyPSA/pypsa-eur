@@ -1,0 +1,36 @@
+Welcome to the CBC MILP Solver 
+Version: 2.10.8 
+Build Date: May  6 2022 
+
+command line - cbc -printingOptions all -import /tmp/linopy-problem-vkrwu974.lp -solve -solu /tmp/linopy-solve-txclz68j.sol (default strategy 1)
+Option for printingOptions changed from normal to all
+Presolve 1860 (-2608) rows, 1927 (-385) columns and 6695 (-3229) elements
+0  Obj 8.0504383e+08 Primal inf 7722700.6 (347) Dual inf 30755.178 (172) w.o. free dual inf (124)
+0  Obj 8.0504383e+08 Primal inf 7722700.6 (347) Dual inf 4.9164394e+13 (1060) w.o. free dual inf (1012)
+112  Obj 1.3842222e+09 Primal inf 5035779.2 (280) Dual inf 2.3576561e+13 (978) w.o. free dual inf (962)
+226  Obj 7.4001154e+09 Primal inf 1150273.5 (210) Dual inf 1.4979198e+13 (912) w.o. free dual inf (901)
+340  Obj 1.0024332e+10 Primal inf 734704.89 (163) Dual inf 1.0767751e+13 (848) w.o. free dual inf (837)
+456  Obj 1.3493118e+10 Primal inf 184454.49 (114) Dual inf 5.3434229e+12 (760) w.o. free dual inf (752)
+572  Obj 1.3522374e+10 Primal inf 78326.158 (63) Dual inf 3.0795909e+12 (734)
+689  Obj 1.3608574e+10 Primal inf 24809.401 (29) Dual inf 1.1040028e+12 (707)
+805  Obj 1.2555201e+10 Primal inf 2838.7651 (14) Dual inf 3.9668999e+11 (641)
+920  Obj 1.2247486e+10 Dual inf 34222029 (755)
+1029  Obj 1.1173711e+10 Dual inf 4.4456899e+08 (731)
+1144  Obj 1.0149203e+10 Dual inf 15978547 (550)
+1259  Obj 9.689175e+09 Dual inf 38105783 (812)
+1372  Obj 9.379287e+09 Dual inf 16472257 (625)
+1484  Obj 8.9366581e+09 Dual inf 55192413 (612)
+1598  Obj 8.6865276e+09 Dual inf 29657682 (506)
+1711  Obj 8.1899336e+09 Dual inf 2106203.4 (435)
+1828  Obj 7.9246571e+09 Dual inf 4514330.9 (426)
+1941  Obj 7.702159e+09 Dual inf 9669102.1 (526)
+2058  Obj 7.5156526e+09 Dual inf 1367671.1 (354)
+2175  Obj 7.4864365e+09 Dual inf 3651672.3 (364)
+2287  Obj 7.4582036e+09 Dual inf 3073020.7 (505)
+2399  Obj 7.4492023e+09 Dual inf 1200.5263 (59)
+2500  Obj 7.4484383e+09
+Optimal - objective value 7.4484383e+09
+After Postsolve, objective 7.4484383e+09, infeasibilities - dual 0 (0), primal 0 (0)
+Optimal objective 7448438281 - 2500 iterations time 0.162, Presolve 0.00
+Total time (CPU seconds):       0.19   (Wallclock seconds):       0.16
+

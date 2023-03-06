@@ -4,6 +4,7 @@
 
 run:
   name: "test-sector-overnight"
+  shared_cutouts: true
 
 scenario:
   ll:

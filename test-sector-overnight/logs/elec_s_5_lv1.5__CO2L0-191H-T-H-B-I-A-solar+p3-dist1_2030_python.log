@@ -1,0 +1,15 @@
+INFO:pypsa.io:Imported network elec_s_5_lv1.5__CO2L0-191H-T-H-B-I-A-solar+p3-dist1_2030.nc has buses, carriers, generators, global_constraints, lines, links, loads, stores
+INFO:linopy.model: Solve linear problem using Cbc solver
+INFO:linopy.model:Solver logs written to `test-sector-overnight/logs/elec_s_5_lv1.5__CO2L0-191H-T-H-B-I-A-solar+p3-dist1_2030_solver.log`.
+INFO:linopy.io: Writing time: 0.35s
+INFO:linopy.constants: Optimization successful: 
+Status: ok
+Termination condition: optimal
+Solution: 2312 primals, 4468 duals
+Objective: 7.45e+09
+Solver model: not available
+Solver message: Optimal - objective value 7448438280.69972992
+
+
+INFO:pypsa.io:Exported network elec_s_5_lv1.5__CO2L0-191H-T-H-B-I-A-solar+p3-dist1_2030.nc has lines, generators, stores, loads, global_constraints, buses, carriers, links
+INFO:__main__:Maximum memory usage: (491.265625, 1678121080.6576045)
