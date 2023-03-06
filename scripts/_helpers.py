@@ -107,7 +107,6 @@ def load_network(import_name=None, custom_components=None):
     )
 
 
-
 def load_network_for_plots(fn, tech_costs, config, combine_hydro_ps=True):
     import pypsa
     from add_electricity import load_costs, update_transmission_costs
