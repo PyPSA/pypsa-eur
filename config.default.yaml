@@ -292,14 +292,14 @@ solving:
     min_iterations: 4
     max_iterations: 6
     keep_shadowprices:
-      - Bus
-      - Line
-      - Link
-      - Transformer
-      - GlobalConstraint
-      - Generator
-      - Store
-      - StorageUnit
+    - Bus
+    - Line
+    - Link
+    - Transformer
+    - GlobalConstraint
+    - Generator
+    - Store
+    - StorageUnit
 
   solver:
     name: gurobi
