@@ -14,7 +14,7 @@ PyPSA-Eur: A Sector-Coupled Open Optimisation Model of the European Energy Syste
 
 .. image:: https://readthedocs.org/projects/pypsa-eur/badge/?version=latest
     :target: https://pypsa-eur.readthedocs.io/en/latest/?badge=latest
-    :alt: Documentation Status
+    :alt: Documentation
 
 .. image:: https://img.shields.io/github/repo-size/pypsa/pypsa-eur
     :alt: GitHub repo size
@@ -28,7 +28,7 @@ PyPSA-Eur: A Sector-Coupled Open Optimisation Model of the European Energy Syste
 
 .. image:: https://api.reuse.software/badge/github.com/pypsa/pypsa-eur
     :target: https://api.reuse.software/info/github.com/pypsa/pypsa-eur
-    :alt: REUSE status
+    :alt: REUSE
 
 
 PyPSA-Eur is an open model dataset of the European energy system at the
