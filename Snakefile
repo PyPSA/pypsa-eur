@@ -1070,6 +1070,7 @@ rule build_transport_demand:
 
 
 rule prepare_sector_network:
+    params: RDIR = RDIR
     input:
         overrides="data/override_component_attrs",
         network='resources/' + RDIR + 'networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc',
@@ -1138,6 +1139,7 @@ rule plot_network:
 
 
 rule copy_config:
+    params: RDIR = RDIR
     output: "results/" + RDIR + 'configs/config.yaml'
     threads: 1
     resources: mem_mb=1000
@@ -1154,6 +1156,7 @@ rule copy_conda_env:
 
 
 rule make_summary:
+    params: RDIR = RDIR
     input:
         overrides="data/override_component_attrs",
         networks=expand(
@@ -1188,6 +1191,7 @@ rule make_summary:
 
 
 rule plot_summary:
+    params: RDIR = RDIR
     input:
         costs="results/" + RDIR + 'csvs/costs.csv',
         energy="results/" + RDIR + 'csvs/energy.csv',

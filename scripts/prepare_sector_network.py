@@ -3344,8 +3344,8 @@ if __name__ == "__main__":
             continue
         limit_type = "carbon budget"
         fn = (
-            snakemake.config["results_dir"]
-            + snakemake.config["run"]
+            "results/"
+            + snakemake.params.RDIR
             + "/csvs/carbon_budget_distribution.csv"
         )
         if not os.path.exists(fn):

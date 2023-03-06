@@ -676,10 +676,9 @@ if __name__ == "__main__":
     logging.basicConfig(level=snakemake.config["logging"]["level"])
 
     networks_dict = {
-        (cluster, lv, opt + sector_opt, planning_horizon): snakemake.config[
-            "results_dir"
-        ]
-        + snakemake.config["run"]
+        (cluster, lv, opt + sector_opt, planning_horizon): 
+        "results/"
+        + snakemake.params.RDIR
         + f"/postnetworks/elec_s{simpl}_{cluster}_lv{lv}_{opt}_{sector_opt}_{planning_horizon}.nc"
         for simpl in snakemake.config["scenario"]["simpl"]
         for cluster in snakemake.config["scenario"]["clusters"]
@@ -706,8 +705,5 @@ if __name__ == "__main__":
     if snakemake.config["foresight"] == "myopic":
         cumulative_cost = calculate_cumulative_cost()
         cumulative_cost.to_csv(
-            snakemake.config["summary_dir"]
-            + "/"
-            + snakemake.config["run"]
-            + "/csvs/cumulative_cost.csv"
+            f"results" + snakemake.params.RDIR + "/csvs/cumulative_cost.csv"
         )

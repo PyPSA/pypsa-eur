@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from shutil import copy
+from pathlib import Path
 
 import yaml
 
@@ -9,7 +10,6 @@ files = {
     "Snakefile": "Snakefile",
     "scripts/solve_network.py": "solve_network.py",
     "scripts/prepare_sector_network.py": "prepare_sector_network.py",
-    "../pypsa-eur/config.yaml": "config.pypsaeur.yaml",
 }
 
 if __name__ == "__main__":
@@ -18,14 +18,12 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("copy_config")
 
-    basepath = (
-        snakemake.config["summary_dir"] + "/" + snakemake.config["run"] + "/configs/"
-    )
+    basepath = Path(f"results/{snakemake.params.RDIR}configs/")
 
     for f, name in files.items():
-        copy(f, basepath + name)
+        copy(f, basepath / name)
 
-    with open(basepath + "config.snakemake.yaml", "w") as yaml_file:
+    with open(basepath / "config.snakemake.yaml", "w") as yaml_file:
         yaml.dump(
             snakemake.config,
             yaml_file,
