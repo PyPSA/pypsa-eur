@@ -23,6 +23,8 @@ electricity:
     Store: [H2]
     Link: [H2 pipeline]
 
+  renewable_carriers: [solar, onwind, offwind-ac, offwind-dc]
+
 
 atlite:
   cutouts:
@@ -44,9 +46,12 @@ renewable:
   solar:
     cutout: be-03-2013-era5
 
+
 clustering:
   exclude_carriers: ["OCGT", "offwind-ac", "coal"]
+
 
 solving:
   solver:
     name: glpk
+    options: "glpk-default"
