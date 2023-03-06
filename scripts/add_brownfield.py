@@ -14,8 +14,8 @@ idx = pd.IndexSlice
 import numpy as np
 import pypsa
 import yaml
-from add_existing_baseyear import add_build_year_to_new_assets
 from _helpers import override_component_attrs, update_config_with_sector_opts
+from add_existing_baseyear import add_build_year_to_new_assets
 
 
 def add_brownfield(n, n_p, year):

@@ -3,22 +3,24 @@
 #
 # SPDX-License-Identifier: MIT
 
-import urllib
-from pathlib import Path
-import pandas as pd
-from tqdm import tqdm
 import contextlib
 import logging
 import os
+import urllib
+from pathlib import Path
+
+import pandas as pd
 import pytz
 import yaml
 from pypsa.components import component_attrs, components
 from pypsa.descriptors import Dict
 from snakemake.utils import update_config
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
 REGION_COLS = ["geometry", "name", "x", "y", "country"]
+
 
 # Define a context manager to temporarily mute print statements
 @contextlib.contextmanager

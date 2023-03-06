@@ -13,12 +13,12 @@ import numpy as np
 import pandas as pd
 import pypsa
 import xarray as xr
-from build_energy_totals import build_co2_totals, build_eea_co2, build_eurostat_co2
 from _helpers import (
     generate_periodic_profiles,
     override_component_attrs,
     update_config_with_sector_opts,
 )
+from build_energy_totals import build_co2_totals, build_eea_co2, build_eurostat_co2
 from networkx.algorithms import complement
 from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentation
 from pypsa.geo import haversine_pts
