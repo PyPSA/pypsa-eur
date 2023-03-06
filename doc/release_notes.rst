@@ -1,21 +1,24 @@
-<<<<<<< HEAD
 ..
   SPDX-FileCopyrightText: 2019-2023 The PyPSA-Eur Authors
 
   SPDX-License-Identifier: CC-BY-4.0
 
-=======
->>>>>>> pypsa-eur-sec/master
 ##########################################
 Release Notes
 ##########################################
 
-<<<<<<< HEAD
 Upcoming Release
 ================
 
 * new features
 
+Future release
+==============
+
+.. note::
+  This unreleased version currently may require the master branches of PyPSA, PyPSA-Eur, and the technology-data repository.
+
+* new feature
 
 PyPSA-Eur 0.7.0 (16th February 2023)
 ====================================
@@ -605,18 +608,13 @@ This is the first release of PyPSA-Eur, a model of the European power system at 
 * Logfiles for all rules of the ``snakemake`` workflow are now written in the folder ``log/`` [`#102 <https://github.com/PyPSA/pypsa-eur/pull/102>`_].
 
 * The new function ``_helpers.mock_snakemake`` creates a ``snakemake`` object which mimics the actual ``snakemake`` object produced by workflow by parsing the ``Snakefile`` and setting all paths for inputs, outputs, and logs. This allows running all scripts within a (I)python terminal (or just by calling ``python <script-name>``) and thereby facilitates developing and debugging scripts significantly [`#107 <https://github.com/PyPSA/pypsa-eur/pull/107>`_].
-=======
-Future release
-==============
 
-.. note::
-  This unreleased version currently may require the master branches of PyPSA, PyPSA-Eur, and the technology-data repository.
 
-* new feature
-
+PyPSA-Eur-Sec Releases
+======================
 
 PyPSA-Eur-Sec 0.7.0 (16th February 2023)
-========================================
+----------------------------------------
 
 This release includes many new features. Highlights include new gas
 infrastructure data with retrofitting options for hydrogen transport, improved
@@ -827,7 +825,7 @@ Many thanks to all who contributed to this release!
 
 
 PyPSA-Eur-Sec 0.6.0 (4 October 2021)
-====================================
+------------------------------------
 
 This release includes
 improvements regarding the basic chemical production,
@@ -1013,7 +1011,7 @@ Many thanks to all who contributed to this release!
 
 
 PyPSA-Eur-Sec 0.5.0 (21st May 2021)
-===================================
+-----------------------------------
 
 This release includes improvements to the cost database for building retrofits, carbon budget management and wildcard settings, as well as an important bugfix for the emissions from land transport.
 
@@ -1034,7 +1032,7 @@ New features and bugfixes:
 Thanks to Lisa Zeyen (KIT) for the retrofitting improvements and Marta Victoria (Aarhus University) for the carbon budget and wildcard management.
 
 PyPSA-Eur-Sec 0.4.0 (11th December 2020)
-=========================================
+----------------------------------------
 
 This release includes a more accurate nodal disaggregation of industry demand within each country, fixes to CHP and CCS representations, as well as changes to some configuration settings.
 
@@ -1056,7 +1054,7 @@ Many thanks to Fraunhofer ISI for opening the hotmaps database and to Lisa Zeyen
 
 
 PyPSA-Eur-Sec 0.3.0 (27th September 2020)
-=========================================
+-----------------------------------------
 
 This releases focuses on improvements to industry demand and the generation of intermediate files for demand for basic materials. There are still inconsistencies with CCS and waste management that need to be improved.
 
@@ -1079,7 +1077,7 @@ New features:
 
 
 PyPSA-Eur-Sec 0.2.0 (21st August 2020)
-======================================
+--------------------------------------
 
 This release introduces pathway optimization over many years (e.g. 2020, 2030, 2040, 2050) with myopic foresight, as well as outsourcing the technology assumptions to the `technology-data <https://github.com/PyPSA/technology-data>`_ repository.
 
@@ -1103,7 +1101,7 @@ Many thanks to Marta Victoria for implementing the myopic foresight, and Marta V
 
 
 PyPSA-Eur-Sec 0.1.0 (8th July 2020)
-===================================
+-----------------------------------
 
 This is the first proper release of PyPSA-Eur-Sec, a model of the European energy system at the transmission network level that covers the full ENTSO-E area.
 
@@ -1141,7 +1139,7 @@ the additional sectors.
 
 
 PyPSA-Eur-Sec 0.0.2 (4th September 2020)
-========================================
+----------------------------------------
 
 This version, also called PyPSA-Eur-Sec-30-Path, built on
 PyPSA-Eur-Sec 0.0.1 (also called PyPSA-Eur-Sec-30) to include myopic
@@ -1157,7 +1155,7 @@ on Zenodo <https://zenodo.org/record/4014807>`_.
 
 
 PyPSA-Eur-Sec 0.0.1 (12th January 2018)
-========================================
+---------------------------------------
 
 This is the first published version of PyPSA-Eur-Sec, also called
 PyPSA-Eur-Sec-30. It was first used in the research paper `Synergies of
@@ -1171,12 +1169,9 @@ transport.
 It is `archived on Zenodo <https://zenodo.org/record/1146666>`_.
 
 
->>>>>>> pypsa-eur-sec/master
-
 Release Process
 ===============
 
-<<<<<<< HEAD
 * Checkout a new release branch ``git checkout -b release-v0.x.x``.
 
 * Finalise release notes at ``doc/release_notes.rst``.
@@ -1187,28 +1182,18 @@ Release Process
 
 * Update version number in ``doc/conf.py``, ``CITATION.cff`` and ``*config.*.yaml``.
 
+* Make a ``git commit``.
+
 * Open, review and merge pull request for branch ``release-v0.x.x``.
   Make sure to close issues and PRs or the release milestone with it (e.g. closes #X).
 
 * Tag a release on Github via ``git tag v0.x.x``, ``git push``, ``git push --tags``. Include release notes in the tag message.
 
-* Upload code to `zenodo code repository <https://doi.org/10.5281/zenodo.3520874>`_ with `MIT license <https://opensource.org/licenses/MIT>`_.
+* Make a `GitHub release <https://github.com/PyPSA/pypsa-eur-sec/releases>`_, which automatically triggers archiving to the `zenodo code repository <https://doi.org/10.5281/zenodo.3520874>`_ with `MIT license <https://opensource.org/licenses/MIT>`_.
 
 * Create pre-built networks for ``config.default.yaml`` by running ``snakemake -call extra_components_all_networks``.
 
 * Upload pre-built networks to `zenodo data repository <https://doi.org/10.5281/zenodo.3601881>`_ with `CC BY 4.0 <https://creativecommons.org/licenses/by/4.0/>`_ license.
-
-* Send announcement on the `PyPSA and PyPSA-Eur mailing list <https://groups.google.com/forum/#!forum/pypsa>`_.
-=======
-* Finalise release notes at ``doc/release_notes.rst``.
-
-* Update version number in ``doc/conf.py`` and ``*config.*.yaml``.
-
-* Make a ``git commit``.
-
-* Tag a release by running ``git tag v0.x.x``, ``git push``, ``git push --tags``. Include release notes in the tag message.
-
-* Make a `GitHub release <https://github.com/PyPSA/pypsa-eur-sec/releases>`_, which automatically triggers archiving by `zenodo <https://doi.org/10.5281/zenodo.3938042>`_.
 
 * Send announcement on the `PyPSA mailing list <https://groups.google.com/forum/#!forum/pypsa>`_.
 
@@ -1217,4 +1202,3 @@ To make a new release of the data bundle, make an archive of the files in ``data
 .. code:: bash
 
     data % tar pczf pypsa-eur-sec-data-bundle.tar.gz eea/UNFCCC_v23.csv switzerland-sfoe biomass eurostat-energy_balances-* jrc-idees-2015 emobility WindWaveWEC_GLTB.xlsx myb1-2017-nitro.xls Industrial_Database.csv retro/tabula-calculator-calcsetbuilding.csv nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson h2_salt_caverns_GWh_per_sqkm.geojson
->>>>>>> pypsa-eur-sec/master

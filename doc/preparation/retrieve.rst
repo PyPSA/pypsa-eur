@@ -129,3 +129,19 @@ None.
 **Outputs**
 
 - ``data/shipdensity_global.zip``
+
+
+Rule ``retrieve_sector_databundle``
+-----------------------------------
+
+
+Small data files are included directly in the git repository, while
+larger ones are archived in a data bundle on zenodo (`10.5281/zenodo.5824485 <https://doi.org/10.5281/zenodo.5824485>`_).
+The data bundle's size is around 640 MB.
+
+The data licences and sources are given in the following table.
+
+
+.. csv-table::
+   :header-rows: 1
+   :file: data.csv
