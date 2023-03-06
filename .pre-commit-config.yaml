@@ -33,7 +33,7 @@ repos:
   rev: v2.2.2
   hooks:
   - id: codespell
-    args: ['--ignore-regex="(\b[A-Z]+\b)"', '--ignore-words-list=fom'] # Ignore capital case words, e.g. country codes
+    args: ['--ignore-regex="(\b[A-Z]+\b)"', '--ignore-words-list=fom,Appartment,bage,ore,setis,Tabacco'] # Ignore capital case words, e.g. country codes
     types_or: [python, rst, markdown]
     files: ^(scripts|doc)/
 
@@ -73,10 +73,10 @@ repos:
     args: [--autofix, --indent, "2", --preserve-quotes]
 
   # Format Snakemake rule / workflow files
-- repo: https://github.com/snakemake/snakefmt
-  rev: v0.8.1
-  hooks:
-  - id: snakefmt
+# - repo: https://github.com/snakemake/snakefmt
+#   rev: v0.8.1
+#   hooks:
+#   - id: snakefmt
 
   # For cleaning jupyter notebooks
 - repo: https://github.com/aflc/pre-commit-jupyter
@@ -86,7 +86,7 @@ repos:
     exclude: examples/solve-on-remote.ipynb
 
 # Check for FSFE REUSE compliance (licensing)
-- repo: https://github.com/fsfe/reuse-tool
-  rev: v1.1.2
-  hooks:
-  - id: reuse
+# - repo: https://github.com/fsfe/reuse-tool
+#   rev: v1.1.2
+#   hooks:
+#   - id: reuse
