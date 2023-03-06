@@ -53,12 +53,12 @@ rule prepare_all_networks:
 
 rule prepare_sector_networks:
     input:
-        expand(RDIR + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        expand("results/" + RDIR + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
                **config['scenario'])
 
 
 rule all:
-    input: RDIR + 'graphs/costs.pdf'
+    input: "results/" + RDIR + 'graphs/costs.pdf'
 
 
 rule solve_all_elec_networks:
@@ -71,14 +71,14 @@ rule solve_all_elec_networks:
 
 rule solve_all_networks:
     input:
-        expand(RDIR + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        expand("results/" + RDIR + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
             **config['scenario']
         ),
 
 
 rule plot_all_networks:
     input:
-        expand(RDIR + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
+        expand("results/" + RDIR + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
                **config['scenario'])
 
 
@@ -1067,7 +1067,7 @@ rule build_transport_demand:
 rule prepare_sector_network:
     input:
         overrides="data/override_component_attrs",
-        network='networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc',
+        network='resources/' + RDIR + 'networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc',
         energy_totals_name='resources/' + RDIR + 'energy_totals.csv',
         eurostat=input_eurostat,
         pop_weighted_energy_totals="resources/" + RDIR + "pop_weighted_energy_totals_s{simpl}_{clusters}.csv",
@@ -1111,7 +1111,7 @@ rule prepare_sector_network:
         **build_biomass_transport_costs_output,
         **gas_infrastructure,
         **build_sequestration_potentials_output
-    output: "results/" + RDIR + '/prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc'
+    output: "results/" + RDIR + 'prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc'
     threads: 1
     resources: mem_mb=2000
     benchmark: RDIR + "benchmarks/prepare_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
@@ -1225,7 +1225,7 @@ if config["foresight"] == "myopic":
     rule add_existing_baseyear:
         input:
             overrides="data/override_component_attrs",
-            network="results/" + RDIR + '/prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc',
+            network="results/" + RDIR + 'prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc',
             powerplants='resources/' + RDIR + 'powerplants.csv',
             busmap_s="resources/" + RDIR + "busmap_elec_s{simpl}.csv",
             busmap="resources/" + RDIR + "busmap_elec_s{simpl}_{clusters}.csv",
@@ -1238,7 +1238,7 @@ if config["foresight"] == "myopic":
             existing_solar='data/existing_infrastructure/solar_capacity_IRENA.csv',
             existing_onwind='data/existing_infrastructure/onwind_capacity_IRENA.csv',
             existing_offwind='data/existing_infrastructure/offwind_capacity_IRENA.csv',
-        output: "results/" + RDIR + '/prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc'
+        output: "results/" + RDIR + 'prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc'
         wildcard_constraints:
             planning_horizons=config['scenario']['planning_horizons'][0] #only applies to baseyear
         threads: 1
@@ -1257,7 +1257,7 @@ if config["foresight"] == "myopic":
     rule add_brownfield:
         input:
             overrides="data/override_component_attrs",
-            network="results/" + RDIR + '/prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc',
+            network="results/" + RDIR + 'prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc',
             network_p=solved_previous_horizon, #solved network at previous time step
             costs="data/costs_{planning_horizons}.csv",
             cop_soil_total="resources/" + RDIR + "cop_soil_total_elec_s{simpl}_{clusters}.nc",
