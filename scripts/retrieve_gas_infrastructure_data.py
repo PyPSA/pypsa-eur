@@ -1,23 +1,26 @@
+# -*- coding: utf-8 -*-
 """
-Retrieve gas infrastructure data from https://zenodo.org/record/4767098/files/IGGIELGN.zip
+Retrieve gas infrastructure data from
+https://zenodo.org/record/4767098/files/IGGIELGN.zip.
 """
 
 import logging
-from helper import progress_retrieve
-
 import zipfile
 from pathlib import Path
+
+from helper import progress_retrieve
 
 logger = logging.getLogger(__name__)
 
 
 if __name__ == "__main__":
-    if 'snakemake' not in globals():
+    if "snakemake" not in globals():
         from helper import mock_snakemake
-        snakemake = mock_snakemake('retrieve_gas_network_data')
-        rootpath = '..'
+
+        snakemake = mock_snakemake("retrieve_gas_network_data")
+        rootpath = ".."
     else:
-        rootpath = '.'
+        rootpath = "."
 
     url = "https://zenodo.org/record/4767098/files/IGGIELGN.zip"
 

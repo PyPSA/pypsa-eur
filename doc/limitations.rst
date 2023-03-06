@@ -36,7 +36,7 @@ See also the `GitHub repository issues <https://github.com/PyPSA/pypsa-eur-sec/i
   industry away from fossil fuels is determined exogenously.
 
 - **Industry materials production constant and inelastic:**
-  For industry, the production of different materials per country is 
+  For industry, the production of different materials per country is
   assumed to remain constant and no industry demand elasticity is included in the modelled.
 
 - **Energy demand distribution within countries:**

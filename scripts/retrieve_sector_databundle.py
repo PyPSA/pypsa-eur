@@ -1,8 +1,10 @@
+# -*- coding: utf-8 -*-
 """
 Retrieve and extract sector data bundle.
 """
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 import os
@@ -13,8 +15,7 @@ from pathlib import Path
 # Add pypsa-eur scripts to path for import of _helpers
 sys.path.insert(0, os.getcwd() + "/../pypsa-eur/scripts")
 
-from _helpers import progress_retrieve, configure_logging
-
+from _helpers import configure_logging, progress_retrieve
 
 if __name__ == "__main__":
     configure_logging(snakemake)
