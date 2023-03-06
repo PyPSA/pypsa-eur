@@ -2521,7 +2521,7 @@ def add_waste_heat(n):
             n.links.loc[urban_central + " Fischer-Tropsch", "bus3"] = urban_central + " urban central heat"
             n.links.loc[urban_central + " Fischer-Tropsch", "efficiency3"] = 0.95 - n.links.loc[urban_central + " Fischer-Tropsch", "efficiency"]
 
-        # TODO integrate useable waste heat efficiency into technology-data from DEA
+        # TODO integrate usable waste heat efficiency into technology-data from DEA
         if options.get('use_electrolysis_waste_heat', False):
             n.links.loc[urban_central + " H2 Electrolysis", "bus2"] = urban_central + " urban central heat"
             n.links.loc[urban_central + " H2 Electrolysis", "efficiency2"] = 0.84 - n.links.loc[urban_central + " H2 Electrolysis", "efficiency"]

@@ -586,7 +586,7 @@ def map_to_lstrength(l_strength, df):
 def calculate_heat_losses(u_values, data_tabula, l_strength, temperature_factor):
     """
     calculates total annual heat losses Q_ht for different insulation thicknesses
-    (l_strength), depening on current insulation state (u_values), standard
+    (l_strength), depending on current insulation state (u_values), standard
     building topologies and air ventilation from TABULA (data_tabula) and
     the accumulated difference between internal and external temperature
     during the heating season (temperature_factor).

@@ -495,7 +495,7 @@ The production of glass is assumed to be fully electrified based on the current 
 
 **Non-ferrous Metals**
 
-The non-ferrous metal subsector includes the manufacturing of base metals (aluminium, copper, lead, zink), precious metals (gold, silver), and technology metals (molybdenum, cobalt, silicon).					
+The non-ferrous metal subsector includes the manufacturing of base metals (aluminium, copper, lead, zinc), precious metals (gold, silver), and technology metals (molybdenum, cobalt, silicon).					
 
 The manufacturing of aluminium accounts for more than half of the final energy consumption of this subsector. Two alternative processing routes are used today to manufacture aluminium in Europe. The primary route represents 40% of the aluminium pro- duction, while the secondary route represents the remaining 60%.		
 
