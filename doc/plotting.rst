@@ -9,42 +9,6 @@ Plotting and Summary
 
 .. warning:: The corresponding code is currently under revision and has only minimal documentation.
 
-.. _plot_potentials:
-
-Rule ``plot_p_nom_max``
-==========================
-
-.. graphviz::
-    :align: center
-
-    digraph snakemake_dag {
-        graph [bgcolor=white,
-            margin=0,
-            size="8,5"
-        ];
-        node [fontname=sans,
-            fontsize=10,
-            penwidth=2,
-            shape=box,
-            style=rounded
-        ];
-        edge [color=grey,
-            penwidth=2
-        ];
-        0	 [color="0.42 0.6 0.85",
-            fillcolor=gray,
-            label=plot_p_nom_max,
-            style=filled];
-        1	 [color="0.58 0.6 0.85",
-            label=cluster_network];
-        1 -> 0;
-    }
-
-|
-
-.. automodule:: plot_p_nom_max
-
-.. _summary:
 
 Rule ``make_summary``
 ========================

@@ -128,10 +128,6 @@ series and potentials using the rule :mod:`build_renewable_profiles`.
 It can take the values ``onwind``, ``offwind-ac``, ``offwind-dc``, and ``solar`` but **not** ``hydro``
 (since hydroelectric plant profiles are created by a different rule).
 
-The wildcard can moreover be used to create technology specific figures and summaries.
-For instance ``{technology}`` can be used to plot regionally disaggregated potentials
-with the rule :mod:`plot_p_nom_max`.
-
 .. _attr:
 
 The ``{attr}`` wildcard
@@ -148,7 +144,7 @@ The ``{ext}`` wildcard
 ======================
 
 The ``{ext}`` wildcard specifies the file type of the figures the
-rule :mod:`plot_network`, :mod:`plot_summary`, and :mod:`plot_p_nom_max` produce.
+rule :mod:`plot_network` and :mod:`plot_summary` produce.
 Typical examples are ``pdf`` and ``png``. The list of supported file
 formats depends on the used backend. To query the supported file types on your system, issue:
 
