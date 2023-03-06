@@ -725,13 +725,12 @@ def cycling_shift(df, steps=1):
 
 
 # TODO checkout PyPSA-Eur script
-def prepare_costs(cost_file, USD_to_EUR, discount_rate, Nyears, lifetime):
+def prepare_costs(cost_file, discount_rate, Nyears, lifetime):
     # set all asset costs and other parameters
     costs = pd.read_csv(cost_file, index_col=[0, 1]).sort_index()
 
     # correct units to MW and EUR
     costs.loc[costs.unit.str.contains("/kW"), "value"] *= 1e3
-    costs.loc[costs.unit.str.contains("USD"), "value"] *= USD_to_EUR
 
     # min_count=1 is important to generate NaNs which are then filled by fillna
     costs = (
@@ -3266,7 +3265,6 @@ if __name__ == "__main__":
 
     costs = prepare_costs(
         snakemake.input.costs,
-        snakemake.config["costs"]["USD2013_to_EUR2013"],
         snakemake.config["costs"]["discountrate"],
         Nyears,
         snakemake.config["costs"]["lifetime"],
