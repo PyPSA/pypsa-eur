@@ -373,8 +373,9 @@ def extra_functionality(n, snapshots):
 
 
 def solve_network(n, config, opts="", **kwargs):
-    solver_options = config["solving"]["solver"].copy()
-    solver_name = solver_options.pop("name")
+    set_of_options = config['solving']['solver']['options']
+    solver_options = config['solving']["solver_options"][set_of_options] if set_of_options else {}
+    solver_name = config['solving']['solver']['name']
     cf_solving = config["solving"]["options"]
     track_iterations = cf_solving.get("track_iterations", False)
     min_iterations = cf_solving.get("min_iterations", 4)
@@ -411,7 +412,7 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "solve_network", simpl="", clusters="5", ll="copt", opts="Co2L-BAU-CCL-24H"
+            "solve_network", simpl="", clusters="5", ll="v1.5", opts=""
         )
     configure_logging(snakemake)
 
@@ -419,7 +420,7 @@ if __name__ == "__main__":
     if tmpdir is not None:
         Path(tmpdir).mkdir(parents=True, exist_ok=True)
     opts = snakemake.wildcards.opts.split("-")
-    solve_opts = snakemake.config["solving"]["options"]
+    solve_opts = snakemake.config['solving']['options']
 
     fn = getattr(snakemake.log, "memory", None)
     with memory_logger(filename=fn, interval=30.0) as mem:
