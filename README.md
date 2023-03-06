@@ -27,7 +27,7 @@ and in the paper
 [PyPSA-Eur: An Open Optimisation Model of the European Transmission
 System](https://arxiv.org/abs/1806.01613), 2018,
 [arXiv:1806.01613](https://arxiv.org/abs/1806.01613).
-The model building routines are defined through a snakemake workflow. 
+The model building routines are defined through a snakemake workflow.
 Please see the [documentation](https://pypsa-eur.readthedocs.io/)
 for installation instructions and other useful information about the snakemake workflow.
 The model is designed to be imported into the open toolbox
