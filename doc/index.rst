@@ -310,6 +310,6 @@ More details are included in
    :header-rows: 1
    :file: configtables/licenses.csv
 
-* *BY: Attribute Source*
-* *NC: Non-Commercial Use Only*
-* *SA: Share Alike*
+* BY: Attribute Source
+* NC: Non-Commercial Use Only
+* SA: Share Alike
