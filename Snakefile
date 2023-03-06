@@ -19,7 +19,7 @@ run = config.get("run", {})
 RDIR = run["name"] + "/" if run.get("name") else ""
 CDIR = RDIR if not run.get("shared_cutouts") else ""
 
-COSTS = "data/" + RDIR + f"costs_{config['costs']['year']}.csv"
+COSTS = f"data/costs_{config['costs']['year']}.csv"
 ATLITE_NPROCESSES = config["atlite"].get("nprocesses", 4)
 
 
@@ -282,9 +282,9 @@ if config["enable"].get("retrieve_cost_data", True):
                 keep_local=True,
             ),
         output:
-            "data/" + RDIR + "costs_{year}.csv",
+            "data/costs_{year}.csv",
         log:
-            "logs/" + RDIR + "retrieve_cost_data_{year}.log",
+            "logs/retrieve_cost_data_{year}.log",
         resources:
             mem_mb=1000,
         run:
