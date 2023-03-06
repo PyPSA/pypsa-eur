@@ -1,3 +1,8 @@
+..
+  SPDX-FileCopyrightText: 2021-2023 The PyPSA-Eur Authors
+
+  SPDX-License-Identifier: CC-BY-4.0
+
 .. _spatial_resolution:
 
 ##########################################
