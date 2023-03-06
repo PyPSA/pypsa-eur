@@ -1,6 +1,6 @@
-Welcome to the CBC MILP Solver 
-Version: 2.10.8 
-Build Date: May  6 2022 
+Welcome to the CBC MILP Solver
+Version: 2.10.8
+Build Date: May  6 2022
 
 command line - cbc -printingOptions all -import /tmp/linopy-problem-vkrwu974.lp -solve -solu /tmp/linopy-solve-txclz68j.sol (default strategy 1)
 Option for printingOptions changed from normal to all
@@ -33,4 +33,3 @@ Optimal - objective value 7.4484383e+09
 After Postsolve, objective 7.4484383e+09, infeasibilities - dual 0 (0), primal 0 (0)
 Optimal objective 7448438281 - 2500 iterations time 0.162, Presolve 0.00
 Total time (CPU seconds):       0.19   (Wallclock seconds):       0.16
-
