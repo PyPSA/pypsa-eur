@@ -220,7 +220,7 @@ if __name__ == "__main__":
     cluster = LocalCluster(n_workers=nprocesses, threads_per_worker=1)
     client = Client(cluster, asynchronous=True)
 
-    cutout = atlite.Cutout(snakemake.input["cutout"])
+    cutout = atlite.Cutout(snakemake.input.cutout)
     regions = gpd.read_file(snakemake.input.regions)
     assert not regions.empty, (
         f"List of regions in {snakemake.input.regions} is empty, please "

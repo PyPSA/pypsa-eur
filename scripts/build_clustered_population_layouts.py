@@ -18,7 +18,7 @@ if __name__ == "__main__":
             clusters=48,
         )
 
-    cutout = atlite.Cutout(snakemake.config["atlite"]["cutout"])
+    cutout = atlite.Cutout(snakemake.input.cutout)
 
     clustered_regions = (
         gpd.read_file(snakemake.input.regions_onshore)

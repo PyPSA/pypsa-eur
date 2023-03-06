@@ -23,7 +23,7 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=snakemake.config["logging"]["level"])
 
-    cutout = atlite.Cutout(snakemake.config["atlite"]["cutout"])
+    cutout = atlite.Cutout(snakemake.input.cutout)
 
     grid_cells = cutout.grid.geometry
 

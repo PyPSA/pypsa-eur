@@ -138,7 +138,7 @@ electricity:
 
 
 atlite:
-  cutout: ../pypsa-eur/cutouts/europe-2013-era5.nc
+  default_cutout: europe-2013-era5
   nprocesses: 4
   show_progress: false # false saves time
   cutouts:

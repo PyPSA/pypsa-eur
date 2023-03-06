@@ -661,7 +661,8 @@ if config.get("retrieve_cost_data", True):
 rule build_population_layouts:
     input:
         nuts3_shapes='resources/' + RDIR + 'nuts3_shapes.geojson',
-        urban_percent="data/urban_percent.csv"
+        urban_percent="data/urban_percent.csv",
+        cutout="cutouts/" + CDIR + config["atlite"]["default_cutout"] + ".nc",
     output:
         pop_layout_total="resources/" + RDIR + "pop_layout_total.nc",
         pop_layout_urban="resources/" + RDIR + "pop_layout_urban.nc",
@@ -677,7 +678,8 @@ rule build_clustered_population_layouts:
         pop_layout_total="resources/" + RDIR + "pop_layout_total.nc",
         pop_layout_urban="resources/" + RDIR + "pop_layout_urban.nc",
         pop_layout_rural="resources/" + RDIR + "pop_layout_rural.nc",
-        regions_onshore='resources/' + RDIR + 'regions_onshore_elec_s{simpl}_{clusters}.geojson'
+        regions_onshore='resources/' + RDIR + 'regions_onshore_elec_s{simpl}_{clusters}.geojson',
+        cutout="cutouts/" + CDIR + config["atlite"]["default_cutout"] + ".nc",
     output:
         clustered_pop_layout="resources/" + RDIR + "pop_layout_elec_s{simpl}_{clusters}.csv"
     resources: mem_mb=10000
@@ -755,7 +757,8 @@ else:
 rule build_heat_demands:
     input:
         pop_layout="resources/" + RDIR + "pop_layout_{scope}.nc",
-        regions_onshore="resources/" + RDIR + "regions_onshore_elec_s{simpl}_{clusters}.geojson"
+        regions_onshore="resources/" + RDIR + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+        cutout="cutouts/" + CDIR + config["atlite"]["default_cutout"] + ".nc",
     output:
         heat_demand="resources/" + RDIR + "heat_demand_{scope}_elec_s{simpl}_{clusters}.nc"
     resources: mem_mb=20000
@@ -767,7 +770,8 @@ rule build_heat_demands:
 rule build_temperature_profiles:
     input:
         pop_layout="resources/" + RDIR + "pop_layout_{scope}.nc",
-        regions_onshore="resources/" + RDIR + "regions_onshore_elec_s{simpl}_{clusters}.geojson"
+        regions_onshore="resources/" + RDIR + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+        cutout="cutouts/" + CDIR + config["atlite"]["default_cutout"] + ".nc",
     output:
         temp_soil="resources/" + RDIR + "temp_soil_{scope}_elec_s{simpl}_{clusters}.nc",
         temp_air="resources/" + RDIR + "temp_air_{scope}_elec_s{simpl}_{clusters}.nc",
@@ -800,7 +804,8 @@ rule build_cop_profiles:
 rule build_solar_thermal_profiles:
     input:
         pop_layout="resources/" + RDIR + "pop_layout_{scope}.nc",
-        regions_onshore="resources/" + RDIR + "regions_onshore_elec_s{simpl}_{clusters}.geojson"
+        regions_onshore="resources/" + RDIR + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+        cutout="cutouts/" + CDIR + config["atlite"]["default_cutout"] + ".nc",
     output:
         solar_thermal="resources/" + RDIR + "solar_thermal_{scope}_elec_s{simpl}_{clusters}.nc",
     resources: mem_mb=20000
