@@ -160,7 +160,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
     mean = df_agg.loc[biomass_i, "DateIn"].mean()
     df_agg.loc[biomass_i, "DateIn"] = df_agg.loc[biomass_i, "DateIn"].fillna(int(mean))
     # Fill missing DateOut
-    dateout = df_agg.loc[biomass_i, "DateIn"] + snakemake.config["costs"]["lifetime"]
+    dateout = df_agg.loc[biomass_i, "DateIn"] + snakemake.config["costs"]['fill_values']["lifetime"]
     df_agg.loc[biomass_i, "DateOut"] = df_agg.loc[biomass_i, "DateOut"].fillna(dateout)
 
     # drop assets which are already phased out / decommissioned
@@ -654,7 +654,7 @@ if __name__ == "__main__":
             .to_pandas()
             .reindex(index=n.snapshots)
         )
-        default_lifetime = snakemake.config["costs"]["lifetime"]
+        default_lifetime = snakemake.config["costs"]['fill_values']["lifetime"]
         add_heating_capacities_installed_before_baseyear(
             n,
             baseyear,

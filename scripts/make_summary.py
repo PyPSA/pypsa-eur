@@ -208,15 +208,15 @@ def calculate_cumulative_cost():
     # integrate cost throughout the transition path
     for r in cumulative_cost.columns:
         for cluster in cumulative_cost.index.get_level_values(level=0).unique():
-            for lv in cumulative_cost.index.get_level_values(level=1).unique():
+            for ll in cumulative_cost.index.get_level_values(level=1).unique():
                 for sector_opts in cumulative_cost.index.get_level_values(
                     level=2
                 ).unique():
                     cumulative_cost.loc[
-                        (cluster, lv, sector_opts, "cumulative cost"), r
+                        (cluster, ll, sector_opts, "cumulative cost"), r
                     ] = np.trapz(
                         cumulative_cost.loc[
-                            idx[cluster, lv, sector_opts, planning_horizons], r
+                            idx[cluster, ll, sector_opts, planning_horizons], r
                         ].values,
                         x=planning_horizons,
                     )
@@ -639,7 +639,7 @@ def make_summaries(networks_dict):
     ]
 
     columns = pd.MultiIndex.from_tuples(
-        networks_dict.keys(), names=["cluster", "lv", "opt", "planning_horizon"]
+        networks_dict.keys(), names=["cluster", "ll", "opt", "planning_horizon"]
     )
 
     df = {}
@@ -676,14 +676,14 @@ if __name__ == "__main__":
     logging.basicConfig(level=snakemake.config["logging"]["level"])
 
     networks_dict = {
-        (cluster, lv, opt + sector_opt, planning_horizon): "results/"
+        (cluster, ll, opt + sector_opt, planning_horizon): "results/"
         + snakemake.params.RDIR
-        + f"/postnetworks/elec_s{simpl}_{cluster}_lv{lv}_{opt}_{sector_opt}_{planning_horizon}.nc"
+        + f"/postnetworks/elec_s{simpl}_{cluster}_l{ll}_{opt}_{sector_opt}_{planning_horizon}.nc"
         for simpl in snakemake.config["scenario"]["simpl"]
         for cluster in snakemake.config["scenario"]["clusters"]
         for opt in snakemake.config["scenario"]["opts"]
         for sector_opt in snakemake.config["scenario"]["sector_opts"]
-        for lv in snakemake.config["scenario"]["lv"]
+        for ll in snakemake.config["scenario"]["ll"]
         for planning_horizon in snakemake.config["scenario"]["planning_horizons"]
     }
 

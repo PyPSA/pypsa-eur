@@ -136,7 +136,7 @@ def plot_map(
     ac_color = "rosybrown"
     dc_color = "darkseagreen"
 
-    if snakemake.wildcards["lv"] == "1.0":
+    if snakemake.wildcards["ll"] == "v1.0":
         # should be zero
         line_widths = n.lines.s_nom_opt - n.lines.s_nom
         link_widths = n.links.p_nom_opt - n.links.p_nom
@@ -698,7 +698,7 @@ def plot_map_without(network):
     to_drop = n.links.index[(n.links.carrier != "DC") & (n.links.carrier != "B2B")]
     n.links.drop(to_drop, inplace=True)
 
-    if snakemake.wildcards["lv"] == "1.0":
+    if snakemake.wildcards["ll"] == "v1.0":
         line_widths = n.lines.s_nom
         link_widths = n.links.p_nom
     else:
@@ -895,7 +895,7 @@ def plot_series(network, carrier="AC", name="test"):
         "{}/{RDIR}maps/series-{}-{}-{}-{}-{}.pdf".format(
             "results",
             snakemake.params.RDIR,
-            snakemake.wildcards["lv"],
+            snakemake.wildcards["ll"],
             carrier,
             start,
             stop,
