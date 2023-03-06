@@ -19,7 +19,7 @@ run = config.get("run", {})
 RDIR = run["name"] + "/" if run.get("name") else ""
 CDIR = RDIR if not run.get("shared_cutouts") else ""
 
-COSTS = "resources/" + RDIR + "costs.csv"
+COSTS = "resources/" + RDIR + f"costs_{config['costs']['year']}.csv"
 ATLITE_NPROCESSES = config["atlite"].get("nprocesses", 4)
 
 
@@ -278,18 +278,17 @@ if config["enable"].get("retrieve_cost_data", True):
     rule retrieve_cost_data:
         input:
             HTTP.remote(
-                f"raw.githubusercontent.com/PyPSA/technology-data/{config['costs']['version']}/outputs/costs_{config['costs']['year']}.csv",
+                "raw.githubusercontent.com/PyPSA/technology-data/{}/outputs/".format(config['costs']['version']) + "costs_{year}.csv",
                 keep_local=True,
             ),
         output:
-            COSTS,
+            "data/costs_{year}.csv",
         log:
-            "logs/" + RDIR + "retrieve_cost_data.log",
+            "logs/" + RDIR + "retrieve_cost_data_{year}.log",
         resources:
-            mem_mb=5000,
+            mem_mb=1000,
         run:
             move(input[0], output[0])
-
 
 if config["enable"].get("build_natura_raster", False):
 
@@ -642,20 +641,11 @@ datafiles = [
     directory("data/jrc-idees-2015"),
 ]
 
-if config.get('retrieve_sector_databundle', True):
+if config["enable"].get('retrieve_sector_databundle', True):
     rule retrieve_sector_databundle:
         output: *datafiles
         log: "logs/retrieve_sector_databundle.log"
         script: 'scripts/retrieve_sector_databundle.py'
-
-
-if config.get("retrieve_cost_data", True):
-    rule retrieve_cost_data:
-        input: HTTP.remote("raw.githubusercontent.com/PyPSA/technology-data/{}/outputs/".format(config['costs']['version']) + "costs_{year}.csv", keep_local=True)
-        output: "data/costs_{year}.csv"
-        log: "logs/" + RDIR + "retrieve_cost_data_{year}.log",
-        resources: mem_mb=1000,
-        run: move(input[0], output[0])
 
 
 rule build_population_layouts:
