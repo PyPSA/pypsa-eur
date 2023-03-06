@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: CC0-1.0
 
 run:
-  name: "test-sector-overnight" 
+  name: "test-sector-overnight"
 
 scenario:
   ll:

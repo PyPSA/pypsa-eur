@@ -8,9 +8,9 @@ run:
   name: "test-elec" # use this to keep track of runs with different settings
 
 scenario:
-  clusters: 
+  clusters:
   - 5
-  opts: 
+  opts:
   - Co2L-24H
 
 countries: ['BE']
