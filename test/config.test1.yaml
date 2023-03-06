@@ -46,7 +46,7 @@ renewable:
   solar:
     cutout: be-03-2013-era5
 
-  
+
 clustering:
   exclude_carriers: ["OCGT", "offwind-ac", "coal"]
 

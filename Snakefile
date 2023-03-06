@@ -319,7 +319,13 @@ rule retrieve_ship_raster:
 rule build_ship_raster:
     input:
         ship_density="data/shipdensity_global.zip",
-        cutouts=expand("cutouts/" + CDIR + "{cutout}.nc", cutout=[config["renewable"][k]['cutout'] for k in config['electricity']['renewable_carriers']])
+        cutouts=expand(
+            "cutouts/" + CDIR + "{cutout}.nc",
+            cutout=[
+                config["renewable"][k]["cutout"]
+                for k in config["electricity"]["renewable_carriers"]
+            ],
+        ),
     output:
         "resources/" + RDIR + "shipdensity_raster.nc",
     log:
