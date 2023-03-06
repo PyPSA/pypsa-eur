@@ -14,7 +14,7 @@ import pandas as pd
 import pypsa
 import xarray as xr
 from build_energy_totals import build_co2_totals, build_eea_co2, build_eurostat_co2
-from helper import (
+from _helpers import (
     generate_periodic_profiles,
     override_component_attrs,
     update_config_with_sector_opts,

@@ -12,7 +12,7 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
-from helper import override_component_attrs
+from _helpers import override_component_attrs
 from make_summary import assign_carriers
 from plot_summary import preferred_order, rename_techs
 from pypsa.plot import add_legend_circles, add_legend_lines, add_legend_patches

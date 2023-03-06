@@ -8,7 +8,7 @@ Build industry sector ratios.
 """
 
 import pandas as pd
-from helper import mute_print
+from _helpers import mute_print
 
 # GWh/ktoe OR MWh/toe
 toe_to_MWh = 11.630

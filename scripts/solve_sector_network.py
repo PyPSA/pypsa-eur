@@ -10,7 +10,7 @@ import logging
 
 import numpy as np
 import pypsa
-from helper import override_component_attrs, update_config_with_sector_opts
+from _helpers import override_component_attrs, update_config_with_sector_opts
 from vresutils.benchmark import memory_logger
 
 logger = logging.getLogger(__name__)

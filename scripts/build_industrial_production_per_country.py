@@ -15,7 +15,7 @@ import multiprocessing as mp
 
 import numpy as np
 import pandas as pd
-from helper import mute_print
+from _helpers import mute_print
 from tqdm import tqdm
 
 tj_to_ktoe = 0.0238845

@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 import pypsa
 import yaml
-from helper import override_component_attrs
+from _helpers import override_component_attrs
 from prepare_sector_network import prepare_costs
 
 idx = pd.IndexSlice

@@ -10,7 +10,7 @@ Build transport demand.
 import numpy as np
 import pandas as pd
 import xarray as xr
-from helper import generate_periodic_profiles
+from _helpers import generate_periodic_profiles
 
 
 def build_nodal_transport_data(fn, pop_layout):
