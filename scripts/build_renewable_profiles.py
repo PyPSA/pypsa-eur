@@ -204,7 +204,7 @@ if __name__ == "__main__":
     configure_logging(snakemake)
 
     nprocesses = int(snakemake.threads)
-    noprogress = not snakemake.config["atlite"].get("show_progress", False)
+    noprogress = snakemake.config["run"].get("disable_progressbar", True)
     config = snakemake.config["renewable"][snakemake.wildcards.technology]
     resource = config["resource"]  # pv panel config / wind turbine config
     correction_factor = config.get("correction_factor", 1.0)
@@ -369,3 +369,4 @@ if __name__ == "__main__":
         ds["profile"] = ds["profile"].where(ds["profile"] >= min_p_max_pu, 0)
 
     ds.to_netcdf(snakemake.output.profile)
+    client.shutdown()

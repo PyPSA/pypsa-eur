@@ -398,6 +398,7 @@ def idees_per_country(ct, year, base_dir):
 
 def build_idees(countries, year):
     nprocesses = snakemake.threads
+    disable_progress = snakemake.config["run"].get("disable_progressbar", False)
 
     func = partial(idees_per_country, year=year, base_dir=snakemake.input.idees)
     tqdm_kwargs = dict(
@@ -405,6 +406,7 @@ def build_idees(countries, year):
         unit=" country",
         total=len(countries),
         desc="Build from IDEES database",
+        disable=disable_progress,
     )
     with mute_print():
         with mp.Pool(processes=nprocesses) as pool:

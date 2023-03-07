@@ -264,15 +264,18 @@ def aggregate_costs(n, flatten=False, opts=None, existing_only=False):
     return costs
 
 
-def progress_retrieve(url, file):
-    with tqdm(unit="B", unit_scale=True, unit_divisor=1024, miniters=1) as t:
+def progress_retrieve(url, file, disable=False):
+    if disable:
+        urllib.request.urlretrieve(url, file)
+    else:
+        with tqdm(unit="B", unit_scale=True, unit_divisor=1024, miniters=1) as t:
 
-        def update_to(b=1, bsize=1, tsize=None):
-            if tsize is not None:
-                t.total = tsize
-            t.update(b * bsize - t.n)
+            def update_to(b=1, bsize=1, tsize=None):
+                if tsize is not None:
+                    t.total = tsize
+                t.update(b * bsize - t.n)
 
-        urllib.request.urlretrieve(url, file, reporthook=update_to)
+            urllib.request.urlretrieve(url, file, reporthook=update_to)
 
 
 def get_aggregation_strategies(aggregation_strategies):

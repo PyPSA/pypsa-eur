@@ -245,7 +245,9 @@ def industry_production_per_country(country, year, eurostat_dir, jrc_dir):
 
 
 def industry_production(countries, year, eurostat_dir, jrc_dir):
-    nprocesses = 1  # snakemake.threads
+    nprocesses = snakemake.threads
+    disable_progress = snakemake.config["run"].get("disable_progressbar", False)
+
     func = partial(
         industry_production_per_country,
         year=year,
@@ -257,6 +259,7 @@ def industry_production(countries, year, eurostat_dir, jrc_dir):
         unit=" country",
         total=len(countries),
         desc="Build industry production",
+        disable=disable_progress,
     )
     with mp.Pool(processes=nprocesses) as pool:
         demand_l = list(tqdm(pool.imap(func, countries), **tqdm_kwargs))

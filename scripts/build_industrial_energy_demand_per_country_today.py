@@ -179,6 +179,7 @@ def add_non_eu28_industrial_energy_demand(demand):
 
 def industrial_energy_demand(countries, year):
     nprocesses = snakemake.threads
+    disable_progress = snakemake.config["run"].get("disable_progressbar", False)
     func = partial(
         industrial_energy_demand_per_country, year=year, jrc_dir=snakemake.input.jrc
     )
@@ -187,6 +188,7 @@ def industrial_energy_demand(countries, year):
         unit=" country",
         total=len(countries),
         desc="Build industrial energy demand",
+        disable=disable_progress,
     )
     with mp.Pool(processes=nprocesses) as pool:
         demand_l = list(tqdm(pool.imap(func, countries), **tqdm_kwargs))

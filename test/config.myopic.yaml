@@ -2,8 +2,10 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
+
 run:
   name: "test-sector-myopic"
+  disable_progressbar: true
   shared_resources: true
   shared_cutouts: true
 
