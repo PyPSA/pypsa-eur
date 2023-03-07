@@ -15,6 +15,7 @@ if not exists("config.yaml"):
 
 configfile: "config.yaml"
 
+
 COSTS = f"data/costs_{config['costs']['year']}.csv"
 ATLITE_NPROCESSES = config["atlite"].get("nprocesses", 4)
 
@@ -38,25 +39,20 @@ wildcard_constraints:
 
 rule cluster_all_networks:
     input:
-        expand(
-            RESOURCES + "networks/elec_s{simpl}_{clusters}.nc",
-            **config["scenario"]
-        ),
+        expand(RESOURCES + "networks/elec_s{simpl}_{clusters}.nc", **config["scenario"]),
 
 
 rule extra_components_all_networks:
     input:
         expand(
-            RESOURCES + "networks/elec_s{simpl}_{clusters}_ec.nc",
-            **config["scenario"]
+            RESOURCES + "networks/elec_s{simpl}_{clusters}_ec.nc", **config["scenario"]
         ),
 
 
 rule prepare_all_networks:
     input:
         expand(
-            RESOURCES
-            + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+            RESOURCES + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
             **config["scenario"]
         ),
 
@@ -513,10 +509,8 @@ rule cluster_network:
         tech_costs=COSTS,
     output:
         network=RESOURCES + "networks/elec_s{simpl}_{clusters}.nc",
-        regions_onshore=RESOURCES
-        + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
-        regions_offshore=RESOURCES
-        + "regions_offshore_elec_s{simpl}_{clusters}.geojson",
+        regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+        regions_offshore=RESOURCES + "regions_offshore_elec_s{simpl}_{clusters}.geojson",
         busmap=RESOURCES + "busmap_elec_s{simpl}_{clusters}.csv",
         linemap=RESOURCES + "linemap_elec_s{simpl}_{clusters}.csv",
     log:
@@ -556,10 +550,7 @@ rule prepare_network:
     log:
         LOGS + "prepare_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.log",
     benchmark:
-        (
-            BENCHMARKS
-            + "prepare_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}"
-        )
+        (BENCHMARKS + "prepare_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}")
     threads: 1
     resources:
         mem_mb=4000,
@@ -593,8 +584,8 @@ rule solve_network:
     output:
         RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
     log:
-        solver=normpath(LOGS
-            + "solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_solver.log"
+        solver=normpath(
+            LOGS + "solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_solver.log"
         ),
         python=LOGS
         + "solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_python.log",
@@ -614,13 +605,12 @@ rule solve_network:
 rule solve_operations_network:
     input:
         unprepared=RESOURCES + "networks/elec_s{simpl}_{clusters}_ec.nc",
-        optimized=RESULTS
-        + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+        optimized=RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
     output:
         RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op.nc",
     log:
         solver=normpath(
-LOGS
+            LOGS
             + "solve_operations_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op_solver.log"
         ),
         python=LOGS
@@ -689,12 +679,10 @@ rule build_clustered_population_layouts:
         pop_layout_total=RESOURCES + "pop_layout_total.nc",
         pop_layout_urban=RESOURCES + "pop_layout_urban.nc",
         pop_layout_rural=RESOURCES + "pop_layout_rural.nc",
-        regions_onshore=RESOURCES
-        + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+        regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
         cutout="cutouts/" + CDIR + config["atlite"]["default_cutout"] + ".nc",
     output:
-        clustered_pop_layout=RESOURCES
-        + "pop_layout_elec_s{simpl}_{clusters}.csv",
+        clustered_pop_layout=RESOURCES + "pop_layout_elec_s{simpl}_{clusters}.csv",
     resources:
         mem_mb=10000,
     benchmark:
@@ -774,8 +762,7 @@ if config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]:
             regions_offshore=RESOURCES
             + "regions_offshore_elec_s{simpl}_{clusters}.geojson",
         output:
-            clustered_gas_network=RESOURCES
-            + "gas_network_elec_s{simpl}_{clusters}.csv",
+            clustered_gas_network=RESOURCES + "gas_network_elec_s{simpl}_{clusters}.csv",
         resources:
             mem_mb=4000,
         script:
@@ -786,8 +773,9 @@ if config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]:
         **rules.build_gas_input_locations.output,
     }
 
+
 if not (config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]):
-# this is effecively an `else` statement which is however not liked by snakefmt
+    # this is effecively an `else` statement which is however not liked by snakefmt
 
     gas_infrastructure = {}
 
@@ -795,12 +783,10 @@ if not (config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]):
 rule build_heat_demands:
     input:
         pop_layout=RESOURCES + "pop_layout_{scope}.nc",
-        regions_onshore=RESOURCES
-        + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+        regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
         cutout="cutouts/" + CDIR + config["atlite"]["default_cutout"] + ".nc",
     output:
-        heat_demand=RESOURCES
-        + "heat_demand_{scope}_elec_s{simpl}_{clusters}.nc",
+        heat_demand=RESOURCES + "heat_demand_{scope}_elec_s{simpl}_{clusters}.nc",
     resources:
         mem_mb=20000,
     threads: 8
@@ -813,8 +799,7 @@ rule build_heat_demands:
 rule build_temperature_profiles:
     input:
         pop_layout=RESOURCES + "pop_layout_{scope}.nc",
-        regions_onshore=RESOURCES
-        + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+        regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
         cutout="cutouts/" + CDIR + config["atlite"]["default_cutout"] + ".nc",
     output:
         temp_soil=RESOURCES + "temp_soil_{scope}_elec_s{simpl}_{clusters}.nc",
@@ -830,25 +815,16 @@ rule build_temperature_profiles:
 
 rule build_cop_profiles:
     input:
-        temp_soil_total=RESOURCES
-        + "temp_soil_total_elec_s{simpl}_{clusters}.nc",
-        temp_soil_rural=RESOURCES
-        + "temp_soil_rural_elec_s{simpl}_{clusters}.nc",
-        temp_soil_urban=RESOURCES
-        + "temp_soil_urban_elec_s{simpl}_{clusters}.nc",
-        temp_air_total=RESOURCES
-        + "temp_air_total_elec_s{simpl}_{clusters}.nc",
-        temp_air_rural=RESOURCES
-        + "temp_air_rural_elec_s{simpl}_{clusters}.nc",
-        temp_air_urban=RESOURCES
-        + "temp_air_urban_elec_s{simpl}_{clusters}.nc",
+        temp_soil_total=RESOURCES + "temp_soil_total_elec_s{simpl}_{clusters}.nc",
+        temp_soil_rural=RESOURCES + "temp_soil_rural_elec_s{simpl}_{clusters}.nc",
+        temp_soil_urban=RESOURCES + "temp_soil_urban_elec_s{simpl}_{clusters}.nc",
+        temp_air_total=RESOURCES + "temp_air_total_elec_s{simpl}_{clusters}.nc",
+        temp_air_rural=RESOURCES + "temp_air_rural_elec_s{simpl}_{clusters}.nc",
+        temp_air_urban=RESOURCES + "temp_air_urban_elec_s{simpl}_{clusters}.nc",
     output:
-        cop_soil_total=RESOURCES
-        + "cop_soil_total_elec_s{simpl}_{clusters}.nc",
-        cop_soil_rural=RESOURCES
-        + "cop_soil_rural_elec_s{simpl}_{clusters}.nc",
-        cop_soil_urban=RESOURCES
-        + "cop_soil_urban_elec_s{simpl}_{clusters}.nc",
+        cop_soil_total=RESOURCES + "cop_soil_total_elec_s{simpl}_{clusters}.nc",
+        cop_soil_rural=RESOURCES + "cop_soil_rural_elec_s{simpl}_{clusters}.nc",
+        cop_soil_urban=RESOURCES + "cop_soil_urban_elec_s{simpl}_{clusters}.nc",
         cop_air_total=RESOURCES + "cop_air_total_elec_s{simpl}_{clusters}.nc",
         cop_air_rural=RESOURCES + "cop_air_rural_elec_s{simpl}_{clusters}.nc",
         cop_air_urban=RESOURCES + "cop_air_urban_elec_s{simpl}_{clusters}.nc",
@@ -863,12 +839,10 @@ rule build_cop_profiles:
 rule build_solar_thermal_profiles:
     input:
         pop_layout=RESOURCES + "pop_layout_{scope}.nc",
-        regions_onshore=RESOURCES
-        + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+        regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
         cutout="cutouts/" + CDIR + config["atlite"]["default_cutout"] + ".nc",
     output:
-        solar_thermal=RESOURCES
-        + "solar_thermal_{scope}_elec_s{simpl}_{clusters}.nc",
+        solar_thermal=RESOURCES + "solar_thermal_{scope}_elec_s{simpl}_{clusters}.nc",
     resources:
         mem_mb=20000,
     threads: 16
@@ -912,8 +886,7 @@ rule build_biomass_potentials:
             keep_local=True,
         ),
         nuts2="data/nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson",  # https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/#nuts21
-        regions_onshore=RESOURCES
-        + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+        regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
         nuts3_population="data/bundle/nama_10r_3popgdp.tsv.gz",
         swiss_cantons="data/bundle/ch_cantons.csv",
         swiss_population="data/bundle/je-e-21.03.02.xls",
@@ -921,8 +894,7 @@ rule build_biomass_potentials:
     output:
         biomass_potentials_all=RESOURCES
         + "biomass_potentials_all_s{simpl}_{clusters}.csv",
-        biomass_potentials=RESOURCES
-        + "biomass_potentials_s{simpl}_{clusters}.csv",
+        biomass_potentials=RESOURCES + "biomass_potentials_s{simpl}_{clusters}.csv",
     threads: 1
     resources:
         mem_mb=1000,
@@ -952,8 +924,9 @@ if config["sector"]["biomass_transport"]:
 
     build_biomass_transport_costs_output = rules.build_biomass_transport_costs.output
 
+
 if not config["sector"]["biomass_transport"]:
-# this is effecively an `else` statement which is however not liked by snakefmt
+    # this is effecively an `else` statement which is however not liked by snakefmt
 
     build_biomass_transport_costs_output = {}
 
@@ -985,20 +958,17 @@ if config["sector"]["regional_co2_sequestration_potential"]["enable"]:
 
 
 if not config["sector"]["regional_co2_sequestration_potential"]["enable"]:
-# this is effecively an `else` statement which is however not liked by snakefmt
+    # this is effecively an `else` statement which is however not liked by snakefmt
     build_sequestration_potentials_output = {}
 
 
 rule build_salt_cavern_potentials:
     input:
         salt_caverns="data/h2_salt_caverns_GWh_per_sqkm.geojson",
-        regions_onshore=RESOURCES
-        + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
-        regions_offshore=RESOURCES
-        + "regions_offshore_elec_s{simpl}_{clusters}.geojson",
+        regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+        regions_offshore=RESOURCES + "regions_offshore_elec_s{simpl}_{clusters}.geojson",
     output:
-        h2_cavern_potential=RESOURCES
-        + "salt_cavern_potentials_s{simpl}_{clusters}.csv",
+        h2_cavern_potential=RESOURCES + "salt_cavern_potentials_s{simpl}_{clusters}.csv",
     threads: 1
     resources:
         mem_mb=2000,
@@ -1072,10 +1042,8 @@ rule build_industrial_production_per_country_tomorrow:
 
 rule build_industrial_distribution_key:
     input:
-        regions_onshore=RESOURCES
-        + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
-        clustered_pop_layout=RESOURCES
-        + "pop_layout_elec_s{simpl}_{clusters}.csv",
+        regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+        clustered_pop_layout=RESOURCES + "pop_layout_elec_s{simpl}_{clusters}.csv",
         hotmaps_industrial_database="data/Industrial_Database.csv",
     output:
         industrial_distribution_key=RESOURCES
@@ -1168,14 +1136,12 @@ if config["sector"]["retrofitting"]["retro_endogen"]:
         input:
             building_stock="data/retro/data_building_stock.csv",
             data_tabula="data/retro/tabula-calculator-calcsetbuilding.csv",
-            air_temperature=RESOURCES
-            + "temp_air_total_elec_s{simpl}_{clusters}.nc",
+            air_temperature=RESOURCES + "temp_air_total_elec_s{simpl}_{clusters}.nc",
             u_values_PL="data/retro/u_values_poland.csv",
             tax_w="data/retro/electricity_taxes_eu.csv",
             construction_index="data/retro/comparative_level_investment.csv",
             floor_area_missing="data/retro/floor_area_missing.csv",
-            clustered_pop_layout=RESOURCES
-            + "pop_layout_elec_s{simpl}_{clusters}.csv",
+            clustered_pop_layout=RESOURCES + "pop_layout_elec_s{simpl}_{clusters}.csv",
             cost_germany="data/retro/retro_cost_germany.csv",
             window_assumptions="data/retro/window_assumptions.csv",
         output:
@@ -1192,15 +1158,14 @@ if config["sector"]["retrofitting"]["retro_endogen"]:
 
 
 if not config["sector"]["retrofitting"]["retro_endogen"]:
-# this is effecively an `else` statement which is however not liked by snakefmt
+    # this is effecively an `else` statement which is however not liked by snakefmt
     build_retro_cost_output = {}
 
 
 rule build_population_weighted_energy_totals:
     input:
         energy_totals=RESOURCES + "energy_totals.csv",
-        clustered_pop_layout=RESOURCES
-        + "pop_layout_elec_s{simpl}_{clusters}.csv",
+        clustered_pop_layout=RESOURCES + "pop_layout_elec_s{simpl}_{clusters}.csv",
     output:
         RESOURCES + "pop_weighted_energy_totals_s{simpl}_{clusters}.csv",
     threads: 1
@@ -1227,18 +1192,15 @@ rule build_shipping_demand:
 
 rule build_transport_demand:
     input:
-        clustered_pop_layout=RESOURCES
-        + "pop_layout_elec_s{simpl}_{clusters}.csv",
+        clustered_pop_layout=RESOURCES + "pop_layout_elec_s{simpl}_{clusters}.csv",
         pop_weighted_energy_totals=RESOURCES
         + "pop_weighted_energy_totals_s{simpl}_{clusters}.csv",
         transport_data=RESOURCES + "transport_data.csv",
         traffic_data_KFZ="data/emobility/KFZ__count",
         traffic_data_Pkw="data/emobility/Pkw__count",
-        temp_air_total=RESOURCES
-        + "temp_air_total_elec_s{simpl}_{clusters}.nc",
+        temp_air_total=RESOURCES + "temp_air_total_elec_s{simpl}_{clusters}.nc",
     output:
-        transport_demand=RESOURCES
-        + "transport_demand_s{simpl}_{clusters}.csv",
+        transport_demand=RESOURCES + "transport_demand_s{simpl}_{clusters}.csv",
         transport_data=RESOURCES + "transport_data_s{simpl}_{clusters}.csv",
         avail_profile=RESOURCES + "avail_profile_s{simpl}_{clusters}.csv",
         dsm_profile=RESOURCES + "dsm_profile_s{simpl}_{clusters}.csv",
@@ -1258,22 +1220,19 @@ rule prepare_sector_network:
         **gas_infrastructure,
         **build_sequestration_potentials_output,
         overrides="data/override_component_attrs",
-        network=RESOURCES
-        + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+        network=RESOURCES + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
         energy_totals_name=RESOURCES + "energy_totals.csv",
         eurostat=input_eurostat,
         pop_weighted_energy_totals=RESOURCES
         + "pop_weighted_energy_totals_s{simpl}_{clusters}.csv",
         shipping_demand=RESOURCES + "shipping_demand_s{simpl}_{clusters}.csv",
-        transport_demand=RESOURCES
-        + "transport_demand_s{simpl}_{clusters}.csv",
+        transport_demand=RESOURCES + "transport_demand_s{simpl}_{clusters}.csv",
         transport_data=RESOURCES + "transport_data_s{simpl}_{clusters}.csv",
         avail_profile=RESOURCES + "avail_profile_s{simpl}_{clusters}.csv",
         dsm_profile=RESOURCES + "dsm_profile_s{simpl}_{clusters}.csv",
         co2_totals_name=RESOURCES + "co2_totals.csv",
         co2="data/eea/UNFCCC_v23.csv",
-        biomass_potentials=RESOURCES
-        + "biomass_potentials_s{simpl}_{clusters}.csv",
+        biomass_potentials=RESOURCES + "biomass_potentials_s{simpl}_{clusters}.csv",
         heat_profile="data/heat_load_profile_BDEW.csv",
         costs="data/costs_{}.csv".format(config["costs"]["year"])
         if config["foresight"] == "overnight"
@@ -1283,35 +1242,22 @@ rule prepare_sector_network:
         h2_cavern=RESOURCES + "salt_cavern_potentials_s{simpl}_{clusters}.csv",
         busmap_s=RESOURCES + "busmap_elec_s{simpl}.csv",
         busmap=RESOURCES + "busmap_elec_s{simpl}_{clusters}.csv",
-        clustered_pop_layout=RESOURCES
-        + "pop_layout_elec_s{simpl}_{clusters}.csv",
+        clustered_pop_layout=RESOURCES + "pop_layout_elec_s{simpl}_{clusters}.csv",
         simplified_pop_layout=RESOURCES + "pop_layout_elec_s{simpl}.csv",
         industrial_demand=RESOURCES
         + "industrial_energy_demand_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
-        heat_demand_urban=RESOURCES
-        + "heat_demand_urban_elec_s{simpl}_{clusters}.nc",
-        heat_demand_rural=RESOURCES
-        + "heat_demand_rural_elec_s{simpl}_{clusters}.nc",
-        heat_demand_total=RESOURCES
-        + "heat_demand_total_elec_s{simpl}_{clusters}.nc",
-        temp_soil_total=RESOURCES
-        + "temp_soil_total_elec_s{simpl}_{clusters}.nc",
-        temp_soil_rural=RESOURCES
-        + "temp_soil_rural_elec_s{simpl}_{clusters}.nc",
-        temp_soil_urban=RESOURCES
-        + "temp_soil_urban_elec_s{simpl}_{clusters}.nc",
-        temp_air_total=RESOURCES
-        + "temp_air_total_elec_s{simpl}_{clusters}.nc",
-        temp_air_rural=RESOURCES
-        + "temp_air_rural_elec_s{simpl}_{clusters}.nc",
-        temp_air_urban=RESOURCES
-        + "temp_air_urban_elec_s{simpl}_{clusters}.nc",
-        cop_soil_total=RESOURCES
-        + "cop_soil_total_elec_s{simpl}_{clusters}.nc",
-        cop_soil_rural=RESOURCES
-        + "cop_soil_rural_elec_s{simpl}_{clusters}.nc",
-        cop_soil_urban=RESOURCES
-        + "cop_soil_urban_elec_s{simpl}_{clusters}.nc",
+        heat_demand_urban=RESOURCES + "heat_demand_urban_elec_s{simpl}_{clusters}.nc",
+        heat_demand_rural=RESOURCES + "heat_demand_rural_elec_s{simpl}_{clusters}.nc",
+        heat_demand_total=RESOURCES + "heat_demand_total_elec_s{simpl}_{clusters}.nc",
+        temp_soil_total=RESOURCES + "temp_soil_total_elec_s{simpl}_{clusters}.nc",
+        temp_soil_rural=RESOURCES + "temp_soil_rural_elec_s{simpl}_{clusters}.nc",
+        temp_soil_urban=RESOURCES + "temp_soil_urban_elec_s{simpl}_{clusters}.nc",
+        temp_air_total=RESOURCES + "temp_air_total_elec_s{simpl}_{clusters}.nc",
+        temp_air_rural=RESOURCES + "temp_air_rural_elec_s{simpl}_{clusters}.nc",
+        temp_air_urban=RESOURCES + "temp_air_urban_elec_s{simpl}_{clusters}.nc",
+        cop_soil_total=RESOURCES + "cop_soil_total_elec_s{simpl}_{clusters}.nc",
+        cop_soil_rural=RESOURCES + "cop_soil_rural_elec_s{simpl}_{clusters}.nc",
+        cop_soil_urban=RESOURCES + "cop_soil_urban_elec_s{simpl}_{clusters}.nc",
         cop_air_total=RESOURCES + "cop_air_total_elec_s{simpl}_{clusters}.nc",
         cop_air_rural=RESOURCES + "cop_air_rural_elec_s{simpl}_{clusters}.nc",
         cop_air_urban=RESOURCES + "cop_air_urban_elec_s{simpl}_{clusters}.nc",
@@ -1500,13 +1446,10 @@ if config["foresight"] == "myopic":
             powerplants=RESOURCES + "powerplants.csv",
             busmap_s=RESOURCES + "busmap_elec_s{simpl}.csv",
             busmap=RESOURCES + "busmap_elec_s{simpl}_{clusters}.csv",
-            clustered_pop_layout=RESOURCES
-            + "pop_layout_elec_s{simpl}_{clusters}.csv",
+            clustered_pop_layout=RESOURCES + "pop_layout_elec_s{simpl}_{clusters}.csv",
             costs="data/costs_{}.csv".format(config["scenario"]["planning_horizons"][0]),
-            cop_soil_total=RESOURCES
-            + "cop_soil_total_elec_s{simpl}_{clusters}.nc",
-            cop_air_total=RESOURCES
-            + "cop_air_total_elec_s{simpl}_{clusters}.nc",
+            cop_soil_total=RESOURCES + "cop_soil_total_elec_s{simpl}_{clusters}.nc",
+            cop_air_total=RESOURCES + "cop_air_total_elec_s{simpl}_{clusters}.nc",
             existing_heating="data/existing_infrastructure/existing_heating_raw.csv",
             country_codes="data/Country_codes.csv",
             existing_solar="data/existing_infrastructure/solar_capacity_IRENA.csv",
@@ -1546,10 +1489,8 @@ if config["foresight"] == "myopic":
             + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
             network_p=solved_previous_horizon,  #solved network at previous time step
             costs="data/costs_{planning_horizons}.csv",
-            cop_soil_total=RESOURCES
-            + "cop_soil_total_elec_s{simpl}_{clusters}.nc",
-            cop_air_total=RESOURCES
-            + "cop_air_total_elec_s{simpl}_{clusters}.nc",
+            cop_soil_total=RESOURCES + "cop_soil_total_elec_s{simpl}_{clusters}.nc",
+            cop_air_total=RESOURCES + "cop_air_total_elec_s{simpl}_{clusters}.nc",
         output:
             RESULTS
             + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",

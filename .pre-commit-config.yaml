@@ -73,10 +73,10 @@ repos:
     args: [--autofix, --indent, "2", --preserve-quotes]
 
   # Format Snakemake rule / workflow files
-# - repo: https://github.com/snakemake/snakefmt
-#   rev: v0.8.1
-#   hooks:
-#   - id: snakefmt
+- repo: https://github.com/snakemake/snakefmt
+  rev: v0.8.1
+  hooks:
+  - id: snakefmt
 
   # For cleaning jupyter notebooks
 - repo: https://github.com/aflc/pre-commit-jupyter
