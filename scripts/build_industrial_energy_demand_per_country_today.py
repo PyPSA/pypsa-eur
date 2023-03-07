@@ -179,7 +179,9 @@ def add_non_eu28_industrial_energy_demand(demand):
 
 def industrial_energy_demand(countries, year):
     nprocesses = snakemake.threads
-    func = partial(industrial_energy_demand_per_country, year=year, jrc_dir=snakemake.input.jrc)
+    func = partial(
+        industrial_energy_demand_per_country, year=year, jrc_dir=snakemake.input.jrc
+    )
     tqdm_kwargs = dict(
         ascii=False,
         unit=" country",
