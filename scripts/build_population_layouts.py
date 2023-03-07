@@ -11,7 +11,6 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-import multiprocessing as mp
 
 import atlite
 import geopandas as gpd

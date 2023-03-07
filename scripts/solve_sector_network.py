@@ -99,7 +99,7 @@ def add_co2_sequestration_limit(n, limit=200):
 
     limit = limit * 1e6
     for o in opts:
-        if not "seq" in o:
+        if "seq" not in o:
             continue
         limit = float(o[o.find("seq") + 3 :]) * 1e6
         break

@@ -12,7 +12,6 @@ import sys
 import numpy as np
 import pandas as pd
 import pypsa
-import yaml
 from _helpers import override_component_attrs
 from prepare_sector_network import prepare_costs
 
@@ -708,5 +707,5 @@ if __name__ == "__main__":
     if snakemake.config["foresight"] == "myopic":
         cumulative_cost = calculate_cumulative_cost()
         cumulative_cost.to_csv(
-            f"results/" + snakemake.params.RDIR + "/csvs/cumulative_cost.csv"
+            "results/" + snakemake.params.RDIR + "/csvs/cumulative_cost.csv"
         )

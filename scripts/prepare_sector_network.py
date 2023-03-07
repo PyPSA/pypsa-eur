@@ -741,9 +741,8 @@ def prepare_costs(cost_file, config, Nyears):
 
     costs = costs.fillna(config["fill_values"])
 
-    annuity_factor = (
-        lambda v: annuity(v["lifetime"], v["discount rate"]) + v["FOM"] / 100
-    )
+    def annuity_factor(v):
+        return annuity(v["lifetime"], v["discount rate"]) + v["FOM"] / 100
     costs["fixed"] = [
         annuity_factor(v) * v["investment"] * Nyears for i, v in costs.iterrows()
     ]
@@ -3343,7 +3342,7 @@ if __name__ == "__main__":
     limit_type = "config"
     limit = get(snakemake.config["co2_budget"], investment_year)
     for o in opts:
-        if not "cb" in o:
+        if "cb" not in o:
             continue
         limit_type = "carbon budget"
         fn = "results/" + snakemake.params.RDIR + "/csvs/carbon_budget_distribution.csv"
@@ -3357,7 +3356,7 @@ if __name__ == "__main__":
         limit = co2_cap.loc[investment_year]
         break
     for o in opts:
-        if not "Co2L" in o:
+        if "Co2L" not in o:
             continue
         limit_type = "wildcard"
         limit = o[o.find("Co2L") + 4 :]

@@ -31,7 +31,7 @@ if __name__ == "__main__":
     logger.info(f"Downloading databundle from '{url}'.")
     progress_retrieve(url, tarball_fn)
 
-    logger.info(f"Extracting databundle.")
+    logger.info("Extracting databundle.")
     tarfile.open(tarball_fn).extractall(to_fn)
 
     tarball_fn.unlink()

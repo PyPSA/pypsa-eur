@@ -606,7 +606,7 @@ def attach_extendable_generators(n, costs, ppl, carriers):
 
         else:
             raise NotImplementedError(
-                f"Adding extendable generators for carrier "
+                "Adding extendable generators for carrier "
                 "'{tech}' is not implemented, yet. "
                 "Only OCGT, CCGT and nuclear are allowed at the moment."
             )

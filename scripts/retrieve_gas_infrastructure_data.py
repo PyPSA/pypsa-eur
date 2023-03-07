@@ -34,7 +34,7 @@ if __name__ == "__main__":
     logger.info(f"Downloading databundle from '{url}'.")
     progress_retrieve(url, zip_fn)
 
-    logger.info(f"Extracting databundle.")
+    logger.info("Extracting databundle.")
     zipfile.ZipFile(zip_fn).extractall(to_fn)
 
     zip_fn.unlink()

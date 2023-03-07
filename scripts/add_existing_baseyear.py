@@ -16,7 +16,6 @@ from types import SimpleNamespace
 import numpy as np
 import pypsa
 import xarray as xr
-import yaml
 from _helpers import override_component_attrs, update_config_with_sector_opts
 from prepare_sector_network import cluster_heat_buses, define_spatial, prepare_costs
 
