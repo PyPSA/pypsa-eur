@@ -743,6 +743,7 @@ def prepare_costs(cost_file, config, Nyears):
 
     def annuity_factor(v):
         return annuity(v["lifetime"], v["discount rate"]) + v["FOM"] / 100
+
     costs["fixed"] = [
         annuity_factor(v) * v["investment"] * Nyears for i, v in costs.iterrows()
     ]

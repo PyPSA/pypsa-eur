@@ -77,10 +77,13 @@ def load_timeseries(fn, years, countries, powerstatistics=True):
 
     pattern = "power_statistics" if powerstatistics else "transparency"
     pattern = f"_load_actual_entsoe_{pattern}"
+
     def rename(s):
-        return s[:-len(pattern)]
+        return s[: -len(pattern)]
+
     def date_parser(x):
         return dateutil.parser.parse(x, ignoretz=True)
+
     return (
         pd.read_csv(fn, index_col=0, parse_dates=[0], date_parser=date_parser)
         .filter(like=pattern)
