@@ -90,7 +90,7 @@ eu28 = [
 jrc_names = {"GR": "EL", "GB": "UK"}
 
 
-def industrial_energy_demand_per_country(country, jrc_dir):
+def industrial_energy_demand_per_country(country, year, jrc_dir):
     jrc_country = jrc_names.get(country, country)
     fn = f"{jrc_dir}/JRC-IDEES-2015_EnergyBalance_{jrc_country}.xlsx"
 
@@ -177,9 +177,9 @@ def add_non_eu28_industrial_energy_demand(demand):
     return pd.concat([demand, demand_non_eu28])
 
 
-def industrial_energy_demand(countries):
+def industrial_energy_demand(countries, year):
     nprocesses = snakemake.threads
-    func = partial(industrial_energy_demand_per_country, jrc_dir=snakemake.input.jrc)
+    func = partial(industrial_energy_demand_per_country, year=year, jrc_dir=snakemake.input.jrc)
     tqdm_kwargs = dict(
         ascii=False,
         unit=" country",
@@ -203,7 +203,7 @@ if __name__ == "__main__":
     config = snakemake.config["industry"]
     year = config.get("reference_year", 2015)
 
-    demand = industrial_energy_demand(eu28)
+    demand = industrial_energy_demand(eu28, year)
 
     demand = add_ammonia_energy_demand(demand)
 
