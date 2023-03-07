@@ -786,7 +786,8 @@ if config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]:
         **rules.build_gas_input_locations.output,
     }
 
-else:
+if not (config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]):
+# this is effecively an `else` statement which is however not liked by snakefmt
 
     gas_infrastructure = {}
 
@@ -951,8 +952,9 @@ if config["sector"]["biomass_transport"]:
 
     build_biomass_transport_costs_output = rules.build_biomass_transport_costs.output
 
+if not config["sector"]["biomass_transport"]:
+# this is effecively an `else` statement which is however not liked by snakefmt
 
-else:
     build_biomass_transport_costs_output = {}
 
 
@@ -982,7 +984,8 @@ if config["sector"]["regional_co2_sequestration_potential"]["enable"]:
     build_sequestration_potentials_output = rules.build_sequestration_potentials.output
 
 
-else:
+if not config["sector"]["regional_co2_sequestration_potential"]["enable"]:
+# this is effecively an `else` statement which is however not liked by snakefmt
     build_sequestration_potentials_output = {}
 
 
@@ -1188,7 +1191,8 @@ if config["sector"]["retrofitting"]["retro_endogen"]:
     build_retro_cost_output = rules.build_retro_cost.output
 
 
-else:
+if not config["sector"]["retrofitting"]["retro_endogen"]:
+# this is effecively an `else` statement which is however not liked by snakefmt
     build_retro_cost_output = {}
 
 
