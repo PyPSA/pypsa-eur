@@ -102,7 +102,8 @@ def voronoi_partition_pts(points, outline):
             if not poly.is_valid:
                 poly = poly.buffer(0)
 
-            poly = poly.intersection(outline)
+            with np.errstate(invalid="ignore"):
+                poly = poly.intersection(outline)
 
             polygons.append(poly)
 

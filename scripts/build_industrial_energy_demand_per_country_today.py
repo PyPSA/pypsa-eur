@@ -8,6 +8,7 @@ Build industrial energy demand per country.
 """
 
 import multiprocessing as mp
+from functools import partial
 
 import pandas as pd
 from tqdm import tqdm
@@ -89,8 +90,7 @@ eu28 = [
 jrc_names = {"GR": "EL", "GB": "UK"}
 
 
-def industrial_energy_demand_per_country(country):
-    jrc_dir = snakemake.input.jrc
+def industrial_energy_demand_per_country(country, jrc_dir):
     jrc_country = jrc_names.get(country, country)
     fn = f"{jrc_dir}/JRC-IDEES-2015_EnergyBalance_{jrc_country}.xlsx"
 
@@ -179,7 +179,7 @@ def add_non_eu28_industrial_energy_demand(demand):
 
 def industrial_energy_demand(countries):
     nprocesses = snakemake.threads
-    func = industrial_energy_demand_per_country
+    func = partial(industrial_energy_demand_per_country, jrc_dir=snakemake.input.jrc)
     tqdm_kwargs = dict(
         ascii=False,
         unit=" country",

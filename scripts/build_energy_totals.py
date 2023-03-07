@@ -196,9 +196,7 @@ def build_swiss(year):
     return df
 
 
-def idees_per_country(ct, year):
-    base_dir = snakemake.input.idees
-
+def idees_per_country(ct, year, base_dir):
     ct_totals = {}
 
     ct_idees = idees_rename.get(ct, ct)
@@ -401,7 +399,7 @@ def idees_per_country(ct, year):
 def build_idees(countries, year):
     nprocesses = snakemake.threads
 
-    func = partial(idees_per_country, year=year)
+    func = partial(idees_per_country, year=year, base_dir=snakemake.input.idees)
     tqdm_kwargs = dict(
         ascii=False,
         unit=" country",
