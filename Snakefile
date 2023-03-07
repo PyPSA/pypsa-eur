@@ -1421,7 +1421,8 @@ rule prepare_sector_network:
         mem_mb=2000,
     benchmark:
         (
-            RDIR
+            "results/"
+            + RDIR
             + "benchmarks/prepare_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
         )
     script:
