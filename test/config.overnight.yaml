@@ -52,6 +52,6 @@ sector:
 
 solving:
   solver:
-    name: cbc
-    options: cbc-default
+    name: glpk
+    options: glpk-default
   mem: 4000
