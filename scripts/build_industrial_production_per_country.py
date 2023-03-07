@@ -8,6 +8,7 @@ Build industrial production per country.
 """
 
 import logging
+from functools import partial
 
 logger = logging.getLogger(__name__)
 
@@ -185,7 +186,7 @@ def find_physical_output(df):
     return slice(start, end)
 
 
-def get_energy_ratio(country):
+def get_energy_ratio(country, eurostat_dir, jrc_dir):
     if country == "CH":
         e_country = e_switzerland * tj_to_ktoe
     else:
@@ -214,7 +215,7 @@ def get_energy_ratio(country):
     return pd.Series({k: e_ratio[v] for k, v in sub2sect.items()})
 
 
-def industry_production_per_country(country):
+def industry_production_per_country(country, eurostat_dir, jrc_dir):
     def get_sector_data(sector, country):
         jrc_country = jrc_names.get(country, country)
         fn = f"{jrc_dir}/JRC-IDEES-2015_Industry_{jrc_country}.xlsx"
@@ -236,16 +237,16 @@ def industry_production_per_country(country):
     demand = pd.concat([get_sector_data(s, ct) for s in sect2sub.keys()])
 
     if country in non_EU:
-        demand *= get_energy_ratio(country)
+        demand *= get_energy_ratio(country, eurostat_dir, jrc_dir)
 
     demand.name = country
 
     return demand
 
 
-def industry_production(countries):
-    nprocesses = snakemake.threads
-    func = industry_production_per_country
+def industry_production(countries, eurostat_dir, jrc_dir):
+    nprocesses = 1 #snakemake.threads
+    func = partial(industry_production_per_country, eurostat_dir=eurostat_dir, jrc_dir=jrc_dir)
     tqdm_kwargs = dict(
         ascii=False,
         unit=" country",
@@ -309,7 +310,7 @@ if __name__ == "__main__":
     jrc_dir = snakemake.input.jrc
     eurostat_dir = snakemake.input.eurostat
 
-    demand = industry_production(countries)
+    demand = industry_production(countries, eurostat_dir, jrc_dir)
 
     separate_basic_chemicals(demand)
 
