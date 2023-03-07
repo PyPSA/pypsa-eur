@@ -245,8 +245,10 @@ def industry_production_per_country(country, eurostat_dir, jrc_dir):
 
 
 def industry_production(countries, eurostat_dir, jrc_dir):
-    nprocesses = 1 #snakemake.threads
-    func = partial(industry_production_per_country, eurostat_dir=eurostat_dir, jrc_dir=jrc_dir)
+    nprocesses = 1  # snakemake.threads
+    func = partial(
+        industry_production_per_country, eurostat_dir=eurostat_dir, jrc_dir=jrc_dir
+    )
     tqdm_kwargs = dict(
         ascii=False,
         unit=" country",
