@@ -4,6 +4,7 @@
 
 run:
   name: "test-sector-myopic"
+  shared_resources: true
   shared_cutouts: true
 
 foresight: myopic

@@ -15,13 +15,17 @@ if not exists("config.yaml"):
 
 configfile: "config.yaml"
 
+COSTS = f"data/costs_{config['costs']['year']}.csv"
+ATLITE_NPROCESSES = config["atlite"].get("nprocesses", 4)
 
 run = config.get("run", {})
 RDIR = run["name"] + "/" if run.get("name") else ""
 CDIR = RDIR if not run.get("shared_cutouts") else ""
 
-COSTS = f"data/costs_{config['costs']['year']}.csv"
-ATLITE_NPROCESSES = config["atlite"].get("nprocesses", 4)
+LOGS = "logs/" + RDIR
+BENCHMARKS = "benchmarks/" + RDIR
+RESOURCES = "resources/" + RDIR if run.get("shared_resources") else "resources/"
+RESULTS = "results/" + RDIR
 
 
 wildcard_constraints:
@@ -35,7 +39,7 @@ wildcard_constraints:
 rule cluster_all_networks:
     input:
         expand(
-            "resources/" + RDIR + "networks/elec_s{simpl}_{clusters}.nc",
+            RESOURCES + "networks/elec_s{simpl}_{clusters}.nc",
             **config["scenario"]
         ),
 
@@ -43,7 +47,7 @@ rule cluster_all_networks:
 rule extra_components_all_networks:
     input:
         expand(
-            "resources/" + RDIR + "networks/elec_s{simpl}_{clusters}_ec.nc",
+            RESOURCES + "networks/elec_s{simpl}_{clusters}_ec.nc",
             **config["scenario"]
         ),
 
@@ -51,8 +55,7 @@ rule extra_components_all_networks:
 rule prepare_all_networks:
     input:
         expand(
-            "resources/"
-            + RDIR
+            RESOURCES
             + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
             **config["scenario"]
         ),
@@ -61,8 +64,7 @@ rule prepare_all_networks:
 rule prepare_sector_networks:
     input:
         expand(
-            "results/"
-            + RDIR
+            RESULTS
             + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
             **config["scenario"]
         ),
@@ -70,13 +72,13 @@ rule prepare_sector_networks:
 
 rule all:
     input:
-        "results/" + RDIR + "graphs/costs.pdf",
+        RESULTS + "graphs/costs.pdf",
 
 
 rule solve_all_elec_networks:
     input:
         expand(
-            "results/" + RDIR + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+            RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
             **config["scenario"]
         ),
 
@@ -84,8 +86,7 @@ rule solve_all_elec_networks:
 rule solve_all_networks:
     input:
         expand(
-            "results/"
-            + RDIR
+            RESULTS
             + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
             **config["scenario"]
         ),
@@ -94,8 +95,7 @@ rule solve_all_networks:
 rule plot_all_networks:
     input:
         expand(
-            "results/"
-            + RDIR
+            RESULTS
             + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
             **config["scenario"]
         ),
@@ -107,7 +107,7 @@ if config["enable"].get("prepare_links_p_nom", False):
         output:
             "data/links_p_nom.csv",
         log:
-            "logs/" + RDIR + "prepare_links_p_nom.log",
+            LOGS + "prepare_links_p_nom.log",
         threads: 1
         resources:
             mem_mb=1500,
@@ -138,7 +138,7 @@ if config["enable"].get("retrieve_databundle", True):
         output:
             expand("data/bundle/{file}", file=datafiles),
         log:
-            "logs/" + RDIR + "retrieve_databundle.log",
+            LOGS + "retrieve_databundle.log",
         resources:
             mem_mb=1000,
         script:
@@ -164,9 +164,9 @@ rule build_load_data:
     input:
         "data/load_raw.csv",
     output:
-        "resources/" + RDIR + "load.csv",
+        RESOURCES + "load.csv",
     log:
-        "logs/" + RDIR + "build_load_data.log",
+        LOGS + "build_load_data.log",
     resources:
         mem_mb=5000,
     script:
@@ -175,12 +175,12 @@ rule build_load_data:
 
 rule build_powerplants:
     input:
-        base_network="resources/" + RDIR + "networks/base.nc",
+        base_network=RESOURCES + "networks/base.nc",
         custom_powerplants="data/custom_powerplants.csv",
     output:
-        "resources/" + RDIR + "powerplants.csv",
+        RESOURCES + "powerplants.csv",
     log:
-        "logs/" + RDIR + "build_powerplants.log",
+        LOGS + "build_powerplants.log",
     threads: 1
     resources:
         mem_mb=5000,
@@ -198,15 +198,15 @@ rule base_network:
         parameter_corrections="data/parameter_corrections.yaml",
         links_p_nom="data/links_p_nom.csv",
         links_tyndp="data/links_tyndp.csv",
-        country_shapes="resources/" + RDIR + "country_shapes.geojson",
-        offshore_shapes="resources/" + RDIR + "offshore_shapes.geojson",
-        europe_shape="resources/" + RDIR + "europe_shape.geojson",
+        country_shapes=RESOURCES + "country_shapes.geojson",
+        offshore_shapes=RESOURCES + "offshore_shapes.geojson",
+        europe_shape=RESOURCES + "europe_shape.geojson",
     output:
-        "resources/" + RDIR + "networks/base.nc",
+        RESOURCES + "networks/base.nc",
     log:
-        "logs/" + RDIR + "base_network.log",
+        LOGS + "base_network.log",
     benchmark:
-        "benchmarks/" + RDIR + "base_network"
+        BENCHMARKS + "base_network"
     threads: 1
     resources:
         mem_mb=1500,
@@ -224,12 +224,12 @@ rule build_shapes:
         ch_cantons="data/bundle/ch_cantons.csv",
         ch_popgdp="data/bundle/je-e-21.03.02.xls",
     output:
-        country_shapes="resources/" + RDIR + "country_shapes.geojson",
-        offshore_shapes="resources/" + RDIR + "offshore_shapes.geojson",
-        europe_shape="resources/" + RDIR + "europe_shape.geojson",
-        nuts3_shapes="resources/" + RDIR + "nuts3_shapes.geojson",
+        country_shapes=RESOURCES + "country_shapes.geojson",
+        offshore_shapes=RESOURCES + "offshore_shapes.geojson",
+        europe_shape=RESOURCES + "europe_shape.geojson",
+        nuts3_shapes=RESOURCES + "nuts3_shapes.geojson",
     log:
-        "logs/" + RDIR + "build_shapes.log",
+        LOGS + "build_shapes.log",
     threads: 1
     resources:
         mem_mb=1500,
@@ -239,14 +239,14 @@ rule build_shapes:
 
 rule build_bus_regions:
     input:
-        country_shapes="resources/" + RDIR + "country_shapes.geojson",
-        offshore_shapes="resources/" + RDIR + "offshore_shapes.geojson",
-        base_network="resources/" + RDIR + "networks/base.nc",
+        country_shapes=RESOURCES + "country_shapes.geojson",
+        offshore_shapes=RESOURCES + "offshore_shapes.geojson",
+        base_network=RESOURCES + "networks/base.nc",
     output:
-        regions_onshore="resources/" + RDIR + "regions_onshore.geojson",
-        regions_offshore="resources/" + RDIR + "regions_offshore.geojson",
+        regions_onshore=RESOURCES + "regions_onshore.geojson",
+        regions_offshore=RESOURCES + "regions_offshore.geojson",
     log:
-        "logs/" + RDIR + "build_bus_regions.log",
+        LOGS + "build_bus_regions.log",
     threads: 1
     resources:
         mem_mb=1000,
@@ -258,8 +258,8 @@ if config["enable"].get("build_cutout", False):
 
     rule build_cutout:
         input:
-            regions_onshore="resources/" + RDIR + "regions_onshore.geojson",
-            regions_offshore="resources/" + RDIR + "regions_offshore.geojson",
+            regions_onshore=RESOURCES + "regions_onshore.geojson",
+            regions_offshore=RESOURCES + "regions_offshore.geojson",
         output:
             "cutouts/" + CDIR + "{cutout}.nc",
         log:
@@ -320,11 +320,11 @@ if config["enable"].get("build_natura_raster", False):
             natura="data/bundle/natura/Natura2000_end2015.shp",
             cutouts=expand("cutouts/" + CDIR + "{cutouts}.nc", **config["atlite"]),
         output:
-            "resources/" + RDIR + "natura.tiff",
+            RESOURCES + "natura.tiff",
         resources:
             mem_mb=5000,
         log:
-            "logs/" + RDIR + "build_natura_raster.log",
+            LOGS + "build_natura_raster.log",
         script:
             "scripts/build_natura_raster.py"
 
@@ -339,7 +339,7 @@ if config["enable"].get("retrieve_natura_raster", True):
                 static=True,
             ),
         output:
-            "resources/" + RDIR + "natura.tiff",
+            RESOURCES + "natura.tiff",
         resources:
             mem_mb=5000,
         run:
@@ -372,23 +372,23 @@ rule build_ship_raster:
             ],
         ),
     output:
-        "resources/" + RDIR + "shipdensity_raster.nc",
+        RESOURCES + "shipdensity_raster.nc",
     log:
-        "logs/" + RDIR + "build_ship_raster.log",
+        LOGS + "build_ship_raster.log",
     resources:
         mem_mb=5000,
     benchmark:
-        "benchmarks/" + RDIR + "build_ship_raster"
+        BENCHMARKS + "build_ship_raster"
     script:
         "scripts/build_ship_raster.py"
 
 
 rule build_renewable_profiles:
     input:
-        base_network="resources/" + RDIR + "networks/base.nc",
+        base_network=RESOURCES + "networks/base.nc",
         corine="data/bundle/corine/g250_clc06_V18_5.tif",
         natura=lambda w: (
-            "resources/" + RDIR + "natura.tiff"
+            RESOURCES + "natura.tiff"
             if config["renewable"][w.technology]["natura"]
             else []
         ),
@@ -398,27 +398,27 @@ rule build_renewable_profiles:
             else []
         ),
         ship_density=lambda w: (
-            "resources/" + RDIR + "shipdensity_raster.nc"
+            RESOURCES + "shipdensity_raster.nc"
             if "ship_threshold" in config["renewable"][w.technology].keys()
             else []
         ),
-        country_shapes="resources/" + RDIR + "country_shapes.geojson",
-        offshore_shapes="resources/" + RDIR + "offshore_shapes.geojson",
+        country_shapes=RESOURCES + "country_shapes.geojson",
+        offshore_shapes=RESOURCES + "offshore_shapes.geojson",
         regions=lambda w: (
-            "resources/" + RDIR + "regions_onshore.geojson"
+            RESOURCES + "regions_onshore.geojson"
             if w.technology in ("onwind", "solar")
-            else "resources/" + RDIR + "regions_offshore.geojson"
+            else RESOURCES + "regions_offshore.geojson"
         ),
         cutout=lambda w: "cutouts/"
         + CDIR
         + config["renewable"][w.technology]["cutout"]
         + ".nc",
     output:
-        profile="resources/" + RDIR + "profile_{technology}.nc",
+        profile=RESOURCES + "profile_{technology}.nc",
     log:
-        "logs/" + RDIR + "build_renewable_profile_{technology}.log",
+        LOGS + "build_renewable_profile_{technology}.log",
     benchmark:
-        "benchmarks/" + RDIR + "build_renewable_profiles_{technology}"
+        BENCHMARKS + "build_renewable_profiles_{technology}"
     threads: ATLITE_NPROCESSES
     resources:
         mem_mb=ATLITE_NPROCESSES * 5000,
@@ -430,13 +430,13 @@ rule build_renewable_profiles:
 
 rule build_hydro_profile:
     input:
-        country_shapes="resources/" + RDIR + "country_shapes.geojson",
+        country_shapes=RESOURCES + "country_shapes.geojson",
         eia_hydro_generation="data/eia_hydro_annual_generation.csv",
         cutout=f"cutouts/" + CDIR + config["renewable"]["hydro"]["cutout"] + ".nc",
     output:
-        "resources/" + RDIR + "profile_hydro.nc",
+        RESOURCES + "profile_hydro.nc",
     log:
-        "logs/" + RDIR + "build_hydro_profile.log",
+        LOGS + "build_hydro_profile.log",
     resources:
         mem_mb=5000,
     script:
@@ -446,7 +446,7 @@ rule build_hydro_profile:
 rule add_electricity:
     input:
         **{
-            f"profile_{tech}": "resources/" + RDIR + f"profile_{tech}.nc"
+            f"profile_{tech}": RESOURCES + f"profile_{tech}.nc"
             for tech in config["electricity"]["renewable_carriers"]
         },
         **{
@@ -455,20 +455,20 @@ rule add_electricity:
             for attr, fn in d.items()
             if str(fn).startswith("data/")
         },
-        base_network="resources/" + RDIR + "networks/base.nc",
+        base_network=RESOURCES + "networks/base.nc",
         tech_costs=COSTS,
-        regions="resources/" + RDIR + "regions_onshore.geojson",
-        powerplants="resources/" + RDIR + "powerplants.csv",
+        regions=RESOURCES + "regions_onshore.geojson",
+        powerplants=RESOURCES + "powerplants.csv",
         hydro_capacities="data/bundle/hydro_capacities.csv",
         geth_hydro_capacities="data/geth2015_hydro_capacities.csv",
-        load="resources/" + RDIR + "load.csv",
-        nuts3_shapes="resources/" + RDIR + "nuts3_shapes.geojson",
+        load=RESOURCES + "load.csv",
+        nuts3_shapes=RESOURCES + "nuts3_shapes.geojson",
     output:
-        "resources/" + RDIR + "networks/elec.nc",
+        RESOURCES + "networks/elec.nc",
     log:
-        "logs/" + RDIR + "add_electricity.log",
+        LOGS + "add_electricity.log",
     benchmark:
-        "benchmarks/" + RDIR + "add_electricity"
+        BENCHMARKS + "add_electricity"
     threads: 1
     resources:
         mem_mb=5000,
@@ -478,20 +478,20 @@ rule add_electricity:
 
 rule simplify_network:
     input:
-        network="resources/" + RDIR + "networks/elec.nc",
+        network=RESOURCES + "networks/elec.nc",
         tech_costs=COSTS,
-        regions_onshore="resources/" + RDIR + "regions_onshore.geojson",
-        regions_offshore="resources/" + RDIR + "regions_offshore.geojson",
+        regions_onshore=RESOURCES + "regions_onshore.geojson",
+        regions_offshore=RESOURCES + "regions_offshore.geojson",
     output:
-        network="resources/" + RDIR + "networks/elec_s{simpl}.nc",
-        regions_onshore="resources/" + RDIR + "regions_onshore_elec_s{simpl}.geojson",
-        regions_offshore="resources/" + RDIR + "regions_offshore_elec_s{simpl}.geojson",
-        busmap="resources/" + RDIR + "busmap_elec_s{simpl}.csv",
-        connection_costs="resources/" + RDIR + "connection_costs_s{simpl}.csv",
+        network=RESOURCES + "networks/elec_s{simpl}.nc",
+        regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}.geojson",
+        regions_offshore=RESOURCES + "regions_offshore_elec_s{simpl}.geojson",
+        busmap=RESOURCES + "busmap_elec_s{simpl}.csv",
+        connection_costs=RESOURCES + "connection_costs_s{simpl}.csv",
     log:
-        "logs/" + RDIR + "simplify_network/elec_s{simpl}.log",
+        LOGS + "simplify_network/elec_s{simpl}.log",
     benchmark:
-        "benchmarks/" + RDIR + "simplify_network/elec_s{simpl}"
+        BENCHMARKS + "simplify_network/elec_s{simpl}"
     threads: 1
     resources:
         mem_mb=4000,
@@ -501,10 +501,10 @@ rule simplify_network:
 
 rule cluster_network:
     input:
-        network="resources/" + RDIR + "networks/elec_s{simpl}.nc",
-        regions_onshore="resources/" + RDIR + "regions_onshore_elec_s{simpl}.geojson",
-        regions_offshore="resources/" + RDIR + "regions_offshore_elec_s{simpl}.geojson",
-        busmap=ancient("resources/" + RDIR + "busmap_elec_s{simpl}.csv"),
+        network=RESOURCES + "networks/elec_s{simpl}.nc",
+        regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}.geojson",
+        regions_offshore=RESOURCES + "regions_offshore_elec_s{simpl}.geojson",
+        busmap=ancient(RESOURCES + "busmap_elec_s{simpl}.csv"),
         custom_busmap=(
             "data/custom_busmap_elec_s{simpl}_{clusters}.csv"
             if config["enable"].get("custom_busmap", False)
@@ -512,19 +512,17 @@ rule cluster_network:
         ),
         tech_costs=COSTS,
     output:
-        network="resources/" + RDIR + "networks/elec_s{simpl}_{clusters}.nc",
-        regions_onshore="resources/"
-        + RDIR
+        network=RESOURCES + "networks/elec_s{simpl}_{clusters}.nc",
+        regions_onshore=RESOURCES
         + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
-        regions_offshore="resources/"
-        + RDIR
+        regions_offshore=RESOURCES
         + "regions_offshore_elec_s{simpl}_{clusters}.geojson",
-        busmap="resources/" + RDIR + "busmap_elec_s{simpl}_{clusters}.csv",
-        linemap="resources/" + RDIR + "linemap_elec_s{simpl}_{clusters}.csv",
+        busmap=RESOURCES + "busmap_elec_s{simpl}_{clusters}.csv",
+        linemap=RESOURCES + "linemap_elec_s{simpl}_{clusters}.csv",
     log:
-        "logs/" + RDIR + "cluster_network/elec_s{simpl}_{clusters}.log",
+        LOGS + "cluster_network/elec_s{simpl}_{clusters}.log",
     benchmark:
-        "benchmarks/" + RDIR + "cluster_network/elec_s{simpl}_{clusters}"
+        BENCHMARKS + "cluster_network/elec_s{simpl}_{clusters}"
     threads: 1
     resources:
         mem_mb=6000,
@@ -534,14 +532,14 @@ rule cluster_network:
 
 rule add_extra_components:
     input:
-        network="resources/" + RDIR + "networks/elec_s{simpl}_{clusters}.nc",
+        network=RESOURCES + "networks/elec_s{simpl}_{clusters}.nc",
         tech_costs=COSTS,
     output:
-        "resources/" + RDIR + "networks/elec_s{simpl}_{clusters}_ec.nc",
+        RESOURCES + "networks/elec_s{simpl}_{clusters}_ec.nc",
     log:
-        "logs/" + RDIR + "add_extra_components/elec_s{simpl}_{clusters}.log",
+        LOGS + "add_extra_components/elec_s{simpl}_{clusters}.log",
     benchmark:
-        "benchmarks/" + RDIR + "add_extra_components/elec_s{simpl}_{clusters}_ec"
+        BENCHMARKS + "add_extra_components/elec_s{simpl}_{clusters}_ec"
     threads: 1
     resources:
         mem_mb=3000,
@@ -551,16 +549,15 @@ rule add_extra_components:
 
 rule prepare_network:
     input:
-        "resources/" + RDIR + "networks/elec_s{simpl}_{clusters}_ec.nc",
+        RESOURCES + "networks/elec_s{simpl}_{clusters}_ec.nc",
         tech_costs=COSTS,
     output:
-        "resources/" + RDIR + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+        RESOURCES + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
     log:
-        "logs/" + RDIR + "prepare_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.log",
+        LOGS + "prepare_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.log",
     benchmark:
         (
-            "benchmarks/"
-            + RDIR
+            BENCHMARKS
             + "prepare_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}"
         )
     threads: 1
@@ -592,23 +589,19 @@ def memory(w):
 
 rule solve_network:
     input:
-        "resources/" + RDIR + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+        RESOURCES + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
     output:
-        "results/" + RDIR + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+        RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
     log:
-        solver=normpath(
-            "logs/"
-            + RDIR
+        solver=normpath(LOGS
             + "solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_solver.log"
         ),
-        python="logs/"
-        + RDIR
+        python=LOGS
         + "solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_python.log",
-        memory="logs/"
-        + RDIR
+        memory=LOGS
         + "solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_memory.log",
     benchmark:
-        "benchmarks/" + RDIR + "solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}"
+        BENCHMARKS + "solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}"
     threads: 4
     resources:
         mem_mb=memory,
@@ -620,28 +613,23 @@ rule solve_network:
 
 rule solve_operations_network:
     input:
-        unprepared="resources/" + RDIR + "networks/elec_s{simpl}_{clusters}_ec.nc",
-        optimized="results/"
-        + RDIR
+        unprepared=RESOURCES + "networks/elec_s{simpl}_{clusters}_ec.nc",
+        optimized=RESULTS
         + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
     output:
-        "results/" + RDIR + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op.nc",
+        RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op.nc",
     log:
         solver=normpath(
-            "logs/"
-            + RDIR
+LOGS
             + "solve_operations_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op_solver.log"
         ),
-        python="logs/"
-        + RDIR
+        python=LOGS
         + "solve_operations_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op_python.log",
-        memory="logs/"
-        + RDIR
+        memory=LOGS
         + "solve_operations_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op_memory.log",
     benchmark:
         (
-            "benchmarks/"
-            + RDIR
+            BENCHMARKS
             + "solve_operations_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}"
         )
     threads: 4
@@ -680,13 +668,13 @@ if config["enable"].get("retrieve_sector_databundle", True):
 
 rule build_population_layouts:
     input:
-        nuts3_shapes="resources/" + RDIR + "nuts3_shapes.geojson",
+        nuts3_shapes=RESOURCES + "nuts3_shapes.geojson",
         urban_percent="data/urban_percent.csv",
         cutout="cutouts/" + CDIR + config["atlite"]["default_cutout"] + ".nc",
     output:
-        pop_layout_total="resources/" + RDIR + "pop_layout_total.nc",
-        pop_layout_urban="resources/" + RDIR + "pop_layout_urban.nc",
-        pop_layout_rural="resources/" + RDIR + "pop_layout_rural.nc",
+        pop_layout_total=RESOURCES + "pop_layout_total.nc",
+        pop_layout_urban=RESOURCES + "pop_layout_urban.nc",
+        pop_layout_rural=RESOURCES + "pop_layout_rural.nc",
     resources:
         mem_mb=20000,
     benchmark:
@@ -698,16 +686,14 @@ rule build_population_layouts:
 
 rule build_clustered_population_layouts:
     input:
-        pop_layout_total="resources/" + RDIR + "pop_layout_total.nc",
-        pop_layout_urban="resources/" + RDIR + "pop_layout_urban.nc",
-        pop_layout_rural="resources/" + RDIR + "pop_layout_rural.nc",
-        regions_onshore="resources/"
-        + RDIR
+        pop_layout_total=RESOURCES + "pop_layout_total.nc",
+        pop_layout_urban=RESOURCES + "pop_layout_urban.nc",
+        pop_layout_rural=RESOURCES + "pop_layout_rural.nc",
+        regions_onshore=RESOURCES
         + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
         cutout="cutouts/" + CDIR + config["atlite"]["default_cutout"] + ".nc",
     output:
-        clustered_pop_layout="resources/"
-        + RDIR
+        clustered_pop_layout=RESOURCES
         + "pop_layout_elec_s{simpl}_{clusters}.csv",
     resources:
         mem_mb=10000,
@@ -719,13 +705,13 @@ rule build_clustered_population_layouts:
 
 rule build_simplified_population_layouts:
     input:
-        pop_layout_total="resources/" + RDIR + "pop_layout_total.nc",
-        pop_layout_urban="resources/" + RDIR + "pop_layout_urban.nc",
-        pop_layout_rural="resources/" + RDIR + "pop_layout_rural.nc",
-        regions_onshore="resources/" + RDIR + "regions_onshore_elec_s{simpl}.geojson",
+        pop_layout_total=RESOURCES + "pop_layout_total.nc",
+        pop_layout_urban=RESOURCES + "pop_layout_urban.nc",
+        pop_layout_rural=RESOURCES + "pop_layout_rural.nc",
+        regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}.geojson",
         cutout="cutouts/" + CDIR + config["atlite"]["default_cutout"] + ".nc",
     output:
-        clustered_pop_layout="resources/" + RDIR + "pop_layout_elec_s{simpl}.csv",
+        clustered_pop_layout=RESOURCES + "pop_layout_elec_s{simpl}.csv",
     resources:
         mem_mb=10000,
     benchmark:
@@ -752,7 +738,7 @@ if config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]:
         input:
             gas_network="data/gas_network/scigrid-gas/data/IGGIELGN_PipeSegments.geojson",
         output:
-            cleaned_gas_network="resources/" + RDIR + "gas_network.csv",
+            cleaned_gas_network=RESOURCES + "gas_network.csv",
         resources:
             mem_mb=4000,
         script:
@@ -766,18 +752,14 @@ if config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]:
             ),
             entry="data/gas_network/scigrid-gas/data/IGGIELGN_BorderPoints.geojson",
             production="data/gas_network/scigrid-gas/data/IGGIELGN_Productions.geojson",
-            regions_onshore="resources/"
-            + RDIR
+            regions_onshore=RESOURCES
             + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
-            regions_offshore="resources/"
-            + RDIR
+            regions_offshore=RESOURCES
             + "regions_offshore_elec_s{simpl}_{clusters}.geojson",
         output:
-            gas_input_nodes="resources/"
-            + RDIR
+            gas_input_nodes=RESOURCES
             + "gas_input_locations_s{simpl}_{clusters}.geojson",
-            gas_input_nodes_simplified="resources/"
-            + RDIR
+            gas_input_nodes_simplified=RESOURCES
             + "gas_input_locations_s{simpl}_{clusters}_simplified.csv",
         resources:
             mem_mb=2000,
@@ -786,16 +768,13 @@ if config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]:
 
     rule cluster_gas_network:
         input:
-            cleaned_gas_network="resources/" + RDIR + "gas_network.csv",
-            regions_onshore="resources/"
-            + RDIR
+            cleaned_gas_network=RESOURCES + "gas_network.csv",
+            regions_onshore=RESOURCES
             + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
-            regions_offshore="resources/"
-            + RDIR
+            regions_offshore=RESOURCES
             + "regions_offshore_elec_s{simpl}_{clusters}.geojson",
         output:
-            clustered_gas_network="resources/"
-            + RDIR
+            clustered_gas_network=RESOURCES
             + "gas_network_elec_s{simpl}_{clusters}.csv",
         resources:
             mem_mb=4000,
@@ -814,14 +793,12 @@ else:
 
 rule build_heat_demands:
     input:
-        pop_layout="resources/" + RDIR + "pop_layout_{scope}.nc",
-        regions_onshore="resources/"
-        + RDIR
+        pop_layout=RESOURCES + "pop_layout_{scope}.nc",
+        regions_onshore=RESOURCES
         + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
         cutout="cutouts/" + CDIR + config["atlite"]["default_cutout"] + ".nc",
     output:
-        heat_demand="resources/"
-        + RDIR
+        heat_demand=RESOURCES
         + "heat_demand_{scope}_elec_s{simpl}_{clusters}.nc",
     resources:
         mem_mb=20000,
@@ -834,14 +811,13 @@ rule build_heat_demands:
 
 rule build_temperature_profiles:
     input:
-        pop_layout="resources/" + RDIR + "pop_layout_{scope}.nc",
-        regions_onshore="resources/"
-        + RDIR
+        pop_layout=RESOURCES + "pop_layout_{scope}.nc",
+        regions_onshore=RESOURCES
         + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
         cutout="cutouts/" + CDIR + config["atlite"]["default_cutout"] + ".nc",
     output:
-        temp_soil="resources/" + RDIR + "temp_soil_{scope}_elec_s{simpl}_{clusters}.nc",
-        temp_air="resources/" + RDIR + "temp_air_{scope}_elec_s{simpl}_{clusters}.nc",
+        temp_soil=RESOURCES + "temp_soil_{scope}_elec_s{simpl}_{clusters}.nc",
+        temp_air=RESOURCES + "temp_air_{scope}_elec_s{simpl}_{clusters}.nc",
     resources:
         mem_mb=20000,
     threads: 8
@@ -853,37 +829,28 @@ rule build_temperature_profiles:
 
 rule build_cop_profiles:
     input:
-        temp_soil_total="resources/"
-        + RDIR
+        temp_soil_total=RESOURCES
         + "temp_soil_total_elec_s{simpl}_{clusters}.nc",
-        temp_soil_rural="resources/"
-        + RDIR
+        temp_soil_rural=RESOURCES
         + "temp_soil_rural_elec_s{simpl}_{clusters}.nc",
-        temp_soil_urban="resources/"
-        + RDIR
+        temp_soil_urban=RESOURCES
         + "temp_soil_urban_elec_s{simpl}_{clusters}.nc",
-        temp_air_total="resources/"
-        + RDIR
+        temp_air_total=RESOURCES
         + "temp_air_total_elec_s{simpl}_{clusters}.nc",
-        temp_air_rural="resources/"
-        + RDIR
+        temp_air_rural=RESOURCES
         + "temp_air_rural_elec_s{simpl}_{clusters}.nc",
-        temp_air_urban="resources/"
-        + RDIR
+        temp_air_urban=RESOURCES
         + "temp_air_urban_elec_s{simpl}_{clusters}.nc",
     output:
-        cop_soil_total="resources/"
-        + RDIR
+        cop_soil_total=RESOURCES
         + "cop_soil_total_elec_s{simpl}_{clusters}.nc",
-        cop_soil_rural="resources/"
-        + RDIR
+        cop_soil_rural=RESOURCES
         + "cop_soil_rural_elec_s{simpl}_{clusters}.nc",
-        cop_soil_urban="resources/"
-        + RDIR
+        cop_soil_urban=RESOURCES
         + "cop_soil_urban_elec_s{simpl}_{clusters}.nc",
-        cop_air_total="resources/" + RDIR + "cop_air_total_elec_s{simpl}_{clusters}.nc",
-        cop_air_rural="resources/" + RDIR + "cop_air_rural_elec_s{simpl}_{clusters}.nc",
-        cop_air_urban="resources/" + RDIR + "cop_air_urban_elec_s{simpl}_{clusters}.nc",
+        cop_air_total=RESOURCES + "cop_air_total_elec_s{simpl}_{clusters}.nc",
+        cop_air_rural=RESOURCES + "cop_air_rural_elec_s{simpl}_{clusters}.nc",
+        cop_air_urban=RESOURCES + "cop_air_urban_elec_s{simpl}_{clusters}.nc",
     resources:
         mem_mb=20000,
     benchmark:
@@ -894,14 +861,12 @@ rule build_cop_profiles:
 
 rule build_solar_thermal_profiles:
     input:
-        pop_layout="resources/" + RDIR + "pop_layout_{scope}.nc",
-        regions_onshore="resources/"
-        + RDIR
+        pop_layout=RESOURCES + "pop_layout_{scope}.nc",
+        regions_onshore=RESOURCES
         + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
         cutout="cutouts/" + CDIR + config["atlite"]["default_cutout"] + ".nc",
     output:
-        solar_thermal="resources/"
-        + RDIR
+        solar_thermal=RESOURCES
         + "solar_thermal_{scope}_elec_s{simpl}_{clusters}.nc",
     resources:
         mem_mb=20000,
@@ -920,16 +885,16 @@ def input_eurostat(w):
 
 rule build_energy_totals:
     input:
-        nuts3_shapes="resources/" + RDIR + "nuts3_shapes.geojson",
+        nuts3_shapes=RESOURCES + "nuts3_shapes.geojson",
         co2="data/eea/UNFCCC_v23.csv",
         swiss="data/switzerland-sfoe/switzerland-new_format.csv",
         idees="data/jrc-idees-2015",
         district_heat_share="data/district_heat_share.csv",
         eurostat=input_eurostat,
     output:
-        energy_name="resources/" + RDIR + "energy_totals.csv",
-        co2_name="resources/" + RDIR + "co2_totals.csv",
-        transport_name="resources/" + RDIR + "transport_data.csv",
+        energy_name=RESOURCES + "energy_totals.csv",
+        co2_name=RESOURCES + "co2_totals.csv",
+        transport_name=RESOURCES + "transport_data.csv",
     threads: 16
     resources:
         mem_mb=10000,
@@ -946,19 +911,16 @@ rule build_biomass_potentials:
             keep_local=True,
         ),
         nuts2="data/nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson",  # https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/#nuts21
-        regions_onshore="resources/"
-        + RDIR
+        regions_onshore=RESOURCES
         + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
         nuts3_population="data/bundle/nama_10r_3popgdp.tsv.gz",
         swiss_cantons="data/bundle/ch_cantons.csv",
         swiss_population="data/bundle/je-e-21.03.02.xls",
-        country_shapes="resources/" + RDIR + "country_shapes.geojson",
+        country_shapes=RESOURCES + "country_shapes.geojson",
     output:
-        biomass_potentials_all="resources/"
-        + RDIR
+        biomass_potentials_all=RESOURCES
         + "biomass_potentials_all_s{simpl}_{clusters}.csv",
-        biomass_potentials="resources/"
-        + RDIR
+        biomass_potentials=RESOURCES
         + "biomass_potentials_s{simpl}_{clusters}.csv",
     threads: 1
     resources:
@@ -978,7 +940,7 @@ if config["sector"]["biomass_transport"]:
                 keep_local=True,
             ),
         output:
-            biomass_transport_costs="resources/" + RDIR + "biomass_transport_costs.csv",
+            biomass_transport_costs=RESOURCES + "biomass_transport_costs.csv",
         threads: 1
         resources:
             mem_mb=1000,
@@ -1002,15 +964,12 @@ if config["sector"]["regional_co2_sequestration_potential"]["enable"]:
                 "https://raw.githubusercontent.com/ericzhou571/Co2Storage/main/resources/complete_map_2020_unit_Mt.geojson",
                 keep_local=True,
             ),
-            regions_onshore="resources/"
-            + RDIR
+            regions_onshore=RESOURCES
             + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
-            regions_offshore="resources/"
-            + RDIR
+            regions_offshore=RESOURCES
             + "regions_offshore_elec_s{simpl}_{clusters}.geojson",
         output:
-            sequestration_potential="resources/"
-            + RDIR
+            sequestration_potential=RESOURCES
             + "co2_sequestration_potential_elec_s{simpl}_{clusters}.csv",
         threads: 1
         resources:
@@ -1030,15 +989,12 @@ else:
 rule build_salt_cavern_potentials:
     input:
         salt_caverns="data/h2_salt_caverns_GWh_per_sqkm.geojson",
-        regions_onshore="resources/"
-        + RDIR
+        regions_onshore=RESOURCES
         + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
-        regions_offshore="resources/"
-        + RDIR
+        regions_offshore=RESOURCES
         + "regions_offshore_elec_s{simpl}_{clusters}.geojson",
     output:
-        h2_cavern_potential="resources/"
-        + RDIR
+        h2_cavern_potential=RESOURCES
         + "salt_cavern_potentials_s{simpl}_{clusters}.csv",
     threads: 1
     resources:
@@ -1053,7 +1009,7 @@ rule build_ammonia_production:
     input:
         usgs="data/myb1-2017-nitro.xls",
     output:
-        ammonia_production="resources/" + RDIR + "ammonia_production.csv",
+        ammonia_production=RESOURCES + "ammonia_production.csv",
     threads: 1
     resources:
         mem_mb=1000,
@@ -1065,10 +1021,10 @@ rule build_ammonia_production:
 
 rule build_industry_sector_ratios:
     input:
-        ammonia_production="resources/" + RDIR + "ammonia_production.csv",
+        ammonia_production=RESOURCES + "ammonia_production.csv",
         idees="data/jrc-idees-2015",
     output:
-        industry_sector_ratios="resources/" + RDIR + "industry_sector_ratios.csv",
+        industry_sector_ratios=RESOURCES + "industry_sector_ratios.csv",
     threads: 1
     resources:
         mem_mb=1000,
@@ -1080,12 +1036,11 @@ rule build_industry_sector_ratios:
 
 rule build_industrial_production_per_country:
     input:
-        ammonia_production="resources/" + RDIR + "ammonia_production.csv",
+        ammonia_production=RESOURCES + "ammonia_production.csv",
         jrc="data/jrc-idees-2015",
         eurostat="data/eurostat-energy_balances-may_2018_edition",
     output:
-        industrial_production_per_country="resources/"
-        + RDIR
+        industrial_production_per_country=RESOURCES
         + "industrial_production_per_country.csv",
     threads: 8
     resources:
@@ -1098,12 +1053,10 @@ rule build_industrial_production_per_country:
 
 rule build_industrial_production_per_country_tomorrow:
     input:
-        industrial_production_per_country="resources/"
-        + RDIR
+        industrial_production_per_country=RESOURCES
         + "industrial_production_per_country.csv",
     output:
-        industrial_production_per_country_tomorrow="resources/"
-        + RDIR
+        industrial_production_per_country_tomorrow=RESOURCES
         + "industrial_production_per_country_tomorrow_{planning_horizons}.csv",
     threads: 1
     resources:
@@ -1116,16 +1069,13 @@ rule build_industrial_production_per_country_tomorrow:
 
 rule build_industrial_distribution_key:
     input:
-        regions_onshore="resources/"
-        + RDIR
+        regions_onshore=RESOURCES
         + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
-        clustered_pop_layout="resources/"
-        + RDIR
+        clustered_pop_layout=RESOURCES
         + "pop_layout_elec_s{simpl}_{clusters}.csv",
         hotmaps_industrial_database="data/Industrial_Database.csv",
     output:
-        industrial_distribution_key="resources/"
-        + RDIR
+        industrial_distribution_key=RESOURCES
         + "industrial_distribution_key_elec_s{simpl}_{clusters}.csv",
     threads: 1
     resources:
@@ -1138,15 +1088,12 @@ rule build_industrial_distribution_key:
 
 rule build_industrial_production_per_node:
     input:
-        industrial_distribution_key="resources/"
-        + RDIR
+        industrial_distribution_key=RESOURCES
         + "industrial_distribution_key_elec_s{simpl}_{clusters}.csv",
-        industrial_production_per_country_tomorrow="resources/"
-        + RDIR
+        industrial_production_per_country_tomorrow=RESOURCES
         + "industrial_production_per_country_tomorrow_{planning_horizons}.csv",
     output:
-        industrial_production_per_node="resources/"
-        + RDIR
+        industrial_production_per_node=RESOURCES
         + "industrial_production_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
     threads: 1
     resources:
@@ -1159,16 +1106,13 @@ rule build_industrial_production_per_node:
 
 rule build_industrial_energy_demand_per_node:
     input:
-        industry_sector_ratios="resources/" + RDIR + "industry_sector_ratios.csv",
-        industrial_production_per_node="resources/"
-        + RDIR
+        industry_sector_ratios=RESOURCES + "industry_sector_ratios.csv",
+        industrial_production_per_node=RESOURCES
         + "industrial_production_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
-        industrial_energy_demand_per_node_today="resources/"
-        + RDIR
+        industrial_energy_demand_per_node_today=RESOURCES
         + "industrial_energy_demand_today_elec_s{simpl}_{clusters}.csv",
     output:
-        industrial_energy_demand_per_node="resources/"
-        + RDIR
+        industrial_energy_demand_per_node=RESOURCES
         + "industrial_energy_demand_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
     threads: 1
     resources:
@@ -1182,13 +1126,11 @@ rule build_industrial_energy_demand_per_node:
 rule build_industrial_energy_demand_per_country_today:
     input:
         jrc="data/jrc-idees-2015",
-        ammonia_production="resources/" + RDIR + "ammonia_production.csv",
-        industrial_production_per_country="resources/"
-        + RDIR
+        ammonia_production=RESOURCES + "ammonia_production.csv",
+        industrial_production_per_country=RESOURCES
         + "industrial_production_per_country.csv",
     output:
-        industrial_energy_demand_per_country_today="resources/"
-        + RDIR
+        industrial_energy_demand_per_country_today=RESOURCES
         + "industrial_energy_demand_per_country_today.csv",
     threads: 8
     resources:
@@ -1201,15 +1143,12 @@ rule build_industrial_energy_demand_per_country_today:
 
 rule build_industrial_energy_demand_per_node_today:
     input:
-        industrial_distribution_key="resources/"
-        + RDIR
+        industrial_distribution_key=RESOURCES
         + "industrial_distribution_key_elec_s{simpl}_{clusters}.csv",
-        industrial_energy_demand_per_country_today="resources/"
-        + RDIR
+        industrial_energy_demand_per_country_today=RESOURCES
         + "industrial_energy_demand_per_country_today.csv",
     output:
-        industrial_energy_demand_per_node_today="resources/"
-        + RDIR
+        industrial_energy_demand_per_node_today=RESOURCES
         + "industrial_energy_demand_today_elec_s{simpl}_{clusters}.csv",
     threads: 1
     resources:
@@ -1226,21 +1165,19 @@ if config["sector"]["retrofitting"]["retro_endogen"]:
         input:
             building_stock="data/retro/data_building_stock.csv",
             data_tabula="data/retro/tabula-calculator-calcsetbuilding.csv",
-            air_temperature="resources/"
-            + RDIR
+            air_temperature=RESOURCES
             + "temp_air_total_elec_s{simpl}_{clusters}.nc",
             u_values_PL="data/retro/u_values_poland.csv",
             tax_w="data/retro/electricity_taxes_eu.csv",
             construction_index="data/retro/comparative_level_investment.csv",
             floor_area_missing="data/retro/floor_area_missing.csv",
-            clustered_pop_layout="resources/"
-            + RDIR
+            clustered_pop_layout=RESOURCES
             + "pop_layout_elec_s{simpl}_{clusters}.csv",
             cost_germany="data/retro/retro_cost_germany.csv",
             window_assumptions="data/retro/window_assumptions.csv",
         output:
-            retro_cost="resources/" + RDIR + "retro_cost_elec_s{simpl}_{clusters}.csv",
-            floor_area="resources/" + RDIR + "floor_area_elec_s{simpl}_{clusters}.csv",
+            retro_cost=RESOURCES + "retro_cost_elec_s{simpl}_{clusters}.csv",
+            floor_area=RESOURCES + "floor_area_elec_s{simpl}_{clusters}.csv",
         resources:
             mem_mb=1000,
         benchmark:
@@ -1257,12 +1194,11 @@ else:
 
 rule build_population_weighted_energy_totals:
     input:
-        energy_totals="resources/" + RDIR + "energy_totals.csv",
-        clustered_pop_layout="resources/"
-        + RDIR
+        energy_totals=RESOURCES + "energy_totals.csv",
+        clustered_pop_layout=RESOURCES
         + "pop_layout_elec_s{simpl}_{clusters}.csv",
     output:
-        "resources/" + RDIR + "pop_weighted_energy_totals_s{simpl}_{clusters}.csv",
+        RESOURCES + "pop_weighted_energy_totals_s{simpl}_{clusters}.csv",
     threads: 1
     resources:
         mem_mb=2000,
@@ -1273,11 +1209,11 @@ rule build_population_weighted_energy_totals:
 rule build_shipping_demand:
     input:
         ports="data/attributed_ports.json",
-        scope="resources/" + RDIR + "europe_shape.geojson",
-        regions="resources/" + RDIR + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
-        demand="resources/" + RDIR + "energy_totals.csv",
+        scope=RESOURCES + "europe_shape.geojson",
+        regions=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+        demand=RESOURCES + "energy_totals.csv",
     output:
-        "resources/" + RDIR + "shipping_demand_s{simpl}_{clusters}.csv",
+        RESOURCES + "shipping_demand_s{simpl}_{clusters}.csv",
     threads: 1
     resources:
         mem_mb=2000,
@@ -1287,25 +1223,21 @@ rule build_shipping_demand:
 
 rule build_transport_demand:
     input:
-        clustered_pop_layout="resources/"
-        + RDIR
+        clustered_pop_layout=RESOURCES
         + "pop_layout_elec_s{simpl}_{clusters}.csv",
-        pop_weighted_energy_totals="resources/"
-        + RDIR
+        pop_weighted_energy_totals=RESOURCES
         + "pop_weighted_energy_totals_s{simpl}_{clusters}.csv",
-        transport_data="resources/" + RDIR + "transport_data.csv",
+        transport_data=RESOURCES + "transport_data.csv",
         traffic_data_KFZ="data/emobility/KFZ__count",
         traffic_data_Pkw="data/emobility/Pkw__count",
-        temp_air_total="resources/"
-        + RDIR
+        temp_air_total=RESOURCES
         + "temp_air_total_elec_s{simpl}_{clusters}.nc",
     output:
-        transport_demand="resources/"
-        + RDIR
+        transport_demand=RESOURCES
         + "transport_demand_s{simpl}_{clusters}.csv",
-        transport_data="resources/" + RDIR + "transport_data_s{simpl}_{clusters}.csv",
-        avail_profile="resources/" + RDIR + "avail_profile_s{simpl}_{clusters}.csv",
-        dsm_profile="resources/" + RDIR + "dsm_profile_s{simpl}_{clusters}.csv",
+        transport_data=RESOURCES + "transport_data_s{simpl}_{clusters}.csv",
+        avail_profile=RESOURCES + "avail_profile_s{simpl}_{clusters}.csv",
+        dsm_profile=RESOURCES + "dsm_profile_s{simpl}_{clusters}.csv",
     threads: 1
     resources:
         mem_mb=2000,
@@ -1322,107 +1254,84 @@ rule prepare_sector_network:
         **gas_infrastructure,
         **build_sequestration_potentials_output,
         overrides="data/override_component_attrs",
-        network="resources/"
-        + RDIR
+        network=RESOURCES
         + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
-        energy_totals_name="resources/" + RDIR + "energy_totals.csv",
+        energy_totals_name=RESOURCES + "energy_totals.csv",
         eurostat=input_eurostat,
-        pop_weighted_energy_totals="resources/"
-        + RDIR
+        pop_weighted_energy_totals=RESOURCES
         + "pop_weighted_energy_totals_s{simpl}_{clusters}.csv",
-        shipping_demand="resources/" + RDIR + "shipping_demand_s{simpl}_{clusters}.csv",
-        transport_demand="resources/"
-        + RDIR
+        shipping_demand=RESOURCES + "shipping_demand_s{simpl}_{clusters}.csv",
+        transport_demand=RESOURCES
         + "transport_demand_s{simpl}_{clusters}.csv",
-        transport_data="resources/" + RDIR + "transport_data_s{simpl}_{clusters}.csv",
-        avail_profile="resources/" + RDIR + "avail_profile_s{simpl}_{clusters}.csv",
-        dsm_profile="resources/" + RDIR + "dsm_profile_s{simpl}_{clusters}.csv",
-        co2_totals_name="resources/" + RDIR + "co2_totals.csv",
+        transport_data=RESOURCES + "transport_data_s{simpl}_{clusters}.csv",
+        avail_profile=RESOURCES + "avail_profile_s{simpl}_{clusters}.csv",
+        dsm_profile=RESOURCES + "dsm_profile_s{simpl}_{clusters}.csv",
+        co2_totals_name=RESOURCES + "co2_totals.csv",
         co2="data/eea/UNFCCC_v23.csv",
-        biomass_potentials="resources/"
-        + RDIR
+        biomass_potentials=RESOURCES
         + "biomass_potentials_s{simpl}_{clusters}.csv",
         heat_profile="data/heat_load_profile_BDEW.csv",
         costs="data/costs_{}.csv".format(config["costs"]["year"])
         if config["foresight"] == "overnight"
         else "data/costs_{planning_horizons}.csv",
-        profile_offwind_ac="resources/" + RDIR + "profile_offwind-ac.nc",
-        profile_offwind_dc="resources/" + RDIR + "profile_offwind-dc.nc",
-        h2_cavern="resources/" + RDIR + "salt_cavern_potentials_s{simpl}_{clusters}.csv",
-        busmap_s="resources/" + RDIR + "busmap_elec_s{simpl}.csv",
-        busmap="resources/" + RDIR + "busmap_elec_s{simpl}_{clusters}.csv",
-        clustered_pop_layout="resources/"
-        + RDIR
+        profile_offwind_ac=RESOURCES + "profile_offwind-ac.nc",
+        profile_offwind_dc=RESOURCES + "profile_offwind-dc.nc",
+        h2_cavern=RESOURCES + "salt_cavern_potentials_s{simpl}_{clusters}.csv",
+        busmap_s=RESOURCES + "busmap_elec_s{simpl}.csv",
+        busmap=RESOURCES + "busmap_elec_s{simpl}_{clusters}.csv",
+        clustered_pop_layout=RESOURCES
         + "pop_layout_elec_s{simpl}_{clusters}.csv",
-        simplified_pop_layout="resources/" + RDIR + "pop_layout_elec_s{simpl}.csv",
-        industrial_demand="resources/"
-        + RDIR
+        simplified_pop_layout=RESOURCES + "pop_layout_elec_s{simpl}.csv",
+        industrial_demand=RESOURCES
         + "industrial_energy_demand_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
-        heat_demand_urban="resources/"
-        + RDIR
+        heat_demand_urban=RESOURCES
         + "heat_demand_urban_elec_s{simpl}_{clusters}.nc",
-        heat_demand_rural="resources/"
-        + RDIR
+        heat_demand_rural=RESOURCES
         + "heat_demand_rural_elec_s{simpl}_{clusters}.nc",
-        heat_demand_total="resources/"
-        + RDIR
+        heat_demand_total=RESOURCES
         + "heat_demand_total_elec_s{simpl}_{clusters}.nc",
-        temp_soil_total="resources/"
-        + RDIR
+        temp_soil_total=RESOURCES
         + "temp_soil_total_elec_s{simpl}_{clusters}.nc",
-        temp_soil_rural="resources/"
-        + RDIR
+        temp_soil_rural=RESOURCES
         + "temp_soil_rural_elec_s{simpl}_{clusters}.nc",
-        temp_soil_urban="resources/"
-        + RDIR
+        temp_soil_urban=RESOURCES
         + "temp_soil_urban_elec_s{simpl}_{clusters}.nc",
-        temp_air_total="resources/"
-        + RDIR
+        temp_air_total=RESOURCES
         + "temp_air_total_elec_s{simpl}_{clusters}.nc",
-        temp_air_rural="resources/"
-        + RDIR
+        temp_air_rural=RESOURCES
         + "temp_air_rural_elec_s{simpl}_{clusters}.nc",
-        temp_air_urban="resources/"
-        + RDIR
+        temp_air_urban=RESOURCES
         + "temp_air_urban_elec_s{simpl}_{clusters}.nc",
-        cop_soil_total="resources/"
-        + RDIR
+        cop_soil_total=RESOURCES
         + "cop_soil_total_elec_s{simpl}_{clusters}.nc",
-        cop_soil_rural="resources/"
-        + RDIR
+        cop_soil_rural=RESOURCES
         + "cop_soil_rural_elec_s{simpl}_{clusters}.nc",
-        cop_soil_urban="resources/"
-        + RDIR
+        cop_soil_urban=RESOURCES
         + "cop_soil_urban_elec_s{simpl}_{clusters}.nc",
-        cop_air_total="resources/" + RDIR + "cop_air_total_elec_s{simpl}_{clusters}.nc",
-        cop_air_rural="resources/" + RDIR + "cop_air_rural_elec_s{simpl}_{clusters}.nc",
-        cop_air_urban="resources/" + RDIR + "cop_air_urban_elec_s{simpl}_{clusters}.nc",
-        solar_thermal_total="resources/"
-        + RDIR
+        cop_air_total=RESOURCES + "cop_air_total_elec_s{simpl}_{clusters}.nc",
+        cop_air_rural=RESOURCES + "cop_air_rural_elec_s{simpl}_{clusters}.nc",
+        cop_air_urban=RESOURCES + "cop_air_urban_elec_s{simpl}_{clusters}.nc",
+        solar_thermal_total=RESOURCES
         + "solar_thermal_total_elec_s{simpl}_{clusters}.nc"
         if config["sector"]["solar_thermal"]
         else [],
-        solar_thermal_urban="resources/"
-        + RDIR
+        solar_thermal_urban=RESOURCES
         + "solar_thermal_urban_elec_s{simpl}_{clusters}.nc"
         if config["sector"]["solar_thermal"]
         else [],
-        solar_thermal_rural="resources/"
-        + RDIR
+        solar_thermal_rural=RESOURCES
         + "solar_thermal_rural_elec_s{simpl}_{clusters}.nc"
         if config["sector"]["solar_thermal"]
         else [],
     output:
-        "results/"
-        + RDIR
+        RESULTS
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
     threads: 1
     resources:
         mem_mb=2000,
     benchmark:
         (
-            "results/"
-            + RDIR
+            RESULTS
             + "benchmarks/prepare_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
         )
     script:
@@ -1432,24 +1341,20 @@ rule prepare_sector_network:
 rule plot_network:
     input:
         overrides="data/override_component_attrs",
-        network="results/"
-        + RDIR
+        network=RESULTS
         + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
-        regions="resources/" + RDIR + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+        regions=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
     output:
-        map="results/"
-        + RDIR
+        map=RESULTS
         + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
-        today="results/"
-        + RDIR
+        today=RESULTS
         + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}-today.pdf",
     threads: 2
     resources:
         mem_mb=10000,
     benchmark:
         (
-            "results/"
-            + RDIR
+            RESULTS
             + "benchmarks/plot_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
         )
     script:
@@ -1460,24 +1365,24 @@ rule copy_config:
     params:
         RDIR=RDIR,
     output:
-        "results/" + RDIR + "configs/config.yaml",
+        RESULTS + "configs/config.yaml",
     threads: 1
     resources:
         mem_mb=1000,
     benchmark:
-        "results/" + RDIR + "benchmarks/copy_config"
+        RESULTS + "benchmarks/copy_config"
     script:
         "scripts/copy_config.py"
 
 
 rule copy_conda_env:
     output:
-        "results/" + RDIR + "configs/environment.yaml",
+        RESULTS + "configs/environment.yaml",
     threads: 1
     resources:
         mem_mb=500,
     benchmark:
-        "results/" + RDIR + "benchmarks/copy_conda_env"
+        RESULTS + "benchmarks/copy_conda_env"
     shell:
         "conda env export -f {output} --no-builds"
 
@@ -1488,8 +1393,7 @@ rule make_summary:
     input:
         overrides="data/override_component_attrs",
         networks=expand(
-            "results/"
-            + RDIR
+            RESULTS
             + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
             **config["scenario"]
         ),
@@ -1497,32 +1401,31 @@ rule make_summary:
         if config["foresight"] == "overnight"
         else "data/costs_{}.csv".format(config["scenario"]["planning_horizons"][0]),
         plots=expand(
-            "results/"
-            + RDIR
+            RESULTS
             + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
             **config["scenario"]
         ),
     output:
-        nodal_costs="results/" + RDIR + "csvs/nodal_costs.csv",
-        nodal_capacities="results/" + RDIR + "csvs/nodal_capacities.csv",
-        nodal_cfs="results/" + RDIR + "csvs/nodal_cfs.csv",
-        cfs="results/" + RDIR + "csvs/cfs.csv",
-        costs="results/" + RDIR + "csvs/costs.csv",
-        capacities="results/" + RDIR + "csvs/capacities.csv",
-        curtailment="results/" + RDIR + "csvs/curtailment.csv",
-        energy="results/" + RDIR + "csvs/energy.csv",
-        supply="results/" + RDIR + "csvs/supply.csv",
-        supply_energy="results/" + RDIR + "csvs/supply_energy.csv",
-        prices="results/" + RDIR + "csvs/prices.csv",
-        weighted_prices="results/" + RDIR + "csvs/weighted_prices.csv",
-        market_values="results/" + RDIR + "csvs/market_values.csv",
-        price_statistics="results/" + RDIR + "csvs/price_statistics.csv",
-        metrics="results/" + RDIR + "csvs/metrics.csv",
+        nodal_costs=RESULTS + "csvs/nodal_costs.csv",
+        nodal_capacities=RESULTS + "csvs/nodal_capacities.csv",
+        nodal_cfs=RESULTS + "csvs/nodal_cfs.csv",
+        cfs=RESULTS + "csvs/cfs.csv",
+        costs=RESULTS + "csvs/costs.csv",
+        capacities=RESULTS + "csvs/capacities.csv",
+        curtailment=RESULTS + "csvs/curtailment.csv",
+        energy=RESULTS + "csvs/energy.csv",
+        supply=RESULTS + "csvs/supply.csv",
+        supply_energy=RESULTS + "csvs/supply_energy.csv",
+        prices=RESULTS + "csvs/prices.csv",
+        weighted_prices=RESULTS + "csvs/weighted_prices.csv",
+        market_values=RESULTS + "csvs/market_values.csv",
+        price_statistics=RESULTS + "csvs/price_statistics.csv",
+        metrics=RESULTS + "csvs/metrics.csv",
     threads: 2
     resources:
         mem_mb=10000,
     benchmark:
-        "results/" + RDIR + "benchmarks/make_summary"
+        RESULTS + "benchmarks/make_summary"
     script:
         "scripts/make_summary.py"
 
@@ -1531,20 +1434,20 @@ rule plot_summary:
     params:
         RDIR=RDIR,
     input:
-        costs="results/" + RDIR + "csvs/costs.csv",
-        energy="results/" + RDIR + "csvs/energy.csv",
-        balances="results/" + RDIR + "csvs/supply_energy.csv",
+        costs=RESULTS + "csvs/costs.csv",
+        energy=RESULTS + "csvs/energy.csv",
+        balances=RESULTS + "csvs/supply_energy.csv",
         eurostat=input_eurostat,
         country_codes="data/Country_codes.csv",
     output:
-        costs="results/" + RDIR + "graphs/costs.pdf",
-        energy="results/" + RDIR + "graphs/energy.pdf",
-        balances="results/" + RDIR + "graphs/balances-energy.pdf",
+        costs=RESULTS + "graphs/costs.pdf",
+        energy=RESULTS + "graphs/energy.pdf",
+        balances=RESULTS + "graphs/balances-energy.pdf",
     threads: 2
     resources:
         mem_mb=10000,
     benchmark:
-        "results/" + RDIR + "benchmarks/plot_summary"
+        RESULTS + "benchmarks/plot_summary"
     script:
         "scripts/plot_summary.py"
 
@@ -1554,35 +1457,29 @@ if config["foresight"] == "overnight":
     rule solve_sector_network:
         input:
             overrides="data/override_component_attrs",
-            network="results/"
-            + RDIR
+            network=RESULTS
             + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
             costs="data/costs_{}.csv".format(config["costs"]["year"]),
-            config="results/" + RDIR + "configs/config.yaml",
+            config=RESULTS + "configs/config.yaml",
             #env=RDIR + 'configs/environment.yaml',
         output:
-            "results/"
-            + RDIR
+            RESULTS
             + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
         shadow:
             "shallow"
         log:
-            solver="logs/"
-            + RDIR
+            solver=LOGS
             + "elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_solver.log",
-            python="logs/"
-            + RDIR
+            python=LOGS
             + "elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_python.log",
-            memory="logs/"
-            + RDIR
+            memory=LOGS
             + "elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_memory.log",
         threads: config["solving"]["solver"].get("threads", 4)
         resources:
             mem_mb=config["solving"]["mem"],
         benchmark:
             (
-                "results/"
-                + RDIR
+                RESULTS
                 + "benchmarks/solve_sector_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
             )
         script:
@@ -1594,21 +1491,17 @@ if config["foresight"] == "myopic":
     rule add_existing_baseyear:
         input:
             overrides="data/override_component_attrs",
-            network="results/"
-            + RDIR
+            network=RESULTS
             + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
-            powerplants="resources/" + RDIR + "powerplants.csv",
-            busmap_s="resources/" + RDIR + "busmap_elec_s{simpl}.csv",
-            busmap="resources/" + RDIR + "busmap_elec_s{simpl}_{clusters}.csv",
-            clustered_pop_layout="resources/"
-            + RDIR
+            powerplants=RESOURCES + "powerplants.csv",
+            busmap_s=RESOURCES + "busmap_elec_s{simpl}.csv",
+            busmap=RESOURCES + "busmap_elec_s{simpl}_{clusters}.csv",
+            clustered_pop_layout=RESOURCES
             + "pop_layout_elec_s{simpl}_{clusters}.csv",
             costs="data/costs_{}.csv".format(config["scenario"]["planning_horizons"][0]),
-            cop_soil_total="resources/"
-            + RDIR
+            cop_soil_total=RESOURCES
             + "cop_soil_total_elec_s{simpl}_{clusters}.nc",
-            cop_air_total="resources/"
-            + RDIR
+            cop_air_total=RESOURCES
             + "cop_air_total_elec_s{simpl}_{clusters}.nc",
             existing_heating="data/existing_infrastructure/existing_heating_raw.csv",
             country_codes="data/Country_codes.csv",
@@ -1616,8 +1509,7 @@ if config["foresight"] == "myopic":
             existing_onwind="data/existing_infrastructure/onwind_capacity_IRENA.csv",
             existing_offwind="data/existing_infrastructure/offwind_capacity_IRENA.csv",
         output:
-            "results/"
-            + RDIR
+            RESULTS
             + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
         wildcard_constraints:
             planning_horizons=config["scenario"]["planning_horizons"][0],  #only applies to baseyear
@@ -1626,8 +1518,7 @@ if config["foresight"] == "myopic":
             mem_mb=2000,
         benchmark:
             (
-                "results/"
-                + RDIR
+                RESULTS
                 + "benchmarks/add_existing_baseyear/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
             )
         script:
@@ -1638,8 +1529,7 @@ if config["foresight"] == "myopic":
         i = planning_horizons.index(int(wildcards.planning_horizons))
         planning_horizon_p = str(planning_horizons[i - 1])
         return (
-            "results/"
-            + RDIR
+            RESULTS
             + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_"
             + planning_horizon_p
             + ".nc"
@@ -1648,28 +1538,23 @@ if config["foresight"] == "myopic":
     rule add_brownfield:
         input:
             overrides="data/override_component_attrs",
-            network="results/"
-            + RDIR
+            network=RESULTS
             + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
             network_p=solved_previous_horizon,  #solved network at previous time step
             costs="data/costs_{planning_horizons}.csv",
-            cop_soil_total="resources/"
-            + RDIR
+            cop_soil_total=RESOURCES
             + "cop_soil_total_elec_s{simpl}_{clusters}.nc",
-            cop_air_total="resources/"
-            + RDIR
+            cop_air_total=RESOURCES
             + "cop_air_total_elec_s{simpl}_{clusters}.nc",
         output:
-            "results/"
-            + RDIR
+            RESULTS
             + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
         threads: 4
         resources:
             mem_mb=10000,
         benchmark:
             (
-                "results/"
-                + RDIR
+                RESULTS
                 + "benchmarks/add_brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
             )
         script:
@@ -1680,34 +1565,28 @@ if config["foresight"] == "myopic":
     rule solve_sector_network_myopic:
         input:
             overrides="data/override_component_attrs",
-            network="results/"
-            + RDIR
+            network=RESULTS
             + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
             costs="data/costs_{planning_horizons}.csv",
-            config="results/" + RDIR + "configs/config.yaml",
+            config=RESULTS + "configs/config.yaml",
         output:
-            "results/"
-            + RDIR
+            RESULTS
             + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
         shadow:
             "shallow"
         log:
-            solver="logs/"
-            + RDIR
+            solver=LOGS
             + "elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_solver.log",
-            python="logs/"
-            + RDIR
+            python=LOGS
             + "elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_python.log",
-            memory="logs/"
-            + RDIR
+            memory=LOGS
             + "elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_memory.log",
         threads: 4
         resources:
             mem_mb=config["solving"]["mem"],
         benchmark:
             (
-                "results/"
-                + RDIR
+                RESULTS
                 + "benchmarks/solve_sector_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
             )
         script:

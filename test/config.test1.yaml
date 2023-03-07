@@ -6,6 +6,8 @@ tutorial: true
 
 run:
   name: "test-elec" # use this to keep track of runs with different settings
+  shared_resources: true
+  shared_cutouts: true
 
 scenario:
   clusters:

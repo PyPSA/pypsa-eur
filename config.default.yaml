@@ -11,6 +11,7 @@ logging:
 
 run:
   name: "" # use this to keep track of runs with different settings
+  shared_resources: false # set to true to share the default resources across runs
   shared_cutouts: false # set to true to share the default cutout(s) across runs
 
 foresight: overnight # options are overnight, myopic, perfect (perfect is not yet implemented)
