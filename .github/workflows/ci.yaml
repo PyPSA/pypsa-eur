@@ -105,3 +105,13 @@ jobs:
         snakemake -call solve_all_elec_networks --configfile test/config.test1.yaml
         snakemake -call all --configfile test/config.overnight.yaml
         snakemake -call all --configfile test/config.myopic.yaml
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: resources-results
+        path: |
+          resources
+          results
+        if-no-files-found: warn
+        retention-days: 1
