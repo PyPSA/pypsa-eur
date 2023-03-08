@@ -26,6 +26,8 @@ if config["enable"].get("retrieve_databundle", True):
         resources:
             mem_mb=1000,
         retries: 2
+        conda:
+            "../envs/environment.yaml"
         script:
             "../scripts/retrieve_databundle.py"
 
@@ -63,7 +65,7 @@ if config["enable"].get("retrieve_cost_data", True):
         output:
             "data/costs_{year}.csv",
         log:
-            "logs/retrieve_cost_data_{year}.log",
+            LOGS + "retrieve_cost_data_{year}.log",
         resources:
             mem_mb=1000,
         retries: 2
@@ -82,6 +84,8 @@ if config["enable"].get("retrieve_natura_raster", True):
             ),
         output:
             RESOURCES + "natura.tiff",
+        log:
+            LOGS + "retrieve_natura_raster.log"
         resources:
             mem_mb=5000,
         retries: 2
@@ -108,8 +112,10 @@ if config["enable"].get("retrieve_sector_databundle", True):
         output:
             *datafiles,
         log:
-            "logs/retrieve_sector_databundle.log",
+            LOGS + "retrieve_sector_databundle.log",
         retries: 2
+        conda:
+            "../envs/environment.yaml"
         script:
             "../scripts/retrieve_sector_databundle.py"
 
@@ -125,7 +131,11 @@ if config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]:
     rule retrieve_gas_infrastructure_data:
         output:
             expand("data/gas_network/scigrid-gas/data/{files}", files=datafiles),
+        log:
+            LOGS + "retrieve_gas_infrastructure_data.log",
         retries: 2
+        conda:
+            "../envs/environment.yaml"
         script:
             "../scripts/retrieve_gas_infrastructure_data.py"
 
@@ -139,6 +149,8 @@ rule retrieve_load_data:
         ),
     output:
         "data/load_raw.csv",
+    log:
+        LOGS + "retrieve_load_data.log",
     resources:
         mem_mb=5000,
     retries: 2
@@ -155,6 +167,8 @@ rule retrieve_ship_raster:
         ),
     output:
         "data/shipdensity_global.zip",
+    log:
+        LOGS + "retrieve_ship_raster.log"
     resources:
         mem_mb=5000,
     retries: 2
