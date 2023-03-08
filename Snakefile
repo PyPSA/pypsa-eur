@@ -69,14 +69,15 @@ rule purge:
 
 
 rule dag:
-     output:
-         dot=RESOURCES + "dag.dot",
-         pdf=RESOURCES + "dag.pdf",
-         png=RESOURCES + "dag.png"
-     conda: "envs/environment.yaml"
-     shell:
-        """
-        snakemake --rulegraph all | sed -n "/digraph/,\$p" > {output.dot}
-        dot -Tpdf -o {output.pdf} {output.dot}
-        dot -Tpng -o {output.png} {output.dot}
-        """
+    message: "Creating DAG of workflow."
+    output:
+        dot=RESOURCES + "dag.dot",
+        pdf=RESOURCES + "dag.pdf",
+        png=RESOURCES + "dag.png"
+    conda: "envs/environment.yaml"
+    shell:
+    """
+    snakemake --rulegraph all | sed -n "/digraph/,\$p" > {output.dot}
+    dot -Tpdf -o {output.pdf} {output.dot}
+    dot -Tpng -o {output.png} {output.dot}
+    """
