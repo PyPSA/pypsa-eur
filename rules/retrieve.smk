@@ -85,7 +85,7 @@ if config["enable"].get("retrieve_natura_raster", True):
         output:
             RESOURCES + "natura.tiff",
         log:
-            LOGS + "retrieve_natura_raster.log"
+            LOGS + "retrieve_natura_raster.log",
         resources:
             mem_mb=5000,
         retries: 2
@@ -168,7 +168,7 @@ rule retrieve_ship_raster:
     output:
         "data/shipdensity_global.zip",
     log:
-        LOGS + "retrieve_ship_raster.log"
+        LOGS + "retrieve_ship_raster.log",
     resources:
         mem_mb=5000,
     retries: 2

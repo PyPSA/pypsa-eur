@@ -33,7 +33,10 @@ BENCHMARKS = "benchmarks/" + RDIR
 RESOURCES = "resources/" + RDIR if not run.get("shared_resources") else "resources/"
 RESULTS = "results/" + RDIR
 
-localrules: purge
+
+localrules:
+    purge,
+
 
 wildcard_constraints:
     simpl="[a-zA-Z0-9]*",
@@ -41,6 +44,7 @@ wildcard_constraints:
     ll="(v|c)([0-9\.]+|opt)",
     opts="[-+a-zA-Z0-9\.]*",
     sector_opts="[-+a-zA-Z0-9\.\s]*",
+
 
 include: "rules/common.smk"
 include: "rules/collect.smk"
@@ -62,19 +66,22 @@ if config["foresight"] == "myopic":
 
 
 rule purge:
-    message: "Purging generated resources and results. Downloads are kept."
+    message:
+        "Purging generated resources and results. Downloads are kept."
     run:
         rmtree("resources/")
         rmtree("results/")
 
 
 rule dag:
-    message: "Creating DAG of workflow."
+    message:
+        "Creating DAG of workflow."
     output:
         dot=RESOURCES + "dag.dot",
         pdf=RESOURCES + "dag.pdf",
-        png=RESOURCES + "dag.png"
-    conda: "envs/environment.yaml"
+        png=RESOURCES + "dag.png",
+    conda:
+        "envs/environment.yaml"
     shell:
         """
         snakemake --rulegraph all | sed -n "/digraph/,\$p" > {output.dot}

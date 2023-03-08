@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
+
 def memory(w):
     factor = 3.0
     for o in w.opts.split("-"):

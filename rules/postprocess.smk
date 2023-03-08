@@ -24,7 +24,8 @@ rule plot_network:
         mem_mb=10000,
     benchmark:
         (
-            BENCHMARKS + "plot_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+            BENCHMARKS
+            + "plot_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
         )
     conda:
         "../envs/environment.yaml"
@@ -55,7 +56,7 @@ rule copy_conda_env:
     resources:
         mem_mb=500,
     log:
-        LOGS + "copy_conda_env.log"
+        LOGS + "copy_conda_env.log",
     benchmark:
         BENCHMARKS + "copy_conda_env"
     conda:
@@ -102,7 +103,7 @@ rule make_summary:
     resources:
         mem_mb=10000,
     log:
-        LOGS + "make_summary.log"
+        LOGS + "make_summary.log",
     benchmark:
         BENCHMARKS + "make_summary"
     conda:
@@ -128,7 +129,7 @@ rule plot_summary:
     resources:
         mem_mb=10000,
     log:
-        LOGS + "plot_summary.log"
+        LOGS + "plot_summary.log",
     benchmark:
         BENCHMARKS + "plot_summary"
     conda:
