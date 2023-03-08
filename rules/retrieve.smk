@@ -25,6 +25,7 @@ if config["enable"].get("retrieve_databundle", True):
             LOGS + "retrieve_databundle.log",
         resources:
             mem_mb=1000,
+        retries: 2
         script:
             "../scripts/retrieve_databundle.py"
 
@@ -43,6 +44,7 @@ if config["enable"].get("retrieve_cutout", True):
             "logs/" + CDIR + "retrieve_cutout_{cutout}.log",
         resources:
             mem_mb=5000,
+        retries: 2
         run:
             move(input[0], output[0])
 
@@ -64,6 +66,7 @@ if config["enable"].get("retrieve_cost_data", True):
             "logs/retrieve_cost_data_{year}.log",
         resources:
             mem_mb=1000,
+        retries: 2
         run:
             move(input[0], output[0])
 
@@ -81,6 +84,7 @@ if config["enable"].get("retrieve_natura_raster", True):
             RESOURCES + "natura.tiff",
         resources:
             mem_mb=5000,
+        retries: 2
         run:
             move(input[0], output[0])
 
@@ -105,6 +109,7 @@ if config["enable"].get("retrieve_sector_databundle", True):
             *datafiles,
         log:
             "logs/retrieve_sector_databundle.log",
+        retries: 2
         script:
             "../scripts/retrieve_sector_databundle.py"
 
@@ -120,6 +125,7 @@ if config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]:
     rule retrieve_gas_infrastructure_data:
         output:
             expand("data/gas_network/scigrid-gas/data/{files}", files=datafiles),
+        retries: 2
         script:
             "../scripts/retrieve_gas_infrastructure_data.py"
 
@@ -135,6 +141,7 @@ rule retrieve_load_data:
         "data/load_raw.csv",
     resources:
         mem_mb=5000,
+    retries: 2
     run:
         move(input[0], output[0])
 
@@ -150,5 +157,6 @@ rule retrieve_ship_raster:
         "data/shipdensity_global.zip",
     resources:
         mem_mb=5000,
+    retries: 2
     run:
         move(input[0], output[0])
