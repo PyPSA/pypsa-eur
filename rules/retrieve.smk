@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: MIT
 
 if config["enable"].get("retrieve_databundle", True):
-
     datafiles = [
         "ch_cantons.csv",
         "je-e-21.03.02.xls",
@@ -15,7 +14,6 @@ if config["enable"].get("retrieve_databundle", True):
         "nama_10r_3gdp.tsv.gz",
         "corine/g250_clc06_V18_5.tif",
     ]
-
 
     if not config.get("tutorial", False):
         datafiles.extend(["natura/Natura2000_end2015.shp", "GEBCO_2014_2D.nc"])
@@ -89,7 +87,6 @@ if config["enable"].get("retrieve_natura_raster", True):
 
 
 if config["enable"].get("retrieve_sector_databundle", True):
-
     datafiles = [
         "data/eea/UNFCCC_v23.csv",
         "data/switzerland-sfoe/switzerland-new_format.csv",
@@ -114,7 +111,6 @@ if config["enable"].get("retrieve_sector_databundle", True):
 
 
 if config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]:
-
     datafiles = [
         "IGGIELGN_LNGs.geojson",
         "IGGIELGN_BorderPoints.geojson",

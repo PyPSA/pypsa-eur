@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
+
 rule add_existing_baseyear:
     input:
         overrides="data/override_component_attrs",
@@ -32,7 +33,8 @@ rule add_existing_baseyear:
             RESULTS
             + "benchmarks/add_existing_baseyear/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
         )
-    conda: "../envs/environment.yaml"
+    conda:
+        "../envs/environment.yaml"
     script:
         "../scripts/add_existing_baseyear.py"
 
@@ -69,7 +71,8 @@ rule add_brownfield:
             RESULTS
             + "benchmarks/add_brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
         )
-    conda: "../envs/environment.yaml"
+    conda:
+        "../envs/environment.yaml"
     script:
         "../scripts/add_brownfield.py"
 
@@ -104,6 +107,7 @@ rule solve_sector_network_myopic:
             RESULTS
             + "benchmarks/solve_sector_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
         )
-    conda: "../envs/environment.yaml"
+    conda:
+        "../envs/environment.yaml"
     script:
         "../scripts/solve_sector_network.py"

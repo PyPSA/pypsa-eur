@@ -2,7 +2,16 @@
 #
 # SPDX-License-Identifier: MIT
 
-localrules: all, cluster_all_networks, extra_components_all_networks, prepare_all_networks, prepare_sector_networks, solve_all_elec_networks, solve_all_networks, plot_all_networks
+
+localrules:
+    all,
+    cluster_all_networks,
+    extra_components_all_networks,
+    prepare_all_networks,
+    prepare_sector_networks,
+    solve_all_elec_networks,
+    solve_all_networks,
+    plot_all_networks,
 
 
 rule all:

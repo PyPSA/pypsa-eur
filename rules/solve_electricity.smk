@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
+
 def memory(w):
     factor = 3.0
     for o in w.opts.split("-"):
@@ -42,7 +43,8 @@ rule solve_network:
         mem_mb=memory,
     shadow:
         "minimal"
-    conda: "../envs/environment.yaml"
+    conda:
+        "../envs/environment.yaml"
     script:
         "../scripts/solve_network.py"
 
@@ -72,6 +74,7 @@ rule solve_operations_network:
         mem_mb=(lambda w: 5000 + 372 * int(w.clusters)),
     shadow:
         "minimal"
-    conda: "../envs/environment.yaml"
+    conda:
+        "../envs/environment.yaml"
     script:
         "../scripts/solve_operations_network.py"

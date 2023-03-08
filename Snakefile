@@ -58,4 +58,3 @@ if config["foresight"] == "overnight":
 if config["foresight"] == "myopic":
 
     include: "rules/solve_myopic.smk"
-
