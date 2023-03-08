@@ -11,7 +11,7 @@ HTTP = HTTPRemoteProvider()
 
 from snakemake.utils import min_version
 
-min_version("6.15")
+min_version("7.7")
 
 
 if not exists("config.yaml"):
