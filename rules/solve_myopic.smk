@@ -34,7 +34,7 @@ rule add_existing_baseyear:
         )
     conda: "../envs/environment.yaml"
     script:
-        "scripts/add_existing_baseyear.py"
+        "../scripts/add_existing_baseyear.py"
 
 
 def solved_previous_horizon(wildcards):
@@ -71,7 +71,7 @@ rule add_brownfield:
         )
     conda: "../envs/environment.yaml"
     script:
-        "scripts/add_brownfield.py"
+        "../scripts/add_brownfield.py"
 
 
 ruleorder: add_existing_baseyear > add_brownfield
@@ -106,4 +106,4 @@ rule solve_sector_network_myopic:
         )
     conda: "../envs/environment.yaml"
     script:
-        "scripts/solve_sector_network.py"
+        "../scripts/solve_sector_network.py"
