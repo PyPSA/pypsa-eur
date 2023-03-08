@@ -58,3 +58,9 @@ if config["foresight"] == "overnight":
 if config["foresight"] == "myopic":
 
     include: "rules/solve_myopic.smk"
+
+
+rule purge:
+    message: "Removing generated resources and results. Downloads are kept."
+    shell:
+        "rm -r resources/ results/"
