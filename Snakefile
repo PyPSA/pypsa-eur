@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 from os.path import normpath, exists
-from shutil import copyfile, move
+from shutil import copyfile, move, rmtree
 
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 
@@ -33,6 +33,7 @@ BENCHMARKS = "benchmarks/" + RDIR
 RESOURCES = "resources/" + RDIR if not run.get("shared_resources") else "resources/"
 RESULTS = "results/" + RDIR
 
+localrules: purge
 
 wildcard_constraints:
     simpl="[a-zA-Z0-9]*",
@@ -61,6 +62,21 @@ if config["foresight"] == "myopic":
 
 
 rule purge:
-    message: "Removing generated resources and results. Downloads are kept."
-    shell:
-        "rm -r resources/ results/"
+    message: "Purging generated resources and results. Downloads are kept."
+    run:
+        rmtree("resources/")
+        rmtree("results/")
+
+
+rule dag:
+     output:
+         dot=RESOURCES + "dag.dot",
+         pdf=RESOURCES + "dag.pdf",
+         png=RESOURCES + "dag.png"
+     conda: "envs/environment.yaml"
+     shell:
+        """
+        snakemake --rulegraph all | sed -n "/digraph/,\$p" > {output.dot}
+        dot -Tpdf -o {output.pdf} {output.dot}
+        dot -Tpng -o {output.png} {output.dot}
+        """
