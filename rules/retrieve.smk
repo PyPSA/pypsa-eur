@@ -35,11 +35,10 @@ if config["enable"].get("retrieve_cutout", True):
         input:
             HTTP.remote(
                 "zenodo.org/record/6382570/files/{cutout}.nc",
-                keep_local=True,
                 static=True,
             ),
         output:
-            "cutouts/" + CDIR + "{cutout}.nc",
+            protected("cutouts/" + CDIR + "{cutout}.nc"),
         log:
             "logs/" + CDIR + "retrieve_cutout_{cutout}.log",
         resources:
