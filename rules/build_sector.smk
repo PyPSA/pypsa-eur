@@ -232,9 +232,9 @@ rule build_biomass_potentials:
         ),
         nuts2="data/nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson",  # https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/#nuts21
         regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
-        nuts3_population="data/bundle/nama_10r_3popgdp.tsv.gz",
-        swiss_cantons="data/bundle/ch_cantons.csv",
-        swiss_population="data/bundle/je-e-21.03.02.xls",
+        nuts3_population=ancient("data/bundle/nama_10r_3popgdp.tsv.gz"),
+        swiss_cantons=ancient("data/bundle/ch_cantons.csv"),
+        swiss_population=ancient("data/bundle/je-e-21.03.02.xls"),
         country_shapes=RESOURCES + "country_shapes.geojson",
     output:
         biomass_potentials_all=RESOURCES

@@ -19,7 +19,7 @@ if config["enable"].get("prepare_links_p_nom", False):
 
 rule build_load_data:
     input:
-        "data/load_raw.csv",
+        ancient("data/load_raw.csv"),
     output:
         RESOURCES + "load.csv",
     log:
@@ -76,13 +76,13 @@ rule base_network:
 
 rule build_shapes:
     input:
-        naturalearth="data/bundle/naturalearth/ne_10m_admin_0_countries.shp",
-        eez="data/bundle/eez/World_EEZ_v8_2014.shp",
-        nuts3="data/bundle/NUTS_2013_60M_SH/data/NUTS_RG_60M_2013.shp",
-        nuts3pop="data/bundle/nama_10r_3popgdp.tsv.gz",
-        nuts3gdp="data/bundle/nama_10r_3gdp.tsv.gz",
-        ch_cantons="data/bundle/ch_cantons.csv",
-        ch_popgdp="data/bundle/je-e-21.03.02.xls",
+        naturalearth=ancient("data/bundle/naturalearth/ne_10m_admin_0_countries.shp"),
+        eez=ancient("data/bundle/eez/World_EEZ_v8_2014.shp"),
+        nuts3=ancient("data/bundle/NUTS_2013_60M_SH/data/NUTS_RG_60M_2013.shp"),
+        nuts3pop=ancient("data/bundle/nama_10r_3popgdp.tsv.gz"),
+        nuts3gdp=ancient("data/bundle/nama_10r_3gdp.tsv.gz"),
+        ch_cantons=ancient("data/bundle/ch_cantons.csv"),
+        ch_popgdp=ancient("data/bundle/je-e-21.03.02.xls"),
     output:
         country_shapes=RESOURCES + "country_shapes.geojson",
         offshore_shapes=RESOURCES + "offshore_shapes.geojson",
@@ -140,7 +140,7 @@ if config["enable"].get("build_natura_raster", False):
 
     rule build_natura_raster:
         input:
-            natura="data/bundle/natura/Natura2000_end2015.shp",
+            natura=ancient("data/bundle/natura/Natura2000_end2015.shp"),
             cutouts=expand("cutouts/" + CDIR + "{cutouts}.nc", **config["atlite"]),
         output:
             RESOURCES + "natura.tiff",
@@ -179,17 +179,17 @@ rule build_ship_raster:
 rule build_renewable_profiles:
     input:
         base_network=RESOURCES + "networks/base.nc",
-        corine="data/bundle/corine/g250_clc06_V18_5.tif",
+        corine=ancient("data/bundle/corine/g250_clc06_V18_5.tif"),
         natura=lambda w: (
             RESOURCES + "natura.tiff"
             if config["renewable"][w.technology]["natura"]
             else []
         ),
-        gebco=lambda w: (
+        gebco=ancient(lambda w: (
             "data/bundle/GEBCO_2014_2D.nc"
             if config["renewable"][w.technology].get("max_depth")
             else []
-        ),
+        )),
         ship_density=lambda w: (
             RESOURCES + "shipdensity_raster.nc"
             if "ship_threshold" in config["renewable"][w.technology].keys()
@@ -254,7 +254,7 @@ rule add_electricity:
         tech_costs=COSTS,
         regions=RESOURCES + "regions_onshore.geojson",
         powerplants=RESOURCES + "powerplants.csv",
-        hydro_capacities="data/bundle/hydro_capacities.csv",
+        hydro_capacities=ancient("data/bundle/hydro_capacities.csv"),
         geth_hydro_capacities="data/geth2015_hydro_capacities.csv",
         load=RESOURCES + "load.csv",
         nuts3_shapes=RESOURCES + "nuts3_shapes.geojson",
