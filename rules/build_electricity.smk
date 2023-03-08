@@ -12,7 +12,8 @@ if config["enable"].get("prepare_links_p_nom", False):
         threads: 1
         resources:
             mem_mb=1500,
-        conda: "../envs/environment.yaml"
+        conda:
+            "../envs/environment.yaml"
         script:
             "../scripts/prepare_links_p_nom.py"
 
@@ -26,7 +27,8 @@ rule build_load_data:
         LOGS + "build_load_data.log",
     resources:
         mem_mb=5000,
-    conda: "../envs/environment.yaml"
+    conda:
+        "../envs/environment.yaml"
     script:
         "../scripts/build_load_data.py"
 
@@ -42,7 +44,8 @@ rule build_powerplants:
     threads: 1
     resources:
         mem_mb=5000,
-    conda: "../envs/environment.yaml"
+    conda:
+        "../envs/environment.yaml"
     script:
         "../scripts/build_powerplants.py"
 
@@ -69,7 +72,8 @@ rule base_network:
     threads: 1
     resources:
         mem_mb=1500,
-    conda: "../envs/environment.yaml"
+    conda:
+        "../envs/environment.yaml"
     script:
         "../scripts/base_network.py"
 
@@ -93,7 +97,8 @@ rule build_shapes:
     threads: 1
     resources:
         mem_mb=1500,
-    conda: "../envs/environment.yaml"
+    conda:
+        "../envs/environment.yaml"
     script:
         "../scripts/build_shapes.py"
 
@@ -111,7 +116,8 @@ rule build_bus_regions:
     threads: 1
     resources:
         mem_mb=1000,
-    conda: "../envs/environment.yaml"
+    conda:
+        "../envs/environment.yaml"
     script:
         "../scripts/build_bus_regions.py"
 
@@ -131,7 +137,8 @@ if config["enable"].get("build_cutout", False):
         threads: ATLITE_NPROCESSES
         resources:
             mem_mb=ATLITE_NPROCESSES * 1000,
-        conda: "../envs/environment.yaml"
+        conda:
+            "../envs/environment.yaml"
         script:
             "../scripts/build_cutout.py"
 
@@ -148,7 +155,8 @@ if config["enable"].get("build_natura_raster", False):
             mem_mb=5000,
         log:
             LOGS + "build_natura_raster.log",
-        conda: "../envs/environment.yaml"
+        conda:
+            "../envs/environment.yaml"
         script:
             "../scripts/build_natura_raster.py"
 
@@ -171,7 +179,8 @@ rule build_ship_raster:
         mem_mb=5000,
     benchmark:
         BENCHMARKS + "build_ship_raster"
-    conda: "../envs/environment.yaml"
+    conda:
+        "../envs/environment.yaml"
     script:
         "../scripts/build_ship_raster.py"
 
@@ -185,11 +194,13 @@ rule build_renewable_profiles:
             if config["renewable"][w.technology]["natura"]
             else []
         ),
-        gebco=ancient(lambda w: (
-            "data/bundle/GEBCO_2014_2D.nc"
-            if config["renewable"][w.technology].get("max_depth")
-            else []
-        )),
+        gebco=ancient(
+            lambda w: (
+                "data/bundle/GEBCO_2014_2D.nc"
+                if config["renewable"][w.technology].get("max_depth")
+                else []
+            )
+        ),
         ship_density=lambda w: (
             RESOURCES + "shipdensity_raster.nc"
             if "ship_threshold" in config["renewable"][w.technology].keys()
@@ -217,7 +228,8 @@ rule build_renewable_profiles:
         mem_mb=ATLITE_NPROCESSES * 5000,
     wildcard_constraints:
         technology="(?!hydro).*",  # Any technology other than hydro
-    conda: "../envs/environment.yaml"
+    conda:
+        "../envs/environment.yaml"
     script:
         "../scripts/build_renewable_profiles.py"
 
@@ -233,7 +245,8 @@ rule build_hydro_profile:
         LOGS + "build_hydro_profile.log",
     resources:
         mem_mb=5000,
-    conda: "../envs/environment.yaml"
+    conda:
+        "../envs/environment.yaml"
     script:
         "../scripts/build_hydro_profile.py"
 
@@ -267,7 +280,8 @@ rule add_electricity:
     threads: 1
     resources:
         mem_mb=5000,
-    conda: "../envs/environment.yaml"
+    conda:
+        "../envs/environment.yaml"
     script:
         "../scripts/add_electricity.py"
 
@@ -291,7 +305,8 @@ rule simplify_network:
     threads: 1
     resources:
         mem_mb=4000,
-    conda: "../envs/environment.yaml"
+    conda:
+        "../envs/environment.yaml"
     script:
         "../scripts/simplify_network.py"
 
@@ -321,7 +336,8 @@ rule cluster_network:
     threads: 1
     resources:
         mem_mb=6000,
-    conda: "../envs/environment.yaml"
+    conda:
+        "../envs/environment.yaml"
     script:
         "../scripts/cluster_network.py"
 
@@ -339,7 +355,8 @@ rule add_extra_components:
     threads: 1
     resources:
         mem_mb=3000,
-    conda: "../envs/environment.yaml"
+    conda:
+        "../envs/environment.yaml"
     script:
         "../scripts/add_extra_components.py"
 
@@ -357,6 +374,7 @@ rule prepare_network:
     threads: 1
     resources:
         mem_mb=4000,
-    conda: "../envs/environment.yaml"
+    conda:
+        "../envs/environment.yaml"
     script:
         "../scripts/prepare_network.py"

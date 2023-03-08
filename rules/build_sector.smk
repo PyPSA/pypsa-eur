@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
+
 rule build_population_layouts:
     input:
         nuts3_shapes=RESOURCES + "nuts3_shapes.geojson",
@@ -12,13 +13,14 @@ rule build_population_layouts:
         pop_layout_urban=RESOURCES + "pop_layout_urban.nc",
         pop_layout_rural=RESOURCES + "pop_layout_rural.nc",
     log:
-        LOGS + "build_population_layouts.log"
+        LOGS + "build_population_layouts.log",
     resources:
         mem_mb=20000,
     benchmark:
         BENCHMARKS + "build_population_layouts"
     threads: 8
-    conda: "../envs/environment.yaml"
+    conda:
+        "../envs/environment.yaml"
     script:
         "../scripts/build_population_layouts.py"
 
@@ -33,12 +35,13 @@ rule build_clustered_population_layouts:
     output:
         clustered_pop_layout=RESOURCES + "pop_layout_elec_s{simpl}_{clusters}.csv",
     log:
-        LOGS + "build_clustered_population_layouts_{simpl}_{clusters}.log"
+        LOGS + "build_clustered_population_layouts_{simpl}_{clusters}.log",
     resources:
         mem_mb=10000,
     benchmark:
         BENCHMARKS + "build_clustered_population_layouts/s{simpl}_{clusters}"
-    conda: "../envs/environment.yaml"
+    conda:
+        "../envs/environment.yaml"
     script:
         "../scripts/build_clustered_population_layouts.py"
 
@@ -55,10 +58,11 @@ rule build_simplified_population_layouts:
     resources:
         mem_mb=10000,
     log:
-        LOGS + "build_simplified_population_layouts_{simpl}"
+        LOGS + "build_simplified_population_layouts_{simpl}",
     benchmark:
         BENCHMARKS + "build_simplified_population_layouts/s{simpl}"
-    conda: "../envs/environment.yaml"
+    conda:
+        "../envs/environment.yaml"
     script:
         "../scripts/build_clustered_population_layouts.py"
 
@@ -73,8 +77,9 @@ if config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]:
         resources:
             mem_mb=4000,
         log:
-            LOGS + "build_gas_network.log"
-        conda: "../envs/environment.yaml"
+            LOGS + "build_gas_network.log",
+        conda:
+            "../envs/environment.yaml"
         script:
             "../scripts/build_gas_network.py"
 
@@ -98,11 +103,11 @@ if config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]:
         resources:
             mem_mb=2000,
         log:
-            LOGS + "build_gas_input_locations_s{simpl}_{clusters}.log"
-        conda: "../envs/environment.yaml"
+            LOGS + "build_gas_input_locations_s{simpl}_{clusters}.log",
+        conda:
+            "../envs/environment.yaml"
         script:
             "../scripts/build_gas_input_locations.py"
-
 
     rule cluster_gas_network:
         input:
@@ -116,8 +121,9 @@ if config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]:
         resources:
             mem_mb=4000,
         log:
-            LOGS + "cluster_gas_network_s{simpl}_{clusters}.log"
-        conda: "../envs/environment.yaml"
+            LOGS + "cluster_gas_network_s{simpl}_{clusters}.log",
+        conda:
+            "../envs/environment.yaml"
         script:
             "../scripts/cluster_gas_network.py"
 
@@ -144,10 +150,11 @@ rule build_heat_demands:
         mem_mb=20000,
     threads: 8
     log:
-        LOGS + "build_heat_demands_{scope}_{simpl}_{clusters}.loc"
+        LOGS + "build_heat_demands_{scope}_{simpl}_{clusters}.loc",
     benchmark:
         BENCHMARKS + "build_heat_demands/{scope}_s{simpl}_{clusters}"
-    conda: "../envs/environment.yaml"
+    conda:
+        "../envs/environment.yaml"
     script:
         "../scripts/build_heat_demand.py"
 
@@ -164,10 +171,11 @@ rule build_temperature_profiles:
         mem_mb=20000,
     threads: 8
     log:
-        LOGS + "build_temperature_profiles_{scope}_{simpl}_{clusters}.log"
+        LOGS + "build_temperature_profiles_{scope}_{simpl}_{clusters}.log",
     benchmark:
         BENCHMARKS + "build_temperature_profiles/{scope}_s{simpl}_{clusters}"
-    conda: "../envs/environment.yaml"
+    conda:
+        "../envs/environment.yaml"
     script:
         "../scripts/build_temperature_profiles.py"
 
@@ -190,10 +198,11 @@ rule build_cop_profiles:
     resources:
         mem_mb=20000,
     log:
-        LOGS + "build_cop_profiles_s{simpl}_{clusters}.log"
+        LOGS + "build_cop_profiles_s{simpl}_{clusters}.log",
     benchmark:
         BENCHMARKS + "build_cop_profiles/s{simpl}_{clusters}"
-    conda: "../envs/environment.yaml"
+    conda:
+        "../envs/environment.yaml"
     script:
         "../scripts/build_cop_profiles.py"
 
@@ -209,10 +218,11 @@ rule build_solar_thermal_profiles:
         mem_mb=20000,
     threads: 16
     log:
-        LOGS + "build_solar_thermal_profiles_{scope}_s{simpl}_{clusters}.log"
+        LOGS + "build_solar_thermal_profiles_{scope}_s{simpl}_{clusters}.log",
     benchmark:
         BENCHMARKS + "build_solar_thermal_profiles/{scope}_s{simpl}_{clusters}"
-    conda: "../envs/environment.yaml"
+    conda:
+        "../envs/environment.yaml"
     script:
         "../scripts/build_solar_thermal_profiles.py"
 
@@ -233,10 +243,11 @@ rule build_energy_totals:
     resources:
         mem_mb=10000,
     log:
-        LOGS + "build_energy_totals.log"
+        LOGS + "build_energy_totals.log",
     benchmark:
         BENCHMARKS + "build_energy_totals"
-    conda: "../envs/environment.yaml"
+    conda:
+        "../envs/environment.yaml"
     script:
         "../scripts/build_energy_totals.py"
 
@@ -261,10 +272,11 @@ rule build_biomass_potentials:
     resources:
         mem_mb=1000,
     log:
-        LOGS + "build_biomass_potentials_s{simpl}_{clusters}.log"
+        LOGS + "build_biomass_potentials_s{simpl}_{clusters}.log",
     benchmark:
         BENCHMARKS + "build_biomass_potentials_s{simpl}_{clusters}"
-    conda: "../envs/environment.yaml"
+    conda:
+        "../envs/environment.yaml"
     script:
         "../scripts/build_biomass_potentials.py"
 
@@ -283,10 +295,11 @@ if config["sector"]["biomass_transport"]:
         resources:
             mem_mb=1000,
         log:
-            LOGS + "build_biomass_transport_costs.log"
+            LOGS + "build_biomass_transport_costs.log",
         benchmark:
             BENCHMARKS + "build_biomass_transport_costs"
-        conda: "../envs/environment.yaml"
+        conda:
+            "../envs/environment.yaml"
         script:
             "../scripts/build_biomass_transport_costs.py"
 
@@ -318,10 +331,11 @@ if config["sector"]["regional_co2_sequestration_potential"]["enable"]:
         resources:
             mem_mb=4000,
         log:
-            LOGS + "build_sequestration_potentials_s{simpl}_{clusters}.log"
+            LOGS + "build_sequestration_potentials_s{simpl}_{clusters}.log",
         benchmark:
             BENCHMARKS + "build_sequestration_potentials_s{simpl}_{clusters}"
-        conda: "../envs/environment.yaml"
+        conda:
+            "../envs/environment.yaml"
         script:
             "../scripts/build_sequestration_potentials.py"
 
@@ -344,10 +358,11 @@ rule build_salt_cavern_potentials:
     resources:
         mem_mb=2000,
     log:
-        LOGS + "build_salt_cavern_potentials_s{simpl}_{clusters}.log"
+        LOGS + "build_salt_cavern_potentials_s{simpl}_{clusters}.log",
     benchmark:
         BENCHMARKS + "build_salt_cavern_potentials_s{simpl}_{clusters}"
-    conda: "../envs/environment.yaml"
+    conda:
+        "../envs/environment.yaml"
     script:
         "../scripts/build_salt_cavern_potentials.py"
 
@@ -361,10 +376,11 @@ rule build_ammonia_production:
     resources:
         mem_mb=1000,
     log:
-        LOGS + "build_ammonia_production.log"
+        LOGS + "build_ammonia_production.log",
     benchmark:
         BENCHMARKS + "build_ammonia_production"
-    conda: "../envs/environment.yaml"
+    conda:
+        "../envs/environment.yaml"
     script:
         "../scripts/build_ammonia_production.py"
 
@@ -379,10 +395,11 @@ rule build_industry_sector_ratios:
     resources:
         mem_mb=1000,
     log:
-        LOGS + "build_industry_sector_ratios.log"
+        LOGS + "build_industry_sector_ratios.log",
     benchmark:
         BENCHMARKS + "build_industry_sector_ratios"
-    conda: "../envs/environment.yaml"
+    conda:
+        "../envs/environment.yaml"
     script:
         "../scripts/build_industry_sector_ratios.py"
 
@@ -399,10 +416,11 @@ rule build_industrial_production_per_country:
     resources:
         mem_mb=1000,
     log:
-        LOGS + "build_industrial_production_per_country.log"
+        LOGS + "build_industrial_production_per_country.log",
     benchmark:
         BENCHMARKS + "build_industrial_production_per_country"
-    conda: "../envs/environment.yaml"
+    conda:
+        "../envs/environment.yaml"
     script:
         "../scripts/build_industrial_production_per_country.py"
 
@@ -418,10 +436,15 @@ rule build_industrial_production_per_country_tomorrow:
     resources:
         mem_mb=1000,
     log:
-        LOGS + "build_industrial_production_per_country_tomorrow_{planning_horizons}.log"
+        LOGS
+        + "build_industrial_production_per_country_tomorrow_{planning_horizons}.log",
     benchmark:
-        BENCHMARKS + "build_industrial_production_per_country_tomorrow_{planning_horizons}"
-    conda: "../envs/environment.yaml"
+        (
+            BENCHMARKS
+            + "build_industrial_production_per_country_tomorrow_{planning_horizons}"
+        )
+    conda:
+        "../envs/environment.yaml"
     script:
         "../scripts/build_industrial_production_per_country_tomorrow.py"
 
@@ -438,10 +461,11 @@ rule build_industrial_distribution_key:
     resources:
         mem_mb=1000,
     log:
-        LOGS + "build_industrial_distribution_key_s{simpl}_{clusters}.log"
+        LOGS + "build_industrial_distribution_key_s{simpl}_{clusters}.log",
     benchmark:
         BENCHMARKS + "build_industrial_distribution_key/s{simpl}_{clusters}"
-    conda: "../envs/environment.yaml"
+    conda:
+        "../envs/environment.yaml"
     script:
         "../scripts/build_industrial_distribution_key.py"
 
@@ -459,10 +483,15 @@ rule build_industrial_production_per_node:
     resources:
         mem_mb=1000,
     log:
-        LOGS + "build_industrial_production_per_node_s{simpl}_{clusters}_{planning_horizons}.log"
+        LOGS
+        + "build_industrial_production_per_node_s{simpl}_{clusters}_{planning_horizons}.log",
     benchmark:
-        BENCHMARKS + "build_industrial_production_per_node/s{simpl}_{clusters}_{planning_horizons}"
-    conda: "../envs/environment.yaml"
+        (
+            BENCHMARKS
+            + "build_industrial_production_per_node/s{simpl}_{clusters}_{planning_horizons}"
+        )
+    conda:
+        "../envs/environment.yaml"
     script:
         "../scripts/build_industrial_production_per_node.py"
 
@@ -481,10 +510,15 @@ rule build_industrial_energy_demand_per_node:
     resources:
         mem_mb=1000,
     log:
-        LOGS + "build_industrial_energy_demand_per_node_s{simpl}_{clusters}_{planning_horizons}.log"
+        LOGS
+        + "build_industrial_energy_demand_per_node_s{simpl}_{clusters}_{planning_horizons}.log",
     benchmark:
-        BENCHMARKS + "build_industrial_energy_demand_per_node/s{simpl}_{clusters}_{planning_horizons}"
-    conda: "../envs/environment.yaml"
+        (
+            BENCHMARKS
+            + "build_industrial_energy_demand_per_node/s{simpl}_{clusters}_{planning_horizons}"
+        )
+    conda:
+        "../envs/environment.yaml"
     script:
         "../scripts/build_industrial_energy_demand_per_node.py"
 
@@ -502,10 +536,11 @@ rule build_industrial_energy_demand_per_country_today:
     resources:
         mem_mb=1000,
     log:
-        LOGS + "build_industrial_energy_demand_per_country_today.log"
+        LOGS + "build_industrial_energy_demand_per_country_today.log",
     benchmark:
         BENCHMARKS + "build_industrial_energy_demand_per_country_today"
-    conda: "../envs/environment.yaml"
+    conda:
+        "../envs/environment.yaml"
     script:
         "../scripts/build_industrial_energy_demand_per_country_today.py"
 
@@ -523,10 +558,11 @@ rule build_industrial_energy_demand_per_node_today:
     resources:
         mem_mb=1000,
     log:
-        LOGS + "build_industrial_energy_demand_per_node_today_s{simpl}_{clusters}.log"
+        LOGS + "build_industrial_energy_demand_per_node_today_s{simpl}_{clusters}.log",
     benchmark:
         BENCHMARKS + "build_industrial_energy_demand_per_node_today/s{simpl}_{clusters}"
-    conda: "../envs/environment.yaml"
+    conda:
+        "../envs/environment.yaml"
     script:
         "../scripts/build_industrial_energy_demand_per_node_today.py"
 
@@ -551,10 +587,11 @@ if config["sector"]["retrofitting"]["retro_endogen"]:
         resources:
             mem_mb=1000,
         log:
-            LOGS + "build_retro_cost_s{simpl}_{clusters}.log"
+            LOGS + "build_retro_cost_s{simpl}_{clusters}.log",
         benchmark:
             BENCHMARKS + "build_retro_cost/s{simpl}_{clusters}"
-        conda: "../envs/environment.yaml"
+        conda:
+            "../envs/environment.yaml"
         script:
             "../scripts/build_retro_cost.py"
 
@@ -576,8 +613,9 @@ rule build_population_weighted_energy_totals:
     resources:
         mem_mb=2000,
     log:
-        LOGS + "build_population_weighted_energy_totals_s{simpl}_{clusters}.log"
-    conda: "../envs/environment.yaml"
+        LOGS + "build_population_weighted_energy_totals_s{simpl}_{clusters}.log",
+    conda:
+        "../envs/environment.yaml"
     script:
         "../scripts/build_population_weighted_energy_totals.py"
 
@@ -594,8 +632,9 @@ rule build_shipping_demand:
     resources:
         mem_mb=2000,
     log:
-        LOGS + "build_shipping_demand_s{simpl}_{clusters}.log"
-    conda: "../envs/environment.yaml"
+        LOGS + "build_shipping_demand_s{simpl}_{clusters}.log",
+    conda:
+        "../envs/environment.yaml"
     script:
         "../scripts/build_shipping_demand.py"
 
@@ -618,8 +657,9 @@ rule build_transport_demand:
     resources:
         mem_mb=2000,
     log:
-        LOGS + "build_transport_demand_s{simpl}_{clusters}.log"
-    conda: "../envs/environment.yaml"
+        LOGS + "build_transport_demand_s{simpl}_{clusters}.log",
+    conda:
+        "../envs/environment.yaml"
     script:
         "../scripts/build_transport_demand.py"
 
@@ -693,11 +733,14 @@ rule prepare_sector_network:
     resources:
         mem_mb=2000,
     log:
-        LOGS + "prepare_sector_network_elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log"
+        LOGS
+        + "prepare_sector_network_elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log",
     benchmark:
         (
-            BENCHMARKS + "prepare_sector_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+            BENCHMARKS
+            + "prepare_sector_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
         )
-    conda: "../envs/environment.yaml"
+    conda:
+        "../envs/environment.yaml"
     script:
         "../scripts/prepare_sector_network.py"
