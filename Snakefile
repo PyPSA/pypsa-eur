@@ -9,6 +9,11 @@ from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 
 HTTP = HTTPRemoteProvider()
 
+from snakemake.utils import min_version
+
+min_version("6.15")
+
+
 if not exists("config.yaml"):
     copyfile("config.default.yaml", "config.yaml")
 

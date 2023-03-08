@@ -30,5 +30,6 @@ rule solve_sector_network:
             RESULTS
             + "benchmarks/solve_sector_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
         )
+    conda: "../envs/environment.yaml"
     script:
-        "scripts/solve_sector_network.py"
+        "../scripts/solve_sector_network.py"

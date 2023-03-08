@@ -42,8 +42,9 @@ rule solve_network:
         mem_mb=memory,
     shadow:
         "minimal"
+    conda: "../envs/environment.yaml"
     script:
-        "scripts/solve_network.py"
+        "../scripts/solve_network.py"
 
 
 rule solve_operations_network:
@@ -71,5 +72,6 @@ rule solve_operations_network:
         mem_mb=(lambda w: 5000 + 372 * int(w.clusters)),
     shadow:
         "minimal"
+    conda: "../envs/environment.yaml"
     script:
-        "scripts/solve_operations_network.py"
+        "../scripts/solve_operations_network.py"

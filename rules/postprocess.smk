@@ -23,8 +23,9 @@ rule plot_network:
             RESULTS
             + "benchmarks/plot_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
         )
+    conda: "../envs/environment.yaml"
     script:
-        "scripts/plot_network.py"
+        "../scripts/plot_network.py"
 
 
 rule copy_config:
@@ -37,8 +38,9 @@ rule copy_config:
         mem_mb=1000,
     benchmark:
         RESULTS + "benchmarks/copy_config"
+    conda: "../envs/environment.yaml"
     script:
-        "scripts/copy_config.py"
+        "../scripts/copy_config.py"
 
 
 rule copy_conda_env:
@@ -49,6 +51,7 @@ rule copy_conda_env:
         mem_mb=500,
     benchmark:
         RESULTS + "benchmarks/copy_conda_env"
+    conda: "../envs/environment.yaml"
     shell:
         "conda env export -f {output} --no-builds"
 
@@ -92,8 +95,9 @@ rule make_summary:
         mem_mb=10000,
     benchmark:
         RESULTS + "benchmarks/make_summary"
+    conda: "../envs/environment.yaml"
     script:
-        "scripts/make_summary.py"
+        "../scripts/make_summary.py"
 
 
 rule plot_summary:
@@ -114,5 +118,6 @@ rule plot_summary:
         mem_mb=10000,
     benchmark:
         RESULTS + "benchmarks/plot_summary"
+    conda: "../envs/environment.yaml"
     script:
-        "scripts/plot_summary.py"
+        "../scripts/plot_summary.py"

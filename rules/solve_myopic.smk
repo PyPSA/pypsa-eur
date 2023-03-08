@@ -32,8 +32,10 @@ rule add_existing_baseyear:
             RESULTS
             + "benchmarks/add_existing_baseyear/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
         )
+    conda: "../envs/environment.yaml"
     script:
         "scripts/add_existing_baseyear.py"
+
 
 def solved_previous_horizon(wildcards):
     planning_horizons = config["scenario"]["planning_horizons"]
@@ -45,6 +47,7 @@ def solved_previous_horizon(wildcards):
         + planning_horizon_p
         + ".nc"
     )
+
 
 rule add_brownfield:
     input:
@@ -66,10 +69,13 @@ rule add_brownfield:
             RESULTS
             + "benchmarks/add_brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
         )
+    conda: "../envs/environment.yaml"
     script:
         "scripts/add_brownfield.py"
 
+
 ruleorder: add_existing_baseyear > add_brownfield
+
 
 rule solve_sector_network_myopic:
     input:
@@ -98,5 +104,6 @@ rule solve_sector_network_myopic:
             RESULTS
             + "benchmarks/solve_sector_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
         )
+    conda: "../envs/environment.yaml"
     script:
         "scripts/solve_sector_network.py"

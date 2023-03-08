@@ -28,7 +28,7 @@ if config["enable"].get("retrieve_databundle", True):
         resources:
             mem_mb=1000,
         script:
-            "scripts/retrieve_databundle.py"
+            "../scripts/retrieve_databundle.py"
 
 
 if config["enable"].get("retrieve_cutout", True):
@@ -110,7 +110,7 @@ if config["enable"].get("retrieve_sector_databundle", True):
         log:
             "logs/retrieve_sector_databundle.log",
         script:
-            "scripts/retrieve_sector_databundle.py"
+            "../scripts/retrieve_sector_databundle.py"
 
 
 if config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]:
@@ -126,7 +126,7 @@ if config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]:
         output:
             expand("data/gas_network/scigrid-gas/data/{files}", files=datafiles),
         script:
-            "scripts/retrieve_gas_infrastructure_data.py"
+            "../scripts/retrieve_gas_infrastructure_data.py"
 
 
 rule retrieve_load_data:
