@@ -20,7 +20,7 @@ on:
 
 env:
   CONDA_CACHE_NUMBER: 1 # Change this value to manually reset the environment cache
-  DATA_CACHE_NUMBER: 1
+  DATA_CACHE_NUMBER: 2
 
 jobs:
   build:
