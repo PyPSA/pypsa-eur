@@ -94,6 +94,6 @@ rule doc:
     message:
         "Build documentation."
     output:
-        directory("doc/_build")
+        directory("doc/_build"),
     shell:
         "make -C doc html"

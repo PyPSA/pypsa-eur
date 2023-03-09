@@ -26,4 +26,3 @@ Rule ``plot_network``
 ========================
 
 .. automodule:: plot_network
-

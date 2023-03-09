@@ -161,9 +161,3 @@ Rule ``prepare_sector_network``
 ==============================================================================
 
 .. automodule:: prepare_sector_network
-
-
-
-
-
-

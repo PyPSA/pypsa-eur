@@ -4,8 +4,9 @@
 # SPDX-License-Identifier: MIT
 
 """
-Creates GIS shape files of the countries, exclusive economic zones and
-`NUTS3 <https://en.wikipedia.org/wiki/Nomenclature_of_Territorial_Units_for_Statistics>`_ areas.
+Creates GIS shape files of the countries, exclusive economic zones and `NUTS3 <
+https://en.wikipedia.org/wiki/Nomenclature_of_Territorial_Units_for_Statistics>
+`_ areas.
 
 Relevant Settings
 -----------------

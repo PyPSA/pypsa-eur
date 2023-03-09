@@ -66,7 +66,6 @@ The script has the following structure:
     (3) calculate costs for corresponding additional insulation material
     (4) get cost savings per retrofitting measures for each sector by weighting
         with heated floor area
-
 """
 import pandas as pd
 import xarray as xr
