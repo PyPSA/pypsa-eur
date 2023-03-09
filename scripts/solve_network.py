@@ -78,6 +78,7 @@ Details (and errors made through this heuristic) are discussed in the paper
 """
 
 import logging
+import os
 import re
 from pathlib import Path
 
@@ -85,16 +86,10 @@ import numpy as np
 import pandas as pd
 import pypsa
 from _helpers import configure_logging
+from linopy import merge
 from pypsa.descriptors import get_switchable_as_dense as get_as_dense
-from pypsa.linopf import (
-    define_constraints,
-    define_variables,
-    get_var,
-    ilopf,
-    join_exprs,
-    linexpr,
-    network_lopf,
-)
+from pypsa.optimization.abstract import optimize_transmission_expansion_iteratively
+from pypsa.optimization.optimize import optimize
 from vresutils.benchmark import memory_logger
 
 logger = logging.getLogger(__name__)
@@ -148,47 +143,90 @@ def prepare_network(n, solve_opts):
 
 
 def add_CCL_constraints(n, config):
-    agg_p_nom_limits = config["electricity"].get("agg_p_nom_limits")
+    """
+    Add CCL (country & carrier limit) constraint to the network.
 
+    Add minimum and maximum levels of generator nominal capacity per carrier
+    for individual countries. Opts and path for agg_p_nom_minmax.csv must be defined
+    in config.yaml. Default file is available at data/agg_p_nom_minmax.csv.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+    config : dict
+
+    Example
+    -------
+    scenario:
+        opts: [Co2L-CCL-24H]
+    electricity:
+        agg_p_nom_limits: data/agg_p_nom_minmax.csv
+    """
+    pypsa_eur_path = os.path.dirname(os.getcwd())
+    agg_p_nom_limits = os.path.join(
+        pypsa_eur_path, config["electricity"].get("agg_p_nom_limits")
+    )
     try:
         agg_p_nom_minmax = pd.read_csv(agg_p_nom_limits, index_col=list(range(2)))
     except IOError:
         logger.exception(
             "Need to specify the path to a .csv file containing "
-            "aggregate capacity limits per country in "
-            "config['electricity']['agg_p_nom_limit']."
+            "aggregate capacity limits per country. "
+            "Path specified in config['electricity']['agg_p_nom_limit']. "
+            f"Currently read path is 'pypsa-eur/{agg_p_nom_limits}'."
         )
     logger.info(
         "Adding per carrier generation capacity constraints for " "individual countries"
     )
+    capacity_variable = n.model["Generator-p_nom"]
 
-    gen_country = n.generators.bus.map(n.buses.country)
-    # cc means country and carrier
-    p_nom_per_cc = (
-        pd.DataFrame(
-            {
-                "p_nom": linexpr((1, get_var(n, "Generator", "p_nom"))),
-                "country": gen_country,
-                "carrier": n.generators.carrier,
-            }
+    lhs = []
+    ext_carriers = n.generators.query("p_nom_extendable").carrier.unique()
+    for c in ext_carriers:
+        ext_carrier = n.generators.query("p_nom_extendable and carrier == @c")
+        country_grouper = (
+            ext_carrier.bus.map(n.buses.country)
+            .rename_axis("Generator-ext")
+            .rename("country")
         )
-        .dropna(subset=["p_nom"])
-        .groupby(["country", "carrier"])
-        .p_nom.apply(join_exprs)
+        ext_carrier_per_country = capacity_variable.loc[
+            country_grouper.index
+        ].groupby_sum(country_grouper)
+        lhs.append(ext_carrier_per_country)
+    lhs = merge(lhs, dim=pd.Index(ext_carriers, name="carrier"))
+
+    min_matrix = agg_p_nom_minmax["min"].to_xarray().unstack().reindex_like(lhs)
+    max_matrix = agg_p_nom_minmax["max"].to_xarray().unstack().reindex_like(lhs)
+
+    n.model.add_constraints(
+        lhs >= min_matrix, name="agg_p_nom_min", mask=min_matrix.notnull()
     )
-    minimum = agg_p_nom_minmax["min"].dropna()
-    if not minimum.empty:
-        minconstraint = define_constraints(
-            n, p_nom_per_cc[minimum.index], ">=", minimum, "agg_p_nom", "min"
-        )
-    maximum = agg_p_nom_minmax["max"].dropna()
-    if not maximum.empty:
-        maxconstraint = define_constraints(
-            n, p_nom_per_cc[maximum.index], "<=", maximum, "agg_p_nom", "max"
-        )
+    n.model.add_constraints(
+        lhs <= max_matrix, name="agg_p_nom_max", mask=max_matrix.notnull()
+    )
 
 
 def add_EQ_constraints(n, o, scaling=1e-1):
+    """
+    Add equality constraints to the network.
+
+    Opts must be specified in the config.yaml.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+    o : str
+
+    Example
+    -------
+    scenario:
+        opts: [Co2L-EQ0.7-24H]
+
+    Require each country or node to on average produce a minimal share
+    of its total consumption itself. Example: EQ0.7c demands each country
+    to produce on average at least 70% of its consumption; EQ0.7 demands
+    each node to produce on average at least 70% of its consumption.
+    """
     float_regex = "[0-9]*\.?[0-9]+"
     level = float(re.findall(float_regex, o)[0])
     if o[-1] == "c":
@@ -209,78 +247,142 @@ def add_EQ_constraints(n, o, scaling=1e-1):
     )
     inflow = inflow.reindex(load.index).fillna(0.0)
     rhs = scaling * (level * load - inflow)
+    dispatch_variable = n.model["Generator-p"].T
     lhs_gen = (
-        linexpr(
-            (n.snapshot_weightings.generators * scaling, get_var(n, "Generator", "p").T)
-        )
-        .T.groupby(ggrouper, axis=1)
-        .apply(join_exprs)
+        (dispatch_variable * (n.snapshot_weightings.generators * scaling))
+        .groupby_sum(ggrouper)
+        .sum("snapshot")
     )
     if not n.storage_units_t.inflow.empty:
+        spillage_variable = n.model["StorageUnit-spill"]
         lhs_spill = (
-            linexpr(
-                (
-                    -n.snapshot_weightings.stores * scaling,
-                    get_var(n, "StorageUnit", "spill").T,
-                )
-            )
-            .T.groupby(sgrouper, axis=1)
-            .apply(join_exprs)
+            (spillage_variable * (-n.snapshot_weightings.stores * scaling))
+            .groupby_sum(sgrouper)
+            .sum("snapshot")
         )
-        lhs_spill = lhs_spill.reindex(lhs_gen.index).fillna("")
-        lhs = lhs_gen + lhs_spill
+        lhs = merge(lhs_gen, lhs_spill)
     else:
         lhs = lhs_gen
-    define_constraints(n, lhs, ">=", rhs, "equity", "min")
+    n.model.add_constraints(lhs >= rhs, name="equity_min")
 
 
 def add_BAU_constraints(n, config):
+    """
+    Add a per-carrier minimal overall capacity.
+
+    BAU_mincapacities and opts must be adjusted in the config.yaml.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+    config : dict
+
+    Example
+    -------
+    scenario:
+        opts: [Co2L-BAU-24H]
+    electricity:
+        BAU_mincapacities:
+            solar: 0
+            onwind: 0
+            OCGT: 100000
+            offwind-ac: 0
+            offwind-dc: 0
+    Which sets minimum expansion across all nodes e.g. in Europe to 100GW.
+    OCGT bus 1 + OCGT bus 2 + ... > 100000
+    """
     mincaps = pd.Series(config["electricity"]["BAU_mincapacities"])
-    lhs = (
-        linexpr((1, get_var(n, "Generator", "p_nom")))
-        .groupby(n.generators.carrier)
-        .apply(join_exprs)
-    )
-    define_constraints(n, lhs, ">=", mincaps[lhs.index], "Carrier", "bau_mincaps")
+    capacity_variable = n.model["Generator-p_nom"]
+    ext_i = n.generators.query("p_nom_extendable")
+    ext_carrier_i = ext_i.carrier.rename_axis("Generator-ext")
+    lhs = capacity_variable.groupby_sum(ext_carrier_i)
+    rhs = mincaps[lhs.coords["carrier"].values].rename_axis("carrier")
+    n.model.add_constraints(lhs >= rhs, name="bau_mincaps")
 
 
 def add_SAFE_constraints(n, config):
-    peakdemand = (
-        1.0 + config["electricity"]["SAFE_reservemargin"]
-    ) * n.loads_t.p_set.sum(axis=1).max()
+    """
+    Add a capacity reserve margin of a certain fraction above the peak demand.
+    Renewable generators and storage do not contribute. Ignores network.
+
+    Parameters
+    ----------
+        n : pypsa.Network
+        config : dict
+
+    Example
+    -------
+    config.yaml requires to specify opts:
+
+    scenario:
+        opts: [Co2L-SAFE-24H]
+    electricity:
+        SAFE_reservemargin: 0.1
+    Which sets a reserve margin of 10% above the peak demand.
+    """
+    peakdemand = n.loads_t.p_set.sum(axis=1).max()
+    margin = 1.0 + config["electricity"]["SAFE_reservemargin"]
+    reserve_margin = peakdemand * margin
     conv_techs = config["plotting"]["conv_techs"]
+    ext_gens_i = n.generators.query("carrier in @conv_techs & p_nom_extendable").index
+    capacity_variable = n.model["Generator-p_nom"]
+    ext_cap_var = capacity_variable.sel({"Generator-ext": ext_gens_i})
+    lhs = ext_cap_var.sum()
     exist_conv_caps = n.generators.query(
         "~p_nom_extendable & carrier in @conv_techs"
     ).p_nom.sum()
-    ext_gens_i = n.generators.query("carrier in @conv_techs & p_nom_extendable").index
-    lhs = linexpr((1, get_var(n, "Generator", "p_nom")[ext_gens_i])).sum()
-    rhs = peakdemand - exist_conv_caps
-    define_constraints(n, lhs, ">=", rhs, "Safe", "mintotalcap")
+    rhs = reserve_margin - exist_conv_caps
+    n.model.add_constraints(lhs >= rhs, name="safe_mintotalcap")
 
 
-def add_operational_reserve_margin_constraint(n, config):
+def add_operational_reserve_margin_constraint(n, sns, config):
+    """
+    Define minimum operational reserve margin for a given snapshot.
+
+    Parameters
+    ----------
+        n : pypsa.Network
+        config : dict
+
+    Example:
+    --------
+    config.yaml requires to specify operational_reserve:
+    operational_reserve: # like https://genxproject.github.io/GenX/dev/core/#Reserves
+        activate: true
+        epsilon_load: 0.02 # percentage of load at each snapshot
+        epsilon_vres: 0.02 # percentage of VRES at each snapshot
+        contingency: 400000 # MW
+    """
     reserve_config = config["electricity"]["operational_reserve"]
     EPSILON_LOAD = reserve_config["epsilon_load"]
     EPSILON_VRES = reserve_config["epsilon_vres"]
     CONTINGENCY = reserve_config["contingency"]
 
     # Reserve Variables
-    reserve = get_var(n, "Generator", "r")
-    lhs = linexpr((1, reserve)).sum(1)
+    n.model.add_variables(
+        0, np.inf, coords=[sns, n.generators.index], name="Generator-r"
+    )
+    reserve = n.model["Generator-r"]
+    lhs = reserve.sum("Generator")
 
     # Share of extendable renewable capacities
     ext_i = n.generators.query("p_nom_extendable").index
     vres_i = n.generators_t.p_max_pu.columns
     if not ext_i.empty and not vres_i.empty:
         capacity_factor = n.generators_t.p_max_pu[vres_i.intersection(ext_i)]
-        renewable_capacity_variables = get_var(n, "Generator", "p_nom")[
-            vres_i.intersection(ext_i)
-        ]
-        lhs += linexpr(
-            (-EPSILON_VRES * capacity_factor, renewable_capacity_variables)
-        ).sum(1)
+        renewable_capacity_variables = (
+            n.model["Generator-p_nom"]
+            .sel({"Generator-ext": vres_i.intersection(ext_i)})
+            .rename({"Generator-ext": "Generator"})
+        )
+        lhs = merge(
+            lhs,
+            (renewable_capacity_variables * (-EPSILON_VRES * capacity_factor)).sum(
+                ["Generator"]
+            ),
+        )
 
-    # Total demand at t
+    # Total demand per t
     demand = n.loads_t.p_set.sum(1)
 
     # VRES potential of non extendable generators
@@ -291,59 +393,76 @@ def add_operational_reserve_margin_constraint(n, config):
     # Right-hand-side
     rhs = EPSILON_LOAD * demand + EPSILON_VRES * potential + CONTINGENCY
 
-    define_constraints(n, lhs, ">=", rhs, "Reserve margin")
+    n.model.add_constraints(lhs >= rhs, name="reserve_margin")
 
 
 def update_capacity_constraint(n):
+    """
+    Update the capacity constraint to include the new capacity variables.
+
+    Parameters
+    ----------
+        n : pypsa.Network
+    """
     gen_i = n.generators.index
     ext_i = n.generators.query("p_nom_extendable").index
     fix_i = n.generators.query("not p_nom_extendable").index
 
-    dispatch = get_var(n, "Generator", "p")
-    reserve = get_var(n, "Generator", "r")
-
+    dispatch = n.model["Generator-p"]
+    reserve = n.model["Generator-r"]
+    p_max_pu = get_as_dense(n, "Generator", "p_max_pu")
     capacity_fixed = n.generators.p_nom[fix_i]
 
-    p_max_pu = get_as_dense(n, "Generator", "p_max_pu")
-
-    lhs = linexpr((1, dispatch), (1, reserve))
+    lhs = merge(
+        dispatch * 1,
+        reserve * 1,
+    )
 
     if not ext_i.empty:
-        capacity_variable = get_var(n, "Generator", "p_nom")
-        lhs += linexpr((-p_max_pu[ext_i], capacity_variable)).reindex(
-            columns=gen_i, fill_value=""
+        capacity_variable = n.model["Generator-p_nom"]
+        lhs = merge(
+            lhs,
+            capacity_variable.rename({"Generator-ext": "Generator"}) * -p_max_pu[ext_i],
         )
 
-    rhs = (p_max_pu[fix_i] * capacity_fixed).reindex(columns=gen_i, fill_value=0)
-
-    define_constraints(n, lhs, "<=", rhs, "Generators", "updated_capacity_constraint")
+    rhs = (p_max_pu[fix_i] * capacity_fixed).reindex(columns=gen_i)
+    n.model.add_constraints(
+        lhs <= rhs, name="gen_updated_capacity_constraint", mask=rhs.notnull()
+    )
 
 
 def add_operational_reserve_margin(n, sns, config):
     """
     Build reserve margin constraints based on the formulation given in
     https://genxproject.github.io/GenX/dev/core/#Reserves.
+
+    Parameters
+    ----------
+        n : pypsa.Network
+        sns: pd.DatetimeIndex
+        config : dict
     """
-    define_variables(n, 0, np.inf, "Generator", "r", axes=[sns, n.generators.index])
-
-    add_operational_reserve_margin_constraint(n, config)
-
+    add_operational_reserve_margin_constraint(n, sns, config)
     update_capacity_constraint(n)
 
 
 def add_battery_constraints(n):
+    """
+    Add constraints to ensure that the ratio between the charger and
+    discharger.
+
+    1 * charger_size - efficiency * discharger_size = 0
+    """
     nodes = n.buses.index[n.buses.carrier == "battery"]
-    if nodes.empty or ("Link", "p_nom") not in n.variables.index:
+    if nodes.empty:
         return
-    link_p_nom = get_var(n, "Link", "p_nom")
-    lhs = linexpr(
-        (1, link_p_nom[nodes + " charger"]),
-        (
-            -n.links.loc[nodes + " discharger", "efficiency"].values,
-            link_p_nom[nodes + " discharger"].values,
-        ),
+    vars_link = n.model["Link-p_nom"]
+    eff = n.links.loc[nodes + " discharger", "efficiency"]
+    lhs = merge(
+        vars_link.sel({"Link-ext": nodes + " charger"}) * 1,
+        vars_link.sel({"Link-ext": nodes + " discharger"}) * -eff,
     )
-    define_constraints(n, lhs, "=", 0, "Link", "charger_ratio")
+    n.model.add_constraints(lhs == 0, name="link_charger_ratio")
 
 
 def extra_functionality(n, snapshots):
@@ -373,11 +492,8 @@ def extra_functionality(n, snapshots):
 
 
 def solve_network(n, config, opts="", **kwargs):
-    set_of_options = config["solving"]["solver"]["options"]
-    solver_options = (
-        config["solving"]["solver_options"][set_of_options] if set_of_options else {}
-    )
-    solver_name = config["solving"]["solver"]["name"]
+    solver_options = config["solving"]["solver"].copy()
+    solver_name = solver_options.pop("name")
     cf_solving = config["solving"]["options"]
     track_iterations = cf_solving.get("track_iterations", False)
     min_iterations = cf_solving.get("min_iterations", 4)
@@ -393,19 +509,25 @@ def solve_network(n, config, opts="", **kwargs):
         logger.info("No expandable lines found. Skipping iterative solving.")
 
     if skip_iterations:
-        network_lopf(
-            n, solver_name=solver_name, solver_options=solver_options, **kwargs
+        optimize(
+            n,
+            solver_name=solver_name,
+            solver_options=solver_options,
+            extra_functionality=extra_functionality,
+            **kwargs,
         )
     else:
-        ilopf(
+        optimize_transmission_expansion_iteratively(
             n,
             solver_name=solver_name,
             solver_options=solver_options,
             track_iterations=track_iterations,
             min_iterations=min_iterations,
             max_iterations=max_iterations,
-            **kwargs
+            extra_functionality=extra_functionality,
+            **kwargs,
         )
+
     return n
 
 
@@ -413,8 +535,13 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
+        os.chdir(os.path.dirname(os.path.abspath(__file__)))
         snakemake = mock_snakemake(
-            "solve_network", simpl="", clusters="5", ll="v1.5", opts=""
+            "solve_network",
+            simpl="",
+            clusters="5",
+            ll="copt",
+            opts="Co2L-BAU-24H",
         )
     configure_logging(snakemake)
 
@@ -432,7 +559,6 @@ if __name__ == "__main__":
             n,
             snakemake.config,
             opts,
-            extra_functionality=extra_functionality,
             solver_dir=tmpdir,
             solver_logfile=snakemake.log.solver,
         )
