@@ -20,7 +20,7 @@ on:
 
 env:
   CONDA_CACHE_NUMBER: 1 # Change this value to manually reset the environment cache
-  DATA_CACHE_NUMBER: 1
+  DATA_CACHE_NUMBER: 2
 
 jobs:
   build:
@@ -50,7 +50,7 @@ jobs:
         shell: bash -l {0}
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Setup secrets
       run: |
