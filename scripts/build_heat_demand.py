@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: MIT
 
 """
-Build heat demand time series.
+Build heat demand time series using heating degree day (HDD) approximation.
 """
 
 import atlite

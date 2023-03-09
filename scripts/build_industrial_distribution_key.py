@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: MIT
 
 """
-Build industrial distribution keys from hotmaps database.
+Build spatial distribution of industries from Hotmaps database.
 """
 
 import logging

@@ -4,19 +4,20 @@
 # SPDX-License-Identifier: MIT
 
 """
-Build COP time series for air- or ground-sourced heat pumps.
+Build coefficient of performance (COP) time series for air- or ground-sourced
+heat pumps.
+
+The COP is a function of the temperature difference between 
+source and sink.
+
+The quadratic regression used is based on Staffell et al. (2012)
+https://doi.org/10.1039/C2EE22653G.
 """
 
 import xarray as xr
 
 
 def coefficient_of_performance(delta_T, source="air"):
-    """
-    COP is function of temp difference source to sink.
-
-    The quadratic regression is based on Staffell et al. (2012)
-    https://doi.org/10.1039/C2EE22653G.
-    """
     if source == "air":
         return 6.81 - 0.121 * delta_T + 0.000630 * delta_T**2
     elif source == "soil":

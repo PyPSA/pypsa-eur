@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: MIT
 
 """
-Build industrial energy demand per node.
+Build industrial energy demand per model region.
 """
 
 import pandas as pd

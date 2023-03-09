@@ -15,7 +15,7 @@ scenario:
   clusters:
   - 5
   opts:
-  - Co2L-40H
+  - Co2L-24H
 
 countries: ['BE']
 

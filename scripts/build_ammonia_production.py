@@ -3,7 +3,7 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build ammonia production.
+Build historical annual ammonia production per country in ktonNH3/a.
 """
 
 import country_converter as coco

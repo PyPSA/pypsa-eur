@@ -3,7 +3,7 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Retrieve and extract sector data bundle.
+Retrieve and extract data bundle for sector-coupled studies.
 """
 
 import logging

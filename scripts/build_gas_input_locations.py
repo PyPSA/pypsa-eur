@@ -5,7 +5,7 @@
 
 """
 Build import locations for fossil gas from entry-points, LNG terminals and
-production sites.
+production sites with data from SciGRID_gas and Global Energy Monitor.
 """
 
 import logging

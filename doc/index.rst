@@ -157,21 +157,6 @@ Documentation
    configuration
    costs
 
-**Implementation details**
-
-* :doc:`spatial_resolution`
-* :doc:`supply_demand`
-* :doc:`technology_assumptions`
-
-.. toctree::
-   :hidden:
-   :maxdepth: 1
-   :caption: Implementation details
-
-   spatial_resolution
-   supply_demand
-   technology_assumptions
-
 **Rules Overview**
 
 * :doc:`preparation`
@@ -203,6 +188,22 @@ Documentation
    overnight
    myopic
    perfect
+
+
+**Implementation details**
+
+* :doc:`spatial_resolution`
+* :doc:`supply_demand`
+* :doc:`technology_assumptions`
+
+.. toctree::
+   :hidden:
+   :maxdepth: 1
+   :caption: Implementation details
+
+   spatial_resolution
+   supply_demand
+   technology_assumptions
 
 **References**
 

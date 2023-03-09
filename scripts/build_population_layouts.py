@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: MIT
 
 """
-Build mapping between grid cells and population (total, urban, rural)
+Build mapping between cutout grid cells and population (total, urban, rural).
 """
 
 import logging

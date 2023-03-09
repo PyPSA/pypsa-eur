@@ -3,6 +3,12 @@
 #
 # SPDX-License-Identifier: MIT
 
+"""
+Creates plots for optimised network topologies, including electricity, gas and
+hydrogen networks, and regional generation, storage and conversion capacities
+built.
+"""
+
 import logging
 
 logger = logging.getLogger(__name__)

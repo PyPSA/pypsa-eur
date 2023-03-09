@@ -3,6 +3,11 @@
 #
 # SPDX-License-Identifier: MIT
 
+"""
+Create summary CSV files for all scenario runs including costs, capacities,
+capacity factors, curtailment, energy balances, prices and other metrics.
+"""
+
 import logging
 
 logger = logging.getLogger(__name__)

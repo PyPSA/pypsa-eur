@@ -5,13 +5,13 @@
 # SPDX-License-Identifier: MIT
 
 """
-Created on Fri Jan 22 10:36:39 2021.
-
-This script should calculate the space heating savings through better
+This script calculates the space heating savings through better
 insulation of the thermal envelope of a building and corresponding costs for
 different building types in different countries.
 
------------------METHODOLOGY  ------------------------------------------------
+Methodology
+-----------
+
 The energy savings calculations are based on the
 
   EN ISO 13790 / seasonal method https://www.iso.org/obp/ui/#iso:std:iso:13790:ed-2:v1:en:
@@ -29,7 +29,9 @@ The energy savings calculations are based on the
       - tabula https://episcope.eu/fileadmin/tabula/public/calc/tabula-calculator.xlsx
 
 
----------------------BASIC EQUAIONS -------------------------------------------
+Basic Equations
+---------------
+
 The basic equations:
 
     The Energy needed for space heating E_space [W/m²] are calculated as the
@@ -53,7 +55,8 @@ The basic equations:
 
         H_gains = nu * (H_solar + H_int)
 
----------------- STRUCTURE OF THE SCRIPT --------------------------------------
+Structure
+---------
 
 The script has the following structure:
 
@@ -64,9 +67,6 @@ The script has the following structure:
     (3) calculate costs for corresponding additional insulation material
     (4) get cost savings per retrofitting measures for each sector by weighting
         with heated floor area
-
--------------------------------------------------------------------------------
-@author: Lisa
 """
 import pandas as pd
 import xarray as xr

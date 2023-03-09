@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: MIT
 
 """
-Build temperature profiles.
+Build time series for air and soil temperatures per clustered model region.
 """
 
 import atlite

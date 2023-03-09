@@ -4,7 +4,9 @@
 # SPDX-License-Identifier: MIT
 
 """
-Build transport demand.
+Build land transport demand per clustered model region including efficiency
+improvements due to drivetrain changes, time series for electric vehicle
+availability and demand-side management constraints.
 """
 
 import numpy as np

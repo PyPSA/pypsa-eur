@@ -3,6 +3,10 @@
 #
 # SPDX-License-Identifier: MIT
 
+"""
+Copy used configuration files and important scripts for archiving.
+"""
+
 from pathlib import Path
 from shutil import copy
 

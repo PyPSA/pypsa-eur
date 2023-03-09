@@ -3,6 +3,11 @@
 #
 # SPDX-License-Identifier: MIT
 
+"""
+Adds all sector-coupling components to the network, including demand and supply
+technologies for the buildings, transport and industry sectors.
+"""
+
 import logging
 import os
 import re

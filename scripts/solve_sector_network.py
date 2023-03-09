@@ -3,7 +3,7 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Solve network.
+Solves sector-coupled network.
 """
 
 import logging

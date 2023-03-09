@@ -3,6 +3,10 @@
 #
 # SPDX-License-Identifier: MIT
 
+"""
+Build total energy demands per country using JRC IDEES, eurostat, and EEA data.
+"""
+
 import logging
 
 logger = logging.getLogger(__name__)

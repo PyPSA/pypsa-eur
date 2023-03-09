@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: MIT
 
 """
-Build population-weighted energy totals.
+Distribute country-level energy demands by population.
 """
 
 import pandas as pd

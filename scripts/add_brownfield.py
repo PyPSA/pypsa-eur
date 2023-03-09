@@ -3,6 +3,8 @@
 #
 # SPDX-License-Identifier: MIT
 
+"""Prepares brownfield data from previous planning horizon."""
+
 import logging
 
 logger = logging.getLogger(__name__)

@@ -2,6 +2,10 @@
 # SPDX-FileCopyrightText: : 2021-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
+"""
+Compute biogas and solid biomass potentials for each clustered model region
+using data from JRC ENSPRESO.
+"""
 
 import geopandas as gpd
 import pandas as pd

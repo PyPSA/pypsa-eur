@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: MIT
 
 """
-Preprocess gas network based on data from bthe SciGRID Gas project
+Preprocess gas network based on data from bthe SciGRID_gas project
 (https://www.gas.scigrid.de/).
 """
 

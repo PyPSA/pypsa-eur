@@ -3,6 +3,10 @@
 #
 # SPDX-License-Identifier: MIT
 
+"""
+Creates plots from summary CSV files.
+"""
+
 import logging
 
 logger = logging.getLogger(__name__)

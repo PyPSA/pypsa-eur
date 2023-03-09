@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: MIT
 
 """
-Build industrial production per node.
+Build industrial production per model region.
 """
 
 from itertools import product

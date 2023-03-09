@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: MIT
 
 """
-Build industry sector ratios.
+Build specific energy consumption by carrier and industries.
 """
 
 import pandas as pd

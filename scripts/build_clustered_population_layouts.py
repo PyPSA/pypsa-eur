@@ -4,7 +4,8 @@
 # SPDX-License-Identifier: MIT
 
 """
-Build clustered population layouts.
+Build population layouts for all clustered model regions as total as well as
+split by urban and rural population.
 """
 
 import atlite

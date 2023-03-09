@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: MIT
 
 """
-Cluster gas network.
+Cluster gas transmission network to clustered model regions.
 """
 
 import logging
