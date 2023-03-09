@@ -103,4 +103,4 @@ rule solve_sector_network_myopic:
     conda:
         "../envs/environment.yaml"
     script:
-        "../scripts/solve_sector_network.py"
+        "../scripts/solve_network.py"

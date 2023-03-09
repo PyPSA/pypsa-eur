@@ -339,11 +339,12 @@ def mock_snakemake(rulename, configfiles=[], **wildcards):
         kwargs = (
             dict(rerun_triggers=[]) if parse(sm.__version__) > Version("7.7.0") else {}
         )
-        workflow = sm.Workflow(snakefile, **kwargs)
-        workflow.include(snakefile)
-
         if isinstance(configfiles, str):
             configfiles = [configfiles]
+
+        workflow = sm.Workflow(snakefile, overwrite_configfiles=configfiles, **kwargs)
+        workflow.include(snakefile)
+
         if configfiles:
             for f in configfiles:
                 if not os.path.exists(f):

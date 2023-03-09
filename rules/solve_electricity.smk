@@ -5,9 +5,9 @@
 
 rule solve_network:
     input:
-        RESOURCES + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+        network=RESOURCES + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
     output:
-        RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+        network=RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
     log:
         solver=normpath(
             LOGS + "solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_solver.log"
@@ -31,10 +31,9 @@ rule solve_network:
 
 rule solve_operations_network:
     input:
-        unprepared=RESOURCES + "networks/elec_s{simpl}_{clusters}_ec.nc",
-        optimized=RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+        network=RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
     output:
-        RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op.nc",
+        network=RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op.nc",
     log:
         solver=normpath(
             LOGS
