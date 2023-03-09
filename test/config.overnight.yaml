@@ -14,9 +14,9 @@ scenario:
   ll:
   - v1.5
   clusters:
-  - 5
+  - 4
   sector_opts:
-  - CO2L0-191H-T-H-B-I-A-solar+p3-dist1
+  - CO2L0-40H-T-H-B-I-A-solar+p3-dist1
   planning_horizons:
   - 2030
 
@@ -24,7 +24,7 @@ countries: ['BE']
 
 snapshots:
   start: "2013-03-01"
-  end: "2013-04-01"
+  end: "2013-03-08"
 
 electricity:
   renewable_carriers: [solar, onwind, offwind-ac, offwind-dc]
