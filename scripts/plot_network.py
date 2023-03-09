@@ -917,7 +917,7 @@ if __name__ == "__main__":
             "plot_network",
             simpl="",
             clusters="181",
-            lv="opt",
+            ll="vopt",
             opts="",
             sector_opts="Co2L0-730H-T-H-B-I-A-solar+p3-linemaxext10",
             planning_horizons="2050",

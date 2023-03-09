@@ -16,7 +16,6 @@ rule add_existing_baseyear:
         cop_soil_total=RESOURCES + "cop_soil_total_elec_s{simpl}_{clusters}.nc",
         cop_air_total=RESOURCES + "cop_air_total_elec_s{simpl}_{clusters}.nc",
         existing_heating="data/existing_infrastructure/existing_heating_raw.csv",
-        country_codes="data/Country_codes.csv",
         existing_solar="data/existing_infrastructure/solar_capacity_IRENA.csv",
         existing_onwind="data/existing_infrastructure/onwind_capacity_IRENA.csv",
         existing_offwind="data/existing_infrastructure/offwind_capacity_IRENA.csv",

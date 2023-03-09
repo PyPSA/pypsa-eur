@@ -345,7 +345,7 @@ def plot_balances():
         plt.cla()
 
 
-def historical_emissions(cts):
+def historical_emissions(countries):
     """
     Read historical emissions to add them to the carbon budget plot.
     """
@@ -380,16 +380,15 @@ def historical_emissions(cts):
     e["total woL"] = "Total (without LULUCF)"
 
     pol = ["CO2"]  # ["All greenhouse gases - (CO2 equivalent)"]
-    cts
-    if "GB" in cts:
-        cts.remove("GB")
-        cts.append("UK")
+    if "GB" in countries:
+        countries.remove("GB")
+        countries.append("UK")
 
     year = np.arange(1990, 2018).tolist()
 
     idx = pd.IndexSlice
     co2_totals = (
-        df.loc[idx[year, e.values, cts, pol], "emissions"]
+        df.loc[idx[year, e.values, countries, pol], "emissions"]
         .unstack("Year")
         .rename(index=pd.Series(e.index, e.values))
     )
@@ -457,14 +456,13 @@ def plot_carbon_budget_distribution(input_eurostat):
     ax1.set_xlim([1990, snakemake.config["scenario"]["planning_horizons"][-1] + 1])
 
     path_cb = "results/" + snakemake.params.RDIR + "/csvs/"
-    countries = pd.read_csv(snakemake.input.country_codes, index_col=1)
-    cts = countries.index.to_list()
-    e_1990 = co2_emissions_year(cts, input_eurostat, opts, year=1990)
+    countries = snakemake.confing["countries"]
+    e_1990 = co2_emissions_year(countries, input_eurostat, opts, year=1990)
     CO2_CAP = pd.read_csv(path_cb + "carbon_budget_distribution.csv", index_col=0)
 
     ax1.plot(e_1990 * CO2_CAP[o], linewidth=3, color="dodgerblue", label=None)
 
-    emissions = historical_emissions(cts)
+    emissions = historical_emissions(countries)
 
     ax1.plot(emissions, color="black", linewidth=3, label=None)
 

@@ -3234,7 +3234,7 @@ if __name__ == "__main__":
             simpl="",
             opts="",
             clusters="37",
-            lv=1.5,
+            ll='v1.5',
             sector_opts="cb40ex0-365H-T-H-B-I-A-solar+p3-dist1",
             planning_horizons="2020",
         )

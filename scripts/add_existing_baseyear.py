@@ -16,8 +16,11 @@ from types import SimpleNamespace
 import numpy as np
 import pypsa
 import xarray as xr
+import country_converter as coco
 from _helpers import override_component_attrs, update_config_with_sector_opts
 from prepare_sector_network import cluster_heat_buses, define_spatial, prepare_costs
+
+cc = coco.CountryConverter()
 
 spatial = SimpleNamespace()
 
@@ -55,8 +58,6 @@ def add_existing_renewables(df_agg):
     power plants.
     """
 
-    cc = pd.read_csv(snakemake.input.country_codes, index_col=0)
-
     carriers = {"solar": "solar", "onwind": "onwind", "offwind": "offwind-ac"}
 
     for tech in ["solar", "onwind", "offwind"]:
@@ -64,17 +65,7 @@ def add_existing_renewables(df_agg):
 
         df = pd.read_csv(snakemake.input[f"existing_{tech}"], index_col=0).fillna(0.0)
         df.columns = df.columns.astype(int)
-
-        rename_countries = {
-            "Czechia": "Czech Republic",
-            "UK": "United Kingdom",
-            "Bosnia Herzg": "Bosnia Herzegovina",
-            "North Macedonia": "Macedonia",
-        }
-
-        df.rename(index=rename_countries, inplace=True)
-
-        df.rename(index=cc["2 letter code (ISO-3166-2)"], inplace=True)
+        df.index = cc.convert(df.index, to='iso2')
 
         # calculate yearly differences
         df.insert(loc=0, value=0.0, column="1999")
@@ -422,9 +413,7 @@ def add_heating_capacities_installed_before_baseyear(
     # convert GW to MW
     df *= 1e3
 
-    cc = pd.read_csv(snakemake.input.country_codes, index_col=0)
-
-    df.rename(index=cc["2 letter code (ISO-3166-2)"], inplace=True)
+    df.index = cc.convert(df.index, to='iso2')
 
     # coal and oil boilers are assimilated to oil boilers
     df["oil boiler"] = df["oil boiler"] + df["coal boiler"]
@@ -611,7 +600,7 @@ if __name__ == "__main__":
             "add_existing_baseyear",
             simpl="",
             clusters="45",
-            lv=1.0,
+            ll='v1.0',
             opts="",
             sector_opts="8760H-T-H-B-I-A-solar+p3-dist1",
             planning_horizons=2020,

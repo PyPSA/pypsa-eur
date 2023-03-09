@@ -10,7 +10,6 @@ BASt emobility statistics,emobility/,unknown,http://www.bast.de/DE/Verkehrstechn
 BDEW heating profile,heat_load_profile_BDEW.csv,unknown,https://github.com/oemof/demandlib
 heating profiles for Aarhus,heat_load_profile_DK_AdamJensen.csv,unknown,Adam Jensen MA thesis at Aarhus University
 George Lavidas wind/wave costs,WindWaveWEC_GLTB.xlsx,unknown,George Lavidas
-country codes,Country_codes.csv,CC BY 4.0,Marta Victoria
 co2 budgets,co2_budget.csv,CC BY 4.0,https://arxiv.org/abs/2004.11009
 existing heating potentials,existing_infrastructure/existing_heating_raw.csv,unknown,https://ec.europa.eu/energy/studies/mapping-and-analyses-current-and-future-2020-2030-heatingcooling-fuel-deployment_en?redir=1
 IRENA existing VRE capacities,existing_infrastructure/{solar|onwind|offwind}_capcity_IRENA.csv,unknown,https://www.irena.org/Statistics/Download-Data
