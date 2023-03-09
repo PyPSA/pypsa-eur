@@ -69,8 +69,8 @@ rule purge:
     message:
         "Purging generated resources and results. Downloads are kept."
     run:
-        rmtree("resources/")
-        rmtree("results/")
+        rmtree("resources/", ignore_errors=True)
+        rmtree("results/", ignore_errors=True)
 
 
 rule dag:

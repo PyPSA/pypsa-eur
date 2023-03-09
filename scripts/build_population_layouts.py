@@ -41,7 +41,7 @@ if __name__ == "__main__":
     # but imprecisions mean not perfect
     Iinv = cutout.indicatormatrix(nuts3.geometry)
 
-    countries = np.sort(nuts3.country.unique())
+    countries = snakemake.config["countries"]
 
     urban_fraction = (
         pd.read_csv(

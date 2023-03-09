@@ -238,7 +238,7 @@ def build_carbon_budget(o, input_eurostat, fn, emissions_scope, report_year):
         carbon_budget = float(o[o.find("cb") + 2 : o.find("ex")])
         r = float(o[o.find("ex") + 2 :])
 
-    countries = n.buses.country.dropna().unique()
+    countries = snakemake.config["countries"]
 
     e_1990 = co2_emissions_year(
         countries, input_eurostat, opts, emissions_scope, report_year, year=1990
@@ -674,7 +674,7 @@ def add_dac(n, costs):
 def add_co2limit(n, Nyears=1.0, limit=0.0):
     logger.info(f"Adding CO2 budget limit as per unit of 1990 levels of {limit}")
 
-    countries = n.buses.country.dropna().unique()
+    countries = snakemake.config["countries"]
 
     sectors = emission_sectors_from_opts(opts)
 

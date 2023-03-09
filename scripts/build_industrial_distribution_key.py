@@ -99,13 +99,12 @@ def prepare_hotmaps_database(regions):
     return gdf
 
 
-def build_nodal_distribution_key(hotmaps, regions):
+def build_nodal_distribution_key(hotmaps, regions, countries):
     """
     Build nodal distribution keys for each sector.
     """
 
     sectors = hotmaps.Subsector.unique()
-    countries = regions.index.str[:2].unique()
 
     keys = pd.DataFrame(index=regions.index, columns=sectors, dtype=float)
 
@@ -148,10 +147,12 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=snakemake.config["logging"]["level"])
 
+    countries = snakemake.config["countries"]
+
     regions = gpd.read_file(snakemake.input.regions_onshore).set_index("name")
 
     hotmaps = prepare_hotmaps_database(regions)
 
-    keys = build_nodal_distribution_key(hotmaps, regions)
+    keys = build_nodal_distribution_key(hotmaps, regions, countries)
 
     keys.to_csv(snakemake.output.industrial_distribution_key)
