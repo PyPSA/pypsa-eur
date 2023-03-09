@@ -1,9 +1,12 @@
 ,Unit,Values,Description
 nprocesses,--,int,"Number of parallel processes in cutout preparation"
+show_progress,bool,true/false,"Whether progressbar for atlite conversion processes should be shown. False saves time."
 cutouts,,,
 -- {name},--,"Convention is to name cutouts like ``<region>-<year>-<source>`` (e.g. ``europe-2013-era5``).","Name of the cutout netcdf file. The user may specify multiple cutouts under configuration ``atlite: cutouts:``. Reference is used in configuration ``renewable: {technology}: cutout:``. The cutout ``base`` may be used to automatically calculate temporal and spatial bounds of the network."
 -- -- module,--,"Subset of {'era5','sarah'}","Source of the reanalysis weather dataset (e.g. `ERA5 <https://www.ecmwf.int/en/forecasts/datasets/reanalysis-datasets/era5>`_ or `SARAH-2 <https://wui.cmsaf.eu/safira/action/viewDoiDetails?acronym=SARAH_V002>`_)"
 -- -- x,°,"Float interval within [-180, 180]","Range of longitudes to download weather data for. If not defined, it defaults to the spatial bounds of all bus shapes."
 -- -- y,°,"Float interval within [-90, 90]","Range of latitudes to download weather data for. If not defined, it defaults to the spatial bounds of all bus shapes."
+-- -- dx,°,"Larger than 0.25","Grid resolution for longitude"
+-- -- dy,°,"Larger than 0.25","Grid resolution for latitude"
 -- -- time,,"Time interval within ['1979', '2018'] (with valid pandas date time strings)","Time span to download weather data for. If not defined, it defaults to the time interval spanned by the snapshots."
 -- -- features,,"String or list of strings with valid cutout features ('inlfux', 'wind').","When freshly building a cutout, retrieve data only for those features. If not defined, it defaults to all available features."
