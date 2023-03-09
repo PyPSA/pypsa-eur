@@ -15,7 +15,7 @@ scenario:
   ll:
   - v1.5
   clusters:
-  - 4
+  - 5
   sector_opts:
   - 40H-T-H-B-I-A-solar+p3-dist1
   planning_horizons:

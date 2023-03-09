@@ -13,7 +13,7 @@ run:
 
 scenario:
   clusters:
-  - 4
+  - 5
   opts:
   - Co2L-40H
 
