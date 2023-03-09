@@ -3,7 +3,9 @@
 #
 # SPDX-License-Identifier: MIT
 
-"""Prepares brownfield data from previous planning horizon."""
+"""
+Prepares brownfield data from previous planning horizon.
+"""
 
 import logging
 

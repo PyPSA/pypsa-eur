@@ -3,7 +3,10 @@
 #
 # SPDX-License-Identifier: MIT
 
-"""Adds existing power and heat generation capacities for initial planning horizon."""
+"""
+Adds existing power and heat generation capacities for initial planning
+horizon.
+"""
 
 import logging
 

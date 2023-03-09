@@ -5,9 +5,9 @@
 # SPDX-License-Identifier: MIT
 
 """
-This script calculates the space heating savings through better
-insulation of the thermal envelope of a building and corresponding costs for
-different building types in different countries.
+This script calculates the space heating savings through better insulation of
+the thermal envelope of a building and corresponding costs for different
+building types in different countries.
 
 Methodology
 -----------

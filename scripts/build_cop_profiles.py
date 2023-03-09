@@ -7,7 +7,7 @@
 Build coefficient of performance (COP) time series for air- or ground-sourced
 heat pumps.
 
-The COP is a function of the temperature difference between 
+The COP is a function of the temperature difference between
 source and sink.
 
 The quadratic regression used is based on Staffell et al. (2012)
