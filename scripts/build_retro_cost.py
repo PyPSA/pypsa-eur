@@ -308,7 +308,7 @@ def prepare_building_stock_data():
     u_values.set_index(["country_code", "subsector", "bage", "type"], inplace=True)
 
     #  only take in config.yaml specified countries into account
-    countries = ct_total.index
+    countries = snakemake.config["countries"]
     area_tot = area_tot.loc[countries]
 
     return u_values, country_iso_dic, countries, area_tot, area

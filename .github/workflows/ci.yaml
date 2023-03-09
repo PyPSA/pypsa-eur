@@ -26,6 +26,7 @@ jobs:
   build:
 
     strategy:
+      fail-fast: false
       matrix:
         include:
           # Matrix required to handle caching with Mambaforge

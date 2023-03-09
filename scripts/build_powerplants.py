@@ -115,7 +115,7 @@ if __name__ == "__main__":
     configure_logging(snakemake)
 
     n = pypsa.Network(snakemake.input.base_network)
-    countries = n.buses.country.unique()
+    countries = snakemake.config["countries"]
 
     ppl = (
         pm.powerplants(from_url=True)

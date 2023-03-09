@@ -14,10 +14,13 @@ logger = logging.getLogger(__name__)
 
 import multiprocessing as mp
 
+import country_converter as coco
 import numpy as np
 import pandas as pd
 from _helpers import mute_print
 from tqdm import tqdm
+
+cc = coco.CountryConverter()
 
 tj_to_ktoe = 0.0238845
 ktoe_to_twh = 0.01163
@@ -36,40 +39,9 @@ sub_sheet_name_dict = {
     "Other Industrial Sectors": "OIS",
 }
 
-non_EU = ["NO", "CH", "ME", "MK", "RS", "BA", "AL"]
+eu28 = cc.EU28as("ISO2").ISO2.values
 
 jrc_names = {"GR": "EL", "GB": "UK"}
-
-eu28 = [
-    "FR",
-    "DE",
-    "GB",
-    "IT",
-    "ES",
-    "PL",
-    "SE",
-    "NL",
-    "BE",
-    "FI",
-    "DK",
-    "PT",
-    "RO",
-    "AT",
-    "BG",
-    "EE",
-    "GR",
-    "LV",
-    "CZ",
-    "HU",
-    "IE",
-    "SK",
-    "LT",
-    "HR",
-    "LU",
-    "SI",
-    "CY",
-    "MT",
-]
 
 sect2sub = {
     "Iron and steel": ["Electric arc", "Integrated steelworks"],
@@ -233,10 +205,10 @@ def industry_production_per_country(country, year, eurostat_dir, jrc_dir):
 
         return df
 
-    ct = "EU28" if country in non_EU else country
-    demand = pd.concat([get_sector_data(s, ct) for s in sect2sub.keys()])
+    ct = "EU28" if country not in eu28 else country
+    demand = pd.concat([get_sector_data(s, ct) for s in sect2sub])
 
-    if country in non_EU:
+    if country not in eu28:
         demand *= get_energy_ratio(country, eurostat_dir, jrc_dir, year)
 
     demand.name = country
@@ -309,7 +281,7 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=snakemake.config["logging"]["level"])
 
-    countries = non_EU + eu28
+    countries = snakemake.config["countries"]
 
     year = snakemake.config["industry"]["reference_year"]
 

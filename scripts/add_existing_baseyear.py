@@ -431,10 +431,10 @@ def add_heating_capacities_installed_before_baseyear(
     ratio_residential = pd.Series(
         [
             (
-                n.loads_t.p_set.sum()["{} residential rural heat".format(node)]
+                n.loads_t.p_set.sum()[f"{node} residential rural heat"]
                 / (
-                    n.loads_t.p_set.sum()["{} residential rural heat".format(node)]
-                    + n.loads_t.p_set.sum()["{} services rural heat".format(node)]
+                    n.loads_t.p_set.sum()[f"{node} residential rural heat"]
+                    + n.loads_t.p_set.sum()[f"{node} services rural heat"]
                 )
             )
             for node in nodal_df.index

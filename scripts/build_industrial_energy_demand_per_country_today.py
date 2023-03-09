@@ -10,8 +10,11 @@ Build industrial energy demand per country.
 import multiprocessing as mp
 from functools import partial
 
+import country_converter as coco
 import pandas as pd
 from tqdm import tqdm
+
+cc = coco.CountryConverter()
 
 ktoe_to_twh = 0.011630
 
@@ -56,36 +59,7 @@ fuels = {
     "Electricity": "electricity",
 }
 
-eu28 = [
-    "FR",
-    "DE",
-    "GB",
-    "IT",
-    "ES",
-    "PL",
-    "SE",
-    "NL",
-    "BE",
-    "FI",
-    "DK",
-    "PT",
-    "RO",
-    "AT",
-    "BG",
-    "EE",
-    "GR",
-    "LV",
-    "CZ",
-    "HU",
-    "IE",
-    "SK",
-    "LT",
-    "HR",
-    "LU",
-    "SI",
-    "CY",
-    "MT",
-]
+eu28 = cc.EU28as("ISO2").ISO2.tolist()
 
 jrc_names = {"GR": "EL", "GB": "UK"}
 
@@ -154,7 +128,10 @@ def add_ammonia_energy_demand(demand):
     return demand
 
 
-def add_non_eu28_industrial_energy_demand(demand):
+def add_non_eu28_industrial_energy_demand(countries, demand):
+    non_eu28 = countries.difference(eu28)
+    if non_eu28.empty:
+        return demand
     # output in MtMaterial/a
     fn = snakemake.input.industrial_production_per_country
     production = pd.read_csv(fn, index_col=0) / 1e3
@@ -164,11 +141,9 @@ def add_non_eu28_industrial_energy_demand(demand):
     production["Basic chemicals (without ammonia)"] = production[chemicals].sum(axis=1)
     production.drop(columns=chemicals, inplace=True)
 
-    eu28_production = production.loc[eu28].sum()
+    eu28_production = production.loc[countries.intersection(eu28)].sum()
     eu28_energy = demand.groupby(level=1).sum()
     eu28_averages = eu28_energy / eu28_production
-
-    non_eu28 = production.index.symmetric_difference(eu28)
 
     demand_non_eu28 = pd.concat(
         {k: v * eu28_averages for k, v in production.loc[non_eu28].iterrows()}
@@ -206,12 +181,13 @@ if __name__ == "__main__":
 
     config = snakemake.config["industry"]
     year = config.get("reference_year", 2015)
+    countries = pd.Index(snakemake.config["countries"])
 
-    demand = industrial_energy_demand(eu28, year)
+    demand = industrial_energy_demand(countries.intersection(eu28), year)
 
     demand = add_ammonia_energy_demand(demand)
 
-    demand = add_non_eu28_industrial_energy_demand(demand)
+    demand = add_non_eu28_industrial_energy_demand(countries, demand)
 
     # for format compatibility
     demand = demand.stack(dropna=False).unstack(level=[0, 2])
