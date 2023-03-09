@@ -10,10 +10,10 @@ logger = logging.getLogger(__name__)
 import multiprocessing as mp
 from functools import partial
 
+import country_converter as coco
 import geopandas as gpd
 import numpy as np
 import pandas as pd
-import country_converter as coco
 from _helpers import mute_print
 from tqdm import tqdm
 
@@ -86,7 +86,7 @@ eurostat_codes = {
 
 idees_rename = {"GR": "EL", "GB": "UK"}
 
-eu28 = cc.EU28as('ISO2').ISO2.tolist()
+eu28 = cc.EU28as("ISO2").ISO2.tolist()
 
 eu28_eea = eu28.copy()
 eu28_eea.remove("GB")

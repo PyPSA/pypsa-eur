@@ -6,8 +6,8 @@
 Build ammonia production.
 """
 
-import pandas as pd
 import country_converter as coco
+import pandas as pd
 
 cc = coco.CountryConverter()
 
@@ -27,7 +27,7 @@ if __name__ == "__main__":
         skipfooter=19,
     )
 
-    ammonia.index = cc.convert(ammonia.index, to='iso2')
+    ammonia.index = cc.convert(ammonia.index, to="iso2")
 
     years = [str(i) for i in range(2013, 2018)]
     countries = ammonia.index.intersection(snakemake.config["countries"])

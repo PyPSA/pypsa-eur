@@ -14,9 +14,9 @@ logger = logging.getLogger(__name__)
 
 import multiprocessing as mp
 
+import country_converter as coco
 import numpy as np
 import pandas as pd
-import country_converter as coco
 from _helpers import mute_print
 from tqdm import tqdm
 
@@ -39,7 +39,7 @@ sub_sheet_name_dict = {
     "Other Industrial Sectors": "OIS",
 }
 
-eu28 = cc.EU28as('ISO2').ISO2.values
+eu28 = cc.EU28as("ISO2").ISO2.values
 
 jrc_names = {"GR": "EL", "GB": "UK"}
 

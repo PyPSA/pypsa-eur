@@ -10,8 +10,8 @@ Build industrial energy demand per country.
 import multiprocessing as mp
 from functools import partial
 
-import pandas as pd
 import country_converter as coco
+import pandas as pd
 from tqdm import tqdm
 
 cc = coco.CountryConverter()
@@ -59,7 +59,7 @@ fuels = {
     "Electricity": "electricity",
 }
 
-eu28 = cc.EU28as('ISO2').ISO2.tolist()
+eu28 = cc.EU28as("ISO2").ISO2.tolist()
 
 jrc_names = {"GR": "EL", "GB": "UK"}
 
