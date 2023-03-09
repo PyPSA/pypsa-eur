@@ -44,19 +44,19 @@ Outputs
 
 - ``resources/regions_onshore_elec_s{simpl}_{clusters}.geojson``:
 
-    .. image:: ../img/regions_onshore_elec_s_X.png
+    .. image:: img/regions_onshore_elec_s_X.png
         :scale: 33 %
 
 - ``resources/regions_offshore_elec_s{simpl}_{clusters}.geojson``:
 
-    .. image:: ../img/regions_offshore_elec_s_X.png
+    .. image:: img/regions_offshore_elec_s_X.png
         :scale: 33 %
 
 - ``resources/busmap_elec_s{simpl}_{clusters}.csv``: Mapping of buses from ``networks/elec_s{simpl}.nc`` to ``networks/elec_s{simpl}_{clusters}.nc``;
 - ``resources/linemap_elec_s{simpl}_{clusters}.csv``: Mapping of lines from ``networks/elec_s{simpl}.nc`` to ``networks/elec_s{simpl}_{clusters}.nc``;
 - ``networks/elec_s{simpl}_{clusters}.nc``:
 
-    .. image:: ../img/elec_s_X.png
+    .. image:: img/elec_s_X.png
         :scale: 40  %
 
 Description
@@ -99,25 +99,25 @@ Description
 
 Exemplary unsolved network clustered to 512 nodes:
 
-.. image:: ../img/elec_s_512.png
+.. image:: img/elec_s_512.png
     :scale: 40  %
     :align: center
 
 Exemplary unsolved network clustered to 256 nodes:
 
-.. image:: ../img/elec_s_256.png
+.. image:: img/elec_s_256.png
     :scale: 40  %
     :align: center
 
 Exemplary unsolved network clustered to 128 nodes:
 
-.. image:: ../img/elec_s_128.png
+.. image:: img/elec_s_128.png
     :scale: 40  %
     :align: center
 
 Exemplary unsolved network clustered to 37 nodes:
 
-.. image:: ../img/elec_s_37.png
+.. image:: img/elec_s_37.png
     :scale: 40  %
     :align: center
 """

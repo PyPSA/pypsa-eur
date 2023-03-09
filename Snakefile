@@ -88,3 +88,12 @@ rule dag:
         dot -Tpdf -o {output.pdf} {output.dot}
         dot -Tpng -o {output.png} {output.dot}
         """
+
+
+rule doc:
+    message:
+        "Build documentation."
+    output:
+        directory("doc/_build")
+    shell:
+        "make -C doc html"

@@ -159,8 +159,10 @@ Documentation
 
 **Rules Overview**
 
+* :doc:`retrieve`
 * :doc:`preparation`
 * :doc:`simplification`
+* :doc:`sector`
 * :doc:`solving`
 * :doc:`plotting`
 
@@ -169,8 +171,10 @@ Documentation
    :maxdepth: 1
    :caption: Rules Overview
 
+   retrieve
    preparation
    simplification
+   sector
    solving
    plotting
 

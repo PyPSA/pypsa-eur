@@ -41,7 +41,7 @@ Outputs
 
 - ``results/networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc``: Solved PyPSA network including optimisation results
 
-    .. image:: ../img/results.png
+    .. image:: img/results.png
         :scale: 40 %
 
 Description

@@ -322,14 +322,16 @@ The model can only use biogas by first upgrading it to natural gas quality [see 
 
 
 Oil-based products demand
-========================
+=========================
+
 Naphtha is used as a feedstock in the chemicals industry (see :ref:`Chemicals Industry`). Furthermore, kerosene is used as transport fuel in the aviation sector (see :ref:`Aviation`). Non-electrified agriculture machinery also consumes gasoline.
 Land transport [(see :ref:`Land transport`)  that is not electrified or converted into using :math:`H_2`-fuel cells also consumes oil-based products. While there is regional distribution of demand, the carrier is copperplated in the model, which means that transport costs and constraints are neglected.
 
 .. _Oil-based products supply:
 
 Oil-based products supply
-========================
+=========================
+
 Oil-based products can be either of fossil origin or synthetically produced by combining :math:`H_2` (see :ref:`Hydrogen supply`) and captured :math:`CO_2` (see :ref:`Carbon dioxide capture, usage and sequestration (CCU/S)`) in Fischer-Tropsch plants
 
 .. math::

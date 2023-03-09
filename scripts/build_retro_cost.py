@@ -60,13 +60,13 @@ Structure
 
 The script has the following structure:
 
-    (i) fixed parameters are set
-    (ii) functions
+    (0) fixed parameters are set
     (1) prepare data, bring to same format
     (2) calculate space heat demand depending on additional insulation material
     (3) calculate costs for corresponding additional insulation material
     (4) get cost savings per retrofitting measures for each sector by weighting
         with heated floor area
+
 """
 import pandas as pd
 import xarray as xr

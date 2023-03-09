@@ -5,8 +5,9 @@
 
 .. _data:
 
-Rules ``retrieve*``
-=============================
+###############
+Retrieving Data
+###############
 
 Not all data dependencies are shipped with the git repository,
 since git is not suited for handling large changing files.
@@ -14,12 +15,12 @@ Instead we provide separate data bundles which can be obtained
 using the ``retrieve*`` rules.
 
 Rule ``retrieve_databundle``
-----------------------------
+============================
 
 .. automodule:: retrieve_databundle
 
 Rule ``retrieve_cutout``
-------------------------
+============================
 
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3517949.svg
    :target: https://doi.org/10.5281/zenodo.3517949
@@ -53,7 +54,7 @@ The :ref:`tutorial` uses a smaller cutout than required for the full model (30 M
 
 
 Rule ``retrieve_natura_raster``
--------------------------------
+================================
 
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.4706686.svg
    :target: https://doi.org/10.5281/zenodo.4706686
@@ -80,7 +81,7 @@ This rule, as a substitute for :mod:`build_natura_raster`, downloads an already 
 
 
 Rule ``retrieve_load_data``
----------------------------
+================================
 
 This rule downloads hourly electric load data for each country from the `OPSD platform <data.open-power-system-data.org/time_series/2019-06-05/time_series_60min_singleindex.csv>`_.
 
@@ -94,7 +95,7 @@ None.
 
 
 Rule ``retrieve_cost_data``
----------------------------
+================================
 
 This rule downloads techno-economic assumptions from the `technology-data repository <https://github.com/pypsa/technology-data>`_.
 
@@ -118,7 +119,7 @@ This rule downloads techno-economic assumptions from the `technology-data reposi
 - ``resources/costs.csv``
 
 Rule ``retrieve_ship_raster``
------------------------------
+================================
 
 This rule downloads data on global shipping traffic density from the `World Bank Data Catalogue <https://datacatalog.worldbank.org/search/dataset/0037580/Global-Shipping-Traffic-Density>`_.
 
@@ -132,7 +133,7 @@ None.
 
 
 Rule ``retrieve_sector_databundle``
------------------------------------
+====================================
 
 
 Small data files are included directly in the git repository, while
