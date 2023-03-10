@@ -2,6 +2,7 @@
 # SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
+
 """
 Solves optimal operation and capacity for a network with the option to
 iteratively optimize while updating line reactances.
@@ -11,7 +12,9 @@ sector coupled network.
 
 Relevant Settings
 -----------------
+
 .. code:: yaml
+
     solving:
         options:
             formulation:
@@ -33,22 +36,28 @@ Relevant Settings
 
 Inputs
 ------
+
 - ``networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc``: confer :ref:`prepare`
 
 Outputs
 -------
+
 - ``results/networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc``: Solved PyPSA network including optimisation results
+
     .. image:: ../img/results.png
         :scale: 40 %
 
 Description
 -----------
+
 Total annual system costs are minimised with PyPSA. The full formulation of the
 linear optimal power flow (plus investment planning
 is provided in the
 `documentation of PyPSA <https://pypsa.readthedocs.io/en/latest/optimal_power_flow.html#linear-optimal-power-flow>`_.
+
 The optimization is based on the ``pyomo=False`` setting in the :func:`network.lopf` and  :func:`pypsa.linopf.ilopf` function.
 Additionally, some extra constraints specified in :mod:`prepare_network` are added.
+
 Solving the network in multiple iterations is motivated through the dependence of transmission line capacities and impedances.
 As lines are expanded their electrical parameters change, which renders the optimisation bilinear even if the power flow
 equations are linearized.
@@ -59,12 +68,15 @@ Details (and errors made through this heuristic) are discussed in the paper
 - Fabian Neumann and Tom Brown. `Heuristics for Transmission Expansion Planning in Low-Carbon Energy System Models <https://arxiv.org/abs/1907.10548>`_), *16th International Conference on the European Energy Market*, 2019. `arXiv:1907.10548 <https://arxiv.org/abs/1907.10548>`_.
 
 .. warning::
+
     Capital costs of existing network components are not included in the objective function,
     since for the optimisation problem they are just a constant term (no influence on optimal result).
+
     Therefore, these capital costs are not included in ``network.objective``!
     If you want to calculate the full total annual system costs add these to the objective value.
 
 .. tip::
+
     The rule :mod:`solve_all_networks` runs
     for all ``scenario`` s in the configuration file
     the rule :mod:`solve_network`.
