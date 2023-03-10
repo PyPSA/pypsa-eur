@@ -703,7 +703,7 @@ if __name__ == "__main__":
 
     opts = snakemake.wildcards.opts
     if "sector_opts" in snakemake.wildcards.keys():
-        opts += "-" + snakemake.wildcards.sector_opts.split("-")
+        opts += "-" + snakemake.wildcards.sector_opts
     opts = [o for o in opts.split("-") if o != ""]
     solve_opts = snakemake.config["solving"]["options"]
 
