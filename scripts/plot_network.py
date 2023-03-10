@@ -23,7 +23,7 @@ from make_summary import assign_carriers
 from plot_summary import preferred_order, rename_techs
 from pypsa.plot import add_legend_circles, add_legend_lines, add_legend_patches
 
-# plt.style.use(["ggplot", "matplotlibrc"])
+plt.style.use(["ggplot", "matplotlibrc"])
 
 
 def rename_techs_tyndp(tech):

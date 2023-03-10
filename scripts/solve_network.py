@@ -532,6 +532,28 @@ def add_pipe_retrofit_constraint(n):
 
 
 def extra_functionality(n, snapshots):
+    """
+    Collects supplementary constraints which will be passed to
+    ``pypsa.optimization.optimize``.
+
+    If you want to enforce additional custom constraints, this is a good
+    location to add them. The arguments ``opts`` and
+    ``snakemake.config`` are expected to be attached to the network.
+    """
+    opts = n.opts
+    config = n.config
+    if "BAU" in opts and n.generators.p_nom_extendable.any():
+        add_BAU_constraints(n, config)
+    if "SAFE" in opts and n.generators.p_nom_extendable.any():
+        add_SAFE_constraints(n, config)
+    if "CCL" in opts and n.generators.p_nom_extendable.any():
+        add_CCL_constraints(n, config)
+    reserve = config["electricity"].get("operational_reserve", {})
+    if reserve.get("activate"):
+        add_operational_reserve_margin(n, snapshots, config)
+    for o in opts:
+        if "EQ" in o:
+            add_EQ_constraints(n, o)
     add_battery_constraints(n)
     add_pipe_retrofit_constraint(n)
 

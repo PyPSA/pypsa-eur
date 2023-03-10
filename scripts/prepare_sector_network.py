@@ -1409,7 +1409,7 @@ def add_land_transport(n, costs):
     # TODO options?
 
     logger.info("Add land transport")
-    nsnapshots = n.snapshot_weightings.generators.sum()
+    nhours = n.snapshot_weightings.generators.sum()
 
     transport = pd.read_csv(
         snakemake.input.transport_demand, index_col=0, parse_dates=True
@@ -1559,7 +1559,7 @@ def add_land_transport(n, costs):
             ice_share
             / ice_efficiency
             * transport[nodes].sum().sum()
-            / nsnapshots
+            / nhours
             * costs.at["oil", "CO2 intensity"]
         )
 
@@ -2334,8 +2334,8 @@ def add_industry(n, costs):
     logger.info("Add industrial demand")
 
     nodes = pop_layout.index
-    nsnapshots = n.snapshot_weightings.generators.sum()
-    nyears = nsnapshots / 8760
+    nhours = n.snapshot_weightings.generators.sum()
+    nyears = nhours / 8760
 
     # 1e6 to convert TWh to MWh
     industrial_demand = (
@@ -2355,10 +2355,10 @@ def add_industry(n, costs):
             industrial_demand.loc[spatial.biomass.locations, "solid biomass"].rename(
                 index=lambda x: x + " solid biomass for industry"
             )
-            / nsnapshots
+            / nhours
         )
     else:
-        p_set = industrial_demand["solid biomass"].sum() / nsnapshots
+        p_set = industrial_demand["solid biomass"].sum() / nhours
 
     n.madd(
         "Load",
@@ -2405,7 +2405,7 @@ def add_industry(n, costs):
         unit="MWh_LHV",
     )
 
-    gas_demand = industrial_demand.loc[nodes, "methane"] / nsnapshots
+    gas_demand = industrial_demand.loc[nodes, "methane"] / nhours
 
     if options["gas_network"]:
         spatial_gas_demand = gas_demand.rename(index=lambda x: x + " gas for industry")
@@ -2457,7 +2457,7 @@ def add_industry(n, costs):
         suffix=" H2 for industry",
         bus=nodes + " H2",
         carrier="H2 for industry",
-        p_set=industrial_demand.loc[nodes, "hydrogen"] / nsnapshots,
+        p_set=industrial_demand.loc[nodes, "hydrogen"] / nhours,
     )
 
     shipping_hydrogen_share = get(options["shipping_hydrogen_share"], investment_year)
@@ -2477,7 +2477,7 @@ def add_industry(n, costs):
         pd.read_csv(snakemake.input.shipping_demand, index_col=0).squeeze() * nyears
     )
     all_navigation = domestic_navigation + international_navigation
-    p_set = all_navigation * 1e6 / nsnapshots
+    p_set = all_navigation * 1e6 / nhours
 
     if shipping_hydrogen_share:
         oil_efficiency = options.get(
@@ -2684,7 +2684,7 @@ def add_industry(n, costs):
     )
 
     demand_factor = options.get("HVC_demand_factor", 1)
-    p_set = demand_factor * industrial_demand.loc[nodes, "naphtha"].sum() / nsnapshots
+    p_set = demand_factor * industrial_demand.loc[nodes, "naphtha"].sum() / nhours
     if demand_factor != 1:
         logger.warning(f"Changing HVC demand by {demand_factor*100-100:+.2f}%.")
 
@@ -2702,7 +2702,7 @@ def add_industry(n, costs):
         demand_factor
         * pop_weighted_energy_totals.loc[nodes, all_aviation].sum(axis=1).sum()
         * 1e6
-        / nsnapshots
+        / nhours
     )
     if demand_factor != 1:
         logger.warning(f"Changing aviation demand by {demand_factor*100-100:+.2f}%.")
@@ -2721,8 +2721,7 @@ def add_industry(n, costs):
     co2_release = ["naphtha for industry", "kerosene for aviation"]
     co2 = (
         n.loads.loc[co2_release, "p_set"].sum() * costs.at["oil", "CO2 intensity"]
-        - industrial_demand.loc[nodes, "process emission from feedstock"].sum()
-        / nsnapshots
+        - industrial_demand.loc[nodes, "process emission from feedstock"].sum() / nhours
     )
 
     n.add(
@@ -2745,7 +2744,7 @@ def add_industry(n, costs):
             for node in nodes
         ],
         carrier="low-temperature heat for industry",
-        p_set=industrial_demand.loc[nodes, "low-temperature heat"] / nsnapshots,
+        p_set=industrial_demand.loc[nodes, "low-temperature heat"] / nhours,
     )
 
     # remove today's industrial electricity demand by scaling down total electricity demand
@@ -2770,7 +2769,7 @@ def add_industry(n, costs):
         suffix=" industry electricity",
         bus=nodes,
         carrier="industry electricity",
-        p_set=industrial_demand.loc[nodes, "electricity"] / nsnapshots,
+        p_set=industrial_demand.loc[nodes, "electricity"] / nhours,
     )
 
     n.madd(
@@ -2787,10 +2786,10 @@ def add_industry(n, costs):
             -industrial_demand.loc[nodes, sel]
             .sum(axis=1)
             .rename(index=lambda x: x + " process emissions")
-            / nsnapshots
+            / nhours
         )
     else:
-        p_set = -industrial_demand.loc[nodes, sel].sum(axis=1).sum() / nsnapshots
+        p_set = -industrial_demand.loc[nodes, sel].sum(axis=1).sum() / nhours
 
     # this should be process emissions fossil+feedstock
     # then need load on atmosphere for feedstock emissions that are currently going to atmosphere via Link Fischer-Tropsch demand
@@ -2834,10 +2833,10 @@ def add_industry(n, costs):
                 industrial_demand.loc[spatial.ammonia.locations, "ammonia"].rename(
                     index=lambda x: x + " NH3"
                 )
-                / nsnapshots
+                / nhours
             )
         else:
-            p_set = industrial_demand["ammonia"].sum() / nsnapshots
+            p_set = industrial_demand["ammonia"].sum() / nhours
 
         n.madd(
             "Load",
@@ -2889,7 +2888,7 @@ def add_agriculture(n, costs):
     logger.info("Add agriculture, forestry and fishing sector.")
 
     nodes = pop_layout.index
-    nsnapshots = n.snapshot_weightings.generators.sum()
+    nhours = n.snapshot_weightings.generators.sum()
 
     # electricity
 
@@ -2901,7 +2900,7 @@ def add_agriculture(n, costs):
         carrier="agriculture electricity",
         p_set=pop_weighted_energy_totals.loc[nodes, "total agriculture electricity"]
         * 1e6
-        / nsnapshots,
+        / nhours,
     )
 
     # heat
@@ -2914,7 +2913,7 @@ def add_agriculture(n, costs):
         carrier="agriculture heat",
         p_set=pop_weighted_energy_totals.loc[nodes, "total agriculture heat"]
         * 1e6
-        / nsnapshots,
+        / nhours,
     )
 
     # machinery
@@ -2950,7 +2949,7 @@ def add_agriculture(n, costs):
             / efficiency_gain
             * machinery_nodal_energy
             * 1e6
-            / nsnapshots,
+            / nhours,
         )
 
     if oil_share > 0:
@@ -2959,14 +2958,14 @@ def add_agriculture(n, costs):
             ["agriculture machinery oil"],
             bus=spatial.oil.nodes,
             carrier="agriculture machinery oil",
-            p_set=oil_share * machinery_nodal_energy.sum() * 1e6 / nsnapshots,
+            p_set=oil_share * machinery_nodal_energy.sum() * 1e6 / nhours,
         )
 
         co2 = (
             oil_share
             * machinery_nodal_energy.sum()
             * 1e6
-            / nsnapshots
+            / nhours
             * costs.at["oil", "CO2 intensity"]
         )
 
@@ -3264,8 +3263,8 @@ if __name__ == "__main__":
     n = pypsa.Network(snakemake.input.network, override_component_attrs=overrides)
 
     pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
-    nsnapshots = n.snapshot_weightings.generators.sum()
-    nyears = nsnapshots / 8760
+    nhours = n.snapshot_weightings.generators.sum()
+    nyears = nhours / 8760
 
     costs = prepare_costs(
         snakemake.input.costs,
