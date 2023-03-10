@@ -442,9 +442,13 @@ def calculate_metrics(n, label, metrics):
         ["line_volume_AC", "line_volume_DC"], label
     ].sum()
 
-    if hasattr(n, "line_volume_limit"):
-        metrics.at["line_volume_limit", label] = n.line_volume_limit
-        metrics.at["line_volume_shadow", label] = n.line_volume_limit_dual
+    if "lv_limit" in n.global_constraints.index:
+        metrics.at["line_volume_limit", label] = n.global_constraints.at[
+            "lv_limit", "constant"
+        ]
+        metrics.at["line_volume_shadow", label] = n.global_constraints.at[
+            "lv_limit", "mu"
+        ]
 
     if "CO2Limit" in n.global_constraints.index:
         metrics.at["co2_shadow", label] = n.global_constraints.at["CO2Limit", "mu"]
@@ -695,7 +699,7 @@ if __name__ == "__main__":
         for planning_horizon in snakemake.config["scenario"]["planning_horizons"]
     }
 
-    Nyears = 1
+    Nyears = len(pd.date_range(freq="h", **snakemake.config["snapshots"])) / 8760
 
     costs_db = prepare_costs(
         snakemake.input.costs,
