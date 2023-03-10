@@ -1409,6 +1409,7 @@ def add_land_transport(n, costs):
     # TODO options?
 
     logger.info("Add land transport")
+    nsnapshots = n.snapshot_weightings.generators.sum()
 
     transport = pd.read_csv(
         snakemake.input.transport_demand, index_col=0, parse_dates=True
@@ -1557,7 +1558,8 @@ def add_land_transport(n, costs):
         co2 = (
             ice_share
             / ice_efficiency
-            * transport[nodes].sum(axis=1)
+            * transport[nodes].sum().sum()
+            / nsnapshots
             * costs.at["oil", "CO2 intensity"]
         )
 
@@ -3262,7 +3264,7 @@ if __name__ == "__main__":
     n = pypsa.Network(snakemake.input.network, override_component_attrs=overrides)
 
     pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
-    nsnapshots = n.snapshot_weightings.objective.sum()
+    nsnapshots = n.snapshot_weightings.generators.sum()
     nyears = nsnapshots / 8760
 
     costs = prepare_costs(
