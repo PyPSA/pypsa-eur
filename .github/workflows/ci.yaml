@@ -81,7 +81,7 @@ jobs:
       run: echo "DATE=$(date +'%Y%m%d')" >> $GITHUB_ENV
 
     - name: Create environment cache
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       id: cache
       with:
         path: ${{ matrix.prefix }}
@@ -95,6 +95,4 @@ jobs:
       run: |
         conda activate pypsa-eur
         conda list
-        cp test/config.test1.yaml config.yaml
-        snakemake --cores all solve_all_networks
-        rm -rf resources/*.nc resources/*.geojson resources/*.h5 networks results
+        snakemake -call solve_all_networks --configfile test/config.test1.yaml

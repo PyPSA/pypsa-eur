@@ -189,7 +189,6 @@ def manual_adjustment(load, fn_load, powerstatistics):
          Manual adjusted and interpolated load time-series with UTC
          timestamps x ISO-2 countries
     """
-
     if powerstatistics:
         if "MK" in load.columns:
             if "AL" not in load.columns or load.AL.isnull().values.all():
@@ -269,7 +268,6 @@ def manual_adjustment(load, fn_load, powerstatistics):
 
 
 if __name__ == "__main__":
-
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 

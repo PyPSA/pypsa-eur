@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2019-2022 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: 2019-2023 The PyPSA-Eur Authors
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -107,7 +107,7 @@ in Germany (in the solution for Europe) use:
 
 .. code:: bash
 
-    snakemake -j 1 results/summaries/elec_s_all_lall_Co2L-3H_DE
+    snakemake -call results/summaries/elec_s_all_lall_Co2L-3H_DE
 
 .. _cutout_wc:
 

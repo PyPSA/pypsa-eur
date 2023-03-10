@@ -1,15 +1,18 @@
 ,Unit,Values,Description
-version,--,0.x.x,"Version of PyPSA-Eur"
+version,--,0.x.x,"Version of PyPSA-Eur. Descriptive only."
 tutorial,bool,"{true, false}","Switch to retrieve the tutorial data set instead of the full data set."
 logging,,,
 -- level,--,"Any of {'INFO', 'WARNING', 'ERROR'}","Restrict console outputs to all infos, warning or errors only"
 -- format,--,"","Custom format for log messages. See `LogRecord <https://docs.python.org/3/library/logging.html#logging.LogRecord>`_ attributes."
-summary_dir,--,"e.g. 'results'","Directory into which results are written."
+run,,,
+-- name,--,"any string","Specify a name for your run. Results will be stored under this name."
+-- shared_cutouts,bool,"{true, false}","Switch to select whether cutouts should be shared across runs."
 countries,--,"Subset of {'AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK'}","European countries defined by their `Two-letter country codes (ISO 3166-1) <https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2>`_ which should be included in the energy system model."
 focus_weights,--,"Keys should be two-digit country codes (e.g. DE) and values should range between 0 and 1","Ratio of total clusters for particular countries. the remaining weight is distributed according to mean load. An example: ``focus_weights: 'DE': 0.6 'FR': 0.2``."
 enable,,,
 -- prepare_links_p_nom,bool,"{true, false}","Switch to retrieve current HVDC projects from `Wikipedia <https://en.wikipedia.org/wiki/List_of_HVDC_projects>`_"
 -- retrieve_databundle,bool,"{true, false}","Switch to retrieve databundle from zenodo via the rule :mod:`retrieve_databundle` or whether to keep a custom databundle located in the corresponding folder."
+-- retrieve_cost_data,bool,"{true, false}","Switch to retrieve technology cost data from `technology-data repository <https://github.com/PyPSA/technology-data>`_."
 -- build_cutout,bool,"{true, false}","Switch to enable the building of cutouts via the rule :mod:`build_cutout`."
 -- retrieve_cutout,bool,"{true, false}","Switch to enable the retrieval of cutouts from zenodo with :mod:`retrieve_cutout`."
 -- build_natura_raster,bool,"{true, false}","Switch to enable the creation of the raster ``natura.tiff`` via the rule :mod:`build_natura_raster`."

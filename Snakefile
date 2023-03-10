@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2017-2022 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
@@ -68,7 +68,7 @@ if config["enable"].get("prepare_links_p_nom", False):
             "logs/" + RDIR + "prepare_links_p_nom.log",
         threads: 1
         resources:
-            mem_mb=500,
+            mem_mb=1500,
         script:
             "scripts/prepare_links_p_nom.py"
 
@@ -173,7 +173,7 @@ rule base_network:
         "benchmarks/" + RDIR + "base_network"
     threads: 1
     resources:
-        mem_mb=500,
+        mem_mb=1500,
     script:
         "scripts/base_network.py"
 
@@ -196,7 +196,7 @@ rule build_shapes:
         "logs/" + RDIR + "build_shapes.log",
     threads: 1
     resources:
-        mem_mb=500,
+        mem_mb=1500,
     script:
         "scripts/build_shapes.py"
 
@@ -325,7 +325,13 @@ rule retrieve_ship_raster:
 rule build_ship_raster:
     input:
         ship_density="data/shipdensity_global.zip",
-        cutouts=expand("cutouts/" + CDIR + "{cutouts}.nc", **config["atlite"]),
+        cutouts=expand(
+            "cutouts/" + CDIR + "{cutout}.nc",
+            cutout=[
+                config["renewable"][k]["cutout"]
+                for k in config["electricity"]["renewable_carriers"]
+            ],
+        ),
     output:
         "resources/" + RDIR + "shipdensity_raster.nc",
     log:
@@ -349,7 +355,7 @@ rule build_renewable_profiles:
         ),
         gebco=lambda w: (
             "data/bundle/GEBCO_2014_2D.nc"
-            if "max_depth" in config["renewable"][w.technology].keys()
+            if config["renewable"][w.technology].get("max_depth")
             else []
         ),
         ship_density=lambda w: (
@@ -387,9 +393,7 @@ rule build_hydro_profile:
     input:
         country_shapes="resources/" + RDIR + "country_shapes.geojson",
         eia_hydro_generation="data/eia_hydro_annual_generation.csv",
-        cutout=f"cutouts/" + CDIR + config["renewable"]["hydro"]["cutout"] + ".nc"
-        if "hydro" in config["renewable"]
-        else [],
+        cutout=f"cutouts/" + CDIR + config["renewable"]["hydro"]["cutout"] + ".nc",
     output:
         "resources/" + RDIR + "profile_hydro.nc",
     log:
@@ -404,7 +408,7 @@ rule add_electricity:
     input:
         **{
             f"profile_{tech}": "resources/" + RDIR + f"profile_{tech}.nc"
-            for tech in config["renewable"]
+            for tech in config["electricity"]["renewable_carriers"]
         },
         **{
             f"conventional_{carrier}_{attr}": fn
@@ -663,7 +667,7 @@ rule make_summary:
         + RDIR
         + "make_summary/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}.log",
     resources:
-        mem_mb=500,
+        mem_mb=1500,
     script:
         "scripts/make_summary.py"
 
@@ -682,7 +686,7 @@ rule plot_summary:
         + RDIR
         + "plot_summary/{summary}_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_{country}_{ext}.log",
     resources:
-        mem_mb=500,
+        mem_mb=1500,
     script:
         "scripts/plot_summary.py"
 
@@ -712,6 +716,6 @@ rule plot_p_nom_max:
         + RDIR
         + "plot_p_nom_max/elec_s{simpl}_{clusts}_{techs}_{country}_{ext}.log",
     resources:
-        mem_mb=500,
+        mem_mb=1500,
     script:
         "scripts/plot_p_nom_max.py"

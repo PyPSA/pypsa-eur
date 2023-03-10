@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2019-2022 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: 2019-2023 The PyPSA-Eur Authors
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -103,8 +103,12 @@ It might be the case that you can only retrieve solutions by using a commercial 
         conda activate pypsa-eur
         conda install -c conda-forge ipopt glpk
 
-.. warning::
-    On Windows, new versions of ``ipopt`` have caused problems. Consider downgrading to version 3.11.1.
+    or
+
+    .. code:: bash
+
+        conda activate pypsa-eur
+        pip install highspy
 
 .. _defaultconfig:
 
@@ -123,11 +127,3 @@ Before first use, create a ``config.yaml`` by copying the example.
 
 Users are advised to regularly check their own ``config.yaml`` against changes in the ``config.default.yaml``
 when pulling a new version from the remote repository.
-
-.. Using PyPSA-Eur with Docker Images
-.. ==================================
-
-.. If docker. Optional.
-.. To run on cloud computing.
-.. Gurobi license - floating token server - license must not be tied to a particular machine
-.. Provide ``Dockerfile``.

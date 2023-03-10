@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2022 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
@@ -69,7 +69,6 @@ def voronoi_partition_pts(points, outline):
     -------
     polygons : N - ndarray[dtype=Polygon|MultiPolygon]
     """
-
     points = np.asarray(points)
 
     if len(points) == 1:

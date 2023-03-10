@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2022 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
@@ -216,18 +216,21 @@ def add_EQ_constraints(n, o, scaling=1e-1):
         .T.groupby(ggrouper, axis=1)
         .apply(join_exprs)
     )
-    lhs_spill = (
-        linexpr(
-            (
-                -n.snapshot_weightings.stores * scaling,
-                get_var(n, "StorageUnit", "spill").T,
+    if not n.storage_units_t.inflow.empty:
+        lhs_spill = (
+            linexpr(
+                (
+                    -n.snapshot_weightings.stores * scaling,
+                    get_var(n, "StorageUnit", "spill").T,
+                )
             )
+            .T.groupby(sgrouper, axis=1)
+            .apply(join_exprs)
         )
-        .T.groupby(sgrouper, axis=1)
-        .apply(join_exprs)
-    )
-    lhs_spill = lhs_spill.reindex(lhs_gen.index).fillna("")
-    lhs = lhs_gen + lhs_spill
+        lhs_spill = lhs_spill.reindex(lhs_gen.index).fillna("")
+        lhs = lhs_gen + lhs_spill
+    else:
+        lhs = lhs_gen
     define_constraints(n, lhs, ">=", rhs, "equity", "min")
 
 
@@ -278,7 +281,7 @@ def add_operational_reserve_margin_constraint(n, config):
         ).sum(1)
 
     # Total demand at t
-    demand = n.loads_t.p.sum(1)
+    demand = n.loads_t.p_set.sum(1)
 
     # VRES potential of non extendable generators
     capacity_factor = n.generators_t.p_max_pu[vres_i.difference(ext_i)]
@@ -321,7 +324,6 @@ def add_operational_reserve_margin(n, sns, config):
     Build reserve margin constraints based on the formulation given in
     https://genxproject.github.io/GenX/dev/core/#Reserves.
     """
-
     define_variables(n, 0, np.inf, "Generator", "r", axes=[sns, n.generators.index])
 
     add_operational_reserve_margin_constraint(n, config)
@@ -371,8 +373,11 @@ def extra_functionality(n, snapshots):
 
 
 def solve_network(n, config, opts="", **kwargs):
-    solver_options = config["solving"]["solver"].copy()
-    solver_name = solver_options.pop("name")
+    set_of_options = config["solving"]["solver"]["options"]
+    solver_options = (
+        config["solving"]["solver_options"][set_of_options] if set_of_options else {}
+    )
+    solver_name = config["solving"]["solver"]["name"]
     cf_solving = config["solving"]["options"]
     track_iterations = cf_solving.get("track_iterations", False)
     min_iterations = cf_solving.get("min_iterations", 4)
@@ -389,11 +394,7 @@ def solve_network(n, config, opts="", **kwargs):
 
     if skip_iterations:
         network_lopf(
-            n,
-            solver_name=solver_name,
-            solver_options=solver_options,
-            extra_functionality=extra_functionality,
-            **kwargs
+            n, solver_name=solver_name, solver_options=solver_options, **kwargs
         )
     else:
         ilopf(
@@ -403,7 +404,6 @@ def solve_network(n, config, opts="", **kwargs):
             track_iterations=track_iterations,
             min_iterations=min_iterations,
             max_iterations=max_iterations,
-            extra_functionality=extra_functionality,
             **kwargs
         )
     return n
@@ -414,7 +414,7 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "solve_network", simpl="", clusters="5", ll="copt", opts="Co2L-BAU-CCL-24H"
+            "solve_network", simpl="", clusters="5", ll="v1.5", opts=""
         )
     configure_logging(snakemake)
 
@@ -432,6 +432,7 @@ if __name__ == "__main__":
             n,
             snakemake.config,
             opts,
+            extra_functionality=extra_functionality,
             solver_dir=tmpdir,
             solver_logfile=snakemake.log.solver,
         )

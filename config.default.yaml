@@ -1,8 +1,8 @@
-# SPDX-FileCopyrightText: : 2017-2022 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: CC0-1.0
 
-version: 0.6.1
+version: 0.7.0
 tutorial: false
 
 logging:
@@ -25,7 +25,7 @@ countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'F
 snapshots:
   start: "2013-01-01"
   end: "2014-01-01"
-  closed: 'left' # end is not inclusive
+  inclusive: 'left' # include start, not end
 
 enable:
   prepare_links_p_nom: false
@@ -86,6 +86,7 @@ electricity:
 
 atlite:
   nprocesses: 4
+  show_progress: false # false saves time
   cutouts:
     # use 'base' to determine geographical bounds and time span from config
     # base:
@@ -232,7 +233,7 @@ load:
 
 costs:
   year: 2030
-  version: v0.4.0
+  version: v0.5.0
   rooftop_share: 0.14  # based on the potentials, assuming  (0.1 kW/m2 and 10 m2/person)
   fill_values:
     FOM: 0
@@ -262,6 +263,8 @@ clustering:
     algorithm: kmeans # choose from: [hac, kmeans]
     feature: solar+onwind-time # only for hac. choose from: [solar+onwind-time, solar+onwind-cap, solar-time, solar-cap, solar+offwind-cap] etc.
     exclude_carriers: []
+    remove_stubs: true
+    remove_stubs_across_borders: true
   cluster_network:
     algorithm: kmeans
     feature: solar+onwind-time
@@ -278,33 +281,86 @@ clustering:
       efficiency: mean
 
 solving:
+  #tmpdir: "path/to/tmp"
   options:
     formulation: kirchhoff
+    clip_p_max_pu: 1.e-2
     load_shedding: false
     noisy_costs: true
+    skip_iterations: true
+    track_iterations: false
     min_iterations: 4
     max_iterations: 6
-    clip_p_max_pu: 0.01
-    skip_iterations: false
-    track_iterations: false
-    #nhours: 10
+    keep_shadowprices:
+    - Bus
+    - Line
+    - Link
+    - Transformer
+    - GlobalConstraint
+    - Generator
+    - Store
+    - StorageUnit
+
   solver:
     name: gurobi
-    threads: 4
-    method: 2 # barrier
-    crossover: 0
-    BarConvTol: 1.e-5
-    FeasibilityTol: 1.e-6
-    AggFill: 0
-    PreDual: 0
-    GURO_PAR_BARDENSETHRESH: 200
-  # solver:
-  #   name: cplex
-  #   threads: 4
-  #   lpmethod: 4 # barrier
-  #   solutiontype: 2 # non basic solution, ie no crossover
-  #   barrier.convergetol: 1.e-5
-  #   feasopt.tolerance: 1.e-6
+    options: gurobi-default
+
+  solver_options:
+    highs-default:
+      # refer to https://ergo-code.github.io/HiGHS/options/definitions.html#solver
+      threads: 4
+      solver: "ipm"
+      run_crossover: "off"
+      small_matrix_value: 1e-6
+      large_matrix_value: 1e9
+      primal_feasibility_tolerance: 1e-5
+      dual_feasibility_tolerance: 1e-5
+      ipm_optimality_tolerance: 1e-4
+      parallel: "on"
+      random_seed: 123
+    gurobi-default:
+      threads: 4
+      method: 2 # barrier
+      crossover: 0
+      BarConvTol: 1.e-6
+      Seed: 123
+      AggFill: 0
+      PreDual: 0
+      GURO_PAR_BARDENSETHRESH: 200
+      seed: 10              # Consistent seed for all plattforms
+    gurobi-numeric-focus:
+      name: gurobi
+      NumericFocus: 3       # Favour numeric stability over speed
+      method: 2             # barrier
+      crossover: 0          # do not use crossover
+      BarHomogeneous: 1     # Use homogeneous barrier if standard does not converge
+      BarConvTol: 1.e-5
+      FeasibilityTol: 1.e-4
+      OptimalityTol: 1.e-4
+      ObjScale: -0.5
+      threads: 8
+      Seed: 123
+    gurobi-fallback:        # Use gurobi defaults
+      name: gurobi
+      crossover: 0
+      method: 2             # barrier
+      BarHomogeneous: 1     # Use homogeneous barrier if standard does not converge
+      BarConvTol: 1.e-5
+      FeasibilityTol: 1.e-5
+      OptimalityTol: 1.e-5
+      Seed: 123
+      threads: 8
+    cplex-default:
+      threads: 4
+      lpmethod: 4 # barrier
+      solutiontype: 2 # non basic solution, ie no crossover
+      barrier_convergetol: 1.e-5
+      feasopt_tolerance: 1.e-6
+    cbc-default: {} # Used in CI
+    glpk-default: {} # Used in CI
+
+  mem: 30000 #memory in MB; 20 GB enough for 50+B+I+H2; 100 GB for 181+B+I+H2
+
 
 plotting:
   map:

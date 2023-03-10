@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2019-2022 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: 2019-2023 The PyPSA-Eur Authors
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -9,9 +9,7 @@ Cost Assumptions
 
 The database of cost assumptions is retrieved from the repository
 `PyPSA/technology-data <https://github.com/pypsa/technology-data>`_ and then
-saved to ``resources/costs.csv``. Cost assumptions of previous PyPSA-Eur
-versions can be restored by setting in the ``Snakefile``:
-``COSTS="data/costs.csv"``.
+saved to ``resources/costs.csv``.
 
 The ``config.yaml`` provides options to choose a reference year (``costs: year:``) and use a specific version of the repository ``costs: version:``.
 

@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2019-2022 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: 2019-2023 The PyPSA-Eur Authors
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -28,17 +28,18 @@ For instance an invocation to
 
 .. code:: bash
 
-    .../pypsa-eur % snakemake -j 1 networks/elec_s_128.nc
+    .../pypsa-eur % snakemake -call results/networks/elec_s_128_ec_lvopt_Co2L-3H.nc
 
 follows this dependency graph:
 
 .. image:: img/workflow.png
+    :class: full-width
 
 The **blocks** represent the individual rules which are required to create the file ``networks/elec_s_128.nc``. The **arrows** indicate the outputs from preceding rules which a particular rule takes as input data.
 
 .. note::
     The dependency graph shown above was generated using
-    ``snakemake --dag networks/elec_s_128.nc | dot -Tpng > workflow.png``
+    ``snakemake --dag results/networks/elec_s_128_ec_lvopt_Co2L-3H.nc -F | sed -n "/digraph/,/}/p" | dot -Tpng -o workflow.png``
 
 For the use of ``snakemake``, it makes sense to familiarize oneself quickly with its `basic tutorial <https://snakemake.readthedocs.io/en/stable/tutorial/basics.html>`_ and then read carefully through the section `Executing Snakemake <https://snakemake.readthedocs.io/en/stable/executable.html>`_, noting the arguments ``-j``, ``-n``, ``-r``, but also ``--dag``, ``-R`` and ``-t``.
 

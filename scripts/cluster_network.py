@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2022 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
@@ -222,7 +222,6 @@ def distribute_clusters(n, n_clusters, focus_weights=None, solver_name="cbc"):
     """
     Determine the number of clusters per country.
     """
-
     L = (
         n.loads_t.p_set.mean()
         .groupby(n.loads.bus)
@@ -239,7 +238,6 @@ def distribute_clusters(n, n_clusters, focus_weights=None, solver_name="cbc"):
     ), f"Number of clusters must be {len(N)} <= n_clusters <= {N.sum()} for this selection of countries."
 
     if focus_weights is not None:
-
         total_focus = sum(list(focus_weights.values()))
 
         assert (
@@ -397,7 +395,6 @@ def clustering_for_n_clusters(
     extended_link_costs=0,
     focus_weights=None,
 ):
-
     bus_strategies, generator_strategies = get_aggregation_strategies(
         aggregation_strategies
     )
@@ -481,9 +478,10 @@ if __name__ == "__main__":
     aggregate_carriers = set(n.generators.carrier) - set(exclude_carriers)
     if snakemake.wildcards.clusters.endswith("m"):
         n_clusters = int(snakemake.wildcards.clusters[:-1])
-        aggregate_carriers = snakemake.config["electricity"].get(
-            "conventional_carriers"
+        conventional = set(
+            snakemake.config["electricity"].get("conventional_carriers", [])
         )
+        aggregate_carriers = conventional.intersection(aggregate_carriers)
     elif snakemake.wildcards.clusters == "all":
         n_clusters = len(n.buses)
     else:
