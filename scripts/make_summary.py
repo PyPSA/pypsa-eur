@@ -699,7 +699,7 @@ if __name__ == "__main__":
         for planning_horizon in snakemake.config["scenario"]["planning_horizons"]
     }
 
-    Nyears = 1
+    Nyears = len(pd.date_range(freq="h", **snakemake.config["snapshots"])) / 8760
 
     costs_db = prepare_costs(
         snakemake.input.costs,

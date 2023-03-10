@@ -83,7 +83,7 @@ def build_transport_demand(traffic_fn, airtemp_fn, nodes, nodal_transport_data):
     )
 
     transport = (
-        (transport_shape.multiply(energy_totals_transport) * 1e6 * Nyears)
+        (transport_shape.multiply(energy_totals_transport) * 1e6 * nyears)
         .divide(efficiency_gain * ice_correction)
         .multiply(1 + dd_EV)
     )
@@ -181,7 +181,7 @@ if __name__ == "__main__":
 
     snapshots = pd.date_range(freq="h", **snakemake.config["snapshots"], tz="UTC")
 
-    Nyears = 1
+    nyears = len(snapshots) / 8760
 
     nodal_transport_data = build_nodal_transport_data(
         snakemake.input.transport_data, pop_layout

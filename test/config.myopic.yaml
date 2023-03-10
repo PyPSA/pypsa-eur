@@ -58,3 +58,15 @@ solving:
     name: glpk
     options: glpk-default
   mem: 4000
+
+plotting:
+  map:
+    boundaries:
+  eu_node_location:
+    x: -5.5
+    y: 46.
+  costs_max: 1000
+  costs_threshold: 0.0000001
+  energy_max:
+  energy_min:
+  energy_threshold: 0.000001

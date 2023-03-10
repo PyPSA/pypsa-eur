@@ -31,7 +31,7 @@ def add_land_use_constraint(n, config):
         _add_land_use_constraint(n, config)
 
 
-def _add_land_use_constraint(n):
+def _add_land_use_constraint(n, config):
     # warning: this will miss existing offwind which is not classed AC-DC and has carrier 'offwind'
 
     for carrier in ["solar", "onwind", "offwind-ac", "offwind-dc"]:

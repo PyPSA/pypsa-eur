@@ -23,7 +23,7 @@ from make_summary import assign_carriers
 from plot_summary import preferred_order, rename_techs
 from pypsa.plot import add_legend_circles, add_legend_lines, add_legend_patches
 
-plt.style.use(["ggplot", "matplotlibrc"])
+# plt.style.use(["ggplot", "matplotlibrc"])
 
 
 def rename_techs_tyndp(tech):
@@ -394,8 +394,7 @@ def plot_h2_map(network, regions):
         link_widths=link_widths_retro,
         branch_components=["Link"],
         ax=ax,
-        color_geomap=False,
-        boundaries=map_opts["boundaries"],
+        **map_opts,
     )
 
     regions.plot(
@@ -922,11 +921,11 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "plot_network",
             simpl="",
-            clusters="181",
-            ll="vopt",
             opts="",
-            sector_opts="Co2L0-730H-T-H-B-I-A-solar+p3-linemaxext10",
-            planning_horizons="2050",
+            clusters="5",
+            ll="v1.5",
+            sector_opts="CO2L0-1H-T-H-B-I-A-solar+p3-dist1",
+            planning_horizons="2030",
         )
 
     logging.basicConfig(level=snakemake.config["logging"]["level"])
@@ -937,6 +936,9 @@ if __name__ == "__main__":
     regions = gpd.read_file(snakemake.input.regions).set_index("name")
 
     map_opts = snakemake.config["plotting"]["map"]
+
+    if map_opts["boundaries"] is None:
+        map_opts["boundaries"] = regions.total_bounds[[0, 2, 1, 3]] + [-1, 1, -1, 1]
 
     plot_map(
         n,
