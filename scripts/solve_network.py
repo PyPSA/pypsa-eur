@@ -696,10 +696,15 @@ if __name__ == "__main__":
             planning_horizons="2030",
         )
     configure_logging(snakemake)
-    update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
+    if "sector_opts" in snakemake.wildcards.keys():
+        update_config_with_sector_opts(
+            snakemake.config, snakemake.wildcards.sector_opts
+        )
 
-    opts = (snakemake.wildcards.opts + "-" + snakemake.wildcards.sector_opts).split("-")
-    opts = [o for o in opts if o != ""]
+    opts = snakemake.wildcards.opts
+    if "sector_opts" in snakemake.wildcards.keys():
+        opts += "-" + snakemake.wildcards.sector_opts.split("-")
+    opts = [o for o in opts.split("-") if o != ""]
     solve_opts = snakemake.config["solving"]["options"]
 
     np.random.seed(solve_opts.get("seed", 123))
