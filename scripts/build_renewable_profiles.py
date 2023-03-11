@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# SPDX-FileCopyrightText: : 2017-2022 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
@@ -187,7 +187,6 @@ import time
 import atlite
 import geopandas as gpd
 import numpy as np
-import progressbar as pgb
 import xarray as xr
 from _helpers import configure_logging
 from dask.distributed import Client, LocalCluster
@@ -203,7 +202,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_renewable_profiles", technology="solar")
     configure_logging(snakemake)
-    pgb.streams.wrap_stderr()
 
     nprocesses = int(snakemake.threads)
     noprogress = not snakemake.config["atlite"].get("show_progress", False)
@@ -258,7 +256,7 @@ if __name__ == "__main__":
             snakemake.input.ship_density, codes=func, crs=4326, allow_no_overlap=True
         )
 
-    if "max_depth" in config:
+    if config.get("max_depth"):
         # lambda not supported for atlite + multiprocessing
         # use named function np.greater with partially frozen argument instead
         # and exclude areas where: -max_depth > grid cell depth

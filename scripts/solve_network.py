@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2022 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
@@ -373,8 +373,11 @@ def extra_functionality(n, snapshots):
 
 
 def solve_network(n, config, opts="", **kwargs):
-    solver_options = config["solving"]["solver"].copy()
-    solver_name = solver_options.pop("name")
+    set_of_options = config["solving"]["solver"]["options"]
+    solver_options = (
+        config["solving"]["solver_options"][set_of_options] if set_of_options else {}
+    )
+    solver_name = config["solving"]["solver"]["name"]
     cf_solving = config["solving"]["options"]
     track_iterations = cf_solving.get("track_iterations", False)
     min_iterations = cf_solving.get("min_iterations", 4)
@@ -411,7 +414,7 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "solve_network", simpl="", clusters="5", ll="copt", opts="Co2L-BAU-CCL-24H"
+            "solve_network", simpl="", clusters="5", ll="v1.5", opts=""
         )
     configure_logging(snakemake)
 

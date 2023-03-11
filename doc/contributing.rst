@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2019-2022 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: 2019-2023 The PyPSA-Eur Authors
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -7,9 +7,9 @@
 Contributing
 #######################
 
-We happily welcome anyone interested in contributing to this project,
-be it with new ideas, suggestions, by filing bug reports or contributing code
-to our `GitHub repository <https://github.com/PyPSA/PyPSA-Eur>`_.
+We welcome anyone interested in contributing to this project, be it with new
+ideas, suggestions, by filing bug reports or contributing code to our `GitHub
+repository <https://github.com/PyPSA/PyPSA-Eur>`_.
 
 * If you already have some code changes, you can submit them directly as a `pull request <https://github.com/PyPSA/pypsa-eur/pulls>`_.
 * If you are wondering where we would greatly appreciate your efforts, check out the ``help wanted`` tag in the `issues list <https://github.com/PyPSA/pypsa-eur/issues>`_ and initiate a discussion there.

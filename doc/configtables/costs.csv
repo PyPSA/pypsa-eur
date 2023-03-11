@@ -1,6 +1,6 @@
 ,Unit,Values,Description
 year,--,"YYYY; e.g. '2030'","Year for which to retrieve cost assumptions of ``resources/costs.csv``."
-version,--,"vX.X.X; e.g. 'v0.1.0'","Version of ``technology-data`` repository to use."
+version,--,"vX.X.X; e.g. 'v0.5.0'","Version of ``technology-data`` repository to use."
 rooftop_share,--,float,"Share of rooftop PV when calculating capital cost of solar (joint rooftop and utility-scale PV)."
 fill_values,--,float,"Default values if not specified for a technology in ``resources/costs.csv``."
 capital_cost,EUR/MW,"Keys should be in the 'technology' column of ``resources/costs.csv``. Values can be any float.","For the given technologies, assumptions about their capital investment costs are set to the corresponding value. Optional; overwrites cost assumptions from ``resources/costs.csv``."

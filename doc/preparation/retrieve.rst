@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2019-2022 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: 2019-2023 The PyPSA-Eur Authors
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -77,3 +77,55 @@ This rule, as a substitute for :mod:`build_natura_raster`, downloads an already 
 
 .. seealso::
     For details see :mod:`build_natura_raster`.
+
+
+Rule ``retrieve_load_data``
+---------------------------
+
+This rule downloads hourly electric load data for each country from the `OPSD platform <data.open-power-system-data.org/time_series/2019-06-05/time_series_60min_singleindex.csv>`_.
+
+**Relevant Settings**
+
+None.
+
+**Outputs**
+
+- ``data/load_raw.csv``
+
+
+Rule ``retrieve_cost_data``
+---------------------------
+
+This rule downloads techno-economic assumptions from the `technology-data repository <https://github.com/pypsa/technology-data>`_.
+
+**Relevant Settings**
+
+.. code:: yaml
+
+    enable:
+        retrieve_cost_data:
+
+    costs:
+        year:
+        version:
+
+.. seealso::
+    Documentation of the configuration file ``config.yaml`` at
+    :ref:`costs_cf`
+
+**Outputs**
+
+- ``resources/costs.csv``
+
+Rule ``retrieve_ship_raster``
+-----------------------------
+
+This rule downloads data on global shipping traffic density from the `World Bank Data Catalogue <https://datacatalog.worldbank.org/search/dataset/0037580/Global-Shipping-Traffic-Density>`_.
+
+**Relevant Settings**
+
+None.
+
+**Outputs**
+
+- ``data/shipdensity_global.zip``

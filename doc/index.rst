@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2019-2022 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: 2019-2023 The PyPSA-Eur Authors
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -116,7 +116,6 @@ Documentation
 * :doc:`release_notes`
 * :doc:`limitations`
 * :doc:`contributing`
-* :doc:`cloudcomputing`
 
 .. toctree::
    :hidden:
@@ -126,7 +125,6 @@ Documentation
    release_notes
    limitations
    contributing
-   cloudcomputing
 
 Warnings
 ========
@@ -150,8 +148,10 @@ in addition to reading this documentation.
 
 - Documentation of `PyPSA <https://pypsa.readthedocs.io>`__, the package for
   simulating and optimising modern power systems which PyPSA-Eur uses under the hood.
-- Course on `Energy System Modelling <https://nworbmot.org/courses/esm-2019/>`_,
-  Karlsruhe Institute of Technology (KIT), `Dr. Tom Brown <https://nworbmot.org>`_
+- Course on `Energy Systems <https://nworbmot.org/courses/es-22/>`_,
+  Technical University of Berlin (TUB), `Prof. Dr. Tom Brown <https://nworbmot.org>`_
+- Course on `Data Science for Energy System Modelling <https://fneum.github.io/data-science-for-esm/intro.html>`_,
+  Technical University of Berlin (TUB), `Dr. Fabian Neumann <https://neumann.fyi>`_
 
 Citing PyPSA-Eur
 ================

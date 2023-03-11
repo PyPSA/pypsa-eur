@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2017-2022 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
@@ -355,7 +355,13 @@ rule retrieve_ship_raster:
 rule build_ship_raster:
     input:
         ship_density="data/shipdensity_global.zip",
-        cutouts=expand("cutouts/" + CDIR + "{cutouts}.nc", **config["atlite"]),
+        cutouts=expand(
+            "cutouts/" + CDIR + "{cutout}.nc",
+            cutout=[
+                config["renewable"][k]["cutout"]
+                for k in config["electricity"]["renewable_carriers"]
+            ],
+        ),
     output:
         "resources/" + RDIR + "shipdensity_raster.nc",
     log:
@@ -387,7 +393,7 @@ rule build_renewable_profiles:
         ),
         gebco=lambda w: (
             "data/bundle/GEBCO_2014_2D.nc"
-            if "max_depth" in config["renewable"][w.technology].keys()
+            if config["renewable"][w.technology].get("max_depth")
             else []
         ),
         ship_density=lambda w: (
@@ -425,9 +431,7 @@ rule build_hydro_profile:
     input:
         country_shapes="resources/" + RDIR + "country_shapes.geojson",
         eia_hydro_generation="data/eia_hydro_annual_generation.csv",
-        cutout=f"cutouts/" + CDIR + config["renewable"]["hydro"]["cutout"] + ".nc"
-        if "hydro" in config["renewable"]
-        else [],
+        cutout=f"cutouts/" + CDIR + config["renewable"]["hydro"]["cutout"] + ".nc",
     output:
         "resources/" + RDIR + "profile_hydro.nc",
     log:
@@ -442,7 +446,7 @@ rule add_electricity:
     input:
         **{
             f"profile_{tech}": "resources/" + RDIR + f"profile_{tech}.nc"
-            for tech in config["renewable"]
+            for tech in config["electricity"]["renewable_carriers"]
         },
         **{
             f"conventional_{carrier}_{attr}": fn

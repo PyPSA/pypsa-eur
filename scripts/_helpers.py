@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2022 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
+import urllib
 from pathlib import Path
 
 import pandas as pd
+from tqdm import tqdm
 
 REGION_COLS = ["geometry", "name", "x", "y", "country"]
 
@@ -251,16 +253,14 @@ def aggregate_costs(n, flatten=False, opts=None, existing_only=False):
 
 
 def progress_retrieve(url, file):
-    import urllib
+    with tqdm(unit="B", unit_scale=True, unit_divisor=1024, miniters=1) as t:
 
-    from progressbar import ProgressBar
+        def update_to(b=1, bsize=1, tsize=None):
+            if tsize is not None:
+                t.total = tsize
+            t.update(b * bsize - t.n)
 
-    pbar = ProgressBar(0, 100)
-
-    def dlProgress(count, blockSize, totalSize):
-        pbar.update(int(count * blockSize * 100 / totalSize))
-
-    urllib.request.urlretrieve(url, file, reporthook=dlProgress)
+        urllib.request.urlretrieve(url, file, reporthook=update_to)
 
 
 def get_aggregation_strategies(aggregation_strategies):

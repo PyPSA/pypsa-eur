@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2022 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
@@ -80,7 +80,6 @@ import pandas as pd
 import pycountry as pyc
 from _helpers import configure_logging
 from shapely.geometry import MultiPolygon, Polygon
-from shapely.ops import unary_union
 
 logger = logging.getLogger(__name__)
 
@@ -158,8 +157,7 @@ def country_cover(country_shapes, eez_shapes=None):
     shapes = country_shapes
     if eez_shapes is not None:
         shapes = pd.concat([shapes, eez_shapes])
-
-    europe_shape = unary_union(shapes)
+    europe_shape = shapes.unary_union
     if isinstance(europe_shape, MultiPolygon):
         europe_shape = max(europe_shape, key=attrgetter("area"))
     return Polygon(shell=europe_shape.exterior)
@@ -237,9 +235,11 @@ def nuts3(country_shapes, nuts3, nuts3pop, nuts3gdp, ch_cantons, ch_popgdp):
     manual = gpd.GeoDataFrame(
         [["BA1", "BA", 3871.0], ["RS1", "RS", 7210.0], ["AL1", "AL", 2893.0]],
         columns=["NUTS_ID", "country", "pop"],
-    ).set_index("NUTS_ID")
+    )
     manual["geometry"] = manual["country"].map(country_shapes)
     manual = manual.dropna()
+    manual = manual.set_index("NUTS_ID")
+    manual = manual.set_crs("ETRS89")
 
     df = pd.concat([df, manual], sort=False)
 

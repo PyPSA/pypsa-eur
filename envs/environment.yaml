@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2017-2022 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
@@ -18,7 +18,7 @@ dependencies:
 
   # Dependencies of the workflow itself
 - xlrd
-- openpyxl
+- openpyxl!=3.1.1
 - pycountry
 - seaborn
 - snakemake-minimal
@@ -28,14 +28,13 @@ dependencies:
 - lxml
 - powerplantmatching>=0.5.5
 - numpy<1.24
-- pandas
+- pandas>=1.4
 - geopandas>=0.11.0
 - xarray
 - netcdf4
 - networkx
 - scipy
-- shapely<2.0
-- progressbar2
+- shapely>=2.0
 - pyomo
 - matplotlib<3.6
 - proj

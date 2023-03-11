@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2022 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
@@ -402,12 +402,10 @@ def attach_conventional_generators(
     )
 
     for carrier in conventional_config:
-
         # Generators with technology affected
         idx = n.generators.query("carrier == @carrier").index
 
         for attr in list(set(conventional_config[carrier]) & set(n.generators)):
-
             values = conventional_config[carrier][attr]
 
             if f"conventional_{carrier}_{attr}" in conventional_inputs:
@@ -506,7 +504,7 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **con
         e_target = hydro_stats["E_store[TWh]"].clip(lower=0.2) * 1e6
         e_installed = hydro.eval("p_nom * max_hours").groupby(hydro.country).sum()
         e_missing = e_target - e_installed
-        missing_mh_i = hydro.query("max_hours == 0").index
+        missing_mh_i = hydro.query("max_hours.isnull()").index
 
         if hydro_max_hours == "energy_capacity_totals_by_country":
             # watch out some p_nom values like IE's are totally underrepresented
@@ -518,6 +516,8 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **con
             max_hours_country = (
                 hydro_stats["E_store[TWh]"] * 1e3 / hydro_stats["p_nom_discharge[GW]"]
             )
+
+        max_hours_country.clip(0, inplace=True)
 
         missing_countries = pd.Index(hydro["country"].unique()).difference(
             max_hours_country.dropna().index
@@ -728,7 +728,7 @@ if __name__ == "__main__":
     ppl = load_powerplants(snakemake.input.powerplants)
 
     if "renewable_carriers" in snakemake.config["electricity"]:
-        renewable_carriers = set(snakemake.config["renewable"])
+        renewable_carriers = set(snakemake.config["electricity"]["renewable_carriers"])
     else:
         logger.warning(
             "Missing key `renewable_carriers` under config entry `electricity`. "
