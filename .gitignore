@@ -18,6 +18,7 @@ gurobi.log
 /notebooks
 /data
 /data/links_p_nom.csv
+!/data/tyndp2020/
 /cutouts
 /dask-worker-space
 
