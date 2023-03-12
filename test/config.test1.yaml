@@ -55,3 +55,10 @@ solving:
   solver:
     name: glpk
     options: "glpk-default"
+
+TYNDP2020:
+  include: false
+  allowed_statuses: ['in_permitting', 'under_construction']  # 'planned_not_yet_permitting', 'under_consideration'
+  # put a TYNDP2020 project_id in here to ignore a specific project
+  # (which may include several investments, e.g. buses and lines!).
+  ignored_projects: []  # e.g. '335' to ignore North Sea Wind Power Hub
