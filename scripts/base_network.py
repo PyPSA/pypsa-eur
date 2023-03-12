@@ -688,16 +688,18 @@ def _adjust_capacities_of_under_construction_branches(n, config):
     return n
 
 
-def _integrate_tyndp_2020(buses,
-                          lines,
-                          links,
-                          new_buses,
-                          new_lines,
-                          new_links,
-                          upg_buses,
-                          upg_lines,
-                          upg_links,
-                          config):
+def _integrate_tyndp_2020(
+    buses,
+    lines,
+    links,
+    new_buses,
+    new_lines,
+    new_links,
+    upg_buses,
+    upg_lines,
+    upg_links,
+    config,
+):
     new_buses = _read_tyndp2020_buses(new_buses)
     new_lines = _read_tyndp2020_lines(new_lines)
     new_links = _read_tyndp2020_links(new_links)
@@ -718,9 +720,9 @@ def _integrate_tyndp_2020(buses,
     upg_links = _filter_assets(upg_links, allowed_statuses, ignored_projects)
 
     # add 'commissioning_year' to existing assets (beginning of UNIX time)
-    buses.loc[:, 'commissioning_year'] = pd.to_datetime(0)
-    lines.loc[:, 'commissioning_year'] = pd.to_datetime(0)
-    links.loc[:, 'commissioning_year'] = pd.to_datetime(0)
+    buses.loc[:, "commissioning_year"] = pd.to_datetime(0)
+    lines.loc[:, "commissioning_year"] = pd.to_datetime(0)
+    links.loc[:, "commissioning_year"] = pd.to_datetime(0)
 
     # append new assets
     buses = pd.concat([buses, new_buses])
@@ -734,35 +736,28 @@ def _integrate_tyndp_2020(buses,
 
     # Drop lines or links if their 'bus0' or 'bus1' columns contain
     # buses that were dropped due to their 'tyndp_status'.
-    lines = lines.loc[lines.bus0.isin(buses.index)
-                      & lines.bus1.isin(buses.index)]
-    links = links.loc[links.bus0.isin(buses.index)
-                      & links.bus1.isin(buses.index)]
+    lines = lines.loc[lines.bus0.isin(buses.index) & lines.bus1.isin(buses.index)]
+    links = links.loc[links.bus0.isin(buses.index) & links.bus1.isin(buses.index)]
 
     return buses, lines, links
 
 
 def _read_tyndp2020_buses(tyndp_file):
-    df = pd.read_csv(tyndp_file,
-                     index_col=0)
+    df = pd.read_csv(tyndp_file, index_col=0)
     df.index = df.index.astype(str)
     df.index.name = "bus_id"
     df["carrier"] = df.pop("dc").map({True: "DC", False: "AC"})
-    df["commissioning_year"] = pd.to_datetime(df['commissioning_year'],
-                                              format="%Y")
+    df["commissioning_year"] = pd.to_datetime(df["commissioning_year"], format="%Y")
     df["symbol"] = "substation"
 
     return df
 
 
 def _read_tyndp2020_lines(tyndp_file):
-    df = pd.read_csv(tyndp_file,
-                     index_col=0,
-                     dtype={"bus0": "str", "bus1": "str"})
+    df = pd.read_csv(tyndp_file, index_col=0, dtype={"bus0": "str", "bus1": "str"})
     df.index = df.index.astype(str)
     df.index.name = "line_id"
-    df["commissioning_year"] = pd.to_datetime(df['commissioning_year'],
-                                              format="%Y")
+    df["commissioning_year"] = pd.to_datetime(df["commissioning_year"], format="%Y")
     df["v_nom"] = df["v_nom"].replace(np.nan, 220)
     df["v_nom"] = df["v_nom"].astype(int)
     df["num_parallel"] = 1
@@ -770,27 +765,24 @@ def _read_tyndp2020_lines(tyndp_file):
 
 
 def _read_tyndp2020_links(tyndp_file):
-    df = pd.read_csv(tyndp_file,
-                     index_col=0,
-                     dtype={"bus0": "str", "bus1": "str"})
+    df = pd.read_csv(tyndp_file, index_col=0, dtype={"bus0": "str", "bus1": "str"})
     df.index = df.index.astype(str)
     df.index.name = "link_id"
     df["carrier"] = "DC"
-    df["commissioning_year"] = pd.to_datetime(df['commissioning_year'],
-                                              format="%Y")
+    df["commissioning_year"] = pd.to_datetime(df["commissioning_year"], format="%Y")
     df = df.drop("v_nom", axis=1)
     return df
 
 
 def _filter_assets(df, allowed_statuses, ignore_projects):
-    df = df.loc[df['tyndp_status'].isin(allowed_statuses)]
+    df = df.loc[df["tyndp_status"].isin(allowed_statuses)]
     if ignore_projects:
-        df['project_id'] = _get_tyndp_project_id(df)
-        df = df.loc[~df.loc[:, 'project_id'].isin(ignore_projects)]
-        df = df.drop('project_id', axis=1)
+        df["project_id"] = _get_tyndp_project_id(df)
+        df = df.loc[~df.loc[:, "project_id"].isin(ignore_projects)]
+        df = df.drop("project_id", axis=1)
 
-    df['under_construction'] = True
-    return df.drop('tyndp_status', axis=1)
+    df["under_construction"] = True
+    return df.drop("tyndp_status", axis=1)
 
 
 def _add_upg_assets(gridx_assets, tyndp_upg):
@@ -798,8 +790,10 @@ def _add_upg_assets(gridx_assets, tyndp_upg):
     missing_in_gridx = tyndp_upg.index.difference(gridx_assets.index, sort=False)
 
     if not missing_in_gridx.empty:
-        msg = (f"Updating {missing_in_gridx} failed because the assets "
-               "do not exist or were excluded from the model.")
+        msg = (
+            f"Updating {missing_in_gridx} failed because the assets "
+            "do not exist or were excluded from the model."
+        )
         logger.warning(msg)
 
     gridx_assets.loc[intersected_idx] = tyndp_upg.loc[intersected_idx]
@@ -838,16 +832,18 @@ def base_network(
     transformers = _load_transformers_from_eg(buses, eg_transformers)
 
     if config["TYNDP2020"].get("include"):
-        buses, lines, links = _integrate_tyndp_2020(buses,
-                                                    lines,
-                                                    links,
-                                                    tyndp2020_new_buses,
-                                                    tyndp2020_new_lines,
-                                                    tyndp2020_new_links,
-                                                    tyndp2020_upg_buses,
-                                                    tyndp2020_upg_lines,
-                                                    tyndp2020_upg_links,
-                                                    config)
+        buses, lines, links = _integrate_tyndp_2020(
+            buses,
+            lines,
+            links,
+            tyndp2020_new_buses,
+            tyndp2020_new_lines,
+            tyndp2020_new_links,
+            tyndp2020_upg_buses,
+            tyndp2020_upg_lines,
+            tyndp2020_upg_links,
+            config,
+        )
 
     lines = _set_electrical_parameters_lines(lines, config)
     transformers = _set_electrical_parameters_transformers(transformers, config)

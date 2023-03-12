@@ -159,12 +159,12 @@ rule base_network:
         country_shapes="resources/" + RDIR + "country_shapes.geojson",
         offshore_shapes="resources/" + RDIR + "offshore_shapes.geojson",
         europe_shape="resources/" + RDIR + "europe_shape.geojson",
-        tyndp2020_new_buses='data/tyndp2020/new_buses.csv',
-        tyndp2020_new_lines='data/tyndp2020/new_lines.csv',
-        tyndp2020_new_links='data/tyndp2020/new_links.csv',
-        tyndp2020_upg_buses='data/tyndp2020/upgraded_buses.csv',
-        tyndp2020_upg_lines='data/tyndp2020/upgraded_lines.csv',
-        tyndp2020_upg_links='data/tyndp2020/upgraded_links.csv',
+        tyndp2020_new_buses="data/tyndp2020/new_buses.csv",
+        tyndp2020_new_lines="data/tyndp2020/new_lines.csv",
+        tyndp2020_new_links="data/tyndp2020/new_links.csv",
+        tyndp2020_upg_buses="data/tyndp2020/upgraded_buses.csv",
+        tyndp2020_upg_lines="data/tyndp2020/upgraded_lines.csv",
+        tyndp2020_upg_links="data/tyndp2020/upgraded_links.csv",
     output:
         "networks/" + RDIR + "base.nc",
     log:
