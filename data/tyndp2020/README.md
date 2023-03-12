@@ -6,4 +6,6 @@ This directory contains the TYNDP2020 which was extended and modified such that 
   - 'Upgraded' assets: Adopted bus coordinates and IDs from gridextract, took larger values of significant fields (e.g. voltage) to ensure that nothing is downgraded.
 - Convert data to gridextract format 
 
-For more details on the extension, modification and merging see the [external project](https://github.com/grecht/tyndp_to_pypsa) where this was implemented.
+For more details on the extension, modification and merging see the external project [tyndp_to_pypsa](https://github.com/grecht/tyndp_to_pypsa) where this was implemented.
+If the integration into PyPSA-Eur fails this could be due to changes in the gridextract or the file ´data/links_tyndp.csv´.
+In that case update this data in  [tyndp_to_pypsa](https://github.com/grecht/tyndp_to_pypsa) and follow the instructions there to create the files in this directory again. 

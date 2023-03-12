@@ -15,6 +15,7 @@ Relevant Settings
 
 .. code:: yaml
 
+
     snapshots:
 
     countries:
@@ -95,6 +96,13 @@ def _get_oid(df):
 def _get_country(df):
     if "tags" in df.columns:
         return df.tags.str.extract('"country"=>"([A-Z]{2})"', expand=False)
+    else:
+        return pd.Series(np.nan, df.index)
+
+
+def _get_tyndp_project_id(df):
+    if "tags" in df.columns:
+        return df.tags.str.extract('"tyndp2020_proj_id"=>"(\d+)"', expand=False)
     else:
         return pd.Series(np.nan, df.index)
 
@@ -302,8 +310,7 @@ def _add_links_from_tyndp(buses, links, links_tyndp, europe_shape):
             + links_tyndp["Name"]
             + '", '
             + '"ref"=>"'
-            + links_tyndp["Ref"
-                          ]
+            + links_tyndp["Ref"]
             + '", '
             + '"status"=>"'
             + links_tyndp["status"]
@@ -700,14 +707,15 @@ def _integrate_tyndp_2020(buses,
     upg_links = _read_tyndp2020_links(upg_links)
 
     allowed_statuses = config["TYNDP2020"].get("allowed_statuses")
+    ignored_projects = config["TYNDP2020"].get("ignored_projects")
 
-    new_buses = _handle_status(new_buses, allowed_statuses)
-    new_lines = _handle_status(new_lines, allowed_statuses)
-    new_links = _handle_status(new_links, allowed_statuses)
+    new_buses = _filter_assets(new_buses, allowed_statuses, ignored_projects)
+    new_lines = _filter_assets(new_lines, allowed_statuses, ignored_projects)
+    new_links = _filter_assets(new_links, allowed_statuses, ignored_projects)
 
-    upg_buses = _handle_status(upg_buses, allowed_statuses)
-    upg_lines = _handle_status(upg_lines, allowed_statuses)
-    upg_links = _handle_status(upg_links, allowed_statuses)
+    upg_buses = _filter_assets(upg_buses, allowed_statuses, ignored_projects)
+    upg_lines = _filter_assets(upg_lines, allowed_statuses, ignored_projects)
+    upg_links = _filter_assets(upg_links, allowed_statuses, ignored_projects)
 
     # add 'commissioning_year' to existing assets (beginning of UNIX time)
     buses.loc[:, 'commissioning_year'] = pd.to_datetime(0)
@@ -720,9 +728,9 @@ def _integrate_tyndp_2020(buses,
     links = pd.concat([links, new_links])
 
     # upgrade existing assets
-    buses.loc[upg_buses.index, :] = upg_buses
-    lines.loc[upg_lines.index, :] = upg_lines
-    links.loc[upg_links.index, :] = upg_links
+    buses = _add_upg_assets(buses, upg_buses)
+    lines = _add_upg_assets(lines, upg_lines)
+    links = _add_upg_assets(links, upg_links)
 
     # Drop lines or links if their 'bus0' or 'bus1' columns contain
     # buses that were dropped due to their 'tyndp_status'.
@@ -774,11 +782,28 @@ def _read_tyndp2020_links(tyndp_file):
     return df
 
 
-def _handle_status(df, allowed_statuses):
+def _filter_assets(df, allowed_statuses, ignore_projects):
     df = df.loc[df['tyndp_status'].isin(allowed_statuses)]
-    # TODO: maybe set this depending on whether date has passed?
+    if ignore_projects:
+        df['project_id'] = _get_tyndp_project_id(df)
+        df = df.loc[~df.loc[:, 'project_id'].isin(ignore_projects)]
+        df = df.drop('project_id', axis=1)
+
     df['under_construction'] = True
     return df.drop('tyndp_status', axis=1)
+
+
+def _add_upg_assets(gridx_assets, tyndp_upg):
+    intersected_idx = tyndp_upg.index.intersection(gridx_assets.index)
+    missing_in_gridx = tyndp_upg.index.difference(gridx_assets.index, sort=False)
+
+    if not missing_in_gridx.empty:
+        msg = (f"Updating {missing_in_gridx} failed because the assets "
+               "do not exist or were excluded from the model.")
+        logger.warning(msg)
+
+    gridx_assets.loc[intersected_idx] = tyndp_upg.loc[intersected_idx]
+    return gridx_assets
 
 
 def base_network(
