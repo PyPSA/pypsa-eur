@@ -141,5 +141,3 @@ Rule ``retrieve_sector_databundle``
 In addition to the databundle required for electricity-only studies,
 another databundle is required for modelling sector-coupled systems.
 The size of this data bundle is around 640 MB.
-
-

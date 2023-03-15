@@ -55,4 +55,3 @@ set in the ``config.yaml`` (cf. Section  :ref:`costs_cf`  in
 .. literalinclude:: ../Snakefile
    :start-at: COSTS
    :end-at: COSTS
-

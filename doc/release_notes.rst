@@ -16,7 +16,7 @@ Upcoming Release
 PyPSA-Eur 0.8.0 (TBA)
 =====================
 
-.. note:: 
+.. note::
   This is the first release of PyPSA-Eur which incorporates its sector-coupled extension PyPSA-Eur-Sec.
 
 * The solver configurations in ``config.default.yaml`` are now modularized. To

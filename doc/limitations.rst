@@ -78,4 +78,3 @@ improving the approximations.
 
 - **Demand sufficiency:** Further measures of demand reduction may be
   possible beyond the assumptions made here.
-

@@ -107,7 +107,7 @@ currently:
 
 .. csv-table::
    :header-rows: 1
-   :widths: 10,20,10,10 
+   :widths: 10,20,10,10
    :file: configtables/opts.csv
 
 .. _sector_opts:
@@ -122,7 +122,7 @@ The ``{sector_opts}`` wildcard is only used for sector-coupling studies.
 
 .. csv-table::
    :header-rows: 1
-   :widths: 10,20,10,10 
+   :widths: 10,20,10,10
    :file: configtables/sector-opts.csv
 
 .. _scope:

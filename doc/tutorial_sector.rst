@@ -274,7 +274,7 @@ successfully.
         29 -> 47
         8 -> 49
         3 -> 49
-    } 
+    }
 
 |
 
@@ -284,7 +284,7 @@ Myopic Foresight Scenarios
 Configuration
 -------------
 
-In the myopic foresight mode, 
+In the myopic foresight mode,
 
 .. literalinclude:: ../test/config.myopic.yaml
    :language: yaml
@@ -497,7 +497,7 @@ implemented in the workflow:
         43 -> 46
         3 -> 47
         8 -> 47
-    }  
+    }
 
 |
 
