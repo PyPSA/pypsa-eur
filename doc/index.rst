@@ -3,8 +3,9 @@
 
   SPDX-License-Identifier: CC-BY-4.0
 
+##################################################################################
 PyPSA-Eur: A Sector-Coupled Open Optimisation Model of the European Energy System
-=================================================================================
+##################################################################################
 
 .. image:: https://img.shields.io/github/v/release/pypsa/pypsa-eur?include_prereleases
     :alt: GitHub release (latest by date including pre-releases)
@@ -22,7 +23,7 @@ PyPSA-Eur: A Sector-Coupled Open Optimisation Model of the European Energy Syste
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3520874.svg
     :target: https://doi.org/10.5281/zenodo.3520874
 
-.. image:: https://img.shields.io/badge/snakemake-≥5.0.0-brightgreen.svg?style=flat
+.. image:: https://img.shields.io/badge/snakemake-≥7.19-brightgreen.svg?style=flat
     :target: https://snakemake.readthedocs.io
     :alt: Snakemake
 
@@ -30,22 +31,19 @@ PyPSA-Eur: A Sector-Coupled Open Optimisation Model of the European Energy Syste
     :target: https://api.reuse.software/info/github.com/pypsa/pypsa-eur
     :alt: REUSE
 
+|
 
 PyPSA-Eur is an open model dataset of the European energy system at the
 transmission network level that covers the full ENTSO-E area.
 
-It contains alternating current lines at and above 220 kV voltage level and all
-high voltage direct current lines, substations, an open database of conventional
-power plants, time series for electrical demand and variable renewable generator
-availability, and geographic potentials for the expansion of wind and solar
-power.
+Electricity System
+==================
 
-A sector-coupled extension (previously known as PyPSA-Eur-Sec) adds demand and
-supply for the following sectors: transport, space and water heating, biomass,
-energy consumption in the agriculture, industry and industrial feedstocks,
-carbon management, carbon capture and usage/sequestration. This completes the
-energy system and includes all greenhouse gas emitters except waste management,
-agriculture, forestry and land use.
+The electricity system representation contains alternating current lines at
+and above 220 kV voltage level and all high voltage direct current lines,
+substations, an open database of conventional power plants, time series for
+electrical demand and variable renewable generator availability, geographic
+potentials for the expansion of wind and solar power.
 
 The model is suitable both for operational studies and generation and
 transmission expansion planning studies. The continental scope and highly
@@ -56,15 +54,59 @@ effects for renewable power generation and their varying resource availability.
     :width: 70%
     :align: center
 
+|
+
+Sector-Coupled Energy System
+============================
+
+A sector-coupled extension (previously known as **PyPSA-Eur-Sec**) adds demand
+and supply for the following sectors: transport, space and water heating,
+biomass, energy consumption in the agriculture, industry and industrial
+feedstocks, carbon management, carbon capture and usage/sequestration. This
+completes the energy system and includes all greenhouse gas emitters except
+waste management, agriculture, forestry and land use. The diagram below gives an
+overview of the sectors and the links between them:
+
+.. image:: ../graphics/multisector_figure.png
+    :width: 70%
+    :align: center
+
+.. note::
+    You can find showcases of the model's capabilities in the Supplementary Materials of the
+    preprint `Benefits of a Hydrogen Network in Europe
+    <https://arxiv.org/abs/2207.05816>`_, the Supplementary Materials of the `paper in Joule with a
+    description of the industry sector
+    <https://arxiv.org/abs/2109.09563>`_, or in `a 2021 presentation
+    at EMP-E <https://nworbmot.org/energy/brown-empe.pdf>`_.
+    The sector-coupled extension of PyPSA-Eur was
+    initially described in the paper `Synergies of sector coupling and transmission
+    reinforcement in a cost-optimised, highly renewable European energy system
+    <https://arxiv.org/abs/1801.05290>`_ (2018) but it differs by being based on the
+    higher resolution electricity transmission model `PyPSA-Eur
+    <https://github.com/PyPSA/pypsa-eur>`_ rather than a one-node-per-country model,
+    and by including biomass, industry, industrial feedstocks, aviation, shipping,
+    better carbon management, carbon capture and usage/sequestration, and gas
+    networks.
+
+About
+=====
+
+PyPSA-Eur is designed to be imported into the open energy system modelling
+framework `PyPSA <https://www.pypsa.org>`_ for which `documentation
+<https://pypsa.readthedocs.io>`_ is available as well.
+
 The restriction to freely available and open data encourages the open exchange
 of model data developments and eases the comparison of model results. It
 provides a full, automated software pipeline to assemble the load-flow-ready
 model from the original datasets, which enables easy replacement and improvement
 of the individual parts.
 
-PyPSA-Eur is designed to be imported into the open toolbox `PyPSA
-<https://www.pypsa.org>`_ for which `documentation <https://pypsa.org/doc>`_ is
-available as well.
+.. warning::
+    PyPSA-Eur is under active development and has several
+    :doc:`limitations` which
+    you should understand before using the model. The Github repository
+    `issues <https://github.com/PyPSA/pypsa-eur/issues>`_ collect known
+    topics we are working on. Please feel free to help or make suggestions.
 
 This project is currently maintained by the `Department of Digital
 Transformation in Energy Systems <https:/www.ensys.tu-berlin.de>`_ at the
@@ -80,186 +122,38 @@ Ministry for Education and Research (BMBF) <https://www.bmbf.de/en/index.html>`_
 as part of the `Stromnetze Research Initiative
 <http://forschung-stromnetze.info/projekte/grundlagen-und-konzepte-fuer-effiziente-dezentrale-stromnetze/>`_.
 
-**WARNING**: PyPSA-Eur is under active development and has several
-`limitations <https://pypsa-eur.readthedocs.io/en/latest/limitations.html>`_ which
-you should understand before using the model. The github repository
-`issues <https://github.com/PyPSA/pypsa-eur/issues>`_ collect known
-topics we are working on (please feel free to help or make suggestions).
 
-.. note::
-    You can find showcases of the model's capabilities in the Supplementary Materials of the
-    preprint `Benefits of a Hydrogen Network in Europe
-    <https://arxiv.org/abs/2207.05816>`_, the Supplementary Materials of the `paper in Joule with a
-    description of the industry sector
-    <https://arxiv.org/abs/2109.09563>`_, or in `a 2021 presentation
-    at EMP-E <https://nworbmot.org/energy/brown-empe.pdf>`_.
-
-
-This diagram gives an overview of the sectors and the links between
-them:
-
-.. image:: ../graphics/multisector_figure.png
-    :width: 70%
-    :align: center
-
-The sector-coupled extension of PyPSA-Eur (previously PyPSA-Eur-Sec) was
-initially described in the paper `Synergies of sector coupling and transmission
-reinforcement in a cost-optimised, highly renewable European energy system
-<https://arxiv.org/abs/1801.05290>`_ (2018) but it differs by being based on the
-higher resolution electricity transmission model `PyPSA-Eur
-<https://github.com/PyPSA/pypsa-eur>`_ rather than a one-node-per-country model,
-and by including biomass, industry, industrial feedstocks, aviation, shipping,
-better carbon management, carbon capture and usage/sequestration, and gas
-networks.
-
-
-
-Workflow Outline
-================
+Workflow
+========
 
 .. image:: ../graphics/workflow.png
+    :class: full-width
+    :align: center
 
 .. note::
     The graph above was generated using
     ``snakemake --rulegraph -F | sed -n "/digraph/,/}/p" | dot -Tpng -o workflow.png``
 
 
-Documentation
-=============
-
-**Getting Started**
-
-* :doc:`introduction`
-* :doc:`installation`
-* :doc:`tutorial`
-
-.. toctree::
-   :hidden:
-   :maxdepth: 1
-   :caption: Getting Started
-
-   introduction
-   installation
-   tutorial
-
-**Configuration**
-
-* :doc:`wildcards`
-* :doc:`configuration`
-* :doc:`costs`
-
-.. toctree::
-   :hidden:
-   :maxdepth: 1
-   :caption: Configuration
-
-   wildcards
-   configuration
-   costs
-
-**Rules Overview**
-
-* :doc:`retrieve`
-* :doc:`preparation`
-* :doc:`simplification`
-* :doc:`sector`
-* :doc:`solving`
-* :doc:`plotting`
-
-.. toctree::
-   :hidden:
-   :maxdepth: 1
-   :caption: Rules Overview
-
-   retrieve
-   preparation
-   simplification
-   sector
-   solving
-   plotting
-
-**Foresight options**
-
-* :doc:`overnight`
-* :doc:`myopic`
-* :doc:`perfect`
-
-.. toctree::
-   :hidden:
-   :maxdepth: 1
-   :caption: Foresight options
-
-   overnight
-   myopic
-   perfect
-
-
-**Implementation details**
-
-* :doc:`spatial_resolution`
-* :doc:`supply_demand`
-* :doc:`technology_assumptions`
-
-.. toctree::
-   :hidden:
-   :maxdepth: 1
-   :caption: Implementation details
-
-   spatial_resolution
-   supply_demand
-   technology_assumptions
-
-**References**
-
-* :doc:`release_notes`
-* :doc:`limitations`
-* :doc:`contributing`
-
-.. toctree::
-   :hidden:
-   :maxdepth: 1
-   :caption: References
-
-   release_notes
-   limitations
-   contributing
-
-
-Warnings
-========
-
-Please read the `limitations <https://pypsa-eur.readthedocs.io/en/latest/limitations.html>`_ section of the
-documentation and paper carefully before using the model. We do not
-recommend to use the full resolution network model for simulations. At
-high granularity the assignment of loads and generators to the nearest
-network node may not be a correct assumption, depending on the topology of the underlying distribution grid,
-and local grid
-bottlenecks may cause unrealistic load-shedding or generator
-curtailment. We recommend to cluster the network to a couple of
-hundred nodes to remove these local inconsistencies.
-
 Learning Energy System Modelling
 ================================
 
-If you are (relatively) new to energy system modelling and optimisation
-and plan to use PyPSA-Eur, the following resources are *one way* to get started
-in addition to reading this documentation.
+If you are (relatively) new to energy system modelling and optimisation and plan
+to use PyPSA-Eur, the following resources are one way to get started in addition
+to reading this documentation.
 
 - Documentation of `PyPSA <https://pypsa.readthedocs.io>`__, the package for
-  simulating and optimising modern power systems which PyPSA-Eur uses under the hood.
-- Course on `Energy Systems <https://nworbmot.org/courses/es-22/>`_,
-  Technical University of Berlin (TUB), `Prof. Dr. Tom Brown <https://nworbmot.org>`_
-- Course on `Data Science for Energy System Modelling <https://fneum.github.io/data-science-for-esm/intro.html>`_,
-  Technical University of Berlin (TUB), `Dr. Fabian Neumann <https://neumann.fyi>`_
+  modelling energy systems which PyPSA-Eur uses under the hood.
+- Course on `Energy Systems <https://nworbmot.org/courses/es-22/>`_ given at
+  Technical University of Berlin by `Prof. Dr. Tom Brown <https://nworbmot.org>`_.
+- Course on `Data Science for Energy System Modelling <https://fneum.github.io/data-science-for-esm/intro.html>`_
+  given at Technical University of Berlin by `Dr. Fabian Neumann <https://neumann.fyi>`_.
+
 
 Citing PyPSA-Eur
 ================
 
-If you use PyPSA-Eur for your research, we would appreciate it if you would cite the following paper:
-
-- Jonas Hörsch, Fabian Hofmann, David Schlachtberger, and Tom Brown. `PyPSA-Eur: An open optimisation model of the European transmission system <https://arxiv.org/abs/1806.01613>`_. Energy Strategy Reviews, 22:207-215, 2018. `arXiv:1806.01613 <https://arxiv.org/abs/1806.01613>`_, `doi:10.1016/j.esr.2018.08.012 <https://doi.org/10.1016/j.esr.2018.08.012>`_.
-
-Please use the following BibTeX: ::
+If you use PyPSA-Eur for your research, we would appreciate it if you would cite the following paper: ::
 
     @article{PyPSAEur,
         author = "Jonas Hoersch and Fabian Hofmann and David Schlachtberger and Tom Brown",
@@ -274,11 +168,11 @@ Please use the following BibTeX: ::
     }
 
 
-If you want to cite a specific PyPSA-Eur version, each release of PyPSA-Eur is stored on Zenodo with a release-specific DOI.
-This can be found linked from the overall PyPSA-Eur Zenodo DOI:
+If you want to cite a specific PyPSA-Eur version, each release of PyPSA-Eur is stored on Zenodo with a release-specific DOI:
 
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3520874.svg
    :target: https://doi.org/10.5281/zenodo.3520874
+
 
 Pre-Built Networks as a Dataset
 ===============================
@@ -293,30 +187,59 @@ The included ``.nc`` files are PyPSA network files which can be imported with Py
 .. code:: python
 
     import pypsa
-
     filename = "elec_s_1024_ec.nc"  # example
     n = pypsa.Network(filename)
 
-Licence
-=======
 
-PyPSA-Eur work is released under multiple licenses:
 
-* All original source code is licensed as free software under `MIT <LICENSES/MIT.txt>`_.
-* The documentation is licensed under `CC-BY-4.0 <LICENSES/CC-BY-4.0.txt>`_.
-* Configuration files are mostly licensed under `CC0-1.0 <LICENSES/CC0-1.0.txt>`_.
-* Data files are licensed under `CC-BY-4.0 <LICENSES/CC-BY-4.0.txt>`_.
 
-See the individual files and the `dep5 <.reuse/dep5>`_ file for license details.
 
-Additionally, different licenses and terms of use also apply to the various input data, which are summarised below.
-More details are included in
-`the description of the data bundles on zenodo <https://zenodo.org/record/3517935#.XbGeXvzRZGo>`_.
+.. toctree::
+   :hidden:
+   :maxdepth: 1
+   :caption: Getting Started
 
-.. csv-table::
-   :header-rows: 1
-   :file: configtables/licenses.csv
+   introduction
+   installation
+   tutorial
+   tutorial_sector
 
-* BY: Attribute Source
-* NC: Non-Commercial Use Only
-* SA: Share Alike
+.. toctree::
+   :hidden:
+   :maxdepth: 1
+   :caption: Configuration
+
+   wildcards
+   configuration
+   foresight
+   costs
+
+.. toctree::
+   :hidden:
+   :maxdepth: 1
+   :caption: Rules Overview
+
+   retrieve
+   preparation
+   simplification
+   sector
+   solving
+   plotting
+
+.. toctree::
+   :hidden:
+   :maxdepth: 1
+   :caption: Implementation details for sector-coupled systems
+
+   spatial_resolution
+   supply_demand
+
+.. toctree::
+   :hidden:
+   :maxdepth: 1
+   :caption: References
+
+   release_notes
+   licenses
+   limitations
+   contributing

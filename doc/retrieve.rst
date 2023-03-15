@@ -135,14 +135,11 @@ None.
 Rule ``retrieve_sector_databundle``
 ====================================
 
+.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.5546516.svg
+   :target: https://doi.org/10.5281/zenodo.5546516
 
-Small data files are included directly in the git repository, while
-larger ones are archived in a data bundle on zenodo (`10.5281/zenodo.5824485 <https://doi.org/10.5281/zenodo.5824485>`_).
-The data bundle's size is around 640 MB.
-
-The data licences and sources are given in the following table.
+In addition to the databundle required for electricity-only studies,
+another databundle is required for modelling sector-coupled systems.
+The size of this data bundle is around 640 MB.
 
 
-.. csv-table::
-   :header-rows: 1
-   :file: data.csv

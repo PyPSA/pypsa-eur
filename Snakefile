@@ -67,10 +67,11 @@ if config["foresight"] == "myopic":
 
 rule purge:
     message:
-        "Purging generated resources and results. Downloads are kept."
+        "Purging generated resources, results and docs. Downloads are kept."
     run:
         rmtree("resources/", ignore_errors=True)
         rmtree("results/", ignore_errors=True)
+        rmtree("doc/_build", ignore_errors=True)
 
 
 rule dag:

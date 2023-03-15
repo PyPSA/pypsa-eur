@@ -10,43 +10,6 @@ iteratively optimize while updating line reactances.
 This script is used for optimizing the electrical network as well as the
 sector coupled network.
 
-Relevant Settings
------------------
-
-.. code:: yaml
-
-    solving:
-        options:
-            formulation:
-            clip_p_max_pu:
-            load_shedding:
-            noisy_costs:
-            nhours:
-            min_iterations:
-            max_iterations:
-            skip_iterations:
-            track_iterations:
-        solver:
-            name:
-            options:
-
-.. seealso::
-    Documentation of the configuration file ``config.yaml`` at
-    :ref:`electricity_cf`, :ref:`solving_cf`, :ref:`plotting_cf`
-
-Inputs
-------
-
-- ``networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc``: confer :ref:`prepare`
-
-Outputs
--------
-
-- ``results/networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc``: Solved PyPSA network including optimisation results
-
-    .. image:: img/results.png
-        :scale: 40 %
-
 Description
 -----------
 
@@ -55,31 +18,14 @@ linear optimal power flow (plus investment planning
 is provided in the
 `documentation of PyPSA <https://pypsa.readthedocs.io/en/latest/optimal_power_flow.html#linear-optimal-power-flow>`_.
 
-The optimization is based on the ``pyomo=False`` setting in the :func:`network.lopf` and  :func:`pypsa.linopf.ilopf` function.
-Additionally, some extra constraints specified in :mod:`prepare_network` are added.
+The optimization is based on the :func:`network.optimize` function.
+Additionally, some extra constraints specified in :mod:`solve_network` are added.
 
-Solving the network in multiple iterations is motivated through the dependence of transmission line capacities and impedances.
-As lines are expanded their electrical parameters change, which renders the optimisation bilinear even if the power flow
-equations are linearized.
-To retain the computational advantage of continuous linear programming, a sequential linear programming technique
-is used, where in between iterations the line impedances are updated.
-Details (and errors made through this heuristic) are discussed in the paper
+.. note::
 
-- Fabian Neumann and Tom Brown. `Heuristics for Transmission Expansion Planning in Low-Carbon Energy System Models <https://arxiv.org/abs/1907.10548>`_), *16th International Conference on the European Energy Market*, 2019. `arXiv:1907.10548 <https://arxiv.org/abs/1907.10548>`_.
-
-.. warning::
-
-    Capital costs of existing network components are not included in the objective function,
-    since for the optimisation problem they are just a constant term (no influence on optimal result).
-
-    Therefore, these capital costs are not included in ``network.objective``!
-    If you want to calculate the full total annual system costs add these to the objective value.
-
-.. tip::
-
-    The rule :mod:`solve_all_networks` runs
-    for all ``scenario`` s in the configuration file
-    the rule :mod:`solve_network`.
+    The rules ``solve_elec_networks`` and ``solve_sector_networks`` run
+    the workflow for all scenarios in the configuration file (``scenario:``)
+    based on the rule :mod:`solve_network`.
 """
 import logging
 import re

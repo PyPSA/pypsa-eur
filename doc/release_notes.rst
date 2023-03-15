@@ -10,7 +10,21 @@ Release Notes
 Upcoming Release
 ================
 
-* The solver configuration in `config.default.yaml` are now modularized. To change the set of solver options, change to value in `solving`: `solver`: `options` to one of the keys `solving`: `solver_options`.
+* new feature or bugfix
+
+
+PyPSA-Eur 0.8.0 (TBA)
+=====================
+
+.. note:: 
+  This is the first release of PyPSA-Eur which incorporates its sector-coupled extension PyPSA-Eur-Sec.
+
+* The solver configurations in ``config.default.yaml`` are now modularized. To
+  change the set of solver options, change to value in ``solving: solver:
+  options:`` to one of the keys in ``solving: solver_options:``.
+
+* The ``Snakefile`` has been modularised. Rules are now organised in the
+  ``rules`` directory.
 
 PyPSA-Eur Releases (pre-merge)
 ==============================
@@ -445,7 +459,7 @@ PyPSA-Eur 0.3.0 (7th December 2020)
 
 **New Features**
 
-Using the ``{opts}`` wildcard for scenarios:
+Using the ``{opts}`` wildcard for scenario:
 
 * An option is introduced which adds constraints such that each country or node produces on average a minimal share of its total consumption itself.
   For example ``EQ0.5c`` set in the ``{opts}`` wildcard requires each country to produce on average at least 50% of its consumption. Additionally,
@@ -1186,7 +1200,7 @@ Release Process
 
 * Make a `GitHub release <https://github.com/PyPSA/pypsa-eur-sec/releases>`_, which automatically triggers archiving to the `zenodo code repository <https://doi.org/10.5281/zenodo.3520874>`_ with `MIT license <https://opensource.org/licenses/MIT>`_.
 
-* Create pre-built networks for ``config.default.yaml`` by running ``snakemake -call extra_components_all_networks``.
+* Create pre-built networks for ``config.default.yaml`` by running ``snakemake -call extra_components_networks``.
 
 * Upload pre-built networks to `zenodo data repository <https://doi.org/10.5281/zenodo.3601881>`_ with `CC BY 4.0 <https://creativecommons.org/licenses/by/4.0/>`_ license.
 

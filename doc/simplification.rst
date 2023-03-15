@@ -6,7 +6,7 @@
   SPDX-License-Identifier: CC-BY-4.0
 
 ##########################################
-Simplifying Networks
+Simplifying Electricity Networks
 ##########################################
 
 The simplification ``snakemake`` rules prepare **approximations** of the full model, for which it is computationally viable to co-optimize generation, storage and transmission capacities.

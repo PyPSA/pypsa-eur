@@ -81,13 +81,13 @@ enable:
 # this is over-ridden if CO2Lx is set in sector_opts
 # this is also over-ridden if cb is set in sector_opts
 co2_budget:
-  2020: 0.7011648746
-  2025: 0.5241935484
-  2030: 0.2970430108
-  2035: 0.1500896057
-  2040: 0.0712365591
-  2045: 0.0322580645
-  2050: 0
+  2020: 0.701
+  2025: 0.524
+  2030: 0.297
+  2035: 0.150
+  2040: 0.071
+  2045: 0.032
+  2050: 0.000
 
 electricity:
   voltages: [220., 300., 380.]
@@ -175,7 +175,7 @@ renewable:
     # acceptance issues.
     # correction_factor: 0.93
     corine:
-      # Scholz, Y. (2012). Renewable energy based electricity supply at low costs:
+      # Scholz, Y. (2012). Renewable energy based electricity supply at low costs
       #  development of the REMix model and application for Europe. ( p.42 / p.28)
       grid_codes: [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 31, 32]
       distance: 1000
@@ -236,7 +236,7 @@ renewable:
     # Correction factor determined by comparing uncorrected area-weighted full-load hours to those
     # published in Supplementary Data to
     # Pietzcker, Robert Carl, et al. "Using the sun to decarbonize the power
-    # sector: The economic potential of photovoltaics and concentrating solar
+    # sector -- The economic potential of photovoltaics and concentrating solar
     # power." Applied Energy 135 (2014): 704-720.
     # This correction factor of 0.854337 may be in order if using reanalysis data.
     # for discussion refer to https://github.com/PyPSA/pypsa-eur/pull/304

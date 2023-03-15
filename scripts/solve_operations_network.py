@@ -6,43 +6,6 @@
 """
 Solves linear optimal dispatch in hourly resolution using the capacities of
 previous capacity expansion in rule :mod:`solve_network`.
-
-Relevant Settings
------------------
-
-.. code:: yaml
-
-    solving:
-        tmpdir:
-        options:
-            formulation:
-            clip_p_max_pu:
-            load_shedding:
-            noisy_costs:
-            nhours:
-            min_iterations:
-            max_iterations:
-        solver:
-            name:
-            (solveroptions):
-
-.. seealso::
-    Documentation of the configuration file ``config.yaml`` at
-    :ref:`solving_cf`
-
-Inputs
-------
-
-- ``networks/elec_s{simpl}_{clusters}.nc``: confer :ref:`cluster`
-- ``results/networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc``: confer :ref:`solve`
-
-Outputs
--------
-
-- ``results/networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op.nc``: Solved PyPSA network for optimal dispatch including optimisation results
-
-Description
------------
 """
 
 import logging
@@ -66,7 +29,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "solve_operations_network",
-            configfiles="test/config.test1.yaml",
+            configfiles="test/config.electricity.yaml",
             simpl="",
             opts="",
             clusters="5",

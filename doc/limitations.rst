@@ -14,9 +14,12 @@ The limitations of the dataset are listed below,
 both as a warning to the user and as an encouragement to assist in
 improving the approximations.
 
-This list of limitations is incomplete and will be added to over time.
+.. warning::
 
-See also the `GitHub repository issues <https://github.com/PyPSA/pypsa-eur/issues>`_.
+  This list of limitations is incomplete and will be added to over time.
+
+.. seealso::
+  See also the `GitHub repository issues <https://github.com/PyPSA/pypsa-eur/issues>`_.
 
 - **Electricity transmission network topology:**
   The grid data is based on a map of the ENTSO-E area that is known
@@ -75,3 +78,4 @@ See also the `GitHub repository issues <https://github.com/PyPSA/pypsa-eur/issue
 
 - **Demand sufficiency:** Further measures of demand reduction may be
   possible beyond the assumptions made here.
+

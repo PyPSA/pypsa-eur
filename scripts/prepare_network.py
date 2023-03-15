@@ -52,7 +52,7 @@ Description
 -----------
 
 .. tip::
-    The rule :mod:`prepare_all_networks` runs
+    The rule :mod:`prepare_elec_networks` runs
     for all ``scenario`` s in the configuration file
     the rule :mod:`prepare_network`.
 """

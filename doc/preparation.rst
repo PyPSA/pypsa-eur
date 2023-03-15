@@ -4,7 +4,7 @@
   SPDX-License-Identifier: CC-BY-4.0
 
 ##########################################
-Preparing Networks
+Building Electricity Networks
 ##########################################
 
 The preparation process of the PyPSA-Eur energy system model consists of a group of ``snakemake``

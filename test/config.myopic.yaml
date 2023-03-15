@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
+tutorial: true
 
 run:
   name: "test-sector-myopic"
@@ -52,6 +53,12 @@ renewable:
     max_depth: false
   solar:
     cutout: be-03-2013-era5
+
+industry:
+  St_primary_fraction:
+    2030: 0.6
+    2040: 0.5
+    2050: 0.4
 
 solving:
   solver:
