@@ -60,7 +60,7 @@ facilitate running multiple scenarios through a single command
    snakemake -call solve_elec_networks
 
    # for sector-coupling studies
-   snakemake -call solve_all_sector_networks
+   snakemake -call solve_sector_networks
 
 For each wildcard, a **list of values** is provided. The rule
 ``solve_all_elec_networks`` will trigger the rules for creating
