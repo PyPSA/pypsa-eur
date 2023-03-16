@@ -288,7 +288,7 @@ To activate the myopic foresight mode, set
 
 .. code:: yaml
 
-    foresight: myopic 
+    foresight: myopic
 
 Scenarios can be defined like for electricity-only studies, but with additional
 wildcard options. For the myopic foresight mode, the ``{planning_horizons}`` wildcard
