@@ -52,8 +52,8 @@ extensions = [
 autodoc_default_flags = ["members"]
 autosummary_generate = True
 
-bibtex_bibfiles = ['publications.bib']
-bibtex_default_style = 'unsrt'
+bibtex_bibfiles = ["publications.bib"]
+bibtex_default_style = "unsrt"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
