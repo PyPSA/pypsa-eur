@@ -13,7 +13,7 @@ dask[distributed]
 matplotlib
 tabula-py
 
-cartopy
+# cartopy
 scikit-learn
 pycountry
 pyyaml
