@@ -153,18 +153,43 @@ to reading this documentation.
 Citing PyPSA-Eur
 ================
 
-If you use PyPSA-Eur for your research, we would appreciate it if you would cite the following paper: ::
+If you use PyPSA-Eur for your research, we would appreciate it if you would cite one of the following papers:
+
+For electricity-only studies: ::
 
     @article{PyPSAEur,
         author = "Jonas Hoersch and Fabian Hofmann and David Schlachtberger and Tom Brown",
         title = "PyPSA-Eur: An open optimisation model of the European transmission system",
         journal = "Energy Strategy Reviews",
         volume = "22",
-        pages = "207 - 215",
+        pages = "207--215",
         year = "2018",
-        issn = "2211-467X",
         doi = "10.1016/j.esr.2018.08.012",
         eprint = "1806.01613"
+    }
+
+For sector-coupling studies: ::
+
+    @misc{PyPSAEurSec,
+        author = "Fabian Neumann and Elisabeth Zeyen and Marta Victoria and Tom Brown",
+        title = "The Potential Role of a Hydrogen Network in Europe",
+        year = "2022",
+        eprint = "2207.05816",
+        url = "https://arxiv.org/abs/2207.05816",
+    }
+
+For sector-coupling studies with pathway optimisation: ::
+
+    @article{SpeedTechnological2022,
+        title = "Speed of technological transformations required in {Europe} to achieve different climate goals",
+        author = "Marta Victoria and Elisabeth Zeyen and Tom Brown",
+        journal = "Joule",
+        volume = "6",
+        number = "5",
+        pages = "1066--1086",
+        year = "2022",
+        doi = "10.1016/j.joule.2022.04.016",
+        eprint = "2109.09563",
     }
 
 
