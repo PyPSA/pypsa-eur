@@ -42,6 +42,10 @@ The ``run`` section is used for running and storing scenarios with different con
    :start-at: run:
    :end-before: foresight:
 
+.. csv-table::
+   :header-rows: 1
+   :widths: 25,7,22,30
+   :file: configtables/run.csv
 
 ``scenario``
 ============
@@ -110,6 +114,11 @@ Switches for some rules and optional features.
    :language: yaml
    :start-at: enable:
    :end-before: co2_budget:
+
+.. csv-table::
+   :header-rows: 1
+   :widths: 25,7,22,30
+   :file: configtables/enable.csv
 
 .. _electricity_cf:
 
@@ -230,6 +239,10 @@ overwrite the existing values.
    :start-at:   conventional:
    :end-before: lines:
 
+.. csv-table::
+   :header-rows: 1
+   :widths: 25,7,22,30
+   :file: configtables/conventional.csv
 
 ``lines``
 =============
@@ -436,7 +449,7 @@ overwrite the existing values.
 .. csv-table::
    :header-rows: 1
    :widths: 25,7,22,30
-   :file: configtables/solving-solver.csv
+   :file: configtables/solving.csv
 
 .. _plotting_cf:
 

@@ -305,6 +305,7 @@ configuration file.
     commit to a run:
 
     .. code:: bash
+        
         snakemake -call solve_elec_networks -n
 
 How to analyse results?
