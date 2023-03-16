@@ -443,6 +443,7 @@ def parse(l):
 
 def update_config_with_sector_opts(config, sector_opts):
     from snakemake.utils import update_config
+
     for o in sector_opts.split("-"):
         if o.startswith("CF+"):
             l = o.split("+")[1:]
