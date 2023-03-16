@@ -13,7 +13,7 @@ run:
   name: "" # use this to keep track of runs with different settings
   disable_progressbar: false # set to true to disable the progressbar
   shared_resources: false # set to true to share the default resources across runs
-  shared_cutouts: false # set to true to share the default cutout(s) across runs
+  shared_cutouts: true # set to true to share the default cutout(s) across runs
 
 foresight: overnight # options are overnight, myopic, perfect (perfect is not yet implemented)
 # if you use myopic or perfect foresight, set the investment years in "planning_horizons" below
