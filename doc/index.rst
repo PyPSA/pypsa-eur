@@ -269,3 +269,4 @@ The included ``.nc`` files are PyPSA network files which can be imported with Py
    licenses
    limitations
    contributing
+   publications

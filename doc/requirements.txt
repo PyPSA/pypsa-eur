@@ -4,6 +4,7 @@
 
 sphinx
 sphinx_book_theme
+sphinxcontrib-bibtex
 
 pypsa
 vresutils>=0.3.1
