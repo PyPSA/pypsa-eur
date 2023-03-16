@@ -10,7 +10,7 @@ vresutils>=0.3.1
 powerplantmatching>=0.5.5
 atlite>=0.2.9
 dask[distributed]
-matplotlib
+matplotlib<3.6
 tabula-py
 
 # cartopy
