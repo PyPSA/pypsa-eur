@@ -528,5 +528,5 @@ configuration file.
     commit to a run:
 
     .. code:: bash
-        
+
         snakemake -call all -n
