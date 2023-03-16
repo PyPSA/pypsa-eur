@@ -13,11 +13,26 @@ Upcoming Release
 * new feature or bugfix
 
 
-PyPSA-Eur 0.8.0 (TBA)
-=====================
+PyPSA-Eur 0.8.0 (17th March 2023)
+=================================
 
 .. note::
   This is the first release of PyPSA-Eur which incorporates its sector-coupled extension PyPSA-Eur-Sec.
+  PyPSA-Eur can now directly be used for high-resolution energy system modelling with sector-coupling
+  including industry, transport, buildings, biomass, and detailed carbon management. 
+
+* The :mod:`solve_network` script now uses the ``linopy`` backend of PyPSA and is applied for both electricity-only and sector-coupled models. This
+  requires an adjustment of custom ``extra_functionality``.
+  See the `migration guide <https://pypsa.readthedocs.io/en/latest/examples/optimization-with-linopy-migrate-extra-functionalities.html>`_ in the PyPSA documentation.
+
+* The configuration file ``config.default.yaml`` now also includes settings for
+  sector-coupled models, which will be ignored when the user runs
+  electricity-only studies. Common settings have been aligned.
+
+* Unified handling of scenario runs. Users can name their scenarios in ``run:
+  name:``, which will encapsulate results in a correspondingly named folder
+  under ``results``. Additionally, users can select to encapsulate the ``resources`` folder
+  in the same way, through the setting ``run: shared_resources:``.
 
 * The solver configurations in ``config.default.yaml`` are now modularized. To
   change the set of solver options, change to value in ``solving: solver:
@@ -25,6 +40,65 @@ PyPSA-Eur 0.8.0 (TBA)
 
 * The ``Snakefile`` has been modularised. Rules are now organised in the
   ``rules`` directory.
+
+* Unified wildcard for transmission line expansion from ``{lv}`` and ``{ll}`` to
+  ``{ll}``.
+
+* Renamed collection rules to distinguish between sector-coupled and
+  electricity-only runs: ``cluster_networks``, ``extra_components_networks``,
+  ``prepare_elec_networks``, ``prepare_sector_networks``,
+  ``solve_elec_networks``, ``solve_sector_networks``, ``plot_networks``,
+  ``all``.
+
+* Some rules with a small computational footprint have been declared as ``localrules``.
+
+* Added new utility rules ``purge`` for clearing workflow outputs from the
+  directory, ``doc`` to build the documentation, and ``dag`` to create a
+  workflow graph.
+
+* The workflow can now be used with the ``snakemake --use-conda`` directive. In
+  this way, Snakemake can automatically handle the installation of dependencies.
+
+* Data retrieval rules now retry download twice in case of connection problems.
+
+* The cutouts are now marked as ``protected()`` in the workflow to avoid
+  accidental recomputation.
+
+* The files contained in ``data/bundle`` are now marked as ``ancient()`` as they
+  are not expected to be altered by workflow changes.
+
+* Preparation scripts for sector-coupled models have been improved to only run
+  for the subset of selected countries rather than all European countries.
+
+* Added largely automated country code conversion using ``country_converter``..
+
+* Test coverage extended to an electricity-only run and sector-coupled runs for
+  overnight and myopic foresight scenarios for Ubuntu, MacOS and Windows.
+
+* Apply ``black`` and ``snakefmt`` code formatting.
+
+* Implemented REUSE compatibility for merged code.
+
+* Merged documentations of PyPSA-Eur and PyPSA-Eur-Sec.
+
+* Added a tutorial for running sector-coupled models to the documentation
+  (:ref:`tutorial_sector`).
+
+* Deleted ``config.tutorial.yaml``, which is superseded by
+  ``test/config.electricity.yaml``.
+
+* The ``mock_snakemake`` function now also takes configuration files as inputs.
+
+* The helper scripts ``helper.py`` and ``_helpers.py`` have been merged into
+  ``_helpers.py``.
+
+* The unused rule ``plot_p_nom_max`` has been removed.
+
+* The rule ``solve_network`` from PyPSA-Eur-Sec was renamed to
+  ``solve_sector_network``.
+
+* The plotting scripts from PyPSA-Eur (electricity-only) have been removed and
+  are superseded by those from PyPSA-Eur-Sec (sector-coupled).
 
 PyPSA-Eur Releases (pre-merge)
 ==============================
@@ -1200,14 +1274,8 @@ Release Process
 
 * Make a `GitHub release <https://github.com/PyPSA/pypsa-eur-sec/releases>`_, which automatically triggers archiving to the `zenodo code repository <https://doi.org/10.5281/zenodo.3520874>`_ with `MIT license <https://opensource.org/licenses/MIT>`_.
 
-* Create pre-built networks for ``config.default.yaml`` by running ``snakemake -call extra_components_networks``.
+* Create pre-built networks for ``config.default.yaml`` by running ``snakemake -call prepare_sector_networks``.
 
 * Upload pre-built networks to `zenodo data repository <https://doi.org/10.5281/zenodo.3601881>`_ with `CC BY 4.0 <https://creativecommons.org/licenses/by/4.0/>`_ license.
 
 * Send announcement on the `PyPSA mailing list <https://groups.google.com/forum/#!forum/pypsa>`_.
-
-To make a new release of the data bundle, make an archive of the files in ``data`` which are not already included in the git repository:
-
-.. code:: bash
-
-    data % tar pczf pypsa-eur-sec-data-bundle.tar.gz eea/UNFCCC_v23.csv switzerland-sfoe biomass eurostat-energy_balances-* jrc-idees-2015 emobility WindWaveWEC_GLTB.xlsx myb1-2017-nitro.xls Industrial_Database.csv retro/tabula-calculator-calcsetbuilding.csv nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson h2_salt_caverns_GWh_per_sqkm.geojson

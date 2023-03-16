@@ -9,6 +9,7 @@ options,,,
 -- clip_p_max_pu,p.u.,float,"To avoid too small values in the renewables` per-unit availability time series values below this threshold are set to zero."
 -- skip_iterations,bool,"{'true','false'}","Skip iterating, do not update impedances of branches. Defaults to true."
 -- track_iterations,bool,"{'true','false'}","Flag whether to store the intermediate branch capacities and objective function values are recorded for each iteration in ``network.lines['s_nom_opt_X']`` (where ``X`` labels the iteration)"
+-- seed,--,int,"Random seed for increased deterministic behaviour."
 solver,,,
 -- name,--,"One of {'gurobi', 'cplex', 'cbc', 'glpk', 'ipopt'}; potentially more possible","Solver to use for optimisation problems in the workflow; e.g. clustering and linear optimal power flow."
 -- options,--,"Key listed under ``solver_options``.","Link to specific parameter settings."
