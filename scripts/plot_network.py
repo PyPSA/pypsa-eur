@@ -6,7 +6,10 @@
 """
 Creates plots for optimised network topologies, including electricity, gas and
 hydrogen networks, and regional generation, storage and conversion capacities
-built. This rule plots a map of the network with technology capacities at the nodes.
+built.
+
+This rule plots a map of the network with technology capacities at the
+nodes.
 """
 
 import logging
