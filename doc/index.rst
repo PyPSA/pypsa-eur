@@ -14,6 +14,12 @@ PyPSA-Eur-Sec: A Sector-Coupled Open Optimisation Model of the European Energy S
 .. image:: https://img.shields.io/github/repo-size/pypsa/pypsa-eur-sec
     :alt: GitHub repo size
 
+.. warning::
+    PyPSA-Eur-Sec v0.7.0 has been incorporated into PyPSA-Eur with version
+    `v0.8.0 <https://pypsa-eur.readthedocs.io/en/latest/release_notes.html>`_.
+    Please go to `PyPSA-Eur <https://github.com/pypsa/pypsa-eur>`_ to
+    run sector-coupling studies for the European energy system with PyPSA.
+    This repository (PyPSA-Eur-Sec) is now deprecated!
 
 PyPSA-Eur-Sec is an open model dataset of the European energy system at the
 transmission network level that covers the full ENTSO-E area.
