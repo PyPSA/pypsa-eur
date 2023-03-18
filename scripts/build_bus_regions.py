@@ -30,12 +30,12 @@ Outputs
 
 - ``resources/regions_onshore.geojson``:
 
-    .. image:: ../img/regions_onshore.png
+    .. image:: img/regions_onshore.png
         :scale: 33 %
 
 - ``resources/regions_offshore.geojson``:
 
-    .. image:: ../img/regions_offshore.png
+    .. image:: img/regions_offshore.png
         :scale: 33 %
 
 Description
@@ -43,7 +43,6 @@ Description
 """
 
 import logging
-import os
 
 import geopandas as gpd
 import numpy as np
@@ -102,7 +101,8 @@ def voronoi_partition_pts(points, outline):
             if not poly.is_valid:
                 poly = poly.buffer(0)
 
-            poly = poly.intersection(outline)
+            with np.errstate(invalid="ignore"):
+                poly = poly.intersection(outline)
 
             polygons.append(poly)
 

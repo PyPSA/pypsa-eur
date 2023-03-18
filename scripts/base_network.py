@@ -58,7 +58,7 @@ Outputs
 
 - ``networks/base.nc``
 
-    .. image:: ../img/base.png
+    .. image:: img/base.png
         :scale: 33 %
 
 Description

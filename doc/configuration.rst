@@ -18,7 +18,7 @@ Top-level configuration
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :lines: 5-11,23,30-38
+   :lines: 5-11,18-19,62,80-90
 
 
 .. csv-table::
@@ -40,8 +40,12 @@ The ``run`` section is used for running and storing scenarios with different con
 .. literalinclude:: ../config.default.yaml
    :language: yaml
    :start-at: run:
-   :end-before: scenario:
+   :end-before: foresight:
 
+.. csv-table::
+   :header-rows: 1
+   :widths: 25,7,22,30
+   :file: configtables/run.csv
 
 ``scenario``
 ============
@@ -52,9 +56,21 @@ facilitate running multiple scenarios through a single command
 
 .. code:: bash
 
-    snakemake -call solve_all_networks
+   # for electricity-only studies
+   snakemake -call solve_elec_networks
 
-For each wildcard, a **list of values** is provided. The rule ``solve_all_networks`` will trigger the rules for creating ``results/networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc`` for **all combinations** of the provided wildcard values as defined by Python's `itertools.product(...) <https://docs.python.org/2/library/itertools.html#itertools.product>`_ function that snakemake's `expand(...) function <https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#targets>`_ uses.
+   # for sector-coupling studies
+   snakemake -call solve_sector_networks
+
+For each wildcard, a **list of values** is provided. The rule
+``solve_all_elec_networks`` will trigger the rules for creating
+``results/networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc`` for **all
+combinations** of the provided wildcard values as defined by Python's
+`itertools.product(...)
+<https://docs.python.org/2/library/itertools.html#itertools.product>`_ function
+that snakemake's `expand(...) function
+<https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#targets>`_
+uses.
 
 An exemplary dependency graph (starting from the simplification rules) then looks like this:
 
@@ -86,6 +102,23 @@ Specifies the temporal range to build an energy system model for as arguments to
    :header-rows: 1
    :widths: 25,7,22,30
    :file: configtables/snapshots.csv
+
+.. _enable_cf:
+
+``enable``
+==========
+
+Switches for some rules and optional features.
+
+.. literalinclude:: ../config.default.yaml
+   :language: yaml
+   :start-at: enable:
+   :end-before: co2_budget:
+
+.. csv-table::
+   :header-rows: 1
+   :widths: 25,7,22,30
+   :file: configtables/enable.csv
 
 .. _electricity_cf:
 
@@ -194,13 +227,22 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 ``conventional``
 ================
 
-Define additional generator attribute for conventional carrier types. If a scalar value is given it is applied to all generators. However if a string starting with "data/" is given, the value is interpreted as a path to a csv file with country specific values. Then, the values are read in and applied to all generators of the given carrier in the given country. Note that the value(s) overwrite the existing values in the corresponding section of the ``generators`` dataframe.
+Define additional generator attribute for conventional carrier types. If a
+scalar value is given it is applied to all generators. However if a string
+starting with "data/" is given, the value is interpreted as a path to a csv file
+with country specific values. Then, the values are read in and applied to all
+generators of the given carrier in the given country. Note that the value(s)
+overwrite the existing values.
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
    :start-at:   conventional:
    :end-before: lines:
 
+.. csv-table::
+   :header-rows: 1
+   :widths: 25,7,22,30
+   :file: configtables/conventional.csv
 
 ``lines``
 =============
@@ -252,8 +294,8 @@ Define additional generator attribute for conventional carrier types. If a scala
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :start-at: load:
-   :end-before: costs:
+   :start-after:   type:
+   :end-at:   scaling_factor:
 
 .. csv-table::
    :header-rows: 1
@@ -267,17 +309,13 @@ Define additional generator attribute for conventional carrier types. If a scala
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :start-after: scaling_factor:
+   :start-at: costs:
    :end-before: clustering:
 
 .. csv-table::
    :header-rows: 1
    :widths: 25,7,22,30
    :file: configtables/costs.csv
-
-.. note::
-    To change cost assumptions in more detail (i.e. other than ``marginal_cost`` and ``capital_cost``), consider modifying cost assumptions directly in ``resources/costs.csv`` as this is not yet supported through the config file.
-    You can also build multiple different cost databases. Make a renamed copy of ``resources/costs.csv`` (e.g. ``data/costs-optimistic.csv``) and set the variable ``COSTS=data/costs-optimistic.csv`` in the ``Snakefile``.
 
 
 .. _clustering_cf:
@@ -287,7 +325,7 @@ Define additional generator attribute for conventional carrier types. If a scala
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
-   :start-after:     co2:
+   :start-at: clustering:
    :end-before: solving:
 
 .. csv-table::
@@ -296,41 +334,130 @@ Define additional generator attribute for conventional carrier types. If a scala
    :file: configtables/clustering.csv
 
 
+.. _energy_cf:
+
+``energy``
+=======================
+
+.. note::
+   Only used for sector-coupling studies.
+
+.. warning::
+   More comprehensive documentation for this segment will be released soon.
+
+.. literalinclude:: ../config.default.yaml
+   :language: yaml
+   :start-at: energy:
+   :end-before: biomass:
+
+
+.. _biomass_cf:
+
+``biomass``
+=======================
+
+.. note::
+   Only used for sector-coupling studies.
+
+.. warning::
+   More comprehensive documentation for this segment will be released soon.
+
+.. literalinclude:: ../config.default.yaml
+   :language: yaml
+   :start-at: biomass:
+   :end-before: solar_thermal:
+
+.. _solar_thermal_cf:
+
+``solar_thermal``
+=======================
+
+.. note::
+   Only used for sector-coupling studies.
+
+.. warning::
+   More comprehensive documentation for this segment will be released soon.
+
+.. literalinclude:: ../config.default.yaml
+   :language: yaml
+   :start-at: solar_thermal:
+   :end-before: existing_capacities:
+
+.. _existing_capacities_cf:
+
+``existing_capacities``
+=======================
+
+.. note::
+   Only used for sector-coupling studies.
+
+.. warning::
+   More comprehensive documentation for this segment will be released soon.
+
+.. literalinclude:: ../config.default.yaml
+   :language: yaml
+   :start-at: existing_capacities:
+   :end-before: sector:
+
+.. _sector_cf:
+
+``sector``
+=======================
+
+.. note::
+   Only used for sector-coupling studies.
+
+.. warning::
+   More comprehensive documentation for this segment will be released soon.
+
+.. literalinclude:: ../config.default.yaml
+   :language: yaml
+   :start-at: sector:
+   :end-before: industry:
+
+.. _industry_cf:
+
+``industry``
+=======================
+
+.. note::
+   Only used for sector-coupling studies.
+
+.. warning::
+   More comprehensive documentation for this segment will be released soon.
+
+.. literalinclude:: ../config.default.yaml
+   :language: yaml
+   :start-at: industry:
+   :end-before: costs:
+
 .. _solving_cf:
 
 ``solving``
 =============
 
-``options``
------------
-
 .. literalinclude:: ../config.default.yaml
    :language: yaml
    :start-at: solving:
-   :end-before:   solver:
-
-.. csv-table::
-   :header-rows: 1
-   :widths: 25,7,22,30
-   :file: configtables/solving-options.csv
-
-``solver``
-----------
-
-.. literalinclude:: ../config.default.yaml
-   :language: yaml
-   :start-at:   solver:
    :end-before: plotting:
 
 .. csv-table::
    :header-rows: 1
    :widths: 25,7,22,30
-   :file: configtables/solving-solver.csv
+   :file: configtables/solving.csv
+
+.. csv-table::
+   :header-rows: 1
+   :widths: 25,7,22,30
+   :file: configtables/solving.csv
 
 .. _plotting_cf:
 
 ``plotting``
 =============
+
+.. warning::
+   More comprehensive documentation for this segment will be released soon.
 
 .. literalinclude:: ../config.default.yaml
    :language: yaml
