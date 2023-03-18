@@ -13,11 +13,11 @@ Upcoming Release
 * new feature or bugfix
 
 
-PyPSA-Eur 0.8.0 (17th March 2023)
+PyPSA-Eur 0.8.0 (18th March 2023)
 =================================
 
 .. note::
-  This is the first release of PyPSA-Eur which incorporates its sector-coupled extension PyPSA-Eur-Sec (v0.7.1).
+  This is the first release of PyPSA-Eur which incorporates its sector-coupled extension PyPSA-Eur-Sec (v0.7.0).
   PyPSA-Eur can now directly be used for high-resolution energy system modelling with sector-coupling
   including industry, transport, buildings, biomass, and detailed carbon management. The PyPSA-Eur-Sec repository is now deprecated.
 
