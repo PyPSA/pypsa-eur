@@ -10,8 +10,7 @@ Release Notes
 Upcoming Release
 ================
 
-* new feature or bugfix
-
+* Bugfix: Correct typo in the CPLEX solver configuration in ``config.default.yaml``.
 
 PyPSA-Eur 0.8.0 (18th March 2023)
 =================================
