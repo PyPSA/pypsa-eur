@@ -136,8 +136,8 @@ rule determine_availability_matrix_MD_UA:
         ATLITE_NPROCESSES
     resources:
         mem_mb=ATLITE_NPROCESSES * 5000
-    notebook:
-        "scripts/determine_availability_matrix_MD_UA.py.ipynb"
+    script:
+        "scripts/determine_availability_matrix_MD_UA.py"
 
 rule retrieve_load_data:
     input:
