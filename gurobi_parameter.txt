@@ -1,0 +1,7 @@
+import gurobipy as gp
+
+env = gp.Env(empty=True)
+env.setParam('WLSACCESSID',143f92df-e67a-456e-9de5-4884229f7f26)
+env.setParam('WLSSECRET', 41bdad38-c3f8-4b72-8a5b-86e12e30109c)
+env.setParam('LICENSEID', 938735)
+env.start()
