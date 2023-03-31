@@ -1,19 +1,14 @@
-#!/usr/bin/env python
-# coding: utf-8
+# -*- coding: utf-8 -*-
+# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: MIT
 
-# In[ ]:
-
-
-import progressbar as pgb
 import geopandas as gpd
-import xarray as xr
 import numpy as np
 import functools
 import atlite
 import logging
 import time
-import matplotlib.pyplot as plt
-from _helpers import mock_snakemake
 
 from _helpers import configure_logging
 
@@ -27,13 +22,12 @@ if __name__ == "__main__":
             "determine_availability_matrix_MD_UA", technology="solar"
         )
     configure_logging(snakemake)
-    pgb.streams.wrap_stderr()
 
     nprocesses = snakemake.config["atlite"].get("nprocesses")
     noprogress = not snakemake.config["atlite"].get("show_progress", True)
     config = snakemake.config["renewable"][snakemake.wildcards.technology]
 
-    cutout = atlite.Cutout(snakemake.input["cutout"])
+    cutout = atlite.Cutout(snakemake.input.cutout)
     regions = (
         gpd.read_file(snakemake.input.regions).set_index("name").rename_axis("bus")
     )
@@ -120,8 +114,4 @@ if __name__ == "__main__":
     availability = availability.sel(bus=buses)
 
     # Save and plot for verification
-    availability.to_netcdf(snakemake.output["availability_matrix"])
-    # availability.sum(dim="bus").plot()
-    # plt.title(technology)
-    # plt.show()
-
+    availability.to_netcdf(snakemake.output.availability_matrix)

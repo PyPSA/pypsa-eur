@@ -412,6 +412,7 @@ rule build_renewable_profiles:
         + CDIR
         + config["renewable"][w.technology]["cutout"]
         + ".nc",
+        **opt
     output:
         profile="resources/" + RDIR + "profile_{technology}.nc",
     log:
