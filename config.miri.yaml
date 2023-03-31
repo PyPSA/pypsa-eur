@@ -26,9 +26,9 @@ scenario:
   #- v1.5
   clusters: # number of nodes in Europe, any integer between 37 (1 node per country-zone) and several hundred
   #- 37
-  - 128
+  #- 128
   #- 256
-  #- 512
+  - 512
   #- 1024
   opts: # only relevant for PyPSA-Eur
   - 'Co2L-3H'
@@ -64,7 +64,7 @@ countries: ['DE','DK','FR','BE','CZ','SE','PL', 'NL', 'NO','GB',]
 #'AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK'
 snapshots:
   start: "2013-01-01"
-  end: "2013-01-08"
+  end: "2013-02-01"
   inclusive: 'left' # include start, not end
 
 enable:
