@@ -1,15 +1,15 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: MIT
+
 """
 Concats pypsa networks of single investment periods to one network.
-
-Created on Tue Aug 16 10:40:41 2022
-
-@author: lisa
 """
+
 import pypsa
 import pandas as pd
-from helper import override_component_attrs, update_config_with_sector_opts
+from _helpers import override_component_attrs, update_config_with_sector_opts
 from pypsa.io import import_components_from_dataframe
 from add_existing_baseyear import add_build_year_to_new_assets
 from six import iterkeys
@@ -179,23 +179,22 @@ def set_all_phase_outs(n):
 
 def set_carbon_constraints(n, opts):
     """Add global constraints for carbon emissions."""
-    budget = (
-        snakemake.config["co2_budget"]["1p7"] * 1e9
-    )  # budget for + 1.7 Celsius for Europe
+    budget = None
     for o in opts:
         # other budgets
         m = re.match(r"^\d+p\d$", o, re.IGNORECASE)
         if m is not None:
             budget = snakemake.config["co2_budget"][m.group(0)] * 1e9
-    logger.info("add carbon budget of {}".format(budget))
-    n.add(
-        "GlobalConstraint",
-        "Budget",
-        type="Co2constraint",
-        carrier_attribute="co2_emissions",
-        sense="<=",
-        constant=budget,
-    )
+    if budget!=None:
+        logger.info("add carbon budget of {}".format(budget))
+        n.add(
+            "GlobalConstraint",
+            "Budget",
+            type="Co2constraint",
+            carrier_attribute="co2_emissions",
+            sense="<=",
+            constant=budget,
+        )
 
     if not "noco2neutral" in opts:
         logger.info("Add carbon neutrality constraint.")
@@ -232,7 +231,7 @@ def set_carbon_constraints(n, opts):
 #%%
 if __name__ == "__main__":
     if 'snakemake' not in globals():
-        from helper import mock_snakemake
+        from _helpers import mock_snakemake
         snakemake = mock_snakemake(
             'prepare_perfect_foresight',
             simpl='',

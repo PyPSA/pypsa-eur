@@ -68,32 +68,27 @@ rule add_brownfield:
         "../scripts/add_brownfield.py"
 
 
-ruleorder: add_existing_baseyear > add_brownfield
-
-
 rule prepare_perfect_foresight:
     input:
         **{
-            f"network_{year}": RDIR
-            + "/prenetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_"
+            f"network_{year}": RESULTS
+            + "/prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_"
             + f"{year}.nc"
             for year in config["scenario"]["planning_horizons"][1:]
         },
         brownfield_network=lambda w: (
-            RDIR
+            RESULTS
             + "/prenetworks-brownfield/"
-            + "elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_"
+            + "elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_"
             + "{}.nc".format(str(config["scenario"]["planning_horizons"][0]))
         ),
         overrides="data/override_component_attrs",
     output:
-        RDIR
-        + "/prenetworks-brownfield/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_brownfield_all_years.nc",
+        RESULTS
+        + "/prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years.nc",
     threads: 2
     resources:
         mem_mb=10000,
-    script:
-        "../scripts/prepare_perfect_foresight.py"
     log:
         LOGS
         + "prepare_perfect_foresight{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}.log",
@@ -108,84 +103,84 @@ rule prepare_perfect_foresight:
         "../scripts/prepare_perfect_foresight.py"
 
 
-rule solve_network_perfect:
+rule solve_sector_network_perfect:
     input:
         overrides="data/override_component_attrs",
-        network=RDIR
-        + "/prenetworks-brownfield/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_brownfield_all_years.nc",
+        network=RESULTS
+        + "/prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years.nc",
         costs="data/costs_2030.csv",
-        config=SDIR + "/configs/config.yaml",
+        config=RESULTS + "configs/config.yaml",
     output:
-        RDIR
-        + "/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_brownfield_all_years.nc",
-    shadow:
-        "shallow"
-    log:
-        solver=RDIR
-        + "/logs/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_brownfield_all_years_solver.log",
-        python=RDIR
-        + "/logs/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_brownfield_all_years_python.log",
-        memory=RDIR
-        + "/logs/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_brownfield_all_years_memory.log",
+        RESULTS
+        + "/postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years.nc",
     threads: 4
     resources:
         mem_mb=config["solving"]["mem"],
+    shadow:
+        "shallow"
+    log:
+        solver=RESULTS
+        + "/logs/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years_solver.log",
+        python=RESULTS
+        + "/logs/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years_python.log",
+        memory=RESULTS
+        + "/logs/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years_memory.log",
     benchmark:
         (
-            RDIR
-            + "/benchmarks/solve_network/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_brownfield_all_years"
+            BENCHMARKS
+            + "solve_sector_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years}"
         )
-    script:
-        "../scripts/solve_network.py"
     conda:
         "../envs/environment.yaml"
+    script:
+        "../scripts/solve_network.py"
 
 
 rule make_summary_perfect:
     input:
         **{
-            f"networks_{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}": RDIR
-            + f"/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_brownfield_all_years.nc"
+            f"networks_{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}": RESULTS
+            + f"/postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years.nc"
             for simpl in config["scenario"]["simpl"]
             for clusters in config["scenario"]["clusters"]
             for opts in config["scenario"]["opts"]
             for sector_opts in config["scenario"]["sector_opts"]
-            for lv in config["scenario"]["lv"]
+            for ll in config["scenario"]["ll"]
         },
         costs="data/costs_2020.csv",
         overrides="data/override_component_attrs",
     output:
-        nodal_costs="results" + "/" + config["run"] + "/csvs/nodal_costs.csv",
-        nodal_capacities="results" + "/" + config["run"] + "/csvs/nodal_capacities.csv",
-        nodal_cfs="results" + "/" + config["run"] + "/csvs/nodal_cfs.csv",
-        cfs="results" + "/" + config["run"] + "/csvs/cfs.csv",
-        costs="results" + "/" + config["run"] + "/csvs/costs.csv",
-        capacities="results" + "/" + config["run"] + "/csvs/capacities.csv",
-        curtailment="results" + "/" + config["run"] + "/csvs/curtailment.csv",
-        capital_cost="results" + "/" + config["run"] + "/csvs/capital_cost.csv",
-        energy="results" + "/" + config["run"] + "/csvs/energy.csv",
-        supply="results" + "/" + config["run"] + "/csvs/supply.csv",
-        supply_energy="results" + "/" + config["run"] + "/csvs/supply_energy.csv",
-        prices="results" + "/" + config["run"] + "/csvs/prices.csv",
-        weighted_prices="results" + "/" + config["run"] + "/csvs/weighted_prices.csv",
-        market_values="results" + "/" + config["run"] + "/csvs/market_values.csv",
-        price_statistics="results" + "/" + config["run"] + "/csvs/price_statistics.csv",
-        metrics="results" + "/" + config["run"] + "/csvs/metrics.csv",
-        co2_emissions="results" + "/" + config["run"] + "/csvs/co2_emissions.csv",
+        nodal_costs=RESULTS + "/csvs/nodal_costs.csv",
+        nodal_capacities=RESULTS + "/csvs/nodal_capacities.csv",
+        nodal_cfs=RESULTS + "/csvs/nodal_cfs.csv",
+        cfs=RESULTS + "/csvs/cfs.csv",
+        costs=RESULTS + "/csvs/costs.csv",
+        capacities=RESULTS + "/csvs/capacities.csv",
+        curtailment=RESULTS + "/csvs/curtailment.csv",
+        capital_cost=RESULTS + "/csvs/capital_cost.csv",
+        energy=RESULTS + "/csvs/energy.csv",
+        supply=RESULTS + "/csvs/supply.csv",
+        supply_energy=RESULTS + "/csvs/supply_energy.csv",
+        prices=RESULTS + "/csvs/prices.csv",
+        weighted_prices=RESULTS + "/csvs/weighted_prices.csv",
+        market_values=RESULTS + "/csvs/market_values.csv",
+        price_statistics=RESULTS + "/csvs/price_statistics.csv",
+        metrics=RESULTS + "/csvs/metrics.csv",
+        co2_emissions=RESULTS + "/csvs/co2_emissions.csv",
     threads: 2
     resources:
         mem_mb=10000,
-    script:
-        "../scripts/make_summary_perfect.py"
     log:
-        LOGS + "make_summary_perfect{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}.log",
+        LOGS + "make_summary_perfect.log",
     benchmark:
         (
             BENCHMARKS
-            + "make_summary_perfect{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}"
+            + "make_summary_perfect"
         )
     conda:
         "../envs/environment.yaml"
+    script:
+        "../scripts/make_summary_perfect.py"
 
 
 rule plot_summary_perfect:
@@ -194,30 +189,33 @@ rule plot_summary_perfect:
             f"costs_{year}": f"data/costs_{year}.csv"
             for year in config["scenario"]["planning_horizons"]
         },
-        costs_csv="results" + "/" + config["run"] + "/csvs/costs.csv",
-        energy="results" + "/" + config["run"] + "/csvs/energy.csv",
-        balances="results" + "/" + config["run"] + "/csvs/supply_energy.csv",
+        costs_csv=RESULTS + "/csvs/costs.csv",
+        energy=RESULTS + "/csvs/energy.csv",
+        balances=RESULTS + "/csvs/supply_energy.csv",
         eea="data/eea/UNFCCC_v24.csv",
-        countries="results" + "/" + config["run"] + "/csvs/nodal_capacities.csv",
-        co2_emissions="results" + "/" + config["run"] + "/csvs/co2_emissions.csv",
-        capacities="results" + "/" + config["run"] + "/csvs/capacities.csv",
-        capital_cost="results" + "/" + config["run"] + "/csvs/capital_cost.csv",
+        countries=RESULTS + "/csvs/nodal_capacities.csv",
+        co2_emissions=RESULTS + "/csvs/co2_emissions.csv",
+        capacities=RESULTS + "/csvs/capacities.csv",
+        capital_cost=RESULTS + "/csvs/capital_cost.csv",
     output:
-        costs1="results" + "/" + config["run"] + "/graphs/costs.pdf",
-        costs2="results" + "/" + config["run"] + "/graphs/costs2.pdf",
-        costs3="results" + "/" + config["run"] + "/graphs/total_costs_per_year.pdf",
+        costs1=RESULTS + "/graphs/costs.pdf",
+        costs2=RESULTS + "/graphs/costs2.pdf",
+        costs3=RESULTS + "/graphs/total_costs_per_year.pdf",
         # energy="results"  + '/' + config['run'] + '/graphs/energy.pdf',
-        balances="results" + "/" + config["run"] + "/graphs/balances-energy.pdf",
-        co2_emissions="results" + "/" + config["run"] + "/graphs/carbon_budget_plot.pdf",
-        capacities="results" + "/" + config["run"] + "/graphs/capacities.pdf",
+        balances=RESULTS + "/graphs/balances-energy.pdf",
+        co2_emissions=RESULTS + "/graphs/carbon_budget_plot.pdf",
+        capacities=RESULTS + "/graphs/capacities.pdf",
     threads: 2
     resources:
         mem_mb=10000,
-    script:
-        "../scripts/plot_summary_perfect.py"
     log:
         LOGS + "plot_summary_perfect.log",
     benchmark:
         (BENCHMARKS + "plot_summary_perfect")
     conda:
         "../envs/environment.yaml"
+    script:
+        "../scripts/plot_summary_perfect.py"
+
+
+ruleorder: add_existing_baseyear > add_brownfield
