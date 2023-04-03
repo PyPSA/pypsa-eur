@@ -1130,6 +1130,7 @@ def add_storage_and_grids(n, costs):
         e_cyclic=True,
         carrier="H2 Store",
         capital_cost=h2_capital_cost,
+        lifetime=costs.at["hydrogen storage tank type 1 including compressor", "lifetime"],
     )
 
     if options["gas_network"] or options["H2_retrofit"]:
@@ -1483,6 +1484,7 @@ def add_land_transport(n, costs):
             carrier="BEV charger",
             p_max_pu=avail_profile[nodes],
             efficiency=options.get("bev_charge_efficiency", 0.9),
+            lifetime=1,
             # These were set non-zero to find LU infeasibility when availability = 0.25
             # p_nom_extendable=True,
             # p_nom_min=p_nom,
@@ -1500,6 +1502,7 @@ def add_land_transport(n, costs):
             carrier="V2G",
             p_max_pu=avail_profile[nodes],
             efficiency=options.get("bev_charge_efficiency", 0.9),
+            lifetime=1,
         )
 
     if electric_share > 0 and options["bev_dsm"]:
@@ -1520,6 +1523,7 @@ def add_land_transport(n, costs):
             e_nom=e_nom,
             e_max_pu=1,
             e_min_pu=dsm_profile[nodes],
+            lifetime=1,
         )
 
     if fuel_cell_share > 0:
@@ -2019,6 +2023,7 @@ def add_heat(n, costs):
                     country=ct,
                     capital_cost=capital_cost[strength]
                     * options["retrofitting"]["cost_factor"],
+                    lifetime=50,
                 )
 
 
@@ -2113,6 +2118,7 @@ def add_biomass(n, costs):
         e_nom=biogas_potentials_spatial,
         marginal_cost=costs.at["biogas", "fuel"],
         e_initial=biogas_potentials_spatial,
+        lifetime=1,
     )
 
     n.madd(
@@ -2123,6 +2129,7 @@ def add_biomass(n, costs):
         e_nom=solid_biomass_potentials_spatial,
         marginal_cost=costs.at["solid biomass", "fuel"],
         e_initial=solid_biomass_potentials_spatial,
+        lifetime=1,
     )
 
     n.madd(
@@ -3280,7 +3287,7 @@ if __name__ == "__main__":
 
     spatial = define_spatial(pop_layout.index, options)
 
-    if snakemake.config["foresight"] == "myopic":
+    if snakemake.config["foresight"] in ['myopic', 'perfect']:
         add_lifetime_wind_solar(n, costs)
 
         conventional = snakemake.config["existing_capacities"]["conventional_carriers"]
@@ -3395,11 +3402,11 @@ if __name__ == "__main__":
     if options["electricity_grid_connection"]:
         add_electricity_grid_connection(n, costs)
 
-    first_year_myopic = (snakemake.config["foresight"] == "myopic") and (
+    first_year_multi = (snakemake.config["foresight"] in ['myopic', 'perfect']) and (
         snakemake.config["scenario"]["planning_horizons"][0] == investment_year
     )
 
-    if options.get("cluster_heat_buses", False) and not first_year_myopic:
+    if options.get("cluster_heat_buses", False) and not first_year_multi:
         cluster_heat_buses(n)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
