@@ -65,6 +65,11 @@ if config["foresight"] == "myopic":
     include: "rules/solve_myopic.smk"
 
 
+if config["foresight"] == "perfect":
+
+    include: "rules/solve_perfect.smk"
+
+
 rule purge:
     message:
         "Purging generated resources, results and docs. Downloads are kept."
