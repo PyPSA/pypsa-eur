@@ -42,7 +42,9 @@ def rename_techs(label):
         "resistive heater",
         "Fischer-Tropsch",
         "land transport fuel cell",
-        "land transport oil"
+        "land transport oil",
+        "H2 for industry",
+        "shipping oil"
     ]
 
     rename_if_contains_dict = {
@@ -215,6 +217,11 @@ def plot_energy():
     df = df.drop(to_drop)
 
     logger.info(f"Total energy of {round(df.sum()[0])} TWh/a")
+
+    if df.empty:
+        fig, ax = plt.subplots(figsize=(12, 8))
+        fig.savefig(snakemake.output.energy, bbox_inches="tight")
+        return
 
     new_index = preferred_order.intersection(df.index).append(
         df.index.difference(preferred_order)
