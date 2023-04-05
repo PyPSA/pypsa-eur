@@ -52,6 +52,21 @@ def get_investment_weighting(time_weighting, r=0.01):
         axis=1,
     )
 
+def add_year_to_constraints(n, baseyear):
+    """
+    Parameters
+    ----------
+    n : pypsa.Network
+    baseyear : int
+        year in which optimized assets are built
+    """
+
+    for c in n.iterate_components(["GlobalConstraint"]):
+
+        c.df["investment_period"] = baseyear
+        c.df.rename(index=lambda x: x + "-" + str(baseyear), inplace=True)
+
+
 # --------------------------------------------------------------------
 def concat_networks(years):
     """Concat given pypsa networks and adds build_year.
@@ -121,6 +136,12 @@ def concat_networks(years):
 
 
         n.snapshot_weightings.loc[year,:] = network.snapshot_weightings.values
+
+        # (3) global constraints
+        for component in network.iterate_components(["GlobalConstraint"]):
+            add_year_to_constraints(n, year)
+            import_components_from_dataframe(n, component.df.index, component.name)
+
     # set investment periods
     n.investment_periods = n.snapshots.levels[0]
     # weighting of the investment period -> assuming last period same weighting as the period before
@@ -132,6 +153,7 @@ def concat_networks(years):
     n.investment_period_weightings["objective"] = objective_w
     # all former static loads are now time-dependent -> set static = 0
     n.loads["p_set"] = 0
+    n.loads_t.p_set.fillna(0,inplace=True)
 
     return n
 
@@ -147,6 +169,11 @@ def adjust_stores(n):
     co2_i = n.stores[n.stores.carrier.isin(non_cyclic_store)].index
     n.stores.loc[co2_i, "e_cyclic_per_period"] = False
     n.stores.loc[co2_i, "e_cyclic"] = False
+    # e_initial at beginning of each investment period
+    e_initial_store = ["solid biomass", "biogas"]
+    co2_i = n.stores[n.stores.carrier.isin(e_initial_store)].index
+    n.stores.loc[co2_i, "e_initial"] *= 10
+    n.stores.loc[co2_i, "e_nom"] *= 10
 
     return n
 
@@ -236,9 +263,9 @@ if __name__ == "__main__":
             'prepare_perfect_foresight',
             simpl='',
             opts="",
-            clusters="45",
-            lv=1.0,
-            sector_opts='1p7-365H-T-H-B-I-A-solar+p3-dist1',
+            clusters="37",
+            ll=1.0,
+            sector_opts='cb40ex0-2190H-T-H-B-solar+p3-dist1',
         )
 
     update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
