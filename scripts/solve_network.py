@@ -157,9 +157,9 @@ def prepare_network(n, solve_opts=None, config=None):
         # TODO: retrieve color and nice name from config
         n.add("Carrier", "load", color="#dd2e23", nice_name="Load shedding")
         buses_i = n.buses.query("carrier == 'AC'").index
-        if not np.isscalar(load_shedding):
+        #if not np.isscalar(load_shedding):
             # TODO: do not scale via sign attribute (use Eur/MWh instead of Eur/kWh)
-            load_shedding = 1e2  # Eur/kWh
+        load_shedding = 1e2  # Eur/kWh
 
         n.madd(
             "Generator",
@@ -626,20 +626,20 @@ def solve_network(n, config, opts="", **kwargs):
 
     return n
 
-
+#%%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "solve_sector_network",
-            configfiles="test/config.overnight.yaml",
+            "solve_sector_network_perfect",
+            configfiles="config.yaml",
             simpl="",
             opts="",
-            clusters="5",
-            ll="v1.5",
-            sector_opts="CO2L0-24H-T-H-B-I-A-solar+p3-dist1",
-            planning_horizons="2030",
+            clusters="37",
+            ll="v1.0",
+            sector_opts="cb40ex0-8760H-T-H-B-I-A-solar+p3-dist1",
+            # planning_horizons="2030",
         )
     configure_logging(snakemake)
     if "sector_opts" in snakemake.wildcards.keys():
