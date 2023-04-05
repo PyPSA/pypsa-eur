@@ -156,7 +156,7 @@ def prepare_network(n, solve_opts=None, config=None):
         # http://journal.frontiersin.org/article/10.3389/fenrg.2015.00055/full
         # TODO: retrieve color and nice name from config
         n.add("Carrier", "load", color="#dd2e23", nice_name="Load shedding")
-        buses_i = n.buses.query("carrier == 'AC'").index
+        buses_i = n.buses.index # query("carrier == 'AC'").index
         #if not np.isscalar(load_shedding):
             # TODO: do not scale via sign attribute (use Eur/MWh instead of Eur/kWh)
         load_shedding = 1e2  # Eur/kWh
@@ -589,6 +589,7 @@ def solve_network(n, config, opts="", **kwargs):
     track_iterations = cf_solving.get("track_iterations", False)
     min_iterations = cf_solving.get("min_iterations", 4)
     max_iterations = cf_solving.get("max_iterations", 6)
+    multi_horizon = True if config["foresight"] == "perfect" else False
 
     # add to network for extra_functionality
     n.config = config
@@ -603,6 +604,7 @@ def solve_network(n, config, opts="", **kwargs):
         status, condition = n.optimize(
             solver_name=solver_name,
             extra_functionality=extra_functionality,
+            multi_investment_periods=multi_horizon,
             **solver_options,
             **kwargs,
         )
@@ -613,6 +615,7 @@ def solve_network(n, config, opts="", **kwargs):
             min_iterations=min_iterations,
             max_iterations=max_iterations,
             extra_functionality=extra_functionality,
+            multi_investment_periods=multi_horizon,
             **solver_options,
             **kwargs,
         )
@@ -633,12 +636,12 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "solve_sector_network_perfect",
-            configfiles="config.yaml",
+            #configfiles="config.yaml",
             simpl="",
             opts="",
             clusters="37",
             ll="v1.0",
-            sector_opts="cb40ex0-8760H-T-H-B-I-A-solar+p3-dist1",
+            sector_opts="cb40ex0-2190H-T-H-B-solar+p3-dist1",
             # planning_horizons="2030",
         )
     configure_logging(snakemake)
