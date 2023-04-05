@@ -1,3 +1,15 @@
+# -*- coding: utf-8 -*-
+# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: MIT
+
+"""
+Create summary CSV files for all scenario runs with perfect foresight
+including costs, capacities, capacity factors, curtailment, energy balances,
+prices and other metrics.
+"""
+
+
 from six import iteritems
 
 import pandas as pd
@@ -11,7 +23,7 @@ from pypsa.descriptors import (
     get_active_assets,
 )
 
-from helper import override_component_attrs
+from _helpers import override_component_attrs
 
 from prepare_sector_network import prepare_costs
 
@@ -50,8 +62,8 @@ def calculate_costs(n, label, costs):
         ).astype(int)
         capital_costs = active.mul(capital_costs, axis=0)
         discount = (
-            n.investment_period_weightings["objective_weightings"]
-            / n.investment_period_weightings["time_weightings"]
+            n.investment_period_weightings["objective"]
+            / n.investment_period_weightings["years"]
         )
         capital_costs_grouped = (
             capital_costs.groupby(c.df.carrier).sum().mul(discount)
@@ -66,20 +78,20 @@ def calculate_costs(n, label, costs):
 
         if c.name == "Link":
             p = (
-                c.pnl.p0.multiply(n.snapshot_weightings.generator_weightings, axis=0)
+                c.pnl.p0.multiply(n.snapshot_weightings.generators, axis=0)
                 .groupby(level=0)
                 .sum()
             )
         elif c.name == "Line":
             continue
         elif c.name == "StorageUnit":
-            p_all = c.pnl.p.multiply(n.snapshot_weightings.store_weightings, axis=0)
+            p_all = c.pnl.p.multiply(n.snapshot_weightings.stores, axis=0)
             p_all[p_all < 0.0] = 0.0
             p = p_all.groupby(level=0).sum()
         else:
             p = (
                 round(c.pnl.p, ndigits=2)
-                .multiply(n.snapshot_weightings.generator_weightings, axis=0)
+                .multiply(n.snapshot_weightings.generators, axis=0)
                 .groupby(level=0)
                 .sum()
             )
@@ -285,7 +297,7 @@ def calculate_supply(n, label, supply):
 
             for end in [col[3:] for col in c.df.columns if col[:3] == "bus"]:
 
-                items = c.df.index[c.df["bus" + end].map(bus_map, na_action=False)]
+                items = c.df.index[c.df["bus" + end].map(bus_map).fillna(False)]
 
                 if len(items) == 0:
                     continue
@@ -333,9 +345,9 @@ def calculate_supply_energy(n, label, supply_energy):
                 continue
 
             if c.name == "Generator":
-                weightings = n.snapshot_weightings.generator_weightings
+                weightings = n.snapshot_weightings.generators
             else:
-                weightings = n.snapshot_weightings.store_weightings
+                weightings = n.snapshot_weightings.stores
 
             if i in ["oil", "co2", "H2"]:
                 if c.name=="Load":
@@ -364,7 +376,7 @@ def calculate_supply_energy(n, label, supply_energy):
 
             for end in [col[3:] for col in c.df.columns if col[:3] == "bus"]:
 
-                items = c.df.index[c.df["bus" + str(end)].map(bus_map, na_action=False)]
+                items = c.df.index[c.df["bus" + str(end)].map(bus_map).fillna(False)]
 
                 if len(items) == 0:
                     continue
@@ -373,7 +385,7 @@ def calculate_supply_energy(n, label, supply_energy):
                     (-1)
                     * c.pnl["p" + end]
                     .reindex(items, axis=1)
-                    .multiply(n.snapshot_weightings.objective_weightings, axis=0)
+                    .multiply(n.snapshot_weightings.objective, axis=0)
                     .groupby(level=0)
                     .sum()
                     .groupby(c.df.loc[items, "carrier"], axis=1)
@@ -593,11 +605,11 @@ def calculate_price_statistics(n, label, price_statistics):
     )
 
     price_statistics.at["mean", label] = (
-        n.buses_t.marginal_price[buses].unstack().mean()
+        n.buses_t.marginal_price[buses].mean().mean()
     )
 
     price_statistics.at["standard_deviation", label] = (
-        n.buses_t.marginal_price[buses].unstack().std()
+        n.buses_t.marginal_price[buses].droplevel(0).unstack().std()
     )
 
     return price_statistics
@@ -612,7 +624,7 @@ def calculate_co2_emissions(n, label, df):
         return
 
     weightings = n.snapshot_weightings.mul(
-        n.investment_period_weightings["time_weightings"]
+        n.investment_period_weightings["years"]
         .reindex(n.snapshots)
         .fillna(method="bfill")
         .fillna(1.0),
@@ -624,7 +636,7 @@ def calculate_co2_emissions(n, label, df):
     if not gens.empty:
         em_pu = gens.carrier.map(emissions) / gens.efficiency
         em_pu = (
-            weightings["generator_weightings"].to_frame("weightings")
+            weightings["generators"].to_frame("weightings")
             @ em_pu.to_frame("weightings").T
         )
         emitted = n.generators_t.p[gens.index].mul(em_pu)
@@ -648,52 +660,6 @@ def calculate_co2_emissions(n, label, df):
     return df
 
 
-
-
-def calculate_cumulative_capacities(n, label, cum_cap):
-    # TODO
-
-    investments = n.investment_periods
-    cols = pd.MultiIndex.from_product(
-        [
-            cum_cap.columns.levels[0],
-            cum_cap.columns.levels[1],
-            cum_cap.columns.levels[2],
-            investments,
-        ],
-        names=cum_cap.columns.names[:3] + ["year"],
-    )
-    cum_cap = cum_cap.reindex(cols, axis=1)
-
-    learn_i = n.carriers[n.carriers.learning_rate != 0].index
-
-    for c, attr in nominal_attrs.items():
-        if "carrier" not in n.df(c) or n.df(c).empty:
-            continue
-        caps = (
-            n.df(c)[n.df(c).carrier.isin(learn_i)]
-            .groupby([n.df(c).carrier, n.df(c).build_year])[
-                opt_name.get(c, "p") + "_nom_opt"
-            ]
-            .sum()
-        )
-
-        if caps.empty:
-            continue
-
-        caps = round(
-            caps.unstack().reindex(columns=investments).fillna(0).cumsum(axis=1)
-        )
-        cum_cap = cum_cap.reindex(caps.index.union(cum_cap.index))
-
-        cum_cap.loc[caps.index, label] = caps.values
-
-    return cum_cap
-
-
-
-
-
 outputs = [
     "nodal_costs",
     "nodal_capacities",
@@ -711,14 +677,13 @@ outputs = [
     "market_values",
     "metrics",
     "co2_emissions",
-    "cumulative_capacities",
 ]
 
 
 def make_summaries(networks_dict):
 
     columns = pd.MultiIndex.from_tuples(
-        networks_dict.keys(), names=["cluster", "lv", "opt", "year"]
+        networks_dict.keys(), names=["cluster", "lv", "opt"]
     )
     df = {}
 
@@ -760,30 +725,28 @@ def to_csv(df):
 if __name__ == "__main__":
     # Detect running outside of snakemake and mock snakemake for testing
     if "snakemake" not in globals():
-        from helper import mock_snakemake
+        from _helpers import mock_snakemake
         snakemake = mock_snakemake('make_summary_perfect')
 
     networks_dict = {
         (clusters, lv, opts+sector_opts) :
-        snakemake.config['results_dir'] + snakemake.config['run'] + f'/postnetworks/elec_s{simpl}_{clusters}_lv{lv}_{opts}_{sector_opts}_brownfield_all_years.nc' \
+        "results/" + snakemake.config['run']["name"] + f'/postnetworks/elec_s{simpl}_{clusters}_l{lv}_{opts}_{sector_opts}_brownfield_all_years.nc' \
         for simpl in snakemake.config['scenario']['simpl'] \
         for clusters in snakemake.config['scenario']['clusters'] \
         for opts in snakemake.config['scenario']['opts'] \
         for sector_opts in snakemake.config['scenario']['sector_opts'] \
-        for lv in snakemake.config['scenario']['lv'] \
+        for lv in snakemake.config['scenario']['ll'] \
     }
 
 
     print(networks_dict)
 
-    Nyears = 1
 
+    nyears = 1
     costs_db = prepare_costs(
         snakemake.input.costs,
-        snakemake.config["costs"]["USD2013_to_EUR2013"],
-        snakemake.config["costs"]["discountrate"],
-        Nyears,
-        snakemake.config["costs"]["lifetime"],
+        snakemake.config["costs"],
+        nyears,
     )
 
     df = make_summaries(networks_dict)
