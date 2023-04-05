@@ -157,7 +157,6 @@ rule make_summary_perfect:
         costs=RESULTS + "csvs/costs.csv",
         capacities=RESULTS + "csvs/capacities.csv",
         curtailment=RESULTS + "csvs/curtailment.csv",
-        capital_cost=RESULTS + "csvs/capital_cost.csv",
         energy=RESULTS + "csvs/energy.csv",
         supply=RESULTS + "csvs/supply.csv",
         supply_energy=RESULTS + "csvs/supply_energy.csv",
