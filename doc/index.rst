@@ -34,7 +34,9 @@ PyPSA-Eur: A Sector-Coupled Open Optimisation Model of the European Energy Syste
 |
 
 PyPSA-Eur is an open model dataset of the European energy system at the
-transmission network level that covers the full ENTSO-E area.
+transmission network level that covers the full ENTSO-E area. It covers demand
+and supply for all energy sectors. From version v0.8.0, PyPSA-Eur includes all
+the features from PyPSA-Eur-Sec, which is now deprecated.
 
 Electricity System
 ==================
@@ -59,13 +61,14 @@ effects for renewable power generation and their varying resource availability.
 Sector-Coupled Energy System
 ============================
 
-A sector-coupled extension (previously known as **PyPSA-Eur-Sec**) adds demand
-and supply for the following sectors: transport, space and water heating,
-biomass, energy consumption in the agriculture, industry and industrial
-feedstocks, carbon management, carbon capture and usage/sequestration. This
-completes the energy system and includes all greenhouse gas emitters except
-waste management, agriculture, forestry and land use. The diagram below gives an
-overview of the sectors and the links between them:
+A sector-coupled extension (previously known as **PyPSA-Eur-Sec**, which is now
+deprecated) adds demand and supply for the following sectors: transport, space
+and water heating, biomass, energy consumption in the agriculture, industry and
+industrial feedstocks, carbon management, carbon capture and
+usage/sequestration. This completes the energy system and includes all
+greenhouse gas emitters except waste management, agriculture, forestry and land
+use. The diagram below gives an overview of the sectors and the links between
+them:
 
 .. image:: ../graphics/multisector_figure.png
     :width: 70%
@@ -93,7 +96,9 @@ About
 
 PyPSA-Eur is designed to be imported into the open energy system modelling
 framework `PyPSA <https://www.pypsa.org>`_ for which `documentation
-<https://pypsa.readthedocs.io>`_ is available as well.
+<https://pypsa.readthedocs.io>`_ is available as well. However, since the
+workflow is modular, it should be easy to adapt the data workflow to other
+modelling frameworks.
 
 The restriction to freely available and open data encourages the open exchange
 of model data developments and eases the comparison of model results. It
@@ -153,18 +158,43 @@ to reading this documentation.
 Citing PyPSA-Eur
 ================
 
-If you use PyPSA-Eur for your research, we would appreciate it if you would cite the following paper: ::
+If you use PyPSA-Eur for your research, we would appreciate it if you would cite one of the following papers:
+
+For electricity-only studies: ::
 
     @article{PyPSAEur,
         author = "Jonas Hoersch and Fabian Hofmann and David Schlachtberger and Tom Brown",
         title = "PyPSA-Eur: An open optimisation model of the European transmission system",
         journal = "Energy Strategy Reviews",
         volume = "22",
-        pages = "207 - 215",
+        pages = "207--215",
         year = "2018",
-        issn = "2211-467X",
         doi = "10.1016/j.esr.2018.08.012",
         eprint = "1806.01613"
+    }
+
+For sector-coupling studies: ::
+
+    @misc{PyPSAEurSec,
+        author = "Fabian Neumann and Elisabeth Zeyen and Marta Victoria and Tom Brown",
+        title = "The Potential Role of a Hydrogen Network in Europe",
+        year = "2022",
+        eprint = "2207.05816",
+        url = "https://arxiv.org/abs/2207.05816",
+    }
+
+For sector-coupling studies with pathway optimisation: ::
+
+    @article{SpeedTechnological2022,
+        title = "Speed of technological transformations required in {Europe} to achieve different climate goals",
+        author = "Marta Victoria and Elisabeth Zeyen and Tom Brown",
+        journal = "Joule",
+        volume = "6",
+        number = "5",
+        pages = "1066--1086",
+        year = "2022",
+        doi = "10.1016/j.joule.2022.04.016",
+        eprint = "2109.09563",
     }
 
 
@@ -244,3 +274,4 @@ The included ``.nc`` files are PyPSA network files which can be imported with Py
    licenses
    limitations
    contributing
+   publications

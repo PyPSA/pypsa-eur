@@ -14,7 +14,6 @@ import pytz
 import yaml
 from pypsa.components import component_attrs, components
 from pypsa.descriptors import Dict
-from snakemake.utils import update_config
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
@@ -443,6 +442,8 @@ def parse(l):
 
 
 def update_config_with_sector_opts(config, sector_opts):
+    from snakemake.utils import update_config
+
     for o in sector_opts.split("-"):
         if o.startswith("CF+"):
             l = o.split("+")[1:]

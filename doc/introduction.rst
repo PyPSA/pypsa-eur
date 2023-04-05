@@ -16,6 +16,9 @@
 .. note::
     Find the introductory slides `here <https://docs.google.com/presentation/d/e/2PACX-1vQGQZD7KIVdocRZzRVu8Uk-JC_ltEow5zjtIarhyws46IMJpaqGuux695yincmJA_i5bVEibEs7z2eo/pub?start=false&loop=true&delayms=3000>`_.
 
+.. warning::
+    The video only introduces the electricity-only part of PyPSA-Eur.
+
 Workflow
 =========
 
