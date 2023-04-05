@@ -85,7 +85,7 @@ rule prepare_perfect_foresight:
         overrides="data/override_component_attrs",
     output:
         RESULTS
-        + "/prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years.nc",
+        + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years.nc",
     threads: 2
     resources:
         mem_mb=10000,
@@ -140,7 +140,7 @@ rule make_summary_perfect:
     input:
         **{
             f"networks_{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}": RESULTS
-            + f"/postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years.nc"
+            + f"postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years.nc"
             for simpl in config["scenario"]["simpl"]
             for clusters in config["scenario"]["clusters"]
             for opts in config["scenario"]["opts"]
