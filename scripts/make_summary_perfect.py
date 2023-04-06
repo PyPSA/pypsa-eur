@@ -4,39 +4,33 @@
 # SPDX-License-Identifier: MIT
 
 """
-Create summary CSV files for all scenario runs with perfect foresight
-including costs, capacities, capacity factors, curtailment, energy balances,
-prices and other metrics.
+Create summary CSV files for all scenario runs with perfect foresight including
+costs, capacities, capacity factors, curtailment, energy balances, prices and
+other metrics.
 """
 
 
-from six import iteritems
-
-import pandas as pd
-
 import numpy as np
-
+import pandas as pd
 import pypsa
-
-from pypsa.descriptors import (
-    nominal_attrs,
-    get_active_assets,
-)
-
 from _helpers import override_component_attrs
-
+from make_summary import (
+    assign_carriers,
+    assign_locations,
+    calculate_cfs,
+    calculate_nodal_cfs,
+    calculate_nodal_costs,
+)
 from prepare_sector_network import prepare_costs
-
-from make_summary import (assign_carriers, assign_locations,
-                          calculate_cfs, calculate_nodal_cfs,
-                          calculate_nodal_costs)
+from pypsa.descriptors import get_active_assets, nominal_attrs
+from six import iteritems
 
 idx = pd.IndexSlice
 
 opt_name = {"Store": "e", "Line": "s", "Transformer": "s"}
 
-def calculate_costs(n, label, costs):
 
+def calculate_costs(n, label, costs):
     investments = n.investment_periods
     cols = pd.MultiIndex.from_product(
         [
@@ -65,9 +59,7 @@ def calculate_costs(n, label, costs):
             n.investment_period_weightings["objective"]
             / n.investment_period_weightings["years"]
         )
-        capital_costs_grouped = (
-            capital_costs.groupby(c.df.carrier).sum().mul(discount)
-        )
+        capital_costs_grouped = capital_costs.groupby(c.df.carrier).sum().mul(discount)
 
         capital_costs_grouped = pd.concat([capital_costs_grouped], keys=["capital"])
         capital_costs_grouped = pd.concat([capital_costs_grouped], keys=[c.list_name])
@@ -176,7 +168,6 @@ def calculate_nodal_capacities(n, label, nodal_capacities):
 
 
 def calculate_capacities(n, label, capacities):
-
     investments = n.investment_periods
     cols = pd.MultiIndex.from_product(
         [
@@ -202,9 +193,7 @@ def calculate_capacities(n, label, capacities):
         caps = c.df[opt_name.get(c.name, "p") + "_nom_opt"]
         caps = active.mul(caps, axis=0)
         capacities_grouped = (
-            caps.groupby(c.df.carrier)
-            .sum()
-            .drop("load", errors="ignore")
+            caps.groupby(c.df.carrier).sum().drop("load", errors="ignore")
         )
         capacities_grouped = pd.concat([capacities_grouped], keys=[c.list_name])
 
@@ -218,7 +207,6 @@ def calculate_capacities(n, label, capacities):
 
 
 def calculate_curtailment(n, label, curtailment):
-
     avail = (
         n.generators_t.p_max_pu.multiply(n.generators.p_nom_opt)
         .sum()
@@ -233,9 +221,7 @@ def calculate_curtailment(n, label, curtailment):
 
 
 def calculate_energy(n, label, energy):
-
     for c in n.iterate_components(n.one_port_components | n.branch_components):
-
         if c.name in n.one_port_components:
             c_energies = (
                 c.pnl.p.multiply(n.snapshot_weightings, axis=0)
@@ -265,7 +251,10 @@ def calculate_energy(n, label, energy):
 
 
 def calculate_supply(n, label, supply):
-    """calculate the max dispatch of each component at the buses aggregated by carrier"""
+    """
+    Calculate the max dispatch of each component at the buses aggregated by
+    carrier.
+    """
 
     bus_carriers = n.buses.carrier.unique()
 
@@ -274,7 +263,6 @@ def calculate_supply(n, label, supply):
         bus_map.at[""] = False
 
         for c in n.iterate_components(n.one_port_components):
-
             items = c.df.index[c.df.bus.map(bus_map).fillna(False)]
 
             if len(items) == 0:
@@ -294,9 +282,7 @@ def calculate_supply(n, label, supply):
             supply.loc[s.index, label] = s
 
         for c in n.iterate_components(n.branch_components):
-
             for end in [col[3:] for col in c.df.columns if col[:3] == "bus"]:
-
                 items = c.df.index[c.df["bus" + end].map(bus_map).fillna(False)]
 
                 if len(items) == 0:
@@ -317,7 +303,10 @@ def calculate_supply(n, label, supply):
 
 
 def calculate_supply_energy(n, label, supply_energy):
-    """calculate the total energy supply/consuption of each component at the buses aggregated by carrier"""
+    """
+    Calculate the total energy supply/consuption of each component at the buses
+    aggregated by carrier.
+    """
 
     investments = n.investment_periods
     cols = pd.MultiIndex.from_product(
@@ -338,7 +327,6 @@ def calculate_supply_energy(n, label, supply_energy):
         bus_map.at[""] = False
 
         for c in n.iterate_components(n.one_port_components):
-
             items = c.df.index[c.df.bus.map(bus_map).fillna(False)]
 
             if len(items) == 0:
@@ -350,9 +338,11 @@ def calculate_supply_energy(n, label, supply_energy):
                 weightings = n.snapshot_weightings.stores
 
             if i in ["oil", "co2", "H2"]:
-                if c.name=="Load":
-                    c.df.loc[items, "carrier"] = [load.split("-202")[0] for load in items]
-                if i=="oil" and c.name=="Generator":
+                if c.name == "Load":
+                    c.df.loc[items, "carrier"] = [
+                        load.split("-202")[0] for load in items
+                    ]
+                if i == "oil" and c.name == "Generator":
                     c.df.loc[items, "carrier"] = "imported oil"
             s = (
                 c.pnl.p[items]
@@ -373,9 +363,7 @@ def calculate_supply_energy(n, label, supply_energy):
             supply_energy.loc[s.index, label] = s.values
 
         for c in n.iterate_components(n.branch_components):
-
             for end in [col[3:] for col in c.df.columns if col[:3] == "bus"]:
-
                 items = c.df.index[c.df["bus" + str(end)].map(bus_map).fillna(False)]
 
                 if len(items) == 0:
@@ -405,7 +393,6 @@ def calculate_supply_energy(n, label, supply_energy):
 
 
 def calculate_metrics(n, label, metrics):
-
     metrics = metrics.reindex(
         pd.Index(
             [
@@ -438,15 +425,10 @@ def calculate_metrics(n, label, metrics):
 
 
 def calculate_prices(n, label, prices):
-
     prices = prices.reindex(prices.index.union(n.buses.carrier.unique()))
 
     # WARNING: this is time-averaged, see weighted_prices for load-weighted average
-    prices[label] = (
-        n.buses_t.marginal_price.mean()
-        .groupby(n.buses.carrier)
-        .mean()
-    )
+    prices[label] = n.buses_t.marginal_price.mean().groupby(n.buses.carrier).mean()
 
     return prices
 
@@ -484,7 +466,6 @@ def calculate_weighted_prices(n, label, weighted_prices):
     }
 
     for carrier in link_loads:
-
         if carrier == "electricity":
             suffix = ""
         elif carrier[:5] == "space":
@@ -503,7 +484,6 @@ def calculate_weighted_prices(n, label, weighted_prices):
             load = n.loads_t.p_set.reindex(buses, axis=1)
 
         for tech in link_loads[carrier]:
-
             names = n.links.index[n.links.index.to_series().str[-len(tech) :] == tech]
 
             if names.empty:
@@ -585,7 +565,6 @@ def calculate_market_values(n, label, market_values):
 
 
 def calculate_price_statistics(n, label, price_statistics):
-
     price_statistics = price_statistics.reindex(
         price_statistics.index.union(
             pd.Index(["zero_hours", "mean", "standard_deviation"])
@@ -604,9 +583,7 @@ def calculate_price_statistics(n, label, price_statistics):
         df.shape[0] * df.shape[1]
     )
 
-    price_statistics.at["mean", label] = (
-        n.buses_t.marginal_price[buses].mean().mean()
-    )
+    price_statistics.at["mean", label] = n.buses_t.marginal_price[buses].mean().mean()
 
     price_statistics.at["standard_deviation", label] = (
         n.buses_t.marginal_price[buses].droplevel(0).unstack().std()
@@ -616,7 +593,6 @@ def calculate_price_statistics(n, label, price_statistics):
 
 
 def calculate_co2_emissions(n, label, df):
-
     carattr = "co2_emissions"
     emissions = n.carriers.query(f"{carattr} != 0")[carattr]
 
@@ -642,11 +618,7 @@ def calculate_co2_emissions(n, label, df):
         emitted = n.generators_t.p[gens.index].mul(em_pu)
 
         emitted_grouped = (
-            emitted.groupby(level=0)
-            .sum()
-            .groupby(n.generators.carrier, axis=1)
-            .sum()
-            .T
+            emitted.groupby(level=0).sum().groupby(n.generators.carrier, axis=1).sum().T
         )
 
         df = df.reindex(emitted_grouped.index.union(df.index))
@@ -681,7 +653,6 @@ outputs = [
 
 
 def make_summaries(networks_dict):
-
     columns = pd.MultiIndex.from_tuples(
         networks_dict.keys(), names=["cluster", "lv", "opt"]
     )
@@ -694,9 +665,7 @@ def make_summaries(networks_dict):
     for label, filename in iteritems(networks_dict):
         print(label, filename)
         try:
-            n = pypsa.Network(
-                filename, override_component_attrs=overrides
-            )
+            n = pypsa.Network(filename, override_component_attrs=overrides)
         except OSError:
             print(label, " not solved yet.")
             continue
@@ -715,32 +684,31 @@ def make_summaries(networks_dict):
 
 
 def to_csv(df):
-
     for key in df:
         df[key] = df[key].apply(lambda x: pd.to_numeric(x))
         df[key].to_csv(snakemake.output[key])
 
 
-#%%
+# %%
 if __name__ == "__main__":
     # Detect running outside of snakemake and mock snakemake for testing
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
-        snakemake = mock_snakemake('make_summary_perfect')
+
+        snakemake = mock_snakemake("make_summary_perfect")
 
     networks_dict = {
-        (clusters, lv, opts+sector_opts) :
-        "results/" + snakemake.config['run']["name"] + f'postnetworks/elec_s{simpl}_{clusters}_l{lv}_{opts}_{sector_opts}_brownfield_all_years.nc' \
-        for simpl in snakemake.config['scenario']['simpl'] \
-        for clusters in snakemake.config['scenario']['clusters'] \
-        for opts in snakemake.config['scenario']['opts'] \
-        for sector_opts in snakemake.config['scenario']['sector_opts'] \
-        for lv in snakemake.config['scenario']['ll'] \
+        (clusters, lv, opts + sector_opts): "results/"
+        + snakemake.config["run"]["name"]
+        + f"postnetworks/elec_s{simpl}_{clusters}_l{lv}_{opts}_{sector_opts}_brownfield_all_years.nc"
+        for simpl in snakemake.config["scenario"]["simpl"]
+        for clusters in snakemake.config["scenario"]["clusters"]
+        for opts in snakemake.config["scenario"]["opts"]
+        for sector_opts in snakemake.config["scenario"]["sector_opts"]
+        for lv in snakemake.config["scenario"]["ll"]
     }
 
-
     print(networks_dict)
-
 
     nyears = 1
     costs_db = prepare_costs(

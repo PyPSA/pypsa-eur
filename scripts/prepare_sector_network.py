@@ -246,12 +246,24 @@ def build_carbon_budget(o, input_eurostat, input_eea, fn, emissions_scope, repor
     countries = snakemake.config["countries"]
 
     e_1990 = co2_emissions_year(
-        countries, input_eurostat, input_eea, opts, emissions_scope, report_year, year=1990
+        countries,
+        input_eurostat,
+        input_eea,
+        opts,
+        emissions_scope,
+        report_year,
+        year=1990,
     )
 
     # emissions at the beginning of the path (last year available 2018)
     e_0 = co2_emissions_year(
-        countries, input_eurostat, input_eea, opts, emissions_scope, report_year, year=2018
+        countries,
+        input_eurostat,
+        input_eea,
+        opts,
+        emissions_scope,
+        report_year,
+        year=2018,
     )
 
     planning_horizons = snakemake.config["scenario"]["planning_horizons"]
@@ -1130,7 +1142,9 @@ def add_storage_and_grids(n, costs):
         e_cyclic=True,
         carrier="H2 Store",
         capital_cost=h2_capital_cost,
-        lifetime=costs.at["hydrogen storage tank type 1 including compressor", "lifetime"],
+        lifetime=costs.at[
+            "hydrogen storage tank type 1 including compressor", "lifetime"
+        ],
     )
 
     if options["gas_network"] or options["H2_retrofit"]:
@@ -3287,7 +3301,7 @@ if __name__ == "__main__":
 
     spatial = define_spatial(pop_layout.index, options)
 
-    if snakemake.config["foresight"] in ['myopic', 'perfect']:
+    if snakemake.config["foresight"] in ["myopic", "perfect"]:
         add_lifetime_wind_solar(n, costs)
 
         conventional = snakemake.config["existing_capacities"]["conventional_carriers"]
@@ -3369,7 +3383,12 @@ if __name__ == "__main__":
             emissions_scope = snakemake.config["energy"]["emissions"]
             report_year = snakemake.config["energy"]["eurostat_report_year"]
             build_carbon_budget(
-                o, snakemake.input.eurostat, snakemake.input.co2, fn, emissions_scope, report_year
+                o,
+                snakemake.input.eurostat,
+                snakemake.input.co2,
+                fn,
+                emissions_scope,
+                report_year,
             )
         co2_cap = pd.read_csv(fn, index_col=0).squeeze()
         limit = co2_cap.loc[investment_year]
@@ -3402,7 +3421,7 @@ if __name__ == "__main__":
     if options["electricity_grid_connection"]:
         add_electricity_grid_connection(n, costs)
 
-    first_year_multi = (snakemake.config["foresight"] in ['myopic', 'perfect']) and (
+    first_year_multi = (snakemake.config["foresight"] in ["myopic", "perfect"]) and (
         snakemake.config["scenario"]["planning_horizons"][0] == investment_year
     )
 

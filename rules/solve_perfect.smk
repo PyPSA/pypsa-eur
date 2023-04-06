@@ -172,10 +172,7 @@ rule make_summary_perfect:
     log:
         LOGS + "make_summary_perfect.log",
     benchmark:
-        (
-            BENCHMARKS
-            + "make_summary_perfect"
-        )
+        (BENCHMARKS + "make_summary_perfect")
     conda:
         "../envs/environment.yaml"
     script:

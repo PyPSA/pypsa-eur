@@ -44,7 +44,7 @@ def rename_techs(label):
         "land transport fuel cell",
         "land transport oil",
         "H2 for industry",
-        "shipping oil"
+        "shipping oil",
     ]
 
     rename_if_contains_dict = {
@@ -277,7 +277,6 @@ def plot_balances():
         i for i in balances_df.index.levels[0] if i not in co2_carriers
     ]
 
-
     for k, v in balances.items():
         df = balances_df.loc[v]
         df = df.groupby(df.index.get_level_values(2)).sum()
@@ -462,17 +461,20 @@ def plot_carbon_budget_distribution(input_eurostat, input_eea):
     plt.rcParams["xtick.labelsize"] = 20
     plt.rcParams["ytick.labelsize"] = 20
 
-
     path_cb = "results/" + snakemake.params.RDIR + "csvs/"
     countries = snakemake.config["countries"]
     emissions_scope = snakemake.config["energy"]["emissions"]
     # this only affects the estimation of CO2 emissions for BA, RS, AL, ME, MK
     report_year = snakemake.config["energy"]["eurostat_report_year"]
     e_1990 = co2_emissions_year(
-        countries, input_eurostat, input_eea, opts, emissions_scope,
-        report_year, year=1990
+        countries,
+        input_eurostat,
+        input_eea,
+        opts,
+        emissions_scope,
+        report_year,
+        year=1990,
     )
-
 
     CO2_CAP = pd.read_csv(path_cb + "carbon_budget_distribution.csv", index_col=0)
 
@@ -482,7 +484,6 @@ def plot_carbon_budget_distribution(input_eurostat, input_eea):
     ax1.set_ylabel("CO$_2$ emissions (Gt per year)", fontsize=22)
     ax1.set_ylim([0, 5])
     ax1.set_xlim([1990, snakemake.config["scenario"]["planning_horizons"][-1] + 1])
-
 
     ax1.plot(e_1990 * CO2_CAP[o], linewidth=3, color="dodgerblue", label=None)
 
@@ -560,7 +561,8 @@ def plot_carbon_budget_distribution(input_eurostat, input_eea):
     path_cb_plot = "results/" + snakemake.params.RDIR + "/graphs/"
     plt.savefig(path_cb_plot + "carbon_budget_plot.pdf", dpi=300)
 
-#%%
+
+# %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -581,5 +583,6 @@ if __name__ == "__main__":
         opts = sector_opts.split("-")
         for o in opts:
             if "cb" in o:
-                plot_carbon_budget_distribution(snakemake.input.eurostat,
-                                                snakemake.input.co2)
+                plot_carbon_budget_distribution(
+                    snakemake.input.eurostat, snakemake.input.co2
+                )
