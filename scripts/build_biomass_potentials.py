@@ -68,7 +68,6 @@ def enspreso_biomass_potentials(year=2020, scenario="ENS_Low"):
         Biomass potentials for given year and scenario
         in TWh/a by commodity and NUTS2 region.
     """
-
     glossary = pd.read_excel(
         str(snakemake.input.enspreso_biomass),
         sheet_name="Glossary",
@@ -124,7 +123,6 @@ def disaggregate_nuts0(bio):
     -------
     pd.DataFrame
     """
-
     pop = build_nuts_population_data()
 
     # get population in nuts2
@@ -149,7 +147,6 @@ def build_nuts2_shapes():
     - add RS, AL, BA country shapes (not covered in NUTS 2013)
     - consistently name ME, MK
     """
-
     nuts2 = gpd.GeoDataFrame(
         gpd.read_file(snakemake.input.nuts2).set_index("id").geometry
     )
@@ -186,7 +183,6 @@ def convert_nuts2_to_regions(bio_nuts2, regions):
     -------
     gpd.GeoDataFrame
     """
-
     # calculate area of nuts2 regions
     bio_nuts2["area_nuts2"] = area(bio_nuts2)
 
