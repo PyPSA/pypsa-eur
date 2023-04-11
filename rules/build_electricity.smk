@@ -18,19 +18,19 @@ if config["enable"].get("prepare_links_p_nom", False):
             "../scripts/prepare_links_p_nom.py"
 
 
-rule build_load_data:
+rule build_electricity_demand:
     input:
         ancient("data/load_raw.csv"),
     output:
         RESOURCES + "load.csv",
     log:
-        LOGS + "build_load_data.log",
+        LOGS + "build_electricity_demand.log",
     resources:
         mem_mb=5000,
     conda:
         "../envs/environment.yaml"
     script:
-        "../scripts/build_load_data.py"
+        "../scripts/build_electricity_demand.py"
 
 
 rule build_powerplants:
