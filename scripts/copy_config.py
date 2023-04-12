@@ -13,7 +13,7 @@ from shutil import copy
 import yaml
 
 files = {
-    "config.yaml": "config.yaml",
+    "configs/config.yaml": "config.yaml",
     "Snakefile": "Snakefile",
     "scripts/solve_network.py": "solve_network.py",
     "scripts/prepare_sector_network.py": "prepare_sector_network.py",
