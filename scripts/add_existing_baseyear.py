@@ -38,7 +38,6 @@ def add_build_year_to_new_assets(n, baseyear):
     baseyear : int
         year in which optimized assets are built
     """
-
     # Give assets with lifetimes and no build year the build year baseyear
     for c in n.iterate_components(["Link", "Generator", "Store"]):
         assets = c.df.index[(c.df.lifetime != np.inf) & (c.df.build_year == 0)]
@@ -62,7 +61,6 @@ def add_existing_renewables(df_agg):
     Append existing renewables to the df_agg pd.DataFrame with the conventional
     power plants.
     """
-
     carriers = {"solar": "solar", "onwind": "onwind", "offwind": "offwind-ac"}
 
     for tech in ["solar", "onwind", "offwind"]:

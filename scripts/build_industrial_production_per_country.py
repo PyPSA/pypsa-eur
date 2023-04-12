@@ -247,7 +247,6 @@ def separate_basic_chemicals(demand, year):
     """
     Separate basic chemicals into ammonia, chlorine, methanol and HVC.
     """
-
     ammonia = pd.read_csv(snakemake.input.ammonia_production, index_col=0)
 
     there = ammonia.index.intersection(demand.index)

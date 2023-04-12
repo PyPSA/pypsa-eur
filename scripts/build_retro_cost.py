@@ -150,7 +150,6 @@ def prepare_building_stock_data():
                        type and period
 
     """
-
     building_data = pd.read_csv(snakemake.input.building_stock, usecols=list(range(13)))
 
     # standardize data
@@ -318,7 +317,6 @@ def prepare_building_topology(u_values, same_building_topology=True):
     Reads in typical building topologies (e.g. average surface of building
     elements) and typical losses through thermal bridging and air ventilation.
     """
-
     data_tabula = pd.read_csv(
         snakemake.input.data_tabula,
         skiprows=lambda x: x in range(1, 11),
