@@ -155,7 +155,7 @@ This triggers a workflow of multiple preceding jobs that depend on each rule's i
         19[label = "build_hydro_profile", color = "0.44 0.6 0.85", style="rounded"];
         20[label = "retrieve_cost_data", color = "0.30 0.6 0.85", style="rounded"];
         21[label = "build_powerplants", color = "0.16 0.6 0.85", style="rounded"];
-        22[label = "build_load_data", color = "0.00 0.6 0.85", style="rounded"];
+        22[label = "build_electricity_demand", color = "0.00 0.6 0.85", style="rounded"];
         23[label = "retrieve_load_data", color = "0.34 0.6 0.85", style="rounded,dashed"];
         1 -> 0
         2 -> 1
@@ -232,7 +232,7 @@ In the terminal, this will show up as a list of jobs to be run:
     base_network                    1              1              1
     build_bus_regions               1              1              1
     build_hydro_profile             1              1              1
-    build_load_data                 1              1              1
+    build_electricity_demand        1              1              1
     build_powerplants               1              1              1
     build_renewable_profiles        4              1              1
     build_shapes                    1              1              1
