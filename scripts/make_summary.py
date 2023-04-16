@@ -320,7 +320,6 @@ def calculate_supply(n, label, supply):
     Calculate the max dispatch of each component at the buses aggregated by
     carrier.
     """
-
     bus_carriers = n.buses.carrier.unique()
 
     for i in bus_carriers:
@@ -372,7 +371,6 @@ def calculate_supply_energy(n, label, supply_energy):
     Calculate the total energy supply/consuption of each component at the buses
     aggregated by carrier.
     """
-
     bus_carriers = n.buses.carrier.unique()
 
     for i in bus_carriers:

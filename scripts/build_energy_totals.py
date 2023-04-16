@@ -124,7 +124,6 @@ def build_eurostat(input_eurostat, countries, report_year, year):
     """
     Return multi-index for all countries' energy data in TWh/a.
     """
-
     filenames = {
         2016: f"/{year}-Energy-Balances-June2016edition.xlsx",
         2017: f"/{year}-ENERGY-BALANCES-June2017edition.xlsx",
@@ -163,7 +162,6 @@ def build_swiss(year):
     """
     Return a pd.Series of Swiss energy data in TWh/a.
     """
-
     fn = snakemake.input.swiss
 
     df = pd.read_csv(fn, index_col=[0, 1]).loc["CH", str(year)]

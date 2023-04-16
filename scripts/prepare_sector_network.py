@@ -51,7 +51,6 @@ def define_spatial(nodes, options):
     ----------
     nodes : list-like
     """
-
     global spatial
 
     spatial.nodes = nodes
@@ -362,7 +361,6 @@ def update_wind_solar_costs(n, costs):
     Update costs for wind and solar generators added with pypsa-eur to those
     cost in the planning year.
     """
-
     # NB: solar costs are also manipulated for rooftop
     # when distribution grid is inserted
     n.generators.loc[n.generators.carrier == "solar", "capital_cost"] = costs.at[
@@ -440,7 +438,6 @@ def add_carrier_buses(n, carrier, nodes=None):
     """
     Add buses to connect e.g. coal, nuclear and oil plants.
     """
-
     if nodes is None:
         nodes = vars(spatial)[carrier].nodes
     location = vars(spatial)[carrier].locations
@@ -487,7 +484,6 @@ def remove_elec_base_techs(n):
     batteries and H2) from base electricity-only network, since they're added
     here differently using links.
     """
-
     for c in n.iterate_components(snakemake.config["pypsa_eur"]):
         to_keep = snakemake.config["pypsa_eur"][c.name]
         to_remove = pd.Index(c.df.carrier.unique()).symmetric_difference(to_keep)
