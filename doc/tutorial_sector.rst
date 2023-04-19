@@ -140,7 +140,7 @@ successfully.
         18[label = "retrieve_ship_raster", color = "0.15 0.6 0.85", style="rounded"];
         19[label = "retrieve_cost_data", color = "0.50 0.6 0.85", style="rounded"];
         20[label = "build_powerplants", color = "0.49 0.6 0.85", style="rounded"];
-        21[label = "build_load_data", color = "0.39 0.6 0.85", style="rounded"];
+        21[label = "build_electricity_demand", color = "0.39 0.6 0.85", style="rounded"];
         22[label = "retrieve_load_data", color = "0.05 0.6 0.85", style="rounded"];
         23[label = "build_gas_input_locations", color = "0.45 0.6 0.85", style="rounded"];
         24[label = "prepare_network", color = "0.31 0.6 0.85", style="rounded"];
@@ -367,7 +367,7 @@ implemented in the workflow:
         18[label = "retrieve_ship_raster", color = "0.09 0.6 0.85", style="rounded"];
         19[label = "retrieve_cost_data", color = "0.04 0.6 0.85", style="rounded"];
         20[label = "build_powerplants", color = "0.28 0.6 0.85", style="rounded"];
-        21[label = "build_load_data", color = "0.46 0.6 0.85", style="rounded"];
+        21[label = "build_electricity_demand", color = "0.46 0.6 0.85", style="rounded"];
         22[label = "retrieve_load_data", color = "0.44 0.6 0.85", style="rounded"];
         23[label = "build_energy_totals", color = "0.53 0.6 0.85", style="rounded"];
         24[label = "build_population_weighted_energy_totals", color = "0.03 0.6 0.85", style="rounded"];
