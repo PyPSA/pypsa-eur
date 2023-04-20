@@ -172,7 +172,7 @@ rule build_ship_raster:
             ],
         ),
     output:
-        RESOURCES + "shipdensity_raster.nc",
+        RESOURCES + "shipdensity_raster.tif",
     log:
         LOGS + "build_ship_raster.log",
     resources:
@@ -202,7 +202,7 @@ rule build_renewable_profiles:
             )
         ),
         ship_density=lambda w: (
-            RESOURCES + "shipdensity_raster.nc"
+            RESOURCES + "shipdensity_raster.tif"
             if "ship_threshold" in config["renewable"][w.technology].keys()
             else []
         ),
