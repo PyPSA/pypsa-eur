@@ -463,7 +463,7 @@ def add_operational_reserve_margin(n, sns, config):
 
     rhs = (p_max_pu[fix_i] * capacity_fixed).reindex(columns=gen_i, fill_value=0)
 
-    n.model.add_constraints(lhs <= rhs, name="updated_capacity_constraint")
+    n.model.add_constraints(lhs <= rhs, name="Generator-p-reserve-upper")
 
 
 def add_battery_constraints(n):
