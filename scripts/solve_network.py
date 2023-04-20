@@ -427,7 +427,9 @@ def add_operational_reserve_margin(n, sns, config):
             .loc[vres_i.intersection(ext_i)]
             .rename({"Generator-ext": "Generator"})
         )
-        lhs = summed_reserve + (p_nom_vres * (-EPSILON_VRES * capacity_factor)).sum("Generator")
+        lhs = summed_reserve + (p_nom_vres * (-EPSILON_VRES * capacity_factor)).sum(
+            "Generator"
+        )
 
     # Total demand per t
     demand = get_as_dense(n, "Load", "p_set").sum(axis=1)
@@ -444,16 +446,18 @@ def add_operational_reserve_margin(n, sns, config):
 
     # additional contraint that capacity is not exceeded
     gen_i = n.generators.index
-    ext_i = n.generators.query('p_nom_extendable').index
-    fix_i = n.generators.query('not p_nom_extendable').index
+    ext_i = n.generators.query("p_nom_extendable").index
+    fix_i = n.generators.query("not p_nom_extendable").index
 
     dispatch = n.model["Generator-p"]
     reserve = n.model["Generator-r"]
 
-    capacity_variable = n.model["Generator-p_nom"].rename({"Generator-ext": "Generator"})
+    capacity_variable = n.model["Generator-p_nom"].rename(
+        {"Generator-ext": "Generator"}
+    )
     capacity_fixed = n.generators.p_nom[fix_i]
 
-    p_max_pu = get_as_dense(n, 'Generator', 'p_max_pu')
+    p_max_pu = get_as_dense(n, "Generator", "p_max_pu")
 
     lhs = dispatch + reserve - capacity_variable * p_max_pu[ext_i]
 
