@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Copyright 2019-2022 Fabian Hofmann (TUB, FIAS)
-# SPDX-FileCopyrightText: : 2017-2022 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
@@ -64,9 +64,10 @@ if __name__ == "__main__":
     to_fn = Path(f"{rootpath}/data")
 
     logger.info(f"Downloading databundle from '{url}'.")
-    progress_retrieve(url, tarball_fn)
+    disable_progress = snakemake.config["run"].get("disable_progressbar", False)
+    progress_retrieve(url, tarball_fn, disable=disable_progress)
 
-    logger.info(f"Extracting databundle.")
+    logger.info("Extracting databundle.")
     tarfile.open(tarball_fn).extractall(to_fn)
 
     tarball_fn.unlink()

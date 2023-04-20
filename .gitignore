@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2017-2022 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: CC0-1.0
 
@@ -11,18 +11,65 @@ gurobi.log
 
 /bak
 /resources
+/resources*
 /results
 /networks
 /benchmarks
 /logs
 /notebooks
 /data
-/data/links_p_nom.csv
 /cutouts
-/dask-worker-space
 
 doc/_build
 
 config.yaml
 
 dconf
+/data/links_p_nom.csv
+/data/*totals.csv
+/data/biomass*
+/data/emobility/
+/data/eea*
+/data/jrc*
+/data/heating/
+/data/eurostat*
+/data/odyssee/
+/data/transport_data.csv
+/data/switzerland*
+/data/.nfs*
+/data/Industrial_Database.csv
+/data/retro/tabula-calculator-calcsetbuilding.csv
+/data/nuts*
+data/gas_network/scigrid-gas/
+data/costs_*.csv
+
+dask-worker-space/
+publications.jrc.ec.europa.eu/
+
+*.org
+
+*.nc
+
+*~
+/scripts/old
+
+*.pyc
+/cutouts
+/tmp
+/pypsa
+
+*.xlsx
+
+config.yaml
+
+doc/_build
+
+*.xls
+
+*.geojson
+
+*.ipynb
+
+data/costs_*
+
+merger-todos.md

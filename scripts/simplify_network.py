@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2022 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
@@ -57,18 +57,18 @@ Outputs
 
 - ``resources/regions_onshore_elec_s{simpl}.geojson``:
 
-    .. image:: ../img/regions_onshore_elec_s.png
+    .. image:: img/regions_onshore_elec_s.png
             :scale: 33 %
 
 - ``resources/regions_offshore_elec_s{simpl}.geojson``:
 
-    .. image:: ../img/regions_offshore_elec_s  .png
+    .. image:: img/regions_offshore_elec_s  .png
             :scale: 33 %
 
 - ``resources/busmap_elec_s{simpl}.csv``: Mapping of buses from ``networks/elec.nc`` to ``networks/elec_s{simpl}.nc``;
 - ``networks/elec_s{simpl}.nc``:
 
-    .. image:: ../img/elec_s.png
+    .. image:: img/elec_s.png
         :scale: 33 %
 
 Description
@@ -112,15 +112,12 @@ def simplify_network_to_380(n):
     Fix all lines to a voltage level of 380 kV and remove all transformers.
 
     The function preserves the transmission capacity for each line while
-    updating
-    its voltage level, line type and number of parallel bundles
+    updating its voltage level, line type and number of parallel bundles
     (num_parallel).
 
     Transformers are removed and connected components are moved from
-    their
-    starting bus to their ending bus. The corresponding starting buses
-    are
-    removed as well.
+    their starting bus to their ending bus. The corresponding starting
+    buses are removed as well.
     """
     logger.info("Mapping all network lines onto a single 380kV layer")
 
@@ -324,7 +321,6 @@ def simplify_links(n, costs, config, output, aggregation_strategies=dict()):
     )
 
     for lbl in labels.value_counts().loc[lambda s: s > 2].index:
-
         for b, buses, links in split_links(labels.index[labels == lbl]):
             if len(buses) <= 2:
                 continue

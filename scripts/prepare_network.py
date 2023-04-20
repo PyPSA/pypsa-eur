@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2022 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
@@ -52,7 +52,7 @@ Description
 -----------
 
 .. tip::
-    The rule :mod:`prepare_all_networks` runs
+    The rule :mod:`prepare_elec_networks` runs
     for all ``scenario`` s in the configuration file
     the rule :mod:`prepare_network`.
 """

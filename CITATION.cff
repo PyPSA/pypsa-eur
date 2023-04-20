@@ -3,20 +3,21 @@
 # SPDX-License-Identifier: CC0-1.0
 
 cff-version: 1.1.0
-message: "If you use this package, please cite the corresponding manuscript in Energy Strategy Reviews."
-title: "PyPSA-Eur: An open optimisation model of the European transmission system"
+message: "If you use this package, please cite it in the following way."
+title: "PyPSA-Eur: An open sector-coupled optimisation model of the European energy system"
 repository: https://github.com/pypsa/pypsa-eur
-version: 0.6.1
+version: 0.8.0
 license: MIT
-journal: Energy Strategy Reviews
-doi: 10.1016/j.esr.2018.08.012
 authors:
-  - family-names: Hörsch
-    given-names: Jonas
-    orcid: https://orcid.org/0000-0001-9438-767X
   - family-names: Brown
     given-names: Tom
     orcid: https://orcid.org/0000-0001-5898-1911
+  - family-names: Victoria
+    given-names: Marta
+    orcid: https://orcid.org/0000-0003-1665-1281
+  - family-names: Zeyen
+    given-names: Elisabeth
+    orcid: https://orcid.org/0000-0002-7262-3296
   - family-names: Hofmann
     given-names: Fabian
     orcid: https://orcid.org/0000-0002-6604-5450
@@ -32,3 +33,6 @@ authors:
   - family-names: Schlachtberger
     given-names: David
     orcid: https://orcid.org/0000-0002-8167-8213
+  - family-names: Hörsch
+    given-names: Jonas
+    orcid: https://orcid.org/0000-0001-9438-767X

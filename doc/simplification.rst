@@ -1,12 +1,12 @@
 
 
 ..
-  SPDX-FileCopyrightText: 2019-2022 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: 2019-2023 The PyPSA-Eur Authors
 
   SPDX-License-Identifier: CC-BY-4.0
 
 ##########################################
-Simplifying Networks
+Simplifying Electricity Networks
 ##########################################
 
 The simplification ``snakemake`` rules prepare **approximations** of the full model, for which it is computationally viable to co-optimize generation, storage and transmission capacities.
@@ -20,10 +20,31 @@ The simplification and clustering steps are described in detail in the paper
 
 After simplification and clustering of the network, additional components may be appended in the rule :mod:`add_extra_components` and the network is prepared for solving in :mod:`prepare_network`.
 
-.. toctree::
-   :caption: Overview
+.. _simplify:
 
-   simplification/simplify_network
-   simplification/cluster_network
-   simplification/add_extra_components
-   simplification/prepare_network
+Rule ``simplify_network``
+============================
+
+.. automodule:: simplify_network
+
+.. _cluster:
+
+Rule ``cluster_network``
+===========================
+
+.. automodule:: cluster_network
+
+.. _extra_components:
+
+Rule ``add_extra_components``
+=============================
+
+.. automodule:: add_extra_components
+
+
+.. _prepare:
+
+Rule ``prepare_network``
+===========================
+
+.. automodule:: prepare_network

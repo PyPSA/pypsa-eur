@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2022 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
@@ -27,7 +27,7 @@ Inputs
 
 - ``data/bundle/natura/Natura2000_end2015.shp``: `Natura 2000 <https://en.wikipedia.org/wiki/Natura_2000>`_ natural protection areas.
 
-    .. image:: ../img/natura.png
+    .. image:: img/natura.png
         :scale: 33 %
 
 Outputs
@@ -35,7 +35,7 @@ Outputs
 
 - ``resources/natura.tiff``: Rasterized version of `Natura 2000 <https://en.wikipedia.org/wiki/Natura_2000>`_ natural protection areas to reduce computation times.
 
-    .. image:: ../img/natura.png
+    .. image:: img/natura.png
         :scale: 33 %
 
 Description

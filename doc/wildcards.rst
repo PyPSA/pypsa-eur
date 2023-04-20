@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2019-2022 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: 2019-2023 The PyPSA-Eur Authors
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -15,8 +15,28 @@ which e.g. defines one particular scenario. One can think of a wildcard as a par
 up in the input/output file names of the ``Snakefile`` and thereby determines which rules to run,
 what data to retrieve and what files to produce.
 
-Detailed explanations of how wildcards work in ``snakemake`` can be found in the
-`relevant section of the documentation <https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#wildcards>`_.
+.. note::
+    Detailed explanations of how wildcards work in ``snakemake`` can be found in the
+    `relevant section of the documentation <https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#wildcards>`_.
+
+.. _cutout_wc:
+
+The ``{cutout}`` wildcard
+=========================
+
+The ``{cutout}`` wildcard facilitates running the rule :mod:`build_cutout`
+for all cutout configurations specified under ``atlite: cutouts:``.
+These cutouts will be stored in a folder specified by ``{cutout}``.
+
+.. _technology:
+
+The ``{technology}`` wildcard
+=============================
+
+The ``{technology}`` wildcard specifies for which renewable energy technology to produce availability time
+series and potentials using the rule :mod:`build_renewable_profiles`.
+It can take the values ``onwind``, ``offwind-ac``, ``offwind-dc``, and ``solar`` but **not** ``hydro``
+(since hydroelectric plant profiles are created by a different rule).
 
 .. _simpl:
 
@@ -78,10 +98,11 @@ The wildcard, in general, consists of two parts:
 The ``{opts}`` wildcard
 =======================
 
-The ``{opts}`` wildcard triggers optional constraints, which are activated in either
-:mod:`prepare_network` or the :mod:`solve_network` step.
-It may hold multiple triggers separated by ``-``, i.e. ``Co2L-3H`` contains the
-``Co2L`` trigger and the ``3H`` switch. There are currently:
+The ``{opts}`` wildcard is used for electricity-only studies. It triggers
+optional constraints, which are activated in either :mod:`prepare_network` or
+the :mod:`solve_network` step. It may hold multiple triggers separated by ``-``,
+i.e. ``Co2L-3H`` contains the ``Co2L`` trigger and the ``3H`` switch. There are
+currently:
 
 
 .. csv-table::
@@ -89,71 +110,35 @@ It may hold multiple triggers separated by ``-``, i.e. ``Co2L-3H`` contains the
    :widths: 10,20,10,10
    :file: configtables/opts.csv
 
-.. _country:
+.. _sector_opts:
 
-The ``{country}`` wildcard
-==========================
+The ``{sector_opts}`` wildcard
+==============================
 
-The rules :mod:`make_summary` and :mod:`plot_summary` (generating summaries of all or a subselection
-of the solved networks) as well as :mod:`plot_p_nom_map` (for plotting the cumulative
-generation potentials for renewable technologies) can be narrowed to
-individual countries using the ``{country}`` wildcard.
+.. warning::
+    More comprehensive documentation for this wildcard will be added soon.
 
-If ``country=all``, then the rule acts on the network for all countries
-defined in ``config.yaml``. If otherwise ``country=DE`` or another 2-letter
-country code, then the network is narrowed to buses of this country
-for the rule. For example to get a summary of the energy generated
-in Germany (in the solution for Europe) use:
+The ``{sector_opts}`` wildcard is only used for sector-coupling studies.
 
-.. code:: bash
+.. csv-table::
+   :header-rows: 1
+   :widths: 10,20,10,10
+   :file: configtables/sector-opts.csv
 
-    snakemake -j 1 results/summaries/elec_s_all_lall_Co2L-3H_DE
+.. _scope:
 
-.. _cutout_wc:
+The ``{scope}`` wildcard
+========================
 
-The ``{cutout}`` wildcard
-=========================
+Takes values ``residential``, ``urban``, ``total``.
 
-The ``{cutout}`` wildcard facilitates running the rule :mod:`build_cutout`
-for all cutout configurations specified under ``atlite: cutouts:``.
-These cutouts will be stored in a folder specified by ``{cutout}``.
+.. _planning_horizons:
 
-.. _technology:
+The ``{planning_horizons}`` wildcard
+====================================
 
-The ``{technology}`` wildcard
-=============================
+.. warning::
+    More comprehensive documentation for this wildcard will be added soon.
 
-The ``{technology}`` wildcard specifies for which renewable energy technology to produce availability time
-series and potentials using the rule :mod:`build_renewable_profiles`.
-It can take the values ``onwind``, ``offwind-ac``, ``offwind-dc``, and ``solar`` but **not** ``hydro``
-(since hydroelectric plant profiles are created by a different rule).
-
-The wildcard can moreover be used to create technology specific figures and summaries.
-For instance ``{technology}`` can be used to plot regionally disaggregated potentials
-with the rule :mod:`plot_p_nom_max`.
-
-.. _attr:
-
-The ``{attr}`` wildcard
-=======================
-
-The ``{attr}`` wildcard specifies which attribute is used for size
-representations of network components on a map plot produced by the rule
-:mod:`plot_network`. While it might be extended in the future, ``{attr}``
-currently only supports plotting of ``p_nom``.
-
-.. _ext:
-
-The ``{ext}`` wildcard
-======================
-
-The ``{ext}`` wildcard specifies the file type of the figures the
-rule :mod:`plot_network`, :mod:`plot_summary`, and :mod:`plot_p_nom_max` produce.
-Typical examples are ``pdf`` and ``png``. The list of supported file
-formats depends on the used backend. To query the supported file types on your system, issue:
-
-.. code:: python
-
-    import matplotlib.pyplot as plt
-
-    plt.gcf().canvas.get_supported_filetypes()
+The ``{planning_horizons}`` wildcard is only used for sector-coupling studies.
+It takes years as values, e.g. 2020, 2030, 2040, 2050.

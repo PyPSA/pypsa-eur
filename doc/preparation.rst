@@ -1,10 +1,10 @@
 ..
-  SPDX-FileCopyrightText: 2019-2022 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: 2019-2023 The PyPSA-Eur Authors
 
   SPDX-License-Identifier: CC-BY-4.0
 
 ##########################################
-Preparing Networks
+Building Electricity Networks
 ##########################################
 
 The preparation process of the PyPSA-Eur energy system model consists of a group of ``snakemake``
@@ -28,24 +28,99 @@ Then the process continues by calculating conventional power plant capacities, p
 
 - :mod:`build_powerplants` for today's thermal power plant capacities using `powerplantmatching <https://github.com/FRESNA/powerplantmatching>`_ allocating these to the closest substation for each powerplant,
 - :mod:`build_natura_raster` for rasterising NATURA2000 natural protection areas,
+- :mod:`build_ship_raster` for building shipping traffic density,
 - :mod:`build_renewable_profiles` for the hourly capacity factors and installation potentials constrained by land-use in each substation's Voronoi cell for PV, onshore and offshore wind, and
 - :mod:`build_hydro_profile` for the hourly per-unit hydro power availability time series.
 
 The central rule :mod:`add_electricity` then ties all the different data inputs
 together into a detailed PyPSA network stored in ``networks/elec.nc``.
 
-.. toctree::
-   :caption: Overview
+.. _busregions:
 
-   preparation/retrieve
-   preparation/build_shapes
-   preparation/build_load_data
-   preparation/build_cutout
-   preparation/build_natura_raster
-   preparation/prepare_links_p_nom
-   preparation/base_network
-   preparation/build_bus_regions
-   preparation/build_powerplants
-   preparation/build_renewable_profiles
-   preparation/build_hydro_profile
-   preparation/add_electricity
+Rule ``build_bus_regions``
+=============================
+
+.. automodule:: build_bus_regions
+
+.. _cutout:
+
+Rule ``build_cutout``
+=============================
+
+.. automodule:: build_cutout
+
+
+Rule ``prepare_links_p_nom``
+===============================
+
+.. automodule:: prepare_links_p_nom
+
+.. _natura:
+
+Rule ``build_natura_raster``
+===============================
+
+.. automodule:: build_natura_raster
+
+
+.. _base:
+
+Rule ``base_network``
+=============================
+
+.. automodule:: base_network
+
+.. _shapes:
+
+Rule ``build_shapes``
+=============================
+
+.. automodule:: build_shapes
+
+
+.. _powerplants:
+
+Rule ``build_powerplants``
+=============================
+
+.. automodule:: build_powerplants
+
+
+.. _electricity_demand:
+
+Rule ``build_electricity_demand``
+=============================
+
+
+.. automodule:: build_electricity_demand
+
+.. _ship:
+
+Rule ``build_ship_raster``
+===============================
+
+
+.. automodule:: build_ship_raster
+
+
+.. _renewableprofiles:
+
+Rule ``build_renewable_profiles``
+====================================
+
+.. automodule:: build_renewable_profiles
+
+
+.. _hydroprofiles:
+
+Rule ``build_hydro_profile``
+===============================
+
+.. automodule:: build_hydro_profile
+
+.. _electricity:
+
+Rule ``add_electricity``
+=============================
+
+.. automodule:: add_electricity

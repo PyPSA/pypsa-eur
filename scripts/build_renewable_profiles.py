@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# SPDX-FileCopyrightText: : 2017-2022 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
@@ -51,12 +51,12 @@ Inputs
 
 - ``data/bundle/corine/g250_clc06_V18_5.tif``: `CORINE Land Cover (CLC) <https://land.copernicus.eu/pan-european/corine-land-cover>`_ inventory on `44 classes <https://wiki.openstreetmap.org/wiki/Corine_Land_Cover#Tagging>`_ of land use (e.g. forests, arable land, industrial, urban areas).
 
-    .. image:: ../img/corine.png
+    .. image:: img/corine.png
         :scale: 33 %
 
 - ``data/bundle/GEBCO_2014_2D.nc``: A `bathymetric <https://en.wikipedia.org/wiki/Bathymetry>`_ data set with a global terrain model for ocean and land at 15 arc-second intervals by the `General Bathymetric Chart of the Oceans (GEBCO) <https://www.gebco.net/data_and_products/gridded_bathymetry_data/>`_.
 
-    .. image:: ../img/gebco_2019_grid_image.jpg
+    .. image:: img/gebco_2019_grid_image.jpg
         :scale: 50 %
 
     **Source:** `GEBCO <https://www.gebco.net/data_and_products/images/gebco_2019_grid_image.jpg>`_
@@ -95,31 +95,31 @@ Outputs
 
     - **profile**
 
-    .. image:: ../img/profile_ts.png
+    .. image:: img/profile_ts.png
         :scale: 33 %
         :align: center
 
     - **p_nom_max**
 
-    .. image:: ../img/p_nom_max_hist.png
+    .. image:: img/p_nom_max_hist.png
         :scale: 33 %
         :align: center
 
     - **potential**
 
-    .. image:: ../img/potential_heatmap.png
+    .. image:: img/potential_heatmap.png
         :scale: 33 %
         :align: center
 
     - **average_distance**
 
-    .. image:: ../img/distance_hist.png
+    .. image:: img/distance_hist.png
         :scale: 33 %
         :align: center
 
     - **underwater_fraction**
 
-    .. image:: ../img/underwater_hist.png
+    .. image:: img/underwater_hist.png
         :scale: 33 %
         :align: center
 
@@ -140,7 +140,7 @@ cutout grid cell and each node using the `GLAES
 <https://github.com/FZJ-IEK3-VSA/glaes>`_ library. This uses the CORINE land use data,
 Natura2000 nature reserves and GEBCO bathymetry data.
 
-.. image:: ../img/eligibility.png
+.. image:: img/eligibility.png
     :scale: 50 %
     :align: center
 
@@ -149,19 +149,19 @@ installable potential in each grid cell is multiplied with the capacity factor
 at each grid cell. This is done since we assume more generators are installed
 at cells with a higher capacity factor.
 
-.. image:: ../img/offwinddc-gridcell.png
+.. image:: img/offwinddc-gridcell.png
     :scale: 50 %
     :align: center
 
-.. image:: ../img/offwindac-gridcell.png
+.. image:: img/offwindac-gridcell.png
     :scale: 50 %
     :align: center
 
-.. image:: ../img/onwind-gridcell.png
+.. image:: img/onwind-gridcell.png
     :scale: 50 %
     :align: center
 
-.. image:: ../img/solar-gridcell.png
+.. image:: img/solar-gridcell.png
     :scale: 50 %
     :align: center
 
@@ -187,7 +187,6 @@ import time
 import atlite
 import geopandas as gpd
 import numpy as np
-import progressbar as pgb
 import xarray as xr
 from _helpers import configure_logging
 from dask.distributed import Client, LocalCluster
@@ -203,10 +202,9 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_renewable_profiles", technology="solar")
     configure_logging(snakemake)
-    pgb.streams.wrap_stderr()
 
     nprocesses = int(snakemake.threads)
-    noprogress = not snakemake.config["atlite"].get("show_progress", False)
+    noprogress = snakemake.config["run"].get("disable_progressbar", True)
     config = snakemake.config["renewable"][snakemake.wildcards.technology]
     resource = config["resource"]  # pv panel config / wind turbine config
     correction_factor = config.get("correction_factor", 1.0)
@@ -222,7 +220,7 @@ if __name__ == "__main__":
     cluster = LocalCluster(n_workers=nprocesses, threads_per_worker=1)
     client = Client(cluster, asynchronous=True)
 
-    cutout = atlite.Cutout(snakemake.input["cutout"])
+    cutout = atlite.Cutout(snakemake.input.cutout)
     regions = gpd.read_file(snakemake.input.regions)
     assert not regions.empty, (
         f"List of regions in {snakemake.input.regions} is empty, please "
@@ -258,7 +256,7 @@ if __name__ == "__main__":
             snakemake.input.ship_density, codes=func, crs=4326, allow_no_overlap=True
         )
 
-    if "max_depth" in config:
+    if config.get("max_depth"):
         # lambda not supported for atlite + multiprocessing
         # use named function np.greater with partially frozen argument instead
         # and exclude areas where: -max_depth > grid cell depth
@@ -371,3 +369,4 @@ if __name__ == "__main__":
         ds["profile"] = ds["profile"].where(ds["profile"] >= min_p_max_pu, 0)
 
     ds.to_netcdf(snakemake.output.profile)
+    client.shutdown()

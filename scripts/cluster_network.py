@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2022 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
@@ -44,19 +44,19 @@ Outputs
 
 - ``resources/regions_onshore_elec_s{simpl}_{clusters}.geojson``:
 
-    .. image:: ../img/regions_onshore_elec_s_X.png
+    .. image:: img/regions_onshore_elec_s_X.png
         :scale: 33 %
 
 - ``resources/regions_offshore_elec_s{simpl}_{clusters}.geojson``:
 
-    .. image:: ../img/regions_offshore_elec_s_X.png
+    .. image:: img/regions_offshore_elec_s_X.png
         :scale: 33 %
 
 - ``resources/busmap_elec_s{simpl}_{clusters}.csv``: Mapping of buses from ``networks/elec_s{simpl}.nc`` to ``networks/elec_s{simpl}_{clusters}.nc``;
 - ``resources/linemap_elec_s{simpl}_{clusters}.csv``: Mapping of lines from ``networks/elec_s{simpl}.nc`` to ``networks/elec_s{simpl}_{clusters}.nc``;
 - ``networks/elec_s{simpl}_{clusters}.nc``:
 
-    .. image:: ../img/elec_s_X.png
+    .. image:: img/elec_s_X.png
         :scale: 40  %
 
 Description
@@ -93,31 +93,31 @@ Description
         do not work reliably with multiple voltage levels and transformers.
 
 .. tip::
-    The rule :mod:`cluster_all_networks` runs
+    The rule :mod:`cluster_networks` runs
     for all ``scenario`` s in the configuration file
     the rule :mod:`cluster_network`.
 
 Exemplary unsolved network clustered to 512 nodes:
 
-.. image:: ../img/elec_s_512.png
+.. image:: img/elec_s_512.png
     :scale: 40  %
     :align: center
 
 Exemplary unsolved network clustered to 256 nodes:
 
-.. image:: ../img/elec_s_256.png
+.. image:: img/elec_s_256.png
     :scale: 40  %
     :align: center
 
 Exemplary unsolved network clustered to 128 nodes:
 
-.. image:: ../img/elec_s_128.png
+.. image:: img/elec_s_128.png
     :scale: 40  %
     :align: center
 
 Exemplary unsolved network clustered to 37 nodes:
 
-.. image:: ../img/elec_s_37.png
+.. image:: img/elec_s_37.png
     :scale: 40  %
     :align: center
 """
@@ -238,7 +238,6 @@ def distribute_clusters(n, n_clusters, focus_weights=None, solver_name="cbc"):
     ), f"Number of clusters must be {len(N)} <= n_clusters <= {N.sum()} for this selection of countries."
 
     if focus_weights is not None:
-
         total_focus = sum(list(focus_weights.values()))
 
         assert (
@@ -396,7 +395,6 @@ def clustering_for_n_clusters(
     extended_link_costs=0,
     focus_weights=None,
 ):
-
     bus_strategies, generator_strategies = get_aggregation_strategies(
         aggregation_strategies
     )
@@ -480,9 +478,10 @@ if __name__ == "__main__":
     aggregate_carriers = set(n.generators.carrier) - set(exclude_carriers)
     if snakemake.wildcards.clusters.endswith("m"):
         n_clusters = int(snakemake.wildcards.clusters[:-1])
-        aggregate_carriers = snakemake.config["electricity"].get(
-            "conventional_carriers"
+        conventional = set(
+            snakemake.config["electricity"].get("conventional_carriers", [])
         )
+        aggregate_carriers = conventional.intersection(aggregate_carriers)
     elif snakemake.wildcards.clusters == "all":
         n_clusters = len(n.buses)
     else:
