@@ -74,7 +74,7 @@ what data to retrieve and what files to produce. Details are explained in
 :ref:`wildcards` and :ref:`scenario`.
 
 The model also has several further configuration options collected in the
-``config.yaml`` file located in the root directory, which that are not part of
+``config/config.yaml`` file located in the root directory, which that are not part of
 the scenarios. Options are explained in :ref:`config`.
 
 Folder Structure

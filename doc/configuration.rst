@@ -9,14 +9,14 @@
 Configuration
 ##########################################
 
-PyPSA-Eur has several configuration options which are documented in this section and are collected in a ``config.yaml`` file located in the root directory. Users should copy the provided default configuration (``config.default.yaml``) and amend their own modifications and assumptions in the user-specific configuration file (``config.yaml``); confer installation instructions at :ref:`defaultconfig`.
+PyPSA-Eur has several configuration options which are documented in this section and are collected in a ``config/config.yaml`` file located in the root directory. Users should copy the provided default configuration (``config/config.default.yaml``) and amend their own modifications and assumptions in the user-specific configuration file (``config/config.yaml``); confer installation instructions at :ref:`defaultconfig`.
 
 .. _toplevel_cf:
 
 Top-level configuration
 =======================
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :lines: 5-11,18-19,62,80-90
 
@@ -37,7 +37,7 @@ investment changes as more ambitious greenhouse-gas emission reduction targets a
 
 The ``run`` section is used for running and storing scenarios with different configurations which are not covered by :ref:`wildcards`. It determines the path at which resources, networks and results are stored. Therefore the user can run different configurations within the same directory. If a run with a non-empty name should use cutouts shared across runs, set ``shared_cutouts`` to `true`.
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: run:
    :end-before: foresight:
@@ -76,7 +76,7 @@ An exemplary dependency graph (starting from the simplification rules) then look
 
 .. image:: img/scenarios.png
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: scenario:
    :end-before: countries:
@@ -93,7 +93,7 @@ An exemplary dependency graph (starting from the simplification rules) then look
 
 Specifies the temporal range to build an energy system model for as arguments to `pandas.date_range <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.date_range.html>`_
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: snapshots:
    :end-before: enable:
@@ -110,7 +110,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 Switches for some rules and optional features.
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: enable:
    :end-before: co2_budget:
@@ -125,7 +125,7 @@ Switches for some rules and optional features.
 ``electricity``
 ===============
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: electricity:
    :end-before: atlite:
@@ -142,7 +142,7 @@ Switches for some rules and optional features.
 
 Define and specify the ``atlite.Cutout`` used for calculating renewable potentials and time-series. All options except for ``features`` are directly used as `cutout parameters <https://atlite.readthedocs.io/en/latest/ref_api.html#cutout>`_.
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: atlite:
    :end-before: renewable:
@@ -160,7 +160,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 ``onwind``
 ----------
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: renewable:
    :end-before:   offwind-ac:
@@ -173,7 +173,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 ``offwind-ac``
 --------------
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at:   offwind-ac:
    :end-before:   offwind-dc:
@@ -186,7 +186,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 ``offwind-dc``
 ---------------
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at:   offwind-dc:
    :end-before:   solar:
@@ -199,7 +199,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 ``solar``
 ---------------
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at:   solar:
    :end-before:   hydro:
@@ -212,7 +212,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 ``hydro``
 ---------------
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at:   hydro:
    :end-before: conventional:
@@ -234,7 +234,7 @@ with country specific values. Then, the values are read in and applied to all
 generators of the given carrier in the given country. Note that the value(s)
 overwrite the existing values.
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at:   conventional:
    :end-before: lines:
@@ -247,7 +247,7 @@ overwrite the existing values.
 ``lines``
 =============
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: lines:
    :end-before: links:
@@ -262,7 +262,7 @@ overwrite the existing values.
 ``links``
 =============
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: links:
    :end-before: transformers:
@@ -277,7 +277,7 @@ overwrite the existing values.
 ``transformers``
 ================
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: transformers:
    :end-before: load:
@@ -292,7 +292,7 @@ overwrite the existing values.
 ``load``
 =============
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-after:   type:
    :end-at:   scaling_factor:
@@ -307,7 +307,7 @@ overwrite the existing values.
 ``costs``
 =============
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: costs:
    :end-before: clustering:
@@ -323,7 +323,7 @@ overwrite the existing values.
 ``clustering``
 ==============
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: clustering:
    :end-before: solving:
@@ -345,7 +345,7 @@ overwrite the existing values.
 .. warning::
    More comprehensive documentation for this segment will be released soon.
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: energy:
    :end-before: biomass:
@@ -362,7 +362,7 @@ overwrite the existing values.
 .. warning::
    More comprehensive documentation for this segment will be released soon.
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: biomass:
    :end-before: solar_thermal:
@@ -378,7 +378,7 @@ overwrite the existing values.
 .. warning::
    More comprehensive documentation for this segment will be released soon.
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: solar_thermal:
    :end-before: existing_capacities:
@@ -394,7 +394,7 @@ overwrite the existing values.
 .. warning::
    More comprehensive documentation for this segment will be released soon.
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: existing_capacities:
    :end-before: sector:
@@ -410,7 +410,7 @@ overwrite the existing values.
 .. warning::
    More comprehensive documentation for this segment will be released soon.
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: sector:
    :end-before: industry:
@@ -426,7 +426,7 @@ overwrite the existing values.
 .. warning::
    More comprehensive documentation for this segment will be released soon.
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: industry:
    :end-before: costs:
@@ -436,7 +436,7 @@ overwrite the existing values.
 ``solving``
 =============
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: solving:
    :end-before: plotting:
@@ -459,7 +459,7 @@ overwrite the existing values.
 .. warning::
    More comprehensive documentation for this segment will be released soon.
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: plotting:
 

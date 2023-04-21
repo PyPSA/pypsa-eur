@@ -42,7 +42,7 @@ The :ref:`tutorial` uses a smaller cutout than required for the full model (30 M
         build_cutout:
 
 .. seealso::
-    Documentation of the configuration file ``config.yaml`` at
+    Documentation of the configuration file ``config/config.yaml`` at
     :ref:`toplevel_cf`
 
 **Outputs**
@@ -69,7 +69,7 @@ This rule, as a substitute for :mod:`build_natura_raster`, downloads an already 
         build_natura_raster:
 
 .. seealso::
-    Documentation of the configuration file ``config.yaml`` at
+    Documentation of the configuration file ``config/config.yaml`` at
     :ref:`toplevel_cf`
 
 **Outputs**
@@ -111,7 +111,7 @@ This rule downloads techno-economic assumptions from the `technology-data reposi
         version:
 
 .. seealso::
-    Documentation of the configuration file ``config.yaml`` at
+    Documentation of the configuration file ``config/config.yaml`` at
     :ref:`costs_cf`
 
 **Outputs**

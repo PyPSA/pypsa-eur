@@ -25,7 +25,7 @@ Relevant Settings
 
 
 .. seealso::
-    Documentation of the configuration file ``config.yaml`` at
+    Documentation of the configuration file ``config/config.yaml`` at
     :ref:`load_cf`
 
 Inputs

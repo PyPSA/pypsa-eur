@@ -10,6 +10,9 @@ Release Notes
 Upcoming Release
 ================
 
+
+* **Important:** The configuration files are now located in the ``config`` directory. This counts for ``config.default.yaml``, ``config.yaml`` as well as the test configuration files which are now located in ``config/test``. Config files that are still in the root directory will be ignored.
+
 * Bugfix: Correct typo in the CPLEX solver configuration in ``config.default.yaml``.
 
 * Renamed script file from PyPSA-EUR ``build_load_data`` to ``build_electricity_demand``.
@@ -339,7 +342,7 @@ PyPSA-Eur 0.5.0 (27th July 2022)
 * Network building is made deterministic by supplying a fixed random state to
   network clustering routines.
 
-* Clustering strategies for generator and bus attributes can now be specified directly in the ``config.yaml``.
+* Clustering strategies for generator and bus attributes can now be specified directly in the ``config/config.yaml``.
 
 * Iterative solving with impedance updates is skipped if there are no expandable
   lines.

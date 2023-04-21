@@ -26,7 +26,7 @@ local machine. The tutorial will cover examples on how to configure and
 customise the PyPSA-Eur model and run the ``snakemake`` workflow step by step
 from network creation to the solved network. The configuration for the tutorial
 is located at ``test/config.electricity.yaml``. It includes parts deviating from
-the default config file ``config.default.yaml``. To run the tutorial with this
+the default config file ``config/config.default.yaml``. To run the tutorial with this
 configuration, execute
 
 .. code:: bash
@@ -282,7 +282,7 @@ For example, you can explore the evolution of the PyPSA networks by running
 #. ``snakemake resources/networks/elec_s_6.nc -call --configfile test/config.electricity.yaml``
 #. ``snakemake resources/networks/elec_s_6_ec_lcopt_Co2L-24H.nc -call --configfile test/config.electricity.yaml``
 
-To run all combinations of wildcard values provided in the ``config.yaml`` under ``scenario:``,
+To run all combinations of wildcard values provided in the ``config/config.yaml`` under ``scenario:``,
 you can use the collection rule ``solve_elec_networks``.
 
 .. code:: bash
@@ -290,7 +290,7 @@ you can use the collection rule ``solve_elec_networks``.
     snakemake -call solve_elec_networks --configfile test/config.electricity.yaml
 
 If you now feel confident and want to tackle runs with larger temporal and
-spatial scope, clean-up the repository and after modifying the ``config.yaml`` file
+spatial scope, clean-up the repository and after modifying the ``config/config.yaml`` file
 target the collection rule ``solve_elec_networks`` again without providing the test
 configuration file.
 

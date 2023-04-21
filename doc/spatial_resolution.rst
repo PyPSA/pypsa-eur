@@ -11,7 +11,7 @@ Spatial resolution
 
 The default nodal resolution of the model follows the electricity generation and transmission model `PyPSA-Eur <https://github.com/PyPSA/pypsa-eur>`_, which clusters down the electricity transmission substations in each European country based on the k-means algorithm (See `cluster_network <https://pypsa-eur.readthedocs.io/en/latest/simplification/cluster_network.html#rule-cluster-network>`_ for a complete explanation). This gives nodes which correspond to major load and generation centres (typically cities).
 
-The total number of nodes for Europe is set in the ``config.yaml`` file under ``clusters``. The number of nodes can vary between 37, the number of independent countries / synchronous areas, and several hundred. With 200-300 nodes the model needs 100-150 GB RAM to solve with a commercial solver like Gurobi.
+The total number of nodes for Europe is set in the ``config/config.yaml`` file under ``clusters``. The number of nodes can vary between 37, the number of independent countries / synchronous areas, and several hundred. With 200-300 nodes the model needs 100-150 GB RAM to solve with a commercial solver like Gurobi.
 
 Exemplary unsolved network clustered to 512 nodes:
 
@@ -21,7 +21,7 @@ Exemplary unsolved network clustered to 37 nodes:
 
 .. image:: ../graphics/elec_s_37.png
 
-The total number of nodes for Europe is set in the config.yaml file under `clusters <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L20>`_.  The number of nodes can vary between 37, the number of independent countries/synchronous areas, and several hundred. With 200-300 nodes, the model needs 100-150 GB RAM to solve with a commercial solver like Gurobi.
+The total number of nodes for Europe is set in the ``config/config.yaml`` file under `clusters <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L20>`_.  The number of nodes can vary between 37, the number of independent countries/synchronous areas, and several hundred. With 200-300 nodes, the model needs 100-150 GB RAM to solve with a commercial solver like Gurobi.
 Not all of the sectors are at the full nodal resolution, and some demand for some sectors is distributed to nodes using heuristics that need to be corrected. Some networks are copper-plated to reduce computational times.
 
 Here are some examples of how spatial resolution is set for different sectors in PyPSA-Eur-Sec:
