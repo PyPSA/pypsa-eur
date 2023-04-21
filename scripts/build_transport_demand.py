@@ -2,7 +2,6 @@
 # SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
-
 """
 Build land transport demand per clustered model region including efficiency
 improvements due to drivetrain changes, time series for electric vehicle

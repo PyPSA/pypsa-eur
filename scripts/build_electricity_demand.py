@@ -2,7 +2,6 @@
 # SPDX-FileCopyrightText: : 2020 @JanFrederickUnnewehr, The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
-
 """
 This rule downloads the load data from `Open Power System Data Time series.
 

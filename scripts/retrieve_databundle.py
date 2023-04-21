@@ -3,7 +3,6 @@
 # SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
-
 """
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3517935.svg
    :target: https://doi.org/10.5281/zenodo.3517935
