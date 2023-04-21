@@ -29,7 +29,7 @@ Overnight Scenarios
 Configuration
 -------------
 
-The default configuration file (``config.default.yaml``) is set up for running
+The default configuration file (``config/config.default.yaml``) is set up for running
 overnight scenarios. Running a sector-coupled model unlocks many further
 configuration options. In the example below, we say that the gas network should
 be added and spatially resolved. We also say that the existing gas network may
@@ -513,7 +513,7 @@ Scaling-Up
 ==========
 
 If you now feel confident and want to tackle runs with larger temporal, technological and
-spatial scope, clean-up the repository and after modifying the ``config.yaml`` file
+spatial scope, clean-up the repository and after modifying the ``config/config.yaml`` file
 target the collection rule ``all`` again without providing the test
 configuration file.
 

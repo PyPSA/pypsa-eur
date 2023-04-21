@@ -41,7 +41,7 @@ Relevant Settings
         length_factor:
 
 .. seealso::
-    Documentation of the configuration file ``config.yaml`` at :ref:`costs_cf`,
+    Documentation of the configuration file ``config/config.yaml`` at :ref:`costs_cf`,
     :ref:`electricity_cf`, :ref:`load_cf`, :ref:`renewable_cf`, :ref:`lines_cf`
 
 Inputs

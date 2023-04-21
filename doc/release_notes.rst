@@ -339,7 +339,7 @@ PyPSA-Eur 0.5.0 (27th July 2022)
 * Network building is made deterministic by supplying a fixed random state to
   network clustering routines.
 
-* Clustering strategies for generator and bus attributes can now be specified directly in the ``config.yaml``.
+* Clustering strategies for generator and bus attributes can now be specified directly in the ``config/config.yaml``.
 
 * Iterative solving with impedance updates is skipped if there are no expandable
   lines.

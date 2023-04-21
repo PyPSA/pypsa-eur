@@ -21,7 +21,7 @@ Relevant Settings
       custom_powerplants:
 
 .. seealso::
-    Documentation of the configuration file ``config.yaml`` at
+    Documentation of the configuration file ``config/config.yaml`` at
     :ref:`electricity`
 
 Inputs

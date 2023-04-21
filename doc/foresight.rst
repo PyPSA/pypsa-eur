@@ -28,7 +28,7 @@ It does not affect the year for cost and technology assumptions, which is set se
   costs:
     year: 2030
 
-For running overnight scenarios, use in the ``config.yaml``:
+For running overnight scenarios, use in the ``config/config.yaml``:
 
 .. code:: yaml
 
@@ -44,7 +44,7 @@ Perfect foresight scenarios
   Perfect foresight is currently under development and not yet implemented.
 
 For running perfect foresight scenarios, in future versions you will be able to
-set in the ``config.yaml``:
+set in the ``config/config.yaml``:
 
 .. code:: yaml
 
@@ -94,13 +94,13 @@ evolve with the myopic approach:
 Configuration
 --------------
 
-For running myopic foresight transition scenarios, set in ``config.yaml``:
+For running myopic foresight transition scenarios, set in ``config/config.yaml``:
 
 .. code:: yaml
 
   foresight: myopic
 
-The following options included in the config.yaml file  are relevant for the
+The following options included in the ``config/config.yaml`` file  are relevant for the
 myopic code.
 
 The ``{planning_horizons}`` wildcard indicates the year in which the network is
@@ -163,7 +163,7 @@ Options
 The total carbon budget for the entire transition path can be indicated in the
 `sector_opts
 <https://github.com/PyPSA/pypsa-eur-sec/blob/f13902510010b734c510c38c4cae99356f683058/config.default.yaml#L25>`_
-in ``config.yaml``. The carbon budget can be split among the
+in ``config/config.yaml``. The carbon budget can be split among the
 ``planning_horizons`` following an exponential or beta decay. E.g. ``'cb40ex0'``
 splits a carbon budget equal to 40 Gt :math:`_{CO_2}` following an exponential
 decay whose initial linear growth rate r is zero. They can also follow some
@@ -218,7 +218,7 @@ add_brownfield for the remaining planning_horizons.
    ``results/run_name/networks/prenetworks-brownfield``.
 
 Steps 2 and 3 are solved recursively for all the planning_horizons included in
-``config.yaml``.
+``config/config.yaml``.
 
 Rule overview
 --------------
