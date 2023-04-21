@@ -14,11 +14,11 @@ from snakemake.utils import min_version
 min_version("7.7")
 
 
-if not exists("configs/config.yaml"):
-    copyfile("configs/config.default.yaml", "configs/config.yaml")
+if not exists("config/config.yaml"):
+    copyfile("config/config.default.yaml", "config/config.yaml")
 
 
-configfile: "configs/config.yaml"
+configfile: "config/config.yaml"
 
 
 COSTS = f"data/costs_{config['costs']['year']}.csv"
