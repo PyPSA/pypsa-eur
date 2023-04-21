@@ -2,7 +2,6 @@
 # SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
-
 """
 Solves optimal operation and capacity for a network with the option to
 iteratively optimize while updating line reactances.
@@ -444,7 +443,7 @@ def add_operational_reserve_margin(n, sns, config):
 
     n.model.add_constraints(lhs >= rhs, name="reserve_margin")
 
-    # additional contraint that capacity is not exceeded
+    # additional constraint that capacity is not exceeded
     gen_i = n.generators.index
     ext_i = n.generators.query("p_nom_extendable").index
     fix_i = n.generators.query("not p_nom_extendable").index

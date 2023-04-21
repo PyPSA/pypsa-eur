@@ -2,7 +2,6 @@
 # SPDX-FileCopyrightText: : 2022 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
-
 """
 Transforms the global ship density data from the `World Bank Data Catalogue.
 

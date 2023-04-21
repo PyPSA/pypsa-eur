@@ -3,7 +3,6 @@
 # SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
-
 """
 This script calculates the space heating savings through better insulation of
 the thermal envelope of a building and corresponding costs for different
