@@ -10,6 +10,9 @@ Release Notes
 Upcoming Release
 ================
 
+
+* **Important:** The configuration files are now located in the ``config`` directory. This counts for ``config.default.yaml``, ``config.yaml`` as well as the test configuration files which are now located in ``config/test``. Config files that are still in the root directory will be ignored.
+
 * Bugfix: Correct typo in the CPLEX solver configuration in ``config.default.yaml``.
 
 * Renamed script file from PyPSA-EUR ``build_load_data`` to ``build_electricity_demand``.
