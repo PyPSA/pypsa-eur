@@ -197,7 +197,7 @@ def convert_nuts2_to_regions(bio_nuts2, regions):
     )
     overlay[adjust_cols] = overlay[adjust_cols].multiply(overlay["share"], axis=0)
 
-    bio_regions = overlay.groupby("name").sum()
+    bio_regions = overlay.dissolve("name", aggfunc="sum")
 
     bio_regions.drop(["area_nuts2", "share"], axis=1, inplace=True)
 
