@@ -4,7 +4,6 @@
 # SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
-
 """
 Build hydroelectric inflow time-series for each country.
 

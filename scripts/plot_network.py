@@ -2,7 +2,6 @@
 # SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
-
 """
 Creates plots for optimised network topologies, including electricity, gas and
 hydrogen networks, and regional generation, storage and conversion capacities

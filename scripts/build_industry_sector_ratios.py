@@ -2,7 +2,6 @@
 # SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
-
 """
 Build specific energy consumption by carrier and industries.
 """

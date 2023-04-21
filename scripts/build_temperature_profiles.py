@@ -2,7 +2,6 @@
 # SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
-
 """
 Build time series for air and soil temperatures per clustered model region.
 """

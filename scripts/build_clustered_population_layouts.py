@@ -2,7 +2,6 @@
 # SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
-
 """
 Build population layouts for all clustered model regions as total as well as
 split by urban and rural population.

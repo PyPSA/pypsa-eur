@@ -2,7 +2,6 @@
 # SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
-
 """
 Preprocess gas network based on data from bthe SciGRID_gas project
 (https://www.gas.scigrid.de/).

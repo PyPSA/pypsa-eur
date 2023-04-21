@@ -2,7 +2,6 @@
 # SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
-
 """
 Solves linear optimal dispatch in hourly resolution using the capacities of
 previous capacity expansion in rule :mod:`solve_network`.

@@ -12,6 +12,8 @@ Upcoming Release
 
 * Bugfix: Correct typo in the CPLEX solver configuration in ``config.default.yaml``.
 
+* Renamed script file from PyPSA-EUR ``build_load_data`` to ``build_electricity_demand``.
+
 PyPSA-Eur 0.8.0 (18th March 2023)
 =================================
 
@@ -558,7 +560,7 @@ More OPSD integration:
   This will overwrite the capacities calculated from the heuristic approach in :func:`estimate_renewable_capacities()`
   [`#212 <https://github.com/PyPSA/pypsa-eur/pull/212>`_].
 
-* Electricity consumption data is now retrieved directly from the `OPSD website <https://data.open-power-system-data.org/time_series/2019-06-05>`_ using the rule :mod:`build_load_data`.
+* Electricity consumption data is now retrieved directly from the `OPSD website <https://data.open-power-system-data.org/time_series/2019-06-05>`_ using the rule :mod:`build_electricity_demand`.
   The user can decide whether to take the ENTSO-E power statistics data (default) or the ENTSO-E transparency data
   [`#211 <https://github.com/PyPSA/pypsa-eur/pull/211>`_].
 

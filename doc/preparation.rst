@@ -86,13 +86,13 @@ Rule ``build_powerplants``
 .. automodule:: build_powerplants
 
 
-.. _load_data:
+.. _electricity_demand:
 
-Rule ``build_load_data``
+Rule ``build_electricity_demand``
 =============================
 
 
-.. automodule:: build_load_data
+.. automodule:: build_electricity_demand
 
 .. _ship:
 

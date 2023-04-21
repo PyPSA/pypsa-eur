@@ -2,7 +2,6 @@
 # SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
-
 """
 Solves optimal operation and capacity for a network with the option to
 iteratively optimize while updating line reactances.
@@ -43,6 +42,7 @@ from vresutils.benchmark import memory_logger
 
 logger = logging.getLogger(__name__)
 pypsa.pf.logger.setLevel(logging.WARNING)
+from pypsa.descriptors import get_switchable_as_dense as get_as_dense
 
 
 def add_land_use_constraint(n, config):
@@ -414,7 +414,7 @@ def add_operational_reserve_margin(n, sns, config):
         0, np.inf, coords=[sns, n.generators.index], name="Generator-r"
     )
     reserve = n.model["Generator-r"]
-    lhs = reserve.sum("Generator")
+    summed_reserve = reserve.sum("Generator")
 
     # Share of extendable renewable capacities
     ext_i = n.generators.query("p_nom_extendable").index
@@ -426,10 +426,12 @@ def add_operational_reserve_margin(n, sns, config):
             .loc[vres_i.intersection(ext_i)]
             .rename({"Generator-ext": "Generator"})
         )
-        lhs = lhs + (p_nom_vres * (-EPSILON_VRES * capacity_factor)).sum()
+        lhs = summed_reserve + (p_nom_vres * (-EPSILON_VRES * capacity_factor)).sum(
+            "Generator"
+        )
 
     # Total demand per t
-    demand = n.loads_t.p_set.sum(axis=1)
+    demand = get_as_dense(n, "Load", "p_set").sum(axis=1)
 
     # VRES potential of non extendable generators
     capacity_factor = n.generators_t.p_max_pu[vres_i.difference(ext_i)]
@@ -441,17 +443,26 @@ def add_operational_reserve_margin(n, sns, config):
 
     n.model.add_constraints(lhs >= rhs, name="reserve_margin")
 
+    # additional constraint that capacity is not exceeded
+    gen_i = n.generators.index
+    ext_i = n.generators.query("p_nom_extendable").index
+    fix_i = n.generators.query("not p_nom_extendable").index
+
+    dispatch = n.model["Generator-p"]
     reserve = n.model["Generator-r"]
 
-    lhs = n.model.constraints["Generator-fix-p-upper"].lhs
-    lhs = lhs + reserve.loc[:, lhs.coords["Generator-fix"]].drop("Generator")
-    rhs = n.model.constraints["Generator-fix-p-upper"].rhs
-    n.model.add_constraints(lhs <= rhs, name="Generator-fix-p-upper-reserve")
+    capacity_variable = n.model["Generator-p_nom"].rename(
+        {"Generator-ext": "Generator"}
+    )
+    capacity_fixed = n.generators.p_nom[fix_i]
 
-    lhs = n.model.constraints["Generator-ext-p-upper"].lhs
-    lhs = lhs + reserve.loc[:, lhs.coords["Generator-ext"]].drop("Generator")
-    rhs = n.model.constraints["Generator-ext-p-upper"].rhs
-    n.model.add_constraints(lhs >= rhs, name="Generator-ext-p-upper-reserve")
+    p_max_pu = get_as_dense(n, "Generator", "p_max_pu")
+
+    lhs = dispatch + reserve - capacity_variable * p_max_pu[ext_i]
+
+    rhs = (p_max_pu[fix_i] * capacity_fixed).reindex(columns=gen_i, fill_value=0)
+
+    n.model.add_constraints(lhs <= rhs, name="Generator-p-reserve-upper")
 
 
 def add_battery_constraints(n):
