@@ -1068,7 +1068,6 @@ def add_storage_and_grids(n, costs):
     )
 
     if options["hydrogen_fuel_cell"]:
-
         logger.info("Adding hydrogen fuel cell for re-electrification.")
 
         n.madd(
@@ -1085,7 +1084,6 @@ def add_storage_and_grids(n, costs):
         )
 
     if options["hydrogen_turbine"]:
-
         logger.info("Adding hydrogen turbine for re-electrification.")
 
         n.madd(
