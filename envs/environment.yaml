@@ -26,7 +26,7 @@ dependencies:
 - lxml
 - powerplantmatching>=0.5.5
 - numpy<1.24
-- pandas>=1.4
+- pandas>=2.0
 - geopandas>=0.11.0
 - xarray
 - rioxarray

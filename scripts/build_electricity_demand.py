@@ -80,11 +80,8 @@ def load_timeseries(fn, years, countries, powerstatistics=True):
     def rename(s):
         return s[: -len(pattern)]
 
-    def date_parser(x):
-        return dateutil.parser.parse(x, ignoretz=True)
-
     return (
-        pd.read_csv(fn, index_col=0, parse_dates=[0], date_parser=date_parser)
+        pd.read_csv(fn, index_col=0, parse_dates=[0], date_format="%Y-%m-%dT%H:%M:%SZ")
         .filter(like=pattern)
         .rename(columns=rename)
         .dropna(how="all", axis=0)
