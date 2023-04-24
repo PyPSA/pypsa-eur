@@ -17,7 +17,7 @@ Upcoming Release
 
 * Renamed script file from PyPSA-EUR ``build_load_data`` to ``build_electricity_demand``.
 
-* Adressed deprecation warnings for ``pandas=2.0``. ``pandas=2.0`` is now minimum requirement.
+* Addressed deprecation warnings for ``pandas=2.0``. ``pandas=2.0`` is now minimum requirement.
 
 PyPSA-Eur 0.8.0 (18th March 2023)
 =================================
