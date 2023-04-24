@@ -151,7 +151,8 @@ def prepare_network(n, solve_opts=None, config=None):
         ):
             df.where(df > solve_opts["clip_p_max_pu"], other=0.0, inplace=True)
 
-    if solve_opts.get("load_shedding"):
+    load_shedding = solve_opts.get("load_shedding")
+    if load_shedding:
         # intersect between macroeconomic and surveybased willingness to pay
         # http://journal.frontiersin.org/article/10.3389/fenrg.2015.00055/full
         # TODO: retrieve color and nice name from config
