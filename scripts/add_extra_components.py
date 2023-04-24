@@ -119,6 +119,8 @@ def attach_stores(n, costs, elec_opts):
             e_cyclic=True,
             capital_cost=costs.at["hydrogen storage underground", "capital_cost"],
         )
+        
+        n.madd("Carrier",["H2 electrolysis","H2 fuel cell"])
 
         n.madd(
             "Link",
@@ -161,6 +163,8 @@ def attach_stores(n, costs, elec_opts):
             capital_cost=costs.at["battery storage", "capital_cost"],
             marginal_cost=costs.at["battery", "marginal_cost"],
         )
+        
+        n.madd("Carrier",["battery charger","battery discharger"])
 
         n.madd(
             "Link",
@@ -213,6 +217,8 @@ def attach_hydrogen_pipelines(n, costs, elec_opts):
     h2_links.index = h2_links.apply(lambda c: f"H2 pipeline {c.bus0}-{c.bus1}", axis=1)
 
     # add pipelines
+    n.add("Carrier","H2 pipeline")
+    
     n.madd(
         "Link",
         h2_links.index,
