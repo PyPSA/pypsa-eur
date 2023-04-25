@@ -23,6 +23,7 @@ import pypsa
 import xarray as xr
 from _helpers import override_component_attrs, update_config_with_sector_opts
 from prepare_sector_network import cluster_heat_buses, define_spatial, prepare_costs
+from add_electricity import add_missing_carrier
 
 cc = coco.CountryConverter()
 
@@ -666,5 +667,7 @@ if __name__ == "__main__":
         cluster_heat_buses(n)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
+    
+    add_missing_carrier(n)
 
     n.export_to_netcdf(snakemake.output[0])
