@@ -143,7 +143,7 @@ if config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]:
 rule retrieve_load_data:
     input:
         HTTP.remote(
-            "data.open-power-system-data.org/time_series/2019-06-05/time_series_60min_singleindex.csv",
+            "data.open-power-system-data.org/time_series/latest/time_series_60min_singleindex.csv",
             keep_local=True,
             static=True,
         ),
