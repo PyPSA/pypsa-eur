@@ -2,7 +2,6 @@
 # SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
-
 """
 Create cutouts with `atlite <https://atlite.readthedocs.io/en/latest/>`_.
 
@@ -26,7 +25,7 @@ Relevant Settings
             {cutout}:
 
 .. seealso::
-    Documentation of the configuration file ``config.yaml`` at
+    Documentation of the configuration file ``config/config.yaml`` at
     :ref:`atlite_cf`
 
 Inputs
@@ -78,13 +77,13 @@ Outputs
     wnd100m              time, y, x  ms**-1      Wind speeds at 100 meters (regardless of direction)
     ===================  ==========  ==========  =========================================================
 
-    .. image:: ../img/era5.png
+    .. image:: img/era5.png
         :scale: 40 %
 
 A **SARAH-2 cutout** can be used to amend the fields ``temperature``, ``influx_toa``, ``influx_direct``, ``albedo``,
 ``influx_diffuse`` of ERA5 using satellite-based radiation observations.
 
-    .. image:: ../img/sarah.png
+    .. image:: img/sarah.png
         :scale: 40 %
 
 Description

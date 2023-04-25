@@ -4,7 +4,6 @@
 # SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
-
 """
 Build hydroelectric inflow time-series for each country.
 
@@ -21,7 +20,7 @@ Relevant Settings
             clip_min_inflow:
 
 .. seealso::
-    Documentation of the configuration file ``config.yaml`` at
+    Documentation of the configuration file ``config/config.yaml`` at
     :ref:`toplevel_cf`, :ref:`renewable_cf`
 
 Inputs
@@ -29,7 +28,7 @@ Inputs
 
 - ``data/bundle/EIA_hydro_generation_2000_2014.csv``: Hydroelectricity net generation per country and year (`EIA <https://www.eia.gov/beta/international/data/browser/#/?pa=000000000000000000000000000000g&c=1028i008006gg6168g80a4k000e0ag00gg0004g800ho00g8&ct=0&ug=8&tl_id=2-A&vs=INTL.33-12-ALB-BKWH.A&cy=2014&vo=0&v=H&start=2000&end=2016>`_)
 
-    .. image:: ../img/hydrogeneration.png
+    .. image:: img/hydrogeneration.png
         :scale: 33 %
 
 - ``resources/country_shapes.geojson``: confer :ref:`shapes`
@@ -47,10 +46,10 @@ Outputs
                                            e.g. due to river inflow in hydro reservoir.
     ===================  ================  =========================================================
 
-    .. image:: ../img/inflow-ts.png
+    .. image:: img/inflow-ts.png
         :scale: 33 %
 
-    .. image:: ../img/inflow-box.png
+    .. image:: img/inflow-box.png
         :scale: 33 %
 
 Description

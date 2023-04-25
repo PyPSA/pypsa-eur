@@ -19,7 +19,7 @@ dependencies:
 - openpyxl!=3.1.1
 - pycountry
 - seaborn
-- snakemake-minimal
+- snakemake-minimal>=7.7.0
 - memory_profiler
 - yaml
 - pytables
@@ -29,6 +29,7 @@ dependencies:
 - pandas>=1.4
 - geopandas>=0.11.0
 - xarray
+- rioxarray
 - netcdf4
 - networkx
 - scipy
@@ -38,6 +39,12 @@ dependencies:
 - proj
 - fiona
 - country_converter
+- geopy
+- tqdm
+- pytz
+- tabula-py
+- pyxlsb
+- graphviz
 
   # Keep in conda environment when calling ipython
 - ipython
@@ -46,13 +53,6 @@ dependencies:
 - cartopy
 - descartes
 - rasterio!=1.2.10
-
-  # PyPSA-Eur-Sec Dependencies
-- geopy
-- tqdm
-- pytz
-- tabula-py
-- pyxlsb
 
 - pip:
   - vresutils>=0.3.1

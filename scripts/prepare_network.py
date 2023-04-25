@@ -34,7 +34,7 @@ Relevant Settings
         max_hours:
 
 .. seealso::
-    Documentation of the configuration file ``config.yaml`` at
+    Documentation of the configuration file ``config/config.yaml`` at
     :ref:`costs_cf`, :ref:`electricity_cf`
 
 Inputs
@@ -52,7 +52,7 @@ Description
 -----------
 
 .. tip::
-    The rule :mod:`prepare_all_networks` runs
+    The rule :mod:`prepare_elec_networks` runs
     for all ``scenario`` s in the configuration file
     the rule :mod:`prepare_network`.
 """

@@ -41,7 +41,7 @@ Relevant Settings
         length_factor:
 
 .. seealso::
-    Documentation of the configuration file ``config.yaml`` at :ref:`costs_cf`,
+    Documentation of the configuration file ``config/config.yaml`` at :ref:`costs_cf`,
     :ref:`electricity_cf`, :ref:`load_cf`, :ref:`renewable_cf`, :ref:`lines_cf`
 
 Inputs
@@ -50,7 +50,7 @@ Inputs
 - ``resources/costs.csv``: The database of cost assumptions for all included technologies for specific years from various sources; e.g. discount rate, lifetime, investment (CAPEX), fixed operation and maintenance (FOM), variable operation and maintenance (VOM), fuel costs, efficiency, carbon-dioxide intensity.
 - ``data/bundle/hydro_capacities.csv``: Hydropower plant store/discharge power capacities, energy storage capacity, and average hourly inflow by country.
 
-    .. image:: ../img/hydrocapacities.png
+    .. image:: img/hydrocapacities.png
         :scale: 34 %
 
 - ``data/geth2015_hydro_capacities.csv``: alternative to capacities above; not currently used!
@@ -66,7 +66,7 @@ Outputs
 
 - ``networks/elec.nc``:
 
-    .. image:: ../img/elec.png
+    .. image:: img/elec.png
             :scale: 33 %
 
 Description
@@ -606,7 +606,7 @@ def attach_extendable_generators(n, costs, ppl, carriers):
 
         else:
             raise NotImplementedError(
-                f"Adding extendable generators for carrier "
+                "Adding extendable generators for carrier "
                 "'{tech}' is not implemented, yet. "
                 "Only OCGT, CCGT and nuclear are allowed at the moment."
             )
