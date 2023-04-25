@@ -56,9 +56,10 @@ logger = logging.getLogger(__name__)
 
 def voronoi_partition_pts(points, outline):
     """
-    Compute the polygons of a voronoi partition of `points` within the
-    polygon `outline`. Taken from
-    https://github.com/FRESNA/vresutils/blob/master/vresutils/graph.py
+    Compute the polygons of a voronoi partition of `points` within the polygon
+    `outline`. Taken from
+    https://github.com/FRESNA/vresutils/blob/master/vresutils/graph.py.
+
     Attributes
     ----------
     points : Nx2 - ndarray[dtype=float]
