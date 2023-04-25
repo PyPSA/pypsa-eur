@@ -345,7 +345,7 @@ solar_thermal:
 
 # only relevant for foresight = myopic or perfect
 existing_capacities:
-  unit_commitment: True  # if unit commitment (UC) for conventional power plants is used
+  unit_commitment: true  # if unit commitment (UC) for conventional power plants is used
   # UC is only applied to extendable plants if  linearized UC is used
   grouping_years_power: [1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2020, 2025, 2030]
   grouping_years_heat: [1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2019] # these should not extend 2020
@@ -625,7 +625,7 @@ solving:
   options:
     formulation: kirchhoff
     clip_p_max_pu: 1.e-2
-    linearized_unit_commitment: True
+    linearized_unit_commitment: true
     load_shedding: false
     noisy_costs: true
     skip_iterations: true
