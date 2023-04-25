@@ -140,7 +140,7 @@ if config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]:
             "../scripts/retrieve_gas_infrastructure_data.py"
 
 
-rule retrieve_load_data:
+rule retrieve_electricity_demand:
     input:
         HTTP.remote(
             "data.open-power-system-data.org/time_series/2019-06-05/time_series_60min_singleindex.csv",
@@ -150,7 +150,7 @@ rule retrieve_load_data:
     output:
         "data/load_raw.csv",
     log:
-        LOGS + "retrieve_load_data.log",
+        LOGS + "retrieve_electricity_demand.log",
     resources:
         mem_mb=5000,
     retries: 2

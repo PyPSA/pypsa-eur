@@ -156,7 +156,7 @@ This triggers a workflow of multiple preceding jobs that depend on each rule's i
         20[label = "retrieve_cost_data", color = "0.30 0.6 0.85", style="rounded"];
         21[label = "build_powerplants", color = "0.16 0.6 0.85", style="rounded"];
         22[label = "build_electricity_demand", color = "0.00 0.6 0.85", style="rounded"];
-        23[label = "retrieve_load_data", color = "0.34 0.6 0.85", style="rounded,dashed"];
+        23[label = "retrieve_electricity_demand", color = "0.34 0.6 0.85", style="rounded,dashed"];
         1 -> 0
         2 -> 1
         20 -> 1
