@@ -267,6 +267,12 @@ def manual_adjustment(load, fn_load, powerstatistics):
         copy_timeslice(
             load, "BG", "2018-10-27 21:00", "2018-10-28 22:00", Delta(weeks=1)
         )
+        copy_timeslice(
+            load, "LU", "2019-01-02 11:00", "2019-01-05 05:00", Delta(weeks=-1)
+        )
+        copy_timeslice(
+            load, "LU", "2019-02-05 20:00", "2019-02-06 19:00", Delta(weeks=-1)
+        )
 
     return load
 
