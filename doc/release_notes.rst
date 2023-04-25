@@ -15,7 +15,9 @@ Upcoming Release
 
 * Bugfix: Correct typo in the CPLEX solver configuration in ``config.default.yaml``.
 
-* Renamed script file from PyPSA-EUR ``build_load_data`` to ``build_electricity_demand``.
+* Renamed script file from PyPSA-EUR ``build_load_data`` to ``build_electricity_demand`` and ``retrieve_load_data`` to ``retrieve_electricity_demand``.
+
+
 
 PyPSA-Eur 0.8.0 (18th March 2023)
 =================================
