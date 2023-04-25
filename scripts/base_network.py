@@ -782,7 +782,8 @@ def _filter_assets(df, allowed_statuses, ignore_projects):
         df = df.drop("project_id", axis=1)
 
     df = pd.concat(
-        [df, pd.DataFrame(index=df.index, columns=["under_construction"], data=True)], axis=1
+        [df, pd.DataFrame(index=df.index, columns=["under_construction"], data=True)],
+        axis=1,
     )
     return df.drop("tyndp_status", axis=1)
 
