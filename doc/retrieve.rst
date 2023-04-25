@@ -80,8 +80,8 @@ This rule, as a substitute for :mod:`build_natura_raster`, downloads an already 
     For details see :mod:`build_natura_raster`.
 
 
-Rule ``retrieve_load_data``
-================================
+Rule ``retrieve_electricity_demand``
+====================================
 
 This rule downloads hourly electric load data for each country from the `OPSD platform <https://data.open-power-system-data.org/time_series/latest/time_series_60min_singleindex.csv>`_.
 
