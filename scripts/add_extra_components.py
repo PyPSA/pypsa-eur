@@ -57,6 +57,7 @@ import pandas as pd
 import pypsa
 from _helpers import configure_logging
 from add_electricity import (
+    add_missing_carrier,
     _add_missing_carriers_from_costs,
     add_nice_carrier_names,
     load_costs,
@@ -251,6 +252,8 @@ if __name__ == "__main__":
     attach_storageunits(n, costs, elec_config)
     attach_stores(n, costs, elec_config)
     attach_hydrogen_pipelines(n, costs, elec_config)
+    
+    add_missing_carrier(n)
 
     add_nice_carrier_names(n, snakemake.config)
 
