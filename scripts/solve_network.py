@@ -143,6 +143,9 @@ def add_co2_sequestration_limit(n, limit=200):
 
 
 def prepare_network(n, solve_opts=None, config=None):
+    if snakemake.config["existing_capacities"]["unit_commitment"]:
+        add_unit_committment(n)
+
     if "clip_p_max_pu" in solve_opts:
         for df in (
             n.generators_t.p_max_pu,
@@ -591,6 +594,18 @@ def extra_functionality(n, snapshots):
     add_pipe_retrofit_constraint(n)
 
 
+def add_unit_committment(n):
+    """
+    Add unit commitment.
+    """
+    c = "Link" if ("sector_opts" in snakemake.wildcards.keys()) else "Generator"
+    uc_data = pd.read_csv("/home/lisa/Documents/pypsa-eur/data/unit_committment.csv",
+                          index_col=0)
+    for attr in uc_data.index:
+        n.df(c)[attr] = n.df(c)["carrier"].map(uc_data.loc[attr])
+
+
+
 def solve_network(n, config, opts="", **kwargs):
     set_of_options = config["solving"]["solver"]["options"]
     solver_options = (
@@ -638,7 +653,7 @@ def solve_network(n, config, opts="", **kwargs):
 
     return n
 
-
+#%%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
