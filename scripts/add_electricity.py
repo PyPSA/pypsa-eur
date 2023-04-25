@@ -120,11 +120,13 @@ def calculate_annuity(n, r):
     else:
         return 1 / n
 
+
 def add_missing_carrier(n):
     components = [n.buses, n.generators, n.lines, n.links, n.storage_units, n.stores]
     for c in components:
-        missing_carrier = np.setdiff1d(c.carrier.unique(),n.carriers.index)
-        n.madd("Carrier",missing_carrier)
+        missing_carrier = np.setdiff1d(c.carrier.unique(), n.carriers.index)
+        n.madd("Carrier", missing_carrier)
+
 
 def _add_missing_carriers_from_costs(n, costs, carriers):
     missing_carriers = pd.Index(carriers).difference(n.carriers.index)
@@ -837,7 +839,7 @@ if __name__ == "__main__":
         estimate_renewable_capacities(n, snakemake.config)
 
     update_p_nom_max(n)
-    
+
     add_missing_carrier(n)
     add_nice_carrier_names(n, snakemake.config)
 
