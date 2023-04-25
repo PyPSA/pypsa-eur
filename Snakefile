@@ -20,6 +20,7 @@ if not exists("config/config.yaml"):
 
 configfile: "config/config.yaml"
 
+
 COSTS = f"data/costs_{config['costs']['year']}.csv"
 ATLITE_NPROCESSES = config["atlite"].get("nprocesses", 4)
 
