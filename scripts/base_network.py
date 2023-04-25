@@ -720,9 +720,12 @@ def _integrate_tyndp_2020(
     upg_links = _filter_assets(upg_links, allowed_statuses, ignored_projects)
 
     # add 'commissioning_year' to existing assets (beginning of UNIX time)
-    if len(buses) > 0: buses.loc[:, "commissioning_year"] = pd.to_datetime(0)
-    if len(lines) > 0: lines.loc[:, "commissioning_year"] = pd.to_datetime(0)
-    if len(links) > 0: links.loc[:, "commissioning_year"] = pd.to_datetime(0)
+    if len(buses) > 0:
+        buses.loc[:, "commissioning_year"] = pd.to_datetime(0)
+    if len(lines) > 0:
+        lines.loc[:, "commissioning_year"] = pd.to_datetime(0)
+    if len(links) > 0:
+        links.loc[:, "commissioning_year"] = pd.to_datetime(0)
 
     # append new assets
     buses = pd.concat([buses, new_buses])
