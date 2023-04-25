@@ -29,6 +29,7 @@ from pypsa.geo import haversine_pts
 from pypsa.io import import_components_from_dataframe
 from scipy.stats import beta
 from vresutils.costdata import annuity
+from add_electricity import add_missing_carrier
 
 logger = logging.getLogger(__name__)
 
@@ -3398,5 +3399,7 @@ if __name__ == "__main__":
         cluster_heat_buses(n)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
+    
+    add_missing_carrier(n)
 
     n.export_to_netcdf(snakemake.output[0])
