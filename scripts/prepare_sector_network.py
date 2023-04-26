@@ -12,10 +12,10 @@ import os
 import re
 from itertools import product
 
+import geopandas as gpd
 import networkx as nx
 import numpy as np
 import pandas as pd
-import geopandas as gpd
 import pypsa
 import xarray as xr
 from _helpers import (
@@ -24,6 +24,7 @@ from _helpers import (
     update_config_with_sector_opts,
 )
 from build_energy_totals import build_co2_totals, build_eea_co2, build_eurostat_co2
+from geopy.geocoders import Nominatim
 from networkx.algorithms import complement
 from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentation
 from pypsa.geo import haversine_pts
@@ -31,7 +32,6 @@ from pypsa.io import import_components_from_dataframe
 from scipy.stats import beta
 from vresutils.costdata import annuity
 
-from geopy.geocoders import Nominatim
 geolocator = Nominatim(user_agent="locate-exporting-region", timeout=10)
 
 logger = logging.getLogger(__name__)
@@ -2995,20 +2995,24 @@ def remove_h2_network(n):
 
 
 def add_endogenous_hvdc_import_options(n):
-
     logger.info("Add import options: endogenous hvdc-to-elec")
     cf = snakemake.config["sector"]["import"].get("endogenous_hvdc_import", {})
-    if not cf["enable"]: return
+    if not cf["enable"]:
+        return
 
-    regions = gpd.read_file(snakemake.input.regions_onshore).set_index('name')
+    regions = gpd.read_file(snakemake.input.regions_onshore).set_index("name")
 
-    p_max_pu = xr.open_dataset(snakemake.input.import_p_max_pu).p_max_pu.sel(importer='EUE')
+    p_max_pu = xr.open_dataset(snakemake.input.import_p_max_pu).p_max_pu.sel(
+        importer="EUE"
+    )
 
     def _coordinates(ct):
-        loc = geolocator.geocode(ct.split('-')[0])
+        loc = geolocator.geocode(ct.split("-")[0])
         return [loc.longitude, loc.latitude]
 
-    exporters = pd.DataFrame({ct: _coordinates(ct) for ct in cf["exporters"]}, index=['x', 'y']).T
+    exporters = pd.DataFrame(
+        {ct: _coordinates(ct) for ct in cf["exporters"]}, index=["x", "y"]
+    ).T
     geometry = gpd.points_from_xy(exporters.x, exporters.y)
     exporters = gpd.GeoDataFrame(exporters, geometry=geometry, crs=4326)
 
@@ -3017,20 +3021,23 @@ def add_endogenous_hvdc_import_options(n):
     for ct in exporters.index:
         b = exporters.to_crs(3857).loc[ct].geometry
         d = a.distance(b)
-        import_links[ct] = d.where(d < d.quantile(cf["distance_threshold"])).div(1e3).dropna() # km
+        import_links[ct] = (
+            d.where(d < d.quantile(cf["distance_threshold"])).div(1e3).dropna()
+        )  # km
     import_links = pd.concat(import_links)
 
     hvdc_cost = (
-        import_links.values * cf["length_factor"] * costs.at['HVDC submarine', 'fixed'] +
-        costs.at['HVDC inverter pair', 'fixed']
+        import_links.values * cf["length_factor"] * costs.at["HVDC submarine", "fixed"]
+        + costs.at["HVDC inverter pair", "fixed"]
     )
 
     buses_i = exporters.index
 
-    n.madd("Bus", buses_i, **exporters.drop('geometry', axis=1))
+    n.madd("Bus", buses_i, **exporters.drop("geometry", axis=1))
 
-    n.madd("Link",
-        ["import hvdc-to-elec " + ' '.join(idx).strip() for idx in import_links.index],
+    n.madd(
+        "Link",
+        ["import hvdc-to-elec " + " ".join(idx).strip() for idx in import_links.index],
         bus0=import_links.index.get_level_values(0),
         bus1=import_links.index.get_level_values(1),
         carrier="import hvdc-to-elec",
@@ -3042,12 +3049,12 @@ def add_endogenous_hvdc_import_options(n):
     )
 
     for tech in ["solar-utility", "onwind", "offwind"]:
-
         p_max_pu_tech = p_max_pu.sel(technology=tech).to_pandas().dropna().T
 
         exporters_tech_i = exporters.index.intersection(p_max_pu_tech.columns)
 
-        n.madd("Generator",
+        n.madd(
+            "Generator",
             exporters_tech_i,
             suffix=" " + tech,
             bus=exporters_tech_i,
@@ -3060,89 +3067,97 @@ def add_endogenous_hvdc_import_options(n):
 
     # hydrogen storage
 
-    h2_buses_i = n.madd("Bus",
-        buses_i,
-        suffix=" H2",
-        carrier="external H2",
-        location=buses_i
+    h2_buses_i = n.madd(
+        "Bus", buses_i, suffix=" H2", carrier="external H2", location=buses_i
     )
 
-    n.madd("Store",
+    n.madd(
+        "Store",
         h2_buses_i,
         bus=h2_buses_i,
-        carrier='external H2',
+        carrier="external H2",
         e_nom_extendable=True,
         e_cyclic=True,
-        capital_cost=costs.at["hydrogen storage tank incl. compressor", "fixed"]
+        capital_cost=costs.at["hydrogen storage tank incl. compressor", "fixed"],
     )
 
-    n.madd("Link",
+    n.madd(
+        "Link",
         h2_buses_i + " Electrolysis",
         bus0=buses_i,
         bus1=h2_buses_i,
-        carrier='external H2 Electrolysis',
+        carrier="external H2 Electrolysis",
         p_nom_extendable=True,
         efficiency=costs.at["electrolysis", "efficiency"],
         capital_cost=costs.at["electrolysis", "fixed"],
-        lifetime=costs.at["electrolysis", "lifetime"]
+        lifetime=costs.at["electrolysis", "lifetime"],
     )
 
-    n.madd("Link",
+    n.madd(
+        "Link",
         h2_buses_i + " Fuel Cell",
         bus0=h2_buses_i,
         bus1=buses_i,
-        carrier='external H2 Fuel Cell',
+        carrier="external H2 Fuel Cell",
         p_nom_extendable=True,
         efficiency=costs.at["fuel cell", "efficiency"],
-        capital_cost=costs.at["fuel cell", "fixed"] * costs.at["fuel cell", "efficiency"],
-        lifetime=costs.at["fuel cell", "lifetime"]
+        capital_cost=costs.at["fuel cell", "fixed"]
+        * costs.at["fuel cell", "efficiency"],
+        lifetime=costs.at["fuel cell", "lifetime"],
     )
 
     # battery storage
 
-    b_buses_i = n.madd("Bus",
-        buses_i,
-        suffix=" battery",
-        carrier="external battery",
-        location=buses_i
+    b_buses_i = n.madd(
+        "Bus", buses_i, suffix=" battery", carrier="external battery", location=buses_i
     )
 
-    n.madd("Store",
+    n.madd(
+        "Store",
         b_buses_i,
         bus=b_buses_i,
-        carrier='external battery',
+        carrier="external battery",
         e_cyclic=True,
         e_nom_extendable=True,
-        capital_cost=costs.at['battery storage', 'fixed'],
-        lifetime=costs.at['battery storage', 'lifetime']
+        capital_cost=costs.at["battery storage", "fixed"],
+        lifetime=costs.at["battery storage", "lifetime"],
     )
 
-    n.madd("Link",
+    n.madd(
+        "Link",
         b_buses_i + " charger",
         bus0=buses_i,
         bus1=b_buses_i,
-        carrier='external battery charger',
-        efficiency=costs.at['battery inverter', 'efficiency']**0.5,
-        capital_cost=costs.at['battery inverter', 'fixed'],
+        carrier="external battery charger",
+        efficiency=costs.at["battery inverter", "efficiency"] ** 0.5,
+        capital_cost=costs.at["battery inverter", "fixed"],
         p_nom_extendable=True,
-        lifetime=costs.at['battery inverter', 'lifetime']
+        lifetime=costs.at["battery inverter", "lifetime"],
     )
 
-    n.madd("Link",
+    n.madd(
+        "Link",
         b_buses_i + " discharger",
         bus0=b_buses_i,
         bus1=buses_i,
-        carrier='external battery discharger',
-        efficiency=costs.at['battery inverter','efficiency']**0.5,
+        carrier="external battery discharger",
+        efficiency=costs.at["battery inverter", "efficiency"] ** 0.5,
         p_nom_extendable=True,
-        lifetime=costs.at['battery inverter', 'lifetime']
+        lifetime=costs.at["battery inverter", "lifetime"],
     )
 
 
 def add_import_options(
     n,
-    capacity_boost=3.,
-    import_options=["hvdc-to-elec", "pipeline-h2", "shipping-lh2", "shipping-lch4", "shipping-ftfuel", "shipping-lnh3"],
+    capacity_boost=3.0,
+    import_options=[
+        "hvdc-to-elec",
+        "pipeline-h2",
+        "shipping-lh2",
+        "shipping-lch4",
+        "shipping-ftfuel",
+        "shipping-lnh3",
+    ],
     endogenous_hvdc=False,
 ):
     logger.info("Add import options: " + " ".join(import_options))
@@ -3169,8 +3184,8 @@ def add_import_options(
     }
 
     co2_intensity = {
-        "shipping-lch4": 'gas',
-        "shipping-ftfuel": 'oil',
+        "shipping-lch4": "gas",
+        "shipping-ftfuel": "oil",
     }
 
     import_costs = pd.read_csv(snakemake.input.import_costs, delimiter=";")
@@ -3182,23 +3197,31 @@ def add_import_options(
         import_nodes[k] = import_nodes[v]
         ports[k] = ports.get(v)
 
-    regionalised_options = {"hvdc-to-elec", "pipeline-h2", "shipping-lh2", "shipping-lch4"}
+    regionalised_options = {
+        "hvdc-to-elec",
+        "pipeline-h2",
+        "shipping-lh2",
+        "shipping-lch4",
+    }
 
-    if endogenous_hvdc and 'hvdc-to-elec' in import_options:
-        import_options = [o for o in import_options if o != 'hvdc-to-elec']
+    if endogenous_hvdc and "hvdc-to-elec" in import_options:
+        import_options = [o for o in import_options if o != "hvdc-to-elec"]
         add_endogenous_hvdc_import_options(n)
 
     for tech in set(import_options).intersection(regionalised_options):
-
-        import_costs_tech = import_costs.query("esc == @tech").groupby('importer').marginal_cost.min()
+        import_costs_tech = (
+            import_costs.query("esc == @tech").groupby("importer").marginal_cost.min()
+        )
 
         sel = ~import_nodes[tech].isna()
-        if tech == 'pipeline-h2':
+        if tech == "pipeline-h2":
             forbidden_pipelines = ["DE", "BE", "FR", "GB"]
             sel &= ~import_nodes.index.str[:2].isin(forbidden_pipelines)
         import_nodes_tech = import_nodes.loc[sel, [tech]]
 
-        import_nodes_tech = import_nodes_tech.rename(columns={tech: "p_nom"}) * capacity_boost
+        import_nodes_tech = (
+            import_nodes_tech.rename(columns={tech: "p_nom"}) * capacity_boost
+        )
 
         marginal_costs = ports[tech].dropna().map(import_costs_tech)
         import_nodes_tech["marginal_cost"] = marginal_costs
@@ -3208,15 +3231,12 @@ def add_import_options(
         suffix = bus_suffix[tech]
 
         if tech in co2_intensity.keys():
-
             buses = import_nodes_tech.index + f"{suffix} import {tech}"
 
-            n.madd("Bus",
-                buses + " bus",
-                carrier=f"import {tech}"
-            )
+            n.madd("Bus", buses + " bus", carrier=f"import {tech}")
 
-            n.madd("Store",
+            n.madd(
+                "Store",
                 buses + " store",
                 bus=buses + " bus",
                 e_nom_extendable=True,
@@ -3226,21 +3246,21 @@ def add_import_options(
                 e_max_pu=0,
             )
 
-            n.madd("Link",
+            n.madd(
+                "Link",
                 buses,
                 bus0=buses + " bus",
                 bus1=import_nodes_tech.index + suffix,
                 bus2="co2 atmosphere",
                 carrier=f"import {tech}",
-                efficiency2=-costs.at[co2_intensity[tech], 'CO2 intensity'],
+                efficiency2=-costs.at[co2_intensity[tech], "CO2 intensity"],
                 marginal_cost=import_nodes_tech.marginal_cost.values,
                 p_nom=import_nodes_tech.p_nom.values,
             )
 
         else:
-
             location = import_nodes_tech.index
-            buses = location if tech == 'hvdc-to-elec' else location + suffix
+            buses = location if tech == "hvdc-to-elec" else location + suffix
 
             n.madd(
                 "Generator",
@@ -3253,17 +3273,16 @@ def add_import_options(
 
     # need special handling for copperplated Fischer-Tropsch imports
     if "shipping-ftfuel" in import_options:
+        marginal_costs = import_costs.query(
+            "esc == 'shipping-ftfuel'"
+        ).marginal_cost.min()
 
-        marginal_costs = import_costs.query("esc == 'shipping-ftfuel'").marginal_cost.min()
+        n.add("Bus", "EU import shipping-ftfuel bus", carrier="import shipping-ftfuel")
 
-        n.add("Bus",
-            "EU import shipping-ftfuel bus",
-            carrier="import shipping-ftfuel"
-        )
-
-        n.add("Store",
+        n.add(
+            "Store",
             "EU import shipping-ftfuel store",
-            bus='EU import shipping-ftfuel bus',
+            bus="EU import shipping-ftfuel bus",
             e_nom_extendable=True,
             e_nom_min=-np.inf,
             e_nom_max=0,
@@ -3271,22 +3290,28 @@ def add_import_options(
             e_max_pu=0,
         )
 
-        n.add("Link",
+        n.add(
+            "Link",
             "EU import shipping-ftfuel",
             bus0="EU import shipping-ftfuel bus",
             bus1="EU oil",
             bus2="co2 atmosphere",
             carrier="import shipping-ftfuel",
-            efficiency2=-costs.at["oil", 'CO2 intensity'],
+            efficiency2=-costs.at["oil", "CO2 intensity"],
             marginal_cost=marginal_costs,
             p_nom=1e7,
         )
 
-    if "shipping-lnh3" in import_options and "shipping-lnh3" not in regionalised_options:
+    if (
+        "shipping-lnh3" in import_options
+        and "shipping-lnh3" not in regionalised_options
+    ):
+        marginal_costs = import_costs.query(
+            "esc == 'shipping-lnh3'"
+        ).marginal_cost.min()
 
-        marginal_costs = import_costs.query("esc == 'shipping-lnh3'").marginal_cost.min()
-
-        n.add("Generator",
+        n.add(
+            "Generator",
             "EU import shipping-lnh3",
             bus="EU NH3",
             carrier="import shipping-lnh3",
@@ -3298,7 +3323,8 @@ def add_import_options(
 def maybe_adjust_costs_and_potentials(n, opts):
     for o in opts:
         flags = ["+e", "+p", "+m"]
-        if all(flag not in o for flag in flags): continue
+        if all(flag not in o for flag in flags):
+            continue
         oo = o.split("+")
         carrier_list = np.hstack(
             (
@@ -3653,19 +3679,21 @@ if __name__ == "__main__":
         FT=["shipping-ftfuel"],
     )
     for o in opts:
-        if not o.startswith("imp"): continue
+        if not o.startswith("imp"):
+            continue
         subsets = o.split("+")[1:]
         if len(subsets):
             carriers = sum([translate[s] for s in subsets], [])
         else:
             carriers = options["import"]["options"]
-        add_import_options(n,
+        add_import_options(
+            n,
             capacity_boost=options["import"]["capacity_boost"],
             import_options=carriers,
-            endogenous_hvdc=options["import"]["endogenous_hvdc_import"]["enable"]
+            endogenous_hvdc=options["import"]["endogenous_hvdc_import"]["enable"],
         )
         break
-    
+
     if options["allam_cycle"]:
         add_allam(n, costs)
 
@@ -3718,9 +3746,11 @@ if __name__ == "__main__":
 
     # Workaround: Remove lines with conflicting (and unrealistic) properties
     # cf. https://github.com/PyPSA/pypsa-eur/issues/444
-    if options['electricity_grid_transmission_losses']:
+    if options["electricity_grid_transmission_losses"]:
         idx = n.lines.query("num_parallel == 0").index
-        logger.info(f"Removing {len(idx)} line(s) with properties conflicting with transmission losses functionality.")
+        logger.info(
+            f"Removing {len(idx)} line(s) with properties conflicting with transmission losses functionality."
+        )
         n.mremove("Line", idx)
 
     first_year_myopic = (snakemake.config["foresight"] == "myopic") and (

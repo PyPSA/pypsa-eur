@@ -50,9 +50,12 @@ wildcard_constraints:
 # https://github.com/euronion/trace/commit/646d48b2e7a889594338bc376e0a6ecc5d18998f
 # in parallel directory to /pypsa-eur-sec
 subworkflow trace:
-    workdir: "../trace"
-    snakefile: "../trace/Snakefile"
-    configfile: "../trace/config/config.default.yaml"
+    workdir:
+        "../trace"
+    snakefile:
+        "../trace/Snakefile"
+    configfile:
+        "../trace/config/config.default.yaml"
 
 
 include: "rules/common.smk"
