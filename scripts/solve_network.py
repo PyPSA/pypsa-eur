@@ -600,6 +600,7 @@ def add_unit_commitment(n, fn):
     """
     c = "Generator"
     uc_data = pd.read_csv(fn, index_col=0)
+    n.df(c).loc[n.df(c).carrier.isin(uc_data.columns), "committable"] = True
     for attr in uc_data.index:
         n.df(c)[attr].update(n.df(c)["carrier"].map(uc_data.loc[attr]).dropna())
 
@@ -614,6 +615,7 @@ def solve_network(n, config, opts="", **kwargs):
     track_iterations = cf_solving.get("track_iterations", False)
     min_iterations = cf_solving.get("min_iterations", 4)
     max_iterations = cf_solving.get("max_iterations", 6)
+    linearized_unit_commitment = cf_solving.get("linearized_unit_commitment", True)
 
     # add to network for extra_functionality
     n.config = config
@@ -628,6 +630,7 @@ def solve_network(n, config, opts="", **kwargs):
         status, condition = n.optimize(
             solver_name=solver_name,
             extra_functionality=extra_functionality,
+            linearized_unit_commitment=linearized_unit_commitment,
             **solver_options,
             **kwargs,
         )
@@ -658,14 +661,14 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "solve_sector_network",
-            configfiles="test/config.overnight.yaml",
+            "solve_network",
+            # configfiles="test/config.overnight.yaml",
             simpl="",
             opts="",
-            clusters="5",
-            ll="v1.5",
-            sector_opts="CO2L0-24H-T-H-B-I-A-solar+p3-dist1",
-            planning_horizons="2030",
+            clusters="37",
+            ll="v1.0",
+            sector_opts="",
+            planning_horizons="2020",
         )
     configure_logging(snakemake)
     if "sector_opts" in snakemake.wildcards.keys():
