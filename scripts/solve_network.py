@@ -166,7 +166,7 @@ def prepare_network(n, solve_opts=None, config=None):
             "Generator",
             buses_i,
             " load",
-            bus=n.buses.index,
+            bus=buses_i,
             carrier="load",
             sign=1e-3,  # Adjust sign to measure p and p_nom in kW instead of MW
             marginal_cost=load_shedding,  # Eur/kWh
