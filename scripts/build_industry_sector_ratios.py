@@ -1,6 +1,13 @@
-"""Build industry sector ratios."""
+# -*- coding: utf-8 -*-
+# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: MIT
+"""
+Build specific energy consumption by carrier and industries.
+"""
 
 import pandas as pd
+from _helpers import mute_print
 
 # GWh/ktoe OR MWh/toe
 toe_to_MWh = 11.630
@@ -67,20 +74,20 @@ index = [
 
 
 def load_idees_data(sector, country="EU28"):
-
     suffixes = {"out": "", "fec": "_fec", "ued": "_ued", "emi": "_emi"}
     sheets = {k: sheet_names[sector] + v for k, v in suffixes.items()}
 
     def usecols(x):
         return isinstance(x, str) or x == year
 
-    idees = pd.read_excel(
-        f"{snakemake.input.idees}/JRC-IDEES-2015_Industry_{country}.xlsx",
-        sheet_name=list(sheets.values()),
-        index_col=0,
-        header=0,
-        usecols=usecols,
-    )
+    with mute_print():
+        idees = pd.read_excel(
+            f"{snakemake.input.idees}/JRC-IDEES-2015_Industry_{country}.xlsx",
+            sheet_name=list(sheets.values()),
+            index_col=0,
+            header=0,
+            usecols=usecols,
+        )
 
     for k, v in sheets.items():
         idees[k] = idees.pop(v).squeeze()
@@ -89,7 +96,6 @@ def load_idees_data(sector, country="EU28"):
 
 
 def iron_and_steel():
-
     # There are two different approaches to produce iron and steel:
     # i.e., integrated steelworks and electric arc.
     # Electric arc approach has higher efficiency and relies more on electricity.
@@ -600,7 +606,6 @@ def chemicals_industry():
 
 
 def nonmetalic_mineral_products():
-
     # This includes cement, ceramic and glass production.
     # This includes process emissions related to the fabrication of clinker.
 
@@ -618,7 +623,7 @@ def nonmetalic_mineral_products():
     # (c) clinker production (kilns),
     # (d) Grinding, packaging.
     # (b)+(c) represent 94% of fec. So (a) is joined to (b) and (d) is joined to (c).
-    # Temperatures above 1400C are required for procesing limestone and sand into clinker.
+    # Temperatures above 1400C are required for processing limestone and sand into clinker.
     # Everything (except current electricity and heat consumption and existing biomass)
     # is transformed into methane for high T.
 
@@ -787,7 +792,6 @@ def nonmetalic_mineral_products():
 
 
 def pulp_paper_printing():
-
     # Pulp, paper and printing can be completely electrified.
     # There are no process emissions associated to this sector.
 
@@ -940,7 +944,6 @@ def pulp_paper_printing():
 
 
 def food_beverages_tobacco():
-
     # Food, beverages and tobaco can be completely electrified.
     # There are no process emissions associated to this sector.
 
@@ -1000,7 +1003,6 @@ def food_beverages_tobacco():
 
 
 def non_ferrous_metals():
-
     sector = "Non Ferrous Metals"
     idees = load_idees_data(sector)
 
@@ -1110,7 +1112,7 @@ def non_ferrous_metals():
 
     # Aluminium secondary route
 
-    # All is coverted into secondary route fully electrified.
+    # All is converted into secondary route fully electrified.
 
     sector = "Aluminium - secondary production"
 
@@ -1203,7 +1205,6 @@ def non_ferrous_metals():
 
 
 def transport_equipment():
-
     sector = "Transport Equipment"
     idees = load_idees_data(sector)
 
@@ -1254,7 +1255,6 @@ def transport_equipment():
 
 
 def machinery_equipment():
-
     sector = "Machinery Equipment"
 
     idees = load_idees_data(sector)
@@ -1307,7 +1307,6 @@ def machinery_equipment():
 
 
 def textiles_and_leather():
-
     sector = "Textiles and leather"
 
     idees = load_idees_data(sector)
@@ -1356,7 +1355,6 @@ def textiles_and_leather():
 
 
 def wood_and_wood_products():
-
     sector = "Wood and wood products"
 
     idees = load_idees_data(sector)
@@ -1402,7 +1400,6 @@ def wood_and_wood_products():
 
 
 def other_industrial_sectors():
-
     sector = "Other Industrial Sectors"
 
     idees = load_idees_data(sector)
@@ -1463,9 +1460,10 @@ def other_industrial_sectors():
 
 
 if __name__ == "__main__":
-    if 'snakemake' not in globals():
-        from helper import mock_snakemake
-        snakemake = mock_snakemake('build_industry_sector_ratios')
+    if "snakemake" not in globals():
+        from _helpers import mock_snakemake
+
+        snakemake = mock_snakemake("build_industry_sector_ratios")
 
     # TODO make config option
     year = 2015

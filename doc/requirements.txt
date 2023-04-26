@@ -1,0 +1,24 @@
+# SPDX-FileCopyrightText: : 2019-2023 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: CC0-1.0
+
+sphinx
+sphinx_book_theme
+sphinxcontrib-bibtex
+
+pypsa
+vresutils>=0.3.1
+powerplantmatching>=0.5.5
+atlite>=0.2.9
+dask[distributed]
+matplotlib>3.5.1,<3.6
+tabula-py
+
+# cartopy
+scikit-learn
+pycountry
+pyyaml
+seaborn
+memory_profiler
+tables
+descartes
