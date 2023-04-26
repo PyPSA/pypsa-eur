@@ -763,7 +763,7 @@ def _read_tyndp2020_lines(tyndp_file):
     df["commissioning_year"] = pd.to_datetime(df["commissioning_year"], format="%Y")
     df["v_nom"] = df["v_nom"].replace(np.nan, 220)
     df["v_nom"] = df["v_nom"].astype(int)
-    df["num_parallel"] = 1
+    df["num_parallel"] = 2.
     return df
 
 
@@ -784,7 +784,7 @@ def _filter_assets(df, allowed_statuses, ignore_projects):
         df = df.loc[~df.loc[:, "project_id"].isin(ignore_projects)]
         df = df.drop("project_id", axis=1)
 
-    df = df.assign(under_construction=True)
+    df = df.assign(under_construction=False)
     return df.drop("tyndp_status", axis=1)
 
 
@@ -835,6 +835,10 @@ def base_network(
     transformers = _load_transformers_from_eg(buses, eg_transformers)
 
     if config["TYNDP2020"].get("include"):
+        logger.info(
+            "Adding TYNDP2020 lines, buses and links... "
+            "warning - this dataset is not yet evaluated and may lead to unexpected results."
+        )
         buses, lines, links = _integrate_tyndp_2020(
             buses,
             lines,
@@ -910,4 +914,5 @@ if __name__ == "__main__":
     )
 
     n.meta = snakemake.config
+
     n.export_to_netcdf(snakemake.output[0])
