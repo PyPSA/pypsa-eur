@@ -108,13 +108,13 @@ def attach_stores(n, costs, elec_opts):
     bus_sub_dict = {k: n.buses[k].values for k in ["x", "y", "country"]}
 
     if "H2" in carriers:
-        h2_buses_i = n.madd("Bus", buses_i + " H2", carrier="H2", **bus_sub_dict)
+        h2_buses_i = n.madd("Bus", buses_i + " H2", carrier="h2", **bus_sub_dict)
 
         n.madd(
             "Store",
             h2_buses_i,
             bus=h2_buses_i,
-            carrier="H2",
+            carrier="h2",
             e_nom_extendable=True,
             e_cyclic=True,
             capital_cost=costs.at["hydrogen storage underground", "capital_cost"],
@@ -125,7 +125,7 @@ def attach_stores(n, costs, elec_opts):
             h2_buses_i + " Electrolysis",
             bus0=buses_i,
             bus1=h2_buses_i,
-            carrier="H2 electrolysis",
+            carrier="h2 electrolysis",
             p_nom_extendable=True,
             efficiency=costs.at["electrolysis", "efficiency"],
             capital_cost=costs.at["electrolysis", "capital_cost"],
@@ -137,7 +137,7 @@ def attach_stores(n, costs, elec_opts):
             h2_buses_i + " Fuel Cell",
             bus0=h2_buses_i,
             bus1=buses_i,
-            carrier="H2 fuel cell",
+            carrier="h2 fuel cell",
             p_nom_extendable=True,
             efficiency=costs.at["fuel cell", "efficiency"],
             # NB: fixed cost is per MWel
@@ -223,7 +223,7 @@ def attach_hydrogen_pipelines(n, costs, elec_opts):
         length=h2_links.length.values,
         capital_cost=costs.at["H2 pipeline", "capital_cost"] * h2_links.length,
         efficiency=costs.at["H2 pipeline", "efficiency"],
-        carrier="H2 pipeline",
+        carrier="h2 pipeline",
     )
 
 

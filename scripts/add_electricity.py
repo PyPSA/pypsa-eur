@@ -202,10 +202,10 @@ def load_costs(tech_costs, config, elec_config, Nyears=1.0):
 
 def load_powerplants(ppl_fn):
     carrier_dict = {
-        "ocgt": "OCGT",
-        "ccgt": "CCGT",
+        #"ocgt": "OCGT",
+        #"ccgt": "CCGT",
         "bioenergy": "biomass",
-        "ccgt, thermal": "CCGT",
+        "ccgt, thermal": "ccgt",
         "hard coal": "coal",
     }
     return (
@@ -467,7 +467,7 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **con
             ),
         )
 
-    if "PHS" in carriers and not phs.empty:
+    if "phs" in carriers and not phs.empty:
         # fill missing max hours to config value and
         # assume no natural inflow due to lack of data
         max_hours = config.get("PHS_max_hours", 6)
@@ -475,7 +475,7 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **con
         n.madd(
             "StorageUnit",
             phs.index,
-            carrier="PHS",
+            carrier="phs",
             bus=phs["bus"],
             p_nom=phs["p_nom"],
             capital_cost=costs.at["PHS", "capital_cost"],
