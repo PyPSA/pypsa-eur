@@ -298,6 +298,8 @@ if __name__ == "__main__":
             break
 
     for o in opts:
+        if "+" not in o:
+            continue
         oo = o.split("+")
         suptechs = map(lambda c: c.split("-", 2)[0], n.carriers.index)
         if oo[0].startswith(tuple(suptechs)):
