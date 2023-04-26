@@ -5,7 +5,7 @@
 
 rule solve_network:
     input:
-        unit_commitment_file="data/unit_commitment.csv",
+        unit_commitment_params="data/unit_commitment.csv",
         network=RESOURCES + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
     output:
         network=RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
