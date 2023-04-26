@@ -11,11 +11,10 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-import pandas as pd
 import geopandas as gpd
-from vresutils.graph import voronoi_partition_pts
-
+import pandas as pd
 from cluster_gas_network import load_bus_regions
+from vresutils.graph import voronoi_partition_pts
 
 
 def read_scigrid_gas(fn):
@@ -79,19 +78,21 @@ def build_gas_input_locations(lng_fn, entry_fn, prod_fn, countries):
 
 
 def assign_reference_import_sites(gas_input_locations, import_sites, europe_shape):
-
-    europe_shape = europe_shape.squeeze().geometry.buffer(1) # 1 latlon degree
+    europe_shape = europe_shape.squeeze().geometry.buffer(1)  # 1 latlon degree
 
     for kind in ["lng", "pipeline"]:
-
         locs = import_sites.query("type == @kind")
 
         partition = voronoi_partition_pts(locs[["x", "y"]].values, europe_shape)
         partition = gpd.GeoDataFrame(dict(name=locs.index, geometry=partition))
-        partition = partition.set_crs(4326).set_index('name')
+        partition = partition.set_crs(4326).set_index("name")
 
-        match = gpd.sjoin(gas_input_locations.query("type == @kind"), partition, how='left')
-        gas_input_locations.loc[gas_input_locations["type"] == kind, "port"] = match["index_right"]
+        match = gpd.sjoin(
+            gas_input_locations.query("type == @kind"), partition, how="left"
+        )
+        gas_input_locations.loc[gas_input_locations["type"] == kind, "port"] = match[
+            "index_right"
+        ]
 
     return gas_input_locations
 
@@ -133,7 +134,9 @@ if __name__ == "__main__":
         countries,
     )
 
-    gas_input_locations = assign_reference_import_sites(gas_input_locations, import_sites, europe_shape)
+    gas_input_locations = assign_reference_import_sites(
+        gas_input_locations, import_sites, europe_shape
+    )
 
     gas_input_nodes = gpd.sjoin(gas_input_locations, regions, how="left")
 
@@ -148,7 +151,12 @@ if __name__ == "__main__":
 
     gas_input_nodes_s.to_csv(snakemake.output.gas_input_nodes_simplified)
 
-    ports = gas_input_nodes.groupby(["bus", "type"])["port"].first().unstack().drop("production", axis=1)
+    ports = (
+        gas_input_nodes.groupby(["bus", "type"])["port"]
+        .first()
+        .unstack()
+        .drop("production", axis=1)
+    )
     ports.columns.name = "port"
 
     ports.to_csv(snakemake.output.ports)

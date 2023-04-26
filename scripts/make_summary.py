@@ -514,7 +514,11 @@ def calculate_weighted_prices(n, label, weighted_prices):
                 columns=lambda i: str(i) + suffix
             )
         else:
-            load = n.loads_t.p_set[buses.intersection(n.loads_t.p_set.columns)].reindex(columns=buses).fillna(0.)
+            load = (
+                n.loads_t.p_set[buses.intersection(n.loads_t.p_set.columns)]
+                .reindex(columns=buses)
+                .fillna(0.0)
+            )
 
         for tech in link_loads[carrier]:
             names = n.links.index[n.links.index.to_series().str[-len(tech) :] == tech]

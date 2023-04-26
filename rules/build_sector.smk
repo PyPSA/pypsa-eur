@@ -95,8 +95,7 @@ if config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]:
             + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
             regions_offshore=RESOURCES
             + "regions_offshore_elec_s{simpl}_{clusters}.geojson",
-            europe_shape=RESOURCES
-            + "europe_shape.geojson",
+            europe_shape=RESOURCES + "europe_shape.geojson",
             reference_import_sites="data/import-sites.csv",
         output:
             gas_input_nodes=RESOURCES
@@ -730,10 +729,9 @@ rule prepare_sector_network:
         + "solar_thermal_rural_elec_s{simpl}_{clusters}.nc"
         if config["sector"]["solar_thermal"]
         else [],
-        import_costs=trace("results/result.csv"), # TODO: host file on zenodo or elsewhere
-        import_p_max_pu=trace("results/combined_weighted_generator_timeseries.nc"), # TODO: host file on zenodo or elsewhere
-        regions_onshore=RESOURCES
-        + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+        import_costs=trace("results/result.csv"),  # TODO: host file on zenodo or elsewhere
+        import_p_max_pu=trace("results/combined_weighted_generator_timeseries.nc"),  # TODO: host file on zenodo or elsewhere
+        regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
     output:
         RESULTS
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",

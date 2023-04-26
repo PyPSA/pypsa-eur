@@ -282,11 +282,15 @@ def plot_balances():
         df = df / 1e6
 
         # remove trailing link ports
-        forbidden = ["co2", "import shipping-lh2", "import shipping-lnh3", "import pipeline-h2", "NH3"]
+        forbidden = [
+            "co2",
+            "import shipping-lh2",
+            "import shipping-lnh3",
+            "import pipeline-h2",
+            "NH3",
+        ]
         df.index = [
-            i[:-1]
-            if ((i not in forbidden) and (i[-1:] in ["0", "1", "2", "3"]))
-            else i
+            i[:-1] if ((i not in forbidden) and (i[-1:] in ["0", "1", "2", "3"])) else i
             for i in df.index
         ]
 
