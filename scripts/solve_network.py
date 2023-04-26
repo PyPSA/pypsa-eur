@@ -603,6 +603,8 @@ def add_unit_commitment(n, fn):
     n.df(c).loc[n.df(c).carrier.isin(uc_data.columns), "committable"] = True
     for attr in uc_data.index:
         n.df(c)[attr].update(n.df(c)["carrier"].map(uc_data.loc[attr]).dropna())
+    gen_i = n.df(c).query("carrier in @uc_data.columns").index
+    n.df(c).loc[gen_i, "committable"] = True
 
 
 def solve_network(n, config, opts="", **kwargs):
@@ -615,7 +617,7 @@ def solve_network(n, config, opts="", **kwargs):
     track_iterations = cf_solving.get("track_iterations", False)
     min_iterations = cf_solving.get("min_iterations", 4)
     max_iterations = cf_solving.get("max_iterations", 6)
-    linearized_unit_commitment = cf_solving.get("linearized_unit_commitment", True)
+    linearized_unit_commitment = cf_solving.get("linearized_unit_commitment", False)
 
     # add to network for extra_functionality
     n.config = config
@@ -631,6 +633,7 @@ def solve_network(n, config, opts="", **kwargs):
             solver_name=solver_name,
             extra_functionality=extra_functionality,
             linearized_unit_commitment=linearized_unit_commitment,
+            linearized_unit_commitment=linearized_unit_commitment,
             **solver_options,
             **kwargs,
         )
@@ -640,6 +643,7 @@ def solve_network(n, config, opts="", **kwargs):
             track_iterations=track_iterations,
             min_iterations=min_iterations,
             max_iterations=max_iterations,
+            linearized_unit_commitment=linearized_unit_commitment,
             extra_functionality=extra_functionality,
             **solver_options,
             **kwargs,
@@ -655,20 +659,19 @@ def solve_network(n, config, opts="", **kwargs):
     return n
 
 
-# %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "solve_network",
-            # configfiles="test/config.overnight.yaml",
+            "solve_sector_network",
+            configfiles="test/config.overnight.yaml",
             simpl="",
             opts="",
-            clusters="37",
-            ll="v1.0",
-            sector_opts="",
-            planning_horizons="2020",
+            clusters="5",
+            ll="v1.5",
+            sector_opts="CO2L0-24H-T-H-B-I-A-solar+p3-dist1",
+            planning_horizons="2030",
         )
     configure_logging(snakemake)
     if "sector_opts" in snakemake.wildcards.keys():
