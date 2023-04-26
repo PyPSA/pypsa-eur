@@ -598,10 +598,10 @@ def add_unit_commitment(n, fn):
     """
     Add unit commitment.
     """
-    c = "Link" if ("sector_opts" in snakemake.wildcards.keys()) else "Generator"
+    c = "Generator"
     uc_data = pd.read_csv(fn, index_col=0)
     for attr in uc_data.index:
-        n.df(c)[attr] = n.df(c)["carrier"].map(uc_data.loc[attr])
+        n.df(c)[attr].update(n.df(c)["carrier"].map(uc_data.loc[attr]).dropna())
 
 
 def solve_network(n, config, opts="", **kwargs):
