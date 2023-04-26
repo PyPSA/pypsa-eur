@@ -763,7 +763,7 @@ def _read_tyndp2020_lines(tyndp_file):
     df["commissioning_year"] = pd.to_datetime(df["commissioning_year"], format="%Y")
     df["v_nom"] = df["v_nom"].replace(np.nan, 220)
     df["v_nom"] = df["v_nom"].astype(int)
-    df["num_parallel"] = 2.
+    df["num_parallel"] = 2.0
     return df
 
 
