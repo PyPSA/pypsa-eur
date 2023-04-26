@@ -169,7 +169,7 @@ def prepare_network(n, solve_opts=None, config=None):
             "Generator",
             buses_i,
             " load",
-            bus=n.buses.index,
+            bus=buses_i,
             carrier="load",
             sign=1e-3,  # Adjust sign to measure p and p_nom in kW instead of MW
             marginal_cost=load_shedding,  # Eur/kWh
@@ -633,7 +633,6 @@ def solve_network(n, config, opts="", **kwargs):
             solver_name=solver_name,
             extra_functionality=extra_functionality,
             linearized_unit_commitment=linearized_unit_commitment,
-            linearized_unit_commitment=linearized_unit_commitment,
             **solver_options,
             **kwargs,
         )
@@ -659,19 +658,20 @@ def solve_network(n, config, opts="", **kwargs):
     return n
 
 
+# %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "solve_sector_network",
-            configfiles="test/config.overnight.yaml",
+            "solve_network",
+            # configfiles="test/config.overnight.yaml",
             simpl="",
             opts="",
-            clusters="5",
-            ll="v1.5",
-            sector_opts="CO2L0-24H-T-H-B-I-A-solar+p3-dist1",
-            planning_horizons="2030",
+            clusters="37",
+            ll="v1.0",
+            sector_opts="",
+            planning_horizons="2020",
         )
     configure_logging(snakemake)
     if "sector_opts" in snakemake.wildcards.keys():
