@@ -633,7 +633,6 @@ def solve_network(n, config, opts="", **kwargs):
             solver_name=solver_name,
             extra_functionality=extra_functionality,
             linearized_unit_commitment=linearized_unit_commitment,
-            linearized_unit_commitment=linearized_unit_commitment,
             **solver_options,
             **kwargs,
         )
