@@ -125,7 +125,8 @@ def add_missing_carrier(n):
     components = [n.buses, n.generators, n.lines, n.links, n.storage_units, n.stores]
     for c in components:
         missing_carrier = np.setdiff1d(c.carrier.unique(), n.carriers.index)
-        n.madd("Carrier", missing_carrier)
+        if len(missing_carrier):
+            n.madd("Carrier", missing_carrier)
 
 
 def _add_missing_carriers_from_costs(n, costs, carriers):
