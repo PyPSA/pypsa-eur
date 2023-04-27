@@ -703,4 +703,4 @@ if __name__ == "__main__":
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     n.export_to_netcdf(snakemake.output[0])
 
-    logger.info("Maximum memory usage: {}".format(mem.mem_usage))
+    # logger.info("Maximum memory usage: {}".format(mem.mem_usage))
