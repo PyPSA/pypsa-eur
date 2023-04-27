@@ -25,6 +25,7 @@ scenario:
   - v1.0
   clusters:  # number of nodes in Europe, any integer between 37 (1 node per country-zone) and several hundred
   - 37
+  - "37c"
   # - 128
   # - 256
   # - 512
