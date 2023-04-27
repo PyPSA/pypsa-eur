@@ -597,7 +597,7 @@ clustering:
   cluster_network:
     algorithm: kmeans
     feature: solar+onwind-time
-    exclude_carriers: ['onwind', 'solar', 'offwind-ac', 'CCGT', 'offwind-dc', 'lignite', 'ror', 'oil', 'biomass', 'coal', 'OCGT', 'nuclear']
+    exclude_carriers: ['CCGT', 'lignite', 'oil', 'coal', 'OCGT', 'nuclear']
   aggregation_strategies:
     generators:
       p_nom_max: sum # use "min" for more conservative assumptions
