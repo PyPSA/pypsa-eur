@@ -121,7 +121,7 @@ def calculate_annuity(n, r):
         return 1 / n
 
 
-def add_missing_carriers_with_nice_names(n,config):
+def add_missing_carriers_with_nice_names(n, config):
     components = [n.buses, n.generators, n.lines, n.links, n.storage_units, n.stores]
     for c in components:
         missing_carrier = np.setdiff1d(c.carrier.unique(), n.carriers.index)
