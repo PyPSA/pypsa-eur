@@ -22,7 +22,7 @@ from _helpers import (
     override_component_attrs,
     update_config_with_sector_opts,
 )
-from add_electricity import add_missing_carrier
+from add_electricity import add_missing_carriers_with_nice_names
 from build_energy_totals import build_co2_totals, build_eea_co2, build_eurostat_co2
 from networkx.algorithms import complement
 from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentation
@@ -3400,6 +3400,6 @@ if __name__ == "__main__":
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
 
-    add_missing_carrier(n)
+    add_missing_carriers_with_nice_names(n, snakemake.config)
 
     n.export_to_netcdf(snakemake.output[0])
