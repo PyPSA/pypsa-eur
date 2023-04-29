@@ -1,7 +1,7 @@
-# SPDX-FileCopyrightText: : 2017-2021 The PyPSA-Eur Authors
+# -*- coding: utf-8 -*-
+# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
-
 """
 Create cutouts with `atlite <https://atlite.readthedocs.io/en/latest/>`_.
 
@@ -25,7 +25,7 @@ Relevant Settings
             {cutout}:
 
 .. seealso::
-    Documentation of the configuration file ``config.yaml`` at
+    Documentation of the configuration file ``config/config.yaml`` at
     :ref:`atlite_cf`
 
 Inputs
@@ -77,37 +77,36 @@ Outputs
     wnd100m              time, y, x  ms**-1      Wind speeds at 100 meters (regardless of direction)
     ===================  ==========  ==========  =========================================================
 
-    .. image:: ../img/era5.png
+    .. image:: img/era5.png
         :scale: 40 %
 
 A **SARAH-2 cutout** can be used to amend the fields ``temperature``, ``influx_toa``, ``influx_direct``, ``albedo``,
 ``influx_diffuse`` of ERA5 using satellite-based radiation observations.
 
-    .. image:: ../img/sarah.png
+    .. image:: img/sarah.png
         :scale: 40 %
 
 Description
 -----------
-
 """
 
 import logging
+
 import atlite
 import geopandas as gpd
 import pandas as pd
 from _helpers import configure_logging
 
-
 logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
-    if 'snakemake' not in globals():
+    if "snakemake" not in globals():
         from _helpers import mock_snakemake
-        # snakemake = mock_snakemake('build_cutout_year', cutout='europe-era5', weather_year=2011)
-        snakemake = mock_snakemake('build_cutout', cutout='europe-era5')
+
+        snakemake = mock_snakemake("build_cutout", cutout="europe-2013-era5")
     configure_logging(snakemake)
 
-    cutout_params = snakemake.config['atlite']['cutouts'][snakemake.wildcards.cutout]
+    cutout_params = snakemake.config["atlite"]["cutouts"][snakemake.wildcards.cutout]
 
     if hasattr(snakemake.wildcards, 'weather_year'): 
         time = snakemake.wildcards.weather_year
@@ -119,19 +118,18 @@ if __name__ == "__main__":
 
     cutout_params['time'] = slice(*cutout_params['time'])
 
-    if {'x', 'y', 'bounds'}.isdisjoint(cutout_params):
+    if {"x", "y", "bounds"}.isdisjoint(cutout_params):
         # Determine the bounds from bus regions with a buffer of two grid cells
         onshore = gpd.read_file(snakemake.input.regions_onshore)
         offshore = gpd.read_file(snakemake.input.regions_offshore)
-        regions =  pd.concat([onshore, offshore])
-        d = max(cutout_params.get('dx', 0.25), cutout_params.get('dy', 0.25))*2
-        cutout_params['bounds'] = regions.total_bounds + [-d, -d, d, d]
-    elif {'x', 'y'}.issubset(cutout_params):
-        cutout_params['x'] = slice(*cutout_params['x'])
-        cutout_params['y'] = slice(*cutout_params['y'])
-
+        regions = pd.concat([onshore, offshore])
+        d = max(cutout_params.get("dx", 0.25), cutout_params.get("dy", 0.25)) * 2
+        cutout_params["bounds"] = regions.total_bounds + [-d, -d, d, d]
+    elif {"x", "y"}.issubset(cutout_params):
+        cutout_params["x"] = slice(*cutout_params["x"])
+        cutout_params["y"] = slice(*cutout_params["y"])
 
     logging.info(f"Preparing cutout with parameters {cutout_params}.")
-    features = cutout_params.pop('features', None)
+    features = cutout_params.pop("features", None)
     cutout = atlite.Cutout(snakemake.output[0], **cutout_params)
     cutout.prepare(features=features)

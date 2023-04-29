@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2021 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2021-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: CC0-1.0
 
@@ -16,75 +16,103 @@ on:
     branches:
     - master
   schedule:
-    - cron: "0 5 * * TUE"
+  - cron: "0 5 * * TUE"
 
 env:
-  CACHE_NUMBER: 1 # Change this value to manually reset the environment cache
+  CONDA_CACHE_NUMBER: 1 # Change this value to manually reset the environment cache
+  DATA_CACHE_NUMBER: 2
 
 jobs:
   build:
 
     strategy:
+      fail-fast: false
       matrix:
         include:
           # Matrix required to handle caching with Mambaforge
-          - os: ubuntu-latest
-            label: ubuntu-latest
-            prefix: /usr/share/miniconda3/envs/pypsa-eur
+        - os: ubuntu-latest
+          label: ubuntu-latest
+          prefix: /usr/share/miniconda3/envs/pypsa-eur
 
-          - os: macos-latest
-            label: macos-latest
-            prefix: /Users/runner/miniconda3/envs/pypsa-eur
+        - os: macos-latest
+          label: macos-latest
+          prefix: /Users/runner/miniconda3/envs/pypsa-eur
 
-          - os: windows-latest
-            label: windows-latest
-            prefix: C:\Miniconda3\envs\pypsa-eur
+        - os: windows-latest
+          label: windows-latest
+          prefix: C:\Miniconda3\envs\pypsa-eur
 
     name: ${{ matrix.label }}
 
     runs-on: ${{ matrix.os }}
-    
+
     defaults:
       run:
         shell: bash -l {0}
-        
+
     steps:
-      - uses: actions/checkout@v2
-      
-      - name: Setup secrets
-        run: |
-          echo -ne "url: ${CDSAPI_URL}\nkey: ${CDSAPI_TOKEN}\n" > ~/.cdsapirc
+    - uses: actions/checkout@v3
 
-      - name: Add solver to environment
-        run: |
-          echo -e "  - glpk\n  - ipopt<3.13.3" >> envs/environment.yaml
+    - name: Setup secrets
+      run: |
+        echo -ne "url: ${CDSAPI_URL}\nkey: ${CDSAPI_TOKEN}\n" > ~/.cdsapirc
 
-      - name: Setup Mambaforge
-        uses: conda-incubator/setup-miniconda@v2
-        with:
-            miniforge-variant: Mambaforge
-            miniforge-version: latest
-            activate-environment: pypsa-eur
-            use-mamba: true
-            
-      - name: Set cache date
-        run: echo "DATE=$(date +'%Y%m%d')" >> $GITHUB_ENV
+    - name: Add solver to environment
+      run: |
+        echo -e "- glpk\n- ipopt<3.13.3" >> envs/environment.yaml
+      if: ${{ matrix.label }} == 'windows-latest'
 
-      - name: Create environment cache
-        uses: actions/cache@v2
-        id: cache
-        with:
-          path: ${{ matrix.prefix }}
-          key: ${{ matrix.label }}-conda-${{ hashFiles('envs/environment.yaml') }}-${{ env.DATE }}-${{ env.CACHE_NUMBER }}
+    - name: Add solver to environment
+      run: |
+        echo -e "- glpk\n- ipopt" >> envs/environment.yaml
+      if: ${{ matrix.label }} != 'windows-latest'
 
-      - name: Update environment due to outdated or unavailable cache
-        run: mamba env update -n pypsa-eur -f envs/environment.yaml
-        if: steps.cache.outputs.cache-hit != 'true'
+    - name: Setup Mambaforge
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        miniforge-variant: Mambaforge
+        miniforge-version: latest
+        activate-environment: pypsa-eur
+        use-mamba: true
 
-      - name: Test snakemake workflow
-        run: |
-          conda activate pypsa-eur
-          conda list
-          cp test/config.test1.yaml config.yaml
-          snakemake --cores all solve_all_networks
-          rm -rf resources/*.nc resources/*.geojson resources/*.h5 networks results
+    - name: Set cache dates
+      run: |
+        echo "DATE=$(date +'%Y%m%d')" >> $GITHUB_ENV
+        echo "WEEK=$(date +'%Y%U')" >> $GITHUB_ENV
+
+    - name: Cache data and cutouts folders
+      uses: actions/cache@v3
+      with:
+        path: |
+          data
+          cutouts
+        key: data-cutouts-${{ env.WEEK }}-${{ env.DATA_CACHE_NUMBER }}
+
+    - name: Create environment cache
+      uses: actions/cache@v3
+      id: cache
+      with:
+        path: ${{ matrix.prefix }}
+        key: ${{ matrix.label }}-conda-${{ env.DATE }}-${{ env.CONDA_CACHE_NUMBER }}
+
+    - name: Update environment due to outdated or unavailable cache
+      run: mamba env update -n pypsa-eur -f envs/environment.yaml
+      if: steps.cache.outputs.cache-hit != 'true'
+
+    - name: Test snakemake workflow
+      run: |
+        conda activate pypsa-eur
+        conda list
+        snakemake -call solve_elec_networks --configfile config/test/config.electricity.yaml --rerun-triggers=mtime
+        snakemake -call all --configfile config/test/config.overnight.yaml --rerun-triggers=mtime
+        snakemake -call all --configfile config/test/config.myopic.yaml --rerun-triggers=mtime
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: resources-results
+        path: |
+          resources
+          results
+        if-no-files-found: warn
+        retention-days: 1

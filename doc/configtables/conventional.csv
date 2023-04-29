@@ -1,0 +1,3 @@
+,Unit,Values,Description
+{name},--,"string","For any carrier/technology overwrite attributes as listed below."
+-- {attribute},--,"string or float","For any attribute, can specify a float or reference to a file path to a CSV file giving floats for each country (2-letter code)."

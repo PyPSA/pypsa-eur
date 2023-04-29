@@ -1,60 +1,59 @@
-# SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
 name: pypsa-eur
 channels:
-  - conda-forge
-  - bioconda
+- conda-forge
+- bioconda
 dependencies:
-  - python>=3.8
-  - pip
+- python>=3.8
+- pip
 
-  - pypsa>=0.19.1
-  - atlite>=0.2.6
-  - dask
+- pypsa>=0.21.3
+- atlite>=0.2.9
+- dask
 
   # Dependencies of the workflow itself
-  - xlrd
-  - openpyxl
-  - pycountry
-  - seaborn
-  - snakemake-minimal
-  - memory_profiler
-  - yaml
-  - pytables
-  - lxml
-  - powerplantmatching>=0.5.3
-  - numpy
-  - pandas
-  - geopandas>=0.11.0
-  - xarray
-  - netcdf4
-  - networkx
-  - scipy
-  - shapely
-  - progressbar2
-  - pyomo
-  - matplotlib
-  - proj
-  - fiona <= 1.18.20  # Till issue https://github.com/Toblerity/Fiona/issues/1085 is not solved
-  - country_converter
+- xlrd
+- openpyxl!=3.1.1
+- pycountry
+- seaborn
+- snakemake-minimal>=7.7.0
+- memory_profiler
+- yaml
+- pytables
+- lxml
+- powerplantmatching>=0.5.5
+- numpy<1.24
+- pandas>=1.4
+- geopandas>=0.11.0
+- xarray
+- rioxarray
+- netcdf4
+- networkx
+- scipy
+- shapely>=2.0
+- pyomo
+- matplotlib<3.6
+- proj
+- fiona
+- country_converter
+- geopy
+- tqdm
+- pytz
+- tabula-py
+- pyxlsb
+- graphviz
 
   # Keep in conda environment when calling ipython
-  - ipython
+- ipython
 
   # GIS dependencies:
-  - cartopy
-  - descartes
-  - rasterio<=1.2.9  # 1.2.10 creates error https://github.com/PyPSA/atlite/issues/238
+- cartopy
+- descartes
+- rasterio!=1.2.10
 
-  # PyPSA-Eur-Sec Dependencies
-  - geopy
-  - tqdm
-  - pytz
-  - tabula-py
-  - mergedeep
-
-  - pip:
-    - vresutils>=0.3.1
-    - tsam>=1.1.0
+- pip:
+  - vresutils>=0.3.1
+  - tsam>=1.1.0
