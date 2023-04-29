@@ -108,15 +108,15 @@ if __name__ == "__main__":
 
     cutout_params = snakemake.config["atlite"]["cutouts"][snakemake.wildcards.cutout]
 
-    if hasattr(snakemake.wildcards, 'weather_year'): 
+    if hasattr(snakemake.wildcards, "weather_year"):
         time = snakemake.wildcards.weather_year
         cutout_params["time"] = [time, time]
 
     if "time" not in cutout_params:
-        snapshots = pd.date_range(freq='h', **snakemake.config['snapshots'])
-        cutout_params["time"]  = [snapshots[0], snapshots[-1]]
+        snapshots = pd.date_range(freq="h", **snakemake.config["snapshots"])
+        cutout_params["time"] = [snapshots[0], snapshots[-1]]
 
-    cutout_params['time'] = slice(*cutout_params['time'])
+    cutout_params["time"] = slice(*cutout_params["time"])
 
     if {"x", "y", "bounds"}.isdisjoint(cutout_params):
         # Determine the bounds from bus regions with a buffer of two grid cells

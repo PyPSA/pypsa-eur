@@ -275,23 +275,25 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_electricity_demand", weather_year='')
+        snakemake = mock_snakemake("build_electricity_demand", weather_year="")
 
     configure_logging(snakemake)
 
     weather_year = snakemake.wildcards.weather_year
     if weather_year:
         snapshots = dict(
-            start=weather_year,
-            end=str(int(weather_year)+1),
-            closed="left"
+            start=weather_year, end=str(int(weather_year) + 1), closed="left"
         )
     else:
-        snapshots = snakemake.config['snapshots']
-    snapshots = pd.date_range(freq='h', **snapshots)
+        snapshots = snakemake.config["snapshots"]
+    snapshots = pd.date_range(freq="h", **snapshots)
 
     fixed_year = snakemake.config["load"].get("fixed_year", False)
-    years = slice(str(fixed_year), str(fixed_year)) if fixed_year else slice(snapshots[0], snapshots[-1])
+    years = (
+        slice(str(fixed_year), str(fixed_year))
+        if fixed_year
+        else slice(snapshots[0], snapshots[-1])
+    )
 
     powerstatistics = snakemake.config["load"]["power_statistics"]
     interpolate_limit = snakemake.config["load"]["interpolate_limit"]

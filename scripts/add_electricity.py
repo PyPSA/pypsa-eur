@@ -701,19 +701,20 @@ def add_nice_carrier_names(n, config):
     n.carriers["color"] = colors
 
 
-
 def drop_leap_day(n):
-    if not n.snapshots.is_leap_year.any(): return
+    if not n.snapshots.is_leap_year.any():
+        return
     leap_days = (n.snapshots.day == 29) & (n.snapshots.month == 2)
     n.set_snapshots(n.snapshots[~leap_days])
-    n.snapshot_weightings[:] = 8760/len(n.snapshots)
+    n.snapshot_weightings[:] = 8760 / len(n.snapshots)
     logger.info("Dropped February 29 from leap year.")
 
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
-        snakemake = mock_snakemake('add_electricity', weather_year='')
+
+        snakemake = mock_snakemake("add_electricity", weather_year="")
     configure_logging(snakemake)
 
     n = pypsa.Network(snakemake.input.base_network)
@@ -721,15 +722,13 @@ if __name__ == "__main__":
     weather_year = snakemake.wildcards.weather_year
     if weather_year:
         snapshots = dict(
-            start=weather_year,
-            end=str(int(weather_year)+1),
-            closed="left"
+            start=weather_year, end=str(int(weather_year) + 1), closed="left"
         )
     else:
-        snapshots = snakemake.config['snapshots']
-    n.set_snapshots(pd.date_range(freq='h', **snapshots))
-    
-    Nyears = n.snapshot_weightings.objective.sum() / 8760.
+        snapshots = snakemake.config["snapshots"]
+    n.set_snapshots(pd.date_range(freq="h", **snapshots))
+
+    Nyears = n.snapshot_weightings.objective.sum() / 8760.0
 
     costs = load_costs(
         snakemake.input.tech_costs,
@@ -855,7 +854,7 @@ if __name__ == "__main__":
 
     add_nice_carrier_names(n, snakemake.config)
 
-    if snakemake.config['enable'].get('drop_leap_days', True):
+    if snakemake.config["enable"].get("drop_leap_days", True):
         drop_leap_day(n)
 
     n.meta = snakemake.config

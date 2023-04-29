@@ -65,9 +65,8 @@ import atlite
 import country_converter as coco
 import geopandas as gpd
 import pandas as pd
-from numpy.polynomial import Polynomial
 from _helpers import configure_logging
-
+from numpy.polynomial import Polynomial
 
 cc = coco.CountryConverter()
 
@@ -132,11 +131,10 @@ def correct_eia_stats_by_capacity(eia_stats, fn, countries, baseyear=2019):
     eia_stats_corrected = eia_stats / ratio
     to_keep = ["AL", "AT", "CH", "DE", "GB", "NL", "RS", "RO", "SK"]
     to_correct = eia_stats_corrected.columns.difference(to_keep)
-    eia_stats.loc[:,to_correct] = eia_stats_corrected.loc[:,to_correct]
+    eia_stats.loc[:, to_correct] = eia_stats_corrected.loc[:, to_correct]
 
 
 def approximate_missing_eia_stats(eia_stats, runoff_fn, countries):
-
     runoff = pd.read_csv(runoff_fn, index_col=0).T[countries]
 
     # fix ES, PT data points
@@ -147,7 +145,6 @@ def approximate_missing_eia_stats(eia_stats, runoff_fn, countries):
     eia_stats_approximated = {}
 
     for c in countries:
-
         X = runoff_eia[c]
         Y = eia_stats[c]
 
@@ -168,7 +165,8 @@ logger = logging.getLogger(__name__)
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
-        snakemake = mock_snakemake('build_hydro_profile', weather_year='')
+
+        snakemake = mock_snakemake("build_hydro_profile", weather_year="")
     configure_logging(snakemake)
 
     config_hydro = snakemake.config["renewable"]["hydro"]
@@ -185,18 +183,18 @@ if __name__ == "__main__":
     fn = snakemake.input.eia_hydro_generation
     eia_stats = get_eia_annual_hydro_generation(fn, countries)
 
-    if config_hydro.get('eia_correct_by_capacity'):
+    if config_hydro.get("eia_correct_by_capacity"):
         fn = snakemake.input.eia_hydro_capacity
         correct_eia_stats_by_capacity(eia_stats, fn, countries)
 
-    if config_hydro.get('eia_approximate_missing'):
+    if config_hydro.get("eia_approximate_missing"):
         fn = snakemake.input.era5_runoff
         eia_stats = approximate_missing_eia_stats(eia_stats, fn, countries)
 
     eia_stats.to_csv(snakemake.output.eia_hydro)
 
     weather_year = snakemake.wildcards.weather_year
-    norm_year = config_hydro.get('eia_norm_year')
+    norm_year = config_hydro.get("eia_norm_year")
     if norm_year:
         eia_stats.loc[weather_year] = eia_stats.loc[norm_year]
     elif weather_year and weather_year not in eia_stats.index:

@@ -243,7 +243,12 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "prepare_network", weather_year="", simpl="", clusters="40", ll="v0.3", opts="Co2L-24H"
+            "prepare_network",
+            weather_year="",
+            simpl="",
+            clusters="40",
+            ll="v0.3",
+            opts="Co2L-24H",
         )
     configure_logging(snakemake)
 
