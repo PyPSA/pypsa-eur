@@ -18,11 +18,15 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_clustered_population_layouts",
+            weather_year="",
             simpl="",
             clusters=48,
         )
 
-    cutout = atlite.Cutout(snakemake.input.cutout)
+    cutout_name = snakemake.input.cutout
+    year = snakemake.wildcards.weather_year
+    if year: cutout_name = cutout_name.format(weather_year=year)
+    cutout = atlite.Cutout(cutout_name)
 
     clustered_regions = (
         gpd.read_file(snakemake.input.regions_onshore)

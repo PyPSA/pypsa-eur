@@ -131,6 +131,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "add_brownfield",
+            weather_year="",
             simpl="",
             clusters="37",
             opts="",

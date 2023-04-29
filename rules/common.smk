@@ -23,19 +23,13 @@ def memory(w):
         return int(factor * (10000 + 195 * int(w.clusters)))
 
 
-def input_eurostat(w):
-    # 2016 includes BA, 2017 does not
-    report_year = config["energy"]["eurostat_report_year"]
-    return f"data/eurostat-energy_balances-june_{report_year}_edition"
-
-
 def solved_previous_horizon(wildcards):
     planning_horizons = config["scenario"]["planning_horizons"]
     i = planning_horizons.index(int(wildcards.planning_horizons))
     planning_horizon_p = str(planning_horizons[i - 1])
     return (
         RESULTS
-        + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_"
+        + "postnetworks/elec{weather_year}_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_"
         + planning_horizon_p
         + ".nc"
     )

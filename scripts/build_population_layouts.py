@@ -20,12 +20,17 @@ import xarray as xr
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
-
-        snakemake = mock_snakemake("build_population_layouts")
+        snakemake = mock_snakemake(
+            'build_population_layouts',
+            weather_year="",
+        )
 
     logging.basicConfig(level=snakemake.config["logging"]["level"])
 
-    cutout = atlite.Cutout(snakemake.input.cutout)
+    cutout_name = snakemake.input.cutout
+    year = snakemake.wildcards.weather_year
+    if year: cutout_name = cutout_name.format(weather_year=year)
+    cutout = atlite.Cutout(cutout_name)
 
     grid_cells = cutout.grid.geometry
 

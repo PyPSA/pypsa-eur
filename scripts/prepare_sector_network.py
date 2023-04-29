@@ -695,7 +695,7 @@ def add_co2limit(n, nyears=1.0, limit=0.0):
 
 
 # TODO PyPSA-Eur merge issue
-def average_every_nhours(n, offset):
+def average_every_nhours(n, offset, drop_leap_day=False):
     logger.info(f"Resampling the network to {offset}")
     m = n.copy(with_time=False)
 
@@ -713,6 +713,10 @@ def average_every_nhours(n, offset):
                     pnl[k] = df.resample(offset).max()
                 else:
                     pnl[k] = df.resample(offset).mean()
+
+    if drop_leap_day:
+        sns = m.snapshots[~((m.snapshots.month == 2) & (m.snapshots.day == 29))]
+        m.set_snapshots(sns)
 
     return m
 
@@ -3201,7 +3205,7 @@ def apply_time_segmentation(
     return n
 
 
-def set_temporal_aggregation(n, opts, solver_name):
+def set_temporal_aggregation(n, opts, solver_name, drop_leap_day=False):
     """
     Aggregate network temporally.
     """
@@ -3236,6 +3240,7 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "prepare_sector_network",
             configfiles="test/config.overnight.yaml",
+            weather_year="",
             simpl="",
             opts="",
             clusters="5",
@@ -3267,9 +3272,9 @@ if __name__ == "__main__":
         nyears,
     )
 
-    pop_weighted_energy_totals = (
-        pd.read_csv(snakemake.input.pop_weighted_energy_totals, index_col=0) * nyears
-    )
+    pop_weighted_energy_totals = pd.read_csv(snakemake.input.pop_weighted_energy_totals, index_col=0) * nyears
+    pop_weighted_heat_totals = pd.read_csv(snakemake.input.pop_weighted_heat_totals, index_col=0) * nyears
+    pop_weighted_energy_totals.update(pop_weighted_heat_totals)
 
     patch_electricity_network(n)
 
@@ -3344,7 +3349,8 @@ if __name__ == "__main__":
         add_allam(n, costs)
 
     solver_name = snakemake.config["solving"]["solver"]["name"]
-    n = set_temporal_aggregation(n, opts, solver_name)
+    drop_leap_day = snakemake.config["atlite"].get("drop_leap_day", False)
+    n = set_temporal_aggregation(n, opts, solver_name, drop_leap_day)
 
     limit_type = "config"
     limit = get(snakemake.config["co2_budget"], investment_year)

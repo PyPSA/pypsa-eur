@@ -23,7 +23,7 @@ if __name__ == "__main__":
         snapshots = dict(
             start=weather_year,
             end=str(int(weather_year)+1),
-            closed="left"
+            inclusive="left"
         )
     else:
         snapshots = snakemake.config['snapshots']

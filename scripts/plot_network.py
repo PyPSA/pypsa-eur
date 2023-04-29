@@ -922,6 +922,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "plot_network",
+            weather_year="",
             simpl="",
             opts="",
             clusters="5",

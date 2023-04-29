@@ -600,6 +600,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "add_existing_baseyear",
+            weather_year="",
             simpl="",
             clusters="45",
             ll="v1.0",

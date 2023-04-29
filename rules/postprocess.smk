@@ -12,20 +12,20 @@ rule plot_network:
     input:
         overrides="data/override_component_attrs",
         network=RESULTS
-        + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
-        regions=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+        + "postnetworks/elec{weather_year}_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        regions=RESOURCES + "regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson",
     output:
         map=RESULTS
-        + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
+        + "maps/elec{weather_year}_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
         today=RESULTS
-        + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}-today.pdf",
+        + "maps/elec{weather_year}_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}-today.pdf",
     threads: 2
     resources:
         mem_mb=10000,
     benchmark:
         (
             BENCHMARKS
-            + "plot_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+            + "plot_network/elec{weather_year}_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
         )
     conda:
         "../envs/environment.yaml"
@@ -72,7 +72,7 @@ rule make_summary:
         overrides="data/override_component_attrs",
         networks=expand(
             RESULTS
-            + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+            + "postnetworks/elec{weather_year}_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
             **config["scenario"]
         ),
         costs="data/costs_{}.csv".format(config["costs"]["year"])
@@ -80,7 +80,7 @@ rule make_summary:
         else "data/costs_{}.csv".format(config["scenario"]["planning_horizons"][0]),
         plots=expand(
             RESULTS
-            + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
+            + "maps/elec{weather_year}_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
             **config["scenario"]
         ),
     output:

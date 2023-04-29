@@ -19,6 +19,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_solar_thermal_profiles",
+            weather_year="",
             simpl="",
             clusters=48,
         )
@@ -27,10 +28,22 @@ if __name__ == "__main__":
     cluster = LocalCluster(n_workers=nprocesses, threads_per_worker=1)
     client = Client(cluster, asynchronous=True)
 
-    config = snakemake.config["solar_thermal"]
+    config = snakemake.config['solar_thermal']
+    
+    cutout_name = snakemake.input.cutout
+    year = snakemake.wildcards.weather_year
 
-    time = pd.date_range(freq="h", **snakemake.config["snapshots"])
-    cutout = atlite.Cutout(snakemake.input.cutout).sel(time=time)
+    if year:
+        snapshots = dict(start=year, end=str(int(year)+1), inclusive="left")
+        cutout_name = cutout_name.format(weather_year=year)
+    else:
+        snapshots = snakemake.config['snapshots']
+    
+    time = pd.date_range(freq='h', **snapshots)
+    if snakemake.config["atlite"].get("drop_leap_day", False):
+        time = time[~((time.month == 2) & (time.day == 29))]
+
+    cutout = atlite.Cutout(cutout_name).sel(time=time)
 
     clustered_regions = (
         gpd.read_file(snakemake.input.regions_onshore)
