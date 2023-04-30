@@ -1084,7 +1084,9 @@ def add_storage_and_grids(n, costs):
         )
 
     if options["hydrogen_turbine"]:
-        logger.info("Adding hydrogen turbine for re-electrification. Assuming OCGT technology costs.")
+        logger.info(
+            "Adding hydrogen turbine for re-electrification. Assuming OCGT technology costs."
+        )
         # TODO: perhaps replace with hydrogen-specific technology assumptions.
 
         n.madd(
