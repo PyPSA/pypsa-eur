@@ -208,7 +208,9 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_biomass_potentials", weather_year="", simpl="", clusters="5")
+        snakemake = mock_snakemake(
+            "build_biomass_potentials", weather_year="", simpl="", clusters="5"
+        )
 
     config = snakemake.config["biomass"]
     year = config["year"]

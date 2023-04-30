@@ -163,7 +163,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_transport_demand",
-            weather_year='',
+            weather_year="",
             simpl="",
             clusters=48,
         )
@@ -179,8 +179,12 @@ if __name__ == "__main__":
     options = snakemake.config["sector"]
 
     year = snakemake.wildcards.weather_year
-    snapshots = dict(start=year, end=str(int(year)+1), inclusive="left") if year else snakemake.config['snapshots']
-    snapshots = pd.date_range(freq='h', **snapshots, tz="UTC")
+    snapshots = (
+        dict(start=year, end=str(int(year) + 1), inclusive="left")
+        if year
+        else snakemake.config["snapshots"]
+    )
+    snapshots = pd.date_range(freq="h", **snapshots, tz="UTC")
     if snakemake.config["atlite"].get("drop_leap_day", False):
         leap_day = (snapshots.month == 2) & (snapshots.day == 29)
         snapshots = snapshots[~leap_day]

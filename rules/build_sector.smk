@@ -262,7 +262,7 @@ rule build_heat_totals:
     resources: mem_mb=2000
     log:
         LOGS + "build_heat_totals.log",
-    benchmark: 
+    benchmark:
         BENCHMARKS + "build_heat_totals",
     conda:
         "../envs/environment.yaml"

@@ -73,7 +73,7 @@ to_ipcc = {
 
 
 def eurostat_per_country(country):
-    
+
     country_fn = idees_rename.get(country, country)
     fn = snakemake.input.eurostat + f"/{country_fn}-Energy-balance-sheets-June-2021-edition.xlsb"
 
@@ -91,7 +91,9 @@ def eurostat_per_country(country):
 
 
 def build_eurostat(countries, year=None):
-    """Return multi-index for all countries' energy data in TWh/a."""
+    """
+    Return multi-index for all countries' energy data in TWh/a.
+    """
 
     nprocesses = snakemake.threads
     tqdm_kwargs = dict(ascii=False, unit=' country', total=len(countries),
@@ -128,7 +130,9 @@ def build_eurostat(countries, year=None):
 
 
 def build_swiss(year=None):
-    """Return a pd.DataFrame of Swiss energy data in TWh/a"""
+    """
+    Return a pd.DataFrame of Swiss energy data in TWh/a.
+    """
 
     fn = snakemake.input.swiss
 
@@ -350,7 +354,7 @@ def build_idees(countries, year=None):
 
     nprocesses = snakemake.threads
     disable_progress = snakemake.config["run"].get("disable_progressbar", False)
-    
+
     func = partial(idees_per_country, year=year, base_dir=snakemake.input.idees)
     tqdm_kwargs = dict(
         ascii=False,
@@ -359,7 +363,7 @@ def build_idees(countries, year=None):
         desc="Build from IDEES database",
         disable=disable_progress
     )
-    
+
     with mute_print():
         with mp.Pool(processes=nprocesses) as pool:
             dfs = list(tqdm(pool.imap(func, countries), **tqdm_kwargs))
@@ -438,7 +442,7 @@ def build_energy_totals(countries, eurostat, swiss, idees):
         # fuel use
 
         for fuel in ["electricity", "total"]:
-            
+
             slicer = idx[c, y, :, :, eurostat_sectors[sector]]
             fill_values = eurostat.loc[slicer, eurostat_fuels[fuel]].groupby(level=[0,1]).sum()
             df.loc[to_fill, f"{fuel} {sector}"] = fill_values

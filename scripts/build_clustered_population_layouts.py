@@ -25,7 +25,8 @@ if __name__ == "__main__":
 
     cutout_name = snakemake.input.cutout
     year = snakemake.wildcards.weather_year
-    if year: cutout_name = cutout_name.format(weather_year=year)
+    if year:
+        cutout_name = cutout_name.format(weather_year=year)
     cutout = atlite.Cutout(cutout_name)
 
     clustered_regions = (
