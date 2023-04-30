@@ -13,7 +13,8 @@ rule plot_network:
         overrides="data/override_component_attrs",
         network=RESULTS
         + "postnetworks/elec{weather_year}_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
-        regions=RESOURCES + "regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson",
+        regions=RESOURCES
+        + "regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson",
     output:
         map=RESULTS
         + "maps/elec{weather_year}_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",

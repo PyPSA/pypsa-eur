@@ -17,7 +17,8 @@ if config["enable"].get("prepare_links_p_nom", False):
         script:
             "../scripts/prepare_links_p_nom.py"
 
-if config["enable"].get('retrieve_opsd_load_data', True):
+
+if config["enable"].get("retrieve_opsd_load_data", True):
 
     rule build_electricity_demand:
         input:
@@ -33,15 +34,23 @@ if config["enable"].get('retrieve_opsd_load_data', True):
         script:
             "../scripts/build_electricity_demand.py"
 
-if config["enable"].get('retrieve_artificial_load_data', False):
+
+if config["enable"].get("retrieve_artificial_load_data", False):
 
     rule build_artificial_load_data:
-        input: ancient("data/load_artificial_raw.csv")
-        output: RESOURCES + "load{weather_year}.csv"
-        log: LOGS + "build_artificial_load_data{weather_year}.log"
-        resources: mem_mb=5000,
-        conda: "../envs/environment.yaml"
-        script: "../scripts/build_artificial_load_data.py"
+        input:
+            ancient("data/load_artificial_raw.csv"),
+        output:
+            RESOURCES + "load{weather_year}.csv",
+        log:
+            LOGS + "build_artificial_load_data{weather_year}.log",
+        resources:
+            mem_mb=5000,
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/build_artificial_load_data.py"
+
 
 rule build_powerplants:
     input:
@@ -155,15 +164,22 @@ if config["enable"].get("build_cutout", False):
             "../scripts/build_cutout.py"
 
     rule build_cutout_year:
-        input: rules.build_cutout.input
-        output: protected("cutouts/" + CDIR + "{cutout}-{weather_year}.nc")
-        log: "logs/" + CDIR + "build_cutout/{cutout}-{weather_year}.log"
-        benchmark: "benchmarks/" + CDIR + "build_cutout_{cutout}-{weather_year}"
+        input:
+            rules.build_cutout.input,
+        output:
+            protected("cutouts/" + CDIR + "{cutout}-{weather_year}.nc"),
+        log:
+            "logs/" + CDIR + "build_cutout/{cutout}-{weather_year}.log",
+        benchmark:
+            "benchmarks/" + CDIR + "build_cutout_{cutout}-{weather_year}"
         threads: ATLITE_NPROCESSES
-        resources: mem_mb=ATLITE_NPROCESSES * 1000
+        resources:
+            mem_mb=ATLITE_NPROCESSES * 1000,
         conda:
             "../envs/environment.yaml"
-        script: "../scripts/build_cutout.py"
+        script:
+            "../scripts/build_cutout.py"
+
 
 if config["enable"].get("build_natura_raster", False):
 
@@ -319,8 +335,10 @@ rule simplify_network:
         regions_offshore=RESOURCES + "regions_offshore.geojson",
     output:
         network=RESOURCES + "networks/elec{weather_year}_s{simpl}.nc",
-        regions_onshore=RESOURCES + "regions_onshore_elec{weather_year}_s{simpl}.geojson",
-        regions_offshore=RESOURCES + "regions_offshore_elec{weather_year}_s{simpl}.geojson",
+        regions_onshore=RESOURCES
+        + "regions_onshore_elec{weather_year}_s{simpl}.geojson",
+        regions_offshore=RESOURCES
+        + "regions_offshore_elec{weather_year}_s{simpl}.geojson",
         busmap=RESOURCES + "busmap_elec{weather_year}_s{simpl}.csv",
         connection_costs=RESOURCES + "connection_costs{weather_year}_s{simpl}.csv",
     log:
@@ -339,8 +357,10 @@ rule simplify_network:
 rule cluster_network:
     input:
         network=RESOURCES + "networks/elec{weather_year}_s{simpl}.nc",
-        regions_onshore=RESOURCES + "regions_onshore_elec{weather_year}_s{simpl}.geojson",
-        regions_offshore=RESOURCES + "regions_offshore_elec{weather_year}_s{simpl}.geojson",
+        regions_onshore=RESOURCES
+        + "regions_onshore_elec{weather_year}_s{simpl}.geojson",
+        regions_offshore=RESOURCES
+        + "regions_offshore_elec{weather_year}_s{simpl}.geojson",
         busmap=ancient(RESOURCES + "busmap_elec{weather_year}_s{simpl}.csv"),
         custom_busmap=(
             "data/custom_busmap_elec_s{simpl}_{clusters}.csv"
@@ -350,8 +370,10 @@ rule cluster_network:
         tech_costs=COSTS,
     output:
         network=RESOURCES + "networks/elec{weather_year}_s{simpl}_{clusters}.nc",
-        regions_onshore=RESOURCES + "regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson",
-        regions_offshore=RESOURCES + "regions_offshore_elec{weather_year}_s{simpl}_{clusters}.geojson",
+        regions_onshore=RESOURCES
+        + "regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson",
+        regions_offshore=RESOURCES
+        + "regions_offshore_elec{weather_year}_s{simpl}_{clusters}.geojson",
         busmap=RESOURCES + "busmap_elec{weather_year}_s{simpl}_{clusters}.csv",
         linemap=RESOURCES + "linemap_elec{weather_year}_s{simpl}_{clusters}.csv",
     log:
@@ -393,9 +415,13 @@ rule prepare_network:
     output:
         RESOURCES + "networks/elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
     log:
-        LOGS + "prepare_network/elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}.log",
+        LOGS
+        + "prepare_network/elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}.log",
     benchmark:
-        (BENCHMARKS + "prepare_network/elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}")
+        (
+            BENCHMARKS
+            + "prepare_network/elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}"
+        )
     threads: 1
     resources:
         mem_mb=4000,
