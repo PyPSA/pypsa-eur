@@ -477,6 +477,8 @@ sector:
   dac: true
   co2_vent: false
   allam_cycle: false
+  hydrogen_fuel_cell: true
+  hydrogen_turbine: false
   SMR: true
   regional_co2_sequestration_potential:
     enable: false  # enable regionally resolved geological co2 storage potential
@@ -925,6 +927,7 @@ plotting:
     H2 pipeline: '#f081dc'
     H2 pipeline retrofitted: '#ba99b5'
     H2 Fuel Cell: '#c251ae'
+    H2 turbine: '#991f83'
     H2 Electrolysis: '#ff29d9'
     # ammonia
     NH3: '#46caf0'

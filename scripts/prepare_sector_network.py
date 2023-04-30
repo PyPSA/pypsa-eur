@@ -1071,18 +1071,40 @@ def add_storage_and_grids(n, costs):
         lifetime=costs.at["electrolysis", "lifetime"],
     )
 
-    n.madd(
-        "Link",
-        nodes + " H2 Fuel Cell",
-        bus0=nodes + " H2",
-        bus1=nodes,
-        p_nom_extendable=True,
-        carrier="H2 Fuel Cell",
-        efficiency=costs.at["fuel cell", "efficiency"],
-        capital_cost=costs.at["fuel cell", "fixed"]
-        * costs.at["fuel cell", "efficiency"],  # NB: fixed cost is per MWel
-        lifetime=costs.at["fuel cell", "lifetime"],
-    )
+    if options["hydrogen_fuel_cell"]:
+        logger.info("Adding hydrogen fuel cell for re-electrification.")
+
+        n.madd(
+            "Link",
+            nodes + " H2 Fuel Cell",
+            bus0=nodes + " H2",
+            bus1=nodes,
+            p_nom_extendable=True,
+            carrier="H2 Fuel Cell",
+            efficiency=costs.at["fuel cell", "efficiency"],
+            capital_cost=costs.at["fuel cell", "fixed"]
+            * costs.at["fuel cell", "efficiency"],  # NB: fixed cost is per MWel
+            lifetime=costs.at["fuel cell", "lifetime"],
+        )
+
+    if options["hydrogen_turbine"]:
+        logger.info(
+            "Adding hydrogen turbine for re-electrification. Assuming OCGT technology costs."
+        )
+        # TODO: perhaps replace with hydrogen-specific technology assumptions.
+
+        n.madd(
+            "Link",
+            nodes + " H2 turbine",
+            bus0=nodes + " H2",
+            bus1=nodes,
+            p_nom_extendable=True,
+            carrier="H2 turbine",
+            efficiency=costs.at["OCGT", "efficiency"],
+            capital_cost=costs.at["OCGT", "fixed"]
+            * costs.at["OCGT", "efficiency"],  # NB: fixed cost is per MWel
+            lifetime=costs.at["OCGT", "lifetime"],
+        )
 
     cavern_types = snakemake.config["sector"]["hydrogen_underground_storage_locations"]
     h2_caverns = pd.read_csv(snakemake.input.h2_cavern, index_col=0)
