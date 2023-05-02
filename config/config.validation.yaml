@@ -187,7 +187,7 @@ renewable:
     # until done more rigorously in #153
     corine: [44, 255]
     natura: true
-    # ship_threshold: 400
+    ship_threshold: 400
     max_depth: 50
     max_shore_distance: 30000
     excluder_resolution: 200
@@ -207,7 +207,7 @@ renewable:
     # until done more rigorously in #153
     corine: [44, 255]
     natura: true
-    # ship_threshold: 400
+    ship_threshold: 400
     max_depth: 50
     min_shore_distance: 30000
     excluder_resolution: 200
