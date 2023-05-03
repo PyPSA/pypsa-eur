@@ -19,6 +19,10 @@ Upcoming Release
 
 
 
+* Add plain hydrogen turbine as additional re-electrification option besides
+  hydrogen fuel cell. Add switches for both re-electrification options under
+  ``sector: hydrogen_turbine:`` and ``sector: hydrogen_fuel_cell:``.
+
 PyPSA-Eur 0.8.0 (18th March 2023)
 =================================
 
