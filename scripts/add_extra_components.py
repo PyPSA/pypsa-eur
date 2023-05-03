@@ -200,8 +200,6 @@ def attach_hydrogen_pipelines(n, costs, elec_opts):
         "`config.yaml` at `electricity: extendable_carriers: Store:`."
     )
 
-    n.add("Carrier", "H2 pipeline")
-
     # determine bus pairs
     attrs = ["bus0", "bus1", "length"]
     candidates = pd.concat(
