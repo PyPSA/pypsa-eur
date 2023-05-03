@@ -31,7 +31,7 @@ PyPSA-Eur: A Sector-Coupled Open Optimisation Model of the European Energy Syste
     :target: https://api.reuse.software/info/github.com/pypsa/pypsa-eur
     :alt: REUSE
 
-|.. image:: https://img.shields.io/stackexchange/stackoverflow/t/pypsa
+.. image:: https://img.shields.io/stackexchange/stackoverflow/t/pypsa
    :target: https://stackoverflow.com/questions/tagged/pypsa
    :alt: Stackoverflow
 
