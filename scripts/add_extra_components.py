@@ -56,11 +56,7 @@ import numpy as np
 import pandas as pd
 import pypsa
 from _helpers import configure_logging
-from add_electricity import (
-    _add_missing_carriers_from_costs,
-    add_missing_carriers_with_nice_names,
-    load_costs,
-)
+from add_electricity import load_costs, sanitize_carriers
 
 idx = pd.IndexSlice
 
@@ -71,7 +67,7 @@ def attach_storageunits(n, costs, elec_opts):
     carriers = elec_opts["extendable_carriers"]["StorageUnit"]
     max_hours = elec_opts["max_hours"]
 
-    _add_missing_carriers_from_costs(n, costs, carriers)
+    n.madd("Carrier", carriers)
 
     buses_i = n.buses.index
 
@@ -102,7 +98,7 @@ def attach_storageunits(n, costs, elec_opts):
 def attach_stores(n, costs, elec_opts):
     carriers = elec_opts["extendable_carriers"]["Store"]
 
-    _add_missing_carriers_from_costs(n, costs, carriers)
+    n.madd("Carrier", carriers)
 
     buses_i = n.buses.index
     bus_sub_dict = {k: n.buses[k].values for k in ["x", "y", "country"]}
@@ -204,6 +200,8 @@ def attach_hydrogen_pipelines(n, costs, elec_opts):
         "`config.yaml` at `electricity: extendable_carriers: Store:`."
     )
 
+    n.add("Carrier", "H2 pipeline")
+
     # determine bus pairs
     attrs = ["bus0", "bus1", "length"]
     candidates = pd.concat(
@@ -252,7 +250,7 @@ if __name__ == "__main__":
     attach_stores(n, costs, elec_config)
     attach_hydrogen_pipelines(n, costs, elec_config)
 
-    add_missing_carriers_with_nice_names(n, snakemake.config)
+    sanitize_carriers(n, snakemake.config)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     n.export_to_netcdf(snakemake.output[0])

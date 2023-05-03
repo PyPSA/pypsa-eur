@@ -121,12 +121,38 @@ def calculate_annuity(n, r):
         return 1 / n
 
 
-def add_missing_carriers_with_nice_names(n, config):
-    components = [n.buses, n.generators, n.lines, n.links, n.storage_units, n.stores]
-    for c in components:
-        missing_carrier = np.setdiff1d(c.carrier.unique(), n.carriers.index)
-        if len(missing_carrier):
-            n.madd("Carrier", missing_carrier)
+def sanitize_carriers(n, config):
+    """
+    Sanitize the carrier information in a PyPSA Network object.
+
+    The function ensures that all unique carrier names are present in the network's
+    carriers attribute, and adds nice names and colors for each carrier according
+    to the provided configuration dictionary.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        A PyPSA Network object that represents an electrical power system.
+    config : dict
+        A dictionary containing configuration information, specifically the
+        "plotting" key with "nice_names" and "tech_colors" keys for carriers.
+
+    Returns
+    -------
+    None
+        The function modifies the 'n' PyPSA Network object in-place, updating the
+        carriers attribute with nice names and colors.
+
+    Warnings
+    --------
+    Raises a warning if any carrier's "tech_colors" are not defined in the config dictionary.
+    """
+
+    for c in n.iterate_components():
+        if "carrier" in c.df:
+            missing_carrier = set(c.df.carrier.unique()) - set(n.carriers.index) - {""}
+            if len(missing_carrier):
+                n.madd("Carrier", missing_carrier)
 
     carrier_i = n.carriers.index
     nice_names = (
@@ -142,18 +168,12 @@ def add_missing_carriers_with_nice_names(n, config):
     n.carriers["color"] = colors
 
 
-def _add_missing_carriers_from_costs(n, costs, carriers):
-    missing_carriers = pd.Index(carriers).difference(n.carriers.index)
-    if missing_carriers.empty:
-        return
-
-    emissions_cols = (
-        costs.columns.to_series().loc[lambda s: s.str.endswith("_emissions")].values
-    )
-    suptechs = missing_carriers.str.split("-").str[0]
-    emissions = costs.loc[suptechs, emissions_cols].fillna(0.0)
-    emissions.index = missing_carriers
-    n.import_components_from_dataframe(emissions, "Carrier")
+def add_co2_emissions(n, costs, carriers):
+    """
+    Add CO2 emissions to the network's carriers attribute.
+    """
+    suptechs = n.carriers.loc[carriers].index.str.split("-").str[0]
+    n.carriers.loc[carriers, "co2_emissions"] = costs.co2_emissions[suptechs].values
 
 
 def load_costs(tech_costs, config, elec_config, Nyears=1.0):
@@ -316,57 +336,56 @@ def update_transmission_costs(n, costs, length_factor=1.0):
 
 
 def attach_wind_and_solar(
-    n, costs, input_profiles, technologies, extendable_carriers, line_length_factor=1
+    n, costs, input_profiles, carriers, extendable_carriers, line_length_factor=1
 ):
-    # TODO: rename tech -> carrier, technologies -> carriers
-    _add_missing_carriers_from_costs(n, costs, technologies)
+    n.madd("Carrier", carriers)
 
-    for tech in technologies:
-        if tech == "hydro":
+    for car in carriers:
+        if car == "hydro":
             continue
 
-        with xr.open_dataset(getattr(input_profiles, "profile_" + tech)) as ds:
+        with xr.open_dataset(getattr(input_profiles, "profile_" + car)) as ds:
             if ds.indexes["bus"].empty:
                 continue
 
-            suptech = tech.split("-", 2)[0]
-            if suptech == "offwind":
+            supcar = car.split("-", 2)[0]
+            if supcar == "offwind":
                 underwater_fraction = ds["underwater_fraction"].to_pandas()
                 connection_cost = (
                     line_length_factor
                     * ds["average_distance"].to_pandas()
                     * (
                         underwater_fraction
-                        * costs.at[tech + "-connection-submarine", "capital_cost"]
+                        * costs.at[car + "-connection-submarine", "capital_cost"]
                         + (1.0 - underwater_fraction)
-                        * costs.at[tech + "-connection-underground", "capital_cost"]
+                        * costs.at[car + "-connection-underground", "capital_cost"]
                     )
                 )
                 capital_cost = (
                     costs.at["offwind", "capital_cost"]
-                    + costs.at[tech + "-station", "capital_cost"]
+                    + costs.at[car + "-station", "capital_cost"]
                     + connection_cost
                 )
                 logger.info(
                     "Added connection cost of {:0.0f}-{:0.0f} Eur/MW/a to {}".format(
-                        connection_cost.min(), connection_cost.max(), tech
+                        connection_cost.min(), connection_cost.max(), car
                     )
                 )
             else:
-                capital_cost = costs.at[tech, "capital_cost"]
+                capital_cost = costs.at[car, "capital_cost"]
 
             n.madd(
                 "Generator",
                 ds.indexes["bus"],
-                " " + tech,
+                " " + car,
                 bus=ds.indexes["bus"],
-                carrier=tech,
-                p_nom_extendable=tech in extendable_carriers["Generator"],
+                carrier=car,
+                p_nom_extendable=car in extendable_carriers["Generator"],
                 p_nom_max=ds["p_nom_max"].to_pandas(),
                 weight=ds["weight"].to_pandas(),
-                marginal_cost=costs.at[suptech, "marginal_cost"],
+                marginal_cost=costs.at[supcar, "marginal_cost"],
                 capital_cost=capital_cost,
-                efficiency=costs.at[suptech, "efficiency"],
+                efficiency=costs.at[supcar, "efficiency"],
                 p_max_pu=ds["profile"].transpose("time", "bus").to_pandas(),
             )
 
@@ -380,8 +399,9 @@ def attach_conventional_generators(
     conventional_config,
     conventional_inputs,
 ):
-    carriers = set(conventional_carriers) | set(extendable_carriers["Generator"])
-    _add_missing_carriers_from_costs(n, costs, carriers)
+    carriers = list(set(conventional_carriers) | set(extendable_carriers["Generator"]))
+    n.madd("Carrier", carriers)
+    add_co2_emissions(n, costs, carriers)
 
     ppl = (
         ppl.query("carrier in @carriers")
@@ -435,7 +455,8 @@ def attach_conventional_generators(
 
 
 def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **config):
-    _add_missing_carriers_from_costs(n, costs, carriers)
+    n.madd("Carrier", carriers)
+    add_co2_emissions(n, costs, carriers)
 
     ppl = (
         ppl.query('carrier == "hydro"')
@@ -567,7 +588,8 @@ def attach_extendable_generators(n, costs, ppl, carriers):
     logger.warning(
         "The function `attach_extendable_generators` is deprecated in v0.5.0."
     )
-    _add_missing_carriers_from_costs(n, costs, carriers)
+    n.madd("Carrier", carriers)
+    add_co2_emissions(n, costs, carriers)
 
     for tech in carriers:
         if tech.startswith("OCGT"):
@@ -839,7 +861,7 @@ if __name__ == "__main__":
 
     update_p_nom_max(n)
 
-    add_missing_carriers_with_nice_names(n, snakemake.config)
+    sanitize_carriers(n, snakemake.config)
 
     n.meta = snakemake.config
     n.export_to_netcdf(snakemake.output[0])
