@@ -1,7 +1,11 @@
+..
+  SPDX-FileCopyrightText: 2019-2023 The PyPSA-Eur Authors
 
--------
+  SPDX-License-Identifier: CC-BY-4.0
+
+#######################
 Support
--------
+#######################
 
 * In case of code-related **questions**, please post on `stack overflow <https://stackoverflow.com/questions/tagged/pypsa>`_.
 * For non-programming related and more general questions please refer to the `mailing list <https://groups.google.com/group/pypsa>`_.
