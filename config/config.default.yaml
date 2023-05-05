@@ -824,6 +824,11 @@ plotting:
     # oil
     oil: '#c9c9c9'
     oil boiler: '#adadad'
+    residential rural oil boiler: '#a9a9a9'
+    services rural oil boiler: '#a5a5a5'
+    residential urban decentral oil boiler: '#a1a1a1'
+    urban central oil boiler: '#9d9d9d'
+    services urban decentral oil boiler: '#999999'
     agriculture machinery oil: '#949494'
     shipping oil: "#808080"
     land transport oil: '#afafaf'
@@ -959,8 +964,10 @@ plotting:
     H2 pipeline: '#f081dc'
     H2 pipeline retrofitted: '#ba99b5'
     H2 Fuel Cell: '#c251ae'
+    H2 fuel cell: '#c251ae'
     H2 turbine: '#991f83'
     H2 Electrolysis: '#ff29d9'
+    H2 electrolysis: '#ff29d9'
     # ammonia
     NH3: '#46caf0'
     ammonia: '#46caf0'
@@ -1014,5 +1021,6 @@ plotting:
     AC line: "#70af1d"
     links: "#8a1caf"
     HVDC links: "#8a1caf"
+    DC: "#8a1caf"
     DC-DC: "#8a1caf"
     DC link: "#8a1caf"
