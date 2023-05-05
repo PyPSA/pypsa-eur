@@ -20,7 +20,7 @@ Upcoming Release
 * Add plain hydrogen turbine as additional re-electrification option besides
   hydrogen fuel cell. Add switches for both re-electrification options under
   ``sector: hydrogen_turbine:`` and ``sector: hydrogen_fuel_cell:``.
-  
+
 * A new function named ``sanitize_carrier`` ensures that all unique carrier names are present in the network's carriers attribute, and adds nice names and colors for each carrier according to the provided configuration dictionary.
 
 * Additional tech_color are added to include previously unlisted carriers.
