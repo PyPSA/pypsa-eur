@@ -17,7 +17,7 @@ Upcoming Release
 
 * Renamed script file from PyPSA-EUR ``build_load_data`` to ``build_electricity_demand`` and ``retrieve_load_data`` to ``retrieve_electricity_demand``.
 
-
+* Fix docs readthedocs built
 
 * Add plain hydrogen turbine as additional re-electrification option besides
   hydrogen fuel cell. Add switches for both re-electrification options under
