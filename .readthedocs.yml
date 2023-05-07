@@ -9,7 +9,7 @@ build:
   tools:
     python: "3.11"
   apt_packages:
-    - graphviz
+  - graphviz
 
 python:
   install:
