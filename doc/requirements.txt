@@ -2,9 +2,11 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
+setuptools
 sphinx
 sphinx_book_theme
 sphinxcontrib-bibtex
+myst-parser  # recommark is deprecated, https://stackoverflow.com/a/71660856/13573820
 
 pypsa
 vresutils>=0.3.1
