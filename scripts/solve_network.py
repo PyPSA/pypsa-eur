@@ -248,13 +248,66 @@ def add_CCL_constraints(n, config):
         )
 
 
-def add_EQ_constraints(n, o, scaling=1e-1):
+def add_EQ_constraints(n, level, by_country, config, scaling=1e-1):
     """
     Add equity constraints to the network.
 
-    Currently this is only implemented for the electricity sector only.
+    The equity option specifies a certain level x of equity (as in
+    EQx) where x is a number between 0 and 1. When this option is set,
+    each node in the network is required to produce at least a
+    fraction of x of its energy demand locally. For example, when
+    EQ0.7 is set, each node is required to produce at least 70% of its
+    energy demand locally.
 
-    Opts must be specified in the config.yaml.
+    Locally produced energy includes local renewable generation and
+    (some) conventional generation (nuclear, coal, geothermal).
+    How conventional generation is dealt with depends on whether the
+    model is run in electricity-only mode or is sector-coupled. In
+    electricity-only mode, all conventional generation is considered
+    local production.
+
+    In the sector-coupled model, however, gas and oil are endogenously
+    modelled. Oil is not spatially resolved, meaning that any use of
+    oil is considered an import, but any production of oil
+    (Fischer-Tropsch) is considered an export. When gas is not
+    spatially resolved, it functions the same. When, however, a gas
+    network is modelled, imports and exports are instead calculated
+    using gas network flow. For now, even locally extracted natural
+    gas is considered "imported" for the purposes of this equation.
+
+    For other conventional generation (coal, oil, nuclear) the fuel is
+    not endogenously modelled, and this generation is considered local
+    (even though implementation-wise nodes have to "import" the fuel
+    from a copper-plated "EU" node).
+
+    Optionally the EQ option may be suffixed by the letter "c", which
+    makes the equity constraint act on a country level instead of a
+    node level.
+
+    Regardless, the equity constraint is only enforced on average over
+    the whole year.
+
+    In a sector-coupled network, energy production is generally
+    greater than consumption because of efficiency losses in energy
+    conversions such as hydrogen production (whereas heat pumps
+    actually have an "efficiency" greater than 1). Ignoring these
+    losses would lead to a weakening of the equity constraint (i.e. if
+    1.5TWh of electricity needs to be produced to satisfy a final
+    demand of 1 TWh of energy, even an equity constraint of 100% would
+    be satisfied if 1TWh of electricity is produced locally).
+    Therefore, for the purpose of the equity constraint, efficiency
+    losses in a sector-coupled network are effectively counted as
+    demand, and the equity constraint is enforced on the sum of final
+    demand and efficiency losses.
+
+    Again in the sector-coupled model, some energy supply and energy
+    demand are copper-plated, meaning that they are not spatially
+    resolved by only modelled europe-wide. For the purpose of the
+    equity constraint in a sector-coupled model, energy supplied from
+    a copper-plated carrier (supplied from the "european node") is
+    counted as imported, not locally produced. Similarly, energy
+    demand for a copper-plated carrier (demanded at the "european
+    node") is counted as exported, not locally demanded.
 
     Parameters
     ----------
@@ -265,53 +318,310 @@ def add_EQ_constraints(n, o, scaling=1e-1):
     -------
     scenario:
         opts: [Co2L-EQ0.7-24H]
-
-    Require each country or node to on average produce a minimal share
-    of its total electricity consumption itself. Example: EQ0.7c demands each country
-    to produce on average at least 70% of its consumption; EQ0.7 demands
-    each node to produce on average at least 70% of its consumption.
     """
-    # TODO: Generalize to cover myopic and other sectors?
-    float_regex = "[0-9]*\.?[0-9]+"
-    level = float(re.findall(float_regex, o)[0])
-    if o[-1] == "c":
-        ggrouper = n.generators.bus.map(n.buses.country).to_xarray()
-        lgrouper = n.loads.bus.map(n.buses.country).to_xarray()
-        sgrouper = n.storage_units.bus.map(n.buses.country).to_xarray()
-    else:
-        ggrouper = n.generators.bus.to_xarray()
-        lgrouper = n.loads.bus.to_xarray()
-        sgrouper = n.storage_units.bus.to_xarray()
-    load = (
-        n.snapshot_weightings.generators
-        @ n.loads_t.p_set.groupby(lgrouper, axis=1).sum()
-    )
-    inflow = (
-        n.snapshot_weightings.stores
-        @ n.storage_units_t.inflow.groupby(sgrouper, axis=1).sum()
-    )
-    inflow = inflow.reindex(load.index).fillna(0.0)
-    rhs = scaling * (level * load - inflow)
-    p = n.model["Generator-p"]
-    lhs_gen = (
-        (p * (n.snapshot_weightings.generators * scaling))
-        .groupby(ggrouper)
-        .sum()
-        .sum("snapshot")
-    )
-    # TODO: double check that this is really needed, why do have to subtract the spillage
-    if not n.storage_units_t.inflow.empty:
-        spillage = n.model["StorageUnit-spill"]
-        lhs_spill = (
-            (spillage * (-n.snapshot_weightings.stores * scaling))
-            .groupby(sgrouper)
-            .sum()
-            .sum("snapshot")
+    # TODO: Does this work for myopic optimisation?
+
+    # Implementation note: while the equity constraint nominally
+    # specifies that a minimum fraction demand be produced locally, in
+    # the implementation we enforce a minimum ratio between local
+    # production and net energy imports. This because
+    #     local_production + net_imports = demand + efficiency_losses
+    # for each node (or country), so we can convert a constraint of the form
+    #     local_production >= level * (demand + efficiency_losses)
+    # to the equivalent:
+    #     net_imports <= (1 / level - 1) * local_production
+    # or, putting all variables on the right hand side and constants
+    # on the left hand side:
+    #     (1 - 1 / level) * local_production + net_imports <= 0
+    #
+    # While leading to an equivalent constraint, we choose this
+    # implementation because it allows us to avoid having to calculate
+    # efficiency losses explicitly; local production and net imports
+    # are slightly easier to deal with.
+    #
+    # Notes on specific technologies. Locally produced energy comes
+    # from the following sources:
+    # - Variable renewables (various types of solar, onwind, offwind,
+    #   etc.), implemented as generators.
+    # - Conventional sources (gas, coal, nuclear), implemented as
+    #   either generators or links (depending on whether or not the
+    #   model is sector-coupled).
+    # - Biomass, biogass, if spatially resolved, implemented as stores.
+    # - Hydro, implemented as storageunits.
+    # - Ambient heat used in heat pumps, implemented as links.
+    # Imports can come in the following forms:
+    # - Electricity (AC & DC), implemented as lines and links.
+    # - Gas pipelines, implemented as links.
+    # - H2 pipelines, implemented as links.
+    # - Gas imports (pipeline, LNG, production), implemented as generators.
+
+    if config["foresight"] != "overnight":
+        logging.warning(
+            "Careful! Equity constraint is only tested for 'overnight' "
+            f"foresight models, not '{config['foresight']}' foresight"
         )
-        lhs = lhs_gen + lhs_spill
+
+    # While we need to group components by bus location in the
+    # sector-coupled model, there is no "location" column in the
+    # electricity-only model.
+    location = (
+        n.buses.location
+        if "location" in n.buses.columns
+        else pd.Series(n.buses.index, index=n.buses.index)
+    )
+
+    def group(df, b="bus"):
+        """
+        Group given dataframe by bus location or country.
+
+        The optional argument `b` allows clustering by bus0 or bus1 for
+        lines and links.
+        """
+        if by_country:
+            return df[b].map(location).map(n.buses.country).to_xarray()
+        else:
+            return df[b].map(location).to_xarray()
+
+    # Local production by generators. Note: the network may not
+    # actually have all these generators (for instance some
+    # conventional generators are implemented as links in the
+    # sector-coupled model; heating sector might not be turned on),
+    # but we list all that might be in the network.
+    local_gen_carriers = list(
+        set(
+            config["electricity"]["extendable_carriers"]["Generator"]
+            + config["electricity"]["conventional_carriers"]
+            + config["electricity"]["renewable_carriers"]
+            + [c for c in n.generators.carrier if "solar thermal" in c]
+            + ["solar rooftop", "wave"]
+        )
+    )
+    local_gen_i = n.generators.loc[
+        n.generators.carrier.isin(local_gen_carriers)
+        & (n.generators.bus.map(location) != "EU")
+    ].index
+    local_gen_p = (
+        n.model["Generator-p"]
+        .loc[:, local_gen_i]
+        .groupby(group(n.generators.loc[local_gen_i]))
+        .sum()
+    )
+    local_gen = (local_gen_p * n.snapshot_weightings.generators).sum("snapshot")
+
+    # Hydro production; the only local production from a StorageUnit.
+    local_hydro_i = n.storage_units.loc[n.storage_units.carrier == "hydro"].index
+    local_hydro_p = (
+        n.model["StorageUnit-p_dispatch"]
+        .loc[:, local_hydro_i]
+        .groupby(group(n.storage_units.loc[local_hydro_i]))
+        .sum()
+    )
+    local_hydro = (local_hydro_p * n.snapshot_weightings.stores).sum("snapshot")
+
+    # Biomass and biogas; these are only considered locally produced
+    # if spatially resolved, not if they belong to an "EU" node. They
+    # are modelled as stores with initial capacity to model a finite
+    # yearly supply; the difference between initial and final capacity
+    # is the total local production.
+    local_bio_i = n.stores.loc[
+        n.stores.carrier.isin(["biogas", "solid biomass"])
+        & (n.stores.bus.map(location) != "EU")
+    ].index
+    # Building the following linear expression only works if it's non-empty
+    if len(local_bio_i) > 0:
+        local_bio_first_e = n.model["Store-e"].loc[n.snapshots[0], local_bio_i]
+        local_bio_last_e = n.model["Store-e"].loc[n.snapshots[-1], local_bio_i]
+        local_bio_p = local_bio_first_e - local_bio_last_e
+        local_bio = local_bio_p.groupby(group(n.stores.loc[local_bio_i])).sum()
     else:
-        lhs = lhs_gen
-    n.model.add_constraints(lhs >= rhs, name="equity_min")
+        local_bio = None
+
+    # Conventional generation in the sector-coupled model. These are
+    # modelled as links in order to take the CO2 cycle into account.
+    # All of these are counted as local production even if the links
+    # may take their fuel from an "EU" node, except for gas and oil,
+    # which are modelled endogenously and is counted under imports /
+    # exports.
+    conv_carriers = config["sector"].get("conventional_generation", {})
+    conv_carriers = [
+        gen for gen, carrier in conv_carriers.items() if carrier not in ["gas", "oil"]
+    ]
+    if config["sector"].get("coal_cc") and not "coal" in conv_carriers:
+        conv_carriers.append("coal")
+    local_conv_gen_i = n.links.loc[n.links.carrier.isin(conv_carriers)].index
+    if len(local_conv_gen_i) > 0:
+        local_conv_gen_p = n.model["Link-p"].loc[:, local_conv_gen_i]
+        # These links have efficiencies, which we divide by since we only
+        # want to count the _output_ of each conventional generator as
+        # local generation for the equity balance.
+        efficiencies = n.links.loc[local_conv_gen_i, "efficiency"]
+        local_conv_gen_p = (
+            (local_conv_gen_p / efficiencies)
+            .groupby(group(n.links.loc[local_conv_gen_i], b="bus1"))
+            .sum()
+            .rename({"bus1": "bus"})
+        )
+        local_conv_gen = (local_conv_gen_p * n.snapshot_weightings.generators).sum(
+            "snapshot"
+        )
+    else:
+        local_conv_gen = None
+
+    # TODO: should we (in prepare_sector_network.py) model gas
+    # pipeline imports from outside the EU and LNG imports separately
+    # from gas extraction / production? Then we could model gas
+    # extraction as locally produced energy.
+
+    # Ambient heat for heat pumps
+    heat_pump_i = n.links.filter(like="heat pump", axis="rows").index
+    if len(heat_pump_i) > 0:
+        # To get the ambient heat extracted, we subtract 1 from the
+        # efficiency of the heat pump (where "efficiency" is really COP
+        # for heat pumps).
+        from_ambient = n.links_t["efficiency"].loc[:, heat_pump_i] - 1
+        local_heat_from_ambient_p = n.model["Link-p"].loc[:, heat_pump_i]
+        local_heat_from_ambient = (
+            (local_heat_from_ambient_p * from_ambient)
+            .groupby(group(n.links.loc[heat_pump_i], b="bus1"))
+            .sum()
+            .rename({"bus1": "bus"})
+        )
+        local_heat_from_ambient = (
+            local_heat_from_ambient * n.snapshot_weightings.generators
+        ).sum("snapshot")
+    else:
+        local_heat_from_ambient = None
+
+    # Total locally produced energy
+    local_energy = sum(
+        e
+        for e in [
+            local_gen,
+            local_hydro,
+            local_bio,
+            local_conv_gen,
+            local_heat_from_ambient,
+        ]
+        if e is not None
+    )
+
+    # Now it's time to collect imports: electricity, hydrogen & gas
+    # pipeline, other gas, biomass, gas terminals & production.
+
+    # Start with net electricity imports.
+    lines_cross_region_i = n.lines.loc[
+        (group(n.lines, b="bus0") != group(n.lines, b="bus1")).to_numpy()
+    ].index
+    # Build linear expression representing net imports (i.e. imports -
+    # exports) for each bus/country.
+    lines_in_s = (
+        n.model["Line-s"]
+        .loc[:, lines_cross_region_i]
+        .groupby(group(n.lines.loc[lines_cross_region_i], b="bus1"))
+        .sum()
+        .rename({"bus1": "bus"})
+    ) - (
+        n.model["Line-s"]
+        .loc[:, lines_cross_region_i]
+        .groupby(group(n.lines.loc[lines_cross_region_i], b="bus0"))
+        .sum()
+        .rename({"bus0": "bus"})
+    )
+    line_imports = (lines_in_s * n.snapshot_weightings.generators).sum("snapshot")
+
+    # Link net imports, representing all net energy imports of various
+    # carriers that are implemented as links. We list all possible
+    # link carriers that could be represented in the network; some
+    # might not be present in some networks depending on the sector
+    # configuration. Note that we do not count efficiencies here (e.g.
+    # for oil boilers that import oil) since efficiency losses are
+    # counted as "local demand".
+    link_import_carriers = [
+        # Pipeline imports / exports
+        "H2 pipeline",
+        "H2 pipeline retrofitted",
+        "gas pipeline",
+        "gas pipeline new",
+        # Solid biomass
+        "solid biomass transport",
+        # DC electricity
+        "DC",
+        # Oil (imports / exports between spatial nodes and "EU" node)
+        "Fischer-Tropsch",
+        "biomass to liquid",
+        "residential rural oil boiler",
+        "services rural oil boiler",
+        "residential urban decentral oil boiler",
+        "services urban decentral oil boiler",
+        "oil",  # Oil powerplant (from `prepare_sector_network.add_generation`)
+        # Gas (imports / exports between spatial nodes and "EU" node,
+        # only cross-region if gas is not spatially resolved)
+        "Sabatier",
+        "helmeth",
+        "SMR CC",
+        "SMR",
+        "biogas to gas",
+        "BioSNG",
+        "residential rural gas boiler",
+        "services rural gas boiler",
+        "residential urban decentral gas boiler",
+        "services urban decentral gas boiler",
+        "urban central gas boiler",
+        "urban central gas CHP",
+        "urban central gas CHP CC",
+        "residential rural micro gas CHP",
+        "services rural micro gas CHP",
+        "residential urban decentral micro gas CHP",
+        "services urban decentral micro gas CHP",
+        "allam",
+        "OCGT",
+        "CCGT",
+    ]
+    links_cross_region_i = (
+        n.links.loc[(group(n.links, b="bus0") != group(n.links, b="bus1")).to_numpy()]
+        .loc[n.links.carrier.isin(link_import_carriers)]
+        .index
+    )
+    # Build linear expression representing net imports (i.e. imports -
+    # exports) for each bus/country.
+    links_in_p = (
+        n.model["Link-p"]
+        .loc[:, links_cross_region_i]
+        .groupby(group(n.links.loc[links_cross_region_i], b="bus1"))
+        .sum()
+        .rename({"bus1": "bus"})
+    ) - (
+        n.model["Link-p"]
+        .loc[:, links_cross_region_i]
+        .groupby(group(n.links.loc[links_cross_region_i], b="bus0"))
+        .sum()
+        .rename({"bus0": "bus"})
+    )
+    link_imports = (links_in_p * n.snapshot_weightings.generators).sum("snapshot")
+
+    # Gas imports by pipeline from outside of Europe, LNG terminal or
+    # gas production (all modelled as generators).
+    gas_import_i = n.generators.loc[n.generators.carrier == "gas"].index
+    if len(gas_import_i) > 0:
+        gas_import_p = (
+            n.model["Generator-p"]
+            .loc[:, gas_import_i]
+            .groupby(group(n.generators.loc[gas_import_i]))
+            .sum()
+        )
+        gas_imports = (gas_import_p * n.snapshot_weightings.generators).sum("snapshot")
+    else:
+        gas_imports = None
+
+    imported_energy = sum(
+        i for i in [line_imports, link_imports, gas_imports] if i is not None
+    )
+
+    local_factor = 1 - 1 / level
+
+    n.model.add_constraints(
+        local_factor * local_energy + imported_energy <= 0, name="equity_min"
+    )
 
 
 def add_BAU_constraints(n, config):
@@ -586,7 +896,14 @@ def extra_functionality(n, snapshots):
         add_operational_reserve_margin(n, snapshots, config)
     for o in opts:
         if "EQ" in o:
-            add_EQ_constraints(n, o)
+            EQ_regex = "EQ(0\.[0-9]+)(c?)"  # Ex.: EQ0.75c
+            m = re.search(EQ_regex, o)
+            if m is not None:
+                level = float(m.group(1))
+                by_country = True if m.group(2) == "c" else False
+                add_EQ_constraints(n, level, by_country, config)
+            else:
+                logging.warning(f"Invalid EQ option: {o}")
     add_battery_constraints(n)
     add_pipe_retrofit_constraint(n)
 
