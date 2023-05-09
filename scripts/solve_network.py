@@ -451,12 +451,12 @@ def add_EQ_constraints(n, level, by_country, config, scaling=1e-1):
     local_conv_gen_i = n.links.loc[n.links.carrier.isin(conv_carriers)].index
     if len(local_conv_gen_i) > 0:
         local_conv_gen_p = n.model["Link-p"].loc[:, local_conv_gen_i]
-        # These links have efficiencies, which we divide by since we only
-        # want to count the _output_ of each conventional generator as
-        # local generation for the equity balance.
+        # These links have efficiencies, which we multiply by since we
+        # only want to count the _output_ of each conventional
+        # generator as local generation for the equity balance.
         efficiencies = n.links.loc[local_conv_gen_i, "efficiency"]
         local_conv_gen_p = (
-            (local_conv_gen_p / efficiencies)
+            (local_conv_gen_p * efficiencies)
             .groupby(group(n.links.loc[local_conv_gen_i], b="bus1"))
             .sum()
             .rename({"bus1": "bus"})
