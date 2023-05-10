@@ -22,13 +22,13 @@ from _helpers import (
     override_component_attrs,
     update_config_with_sector_opts,
 )
+from add_electricity import calculate_annuity
 from build_energy_totals import build_co2_totals, build_eea_co2, build_eurostat_co2
 from networkx.algorithms import complement
 from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentation
 from pypsa.geo import haversine_pts
 from pypsa.io import import_components_from_dataframe
 from scipy.stats import beta
-from add_electricity import calculate_annuity
 
 logger = logging.getLogger(__name__)
 
