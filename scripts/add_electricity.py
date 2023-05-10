@@ -94,7 +94,9 @@ import pypsa
 import xarray as xr
 from _helpers import configure_logging, update_p_nom_max
 from powerplantmatching.export import map_country_bus
-from vresutils import transfer as vtransfer
+from itertools import product
+import scipy.sparse as sparse
+from shapely.prepared import prep
 
 idx = pd.IndexSlice
 
@@ -215,6 +217,20 @@ def load_powerplants(ppl_fn):
         .replace({"carrier": carrier_dict})
     )
 
+def Shapes2Shapes(orig, dest):
+    """
+    Adopted from vresutils.transfer.Shapes2Shapes()
+    """
+    orig_prepped = list(map(prep, orig))
+    transfer = sparse.lil_matrix((len(dest), len(orig)), dtype=float)
+
+    for i,j in product(range(len(dest)), range(len(orig))):
+        if orig_prepped[j].intersects(dest[i]):
+            area = orig[j].intersection(dest[i]).area
+            transfer[i,j] = area/dest[i].area
+
+    return transfer
+
 
 def attach_load(n, regions, load, nuts3_shapes, countries, scaling=1.0):
     substation_lv_i = n.buses.index[n.buses["substation_lv"]]
@@ -232,7 +248,7 @@ def attach_load(n, regions, load, nuts3_shapes, countries, scaling=1.0):
             return pd.DataFrame({group.index[0]: l})
         else:
             nuts3_cntry = nuts3.loc[nuts3.country == cntry]
-            transfer = vtransfer.Shapes2Shapes(
+            transfer = Shapes2Shapes(
                 group, nuts3_cntry.geometry, normed=False
             ).T.tocsr()
             gdp_n = pd.Series(
