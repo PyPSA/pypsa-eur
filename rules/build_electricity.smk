@@ -274,13 +274,13 @@ rule add_electricity:
     output:
         RESOURCES + "networks/elec.nc",
     params:
-        costs=snakemake.config["costs"]
-        electricity=snakemake.config["electricity"]
-        renewable=snakemake.config["renewable"]
-        conventional=snakemake.config.get("conventional", {})
-        countries=snakemake.config["countries"]
-        scaling_factor=snakemake.config["load"]["scaling_factor"]
-        length_factor=snakemake.config["lines"]["length_factor"]
+        costs=snakemake.config["costs"],
+        electricity=snakemake.config["electricity"],
+        renewable=snakemake.config["renewable"],
+        conventional=snakemake.config.get("conventional", {}),
+        countries=snakemake.config["countries"],
+        scaling_factor=snakemake.config["load"]["scaling_factor"],
+        length_factor=snakemake.config["lines"]["length_factor"],
     log:
         LOGS + "add_electricity.log",
     benchmark:
