@@ -668,9 +668,7 @@ if __name__ == "__main__":
 
     if "overrides" in snakemake.input.keys():
         overrides = override_component_attrs(snakemake.input.overrides)
-        n = pypsa.Network(
-            snakemake.input.network, override_component_attrs=overrides
-        )
+        n = pypsa.Network(snakemake.input.network, override_component_attrs=overrides)
     else:
         n = pypsa.Network(snakemake.input.network)
 
