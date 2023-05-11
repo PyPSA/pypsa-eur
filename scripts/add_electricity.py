@@ -218,7 +218,7 @@ def load_powerplants(ppl_fn):
     )
 
 
-def Shapes2Shapes(orig, dest):
+def shapes_to_shapes(orig, dest):
     """
     Adopted from vresutils.transfer.Shapes2Shapes()
     """
@@ -249,9 +249,7 @@ def attach_load(n, regions, load, nuts3_shapes, countries, scaling=1.0):
             return pd.DataFrame({group.index[0]: l})
         else:
             nuts3_cntry = nuts3.loc[nuts3.country == cntry]
-            transfer = Shapes2Shapes(
-                group, nuts3_cntry.geometry, normed=False
-            ).T.tocsr()
+            transfer = shapes_to_shapes(group, nuts3_cntry.geometry).T.tocsr()
             gdp_n = pd.Series(
                 transfer.dot(nuts3_cntry["gdp"].fillna(1.0).values), index=group.index
             )
