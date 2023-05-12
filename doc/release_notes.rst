@@ -29,6 +29,10 @@ Upcoming Release
   e.g. by setting ``solving: options: transmission_losses: 2`` for an
   approximation with two tangents.
 
+* Added configuration option ``lines: max_extension:`` and ``links:
+  max_extension:``` to control the maximum capacity addition per line or link in
+  MW.
+
 PyPSA-Eur 0.8.0 (18th March 2023)
 =================================
 
