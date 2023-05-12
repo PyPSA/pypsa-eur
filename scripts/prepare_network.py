@@ -345,10 +345,10 @@ if __name__ == "__main__":
 
     set_line_nom_max(
         n,
-        s_nom_max_set=snakemake.config["lines"]["s_nom_max,"],
-        p_nom_max_set=snakemake.config["links"]["p_nom_max,"],
-        s_nom_max_ext=snakemake.config["lines"]["max_extension,"],
-        p_nom_max_ext=snakemake.config["links"]["max_extension,"],
+        s_nom_max_set=snakemake.config["lines"]["s_nom_max"],
+        p_nom_max_set=snakemake.config["links"]["p_nom_max"],
+        s_nom_max_ext=snakemake.config["lines"]["max_extension"],
+        p_nom_max_ext=snakemake.config["links"]["max_extension"],
     )
 
     if "ATK" in opts:
