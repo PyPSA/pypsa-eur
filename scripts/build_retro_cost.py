@@ -513,7 +513,7 @@ def prepare_cost_retro(country_iso_dic):
 
 def prepare_temperature_data():
     """
-    returns the temperature dependent data for each country:
+    Returns the temperature dependent data for each country:
 
     d_heat             : length of heating season pd.Series(index=countries) [days/year]
                          on those days, daily average temperature is below
@@ -621,7 +621,7 @@ def calculate_costs(u_values, l, cost_retro, window_assumptions):
 
 def calculate_new_u(u_values, l, l_weight, window_assumptions, k=0.035):
     """
-    calculate U-values after building retrofitting, depending on the old
+    Calculate U-values after building retrofitting, depending on the old
     U-values (u_values). This is for simple insulation measuers, adding an
     additional layer of insulation.
 
@@ -682,7 +682,7 @@ def map_tabula_to_hotmaps(df_tabula, df_hotmaps, column_prefix):
 
 def get_solar_gains_per_year(window_area):
     """
-    returns solar heat gains during heating season in [kWh/a] depending on the
+    Returns solar heat gains during heating season in [kWh/a] depending on the
     window area [m^2] of the building, assuming a equal distributed window
     orientation (east, south, north, west)
     """
@@ -718,7 +718,7 @@ def map_to_lstrength(l_strength, df):
 
 def calculate_heat_losses(u_values, data_tabula, l_strength, temperature_factor):
     """
-    calculates total annual heat losses Q_ht for different insulation
+    Calculates total annual heat losses Q_ht for different insulation
     thicknesses (l_strength), depending on current insulation state (u_values),
     standard building topologies and air ventilation from TABULA (data_tabula)
     and the accumulated difference between internal and external temperature
@@ -840,7 +840,7 @@ def calculate_heat_losses(u_values, data_tabula, l_strength, temperature_factor)
 
 def calculate_heat_gains(data_tabula, heat_transfer_perm2, d_heat):
     """
-    calculates heat gains Q_gain [W/m^2], which consititure from gains by:
+    Calculates heat gains Q_gain [W/m^2], which consititure from gains by:
 
     (1) solar radiation (2) internal heat gains
     """
@@ -885,7 +885,7 @@ def calculate_space_heat_savings(
     u_values, data_tabula, l_strength, temperature_factor, d_heat
 ):
     """
-    calculates space heat savings (dE_space [per unit of unrefurbished state])
+    Calculates space heat savings (dE_space [per unit of unrefurbished state])
     through retrofitting of the thermal envelope by additional insulation
     material (l_strength[m])
     """
