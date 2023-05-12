@@ -17,7 +17,6 @@ from _helpers import (
     update_config_with_sector_opts,
 )
 from solve_network import prepare_network, solve_network
-from vresutils.benchmark import memory_logger
 
 logger = logging.getLogger(__name__)
 
