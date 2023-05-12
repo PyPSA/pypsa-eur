@@ -22,13 +22,13 @@ from _helpers import (
     override_component_attrs,
     update_config_with_sector_opts,
 )
+from add_electricity import calculate_annuity
 from build_energy_totals import build_co2_totals, build_eea_co2, build_eurostat_co2
 from networkx.algorithms import complement
 from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentation
 from pypsa.geo import haversine_pts
 from pypsa.io import import_components_from_dataframe
 from scipy.stats import beta
-from vresutils.costdata import annuity
 
 logger = logging.getLogger(__name__)
 
@@ -742,7 +742,7 @@ def prepare_costs(cost_file, config, nyears):
     costs = costs.fillna(config["fill_values"])
 
     def annuity_factor(v):
-        return annuity(v["lifetime"], v["discount rate"]) + v["FOM"] / 100
+        return calculate_annuity(v["lifetime"], v["discount rate"]) + v["FOM"] / 100
 
     costs["fixed"] = [
         annuity_factor(v) * v["investment"] * nyears for i, v in costs.iterrows()
@@ -851,7 +851,7 @@ def add_wave(n, wave_cost_factor):
     capacity = pd.Series({"Attenuator": 750, "F2HB": 1000, "MultiPA": 600})
 
     # in EUR/MW
-    annuity_factor = annuity(25, 0.07) + 0.03
+    annuity_factor = calculate_annuity(25, 0.07) + 0.03
     costs = (
         1e6
         * wave_cost_factor

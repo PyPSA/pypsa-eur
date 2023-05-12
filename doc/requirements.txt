@@ -9,7 +9,6 @@ sphinxcontrib-bibtex
 myst-parser  # recommark is deprecated, https://stackoverflow.com/a/71660856/13573820
 
 pypsa
-vresutils>=0.3.1
 powerplantmatching>=0.5.5
 atlite>=0.2.9
 dask[distributed]

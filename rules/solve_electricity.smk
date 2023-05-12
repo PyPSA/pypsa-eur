@@ -14,8 +14,6 @@ rule solve_network:
         ),
         python=LOGS
         + "solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_python.log",
-        memory=LOGS
-        + "solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_memory.log",
     benchmark:
         BENCHMARKS + "solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}"
     threads: 4
@@ -41,8 +39,6 @@ rule solve_operations_network:
         ),
         python=LOGS
         + "solve_operations_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op_python.log",
-        memory=LOGS
-        + "solve_operations_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op_memory.log",
     benchmark:
         (
             BENCHMARKS
