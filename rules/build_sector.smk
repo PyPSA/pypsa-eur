@@ -729,8 +729,8 @@ rule prepare_sector_network:
         + "solar_thermal_rural_elec_s{simpl}_{clusters}.nc"
         if config["sector"]["solar_thermal"]
         else [],
-        import_costs=trace("results/result.csv"),  # TODO: host file on zenodo or elsewhere
-        import_p_max_pu=trace("results/combined_weighted_generator_timeseries.nc"),  # TODO: host file on zenodo or elsewhere
+        import_costs="data/imports/results.csv",  # TODO: host file on zenodo or elsewhere
+        import_p_max_pu="data/imports/hvdc-to-elec_aggregated-time-series_p-max-pu_.nc",  # TODO: host file on zenodo or elsewhere
         regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
     output:
         RESULTS

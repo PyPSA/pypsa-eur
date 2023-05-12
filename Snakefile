@@ -14,7 +14,7 @@ from snakemake.utils import min_version
 min_version("7.7")
 
 
-if not exists("config/config.yaml"):
+if not exists("config/config.yaml") and exists("config/config.default.yaml"):
     copyfile("config/config.default.yaml", "config/config.yaml")
 
 
@@ -44,18 +44,6 @@ wildcard_constraints:
     ll="(v|c)([0-9\.]+|opt)",
     opts="[-+a-zA-Z0-9\.]*",
     sector_opts="[-+a-zA-Z0-9\.\s]*",
-
-
-# Requires clone of this version of trace
-# https://github.com/euronion/trace/commit/646d48b2e7a889594338bc376e0a6ecc5d18998f
-# in parallel directory to /pypsa-eur-sec
-subworkflow trace:
-    workdir:
-        "../trace"
-    snakefile:
-        "../trace/Snakefile"
-    configfile:
-        "../trace/config/config.default.yaml"
 
 
 include: "rules/common.smk"
