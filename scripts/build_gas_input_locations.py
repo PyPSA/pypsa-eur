@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 import geopandas as gpd
 import pandas as pd
 from cluster_gas_network import load_bus_regions
-from vresutils.graph import voronoi_partition_pts
+from build_bus_regions import voronoi_partition_pts
 
 
 def read_scigrid_gas(fn):
