@@ -233,8 +233,13 @@ def enforce_autarky(n, only_crossborder=False):
     n.mremove("Link", links_rm)
 
 
-def set_line_nom_max(n, s_nom_max_set=np.inf, p_nom_max_set=np.inf, s_nom_max_ext=np.inf, p_nom_max_ext=np.inf):
-
+def set_line_nom_max(
+    n,
+    s_nom_max_set=np.inf,
+    p_nom_max_set=np.inf,
+    s_nom_max_ext=np.inf,
+    p_nom_max_ext=np.inf,
+):
     if np.isfinite(s_nom_max_ext) and s_nom_max_ext > 0:
         logger.info(f"Limiting line extensions to {s_nom_max_ext} MW")
         n.lines["s_nom_max"] = n.lines["s_nom"] + s_nom_max_ext
