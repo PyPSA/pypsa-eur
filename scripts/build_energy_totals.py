@@ -373,7 +373,7 @@ def idees_per_country(ct, year, base_dir):
 
 def build_idees(countries, year):
     nprocesses = snakemake.threads
-    disable_progress = snakemake.config["run"].get("disable_progressbar", False)
+    disable_progress = snakemake.params["run"].get("disable_progressbar", False)
 
     func = partial(idees_per_country, year=year, base_dir=snakemake.input.idees)
     tqdm_kwargs = dict(
@@ -735,18 +735,18 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_energy_totals")
 
-    logging.basicConfig(level=snakemake.config["logging"]["level"])
+    logging.basicConfig(level=snakemake.params["logging"]["level"])
 
-    config = snakemake.config["energy"]
+    config = snakemake.params["energy"]
 
     nuts3 = gpd.read_file(snakemake.input.nuts3_shapes).set_index("index")
     population = nuts3["pop"].groupby(nuts3.country).sum()
 
-    countries = snakemake.config["countries"]
+    countries = snakemake.params["countries"]
     idees_countries = pd.Index(countries).intersection(eu28)
 
     data_year = config["energy_totals_year"]
-    report_year = snakemake.config["energy"]["eurostat_report_year"]
+    report_year = snakemake.params["energy"]["eurostat_report_year"]
     input_eurostat = snakemake.input.eurostat
     eurostat = build_eurostat(input_eurostat, countries, report_year, data_year)
     swiss = build_swiss(data_year)
@@ -756,7 +756,7 @@ if __name__ == "__main__":
     energy.to_csv(snakemake.output.energy_name)
 
     base_year_emissions = config["base_emissions_year"]
-    emissions_scope = snakemake.config["energy"]["emissions"]
+    emissions_scope = snakemake.params["energy"]["emissions"]
     eea_co2 = build_eea_co2(snakemake.input.co2, base_year_emissions, emissions_scope)
     eurostat_co2 = build_eurostat_co2(
         input_eurostat, countries, report_year, base_year_emissions

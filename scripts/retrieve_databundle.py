@@ -53,7 +53,7 @@ if __name__ == "__main__":
         snakemake
     )  # TODO Make logging compatible with progressbar (see PR #102)
 
-    if snakemake.config["tutorial"]:
+    if snakemake.params["tutorial"]:
         url = "https://zenodo.org/record/3517921/files/pypsa-eur-tutorial-data-bundle.tar.xz"
     else:
         url = "https://zenodo.org/record/3517935/files/pypsa-eur-data-bundle.tar.xz"
@@ -63,7 +63,7 @@ if __name__ == "__main__":
     to_fn = Path(f"{rootpath}/data")
 
     logger.info(f"Downloading databundle from '{url}'.")
-    disable_progress = snakemake.config["run"].get("disable_progressbar", False)
+    disable_progress = snakemake.params["run"].get("disable_progressbar", False)
     progress_retrieve(url, tarball_fn, disable=disable_progress)
 
     logger.info("Extracting databundle.")

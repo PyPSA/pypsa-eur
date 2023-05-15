@@ -210,7 +210,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_biomass_potentials", simpl="", clusters="5")
 
-    config = snakemake.config["biomass"]
+    config = snakemake.params["biomass"]
     year = config["year"]
     scenario = config["scenario"]
 

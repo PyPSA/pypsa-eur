@@ -686,15 +686,15 @@ def estimate_renewable_capacities(n, config):
             )
 
 
-def add_nice_carrier_names(n, plotting):
+def add_nice_carrier_names(n, config):
     carrier_i = n.carriers.index
     nice_names = (
-        pd.Series(plotting["nice_names"])
+        pd.Series(config["plotting"]["nice_names"])
         .reindex(carrier_i)
         .fillna(carrier_i.to_series().str.title())
     )
     n.carriers["nice_name"] = nice_names
-    colors = pd.Series(plotting["tech_colors"]).reindex(carrier_i)
+    colors = pd.Series(config["plotting"]["tech_colors"]).reindex(carrier_i)
     if colors.isna().any():
         missing_i = list(colors.index[colors.isna()])
         logger.warning(f"tech_colors for carriers {missing_i} not defined in config.")
@@ -713,23 +713,23 @@ if __name__ == "__main__":
 
     costs = load_costs(
         snakemake.input.tech_costs,
-        snakemake.param["costs"],
-        snakemake.param["electricity"],
+        snakemake.params["costs"],
+        snakemake.params["electricity"],
         Nyears,
     )
     ppl = load_powerplants(snakemake.input.powerplants)
 
-    if "renewable_carriers" in snakemake.param["electricity"]:
-        renewable_carriers = set(snakemake.param["electricity"]["renewable_carriers"])
+    if "renewable_carriers" in snakemake.params["electricity"]:
+        renewable_carriers = set(snakemake.params["electricity"]["renewable_carriers"])
     else:
         logger.warning(
             "Missing key `renewable_carriers` under config entry `electricity`. "
             "In future versions, this will raise an error. "
             "Falling back to carriers listed under `renewable`."
         )
-        renewable_carriers = snakemake.param["renewable"]
+        renewable_carriers = snakemake.params["renewable"]
 
-    extendable_carriers = snakemake.param["electricity"]["extendable_carriers"]
+    extendable_carriers = snakemake.params["electricity"]["extendable_carriers"]
     if not (set(renewable_carriers) & set(extendable_carriers["Generator"])):
         logger.warning(
             "No renewables found in config entry `extendable_carriers`. "
@@ -737,18 +737,18 @@ if __name__ == "__main__":
             "Falling back to all renewables."
         )
 
-    conventional_carriers = snakemake.param["electricity"]["conventional_carriers"]
+    conventional_carriers = snakemake.params["electricity"]["conventional_carriers"]
 
     attach_load(
         n,
         snakemake.input.regions,
         snakemake.input.load,
         snakemake.input.nuts3_shapes,
-        snakemake.param["countries"],
-        snakemake.param["load"]["scaling_factor"],
+        snakemake.params["countries"],
+        snakemake.params["load"]["scaling_factor"],
     )
 
-    update_transmission_costs(n, costs, snakemake.param["lines"]["length_factor"])
+    update_transmission_costs(n, costs, snakemake.params["lines"]["length_factor"])
 
     conventional_inputs = {
         k: v for k, v in snakemake.input.items() if k.startswith("conventional_")
@@ -759,7 +759,7 @@ if __name__ == "__main__":
         ppl,
         conventional_carriers,
         extendable_carriers,
-        snakemake.param.get("conventional", {}),
+        snakemake.config.get("conventional", {}),
         conventional_inputs,
     )
 
@@ -769,11 +769,11 @@ if __name__ == "__main__":
         snakemake.input,
         renewable_carriers,
         extendable_carriers,
-        snakemake.param["lines"]["length_factor"],
+        snakemake.params["lines"]["length_factor"],
     )
 
     if "hydro" in renewable_carriers:
-        conf = snakemake.param["renewable"]["hydro"]
+        conf = snakemake.params["renewable"]["hydro"]
         attach_hydro(
             n,
             costs,
@@ -784,7 +784,7 @@ if __name__ == "__main__":
             **conf,
         )
 
-    if "estimate_renewable_capacities" not in snakemake.param["electricity"]:
+    if "estimate_renewable_capacities" not in snakemake.params["electricity"]:
         logger.warning(
             "Missing key `estimate_renewable_capacities` under config entry `electricity`. "
             "In future versions, this will raise an error. "
@@ -792,18 +792,18 @@ if __name__ == "__main__":
         )
         if (
             "estimate_renewable_capacities_from_capacity_stats"
-            in snakemake.param["electricity"]
+            in snakemake.params["electricity"]
         ):
             estimate_renewable_caps = {
                 "enable": True,
-                **snakemake.param["electricity"][
+                **snakemake.params["electricity"][
                     "estimate_renewable_capacities_from_capacity_stats"
                 ],
             }
         else:
             estimate_renewable_caps = {"enable": False}
     else:
-        estimate_renewable_caps = snakemake.param["electricity"][
+        estimate_renewable_caps = snakemake.params["electricity"][
             "estimate_renewable_capacities"
         ]
     if "enable" not in estimate_renewable_caps:
@@ -819,21 +819,21 @@ if __name__ == "__main__":
             "Falling back to whether `renewable_capacities_from_opsd` is non-empty."
         )
         from_opsd = bool(
-            snakemake.param["electricity"].get("renewable_capacities_from_opsd", False)
+            snakemake.params["electricity"].get("renewable_capacities_from_opsd", False)
         )
         estimate_renewable_caps["from_opsd"] = from_opsd
 
     if estimate_renewable_caps["enable"]:
         if estimate_renewable_caps["from_opsd"]:
-            tech_map = snakemake.param["electricity"]["estimate_renewable_capacities"][
+            tech_map = snakemake.params["electricity"]["estimate_renewable_capacities"][
                 "technology_mapping"
             ]
             attach_OPSD_renewables(n, tech_map)
-        estimate_renewable_capacities(n, snakemake.param)
+        estimate_renewable_capacities(n, snakemake.config)
 
     update_p_nom_max(n)
 
-    add_nice_carrier_names(n, snakemake.param["plotting"])
+    add_nice_carrier_names(n, snakemake.config)
 
-    n.meta = snakemake.param
+    n.meta = snakemake.config
     n.export_to_netcdf(snakemake.output[0])

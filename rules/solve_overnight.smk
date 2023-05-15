@@ -4,6 +4,8 @@
 
 
 rule solve_sector_network:
+    params:
+        solving=config["solving"],
     input:
         overrides="data/override_component_attrs",
         network=RESULTS

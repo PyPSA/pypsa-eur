@@ -217,7 +217,7 @@ def industry_production_per_country(country, year, eurostat_dir, jrc_dir):
 
 def industry_production(countries, year, eurostat_dir, jrc_dir):
     nprocesses = snakemake.threads
-    disable_progress = snakemake.config["run"].get("disable_progressbar", False)
+    disable_progress = snakemake.params["run"].get("disable_progressbar", False)
 
     func = partial(
         industry_production_per_country,
@@ -277,13 +277,13 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_industrial_production_per_country")
 
-    logging.basicConfig(level=snakemake.config["logging"]["level"])
+    logging.basicConfig(level=snakemake.params["logging"]["level"])
 
-    countries = snakemake.config["countries"]
+    countries = snakemake.params["countries"]
 
-    year = snakemake.config["industry"]["reference_year"]
+    year = snakemake.params["industry"]["reference_year"]
 
-    config = snakemake.config["industry"]
+    config = snakemake.params["industry"]
 
     jrc_dir = snakemake.input.jrc
     eurostat_dir = snakemake.input.eurostat

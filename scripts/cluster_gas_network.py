@@ -110,7 +110,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("cluster_gas_network", simpl="", clusters="37")
 
-    logging.basicConfig(level=snakemake.config["logging"]["level"])
+    logging.basicConfig(level=snakemake.params["logging"]["level"])
 
     fn = snakemake.input.cleaned_gas_network
     df = pd.read_csv(fn, index_col=0)

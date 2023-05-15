@@ -4,6 +4,8 @@
 
 
 rule build_population_layouts:
+    params:
+        logging=config["logging"],
     input:
         nuts3_shapes=RESOURCES + "nuts3_shapes.geojson",
         urban_percent="data/urban_percent.csv",
@@ -70,6 +72,8 @@ rule build_simplified_population_layouts:
 if config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]:
 
     rule build_gas_network:
+        params:
+            logging=config["logging"],
         input:
             gas_network="data/gas_network/scigrid-gas/data/IGGIELGN_PipeSegments.geojson",
         output:
@@ -84,6 +88,8 @@ if config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]:
             "../scripts/build_gas_network.py"
 
     rule build_gas_input_locations:
+        params:
+            logging=config["logging"],
         input:
             lng=HTTP.remote(
                 "https://globalenergymonitor.org/wp-content/uploads/2022/09/Europe-Gas-Tracker-August-2022.xlsx",
@@ -110,6 +116,8 @@ if config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]:
             "../scripts/build_gas_input_locations.py"
 
     rule cluster_gas_network:
+        params:
+            logging=config["logging"],
         input:
             cleaned_gas_network=RESOURCES + "gas_network.csv",
             regions_onshore=RESOURCES
@@ -140,6 +148,8 @@ if not (config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]):
 
 
 rule build_heat_demands:
+    params:
+        snapshots=config["snapshots"],
     input:
         pop_layout=RESOURCES + "pop_layout_{scope}.nc",
         regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
@@ -160,6 +170,8 @@ rule build_heat_demands:
 
 
 rule build_temperature_profiles:
+    params:
+        snapshots=config["snapshots"],
     input:
         pop_layout=RESOURCES + "pop_layout_{scope}.nc",
         regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
@@ -181,6 +193,8 @@ rule build_temperature_profiles:
 
 
 rule build_cop_profiles:
+    params:
+        sector=config["sector"],
     input:
         temp_soil_total=RESOURCES + "temp_soil_total_elec_s{simpl}_{clusters}.nc",
         temp_soil_rural=RESOURCES + "temp_soil_rural_elec_s{simpl}_{clusters}.nc",
@@ -208,6 +222,9 @@ rule build_cop_profiles:
 
 
 rule build_solar_thermal_profiles:
+    params:
+        snapshots=config["snapshots"],
+        solar_thermal=config["solar_thermal"],
     input:
         pop_layout=RESOURCES + "pop_layout_{scope}.nc",
         regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
@@ -228,6 +245,11 @@ rule build_solar_thermal_profiles:
 
 
 rule build_energy_totals:
+    params:
+        run=config["run"],
+        countries=config["countries"],
+        energy=config["energy"],
+        logging=config["logging"],
     input:
         nuts3_shapes=RESOURCES + "nuts3_shapes.geojson",
         co2="data/eea/UNFCCC_v23.csv",
@@ -253,6 +275,8 @@ rule build_energy_totals:
 
 
 rule build_biomass_potentials:
+    params:
+        biomass=config["biomass"],
     input:
         enspreso_biomass=HTTP.remote(
             "https://cidportal.jrc.ec.europa.eu/ftp/jrc-opendata/ENSPRESO/ENSPRESO_BIOMASS.xlsx",
@@ -315,6 +339,8 @@ if not config["sector"]["biomass_transport"]:
 if config["sector"]["regional_co2_sequestration_potential"]["enable"]:
 
     rule build_sequestration_potentials:
+        params:
+            sector=config["sector"],
         input:
             sequestration_potential=HTTP.remote(
                 "https://raw.githubusercontent.com/ericzhou571/Co2Storage/main/resources/complete_map_2020_unit_Mt.geojson",
@@ -368,6 +394,8 @@ rule build_salt_cavern_potentials:
 
 
 rule build_ammonia_production:
+    params:
+        countries=config["countries"],
     input:
         usgs="data/myb1-2017-nitro.xls",
     output:
@@ -386,6 +414,9 @@ rule build_ammonia_production:
 
 
 rule build_industry_sector_ratios:
+    params:
+        industry=config["industry"],
+        sector=config["sector"],
     input:
         ammonia_production=RESOURCES + "ammonia_production.csv",
         idees="data/jrc-idees-2015",
@@ -405,6 +436,11 @@ rule build_industry_sector_ratios:
 
 
 rule build_industrial_production_per_country:
+    params:
+        run=config["run"],
+        industry=config["industry"],
+        countries=config["countries"],
+        logging=config["logging"],
     input:
         ammonia_production=RESOURCES + "ammonia_production.csv",
         jrc="data/jrc-idees-2015",
@@ -426,6 +462,8 @@ rule build_industrial_production_per_country:
 
 
 rule build_industrial_production_per_country_tomorrow:
+    params:
+        industry=config["industry"],
     input:
         industrial_production_per_country=RESOURCES
         + "industrial_production_per_country.csv",
@@ -450,6 +488,10 @@ rule build_industrial_production_per_country_tomorrow:
 
 
 rule build_industrial_distribution_key:
+    params:
+        industry=config["industry"],
+        countries=config["countries"],
+        logging=config["logging"],
     input:
         regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
         clustered_pop_layout=RESOURCES + "pop_layout_elec_s{simpl}_{clusters}.csv",
@@ -524,6 +566,10 @@ rule build_industrial_energy_demand_per_node:
 
 
 rule build_industrial_energy_demand_per_country_today:
+    params:
+        run=config["run"],
+        countries=config["countries"],
+        industry=config["industry"],
     input:
         jrc="data/jrc-idees-2015",
         ammonia_production=RESOURCES + "ammonia_production.csv",
@@ -570,6 +616,9 @@ rule build_industrial_energy_demand_per_node_today:
 if config["sector"]["retrofitting"]["retro_endogen"]:
 
     rule build_retro_cost:
+        params:
+            sector=config["sector"],
+            countries=config["countries"],
         input:
             building_stock="data/retro/data_building_stock.csv",
             data_tabula="data/retro/tabula-calculator-calcsetbuilding.csv",
@@ -640,6 +689,9 @@ rule build_shipping_demand:
 
 
 rule build_transport_demand:
+    params:
+        snapshots=config["snapshots"],
+        sector=config["sector"],
     input:
         clustered_pop_layout=RESOURCES + "pop_layout_elec_s{simpl}_{clusters}.csv",
         pop_weighted_energy_totals=RESOURCES
@@ -666,6 +718,19 @@ rule build_transport_demand:
 
 rule prepare_sector_network:
     params:
+        co2_budget=config["co2_budget"],
+        solving=config["solving"],
+        existing_capacities=config["existing_capacities"],
+        foresight=config["foresight"],
+        costs=config["costs"],
+        logging=config["logging"],
+        sector=config["sector"],
+        industry=config["industry"],
+        pypsa_eur=config["pypsa_eur"],
+        lines=config["lines"],
+        scenario=config["scenario"],
+        countries=config["countries"],
+        energy=config["energy"],
         RDIR=RDIR,
     input:
         **build_retro_cost_output,

@@ -468,18 +468,18 @@ if __name__ == "__main__":
         [
             tech
             for tech in n.generators.carrier.unique()
-            if tech in snakemake.config["renewable"]
+            if tech in snakemake.params["renewable"]
         ]
     )
 
-    exclude_carriers = snakemake.config["clustering"]["cluster_network"].get(
+    exclude_carriers = snakemake.params["clustering"]["cluster_network"].get(
         "exclude_carriers", []
     )
     aggregate_carriers = set(n.generators.carrier) - set(exclude_carriers)
     if snakemake.wildcards.clusters.endswith("m"):
         n_clusters = int(snakemake.wildcards.clusters[:-1])
         conventional = set(
-            snakemake.config["electricity"].get("conventional_carriers", [])
+            snakemake.params["electricity"].get("conventional_carriers", [])
         )
         aggregate_carriers = conventional.intersection(aggregate_carriers)
     elif snakemake.wildcards.clusters == "all":
@@ -495,13 +495,13 @@ if __name__ == "__main__":
             n, busmap, linemap, linemap, pd.Series(dtype="O")
         )
     else:
-        line_length_factor = snakemake.config["lines"]["length_factor"]
+        line_length_factor = snakemake.params["lines"]["length_factor"]
         Nyears = n.snapshot_weightings.objective.sum() / 8760
 
         hvac_overhead_cost = load_costs(
             snakemake.input.tech_costs,
-            snakemake.config["costs"],
-            snakemake.config["electricity"],
+            snakemake.params["costs"],
+            snakemake.params["electricity"],
             Nyears,
         ).at["HVAC overhead", "capital_cost"]
 
@@ -512,7 +512,7 @@ if __name__ == "__main__":
             ).all() or x.isnull().all(), "The `potential` configuration option must agree for all renewable carriers, for now!"
             return v
 
-        aggregation_strategies = snakemake.config["clustering"].get(
+        aggregation_strategies = snakemake.params["clustering"].get(
             "aggregation_strategies", {}
         )
         # translate str entries of aggregation_strategies to pd.Series functions:
@@ -521,7 +521,7 @@ if __name__ == "__main__":
             for p in aggregation_strategies.keys()
         }
 
-        custom_busmap = snakemake.config["enable"].get("custom_busmap", False)
+        custom_busmap = snakemake.params["enable"].get("custom_busmap", False)
         if custom_busmap:
             custom_busmap = pd.read_csv(
                 snakemake.input.custom_busmap, index_col=0, squeeze=True
@@ -539,7 +539,7 @@ if __name__ == "__main__":
             aggregate_carriers,
             line_length_factor,
             aggregation_strategies,
-            snakemake.config["solving"]["solver"]["name"],
+            snakemake.params["solving"]["solver"]["name"],
             cluster_config.get("algorithm", "hac"),
             cluster_config.get("feature", "solar+onwind-time"),
             hvac_overhead_cost,

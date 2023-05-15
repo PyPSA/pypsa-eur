@@ -510,7 +510,7 @@ if __name__ == "__main__":
 
     n = pypsa.Network(snakemake.input.network)
 
-    aggregation_strategies = snakemake.config["clustering"].get(
+    aggregation_strategies = snakemake.params["clustering"].get(
         "aggregation_strategies", {}
     )
     # translate str entries of aggregation_strategies to pd.Series functions:
@@ -525,8 +525,8 @@ if __name__ == "__main__":
 
     technology_costs = load_costs(
         snakemake.input.tech_costs,
-        snakemake.config["costs"],
-        snakemake.config["electricity"],
+        snakemake.params["costs"],
+        snakemake.params["electricity"],
         Nyears,
     )
 
@@ -536,7 +536,7 @@ if __name__ == "__main__":
 
     busmaps = [trafo_map, simplify_links_map]
 
-    cluster_config = snakemake.config["clustering"]["simplify_network"]
+    cluster_config = snakemake.params["clustering"]["simplify_network"]
     if cluster_config.get("remove_stubs", True):
         n, stub_map = remove_stubs(
             n,

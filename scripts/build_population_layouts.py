@@ -23,7 +23,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_population_layouts")
 
-    logging.basicConfig(level=snakemake.config["logging"]["level"])
+    logging.basicConfig(level=snakemake.params["logging"]["level"])
 
     cutout = atlite.Cutout(snakemake.input.cutout)
 

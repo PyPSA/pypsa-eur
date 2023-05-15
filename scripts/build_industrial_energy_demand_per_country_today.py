@@ -153,7 +153,7 @@ def add_non_eu28_industrial_energy_demand(countries, demand):
 
 def industrial_energy_demand(countries, year):
     nprocesses = snakemake.threads
-    disable_progress = snakemake.config["run"].get("disable_progressbar", False)
+    disable_progress = snakemake.params["run"].get("disable_progressbar", False)
     func = partial(
         industrial_energy_demand_per_country, year=year, jrc_dir=snakemake.input.jrc
     )
@@ -178,9 +178,9 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_industrial_energy_demand_per_country_today")
 
-    config = snakemake.config["industry"]
+    config = snakemake.params["industry"]
     year = config.get("reference_year", 2015)
-    countries = pd.Index(snakemake.config["countries"])
+    countries = pd.Index(snakemake.params["countries"])
 
     demand = industrial_energy_demand(countries.intersection(eu28), year)
 

@@ -4,6 +4,12 @@
 
 
 rule add_existing_baseyear:
+    params:
+        scenario=config["scenario"],
+        sector=config["sector"],
+        logging=config["logging"],
+        existing_capacities=config["existing_capacities"],
+        costs=config["costs"],
     input:
         overrides="data/override_component_attrs",
         network=RESULTS
@@ -42,6 +48,10 @@ rule add_existing_baseyear:
 
 
 rule add_brownfield:
+    params:
+        logging=config["logging"],
+        sector=config["sector"],
+        existing_capacities=config["existing_capacities"],
     input:
         overrides="data/override_component_attrs",
         network=RESULTS
@@ -74,6 +84,8 @@ ruleorder: add_existing_baseyear > add_brownfield
 
 
 rule solve_sector_network_myopic:
+    params:
+        solving=config["solving"],
     input:
         overrides="data/override_component_attrs",
         network=RESULTS
