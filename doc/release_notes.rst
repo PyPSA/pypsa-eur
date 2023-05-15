@@ -32,8 +32,8 @@ Upcoming Release
 * Add option to include a piecewise linear approximation of transmission losses,
   e.g. by setting ``solving: options: transmission_losses: 2`` for an
   approximation with two tangents.
-  
-  
+
+
 PyPSA-Eur 0.8.0 (18th March 2023)
 =================================
 
