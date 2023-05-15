@@ -600,6 +600,7 @@ def solve_network(n, config, opts="", **kwargs):
     track_iterations = cf_solving.get("track_iterations", False)
     min_iterations = cf_solving.get("min_iterations", 4)
     max_iterations = cf_solving.get("max_iterations", 6)
+    transmission_losses = cf_solving.get("transmission_losses", 0)
 
     # add to network for extra_functionality
     n.config = config
@@ -613,6 +614,7 @@ def solve_network(n, config, opts="", **kwargs):
     if skip_iterations:
         status, condition = n.optimize(
             solver_name=solver_name,
+            transmission_losses=transmission_losses,
             extra_functionality=extra_functionality,
             **solver_options,
             **kwargs,
@@ -623,6 +625,7 @@ def solve_network(n, config, opts="", **kwargs):
             track_iterations=track_iterations,
             min_iterations=min_iterations,
             max_iterations=max_iterations,
+            transmission_losses=transmission_losses,
             extra_functionality=extra_functionality,
             **solver_options,
             **kwargs,
