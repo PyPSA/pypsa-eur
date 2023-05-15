@@ -201,6 +201,7 @@ rule build_ship_raster:
 
 rule build_renewable_profiles:
     params:
+        run=config["run"],
         renewable=config["renewable"],
     input:
         base_network=RESOURCES + "networks/base.nc",
