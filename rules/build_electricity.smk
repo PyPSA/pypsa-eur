@@ -239,7 +239,7 @@ rule build_monthly_prices:
         fuel_price_raw="/home/lisa/Documents/pypsa-eur/data/validation/energy-price-trends-xlsx-5619002.xlsx"
     output:
         co2_price="data/validation/CO2_price_2019.csv",
-        fuel_price="data/validation/onthly_fuel_price.csv"
+        fuel_price="data/validation/monthly_fuel_price.csv"
     log:
         LOGS + "build_monthly_prices.log",
     threads: 1
@@ -285,7 +285,8 @@ rule add_electricity:
         powerplants=RESOURCES + "powerplants.csv",
         hydro_capacities=ancient("data/bundle/hydro_capacities.csv"),
         geth_hydro_capacities="data/geth2015_hydro_capacities.csv",
-        monthly_fuel_price="data/monthly_fuel_price.csv",
+        co2_price="data/validation/CO2_price_2019.csv",
+        fuel_price="data/validation/monthly_fuel_price.csv",
         load=RESOURCES + "load.csv",
         nuts3_shapes=RESOURCES + "nuts3_shapes.geojson",
     output:
