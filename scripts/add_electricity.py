@@ -638,9 +638,7 @@ def attach_OPSD_renewables(n, tech_map):
 
 def estimate_renewable_capacities(n, electricity_params, countries):
     year = electricity_params["estimate_renewable_capacities"]["year"]
-    tech_map = electricity_params["estimate_renewable_capacities"][
-        "technology_mapping"
-    ]
+    tech_map = electricity_params["estimate_renewable_capacities"]["technology_mapping"]
     expansion_limit = electricity_params["estimate_renewable_capacities"][
         "expansion_limit"
     ]
@@ -828,7 +826,9 @@ if __name__ == "__main__":
                 "technology_mapping"
             ]
             attach_OPSD_renewables(n, tech_map)
-        estimate_renewable_capacities(n, snakemake.params["electricity"],snakemake.params["countries"])
+        estimate_renewable_capacities(
+            n, snakemake.params["electricity"], snakemake.params["countries"]
+        )
 
     update_p_nom_max(n)
 
