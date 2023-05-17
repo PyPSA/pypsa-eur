@@ -682,7 +682,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("make_summary")
 
-    logging.basicConfig(level=snakemake.params["logging"]["level"])
+    logging.basicConfig(level=snakemake.config["logging"]["level"])
 
     networks_dict = {
         (cluster, ll, opt + sector_opt, planning_horizon): "results/"

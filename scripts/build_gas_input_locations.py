@@ -86,7 +86,7 @@ if __name__ == "__main__":
             clusters="37",
         )
 
-    logging.basicConfig(level=snakemake.params["logging"]["level"])
+    logging.basicConfig(level=snakemake.config["logging"]["level"])
 
     regions = load_bus_regions(
         snakemake.input.regions_onshore, snakemake.input.regions_offshore

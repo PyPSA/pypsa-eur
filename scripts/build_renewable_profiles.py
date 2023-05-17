@@ -203,7 +203,7 @@ if __name__ == "__main__":
     configure_logging(snakemake)
 
     nprocesses = int(snakemake.threads)
-    noprogress = snakemake.params["run"].get("disable_progressbar", True)
+    noprogress = snakemake.config["run"].get("disable_progressbar", True)
     config = snakemake.params["renewable"][snakemake.wildcards.technology]
     resource = config["resource"]  # pv panel config / wind turbine config
     correction_factor = config.get("correction_factor", 1.0)

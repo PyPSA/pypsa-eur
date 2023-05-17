@@ -930,7 +930,7 @@ if __name__ == "__main__":
             planning_horizons="2030",
         )
 
-    logging.basicConfig(level=snakemake.params["logging"]["level"])
+    logging.basicConfig(level=snakemake.config["logging"]["level"])
 
     overrides = override_component_attrs(snakemake.input.overrides)
     n = pypsa.Network(snakemake.input.network, override_component_attrs=overrides)

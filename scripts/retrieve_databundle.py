@@ -63,7 +63,7 @@ if __name__ == "__main__":
     to_fn = Path(f"{rootpath}/data")
 
     logger.info(f"Downloading databundle from '{url}'.")
-    disable_progress = snakemake.params["run"].get("disable_progressbar", False)
+    disable_progress = snakemake.config["run"].get("disable_progressbar", False)
     progress_retrieve(url, tarball_fn, disable=disable_progress)
 
     logger.info("Extracting databundle.")

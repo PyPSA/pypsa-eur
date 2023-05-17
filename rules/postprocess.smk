@@ -10,7 +10,6 @@ localrules:
 
 rule plot_network:
     params:
-        logging=config["logging"],
         foresight=config["foresight"],
         plotting=config["plotting"],
     input:
@@ -74,7 +73,6 @@ rule make_summary:
         foresight=config["foresight"],
         costs=config["costs"],
         snapshots=config["snapshots"],
-        logging=config["logging"],
         scenario=config["scenario"],
         RDIR=RDIR,
     input:
@@ -123,7 +121,6 @@ rule make_summary:
 
 rule plot_summary:
     params:
-        logging=config["logging"],
         countries=config["countries"],
         scenario=config["scenario"],
         plotting=config["plotting"],

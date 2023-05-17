@@ -201,7 +201,6 @@ rule build_ship_raster:
 
 rule build_renewable_profiles:
     params:
-        run=config["run"],
         renewable=config["renewable"],
     input:
         base_network=RESOURCES + "networks/base.nc",
@@ -350,7 +349,7 @@ rule cluster_network:
         lines=config["lines"],
         renewable=config["renewable"],
         clustering=config["clustering"],
-        enable=config["enable"],
+        enable=config["enable"].get("custom_busmap", False),
     input:
         network=RESOURCES + "networks/elec_s{simpl}.nc",
         regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}.geojson",

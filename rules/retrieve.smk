@@ -20,7 +20,6 @@ if config["enable"].get("retrieve_databundle", True):
 
     rule retrieve_databundle:
         params:
-            run=config["run"],
             tutorial=config["tutorial"],
         output:
             expand("data/bundle/{file}", file=datafiles),

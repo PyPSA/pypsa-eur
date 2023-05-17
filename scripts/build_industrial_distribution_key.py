@@ -141,7 +141,7 @@ if __name__ == "__main__":
             clusters=48,
         )
 
-    logging.basicConfig(level=snakemake.params["logging"]["level"])
+    logging.basicConfig(level=snakemake.config["logging"]["level"])
 
     countries = snakemake.params["countries"]
 
