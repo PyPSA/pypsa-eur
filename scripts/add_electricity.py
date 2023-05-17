@@ -135,7 +135,7 @@ def _add_missing_carriers_from_costs(n, costs, carriers):
     n.import_components_from_dataframe(emissions, "Carrier")
 
 
-def load_costs(tech_costs, config, elec_config, Nyears=1.0):
+def load_costs(tech_costs, params, elec_params, Nyears=1.0):
     # set all asset costs and other parameters
     costs = pd.read_csv(tech_costs, index_col=[0, 1]).sort_index()
 
@@ -143,7 +143,7 @@ def load_costs(tech_costs, config, elec_config, Nyears=1.0):
     costs.loc[costs.unit.str.contains("/kW"), "value"] *= 1e3
     costs.unit = costs.unit.str.replace("/kW", "/MW")
 
-    fill_values = config["fill_values"]
+    fill_values = params["fill_values"]
     costs = costs.value.unstack().fillna(fill_values)
 
     costs["capital_cost"] = (
@@ -166,8 +166,8 @@ def load_costs(tech_costs, config, elec_config, Nyears=1.0):
     costs.at["CCGT", "co2_emissions"] = costs.at["gas", "co2_emissions"]
 
     costs.at["solar", "capital_cost"] = (
-        config["rooftop_share"] * costs.at["solar-rooftop", "capital_cost"]
-        + (1 - config["rooftop_share"]) * costs.at["solar-utility", "capital_cost"]
+        params["rooftop_share"] * costs.at["solar-rooftop", "capital_cost"]
+        + (1 - params["rooftop_share"]) * costs.at["solar-utility", "capital_cost"]
     )
 
     def costs_for_storage(store, link1, link2=None, max_hours=1.0):
@@ -178,7 +178,7 @@ def load_costs(tech_costs, config, elec_config, Nyears=1.0):
             dict(capital_cost=capital_cost, marginal_cost=0.0, co2_emissions=0.0)
         )
 
-    max_hours = elec_config["max_hours"]
+    max_hours = elec_params["max_hours"]
     costs.loc["battery"] = costs_for_storage(
         costs.loc["battery storage"],
         costs.loc["battery inverter"],
@@ -192,7 +192,7 @@ def load_costs(tech_costs, config, elec_config, Nyears=1.0):
     )
 
     for attr in ("marginal_cost", "capital_cost"):
-        overwrites = config.get(attr)
+        overwrites = params.get(attr)
         if overwrites is not None:
             overwrites = pd.Series(overwrites)
             costs.loc[overwrites.index, attr] = overwrites
@@ -356,7 +356,7 @@ def attach_conventional_generators(
     ppl,
     conventional_carriers,
     extendable_carriers,
-    conventional_config,
+    conventional_params,
     conventional_inputs,
 ):
     carriers = set(conventional_carriers) | set(extendable_carriers["Generator"])
@@ -393,12 +393,12 @@ def attach_conventional_generators(
         lifetime=(ppl.dateout - ppl.datein).fillna(np.inf),
     )
 
-    for carrier in conventional_config:
+    for carrier in conventional_params:
         # Generators with technology affected
         idx = n.generators.query("carrier == @carrier").index
 
-        for attr in list(set(conventional_config[carrier]) & set(n.generators)):
-            values = conventional_config[carrier][attr]
+        for attr in list(set(conventional_params[carrier]) & set(n.generators)):
+            values = conventional_params[carrier][attr]
 
             if f"conventional_{carrier}_{attr}" in conventional_inputs:
                 # Values affecting generators of technology k country-specific
@@ -413,7 +413,7 @@ def attach_conventional_generators(
                 n.generators.loc[idx, attr] = values
 
 
-def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **config):
+def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **params):
     _add_missing_carriers_from_costs(n, costs, carriers)
 
     ppl = (
@@ -468,9 +468,9 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **con
         )
 
     if "PHS" in carriers and not phs.empty:
-        # fill missing max hours to config value and
+        # fill missing max hours to params value and
         # assume no natural inflow due to lack of data
-        max_hours = config.get("PHS_max_hours", 6)
+        max_hours = params.get("PHS_max_hours", 6)
         phs = phs.replace({"max_hours": {0: max_hours}})
         n.madd(
             "StorageUnit",
@@ -486,7 +486,7 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **con
         )
 
     if "hydro" in carriers and not hydro.empty:
-        hydro_max_hours = config.get("hydro_max_hours")
+        hydro_max_hours = params.get("hydro_max_hours")
 
         assert hydro_max_hours is not None, "No path for hydro capacities given."
 
@@ -636,13 +636,12 @@ def attach_OPSD_renewables(n, tech_map):
         n.generators.p_nom_min.update(gens.bus.map(caps).dropna())
 
 
-def estimate_renewable_capacities(n, config):
-    year = config["electricity"]["estimate_renewable_capacities"]["year"]
-    tech_map = config["electricity"]["estimate_renewable_capacities"][
+def estimate_renewable_capacities(n, electricity_params, countries):
+    year = electricity_params["estimate_renewable_capacities"]["year"]
+    tech_map = electricity_params["estimate_renewable_capacities"][
         "technology_mapping"
     ]
-    countries = config["countries"]
-    expansion_limit = config["electricity"]["estimate_renewable_capacities"][
+    expansion_limit = electricity_params["estimate_renewable_capacities"][
         "expansion_limit"
     ]
 
@@ -759,7 +758,7 @@ if __name__ == "__main__":
         ppl,
         conventional_carriers,
         extendable_carriers,
-        snakemake.config.get("conventional", {}),
+        snakemake.params.get("conventional", {}),
         conventional_inputs,
     )
 
@@ -773,15 +772,15 @@ if __name__ == "__main__":
     )
 
     if "hydro" in renewable_carriers:
-        conf = snakemake.params["renewable"]["hydro"]
+        para = snakemake.params["renewable"]["hydro"]
         attach_hydro(
             n,
             costs,
             ppl,
             snakemake.input.profile_hydro,
             snakemake.input.hydro_capacities,
-            conf.pop("carriers", []),
-            **conf,
+            para.pop("carriers", []),
+            **para,
         )
 
     if "estimate_renewable_capacities" not in snakemake.params["electricity"]:
@@ -829,7 +828,7 @@ if __name__ == "__main__":
                 "technology_mapping"
             ]
             attach_OPSD_renewables(n, tech_map)
-        estimate_renewable_capacities(n, snakemake.config)
+        estimate_renewable_capacities(n, snakemake.params["electricity"],snakemake.params["countries"])
 
     update_p_nom_max(n)
 

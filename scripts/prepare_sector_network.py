@@ -727,7 +727,7 @@ def cycling_shift(df, steps=1):
     return df
 
 
-def prepare_costs(cost_file, config, nyears):
+def prepare_costs(cost_file, params, nyears):
     # set all asset costs and other parameters
     costs = pd.read_csv(cost_file, index_col=[0, 1]).sort_index()
 
@@ -739,7 +739,7 @@ def prepare_costs(cost_file, config, nyears):
         costs.loc[:, "value"].unstack(level=1).groupby("technology").sum(min_count=1)
     )
 
-    costs = costs.fillna(config["fill_values"])
+    costs = costs.fillna(params["fill_values"])
 
     def annuity_factor(v):
         return annuity(v["lifetime"], v["discount rate"]) + v["FOM"] / 100
