@@ -285,7 +285,6 @@ rule add_electricity:
         powerplants=RESOURCES + "powerplants.csv",
         hydro_capacities=ancient("data/bundle/hydro_capacities.csv"),
         geth_hydro_capacities="data/geth2015_hydro_capacities.csv",
-        co2_price="data/validation/CO2_price_2019.csv",
         fuel_price="data/validation/monthly_fuel_price.csv",
         load=RESOURCES + "load.csv",
         nuts3_shapes=RESOURCES + "nuts3_shapes.geojson",
@@ -383,6 +382,7 @@ rule prepare_network:
     input:
         RESOURCES + "networks/elec_s{simpl}_{clusters}_ec.nc",
         tech_costs=COSTS,
+        co2_price="data/validation/CO2_price_2019.csv",
     output:
         RESOURCES + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
     log:
