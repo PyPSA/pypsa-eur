@@ -24,13 +24,13 @@ scenario:
   ll:  # allowed transmission line volume expansion, can be any float >= 1.0 with a prefix v|c (today) or "copt"
   - v1.0
   clusters:  # number of nodes in Europe, any integer between 37 (1 node per country-zone) and several hundred
-  - 37
+  - 37c
   # - 128
   # - 256
   # - 512
   # - 1024
   opts: # only relevant for PyPSA-Eur
-  - 'Ep'
+  - 'ept'
   sector_opts: # this is where the main scenario settings are
   - Co2L0-3H-T-H-B-I-A-solar+p3-dist1
   # to really understand the options here, look in scripts/prepare_sector_network.py
