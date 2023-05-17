@@ -277,7 +277,7 @@ rule add_electricity:
         countries=config["countries"],
         renewable=config["renewable"],
         electricity=config["electricity"],
-        conventional=config.get("conventional", {})
+        conventional=config.get("conventional", {}),
         costs=config["costs"],
     input:
         **{
