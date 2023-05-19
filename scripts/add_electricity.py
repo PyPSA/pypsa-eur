@@ -756,7 +756,7 @@ if __name__ == "__main__":
         ppl,
         conventional_carriers,
         extendable_carriers,
-        snakemake.params.get("conventional", {}),
+        snakemake.params["conventional"],
         conventional_inputs,
     )
 

@@ -521,7 +521,7 @@ if __name__ == "__main__":
             for p in aggregation_strategies.keys()
         }
 
-        custom_busmap = snakemake.params["enable"].get("custom_busmap", False)
+        custom_busmap = snakemake.params["custom_busmap"]
         if custom_busmap:
             custom_busmap = pd.read_csv(
                 snakemake.input.custom_busmap, index_col=0, squeeze=True
