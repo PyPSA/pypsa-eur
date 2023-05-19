@@ -321,7 +321,9 @@ rule simplify_network:
         renewable=config["renewable"],
         length_factor=config["lines"]["length_factor"],
         p_max_pu=config["links"].get("p_max_pu", 1.0),
-        exclude_carriers=config["clustering"]["simplify_network"].get("exclude_carriers", []),
+        exclude_carriers=config["clustering"]["simplify_network"].get(
+            "exclude_carriers", []
+        ),
         focus_weights=config.get("focus_weights", None),
         solver_name=config["solving"]["solver"]["name"],
     input:
