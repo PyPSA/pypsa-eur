@@ -623,9 +623,9 @@ clustering:
 solving:
   #tmpdir: "path/to/tmp"
   options:
-    formulation: kirchhoff
     clip_p_max_pu: 1.e-2
     load_shedding: false
+    transmission_losses: 0
     noisy_costs: true
     skip_iterations: true
     track_iterations: false

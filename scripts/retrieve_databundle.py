@@ -58,9 +58,8 @@ if __name__ == "__main__":
     else:
         url = "https://zenodo.org/record/3517935/files/pypsa-eur-data-bundle.tar.xz"
 
-    # Save locations
     tarball_fn = Path(f"{rootpath}/bundle.tar.xz")
-    to_fn = Path(f"{rootpath}/data")
+    to_fn = Path(rootpath) / Path(snakemake.output[0]).parent.parent
 
     logger.info(f"Downloading databundle from '{url}'.")
     disable_progress = snakemake.config["run"].get("disable_progressbar", False)
