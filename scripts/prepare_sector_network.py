@@ -1105,7 +1105,11 @@ def add_storage_and_grids(n, costs):
     cavern_types = snakemake.config["sector"]["hydrogen_underground_storage_locations"]
     h2_caverns = pd.read_csv(snakemake.input.h2_cavern, index_col=0)
 
-    if not h2_caverns.empty and options["hydrogen_underground_storage"]:
+    if (
+        not h2_caverns.empty
+        and options["hydrogen_underground_storage"]
+        and set(cavern_types).intersection(h2_caverns.columns)
+    ):
         h2_caverns = h2_caverns[cavern_types].sum(axis=1)
 
         # only use sites with at least 2 TWh potential
