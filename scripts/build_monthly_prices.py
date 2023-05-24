@@ -57,7 +57,7 @@ sheet_name_map = {"5.1 Hard coal and lignite": "coal",
 keywords = {"coal": " GP09-051 Hard coal",
             "lignite": " GP09-052 Lignite and lignite briquettes",
             "oil": " GP09-0610 10 Mineral oil, crude",
-            "gas": "GP09-3522 24 Natural gas, when supplied to power plants"
+            "gas": "GP09-062 Natural gas"
             }
 
 # import fuel price 2015 in Eur/MWh
