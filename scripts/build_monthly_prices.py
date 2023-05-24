@@ -29,8 +29,8 @@ and translates them from different input sources to pypsa syntax
 Data sources:
     [1] Fuel price index. Destatis
     https://www.destatis.de/EN/Home/_node.html
-    [2] average annual import price (coal, gas, oil) Agora, slide 22
-    https://static.agora-energiewende.de/fileadmin/Projekte/2022/2022-10_DE_JAW2022/2023-02-20_Praesentation_Agora_Jahresauswertung.pdf
+    [2] average annual import price (coal, gas, oil) Agora, slide 24
+    https://static.agora-energiewende.de/fileadmin/Projekte/2019/Jahresauswertung_2019/A-EW_German-Power-Market-2019_Summary_EN.pdf
     [3] average annual fuel price lignite, ENTSO-E
     https://2020.entsos-tyndp-scenarios.eu/fuel-commodities-and-carbon-prices/
     [4] CO2 Prices, Emission spot primary auction, EEX
@@ -61,11 +61,11 @@ keywords = {"coal": " GP09-051 Hard coal",
             }
 
 # import fuel price 2015 in Eur/MWh
-# source for coal, oil, gas, Agora, slide 22 [2]
+# source for coal, oil, gas, Agora, slide 24 [2]
 # source lignite, price for 2020, scaled by price index, ENTSO-E [3]
-price_2015 = {"coal": 8,
-              "oil": 31,
-              "gas": 21,
+price_2015 = {"coal": 8.3,
+              "oil": 30.6,
+              "gas": 20.6,
               "lignite": 3.8}  # 2020 3.96/1.04 
 
 def get_fuel_price():
