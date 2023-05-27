@@ -7,11 +7,15 @@ rule solve_network:
     params:
         solving=config["solving"],
         config_parts={
-                    "foresight":config["foresight"],
-                    "planning_horizons":config["scenario"]["planning_horizons"],
-                    "co2_sequestration_potential":config["sector"].get("co2_sequestration_potential", 200),
-                    "H2_retrofit_capacity_per_CH4":config["sector"]["H2_retrofit_capacity_per_CH4"]
-                    },
+            "foresight": config["foresight"],
+            "planning_horizons": config["scenario"]["planning_horizons"],
+            "co2_sequestration_potential": config["sector"].get(
+                "co2_sequestration_potential", 200
+            ),
+            "H2_retrofit_capacity_per_CH4": config["sector"][
+            "H2_retrofit_capacity_per_CH4"
+            ],
+        },
     input:
         network=RESOURCES + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
     output:

@@ -222,7 +222,7 @@ def add_CCL_constraints(n, config):
         agg_p_nom_limits: data/agg_p_nom_minmax.csv
     """
     agg_p_nom_minmax = pd.read_csv(
-        config['electricity']["agg_p_nom_limits"], index_col=[0, 1]
+        config["electricity"]["agg_p_nom_limits"], index_col=[0, 1]
     )
     logger.info("Adding generation capacity constraints per carrier and country")
     p_nom = n.model["Generator-p_nom"]
@@ -370,7 +370,7 @@ def add_SAFE_constraints(n, config):
     Which sets a reserve margin of 10% above the peak demand.
     """
     peakdemand = n.loads_t.p_set.sum(axis=1).max()
-    margin = 1.0 + config['electricity']["SAFE_reservemargin"]
+    margin = 1.0 + config["electricity"]["SAFE_reservemargin"]
     reserve_margin = peakdemand * margin
     # TODO: do not take this from the plotting config!
     conv_techs = config["plotting"]["conv_techs"]
@@ -675,10 +675,16 @@ if __name__ == "__main__":
     else:
         n = pypsa.Network(snakemake.input.network)
 
-    n = prepare_network(n, solve_opts, config=snakemake.config, param=snakemake.params["config_parts"])
+    n = prepare_network(
+        n, solve_opts, config=snakemake.config, param=snakemake.params["config_parts"]
+    )
 
     n = solve_network(
-        n, config=snakemake.config, solving_param=snakemake.params["solving"], opts=opts, log_fn=snakemake.log.solver
+        n,
+        config=snakemake.config,
+        solving_param=snakemake.params["solving"],
+        opts=opts,
+        log_fn=snakemake.log.solver,
     )
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
