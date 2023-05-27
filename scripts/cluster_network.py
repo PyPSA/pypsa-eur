@@ -478,9 +478,7 @@ if __name__ == "__main__":
     aggregate_carriers = set(n.generators.carrier) - set(exclude_carriers)
     if snakemake.wildcards.clusters.endswith("m"):
         n_clusters = int(snakemake.wildcards.clusters[:-1])
-        conventional = set(
-            snakemake.params["conventional_carriers"]
-        )
+        conventional = set(snakemake.params["conventional_carriers"])
         aggregate_carriers = conventional.intersection(aggregate_carriers)
     elif snakemake.wildcards.clusters == "all":
         n_clusters = len(n.buses)
