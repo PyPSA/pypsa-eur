@@ -44,14 +44,14 @@ pypsa.pf.logger.setLevel(logging.WARNING)
 from pypsa.descriptors import get_switchable_as_dense as get_as_dense
 
 
-def add_land_use_constraint(n, config):
+def add_land_use_constraint(n, param, config):
     if "m" in snakemake.wildcards.clusters:
-        _add_land_use_constraint_m(n, config)
+        _add_land_use_constraint_m(n, param, config)
     else:
-        _add_land_use_constraint(n, config)
+        _add_land_use_constraint(n, param)
 
 
-def _add_land_use_constraint(n, config):
+def _add_land_use_constraint(n, param):
     # warning: this will miss existing offwind which is not classed AC-DC and has carrier 'offwind'
 
     for carrier in ["solar", "onwind", "offwind-ac", "offwind-dc"]:
@@ -80,10 +80,10 @@ def _add_land_use_constraint(n, config):
     n.generators.p_nom_max.clip(lower=0, inplace=True)
 
 
-def _add_land_use_constraint_m(n, config):
+def _add_land_use_constraint_m(n, param, config):
     # if generators clustering is lower than network clustering, land_use accounting is at generators clusters
 
-    planning_horizons = config["scenario"]["planning_horizons"]
+    planning_horizons = param["planning_horizons"]
     grouping_years = config["existing_capacities"]["grouping_years"]
     current_horizon = snakemake.wildcards.planning_horizons
 
@@ -141,7 +141,7 @@ def add_co2_sequestration_limit(n, limit=200):
     )
 
 
-def prepare_network(n, solve_opts=None, config=None):
+def prepare_network(n, solve_opts=None, config=None, param=None):
     if "clip_p_max_pu" in solve_opts:
         for df in (
             n.generators_t.p_max_pu,
@@ -191,11 +191,11 @@ def prepare_network(n, solve_opts=None, config=None):
         n.set_snapshots(n.snapshots[:nhours])
         n.snapshot_weightings[:] = 8760.0 / nhours
 
-    if config["foresight"] == "myopic":
-        add_land_use_constraint(n, config)
+    if param["foresight"] == "myopic":
+        add_land_use_constraint(n, param, config)
 
     if n.stores.carrier.eq("co2 stored").any():
-        limit = config["sector"].get("co2_sequestration_potential", 200)
+        limit = param["co2_sequestration_potential"]
         add_co2_sequestration_limit(n, limit=limit)
 
     return n
@@ -222,7 +222,7 @@ def add_CCL_constraints(n, config):
         agg_p_nom_limits: data/agg_p_nom_minmax.csv
     """
     agg_p_nom_minmax = pd.read_csv(
-        config["electricity"]["agg_p_nom_limits"], index_col=[0, 1]
+        config['electricity']["agg_p_nom_limits"], index_col=[0, 1]
     )
     logger.info("Adding generation capacity constraints per carrier and country")
     p_nom = n.model["Generator-p_nom"]
@@ -370,7 +370,7 @@ def add_SAFE_constraints(n, config):
     Which sets a reserve margin of 10% above the peak demand.
     """
     peakdemand = n.loads_t.p_set.sum(axis=1).max()
-    margin = 1.0 + config["electricity"]["SAFE_reservemargin"]
+    margin = 1.0 + config['electricity']["SAFE_reservemargin"]
     reserve_margin = peakdemand * margin
     # TODO: do not take this from the plotting config!
     conv_techs = config["plotting"]["conv_techs"]
@@ -590,13 +590,13 @@ def extra_functionality(n, snapshots):
     add_pipe_retrofit_constraint(n)
 
 
-def solve_network(n, config, opts="", **kwargs):
-    set_of_options = config["solving"]["solver"]["options"]
+def solve_network(n, config, solving_param, opts="", **kwargs):
+    set_of_options = solving_param["solver"]["options"]
     solver_options = (
-        config["solving"]["solver_options"][set_of_options] if set_of_options else {}
+        solving_param["solver_options"][set_of_options] if set_of_options else {}
     )
-    solver_name = config["solving"]["solver"]["name"]
-    cf_solving = config["solving"]["options"]
+    solver_name = solving_param["solver"]["name"]
+    cf_solving = solving_param["options"]
     track_iterations = cf_solving.get("track_iterations", False)
     min_iterations = cf_solving.get("min_iterations", 4)
     max_iterations = cf_solving.get("max_iterations", 6)
@@ -675,10 +675,10 @@ if __name__ == "__main__":
     else:
         n = pypsa.Network(snakemake.input.network)
 
-    n = prepare_network(n, solve_opts, config=snakemake.config)
+    n = prepare_network(n, solve_opts, config=snakemake.config, param=snakemake.params["config_parts"])
 
     n = solve_network(
-        n, config=snakemake.config, opts=opts, log_fn=snakemake.log.solver
+        n, config=snakemake.config, solving_param=snakemake.params["solving"], opts=opts, log_fn=snakemake.log.solver
     )
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
