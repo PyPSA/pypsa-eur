@@ -254,7 +254,7 @@ if __name__ == "__main__":
     costs = load_costs(
         snakemake.input.tech_costs,
         snakemake.params["costs"],
-        snakemake.params["electricity"],
+        snakemake.params["max_hours"],
         Nyears,
     )
 
@@ -269,7 +269,7 @@ if __name__ == "__main__":
     for o in opts:
         m = re.match(r"^\d+seg$", o, re.IGNORECASE)
         if m is not None:
-            solver_name = snakemake.params["solving"]["solver"]["name"]
+            solver_name = snakemake.params["solver_name"]
             n = apply_time_segmentation(n, m.group(0)[:-3], solver_name)
             break
 
@@ -277,11 +277,11 @@ if __name__ == "__main__":
         if "Co2L" in o:
             m = re.findall("[0-9]*\.?[0-9]+$", o)
             if len(m) > 0:
-                co2limit = float(m[0]) * snakemake.params["electricity"]["co2base"]
+                co2limit = float(m[0]) * snakemake.params["co2base"]
                 add_co2limit(n, co2limit, Nyears)
                 logger.info("Setting CO2 limit according to wildcard value.")
             else:
-                add_co2limit(n, snakemake.params["electricity"]["co2limit"], Nyears)
+                add_co2limit(n, snakemake.params["co2limit"], Nyears)
                 logger.info("Setting CO2 limit according to config value.")
             break
 
@@ -293,7 +293,7 @@ if __name__ == "__main__":
                 add_gaslimit(n, limit, Nyears)
                 logger.info("Setting gas usage limit according to wildcard value.")
             else:
-                add_gaslimit(n, snakemake.params["electricity"].get("gaslimit"), Nyears)
+                add_gaslimit(n, snakemake.params["gaslimit"], Nyears)
                 logger.info("Setting gas usage limit according to config value.")
             break
 

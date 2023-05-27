@@ -5,7 +5,7 @@
 
 rule add_existing_baseyear:
     params:
-        scenario=config["scenario"],
+        baseyear=config["scenario"]["planning_horizons"][0],
         sector=config["sector"],
         existing_capacities=config["existing_capacities"],
         costs=config["costs"],
@@ -48,8 +48,9 @@ rule add_existing_baseyear:
 
 rule add_brownfield:
     params:
-        sector=config["sector"],
-        existing_capacities=config["existing_capacities"],
+        H2_retrofit=config["sector"]["H2_retrofit"],
+        H2_retrofit_capacity_per_CH4=config["sector"]["H2_retrofit_capacity_per_CH4"],
+        threshold_capacity=config["existing_capacities"]["threshold_capacity"],
     input:
         overrides="data/override_component_attrs",
         network=RESULTS

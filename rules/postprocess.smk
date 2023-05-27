@@ -122,7 +122,8 @@ rule make_summary:
 rule plot_summary:
     params:
         countries=config["countries"],
-        scenario=config["scenario"],
+        planning_horizons=config["scenario"]["planning_horizons"],
+        sector_opts=config["scenario"]["sector_opts"],
         plotting=config["plotting"],
         RDIR=RDIR,
     input:

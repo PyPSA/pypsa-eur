@@ -455,7 +455,7 @@ def plot_carbon_budget_distribution(input_eurostat):
     ax1 = plt.subplot(gs1[0, 0])
     ax1.set_ylabel("CO$_2$ emissions (Gt per year)", fontsize=22)
     ax1.set_ylim([0, 5])
-    ax1.set_xlim([1990, snakemake.params["scenario"]["planning_horizons"][-1] + 1])
+    ax1.set_xlim([1990, snakemake.params["planning_horizons"][-1] + 1])
 
     path_cb = "results/" + snakemake.params.RDIR + "/csvs/"
     countries = snakemake.params["countries"]
@@ -555,7 +555,7 @@ if __name__ == "__main__":
 
     plot_balances()
 
-    for sector_opts in snakemake.params["scenario"]["sector_opts"]:
+    for sector_opts in snakemake.params["sector_opts"]:
         opts = sector_opts.split("-")
         for o in opts:
             if "cb" in o:

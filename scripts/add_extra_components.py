@@ -67,9 +67,8 @@ idx = pd.IndexSlice
 logger = logging.getLogger(__name__)
 
 
-def attach_storageunits(n, costs, elec_opts):
-    carriers = elec_opts["extendable_carriers"]["StorageUnit"]
-    max_hours = elec_opts["max_hours"]
+def attach_storageunits(n, costs, ext_carriers, max_hours):
+    carriers = ext_carriers["StorageUnit"]
 
     _add_missing_carriers_from_costs(n, costs, carriers)
 
@@ -99,8 +98,8 @@ def attach_storageunits(n, costs, elec_opts):
         )
 
 
-def attach_stores(n, costs, elec_opts):
-    carriers = elec_opts["extendable_carriers"]["Store"]
+def attach_stores(n, costs, ext_carriers):
+    carriers = ext_carriers["Store"]
 
     _add_missing_carriers_from_costs(n, costs, carriers)
 
@@ -187,8 +186,7 @@ def attach_stores(n, costs, elec_opts):
         )
 
 
-def attach_hydrogen_pipelines(n, costs, elec_opts):
-    ext_carriers = elec_opts["extendable_carriers"]
+def attach_hydrogen_pipelines(n, costs, ext_carriers):
     as_stores = ext_carriers.get("Store", [])
 
     if "H2 pipeline" not in ext_carriers.get("Link", []):
@@ -235,16 +233,17 @@ if __name__ == "__main__":
     configure_logging(snakemake)
 
     n = pypsa.Network(snakemake.input.network)
-    elec_config = snakemake.params["electricity"]
+    ext_carriers = snakemake.params["ext_carriers"]
+    max_hours = snakemake.params["max_hours"]
 
     Nyears = n.snapshot_weightings.objective.sum() / 8760.0
     costs = load_costs(
-        snakemake.input.tech_costs, snakemake.params["costs"], elec_config, Nyears
+        snakemake.input.tech_costs, snakemake.params["costs"], max_hours, Nyears
     )
 
-    attach_storageunits(n, costs, elec_config)
-    attach_stores(n, costs, elec_config)
-    attach_hydrogen_pipelines(n, costs, elec_config)
+    attach_storageunits(n, costs, ext_carriers, max_hours)
+    attach_stores(n, costs, ext_carriers)
+    attach_hydrogen_pipelines(n, costs, ext_carriers)
 
     add_nice_carrier_names(n, snakemake.config)
 

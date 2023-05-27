@@ -130,7 +130,7 @@ if __name__ == "__main__":
         snakemake = mock_snakemake("build_hydro_profile")
     configure_logging(snakemake)
 
-    params_hydro = snakemake.params["renewable"]["hydro"]
+    params_hydro = snakemake.params["hydro"]
     cutout = atlite.Cutout(snakemake.input.cutout)
 
     countries = snakemake.params["countries"]

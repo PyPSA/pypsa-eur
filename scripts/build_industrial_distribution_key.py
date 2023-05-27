@@ -73,7 +73,7 @@ def prepare_hotmaps_database(regions):
 
     df[["srid", "coordinates"]] = df.geom.str.split(";", expand=True)
 
-    if snakemake.params["industry"].get("hotmaps_locate_missing", False):
+    if snakemake.params["hotmaps_locate_missing"]:
         df = locate_missing_industrial_sites(df)
 
     # remove those sites without valid locations

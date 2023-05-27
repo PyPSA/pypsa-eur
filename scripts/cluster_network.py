@@ -479,7 +479,7 @@ if __name__ == "__main__":
     if snakemake.wildcards.clusters.endswith("m"):
         n_clusters = int(snakemake.wildcards.clusters[:-1])
         conventional = set(
-            snakemake.params["electricity"].get("conventional_carriers", [])
+            snakemake.params["conventional_carriers"]
         )
         aggregate_carriers = conventional.intersection(aggregate_carriers)
     elif snakemake.wildcards.clusters == "all":
@@ -495,13 +495,13 @@ if __name__ == "__main__":
             n, busmap, linemap, linemap, pd.Series(dtype="O")
         )
     else:
-        line_length_factor = snakemake.params["lines"]["length_factor"]
+        line_length_factor = snakemake.params["length_factor"]
         Nyears = n.snapshot_weightings.objective.sum() / 8760
 
         hvac_overhead_cost = load_costs(
             snakemake.input.tech_costs,
             snakemake.params["costs"],
-            snakemake.params["electricity"],
+            snakemake.params["max_hours"],
             Nyears,
         ).at["HVAC overhead", "capital_cost"]
 
@@ -539,7 +539,7 @@ if __name__ == "__main__":
             aggregate_carriers,
             line_length_factor,
             aggregation_strategies,
-            snakemake.params["solving"]["solver"]["name"],
+            snakemake.params["solver_name"],
             cluster_config.get("algorithm", "hac"),
             cluster_config.get("feature", "solar+onwind-time"),
             hvac_overhead_cost,

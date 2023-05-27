@@ -439,7 +439,7 @@ def chemicals_industry():
 
     sector = "Ammonia"
     df[sector] = 0.0
-    if snakemake.params["sector"].get("ammonia", False):
+    if snakemake.params["sector_amonia"]:
         df.loc["ammonia", sector] = params["MWh_NH3_per_tNH3"]
     else:
         df.loc["hydrogen", sector] = params["MWh_H2_per_tNH3_electrolysis"]

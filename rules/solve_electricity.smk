@@ -41,7 +41,7 @@ rule solve_network:
 
 rule solve_operations_network:
     params:
-        solving=config["solving"],
+        options=config["solving"]["options"],
     input:
         network=RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
     output:

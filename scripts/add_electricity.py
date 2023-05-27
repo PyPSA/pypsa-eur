@@ -137,7 +137,7 @@ def _add_missing_carriers_from_costs(n, costs, carriers):
     n.import_components_from_dataframe(emissions, "Carrier")
 
 
-def load_costs(tech_costs, params, elec_params, Nyears=1.0):
+def load_costs(tech_costs, params, max_hours, Nyears=1.0):
     # set all asset costs and other parameters
     costs = pd.read_csv(tech_costs, index_col=[0, 1]).sort_index()
 
@@ -180,7 +180,6 @@ def load_costs(tech_costs, params, elec_params, Nyears=1.0):
             dict(capital_cost=capital_cost, marginal_cost=0.0, co2_emissions=0.0)
         )
 
-    max_hours = elec_params["max_hours"]
     costs.loc["battery"] = costs_for_storage(
         costs.loc["battery storage"],
         costs.loc["battery inverter"],
@@ -728,7 +727,7 @@ if __name__ == "__main__":
     costs = load_costs(
         snakemake.input.tech_costs,
         snakemake.params["costs"],
-        snakemake.params["electricity"],
+        snakemake.params["electricity"]["max_hours"],
         Nyears,
     )
     ppl = load_powerplants(snakemake.input.powerplants)
@@ -759,10 +758,10 @@ if __name__ == "__main__":
         snakemake.input.load,
         snakemake.input.nuts3_shapes,
         snakemake.params["countries"],
-        snakemake.params["load"]["scaling_factor"],
+        snakemake.params["scaling_factor"],
     )
 
-    update_transmission_costs(n, costs, snakemake.params["lines"]["length_factor"])
+    update_transmission_costs(n, costs, snakemake.params["length_factor"])
 
     conventional_inputs = {
         k: v for k, v in snakemake.input.items() if k.startswith("conventional_")
@@ -783,7 +782,7 @@ if __name__ == "__main__":
         snakemake.input,
         renewable_carriers,
         extendable_carriers,
-        snakemake.params["lines"]["length_factor"],
+        snakemake.params["length_factor"],
     )
 
     if "hydro" in renewable_carriers:

@@ -1040,7 +1040,7 @@ if __name__ == "__main__":
 
     #  ********  config  *********************************************************
 
-    retro_opts = snakemake.params["sector"]["retrofitting"]
+    retro_opts = snakemake.params["retrofitting"]
     interest_rate = retro_opts["interest_rate"]
     annualise_cost = retro_opts["annualise_cost"]  # annualise the investment costs
     tax_weighting = retro_opts[

@@ -252,7 +252,7 @@ def build_carbon_budget(o, input_eurostat, fn, emissions_scope, report_year):
         countries, input_eurostat, opts, emissions_scope, report_year, year=2018
     )
 
-    planning_horizons = snakemake.params["scenario"]["planning_horizons"]
+    planning_horizons = snakemake.params["planning_horizons"]
     t_0 = planning_horizons[0]
 
     if "be" in o:
@@ -391,7 +391,7 @@ def update_wind_solar_costs(n, costs):
         with xr.open_dataset(profile) as ds:
             underwater_fraction = ds["underwater_fraction"].to_pandas()
             connection_cost = (
-                snakemake.params["lines"]["length_factor"]
+                snakemake.params["length_factor"]
                 * ds["average_distance"].to_pandas()
                 * (
                     underwater_fraction
@@ -3300,7 +3300,7 @@ if __name__ == "__main__":
     if snakemake.params["foresight"] == "myopic":
         add_lifetime_wind_solar(n, costs)
 
-        conventional = snakemake.params["existing_capacities"]["conventional_carriers"]
+        conventional = snakemake.params["conventional_carriers"]
         for carrier in conventional:
             add_carrier_buses(n, carrier)
 
@@ -3365,7 +3365,7 @@ if __name__ == "__main__":
     if options["allam_cycle"]:
         add_allam(n, costs)
 
-    solver_name = snakemake.params["solving"]["solver"]["name"]
+    solver_name = snakemake.params["solver_name"]
     n = set_temporal_aggregation(n, opts, solver_name)
 
     limit_type = "config"
@@ -3376,8 +3376,8 @@ if __name__ == "__main__":
         limit_type = "carbon budget"
         fn = "results/" + snakemake.params.RDIR + "/csvs/carbon_budget_distribution.csv"
         if not os.path.exists(fn):
-            emissions_scope = snakemake.params["energy"]["emissions"]
-            report_year = snakemake.params["energy"]["eurostat_report_year"]
+            emissions_scope = snakemake.params["emissions_scope"]
+            report_year = snakemake.params["report_year"]
             build_carbon_budget(
                 o, snakemake.input.eurostat, fn, emissions_scope, report_year
             )
@@ -3413,7 +3413,7 @@ if __name__ == "__main__":
         add_electricity_grid_connection(n, costs)
 
     first_year_myopic = (snakemake.params["foresight"] == "myopic") and (
-        snakemake.params["scenario"]["planning_horizons"][0] == investment_year
+        snakemake.params["planning_horizons"][0] == investment_year
     )
 
     if options.get("cluster_heat_buses", False) and not first_year_myopic:

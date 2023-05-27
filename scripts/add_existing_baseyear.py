@@ -615,7 +615,7 @@ if __name__ == "__main__":
     options = snakemake.params["sector"]
     opts = snakemake.wildcards.sector_opts.split("-")
 
-    baseyear = snakemake.params["scenario"]["planning_horizons"][0]
+    baseyear = snakemake.params["baseyear"]
 
     overrides = override_component_attrs(snakemake.input.overrides)
     n = pypsa.Network(snakemake.input.network, override_component_attrs=overrides)
