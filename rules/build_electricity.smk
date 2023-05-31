@@ -255,7 +255,6 @@ rule build_hydro_profile:
     params:
         hydro=config["renewable"]["hydro"],
         countries=config["countries"],
-        renewable=config["renewable"],
     input:
         country_shapes=RESOURCES + "country_shapes.geojson",
         eia_hydro_generation="data/eia_hydro_annual_generation.csv",

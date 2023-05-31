@@ -405,40 +405,7 @@ rule build_ammonia_production:
 
 rule build_industry_sector_ratios:
     params:
-        industry={
-            "H2_DRI": config["industry"]["H2_DRI"],
-            "elec_DRI": config["industry"]["elec_DRI"],
-            "HVC_production_today": config["industry"]["HVC_production_today"],
-            "petrochemical_process_emissions": config["industry"][
-            "petrochemical_process_emissions"
-            ],
-            "NH3_process_emissions": config["industry"]["NH3_process_emissions"],
-            "MWh_CH4_per_tNH3_SMR": config["industry"]["MWh_CH4_per_tNH3_SMR"],
-            "MWh_elec_per_tNH3_SMR": config["industry"]["MWh_elec_per_tNH3_SMR"],
-            "chlorine_production_today": config["industry"][
-            "chlorine_production_today"
-            ],
-            "MWh_H2_per_tCl": config["industry"]["MWh_H2_per_tCl"],
-            "MWh_elec_per_tCl": config["industry"]["MWh_elec_per_tCl"],
-            "methanol_production_today": config["industry"][
-            "methanol_production_today"
-            ],
-            "MWh_CH4_per_tMeOH": config["industry"]["MWh_CH4_per_tMeOH"],
-            "MWh_elec_per_tMeOH": config["industry"]["MWh_elec_per_tMeOH"],
-            "MWh_elec_per_tHVC_mechanical_recycling": config["industry"][
-            "MWh_elec_per_tHVC_mechanical_recycling"
-            ],
-            "MWh_elec_per_tHVC_chemical_recycling": config["industry"][
-            "MWh_elec_per_tHVC_chemical_recycling"
-            ],
-            "MWh_NH3_per_tNH3": config["industry"]["MWh_NH3_per_tNH3"],
-            "MWh_H2_per_tNH3_electrolysis": config["industry"][
-            "MWh_H2_per_tNH3_electrolysis"
-            ],
-            "MWh_elec_per_tNH3_electrolysis": config["industry"][
-            "MWh_elec_per_tNH3_electrolysis"
-            ],
-        },
+        industry=config["industry"],
         sector_amonia=config["sector"].get("ammonia", False),
     input:
         ammonia_production=RESOURCES + "ammonia_production.csv",
@@ -460,16 +427,7 @@ rule build_industry_sector_ratios:
 
 rule build_industrial_production_per_country:
     params:
-        industry={
-            "reference_year": config["industry"]["reference_year"],
-            "HVC_production_today": config["industry"]["HVC_production_today"],
-            "chlorine_production_today": config["industry"][
-            "chlorine_production_today"
-            ],
-            "methanol_production_today": config["industry"][
-            "methanol_production_today"
-            ],
-        },
+        industry=config["industry"],
         countries=config["countries"],
     input:
         ammonia_production=RESOURCES + "ammonia_production.csv",
@@ -493,18 +451,7 @@ rule build_industrial_production_per_country:
 
 rule build_industrial_production_per_country_tomorrow:
     params:
-        industry={
-            "St_primary_fraction": config["industry"]["St_primary_fraction"],
-            "DRI_fraction": config["industry"]["DRI_fraction"],
-            "Al_primary_fraction": config["industry"]["Al_primary_fraction"],
-            "HVC_mechanical_recycling_fraction": config["industry"][
-            "HVC_mechanical_recycling_fraction"
-            ],
-            "HVC_chemical_recycling_fraction": config["industry"][
-            "HVC_chemical_recycling_fraction"
-            ],
-            "HVC_primary_fraction": config["industry"]["HVC_primary_fraction"],
-        },
+        industry=config["industry"],
     input:
         industrial_production_per_country=RESOURCES
         + "industrial_production_per_country.csv",
@@ -608,12 +555,7 @@ rule build_industrial_energy_demand_per_node:
 rule build_industrial_energy_demand_per_country_today:
     params:
         countries=config["countries"],
-        industry={
-            "reference_year": config["industry"].get("reference_year", 2015),
-            "MWh_CH4_per_tNH3_SMR": config["industry"]["MWh_CH4_per_tNH3_SMR"],
-            "MWh_elec_per_tNH3_SMR": config["industry"]["MWh_elec_per_tNH3_SMR"],
-            "MWh_NH3_per_tNH3": config["industry"]["MWh_NH3_per_tNH3"],
-        },
+        industry=config["industry"],
     input:
         jrc="data/jrc-idees-2015",
         ammonia_production=RESOURCES + "ammonia_production.csv",
@@ -768,18 +710,7 @@ rule prepare_sector_network:
         foresight=config["foresight"],
         costs=config["costs"],
         sector=config["sector"],
-        industry={
-            "MWh_elec_per_tNH3_electrolysis": config["industry"][
-            "MWh_elec_per_tNH3_electrolysis"
-            ],
-            "MWh_NH3_per_tNH3": config["industry"]["MWh_NH3_per_tNH3"],
-            "MWh_H2_per_tNH3_electrolysis": config["industry"][
-            "MWh_H2_per_tNH3_electrolysis"
-            ],
-            "MWh_NH3_per_MWh_H2_cracker": config["industry"][
-            "MWh_NH3_per_MWh_H2_cracker"
-            ],
-        },
+        industry=config["industry"],
         pypsa_eur=config["pypsa_eur"],
         length_factor=config["lines"]["length_factor"],
         planning_horizons=config["scenario"]["planning_horizons"],
