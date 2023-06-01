@@ -22,13 +22,13 @@ from _helpers import (
     override_component_attrs,
     update_config_with_sector_opts,
 )
+from add_electricity import calculate_annuity
 from build_energy_totals import build_co2_totals, build_eea_co2, build_eurostat_co2
 from networkx.algorithms import complement
 from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentation
 from pypsa.geo import haversine_pts
 from pypsa.io import import_components_from_dataframe
 from scipy.stats import beta
-from vresutils.costdata import annuity
 
 logger = logging.getLogger(__name__)
 
@@ -742,7 +742,7 @@ def prepare_costs(cost_file, config, nyears):
     costs = costs.fillna(config["fill_values"])
 
     def annuity_factor(v):
-        return annuity(v["lifetime"], v["discount rate"]) + v["FOM"] / 100
+        return calculate_annuity(v["lifetime"], v["discount rate"]) + v["FOM"] / 100
 
     costs["fixed"] = [
         annuity_factor(v) * v["investment"] * nyears for i, v in costs.iterrows()
@@ -851,7 +851,7 @@ def add_wave(n, wave_cost_factor):
     capacity = pd.Series({"Attenuator": 750, "F2HB": 1000, "MultiPA": 600})
 
     # in EUR/MW
-    annuity_factor = annuity(25, 0.07) + 0.03
+    annuity_factor = calculate_annuity(25, 0.07) + 0.03
     costs = (
         1e6
         * wave_cost_factor
@@ -1067,23 +1067,49 @@ def add_storage_and_grids(n, costs):
         lifetime=costs.at["electrolysis", "lifetime"],
     )
 
-    n.madd(
-        "Link",
-        nodes + " H2 Fuel Cell",
-        bus0=nodes + " H2",
-        bus1=nodes,
-        p_nom_extendable=True,
-        carrier="H2 Fuel Cell",
-        efficiency=costs.at["fuel cell", "efficiency"],
-        capital_cost=costs.at["fuel cell", "fixed"]
-        * costs.at["fuel cell", "efficiency"],  # NB: fixed cost is per MWel
-        lifetime=costs.at["fuel cell", "lifetime"],
-    )
+    if options["hydrogen_fuel_cell"]:
+        logger.info("Adding hydrogen fuel cell for re-electrification.")
+
+        n.madd(
+            "Link",
+            nodes + " H2 Fuel Cell",
+            bus0=nodes + " H2",
+            bus1=nodes,
+            p_nom_extendable=True,
+            carrier="H2 Fuel Cell",
+            efficiency=costs.at["fuel cell", "efficiency"],
+            capital_cost=costs.at["fuel cell", "fixed"]
+            * costs.at["fuel cell", "efficiency"],  # NB: fixed cost is per MWel
+            lifetime=costs.at["fuel cell", "lifetime"],
+        )
+
+    if options["hydrogen_turbine"]:
+        logger.info(
+            "Adding hydrogen turbine for re-electrification. Assuming OCGT technology costs."
+        )
+        # TODO: perhaps replace with hydrogen-specific technology assumptions.
+
+        n.madd(
+            "Link",
+            nodes + " H2 turbine",
+            bus0=nodes + " H2",
+            bus1=nodes,
+            p_nom_extendable=True,
+            carrier="H2 turbine",
+            efficiency=costs.at["OCGT", "efficiency"],
+            capital_cost=costs.at["OCGT", "fixed"]
+            * costs.at["OCGT", "efficiency"],  # NB: fixed cost is per MWel
+            lifetime=costs.at["OCGT", "lifetime"],
+        )
 
     cavern_types = snakemake.config["sector"]["hydrogen_underground_storage_locations"]
     h2_caverns = pd.read_csv(snakemake.input.h2_cavern, index_col=0)
 
-    if not h2_caverns.empty and options["hydrogen_underground_storage"]:
+    if (
+        not h2_caverns.empty
+        and options["hydrogen_underground_storage"]
+        and set(cavern_types).intersection(h2_caverns.columns)
+    ):
         h2_caverns = h2_caverns[cavern_types].sum(axis=1)
 
         # only use sites with at least 2 TWh potential
