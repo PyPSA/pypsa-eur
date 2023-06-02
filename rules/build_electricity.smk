@@ -252,17 +252,20 @@ rule build_hydro_profile:
 
 
 if config['lines']['dynamic_line_rating']['activate']:
-    rule build_line_rating:
+    rule build_line_rating:cutouts
         input:
-            base_network="networks/base.nc",
-            cutout="cutouts/" + config["lines"]['cutout'] + ".nc"
+            base_network=RESOURCES + "networks/base.nc",
+            cutout="cutouts/" + CDIR + config["lines"]['cutout'] + ".nc"
         output:
-            output="resources/line_rating.nc"
-        log: "logs/build_line_rating.log"
-        benchmark: "benchmarks/build_line_rating"
+            output=RESOURCES + "networks/line_rating.nc"
+        log: LOGS + "build_line_rating.log"
+        benchmark: BENCHMARKS + "build_line_rating"
         threads: ATLITE_NPROCESSES
         resources: mem_mb=ATLITE_NPROCESSES * 1000
-        script: "scripts/build_line_rating.py"
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/build_line_rating.py"
 
 
 rule add_electricity:
@@ -278,7 +281,7 @@ rule add_electricity:
             if str(fn).startswith("data/")
         },
         base_network=RESOURCES + "networks/base.nc",
-        line_rating="resources/line_rating.nc" if config['lines']['dynamic_line_rating']['activate'] else "networks/base.nc",
+        line_rating=RESOURCES + "networks/line_rating.nc" if config['lines']['dynamic_line_rating']['activate'] else RESOURCES + "networks/base.nc",
         tech_costs=COSTS,
         regions=RESOURCES + "regions_onshore.geojson",
         powerplants=RESOURCES + "powerplants.csv",

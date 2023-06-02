@@ -266,6 +266,7 @@ lines:
   s_nom_max: .inf
   length_factor: 1.25
   under_construction: 'zero' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
+  cutout: europe-2013-era5
   dynamic_line_rating:
     activate: false
     # factor compensate overestimation of the wind speed in hourly averaged wind data
