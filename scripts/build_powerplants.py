@@ -107,10 +107,6 @@ def replace_natural_gas_fueltype(df):
     return df.Fueltype.where(df.Fueltype != "Natural Gas", df.Technology)
 
 
-def replace_natural_gas_by_technology(df): 
-    return df.Fueltype.where(df.Fueltype != 'Natural Gas', df.Technology)
-
-
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake

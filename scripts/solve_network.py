@@ -464,44 +464,6 @@ def add_operational_reserve_margin(n, sns, config):
 
     n.model.add_constraints(lhs <= rhs, name="Generator-p-reserve-upper")
 
-def add_minRenew_constraints(n, config, o):
-    '''
-    Adds the constraint to have a minimum share of renewable energy production.
-    As renewable carriers the renewables from the configs listed under renewable are taken.
-    To use this constraint simply add the wildcard RE{share} in the opts wildcard like RE0.8 for a 80% renewable share
-    '''
-    import operator
-    renewables=list(config["electricity"]["renewable_aim"].keys())
-    if len(o)>2:
-        share=float(o[2:])
-        renewables_b = n.generators.carrier.str.contains("|".join(renewables))
-        renewables_i = n.generators[renewables_b].index
-        conventionals_i = n.generators[~renewables_b].index
-        weightings = n.snapshot_weightings.generators
-        coeff_vres = pd.DataFrame({c: weightings for c in renewables_i})
-        coeff_conv = pd.DataFrame({c: weightings for c in conventionals_i})
-        vres = get_var(n, "Generator", "p")[renewables_i]
-        conv = get_var(n, "Generator", "p")[conventionals_i]
-        lhs = linexpr(((1 - share) * coeff_vres, vres)).sum().sum()
-        lhs += linexpr((- share * coeff_conv, conv)).sum().sum()
-        rhs = 0
-        define_constraints(n, lhs, '>=', rhs, 'Carrier', 'min_generation_renewables')
-    else:
-        for tech in renewables:
-            filter = n.generators.query("carrier.str.match(@tech)").index
-            lhs= linexpr((1, get_var(n, "Generator", "p_nom").loc[filter])).sum()
-            rhs= config["electricity"]["renewable_aim"][tech] * 1000 #in GW
-            define_constraints(n, lhs, '>=', rhs, 'Carrier', f'min_capacity_{tech}')
-
-def add_base_load_constraint(n, config):
-    '''
-    Adds the constraint that conventional carriers defined in the config have a base load namely p_min_pu.
-    To use this constraint simply add the wildcard BL in the opts wildcard.
-    '''
-    carriers=config["electricity"]["base_load"].keys()
-    for carrier in carriers:
-        filter=n.generators.query("carrier==@carrier").index
-        n.generators.loc[filter,"p_min_pu"]=config["electricity"]["base_load"][carrier]
 
 def add_battery_constraints(n):
     """
@@ -618,16 +580,12 @@ def extra_functionality(n, snapshots):
         add_SAFE_constraints(n, config)
     if "CCL" in opts and n.generators.p_nom_extendable.any():
         add_CCL_constraints(n, config)
-    if "BL" in opts:
-        add_base_load_constraint(n, config)
     reserve = config["electricity"].get("operational_reserve", {})
     if reserve.get("activate"):
         add_operational_reserve_margin(n, snapshots, config)
     for o in opts:
         if "EQ" in o:
             add_EQ_constraints(n, o)
-        if 'RE' in o:
-            add_minRenew_constraints(n, config, o)
     add_battery_constraints(n)
     add_pipe_retrofit_constraint(n)
 
