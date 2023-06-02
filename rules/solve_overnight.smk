@@ -8,7 +8,9 @@ rule solve_sector_network:
         solving=config["solving"],
         foresight=config["foresight"],
         planning_horizons=config["scenario"]["planning_horizons"],
-        co2_sequestration_potential=config["sector"].get("co2_sequestration_potential", 200),
+        co2_sequestration_potential=config["sector"].get(
+            "co2_sequestration_potential", 200
+        ),
     input:
         overrides="data/override_component_attrs",
         network=RESULTS
