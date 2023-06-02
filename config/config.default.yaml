@@ -266,12 +266,15 @@ lines:
   s_nom_max: .inf
   length_factor: 1.25
   under_construction: 'zero' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
+<<<<<<< HEAD
   dynamic_line_rating:
     activate: false
     # factor compensate overestimation of the wind speed in hourly averaged wind data
     correction_factor: 0.95
     max_voltage_difference: 45 # in deg or `false` to disable
     max_line_rating: false # over capacity relative to nominal capacity e.g. 1.3 or `false`to disable
+=======
+>>>>>>> master
 
 links:
   p_max_pu: 1.0

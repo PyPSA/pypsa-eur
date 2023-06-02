@@ -859,8 +859,6 @@ if __name__ == "__main__":
             attach_OPSD_renewables(n, tech_map)
         estimate_renewable_capacities(n, snakemake.config)
 
-    estimate_renewable_capacities(n, snakemake.config)
-
     update_p_nom_max(n)
 
     line_rating_config = snakemake.config["lines"]["dynamic_line_rating"]
