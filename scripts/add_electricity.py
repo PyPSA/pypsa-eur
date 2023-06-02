@@ -700,19 +700,30 @@ def estimate_renewable_capacities(n, config):
                 expansion_limit * n.generators.loc[tech_i, "p_nom_min"]
             )
 
-def attach_line_rating(n, rating, s_max_pu, correction_factor, max_voltage_difference, max_line_rating):
+
+def attach_line_rating(
+    n, rating, s_max_pu, correction_factor, max_voltage_difference, max_line_rating
+):
     # TODO: Only considers overhead lines
-    n.lines_t.s_max_pu = (rating / n.lines.s_nom[rating.columns]) * correction_factor 
+    n.lines_t.s_max_pu = (rating / n.lines.s_nom[rating.columns]) * correction_factor
     if max_voltage_difference:
-        x_pu = n.lines.type.map(n.line_types["x_per_length"])*n.lines.length/(n.lines.v_nom**2)
-        # need to clip here as cap values might be below 1 
+        x_pu = (
+            n.lines.type.map(n.line_types["x_per_length"])
+            * n.lines.length
+            / (n.lines.v_nom**2)
+        )
+        # need to clip here as cap values might be below 1
         # -> would mean the line cannot be operated at actual given pessimistic ampacity
-        s_max_pu_cap = (np.deg2rad(max_voltage_difference) / ( x_pu * n.lines.s_nom)).clip(lower=1) 
-        n.lines_t.s_max_pu = n.lines_t.s_max_pu.clip(lower=1, upper=s_max_pu_cap, axis=1)
+        s_max_pu_cap = (
+            np.deg2rad(max_voltage_difference) / (x_pu * n.lines.s_nom)
+        ).clip(lower=1)
+        n.lines_t.s_max_pu = n.lines_t.s_max_pu.clip(
+            lower=1, upper=s_max_pu_cap, axis=1
+        )
     if max_line_rating:
         n.lines_t.s_max_pu = n.lines_t.s_max_pu.clip(upper=max_line_rating)
     n.lines_t.s_max_pu *= s_max_pu
-        
+
 
 def add_nice_carrier_names(n, config):
     carrier_i = n.carriers.index
@@ -864,18 +875,18 @@ if __name__ == "__main__":
     line_rating_config = snakemake.config["lines"]["dynamic_line_rating"]
     if line_rating_config["activate"]:
         rating = xr.open_dataarray(snakemake.input.line_rating).to_pandas().transpose()
-        s_max_pu = snakemake.config["lines"]["s_max_pu"] 
-        correction_factor = line_rating_config['correction_factor'] 
-        max_voltage_difference = line_rating_config['max_voltage_difference']
-        max_line_rating = line_rating_config['max_line_rating']
+        s_max_pu = snakemake.config["lines"]["s_max_pu"]
+        correction_factor = line_rating_config["correction_factor"]
+        max_voltage_difference = line_rating_config["max_voltage_difference"]
+        max_line_rating = line_rating_config["max_line_rating"]
 
         attach_line_rating(
-            n, 
-            rating, 
-            s_max_pu, 
-            correction_factor, 
-            max_voltage_difference, 
-            max_line_rating
+            n,
+            rating,
+            s_max_pu,
+            correction_factor,
+            max_voltage_difference,
+            max_line_rating,
         )
 
     add_nice_carrier_names(n, snakemake.config)
