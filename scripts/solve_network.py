@@ -44,14 +44,14 @@ pypsa.pf.logger.setLevel(logging.WARNING)
 from pypsa.descriptors import get_switchable_as_dense as get_as_dense
 
 
-def add_land_use_constraint(n, param, config):
+def add_land_use_constraint(n, planning_horizons_param, config):
     if "m" in snakemake.wildcards.clusters:
-        _add_land_use_constraint_m(n, param, config)
+        _add_land_use_constraint_m(n, planning_horizons_param, config)
     else:
-        _add_land_use_constraint(n, param)
+        _add_land_use_constraint(n)
 
 
-def _add_land_use_constraint(n, param):
+def _add_land_use_constraint(n):
     # warning: this will miss existing offwind which is not classed AC-DC and has carrier 'offwind'
 
     for carrier in ["solar", "onwind", "offwind-ac", "offwind-dc"]:
@@ -80,7 +80,7 @@ def _add_land_use_constraint(n, param):
     n.generators.p_nom_max.clip(lower=0, inplace=True)
 
 
-def _add_land_use_constraint_m(n, param, config):
+def _add_land_use_constraint_m(n, planning_horizons_param, config):
     # if generators clustering is lower than network clustering, land_use accounting is at generators clusters
 
     planning_horizons = param["planning_horizons"]
@@ -141,7 +141,7 @@ def add_co2_sequestration_limit(n, limit=200):
     )
 
 
-def prepare_network(n, solve_opts=None, config=None, param=None):
+def prepare_network(n, solve_opts=None, config=None, foresight_param=None, planning_horizons_param=None, co2_sequestration_potential=None):
     if "clip_p_max_pu" in solve_opts:
         for df in (
             n.generators_t.p_max_pu,
@@ -191,11 +191,11 @@ def prepare_network(n, solve_opts=None, config=None, param=None):
         n.set_snapshots(n.snapshots[:nhours])
         n.snapshot_weightings[:] = 8760.0 / nhours
 
-    if param["foresight"] == "myopic":
-        add_land_use_constraint(n, param, config)
+    if foresight_param == "myopic":
+        add_land_use_constraint(n, planning_horizons_param, config)
 
     if n.stores.carrier.eq("co2 stored").any():
-        limit = param["co2_sequestration_potential"]
+        limit = co2_sequestration_potential_param
         add_co2_sequestration_limit(n, limit=limit)
 
     return n
@@ -676,7 +676,12 @@ if __name__ == "__main__":
         n = pypsa.Network(snakemake.input.network)
 
     n = prepare_network(
-        n, solve_opts, config=snakemake.config, param=snakemake.params["config_parts"]
+        n,
+        solve_opts,
+        config=snakemake.config,
+        foresight_param=snakemake.params["foresight"],
+        planning_horizons_param=snakemake.params["planning_horizons"],
+        co2_sequestration_potential=snakemake.params["co2_sequestration_potential"]
     )
 
     n = solve_network(
