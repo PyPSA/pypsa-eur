@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
@@ -50,21 +51,23 @@ the maximal possible capacity factor "s_max_pu" for each transmission line at ea
 """
 
 import logging
-from _helpers import configure_logging
-
-import pypsa
-import pandas as pd
-import numpy as np
-import geopandas as gpd
-from shapely.geometry import Point, LineString as Line
-import atlite
-import xarray as xr
 import re
+
+import atlite
+import geopandas as gpd
+import numpy as np
+import pandas as pd
+import pypsa
+import xarray as xr
+from _helpers import configure_logging
+from shapely.geometry import LineString as Line
+from shapely.geometry import Point
 
 
 def calculate_resistance(T, R_ref, T_ref=293, alpha=0.00403):
     """
-    Calculates the resistance at other temperatures than the reference temperature.
+    Calculates the resistance at other temperatures than the reference
+    temperature.
 
     Parameters
     ----------
@@ -86,7 +89,8 @@ def calculate_resistance(T, R_ref, T_ref=293, alpha=0.00403):
 
 def calculate_line_rating(n, cutout):
     """
-    Calculates the maximal allowed power flow in each line for each time step considering the maximal temperature.
+    Calculates the maximal allowed power flow in each line for each time step
+    considering the maximal temperature.
 
     Parameters
     ----------
