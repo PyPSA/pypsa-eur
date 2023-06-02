@@ -1,0 +1,3 @@
+attribute,type,unit,default,description,status
+location,string,n/a,n/a,Reference to original electricity bus,Input (optional)
+unit,string,n/a,MWh,Unit of the bus (descriptive only), Input (optional)

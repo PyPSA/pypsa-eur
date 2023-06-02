@@ -1,0 +1,5 @@
+,Unit,Values,Description
+name,--,"any string","Specify a name for your run. Results will be stored under this name."
+disable_progrssbar,bool,"{true, false}","Switch to select whether progressbar should be disabled."
+shared_resources,bool,"{true, false}","Switch to select whether resources should be shared across runs."
+shared_cutouts,bool,"{true, false}","Switch to select whether cutouts should be shared across runs."
