@@ -147,7 +147,7 @@ def prepare_network(
     config=None,
     foresight_param=None,
     planning_horizons_param=None,
-    co2_sequestration_potential=None,
+    co2_sequestration_potential_param=None,
 ):
     if "clip_p_max_pu" in solve_opts:
         for df in (
@@ -688,7 +688,7 @@ if __name__ == "__main__":
         config=snakemake.config,
         foresight_param=snakemake.params["foresight"],
         planning_horizons_param=snakemake.params["planning_horizons"],
-        co2_sequestration_potential=snakemake.params["co2_sequestration_potential"],
+        co2_sequestration_potential_param=snakemake.params["co2_sequestration_potential"],
     )
 
     n = solve_network(
