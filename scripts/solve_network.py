@@ -688,7 +688,9 @@ if __name__ == "__main__":
         config=snakemake.config,
         foresight_param=snakemake.params["foresight"],
         planning_horizons_param=snakemake.params["planning_horizons"],
-        co2_sequestration_potential_param=snakemake.params["co2_sequestration_potential"],
+        co2_sequestration_potential_param=snakemake.params[
+            "co2_sequestration_potential"
+        ],
     )
 
     n = solve_network(
