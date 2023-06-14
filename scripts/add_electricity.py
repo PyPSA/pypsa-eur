@@ -726,23 +726,23 @@ if __name__ == "__main__":
 
     costs = load_costs(
         snakemake.input.tech_costs,
-        snakemake.params["costs"],
-        snakemake.params["electricity"]["max_hours"],
+        snakemake.params.costs,
+        snakemake.params.electricity["max_hours"],
         Nyears,
     )
     ppl = load_powerplants(snakemake.input.powerplants)
 
-    if "renewable_carriers" in snakemake.params["electricity"]:
-        renewable_carriers = set(snakemake.params["electricity"]["renewable_carriers"])
+    if "renewable_carriers" in snakemake.params.electricity:
+        renewable_carriers = set(snakemake.params.electricity["renewable_carriers"])
     else:
         logger.warning(
             "Missing key `renewable_carriers` under config entry `electricity`. "
             "In future versions, this will raise an error. "
             "Falling back to carriers listed under `renewable`."
         )
-        renewable_carriers = snakemake.params["renewable"]
+        renewable_carriers = snakemake.params.renewable
 
-    extendable_carriers = snakemake.params["electricity"]["extendable_carriers"]
+    extendable_carriers = snakemake.params.electricity["extendable_carriers"]
     if not (set(renewable_carriers) & set(extendable_carriers["Generator"])):
         logger.warning(
             "No renewables found in config entry `extendable_carriers`. "
@@ -750,18 +750,18 @@ if __name__ == "__main__":
             "Falling back to all renewables."
         )
 
-    conventional_carriers = snakemake.params["electricity"]["conventional_carriers"]
+    conventional_carriers = snakemake.params.electricity["conventional_carriers"]
 
     attach_load(
         n,
         snakemake.input.regions,
         snakemake.input.load,
         snakemake.input.nuts3_shapes,
-        snakemake.params["countries"],
-        snakemake.params["scaling_factor"],
+        snakemake.params.countries,
+        snakemake.params.scaling_factor,
     )
 
-    update_transmission_costs(n, costs, snakemake.params["length_factor"])
+    update_transmission_costs(n, costs, snakemake.params.length_factor)
 
     conventional_inputs = {
         k: v for k, v in snakemake.input.items() if k.startswith("conventional_")
@@ -772,7 +772,7 @@ if __name__ == "__main__":
         ppl,
         conventional_carriers,
         extendable_carriers,
-        snakemake.params["conventional"],
+        snakemake.params.conventional,
         conventional_inputs,
     )
 
@@ -782,11 +782,11 @@ if __name__ == "__main__":
         snakemake.input,
         renewable_carriers,
         extendable_carriers,
-        snakemake.params["length_factor"],
+        snakemake.params.length_factor,
     )
 
     if "hydro" in renewable_carriers:
-        para = snakemake.params["renewable"]["hydro"]
+        para = snakemake.params.renewable["hydro"]
         attach_hydro(
             n,
             costs,
@@ -797,7 +797,7 @@ if __name__ == "__main__":
             **para,
         )
 
-    if "estimate_renewable_capacities" not in snakemake.params["electricity"]:
+    if "estimate_renewable_capacities" not in snakemake.params.electricity:
         logger.warning(
             "Missing key `estimate_renewable_capacities` under config entry `electricity`. "
             "In future versions, this will raise an error. "
@@ -805,18 +805,18 @@ if __name__ == "__main__":
         )
         if (
             "estimate_renewable_capacities_from_capacity_stats"
-            in snakemake.params["electricity"]
+            in snakemake.params.electricity
         ):
             estimate_renewable_caps = {
                 "enable": True,
-                **snakemake.params["electricity"][
+                **snakemake.params.electricity[
                     "estimate_renewable_capacities_from_capacity_stats"
                 ],
             }
         else:
             estimate_renewable_caps = {"enable": False}
     else:
-        estimate_renewable_caps = snakemake.params["electricity"][
+        estimate_renewable_caps = snakemake.params.electricity[
             "estimate_renewable_capacities"
         ]
     if "enable" not in estimate_renewable_caps:
@@ -832,18 +832,18 @@ if __name__ == "__main__":
             "Falling back to whether `renewable_capacities_from_opsd` is non-empty."
         )
         from_opsd = bool(
-            snakemake.params["electricity"].get("renewable_capacities_from_opsd", False)
+            snakemake.params.electricity.get("renewable_capacities_from_opsd", False)
         )
         estimate_renewable_caps["from_opsd"] = from_opsd
 
     if estimate_renewable_caps["enable"]:
         if estimate_renewable_caps["from_opsd"]:
-            tech_map = snakemake.params["electricity"]["estimate_renewable_capacities"][
+            tech_map = snakemake.params.electricity["estimate_renewable_capacities"][
                 "technology_mapping"
             ]
             attach_OPSD_renewables(n, tech_map)
         estimate_renewable_capacities(
-            n, snakemake.params["electricity"], snakemake.params["countries"]
+            n, snakemake.params.electricity, snakemake.params.countries
         )
 
     update_p_nom_max(n)

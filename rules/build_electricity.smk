@@ -316,16 +316,14 @@ rule add_electricity:
 
 rule simplify_network:
     params:
-        clustering=config["clustering"],
-        max_hours=config["electricity"]["max_hours"],
+        simplify_network=config["clustering"]["simplify_network"],
+        aggregation_strategies=config["clustering"].get("aggregation_strategies", {}),
+        focus_weights=config.get("focus_weights", None),
+        renewable_carriers=config["electricity"]["renewable_carriers"],
         costs=config["costs"],
-        renewable=config["renewable"],
+        max_hours=config["electricity"]["max_hours"],
         length_factor=config["lines"]["length_factor"],
         p_max_pu=config["links"].get("p_max_pu", 1.0),
-        exclude_carriers=config["clustering"]["simplify_network"].get(
-            "exclude_carriers", []
-        ),
-        focus_weights=config.get("focus_weights", None),
         solver_name=config["solving"]["solver"]["name"],
     input:
         network=RESOURCES + "networks/elec.nc",
@@ -353,14 +351,16 @@ rule simplify_network:
 
 rule cluster_network:
     params:
-        solver_name=config["solving"]["solver"]["name"],
-        max_hours=config["electricity"]["max_hours"],
+        cluster_network=config["clustering"]["cluster_network"],
+        aggregation_strategies=config["clustering"].get("aggregation_strategies", {}),
+        custom_busmap=config["enable"].get("custom_busmap", False),
+        focus_weights=config.get("focus_weights", None),
+        renewable_carriers=config["electricity"]["renewable_carriers"],
         conventional_carriers=config["electricity"].get("conventional_carriers", []),
         costs=config["costs"],
+        max_hours=config["electricity"]["max_hours"],
         length_factor=config["lines"]["length_factor"],
-        renewable=config["renewable"],
-        clustering=config["clustering"],
-        custom_busmap=config["enable"].get("custom_busmap", False),
+        solver_name=config["solving"]["solver"]["name"],
     input:
         network=RESOURCES + "networks/elec_s{simpl}.nc",
         regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}.geojson",

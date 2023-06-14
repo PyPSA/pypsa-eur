@@ -309,7 +309,7 @@ if __name__ == "__main__":
         p_nom_max = capacities / max_cap_factor
     else:
         raise AssertionError(
-            'params key `potential` should be one of "simple" '
+            'Config key `potential` should be one of "simple" '
             f'(default) or "conservative", not "{p_nom_max_meth}"'
         )
 
