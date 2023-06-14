@@ -698,8 +698,8 @@ def get_solar_gains_per_year(window_area):
 
 def map_to_lstrength(l_strength, df):
     """
-    renames column names from a pandas dataframe to map tabula retrofitting
-    strengths [2 = moderate, 3 = ambitious] to l_strength
+    Renames column names from a pandas dataframe to map tabula retrofitting
+    strengths [2 = moderate, 3 = ambitious] to l_strength.
     """
     middle = len(l_strength) // 2
     map_to_l = pd.MultiIndex.from_arrays(
