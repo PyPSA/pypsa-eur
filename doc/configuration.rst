@@ -18,7 +18,8 @@ Top-level configuration
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
-   :lines: 5-11,18-19,62,80-90
+   :start-at: version:
+   :end-before: # docs
 
 
 .. csv-table::
@@ -26,7 +27,7 @@ Top-level configuration
    :widths: 25,7,22,30
    :file: configtables/toplevel.csv
 
-.. _scenario:
+.. _run_cf:
 
 ``run``
 =======
@@ -40,12 +41,33 @@ The ``run`` section is used for running and storing scenarios with different con
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: run:
-   :end-before: foresight:
+   :end-before: # docs
 
 .. csv-table::
    :header-rows: 1
    :widths: 25,7,22,30
    :file: configtables/run.csv
+
+.. _foresight_cf:
+
+``foresight``
+=============
+
+.. literalinclude:: ../config/config.default.yaml
+   :language: yaml
+   :start-at: foresight:
+   :end-at: foresight:
+
+.. csv-table::
+   :header-rows: 1
+   :widths: 25,7,22,30
+   :file: configtables/foresight.csv
+
+.. note::
+    if you use myopic or perfect foresight, The investment years in 
+    :ref:`planning_horizons` in scenario has to be set.
+
+.. _scenario:
 
 ``scenario``
 ============
@@ -79,12 +101,27 @@ An exemplary dependency graph (starting from the simplification rules) then look
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: scenario:
-   :end-before: countries:
+   :end-before: # docs
 
 .. csv-table::
    :header-rows: 1
    :widths: 25,7,22,30
    :file: configtables/scenario.csv
+
+.. _countries:
+
+``countries``
+=============
+
+.. literalinclude:: ../config/config.default.yaml
+   :language: yaml
+   :start-at: countries:
+   :end-before: # docs
+
+.. csv-table::
+   :header-rows: 1
+   :widths: 25,7,22,30
+   :file: configtables/countries.csv
 
 .. _snapshots_cf:
 
@@ -96,7 +133,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: snapshots:
-   :end-before: enable:
+   :end-before: # docs
 
 .. csv-table::
    :header-rows: 1
@@ -113,12 +150,31 @@ Switches for some rules and optional features.
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: enable:
-   :end-before: co2_budget:
+   :end-before: # docs
 
 .. csv-table::
    :header-rows: 1
    :widths: 25,7,22,30
    :file: configtables/enable.csv
+
+.. _CO2_budget_cf:
+
+``co2 budget``
+==============
+
+.. literalinclude:: ../config/config.default.yaml
+   :language: yaml
+   :start-at: co2_budget:
+   :end-before: # docs
+
+.. csv-table::
+   :header-rows: 1
+   :widths: 25,7,22,30
+   :file: configtables/co2_budget.csv
+
+.. note::
+    this parameter is over-ridden if ``CO2Lx`` or ``cb`` is set in 
+    sector_opts.
 
 .. _electricity_cf:
 
@@ -128,7 +184,7 @@ Switches for some rules and optional features.
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: electricity:
-   :end-before: atlite:
+   :end-before: # docs
 
 .. csv-table::
    :header-rows: 1
@@ -145,7 +201,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: atlite:
-   :end-before: renewable:
+   :end-before: # docs
 
 .. csv-table::
    :header-rows: 1
@@ -170,6 +226,15 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
    :widths: 25,7,22,30
    :file: configtables/onwind.csv
 
+.. note::
+   Notes on ``capacity_per_sqkm``. ScholzPhd Tab 4.3.1: 10MW/km^2 and assuming 30% fraction of the already restricted
+   area is available for installation of wind generators due to competing land use and likely public
+   acceptance issues.
+
+.. note::
+   The default choice for corine ``grid_codes`` was based on Scholz, Y. (2012). Renewable energy based electricity supply at low costs
+   development of the REMix model and application for Europe. ( p.42 / p.28)
+
 ``offwind-ac``
 --------------
 
@@ -182,6 +247,16 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
    :header-rows: 1
    :widths: 25,7,22,30
    :file: configtables/offwind-ac.csv
+
+.. note::
+   Notes on ``capacity_per_sqkm``. ScholzPhd Tab 4.3.1: 10MW/km^2 and assuming 20% fraction of the already restricted
+   area is available for installation of wind generators due to competing land use and likely public
+   acceptance issues.
+
+.. note::
+   Notes on ``correction_factor``. Correction due to proxy for wake losses
+   from 10.1016/j.energy.2018.08.153
+   until done more rigorously in #153
 
 ``offwind-dc``
 ---------------
@@ -196,6 +271,10 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
    :widths: 25,7,22,30
    :file: configtables/offwind-dc.csv
 
+.. note::
+   both ``offwind-ac`` and ``offwind-dc`` have the same assumption on 
+   ``capacity_per_sqkm`` and ``correction_factor``.
+
 ``solar``
 ---------------
 
@@ -209,13 +288,22 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
    :widths: 25,7,22,30
    :file: configtables/solar.csv
 
+.. note::
+   Notes on ``capacity_per_sqkm``. ScholzPhd Tab 4.3.1: 170 MW/km^2 and assuming 1% of the area can be used for solar PV panels.
+   Correction factor determined by comparing uncorrected area-weighted full-load hours to those
+   published in Supplementary Data to Pietzcker, Robert Carl, et al. "Using the sun to decarbonize the power
+   sector -- The economic potential of photovoltaics and concentrating solar
+   power." Applied Energy 135 (2014): 704-720.
+   This correction factor of 0.854337 may be in order if using reanalysis data.
+   for discussion refer to this <issue https://github.com/PyPSA/pypsa-eur/issues/285>
+
 ``hydro``
 ---------------
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at:   hydro:
-   :end-before: conventional:
+   :end-before: # docs
 
 .. csv-table::
    :header-rows: 1
@@ -237,7 +325,7 @@ overwrite the existing values.
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at:   conventional:
-   :end-before: lines:
+   :end-before: # docs
 
 .. csv-table::
    :header-rows: 1
@@ -250,7 +338,7 @@ overwrite the existing values.
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: lines:
-   :end-before: links:
+   :end-before: # docs
 
 .. csv-table::
    :header-rows: 1
@@ -265,7 +353,7 @@ overwrite the existing values.
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: links:
-   :end-before: transformers:
+   :end-before: # docs
 
 .. csv-table::
    :header-rows: 1
@@ -280,7 +368,7 @@ overwrite the existing values.
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: transformers:
-   :end-before: load:
+   :end-before: # docs
 
 .. csv-table::
    :header-rows: 1
@@ -295,44 +383,12 @@ overwrite the existing values.
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-after:   type:
-   :end-at:   scaling_factor:
+   :end-before: # docs
 
 .. csv-table::
    :header-rows: 1
    :widths: 25,7,22,30
    :file: configtables/load.csv
-
-.. _costs_cf:
-
-``costs``
-=============
-
-.. literalinclude:: ../config/config.default.yaml
-   :language: yaml
-   :start-at: costs:
-   :end-before: clustering:
-
-.. csv-table::
-   :header-rows: 1
-   :widths: 25,7,22,30
-   :file: configtables/costs.csv
-
-
-.. _clustering_cf:
-
-``clustering``
-==============
-
-.. literalinclude:: ../config/config.default.yaml
-   :language: yaml
-   :start-at: clustering:
-   :end-before: solving:
-
-.. csv-table::
-   :header-rows: 1
-   :widths: 25,7,22,30
-   :file: configtables/clustering.csv
-
 
 .. _energy_cf:
 
@@ -348,7 +404,7 @@ overwrite the existing values.
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: energy:
-   :end-before: biomass:
+   :end-before: # docs
 
 
 .. _biomass_cf:
@@ -365,7 +421,7 @@ overwrite the existing values.
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: biomass:
-   :end-before: solar_thermal:
+   :end-before: # docs
 
 .. _solar_thermal_cf:
 
@@ -381,7 +437,7 @@ overwrite the existing values.
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: solar_thermal:
-   :end-before: existing_capacities:
+   :end-before: # docs
 
 .. _existing_capacities_cf:
 
@@ -397,7 +453,7 @@ overwrite the existing values.
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: existing_capacities:
-   :end-before: sector:
+   :end-before: # docs
 
 .. _sector_cf:
 
@@ -413,7 +469,7 @@ overwrite the existing values.
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: sector:
-   :end-before: industry:
+   :end-before: # docs
 
 .. _industry_cf:
 
@@ -429,7 +485,49 @@ overwrite the existing values.
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: industry:
-   :end-before: costs:
+   :end-before: # docs
+
+.. _costs_cf:
+
+``costs``
+=============
+
+.. literalinclude:: ../config/config.default.yaml
+   :language: yaml
+   :start-at: costs:
+   :end-before: # docs
+
+.. csv-table::
+   :header-rows: 1
+   :widths: 25,7,22,30
+   :file: configtables/costs.csv
+
+.. note:: 
+   ``rooftop_share:`` are based on the potentials, assuming  
+   (0.1 kW/m2 and 10 m2/person)
+
+.. _clustering_cf:
+
+``clustering``
+==============
+
+.. literalinclude:: ../config/config.default.yaml
+   :language: yaml
+   :start-at: clustering:
+   :end-before: # docs
+
+.. csv-table::
+   :header-rows: 1
+   :widths: 25,7,22,30
+   :file: configtables/clustering.csv
+
+.. note:: 
+   ``feature:`` in ``simplify_network:`` 
+   are only relevant if ``hac`` were chosen in ``algorithm``.
+
+.. tip:: 
+   use ``min`` in ``p_nom_max:`` for more `
+   conservative assumptions.
 
 .. _solving_cf:
 
@@ -439,12 +537,7 @@ overwrite the existing values.
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: solving:
-   :end-before: plotting:
-
-.. csv-table::
-   :header-rows: 1
-   :widths: 25,7,22,30
-   :file: configtables/solving.csv
+   :end-before: # docs
 
 .. csv-table::
    :header-rows: 1

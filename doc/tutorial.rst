@@ -43,21 +43,21 @@ How to configure runs?
 
 The model can be adapted to only include selected countries (e.g. Belgium) instead of all European countries to limit the spatial scope.
 
-.. literalinclude:: ../test/config.electricity.yaml
+.. literalinclude:: ../config/test/config.electricity.yaml
    :language: yaml
    :start-at: countries:
    :end-before: snapshots:
 
 Likewise, the example's temporal scope can be restricted (e.g. to a single week).
 
-.. literalinclude:: ../test/config.electricity.yaml
+.. literalinclude:: ../config/test/config.electricity.yaml
    :language: yaml
    :start-at: snapshots:
    :end-before: electricity:
 
 It is also possible to allow less or more carbon-dioxide emissions. Here, we limit the emissions of Belgium to 100 Mt per year.
 
-.. literalinclude:: ../test/config.electricity.yaml
+.. literalinclude:: ../config/test/config.electricity.yaml
    :language: yaml
    :start-at: electricity:
    :end-before: extendable_carriers:
@@ -65,7 +65,7 @@ It is also possible to allow less or more carbon-dioxide emissions. Here, we lim
 PyPSA-Eur also includes a database of existing conventional powerplants.
 We can select which types of existing powerplants we like to be extendable:
 
-.. literalinclude:: ../test/config.electricity.yaml
+.. literalinclude:: ../config/test/config.electricity.yaml
    :language: yaml
    :start-at: extendable_carriers:
    :end-before: renewable_carriers:
@@ -74,7 +74,7 @@ To accurately model the temporal and spatial availability of renewables such as
 wind and solar energy, we rely on historical weather data. It is advisable to
 adapt the required range of coordinates to the selection of countries.
 
-.. literalinclude:: ../test/config.electricity.yaml
+.. literalinclude:: ../config/test/config.electricity.yaml
    :language: yaml
    :start-at: atlite:
    :end-before: renewable:
@@ -83,7 +83,7 @@ We can also decide which weather data source should be used to calculate
 potentials and capacity factor time-series for each carrier. For example, we may
 want to use the ERA-5 dataset for solar and not the default SARAH-2 dataset.
 
-.. literalinclude:: ../test/config.electricity.yaml
+.. literalinclude:: ../config/test/config.electricity.yaml
    :language: yaml
    :start-at: solar:
    :end-at: cutout:
@@ -91,7 +91,7 @@ want to use the ERA-5 dataset for solar and not the default SARAH-2 dataset.
 Finally, it is possible to pick a solver. For instance, this tutorial uses the
 open-source solver GLPK.
 
-.. literalinclude:: ../test/config.electricity.yaml
+.. literalinclude:: ../config/test/config.electricity.yaml
    :language: yaml
    :start-at: solver:
    :end-before: plotting:
