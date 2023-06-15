@@ -28,6 +28,14 @@ snapshots:
   end: "2013-03-08"
 
 electricity:
+  co2limit: 100.e+6
+
+  extendable_carriers:
+    Generator: [OCGT]
+    StorageUnit: [battery]
+    Store: [H2]
+    Link: [H2 pipeline]
+
   renewable_carriers: [solar, onwind, offwind-ac, offwind-dc]
 
 atlite:
