@@ -269,7 +269,7 @@ if __name__ == "__main__":
     for o in opts:
         m = re.match(r"^\d+seg$", o, re.IGNORECASE)
         if m is not None:
-            solver_name = snakemake.params.solver_name
+            solver_name = snakemake.config["solving"]["solver"]["name"]
             n = apply_time_segmentation(n, m.group(0)[:-3], solver_name)
             break
 

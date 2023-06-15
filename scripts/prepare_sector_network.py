@@ -3369,7 +3369,7 @@ if __name__ == "__main__":
     if options["allam_cycle"]:
         add_allam(n, costs)
 
-    solver_name = snakemake.params.solver_name
+    solver_name = snakemake.config["solving"]["solver"]["name"]
     n = set_temporal_aggregation(n, opts, solver_name)
 
     limit_type = "config"
@@ -3381,7 +3381,7 @@ if __name__ == "__main__":
         fn = "results/" + snakemake.params.RDIR + "/csvs/carbon_budget_distribution.csv"
         if not os.path.exists(fn):
             emissions_scope = snakemake.params.emissions_scope
-            report_year = snakemake.params.report_year
+            report_year = snakemake.params.eurostat_report_year
             build_carbon_budget(
                 o, snakemake.input.eurostat, fn, emissions_scope, report_year
             )

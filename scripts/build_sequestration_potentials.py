@@ -41,7 +41,7 @@ if __name__ == "__main__":
             "build_sequestration_potentials", simpl="", clusters="181"
         )
 
-    cf = snakemake.params.co2seq_potential
+    cf = snakemake.params.sequestration_potential
 
     gdf = gpd.read_file(snakemake.input.sequestration_potential[0])
 

@@ -137,7 +137,7 @@ def _add_missing_carriers_from_costs(n, costs, carriers):
     n.import_components_from_dataframe(emissions, "Carrier")
 
 
-def load_costs(tech_costs, params, max_hours, Nyears=1.0):
+def load_costs(tech_costs, costs, max_hours, Nyears=1.0):
     # set all asset costs and other parameters
     costs = pd.read_csv(tech_costs, index_col=[0, 1]).sort_index()
 
@@ -145,7 +145,7 @@ def load_costs(tech_costs, params, max_hours, Nyears=1.0):
     costs.loc[costs.unit.str.contains("/kW"), "value"] *= 1e3
     costs.unit = costs.unit.str.replace("/kW", "/MW")
 
-    fill_values = params["fill_values"]
+    fill_values = costs["fill_values"]
     costs = costs.value.unstack().fillna(fill_values)
 
     costs["capital_cost"] = (
@@ -168,8 +168,8 @@ def load_costs(tech_costs, params, max_hours, Nyears=1.0):
     costs.at["CCGT", "co2_emissions"] = costs.at["gas", "co2_emissions"]
 
     costs.at["solar", "capital_cost"] = (
-        params["rooftop_share"] * costs.at["solar-rooftop", "capital_cost"]
-        + (1 - params["rooftop_share"]) * costs.at["solar-utility", "capital_cost"]
+        costs["rooftop_share"] * costs.at["solar-rooftop", "capital_cost"]
+        + (1 - costs["rooftop_share"]) * costs.at["solar-utility", "capital_cost"]
     )
 
     def costs_for_storage(store, link1, link2=None, max_hours=1.0):
@@ -193,7 +193,7 @@ def load_costs(tech_costs, params, max_hours, Nyears=1.0):
     )
 
     for attr in ("marginal_cost", "capital_cost"):
-        overwrites = params.get(attr)
+        overwrites = costs.get(attr)
         if overwrites is not None:
             overwrites = pd.Series(overwrites)
             costs.loc[overwrites.index, attr] = overwrites
@@ -728,16 +728,6 @@ if __name__ == "__main__":
     )
     ppl = load_powerplants(snakemake.input.powerplants)
 
-    if "renewable_carriers" in params.electricity:
-        renewable_carriers = set(params.electricity["renewable_carriers"])
-    else:
-        logger.warning(
-            "Missing key `renewable_carriers` under config entry `electricity`. "
-            "In future versions, this will raise an error. "
-            "Falling back to carriers listed under `renewable`."
-        )
-        renewable_carriers = params.renewable
-
     attach_load(
         n,
         snakemake.input.regions,
@@ -749,6 +739,7 @@ if __name__ == "__main__":
 
     update_transmission_costs(n, costs, params.length_factor)
 
+    renewable_carriers = set(params.electricity["renewable_carriers"])
     extendable_carriers = params.electricity["extendable_carriers"]
     conventional_carriers = params.electricity["conventional_carriers"]
     conventional_inputs = {

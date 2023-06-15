@@ -330,7 +330,9 @@ if config["sector"]["regional_co2_sequestration_potential"]["enable"]:
 
     rule build_sequestration_potentials:
         params:
-            co2seq_potential=config["sector"]["regional_co2_sequestration_potential"],
+            sequestration_potential=config["sector"][
+                "regional_co2_sequestration_potential"
+            ],
         input:
             sequestration_potential=HTTP.remote(
                 "https://raw.githubusercontent.com/ericzhou571/Co2Storage/main/resources/complete_map_2020_unit_Mt.geojson",
@@ -705,7 +707,6 @@ rule build_transport_demand:
 rule prepare_sector_network:
     params:
         co2_budget=config["co2_budget"],
-        solver_name=config["solving"]["solver"]["name"],
         conventional_carriers=config["existing_capacities"]["conventional_carriers"],
         foresight=config["foresight"],
         costs=config["costs"],
@@ -716,7 +717,7 @@ rule prepare_sector_network:
         planning_horizons=config["scenario"]["planning_horizons"],
         countries=config["countries"],
         emissions_scope=config["energy"]["emissions"],
-        report_year=config["energy"]["eurostat_report_year"],
+        eurostat_report_year=config["energy"]["eurostat_report_year"],
         RDIR=RDIR,
     input:
         **build_retro_cost_output,
