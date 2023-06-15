@@ -394,7 +394,7 @@ rule cluster_network:
 rule add_extra_components:
     params:
         costs=config["costs"],
-        ext_carriers=config["electricity"]["extendable_carriers"],
+        extendable_carriers=config["electricity"]["extendable_carriers"],
         max_hours=config["electricity"]["max_hours"],
     input:
         network=RESOURCES + "networks/elec_s{simpl}_{clusters}.nc",

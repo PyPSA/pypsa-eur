@@ -439,7 +439,7 @@ def chemicals_industry():
 
     sector = "Ammonia"
     df[sector] = 0.0
-    if snakemake.params["sector_amonia"]:
+    if snakemake.params.ammonia:
         df.loc["ammonia", sector] = params["MWh_NH3_per_tNH3"]
     else:
         df.loc["hydrogen", sector] = params["MWh_H2_per_tNH3_electrolysis"]
@@ -1468,7 +1468,7 @@ if __name__ == "__main__":
     # TODO make params option
     year = 2015
 
-    params = snakemake.params["industry"]
+    params = snakemake.params.industry
 
     df = pd.concat(
         [

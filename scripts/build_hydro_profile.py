@@ -130,10 +130,10 @@ if __name__ == "__main__":
         snakemake = mock_snakemake("build_hydro_profile")
     configure_logging(snakemake)
 
-    params_hydro = snakemake.params["hydro"]
+    params_hydro = snakemake.params.hydro
     cutout = atlite.Cutout(snakemake.input.cutout)
 
-    countries = snakemake.params["countries"]
+    countries = snakemake.params.countries
     country_shapes = (
         gpd.read_file(snakemake.input.country_shapes)
         .set_index("name")["geometry"]

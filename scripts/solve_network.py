@@ -44,9 +44,9 @@ pypsa.pf.logger.setLevel(logging.WARNING)
 from pypsa.descriptors import get_switchable_as_dense as get_as_dense
 
 
-def add_land_use_constraint(n, planning_horizons_param, config):
+def add_land_use_constraint(n, planning_horizons, config):
     if "m" in snakemake.wildcards.clusters:
-        _add_land_use_constraint_m(n, planning_horizons_param, config)
+        _add_land_use_constraint_m(n, planning_horizons, config)
     else:
         _add_land_use_constraint(n)
 
@@ -80,7 +80,7 @@ def _add_land_use_constraint(n):
     n.generators.p_nom_max.clip(lower=0, inplace=True)
 
 
-def _add_land_use_constraint_m(n, planning_horizons_param, config):
+def _add_land_use_constraint_m(n, planning_horizons, config):
     # if generators clustering is lower than network clustering, land_use accounting is at generators clusters
 
     planning_horizons = param["planning_horizons"]
@@ -145,9 +145,9 @@ def prepare_network(
     n,
     solve_opts=None,
     config=None,
-    foresight_param=None,
-    planning_horizons_param=None,
-    co2_sequestration_potential_param=None,
+    foresight=None,
+    planning_horizons=None,
+    co2_sequestration_potential=None,
 ):
     if "clip_p_max_pu" in solve_opts:
         for df in (
@@ -198,11 +198,11 @@ def prepare_network(
         n.set_snapshots(n.snapshots[:nhours])
         n.snapshot_weightings[:] = 8760.0 / nhours
 
-    if foresight_param == "myopic":
-        add_land_use_constraint(n, planning_horizons_param, config)
+    if foresight == "myopic":
+        add_land_use_constraint(n, planning_horizons, config)
 
     if n.stores.carrier.eq("co2 stored").any():
-        limit = co2_sequestration_potential_param
+        limit = co2_sequestration_potential
         add_co2_sequestration_limit(n, limit=limit)
 
     return n
@@ -597,13 +597,11 @@ def extra_functionality(n, snapshots):
     add_pipe_retrofit_constraint(n)
 
 
-def solve_network(n, config, solving_param, opts="", **kwargs):
-    set_of_options = solving_param["solver"]["options"]
-    solver_options = (
-        solving_param["solver_options"][set_of_options] if set_of_options else {}
-    )
-    solver_name = solving_param["solver"]["name"]
-    cf_solving = solving_param["options"]
+def solve_network(n, config, solving, opts="", **kwargs):
+    set_of_options = solving["solver"]["options"]
+    solver_options = solving["solver_options"][set_of_options] if set_of_options else {}
+    solver_name = solving["solver"]["name"]
+    cf_solving = solving["options"]
     track_iterations = cf_solving.get("track_iterations", False)
     min_iterations = cf_solving.get("min_iterations", 4)
     max_iterations = cf_solving.get("max_iterations", 6)
@@ -672,7 +670,7 @@ if __name__ == "__main__":
     if "sector_opts" in snakemake.wildcards.keys():
         opts += "-" + snakemake.wildcards.sector_opts
     opts = [o for o in opts.split("-") if o != ""]
-    solve_opts = snakemake.params["solving"]["options"]
+    solve_opts = snakemake.params.solving["options"]
 
     np.random.seed(solve_opts.get("seed", 123))
 
@@ -686,17 +684,15 @@ if __name__ == "__main__":
         n,
         solve_opts,
         config=snakemake.config,
-        foresight_param=snakemake.params["foresight"],
-        planning_horizons_param=snakemake.params["planning_horizons"],
-        co2_sequestration_potential_param=snakemake.params[
-            "co2_sequestration_potential"
-        ],
+        foresight=snakemake.params.foresight,
+        planning_horizons=snakemake.params.planning_horizons,
+        co2_sequestration_potential=snakemake.params["co2_sequestration_potential"],
     )
 
     n = solve_network(
         n,
         config=snakemake.config,
-        solving_param=snakemake.params["solving"],
+        solving=snakemake.params.solving,
         opts=opts,
         log_fn=snakemake.log.solver,
     )

@@ -652,13 +652,7 @@ def attach_OPSD_renewables(n, tech_map):
         n.generators.p_nom_min.update(gens.bus.map(caps).dropna())
 
 
-def estimate_renewable_capacities(n, electricity_params, countries):
-    year = electricity_params["estimate_renewable_capacities"]["year"]
-    tech_map = electricity_params["estimate_renewable_capacities"]["technology_mapping"]
-    expansion_limit = electricity_params["estimate_renewable_capacities"][
-        "expansion_limit"
-    ]
-
+def estimate_renewable_capacities(n, year, tech_map, expansion_limit, countries):
     if not len(countries) or not len(tech_map):
         return
 
@@ -721,48 +715,42 @@ if __name__ == "__main__":
         snakemake = mock_snakemake("add_electricity")
     configure_logging(snakemake)
 
+    params = snakemake.params
+
     n = pypsa.Network(snakemake.input.base_network)
     Nyears = n.snapshot_weightings.objective.sum() / 8760.0
 
     costs = load_costs(
         snakemake.input.tech_costs,
-        snakemake.params.costs,
-        snakemake.params.electricity["max_hours"],
+        params.costs,
+        params.electricity["max_hours"],
         Nyears,
     )
     ppl = load_powerplants(snakemake.input.powerplants)
 
-    if "renewable_carriers" in snakemake.params.electricity:
-        renewable_carriers = set(snakemake.params.electricity["renewable_carriers"])
+    if "renewable_carriers" in params.electricity:
+        renewable_carriers = set(params.electricity["renewable_carriers"])
     else:
         logger.warning(
             "Missing key `renewable_carriers` under config entry `electricity`. "
             "In future versions, this will raise an error. "
             "Falling back to carriers listed under `renewable`."
         )
-        renewable_carriers = snakemake.params.renewable
-
-    extendable_carriers = snakemake.params.electricity["extendable_carriers"]
-    if not (set(renewable_carriers) & set(extendable_carriers["Generator"])):
-        logger.warning(
-            "No renewables found in config entry `extendable_carriers`. "
-            "In future versions, these have to be explicitly listed. "
-            "Falling back to all renewables."
-        )
-
-    conventional_carriers = snakemake.params.electricity["conventional_carriers"]
+        renewable_carriers = params.renewable
 
     attach_load(
         n,
         snakemake.input.regions,
         snakemake.input.load,
         snakemake.input.nuts3_shapes,
-        snakemake.params.countries,
-        snakemake.params.scaling_factor,
+        params.countries,
+        params.scaling_factor,
     )
 
-    update_transmission_costs(n, costs, snakemake.params.length_factor)
+    update_transmission_costs(n, costs, params.length_factor)
 
+    extendable_carriers = params.electricity["extendable_carriers"]
+    conventional_carriers = params.electricity["conventional_carriers"]
     conventional_inputs = {
         k: v for k, v in snakemake.input.items() if k.startswith("conventional_")
     }
@@ -772,7 +760,7 @@ if __name__ == "__main__":
         ppl,
         conventional_carriers,
         extendable_carriers,
-        snakemake.params.conventional,
+        params.conventional,
         conventional_inputs,
     )
 
@@ -782,11 +770,11 @@ if __name__ == "__main__":
         snakemake.input,
         renewable_carriers,
         extendable_carriers,
-        snakemake.params.length_factor,
+        params.length_factor,
     )
 
     if "hydro" in renewable_carriers:
-        para = snakemake.params.renewable["hydro"]
+        para = params.renewable["hydro"]
         attach_hydro(
             n,
             costs,
@@ -797,53 +785,16 @@ if __name__ == "__main__":
             **para,
         )
 
-    if "estimate_renewable_capacities" not in snakemake.params.electricity:
-        logger.warning(
-            "Missing key `estimate_renewable_capacities` under config entry `electricity`. "
-            "In future versions, this will raise an error. "
-            "Falling back to whether ``estimate_renewable_capacities_from_capacity_stats`` is in the config."
-        )
-        if (
-            "estimate_renewable_capacities_from_capacity_stats"
-            in snakemake.params.electricity
-        ):
-            estimate_renewable_caps = {
-                "enable": True,
-                **snakemake.params.electricity[
-                    "estimate_renewable_capacities_from_capacity_stats"
-                ],
-            }
-        else:
-            estimate_renewable_caps = {"enable": False}
-    else:
-        estimate_renewable_caps = snakemake.params.electricity[
-            "estimate_renewable_capacities"
-        ]
-    if "enable" not in estimate_renewable_caps:
-        logger.warning(
-            "Missing key `enable` under config entry `estimate_renewable_capacities`. "
-            "In future versions, this will raise an error. Falling back to False."
-        )
-        estimate_renewable_caps = {"enable": False}
-    if "from_opsd" not in estimate_renewable_caps:
-        logger.warning(
-            "Missing key `from_opsd` under config entry `estimate_renewable_capacities`. "
-            "In future versions, this will raise an error. "
-            "Falling back to whether `renewable_capacities_from_opsd` is non-empty."
-        )
-        from_opsd = bool(
-            snakemake.params.electricity.get("renewable_capacities_from_opsd", False)
-        )
-        estimate_renewable_caps["from_opsd"] = from_opsd
-
+    estimate_renewable_caps = params.electricity["estimate_renewable_capacities"]
     if estimate_renewable_caps["enable"]:
+        tech_map = estimate_renewable_caps["technology_mapping"]
+        expansion_limit = estimate_renewable_caps["expansion_limit"]
+        year = estimate_renewable_caps["year"]
+
         if estimate_renewable_caps["from_opsd"]:
-            tech_map = snakemake.params.electricity["estimate_renewable_capacities"][
-                "technology_mapping"
-            ]
             attach_OPSD_renewables(n, tech_map)
         estimate_renewable_capacities(
-            n, snakemake.params.electricity, snakemake.params.countries
+            n, year, tech_map, expansion_limit, params.countries
         )
 
     update_p_nom_max(n)

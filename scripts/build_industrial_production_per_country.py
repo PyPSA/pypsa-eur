@@ -279,11 +279,11 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=snakemake.config["logging"]["level"])
 
-    countries = snakemake.params["countries"]
+    countries = snakemake.params.countries
 
-    year = snakemake.params["industry"]["reference_year"]
+    year = snakemake.params.industry["reference_year"]
 
-    params = snakemake.params["industry"]
+    params = snakemake.params.industry
 
     jrc_dir = snakemake.input.jrc
     eurostat_dir = snakemake.input.eurostat

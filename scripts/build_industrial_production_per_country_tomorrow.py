@@ -15,7 +15,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_industrial_production_per_country_tomorrow")
 
-    params = snakemake.params["industry"]
+    params = snakemake.params.industry
 
     investment_year = int(snakemake.wildcards.planning_horizons)
 

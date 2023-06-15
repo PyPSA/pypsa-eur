@@ -178,9 +178,9 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_industrial_energy_demand_per_country_today")
 
-    params = snakemake.params["industry"]
+    params = snakemake.params.industry
     year = params.get("reference_year", 2015)
-    countries = pd.Index(snakemake.params["countries"])
+    countries = pd.Index(snakemake.params.countries)
 
     demand = industrial_energy_demand(countries.intersection(eu28), year)
 

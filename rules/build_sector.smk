@@ -406,7 +406,7 @@ rule build_ammonia_production:
 rule build_industry_sector_ratios:
     params:
         industry=config["industry"],
-        sector_amonia=config["sector"].get("ammonia", False),
+        ammonia=config["sector"].get("ammonia", False),
     input:
         ammonia_production=RESOURCES + "ammonia_production.csv",
         idees="data/jrc-idees-2015",
