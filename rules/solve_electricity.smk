@@ -4,6 +4,13 @@
 
 
 rule solve_network:
+    params:
+        solving=config["solving"],
+        foresight=config["foresight"],
+        planning_horizons=config["scenario"]["planning_horizons"],
+        co2_sequestration_potential=config["sector"].get(
+            "co2_sequestration_potential", 200
+        ),
     input:
         network=RESOURCES + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
     output:
@@ -14,8 +21,6 @@ rule solve_network:
         ),
         python=LOGS
         + "solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_python.log",
-        memory=LOGS
-        + "solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_memory.log",
     benchmark:
         BENCHMARKS + "solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}"
     threads: 4
@@ -30,6 +35,8 @@ rule solve_network:
 
 
 rule solve_operations_network:
+    params:
+        options=config["solving"]["options"],
     input:
         network=RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
     output:
@@ -41,8 +48,6 @@ rule solve_operations_network:
         ),
         python=LOGS
         + "solve_operations_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op_python.log",
-        memory=LOGS
-        + "solve_operations_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op_memory.log",
     benchmark:
         (
             BENCHMARKS

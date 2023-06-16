@@ -49,7 +49,7 @@ def add_brownfield(n, n_p, year):
             )
         ]
 
-        threshold = snakemake.config["existing_capacities"]["threshold_capacity"]
+        threshold = snakemake.params.threshold_capacity
 
         if not chp_heat.empty:
             threshold_chp_heat = (
@@ -87,7 +87,7 @@ def add_brownfield(n, n_p, year):
 
         # deal with gas network
         pipe_carrier = ["gas pipeline"]
-        if snakemake.config["sector"]["H2_retrofit"]:
+        if snakemake.params.H2_retrofit:
             # drop capacities of previous year to avoid duplicating
             to_drop = n.links.carrier.isin(pipe_carrier) & (n.links.build_year != year)
             n.mremove("Link", n.links.loc[to_drop].index)
@@ -98,7 +98,7 @@ def add_brownfield(n, n_p, year):
                 & (n.links.build_year != year)
             ].index
             gas_pipes_i = n.links[n.links.carrier.isin(pipe_carrier)].index
-            CH4_per_H2 = 1 / snakemake.config["sector"]["H2_retrofit_capacity_per_CH4"]
+            CH4_per_H2 = 1 / snakemake.params.H2_retrofit_capacity_per_CH4
             fr = "H2 pipeline retrofitted"
             to = "gas pipeline"
             # today's pipe capacity

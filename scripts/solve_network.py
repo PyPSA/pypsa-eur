@@ -38,21 +38,20 @@ from _helpers import (
     override_component_attrs,
     update_config_with_sector_opts,
 )
-from vresutils.benchmark import memory_logger
 
 logger = logging.getLogger(__name__)
 pypsa.pf.logger.setLevel(logging.WARNING)
 from pypsa.descriptors import get_switchable_as_dense as get_as_dense
 
 
-def add_land_use_constraint(n, config):
+def add_land_use_constraint(n, planning_horizons, config):
     if "m" in snakemake.wildcards.clusters:
-        _add_land_use_constraint_m(n, config)
+        _add_land_use_constraint_m(n, planning_horizons, config)
     else:
-        _add_land_use_constraint(n, config)
+        _add_land_use_constraint(n)
 
 
-def _add_land_use_constraint(n, config):
+def _add_land_use_constraint(n):
     # warning: this will miss existing offwind which is not classed AC-DC and has carrier 'offwind'
 
     for carrier in ["solar", "onwind", "offwind-ac", "offwind-dc"]:
@@ -81,10 +80,10 @@ def _add_land_use_constraint(n, config):
     n.generators.p_nom_max.clip(lower=0, inplace=True)
 
 
-def _add_land_use_constraint_m(n, config):
+def _add_land_use_constraint_m(n, planning_horizons, config):
     # if generators clustering is lower than network clustering, land_use accounting is at generators clusters
 
-    planning_horizons = config["scenario"]["planning_horizons"]
+    planning_horizons = param["planning_horizons"]
     grouping_years = config["existing_capacities"]["grouping_years"]
     current_horizon = snakemake.wildcards.planning_horizons
 
@@ -142,7 +141,14 @@ def add_co2_sequestration_limit(n, limit=200):
     )
 
 
-def prepare_network(n, solve_opts=None, config=None):
+def prepare_network(
+    n,
+    solve_opts=None,
+    config=None,
+    foresight=None,
+    planning_horizons=None,
+    co2_sequestration_potential=None,
+):
     if "clip_p_max_pu" in solve_opts:
         for df in (
             n.generators_t.p_max_pu,
@@ -192,11 +198,11 @@ def prepare_network(n, solve_opts=None, config=None):
         n.set_snapshots(n.snapshots[:nhours])
         n.snapshot_weightings[:] = 8760.0 / nhours
 
-    if config["foresight"] == "myopic":
-        add_land_use_constraint(n, config)
+    if foresight == "myopic":
+        add_land_use_constraint(n, planning_horizons, config)
 
     if n.stores.carrier.eq("co2 stored").any():
-        limit = config["sector"].get("co2_sequestration_potential", 200)
+        limit = co2_sequestration_potential
         add_co2_sequestration_limit(n, limit=limit)
 
     return n
@@ -908,16 +914,15 @@ def extra_functionality(n, snapshots):
     add_pipe_retrofit_constraint(n)
 
 
-def solve_network(n, config, opts="", **kwargs):
-    set_of_options = config["solving"]["solver"]["options"]
-    solver_options = (
-        config["solving"]["solver_options"][set_of_options] if set_of_options else {}
-    )
-    solver_name = config["solving"]["solver"]["name"]
-    cf_solving = config["solving"]["options"]
+def solve_network(n, config, solving, opts="", **kwargs):
+    set_of_options = solving["solver"]["options"]
+    solver_options = solving["solver_options"][set_of_options] if set_of_options else {}
+    solver_name = solving["solver"]["name"]
+    cf_solving = solving["options"]
     track_iterations = cf_solving.get("track_iterations", False)
     min_iterations = cf_solving.get("min_iterations", 4)
     max_iterations = cf_solving.get("max_iterations", 6)
+    transmission_losses = cf_solving.get("transmission_losses", 0)
 
     # add to network for extra_functionality
     n.config = config
@@ -931,6 +936,7 @@ def solve_network(n, config, opts="", **kwargs):
     if skip_iterations:
         status, condition = n.optimize(
             solver_name=solver_name,
+            transmission_losses=transmission_losses,
             extra_functionality=extra_functionality,
             **solver_options,
             **kwargs,
@@ -941,6 +947,7 @@ def solve_network(n, config, opts="", **kwargs):
             track_iterations=track_iterations,
             min_iterations=min_iterations,
             max_iterations=max_iterations,
+            transmission_losses=transmission_losses,
             extra_functionality=extra_functionality,
             **solver_options,
             **kwargs,
@@ -980,27 +987,32 @@ if __name__ == "__main__":
     if "sector_opts" in snakemake.wildcards.keys():
         opts += "-" + snakemake.wildcards.sector_opts
     opts = [o for o in opts.split("-") if o != ""]
-    solve_opts = snakemake.config["solving"]["options"]
+    solve_opts = snakemake.params.solving["options"]
 
     np.random.seed(solve_opts.get("seed", 123))
 
-    fn = getattr(snakemake.log, "memory", None)
-    with memory_logger(filename=fn, interval=30.0) as mem:
-        if "overrides" in snakemake.input.keys():
-            overrides = override_component_attrs(snakemake.input.overrides)
-            n = pypsa.Network(
-                snakemake.input.network, override_component_attrs=overrides
-            )
-        else:
-            n = pypsa.Network(snakemake.input.network)
+    if "overrides" in snakemake.input.keys():
+        overrides = override_component_attrs(snakemake.input.overrides)
+        n = pypsa.Network(snakemake.input.network, override_component_attrs=overrides)
+    else:
+        n = pypsa.Network(snakemake.input.network)
 
-        n = prepare_network(n, solve_opts, config=snakemake.config)
+    n = prepare_network(
+        n,
+        solve_opts,
+        config=snakemake.config,
+        foresight=snakemake.params.foresight,
+        planning_horizons=snakemake.params.planning_horizons,
+        co2_sequestration_potential=snakemake.params["co2_sequestration_potential"],
+    )
 
-        n = solve_network(
-            n, config=snakemake.config, opts=opts, log_fn=snakemake.log.solver
-        )
+    n = solve_network(
+        n,
+        config=snakemake.config,
+        solving=snakemake.params.solving,
+        opts=opts,
+        log_fn=snakemake.log.solver,
+    )
 
-        n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
-        n.export_to_netcdf(snakemake.output[0])
-
-    logger.info("Maximum memory usage: {}".format(mem.mem_usage))
+    n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
+    n.export_to_netcdf(snakemake.output[0])

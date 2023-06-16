@@ -82,7 +82,7 @@ def load_network(import_name=None, custom_components=None):
         As in pypsa.Network(import_name)
     custom_components : dict
         Dictionary listing custom components.
-        For using ``snakemake.config['override_components']``
+        For using ``snakemake.params['override_components']``
         in ``config/config.yaml`` define:
 
         .. code:: yaml
@@ -385,10 +385,11 @@ def mock_snakemake(rulename, configfiles=[], **wildcards):
 
 
 def override_component_attrs(directory):
-    """Tell PyPSA that links can have multiple outputs by
-    overriding the component_attrs. This can be done for
-    as many buses as you need with format busi for i = 2,3,4,5,....
-    See https://pypsa.org/doc/components.html#link-with-multiple-outputs-or-inputs
+    """
+    Tell PyPSA that links can have multiple outputs by overriding the
+    component_attrs. This can be done for as many buses as you need with format
+    busi for i = 2,3,4,5,.... See https://pypsa.org/doc/components.html#link-
+    with-multiple-outputs-or-inputs.
 
     Parameters
     ----------
