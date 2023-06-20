@@ -10,6 +10,7 @@ Release Notes
 Upcoming Release
 ================
 
+* ``param:`` section in rule definition are added to track changed settings in ``config.yaml``. The goal is to automatically re-execute rules whose parameters have changed. See `Non-file parameters for rules <https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#non-file-parameters-for-rules>`_ in the snakemake documentation.
 
 * **Important:** The configuration files are now located in the ``config`` directory. This counts for ``config.default.yaml``, ``config.yaml`` as well as the test configuration files which are now located in ``config/test``. Config files that are still in the root directory will be ignored.
 
@@ -28,6 +29,11 @@ Upcoming Release
 * Added configuration option ``lines: max_extension:`` and ``links:
   max_extension:``` to control the maximum capacity addition per line or link in
   MW.
+
+* Add option to include a piecewise linear approximation of transmission losses,
+  e.g. by setting ``solving: options: transmission_losses: 2`` for an
+  approximation with two tangents.
+
 
 PyPSA-Eur 0.8.0 (18th March 2023)
 =================================
