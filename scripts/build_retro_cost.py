@@ -305,7 +305,7 @@ def prepare_building_stock_data():
     u_values.set_index(["country_code", "subsector", "bage", "type"], inplace=True)
 
     #  only take in config.yaml specified countries into account
-    countries = snakemake.config["countries"]
+    countries = snakemake.params.countries
     area_tot = area_tot.loc[countries]
 
     return u_values, country_iso_dic, countries, area_tot, area
@@ -698,8 +698,8 @@ def get_solar_gains_per_year(window_area):
 
 def map_to_lstrength(l_strength, df):
     """
-    renames column names from a pandas dataframe to map tabula retrofitting
-    strengths [2 = moderate, 3 = ambitious] to l_strength
+    Renames column names from a pandas dataframe to map tabula retrofitting
+    strengths [2 = moderate, 3 = ambitious] to l_strength.
     """
     middle = len(l_strength) // 2
     map_to_l = pd.MultiIndex.from_arrays(
@@ -1040,7 +1040,7 @@ if __name__ == "__main__":
 
     #  ********  config  *********************************************************
 
-    retro_opts = snakemake.config["sector"]["retrofitting"]
+    retro_opts = snakemake.params.retrofitting
     interest_rate = retro_opts["interest_rate"]
     annualise_cost = retro_opts["annualise_cost"]  # annualise the investment costs
     tax_weighting = retro_opts[

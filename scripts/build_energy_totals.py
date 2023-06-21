@@ -737,16 +737,16 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=snakemake.config["logging"]["level"])
 
-    config = snakemake.config["energy"]
+    params = snakemake.params.energy
 
     nuts3 = gpd.read_file(snakemake.input.nuts3_shapes).set_index("index")
     population = nuts3["pop"].groupby(nuts3.country).sum()
 
-    countries = snakemake.config["countries"]
+    countries = snakemake.params.countries
     idees_countries = pd.Index(countries).intersection(eu28)
 
-    data_year = config["energy_totals_year"]
-    report_year = snakemake.config["energy"]["eurostat_report_year"]
+    data_year = params["energy_totals_year"]
+    report_year = snakemake.params.energy["eurostat_report_year"]
     input_eurostat = snakemake.input.eurostat
     eurostat = build_eurostat(input_eurostat, countries, report_year, data_year)
     swiss = build_swiss(data_year)
@@ -755,8 +755,8 @@ if __name__ == "__main__":
     energy = build_energy_totals(countries, eurostat, swiss, idees)
     energy.to_csv(snakemake.output.energy_name)
 
-    base_year_emissions = config["base_emissions_year"]
-    emissions_scope = snakemake.config["energy"]["emissions"]
+    base_year_emissions = params["base_emissions_year"]
+    emissions_scope = snakemake.params.energy["emissions"]
     eea_co2 = build_eea_co2(snakemake.input.co2, base_year_emissions, emissions_scope)
     eurostat_co2 = build_eurostat_co2(
         input_eurostat, countries, report_year, base_year_emissions

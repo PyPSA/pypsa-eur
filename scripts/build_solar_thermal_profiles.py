@@ -27,9 +27,9 @@ if __name__ == "__main__":
     cluster = LocalCluster(n_workers=nprocesses, threads_per_worker=1)
     client = Client(cluster, asynchronous=True)
 
-    config = snakemake.config["solar_thermal"]
+    config = snakemake.params.solar_thermal
 
-    time = pd.date_range(freq="h", **snakemake.config["snapshots"])
+    time = pd.date_range(freq="h", **snakemake.params.snapshots)
     cutout = atlite.Cutout(snakemake.input.cutout).sel(time=time)
 
     clustered_regions = (

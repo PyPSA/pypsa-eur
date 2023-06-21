@@ -10,6 +10,7 @@ Release Notes
 Upcoming Release
 ================
 
+* ``param:`` section in rule definition are added to track changed settings in ``config.yaml``. The goal is to automatically re-execute rules whose parameters have changed. See `Non-file parameters for rules <https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#non-file-parameters-for-rules>`_ in the snakemake documentation.
 
 * **Important:** The configuration files are now located in the ``config`` directory. This counts for ``config.default.yaml``, ``config.yaml`` as well as the test configuration files which are now located in ``config/test``. Config files that are still in the root directory will be ignored.
 

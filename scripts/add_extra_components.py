@@ -63,9 +63,8 @@ idx = pd.IndexSlice
 logger = logging.getLogger(__name__)
 
 
-def attach_storageunits(n, costs, elec_opts):
-    carriers = elec_opts["extendable_carriers"]["StorageUnit"]
-    max_hours = elec_opts["max_hours"]
+def attach_storageunits(n, costs, extendable_carriers, max_hours):
+    carriers = extendable_carriers["StorageUnit"]
 
     n.madd("Carrier", carriers)
 
@@ -95,8 +94,8 @@ def attach_storageunits(n, costs, elec_opts):
         )
 
 
-def attach_stores(n, costs, elec_opts):
-    carriers = elec_opts["extendable_carriers"]["Store"]
+def attach_stores(n, costs, extendable_carriers):
+    carriers = extendable_carriers["Store"]
 
     n.madd("Carrier", carriers)
 
@@ -187,11 +186,10 @@ def attach_stores(n, costs, elec_opts):
         )
 
 
-def attach_hydrogen_pipelines(n, costs, elec_opts):
-    ext_carriers = elec_opts["extendable_carriers"]
-    as_stores = ext_carriers.get("Store", [])
+def attach_hydrogen_pipelines(n, costs, extendable_carriers):
+    as_stores = extendable_carriers.get("Store", [])
 
-    if "H2 pipeline" not in ext_carriers.get("Link", []):
+    if "H2 pipeline" not in extendable_carriers.get("Link", []):
         return
 
     assert "H2" in as_stores, (
@@ -237,16 +235,17 @@ if __name__ == "__main__":
     configure_logging(snakemake)
 
     n = pypsa.Network(snakemake.input.network)
-    elec_config = snakemake.config["electricity"]
+    extendable_carriers = snakemake.params.extendable_carriers
+    max_hours = snakemake.params.max_hours
 
     Nyears = n.snapshot_weightings.objective.sum() / 8760.0
     costs = load_costs(
-        snakemake.input.tech_costs, snakemake.config["costs"], elec_config, Nyears
+        snakemake.input.tech_costs, snakemake.params.costs, max_hours, Nyears
     )
 
-    attach_storageunits(n, costs, elec_config)
-    attach_stores(n, costs, elec_config)
-    attach_hydrogen_pipelines(n, costs, elec_config)
+    attach_storageunits(n, costs, extendable_carriers, max_hours)
+    attach_stores(n, costs, extendable_carriers)
+    attach_hydrogen_pipelines(n, costs, extendable_carriers)
 
     sanitize_carriers(n, snakemake.config)
 
