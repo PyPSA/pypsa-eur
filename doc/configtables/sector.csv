@@ -1,0 +1,26 @@
+,Unit,Values,Description
+district_heating,,,`prepare_sector_network.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/prepare_sector_network.py>`_
+-- potential,,float,maximum fraction of urban demand which can be supplied by district heating increase of today's district heating demand to potential maximum district heating share
+-- progress,,Dictionary with planning horizons as keys.,Progress = 0 means today's district heating share. Progress = 1 means maximum fraction of urban demand is supplied by district heating
+-- district_heating_loss,,float,
+cluster_heat_buses,,bool,cluster residential and service heat buses in `prepare_sector_network.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/prepare_sector_network.py>`_  to one to save memory.
+bev_dsm_restriction_value,,float,Adding a stage of charge (SOC) limit  for battery electric vehicles (BEV) to manage its own energy demand (DSM). Located in `build_transport_demand.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_transport_demand.py>`_. 
+bev_dsm_restriction_time,,float,Time at which SOC of BEV has to be dsm_restriction_value
+transport_heating_deadband_upper,,,
+transport_heating_deadband_lower,,,
+ICE_lower_degree_factor,,,
+ICE_upper_degree_factor,,,
+EV_lower_degree_factor,,,
+EV_upper_degree_factor,,,
+bev_dsm,,,
+bev_availability,,,
+bev_energy,,,
+bev_charge_efficiency,,,
+bev_plug_to_wheel_efficiency,,,
+bev_charge_rate,,,
+bev_avail_max,,,
+bev_avail_mean,,,
+v2g,,,
+land_transport_fuel_cell_share,,,
+land_transport_electric_share,,,
+land_transport_ice_share,,,
