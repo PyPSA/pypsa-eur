@@ -1,0 +1,28 @@
+,Unit,Values,Description
+St_primary_fraction,--,Dictionary with planning horizons as keys.,The fraction of steel produced via primary route versus secondary route (scrap+EAF). Current fraction is 0.6
+DRI_fraction,--,Dictionary with planning horizons as keys.,The fraction of the primary route converted to DRI + EAF
+H2_DRI,--,float,The hydrogen consumption in Direct Reduced Iron (DRI)  Mwh_H2 LHV/ton_Steel from 51kgH2/tSt in Vogl et al (2018) doi:10.1016/j.jclepro.2018.08.279
+elec_DRI,--,float,The electricity consumed in Direct Reduced Iron (DRI) shaft. MWh/tSt HYBRIT brochure https://ssabwebsitecdn.azureedge.net/-/media/hybrit/files/hybrit_brochure.pdf
+Al_primary_fraction,--,Dictionary with planning horizons as keys.,The fraction of aluminium produced via the primary route versus scrap.  Current fraction is 0.4
+MWh_NH3_per_tNH3,LHV,float,The energy amount per ton of ammonia.
+MWh_CH4_per_tNH3_SMR,--,float,The energy amount of methane needed to produce a ton of ammonia using steam methane reforming (SMR). Value derived from 2012's demand from https://ec.europa.eu/docsroom/documents/4165/attachments/1/translations/en/renditions/pdf
+MWh_elec_per_tNH3_SMR,--,float,"The energy amount of electricity needed to produce a ton of ammonia using steam methane reforming (SMR). same source, assuming 94-6% split methane-elec of total energy demand 11.5 MWh/tNH3"
+MWh_H2_per_tNH3_electrolysis,--,float,"The energy amount of hydrogen needed to produce a ton of ammonia using Haber–Bosch process. From https://doi.org/10.1016/j.joule.2018.04.017, around 0.197 tH2/tHN3 (>3/17 since some H2 lost and used for energy)"
+MWh_elec_per_tNH3_electrolysis,--,float,The energy amount of electricity needed to produce a ton of ammonia using Haber–Bosch process. From https://doi.org/10.1016/j.joule.2018.04.017 Table 13 (air separation and HB)
+MWh_NH3_per_MWh_H2_cracker,--,float,The energy amount of amonia needed to produce an energy amount hydrogen using ammonia cracker. https://github.com/euronion/trace/blob/44a5ff8401762edbef80eff9cfe5a47c8d3c8be4/data/efficiencies.csv
+NH3_process_emissions,MtCO2/a,float,The emission of ammonia production from steam methane reforming (SMR)
+petrochemical_process_emissions,MtCO2/a,float,The emission of petrochemical production
+HVC_primary_fraction,--,float,The fraction of today's high value chemicals (HVC) produced via primary route
+HVC_mechanical_recycling_fraction,--,float,The fraction of today's high value chemicals (HVC) produced using mechanical recycling
+HVC_chemical_recycling_fraction,--,float,The fraction of today's high value chemicals (HVC) produced using chemical recycling
+HVC_production_today,MtHVC/a,float,The amount of high value chemicals (HVC) produced
+MWh_elec_per_tHVC_mechanical_recycling,--,float,The energy amount of electricity needed to produce a ton of high value chemical (HVC) using mechanical recycling
+MWh_elec_per_tHVC_chemical_recycling,--,float,The energy amount of electricity needed to produce a ton of high value chemical (HVC) using chemical recycling
+chlorine_production_today,MtCl/a,float,The amount of chlorine produced
+MWh_elec_per_tCl,--,float,The energy amount of electricity needed to produce a ton of chlorine
+MWh_H2_per_tCl,--,float,The energy amount of hydrogen needed to produce a ton of chlorine
+methanol_production_today,MtMeOH/a,float,The amount of methanol produced
+MWh_elec_per_tMeOH,--,float,The energy amount of electricity needed to produce a ton of methanol
+MWh_CH4_per_tMeOH,--,float,The energy amount of methane needed to produce a ton of methanol
+hotmaps_locate_missing,--,true or false,Locate industrial sites without valid locations based on city and countries.
+reference_year,--,year,

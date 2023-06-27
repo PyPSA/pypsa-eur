@@ -471,6 +471,11 @@ overwrite the existing values.
    :start-at: sector:
    :end-before: # docs
 
+.. csv-table::
+   :header-rows: 1
+   :widths: 25,7,22,30
+   :file: configtables/sector.csv
+
 .. _industry_cf:
 
 ``industry``
@@ -486,6 +491,11 @@ overwrite the existing values.
    :language: yaml
    :start-at: industry:
    :end-before: # docs
+
+.. csv-table::
+   :header-rows: 1
+   :widths: 25,7,22,30
+   :file: configtables/industry.csv
 
 .. _costs_cf:
 
