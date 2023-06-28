@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
-# docs in 
+# docs in
 version: 0.8.0
 tutorial: false
 
@@ -10,22 +10,22 @@ logging:
   level: INFO
   format: '%(levelname)s:%(name)s:%(message)s'
 
-# docs in 
-run: 
+# docs in
+run:
   name: ""
   disable_progressbar: false
   shared_resources: false
   shared_cutouts: true
 
-# docs in 
+# docs in
 foresight: overnight
 
-# docs in 
-# Wildcard docs in 
-scenario: 
+# docs in
+# Wildcard docs in
+scenario:
   simpl:
   - ''
-  ll:  
+  ll:
   - v1.5
   clusters:
   - 37
@@ -33,7 +33,7 @@ scenario:
   - 256
   - 512
   - 1024
-  opts: 
+  opts:
   - ''
   sector_opts:
   - Co2L0-3H-T-H-B-I-A-solar+p3-dist1
@@ -43,18 +43,16 @@ scenario:
   # - 2040
   - 2050
 
-# docs in 
-countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 
-            'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 
-            'ME', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK']
+# docs in
+countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK']
 
-# docs in 
+# docs in
 snapshots:
   start: "2013-01-01"
   end: "2014-01-01"
   inclusive: 'left'
 
-# docs in 
+# docs in
 enable:
   prepare_links_p_nom: false
   retrieve_databundle: true
@@ -66,7 +64,7 @@ enable:
   retrieve_natura_raster: true
   custom_busmap: false
 
-# docs in 
+# docs in
 co2_budget:
   2020: 0.701
   2025: 0.524
@@ -76,7 +74,7 @@ co2_budget:
   2045: 0.032
   2050: 0.000
 
-# docs in 
+# docs in
 electricity:
   voltages: [220., 300., 380.]
   gaslimit: false
@@ -157,7 +155,7 @@ renewable:
     resource:
       method: wind
       turbine: Vestas_V112_3MW
-    capacity_per_sqkm: 3 
+    capacity_per_sqkm: 3
     # correction_factor: 0.93
     corine:
       grid_codes: [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 31, 32]
@@ -172,7 +170,7 @@ renewable:
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_5MW_offshore
-    capacity_per_sqkm: 2 
+    capacity_per_sqkm: 2
     correction_factor: 0.8855
     corine: [44, 255]
     natura: true

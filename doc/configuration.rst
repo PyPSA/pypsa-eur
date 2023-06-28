@@ -64,7 +64,7 @@ The ``run`` section is used for running and storing scenarios with different con
    :file: configtables/foresight.csv
 
 .. note::
-    if you use myopic or perfect foresight, The investment years in 
+    if you use myopic or perfect foresight, The investment years in
     :ref:`planning_horizons` in scenario has to be set.
 
 .. _scenario:
@@ -173,7 +173,7 @@ Switches for some rules and optional features.
    :file: configtables/co2_budget.csv
 
 .. note::
-    this parameter is over-ridden if ``CO2Lx`` or ``cb`` is set in 
+    this parameter is over-ridden if ``CO2Lx`` or ``cb`` is set in
     sector_opts.
 
 .. _electricity_cf:
@@ -272,7 +272,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
    :file: configtables/offwind-dc.csv
 
 .. note::
-   both ``offwind-ac`` and ``offwind-dc`` have the same assumption on 
+   both ``offwind-ac`` and ``offwind-dc`` have the same assumption on
    ``capacity_per_sqkm`` and ``correction_factor``.
 
 ``solar``
@@ -512,8 +512,8 @@ overwrite the existing values.
    :widths: 25,7,22,30
    :file: configtables/costs.csv
 
-.. note:: 
-   ``rooftop_share:`` are based on the potentials, assuming  
+.. note::
+   ``rooftop_share:`` are based on the potentials, assuming
    (0.1 kW/m2 and 10 m2/person)
 
 .. _clustering_cf:
@@ -531,11 +531,11 @@ overwrite the existing values.
    :widths: 25,7,22,30
    :file: configtables/clustering.csv
 
-.. note:: 
-   ``feature:`` in ``simplify_network:`` 
+.. note::
+   ``feature:`` in ``simplify_network:``
    are only relevant if ``hac`` were chosen in ``algorithm``.
 
-.. tip:: 
+.. tip::
    use ``min`` in ``p_nom_max:`` for more `
    conservative assumptions.
 
