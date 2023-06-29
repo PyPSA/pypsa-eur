@@ -84,16 +84,14 @@ def get_fuel_price():
 
     def extract_df(sheet, keyword):
         # Create a DatetimeIndex for the first day of each month of a given year
-        dti = pd.date_range(
+        month_list = pd.date_range(
             start=f"{validation_year}-01-01", end=f"{validation_year}-12-01", freq="MS"
-        )
-        # Extract month names
-        month_list = dti.month
+        ).month
         start = fuel_price[sheet].index[(fuel_price[sheet] == keyword).any(axis=1)]
-        df = fuel_price[sheet].loc[start[0] : start[0] + 18, :]
-        df.dropna(axis=0, inplace=True)
-        df.iloc[:, 0] = df.iloc[:, 0].apply(lambda x: int(x.replace(" ...", "")))
+        df = fuel_price[sheet].loc[start[0] : start[0] + 18]
+        df = df.dropna(axis=0)
         df.set_index(df.columns[0], inplace=True)
+        df.index = df.index.map(lambda x: int(x.replace(" ...", "")))
         df = df.iloc[:, :12]
         df.columns = month_list
         return df
