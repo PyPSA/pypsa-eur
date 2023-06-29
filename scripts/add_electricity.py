@@ -162,7 +162,7 @@ def sanitize_carriers(n, config):
         .reindex(carrier_i)
         .fillna(carrier_i.to_series().str.title())
     )
-    n.carriers["nice_name"] = nice_names
+    n.carriers["nice_name"] = n.carriers.nice_name.where(n.carriers.nice_name != "", nice_names)
     colors = pd.Series(config["plotting"]["tech_colors"]).reindex(carrier_i)
     if colors.isna().any():
         missing_i = list(colors.index[colors.isna()])
