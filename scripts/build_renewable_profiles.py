@@ -204,6 +204,7 @@ if __name__ == "__main__":
 
     nprocesses = int(snakemake.threads)
     noprogress = snakemake.config["run"].get("disable_progressbar", True)
+    noprogress = noprogress or not snakemake.config["atlite"]["show_progress"]
     params = snakemake.params.renewable[snakemake.wildcards.technology]
     resource = params["resource"]  # pv panel params / wind turbine params
     correction_factor = params.get("correction_factor", 1.0)
