@@ -167,7 +167,7 @@ def sanitize_carriers(n, config):
     if colors.isna().any():
         missing_i = list(colors.index[colors.isna()])
         logger.warning(f"tech_colors for carriers {missing_i} not defined in config.")
-    n.carriers["color"] = colors
+    n.carriers["color"] = n.carriers.color.where(n.carriers.color != "", colors)
 
 
 def add_co2_emissions(n, costs, carriers):
