@@ -254,6 +254,8 @@ renewable:
     clip_min_inflow: 1.0
 
 conventional:
+  unit_commitment: false
+  dynamic_fuel_price: false
   nuclear:
     p_max_pu: "data/nuclear_p_max_pu.csv" # float of file name
 
@@ -345,8 +347,6 @@ solar_thermal:
 
 # only relevant for foresight = myopic or perfect
 existing_capacities:
-  unit_commitment: true  # if unit commitment (UC) for conventional power plants is used
-  # UC is only applied to extendable plants if  linearized UC is used
   grouping_years_power: [1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2020, 2025, 2030]
   grouping_years_heat: [1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2019] # these should not extend 2020
   threshold_capacity: 10

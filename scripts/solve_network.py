@@ -149,8 +149,6 @@ def prepare_network(
     planning_horizons=None,
     co2_sequestration_potential=None,
 ):
-    if snakemake.config["existing_capacities"]["unit_commitment"]:
-        add_unit_commitment(n, snakemake.input.unit_commitment_params)
 
     if "clip_p_max_pu" in solve_opts:
         for df in (
@@ -598,19 +596,6 @@ def extra_functionality(n, snapshots):
             add_EQ_constraints(n, o)
     add_battery_constraints(n)
     add_pipe_retrofit_constraint(n)
-
-
-def add_unit_commitment(n, fn):
-    """
-    Add unit commitment.
-    """
-    c = "Generator"
-    uc_data = pd.read_csv(fn, index_col=0)
-    n.df(c).loc[n.df(c).carrier.isin(uc_data.columns), "committable"] = True
-    for attr in uc_data.index:
-        n.df(c)[attr].update(n.df(c)["carrier"].map(uc_data.loc[attr]).dropna())
-    gen_i = n.df(c).query("carrier in @uc_data.columns").index
-    n.df(c).loc[gen_i, "committable"] = True
 
 
 def solve_network(n, config, solving, opts="", **kwargs):

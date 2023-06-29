@@ -366,12 +366,13 @@ def attach_wind_and_solar(
 def attach_conventional_generators(
     n,
     costs,
-    fuel_price,
     ppl,
     conventional_carriers,
     extendable_carriers,
     conventional_params,
     conventional_inputs,
+    unit_commitment=None,
+    fuel_price=None,
 ):
     carriers = set(conventional_carriers) | set(extendable_carriers["Generator"])
     _add_missing_carriers_from_costs(n, costs, carriers)
@@ -383,19 +384,30 @@ def attach_conventional_generators(
     )
     ppl["efficiency"] = ppl.efficiency.fillna(ppl.efficiency_r)
 
-    fuel_price = fuel_price.assign(OCGT=fuel_price["gas"], CCGT=fuel_price["gas"]).drop(
-        "gas", axis=1
-    )
-    fuel_price = fuel_price.reindex(ppl.carrier, axis=1)
-    fuel_price.fillna(costs.fuel, inplace=True)
-    fuel_price.columns = ppl.index
-    marginal_cost = (fuel_price.div(ppl.efficiency)).add(ppl.carrier.map(costs.VOM))
+    if unit_commitment is not None:
+        committable_attrs = ppl.carrier.isin(unit_commitment).to_frame('committable')
+        for attr in unit_commitment.index:
+            default = pypsa.components.component_attrs['Generator'].default[attr]
+            committable_attrs[attr] = ppl.carrier.map(unit_commitment.loc[attr]).fillna(default)
+    else:
+        committable_attrs = {}
 
-    logger.info(
-        "Adding {} generators with capacities [GW] \n{}".format(
-            len(ppl), ppl.groupby("carrier").p_nom.sum().div(1e3).round(2)
-        )
-    )
+
+    if fuel_price is not None:
+        fuel_price = (fuel_price.assign(OCGT=fuel_price['gas'],
+                                        CCGT=fuel_price['gas'])
+                        .drop("gas", axis=1))
+        missing_carriers = list(carriers - set(fuel_price))
+        fuel_price = fuel_price.assign(**costs.fuel[missing_carriers])
+        fuel_price = fuel_price.reindex(ppl.carrier, axis=1)
+        fuel_price.columns = ppl.index
+        marginal_cost = fuel_price.div(ppl.efficiency).add(ppl.carrier.map(costs.VOM))
+    else:
+        marginal_cost = ppl.carrier.map(costs.VOM) + ppl.carrier.map(costs.fuel) / ppl.efficiency
+
+    # Define generators using modified ppl DataFrame
+    caps = ppl.groupby("carrier").p_nom.sum().div(1e3).round(2)
+    logger.info(f"Adding {len(ppl)} generators with capacities [GW] \n{caps}")
 
     n.madd(
         "Generator",
@@ -410,9 +422,10 @@ def attach_conventional_generators(
         capital_cost=ppl.capital_cost,
         build_year=ppl.datein.fillna(0).astype(int),
         lifetime=(ppl.dateout - ppl.datein).fillna(np.inf),
+        **committable_attrs
     )
 
-    for carrier in conventional_params:
+    for carrier in set(conventional_params) & carriers:
         # Generators with technology affected
         idx = n.generators.query("carrier == @carrier").index
 
@@ -752,18 +765,28 @@ if __name__ == "__main__":
         k: v for k, v in snakemake.input.items() if k.startswith("conventional_")
     }
 
-    m_fuel_price = pd.read_csv(snakemake.input.fuel_price, index_col=[0], header=[0])
-    m_fuel_price.index = pd.date_range(start="2019-01-01", end="2019-12-01", freq="MS")
-    fuel_price = m_fuel_price.reindex(n.snapshots).fillna(method="ffill")
+    if params.conventional["unit_commitment"]:
+        unit_commitment = pd.read_csv(snakemake.input.unit_commitment, index_col=0)
+    else:
+        unit_commitment = None
+
+    if params.conventional["dynamic_fuel_price"]:
+        monthly_fuel_price = pd.read_csv(snakemake.input.fuel_price, index_col=0, header=0)
+        monthly_fuel_price.index = pd.date_range(start=n.snapshots[0], end=n.snapshots[-1], freq='MS')
+        fuel_price = monthly_fuel_price.reindex(n.snapshots).fillna(method="ffill")
+    else:
+        fuel_price = None
+
     attach_conventional_generators(
         n,
         costs,
-        fuel_price,
         ppl,
         conventional_carriers,
         extendable_carriers,
         params.conventional,
         conventional_inputs,
+        unit_commitment=unit_commitment,
+        fuel_price=fuel_price,
     )
 
     attach_wind_and_solar(

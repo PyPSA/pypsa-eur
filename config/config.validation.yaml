@@ -243,6 +243,8 @@ renewable:
     clip_min_inflow: 1.0
 
 conventional:
+  unit_commitment: true
+  dynamic_fuel_price: true
   nuclear:
     p_max_pu: "data/nuclear_p_max_pu.csv" # float of file name
 

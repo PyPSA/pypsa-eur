@@ -296,7 +296,7 @@ rule add_electricity:
         countries=config["countries"],
         renewable=config["renewable"],
         electricity=config["electricity"],
-        conventional=config.get("conventional", {}),
+        conventional=config["conventional"],
         costs=config["costs"],
     input:
         **{
@@ -306,6 +306,7 @@ rule add_electricity:
         **{
             f"conventional_{carrier}_{attr}": fn
             for carrier, d in config.get("conventional", {None: {}}).items()
+            if carrier in config["electricity"]["conventional_carriers"]
             for attr, fn in d.items()
             if str(fn).startswith("data/")
         },
@@ -315,6 +316,7 @@ rule add_electricity:
         powerplants=RESOURCES + "powerplants.csv",
         hydro_capacities=ancient("data/bundle/hydro_capacities.csv"),
         geth_hydro_capacities="data/geth2015_hydro_capacities.csv",
+        unit_commitment="data/unit_commitment.csv",
         fuel_price="data/validation/monthly_fuel_price.csv",
         load=RESOURCES + "load.csv",
         nuts3_shapes=RESOURCES + "nuts3_shapes.geojson",
