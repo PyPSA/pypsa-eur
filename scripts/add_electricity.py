@@ -385,25 +385,28 @@ def attach_conventional_generators(
     ppl["efficiency"] = ppl.efficiency.fillna(ppl.efficiency_r)
 
     if unit_commitment is not None:
-        committable_attrs = ppl.carrier.isin(unit_commitment).to_frame('committable')
+        committable_attrs = ppl.carrier.isin(unit_commitment).to_frame("committable")
         for attr in unit_commitment.index:
-            default = pypsa.components.component_attrs['Generator'].default[attr]
-            committable_attrs[attr] = ppl.carrier.map(unit_commitment.loc[attr]).fillna(default)
+            default = pypsa.components.component_attrs["Generator"].default[attr]
+            committable_attrs[attr] = ppl.carrier.map(unit_commitment.loc[attr]).fillna(
+                default
+            )
     else:
         committable_attrs = {}
 
-
     if fuel_price is not None:
-        fuel_price = (fuel_price.assign(OCGT=fuel_price['gas'],
-                                        CCGT=fuel_price['gas'])
-                        .drop("gas", axis=1))
+        fuel_price = fuel_price.assign(
+            OCGT=fuel_price["gas"], CCGT=fuel_price["gas"]
+        ).drop("gas", axis=1)
         missing_carriers = list(carriers - set(fuel_price))
         fuel_price = fuel_price.assign(**costs.fuel[missing_carriers])
         fuel_price = fuel_price.reindex(ppl.carrier, axis=1)
         fuel_price.columns = ppl.index
         marginal_cost = fuel_price.div(ppl.efficiency).add(ppl.carrier.map(costs.VOM))
     else:
-        marginal_cost = ppl.carrier.map(costs.VOM) + ppl.carrier.map(costs.fuel) / ppl.efficiency
+        marginal_cost = (
+            ppl.carrier.map(costs.VOM) + ppl.carrier.map(costs.fuel) / ppl.efficiency
+        )
 
     # Define generators using modified ppl DataFrame
     caps = ppl.groupby("carrier").p_nom.sum().div(1e3).round(2)
@@ -422,7 +425,7 @@ def attach_conventional_generators(
         capital_cost=ppl.capital_cost,
         build_year=ppl.datein.fillna(0).astype(int),
         lifetime=(ppl.dateout - ppl.datein).fillna(np.inf),
-        **committable_attrs
+        **committable_attrs,
     )
 
     for carrier in set(conventional_params) & carriers:
@@ -771,8 +774,12 @@ if __name__ == "__main__":
         unit_commitment = None
 
     if params.conventional["dynamic_fuel_price"]:
-        monthly_fuel_price = pd.read_csv(snakemake.input.fuel_price, index_col=0, header=0)
-        monthly_fuel_price.index = pd.date_range(start=n.snapshots[0], end=n.snapshots[-1], freq='MS')
+        monthly_fuel_price = pd.read_csv(
+            snakemake.input.fuel_price, index_col=0, header=0
+        )
+        monthly_fuel_price.index = pd.date_range(
+            start=n.snapshots[0], end=n.snapshots[-1], freq="MS"
+        )
         fuel_price = monthly_fuel_price.reindex(n.snapshots).fillna(method="ffill")
     else:
         fuel_price = None

@@ -149,7 +149,6 @@ def prepare_network(
     planning_horizons=None,
     co2_sequestration_potential=None,
 ):
-
     if "clip_p_max_pu" in solve_opts:
         for df in (
             n.generators_t.p_max_pu,
