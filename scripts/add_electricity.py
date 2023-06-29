@@ -704,13 +704,14 @@ def attach_OPSD_renewables(n, tech_map):
         {"Solar": "PV"}
     )
     df = df.query("Fueltype in @tech_map").powerplant.convert_country_to_alpha2()
+    df = df.dropna(subset=["lat", "lon"])
 
     for fueltype, carriers in tech_map.items():
         gens = n.generators[lambda df: df.carrier.isin(carriers)]
         buses = n.buses.loc[gens.bus.unique()]
         gens_per_bus = gens.groupby("bus").p_nom.count()
 
-        caps = map_country_bus(df.query("Fueltype == @fueltype and lat == lat"), buses)
+        caps = map_country_bus(df.query("Fueltype == @fueltype"), buses)
         caps = caps.groupby(["bus"]).Capacity.sum()
         caps = caps / gens_per_bus.reindex(caps.index, fill_value=1)
 
