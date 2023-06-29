@@ -149,7 +149,6 @@ def prepare_network(
     planning_horizons=None,
     co2_sequestration_potential=None,
 ):
-
     if snakemake.config["existing_capacities"]["unit_commitment"]:
         add_unit_commitment(n, snakemake.input.unit_commitment_params)
 

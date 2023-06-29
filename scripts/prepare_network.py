@@ -106,17 +106,19 @@ def add_emission_prices(n, emission_prices={"co2": 0.0}, exclude_co2=False):
     n.generators["marginal_cost"] += gen_ep
     su_ep = n.storage_units.carrier.map(ep) / n.storage_units.efficiency_dispatch
     n.storage_units["marginal_cost"] += su_ep
-    
+
 
 def add_emission_prices_t(n):
-    co2_price = pd.read_csv(snakemake.input.co2_price, index_col=0,
-                            parse_dates=True)
+    co2_price = pd.read_csv(snakemake.input.co2_price, index_col=0, parse_dates=True)
     co2_price = co2_price[~co2_price.index.duplicated()]
-    co2_price = co2_price.reindex(n.snapshots).fillna(method="ffill").fillna(method="bfill")
+    co2_price = (
+        co2_price.reindex(n.snapshots).fillna(method="ffill").fillna(method="bfill")
+    )
     emissions = n.generators.carrier.map(n.carriers.co2_emissions)
-    co2_cost = (expand_series(emissions, n.snapshots).T
-                .mul(co2_price.iloc[:,0], axis=0))
-    n.generators_t.marginal_cost += (co2_cost.reindex(columns=n.generators_t.marginal_cost.columns))
+    co2_cost = expand_series(emissions, n.snapshots).T.mul(co2_price.iloc[:, 0], axis=0)
+    n.generators_t.marginal_cost += co2_cost.reindex(
+        columns=n.generators_t.marginal_cost.columns
+    )
 
 
 def set_line_s_max_pu(n, s_max_pu=0.7):
@@ -250,7 +252,7 @@ def set_line_nom_max(n, s_nom_max_set=np.inf, p_nom_max_set=np.inf):
     n.links.p_nom_max.clip(upper=p_nom_max_set, inplace=True)
 
 
-#%%
+# %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -338,7 +340,9 @@ if __name__ == "__main__":
                 add_emission_prices(n, snakemake.params.costs["emission_prices"])
             break
         if "ept" in o:
-            logger.info("Setting time dependent emission prices according spot market price")
+            logger.info(
+                "Setting time dependent emission prices according spot market price"
+            )
             add_emission_prices_t(n)
 
     ll_type, factor = snakemake.wildcards.ll[0], snakemake.wildcards.ll[1:]

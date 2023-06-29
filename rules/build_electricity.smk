@@ -250,13 +250,14 @@ rule build_renewable_profiles:
     script:
         "../scripts/build_renewable_profiles.py"
 
+
 rule build_monthly_prices:
     input:
         co2_price_raw="data/validation/emission-spot-primary-market-auction-report-2019-data.xls",
-        fuel_price_raw="data/validation/energy-price-trends-xlsx-5619002.xlsx"
+        fuel_price_raw="data/validation/energy-price-trends-xlsx-5619002.xlsx",
     output:
         co2_price="data/validation/CO2_price_2019.csv",
-        fuel_price="data/validation/monthly_fuel_price.csv"
+        fuel_price="data/validation/monthly_fuel_price.csv",
     log:
         LOGS + "build_monthly_prices.log",
     threads: 1
@@ -266,6 +267,7 @@ rule build_monthly_prices:
         "../envs/environment.yaml"
     script:
         "../scripts/build_monthly_prices.py"
+
 
 rule build_hydro_profile:
     params:

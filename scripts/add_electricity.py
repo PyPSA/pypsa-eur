@@ -382,17 +382,14 @@ def attach_conventional_generators(
         .rename(index=lambda s: "C" + str(s))
     )
     ppl["efficiency"] = ppl.efficiency.fillna(ppl.efficiency_r)
-    
 
-    fuel_price = (fuel_price.assign(OCGT=fuel_price['gas'],
-                                    CCGT=fuel_price['gas'])
-                    .drop("gas", axis=1))
+    fuel_price = fuel_price.assign(OCGT=fuel_price["gas"], CCGT=fuel_price["gas"]).drop(
+        "gas", axis=1
+    )
     fuel_price = fuel_price.reindex(ppl.carrier, axis=1)
     fuel_price.fillna(costs.fuel, inplace=True)
     fuel_price.columns = ppl.index
-    marginal_cost = (
-        (fuel_price.div(ppl.efficiency)).add(ppl.carrier.map(costs.VOM))
-    )
+    marginal_cost = (fuel_price.div(ppl.efficiency)).add(ppl.carrier.map(costs.VOM))
 
     logger.info(
         "Adding {} generators with capacities [GW] \n{}".format(
@@ -715,7 +712,8 @@ def add_nice_carrier_names(n, config):
         logger.warning(f"tech_colors for carriers {missing_i} not defined in config.")
     n.carriers["color"] = colors
 
-#%%
+
+# %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -753,11 +751,9 @@ if __name__ == "__main__":
     conventional_inputs = {
         k: v for k, v in snakemake.input.items() if k.startswith("conventional_")
     }
-    
-    m_fuel_price = pd.read_csv(snakemake.input.fuel_price,
-                               index_col=[0], header=[0])
-    m_fuel_price.index = pd.date_range(start='2019-01-01', end='2019-12-01',
-                                       freq='MS')
+
+    m_fuel_price = pd.read_csv(snakemake.input.fuel_price, index_col=[0], header=[0])
+    m_fuel_price.index = pd.date_range(start="2019-01-01", end="2019-12-01", freq="MS")
     fuel_price = m_fuel_price.reindex(n.snapshots).fillna(method="ffill")
     attach_conventional_generators(
         n,
