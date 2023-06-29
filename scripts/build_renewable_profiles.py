@@ -216,8 +216,11 @@ if __name__ == "__main__":
     if correction_factor != 1.0:
         logger.info(f"correction_factor is set as {correction_factor}")
 
-    cluster = LocalCluster(n_workers=nprocesses, threads_per_worker=1)
-    client = Client(cluster, asynchronous=True)
+    if nprocesses > 1:
+        # cluster = LocalCluster(n_workers=nprocesses, threads_per_worker=1)
+        client = Client(n_workers=2, threads_per_worker=2, memory_limit="1GB")
+    else:
+        client = None
 
     cutout = atlite.Cutout(snakemake.input.cutout)
     regions = gpd.read_file(snakemake.input.regions)
