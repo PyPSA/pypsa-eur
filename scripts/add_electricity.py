@@ -85,16 +85,18 @@ It further adds extendable ``generators`` with **zero** capacity for
 """
 
 import logging
+from itertools import product
 
 import geopandas as gpd
 import numpy as np
 import pandas as pd
 import powerplantmatching as pm
 import pypsa
+import scipy.sparse as sparse
 import xarray as xr
 from _helpers import configure_logging, update_p_nom_max
 from powerplantmatching.export import map_country_bus
-from vresutils import transfer as vtransfer
+from shapely.prepared import prep
 
 idx = pd.IndexSlice
 
@@ -135,7 +137,7 @@ def _add_missing_carriers_from_costs(n, costs, carriers):
     n.import_components_from_dataframe(emissions, "Carrier")
 
 
-def load_costs(tech_costs, config, elec_config, Nyears=1.0):
+def load_costs(tech_costs, config, max_hours, Nyears=1.0):
     # set all asset costs and other parameters
     costs = pd.read_csv(tech_costs, index_col=[0, 1]).sort_index()
 
@@ -177,7 +179,6 @@ def load_costs(tech_costs, config, elec_config, Nyears=1.0):
             dict(capital_cost=capital_cost, marginal_cost=0.0, co2_emissions=0.0)
         )
 
-    max_hours = elec_config["max_hours"]
     costs.loc["battery"] = costs_for_storage(
         costs.loc["battery storage"],
         costs.loc["battery inverter"],
@@ -215,6 +216,21 @@ def load_powerplants(ppl_fn):
     )
 
 
+def shapes_to_shapes(orig, dest):
+    """
+    Adopted from vresutils.transfer.Shapes2Shapes()
+    """
+    orig_prepped = list(map(prep, orig))
+    transfer = sparse.lil_matrix((len(dest), len(orig)), dtype=float)
+
+    for i, j in product(range(len(dest)), range(len(orig))):
+        if orig_prepped[j].intersects(dest[i]):
+            area = orig[j].intersection(dest[i]).area
+            transfer[i, j] = area / dest[i].area
+
+    return transfer
+
+
 def attach_load(n, regions, load, nuts3_shapes, countries, scaling=1.0):
     substation_lv_i = n.buses.index[n.buses["substation_lv"]]
     regions = gpd.read_file(regions).set_index("name").reindex(substation_lv_i)
@@ -231,9 +247,7 @@ def attach_load(n, regions, load, nuts3_shapes, countries, scaling=1.0):
             return pd.DataFrame({group.index[0]: l})
         else:
             nuts3_cntry = nuts3.loc[nuts3.country == cntry]
-            transfer = vtransfer.Shapes2Shapes(
-                group, nuts3_cntry.geometry, normed=False
-            ).T.tocsr()
+            transfer = shapes_to_shapes(group, nuts3_cntry.geometry).T.tocsr()
             gdp_n = pd.Series(
                 transfer.dot(nuts3_cntry["gdp"].fillna(1.0).values), index=group.index
             )
@@ -356,7 +370,7 @@ def attach_conventional_generators(
     ppl,
     conventional_carriers,
     extendable_carriers,
-    conventional_config,
+    conventional_params,
     conventional_inputs,
 ):
     carriers = set(conventional_carriers) | set(extendable_carriers["Generator"])
@@ -401,17 +415,19 @@ def attach_conventional_generators(
         lifetime=(ppl.dateout - ppl.datein).fillna(np.inf),
     )
 
-    for carrier in conventional_config:
+    for carrier in conventional_params:
         # Generators with technology affected
         idx = n.generators.query("carrier == @carrier").index
 
-        for attr in list(set(conventional_config[carrier]) & set(n.generators)):
-            values = conventional_config[carrier][attr]
+        for attr in list(set(conventional_params[carrier]) & set(n.generators)):
+            values = conventional_params[carrier][attr]
 
             if f"conventional_{carrier}_{attr}" in conventional_inputs:
                 # Values affecting generators of technology k country-specific
                 # First map generator buses to countries; then map countries to p_max_pu
-                values = pd.read_csv(values, index_col=0).iloc[:, 0]
+                values = pd.read_csv(
+                    snakemake.input[f"conventional_{carrier}_{attr}"], index_col=0
+                ).iloc[:, 0]
                 bus_values = n.buses.country.map(values)
                 n.generators[attr].update(
                     n.generators.loc[idx].bus.map(bus_values).dropna()
@@ -421,7 +437,7 @@ def attach_conventional_generators(
                 n.generators.loc[idx, attr] = values
 
 
-def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **config):
+def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **params):
     _add_missing_carriers_from_costs(n, costs, carriers)
 
     ppl = (
@@ -476,9 +492,9 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **con
         )
 
     if "PHS" in carriers and not phs.empty:
-        # fill missing max hours to config value and
+        # fill missing max hours to params value and
         # assume no natural inflow due to lack of data
-        max_hours = config.get("PHS_max_hours", 6)
+        max_hours = params.get("PHS_max_hours", 6)
         phs = phs.replace({"max_hours": {0: max_hours}})
         n.madd(
             "StorageUnit",
@@ -494,7 +510,7 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **con
         )
 
     if "hydro" in carriers and not hydro.empty:
-        hydro_max_hours = config.get("hydro_max_hours")
+        hydro_max_hours = params.get("hydro_max_hours")
 
         assert hydro_max_hours is not None, "No path for hydro capacities given."
 
@@ -644,16 +660,7 @@ def attach_OPSD_renewables(n, tech_map):
         n.generators.p_nom_min.update(gens.bus.map(caps).dropna())
 
 
-def estimate_renewable_capacities(n, config):
-    year = config["electricity"]["estimate_renewable_capacities"]["year"]
-    tech_map = config["electricity"]["estimate_renewable_capacities"][
-        "technology_mapping"
-    ]
-    countries = config["countries"]
-    expansion_limit = config["electricity"]["estimate_renewable_capacities"][
-        "expansion_limit"
-    ]
-
+def estimate_renewable_capacities(n, year, tech_map, expansion_limit, countries):
     if not len(countries) or not len(tech_map):
         return
 
@@ -716,48 +723,33 @@ if __name__ == "__main__":
         snakemake = mock_snakemake("add_electricity")
     configure_logging(snakemake)
 
+    params = snakemake.params
+
     n = pypsa.Network(snakemake.input.base_network)
     Nyears = n.snapshot_weightings.objective.sum() / 8760.0
 
     costs = load_costs(
         snakemake.input.tech_costs,
-        snakemake.config["costs"],
-        snakemake.config["electricity"],
+        params.costs,
+        params.electricity["max_hours"],
         Nyears,
     )
     ppl = load_powerplants(snakemake.input.powerplants)
-
-    if "renewable_carriers" in snakemake.config["electricity"]:
-        renewable_carriers = set(snakemake.config["electricity"]["renewable_carriers"])
-    else:
-        logger.warning(
-            "Missing key `renewable_carriers` under config entry `electricity`. "
-            "In future versions, this will raise an error. "
-            "Falling back to carriers listed under `renewable`."
-        )
-        renewable_carriers = snakemake.config["renewable"]
-
-    extendable_carriers = snakemake.config["electricity"]["extendable_carriers"]
-    if not (set(renewable_carriers) & set(extendable_carriers["Generator"])):
-        logger.warning(
-            "No renewables found in config entry `extendable_carriers`. "
-            "In future versions, these have to be explicitly listed. "
-            "Falling back to all renewables."
-        )
-
-    conventional_carriers = snakemake.config["electricity"]["conventional_carriers"]
 
     attach_load(
         n,
         snakemake.input.regions,
         snakemake.input.load,
         snakemake.input.nuts3_shapes,
-        snakemake.config["countries"],
-        snakemake.config["load"]["scaling_factor"],
+        params.countries,
+        params.scaling_factor,
     )
 
-    update_transmission_costs(n, costs, snakemake.config["lines"]["length_factor"])
+    update_transmission_costs(n, costs, params.length_factor)
 
+    renewable_carriers = set(params.electricity["renewable_carriers"])
+    extendable_carriers = params.electricity["extendable_carriers"]
+    conventional_carriers = params.electricity["conventional_carriers"]
     conventional_inputs = {
         k: v for k, v in snakemake.input.items() if k.startswith("conventional_")
     }
@@ -774,7 +766,7 @@ if __name__ == "__main__":
         ppl,
         conventional_carriers,
         extendable_carriers,
-        snakemake.config.get("conventional", {}),
+        params.conventional,
         conventional_inputs,
     )
 
@@ -784,67 +776,32 @@ if __name__ == "__main__":
         snakemake.input,
         renewable_carriers,
         extendable_carriers,
-        snakemake.config["lines"]["length_factor"],
+        params.length_factor,
     )
 
     if "hydro" in renewable_carriers:
-        conf = snakemake.config["renewable"]["hydro"]
+        para = params.renewable["hydro"]
         attach_hydro(
             n,
             costs,
             ppl,
             snakemake.input.profile_hydro,
             snakemake.input.hydro_capacities,
-            conf.pop("carriers", []),
-            **conf,
+            para.pop("carriers", []),
+            **para,
         )
 
-    if "estimate_renewable_capacities" not in snakemake.config["electricity"]:
-        logger.warning(
-            "Missing key `estimate_renewable_capacities` under config entry `electricity`. "
-            "In future versions, this will raise an error. "
-            "Falling back to whether ``estimate_renewable_capacities_from_capacity_stats`` is in the config."
-        )
-        if (
-            "estimate_renewable_capacities_from_capacity_stats"
-            in snakemake.config["electricity"]
-        ):
-            estimate_renewable_caps = {
-                "enable": True,
-                **snakemake.config["electricity"][
-                    "estimate_renewable_capacities_from_capacity_stats"
-                ],
-            }
-        else:
-            estimate_renewable_caps = {"enable": False}
-    else:
-        estimate_renewable_caps = snakemake.config["electricity"][
-            "estimate_renewable_capacities"
-        ]
-    if "enable" not in estimate_renewable_caps:
-        logger.warning(
-            "Missing key `enable` under config entry `estimate_renewable_capacities`. "
-            "In future versions, this will raise an error. Falling back to False."
-        )
-        estimate_renewable_caps = {"enable": False}
-    if "from_opsd" not in estimate_renewable_caps:
-        logger.warning(
-            "Missing key `from_opsd` under config entry `estimate_renewable_capacities`. "
-            "In future versions, this will raise an error. "
-            "Falling back to whether `renewable_capacities_from_opsd` is non-empty."
-        )
-        from_opsd = bool(
-            snakemake.config["electricity"].get("renewable_capacities_from_opsd", False)
-        )
-        estimate_renewable_caps["from_opsd"] = from_opsd
-
+    estimate_renewable_caps = params.electricity["estimate_renewable_capacities"]
     if estimate_renewable_caps["enable"]:
+        tech_map = estimate_renewable_caps["technology_mapping"]
+        expansion_limit = estimate_renewable_caps["expansion_limit"]
+        year = estimate_renewable_caps["year"]
+
         if estimate_renewable_caps["from_opsd"]:
-            tech_map = snakemake.config["electricity"]["estimate_renewable_capacities"][
-                "technology_mapping"
-            ]
             attach_OPSD_renewables(n, tech_map)
-        estimate_renewable_capacities(n, snakemake.config)
+        estimate_renewable_capacities(
+            n, year, tech_map, expansion_limit, params.countries
+        )
 
     update_p_nom_max(n)
 

@@ -9,6 +9,9 @@ localrules:
 
 
 rule plot_network:
+    params:
+        foresight=config["foresight"],
+        plotting=config["plotting"],
     input:
         overrides="data/override_component_attrs",
         network=RESULTS
@@ -67,6 +70,10 @@ rule copy_conda_env:
 
 rule make_summary:
     params:
+        foresight=config["foresight"],
+        costs=config["costs"],
+        snapshots=config["snapshots"],
+        scenario=config["scenario"],
         RDIR=RDIR,
     input:
         overrides="data/override_component_attrs",
@@ -114,6 +121,10 @@ rule make_summary:
 
 rule plot_summary:
     params:
+        countries=config["countries"],
+        planning_horizons=config["scenario"]["planning_horizons"],
+        sector_opts=config["scenario"]["sector_opts"],
+        plotting=config["plotting"],
         RDIR=RDIR,
     input:
         costs=RESULTS + "csvs/costs.csv",
