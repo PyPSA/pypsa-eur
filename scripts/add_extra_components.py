@@ -115,7 +115,6 @@ def attach_stores(n, costs, extendable_carriers):
             capital_cost=costs.at["hydrogen storage underground", "capital_cost"],
         )
 
-        n.madd("Carrier", ["H2 electrolysis", "H2 fuel cell"])
 
         n.madd(
             "Link",
