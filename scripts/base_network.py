@@ -714,6 +714,7 @@ def base_network(
     n.name = "PyPSA-Eur"
 
     n.set_snapshots(pd.date_range(freq="h", **config["snapshots"]))
+    n.madd("Carrier", ["AC", "DC"])
 
     n.import_components_from_dataframe(buses, "Bus")
     n.import_components_from_dataframe(lines, "Line")

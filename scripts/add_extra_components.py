@@ -56,11 +56,7 @@ import numpy as np
 import pandas as pd
 import pypsa
 from _helpers import configure_logging
-from add_electricity import (
-    _add_missing_carriers_from_costs,
-    add_nice_carrier_names,
-    load_costs,
-)
+from add_electricity import load_costs, sanitize_carriers
 
 idx = pd.IndexSlice
 
@@ -70,7 +66,7 @@ logger = logging.getLogger(__name__)
 def attach_storageunits(n, costs, extendable_carriers, max_hours):
     carriers = extendable_carriers["StorageUnit"]
 
-    _add_missing_carriers_from_costs(n, costs, carriers)
+    n.madd("Carrier", carriers)
 
     buses_i = n.buses.index
 
@@ -101,7 +97,7 @@ def attach_storageunits(n, costs, extendable_carriers, max_hours):
 def attach_stores(n, costs, extendable_carriers):
     carriers = extendable_carriers["Store"]
 
-    _add_missing_carriers_from_costs(n, costs, carriers)
+    n.madd("Carrier", carriers)
 
     buses_i = n.buses.index
     bus_sub_dict = {k: n.buses[k].values for k in ["x", "y", "country"]}
@@ -161,6 +157,8 @@ def attach_stores(n, costs, extendable_carriers):
             marginal_cost=costs.at["battery", "marginal_cost"],
         )
 
+        n.madd("Carrier", ["battery charger", "battery discharger"])
+
         n.madd(
             "Link",
             b_buses_i + " charger",
@@ -211,6 +209,8 @@ def attach_hydrogen_pipelines(n, costs, extendable_carriers):
     h2_links.index = h2_links.apply(lambda c: f"H2 pipeline {c.bus0}-{c.bus1}", axis=1)
 
     # add pipelines
+    n.add("Carrier", "H2 pipeline")
+
     n.madd(
         "Link",
         h2_links.index,
@@ -245,7 +245,7 @@ if __name__ == "__main__":
     attach_stores(n, costs, extendable_carriers)
     attach_hydrogen_pipelines(n, costs, extendable_carriers)
 
-    add_nice_carrier_names(n, snakemake.config)
+    sanitize_carriers(n, snakemake.config)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     n.export_to_netcdf(snakemake.output[0])
