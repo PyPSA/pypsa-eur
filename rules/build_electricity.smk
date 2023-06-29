@@ -252,7 +252,7 @@ rule build_hydro_profile:
 
 
 if config['lines']['dynamic_line_rating']['activate']:
-    rule build_line_rating:cutouts
+    rule build_line_rating:
         input:
             base_network=RESOURCES + "networks/base.nc",
             cutout="cutouts/" + CDIR + config["lines"]['cutout'] + ".nc"
