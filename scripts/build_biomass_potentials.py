@@ -210,9 +210,9 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_biomass_potentials", simpl="", clusters="5")
 
-    config = snakemake.config["biomass"]
-    year = config["year"]
-    scenario = config["scenario"]
+    params = snakemake.params.biomass
+    year = params["year"]
+    scenario = params["scenario"]
 
     enspreso = enspreso_biomass_potentials(year, scenario)
 
@@ -228,7 +228,7 @@ if __name__ == "__main__":
 
     df.to_csv(snakemake.output.biomass_potentials_all)
 
-    grouper = {v: k for k, vv in config["classes"].items() for v in vv}
+    grouper = {v: k for k, vv in params["classes"].items() for v in vv}
     df = df.groupby(grouper, axis=1).sum()
 
     df *= 1e6  # TWh/a to MWh/a

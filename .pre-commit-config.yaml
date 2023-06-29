@@ -30,7 +30,7 @@ repos:
 
   # Find common spelling mistakes in comments and docstrings
 - repo: https://github.com/codespell-project/codespell
-  rev: v2.2.4
+  rev: v2.2.5
   hooks:
   - id: codespell
     args: ['--ignore-regex="(\b[A-Z]+\b)"', '--ignore-words-list=fom,appartment,bage,ore,setis,tabacco,berfore'] # Ignore capital case words, e.g. country codes
@@ -39,7 +39,7 @@ repos:
 
   # Make docstrings PEP 257 compliant
 - repo: https://github.com/PyCQA/docformatter
-  rev: v1.7.1
+  rev: v1.7.3
   hooks:
   - id: docformatter
     args: ["--in-place", "--make-summary-multi-line", "--pre-summary-newline"]
@@ -87,6 +87,6 @@ repos:
 
   # Check for FSFE REUSE compliance (licensing)
 - repo: https://github.com/fsfe/reuse-tool
-  rev: v1.1.2
+  rev: v2.0.0
   hooks:
   - id: reuse

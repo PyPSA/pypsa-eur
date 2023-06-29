@@ -82,7 +82,7 @@ def load_network(import_name=None, custom_components=None):
         As in pypsa.Network(import_name)
     custom_components : dict
         Dictionary listing custom components.
-        For using ``snakemake.config['override_components']``
+        For using ``snakemake.params['override_components']``
         in ``config/config.yaml`` define:
 
         .. code:: yaml
