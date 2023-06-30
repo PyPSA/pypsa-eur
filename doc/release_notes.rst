@@ -16,6 +16,8 @@ Upcoming Release
 
 * Bugfix: Correct typo in the CPLEX solver configuration in ``config.default.yaml``.
 
+* Bugfix: Error in ``add_electricity`` where carriers were added multiple times to the network, resulting in a non-unique carriers error.
+
 * Renamed script file from PyPSA-EUR ``build_load_data`` to ``build_electricity_demand`` and ``retrieve_load_data`` to ``retrieve_electricity_demand``.
 
 * Fix docs readthedocs built
