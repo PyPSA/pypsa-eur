@@ -471,7 +471,7 @@ def attach_conventional_generators(
         **committable_attrs,
     )
 
-    for carrier in set(conventional_params) & carriers:
+    for carrier in set(conventional_params) & set(carriers):
         # Generators with technology affected
         idx = n.generators.query("carrier == @carrier").index
 
