@@ -19,8 +19,6 @@ if config["enable"].get("retrieve_databundle", True):
         datafiles.extend(["natura/Natura2000_end2015.shp", "GEBCO_2014_2D.nc"])
 
     rule retrieve_databundle:
-        params:
-            tutorial=config["tutorial"],
         output:
             expand("data/bundle/{file}", file=datafiles),
         log:

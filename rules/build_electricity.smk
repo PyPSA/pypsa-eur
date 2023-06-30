@@ -59,6 +59,9 @@ rule build_powerplants:
 
 
 rule base_network:
+    params:
+        countries=config["countries"],
+        snapshots=config["snapshots"],
     input:
         eg_buses="data/entsoegridkit/buses.csv",
         eg_lines="data/entsoegridkit/lines.csv",
