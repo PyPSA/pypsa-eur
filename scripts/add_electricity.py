@@ -123,6 +123,15 @@ def calculate_annuity(n, r):
         return 1 / n
 
 
+def add_missing_carriers(n, carriers):
+    """
+    Function to add missing carriers to the network without raising errors.
+    """
+    missing_carriers = set(carriers) - set(n.carriers.index)
+    if len(missing_carriers) > 0:
+        n.madd("Carrier", missing_carriers)
+
+
 def sanitize_carriers(n, config):
     """
     Sanitize the carrier information in a PyPSA Network object.
@@ -152,9 +161,7 @@ def sanitize_carriers(n, config):
 
     for c in n.iterate_components():
         if "carrier" in c.df:
-            missing_carrier = set(c.df.carrier.unique()) - set(n.carriers.index) - {""}
-            if len(missing_carrier):
-                n.madd("Carrier", missing_carrier)
+            add_missing_carriers(n, c.df)
 
     carrier_i = n.carriers.index
     nice_names = (
@@ -354,7 +361,7 @@ def update_transmission_costs(n, costs, length_factor=1.0):
 def attach_wind_and_solar(
     n, costs, input_profiles, carriers, extendable_carriers, line_length_factor=1
 ):
-    n.madd("Carrier", carriers)
+    add_missing_carriers(n, carriers)
 
     for car in carriers:
         if car == "hydro":
@@ -416,7 +423,7 @@ def attach_conventional_generators(
     conventional_inputs,
 ):
     carriers = list(set(conventional_carriers) | set(extendable_carriers["Generator"]))
-    n.madd("Carrier", carriers)
+    add_missing_carriers(n, carriers)
     add_co2_emissions(n, costs, carriers)
 
     ppl = (
@@ -473,7 +480,7 @@ def attach_conventional_generators(
 
 
 def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **params):
-    n.madd("Carrier", carriers)
+    add_missing_carriers(n, carriers)
     add_co2_emissions(n, costs, carriers)
 
     ppl = (
@@ -606,7 +613,7 @@ def attach_extendable_generators(n, costs, ppl, carriers):
     logger.warning(
         "The function `attach_extendable_generators` is deprecated in v0.5.0."
     )
-    n.madd("Carrier", carriers)
+    add_missing_carriers(n, carriers)
     add_co2_emissions(n, costs, carriers)
 
     for tech in carriers:
