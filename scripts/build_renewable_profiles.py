@@ -188,7 +188,7 @@ import geopandas as gpd
 import numpy as np
 import xarray as xr
 from _helpers import configure_logging
-from dask.distributed import Client, LocalCluster
+from dask.distributed import Client
 from pypsa.geo import haversine
 from shapely.geometry import LineString
 
@@ -218,8 +218,7 @@ if __name__ == "__main__":
         logger.info(f"correction_factor is set as {correction_factor}")
 
     if nprocesses > 1:
-        # cluster = LocalCluster(n_workers=nprocesses, threads_per_worker=1)
-        client = Client(n_workers=2, threads_per_worker=2, memory_limit="1GB")
+        client = Client(n_workers=nprocesses, threads_per_worker=1)
     else:
         client = None
 
@@ -293,7 +292,8 @@ if __name__ == "__main__":
 
     potential = capacity_per_sqkm * availability.sum("bus") * area
     func = getattr(cutout, resource.pop("method"))
-    resource["dask_kwargs"] = {"scheduler": client}
+    if client is not None:
+        resource["dask_kwargs"] = {"scheduler": client}
     capacity_factor = correction_factor * func(capacity_factor=True, **resource)
     layout = capacity_factor * area * capacity_per_sqkm
     profile, capacities = func(
