@@ -122,6 +122,7 @@ def calculate_annuity(n, r):
     else:
         return 1 / n
 
+
 def add_missing_carriers(n, carriers):
     """
     Function to add missing carriers to the network without raising errors.
@@ -129,6 +130,7 @@ def add_missing_carriers(n, carriers):
     missing_carriers = set(carriers) - set(n.carriers.index)
     if len(missing_carriers) > 0:
         n.madd("Carrier", missing_carriers)
+
 
 def sanitize_carriers(n, config):
     """
