@@ -106,9 +106,9 @@ if __name__ == "__main__":
         snakemake = mock_snakemake("build_cutout", cutout="europe-2013-era5")
     configure_logging(snakemake)
 
-    cutout_params = snakemake.config["atlite"]["cutouts"][snakemake.wildcards.cutout]
+    cutout_params = snakemake.params.cutouts[snakemake.wildcards.cutout]
 
-    snapshots = pd.date_range(freq="h", **snakemake.config["snapshots"])
+    snapshots = pd.date_range(freq="h", **snakemake.params.snapshots)
     time = [snapshots[0], snapshots[-1]]
     cutout_params["time"] = slice(*cutout_params.get("time", time))
 

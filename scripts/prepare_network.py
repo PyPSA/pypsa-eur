@@ -253,12 +253,12 @@ if __name__ == "__main__":
     Nyears = n.snapshot_weightings.objective.sum() / 8760.0
     costs = load_costs(
         snakemake.input.tech_costs,
-        snakemake.config["costs"],
-        snakemake.config["electricity"],
+        snakemake.params.costs,
+        snakemake.params.max_hours,
         Nyears,
     )
 
-    set_line_s_max_pu(n, snakemake.config["lines"]["s_max_pu"])
+    set_line_s_max_pu(n, snakemake.params.lines["s_max_pu"])
 
     for o in opts:
         m = re.match(r"^\d+h$", o, re.IGNORECASE)
@@ -277,11 +277,11 @@ if __name__ == "__main__":
         if "Co2L" in o:
             m = re.findall("[0-9]*\.?[0-9]+$", o)
             if len(m) > 0:
-                co2limit = float(m[0]) * snakemake.config["electricity"]["co2base"]
+                co2limit = float(m[0]) * snakemake.params.co2base
                 add_co2limit(n, co2limit, Nyears)
                 logger.info("Setting CO2 limit according to wildcard value.")
             else:
-                add_co2limit(n, snakemake.config["electricity"]["co2limit"], Nyears)
+                add_co2limit(n, snakemake.params.co2limit, Nyears)
                 logger.info("Setting CO2 limit according to config value.")
             break
 
@@ -293,11 +293,13 @@ if __name__ == "__main__":
                 add_gaslimit(n, limit, Nyears)
                 logger.info("Setting gas usage limit according to wildcard value.")
             else:
-                add_gaslimit(n, snakemake.config["electricity"].get("gaslimit"), Nyears)
+                add_gaslimit(n, snakemake.params.gaslimit, Nyears)
                 logger.info("Setting gas usage limit according to config value.")
             break
 
     for o in opts:
+        if "+" not in o:
+            continue
         oo = o.split("+")
         suptechs = map(lambda c: c.split("-", 2)[0], n.carriers.index)
         if oo[0].startswith(tuple(suptechs)):
@@ -322,7 +324,7 @@ if __name__ == "__main__":
                 add_emission_prices(n, dict(co2=float(m[0])))
             else:
                 logger.info("Setting emission prices according to config value.")
-                add_emission_prices(n, snakemake.config["costs"]["emission_prices"])
+                add_emission_prices(n, snakemake.params.costs["emission_prices"])
             break
 
     ll_type, factor = snakemake.wildcards.ll[0], snakemake.wildcards.ll[1:]
@@ -330,8 +332,8 @@ if __name__ == "__main__":
 
     set_line_nom_max(
         n,
-        s_nom_max_set=snakemake.config["lines"].get("s_nom_max,", np.inf),
-        p_nom_max_set=snakemake.config["links"].get("p_nom_max,", np.inf),
+        s_nom_max_set=snakemake.params.lines.get("s_nom_max,", np.inf),
+        p_nom_max_set=snakemake.params.links.get("p_nom_max,", np.inf),
     )
 
     if "ATK" in opts:

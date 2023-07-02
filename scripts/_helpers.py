@@ -82,7 +82,7 @@ def load_network(import_name=None, custom_components=None):
         As in pypsa.Network(import_name)
     custom_components : dict
         Dictionary listing custom components.
-        For using ``snakemake.config['override_components']``
+        For using ``snakemake.params['override_components']``
         in ``config/config.yaml`` define:
 
         .. code:: yaml
@@ -283,7 +283,7 @@ def get_aggregation_strategies(aggregation_strategies):
     # when custom values are specified in the config.
 
     import numpy as np
-    from pypsa.networkclustering import _make_consense
+    from pypsa.clustering.spatial import _make_consense
 
     bus_strategies = dict(country=_make_consense("Bus", "country"))
     bus_strategies.update(aggregation_strategies.get("buses", {}))
