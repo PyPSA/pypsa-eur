@@ -108,7 +108,7 @@ def add_emission_prices(n, emission_prices={"co2": 0.0}, exclude_co2=False):
     n.storage_units["marginal_cost"] += su_ep
 
 
-def add_emission_prices_t(n):
+def add_dynamic_emission_prices(n):
     co2_price = pd.read_csv(snakemake.input.co2_price, index_col=0, parse_dates=True)
     co2_price = co2_price[~co2_price.index.duplicated()]
     co2_price = (
@@ -341,11 +341,11 @@ if __name__ == "__main__":
                 logger.info("Setting emission prices according to config value.")
                 add_emission_prices(n, snakemake.params.costs["emission_prices"])
             break
-        if "ept" in o:
+        if "Ept" in o:
             logger.info(
                 "Setting time dependent emission prices according spot market price"
             )
-            add_emission_prices_t(n)
+            add_dynamic_emission_prices(n)
 
     ll_type, factor = snakemake.wildcards.ll[0], snakemake.wildcards.ll[1:]
     set_transmission_limit(n, ll_type, factor, costs, Nyears)

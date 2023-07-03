@@ -9,6 +9,10 @@ logging:
   level: INFO
   format: '%(levelname)s:%(name)s:%(message)s'
 
+remote:
+  ssh: ""
+  path: ""
+
 run:
   name: "" # use this to keep track of runs with different settings
   disable_progressbar: false # set to true to disable the progressbar
