@@ -436,7 +436,7 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 - Miscanthus, switchgrass, RCG
 - Willow
 - Poplar
-- Sunflower, soya seed 
+- Sunflower, soya seed
 - Rape seed
 - Fuelwood residues
 - FuelwoodRW
