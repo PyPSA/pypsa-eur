@@ -2,8 +2,6 @@
 # SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
-
-# coding: utf-8
 """
 Adds electrical generators and existing hydro storage units to a base network.
 
@@ -353,11 +351,11 @@ def update_transmission_costs(n, costs, length_factor=1.0):
 def attach_wind_and_solar(
     n, costs, input_profiles, carriers, extendable_carriers, line_length_factor=1
 ):
-    n.madd("Carrier", carriers)
-
     for car in carriers:
         if car == "hydro":
             continue
+
+        n.add("Carrier", car)
 
         with xr.open_dataset(getattr(input_profiles, "profile_" + car)) as ds:
             if ds.indexes["bus"].empty:
@@ -441,7 +439,7 @@ def attach_conventional_generators(
         fuel_price = fuel_price.assign(
             OCGT=fuel_price["gas"], CCGT=fuel_price["gas"]
         ).drop("gas", axis=1)
-        missing_carriers = list(carriers - set(fuel_price))
+        missing_carriers = list(set(carriers) - set(fuel_price))
         fuel_price = fuel_price.assign(**costs.fuel[missing_carriers])
         fuel_price = fuel_price.reindex(ppl.carrier, axis=1)
         fuel_price.columns = ppl.index
@@ -836,15 +834,16 @@ if __name__ == "__main__":
     )
 
     if "hydro" in renewable_carriers:
-        para = params.renewable["hydro"]
+        p = params.renewable["hydro"]
+        carriers = p.pop("carriers", [])
         attach_hydro(
             n,
             costs,
             ppl,
             snakemake.input.profile_hydro,
             snakemake.input.hydro_capacities,
-            para.pop("carriers", []),
-            **para,
+            carriers,
+            **p,
         )
 
     estimate_renewable_caps = params.electricity["estimate_renewable_capacities"]
