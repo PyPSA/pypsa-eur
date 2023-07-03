@@ -146,3 +146,14 @@ rule plot_summary:
         "../envs/environment.yaml"
     script:
         "../scripts/plot_summary.py"
+
+
+rule plot_statistics:
+    input:
+        overrides="data/override_component_attrs",
+        network=RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+    output:
+        bar=RESULTS
+        + "figures/statistics_bar_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.pdf",
+    script:
+        "../scripts/plot_statistics.py"
