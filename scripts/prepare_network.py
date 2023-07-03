@@ -349,8 +349,8 @@ if __name__ == "__main__":
         n,
         s_nom_max_set=snakemake.params.lines.get("s_nom_max", np.inf),
         p_nom_max_set=snakemake.params.links.get("p_nom_max", np.inf),
-        s_nom_max_set=snakemake.params.lines.get("max_extension", np.inf),
-        p_nom_max_set=snakemake.params.links.get("max_extension", np.inf),
+        s_nom_max_ext=snakemake.params.lines.get("max_extension", np.inf),
+        p_nom_max_ext=snakemake.params.links.get("max_extension", np.inf),
     )
 
     if "ATK" in opts:
