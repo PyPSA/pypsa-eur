@@ -37,16 +37,16 @@ Description
 The rule :mod:`build_line_rating` calculates the line rating for transmission lines.
 The line rating provides the maximal capacity of a transmission line considering the heat exchange with the environment.
 
-The folloing heat gains and losses are considered:
+The following heat gains and losses are considered:
 
 - heat gain through resistive losses
-- heat gain trough solar radiation
+- heat gain through solar radiation
 - heat loss through radiation of the trasnmission line
 - heat loss through forced convection with wind
 - heat loss through natural convection
 
 
-With a heat balance considering the maximum temperature threshold of the tranmission line,
+With a heat balance considering the maximum temperature threshold of the transmission line,
 the maximal possible capacity factor "s_max_pu" for each transmission line at each time step is calculated.
 """
 
