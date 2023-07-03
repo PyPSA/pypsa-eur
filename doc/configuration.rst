@@ -398,14 +398,15 @@ overwrite the existing values.
 .. note::
    Only used for sector-coupling studies.
 
-.. warning::
-   More comprehensive documentation for this segment will be released soon.
-
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: energy:
    :end-before: # docs
 
+.. csv-table::
+   :header-rows: 1
+   :widths: 25,7,22,30
+   :file: configtables/energy.csv
 
 .. _biomass_cf:
 
@@ -415,13 +416,35 @@ overwrite the existing values.
 .. note::
    Only used for sector-coupling studies.
 
-.. warning::
-   More comprehensive documentation for this segment will be released soon.
-
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: biomass:
    :end-before: # docs
+
+.. csv-table::
+   :header-rows: 1
+   :widths: 25,7,22,30
+   :file: configtables/biomass.csv
+
+The list of available biomass is given by the category in `ENSPRESO_BIOMASS <https://cidportal.jrc.ec.europa.eu/ftp/jrc-opendata/ENSPRESO/ENSPRESO_BIOMASS.xlsx>`_, namely:
+
+- Agricultural waste
+- Manure solid, liquid
+- Residues from landscape care
+- Bioethanol barley, wheat, grain maize, oats, other cereals and rye
+- Sugar from sugar beet
+- Miscanthus, switchgrass, RCG
+- Willow
+- Poplar
+- Sunflower, soya seed 
+- Rape seed
+- Fuelwood residues
+- FuelwoodRW
+- C&P_RW
+- Secondary Forestry residues - woodchips
+- Sawdust
+- Municipal waste
+- Sludge
 
 .. _solar_thermal_cf:
 
@@ -431,13 +454,15 @@ overwrite the existing values.
 .. note::
    Only used for sector-coupling studies.
 
-.. warning::
-   More comprehensive documentation for this segment will be released soon.
-
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: solar_thermal:
    :end-before: # docs
+
+.. csv-table::
+   :header-rows: 1
+   :widths: 25,7,22,30
+   :file: configtables/solar-thermal.csv
 
 .. _existing_capacities_cf:
 
@@ -445,15 +470,17 @@ overwrite the existing values.
 =======================
 
 .. note::
-   Only used for sector-coupling studies.
-
-.. warning::
-   More comprehensive documentation for this segment will be released soon.
+   Only used for sector-coupling studies. The value for grouping years are only used in myopic scenarios.
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: existing_capacities:
    :end-before: # docs
+
+.. csv-table::
+   :header-rows: 1
+   :widths: 25,7,22,30
+   :file: configtables/existing_capacities.csv
 
 .. _sector_cf:
 
@@ -462,9 +489,6 @@ overwrite the existing values.
 
 .. note::
    Only used for sector-coupling studies.
-
-.. warning::
-   More comprehensive documentation for this segment will be released soon.
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
