@@ -53,7 +53,7 @@ if __name__ == "__main__":
         snakemake
     )  # TODO Make logging compatible with progressbar (see PR #102)
 
-    if snakemake.params.tutorial:
+    if snakemake.config["tutorial"]:
         url = "https://zenodo.org/record/3517921/files/pypsa-eur-tutorial-data-bundle.tar.xz"
     else:
         url = "https://zenodo.org/record/3517935/files/pypsa-eur-data-bundle.tar.xz"

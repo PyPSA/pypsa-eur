@@ -95,13 +95,13 @@ import scipy as sp
 from _helpers import configure_logging, get_aggregation_strategies, update_p_nom_max
 from add_electricity import load_costs
 from cluster_network import cluster_regions, clustering_for_n_clusters
-from pypsa.io import import_components_from_dataframe, import_series_from_dataframe
-from pypsa.networkclustering import (
+from pypsa.clustering.spatial import (
     aggregategenerators,
     aggregateoneport,
     busmap_by_stubs,
     get_clustering_from_busmap,
 )
+from pypsa.io import import_components_from_dataframe, import_series_from_dataframe
 from scipy.sparse.csgraph import connected_components, dijkstra
 
 logger = logging.getLogger(__name__)
