@@ -141,9 +141,11 @@ if config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]:
 
 
 rule retrieve_electricity_demand:
+    params:
+        version="2019-06-05" if config["snapshots"]["end"] < "2019" else "latest",
     input:
         HTTP.remote(
-            "data.open-power-system-data.org/time_series/latest/time_series_60min_singleindex.csv",
+            "data.open-power-system-data.org/time_series/{params.version}/time_series_60min_singleindex.csv",
             keep_local=True,
             static=True,
         ),

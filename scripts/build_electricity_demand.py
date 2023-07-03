@@ -80,11 +80,9 @@ def load_timeseries(fn, years, countries, powerstatistics=True):
     def rename(s):
         return s[: -len(pattern)]
 
-    def date_parser(x):
-        return dateutil.parser.parse(x, ignoretz=True)
-
     return (
-        pd.read_csv(fn, index_col=0, parse_dates=[0], date_parser=date_parser)
+        pd.read_csv(fn, index_col=0, parse_dates=[0])
+        .tz_localize(None)
         .filter(like=pattern)
         .rename(columns=rename)
         .dropna(how="all", axis=0)
@@ -302,6 +300,9 @@ if __name__ == "__main__":
 
     if snakemake.params.load["manual_adjustments"]:
         load = manual_adjustment(load, snakemake.input[0], powerstatistics)
+
+    if load.empty:
+        logger.warning("Build electricity demand time series is empty.")
 
     logger.info(f"Linearly interpolate gaps of size {interpolate_limit} and less.")
     load = load.interpolate(method="linear", limit=interpolate_limit)
