@@ -191,6 +191,9 @@ Switches for some rules and optional features.
    :widths: 25,7,22,30
    :file: configtables/electricity.csv
 
+.. note::
+   Wind is the Fueltype in powerplantmatching, onwind, offwind-{ac,dc} the carrier in PyPSA-Eur
+
 .. _atlite_cf:
 
 ``atlite``
@@ -470,7 +473,7 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 =======================
 
 .. note::
-   Only used for sector-coupling studies. The value for grouping years are only used in myopic scenarios.
+   Only used for sector-coupling studies. The value for grouping years are only used in myopic or perfect scenarios.
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
@@ -507,9 +510,6 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 
 .. note::
    Only used for sector-coupling studies.
-
-.. warning::
-   More comprehensive documentation for this segment will be released soon.
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml

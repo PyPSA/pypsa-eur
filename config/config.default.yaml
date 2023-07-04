@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
-# docs in
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#top-level-configuration
 version: 0.8.0
 tutorial: false
 
@@ -10,18 +10,18 @@ logging:
   level: INFO
   format: '%(levelname)s:%(name)s:%(message)s'
 
-# docs in
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
   name: ""
   disable_progressbar: false
   shared_resources: false
   shared_cutouts: true
 
-# docs in
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#foresight
 foresight: overnight
 
-# docs in
-# Wildcard docs in
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#scenario
+# Wildcard docs in https://pypsa-eur.readthedocs.io/en/latest/wildcards.html
 scenario:
   simpl:
   - ''
@@ -43,16 +43,16 @@ scenario:
   # - 2040
   - 2050
 
-# docs in
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#countries
 countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK']
 
-# docs in
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#snapshots
 snapshots:
   start: "2013-01-01"
   end: "2014-01-01"
   inclusive: 'left'
 
-# docs in
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#enable
 enable:
   prepare_links_p_nom: false
   retrieve_databundle: true
@@ -64,7 +64,7 @@ enable:
   retrieve_natura_raster: true
   custom_busmap: false
 
-# docs in
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
 co2_budget:
   2020: 0.701
   2025: 0.524
@@ -74,7 +74,7 @@ co2_budget:
   2045: 0.032
   2050: 0.000
 
-# docs in
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
   voltages: [220., 300., 380.]
   gaslimit: false
@@ -99,7 +99,6 @@ electricity:
     Link: [] # H2 pipeline
 
   powerplants_filter: (DateOut >= 2022 or DateOut != DateOut)
-  # use pandas query strings here, e.g. Country in ['Germany']
   custom_powerplants: false
 
   conventional_carriers: [nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
@@ -107,25 +106,19 @@ electricity:
 
   estimate_renewable_capacities:
     enable: true
-    # Add capacities from OPSD data
     from_opsd: true
-    # Renewable capacities are based on existing capacities reported by IRENA
     year: 2020
-    # Artificially limit maximum capacities to factor * (IRENA capacities),
-    # i.e. 110% of <years>'s capacities => expansion_limit: 1.1
-    # false: Use estimated renewable potentials determine by the workflow
     expansion_limit: false
     technology_mapping:
-      # Wind is the Fueltype in powerplantmatching, onwind, offwind-{ac,dc} the carrier in PyPSA-Eur
       Offshore: [offwind-ac, offwind-dc]
       Onshore: [onwind]
       PV: [solar]
 
-# docs in
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#atlite
 atlite:
   default_cutout: europe-2013-era5
   nprocesses: 4
-  show_progress: false # false saves time
+  show_progress: false
   cutouts:
     # use 'base' to determine geographical bounds and time span from config
     # base:
@@ -148,7 +141,7 @@ atlite:
       sarah_dir:
       features: [influx, temperature]
 
-# docs in
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#renewable
 renewable:
   onwind:
     cutout: europe-2013-era5
@@ -217,12 +210,12 @@ renewable:
     hydro_max_hours: "energy_capacity_totals_by_country" # one of energy_capacity_totals_by_country, estimate_by_large_installations or a float
     clip_min_inflow: 1.0
 
-# docs in
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#conventional
 conventional:
   nuclear:
     p_max_pu: "data/nuclear_p_max_pu.csv" # float of file name
 
-# docs in
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#lines
 lines:
   types:
     220.: "Al/St 240/40 2-bundle 220.0"
@@ -233,20 +226,20 @@ lines:
   length_factor: 1.25
   under_construction: 'zero' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
 
-# docs in
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#links
 links:
   p_max_pu: 1.0
   p_nom_max: .inf
   include_tyndp: true
   under_construction: 'zero' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
 
-# docs in
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#transformers
 transformers:
   x: 0.1
   s_nom: 2000.
   type: ''
 
-# docs in
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#load
 load:
   power_statistics: true
   interpolate_limit: 3
@@ -254,6 +247,7 @@ load:
   manual_adjustments: true # false
   scaling_factor: 1.0
 
+# docs
 # TODO: PyPSA-Eur merge issue in prepare_sector_network.py
 # regulate what components with which carriers are kept from PyPSA-Eur;
 # some technologies are removed because they are implemented differently
@@ -275,14 +269,14 @@ pypsa_eur:
   - hydro
   Store: []
 
-# docs in
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#energy
 energy:
   energy_totals_year: 2011
   base_emissions_year: 1990
   eurostat_report_year: 2016
-  emissions: CO2 # "CO2" or "All greenhouse gases - (CO2 equivalent)"
+  emissions: CO2
 
-# docs in
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#biomass
 biomass:
   year: 2030
   scenario: ENS_Med
@@ -308,15 +302,14 @@ biomass:
     - Manure solid, liquid
     - Sludge
 
-# docs in
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solar-thermal
 solar_thermal:
   clearsky_model: simple  # should be "simple" or "enhanced"?
   orientation:
     slope: 45.
     azimuth: 180.
 
-# docs under construction in
-# only relevant for foresight = myopic or perfect
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#existing-capacities
 existing_capacities:
   grouping_years_power: [1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2020, 2025, 2030]
   grouping_years_heat: [1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2019] # these should not extend 2020
@@ -327,37 +320,34 @@ existing_capacities:
   - oil
   - uranium
 
-# docs under construction in
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#sector
 sector:
   district_heating:
-    potential: 0.6  # maximum fraction of urban demand which can be supplied by district heating
-     # increase of today's district heating demand to potential maximum district heating share
-     # progress = 0 means today's district heating share, progress = 1 means maximum fraction of urban demand is supplied by district heating
+    potential: 0.6 
     progress:
       2020: 0.0
       2030: 0.3
       2040: 0.6
       2050: 1.0
     district_heating_loss: 0.15
-  cluster_heat_buses: false # cluster residential and service heat buses to one to save memory
-  bev_dsm_restriction_value: 0.75  #Set to 0 for no restriction on BEV DSM
-  bev_dsm_restriction_time: 7  #Time at which SOC of BEV has to be dsm_restriction_value
+  cluster_heat_buses: false
+  bev_dsm_restriction_value: 0.75
+  bev_dsm_restriction_time: 7
   transport_heating_deadband_upper: 20.
   transport_heating_deadband_lower: 15.
-  ICE_lower_degree_factor: 0.375  #in per cent increase in fuel consumption per degree above deadband
+  ICE_lower_degree_factor: 0.375
   ICE_upper_degree_factor: 1.6
   EV_lower_degree_factor: 0.98
   EV_upper_degree_factor: 0.63
-  bev_dsm: true #turns on EV battery
-  bev_availability: 0.5  #How many cars do smart charging
-  bev_energy: 0.05  #average battery size in MWh
-  bev_charge_efficiency: 0.9  #BEV (dis-)charging efficiency
-  bev_plug_to_wheel_efficiency: 0.2 #kWh/km from EPA https://www.fueleconomy.gov/feg/ for Tesla Model S
-  bev_charge_rate: 0.011 #3-phase charger with 11 kW
+  bev_dsm: true
+  bev_availability: 0.5
+  bev_energy: 0.05
+  bev_charge_efficiency: 0.9
+  bev_plug_to_wheel_efficiency: 0.2
+  bev_charge_rate: 0.011
   bev_avail_max: 0.95
   bev_avail_mean: 0.8
-  v2g: true #allows feed-in to grid from EV battery
-  #what is not EV or FCEV is oil-fuelled ICE
+  v2g: true
   land_transport_fuel_cell_share:
     2020: 0
     2030: 0.05
@@ -377,12 +367,12 @@ sector:
   transport_internal_combustion_efficiency: 0.3
   agriculture_machinery_electric_share: 0
   agriculture_machinery_oil_share: 1
-  agriculture_machinery_fuel_efficiency: 0.7 # fuel oil per use
-  agriculture_machinery_electric_efficiency: 0.3 # electricity per use
-  MWh_MeOH_per_MWh_H2: 0.8787 # in LHV, source: DECHEMA (2017): Low carbon energy and feedstock for the European chemical industry , pg. 64.
-  MWh_MeOH_per_tCO2: 4.0321 # in LHV, source: DECHEMA (2017): Low carbon energy and feedstock for the European chemical industry , pg. 64.
-  MWh_MeOH_per_MWh_e: 3.6907 # in LHV, source: DECHEMA (2017): Low carbon energy and feedstock for the European chemical industry , pg. 64.
-  shipping_hydrogen_liquefaction: false # whether to consider liquefaction costs for shipping H2 demands
+  agriculture_machinery_fuel_efficiency: 0.7
+  agriculture_machinery_electric_efficiency: 0.3
+  MWh_MeOH_per_MWh_H2: 0.8787
+  MWh_MeOH_per_tCO2: 4.0321
+  MWh_MeOH_per_MWh_e: 3.6907
+  shipping_hydrogen_liquefaction: false
   shipping_hydrogen_share:
     2020: 0
     2030: 0
@@ -398,18 +388,14 @@ sector:
     2030: 0.7
     2040: 0.3
     2050: 0
-  shipping_methanol_efficiency: 0.46 # 10-15% higher https://www.iea-amf.org/app/webroot/files/file/Annex%20Reports/AMF_Annex_56.pdf, https://users.ugent.be/~lsileghe/documents/extended_abstract.pdf
-  shipping_oil_efficiency: 0.40 #For conversion of fuel oil to propulsion in 2011
-  aviation_demand_factor: 1. # relative aviation demand compared to today
-  HVC_demand_factor: 1. # relative HVC demand compared to today
-  time_dep_hp_cop: true #time dependent heat pump coefficient of performance
-  heat_pump_sink_T: 55. # Celsius, based on DTU / large area radiators; used in build_cop_profiles.py
-   # conservatively high to cover hot water and space heating in poorly-insulated buildings
-  reduce_space_heat_exogenously: true  # reduces space heat demand by a given factor (applied before losses in DH)
-  # this can represent e.g. building renovation, building demolition, or if
-  # the factor is negative: increasing floor area, increased thermal comfort, population growth
-  reduce_space_heat_exogenously_factor:  # per unit reduction in space heat demand
-  # the default factors are determined by the LTS scenario from http://tool.european-calculator.eu/app/buildings/building-types-area/?levers=1ddd4444421213bdbbbddd44444ffffff11f411111221111211l212221
+  shipping_methanol_efficiency: 0.46
+  shipping_oil_efficiency: 0.40
+  aviation_demand_factor: 1.
+  HVC_demand_factor: 1.
+  time_dep_hp_cop: true
+  heat_pump_sink_T: 55.
+  reduce_space_heat_exogenously: true
+  reduce_space_heat_exogenously_factor:
     2020: 0.10  # this results in a space heat demand reduction of 10%
     2025: 0.09  # first heat demand increases compared to 2020 because of larger floor area per capita
     2030: 0.09
@@ -417,15 +403,15 @@ sector:
     2040: 0.16
     2045: 0.21
     2050: 0.29
-  retrofitting:   # co-optimises building renovation to reduce space heat demand
-    retro_endogen: false  # co-optimise space heat savings
-    cost_factor: 1.0   # weight costs for building renovation
-    interest_rate: 0.04  # for investment in building components
-    annualise_cost: true  # annualise the investment costs
-    tax_weighting: false   # weight costs depending on taxes in countries
-    construction_index: true   # weight costs depending on labour/material costs per country
+  retrofitting:
+    retro_endogen: false
+    cost_factor: 1.0
+    interest_rate: 0.04
+    annualise_cost: true
+    tax_weighting: false
+    construction_index: true
   tes: true
-  tes_tau: # 180 day time constant for centralised, 3 day for decentralised
+  tes_tau:
     decentral: 3
     central: 180
   boilers: true
@@ -446,51 +432,48 @@ sector:
   hydrogen_turbine: false
   SMR: true
   regional_co2_sequestration_potential:
-    enable: false  # enable regionally resolved geological co2 storage potential
+    enable: false
     attribute: 'conservative estimate Mt'
-    include_onshore: false  # include onshore sequestration potentials
-    min_size: 3 # Gt, sites with lower potential will be excluded
-    max_size: 25 # Gt, max sequestration potential for any one site, TODO research suitable value
-    years_of_storage: 25 # years until potential exhausted at optimised annual rate
-  co2_sequestration_potential: 200  #MtCO2/a sequestration potential for Europe
-  co2_sequestration_cost: 10   #EUR/tCO2 for sequestration of CO2
+    include_onshore: false 
+    min_size: 3
+    max_size: 25
+    years_of_storage: 25
+  co2_sequestration_potential: 200
+  co2_sequestration_cost: 10
   co2_spatial: false
   co2network: false
-  cc_fraction: 0.9  # default fraction of CO2 captured with post-combustion capture
+  cc_fraction: 0.9
   hydrogen_underground_storage: true
   hydrogen_underground_storage_locations:
     # - onshore  # more than 50 km from sea
   - nearshore    # within 50 km of sea
     # - offshore
-  ammonia: false # can be false (no NH3 carrier), true (copperplated NH3), "regional" (regionalised NH3 without network)
-  min_part_load_fischer_tropsch: 0.9 # p_min_pu
-  min_part_load_methanolisation: 0.5 # p_min_pu
+  ammonia: false
+  min_part_load_fischer_tropsch: 0.9
+  min_part_load_methanolisation: 0.5
   use_fischer_tropsch_waste_heat: true
   use_fuel_cell_waste_heat: true
   use_electrolysis_waste_heat: false
   electricity_distribution_grid: true
-  electricity_distribution_grid_cost_factor: 1.0  #multiplies cost in data/costs.csv
-  electricity_grid_connection: true  # only applies to onshore wind and utility PV
+  electricity_distribution_grid_cost_factor: 1.0 
+  electricity_grid_connection: true
   H2_network: true
   gas_network: false
-  H2_retrofit: false  # if set to True existing gas pipes can be retrofitted to H2 pipes
-  # according to hydrogen backbone strategy (April, 2020) p.15
-  # https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf
-  # 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity
-  H2_retrofit_capacity_per_CH4: 0.6  # ratio for H2 capacity per original CH4 capacity of retrofitted pipelines
-  gas_network_connectivity_upgrade: 1 # https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation
+  H2_retrofit: false
+  H2_retrofit_capacity_per_CH4: 0.6 
+  gas_network_connectivity_upgrade: 1
   gas_distribution_grid: true
-  gas_distribution_grid_cost_factor: 1.0  #multiplies cost in data/costs.csv
-  biomass_spatial: false  # regionally resolve biomass (e.g. potentials)
-  biomass_transport: false  # allow transport of solid biomass between nodes
-  conventional_generation: # generator : carrier
+  gas_distribution_grid_cost_factor: 1.0
+  biomass_spatial: false
+  biomass_transport: false
+  conventional_generation:
     OCGT: gas
   biomass_to_liquid: false
   biosng: false
 
-# docs under construction in
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
 industry:
-  St_primary_fraction:  # fraction of steel produced via primary route versus secondary route (scrap+EAF); today fraction is 0.6
+  St_primary_fraction:
     2020: 0.6
     2025: 0.55
     2030: 0.5
@@ -498,7 +481,7 @@ industry:
     2040: 0.4
     2045: 0.35
     2050: 0.3
-  DRI_fraction:  # fraction of the primary route converted to DRI + EAF
+  DRI_fraction:
     2020: 0
     2025: 0
     2030: 0.05
@@ -506,9 +489,9 @@ industry:
     2040: 0.4
     2045: 0.7
     2050: 1
-  H2_DRI: 1.7   #H2 consumption in Direct Reduced Iron (DRI),  MWh_H2,LHV/ton_Steel from 51kgH2/tSt in Vogl et al (2018) doi:10.1016/j.jclepro.2018.08.279
-  elec_DRI: 0.322   #electricity consumption in Direct Reduced Iron (DRI) shaft, MWh/tSt HYBRIT brochure https://ssabwebsitecdn.azureedge.net/-/media/hybrit/files/hybrit_brochure.pdf
-  Al_primary_fraction:  # fraction of aluminium produced via the primary route versus scrap; today fraction is 0.4
+  H2_DRI: 1.7 
+  elec_DRI: 0.322
+  Al_primary_fraction:
     2020: 0.4
     2025: 0.375
     2030: 0.35
@@ -516,33 +499,30 @@ industry:
     2040: 0.3
     2045: 0.25
     2050: 0.2
-  MWh_NH3_per_tNH3: 5.166 # LHV
-  MWh_CH4_per_tNH3_SMR: 10.8 # 2012's demand from https://ec.europa.eu/docsroom/documents/4165/attachments/1/translations/en/renditions/pdf
-  MWh_elec_per_tNH3_SMR: 0.7 # same source, assuming 94-6% split methane-elec of total energy demand 11.5 MWh/tNH3
-  MWh_H2_per_tNH3_electrolysis: 6.5 # from https://doi.org/10.1016/j.joule.2018.04.017, around 0.197 tH2/tHN3 (>3/17 since some H2 lost and used for energy)
-  MWh_elec_per_tNH3_electrolysis: 1.17 # from https://doi.org/10.1016/j.joule.2018.04.017 Table 13 (air separation and HB)
+  MWh_NH3_per_tNH3: 5.166
+  MWh_CH4_per_tNH3_SMR: 10.8
+  MWh_elec_per_tNH3_SMR: 0.7
+  MWh_H2_per_tNH3_electrolysis: 6.5
+  MWh_elec_per_tNH3_electrolysis: 1.17
   MWh_NH3_per_MWh_H2_cracker: 1.46 # https://github.com/euronion/trace/blob/44a5ff8401762edbef80eff9cfe5a47c8d3c8be4/data/efficiencies.csv
-  NH3_process_emissions: 24.5 # in MtCO2/a from SMR for H2 production for NH3 from UNFCCC for 2015 for EU28
-  petrochemical_process_emissions: 25.5 # in MtCO2/a for petrochemical and other from UNFCCC for 2015 for EU28
-  HVC_primary_fraction: 1. # fraction of today's HVC produced via primary route
-  HVC_mechanical_recycling_fraction: 0. # fraction of today's HVC produced via mechanical recycling
-  HVC_chemical_recycling_fraction: 0. # fraction of today's HVC produced via chemical recycling
-  HVC_production_today: 52. # MtHVC/a from DECHEMA (2017), Figure 16, page 107; includes ethylene, propylene and BTX
-  MWh_elec_per_tHVC_mechanical_recycling: 0.547 # from SI of https://doi.org/10.1016/j.resconrec.2020.105010, Table S5, for HDPE, PP, PS, PET. LDPE would be 0.756.
-  MWh_elec_per_tHVC_chemical_recycling: 6.9 # Material Economics (2019), page 125; based on pyrolysis and electric steam cracking
-  chlorine_production_today: 9.58 # MtCl/a from DECHEMA (2017), Table 7, page 43
-  MWh_elec_per_tCl: 3.6 # DECHEMA (2017), Table 6, page 43
-  MWh_H2_per_tCl: -0.9372  # DECHEMA (2017), page 43; negative since hydrogen produced in chloralkali process
-  methanol_production_today: 1.5 # MtMeOH/a from DECHEMA (2017), page 62
-  MWh_elec_per_tMeOH: 0.167 # DECHEMA (2017), Table 14, page 65
-  MWh_CH4_per_tMeOH: 10.25 # DECHEMA (2017), Table 14, page 65
+  NH3_process_emissions: 24.5
+  petrochemical_process_emissions: 25.5
+  HVC_primary_fraction: 1.
+  HVC_mechanical_recycling_fraction: 0.
+  HVC_chemical_recycling_fraction: 0.
+  HVC_production_today: 52.
+  MWh_elec_per_tHVC_mechanical_recycling: 0.547
+  MWh_elec_per_tHVC_chemical_recycling: 6.9
+  chlorine_production_today: 9.58
+  MWh_elec_per_tCl: 3.6
+  MWh_H2_per_tCl: -0.9372
+  methanol_production_today: 1.5
+  MWh_elec_per_tMeOH: 0.167
+  MWh_CH4_per_tMeOH: 10.25
   hotmaps_locate_missing: false
   reference_year: 2015
-  # references:
-  # DECHEMA (2017): https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf
-  # Material Economics (2019): https://materialeconomics.com/latest-updates/industrial-transformation-2050
 
-# docs in
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 costs:
   year: 2030
   version: v0.5.0
@@ -572,7 +552,7 @@ costs:
   emission_prices:
     co2: 0.
 
-# docs in
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#clustering
 clustering:
   simplify_network:
     to_substations: false
@@ -596,7 +576,7 @@ clustering:
       ramp_limit_down: max
       efficiency: mean
 
-# docs in
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solving
 solving:
   #tmpdir: "path/to/tmp"
   options:
@@ -670,7 +650,7 @@ solving:
 
   mem: 30000 #memory in MB; 20 GB enough for 50+B+I+H2; 100 GB for 181+B+I+H2
 
-# docs in
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#plotting
 plotting:
   map:
     boundaries: [-11, 30, 34, 71]
