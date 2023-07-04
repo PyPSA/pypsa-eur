@@ -43,7 +43,7 @@ aviation_demand_factor,--,float,The proportion of demand for aviation compared t
 HVC_demand_factor,--,float,The proportion of demand for high-value chemicals compared to today's
 time_dep_hp_cop,--,"{true, false}",Consider the time dependent coefficient of performance (COP) of the heat pump
 heat_pump_sink_T,°C,float,The temperature heat sink used in heat pumps based on DTU / large area radiators. The value is conservatively high to cover hot water and space heating in poorly-insulated buildings
-reduce_space_heat_exogenously,--,"{true, false}",Influence on space heating demand by a certain factor (applied before losses in district heating). 
+reduce_space_heat_exogenously,--,"{true, false}",Influence on space heating demand by a certain factor (applied before losses in district heating).
 reduce_space_heat_exogenously_factor,--,Dictionary with planning horizons as keys.,"A positive factor can mean renovation or demolition of a building. If the factor is negative, it can mean an increase in floor area, increased thermal comfort, population growth. The default factors are determined by the `Eurocalc Homes and buildings decarbonization scenario <http://tool.european-calculator.eu/app/buildings/building-types-area/?levers=1ddd4444421213bdbbbddd44444ffffff11f411111221111211l212221>`_"
 retrofitting,,,
 -- retro_endogen,--,"{true, false}",Add retrofitting as an endogenous system which co-optimise space heat savings.
@@ -99,7 +99,7 @@ electricity_grid_connection,--,"{true, false}",Add the cost of electricity grid 
 H2_network,--,"{true, false}",Add option for new hydrogen pipelines
 gas_network,--,"{true, false}","Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. The existing gas network is added with a lossless transport model. A length-weighted `k-edge augmentation algorithm   <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_   can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well."
 H2_retrofit,--,"{true, false}","Add option for retrofiting existing pipelines to transport hydrogen. The reasoning is in accordance with the `hydrogen backbone strategy (April, 2020) p.15 <https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf>`_. 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity."
-H2_retrofit_capacity_per_CH4,--,float,The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines 
+H2_retrofit_capacity_per_CH4,--,float,The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines
 gas_network_connectivity_upgrade ,--,float,The number of desired edge connectivity (k) in the length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ used for the gas network
 gas_distribution_grid,--,"{true, false}",Add a gas distribution grid
 gas_distribution_grid_cost_factor,,,Multiplies the investment cost of the gas distribution grid in data/costs.csv
