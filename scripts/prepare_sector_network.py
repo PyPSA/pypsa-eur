@@ -3177,8 +3177,10 @@ def add_import_options(
         "pipeline-h2",
         "shipping-lh2",
         "shipping-lch4",
+        "shipping-meoh",
         "shipping-ftfuel",
         "shipping-lnh3",
+        # "shipping-steel",
     ],
     endogenous_hvdc=False,
 ):
@@ -3203,11 +3205,16 @@ def add_import_options(
         "shipping-lh2": " H2",
         "shipping-lch4": " gas",
         "shipping-lnh3": " NH3",
+        "shipping-ftfuel": " oil",
+        "shipping-meoh": " methanol",
+        # "shipping-steel": " steel",
     }
 
     co2_intensity = {
         "shipping-lch4": "gas",
         "shipping-ftfuel": "oil",
+        "shipping-meoh": "methanol", # TODO: or shipping fuel methanol
+        # "shipping-steel": "", TODO: is this necessary?
     }
 
     import_costs = pd.read_csv(snakemake.input.import_costs, delimiter=";")
@@ -3219,16 +3226,16 @@ def add_import_options(
         import_nodes[k] = import_nodes[v]
         ports[k] = ports.get(v)
 
+    if endogenous_hvdc and "hvdc-to-elec" in import_options:
+        import_options = [o for o in import_options if o != "hvdc-to-elec"]
+        add_endogenous_hvdc_import_options(n)
+
     regionalised_options = {
         "hvdc-to-elec",
         "pipeline-h2",
         "shipping-lh2",
         "shipping-lch4",
     }
-
-    if endogenous_hvdc and "hvdc-to-elec" in import_options:
-        import_options = [o for o in import_options if o != "hvdc-to-elec"]
-        add_endogenous_hvdc_import_options(n)
 
     for tech in set(import_options).intersection(regionalised_options):
         import_costs_tech = (
@@ -3293,18 +3300,26 @@ def add_import_options(
                 p_nom=import_nodes_tech.p_nom.values,
             )
 
-    # need special handling for copperplated Fischer-Tropsch imports
-    if "shipping-ftfuel" in import_options:
+    # need special handling for copperplated imports
+    copperplated_options = {
+        "shipping-ftfuel",
+        "shipping-meoh",
+        # "shipping-steel",
+    }
+
+    for tech in set(import_options).intersection(copperplated_options):
         marginal_costs = import_costs.query(
-            "esc == 'shipping-ftfuel'"
+            "esc == @tech"
         ).marginal_cost.min()
 
-        n.add("Bus", "EU import shipping-ftfuel bus", carrier="import shipping-ftfuel")
+        suffix = bus_suffix[tech]
+
+        n.add("Bus", f"EU import {tech} bus", carrier="import {tech}")
 
         n.add(
             "Store",
-            "EU import shipping-ftfuel store",
-            bus="EU import shipping-ftfuel bus",
+            "EU import {tech} store",
+            bus="EU import {tech} bus",
             e_nom_extendable=True,
             e_nom_min=-np.inf,
             e_nom_max=0,
@@ -3314,12 +3329,12 @@ def add_import_options(
 
         n.add(
             "Link",
-            "EU import shipping-ftfuel",
-            bus0="EU import shipping-ftfuel bus",
-            bus1="EU oil",
+            "EU import {tech}",
+            bus0="EU import {tech} bus",
+            bus1="EU" + suffix,
             bus2="co2 atmosphere",
-            carrier="import shipping-ftfuel",
-            efficiency2=-costs.at["oil", "CO2 intensity"],
+            carrier="import {tech}",
+            efficiency2=-costs.at[co2_intensity[tech], "CO2 intensity"],
             marginal_cost=marginal_costs,
             p_nom=1e7,
         )
@@ -3587,13 +3602,13 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "prepare_sector_network",
-            configfiles="test/config.overnight.yaml",
+            configfiles="../../../config/config.yaml",
             simpl="",
             opts="",
-            clusters="5",
+            clusters="128",
             ll="v1.5",
-            sector_opts="CO2L0-24H-T-H-B-I-A-solar+p3-dist1",
-            planning_horizons="2030",
+            sector_opts="CO2L0-3H-T-H-B-I-A",
+            planning_horizons="2050",
         )
 
     logging.basicConfig(level=snakemake.config["logging"]["level"])
@@ -3698,6 +3713,8 @@ if __name__ == "__main__":
         CH4=["shipping-lch4"],
         NH3=["shipping-lnh3"],
         FT=["shipping-ftfuel"],
+        MEOH=["shipping-meoh"],
+        # STEEL=["shipping-steel"]
     )
     for o in opts:
         if not o.startswith("imp"):
