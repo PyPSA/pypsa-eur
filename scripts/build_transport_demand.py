@@ -175,9 +175,9 @@ if __name__ == "__main__":
         snakemake.input.pop_weighted_energy_totals, index_col=0
     )
 
-    options = snakemake.config["sector"]
+    options = snakemake.params.sector
 
-    snapshots = pd.date_range(freq="h", **snakemake.config["snapshots"], tz="UTC")
+    snapshots = pd.date_range(freq="h", **snakemake.params.snapshots, tz="UTC")
 
     nyears = len(snapshots) / 8760
 

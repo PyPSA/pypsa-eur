@@ -147,10 +147,10 @@ def plot_costs():
 
     df = df.groupby(df.index.map(rename_techs)).sum()
 
-    to_drop = df.index[df.max(axis=1) < snakemake.config["plotting"]["costs_threshold"]]
+    to_drop = df.index[df.max(axis=1) < snakemake.params.plotting["costs_threshold"]]
 
     logger.info(
-        f"Dropping technology with costs below {snakemake.config['plotting']['costs_threshold']} EUR billion per year"
+        f"Dropping technology with costs below {snakemake.params['plotting']['costs_threshold']} EUR billion per year"
     )
     logger.debug(df.loc[to_drop])
 
@@ -170,7 +170,7 @@ def plot_costs():
         kind="bar",
         ax=ax,
         stacked=True,
-        color=[snakemake.config["plotting"]["tech_colors"][i] for i in new_index],
+        color=[snakemake.params.plotting["tech_colors"][i] for i in new_index],
     )
 
     handles, labels = ax.get_legend_handles_labels()
@@ -178,7 +178,7 @@ def plot_costs():
     handles.reverse()
     labels.reverse()
 
-    ax.set_ylim([0, snakemake.config["plotting"]["costs_max"]])
+    ax.set_ylim([0, snakemake.params.plotting["costs_max"]])
 
     ax.set_ylabel("System Cost [EUR billion per year]")
 
@@ -206,11 +206,11 @@ def plot_energy():
     df = df.groupby(df.index.map(rename_techs)).sum()
 
     to_drop = df.index[
-        df.abs().max(axis=1) < snakemake.config["plotting"]["energy_threshold"]
+        df.abs().max(axis=1) < snakemake.params.plotting["energy_threshold"]
     ]
 
     logger.info(
-        f"Dropping all technology with energy consumption or production below {snakemake.config['plotting']['energy_threshold']} TWh/a"
+        f"Dropping all technology with energy consumption or production below {snakemake.params['plotting']['energy_threshold']} TWh/a"
     )
     logger.debug(df.loc[to_drop])
 
@@ -232,7 +232,7 @@ def plot_energy():
         kind="bar",
         ax=ax,
         stacked=True,
-        color=[snakemake.config["plotting"]["tech_colors"][i] for i in new_index],
+        color=[snakemake.params.plotting["tech_colors"][i] for i in new_index],
     )
 
     handles, labels = ax.get_legend_handles_labels()
@@ -242,8 +242,8 @@ def plot_energy():
 
     ax.set_ylim(
         [
-            snakemake.config["plotting"]["energy_min"],
-            snakemake.config["plotting"]["energy_max"],
+            snakemake.params.plotting["energy_min"],
+            snakemake.params.plotting["energy_max"],
         ]
     )
 
@@ -297,7 +297,7 @@ def plot_balances():
         df = df.groupby(df.index.map(rename_techs)).sum()
 
         to_drop = df.index[
-            df.abs().max(axis=1) < snakemake.config["plotting"]["energy_threshold"] / 10
+            df.abs().max(axis=1) < snakemake.params.plotting["energy_threshold"] / 10
         ]
 
         if v[0] in co2_carriers:
@@ -306,7 +306,7 @@ def plot_balances():
             units = "TWh/a"
 
         logger.debug(
-            f"Dropping technology energy balance smaller than {snakemake.config['plotting']['energy_threshold']/10} {units}"
+            f"Dropping technology energy balance smaller than {snakemake.params['plotting']['energy_threshold']/10} {units}"
         )
         logger.debug(df.loc[to_drop])
 
@@ -327,7 +327,7 @@ def plot_balances():
             kind="bar",
             ax=ax,
             stacked=True,
-            color=[snakemake.config["plotting"]["tech_colors"][i] for i in new_index],
+            color=[snakemake.params.plotting["tech_colors"][i] for i in new_index],
         )
 
         handles, labels = ax.get_legend_handles_labels()
@@ -465,10 +465,10 @@ def plot_carbon_budget_distribution(input_eurostat):
     ax1 = plt.subplot(gs1[0, 0])
     ax1.set_ylabel("CO$_2$ emissions (Gt per year)", fontsize=22)
     ax1.set_ylim([0, 5])
-    ax1.set_xlim([1990, snakemake.config["scenario"]["planning_horizons"][-1] + 1])
+    ax1.set_xlim([1990, snakemake.params.planning_horizons[-1] + 1])
 
     path_cb = "results/" + snakemake.params.RDIR + "/csvs/"
-    countries = snakemake.config["countries"]
+    countries = snakemake.params.countries
     e_1990 = co2_emissions_year(countries, input_eurostat, opts, year=1990)
     CO2_CAP = pd.read_csv(path_cb + "carbon_budget_distribution.csv", index_col=0)
 
@@ -565,7 +565,7 @@ if __name__ == "__main__":
 
     plot_balances()
 
-    for sector_opts in snakemake.config["scenario"]["sector_opts"]:
+    for sector_opts in snakemake.params.sector_opts:
         opts = sector_opts.split("-")
         for o in opts:
             if "cb" in o:
