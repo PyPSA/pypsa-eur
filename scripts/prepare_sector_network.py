@@ -3217,7 +3217,7 @@ def add_import_options(
     co2_intensity = {
         "shipping-lch4": "gas",
         "shipping-ftfuel": "oil",
-        "shipping-meoh": "methanol", # TODO: or shipping fuel methanol
+        "shipping-meoh": "methanol",  # TODO: or shipping fuel methanol
         # "shipping-steel": "", TODO: is this necessary?
     }
 
@@ -3312,9 +3312,7 @@ def add_import_options(
     }
 
     for tech in set(import_options).intersection(copperplated_options):
-        marginal_costs = import_costs.query(
-            "esc == @tech"
-        ).marginal_cost.min()
+        marginal_costs = import_costs.query("esc == @tech").marginal_cost.min()
 
         suffix = bus_suffix[tech]
 
