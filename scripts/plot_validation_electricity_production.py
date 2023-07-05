@@ -45,8 +45,6 @@ if __name__ == "__main__":
         header=[0, 1],
         parse_dates=True,
     )
-    historic = historic.drop("Other renewable", axis=1, level=1)
-    historic = historic.drop("Marine", axis=1, level=1)
 
     colors = n.carriers.set_index("nice_name").color.where(
         lambda s: s != "", "lightgrey"

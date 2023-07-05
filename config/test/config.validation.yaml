@@ -1,0 +1,12 @@
+# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: CC0-1.0
+
+run:
+  name: "validation-test" # use this to keep track of runs with different settings
+
+scenario:
+  clusters:  # number of nodes in Europe, any integer between 37 (1 node per country-zone) and several hundred
+  - 37
+  opts: # only relevant for PyPSA-Eur
+  - 'Ept-12h'

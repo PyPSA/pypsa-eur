@@ -84,6 +84,7 @@ rule validate_elec_networks:
         ),
         expand(
             RESULTS
-            + "figures/.validation_plots_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}",
-            **config["scenario"]
+            + "figures/.validation_{kind}_plots_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}",
+            **config["scenario"],
+            kind=["production", "prices", "cross_border"]
         ),
