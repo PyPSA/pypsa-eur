@@ -32,6 +32,10 @@ Upcoming Release
 
 * Remove ``vresutils`` dependency.
 
+* Added configuration option ``lines: max_extension:`` and ``links:
+  max_extension:``` to control the maximum capacity addition per line or link in
+  MW.
+
 * Add option to include a piecewise linear approximation of transmission losses,
   e.g. by setting ``solving: options: transmission_losses: 2`` for an
   approximation with two tangents.
