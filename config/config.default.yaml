@@ -665,48 +665,6 @@ plotting:
   energy_max: 20000
   energy_min: -20000
   energy_threshold: 50.
-  vre_techs:
-  - onwind
-  - offwind-ac
-  - offwind-dc
-  - solar
-  - ror
-  renewable_storage_techs:
-  - PHS
-  - hydro
-  conv_techs:
-  - OCGT
-  - CCGT
-  - Nuclear
-  - Coal
-  storage_techs:
-  - hydro+PHS
-  - battery
-  - H2
-  load_carriers:
-  - AC load
-  AC_carriers:
-  - AC line
-  - AC transformer
-  link_carriers:
-  - DC line
-  - Converter AC-DC
-  heat_links:
-  - heat pump
-  - resistive heater
-  - CHP heat
-  - CHP electric
-  - gas boiler
-  - central heat pump
-  - central resistive heater
-  - central CHP heat
-  - central CHP electric
-  - central gas boiler
-  heat_generators:
-  - gas boiler
-  - central gas boiler
-  - solar thermal collector
-  - central solar thermal collector
 
   nice_names:
     OCGT: "Open-Cycle Gas"
