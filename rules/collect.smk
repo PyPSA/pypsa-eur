@@ -79,6 +79,11 @@ rule validate_elec_networks:
     input:
         expand(
             RESULTS
-            + "figures/validate_electricity_production_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+            + "figures/.statistics_plots_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}",
+            **config["scenario"]
+        ),
+        expand(
+            RESULTS
+            + "figures/.validation_plots_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}",
             **config["scenario"]
         ),

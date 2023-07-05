@@ -9,6 +9,10 @@ logging:
   level: INFO
   format: '%(levelname)s:%(name)s:%(message)s'
 
+private:
+  keys:
+    entsoe_api:
+
 remote:
   ssh: ""
   path: ""

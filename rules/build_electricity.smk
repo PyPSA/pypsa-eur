@@ -331,7 +331,7 @@ rule add_electricity:
         BENCHMARKS + "add_electricity"
     threads: 1
     resources:
-        mem_mb=5000,
+        mem_mb=10000,
     conda:
         "../envs/environment.yaml"
     script:
@@ -365,7 +365,7 @@ rule simplify_network:
         BENCHMARKS + "simplify_network/elec_s{simpl}"
     threads: 1
     resources:
-        mem_mb=4000,
+        mem_mb=10000,
     conda:
         "../envs/environment.yaml"
     script:
@@ -406,7 +406,7 @@ rule cluster_network:
         BENCHMARKS + "cluster_network/elec_s{simpl}_{clusters}"
     threads: 1
     resources:
-        mem_mb=6000,
+        mem_mb=10000,
     conda:
         "../envs/environment.yaml"
     script:
@@ -429,7 +429,7 @@ rule add_extra_components:
         BENCHMARKS + "add_extra_components/elec_s{simpl}_{clusters}_ec"
     threads: 1
     resources:
-        mem_mb=3000,
+        mem_mb=4000,
     conda:
         "../envs/environment.yaml"
     script:

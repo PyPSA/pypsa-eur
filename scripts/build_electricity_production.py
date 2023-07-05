@@ -3,16 +3,11 @@
 # SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
-"""
-Created on Mon Jul  3 11:19:54 2023.
-
-@author: fabian
-"""
-
 
 import logging
 
 import pandas as pd
+from _helpers import configure_logging
 from entsoe import EntsoePandasClient
 from entsoe.exceptions import NoMatchingDataError
 
@@ -31,6 +26,10 @@ carrier_grouper = {
     "Fossil Brown coal/Lignite": "Lignite",
     "Fossil Peat": "Lignite",
     "Fossil Hard coal": "Coal",
+    "Wind Onshore": "Onshore Wind",
+    "Wind Offshore": "Offshore Wind",
+    "Other renewable": "Other",
+    "Marine": "Other",
 }
 
 
@@ -38,43 +37,37 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("retrieve_historical_electricity_generation")
+        snakemake = mock_snakemake("build_electricity_production")
+    configure_logging(snakemake)
 
+    api_key = snakemake.config["private"]["keys"]["entsoe_api"]
+    client = EntsoePandasClient(api_key=api_key)
 
-api_key = "aeff3346-a240-40df-bd12-692772b845d0"
-client = EntsoePandasClient(api_key=api_key)
+    start = pd.Timestamp(snakemake.params.snapshots["start"], tz="Europe/Brussels")
+    end = pd.Timestamp(snakemake.params.snapshots["end"], tz="Europe/Brussels")
 
-start = pd.Timestamp(snakemake.params.snapshots["start"], tz="Europe/Brussels")
-end = pd.Timestamp(snakemake.params.snapshots["end"], tz="Europe/Brussels")
+    countries = snakemake.params.countries
 
-countries = snakemake.params.countries
+    generation = []
+    unavailable_countries = []
 
+    for country in countries:
+        country_code = country
 
-generation = []
-unavailable_countries = []
+        try:
+            gen = client.query_generation(country, start=start, end=end, nett=True)
+            gen = gen.tz_localize(None).resample("1h").mean()
+            gen = gen.loc[start.tz_localize(None) : end.tz_localize(None)]
+            gen = gen.rename(columns=carrier_grouper).groupby(level=0, axis=1).sum()
+            generation.append(gen)
+        except NoMatchingDataError:
+            unavailable_countries.append(country)
 
-for country in countries:
-    country_code = country
+    if unavailable_countries:
+        logger.warning(
+            f"Historical electricity production for countries {', '.join(unavailable_countries)} not available."
+        )
 
-    try:
-        gen = client.query_generation(country, start=start, end=end, nett=True)
-        gen = gen.tz_localize(None).resample("1h").mean()
-        gen = gen.rename(columns=carrier_grouper).groupby(level=0, axis=1).sum()
-        generation.append(gen)
-    except NoMatchingDataError:
-        unavailable_countries.append(country)
-
-
-if unavailable_countries:
-    logger.warning(
-        f"Historical electricity production for countries {', '.join(unavailable_countries)} not available."
-    )
-
-keys = [c for c in countries if c not in unavailable_countries]
-generation = pd.concat(generation, keys=keys, axis=1)
-generation = generation.loc[start.tz_localize(None) : end.tz_localize(None)]
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
-#
-# SPDX-License-Identifier: MIT
-generation.to_csv(snakemake.output[0])
+    keys = [c for c in countries if c not in unavailable_countries]
+    generation = pd.concat(generation, keys=keys, axis=1)
+    generation.to_csv(snakemake.output[0])

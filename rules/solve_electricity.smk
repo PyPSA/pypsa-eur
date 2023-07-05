@@ -55,7 +55,7 @@ rule solve_operations_network:
         )
     threads: 4
     resources:
-        mem_mb=(lambda w: 5000 + 372 * int(w.clusters)),
+        mem_mb=(lambda w: 10000 + 372 * int(w.clusters)),
     shadow:
         "minimal"
     conda:

@@ -18,15 +18,23 @@ rule build_electricity_production:
     resources:
         mem_mb=5000,
     script:
-        "../scripts/retrieve_electricity_production.py"
+        "../scripts/build_electricity_production.py"
+
+
+PLOTS = ["production_bar", "production_deviation_bar", "seasonal_operation_area"]
 
 
 rule plot_electricity_production:
     input:
         network=RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
-        electricity_production="data/historical_electricity_production.csv",
+        electricity_production=RESOURCES + "historical_electricity_production.csv",
     output:
-        electricity_producion=RESULTS
-        + "figures/validate_electricity_production_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.pdf",
+        **{
+            plot: RESULTS
+            + f"figures/validation_{plot}_elec_s{{simpl}}_{{clusters}}_ec_l{{ll}}_{{opts}}.pdf"
+            for plot in PLOTS
+        },
+        plots_touch=RESULTS
+        + "figures/.validation_plots_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}",
     script:
-        "scripts/plot_electricity_production.py"
+        "../scripts/plot_electricity_production.py"
