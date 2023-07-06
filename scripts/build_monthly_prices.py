@@ -52,14 +52,6 @@ from _helpers import configure_logging
 
 logger = logging.getLogger(__name__)
 
-validation_year = 2019
-
-# sheet names to pypsa syntax
-sheet_name_map = {
-    "5.1 Hard coal and lignite": "coal",
-    "5.2 Mineral oil": "oil",
-    "5.3.1 Natural gas - indices": "gas",
-}
 
 # keywords in datasheet
 keywords = {
@@ -69,6 +61,15 @@ keywords = {
     "gas": "GP09-062 Natural gas",
 }
 
+# sheet names to pypsa syntax
+sheet_name_map = {
+    "coal": "5.1 Hard coal and lignite",
+    "lignite": "5.1 Hard coal and lignite",
+    "oil": "5.2 Mineral oil",
+    "gas": "5.3.1 Natural gas - indices",
+}
+
+
 # import fuel price 2015 in Eur/MWh
 # source for coal, oil, gas, Agora, slide 24 [2]
 # source lignite, price for 2020, scaled by price index, ENTSO-E [3]
@@ -76,43 +77,30 @@ price_2015 = {"coal": 8.3, "oil": 30.6, "gas": 20.6, "lignite": 3.8}  # 2020 3.9
 
 
 def get_fuel_price():
-    fuel_price = pd.read_excel(
-        snakemake.input.fuel_price_raw, sheet_name=list(sheet_name_map.keys())
-    )
-    fuel_price = {
-        sheet_name_map[key]: value
-        for key, value in fuel_price.items()
-        if key in sheet_name_map
-    }
-    # lignite and hard coal are on the same sheet
-    fuel_price["lignite"] = fuel_price["coal"]
-
-    def extract_df(sheet, keyword):
-        # Create a DatetimeIndex for the first day of each month of a given year
-        month_list = pd.date_range(
-            start=f"{validation_year}-01-01", end=f"{validation_year}-12-01", freq="MS"
-        ).month
-        start = fuel_price[sheet].index[(fuel_price[sheet] == keyword).any(axis=1)]
-        df = fuel_price[sheet].loc[start[0] : start[0] + 18]
-        df = df.dropna(axis=0)
-        df.set_index(df.columns[0], inplace=True)
-        df.index = df.index.map(lambda x: int(x.replace(" ...", "")))
-        df = df.iloc[:, :12]
-        df.columns = month_list
-        return df
-
-    m_price = {}
+    price = {}
     for carrier, keyword in keywords.items():
-        df = extract_df(carrier, keyword).loc[validation_year]
-        m_price[carrier] = df.mul(price_2015[carrier] / 100)
+        sheet_name = sheet_name_map[carrier]
+        df = pd.read_excel(
+            snakemake.input.fuel_price_raw,
+            sheet_name=sheet_name,
+            index_col=0,
+            skiprows=6,
+            nrows=18,
+        )
+        df = df.dropna(axis=0).iloc[:, :12]
+        start, end = df.index[0], str(int(df.index[-1][:4]) + 1)
+        df = df.stack()
+        df.index = pd.date_range(start=start, end=end, freq="MS", inclusive="left")
+        df = df.mul(price_2015[carrier] / 100)
+        price[carrier] = df
 
-    pd.concat(m_price, axis=1).to_csv(snakemake.output.fuel_price)
+    return pd.concat(price, axis=1)
 
 
 def get_co2_price():
     # emission price
-    CO2_price = pd.read_excel(snakemake.input.co2_price_raw, index_col=1, header=5)
-    CO2_price["Auction Price €/tCO2"].to_csv(snakemake.output.co2_price)
+    co2_price = pd.read_excel(snakemake.input.co2_price_raw, index_col=1, header=5)
+    return co2_price["Auction Price €/tCO2"]
 
 
 if __name__ == "__main__":
@@ -123,5 +111,8 @@ if __name__ == "__main__":
 
     configure_logging(snakemake)
 
-    get_fuel_price()
-    get_co2_price()
+    fuel_price = get_fuel_price()
+    fuel_price.to_csv(snakemake.output.fuel_price)
+
+    co2_price = get_co2_price()
+    co2_price.to_csv(snakemake.output.co2_price)

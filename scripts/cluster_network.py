@@ -506,15 +506,6 @@ if __name__ == "__main__":
             ).all() or x.isnull().all(), "The `potential` configuration option must agree for all renewable carriers, for now!"
             return v
 
-        # translate str entries of aggregation_strategies to pd.Series functions:
-        aggregation_strategies = {
-            p: {
-                k: getattr(pd.Series, v)
-                for k, v in params.aggregation_strategies[p].items()
-            }
-            for p in params.aggregation_strategies.keys()
-        }
-
         custom_busmap = params.custom_busmap
         if custom_busmap:
             custom_busmap = pd.read_csv(

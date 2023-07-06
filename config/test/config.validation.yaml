@@ -9,4 +9,9 @@ scenario:
   clusters:  # number of nodes in Europe, any integer between 37 (1 node per country-zone) and several hundred
   - 37
   opts: # only relevant for PyPSA-Eur
-  - 'Ept-12h'
+  - 'Ept'
+
+snapshots:
+  start: "2019-04-01"
+  end: "2019-04-10"
+  inclusive: 'left' # include start, not end

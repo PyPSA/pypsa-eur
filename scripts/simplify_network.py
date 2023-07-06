@@ -534,15 +534,6 @@ if __name__ == "__main__":
     n = pypsa.Network(snakemake.input.network)
     Nyears = n.snapshot_weightings.objective.sum() / 8760
 
-    # translate str entries of aggregation_strategies to pd.Series functions:
-    aggregation_strategies = {
-        p: {
-            k: getattr(pd.Series, v)
-            for k, v in params.aggregation_strategies[p].items()
-        }
-        for p in params.aggregation_strategies.keys()
-    }
-
     n, trafo_map = simplify_network_to_380(n)
 
     technology_costs = load_costs(
@@ -560,7 +551,7 @@ if __name__ == "__main__":
         params.p_max_pu,
         params.simplify_network["exclude_carriers"],
         snakemake.output,
-        aggregation_strategies,
+        params.aggregation_strategies,
     )
 
     busmaps = [trafo_map, simplify_links_map]
@@ -573,12 +564,12 @@ if __name__ == "__main__":
             params.length_factor,
             params.simplify_network,
             snakemake.output,
-            aggregation_strategies=aggregation_strategies,
+            aggregation_strategies=params.aggregation_strategies,
         )
         busmaps.append(stub_map)
 
     if params.simplify_network["to_substations"]:
-        n, substation_map = aggregate_to_substations(n, aggregation_strategies)
+        n, substation_map = aggregate_to_substations(n, params.aggregation_strategies)
         busmaps.append(substation_map)
 
     # treatment of outliers (nodes without a profile for considered carrier):
@@ -592,7 +583,9 @@ if __name__ == "__main__":
             logger.info(
                 f"clustering preparation (hac): aggregating {len(buses_i)} buses of type {carrier}."
             )
-            n, busmap_hac = aggregate_to_substations(n, aggregation_strategies, buses_i)
+            n, busmap_hac = aggregate_to_substations(
+                n, params.aggregation_strategies, buses_i
+            )
             busmaps.append(busmap_hac)
 
     if snakemake.wildcards.simpl:
@@ -603,7 +596,7 @@ if __name__ == "__main__":
             solver_name,
             params.simplify_network["algorithm"],
             params.simplify_network["feature"],
-            aggregation_strategies,
+            params.aggregation_strategies,
         )
         busmaps.append(cluster_map)
 

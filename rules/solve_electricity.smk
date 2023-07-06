@@ -26,6 +26,7 @@ rule solve_network:
     threads: 4
     resources:
         mem_mb=memory,
+        walltime="24:00:00",
     shadow:
         "minimal"
     conda:

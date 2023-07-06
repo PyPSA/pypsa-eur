@@ -19,6 +19,8 @@ if not exists("config/config.yaml"):
 
 
 configfile: "config/config.yaml"
+configfile: "config/config.validation.yaml"
+configfile: "config/test/config.validation.yaml"
 
 
 COSTS = f"data/costs_{config['costs']['year']}.csv"
@@ -106,7 +108,7 @@ rule sync:
         cluster=f"{config['remote']['ssh']}:{config['remote']['path']}",
     shell:
         """
-        rsync -uvarh --no-g --ignore-missing-args --files-from=.sync-send . {params.cluster}
-        rsync -uvarh --no-g {params.cluster}/results results
-        rsync -uvarh --no-g {params.cluster}/logs logs
+        rsync -uvarh --ignore-missing-args --files-from=.sync-send . {params.cluster}
+        rsync -uvarh --no-g {params.cluster}/results results || echo "No results directory, skipping rsync"
+        rsync -uvarh --no-g {params.cluster}/logs logs || echo "No logs directory, skipping rsync"
         """

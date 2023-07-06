@@ -159,7 +159,7 @@ def sanitize_carriers(n, config):
 
     for c in n.iterate_components():
         if "carrier" in c.df:
-            add_missing_carriers(n, c.df)
+            add_missing_carriers(n, c.df.carrier)
 
     carrier_i = n.carriers.index
     nice_names = (
@@ -809,13 +809,10 @@ if __name__ == "__main__":
         unit_commitment = None
 
     if params.conventional["dynamic_fuel_price"]:
-        monthly_fuel_price = pd.read_csv(
-            snakemake.input.fuel_price, index_col=0, header=0
+        fuel_price = pd.read_csv(
+            snakemake.input.fuel_price, index_col=0, header=0, parse_dates=True
         )
-        monthly_fuel_price.index = pd.date_range(
-            start=n.snapshots[0], end=n.snapshots[-1], freq="MS"
-        )
-        fuel_price = monthly_fuel_price.reindex(n.snapshots).fillna(method="ffill")
+        fuel_price = fuel_price.reindex(n.snapshots).fillna(method="ffill")
     else:
         fuel_price = None
 
