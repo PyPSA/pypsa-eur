@@ -233,7 +233,22 @@ def enforce_autarky(n, only_crossborder=False):
     n.mremove("Link", links_rm)
 
 
-def set_line_nom_max(n, s_nom_max_set=np.inf, p_nom_max_set=np.inf):
+def set_line_nom_max(
+    n,
+    s_nom_max_set=np.inf,
+    p_nom_max_set=np.inf,
+    s_nom_max_ext=np.inf,
+    p_nom_max_ext=np.inf,
+):
+    if np.isfinite(s_nom_max_ext) and s_nom_max_ext > 0:
+        logger.info(f"Limiting line extensions to {s_nom_max_ext} MW")
+        n.lines["s_nom_max"] = n.lines["s_nom"] + s_nom_max_ext
+
+    if np.isfinite(p_nom_max_ext) and p_nom_max_ext > 0:
+        logger.info(f"Limiting line extensions to {p_nom_max_ext} MW")
+        hvdc = n.links.index[n.links.carrier == "DC"]
+        n.links.loc[hvdc, "p_nom_max"] = n.links.loc[hvdc, "p_nom"] + p_nom_max_ext
+
     n.lines.s_nom_max.clip(upper=s_nom_max_set, inplace=True)
     n.links.p_nom_max.clip(upper=p_nom_max_set, inplace=True)
 
@@ -332,8 +347,10 @@ if __name__ == "__main__":
 
     set_line_nom_max(
         n,
-        s_nom_max_set=snakemake.params.lines.get("s_nom_max,", np.inf),
-        p_nom_max_set=snakemake.params.links.get("p_nom_max,", np.inf),
+        s_nom_max_set=snakemake.params.lines.get("s_nom_max", np.inf),
+        p_nom_max_set=snakemake.params.links.get("p_nom_max", np.inf),
+        s_nom_max_ext=snakemake.params.lines.get("max_extension", np.inf),
+        p_nom_max_ext=snakemake.params.links.get("max_extension", np.inf),
     )
 
     if "ATK" in opts:

@@ -152,7 +152,7 @@ def prepare_network(
     if "clip_p_max_pu" in solve_opts:
         for df in (
             n.generators_t.p_max_pu,
-            n.generators_t.p_min_pu,  # TODO: check if this can be removed
+            n.generators_t.p_min_pu,
             n.storage_units_t.inflow,
         ):
             df.where(df > solve_opts["clip_p_max_pu"], other=0.0, inplace=True)
