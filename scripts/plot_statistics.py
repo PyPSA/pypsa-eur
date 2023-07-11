@@ -36,7 +36,7 @@ if __name__ == "__main__":
     # %%
 
     def rename_index(ds):
-        specific = ds.index.map(lambda x: f"{x[1]}\n({x[0].lower()})")
+        specific = ds.index.map(lambda x: f"{x[1]}\n({x[0]})")
         generic = ds.index.get_level_values("carrier")
         duplicated = generic.duplicated(keep=False)
         index = specific.where(duplicated, generic)

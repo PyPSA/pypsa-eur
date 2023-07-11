@@ -28,9 +28,9 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "plot_electricity_production",
+            "plot_validation_electricity_production",
             simpl="",
-            opts="Ept-12h",
+            opts="Ept",
             clusters="37",
             ll="v1.0",
         )
@@ -69,7 +69,7 @@ if __name__ == "__main__":
     data.columns.names = ["Kind", "Country", "Carrier"]
     data = data.mul(n.snapshot_weightings.generators, axis=0)
 
-    # %% total production per carrier
+    # total production per carrier
     fig, ax = plt.subplots(figsize=(6, 6))
 
     df = data.groupby(level=["Kind", "Carrier"], axis=1).sum().sum().unstack().T
@@ -78,7 +78,7 @@ if __name__ == "__main__":
     ax.grid(axis="y")
     fig.savefig(snakemake.output.production_bar, bbox_inches="tight")
 
-    # %% highest diffs
+    # highest diffs
 
     fig, ax = plt.subplots(figsize=(6, 10))
 
@@ -94,7 +94,7 @@ if __name__ == "__main__":
     ax.grid(axis="y")
     fig.savefig(snakemake.output.production_deviation_bar, bbox_inches="tight")
 
-    # %% seasonal operation
+    # seasonal operation
 
     fig, axes = plt.subplots(3, 1, figsize=(9, 9))
 

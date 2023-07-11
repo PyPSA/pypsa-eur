@@ -19,8 +19,6 @@ if not exists("config/config.yaml"):
 
 
 configfile: "config/config.yaml"
-configfile: "config/config.validation.yaml"
-configfile: "config/test/config.validation.yaml"
 
 
 COSTS = f"data/costs_{config['costs']['year']}.csv"
