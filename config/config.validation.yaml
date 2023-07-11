@@ -70,7 +70,7 @@ renewable:
     cutout: europe-2019-era5
 
 conventional:
-  unit_commitment: true
+  unit_commitment: false
   dynamic_fuel_price: true
   nuclear:
     p_max_pu: "data/nuclear_p_max_pu.csv" # float of file name
@@ -88,3 +88,5 @@ solving:
   #tmpdir: "path/to/tmp"
   options:
     load_shedding: true
+    rolling_horizon: true
+    horizon: 365

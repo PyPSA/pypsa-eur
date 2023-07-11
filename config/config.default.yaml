@@ -630,15 +630,18 @@ solving:
   #tmpdir: "path/to/tmp"
   options:
     clip_p_max_pu: 1.e-2
-    linearized_unit_commitment: true
     load_shedding: false
-    transmission_losses: 0
     noisy_costs: true
     skip_iterations: true
+    rolling_horizon: false
+    seed: 123
+    # options that go into the optimize function
     track_iterations: false
     min_iterations: 4
     max_iterations: 6
-    seed: 123
+    transmission_losses: 0
+    linearized_unit_commitment: true
+    horizon: 365
 
   solver:
     name: gurobi
@@ -666,7 +669,6 @@ solving:
       AggFill: 0
       PreDual: 0
       GURO_PAR_BARDENSETHRESH: 200
-      seed: 10              # Consistent seed for all plattforms
     gurobi-numeric-focus:
       name: gurobi
       NumericFocus: 3       # Favour numeric stability over speed
