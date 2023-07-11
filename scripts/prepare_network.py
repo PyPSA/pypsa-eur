@@ -104,6 +104,7 @@ def add_emission_prices(n, emission_prices={"co2": 0.0}, exclude_co2=False):
     ).sum(axis=1)
     gen_ep = n.generators.carrier.map(ep) / n.generators.efficiency
     n.generators["marginal_cost"] += gen_ep
+    n.generators_t["marginal_cost"] += gen_ep[n.generators_t["marginal_cost"].columns]
     su_ep = n.storage_units.carrier.map(ep) / n.storage_units.efficiency_dispatch
     n.storage_units["marginal_cost"] += su_ep
 
@@ -114,7 +115,10 @@ def add_dynamic_emission_prices(n):
     co2_price = (
         co2_price.reindex(n.snapshots).fillna(method="ffill").fillna(method="bfill")
     )
-    emissions = n.generators.carrier.map(n.carriers.co2_emissions)
+    # TODO: enable this without having dynamic marginal costs defined beforehand
+    emissions = (
+        n.generators.carrier.map(n.carriers.co2_emissions) / n.generators.efficiency
+    )
     co2_cost = expand_series(emissions, n.snapshots).T.mul(co2_price.iloc[:, 0], axis=0)
     n.generators_t.marginal_cost += co2_cost.reindex(
         columns=n.generators_t.marginal_cost.columns
