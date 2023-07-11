@@ -621,14 +621,10 @@ clustering:
     exclude_carriers: []
   aggregation_strategies:
     generators:
-      p_nom_max: sum # use "min" for more conservative assumptions
-      p_nom_min: sum
-      p_min_pu: mean
-      marginal_cost: mean
+      p_nom_max: weighted_min
       committable: any
       ramp_limit_up: max
       ramp_limit_down: max
-      efficiency: mean
 
 solving:
   #tmpdir: "path/to/tmp"
@@ -775,6 +771,8 @@ plotting:
     H2: "Hydrogen Storage"
     lines: "Transmission Lines"
     ror: "Run of River"
+    ac: "AC"
+    dc: "DC"
 
   tech_colors:
     # wind

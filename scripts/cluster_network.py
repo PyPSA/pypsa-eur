@@ -499,13 +499,6 @@ if __name__ == "__main__":
             Nyears,
         ).at["HVAC overhead", "capital_cost"]
 
-        def consense(x):
-            v = x.iat[0]
-            assert (
-                x == v
-            ).all() or x.isnull().all(), "The `potential` configuration option must agree for all renewable carriers, for now!"
-            return v
-
         custom_busmap = params.custom_busmap
         if custom_busmap:
             custom_busmap = pd.read_csv(

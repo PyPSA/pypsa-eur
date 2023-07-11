@@ -36,7 +36,11 @@ if __name__ == "__main__":
     # %%
 
     def rename_index(ds):
-        return ds.set_axis(ds.index.map(lambda x: f"{x[1]}\n({x[0].lower()})"))
+        specific = ds.index.map(lambda x: f"{x[1]}\n({x[0].lower()})")
+        generic = ds.index.get_level_values("carrier")
+        duplicated = generic.duplicated(keep=False)
+        index = specific.where(duplicated, generic)
+        return ds.set_axis(index)
 
     def plot_static_per_carrier(ds, ax, drop_zero=True):
         if drop_zero:

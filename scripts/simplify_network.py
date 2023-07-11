@@ -256,8 +256,12 @@ def _aggregate_and_move_components(
     _, generator_strategies = get_aggregation_strategies(aggregation_strategies)
 
     carriers = set(n.generators.carrier) - set(exclude_carriers)
-    generators, generators_pnl = aggregategenerators(
-        n, busmap, carriers=carriers, custom_strategies=generator_strategies
+    generators, generators_pnl = aggregateoneport(
+        n,
+        busmap,
+        "Generator",
+        carriers=carriers,
+        custom_strategies=generator_strategies,
     )
 
     replace_components(n, "Generator", generators, generators_pnl)
@@ -602,14 +606,16 @@ if __name__ == "__main__":
 
     # some entries in n.buses are not updated in previous functions, therefore can be wrong. as they are not needed
     # and are lost when clustering (for example with the simpl wildcard), we remove them for consistency:
-    buses_c = {
+    remove = [
         "symbol",
         "tags",
         "under_construction",
         "substation_lv",
         "substation_off",
-    }.intersection(n.buses.columns)
-    n.buses = n.buses.drop(buses_c, axis=1)
+        "geometry",
+    ]
+    n.buses.drop(remove, axis=1, inplace=True, errors="ignore")
+    n.lines.drop(remove, axis=1, errors="ignore", inplace=True)
 
     update_p_nom_max(n)
 
