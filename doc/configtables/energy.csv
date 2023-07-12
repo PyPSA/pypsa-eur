@@ -5,4 +5,3 @@ base_emissions_year ,--,"YYYY; e.g. 1990","The base year for the sector emission
 eurostat_report_year ,--,"{2016,2017,2018}","The publication year of the Eurostat report. 2016 includes Bosnia and Herzegovina, 2017 does not"
 
 emissions ,--,"{CO2, All greenhouse gases - (CO2 equivalent)}","Specify which sectoral emissions are taken into account. Data derived from EEA. Currently only CO2 is implemented."
-
