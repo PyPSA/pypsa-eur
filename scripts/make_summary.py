@@ -16,7 +16,6 @@ import sys
 import numpy as np
 import pandas as pd
 import pypsa
-from _helpers import override_component_attrs
 from prepare_sector_network import prepare_costs
 
 idx = pd.IndexSlice
@@ -659,8 +658,7 @@ def make_summaries(networks_dict):
     for label, filename in networks_dict.items():
         logger.info(f"Make summary for scenario {label}, using {filename}")
 
-        overrides = override_component_attrs(snakemake.input.overrides)
-        n = pypsa.Network(filename, override_component_attrs=overrides)
+        n = pypsa.Network(filename)
 
         assign_carriers(n)
         assign_locations(n)

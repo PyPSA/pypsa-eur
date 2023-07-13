@@ -40,6 +40,9 @@ Upcoming Release
   e.g. by setting ``solving: options: transmission_losses: 2`` for an
   approximation with two tangents.
 
+* Handling networks with links with multiple inputs/outputs no longer requires
+  to override component attributes.
+
 
 PyPSA-Eur 0.8.0 (18th March 2023)
 =================================

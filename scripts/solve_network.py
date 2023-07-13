@@ -35,7 +35,6 @@ import pypsa
 import xarray as xr
 from _helpers import (
     configure_logging,
-    override_component_attrs,
     update_config_with_sector_opts,
 )
 
@@ -673,11 +672,7 @@ if __name__ == "__main__":
 
     np.random.seed(solve_opts.get("seed", 123))
 
-    if "overrides" in snakemake.input.keys():
-        overrides = override_component_attrs(snakemake.input.overrides)
-        n = pypsa.Network(snakemake.input.network, override_component_attrs=overrides)
-    else:
-        n = pypsa.Network(snakemake.input.network)
+    n = pypsa.Network(snakemake.input.network)
 
     n = prepare_network(
         n,

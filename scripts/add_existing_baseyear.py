@@ -21,7 +21,7 @@ import country_converter as coco
 import numpy as np
 import pypsa
 import xarray as xr
-from _helpers import override_component_attrs, update_config_with_sector_opts
+from _helpers import update_config_with_sector_opts
 from add_electricity import sanitize_carriers
 from prepare_sector_network import cluster_heat_buses, define_spatial, prepare_costs
 
@@ -618,8 +618,8 @@ if __name__ == "__main__":
 
     baseyear = snakemake.params.baseyear
 
-    overrides = override_component_attrs(snakemake.input.overrides)
-    n = pypsa.Network(snakemake.input.network, override_component_attrs=overrides)
+    n = pypsa.Network(snakemake.input.network)
+
     # define spatial resolution of carriers
     spatial = define_spatial(n.buses[n.buses.carrier == "AC"].index, options)
     add_build_year_to_new_assets(n, baseyear)
