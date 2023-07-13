@@ -67,6 +67,7 @@ snapshots:
   inclusive: 'left' # include start, not end
 
 enable:
+  retrieve: auto
   prepare_links_p_nom: false
   retrieve_databundle: true
   retrieve_sector_databundle: true
