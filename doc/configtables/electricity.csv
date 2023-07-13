@@ -27,7 +27,7 @@ conventional_carriers,--,"Any subset of {nuclear, oil, OCGT, CCGT, coal, lignite
 renewable_carriers,--,"Any subset of {solar, onwind, offwind-ac, offwind-dc, hydro}",List of renewable generators to include in the model.
 estimate_renewable_capacities,,,
 -- enable,,bool,Activate routine to estimate renewable capacities
--- from_opsd,--,bool,Add renewable capacities from `OPSD database <https://data.open-power-system-data.org/renewable_power_plants/2020-08-25>`_. The value is depreciated but still can be used.   
+-- from_opsd,--,bool,Add renewable capacities from `OPSD database <https://data.open-power-system-data.org/renewable_power_plants/2020-08-25>`_. The value is depreciated but still can be used.
 -- year,--,bool,Renewable capacities are based on existing capacities reported by IRENA (IRENASTAT) for the specified year
 -- expansion_limit,--,float or false,"Artificially limit maximum IRENA capacities to a factor.  For example, an ``expansion_limit: 1.1`` means 110% of capacities . If false are chosen, the estimated renewable potentials determine by the workflow are used."
 -- technology_mapping,,,Mapping between PyPSA-Eur and powerplantmatching technology names
