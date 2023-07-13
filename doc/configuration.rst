@@ -191,9 +191,6 @@ Switches for some rules and optional features.
    :widths: 25,7,22,30
    :file: configtables/electricity.csv
 
-.. note::
-   Wind is the Fueltype in powerplantmatching, onwind, offwind-{ac,dc} the carrier in PyPSA-Eur
-
 .. _atlite_cf:
 
 ``atlite``
