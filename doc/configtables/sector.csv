@@ -7,8 +7,9 @@ cluster_heat_buses,--,"{true, false}",Cluster residential and service heat buses
 
 bev_dsm_restriction_value,--,float,Adds a lower state of charge (SOC) limit for battery electric vehicles (BEV) to manage its own energy demand (DSM). Located in `build_transport_demand.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_transport_demand.py>`_. Set to 0 for no restriction on BEV DSM
 bev_dsm_restriction_time,--,float,Time at which SOC of BEV has to be dsm_restriction_value
-transport_heating_deadband_upper,°C,float,"The minimum temperature in the vehicle. At lower temperatures, the energy required for heating in the vehicle increases."
-transport_heating_deadband_lower,°C,float,"The maximum temperature in the vehicle. At higher temperatures, the energy required for cooling in the vehicle increases."
+transport_heating_deadband_upper,°C,float,"The maximum temperature in the vehicle. At higher temperatures, the energy required for cooling in the vehicle increases."
+transport_heating_deadband_lower,°C,float,"The minimum temperature in the vehicle. At lower temperatures, the energy required for heating in the vehicle increases."
+
 ICE_lower_degree_factor,--,float,Percentage increase in energy demand in internal combustion engine (ICE) for each degree difference between the cold environment and the minimum temperature.
 ICE_upper_degree_factor,--,float,Percentage increase in energy demand in internal combustion engine (ICE) for each degree difference between the hot environment and the maximum temperature.
 EV_lower_degree_factor,--,float,Percentage increase in energy demand in electric vehicles (EV) for each degree difference between the cold environment and the minimum temperature.
@@ -103,7 +104,8 @@ use_fischer_tropsch_waste_heat,--,"{true, false}",Add option for using waste hea
 use_fuel_cell_waste_heat,--,"{true, false}",Add option for using waste heat of fuel cells in district heating networks
 use_electrolysis_waste_heat,--,"{true, false}",Add option for using waste heat of electrolysis in district heating networks
 electricity_distribution_grid,--,"{true, false}",Add a simplified representation of the exchange capacity between transmission and distribution grid level through a link.
-electricity_distribution_grid_cost_factor,,,Multiplies the investment cost of the electricity distribution grid in data/costs.csv
+electricity_distribution_grid_cost_factor,,,Multiplies the investment cost of the electricity distribution grid
+
 electricity_grid_connection,--,"{true, false}",Add the cost of electricity grid connection for onshore wind and solar
 H2_network,--,"{true, false}",Add option for new hydrogen pipelines
 gas_network,--,"{true, false}","Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. The existing gas network is added with a lossless transport model. A length-weighted `k-edge augmentation algorithm   <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_   can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well."
