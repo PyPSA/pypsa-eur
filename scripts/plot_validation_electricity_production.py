@@ -31,7 +31,7 @@ if __name__ == "__main__":
             "plot_validation_electricity_production",
             simpl="",
             opts="Ept",
-            clusters="37",
+            clusters="37c",
             ll="v1.0",
         )
     configure_logging(snakemake)
@@ -119,7 +119,7 @@ if __name__ == "__main__":
     optimized.plot.area(ax=axes[0], **kwargs, title="Optimized")
     historical.plot.area(ax=axes[1], **kwargs, title="Historic")
 
-    diff = historical - optimized
+    diff = optimized - historical
     diff.clip(lower=0).plot.area(
         ax=axes[2], **kwargs, title="$\Delta$ (Optimized - Historic)"
     )
