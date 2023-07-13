@@ -64,7 +64,7 @@ The ``run`` section is used for running and storing scenarios with different con
    :file: configtables/foresight.csv
 
 .. note::
-    if you use myopic or perfect foresight, The investment years in
+    If you use myopic or perfect foresight, the planning horizon in
     :ref:`planning_horizons` in scenario has to be set.
 
 .. _scenario:
