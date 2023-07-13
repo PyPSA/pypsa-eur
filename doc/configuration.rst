@@ -473,7 +473,7 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 =======================
 
 .. note::
-   Only used for sector-coupling studies. The value for grouping years are only used in myopic or perfect scenarios.
+   Only used for sector-coupling studies. The value for grouping years are only used in myopic or perfect foresight scenarios.
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
