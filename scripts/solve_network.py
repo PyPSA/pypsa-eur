@@ -33,10 +33,7 @@ import numpy as np
 import pandas as pd
 import pypsa
 import xarray as xr
-from _helpers import (
-    configure_logging,
-    update_config_with_sector_opts,
-)
+from _helpers import configure_logging, update_config_with_sector_opts
 
 logger = logging.getLogger(__name__)
 pypsa.pf.logger.setLevel(logging.WARNING)

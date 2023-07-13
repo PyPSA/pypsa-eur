@@ -11,10 +11,7 @@ import logging
 
 import numpy as np
 import pypsa
-from _helpers import (
-    configure_logging,
-    update_config_with_sector_opts,
-)
+from _helpers import configure_logging, update_config_with_sector_opts
 from solve_network import prepare_network, solve_network
 
 logger = logging.getLogger(__name__)

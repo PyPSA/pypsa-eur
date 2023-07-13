@@ -17,10 +17,7 @@ import numpy as np
 import pandas as pd
 import pypsa
 import xarray as xr
-from _helpers import (
-    generate_periodic_profiles,
-    update_config_with_sector_opts,
-)
+from _helpers import generate_periodic_profiles, update_config_with_sector_opts
 from add_electricity import calculate_annuity, sanitize_carriers
 from build_energy_totals import build_co2_totals, build_eea_co2, build_eurostat_co2
 from networkx.algorithms import complement
