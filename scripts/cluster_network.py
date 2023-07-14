@@ -139,7 +139,6 @@ from pypsa.clustering.spatial import (
     busmap_by_hac,
     busmap_by_kmeans,
     get_clustering_from_busmap,
-    make_consense,
 )
 
 warnings.filterwarnings(action="ignore", category=UserWarning)
@@ -406,7 +405,6 @@ def clustering_for_n_clusters(
     clustering = get_clustering_from_busmap(
         n,
         busmap,
-        bus_strategies={"country": make_consense},
         aggregate_generators_weighted=True,
         aggregate_generators_carriers=aggregate_carriers,
         aggregate_one_ports=["Load", "StorageUnit"],

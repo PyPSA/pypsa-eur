@@ -86,7 +86,7 @@ The rule :mod:`simplify_network` does up to four things:
 """
 
 import logging
-from functools import reduce
+from functools import partial, reduce
 
 import numpy as np
 import pandas as pd
@@ -99,7 +99,6 @@ from pypsa.clustering.spatial import (
     aggregateoneport,
     busmap_by_stubs,
     get_clustering_from_busmap,
-    make_consense,
 )
 from pypsa.io import import_components_from_dataframe, import_series_from_dataframe
 from scipy.sparse.csgraph import connected_components, dijkstra
@@ -482,17 +481,14 @@ def aggregate_to_substations(n, aggregation_strategies=dict(), buses_i=None):
     busmap = n.buses.index.to_series()
     busmap.loc[buses_i] = dist.idxmin(1)
 
-    bus_strategies = {"country": make_consense}
-
     clustering = get_clustering_from_busmap(
         n,
         busmap,
-        bus_strategies=bus_strategies,
         aggregate_generators_weighted=True,
         aggregate_generators_carriers=None,
         aggregate_one_ports=["Load", "StorageUnit"],
         line_length_factor=1.0,
-        generator_strategies=generator_strategies,
+        generator_strategies=aggregation_strategies["generators"],
         scale_link_capital_costs=False,
     )
     return clustering.network, busmap
