@@ -7,14 +7,19 @@ run:
 
 scenario:
   clusters:  # number of nodes in Europe, any integer between 37 (1 node per country-zone) and several hundred
-  - 37c
+  - 37
   opts: # only relevant for PyPSA-Eur
   - 'Ept'
 
 snapshots:
   start: "2019-01-01"
-  end: "2019-02-01"
+  end: "2020-01-01"
   inclusive: 'left' # include start, not end
 
 conventional:
   unit_commitment: false
+
+solving:
+  options:
+    linearized_unit_commitment: false
+    rolling_horizon: false
