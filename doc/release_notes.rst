@@ -40,6 +40,10 @@ Upcoming Release
   e.g. by setting ``solving: options: transmission_losses: 2`` for an
   approximation with two tangents.
 
+* Added configuration option ``enable: retrieve:`` to control whether data
+  retrieval rules from snakemake are enabled or not. Th default setting ``auto`` 
+  will automatically detect and enable/disable the rules based on internet connectivity.
+
 
 PyPSA-Eur 0.8.0 (18th March 2023)
 =================================
