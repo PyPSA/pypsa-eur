@@ -41,7 +41,7 @@ Upcoming Release
   approximation with two tangents.
 
 * Added configuration option ``enable: retrieve:`` to control whether data
-  retrieval rules from snakemake are enabled or not. Th default setting ``auto`` 
+  retrieval rules from snakemake are enabled or not. Th default setting ``auto``
   will automatically detect and enable/disable the rules based on internet connectivity.
 
 
