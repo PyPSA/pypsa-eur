@@ -3056,7 +3056,6 @@ def maybe_adjust_costs_and_potentials(n, opts):
             logger.info(f"changing {attr} for {carrier} by factor {factor}")
 
 
-# TODO this should rather be a config no wildcard
 def limit_individual_line_extension(n, maxext):
     logger.info(f"Limiting new HVAC and HVDC extensions to {maxext} MW")
     n.lines["s_nom_max"] = n.lines["s_nom"] + maxext
