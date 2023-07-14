@@ -92,14 +92,14 @@ import numpy as np
 import pandas as pd
 import pypsa
 import scipy as sp
-from _helpers import configure_logging, get_aggregation_strategies, update_p_nom_max
+from _helpers import configure_logging, update_p_nom_max
 from add_electricity import load_costs
 from cluster_network import cluster_regions, clustering_for_n_clusters
 from pypsa.clustering.spatial import (
-    aggregategenerators,
     aggregateoneport,
     busmap_by_stubs,
     get_clustering_from_busmap,
+    make_consense,
 )
 from pypsa.io import import_components_from_dataframe, import_series_from_dataframe
 from scipy.sparse.csgraph import connected_components, dijkstra
@@ -253,11 +253,15 @@ def _aggregate_and_move_components(
 
     _adjust_capital_costs_using_connection_costs(n, connection_costs_to_bus, output)
 
-    _, generator_strategies = get_aggregation_strategies(aggregation_strategies)
+    generator_strategies = aggregation_strategies["generators"]
 
     carriers = set(n.generators.carrier) - set(exclude_carriers)
-    generators, generators_pnl = aggregategenerators(
-        n, busmap, carriers=carriers, custom_strategies=generator_strategies
+    generators, generators_pnl = aggregateoneport(
+        n,
+        busmap,
+        "Generator",
+        carriers=carriers,
+        custom_strategies=generator_strategies,
     )
 
     replace_components(n, "Generator", generators, generators_pnl)
@@ -478,9 +482,7 @@ def aggregate_to_substations(n, aggregation_strategies=dict(), buses_i=None):
     busmap = n.buses.index.to_series()
     busmap.loc[buses_i] = dist.idxmin(1)
 
-    bus_strategies, generator_strategies = get_aggregation_strategies(
-        aggregation_strategies
-    )
+    bus_strategies = {"country": make_consense}
 
     clustering = get_clustering_from_busmap(
         n,
@@ -534,15 +536,6 @@ if __name__ == "__main__":
     n = pypsa.Network(snakemake.input.network)
     Nyears = n.snapshot_weightings.objective.sum() / 8760
 
-    # translate str entries of aggregation_strategies to pd.Series functions:
-    aggregation_strategies = {
-        p: {
-            k: getattr(pd.Series, v)
-            for k, v in params.aggregation_strategies[p].items()
-        }
-        for p in params.aggregation_strategies.keys()
-    }
-
     n, trafo_map = simplify_network_to_380(n)
 
     technology_costs = load_costs(
@@ -560,7 +553,7 @@ if __name__ == "__main__":
         params.p_max_pu,
         params.simplify_network["exclude_carriers"],
         snakemake.output,
-        aggregation_strategies,
+        params.aggregation_strategies,
     )
 
     busmaps = [trafo_map, simplify_links_map]
@@ -573,12 +566,12 @@ if __name__ == "__main__":
             params.length_factor,
             params.simplify_network,
             snakemake.output,
-            aggregation_strategies=aggregation_strategies,
+            aggregation_strategies=params.aggregation_strategies,
         )
         busmaps.append(stub_map)
 
     if params.simplify_network["to_substations"]:
-        n, substation_map = aggregate_to_substations(n, aggregation_strategies)
+        n, substation_map = aggregate_to_substations(n, params.aggregation_strategies)
         busmaps.append(substation_map)
 
     # treatment of outliers (nodes without a profile for considered carrier):
@@ -592,7 +585,9 @@ if __name__ == "__main__":
             logger.info(
                 f"clustering preparation (hac): aggregating {len(buses_i)} buses of type {carrier}."
             )
-            n, busmap_hac = aggregate_to_substations(n, aggregation_strategies, buses_i)
+            n, busmap_hac = aggregate_to_substations(
+                n, params.aggregation_strategies, buses_i
+            )
             busmaps.append(busmap_hac)
 
     if snakemake.wildcards.simpl:
@@ -603,20 +598,22 @@ if __name__ == "__main__":
             solver_name,
             params.simplify_network["algorithm"],
             params.simplify_network["feature"],
-            aggregation_strategies,
+            params.aggregation_strategies,
         )
         busmaps.append(cluster_map)
 
     # some entries in n.buses are not updated in previous functions, therefore can be wrong. as they are not needed
     # and are lost when clustering (for example with the simpl wildcard), we remove them for consistency:
-    buses_c = {
+    remove = [
         "symbol",
         "tags",
         "under_construction",
         "substation_lv",
         "substation_off",
-    }.intersection(n.buses.columns)
-    n.buses = n.buses.drop(buses_c, axis=1)
+        "geometry",
+    ]
+    n.buses.drop(remove, axis=1, inplace=True, errors="ignore")
+    n.lines.drop(remove, axis=1, errors="ignore", inplace=True)
 
     update_p_nom_max(n)
 
