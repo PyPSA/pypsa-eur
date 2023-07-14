@@ -32,7 +32,7 @@ configuration, execute
 .. code:: bash
     :class: full-width
 
-    snakemake -call results/test-elec/networks/elec_s_6_ec_lcopt_Co2L-24H.nc --configfile test/config.electricity.yaml
+    snakemake -call results/test-elec/networks/elec_s_6_ec_lcopt_Co2L-24H.nc --configfile config/test/config.electricity.yaml
 
 This configuration is set to download a reduced data set via the rules :mod:`retrieve_databundle`,
 :mod:`retrieve_natura_raster`, :mod:`retrieve_cutout`.
@@ -115,7 +115,7 @@ clustered down to 6 buses and every 24 hours aggregated to one snapshot. The com
 
 .. code:: bash
 
-    snakemake -call results/test-elec/networks/elec_s_6_ec_lcopt_Co2L-24H.nc --configfile test/config.electricity.yaml
+    snakemake -call results/test-elec/networks/elec_s_6_ec_lcopt_Co2L-24H.nc --configfile config/test/config.electricity.yaml
 
 orders ``snakemake`` to run the rule :mod:`solve_network` that produces the solved network and stores it in ``results/networks`` with the name ``elec_s_6_ec_lcopt_Co2L-24H.nc``:
 
@@ -276,18 +276,18 @@ You can produce any output file occurring in the ``Snakefile`` by running
 
 For example, you can explore the evolution of the PyPSA networks by running
 
-#. ``snakemake resources/networks/base.nc -call --configfile test/config.electricity.yaml``
-#. ``snakemake resources/networks/elec.nc -call --configfile test/config.electricity.yaml``
-#. ``snakemake resources/networks/elec_s.nc -call --configfile test/config.electricity.yaml``
-#. ``snakemake resources/networks/elec_s_6.nc -call --configfile test/config.electricity.yaml``
-#. ``snakemake resources/networks/elec_s_6_ec_lcopt_Co2L-24H.nc -call --configfile test/config.electricity.yaml``
+#. ``snakemake resources/networks/base.nc -call --configfile config/test/config.electricity.yaml``
+#. ``snakemake resources/networks/elec.nc -call --configfile config/test/config.electricity.yaml``
+#. ``snakemake resources/networks/elec_s.nc -call --configfile config/test/config.electricity.yaml``
+#. ``snakemake resources/networks/elec_s_6.nc -call --configfile config/test/config.electricity.yaml``
+#. ``snakemake resources/networks/elec_s_6_ec_lcopt_Co2L-24H.nc -call --configfile config/test/config.electricity.yaml``
 
 To run all combinations of wildcard values provided in the ``config/config.yaml`` under ``scenario:``,
 you can use the collection rule ``solve_elec_networks``.
 
 .. code:: bash
 
-    snakemake -call solve_elec_networks --configfile test/config.electricity.yaml
+    snakemake -call solve_elec_networks --configfile config/test/config.electricity.yaml
 
 If you now feel confident and want to tackle runs with larger temporal and
 spatial scope, clean-up the repository and after modifying the ``config/config.yaml`` file

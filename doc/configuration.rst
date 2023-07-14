@@ -24,7 +24,7 @@ Top-level configuration
 
 .. csv-table::
    :header-rows: 1
-   :widths: 25,7,22,30
+   :widths: 22,7,22,33
    :file: configtables/toplevel.csv
 
 .. _run_cf:
@@ -45,7 +45,7 @@ The ``run`` section is used for running and storing scenarios with different con
 
 .. csv-table::
    :header-rows: 1
-   :widths: 25,7,22,30
+   :widths: 22,7,22,33
    :file: configtables/run.csv
 
 .. _foresight_cf:
@@ -60,7 +60,7 @@ The ``run`` section is used for running and storing scenarios with different con
 
 .. csv-table::
    :header-rows: 1
-   :widths: 25,7,22,30
+   :widths: 22,7,22,33
    :file: configtables/foresight.csv
 
 .. note::
@@ -105,7 +105,7 @@ An exemplary dependency graph (starting from the simplification rules) then look
 
 .. csv-table::
    :header-rows: 1
-   :widths: 25,7,22,30
+   :widths: 22,7,22,33
    :file: configtables/scenario.csv
 
 .. _countries:
@@ -120,7 +120,7 @@ An exemplary dependency graph (starting from the simplification rules) then look
 
 .. csv-table::
    :header-rows: 1
-   :widths: 25,7,22,30
+   :widths: 22,7,22,33
    :file: configtables/countries.csv
 
 .. _snapshots_cf:
@@ -137,7 +137,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 .. csv-table::
    :header-rows: 1
-   :widths: 25,7,22,30
+   :widths: 22,7,22,33
    :file: configtables/snapshots.csv
 
 .. _enable_cf:
@@ -154,7 +154,7 @@ Switches for some rules and optional features.
 
 .. csv-table::
    :header-rows: 1
-   :widths: 25,7,22,30
+   :widths: 22,7,22,33
    :file: configtables/enable.csv
 
 .. _CO2_budget_cf:
@@ -169,7 +169,7 @@ Switches for some rules and optional features.
 
 .. csv-table::
    :header-rows: 1
-   :widths: 25,7,22,30
+   :widths: 22,7,22,33
    :file: configtables/co2_budget.csv
 
 .. note::
@@ -188,7 +188,7 @@ Switches for some rules and optional features.
 
 .. csv-table::
    :header-rows: 1
-   :widths: 25,7,22,30
+   :widths: 22,7,22,33
    :file: configtables/electricity.csv
 
 .. _atlite_cf:
@@ -205,7 +205,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 
 .. csv-table::
    :header-rows: 1
-   :widths: 25,7,22,30
+   :widths: 22,7,22,33
    :file: configtables/atlite.csv
 
 .. _renewable_cf:
@@ -223,7 +223,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 
 .. csv-table::
    :header-rows: 1
-   :widths: 25,7,22,30
+   :widths: 22,7,22,33
    :file: configtables/onwind.csv
 
 .. note::
@@ -245,7 +245,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 
 .. csv-table::
    :header-rows: 1
-   :widths: 25,7,22,30
+   :widths: 22,7,22,33
    :file: configtables/offwind-ac.csv
 
 .. note::
@@ -268,7 +268,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 
 .. csv-table::
    :header-rows: 1
-   :widths: 25,7,22,30
+   :widths: 22,7,22,33
    :file: configtables/offwind-dc.csv
 
 .. note::
@@ -285,7 +285,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 
 .. csv-table::
    :header-rows: 1
-   :widths: 25,7,22,30
+   :widths: 22,7,22,33
    :file: configtables/solar.csv
 
 .. note::
@@ -307,7 +307,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 
 .. csv-table::
    :header-rows: 1
-   :widths: 25,7,22,30
+   :widths: 22,7,22,33
    :file: configtables/hydro.csv
 
 .. _lines_cf:
@@ -329,7 +329,7 @@ overwrite the existing values.
 
 .. csv-table::
    :header-rows: 1
-   :widths: 25,7,22,30
+   :widths: 22,7,22,33
    :file: configtables/conventional.csv
 
 ``lines``
@@ -342,7 +342,7 @@ overwrite the existing values.
 
 .. csv-table::
    :header-rows: 1
-   :widths: 25,7,22,30
+   :widths: 22,7,22,33
    :file: configtables/lines.csv
 
 .. _links_cf:
@@ -357,7 +357,7 @@ overwrite the existing values.
 
 .. csv-table::
    :header-rows: 1
-   :widths: 25,7,22,30
+   :widths: 22,7,22,33
    :file: configtables/links.csv
 
 .. _transformers_cf:
@@ -372,7 +372,7 @@ overwrite the existing values.
 
 .. csv-table::
    :header-rows: 1
-   :widths: 25,7,22,30
+   :widths: 22,7,22,33
    :file: configtables/transformers.csv
 
 .. _load_cf:
@@ -387,7 +387,7 @@ overwrite the existing values.
 
 .. csv-table::
    :header-rows: 1
-   :widths: 25,7,22,30
+   :widths: 22,7,22,33
    :file: configtables/load.csv
 
 .. _energy_cf:
@@ -405,7 +405,7 @@ overwrite the existing values.
 
 .. csv-table::
    :header-rows: 1
-   :widths: 25,7,22,30
+   :widths: 22,7,22,33
    :file: configtables/energy.csv
 
 .. _biomass_cf:
@@ -423,7 +423,7 @@ overwrite the existing values.
 
 .. csv-table::
    :header-rows: 1
-   :widths: 25,7,22,30
+   :widths: 22,7,22,33
    :file: configtables/biomass.csv
 
 The list of available biomass is given by the category in `ENSPRESO_BIOMASS <https://cidportal.jrc.ec.europa.eu/ftp/jrc-opendata/ENSPRESO/ENSPRESO_BIOMASS.xlsx>`_, namely:
@@ -461,7 +461,7 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 
 .. csv-table::
    :header-rows: 1
-   :widths: 25,7,22,30
+   :widths: 22,7,22,33
    :file: configtables/solar-thermal.csv
 
 .. _existing_capacities_cf:
@@ -479,7 +479,7 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 
 .. csv-table::
    :header-rows: 1
-   :widths: 25,7,22,30
+   :widths: 22,7,22,33
    :file: configtables/existing_capacities.csv
 
 .. _sector_cf:
@@ -497,7 +497,7 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 
 .. csv-table::
    :header-rows: 1
-   :widths: 25,7,22,30
+   :widths: 22,7,22,33
    :file: configtables/sector.csv
 
 .. _industry_cf:
@@ -515,7 +515,7 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 
 .. csv-table::
    :header-rows: 1
-   :widths: 25,7,22,30
+   :widths: 22,7,22,33
    :file: configtables/industry.csv
 
 .. _costs_cf:
@@ -530,7 +530,7 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 
 .. csv-table::
    :header-rows: 1
-   :widths: 25,7,22,30
+   :widths: 22,7,22,33
    :file: configtables/costs.csv
 
 .. note::
@@ -549,7 +549,7 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 
 .. csv-table::
    :header-rows: 1
-   :widths: 25,7,22,30
+   :widths: 22,7,22,33
    :file: configtables/clustering.csv
 
 .. note::
@@ -572,7 +572,7 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 
 .. csv-table::
    :header-rows: 1
-   :widths: 25,7,22,30
+   :widths: 22,7,22,33
    :file: configtables/solving.csv
 
 .. _plotting_cf:
@@ -589,5 +589,5 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 
 .. csv-table::
    :header-rows: 1
-   :widths: 25,7,22,30
+   :widths: 22,7,22,33
    :file: configtables/plotting.csv
