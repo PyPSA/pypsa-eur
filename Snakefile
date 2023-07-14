@@ -48,10 +48,7 @@ wildcard_constraints:
 
 include: "rules/common.smk"
 include: "rules/collect.smk"
-if (config["enable"].get("retrieve","auto") == "auto" and has_internet_access())or config["enable"]["retrieve"] is True:
-    include: "rules/retrieve.smk"
-else:
-    print("Datafile downloads disabled in config[retrieve] or no internet access.")
+include: "rules/retrieve.smk"
 include: "rules/build_electricity.smk"
 include: "rules/build_sector.smk"
 include: "rules/solve_electricity.smk"
