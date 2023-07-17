@@ -133,7 +133,7 @@ import pandas as pd
 import pyomo.environ as po
 import pypsa
 import seaborn as sns
-from _helpers import configure_logging, get_aggregation_strategies, update_p_nom_max
+from _helpers import configure_logging, update_p_nom_max
 from pypsa.clustering.spatial import (
     busmap_by_greedy_modularity,
     busmap_by_hac,
@@ -395,10 +395,6 @@ def clustering_for_n_clusters(
     extended_link_costs=0,
     focus_weights=None,
 ):
-    bus_strategies, generator_strategies = get_aggregation_strategies(
-        aggregation_strategies
-    )
-
     if not isinstance(custom_busmap, pd.Series):
         busmap = busmap_for_n_clusters(
             n, n_clusters, solver_name, focus_weights, algorithm, feature
@@ -406,15 +402,20 @@ def clustering_for_n_clusters(
     else:
         busmap = custom_busmap
 
+    line_strategies = aggregation_strategies.get("lines", dict())
+    generator_strategies = aggregation_strategies.get("generators", dict())
+    one_port_strategies = aggregation_strategies.get("one_ports", dict())
+
     clustering = get_clustering_from_busmap(
         n,
         busmap,
-        bus_strategies=bus_strategies,
         aggregate_generators_weighted=True,
         aggregate_generators_carriers=aggregate_carriers,
         aggregate_one_ports=["Load", "StorageUnit"],
         line_length_factor=line_length_factor,
+        line_strategies=line_strategies,
         generator_strategies=generator_strategies,
+        one_port_strategies=one_port_strategies,
         scale_link_capital_costs=False,
     )
 
@@ -460,7 +461,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("cluster_network", simpl="", clusters="5")
+        snakemake = mock_snakemake("cluster_network", simpl="", clusters="37c")
     configure_logging(snakemake)
 
     params = snakemake.params
@@ -470,11 +471,13 @@ if __name__ == "__main__":
 
     exclude_carriers = params.cluster_network["exclude_carriers"]
     aggregate_carriers = set(n.generators.carrier) - set(exclude_carriers)
+    conventional_carriers = set(params.conventional_carriers)
     if snakemake.wildcards.clusters.endswith("m"):
         n_clusters = int(snakemake.wildcards.clusters[:-1])
-        aggregate_carriers = set(params.conventional_carriers).intersection(
-            aggregate_carriers
-        )
+        aggregate_carriers = params.conventional_carriers & aggregate_carriers
+    elif snakemake.wildcards.clusters.endswith("c"):
+        n_clusters = int(snakemake.wildcards.clusters[:-1])
+        aggregate_carriers = aggregate_carriers - conventional_carriers
     elif snakemake.wildcards.clusters == "all":
         n_clusters = len(n.buses)
     else:
@@ -496,22 +499,6 @@ if __name__ == "__main__":
             params.max_hours,
             Nyears,
         ).at["HVAC overhead", "capital_cost"]
-
-        def consense(x):
-            v = x.iat[0]
-            assert (
-                x == v
-            ).all() or x.isnull().all(), "The `potential` configuration option must agree for all renewable carriers, for now!"
-            return v
-
-        # translate str entries of aggregation_strategies to pd.Series functions:
-        aggregation_strategies = {
-            p: {
-                k: getattr(pd.Series, v)
-                for k, v in params.aggregation_strategies[p].items()
-            }
-            for p in params.aggregation_strategies.keys()
-        }
 
         custom_busmap = params.custom_busmap
         if custom_busmap:
