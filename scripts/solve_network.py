@@ -378,13 +378,14 @@ def add_SAFE_constraints(n, config):
     peakdemand = n.loads_t.p_set.sum(axis=1).max()
     margin = 1.0 + config["electricity"]["SAFE_reservemargin"]
     reserve_margin = peakdemand * margin
-    # TODO: do not take this from the plotting config!
-    conv_techs = config["plotting"]["conv_techs"]
-    ext_gens_i = n.generators.query("carrier in @conv_techs & p_nom_extendable").index
+    conventional_carriers = config["electricity"]["conventional_carriers"]
+    ext_gens_i = n.generators.query(
+        "carrier in @conventional_carriers & p_nom_extendable"
+    ).index
     p_nom = n.model["Generator-p_nom"].loc[ext_gens_i]
     lhs = p_nom.sum()
     exist_conv_caps = n.generators.query(
-        "~p_nom_extendable & carrier in @conv_techs"
+        "~p_nom_extendable & carrier in @conventional_carriers"
     ).p_nom.sum()
     rhs = reserve_margin - exist_conv_caps
     n.model.add_constraints(lhs >= rhs, name="safe_mintotalcap")
