@@ -73,7 +73,9 @@ sheet_name_map = {
 # import fuel price 2015 in Eur/MWh
 # source for coal, oil, gas, Agora, slide 24 [2]
 # source lignite, price for 2020, scaled by price index, ENTSO-E [3]
-price_2015 = {"coal": 8.3, "oil": 30.6, "gas": 20.6, "lignite": 3.8}  # 2020 3.96/1.04
+price_2020 = (
+    pd.Series({"coal": 3.0, "oil": 10.6, "gas": 5.6, "lignite": 1.1}) * 3.6
+)  # Eur/MWh
 
 
 def get_fuel_price():
@@ -91,7 +93,8 @@ def get_fuel_price():
         start, end = df.index[0], str(int(df.index[-1][:4]) + 1)
         df = df.stack()
         df.index = pd.date_range(start=start, end=end, freq="MS", inclusive="left")
-        df = df.mul(price_2015[carrier] / 100)
+        scale = price_2020[carrier] / df["2020"].mean()  # scale to 2020 price
+        df = df.mul(scale)
         price[carrier] = df
 
     return pd.concat(price, axis=1)
