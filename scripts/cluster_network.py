@@ -402,6 +402,10 @@ def clustering_for_n_clusters(
     else:
         busmap = custom_busmap
 
+    line_strategies = aggregation_strategies.get("lines", dict())
+    generator_strategies = aggregation_strategies.get("generators", dict())
+    one_port_strategies = aggregation_strategies.get("one_ports", dict())
+
     clustering = get_clustering_from_busmap(
         n,
         busmap,
@@ -409,7 +413,9 @@ def clustering_for_n_clusters(
         aggregate_generators_carriers=aggregate_carriers,
         aggregate_one_ports=["Load", "StorageUnit"],
         line_length_factor=line_length_factor,
-        generator_strategies=aggregation_strategies["generators"],
+        line_strategies=line_strategies,
+        generator_strategies=generator_strategies,
+        one_port_strategies=one_port_strategies,
         scale_link_capital_costs=False,
     )
 

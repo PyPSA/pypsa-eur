@@ -481,6 +481,10 @@ def aggregate_to_substations(n, aggregation_strategies=dict(), buses_i=None):
     busmap = n.buses.index.to_series()
     busmap.loc[buses_i] = dist.idxmin(1)
 
+    line_strategies = aggregation_strategies.get("lines", dict())
+    generator_strategies = aggregation_strategies.get("generators", dict())
+    one_port_strategies = aggregation_strategies.get("one_ports", dict())
+
     clustering = get_clustering_from_busmap(
         n,
         busmap,
@@ -488,7 +492,9 @@ def aggregate_to_substations(n, aggregation_strategies=dict(), buses_i=None):
         aggregate_generators_carriers=None,
         aggregate_one_ports=["Load", "StorageUnit"],
         line_length_factor=1.0,
-        generator_strategies=aggregation_strategies["generators"],
+        line_strategies=line_strategies,
+        generator_strategies=generator_strategies,
+        one_port_strategies=one_port_strategies,
         scale_link_capital_costs=False,
     )
     return clustering.network, busmap
