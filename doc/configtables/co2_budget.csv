@@ -1,0 +1,2 @@
+,Unit,Values,Description
+co2_budget,--,Dictionary with planning horizons as keys.,CO2 budget as a fraction of 1990 emissions. Overwritten if ``CO2Lx`` or ``cb`` are set in ``{sector_opts}`` wildcard"doc/configtables/othertoplevel.csv
