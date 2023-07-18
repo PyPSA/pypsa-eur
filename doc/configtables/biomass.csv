@@ -1,0 +1,7 @@
+,Unit,Values,Description
+year ,--,"{2010, 2020, 2030, 2040, 2050}",Year for which to retrieve biomass potential according to the assumptions of the `JRC ENSPRESO <https://data.jrc.ec.europa.eu/dataset/74ed5a04-7d74-4807-9eab-b94774309d9f>`_ .
+scenario ,--,"{""ENS_Low"", ""ENS_Med"", ""ENS_High""}",Scenario for which to retrieve biomass potential. The scenario definition can be seen in `ENSPRESO_BIOMASS <https://cidportal.jrc.ec.europa.eu/ftp/jrc-opendata/ENSPRESO/ENSPRESO_BIOMASS.xlsx>`_
+classes ,,,
+-- solid biomass,--,Array of biomass comodity,The comodity that are included as solid biomass
+-- not included,--,Array of biomass comodity,The comodity that are not included as a biomass potential
+-- biogas,--,Array of biomass comodity,The comodity that are included as biogas

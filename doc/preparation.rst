@@ -89,7 +89,7 @@ Rule ``build_powerplants``
 .. _electricity_demand:
 
 Rule ``build_electricity_demand``
-=============================
+==================================
 
 
 .. automodule:: build_electricity_demand

@@ -1,0 +1,7 @@
+,Unit,Values,Description
+energy_totals_year ,--,"{1990,1995,2000,2005,2010,2011,…} ",The year for the sector energy use. The year must be avaliable in the Eurostat report
+base_emissions_year ,--,"YYYY; e.g. 1990","The base year for the sector emissions. See `European Environment Agency (EEA) <https://www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-16>`_."
+
+eurostat_report_year ,--,"{2016,2017,2018}","The publication year of the Eurostat report. 2016 includes Bosnia and Herzegovina, 2017 does not"
+
+emissions ,--,"{CO2, All greenhouse gases - (CO2 equivalent)}","Specify which sectoral emissions are taken into account. Data derived from EEA. Currently only CO2 is implemented."
