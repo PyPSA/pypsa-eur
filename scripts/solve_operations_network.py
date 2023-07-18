@@ -41,7 +41,7 @@ if __name__ == "__main__":
 
     opts = (snakemake.wildcards.opts + "-" + snakemake.wildcards.sector_opts).split("-")
     opts = [o for o in opts if o != ""]
-    solve_opts = snakemake.config["solving"]["options"]
+    solve_opts = snakemake.params.options
 
     np.random.seed(solve_opts.get("seed", 123))
 

@@ -198,7 +198,7 @@ def calculate_costs(n, label, costs):
 
 
 def calculate_cumulative_cost():
-    planning_horizons = snakemake.config["scenario"]["planning_horizons"]
+    planning_horizons = snakemake.params.scenario["planning_horizons"]
 
     cumulative_cost = pd.DataFrame(
         index=df["costs"].sum().index,
@@ -688,19 +688,19 @@ if __name__ == "__main__":
         (cluster, ll, opt + sector_opt, planning_horizon): "results/"
         + snakemake.params.RDIR
         + f"/postnetworks/elec_s{simpl}_{cluster}_l{ll}_{opt}_{sector_opt}_{planning_horizon}.nc"
-        for simpl in snakemake.config["scenario"]["simpl"]
-        for cluster in snakemake.config["scenario"]["clusters"]
-        for opt in snakemake.config["scenario"]["opts"]
-        for sector_opt in snakemake.config["scenario"]["sector_opts"]
-        for ll in snakemake.config["scenario"]["ll"]
-        for planning_horizon in snakemake.config["scenario"]["planning_horizons"]
+        for simpl in snakemake.params.scenario["simpl"]
+        for cluster in snakemake.params.scenario["clusters"]
+        for opt in snakemake.params.scenario["opts"]
+        for sector_opt in snakemake.params.scenario["sector_opts"]
+        for ll in snakemake.params.scenario["ll"]
+        for planning_horizon in snakemake.params.scenario["planning_horizons"]
     }
 
-    Nyears = len(pd.date_range(freq="h", **snakemake.config["snapshots"])) / 8760
+    Nyears = len(pd.date_range(freq="h", **snakemake.params.snapshots)) / 8760
 
     costs_db = prepare_costs(
         snakemake.input.costs,
-        snakemake.config["costs"],
+        snakemake.params.costs,
         Nyears,
     )
 
@@ -710,7 +710,7 @@ if __name__ == "__main__":
 
     to_csv(df)
 
-    if snakemake.config["foresight"] == "myopic":
+    if snakemake.params.foresight == "myopic":
         cumulative_cost = calculate_cumulative_cost()
         cumulative_cost.to_csv(
             "results/" + snakemake.params.RDIR + "/csvs/cumulative_cost.csv"

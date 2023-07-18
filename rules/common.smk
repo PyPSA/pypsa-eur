@@ -23,6 +23,22 @@ def memory(w):
         return int(factor * (10000 + 195 * int(w.clusters)))
 
 
+# Check if the workflow has access to the internet by trying to access the HEAD of specified url
+def has_internet_access(url="www.zenodo.org") -> bool:
+    import http.client as http_client
+
+    # based on answer and comments from
+    # https://stackoverflow.com/a/29854274/11318472
+    conn = http_client.HTTPConnection(url, timeout=5)  # need access to zenodo anyway
+    try:
+        conn.request("HEAD", "/")
+        return True
+    except:
+        return False
+    finally:
+        conn.close()
+
+
 def input_eurostat(w):
     # 2016 includes BA, 2017 does not
     report_year = config["energy"]["eurostat_report_year"]

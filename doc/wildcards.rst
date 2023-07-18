@@ -117,6 +117,23 @@ The ``{sector_opts}`` wildcard
 
 .. warning::
     More comprehensive documentation for this wildcard will be added soon.
+    To really understand the options here, look in scripts/prepare_sector_network.py
+
+  # Co2Lx specifies the CO2 target in x% of the 1990 values; default will give default (5%);
+  # Co2L0p25 will give 25% CO2 emissions; Co2Lm0p05 will give 5% negative emissions
+  # xH is the temporal resolution; 3H is 3-hourly, i.e. one snapshot every 3 hours
+  # single letters are sectors: T for land transport, H for building heating,
+  # B for biomass supply, I for industry, shipping and aviation,
+  # A for agriculture, forestry and fishing
+  # solar+c0.5 reduces the capital cost of solar to 50\% of reference value
+  # solar+p3 multiplies the available installable potential by factor 3
+  # seq400 sets the potential of CO2 sequestration to 400 Mt CO2 per year
+  # dist{n} includes distribution grids with investment cost of n times cost in data/costs.csv
+  # for myopic/perfect foresight cb states the carbon budget in GtCO2 (cumulative
+  # emissions throughout the transition path in the timeframe determined by the
+  # planning_horizons), be:beta decay; ex:exponential decay
+  # cb40ex0 distributes a carbon budget of 40 GtCO2 following an exponential
+  # decay with initial growth rate 0
 
 The ``{sector_opts}`` wildcard is only used for sector-coupling studies.
 

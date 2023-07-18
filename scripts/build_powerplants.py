@@ -115,7 +115,7 @@ if __name__ == "__main__":
     configure_logging(snakemake)
 
     n = pypsa.Network(snakemake.input.base_network)
-    countries = snakemake.config["countries"]
+    countries = snakemake.params.countries
 
     ppl = (
         pm.powerplants(from_url=True)
@@ -134,12 +134,12 @@ if __name__ == "__main__":
     ppl = ppl.query('not (Country in @available_countries and Fueltype == "Bioenergy")')
     ppl = pd.concat([ppl, opsd])
 
-    ppl_query = snakemake.config["electricity"]["powerplants_filter"]
+    ppl_query = snakemake.params.powerplants_filter
     if isinstance(ppl_query, str):
         ppl.query(ppl_query, inplace=True)
 
     # add carriers from own powerplant files:
-    custom_ppl_query = snakemake.config["electricity"]["custom_powerplants"]
+    custom_ppl_query = snakemake.params.custom_powerplants
     ppl = add_custom_powerplants(
         ppl, snakemake.input.custom_powerplants, custom_ppl_query
     )
@@ -149,6 +149,7 @@ if __name__ == "__main__":
         logging.warning(f"No powerplants known in: {', '.join(countries_wo_ppl)}")
 
     substations = n.buses.query("substation_lv")
+    ppl = ppl.dropna(subset=["lat", "lon"])
     ppl = map_country_bus(ppl, substations)
 
     bus_null_b = ppl["bus"].isnull()
