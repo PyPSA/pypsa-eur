@@ -22,7 +22,7 @@ from _helpers import (
     override_component_attrs,
     update_config_with_sector_opts,
 )
-from add_electricity import calculate_annuity
+from add_electricity import calculate_annuity, sanitize_carriers
 from build_energy_totals import build_co2_totals, build_eea_co2, build_eurostat_co2
 from networkx.algorithms import complement
 from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentation
@@ -3056,7 +3056,6 @@ def maybe_adjust_costs_and_potentials(n, opts):
             logger.info(f"changing {attr} for {carrier} by factor {factor}")
 
 
-# TODO this should rather be a config no wildcard
 def limit_individual_line_extension(n, maxext):
     logger.info(f"Limiting new HVAC and HVDC extensions to {maxext} MW")
     n.lines["s_nom_max"] = n.lines["s_nom"] + maxext
@@ -3424,5 +3423,7 @@ if __name__ == "__main__":
         cluster_heat_buses(n)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
+
+    sanitize_carriers(n, snakemake.config)
 
     n.export_to_netcdf(snakemake.output[0])

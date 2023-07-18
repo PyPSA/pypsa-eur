@@ -35,7 +35,7 @@ configuration options. In the example below, we say that the gas network should
 be added and spatially resolved. We also say that the existing gas network may
 be retrofitted to transport hydrogen instead.
 
-.. literalinclude:: ../test/config.overnight.yaml
+.. literalinclude:: ../config/test/config.overnight.yaml
    :language: yaml
    :start-at: sector:
    :end-before: solving:
@@ -45,7 +45,7 @@ Documentation for all options will be added successively to :ref:`config`.
 Scenarios can be defined like for electricity-only studies, but with additional
 wildcard options.
 
-.. literalinclude:: ../test/config.overnight.yaml
+.. literalinclude:: ../config/test/config.overnight.yaml
    :language: yaml
    :start-at: scenario:
    :end-before: countries:
@@ -59,7 +59,7 @@ To run an overnight / greenfiled scenario with the specifications above, run
 
 .. code:: bash
 
-    snakemake -call --configfile test/config.overnight.yaml all
+    snakemake -call --configfile config/test/config.overnight.yaml all
 
 which will result in the following *additional* jobs ``snakemake`` wants to run
 on top of those already included in the electricity-only tutorial:
@@ -294,7 +294,7 @@ Scenarios can be defined like for electricity-only studies, but with additional
 wildcard options. For the myopic foresight mode, the ``{planning_horizons}`` wildcard
 defines the sequence of investment horizons.
 
-.. literalinclude:: ../test/config.myopic.yaml
+.. literalinclude:: ../config/test/config.myopic.yaml
    :language: yaml
    :start-at: scenario:
    :end-before: countries:
@@ -304,7 +304,7 @@ For allowed wildcard values, refer to :ref:`wildcards`.
 In the myopic foresight mode, you can tweak for instance exogenously given transition paths, like the one for
 the share of primary steel production we change below:
 
-.. literalinclude:: ../test/config.myopic.yaml
+.. literalinclude:: ../config/test/config.myopic.yaml
    :language: yaml
    :start-at: industry:
    :end-before: solving:
@@ -318,7 +318,7 @@ To run a myopic foresight scenario with the specifications above, run
 
 .. code:: bash
 
-    snakemake -call --configfile test/config.myopic.yaml all
+    snakemake -call --configfile config/test/config.myopic.yaml all
 
 which will result in the following *additional* jobs ``snakemake`` wants to run:
 

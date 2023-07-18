@@ -12,7 +12,7 @@ The database of cost assumptions is retrieved from the repository
 saved to a file ``data/costs_{year}.csv``. The ``config/config.yaml`` provides options
 to choose a reference year and use a specific version of the repository.
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: costs:
    :end-at:   version:
