@@ -645,17 +645,15 @@ def solve_network(n, config, solving, opts="", **kwargs):
     return n
 
 
-# %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "solve_network",
-            # configfiles="test/config.overnight.yaml",
             simpl="",
-            opts="Co2L",
-            clusters="37c",
+            opts="Ept",
+            clusters="37",
             ll="v1.0",
             sector_opts="",
             planning_horizons="2020",
