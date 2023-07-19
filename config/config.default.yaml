@@ -62,6 +62,7 @@ snapshots:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#enable
 enable:
+  retrieve: auto
   prepare_links_p_nom: false
   retrieve_databundle: true
   retrieve_sector_databundle: true
