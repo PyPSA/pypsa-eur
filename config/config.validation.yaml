@@ -70,10 +70,12 @@ renewable:
     cutout: europe-2019-era5
 
 conventional:
-  unit_commitment: false
+  unit_commitment: true
   dynamic_fuel_price: true
   nuclear:
     p_max_pu: "data/nuclear_p_max_pu.csv" # float of file name
+  biomass:
+    p_max_pu: 0.7
 
 
 load:

@@ -17,9 +17,9 @@ snapshots:
   inclusive: 'left' # include start, not end
 
 conventional:
-  unit_commitment: false
+  unit_commitment: true
 
 solving:
   options:
-    linearized_unit_commitment: false
+    linearized_unit_commitment: true
     rolling_horizon: false

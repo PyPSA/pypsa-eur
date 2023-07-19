@@ -8,7 +8,7 @@ PRODUCTION_PLOTS = [
     "seasonal_operation_area",
 ]
 CROSS_BORDER_PLOTS = []
-PRICES_PLOTS = ["price_bar"]
+PRICES_PLOTS = ["price_bar", "price_line"]
 
 
 rule build_electricity_production:

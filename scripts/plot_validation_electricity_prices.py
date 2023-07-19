@@ -44,13 +44,19 @@ if __name__ == "__main__":
     data = pd.concat([historic, optimized], keys=["Historic", "Optimized"], axis=1)
     data.columns.names = ["Kind", "Country"]
 
-    # %% total production per carrier
     fig, ax = plt.subplots(figsize=(6, 6))
 
     df = data.mean().unstack().T
     df.plot.barh(ax=ax, xlabel="Electricity Price [€/MWh]", ylabel="")
     ax.grid(axis="y")
     fig.savefig(snakemake.output.price_bar, bbox_inches="tight")
+
+    fig, ax = plt.subplots()
+
+    df = data.groupby(level="Kind", axis=1).mean()
+    df.plot(ax=ax, xlabel="", ylabel="Electricity Price [€/MWh]", alpha=0.8)
+    ax.grid(axis="x")
+    fig.savefig(snakemake.output.price_line, bbox_inches="tight")
 
     # touch file
     with open(snakemake.output.plots_touch, "a"):
