@@ -159,10 +159,10 @@ if config["enable"]["retrieve"]:
         input:
             HTTP.remote(
                 "data.open-power-system-data.org/time_series/2019-06-05/time_series_60min_singleindex.csv".format(
-            version="2019-06-05"
-                if config["snapshots"]["end"] < "2019"
-                else "latest"
-            ),
+                version="2019-06-05"
+                    if config["snapshots"]["end"] < "2019"
+                    else "latest"
+                ),
                 keep_local=True,
                 static=True,
             ),
