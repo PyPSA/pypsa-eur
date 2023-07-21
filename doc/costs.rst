@@ -9,10 +9,10 @@ Techno-Economic Assumptions
 
 The database of cost assumptions is retrieved from the repository
 `PyPSA/technology-data <https://github.com/pypsa/technology-data>`_ and then
-saved to a file ``data/costs_{year}.csv``. The ``config.yaml`` provides options
+saved to a file ``data/costs_{year}.csv``. The ``config/config.yaml`` provides options
 to choose a reference year and use a specific version of the repository.
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: costs:
    :end-at:   version:
@@ -48,7 +48,7 @@ Modifying Assumptions
 =====================
 
 Some cost assumptions (e.g. marginal cost and capital cost) can be directly
-set in the ``config.yaml`` (cf. Section  :ref:`costs_cf`  in
+set in the ``config/config.yaml`` (cf. Section  :ref:`costs_cf`  in
 :ref:`config`). To change cost assumptions in more detail, make a copy of
 ``data/costs_{year}.csv`` and reference the new cost file in the ``Snakefile``:
 

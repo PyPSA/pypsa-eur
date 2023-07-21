@@ -39,7 +39,7 @@ The environment can be installed and activated using
 
 .. code:: bash
 
-    .../pypsa-eur % mamba create -f envs/environment.yaml
+    .../pypsa-eur % mamba env create -f envs/environment.yaml
 
     .../pypsa-eur % mamba activate pypsa-eur
 
@@ -119,19 +119,19 @@ Handling Configuration Files
 ============================
 
 PyPSA-Eur has several configuration options that must be specified in a
-``config.yaml`` file located in the root directory. An example configuration
-``config.default.yaml`` is maintained in the repository, which will be used to
-automatically create your customisable ``config.yaml`` on first use. More
+``config/config.yaml`` file located in the root directory. An example configuration
+``config/config.default.yaml`` is maintained in the repository, which will be used to
+automatically create your customisable ``config/config.yaml`` on first use. More
 details on the configuration options are in :ref:`config`.
 
 You can also use ``snakemake`` to specify another file, e.g.
-``config.mymodifications.yaml``, to update the settings of the ``config.yaml``.
+``config/config.mymodifications.yaml``, to update the settings of the ``config/config.yaml``.
 
 .. code:: bash
 
-    .../pypsa-eur % snakemake -call --configfile config.mymodifications.yaml
+    .../pypsa-eur % snakemake -call --configfile config/config.mymodifications.yaml
 
 .. warning::
-    Users are advised to regularly check their own ``config.yaml`` against changes
-    in the ``config.default.yaml`` when pulling a new version from the remote
+    Users are advised to regularly check their own ``config/config.yaml`` against changes
+    in the ``config/config.default.yaml`` when pulling a new version from the remote
     repository.

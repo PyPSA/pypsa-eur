@@ -28,7 +28,7 @@ It does not affect the year for cost and technology assumptions, which is set se
   costs:
     year: 2030
 
-For running overnight scenarios, use in the ``config.yaml``:
+For running overnight scenarios, use in the ``config/config.yaml``:
 
 .. code:: yaml
 
@@ -44,7 +44,7 @@ Perfect foresight scenarios
   Perfect foresight is currently under development and not yet implemented.
 
 For running perfect foresight scenarios, in future versions you will be able to
-set in the ``config.yaml``:
+set in the ``config/config.yaml``:
 
 .. code:: yaml
 
@@ -87,20 +87,24 @@ evolve with the myopic approach:
   vehicle-to-grid services.
 
 - The annual biomass potential (default year and scenario for which potential is
-  taken is 2030, defined `here
-  <https://github.com/PyPSA/pypsa-eur-sec/blob/413254e241fb37f55b41caba7264644805ad8e97/config.default.yaml#L109>`_)
+  taken is 2030, as defined in config)
+
+.. literalinclude:: ../config/test/config.myopic.yaml
+   :language: yaml
+   :start-at: biomass:
+   :end-at: year:
 
 
 Configuration
 --------------
 
-For running myopic foresight transition scenarios, set in ``config.yaml``:
+For running myopic foresight transition scenarios, set in ``config/config.yaml``:
 
 .. code:: yaml
 
   foresight: myopic
 
-The following options included in the config.yaml file  are relevant for the
+The following options included in the ``config/config.yaml`` file  are relevant for the
 myopic code.
 
 The ``{planning_horizons}`` wildcard indicates the year in which the network is
@@ -108,7 +112,7 @@ optimized. For a myopic optimization, this is equivalent to the investment year.
 To set the investment years which are sequentially simulated for the myopic
 investment planning, select for example:
 
-.. literalinclude:: ../test/config.myopic.yaml
+.. literalinclude:: ../config/test/config.myopic.yaml
    :language: yaml
    :start-at:   planning_horizons:
    :end-before: countries:
@@ -163,7 +167,7 @@ Options
 The total carbon budget for the entire transition path can be indicated in the
 `sector_opts
 <https://github.com/PyPSA/pypsa-eur-sec/blob/f13902510010b734c510c38c4cae99356f683058/config.default.yaml#L25>`_
-in ``config.yaml``. The carbon budget can be split among the
+in ``config/config.yaml``. The carbon budget can be split among the
 ``planning_horizons`` following an exponential or beta decay. E.g. ``'cb40ex0'``
 splits a carbon budget equal to 40 Gt :math:`_{CO_2}` following an exponential
 decay whose initial linear growth rate r is zero. They can also follow some
@@ -203,6 +207,7 @@ The myopic code solves the network for the time steps included in
    network comprises additional generator, storage, and link capacities with
    p_nom_extendable=True. The non-solved network is saved in
    ``results/run_name/networks/prenetworks-brownfield``.
+
 The base year is the first element in ``planning_horizons``. Step 1 is
 implemented with the rule add_baseyear for the base year and with the rule
 add_brownfield for the remaining planning_horizons.
@@ -218,7 +223,7 @@ add_brownfield for the remaining planning_horizons.
    ``results/run_name/networks/prenetworks-brownfield``.
 
 Steps 2 and 3 are solved recursively for all the planning_horizons included in
-``config.yaml``.
+``config/config.yaml``.
 
 Rule overview
 --------------

@@ -4,13 +4,20 @@
 
 
 rule solve_sector_network:
+    params:
+        solving=config["solving"],
+        foresight=config["foresight"],
+        planning_horizons=config["scenario"]["planning_horizons"],
+        co2_sequestration_potential=config["sector"].get(
+            "co2_sequestration_potential", 200
+        ),
     input:
         overrides="data/override_component_attrs",
         network=RESULTS
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
         costs="data/costs_{}.csv".format(config["costs"]["year"]),
-        config=RESULTS + "configs/config.yaml",
-        #env=RDIR + 'configs/environment.yaml',
+        config=RESULTS + "config/config.yaml",
+        #env=RDIR + 'config/environment.yaml',
     output:
         RESULTS
         + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
@@ -21,8 +28,6 @@ rule solve_sector_network:
         + "elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_solver.log",
         python=LOGS
         + "elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_python.log",
-        memory=LOGS
-        + "elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_memory.log",
     threads: config["solving"]["solver"].get("threads", 4)
     resources:
         mem_mb=config["solving"]["mem"],

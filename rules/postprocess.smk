@@ -9,6 +9,9 @@ localrules:
 
 
 rule plot_network:
+    params:
+        foresight=config["foresight"],
+        plotting=config["plotting"],
     input:
         overrides="data/override_component_attrs",
         network=RESULTS
@@ -37,7 +40,7 @@ rule copy_config:
     params:
         RDIR=RDIR,
     output:
-        RESULTS + "configs/config.yaml",
+        RESULTS + "config/config.yaml",
     threads: 1
     resources:
         mem_mb=1000,
@@ -51,7 +54,7 @@ rule copy_config:
 
 rule copy_conda_env:
     output:
-        RESULTS + "configs/environment.yaml",
+        RESULTS + "config/environment.yaml",
     threads: 1
     resources:
         mem_mb=500,
@@ -67,6 +70,10 @@ rule copy_conda_env:
 
 rule make_summary:
     params:
+        foresight=config["foresight"],
+        costs=config["costs"],
+        snapshots=config["snapshots"],
+        scenario=config["scenario"],
         RDIR=RDIR,
     input:
         overrides="data/override_component_attrs",
@@ -114,6 +121,10 @@ rule make_summary:
 
 rule plot_summary:
     params:
+        countries=config["countries"],
+        planning_horizons=config["scenario"]["planning_horizons"],
+        sector_opts=config["scenario"]["sector_opts"],
+        plotting=config["plotting"],
         RDIR=RDIR,
     input:
         costs=RESULTS + "csvs/costs.csv",

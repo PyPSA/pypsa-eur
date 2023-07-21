@@ -2,7 +2,14 @@
 #
 # SPDX-License-Identifier: MIT
 
-if config["enable"].get("retrieve_databundle", True):
+if config["enable"].get("retrieve", "auto") == "auto":
+    config["enable"]["retrieve"] = has_internet_access()
+
+if config["enable"]["retrieve"] is False:
+    print("Datafile downloads disabled in config[retrieve] or no internet access.")
+
+
+if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", True):
     datafiles = [
         "ch_cantons.csv",
         "je-e-21.03.02.xls",
@@ -32,7 +39,7 @@ if config["enable"].get("retrieve_databundle", True):
             "../scripts/retrieve_databundle.py"
 
 
-if config["enable"].get("retrieve_cutout", True):
+if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True):
 
     rule retrieve_cutout:
         input:
@@ -51,7 +58,7 @@ if config["enable"].get("retrieve_cutout", True):
             move(input[0], output[0])
 
 
-if config["enable"].get("retrieve_cost_data", True):
+if config["enable"]["retrieve"] and config["enable"].get("retrieve_cost_data", True):
 
     rule retrieve_cost_data:
         input:
@@ -73,7 +80,9 @@ if config["enable"].get("retrieve_cost_data", True):
             move(input[0], output[0])
 
 
-if config["enable"].get("retrieve_natura_raster", True):
+if config["enable"]["retrieve"] and config["enable"].get(
+    "retrieve_natura_raster", True
+):
 
     rule retrieve_natura_raster:
         input:
@@ -93,7 +102,9 @@ if config["enable"].get("retrieve_natura_raster", True):
             move(input[0], output[0])
 
 
-if config["enable"].get("retrieve_sector_databundle", True):
+if config["enable"]["retrieve"] and config["enable"].get(
+    "retrieve_sector_databundle", True
+):
     datafiles = [
         "data/eea/UNFCCC_v23.csv",
         "data/switzerland-sfoe/switzerland-new_format.csv",
@@ -120,7 +131,9 @@ if config["enable"].get("retrieve_sector_databundle", True):
             "../scripts/retrieve_sector_databundle.py"
 
 
-if config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]:
+if config["enable"]["retrieve"] and (
+    config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]
+):
     datafiles = [
         "IGGIELGN_LNGs.geojson",
         "IGGIELGN_BorderPoints.geojson",
@@ -140,37 +153,41 @@ if config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]:
             "../scripts/retrieve_gas_infrastructure_data.py"
 
 
-rule retrieve_load_data:
-    input:
-        HTTP.remote(
-            "data.open-power-system-data.org/time_series/2019-06-05/time_series_60min_singleindex.csv",
-            keep_local=True,
-            static=True,
-        ),
-    output:
-        "data/load_raw.csv",
-    log:
-        LOGS + "retrieve_load_data.log",
-    resources:
-        mem_mb=5000,
-    retries: 2
-    run:
-        move(input[0], output[0])
+if config["enable"]["retrieve"]:
+
+    rule retrieve_electricity_demand:
+        input:
+            HTTP.remote(
+                "data.open-power-system-data.org/time_series/2019-06-05/time_series_60min_singleindex.csv",
+                keep_local=True,
+                static=True,
+            ),
+        output:
+            "data/load_raw.csv",
+        log:
+            LOGS + "retrieve_electricity_demand.log",
+        resources:
+            mem_mb=5000,
+        retries: 2
+        run:
+            move(input[0], output[0])
 
 
-rule retrieve_ship_raster:
-    input:
-        HTTP.remote(
-            "https://zenodo.org/record/6953563/files/shipdensity_global.zip",
-            keep_local=True,
-            static=True,
-        ),
-    output:
-        "data/shipdensity_global.zip",
-    log:
-        LOGS + "retrieve_ship_raster.log",
-    resources:
-        mem_mb=5000,
-    retries: 2
-    run:
-        move(input[0], output[0])
+if config["enable"]["retrieve"]:
+
+    rule retrieve_ship_raster:
+        input:
+            HTTP.remote(
+                "https://zenodo.org/record/6953563/files/shipdensity_global.zip",
+                keep_local=True,
+                static=True,
+            ),
+        output:
+            "data/shipdensity_global.zip",
+        log:
+            LOGS + "retrieve_ship_raster.log",
+        resources:
+            mem_mb=5000,
+        retries: 2
+        run:
+            move(input[0], output[0])

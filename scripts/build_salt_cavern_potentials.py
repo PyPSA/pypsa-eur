@@ -2,12 +2,11 @@
 # SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
-
 """
 Build salt cavern potentials for hydrogen storage.
 
-Technical Potential of Salt Caverns for Hydrogen Storage in Europe
-CC-BY 4.0
+Technical Potential of Salt Caverns for Hydrogen Storage in Europe CC-BY
+4.0
 https://doi.org/10.20944/preprints201910.0187.v1
 https://doi.org/10.1016/j.ijhydene.2019.12.161
 
@@ -39,7 +38,6 @@ def load_bus_regions(onshore_path, offshore_path):
     """
     Load pypsa-eur on- and offshore regions and concat.
     """
-
     bus_regions_offshore = gpd.read_file(offshore_path)
     bus_regions_onshore = gpd.read_file(onshore_path)
     bus_regions = concat_gdf([bus_regions_offshore, bus_regions_onshore])

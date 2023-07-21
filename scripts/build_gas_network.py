@@ -2,7 +2,6 @@
 # SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
-
 """
 Preprocess gas network based on data from bthe SciGRID_gas project
 (https://www.gas.scigrid.de/).
@@ -22,14 +21,14 @@ def diameter_to_capacity(pipe_diameter_mm):
     """
     Calculate pipe capacity in MW based on diameter in mm.
 
-    20 inch (500 mm)  50 bar -> 1.5   GW CH4 pipe capacity (LHV)
-    24 inch (600 mm)  50 bar -> 5     GW CH4 pipe capacity (LHV)
-    36 inch (900 mm)  50 bar -> 11.25 GW CH4 pipe capacity (LHV)
-    48 inch (1200 mm) 80 bar -> 21.7  GW CH4 pipe capacity (LHV)
+    20 inch (500 mm)  50 bar -> 1.5   GW CH4 pipe capacity (LHV) 24 inch
+    (600 mm)  50 bar -> 5     GW CH4 pipe capacity (LHV) 36 inch (900
+    mm)  50 bar -> 11.25 GW CH4 pipe capacity (LHV) 48 inch (1200 mm) 80
+    bar -> 21.7  GW CH4 pipe capacity (LHV)
 
-    Based on p.15 of https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf
+    Based on p.15 of
+    https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf
     """
-
     # slopes definitions
     m0 = (1500 - 0) / (500 - 0)
     m1 = (5000 - 1500) / (600 - 500)

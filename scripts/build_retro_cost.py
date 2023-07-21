@@ -3,7 +3,6 @@
 # SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
-
 """
 This script calculates the space heating savings through better insulation of
 the thermal envelope of a building and corresponding costs for different
@@ -150,7 +149,6 @@ def prepare_building_stock_data():
                        type and period
 
     """
-
     building_data = pd.read_csv(snakemake.input.building_stock, usecols=list(range(13)))
 
     # standardize data
@@ -307,7 +305,7 @@ def prepare_building_stock_data():
     u_values.set_index(["country_code", "subsector", "bage", "type"], inplace=True)
 
     #  only take in config.yaml specified countries into account
-    countries = snakemake.config["countries"]
+    countries = snakemake.params.countries
     area_tot = area_tot.loc[countries]
 
     return u_values, country_iso_dic, countries, area_tot, area
@@ -318,7 +316,6 @@ def prepare_building_topology(u_values, same_building_topology=True):
     Reads in typical building topologies (e.g. average surface of building
     elements) and typical losses through thermal bridging and air ventilation.
     """
-
     data_tabula = pd.read_csv(
         snakemake.input.data_tabula,
         skiprows=lambda x: x in range(1, 11),
@@ -516,7 +513,7 @@ def prepare_cost_retro(country_iso_dic):
 
 def prepare_temperature_data():
     """
-    returns the temperature dependent data for each country:
+    Returns the temperature dependent data for each country:
 
     d_heat             : length of heating season pd.Series(index=countries) [days/year]
                          on those days, daily average temperature is below
@@ -624,7 +621,7 @@ def calculate_costs(u_values, l, cost_retro, window_assumptions):
 
 def calculate_new_u(u_values, l, l_weight, window_assumptions, k=0.035):
     """
-    calculate U-values after building retrofitting, depending on the old
+    Calculate U-values after building retrofitting, depending on the old
     U-values (u_values). This is for simple insulation measuers, adding an
     additional layer of insulation.
 
@@ -685,7 +682,7 @@ def map_tabula_to_hotmaps(df_tabula, df_hotmaps, column_prefix):
 
 def get_solar_gains_per_year(window_area):
     """
-    returns solar heat gains during heating season in [kWh/a] depending on the
+    Returns solar heat gains during heating season in [kWh/a] depending on the
     window area [m^2] of the building, assuming a equal distributed window
     orientation (east, south, north, west)
     """
@@ -701,8 +698,8 @@ def get_solar_gains_per_year(window_area):
 
 def map_to_lstrength(l_strength, df):
     """
-    renames column names from a pandas dataframe to map tabula retrofitting
-    strengths [2 = moderate, 3 = ambitious] to l_strength
+    Renames column names from a pandas dataframe to map tabula retrofitting
+    strengths [2 = moderate, 3 = ambitious] to l_strength.
     """
     middle = len(l_strength) // 2
     map_to_l = pd.MultiIndex.from_arrays(
@@ -721,7 +718,7 @@ def map_to_lstrength(l_strength, df):
 
 def calculate_heat_losses(u_values, data_tabula, l_strength, temperature_factor):
     """
-    calculates total annual heat losses Q_ht for different insulation
+    Calculates total annual heat losses Q_ht for different insulation
     thicknesses (l_strength), depending on current insulation state (u_values),
     standard building topologies and air ventilation from TABULA (data_tabula)
     and the accumulated difference between internal and external temperature
@@ -843,7 +840,7 @@ def calculate_heat_losses(u_values, data_tabula, l_strength, temperature_factor)
 
 def calculate_heat_gains(data_tabula, heat_transfer_perm2, d_heat):
     """
-    calculates heat gains Q_gain [W/m^2], which consititure from gains by:
+    Calculates heat gains Q_gain [W/m^2], which consititure from gains by:
 
     (1) solar radiation (2) internal heat gains
     """
@@ -888,7 +885,7 @@ def calculate_space_heat_savings(
     u_values, data_tabula, l_strength, temperature_factor, d_heat
 ):
     """
-    calculates space heat savings (dE_space [per unit of unrefurbished state])
+    Calculates space heat savings (dE_space [per unit of unrefurbished state])
     through retrofitting of the thermal envelope by additional insulation
     material (l_strength[m])
     """
@@ -1043,7 +1040,7 @@ if __name__ == "__main__":
 
     #  ********  config  *********************************************************
 
-    retro_opts = snakemake.config["sector"]["retrofitting"]
+    retro_opts = snakemake.params.retrofitting
     interest_rate = retro_opts["interest_rate"]
     annualise_cost = retro_opts["annualise_cost"]  # annualise the investment costs
     tax_weighting = retro_opts[

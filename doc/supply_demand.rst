@@ -133,12 +133,12 @@ The coefficient of performance (COP) of air- and ground-sourced heat pumps depen
 For the sink water temperature Tsink we assume 55 °C [`Config <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L207>`_ file]. For the time- and location-dependent source temperatures Tsource, we rely on the `ERA5 <https://doi.org/10.1002/qj.3803>`_ reanalysis weather data. The temperature differences are converted into COP time series using results from a regression analysis performed in the study by `Stafell et al. <https://pubs.rsc.org/en/content/articlelanding/2012/EE/c2ee22653g>`_. For air-sourced heat pumps (ASHP), we use the function:
 
 .. math::
-   COP (\Delta T) = 6.81 + 0.121\Delta T + 0.000630\Delta T^2
+   COP (\Delta T) = 6.81 - 0.121\Delta T + 0.000630\Delta T^2
 
 for ground-sourced heat pumps (GSHP), we use the function:
 
 .. math::
-   COP(\Delta T) = 8.77 + 0.150\Delta T + 0.000734\Delta T^2
+   COP(\Delta T) = 8.77 - 0.150\Delta T + 0.000734\Delta T^2
 
 **Resistive heaters**
 
@@ -189,7 +189,7 @@ higher costs and higher efficiency gains. They are added by step-wise
 linearisation in form of two additional generations in
 the  `prepare_sector_network.py <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/scripts/prepare_sector_network.py#L1600>`_  script.
 
-Settings in the config.yaml concerning the endogenously optimisation of building
+Settings in the ``config/config.yaml`` concerning the endogenously optimisation of building
 renovation include `cost factor <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L223>`_, `interest rate <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L224>`_, `annualised cost <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L225>`_, `tax weighting <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L226>`_, and `construction index <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L227>`_.
 
 Further information are given in the study by Zeyen et al. : `Mitigating heat demand peaks in buildings in a highly renewable European energy system, (2021) <https://arxiv.org/abs/2012.01831>`_.

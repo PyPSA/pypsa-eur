@@ -36,6 +36,7 @@ sys.path.insert(0, os.path.abspath("../scripts"))
 extensions = [
     #'sphinx.ext.autodoc',
     #'sphinx.ext.autosummary',
+    "myst_parser",
     "sphinx.ext.autosectionlabel",
     "sphinx.ext.intersphinx",
     "sphinx.ext.todo",

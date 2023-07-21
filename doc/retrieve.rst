@@ -42,7 +42,7 @@ The :ref:`tutorial` uses a smaller cutout than required for the full model (30 M
         build_cutout:
 
 .. seealso::
-    Documentation of the configuration file ``config.yaml`` at
+    Documentation of the configuration file ``config/config.yaml`` at
     :ref:`toplevel_cf`
 
 **Outputs**
@@ -69,7 +69,7 @@ This rule, as a substitute for :mod:`build_natura_raster`, downloads an already 
         build_natura_raster:
 
 .. seealso::
-    Documentation of the configuration file ``config.yaml`` at
+    Documentation of the configuration file ``config/config.yaml`` at
     :ref:`toplevel_cf`
 
 **Outputs**
@@ -80,8 +80,8 @@ This rule, as a substitute for :mod:`build_natura_raster`, downloads an already 
     For details see :mod:`build_natura_raster`.
 
 
-Rule ``retrieve_load_data``
-================================
+Rule ``retrieve_electricity_demand``
+====================================
 
 This rule downloads hourly electric load data for each country from the `OPSD platform <data.open-power-system-data.org/time_series/2019-06-05/time_series_60min_singleindex.csv>`_.
 
@@ -111,7 +111,7 @@ This rule downloads techno-economic assumptions from the `technology-data reposi
         version:
 
 .. seealso::
-    Documentation of the configuration file ``config.yaml`` at
+    Documentation of the configuration file ``config/config.yaml`` at
     :ref:`costs_cf`
 
 **Outputs**

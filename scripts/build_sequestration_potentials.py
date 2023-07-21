@@ -2,7 +2,6 @@
 # SPDX-FileCopyrightText: : 2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
-
 """
 Build regionalised geological sequestration potential for carbon dioxide using
 data from `CO2Stop <https://setis.ec.europa.eu/european-co2-storage-
@@ -42,7 +41,7 @@ if __name__ == "__main__":
             "build_sequestration_potentials", simpl="", clusters="181"
         )
 
-    cf = snakemake.config["sector"]["regional_co2_sequestration_potential"]
+    cf = snakemake.params.sequestration_potential
 
     gdf = gpd.read_file(snakemake.input.sequestration_potential[0])
 

@@ -29,7 +29,7 @@ if __name__ == "__main__":
 
     # Save locations
     zip_fn = Path(f"{rootpath}/IGGIELGN.zip")
-    to_fn = Path(f"{rootpath}/data/gas_network/scigrid-gas")
+    to_fn = Path(rootpath) / Path(snakemake.output[0]).parent.parent
 
     logger.info(f"Downloading databundle from '{url}'.")
     disable_progress = snakemake.config["run"].get("disable_progressbar", False)

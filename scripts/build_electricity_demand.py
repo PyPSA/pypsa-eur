@@ -2,7 +2,6 @@
 # SPDX-FileCopyrightText: : 2020 @JanFrederickUnnewehr, The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
-
 """
 This rule downloads the load data from `Open Power System Data Time series.
 
@@ -26,7 +25,7 @@ Relevant Settings
 
 
 .. seealso::
-    Documentation of the configuration file ``config.yaml`` at
+    Documentation of the configuration file ``config/config.yaml`` at
     :ref:`load_cf`
 
 Inputs
@@ -276,20 +275,20 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_load_data")
+        snakemake = mock_snakemake("build_electricity_demand")
 
     configure_logging(snakemake)
 
-    powerstatistics = snakemake.config["load"]["power_statistics"]
-    interpolate_limit = snakemake.config["load"]["interpolate_limit"]
-    countries = snakemake.config["countries"]
-    snapshots = pd.date_range(freq="h", **snakemake.config["snapshots"])
+    powerstatistics = snakemake.params.load["power_statistics"]
+    interpolate_limit = snakemake.params.load["interpolate_limit"]
+    countries = snakemake.params.countries
+    snapshots = pd.date_range(freq="h", **snakemake.params.snapshots)
     years = slice(snapshots[0], snapshots[-1])
-    time_shift = snakemake.config["load"]["time_shift_for_large_gaps"]
+    time_shift = snakemake.params.load["time_shift_for_large_gaps"]
 
     load = load_timeseries(snakemake.input[0], years, countries, powerstatistics)
 
-    if snakemake.config["load"]["manual_adjustments"]:
+    if snakemake.params.load["manual_adjustments"]:
         load = manual_adjustment(load, snakemake.input[0], powerstatistics)
 
     logger.info(f"Linearly interpolate gaps of size {interpolate_limit} and less.")

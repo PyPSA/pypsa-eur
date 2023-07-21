@@ -82,8 +82,8 @@ def load_network(import_name=None, custom_components=None):
         As in pypsa.Network(import_name)
     custom_components : dict
         Dictionary listing custom components.
-        For using ``snakemake.config['override_components']``
-        in ``config.yaml`` define:
+        For using ``snakemake.params['override_components']``
+        in ``config/config.yaml`` define:
 
         .. code:: yaml
 
@@ -277,23 +277,6 @@ def progress_retrieve(url, file, disable=False):
             urllib.request.urlretrieve(url, file, reporthook=update_to)
 
 
-def get_aggregation_strategies(aggregation_strategies):
-    # default aggregation strategies that cannot be defined in .yaml format must be specified within
-    # the function, otherwise (when defaults are passed in the function's definition) they get lost
-    # when custom values are specified in the config.
-
-    import numpy as np
-    from pypsa.networkclustering import _make_consense
-
-    bus_strategies = dict(country=_make_consense("Bus", "country"))
-    bus_strategies.update(aggregation_strategies.get("buses", {}))
-
-    generator_strategies = {"build_year": lambda x: 0, "lifetime": lambda x: np.inf}
-    generator_strategies.update(aggregation_strategies.get("generators", {}))
-
-    return bus_strategies, generator_strategies
-
-
 def mock_snakemake(rulename, configfiles=[], **wildcards):
     """
     This function is expected to be executed from the 'scripts'-directory of '
@@ -385,10 +368,11 @@ def mock_snakemake(rulename, configfiles=[], **wildcards):
 
 
 def override_component_attrs(directory):
-    """Tell PyPSA that links can have multiple outputs by
-    overriding the component_attrs. This can be done for
-    as many buses as you need with format busi for i = 2,3,4,5,....
-    See https://pypsa.org/doc/components.html#link-with-multiple-outputs-or-inputs
+    """
+    Tell PyPSA that links can have multiple outputs by overriding the
+    component_attrs. This can be done for as many buses as you need with format
+    busi for i = 2,3,4,5,.... See https://pypsa.org/doc/components.html#link-
+    with-multiple-outputs-or-inputs.
 
     Parameters
     ----------
@@ -400,7 +384,6 @@ def override_component_attrs(directory):
     -------
     Dictionary of overridden component attributes.
     """
-
     attrs = Dict({k: v.copy() for k, v in component_attrs.items()})
 
     for component, list_name in components.list_name.items():
@@ -418,7 +401,6 @@ def generate_periodic_profiles(dt_index, nodes, weekly_profile, localize=None):
     country for the period dt_index, taking account of time zones and summer
     time.
     """
-
     weekly_profile = pd.Series(weekly_profile, range(24 * 7))
 
     week_df = pd.DataFrame(index=dt_index, columns=nodes)

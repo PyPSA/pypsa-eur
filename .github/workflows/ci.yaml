@@ -103,9 +103,9 @@ jobs:
       run: |
         conda activate pypsa-eur
         conda list
-        snakemake -call solve_elec_networks --configfile test/config.electricity.yaml --rerun-triggers=mtime
-        snakemake -call all --configfile test/config.overnight.yaml --rerun-triggers=mtime
-        snakemake -call all --configfile test/config.myopic.yaml --rerun-triggers=mtime
+        snakemake -call solve_elec_networks --configfile config/test/config.electricity.yaml --rerun-triggers=mtime
+        snakemake -call all --configfile config/test/config.overnight.yaml --rerun-triggers=mtime
+        snakemake -call all --configfile config/test/config.myopic.yaml --rerun-triggers=mtime
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v3

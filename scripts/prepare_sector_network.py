@@ -2,7 +2,6 @@
 # SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
-
 """
 Adds all sector-coupling components to the network, including demand and supply
 technologies for the buildings, transport and industry sectors.
@@ -23,13 +22,13 @@ from _helpers import (
     override_component_attrs,
     update_config_with_sector_opts,
 )
+from add_electricity import calculate_annuity, sanitize_carriers
 from build_energy_totals import build_co2_totals, build_eea_co2, build_eurostat_co2
 from networkx.algorithms import complement
 from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentation
 from pypsa.geo import haversine_pts
 from pypsa.io import import_components_from_dataframe
 from scipy.stats import beta
-from vresutils.costdata import annuity
 
 logger = logging.getLogger(__name__)
 
@@ -197,17 +196,17 @@ def get(item, investment_year=None):
 
 
 def co2_emissions_year(
-    countries, input_eurostat, input_eea, opts, emissions_scope, report_year, year
+    countries, input_eurostat, opts, emissions_scope, report_year, year
 ):
     """
     Calculate CO2 emissions in one specific year (e.g. 1990 or 2018).
     """
-
-    eea_co2 = build_eea_co2(input_eea, year, emissions_scope)
+    emissions_scope = snakemake.params.energy["emissions"]
+    eea_co2 = build_eea_co2(snakemake.input.co2, year, emissions_scope)
 
     # TODO: read Eurostat data from year > 2014
     # this only affects the estimation of CO2 emissions for BA, RS, AL, ME, MK
-
+    report_year = snakemake.params.energy["eurostat_report_year"]
     if year > 2014:
         eurostat_co2 = build_eurostat_co2(
             input_eurostat, countries, report_year, year=2014
@@ -228,7 +227,7 @@ def co2_emissions_year(
 
 
 # TODO: move to own rule with sector-opts wildcard?
-def build_carbon_budget(o, input_eurostat, input_eea, fn, emissions_scope, report_year):
+def build_carbon_budget(o, input_eurostat, fn, emissions_scope, report_year):
     """
     Distribute carbon budget following beta or exponential transition path.
     """
@@ -243,30 +242,18 @@ def build_carbon_budget(o, input_eurostat, input_eea, fn, emissions_scope, repor
         carbon_budget = float(o[o.find("cb") + 2 : o.find("ex")])
         r = float(o[o.find("ex") + 2 :])
 
-    countries = snakemake.config["countries"]
+    countries = snakemake.params.countries
 
     e_1990 = co2_emissions_year(
-        countries,
-        input_eurostat,
-        input_eea,
-        opts,
-        emissions_scope,
-        report_year,
-        year=1990,
+        countries, input_eurostat, opts, emissions_scope, report_year, year=1990
     )
 
     # emissions at the beginning of the path (last year available 2018)
     e_0 = co2_emissions_year(
-        countries,
-        input_eurostat,
-        input_eea,
-        opts,
-        emissions_scope,
-        report_year,
-        year=2018,
+        countries, input_eurostat, opts, emissions_scope, report_year, year=2018
     )
 
-    planning_horizons = snakemake.config["scenario"]["planning_horizons"]
+    planning_horizons = snakemake.params.planning_horizons
     t_0 = planning_horizons[0]
 
     if "be" in o:
@@ -406,7 +393,7 @@ def update_wind_solar_costs(n, costs):
         with xr.open_dataset(profile) as ds:
             underwater_fraction = ds["underwater_fraction"].to_pandas()
             connection_cost = (
-                snakemake.config["lines"]["length_factor"]
+                snakemake.params.length_factor
                 * ds["average_distance"].to_pandas()
                 * (
                     underwater_fraction
@@ -499,9 +486,8 @@ def remove_elec_base_techs(n):
     batteries and H2) from base electricity-only network, since they're added
     here differently using links.
     """
-
-    for c in n.iterate_components(snakemake.config["pypsa_eur"]):
-        to_keep = snakemake.config["pypsa_eur"][c.name]
+    for c in n.iterate_components(snakemake.params.pypsa_eur):
+        to_keep = snakemake.params.pypsa_eur[c.name]
         to_remove = pd.Index(c.df.carrier.unique()).symmetric_difference(to_keep)
         if to_remove.empty:
             continue
@@ -691,7 +677,7 @@ def add_dac(n, costs):
 def add_co2limit(n, nyears=1.0, limit=0.0):
     logger.info(f"Adding CO2 budget limit as per unit of 1990 levels of {limit}")
 
-    countries = snakemake.config["countries"]
+    countries = snakemake.params.countries
 
     sectors = emission_sectors_from_opts(opts)
 
@@ -744,7 +730,7 @@ def cycling_shift(df, steps=1):
     return df
 
 
-def prepare_costs(cost_file, config, nyears):
+def prepare_costs(cost_file, params, nyears):
     # set all asset costs and other parameters
     costs = pd.read_csv(cost_file, index_col=[0, 1]).sort_index()
 
@@ -756,10 +742,10 @@ def prepare_costs(cost_file, config, nyears):
         costs.loc[:, "value"].unstack(level=1).groupby("technology").sum(min_count=1)
     )
 
-    costs = costs.fillna(config["fill_values"])
+    costs = costs.fillna(params["fill_values"])
 
     def annuity_factor(v):
-        return annuity(v["lifetime"], v["discount rate"]) + v["FOM"] / 100
+        return calculate_annuity(v["lifetime"], v["discount rate"]) + v["FOM"] / 100
 
     costs["fixed"] = [
         annuity_factor(v) * v["investment"] * nyears for i, v in costs.iterrows()
@@ -804,7 +790,7 @@ def add_ammonia(n, costs):
 
     nodes = pop_layout.index
 
-    cf_industry = snakemake.config["industry"]
+    cf_industry = snakemake.params.industry
 
     n.add("Carrier", "NH3")
 
@@ -868,7 +854,7 @@ def add_wave(n, wave_cost_factor):
     capacity = pd.Series({"Attenuator": 750, "F2HB": 1000, "MultiPA": 600})
 
     # in EUR/MW
-    annuity_factor = annuity(25, 0.07) + 0.03
+    annuity_factor = calculate_annuity(25, 0.07) + 0.03
     costs = (
         1e6
         * wave_cost_factor
@@ -1084,23 +1070,49 @@ def add_storage_and_grids(n, costs):
         lifetime=costs.at["electrolysis", "lifetime"],
     )
 
-    n.madd(
-        "Link",
-        nodes + " H2 Fuel Cell",
-        bus0=nodes + " H2",
-        bus1=nodes,
-        p_nom_extendable=True,
-        carrier="H2 Fuel Cell",
-        efficiency=costs.at["fuel cell", "efficiency"],
-        capital_cost=costs.at["fuel cell", "fixed"]
-        * costs.at["fuel cell", "efficiency"],  # NB: fixed cost is per MWel
-        lifetime=costs.at["fuel cell", "lifetime"],
-    )
+    if options["hydrogen_fuel_cell"]:
+        logger.info("Adding hydrogen fuel cell for re-electrification.")
 
-    cavern_types = snakemake.config["sector"]["hydrogen_underground_storage_locations"]
+        n.madd(
+            "Link",
+            nodes + " H2 Fuel Cell",
+            bus0=nodes + " H2",
+            bus1=nodes,
+            p_nom_extendable=True,
+            carrier="H2 Fuel Cell",
+            efficiency=costs.at["fuel cell", "efficiency"],
+            capital_cost=costs.at["fuel cell", "fixed"]
+            * costs.at["fuel cell", "efficiency"],  # NB: fixed cost is per MWel
+            lifetime=costs.at["fuel cell", "lifetime"],
+        )
+
+    if options["hydrogen_turbine"]:
+        logger.info(
+            "Adding hydrogen turbine for re-electrification. Assuming OCGT technology costs."
+        )
+        # TODO: perhaps replace with hydrogen-specific technology assumptions.
+
+        n.madd(
+            "Link",
+            nodes + " H2 turbine",
+            bus0=nodes + " H2",
+            bus1=nodes,
+            p_nom_extendable=True,
+            carrier="H2 turbine",
+            efficiency=costs.at["OCGT", "efficiency"],
+            capital_cost=costs.at["OCGT", "fixed"]
+            * costs.at["OCGT", "efficiency"],  # NB: fixed cost is per MWel
+            lifetime=costs.at["OCGT", "lifetime"],
+        )
+
+    cavern_types = snakemake.params.sector["hydrogen_underground_storage_locations"]
     h2_caverns = pd.read_csv(snakemake.input.h2_cavern, index_col=0)
 
-    if not h2_caverns.empty and options["hydrogen_underground_storage"]:
+    if (
+        not h2_caverns.empty
+        and options["hydrogen_underground_storage"]
+        and set(cavern_types).intersection(h2_caverns.columns)
+    ):
         h2_caverns = h2_caverns[cavern_types].sum(axis=1)
 
         # only use sites with at least 2 TWh potential
@@ -1142,9 +1154,6 @@ def add_storage_and_grids(n, costs):
         e_cyclic=True,
         carrier="H2 Store",
         capital_cost=h2_capital_cost,
-        lifetime=costs.at[
-            "hydrogen storage tank type 1 including compressor", "lifetime"
-        ],
     )
 
     if options["gas_network"] or options["H2_retrofit"]:
@@ -1498,7 +1507,6 @@ def add_land_transport(n, costs):
             carrier="BEV charger",
             p_max_pu=avail_profile[nodes],
             efficiency=options.get("bev_charge_efficiency", 0.9),
-            lifetime=1,
             # These were set non-zero to find LU infeasibility when availability = 0.25
             # p_nom_extendable=True,
             # p_nom_min=p_nom,
@@ -1516,7 +1524,6 @@ def add_land_transport(n, costs):
             carrier="V2G",
             p_max_pu=avail_profile[nodes],
             efficiency=options.get("bev_charge_efficiency", 0.9),
-            lifetime=1,
         )
 
     if electric_share > 0 and options["bev_dsm"]:
@@ -1537,7 +1544,6 @@ def add_land_transport(n, costs):
             e_nom=e_nom,
             e_max_pu=1,
             e_min_pu=dsm_profile[nodes],
-            lifetime=1,
         )
 
     if fuel_cell_share > 0:
@@ -2037,7 +2043,6 @@ def add_heat(n, costs):
                     country=ct,
                     capital_cost=capital_cost[strength]
                     * options["retrofitting"]["cost_factor"],
-                    lifetime=50,
                 )
 
 
@@ -2132,7 +2137,6 @@ def add_biomass(n, costs):
         e_nom=biogas_potentials_spatial,
         marginal_cost=costs.at["biogas", "fuel"],
         e_initial=biogas_potentials_spatial,
-        lifetime=1,
     )
 
     n.madd(
@@ -2143,7 +2147,6 @@ def add_biomass(n, costs):
         e_nom=solid_biomass_potentials_spatial,
         marginal_cost=costs.at["solid biomass", "fuel"],
         e_initial=solid_biomass_potentials_spatial,
-        lifetime=1,
     )
 
     n.madd(
@@ -3274,7 +3277,7 @@ if __name__ == "__main__":
 
     update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
 
-    options = snakemake.config["sector"]
+    options = snakemake.params.sector
 
     opts = snakemake.wildcards.sector_opts.split("-")
 
@@ -3289,7 +3292,7 @@ if __name__ == "__main__":
 
     costs = prepare_costs(
         snakemake.input.costs,
-        snakemake.config["costs"],
+        snakemake.params.costs,
         nyears,
     )
 
@@ -3301,10 +3304,10 @@ if __name__ == "__main__":
 
     spatial = define_spatial(pop_layout.index, options)
 
-    if snakemake.config["foresight"] in ["myopic", "perfect"]:
+    if snakemake.params.foresight == "myopic":
         add_lifetime_wind_solar(n, costs)
 
-        conventional = snakemake.config["existing_capacities"]["conventional_carriers"]
+        conventional = snakemake.params.conventional_carriers
         for carrier in conventional:
             add_carrier_buses(n, carrier)
 
@@ -3373,22 +3376,17 @@ if __name__ == "__main__":
     n = set_temporal_aggregation(n, opts, solver_name)
 
     limit_type = "config"
-    limit = get(snakemake.config["co2_budget"], investment_year)
+    limit = get(snakemake.params.co2_budget, investment_year)
     for o in opts:
         if "cb" not in o:
             continue
         limit_type = "carbon budget"
         fn = "results/" + snakemake.params.RDIR + "/csvs/carbon_budget_distribution.csv"
         if not os.path.exists(fn):
-            emissions_scope = snakemake.config["energy"]["emissions"]
-            report_year = snakemake.config["energy"]["eurostat_report_year"]
+            emissions_scope = snakemake.params.emissions_scope
+            report_year = snakemake.params.eurostat_report_year
             build_carbon_budget(
-                o,
-                snakemake.input.eurostat,
-                snakemake.input.co2,
-                fn,
-                emissions_scope,
-                report_year,
+                o, snakemake.input.eurostat, fn, emissions_scope, report_year
             )
         co2_cap = pd.read_csv(fn, index_col=0).squeeze()
         limit = co2_cap.loc[investment_year]
@@ -3421,13 +3419,15 @@ if __name__ == "__main__":
     if options["electricity_grid_connection"]:
         add_electricity_grid_connection(n, costs)
 
-    first_year_multi = (snakemake.config["foresight"] in ["myopic", "perfect"]) and (
-        snakemake.config["scenario"]["planning_horizons"][0] == investment_year
+    first_year_myopic = (snakemake.params.foresight == "myopic") and (
+        snakemake.params.planning_horizons[0] == investment_year
     )
 
-    if options.get("cluster_heat_buses", False) and not first_year_multi:
+    if options.get("cluster_heat_buses", False) and not first_year_myopic:
         cluster_heat_buses(n)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
+
+    sanitize_carriers(n, snakemake.config)
 
     n.export_to_netcdf(snakemake.output[0])

@@ -2,7 +2,6 @@
 # SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
-
 """
 Creates Voronoi shapes for each bus representing both onshore and offshore
 regions.
@@ -15,7 +14,7 @@ Relevant Settings
     countries:
 
 .. seealso::
-    Documentation of the configuration file ``config.yaml`` at
+    Documentation of the configuration file ``config/config.yaml`` at
     :ref:`toplevel_cf`
 
 Inputs
@@ -57,9 +56,10 @@ logger = logging.getLogger(__name__)
 
 def voronoi_partition_pts(points, outline):
     """
-    Compute the polygons of a voronoi partition of `points` within the
-    polygon `outline`. Taken from
-    https://github.com/FRESNA/vresutils/blob/master/vresutils/graph.py
+    Compute the polygons of a voronoi partition of `points` within the polygon
+    `outline`. Taken from
+    https://github.com/FRESNA/vresutils/blob/master/vresutils/graph.py.
+
     Attributes
     ----------
     points : Nx2 - ndarray[dtype=float]
@@ -116,7 +116,7 @@ if __name__ == "__main__":
         snakemake = mock_snakemake("build_bus_regions")
     configure_logging(snakemake)
 
-    countries = snakemake.config["countries"]
+    countries = snakemake.params.countries
 
     n = pypsa.Network(snakemake.input.base_network)
 

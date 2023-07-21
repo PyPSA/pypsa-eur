@@ -68,7 +68,6 @@ def enspreso_biomass_potentials(year=2020, scenario="ENS_Low"):
         Biomass potentials for given year and scenario
         in TWh/a by commodity and NUTS2 region.
     """
-
     glossary = pd.read_excel(
         str(snakemake.input.enspreso_biomass),
         sheet_name="Glossary",
@@ -124,7 +123,6 @@ def disaggregate_nuts0(bio):
     -------
     pd.DataFrame
     """
-
     pop = build_nuts_population_data()
 
     # get population in nuts2
@@ -149,7 +147,6 @@ def build_nuts2_shapes():
     - add RS, AL, BA country shapes (not covered in NUTS 2013)
     - consistently name ME, MK
     """
-
     nuts2 = gpd.GeoDataFrame(
         gpd.read_file(snakemake.input.nuts2).set_index("id").geometry
     )
@@ -186,7 +183,6 @@ def convert_nuts2_to_regions(bio_nuts2, regions):
     -------
     gpd.GeoDataFrame
     """
-
     # calculate area of nuts2 regions
     bio_nuts2["area_nuts2"] = area(bio_nuts2)
 
@@ -201,7 +197,7 @@ def convert_nuts2_to_regions(bio_nuts2, regions):
     )
     overlay[adjust_cols] = overlay[adjust_cols].multiply(overlay["share"], axis=0)
 
-    bio_regions = overlay.groupby("name").sum()
+    bio_regions = overlay.dissolve("name", aggfunc="sum")
 
     bio_regions.drop(["area_nuts2", "share"], axis=1, inplace=True)
 
@@ -214,9 +210,9 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_biomass_potentials", simpl="", clusters="5")
 
-    config = snakemake.config["biomass"]
-    year = config["year"]
-    scenario = config["scenario"]
+    params = snakemake.params.biomass
+    year = params["year"]
+    scenario = params["scenario"]
 
     enspreso = enspreso_biomass_potentials(year, scenario)
 
@@ -232,7 +228,7 @@ if __name__ == "__main__":
 
     df.to_csv(snakemake.output.biomass_potentials_all)
 
-    grouper = {v: k for k, vv in config["classes"].items() for v in vv}
+    grouper = {v: k for k, vv in params["classes"].items() for v in vv}
     df = df.groupby(grouper, axis=1).sum()
 
     df *= 1e6  # TWh/a to MWh/a

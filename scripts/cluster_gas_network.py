@@ -2,7 +2,6 @@
 # SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
-
 """
 Cluster gas transmission network to clustered model regions.
 """
@@ -30,7 +29,6 @@ def load_bus_regions(onshore_path, offshore_path):
     """
     Load pypsa-eur on- and offshore regions and concat.
     """
-
     bus_regions_offshore = gpd.read_file(offshore_path)
     bus_regions_onshore = gpd.read_file(onshore_path)
     bus_regions = concat_gdf([bus_regions_offshore, bus_regions_onshore])

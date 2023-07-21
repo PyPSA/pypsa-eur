@@ -2,7 +2,6 @@
 # SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
-
 """
 Build spatial distribution of industries from Hotmaps database.
 """
@@ -27,7 +26,6 @@ def locate_missing_industrial_sites(df):
     Should only be used if the model's spatial resolution is coarser
     than individual cities.
     """
-
     try:
         from geopy.extra.rate_limiter import RateLimiter
         from geopy.geocoders import Nominatim
@@ -71,12 +69,11 @@ def prepare_hotmaps_database(regions):
     """
     Load hotmaps database of industrial sites and map onto bus regions.
     """
-
     df = pd.read_csv(snakemake.input.hotmaps_industrial_database, sep=";", index_col=0)
 
     df[["srid", "coordinates"]] = df.geom.str.split(";", expand=True)
 
-    if snakemake.config["industry"].get("hotmaps_locate_missing", False):
+    if snakemake.params.hotmaps_locate_missing:
         df = locate_missing_industrial_sites(df)
 
     # remove those sites without valid locations
@@ -103,7 +100,6 @@ def build_nodal_distribution_key(hotmaps, regions, countries):
     """
     Build nodal distribution keys for each sector.
     """
-
     sectors = hotmaps.Subsector.unique()
 
     keys = pd.DataFrame(index=regions.index, columns=sectors, dtype=float)
@@ -147,7 +143,7 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=snakemake.config["logging"]["level"])
 
-    countries = snakemake.config["countries"]
+    countries = snakemake.params.countries
 
     regions = gpd.read_file(snakemake.input.regions_onshore).set_index("name")
 

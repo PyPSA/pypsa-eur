@@ -10,7 +10,40 @@ Release Notes
 Upcoming Release
 ================
 
+* ``param:`` section in rule definition are added to track changed settings in ``config.yaml``. The goal is to automatically re-execute rules whose parameters have changed. See `Non-file parameters for rules <https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#non-file-parameters-for-rules>`_ in the snakemake documentation.
+
+* **Important:** The configuration files are now located in the ``config`` directory. This counts for ``config.default.yaml``, ``config.yaml`` as well as the test configuration files which are now located in ``config/test``. Config files that are still in the root directory will be ignored.
+
 * Bugfix: Correct typo in the CPLEX solver configuration in ``config.default.yaml``.
+
+* Bugfix: Error in ``add_electricity`` where carriers were added multiple times to the network, resulting in a non-unique carriers error.
+
+* Renamed script file from PyPSA-EUR ``build_load_data`` to ``build_electricity_demand`` and ``retrieve_load_data`` to ``retrieve_electricity_demand``.
+
+* Fix docs readthedocs built
+
+* Add plain hydrogen turbine as additional re-electrification option besides
+  hydrogen fuel cell. Add switches for both re-electrification options under
+  ``sector: hydrogen_turbine:`` and ``sector: hydrogen_fuel_cell:``.
+
+* A new function named ``sanitize_carrier`` ensures that all unique carrier names are present in the network's carriers attribute, and adds nice names and colors for each carrier according to the provided configuration dictionary.
+
+* Additional tech_color are added to include previously unlisted carriers.
+
+* Remove ``vresutils`` dependency.
+
+* Added configuration option ``lines: max_extension:`` and ``links:
+  max_extension:``` to control the maximum capacity addition per line or link in
+  MW.
+
+* Add option to include a piecewise linear approximation of transmission losses,
+  e.g. by setting ``solving: options: transmission_losses: 2`` for an
+  approximation with two tangents.
+
+* Added configuration option ``enable: retrieve:`` to control whether data
+  retrieval rules from snakemake are enabled or not. Th default setting ``auto``
+  will automatically detect and enable/disable the rules based on internet connectivity.
+
 
 PyPSA-Eur 0.8.0 (18th March 2023)
 =================================
@@ -337,7 +370,7 @@ PyPSA-Eur 0.5.0 (27th July 2022)
 * Network building is made deterministic by supplying a fixed random state to
   network clustering routines.
 
-* Clustering strategies for generator and bus attributes can now be specified directly in the ``config.yaml``.
+* Clustering strategies for generator and bus attributes can now be specified directly in the ``config/config.yaml``.
 
 * Iterative solving with impedance updates is skipped if there are no expandable
   lines.
@@ -558,7 +591,7 @@ More OPSD integration:
   This will overwrite the capacities calculated from the heuristic approach in :func:`estimate_renewable_capacities()`
   [`#212 <https://github.com/PyPSA/pypsa-eur/pull/212>`_].
 
-* Electricity consumption data is now retrieved directly from the `OPSD website <https://data.open-power-system-data.org/time_series/2019-06-05>`_ using the rule :mod:`build_load_data`.
+* Electricity consumption data is now retrieved directly from the `OPSD website <https://data.open-power-system-data.org/time_series/2019-06-05>`_ using the rule :mod:`build_electricity_demand`.
   The user can decide whether to take the ENTSO-E power statistics data (default) or the ENTSO-E transparency data
   [`#211 <https://github.com/PyPSA/pypsa-eur/pull/211>`_].
 

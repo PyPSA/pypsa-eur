@@ -2,7 +2,6 @@
 # SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
-
 """
 Rasters the vector data of the `Natura 2000.
 
@@ -19,7 +18,7 @@ Relevant Settings
             cutout:
 
 .. seealso::
-    Documentation of the configuration file ``config.yaml`` at
+    Documentation of the configuration file ``config/config.yaml`` at
     :ref:`renewable_cf`
 
 Inputs
