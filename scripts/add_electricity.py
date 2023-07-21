@@ -610,6 +610,16 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **par
             hydro.max_hours > 0, hydro.country.map(max_hours_country)
         ).fillna(6)
 
+        flatten_dispatch = params.get("flatten_dispatch", False)
+        if flatten_dispatch:
+            buffer = (
+                flatten_dispatch if isinstance(flatten_dispatch, (int, float)) else 0.2
+            )
+            average_capacity_factor = inflow_t[hydro.index].mean() / hydro["p_nom"]
+            p_max_pu = (average_capacity_factor + buffer).clip(upper=1)
+        else:
+            p_max_pu = 1
+
         n.madd(
             "StorageUnit",
             hydro.index,
@@ -619,7 +629,7 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **par
             max_hours=hydro_max_hours,
             capital_cost=costs.at["hydro", "capital_cost"],
             marginal_cost=costs.at["hydro", "marginal_cost"],
-            p_max_pu=1.0,  # dispatch
+            p_max_pu=p_max_pu,  # dispatch
             p_min_pu=0.0,  # store
             efficiency_dispatch=costs.at["hydro", "efficiency"],
             efficiency_store=0.0,

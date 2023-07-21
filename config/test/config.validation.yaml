@@ -22,6 +22,6 @@ conventional:
 solving:
   options:
     linearized_unit_commitment: true
-    horizon: 365
-    overlap: 24
     rolling_horizon: true
+    horizon: 389
+    overlap: 24
