@@ -7,7 +7,7 @@ PRODUCTION_PLOTS = [
     "production_deviation_bar",
     "seasonal_operation_area",
 ]
-CROSS_BORDER_PLOTS = ["trade_time_series","cross_border_bar"]
+CROSS_BORDER_PLOTS = ["trade_time_series", "cross_border_bar"]
 PRICES_PLOTS = ["price_bar", "price_line"]
 
 

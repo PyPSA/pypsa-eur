@@ -4,10 +4,10 @@
 #
 # SPDX-License-Identifier: MIT
 
+import country_converter as coco
 import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
-import country_converter as coco
 import seaborn as sns
 from _helpers import configure_logging
 
@@ -51,6 +51,7 @@ color_country = {
     "SK": "#d3e75a",
 }
 
+
 def sort_one_country(country, df):
     indices = [link for link in df.columns if country in link]
     df_country = df[indices].copy()
@@ -64,10 +65,9 @@ def sort_one_country(country, df):
 
 
 def cross_border_time_series(countries, data):
-    
-    fig, ax = plt.subplots(2*len(countries), 1, figsize=(15, 10*len(countries)))
+    fig, ax = plt.subplots(2 * len(countries), 1, figsize=(15, 10 * len(countries)))
     axis = 0
-    
+
     for country in countries:
         ymin = 0
         ymax = 0
@@ -88,7 +88,7 @@ def cross_border_time_series(countries, data):
                 title = "Historic"
             else:
                 title = "Optimized"
-            
+
             ax[axis].set_title(
                 title + " Import / Export for " + cc.convert(country, to="name_short")
             )
@@ -119,8 +119,8 @@ def cross_border_time_series(countries, data):
                 ymax = pos_max
 
             axis = axis + 1
-        
-        for x in range(axis-2,axis):
+
+        for x in range(axis - 2, axis):
             ax[x].set_ylim([neg_min, pos_max])
 
     fig.savefig(snakemake.output.trade_time_series, bbox_inches="tight")
@@ -154,12 +154,12 @@ def cross_border_bar(countries, data):
             df_negative = pd.concat([df_negative_new, df_negative])
 
             order = order + 1
-            
+
     fig, ax = plt.subplots(figsize=(15, 60))
-            
+
     df_positive.plot.barh(ax=ax, stacked=True, color=color, zorder=2)
     df_negative.plot.barh(ax=ax, stacked=True, color=color, zorder=2)
-        
+
     plt.grid(axis="x", zorder=0)
     plt.grid(axis="y", zorder=0)
 
@@ -212,7 +212,7 @@ if __name__ == "__main__":
 
     # Preparing network data to be shaped similar to ENTSOE datastructure
     optimized_links = n.links_t.p0.rename(
-    columns=dict(n.links.bus0.str[:2] + " - " + n.links.bus1.str[:2])
+        columns=dict(n.links.bus0.str[:2] + " - " + n.links.bus1.str[:2])
     )
     optimized_lines = n.lines_t.p0.rename(
         columns=dict(n.lines.bus0.str[:2] + " - " + n.lines.bus1.str[:2])
@@ -220,7 +220,9 @@ if __name__ == "__main__":
     optimized = pd.concat([optimized_links, optimized_lines], axis=1)
 
     # Drop internal country connection
-    optimized.drop([c for c in optimized.columns if c[:2] == c[5:]], axis=1, inplace=True)
+    optimized.drop(
+        [c for c in optimized.columns if c[:2] == c[5:]], axis=1, inplace=True
+    )
 
     # align columns name
     for c1 in optimized.columns:
@@ -230,7 +232,7 @@ if __name__ == "__main__":
 
     optimized = optimized.groupby(lambda x: x, axis=1).sum()
 
-    cross_border_bar(countries,[historic, optimized])
+    cross_border_bar(countries, [historic, optimized])
 
     cross_border_time_series(countries, [historic, optimized])
 
