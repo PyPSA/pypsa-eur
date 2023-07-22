@@ -7,7 +7,7 @@ PRODUCTION_PLOTS = [
     "production_deviation_bar",
     "seasonal_operation_area",
 ]
-CROSS_BORDER_PLOTS = []
+CROSS_BORDER_PLOTS = ["trade_time_series","cross_border_bar"]
 PRICES_PLOTS = ["price_bar", "price_line"]
 
 
@@ -84,13 +84,15 @@ rule plot_validation_electricity_production:
 
 
 rule plot_validation_cross_border_flows:
+    params:
+        countries=config["countries"],
     input:
         network=RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
         cross_border_flows=RESOURCES + "historical_cross_border_flows.csv",
     output:
         **{
             plot: RESULTS
-            + f"figures/validation_{plot}_elec_s{{simpl}}_{{clusters}}_ec_l{{ll}}_{{opts}}.pdf"
+            + f"figures/validation_{plot}_elec_s{{simpl}}_{{clusters}}_ec_l{{ll}}_{{opts}}.png"
             for plot in CROSS_BORDER_PLOTS
         },
         plots_touch=RESULTS
