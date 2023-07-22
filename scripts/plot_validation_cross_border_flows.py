@@ -234,19 +234,6 @@ if __name__ == "__main__":
 
     cross_border_time_series(countries, [historic, optimized])
 
-    # optimized = n.buses_t.marginal_price.groupby(n.buses.country, axis=1).mean()
-
-    # data = pd.concat([historic, optimized], keys=["Historic", "Optimized"], axis=1)
-    # data.columns.names = ["Kind", "Country"]
-
-    # # %% total production per carrier
-    # fig, ax = plt.subplots(figsize=(6, 6))
-
-    # df = data.mean().unstack().T
-    # df.plot.barh(ax=ax, xlabel="Electricity Price [€/MWh]", ylabel="")
-    # ax.grid(axis="y")
-    # fig.savefig(snakemake.output.price_bar, bbox_inches="tight")
-
     # touch file
     with open(snakemake.output.plots_touch, "a"):
         pass
