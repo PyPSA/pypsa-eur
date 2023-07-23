@@ -63,12 +63,8 @@ jobs:
         environment-file: envs/environment.yaml
         log-level: debug
         init-shell: bash
-        cache-environment: false
+        cache-environment: true
         cache-downloads: true
-
-    - name: Print installed dependencies
-      run: |
-        micromamba list
 
     - name: Set cache dates
       run: |
