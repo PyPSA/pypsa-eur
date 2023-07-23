@@ -104,7 +104,9 @@ def replace_natural_gas_technology(df):
 
 
 def replace_natural_gas_fueltype(df):
-    return df.Fueltype.mask((df.Technology == "OCGT") | (df.Technology == "CCGT"), "Natural Gas")
+    return df.Fueltype.mask(
+        (df.Technology == "OCGT") | (df.Technology == "CCGT"), "Natural Gas"
+    )
 
 
 if __name__ == "__main__":
