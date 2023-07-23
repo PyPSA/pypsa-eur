@@ -224,7 +224,10 @@ The included ``.nc`` files are PyPSA network files which can be imported with Py
     n = pypsa.Network(filename)
 
 
+Operating Systems
+=================
 
+The PyPSA-Eur workflow is continuously tested for Linux, macOS and Windows (WSL only).
 
 
 .. toctree::
