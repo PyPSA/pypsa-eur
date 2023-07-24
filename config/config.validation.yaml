@@ -68,7 +68,7 @@ renewable:
     cutout: europe-2019-era5
   hydro:
     cutout: europe-2019-era5
-    flatten_dispatch: 0.1
+    flatten_dispatch: 0.2
 
 conventional:
   unit_commitment: true
