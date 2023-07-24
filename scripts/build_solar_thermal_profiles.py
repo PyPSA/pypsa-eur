@@ -38,7 +38,7 @@ if __name__ == "__main__":
         .buffer(0)
         .squeeze()
     )
-    
+
     # if 1 country, 1 node
     if clustered_regions.size == 1:
         clustered_regions.index = [snakemake.config["countries"][0] + "0 0"]
