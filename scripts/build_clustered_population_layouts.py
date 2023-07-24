@@ -24,12 +24,16 @@ if __name__ == "__main__":
 
     cutout = atlite.Cutout(snakemake.input.cutout)
 
-    clustered_regions = (
+    clustered_regions = gpd.GeoSeries(
         gpd.read_file(snakemake.input.regions_onshore)
         .set_index("name")
         .buffer(0)
         .squeeze()
     )
+
+    # if 1 country, 1 node
+    if clustered_regions.size == 1:
+        clustered_regions.index = [snakemake.config["countries"][0] + "0 0"]
 
     I = cutout.indicatormatrix(clustered_regions)
 
