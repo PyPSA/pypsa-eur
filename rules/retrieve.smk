@@ -158,7 +158,7 @@ if config["enable"]["retrieve"]:
     rule retrieve_electricity_demand:
         input:
             HTTP.remote(
-                "data.open-power-system-data.org/time_series/2019-06-05/time_series_60min_singleindex.csv".format(
+                "data.open-power-system-data.org/time_series/{version}/time_series_60min_singleindex.csv".format(
                 version="2019-06-05"
                     if config["snapshots"]["end"] < "2019"
                     else "latest"
