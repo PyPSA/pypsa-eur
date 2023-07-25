@@ -142,7 +142,7 @@ if __name__ == "__main__":
             "build_line_rating",
             network="elec",
             simpl="",
-            clusters="40",
+            clusters="5",
             ll="v1.0",
             opts="Co2L-4H",
         )

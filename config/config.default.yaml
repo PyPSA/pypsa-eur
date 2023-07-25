@@ -227,9 +227,9 @@ lines:
   max_extension: .inf
   length_factor: 1.25
   under_construction: 'zero' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
-  cutout: europe-2013-era5
   dynamic_line_rating:
     activate: false
+    cutout: europe-2013-era5
     correction_factor: 0.95
     max_voltage_difference: false
     max_line_rating: false

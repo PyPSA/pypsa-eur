@@ -279,7 +279,10 @@ if config["lines"]["dynamic_line_rating"]["activate"]:
     rule build_line_rating:
         input:
             base_network=RESOURCES + "networks/base.nc",
-            cutout="cutouts/" + CDIR + config["lines"]["cutout"] + ".nc",
+            cutout="cutouts/"
+            + CDIR
+            + config["lines"]["dynamic_line_rating"]["cutout"]
+            + ".nc",
         output:
             output=RESOURCES + "networks/line_rating.nc",
         log:
