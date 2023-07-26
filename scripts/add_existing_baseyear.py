@@ -605,7 +605,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "add_existing_baseyear",
-            configfiles="config/test/config.myopic.yaml",                        
+            configfiles="config/test/config.myopic.yaml",
             simpl="",
             clusters="5",
             ll="v1.5",
