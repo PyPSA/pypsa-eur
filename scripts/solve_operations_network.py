@@ -11,11 +11,7 @@ import logging
 
 import numpy as np
 import pypsa
-from _helpers import (
-    configure_logging,
-    override_component_attrs,
-    update_config_with_sector_opts,
-)
+from _helpers import configure_logging, update_config_with_sector_opts
 from solve_network import prepare_network, solve_network
 
 logger = logging.getLogger(__name__)
@@ -45,11 +41,7 @@ if __name__ == "__main__":
 
     np.random.seed(solve_opts.get("seed", 123))
 
-    if "overrides" in snakemake.input:
-        overrides = override_component_attrs(snakemake.input.overrides)
-        n = pypsa.Network(snakemake.input.network, override_component_attrs=overrides)
-    else:
-        n = pypsa.Network(snakemake.input.network)
+    n = pypsa.Network(snakemake.input.network)
 
     n.optimize.fix_optimal_capacities()
     n = prepare_network(n, solve_opts, config=snakemake.config)

@@ -424,6 +424,13 @@ def attach_conventional_generators(
     add_missing_carriers(n, carriers)
     add_co2_emissions(n, costs, carriers)
 
+    # Replace carrier "natural gas" with the respective technology (OCGT or
+    # CCGT) to align with PyPSA names of "carriers" and avoid filtering "natural
+    # gas" powerplants in ppl.query("carrier in @carriers")
+    ppl.loc[ppl["carrier"] == "natural gas", "carrier"] = ppl.loc[
+        ppl["carrier"] == "natural gas", "technology"
+    ]
+
     ppl = (
         ppl.query("carrier in @carriers")
         .join(costs, on="carrier", rsuffix="_r")
