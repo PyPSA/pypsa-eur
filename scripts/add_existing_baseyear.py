@@ -129,9 +129,13 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
         "Oil": "oil",
         "OCGT": "OCGT",
         "CCGT": "CCGT",
-        "Natural Gas": "gas",
         "Bioenergy": "urban central solid biomass CHP",
     }
+
+    # Replace Fueltype "Natural Gas" with the respective technology (OCGT or CCGT)
+    df_agg.loc[df_agg["Fueltype"] == "Natural Gas", "Fueltype"] = df_agg.loc[
+        df_agg["Fueltype"] == "Natural Gas", "Technology"
+    ]
 
     fueltype_to_drop = [
         "Hydro",
@@ -601,12 +605,13 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "add_existing_baseyear",
+            configfiles="config/test/config.myopic.yaml",                        
             simpl="",
-            clusters="45",
-            ll="v1.0",
+            clusters="5",
+            ll="v1.5",
             opts="",
-            sector_opts="8760H-T-H-B-I-A-solar+p3-dist1",
-            planning_horizons=2020,
+            sector_opts="24H-T-H-B-I-A-solar+p3-dist1",
+            planning_horizons=2030,
         )
 
     logging.basicConfig(level=snakemake.config["logging"]["level"])
