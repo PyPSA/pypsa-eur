@@ -16,7 +16,7 @@ idx = pd.IndexSlice
 
 import numpy as np
 import pypsa
-from _helpers import override_component_attrs, update_config_with_sector_opts
+from _helpers import update_config_with_sector_opts
 from add_existing_baseyear import add_build_year_to_new_assets
 
 
@@ -49,7 +49,7 @@ def add_brownfield(n, n_p, year):
             )
         ]
 
-        threshold = snakemake.config["existing_capacities"]["threshold_capacity"]
+        threshold = snakemake.params.threshold_capacity
 
         if not chp_heat.empty:
             threshold_chp_heat = (
@@ -87,7 +87,7 @@ def add_brownfield(n, n_p, year):
 
         # deal with gas network
         pipe_carrier = ["gas pipeline"]
-        if snakemake.config["sector"]["H2_retrofit"]:
+        if snakemake.params.H2_retrofit:
             # drop capacities of previous year to avoid duplicating
             to_drop = n.links.carrier.isin(pipe_carrier) & (n.links.build_year != year)
             n.mremove("Link", n.links.loc[to_drop].index)
@@ -98,7 +98,7 @@ def add_brownfield(n, n_p, year):
                 & (n.links.build_year != year)
             ].index
             gas_pipes_i = n.links[n.links.carrier.isin(pipe_carrier)].index
-            CH4_per_H2 = 1 / snakemake.config["sector"]["H2_retrofit_capacity_per_CH4"]
+            CH4_per_H2 = 1 / snakemake.params.H2_retrofit_capacity_per_CH4
             fr = "H2 pipeline retrofitted"
             to = "gas pipeline"
             # today's pipe capacity
@@ -148,12 +148,11 @@ if __name__ == "__main__":
 
     year = int(snakemake.wildcards.planning_horizons)
 
-    overrides = override_component_attrs(snakemake.input.overrides)
-    n = pypsa.Network(snakemake.input.network, override_component_attrs=overrides)
+    n = pypsa.Network(snakemake.input.network)
 
     add_build_year_to_new_assets(n, year)
 
-    n_p = pypsa.Network(snakemake.input.network_p, override_component_attrs=overrides)
+    n_p = pypsa.Network(snakemake.input.network_p)
 
     add_brownfield(n, n_p, year)
 

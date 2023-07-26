@@ -285,7 +285,7 @@ if __name__ == "__main__":
             start=weather_year, end=str(int(weather_year) + 1), inclusive="left"
         )
     else:
-        snapshots = snakemake.config["snapshots"]
+        snapshots = snakemake.params.snapshots
     snapshots = pd.date_range(freq="h", **snapshots)
 
     fixed_year = snakemake.config["load"].get("fixed_year", False)
@@ -295,16 +295,17 @@ if __name__ == "__main__":
         else slice(snapshots[0], snapshots[-1])
     )
 
-    powerstatistics = snakemake.config["load"]["power_statistics"]
-    interpolate_limit = snakemake.config["load"]["interpolate_limit"]
-    countries = snakemake.config["countries"]
-    snapshots = pd.date_range(freq="h", **snakemake.config["snapshots"])
+    powerstatistics = snakemake.params.load["power_statistics"]
+    interpolate_limit = snakemake.params.load["interpolate_limit"]
+    countries = snakemake.params.countries
+    snapshots = pd.date_range(freq="h", **snakemake.params.snapshots)
+
     years = slice(snapshots[0], snapshots[-1])
-    time_shift = snakemake.config["load"]["time_shift_for_large_gaps"]
+    time_shift = snakemake.params.load["time_shift_for_large_gaps"]
 
     load = load_timeseries(snakemake.input[0], years, countries, powerstatistics)
 
-    if snakemake.config["load"]["manual_adjustments"]:
+    if snakemake.params.load["manual_adjustments"]:
         load = manual_adjustment(load, snakemake.input[0], powerstatistics)
 
     logger.info(f"Linearly interpolate gaps of size {interpolate_limit} and less.")

@@ -106,14 +106,14 @@ if __name__ == "__main__":
         snakemake = mock_snakemake("build_cutout", cutout="europe-2013-era5")
     configure_logging(snakemake)
 
-    cutout_params = snakemake.config["atlite"]["cutouts"][snakemake.wildcards.cutout]
+    cutout_params = snakemake.params.cutouts[snakemake.wildcards.cutout]
 
     if hasattr(snakemake.wildcards, "weather_year"):
         time = snakemake.wildcards.weather_year
         cutout_params["time"] = [time, time]
 
     if "time" not in cutout_params:
-        snapshots = pd.date_range(freq="h", **snakemake.config["snapshots"])
+        snapshots = pd.date_range(freq="h", **snakemake.params.snapshots)
         cutout_params["time"] = [snapshots[0], snapshots[-1]]
 
     cutout_params["time"] = slice(*cutout_params["time"])

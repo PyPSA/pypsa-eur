@@ -28,7 +28,7 @@ if __name__ == "__main__":
     cluster = LocalCluster(n_workers=nprocesses, threads_per_worker=1)
     client = Client(cluster, asynchronous=True)
 
-    config = snakemake.config["solar_thermal"]
+    config = snakemake.params.solar_thermal
 
     cutout_name = snakemake.input.cutout
     year = snakemake.wildcards.weather_year
@@ -37,7 +37,7 @@ if __name__ == "__main__":
         snapshots = dict(start=year, end=str(int(year) + 1), inclusive="left")
         cutout_name = cutout_name.format(weather_year=year)
     else:
-        snapshots = snakemake.config["snapshots"]
+        snapshots = snakemake.params.snapshots
 
     time = pd.date_range(freq="h", **snapshots)
     if snakemake.config["atlite"].get("drop_leap_day", False):

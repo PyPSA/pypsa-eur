@@ -11,13 +11,8 @@ import logging
 
 import numpy as np
 import pypsa
-from _helpers import (
-    configure_logging,
-    override_component_attrs,
-    update_config_with_sector_opts,
-)
+from _helpers import configure_logging, update_config_with_sector_opts
 from solve_network import prepare_network, solve_network
-from vresutils.benchmark import memory_logger
 
 logger = logging.getLogger(__name__)
 
@@ -43,27 +38,17 @@ if __name__ == "__main__":
 
     opts = (snakemake.wildcards.opts + "-" + snakemake.wildcards.sector_opts).split("-")
     opts = [o for o in opts if o != ""]
-    solve_opts = snakemake.config["solving"]["options"]
+    solve_opts = snakemake.params.options
 
     np.random.seed(solve_opts.get("seed", 123))
 
-    fn = getattr(snakemake.log, "memory", None)
-    with memory_logger(filename=fn, interval=30.0) as mem:
-        if "overrides" in snakemake.input:
-            overrides = override_component_attrs(snakemake.input.overrides)
-            n = pypsa.Network(
-                snakemake.input.network, override_component_attrs=overrides
-            )
-        else:
-            n = pypsa.Network(snakemake.input.network)
+    n = pypsa.Network(snakemake.input.network)
 
-        n.optimize.fix_optimal_capacities()
-        n = prepare_network(n, solve_opts, config=snakemake.config)
-        n = solve_network(
-            n, config=snakemake.config, opts=opts, log_fn=snakemake.log.solver
-        )
+    n.optimize.fix_optimal_capacities()
+    n = prepare_network(n, solve_opts, config=snakemake.config)
+    n = solve_network(
+        n, config=snakemake.config, opts=opts, log_fn=snakemake.log.solver
+    )
 
-        n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
-        n.export_to_netcdf(snakemake.output[0])
-
-    logger.info("Maximum memory usage: {}".format(mem.mem_usage))
+    n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
+    n.export_to_netcdf(snakemake.output[0])

@@ -133,12 +133,12 @@ The coefficient of performance (COP) of air- and ground-sourced heat pumps depen
 For the sink water temperature Tsink we assume 55 °C [`Config <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L207>`_ file]. For the time- and location-dependent source temperatures Tsource, we rely on the `ERA5 <https://doi.org/10.1002/qj.3803>`_ reanalysis weather data. The temperature differences are converted into COP time series using results from a regression analysis performed in the study by `Stafell et al. <https://pubs.rsc.org/en/content/articlelanding/2012/EE/c2ee22653g>`_. For air-sourced heat pumps (ASHP), we use the function:
 
 .. math::
-   COP (\Delta T) = 6.81 + 0.121\Delta T + 0.000630\Delta T^2
+   COP (\Delta T) = 6.81 - 0.121\Delta T + 0.000630\Delta T^2
 
 for ground-sourced heat pumps (GSHP), we use the function:
 
 .. math::
-   COP(\Delta T) = 8.77 + 0.150\Delta T + 0.000734\Delta T^2
+   COP(\Delta T) = 8.77 - 0.150\Delta T + 0.000734\Delta T^2
 
 **Resistive heaters**
 

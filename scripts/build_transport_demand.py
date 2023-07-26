@@ -176,13 +176,13 @@ if __name__ == "__main__":
         snakemake.input.pop_weighted_energy_totals, index_col=0
     )
 
-    options = snakemake.config["sector"]
+    options = snakemake.params.sector
 
     year = snakemake.wildcards.weather_year
     snapshots = (
         dict(start=year, end=str(int(year) + 1), inclusive="left")
         if year
-        else snakemake.config["snapshots"]
+        else snakemake.params.snapshots
     )
     snapshots = pd.date_range(freq="h", **snapshots, tz="UTC")
     if snakemake.config["atlite"].get("drop_leap_day", False):

@@ -10,23 +10,25 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-import os
-import sys
 import tarfile
 from pathlib import Path
-
-# Add pypsa-eur scripts to path for import of _helpers
-sys.path.insert(0, os.getcwd() + "/../pypsa-eur/scripts")
 
 from _helpers import configure_logging, progress_retrieve
 
 if __name__ == "__main__":
+    if "snakemake" not in globals():
+        from _helpers import mock_snakemake
+
+        snakemake = mock_snakemake("retrieve_databundle")
+        rootpath = ".."
+    else:
+        rootpath = "."
     configure_logging(snakemake)
 
     url = "https://zenodo.org/record/5824485/files/pypsa-eur-sec-data-bundle.tar.gz"
 
-    tarball_fn = Path("sector-bundle.tar.gz")
-    to_fn = Path("data")
+    tarball_fn = Path(f"{rootpath}/sector-bundle.tar.gz")
+    to_fn = Path(rootpath) / Path(snakemake.output[0]).parent.parent
 
     logger.info(f"Downloading databundle from '{url}'.")
     disable_progress = snakemake.config["run"].get("disable_progressbar", False)

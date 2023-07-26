@@ -9,8 +9,10 @@ localrules:
 
 
 rule plot_network:
+    params:
+        foresight=config["foresight"],
+        plotting=config["plotting"],
     input:
-        overrides="data/override_component_attrs",
         network=RESULTS
         + "postnetworks/elec{weather_year}_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
         regions=RESOURCES
@@ -68,9 +70,12 @@ rule copy_conda_env:
 
 rule make_summary:
     params:
+        foresight=config["foresight"],
+        costs=config["costs"],
+        snapshots=config["snapshots"],
+        scenario=config["scenario"],
         RDIR=RDIR,
     input:
-        overrides="data/override_component_attrs",
         networks=expand(
             RESULTS
             + "postnetworks/elec{weather_year}_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
@@ -115,6 +120,10 @@ rule make_summary:
 
 rule plot_summary:
     params:
+        countries=config["countries"],
+        planning_horizons=config["scenario"]["planning_horizons"],
+        sector_opts=config["scenario"]["sector_opts"],
+        plotting=config["plotting"],
         RDIR=RDIR,
     input:
         costs=RESULTS + "csvs/costs.csv",

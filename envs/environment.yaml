@@ -10,7 +10,6 @@ dependencies:
 - python>=3.8
 - pip
 
-- pypsa>=0.21.3
 - atlite>=0.2.9
 - dask
 
@@ -25,7 +24,7 @@ dependencies:
 - pytables
 - lxml
 - powerplantmatching>=0.5.5
-- numpy<1.24
+- numpy
 - pandas>=1.4
 - geopandas>=0.11.0
 - xarray
@@ -55,5 +54,5 @@ dependencies:
 - rasterio!=1.2.10
 
 - pip:
-  - vresutils>=0.3.1
   - tsam>=1.1.0
+  - git+https://github.com/PyPSA/PyPSA.git@master
