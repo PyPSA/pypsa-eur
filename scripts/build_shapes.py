@@ -234,6 +234,7 @@ def nuts3(country_shapes, nuts3, nuts3pop, nuts3gdp, ch_cantons, ch_popgdp):
     manual = gpd.GeoDataFrame(
         [["BA1", "BA", 3871.0], ["RS1", "RS", 7210.0], ["AL1", "AL", 2893.0]],
         columns=["NUTS_ID", "country", "pop"],
+        geometry=gpd.GeoSeries(),
     )
     manual["geometry"] = manual["country"].map(country_shapes)
     manual = manual.dropna()
@@ -254,13 +255,11 @@ if __name__ == "__main__":
         snakemake = mock_snakemake("build_shapes")
     configure_logging(snakemake)
 
-    country_shapes = countries(
-        snakemake.input.naturalearth, snakemake.config["countries"]
-    )
+    country_shapes = countries(snakemake.input.naturalearth, snakemake.params.countries)
     country_shapes.reset_index().to_file(snakemake.output.country_shapes)
 
     offshore_shapes = eez(
-        country_shapes, snakemake.input.eez, snakemake.config["countries"]
+        country_shapes, snakemake.input.eez, snakemake.params.countries
     )
     offshore_shapes.reset_index().to_file(snakemake.output.offshore_shapes)
 

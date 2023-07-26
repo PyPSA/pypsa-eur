@@ -10,8 +10,6 @@ The COP is a function of the temperature difference between source and
 sink.
 
 The quadratic regression used is based on Staffell et al. (2012)
-
-
 https://doi.org/10.1039/C2EE22653G.
 """
 
@@ -41,7 +39,7 @@ if __name__ == "__main__":
         for source in ["air", "soil"]:
             source_T = xr.open_dataarray(snakemake.input[f"temp_{source}_{area}"])
 
-            delta_T = snakemake.config["sector"]["heat_pump_sink_T"] - source_T
+            delta_T = snakemake.params.heat_pump_sink_T - source_T
 
             cop = coefficient_of_performance(delta_T, source)
 

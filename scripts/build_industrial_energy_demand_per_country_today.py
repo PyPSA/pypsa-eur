@@ -101,8 +101,8 @@ def add_ammonia_energy_demand(demand):
 
     def get_ammonia_by_fuel(x):
         fuels = {
-            "gas": config["MWh_CH4_per_tNH3_SMR"],
-            "electricity": config["MWh_elec_per_tNH3_SMR"],
+            "gas": params["MWh_CH4_per_tNH3_SMR"],
+            "electricity": params["MWh_elec_per_tNH3_SMR"],
         }
 
         return pd.Series({k: x * v for k, v in fuels.items()})
@@ -112,7 +112,7 @@ def add_ammonia_energy_demand(demand):
         index=demand.index, fill_value=0.0
     )
 
-    ammonia = pd.DataFrame({"ammonia": ammonia * config["MWh_NH3_per_tNH3"]}).T
+    ammonia = pd.DataFrame({"ammonia": ammonia * params["MWh_NH3_per_tNH3"]}).T
 
     demand["Ammonia"] = ammonia.unstack().reindex(index=demand.index, fill_value=0.0)
 
@@ -178,9 +178,9 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_industrial_energy_demand_per_country_today")
 
-    config = snakemake.config["industry"]
-    year = config.get("reference_year", 2015)
-    countries = pd.Index(snakemake.config["countries"])
+    params = snakemake.params.industry
+    year = params.get("reference_year", 2015)
+    countries = pd.Index(snakemake.params.countries)
 
     demand = industrial_energy_demand(countries.intersection(eu28), year)
 

@@ -27,8 +27,6 @@ def diameter_to_capacity(pipe_diameter_mm):
     bar -> 21.7  GW CH4 pipe capacity (LHV)
 
     Based on p.15 of
-
-
     https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf
     """
     # slopes definitions

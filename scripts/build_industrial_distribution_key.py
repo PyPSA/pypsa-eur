@@ -73,7 +73,7 @@ def prepare_hotmaps_database(regions):
 
     df[["srid", "coordinates"]] = df.geom.str.split(";", expand=True)
 
-    if snakemake.config["industry"].get("hotmaps_locate_missing", False):
+    if snakemake.params.hotmaps_locate_missing:
         df = locate_missing_industrial_sites(df)
 
     # remove those sites without valid locations
@@ -143,7 +143,7 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=snakemake.config["logging"]["level"])
 
-    countries = snakemake.config["countries"]
+    countries = snakemake.params.countries
 
     regions = gpd.read_file(snakemake.input.regions_onshore).set_index("name")
 

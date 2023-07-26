@@ -39,7 +39,7 @@ The environment can be installed and activated using
 
 .. code:: bash
 
-    .../pypsa-eur % mamba create -f envs/environment.yaml
+    .../pypsa-eur % mamba env create -f envs/environment.yaml
 
     .../pypsa-eur % mamba activate pypsa-eur
 
