@@ -62,6 +62,9 @@ rule base_network:
     params:
         countries=config["countries"],
         snapshots=config["snapshots"],
+        lines=config["lines"],
+        links=config["links"],
+        transformers=config["transformers"],
     input:
         eg_buses="data/entsoegridkit/buses.csv",
         eg_lines="data/entsoegridkit/lines.csv",
