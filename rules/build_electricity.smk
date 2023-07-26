@@ -56,7 +56,6 @@ if config["enable"].get("retrieve_artificial_load_data", False):
             "../scripts/build_artificial_load_data.py"
 
 
-
 rule build_powerplants:
     params:
         powerplants_filter=config["electricity"]["powerplants_filter"],
