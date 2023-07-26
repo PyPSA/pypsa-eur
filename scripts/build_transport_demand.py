@@ -1,13 +1,20 @@
-"""Build transport demand."""
+# -*- coding: utf-8 -*-
+# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: MIT
+"""
+Build land transport demand per clustered model region including efficiency
+improvements due to drivetrain changes, time series for electric vehicle
+availability and demand-side management constraints.
+"""
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 import xarray as xr
-from helper import generate_periodic_profiles
+from _helpers import generate_periodic_profiles
 
 
 def build_nodal_transport_data(fn, pop_layout):
-
     transport_data = pd.read_csv(fn, index_col=0)
 
     nodal_transport_data = transport_data.loc[pop_layout.ct].fillna(0.0)
@@ -24,12 +31,9 @@ def build_nodal_transport_data(fn, pop_layout):
 
 
 def build_transport_demand(traffic_fn, airtemp_fn, nodes, nodal_transport_data):
-
     ## Get overall demand curve for all vehicles
 
-    traffic = pd.read_csv(
-        traffic_fn, skiprows=2, usecols=["count"]
-    ).squeeze("columns")
+    traffic = pd.read_csv(traffic_fn, skiprows=2, usecols=["count"]).squeeze("columns")
 
     transport_shape = generate_periodic_profiles(
         dt_index=snapshots,
@@ -78,7 +82,7 @@ def build_transport_demand(traffic_fn, airtemp_fn, nodes, nodal_transport_data):
     )
 
     transport = (
-        (transport_shape.multiply(energy_totals_transport) * 1e6 * Nyears)
+        (transport_shape.multiply(energy_totals_transport) * 1e6 * nyears)
         .divide(efficiency_gain * ice_correction)
         .multiply(1 + dd_EV)
     )
@@ -94,9 +98,11 @@ def transport_degree_factor(
     upper_degree_factor=1.6,
 ):
     """
-    Work out how much energy demand in vehicles increases due to heating and cooling.
-    There is a deadband where there is no increase.
-    Degree factors are % increase in demand compared to no heating/cooling fuel consumption.
+    Work out how much energy demand in vehicles increases due to heating and
+    cooling.
+
+    There is a deadband where there is no increase. Degree factors are %
+    increase in demand compared to no heating/cooling fuel consumption.
     Returns per unit increase in demand for each place and time
     """
 
@@ -117,7 +123,6 @@ def bev_availability_profile(fn, snapshots, nodes, options):
     """
     Derive plugged-in availability for passenger electric vehicles.
     """
-
     traffic = pd.read_csv(fn, skiprows=2, usecols=["count"]).squeeze("columns")
 
     avail_max = options["bev_avail_max"]
@@ -137,7 +142,6 @@ def bev_availability_profile(fn, snapshots, nodes, options):
 
 
 def bev_dsm_profile(snapshots, nodes, options):
-
     dsm_week = np.zeros((24 * 7,))
 
     dsm_week[(np.arange(0, 7, 1) * 24 + options["bev_dsm_restriction_time"])] = options[
@@ -155,7 +159,7 @@ def bev_dsm_profile(snapshots, nodes, options):
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from helper import mock_snakemake
+        from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "build_transport_demand",
@@ -171,26 +175,25 @@ if __name__ == "__main__":
         snakemake.input.pop_weighted_energy_totals, index_col=0
     )
 
-    options = snakemake.config["sector"]
+    options = snakemake.params.sector
 
-    snapshots = pd.date_range(freq='h', **snakemake.config["snapshots"], tz="UTC")
+    snapshots = pd.date_range(freq="h", **snakemake.params.snapshots, tz="UTC")
 
-    Nyears = 1
+    nyears = len(snapshots) / 8760
 
     nodal_transport_data = build_nodal_transport_data(
-        snakemake.input.transport_data,
-        pop_layout
+        snakemake.input.transport_data, pop_layout
     )
 
     transport_demand = build_transport_demand(
         snakemake.input.traffic_data_KFZ,
         snakemake.input.temp_air_total,
-        nodes, nodal_transport_data
+        nodes,
+        nodal_transport_data,
     )
 
     avail_profile = bev_availability_profile(
-        snakemake.input.traffic_data_Pkw,
-        snapshots, nodes, options
+        snakemake.input.traffic_data_Pkw, snapshots, nodes, options
     )
 
     dsm_profile = bev_dsm_profile(snapshots, nodes, options)

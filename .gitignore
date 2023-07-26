@@ -1,16 +1,30 @@
+# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: CC0-1.0
+
 .snakemake*
 .ipynb_checkpoints
 __pycache__
+*dconf
 gurobi.log
 .vscode
 
 /bak
+/resources
 /resources*
 /results
 /networks
 /benchmarks
 /logs
 /notebooks
+/data
+/cutouts
+
+doc/_build
+
+config.yaml
+
+dconf
 /data/links_p_nom.csv
 /data/*totals.csv
 /data/biomass*
@@ -28,8 +42,6 @@ gurobi.log
 /data/nuts*
 data/gas_network/scigrid-gas/
 data/costs_*.csv
-
-dask-worker-space
 
 dask-worker-space/
 publications.jrc.ec.europa.eu/
@@ -59,3 +71,5 @@ doc/_build
 *.ipynb
 
 data/costs_*
+
+merger-todos.md
