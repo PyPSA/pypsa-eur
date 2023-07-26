@@ -19,7 +19,6 @@ on:
   - cron: "0 5 * * TUE"
 
 env:
-  CONDA_CACHE_NUMBER: 1 # Change this value to manually reset the environment cache
   DATA_CACHE_NUMBER: 2
 
 jobs:
@@ -27,22 +26,12 @@ jobs:
 
     strategy:
       fail-fast: false
+      max-parallel: 3
       matrix:
-        include:
-          # Matrix required to handle caching with Mambaforge
-        - os: ubuntu-latest
-          label: ubuntu-latest
-          prefix: /usr/share/miniconda3/envs/pypsa-eur
-
-        - os: macos-latest
-          label: macos-latest
-          prefix: /Users/runner/miniconda3/envs/pypsa-eur
-
-        - os: windows-latest
-          label: windows-latest
-          prefix: C:\Miniconda3\envs\pypsa-eur
-
-    name: ${{ matrix.label }}
+        os:
+        - ubuntu-latest
+        - macos-latest
+        - windows-latest
 
     runs-on: ${{ matrix.os }}
 
@@ -60,24 +49,25 @@ jobs:
     - name: Add solver to environment
       run: |
         echo -e "- glpk\n- ipopt<3.13.3" >> envs/environment.yaml
-      if: ${{ matrix.label }} == 'windows-latest'
+      if: ${{ matrix.os }} == 'windows-latest'
 
     - name: Add solver to environment
       run: |
         echo -e "- glpk\n- ipopt" >> envs/environment.yaml
-      if: ${{ matrix.label }} != 'windows-latest'
+      if: ${{ matrix.os }} != 'windows-latest'
 
-    - name: Setup Mambaforge
-      uses: conda-incubator/setup-miniconda@v2
+    - name: Setup micromamba
+      uses: mamba-org/setup-micromamba@v1
       with:
-        miniforge-variant: Mambaforge
-        miniforge-version: latest
-        activate-environment: pypsa-eur
-        use-mamba: true
+        micromamba-version: latest
+        environment-file: envs/environment.yaml
+        log-level: debug
+        init-shell: bash
+        cache-environment: true
+        cache-downloads: true
 
     - name: Set cache dates
       run: |
-        echo "DATE=$(date +'%Y%m%d')" >> $GITHUB_ENV
         echo "WEEK=$(date +'%Y%U')" >> $GITHUB_ENV
 
     - name: Cache data and cutouts folders
@@ -88,21 +78,8 @@ jobs:
           cutouts
         key: data-cutouts-${{ env.WEEK }}-${{ env.DATA_CACHE_NUMBER }}
 
-    - name: Create environment cache
-      uses: actions/cache@v3
-      id: cache
-      with:
-        path: ${{ matrix.prefix }}
-        key: ${{ matrix.label }}-conda-${{ env.DATE }}-${{ env.CONDA_CACHE_NUMBER }}
-
-    - name: Update environment due to outdated or unavailable cache
-      run: mamba env update -n pypsa-eur -f envs/environment.yaml
-      if: steps.cache.outputs.cache-hit != 'true'
-
     - name: Test snakemake workflow
       run: |
-        conda activate pypsa-eur
-        conda list
         snakemake -call solve_elec_networks --configfile config/test/config.electricity.yaml --rerun-triggers=mtime
         snakemake -call all --configfile config/test/config.overnight.yaml --rerun-triggers=mtime
         snakemake -call all --configfile config/test/config.myopic.yaml --rerun-triggers=mtime

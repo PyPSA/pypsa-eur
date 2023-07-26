@@ -21,7 +21,7 @@ import country_converter as coco
 import numpy as np
 import pypsa
 import xarray as xr
-from _helpers import override_component_attrs, update_config_with_sector_opts
+from _helpers import update_config_with_sector_opts
 from add_electricity import sanitize_carriers
 from prepare_sector_network import cluster_heat_buses, define_spatial, prepare_costs
 
@@ -129,9 +129,13 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
         "Oil": "oil",
         "OCGT": "OCGT",
         "CCGT": "CCGT",
-        "Natural Gas": "gas",
         "Bioenergy": "urban central solid biomass CHP",
     }
+
+    # Replace Fueltype "Natural Gas" with the respective technology (OCGT or CCGT)
+    df_agg.loc[df_agg["Fueltype"] == "Natural Gas", "Fueltype"] = df_agg.loc[
+        df_agg["Fueltype"] == "Natural Gas", "Technology"
+    ]
 
     fueltype_to_drop = [
         "Hydro",
@@ -601,12 +605,13 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "add_existing_baseyear",
+            configfiles="config/test/config.myopic.yaml",
             simpl="",
-            clusters="45",
-            ll="v1.0",
+            clusters="5",
+            ll="v1.5",
             opts="",
-            sector_opts="8760H-T-H-B-I-A-solar+p3-dist1",
-            planning_horizons=2020,
+            sector_opts="24H-T-H-B-I-A-solar+p3-dist1",
+            planning_horizons=2030,
         )
 
     logging.basicConfig(level=snakemake.config["logging"]["level"])
@@ -618,8 +623,8 @@ if __name__ == "__main__":
 
     baseyear = snakemake.params.baseyear
 
-    overrides = override_component_attrs(snakemake.input.overrides)
-    n = pypsa.Network(snakemake.input.network, override_component_attrs=overrides)
+    n = pypsa.Network(snakemake.input.network)
+
     # define spatial resolution of carriers
     spatial = define_spatial(n.buses[n.buses.carrier == "AC"].index, options)
     add_build_year_to_new_assets(n, baseyear)

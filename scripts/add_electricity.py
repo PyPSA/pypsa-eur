@@ -161,7 +161,7 @@ def sanitize_carriers(n, config):
 
     for c in n.iterate_components():
         if "carrier" in c.df:
-            add_missing_carriers(n, c.df)
+            add_missing_carriers(n, c.df.carrier)
 
     carrier_i = n.carriers.index
     nice_names = (
@@ -425,6 +425,13 @@ def attach_conventional_generators(
     carriers = list(set(conventional_carriers) | set(extendable_carriers["Generator"]))
     add_missing_carriers(n, carriers)
     add_co2_emissions(n, costs, carriers)
+
+    # Replace carrier "natural gas" with the respective technology (OCGT or
+    # CCGT) to align with PyPSA names of "carriers" and avoid filtering "natural
+    # gas" powerplants in ppl.query("carrier in @carriers")
+    ppl.loc[ppl["carrier"] == "natural gas", "carrier"] = ppl.loc[
+        ppl["carrier"] == "natural gas", "technology"
+    ]
 
     ppl = (
         ppl.query("carrier in @carriers")

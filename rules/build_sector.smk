@@ -727,7 +727,6 @@ rule prepare_sector_network:
         **build_biomass_transport_costs_output,
         **gas_infrastructure,
         **build_sequestration_potentials_output,
-        overrides="data/override_component_attrs",
         network=RESOURCES + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
         energy_totals_name=RESOURCES + "energy_totals.csv",
         eurostat=input_eurostat,

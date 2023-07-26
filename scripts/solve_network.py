@@ -33,11 +33,7 @@ import numpy as np
 import pandas as pd
 import pypsa
 import xarray as xr
-from _helpers import (
-    configure_logging,
-    override_component_attrs,
-    update_config_with_sector_opts,
-)
+from _helpers import configure_logging, update_config_with_sector_opts
 
 logger = logging.getLogger(__name__)
 pypsa.pf.logger.setLevel(logging.WARNING)
@@ -152,7 +148,7 @@ def prepare_network(
     if "clip_p_max_pu" in solve_opts:
         for df in (
             n.generators_t.p_max_pu,
-            n.generators_t.p_min_pu,  # TODO: check if this can be removed
+            n.generators_t.p_min_pu,
             n.storage_units_t.inflow,
         ):
             df.where(df > solve_opts["clip_p_max_pu"], other=0.0, inplace=True)
@@ -280,13 +276,13 @@ def add_EQ_constraints(n, o, scaling=1e-1):
     float_regex = "[0-9]*\.?[0-9]+"
     level = float(re.findall(float_regex, o)[0])
     if o[-1] == "c":
-        ggrouper = n.generators.bus.map(n.buses.country).to_xarray()
-        lgrouper = n.loads.bus.map(n.buses.country).to_xarray()
-        sgrouper = n.storage_units.bus.map(n.buses.country).to_xarray()
+        ggrouper = n.generators.bus.map(n.buses.country)
+        lgrouper = n.loads.bus.map(n.buses.country)
+        sgrouper = n.storage_units.bus.map(n.buses.country)
     else:
-        ggrouper = n.generators.bus.to_xarray()
-        lgrouper = n.loads.bus.to_xarray()
-        sgrouper = n.storage_units.bus.to_xarray()
+        ggrouper = n.generators.bus
+        lgrouper = n.loads.bus
+        sgrouper = n.storage_units.bus
     load = (
         n.snapshot_weightings.generators
         @ n.loads_t.p_set.groupby(lgrouper, axis=1).sum()
@@ -300,7 +296,7 @@ def add_EQ_constraints(n, o, scaling=1e-1):
     p = n.model["Generator-p"]
     lhs_gen = (
         (p * (n.snapshot_weightings.generators * scaling))
-        .groupby(ggrouper)
+        .groupby(ggrouper.to_xarray())
         .sum()
         .sum("snapshot")
     )
@@ -309,7 +305,7 @@ def add_EQ_constraints(n, o, scaling=1e-1):
         spillage = n.model["StorageUnit-spill"]
         lhs_spill = (
             (spillage * (-n.snapshot_weightings.stores * scaling))
-            .groupby(sgrouper)
+            .groupby(sgrouper.to_xarray())
             .sum()
             .sum("snapshot")
         )
@@ -378,13 +374,14 @@ def add_SAFE_constraints(n, config):
     peakdemand = n.loads_t.p_set.sum(axis=1).max()
     margin = 1.0 + config["electricity"]["SAFE_reservemargin"]
     reserve_margin = peakdemand * margin
-    # TODO: do not take this from the plotting config!
-    conv_techs = config["plotting"]["conv_techs"]
-    ext_gens_i = n.generators.query("carrier in @conv_techs & p_nom_extendable").index
+    conventional_carriers = config["electricity"]["conventional_carriers"]
+    ext_gens_i = n.generators.query(
+        "carrier in @conventional_carriers & p_nom_extendable"
+    ).index
     p_nom = n.model["Generator-p_nom"].loc[ext_gens_i]
     lhs = p_nom.sum()
     exist_conv_caps = n.generators.query(
-        "~p_nom_extendable & carrier in @conv_techs"
+        "~p_nom_extendable & carrier in @conventional_carriers"
     ).p_nom.sum()
     rhs = reserve_margin - exist_conv_caps
     n.model.add_constraints(lhs >= rhs, name="safe_mintotalcap")
@@ -709,11 +706,7 @@ if __name__ == "__main__":
 
     np.random.seed(solve_opts.get("seed", 123))
 
-    if "overrides" in snakemake.input.keys():
-        overrides = override_component_attrs(snakemake.input.overrides)
-        n = pypsa.Network(snakemake.input.network, override_component_attrs=overrides)
-    else:
-        n = pypsa.Network(snakemake.input.network)
+    n = pypsa.Network(snakemake.input.network)
 
     n = prepare_network(
         n,

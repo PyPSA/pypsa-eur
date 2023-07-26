@@ -39,7 +39,7 @@ repos:
 
   # Make docstrings PEP 257 compliant
 - repo: https://github.com/PyCQA/docformatter
-  rev: v1.7.3
+  rev: v1.7.5
   hooks:
   - id: docformatter
     args: ["--in-place", "--make-summary-multi-line", "--pre-summary-newline"]
@@ -51,7 +51,7 @@ repos:
 
   # Formatting with "black" coding style
 - repo: https://github.com/psf/black
-  rev: 23.3.0
+  rev: 23.7.0
   hooks:
       # Format Python files
   - id: black
@@ -67,7 +67,7 @@ repos:
 
   # Do YAML formatting (before the linter checks it for misses)
 - repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
-  rev: v2.9.0
+  rev: v2.10.0
   hooks:
   - id: pretty-format-yaml
     args: [--autofix, --indent, "2", --preserve-quotes]
@@ -87,6 +87,6 @@ repos:
 
   # Check for FSFE REUSE compliance (licensing)
 - repo: https://github.com/fsfe/reuse-tool
-  rev: v2.0.0
+  rev: v2.1.0
   hooks:
   - id: reuse

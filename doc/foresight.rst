@@ -87,8 +87,12 @@ evolve with the myopic approach:
   vehicle-to-grid services.
 
 - The annual biomass potential (default year and scenario for which potential is
-  taken is 2030, defined `here
-  <https://github.com/PyPSA/pypsa-eur-sec/blob/413254e241fb37f55b41caba7264644805ad8e97/config.default.yaml#L109>`_)
+  taken is 2030, as defined in config)
+
+.. literalinclude:: ../config/test/config.myopic.yaml
+   :language: yaml
+   :start-at: biomass:
+   :end-at: year:
 
 
 Configuration
@@ -108,7 +112,7 @@ optimized. For a myopic optimization, this is equivalent to the investment year.
 To set the investment years which are sequentially simulated for the myopic
 investment planning, select for example:
 
-.. literalinclude:: ../test/config.myopic.yaml
+.. literalinclude:: ../config/test/config.myopic.yaml
    :language: yaml
    :start-at:   planning_horizons:
    :end-before: countries:
@@ -203,6 +207,7 @@ The myopic code solves the network for the time steps included in
    network comprises additional generator, storage, and link capacities with
    p_nom_extendable=True. The non-solved network is saved in
    ``results/run_name/networks/prenetworks-brownfield``.
+
 The base year is the first element in ``planning_horizons``. Step 1 is
 implemented with the rule add_baseyear for the base year and with the rule
 add_brownfield for the remaining planning_horizons.
