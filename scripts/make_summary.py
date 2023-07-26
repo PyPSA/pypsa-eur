@@ -299,9 +299,9 @@ def calculate_energy(n, label, energy):
                 )
                 # remove values where bus is missing (bug in nomopyomo)
                 no_bus = c.df.index[c.df["bus" + port] == ""]
-                totals.loc[no_bus] = float(n.component_attrs[c.name].loc[
-                    "p" + port, "default"
-                ])
+                totals.loc[no_bus] = float(
+                    n.component_attrs[c.name].loc["p" + port, "default"]
+                )
                 c_energies -= totals.groupby(c.df.carrier).sum()
 
         c_energies = pd.concat([c_energies], keys=[c.list_name])
