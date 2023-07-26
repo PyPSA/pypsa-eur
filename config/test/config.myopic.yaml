@@ -13,6 +13,8 @@ run:
 foresight: myopic
 
 scenario:
+  weather_year:
+  - ""
   ll:
   - v1.5
   clusters:

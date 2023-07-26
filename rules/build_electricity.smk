@@ -326,7 +326,7 @@ rule add_electricity:
         costs=config["costs"],
     input:
         **{
-            f"profile_{tech}": RESOURCES + f"profile{weather_year}_{tech}.nc"
+            f"profile_{tech}": RESOURCES + "profile{weather_year}" + f"_{tech}.nc"
             for tech in config["electricity"]["renewable_carriers"]
         },
         **{

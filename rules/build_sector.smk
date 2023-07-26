@@ -748,7 +748,7 @@ rule prepare_sector_network:
         pop_weighted_energy_totals=RESOURCES
         + "pop_weighted_energy_totals{weather_year}_s{simpl}_{clusters}.csv",
         pop_weighted_heat_totals=RESOURCES
-        + "pop_weighted_heat_totals{weather_year}_s{simpl}_{clusters}.csv"
+        + "pop_weighted_heat_totals{weather_year}_s{simpl}_{clusters}.csv",
         shipping_demand=RESOURCES + "shipping_demand{weather_year}_s{simpl}_{clusters}.csv",
         transport_demand=RESOURCES + "transport_demand{weather_year}_s{simpl}_{clusters}.csv",
         transport_data=RESOURCES + "transport_data{weather_year}_s{simpl}_{clusters}.csv",
