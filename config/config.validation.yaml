@@ -66,10 +66,10 @@ renewable:
     cutout: europe-2019-era5
   hydro:
     cutout: europe-2019-era5
-    flatten_dispatch: 0.1
+    flatten_dispatch: 0.01
 
 conventional:
-  unit_commitment: true
+  unit_commitment: false
   dynamic_fuel_price: true
   nuclear:
     p_max_pu: "data/nuclear_p_max_pu.csv" # float of file name
@@ -82,7 +82,7 @@ load:
 
 
 lines:
-  s_max_pu: 0.5
+  s_max_pu: 0.25
   under_construction: 'remove' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
 
 
