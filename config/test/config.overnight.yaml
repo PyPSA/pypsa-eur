@@ -59,6 +59,11 @@ renewable:
   solar:
     cutout: be-03-2013-era5
 
+lines:
+  dynamic_line_rating:
+    activate: true
+    max_line_rating: 1.3
+
 sector:
   gas_network: true
   H2_retrofit: true
