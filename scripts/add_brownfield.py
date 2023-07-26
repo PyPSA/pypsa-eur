@@ -16,7 +16,7 @@ idx = pd.IndexSlice
 
 import numpy as np
 import pypsa
-from _helpers import override_component_attrs, update_config_with_sector_opts
+from _helpers import update_config_with_sector_opts
 from add_existing_baseyear import add_build_year_to_new_assets
 
 
@@ -147,12 +147,11 @@ if __name__ == "__main__":
 
     year = int(snakemake.wildcards.planning_horizons)
 
-    overrides = override_component_attrs(snakemake.input.overrides)
-    n = pypsa.Network(snakemake.input.network, override_component_attrs=overrides)
+    n = pypsa.Network(snakemake.input.network)
 
     add_build_year_to_new_assets(n, year)
 
-    n_p = pypsa.Network(snakemake.input.network_p, override_component_attrs=overrides)
+    n_p = pypsa.Network(snakemake.input.network_p)
 
     add_brownfield(n, n_p, year)
 

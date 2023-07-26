@@ -13,7 +13,6 @@ rule plot_network:
         foresight=config["foresight"],
         plotting=config["plotting"],
     input:
-        overrides="data/override_component_attrs",
         network=RESULTS
         + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
         regions=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
@@ -76,7 +75,6 @@ rule make_summary:
         scenario=config["scenario"],
         RDIR=RDIR,
     input:
-        overrides="data/override_component_attrs",
         networks=expand(
             RESULTS
             + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
