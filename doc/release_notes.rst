@@ -119,7 +119,7 @@ PyPSA-Eur 0.8.1 (27th July 2023)
 * Fix addition of load shedding generators.
   (https://github.com/PyPSA/pypsa-eur/pull/649)
 
-* Fix automatic building of documentation ond readthedocs.org.
+* Fix automatic building of documentation on readthedocs.org.
   (https://github.com/PyPSA/pypsa-eur/pull/658)
 
 * Bugfix: Update network clustering to avoid adding deleted links in clustered
