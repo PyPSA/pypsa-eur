@@ -56,4 +56,4 @@ dependencies:
 
 - pip:
   - tsam>=1.1.0
-  - git+https://github.com/PyPSA/PyPSA.git@master
+  - pypsa>=0.25.1
