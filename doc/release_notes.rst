@@ -79,7 +79,7 @@ PyPSA-Eur 0.8.1 (27th July 2023)
   (https://github.com/PyPSA/pypsa-eur/pull/704)
 
 * Handle data bundle extraction paths via ``snakemake.output``.
- 
+
 * Additional technologies are added to ``tech_color`` in the configuration files
   to include previously unlisted carriers.
 
