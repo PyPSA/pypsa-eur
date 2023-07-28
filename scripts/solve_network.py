@@ -632,6 +632,7 @@ def solve_network(n, config, solving, opts="", **kwargs):
     min_iterations = cf_solving.get("min_iterations", 4)
     max_iterations = cf_solving.get("max_iterations", 6)
     transmission_losses = cf_solving.get("transmission_losses", 0)
+    assign_all_duals = cf_solving.get("assign_all_duals", False)
 
     # add to network for extra_functionality
     n.config = config
@@ -646,6 +647,7 @@ def solve_network(n, config, solving, opts="", **kwargs):
         status, condition = n.optimize(
             solver_name=solver_name,
             transmission_losses=transmission_losses,
+            assign_all_duals=assign_all_duals,
             extra_functionality=extra_functionality,
             transmission_losses=config["sector"][
                 "electricity_grid_transmission_losses"
@@ -660,6 +662,7 @@ def solve_network(n, config, solving, opts="", **kwargs):
             min_iterations=min_iterations,
             max_iterations=max_iterations,
             transmission_losses=transmission_losses,
+            assign_all_duals=assign_all_duals,
             extra_functionality=extra_functionality,
             transmission_losses=config["sector"][
                 "electricity_grid_transmission_losses"
