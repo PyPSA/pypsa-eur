@@ -442,7 +442,7 @@ def add_heating_capacities_installed_before_baseyear(
             # if rural heating demand for one of the nodes doesn't exist,
             # then columns were dropped before and heating demand share should be 0.0
             if (f"{node} residential rural heat" in n.loads_t.p_set.sum().index)
-               & (f"{node} services rural heat" in n.loads_t.p_set.sum().index)
+            & (f"{node} services rural heat" in n.loads_t.p_set.sum().index)
             else 0.0
             for node in nodal_df.index
         ],
