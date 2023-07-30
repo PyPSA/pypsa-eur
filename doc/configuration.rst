@@ -16,11 +16,12 @@ PyPSA-Eur has several configuration options which are documented in this section
 Top-level configuration
 =======================
 
+"Private" refers to local, machine-specific settings or data meant for personal use, not to be shared. "Remote" indicates the address of a server used for data exchange, often for clusters and data pushing/pulling.
+
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: version:
    :end-before: # docs
-
 
 .. csv-table::
    :header-rows: 1

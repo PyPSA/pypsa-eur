@@ -40,17 +40,16 @@ color_country = {
     "LV": "#f3758d",
     "ME": "#f37685",
     "MK": "#f37b7c",
-    "NL": "#f28774",
-    "NO": "#f1976b",
-    "PL": "#efaa63",
-    "PT": "#ebb160",
-    "RO": "#e6c260",
-    "RS": "#e2d75e",
-    "SE": "#dedc5b",
-    "SI": "#d9e35a",
-    "SK": "#d3e75a",
+    "NL": "#FF6666",
+    "NO": "#FF3333",
+    "PL": "#eb0000",
+    "PT": "#d70000",
+    "RO": "#c00000",
+    "RS": "#a50000",
+    "SE": "#8a0000",
+    "SI": "#6f0000",
+    "SK": "#550000",
 }
-
 
 def sort_one_country(country, df):
     indices = [link for link in df.columns if country in link]
@@ -142,7 +141,6 @@ def cross_border_bar(countries, data):
             else:
                 title = "Optimized"
 
-            color = [color_country[link[5:]] for link in df_country.columns] + color
             df_positive_new = pd.DataFrame(data=df_pos.sum()).T.rename(
                 {0: title + " " + cc.convert(country, to="name_short")}
             )
@@ -154,6 +152,8 @@ def cross_border_bar(countries, data):
             df_negative = pd.concat([df_negative_new, df_negative])
 
             order = order + 1
+
+    color = [color_country[link[5:]] for link in df_positive.columns]
 
     fig, ax = plt.subplots(figsize=(15, 60))
 
