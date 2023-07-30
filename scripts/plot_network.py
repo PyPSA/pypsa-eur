@@ -20,7 +20,6 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
-from _helpers import override_component_attrs
 from make_summary import assign_carriers
 from plot_summary import preferred_order, rename_techs
 from pypsa.plot import add_legend_circles, add_legend_lines, add_legend_patches
@@ -930,8 +929,7 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=snakemake.config["logging"]["level"])
 
-    overrides = override_component_attrs(snakemake.input.overrides)
-    n = pypsa.Network(snakemake.input.network, override_component_attrs=overrides)
+    n = pypsa.Network(snakemake.input.network)
 
     regions = gpd.read_file(snakemake.input.regions).set_index("name")
 

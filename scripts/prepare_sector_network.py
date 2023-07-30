@@ -17,11 +17,7 @@ import numpy as np
 import pandas as pd
 import pypsa
 import xarray as xr
-from _helpers import (
-    generate_periodic_profiles,
-    override_component_attrs,
-    update_config_with_sector_opts,
-)
+from _helpers import generate_periodic_profiles, update_config_with_sector_opts
 from add_electricity import calculate_annuity, sanitize_carriers
 from build_energy_totals import build_co2_totals, build_eea_co2, build_eurostat_co2
 from networkx.algorithms import complement
@@ -3279,8 +3275,7 @@ if __name__ == "__main__":
 
     investment_year = int(snakemake.wildcards.planning_horizons[-4:])
 
-    overrides = override_component_attrs(snakemake.input.overrides)
-    n = pypsa.Network(snakemake.input.network, override_component_attrs=overrides)
+    n = pypsa.Network(snakemake.input.network)
 
     pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
     nhours = n.snapshot_weightings.generators.sum()
