@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: CC0-1.0
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#top-level-configuration
-version: 0.8.0
+version: 0.8.1
 tutorial: false
 
 logging:
@@ -238,6 +238,12 @@ lines:
   max_extension: .inf
   length_factor: 1.25
   under_construction: 'zero' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
+  dynamic_line_rating:
+    activate: false
+    cutout: europe-2013-era5
+    correction_factor: 0.95
+    max_voltage_difference: false
+    max_line_rating: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#links
 links:

@@ -60,6 +60,12 @@ renewable:
 clustering:
   exclude_carriers: ["OCGT", "offwind-ac", "coal"]
 
+lines:
+  dynamic_line_rating:
+    activate: true
+    cutout: be-03-2013-era5
+    max_line_rating: 1.3
+
 
 solving:
   solver:

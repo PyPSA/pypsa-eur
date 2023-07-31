@@ -596,6 +596,7 @@ def extra_functionality(n, snapshots):
 def solve_network(n, config, solving, opts="", **kwargs):
     set_of_options = solving["solver"]["options"]
     cf_solving = solving["options"]
+
     kwargs["solver_options"] = (
         solving["solver_options"][set_of_options] if set_of_options else {}
     )
@@ -605,6 +606,7 @@ def solve_network(n, config, solving, opts="", **kwargs):
     kwargs["linearized_unit_commitment"] = cf_solving.get(
         "linearized_unit_commitment", False
     )
+    kwargs["assign_all_duals"] = cf_solving.get("assign_all_duals", False)
 
     rolling_horizon = cf_solving.pop("rolling_horizon", False)
     skip_iterations = cf_solving.pop("skip_iterations", False)
