@@ -3077,7 +3077,7 @@ def add_endogenous_hvdc_import_options(n):
         efficiency=1 - import_links.values * cf["hvdc_losses"],
     )
 
-    for tech in ["solar-utility", "onwind", "offwind"]:
+    for tech in ["solar-utility", "onwind"]:
         p_max_pu_tech = p_max_pu.sel(technology=tech).to_pandas().dropna().T
 
         exporters_tech_i = exporters.index.intersection(p_max_pu_tech.columns)
@@ -3107,7 +3107,7 @@ def add_endogenous_hvdc_import_options(n):
         carrier="external H2",
         e_nom_extendable=True,
         e_cyclic=True,
-        capital_cost=costs.at["hydrogen storage tank incl. compressor", "fixed"],
+        capital_cost=costs.at["hydrogen storage tank type 1 including compressor", "fixed"],
     )
 
     n.madd(
@@ -3124,15 +3124,15 @@ def add_endogenous_hvdc_import_options(n):
 
     n.madd(
         "Link",
-        h2_buses_i + " Fuel Cell",
+        h2_buses_i + " H2 Turbine",
         bus0=h2_buses_i,
         bus1=buses_i,
-        carrier="external H2 Fuel Cell",
+        carrier="external H2 Turbine",
         p_nom_extendable=True,
-        efficiency=costs.at["fuel cell", "efficiency"],
-        capital_cost=costs.at["fuel cell", "fixed"]
-        * costs.at["fuel cell", "efficiency"],
-        lifetime=costs.at["fuel cell", "lifetime"],
+        efficiency=costs.at["OCGT", "efficiency"],
+        capital_cost=costs.at["OCGT", "fixed"]
+        * costs.at["OCGT", "efficiency"],
+        lifetime=costs.at["OCGT", "lifetime"],
     )
 
     # battery storage
@@ -3210,7 +3210,7 @@ def add_import_options(
         "pipeline-h2",
         "shipping-lh2",
         "shipping-lch4",
-        "shipping-meoh",
+        #"shipping-meoh",
         "shipping-ftfuel",
         "shipping-lnh3",
         # "shipping-steel",
@@ -3239,16 +3239,17 @@ def add_import_options(
         "shipping-lch4": " gas",
         "shipping-lnh3": " NH3",
         "shipping-ftfuel": " oil",
-        "shipping-meoh": " methanol",
+        #"shipping-meoh": " methanol",
         # "shipping-steel": " steel",
     }
 
     co2_intensity = {
         "shipping-lch4": "gas",
         "shipping-ftfuel": "oil",
-        "shipping-meoh": "methanol",  # TODO: or shipping fuel methanol
+        #"shipping-meoh": "methanol",  # TODO: or shipping fuel methanol
         # "shipping-steel": "", TODO: is this necessary?
     }
+    # TODO take from options MWh_MeOH_per_tCO2
 
     import_costs = pd.read_csv(snakemake.input.import_costs, delimiter=";")
     cols = ["esc", "exporter", "importer", "value"]
@@ -3336,7 +3337,7 @@ def add_import_options(
     # need special handling for copperplated imports
     copperplated_options = {
         "shipping-ftfuel",
-        "shipping-meoh",
+        #"shipping-meoh",
         # "shipping-steel",
     }
 
@@ -3349,8 +3350,8 @@ def add_import_options(
 
         n.add(
             "Store",
-            "EU import {tech} store",
-            bus="EU import {tech} bus",
+            f"EU import {tech} store",
+            bus=f"EU import {tech} bus",
             e_nom_extendable=True,
             e_nom_min=-np.inf,
             e_nom_max=0,
@@ -3360,11 +3361,11 @@ def add_import_options(
 
         n.add(
             "Link",
-            "EU import {tech}",
-            bus0="EU import {tech} bus",
+            f"EU import {tech}",
+            bus0=f"EU import {tech} bus",
             bus1="EU" + suffix,
             bus2="co2 atmosphere",
-            carrier="import {tech}",
+            carrier=f"import {tech}",
             efficiency2=-costs.at[co2_intensity[tech], "CO2 intensity"],
             marginal_cost=marginal_costs,
             p_nom=1e7,
@@ -3743,8 +3744,8 @@ if __name__ == "__main__":
         CH4=["shipping-lch4"],
         NH3=["shipping-lnh3"],
         FT=["shipping-ftfuel"],
-        MEOH=["shipping-meoh"],
-        # STEEL=["shipping-steel"]
+        # MeOH=["shipping-meoh"],
+        # St=["shipping-steel"]
     )
     for o in opts:
         if not o.startswith("imp"):
