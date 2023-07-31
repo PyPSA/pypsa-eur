@@ -451,10 +451,11 @@ def add_carrier_buses(n, carrier, nodes=None):
     n.add("Carrier", carrier)
 
     unit = "MWh_LHV" if carrier == "gas" else "MWh_th"
+    # preliminary value for non-gas carriers to avoid zeros
+    capital_cost = costs.at["gas storage", "fixed"] if carrier == "gas" else 0.02
 
     n.madd("Bus", nodes, location=location, carrier=carrier, unit=unit)
 
-    # capital cost could be corrected to e.g. 0.2 EUR/kWh * annuity and O&M
     n.madd(
         "Store",
         nodes + " Store",
@@ -462,8 +463,7 @@ def add_carrier_buses(n, carrier, nodes=None):
         e_nom_extendable=True,
         e_cyclic=True,
         carrier=carrier,
-        capital_cost=0.2
-        * costs.at[carrier, "discount rate"],  # preliminary value to avoid zeros
+        capital_cost=capital_cost,
     )
 
     n.madd(
@@ -1159,7 +1159,7 @@ def add_storage_and_grids(n, costs):
 
     if options["gas_network"]:
         logger.info(
-            "Add natural gas infrastructure, incl. LNG terminals, production and entry-points."
+            "Add natural gas infrastructure, incl. LNG terminals, production, storage and entry-points."
         )
 
         if options["H2_retrofit"]:
@@ -1204,9 +1204,16 @@ def add_storage_and_grids(n, costs):
         remove_i = n.generators[gas_i & internal_i].index
         n.generators.drop(remove_i, inplace=True)
 
-        p_nom = gas_input_nodes.sum(axis=1).rename(lambda x: x + " gas")
+        input_types = ["lng", "pipeline", "production"]
+        p_nom = gas_input_nodes[input_types].sum(axis=1).rename(lambda x: x + " gas")
         n.generators.loc[gas_i, "p_nom_extendable"] = False
         n.generators.loc[gas_i, "p_nom"] = p_nom
+
+        # add existing gas storage capacity
+        gas_i = n.stores.carrier == "gas"
+        e_nom = gas_input_nodes["storage"].rename(lambda x: x + " gas Store").reindex(n.stores.index).fillna(0.) * 1e3 # MWh_LHV
+        e_nom.clip(upper=e_nom.quantile(0.98), inplace=True) # limit extremely large storage
+        n.stores.loc[gas_i, "e_nom_min"] = e_nom
 
         # add candidates for new gas pipelines to achieve full connectivity
 

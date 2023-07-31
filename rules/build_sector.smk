@@ -90,6 +90,7 @@ if config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]:
                 keep_local=True,
             ),
             entry="data/gas_network/scigrid-gas/data/IGGIELGN_BorderPoints.geojson",
+            storage="data/gas_network/scigrid-gas/data/IGGIELGN_Storages.geojson",
             regions_onshore=RESOURCES
             + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
             regions_offshore=RESOURCES

@@ -76,7 +76,7 @@ def build_gem_prod_data(fn):
     return gpd.GeoDataFrame(df, geometry=geometry, crs="EPSG:4326")
 
 
-def build_gas_input_locations(gem_fn, entry_fn, countries):
+def build_gas_input_locations(gem_fn, entry_fn, sto_fn, countries):
     # LNG terminals
     lng = build_gem_lng_data(gem_fn)
 
@@ -89,23 +89,30 @@ def build_gas_input_locations(gem_fn, entry_fn, countries):
         | (entry.from_country == "NO")  # malformed datapoint  # entries from NO to GB
     ]
 
+    sto =  read_scigrid_gas(sto_fn)
+    remove_country = ["RU", "UA", "TR", "BY"]
+    sto = sto.query("country_code != @remove_country")
+
     # production sites inside the model scope
     prod = build_gem_prod_data(gem_fn)
 
     mcm_per_day_to_mw = 437.5  # MCM/day to MWh/h
     mcm_per_year_to_mw = 1.199  #  MCM/year to MWh/h
     mtpa_to_mw = 1649.224  # mtpa to MWh/h
-    lng["p_nom"] = lng["CapacityInMtpa"] * mtpa_to_mw
-    entry["p_nom"] = entry["max_cap_from_to_M_m3_per_d"] * mcm_per_day_to_mw
-    prod["p_nom"] = prod["mcm_per_year"] * mcm_per_year_to_mw
+    mcm_to_gwh = 11.36  # MCM to GWh
+    lng["capacity"] = lng["CapacityInMtpa"] * mtpa_to_mw
+    entry["capacity"] = entry["max_cap_from_to_M_m3_per_d"] * mcm_per_day_to_mw
+    prod["capacity"] = prod["mcm_per_year"] * mcm_per_year_to_mw
+    sto["capacity"] = sto["max_cushionGas_M_m3"] * mcm_to_gwh
 
     lng["type"] = "lng"
     entry["type"] = "pipeline"
     prod["type"] = "production"
+    sto["type"] = "storage"
 
-    sel = ["geometry", "p_nom", "type"]
+    sel = ["geometry", "capacity", "type"]
 
-    return pd.concat([prod[sel], entry[sel], lng[sel]], ignore_index=True)
+    return pd.concat([prod[sel], entry[sel], lng[sel], sto[sel]], ignore_index=True)
 
 
 def assign_reference_import_sites(gas_input_locations, import_sites, europe_shape):
@@ -161,6 +168,7 @@ if __name__ == "__main__":
     gas_input_locations = build_gas_input_locations(
         snakemake.input.gem,
         snakemake.input.entry,
+        snakemake.input.storage,
         countries,
     )
 
@@ -175,9 +183,9 @@ if __name__ == "__main__":
     gas_input_nodes.to_file(snakemake.output.gas_input_nodes, driver="GeoJSON")
 
     gas_input_nodes_s = (
-        gas_input_nodes.groupby(["bus", "type"])["p_nom"].sum().unstack()
+        gas_input_nodes.groupby(["bus", "type"])["capacity"].sum().unstack()
     )
-    gas_input_nodes_s.columns.name = "p_nom"
+    gas_input_nodes_s.columns.name = "capacity"
 
     gas_input_nodes_s.to_csv(snakemake.output.gas_input_nodes_simplified)
 
