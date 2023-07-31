@@ -504,6 +504,13 @@ sector:
       - TN
       - TR
       - UA
+      extra_connections:
+      - MA-DZ
+      - DZ-LY
+      - DZ-TN
+      - TN-LY
+      - LY-EG
+      - EG-SA
       hvdc_losses: 3.e-5 # p.u./km
       length_factor: 1.25
       distance_threshold: 0.05 # quantile

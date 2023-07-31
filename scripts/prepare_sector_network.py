@@ -3175,6 +3175,32 @@ def add_endogenous_hvdc_import_options(n):
         lifetime=costs.at["battery inverter", "lifetime"],
     )
 
+    # add extra HVDC connections between MENA countries
+
+    for bus0_bus1 in cf.get("extra_connections", []):
+        bus0, bus1 = bus0_bus1.split("-")
+
+        a = exporters.to_crs(3857).at[bus0, "geometry"]
+        b = exporters.to_crs(3857).at[bus1, "geometry"]
+        d = a.distance(b) / 1e3  # km
+
+        capital_cost = (
+            d * cf["length_factor"] * costs.at["HVDC overhead", "fixed"]
+            + costs.at["HVDC inverter pair", "fixed"]
+        )
+
+        n.add(
+            "Link",
+            f"external HVDC {bus0_bus1}",
+            bus0=bus0,
+            bus1=bus1,
+            carrier="external HVDC",
+            p_min_pu=-1,
+            p_nom_extendable=True,
+            capital_cost=capital_cost,
+            length=d,
+        )
+
 
 def add_import_options(
     n,
