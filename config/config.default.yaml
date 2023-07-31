@@ -511,6 +511,56 @@ sector:
       - TN-LY
       - LY-EG
       - EG-SA
+      xlinks:
+        MA:
+        # Plymouth
+        - x: -4.14
+          y: 50.39
+          length: 3800
+        # Cork
+        - x: -8.52
+          y: 51.92
+          length: 4000
+        # Brest
+        - x: -4.49
+          y: 48.43
+          length: 3200
+        # Vigo
+        - x: -8.70
+          y: 42.31
+          length: 1800
+        DZ:
+        # Barcelona
+        - x: 2.37
+          y: 41.57
+          length: 1300
+        # Genoa
+        - x: 8.93
+          y: 44.41
+          length: 1800
+        # Marseille
+        - x: 5.30
+          y: 43.38
+          length: 1400
+        TN:
+        # Genoa
+        - x: 8.93
+          y: 44.41
+          length: 1500
+        # Marseille
+        - x: 5.30
+          y: 43.38
+          length: 1500
+        LY:
+        # Venice
+        - x: 12.39
+          y: 45.56
+          length: 2500
+        EG:
+        # Venice
+        - x: 12.39
+          y: 45.56
+          length: 2500
       hvdc_losses: 3.e-5 # p.u./km
       length_factor: 1.25
       distance_threshold: 0.05 # quantile

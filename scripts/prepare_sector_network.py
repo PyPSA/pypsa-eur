@@ -27,6 +27,7 @@ from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentati
 from pypsa.geo import haversine_pts
 from pypsa.io import import_components_from_dataframe
 from scipy.stats import beta
+from shapely.geometry import Point
 
 geolocator = Nominatim(user_agent="locate-exporting-region", timeout=10)
 
@@ -40,6 +41,8 @@ from packaging.version import Version, parse
 
 pd_version = parse(pd.__version__)
 agg_group_kwargs = dict(numeric_only=False) if pd_version >= Version("1.3") else {}
+
+DISTANCE_CRS = 3857
 
 
 def define_spatial(nodes, options):
@@ -3046,14 +3049,25 @@ def add_endogenous_hvdc_import_options(n):
     exporters = gpd.GeoDataFrame(exporters, geometry=geometry, crs=4326)
 
     import_links = {}
-    a = regions.representative_point().to_crs(3857)
+    a = regions.representative_point().to_crs(DISTANCE_CRS)
     for ct in exporters.index:
-        b = exporters.to_crs(3857).loc[ct].geometry
+        b = exporters.to_crs(DISTANCE_CRS).loc[ct].geometry
         d = a.distance(b)
         import_links[ct] = (
             d.where(d < d.quantile(cf["distance_threshold"])).div(1e3).dropna()
         )  # km
     import_links = pd.concat(import_links)
+
+    # xlinks
+    xlinks = {}
+    for bus0, links in cf["xlinks"].items():
+        for link in links:
+            landing_point = gpd.GeoSeries([Point(link["x"], link["y"])], crs=4326).to_crs(DISTANCE_CRS)
+            bus1 = regions.to_crs(DISTANCE_CRS).geometry.distance(landing_point[0]).idxmin()
+            xlinks[(bus0, bus1)] = link["length"]
+
+    import_links = pd.concat([import_links, pd.Series(xlinks)], axis=0)
+    import_links = import_links.drop_duplicates(keep='first')
 
     hvdc_cost = (
         import_links.values * cf["length_factor"] * costs.at["HVDC submarine", "fixed"]
@@ -3346,7 +3360,7 @@ def add_import_options(
 
         suffix = bus_suffix[tech]
 
-        n.add("Bus", f"EU import {tech} bus", carrier="import {tech}")
+        n.add("Bus", f"EU import {tech} bus", carrier=f"import {tech}")
 
         n.add(
             "Store",
