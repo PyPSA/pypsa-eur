@@ -69,7 +69,7 @@ renewable:
     flatten_dispatch: 0.01
 
 conventional:
-  unit_commitment: false
+  unit_commitment: true
   dynamic_fuel_price: true
   nuclear:
     p_max_pu: "data/nuclear_p_max_pu.csv" # float of file name
@@ -82,7 +82,7 @@ load:
 
 
 lines:
-  s_max_pu: 0.25
+  s_max_pu: 0.23
   under_construction: 'remove' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
 
 

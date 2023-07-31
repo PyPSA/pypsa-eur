@@ -77,6 +77,9 @@ price_2020 = (
     pd.Series({"coal": 3.0, "oil": 10.6, "gas": 5.6, "lignite": 1.1}) * 3.6
 )  # Eur/MWh
 
+# manual correction for better fit:
+price_2020["coal"] = 2.2
+
 
 def get_fuel_price():
     price = {}
