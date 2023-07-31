@@ -51,6 +51,7 @@ color_country = {
     "SK": "#550000",
 }
 
+
 def sort_one_country(country, df):
     indices = [link for link in df.columns if country in link]
     df_country = df[indices].copy()
