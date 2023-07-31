@@ -2155,12 +2155,12 @@ def add_biomass(n, costs):
         p_nom_extendable=True,
     )
 
-    if options["biomass_transport"]:
-        transport_costs = pd.read_csv(
-            snakemake.input.biomass_transport_costs,
-            index_col=0,
-        ).squeeze()
+    transport_costs = pd.read_csv(
+        snakemake.input.biomass_transport_costs,
+        index_col=0,
+    ).squeeze()
 
+    if options["biomass_transport"]:
         # add biomass transport
         biomass_transport = create_network_topology(
             n, "biomass transport ", bidirectional=False
@@ -2183,6 +2183,23 @@ def add_biomass(n, costs):
             length=biomass_transport.length.values,
             marginal_cost=biomass_transport.costs * biomass_transport.length.values,
             carrier="solid biomass transport",
+        )
+
+    elif options["biomass_spatial"]:
+        # add artificial biomass generators at nodes which include transport costs
+        bus_transport_costs = spatial.biomass.nodes.to_series().apply(
+            lambda x: transport_costs[x[:2]]
+        )
+        average_distance = 200  # km #TODO: validate this assumption
+
+        n.madd(
+            "Generator",
+            spatial.biomass.nodes,
+            bus=spatial.biomass.nodes,
+            carrier="solid biomass",
+            p_nom=10000,
+            marginal_cost=costs.at["solid biomass", "fuel"]
+            + bus_transport_costs * average_distance,
         )
 
     # AC buses with district heating

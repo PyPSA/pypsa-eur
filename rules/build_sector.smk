@@ -295,35 +295,25 @@ rule build_biomass_potentials:
         "../scripts/build_biomass_potentials.py"
 
 
-if config["sector"]["biomass_transport"]:
-
-    rule build_biomass_transport_costs:
-        input:
-            transport_cost_data=HTTP.remote(
-                "publications.jrc.ec.europa.eu/repository/bitstream/JRC98626/biomass potentials in europe_web rev.pdf",
-                keep_local=True,
-            ),
-        output:
-            biomass_transport_costs=RESOURCES + "biomass_transport_costs.csv",
-        threads: 1
-        resources:
-            mem_mb=1000,
-        log:
-            LOGS + "build_biomass_transport_costs.log",
-        benchmark:
-            BENCHMARKS + "build_biomass_transport_costs"
-        conda:
-            "../envs/environment.yaml"
-        script:
-            "../scripts/build_biomass_transport_costs.py"
-
-    build_biomass_transport_costs_output = rules.build_biomass_transport_costs.output
-
-
-if not config["sector"]["biomass_transport"]:
-    # this is effecively an `else` statement which is however not liked by snakefmt
-
-    build_biomass_transport_costs_output = {}
+rule build_biomass_transport_costs:
+    input:
+        transport_cost_data=HTTP.remote(
+            "publications.jrc.ec.europa.eu/repository/bitstream/JRC98626/biomass potentials in europe_web rev.pdf",
+            keep_local=True,
+        ),
+    output:
+        biomass_transport_costs=RESOURCES + "biomass_transport_costs.csv",
+    threads: 1
+    resources:
+        mem_mb=1000,
+    log:
+        LOGS + "build_biomass_transport_costs.log",
+    benchmark:
+        BENCHMARKS + "build_biomass_transport_costs"
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_biomass_transport_costs.py"
 
 
 if config["sector"]["regional_co2_sequestration_potential"]["enable"]:
@@ -721,7 +711,7 @@ rule prepare_sector_network:
         RDIR=RDIR,
     input:
         **build_retro_cost_output,
-        **build_biomass_transport_costs_output,
+        **rules.build_biomass_transport_costs.output,
         **gas_infrastructure,
         **build_sequestration_potentials_output,
         network=RESOURCES + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
@@ -782,7 +772,7 @@ rule prepare_sector_network:
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
     threads: 1
     resources:
-        mem_mb=2000,
+        mem_mb=20000,
     log:
         LOGS
         + "prepare_sector_network_elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log",
