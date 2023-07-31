@@ -491,6 +491,23 @@ def add_battery_constraints(n):
     n.model.add_constraints(lhs == 0, name="Link-charger_ratio")
 
 
+def add_lossy_bidirectional_link_constraints(n):
+    if not n.links.p_nom_extendable.any() or not "reversed" in n.links.columns:
+        return
+    
+    carriers = n.links.loc[n.links.reversed, "carrier"].unique()
+
+    backward_i = n.links.query("carrier in @carriers and reversed and p_nom_extendable").index
+    forward_i = n.links.query("carrier in @carriers and ~reversed and p_nom_extendable").index
+
+    assert len(forward_i) == len(backward_i)
+
+    lhs = n.model["Link-p_nom"].loc[backward_i]
+    rhs = n.model["Link-p_nom"].loc[forward_i]
+
+    n.model.add_constraints(lhs == rhs, name="Link-bidirectional_sync")
+
+
 def add_chp_constraints(n):
     electric = (
         n.links.index.str.contains("urban central")
@@ -619,6 +636,7 @@ def extra_functionality(n, snapshots):
         if "EQ" in o:
             add_EQ_constraints(n, o)
     add_battery_constraints(n)
+    add_lossy_bidirectional_link_constraints(n)
     add_pipe_retrofit_constraint(n)
     add_energy_import_limit(n, snapshots)
 
@@ -649,9 +667,6 @@ def solve_network(n, config, solving, opts="", **kwargs):
             transmission_losses=transmission_losses,
             assign_all_duals=assign_all_duals,
             extra_functionality=extra_functionality,
-            transmission_losses=config["sector"][
-                "electricity_grid_transmission_losses"
-            ],
             **solver_options,
             **kwargs,
         )
@@ -664,9 +679,6 @@ def solve_network(n, config, solving, opts="", **kwargs):
             transmission_losses=transmission_losses,
             assign_all_duals=assign_all_duals,
             extra_functionality=extra_functionality,
-            transmission_losses=config["sector"][
-                "electricity_grid_transmission_losses"
-            ],
             **solver_options,
             **kwargs,
         )

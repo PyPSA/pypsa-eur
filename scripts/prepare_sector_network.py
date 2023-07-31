@@ -3642,6 +3642,28 @@ def set_temporal_aggregation(n, opts, solver_name):
     return n
 
 
+def lossy_bidirectional_links(n, carrier, losses_per_thousand_km=0.):
+    "Split bidirectional links into two unidirectional links to include transmission losses."
+
+    carrier_i = n.links.query("carrier == @carrier").index
+
+    if not losses_per_thousand_km or carrier_i.empty:
+        return
+
+    logger.info(f"Specified losses for {carrier} transmission. Splitting bidirectional links.")
+
+    carrier_i = n.links.query("carrier == @carrier").index
+    n.links.loc[carrier_i, "p_min_pu"] = 0
+    n.links["reversed"] = False
+    n.links.loc[carrier_i, "efficiency"] = 1 - n.links.loc[carrier_i, "length"] * losses_per_thousand_km / 1e3
+    rev_links = n.links.loc[carrier_i].copy().rename({"bus0": "bus1", "bus1": "bus0"}, axis=1)
+    rev_links.capital_cost = 0
+    rev_links.reversed = True
+    rev_links.index = rev_links.index.map(lambda x: x + "-reversed")
+
+    n.links = pd.concat([n.links, rev_links], sort=False)
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -3827,9 +3849,12 @@ if __name__ == "__main__":
     if options["electricity_grid_connection"]:
         add_electricity_grid_connection(n, costs)
 
+    for k, v in options["transmission_losses"].items():
+        lossy_bidirectional_links(n, k, v)
+
     # Workaround: Remove lines with conflicting (and unrealistic) properties
     # cf. https://github.com/PyPSA/pypsa-eur/issues/444
-    if options["electricity_grid_transmission_losses"]:
+    if snakemake.config["solving"]["options"]["transmission_losses"]:
         idx = n.lines.query("num_parallel == 0").index
         logger.info(
             f"Removing {len(idx)} line(s) with properties conflicting with transmission losses functionality."

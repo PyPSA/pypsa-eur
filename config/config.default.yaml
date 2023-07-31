@@ -466,7 +466,11 @@ sector:
   electricity_distribution_grid: true
   electricity_distribution_grid_cost_factor: 1.0
   electricity_grid_connection: true
-  electricity_grid_transmission_losses: 0 # Enable (= value from 1 to 3) or disable (= 0) transmission losses in electricity grid
+  transmission_losses:
+    # per 1000 km
+    DC: 0
+    H2 pipeline: 0
+    gas pipeline: 0
   H2_network: true
   gas_network: false
   H2_retrofit: false
