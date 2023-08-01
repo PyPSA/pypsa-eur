@@ -62,7 +62,7 @@ renewable:
     flatten_dispatch: 0.01
 
 conventional:
-  unit_commitment: false
+  unit_commitment: true
   dynamic_fuel_price: true
   nuclear:
     p_max_pu: "data/nuclear_p_max_pu.csv"

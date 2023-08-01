@@ -34,11 +34,9 @@ and translates them from different input sources to pypsa syntax
 Data sources:
     [1] Fuel price index. Destatis
     https://www.destatis.de/EN/Home/_node.html
-    [2] average annual import price (coal, gas, oil) Agora, slide 24
-    https://static.agora-energiewende.de/fileadmin/Projekte/2019/Jahresauswertung_2019/A-EW_German-Power-Market-2019_Summary_EN.pdf
-    [3] average annual fuel price lignite, ENTSO-E
+    [2] average annual fuel price lignite, ENTSO-E
     https://2020.entsos-tyndp-scenarios.eu/fuel-commodities-and-carbon-prices/
-    [4] CO2 Prices, Emission spot primary auction, EEX
+    [3] CO2 Prices, Emission spot primary auction, EEX
     https://www.eex.com/en/market-data/environmental-markets/eua-primary-auction-spot-download
 
 
@@ -71,14 +69,14 @@ sheet_name_map = {
 
 
 # import fuel price 2015 in Eur/MWh
-# source for coal, oil, gas, Agora, slide 24 [2]
 # source lignite, price for 2020, scaled by price index, ENTSO-E [3]
 price_2020 = (
     pd.Series({"coal": 3.0, "oil": 10.6, "gas": 5.6, "lignite": 1.1}) * 3.6
 )  # Eur/MWh
 
-# manual correction for better fit:
-price_2020["coal"] = 2.2
+# manual adjustment of coal price
+price_2020["coal"] = 2.4 * 3.6
+price_2020["lignite"] = 1.6 * 3.6
 
 
 def get_fuel_price():
