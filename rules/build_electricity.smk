@@ -233,7 +233,7 @@ rule determine_availability_matrix_MD_UA:
     conda:
         "../envs/environment.yaml"
     script:
-        "scripts/determine_availability_matrix_MD_UA.py"
+        "../scripts/determine_availability_matrix_MD_UA.py"
 
 
 # Optional input when having Ukraine (UA) or Moldova (MD) in the countries list

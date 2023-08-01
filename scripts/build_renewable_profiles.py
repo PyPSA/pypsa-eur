@@ -185,6 +185,7 @@ import time
 
 import atlite
 import geopandas as gpd
+import pandas as pd
 import numpy as np
 import xarray as xr
 from _helpers import configure_logging
@@ -222,7 +223,8 @@ if __name__ == "__main__":
     else:
         client = None
 
-    cutout = atlite.Cutout(snakemake.input.cutout)
+    sns = pd.date_range(freq="h", **snakemake.config["snapshots"])
+    cutout = atlite.Cutout(snakemake.input.cutout).sel(time=sns)
     regions = gpd.read_file(snakemake.input.regions)
     assert not regions.empty, (
         f"List of regions in {snakemake.input.regions} is empty, please "
@@ -380,4 +382,6 @@ if __name__ == "__main__":
         ds["profile"] = ds["profile"].where(ds["profile"] >= min_p_max_pu, 0)
 
     ds.to_netcdf(snakemake.output.profile)
-    client.shutdown()
+
+    if client is not None:
+        client.shutdown()
