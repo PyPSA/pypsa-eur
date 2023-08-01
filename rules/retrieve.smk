@@ -205,4 +205,3 @@ if config["enable"]["retrieve"]:
         output:
             RESOURCES + "Copernicus_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
         run: move(input[0], output[0])
-

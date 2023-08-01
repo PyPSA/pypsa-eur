@@ -3,13 +3,13 @@
 #
 # SPDX-License-Identifier: MIT
 
-import geopandas as gpd
-import numpy as np
 import functools
-import atlite
 import logging
 import time
 
+import atlite
+import geopandas as gpd
+import numpy as np
 from _helpers import configure_logging
 
 logger = logging.getLogger(__name__)
