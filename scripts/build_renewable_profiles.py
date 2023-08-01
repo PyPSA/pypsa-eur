@@ -185,8 +185,8 @@ import time
 
 import atlite
 import geopandas as gpd
-import pandas as pd
 import numpy as np
+import pandas as pd
 import xarray as xr
 from _helpers import configure_logging
 from dask.distributed import Client
