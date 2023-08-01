@@ -92,7 +92,7 @@ rule plot_validation_cross_border_flows:
     output:
         **{
             plot: RESULTS
-            + f"figures/validation_{plot}_elec_s{{simpl}}_{{clusters}}_ec_l{{ll}}_{{opts}}.png"
+            + f"figures/validation_{plot}_elec_s{{simpl}}_{{clusters}}_ec_l{{ll}}_{{opts}}.pdf"
             for plot in CROSS_BORDER_PLOTS
         },
         plots_touch=RESULTS
