@@ -205,24 +205,31 @@ rule build_ship_raster:
 
 rule determine_availability_matrix_MD_UA:
     input:
-        copernicus=RESOURCES + "Copernicus_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
-        gebco=lambda w: ("data/bundle/GEBCO_2014_2D.nc"
-                        if "max_depth" in config["renewable"][w.technology].keys()
-                        else []),
-        country_shapes=RESOURCES + 'country_shapes.geojson',
-        offshore_shapes=RESOURCES + 'offshore_shapes.geojson',
-        regions=lambda w: (RESOURCES + "regions_onshore.geojson"
-                                if w.technology in ('onwind', 'solar')
-                                else RESOURCES + "regions_offshore.geojson"),
-        cutout=lambda w: "cutouts/" + CDIR + config["renewable"][w.technology]['cutout'] + ".nc"
+        copernicus=RESOURCES
+        + "Copernicus_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
+        gebco=lambda w: (
+            "data/bundle/GEBCO_2014_2D.nc"
+            if "max_depth" in config["renewable"][w.technology].keys()
+            else []
+        ),
+        country_shapes=RESOURCES + "country_shapes.geojson",
+        offshore_shapes=RESOURCES + "offshore_shapes.geojson",
+        regions=lambda w: (
+            RESOURCES + "regions_onshore.geojson"
+            if w.technology in ("onwind", "solar")
+            else RESOURCES + "regions_offshore.geojson"
+        ),
+        cutout=lambda w: "cutouts/"
+        + CDIR
+        + config["renewable"][w.technology]["cutout"]
+        + ".nc",
     output:
         availability_matrix=RESOURCES + "availability_matrix_MD-UA_{technology}.nc",
     log:
         LOGS + "determine_availability_matrix_MD_UA_{technology}.log",
-    threads:
-        ATLITE_NPROCESSES
+    threads: ATLITE_NPROCESSES
     resources:
-        mem_mb=ATLITE_NPROCESSES * 5000
+        mem_mb=ATLITE_NPROCESSES * 5000,
     conda:
         "../envs/environment.yaml"
     script:
@@ -232,7 +239,8 @@ rule determine_availability_matrix_MD_UA:
 # Optional input when having Ukraine (UA) or Moldova (MD) in the countries list
 if {"UA", "MD"}.intersection(set(config["countries"])):
     opt = {
-        "availability_matrix_MD_UA": RESOURCES + "availability_matrix_MD-UA_{technology}.nc"
+        "availability_matrix_MD_UA": RESOURCES
+        + "availability_matrix_MD-UA_{technology}.nc"
     }
 else:
     opt = {}
@@ -242,6 +250,7 @@ rule build_renewable_profiles:
     params:
         renewable=config["renewable"],
     input:
+        **opt,
         base_network=RESOURCES + "networks/base.nc",
         corine=ancient("data/bundle/corine/g250_clc06_V18_5.tif"),
         natura=lambda w: (
@@ -272,7 +281,6 @@ rule build_renewable_profiles:
         + CDIR
         + config["renewable"][w.technology]["cutout"]
         + ".nc",
-        **opt
     output:
         profile=RESOURCES + "profile_{technology}.nc",
     log:
@@ -365,7 +373,7 @@ rule add_electricity:
         geth_hydro_capacities="data/geth2015_hydro_capacities.csv",
         load=RESOURCES + "load.csv",
         nuts3_shapes=RESOURCES + "nuts3_shapes.geojson",
-        ua_md_gdp='data/GDP_PPP_30arcsec_v3_mapped_default.csv',
+        ua_md_gdp="data/GDP_PPP_30arcsec_v3_mapped_default.csv",
     output:
         RESOURCES + "networks/elec.nc",
     log:
