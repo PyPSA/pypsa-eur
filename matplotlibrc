@@ -1,1 +1,6 @@
-backend : Agg
+# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: CC0-1.0
+font.family: sans-serif
+font.sans-serif: Ubuntu, DejaVu Sans
+image.cmap: viridis

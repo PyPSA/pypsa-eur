@@ -38,7 +38,7 @@ Relevant Settings
         type:
 
 .. seealso::
-    Documentation of the configuration file ``config.yaml`` at
+    Documentation of the configuration file ``config/config.yaml`` at
     :ref:`snapshots_cf`, :ref:`toplevel_cf`, :ref:`electricity_cf`, :ref:`load_cf`,
     :ref:`lines_cf`, :ref:`links_cf`, :ref:`transformers_cf`
 
@@ -58,7 +58,7 @@ Outputs
 
 - ``networks/base.nc``
 
-    .. image:: ../img/base.png
+    .. image:: img/base.png
         :scale: 33 %
 
 Description
@@ -714,6 +714,7 @@ def base_network(
     n.name = "PyPSA-Eur"
 
     n.set_snapshots(pd.date_range(freq="h", **config["snapshots"]))
+    n.madd("Carrier", ["AC", "DC"])
 
     n.import_components_from_dataframe(buses, "Bus")
     n.import_components_from_dataframe(lines, "Line")

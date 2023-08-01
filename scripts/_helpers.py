@@ -3,13 +3,30 @@
 #
 # SPDX-License-Identifier: MIT
 
+import contextlib
+import logging
+import os
 import urllib
 from pathlib import Path
 
 import pandas as pd
+import pytz
+import yaml
+from pypsa.components import component_attrs, components
+from pypsa.descriptors import Dict
 from tqdm import tqdm
 
+logger = logging.getLogger(__name__)
+
 REGION_COLS = ["geometry", "name", "x", "y", "country"]
+
+
+# Define a context manager to temporarily mute print statements
+@contextlib.contextmanager
+def mute_print():
+    with open(os.devnull, "w") as devnull:
+        with contextlib.redirect_stdout(devnull):
+            yield
 
 
 def configure_logging(snakemake, skip_handlers=False):
@@ -53,98 +70,6 @@ def configure_logging(snakemake, skip_handlers=False):
             }
         )
     logging.basicConfig(**kwargs)
-
-
-def load_network(import_name=None, custom_components=None):
-    """
-    Helper for importing a pypsa.Network with additional custom components.
-
-    Parameters
-    ----------
-    import_name : str
-        As in pypsa.Network(import_name)
-    custom_components : dict
-        Dictionary listing custom components.
-        For using ``snakemake.config['override_components']``
-        in ``config.yaml`` define:
-
-        .. code:: yaml
-
-            override_components:
-                ShadowPrice:
-                    component: ["shadow_prices","Shadow price for a global constraint.",np.nan]
-                    attributes:
-                    name: ["string","n/a","n/a","Unique name","Input (required)"]
-                    value: ["float","n/a",0.,"shadow value","Output"]
-
-    Returns
-    -------
-    pypsa.Network
-    """
-    import pypsa
-    from pypsa.descriptors import Dict
-
-    override_components = None
-    override_component_attrs = None
-
-    if custom_components is not None:
-        override_components = pypsa.components.components.copy()
-        override_component_attrs = Dict(
-            {k: v.copy() for k, v in pypsa.components.component_attrs.items()}
-        )
-        for k, v in custom_components.items():
-            override_components.loc[k] = v["component"]
-            override_component_attrs[k] = pd.DataFrame(
-                columns=["type", "unit", "default", "description", "status"]
-            )
-            for attr, val in v["attributes"].items():
-                override_component_attrs[k].loc[attr] = val
-
-    return pypsa.Network(
-        import_name=import_name,
-        override_components=override_components,
-        override_component_attrs=override_component_attrs,
-    )
-
-
-def pdbcast(v, h):
-    return pd.DataFrame(
-        v.values.reshape((-1, 1)) * h.values, index=v.index, columns=h.index
-    )
-
-
-def load_network_for_plots(fn, tech_costs, config, combine_hydro_ps=True):
-    import pypsa
-    from add_electricity import load_costs, update_transmission_costs
-
-    n = pypsa.Network(fn)
-
-    n.loads["carrier"] = n.loads.bus.map(n.buses.carrier) + " load"
-    n.stores["carrier"] = n.stores.bus.map(n.buses.carrier)
-
-    n.links["carrier"] = (
-        n.links.bus0.map(n.buses.carrier) + "-" + n.links.bus1.map(n.buses.carrier)
-    )
-    n.lines["carrier"] = "AC line"
-    n.transformers["carrier"] = "AC transformer"
-
-    n.lines["s_nom"] = n.lines["s_nom_min"]
-    n.links["p_nom"] = n.links["p_nom_min"]
-
-    if combine_hydro_ps:
-        n.storage_units.loc[
-            n.storage_units.carrier.isin({"PHS", "hydro"}), "carrier"
-        ] = "hydro+PHS"
-
-    # if the carrier was not set on the heat storage units
-    # bus_carrier = n.storage_units.bus.map(n.buses.carrier)
-    # n.storage_units.loc[bus_carrier == "heat","carrier"] = "water tanks"
-
-    Nyears = n.snapshot_weightings.objective.sum() / 8760.0
-    costs = load_costs(tech_costs, config["costs"], config["electricity"], Nyears)
-    update_transmission_costs(n, costs)
-
-    return n
 
 
 def update_p_nom_max(n):
@@ -252,35 +177,21 @@ def aggregate_costs(n, flatten=False, opts=None, existing_only=False):
     return costs
 
 
-def progress_retrieve(url, file):
-    with tqdm(unit="B", unit_scale=True, unit_divisor=1024, miniters=1) as t:
+def progress_retrieve(url, file, disable=False):
+    if disable:
+        urllib.request.urlretrieve(url, file)
+    else:
+        with tqdm(unit="B", unit_scale=True, unit_divisor=1024, miniters=1) as t:
 
-        def update_to(b=1, bsize=1, tsize=None):
-            if tsize is not None:
-                t.total = tsize
-            t.update(b * bsize - t.n)
+            def update_to(b=1, bsize=1, tsize=None):
+                if tsize is not None:
+                    t.total = tsize
+                t.update(b * bsize - t.n)
 
-        urllib.request.urlretrieve(url, file, reporthook=update_to)
-
-
-def get_aggregation_strategies(aggregation_strategies):
-    # default aggregation strategies that cannot be defined in .yaml format must be specified within
-    # the function, otherwise (when defaults are passed in the function's definition) they get lost
-    # when custom values are specified in the config.
-
-    import numpy as np
-    from pypsa.networkclustering import _make_consense
-
-    bus_strategies = dict(country=_make_consense("Bus", "country"))
-    bus_strategies.update(aggregation_strategies.get("buses", {}))
-
-    generator_strategies = {"build_year": lambda x: 0, "lifetime": lambda x: np.inf}
-    generator_strategies.update(aggregation_strategies.get("generators", {}))
-
-    return bus_strategies, generator_strategies
+            urllib.request.urlretrieve(url, file, reporthook=update_to)
 
 
-def mock_snakemake(rulename, **wildcards):
+def mock_snakemake(rulename, configfiles=[], **wildcards):
     """
     This function is expected to be executed from the 'scripts'-directory of '
     the snakemake project. It returns a snakemake.script.Snakemake object,
@@ -292,6 +203,8 @@ def mock_snakemake(rulename, **wildcards):
     ----------
     rulename: str
         name of the rule for which the snakemake object should be generated
+    configfiles: list, str
+        list of configfiles to be used to update the config
     **wildcards:
         keyword arguments fixing the wildcards. Only necessary if wildcards are
         needed.
@@ -304,44 +217,102 @@ def mock_snakemake(rulename, **wildcards):
     from snakemake.script import Snakemake
 
     script_dir = Path(__file__).parent.resolve()
-    assert (
-        Path.cwd().resolve() == script_dir
-    ), f"mock_snakemake has to be run from the repository scripts directory {script_dir}"
-    os.chdir(script_dir.parent)
-    for p in sm.SNAKEFILE_CHOICES:
-        if os.path.exists(p):
-            snakefile = p
-            break
-    kwargs = dict(rerun_triggers=[]) if parse(sm.__version__) > Version("7.7.0") else {}
-    workflow = sm.Workflow(snakefile, overwrite_configfiles=[], **kwargs)
-    workflow.include(snakefile)
-    workflow.global_resources = {}
-    rule = workflow.get_rule(rulename)
-    dag = sm.dag.DAG(workflow, rules=[rule])
-    wc = Dict(wildcards)
-    job = sm.jobs.Job(rule, dag, wc)
+    root_dir = script_dir.parent
 
-    def make_accessable(*ios):
-        for io in ios:
-            for i in range(len(io)):
-                io[i] = os.path.abspath(io[i])
+    user_in_script_dir = Path.cwd().resolve() == script_dir
+    if user_in_script_dir:
+        os.chdir(root_dir)
+    elif Path.cwd().resolve() != root_dir:
+        raise RuntimeError(
+            "mock_snakemake has to be run from the repository root"
+            f" {root_dir} or scripts directory {script_dir}"
+        )
+    try:
+        for p in sm.SNAKEFILE_CHOICES:
+            if os.path.exists(p):
+                snakefile = p
+                break
+        kwargs = (
+            dict(rerun_triggers=[]) if parse(sm.__version__) > Version("7.7.0") else {}
+        )
+        if isinstance(configfiles, str):
+            configfiles = [configfiles]
 
-    make_accessable(job.input, job.output, job.log)
-    snakemake = Snakemake(
-        job.input,
-        job.output,
-        job.params,
-        job.wildcards,
-        job.threads,
-        job.resources,
-        job.log,
-        job.dag.workflow.config,
-        job.rule.name,
-        None,
-    )
-    # create log and output dir if not existent
-    for path in list(snakemake.log) + list(snakemake.output):
-        Path(path).parent.mkdir(parents=True, exist_ok=True)
+        workflow = sm.Workflow(snakefile, overwrite_configfiles=configfiles, **kwargs)
+        workflow.include(snakefile)
 
-    os.chdir(script_dir)
+        if configfiles:
+            for f in configfiles:
+                if not os.path.exists(f):
+                    raise FileNotFoundError(f"Config file {f} does not exist.")
+                workflow.configfile(f)
+
+        workflow.global_resources = {}
+        rule = workflow.get_rule(rulename)
+        dag = sm.dag.DAG(workflow, rules=[rule])
+        wc = Dict(wildcards)
+        job = sm.jobs.Job(rule, dag, wc)
+
+        def make_accessable(*ios):
+            for io in ios:
+                for i in range(len(io)):
+                    io[i] = os.path.abspath(io[i])
+
+        make_accessable(job.input, job.output, job.log)
+        snakemake = Snakemake(
+            job.input,
+            job.output,
+            job.params,
+            job.wildcards,
+            job.threads,
+            job.resources,
+            job.log,
+            job.dag.workflow.config,
+            job.rule.name,
+            None,
+        )
+        # create log and output dir if not existent
+        for path in list(snakemake.log) + list(snakemake.output):
+            Path(path).parent.mkdir(parents=True, exist_ok=True)
+
+    finally:
+        if user_in_script_dir:
+            os.chdir(script_dir)
     return snakemake
+
+
+def generate_periodic_profiles(dt_index, nodes, weekly_profile, localize=None):
+    """
+    Give a 24*7 long list of weekly hourly profiles, generate this for each
+    country for the period dt_index, taking account of time zones and summer
+    time.
+    """
+    weekly_profile = pd.Series(weekly_profile, range(24 * 7))
+
+    week_df = pd.DataFrame(index=dt_index, columns=nodes)
+
+    for node in nodes:
+        timezone = pytz.timezone(pytz.country_timezones[node[:2]][0])
+        tz_dt_index = dt_index.tz_convert(timezone)
+        week_df[node] = [24 * dt.weekday() + dt.hour for dt in tz_dt_index]
+        week_df[node] = week_df[node].map(weekly_profile)
+
+    week_df = week_df.tz_localize(localize)
+
+    return week_df
+
+
+def parse(l):
+    if len(l) == 1:
+        return yaml.safe_load(l[0])
+    else:
+        return {l.pop(0): parse(l)}
+
+
+def update_config_with_sector_opts(config, sector_opts):
+    from snakemake.utils import update_config
+
+    for o in sector_opts.split("-"):
+        if o.startswith("CF+"):
+            l = o.split("+")[1:]
+            update_config(config, parse(l))

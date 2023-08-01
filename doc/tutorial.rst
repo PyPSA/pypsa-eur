@@ -5,130 +5,121 @@
 
 .. _tutorial:
 
-#####################
-Tutorial
-#####################
+###############################
+Tutorial: Electricity-Only
+###############################
 
 .. raw:: html
 
     <iframe width="832" height="468" src="https://www.youtube.com/embed/mAwhQnNRIvs" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
-Before getting started with **PyPSA-Eur** it makes sense to be familiar
+.. note::
+    If you have not done it yet, follow the :ref:`installation` steps first.
+
+In this tutorial, we will build a heavily simplified power system model for
+Belgium. But before getting started with **PyPSA-Eur** it makes sense to be familiar
 with its general modelling framework `PyPSA <https://pypsa.readthedocs.io>`__.
 
-Running the tutorial requires limited computational resources compared to the full model,
-which allows the user to explore most of its functionalities on a local machine.
-It takes approximately five minutes to complete and
-requires 3 GB of memory along with 1 GB free disk space.
-
-If not yet completed, follow the :ref:`installation` steps first.
-
-The tutorial will cover examples on how to
-
-- configure and customise the PyPSA-Eur model and
-- run the ``snakemake`` workflow step by step from network creation to the solved network.
-
-The configuration of the tutorial is included in the ``config.tutorial.yaml``.
-To run the tutorial, use this as your configuration file ``config.yaml``.
+Running the tutorial requires limited computational resources compared to the
+full model, which allows the user to explore most of its functionalities on a
+local machine. The tutorial will cover examples on how to configure and
+customise the PyPSA-Eur model and run the ``snakemake`` workflow step by step
+from network creation to the solved network. The configuration for the tutorial
+is located at ``test/config.electricity.yaml``. It includes parts deviating from
+the default config file ``config/config.default.yaml``. To run the tutorial with this
+configuration, execute
 
 .. code:: bash
+    :class: full-width
 
-    .../pypsa-eur % cp config.tutorial.yaml config.yaml
+    snakemake -call results/test-elec/networks/elec_s_6_ec_lcopt_Co2L-24H.nc --configfile config/test/config.electricity.yaml
 
 This configuration is set to download a reduced data set via the rules :mod:`retrieve_databundle`,
-:mod:`retrieve_natura_raster`, :mod:`retrieve_cutout` totalling at less than 250 MB.
-The full set of data dependencies would take 5.3 GB.
+:mod:`retrieve_natura_raster`, :mod:`retrieve_cutout`.
 For more information on the data dependencies of PyPSA-Eur, continue reading :ref:`data`.
 
-How to customise PyPSA-Eur?
+How to configure runs?
 ===========================
 
 The model can be adapted to only include selected countries (e.g. Belgium) instead of all European countries to limit the spatial scope.
 
-.. literalinclude:: ../config.tutorial.yaml
+.. literalinclude:: ../config/test/config.electricity.yaml
    :language: yaml
    :start-at: countries:
    :end-before: snapshots:
 
-Likewise, the example's temporal scope can be restricted (e.g. to a single month).
+Likewise, the example's temporal scope can be restricted (e.g. to a single week).
 
-.. literalinclude:: ../config.tutorial.yaml
+.. literalinclude:: ../config/test/config.electricity.yaml
    :language: yaml
    :start-at: snapshots:
-   :end-before: enable:
+   :end-before: electricity:
 
-It is also possible to allow less or more carbon-dioxide emissions. Here, we limit the emissions of Germany 100 Megatonnes per year.
+It is also possible to allow less or more carbon-dioxide emissions. Here, we limit the emissions of Belgium to 100 Mt per year.
 
-.. literalinclude:: ../config.tutorial.yaml
+.. literalinclude:: ../config/test/config.electricity.yaml
    :language: yaml
    :start-at: electricity:
    :end-before: extendable_carriers:
 
 PyPSA-Eur also includes a database of existing conventional powerplants.
-We can select which types of powerplants we like to be included:
+We can select which types of existing powerplants we like to be extendable:
 
-.. literalinclude:: ../config.tutorial.yaml
+.. literalinclude:: ../config/test/config.electricity.yaml
    :language: yaml
    :start-at: extendable_carriers:
-   :end-before: max_hours:
+   :end-before: renewable_carriers:
 
-To accurately model the temporal and spatial availability of renewables such as wind and solar energy, we rely on historical weather data.
-It is advisable to adapt the required range of coordinates to the selection of countries.
+To accurately model the temporal and spatial availability of renewables such as
+wind and solar energy, we rely on historical weather data. It is advisable to
+adapt the required range of coordinates to the selection of countries.
 
-.. literalinclude:: ../config.tutorial.yaml
+.. literalinclude:: ../config/test/config.electricity.yaml
    :language: yaml
    :start-at: atlite:
    :end-before: renewable:
 
-We can also decide which weather data source should be used to calculate potentials and capacity factor time-series for each carrier.
-For example, we may want to use the ERA-5 dataset for solar and not the default SARAH-2 dataset.
+We can also decide which weather data source should be used to calculate
+potentials and capacity factor time-series for each carrier. For example, we may
+want to use the ERA-5 dataset for solar and not the default SARAH-2 dataset.
 
-.. literalinclude:: ../config.tutorial.yaml
-   :language: yaml
-   :start-at: be-03-2013-era5:
-   :end-at: module:
-
-.. literalinclude:: ../config.tutorial.yaml
+.. literalinclude:: ../config/test/config.electricity.yaml
    :language: yaml
    :start-at: solar:
    :end-at: cutout:
 
-Finally, it is possible to pick a solver. For instance, this tutorial uses the open-source solvers CBC and Ipopt and does not rely
-on the commercial solvers Gurobi or CPLEX (for which free academic licenses are available).
+Finally, it is possible to pick a solver. For instance, this tutorial uses the
+open-source solver GLPK.
 
-.. literalinclude:: ../config.tutorial.yaml
+.. literalinclude:: ../config/test/config.electricity.yaml
    :language: yaml
    :start-at: solver:
    :end-before: plotting:
 
-.. note::
+Note, that ``test/config.electricity.yaml`` only includes changes relative to
+the default configuration. There are many more configuration options, which are
+documented at :ref:`config`.
 
-    To run the tutorial, either install CBC and Ipopt (see instructions for :ref:`installation`).
 
-    Alternatively, choose another installed solver in the ``config.yaml`` at ``solving: solver:``.
-
-Note, that we only focus on changes relative to the default configuration.
-There are many more configuration options, which are documented at :ref:`config`.
-
-How to use the ``snakemake`` rules?
+How to use ``snakemake`` rules?
 ===================================
 
 Open a terminal, go into the PyPSA-Eur directory, and activate the ``pypsa-eur`` environment with
 
 .. code:: bash
 
-    .../pypsa-eur % conda activate pypsa-eur
+    mamba activate pypsa-eur
 
 Let's say based on the modifications above we would like to solve a very simplified model
 clustered down to 6 buses and every 24 hours aggregated to one snapshot. The command
 
 .. code:: bash
 
-    .../pypsa-eur % snakemake -call results/networks/elec_s_6_ec_lcopt_Co2L-24H.nc
+    snakemake -call results/test-elec/networks/elec_s_6_ec_lcopt_Co2L-24H.nc --configfile config/test/config.electricity.yaml
 
-orders ``snakemake`` to run the script ``solve_network`` that produces the solved network and stores it in ``.../pypsa-eur/results/networks`` with the name ``elec_s_6_ec_lcopt_Co2L-24H.nc``:
+orders ``snakemake`` to run the rule :mod:`solve_network` that produces the solved network and stores it in ``results/networks`` with the name ``elec_s_6_ec_lcopt_Co2L-24H.nc``:
 
-.. literalinclude:: ../Snakefile
+.. literalinclude:: ../rules/solve_electricity.smk
    :start-at: rule solve_network:
    :end-before: rule solve_operations_network:
 
@@ -164,8 +155,8 @@ This triggers a workflow of multiple preceding jobs that depend on each rule's i
         19[label = "build_hydro_profile", color = "0.44 0.6 0.85", style="rounded"];
         20[label = "retrieve_cost_data", color = "0.30 0.6 0.85", style="rounded"];
         21[label = "build_powerplants", color = "0.16 0.6 0.85", style="rounded"];
-        22[label = "build_load_data", color = "0.00 0.6 0.85", style="rounded"];
-        23[label = "retrieve_load_data", color = "0.34 0.6 0.85", style="rounded,dashed"];
+        22[label = "build_electricity_demand", color = "0.00 0.6 0.85", style="rounded"];
+        23[label = "retrieve_electricity_demand", color = "0.34 0.6 0.85", style="rounded,dashed"];
         1 -> 0
         2 -> 1
         20 -> 1
@@ -234,7 +225,6 @@ In the terminal, this will show up as a list of jobs to be run:
 .. code:: bash
 
     Building DAG of jobs...
-    Job stats:
     job                         count    min threads    max threads
     ------------------------  -------  -------------  -------------
     add_electricity                 1              1              1
@@ -242,7 +232,7 @@ In the terminal, this will show up as a list of jobs to be run:
     base_network                    1              1              1
     build_bus_regions               1              1              1
     build_hydro_profile             1              1              1
-    build_load_data                 1              1              1
+    build_electricity_demand        1              1              1
     build_powerplants               1              1              1
     build_renewable_profiles        4              1              1
     build_shapes                    1              1              1
@@ -282,38 +272,52 @@ You can produce any output file occurring in the ``Snakefile`` by running
 
 .. code:: bash
 
-    .../pypsa-eur % snakemake -call <output file>
+    snakemake -call <output file>
 
 For example, you can explore the evolution of the PyPSA networks by running
 
-#. ``.../pypsa-eur % snakemake -call networks/base.nc``
-#. ``.../pypsa-eur % snakemake -call networks/elec.nc``
-#. ``.../pypsa-eur % snakemake -call networks/elec_s.nc``
-#. ``.../pypsa-eur % snakemake -call networks/elec_s_6.nc``
-#. ``.../pypsa-eur % snakemake -call networks/elec_s_6_ec_lcopt_Co2L-24H.nc``
+#. ``snakemake resources/networks/base.nc -call --configfile config/test/config.electricity.yaml``
+#. ``snakemake resources/networks/elec.nc -call --configfile config/test/config.electricity.yaml``
+#. ``snakemake resources/networks/elec_s.nc -call --configfile config/test/config.electricity.yaml``
+#. ``snakemake resources/networks/elec_s_6.nc -call --configfile config/test/config.electricity.yaml``
+#. ``snakemake resources/networks/elec_s_6_ec_lcopt_Co2L-24H.nc -call --configfile config/test/config.electricity.yaml``
 
-There's a special rule: If you simply run
+To run all combinations of wildcard values provided in the ``config/config.yaml`` under ``scenario:``,
+you can use the collection rule ``solve_elec_networks``.
 
 .. code:: bash
 
-    .../pypsa-eur % snakemake
+    snakemake -call solve_elec_networks --configfile config/test/config.electricity.yaml
 
-the wildcards given in ``scenario`` in the configuration file ``config.yaml`` are used:
+If you now feel confident and want to tackle runs with larger temporal and
+spatial scope, clean-up the repository and after modifying the ``config/config.yaml`` file
+target the collection rule ``solve_elec_networks`` again without providing the test
+configuration file.
 
-.. literalinclude:: ../config.tutorial.yaml
-   :language: yaml
-   :start-at: scenario:
-   :end-before: countries:
+.. code:: bash
 
-How to analyse solved networks?
+    snakemake -call purge
+    snakemake -call solve_elec_networks
+
+.. note::
+
+    It is good practice to perform a dry-run using the option `-n`, before you
+    commit to a run:
+
+    .. code:: bash
+
+        snakemake -call solve_elec_networks -n
+
+How to analyse results?
 ===============================
 
-The solved networks can be analysed just like any other PyPSA network (e.g. in Jupyter Notebooks).
+The solved networks can be analysed just like any other PyPSA network (e.g. in
+Jupyter Notebooks).
 
 .. code:: python
 
     import pypsa
 
-    network = pypsa.Network("results/networks/elec_s_6_ec_lcopt_Co2L-24H.nc")
+    n = pypsa.Network("results/networks/elec_s_6_ec_lcopt_Co2L-24H.nc")
 
 For inspiration, read the `examples section in the PyPSA documentation <https://pypsa.readthedocs.io/en/latest/examples-basic.html>`_.

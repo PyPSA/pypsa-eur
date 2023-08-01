@@ -21,7 +21,7 @@ Relevant Settings
       custom_powerplants:
 
 .. seealso::
-    Documentation of the configuration file ``config.yaml`` at
+    Documentation of the configuration file ``config/config.yaml`` at
     :ref:`electricity`
 
 Inputs
@@ -35,7 +35,7 @@ Outputs
 
 - ``resource/powerplants.csv``: A list of conventional power plants (i.e. neither wind nor solar) with fields for name, fuel type, technology, country, capacity in MW, duration, commissioning year, retrofit year, latitude, longitude, and dam information as documented in the `powerplantmatching README <https://github.com/FRESNA/powerplantmatching/blob/master/README.md>`_; additionally it includes information on the closest substation/bus in ``networks/base.nc``.
 
-    .. image:: ../img/powerplantmatching.png
+    .. image:: img/powerplantmatching.png
         :scale: 30 %
 
     **Source:** `powerplantmatching on GitHub <https://github.com/FRESNA/powerplantmatching>`_
@@ -98,13 +98,15 @@ def add_custom_powerplants(ppl, custom_powerplants, custom_ppl_query=False):
 
 
 def replace_natural_gas_technology(df):
-    mapping = {"Steam Turbine": "OCGT", "Combustion Engine": "OCGT"}
-    tech = df.Technology.replace(mapping).fillna("OCGT")
-    return df.Technology.where(df.Fueltype != "Natural Gas", tech)
+    mapping = {"Steam Turbine": "CCGT", "Combustion Engine": "OCGT"}
+    tech = df.Technology.replace(mapping).fillna("CCGT")
+    return df.Technology.mask(df.Fueltype == "Natural Gas", tech)
 
 
 def replace_natural_gas_fueltype(df):
-    return df.Fueltype.where(df.Fueltype != "Natural Gas", df.Technology)
+    return df.Fueltype.mask(
+        (df.Technology == "OCGT") | (df.Technology == "CCGT"), "Natural Gas"
+    )
 
 
 if __name__ == "__main__":
@@ -115,7 +117,7 @@ if __name__ == "__main__":
     configure_logging(snakemake)
 
     n = pypsa.Network(snakemake.input.base_network)
-    countries = n.buses.country.unique()
+    countries = snakemake.params.countries
 
     ppl = (
         pm.powerplants(from_url=True)
@@ -134,12 +136,12 @@ if __name__ == "__main__":
     ppl = ppl.query('not (Country in @available_countries and Fueltype == "Bioenergy")')
     ppl = pd.concat([ppl, opsd])
 
-    ppl_query = snakemake.config["electricity"]["powerplants_filter"]
+    ppl_query = snakemake.params.powerplants_filter
     if isinstance(ppl_query, str):
         ppl.query(ppl_query, inplace=True)
 
     # add carriers from own powerplant files:
-    custom_ppl_query = snakemake.config["electricity"]["custom_powerplants"]
+    custom_ppl_query = snakemake.params.custom_powerplants
     ppl = add_custom_powerplants(
         ppl, snakemake.input.custom_powerplants, custom_ppl_query
     )
@@ -149,6 +151,7 @@ if __name__ == "__main__":
         logging.warning(f"No powerplants known in: {', '.join(countries_wo_ppl)}")
 
     substations = n.buses.query("substation_lv")
+    ppl = ppl.dropna(subset=["lat", "lon"])
     ppl = map_country_bus(ppl, substations)
 
     bus_null_b = ppl["bus"].isnull()

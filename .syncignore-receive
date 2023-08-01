@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2021 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2021-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: CC0-1.0
 
@@ -15,5 +15,7 @@ __pycache__
 notebooks
 doc
 cutouts
-data/bundle
+data
+benchmarks
 *.nc
+configs

@@ -27,7 +27,7 @@ Relevant Settings
             Store:
 
 .. seealso::
-    Documentation of the configuration file ``config.yaml`` at :ref:`costs_cf`,
+    Documentation of the configuration file ``config/config.yaml`` at :ref:`costs_cf`,
     :ref:`electricity_cf`
 
 Inputs
@@ -44,7 +44,7 @@ Outputs
 Description
 -----------
 
-The rule :mod:`add_extra_components` attaches additional extendable components to the clustered and simplified network. These can be configured in the ``config.yaml`` at ``electricity: extendable_carriers:``. It processes ``networks/elec_s{simpl}_{clusters}.nc`` to build ``networks/elec_s{simpl}_{clusters}_ec.nc``, which in contrast to the former (depending on the configuration) contain with **zero** initial capacity
+The rule :mod:`add_extra_components` attaches additional extendable components to the clustered and simplified network. These can be configured in the ``config/config.yaml`` at ``electricity: extendable_carriers:``. It processes ``networks/elec_s{simpl}_{clusters}.nc`` to build ``networks/elec_s{simpl}_{clusters}_ec.nc``, which in contrast to the former (depending on the configuration) contain with **zero** initial capacity
 
 - ``StorageUnits`` of carrier 'H2' and/or 'battery'. If this option is chosen, every bus is given an extendable ``StorageUnit`` of the corresponding carrier. The energy and power capacities are linked through a parameter that specifies the energy capacity as maximum hours at full dispatch power and is configured in ``electricity: max_hours:``. This linkage leads to one investment variable per storage unit. The default ``max_hours`` lead to long-term hydrogen and short-term battery storage units.
 
@@ -56,22 +56,17 @@ import numpy as np
 import pandas as pd
 import pypsa
 from _helpers import configure_logging
-from add_electricity import (
-    _add_missing_carriers_from_costs,
-    add_nice_carrier_names,
-    load_costs,
-)
+from add_electricity import load_costs, sanitize_carriers
 
 idx = pd.IndexSlice
 
 logger = logging.getLogger(__name__)
 
 
-def attach_storageunits(n, costs, elec_opts):
-    carriers = elec_opts["extendable_carriers"]["StorageUnit"]
-    max_hours = elec_opts["max_hours"]
+def attach_storageunits(n, costs, extendable_carriers, max_hours):
+    carriers = extendable_carriers["StorageUnit"]
 
-    _add_missing_carriers_from_costs(n, costs, carriers)
+    n.madd("Carrier", carriers)
 
     buses_i = n.buses.index
 
@@ -99,10 +94,10 @@ def attach_storageunits(n, costs, elec_opts):
         )
 
 
-def attach_stores(n, costs, elec_opts):
-    carriers = elec_opts["extendable_carriers"]["Store"]
+def attach_stores(n, costs, extendable_carriers):
+    carriers = extendable_carriers["Store"]
 
-    _add_missing_carriers_from_costs(n, costs, carriers)
+    n.madd("Carrier", carriers)
 
     buses_i = n.buses.index
     bus_sub_dict = {k: n.buses[k].values for k in ["x", "y", "country"]}
@@ -162,6 +157,8 @@ def attach_stores(n, costs, elec_opts):
             marginal_cost=costs.at["battery", "marginal_cost"],
         )
 
+        n.madd("Carrier", ["battery charger", "battery discharger"])
+
         n.madd(
             "Link",
             b_buses_i + " charger",
@@ -187,11 +184,10 @@ def attach_stores(n, costs, elec_opts):
         )
 
 
-def attach_hydrogen_pipelines(n, costs, elec_opts):
-    ext_carriers = elec_opts["extendable_carriers"]
-    as_stores = ext_carriers.get("Store", [])
+def attach_hydrogen_pipelines(n, costs, extendable_carriers):
+    as_stores = extendable_carriers.get("Store", [])
 
-    if "H2 pipeline" not in ext_carriers.get("Link", []):
+    if "H2 pipeline" not in extendable_carriers.get("Link", []):
         return
 
     assert "H2" in as_stores, (
@@ -213,6 +209,8 @@ def attach_hydrogen_pipelines(n, costs, elec_opts):
     h2_links.index = h2_links.apply(lambda c: f"H2 pipeline {c.bus0}-{c.bus1}", axis=1)
 
     # add pipelines
+    n.add("Carrier", "H2 pipeline")
+
     n.madd(
         "Link",
         h2_links.index,
@@ -235,18 +233,19 @@ if __name__ == "__main__":
     configure_logging(snakemake)
 
     n = pypsa.Network(snakemake.input.network)
-    elec_config = snakemake.config["electricity"]
+    extendable_carriers = snakemake.params.extendable_carriers
+    max_hours = snakemake.params.max_hours
 
     Nyears = n.snapshot_weightings.objective.sum() / 8760.0
     costs = load_costs(
-        snakemake.input.tech_costs, snakemake.config["costs"], elec_config, Nyears
+        snakemake.input.tech_costs, snakemake.params.costs, max_hours, Nyears
     )
 
-    attach_storageunits(n, costs, elec_config)
-    attach_stores(n, costs, elec_config)
-    attach_hydrogen_pipelines(n, costs, elec_config)
+    attach_storageunits(n, costs, extendable_carriers, max_hours)
+    attach_stores(n, costs, extendable_carriers)
+    attach_hydrogen_pipelines(n, costs, extendable_carriers)
 
-    add_nice_carrier_names(n, snakemake.config)
+    sanitize_carriers(n, snakemake.config)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     n.export_to_netcdf(snakemake.output[0])
