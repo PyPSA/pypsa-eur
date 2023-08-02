@@ -218,6 +218,7 @@ renewable:
     PHS_max_hours: 6
     hydro_max_hours: "energy_capacity_totals_by_country" # one of energy_capacity_totals_by_country, estimate_by_large_installations or a float
     flatten_dispatch: false
+    flatten_dispatch_buffer: 0.2
     clip_min_inflow: 1.0
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#conventional

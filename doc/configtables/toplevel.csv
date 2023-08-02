@@ -6,7 +6,7 @@ logging,,,
 -- format,--,,Custom format for log messages. See `LogRecord <https://docs.python.org/3/library/logging.html#logging.LogRecord>`_ attributes.
 private,,,
 -- keys,,,
--- -- entsoe_api,--,,Specify the ENTSO-E API key. See the guidelines to get `ENTSO-E API key <https://transparency.entsoe.eu/content/static_content/Static%20content/web%20api/Guide.html>`_
+-- -- entsoe_api,--,,Optionally specify the ENTSO-E API key. See the guidelines to get `ENTSO-E API key <https://transparency.entsoe.eu/content/static_content/Static%20content/web%20api/Guide.html>`_
 remote,,,
--- ssh,--,,Specify the SSH of a remote cluster to be synchronized.
--- path,--,,Specify the file path within the remote cluster to be synchronized.
+-- ssh,--,,Optionally specify the SSH of a remote cluster to be synchronized.
+-- path,--,,Optionally specify the file path within the remote cluster to be synchronized.

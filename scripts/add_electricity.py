@@ -619,9 +619,7 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **par
 
         flatten_dispatch = params.get("flatten_dispatch", False)
         if flatten_dispatch:
-            buffer = (
-                flatten_dispatch if isinstance(flatten_dispatch, (int, float)) else 0.2
-            )
+            buffer = params.get("flatten_dispatch_buffer", 0.2)
             average_capacity_factor = inflow_t[hydro.index].mean() / hydro["p_nom"]
             p_max_pu = (average_capacity_factor + buffer).clip(upper=1)
         else:
