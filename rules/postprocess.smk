@@ -47,8 +47,8 @@ rule copy_config:
         BENCHMARKS + "copy_config"
     conda:
         "../envs/environment.yaml"
-    shell:
-        "cp {configfile} {output}"
+    script:
+        "../scripts/copy_config.py"
 
 
 rule make_summary:
