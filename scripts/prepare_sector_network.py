@@ -643,6 +643,54 @@ def add_allam(n, costs):
     )
 
 
+def add_methanol_reforming(n, costs):
+
+    logger.info("Adding methanol steam reforming.")
+
+    nodes = pop_layout.index
+
+    # TODO: heat and electricity demand for process and carbon capture
+    # but the energy demands for carbon capture have not yet been added for other CC processes
+
+    tech = "Methanol steam reforming"
+
+    capital_cost = costs.at[tech, "fixed"] / costs.at[tech, "methanol-input"]
+
+    capital_cost_cc = capital_cost + costs.at["cement capture", "fixed"] / options["MWh_MeOH_per_tCO2"]
+
+    n.madd(
+        "Link",
+        nodes,
+        suffix=f" {tech} CC",
+        bus0=spatial.methanol.nodes,
+        bus1=spatial.h2.nodes,
+        bus2="co2 atmosphere",
+        bus3=spatial.co2.nodes,
+        p_nom_extendable=True,
+        capital_cost=capital_cost_cc,
+        efficiency=1 / costs.at[tech, "methanol-input"],
+        efficiency2=(1 - costs.at["cement capture", "capture_rate"]) / options["MWh_MeOH_per_tCO2"],
+        efficiency3=costs.at["cement capture", "capture_rate"] / options["MWh_MeOH_per_tCO2"],
+        carrier=f"{tech} CC",
+        lifetime=costs.at[tech, "lifetime"],
+    )
+
+    n.madd(
+        "Link",
+        nodes,
+        suffix=f" {tech}",
+        bus0=spatial.methanol.nodes,
+        bus1=spatial.h2.nodes,
+        bus2="co2 atmosphere",
+        p_nom_extendable=True,
+        capital_cost=capital_cost,
+        efficiency=1 / costs.at[tech, "methanol-input"],
+        efficiency2=1 / options["MWh_MeOH_per_tCO2"],
+        carrier=tech,
+        lifetime=costs.at[tech, "lifetime"],
+    )
+
+
 def add_dac(n, costs):
     heat_carriers = ["urban central heat", "services urban decentral heat"]
     heat_buses = n.buses.index[n.buses.carrier.isin(heat_carriers)]
@@ -3263,7 +3311,7 @@ def add_import_options(
         #"shipping-meoh": "methanol",  # TODO: or shipping fuel methanol
         # "shipping-steel": "", TODO: is this necessary?
     }
-    # TODO take from options MWh_MeOH_per_tCO2
+    # TODO take from options["MWh_MeOH_per_tCO2"]
 
     import_costs = pd.read_csv(snakemake.input.import_costs, delimiter=";")
     cols = ["esc", "exporter", "importer", "value"]
@@ -3809,6 +3857,9 @@ if __name__ == "__main__":
 
     if options["allam_cycle"]:
         add_allam(n, costs)
+
+    if options["methanol_reforming"]:
+        add_methanol_reforming(n, costs)
 
     solver_name = snakemake.config["solving"]["solver"]["name"]
     n = set_temporal_aggregation(n, opts, solver_name)
