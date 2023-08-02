@@ -3297,7 +3297,7 @@ def add_import_options(
         import_nodes_tech = import_nodes.loc[sel, [tech]]
 
         import_nodes_tech = (
-            import_nodes_tech.rename(columns={tech: "p_nom"}) * capacity_boost
+            import_nodes_tech.rename(columns={tech: "p_nom"})
         )
 
         marginal_costs = ports[tech].dropna().map(import_costs_tech)
@@ -3309,6 +3309,7 @@ def add_import_options(
 
         if tech in co2_intensity.keys():
             buses = import_nodes_tech.index + f"{suffix} import {tech}"
+            capital_cost = 7018. if tech == 'shipping-lch4' else 0. # €/MW/a
 
             n.madd("Bus", buses + " bus", carrier=f"import {tech}")
 
@@ -3332,12 +3333,17 @@ def add_import_options(
                 carrier=f"import {tech}",
                 efficiency2=-costs.at[co2_intensity[tech], "CO2 intensity"],
                 marginal_cost=import_nodes_tech.marginal_cost.values,
-                p_nom=import_nodes_tech.p_nom.values,
+                p_nom_extendable=True,
+                capital_cost=capital_cost,
+                p_nom_min=import_nodes_tech.p_nom.values,
+                p_nom_max=import_nodes_tech.p_nom.values * capacity_boost,
             )
 
         else:
             location = import_nodes_tech.index
             buses = location if tech == "hvdc-to-elec" else location + suffix
+
+            capital_cost = 1.2 * 7018. if tech == 'shipping-lh2' else 0. # €/MW/a, +20% compared to LNG
 
             n.madd(
                 "Generator",
@@ -3345,7 +3351,9 @@ def add_import_options(
                 bus=buses,
                 carrier=f"import {tech}",
                 marginal_cost=import_nodes_tech.marginal_cost.values,
-                p_nom=import_nodes_tech.p_nom.values,
+                p_nom_extendable=True,
+                capital_cost=capital_cost,
+                p_nom_max=import_nodes_tech.p_nom.values * capacity_boost,
             )
 
     # need special handling for copperplated imports
