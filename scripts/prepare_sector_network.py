@@ -2155,13 +2155,12 @@ def add_biomass(n, costs):
         p_nom_extendable=True,
     )
 
-    transport_costs = pd.read_csv(
-        snakemake.input.biomass_transport_costs,
-        index_col=0,
-    ).squeeze()
-
     if options["biomass_transport"]:
         # add biomass transport
+        transport_costs = pd.read_csv(
+            snakemake.input.biomass_transport_costs, index_col=0
+        )
+        transport_costs = transport_costs.squeeze()
         biomass_transport = create_network_topology(
             n, "biomass transport ", bidirectional=False
         )
@@ -2187,6 +2186,10 @@ def add_biomass(n, costs):
 
     elif options["biomass_spatial"]:
         # add artificial biomass generators at nodes which include transport costs
+        transport_costs = pd.read_csv(
+            snakemake.input.biomass_transport_costs, index_col=0
+        )
+        transport_costs = transport_costs.squeeze()
         bus_transport_costs = spatial.biomass.nodes.to_series().apply(
             lambda x: transport_costs[x[:2]]
         )
