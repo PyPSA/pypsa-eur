@@ -1,0 +1,25 @@
+# SPDX-FileCopyrightText: : 2019-2023 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: CC0-1.0
+
+setuptools
+sphinx
+sphinx_book_theme
+sphinxcontrib-bibtex
+myst-parser  # recommark is deprecated, https://stackoverflow.com/a/71660856/13573820
+
+pypsa
+powerplantmatching>=0.5.5
+atlite>=0.2.9
+dask[distributed]
+matplotlib>3.5.1,<3.6
+tabula-py
+
+# cartopy
+scikit-learn
+pycountry
+pyyaml
+seaborn
+memory_profiler
+tables
+descartes

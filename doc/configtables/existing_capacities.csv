@@ -1,0 +1,6 @@
+,Unit,Values,Description
+grouping_years_power ,--,A list of years,Intervals to group existing capacities for power
+grouping_years_heat ,--,A list of years below 2020,Intervals to group existing capacities for heat
+
+threshold_capacity ,MW,float,Capacities generators and links of below threshold are removed during add_existing_capacities
+conventional_carriers ,--,"Any subset of {uranium, coal, lignite, oil} ",List of conventional power plants to include in the sectoral network

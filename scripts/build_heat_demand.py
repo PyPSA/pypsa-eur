@@ -1,46 +1,54 @@
-"""Build heat demand time series."""
+# -*- coding: utf-8 -*-
+# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: MIT
+"""
+Build heat demand time series using heating degree day (HDD) approximation.
+"""
 
-import geopandas as gpd
 import atlite
+import geopandas as gpd
+import numpy as np
 import pandas as pd
 import xarray as xr
-import numpy as np
+from dask.distributed import Client, LocalCluster
 
-if __name__ == '__main__':
-    if 'snakemake' not in globals():
-        from helper import mock_snakemake
+if __name__ == "__main__":
+    if "snakemake" not in globals():
+        from _helpers import mock_snakemake
+
         snakemake = mock_snakemake(
-            'build_heat_demands',
-            simpl='',
+            "build_heat_demands",
+            simpl="",
             clusters=48,
         )
 
-    if 'snakemake' not in globals():
-        from vresutils import Dict
-        import yaml
-        snakemake = Dict()
-        with open('config.yaml') as f:
-            snakemake.config = yaml.safe_load(f)
-        snakemake.input = Dict()
-        snakemake.output = Dict()
+    nprocesses = int(snakemake.threads)
+    cluster = LocalCluster(n_workers=nprocesses, threads_per_worker=1)
+    client = Client(cluster, asynchronous=True)
 
-    time = pd.date_range(freq='h', **snakemake.config['snapshots'])
-    cutout_config = snakemake.config['atlite']['cutout']
-    cutout = atlite.Cutout(cutout_config).sel(time=time)
+    time = pd.date_range(freq="h", **snakemake.params.snapshots)
+    cutout = atlite.Cutout(snakemake.input.cutout).sel(time=time)
 
-    clustered_regions = gpd.read_file(
-        snakemake.input.regions_onshore).set_index('name').buffer(0).squeeze()
+    clustered_regions = (
+        gpd.read_file(snakemake.input.regions_onshore)
+        .set_index("name")
+        .buffer(0)
+        .squeeze()
+    )
 
     I = cutout.indicatormatrix(clustered_regions)
 
-    for area in ["rural", "urban", "total"]:
+    pop_layout = xr.open_dataarray(snakemake.input.pop_layout)
 
-        pop_layout = xr.open_dataarray(snakemake.input[f'pop_layout_{area}'])
+    stacked_pop = pop_layout.stack(spatial=("y", "x"))
+    M = I.T.dot(np.diag(I.dot(stacked_pop)))
 
-        stacked_pop = pop_layout.stack(spatial=('y', 'x'))
-        M = I.T.dot(np.diag(I.dot(stacked_pop)))
+    heat_demand = cutout.heat_demand(
+        matrix=M.T,
+        index=clustered_regions.index,
+        dask_kwargs=dict(scheduler=client),
+        show_progress=False,
+    )
 
-        heat_demand = cutout.heat_demand(
-            matrix=M.T, index=clustered_regions.index)
-
-        heat_demand.to_netcdf(snakemake.output[f"heat_demand_{area}"])
+    heat_demand.to_netcdf(snakemake.output.heat_demand)

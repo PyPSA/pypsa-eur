@@ -1,0 +1,11 @@
+Trigger, Description, Definition, Status
+``nH``, i.e. ``2H``-``6H``, "Resample the time-resolution by averaging over every ``n`` snapshots, ``prepare_network``: `average_every_nhours() <https://github.com/PyPSA/pypsa-eur/blob/6b964540ed39d44079cdabddee8333f486d0cd63/scripts/prepare_network.py#L110>`_ and its `caller <https://github.com/PyPSA/pypsa-eur/blob/6b964540ed39d44079cdabddee8333f486d0cd63/scripts/prepare_network.py#L146>`__)", In active use
+``Co2L``, Add an overall absolute carbon-dioxide emissions limit configured in ``electricity: co2limit``. If a float is appended an overall emission limit relative to the emission level given in ``electricity: co2base`` is added (e.g. ``Co2L0.05`` limits emissisions to 5% of what is given in ``electricity: co2base``), ``prepare_network``: `add_co2limit() <https://github.com/PyPSA/pypsa-eur/blob/6b964540ed39d44079cdabddee8333f486d0cd63/scripts/prepare_network.py#L19>`_ and its `caller <https://github.com/PyPSA/pypsa-eur/blob/6b964540ed39d44079cdabddee8333f486d0cd63/scripts/prepare_network.py#L154>`__, In active use
+``carrier+{c|p|m}factor``,"Alter the capital cost (``c``), installable potential (``p``) or marginal costs (``m``) of a carrier by a factor. Example: ``solar+c0.5`` reduces the capital cost of solar to 50\% of original values.", ``prepare_network``, In active use
+``T``,Add land transport sector,,In active use
+``H``,Add heating sector,,In active use
+``B``,Add biomass,,In active use
+``I``,Add industry sector,,In active use
+``A``,Add agriculture sector,,In active use
+``dist``+``n``,Add distribution grid with investment costs of ``n`` times costs in ``data/costs_{cost_year}.csv``,,In active use
+``seq``+``n``,Sets the CO2 sequestration potential to ``n`` Mt CO2 per year,,In active use

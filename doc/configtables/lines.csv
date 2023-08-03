@@ -1,0 +1,13 @@
+,Unit,Values,Description
+types,--,"Values should specify a `line type in PyPSA <https://pypsa.readthedocs.io/en/latest/components.html#line-types>`_. Keys should specify the corresponding voltage level (e.g. 220., 300. and 380. kV)","Specifies line types to assume for the different voltage levels of the ENTSO-E grid extraction. Should normally handle voltage levels 220, 300, and 380 kV"
+s_max_pu,--,"Value in [0.,1.]","Correction factor for line capacities (``s_nom``) to approximate :math:`N-1` security and reserve capacity for reactive power flows"
+s_nom_max,MW,"float","Global upper limit for the maximum capacity of each extendable line."
+max_extension,MW,"float","Upper limit for the extended capacity of each extendable line."
+length_factor,--,float,"Correction factor to account for the fact that buses are *not* connected by lines through air-line distance."
+under_construction,--,"One of {'zero': set capacity to zero, 'remove': remove completely, 'keep': keep with full capacity}","Specifies how to handle lines which are currently under construction."
+dynamic_line_rating,,,
+-- activate,bool,"true or false","Whether to take dynamic line rating into account"
+-- cutout,--,"Should be a folder listed in the configuration ``atlite: cutouts:`` (e.g. 'europe-2013-era5') or reference an existing folder in the directory ``cutouts``. Source module must be ERA5.","Specifies the directory where the relevant weather data ist stored."
+-- correction_factor,--,"float","Factor to compensate for overestimation of wind speeds in hourly averaged wind data"
+-- max_voltage_difference,deg,"float","Maximum voltage angle difference in degrees or 'false' to disable"
+-- max_line_rating,--,"float","Maximum line rating relative to nominal capacity without DLR, e.g. 1.3 or 'false' to disable"
