@@ -2574,7 +2574,7 @@ def add_industry(n, costs):
         snakemake.input.industry_sector_ratios, index_col=0
     )
 
-    endogenous_sectors = ["DRI + Electric arc"]
+    endogenous_sectors = ["DRI + Electric arc"] if options["endogenous_steel"] else []
     sectors_b = ~industrial_demand.index.get_level_values("sector").isin(
         endogenous_sectors
     )
