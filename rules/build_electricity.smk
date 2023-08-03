@@ -395,7 +395,7 @@ rule simplify_network:
         BENCHMARKS + "simplify_network/elec_s{simpl}"
     threads: 1
     resources:
-        mem_mb=10000,
+        mem_mb=12000,
     conda:
         "../envs/environment.yaml"
     script:
