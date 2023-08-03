@@ -500,6 +500,7 @@ sector:
     - shipping-lch4
     - shipping-lnh3
     - shipping-ftfuel
+    - shipping-meoh
     - hvdc-to-elec
     endogenous_hvdc_import:
       enable: false

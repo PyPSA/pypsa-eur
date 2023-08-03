@@ -3424,7 +3424,7 @@ def add_import_options(
         "pipeline-h2",
         "shipping-lh2",
         "shipping-lch4",
-        # "shipping-meoh",
+        "shipping-meoh",
         "shipping-ftfuel",
         "shipping-lnh3",
         # "shipping-steel",
@@ -3453,17 +3453,16 @@ def add_import_options(
         "shipping-lch4": " gas",
         "shipping-lnh3": " NH3",
         "shipping-ftfuel": " oil",
-        # "shipping-meoh": " methanol",
+        "shipping-meoh": " methanol",
         # "shipping-steel": " steel",
     }
 
     co2_intensity = {
-        "shipping-lch4": "gas",
-        "shipping-ftfuel": "oil",
-        # "shipping-meoh": "methanol",  # TODO: or shipping fuel methanol
+        "shipping-lch4": ("gas", "CO2 intensity"),
+        "shipping-ftfuel": ("oil", "CO2 intensity"),
+        "shipping-meoh": ("methanolisation", "carbondioxide-input"),
         # "shipping-steel": "", TODO: is this necessary?
     }
-    # TODO take from costs.at["methanolisation", "carbondioxide-input"]
 
     import_costs = pd.read_csv(snakemake.input.import_costs, delimiter=";")
     cols = ["esc", "exporter", "importer", "value"]
@@ -3529,7 +3528,7 @@ def add_import_options(
                 bus1=import_nodes_tech.index + suffix,
                 bus2="co2 atmosphere",
                 carrier=f"import {tech}",
-                efficiency2=-costs.at[co2_intensity[tech], "CO2 intensity"],
+                efficiency2=-costs.at[co2_intensity[tech][0], co2_intensity[tech][1]],
                 marginal_cost=import_nodes_tech.marginal_cost.values,
                 p_nom_extendable=True,
                 capital_cost=capital_cost,
@@ -3559,7 +3558,7 @@ def add_import_options(
     # need special handling for copperplated imports
     copperplated_options = {
         "shipping-ftfuel",
-        # "shipping-meoh",
+        "shipping-meoh",
         # "shipping-steel",
     }
 
@@ -3588,7 +3587,7 @@ def add_import_options(
             bus1="EU" + suffix,
             bus2="co2 atmosphere",
             carrier=f"import {tech}",
-            efficiency2=-costs.at[co2_intensity[tech], "CO2 intensity"],
+            efficiency2=-costs.at[co2_intensity[tech][0], co2_intensity[tech][1]],
             marginal_cost=marginal_costs,
             p_nom=1e7,
         )
@@ -3994,7 +3993,7 @@ if __name__ == "__main__":
         CH4=["shipping-lch4"],
         NH3=["shipping-lnh3"],
         FT=["shipping-ftfuel"],
-        # MeOH=["shipping-meoh"],
+        MeOH=["shipping-meoh"],
         # St=["shipping-steel"]
     )
     for o in opts:
