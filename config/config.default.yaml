@@ -441,6 +441,7 @@ sector:
   hydrogen_turbine: false
   SMR: true
   methanol_reforming: true
+  methanol_to_power: true
   regional_co2_sequestration_potential:
     enable: false
     attribute: 'conservative estimate Mt'

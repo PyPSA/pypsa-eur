@@ -645,6 +645,92 @@ def add_allam_cycle_gas(n, costs):
     )
 
 
+def add_methanol_to_power(n, costs):
+
+    # TODO: add costs to technology-data
+
+    logger.info("Adding Allam cycle methanol power plants.")
+
+    nodes = pop_layout.index
+
+    n.madd(
+        "Link",
+        nodes,
+        suffix=" allam methanol",
+        bus0=spatial.methanol.nodes,
+        bus1=nodes,
+        bus2=spatial.co2.df.loc[nodes, "nodes"].values,
+        bus3="co2 atmosphere",
+        carrier="allam methanol",
+        p_nom_extendable=True,
+        capital_cost=0.66 * 1.832e6 * calculate_annuity(25, 0.07),  # efficiency * EUR/MW * annuity
+        marginal_cost=2,
+        efficiency=0.66,
+        efficiency2=0.98 * costs.at["methanolisation", "carbondioxide-input"],
+        efficiency3=0.02 * costs.at["methanolisation", "carbondioxide-input"],
+        lifetime=25,
+    )
+
+    logger.info("Adding methanol CCGT power plants.")
+
+    # efficiency * EUR/MW * (annuity + FOM)
+    capital_cost = 0.58 * 916e3 * (calculate_annuity(25, 0.07) + 0.035)
+
+    n.madd(
+        "Link",
+        nodes,
+        suffix=" CCGT methanol",
+        bus0=spatial.methanol.nodes,
+        bus1=nodes,
+        carrier="CCGT methanol",
+        p_nom_extendable=True,
+        capital_cost=capital_cost,
+        marginal_cost=2,
+        efficiency=0.58,
+        lifetime=25,
+    )
+
+    logger.info("Adding methanol CCGT power plants with post-combustion carbon capture.")
+
+    # TODO consider efficiency changes / energy inputs for CC
+
+    capital_cost_cc = capital_cost + costs.at["cement capture", "fixed"] * costs.at["methanolisation", "carbondioxide-input"]
+
+    n.madd(
+        "Link",
+        nodes,
+        suffix=" CCGT methanol CC",
+        bus0=spatial.methanol.nodes,
+        bus1=nodes,
+        bus2=spatial.co2.df.loc[nodes, "nodes"].values,
+        bus3="co2 atmosphere",
+        carrier="CCGT methanol CC",
+        p_nom_extendable=True,
+        capital_cost=capital_cost_cc,
+        marginal_cost=2,
+        efficiency=0.58,
+        efficiency2=costs.at["cement capture", "capture_rate"] * costs.at["methanolisation", "carbondioxide-input"],
+        efficiency3=(1-costs.at["cement capture", "capture_rate"]) * costs.at["methanolisation", "carbondioxide-input"],
+        lifetime=25,
+    )
+
+    logger.info("Adding methanol OCGT power plants.")
+
+    n.madd(
+        "Link",
+        nodes,
+        suffix=" OCGT methanol",
+        bus0=spatial.methanol.nodes,
+        bus1=nodes,
+        carrier="OCGT methanol",
+        p_nom_extendable=True,
+        capital_cost=0.35 * 458e3 * (calculate_annuity(25, 0.07) + 0.035),  # efficiency * EUR/MW * (annuity + FOM)
+        marginal_cost=2,
+        efficiency=0.35,
+        lifetime=25,
+    )
+
+
 def add_methanol_reforming(n, costs):
 
     logger.info("Adding methanol steam reforming.")
@@ -3860,6 +3946,9 @@ if __name__ == "__main__":
 
     if options["allam_cycle_gas"]:
         add_allam_cycle_gas(n, costs)
+
+    if options["methanol_to_power"]:
+        add_methanol_to_power(n, costs)
 
     if options["methanol_reforming"]:
         add_methanol_reforming(n, costs)
