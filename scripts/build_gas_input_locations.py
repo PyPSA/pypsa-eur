@@ -48,7 +48,7 @@ def build_gem_prod_data(fn):
 
     remove_country = ["Cyprus", "Türkiye"]
     remove_fuel_type = ["oil"]
-    
+
     df = df.query(
         "Status != 'shut in' \
               & 'Fuel type' != 'oil' \
@@ -59,18 +59,25 @@ def build_gem_prod_data(fn):
 
     p = pd.read_excel(fn[0], sheet_name="Gas extraction - production")
     p = p.set_index("GEM Unit ID")
-    p = p[p["Fuel description"] == 'gas' ]
+    p = p[p["Fuel description"] == "gas"]
 
     capacities = pd.DataFrame(index=df.index)
     for key in ["production", "production design capacity", "reserves"]:
-        cap = p.loc[p["Production/reserves"] == key, "Quantity (converted)"].groupby("GEM Unit ID").sum().reindex(df.index)
+        cap = (
+            p.loc[p["Production/reserves"] == key, "Quantity (converted)"]
+            .groupby("GEM Unit ID")
+            .sum()
+            .reindex(df.index)
+        )
         # assume capacity such that 3% of reserves can be extracted per year (25% quantile)
-        annualization_factor = 0.03 if key == "reserves" else 1. 
+        annualization_factor = 0.03 if key == "reserves" else 1.0
         capacities[key] = cap * annualization_factor
 
-    df["mcm_per_year"] = capacities["production"] \
-        .combine_first(capacities["production design capacity"]) \
+    df["mcm_per_year"] = (
+        capacities["production"]
+        .combine_first(capacities["production design capacity"])
         .combine_first(capacities["reserves"])
+    )
 
     geometry = gpd.points_from_xy(df["Longitude"], df["Latitude"])
     return gpd.GeoDataFrame(df, geometry=geometry, crs="EPSG:4326")
@@ -89,7 +96,7 @@ def build_gas_input_locations(gem_fn, entry_fn, sto_fn, countries):
         | (entry.from_country == "NO")  # malformed datapoint  # entries from NO to GB
     ]
 
-    sto =  read_scigrid_gas(sto_fn)
+    sto = read_scigrid_gas(sto_fn)
     remove_country = ["RU", "UA", "TR", "BY"]
     sto = sto.query("country_code != @remove_country")
 
