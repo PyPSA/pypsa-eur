@@ -298,7 +298,7 @@ rule build_biomass_potentials:
         "../scripts/build_biomass_potentials.py"
 
 
-if config["sector"]["biomass_transport"]:
+if config["sector"]["biomass_transport"] or config["sector"]["biomass_spatial"]:
 
     rule build_biomass_transport_costs:
         input:
@@ -323,9 +323,8 @@ if config["sector"]["biomass_transport"]:
     build_biomass_transport_costs_output = rules.build_biomass_transport_costs.output
 
 
-if not config["sector"]["biomass_transport"]:
+if not (config["sector"]["biomass_transport"] or config["sector"]["biomass_spatial"]):
     # this is effecively an `else` statement which is however not liked by snakefmt
-
     build_biomass_transport_costs_output = {}
 
 
