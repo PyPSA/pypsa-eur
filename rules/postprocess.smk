@@ -39,7 +39,7 @@ rule copy_config:
     params:
         RDIR=RDIR,
     output:
-        RESULTS + "config/config.yaml",
+        RESULTS + "config.yaml",
     threads: 1
     resources:
         mem_mb=1000,
@@ -49,22 +49,6 @@ rule copy_config:
         "../envs/environment.yaml"
     script:
         "../scripts/copy_config.py"
-
-
-rule copy_conda_env:
-    output:
-        RESULTS + "config/environment.yaml",
-    threads: 1
-    resources:
-        mem_mb=500,
-    log:
-        LOGS + "copy_conda_env.log",
-    benchmark:
-        BENCHMARKS + "copy_conda_env"
-    conda:
-        "../envs/environment.yaml"
-    shell:
-        "conda env export -f {output} --no-builds"
 
 
 rule make_summary:
