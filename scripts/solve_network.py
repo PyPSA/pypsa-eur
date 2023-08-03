@@ -497,10 +497,8 @@ def add_lossy_bidirectional_link_constraints(n):
     
     carriers = n.links.loc[n.links.reversed, "carrier"].unique()
 
-    backward_i = n.links.query("carrier in @carriers and reversed and p_nom_extendable").index
     forward_i = n.links.query("carrier in @carriers and ~reversed and p_nom_extendable").index
-
-    assert len(forward_i) == len(backward_i)
+    backward_i = forward_i + "-reversed"
 
     lhs = n.model["Link-p_nom"].loc[backward_i]
     rhs = n.model["Link-p_nom"].loc[forward_i]

@@ -3828,14 +3828,14 @@ def lossy_bidirectional_links(n, carrier, losses_per_thousand_km=0.):
 
     carrier_i = n.links.query("carrier == @carrier").index
     n.links.loc[carrier_i, "p_min_pu"] = 0
-    n.links["reversed"] = False
     n.links.loc[carrier_i, "efficiency"] = 1 - n.links.loc[carrier_i, "length"] * losses_per_thousand_km / 1e3
     rev_links = n.links.loc[carrier_i].copy().rename({"bus0": "bus1", "bus1": "bus0"}, axis=1)
     rev_links.capital_cost = 0
-    rev_links.reversed = True
+    rev_links["reversed"] = True
     rev_links.index = rev_links.index.map(lambda x: x + "-reversed")
 
     n.links = pd.concat([n.links, rev_links], sort=False)
+    n.links["reversed"] = n.links["reversed"].fillna(False)
 
 
 if __name__ == "__main__":
