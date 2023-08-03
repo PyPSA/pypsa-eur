@@ -636,7 +636,7 @@ def add_allam_cycle_gas(n, costs):
         carrier="allam gas",
         p_nom_extendable=True,
         # TODO: add costs to technology-data
-        capital_cost=0.66 * 1.832e6 * calculate_annuity(25, 0.07),  # efficiency * EUR/MW * annuity
+        capital_cost=0.66 * 1.832e6 * (calculate_annuity(25, 0.07) + 0.0385),  # efficiency * EUR/MW * (annuity + FOM)
         marginal_cost=2,
         efficiency=0.66,
         efficiency2=0.98 * costs.at["gas", "CO2 intensity"],
