@@ -490,6 +490,7 @@ sector:
     OCGT: gas
   biomass_to_liquid: false
   biosng: false
+  endogenous_steel: false
   import:
     capacity_boost: 2
     limit: false # bool or number in TWh

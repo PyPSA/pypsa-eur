@@ -534,8 +534,6 @@ rule build_industrial_energy_demand_per_node:
         industry_sector_ratios=RESOURCES + "industry_sector_ratios.csv",
         industrial_production_per_node=RESOURCES
         + "industrial_production_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
-        industrial_energy_demand_per_node_today=RESOURCES
-        + "industrial_energy_demand_today_elec_s{simpl}_{clusters}.csv",
     output:
         industrial_energy_demand_per_node=RESOURCES
         + "industrial_energy_demand_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
@@ -750,8 +748,13 @@ rule prepare_sector_network:
         busmap=RESOURCES + "busmap_elec_s{simpl}_{clusters}.csv",
         clustered_pop_layout=RESOURCES + "pop_layout_elec_s{simpl}_{clusters}.csv",
         simplified_pop_layout=RESOURCES + "pop_layout_elec_s{simpl}.csv",
+        industrial_production=RESOURCES
+        + "industrial_production_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
         industrial_demand=RESOURCES
         + "industrial_energy_demand_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
+        industrial_demand_today=RESOURCES
+        + "industrial_energy_demand_today_elec_s{simpl}_{clusters}.csv",
+        industry_sector_ratios=RESOURCES + "industry_sector_ratios.csv",
         heat_demand_urban=RESOURCES + "heat_demand_urban_elec_s{simpl}_{clusters}.nc",
         heat_demand_rural=RESOURCES + "heat_demand_rural_elec_s{simpl}_{clusters}.nc",
         heat_demand_total=RESOURCES + "heat_demand_total_elec_s{simpl}_{clusters}.nc",
