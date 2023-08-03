@@ -656,7 +656,7 @@ def add_methanol_reforming(n, costs):
 
     capital_cost = costs.at[tech, "fixed"] / costs.at[tech, "methanol-input"]
 
-    capital_cost_cc = capital_cost + costs.at["cement capture", "fixed"] / options["MWh_MeOH_per_tCO2"]
+    capital_cost_cc = capital_cost + costs.at["cement capture", "fixed"] * costs.at["methanolisation", "carbondioxide-input"]
 
     n.madd(
         "Link",
@@ -669,8 +669,8 @@ def add_methanol_reforming(n, costs):
         p_nom_extendable=True,
         capital_cost=capital_cost_cc,
         efficiency=1 / costs.at[tech, "methanol-input"],
-        efficiency2=(1 - costs.at["cement capture", "capture_rate"]) / options["MWh_MeOH_per_tCO2"],
-        efficiency3=costs.at["cement capture", "capture_rate"] / options["MWh_MeOH_per_tCO2"],
+        efficiency2=(1 - costs.at["cement capture", "capture_rate"]) * costs.at["methanolisation", "carbondioxide-input"],
+        efficiency3=costs.at["cement capture", "capture_rate"] * costs.at["methanolisation", "carbondioxide-input"],
         carrier=f"{tech} CC",
         lifetime=costs.at[tech, "lifetime"],
     )
@@ -685,7 +685,7 @@ def add_methanol_reforming(n, costs):
         p_nom_extendable=True,
         capital_cost=capital_cost,
         efficiency=1 / costs.at[tech, "methanol-input"],
-        efficiency2=1 / options["MWh_MeOH_per_tCO2"],
+        efficiency2=costs.at["methanolisation", "carbondioxide-input"],
         carrier=tech,
         lifetime=costs.at[tech, "lifetime"],
     )
@@ -2637,11 +2637,11 @@ def add_industry(n, costs):
             p_nom_extendable=True,
             p_min_pu=options.get("min_part_load_methanolisation", 0),
             capital_cost=costs.at["methanolisation", "fixed"]
-            * options["MWh_MeOH_per_MWh_H2"],  # EUR/MW_H2/a
+            / costs.at["methanolisation", "hydrogen-input"],  # EUR/MW_H2/a
             lifetime=costs.at["methanolisation", "lifetime"],
-            efficiency=options["MWh_MeOH_per_MWh_H2"],
-            efficiency2=-options["MWh_MeOH_per_MWh_H2"] / options["MWh_MeOH_per_MWh_e"],
-            efficiency3=-options["MWh_MeOH_per_MWh_H2"] / options["MWh_MeOH_per_tCO2"],
+            efficiency=1 / costs.at["methanolisation", "hydrogen-input"],
+            efficiency2=-costs.at["methanolisation", "electricity-input"] / costs.at["methanolisation", "hydrogen-input"],
+            efficiency3=-costs.at["methanolisation", "carbondioxide-input"] / costs.at["methanolisation", "hydrogen-input"],
         )
 
         efficiency = (
@@ -2659,7 +2659,7 @@ def add_industry(n, costs):
         )
 
         # CO2 intensity methanol based on stoichiometric calculation with 22.7 GJ/t methanol (32 g/mol), CO2 (44 g/mol), 277.78 MWh/TJ = 0.218 t/MWh
-        co2 = p_set_methanol / options["MWh_MeOH_per_tCO2"]
+        co2 = p_set_methanol * costs.at["methanolisation", "carbondioxide-input"]
 
         n.add(
             "Load",
@@ -3311,7 +3311,7 @@ def add_import_options(
         #"shipping-meoh": "methanol",  # TODO: or shipping fuel methanol
         # "shipping-steel": "", TODO: is this necessary?
     }
-    # TODO take from options["MWh_MeOH_per_tCO2"]
+    # TODO take from costs.at["methanolisation", "carbondioxide-input"] 
 
     import_costs = pd.read_csv(snakemake.input.import_costs, delimiter=";")
     cols = ["esc", "exporter", "importer", "value"]
