@@ -494,10 +494,12 @@ def add_battery_constraints(n):
 def add_lossy_bidirectional_link_constraints(n):
     if not n.links.p_nom_extendable.any() or not "reversed" in n.links.columns:
         return
-    
+
     carriers = n.links.loc[n.links.reversed, "carrier"].unique()
 
-    forward_i = n.links.query("carrier in @carriers and ~reversed and p_nom_extendable").index
+    forward_i = n.links.query(
+        "carrier in @carriers and ~reversed and p_nom_extendable"
+    ).index
     backward_i = forward_i + "-reversed"
 
     lhs = n.model["Link-p_nom"].loc[backward_i]

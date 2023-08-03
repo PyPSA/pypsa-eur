@@ -636,7 +636,11 @@ def add_allam_cycle_gas(n, costs):
         carrier="allam gas",
         p_nom_extendable=True,
         # TODO: add costs to technology-data
-        capital_cost=0.66 * 1.832e6 * (calculate_annuity(25, 0.07) + 0.0385),  # efficiency * EUR/MW * (annuity + FOM)
+        capital_cost=0.66
+        * 1.832e6
+        * (
+            calculate_annuity(25, 0.07) + 0.0385
+        ),  # efficiency * EUR/MW * (annuity + FOM)
         marginal_cost=2,
         efficiency=0.66,
         efficiency2=0.98 * costs.at["gas", "CO2 intensity"],
@@ -646,15 +650,12 @@ def add_allam_cycle_gas(n, costs):
 
 
 def add_methanol_to_power(n, costs, types={}):
-
     # TODO: add costs to technology-data
 
     nodes = pop_layout.index
 
     if types["allam"]:
-
         logger.info("Adding Allam cycle methanol power plants.")
-
 
         n.madd(
             "Link",
@@ -666,7 +667,9 @@ def add_methanol_to_power(n, costs, types={}):
             bus3="co2 atmosphere",
             carrier="allam methanol",
             p_nom_extendable=True,
-            capital_cost=0.66 * 1.832e6 * calculate_annuity(25, 0.07),  # efficiency * EUR/MW * annuity
+            capital_cost=0.66
+            * 1.832e6
+            * calculate_annuity(25, 0.07),  # efficiency * EUR/MW * annuity
             marginal_cost=2,
             efficiency=0.66,
             efficiency2=0.98 * costs.at["methanolisation", "carbondioxide-input"],
@@ -675,7 +678,6 @@ def add_methanol_to_power(n, costs, types={}):
         )
 
     if types["ccgt"]:
-
         logger.info("Adding methanol CCGT power plants.")
 
         # efficiency * EUR/MW * (annuity + FOM)
@@ -696,12 +698,17 @@ def add_methanol_to_power(n, costs, types={}):
         )
 
     if types["ccgt_cc"]:
-
-        logger.info("Adding methanol CCGT power plants with post-combustion carbon capture.")
+        logger.info(
+            "Adding methanol CCGT power plants with post-combustion carbon capture."
+        )
 
         # TODO consider efficiency changes / energy inputs for CC
 
-        capital_cost_cc = capital_cost + costs.at["cement capture", "fixed"] * costs.at["methanolisation", "carbondioxide-input"]
+        capital_cost_cc = (
+            capital_cost
+            + costs.at["cement capture", "fixed"]
+            * costs.at["methanolisation", "carbondioxide-input"]
+        )
 
         n.madd(
             "Link",
@@ -716,13 +723,14 @@ def add_methanol_to_power(n, costs, types={}):
             capital_cost=capital_cost_cc,
             marginal_cost=2,
             efficiency=0.58,
-            efficiency2=costs.at["cement capture", "capture_rate"] * costs.at["methanolisation", "carbondioxide-input"],
-            efficiency3=(1-costs.at["cement capture", "capture_rate"]) * costs.at["methanolisation", "carbondioxide-input"],
+            efficiency2=costs.at["cement capture", "capture_rate"]
+            * costs.at["methanolisation", "carbondioxide-input"],
+            efficiency3=(1 - costs.at["cement capture", "capture_rate"])
+            * costs.at["methanolisation", "carbondioxide-input"],
             lifetime=25,
         )
 
     if types["ocgt"]:
-
         logger.info("Adding methanol OCGT power plants.")
 
         n.madd(
@@ -733,7 +741,11 @@ def add_methanol_to_power(n, costs, types={}):
             bus1=nodes,
             carrier="OCGT methanol",
             p_nom_extendable=True,
-            capital_cost=0.35 * 458e3 * (calculate_annuity(25, 0.07) + 0.035),  # efficiency * EUR/MW * (annuity + FOM)
+            capital_cost=0.35
+            * 458e3
+            * (
+                calculate_annuity(25, 0.07) + 0.035
+            ),  # efficiency * EUR/MW * (annuity + FOM)
             marginal_cost=2,
             efficiency=0.35,
             lifetime=25,
@@ -741,7 +753,6 @@ def add_methanol_to_power(n, costs, types={}):
 
 
 def add_methanol_reforming(n, costs):
-
     logger.info("Adding methanol steam reforming.")
 
     nodes = pop_layout.index
@@ -754,7 +765,11 @@ def add_methanol_reforming(n, costs):
 
     capital_cost = costs.at[tech, "fixed"] / costs.at[tech, "methanol-input"]
 
-    capital_cost_cc = capital_cost + costs.at["cement capture", "fixed"] * costs.at["methanolisation", "carbondioxide-input"]
+    capital_cost_cc = (
+        capital_cost
+        + costs.at["cement capture", "fixed"]
+        * costs.at["methanolisation", "carbondioxide-input"]
+    )
 
     n.madd(
         "Link",
@@ -767,8 +782,10 @@ def add_methanol_reforming(n, costs):
         p_nom_extendable=True,
         capital_cost=capital_cost_cc,
         efficiency=1 / costs.at[tech, "methanol-input"],
-        efficiency2=(1 - costs.at["cement capture", "capture_rate"]) * costs.at["methanolisation", "carbondioxide-input"],
-        efficiency3=costs.at["cement capture", "capture_rate"] * costs.at["methanolisation", "carbondioxide-input"],
+        efficiency2=(1 - costs.at["cement capture", "capture_rate"])
+        * costs.at["methanolisation", "carbondioxide-input"],
+        efficiency3=costs.at["cement capture", "capture_rate"]
+        * costs.at["methanolisation", "carbondioxide-input"],
         carrier=f"{tech} CC",
         lifetime=costs.at[tech, "lifetime"],
     )
@@ -1360,8 +1377,16 @@ def add_storage_and_grids(n, costs):
 
         # add existing gas storage capacity
         gas_i = n.stores.carrier == "gas"
-        e_nom = gas_input_nodes["storage"].rename(lambda x: x + " gas Store").reindex(n.stores.index).fillna(0.) * 1e3 # MWh_LHV
-        e_nom.clip(upper=e_nom.quantile(0.98), inplace=True) # limit extremely large storage
+        e_nom = (
+            gas_input_nodes["storage"]
+            .rename(lambda x: x + " gas Store")
+            .reindex(n.stores.index)
+            .fillna(0.0)
+            * 1e3
+        )  # MWh_LHV
+        e_nom.clip(
+            upper=e_nom.quantile(0.98), inplace=True
+        )  # limit extremely large storage
         n.stores.loc[gas_i, "e_nom_min"] = e_nom
 
         # add candidates for new gas pipelines to achieve full connectivity
@@ -2758,8 +2783,10 @@ def add_industry(n, costs):
             / costs.at["methanolisation", "hydrogen-input"],  # EUR/MW_H2/a
             lifetime=costs.at["methanolisation", "lifetime"],
             efficiency=1 / costs.at["methanolisation", "hydrogen-input"],
-            efficiency2=-costs.at["methanolisation", "electricity-input"] / costs.at["methanolisation", "hydrogen-input"],
-            efficiency3=-costs.at["methanolisation", "carbondioxide-input"] / costs.at["methanolisation", "hydrogen-input"],
+            efficiency2=-costs.at["methanolisation", "electricity-input"]
+            / costs.at["methanolisation", "hydrogen-input"],
+            efficiency3=-costs.at["methanolisation", "carbondioxide-input"]
+            / costs.at["methanolisation", "hydrogen-input"],
         )
 
         efficiency = (
@@ -3228,12 +3255,18 @@ def add_endogenous_hvdc_import_options(n):
     xlinks = {}
     for bus0, links in cf["xlinks"].items():
         for link in links:
-            landing_point = gpd.GeoSeries([Point(link["x"], link["y"])], crs=4326).to_crs(DISTANCE_CRS)
-            bus1 = regions.to_crs(DISTANCE_CRS).geometry.distance(landing_point[0]).idxmin()
+            landing_point = gpd.GeoSeries(
+                [Point(link["x"], link["y"])], crs=4326
+            ).to_crs(DISTANCE_CRS)
+            bus1 = (
+                regions.to_crs(DISTANCE_CRS)
+                .geometry.distance(landing_point[0])
+                .idxmin()
+            )
             xlinks[(bus0, bus1)] = link["length"]
 
     import_links = pd.concat([import_links, pd.Series(xlinks)], axis=0)
-    import_links = import_links.drop_duplicates(keep='first')
+    import_links = import_links.drop_duplicates(keep="first")
 
     hvdc_cost = (
         import_links.values * cf["length_factor"] * costs.at["HVDC submarine", "fixed"]
@@ -3287,7 +3320,9 @@ def add_endogenous_hvdc_import_options(n):
         carrier="external H2",
         e_nom_extendable=True,
         e_cyclic=True,
-        capital_cost=costs.at["hydrogen storage tank type 1 including compressor", "fixed"],
+        capital_cost=costs.at[
+            "hydrogen storage tank type 1 including compressor", "fixed"
+        ],
     )
 
     n.madd(
@@ -3310,8 +3345,7 @@ def add_endogenous_hvdc_import_options(n):
         carrier="external H2 Turbine",
         p_nom_extendable=True,
         efficiency=costs.at["OCGT", "efficiency"],
-        capital_cost=costs.at["OCGT", "fixed"]
-        * costs.at["OCGT", "efficiency"],
+        capital_cost=costs.at["OCGT", "fixed"] * costs.at["OCGT", "efficiency"],
         lifetime=costs.at["OCGT", "lifetime"],
     )
 
@@ -3390,7 +3424,7 @@ def add_import_options(
         "pipeline-h2",
         "shipping-lh2",
         "shipping-lch4",
-        #"shipping-meoh",
+        # "shipping-meoh",
         "shipping-ftfuel",
         "shipping-lnh3",
         # "shipping-steel",
@@ -3419,17 +3453,17 @@ def add_import_options(
         "shipping-lch4": " gas",
         "shipping-lnh3": " NH3",
         "shipping-ftfuel": " oil",
-        #"shipping-meoh": " methanol",
+        # "shipping-meoh": " methanol",
         # "shipping-steel": " steel",
     }
 
     co2_intensity = {
         "shipping-lch4": "gas",
         "shipping-ftfuel": "oil",
-        #"shipping-meoh": "methanol",  # TODO: or shipping fuel methanol
+        # "shipping-meoh": "methanol",  # TODO: or shipping fuel methanol
         # "shipping-steel": "", TODO: is this necessary?
     }
-    # TODO take from costs.at["methanolisation", "carbondioxide-input"] 
+    # TODO take from costs.at["methanolisation", "carbondioxide-input"]
 
     import_costs = pd.read_csv(snakemake.input.import_costs, delimiter=";")
     cols = ["esc", "exporter", "importer", "value"]
@@ -3462,9 +3496,7 @@ def add_import_options(
             sel &= ~import_nodes.index.str[:2].isin(forbidden_pipelines)
         import_nodes_tech = import_nodes.loc[sel, [tech]]
 
-        import_nodes_tech = (
-            import_nodes_tech.rename(columns={tech: "p_nom"})
-        )
+        import_nodes_tech = import_nodes_tech.rename(columns={tech: "p_nom"})
 
         marginal_costs = ports[tech].dropna().map(import_costs_tech)
         import_nodes_tech["marginal_cost"] = marginal_costs
@@ -3475,7 +3507,7 @@ def add_import_options(
 
         if tech in co2_intensity.keys():
             buses = import_nodes_tech.index + f"{suffix} import {tech}"
-            capital_cost = 7018. if tech == 'shipping-lch4' else 0. # €/MW/a
+            capital_cost = 7018.0 if tech == "shipping-lch4" else 0.0  # €/MW/a
 
             n.madd("Bus", buses + " bus", carrier=f"import {tech}")
 
@@ -3509,7 +3541,9 @@ def add_import_options(
             location = import_nodes_tech.index
             buses = location if tech == "hvdc-to-elec" else location + suffix
 
-            capital_cost = 1.2 * 7018. if tech == 'shipping-lh2' else 0. # €/MW/a, +20% compared to LNG
+            capital_cost = (
+                1.2 * 7018.0 if tech == "shipping-lh2" else 0.0
+            )  # €/MW/a, +20% compared to LNG
 
             n.madd(
                 "Generator",
@@ -3525,7 +3559,7 @@ def add_import_options(
     # need special handling for copperplated imports
     copperplated_options = {
         "shipping-ftfuel",
-        #"shipping-meoh",
+        # "shipping-meoh",
         # "shipping-steel",
     }
 
@@ -3816,7 +3850,7 @@ def set_temporal_aggregation(n, opts, solver_name):
     return n
 
 
-def lossy_bidirectional_links(n, carrier, losses_per_thousand_km=0.):
+def lossy_bidirectional_links(n, carrier, losses_per_thousand_km=0.0):
     "Split bidirectional links into two unidirectional links to include transmission losses."
 
     carrier_i = n.links.query("carrier == @carrier").index
@@ -3824,12 +3858,18 @@ def lossy_bidirectional_links(n, carrier, losses_per_thousand_km=0.):
     if not losses_per_thousand_km or carrier_i.empty:
         return
 
-    logger.info(f"Specified losses for {carrier} transmission. Splitting bidirectional links.")
+    logger.info(
+        f"Specified losses for {carrier} transmission. Splitting bidirectional links."
+    )
 
     carrier_i = n.links.query("carrier == @carrier").index
     n.links.loc[carrier_i, "p_min_pu"] = 0
-    n.links.loc[carrier_i, "efficiency"] = 1 - n.links.loc[carrier_i, "length"] * losses_per_thousand_km / 1e3
-    rev_links = n.links.loc[carrier_i].copy().rename({"bus0": "bus1", "bus1": "bus0"}, axis=1)
+    n.links.loc[carrier_i, "efficiency"] = (
+        1 - n.links.loc[carrier_i, "length"] * losses_per_thousand_km / 1e3
+    )
+    rev_links = (
+        n.links.loc[carrier_i].copy().rename({"bus0": "bus1", "bus1": "bus0"}, axis=1)
+    )
     rev_links.capital_cost = 0
     rev_links["reversed"] = True
     rev_links.index = rev_links.index.map(lambda x: x + "-reversed")
