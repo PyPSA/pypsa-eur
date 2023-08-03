@@ -620,7 +620,7 @@ def add_co2_network(n, costs):
     )
 
 
-def add_allam(n, costs):
+def add_allam_cycle_gas(n, costs):
     logger.info("Adding Allam cycle gas power plants.")
 
     nodes = pop_layout.index
@@ -628,18 +628,20 @@ def add_allam(n, costs):
     n.madd(
         "Link",
         nodes,
-        suffix=" allam",
+        suffix=" allam gas",
         bus0=spatial.gas.df.loc[nodes, "nodes"].values,
         bus1=nodes,
         bus2=spatial.co2.df.loc[nodes, "nodes"].values,
-        carrier="allam",
+        bus3="co2 atmosphere",
+        carrier="allam gas",
         p_nom_extendable=True,
         # TODO: add costs to technology-data
-        capital_cost=0.6 * 1.5e6 * 0.1,  # efficiency * EUR/MW * annuity
+        capital_cost=0.66 * 1.832e6 * calculate_annuity(25, 0.07),  # efficiency * EUR/MW * annuity
         marginal_cost=2,
-        efficiency=0.6,
-        efficiency2=costs.at["gas", "CO2 intensity"],
-        lifetime=30.0,
+        efficiency=0.66,
+        efficiency2=0.98 * costs.at["gas", "CO2 intensity"],
+        efficiency3=0.02 * costs.at["gas", "CO2 intensity"],
+        lifetime=25,
     )
 
 
@@ -3856,8 +3858,8 @@ if __name__ == "__main__":
         )
         break
 
-    if options["allam_cycle"]:
-        add_allam(n, costs)
+    if options["allam_cycle_gas"]:
+        add_allam_cycle_gas(n, costs)
 
     if options["methanol_reforming"]:
         add_methanol_reforming(n, costs)

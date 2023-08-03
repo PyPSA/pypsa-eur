@@ -436,7 +436,7 @@ sector:
   coal_cc: false
   dac: true
   co2_vent: false
-  allam_cycle: false
+  allam_cycle_gas: false
   hydrogen_fuel_cell: true
   hydrogen_turbine: false
   SMR: true
@@ -828,7 +828,7 @@ plotting:
     biogas to gas: '#e36311'
     CCGT: '#a85522'
     CCGT marginal: '#a85522'
-    allam: '#B98F76'
+    allam gas: '#B98F76'
     gas for industry co2 to atmosphere: '#692e0a'
     gas for industry co2 to stored: '#8a3400'
     gas for industry: '#853403'
