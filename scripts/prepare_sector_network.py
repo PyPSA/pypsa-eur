@@ -2623,12 +2623,13 @@ def add_industry(n, costs):
             bus2=nodes + " H2",
             bus3=spatial.gas.nodes,
             bus4="co2 atmosphere",
+            bus5=nodes + " uban central heat",
             efficiency=1 / ratio["elec"],
             efficiency2=-ratio["hydrogen"] / ratio["elec"],
             efficiency3=-ratio["methane"] / ratio["elec"],
             efficiency4=ratio["process emission"] / ratio["elec"],
+            efficiency5=-ratio["heat"] / ratio["elec"],
         )
-        # TODO specific consumption of heat (small), requires extension to bus5
 
     n.madd(
         "Bus",
