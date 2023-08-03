@@ -649,8 +649,9 @@ def add_methanol_reforming(n, costs):
 
     nodes = pop_layout.index
 
-    # TODO: heat and electricity demand for process and carbon capture
+    # TODO: heat release and electricity demand for process and carbon capture
     # but the energy demands for carbon capture have not yet been added for other CC processes
+    # 10.1016/j.rser.2020.110171: 0.129 kWh_e/kWh_H2, -0.09 kWh_heat/kWh_H2
 
     tech = "Methanol steam reforming"
 
