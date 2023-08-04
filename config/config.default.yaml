@@ -669,6 +669,7 @@ solving:
     glpk-default: {} # Used in CI
 
   mem: 30000 #memory in MB; 20 GB enough for 50+B+I+H2; 100 GB for 181+B+I+H2
+  walltime: "12:00:00"
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#plotting
 plotting:
