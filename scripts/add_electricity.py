@@ -2,8 +2,6 @@
 # SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
-
-# coding: utf-8
 """
 Adds electrical generators and existing hydro storage units to a base network.
 
@@ -752,6 +750,30 @@ def estimate_renewable_capacities(n, year, tech_map, expansion_limit, countries)
             )
 
 
+def attach_line_rating(
+    n, rating, s_max_pu, correction_factor, max_voltage_difference, max_line_rating
+):
+    # TODO: Only considers overhead lines
+    n.lines_t.s_max_pu = (rating / n.lines.s_nom[rating.columns]) * correction_factor
+    if max_voltage_difference:
+        x_pu = (
+            n.lines.type.map(n.line_types["x_per_length"])
+            * n.lines.length
+            / (n.lines.v_nom**2)
+        )
+        # need to clip here as cap values might be below 1
+        # -> would mean the line cannot be operated at actual given pessimistic ampacity
+        s_max_pu_cap = (
+            np.deg2rad(max_voltage_difference) / (x_pu * n.lines.s_nom)
+        ).clip(lower=1)
+        n.lines_t.s_max_pu = n.lines_t.s_max_pu.clip(
+            lower=1, upper=s_max_pu_cap, axis=1
+        )
+    if max_line_rating:
+        n.lines_t.s_max_pu = n.lines_t.s_max_pu.clip(upper=max_line_rating)
+    n.lines_t.s_max_pu *= s_max_pu
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -833,6 +855,23 @@ if __name__ == "__main__":
         )
 
     update_p_nom_max(n)
+
+    line_rating_config = snakemake.config["lines"]["dynamic_line_rating"]
+    if line_rating_config["activate"]:
+        rating = xr.open_dataarray(snakemake.input.line_rating).to_pandas().transpose()
+        s_max_pu = snakemake.config["lines"]["s_max_pu"]
+        correction_factor = line_rating_config["correction_factor"]
+        max_voltage_difference = line_rating_config["max_voltage_difference"]
+        max_line_rating = line_rating_config["max_line_rating"]
+
+        attach_line_rating(
+            n,
+            rating,
+            s_max_pu,
+            correction_factor,
+            max_voltage_difference,
+            max_line_rating,
+        )
 
     sanitize_carriers(n, snakemake.config)
 

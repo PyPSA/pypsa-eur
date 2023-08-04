@@ -86,7 +86,7 @@ if config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]:
     rule build_gas_input_locations:
         input:
             lng=HTTP.remote(
-                "https://globalenergymonitor.org/wp-content/uploads/2022/09/Europe-Gas-Tracker-August-2022.xlsx",
+                "https://globalenergymonitor.org/wp-content/uploads/2023/07/Europe-Gas-Tracker-2023-03-v3.xlsx",
                 keep_local=True,
             ),
             entry="data/gas_network/scigrid-gas/data/IGGIELGN_BorderPoints.geojson",
@@ -295,7 +295,7 @@ rule build_biomass_potentials:
         "../scripts/build_biomass_potentials.py"
 
 
-if config["sector"]["biomass_transport"]:
+if config["sector"]["biomass_transport"] or config["sector"]["biomass_spatial"]:
 
     rule build_biomass_transport_costs:
         input:
@@ -320,9 +320,8 @@ if config["sector"]["biomass_transport"]:
     build_biomass_transport_costs_output = rules.build_biomass_transport_costs.output
 
 
-if not config["sector"]["biomass_transport"]:
+if not (config["sector"]["biomass_transport"] or config["sector"]["biomass_spatial"]):
     # this is effecively an `else` statement which is however not liked by snakefmt
-
     build_biomass_transport_costs_output = {}
 
 
