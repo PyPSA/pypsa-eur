@@ -3585,7 +3585,7 @@ def add_import_options(
 
     import_costs = pd.read_csv(snakemake.input.import_costs, delimiter=";")
     cols = ["esc", "exporter", "importer", "value"]
-    fields = ['Cost per MWh delivered', "Cost per t delivered"]
+    fields = ["Cost per MWh delivered", "Cost per t delivered"]
     import_costs = import_costs.query("subcategory in @fields")[cols]
     import_costs.rename(columns={"value": "marginal_cost"}, inplace=True)
 
@@ -3717,12 +3717,9 @@ def add_import_options(
     }
 
     for tech in set(import_options).intersection(copperplated_carbonfree_options):
-
         suffix = bus_suffix[tech]
 
-        marginal_costs = import_costs.query(
-            "esc == @tech"
-        ).marginal_cost.min()
+        marginal_costs = import_costs.query("esc == @tech").marginal_cost.min()
 
         n.add(
             "Generator",
@@ -4118,7 +4115,7 @@ if __name__ == "__main__":
         NH3=["shipping-lnh3"],
         FT=["shipping-ftfuel"],
         MeOH=["shipping-meoh"],
-        St=["shipping-steel"]
+        St=["shipping-steel"],
     )
     for o in opts:
         if not o.startswith("imp"):
