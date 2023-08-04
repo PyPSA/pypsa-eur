@@ -6,6 +6,7 @@ Trigger, Description, Definition, Status
 ``H``,Add heating sector,,In active use
 ``B``,Add biomass,,In active use
 ``I``,Add industry sector,,In active use
+``S``,Add shipping sector,,In active use
 ``A``,Add agriculture sector,,In active use
 ``dist``+``n``,Add distribution grid with investment costs of ``n`` times costs in ``data/costs_{cost_year}.csv``,,In active use
 ``seq``+``n``,Sets the CO2 sequestration potential to ``n`` Mt CO2 per year,,In active use
