@@ -5,4 +5,3 @@ font.family: sans-serif
 font.sans-serif: Ubuntu, DejaVu Sans
 image.cmap: viridis
 figure.autolayout : True
-figure.dpi: 300
