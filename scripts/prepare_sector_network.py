@@ -3547,7 +3547,7 @@ def add_import_options(
         "shipping-meoh",
         "shipping-ftfuel",
         "shipping-lnh3",
-        # "shipping-steel",
+        "shipping-steel",
     ],
     endogenous_hvdc=False,
 ):
@@ -3574,19 +3574,19 @@ def add_import_options(
         "shipping-lnh3": " NH3",
         "shipping-ftfuel": " oil",
         "shipping-meoh": " methanol",
-        # "shipping-steel": " steel",
+        "shipping-steel": " steel",
     }
 
     co2_intensity = {
         "shipping-lch4": ("gas", "CO2 intensity"),
         "shipping-ftfuel": ("oil", "CO2 intensity"),
         "shipping-meoh": ("methanolisation", "carbondioxide-input"),
-        # "shipping-steel": "", TODO: is this necessary?
     }
 
     import_costs = pd.read_csv(snakemake.input.import_costs, delimiter=";")
     cols = ["esc", "exporter", "importer", "value"]
-    import_costs = import_costs.query("subcategory == 'Cost per MWh delivered'")[cols]
+    fields = ['Cost per MWh delivered', "Cost per t delivered"]
+    import_costs = import_costs.query("subcategory in @fields")[cols]
     import_costs.rename(columns={"value": "marginal_cost"}, inplace=True)
 
     for k, v in translate.items():
@@ -3676,13 +3676,12 @@ def add_import_options(
             )
 
     # need special handling for copperplated imports
-    copperplated_options = {
+    copperplated_carbonaceous_options = {
         "shipping-ftfuel",
         "shipping-meoh",
-        # "shipping-steel",
     }
 
-    for tech in set(import_options).intersection(copperplated_options):
+    for tech in set(import_options).intersection(copperplated_carbonaceous_options):
         marginal_costs = import_costs.query("esc == @tech").marginal_cost.min()
 
         suffix = bus_suffix[tech]
@@ -3712,19 +3711,24 @@ def add_import_options(
             p_nom=1e7,
         )
 
-    if (
-        "shipping-lnh3" in import_options
-        and "shipping-lnh3" not in regionalised_options
-    ):
+    copperplated_carbonfree_options = {
+        "shipping-steel",
+        "shipping-lnh3",
+    }
+
+    for tech in set(import_options).intersection(copperplated_carbonfree_options):
+
+        suffix = bus_suffix[tech]
+
         marginal_costs = import_costs.query(
-            "esc == 'shipping-lnh3'"
+            "esc == @tech"
         ).marginal_cost.min()
 
         n.add(
             "Generator",
-            "EU import shipping-lnh3",
-            bus="EU NH3",
-            carrier="import shipping-lnh3",
+            f"EU import {tech}",
+            bus="EU" + suffix,
+            carrier=f"import {tech}",
             marginal_cost=marginal_costs,
             p_nom=1e7,
         )
@@ -4114,7 +4118,7 @@ if __name__ == "__main__":
         NH3=["shipping-lnh3"],
         FT=["shipping-ftfuel"],
         MeOH=["shipping-meoh"],
-        # St=["shipping-steel"]
+        St=["shipping-steel"]
     )
     for o in opts:
         if not o.startswith("imp"):
