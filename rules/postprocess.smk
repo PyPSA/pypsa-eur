@@ -143,7 +143,7 @@ STATISTICS_BARPLOTS = [
 ]
 
 
-rule plot_statistics:
+rule plot_elec_statistics:
     params:
         plotting=config["plotting"],
         barplots=STATISTICS_BARPLOTS,
