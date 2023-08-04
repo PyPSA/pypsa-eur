@@ -2568,7 +2568,7 @@ def add_industry(n, costs):
     )
 
     industrial_production = (
-        pd.read_csv(snakemake.input.industrial_production, index_col=0) * nyears
+        pd.read_csv(snakemake.input.industrial_production, index_col=0) * 1e3 * nyears # kt/a -> t/a
     )
     industry_sector_ratios = pd.read_csv(
         snakemake.input.industry_sector_ratios, index_col=0
@@ -2580,6 +2580,9 @@ def add_industry(n, costs):
     )
 
     if options["endogenous_steel"]:
+
+        logger.info("Adding endogenous primary steel demand in tonnes.")
+
         sector = "DRI + Electric arc"
 
         n.add(
@@ -2595,35 +2598,43 @@ def add_industry(n, costs):
             "EU steel",
             bus="EU steel",
             carrier="steel",
-            p_set=industrial_production[sector].sum() / 8760,
+            p_set=industrial_production[sector].sum() / nhours,
         )
 
-        n.add(
-            "Store",
-            "EU steel Store",
-            bus="EU steel",
-            e_nom_extendable=True,
-            e_cyclic=True,
-            carrier="steel",
-        )
+        # n.add(
+        #     "Store",
+        #     "EU steel Store",
+        #     bus="EU steel",
+        #     e_nom_extendable=True,
+        #     e_cyclic=True,
+        #     carrier="steel",
+        # )
 
         ratio = industry_sector_ratios[sector]
+
+        # so that for each region supply matches consumption
+        p_nom = industrial_production[sector] * ratio["elec"] / nhours
+
+        bus5 = [
+            node + " urban central heat"
+            if node + " urban central heat" in n.buses.index
+            else node + " services urban decentral heat"
+            for node in nodes
+        ]
 
         n.madd(
             "Link",
             nodes,
             suffix=f" {sector}",
             carrier=sector,
-            p_nom_extendable=True,
+            p_nom=p_nom,
             p_min_pu=1,
-            capital_cost=0,
-            lifetime=99,
             bus0=nodes,
             bus1="EU steel",
             bus2=nodes + " H2",
             bus3=spatial.gas.nodes,
             bus4="co2 atmosphere",
-            bus5=nodes + " uban central heat",
+            bus5=bus5,
             efficiency=1 / ratio["elec"],
             efficiency2=-ratio["hydrogen"] / ratio["elec"],
             efficiency3=-ratio["methane"] / ratio["elec"],
