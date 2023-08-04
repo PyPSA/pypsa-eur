@@ -2784,6 +2784,8 @@ def add_industry(n, costs):
         / nhours,
     )
 
+    # shipping
+
     shipping_hydrogen_share = get(options["shipping_hydrogen_share"], investment_year)
     shipping_methanol_share = get(options["shipping_methanol_share"], investment_year)
     shipping_oil_share = get(options["shipping_oil_share"], investment_year)
@@ -2917,6 +2919,9 @@ def add_industry(n, costs):
         )
 
     if shipping_oil_share:
+
+        add_carrier_buses(n, "oil")
+
         p_set_oil = shipping_oil_share * p_set.sum()
 
         n.madd(
@@ -2938,35 +2943,6 @@ def add_industry(n, costs):
             p_set=-co2,
         )
 
-    if "oil" not in n.buses.carrier.unique():
-        n.madd(
-            "Bus",
-            spatial.oil.nodes,
-            location=spatial.oil.locations,
-            carrier="oil",
-            unit="MWh_LHV",
-        )
-
-    if "oil" not in n.stores.carrier.unique():
-        # could correct to e.g. 0.001 EUR/kWh * annuity and O&M
-        n.madd(
-            "Store",
-            [oil_bus + " Store" for oil_bus in spatial.oil.nodes],
-            bus=spatial.oil.nodes,
-            e_nom_extendable=True,
-            e_cyclic=True,
-            carrier="oil",
-        )
-
-    if "oil" not in n.generators.carrier.unique():
-        n.madd(
-            "Generator",
-            spatial.oil.nodes,
-            bus=spatial.oil.nodes,
-            p_nom_extendable=True,
-            carrier="oil",
-            marginal_cost=costs.at["oil", "fuel"],
-        )
 
     if options["oil_boilers"]:
         nodes_heat = create_nodes_for_heat_sector()[0]
