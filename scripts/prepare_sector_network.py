@@ -3110,7 +3110,6 @@ def add_shipping(n, costs):
         )
 
     if shipping_methanol_share:
-
         add_carrier_buses(n, "methanol")
 
         n.madd(
@@ -3289,7 +3288,6 @@ def add_agriculture(n, costs):
         )
 
     if oil_share > 0:
-
         add_carrier_buses(n, "oil")
 
         n.madd(
