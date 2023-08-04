@@ -3065,6 +3065,29 @@ def add_industry(n, costs):
         p_set=-co2,
     )
 
+    # industry methanol demand
+
+    p_set_methanol = industrial_demand.loc[(nodes, sectors_b), "methanol"].sum() / nhours
+
+    n.madd(
+        "Load",
+        spatial.methanol.nodes,
+        suffix=" industry methanol",
+        bus=spatial.methanol.nodes,
+        carrier="industry methanol",
+        p_set=p_set_methanol,
+    )
+
+    co2 = p_set_methanol * costs.at["methanolisation", "carbondioxide-input"]
+
+    n.add(
+        "Load",
+        "industry methanol emissions",
+        bus="co2 atmosphere",
+        carrier="industry methanol emissions",
+        p_set=-co2,
+    )
+
     # TODO simplify bus expression
     n.madd(
         "Load",
