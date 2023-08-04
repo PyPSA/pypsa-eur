@@ -2622,11 +2622,25 @@ def add_industry(n, costs):
             for node in nodes
         ]
 
+        marginal_cost = (
+            costs.at["iron ore DRI-ready", "commodity"]
+            * costs.at["direct iron reduction furnace", "ore-input"]
+            * costs.at["electric arc furnace", "hbi-input"]
+            / ratio["elec"]
+        )
+
+        capital_cost = (
+            costs.at["direct iron reduction furnace", "fixed"]
+            + costs.at["electric arc furnace", "fixed"]
+        ) / ratio["elec"]
+
         n.madd(
             "Link",
             nodes,
             suffix=f" {sector}",
             carrier=sector,
+            capital_cost=capital_cost,
+            marginal_cost=marginal_cost,
             p_nom=p_nom,
             p_min_pu=1,
             bus0=nodes,
