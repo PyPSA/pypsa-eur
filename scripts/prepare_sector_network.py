@@ -3067,7 +3067,9 @@ def add_industry(n, costs):
 
     # industry methanol demand
 
-    p_set_methanol = industrial_demand.loc[(nodes, sectors_b), "methanol"].sum() / nhours
+    p_set_methanol = (
+        industrial_demand.loc[(nodes, sectors_b), "methanol"].sum() / nhours
+    )
 
     n.madd(
         "Load",

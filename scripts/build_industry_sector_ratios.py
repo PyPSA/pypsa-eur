@@ -601,7 +601,7 @@ def chemicals_industry():
     sources = ["elec", "biomass", "methane", "hydrogen", "heat", "naphtha"]
     df.loc[sources, sector] = df.loc[sources, sector] * toe_to_MWh / s_out.values
 
-    return df.fillna(0.)
+    return df.fillna(0.0)
 
 
 def nonmetalic_mineral_products():
