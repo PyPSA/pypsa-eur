@@ -2910,6 +2910,28 @@ def add_industry(n, costs):
         p_set=-co2,
     )
 
+    # methanolisation
+
+    n.madd(
+        "Link",
+        spatial.h2.locations + " methanolisation",
+        bus0=spatial.h2.nodes,
+        bus1=spatial.methanol.nodes,
+        bus2=nodes,
+        bus3=spatial.co2.nodes,
+        carrier="methanolisation",
+        p_nom_extendable=True,
+        p_min_pu=options.get("min_part_load_methanolisation", 0),
+        capital_cost=costs.at["methanolisation", "fixed"]
+        / costs.at["methanolisation", "hydrogen-input"],  # EUR/MW_H2/a
+        lifetime=costs.at["methanolisation", "lifetime"],
+        efficiency=1 / costs.at["methanolisation", "hydrogen-input"],
+        efficiency2=-costs.at["methanolisation", "electricity-input"]
+        / costs.at["methanolisation", "hydrogen-input"],
+        efficiency3=-costs.at["methanolisation", "carbondioxide-input"]
+        / costs.at["methanolisation", "hydrogen-input"],
+    )
+
     # TODO simplify bus expression
     n.madd(
         "Load",
@@ -3111,26 +3133,6 @@ def add_shipping(n, costs):
 
     if shipping_methanol_share:
         add_carrier_buses(n, "methanol")
-
-        n.madd(
-            "Link",
-            spatial.h2.locations + " methanolisation",
-            bus0=spatial.h2.nodes,
-            bus1=spatial.methanol.nodes,
-            bus2=nodes,
-            bus3=spatial.co2.nodes,
-            carrier="methanolisation",
-            p_nom_extendable=True,
-            p_min_pu=options.get("min_part_load_methanolisation", 0),
-            capital_cost=costs.at["methanolisation", "fixed"]
-            / costs.at["methanolisation", "hydrogen-input"],  # EUR/MW_H2/a
-            lifetime=costs.at["methanolisation", "lifetime"],
-            efficiency=1 / costs.at["methanolisation", "hydrogen-input"],
-            efficiency2=-costs.at["methanolisation", "electricity-input"]
-            / costs.at["methanolisation", "hydrogen-input"],
-            efficiency3=-costs.at["methanolisation", "carbondioxide-input"]
-            / costs.at["methanolisation", "hydrogen-input"],
-        )
 
         efficiency = (
             options["shipping_oil_efficiency"] / options["shipping_methanol_efficiency"]
