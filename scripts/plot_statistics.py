@@ -17,7 +17,7 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "plot_statistics",
+            "plot_elec_statistics",
             simpl="",
             opts="Ept-12h",
             clusters="37",

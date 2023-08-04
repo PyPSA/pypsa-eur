@@ -483,7 +483,7 @@ if __name__ == "__main__":
     else:
         n_clusters = int(snakemake.wildcards.clusters)
 
-    if params.cluster_network["consider_efficiency_classes"]:
+    if params.cluster_network.get("consider_efficiency_classes", False):
         carriers = []
         for c in aggregate_carriers:
             gens = n.generators.query("carrier == @c")

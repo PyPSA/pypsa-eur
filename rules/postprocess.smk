@@ -148,7 +148,6 @@ rule plot_elec_statistics:
         plotting=config["plotting"],
         barplots=STATISTICS_BARPLOTS,
     input:
-        overrides="data/override_component_attrs",
         network=RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
     output:
         **{
