@@ -2919,7 +2919,6 @@ def add_industry(n, costs):
         )
 
     if shipping_oil_share:
-
         add_carrier_buses(n, "oil")
 
         p_set_oil = shipping_oil_share * p_set.sum()
@@ -2942,7 +2941,6 @@ def add_industry(n, costs):
             carrier="shipping oil emissions",
             p_set=-co2,
         )
-
 
     if options["oil_boilers"]:
         nodes_heat = create_nodes_for_heat_sector()[0]
