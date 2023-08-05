@@ -399,6 +399,16 @@ sector:
     2050: 0
   shipping_methanol_efficiency: 0.46
   shipping_oil_efficiency: 0.40
+  shipping_ammonia_efficiency: 0.44
+  shipping_lng_efficiency: 0.41
+  shipping_endogenous:
+    enable: false
+    fuels:
+    - oil
+    - methanol
+    - LH2
+    - LNG
+    - ammonia
   aviation_demand_factor: 1.
   HVC_demand_factor: 1.
   time_dep_hp_cop: true

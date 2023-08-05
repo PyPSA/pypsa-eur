@@ -3132,6 +3132,7 @@ def add_shipping(n, costs):
         )
 
     if shipping_methanol_share:
+
         add_carrier_buses(n, "methanol")
 
         efficiency = (
@@ -3181,6 +3182,132 @@ def add_shipping(n, costs):
             bus="co2 atmosphere",
             carrier="shipping oil emissions",
             p_set=-co2,
+        )
+
+
+def add_shipping_endogenous(n, costs):
+
+    logger.info("Add shipping demand endogenously")
+
+    fuels = options["shipping_endogenous"]["fuels"]
+
+    nodes = pop_layout.index
+
+    domestic_navigation = pop_weighted_energy_totals.loc[
+        nodes, "total domestic navigation"
+    ].squeeze()
+    international_navigation = (
+        pd.read_csv(snakemake.input.shipping_demand, index_col=0).squeeze() * nyears
+    )
+    all_navigation = domestic_navigation + international_navigation
+
+    # determine demand in MW propulsion
+    oil_efficiency = options["shipping_oil_efficiency"]
+    p_set = oil_efficiency * all_navigation * 1e6 / nhours
+
+    n.madd(
+        "Bus",
+        nodes,
+        suffix=" shipping",
+        unit="MWh propulsion",
+        location=nodes,
+        carrier="shipping"
+    )
+
+    n.madd(
+        "Load",
+        nodes,
+        suffix=" shipping",
+        bus=nodes + " shipping",
+        carrier="shipping",
+        p_set=p_set,
+    )
+
+    if "oil" in fuels:
+
+        add_carrier_buses(n, "oil")
+
+        n.madd(
+            "Link",
+            nodes,
+            suffix=" shipping oil",
+            carrier="shipping oil",
+            bus0=spatial.oil.nodes,
+            bus1=nodes + " shipping",
+            bus2="co2 atmosphere",
+            efficiency=options["shipping_oil_efficiency"],
+            efficiency2=costs.at["oil", "CO2 intensity"],
+            p_min_pu=1,
+            p_nom_extendable=True,
+        )
+
+    if "methanol" in fuels:
+
+        add_carrier_buses(n, "methanol")
+
+        n.madd(
+            "Link",
+            nodes,
+            suffix=" shipping methanol",
+            carrier="shipping methanol",
+            bus0=spatial.methanol.nodes,
+            bus1=nodes + " shipping",
+            bus2="co2 atmosphere",
+            efficiency=options["shipping_methanol_efficiency"],
+            efficiency2=costs.at["methanolisation", "carbondioxide-input"],
+            p_min_pu=1,
+            p_nom_extendable=True,
+        )
+
+    if "LH2" in fuels:
+
+        n.madd(
+            "Link",
+            nodes,
+            suffix=" shipping LH2",
+            bus0=nodes + " H2",
+            bus1=nodes + " shipping",
+            carrier="shipping LH2",
+            efficiency=costs.at["fuel cell", "efficiency"] * costs.at["H2 liquefaction", "efficiency"],
+            capital_cost=costs.at["H2 liquefaction", "fixed"],
+            lifetime=costs.at["H2 liquefaction", "lifetime"],
+            p_min_pu=1,
+            p_nom_extendable=True,
+        )
+
+    if "ammonia" in fuels:
+
+        if not options["ammonia"]:
+            logger.warning("Ammonia not represented as carrier. Skipping it as shipping fuel option.")
+
+        n.madd(
+            "Link",
+            nodes,
+            suffix=" shipping ammonia",
+            bus0=spatial.ammonia.nodes,
+            bus1=nodes + " shipping",
+            carrier="shipping ammonia",
+            efficiency=options["shipping_ammonia_efficiency"],
+            p_min_pu=1,
+            p_nom_extendable=True,
+        )
+
+    if "LNG" in fuels:
+
+        n.madd(
+            "Link",
+            nodes,
+            suffix=" shipping LNG",
+            bus0=spatial.gas.nodes,
+            bus1=nodes + " shipping",
+            bus2="co2 atmosphere",
+            carrier="shipping LNG",
+            efficiency=options["shipping_lng_efficiency"],
+            efficiency2=costs.at["gas", "CO2 intensity"],
+            capital_cost=costs.at["CH4 liquefaction", "fixed"],
+            lifetime=costs.at["CH4 liquefaction", "lifetime"],
+            p_min_pu=1,
+            p_nom_extendable=True,
         )
 
 
@@ -3290,6 +3417,7 @@ def add_agriculture(n, costs):
         )
 
     if oil_share > 0:
+
         add_carrier_buses(n, "oil")
 
         n.madd(
@@ -4085,8 +4213,11 @@ if __name__ == "__main__":
     if "I" in opts:
         add_industry(n, costs)
 
-    if "S" in opts:
+    if "S" in opts and not options["shipping_endogenous"]["enable"]:
         add_shipping(n, costs)
+
+    if "S" in opts and options["shipping_endogenous"]["enable"]:
+        add_shipping_endogenous(n, costs)
 
     if "I" in opts and "H" in opts:
         add_waste_heat(n)
