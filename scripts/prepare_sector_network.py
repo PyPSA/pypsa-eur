@@ -3132,7 +3132,6 @@ def add_shipping(n, costs):
         )
 
     if shipping_methanol_share:
-
         add_carrier_buses(n, "methanol")
 
         efficiency = (
@@ -3186,7 +3185,6 @@ def add_shipping(n, costs):
 
 
 def add_shipping_endogenous(n, costs):
-
     logger.info("Add shipping demand endogenously")
 
     fuels = options["shipping_endogenous"]["fuels"]
@@ -3211,7 +3209,7 @@ def add_shipping_endogenous(n, costs):
         suffix=" shipping",
         unit="MWh propulsion",
         location=nodes,
-        carrier="shipping"
+        carrier="shipping",
     )
 
     n.madd(
@@ -3224,7 +3222,6 @@ def add_shipping_endogenous(n, costs):
     )
 
     if "oil" in fuels:
-
         add_carrier_buses(n, "oil")
 
         n.madd(
@@ -3242,7 +3239,6 @@ def add_shipping_endogenous(n, costs):
         )
 
     if "methanol" in fuels:
-
         add_carrier_buses(n, "methanol")
 
         n.madd(
@@ -3260,7 +3256,6 @@ def add_shipping_endogenous(n, costs):
         )
 
     if "LH2" in fuels:
-
         n.madd(
             "Link",
             nodes,
@@ -3268,7 +3263,8 @@ def add_shipping_endogenous(n, costs):
             bus0=nodes + " H2",
             bus1=nodes + " shipping",
             carrier="shipping LH2",
-            efficiency=costs.at["fuel cell", "efficiency"] * costs.at["H2 liquefaction", "efficiency"],
+            efficiency=costs.at["fuel cell", "efficiency"]
+            * costs.at["H2 liquefaction", "efficiency"],
             capital_cost=costs.at["H2 liquefaction", "fixed"],
             lifetime=costs.at["H2 liquefaction", "lifetime"],
             p_min_pu=1,
@@ -3276,9 +3272,10 @@ def add_shipping_endogenous(n, costs):
         )
 
     if "ammonia" in fuels:
-
         if not options["ammonia"]:
-            logger.warning("Ammonia not represented as carrier. Skipping it as shipping fuel option.")
+            logger.warning(
+                "Ammonia not represented as carrier. Skipping it as shipping fuel option."
+            )
 
         n.madd(
             "Link",
@@ -3293,7 +3290,6 @@ def add_shipping_endogenous(n, costs):
         )
 
     if "LNG" in fuels:
-
         n.madd(
             "Link",
             nodes,
@@ -3417,7 +3413,6 @@ def add_agriculture(n, costs):
         )
 
     if oil_share > 0:
-
         add_carrier_buses(n, "oil")
 
         n.madd(
