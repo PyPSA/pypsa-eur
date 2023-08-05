@@ -227,7 +227,7 @@ if config["enable"]["retrieve"]:
                 static=True,
             ),
         output:
-            "data/validation/energy-price-trends-xlsx-5619002.xls",
+            "data/validation/energy-price-trends-xlsx-5619002.xlsx",
         log:
             LOGS + "retrieve_monthly_fuel_prices.log",
         resources:
