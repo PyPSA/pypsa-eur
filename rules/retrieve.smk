@@ -220,12 +220,6 @@ if config["enable"]["retrieve"]:
 if config["enable"]["retrieve"]:
 
     rule retrieve_monthly_fuel_prices:
-        input:
-            HTTP.remote(
-                "https://www.destatis.de/EN/Themes/Economy/Prices/Publications/Downloads-Energy-Price-Trends/energy-price-trends-xlsx-5619002.xlsx?__blob=publicationFile",
-                keep_local=True,
-                static=True,
-            ),
         output:
             "data/validation/energy-price-trends-xlsx-5619002.xlsx",
         log:
@@ -233,5 +227,7 @@ if config["enable"]["retrieve"]:
         resources:
             mem_mb=5000,
         retries: 2
-        run:
-            move(input[0], output[0])
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/retrieve_monthly_fuel_prices.py"
