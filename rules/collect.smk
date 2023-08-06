@@ -73,3 +73,18 @@ rule plot_networks:
             + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
             **config["scenario"]
         ),
+
+
+rule validate_elec_networks:
+    input:
+        expand(
+            RESULTS
+            + "figures/.statistics_plots_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}",
+            **config["scenario"]
+        ),
+        expand(
+            RESULTS
+            + "figures/.validation_{kind}_plots_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}",
+            **config["scenario"],
+            kind=["production", "prices", "cross_border"]
+        ),

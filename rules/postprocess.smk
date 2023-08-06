@@ -128,3 +128,34 @@ rule plot_summary:
         "../envs/environment.yaml"
     script:
         "../scripts/plot_summary.py"
+
+
+STATISTICS_BARPLOTS = [
+    "capacity_factor",
+    "installed_capacity",
+    "optimal_capacity",
+    "capital_expenditure",
+    "operational_expenditure",
+    "curtailment",
+    "supply",
+    "withdrawal",
+    "market_value",
+]
+
+
+rule plot_elec_statistics:
+    params:
+        plotting=config["plotting"],
+        barplots=STATISTICS_BARPLOTS,
+    input:
+        network=RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+    output:
+        **{
+            f"{plot}_bar": RESULTS
+            + f"figures/statistics_{plot}_bar_elec_s{{simpl}}_{{clusters}}_ec_l{{ll}}_{{opts}}.pdf"
+            for plot in STATISTICS_BARPLOTS
+        },
+        barplots_touch=RESULTS
+        + "figures/.statistics_plots_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}",
+    script:
+        "../scripts/plot_statistics.py"

@@ -28,6 +28,7 @@ rule solve_sector_network:
     threads: config["solving"]["solver"].get("threads", 4)
     resources:
         mem_mb=config["solving"]["mem"],
+        walltime=config["solving"].get("walltime", "12:00:00"),
     benchmark:
         (
             RESULTS

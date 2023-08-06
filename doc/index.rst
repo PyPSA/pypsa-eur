@@ -280,6 +280,7 @@ The PyPSA-Eur workflow is continuously tested for Linux, macOS and Windows (WSL 
 
    release_notes
    licenses
+   validation
    limitations
    contributing
    support

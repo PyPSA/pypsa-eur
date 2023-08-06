@@ -10,6 +10,14 @@ logging:
   level: INFO
   format: '%(levelname)s:%(name)s:%(message)s'
 
+private:
+  keys:
+    entsoe_api:
+
+remote:
+  ssh: ""
+  path: ""
+
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
   name: ""
@@ -209,10 +217,14 @@ renewable:
     carriers: [ror, PHS, hydro]
     PHS_max_hours: 6
     hydro_max_hours: "energy_capacity_totals_by_country" # one of energy_capacity_totals_by_country, estimate_by_large_installations or a float
+    flatten_dispatch: false
+    flatten_dispatch_buffer: 0.2
     clip_min_inflow: 1.0
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#conventional
 conventional:
+  unit_commitment: false
+  dynamic_fuel_price: false
   nuclear:
     p_max_pu: "data/nuclear_p_max_pu.csv" # float of file name
 
@@ -574,16 +586,12 @@ clustering:
     algorithm: kmeans
     feature: solar+onwind-time
     exclude_carriers: []
+    consider_efficiency_classes: false
   aggregation_strategies:
     generators:
-      p_nom_max: sum
-      p_nom_min: sum
-      p_min_pu: mean
-      marginal_cost: mean
       committable: any
       ramp_limit_up: max
       ramp_limit_down: max
-      efficiency: mean
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solving
 solving:
@@ -591,13 +599,17 @@ solving:
   options:
     clip_p_max_pu: 1.e-2
     load_shedding: false
-    transmission_losses: 0
     noisy_costs: true
     skip_iterations: true
+    rolling_horizon: false
+    seed: 123
+    # options that go into the optimize function
     track_iterations: false
     min_iterations: 4
     max_iterations: 6
-    seed: 123
+    transmission_losses: 0
+    linearized_unit_commitment: true
+    horizon: 365
 
   solver:
     name: gurobi
@@ -625,7 +637,6 @@ solving:
       AggFill: 0
       PreDual: 0
       GURO_PAR_BARDENSETHRESH: 200
-      seed: 10              # Consistent seed for all plattforms
     gurobi-numeric-focus:
       name: gurobi
       NumericFocus: 3       # Favour numeric stability over speed
@@ -658,6 +669,7 @@ solving:
     glpk-default: {} # Used in CI
 
   mem: 30000 #memory in MB; 20 GB enough for 50+B+I+H2; 100 GB for 181+B+I+H2
+  walltime: "12:00:00"
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#plotting
 plotting:
@@ -688,6 +700,8 @@ plotting:
     H2: "Hydrogen Storage"
     lines: "Transmission Lines"
     ror: "Run of River"
+    ac: "AC"
+    dc: "DC"
 
   tech_colors:
     # wind
