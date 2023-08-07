@@ -80,11 +80,9 @@ def load_timeseries(fn, years, countries, powerstatistics=True):
     def rename(s):
         return s[: -len(pattern)]
 
-    def date_parser(x):
-        return dateutil.parser.parse(x, ignoretz=True)
-
     return (
-        pd.read_csv(fn, index_col=0, parse_dates=[0], date_parser=date_parser)
+        pd.read_csv(fn, index_col=0, parse_dates=[0])
+        .tz_localize(None)
         .filter(like=pattern)
         .rename(columns=rename)
         .dropna(how="all", axis=0)
@@ -168,6 +166,7 @@ def manual_adjustment(load, fn_load, powerstatistics):
      by the corresponding ratio of total energy consumptions reported by
      IEA Data browser [0] for the year 2013.
 
+
      2. For the ENTSOE transparency load data (if powerstatistics is False)
 
      Albania (AL) and Macedonia (MK) do not exist in the data set. Both get the
@@ -176,6 +175,9 @@ def manual_adjustment(load, fn_load, powerstatistics):
 
      [0] https://www.iea.org/data-and-statistics?country=WORLD&fuel=Electricity%20and%20heat&indicator=TotElecCons
 
+    Bosnia and Herzegovina (BA) does not exist in the data set for 2019. It gets the
+    electricity consumption data from Croatia (HR) for the year 2019, scaled by the
+    factors derived from https://energy.at-site.be/eurostat-2021/
 
      Parameters
      ----------
@@ -264,8 +266,16 @@ def manual_adjustment(load, fn_load, powerstatistics):
                 load["AL"] = load.ME * (5.7 / 2.9)
             if "MK" not in load and "MK" in countries:
                 load["MK"] = load.ME * (6.7 / 2.9)
+            if "BA" not in load and "BA" in countries:
+                load["BA"] = load.HR * (11.0 / 16.2)
         copy_timeslice(
             load, "BG", "2018-10-27 21:00", "2018-10-28 22:00", Delta(weeks=1)
+        )
+        copy_timeslice(
+            load, "LU", "2019-01-02 11:00", "2019-01-05 05:00", Delta(weeks=-1)
+        )
+        copy_timeslice(
+            load, "LU", "2019-02-05 20:00", "2019-02-06 19:00", Delta(weeks=-1)
         )
 
     return load
@@ -290,6 +300,9 @@ if __name__ == "__main__":
 
     if snakemake.params.load["manual_adjustments"]:
         load = manual_adjustment(load, snakemake.input[0], powerstatistics)
+
+    if load.empty:
+        logger.warning("Build electricity demand time series is empty.")
 
     logger.info(f"Linearly interpolate gaps of size {interpolate_limit} and less.")
     load = load.interpolate(method="linear", limit=interpolate_limit)

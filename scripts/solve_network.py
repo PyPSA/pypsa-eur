@@ -643,47 +643,45 @@ def extra_functionality(n, snapshots):
 
 def solve_network(n, config, solving, opts="", **kwargs):
     set_of_options = solving["solver"]["options"]
-    solver_options = solving["solver_options"][set_of_options] if set_of_options else {}
-    solver_name = solving["solver"]["name"]
     cf_solving = solving["options"]
-    track_iterations = cf_solving.get("track_iterations", False)
-    min_iterations = cf_solving.get("min_iterations", 4)
-    max_iterations = cf_solving.get("max_iterations", 6)
-    transmission_losses = cf_solving.get("transmission_losses", 0)
-    assign_all_duals = cf_solving.get("assign_all_duals", False)
+
+    kwargs["solver_options"] = (
+        solving["solver_options"][set_of_options] if set_of_options else {}
+    )
+    kwargs["solver_name"] = solving["solver"]["name"]
+    kwargs["extra_functionality"] = extra_functionality
+    kwargs["transmission_losses"] = cf_solving.get("transmission_losses", False)
+    kwargs["linearized_unit_commitment"] = cf_solving.get(
+        "linearized_unit_commitment", False
+    )
+    kwargs["assign_all_duals"] = cf_solving.get("assign_all_duals", False)
+
+    rolling_horizon = cf_solving.pop("rolling_horizon", False)
+    skip_iterations = cf_solving.pop("skip_iterations", False)
+    if not n.lines.s_nom_extendable.any():
+        skip_iterations = True
+        logger.info("No expandable lines found. Skipping iterative solving.")
 
     # add to network for extra_functionality
     n.config = config
     n.opts = opts
 
-    skip_iterations = cf_solving.get("skip_iterations", False)
-    if not n.lines.s_nom_extendable.any():
-        skip_iterations = True
-        logger.info("No expandable lines found. Skipping iterative solving.")
-
-    if skip_iterations:
-        status, condition = n.optimize(
-            solver_name=solver_name,
-            transmission_losses=transmission_losses,
-            assign_all_duals=assign_all_duals,
-            extra_functionality=extra_functionality,
-            **solver_options,
-            **kwargs,
-        )
+    if rolling_horizon:
+        kwargs["horizon"] = cf_solving.get("horizon", 365)
+        kwargs["overlap"] = cf_solving.get("overlap", 0)
+        n.optimize.optimize_with_rolling_horizon(**kwargs)
+        status, condition = "", ""
+    elif skip_iterations:
+        status, condition = n.optimize(**kwargs)
     else:
+        kwargs["track_iterations"] = (cf_solving.get("track_iterations", False),)
+        kwargs["min_iterations"] = (cf_solving.get("min_iterations", 4),)
+        kwargs["max_iterations"] = (cf_solving.get("max_iterations", 6),)
         status, condition = n.optimize.optimize_transmission_expansion_iteratively(
-            solver_name=solver_name,
-            track_iterations=track_iterations,
-            min_iterations=min_iterations,
-            max_iterations=max_iterations,
-            transmission_losses=transmission_losses,
-            assign_all_duals=assign_all_duals,
-            extra_functionality=extra_functionality,
-            **solver_options,
-            **kwargs,
+            **kwargs
         )
 
-    if status != "ok":
+    if status != "ok" and not rolling_horizon:
         logger.warning(
             f"Solving status '{status}' with termination condition '{condition}'"
         )
@@ -698,14 +696,13 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "solve_sector_network",
-            configfiles="test/config.overnight.yaml",
+            "solve_network",
             simpl="",
-            opts="",
-            clusters="5",
-            ll="v1.5",
-            sector_opts="CO2L0-24H-T-H-B-I-A-solar+p3-dist1",
-            planning_horizons="2030",
+            opts="Ept",
+            clusters="37",
+            ll="v1.0",
+            sector_opts="",
+            planning_horizons="2020",
         )
     configure_logging(snakemake)
     if "sector_opts" in snakemake.wildcards.keys():

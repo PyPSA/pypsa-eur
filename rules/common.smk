@@ -15,8 +15,8 @@ def memory(w):
         if m is not None:
             factor *= int(m.group(1)) / 8760
             break
-    if w.clusters.endswith("m"):
-        return int(factor * (18000 + 180 * int(w.clusters[:-1])))
+    if w.clusters.endswith("m") or w.clusters.endswith("c"):
+        return int(factor * (55000 + 600 * int(w.clusters[:-1])))
     elif w.clusters == "all":
         return int(factor * (18000 + 180 * 4000))
     else:
