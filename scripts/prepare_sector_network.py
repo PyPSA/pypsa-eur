@@ -4096,22 +4096,27 @@ def set_temporal_aggregation(n, opts, solver_name):
     return n
 
 
-def lossy_bidirectional_links(n, carrier, losses_per_thousand_km=0.0):
+def lossy_bidirectional_links(n, carrier, efficiencies={}):
     "Split bidirectional links into two unidirectional links to include transmission losses."
 
     carrier_i = n.links.query("carrier == @carrier").index
 
-    if not losses_per_thousand_km or carrier_i.empty:
+    if not any(v != 1. for v in efficiencies.values()) or carrier_i.empty:
         return
 
+    efficiency_static = efficiencies.get("efficiency_static", 1)
+    efficiency_per_1000km = efficiencies.get("efficiency_per_1000km", 1)
+
     logger.info(
-        f"Specified losses for {carrier} transmission. Splitting bidirectional links."
+        f"Specified losses for {carrier} transmission"
+        f"(static: {efficiency_static}, per 1000km: {efficiency_per_1000km})."
+        "Splitting bidirectional links."
     )
 
     carrier_i = n.links.query("carrier == @carrier").index
     n.links.loc[carrier_i, "p_min_pu"] = 0
     n.links.loc[carrier_i, "efficiency"] = (
-        1 - n.links.loc[carrier_i, "length"] * losses_per_thousand_km / 1e3
+        efficiency_static * efficiency_per_1000km ** (n.links.loc[carrier_i, "length"] / 1e3)
     )
     rev_links = (
         n.links.loc[carrier_i].copy().rename({"bus0": "bus1", "bus1": "bus0"}, axis=1)
@@ -4320,7 +4325,7 @@ if __name__ == "__main__":
     if options["electricity_grid_connection"]:
         add_electricity_grid_connection(n, costs)
 
-    for k, v in options["transmission_losses"].items():
+    for k, v in options["transmission_efficiency"].items():
         lossy_bidirectional_links(n, k, v)
 
     # Workaround: Remove lines with conflicting (and unrealistic) properties
