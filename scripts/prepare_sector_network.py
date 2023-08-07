@@ -2512,7 +2512,6 @@ def add_biomass(n, costs):
     # biomethanol
 
     if options.get("biomass_to_methanol"):
-
         n.madd(
             "Link",
             spatial.biomass.nodes,
@@ -2526,8 +2525,10 @@ def add_biomass(n, costs):
             efficiency2=-costs.at["solid biomass", "CO2 intensity"]
             + costs.at["biomass-to-methanol", "CO2 stored"],
             p_nom_extendable=True,
-            capital_cost=costs.at["biomass-to-methanol", "fixed"] / costs.at["biomass-to-methanol", "efficiency"],
-            marginal_cost=costs.loc["biomass-to-methanol", "VOM"] / costs.at["biomass-to-methanol", "efficiency"],
+            capital_cost=costs.at["biomass-to-methanol", "fixed"]
+            / costs.at["biomass-to-methanol", "efficiency"],
+            marginal_cost=costs.loc["biomass-to-methanol", "VOM"]
+            / costs.at["biomass-to-methanol", "efficiency"],
         )
 
         n.madd(
@@ -2542,12 +2543,17 @@ def add_biomass(n, costs):
             lifetime=costs.at["biomass-to-methanol", "lifetime"],
             efficiency=costs.at["biomass-to-methanol", "efficiency"],
             efficiency2=-costs.at["solid biomass", "CO2 intensity"]
-            + costs.at["biomass-to-methanol", "CO2 stored"] * (1 - costs.at["biomass-to-methanol", "capture rate"]),
-            efficiency3=costs.at["biomass-to-methanol", "CO2 stored"] * costs.at["biomass-to-methanol", "capture rate"],
+            + costs.at["biomass-to-methanol", "CO2 stored"]
+            * (1 - costs.at["biomass-to-methanol", "capture rate"]),
+            efficiency3=costs.at["biomass-to-methanol", "CO2 stored"]
+            * costs.at["biomass-to-methanol", "capture rate"],
             p_nom_extendable=True,
-            capital_cost=costs.at["biomass-to-methanol", "fixed"] / costs.at["biomass-to-methanol", "efficiency"]
-            + costs.at["biomass CHP capture", "fixed"] * costs.at["biomass-to-methanol", "CO2 stored"],
-            marginal_cost=costs.loc["biomass-to-methanol", "VOM"] / costs.at["biomass-to-methanol", "efficiency"],
+            capital_cost=costs.at["biomass-to-methanol", "fixed"]
+            / costs.at["biomass-to-methanol", "efficiency"]
+            + costs.at["biomass CHP capture", "fixed"]
+            * costs.at["biomass-to-methanol", "CO2 stored"],
+            marginal_cost=costs.loc["biomass-to-methanol", "VOM"]
+            / costs.at["biomass-to-methanol", "efficiency"],
         )
 
     # BioSNG from solid biomass
