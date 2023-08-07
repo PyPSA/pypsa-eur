@@ -4102,7 +4102,7 @@ def lossy_bidirectional_links(n, carrier, efficiencies={}):
 
     carrier_i = n.links.query("carrier == @carrier").index
 
-    if not any(v != 1. for v in efficiencies.values()) or carrier_i.empty:
+    if not any(v != 1.0 for v in efficiencies.values()) or carrier_i.empty:
         return
 
     efficiency_static = efficiencies.get("efficiency_static", 1)
@@ -4116,8 +4116,10 @@ def lossy_bidirectional_links(n, carrier, efficiencies={}):
 
     carrier_i = n.links.query("carrier == @carrier").index
     n.links.loc[carrier_i, "p_min_pu"] = 0
-    n.links.loc[carrier_i, "efficiency"] = (
-        efficiency_static * efficiency_per_1000km ** (n.links.loc[carrier_i, "length"] / 1e3)
+    n.links.loc[
+        carrier_i, "efficiency"
+    ] = efficiency_static * efficiency_per_1000km ** (
+        n.links.loc[carrier_i, "length"] / 1e3
     )
     rev_links = (
         n.links.loc[carrier_i].copy().rename({"bus0": "bus1", "bus1": "bus0"}, axis=1)
