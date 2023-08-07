@@ -2485,7 +2485,7 @@ def add_biomass(n, costs):
             + costs.at["BtL", "CO2 stored"],
             p_nom_extendable=True,
             capital_cost=costs.at["BtL", "fixed"],
-            marginal_cost=costs.at["BtL", "efficiency"] * costs.loc["BtL", "VOM"],
+            marginal_cost=costs.loc["BtL", "VOM"] / costs.at["BtL", "efficiency"],
         )
 
         # TODO: Update with energy penalty
@@ -2506,7 +2506,8 @@ def add_biomass(n, costs):
             p_nom_extendable=True,
             capital_cost=costs.at["BtL", "fixed"]
             + costs.at["biomass CHP capture", "fixed"] * costs.at["BtL", "CO2 stored"],
-            marginal_cost=costs.at["BtL", "efficiency"] * costs.loc["BtL", "VOM"],
+            marginal_cost=costs.loc["BtL", "VOM"] / costs.at["BtL", "efficiency"],
+        )
         )
 
     # BioSNG from solid biomass
