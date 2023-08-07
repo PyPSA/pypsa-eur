@@ -3331,7 +3331,8 @@ def add_waste_heat(n):
                 urban_central + "urban central heat"
             )
             n.links.loc[urban_central + " methanolisation", "efficiency4"] = (
-                costs.at["methanolisation", "heat-output"] / costs.at["methanolisation", "hydrogen-input"]
+                costs.at["methanolisation", "heat-output"]
+                / costs.at["methanolisation", "hydrogen-input"]
             )
 
         # TODO integrate usable waste heat efficiency into technology-data from DEA
