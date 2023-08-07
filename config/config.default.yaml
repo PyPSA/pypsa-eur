@@ -477,6 +477,7 @@ sector:
   min_part_load_fischer_tropsch: 0.9
   min_part_load_methanolisation: 0.5
   use_fischer_tropsch_waste_heat: true
+  use_methanolisation_waste_heat: true
   use_fuel_cell_waste_heat: true
   use_electrolysis_waste_heat: false
   electricity_distribution_grid: true
