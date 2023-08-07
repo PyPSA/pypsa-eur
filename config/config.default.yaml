@@ -478,11 +478,14 @@ sector:
   electricity_distribution_grid: true
   electricity_distribution_grid_cost_factor: 1.0
   electricity_grid_connection: true
-  transmission_losses:
-    # per 1000 km
-    DC: 0
-    H2 pipeline: 0
-    gas pipeline: 0
+  transmission_efficiency:
+    DC:
+      efficiency_static: 0.98
+      efficiency_per_1000km: 0.977
+    H2 pipeline:
+      efficiency_per_1000km: 0.979
+    gas pipeline:
+      efficiency_per_1000km: 0.977
   H2_network: true
   gas_network: false
   H2_retrofit: false
