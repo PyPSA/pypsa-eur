@@ -12,12 +12,12 @@ rule solve_sector_network:
             "co2_sequestration_potential", 200
         ),
     input:
-        network=RESULTS
-        + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        network=RESOURCES
+        + "networks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
         config=RESULTS + "config.yaml",
     output:
         RESULTS
-        + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        + "networks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
     shadow:
         "shallow"
     log:

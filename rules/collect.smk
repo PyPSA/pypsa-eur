@@ -43,8 +43,8 @@ rule prepare_elec_networks:
 rule prepare_sector_networks:
     input:
         expand(
-            RESULTS
-            + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+            RESOURCES
+            + "networks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
             **config["scenario"]
         ),
 
@@ -61,7 +61,7 @@ rule solve_sector_networks:
     input:
         expand(
             RESULTS
-            + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+            + "networks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
             **config["scenario"]
         ),
 

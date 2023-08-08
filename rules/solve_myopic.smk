@@ -10,8 +10,8 @@ rule add_existing_baseyear:
         existing_capacities=config["existing_capacities"],
         costs=config["costs"],
     input:
-        network=RESULTS
-        + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        network=RESOURCES
+        + "networks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
         powerplants=RESOURCES + "powerplants.csv",
         busmap_s=RESOURCES + "busmap_elec_s{simpl}.csv",
         busmap=RESOURCES + "busmap_elec_s{simpl}_{clusters}.csv",
@@ -24,8 +24,8 @@ rule add_existing_baseyear:
         existing_onwind="data/existing_infrastructure/onwind_capacity_IRENA.csv",
         existing_offwind="data/existing_infrastructure/offwind_capacity_IRENA.csv",
     output:
-        RESULTS
-        + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        RESOURCES
+        + "networks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_brownfield.nc",
     wildcard_constraints:
         planning_horizons=config["scenario"]["planning_horizons"][0],  #only applies to baseyear
     threads: 1
@@ -51,15 +51,15 @@ rule add_brownfield:
         H2_retrofit_capacity_per_CH4=config["sector"]["H2_retrofit_capacity_per_CH4"],
         threshold_capacity=config["existing_capacities"]["threshold_capacity"],
     input:
-        network=RESULTS
-        + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        network=RESOURCES
+        + "networks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
         network_p=solved_previous_horizon,  #solved network at previous time step
         costs="data/costs_{planning_horizons}.csv",
         cop_soil_total=RESOURCES + "cop_soil_total_elec_s{simpl}_{clusters}.nc",
         cop_air_total=RESOURCES + "cop_air_total_elec_s{simpl}_{clusters}.nc",
     output:
-        RESULTS
-        + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        RESOURCES
+        + "networks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_brownfield.nc",
     threads: 4
     resources:
         mem_mb=10000,
@@ -89,13 +89,13 @@ rule solve_sector_network_myopic:
             "co2_sequestration_potential", 200
         ),
     input:
-        network=RESULTS
-        + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        network=RESOURCES
+        + "networks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_brownfield.nc",
         costs="data/costs_{planning_horizons}.csv",
         config=RESULTS + "config.yaml",
     output:
         RESULTS
-        + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        + "networks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
     shadow:
         "shallow"
     log:

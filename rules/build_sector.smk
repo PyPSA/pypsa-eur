@@ -777,8 +777,8 @@ rule prepare_sector_network:
         if config["sector"]["solar_thermal"]
         else [],
     output:
-        RESULTS
-        + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        RESOURCES
+        + "networks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
     threads: 1
     resources:
         mem_mb=2000,
