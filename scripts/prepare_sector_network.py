@@ -3285,11 +3285,16 @@ def lossy_bidirectional_links(n, carrier, efficiencies={}):
 
     carrier_i = n.links.query("carrier == @carrier").index
 
+<<<<<<< HEAD
     if not any(v != 1. for v in efficiencies.values()) or carrier_i.empty:
+=======
+    if not any((v != 1.0) or (v >= 0) for v in efficiencies.values()) or carrier_i.empty:
+>>>>>>> 5822adb0 (add option to consider compression losses in pipelines as electricity demand)
         return
 
     efficiency_static = efficiencies.get("efficiency_static", 1)
     efficiency_per_1000km = efficiencies.get("efficiency_per_1000km", 1)
+    compression_per_1000km = efficiencies.get("compression_per_1000km", 0)
 
     logger.info(
         f"Specified losses for {carrier} transmission"
@@ -3297,7 +3302,6 @@ def lossy_bidirectional_links(n, carrier, efficiencies={}):
         "Splitting bidirectional links."
     )
 
-    carrier_i = n.links.query("carrier == @carrier").index
     n.links.loc[carrier_i, "p_min_pu"] = 0
     n.links.loc[carrier_i, "efficiency"] = (
         efficiency_static * efficiency_per_1000km ** (n.links.loc[carrier_i, "length"] / 1e3)
@@ -3312,6 +3316,11 @@ def lossy_bidirectional_links(n, carrier, efficiencies={}):
     n.links = pd.concat([n.links, rev_links], sort=False)
     n.links["reversed"] = n.links["reversed"].fillna(False)
 
+    # do compression losses after concatenation to take electricity consumption at bus0 in either direction
+    carrier_i = n.links.query("carrier == @carrier").index
+    if compression_per_1000km > 0:
+        n.links.loc[carrier_i, "bus2"] = n.links.loc[carrier_i, "bus0"].map(n.buses.location) # electricity
+        n.links.loc[carrier_i, "efficiency2"] = - compression_per_1000km * n.links.loc[carrier_i, "length"] / 1e3
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
