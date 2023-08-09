@@ -145,8 +145,8 @@ def define_spatial(nodes, options):
     spatial.coal = SimpleNamespace()
     spatial.coal.nodes = ["EU coal"]
     spatial.coal.locations = ["EU"]
-    spatial.gas.industry = ["coal for industry"]
-    spatial.gas.industry_cc = ["coal for industry CC"]
+    spatial.coal.industry = ["coal for industry"]
+    spatial.coal.industry_cc = ["coal for industry CC"]
 
     # lignite
     spatial.lignite = SimpleNamespace()
