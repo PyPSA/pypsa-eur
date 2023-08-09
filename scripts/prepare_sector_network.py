@@ -2883,8 +2883,8 @@ def add_industry(n, costs):
             p_set=p_set,
         )
 
-    primary_steel = snakemake.config["industry"]["St_primary_fraction"]
-    dri_steel = snakemake.config["industry"]["DRI_fraction"]
+    primary_steel = get(snakemake.config["industry"]["St_primary_fraction"], investment_year)
+    dri_steel = get(snakemake.config["industry"]["DRI_fraction"], investment_year)
     bof_steel = primary_steel - dri_steel
 
     if bof_steel > 0:
