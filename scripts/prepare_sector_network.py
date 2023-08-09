@@ -238,12 +238,24 @@ def build_carbon_budget(o, input_eurostat, fn, emissions_scope, report_year):
     countries = snakemake.params.countries
 
     e_1990 = co2_emissions_year(
-        countries, input_eurostat, opts, emissions_scope, report_year, input_co2, year=1990
+        countries,
+        input_eurostat,
+        opts,
+        emissions_scope,
+        report_year,
+        input_co2,
+        year=1990,
     )
 
     # emissions at the beginning of the path (last year available 2018)
     e_0 = co2_emissions_year(
-        countries, input_eurostat, opts, emissions_scope, report_year, input_co2, year=2018
+        countries,
+        input_eurostat,
+        opts,
+        emissions_scope,
+        report_year,
+        input_co2,
+        year=2018,
     )
 
     planning_horizons = snakemake.params.planning_horizons

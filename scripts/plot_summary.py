@@ -475,7 +475,15 @@ def plot_carbon_budget_distribution(input_eurostat):
     emissions_scope = snakemake.params.emissions_scope
     report_year = snakemake.params.eurostat_report_year
     input_co2 = snakemake.input.co2
-    e_1990 = co2_emissions_year(countries, input_eurostat, opts, emissions_scope, report_year, input_co2, year=1990)
+    e_1990 = co2_emissions_year(
+        countries,
+        input_eurostat,
+        opts,
+        emissions_scope,
+        report_year,
+        input_co2,
+        year=1990,
+    )
     CO2_CAP = pd.read_csv(path_cb + "carbon_budget_distribution.csv", index_col=0)
 
     ax1.plot(e_1990 * CO2_CAP[o], linewidth=3, color="dodgerblue", label=None)
