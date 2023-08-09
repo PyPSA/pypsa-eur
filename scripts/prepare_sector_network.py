@@ -145,6 +145,8 @@ def define_spatial(nodes, options):
     spatial.coal = SimpleNamespace()
     spatial.coal.nodes = ["EU coal"]
     spatial.coal.locations = ["EU"]
+    spatial.gas.industry = ["coal for industry"]
+    spatial.gas.industry_cc = ["coal for industry CC"]
 
     # lignite
     spatial.lignite = SimpleNamespace()
@@ -2897,11 +2899,52 @@ def add_industry(n, costs):
         ) / nhours
 
         n.madd(
+            "Bus",
+            spatial.coal.industry,
+            location=spatial.coal.locations,
+            carrier="coal for industry",
+            unit="MWh_LHV",
+        )
+
+        n.madd(
             "Load",
-            "coal for industry",
-            bus=spatial.coal.nodes,
+            spatial.coal.industry,
+            bus=spatial.coal.industry,
             carrier="coal for industry",
             p_set=p_set,
+        )
+
+        n.madd(
+            "Link",
+            spatial.coal.industry,
+            bus0=spatial.coal.nodes,
+            bus1=spatial.coal.industry,
+            bus2="co2 atmosphere",
+            carrier="coal for industry",
+            p_nom_extendable=True,
+            p_min_pu=1.0,
+            efficiency=1.0,
+            efficiency2=costs.at["coal", "CO2 intensity"],
+        )
+
+        n.madd(
+            "Link",
+            spatial.coal.industry_cc,
+            bus0=spatial.coal.nodes,
+            bus1=spatial.coal.industry,
+            bus2="co2 atmosphere",
+            bus3=spatial.co2.nodes,
+            carrier="coal for industry CC",
+            p_min_pu=1.0,
+            p_nom_extendable=True,
+            capital_cost=costs.at["cement capture", "fixed"]
+            * costs.at["coal", "CO2 intensity"],
+            efficiency=0.9,
+            efficiency2=costs.at["coal", "CO2 intensity"]
+            * (1 - costs.at["cement capture", "capture_rate"]),
+            efficiency3=costs.at["coal", "CO2 intensity"]
+            * costs.at["cement capture", "capture_rate"],
+            lifetime=costs.at["cement capture", "lifetime"],
         )
 
 

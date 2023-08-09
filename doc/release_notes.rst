@@ -12,6 +12,8 @@ Upcoming Release
 
 * Updated Global Energy Monitor LNG terminal data to March 2023 version.
 
+* Add option for carbon capture in integrated steelworks.
+
 PyPSA-Eur 0.8.1 (27th July 2023)
 ================================
 
