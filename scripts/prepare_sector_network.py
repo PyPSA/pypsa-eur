@@ -3183,8 +3183,8 @@ def add_shipping(n, costs):
         else:
             shipping_bus = nodes + " H2"
 
-        efficiency = (
-            options["shipping_oil_efficiency"] / options.get("shipping_lh2_efficiency", 0.44)
+        efficiency = options["shipping_oil_efficiency"] / options.get(
+            "shipping_lh2_efficiency", 0.44
         )
         p_set_hydrogen = shipping_hydrogen_share * p_set * efficiency
 
