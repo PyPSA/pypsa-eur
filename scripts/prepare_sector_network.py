@@ -3133,7 +3133,7 @@ def add_shipping(n, costs):
         oil_efficiency = options.get(
             "shipping_oil_efficiency", options.get("shipping_average_efficiency", 0.4)
         )
-        efficiency = oil_efficiency / costs.at["fuel cell", "efficiency"]
+        efficiency = oil_efficiency / options.get("shipping_lh2_efficiency", 0.44)
         shipping_hydrogen_share = get(
             options["shipping_hydrogen_share"], investment_year
         )
@@ -3165,7 +3165,7 @@ def add_shipping(n, costs):
             shipping_bus = nodes + " H2"
 
         efficiency = (
-            options["shipping_oil_efficiency"] / costs.at["fuel cell", "efficiency"]
+            options["shipping_oil_efficiency"] / options.get("shipping_lh2_efficiency", 0.44)
         )
         p_set_hydrogen = shipping_hydrogen_share * p_set * efficiency
 
@@ -3310,7 +3310,7 @@ def add_shipping_endogenous(n, costs):
             bus0=nodes + " H2",
             bus1=nodes + " shipping",
             carrier="shipping LH2",
-            efficiency=costs.at["fuel cell", "efficiency"]
+            efficiency=options["shipping_lh2_efficiency"]
             * costs.at["H2 liquefaction", "efficiency"],
             capital_cost=costs.at["H2 liquefaction", "fixed"],
             lifetime=costs.at["H2 liquefaction", "lifetime"],

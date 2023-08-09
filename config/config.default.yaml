@@ -411,8 +411,9 @@ sector:
     2050: 0
   shipping_methanol_efficiency: 0.46
   shipping_oil_efficiency: 0.40
-  shipping_ammonia_efficiency: 0.44
-  shipping_lng_efficiency: 0.41
+  shipping_ammonia_efficiency: 0.40
+  shipping_lng_efficiency: 0.44
+  shipping_lh2_efficiency: 0.44
   shipping_endogenous:
     enable: false
     fuels:
@@ -661,7 +662,7 @@ industry:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 costs:
   year: 2030
-  version: 5ce58f4
+  version: 234dc24
   rooftop_share: 0.14  # based on the potentials, assuming  (0.1 kW/m2 and 10 m2/person)
   fill_values:
     FOM: 0
