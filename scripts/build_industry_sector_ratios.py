@@ -383,7 +383,7 @@ def chemicals_industry():
     assert s_emi.index[0] == sector
 
     # convert from MtHVC/a to ktHVC/a
-    s_out = params["HVC_production_today"] * 1e3
+    s_out = sum(params["HVC_production_today"].values()) * 1e3
 
     # tCO2/t material
     df.loc["process emission", sector] += (

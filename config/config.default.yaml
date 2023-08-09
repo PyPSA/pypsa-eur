@@ -647,7 +647,10 @@ industry:
   HVC_primary_fraction: 1.
   HVC_mechanical_recycling_fraction: 0.
   HVC_chemical_recycling_fraction: 0.
-  HVC_production_today: 52.
+  HVC_production_today: # DECHEMA report in Mt
+    ethylene: 21.7
+    propylene: 17
+    BTX: 15.7
   MWh_elec_per_tHVC_mechanical_recycling: 0.547
   MWh_elec_per_tHVC_chemical_recycling: 6.9
   chlorine_production_today: 9.58
