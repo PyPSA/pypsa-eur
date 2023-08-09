@@ -753,6 +753,25 @@ def add_methanol_to_power(n, costs, types={}):
         )
 
 
+def add_methanol_to_kerosene(n, costs):
+    logger.info("Adding methanol-to-kerosene.")
+
+    tech = "methanol-to-kerosene"
+
+    n.madd(
+        "Link",
+        spatial.nodes,
+        suffix=f" {tech}",
+        bus0=spatial.methanol.nodes,
+        bus1=spatial.oil.nodes,
+        bus2=spatial.h2.nodes,
+        efficiency=costs.at[tech, "methanol-input"],
+        efficiency2=-costs.at[tech, "hydrogen-input"] / costs.at["methanol-input"],
+        p_nom_extendable=True,
+        p_min_pu=1,
+    )
+
+
 def add_methanol_reforming(n, costs):
     logger.info("Adding methanol steam reforming.")
 
@@ -4337,6 +4356,9 @@ if __name__ == "__main__":
         add_allam_cycle_gas(n, costs)
 
     add_methanol_to_power(n, costs, types=options["methanol_to_power"])
+
+    if options["methanol_to_kerosene"]:
+        add_methanol_to_kerosene(n, costs)
 
     if options["methanol_reforming"]:
         add_methanol_reforming(n, costs)
