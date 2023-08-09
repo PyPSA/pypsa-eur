@@ -2888,11 +2888,13 @@ def add_industry(n, costs):
     bof_steel = primary_steel - dri_steel
 
     if bof_steel > 0:
-
         add_carrier_buses(n, "coal")
 
-        mwh_coal_per_mwh_coke = 1.366 # from eurostat energy balance
-        p_set = (industrial_demand["coal"].sum() + mwh_coal_per_mwh_coke * industrial_demand["coke"].sum()) / nhours
+        mwh_coal_per_mwh_coke = 1.366  # from eurostat energy balance
+        p_set = (
+            industrial_demand["coal"].sum()
+            + mwh_coal_per_mwh_coke * industrial_demand["coke"].sum()
+        ) / nhours
 
         n.madd(
             "Load",
