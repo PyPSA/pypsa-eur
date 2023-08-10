@@ -23,8 +23,8 @@ import xarray as xr
 from _helpers import generate_periodic_profiles, update_config_with_sector_opts
 from add_electricity import calculate_annuity, sanitize_carriers
 from build_energy_totals import build_co2_totals, build_eea_co2, build_eurostat_co2
-from geopy.geocoders import Nominatim
 from geopy.extra.rate_limiter import RateLimiter
+from geopy.geocoders import Nominatim
 from networkx.algorithms import complement
 from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentation
 from pypsa.geo import haversine_pts
@@ -776,7 +776,8 @@ def add_methanol_to_kerosene(n, costs):
         bus1=spatial.oil.nodes,
         bus2=spatial.h2.nodes,
         efficiency=costs.at[tech, "methanol-input"],
-        efficiency2=-costs.at[tech, "hydrogen-input"] / costs.at[tech, "methanol-input"],
+        efficiency2=-costs.at[tech, "hydrogen-input"]
+        / costs.at[tech, "methanol-input"],
         p_nom_extendable=True,
         p_min_pu=1,
     )
@@ -3637,7 +3638,7 @@ def add_endogenous_hvdc_import_options(n):
 
     def _coordinates(ct):
         query = cc.convert(ct.split("-")[0], to="name")
-        loc = geocode(dict(country=query), language='en')
+        loc = geocode(dict(country=query), language="en")
         return [loc.longitude, loc.latitude]
 
     exporters = pd.DataFrame(
