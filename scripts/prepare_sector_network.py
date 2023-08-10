@@ -475,7 +475,7 @@ def add_carrier_buses(n, carrier, nodes=None):
         capital_cost=capital_cost,
     )
 
-    if carrier in costs.index and "fuel" in costs.columns:
+    if carrier in costs.index and costs.at[carrier, "fuel"] > 0:
         n.madd(
             "Generator",
             nodes,
