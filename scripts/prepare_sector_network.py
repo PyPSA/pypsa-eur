@@ -2952,7 +2952,12 @@ def add_industry(n, costs):
 
         logger.info(f"Adding {tech}.")
 
-        p_nom_max = demand_factor * industrial_production.loc[nodes, "HVC"] / nhours * costs.at[tech, "methanol-input"]
+        p_nom_max = (
+            demand_factor
+            * industrial_production.loc[nodes, "HVC"]
+            / nhours
+            * costs.at[tech, "methanol-input"]
+        )
 
         n.madd(
             "Link",
@@ -2979,7 +2984,12 @@ def add_industry(n, costs):
 
         logger.info(f"Adding {tech}.")
 
-        p_nom_max = demand_factor * industrial_production.loc[nodes, "HVC"] / nhours * costs.at[tech, "naphtha-input"]
+        p_nom_max = (
+            demand_factor
+            * industrial_production.loc[nodes, "HVC"]
+            / nhours
+            * costs.at[tech, "naphtha-input"]
+        )
 
         n.madd(
             "Link",
