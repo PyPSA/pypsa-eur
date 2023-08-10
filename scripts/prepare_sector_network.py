@@ -13,6 +13,7 @@ import re
 import uuid
 from itertools import product
 
+import country_converter as coco
 import geopandas as gpd
 import networkx as nx
 import numpy as np
@@ -31,7 +32,6 @@ from pypsa.io import import_components_from_dataframe
 from scipy.stats import beta
 from shapely.geometry import Point
 
-import country_converter as coco
 cc = coco.CountryConverter()
 
 geolocator = Nominatim(user_agent=str(uuid.uuid4()), timeout=10)
@@ -2500,7 +2500,6 @@ def add_biomass(n, costs):
 
     # Solid biomass to liquid fuel
     if options["biomass_to_liquid"]:
-
         add_carrier_buses(n, "oil")
 
         n.madd(
@@ -2544,7 +2543,6 @@ def add_biomass(n, costs):
     # biomethanol
 
     if options.get("biomass_to_methanol"):
-
         add_carrier_buses(n, "methanol")
 
         n.madd(
