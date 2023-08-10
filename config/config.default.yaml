@@ -522,6 +522,7 @@ sector:
   biomass_to_methanol: false
   biosng: false
   endogenous_steel: false
+  endogenous_hvc: false
   import:
     capacity_boost: 2
     limit: false # bool or number in TWh
@@ -666,7 +667,7 @@ industry:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 costs:
   year: 2030
-  version: 9afdb4f
+  version: c338aa8
   rooftop_share: 0.14  # based on the potentials, assuming  (0.1 kW/m2 and 10 m2/person)
   fill_values:
     FOM: 0

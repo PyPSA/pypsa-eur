@@ -2646,7 +2646,11 @@ def add_industry(n, costs):
         snakemake.input.industry_sector_ratios, index_col=0
     )
 
-    endogenous_sectors = ["DRI + Electric arc"] if options["endogenous_steel"] else []
+    endogenous_sectors = []
+    if options["endogenous_steel"]:
+        endogenous_sectors += ["DRI + Electric arc"]
+    if options["endogenous_hvc"]:
+        endogenous_sectors += ["HVC"]
     sectors_b = ~industrial_demand.index.get_level_values("sector").isin(
         endogenous_sectors
     )
@@ -2896,13 +2900,82 @@ def add_industry(n, costs):
     )
 
     demand_factor = options.get("HVC_demand_factor", 1)
+    if demand_factor != 1:
+        logger.warning(f"Changing HVC demand by {demand_factor*100-100:+.2f}%.")
+
+    if options["endogenous_hvc"]:
+        logger.info("Adding endogenous primary high-value chemicals demand in tonnes.")
+
+        n.add(
+            "Bus",
+            "EU HVC",
+            location="EU",
+            carrier="HVC",
+            unit="t",
+        )
+
+        p_set = demand_factor * industrial_production[sector].sum() / nhours
+
+        n.add(
+            "Load",
+            "EU HVC",
+            bus="EU HVC",
+            carrier="HVC",
+            p_set=p_set,
+        )
+
+        n.add(
+            "Store",
+            "EU HVC Store",
+            bus="EU HVC",
+            e_nom_extendable=True,
+            e_cyclic=True,
+            carrier="HVC",
+        )
+
+        tech = "methanol-to-olefins/aromatics"
+
+        n.madd(
+            "Link",
+            nodes,
+            suffix=" {tech}",
+            carrier=tech,
+            capital_cost=costs.at[tech, "fixed"] / costs.at[tech, "methanol-input"],
+            marginal_cost=costs.at[tech, "VOM"] / costs.at[tech, "methanol-input"],
+            p_nom_extendable=True,
+            bus0=spatial.methanol.nodes,
+            bus1="EU HVC",
+            bus2=nodes,
+            bus3="co2 atmosphere",
+            efficiency=1 / costs.at[tech, "methanol-input"],
+            efficiency2=-costs.at[tech, "electricity-input"] / costs.at[tech, "methanol-input"],
+            efficiency3=costs.at[tech, "carbondioxide-output"] / costs.at[tech, "methanol-input"],
+        )
+
+        tech = "electric steam cracker"
+
+        n.madd(
+            "Link",
+            nodes,
+            suffix=" {tech}",
+            carrier=tech,
+            capital_cost=costs.at[tech, "fixed"] / costs.at[tech, "naphtha-input"],
+            marginal_cost=costs.at[tech, "VOM"] / costs.at[tech, "naphtha-input"],
+            p_nom_extendable=True,
+            bus0=spatial.oil.nodes,
+            bus1="EU HVC",
+            bus2=nodes,
+            bus3="co2 atmosphere",
+            efficiency=1 / costs.at[tech, "naphtha-input"],
+            efficiency2=-costs.at[tech, "electricity-input"] / costs.at[tech, "naphtha-input"],
+            efficiency3=costs.at[tech, "carbondioxide-output"] / costs.at[tech, "naphtha-input"],
+        )
+
     p_set = (
         demand_factor
         * industrial_demand.loc[(nodes, sectors_b), "naphtha"].sum()
         / nhours
     )
-    if demand_factor != 1:
-        logger.warning(f"Changing HVC demand by {demand_factor*100-100:+.2f}%.")
 
     n.madd(
         "Load",
