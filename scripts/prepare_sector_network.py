@@ -2959,7 +2959,10 @@ def add_industry(n, costs):
             * costs.at[tech, "methanol-input"]
         )
 
-        co2_release = costs.at[tech, "carbondioxide-output"] / costs.at[tech, "methanol-input"] + costs.at["methanolisation", "carbondioxide-input"]
+        co2_release = (
+            costs.at[tech, "carbondioxide-output"] / costs.at[tech, "methanol-input"]
+            + costs.at["methanolisation", "carbondioxide-input"]
+        )
 
         n.madd(
             "Link",
@@ -2992,7 +2995,10 @@ def add_industry(n, costs):
             * costs.at[tech, "naphtha-input"]
         )
 
-        co2_release = costs.at[tech, "carbondioxide-output"] / costs.at[tech, "naphtha-input"] + costs.at["oil", "CO2 intensity"]
+        co2_release = (
+            costs.at[tech, "carbondioxide-output"] / costs.at[tech, "naphtha-input"]
+            + costs.at["oil", "CO2 intensity"]
+        )
 
         n.madd(
             "Link",
