@@ -693,11 +693,13 @@ def add_methanol_to_power(n, costs, types={}):
             suffix=" CCGT methanol",
             bus0=spatial.methanol.nodes,
             bus1=nodes,
+            bus2="co2 atmosphere",
             carrier="CCGT methanol",
             p_nom_extendable=True,
             capital_cost=capital_cost,
             marginal_cost=2,
             efficiency=0.58,
+            efficiency2=costs.at["methanolisation", "carbondioxide-input"],
             lifetime=25,
         )
 
@@ -743,6 +745,7 @@ def add_methanol_to_power(n, costs, types={}):
             suffix=" OCGT methanol",
             bus0=spatial.methanol.nodes,
             bus1=nodes,
+            bus2="co2 atmosphere",
             carrier="OCGT methanol",
             p_nom_extendable=True,
             capital_cost=0.35
@@ -752,6 +755,7 @@ def add_methanol_to_power(n, costs, types={}):
             ),  # efficiency * EUR/MW * (annuity + FOM)
             marginal_cost=2,
             efficiency=0.35,
+            efficiency2=costs.at["methanolisation", "carbondioxide-input"],
             lifetime=25,
         )
 
