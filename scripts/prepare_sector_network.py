@@ -2928,7 +2928,7 @@ def add_industry(n, costs):
             unit="t",
         )
 
-        p_set = demand_factor * industrial_production[sector].sum() / nhours
+        p_set = demand_factor * industrial_production["HVC"].sum() / nhours
 
         n.add(
             "Load",
