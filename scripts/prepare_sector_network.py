@@ -773,7 +773,7 @@ def add_methanol_to_kerosene(n, costs):
         bus1=spatial.oil.nodes,
         bus2=spatial.h2.nodes,
         efficiency=costs.at[tech, "methanol-input"],
-        efficiency2=-costs.at[tech, "hydrogen-input"] / costs.at["methanol-input"],
+        efficiency2=-costs.at[tech, "hydrogen-input"] / costs.at[tech, "methanol-input"],
         p_nom_extendable=True,
         p_min_pu=1,
     )
