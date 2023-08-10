@@ -2938,21 +2938,25 @@ def add_industry(n, costs):
             p_set=p_set,
         )
 
-        n.add(
-            "Store",
-            "EU HVC Store",
-            bus="EU HVC",
-            e_nom_extendable=True,
-            e_cyclic=True,
-            carrier="HVC",
-        )
+        # n.add(
+        #     "Store",
+        #     "EU HVC Store",
+        #     bus="EU HVC",
+        #     e_nom_extendable=True,
+        #     e_cyclic=True,
+        #     carrier="HVC",
+        # )
 
         tech = "methanol-to-olefins/aromatics"
+
+        logger.info(f"Adding {tech}.")
+
+        p_nom_max = demand_factor * industrial_production.loc[nodes, "HVC"] / nhours * costs.at[tech, "methanol-input"]
 
         n.madd(
             "Link",
             nodes,
-            suffix=" {tech}",
+            suffix=f" {tech}",
             carrier=tech,
             capital_cost=costs.at[tech, "fixed"] / costs.at[tech, "methanol-input"],
             marginal_cost=costs.at[tech, "VOM"] / costs.at[tech, "methanol-input"],
@@ -2961,6 +2965,8 @@ def add_industry(n, costs):
             bus1="EU HVC",
             bus2=nodes,
             bus3="co2 atmosphere",
+            p_min_pu=1,
+            p_nom_max=p_nom_max.values,
             efficiency=1 / costs.at[tech, "methanol-input"],
             efficiency2=-costs.at[tech, "electricity-input"]
             / costs.at[tech, "methanol-input"],
@@ -2970,10 +2976,14 @@ def add_industry(n, costs):
 
         tech = "electric steam cracker"
 
+        logger.info(f"Adding {tech}.")
+
+        p_nom_max = demand_factor * industrial_production.loc[nodes, "HVC"] / nhours * costs.at[tech, "naphtha-input"]
+
         n.madd(
             "Link",
             nodes,
-            suffix=" {tech}",
+            suffix=f" {tech}",
             carrier=tech,
             capital_cost=costs.at[tech, "fixed"] / costs.at[tech, "naphtha-input"],
             marginal_cost=costs.at[tech, "VOM"] / costs.at[tech, "naphtha-input"],
@@ -2982,6 +2992,8 @@ def add_industry(n, costs):
             bus1="EU HVC",
             bus2=nodes,
             bus3="co2 atmosphere",
+            p_min_pu=1,
+            p_nom_max=p_nom_max.values,
             efficiency=1 / costs.at[tech, "naphtha-input"],
             efficiency2=-costs.at[tech, "electricity-input"]
             / costs.at[tech, "naphtha-input"],
