@@ -3296,8 +3296,8 @@ def lossy_bidirectional_links(n, carrier, efficiencies={}):
     compression_per_1000km = efficiencies.get("compression_per_1000km", 0)
 
     logger.info(
-        f"Specified losses for {carrier} transmission"
-        f"(static: {efficiency_static}, per 1000km: {efficiency_per_1000km})."
+        f"Specified losses for {carrier} transmission "
+        f"(static: {efficiency_static}, per 1000km: {efficiency_per_1000km}, compression per 1000km: {compression_per_1000km}). "
         "Splitting bidirectional links."
     )
 
