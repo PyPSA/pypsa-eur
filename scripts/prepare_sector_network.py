@@ -2493,6 +2493,9 @@ def add_biomass(n, costs):
 
     # Solid biomass to liquid fuel
     if options["biomass_to_liquid"]:
+
+        add_carrier_buses(n, "oil")
+
         n.madd(
             "Link",
             spatial.biomass.nodes,
@@ -2534,6 +2537,9 @@ def add_biomass(n, costs):
     # biomethanol
 
     if options.get("biomass_to_methanol"):
+
+        add_carrier_buses(n, "methanol")
+
         n.madd(
             "Link",
             spatial.biomass.nodes,
