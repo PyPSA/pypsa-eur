@@ -10,6 +10,7 @@ technologies for the buildings, transport and industry sectors.
 import logging
 import os
 import re
+import uuid
 from itertools import product
 
 import geopandas as gpd
@@ -22,6 +23,7 @@ from _helpers import generate_periodic_profiles, update_config_with_sector_opts
 from add_electricity import calculate_annuity, sanitize_carriers
 from build_energy_totals import build_co2_totals, build_eea_co2, build_eurostat_co2
 from geopy.geocoders import Nominatim
+from geopy.extra.rate_limiter import RateLimiter
 from networkx.algorithms import complement
 from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentation
 from pypsa.geo import haversine_pts
@@ -32,7 +34,8 @@ from shapely.geometry import Point
 import country_converter as coco
 cc = coco.CountryConverter()
 
-geolocator = Nominatim(user_agent="locate-exporting-region", timeout=10)
+geolocator = Nominatim(user_agent=str(uuid.uuid4()), timeout=10)
+geocode = RateLimiter(geolocator.geocode, min_delay_seconds=2)
 
 logger = logging.getLogger(__name__)
 
@@ -3636,7 +3639,7 @@ def add_endogenous_hvdc_import_options(n):
 
     def _coordinates(ct):
         query = cc.convert(ct.split("-")[0], to="name")
-        loc = geolocator.geocode(query)
+        loc = geocode(dict(country=query), language='en')
         return [loc.longitude, loc.latitude]
 
     exporters = pd.DataFrame(
