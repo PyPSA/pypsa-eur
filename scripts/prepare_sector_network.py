@@ -2952,7 +2952,12 @@ def add_industry(n, costs):
 
         logger.info(f"Adding {tech}.")
 
-        p_nom_max = demand_factor * industrial_production.loc[nodes, "HVC"] / nhours * costs.at[tech, "methanol-input"]
+        p_nom_max = (
+            demand_factor
+            * industrial_production.loc[nodes, "HVC"]
+            / nhours
+            * costs.at[tech, "methanol-input"]
+        )
 
         co2_release = costs.at[tech, "carbondioxide-output"] / costs.at[tech, "methanol-input"] + costs.at["methanolisation", "carbondioxide-input"]
 
@@ -2980,7 +2985,12 @@ def add_industry(n, costs):
 
         logger.info(f"Adding {tech}.")
 
-        p_nom_max = demand_factor * industrial_production.loc[nodes, "HVC"] / nhours * costs.at[tech, "naphtha-input"]
+        p_nom_max = (
+            demand_factor
+            * industrial_production.loc[nodes, "HVC"]
+            / nhours
+            * costs.at[tech, "naphtha-input"]
+        )
 
         co2_release = costs.at[tech, "carbondioxide-output"] / costs.at[tech, "naphtha-input"] + costs.at["oil", "CO2 intensity"]
 
