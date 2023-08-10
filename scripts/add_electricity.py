@@ -358,11 +358,10 @@ def update_transmission_costs(n, costs, length_factor=1.0):
 def attach_wind_and_solar(
     n, costs, input_profiles, carriers, extendable_carriers, line_length_factor=1
 ):
+    add_missing_carriers(n, carriers)
     for car in carriers:
         if car == "hydro":
             continue
-
-        n.add("Carrier", car)
 
         with xr.open_dataset(getattr(input_profiles, "profile_" + car)) as ds:
             if ds.indexes["bus"].empty:
