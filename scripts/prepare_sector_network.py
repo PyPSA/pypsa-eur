@@ -3251,9 +3251,9 @@ def add_shipping(n, costs):
 
 
 def add_shipping_endogenous(n, costs):
-    logger.info("Add shipping demand endogenously")
-
     fuels = options["shipping_endogenous"]["fuels"]
+
+    logger.info(f"Add shipping demand endogenously with options {fuels}")
 
     nodes = pop_layout.index
 
