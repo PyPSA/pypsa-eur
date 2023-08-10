@@ -2948,8 +2948,10 @@ def add_industry(n, costs):
             bus2=nodes,
             bus3="co2 atmosphere",
             efficiency=1 / costs.at[tech, "methanol-input"],
-            efficiency2=-costs.at[tech, "electricity-input"] / costs.at[tech, "methanol-input"],
-            efficiency3=costs.at[tech, "carbondioxide-output"] / costs.at[tech, "methanol-input"],
+            efficiency2=-costs.at[tech, "electricity-input"]
+            / costs.at[tech, "methanol-input"],
+            efficiency3=costs.at[tech, "carbondioxide-output"]
+            / costs.at[tech, "methanol-input"],
         )
 
         tech = "electric steam cracker"
@@ -2967,8 +2969,10 @@ def add_industry(n, costs):
             bus2=nodes,
             bus3="co2 atmosphere",
             efficiency=1 / costs.at[tech, "naphtha-input"],
-            efficiency2=-costs.at[tech, "electricity-input"] / costs.at[tech, "naphtha-input"],
-            efficiency3=costs.at[tech, "carbondioxide-output"] / costs.at[tech, "naphtha-input"],
+            efficiency2=-costs.at[tech, "electricity-input"]
+            / costs.at[tech, "naphtha-input"],
+            efficiency3=costs.at[tech, "carbondioxide-output"]
+            / costs.at[tech, "naphtha-input"],
         )
 
     p_set = (
