@@ -29,6 +29,9 @@ from pypsa.io import import_components_from_dataframe
 from scipy.stats import beta
 from shapely.geometry import Point
 
+import country_converter as coco
+cc = coco.CountryConverter()
+
 geolocator = Nominatim(user_agent="locate-exporting-region", timeout=10)
 
 logger = logging.getLogger(__name__)
@@ -3622,7 +3625,8 @@ def add_endogenous_hvdc_import_options(n):
     )
 
     def _coordinates(ct):
-        loc = geolocator.geocode(ct.split("-")[0])
+        query = cc.convert(ct.split("-")[0], to="name")
+        loc = geolocator.geocode(query)
         return [loc.longitude, loc.latitude]
 
     exporters = pd.DataFrame(
