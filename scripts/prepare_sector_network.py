@@ -2438,9 +2438,6 @@ def add_industry(n, costs):
     industrial_production = (
         pd.read_csv(snakemake.input.industrial_production, index_col=0) * 1e3 * nyears # kt/a -> t/a
     )
-    industry_sector_ratios = pd.read_csv(
-        snakemake.input.industry_sector_ratios, index_col=0
-    )
 
     endogenous_sectors = ["DRI + Electric arc"] if options["endogenous_steel"] else []
     sectors_b = ~industrial_demand.index.get_level_values("sector").isin(
@@ -2478,29 +2475,31 @@ def add_industry(n, costs):
         #     carrier="steel",
         # )
 
-        ratio = industry_sector_ratios[sector]
+        electricity_input = (
+            costs.at["direct iron reduction furnace", "electricity-input"]
+            * costs.at["electric arc furnace", "hbi-input"]
+            + costs.at["electric arc furnace", "electricity-input"]
+        )
+
+        hydrogen_input = (
+            costs.at["direct iron reduction furnace", "hydrogen-input"]
+            * costs.at["electric arc furnace", "hbi-input"]
+        )
 
         # so that for each region supply matches consumption
-        p_nom = industrial_production[sector] * ratio["elec"] / nhours
-
-        bus5 = [
-            node + " urban central heat"
-            if node + " urban central heat" in n.buses.index
-            else node + " services urban decentral heat"
-            for node in nodes
-        ]
+        p_nom = industrial_production[sector] * electricity_input / nhours
 
         marginal_cost = (
             costs.at["iron ore DRI-ready", "commodity"]
             * costs.at["direct iron reduction furnace", "ore-input"]
             * costs.at["electric arc furnace", "hbi-input"]
-            / ratio["elec"]
+            / electricity_input
         )
 
         capital_cost = (
             costs.at["direct iron reduction furnace", "fixed"]
             + costs.at["electric arc furnace", "fixed"]
-        ) / ratio["elec"]
+        ) / electricity_input
 
         n.madd(
             "Link",
@@ -2514,14 +2513,8 @@ def add_industry(n, costs):
             bus0=nodes,
             bus1="EU steel",
             bus2=nodes + " H2",
-            bus3=spatial.gas.nodes,
-            bus4="co2 atmosphere",
-            bus5=bus5,
-            efficiency=1 / ratio["elec"],
-            efficiency2=-ratio["hydrogen"] / ratio["elec"],
-            efficiency3=-ratio["methane"] / ratio["elec"],
-            efficiency4=ratio["process emission"] / ratio["elec"],
-            efficiency5=-ratio["heat"] / ratio["elec"],
+            efficiency=1 / electricity_input,
+            efficiency2=-hydrogen_input / electricity_input,
         )
 
     n.madd(
