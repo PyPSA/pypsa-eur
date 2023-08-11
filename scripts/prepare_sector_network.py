@@ -3909,8 +3909,7 @@ def add_import_options(
         ports[k] = ports.get(v)
 
     if endogenous_hvdc and "hvdc-to-elec" in import_options:
-        import_options.pop("hvdc-to-elec")
-        add_endogenous_hvdc_import_options(n, import_options["hvdc-to-elec"])
+        add_endogenous_hvdc_import_options(n, import_options.pop("hvdc-to-elec"))
 
     regionalised_options = {
         "hvdc-to-elec",
