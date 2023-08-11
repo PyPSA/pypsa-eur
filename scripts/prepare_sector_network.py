@@ -674,11 +674,11 @@ def add_methanol_to_power(n, costs, types={}):
             bus3="co2 atmosphere",
             carrier="allam methanol",
             p_nom_extendable=True,
-            capital_cost=0.66
+            capital_cost=0.59
             * 1.832e6
             * calculate_annuity(25, 0.07),  # efficiency * EUR/MW * annuity
             marginal_cost=2,
-            efficiency=0.66,
+            efficiency=0.59,
             efficiency2=0.98 * costs.at["methanolisation", "carbondioxide-input"],
             efficiency3=0.02 * costs.at["methanolisation", "carbondioxide-input"],
             lifetime=25,
@@ -2657,9 +2657,6 @@ def add_industry(n, costs):
         * 1e3
         * nyears  # kt/a -> t/a
     )
-    industry_sector_ratios = pd.read_csv(
-        snakemake.input.industry_sector_ratios, index_col=0
-    )
 
     endogenous_sectors = []
     if options["endogenous_steel"]:
@@ -2700,29 +2697,31 @@ def add_industry(n, costs):
         #     carrier="steel",
         # )
 
-        ratio = industry_sector_ratios[sector]
+        electricity_input = (
+            costs.at["direct iron reduction furnace", "electricity-input"]
+            * costs.at["electric arc furnace", "hbi-input"]
+            + costs.at["electric arc furnace", "electricity-input"]
+        )
+
+        hydrogen_input = (
+            costs.at["direct iron reduction furnace", "hydrogen-input"]
+            * costs.at["electric arc furnace", "hbi-input"]
+        )
 
         # so that for each region supply matches consumption
-        p_nom = industrial_production[sector] * ratio["elec"] / nhours
-
-        bus5 = [
-            node + " urban central heat"
-            if node + " urban central heat" in n.buses.index
-            else node + " services urban decentral heat"
-            for node in nodes
-        ]
+        p_nom = industrial_production[sector] * electricity_input / nhours
 
         marginal_cost = (
             costs.at["iron ore DRI-ready", "commodity"]
             * costs.at["direct iron reduction furnace", "ore-input"]
             * costs.at["electric arc furnace", "hbi-input"]
-            / ratio["elec"]
+            / electricity_input
         )
 
         capital_cost = (
             costs.at["direct iron reduction furnace", "fixed"]
             + costs.at["electric arc furnace", "fixed"]
-        ) / ratio["elec"]
+        ) / electricity_input
 
         n.madd(
             "Link",
@@ -2736,14 +2735,8 @@ def add_industry(n, costs):
             bus0=nodes,
             bus1="EU steel",
             bus2=nodes + " H2",
-            bus3=spatial.gas.nodes,
-            bus4="co2 atmosphere",
-            bus5=bus5,
-            efficiency=1 / ratio["elec"],
-            efficiency2=-ratio["hydrogen"] / ratio["elec"],
-            efficiency3=-ratio["methane"] / ratio["elec"],
-            efficiency4=ratio["process emission"] / ratio["elec"],
-            efficiency5=-ratio["heat"] / ratio["elec"],
+            efficiency=1 / electricity_input,
+            efficiency2=-hydrogen_input / electricity_input,
         )
 
     n.madd(
