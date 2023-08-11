@@ -3830,8 +3830,8 @@ def add_endogenous_hvdc_import_options(n, cost_factor=1.):
     for bus0_bus1 in cf.get("extra_connections", []):
         bus0, bus1 = bus0_bus1.split("-")
 
-        a = exporters.to_crs(3857).at[bus0, "geometry"]
-        b = exporters.to_crs(3857).at[bus1, "geometry"]
+        a = exporters.to_crs(DISTANCE_CRS).at[bus0, "geometry"]
+        b = exporters.to_crs(DISTANCE_CRS).at[bus1, "geometry"]
         d = a.distance(b) / 1e3  # km
 
         capital_cost = (
