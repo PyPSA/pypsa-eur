@@ -3654,7 +3654,7 @@ def remove_h2_network(n):
         n.stores.drop("EU H2 Store", inplace=True)
 
 
-def add_endogenous_hvdc_import_options(n):
+def add_endogenous_hvdc_import_options(n, cost_factor=1.):
     logger.info("Add import options: endogenous hvdc-to-elec")
     cf = snakemake.config["sector"]["import"].get("endogenous_hvdc_import", {})
     if not cf["enable"]:
@@ -3722,7 +3722,7 @@ def add_endogenous_hvdc_import_options(n):
         p_min_pu=0,
         p_nom_extendable=True,
         length=import_links.values,
-        capital_cost=hvdc_cost,
+        capital_cost=hvdc_cost * cost_factor,
         efficiency=1 - import_links.values * cf["hvdc_losses"],
     )
 
@@ -3738,7 +3738,7 @@ def add_endogenous_hvdc_import_options(n):
             bus=exporters_tech_i,
             carrier=f"external {tech}",
             p_nom_extendable=True,
-            capital_cost=costs.at[tech, "fixed"],
+            capital_cost=costs.at[tech, "fixed"] * cost_factor,
             lifetime=costs.at[tech, "lifetime"],
             p_max_pu=p_max_pu_tech.reindex(columns=exporters_tech_i),
         )
@@ -3758,7 +3758,7 @@ def add_endogenous_hvdc_import_options(n):
         e_cyclic=True,
         capital_cost=costs.at[
             "hydrogen storage tank type 1 including compressor", "fixed"
-        ],
+        ] * cost_factor,
     )
 
     n.madd(
@@ -3769,7 +3769,7 @@ def add_endogenous_hvdc_import_options(n):
         carrier="external H2 Electrolysis",
         p_nom_extendable=True,
         efficiency=costs.at["electrolysis", "efficiency"],
-        capital_cost=costs.at["electrolysis", "fixed"],
+        capital_cost=costs.at["electrolysis", "fixed"] * cost_factor,
         lifetime=costs.at["electrolysis", "lifetime"],
     )
 
@@ -3781,7 +3781,7 @@ def add_endogenous_hvdc_import_options(n):
         carrier="external H2 Turbine",
         p_nom_extendable=True,
         efficiency=costs.at["OCGT", "efficiency"],
-        capital_cost=costs.at["OCGT", "fixed"] * costs.at["OCGT", "efficiency"],
+        capital_cost=costs.at["OCGT", "fixed"] * costs.at["OCGT", "efficiency"] * cost_factor,
         lifetime=costs.at["OCGT", "lifetime"],
     )
 
@@ -3798,7 +3798,7 @@ def add_endogenous_hvdc_import_options(n):
         carrier="external battery",
         e_cyclic=True,
         e_nom_extendable=True,
-        capital_cost=costs.at["battery storage", "fixed"],
+        capital_cost=costs.at["battery storage", "fixed"] * cost_factor,
         lifetime=costs.at["battery storage", "lifetime"],
     )
 
@@ -3809,7 +3809,7 @@ def add_endogenous_hvdc_import_options(n):
         bus1=b_buses_i,
         carrier="external battery charger",
         efficiency=costs.at["battery inverter", "efficiency"] ** 0.5,
-        capital_cost=costs.at["battery inverter", "fixed"],
+        capital_cost=costs.at["battery inverter", "fixed"] * cost_factor,
         p_nom_extendable=True,
         lifetime=costs.at["battery inverter", "lifetime"],
     )
@@ -3847,7 +3847,7 @@ def add_endogenous_hvdc_import_options(n):
             carrier="external HVDC",
             p_min_pu=-1,
             p_nom_extendable=True,
-            capital_cost=capital_cost,
+            capital_cost=capital_cost * cost_factor,
             length=d,
         )
 
@@ -3867,7 +3867,10 @@ def add_import_options(
     ],
     endogenous_hvdc=False,
 ):
-    logger.info("Add import options: " + " ".join(import_options))
+    if not isinstance(import_options, dict):
+        import_options = {k: 1. for k in import_options}
+
+    logger.info("Add import options: " + " ".join(import_options.keys()))
     fn = snakemake.input.gas_input_nodes_simplified
     import_nodes = pd.read_csv(fn, index_col=0)
     import_nodes["hvdc-to-elec"] = 15000
@@ -3910,8 +3913,8 @@ def add_import_options(
         ports[k] = ports.get(v)
 
     if endogenous_hvdc and "hvdc-to-elec" in import_options:
-        import_options = [o for o in import_options if o != "hvdc-to-elec"]
-        add_endogenous_hvdc_import_options(n)
+        import_options.pop("hvdc-to-elec")
+        add_endogenous_hvdc_import_options(n, import_options["hvdc-to-elec"])
 
     regionalised_options = {
         "hvdc-to-elec",
@@ -3923,7 +3926,7 @@ def add_import_options(
     for tech in set(import_options).intersection(regionalised_options):
         import_costs_tech = (
             import_costs.query("esc == @tech").groupby("importer").marginal_cost.min()
-        )
+        ) * import_options[tech]
 
         sel = ~import_nodes[tech].isna()
         if tech == "pipeline-h2":
@@ -3998,7 +4001,7 @@ def add_import_options(
     }
 
     for tech in set(import_options).intersection(copperplated_carbonaceous_options):
-        marginal_costs = import_costs.query("esc == @tech").marginal_cost.min()
+        marginal_costs = import_costs.query("esc == @tech").marginal_cost.min() * import_options[tech]
 
         suffix = bus_suffix[tech]
 
@@ -4035,7 +4038,7 @@ def add_import_options(
     for tech in set(import_options).intersection(copperplated_carbonfree_options):
         suffix = bus_suffix[tech]
 
-        marginal_costs = import_costs.query("esc == @tech").marginal_cost.min()
+        marginal_costs = import_costs.query("esc == @tech").marginal_cost.min() * import_options[tech]
 
         n.add(
             "Generator",
@@ -4464,7 +4467,14 @@ if __name__ == "__main__":
             continue
         subsets = o.split("+")[1:]
         if len(subsets):
-            carriers = sum([translate[s] for s in subsets], [])
+            def parse_carriers(s):
+                prefixes = sorted(translate.keys(), key=lambda k: len(k), reverse=True)
+                pattern = fr'({"|".join(prefixes)})(\d+(\.\d+)?)?'
+                match = re.search(pattern, s)
+                prefix = match.group(1) if match else None
+                number = float(match.group(2)) if match and match.group(2) else 1.0
+                return {prefix: number}
+            carriers = {tk: v for s in subsets for k, v in parse_carriers(s).items() for tk in translate.get(k, [])}
         else:
             carriers = options["import"]["options"]
         add_import_options(
