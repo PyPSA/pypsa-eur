@@ -16,6 +16,7 @@ rule plot_network:
         network=RESULTS
         + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
         regions=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+        rc="matplotlibrc",
     output:
         map=RESULTS
         + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
@@ -113,6 +114,7 @@ rule plot_summary:
         energy=RESULTS + "csvs/energy.csv",
         balances=RESULTS + "csvs/supply_energy.csv",
         eurostat=input_eurostat,
+        rc="matplotlibrc",
     output:
         costs=RESULTS + "graphs/costs.pdf",
         energy=RESULTS + "graphs/energy.pdf",
