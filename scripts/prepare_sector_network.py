@@ -3654,7 +3654,7 @@ def remove_h2_network(n):
         n.stores.drop("EU H2 Store", inplace=True)
 
 
-def add_endogenous_hvdc_import_options(n, cost_factor=1.):
+def add_endogenous_hvdc_import_options(n, cost_factor=1.0):
     logger.info("Add import options: endogenous hvdc-to-elec")
     cf = snakemake.config["sector"]["import"].get("endogenous_hvdc_import", {})
     if not cf["enable"]:
@@ -3758,7 +3758,8 @@ def add_endogenous_hvdc_import_options(n, cost_factor=1.):
         e_cyclic=True,
         capital_cost=costs.at[
             "hydrogen storage tank type 1 including compressor", "fixed"
-        ] * cost_factor,
+        ]
+        * cost_factor,
     )
 
     n.madd(
@@ -3781,7 +3782,9 @@ def add_endogenous_hvdc_import_options(n, cost_factor=1.):
         carrier="external H2 Turbine",
         p_nom_extendable=True,
         efficiency=costs.at["OCGT", "efficiency"],
-        capital_cost=costs.at["OCGT", "fixed"] * costs.at["OCGT", "efficiency"] * cost_factor,
+        capital_cost=costs.at["OCGT", "fixed"]
+        * costs.at["OCGT", "efficiency"]
+        * cost_factor,
         lifetime=costs.at["OCGT", "lifetime"],
     )
 
@@ -3868,7 +3871,7 @@ def add_import_options(
     endogenous_hvdc=False,
 ):
     if not isinstance(import_options, dict):
-        import_options = {k: 1. for k in import_options}
+        import_options = {k: 1.0 for k in import_options}
 
     logger.info("Add import options: " + " ".join(import_options.keys()))
     fn = snakemake.input.gas_input_nodes_simplified
@@ -4001,7 +4004,10 @@ def add_import_options(
     }
 
     for tech in set(import_options).intersection(copperplated_carbonaceous_options):
-        marginal_costs = import_costs.query("esc == @tech").marginal_cost.min() * import_options[tech]
+        marginal_costs = (
+            import_costs.query("esc == @tech").marginal_cost.min()
+            * import_options[tech]
+        )
 
         suffix = bus_suffix[tech]
 
@@ -4038,7 +4044,10 @@ def add_import_options(
     for tech in set(import_options).intersection(copperplated_carbonfree_options):
         suffix = bus_suffix[tech]
 
-        marginal_costs = import_costs.query("esc == @tech").marginal_cost.min() * import_options[tech]
+        marginal_costs = (
+            import_costs.query("esc == @tech").marginal_cost.min()
+            * import_options[tech]
+        )
 
         n.add(
             "Generator",
@@ -4467,14 +4476,21 @@ if __name__ == "__main__":
             continue
         subsets = o.split("+")[1:]
         if len(subsets):
+
             def parse_carriers(s):
                 prefixes = sorted(translate.keys(), key=lambda k: len(k), reverse=True)
-                pattern = fr'({"|".join(prefixes)})(\d+(\.\d+)?)?'
+                pattern = rf'({"|".join(prefixes)})(\d+(\.\d+)?)?'
                 match = re.search(pattern, s)
                 prefix = match.group(1) if match else None
                 number = float(match.group(2)) if match and match.group(2) else 1.0
                 return {prefix: number}
-            carriers = {tk: v for s in subsets for k, v in parse_carriers(s).items() for tk in translate.get(k, [])}
+
+            carriers = {
+                tk: v
+                for s in subsets
+                for k, v in parse_carriers(s).items()
+                for tk in translate.get(k, [])
+            }
         else:
             carriers = options["import"]["options"]
         add_import_options(
