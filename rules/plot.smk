@@ -2,12 +2,13 @@
 #
 # SPDX-License-Identifier: MIT
 
+
 rule plot_power_network_unclustered:
     input:
         network=RESOURCES + "networks/elec.nc",
         rc="matplotlibrc",
     output:
-        multiext(RESOURCES + "graphics/power-network-unclustered", ".png", ".pdf")
+        multiext(RESOURCES + "graphics/power-network-unclustered", ".png", ".pdf"),
     script:
         "../scripts/plot_power_network_unclustered.py"
 
@@ -23,7 +24,7 @@ rule plot_gas_network_unclustered:
         storage="data/gas_network/scigrid-gas/data/IGGIELGN_Storages.geojson",
         rc="matplotlibrc",
     output:
-        multiext(RESOURCES + "graphics/gas-network-unclustered", ".png", ".pdf")
+        multiext(RESOURCES + "graphics/gas-network-unclustered", ".png", ".pdf"),
     script:
         "../scripts/plot_gas_network_unclustered.py"
 
@@ -34,19 +35,19 @@ rule plot_power_network_clustered:
         regions_onshore=RESOURCES + "regions_onshore_elec_s_{clusters}.geojson",
         rc="matplotlibrc",
     output:
-        multiext(RESOURCES + "graphics/power-network-{clusters}", ".png", ".pdf")
+        multiext(RESOURCES + "graphics/power-network-{clusters}", ".png", ".pdf"),
     script:
         "../scripts/plot_power_network_clustered.py"
 
 
 rule plot_renewable_potential_unclustered:
     input:
-        regions_onshore=RESOURCES + "regions_onshore.geojson",
-        regions_offshore=RESOURCES + "regions_offshore.geojson",
         **{
             f"profile_{tech}": RESOURCES + f"profile_{tech}.nc"
             for tech in config["electricity"]["renewable_carriers"]
         },
+        regions_onshore=RESOURCES + "regions_onshore.geojson",
+        regions_offshore=RESOURCES + "regions_offshore.geojson",
         rc="matplotlibrc",
     output:
         wind=multiext(RESOURCES + "graphics/wind-energy-density", ".png", ".pdf"),
@@ -60,9 +61,13 @@ rule plot_weather_data_map:
         cutout=f"cutouts/" + CDIR + config["atlite"]["default_cutout"] + ".nc",
         rc="matplotlibrc",
     output:
-        irradiation=multiext(RESOURCES + "graphics/weather-map-irradiation", ".png", ".pdf"),
+        irradiation=multiext(
+            RESOURCES + "graphics/weather-map-irradiation", ".png", ".pdf"
+        ),
         runoff=multiext(RESOURCES + "graphics/weather-map-runoff", ".png", ".pdf"),
-        temperature=multiext(RESOURCES + "graphics/weather-map-temperature", ".png", ".pdf"),
+        temperature=multiext(
+            RESOURCES + "graphics/weather-map-temperature", ".png", ".pdf"
+        ),
         wind=multiext(RESOURCES + "graphics/weather-map-wind", ".png", ".pdf"),
     script:
         "../scripts/plot_weather_data_map.py"
@@ -106,9 +111,15 @@ rule plot_salt_caverns_clustered:
         regions_offshore=RESOURCES + "regions_offshore_elec_s_{clusters}.geojson",
         rc="matplotlibrc",
     output:
-        onshore=multiext(RESOURCES + "graphics/salt-caverns-{clusters}-onshore", ".png", ".pdf"),
-        nearshore=multiext(RESOURCES + "graphics/salt-caverns-{clusters}-nearshore", ".png", ".pdf"),
-        offshore=multiext(RESOURCES + "graphics/salt-caverns-{clusters}-offshore", ".png", ".pdf"),
+        onshore=multiext(
+            RESOURCES + "graphics/salt-caverns-{clusters}-onshore", ".png", ".pdf"
+        ),
+        nearshore=multiext(
+            RESOURCES + "graphics/salt-caverns-{clusters}-nearshore", ".png", ".pdf"
+        ),
+        offshore=multiext(
+            RESOURCES + "graphics/salt-caverns-{clusters}-offshore", ".png", ".pdf"
+        ),
     script:
         "../scripts/plot_salt_caverns_clustered.py"
 
@@ -119,8 +130,18 @@ rule plot_biomass_potentials:
         regions_onshore=RESOURCES + "regions_onshore_elec_s_{clusters}.geojson",
         rc="matplotlibrc",
     output:
-        solid_biomass=multiext(RESOURCES + "graphics/biomass-potentials-{clusters}-solid_biomass", ".png", ".pdf"),
-        not_included=multiext(RESOURCES + "graphics/biomass-potentials-{clusters}-not_included", ".png", ".pdf"),
-        biogas=multiext(RESOURCES + "graphics/biomass-potentials-{clusters}-biogas", ".png", ".pdf"),
+        solid_biomass=multiext(
+            RESOURCES + "graphics/biomass-potentials-{clusters}-solid_biomass",
+            ".png",
+            ".pdf",
+        ),
+        not_included=multiext(
+            RESOURCES + "graphics/biomass-potentials-{clusters}-not_included",
+            ".png",
+            ".pdf",
+        ),
+        biogas=multiext(
+            RESOURCES + "graphics/biomass-potentials-{clusters}-biogas", ".png", ".pdf"
+        ),
     script:
         "../scripts/plot_biomass_potentials.py"

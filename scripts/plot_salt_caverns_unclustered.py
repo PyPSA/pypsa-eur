@@ -6,10 +6,10 @@
 Plot unclustered salt caverns.
 """
 
+import cartopy
+import cartopy.crs as ccrs
 import geopandas as gpd
 import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
-import cartopy
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -17,7 +17,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "plot_salt_caverns_unclustered",
-            configfiles=["../../config/config.test.yaml"]
+            configfiles=["../../config/config.test.yaml"],
         )
 
     plt.style.use(snakemake.input.rc)
@@ -39,11 +39,8 @@ if __name__ == "__main__":
         cmap="tab10_r",
         legend=True,
         linewidth=0,
-        legend_kwds=dict(
-            title="Salt Caverns for\nHydrogen Storage", loc=(0.21, 0.82)
-        ),
+        legend_kwds=dict(title="Salt Caverns for\nHydrogen Storage", loc=(0.21, 0.82)),
     )
-
 
     plt.xlim(-1e6, 2.6e6)
     plt.ylim(4.3e6, 7.8e6)

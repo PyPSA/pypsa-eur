@@ -6,13 +6,12 @@
 Plot unclustered wind and solar renewable potentials.
 """
 
-import pandas as pd
-import xarray as xr
+import cartopy
+import cartopy.crs as ccrs
 import geopandas as gpd
 import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
-import cartopy
-
+import pandas as pd
+import xarray as xr
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -20,17 +19,19 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "plot_renewable_potential_unclustered",
-            configfiles=["../../config/config.test.yaml"]
+            configfiles=["../../config/config.test.yaml"],
         )
 
     plt.style.use(snakemake.input.rc)
 
-    regions = pd.concat([
-        gpd.read_file(snakemake.input.regions_onshore),
-        gpd.read_file(snakemake.input.regions_offshore)]
+    regions = pd.concat(
+        [
+            gpd.read_file(snakemake.input.regions_onshore),
+            gpd.read_file(snakemake.input.regions_offshore),
+        ]
     )
     regions = regions.dissolve("name")
-    
+
     regions["Area"] = regions.to_crs(epsg=3035).area.div(1e6)
 
     wind = pd.Series()

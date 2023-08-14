@@ -6,11 +6,10 @@
 Plot unclustered electricity transmission network.
 """
 
-import pypsa
-import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
+import matplotlib.pyplot as plt
+import pypsa
 from matplotlib.lines import Line2D
-
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -25,7 +24,9 @@ if __name__ == "__main__":
     w = n.lines.v_nom.div(380)
     c = n.lines.v_nom.map({220: "teal", 300: "orange", 380: "firebrick"})
 
-    fig, ax = plt.subplots(figsize=(13, 13), subplot_kw={"projection": ccrs.EqualEarth()})
+    fig, ax = plt.subplots(
+        figsize=(13, 13), subplot_kw={"projection": ccrs.EqualEarth()}
+    )
 
     n.plot(
         ax=ax,

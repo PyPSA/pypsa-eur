@@ -6,27 +6,28 @@
 Plot power plants.
 """
 
-import pandas as pd
-import geopandas as gpd
-import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
 import cartopy
+import cartopy.crs as ccrs
+import geopandas as gpd
 import matplotlib.colors as mcolors
+import matplotlib.pyplot as plt
+import pandas as pd
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "plot_powerplants",
-            configfiles=["../../config/config.test.yaml"]
+            "plot_powerplants", configfiles=["../../config/config.test.yaml"]
         )
 
     plt.style.use(snakemake.input.rc)
 
     df = pd.read_csv(snakemake.input.powerplants, index_col=0)
 
-    df = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lon, df.lat), crs="EPSG:4326")
+    df = gpd.GeoDataFrame(
+        df, geometry=gpd.points_from_xy(df.lon, df.lat), crs="EPSG:4326"
+    )
 
     colors = {
         "Bioenergy": "#80c944",
@@ -37,7 +38,7 @@ if __name__ == "__main__":
         "Nuclear": "#ff8c00",
         "Oil": "#c9c9c9",
         "Waste": "purple",
-        "Other": "gold"
+        "Other": "gold",
     }
 
     crs = ccrs.EqualEarth()
@@ -45,7 +46,7 @@ if __name__ == "__main__":
     df = df.cx[-12:30, 35:72]
     df = df.to_crs(crs.proj4_init)
 
-    fig, ax = plt.subplots(figsize=(8,8), subplot_kw={"projection": crs})
+    fig, ax = plt.subplots(figsize=(8, 8), subplot_kw={"projection": crs})
 
     ax.add_feature(cartopy.feature.COASTLINE.with_scale("50m"), linewidth=0.5, zorder=2)
     ax.add_feature(cartopy.feature.BORDERS.with_scale("50m"), linewidth=0.5, zorder=2)
@@ -59,7 +60,12 @@ if __name__ == "__main__":
         cmap=mcolors.ListedColormap(
             pd.Series(df.Fueltype.unique()).sort_values().map(colors).values
         ),
-        legend_kwds=dict(title="Technology (radius ~ capacity)", loc=[0.13, 0.82], ncols=2, title_fontproperties={'weight':'bold'}),
+        legend_kwds=dict(
+            title="Technology (radius ~ capacity)",
+            loc=[0.13, 0.82],
+            ncols=2,
+            title_fontproperties={"weight": "bold"},
+        ),
     )
 
     ax.axis("off")

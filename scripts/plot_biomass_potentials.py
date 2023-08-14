@@ -6,15 +6,14 @@
 Plot unclustered salt caverns.
 """
 
-import pandas as pd
+import cartopy
+import cartopy.crs as ccrs
 import geopandas as gpd
 import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
-import cartopy
+import pandas as pd
 
 
 def plot_biomass_potentials(bio, regions, kind):
-
     crs = ccrs.EqualEarth()
     regions = regions.to_crs(crs.proj4_init)
 
@@ -32,7 +31,7 @@ def plot_biomass_potentials(bio, regions, kind):
         cmap="Greens",
         legend=True,
         linewidth=0.5,
-        edgecolor='grey',
+        edgecolor="grey",
         legend_kwds={
             "label": label,
             "shrink": 0.7,
@@ -60,19 +59,15 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "plot_biomass_potentials",
             clusters=128,
-            configfiles=["../../config/config.test.yaml"]
+            configfiles=["../../config/config.test.yaml"],
         )
 
     plt.style.use(snakemake.input.rc)
 
     bio = pd.read_csv(snakemake.input.biomass, index_col=0).div(1e6)  # TWh/a
 
-    regions = gpd.read_file(
-        snakemake.input.regions_onshore
-    ).set_index("name")
-
+    regions = gpd.read_file(snakemake.input.regions_onshore).set_index("name")
 
     plot_biomass_potentials(bio, regions, kind="not included")
     plot_biomass_potentials(bio, regions, kind="biogas")
     plot_biomass_potentials(bio, regions, kind="solid biomass")
-

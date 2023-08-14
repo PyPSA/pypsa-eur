@@ -99,6 +99,14 @@ rule plot_resources:
         RESOURCES + "graphics/industrial-sites.pdf",
         RESOURCES + "graphics/powerplants.pdf",
         RESOURCES + "graphics/salt-caverns.pdf",
-        expand(RESOURCES + "graphics/power-network-{clusters}.pdf", **config["scenario"]),
-        expand(RESOURCES + "graphics/salt-caverns-{clusters}-nearshore.pdf", **config["scenario"]),
-        expand(RESOURCES + "graphics/biomass-potentials-{clusters}-biogas.pdf", **config["scenario"]),
+        expand(
+            RESOURCES + "graphics/power-network-{clusters}.pdf", **config["scenario"]
+        ),
+        expand(
+            RESOURCES + "graphics/salt-caverns-{clusters}-nearshore.pdf",
+            **config["scenario"]
+        ),
+        expand(
+            RESOURCES + "graphics/biomass-potentials-{clusters}-biogas.pdf",
+            **config["scenario"]
+        ),

@@ -6,16 +6,16 @@
 Plot unclustered gas transmission network.
 """
 
-import pandas as pd
-import numpy as np
-from shapely import wkt
-import geopandas as gpd
-import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
 import cartopy
-from build_gas_input_locations import build_gas_input_locations
+import cartopy.crs as ccrs
+import geopandas as gpd
 import matplotlib.colors as mcolors
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from build_gas_input_locations import build_gas_input_locations
 from matplotlib.ticker import LogFormatter
+from shapely import wkt
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -40,7 +40,12 @@ if __name__ == "__main__":
         pts.loc[pts["type"] == t, "capacity"] /= sums[t]
 
     pts["type"] = pts["type"].replace(
-        dict(production="Fossil Extraction", lng="LNG Terminal", pipeline="Entrypoint", storage="Storage")
+        dict(
+            production="Fossil Extraction",
+            lng="LNG Terminal",
+            pipeline="Entrypoint",
+            storage="Storage",
+        )
     )
 
     df = pd.read_csv(snakemake.input.gas_network, index_col=0)
@@ -63,8 +68,8 @@ if __name__ == "__main__":
 
     df.plot(
         ax=ax,
-        column=df["p_nom"].div(1e3).fillna(0.),
-        linewidths=np.log(df.p_nom.div(df.p_nom.min())).fillna(0.).div(3),
+        column=df["p_nom"].div(1e3).fillna(0.0),
+        linewidths=np.log(df.p_nom.div(df.p_nom.min())).fillna(0.0).div(3),
         cmap="Spectral_r",
         vmax=vmax,
         legend=True,
@@ -75,15 +80,15 @@ if __name__ == "__main__":
     pts.plot(
         ax=ax,
         column="type",
-        markersize=pts["capacity"].fillna(0.) * 750,
+        markersize=pts["capacity"].fillna(0.0) * 750,
         alpha=0.8,
         legend=True,
         legend_kwds=dict(loc=[0.08, 0.86]),
-        zorder=6
+        zorder=6,
     )
 
     ax.gridlines(linestyle=":")
-    ax.axis('off')
+    ax.axis("off")
 
     for fn in snakemake.output:
         plt.savefig(fn)

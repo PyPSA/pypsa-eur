@@ -6,12 +6,13 @@
 Plot unclustered salt caverns.
 """
 
-import pandas as pd
-import geopandas as gpd
-import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
-import cartopy.crs as ccrs
 import cartopy
+import cartopy.crs as ccrs
+import geopandas as gpd
+import matplotlib.colors as mcolors
+import matplotlib.pyplot as plt
+import pandas as pd
+
 
 def plot_salt_caverns_by_node(
     cavern_nodes,
@@ -22,7 +23,6 @@ def plot_salt_caverns_by_node(
     vmax=3000,
     label=r"H$_2$ Storage Potential [TWh]",
 ):
-
     crs = ccrs.EqualEarth()
 
     cavern_regions = cavern_regions.to_crs(crs.proj4_init)
@@ -37,7 +37,7 @@ def plot_salt_caverns_by_node(
         vmin=vmin,
         vmax=vmax,
         linewidths=0.5,
-        edgecolor='darkgray',
+        edgecolor="darkgray",
         legend_kwds={
             "label": label,
             "shrink": 0.7,
@@ -67,7 +67,7 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "plot_salt_caverns_clustered",
             clusters=128,
-            configfiles=["../../config/config.test.yaml"]
+            configfiles=["../../config/config.test.yaml"],
         )
 
     plt.style.use(snakemake.input.rc)
@@ -75,13 +75,11 @@ if __name__ == "__main__":
     cavern_nodes = pd.read_csv(snakemake.input.caverns, index_col=0)
     cavern_nodes = cavern_nodes.where(cavern_nodes > 0.5)
 
-    cavern_regions = gpd.read_file(
-        snakemake.input.regions_onshore
-    ).set_index("name")
+    cavern_regions = gpd.read_file(snakemake.input.regions_onshore).set_index("name")
 
-    cavern_offregions = gpd.read_file(
-        snakemake.input.regions_offshore
-    ).set_index("name")
+    cavern_offregions = gpd.read_file(snakemake.input.regions_offshore).set_index(
+        "name"
+    )
 
     plot_salt_caverns_by_node(cavern_nodes, cavern_regions, storage_type="onshore")
     plot_salt_caverns_by_node(cavern_nodes, cavern_regions, storage_type="nearshore")
