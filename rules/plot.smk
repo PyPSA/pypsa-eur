@@ -53,3 +53,16 @@ rule plot_renewable_potential_unclustered:
         solar=multiext(RESOURCES + "graphics/solar-energy-density", ".png", ".pdf"),
     script:
         "../scripts/plot_renewable_potential_unclustered.py"
+
+
+rule plot_weather_data_map:
+    input:
+        cutout=f"cutouts/" + CDIR + config["atlite"]["default_cutout"] + ".nc",
+        rc="matplotlibrc",
+    output:
+        irradiation=multiext(RESOURCES + "graphics/weather-map-irradiation", ".png", ".pdf"),
+        runoff=multiext(RESOURCES + "graphics/weather-map-runoff", ".png", ".pdf"),
+        temperature=multiext(RESOURCES + "graphics/weather-map-temperature", ".png", ".pdf"),
+        wind=multiext(RESOURCES + "graphics/weather-map-wind", ".png", ".pdf"),
+    script:
+        "../scripts/plot_weather_data_map.py"
