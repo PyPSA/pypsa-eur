@@ -9,6 +9,26 @@ localrules:
 
 if config["foresight"] != "perfect":
 
+    rule plot_power_network_clustered:
+        params:
+            plotting=config["plotting"],
+        input:
+            network=RESOURCES + "networks/elec_s{simpl}_{clusters}.nc",
+            regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+            rc="matplotlibrc",
+        output:
+            map=RESULTS + "maps/power-network-{clusters}.pdf",
+        threads: 1
+        resources:
+            mem_mb=4000,
+        benchmark:
+            BENCHMARKS + "plot_power_network_clustered/elec_s{simpl}_{clusters}"
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/plot_power_network_clustered.py"
+
+
     rule plot_power_network:
         params:
             plotting=config["plotting"],
