@@ -87,3 +87,13 @@ rule plot_powerplants:
         multiext(RESOURCES + "graphics/powerplants", ".png", ".pdf"),
     script:
         "../scripts/plot_powerplants.py"
+
+
+rule plot_salt_caverns_unclustered:
+    input:
+        caverns="data/h2_salt_caverns_GWh_per_sqkm.geojson",
+        rc="matplotlibrc",
+    output:
+        multiext(RESOURCES + "graphics/salt-caverns", ".png", ".pdf"),
+    script:
+        "../scripts/plot_salt_caverns_unclustered.py"
