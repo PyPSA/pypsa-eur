@@ -66,3 +66,14 @@ rule plot_weather_data_map:
         wind=multiext(RESOURCES + "graphics/weather-map-wind", ".png", ".pdf"),
     script:
         "../scripts/plot_weather_data_map.py"
+
+
+rule plot_industrial_sites:
+    input:
+        hotmaps="data/Industrial_Database.csv",
+        countries=RESOURCES + "country_shapes.geojson",
+        rc="matplotlibrc",
+    output:
+        multiext(RESOURCES + "graphics/industrial-sites", ".png", ".pdf"),
+    script:
+        "../scripts/plot_industrial_sites.py"
