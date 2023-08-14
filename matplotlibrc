@@ -5,3 +5,6 @@ font.family: sans-serif
 font.sans-serif: Roboto, Ubuntu, DejaVu Sans
 image.cmap: viridis
 figure.autolayout : True
+figure.constrained_layout.use : True
+figure.dpi : 400
+legend.frameon : False
