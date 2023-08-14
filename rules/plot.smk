@@ -112,3 +112,15 @@ rule plot_salt_caverns_clustered:
     script:
         "../scripts/plot_salt_caverns_clustered.py"
 
+
+rule plot_biomass_potentials:
+    input:
+        biomass=RESOURCES + "biomass_potentials_s_{clusters}.csv",
+        regions_onshore=RESOURCES + "regions_onshore_elec_s_{clusters}.geojson",
+        rc="matplotlibrc",
+    output:
+        solid_biomass=multiext(RESOURCES + "graphics/biomass-potentials-{clusters}-solid_biomass", ".png", ".pdf"),
+        not_included=multiext(RESOURCES + "graphics/biomass-potentials-{clusters}-not_included", ".png", ".pdf"),
+        biogas=multiext(RESOURCES + "graphics/biomass-potentials-{clusters}-biogas", ".png", ".pdf"),
+    script:
+        "../scripts/plot_biomass_potentials.py"
