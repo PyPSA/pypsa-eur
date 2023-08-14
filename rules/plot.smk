@@ -26,3 +26,14 @@ rule plot_gas_network_unclustered:
         multiext(RESOURCES + "graphics/gas-network-unclustered", ".png", ".pdf")
     script:
         "../scripts/plot_gas_network_unclustered.py"
+
+
+rule plot_power_network_clustered:
+    input:
+        network=RESOURCES + "networks/elec_s_{clusters}.nc",
+        regions_onshore=RESOURCES + "regions_onshore_elec_s_{clusters}.geojson",
+        rc="matplotlibrc",
+    output:
+        multiext(RESOURCES + "graphics/power-network-{clusters}", ".png", ".pdf")
+    script:
+        "../scripts/plot_power_network_clustered.py"
