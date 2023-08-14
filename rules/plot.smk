@@ -37,3 +37,19 @@ rule plot_power_network_clustered:
         multiext(RESOURCES + "graphics/power-network-{clusters}", ".png", ".pdf")
     script:
         "../scripts/plot_power_network_clustered.py"
+
+
+rule plot_renewable_potential_unclustered:
+    input:
+        regions_onshore=RESOURCES + "regions_onshore.geojson",
+        regions_offshore=RESOURCES + "regions_offshore.geojson",
+        **{
+            f"profile_{tech}": RESOURCES + f"profile_{tech}.nc"
+            for tech in config["electricity"]["renewable_carriers"]
+        },
+        rc="matplotlibrc",
+    output:
+        wind=multiext(RESOURCES + "graphics/wind-energy-density", ".png", ".pdf"),
+        solar=multiext(RESOURCES + "graphics/solar-energy-density", ".png", ".pdf"),
+    script:
+        "../scripts/plot_renewable_potential_unclustered.py"
