@@ -77,3 +77,13 @@ rule plot_industrial_sites:
         multiext(RESOURCES + "graphics/industrial-sites", ".png", ".pdf"),
     script:
         "../scripts/plot_industrial_sites.py"
+
+
+rule plot_powerplants:
+    input:
+        powerplants=RESOURCES + "powerplants.csv",
+        rc="matplotlibrc",
+    output:
+        multiext(RESOURCES + "graphics/powerplants", ".png", ".pdf"),
+    script:
+        "../scripts/plot_powerplants.py"
