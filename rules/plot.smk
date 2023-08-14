@@ -97,3 +97,18 @@ rule plot_salt_caverns_unclustered:
         multiext(RESOURCES + "graphics/salt-caverns", ".png", ".pdf"),
     script:
         "../scripts/plot_salt_caverns_unclustered.py"
+
+
+rule plot_salt_caverns_clustered:
+    input:
+        caverns=RESOURCES + "salt_cavern_potentials_s_{clusters}.csv",
+        regions_onshore=RESOURCES + "regions_onshore_elec_s_{clusters}.geojson",
+        regions_offshore=RESOURCES + "regions_offshore_elec_s_{clusters}.geojson",
+        rc="matplotlibrc",
+    output:
+        onshore=multiext(RESOURCES + "graphics/salt-caverns-{clusters}-onshore", ".png", ".pdf"),
+        nearshore=multiext(RESOURCES + "graphics/salt-caverns-{clusters}-nearshore", ".png", ".pdf"),
+        offshore=multiext(RESOURCES + "graphics/salt-caverns-{clusters}-offshore", ".png", ".pdf"),
+    script:
+        "../scripts/plot_salt_caverns_clustered.py"
+
