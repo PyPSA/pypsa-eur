@@ -10,8 +10,8 @@ Release Notes
 Upcoming Release
 ================
 
-* Networks that are stored in results/prenetworks are now stored in resources/networks. 
-  Remove the prefix of post- and pre- in network names originating from PyPSA-Eur-Sec to match PyPSA-Eur conventions. 
+* Networks that are stored in results/prenetworks are now stored in resources/networks.
+  Remove the prefix of post- and pre- in network names originating from PyPSA-Eur-Sec to match PyPSA-Eur conventions.
   Brownfield networks are appended with the word _brownfield in their filename and placed in resources/networks.
 
 * Updated Global Energy Monitor LNG terminal data to March 2023 version.
