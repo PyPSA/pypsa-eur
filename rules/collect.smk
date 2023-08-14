@@ -88,3 +88,17 @@ rule validate_elec_networks:
             **config["scenario"],
             kind=["production", "prices", "cross_border"]
         ),
+
+
+rule plot_resources:
+    input:
+        RESOURCES + "graphics/power-network-unclustered.pdf",
+        RESOURCES + "graphics/gas-network-unclustered.pdf",
+        RESOURCES + "graphics/wind-energy-density.pdf",
+        RESOURCES + "graphics/weather-map-irradiation.pdf",
+        RESOURCES + "graphics/industrial-sites.pdf",
+        RESOURCES + "graphics/powerplants.pdf",
+        RESOURCES + "graphics/salt-caverns.pdf",
+        expand(RESOURCES + "graphics/power-network-{clusters}.pdf", **config["scenario"]),
+        expand(RESOURCES + "graphics/salt-caverns-{clusters}-nearshore.pdf", **config["scenario"]),
+        expand(RESOURCES + "graphics/biomass-potentials-{clusters}-biogas.pdf", **config["scenario"]),
