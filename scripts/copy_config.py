@@ -13,9 +13,11 @@ import yaml
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from _helpers import mock_snakemake, set_scenario_config
 
         snakemake = mock_snakemake("copy_config")
+
+    set_scenario_config(snakemake)
 
     with open(snakemake.output[0], "w") as yaml_file:
         yaml.dump(
