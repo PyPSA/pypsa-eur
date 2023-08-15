@@ -115,7 +115,9 @@ def build_nodal_distribution_key(hotmaps, regions, countries):
         facilities = hotmaps.query("country == @country and Subsector == @sector")
 
         if not facilities.empty:
-            emissions = facilities["Emissions_ETS_2014"]
+            emissions = facilities["Emissions_ETS_2014"].fillna(
+                hotmaps["Emissions_EPRTR_2014"]
+            )
             if emissions.sum() == 0:
                 key = pd.Series(1 / len(facilities), facilities.index)
             else:
