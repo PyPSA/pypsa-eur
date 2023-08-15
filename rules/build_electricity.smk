@@ -20,9 +20,9 @@ if config["enable"].get("prepare_links_p_nom", False):
 
 rule build_electricity_demand:
     params:
-        snapshots=config["snapshots"],
-        countries=config["countries"],
-        load=config["load"],
+        snapshots=config_provider("snapshots"),
+        countries=config_provider("countries"),
+        load=config_provider("load"),
     input:
         ancient("data/load_raw.csv"),
     output:
@@ -39,9 +39,9 @@ rule build_electricity_demand:
 
 rule build_powerplants:
     params:
-        powerplants_filter=config["electricity"]["powerplants_filter"],
-        custom_powerplants=config["electricity"]["custom_powerplants"],
-        countries=config["countries"],
+        powerplants_filter=config_provider("electricity", "powerplants_filter"),
+        custom_powerplants=config_provider("electricity", "custom_powerplants"),
+        countries=config_provider("countries"),
     input:
         base_network=RESOURCES + "networks/base.nc",
         custom_powerplants="data/custom_powerplants.csv",
@@ -60,11 +60,11 @@ rule build_powerplants:
 
 rule base_network:
     params:
-        countries=config["countries"],
-        snapshots=config["snapshots"],
-        lines=config["lines"],
-        links=config["links"],
-        transformers=config["transformers"],
+        countries=config_provider("countries"),
+        snapshots=config_provider("snapshots"),
+        lines=config_provider("lines"),
+        links=config_provider("links"),
+        transformers=config_provider("transformers"),
     input:
         eg_buses="data/entsoegridkit/buses.csv",
         eg_lines="data/entsoegridkit/lines.csv",
@@ -94,7 +94,7 @@ rule base_network:
 
 rule build_shapes:
     params:
-        countries=config["countries"],
+        countries=config_provider("countries"),
     input:
         naturalearth=ancient("data/bundle/naturalearth/ne_10m_admin_0_countries.shp"),
         eez=ancient("data/bundle/eez/World_EEZ_v8_2014.shp"),
@@ -121,7 +121,7 @@ rule build_shapes:
 
 rule build_bus_regions:
     params:
-        countries=config["countries"],
+        countries=config_provider("countries"),
     input:
         country_shapes=RESOURCES + "country_shapes.geojson",
         offshore_shapes=RESOURCES + "offshore_shapes.geojson",
@@ -144,8 +144,8 @@ if config["enable"].get("build_cutout", False):
 
     rule build_cutout:
         params:
-            snapshots=config["snapshots"],
-            cutouts=config["atlite"]["cutouts"],
+            snapshots=config_provider("snapshots"),
+            cutouts=config_provider("atlite", "cutouts"),
         input:
             regions_onshore=RESOURCES + "regions_onshore.geojson",
             regions_offshore=RESOURCES + "regions_offshore.geojson",
@@ -208,7 +208,7 @@ rule build_ship_raster:
 
 rule build_renewable_profiles:
     params:
-        renewable=config["renewable"],
+        renewable=config_provider("renewable"),
     input:
         base_network=RESOURCES + "networks/base.nc",
         corine=ancient("data/bundle/corine/g250_clc06_V18_5.tif"),
@@ -277,8 +277,8 @@ rule build_monthly_prices:
 
 rule build_hydro_profile:
     params:
-        hydro=config["renewable"]["hydro"],
-        countries=config["countries"],
+        hydro=config_provider("renewable", "hydro"),
+        countries=config_provider("countries"),
     input:
         country_shapes=RESOURCES + "country_shapes.geojson",
         eia_hydro_generation="data/eia_hydro_annual_generation.csv",
@@ -321,13 +321,13 @@ if config["lines"]["dynamic_line_rating"]["activate"]:
 
 rule add_electricity:
     params:
-        length_factor=config["lines"]["length_factor"],
-        scaling_factor=config["load"]["scaling_factor"],
-        countries=config["countries"],
-        renewable=config["renewable"],
-        electricity=config["electricity"],
-        conventional=config["conventional"],
-        costs=config["costs"],
+        length_factor=config_provider("lines", "length_factor"),
+        scaling_factor=config_provider("load", "scaling_factor"),
+        countries=config_provider("countries"),
+        renewable=config_provider("renewable"),
+        electricity=config_provider("electricity"),
+        conventional=config_provider("conventional"),
+        costs=config_provider("costs"),
     input:
         **{
             f"profile_{tech}": RESOURCES + f"profile_{tech}.nc"
@@ -370,14 +370,16 @@ rule add_electricity:
 
 rule simplify_network:
     params:
-        simplify_network=config["clustering"]["simplify_network"],
-        aggregation_strategies=config["clustering"].get("aggregation_strategies", {}),
-        focus_weights=config.get("focus_weights", None),
-        renewable_carriers=config["electricity"]["renewable_carriers"],
-        max_hours=config["electricity"]["max_hours"],
-        length_factor=config["lines"]["length_factor"],
-        p_max_pu=config["links"].get("p_max_pu", 1.0),
-        costs=config["costs"],
+        simplify_network=config_provider("clustering", "simplify_network"),
+        aggregation_strategies=config_provider(
+            "clustering", "aggregation_strategies", default={}
+        ),
+        focus_weights=config_provider("focus_weights", default=None),
+        renewable_carriers=config_provider("electricity", "renewable_carriers"),
+        max_hours=config_provider("electricity", "max_hours"),
+        length_factor=config_provider("lines", "length_factor"),
+        p_max_pu=config_provider("links", "p_max_pu", default=1.0),
+        costs=config_provider("costs"),
     input:
         network=RESOURCES + "networks/elec.nc",
         tech_costs=COSTS,
@@ -404,15 +406,19 @@ rule simplify_network:
 
 rule cluster_network:
     params:
-        cluster_network=config["clustering"]["cluster_network"],
-        aggregation_strategies=config["clustering"].get("aggregation_strategies", {}),
-        custom_busmap=config["enable"].get("custom_busmap", False),
-        focus_weights=config.get("focus_weights", None),
-        renewable_carriers=config["electricity"]["renewable_carriers"],
-        conventional_carriers=config["electricity"].get("conventional_carriers", []),
-        max_hours=config["electricity"]["max_hours"],
-        length_factor=config["lines"]["length_factor"],
-        costs=config["costs"],
+        cluster_network=config_provider("clustering", "cluster_network"),
+        aggregation_strategies=config_provider(
+            "clustering", "aggregation_strategies", default={}
+        ),
+        custom_busmap=config_provider("enable", "custom_busmap", default=False),
+        focus_weights=config_provider("focus_weights", default=None),
+        renewable_carriers=config_provider("electricity", "renewable_carriers"),
+        conventional_carriers=config_provider(
+            "electricity", "conventional_carriers", default=[]
+        ),
+        max_hours=config_provider("electricity", "max_hours"),
+        length_factor=config_provider("lines", "length_factor"),
+        costs=config_provider("costs"),
     input:
         network=RESOURCES + "networks/elec_s{simpl}.nc",
         regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}.geojson",
@@ -445,9 +451,9 @@ rule cluster_network:
 
 rule add_extra_components:
     params:
-        extendable_carriers=config["electricity"]["extendable_carriers"],
-        max_hours=config["electricity"]["max_hours"],
-        costs=config["costs"],
+        extendable_carriers=config_provider("electricity", "extendable_carriers"),
+        max_hours=config_provider("electricity", "max_hours"),
+        costs=config_provider("costs"),
     input:
         network=RESOURCES + "networks/elec_s{simpl}_{clusters}.nc",
         tech_costs=COSTS,
@@ -468,13 +474,13 @@ rule add_extra_components:
 
 rule prepare_network:
     params:
-        links=config["links"],
-        lines=config["lines"],
-        co2base=config["electricity"]["co2base"],
-        co2limit=config["electricity"]["co2limit"],
-        gaslimit=config["electricity"].get("gaslimit"),
-        max_hours=config["electricity"]["max_hours"],
-        costs=config["costs"],
+        links=config_provider("links"),
+        lines=config_provider("lines"),
+        co2base=config_provider("electricity", "co2base"),
+        co2limit=config_provider("electricity", "co2limit"),
+        gaslimit=config_provider("electricity", "gaslimit"),
+        max_hours=config_provider("electricity", "max_hours"),
+        costs=config_provider("costs"),
     input:
         RESOURCES + "networks/elec_s{simpl}_{clusters}_ec.nc",
         tech_costs=COSTS,

@@ -36,7 +36,7 @@ import logging
 import tarfile
 from pathlib import Path
 
-from _helpers import configure_logging, progress_retrieve
+from _helpers import configure_logging, progress_retrieve, set_scenario_config
 
 logger = logging.getLogger(__name__)
 

@@ -14,6 +14,7 @@ import pytz
 import yaml
 from pypsa.components import component_attrs, components
 from pypsa.descriptors import Dict
+from snakemake.utils import update_config
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
@@ -27,6 +28,13 @@ def mute_print():
     with open(os.devnull, "w") as devnull:
         with contextlib.redirect_stdout(devnull):
             yield
+
+
+def set_scenario_config(snakemake):
+    if "scenario_config" in snakemake.input:
+        with open(snakemake.input.scenario_config, "r") as f:
+            scenario_config = yaml.safe_load(f)
+        update_config(snakemake.config, scenario_config)
 
 
 def configure_logging(snakemake, skip_handlers=False):

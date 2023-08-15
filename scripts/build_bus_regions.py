@@ -47,7 +47,7 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import pypsa
-from _helpers import REGION_COLS, configure_logging
+from _helpers import REGION_COLS, configure_logging, set_scenario_config
 from scipy.spatial import Voronoi
 from shapely.geometry import Polygon
 
@@ -115,6 +115,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_bus_regions")
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     countries = snakemake.params.countries
 

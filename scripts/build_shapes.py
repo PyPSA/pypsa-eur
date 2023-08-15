@@ -77,7 +77,7 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import pycountry as pyc
-from _helpers import configure_logging
+from _helpers import configure_logging, set_scenario_config
 from shapely.geometry import MultiPolygon, Polygon
 
 logger = logging.getLogger(__name__)
@@ -254,6 +254,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_shapes")
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     country_shapes = countries(snakemake.input.naturalearth, snakemake.params.countries)
     country_shapes.reset_index().to_file(snakemake.output.country_shapes)

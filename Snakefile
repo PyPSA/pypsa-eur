@@ -4,14 +4,13 @@
 
 from os.path import normpath, exists
 from shutil import copyfile, move, rmtree
-
+from pathlib import Path
+import yaml
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
-
-HTTP = HTTPRemoteProvider()
-
 from snakemake.utils import min_version
 
 min_version("7.7")
+HTTP = HTTPRemoteProvider()
 
 
 if not exists("config/config.yaml"):
@@ -24,8 +23,16 @@ configfile: "config/config.yaml"
 COSTS = f"data/costs_{config['costs']['year']}.csv"
 ATLITE_NPROCESSES = config["atlite"].get("nprocesses", 4)
 
-run = config.get("run", {})
-RDIR = run["name"] + "/" if run.get("name") else ""
+run = config["run"]
+if run.get("scenarios", False):
+    if run["shared_resources"]:
+        raise ValueError("Cannot use shared resources with scenarios")
+    scenarios = yaml.safe_load(Path(config["scenariofile"]).read_text())
+    RDIR = "{run}/"
+elif run["name"]:
+    RDIR = run["name"] + "/"
+else:
+    RDIR = ""
 CDIR = RDIR if not run.get("shared_cutouts") else ""
 
 LOGS = "logs/" + RDIR

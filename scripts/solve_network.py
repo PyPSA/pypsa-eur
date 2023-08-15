@@ -33,7 +33,11 @@ import numpy as np
 import pandas as pd
 import pypsa
 import xarray as xr
-from _helpers import configure_logging, update_config_with_sector_opts
+from _helpers import (
+    configure_logging,
+    set_scenario_config,
+    update_config_with_sector_opts,
+)
 
 logger = logging.getLogger(__name__)
 pypsa.pf.logger.setLevel(logging.WARNING)
@@ -657,6 +661,7 @@ if __name__ == "__main__":
             planning_horizons="2020",
         )
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
     if "sector_opts" in snakemake.wildcards.keys():
         update_config_with_sector_opts(
             snakemake.config, snakemake.wildcards.sector_opts

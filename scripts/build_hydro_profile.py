@@ -65,7 +65,7 @@ import atlite
 import country_converter as coco
 import geopandas as gpd
 import pandas as pd
-from _helpers import configure_logging
+from _helpers import configure_logging, set_scenario_config
 
 cc = coco.CountryConverter()
 
@@ -129,6 +129,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_hydro_profile")
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     params_hydro = snakemake.params.hydro
     cutout = atlite.Cutout(snakemake.input.cutout)

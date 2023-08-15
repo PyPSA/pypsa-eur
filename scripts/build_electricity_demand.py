@@ -45,7 +45,7 @@ logger = logging.getLogger(__name__)
 import dateutil
 import numpy as np
 import pandas as pd
-from _helpers import configure_logging
+from _helpers import configure_logging, set_scenario_config
 from pandas import Timedelta as Delta
 
 
@@ -288,6 +288,7 @@ if __name__ == "__main__":
         snakemake = mock_snakemake("build_electricity_demand")
 
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     powerstatistics = snakemake.params.load["power_statistics"]
     interpolate_limit = snakemake.params.load["interpolate_limit"]

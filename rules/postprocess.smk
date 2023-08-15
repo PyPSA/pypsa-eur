@@ -10,8 +10,8 @@ localrules:
 
 rule plot_network:
     params:
-        foresight=config["foresight"],
-        plotting=config["plotting"],
+        foresight=config_provider("foresight"),
+        plotting=config_provider("plotting"),
     input:
         network=RESULTS
         + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
@@ -53,16 +53,17 @@ rule copy_config:
 
 rule make_summary:
     params:
-        foresight=config["foresight"],
-        costs=config["costs"],
-        snapshots=config["snapshots"],
-        scenario=config["scenario"],
+        foresight=config_provider("foresight"),
+        costs=config_provider("costs"),
+        snapshots=config_provider("snapshots"),
+        scenario=config_provider("scenario"),
         RDIR=RDIR,
     input:
         networks=expand(
             RESULTS
             + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
-            **config["scenario"]
+            **config["scenario"],
+            run=config["run"]["name"]
         ),
         costs="data/costs_{}.csv".format(config["costs"]["year"])
         if config["foresight"] == "overnight"
@@ -70,7 +71,8 @@ rule make_summary:
         plots=expand(
             RESULTS
             + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
-            **config["scenario"]
+            **config["scenario"],
+            run=config["run"]["name"]
         ),
     output:
         nodal_costs=RESULTS + "csvs/nodal_costs.csv",
@@ -103,10 +105,10 @@ rule make_summary:
 
 rule plot_summary:
     params:
-        countries=config["countries"],
-        planning_horizons=config["scenario"]["planning_horizons"],
-        sector_opts=config["scenario"]["sector_opts"],
-        plotting=config["plotting"],
+        countries=config_provider("countries"),
+        planning_horizons=config_provider("scenario", "planning_horizons"),
+        sector_opts=config_provider("scenario", "sector_opts"),
+        plotting=config_provider("plotting"),
         RDIR=RDIR,
     input:
         costs=RESULTS + "csvs/costs.csv",
@@ -145,7 +147,7 @@ STATISTICS_BARPLOTS = [
 
 rule plot_elec_statistics:
     params:
-        plotting=config["plotting"],
+        plotting=config_provider("plotting"),
         barplots=STATISTICS_BARPLOTS,
     input:
         network=RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",

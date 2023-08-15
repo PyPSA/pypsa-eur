@@ -2,6 +2,57 @@
 #
 # SPDX-License-Identifier: MIT
 
+import copy
+
+
+def get_config(keys, config, default=None):
+    """Retrieve a nested value from a dictionary using a tuple of keys."""
+    value = config
+    for key in keys:
+        value = value.get(key, default)
+        if value == default:
+            return default
+    return value
+
+
+def merge_configs(base_config, scenario_config):
+    """Merge base config with a specific scenario without modifying the original."""
+    merged = copy.deepcopy(base_config)
+    for key, value in scenario_config.items():
+        if key in merged and isinstance(merged[key], dict):
+            merged[key] = merge_configs(merged[key], value)
+        else:
+            merged[key] = value
+    return merged
+
+
+def config_provider(*keys, default=None):
+    """Dynamically provide config values based on 'run' -> 'name'.
+
+    Usage in Snakemake rules would look something like:
+    params:
+        my_param=config_provider("key1", "key2", default="some_default_value")
+    """
+
+    def static_getter(wildcards):
+        """Getter function for static config values."""
+        return get_config(keys, config, default)
+
+    def dynamic_getter(wildcards):
+        """Getter function for dynamic config values based on scenario."""
+        scenario_name = wildcards.run
+        if scenario_name not in scenarios:
+            raise ValueError(
+                f"Scenario {scenario_name} not found in file {config['scenariofile']}."
+            )
+        merged_config = merge_configs(config, scenarios[scenario_name])
+        return get_config(keys, merged_config, default)
+
+    if config["run"].get("scenarios", False):
+        return dynamic_getter
+    else:
+        return static_getter
+
 
 def memory(w):
     factor = 3.0

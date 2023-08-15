@@ -188,7 +188,7 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import xarray as xr
-from _helpers import configure_logging
+from _helpers import configure_logging, set_scenario_config
 from dask.distributed import Client
 from pypsa.geo import haversine
 from shapely.geometry import LineString
@@ -202,6 +202,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_renewable_profiles", technology="solar")
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     nprocesses = int(snakemake.threads)
     noprogress = snakemake.config["run"].get("disable_progressbar", True)

@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
 import seaborn as sns
-from _helpers import configure_logging
+from _helpers import configure_logging, set_scenario_config
 from pypsa.statistics import get_bus_and_carrier
 
 sns.set_theme("paper", style="whitegrid")
@@ -25,6 +25,7 @@ if __name__ == "__main__":
             ll="v1.0",
         )
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     n = pypsa.Network(snakemake.input.network)
     n.loads.carrier = "load"

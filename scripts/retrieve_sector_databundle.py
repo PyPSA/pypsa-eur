@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 import tarfile
 from pathlib import Path
 
-from _helpers import configure_logging, progress_retrieve
+from _helpers import configure_logging, progress_retrieve, set_scenario_config
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -24,6 +24,7 @@ if __name__ == "__main__":
     else:
         rootpath = "."
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     url = "https://zenodo.org/record/5824485/files/pypsa-eur-sec-data-bundle.tar.gz"
 

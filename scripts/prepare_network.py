@@ -63,7 +63,7 @@ import re
 import numpy as np
 import pandas as pd
 import pypsa
-from _helpers import configure_logging
+from _helpers import configure_logging, set_scenario_config
 from add_electricity import load_costs, update_transmission_costs
 from pypsa.descriptors import expand_series
 
@@ -283,6 +283,7 @@ if __name__ == "__main__":
             "prepare_network", simpl="", clusters="37", ll="v1.0", opts="Ept"
         )
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     opts = snakemake.wildcards.opts.split("-")
 

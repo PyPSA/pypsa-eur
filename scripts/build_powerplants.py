@@ -80,7 +80,7 @@ import logging
 import pandas as pd
 import powerplantmatching as pm
 import pypsa
-from _helpers import configure_logging
+from _helpers import configure_logging, set_scenario_config
 from powerplantmatching.export import map_country_bus
 
 logger = logging.getLogger(__name__)
@@ -115,6 +115,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_powerplants")
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     n = pypsa.Network(snakemake.input.base_network)
     countries = snakemake.params.countries

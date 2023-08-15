@@ -133,7 +133,7 @@ import pandas as pd
 import pyomo.environ as po
 import pypsa
 import seaborn as sns
-from _helpers import configure_logging, update_p_nom_max
+from _helpers import configure_logging, set_scenario_config, update_p_nom_max
 from pypsa.clustering.spatial import (
     busmap_by_greedy_modularity,
     busmap_by_hac,
@@ -463,6 +463,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("cluster_network", simpl="", clusters="37")
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     params = snakemake.params
     solver_name = snakemake.config["solving"]["solver"]["name"]

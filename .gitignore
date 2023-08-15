@@ -19,10 +19,15 @@ gurobi.log
 /notebooks
 /data
 /cutouts
-
+/tmp
 doc/_build
 
+/scripts/old
+/scripts/create_scenarios.py
+
 config.yaml
+config/scenario.yaml
+
 
 dconf
 /data/links_p_nom.csv
@@ -51,25 +56,15 @@ publications.jrc.ec.europa.eu/
 *.nc
 
 *~
-/scripts/old
 
 *.pyc
-/cutouts
-/tmp
-/pypsa
 
 *.xlsx
-
-config.yaml
-
-doc/_build
 
 *.xls
 
 *.geojson
 
 *.ipynb
-
-data/costs_*
 
 merger-todos.md

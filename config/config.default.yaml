@@ -5,6 +5,7 @@
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#top-level-configuration
 version: 0.8.1
 tutorial: false
+scenariofile: config/scenarios.yaml
 
 logging:
   level: INFO
@@ -21,6 +22,7 @@ remote:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
   name: ""
+  scenarios: false
   disable_progressbar: false
   shared_resources: false
   shared_cutouts: true

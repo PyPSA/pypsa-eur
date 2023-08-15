@@ -11,7 +11,11 @@ import logging
 
 import numpy as np
 import pypsa
-from _helpers import configure_logging, update_config_with_sector_opts
+from _helpers import (
+    configure_logging,
+    set_scenario_config,
+    update_config_with_sector_opts,
+)
 from solve_network import prepare_network, solve_network
 
 logger = logging.getLogger(__name__)
@@ -33,6 +37,7 @@ if __name__ == "__main__":
         )
 
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
     update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
 
     opts = (snakemake.wildcards.opts + "-" + snakemake.wildcards.sector_opts).split("-")

@@ -29,7 +29,7 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
         output:
             expand("data/bundle/{file}", file=datafiles),
         log:
-            LOGS + "retrieve_databundle.log",
+            "logs/retrieve_databundle.log",
         resources:
             mem_mb=1000,
         retries: 2
@@ -72,7 +72,7 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cost_data", T
         output:
             "data/costs_{year}.csv",
         log:
-            LOGS + "retrieve_cost_data_{year}.log",
+            "logs/retrieve_cost_data_{year}.log",
         resources:
             mem_mb=1000,
         retries: 2
@@ -123,7 +123,7 @@ if config["enable"]["retrieve"] and config["enable"].get(
         output:
             *datafiles,
         log:
-            LOGS + "retrieve_sector_databundle.log",
+            "logs/retrieve_sector_databundle.log",
         retries: 2
         conda:
             "../envs/environment.yaml"
@@ -145,7 +145,7 @@ if config["enable"]["retrieve"] and (
         output:
             expand("data/gas_network/scigrid-gas/data/{files}", files=datafiles),
         log:
-            LOGS + "retrieve_gas_infrastructure_data.log",
+            "logs/retrieve_gas_infrastructure_data.log",
         retries: 2
         conda:
             "../envs/environment.yaml"
@@ -169,7 +169,7 @@ if config["enable"]["retrieve"]:
         output:
             "data/load_raw.csv",
         log:
-            LOGS + "retrieve_electricity_demand.log",
+            "logs/retrieve_electricity_demand.log",
         resources:
             mem_mb=5000,
         retries: 2
@@ -189,7 +189,7 @@ if config["enable"]["retrieve"]:
         output:
             "data/shipdensity_global.zip",
         log:
-            LOGS + "retrieve_ship_raster.log",
+            "logs/retrieve_ship_raster.log",
         resources:
             mem_mb=5000,
         retries: 2
@@ -209,7 +209,7 @@ if config["enable"]["retrieve"]:
         output:
             "data/validation/emission-spot-primary-market-auction-report-2019-data.xls",
         log:
-            LOGS + "retrieve_monthly_co2_prices.log",
+            "logs/retrieve_monthly_co2_prices.log",
         resources:
             mem_mb=5000,
         retries: 2
@@ -223,7 +223,7 @@ if config["enable"]["retrieve"]:
         output:
             "data/validation/energy-price-trends-xlsx-5619002.xlsx",
         log:
-            LOGS + "retrieve_monthly_fuel_prices.log",
+            "logs/retrieve_monthly_fuel_prices.log",
         resources:
             mem_mb=5000,
         retries: 2
