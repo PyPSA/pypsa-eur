@@ -11,6 +11,8 @@ Upcoming Release
 ================
 
 * Updated Global Energy Monitor LNG terminal data to March 2023 version.
+* PyPSA-EUR now supports the simultaneous execution of multiple scenarios. For this purpose, a scenarios.yaml file has been introduced which contains customizable scenario names with corresponding configuration overrides. To enable it, set the ``run: scenarios:`` key to ``True`` and define the scenario names to run under ``run: name:`` in the configuration file. The latter must be a subset of toplevel keys in the scenario file.
+
 
 PyPSA-Eur 0.8.1 (27th July 2023)
 ================================
