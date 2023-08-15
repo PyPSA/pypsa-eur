@@ -52,6 +52,8 @@ rule plot_renewable_potential_unclustered:
     output:
         wind=multiext(RESOURCES + "graphics/wind-energy-density", ".png", ".pdf"),
         solar=multiext(RESOURCES + "graphics/solar-energy-density", ".png", ".pdf"),
+        wind_cf=multiext(RESOURCES + "graphics/wind-capacity-factor", ".png", ".pdf"),
+        solar_cf=multiext(RESOURCES + "graphics/solar-capacity-factor", ".png", ".pdf"),
     script:
         "../scripts/plot_renewable_potential_unclustered.py"
 

@@ -33,7 +33,6 @@ BENCHMARKS = "benchmarks/" + RDIR
 RESOURCES = "resources/" + RDIR if not run.get("shared_resources") else "resources/"
 RESULTS = "results/" + RDIR
 
-
 localrules:
     purge,
 
