@@ -5,7 +5,6 @@
 
 localrules:
     copy_config,
-    copy_conda_env,
 
 
 rule plot_network:

@@ -156,16 +156,6 @@ if config["enable"]["retrieve"] and (
 if config["enable"]["retrieve"]:
 
     rule retrieve_electricity_demand:
-        input:
-            HTTP.remote(
-                "data.open-power-system-data.org/time_series/{version}/time_series_60min_singleindex.csv".format(
-                version="2019-06-05"
-                    if config["snapshots"]["end"] < "2019"
-                    else "2020-10-06"
-                ),
-                keep_local=True,
-                static=True,
-            ),
         output:
             "data/load_raw.csv",
         log:
@@ -173,8 +163,8 @@ if config["enable"]["retrieve"]:
         resources:
             mem_mb=5000,
         retries: 2
-        run:
-            move(input[0], output[0])
+        script:
+            "../scripts/retrieve_electricity_demand.py"
 
 
 if config["enable"]["retrieve"]:
