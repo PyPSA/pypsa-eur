@@ -188,6 +188,8 @@ if config["enable"]["retrieve"]:
 if config["enable"]["retrieve"]:
 
     rule retrieve_electricity_demand:
+        params:
+            versions=["2019-06-05", "2020-10-06"],
         output:
             RESOURCES + "load_raw.csv",
         log:
