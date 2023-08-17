@@ -76,6 +76,16 @@ rule solve_sector_networks:
         ),
 
 
+rule plot_elec_networks:
+    input:
+        expand(
+            RESULTS
+            + "figures/.statistics_plots_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}",
+            **config["scenario"],
+            run=config["run"]["name"]
+        ),
+
+
 rule plot_networks:
     input:
         expand(
