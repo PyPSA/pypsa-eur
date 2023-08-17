@@ -214,19 +214,19 @@ rule build_renewable_profiles:
         corine=ancient("data/bundle/corine/g250_clc06_V18_5.tif"),
         natura=lambda w: (
             RESOURCES + "natura.tiff"
-            if config["renewable"][w.technology]["natura"]
+            if config_provider("renewable", w.technology, "natura")(w)
             else []
         ),
         gebco=ancient(
             lambda w: (
                 "data/bundle/GEBCO_2014_2D.nc"
-                if config["renewable"][w.technology].get("max_depth")
+                if config_provider("renewable", w.technology)(w).get("max_depth")
                 else []
             )
         ),
         ship_density=lambda w: (
             RESOURCES + "shipdensity_raster.tif"
-            if "ship_threshold" in config["renewable"][w.technology].keys()
+            if "ship_threshold" in config_provider("renewable", w.technology)(w).keys()
             else []
         ),
         country_shapes=RESOURCES + "country_shapes.geojson",
@@ -238,7 +238,7 @@ rule build_renewable_profiles:
         ),
         cutout=lambda w: "cutouts/"
         + CDIR
-        + config["renewable"][w.technology]["cutout"]
+        + config_provider("renewable", w.technology, "cutout")(w)
         + ".nc",
     output:
         profile=RESOURCES + "profile_{technology}.nc",

@@ -743,7 +743,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("base_network")
+        snakemake = mock_snakemake("base_network", run="network2019")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 

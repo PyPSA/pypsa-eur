@@ -68,8 +68,6 @@ def load_timeseries(fn, years, countries):
     load : pd.DataFrame
         Load time-series with UTC timestamps x ISO-2 countries
     """
-    logger.info(f"Retrieving load data from '{fn}'.")
-
     return (
         pd.read_csv(fn, index_col=0, parse_dates=[0])
         .tz_localize(None)
@@ -182,19 +180,25 @@ def manual_adjustment(load, fn_load):
          Manual adjusted and interpolated load time-series with UTC
          timestamps x ISO-2 countries
     """
-    if "MK" in load:
-        if "AL" not in load or load.AL.isnull().values.all():
-            load["AL"] = load["MK"] * (4.1 / 7.4)
-    if "RS" in load:
-        if "KV" not in load or load.KV.isnull().values.all():
-            load["KV"] = load["RS"] * (4.8 / 27.0)
-    if "ME" in load:
-        if "AL" not in load and "AL" in countries:
+
+    if "AL" not in load and "AL" in countries:
+        if "ME" in load:
             load["AL"] = load.ME * (5.7 / 2.9)
-        if "MK" not in load and "MK" in countries:
-            load["MK"] = load.ME * (6.7 / 2.9)
-        if "BA" not in load and "BA" in countries:
+        elif "MK" in load:
+            load["AL"] = load["MK"] * (4.1 / 7.4)
+
+    if "MK" in countries:
+        if "MK" not in load or load.MK.isnull().sum() > len(load) / 2:
+            if "ME" in load:
+                load["MK"] = load.ME * (6.7 / 2.9)
+
+    if "BA" not in load and "BA" in countries:
+        if "ME" in load:
             load["BA"] = load.HR * (11.0 / 16.2)
+
+    if "KV" not in load or load.KV.isnull().values.all():
+        if "RS" in load:
+            load["KV"] = load["RS"] * (4.8 / 27.0)
 
     copy_timeslice(load, "GR", "2015-08-11 21:00", "2015-08-15 20:00", Delta(weeks=1))
     copy_timeslice(load, "AT", "2018-12-31 22:00", "2019-01-01 22:00", Delta(days=2))
@@ -250,7 +254,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_electricity_demand")
+        snakemake = mock_snakemake("build_electricity_demand", run="network2019")
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)

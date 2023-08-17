@@ -31,10 +31,12 @@ def mute_print():
 
 
 def set_scenario_config(snakemake):
-    if "scenario_config" in snakemake.input:
-        with open(snakemake.input.scenario_config, "r") as f:
+    if snakemake.config["run"]["scenarios"]:
+        script_dir = Path(__file__).parent.resolve()
+        root_dir = script_dir.parent
+        with open(root_dir / snakemake.config["scenariofile"], "r") as f:
             scenario_config = yaml.safe_load(f)
-        update_config(snakemake.config, scenario_config)
+        update_config(snakemake.config, scenario_config[snakemake.wildcards.run])
 
 
 def configure_logging(snakemake, skip_handlers=False):
