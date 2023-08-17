@@ -24,7 +24,7 @@ rule build_electricity_demand:
         countries=config["countries"],
         load=config["load"],
     input:
-        ancient(RESOURCES + "load_raw.csv"),
+        ancient(RESOURCES + "electricity_demand.csv"),
     output:
         RESOURCES + "load.csv",
     log:
