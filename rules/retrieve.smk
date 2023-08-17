@@ -159,7 +159,7 @@ if config["enable"]["retrieve"]:
         params:
             versions=["2019-06-05", "2020-10-06"],
         output:
-            "data/load_raw.csv",
+            "data/electricity_demand.csv",
         log:
             "logs/retrieve_electricity_demand.log",
         resources:

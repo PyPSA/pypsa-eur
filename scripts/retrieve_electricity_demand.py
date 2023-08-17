@@ -20,7 +20,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("retrieve_eletricity_demand")
+        snakemake = mock_snakemake("retrieve_electricity_demand")
         rootpath = ".."
     else:
         rootpath = "."
@@ -33,5 +33,17 @@ if __name__ == "__main__":
         pd.read_csv(url.format(version=version), index_col=0)
         for version in snakemake.params.versions
     ]
-    res = pd.concat([df1, df2[df2.index > df1.index[-1]]], join="inner")
+    combined = pd.concat([df1, df2[df2.index > df1.index[-1]]])
+
+    pattern = "_load_actual_entsoe_transparency"
+    transparency = combined.filter(like=pattern).rename(
+        columns=lambda x: x.replace(pattern, "")
+    )
+    pattern = "_load_actual_entsoe_power_statistics"
+    powerstatistics = combined.filter(like=pattern).rename(
+        columns=lambda x: x.replace(pattern, "")
+    )
+
+    res = transparency.fillna(powerstatistics)
+
     res.to_csv(snakemake.output[0])

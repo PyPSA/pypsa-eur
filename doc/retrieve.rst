@@ -91,7 +91,7 @@ None.
 
 **Outputs**
 
-- ``data/load_raw.csv``
+- ``data/electricity_demand.csv``
 
 
 Rule ``retrieve_cost_data``
