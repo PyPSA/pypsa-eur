@@ -606,7 +606,8 @@ sector:
         - x: 12.39
           y: 45.56
           length: 2500
-      hvdc_losses: 3.e-5 # p.u./km
+      efficiency_static: 0.98
+      efficiency_per_1000km: 0.977 # p.u./km
       length_factor: 1.25
       distance_threshold: 0.05 # quantile
 

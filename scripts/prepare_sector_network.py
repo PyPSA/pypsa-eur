@@ -3730,6 +3730,8 @@ def add_endogenous_hvdc_import_options(n, cost_factor=1.0):
 
     n.madd("Bus", buses_i, **exporters.drop("geometry", axis=1))
 
+    efficiency = cf["efficiency_static"] * cf["efficiency_per_1000km"] ** (import_links.values / 1e3)
+
     n.madd(
         "Link",
         ["import hvdc-to-elec " + " ".join(idx).strip() for idx in import_links.index],
@@ -3740,7 +3742,7 @@ def add_endogenous_hvdc_import_options(n, cost_factor=1.0):
         p_nom_extendable=True,
         length=import_links.values,
         capital_cost=hvdc_cost * cost_factor,
-        efficiency=1 - import_links.values * cf["hvdc_losses"],
+        efficiency=efficiency,
     )
 
     for tech in ["solar-utility", "onwind"]:
