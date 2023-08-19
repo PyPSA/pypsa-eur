@@ -464,6 +464,7 @@ sector:
   hydrogen_turbine: false
   SMR: true
   methanol_reforming: true
+  methanol_reforming_cc: false
   methanol_to_kerosene: true
   methanol_to_power:
     ccgt: true

@@ -788,6 +788,30 @@ def add_methanol_reforming(n, costs):
 
     nodes = pop_layout.index
 
+    tech = "Methanol steam reforming"
+
+    capital_cost = costs.at[tech, "fixed"] / costs.at[tech, "methanol-input"]
+
+    n.madd(
+        "Link",
+        nodes,
+        suffix=f" {tech}",
+        bus0=spatial.methanol.nodes,
+        bus1=spatial.h2.nodes,
+        bus2="co2 atmosphere",
+        p_nom_extendable=True,
+        capital_cost=capital_cost,
+        efficiency=1 / costs.at[tech, "methanol-input"],
+        efficiency2=costs.at["methanolisation", "carbondioxide-input"],
+        carrier=tech,
+        lifetime=costs.at[tech, "lifetime"],
+    )
+
+def add_methanol_reforming_cc(n, costs):
+    logger.info("Adding methanol steam reforming with carbon capture.")
+
+    nodes = pop_layout.index
+
     # TODO: heat release and electricity demand for process and carbon capture
     # but the energy demands for carbon capture have not yet been added for other CC processes
     # 10.1016/j.rser.2020.110171: 0.129 kWh_e/kWh_H2, -0.09 kWh_heat/kWh_H2
@@ -4503,6 +4527,9 @@ if __name__ == "__main__":
 
     if options["methanol_reforming"]:
         add_methanol_reforming(n, costs)
+
+    if options["methanol_reforming_cc"]:
+        add_methanol_reforming_cc(n, costs)
 
     solver_name = snakemake.config["solving"]["solver"]["name"]
     n = set_temporal_aggregation(n, opts, solver_name)
