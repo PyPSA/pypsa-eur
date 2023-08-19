@@ -807,6 +807,7 @@ def add_methanol_reforming(n, costs):
         lifetime=costs.at[tech, "lifetime"],
     )
 
+
 def add_methanol_reforming_cc(n, costs):
     logger.info("Adding methanol steam reforming with carbon capture.")
 
@@ -3734,7 +3735,9 @@ def add_endogenous_hvdc_import_options(n, cost_factor=1.0):
 
     n.madd("Bus", buses_i, **exporters.drop("geometry", axis=1))
 
-    efficiency = cf["efficiency_static"] * cf["efficiency_per_1000km"] ** (import_links.values / 1e3)
+    efficiency = cf["efficiency_static"] * cf["efficiency_per_1000km"] ** (
+        import_links.values / 1e3
+    )
 
     n.madd(
         "Link",
@@ -4409,7 +4412,9 @@ if __name__ == "__main__":
         pd.read_csv(snakemake.input.pop_weighted_energy_totals, index_col=0) * nyears
     )
 
-    country_centroids = pd.read_csv(snakemake.input.country_centroids[0], index_col='ISO')
+    country_centroids = pd.read_csv(
+        snakemake.input.country_centroids[0], index_col="ISO"
+    )
 
     patch_electricity_network(n)
 
