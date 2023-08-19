@@ -780,6 +780,7 @@ def add_methanol_to_kerosene(n, costs):
         / costs.at[tech, "methanol-input"],
         p_nom_extendable=True,
         p_min_pu=1,
+        carrier=tech,
     )
 
 
