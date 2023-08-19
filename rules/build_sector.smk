@@ -785,6 +785,7 @@ rule prepare_sector_network:
         import_costs="data/imports/results.csv",  # TODO: host file on zenodo or elsewhere
         import_p_max_pu="data/imports/combined_weighted_generator_timeseries.nc",  # TODO: host file on zenodo or elsewhere
         regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+        country_centroids=HTTP.remote("https://raw.githubusercontent.com/gavinr/world-countries-centroids/v1.0.0/dist/countries.csv", keep_local=True),
     output:
         RESULTS
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",

@@ -3684,9 +3684,13 @@ def add_endogenous_hvdc_import_options(n, cost_factor=1.0):
     )
 
     def _coordinates(ct):
-        query = cc.convert(ct.split("-")[0], to="name")
-        loc = geocode(dict(country=query), language="en")
-        return [loc.longitude, loc.latitude]
+        iso2 = ct.split("-")[0]
+        if iso2 in country_centroids.index:
+            return country_centroids.loc[iso2, ["longitude", "latitude"]].values
+        else:
+            query = cc.convert(iso2, to="name")
+            loc = geocode(dict(country=query), language="en")
+            return [loc.longitude, loc.latitude]
 
     exporters = pd.DataFrame(
         {ct: _coordinates(ct) for ct in cf["exporters"]}, index=["x", "y"]
@@ -4404,6 +4408,8 @@ if __name__ == "__main__":
     pop_weighted_energy_totals = (
         pd.read_csv(snakemake.input.pop_weighted_energy_totals, index_col=0) * nyears
     )
+
+    country_centroids = pd.read_csv(snakemake.input.country_centroids[0], index_col='ISO')
 
     patch_electricity_network(n)
 
