@@ -4213,13 +4213,9 @@ def cluster_heat_buses(n):
         pnl = c.pnl
         agg = define_clustering(pd.Index(pnl.keys()), aggregate_dict)
         for k in pnl.keys():
-            pnl[k].rename(
-                columns=lambda x: x.replace("residential ", "").replace(
-                    "services ", ""
-                ),
-                inplace=True,
-            )
-            pnl[k] = pnl[k].groupby(level=0, axis=1).agg(agg[k], **agg_group_kwargs)
+            def renamer(s):
+                return s.replace("residential ", "").replace("services ", "")
+            pnl[k] = pnl[k].groupby(renamer, axis=1).agg(agg[k], **agg_group_kwargs)
 
         # remove unclustered assets of service/residential
         to_drop = c.df.index.difference(df.index)
