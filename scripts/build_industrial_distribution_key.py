@@ -96,12 +96,15 @@ def prepare_hotmaps_database(regions):
     # the .sjoin can lead to duplicates if a geom is in two regions
     if gdf.index.duplicated().any():
         import pycountry
+
         # get all duplicated entries
         duplicated_i = gdf.index[gdf.index.duplicated()]
         # convert from raw data country name to iso-2-code
-        s = df.loc[duplicated_i, "Country"].apply(lambda x: pycountry.countries.lookup(x).alpha_2)
+        s = df.loc[duplicated_i, "Country"].apply(
+            lambda x: pycountry.countries.lookup(x).alpha_2
+        )
         # Get a boolean mask where gdf's country column matches s's values for the same index
-        mask = gdf['country'] == gdf.index.map(s)
+        mask = gdf["country"] == gdf.index.map(s)
         # Filter gdf using the mask
         gdf_filtered = gdf[mask]
         # concat not duplicated and filtered gdf
