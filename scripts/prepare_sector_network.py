@@ -847,21 +847,6 @@ def add_methanol_reforming_cc(n, costs):
         lifetime=costs.at[tech, "lifetime"],
     )
 
-    n.madd(
-        "Link",
-        nodes,
-        suffix=f" {tech}",
-        bus0=spatial.methanol.nodes,
-        bus1=spatial.h2.nodes,
-        bus2="co2 atmosphere",
-        p_nom_extendable=True,
-        capital_cost=capital_cost,
-        efficiency=1 / costs.at[tech, "methanol-input"],
-        efficiency2=costs.at["methanolisation", "carbondioxide-input"],
-        carrier=tech,
-        lifetime=costs.at[tech, "lifetime"],
-    )
-
 
 def add_dac(n, costs):
     heat_carriers = ["urban central heat", "services urban decentral heat"]
