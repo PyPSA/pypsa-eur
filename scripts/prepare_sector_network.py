@@ -4279,6 +4279,7 @@ def apply_time_segmentation(
     sn_weightings = pd.Series(
         weightings, index=snapshots, name="weightings", dtype="float64"
     )
+    logger.info("Distribution of snapshot durations: ", weightings.value_counts())
 
     n.set_snapshots(sn_weightings.index)
     n.snapshot_weightings = n.snapshot_weightings.mul(sn_weightings, axis=0)
