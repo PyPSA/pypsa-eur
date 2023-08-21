@@ -31,11 +31,16 @@ def mute_print():
 
 
 def set_scenario_config(snakemake):
-    if snakemake.config["run"]["scenarios"]:
-        script_dir = Path(__file__).parent.resolve()
-        root_dir = script_dir.parent
-        with open(root_dir / snakemake.config["scenariofile"], "r") as f:
-            scenario_config = yaml.safe_load(f)
+    if snakemake.config["run"]["scenarios"] and "run" in snakemake.wildcards:
+        try:
+            with open(snakemake.config["scenariofile"], "r") as f:
+                scenario_config = yaml.safe_load(f)
+        except FileNotFoundError:
+            # fallback for mock_snakemake
+            script_dir = Path(__file__).parent.resolve()
+            root_dir = script_dir.parent
+            with open(root_dir / snakemake.config["scenariofile"], "r") as f:
+                scenario_config = yaml.safe_load(f)
         update_config(snakemake.config, scenario_config[snakemake.wildcards.run])
 
 
