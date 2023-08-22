@@ -17,6 +17,8 @@ import geopandas as gpd
 import pandas as pd
 from packaging.version import Version, parse
 
+import country_converter as coco
+cc = coco.CountryConverter()
 
 def locate_missing_industrial_sites(df):
     """
