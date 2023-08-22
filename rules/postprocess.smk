@@ -13,7 +13,6 @@ rule plot_network:
         foresight=config["foresight"],
         plotting=config["plotting"],
     input:
-        overrides="data/override_component_attrs",
         network=RESULTS
         + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
         regions=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
@@ -35,12 +34,38 @@ rule plot_network:
     script:
         "../scripts/plot_network.py"
 
+rule plot_network_perfect:
+    params:
+        foresight=config["foresight"],
+        plotting=config["plotting"],
+    input:
+        network=RESULTS
+        + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years.nc",
+        regions=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+    output:
+        map=RESULTS
+        + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{year}.pdf",
+        today=RESULTS
+        + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{year}-today.pdf",
+    threads: 2
+    resources:
+        mem_mb=10000,
+    benchmark:
+        BENCHMARKS
+        + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{year}_brownfield_all_years_benchmark.txt",
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/plot_network.py"
+
+
+
 
 rule copy_config:
     params:
         RDIR=RDIR,
     output:
-        RESULTS + "config/config.yaml",
+        RESULTS + "config.yaml",
     threads: 1
     resources:
         mem_mb=1000,
@@ -52,22 +77,6 @@ rule copy_config:
         "../scripts/copy_config.py"
 
 
-rule copy_conda_env:
-    output:
-        RESULTS + "config/environment.yaml",
-    threads: 1
-    resources:
-        mem_mb=500,
-    log:
-        LOGS + "copy_conda_env.log",
-    benchmark:
-        BENCHMARKS + "copy_conda_env"
-    conda:
-        "../envs/environment.yaml"
-    shell:
-        "conda env export -f {output} --no-builds"
-
-
 rule make_summary:
     params:
         foresight=config["foresight"],
@@ -76,7 +85,6 @@ rule make_summary:
         scenario=config["scenario"],
         RDIR=RDIR,
     input:
-        overrides="data/override_component_attrs",
         networks=expand(
             RESULTS
             + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
@@ -147,3 +155,34 @@ rule plot_summary:
         "../envs/environment.yaml"
     script:
         "../scripts/plot_summary.py"
+
+
+STATISTICS_BARPLOTS = [
+    "capacity_factor",
+    "installed_capacity",
+    "optimal_capacity",
+    "capital_expenditure",
+    "operational_expenditure",
+    "curtailment",
+    "supply",
+    "withdrawal",
+    "market_value",
+]
+
+
+rule plot_elec_statistics:
+    params:
+        plotting=config["plotting"],
+        barplots=STATISTICS_BARPLOTS,
+    input:
+        network=RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+    output:
+        **{
+            f"{plot}_bar": RESULTS
+            + f"figures/statistics_{plot}_bar_elec_s{{simpl}}_{{clusters}}_ec_l{{ll}}_{{opts}}.pdf"
+            for plot in STATISTICS_BARPLOTS
+        },
+        barplots_touch=RESULTS
+        + "figures/.statistics_plots_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}",
+    script:
+        "../scripts/plot_statistics.py"

@@ -33,11 +33,7 @@ import numpy as np
 import pandas as pd
 import pypsa
 import xarray as xr
-from _helpers import (
-    configure_logging,
-    override_component_attrs,
-    update_config_with_sector_opts,
-)
+from _helpers import configure_logging, update_config_with_sector_opts
 
 logger = logging.getLogger(__name__)
 pypsa.pf.logger.setLevel(logging.WARNING)
@@ -152,7 +148,7 @@ def prepare_network(
     if "clip_p_max_pu" in solve_opts:
         for df in (
             n.generators_t.p_max_pu,
-            n.generators_t.p_min_pu,  # TODO: check if this can be removed
+            n.generators_t.p_min_pu,
             n.storage_units_t.inflow,
         ):
             df.where(df > solve_opts["clip_p_max_pu"], other=0.0, inplace=True)
@@ -280,13 +276,13 @@ def add_EQ_constraints(n, o, scaling=1e-1):
     float_regex = "[0-9]*\.?[0-9]+"
     level = float(re.findall(float_regex, o)[0])
     if o[-1] == "c":
-        ggrouper = n.generators.bus.map(n.buses.country).to_xarray()
-        lgrouper = n.loads.bus.map(n.buses.country).to_xarray()
-        sgrouper = n.storage_units.bus.map(n.buses.country).to_xarray()
+        ggrouper = n.generators.bus.map(n.buses.country)
+        lgrouper = n.loads.bus.map(n.buses.country)
+        sgrouper = n.storage_units.bus.map(n.buses.country)
     else:
-        ggrouper = n.generators.bus.to_xarray()
-        lgrouper = n.loads.bus.to_xarray()
-        sgrouper = n.storage_units.bus.to_xarray()
+        ggrouper = n.generators.bus
+        lgrouper = n.loads.bus
+        sgrouper = n.storage_units.bus
     load = (
         n.snapshot_weightings.generators
         @ n.loads_t.p_set.groupby(lgrouper, axis=1).sum()
@@ -300,7 +296,7 @@ def add_EQ_constraints(n, o, scaling=1e-1):
     p = n.model["Generator-p"]
     lhs_gen = (
         (p * (n.snapshot_weightings.generators * scaling))
-        .groupby(ggrouper)
+        .groupby(ggrouper.to_xarray())
         .sum()
         .sum("snapshot")
     )
@@ -309,7 +305,7 @@ def add_EQ_constraints(n, o, scaling=1e-1):
         spillage = n.model["StorageUnit-spill"]
         lhs_spill = (
             (spillage * (-n.snapshot_weightings.stores * scaling))
-            .groupby(sgrouper)
+            .groupby(sgrouper.to_xarray())
             .sum()
             .sum("snapshot")
         )
@@ -599,47 +595,46 @@ def extra_functionality(n, snapshots):
 
 def solve_network(n, config, solving, opts="", **kwargs):
     set_of_options = solving["solver"]["options"]
-    solver_options = solving["solver_options"][set_of_options] if set_of_options else {}
-    solver_name = solving["solver"]["name"]
     cf_solving = solving["options"]
-    track_iterations = cf_solving.get("track_iterations", False)
-    min_iterations = cf_solving.get("min_iterations", 4)
-    max_iterations = cf_solving.get("max_iterations", 6)
-    transmission_losses = cf_solving.get("transmission_losses", 0)
-    multi_horizon = True if config["foresight"] == "perfect" else False
+   
+    kwargs["multi_investment_periods"] = True if config["foresight"] == "perfect" else False
+    kwargs["solver_options"] = (
+        solving["solver_options"][set_of_options] if set_of_options else {}
+    )
+    kwargs["solver_name"] = solving["solver"]["name"]
+    kwargs["extra_functionality"] = extra_functionality
+    kwargs["transmission_losses"] = cf_solving.get("transmission_losses", False)
+    kwargs["linearized_unit_commitment"] = cf_solving.get(
+        "linearized_unit_commitment", False
+    )
+    kwargs["assign_all_duals"] = cf_solving.get("assign_all_duals", False)
+
+    rolling_horizon = cf_solving.pop("rolling_horizon", False)
+    skip_iterations = cf_solving.pop("skip_iterations", False)
+    if not n.lines.s_nom_extendable.any():
+        skip_iterations = True
+        logger.info("No expandable lines found. Skipping iterative solving.")
 
     # add to network for extra_functionality
     n.config = config
     n.opts = opts
 
-    skip_iterations = cf_solving.get("skip_iterations", False)
-    if not n.lines.s_nom_extendable.any():
-        skip_iterations = True
-        logger.info("No expandable lines found. Skipping iterative solving.")
-
-    if skip_iterations:
-        status, condition = n.optimize(
-            solver_name=solver_name,
-            transmission_losses=transmission_losses,
-            extra_functionality=extra_functionality,
-            multi_investment_periods=multi_horizon,
-            **solver_options,
-            **kwargs,
-        )
+    if rolling_horizon:
+        kwargs["horizon"] = cf_solving.get("horizon", 365)
+        kwargs["overlap"] = cf_solving.get("overlap", 0)
+        n.optimize.optimize_with_rolling_horizon(**kwargs)
+        status, condition = "", ""
+    elif skip_iterations:
+        status, condition = n.optimize(**kwargs)
     else:
+        kwargs["track_iterations"] = (cf_solving.get("track_iterations", False),)
+        kwargs["min_iterations"] = (cf_solving.get("min_iterations", 4),)
+        kwargs["max_iterations"] = (cf_solving.get("max_iterations", 6),)
         status, condition = n.optimize.optimize_transmission_expansion_iteratively(
-            solver_name=solver_name,
-            track_iterations=track_iterations,
-            min_iterations=min_iterations,
-            max_iterations=max_iterations,
-            transmission_losses=transmission_losses,
-            extra_functionality=extra_functionality,
-            multi_investment_periods=multi_horizon,
-            **solver_options,
-            **kwargs,
+            **kwargs
         )
 
-    if status != "ok":
+    if status != "ok" and not rolling_horizon:
         logger.warning(
             f"Solving status '{status}' with termination condition '{condition}'"
         )
@@ -677,11 +672,7 @@ if __name__ == "__main__":
 
     np.random.seed(solve_opts.get("seed", 123))
 
-    if "overrides" in snakemake.input.keys():
-        overrides = override_component_attrs(snakemake.input.overrides)
-        n = pypsa.Network(snakemake.input.network, override_component_attrs=overrides)
-    else:
-        n = pypsa.Network(snakemake.input.network)
+    n = pypsa.Network(snakemake.input.network)
 
     n = prepare_network(
         n,

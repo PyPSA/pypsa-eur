@@ -92,6 +92,20 @@ def prepare_hotmaps_database(regions):
 
     gdf.rename(columns={"index_right": "bus"}, inplace=True)
     gdf["country"] = gdf.bus.str[:2]
+    
+    # the .sjoin can lead to duplicates if a geom is in two regions
+    if gdf.index.duplicated().any():
+        import pycountry
+        # get all duplicated entries
+        duplicated_i = gdf.index[gdf.index.duplicated()]
+        # convert from raw data country name to iso-2-code
+        s = df.loc[duplicated_i, "Country"].apply(lambda x: pycountry.countries.lookup(x).alpha_2)
+        # Get a boolean mask where gdf's country column matches s's values for the same index
+        mask = gdf['country'] == gdf.index.map(s)
+        # Filter gdf using the mask
+        gdf_filtered = gdf[mask]
+        # concat not duplicated and filtered gdf
+        gdf = pd.concat([gdf.drop(duplicated_i), gdf_filtered]).sort_index()
 
     return gdf
 
@@ -115,7 +129,9 @@ def build_nodal_distribution_key(hotmaps, regions, countries):
         facilities = hotmaps.query("country == @country and Subsector == @sector")
 
         if not facilities.empty:
-            emissions = facilities["Emissions_ETS_2014"]
+            emissions = facilities["Emissions_ETS_2014"].fillna(
+                hotmaps["Emissions_EPRTR_2014"]
+            )
             if emissions.sum() == 0:
                 key = pd.Series(1 / len(facilities), facilities.index)
             else:
@@ -130,7 +146,7 @@ def build_nodal_distribution_key(hotmaps, regions, countries):
 
     return keys
 
-
+#%%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -138,7 +154,7 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "build_industrial_distribution_key",
             simpl="",
-            clusters=48,
+            clusters=128,
         )
 
     logging.basicConfig(level=snakemake.config["logging"]["level"])

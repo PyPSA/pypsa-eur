@@ -78,10 +78,10 @@ them:
 
 .. note::
     You can find showcases of the model's capabilities in the Supplementary Materials of the
-    preprint `Benefits of a Hydrogen Network in Europe
-    <https://arxiv.org/abs/2207.05816>`_, the Supplementary Materials of the `paper in Joule with a
+    Joule paper `The potential role of a hydrogen network in Europe
+    <https://doi.org/10.1016/j.joule.2023.06.016>`_, the Supplementary Materials of another `paper in Joule with a
     description of the industry sector
-    <https://arxiv.org/abs/2109.09563>`_, or in `a 2021 presentation
+    <https://doi.org/10.1016/j.joule.2022.04.016>`_, or in `a 2021 presentation
     at EMP-E <https://nworbmot.org/energy/brown-empe.pdf>`_.
     The sector-coupled extension of PyPSA-Eur was
     initially described in the paper `Synergies of sector coupling and transmission
@@ -179,10 +179,13 @@ For sector-coupling studies: ::
 
     @misc{PyPSAEurSec,
         author = "Fabian Neumann and Elisabeth Zeyen and Marta Victoria and Tom Brown",
-        title = "The Potential Role of a Hydrogen Network in Europe",
-        year = "2022",
+        title = "The potential role of a hydrogen network in Europe",
+        journal "Joule",
+        volume = "7",
+        pages = "1--25"
+        year = "2023",
         eprint = "2207.05816",
-        url = "https://arxiv.org/abs/2207.05816",
+        doi = "10.1016/j.joule.2022.04.016",
     }
 
 For sector-coupling studies with pathway optimisation: ::
@@ -224,7 +227,10 @@ The included ``.nc`` files are PyPSA network files which can be imported with Py
     n = pypsa.Network(filename)
 
 
+Operating Systems
+=================
 
+The PyPSA-Eur workflow is continuously tested for Linux, macOS and Windows (WSL only).
 
 
 .. toctree::
@@ -274,6 +280,7 @@ The included ``.nc`` files are PyPSA network files which can be imported with Py
 
    release_notes
    licenses
+   validation
    limitations
    contributing
    support

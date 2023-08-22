@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: MIT
 rule add_existing_baseyear:
     input:
-        overrides="data/override_component_attrs",
         network=RESULTS
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
         powerplants=RESOURCES + "powerplants.csv",
@@ -41,7 +40,6 @@ rule add_existing_baseyear:
 
 rule add_brownfield:
     input:
-        overrides="data/override_component_attrs",
         network=RESULTS
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
         network_p=solved_previous_horizon,  #solved network at previous time step
@@ -82,7 +80,6 @@ rule prepare_perfect_foresight:
             + "elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_"
             + "{}.nc".format(str(config["scenario"]["planning_horizons"][0]))
         ),
-        overrides="data/override_component_attrs",
     output:
         RESULTS
         + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years.nc",
@@ -105,7 +102,6 @@ rule prepare_perfect_foresight:
 
 rule solve_sector_network_perfect:
     input:
-        overrides="data/override_component_attrs",
         network=RESULTS
         + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years.nc",
         costs="data/costs_2030.csv",
@@ -148,7 +144,6 @@ rule make_summary_perfect:
             for ll in config["scenario"]["ll"]
         },
         costs="data/costs_2020.csv",
-        overrides="data/override_component_attrs",
     output:
         nodal_costs=RESULTS + "csvs/nodal_costs.csv",
         nodal_capacities=RESULTS + "csvs/nodal_capacities.csv",

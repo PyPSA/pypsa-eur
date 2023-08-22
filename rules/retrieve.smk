@@ -158,7 +158,11 @@ if config["enable"]["retrieve"]:
     rule retrieve_electricity_demand:
         input:
             HTTP.remote(
-                "data.open-power-system-data.org/time_series/2019-06-05/time_series_60min_singleindex.csv",
+                "data.open-power-system-data.org/time_series/{version}/time_series_60min_singleindex.csv".format(
+                version="2019-06-05"
+                    if config["snapshots"]["end"] < "2019"
+                    else "2020-10-06"
+                ),
                 keep_local=True,
                 static=True,
             ),
@@ -191,3 +195,39 @@ if config["enable"]["retrieve"]:
         retries: 2
         run:
             move(input[0], output[0])
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_monthly_co2_prices:
+        input:
+            HTTP.remote(
+                "https://www.eex.com/fileadmin/EEX/Downloads/EUA_Emission_Spot_Primary_Market_Auction_Report/Archive_Reports/emission-spot-primary-market-auction-report-2019-data.xls",
+                keep_local=True,
+                static=True,
+            ),
+        output:
+            "data/validation/emission-spot-primary-market-auction-report-2019-data.xls",
+        log:
+            LOGS + "retrieve_monthly_co2_prices.log",
+        resources:
+            mem_mb=5000,
+        retries: 2
+        run:
+            move(input[0], output[0])
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_monthly_fuel_prices:
+        output:
+            "data/validation/energy-price-trends-xlsx-5619002.xlsx",
+        log:
+            LOGS + "retrieve_monthly_fuel_prices.log",
+        resources:
+            mem_mb=5000,
+        retries: 2
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/retrieve_monthly_fuel_prices.py"

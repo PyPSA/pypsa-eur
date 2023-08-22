@@ -13,6 +13,7 @@ rule solve_network:
         ),
     input:
         network=RESOURCES + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+        config=RESULTS + "config.yaml",
     output:
         network=RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
     log:
@@ -26,6 +27,7 @@ rule solve_network:
     threads: 4
     resources:
         mem_mb=memory,
+        walltime=config["solving"].get("walltime", "12:00:00"),
     shadow:
         "minimal"
     conda:
@@ -55,7 +57,8 @@ rule solve_operations_network:
         )
     threads: 4
     resources:
-        mem_mb=(lambda w: 5000 + 372 * int(w.clusters)),
+        mem_mb=(lambda w: 10000 + 372 * int(w.clusters)),
+        walltime=config["solving"].get("walltime", "12:00:00"),
     shadow:
         "minimal"
     conda:
