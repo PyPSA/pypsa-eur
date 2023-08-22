@@ -2900,7 +2900,8 @@ def add_industry(n, costs):
 
         n.madd(
             "Load",
-            "coal for industry",
+            spatial.coal.nodes,
+            suffix=" for industry",
             bus=spatial.coal.nodes,
             carrier="coal for industry",
             p_set=p_set,
