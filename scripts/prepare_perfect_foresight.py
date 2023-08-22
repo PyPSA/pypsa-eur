@@ -12,7 +12,7 @@ import re
 
 import pandas as pd
 import pypsa
-from _helpers import override_component_attrs, update_config_with_sector_opts
+from _helpers import update_config_with_sector_opts
 from add_existing_baseyear import add_build_year_to_new_assets
 from pypsa.descriptors import expand_series
 from pypsa.io import import_components_from_dataframe
@@ -88,13 +88,12 @@ def concat_networks(years):
         snakemake.input[f"network_{year}"] for year in years[1:]
     ]
     # final concatenated network
-    overrides = override_component_attrs(snakemake.input.overrides)
-    n = pypsa.Network(override_component_attrs=overrides)
+    n = pypsa.Network()
 
     # iterate over single year networks and concat to perfect foresight network
     for i, network_path in enumerate(network_paths):
         year = years[i]
-        network = pypsa.Network(network_path, override_component_attrs=overrides)
+        network = pypsa.Network(network_path)
         network.lines["carrier"] = "AC"
         add_build_year_to_new_assets(network, year)
 
@@ -286,8 +285,8 @@ if __name__ == "__main__":
             simpl="",
             opts="",
             clusters="37",
-            ll=1.0,
-            sector_opts="cb40ex0-2190H-T-H-B-solar+p3-dist1",
+            ll="v1.0",
+            sector_opts="Co2L0-8760H-T-H-B-I-A-solar+p3-dist1",
         )
 
     update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
