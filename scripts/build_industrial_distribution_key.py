@@ -93,6 +93,17 @@ def prepare_hotmaps_database(regions):
     gdf.rename(columns={"index_right": "bus"}, inplace=True)
     gdf["country"] = gdf.bus.str[:2]
 
+    # the .sjoin can lead to duplicates if a geom is in two overlapping regions
+    if gdf.index.duplicated().any():
+        # get all duplicated entries
+        duplicated_i = gdf.index[gdf.index.duplicated()]
+        # convert from raw data country name to iso-2-code
+        code = cc.convert(gdf.loc[duplicated_i, "Country"], to="iso2")
+        # screen out malformed country allocation
+        gdf_filtered = gdf.loc[duplicated_i].query("country == @code")
+        # concat not duplicated and filtered gdf
+        gdf = pd.concat([gdf.drop(duplicated_i), gdf_filtered])
+
     return gdf
 
 
