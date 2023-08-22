@@ -387,19 +387,9 @@ def historical_emissions(countries):
         countries.remove("GB")
         countries.append("UK")
 
-    # Albania (AL) and Bosnia Herzegovina (BA), Montenegro (ME), Macedonia (MK) and  Serbia (RS)
-    # not included in eea historical emission dataset
-    if "AL" in countries:
-        countries.remove("AL")
-    if "BA" in countries:
-        countries.remove("BA")
-    if "ME" in countries:
-        countries.remove("ME")
-    if "MK" in countries:
-        countries.remove("MK")
-    if "RS" in countries:
-        countries.remove("RS")
-
+    # remove countries which are not included in eea historical emission dataset
+    countries_to_remove = {"AL", "BA", "ME", "MK", "RS"}
+    countries = list(set(countries) - countries_to_remove)
     year = np.arange(1990, 2018).tolist()
 
     idx = pd.IndexSlice
