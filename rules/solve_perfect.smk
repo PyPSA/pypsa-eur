@@ -2,6 +2,11 @@
 #
 # SPDX-License-Identifier: MIT
 rule add_existing_baseyear:
+    params:
+        baseyear=config["scenario"]["planning_horizons"][0],
+        sector=config["sector"],
+        existing_capacities=config["existing_capacities"],
+        costs=config["costs"],
     input:
         network=RESULTS
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
@@ -39,6 +44,10 @@ rule add_existing_baseyear:
 
 
 rule add_brownfield:
+    params:
+        H2_retrofit=config["sector"]["H2_retrofit"],
+        H2_retrofit_capacity_per_CH4=config["sector"]["H2_retrofit_capacity_per_CH4"],
+        threshold_capacity=config["existing_capacities"]["threshold_capacity"],
     input:
         network=RESULTS
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
@@ -105,7 +114,7 @@ rule solve_sector_network_perfect:
         network=RESULTS
         + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years.nc",
         costs="data/costs_2030.csv",
-        config=RESULTS + "configs/config.yaml",
+        config=RESULTS + "config.yaml",
     output:
         RESULTS
         + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years.nc",
