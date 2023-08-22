@@ -794,7 +794,7 @@ rule prepare_sector_network:
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
     threads: 1
     resources:
-        mem_mb=2000,
+        mem_mb=8000,
     log:
         LOGS
         + "prepare_sector_network_elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log",
