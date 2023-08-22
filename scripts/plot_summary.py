@@ -549,7 +549,7 @@ def plot_carbon_budget_distribution(input_eurostat):
         fancybox=True, fontsize=18, loc=(0.01, 0.01), facecolor="white", frameon=True
     )
 
-    path_cb_plot = "results/" + snakemake.params.RDIR + "/graphs/"
+    path_cb_plot = "results/" + snakemake.params.RDIR + "graphs/"
     plt.savefig(path_cb_plot + "carbon_budget_plot.pdf", dpi=300)
 
 
