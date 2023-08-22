@@ -31,7 +31,7 @@ def mute_print():
 
 
 def set_scenario_config(snakemake):
-    if snakemake.config["run"]["scenarios"] and "run" in snakemake.wildcards:
+    if snakemake.config["run"]["scenarios"] and "run" in snakemake.wildcards.keys():
         try:
             with open(snakemake.config["scenariofile"], "r") as f:
                 scenario_config = yaml.safe_load(f)
