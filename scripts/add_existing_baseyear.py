@@ -435,15 +435,23 @@ def add_heating_capacities_installed_before_baseyear(
 
     # split existing capacities between residential and services
     # proportional to energy demand
+    p_set_sum = n.loads_t.p_set.sum()
     ratio_residential = pd.Series(
         [
             (
-                n.loads_t.p_set.sum()[f"{node} residential rural heat"]
+                p_set_sum[f"{node} residential rural heat"]
                 / (
-                    n.loads_t.p_set.sum()[f"{node} residential rural heat"]
-                    + n.loads_t.p_set.sum()[f"{node} services rural heat"]
+                    p_set_sum[f"{node} residential rural heat"]
+                    + p_set_sum[f"{node} services rural heat"]
                 )
             )
+            # if rural heating demand for one of the nodes doesn't exist,
+            # then columns were dropped before and heating demand share should be 0.0
+            if all(
+                f"{node} {service} rural heat" in p_set_sum.index
+                for service in ["residential", "services"]
+            )
+            else 0.0
             for node in nodal_df.index
         ],
         index=nodal_df.index,

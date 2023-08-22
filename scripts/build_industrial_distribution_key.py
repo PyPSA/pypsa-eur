@@ -13,9 +13,12 @@ logger = logging.getLogger(__name__)
 import uuid
 from itertools import product
 
+import country_converter as coco
 import geopandas as gpd
 import pandas as pd
 from packaging.version import Version, parse
+
+cc = coco.CountryConverter()
 
 
 def locate_missing_industrial_sites(df):

@@ -28,18 +28,18 @@ dconf
 /data/links_p_nom.csv
 /data/*totals.csv
 /data/biomass*
-/data/emobility/
-/data/eea*
-/data/jrc*
+/data/bundle-sector/emobility/
+/data/bundle-sector/eea*
+/data/bundle-sector/jrc*
 /data/heating/
-/data/eurostat*
+/data/bundle-sector/eurostat*
 /data/odyssee/
 /data/transport_data.csv
-/data/switzerland*
+/data/bundle-sector/switzerland*
 /data/.nfs*
-/data/Industrial_Database.csv
+/data/bundle-sector/Industrial_Database.csv
 /data/retro/tabula-calculator-calcsetbuilding.csv
-/data/nuts*
+/data/bundle-sector/nuts*
 data/gas_network/scigrid-gas/
 data/costs_*.csv
 
