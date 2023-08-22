@@ -53,7 +53,7 @@ def _add_land_use_constraint(n):
     for carrier in ["solar", "onwind", "offwind-ac", "offwind-dc"]:
         extendable_i = (n.generators.carrier == carrier) & n.generators.p_nom_extendable
         n.generators.loc[extendable_i, "p_nom_min"] = 0
-        
+
         ext_i = (n.generators.carrier == carrier) & ~n.generators.p_nom_extendable
         existing = (
             n.generators.loc[ext_i, "p_nom"]
