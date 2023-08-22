@@ -7,56 +7,57 @@ localrules:
     copy_config,
     copy_conda_env,
 
+if config["foresight"] != "perfect":
+    rule plot_network:
+        params:
+            foresight=config["foresight"],
+            plotting=config["plotting"],
+        input:
+            network=RESULTS
+            + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+            regions=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+        output:
+            map=RESULTS
+            + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
+            today=RESULTS
+            + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}-today.pdf",
+        threads: 2
+        resources:
+            mem_mb=10000,
+        benchmark:
+            (
+                BENCHMARKS
+                + "plot_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+            )
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/plot_network.py"
 
-rule plot_network:
-    params:
-        foresight=config["foresight"],
-        plotting=config["plotting"],
-    input:
-        network=RESULTS
-        + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
-        regions=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
-    output:
-        map=RESULTS
-        + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
-        today=RESULTS
-        + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}-today.pdf",
-    threads: 2
-    resources:
-        mem_mb=10000,
-    benchmark:
-        (
+if config["foresight"] == "perfect":
+    rule plot_network:
+        params:
+            foresight=config["foresight"],
+            plotting=config["plotting"],
+        input:
+            network=RESULTS
+            + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years.nc",
+            regions=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+        output:
+            map=RESULTS
+            + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{year}.pdf",
+            today=RESULTS
+            + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{year}-today.pdf",
+        threads: 2
+        resources:
+            mem_mb=10000,
+        benchmark:
             BENCHMARKS
-            + "plot_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
-        )
-    conda:
-        "../envs/environment.yaml"
-    script:
-        "../scripts/plot_network.py"
-
-rule plot_network_perfect:
-    params:
-        foresight=config["foresight"],
-        plotting=config["plotting"],
-    input:
-        network=RESULTS
-        + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years.nc",
-        regions=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
-    output:
-        map=RESULTS
-        + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{year}.pdf",
-        today=RESULTS
-        + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{year}-today.pdf",
-    threads: 2
-    resources:
-        mem_mb=10000,
-    benchmark:
-        BENCHMARKS
-        + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{year}_brownfield_all_years_benchmark.txt",
-    conda:
-        "../envs/environment.yaml"
-    script:
-        "../scripts/plot_network.py"
+            + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{year}_brownfield_all_years_benchmark.txt",
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/plot_network.py"
 
 
 
