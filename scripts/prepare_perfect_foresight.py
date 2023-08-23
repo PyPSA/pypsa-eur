@@ -143,8 +143,8 @@ def concat_networks(years):
 
         # (3) global constraints
         for component in network.iterate_components(["GlobalConstraint"]):
-            add_year_to_constraints(n, year)
-            import_components_from_dataframe(n, component.df.index, component.name)
+            add_year_to_constraints(network, year)
+            import_components_from_dataframe(n, component.df, component.name)
 
     # set investment periods
     n.investment_periods = n.snapshots.levels[0]
@@ -275,6 +275,19 @@ def set_carbon_constraints(n, opts):
     return n
 
 
+def adjust_lvlimit(n):
+    c = "GlobalConstraint"
+    cols = ['carrier_attribute', 'sense', "constant", "type"]
+    glc_type = "transmission_volume_expansion_limit"
+    if (n.df(c)[n.df(c).type==glc_type][cols].nunique()==1).all():
+        glc = n.df(c)[n.df(c).type==glc_type][cols].iloc[[0]]
+        glc.index = pd.Index(["lv_limit"])
+        remove_i = n.df(c)[n.df(c).type==glc_type].index
+        n.mremove(c, remove_i)
+        import_components_from_dataframe(n, glc, c)
+        
+    return n
+
 # %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -286,7 +299,7 @@ if __name__ == "__main__":
             opts="",
             clusters="37",
             ll="v1.0",
-            sector_opts="Co2L0-8760H-T-H-B-I-A-solar+p3-dist1",
+            sector_opts="2p0-co2min-8760H-T-H-B-I-A-solar+p3-dist1",
         )
 
     update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
@@ -306,7 +319,9 @@ if __name__ == "__main__":
 
     # concat prenetworks of planning horizon to single network ------------
     n = concat_networks(years)
-
+    
+    # adjust global constraints lv limit if the same for all years
+    n = adjust_lvlimit(n)
     # set phase outs
     set_all_phase_outs(n)
     # adjust stores to multi period investment
