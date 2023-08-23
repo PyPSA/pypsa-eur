@@ -110,6 +110,13 @@ rule prepare_perfect_foresight:
 
 
 rule solve_sector_network_perfect:
+    params:
+        solving=config["solving"],
+        foresight=config["foresight"],
+        planning_horizons=config["scenario"]["planning_horizons"],
+        co2_sequestration_potential=config["sector"].get(
+            "co2_sequestration_potential", 200
+        ),
     input:
         network=RESULTS
         + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years.nc",
