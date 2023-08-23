@@ -304,6 +304,17 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
             bus0 = vars(spatial)[carrier[generator]].nodes
             if "EU" not in vars(spatial)[carrier[generator]].locations:
                 bus0 = bus0.intersection(capacity.index + " gas")
+            
+            # check for missing bus
+            missing_bus = pd.Index(bus0).difference(n.buses.index)
+            if not missing_bus.empty:
+                logger.info(f"add buses {bus0}")
+                n.madd("Bus",
+                       bus0,
+                       carrier=generator,
+                       location=vars(spatial)[carrier[generator]].locations,
+                       unit="MWh_el"
+                       )
 
             already_build = n.links.index.intersection(asset_i)
             new_build = asset_i.difference(n.links.index)
@@ -605,13 +616,13 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "add_existing_baseyear",
-            configfiles="config/test/config.myopic.yaml",
+            # configfiles="config/test/config.myopic.yaml",
             simpl="",
-            clusters="5",
-            ll="v1.5",
+            clusters="37",
+            ll="v1.0",
             opts="",
-            sector_opts="24H-T-H-B-I-A-solar+p3-dist1",
-            planning_horizons=2030,
+            sector_opts="8760H-T-H-B-I-A-solar+p3-dist1",
+            planning_horizons=2020,
         )
 
     logging.basicConfig(level=snakemake.config["logging"]["level"])
