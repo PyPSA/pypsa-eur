@@ -49,6 +49,10 @@ def rename_techs(label):
         # "H2 Fuel Cell": "hydrogen storage",
         # "H2 pipeline": "hydrogen storage",
         "battery": "battery storage",
+        "H2 for industry": "H2 for industry",
+        "land transport fuel cell": "land transport fuel cell",
+        "land transport oil": "land transport oil",
+        "oil shipping": "shipping oil",
         # "CC": "CC"
     }
 
@@ -157,11 +161,11 @@ def plot_costs():
         df.index.difference(preferred_order)
     )
 
-    new_columns = df.sum().sort_values().index
+    # new_columns = df.sum().sort_values().index
 
     fig, ax = plt.subplots(figsize=(12, 8))
 
-    df.loc[new_index, new_columns].T.plot(
+    df.loc[new_index].T.plot(
         kind="bar",
         ax=ax,
         stacked=True,
@@ -222,13 +226,13 @@ def plot_energy():
         df.index.difference(preferred_order)
     )
 
-    new_columns = df.columns.sort_values()
+    # new_columns = df.columns.sort_values()
 
     fig, ax = plt.subplots(figsize=(12, 8))
 
-    logger.debug(df.loc[new_index, new_columns])
+    logger.debug(df.loc[new_index])
 
-    df.loc[new_index, new_columns].T.plot(
+    df.loc[new_index].T.plot(
         kind="bar",
         ax=ax,
         stacked=True,
@@ -272,7 +276,7 @@ def plot_balances():
         i for i in balances_df.index.levels[0] if i not in co2_carriers
     ]
 
-    fig, ax = plt.subplots(figsize=(12, 8))
+    
 
     for k, v in balances.items():
         df = balances_df.loc[v]
@@ -317,6 +321,8 @@ def plot_balances():
         )
 
         new_columns = df.columns.sort_values()
+        
+        fig, ax = plt.subplots(figsize=(12, 8))
 
         df.loc[new_index, new_columns].T.plot(
             kind="bar",
@@ -544,7 +550,7 @@ def plot_carbon_budget_distribution(input_eurostat):
     path_cb_plot = "results/" + snakemake.params.RDIR + "/graphs/"
     plt.savefig(path_cb_plot + "carbon_budget_plot.pdf", dpi=300)
 
-
+#%%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake

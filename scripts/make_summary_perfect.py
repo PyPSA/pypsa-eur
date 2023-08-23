@@ -13,7 +13,6 @@ other metrics.
 import numpy as np
 import pandas as pd
 import pypsa
-from _helpers import override_component_attrs
 from make_summary import (
     assign_carriers,
     assign_locations,
@@ -221,31 +220,43 @@ def calculate_curtailment(n, label, curtailment):
 
 
 def calculate_energy(n, label, energy):
+    investments = n.investment_periods
+    cols = pd.MultiIndex.from_product(
+        [
+            energy.columns.levels[0],
+            energy.columns.levels[1],
+            energy.columns.levels[2],
+            investments,
+        ],
+        names=energy.columns.names[:3] + ["year"],
+    )
+    energy = energy.reindex(cols, axis=1)
+    
     for c in n.iterate_components(n.one_port_components | n.branch_components):
         if c.name in n.one_port_components:
             c_energies = (
-                c.pnl.p.multiply(n.snapshot_weightings, axis=0)
-                .sum()
+                c.pnl.p.multiply(n.snapshot_weightings.generators, axis=0)
+                .groupby(level=0).sum()
                 .multiply(c.df.sign)
-                .groupby(c.df.carrier)
+                .groupby(c.df.carrier, axis=1)
                 .sum()
             )
         else:
-            c_energies = pd.Series(0.0, c.df.carrier.unique())
+            c_energies = pd.DataFrame(0.0, columns=c.df.carrier.unique(), index=n.investment_periods)
             for port in [col[3:] for col in c.df.columns if col[:3] == "bus"]:
-                totals = c.pnl["p" + port].multiply(n.snapshot_weightings, axis=0).sum()
+                totals = c.pnl["p" + port].multiply(n.snapshot_weightings.generators, axis=0).groupby(level=0).sum()
                 # remove values where bus is missing (bug in nomopyomo)
                 no_bus = c.df.index[c.df["bus" + port] == ""]
-                totals.loc[no_bus] = n.component_attrs[c.name].loc[
+                totals[no_bus] = float(n.component_attrs[c.name].loc[
                     "p" + port, "default"
-                ]
-                c_energies -= totals.groupby(c.df.carrier).sum()
+                ])
+                c_energies -= totals.groupby(c.df.carrier, axis=1).sum()
 
-        c_energies = pd.concat([c_energies], keys=[c.list_name])
+        c_energies = pd.concat([c_energies.T], keys=[c.list_name])
 
         energy = energy.reindex(c_energies.index.union(energy.index))
 
-        energy.loc[c_energies.index, label] = c_energies
+        energy.loc[c_energies.index, label] = c_energies.values
 
     return energy
 
@@ -599,7 +610,7 @@ def calculate_co2_emissions(n, label, df):
     if emissions.empty:
         return
 
-    weightings = n.snapshot_weightings.mul(
+    weightings = n.snapshot_weightings.generators.mul(
         n.investment_period_weightings["years"]
         .reindex(n.snapshots)
         .fillna(method="bfill")
@@ -661,11 +672,10 @@ def make_summaries(networks_dict):
     for output in outputs:
         df[output] = pd.DataFrame(columns=columns, dtype=float)
 
-    overrides = override_component_attrs(snakemake.input.overrides)
     for label, filename in iteritems(networks_dict):
         print(label, filename)
         try:
-            n = pypsa.Network(filename, override_component_attrs=overrides)
+            n = pypsa.Network(filename)
         except OSError:
             print(label, " not solved yet.")
             continue
@@ -694,7 +704,6 @@ if __name__ == "__main__":
     # Detect running outside of snakemake and mock snakemake for testing
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
-
         snakemake = mock_snakemake("make_summary_perfect")
 
     networks_dict = {
