@@ -1150,6 +1150,7 @@ def add_storage_and_grids(n, costs):
         e_cyclic=True,
         carrier="H2 Store",
         capital_cost=h2_capital_cost,
+        lifetime=costs.at["hydrogen storage tank type 1 including compressor", "lifetime"],
     )
 
     if options["gas_network"] or options["H2_retrofit"]:
@@ -3273,20 +3274,20 @@ def set_temporal_aggregation(n, opts, solver_name):
             break
     return n
 
-
+#%%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "prepare_sector_network",
-            configfiles="test/config.overnight.yaml",
+            # configfiles="test/config.overnight.yaml",
             simpl="",
             opts="",
-            clusters="5",
-            ll="v1.5",
-            sector_opts="CO2L0-24H-T-H-B-I-A-solar+p3-dist1",
-            planning_horizons="2030",
+            clusters="37",
+            ll="v1.0",
+            sector_opts="8760H-T-H-B-I-A-solar+p3-dist1",
+            planning_horizons="2020",
         )
 
     logging.basicConfig(level=snakemake.config["logging"]["level"])
@@ -3319,7 +3320,7 @@ if __name__ == "__main__":
 
     spatial = define_spatial(pop_layout.index, options)
 
-    if snakemake.params.foresight == "myopic":
+    if snakemake.params.foresight in ["myopic", "perfect"]:
         add_lifetime_wind_solar(n, costs)
 
         conventional = snakemake.params.conventional_carriers
@@ -3434,7 +3435,7 @@ if __name__ == "__main__":
     if options["electricity_grid_connection"]:
         add_electricity_grid_connection(n, costs)
 
-    first_year_myopic = (snakemake.params.foresight == "myopic") and (
+    first_year_myopic = (snakemake.params.foresight in ["myopic", "perfect"]) and (
         snakemake.params.planning_horizons[0] == investment_year
     )
 
