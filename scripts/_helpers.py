@@ -6,20 +6,56 @@
 import contextlib
 import logging
 import os
+import re
 import urllib
 from pathlib import Path
 
 import pandas as pd
 import pytz
 import yaml
-from pypsa.components import component_attrs, components
-from pypsa.descriptors import Dict
 from snakemake.utils import update_config
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
 REGION_COLS = ["geometry", "name", "x", "y", "country"]
+
+
+def path_provider(dir, rdir, shared_resources):
+    """
+    Dynamically provide paths based on shared resources.
+
+    Use this function whenever there is an input or output to a
+    snakemake rule that should, optionally, be either shared across runs
+    or created individually for each run. If shared_resources is a
+    string, it is assumed to be the wildcard that indicates the cutoff
+    after which resources are no longer shared. The function returns a
+    function which takes a filename and returns a path that is either
+    shared or individual to each run.
+    """
+
+    def path(fn):
+        pattern = r"\{([^{}]+)\}"
+        existing_wildcards = list(re.findall(pattern, fn))
+        if shared_resources == "base":
+            # special case for shared "base" resources
+            no_relevant_wildcards = not len(set(existing_wildcards) - {"technology"})
+            no_elec_rule = not fn.startswith("networks/elec") and not fn.startswith(
+                "add_electricity"
+            )
+            is_shared = no_relevant_wildcards and no_elec_rule
+        elif isinstance(shared_resources, str):
+            final_wildcard = shared_resources
+            is_shared = final_wildcard not in existing_wildcards[:-1]
+        else:
+            is_shared = shared_resources
+
+        if is_shared:
+            return f"{dir}{fn}"
+        else:
+            return f"{dir}{rdir}{fn}"
+
+    return path
 
 
 # Define a context manager to temporarily mute print statements
@@ -31,15 +67,16 @@ def mute_print():
 
 
 def set_scenario_config(snakemake):
-    if snakemake.config["run"]["scenarios"] and "run" in snakemake.wildcards.keys():
+    scenario = snakemake.config["run"].get("scenario", {})
+    if scenario.get("enable") and "run" in snakemake.wildcards.keys():
         try:
-            with open(snakemake.config["scenariofile"], "r") as f:
+            with open(scenario["file"], "r") as f:
                 scenario_config = yaml.safe_load(f)
         except FileNotFoundError:
             # fallback for mock_snakemake
             script_dir = Path(__file__).parent.resolve()
             root_dir = script_dir.parent
-            with open(root_dir / snakemake.config["scenariofile"], "r") as f:
+            with open(root_dir / scenario["file"], "r") as f:
                 scenario_config = yaml.safe_load(f)
         update_config(snakemake.config, scenario_config[snakemake.wildcards.run])
 

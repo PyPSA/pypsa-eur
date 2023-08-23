@@ -8,6 +8,7 @@ from pathlib import Path
 import yaml
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 from snakemake.utils import min_version
+from scripts._helpers import path_provider
 
 min_version("7.7")
 HTTP = HTTPRemoteProvider()
@@ -24,20 +25,23 @@ COSTS = f"data/costs_{config['costs']['year']}.csv"
 ATLITE_NPROCESSES = config["atlite"].get("nprocesses", 4)
 
 run = config["run"]
-if run.get("scenarios", False):
-    if run["shared_resources"]:
-        raise ValueError("Cannot use shared resources with scenarios")
-    scenarios = yaml.safe_load(Path(config["scenariofile"]).read_text())
+scenario = run.get("scenario", {})
+if run["name"]:
+    if scenario.get("enable"):
+        fn = Path(scenario["file"])
+        scenarios = yaml.safe_load(fn.read_text())
     RDIR = "{run}/"
-elif run["name"]:
-    RDIR = run["name"] + "/"
 else:
     RDIR = ""
-CDIR = RDIR if not run.get("shared_cutouts") else ""
 
+# for possibly shared resources
+logs = path_provider("logs/", RDIR, run["shared_resources"])
+benchmarks = path_provider("benchmarks/", RDIR, run["shared_resources"])
+resources = path_provider("resources/", RDIR, run["shared_resources"])
+
+CDIR = "" if run["shared_cutouts"] else RDIR
 LOGS = "logs/" + RDIR
 BENCHMARKS = "benchmarks/" + RDIR
-RESOURCES = "resources/" + RDIR if not run.get("shared_resources") else "resources/"
 RESULTS = "results/" + RDIR
 
 
@@ -86,9 +90,9 @@ rule dag:
     message:
         "Creating DAG of workflow."
     output:
-        dot=RESOURCES + "dag.dot",
-        pdf=RESOURCES + "dag.pdf",
-        png=RESOURCES + "dag.png",
+        dot=resources("dag.dot"),
+        pdf=resources("dag.pdf"),
+        png=resources("dag.png"),
     conda:
         "envs/environment.yaml"
     shell:

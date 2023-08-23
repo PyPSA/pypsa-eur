@@ -14,7 +14,7 @@ rule plot_network:
     input:
         network=RESULTS
         + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
-        regions=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+        regions=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
     output:
         map=RESULTS
         + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",

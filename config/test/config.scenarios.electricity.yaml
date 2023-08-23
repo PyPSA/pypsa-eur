@@ -3,15 +3,16 @@
 # SPDX-License-Identifier: CC0-1.0
 
 tutorial: true
-scenariofile: "config/test/scenarios.electricity.yaml"
 
 run:
   name:
   - test-elec-no-offshore-wind
   - test-elec-no-onshore-wind
-  scenarios: true
+  scenario:
+    enable: true
+    file: "config/test/scenarios.electricity.yaml"
   disable_progressbar: true
-  shared_resources: false # cannot be true if scenarios is true
+  shared_resources: base
   shared_cutouts: true
 
 scenario:

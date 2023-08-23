@@ -40,10 +40,12 @@ def static_getter(wildcards, keys, default):
 
 def dynamic_getter(wildcards, keys, default):
     """Getter function for dynamic config values based on scenario."""
+    if "run" not in wildcards:
+        return get_config(config, keys, default)
     scenario_name = wildcards.run
     if scenario_name not in scenarios:
         raise ValueError(
-            f"Scenario {scenario_name} not found in file {config['scenariofile']}."
+            f"Scenario {scenario_name} not found in file {config['run']['scenario']['file']}."
         )
     return get_config(scenario_config(scenario_name), keys, default)
 

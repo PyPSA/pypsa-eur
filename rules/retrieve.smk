@@ -92,9 +92,9 @@ if config["enable"]["retrieve"] and config["enable"].get(
                 static=True,
             ),
         output:
-            RESOURCES + "natura.tiff",
+            resources("natura.tiff"),
         log:
-            LOGS + "retrieve_natura_raster.log",
+            logs("retrieve_natura_raster.log"),
         resources:
             mem_mb=5000,
         retries: 2

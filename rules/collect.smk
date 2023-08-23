@@ -23,7 +23,7 @@ rule all:
 rule cluster_networks:
     input:
         expand(
-            RESOURCES + "networks/elec_s{simpl}_{clusters}.nc",
+            resources("networks/elec_s{simpl}_{clusters}.nc"),
             **config["scenario"],
             run=config["run"]["name"]
         ),
@@ -32,7 +32,7 @@ rule cluster_networks:
 rule extra_components_networks:
     input:
         expand(
-            RESOURCES + "networks/elec_s{simpl}_{clusters}_ec.nc",
+            resources("networks/elec_s{simpl}_{clusters}_ec.nc"),
             **config["scenario"],
             run=config["run"]["name"]
         ),
@@ -41,7 +41,7 @@ rule extra_components_networks:
 rule prepare_elec_networks:
     input:
         expand(
-            RESOURCES + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+            resources("networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"),
             **config["scenario"],
             run=config["run"]["name"]
         ),

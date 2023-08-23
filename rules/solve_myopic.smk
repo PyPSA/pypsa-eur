@@ -12,13 +12,13 @@ rule add_existing_baseyear:
     input:
         network=RESULTS
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
-        powerplants=RESOURCES + "powerplants.csv",
-        busmap_s=RESOURCES + "busmap_elec_s{simpl}.csv",
-        busmap=RESOURCES + "busmap_elec_s{simpl}_{clusters}.csv",
-        clustered_pop_layout=RESOURCES + "pop_layout_elec_s{simpl}_{clusters}.csv",
+        powerplants=resources("powerplants.csv"),
+        busmap_s=resources("busmap_elec_s{simpl}.csv"),
+        busmap=resources("busmap_elec_s{simpl}_{clusters}.csv"),
+        clustered_pop_layout=resources("pop_layout_elec_s{simpl}_{clusters}.csv"),
         costs="data/costs_{}.csv".format(config["scenario"]["planning_horizons"][0]),
-        cop_soil_total=RESOURCES + "cop_soil_total_elec_s{simpl}_{clusters}.nc",
-        cop_air_total=RESOURCES + "cop_air_total_elec_s{simpl}_{clusters}.nc",
+        cop_soil_total=resources("cop_soil_total_elec_s{simpl}_{clusters}.nc"),
+        cop_air_total=resources("cop_air_total_elec_s{simpl}_{clusters}.nc"),
         existing_heating="data/existing_infrastructure/existing_heating_raw.csv",
         existing_solar="data/existing_infrastructure/solar_capacity_IRENA.csv",
         existing_onwind="data/existing_infrastructure/onwind_capacity_IRENA.csv",
@@ -55,8 +55,8 @@ rule add_brownfield:
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
         network_p=solved_previous_horizon,  #solved network at previous time step
         costs="data/costs_{planning_horizons}.csv",
-        cop_soil_total=RESOURCES + "cop_soil_total_elec_s{simpl}_{clusters}.nc",
-        cop_air_total=RESOURCES + "cop_air_total_elec_s{simpl}_{clusters}.nc",
+        cop_soil_total=resources("cop_soil_total_elec_s{simpl}_{clusters}.nc"),
+        cop_air_total=resources("cop_air_total_elec_s{simpl}_{clusters}.nc"),
     output:
         RESULTS
         + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",

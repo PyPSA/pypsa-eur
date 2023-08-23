@@ -10,3 +10,29 @@
 # custom-scenario: # name of the scenario
 #   electricity:
 #       renewable_carriers: [wind, solar] # override the list of renewable carriers
+
+
+network2013:
+  snapshots:
+    start: "2013-01-01"
+    end: "2014-01-01"
+    inclusive: 'left'
+
+
+network2019:
+  snapshots:
+    start: "2019-01-01"
+    end: "2020-01-01"
+    inclusive: 'left'
+
+  renewable:
+    onwind:
+      cutout: europe-2019-era5
+    offwind-ac:
+      cutout: europe-2019-era5
+    offwind-dc:
+      cutout: europe-2019-era5
+    solar:
+      cutout: europe-2019-era5
+    hydro:
+      cutout: europe-2019-era5
