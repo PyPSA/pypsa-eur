@@ -115,7 +115,7 @@ rule plot_summary:
         energy=RESULTS + "csvs/energy.csv",
         balances=RESULTS + "csvs/supply_energy.csv",
         eurostat=input_eurostat,
-        co2="data/eea/UNFCCC_v23.csv",
+        co2="data/bundle-sector/eea/UNFCCC_v23.csv",
     output:
         costs=RESULTS + "graphs/costs.pdf",
         energy=RESULTS + "graphs/energy.pdf",

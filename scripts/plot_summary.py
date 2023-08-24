@@ -354,7 +354,7 @@ def historical_emissions(countries):
     """
     # https://www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-16
     # downloaded 201228 (modified by EEA last on 201221)
-    fn = "data/eea/UNFCCC_v23.csv"
+    fn = "data/bundle-sector/eea/UNFCCC_v23.csv"
     df = pd.read_csv(fn, encoding="latin-1")
     df.loc[df["Year"] == "1985-1987", "Year"] = 1986
     df["Year"] = df["Year"].astype(int)
