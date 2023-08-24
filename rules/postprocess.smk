@@ -44,16 +44,18 @@ if config["foresight"] == "perfect":
             + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years.nc",
             regions=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
         output:
-            map=RESULTS
-            + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{year}.pdf",
-            today=RESULTS
-            + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{year}-today.pdf",
+            **{
+                f"map_{year}": RESULTS
+                + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_"
+                + f"{year}.pdf"
+                for year in config["scenario"]["planning_horizons"]
+            },
         threads: 2
         resources:
             mem_mb=10000,
         benchmark:
             BENCHMARKS
-            + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{year}_brownfield_all_years_benchmark.txt",
+            + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years_benchmark",
         conda:
             "../envs/environment.yaml"
         script:
