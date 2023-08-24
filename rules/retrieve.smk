@@ -117,15 +117,19 @@ if config["enable"]["retrieve"] and config["enable"].get(
     ]
 
     datafolders = [
-        protected(directory("data/bundle-sector/eurostat-energy_balances-june_2016_edition")),
-        protected(directory("data/bundle-sector/eurostat-energy_balances-may_2018_edition")),
+        protected(
+            directory("data/bundle-sector/eurostat-energy_balances-june_2016_edition")
+        ),
+        protected(
+            directory("data/bundle-sector/eurostat-energy_balances-may_2018_edition")
+        ),
         protected(directory("data/bundle-sector/jrc-idees-2015")),
     ]
 
     rule retrieve_sector_databundle:
         output:
             protected(expand("data/bundle-sector/{files}", files=datafiles)),
-            *datafolders
+            *datafolders,
         log:
             LOGS + "retrieve_sector_databundle.log",
         retries: 2
@@ -147,7 +151,9 @@ if config["enable"]["retrieve"] and (
 
     rule retrieve_gas_infrastructure_data:
         output:
-            protected(expand("data/gas_network/scigrid-gas/data/{files}", files=datafiles)),
+            protected(
+                expand("data/gas_network/scigrid-gas/data/{files}", files=datafiles)
+            ),
         log:
             LOGS + "retrieve_gas_infrastructure_data.log",
         retries: 2

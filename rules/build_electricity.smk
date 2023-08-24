@@ -350,7 +350,9 @@ rule add_electricity:
         hydro_capacities=ancient("data/bundle/hydro_capacities.csv"),
         geth_hydro_capacities="data/geth2015_hydro_capacities.csv",
         unit_commitment="data/unit_commitment.csv",
-        fuel_price=RESOURCES + "monthly_fuel_price.csv" if config["conventional"]["dynamic_fuel_price"] else [],
+        fuel_price=RESOURCES + "monthly_fuel_price.csv"
+        if config["conventional"]["dynamic_fuel_price"]
+        else [],
         load=RESOURCES + "load.csv",
         nuts3_shapes=RESOURCES + "nuts3_shapes.geojson",
     output:
