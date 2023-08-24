@@ -297,30 +297,55 @@ if __name__ == "__main__":
 
     set_line_s_max_pu(n, snakemake.params.lines["s_max_pu"])
 
+    nH_wildcard = False
+    nseg_wildcard = False
+    Co2L_wildcard = False
+
     for o in opts:
         m = re.match(r"^\d+h$", o, re.IGNORECASE)
         if m is not None:
             n = average_every_nhours(n, m.group(0))
+            nH_wildcard = True
             break
+    
+    if snakemake.params.average_every_nhours.get("enable", False) and not nH_wildcard:
+        m = snakemake.params.average_every_nhours["hour"]
+        n = average_every_nhours(n, m)
 
     for o in opts:
         m = re.match(r"^\d+seg$", o, re.IGNORECASE)
         if m is not None:
             solver_name = snakemake.config["solving"]["solver"]["name"]
             n = apply_time_segmentation(n, m.group(0)[:-3], solver_name)
+            nseg_wildcard = True
             break
+
+    if snakemake.params.time_segmentation.get("enable", False) and not nH_wildcard:
+        solver_name = snakemake.config["solving"]["solver"]["name"]
+        m = snakemake.params.time_segmentation["hour"]
+        n = apply_time_segmentation(n, m, solver_name)
 
     for o in opts:
         if "Co2L" in o:
             m = re.findall("[0-9]*\.?[0-9]+$", o)
             if len(m) > 0:
-                co2limit = float(m[0]) * snakemake.params.co2base
+                co2limit = float(m[0]) * snakemake.params.co2["base"]
                 add_co2limit(n, co2limit, Nyears)
                 logger.info("Setting CO2 limit according to wildcard value.")
             else:
-                add_co2limit(n, snakemake.params.co2limit, Nyears)
+                add_co2limit(n, snakemake.params.co2["limit"], Nyears)
                 logger.info("Setting CO2 limit according to config value.")
+            Co2L_wildcard = True
             break
+    
+    if snakemake.params.co2["fix_limits"].get("enable", False) and not Co2L_wildcard:
+        if isinstance(snakemake.params.co2["fix_limits"].get("value"),float):
+            co2limit = snakemake.params.co2["fix_limits"]["value"] * snakemake.params.co2["base"]
+        else:
+            co2limit = snakemake.params.co2["limit"]
+        add_co2limit(n, co2limit, Nyears)
+        logger.info("Setting CO2 limit according to config value.")
+
 
     for o in opts:
         if "CH4L" in o:
@@ -354,19 +379,20 @@ if __name__ == "__main__":
                     c.df.loc[sel, attr] *= factor
 
     for o in opts:
-        if "Ept" in o:
-            logger.info(
-                "Setting time dependent emission prices according spot market price"
-            )
-            add_dynamic_emission_prices(n)
-        elif "Ep" in o:
+        if "Ep" in o or snakemake.params.cost["emission_prices"].get("enable",False):
+            if "Ept" in o: or snakemake.params.cost["emission_prices"].get("monthly_prices",False)
+                logger.info(
+                    "Setting time dependent emission prices according spot market price"
+                )
+                add_dynamic_emission_prices(n)
+                break
             m = re.findall("[0-9]*\.?[0-9]+$", o)
             if len(m) > 0:
                 logger.info("Setting emission prices according to wildcard value.")
                 add_emission_prices(n, dict(co2=float(m[0])))
             else:
                 logger.info("Setting emission prices according to config value.")
-                add_emission_prices(n, snakemake.params.costs["emission_prices"])
+                add_emission_prices(n, snakemake.params.costs["emission_prices"]["co2"])
             break
 
     ll_type, factor = snakemake.wildcards.ll[0], snakemake.wildcards.ll[1:]
@@ -380,10 +406,11 @@ if __name__ == "__main__":
         p_nom_max_ext=snakemake.params.links.get("max_extension", np.inf),
     )
 
-    if "ATK" in opts:
-        enforce_autarky(n)
-    elif "ATKc" in opts:
-        enforce_autarky(n, only_crossborder=True)
+    if "ATK" in opts or snakemake.params.autarky.get("enable",False):
+        only_crossborder=False
+        if "ATKc" in opts or  snakemake.params.autarky.get("by_country",False):
+            only_crossborder=True
+        enforce_autarky(n, only_crossborder=only_crossborder)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     n.export_to_netcdf(snakemake.output[0])

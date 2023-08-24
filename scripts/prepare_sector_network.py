@@ -3043,6 +3043,8 @@ def remove_h2_network(n):
 
 
 def maybe_adjust_costs_and_potentials(n, opts):
+    adjust_carrier_wildcard = False
+
     for o in opts:
         if "+" not in o:
             continue
@@ -3080,6 +3082,29 @@ def maybe_adjust_costs_and_potentials(n, opts):
                         sel = c.df.carrier.str.contains(carrier)
                     c.df.loc[sel, attr] *= factor
             logger.info(f"changing {attr} for {carrier} by factor {factor}")
+            adjust_carrier_wildcard = True
+    
+    if snakemake.params.adjust_carrier.get("enable", False) and not adjust_carrier_wildcard:
+        for carrier in snakemake.params.adjust_carrier:
+            attr_factor = snakemake.params.adjust_carrier[carrier]     
+            if isinstance(attr, dict):
+                for attr in attr_factor.keys():
+                    factor = attr_factor[attr]
+                    if attr == "p_nom_max":
+                        comps = {"Generator", "Link", "StorageUnit"}
+                    elif attr == "e_nom_max":
+                        comps = {"Store"}
+                    else:
+                        comps = {"Generator", "Link", "StorageUnit", "Store"}
+                    for c in n.iterate_components(comps):
+                        if carrier == "solar":
+                            sel = c.df.carrier.str.contains(
+                                carrier
+                            ) & ~c.df.carrier.str.contains("solar rooftop")
+                        else:
+                            sel = c.df.carrier.str.contains(carrier)
+                        c.df.loc[sel, attr] *= factor
+                    logger.info(f"changing {attr} for {carrier} by factor {factor}")
 
 
 def limit_individual_line_extension(n, maxext):
@@ -3396,17 +3421,23 @@ if __name__ == "__main__":
     solver_name = snakemake.config["solving"]["solver"]["name"]
     n = set_temporal_aggregation(n, opts, solver_name)
 
-    limit_type = "config"
-    limit = get(snakemake.params.co2_budget, investment_year)
+    # add CO2 limits
+    limit_type = None
+
+    if snakemake.params.co2["co2_budget"]["from_values"]["enable"]:
+        limit_type = "config co2 budged"
+        limit = get(snakemake.params.co2["co2_budget"]["from_values"]["values"], investment_year)
+
+    fn = "results/" + snakemake.params.RDIR + "csvs/carbon_budget_distribution.csv"
+    emissions_scope = snakemake.params.emissions_scope
+    report_year = snakemake.params.eurostat_report_year
+    input_co2 = snakemake.input.co2
+
     for o in opts:
-        if "cb" not in o:
+        if "cb" not in o
             continue
-        limit_type = "carbon budget"
-        fn = "results/" + snakemake.params.RDIR + "csvs/carbon_budget_distribution.csv"
+        limit_type = "wildcard co2 budget"
         if not os.path.exists(fn):
-            emissions_scope = snakemake.params.emissions_scope
-            report_year = snakemake.params.eurostat_report_year
-            input_co2 = snakemake.input.co2
             build_carbon_budget(
                 o,
                 snakemake.input.eurostat,
@@ -3418,15 +3449,41 @@ if __name__ == "__main__":
         co2_cap = pd.read_csv(fn, index_col=0).squeeze()
         limit = co2_cap.loc[investment_year]
         break
+
+    if limit_type != "co2 budget":
+        if snakemake.params.co2["co2_budget"]["from_beta_decay"]["enable"]:
+            o = str("cb" + snakemake.params.co2["co2_budget"]["from_beta_decay"]["value"] + "be")
+            limit_type = "carbon budget with beta decay"
+        if snakemake.params.co2["co2_budget"]["from_exp_decay"]["enable"]:
+            o = str("cb" + snakemake.params.co2["co2_budget"]["from_exp_decay"]["value"] + "ex")
+            limit_type = "carbon budget with exponential decay"
+        if "wildcard co2 budget" in limit_type:
+            build_carbon_budget(
+                o,
+                snakemake.input.eurostat,
+                fn,
+                emissions_scope,
+                report_year,
+                input_co2,
+            )
+            co2_cap = pd.read_csv(fn, index_col=0).squeeze()
+            limit = co2_cap.loc[investment_year]
+
     for o in opts:
         if "Co2L" not in o:
             continue
-        limit_type = "wildcard"
+        limit_type = "wildcard fix value"
         limit = o[o.find("Co2L") + 4 :]
         limit = float(limit.replace("p", ".").replace("m", "-"))
         break
-    logger.info(f"Add CO2 limit from {limit_type}")
-    add_co2limit(n, nyears, limit)
+
+    if snakemake.params.co2["fix_limits"]["enable"] and limit_type != "wildcard fix value":
+        limit_type = "config fix value"
+        limit = snakemake.params.co2["fix_limits"]["value"]
+
+    if limit_type is not None:
+        logger.info(f"Add CO2 limit from {limit_type}")
+        add_co2limit(n, nyears, limit)
 
     for o in opts:
         if not o[:10] == "linemaxext":
