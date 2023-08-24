@@ -16,6 +16,10 @@ Upcoming Release
 
 * The minimum capacity for renewable generators when using the myopic option has been fixed.
 
+* Files downloaded from zenodo are now write-protected to prevent accidental re-download.
+
+* Files extracted from sector-coupled data bundle have been moved from ``data/`` to ``data/sector-bundle``.
+
 PyPSA-Eur 0.8.1 (27th July 2023)
 ================================
 
