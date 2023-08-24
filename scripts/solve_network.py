@@ -35,6 +35,8 @@ import pypsa
 import xarray as xr
 from _helpers import configure_logging, update_config_with_sector_opts
 
+from vresutils.benchmark import memory_logger
+
 logger = logging.getLogger(__name__)
 pypsa.pf.logger.setLevel(logging.WARNING)
 from pypsa.descriptors import get_switchable_as_dense as get_as_dense
@@ -717,14 +719,21 @@ if __name__ == "__main__":
         planning_horizons=snakemake.params.planning_horizons,
         co2_sequestration_potential=snakemake.params["co2_sequestration_potential"],
     )
+    
+    with memory_logger(filename=getattr(snakemake.log, 'memory', None), interval=30.) as mem:
+    
+        n = solve_network(
+            n,
+            config=snakemake.config,
+            solving=snakemake.params.solving,
+            opts=opts,
+            log_fn=snakemake.log.solver,
+        )
+    
+    logger.info("Maximum memory usage: {}".format(mem.mem_usage))
 
-    n = solve_network(
-        n,
-        config=snakemake.config,
-        solving=snakemake.params.solving,
-        opts=opts,
-        log_fn=snakemake.log.solver,
-    )
+    
+
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     n.export_to_netcdf(snakemake.output[0])
