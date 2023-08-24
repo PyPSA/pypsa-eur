@@ -365,8 +365,7 @@ def historical_emissions(countries):
     """
     # https://www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-16
     # downloaded 201228 (modified by EEA last on 201221)
-    fn = "data/eea/UNFCCC_v23.csv"
-    df = pd.read_csv(fn, encoding="latin-1")
+    df = pd.read_csv(snakemake.input.co2, encoding="latin-1", low_memory=False)
     df.loc[df["Year"] == "1985-1987", "Year"] = 1986
     df["Year"] = df["Year"].astype(int)
     df = df.set_index(
@@ -390,16 +389,24 @@ def historical_emissions(countries):
     e["waste management"] = "5 - Waste management"
     e["other"] = "6 - Other Sector"
     e["indirect"] = "ind_CO2 - Indirect CO2"
-    e["total wL"] = "Total (with LULUCF)"
-    e["total woL"] = "Total (without LULUCF)"
+    # e["total wL"] = "Total (with LULUCF)"
+    # e["total woL"] = "Total (without LULUCF)"
+
+    e["other LULUCF"] = "4.H - Other LULUCF"
+
 
     pol = ["CO2"]  # ["All greenhouse gases - (CO2 equivalent)"]
     if "GB" in countries:
         countries.remove("GB")
         countries.append("UK")
 
-    year = np.arange(1990, 2018).tolist()
-
+    year = df.index.levels[0][df.index.levels[0]>=1990]
+    
+    missing = pd.Index(countries).difference(df.index.levels[2])
+    if not missing.empty:
+        logger.warning(f"The following countries are missing and not considered when plotting historic CO2 emissions: {missing}")
+        countries = pd.Index(df.index.levels[2]).intersection(countries)
+        
     idx = pd.IndexSlice
     co2_totals = (
         df.loc[idx[year, e.values, countries, pol], "emissions"]
@@ -462,100 +469,80 @@ def plot_carbon_budget_distribution(input_eurostat):
     plt.rcParams["xtick.labelsize"] = 20
     plt.rcParams["ytick.labelsize"] = 20
 
+    # historic emissions
+    countries = snakemake.params.countries
+    e_1990 = co2_emissions_year(
+        countries, input_eurostat, opts, snakemake, year=1990
+    )
+    emissions = historical_emissions(countries)
+    # add other years https://sdi.eea.europa.eu/data/0569441f-2853-4664-a7cd-db969ef54de0
+    emissions.loc[2019] = 2.971372
+    emissions.loc[2020] = 2.691958
+    emissions.loc[2020] = 2.869355
+    
+    
+    if snakemake.config["foresight"] == "myopic":
+        path_cb = "results/" + snakemake.params.RDIR + "/csvs/"
+        co2_cap = pd.read_csv(path_cb + "carbon_budget_distribution.csv", index_col=0)[["cb"]]
+        co2_cap *= e_1990
+    else:
+        supply_energy = pd.read_csv(snakemake.input.balances,
+                                    index_col=[0,1,2], header=[0,1,2, 3])
+        co2_cap = supply_energy.loc["co2"].droplevel(0).drop("co2").sum().unstack().T/1e9
+        co2_cap.rename(index=lambda x: int(x), inplace=True)
+    
     plt.figure(figsize=(10, 7))
     gs1 = gridspec.GridSpec(1, 1)
     ax1 = plt.subplot(gs1[0, 0])
-    ax1.set_ylabel("CO$_2$ emissions (Gt per year)", fontsize=22)
-    ax1.set_ylim([0, 5])
+    ax1.set_ylabel("CO$_2$ emissions \n [Gt per year]", fontsize=22)
+    # ax1.set_ylim([0, 5])
     ax1.set_xlim([1990, snakemake.params.planning_horizons[-1] + 1])
-
-    path_cb = "results/" + snakemake.params.RDIR + "/csvs/"
-    countries = snakemake.params.countries
-    e_1990 = co2_emissions_year(countries, input_eurostat, opts, year=1990)
-    CO2_CAP = pd.read_csv(path_cb + "carbon_budget_distribution.csv", index_col=0)
-
-    ax1.plot(e_1990 * CO2_CAP[o], linewidth=3, color="dodgerblue", label=None)
-
-    emissions = historical_emissions(countries)
 
     ax1.plot(emissions, color="black", linewidth=3, label=None)
 
-    # plot committed and uder-discussion targets
+    # plot committed and under-discussion targets
     # (notice that historical emissions include all countries in the
     # network, but targets refer to EU)
-    ax1.plot(
-        [2020],
-        [0.8 * emissions[1990]],
-        marker="*",
-        markersize=12,
-        markerfacecolor="black",
-        markeredgecolor="black",
-    )
 
     ax1.plot(
-        [2030],
-        [0.45 * emissions[1990]],
-        marker="*",
-        markersize=12,
-        markerfacecolor="white",
-        markeredgecolor="black",
-    )
+         [2030],
+         [0.45 * emissions[1990]],
+         marker="*",
+         markersize=12,
+         markerfacecolor="black",
+         markeredgecolor="black",
+     )
+
+
 
     ax1.plot(
-        [2030],
-        [0.6 * emissions[1990]],
-        marker="*",
-        markersize=12,
-        markerfacecolor="black",
-        markeredgecolor="black",
-    )
+         [2050],
+         [0.0 * emissions[1990]],
+         marker="*",
+         markersize=12,
+         markerfacecolor="black",
+         markeredgecolor="black",
+         label="EU commited target",
+     )
 
-    ax1.plot(
-        [2050, 2050],
-        [x * emissions[1990] for x in [0.2, 0.05]],
-        color="gray",
-        linewidth=2,
-        marker="_",
-        alpha=0.5,
-    )
+    for col in co2_cap.columns:
+        ax1.plot(co2_cap[col], linewidth=3, label=col)
 
-    ax1.plot(
-        [2050],
-        [0.01 * emissions[1990]],
-        marker="*",
-        markersize=12,
-        markerfacecolor="white",
-        linewidth=0,
-        markeredgecolor="black",
-        label="EU under-discussion target",
-        zorder=10,
-        clip_on=False,
-    )
-
-    ax1.plot(
-        [2050],
-        [0.125 * emissions[1990]],
-        "ro",
-        marker="*",
-        markersize=12,
-        markerfacecolor="black",
-        markeredgecolor="black",
-        label="EU committed target",
-    )
-
+    
     ax1.legend(
         fancybox=True, fontsize=18, loc=(0.01, 0.01), facecolor="white", frameon=True
     )
+    
+    plt.grid(axis="y")
 
-    path_cb_plot = "results/" + snakemake.params.RDIR + "/graphs/"
-    plt.savefig(path_cb_plot + "carbon_budget_plot.pdf", dpi=300)
+    plt.savefig(snakemake.output.co2_emissions, bbox_inches="tight")
 
 #%%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("plot_summary")
+        snakemake = mock_snakemake("plot_summary_perfect")
 
     logging.basicConfig(level=snakemake.config["logging"]["level"])
 
@@ -569,6 +556,5 @@ if __name__ == "__main__":
 
     for sector_opts in snakemake.params.sector_opts:
         opts = sector_opts.split("-")
-        for o in opts:
-            if "cb" in o:
-                plot_carbon_budget_distribution(snakemake.input.eurostat)
+        if any(["cb" in o for o in opts]) or (snakemake.config["foresight"]=="perfect"):
+            plot_carbon_budget_distribution(snakemake.input.eurostat)
