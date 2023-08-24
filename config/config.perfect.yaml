@@ -45,7 +45,7 @@ scenario:
   opts:
   - ''
   sector_opts:
-  - 2p0-co2min-8760H-T-H-B-I-A-solar+p3-dist1
+  - 4380H-T-H-B-I-A-solar+p3-dist1
   planning_horizons:
   - 2020
   - 2030
@@ -468,6 +468,7 @@ sector:
     years_of_storage: 25
   co2_sequestration_potential: 200
   co2_sequestration_cost: 10
+  co2_sequestration_lifetime: 50
   co2_spatial: false
   co2network: false
   cc_fraction: 0.9
