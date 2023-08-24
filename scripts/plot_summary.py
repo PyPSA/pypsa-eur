@@ -400,6 +400,9 @@ def historical_emissions(countries):
         countries.remove("GB")
         countries.append("UK")
 
+    # remove countries which are not included in eea historical emission dataset
+    countries_to_remove = {"AL", "BA", "ME", "MK", "RS"}
+    countries = list(set(countries) - countries_to_remove)
     year = np.arange(1990, 2018).tolist()
 
     idx = pd.IndexSlice
@@ -470,9 +473,20 @@ def plot_carbon_budget_distribution(input_eurostat):
     ax1.set_ylim([0, 5])
     ax1.set_xlim([1990, snakemake.params.planning_horizons[-1] + 1])
 
-    path_cb = "results/" + snakemake.params.RDIR + "/csvs/"
+    path_cb = "results/" + snakemake.params.RDIR + "csvs/"
     countries = snakemake.params.countries
-    e_1990 = co2_emissions_year(countries, input_eurostat, opts, year=1990)
+    emissions_scope = snakemake.params.emissions_scope
+    report_year = snakemake.params.eurostat_report_year
+    input_co2 = snakemake.input.co2
+    e_1990 = co2_emissions_year(
+        countries,
+        input_eurostat,
+        opts,
+        emissions_scope,
+        report_year,
+        input_co2,
+        year=1990,
+    )
     CO2_CAP = pd.read_csv(path_cb + "carbon_budget_distribution.csv", index_col=0)
 
     ax1.plot(e_1990 * CO2_CAP[o], linewidth=3, color="dodgerblue", label=None)
@@ -548,7 +562,7 @@ def plot_carbon_budget_distribution(input_eurostat):
         fancybox=True, fontsize=18, loc=(0.01, 0.01), facecolor="white", frameon=True
     )
 
-    path_cb_plot = "results/" + snakemake.params.RDIR + "/graphs/"
+    path_cb_plot = "results/" + snakemake.params.RDIR + "graphs/"
     plt.savefig(path_cb_plot + "carbon_budget_plot.pdf", dpi=300)
 
 

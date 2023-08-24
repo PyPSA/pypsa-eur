@@ -12,6 +12,10 @@ Upcoming Release
 
 * Updated Global Energy Monitor LNG terminal data to March 2023 version.
 
+* For industry distribution, use EPRTR as fallback if ETS data is not available.
+
+* The minimum capacity for renewable generators when using the myopic option has been fixed.
+
 PyPSA-Eur 0.8.1 (27th July 2023)
 ================================
 
