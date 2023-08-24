@@ -2,7 +2,7 @@
 name,--,str/list,"Specify a name for your run. Results will be stored under this name. If ``scenario: enable`` is set to ``true``, the name must contain a subset of scenario names defined in ``scenario: file``."
 scenarios,,,
 -- enable,bool,"{true, false}","Switch to select whether workflow should generate scenarios based on ``file``."
--- file,str,,Path to the scenario yaml file. The scenario file contains config overrides for each scenario. In order to be taken account, ``run:scenarios`` has to be set to ``true`` and ``run:name`` has to be a subset of top level keys given in the scenario file. In order to automatically create a `scenario.yaml` file based on a combindation of settings, alter and use the ``create_scenarios.py`` script in ``scripts``.
+-- file,str,,"Path to the scenario yaml file. The scenario file contains config overrides for each scenario. In order to be taken account, ``run:scenarios`` has to be set to ``true`` and ``run:name`` has to be a subset of top level keys given in the scenario file. In order to automatically create a `scenario.yaml` file based on a combindation of settings, alter and use the ``create_scenarios.py`` script in ``scripts``."
 disable_progrssbar,bool,"{true, false}","Switch to select whether progressbar should be disabled."
 shared_resources,bool/str/list,,"Switch to select whether resources should be shared across runs. If a string or list is passed, it is assumed to be wildcard(s) which indicates up to which set of wildcards the resource folder should be shared. If set to 'base', only resources before creating the elec.nc file are shared."
 shared_cutouts,bool,"{true, false}","Switch to select whether cutouts should be shared across runs."
