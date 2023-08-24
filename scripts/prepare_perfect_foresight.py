@@ -179,8 +179,12 @@ def adjust_stores(n):
     # e_initial at beginning of each investment period
     e_initial_store = ["solid biomass", "biogas"]
     co2_i = n.stores[n.stores.carrier.isin(e_initial_store)].index
-    n.stores.loc[co2_i, "e_initial"] *= 10
-    n.stores.loc[co2_i, "e_nom"] *= 10
+    n.stores.loc[co2_i, "e_initial_per_period"] = True
+    # n.stores.loc[co2_i, "e_initial"] *= 10
+    # n.stores.loc[co2_i, "e_nom"] *= 10
+    e_initial_store = ["co2 stored"]
+    co2_i = n.stores[n.stores.carrier.isin(e_initial_store)].index
+    n.stores.loc[co2_i, "e_initial_per_period"] = True
 
     return n
 
@@ -232,23 +236,17 @@ def set_carbon_constraints(n, opts):
         n.add(
             "GlobalConstraint",
             "Budget",
-            type="Co2constraint",
+            type="Co2Budget",
             carrier_attribute="co2_emissions",
             sense="<=",
             constant=budget,
         )
 
-    if not "noco2neutral" in opts:
-        logger.info("Add carbon neutrality constraint.")
-        n.add(
-            "GlobalConstraint",
-            "Co2neutral",
-            type="Co2constraint",
-            carrier_attribute="co2_emissions",
-            investment_period=n.snapshots.levels[0][-1],
-            sense="<=",
-            constant=0,
-        )
+           
+    else: 
+        e_initial_store = ["co2 stored"]
+        co2_i = n.stores[n.stores.carrier.isin(e_initial_store)].index
+        n.stores.loc[co2_i, "e_initial_per_period"] = True
     # set minimum CO2 emission constraint to avoid too fast reduction
     if "co2min" in opts:
         emissions_1990 = 4.53693
@@ -263,14 +261,14 @@ def set_carbon_constraints(n, opts):
         )
         n.add(
             "GlobalConstraint",
-            "Co2min",
-            type="Co2constraint",
+            f"Co2Min-{first_year}",
+            type="Co2min",
             carrier_attribute="co2_emissions",
             sense=">=",
             investment_period=first_year,
             constant=co2min * 1e9 * time_weightings,
         )
-
+        
     return n
 
 
@@ -287,6 +285,15 @@ def adjust_lvlimit(n):
         
     return n
 
+
+def adjust_CO2_glc(n):
+    c = "GlobalConstraint"
+    glc_name = "CO2Limit"
+    glc_type = "primary_energy"
+    mask = (n.df(c).index.str.contains(glc_name)) & (n.df(c).type==glc_type)
+    n.df(c).loc[mask, "type"] = "co2_limit"
+    
+    return n
 # %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -298,7 +305,7 @@ if __name__ == "__main__":
             opts="",
             clusters="37",
             ll="v1.0",
-            sector_opts="2p0-co2min-8760H-T-H-B-I-A-solar+p3-dist1",
+            sector_opts="4380H-T-H-B-I-A-solar+p3-dist1",
         )
 
     update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
@@ -321,6 +328,9 @@ if __name__ == "__main__":
     
     # adjust global constraints lv limit if the same for all years
     n = adjust_lvlimit(n)
+    
+    # adjust global constraints CO2 limit
+    n = adjust_CO2_glc(n)
     # set phase outs
     set_all_phase_outs(n)
     # adjust stores to multi period investment
