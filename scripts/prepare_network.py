@@ -307,7 +307,7 @@ if __name__ == "__main__":
             n = average_every_nhours(n, m.group(0))
             nH_wildcard = True
             break
-    
+
     if snakemake.params.average_every_nhours.get("enable", False) and not nH_wildcard:
         m = snakemake.params.average_every_nhours["hour"]
         n = average_every_nhours(n, m)
@@ -337,7 +337,7 @@ if __name__ == "__main__":
                 logger.info("Setting CO2 limit according to config value.")
             Co2L_wildcard = True
             break
-    
+
     if snakemake.params.co2["fix_limits"].get("enable", False) and not Co2L_wildcard:
         if isinstance(snakemake.params.co2["fix_limits"].get("value"),float):
             co2limit = snakemake.params.co2["fix_limits"]["value"] * snakemake.params.co2["base"]

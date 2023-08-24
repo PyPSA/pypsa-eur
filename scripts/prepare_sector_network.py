@@ -3083,10 +3083,10 @@ def maybe_adjust_costs_and_potentials(n, opts):
                     c.df.loc[sel, attr] *= factor
             logger.info(f"changing {attr} for {carrier} by factor {factor}")
             adjust_carrier_wildcard = True
-    
+
     if snakemake.params.adjust_carrier.get("enable", False) and not adjust_carrier_wildcard:
         for carrier in snakemake.params.adjust_carrier:
-            attr_factor = snakemake.params.adjust_carrier[carrier]     
+            attr_factor = snakemake.params.adjust_carrier[carrier]
             if isinstance(attr, dict):
                 for attr in attr_factor.keys():
                     factor = attr_factor[attr]

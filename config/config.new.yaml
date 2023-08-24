@@ -96,10 +96,10 @@ co2:
         2040: 0.071
         2045: 0.032
         2050: 0.000
-    from_beta_decay: 
+    from_beta_decay:
       enable: false # TODO: move to own rule with sector-opts wildcard?
       value: 1
-    from_exp_decay: 
+    from_exp_decay:
       enable: false
       value: 1
   dac: # if sector is true
@@ -163,7 +163,7 @@ electricity:
     cost_factor: 1.0
     home_battery:
       marginal_cost_storage: 0. #1e-4
-  
+
   electricity_grid_connection: # only applied if sector is included
     enable: true
 
@@ -425,7 +425,7 @@ sector: # aim: remove the sector network
       dsm:
         enable: true # replace bev_dsm
         restriction_value: 0.75 # these are located in build_transport
-        restriction_time: 7 
+        restriction_time: 7
 
   heating:
     enable: false # if "H" in opts
@@ -445,10 +445,10 @@ sector: # aim: remove the sector network
         decentral: 3
         central: 180
     boilers: true
-    solar_thermal: 
+    solar_thermal:
       enable: true
       correction_factor: 0.788457  # =  >>> 1/1.2683 solar_cf_correction
-    chp: 
+    chp:
       enable: true
       micro_chp: false
     retrofitting:
@@ -459,7 +459,7 @@ sector: # aim: remove the sector network
       tax_weighting: false
       construction_index: true
     district_heating:
-      enable: true # (wildcard "nodistric" false) 
+      enable: true # (wildcard "nodistric" false)
       potential: 0.6
       progress:
         2020: 0.0
@@ -525,8 +525,8 @@ sector: # aim: remove the sector network
     fischer-tropsch:
       min_part_load_fischer_tropsch: 0.9
 
-  ammonia: 
-    enable: false 
+  ammonia:
+    enable: false
     regional: false
 
   decentralized:
@@ -571,10 +571,10 @@ sector: # aim: remove the sector network
     network:
       enable: false
       connectivity_upgrade: 1
-    distribution_grid: 
+    distribution_grid:
       enable: true
       cost_factor: 1.0
-    
+
   coal_cc: false # ?
 
   conventional_generation:

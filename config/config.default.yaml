@@ -98,10 +98,10 @@ co2:
         2040: 0.071
         2045: 0.032
         2050: 0.000
-    from_beta_decay: 
+    from_beta_decay:
       enable: false
       value: 1
-    from_exp_decay: 
+    from_exp_decay:
       enable: false
       value: 1
 
