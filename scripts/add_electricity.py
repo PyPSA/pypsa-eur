@@ -165,7 +165,7 @@ def sanitize_carriers(n, config):
     nice_names = (
         pd.Series(config["plotting"]["nice_names"])
         .reindex(carrier_i)
-        .fillna(carrier_i.to_series().str.title())
+        .fillna(carrier_i.to_series())
     )
     n.carriers["nice_name"] = n.carriers.nice_name.where(
         n.carriers.nice_name != "", nice_names

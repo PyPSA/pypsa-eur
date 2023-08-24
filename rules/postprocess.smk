@@ -107,6 +107,8 @@ rule plot_summary:
         countries=config_provider("countries"),
         planning_horizons=config_provider("scenario", "planning_horizons"),
         sector_opts=config_provider("scenario", "sector_opts"),
+        emissions_scope=config_provider("energy", "emissions"),
+        eurostat_report_year=config_provider("energy", "eurostat_report_year"),
         plotting=config_provider("plotting"),
         RDIR=RDIR,
     input:
@@ -114,6 +116,7 @@ rule plot_summary:
         energy=RESULTS + "csvs/energy.csv",
         balances=RESULTS + "csvs/supply_energy.csv",
         eurostat=input_eurostat,
+        co2="data/eea/UNFCCC_v23.csv",
     output:
         costs=RESULTS + "graphs/costs.pdf",
         energy=RESULTS + "graphs/energy.pdf",
