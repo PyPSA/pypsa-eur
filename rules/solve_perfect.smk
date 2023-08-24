@@ -190,39 +190,7 @@ rule make_summary_perfect:
         "../scripts/make_summary_perfect.py"
 
 
-rule plot_summary_perfect:
-    input:
-        **{
-            f"costs_{year}": f"data/costs_{year}.csv"
-            for year in config["scenario"]["planning_horizons"]
-        },
-        costs_csv=RESULTS + "csvs/costs.csv",
-        energy=RESULTS + "csvs/energy.csv",
-        balances=RESULTS + "csvs/supply_energy.csv",
-        eea="data/eea/UNFCCC_v24.csv",
-        countries=RESULTS + "csvs/nodal_capacities.csv",
-        co2_emissions=RESULTS + "csvs/co2_emissions.csv",
-        capacities=RESULTS + "csvs/capacities.csv",
-        capital_cost=RESULTS + "csvs/capital_cost.csv",
-    output:
-        costs1=RESULTS + "graphs/costs.pdf",
-        costs2=RESULTS + "graphs/costs2.pdf",
-        costs3=RESULTS + "graphs/total_costs_per_year.pdf",
-        # energy="results"  + '/' + config['run'] + '/graphs/energy.pdf',
-        balances=RESULTS + "graphs/balances-energy.pdf",
-        co2_emissions=RESULTS + "graphs/carbon_budget_plot.pdf",
-        capacities=RESULTS + "graphs/capacities.pdf",
-    threads: 2
-    resources:
-        mem_mb=10000,
-    log:
-        LOGS + "plot_summary_perfect.log",
-    benchmark:
-        (BENCHMARKS + "plot_summary_perfect")
-    conda:
-        "../envs/environment.yaml"
-    script:
-        "../scripts/plot_summary_perfect.py"
+
 
 
 ruleorder: add_existing_baseyear > add_brownfield

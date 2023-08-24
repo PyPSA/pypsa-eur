@@ -356,7 +356,6 @@ def plot_balances():
 
         fig.savefig(snakemake.output.balances[:-10] + k + ".pdf", bbox_inches="tight")
 
-        plt.cla()
 
 
 def historical_emissions(countries):
@@ -478,7 +477,7 @@ def plot_carbon_budget_distribution(input_eurostat):
     # add other years https://sdi.eea.europa.eu/data/0569441f-2853-4664-a7cd-db969ef54de0
     emissions.loc[2019] = 2.971372
     emissions.loc[2020] = 2.691958
-    emissions.loc[2020] = 2.869355
+    emissions.loc[2021] = 2.869355
     
     
     if snakemake.config["foresight"] == "myopic":
@@ -534,15 +533,15 @@ def plot_carbon_budget_distribution(input_eurostat):
     )
     
     plt.grid(axis="y")
-
-    plt.savefig(snakemake.output.co2_emissions, bbox_inches="tight")
+    path = snakemake.output.balances.split("balances")[0] + "carbon_budget.pdf"
+    plt.savefig(path, bbox_inches="tight")
 
 #%%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("plot_summary_perfect")
+        snakemake = mock_snakemake("plot_summary")
 
     logging.basicConfig(level=snakemake.config["logging"]["level"])
 
