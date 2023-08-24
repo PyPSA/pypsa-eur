@@ -20,9 +20,9 @@ remote:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
-  name: ""
+  name: "test_co2limit"
   disable_progressbar: false
-  shared_resources: false
+  shared_resources: true
   shared_cutouts: true
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#foresight
