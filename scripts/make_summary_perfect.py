@@ -704,10 +704,13 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
         snakemake = mock_snakemake("make_summary_perfect")
-
+    
+    run = snakemake.config["run"]["name"]
+    if run!="": run += "/"
+    
     networks_dict = {
         (clusters, lv, opts + sector_opts): "results/"
-        + snakemake.config["run"]["name"]
+        + run
         + f"postnetworks/elec_s{simpl}_{clusters}_l{lv}_{opts}_{sector_opts}_brownfield_all_years.nc"
         for simpl in snakemake.config["scenario"]["simpl"]
         for clusters in snakemake.config["scenario"]["clusters"]
