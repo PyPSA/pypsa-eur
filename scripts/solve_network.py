@@ -113,7 +113,7 @@ def _add_land_use_constraint_m(n, planning_horizons, config):
     n.generators.p_nom_max.clip(lower=0, inplace=True)
 
 
-def add_co2_sequestration_limit(n, limit=200):
+def add_co2_sequestration_limit(n, config, limit=200):
     """
     Add a global constraint on the amount of Mt CO2 that can be sequestered.
     """
@@ -126,17 +126,51 @@ def add_co2_sequestration_limit(n, limit=200):
             continue
         limit = float(o[o.find("seq") + 3 :]) * 1e6
         break
-
-    n.add(
+    
+    if config["foresight"] == "perfect":
+        periods = n.investment_periods
+        names = pd.Index([f"co2_sequestration_limit-{period}" for period in periods])
+    else:
+        periods = [np.nan]
+        names = pd.Index(["co2_sequestration_limit"])
+                         
+    n.madd(
         "GlobalConstraint",
-        "co2_sequestration_limit",
+        names,
         sense="<=",
         constant=limit,
         type="primary_energy",
         carrier_attribute="co2_absorptions",
+        investment_period=periods,
     )
 
 
+def add_carbon_neutral_constraint(n, snapshots):
+    glcs = n.global_constraints.query('type == "co2_limit"')
+    if glcs.empty:
+        return
+    for name, glc in glcs.iterrows():
+        rhs = glc.constant
+        carattr = glc.carrier_attribute
+        emissions = n.carriers.query(f"{carattr} != 0")[carattr]
+
+        if emissions.empty:
+            continue
+
+        # stores
+        n.stores["carrier"] = n.stores.bus.map(n.buses.carrier)
+        stores = n.stores.query("carrier in @emissions.index and not e_cyclic")
+        time_valid = int(glc.loc["investment_period"])
+        if not stores.empty:
+            last = n.snapshot_weightings.reset_index().groupby("period").last()
+            last_i = last.set_index([last.index, last.timestep]).index 
+            final_e = n.model["Store-e"].loc[last_i, stores.index]
+            time_i = pd.IndexSlice[time_valid, :]
+            lhs = final_e.loc[time_i,:] - final_e.shift(snapshot=1).loc[time_i,:]
+            
+            n.model.add_constraints(lhs <= rhs, name=f"GlobalConstraint-{name}")
+
+            
 def prepare_network(
     n,
     solve_opts=None,
@@ -199,7 +233,7 @@ def prepare_network(
 
     if n.stores.carrier.eq("co2 stored").any():
         limit = co2_sequestration_potential
-        add_co2_sequestration_limit(n, limit=limit)
+        add_co2_sequestration_limit(n, config, limit=limit)
 
     return n
 
@@ -591,6 +625,7 @@ def extra_functionality(n, snapshots):
             add_EQ_constraints(n, o)
     add_battery_constraints(n)
     add_pipe_retrofit_constraint(n)
+    add_carbon_neutral_constraint(n, snapshots)
 
 
 def solve_network(n, config, solving, opts="", **kwargs):
@@ -643,19 +678,19 @@ def solve_network(n, config, solving, opts="", **kwargs):
 
     return n
 
-
+#%%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "solve_sector_network",
-            configfiles="test/config.overnight.yaml",
+            "solve_sector_network_perfect",
+            configfiles="config/config.perfect.yaml",
             simpl="",
             opts="",
-            clusters="5",
-            ll="v1.5",
-            sector_opts="CO2L0-24H-T-H-B-I-A-solar+p3-dist1",
+            clusters="37",
+            ll="v1.0",
+            sector_opts="4380H-T-H-B-I-A-solar+p3-dist1",
             planning_horizons="2030",
         )
     configure_logging(snakemake)
