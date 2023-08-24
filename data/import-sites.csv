@@ -1,0 +1,13 @@
+name,y,x,reference,type,comment
+EUSW,36.39,-5.64,https://openinframap.org/,pipeline,
+EUS,37.18,14.53,https://openinframap.org/,pipeline,
+EUSE,41.09,25.46,https://openinframap.org/,pipeline,
+EUE,49.91,22.87,https://openinframap.org/,pipeline,
+EUNE,57.53,27.34,https://openinframap.org/,pipeline,
+BEZEE,51.353,3.22241,https://www.gem.wiki/Zeebrugge_LNG_Terminal,lng,
+ESLCG,43.4613,-7.5,https://www.gem.wiki/Mugardos_LNG_Terminal,lng,"center coordinate moved east from -8.2395"
+ESVLC,39.6329,-0.2152,https://www.gem.wiki/Sagunto_LNG_Terminal,lng,
+GBMLF,51.7152,-7,https://www.gem.wiki/South_Hook_LNG_Terminal,lng,"center coordinate moved west from -5.07627"
+GREEV,37.96,23.4023,https://www.gem.wiki/Revithoussa_LNG_Terminal,lng,
+ITVCE,45.091667,12.586111,https://www.gem.wiki/Adriatic_LNG_Terminal,lng,
+PLSWI,53.909167,17,https://www.gem.wiki/%C5%9Awinouj%C5%9Bcie_Polskie_LNG_Terminal,lng,"center coordinate moved east from 14.294722"

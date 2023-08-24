@@ -494,6 +494,23 @@ def add_battery_constraints(n):
     n.model.add_constraints(lhs == 0, name="Link-charger_ratio")
 
 
+def add_lossy_bidirectional_link_constraints(n):
+    if not n.links.p_nom_extendable.any() or not "reversed" in n.links.columns:
+        return
+
+    carriers = n.links.loc[n.links.reversed, "carrier"].unique()
+
+    forward_i = n.links.query(
+        "carrier in @carriers and ~reversed and p_nom_extendable"
+    ).index
+    backward_i = forward_i + "-reversed"
+
+    lhs = n.model["Link-p_nom"].loc[backward_i]
+    rhs = n.model["Link-p_nom"].loc[forward_i]
+
+    n.model.add_constraints(lhs == rhs, name="Link-bidirectional_sync")
+
+
 def add_chp_constraints(n):
     electric = (
         n.links.index.str.contains("urban central")
@@ -569,6 +586,35 @@ def add_pipe_retrofit_constraint(n):
     n.model.add_constraints(lhs == rhs, name="Link-pipe_retrofit")
 
 
+def add_energy_import_limit(n, sns):
+    import_gens = n.generators.loc[n.generators.carrier.str.contains("import")].index
+    import_links = n.links.loc[n.links.carrier.str.contains("import")].index
+
+    limit = n.config["sector"].get("import", {}).get("limit", False)
+    limit_sense = n.config["sector"].get("import", {}).get("limit_sense", "<=")
+    for o in n.opts:
+        if not o.startswith("imp"):
+            continue
+        match = o.split("+")[0][3:]
+        if match:
+            limit = float(match)
+        break
+
+    if (import_gens.empty and import_links.empty) or not limit:
+        return
+
+    weightings = n.snapshot_weightings.loc[sns, "generators"]
+
+    p_gens = n.model["Generator-p"].loc[sns, import_gens]
+    p_links = n.model["Link-p"].loc[sns, import_links]
+
+    lhs = (p_gens * weightings).sum() + (p_links * weightings).sum()
+
+    rhs = limit * 1e6
+
+    n.model.add_constraints(lhs, limit_sense, rhs, name="energy_import_limit")
+
+
 def extra_functionality(n, snapshots):
     """
     Collects supplementary constraints which will be passed to
@@ -593,7 +639,9 @@ def extra_functionality(n, snapshots):
         if "EQ" in o:
             add_EQ_constraints(n, o)
     add_battery_constraints(n)
+    add_lossy_bidirectional_link_constraints(n)
     add_pipe_retrofit_constraint(n)
+    add_energy_import_limit(n, snapshots)
 
 
 def solve_network(n, config, solving, opts="", **kwargs):

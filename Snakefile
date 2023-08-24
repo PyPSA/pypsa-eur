@@ -14,7 +14,7 @@ from snakemake.utils import min_version
 min_version("7.7")
 
 
-if not exists("config/config.yaml"):
+if not exists("config/config.yaml") and exists("config/config.default.yaml"):
     copyfile("config/config.default.yaml", "config/config.yaml")
 
 
@@ -54,6 +54,7 @@ include: "rules/build_sector.smk"
 include: "rules/solve_electricity.smk"
 include: "rules/postprocess.smk"
 include: "rules/validate.smk"
+include: "rules/plot.smk"
 
 
 if config["foresight"] == "overnight":

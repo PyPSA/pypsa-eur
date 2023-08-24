@@ -24,13 +24,13 @@ from make_summary import assign_carriers
 from plot_summary import preferred_order, rename_techs
 from pypsa.plot import add_legend_circles, add_legend_lines, add_legend_patches
 
-plt.style.use(["ggplot", "matplotlibrc"])
-
 
 def rename_techs_tyndp(tech):
     tech = rename_techs(tech)
     if "heat pump" in tech or "resistive heater" in tech:
         return "power-to-heat"
+    elif "external" in tech:
+        return "import hvdc-to-elec"
     elif tech in ["H2 Electrolysis", "methanation", "helmeth", "H2 liquefaction"]:
         return "power-to-gas"
     elif tech == "H2":
@@ -928,6 +928,8 @@ if __name__ == "__main__":
         )
 
     logging.basicConfig(level=snakemake.config["logging"]["level"])
+
+    plt.style.use(["ggplot", snakemake.input.rc])
 
     n = pypsa.Network(snakemake.input.network)
 

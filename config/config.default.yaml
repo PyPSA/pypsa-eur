@@ -44,7 +44,7 @@ scenario:
   opts:
   - ''
   sector_opts:
-  - Co2L0-3H-T-H-B-I-A-solar+p3-dist1
+  - Co2L0-3H-T-H-B-I-S-A-solar+p3-dist1
   planning_horizons:
   # - 2020
   # - 2030
@@ -411,6 +411,17 @@ sector:
     2050: 0
   shipping_methanol_efficiency: 0.46
   shipping_oil_efficiency: 0.40
+  shipping_ammonia_efficiency: 0.40
+  shipping_lng_efficiency: 0.44
+  shipping_lh2_efficiency: 0.44
+  shipping_endogenous:
+    enable: false
+    fuels:
+    - oil
+    - methanol
+    - LH2
+    - LNG
+    - ammonia
   aviation_demand_factor: 1.
   HVC_demand_factor: 1.
   time_dep_hp_cop: true
@@ -448,10 +459,18 @@ sector:
   coal_cc: false
   dac: true
   co2_vent: false
-  allam_cycle: false
+  allam_cycle_gas: false
   hydrogen_fuel_cell: true
   hydrogen_turbine: false
   SMR: true
+  methanol_reforming: true
+  methanol_reforming_cc: false
+  methanol_to_kerosene: true
+  methanol_to_power:
+    ccgt: true
+    ccgt_cc: true
+    ocgt: true
+    allam: true
   regional_co2_sequestration_potential:
     enable: false
     attribute: 'conservative estimate Mt'
@@ -473,11 +492,22 @@ sector:
   min_part_load_fischer_tropsch: 0.9
   min_part_load_methanolisation: 0.5
   use_fischer_tropsch_waste_heat: true
+  use_methanolisation_waste_heat: true
   use_fuel_cell_waste_heat: true
   use_electrolysis_waste_heat: false
   electricity_distribution_grid: true
   electricity_distribution_grid_cost_factor: 1.0
   electricity_grid_connection: true
+  transmission_efficiency:
+    DC:
+      efficiency_static: 0.98
+      efficiency_per_1000km: 0.977
+    H2 pipeline:
+      efficiency_per_1000km: 1 # 0.979
+      compression_per_1000km: 0.019
+    gas pipeline:
+      efficiency_per_1000km: 1 #0.977
+      compression_per_1000km: 0.01
   H2_network: true
   gas_network: false
   H2_retrofit: false
@@ -490,7 +520,96 @@ sector:
   conventional_generation:
     OCGT: gas
   biomass_to_liquid: false
+  biomass_to_methanol: false
   biosng: false
+  endogenous_steel: false
+  endogenous_hvc: false
+  import:
+    capacity_boost: 2
+    limit: false # bool or number in TWh
+    limit_sense: "=="
+    options:
+    - pipeline-h2
+    - shipping-lh2
+    - shipping-lch4
+    - shipping-lnh3
+    - shipping-ftfuel
+    - shipping-meoh
+    - hvdc-to-elec
+    endogenous_hvdc_import:
+      enable: false
+      exporters:
+      - CN-West
+      - DZ
+      - EG
+      - KZ
+      - LY
+      - MA
+      - SA
+      - TN
+      - TR
+      - UA
+      extra_connections:
+      - MA-DZ
+      - DZ-LY
+      - DZ-TN
+      - TN-LY
+      - LY-EG
+      - EG-SA
+      xlinks:
+        MA:
+        # Plymouth
+        - x: -4.14
+          y: 50.39
+          length: 3800
+        # Cork
+        - x: -8.52
+          y: 51.92
+          length: 4000
+        # Brest
+        - x: -4.49
+          y: 48.43
+          length: 3200
+        # Vigo
+        - x: -8.70
+          y: 42.31
+          length: 1800
+        DZ:
+        # Barcelona
+        - x: 2.37
+          y: 41.57
+          length: 1300
+        # Genoa
+        - x: 8.93
+          y: 44.41
+          length: 1800
+        # Marseille
+        - x: 5.30
+          y: 43.38
+          length: 1400
+        TN:
+        # Genoa
+        - x: 8.93
+          y: 44.41
+          length: 1500
+        # Marseille
+        - x: 5.30
+          y: 43.38
+          length: 1500
+        LY:
+        # Venice
+        - x: 12.39
+          y: 45.56
+          length: 2500
+        EG:
+        # Venice
+        - x: 12.39
+          y: 45.56
+          length: 2500
+      efficiency_static: 0.98
+      efficiency_per_1000km: 0.977 # p.u./km
+      length_factor: 1.25
+      distance_threshold: 0.05 # quantile
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
 industry:
@@ -531,13 +650,17 @@ industry:
   HVC_primary_fraction: 1.
   HVC_mechanical_recycling_fraction: 0.
   HVC_chemical_recycling_fraction: 0.
-  HVC_production_today: 52.
+  HVC_production_today: # DECHEMA report in Mt
+    ethylene: 21.7
+    propylene: 17
+    BTX: 15.7
   MWh_elec_per_tHVC_mechanical_recycling: 0.547
   MWh_elec_per_tHVC_chemical_recycling: 6.9
   chlorine_production_today: 9.58
   MWh_elec_per_tCl: 3.6
   MWh_H2_per_tCl: -0.9372
   methanol_production_today: 1.5
+  MWh_MeOH_per_tMeOH: 5.54
   MWh_elec_per_tMeOH: 0.167
   MWh_CH4_per_tMeOH: 10.25
   hotmaps_locate_missing: false
@@ -546,7 +669,7 @@ industry:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 costs:
   year: 2030
-  version: v0.6.0
+  version: c338aa8
   rooftop_share: 0.14  # based on the potentials, assuming  (0.1 kW/m2 and 10 m2/person)
   fill_values:
     FOM: 0
@@ -752,7 +875,11 @@ plotting:
     biogas to gas: '#e36311'
     CCGT: '#a85522'
     CCGT marginal: '#a85522'
-    allam: '#B98F76'
+    allam gas: '#B98F76'
+    allam methanol: '#B98F76'
+    CCGT methanol: '#B98F76'
+    CCGT methanol CC: '#B98F76'
+    OCGT methanol: '#B98F76'
     gas for industry co2 to atmosphere: '#692e0a'
     gas for industry co2 to stored: '#8a3400'
     gas for industry: '#853403'
@@ -962,3 +1089,35 @@ plotting:
     DC: "#8a1caf"
     DC-DC: "#8a1caf"
     DC link: "#8a1caf"
+    import pipeline-h2: '#fff6e0'
+    import shipping-lh2: '#ebe1ca'
+    import shipping-lch4: '#d6cbb2'
+    import shipping-lnh3: '#c6c093'
+    import shipping-ftfuel: '#bdb093'
+    import shipping-meoh: '#91856a'
+    import shipping-steel: '#736c5d'
+    import hvdc-to-elec: '#47443d'
+    external H2: '#f7cdf0'
+    external H2 Turbine: '#991f83'
+    external H2 Electrolysis: '#991f83'
+    external battery discharger: '#dff7cb'
+    external battery charger: '#dff7cb'
+    external battery: '#dff7cb'
+    external offwind: '#d0e8f5'
+    external onwind: '#accbfc'
+    external solar: '#fcf1c7'
+    external solar-utility: '#fcf1c7'
+    external HVDC: "#8a1caf"
+    steel: '#b1bbc9'
+    DRI + Electric arc: '#b1bbc9'
+    shipping ammonia: '#46caf0'
+    Methanol steam reforming CC: '#468c8b'
+    biomass to methanol CC: '#468c8b'
+    biomass to methanol: '#468c8b'
+    Methanol steam reforming: '#468c8b'
+    shipping LNG: '#e0986c'
+    industry methanol: '#468c8b'
+    industry methanol emissions: '#468c8b'
+    HVC: '#012345'
+    methanol-to-olefins/aromatics: '#012345'
+    electric steam cracker: '#012345'

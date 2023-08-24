@@ -85,21 +85,24 @@ if config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]:
 
     rule build_gas_input_locations:
         input:
-            lng=HTTP.remote(
+            gem=HTTP.remote(
                 "https://globalenergymonitor.org/wp-content/uploads/2023/07/Europe-Gas-Tracker-2023-03-v3.xlsx",
                 keep_local=True,
             ),
             entry="data/gas_network/scigrid-gas/data/IGGIELGN_BorderPoints.geojson",
-            production="data/gas_network/scigrid-gas/data/IGGIELGN_Productions.geojson",
+            storage="data/gas_network/scigrid-gas/data/IGGIELGN_Storages.geojson",
             regions_onshore=RESOURCES
             + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
             regions_offshore=RESOURCES
             + "regions_offshore_elec_s{simpl}_{clusters}.geojson",
+            europe_shape=RESOURCES + "europe_shape.geojson",
+            reference_import_sites="data/import-sites.csv",
         output:
             gas_input_nodes=RESOURCES
             + "gas_input_locations_s{simpl}_{clusters}.geojson",
             gas_input_nodes_simplified=RESOURCES
             + "gas_input_locations_s{simpl}_{clusters}_simplified.csv",
+            ports="resources/ports_s{simpl}_{clusters}.csv",
         resources:
             mem_mb=2000,
         log:
@@ -531,8 +534,6 @@ rule build_industrial_energy_demand_per_node:
         industry_sector_ratios=RESOURCES + "industry_sector_ratios.csv",
         industrial_production_per_node=RESOURCES
         + "industrial_production_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
-        industrial_energy_demand_per_node_today=RESOURCES
-        + "industrial_energy_demand_today_elec_s{simpl}_{clusters}.csv",
     output:
         industrial_energy_demand_per_node=RESOURCES
         + "industrial_energy_demand_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
@@ -747,8 +748,13 @@ rule prepare_sector_network:
         busmap=RESOURCES + "busmap_elec_s{simpl}_{clusters}.csv",
         clustered_pop_layout=RESOURCES + "pop_layout_elec_s{simpl}_{clusters}.csv",
         simplified_pop_layout=RESOURCES + "pop_layout_elec_s{simpl}.csv",
+        industrial_production=RESOURCES
+        + "industrial_production_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
         industrial_demand=RESOURCES
         + "industrial_energy_demand_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
+        industrial_demand_today=RESOURCES
+        + "industrial_energy_demand_today_elec_s{simpl}_{clusters}.csv",
+        industry_sector_ratios=RESOURCES + "industry_sector_ratios.csv",
         heat_demand_urban=RESOURCES + "heat_demand_urban_elec_s{simpl}_{clusters}.nc",
         heat_demand_rural=RESOURCES + "heat_demand_rural_elec_s{simpl}_{clusters}.nc",
         heat_demand_total=RESOURCES + "heat_demand_total_elec_s{simpl}_{clusters}.nc",
@@ -776,12 +782,19 @@ rule prepare_sector_network:
         + "solar_thermal_rural_elec_s{simpl}_{clusters}.nc"
         if config["sector"]["solar_thermal"]
         else [],
+        import_costs="data/imports/results.csv",  # TODO: host file on zenodo or elsewhere
+        import_p_max_pu="data/imports/combined_weighted_generator_timeseries.nc",  # TODO: host file on zenodo or elsewhere
+        regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+        country_centroids=HTTP.remote(
+            "https://raw.githubusercontent.com/gavinr/world-countries-centroids/v1.0.0/dist/countries.csv",
+            keep_local=True,
+        ),
     output:
         RESULTS
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
     threads: 1
     resources:
-        mem_mb=2000,
+        mem_mb=8000,
     log:
         LOGS
         + "prepare_sector_network_elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log",

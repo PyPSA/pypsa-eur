@@ -513,7 +513,11 @@ def calculate_weighted_prices(n, label, weighted_prices):
                 columns=lambda i: str(i) + suffix
             )
         else:
-            load = n.loads_t.p_set[buses]
+            load = (
+                n.loads_t.p_set[buses.intersection(n.loads_t.p_set.columns)]
+                .reindex(columns=buses)
+                .fillna(0.0)
+            )
 
         for tech in link_loads[carrier]:
             names = n.links.index[n.links.index.to_series().str[-len(tech) :] == tech]
@@ -682,8 +686,11 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=snakemake.config["logging"]["level"])
 
+    s = snakemake.input.networks[0]
+    base_dir = s[: s.find("results/") + 8]
+
     networks_dict = {
-        (cluster, ll, opt + sector_opt, planning_horizon): "results/"
+        (cluster, ll, opt + sector_opt, planning_horizon): base_dir
         + snakemake.params.RDIR
         + f"/postnetworks/elec_s{simpl}_{cluster}_l{ll}_{opt}_{sector_opt}_{planning_horizon}.nc"
         for simpl in snakemake.params.scenario["simpl"]
