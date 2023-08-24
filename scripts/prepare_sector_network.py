@@ -570,6 +570,7 @@ def add_co2_tracking(n, options):
         capital_cost=options["co2_sequestration_cost"],
         carrier="co2 stored",
         bus=spatial.co2.nodes,
+        lifetime=options["co2_sequestration_lifetime"],
     )
 
     n.add("Carrier", "co2 stored")
