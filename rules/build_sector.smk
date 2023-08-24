@@ -782,8 +782,10 @@ rule prepare_sector_network:
         + "solar_thermal_rural_elec_s{simpl}_{clusters}.nc"
         if config["sector"]["solar_thermal"]
         else [],
-        import_costs="data/imports/results.csv",  # TODO: host file on zenodo or elsewhere
-        import_p_max_pu="data/imports/combined_weighted_generator_timeseries.nc",  # TODO: host file on zenodo or elsewhere
+        # import_costs=HTTP.remote("https://tubcloud.tu-berlin.de/s/Woq9Js5MjtoaqGP/download/results.csv", keep_local=True),
+        import_costs="data/imports/results.csv",
+        # import_p_max_pu=HTTP.remote("https://tubcloud.tu-berlin.de/s/qPaoD54qHtEAo8i/download/combined_weighted_generator_timeseries.nc", keep_local=True),
+        import_p_max_pu="data/imports/combined_weighted_generator_timeseries.nc",
         regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
         country_centroids=HTTP.remote(
             "https://raw.githubusercontent.com/gavinr/world-countries-centroids/v1.0.0/dist/countries.csv",
