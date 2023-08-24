@@ -25,10 +25,10 @@ COSTS = f"data/costs_{config['costs']['year']}.csv"
 ATLITE_NPROCESSES = config["atlite"].get("nprocesses", 4)
 
 run = config["run"]
-scenario = run.get("scenario", {})
+scenarios = run.get("scenarios", {})
 if run["name"]:
-    if scenario.get("enable"):
-        fn = Path(scenario["file"])
+    if scenarios.get("enable"):
+        fn = Path(scenarios["file"])
         scenarios = yaml.safe_load(fn.read_text())
     RDIR = "{run}/"
 else:

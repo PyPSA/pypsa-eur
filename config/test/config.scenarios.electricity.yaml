@@ -8,7 +8,7 @@ run:
   name:
   - test-elec-no-offshore-wind
   - test-elec-no-onshore-wind
-  scenario:
+  scenarios:
     enable: true
     file: "config/test/scenarios.electricity.yaml"
   disable_progressbar: true

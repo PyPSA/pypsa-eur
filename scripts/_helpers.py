@@ -8,6 +8,7 @@ import logging
 import os
 import re
 import urllib
+from functools import partial
 from pathlib import Path
 
 import pandas as pd
@@ -21,41 +22,72 @@ logger = logging.getLogger(__name__)
 REGION_COLS = ["geometry", "name", "x", "y", "country"]
 
 
+def get_run_path(fn, dir, rdir, shared_resources):
+    """
+    Dynamically provide paths based on shared resources and filename.
+
+    Use this function for snakemake rule inputs or outputs that should be
+    optionally shared across runs or created individually for each run.
+
+    Parameters
+    ----------
+    fn : str
+        The filename for the path to be generated.
+    dir : str
+        The base directory.
+    rdir : str
+        Relative directory for non-shared resources.
+    shared_resources : str, list, or bool
+        Specifies which resources should be shared.
+        - If string or list, assumed to be superset of wildcards for sharing.
+        - If "base", special handling for shared "base" resources.
+        - If boolean, directly specifies if the resource is shared.
+
+    Returns
+    -------
+    str
+        Full path where the resource should be stored.
+
+    Notes
+    -----
+    Special case for "base" allows no wildcards other than
+    "technology" and excludes filenames starting with "networks/elec" or
+    "add_electricity".
+    """
+    pattern = r"\{([^{}]+)\}"
+    existing_wildcards = list(re.findall(pattern, fn))
+    if shared_resources == "base":
+        # special case for shared "base" resources
+        no_relevant_wildcards = not len(set(existing_wildcards) - {"technology"})
+        no_elec_rule = not fn.startswith("networks/elec") and not fn.startswith(
+            "add_electricity"
+        )
+        is_shared = no_relevant_wildcards and no_elec_rule
+    elif isinstance(shared_resources, (str, list)):
+        if isinstance(shared_resources, str):
+            shared_resources = [shared_resources]
+        is_shared = set(existing_wildcards).issubset(shared_resources)
+    else:
+        is_shared = shared_resources
+
+    if is_shared:
+        return f"{dir}{fn}"
+    else:
+        return f"{dir}{rdir}{fn}"
+
+
 def path_provider(dir, rdir, shared_resources):
     """
-    Dynamically provide paths based on shared resources.
+    Returns a partial function that dynamically provides paths based on shared
+    resources and the filename.
 
-    Use this function whenever there is an input or output to a
-    snakemake rule that should, optionally, be either shared across runs
-    or created individually for each run. If shared_resources is a
-    string, it is assumed to be the wildcard that indicates the cutoff
-    after which resources are no longer shared. The function returns a
-    function which takes a filename and returns a path that is either
-    shared or individual to each run.
+    Returns
+    -------
+    partial function
+        A partial function that takes a filename as input and
+        returns the path to the file based on the shared_resources parameter.
     """
-
-    def path(fn):
-        pattern = r"\{([^{}]+)\}"
-        existing_wildcards = list(re.findall(pattern, fn))
-        if shared_resources == "base":
-            # special case for shared "base" resources
-            no_relevant_wildcards = not len(set(existing_wildcards) - {"technology"})
-            no_elec_rule = not fn.startswith("networks/elec") and not fn.startswith(
-                "add_electricity"
-            )
-            is_shared = no_relevant_wildcards and no_elec_rule
-        elif isinstance(shared_resources, str):
-            final_wildcard = shared_resources
-            is_shared = final_wildcard not in existing_wildcards[:-1]
-        else:
-            is_shared = shared_resources
-
-        if is_shared:
-            return f"{dir}{fn}"
-        else:
-            return f"{dir}{rdir}{fn}"
-
-    return path
+    return partial(get_run_path, dir=dir, rdir=rdir, shared_resources=shared_resources)
 
 
 # Define a context manager to temporarily mute print statements
@@ -67,7 +99,7 @@ def mute_print():
 
 
 def set_scenario_config(snakemake):
-    scenario = snakemake.config["run"].get("scenario", {})
+    scenario = snakemake.config["run"].get("scenarios", {})
     if scenario.get("enable") and "run" in snakemake.wildcards.keys():
         try:
             with open(scenario["file"], "r") as f:

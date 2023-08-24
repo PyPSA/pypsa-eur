@@ -58,7 +58,7 @@ def config_provider(*keys, default=None):
         my_param=config_provider("key1", "key2", default="some_default_value")
     """
     # Using functools.partial to freeze certain arguments in our getter functions.
-    if config["run"].get("scenarios", False):
+    if config["run"].get("scenarios", {}).get("enable", False):
         return partial(dynamic_getter, keys=keys, default=default)
     else:
         return partial(static_getter, keys=keys, default=default)
