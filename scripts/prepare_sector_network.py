@@ -3753,6 +3753,8 @@ def add_endogenous_hvdc_import_options(n, cost_factor=1.0):
 
         exporters_tech_i = exporters.index.intersection(p_max_pu_tech.columns)
 
+        grid_connection = costs.at["electricity grid connection", "fixed"]
+
         n.madd(
             "Generator",
             exporters_tech_i,
@@ -3760,7 +3762,7 @@ def add_endogenous_hvdc_import_options(n, cost_factor=1.0):
             bus=exporters_tech_i,
             carrier=f"external {tech}",
             p_nom_extendable=True,
-            capital_cost=costs.at[tech, "fixed"] * cost_factor,
+            capital_cost=(costs.at[tech, "fixed"] + grid_connection) * cost_factor,
             lifetime=costs.at[tech, "lifetime"],
             p_max_pu=p_max_pu_tech.reindex(columns=exporters_tech_i),
         )
