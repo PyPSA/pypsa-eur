@@ -87,9 +87,7 @@ def add_land_use_constraint_perfect(n):
     # carrier
     carriers = p_nom_max.index.get_level_values(0).unique()
     gen_i = n.generators[(n.generators.carrier.isin(carriers)) &
-                         (ext_i) & 
-                         (n.generators.build_year>n.investment_periods[0])
-                         ].index
+                         (ext_i)].index
     n.generators.loc[gen_i, "p_nom_min"] = 0
     # check minimum capacities
     check_p_min_p_max(p_nom_max)
@@ -233,22 +231,22 @@ def add_carbon_neutral_constraint(n, snapshots):
             n.model.add_constraints(lhs <= rhs, name=f"GlobalConstraint-{name}")
 
 
-def add_max_growth(n):
-    """Add maximum growth rates for different carriers"""
-    logger.info("set maximum growth rate of renewables.")
-    # solar max grow so far 28 GW in Europe https://www.iea.org/reports/renewables-2020/solar-pv
-    n.carriers.loc["solar", "max_growth"] = 280 * 1.3 * 1e3  # 70 * 1e3
-    # onshore max grow so far 16 GW in Europe https://www.iea.org/reports/renewables-2020/wind
-    n.carriers.loc["onwind", "max_growth"] = 160 * 1.3 * 1e3  # 40 * 1e3
-    # offshore max grow so far 3.5 GW in Europe https://windeurope.org/about-wind/statistics/offshore/european-offshore-wind-industry-key-trends-statistics-2019/
-    n.carriers.loc[["offwind-ac", "offwind-dc"], "max_growth"] = 35 * 1.3 * 1e3  # 8.75 * 1e3
+def add_max_growth(n, config):
+    """Add maximum growth rates for different carriers
+    """
     
-    res = ["solar", "onwind", "offwind-ac", "offwind-dc"]
-    n.carriers.loc[res, "max_relative_growth"] = 3
+    opts = config["sector"]["limit_max_growth"]
+    # take maximum yearly difference between investment periods since historic growth is per year
+    factor = n.investment_period_weightings.years.max() * opts["factor"]
+    for carrier in opts["max_growth"].keys():
+        max_per_period = opts["max_growth"][carrier] * factor
+        logger.info(f"set maximum growth rate per investment period of {carrier} to {max_per_period} GW.")
+        n.carriers.loc[carrier, "max_growth"] = max_per_period * 1e3
     
-    # # heating sector
-    # heat_c = n.carriers[n.carriers.index.str.contains("pump")].index
-    # n.carriers.loc[res, "max_relative_growth"] = 2
+    for carrier in opts["max_relative_growth"].keys():
+        max_r_per_period = opts["max_relative_growth"][carrier]
+        logger.info(f"set maximum relative growth per investment period of {carrier} to {max_r_per_period}.")
+        n.carriers.loc[carrier, "max_relative_growth"] = max_r_per_period 
     
     return n
             
@@ -314,7 +312,8 @@ def prepare_network(
     
     if foresight == "perfect":
         n = add_land_use_constraint_perfect(n)
-        n = add_max_growth(n)
+        if config["sector"]["limit_max_growth"]["enable"]:
+            n = add_max_growth(n, config)
 
     if n.stores.carrier.eq("co2 stored").any():
         limit = co2_sequestration_potential
