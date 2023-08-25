@@ -3528,6 +3528,14 @@ def add_waste_heat(n):
                 0.95 - n.links.loc[urban_central + " Fischer-Tropsch", "efficiency"]
             )
 
+        if options["use_methanation_waste_heat"]:
+            n.links.loc[urban_central + " Sabatier", "bus3"] = (
+                urban_central + " urban central heat"
+            )
+            n.links.loc[urban_central + " Sabatier", "efficiency3"] = (
+                0.95 - n.links.loc[urban_central + " Sabatier", "efficiency"]
+            )
+
         if options["use_methanolisation_waste_heat"]:
             n.links.loc[urban_central + " methanolisation", "bus4"] = (
                 urban_central + " urban central heat"
