@@ -495,7 +495,7 @@ sector:
   use_methanolisation_waste_heat: true
   use_methanation_waste_heat: true
   use_fuel_cell_waste_heat: true
-  use_electrolysis_waste_heat: false
+  use_electrolysis_waste_heat: true
   electricity_distribution_grid: true
   electricity_distribution_grid_cost_factor: 1.0
   electricity_grid_connection: true
