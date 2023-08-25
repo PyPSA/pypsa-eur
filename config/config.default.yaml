@@ -610,6 +610,7 @@ sector:
       efficiency_per_1000km: 0.977 # p.u./km
       length_factor: 1.25
       distance_threshold: 0.05 # quantile
+      p_nom_max: .inf # for HVDC links
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
 industry:
