@@ -499,6 +499,11 @@ sector:
     OCGT: gas
   biomass_to_liquid: false
   biosng: false
+  max_growth:
+    onwind: 16
+    solar: 28
+    offwind-ac: 35
+    offwind-dc 35
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
 industry:

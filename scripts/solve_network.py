@@ -232,6 +232,25 @@ def add_carbon_neutral_constraint(n, snapshots):
             
             n.model.add_constraints(lhs <= rhs, name=f"GlobalConstraint-{name}")
 
+
+def add_max_growth(n):
+    """Add maximum growth rates for different carriers"""
+    logger.info("set maximum growth rate of renewables.")
+    # solar max grow so far 28 GW in Europe https://www.iea.org/reports/renewables-2020/solar-pv
+    n.carriers.loc["solar", "max_growth"] = 280 * 1.3 * 1e3  # 70 * 1e3
+    # onshore max grow so far 16 GW in Europe https://www.iea.org/reports/renewables-2020/wind
+    n.carriers.loc["onwind", "max_growth"] = 160 * 1.3 * 1e3  # 40 * 1e3
+    # offshore max grow so far 3.5 GW in Europe https://windeurope.org/about-wind/statistics/offshore/european-offshore-wind-industry-key-trends-statistics-2019/
+    n.carriers.loc[["offwind-ac", "offwind-dc"], "max_growth"] = 35 * 1.3 * 1e3  # 8.75 * 1e3
+    
+    res = ["solar", "onwind", "offwind-ac", "offwind-dc"]
+    n.carriers.loc[res, "max_relative_growth"] = 3
+    
+    # # heating sector
+    # heat_c = n.carriers[n.carriers.index.str.contains("pump")].index
+    # n.carriers.loc[res, "max_relative_growth"] = 2
+    
+    return n
             
 def prepare_network(
     n,
@@ -295,6 +314,7 @@ def prepare_network(
     
     if foresight == "perfect":
         n = add_land_use_constraint_perfect(n)
+        n = add_max_growth(n)
 
     if n.stores.carrier.eq("co2 stored").any():
         limit = co2_sequestration_potential
@@ -663,6 +683,7 @@ def add_pipe_retrofit_constraint(n):
     rhs = n.links.p_nom[gas_pipes_i].rename_axis("Link-ext")
 
     n.model.add_constraints(lhs == rhs, name="Link-pipe_retrofit")
+
 
 
 def extra_functionality(n, snapshots):
