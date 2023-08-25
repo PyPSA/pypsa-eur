@@ -3212,7 +3212,7 @@ def apply_time_segmentation(
                 df = pnl.copy()
                 df.columns = pd.MultiIndex.from_product([[c.name], [attr], df.columns])
                 raw = pd.concat([raw, df], axis=1)
-
+    raw = raw.dropna(axis=1)
     # normalise all time-dependent data
     annual_max = raw.max().replace(0, 1)
     raw = raw.div(annual_max, level=0)
@@ -3282,12 +3282,11 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "prepare_sector_network",
-            # configfiles="test/config.overnight.yaml",
             simpl="",
             opts="",
             clusters="37",
             ll="v1.0",
-            sector_opts="8760H-T-H-B-I-A-solar+p3-dist1",
+            sector_opts="60SEG-T-H-B-I-A-solar+p3-dist1",
             planning_horizons="2020",
         )
 
