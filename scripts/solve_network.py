@@ -32,6 +32,7 @@ import re
 import numpy as np
 import pandas as pd
 import pypsa
+from pypsa.descriptors import nominal_attrs
 import xarray as xr
 from _helpers import configure_logging, update_config_with_sector_opts
 
@@ -40,13 +41,72 @@ from vresutils.benchmark import memory_logger
 logger = logging.getLogger(__name__)
 pypsa.pf.logger.setLevel(logging.WARNING)
 from pypsa.descriptors import get_switchable_as_dense as get_as_dense
-
+from linopy.expressions import merge
+from numpy import isnan
 
 def add_land_use_constraint(n, planning_horizons, config):
     if "m" in snakemake.wildcards.clusters:
         _add_land_use_constraint_m(n, planning_horizons, config)
     else:
         _add_land_use_constraint(n)
+        
+
+def add_land_use_constraint_perfect(n):
+    """Add global constraints for tech capacity limit.
+    """
+    logger.info("Add land-use constraint for perfect foresight")
+    def compress_series(s):
+        
+        def process_group(group):
+            if group.nunique() == 1:
+                return pd.Series(group.iloc[0], index=[None])
+            else:
+                return group
+        
+        return s.groupby(level=[0,1]).apply(process_group)
+    
+    def new_index_name(t):
+        # Convert all elements to string and filter out None values
+        parts = [str(x) for x in t if x is not None]
+        # Join with space, but use a dash for the last item if not None
+        return ' '.join(parts[:2]) + (f'-{parts[-1]}' if len(parts) > 2 else '')
+    
+    def check_p_min_p_max(p_nom_max):
+        p_nom_min = n.generators[ext_i].groupby(grouper).sum().p_nom_min
+        p_nom_min = p_nom_min.reindex(p_nom_max.index)
+        check = (p_nom_min.groupby(level=[0,1]).sum()>p_nom_max.groupby(level=[0,1]).min())
+        if check.sum():
+            logger.warning(f"summed p_min_pu values at node larger than technical potential {check[check].index}")
+
+    grouper = [n.generators.carrier, n.generators.bus, n.generators.build_year]
+    ext_i = n.generators.p_nom_extendable
+    # get technical limit per node and investment period
+    p_nom_max = n.generators[ext_i].groupby(grouper).min().p_nom_max
+    # drop carriers without tech limit
+    p_nom_max = p_nom_max[~p_nom_max.isin([np.inf, np.nan])]
+    # carrier
+    carriers = p_nom_max.index.get_level_values(0).unique()
+    gen_i = n.generators[(n.generators.carrier.isin(carriers)) &
+                         (ext_i) & 
+                         (n.generators.build_year>n.investment_periods[0])
+                         ].index
+    n.generators.loc[gen_i, "p_nom_min"] = 0
+    # check minimum capacities
+    check_p_min_p_max(p_nom_max)
+    # drop multi entries in case p_nom_max stays constant in different periods
+    # p_nom_max = compress_series(p_nom_max)
+    # adjust name to fit syntax of nominal constraint per bus
+    df = p_nom_max.reset_index()
+    df["name"] = df.apply(lambda row: f"nom_max_{row['carrier']}" 
+                          + (f"_{row['build_year']}" if row['build_year'] is not None else ""),
+                          axis=1)
+    
+    for name in df.name.unique():
+        df_carrier = df[df.name==name]
+        bus = df_carrier.bus
+        n.buses.loc[bus, name] = df_carrier.p_nom_max.values
+    
+    return n
 
 
 def _add_land_use_constraint(n):
@@ -232,6 +292,9 @@ def prepare_network(
 
     if foresight == "myopic":
         add_land_use_constraint(n, planning_horizons, config)
+    
+    if foresight == "perfect":
+        n = add_land_use_constraint_perfect(n)
 
     if n.stores.carrier.eq("co2 stored").any():
         limit = co2_sequestration_potential
@@ -627,7 +690,8 @@ def extra_functionality(n, snapshots):
             add_EQ_constraints(n, o)
     add_battery_constraints(n)
     add_pipe_retrofit_constraint(n)
-    add_carbon_neutral_constraint(n, snapshots)
+    if n._multi_invest:
+        add_carbon_neutral_constraint(n, snapshots)
 
 
 def solve_network(n, config, solving, opts="", **kwargs):
