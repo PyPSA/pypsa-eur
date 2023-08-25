@@ -536,6 +536,8 @@ sector:
     - shipping-ftfuel
     - shipping-meoh
     - hvdc-to-elec
+    p_nom_max:
+      pipeline-h2: .inf
     endogenous_hvdc_import:
       enable: false
       exporters:
