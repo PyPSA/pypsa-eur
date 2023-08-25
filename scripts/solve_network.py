@@ -205,7 +205,7 @@ def add_co2_sequestration_limit(n, config, limit=200):
     )
 
 
-def add_carbon_neutral_constraint(n, snapshots):
+def add_carbon_constraint(n, snapshots):
     glcs = n.global_constraints.query('type == "co2_limit"')
     if glcs.empty:
         return
@@ -227,6 +227,32 @@ def add_carbon_neutral_constraint(n, snapshots):
             final_e = n.model["Store-e"].loc[last_i, stores.index]
             time_i = pd.IndexSlice[time_valid, :]
             lhs = final_e.loc[time_i,:] - final_e.shift(snapshot=1).loc[time_i,:]
+            
+            n.model.add_constraints(lhs <= rhs, name=f"GlobalConstraint-{name}")
+
+
+def add_carbon_budget_constraint(n, snapshots):
+    glcs = n.global_constraints.query('type == "Co2Budget"')
+    if glcs.empty:
+        return
+    for name, glc in glcs.iterrows():
+        rhs = glc.constant
+        carattr = glc.carrier_attribute
+        emissions = n.carriers.query(f"{carattr} != 0")[carattr]
+
+        if emissions.empty:
+            continue
+
+        # stores
+        n.stores["carrier"] = n.stores.bus.map(n.buses.carrier)
+        stores = n.stores.query("carrier in @emissions.index and not e_cyclic")
+        time_valid = int(glc.loc["investment_period"])
+        if not stores.empty:
+            last = n.snapshot_weightings.reset_index().groupby("period").last()
+            last_i = last.set_index([last.index, last.timestep]).index 
+            final_e = n.model["Store-e"].loc[last_i, stores.index]
+            time_i = pd.IndexSlice[time_valid, :]
+            lhs = final_e.loc[time_i,:] 
             
             n.model.add_constraints(lhs <= rhs, name=f"GlobalConstraint-{name}")
 
@@ -711,7 +737,7 @@ def extra_functionality(n, snapshots):
     add_battery_constraints(n)
     add_pipe_retrofit_constraint(n)
     if n._multi_invest:
-        add_carbon_neutral_constraint(n, snapshots)
+        add_carbon_constraint(n, snapshots)
 
 
 def solve_network(n, config, solving, opts="", **kwargs):
@@ -776,7 +802,7 @@ if __name__ == "__main__":
             opts="",
             clusters="37",
             ll="v1.0",
-            sector_opts="4380H-T-H-B-I-A-solar+p3-dist1",
+            sector_opts="2p0-4380H-T-H-B-I-A-solar+p3-dist1",
             planning_horizons="2030",
         )
     configure_logging(snakemake)

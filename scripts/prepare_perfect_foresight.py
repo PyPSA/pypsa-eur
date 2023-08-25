@@ -185,6 +185,7 @@ def adjust_stores(n):
     e_initial_store = ["co2 stored"]
     co2_i = n.stores[n.stores.carrier.isin(e_initial_store)].index
     n.stores.loc[co2_i, "e_initial_per_period"] = True
+    
 
     return n
 
@@ -240,13 +241,24 @@ def set_carbon_constraints(n, opts):
             carrier_attribute="co2_emissions",
             sense="<=",
             constant=budget,
+            investment_period=n.investment_periods[-1]
+        )
+        
+        # drop other CO2 limits 
+        drop_i = n.global_constraints[n.global_constraints.type=="co2_limit"].index
+        n.mremove("GlobalConstraint", drop_i)
+        
+        n.add(
+            "GlobalConstraint",
+            "carbon_neutral",
+            type="co2_limit",
+            carrier_attribute="co2_emissions",
+            sense="<=",
+            constant=0,
+            investment_period=n.investment_periods[-1]
         )
 
            
-    else: 
-        e_initial_store = ["co2 stored"]
-        co2_i = n.stores[n.stores.carrier.isin(e_initial_store)].index
-        n.stores.loc[co2_i, "e_initial_per_period"] = True
     # set minimum CO2 emission constraint to avoid too fast reduction
     if "co2min" in opts:
         emissions_1990 = 4.53693
@@ -305,7 +317,7 @@ if __name__ == "__main__":
             opts="",
             clusters="37",
             ll="v1.0",
-            sector_opts="4380H-T-H-B-I-A-solar+p3-dist1",
+            sector_opts="2p0-4380H-T-H-B-I-A-solar+p3-dist1",
         )
 
     update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
