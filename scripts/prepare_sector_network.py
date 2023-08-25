@@ -3680,6 +3680,8 @@ def add_endogenous_hvdc_import_options(n, cost_factor=1.0):
         importer="EUE"
     )
 
+    p_nom_max = xr.open_dataset(snakemake.input.import_p_max_pu).p_nom_max.sel(importer="EUE").to_pandas()
+
     def _coordinates(ct):
         iso2 = ct.split("-")[0]
         if iso2 in country_centroids.index:
@@ -3766,6 +3768,7 @@ def add_endogenous_hvdc_import_options(n, cost_factor=1.0):
             capital_cost=(costs.at[tech, "fixed"] + grid_connection) * cost_factor,
             lifetime=costs.at[tech, "lifetime"],
             p_max_pu=p_max_pu_tech.reindex(columns=exporters_tech_i),
+            p_nom_max=p_nom_max[tech].reindex(index=exporters_tech_i) * cf["share_of_p_nom_max_available"],
         )
 
     # hydrogen storage

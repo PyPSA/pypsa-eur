@@ -611,6 +611,7 @@ sector:
       length_factor: 1.25
       distance_threshold: 0.05 # quantile
       p_nom_max: .inf # for HVDC links
+      share_of_p_nom_max_available: 1. # for wind and solar generators
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
 industry:
