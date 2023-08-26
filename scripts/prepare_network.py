@@ -297,33 +297,34 @@ if __name__ == "__main__":
 
     set_line_s_max_pu(n, snakemake.params.lines["s_max_pu"])
 
-    nH_wildcard = False
-    nseg_wildcard = False
-    Co2L_wildcard = False
+    snapshots_wildcard = False
+    #Co2L_wildcard = False
 
     for o in opts:
         m = re.match(r"^\d+h$", o, re.IGNORECASE)
         if m is not None:
             n = average_every_nhours(n, m.group(0))
-            nH_wildcard = True
+            snapshot_wildcard = True
             break
-
-    if snakemake.params.average_every_nhours.get("enable", False) and not nH_wildcard:
-        m = snakemake.params.average_every_nhours["hour"]
-        n = average_every_nhours(n, m)
 
     for o in opts:
         m = re.match(r"^\d+seg$", o, re.IGNORECASE)
         if m is not None:
             solver_name = snakemake.config["solving"]["solver"]["name"]
             n = apply_time_segmentation(n, m.group(0)[:-3], solver_name)
-            nseg_wildcard = True
+            snapshots_wildcard = True
             break
 
-    if snakemake.params.time_segmentation.get("enable", False) and not nH_wildcard:
-        solver_name = snakemake.config["solving"]["solver"]["name"]
-        m = snakemake.params.time_segmentation["hour"]
-        n = apply_time_segmentation(n, m, solver_name)
+    if not snapshots_wildcard:
+        time_segmentation = snakemake.params.snapshot_opts.get("time_segmentation",{})
+        average_every_nhours_param = snakemake.params.snapshot_opts.get("average_every_nhours",{})
+        if average_every_nhours_param.get("enable", False):
+            m = average_every_nhours_param["hour"]
+            n = average_every_nhours(n, m)
+        if time_segmentation.get("enable", False):
+            solver_name = snakemake.config["solving"]["solver"]["name"]
+            m = time_segmentation["hour"]
+            n = apply_time_segmentation(n, m, solver_name)
 
     for o in opts:
         if "Co2L" in o:
@@ -379,8 +380,8 @@ if __name__ == "__main__":
                     c.df.loc[sel, attr] *= factor
 
     for o in opts:
-        if "Ep" in o or snakemake.params.cost["emission_prices"].get("enable",False):
-            if "Ept" in o: or snakemake.params.cost["emission_prices"].get("monthly_prices",False)
+        if "Ep" in o or snakemake.params.costs["emission_prices"].get("enable",False):
+            if "Ept" in o or snakemake.params.costs["emission_prices"].get("monthly_prices",False):
                 logger.info(
                     "Setting time dependent emission prices according spot market price"
                 )

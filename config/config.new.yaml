@@ -59,6 +59,8 @@ snapshots:
   start: "2013-01-01"
   end: "2014-01-01"
   inclusive: 'left'
+
+snapshot_opts:
   average_every_nhours:
     enable: false
     hour: 2

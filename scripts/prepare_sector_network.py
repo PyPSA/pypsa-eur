@@ -3281,11 +3281,13 @@ def set_temporal_aggregation(n, opts, solver_name):
     """
     Aggregate network temporally.
     """
+    snapshots_wildcard = False
     for o in opts:
         # temporal averaging
         m = re.match(r"^\d+h$", o, re.IGNORECASE)
         if m is not None:
             n = average_every_nhours(n, m.group(0))
+            snapshots_wildcard = True
             break
         # representative snapshots
         m = re.match(r"(^\d+)sn$", o, re.IGNORECASE)
@@ -3294,6 +3296,7 @@ def set_temporal_aggregation(n, opts, solver_name):
             logger.info(f"Use every {sn} snapshot as representative")
             n.set_snapshots(n.snapshots[::sn])
             n.snapshot_weightings *= sn
+            snapshots_wildcard = True
             break
         # segments with package tsam
         m = re.match(r"^(\d+)seg$", o, re.IGNORECASE)
@@ -3301,7 +3304,19 @@ def set_temporal_aggregation(n, opts, solver_name):
             segments = int(m[1])
             logger.info(f"Use temporal segmentation with {segments} segments")
             n = apply_time_segmentation(n, segments, solver_name=solver_name)
+            snapshots_wildcard = True
             break
+
+    if not snapshots_wildcard:
+        average_every_nhours_param = snakemake.params.snapshot_opts.get("average_every_nhours",{})
+        time_segmentation = snakemake.params.snapshot_opts.get("time_segmentation",{})
+        if average_every_nhours_param.get("enable", False):
+            m = average_every_nhours_param["hour"]
+            n = average_every_nhours(n, m)
+        elif time_segmentation.get("enable", False):
+            m = time_segmentation["hour"]
+            n = apply_time_segmentation(n, m, solver_name)
+
     return n
 
 
@@ -3434,7 +3449,7 @@ if __name__ == "__main__":
     input_co2 = snakemake.input.co2
 
     for o in opts:
-        if "cb" not in o
+        if "cb" not in o:
             continue
         limit_type = "wildcard co2 budget"
         if not os.path.exists(fn):

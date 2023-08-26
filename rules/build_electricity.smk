@@ -468,13 +468,12 @@ rule add_extra_components:
 
 rule prepare_network:
     params:
-        average_every_nhours=config["snapshots"].get("average_every_nhours", {}),
-        time_segmentation=config["snapshots"].get("time_segmentation", {}),
+        snapshot_opts=config.get("snapshot_opts",{}),
         links=config["links"],
         lines=config["lines"],
         gaslimit=config["electricity"].get("gaslimit"),
         max_hours=config["electricity"]["max_hours"],
-        autarky=config["electricity"]["autarky"],
+        autarky=config["electricity"].get("autarky", {}),
         costs=config["costs"],
         co2=config["co2"],
     input:

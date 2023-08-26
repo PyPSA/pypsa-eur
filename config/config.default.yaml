@@ -59,6 +59,8 @@ snapshots:
   start: "2013-01-01"
   end: "2014-01-01"
   inclusive: 'left'
+
+snapshot_opts: # Note that only one can be enable, if both is enablem, then there would be an error
   average_every_nhours:
     enable: false
     hour: 2
