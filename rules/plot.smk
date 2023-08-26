@@ -147,3 +147,16 @@ rule plot_biomass_potentials:
         ),
     script:
         "../scripts/plot_biomass_potentials.py"
+
+
+
+rule plot_balance_timeseries:
+    input:
+        network=RESULTS
+        + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        rc="matplotlibrc",
+    threads: 12
+    output:
+        directory(RESULTS + "graphics/balance_timeseries/s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}")
+    script:
+        "../scripts/plot_balance_timeseries.py"
