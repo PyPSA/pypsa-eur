@@ -3084,7 +3084,10 @@ def maybe_adjust_costs_and_potentials(n, opts):
             logger.info(f"changing {attr} for {carrier} by factor {factor}")
             adjust_carrier_wildcard = True
 
-    if snakemake.params.adjust_carrier.get("enable", False) and not adjust_carrier_wildcard:
+    if (
+        snakemake.params.adjust_carrier.get("enable", False)
+        and not adjust_carrier_wildcard
+    ):
         for carrier in snakemake.params.adjust_carrier:
             attr_factor = snakemake.params.adjust_carrier[carrier]
             if isinstance(attr, dict):
@@ -3308,8 +3311,10 @@ def set_temporal_aggregation(n, opts, solver_name):
             break
 
     if not snapshots_wildcard:
-        average_every_nhours_param = snakemake.params.snapshot_opts.get("average_every_nhours",{})
-        time_segmentation = snakemake.params.snapshot_opts.get("time_segmentation",{})
+        average_every_nhours_param = snakemake.params.snapshot_opts.get(
+            "average_every_nhours", {}
+        )
+        time_segmentation = snakemake.params.snapshot_opts.get("time_segmentation", {})
         if average_every_nhours_param.get("enable", False):
             m = average_every_nhours_param["hour"]
             n = average_every_nhours(n, m)
@@ -3441,7 +3446,9 @@ if __name__ == "__main__":
 
     if snakemake.params.co2["co2_budget"]["from_values"]["enable"]:
         limit_type = "config co2 budged"
-        limit = get(snakemake.params.co2["co2_budget"]["from_values"]["values"], investment_year)
+        limit = get(
+            snakemake.params.co2["co2_budget"]["from_values"]["values"], investment_year
+        )
 
     fn = "results/" + snakemake.params.RDIR + "csvs/carbon_budget_distribution.csv"
     emissions_scope = snakemake.params.emissions_scope
@@ -3467,10 +3474,18 @@ if __name__ == "__main__":
 
     if limit_type != "co2 budget":
         if snakemake.params.co2["co2_budget"]["from_beta_decay"]["enable"]:
-            o = str("cb" + snakemake.params.co2["co2_budget"]["from_beta_decay"]["value"] + "be")
+            o = str(
+                "cb"
+                + snakemake.params.co2["co2_budget"]["from_beta_decay"]["value"]
+                + "be"
+            )
             limit_type = "carbon budget with beta decay"
         if snakemake.params.co2["co2_budget"]["from_exp_decay"]["enable"]:
-            o = str("cb" + snakemake.params.co2["co2_budget"]["from_exp_decay"]["value"] + "ex")
+            o = str(
+                "cb"
+                + snakemake.params.co2["co2_budget"]["from_exp_decay"]["value"]
+                + "ex"
+            )
             limit_type = "carbon budget with exponential decay"
         if "wildcard co2 budget" in limit_type:
             build_carbon_budget(
@@ -3492,7 +3507,10 @@ if __name__ == "__main__":
         limit = float(limit.replace("p", ".").replace("m", "-"))
         break
 
-    if snakemake.params.co2["fix_limits"]["enable"] and limit_type != "wildcard fix value":
+    if (
+        snakemake.params.co2["fix_limits"]["enable"]
+        and limit_type != "wildcard fix value"
+    ):
         limit_type = "config fix value"
         limit = snakemake.params.co2["fix_limits"]["value"]
 

@@ -468,7 +468,7 @@ rule add_extra_components:
 
 rule prepare_network:
     params:
-        snapshot_opts=config.get("snapshot_opts",{}),
+        snapshot_opts=config.get("snapshot_opts", {}),
         links=config["links"],
         lines=config["lines"],
         gaslimit=config["electricity"].get("gaslimit"),

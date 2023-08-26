@@ -298,7 +298,7 @@ if __name__ == "__main__":
     set_line_s_max_pu(n, snakemake.params.lines["s_max_pu"])
 
     snapshots_wildcard = False
-    #Co2L_wildcard = False
+    # Co2L_wildcard = False
 
     for o in opts:
         m = re.match(r"^\d+h$", o, re.IGNORECASE)
@@ -316,8 +316,10 @@ if __name__ == "__main__":
             break
 
     if not snapshots_wildcard:
-        time_segmentation = snakemake.params.snapshot_opts.get("time_segmentation",{})
-        average_every_nhours_param = snakemake.params.snapshot_opts.get("average_every_nhours",{})
+        time_segmentation = snakemake.params.snapshot_opts.get("time_segmentation", {})
+        average_every_nhours_param = snakemake.params.snapshot_opts.get(
+            "average_every_nhours", {}
+        )
         if average_every_nhours_param.get("enable", False):
             m = average_every_nhours_param["hour"]
             n = average_every_nhours(n, m)
@@ -340,13 +342,15 @@ if __name__ == "__main__":
             break
 
     if snakemake.params.co2["fix_limits"].get("enable", False) and not Co2L_wildcard:
-        if isinstance(snakemake.params.co2["fix_limits"].get("value"),float):
-            co2limit = snakemake.params.co2["fix_limits"]["value"] * snakemake.params.co2["base"]
+        if isinstance(snakemake.params.co2["fix_limits"].get("value"), float):
+            co2limit = (
+                snakemake.params.co2["fix_limits"]["value"]
+                * snakemake.params.co2["base"]
+            )
         else:
             co2limit = snakemake.params.co2["limit"]
         add_co2limit(n, co2limit, Nyears)
         logger.info("Setting CO2 limit according to config value.")
-
 
     for o in opts:
         if "CH4L" in o:
@@ -380,8 +384,10 @@ if __name__ == "__main__":
                     c.df.loc[sel, attr] *= factor
 
     for o in opts:
-        if "Ep" in o or snakemake.params.costs["emission_prices"].get("enable",False):
-            if "Ept" in o or snakemake.params.costs["emission_prices"].get("monthly_prices",False):
+        if "Ep" in o or snakemake.params.costs["emission_prices"].get("enable", False):
+            if "Ept" in o or snakemake.params.costs["emission_prices"].get(
+                "monthly_prices", False
+            ):
                 logger.info(
                     "Setting time dependent emission prices according spot market price"
                 )
@@ -407,10 +413,10 @@ if __name__ == "__main__":
         p_nom_max_ext=snakemake.params.links.get("max_extension", np.inf),
     )
 
-    if "ATK" in opts or snakemake.params.autarky.get("enable",False):
-        only_crossborder=False
-        if "ATKc" in opts or  snakemake.params.autarky.get("by_country",False):
-            only_crossborder=True
+    if "ATK" in opts or snakemake.params.autarky.get("enable", False):
+        only_crossborder = False
+        if "ATKc" in opts or snakemake.params.autarky.get("by_country", False):
+            only_crossborder = True
         enforce_autarky(n, only_crossborder=only_crossborder)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
