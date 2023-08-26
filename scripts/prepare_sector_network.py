@@ -3914,6 +3914,8 @@ def add_import_options(
     import_nodes = pd.read_csv(fn, index_col=0)
     import_nodes["hvdc-to-elec"] = 15000
 
+    import_config = snakemake.config["sector"]["import"]
+
     ports = pd.read_csv(snakemake.input.ports, index_col=0)
 
     translate = {
