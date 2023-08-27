@@ -679,79 +679,6 @@ def plot_ch4_map(network):
     )
 
 
-def plot_map_without(network):
-    n = network.copy()
-    assign_location(n)
-
-    # Drop non-electric buses so they don't clutter the plot
-    n.buses.drop(n.buses.index[n.buses.carrier != "AC"], inplace=True)
-
-    fig, ax = plt.subplots(figsize=(7, 6), subplot_kw={"projection": ccrs.EqualEarth()})
-
-    # PDF has minimum width, so set these to zero
-    line_lower_threshold = 200.0
-    line_upper_threshold = 1e4
-    linewidth_factor = 3e3
-    ac_color = "rosybrown"
-    dc_color = "darkseagreen"
-
-    # hack because impossible to drop buses...
-    if "EU gas" in n.buses.index:
-        eu_location = snakemake.params.plotting.get(
-            "eu_node_location", dict(x=-5.5, y=46)
-        )
-        n.buses.loc["EU gas", "x"] = eu_location["x"]
-        n.buses.loc["EU gas", "y"] = eu_location["y"]
-
-    to_drop = n.links.index[(n.links.carrier != "DC") & (n.links.carrier != "B2B")]
-    n.links.drop(to_drop, inplace=True)
-
-    if snakemake.wildcards["ll"] == "v1.0":
-        line_widths = n.lines.s_nom
-        link_widths = n.links.p_nom
-    else:
-        line_widths = n.lines.s_nom_min
-        link_widths = n.links.p_nom_min
-
-    line_widths = line_widths.clip(line_lower_threshold, line_upper_threshold)
-    link_widths = link_widths.clip(line_lower_threshold, line_upper_threshold)
-
-    line_widths = line_widths.replace(line_lower_threshold, 0)
-    link_widths = link_widths.replace(line_lower_threshold, 0)
-
-    n.plot(
-        bus_colors="k",
-        line_colors=ac_color,
-        link_colors=dc_color,
-        line_widths=line_widths / linewidth_factor,
-        link_widths=link_widths / linewidth_factor,
-        ax=ax,
-        **map_opts,
-    )
-
-    handles = []
-    labels = []
-
-    for s in (10, 5):
-        handles.append(
-            plt.Line2D([0], [0], color=ac_color, linewidth=s * 1e3 / linewidth_factor)
-        )
-        labels.append(f"{s} GW")
-    l1_1 = ax.legend(
-        handles,
-        labels,
-        loc="upper left",
-        bbox_to_anchor=(0.05, 1.01),
-        frameon=False,
-        labelspacing=0.8,
-        handletextpad=1.5,
-        title="Today's transmission",
-    )
-    ax.add_artist(l1_1)
-
-    fig.savefig(snakemake.output.today, transparent=True, bbox_inches="tight")
-
-
 def plot_series(network, carrier="AC", name="test"):
     n = network.copy()
     assign_location(n)
@@ -949,7 +876,6 @@ if __name__ == "__main__":
 
     plot_h2_map(n, regions)
     plot_ch4_map(n)
-    plot_map_without(n)
 
     # plot_series(n, carrier="AC", name=suffix)
     # plot_series(n, carrier="heat", name=suffix)
