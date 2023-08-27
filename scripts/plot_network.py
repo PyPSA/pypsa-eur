@@ -671,6 +671,7 @@ def plot_ch4_map(network):
     )
 
 
+<<<<<<< HEAD
 def plot_series(network, carrier="AC", name="test"):
     n = network.copy()
     assign_location(n)
@@ -984,6 +985,8 @@ def plot_map_perfect(
         )
 
 
+=======
+>>>>>>> ead390b4 (plot_network: remove function plot_series())
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -1028,6 +1031,3 @@ if __name__ == "__main__":
 
         plot_h2_map(n, regions)
         plot_ch4_map(n)
-
-    # plot_series(n, carrier="AC", name=suffix)
-    # plot_series(n, carrier="heat", name=suffix)
