@@ -160,3 +160,26 @@ rule plot_balance_timeseries:
         directory(RESULTS + "graphics/balance_timeseries/s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}")
     script:
         "../scripts/plot_balance_timeseries.py"
+
+
+rule plot_heatmap_timeseries:
+    input:
+        network=RESULTS
+        + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        rc="matplotlibrc",
+    threads: 12
+    output:
+        directory(RESULTS + "graphics/heatmap_timeseries/s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}")
+    script:
+        "../scripts/plot_heatmap_timeseries.py"
+
+rule plot_heatmap_timeseries_resources:
+    input:
+        network=RESULTS
+        + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        rc="matplotlibrc",
+    threads: 12
+    output:
+        directory(RESULTS + "graphics/heatmap_timeseries/s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}")
+    script:
+        "../scripts/plot_heatmap_timeseries_resources.py"
