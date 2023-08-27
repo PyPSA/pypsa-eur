@@ -240,7 +240,8 @@ def plot_h2_map(n, regions):
 
     ax.set_facecolor("white")
 
-    fig.savefig(snakemake.output[0])
+    for fn in snakemake.output[0]:
+        plt.savefig(fn)
 
 
 if __name__ == "__main__":

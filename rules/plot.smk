@@ -195,8 +195,8 @@ rule plot_power_network:
         regions=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
         rc="matplotlibrc",
     output:
-        RESULTS
-        + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
+        multiext(RESULTS
+        + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{planning_horizons}", ".png", ".pdf")
     threads: 2
     resources:
         mem_mb=10000,
@@ -220,8 +220,8 @@ rule plot_hydrogen_network:
         regions=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
         rc="matplotlibrc",
     output:
-        RESULTS
-        + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-h2_network_{planning_horizons}.pdf",
+        multiext(RESULTS
+        + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-h2_network_{planning_horizons}", ".png", ".pdf")
     threads: 2
     resources:
         mem_mb=10000,
@@ -245,8 +245,8 @@ rule plot_gas_network:
         regions=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
         rc="matplotlibrc",
     output:
-        RESULTS
-        + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-ch4_network_{planning_horizons}.pdf",
+        multiext(RESULTS
+        + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-ch4_network_{planning_horizons}", ".png", ".pdf")
     threads: 2
     resources:
         mem_mb=10000,

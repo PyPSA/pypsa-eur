@@ -239,7 +239,8 @@ def plot_map(
             legend_kw=legend_kw,
         )
 
-    fig.savefig(snakemake.output[0])
+    for fn in snakemake.output[0]:
+        plt.savefig(fn)
 
 
 if __name__ == "__main__":
