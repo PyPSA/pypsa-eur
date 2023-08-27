@@ -187,7 +187,6 @@ rule plot_heatmap_timeseries_resources:
 
 rule plot_power_network:
     params:
-        foresight=config["foresight"],
         plotting=config["plotting"],
     input:
         network=RESULTS
@@ -237,7 +236,6 @@ rule plot_hydrogen_network:
 
 rule plot_gas_network:
     params:
-        foresight=config["foresight"],
         plotting=config["plotting"],
     input:
         network=RESULTS
