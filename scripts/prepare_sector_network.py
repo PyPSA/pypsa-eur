@@ -3711,6 +3711,11 @@ def add_endogenous_hvdc_import_options(n, cost_factor=1.0):
 
     import_links = {}
     a = regions.representative_point().to_crs(DISTANCE_CRS)
+
+    # Prohibit routes through Russia or Belarus
+    forbidden_hvdc_importers = ["FI", "LV", "LT", "EE"]
+    a = a.loc[~a.index.str[:2].isin(forbidden_hvdc_importers)]
+
     for ct in exporters.index:
         b = exporters.to_crs(DISTANCE_CRS).loc[ct].geometry
         d = a.distance(b)
@@ -3718,6 +3723,9 @@ def add_endogenous_hvdc_import_options(n, cost_factor=1.0):
             d.where(d < d.quantile(cf["distance_threshold"])).div(1e3).dropna()
         )  # km
     import_links = pd.concat(import_links)
+    import_links.loc[
+        import_links.index.get_level_values(0).str.contains("KZ|CN")
+    ] *= 1.2  # proxy for detour through Caucasus
 
     # xlinks
     xlinks = {}
