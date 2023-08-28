@@ -607,6 +607,10 @@ def add_heating_capacities_installed_before_baseyear(
                     if str(grouping_year) in index and n.links.p_nom[index] < threshold
                 ],
             )
+            
+            # drop assets which are at the end of their lifetime
+            links_i = n.links[(n.links.build_year+n.links.lifetime<=baseyear)].index
+            n.mremove("Link", links_i)
 
 
 # %%
@@ -621,7 +625,7 @@ if __name__ == "__main__":
             clusters="37",
             ll="v1.0",
             opts="",
-            sector_opts="8760H-T-H-B-I-A-solar+p3-dist1",
+            sector_opts="1p7-4380H-T-H-B-I-A-solar+p3-dist1",
             planning_horizons=2020,
         )
 
