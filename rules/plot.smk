@@ -257,3 +257,15 @@ rule plot_gas_network:
         "../envs/environment.yaml"
     script:
         "../scripts/plot_gas_network.py"
+
+rule plot_import_options:
+    input:
+        network=RESULTS
+        + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        regions=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+        entrypoints=RESOURCES + "gas_input_locations_s{simpl}_{clusters}_simplified.csv",
+        rc="matplotlibrc",
+    output:
+        multiext(RESULTS + "graphics/import_options_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}", ".png", ".pdf")
+    script:
+        "../scripts/plot_import_options.py"
