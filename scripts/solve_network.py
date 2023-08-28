@@ -247,12 +247,13 @@ def add_carbon_budget_constraint(n, snapshots):
         n.stores["carrier"] = n.stores.bus.map(n.buses.carrier)
         stores = n.stores.query("carrier in @emissions.index and not e_cyclic")
         time_valid = int(glc.loc["investment_period"])
+        weighting = n.investment_period_weightings.loc[time_valid, "years"]
         if not stores.empty:
             last = n.snapshot_weightings.reset_index().groupby("period").last()
             last_i = last.set_index([last.index, last.timestep]).index 
             final_e = n.model["Store-e"].loc[last_i, stores.index]
             time_i = pd.IndexSlice[time_valid, :]
-            lhs = final_e.loc[time_i,:] 
+            lhs = final_e.loc[time_i,:] * weighting
             
             n.model.add_constraints(lhs <= rhs, name=f"GlobalConstraint-{name}")
 
@@ -738,6 +739,7 @@ def extra_functionality(n, snapshots):
     add_pipe_retrofit_constraint(n)
     if n._multi_invest:
         add_carbon_constraint(n, snapshots)
+        add_carbon_budget_constraint(n, snapshots)
 
 
 def solve_network(n, config, solving, opts="", **kwargs):
