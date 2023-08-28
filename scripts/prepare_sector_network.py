@@ -4014,7 +4014,9 @@ def add_import_options(
                 p_nom_extendable=True,
                 capital_cost=capital_cost,
                 p_nom_min=import_nodes_tech.p_nom.clip(upper=upper_p_nom_max).values,
-                p_nom_max=import_nodes_tech.p_nom.mul(capacity_boost).clip(upper=upper_p_nom_max).values,
+                p_nom_max=import_nodes_tech.p_nom.mul(capacity_boost)
+                .clip(upper=upper_p_nom_max)
+                .values,
             )
 
         else:
@@ -4033,7 +4035,9 @@ def add_import_options(
                 marginal_cost=import_nodes_tech.marginal_cost.values,
                 p_nom_extendable=True,
                 capital_cost=capital_cost,
-                p_nom_max=import_nodes_tech.p_nom.mul(capacity_boost).clip(upper=upper_p_nom_max).values,
+                p_nom_max=import_nodes_tech.p_nom.mul(capacity_boost)
+                .clip(upper=upper_p_nom_max)
+                .values,
             )
 
     # need special handling for copperplated imports
