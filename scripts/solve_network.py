@@ -32,7 +32,7 @@ import re
 import numpy as np
 import pandas as pd
 import pypsa
-from pypsa.descriptors import nominal_attrs
+from pypsa.descriptors import nominal_attrs, get_activity_mask
 import xarray as xr
 from _helpers import configure_logging, update_config_with_sector_opts
 
@@ -41,6 +41,7 @@ from vresutils.benchmark import memory_logger
 logger = logging.getLogger(__name__)
 pypsa.pf.logger.setLevel(logging.WARNING)
 from pypsa.descriptors import get_switchable_as_dense as get_as_dense
+from pypsa.io import import_components_from_dataframe
 from linopy.expressions import merge
 from numpy import isnan
 
@@ -276,7 +277,51 @@ def add_max_growth(n, config):
         n.carriers.loc[carrier, "max_relative_growth"] = max_r_per_period 
     
     return n
-            
+
+
+def add_retrofit_gas_boiler_constraint(n, snapshots):
+    """Allow retrofitting of existing gas boilers to H2 boilers.
+    """
+    c = "Link"
+    logger.info("Add constraint for retrofitting gas boilers to H2 boilers.")
+    # existing gas boilers
+    mask = n.links.carrier.str.contains("gas boiler") & ~n.links.p_nom_extendable
+    gas_i = n.links[mask].index
+    mask = n.links.carrier.str.contains("retrofitted H2 boiler") 
+    h2_i = n.links[mask].index
+    
+    
+    n.links.loc[gas_i, "p_nom_extendable"] = True
+    p_nom = n.links.loc[gas_i, "p_nom"]
+    n.links.loc[gas_i, "p_nom"] = 0
+    
+    # heat profile
+    cols = n.loads_t.p_set.columns[n.loads_t.p_set.columns.str.contains("heat")
+                                   & ~n.loads_t.p_set.columns.str.contains("industry")
+                                   & ~n.loads_t.p_set.columns.str.contains("agriculture")]
+    profile = n.loads_t.p_set[cols].div(n.loads_t.p_set[cols].groupby(level=0).max(), level=0)
+    # to deal if max value is zero
+    profile.fillna(0, inplace=True)
+    profile.rename(columns=n.loads.bus.to_dict(), inplace=True)
+    profile = profile.reindex(columns=n.links.loc[gas_i, "bus1"])
+    profile.columns = gas_i
+    
+    
+    rhs = profile.mul(p_nom)
+    
+    dispatch = n.model["Link-p"]
+    active = get_activity_mask(n, c, snapshots, gas_i)
+    rhs = rhs[active]
+    p_gas = dispatch.sel(Link=gas_i)
+    p_h2 = dispatch.sel(Link=h2_i)
+    
+    lhs = p_gas + p_h2
+    
+    n.model.add_constraints(lhs == rhs, name="gas_retrofit")
+    
+    
+
+    
 def prepare_network(
     n,
     solve_opts=None,
@@ -740,6 +785,7 @@ def extra_functionality(n, snapshots):
     if n._multi_invest:
         add_carbon_constraint(n, snapshots)
         add_carbon_budget_constraint(n, snapshots)
+        add_retrofit_gas_boiler_constraint(n, snapshots)
 
 
 def solve_network(n, config, solving, opts="", **kwargs):

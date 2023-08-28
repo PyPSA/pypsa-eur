@@ -306,6 +306,29 @@ def adjust_CO2_glc(n):
     n.df(c).loc[mask, "type"] = "co2_limit"
     
     return n
+
+
+def add_H2_boilers(n):
+    c = "Link"
+    logger.info("Add H2 boilers.")
+    # existing gas boilers
+    mask = n.links.carrier.str.contains("gas boiler") & ~n.links.p_nom_extendable
+    gas_i = n.links[mask].index
+    df = n.links.loc[gas_i]
+    # adjust bus 0
+    df["bus0"] = df.bus1.map(n.buses.location) + " H2"
+    # rename carrier and index
+    df["carrier"] = df.carrier.apply(lambda x: x.replace("gas boiler", "retrofitted H2 boiler"))
+    df.rename(index = lambda x: x.replace("gas boiler", "retrofitted H2 boiler"), inplace=True)
+    # todo, costs for retrofitting
+    df["capital_costs"] = 100
+    # set existing capacity to zero
+    df["p_nom"] = 0
+    df["p_nom_extendable"] = True
+    # add H2 boilers to network
+    import_components_from_dataframe(n, df, c)
+    
+   
 # %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -339,14 +362,17 @@ if __name__ == "__main__":
     n = concat_networks(years)
     
     # adjust global constraints lv limit if the same for all years
-    n = adjust_lvlimit(n)
-    
+    n = adjust_lvlimit(n) 
     # adjust global constraints CO2 limit
     n = adjust_CO2_glc(n)
-    # set phase outs
-    set_all_phase_outs(n)
     # adjust stores to multi period investment
     n = adjust_stores(n)
+    
+    # set phase outs
+    set_all_phase_outs(n)
+    
+    # add H2 boiler
+    add_H2_boilers(n)
 
     # set carbon constraints
     opts = snakemake.wildcards.sector_opts.split("-")

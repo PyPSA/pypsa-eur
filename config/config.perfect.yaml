@@ -20,7 +20,7 @@ remote:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
-  name: "test_co2limit"
+  name: "test_h2_retrofit"
   disable_progressbar: false
   shared_resources: true
   shared_cutouts: true
@@ -35,7 +35,7 @@ scenario:
   - ''
   ll:
   - v1.0
-  - v1.5
+#  - v1.5
   clusters:
   - 37
 #  - 128
@@ -45,7 +45,9 @@ scenario:
   opts:
   - ''
   sector_opts:
-  - 4380H-T-H-B-I-A-solar+p3-dist1
+  - 1p7-4380H-T-H-B-I-A-solar+p3-dist1
+  - 1p5-4380H-T-H-B-I-A-solar+p3-dist1
+  - 2p0-4380H-T-H-B-I-A-solar+p3-dist1
   planning_horizons:
   - 2020
   - 2030
@@ -69,7 +71,7 @@ enable:
   retrieve_sector_databundle: true
   retrieve_cost_data: true
   build_cutout: false
-  retrieve_cutout: false
+  retrieve_cutout: true
   build_natura_raster: false
   retrieve_natura_raster: true
   custom_busmap: false
@@ -133,7 +135,7 @@ electricity:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#atlite
 atlite:
   default_cutout: europe-2013-era5
-  nprocesses: 4
+  nprocesses: 1
   show_progress: false
   cutouts:
     # use 'base' to determine geographical bounds and time span from config
@@ -916,6 +918,7 @@ plotting:
     H2 for shipping: "#ebaee0"
     H2: '#bf13a0'
     hydrogen: '#bf13a0'
+    retrofitted H2 boiler: '#e5a0d9'
     SMR: '#870c71'
     SMR CC: '#4f1745'
     H2 liquefaction: '#d647bd'
