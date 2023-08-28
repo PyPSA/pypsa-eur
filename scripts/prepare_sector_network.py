@@ -3970,7 +3970,9 @@ def add_import_options(
 
         sel = ~import_nodes[tech].isna()
         if tech == "pipeline-h2":
-            forbidden_pipelines = ["DE", "BE", "FR", "GB"]
+            entrypoints_internal = ["DE", "BE", "FR", "GB"]
+            entrypoints_via_RU_BY = ["EE", "LT", "LV", "FI"]  # maybe PL Yamal
+            forbidden_pipelines = entrypoints_internal + entrypoints_via_RU_BY
             sel &= ~import_nodes.index.str[:2].isin(forbidden_pipelines)
         import_nodes_tech = import_nodes.loc[sel, [tech]]
 
