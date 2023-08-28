@@ -16,8 +16,8 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
-from plot_summary import preferred_order, rename_techs
 from _helpers import configure_logging
+from plot_summary import preferred_order, rename_techs
 from pypsa.plot import add_legend_circles, add_legend_lines, add_legend_patches
 
 
@@ -48,7 +48,9 @@ def rename_techs_tyndp(tech):
 
 
 def assign_location(n):
-    for c in n.iterate_components(n.one_port_components | n.branch_components):
+    for c in n.iterate_components(
+        n.one_port_components | n.branch_components | {"Bus"}
+    ):
         ifind = pd.Series(c.df.index.str.find(" ", start=4), c.df.index)
         for i in ifind.value_counts().index:
             # these have already been assigned defaults
