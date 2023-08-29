@@ -10,13 +10,13 @@ import logging
 import re
 
 import pandas as pd
+import numpy as np
 import pypsa
 from _helpers import update_config_with_sector_opts
 from add_existing_baseyear import add_build_year_to_new_assets
 from pypsa.descriptors import expand_series
 from pypsa.io import import_components_from_dataframe
 from six import iterkeys
-
 logger = logging.getLogger(__name__)
 
 
@@ -328,7 +328,90 @@ def add_H2_boilers(n):
     # add H2 boilers to network
     import_components_from_dataframe(n, df, c)
     
-   
+def apply_time_segmentation_perfect(
+    n, segments, solver_name="cbc", overwrite_time_dependent=True
+):
+    """
+    Aggregating time series to segments with different lengths.
+
+    Input:
+        n: pypsa Network
+        segments: (int) number of segments in which the typical period should be
+                  subdivided
+        solver_name: (str) name of solver
+        overwrite_time_dependent: (bool) overwrite time dependent data of pypsa network
+        with typical time series created by tsam
+    """
+    try:
+        import tsam.timeseriesaggregation as tsam
+    except:
+        raise ModuleNotFoundError(
+            "Optional dependency 'tsam' not found." "Install via 'pip install tsam'"
+        )
+
+    # get all time-dependent data
+    columns = pd.MultiIndex.from_tuples([], names=["component", "key", "asset"])
+    raw = pd.DataFrame(index=n.snapshots, columns=columns)
+    for c in n.iterate_components():
+        for attr, pnl in c.pnl.items():
+            # exclude e_min_pu which is used for SOC of EVs in the morning
+            if not pnl.empty and attr != "e_min_pu":
+                df = pnl.copy()
+                df.columns = pd.MultiIndex.from_product([[c.name], [attr], df.columns])
+                raw = pd.concat([raw, df], axis=1)
+    raw = raw.dropna(axis=1)
+    sn_weightings = {}
+    
+    for year in raw.index.levels[0]:    
+        logger.info(f"Find representative snapshots for {year}.")
+        raw_t = raw.loc[year]
+        # normalise all time-dependent data
+        annual_max = raw_t.max().replace(0, 1)
+        raw_t = raw_t.div(annual_max, level=0)
+        # get representative segments
+        agg = tsam.TimeSeriesAggregation(
+            raw_t,
+            hoursPerPeriod=len(raw_t),
+            noTypicalPeriods=1,
+            noSegments=int(segments),
+            segmentation=True,
+            solver=solver_name,
+        )
+        segmented = agg.createTypicalPeriods()
+        
+        weightings = segmented.index.get_level_values("Segment Duration")
+        offsets = np.insert(np.cumsum(weightings[:-1]), 0, 0)
+        timesteps = [raw_t.index[0] + pd.Timedelta(f"{offset}h") for offset in offsets]
+        snapshots = pd.DatetimeIndex(timesteps)
+        sn_weightings[year] = pd.Series(
+            weightings, index=snapshots, name="weightings", dtype="float64"
+        )
+    
+    sn_weightings = pd.concat(sn_weightings)
+    n.set_snapshots(sn_weightings.index)
+    n.snapshot_weightings = n.snapshot_weightings.mul(sn_weightings, axis=0)
+
+    # overwrite time-dependent data with timeseries created by tsam
+    # if overwrite_time_dependent:
+    #     values_t = segmented.mul(annual_max).set_index(snapshots)
+    #     for component, key in values_t.columns.droplevel(2).unique():
+    #         n.pnl(component)[key] = values_t[component, key]
+
+    return n
+
+def set_temporal_aggregation_perfect(n, opts, solver_name):
+    """
+    Aggregate network temporally with tsam.
+    """
+    for o in opts:
+        # segments with package tsam
+        m = re.match(r"^(\d+)seg$", o, re.IGNORECASE)
+        if m is not None:
+            segments = int(m[1])
+            logger.info(f"Use temporal segmentation with {segments} segments")
+            n = apply_time_segmentation_perfect(n, segments, solver_name=solver_name)
+            break
+    return n
 # %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -340,7 +423,7 @@ if __name__ == "__main__":
             opts="",
             clusters="37",
             ll="v1.0",
-            sector_opts="2p0-4380H-T-H-B-I-A-solar+p3-dist1",
+            sector_opts="1p7-4380H-T-H-B-I-A-solar+p3-dist1",
         )
 
     update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
@@ -360,6 +443,11 @@ if __name__ == "__main__":
 
     # concat prenetworks of planning horizon to single network ------------
     n = concat_networks(years)
+    
+    # temporal aggregate
+    opts = snakemake.wildcards.sector_opts.split("-")
+    solver_name = snakemake.config["solving"]["solver"]["name"]
+    n = set_temporal_aggregation_perfect(n, opts, solver_name)
     
     # adjust global constraints lv limit if the same for all years
     n = adjust_lvlimit(n) 

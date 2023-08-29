@@ -716,7 +716,6 @@ def average_every_nhours(n, offset):
 
     return m
 
-
 def cycling_shift(df, steps=1):
     """
     Cyclic shift on index of pd.Series|pd.DataFrame by number of steps.
@@ -3269,10 +3268,13 @@ def set_temporal_aggregation(n, opts, solver_name):
         # segments with package tsam
         m = re.match(r"^(\d+)seg$", o, re.IGNORECASE)
         if m is not None:
-            segments = int(m[1])
-            logger.info(f"Use temporal segmentation with {segments} segments")
-            n = apply_time_segmentation(n, segments, solver_name=solver_name)
-            break
+            if snakemake.params.foresight!="perfect":
+                segments = int(m[1])
+                logger.info(f"Use temporal segmentation with {segments} segments")
+                n = apply_time_segmentation(n, segments, solver_name=solver_name)
+                break
+            else:
+                logger.info("Apply temporal segmentation at prepare_perfect_foresight.")
     return n
 
 #%%
@@ -3287,7 +3289,7 @@ if __name__ == "__main__":
             clusters="37",
             ll="v1.0",
             sector_opts="60SEG-T-H-B-I-A-solar+p3-dist1",
-            planning_horizons="2020",
+            planning_horizons="2050",
         )
 
     logging.basicConfig(level=snakemake.config["logging"]["level"])
@@ -3389,6 +3391,7 @@ if __name__ == "__main__":
         add_allam(n, costs)
 
     solver_name = snakemake.config["solving"]["solver"]["name"]
+    
     n = set_temporal_aggregation(n, opts, solver_name)
 
     limit_type = "config"
