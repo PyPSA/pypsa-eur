@@ -869,8 +869,6 @@ if __name__ == "__main__":
 
     n = pypsa.Network(snakemake.input.network)
     
-    n.remove("GlobalConstraint", "lv_limit")
-
     n = prepare_network(
         n,
         solve_opts,

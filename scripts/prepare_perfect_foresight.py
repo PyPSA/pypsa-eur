@@ -73,6 +73,47 @@ def add_year_to_constraints(n, baseyear):
         c.df.rename(index=lambda x: x + "-" + str(baseyear), inplace=True)
 
 
+def hvdc_transport_model(n):
+    
+    logger.info("Convert AC lines to DC links to perform multi-decade optimisation.")
+    
+    n.madd("Link",
+           n.lines.index,
+           bus0=n.lines.bus0,
+           bus1=n.lines.bus1,
+           p_nom_extendable=True,
+           p_nom=n.lines.s_nom,
+           p_nom_min=n.lines.s_nom,
+           p_min_pu=-1,
+           efficiency=1 - 0.03 * n.lines.length / 1000,
+           marginal_cost=0,
+           carrier="DC",
+           length=n.lines.length,
+           capital_cost=n.lines.capital_cost)
+
+    # Remove AC lines
+    logger.info("Removing AC lines")
+    lines_rm = n.lines.index
+    n.mremove("Line", lines_rm)
+
+    # Set efficiency of all DC links to include losses depending on length
+    n.links.loc[n.links.carrier == 'DC', 'efficiency'] = 1 - 0.03 * n.links.loc[
+        n.links.carrier == 'DC', 'length'] / 1000
+    
+
+def adjust_electricity_grid(n, year, years):
+    n.lines["carrier"] = "AC"
+    links_i = n.links[n.links.carrier=="DC"].index
+    if n.lines.s_nom_extendable.any() or n.links.loc[links_i, "p_nom_extendable"].any():
+        hvdc_transport_model(n)
+        links_i = n.links[n.links.carrier=="DC"].index
+        n.links.loc[links_i, "lifetime"] = 100
+        if year!= years[0]:
+            n.links.loc[links_i, "p_nom_min"] = 0
+            n.links.loc[links_i, "p_nom"] = 0
+            
+    
+
 # --------------------------------------------------------------------
 def concat_networks(years):
     """
@@ -93,7 +134,7 @@ def concat_networks(years):
     for i, network_path in enumerate(network_paths):
         year = years[i]
         network = pypsa.Network(network_path)
-        network.lines["carrier"] = "AC"
+        adjust_electricity_grid(network, year, years)
         add_build_year_to_new_assets(network, year)
 
         # static ----------------------------------
@@ -399,7 +440,7 @@ def apply_time_segmentation_perfect(
 
     return n
 
-def set_temporal_aggregation_perfect(n, opts, solver_name):
+def set_temporal_aggregation_SEG(n, opts, solver_name):
     """
     Aggregate network temporally with tsam.
     """
@@ -422,7 +463,7 @@ if __name__ == "__main__":
             simpl="",
             opts="",
             clusters="37",
-            ll="v1.0",
+            ll="v1.5",
             sector_opts="1p7-4380H-T-H-B-I-A-solar+p3-dist1",
         )
 
@@ -447,7 +488,7 @@ if __name__ == "__main__":
     # temporal aggregate
     opts = snakemake.wildcards.sector_opts.split("-")
     solver_name = snakemake.config["solving"]["solver"]["name"]
-    n = set_temporal_aggregation_perfect(n, opts, solver_name)
+    n = set_temporal_aggregation_SEG(n, opts, solver_name)
     
     # adjust global constraints lv limit if the same for all years
     n = adjust_lvlimit(n) 
