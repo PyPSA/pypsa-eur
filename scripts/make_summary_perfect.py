@@ -230,25 +230,33 @@ def calculate_energy(n, label, energy):
         names=energy.columns.names[:3] + ["year"],
     )
     energy = energy.reindex(cols, axis=1)
-    
+
     for c in n.iterate_components(n.one_port_components | n.branch_components):
         if c.name in n.one_port_components:
             c_energies = (
                 c.pnl.p.multiply(n.snapshot_weightings.generators, axis=0)
-                .groupby(level=0).sum()
+                .groupby(level=0)
+                .sum()
                 .multiply(c.df.sign)
                 .groupby(c.df.carrier, axis=1)
                 .sum()
             )
         else:
-            c_energies = pd.DataFrame(0.0, columns=c.df.carrier.unique(), index=n.investment_periods)
+            c_energies = pd.DataFrame(
+                0.0, columns=c.df.carrier.unique(), index=n.investment_periods
+            )
             for port in [col[3:] for col in c.df.columns if col[:3] == "bus"]:
-                totals = c.pnl["p" + port].multiply(n.snapshot_weightings.generators, axis=0).groupby(level=0).sum()
+                totals = (
+                    c.pnl["p" + port]
+                    .multiply(n.snapshot_weightings.generators, axis=0)
+                    .groupby(level=0)
+                    .sum()
+                )
                 # remove values where bus is missing (bug in nomopyomo)
                 no_bus = c.df.index[c.df["bus" + port] == ""]
-                totals[no_bus] = float(n.component_attrs[c.name].loc[
-                    "p" + port, "default"
-                ])
+                totals[no_bus] = float(
+                    n.component_attrs[c.name].loc["p" + port, "default"]
+                )
                 c_energies -= totals.groupby(c.df.carrier, axis=1).sum()
 
         c_energies = pd.concat([c_energies.T], keys=[c.list_name])
@@ -703,11 +711,13 @@ if __name__ == "__main__":
     # Detect running outside of snakemake and mock snakemake for testing
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
+
         snakemake = mock_snakemake("make_summary_perfect")
-    
+
     run = snakemake.config["run"]["name"]
-    if run!="": run += "/"
-    
+    if run != "":
+        run += "/"
+
     networks_dict = {
         (clusters, lv, opts + sector_opts): "results/"
         + run

@@ -304,17 +304,18 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
             bus0 = vars(spatial)[carrier[generator]].nodes
             if "EU" not in vars(spatial)[carrier[generator]].locations:
                 bus0 = bus0.intersection(capacity.index + " gas")
-            
+
             # check for missing bus
             missing_bus = pd.Index(bus0).difference(n.buses.index)
             if not missing_bus.empty:
                 logger.info(f"add buses {bus0}")
-                n.madd("Bus",
-                       bus0,
-                       carrier=generator,
-                       location=vars(spatial)[carrier[generator]].locations,
-                       unit="MWh_el"
-                       )
+                n.madd(
+                    "Bus",
+                    bus0,
+                    carrier=generator,
+                    location=vars(spatial)[carrier[generator]].locations,
+                    unit="MWh_el",
+                )
 
             already_build = n.links.index.intersection(asset_i)
             new_build = asset_i.difference(n.links.index)
@@ -615,9 +616,9 @@ def add_heating_capacities_installed_before_baseyear(
                     if str(grouping_year) in index and n.links.p_nom[index] < threshold
                 ],
             )
-            
+
             # drop assets which are at the end of their lifetime
-            links_i = n.links[(n.links.build_year+n.links.lifetime<=baseyear)].index
+            links_i = n.links[(n.links.build_year + n.links.lifetime <= baseyear)].index
             n.mremove("Link", links_i)
 
 

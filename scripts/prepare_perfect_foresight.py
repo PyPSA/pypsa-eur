@@ -8,14 +8,16 @@ Concats pypsa networks of single investment periods to one network.
 
 import logging
 import re
-import pandas as pd
+
 import numpy as np
+import pandas as pd
 import pypsa
 from _helpers import update_config_with_sector_opts
 from add_existing_baseyear import add_build_year_to_new_assets
 from pypsa.descriptors import expand_series
 from pypsa.io import import_components_from_dataframe
 from six import iterkeys
+
 logger = logging.getLogger(__name__)
 
 
@@ -38,8 +40,8 @@ def get_missing(df, n, c):
 
 def get_social_discount(t, r=0.01):
     """
-    Calculate for a given time t and social discount rate r [per unit] 
-    the social discount.
+    Calculate for a given time t and social discount rate r [per unit] the
+    social discount.
     """
     return 1 / (1 + r) ** t
 
@@ -62,7 +64,7 @@ def get_investment_weighting(time_weighting, r=0.01):
 def add_year_to_constraints(n, baseyear):
     """
     Add investment period to global constraints and rename index.
-    
+
     Parameters
     ----------
     n : pypsa.Network
@@ -77,25 +79,29 @@ def add_year_to_constraints(n, baseyear):
 
 def hvdc_transport_model(n):
     """
-    Convert AC lines to DC links for multi-decade optimisation with
-    line expansion. Losses of DC links are assumed to be 3% per 1000km
+    Convert AC lines to DC links for multi-decade optimisation with line
+    expansion.
+
+    Losses of DC links are assumed to be 3% per 1000km
     """
-    
+
     logger.info("Convert AC lines to DC links to perform multi-decade optimisation.")
-    
-    n.madd("Link",
-           n.lines.index,
-           bus0=n.lines.bus0,
-           bus1=n.lines.bus1,
-           p_nom_extendable=True,
-           p_nom=n.lines.s_nom,
-           p_nom_min=n.lines.s_nom,
-           p_min_pu=-1,
-           efficiency=1 - 0.03 * n.lines.length / 1000,
-           marginal_cost=0,
-           carrier="DC",
-           length=n.lines.length,
-           capital_cost=n.lines.capital_cost)
+
+    n.madd(
+        "Link",
+        n.lines.index,
+        bus0=n.lines.bus0,
+        bus1=n.lines.bus1,
+        p_nom_extendable=True,
+        p_nom=n.lines.s_nom,
+        p_nom_min=n.lines.s_nom,
+        p_min_pu=-1,
+        efficiency=1 - 0.03 * n.lines.length / 1000,
+        marginal_cost=0,
+        carrier="DC",
+        length=n.lines.length,
+        capital_cost=n.lines.capital_cost,
+    )
 
     # Remove AC lines
     logger.info("Removing AC lines")
@@ -103,15 +109,16 @@ def hvdc_transport_model(n):
     n.mremove("Line", lines_rm)
 
     # Set efficiency of all DC links to include losses depending on length
-    n.links.loc[n.links.carrier == 'DC', 'efficiency'] = 1 - 0.03 * n.links.loc[
-        n.links.carrier == 'DC', 'length'] / 1000
-    
+    n.links.loc[n.links.carrier == "DC", "efficiency"] = (
+        1 - 0.03 * n.links.loc[n.links.carrier == "DC", "length"] / 1000
+    )
+
 
 def adjust_electricity_grid(n, year, years):
     """
     Add carrier to lines. Replace AC lines with DC links in case of line
     expansion. Add lifetime to DC links in case of line expansion.
-    
+
     Parameters
     ----------
     n    : pypsa.Network
@@ -121,16 +128,15 @@ def adjust_electricity_grid(n, year, years):
            investment periods
     """
     n.lines["carrier"] = "AC"
-    links_i = n.links[n.links.carrier=="DC"].index
+    links_i = n.links[n.links.carrier == "DC"].index
     if n.lines.s_nom_extendable.any() or n.links.loc[links_i, "p_nom_extendable"].any():
         hvdc_transport_model(n)
-        links_i = n.links[n.links.carrier=="DC"].index
+        links_i = n.links[n.links.carrier == "DC"].index
         n.links.loc[links_i, "lifetime"] = 100
-        if year!= years[0]:
+        if year != years[0]:
             n.links.loc[links_i, "p_nom_min"] = 0
             n.links.loc[links_i, "p_nom"] = 0
-            
-    
+
 
 # --------------------------------------------------------------------
 def concat_networks(years):
@@ -245,7 +251,6 @@ def adjust_stores(n):
     e_initial_store = ["co2 stored"]
     co2_i = n.stores[n.stores.carrier.isin(e_initial_store)].index
     n.stores.loc[co2_i, "e_initial_per_period"] = True
-    
 
     return n
 
@@ -309,13 +314,13 @@ def set_carbon_constraints(n, opts):
             carrier_attribute="co2_emissions",
             sense="<=",
             constant=budget,
-            investment_period=n.investment_periods[-1]
+            investment_period=n.investment_periods[-1],
         )
-        
-        # drop other CO2 limits 
-        drop_i = n.global_constraints[n.global_constraints.type=="co2_limit"].index
+
+        # drop other CO2 limits
+        drop_i = n.global_constraints[n.global_constraints.type == "co2_limit"].index
         n.mremove("GlobalConstraint", drop_i)
-        
+
         n.add(
             "GlobalConstraint",
             "carbon_neutral",
@@ -323,10 +328,9 @@ def set_carbon_constraints(n, opts):
             carrier_attribute="co2_emissions",
             sense="<=",
             constant=0,
-            investment_period=n.investment_periods[-1]
+            investment_period=n.investment_periods[-1],
         )
 
-           
     # set minimum CO2 emission constraint to avoid too fast reduction
     if "co2min" in opts:
         emissions_1990 = 4.53693
@@ -348,25 +352,25 @@ def set_carbon_constraints(n, opts):
             investment_period=first_year,
             constant=co2min * 1e9 * time_weightings,
         )
-        
+
     return n
 
 
 def adjust_lvlimit(n):
     """
-    Convert global constraints for single investment period to one uniform
-    if all attributes stay the same.
+    Convert global constraints for single investment period to one uniform if
+    all attributes stay the same.
     """
     c = "GlobalConstraint"
-    cols = ['carrier_attribute', 'sense', "constant", "type"]
+    cols = ["carrier_attribute", "sense", "constant", "type"]
     glc_type = "transmission_volume_expansion_limit"
-    if (n.df(c)[n.df(c).type==glc_type][cols].nunique()==1).all():
-        glc = n.df(c)[n.df(c).type==glc_type][cols].iloc[[0]]
+    if (n.df(c)[n.df(c).type == glc_type][cols].nunique() == 1).all():
+        glc = n.df(c)[n.df(c).type == glc_type][cols].iloc[[0]]
         glc.index = pd.Index(["lv_limit"])
-        remove_i = n.df(c)[n.df(c).type==glc_type].index
+        remove_i = n.df(c)[n.df(c).type == glc_type].index
         n.mremove(c, remove_i)
         import_components_from_dataframe(n, glc, c)
-        
+
     return n
 
 
@@ -374,16 +378,17 @@ def adjust_CO2_glc(n):
     c = "GlobalConstraint"
     glc_name = "CO2Limit"
     glc_type = "primary_energy"
-    mask = (n.df(c).index.str.contains(glc_name)) & (n.df(c).type==glc_type)
+    mask = (n.df(c).index.str.contains(glc_name)) & (n.df(c).type == glc_type)
     n.df(c).loc[mask, "type"] = "co2_limit"
-    
+
     return n
 
 
 def add_H2_boilers(n):
     """
-    Gas boilers can be retrofitted to run with H2. Add H2 boilers for heating
-    for all existing gas boilers.
+    Gas boilers can be retrofitted to run with H2.
+
+    Add H2 boilers for heating for all existing gas boilers.
     """
     c = "Link"
     logger.info("Add H2 boilers.")
@@ -394,8 +399,12 @@ def add_H2_boilers(n):
     # adjust bus 0
     df["bus0"] = df.bus1.map(n.buses.location) + " H2"
     # rename carrier and index
-    df["carrier"] = df.carrier.apply(lambda x: x.replace("gas boiler", "retrofitted H2 boiler"))
-    df.rename(index = lambda x: x.replace("gas boiler", "retrofitted H2 boiler"), inplace=True)
+    df["carrier"] = df.carrier.apply(
+        lambda x: x.replace("gas boiler", "retrofitted H2 boiler")
+    )
+    df.rename(
+        index=lambda x: x.replace("gas boiler", "retrofitted H2 boiler"), inplace=True
+    )
     # todo, costs for retrofitting
     df["capital_costs"] = 100
     # set existing capacity to zero
@@ -403,8 +412,8 @@ def add_H2_boilers(n):
     df["p_nom_extendable"] = True
     # add H2 boilers to network
     import_components_from_dataframe(n, df, c)
-    
-    
+
+
 def apply_time_segmentation_perfect(
     n, segments, solver_name="cbc", overwrite_time_dependent=True
 ):
@@ -438,8 +447,8 @@ def apply_time_segmentation_perfect(
                 raw = pd.concat([raw, df], axis=1)
     raw = raw.dropna(axis=1)
     sn_weightings = {}
-    
-    for year in raw.index.levels[0]:    
+
+    for year in raw.index.levels[0]:
         logger.info(f"Find representative snapshots for {year}.")
         raw_t = raw.loc[year]
         # normalise all time-dependent data
@@ -455,7 +464,7 @@ def apply_time_segmentation_perfect(
             solver=solver_name,
         )
         segmented = agg.createTypicalPeriods()
-        
+
         weightings = segmented.index.get_level_values("Segment Duration")
         offsets = np.insert(np.cumsum(weightings[:-1]), 0, 0)
         timesteps = [raw_t.index[0] + pd.Timedelta(f"{offset}h") for offset in offsets]
@@ -463,12 +472,13 @@ def apply_time_segmentation_perfect(
         sn_weightings[year] = pd.Series(
             weightings, index=snapshots, name="weightings", dtype="float64"
         )
-    
+
     sn_weightings = pd.concat(sn_weightings)
     n.set_snapshots(sn_weightings.index)
     n.snapshot_weightings = n.snapshot_weightings.mul(sn_weightings, axis=0)
 
     return n
+
 
 def set_temporal_aggregation_SEG(n, opts, solver_name):
     """
@@ -483,6 +493,8 @@ def set_temporal_aggregation_SEG(n, opts, solver_name):
             n = apply_time_segmentation_perfect(n, segments, solver_name=solver_name)
             break
     return n
+
+
 # %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -514,22 +526,22 @@ if __name__ == "__main__":
 
     # concat prenetworks of planning horizon to single network ------------
     n = concat_networks(years)
-    
+
     # temporal aggregate
     opts = snakemake.wildcards.sector_opts.split("-")
     solver_name = snakemake.config["solving"]["solver"]["name"]
     n = set_temporal_aggregation_SEG(n, opts, solver_name)
-    
+
     # adjust global constraints lv limit if the same for all years
-    n = adjust_lvlimit(n) 
+    n = adjust_lvlimit(n)
     # adjust global constraints CO2 limit
     n = adjust_CO2_glc(n)
     # adjust stores to multi period investment
     n = adjust_stores(n)
-    
+
     # set phase outs
     set_all_phase_outs(n)
-    
+
     # add H2 boiler
     add_H2_boilers(n)
 

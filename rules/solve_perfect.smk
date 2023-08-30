@@ -190,7 +190,4 @@ rule make_summary_perfect:
         "../scripts/make_summary_perfect.py"
 
 
-
-
-
 ruleorder: add_existing_baseyear > add_brownfield

@@ -7,7 +7,9 @@ localrules:
     copy_config,
     copy_conda_env,
 
+
 if config["foresight"] != "perfect":
+
     rule plot_network:
         params:
             foresight=config["foresight"],
@@ -34,7 +36,9 @@ if config["foresight"] != "perfect":
         script:
             "../scripts/plot_network.py"
 
+
 if config["foresight"] == "perfect":
+
     rule plot_network:
         params:
             foresight=config["foresight"],
@@ -55,13 +59,11 @@ if config["foresight"] == "perfect":
             mem_mb=10000,
         benchmark:
             BENCHMARKS
-            + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years_benchmark",
+            +"postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years_benchmark"
         conda:
             "../envs/environment.yaml"
         script:
             "../scripts/plot_network.py"
-
-
 
 
 rule copy_config:

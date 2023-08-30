@@ -913,9 +913,11 @@ def plot_series(network, carrier="AC", name="test"):
     )
 
 
-def plot_map_perfect(network, components=["Link", "Store", "StorageUnit", "Generator"],
-             bus_size_factor=1.7e10):
-
+def plot_map_perfect(
+    network,
+    components=["Link", "Store", "StorageUnit", "Generator"],
+    bus_size_factor=1.7e10,
+):
     n = network.copy()
     assign_location(n)
     # Drop non-electric buses so they don't clutter the plot
@@ -926,41 +928,48 @@ def plot_map_perfect(network, components=["Link", "Store", "StorageUnit", "Gener
     costs = {}
     for comp in components:
         df_c = n.df(comp)
-        if df_c.empty: continue
+        if df_c.empty:
+            continue
         df_c["nice_group"] = df_c.carrier.map(rename_techs_tyndp)
 
         attr = "e_nom_opt" if comp == "Store" else "p_nom_opt"
 
         active = pd.concat(
-            [
-                n.get_active_assets(comp, inv_p).rename(inv_p)
-                for inv_p in investments
-            ],
+            [n.get_active_assets(comp, inv_p).rename(inv_p) for inv_p in investments],
             axis=1,
         ).astype(int)
         capital_cost = n.df(comp)[attr] * n.df(comp).capital_cost
-        capital_cost_t = ((active.mul(capital_cost, axis=0))
-                 .groupby([n.df(comp).location,
-                           n.df(comp).nice_group]).sum())
+        capital_cost_t = (
+            (active.mul(capital_cost, axis=0))
+            .groupby([n.df(comp).location, n.df(comp).nice_group])
+            .sum()
+        )
 
         capital_cost_t.drop("load", level=1, inplace=True, errors="ignore")
 
         costs[comp] = capital_cost_t
 
-    costs = pd.concat(costs).groupby(level=[1,2]).sum()
-    costs.drop(costs[costs.sum(axis=1)==0].index, inplace=True)
+    costs = pd.concat(costs).groupby(level=[1, 2]).sum()
+    costs.drop(costs[costs.sum(axis=1) == 0].index, inplace=True)
 
-    new_columns = (preferred_order.intersection(costs.index.levels[1])
-                   .append(costs.index.levels[1].difference(preferred_order)))
+    new_columns = preferred_order.intersection(costs.index.levels[1]).append(
+        costs.index.levels[1].difference(preferred_order)
+    )
     costs = costs.reindex(new_columns, level=1)
 
     for item in new_columns:
-        if item not in snakemake.config['plotting']['tech_colors']:
-            print("Warning!",item,"not in config/plotting/tech_colors, assign random color")
-            snakemake.config['plotting']['tech_colors'] = "pink"
-   
-    n.links.drop(n.links.index[(n.links.carrier != "DC") & (
-        n.links.carrier != "B2B")], inplace=True)
+        if item not in snakemake.config["plotting"]["tech_colors"]:
+            print(
+                "Warning!",
+                item,
+                "not in config/plotting/tech_colors, assign random color",
+            )
+            snakemake.config["plotting"]["tech_colors"] = "pink"
+
+    n.links.drop(
+        n.links.index[(n.links.carrier != "DC") & (n.links.carrier != "B2B")],
+        inplace=True,
+    )
 
     # drop non-bus
     to_drop = costs.index.levels[0].symmetric_difference(n.buses.index)
@@ -972,7 +981,7 @@ def plot_map_perfect(network, components=["Link", "Store", "StorageUnit", "Gener
     costs.index = pd.MultiIndex.from_tuples(costs.index.values)
 
     # PDF has minimum width, so set these to zero
-    line_lower_threshold = 500.
+    line_lower_threshold = 500.0
     line_upper_threshold = 1e4
     linewidth_factor = 2e3
     ac_color = "gray"
@@ -981,29 +990,29 @@ def plot_map_perfect(network, components=["Link", "Store", "StorageUnit", "Gener
     line_widths = n.lines.s_nom_opt
     link_widths = n.links.p_nom_opt
     linewidth_factor = 2e3
-    line_lower_threshold = 0.
+    line_lower_threshold = 0.0
     title = "Today's transmission"
 
-    line_widths[line_widths < line_lower_threshold] = 0.
-    link_widths[link_widths < line_lower_threshold] = 0.
+    line_widths[line_widths < line_lower_threshold] = 0.0
+    link_widths[link_widths < line_lower_threshold] = 0.0
 
     line_widths[line_widths > line_upper_threshold] = line_upper_threshold
     link_widths[link_widths > line_upper_threshold] = line_upper_threshold
 
     for year in costs.columns:
-
         fig, ax = plt.subplots(subplot_kw={"projection": ccrs.PlateCarree()})
         fig.set_size_inches(7, 6)
         fig.suptitle(year)
 
         n.plot(
             bus_sizes=costs[year] / bus_size_factor,
-            bus_colors=snakemake.config['plotting']['tech_colors'],
+            bus_colors=snakemake.config["plotting"]["tech_colors"],
             line_colors=ac_color,
             link_colors=dc_color,
             line_widths=line_widths / linewidth_factor,
             link_widths=link_widths / linewidth_factor,
-            ax=ax,  **map_opts
+            ax=ax,
+            **map_opts,
         )
 
         sizes = [20, 10, 5]
@@ -1051,15 +1060,12 @@ def plot_map_perfect(network, components=["Link", "Store", "StorageUnit", "Gener
             frameon=False,
         )
 
-            
         fig.savefig(
-            snakemake.output[f"map_{year}"],
-            transparent=True,
-            bbox_inches="tight"
+            snakemake.output[f"map_{year}"], transparent=True, bbox_inches="tight"
         )
 
 
-#%%
+# %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -1083,11 +1089,13 @@ if __name__ == "__main__":
 
     if map_opts["boundaries"] is None:
         map_opts["boundaries"] = regions.total_bounds[[0, 2, 1, 3]] + [-1, 1, -1, 1]
-    
+
     if snakemake.params["foresight"] == "perfect":
-        plot_map_perfect(n,
-                         components=["Link", "Store", "StorageUnit", "Generator"],
-                         bus_size_factor=2e10)
+        plot_map_perfect(
+            n,
+            components=["Link", "Store", "StorageUnit", "Generator"],
+            bus_size_factor=2e10,
+        )
     else:
         plot_map(
             n,
@@ -1095,7 +1103,7 @@ if __name__ == "__main__":
             bus_size_factor=2e10,
             transmission=False,
         )
-    
+
         plot_h2_map(n, regions)
         plot_ch4_map(n)
         plot_map_without(n)
