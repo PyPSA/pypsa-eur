@@ -26,7 +26,7 @@ run:
   shared_cutouts: true
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#foresight
-foresight: perfect
+foresight: overnight
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#scenario
 # Wildcard docs in https://pypsa-eur.readthedocs.io/en/latest/wildcards.html
@@ -34,22 +34,21 @@ scenario:
   simpl:
   - ''
   ll:
-  - v1.0
   - v1.5
   clusters:
   - 37
   - 128
-#  - 256
-#  - 512
-  #- 1024
+  - 256
+  - 512
+  - 1024
   opts:
   - ''
   sector_opts:
   - Co2L0-3H-T-H-B-I-A-solar+p3-dist1
   planning_horizons:
-  - 2020
-  - 2030
-  - 2040
+  # - 2020
+  # - 2030
+  # - 2040
   - 2050
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#countries
@@ -493,6 +492,20 @@ sector:
     OCGT: gas
   biomass_to_liquid: false
   biosng: false
+  limit_max_growth:
+    enable: false
+    # allowing 30% larger than max historic growth
+    factor: 1.3
+    max_growth:  # unit GW
+      onwind: 16 # onshore max grow so far 16 GW in Europe https://www.iea.org/reports/renewables-2020/wind
+      solar: 28 # solar max grow so far 28 GW in Europe https://www.iea.org/reports/renewables-2020/solar-pv
+      offwind-ac: 35 # offshore max grow so far 3.5 GW in Europe https://windeurope.org/about-wind/statistics/offshore/european-offshore-wind-industry-key-trends-statistics-2019/
+      offwind-dc: 35
+    max_relative_growth:
+      onwind: 3
+      solar: 3
+      offwind-ac: 3
+      offwind-dc: 3
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
 industry:
@@ -544,6 +557,7 @@ industry:
   MWh_CH4_per_tMeOH: 10.25
   hotmaps_locate_missing: false
   reference_year: 2015
+
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 costs:

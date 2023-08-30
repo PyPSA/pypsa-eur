@@ -270,7 +270,7 @@ def add_max_growth(n, config):
     Add maximum growth rates for different carriers.
     """
 
-    opts = config["sector"]["limit_max_growth"]
+    opts = snakemake.params["sector"]["limit_max_growth"]
     # take maximum yearly difference between investment periods since historic growth is per year
     factor = n.investment_period_weightings.years.max() * opts["factor"]
     for carrier in opts["max_growth"].keys():
@@ -396,7 +396,7 @@ def prepare_network(
 
     if foresight == "perfect":
         n = add_land_use_constraint_perfect(n)
-        if config["sector"]["limit_max_growth"]["enable"]:
+        if snakemake.params["sector"]["limit_max_growth"]["enable"]:
             n = add_max_growth(n, config)
 
     if n.stores.carrier.eq("co2 stored").any():
@@ -859,12 +859,12 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "solve_sector_network_perfect",
-            configfiles="config/config.perfect.yaml",
+            configfiles="../config/test/config.perfect.yaml",
             simpl="",
             opts="",
-            clusters="37",
-            ll="v1.0",
-            sector_opts="2p0-4380H-T-H-B-I-A-solar+p3-dist1",
+            clusters="5",
+            ll="v1.5",
+            sector_opts="8760H-T-H-B-I-A-solar+p3-dist1",
             planning_horizons="2030",
         )
     configure_logging(snakemake)
