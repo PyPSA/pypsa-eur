@@ -457,7 +457,6 @@ def plot_carbon_budget_distribution(input_eurostat):
     """
     Plot historical carbon emissions in the EU and decarbonization path.
     """
-
     import seaborn as sns
 
     sns.set()
@@ -502,6 +501,14 @@ def plot_carbon_budget_distribution(input_eurostat):
     # plot committed and under-discussion targets
     # (notice that historical emissions include all countries in the
     # network, but targets refer to EU)
+    ax1.plot(
+        [2020],
+        [0.8 * emissions[1990]],
+        marker="*",
+        markersize=12,
+        markerfacecolor="black",
+        markeredgecolor="black",
+    )
 
     ax1.plot(
          [2030],
@@ -512,7 +519,23 @@ def plot_carbon_budget_distribution(input_eurostat):
          markeredgecolor="black",
      )
 
+    ax1.plot(
+        [2030],
+        [0.6 * emissions[1990]],
+        marker="*",
+        markersize=12,
+        markerfacecolor="black",
+        markeredgecolor="black",
+    )
 
+    ax1.plot(
+        [2050, 2050],
+        [x * emissions[1990] for x in [0.2, 0.05]],
+        color="gray",
+        linewidth=2,
+        marker="_",
+        alpha=0.5,
+    )
 
     ax1.plot(
          [2050],

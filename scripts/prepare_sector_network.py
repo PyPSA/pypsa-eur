@@ -46,7 +46,6 @@ def define_spatial(nodes, options):
     ----------
     nodes : list-like
     """
-
     global spatial
 
     spatial.nodes = nodes
@@ -192,17 +191,17 @@ def get(item, investment_year=None):
 
 
 def co2_emissions_year(
-    countries, input_eurostat, opts, snakemake, year
+    countries, input_eurostat, opts, emissions_scope, report_year, year
 ):
     """
     Calculate CO2 emissions in one specific year (e.g. 1990 or 2018).
     """
-    emissions_scope = snakemake.config["energy"]["emissions"]
+    emissions_scope = snakemake.params.energy["emissions"]
     eea_co2 = build_eea_co2(snakemake.input.co2, year, emissions_scope)
 
     # TODO: read Eurostat data from year > 2014
     # this only affects the estimation of CO2 emissions for BA, RS, AL, ME, MK
-    report_year = snakemake.config["energy"]["eurostat_report_year"]
+    report_year = snakemake.params.energy["eurostat_report_year"]
     if year > 2014:
         eurostat_co2 = build_eurostat_co2(
             input_eurostat, countries, report_year, year=2014
@@ -241,12 +240,24 @@ def build_carbon_budget(o, input_eurostat, fn, emissions_scope, report_year):
     countries = snakemake.params.countries
 
     e_1990 = co2_emissions_year(
-        countries, input_eurostat, opts, snakemake, year=1990
+        countries,
+        input_eurostat,
+        opts,
+        emissions_scope,
+        report_year,
+        input_co2,
+        year=1990,
     )
 
     # emissions at the beginning of the path (last year available 2018)
     e_0 = co2_emissions_year(
-        countries, input_eurostat, opts, snakemake, year=2018,
+        countries,
+        input_eurostat,
+        opts,
+        emissions_scope,
+        report_year,
+        input_co2,
+        year=2018,
     )
 
     planning_horizons = snakemake.params.planning_horizons
@@ -357,7 +368,6 @@ def update_wind_solar_costs(n, costs):
     Update costs for wind and solar generators added with pypsa-eur to those
     cost in the planning year.
     """
-
     # NB: solar costs are also manipulated for rooftop
     # when distribution grid is inserted
     n.generators.loc[n.generators.carrier == "solar", "capital_cost"] = costs.at[
@@ -435,7 +445,6 @@ def add_carrier_buses(n, carrier, nodes=None):
     """
     Add buses to connect e.g. coal, nuclear and oil plants.
     """
-
     if nodes is None:
         nodes = vars(spatial)[carrier].nodes
     location = vars(spatial)[carrier].locations
@@ -715,6 +724,7 @@ def average_every_nhours(n, offset):
                     pnl[k] = df.resample(offset).mean()
 
     return m
+
 
 def cycling_shift(df, steps=1):
     """
@@ -1150,7 +1160,6 @@ def add_storage_and_grids(n, costs):
         e_cyclic=True,
         carrier="H2 Store",
         capital_cost=h2_capital_cost,
-        lifetime=costs.at["hydrogen storage tank type 1 including compressor", "lifetime"],
     )
 
     if options["gas_network"] or options["H2_retrofit"]:
@@ -3076,7 +3085,6 @@ def maybe_adjust_costs_and_potentials(n, opts):
             logger.info(f"changing {attr} for {carrier} by factor {factor}")
 
 
-# TODO this should rather be a config no wildcard
 def limit_individual_line_extension(n, maxext):
     logger.info(f"Limiting new HVAC and HVDC extensions to {maxext} MW")
     n.lines["s_nom_max"] = n.lines["s_nom"] + maxext
@@ -3211,7 +3219,7 @@ def apply_time_segmentation(
                 df = pnl.copy()
                 df.columns = pd.MultiIndex.from_product([[c.name], [attr], df.columns])
                 raw = pd.concat([raw, df], axis=1)
-    raw = raw.dropna(axis=1)
+
     # normalise all time-dependent data
     annual_max = raw.max().replace(0, 1)
     raw = raw.div(annual_max, level=0)
@@ -3268,28 +3276,26 @@ def set_temporal_aggregation(n, opts, solver_name):
         # segments with package tsam
         m = re.match(r"^(\d+)seg$", o, re.IGNORECASE)
         if m is not None:
-            if snakemake.params.foresight!="perfect":
-                segments = int(m[1])
-                logger.info(f"Use temporal segmentation with {segments} segments")
-                n = apply_time_segmentation(n, segments, solver_name=solver_name)
-                break
-            else:
-                logger.info("Apply temporal segmentation at prepare_perfect_foresight.")
+            segments = int(m[1])
+            logger.info(f"Use temporal segmentation with {segments} segments")
+            n = apply_time_segmentation(n, segments, solver_name=solver_name)
+            break
     return n
 
-#%%
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "prepare_sector_network",
+            configfiles="test/config.overnight.yaml",
             simpl="",
             opts="",
-            clusters="37",
-            ll="v1.0",
-            sector_opts="60SEG-T-H-B-I-A-solar+p3-dist1",
-            planning_horizons="2050",
+            clusters="5",
+            ll="v1.5",
+            sector_opts="CO2L0-24H-T-H-B-I-A-solar+p3-dist1",
+            planning_horizons="2030",
         )
 
     logging.basicConfig(level=snakemake.config["logging"]["level"])
@@ -3391,7 +3397,6 @@ if __name__ == "__main__":
         add_allam(n, costs)
 
     solver_name = snakemake.config["solving"]["solver"]["name"]
-    
     n = set_temporal_aggregation(n, opts, solver_name)
 
     limit_type = "config"
@@ -3404,8 +3409,14 @@ if __name__ == "__main__":
         if not os.path.exists(fn):
             emissions_scope = snakemake.params.emissions_scope
             report_year = snakemake.params.eurostat_report_year
+            input_co2 = snakemake.input.co2
             build_carbon_budget(
-                o, snakemake.input.eurostat, fn, emissions_scope, report_year
+                o,
+                snakemake.input.eurostat,
+                fn,
+                emissions_scope,
+                report_year,
+                input_co2,
             )
         co2_cap = pd.read_csv(fn, index_col=0).squeeze()
         limit = co2_cap.loc[investment_year]
