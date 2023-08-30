@@ -462,6 +462,7 @@ sector:
     years_of_storage: 25
   co2_sequestration_potential: 200
   co2_sequestration_cost: 10
+  co2_sequestration_lifetime: 50
   co2_spatial: false
   co2network: false
   cc_fraction: 0.9
