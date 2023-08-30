@@ -14,35 +14,38 @@
 
 ## You should have received a copy of the GNU General Public License
 ## along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-"""
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
+"""
 
-import time
-import sys, os
+from __future__ import absolute_import, print_function
 
 import logging
+import os
+import sys
+import time
+
 logger = logging.getLogger(__name__)
 
 # TODO: provide alternative when multiprocessing is not available
 try:
-    from multiprocessing import Process, Pipe
+    from multiprocessing import Pipe, Process
 except ImportError:
     from multiprocessing.dummy import Process, Pipe
 
 from memory_profiler import _get_memory, choose_backend
 
+
 # The memory logging facilities have been adapted from memory_profiler
 class MemTimer(Process):
     """
     Write memory consumption over a time interval to file until signaled to
-    stop on the pipe
+    stop on the pipe.
     """
 
-    def __init__(self, monitor_pid, interval, pipe, filename, max_usage, backend, *args, **kw):
+    def __init__(
+        self, monitor_pid, interval, pipe, filename, max_usage, backend, *args, **kw
+    ):
         self.monitor_pid = monitor_pid
         self.interval = interval
         self.pipe = pipe
@@ -57,17 +60,18 @@ class MemTimer(Process):
 
     def run(self):
         # get baseline memory usage
-        cur_mem = (
-            _get_memory(self.monitor_pid, self.backend,
-                        timestamps=self.timestamps,
-                        include_children=self.include_children)
+        cur_mem = _get_memory(
+            self.monitor_pid,
+            self.backend,
+            timestamps=self.timestamps,
+            include_children=self.include_children,
         )
 
         n_measurements = 1
         mem_usage = cur_mem if self.max_usage else [cur_mem]
 
         if self.filename is not None:
-            stream = open(self.filename, 'w')
+            stream = open(self.filename, "w")
             stream.write("MEM {0:.6f} {1:.4f}\n".format(*cur_mem))
             stream.flush()
         else:
@@ -76,10 +80,11 @@ class MemTimer(Process):
         self.pipe.send(0)  # we're ready
         stop = False
         while True:
-            cur_mem = (
-                _get_memory(self.monitor_pid, self.backend,
-                            timestamps=self.timestamps,
-                            include_children=self.include_children)
+            cur_mem = _get_memory(
+                self.monitor_pid,
+                self.backend,
+                timestamps=self.timestamps,
+                include_children=self.include_children,
             )
 
             if stream is not None:
@@ -102,6 +107,7 @@ class MemTimer(Process):
 
         self.pipe.send(mem_usage)
         self.pipe.send(n_measurements)
+
 
 class memory_logger(object):
     """
@@ -144,8 +150,15 @@ class memory_logger(object):
 
     max_mem, timestamp = mem.mem_usage
     """
-    def __init__(self, filename=None, interval=1., max_usage=True,
-                 timestamps=True, include_children=True):
+
+    def __init__(
+        self,
+        filename=None,
+        interval=1.0,
+        max_usage=True,
+        timestamps=True,
+        include_children=True,
+    ):
         if filename is not None:
             timestamps = True
 
@@ -159,9 +172,16 @@ class memory_logger(object):
         backend = choose_backend()
 
         self.child_conn, self.parent_conn = Pipe()  # this will store MemTimer's results
-        self.p = MemTimer(os.getpid(), self.interval, self.child_conn, self.filename,
-                          backend=backend, timestamps=self.timestamps, max_usage=self.max_usage,
-                          include_children=self.include_children)
+        self.p = MemTimer(
+            os.getpid(),
+            self.interval,
+            self.child_conn,
+            self.filename,
+            backend=backend,
+            timestamps=self.timestamps,
+            max_usage=self.max_usage,
+            include_children=self.include_children,
+        )
         self.p.start()
         self.parent_conn.recv()  # wait until memory logging in subprocess is ready
 
@@ -169,7 +189,7 @@ class memory_logger(object):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_type is None:
-            self.parent_conn.send(0) # finish timing
+            self.parent_conn.send(0)  # finish timing
 
             self.mem_usage = self.parent_conn.recv()
             self.n_measurements = self.parent_conn.recv()
@@ -177,6 +197,7 @@ class memory_logger(object):
             self.p.terminate()
 
         return False
+
 
 class timer(object):
     level = 0
@@ -213,7 +234,6 @@ class timer(object):
                 sec = msec / 1000
                 print("%.1f sec" % sec)
 
-
     def __exit__(self, exc_type, exc_val, exc_tb):
         if not self.opened and self.verbose:
             sys.stdout.write(".. " * self.level)
@@ -221,14 +241,17 @@ class timer(object):
         if exc_type is None:
             stop = time.time()
             self.usec = usec = (stop - self.start) * 1e6
-            if self.verbose: self.print_usec(usec)
+            if self.verbose:
+                self.print_usec(usec)
         elif self.verbose:
             print("failed")
         sys.stdout.flush()
 
         self.__class__.level -= 1
-        if self.verbose: self.__class__.opened = False
+        if self.verbose:
+            self.__class__.opened = False
         return False
+
 
 class optional(object):
     def __init__(self, variable, contextman):

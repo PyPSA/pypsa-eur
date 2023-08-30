@@ -33,9 +33,9 @@ import numpy as np
 import pandas as pd
 import pypsa
 import xarray as xr
+from _benchmark import memory_logger
 from _helpers import configure_logging, update_config_with_sector_opts
 from pypsa.descriptors import get_activity_mask
-from _benchmark import memory_logger
 
 logger = logging.getLogger(__name__)
 pypsa.pf.logger.setLevel(logging.WARNING)
