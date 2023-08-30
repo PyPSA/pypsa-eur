@@ -32,7 +32,7 @@ import re
 import numpy as np
 import pandas as pd
 import pypsa
-from pypsa.descriptors import nominal_attrs, get_activity_mask
+from pypsa.descriptors import get_activity_mask
 import xarray as xr
 from _helpers import configure_logging, update_config_with_sector_opts
 
@@ -41,9 +41,7 @@ from vresutils.benchmark import memory_logger
 logger = logging.getLogger(__name__)
 pypsa.pf.logger.setLevel(logging.WARNING)
 from pypsa.descriptors import get_switchable_as_dense as get_as_dense
-from pypsa.io import import_components_from_dataframe
-from linopy.expressions import merge
-from numpy import isnan
+
 
 def add_land_use_constraint(n, planning_horizons, config):
     if "m" in snakemake.wildcards.clusters:
@@ -140,7 +138,6 @@ def _add_land_use_constraint(n):
 def _add_land_use_constraint_m(n, planning_horizons, config):
     # if generators clustering is lower than network clustering, land_use accounting is at generators clusters
 
-    planning_horizons = param["planning_horizons"]
     grouping_years = config["existing_capacities"]["grouping_years"]
     current_horizon = snakemake.wildcards.planning_horizons
 

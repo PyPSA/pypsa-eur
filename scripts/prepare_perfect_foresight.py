@@ -8,7 +8,6 @@ Concats pypsa networks of single investment periods to one network.
 
 import logging
 import re
-
 import pandas as pd
 import numpy as np
 import pypsa
@@ -39,7 +38,8 @@ def get_missing(df, n, c):
 
 def get_social_discount(t, r=0.01):
     """
-    Calculate for a given time t the social discount.
+    Calculate for a given time t and social discount rate r [per unit] 
+    the social discount.
     """
     return 1 / (1 + r) ** t
 
@@ -61,6 +61,8 @@ def get_investment_weighting(time_weighting, r=0.01):
 
 def add_year_to_constraints(n, baseyear):
     """
+    Add investment period to global constraints and rename index.
+    
     Parameters
     ----------
     n : pypsa.Network
@@ -74,6 +76,10 @@ def add_year_to_constraints(n, baseyear):
 
 
 def hvdc_transport_model(n):
+    """
+    Convert AC lines to DC links for multi-decade optimisation with
+    line expansion. Losses of DC links are assumed to be 3% per 1000km
+    """
     
     logger.info("Convert AC lines to DC links to perform multi-decade optimisation.")
     
@@ -102,6 +108,18 @@ def hvdc_transport_model(n):
     
 
 def adjust_electricity_grid(n, year, years):
+    """
+    Add carrier to lines. Replace AC lines with DC links in case of line
+    expansion. Add lifetime to DC links in case of line expansion.
+    
+    Parameters
+    ----------
+    n    : pypsa.Network
+    year : int
+           year in which optimized assets are built
+    years: list
+           investment periods
+    """
     n.lines["carrier"] = "AC"
     links_i = n.links[n.links.carrier=="DC"].index
     if n.lines.s_nom_extendable.any() or n.links.loc[links_i, "p_nom_extendable"].any():
@@ -175,7 +193,8 @@ def concat_networks(years):
                     pnl[k].loc[pnl_year.index, pnl_year.columns] = pnl_year
 
                 else:
-                    # this is to avoid adding multiple times assets with infinit lifetime as ror
+                    # this is to avoid adding multiple times assets with
+                    # infinit lifetime as ror
                     cols = pnl_year.columns.difference(pnl[k].columns)
                     pnl[k] = pd.concat([pnl[k], pnl_year[cols]], axis=1)
 
@@ -250,11 +269,19 @@ def set_all_phase_outs(n):
         (["nuclear"], "DE", 2022),
         (["nuclear"], "BE", 2025),
         (["nuclear"], "ES", 2027),
-        (["coal", "lignite"], "DE", 2038),
+        (["coal", "lignite"], "DE", 2030),
         (["coal", "lignite"], "ES", 2027),
         (["coal", "lignite"], "FR", 2022),
         (["coal", "lignite"], "GB", 2024),
         (["coal", "lignite"], "IT", 2025),
+        (["coal", "lignite"], "DK", 2030),
+        (["coal", "lignite"], "FI", 2030),
+        (["coal", "lignite"], "HU", 2030),
+        (["coal", "lignite"], "SK", 2030),
+        (["coal", "lignite"], "GR", 2030),
+        (["coal", "lignite"], "IE", 2030),
+        (["coal", "lignite"], "NL", 2030),
+        (["coal", "lignite"], "RS", 2030),
     ]
     for carrier, ct, phase_out_year in planned:
         set_phase_out(n, carrier, ct, phase_out_year)
@@ -326,6 +353,10 @@ def set_carbon_constraints(n, opts):
 
 
 def adjust_lvlimit(n):
+    """
+    Convert global constraints for single investment period to one uniform
+    if all attributes stay the same.
+    """
     c = "GlobalConstraint"
     cols = ['carrier_attribute', 'sense', "constant", "type"]
     glc_type = "transmission_volume_expansion_limit"
@@ -350,6 +381,10 @@ def adjust_CO2_glc(n):
 
 
 def add_H2_boilers(n):
+    """
+    Gas boilers can be retrofitted to run with H2. Add H2 boilers for heating
+    for all existing gas boilers.
+    """
     c = "Link"
     logger.info("Add H2 boilers.")
     # existing gas boilers
@@ -368,6 +403,7 @@ def add_H2_boilers(n):
     df["p_nom_extendable"] = True
     # add H2 boilers to network
     import_components_from_dataframe(n, df, c)
+    
     
 def apply_time_segmentation_perfect(
     n, segments, solver_name="cbc", overwrite_time_dependent=True
@@ -431,12 +467,6 @@ def apply_time_segmentation_perfect(
     sn_weightings = pd.concat(sn_weightings)
     n.set_snapshots(sn_weightings.index)
     n.snapshot_weightings = n.snapshot_weightings.mul(sn_weightings, axis=0)
-
-    # overwrite time-dependent data with timeseries created by tsam
-    # if overwrite_time_dependent:
-    #     values_t = segmented.mul(annual_max).set_index(snapshots)
-    #     for component, key in values_t.columns.droplevel(2).unique():
-    #         n.pnl(component)[key] = values_t[component, key]
 
     return n
 
