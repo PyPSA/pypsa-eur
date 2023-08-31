@@ -464,10 +464,22 @@ def plot_carbon_budget_distribution(input_eurostat):
     plt.rcParams["ytick.direction"] = "in"
     plt.rcParams["xtick.labelsize"] = 20
     plt.rcParams["ytick.labelsize"] = 20
+    
+    emissions_scope = snakemake.params.emissions_scope
+    report_year = snakemake.params.eurostat_report_year
+    input_co2 = snakemake.input.co2
 
     # historic emissions
     countries = snakemake.params.countries
-    e_1990 = co2_emissions_year(countries, input_eurostat, opts, snakemake, year=1990)
+    e_1990 = co2_emissions_year(
+        countries,
+        input_eurostat,
+        opts,
+        emissions_scope,
+        report_year,
+        input_co2,
+        year=1990,
+    )
     emissions = historical_emissions(countries)
     # add other years https://sdi.eea.europa.eu/data/0569441f-2853-4664-a7cd-db969ef54de0
     emissions.loc[2019] = 2.971372

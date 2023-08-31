@@ -41,6 +41,9 @@ electricity:
 
   renewable_carriers: [solar, onwind, offwind-ac, offwind-dc]
 
+sector:
+  min_part_load_fischer_tropsch: 0 
+  min_part_load_methanolisation: 0
 atlite:
   default_cutout: be-03-2013-era5
   cutouts:
