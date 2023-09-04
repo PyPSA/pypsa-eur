@@ -268,10 +268,11 @@ rule build_biomass_potentials:
     params:
         biomass=config["biomass"],
     input:
-        enspreso_biomass=HTTP.remote(
-            "https://cidportal.jrc.ec.europa.eu/ftp/jrc-opendata/ENSPRESO/ENSPRESO_BIOMASS.xlsx",
-            keep_local=True,
-        ),
+        # enspreso_biomass=HTTP.remote(
+        #     "https://cidportal.jrc.ec.europa.eu/ftp/jrc-opendata/ENSPRESO/ENSPRESO_BIOMASS.xlsx",
+        #     keep_local=True,
+        # ),
+        enspreso_biomass="cidportal.jrc.ec.europa.eu/ftp/jrc-opendata/ENSPRESO/ENSPRESO_BIOMASS.xlsx",  # dealing with temporary server issues
         nuts2="data/bundle-sector/nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson",  # https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/#nuts21
         regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
         nuts3_population=ancient("data/bundle/nama_10r_3popgdp.tsv.gz"),
@@ -701,6 +702,24 @@ rule build_transport_demand:
         "../envs/environment.yaml"
     script:
         "../scripts/build_transport_demand.py"
+
+
+rule build_egs_potentials:
+    input:
+        egs_cost="data/egs_costs.json",
+        shapes=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+    output:
+        egs_potentials=RESOURCES + "egs_potentials_s{simpl}_{clusters}.csv",
+        egs_overlap=RESOURCES + "egs_overlap_s{simpl}_{clusters}.csv",
+    threads: 1
+    resources:
+        mem_mb=2000,
+    log:
+        LOGS + "build_egs_potentials_s{simpl}_{clusters}.log",
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_egs_potentials.py"
 
 
 rule prepare_sector_network:
