@@ -23,7 +23,7 @@ import json
 import pandas as pd
 import geopandas as gpd
 
-from shapely.geometry import Polygon, Point
+from shapely.geometry import Polygon
 
 
 def prepare_egs_data(egs_file):
@@ -108,13 +108,23 @@ if __name__ == "__main__":
     egs_data.index = egs_data.geometry.astype(str)
     egs_shapes = egs_data.geometry
     
-    network_shapes = gpd.read_file(snakemake.input.shapes).set_index("name", drop=True).set_crs(epsg=4326)
-    egs_shapes = egs_data.geometry
+    network_shapes = (
+        gpd.read_file(snakemake.input.shapes)
+        .set_index("name", drop=True)
+        .set_crs(epsg=4326)
+    )
 
-    overlap_matrix = pd.DataFrame(index=network_shapes.index, columns=egs_shapes.index)
-    
+    overlap_matrix = (
+        pd.DataFrame(
+            index=network_shapes.index,
+            columns=(egs_shapes := egs_data.geometry).astype(str).values)
+    )
+
     for name, polygon in network_shapes.geometry.items():
-        overlap_matrix.loc[name] = egs_shapes.intersection(polygon).area / egs_shapes.area
+        overlap_matrix.loc[name] = (
+            egs_shapes
+            .intersection(polygon).area
+        ) / egs_shapes.area
 
     overlap_matrix.to_csv(snakemake.output["egs_overlap"])
 

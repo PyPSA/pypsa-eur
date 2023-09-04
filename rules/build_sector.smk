@@ -783,6 +783,8 @@ rule prepare_sector_network:
         cop_air_total=RESOURCES + "cop_air_total_elec_s{simpl}_{clusters}.nc",
         cop_air_rural=RESOURCES + "cop_air_rural_elec_s{simpl}_{clusters}.nc",
         cop_air_urban=RESOURCES + "cop_air_urban_elec_s{simpl}_{clusters}.nc",
+        egs_potentials=RESOURCES + "egs_potentials_s{simpl}_{clusters}.csv",
+        egs_overlap=RESOURCES + "egs_overlap_s{simpl}_{clusters}.csv",
         solar_thermal_total=RESOURCES
         + "solar_thermal_total_elec_s{simpl}_{clusters}.nc"
         if config["sector"]["solar_thermal"]
