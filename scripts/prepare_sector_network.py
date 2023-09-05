@@ -3304,7 +3304,7 @@ def add_enhanced_geothermal(
 
     overlap = pd.read_csv(egs_overlap, index_col=0)
     egs_potentials = pd.read_csv(egs_potentials, index_col=0)
-    
+
     Nyears = n.snapshot_weightings.generators.sum() / 8760
     dr = config["costs"]["fill_values"]["discount rate"]
     lt = costs.at["geothermal", "lifetime"]
@@ -3312,9 +3312,7 @@ def add_enhanced_geothermal(
     egs_annuity = calculate_annuity(lt, dr)
 
     egs_potentials["capital_cost"] = (
-        (egs_annuity + 0.02 / 1.02) *
-        egs_potentials["CAPEX"] *
-        Nyears 
+        (egs_annuity + 0.02 / 1.02) * egs_potentials["CAPEX"] * Nyears
     )
 
     # Uncommented for causing a crash for runs with default config.
@@ -3352,15 +3350,15 @@ def add_enhanced_geothermal(
         if not bus_overlap.sum():
             continue
 
-        overlap = bus_overlap.loc[bus_overlap > 0.]
+        overlap = bus_overlap.loc[bus_overlap > 0.0]
 
-        bus_egs = egs_potentials.loc[bus_overlap.loc[bus_overlap > 0.].index]
+        bus_egs = egs_potentials.loc[bus_overlap.loc[bus_overlap > 0.0].index]
 
         if not len(bus_egs):
             continue
-        
+
         bus_egs["p_nom_max"] = bus_egs["p_nom_max"].multiply(bus_overlap)
-        bus_egs = bus_egs.loc[bus_egs.p_nom_max > 0.]
+        bus_egs = bus_egs.loc[bus_egs.p_nom_max > 0.0]
 
         if config["sector"]["enhanced_geothermal_best_only"]:
             bus_egs = bus_egs.sort_values(by="capital_cost").iloc[:1]
@@ -3389,7 +3387,6 @@ def add_enhanced_geothermal(
             efficiency=efficiency,
             efficiency2=costs.at["geothermal", "CO2 intensity"] * efficiency,
         )
-
 
 
 if __name__ == "__main__":
@@ -3567,7 +3564,6 @@ if __name__ == "__main__":
 
     if options.get("enhanced_geothermal"):
         logger.info("Adding Enhanced Geothermal Potential.")
-
         """
         add_enhanced_geothermal(
             n,
