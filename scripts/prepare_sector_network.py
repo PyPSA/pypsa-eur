@@ -3280,7 +3280,7 @@ def set_temporal_aggregation(n, opts, solver_name):
     return n
 
 
-def add_egs_potential(
+def add_enhanced_geothermal(
     n,
     egs_potentials,
     egs_overlap,
@@ -3568,20 +3568,17 @@ if __name__ == "__main__":
     if options.get("enhanced_geothermal"):
         logger.info("Adding Enhanced Geothermal Potential.")
 
-        add_egs_potential(
+        """
+        add_enhanced_geothermal(
             n,
             snakemake.input["egs_potentials"],
             snakemake.input["egs_overlap"],
             costs
         )
-
+        """
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
 
     sanitize_carriers(n, snakemake.config)
-
-    n.buses.to_csv("buses.csv")
-    n.generators.to_csv("generators.csv")
-    n.links.to_csv("links.csv")
 
     n.export_to_netcdf(snakemake.output[0])
