@@ -3565,10 +3565,7 @@ if __name__ == "__main__":
     if options.get("enhanced_geothermal"):
         logger.info("Adding Enhanced Geothermal Potential.")
         add_enhanced_geothermal(
-            n,
-            snakemake.input["egs_potentials"],
-            snakemake.input["egs_overlap"],
-            costs
+            n, snakemake.input["egs_potentials"], snakemake.input["egs_overlap"], costs
         )
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
