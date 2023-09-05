@@ -3303,14 +3303,6 @@ def add_egs_potential(
     config = snakemake.config
 
     overlap = pd.read_csv(egs_overlap, index_col=0)
-    indicator_matrix = (
-        pd.DataFrame(
-            np.ceil(overlap.values),
-            index=overlap.index,
-            columns=overlap.columns
-        )
-    )
-
     egs_potentials = pd.read_csv(egs_potentials, index_col=0)
     
     Nyears = n.snapshot_weightings.generators.sum() / 8760
@@ -3320,12 +3312,18 @@ def add_egs_potential(
     egs_annuity = calculate_annuity(lt, dr)
 
     egs_potentials["capital_cost"] = (
-        (egs_annuity + 0.02 / 1.02) * egs_potentials["CAPEX"] * Nyears 
+        (egs_annuity + 0.02 / 1.02) *
+        egs_potentials["CAPEX"] *
+        Nyears 
     )
 
-    efficiency = costs.at["geothermal", "efficiency electricity"]
+    # Uncommented for causing a crash for runs with default config.
+    # this throws an error, as the retrieved costs are not
+    # the same as the ones built by tech-data.
+    # efficiency = costs.at["geothermal", "efficiency electricity"]
+    efficiency = 0.1
 
-    # p_nom conversion GW -> MW
+    # p_nom_max conversion GW -> MW
     # capital_cost conversion Euro/kW -> Euro/MW
     egs_potentials["p_nom_max"] = egs_potentials["p_nom_max"] * 1000.0
     egs_potentials["capital_cost"] = egs_potentials["capital_cost"] * 1000.0
@@ -3347,29 +3345,28 @@ def add_egs_potential(
         p_nom_extendable=True,
     )
 
-    for bus, overlaps in overlap.iterrows():
-        if not overlaps.sum():
+    egs_potentials.index = np.arange(len(egs_potentials)).astype(str)
+    overlap.columns = egs_potentials.index
+
+    for bus, bus_overlap in overlap.iterrows():
+        if not bus_overlap.sum():
             continue
 
-        overlaps.index = np.arange(len(overlaps))
-    
-        overlaps = overlaps.loc[overlaps > 0.]
-        indicators = indicator_matrix.loc[bus]
-        indicators.index = np.arange(len(indicators))
+        overlap = bus_overlap.loc[bus_overlap > 0.]
 
-        bus_egs = egs_potentials.loc[overlaps.loc[overlaps > 0.].index]
+        bus_egs = egs_potentials.loc[bus_overlap.loc[bus_overlap > 0.].index]
 
         if not len(bus_egs):
             continue
         
-        bus_egs["p_nom_max"] = bus_egs["p_nom_max"].multiply(overlaps)
+        bus_egs["p_nom_max"] = bus_egs["p_nom_max"].multiply(bus_overlap)
         bus_egs = bus_egs.loc[bus_egs.p_nom_max > 0.]
 
         if config["sector"]["enhanced_geothermal_best_only"]:
             bus_egs = bus_egs.sort_values(by="capital_cost").iloc[:1]
-            appendix = ""
+            appendix = pd.Index([""])
         else:
-            appendix = " " + bus_egs.index
+            appendix = " " + pd.Index(np.arange(len(bus_egs)).astype(str))
 
         bus_egs.index = np.arange(len(bus_egs)).astype(str)
 
@@ -3582,5 +3579,9 @@ if __name__ == "__main__":
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
 
     sanitize_carriers(n, snakemake.config)
+
+    n.buses.to_csv("buses.csv")
+    n.generators.to_csv("generators.csv")
+    n.links.to_csv("links.csv")
 
     n.export_to_netcdf(snakemake.output[0])

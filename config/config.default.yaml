@@ -491,6 +491,9 @@ sector:
     OCGT: gas
   biomass_to_liquid: false
   biosng: false
+  enhanced_geothermal: true
+  enhanced_geothermal_optimism: true # if true, egs costs are reducing towards 2050 according to Aghahosseini et al., (2020)
+  enhanced_geothermal_best_only: false # if true, assigns only the cheapest patch of EGS potential to each region
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
 industry:
@@ -954,6 +957,7 @@ plotting:
     waste: '#e3d37d'
     other: '#000000'
     geothermal: '#ba91b1'
+    geothermal heat: '#ba91b1'
     AC: "#70af1d"
     AC-AC: "#70af1d"
     AC line: "#70af1d"
