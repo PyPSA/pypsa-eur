@@ -268,11 +268,10 @@ rule build_biomass_potentials:
     params:
         biomass=config["biomass"],
     input:
-        # enspreso_biomass=HTTP.remote(
-        #     "https://cidportal.jrc.ec.europa.eu/ftp/jrc-opendata/ENSPRESO/ENSPRESO_BIOMASS.xlsx",
-        #     keep_local=True,
-        # ),
-        enspreso_biomass="cidportal.jrc.ec.europa.eu/ftp/jrc-opendata/ENSPRESO/ENSPRESO_BIOMASS.xlsx",  # dealing with temporary server issues
+        enspreso_biomass=HTTP.remote(
+            "https://cidportal.jrc.ec.europa.eu/ftp/jrc-opendata/ENSPRESO/ENSPRESO_BIOMASS.xlsx",
+            keep_local=True,
+        ),
         nuts2="data/bundle-sector/nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson",  # https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/#nuts21
         regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
         nuts3_population=ancient("data/bundle/nama_10r_3popgdp.tsv.gz"),
