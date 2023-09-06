@@ -605,6 +605,40 @@ def add_heating_capacities_installed_before_baseyear(
                 ],
             )
 
+def add_land_transport_installed_before_baseyear(
+        n,
+        grouping_year,       
+):
+    
+    pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
+    nodes = pop_layout.index
+
+    ice_efficiency = options["transport_internal_combustion_efficiency"]
+    p_set = n.loads_t.p_set[n.loads[n.loads.carrier.str.contains('land transport demand')].index]
+    p_set.columns = p_set.columns.str.rstrip('land transport')
+    
+    split_years = costs.at['Liquid fuels ICE (passenger cars)', 'lifetime'] - 1
+    year = range(int(grouping_year-split_years), int(grouping_year),1)
+    set_p_nom = p_set.max(axis=0)/len(year)
+    p_set_year = p_set/(len(year))
+    for year in year:
+        n.madd(
+        "Link",
+        nodes,
+        suffix=f" land transport oil-{year}",
+        bus0=spatial.oil.nodes,
+        bus1=nodes + " land transport",
+        bus2="co2 atmosphere",
+        carrier="land transport oil",
+        capital_cost = 0,
+        efficiency = 1.0/ice_efficiency  * p_set_year[nodes], 
+        efficiency2 = costs.at['oil', 'CO2 intensity'], 
+        lifetime = costs.at['Liquid fuels ICE (passenger cars)', 'lifetime'], 
+        p_nom = set_p_nom, 
+        p_min_pu = p_set_year/set_p_nom*ice_efficiency/p_set_year[nodes],
+        p_max_pu = p_set_year/set_p_nom*ice_efficiency/p_set_year[nodes],
+        build_year = year
+        ) 
 
 # %%
 if __name__ == "__main__":
@@ -673,6 +707,13 @@ if __name__ == "__main__":
             costs,
             default_lifetime,
         )
+
+    endo_transport = ( (options["land_transport_electric_share"][baseyear] is None ) 
+        and (options["land_transport_fuel_cell_share"][baseyear] is None)
+        and (options["land_transport_ice_share"][baseyear] is None))
+    
+    if "T" in opts and options["endogenous_transport"] and endo_transport:
+        add_land_transport_installed_before_baseyear(n, baseyear)
 
     if options.get("cluster_heat_buses", False):
         cluster_heat_buses(n)

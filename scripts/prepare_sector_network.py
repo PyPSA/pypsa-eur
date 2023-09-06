@@ -1454,114 +1454,193 @@ def add_land_transport(n, costs):
     fuel_cell_share = get(options["land_transport_fuel_cell_share"], investment_year)
     electric_share = get(options["land_transport_electric_share"], investment_year)
     ice_share = get(options["land_transport_ice_share"], investment_year)
+    
+    if options["endogenous_transport"]==False:
+        if any([fuel_cell_share == None, electric_share == None, ice_share == None]):
+            logger.warning(
+                f"Exogenous transport selected, but not all transport shares are defined."
+            )
+        total_share = fuel_cell_share + electric_share + ice_share
+        if total_share != 1:
+            logger.warning(
+                f"Total land transport shares sum up to {total_share:.2%}, corresponding to increased or decreased demand assumptions."
+            )
 
-    total_share = fuel_cell_share + electric_share + ice_share
-    if total_share != 1:
-        logger.warning(
-            f"Total land transport shares sum up to {total_share:.2%}, corresponding to increased or decreased demand assumptions."
-        )
 
-    logger.info(f"FCEV share: {fuel_cell_share*100}%")
-    logger.info(f"EV share: {electric_share*100}%")
-    logger.info(f"ICEV share: {ice_share*100}%")
+    if options["endogenous_transport"]==True:
+        if any([fuel_cell_share != None, electric_share != None, ice_share != None]):
+            logger.warning(
+                f"Endogenous transport activated and transport shares defined."
+            )
+
+    if fuel_cell_share != None:
+        logger.info(f"FCEV share: {fuel_cell_share*100}%")
+    if electric_share != None:
+        logger.info(f"EV share: {electric_share*100}%")
+    if ice_share != None:
+        logger.info(f"ICEV share: {ice_share*100}%")
 
     nodes = pop_layout.index
 
-    if electric_share > 0:
+    # Add load for transport demand
+    n.add("Carrier", "land transport demand")
+
+    n.madd("Bus", 
+            nodes,
+            location=nodes,
+            suffix=" land transport",
+            carrier="land transport demand")
+    
+    # p_set formerly used only for the EV share
+    p_set = (
+        (
+            transport[nodes]
+            + cycling_shift(transport[nodes], 1)
+            + cycling_shift(transport[nodes], 2)
+        )
+        / 3
+    )
+    n.madd(
+        "Load",
+        nodes,
+        suffix=" land transport",
+        bus=nodes + " land transport",
+        carrier="land transport demand",
+        p_set=p_set, 
+    )
+
+    # Add EV links
+    if electric_share != 0:
         n.add("Carrier", "Li ion")
 
         n.madd(
             "Bus",
             nodes,
             location=nodes,
-            suffix=" EV battery",
+            suffix=" EV driving",
             carrier="Li ion",
             unit="MWh_el",
         )
 
-        p_set = (
-            electric_share
-            * (
-                transport[nodes]
-                + cycling_shift(transport[nodes], 1)
-                + cycling_shift(transport[nodes], 2)
-            )
-            / 3
-        )
-
-        n.madd(
-            "Load",
-            nodes,
-            suffix=" land transport EV",
-            bus=nodes + " EV battery",
-            carrier="land transport EV",
-            p_set=p_set,
-        )
-
-        p_nom = number_cars * options.get("bev_charge_rate", 0.011) * electric_share
 
         n.madd(
             "Link",
             nodes,
             suffix=" BEV charger",
             bus0=nodes,
-            bus1=nodes + " EV battery",
-            p_nom=p_nom,
+            bus1=nodes + " EV driving",
+            p_nom_extendable = True,
             carrier="BEV charger",
             p_max_pu=avail_profile[nodes],
-            efficiency=options.get("bev_charge_efficiency", 0.9),
+            efficiency=1, # instead of options.get("bev_charge_efficiency", 0.9) -> efficiency already accounted for in build_transport_demand
             # These were set non-zero to find LU infeasibility when availability = 0.25
             # p_nom_extendable=True,
             # p_nom_min=p_nom,
             # capital_cost=1e6,  #i.e. so high it only gets built where necessary
         )
 
-    if electric_share > 0 and options["v2g"]:
+        # Only when v2g option is True, add the v2g link
+        if options["v2g"]:
+            n.madd(
+                "Link",
+                nodes,
+                suffix=" V2G",
+                bus1=nodes,
+                bus0=nodes + " EV driving",
+                p_nom_extendable = True,
+                carrier="V2G",
+                p_max_pu=avail_profile[nodes],
+                efficiency=options.get("bev_charge_efficiency", 0.9),
+            )
+
+
+        # add bev managment when enabled
+        n.add("Carrier", "EV battery storage")
+
+        if options["bev_dsm"]:
+            n.madd(
+                "Store",
+                nodes,
+                suffix=" EV battery storage",
+                bus=nodes + " EV driving",
+                carrier="EV battery storage",
+                e_cyclic=True,
+                e_nom_extendable=True,
+                e_max_pu=1,
+                e_min_pu=dsm_profile[nodes],
+                #lifetime?
+            )
+        
         n.madd(
             "Link",
             nodes,
-            suffix=" V2G",
-            bus1=nodes,
-            bus0=nodes + " EV battery",
-            p_nom=p_nom,
-            carrier="V2G",
-            p_max_pu=avail_profile[nodes],
-            efficiency=options.get("bev_charge_efficiency", 0.9),
+            suffix=" land transport EV",
+            bus0=nodes + " EV driving",                              
+            bus1 =nodes + " land transport",
+            carrier="land transport EV",
+            lifetime = costs.at['Battery electric (passenger cars)', 'lifetime'], 
+            capital_cost = costs.at["Battery electric (passenger cars)", "fixed"]/(options['energy_to_cars']*options.get("bev_charge_efficiency", 0.9)),
+            efficiency = 1, #costs.at['Battery electric (passenger cars)', 'efficiency'],     #efficiency already accounted for in build_transport_demand  
+            p_nom_extendable=True,
         )
 
-    if electric_share > 0 and options["bev_dsm"]:
-        e_nom = (
-            number_cars
-            * options.get("bev_energy", 0.05)
-            * options["bev_availability"]
-            * electric_share
-        )
+        #exogenous pathway if electric share is defined
+        if float(electric_share or 0) > 0:
+            # set p_nom to fulfill electric share, capital cost to 0
+            n.links.loc[n.links.carrier=='land transport EV', "p_nom_extendable"] = False
+            for place in nodes:
+                p_nom = p_set #transport        
+                n.links.loc[(n.links.carrier=="land transport EV") & (n.links.bus1.str.contains(place)),'p_nom'] = electric_share*max(p_nom[place])
+                n.links_t.p_min_pu[n.links[(n.links.carrier=="land transport EV") & (n.links.bus1.str.contains(place))].index.values[0]] = p_nom[place]/max(p_nom[place])/costs.at['Battery electric (passenger cars)', 'efficiency']
+                n.links_t.p_max_pu[n.links[(n.links.carrier=="land transport EV") & (n.links.bus1.str.contains(place))].index.values[0]] = p_nom[place]/max(p_nom[place])/costs.at['Battery electric (passenger cars)', 'efficiency']
 
+            n.links.loc[n.links.carrier=='land transport EV', "capital_cost"] = 0
+            
+            p_nom = number_cars * options.get("bev_charge_rate", 0.011) * electric_share
+            n.links.loc[n.links.carrier=="BEV charger", "p_nom_extendable"] = False
+            for place in nodes:
+                n.links.loc[(n.links.carrier=="BEV charger") & (n.links.bus1.str.contains(place)), "p_nom"] = number_cars[place] * options.get("bev_charge_rate", 0.011) * electric_share
+               
+            
+            if options["v2g"]:
+                n.links.loc[n.links.carrier=="V2G", "p_nom_extendable"] = False
+                for place in nodes:
+                    n.links.loc[(n.links.carrier=="V2G") & (n.links.bus1.str.contains(place)), "p_nom"] = number_cars[place] * options.get("bev_charge_rate", 0.011) * electric_share                  
+
+            
+            if options["bev_dsm"]:
+                n.stores.loc[n.stores.carrier=="EV battery storage", "e_nom_extendable"] = False
+                for place in nodes:
+                    n.stores.loc[(n.stores.carrier=="EV battery storage") & (n.links.bus1.str.contains(place)), "e_nom"] = number_cars[place] * options.get("bev_energy", 0.05) * options["bev_availability"] * electric_share
+
+    # Add hydrogen vehicle links
+    if fuel_cell_share != 0:
         n.madd(
-            "Store",
-            nodes,
-            suffix=" battery storage",
-            bus=nodes + " EV battery",
-            carrier="battery storage",
-            e_cyclic=True,
-            e_nom=e_nom,
-            e_max_pu=1,
-            e_min_pu=dsm_profile[nodes],
-        )
-
-    if fuel_cell_share > 0:
-        n.madd(
-            "Load",
+            "Link",
             nodes,
             suffix=" land transport fuel cell",
-            bus=nodes + " H2",
+            bus0=nodes + " H2",
+            bus1=nodes + " land transport",
             carrier="land transport fuel cell",
-            p_set=fuel_cell_share
-            / options["transport_fuel_cell_efficiency"]
-            * transport[nodes],
-        )
+            lifetime = costs.at['Hydrogen fuel cell (passenger cars)', 'lifetime'], 
+            efficiency=  1.0 / options["transport_fuel_cell_efficiency"] * p_set[nodes], 
+            capital_cost = costs.at["Hydrogen fuel cell (passenger cars)", "fixed"]/(options['energy_to_cars'] * options["transport_fuel_cell_efficiency"]),
+            p_nom_extendable=True,
 
-    if ice_share > 0:
+        )
+        #exogenous pathway if fuel_cell_share is defined
+        if float(fuel_cell_share or 0) > 0:
+            p_nom = p_set
+            n.links.loc[n.links.carrier=='land transport fuel cell', "p_nom_extendable"] = False
+            for place in nodes:
+                n.links.loc[(n.links.carrier=="land transport fuel cell") & (n.links.bus1.str.contains(place)),'p_nom'] = fuel_cell_share * max(p_nom[place])
+                n.links_t.p_min_pu[n.links[(n.links.carrier=="land transport fuel cell") & (n.links.bus1.str.contains(place))].index.values[0]] = (p_nom[place])/max(p_nom[place])* options["transport_fuel_cell_efficiency"]/p_set[place]
+                n.links_t.p_max_pu[n.links[(n.links.carrier=="land transport fuel cell") & (n.links.bus1.str.contains(place))].index.values[0]] = (p_nom[place])/max(p_nom[place])* options["transport_fuel_cell_efficiency"]/p_set[place]
+            n.links.loc[n.links.carrier=='land transport fuel cell', "capital_cost"] = 0
+
+    # add internal combustion engine vehicle links
+    if ice_share != 0:
+        
         if "oil" not in n.buses.carrier.unique():
             n.madd(
                 "Bus",
@@ -1571,32 +1650,31 @@ def add_land_transport(n, costs):
                 unit="MWh_LHV",
             )
 
-        ice_efficiency = options["transport_internal_combustion_efficiency"]
-
         n.madd(
-            "Load",
+            "Link",
             nodes,
             suffix=" land transport oil",
-            bus=spatial.oil.nodes,
+            bus0=spatial.oil.nodes,
+            bus1=nodes + " land transport",
+            bus2="co2 atmosphere",
             carrier="land transport oil",
-            p_set=ice_share / ice_efficiency * transport[nodes],
+            lifetime = costs.at['Liquid fuels ICE (passenger cars)', 'lifetime'], 
+            capital_cost = costs.at["Liquid fuels ICE (passenger cars)", "fixed"]/(options['energy_to_cars'] * options["transport_internal_combustion_efficiency"]),
+            efficiency = 1.0/options["transport_internal_combustion_efficiency"]  * p_set[nodes],
+            efficiency2 = costs.at['oil', 'CO2 intensity'], 
+            p_nom_extendable=True, 
         )
 
-        co2 = (
-            ice_share
-            / ice_efficiency
-            * transport[nodes].sum().sum()
-            / nhours
-            * costs.at["oil", "CO2 intensity"]
-        )
-
-        n.add(
-            "Load",
-            "land transport oil emissions",
-            bus="co2 atmosphere",
-            carrier="land transport oil emissions",
-            p_set=-co2,
-        )
+        #exogenous pathway if ice_share is defined
+        if float(ice_share or 0) > 0:
+            p_nom = p_set
+            ice_efficiency = options["transport_internal_combustion_efficiency"]
+            n.links.loc[n.links.carrier=='land transport oil', "p_nom_extendable"] = False
+            for place in nodes:
+                n.links.loc[(n.links.carrier=="land transport oil") & (n.links.bus1.str.contains(place)),'p_nom'] = ice_share * max(p_nom[place]), 
+                n.links_t.p_min_pu[n.links[(n.links.carrier=="land transport oil") & (n.links.bus1.str.contains(place))].index.values[0]] = (p_nom[place])/max(p_nom[place])*ice_efficiency/p_set[place]
+                n.links_t.p_max_pu[n.links[(n.links.carrier=="land transport oil") & (n.links.bus1.str.contains(place))].index.values[0]] = (p_nom[place])/max(p_nom[place])*ice_efficiency/p_set[place]
+            n.links.loc[n.links.carrier=='land transport oil', "capital_cost"] = 0
 
 
 def build_heat_demand(n):

@@ -369,6 +369,11 @@ sector:
   bev_avail_max: 0.95
   bev_avail_mean: 0.8
   v2g: true
+  endogenous_transport: false
+  energy_to_cars: 0.01 #Mw@wheel/car assuming 0.2kwh/km and 50km/h
+  EV_consumption_1car: 0.01 #MWh_elec/hour (assuming 0.2 kWh/km https://github.com/PyPSA/pypsa-eur/blob/1fbe971ab8dab60d972d3a7b905b9cec7171c0ad/config/config.default.yaml#L382 and velocity of 50km/h
+  ICE_consumption_1car: 0.033 #MWh_oil/hour (assuming 0.66 kWh_oil/km and 50 km/h (with the link efficiency 0.3, they are equivalent to 0.01 MWh_elec/hour)
+  H2_consumption_1car: 0.02 #MWh_H2/hour (assuming 0.4 kWh_H2/km and 50km/h) (with efficiency 0.5, they are equivalent to 0.01 MWh_elec/hour)
   land_transport_fuel_cell_share:
     2020: 0
     2030: 0.05

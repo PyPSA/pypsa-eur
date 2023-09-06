@@ -568,6 +568,130 @@ def add_pipe_retrofit_constraint(n):
 
     n.model.add_constraints(lhs == rhs, name="Link-pipe_retrofit")
 
+def add_battery_constraints(n):
+    """
+    Add constraint ensuring that charger = discharger, i.e.
+    1 * charger_size - efficiency * discharger_size = 0
+    """
+    if not n.links.p_nom_extendable.any():
+        return
+
+    discharger_bool = n.links.index.str.contains("battery discharger")
+    charger_bool = n.links.index.str.contains("battery charger")
+
+    dischargers_ext = n.links[discharger_bool].query("p_nom_extendable").index
+    chargers_ext = n.links[charger_bool].query("p_nom_extendable").index
+
+    eff = n.links.efficiency[dischargers_ext].values
+    lhs = (
+        n.model["Link-p_nom"].loc[chargers_ext]
+        - n.model["Link-p_nom"].loc[dischargers_ext] * eff
+    )
+
+    n.model.add_constraints(lhs == 0, name="Link-charger_ratio")
+
+
+def add_chp_constraints(n):
+    electric = (
+        n.links.index.str.contains("urban central")
+        & n.links.index.str.contains("CHP")
+        & n.links.index.str.contains("electric")
+    )
+    heat = (
+        n.links.index.str.contains("urban central")
+        & n.links.index.str.contains("CHP")
+        & n.links.index.str.contains("heat")
+    )
+
+    electric_ext = n.links[electric].query("p_nom_extendable").index
+    heat_ext = n.links[heat].query("p_nom_extendable").index
+
+    electric_fix = n.links[electric].query("~p_nom_extendable").index
+    heat_fix = n.links[heat].query("~p_nom_extendable").index
+
+    p = n.model["Link-p"]  # dimension: [time, link]
+
+    # output ratio between heat and electricity and top_iso_fuel_line for extendable
+    if not electric_ext.empty:
+        p_nom = n.model["Link-p_nom"]
+
+        lhs = (
+            p_nom.loc[electric_ext]
+            * (n.links.p_nom_ratio * n.links.efficiency)[electric_ext].values
+            - p_nom.loc[heat_ext] * n.links.efficiency[heat_ext].values
+        )
+        n.model.add_constraints(lhs == 0, name="chplink-fix_p_nom_ratio")
+
+        rename = {"Link-ext": "Link"}
+        lhs = (
+            p.loc[:, electric_ext]
+            + p.loc[:, heat_ext]
+            - p_nom.rename(rename).loc[electric_ext]
+        )
+        n.model.add_constraints(lhs <= 0, name="chplink-top_iso_fuel_line_ext")
+
+    # top_iso_fuel_line for fixed
+    if not electric_fix.empty:
+        lhs = p.loc[:, electric_fix] + p.loc[:, heat_fix]
+        rhs = n.links.p_nom[electric_fix]
+        n.model.add_constraints(lhs <= rhs, name="chplink-top_iso_fuel_line_fix")
+
+    # back-pressure
+    if not electric.empty:
+        lhs = (
+            p.loc[:, heat] * (n.links.efficiency[heat] * n.links.c_b[electric].values)
+            - p.loc[:, electric] * n.links.efficiency[electric]
+        )
+        n.model.add_constraints(lhs <= rhs, name="chplink-backpressure")
+
+
+def add_pipe_retrofit_constraint(n):
+    """
+    Add constraint for retrofitting existing CH4 pipelines to H2 pipelines.if
+    """
+    gas_pipes_i = n.links.query("carrier == 'gas pipeline' and p_nom_extendable").index
+    h2_retrofitted_i = n.links.query(
+        "carrier == 'H2 pipeline retrofitted' and p_nom_extendable"
+    ).index
+
+    if h2_retrofitted_i.empty or gas_pipes_i.empty:
+        return
+
+    p_nom = n.model["Link-p_nom"]
+
+    CH4_per_H2 = 1 / n.config["sector"]["H2_retrofit_capacity_per_CH4"]
+    lhs = p_nom.loc[gas_pipes_i] + CH4_per_H2 * p_nom.loc[h2_retrofitted_i]
+    rhs = n.links.p_nom[gas_pipes_i].rename_axis("Link-ext")
+
+    n.model.add_constraints(lhs == rhs, name="Link-pipe_retrofit")
+
+
+def add_v2g_constraint(n):
+    bev_charger = n.links[n.links.carrier.str.contains('BEV charger')].index
+    lhs2 = n.model["Link-p_nom"].loc[bev_charger]
+    v2g = n.links[n.links.carrier.str.contains('V2G')].index
+    lhs1 = n.model["Link-p_nom"].loc[v2g]
+    lhs = lhs1 - lhs2
+    rhs = 0
+    n.model.add_constraints(lhs==rhs, name="constraint_v2g")
+
+def add_EV_storage_constraint(n):
+    bev_charger = n.links[n.links.carrier.str.contains('BEV charger')].index
+    lhs1 = n.model["Link-p_nom"].loc[bev_charger]/n.config['sector']['bev_charge_rate']
+    ev_store = n.stores[n.stores.carrier.str.contains('EV battery storage')].index
+    lhs2 = n.model.variables['Store-e_nom'].loc[ev_store]/n.config['sector']['bev_energy']
+    lhs = lhs1-lhs2
+    rhs = 0
+    n.model.add_constraints(lhs==rhs, name="constraint_EV_storage")
+
+def add_EV_number_constraint(n):
+    bev_charger = n.links[n.links.carrier.str.contains('BEV charger')].index
+    lhs1 = n.model["Link-p_nom"].loc[bev_charger]/n.config['sector']['bev_charge_rate']
+    ev = n.links[n.links.carrier.str.contains('land transport EV')].index
+    lhs2 = n.model["Link-p_nom"].loc[ev]/n.config['sector']['EV_consumption_1car']
+    lhs = lhs1-lhs2
+    rhs = 0
+    n.model.add_constraints(lhs==rhs, name="constraint_EV_number")
 
 def extra_functionality(n, snapshots):
     """
@@ -594,6 +718,13 @@ def extra_functionality(n, snapshots):
             add_EQ_constraints(n, o)
     add_battery_constraints(n)
     add_pipe_retrofit_constraint(n)
+    current_horizon = int(snakemake.wildcards.planning_horizons)
+    if config['sector']["land_transport_electric_share"][current_horizon] is None:
+        add_EV_number_constraint(n)
+        if config['sector']["bev_dsm"]:
+          add_EV_storage_constraint(n)
+        if config['sector']["v2g"]:
+          add_v2g_constraint(n)
 
 
 def solve_network(n, config, solving, opts="", **kwargs):
