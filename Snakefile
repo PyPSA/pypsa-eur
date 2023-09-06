@@ -40,7 +40,7 @@ localrules:
 
 wildcard_constraints:
     simpl="[a-zA-Z0-9]*",
-    clusters="[0-9]+m?|all",
+    clusters="[0-9]+(m|c)?|all",
     ll="(v|c)([0-9\.]+|opt)",
     opts="[-+a-zA-Z0-9\.]*",
     sector_opts="[-+a-zA-Z0-9\.\s]*",
@@ -53,6 +53,7 @@ include: "rules/build_electricity.smk"
 include: "rules/build_sector.smk"
 include: "rules/solve_electricity.smk"
 include: "rules/postprocess.smk"
+include: "rules/validate.smk"
 
 
 if config["foresight"] == "overnight":
@@ -98,3 +99,14 @@ rule doc:
         directory("doc/_build"),
     shell:
         "make -C doc html"
+
+
+rule sync:
+    params:
+        cluster=f"{config['remote']['ssh']}:{config['remote']['path']}",
+    shell:
+        """
+        rsync -uvarh --ignore-missing-args --files-from=.sync-send . {params.cluster}
+        rsync -uvarh --no-g {params.cluster}/results . || echo "No results directory, skipping rsync"
+        rsync -uvarh --no-g {params.cluster}/logs . || echo "No logs directory, skipping rsync"
+        """

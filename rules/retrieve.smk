@@ -27,7 +27,7 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
 
     rule retrieve_databundle:
         output:
-            expand("data/bundle/{file}", file=datafiles),
+            protected(expand("data/bundle/{file}", file=datafiles)),
         log:
             LOGS + "retrieve_databundle.log",
         resources:
@@ -92,7 +92,7 @@ if config["enable"]["retrieve"] and config["enable"].get(
                 static=True,
             ),
         output:
-            RESOURCES + "natura.tiff",
+            protected(RESOURCES + "natura.tiff"),
         log:
             LOGS + "retrieve_natura_raster.log",
         resources:
@@ -106,22 +106,30 @@ if config["enable"]["retrieve"] and config["enable"].get(
     "retrieve_sector_databundle", True
 ):
     datafiles = [
-        "data/eea/UNFCCC_v23.csv",
-        "data/switzerland-sfoe/switzerland-new_format.csv",
-        "data/nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson",
-        "data/myb1-2017-nitro.xls",
-        "data/Industrial_Database.csv",
-        "data/emobility/KFZ__count",
-        "data/emobility/Pkw__count",
-        "data/h2_salt_caverns_GWh_per_sqkm.geojson",
-        directory("data/eurostat-energy_balances-june_2016_edition"),
-        directory("data/eurostat-energy_balances-may_2018_edition"),
-        directory("data/jrc-idees-2015"),
+        "eea/UNFCCC_v23.csv",
+        "switzerland-sfoe/switzerland-new_format.csv",
+        "nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson",
+        "myb1-2017-nitro.xls",
+        "Industrial_Database.csv",
+        "emobility/KFZ__count",
+        "emobility/Pkw__count",
+        "h2_salt_caverns_GWh_per_sqkm.geojson",
+    ]
+
+    datafolders = [
+        protected(
+            directory("data/bundle-sector/eurostat-energy_balances-june_2016_edition")
+        ),
+        protected(
+            directory("data/bundle-sector/eurostat-energy_balances-may_2018_edition")
+        ),
+        protected(directory("data/bundle-sector/jrc-idees-2015")),
     ]
 
     rule retrieve_sector_databundle:
         output:
-            *datafiles,
+            protected(expand("data/bundle-sector/{files}", files=datafiles)),
+            *datafolders,
         log:
             LOGS + "retrieve_sector_databundle.log",
         retries: 2
@@ -143,7 +151,9 @@ if config["enable"]["retrieve"] and (
 
     rule retrieve_gas_infrastructure_data:
         output:
-            expand("data/gas_network/scigrid-gas/data/{files}", files=datafiles),
+            protected(
+                expand("data/gas_network/scigrid-gas/data/{files}", files=datafiles)
+            ),
         log:
             LOGS + "retrieve_gas_infrastructure_data.log",
         retries: 2
@@ -158,7 +168,11 @@ if config["enable"]["retrieve"]:
     rule retrieve_electricity_demand:
         input:
             HTTP.remote(
-                "data.open-power-system-data.org/time_series/2019-06-05/time_series_60min_singleindex.csv",
+                "data.open-power-system-data.org/time_series/{version}/time_series_60min_singleindex.csv".format(
+                version="2019-06-05"
+                    if config["snapshots"]["end"] < "2019"
+                    else "2020-10-06"
+                ),
                 keep_local=True,
                 static=True,
             ),
@@ -183,7 +197,7 @@ if config["enable"]["retrieve"]:
                 static=True,
             ),
         output:
-            "data/shipdensity_global.zip",
+            protected("data/shipdensity_global.zip"),
         log:
             LOGS + "retrieve_ship_raster.log",
         resources:
@@ -191,3 +205,39 @@ if config["enable"]["retrieve"]:
         retries: 2
         run:
             move(input[0], output[0])
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_monthly_co2_prices:
+        input:
+            HTTP.remote(
+                "https://www.eex.com/fileadmin/EEX/Downloads/EUA_Emission_Spot_Primary_Market_Auction_Report/Archive_Reports/emission-spot-primary-market-auction-report-2019-data.xls",
+                keep_local=True,
+                static=True,
+            ),
+        output:
+            "data/validation/emission-spot-primary-market-auction-report-2019-data.xls",
+        log:
+            LOGS + "retrieve_monthly_co2_prices.log",
+        resources:
+            mem_mb=5000,
+        retries: 2
+        run:
+            move(input[0], output[0])
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_monthly_fuel_prices:
+        output:
+            "data/validation/energy-price-trends-xlsx-5619002.xlsx",
+        log:
+            LOGS + "retrieve_monthly_fuel_prices.log",
+        resources:
+            mem_mb=5000,
+        retries: 2
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/retrieve_monthly_fuel_prices.py"

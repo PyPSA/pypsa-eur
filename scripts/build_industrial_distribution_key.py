@@ -13,9 +13,12 @@ logger = logging.getLogger(__name__)
 import uuid
 from itertools import product
 
+import country_converter as coco
 import geopandas as gpd
 import pandas as pd
 from packaging.version import Version, parse
+
+cc = coco.CountryConverter()
 
 
 def locate_missing_industrial_sites(df):
@@ -93,6 +96,17 @@ def prepare_hotmaps_database(regions):
     gdf.rename(columns={"index_right": "bus"}, inplace=True)
     gdf["country"] = gdf.bus.str[:2]
 
+    # the .sjoin can lead to duplicates if a geom is in two overlapping regions
+    if gdf.index.duplicated().any():
+        # get all duplicated entries
+        duplicated_i = gdf.index[gdf.index.duplicated()]
+        # convert from raw data country name to iso-2-code
+        code = cc.convert(gdf.loc[duplicated_i, "Country"], to="iso2")
+        # screen out malformed country allocation
+        gdf_filtered = gdf.loc[duplicated_i].query("country == @code")
+        # concat not duplicated and filtered gdf
+        gdf = pd.concat([gdf.drop(duplicated_i), gdf_filtered])
+
     return gdf
 
 
@@ -115,7 +129,9 @@ def build_nodal_distribution_key(hotmaps, regions, countries):
         facilities = hotmaps.query("country == @country and Subsector == @sector")
 
         if not facilities.empty:
-            emissions = facilities["Emissions_ETS_2014"]
+            emissions = facilities["Emissions_ETS_2014"].fillna(
+                hotmaps["Emissions_EPRTR_2014"]
+            )
             if emissions.sum() == 0:
                 key = pd.Series(1 / len(facilities), facilities.index)
             else:

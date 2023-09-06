@@ -27,6 +27,7 @@ rule solve_network:
     threads: 4
     resources:
         mem_mb=memory,
+        walltime=config["solving"].get("walltime", "12:00:00"),
     shadow:
         "minimal"
     conda:
@@ -56,7 +57,8 @@ rule solve_operations_network:
         )
     threads: 4
     resources:
-        mem_mb=(lambda w: 5000 + 372 * int(w.clusters)),
+        mem_mb=(lambda w: 10000 + 372 * int(w.clusters)),
+        walltime=config["solving"].get("walltime", "12:00:00"),
     shadow:
         "minimal"
     conda:
