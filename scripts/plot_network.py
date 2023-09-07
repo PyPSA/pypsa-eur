@@ -20,7 +20,6 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
-from _helpers import override_component_attrs
 from make_summary import assign_carriers
 from plot_summary import preferred_order, rename_techs
 from pypsa.plot import add_legend_circles, add_legend_lines, add_legend_patches
@@ -70,7 +69,7 @@ def plot_map(
     transmission=False,
     with_legend=True,
 ):
-    tech_colors = snakemake.config["plotting"]["tech_colors"]
+    tech_colors = snakemake.params.plotting["tech_colors"]
 
     n = network.copy()
     assign_location(n)
@@ -116,9 +115,7 @@ def plot_map(
     costs = costs.stack()  # .sort_index()
 
     # hack because impossible to drop buses...
-    eu_location = snakemake.config["plotting"].get(
-        "eu_node_location", dict(x=-5.5, y=46)
-    )
+    eu_location = snakemake.params.plotting.get("eu_node_location", dict(x=-5.5, y=46))
     n.buses.loc["EU gas", "x"] = eu_location["x"]
     n.buses.loc["EU gas", "y"] = eu_location["y"]
 
@@ -315,7 +312,7 @@ def plot_h2_map(network, regions):
     h2_new = n.links[n.links.carrier == "H2 pipeline"]
     h2_retro = n.links[n.links.carrier == "H2 pipeline retrofitted"]
 
-    if snakemake.config["foresight"] == "myopic":
+    if snakemake.params.foresight == "myopic":
         # sum capacitiy for pipelines from different investment periods
         h2_new = group_pipes(h2_new)
 
@@ -558,7 +555,7 @@ def plot_ch4_map(network):
     link_widths_used = max_usage / linewidth_factor
     link_widths_used[max_usage < line_lower_threshold] = 0.0
 
-    tech_colors = snakemake.config["plotting"]["tech_colors"]
+    tech_colors = snakemake.params.plotting["tech_colors"]
 
     pipe_colors = {
         "gas pipeline": "#f08080",
@@ -700,7 +697,7 @@ def plot_map_without(network):
 
     # hack because impossible to drop buses...
     if "EU gas" in n.buses.index:
-        eu_location = snakemake.config["plotting"].get(
+        eu_location = snakemake.params.plotting.get(
             "eu_node_location", dict(x=-5.5, y=46)
         )
         n.buses.loc["EU gas", "x"] = eu_location["x"]
@@ -876,7 +873,7 @@ def plot_series(network, carrier="AC", name="test"):
             stacked=True,
             linewidth=0.0,
             color=[
-                snakemake.config["plotting"]["tech_colors"][i.replace(suffix, "")]
+                snakemake.params.plotting["tech_colors"][i.replace(suffix, "")]
                 for i in new_columns
             ],
         )
@@ -932,12 +929,11 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=snakemake.config["logging"]["level"])
 
-    overrides = override_component_attrs(snakemake.input.overrides)
-    n = pypsa.Network(snakemake.input.network, override_component_attrs=overrides)
+    n = pypsa.Network(snakemake.input.network)
 
     regions = gpd.read_file(snakemake.input.regions).set_index("name")
 
-    map_opts = snakemake.config["plotting"]["map"]
+    map_opts = snakemake.params.plotting["map"]
 
     if map_opts["boundaries"] is None:
         map_opts["boundaries"] = regions.total_bounds[[0, 2, 1, 3]] + [-1, 1, -1, 1]

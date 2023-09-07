@@ -54,6 +54,23 @@ logger = logging.getLogger(__name__)
 
 
 def determine_cutout_xXyY(cutout_name):
+    """
+    Determine the full extent of a cutout.
+
+    Since the coordinates of the cutout data are given as the
+    center of the grid cells, the extent of the cutout is
+    calculated by adding/subtracting half of the grid cell size.
+
+
+    Parameters
+    ----------
+    cutout_name : str
+        Path to the cutout.
+
+    Returns
+    -------
+    A list of extent coordinates in the order [x, X, y, Y].
+    """
     cutout = atlite.Cutout(cutout_name)
     assert cutout.crs.to_epsg() == 4326
     x, X, y, Y = cutout.extent

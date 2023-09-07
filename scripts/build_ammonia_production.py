@@ -30,7 +30,7 @@ if __name__ == "__main__":
     ammonia.index = cc.convert(ammonia.index, to="iso2")
 
     years = [str(i) for i in range(2013, 2018)]
-    countries = ammonia.index.intersection(snakemake.config["countries"])
+    countries = ammonia.index.intersection(snakemake.params.countries)
     ammonia = ammonia.loc[countries, years].astype(float)
 
     # convert from ktonN to ktonNH3

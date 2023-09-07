@@ -10,7 +10,6 @@ dependencies:
 - python>=3.8
 - pip
 
-- pypsa>=0.23
 - atlite>=0.2.9
 - dask
 
@@ -54,5 +53,7 @@ dependencies:
 - descartes
 - rasterio!=1.2.10
 
+
 - pip:
   - tsam>=1.1.0
+  - pypsa>=0.25.1

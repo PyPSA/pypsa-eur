@@ -345,7 +345,7 @@ def _load_lines_from_eg(buses, eg_lines):
     )
 
     lines["length"] /= 1e3
-
+    lines["carrier"] = "AC"
     lines = _remove_dangling_branches(lines, buses)
 
     return lines
@@ -861,6 +861,7 @@ def base_network(
     n.name = "PyPSA-Eur"
 
     n.set_snapshots(pd.date_range(freq="h", **config["snapshots"]))
+    n.madd("Carrier", ["AC", "DC"])
 
     n.import_components_from_dataframe(buses, "Bus")
     n.import_components_from_dataframe(lines, "Line")

@@ -10,24 +10,143 @@ Release Notes
 Upcoming Release
 ================
 
+* Updated Global Energy Monitor LNG terminal data to March 2023 version.
 
-* **Important:** The configuration files are now located in the ``config`` directory. This counts for ``config.default.yaml``, ``config.yaml`` as well as the test configuration files which are now located in ``config/test``. Config files that are still in the root directory will be ignored.
+* For industry distribution, use EPRTR as fallback if ETS data is not available.
 
-* Bugfix: Correct typo in the CPLEX solver configuration in ``config.default.yaml``.
+* The minimum capacity for renewable generators when using the myopic option has been fixed.
 
-* Renamed script file from PyPSA-EUR ``build_load_data`` to ``build_electricity_demand`` and ``retrieve_load_data`` to ``retrieve_electricity_demand``.
+* Files downloaded from zenodo are now write-protected to prevent accidental re-download.
 
-* Fix docs readthedocs built
+* Files extracted from sector-coupled data bundle have been moved from ``data/`` to ``data/sector-bundle``.
+
+
+**Bugs and Compatibility**
+
+* A bug preventing custom powerplants specified in ``data/custom_powerplants.csv`` was fixed. (https://github.com/PyPSA/pypsa-eur/pull/732)
+
+PyPSA-Eur 0.8.1 (27th July 2023)
+================================
+
+**New Features**
+
+* Add option to consider dynamic line rating based on wind speeds and
+  temperature according to `Glaum and Hofmann (2022)
+  <https://arxiv.org/abs/2208.04716>`_. See configuration section ``lines:
+  dynamic_line_rating:`` for more details. (https://github.com/PyPSA/pypsa-eur/pull/675)
+
+* Add option to include a piecewise linear approximation of transmission losses,
+  e.g. by setting ``solving: options: transmission_losses: 2`` for an
+  approximation with two tangents. (https://github.com/PyPSA/pypsa-eur/pull/664)
 
 * Add plain hydrogen turbine as additional re-electrification option besides
   hydrogen fuel cell. Add switches for both re-electrification options under
   ``sector: hydrogen_turbine:`` and ``sector: hydrogen_fuel_cell:``.
+  (https://github.com/PyPSA/pypsa-eur/pull/647)
 
-* Remove ``vresutils`` dependency.
+* Added configuration option ``lines: max_extension:`` and ``links:
+  max_extension:``` to control the maximum capacity addition per line or link in
+  MW. (https://github.com/PyPSA/pypsa-eur/pull/665)
 
-* Add option to include a piecewise linear approximation of transmission losses,
-  e.g. by setting ``solving: options: transmission_losses: 2`` for an
-  approximation with two tangents.
+* A ``param:`` section in the snakemake rule definitions was added to track
+  changed settings in ``config.yaml``. The goal is to automatically re-execute
+  rules where parameters have changed. See `Non-file parameters for rules
+  <https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#non-file-parameters-for-rules>`_
+  in the snakemake documentation. (https://github.com/PyPSA/pypsa-eur/pull/663)
+
+* A new function named ``sanitize_carrier`` ensures that all unique carrier
+  names are present in the network's carriers attribute, and adds nice names and
+  colors for each carrier according to the provided configuration dictionary.
+  (https://github.com/PyPSA/pypsa-eur/pull/653,
+  https://github.com/PyPSA/pypsa-eur/pull/690)
+
+* The configuration settings have been documented in more detail.
+  (https://github.com/PyPSA/pypsa-eur/pull/685)
+
+**Breaking Changes**
+
+* The configuration files are now located in the ``config`` directory. This
+  includes the ``config.default.yaml``, ``config.yaml`` as well as the test
+  configuration files which are now located in the ``config/test`` directory.
+  Config files that are still in the root directory will be ignored.
+  (https://github.com/PyPSA/pypsa-eur/pull/640)
+
+* Renamed script and rule name from ``build_load_data`` to
+  ``build_electricity_demand`` and ``retrieve_load_data`` to
+  ``retrieve_electricity_demand``. (https://github.com/PyPSA/pypsa-eur/pull/642,
+  https://github.com/PyPSA/pypsa-eur/pull/652)
+
+* Updated to new spatial clustering module introduced in PyPSA v0.25.
+  (https://github.com/PyPSA/pypsa-eur/pull/696)
+
+**Changes**
+
+* Handling networks with links with multiple inputs/outputs no longer requires
+  to override component attributes.
+  (https://github.com/PyPSA/pypsa-eur/pull/695)
+
+* Added configuration option ``enable: retrieve:`` to control whether data
+  retrieval rules from snakemake are enabled or not. Th default setting ``auto``
+  will automatically detect and enable/disable the rules based on internet
+  connectivity. (https://github.com/PyPSA/pypsa-eur/pull/694)
+
+* Update to ``technology-data`` v0.6.0.
+  (https://github.com/PyPSA/pypsa-eur/pull/704)
+
+* Handle data bundle extraction paths via ``snakemake.output``.
+
+* Additional technologies are added to ``tech_color`` in the configuration files
+  to include previously unlisted carriers.
+
+* Doc: Added note that Windows is only tested in CI with WSL.
+  (https://github.com/PyPSA/pypsa-eur/issues/697)
+
+* Doc: Add support section. (https://github.com/PyPSA/pypsa-eur/pull/656)
+
+* Open ``rasterio`` files with ``rioxarray``.
+  (https://github.com/PyPSA/pypsa-eur/pull/474)
+
+* Migrate CI to ``micromamba``. (https://github.com/PyPSA/pypsa-eur/pull/700)
+
+**Bugs and Compatibility**
+
+* The new minimum PyPSA version is v0.25.1.
+
+* Removed ``vresutils`` dependency.
+  (https://github.com/PyPSA/pypsa-eur/pull/662)
+
+* Adapt to new ``powerplantmatching`` version.
+  (https://github.com/PyPSA/pypsa-eur/pull/687,
+  https://github.com/PyPSA/pypsa-eur/pull/701)
+
+* Bugfix: Correct typo in the CPLEX solver configuration in
+  ``config.default.yaml``. (https://github.com/PyPSA/pypsa-eur/pull/630)
+
+* Bugfix: Error in ``add_electricity`` where carriers were added multiple times
+  to the network, resulting in a non-unique carriers error.
+
+* Bugfix of optional reserve constraint.
+  (https://github.com/PyPSA/pypsa-eur/pull/645)
+
+* Fix broken equity constraints logic.
+  (https://github.com/PyPSA/pypsa-eur/pull/679)
+
+* Fix addition of load shedding generators.
+  (https://github.com/PyPSA/pypsa-eur/pull/649)
+
+* Fix automatic building of documentation on readthedocs.org.
+  (https://github.com/PyPSA/pypsa-eur/pull/658)
+
+* Bugfix: Update network clustering to avoid adding deleted links in clustered
+  network. (https://github.com/PyPSA/pypsa-eur/pull/678)
+
+* Address ``geopandas`` deprecations.
+  (https://github.com/PyPSA/pypsa-eur/pull/678)
+
+* Fix bug with underground hydrogen storage creation, where for some small model
+  regions no cavern storage is available.
+  (https://github.com/PyPSA/pypsa-eur/pull/672)
+
 
 PyPSA-Eur 0.8.0 (18th March 2023)
 =================================

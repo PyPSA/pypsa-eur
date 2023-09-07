@@ -305,7 +305,7 @@ def prepare_building_stock_data():
     u_values.set_index(["country_code", "subsector", "bage", "type"], inplace=True)
 
     #  only take in config.yaml specified countries into account
-    countries = snakemake.config["countries"]
+    countries = snakemake.params.countries
     area_tot = area_tot.loc[countries]
 
     return u_values, country_iso_dic, countries, area_tot, area
@@ -1040,7 +1040,7 @@ if __name__ == "__main__":
 
     #  ********  config  *********************************************************
 
-    retro_opts = snakemake.config["sector"]["retrofitting"]
+    retro_opts = snakemake.params.retrofitting
     interest_rate = retro_opts["interest_rate"]
     annualise_cost = retro_opts["annualise_cost"]  # annualise the investment costs
     tax_weighting = retro_opts[

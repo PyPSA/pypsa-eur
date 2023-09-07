@@ -65,6 +65,7 @@ import pandas as pd
 import pypsa
 from _helpers import configure_logging
 from add_electricity import load_costs, update_transmission_costs
+from pypsa.descriptors import expand_series
 
 idx = pd.IndexSlice
 
@@ -103,8 +104,28 @@ def add_emission_prices(n, emission_prices={"co2": 0.0}, exclude_co2=False):
     ).sum(axis=1)
     gen_ep = n.generators.carrier.map(ep) / n.generators.efficiency
     n.generators["marginal_cost"] += gen_ep
+    n.generators_t["marginal_cost"] += gen_ep[n.generators_t["marginal_cost"].columns]
     su_ep = n.storage_units.carrier.map(ep) / n.storage_units.efficiency_dispatch
     n.storage_units["marginal_cost"] += su_ep
+
+
+def add_dynamic_emission_prices(n):
+    co2_price = pd.read_csv(snakemake.input.co2_price, index_col=0, parse_dates=True)
+    co2_price = co2_price[~co2_price.index.duplicated()]
+    co2_price = (
+        co2_price.reindex(n.snapshots).fillna(method="ffill").fillna(method="bfill")
+    )
+
+    emissions = (
+        n.generators.carrier.map(n.carriers.co2_emissions) / n.generators.efficiency
+    )
+    co2_cost = expand_series(emissions, n.snapshots).T.mul(co2_price.iloc[:, 0], axis=0)
+
+    static = n.generators.marginal_cost
+    dynamic = n.get_switchable_as_dense("Generator", "marginal_cost")
+
+    marginal_cost = dynamic + co2_cost.reindex(columns=dynamic.columns, fill_value=0)
+    n.generators_t.marginal_cost = marginal_cost.loc[:, marginal_cost.ne(static).any()]
 
 
 def set_line_s_max_pu(n, s_max_pu=0.7):
@@ -233,17 +254,33 @@ def enforce_autarky(n, only_crossborder=False):
     n.mremove("Link", links_rm)
 
 
-def set_line_nom_max(n, s_nom_max_set=np.inf, p_nom_max_set=np.inf):
+def set_line_nom_max(
+    n,
+    s_nom_max_set=np.inf,
+    p_nom_max_set=np.inf,
+    s_nom_max_ext=np.inf,
+    p_nom_max_ext=np.inf,
+):
+    if np.isfinite(s_nom_max_ext) and s_nom_max_ext > 0:
+        logger.info(f"Limiting line extensions to {s_nom_max_ext} MW")
+        n.lines["s_nom_max"] = n.lines["s_nom"] + s_nom_max_ext
+
+    if np.isfinite(p_nom_max_ext) and p_nom_max_ext > 0:
+        logger.info(f"Limiting line extensions to {p_nom_max_ext} MW")
+        hvdc = n.links.index[n.links.carrier == "DC"]
+        n.links.loc[hvdc, "p_nom_max"] = n.links.loc[hvdc, "p_nom"] + p_nom_max_ext
+
     n.lines.s_nom_max.clip(upper=s_nom_max_set, inplace=True)
     n.links.p_nom_max.clip(upper=p_nom_max_set, inplace=True)
 
 
+# %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "prepare_network", simpl="", clusters="40", ll="v0.3", opts="Co2L-24H"
+            "prepare_network", simpl="", clusters="37", ll="v1.0", opts="Ept"
         )
     configure_logging(snakemake)
 
@@ -253,12 +290,12 @@ if __name__ == "__main__":
     Nyears = n.snapshot_weightings.objective.sum() / 8760.0
     costs = load_costs(
         snakemake.input.tech_costs,
-        snakemake.config["costs"],
-        snakemake.config["electricity"],
+        snakemake.params.costs,
+        snakemake.params.max_hours,
         Nyears,
     )
 
-    set_line_s_max_pu(n, snakemake.config["lines"]["s_max_pu"])
+    set_line_s_max_pu(n, snakemake.params.lines["s_max_pu"])
 
     for o in opts:
         m = re.match(r"^\d+h$", o, re.IGNORECASE)
@@ -277,11 +314,11 @@ if __name__ == "__main__":
         if "Co2L" in o:
             m = re.findall("[0-9]*\.?[0-9]+$", o)
             if len(m) > 0:
-                co2limit = float(m[0]) * snakemake.config["electricity"]["co2base"]
+                co2limit = float(m[0]) * snakemake.params.co2base
                 add_co2limit(n, co2limit, Nyears)
                 logger.info("Setting CO2 limit according to wildcard value.")
             else:
-                add_co2limit(n, snakemake.config["electricity"]["co2limit"], Nyears)
+                add_co2limit(n, snakemake.params.co2limit, Nyears)
                 logger.info("Setting CO2 limit according to config value.")
             break
 
@@ -293,11 +330,13 @@ if __name__ == "__main__":
                 add_gaslimit(n, limit, Nyears)
                 logger.info("Setting gas usage limit according to wildcard value.")
             else:
-                add_gaslimit(n, snakemake.config["electricity"].get("gaslimit"), Nyears)
+                add_gaslimit(n, snakemake.params.gaslimit, Nyears)
                 logger.info("Setting gas usage limit according to config value.")
             break
 
     for o in opts:
+        if "+" not in o:
+            continue
         oo = o.split("+")
         suptechs = map(lambda c: c.split("-", 2)[0], n.carriers.index)
         if oo[0].startswith(tuple(suptechs)):
@@ -315,14 +354,19 @@ if __name__ == "__main__":
                     c.df.loc[sel, attr] *= factor
 
     for o in opts:
-        if "Ep" in o:
+        if "Ept" in o:
+            logger.info(
+                "Setting time dependent emission prices according spot market price"
+            )
+            add_dynamic_emission_prices(n)
+        elif "Ep" in o:
             m = re.findall("[0-9]*\.?[0-9]+$", o)
             if len(m) > 0:
                 logger.info("Setting emission prices according to wildcard value.")
                 add_emission_prices(n, dict(co2=float(m[0])))
             else:
                 logger.info("Setting emission prices according to config value.")
-                add_emission_prices(n, snakemake.config["costs"]["emission_prices"])
+                add_emission_prices(n, snakemake.params.costs["emission_prices"])
             break
 
     ll_type, factor = snakemake.wildcards.ll[0], snakemake.wildcards.ll[1:]
@@ -330,8 +374,10 @@ if __name__ == "__main__":
 
     set_line_nom_max(
         n,
-        s_nom_max_set=snakemake.config["lines"].get("s_nom_max,", np.inf),
-        p_nom_max_set=snakemake.config["links"].get("p_nom_max,", np.inf),
+        s_nom_max_set=snakemake.params.lines.get("s_nom_max", np.inf),
+        p_nom_max_set=snakemake.params.links.get("p_nom_max", np.inf),
+        s_nom_max_ext=snakemake.params.lines.get("max_extension", np.inf),
+        p_nom_max_ext=snakemake.params.links.get("max_extension", np.inf),
     )
 
     if "ATK" in opts:

@@ -86,7 +86,7 @@ if config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]:
     rule build_gas_input_locations:
         input:
             lng=HTTP.remote(
-                "https://globalenergymonitor.org/wp-content/uploads/2022/09/Europe-Gas-Tracker-August-2022.xlsx",
+                "https://globalenergymonitor.org/wp-content/uploads/2023/07/Europe-Gas-Tracker-2023-03-v3.xlsx",
                 keep_local=True,
             ),
             entry="data/gas_network/scigrid-gas/data/IGGIELGN_BorderPoints.geojson",
@@ -140,6 +140,8 @@ if not (config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]):
 
 
 rule build_heat_demands:
+    params:
+        snapshots=config["snapshots"],
     input:
         pop_layout=RESOURCES + "pop_layout_{scope}.nc",
         regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
@@ -160,6 +162,8 @@ rule build_heat_demands:
 
 
 rule build_temperature_profiles:
+    params:
+        snapshots=config["snapshots"],
     input:
         pop_layout=RESOURCES + "pop_layout_{scope}.nc",
         regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
@@ -181,6 +185,8 @@ rule build_temperature_profiles:
 
 
 rule build_cop_profiles:
+    params:
+        heat_pump_sink_T=config["sector"]["heat_pump_sink_T"],
     input:
         temp_soil_total=RESOURCES + "temp_soil_total_elec_s{simpl}_{clusters}.nc",
         temp_soil_rural=RESOURCES + "temp_soil_rural_elec_s{simpl}_{clusters}.nc",
@@ -208,6 +214,9 @@ rule build_cop_profiles:
 
 
 rule build_solar_thermal_profiles:
+    params:
+        snapshots=config["snapshots"],
+        solar_thermal=config["solar_thermal"],
     input:
         pop_layout=RESOURCES + "pop_layout_{scope}.nc",
         regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
@@ -228,11 +237,14 @@ rule build_solar_thermal_profiles:
 
 
 rule build_energy_totals:
+    params:
+        countries=config["countries"],
+        energy=config["energy"],
     input:
         nuts3_shapes=RESOURCES + "nuts3_shapes.geojson",
-        co2="data/eea/UNFCCC_v23.csv",
-        swiss="data/switzerland-sfoe/switzerland-new_format.csv",
-        idees="data/jrc-idees-2015",
+        co2="data/bundle-sector/eea/UNFCCC_v23.csv",
+        swiss="data/bundle-sector/switzerland-sfoe/switzerland-new_format.csv",
+        idees="data/bundle-sector/jrc-idees-2015",
         district_heat_share="data/district_heat_share.csv",
         eurostat=input_eurostat,
     output:
@@ -253,12 +265,14 @@ rule build_energy_totals:
 
 
 rule build_biomass_potentials:
+    params:
+        biomass=config["biomass"],
     input:
         enspreso_biomass=HTTP.remote(
             "https://cidportal.jrc.ec.europa.eu/ftp/jrc-opendata/ENSPRESO/ENSPRESO_BIOMASS.xlsx",
             keep_local=True,
         ),
-        nuts2="data/nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson",  # https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/#nuts21
+        nuts2="data/bundle-sector/nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson",  # https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/#nuts21
         regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
         nuts3_population=ancient("data/bundle/nama_10r_3popgdp.tsv.gz"),
         swiss_cantons=ancient("data/bundle/ch_cantons.csv"),
@@ -281,7 +295,7 @@ rule build_biomass_potentials:
         "../scripts/build_biomass_potentials.py"
 
 
-if config["sector"]["biomass_transport"]:
+if config["sector"]["biomass_transport"] or config["sector"]["biomass_spatial"]:
 
     rule build_biomass_transport_costs:
         input:
@@ -306,15 +320,18 @@ if config["sector"]["biomass_transport"]:
     build_biomass_transport_costs_output = rules.build_biomass_transport_costs.output
 
 
-if not config["sector"]["biomass_transport"]:
+if not (config["sector"]["biomass_transport"] or config["sector"]["biomass_spatial"]):
     # this is effecively an `else` statement which is however not liked by snakefmt
-
     build_biomass_transport_costs_output = {}
 
 
 if config["sector"]["regional_co2_sequestration_potential"]["enable"]:
 
     rule build_sequestration_potentials:
+        params:
+            sequestration_potential=config["sector"][
+                "regional_co2_sequestration_potential"
+            ],
         input:
             sequestration_potential=HTTP.remote(
                 "https://raw.githubusercontent.com/ericzhou571/Co2Storage/main/resources/complete_map_2020_unit_Mt.geojson",
@@ -349,7 +366,7 @@ if not config["sector"]["regional_co2_sequestration_potential"]["enable"]:
 
 rule build_salt_cavern_potentials:
     input:
-        salt_caverns="data/h2_salt_caverns_GWh_per_sqkm.geojson",
+        salt_caverns="data/bundle-sector/h2_salt_caverns_GWh_per_sqkm.geojson",
         regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
         regions_offshore=RESOURCES + "regions_offshore_elec_s{simpl}_{clusters}.geojson",
     output:
@@ -368,8 +385,10 @@ rule build_salt_cavern_potentials:
 
 
 rule build_ammonia_production:
+    params:
+        countries=config["countries"],
     input:
-        usgs="data/myb1-2017-nitro.xls",
+        usgs="data/bundle-sector/myb1-2017-nitro.xls",
     output:
         ammonia_production=RESOURCES + "ammonia_production.csv",
     threads: 1
@@ -386,9 +405,12 @@ rule build_ammonia_production:
 
 
 rule build_industry_sector_ratios:
+    params:
+        industry=config["industry"],
+        ammonia=config["sector"].get("ammonia", False),
     input:
         ammonia_production=RESOURCES + "ammonia_production.csv",
-        idees="data/jrc-idees-2015",
+        idees="data/bundle-sector/jrc-idees-2015",
     output:
         industry_sector_ratios=RESOURCES + "industry_sector_ratios.csv",
     threads: 1
@@ -405,10 +427,13 @@ rule build_industry_sector_ratios:
 
 
 rule build_industrial_production_per_country:
+    params:
+        industry=config["industry"],
+        countries=config["countries"],
     input:
         ammonia_production=RESOURCES + "ammonia_production.csv",
-        jrc="data/jrc-idees-2015",
-        eurostat="data/eurostat-energy_balances-may_2018_edition",
+        jrc="data/bundle-sector/jrc-idees-2015",
+        eurostat="data/bundle-sector/eurostat-energy_balances-may_2018_edition",
     output:
         industrial_production_per_country=RESOURCES
         + "industrial_production_per_country.csv",
@@ -426,6 +451,8 @@ rule build_industrial_production_per_country:
 
 
 rule build_industrial_production_per_country_tomorrow:
+    params:
+        industry=config["industry"],
     input:
         industrial_production_per_country=RESOURCES
         + "industrial_production_per_country.csv",
@@ -450,10 +477,13 @@ rule build_industrial_production_per_country_tomorrow:
 
 
 rule build_industrial_distribution_key:
+    params:
+        hotmaps_locate_missing=config["industry"].get("hotmaps_locate_missing", False),
+        countries=config["countries"],
     input:
         regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
         clustered_pop_layout=RESOURCES + "pop_layout_elec_s{simpl}_{clusters}.csv",
-        hotmaps_industrial_database="data/Industrial_Database.csv",
+        hotmaps_industrial_database="data/bundle-sector/Industrial_Database.csv",
     output:
         industrial_distribution_key=RESOURCES
         + "industrial_distribution_key_elec_s{simpl}_{clusters}.csv",
@@ -524,8 +554,11 @@ rule build_industrial_energy_demand_per_node:
 
 
 rule build_industrial_energy_demand_per_country_today:
+    params:
+        countries=config["countries"],
+        industry=config["industry"],
     input:
-        jrc="data/jrc-idees-2015",
+        jrc="data/bundle-sector/jrc-idees-2015",
         ammonia_production=RESOURCES + "ammonia_production.csv",
         industrial_production_per_country=RESOURCES
         + "industrial_production_per_country.csv",
@@ -570,6 +603,9 @@ rule build_industrial_energy_demand_per_node_today:
 if config["sector"]["retrofitting"]["retro_endogen"]:
 
     rule build_retro_cost:
+        params:
+            retrofitting=config["sector"]["retrofitting"],
+            countries=config["countries"],
         input:
             building_stock="data/retro/data_building_stock.csv",
             data_tabula="data/retro/tabula-calculator-calcsetbuilding.csv",
@@ -640,13 +676,16 @@ rule build_shipping_demand:
 
 
 rule build_transport_demand:
+    params:
+        snapshots=config["snapshots"],
+        sector=config["sector"],
     input:
         clustered_pop_layout=RESOURCES + "pop_layout_elec_s{simpl}_{clusters}.csv",
         pop_weighted_energy_totals=RESOURCES
         + "pop_weighted_energy_totals_s{simpl}_{clusters}.csv",
         transport_data=RESOURCES + "transport_data.csv",
-        traffic_data_KFZ="data/emobility/KFZ__count",
-        traffic_data_Pkw="data/emobility/Pkw__count",
+        traffic_data_KFZ="data/bundle-sector/emobility/KFZ__count",
+        traffic_data_Pkw="data/bundle-sector/emobility/Pkw__count",
         temp_air_total=RESOURCES + "temp_air_total_elec_s{simpl}_{clusters}.nc",
     output:
         transport_demand=RESOURCES + "transport_demand_s{simpl}_{clusters}.csv",
@@ -666,13 +705,24 @@ rule build_transport_demand:
 
 rule prepare_sector_network:
     params:
+        co2_budget=config["co2_budget"],
+        conventional_carriers=config["existing_capacities"]["conventional_carriers"],
+        foresight=config["foresight"],
+        costs=config["costs"],
+        sector=config["sector"],
+        industry=config["industry"],
+        pypsa_eur=config["pypsa_eur"],
+        length_factor=config["lines"]["length_factor"],
+        planning_horizons=config["scenario"]["planning_horizons"],
+        countries=config["countries"],
+        emissions_scope=config["energy"]["emissions"],
+        eurostat_report_year=config["energy"]["eurostat_report_year"],
         RDIR=RDIR,
     input:
         **build_retro_cost_output,
         **build_biomass_transport_costs_output,
         **gas_infrastructure,
         **build_sequestration_potentials_output,
-        overrides="data/override_component_attrs",
         network=RESOURCES + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
         energy_totals_name=RESOURCES + "energy_totals.csv",
         eurostat=input_eurostat,
@@ -684,7 +734,7 @@ rule prepare_sector_network:
         avail_profile=RESOURCES + "avail_profile_s{simpl}_{clusters}.csv",
         dsm_profile=RESOURCES + "dsm_profile_s{simpl}_{clusters}.csv",
         co2_totals_name=RESOURCES + "co2_totals.csv",
-        co2="data/eea/UNFCCC_v23.csv",
+        co2="data/bundle-sector/eea/UNFCCC_v23.csv",
         biomass_potentials=RESOURCES + "biomass_potentials_s{simpl}_{clusters}.csv",
         heat_profile="data/heat_load_profile_BDEW.csv",
         costs="data/costs_{}.csv".format(config["costs"]["year"])
