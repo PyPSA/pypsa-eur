@@ -18,6 +18,17 @@ Upcoming Release
 
 * For industry distribution, use EPRTR as fallback if ETS data is not available.
 
+* The minimum capacity for renewable generators when using the myopic option has been fixed.
+
+* Files downloaded from zenodo are now write-protected to prevent accidental re-download.
+
+* Files extracted from sector-coupled data bundle have been moved from ``data/`` to ``data/sector-bundle``.
+
+
+**Bugs and Compatibility**
+
+* A bug preventing custom powerplants specified in ``data/custom_powerplants.csv`` was fixed. (https://github.com/PyPSA/pypsa-eur/pull/732)
+
 PyPSA-Eur 0.8.1 (27th July 2023)
 ================================
 
