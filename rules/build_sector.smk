@@ -718,7 +718,7 @@ rule prepare_sector_network:
         countries=config["countries"],
         emissions_scope=config["energy"]["emissions"],
         eurostat_report_year=config["energy"]["eurostat_report_year"],
-        snapshot_opts=config.get("snapshot_opts",{}),
+        snapshot_opts=config.get("snapshot_opts", {}),
         RDIR=RDIR,
     input:
         **build_retro_cost_output,

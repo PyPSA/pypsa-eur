@@ -479,8 +479,8 @@ rule prepare_network:
         gaslimit=config["electricity"].get("gaslimit"),
         max_hours=config["electricity"]["max_hours"],
         costs=config["costs"],
-        snapshot_opts=config.get("snapshot_opts",{}),
-        autarky=config["electricity"].get("autarky",{}),
+        snapshot_opts=config.get("snapshot_opts", {}),
+        autarky=config["electricity"].get("autarky", {}),
     input:
         RESOURCES + "networks/elec_s{simpl}_{clusters}_ec.nc",
         tech_costs=COSTS,
