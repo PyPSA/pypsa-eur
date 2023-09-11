@@ -63,7 +63,7 @@ import re
 import numpy as np
 import pandas as pd
 import pypsa
-from _helpers import configure_logging
+from _helpers import configure_logging, get_opt
 from add_electricity import load_costs, update_transmission_costs
 from pypsa.descriptors import expand_series
 
@@ -71,6 +71,18 @@ idx = pd.IndexSlice
 
 logger = logging.getLogger(__name__)
 
+def find_opt(opts, expr):
+    """
+    Return if available the float after the expression.
+    """
+    for o in opts:
+        if expr in o:
+            m = re.findall("[0-9]*\.?[0-9]+$", o)
+            if len(m) > 0:
+                return True, float(m[0])
+            else:
+                return True, None
+    return False, None
 
 def add_co2limit(n, co2limit, Nyears=1.0):
     n.add(
@@ -296,43 +308,47 @@ if __name__ == "__main__":
     )
 
     set_line_s_max_pu(n, snakemake.params.lines["s_max_pu"])
+    
+    # temporal averaging
+    nhours_opts_config = snakemake.params.snapshot_opts.get("average_every_nhours",{})
+    nhours_enable_config = nhours_opts_config.get("enable",None)
+    nhours_config = str(nhours_opts_config.get("hour",None)) + "h"
+    nhours_wildcard = get_opt(opts, r"^\d+h$")
+    if nhours_wildcard is not None or (nhours_enable_config and nhours_config is not None):
+        nhours = nhours_wildcard or nhours_config
+        n = average_every_nhours(n, nhours)
 
-    for o in opts:
-        m = re.match(r"^\d+h$", o, re.IGNORECASE)
-        if m is not None:
-            n = average_every_nhours(n, m.group(0))
-            break
+    # segments with package tsam
+    time_seg_opts_config = snakemake.params.snapshot_opts.get("time_segmentation",{})
+    time_seg_enable_config = nhours_opts_config.get("enable",None)
+    time_seg_config = str(nhours_opts_config.get("hour",None)) + "seg"
+    time_seg_wildcard = get_opt(opts, r"^\d+seg$")
+    if time_seg_wildcard is not None or (time_seg_enable_config and time_seg_config is not None):
+        time_seg = time_seg_wildcard or time_seg_config
+        solver_name = snakemake.config["solving"]["solver"]["name"]
+        n = apply_time_segmentation(n, time_seg, solver_name)
 
-    for o in opts:
-        m = re.match(r"^\d+seg$", o, re.IGNORECASE)
-        if m is not None:
-            solver_name = snakemake.config["solving"]["solver"]["name"]
-            n = apply_time_segmentation(n, m.group(0)[:-3], solver_name)
-            break
+    Co2L_config = snakemake.params.co2limit_enable and isinstance(snakemake.params.co2limit,float)
+    Co2L_wildcard, co2limit_wildcard = find_opt(opts, "Co2L")
+    if Co2L_wildcard or Co2L_config:
+        if co2limit_wildcard is not None: # TODO: what if you wat to determine the factor through the wildcard?
+            co2limit = co2limit_wildcard * snakemake.params.co2base
+            add_co2limit(n, co2limit, Nyears)
+            logger.info("Setting CO2 limit according to wildcard value.")
+        else: 
+            add_co2limit(n, snakemake.params.co2limit, Nyears)
+            logger.info("Setting CO2 limit according to config value.")
 
-    for o in opts:
-        if "Co2L" in o:
-            m = re.findall("[0-9]*\.?[0-9]+$", o)
-            if len(m) > 0:
-                co2limit = float(m[0]) * snakemake.params.co2base
-                add_co2limit(n, co2limit, Nyears)
-                logger.info("Setting CO2 limit according to wildcard value.")
-            else:
-                add_co2limit(n, snakemake.params.co2limit, Nyears)
-                logger.info("Setting CO2 limit according to config value.")
-            break
-
-    for o in opts:
-        if "CH4L" in o:
-            m = re.findall("[0-9]*\.?[0-9]+$", o)
-            if len(m) > 0:
-                limit = float(m[0]) * 1e6
-                add_gaslimit(n, limit, Nyears)
-                logger.info("Setting gas usage limit according to wildcard value.")
-            else:
-                add_gaslimit(n, snakemake.params.gaslimit, Nyears)
-                logger.info("Setting gas usage limit according to config value.")
-            break
+    CH4L_config = snakemake.params.gaslimit_enable and isinstance(snakemake.params.gaslimit,float)
+    CH4L_wildcard, gaslimit_wildcard = find_opt(opts, "CH4L")
+    if CH4L_wildcard or CH4L_config:
+        if gaslimit_wildcard is not None: # TODO: what if you wat to determine the factor through the wildcard?
+            gaslimit = gaslimit_wildcard * 1e6
+            add_gaslimit(n, gaslimit, Nyears)
+            logger.info("Setting gas usage limit according to wildcard value.")
+        else: 
+            add_gaslimit(n, snakemake.params.gaslimit, Nyears)
+            logger.info("Setting gas usage limit according to config value.")
 
     for o in opts:
         if "+" not in o:
@@ -353,21 +369,24 @@ if __name__ == "__main__":
                     sel = c.df.carrier.str.contains(carrier)
                     c.df.loc[sel, attr] *= factor
 
+    Ept_config = snakemake.params.costs.get("enable",{}).get("monthly_prices", False)
     for o in opts:
-        if "Ept" in o:
+        if "Ept" in o or Ept_config:
             logger.info(
                 "Setting time dependent emission prices according spot market price"
             )
             add_dynamic_emission_prices(n)
-        elif "Ep" in o:
-            m = re.findall("[0-9]*\.?[0-9]+$", o)
-            if len(m) > 0:
-                logger.info("Setting emission prices according to wildcard value.")
-                add_emission_prices(n, dict(co2=float(m[0])))
-            else:
-                logger.info("Setting emission prices according to config value.")
-                add_emission_prices(n, snakemake.params.costs["emission_prices"])
-            break
+            Ept_config = True
+
+    Ep_config = snakemake.params.costs.get("enable",{}).get("emission_prices", False)
+    Ep_wildcard, co2_wildcard = find_opt(opts, "Ep")
+    if (Ep_wildcard or Ep_config) and not Ept_config:
+        if co2_wildcard is not None:
+            logger.info("Setting emission prices according to wildcard value.")
+            add_emission_prices(n, dict(co2=co2_wildcard))
+        else: 
+            logger.info("Setting emission prices according to config value.")
+            add_emission_prices(n, snakemake.params.costs["emission_prices"])
 
     ll_type, factor = snakemake.wildcards.ll[0], snakemake.wildcards.ll[1:]
     set_transmission_limit(n, ll_type, factor, costs, Nyears)
@@ -380,10 +399,12 @@ if __name__ == "__main__":
         p_nom_max_ext=snakemake.params.links.get("max_extension", np.inf),
     )
 
-    if "ATK" in opts:
-        enforce_autarky(n)
-    elif "ATKc" in opts:
-        enforce_autarky(n, only_crossborder=True)
+    autarky_config = snakemake.params.autarky
+    if "ATK" in opts or autarky_config.get("enable", False):
+        only_crossborder = False
+        if "ATKc" in opts or autarky_config.get("by_country", False):
+            only_crossborder = True
+        enforce_autarky(n, only_crossborder=only_crossborder)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     n.export_to_netcdf(snakemake.output[0])

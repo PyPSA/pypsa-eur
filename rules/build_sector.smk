@@ -705,6 +705,7 @@ rule build_transport_demand:
 
 rule prepare_sector_network:
     params:
+        enable_sector=config.get("enable_sector", {}),
         co2_budget=config["co2_budget"],
         conventional_carriers=config["existing_capacities"]["conventional_carriers"],
         foresight=config["foresight"],
@@ -717,6 +718,7 @@ rule prepare_sector_network:
         countries=config["countries"],
         emissions_scope=config["energy"]["emissions"],
         eurostat_report_year=config["energy"]["eurostat_report_year"],
+        snapshot_opts=config.get("snapshot_opts",{}),
         RDIR=RDIR,
     input:
         **build_retro_cost_output,
