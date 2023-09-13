@@ -725,6 +725,9 @@ def add_methanol_to_power(n, costs, types={}):
 
         # TODO consider efficiency changes / energy inputs for CC
 
+        # efficiency * EUR/MW * (annuity + FOM)
+        capital_cost = 0.58 * 916e3 * (calculate_annuity(25, 0.07) + 0.035)
+
         capital_cost_cc = (
             capital_cost
             + costs.at["cement capture", "fixed"]
