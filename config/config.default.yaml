@@ -521,7 +521,9 @@ sector:
   conventional_generation:
     OCGT: gas
   biomass_to_liquid: false
+  biomass_to_liquid_cc: false
   biomass_to_methanol: false
+  biomass_to_methanol_cc: false
   biosng: false
   biomass_upgrading_cc: false
   electrobiofuels: false
@@ -943,6 +945,7 @@ plotting:
     rural biomass boiler: '#a1a066'
     urban decentral biomass boiler: '#b0b87b'
     biomass to liquid: '#32CD32'
+    biomass to liquid CC: '#32CDaa'
     BioSNG: '#123456'
     # power transmission
     lines: '#6c9459'

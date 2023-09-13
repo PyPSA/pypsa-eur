@@ -2584,7 +2584,7 @@ def add_biomass(n, costs):
             marginal_cost=costs.loc["BtL", "VOM"] / costs.at["BtL", "efficiency"],
         )
 
-        # TODO: Update with energy penalty
+    if options.get("biomass_to_liquid_cc"):
         n.madd(
             "Link",
             spatial.biomass.nodes,
@@ -2593,7 +2593,7 @@ def add_biomass(n, costs):
             bus1=spatial.oil.nodes,
             bus2="co2 atmosphere",
             bus3=spatial.co2.nodes,
-            carrier="biomass to liquid",
+            carrier="biomass to liquid CC",
             lifetime=costs.at["BtL", "lifetime"],
             efficiency=costs.at["BtL", "efficiency"],
             efficiency2=-costs.at["solid biomass", "CO2 intensity"]
@@ -2629,6 +2629,7 @@ def add_biomass(n, costs):
             / costs.at["biomass-to-methanol", "efficiency"],
         )
 
+    if options.get("biomass_to_methanol_cc"):
         n.madd(
             "Link",
             spatial.biomass.nodes,
