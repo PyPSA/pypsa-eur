@@ -2387,15 +2387,15 @@ def add_biomass(n, costs):
         bus1=spatial.gas.nodes,
         bus2="co2 atmosphere",
         carrier="biogas to gas",
-        capital_cost=costs.at["biogas", "fixed"] + costs.at["biogas upgrading", "fixed"],
+        capital_cost=costs.at["biogas", "fixed"]
+        + costs.at["biogas upgrading", "fixed"],
         marginal_cost=costs.at["biogas upgrading", "VOM"],
-        efficiency=1.,
+        efficiency=1.0,
         efficiency2=-costs.at["gas", "CO2 intensity"],
         p_nom_extendable=True,
     )
 
-    if options["biomass_upgrading_cc"]:
-
+    if options.get("biomass_upgrading_cc"):
         # Assuming for costs that the CO2 from upgrading is pure, such as in amine scrubbing. I.e., with and without CC is
         # equivalent. Adding biomass CHP capture because biogas is often small-scale and decentral so further
         # from e.g. CO2 grid or buyers. This is a proxy for the added cost for e.g. a raw biogas pipeline to a central upgrading facility
@@ -2408,16 +2408,24 @@ def add_biomass(n, costs):
             bus2="co2 stored",
             bus3="co2 atmosphere",
             carrier="biogas to gas CC",
-            capital_cost=costs.at["biogas CC", "fixed"] + costs.at["biogas upgrading", "fixed"] + costs.at["biomass CHP capture", "fixed"] * costs.at["biogas CC", "CO2 stored"],
-            marginal_cost=costs.at["biogas CC", "VOM"] + costs.at["biogas upgrading", "VOM"],
-            efficiency=1.,
-            efficiency2=costs.at["biogas CC", "CO2 stored"] * costs.at["biogas CC", "capture rate"],
-            efficiency3=-costs.at["gas", "CO2 intensity"] - costs.at["biogas CC", "CO2 stored"] * costs.at["biogas CC", "capture rate"],
+            capital_cost=costs.at["biogas CC", "fixed"]
+            + costs.at["biogas upgrading", "fixed"]
+            + costs.at["biomass CHP capture", "fixed"]
+            * costs.at["biogas CC", "CO2 stored"],
+            marginal_cost=costs.at["biogas CC", "VOM"]
+            + costs.at["biogas upgrading", "VOM"],
+            efficiency=1.0,
+            efficiency2=costs.at["biogas CC", "CO2 stored"]
+            * costs.at["biogas CC", "capture rate"],
+            efficiency3=-costs.at["gas", "CO2 intensity"]
+            - costs.at["biogas CC", "CO2 stored"]
+            * costs.at["biogas CC", "capture rate"],
             p_nom_extendable=True,
         )
 
-    if options['electrobiofuels']:
-        n.madd("Link",
+    if options.get("electrobiofuels"):
+        n.madd(
+            "Link",
             spatial.nodes,
             suffix=" electrobiofuels",
             bus0=spatial.biomass.nodes,
@@ -2426,12 +2434,22 @@ def add_biomass(n, costs):
             bus3="co2 atmosphere",
             carrier="electrobiofuels",
             p_nom_extendable=True,
-            lifetime=costs.at['electrobiofuels', 'lifetime'],
-            efficiency=costs.at['electrobiofuels', 'efficiency-biomass'],
-            efficiency2=-costs.at['electrobiofuels', 'efficiency-hydrogen'],
-            efficiency3=-costs.at['solid biomass', 'CO2 intensity'] + costs.at['BtL', 'CO2 stored'] * (1 - costs.at['Fischer-Tropsch', 'capture rate']),
-            capital_cost=costs.at['BtL', 'fixed'] * costs.at['electrobiofuels', 'efficiency-biomass'] + costs.at['BtL', 'C stored'] * costs.at['Fischer-Tropsch', 'fixed'] * costs.at['electrobiofuels', 'efficiency-hydrogen'],
-            marginal_cost=costs.at['BtL', 'VOM'] * costs.at['electrobiofuels', 'efficiency-biomass'] + costs.at['BtL', 'C stored'] * costs.at['Fischer-Tropsch', 'VOM'] * costs.at['electrobiofuels', 'efficiency-hydrogen']
+            lifetime=costs.at["electrobiofuels", "lifetime"],
+            efficiency=costs.at["electrobiofuels", "efficiency-biomass"],
+            efficiency2=-costs.at["electrobiofuels", "efficiency-hydrogen"],
+            efficiency3=-costs.at["solid biomass", "CO2 intensity"]
+            + costs.at["BtL", "CO2 stored"]
+            * (1 - costs.at["Fischer-Tropsch", "capture rate"]),
+            capital_cost=costs.at["BtL", "fixed"]
+            * costs.at["electrobiofuels", "efficiency-biomass"]
+            + costs.at["BtL", "C stored"]
+            * costs.at["Fischer-Tropsch", "fixed"]
+            * costs.at["electrobiofuels", "efficiency-hydrogen"],
+            marginal_cost=costs.at["BtL", "VOM"]
+            * costs.at["electrobiofuels", "efficiency-biomass"]
+            + costs.at["BtL", "C stored"]
+            * costs.at["Fischer-Tropsch", "VOM"]
+            * costs.at["electrobiofuels", "efficiency-hydrogen"],
         )
 
     if options["biomass_transport"]:
