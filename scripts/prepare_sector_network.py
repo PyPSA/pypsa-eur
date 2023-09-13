@@ -2430,7 +2430,7 @@ def add_biomass(n, costs):
             suffix=" electrobiofuels",
             bus0=spatial.biomass.nodes,
             bus1=spatial.oil.nodes,
-            bus3=spatial.h2.nodes,
+            bus2=spatial.h2.nodes,
             bus3="co2 atmosphere",
             carrier="electrobiofuels",
             p_nom_extendable=True,
