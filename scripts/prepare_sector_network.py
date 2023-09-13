@@ -114,6 +114,7 @@ def define_spatial(nodes, options):
         spatial.gas.biogas = ["EU biogas"]
         spatial.gas.industry = ["gas for industry"]
         spatial.gas.biogas_to_gas = ["EU biogas to gas"]
+        spatial.gas.biogas_to_gas_cc = ["EU biogas to gas CC"]
         if options.get("co2_spatial", options["co2network"]):
             spatial.gas.industry_cc = nodes + " gas for industry CC"
         else:
@@ -2386,11 +2387,34 @@ def add_biomass(n, costs):
         bus1=spatial.gas.nodes,
         bus2="co2 atmosphere",
         carrier="biogas to gas",
-        capital_cost=costs.loc["biogas upgrading", "fixed"],
-        marginal_cost=costs.loc["biogas upgrading", "VOM"],
+        capital_cost=costs.at["biogas", "fixed"] + costs.at["biogas upgrading", "fixed"],
+        marginal_cost=costs.at["biogas upgrading", "VOM"],
+        efficiency=1.,
         efficiency2=-costs.at["gas", "CO2 intensity"],
         p_nom_extendable=True,
     )
+
+    if options["biomass_upgrading_cc"]:
+
+        # Assuming for costs that the CO2 from upgrading is pure, such as in amine scrubbing. I.e., with and without CC is
+        # equivalent. Adding biomass CHP capture because biogas is often small-scale and decentral so further
+        # from e.g. CO2 grid or buyers. This is a proxy for the added cost for e.g. a raw biogas pipeline to a central upgrading facility
+
+        n.madd(
+            "Link",
+            spatial.gas.biogas_to_gas_cc,
+            bus0=spatial.gas.biogas,
+            bus1=spatial.gas.nodes,
+            bus2="co2 stored",
+            bus3="co2 atmosphere",
+            carrier="biogas to gas CC",
+            capital_cost=costs.at["biogas CC", "fixed"] + costs.at["biogas upgrading", "fixed"] + costs.at["biomass CHP capture", "fixed"] * costs.at["biogas CC", "CO2 stored"],
+            marginal_cost=costs.at["biogas CC", "VOM"] + costs.at["biogas upgrading", "VOM"],
+            efficiency=1.,
+            efficiency2=costs.at["biogas CC", "CO2 stored"] * costs.at["biogas CC", "capture rate"],
+            efficiency3=-costs.at["gas", "CO2 intensity"] - costs.at["biogas CC", "CO2 stored"] * costs.at["biogas CC", "capture rate"],
+            p_nom_extendable=True,
+        )
 
     if options["biomass_transport"]:
         # add biomass transport

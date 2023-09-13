@@ -523,6 +523,7 @@ sector:
   biomass_to_liquid: false
   biomass_to_methanol: false
   biosng: false
+  biomass_upgrading_cc: false
   endogenous_steel: false
   endogenous_hvc: false
   import:
