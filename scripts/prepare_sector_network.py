@@ -2416,6 +2416,24 @@ def add_biomass(n, costs):
             p_nom_extendable=True,
         )
 
+    if options['electrobiofuels']:
+        n.madd("Link",
+            spatial.nodes,
+            suffix=" electrobiofuels",
+            bus0=spatial.biomass.nodes,
+            bus1=spatial.oil.nodes,
+            bus3=spatial.h2.nodes,
+            bus3="co2 atmosphere",
+            carrier="electrobiofuels",
+            p_nom_extendable=True,
+            lifetime=costs.at['electrobiofuels', 'lifetime'],
+            efficiency=costs.at['electrobiofuels', 'efficiency-biomass'],
+            efficiency2=-costs.at['electrobiofuels', 'efficiency-hydrogen'],
+            efficiency3=-costs.at['solid biomass', 'CO2 intensity'] + costs.at['BtL', 'CO2 stored'] * (1 - costs.at['Fischer-Tropsch', 'capture rate']),
+            capital_cost=costs.at['BtL', 'fixed'] * costs.at['electrobiofuels', 'efficiency-biomass'] + costs.at['BtL', 'C stored'] * costs.at['Fischer-Tropsch', 'fixed'] * costs.at['electrobiofuels', 'efficiency-hydrogen'],
+            marginal_cost=costs.at['BtL', 'VOM'] * costs.at['electrobiofuels', 'efficiency-biomass'] + costs.at['BtL', 'C stored'] * costs.at['Fischer-Tropsch', 'VOM'] * costs.at['electrobiofuels', 'efficiency-hydrogen']
+        )
+
     if options["biomass_transport"]:
         # add biomass transport
         transport_costs = pd.read_csv(

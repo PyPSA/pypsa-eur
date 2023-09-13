@@ -524,6 +524,7 @@ sector:
   biomass_to_methanol: false
   biosng: false
   biomass_upgrading_cc: false
+  electrobiofuels: false
   endogenous_steel: false
   endogenous_hvc: false
   import:
@@ -883,6 +884,7 @@ plotting:
     fossil gas: '#e05b09'
     natural gas: '#e05b09'
     biogas to gas: '#e36311'
+    electrobiofuels: '#b0b87b'
     CCGT: '#a85522'
     CCGT marginal: '#a85522'
     allam gas: '#B98F76'
