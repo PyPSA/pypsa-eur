@@ -2678,7 +2678,7 @@ def add_biomass(n, costs):
     if options["biosng"]:
         n.madd(
             "Link",
-            spatial.biomass.nodes,
+            spatial.gas.locations,  # first carrier to be spatially resolved
             suffix=" solid biomass to gas",
             bus0=spatial.biomass.nodes,
             bus1=spatial.gas.nodes,
@@ -2693,16 +2693,16 @@ def add_biomass(n, costs):
             marginal_cost=costs.at["BioSNG", "efficiency"] * costs.loc["BioSNG", "VOM"],
         )
 
-        # TODO: Update with energy penalty for CC
+    if options.get("biosng_cc"):
         n.madd(
             "Link",
-            spatial.biomass.nodes,
+            spatial.gas.locations,  # first carrier to be spatially resolved
             suffix=" solid biomass to gas CC",
             bus0=spatial.biomass.nodes,
             bus1=spatial.gas.nodes,
             bus2=spatial.co2.nodes,
             bus3="co2 atmosphere",
-            carrier="BioSNG",
+            carrier="BioSNG CC",
             lifetime=costs.at["BioSNG", "lifetime"],
             efficiency=costs.at["BioSNG", "efficiency"],
             efficiency2=costs.at["BioSNG", "CO2 stored"]

@@ -525,6 +525,7 @@ sector:
   biomass_to_methanol: false
   biomass_to_methanol_cc: false
   biosng: false
+  biosng_cc: false
   biomass_upgrading_cc: false
   electrobiofuels: false
   endogenous_steel: false
@@ -947,6 +948,7 @@ plotting:
     biomass to liquid: '#32CD32'
     biomass to liquid CC: '#32CDaa'
     BioSNG: '#123456'
+    BioSNG CC: '#123456'
     # power transmission
     lines: '#6c9459'
     transmission lines: '#6c9459'
