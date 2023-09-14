@@ -2808,6 +2808,7 @@ def add_industry(n, costs):
 
         capital_cost = (
             costs.at["direct iron reduction furnace", "fixed"]
+            * costs.at["electric arc furnace", "hbi-input"]
             + costs.at["electric arc furnace", "fixed"]
         ) / electricity_input
 
