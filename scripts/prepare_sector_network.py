@@ -2428,6 +2428,7 @@ def add_biomass(n, costs):
         )
 
     if options.get("electrobiofuels"):
+        add_carrier_buses(n, "oil")
         n.madd(
             "Link",
             spatial.nodes,
