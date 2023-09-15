@@ -156,7 +156,7 @@ rule plot_choropleth_capacity_factors:
         regions_offshore=RESOURCES + "regions_offshore_elec_s{simpl}_{clusters}.geojson",
         rc="matplotlibrc",
     output:
-        directory(RESOURCES + "graphics/capacity-factor-s{simpl}-{clusters}"),
+        directory(RESOURCES + "graphics/capacity-factor/s{simpl}-{clusters}"),
     script:
         "../scripts/plot_choropleth_capacity_factors.py"
 
@@ -168,7 +168,7 @@ rule plot_choropleth_capacity_factors_sector:
         regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
         rc="matplotlibrc",
     output:
-        directory(RESOURCES + "graphics/capacity-factor-sector-s{simpl}-{clusters}"),
+        directory(RESOURCES + "graphics/capacity-factor-sector/s{simpl}-{clusters}"),
     script:
         "../scripts/plot_choropleth_capacity_factors_sector.py"
 
@@ -181,7 +181,7 @@ rule plot_choropleth_capacities:
         regions_offshore=RESOURCES + "regions_offshore_elec_s{simpl}_{clusters}.geojson",
         rc="matplotlibrc",
     output:
-        directory(RESULTS + "graphics/p_nom_opt-s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"),
+        directory(RESULTS + "graphics/p_nom_opt/s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"),
     script:
         "../scripts/plot_choropleth_capacities.py"
 
@@ -194,8 +194,8 @@ rule plot_choropleth_prices:
         regions_offshore=RESOURCES + "regions_offshore_elec_s{simpl}_{clusters}.geojson",
         rc="matplotlibrc",
     output:
-        market_prices=directory(RESULTS + "graphics/market_prices-s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"),
-        market_values=directory(RESULTS + "graphics/market_values-s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"),
+        market_prices=directory(RESULTS + "graphics/market_prices/s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"),
+        market_values=directory(RESULTS + "graphics/market_values/s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"),
     script:
         "../scripts/plot_choropleth_prices.py"
 
