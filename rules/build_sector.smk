@@ -141,7 +141,11 @@ if not (config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]):
 
 rule build_heat_demands:
     params:
-        snapshots=config["snapshots"],
+        snapshots={
+            "start":config["snapshots"]["start"],
+            "end":config["snapshots"]["end"],
+            "inclusive":config["snapshots"]["inclusive"],
+        },
     input:
         pop_layout=RESOURCES + "pop_layout_{scope}.nc",
         regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
@@ -163,7 +167,11 @@ rule build_heat_demands:
 
 rule build_temperature_profiles:
     params:
-        snapshots=config["snapshots"],
+        snapshots={
+            "start":config["snapshots"]["start"],
+            "end":config["snapshots"]["end"],
+            "inclusive":config["snapshots"]["inclusive"],
+        },
     input:
         pop_layout=RESOURCES + "pop_layout_{scope}.nc",
         regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
@@ -215,7 +223,11 @@ rule build_cop_profiles:
 
 rule build_solar_thermal_profiles:
     params:
-        snapshots=config["snapshots"],
+        snapshots={
+            "start":config["snapshots"]["start"],
+            "end":config["snapshots"]["end"],
+            "inclusive":config["snapshots"]["inclusive"],
+        },
         solar_thermal=config["solar_thermal"],
     input:
         pop_layout=RESOURCES + "pop_layout_{scope}.nc",
@@ -677,7 +689,11 @@ rule build_shipping_demand:
 
 rule build_transport_demand:
     params:
-        snapshots=config["snapshots"],
+        snapshots={
+            "start":config["snapshots"]["start"],
+            "end":config["snapshots"]["end"],
+            "inclusive":config["snapshots"]["inclusive"],
+        },
         sector=config["sector"],
     input:
         clustered_pop_layout=RESOURCES + "pop_layout_elec_s{simpl}_{clusters}.csv",
@@ -705,7 +721,6 @@ rule build_transport_demand:
 
 rule prepare_sector_network:
     params:
-        enable_sector=config.get("enable_sector", {}),
         co2_budget=config["co2_budget"],
         conventional_carriers=config["existing_capacities"]["conventional_carriers"],
         foresight=config["foresight"],
@@ -718,7 +733,6 @@ rule prepare_sector_network:
         countries=config["countries"],
         emissions_scope=config["energy"]["emissions"],
         eurostat_report_year=config["energy"]["eurostat_report_year"],
-        snapshot_opts=config.get("snapshot_opts", {}),
         RDIR=RDIR,
     input:
         **build_retro_cost_output,

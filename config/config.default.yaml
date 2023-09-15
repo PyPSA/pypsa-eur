@@ -59,14 +59,9 @@ snapshots:
   start: "2013-01-01"
   end: "2014-01-01"
   inclusive: 'left'
-
-snapshot_opts:
-  average_every_nhours:
-    enable: false
-    hour: 2
-  time_segmentation:
-    enable: false
-    hour: 4380
+  resolution: false
+  segmentation: false
+  #representative: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#enable
 enable:
@@ -81,21 +76,6 @@ enable:
   retrieve_natura_raster: true
   custom_busmap: false
 
-enable_sector:
-  no_heat_district: false
-  land_transport: false
-  heating: false
-  waste_heat: false
-  biomass: false
-  biomass_transport: false
-  agriculture_machinery: false
-  industry: false
-  decentral: false
-  #wave_energy: false
-  #wave_energy_factor:
-  noH2network: false
-  carbon_budget: false
-  co2limit_sector: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
 co2_budget:
@@ -106,16 +86,6 @@ co2_budget:
   2040: 0.071
   2045: 0.032
   2050: 0.000
-
-co2_budget_opts:
-  from_descrete_value:
-    enable: true
-  from_beta_decay:
-    enable: false # TODO: move to own rule with sector-opts wildcard?
-    value: 1
-  from_exp_decay:
-    enable: false
-    value: 1
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
@@ -158,13 +128,6 @@ electricity:
       Offshore: [offwind-ac, offwind-dc]
       Onshore: [onwind]
       PV: [solar]
-
-  adjust_carrier: # This is the solar+c0.5 thing
-    enable: false
-    #solar:
-    #  p_nom_max:
-    #  capital_cost:
-    #  marginal_cost:
 
   autarky:
     enable: false
@@ -618,12 +581,9 @@ costs:
     battery: 0.
     battery inverter: 0.
   emission_prices:
+    enable: false
     co2: 0.
-
-  enable:
-    emission_prices: false
-    monthly_prices: false
-
+    co2_monthly_prices: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#clustering
 clustering:

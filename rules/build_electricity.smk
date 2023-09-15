@@ -20,7 +20,11 @@ if config["enable"].get("prepare_links_p_nom", False):
 
 rule build_electricity_demand:
     params:
-        snapshots=config["snapshots"],
+        snapshots={
+            "start":config["snapshots"]["start"],
+            "end":config["snapshots"]["end"],
+            "inclusive":config["snapshots"]["inclusive"],
+        },
         countries=config["countries"],
         load=config["load"],
     input:
@@ -61,7 +65,11 @@ rule build_powerplants:
 rule base_network:
     params:
         countries=config["countries"],
-        snapshots=config["snapshots"],
+        snapshots={
+            "start":config["snapshots"]["start"],
+            "end":config["snapshots"]["end"],
+            "inclusive":config["snapshots"]["inclusive"],
+        },
         lines=config["lines"],
         links=config["links"],
         transformers=config["transformers"],
@@ -144,7 +152,11 @@ if config["enable"].get("build_cutout", False):
 
     rule build_cutout:
         params:
-            snapshots=config["snapshots"],
+            snapshots={
+                "start":config["snapshots"]["start"],
+                "end":config["snapshots"]["end"],
+                "inclusive":config["snapshots"]["inclusive"],
+            },
             cutouts=config["atlite"]["cutouts"],
         input:
             regions_onshore=RESOURCES + "regions_onshore.geojson",
@@ -470,6 +482,10 @@ rule add_extra_components:
 
 rule prepare_network:
     params:
+        snapshots={
+            "resolution":config["snapshots"].get("resolution", False),
+            "segmentation":config["snapshots"].get("segmentation", False),
+        },
         links=config["links"],
         lines=config["lines"],
         co2base=config["electricity"]["co2base"],
@@ -479,7 +495,6 @@ rule prepare_network:
         gaslimit=config["electricity"].get("gaslimit"),
         max_hours=config["electricity"]["max_hours"],
         costs=config["costs"],
-        snapshot_opts=config.get("snapshot_opts", {}),
         autarky=config["electricity"].get("autarky", {}),
     input:
         RESOURCES + "networks/elec_s{simpl}_{clusters}_ec.nc",

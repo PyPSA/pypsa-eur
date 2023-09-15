@@ -55,7 +55,11 @@ rule make_summary:
     params:
         foresight=config["foresight"],
         costs=config["costs"],
-        snapshots=config["snapshots"],
+        snapshots={
+            "start":config["snapshots"]["start"],
+            "end":config["snapshots"]["end"],
+            "inclusive":config["snapshots"]["inclusive"],
+        },
         scenario=config["scenario"],
         RDIR=RDIR,
     input:
