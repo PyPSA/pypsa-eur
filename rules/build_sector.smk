@@ -142,9 +142,9 @@ if not (config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]):
 rule build_heat_demands:
     params:
         snapshots={
-            "start":config["snapshots"]["start"],
-            "end":config["snapshots"]["end"],
-            "inclusive":config["snapshots"]["inclusive"],
+            "start": config["snapshots"]["start"],
+            "end": config["snapshots"]["end"],
+            "inclusive": config["snapshots"]["inclusive"],
         },
     input:
         pop_layout=RESOURCES + "pop_layout_{scope}.nc",
@@ -168,9 +168,9 @@ rule build_heat_demands:
 rule build_temperature_profiles:
     params:
         snapshots={
-            "start":config["snapshots"]["start"],
-            "end":config["snapshots"]["end"],
-            "inclusive":config["snapshots"]["inclusive"],
+            "start": config["snapshots"]["start"],
+            "end": config["snapshots"]["end"],
+            "inclusive": config["snapshots"]["inclusive"],
         },
     input:
         pop_layout=RESOURCES + "pop_layout_{scope}.nc",
@@ -224,9 +224,9 @@ rule build_cop_profiles:
 rule build_solar_thermal_profiles:
     params:
         snapshots={
-            "start":config["snapshots"]["start"],
-            "end":config["snapshots"]["end"],
-            "inclusive":config["snapshots"]["inclusive"],
+            "start": config["snapshots"]["start"],
+            "end": config["snapshots"]["end"],
+            "inclusive": config["snapshots"]["inclusive"],
         },
         solar_thermal=config["solar_thermal"],
     input:
@@ -690,9 +690,9 @@ rule build_shipping_demand:
 rule build_transport_demand:
     params:
         snapshots={
-            "start":config["snapshots"]["start"],
-            "end":config["snapshots"]["end"],
-            "inclusive":config["snapshots"]["inclusive"],
+            "start": config["snapshots"]["start"],
+            "end": config["snapshots"]["end"],
+            "inclusive": config["snapshots"]["inclusive"],
         },
         sector=config["sector"],
     input:

@@ -18,9 +18,9 @@ rule build_electricity_production:
     """
     params:
         snapshots={
-            "start":config["snapshots"]["start"],
-            "end":config["snapshots"]["end"],
-            "inclusive":config["snapshots"]["inclusive"],
+            "start": config["snapshots"]["start"],
+            "end": config["snapshots"]["end"],
+            "inclusive": config["snapshots"]["inclusive"],
         },
         countries=config["countries"],
     output:
@@ -40,9 +40,9 @@ rule build_cross_border_flows:
     """
     params:
         snapshots={
-            "start":config["snapshots"]["start"],
-            "end":config["snapshots"]["end"],
-            "inclusive":config["snapshots"]["inclusive"],
+            "start": config["snapshots"]["start"],
+            "end": config["snapshots"]["end"],
+            "inclusive": config["snapshots"]["inclusive"],
         },
         countries=config["countries"],
     input:
@@ -64,9 +64,9 @@ rule build_electricity_prices:
     """
     params:
         snapshots={
-            "start":config["snapshots"]["start"],
-            "end":config["snapshots"]["end"],
-            "inclusive":config["snapshots"]["inclusive"],
+            "start": config["snapshots"]["start"],
+            "end": config["snapshots"]["end"],
+            "inclusive": config["snapshots"]["inclusive"],
         },
         countries=config["countries"],
     output:

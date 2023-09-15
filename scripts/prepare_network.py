@@ -312,14 +312,14 @@ if __name__ == "__main__":
     set_line_s_max_pu(n, snakemake.params.lines["s_max_pu"])
 
     # temporal averaging
-    nhours_config = snakemake.params.snapshots.get("resolution",False)
+    nhours_config = snakemake.params.snapshots.get("resolution", False)
     nhours_wildcard = get_opt(opts, r"^\d+h$")
     if nhours_wildcard is not None or isinstance(nhours_config, str):
         nhours = nhours_wildcard or nhours_config
         n = average_every_nhours(n, nhours)
 
     # segments with package tsam
-    time_seg_config = snakemake.params.snapshots.get("segmentation",False)
+    time_seg_config = snakemake.params.snapshots.get("segmentation", False)
     time_seg_wildcard = get_opt(opts, r"^\d+seg$")
     if time_seg_wildcard is not None or isinstance(time_seg_config, str):
         time_seg = time_seg_wildcard or time_seg_config
@@ -375,7 +375,9 @@ if __name__ == "__main__":
                     sel = c.df.carrier.str.contains(carrier)
                     c.df.loc[sel, attr] *= factor
 
-    Ept_config = snakemake.params.costs["emission_prices"].get("co2_monthly_prices", False)
+    Ept_config = snakemake.params.costs["emission_prices"].get(
+        "co2_monthly_prices", False
+    )
     for o in opts:
         if "Ept" in o or Ept_config:
             logger.info(
@@ -392,7 +394,9 @@ if __name__ == "__main__":
             add_emission_prices(n, dict(co2=co2_wildcard))
         else:
             logger.info("Setting CO2 prices according to config value.")
-            add_emission_prices(n, dict(co2=snakemake.params.costs["emission_prices"]["co2"]))
+            add_emission_prices(
+                n, dict(co2=snakemake.params.costs["emission_prices"]["co2"])
+            )
 
     ll_type, factor = snakemake.wildcards.ll[0], snakemake.wildcards.ll[1:]
     set_transmission_limit(n, ll_type, factor, costs, Nyears)
