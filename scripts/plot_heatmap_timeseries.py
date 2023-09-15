@@ -7,16 +7,18 @@ Plot heatmap time series (results).
 """
 
 import logging
-import pypsa
-import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
+import os
 from multiprocessing import Pool
+
+import matplotlib.pyplot as plt
+import pandas as pd
+import pypsa
+import seaborn as sns
 
 logger = logging.getLogger(__name__)
 
-THRESHOLD_MW = 1e3 # 1 GW
-THRESHOLD_MWh = 100e3 # 100 GWh
+THRESHOLD_MW = 1e3  # 1 GW
+THRESHOLD_MWh = 100e3  # 100 GWh
 
 MARGINAL_PRICES = [
     "AC",
@@ -28,21 +30,21 @@ MARGINAL_PRICES = [
     "oil",
     "rural heat",
     "urban central heat",
-    "urban decentral heat"
+    "urban decentral heat",
 ]
 
 SKIP_UTILISATION_RATES = [
-    'DC',
-    'H2 pipeline',
-    'electricity distribution grid',
-    'gas for industry',
-    'gas for industry CC',
-    'gas pipeline',
-    'gas pipeline new',
-    'process emissions',
-    'process emissions CC',
-    'solid biomass for industry',
-    'solid biomass for industry CC',
+    "DC",
+    "H2 pipeline",
+    "electricity distribution grid",
+    "gas for industry",
+    "gas for industry CC",
+    "gas pipeline",
+    "gas pipeline new",
+    "process emissions",
+    "process emissions CC",
+    "solid biomass for industry",
+    "solid biomass for industry CC",
 ]
 
 
@@ -82,11 +84,11 @@ def plot_heatmap(
     )
     plt.ylabel("hour of the day")
     plt.xlabel("day of the year")
-    plt.title(title, fontsize='large')
+    plt.title(title, fontsize="large")
 
-    ax.grid(axis='y')
+    ax.grid(axis="y")
 
-    hours = list(range(0,24))
+    hours = list(range(0, 24))
     ax.set_yticks(hours[0::2])
     ax.set_yticklabels(df.index[0::2], rotation=0)
     ax.set_yticks(hours, minor=True)
@@ -94,9 +96,16 @@ def plot_heatmap(
     major_ticks = [i for i, date in enumerate(df.columns) if date.day == 1]
     minor_ticks = [i for i, date in enumerate(df.columns) if date.day == 15]
     ax.set_xticks(major_ticks)
-    ax.set_xticklabels([df.columns[i].strftime('%e\n%b') for i in major_ticks], rotation=0)
+    ax.set_xticklabels(
+        [df.columns[i].strftime("%e\n%b") for i in major_ticks], rotation=0
+    )
     ax.set_xticks(minor_ticks, minor=True)
-    ax.set_xticklabels([df.columns[i].strftime('%e') for i in minor_ticks], rotation=0, minor=True, color='grey')
+    ax.set_xticklabels(
+        [df.columns[i].strftime("%e") for i in minor_ticks],
+        rotation=0,
+        minor=True,
+        color="grey",
+    )
 
     cb = ax.collections[0].colorbar
     cb.outline.set_linewidth(0.75)
@@ -123,22 +132,27 @@ if __name__ == "__main__":
             opts="",
             sector_opts="Co2L0-2190SEG-T-H-B-I-S-A",
             planning_horizons=2050,
-            configfiles="../../config/config.100n-seg.yaml"
+            configfiles="../../config/config.100n-seg.yaml",
         )
 
     plt.style.use(["bmh", snakemake.input.rc])
 
+    # ensure path exists, since snakemake does not create path for directory outputs
+    # https://github.com/snakemake/snakemake/issues/774
+    dir = snakemake.output[0]
+    if not os.path.exists(dir):
+        os.makedirs(dir)
 
     n = pypsa.Network(snakemake.input.network)
 
-    dir = snakemake.output[0]
     snapshots = snakemake.config["snapshots"]
     carriers = n.carriers
 
     p_nom_opt = n.generators.groupby("carrier").p_nom_opt.sum()
     data = (
         n.generators_t.p.groupby(n.generators.carrier, axis=1).sum()
-        / p_nom_opt * 100 # %
+        / p_nom_opt
+        * 100  # %
     )
     data = data.loc[:, p_nom_opt > THRESHOLD_MW]
 
@@ -153,7 +167,7 @@ if __name__ == "__main__":
             title=title,
             vmin=0,
             vmax=90,
-            cbar_kws=dict(extend='max'),
+            cbar_kws=dict(extend="max"),
             tag="utilisation_rate",
             dir=dir,
         )
@@ -167,13 +181,17 @@ if __name__ == "__main__":
 
     def process_marginal_prices(carrier, s):
         df = unstack_day_hour(s, snapshots)
-        label = "marginal price [€/t]" if "co2" in carrier.lower() else "marginal price [€/MWh]"
+        label = (
+            "marginal price [€/t]"
+            if "co2" in carrier.lower()
+            else "marginal price [€/MWh]"
+        )
         plot_heatmap(
             df,
             cmap="Spectral_r",
             label=label,
             title=carrier,
-            cbar_kws=dict(extend='both'),
+            cbar_kws=dict(extend="both"),
             tag="marginal_price",
             dir=dir,
         )
@@ -183,10 +201,7 @@ if __name__ == "__main__":
 
     # SOCs
     e_nom_opt = n.stores.groupby("carrier").e_nom_opt.sum()
-    data = (
-        n.stores_t.e.groupby(n.stores.carrier, axis=1).sum()
-        / e_nom_opt * 100
-    )
+    data = n.stores_t.e.groupby(n.stores.carrier, axis=1).sum() / e_nom_opt * 100
     data = data.loc[:, e_nom_opt > THRESHOLD_MWh]
 
     def process_socs(carrier, s):
@@ -200,7 +215,7 @@ if __name__ == "__main__":
             vmax=90,
             label=label,
             title=title,
-            cbar_kws=dict(extend='max'),
+            cbar_kws=dict(extend="max"),
             tag="soc",
             dir=dir,
         )
@@ -210,12 +225,9 @@ if __name__ == "__main__":
 
     # link utilisation rates
     p_nom_opt = n.links.groupby("carrier").p_nom_opt.sum()
-    data = (
-        n.links_t.p0.groupby(n.links.carrier, axis=1).sum()
-        / p_nom_opt * 100
-    )
+    data = n.links_t.p0.groupby(n.links.carrier, axis=1).sum() / p_nom_opt * 100
     data = data[data.columns.difference(SKIP_UTILISATION_RATES)]
-    data = data.loc[:,p_nom_opt > THRESHOLD_MW]
+    data = data.loc[:, p_nom_opt > THRESHOLD_MW]
 
     def process_link_utilisation(carrier, s):
         df = unstack_day_hour(s, snapshots)

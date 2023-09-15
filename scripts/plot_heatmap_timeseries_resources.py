@@ -7,14 +7,15 @@ Plot heatmap time series (resources).
 """
 
 import logging
-import pypsa
-import matplotlib.pyplot as plt
+import os
 from multiprocessing import Pool
+
+import matplotlib.pyplot as plt
+import pypsa
 
 logger = logging.getLogger(__name__)
 
-from plot_heatmap_timeseries import unstack_day_hour, plot_heatmap
-
+from plot_heatmap_timeseries import plot_heatmap, unstack_day_hour
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -28,14 +29,19 @@ if __name__ == "__main__":
             opts="",
             sector_opts="Co2L0-2190SEG-T-H-B-I-S-A",
             planning_horizons=2050,
-            configfiles="../../config/config.100n-seg.yaml"
+            configfiles="../../config/config.100n-seg.yaml",
         )
 
     plt.style.use(["bmh", snakemake.input.rc])
 
+    # ensure path exists, since snakemake does not create path for directory outputs
+    # https://github.com/snakemake/snakemake/issues/774
+    dir = snakemake.output[0]
+    if not os.path.exists(dir):
+        os.makedirs(dir)
+
     n = pypsa.Network(snakemake.input.network)
 
-    dir = snakemake.output[0]
     snapshots = snakemake.config["snapshots"]
     carriers = n.carriers
 
@@ -59,7 +65,7 @@ if __name__ == "__main__":
 
     with Pool(processes=snakemake.threads) as pool:
         pool.starmap(process_capacity_factors, data.items())
-    
+
     # heat pump COPs
     data = n.links_t.efficiency.groupby(n.links.carrier, axis=1).mean()
 
@@ -74,7 +80,7 @@ if __name__ == "__main__":
             vmax=4,
             label=label,
             title=title,
-            cbar_kws=dict(extend='both'),
+            cbar_kws=dict(extend="both"),
             tag="cop",
             dir=dir,
         )
@@ -102,4 +108,3 @@ if __name__ == "__main__":
 
     with Pool(processes=snakemake.threads) as pool:
         pool.starmap(process_availabilities, data.items())
-
