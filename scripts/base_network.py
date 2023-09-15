@@ -710,10 +710,10 @@ def base_network(
     links = _set_electrical_parameters_links(links, config, links_p_nom)
     converters = _set_electrical_parameters_converters(converters, config)
     snapshots = {
-            "start":config["snapshots"]["start"],
-            "end":config["snapshots"]["end"],
-            "inclusive":config["snapshots"]["inclusive"],
-            }
+        "start": config["snapshots"]["start"],
+        "end": config["snapshots"]["end"],
+        "inclusive": config["snapshots"]["inclusive"],
+    }
 
     n = pypsa.Network()
     n.name = "PyPSA-Eur"

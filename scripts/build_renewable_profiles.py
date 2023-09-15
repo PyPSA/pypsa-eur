@@ -212,10 +212,10 @@ if __name__ == "__main__":
     capacity_per_sqkm = params["capacity_per_sqkm"]
     p_nom_max_meth = params.get("potential", "conservative")
     snapshots = {
-        "start":snakemake.config["snapshots"]["start"],
-        "end":snakemake.config["snapshots"]["end"],
-        "inclusive":snakemake.config["snapshots"]["inclusive"],
-        }
+        "start": snakemake.config["snapshots"]["start"],
+        "end": snakemake.config["snapshots"]["end"],
+        "inclusive": snakemake.config["snapshots"]["inclusive"],
+    }
 
     if isinstance(params.get("corine", {}), list):
         params["corine"] = {"grid_codes": params["corine"]}
