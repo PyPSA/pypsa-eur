@@ -213,6 +213,22 @@ rule plot_choropleth_potential_used:
         "../scripts/plot_choropleth_potential_used.py"
 
 
+rule plot_choropleth_demand:
+    input:
+        network=RESULTS
+        + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        industrial_demand=RESOURCES
+        + "industrial_energy_demand_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
+        shipping_demand=RESOURCES + "shipping_demand_s{simpl}_{clusters}.csv",
+        nodal_energy_totals=RESOURCES + "pop_weighted_energy_totals_s{simpl}_{clusters}.csv",
+        regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+        rc="matplotlibrc",
+    output:
+        directory(RESOURCES + "graphics/regional_demand/s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"),
+    script:
+        "../scripts/plot_choropleth_demand.py"
+
+
 rule plot_balance_timeseries:
     input:
         network=RESULTS
