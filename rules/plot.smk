@@ -173,6 +173,18 @@ rule plot_choropleth_capacity_factors_sector:
         "../scripts/plot_choropleth_capacity_factors_sector.py"
 
 
+rule plot_choropleth_capacities:
+    input:
+        network=RESULTS
+        + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+        regions_offshore=RESOURCES + "regions_offshore_elec_s{simpl}_{clusters}.geojson",
+        rc="matplotlibrc",
+    output:
+        directory(RESULTS + "graphics/p_nom_opt-s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"),
+    script:
+        "../scripts/plot_choropleth_capacities.py"
+
 
 rule plot_choropleth_prices:
     input:
