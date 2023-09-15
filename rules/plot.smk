@@ -199,6 +199,20 @@ rule plot_choropleth_prices:
     script:
         "../scripts/plot_choropleth_prices.py"
 
+
+rule plot_choropleth_potential_used:
+    input:
+        network=RESULTS
+        + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+        regions_offshore=RESOURCES + "regions_offshore_elec_s{simpl}_{clusters}.geojson",
+        rc="matplotlibrc",
+    output:
+        directory(RESULTS + "graphics/potential_used/s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"),
+    script:
+        "../scripts/plot_choropleth_potential_used.py"
+
+
 rule plot_balance_timeseries:
     input:
         network=RESULTS
