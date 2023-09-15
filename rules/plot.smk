@@ -108,19 +108,19 @@ rule plot_salt_caverns_unclustered:
 
 rule plot_salt_caverns_clustered:
     input:
-        caverns=RESOURCES + "salt_cavern_potentials_s_{clusters}.csv",
-        regions_onshore=RESOURCES + "regions_onshore_elec_s_{clusters}.geojson",
-        regions_offshore=RESOURCES + "regions_offshore_elec_s_{clusters}.geojson",
+        caverns=RESOURCES + "salt_cavern_potentials_s{simpl}_{clusters}.csv",
+        regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+        regions_offshore=RESOURCES + "regions_offshore_elec_s{simpl}_{clusters}.geojson",
         rc="matplotlibrc",
     output:
         onshore=multiext(
-            RESOURCES + "graphics/salt-caverns-{clusters}-onshore", ".png", ".pdf"
+            RESOURCES + "graphics/salt-caverns-s{simpl}-{clusters}-onshore", ".png", ".pdf"
         ),
         nearshore=multiext(
-            RESOURCES + "graphics/salt-caverns-{clusters}-nearshore", ".png", ".pdf"
+            RESOURCES + "graphics/salt-caverns-s{simpl}-{clusters}-nearshore", ".png", ".pdf"
         ),
         offshore=multiext(
-            RESOURCES + "graphics/salt-caverns-{clusters}-offshore", ".png", ".pdf"
+            RESOURCES + "graphics/salt-caverns-s{simpl}-{clusters}-offshore", ".png", ".pdf"
         ),
     script:
         "../scripts/plot_salt_caverns_clustered.py"
@@ -128,22 +128,22 @@ rule plot_salt_caverns_clustered:
 
 rule plot_biomass_potentials:
     input:
-        biomass=RESOURCES + "biomass_potentials_s_{clusters}.csv",
-        regions_onshore=RESOURCES + "regions_onshore_elec_s_{clusters}.geojson",
+        biomass=RESOURCES + "biomass_potentials_s{simpl}_{clusters}.csv",
+        regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
         rc="matplotlibrc",
     output:
         solid_biomass=multiext(
-            RESOURCES + "graphics/biomass-potentials-{clusters}-solid_biomass",
+            RESOURCES + "graphics/biomass-potentials-s{simpl}-{clusters}-solid_biomass",
             ".png",
             ".pdf",
         ),
         not_included=multiext(
-            RESOURCES + "graphics/biomass-potentials-{clusters}-not_included",
+            RESOURCES + "graphics/biomass-potentials-s{simpl}-{clusters}-not_included",
             ".png",
             ".pdf",
         ),
         biogas=multiext(
-            RESOURCES + "graphics/biomass-potentials-{clusters}-biogas", ".png", ".pdf"
+            RESOURCES + "graphics/biomass-potentials-s{simpl}-{clusters}-biogas", ".png", ".pdf"
         ),
     script:
         "../scripts/plot_biomass_potentials.py"
