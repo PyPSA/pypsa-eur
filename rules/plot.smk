@@ -149,6 +149,29 @@ rule plot_biomass_potentials:
         "../scripts/plot_biomass_potentials.py"
 
 
+rule plot_choropleth_capacity_factors:
+    input:
+        network=RESOURCES + "networks/elec_s{simpl}_{clusters}.nc",
+        regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+        regions_offshore=RESOURCES + "regions_offshore_elec_s{simpl}_{clusters}.geojson",
+        rc="matplotlibrc",
+    output:
+        directory(RESOURCES + "graphics/capacity-factor-s{simpl}-{clusters}"),
+    script:
+        "../scripts/plot_choropleth_capacity_factors.py"
+
+
+rule plot_choropleth_capacity_factors_sector:
+    input:
+        cop_soil=RESOURCES + "cop_soil_total_elec_s{simpl}_{clusters}.nc",
+        cop_air=RESOURCES + "cop_air_total_elec_s{simpl}_{clusters}.nc",
+        regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+        rc="matplotlibrc",
+    output:
+        directory(RESOURCES + "graphics/capacity-factor-sector-s{simpl}-{clusters}"),
+    script:
+        "../scripts/plot_choropleth_capacity_factors_sector.py"
+
 
 rule plot_balance_timeseries:
     input:
