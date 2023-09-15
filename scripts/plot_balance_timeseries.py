@@ -7,20 +7,30 @@ Plot balance time series.
 """
 
 import logging
-import pypsa
+import os
+from multiprocessing import Pool
+
+import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-from multiprocessing import Pool
+import pypsa
 
 logger = logging.getLogger(__name__)
 
-THRESHOLD = 5 # GW
+THRESHOLD = 5  # GW
 
 CARRIER_GROUPS = {
     "electricity": ["AC", "low voltage"],
-    "heat": ["urban central heat", "urban decentral heat", "rural heat", "residential urban decentral heat", "residential rural heat", "services urban decentral heat", "services rural heat"],
+    "heat": [
+        "urban central heat",
+        "urban decentral heat",
+        "rural heat",
+        "residential urban decentral heat",
+        "residential rural heat",
+        "services urban decentral heat",
+        "services rural heat",
+    ],
     "hydrogen": "H2",
     "oil": "oil",
     "methanol": "methanol",
@@ -31,8 +41,8 @@ CARRIER_GROUPS = {
     "methane": "gas",
 }
 
-def plot_stacked_area_steplike(ax, df, colors={}):
 
+def plot_stacked_area_steplike(ax, df, colors={}):
     if isinstance(colors, pd.Series):
         colors = colors.to_dict()
 
@@ -45,9 +55,9 @@ def plot_stacked_area_steplike(ax, df, colors={}):
             df_cum.index,
             previous_series,
             df_cum[col],
-            step='pre',
+            step="pre",
             linewidth=0,
-            color=colors.get(col, 'grey'),
+            color=colors.get(col, "grey"),
             label=col,
         )
         previous_series = df_cum[col].values
@@ -65,19 +75,19 @@ def plot_energy_balance_timeseries(
     threshold=0,
     dir="",
 ):
-
     if time is not None:
         df = df.loc[time]
 
-    timespan = (df.index[-1] - df.index[0])
+    timespan = df.index[-1] - df.index[0]
     long_time_frame = timespan > pd.Timedelta(weeks=5)
 
     techs_below_threshold = df.columns[df.abs().max() < threshold].tolist()
+
     if techs_below_threshold:
         other = {tech: "other" for tech in techs_below_threshold}
         rename.update(other)
-        colors["other"] = 'grey'
-    
+        colors["other"] = "grey"
+
     if rename:
         df = df.groupby(df.columns.map(lambda a: rename.get(a, a)), axis=1).sum()
 
@@ -93,8 +103,8 @@ def plot_energy_balance_timeseries(
     df = df.loc[:, order]
 
     # fillna since plot_stacked_area_steplike cannot deal with NaNs
-    pos = df.where(df > 0).fillna(0.)
-    neg = df.where(df < 0).fillna(0.)
+    pos = df.where(df > 0).fillna(0.0)
+    neg = df.where(df < 0).fillna(0.0)
 
     fig, ax = plt.subplots(figsize=(10, 4), layout="constrained")
 
@@ -106,29 +116,25 @@ def plot_energy_balance_timeseries(
     if not long_time_frame:
         # Set major ticks every Monday
         ax.xaxis.set_major_locator(mdates.WeekdayLocator(byweekday=mdates.MONDAY))
-        ax.xaxis.set_major_formatter(mdates.DateFormatter('%e\n%b'))
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%e\n%b"))
         # Set minor ticks every day
         ax.xaxis.set_minor_locator(mdates.DayLocator())
-        ax.xaxis.set_minor_formatter(mdates.DateFormatter('%e'))
+        ax.xaxis.set_minor_formatter(mdates.DateFormatter("%e"))
     else:
         # Set major ticks every first day of the month
         ax.xaxis.set_major_locator(mdates.MonthLocator(bymonthday=1))
-        ax.xaxis.set_major_formatter(mdates.DateFormatter('%e\n%b'))
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%e\n%b"))
         # Set minor ticks every 15th of the month
         ax.xaxis.set_minor_locator(mdates.MonthLocator(bymonthday=15))
-        ax.xaxis.set_minor_formatter(mdates.DateFormatter('%e'))
+        ax.xaxis.set_minor_formatter(mdates.DateFormatter("%e"))
 
-    ax.tick_params(axis='x', which='minor', labelcolor='grey')
-    ax.grid(axis='y')
+    ax.tick_params(axis="x", which="minor", labelcolor="grey")
+    ax.grid(axis="y")
 
     # half the labels because pos and neg create duplicate labels
     handles, labels = ax.get_legend_handles_labels()
     half = int(len(handles) / 2)
-    fig.legend(
-        handles=handles[:half],
-        labels=labels[:half],
-        loc="outside right upper"
-    )
+    fig.legend(handles=handles[:half], labels=labels[:half], loc="outside right upper")
 
     ax.axhline(0, color="grey", linewidth=0.5)
 
@@ -147,16 +153,16 @@ def plot_energy_balance_timeseries(
         ax2.set_xlim(ax.get_xlim())
         ax2.set_xticks(df.index)
         ax2.grid(False)
-        ax2.tick_params(axis='x', length=2)
+        ax2.tick_params(axis="x", length=2)
         ax2.xaxis.set_tick_params(labelbottom=False)
         ax2.set_xticklabels([])
 
     if resample is None:
-        resample = "native"
+        resample = f"native-{time}"
     fn = f"ts-balance-{ylabel.replace(' ', '_')}-{resample}"
     plt.savefig(dir + "/" + fn + ".pdf")
     plt.savefig(dir + "/" + fn + ".png")
-
+    plt.close()
 
 
 if __name__ == "__main__":
@@ -171,8 +177,14 @@ if __name__ == "__main__":
             opts="",
             sector_opts="Co2L0-2190SEG-T-H-B-I-S-A",
             planning_horizons=2050,
-            configfiles="../../config/config.100n-seg.yaml"
+            configfiles="../../config/config.100n-seg.yaml",
         )
+
+    # ensure path exists, since snakemake does not create path for directory outputs
+    # https://github.com/snakemake/snakemake/issues/774
+    dir = snakemake.output[0]
+    if not os.path.exists(dir):
+        os.makedirs(dir)
 
     plt.style.use(["bmh", snakemake.input.rc])
 
@@ -195,6 +207,16 @@ if __name__ == "__main__":
         mask = balance.index.get_level_values("bus_carrier").isin(carriers)
         df = balance[mask].groupby("carrier").sum().div(1e3).T
 
+        # daily resolution for each carrier
+        plot_energy_balance_timeseries(
+            df,
+            resample="D",
+            ylabel=group,
+            colors=colors,
+            threshold=THRESHOLD,
+            dir=dir,
+        )
+
         # native resolution for each month and carrier
         for month in months:
             plot_energy_balance_timeseries(
@@ -203,19 +225,12 @@ if __name__ == "__main__":
                 ylabel=group,
                 colors=colors,
                 threshold=THRESHOLD,
-                dir=snakemake.output[0]
+                dir=dir,
             )
 
-        # daily resolution for each carrier
-        plot_energy_balance_timeseries(
-            df,
-            resample="D",
-            ylabel=group,
-            colors=colors,
-            threshold=THRESHOLD,
-            dir=snakemake.output[0]
-        )
-
-    args = [(group, carriers, balance, months, colors) for group, carriers in CARRIER_GROUPS.items()]
+    args = [
+        (group, carriers, balance, months, colors)
+        for group, carriers in CARRIER_GROUPS.items()
+    ]
     with Pool(processes=snakemake.threads) as pool:
         pool.starmap(process_group, args)
