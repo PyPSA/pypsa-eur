@@ -21,9 +21,9 @@ if config["enable"].get("prepare_links_p_nom", False):
 rule build_electricity_demand:
     params:
         snapshots={
-            "start":config["snapshots"]["start"],
-            "end":config["snapshots"]["end"],
-            "inclusive":config["snapshots"]["inclusive"],
+            "start": config["snapshots"]["start"],
+            "end": config["snapshots"]["end"],
+            "inclusive": config["snapshots"]["inclusive"],
         },
         countries=config["countries"],
         load=config["load"],
@@ -66,9 +66,9 @@ rule base_network:
     params:
         countries=config["countries"],
         snapshots={
-            "start":config["snapshots"]["start"],
-            "end":config["snapshots"]["end"],
-            "inclusive":config["snapshots"]["inclusive"],
+            "start": config["snapshots"]["start"],
+            "end": config["snapshots"]["end"],
+            "inclusive": config["snapshots"]["inclusive"],
         },
         lines=config["lines"],
         links=config["links"],
@@ -153,9 +153,9 @@ if config["enable"].get("build_cutout", False):
     rule build_cutout:
         params:
             snapshots={
-                "start":config["snapshots"]["start"],
-                "end":config["snapshots"]["end"],
-                "inclusive":config["snapshots"]["inclusive"],
+                "start": config["snapshots"]["start"],
+                "end": config["snapshots"]["end"],
+                "inclusive": config["snapshots"]["inclusive"],
             },
             cutouts=config["atlite"]["cutouts"],
         input:
@@ -483,8 +483,8 @@ rule add_extra_components:
 rule prepare_network:
     params:
         snapshots={
-            "resolution":config["snapshots"].get("resolution", False),
-            "segmentation":config["snapshots"].get("segmentation", False),
+            "resolution": config["snapshots"].get("resolution", False),
+            "segmentation": config["snapshots"].get("segmentation", False),
         },
         links=config["links"],
         lines=config["lines"],
