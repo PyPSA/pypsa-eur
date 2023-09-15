@@ -148,8 +148,14 @@ if __name__ == "__main__":
         )
     configure_logging(snakemake)
 
+    snapshots = {
+        "start":snakemake.config["snapshots"]["start"],
+        "end":snakemake.config["snapshots"]["end"],
+        "inclusive":snakemake.config["snapshots"]["inclusive"],
+        }
+
     n = pypsa.Network(snakemake.input.base_network)
-    time = pd.date_range(freq="h", **snakemake.config["snapshots"])
+    time = pd.date_range(freq="h", **snapshots)
     cutout = atlite.Cutout(snakemake.input.cutout).sel(time=time)
 
     da = calculate_line_rating(n, cutout)

@@ -211,6 +211,11 @@ if __name__ == "__main__":
     correction_factor = params.get("correction_factor", 1.0)
     capacity_per_sqkm = params["capacity_per_sqkm"]
     p_nom_max_meth = params.get("potential", "conservative")
+    snapshots = {
+        "start":snakemake.config["snapshots"]["start"],
+        "end":snakemake.config["snapshots"]["end"],
+        "inclusive":snakemake.config["snapshots"]["inclusive"],
+        }
 
     if isinstance(params.get("corine", {}), list):
         params["corine"] = {"grid_codes": params["corine"]}
@@ -223,7 +228,7 @@ if __name__ == "__main__":
     else:
         client = None
 
-    sns = pd.date_range(freq="h", **snakemake.config["snapshots"])
+    sns = pd.date_range(freq="h", **snapshots)
     cutout = atlite.Cutout(snakemake.input.cutout).sel(time=sns)
     regions = gpd.read_file(snakemake.input.regions)
     assert not regions.empty, (
