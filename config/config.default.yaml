@@ -466,6 +466,7 @@ sector:
   co2_sequestration_cost: 10
   co2_spatial: false
   co2network: false
+  co2_network_cost_factor: 1
   cc_fraction: 0.9
   hydrogen_underground_storage: true
   hydrogen_underground_storage_locations:
@@ -548,7 +549,7 @@ industry:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 costs:
-  year: 2030
+  year: 2040
   version: v0.6.0
   rooftop_share: 0.14  # based on the potentials, assuming  (0.1 kW/m2 and 10 m2/person)
   fill_values:
@@ -934,6 +935,7 @@ plotting:
     CO2 sequestration: '#f29dae'
     DAC: '#ff5270'
     co2 stored: '#f2385a'
+    co2 sequestered: '#f2682f'
     co2: '#f29dae'
     co2 vent: '#ffd4dc'
     CO2 pipeline: '#f5627f'

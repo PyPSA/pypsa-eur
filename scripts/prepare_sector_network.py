@@ -528,7 +528,7 @@ def patch_electricity_network(n):
     n.loads_t.p_set.rename(lambda x: x.strip(), axis=1, inplace=True)
 
 
-def add_co2_tracking(n, options):
+def add_co2_tracking(n, costs, options):
     # minus sign because opposite to how fossil fuels used:
     # CH4 burning puts CH4 down, atmosphere up
     n.add("Carrier", "co2", co2_emissions=-1.0)
@@ -555,6 +555,37 @@ def add_co2_tracking(n, options):
         unit="t_co2",
     )
 
+    # add CO2 tanks
+    n.madd(
+        "Store",
+        spatial.co2.nodes,
+        e_nom_extendable=True,
+        capital_cost=costs.loc["CO2 storage tank"],
+        carrier="co2 stored",
+        bus=spatial.co2.nodes,
+    )
+    n.add("Carrier", "co2 stored")
+
+    # this tracks CO2 stored, e.g. underground
+    sequestration_buses = spatial.co2.nodes.str.replace(" stored", " sequestered")
+    n.madd(
+        "Bus",
+        sequestration_buses,
+        location=spatial.co2.locations,
+        carrier="co2 sequestered",
+        unit="t_co2",
+    )
+
+    n.madd(
+        "Link",
+        sequestration_buses,
+        bus0=spatial.co2.nodes,
+        bus1=sequestration_buses,
+        carrier="co2 sequestered",
+        efficiency=1.0,
+        p_nom_extendable=True,
+    )
+
     if options["regional_co2_sequestration_potential"]["enable"]:
         upper_limit = (
             options["regional_co2_sequestration_potential"]["max_size"] * 1e3
@@ -570,21 +601,21 @@ def add_co2_tracking(n, options):
             .mul(1e6)
             / annualiser
         )  # t
-        e_nom_max = e_nom_max.rename(index=lambda x: x + " co2 stored")
+        e_nom_max = e_nom_max.rename(index=lambda x: x + " co2 sequestered")
     else:
         e_nom_max = np.inf
 
     n.madd(
         "Store",
-        spatial.co2.nodes,
+        sequestration_buses,
         e_nom_extendable=True,
         e_nom_max=e_nom_max,
         capital_cost=options["co2_sequestration_cost"],
-        carrier="co2 stored",
-        bus=spatial.co2.nodes,
+        carrier="co2 sequestered",
+        bus=sequestration_buses,
     )
 
-    n.add("Carrier", "co2 stored")
+    n.add("Carrier", "co2 sequestered")
 
     if options["co2_vent"]:
         n.madd(
@@ -613,6 +644,8 @@ def add_co2_network(n, costs):
         * co2_links.length
     )
     capital_cost = cost_onshore + cost_submarine
+    cost_factor = snakemake.config["sector"]["co2_network_cost_factor"]
+    capital_cost *= cost_factor
 
     n.madd(
         "Link",
@@ -3338,7 +3371,7 @@ if __name__ == "__main__":
         for carrier in conventional:
             add_carrier_buses(n, carrier)
 
-    add_co2_tracking(n, options)
+    add_co2_tracking(n, costs, options)
 
     add_generation(n, costs)
 
