@@ -202,10 +202,10 @@ def add_co2_sequestration_limit(n, config, limit=200):
     n.madd(
         "GlobalConstraint",
         names,
-        sense="<=",
-        constant=limit,
-        type="primary_energy",
-        carrier_attribute="co2_absorptions",
+        sense=">=",
+        constant=-limit,
+        type="operational_limit",
+        carrier_attribute="co2 sequestered",
         investment_period=periods,
     )
 

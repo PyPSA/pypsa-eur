@@ -478,6 +478,7 @@ sector:
   co2_sequestration_lifetime: 50
   co2_spatial: false
   co2network: false
+  co2_network_cost_factor: 1
   cc_fraction: 0.9
   hydrogen_underground_storage: true
   hydrogen_underground_storage_locations:
@@ -985,6 +986,7 @@ plotting:
     CO2 sequestration: '#f29dae'
     DAC: '#ff5270'
     co2 stored: '#f2385a'
+    co2 sequestered: '#f2682f'
     co2: '#f29dae'
     co2 vent: '#ffd4dc'
     CO2 pipeline: '#f5627f'
