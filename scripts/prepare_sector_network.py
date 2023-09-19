@@ -546,7 +546,7 @@ def add_co2_tracking(n, costs, options):
         bus="co2 atmosphere",
     )
 
-    # this tracks CO2 stored, e.g. underground
+    # add CO2 tanks
     n.madd(
         "Bus",
         spatial.co2.nodes,
@@ -555,13 +555,13 @@ def add_co2_tracking(n, costs, options):
         unit="t_co2",
     )
 
-    # add CO2 tanks
     n.madd(
         "Store",
         spatial.co2.nodes,
         e_nom_extendable=True,
-        capital_cost=costs.loc["CO2 storage tank"],
+        capital_cost=costs.at["CO2 storage tank", "fixed"],
         carrier="co2 stored",
+        e_cyclic=True,
         bus=spatial.co2.nodes,
     )
     n.add("Carrier", "co2 stored")
