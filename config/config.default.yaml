@@ -507,6 +507,8 @@ sector:
   biomass_to_liquid: false
   biosng: false
   endogenous_steel: false
+  relocation_steel: false
+  flexibility_steel: false
   limit_max_growth:
     enable: false
     # allowing 30% larger than max historic growth

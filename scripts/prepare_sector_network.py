@@ -2451,6 +2451,15 @@ def add_industry(n, costs):
 
         sector = "DRI + Electric arc"
 
+        no_relocation = not options.get("relocation_steel", False)
+        no_flexibility = not options.get("flexibility_steel", False)
+
+        s = " not" if no_relocation else " "
+        logger.info(f"Steel industry relocation{s} activated.")
+
+        s = " not" if no_flexibility else " "
+        logger.info(f"Steel industry flexibility{s} activated.")
+
         n.add(
             "Bus",
             "EU steel",
@@ -2467,14 +2476,15 @@ def add_industry(n, costs):
             p_set=industrial_production[sector].sum() / nhours,
         )
 
-        # n.add(
-        #     "Store",
-        #     "EU steel Store",
-        #     bus="EU steel",
-        #     e_nom_extendable=True,
-        #     e_cyclic=True,
-        #     carrier="steel",
-        # )
+        if not no_flexibility:
+            n.add(
+                "Store",
+                "EU steel Store",
+                bus="EU steel",
+                e_nom_extendable=True,
+                e_cyclic=True,
+                carrier="steel",
+            )
 
         electricity_input = (
             costs.at["direct iron reduction furnace", "electricity-input"]
@@ -2509,8 +2519,9 @@ def add_industry(n, costs):
             carrier=sector,
             capital_cost=capital_cost,
             marginal_cost=marginal_cost,
-            p_nom=p_nom,
-            p_min_pu=1,
+            p_nom_max=p_nom if no_relocation else np.inf,
+            p_nom_extendable=True,
+            p_min_pu=1 if no_flexibility else 0,
             bus0=nodes,
             bus1="EU steel",
             bus2=nodes + " H2",
