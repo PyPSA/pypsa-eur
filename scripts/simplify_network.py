@@ -609,6 +609,7 @@ if __name__ == "__main__":
     remove = [
         "symbol",
         "tags",
+        "commissioning_year",
         "under_construction",
         "substation_lv",
         "substation_off",

@@ -65,6 +65,7 @@ rule base_network:
         lines=config["lines"],
         links=config["links"],
         transformers=config["transformers"],
+        tyndp=config["TYNDP2020"]
     input:
         eg_buses="data/entsoegridkit/buses.csv",
         eg_lines="data/entsoegridkit/lines.csv",
@@ -83,6 +84,7 @@ rule base_network:
         tyndp2020_upg_buses="data/tyndp2020/upgraded_buses.csv",
         tyndp2020_upg_lines="data/tyndp2020/upgraded_lines.csv",
         tyndp2020_upg_links="data/tyndp2020/upgraded_links.csv",
+        parameter_corrections_tyndp="data/tyndp2020/parameter_corrections.yaml",
     output:
         RESOURCES + "networks/base.nc",
     log:

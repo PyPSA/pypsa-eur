@@ -701,11 +701,11 @@ def _integrate_tyndp_2020(
     config,
 ):
     new_buses = _read_tyndp2020_buses(new_buses)
-    new_lines = _read_tyndp2020_lines(new_lines)
+    new_lines = _read_tyndp2020_lines(new_lines, config["electricity"])
     new_links = _read_tyndp2020_links(new_links)
 
     upg_buses = _read_tyndp2020_buses(upg_buses)
-    upg_lines = _read_tyndp2020_lines(upg_lines)
+    upg_lines = _read_tyndp2020_lines(upg_lines, config["electricity"])
     upg_links = _read_tyndp2020_links(upg_links)
 
     allowed_statuses = config["TYNDP2020"].get("allowed_statuses")
@@ -756,14 +756,17 @@ def _read_tyndp2020_buses(tyndp_file):
     return df
 
 
-def _read_tyndp2020_lines(tyndp_file):
+def _read_tyndp2020_lines(tyndp_file, config_elec):
     df = pd.read_csv(tyndp_file, index_col=0, dtype={"bus0": "str", "bus1": "str"})
     df.index = df.index.astype(str)
     df.index.name = "line_id"
     df["commissioning_year"] = pd.to_datetime(df["commissioning_year"], format="%Y")
     df["v_nom"] = df["v_nom"].replace(np.nan, 220)
     df["v_nom"] = df["v_nom"].astype(int)
+    allowed_voltages = config_elec["voltages"]
+    df = df.query("v_nom in @allowed_voltages")
     df["num_parallel"] = 2.0
+    df["carrier"] = "AC"
     return df
 
 
@@ -815,6 +818,7 @@ def base_network(
     country_shapes,
     offshore_shapes,
     parameter_corrections,
+    parameter_corrections_tyndp,
     tyndp2020_new_buses,
     tyndp2020_new_lines,
     tyndp2020_new_links,
@@ -872,6 +876,8 @@ def base_network(
     _set_lines_s_nom_from_linetypes(n)
 
     _apply_parameter_corrections(n, parameter_corrections)
+    if config["TYNDP2020"].get("include"):
+        _apply_parameter_corrections(n, parameter_corrections_tyndp)
 
     n = _remove_unconnected_components(n)
 
@@ -905,6 +911,7 @@ if __name__ == "__main__":
         snakemake.input.country_shapes,
         snakemake.input.offshore_shapes,
         snakemake.input.parameter_corrections,
+        snakemake.input.parameter_corrections_tyndp,
         snakemake.input.tyndp2020_new_buses,
         snakemake.input.tyndp2020_new_lines,
         snakemake.input.tyndp2020_new_links,
