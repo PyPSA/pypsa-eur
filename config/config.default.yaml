@@ -530,6 +530,8 @@ sector:
   electrobiofuels: false
   endogenous_steel: false
   endogenous_hvc: false
+  relocation_steel: false
+  flexibility_steel: false
   import:
     capacity_boost: 2
     limit: false # bool or number in TWh
