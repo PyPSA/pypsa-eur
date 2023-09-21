@@ -1,0 +1,25 @@
+    
+Line:
+  length:
+    index:
+      "TYNDP2020_134": 70 # https://tyndp2020-project-platform.azurewebsites.net/projectsheets/transmission/1059
+      "TYNDP2020_133": 70 # https://tyndp2020-project-platform.azurewebsites.net/projectsheets/transmission/1059
+      "TYNDP2020_91": # https://tyndp2020-project-platform.azurewebsites.net/projectsheets/transmission/265 
+      "TYNDP2020_87": 1 # https://tyndp2020-project-platform.azurewebsites.net/projectsheets/transmission/263
+      "TYNDP2020_86": 1 # https://tyndp2020-project-platform.azurewebsites.net/projectsheets/transmission/263
+      "TYNDP2020_60": 100 # https://tyndp2020-project-platform.azurewebsites.net/projectsheets/transmission/227
+      
+Link:
+  bus1:
+    index:
+      "TYNDP2020_30": "2383" # connection IT mainland and Sardinia, https://tyndp2020-project-platform.azurewebsites.net/projectsheets/transmission/299
+      "TYNDP2020_6": "7029" # Italy-Montenegro interconnection, https://tyndp2020-project-platform.azurewebsites.net/projectsheets/transmission/28
+  bus0:
+    index:
+      "TYNDP2020_30": "2379" # connection IT mainland and Sardinia, https://tyndp2020-project-platform.azurewebsites.net/projectsheets/transmission/299
+      "TYNDP2020_29": "2381" # connection Corsica and Sardinia, https://tyndp2020-project-platform.azurewebsites.net/projectsheets/transmission/299
+      "TYNDP2020_23": "5769" # North-Gerany to Rhineland, https://tyndp2020-project-platform.azurewebsites.net/projectsheets/transmission/132
+  p_nom:
+    index:
+      "5582": 400 # connection Corsica and Sardinia, https://tyndp2020-project-platform.azurewebsites.net/projectsheets/transmission/299
+      "TYNDP2020_23": 2000 # North-Gerany to Rhineland, https://tyndp2020-project-platform.azurewebsites.net/projectsheets/transmission/132
