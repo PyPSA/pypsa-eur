@@ -137,10 +137,10 @@ def add_co2_sequestration_limit(n, limit=200):
     n.add(
         "GlobalConstraint",
         "co2_sequestration_limit",
-        sense="<=",
-        constant=limit,
-        type="primary_energy",
-        carrier_attribute="co2_absorptions",
+        sense=">=",
+        constant=-limit,
+        type="operational_limit",
+        carrier_attribute="co2 sequestered",
     )
 
 

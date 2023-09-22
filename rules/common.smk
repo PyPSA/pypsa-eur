@@ -10,7 +10,10 @@ def get_config(config, keys, default=None):
     """Retrieve a nested value from a dictionary using a tuple of keys."""
     value = config
     for key in keys:
-        value = value.get(key, default)
+        if isinstance(value, list):
+            value = value[key]
+        else:
+            value = value.get(key, default)
         if value == default:
             return default
     return value
@@ -40,7 +43,7 @@ def static_getter(wildcards, keys, default):
 
 def dynamic_getter(wildcards, keys, default):
     """Getter function for dynamic config values based on scenario."""
-    if "run" not in wildcards:
+    if "run" not in wildcards.keys():
         return get_config(config, keys, default)
     scenario_name = wildcards.run
     if scenario_name not in scenarios:

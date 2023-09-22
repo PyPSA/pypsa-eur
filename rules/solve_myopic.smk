@@ -5,10 +5,10 @@
 
 rule add_existing_baseyear:
     params:
-        baseyear=config["scenario"]["planning_horizons"][0],
-        sector=config["sector"],
-        existing_capacities=config["existing_capacities"],
-        costs=config["costs"],
+        baseyear=config_provider("scenario", "planning_horizons", 0),
+        sector=config_provider("sector"),
+        existing_capacities=config_provider("existing_capacities"),
+        costs=config_provider("costs"),
     input:
         network=RESULTS
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
@@ -16,7 +16,9 @@ rule add_existing_baseyear:
         busmap_s=resources("busmap_elec_s{simpl}.csv"),
         busmap=resources("busmap_elec_s{simpl}_{clusters}.csv"),
         clustered_pop_layout=resources("pop_layout_elec_s{simpl}_{clusters}.csv"),
-        costs="data/costs_{}.csv".format(config["scenario"]["planning_horizons"][0]),
+        costs=lambda w: "data/costs_{}.csv".format(
+            config_provider("scenario", "planning_horizons", 0)(w)
+        ),
         cop_soil_total=resources("cop_soil_total_elec_s{simpl}_{clusters}.nc"),
         cop_air_total=resources("cop_air_total_elec_s{simpl}_{clusters}.nc"),
         existing_heating="data/existing_infrastructure/existing_heating_raw.csv",
@@ -27,7 +29,7 @@ rule add_existing_baseyear:
         RESULTS
         + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
     wildcard_constraints:
-        planning_horizons=config["scenario"]["planning_horizons"][0],  #only applies to baseyear
+        planning_horizons=config_provider("scenario", "planning_horizons", 0),  #only applies to baseyear
     threads: 1
     resources:
         mem_mb=2000,
@@ -47,9 +49,11 @@ rule add_existing_baseyear:
 
 rule add_brownfield:
     params:
-        H2_retrofit=config["sector"]["H2_retrofit"],
-        H2_retrofit_capacity_per_CH4=config["sector"]["H2_retrofit_capacity_per_CH4"],
-        threshold_capacity=config["existing_capacities"]["threshold_capacity"],
+        H2_retrofit=config_provider("sector", "H2_retrofit"),
+        H2_retrofit_capacity_per_CH4=config_provider(
+            "sector", "H2_retrofit_capacity_per_CH4"
+        ),
+        threshold_capacity=config_provider("existing_capacities", " threshold_capacity"),
     input:
         network=RESULTS
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
@@ -82,11 +86,11 @@ ruleorder: add_existing_baseyear > add_brownfield
 
 rule solve_sector_network_myopic:
     params:
-        solving=config["solving"],
-        foresight=config["foresight"],
-        planning_horizons=config["scenario"]["planning_horizons"],
-        co2_sequestration_potential=config["sector"].get(
-            "co2_sequestration_potential", 200
+        solving=config_provider("solving"),
+        foresight=config_provider("foresight"),
+        planning_horizons=config_provider("scenario", "planning_horizons"),
+        co2_sequestration_potential=config_provider(
+            "sector", "co2_sequestration_potential", default=200
         ),
     input:
         network=RESULTS
@@ -105,8 +109,8 @@ rule solve_sector_network_myopic:
         + "elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_python.log",
     threads: 4
     resources:
-        mem_mb=config["solving"]["mem"],
-        walltime=config["solving"].get("walltime", "12:00:00"),
+        mem_mb=config_provider("solving", "mem"),
+        walltime=config_provider("solving", "walltime", default="12:00:00"),
     benchmark:
         (
             BENCHMARKS
