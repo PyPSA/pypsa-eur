@@ -46,6 +46,12 @@ wildcard_constraints:
     sector_opts="[-+a-zA-Z0-9\.\s]*",
 
 
+rule all:
+    input:
+        RESULTS + "graphs/costs.pdf",
+    default_target: True
+
+
 include: "rules/common.smk"
 include: "rules/collect.smk"
 include: "rules/retrieve.smk"
