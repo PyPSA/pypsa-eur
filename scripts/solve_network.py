@@ -182,9 +182,6 @@ def add_co2_sequestration_limit(n, config, limit=200):
     """
     Add a global constraint on the amount of Mt CO2 that can be sequestered.
     """
-    n.carriers.loc["co2 stored", "co2_absorptions"] = -1
-    n.carriers.co2_absorptions = n.carriers.co2_absorptions.fillna(0)
-
     limit = limit * 1e6
     for o in opts:
         if "seq" not in o:
@@ -396,7 +393,7 @@ def prepare_network(
         if snakemake.params["sector"]["limit_max_growth"]["enable"]:
             n = add_max_growth(n, config)
 
-    if n.stores.carrier.eq("co2 stored").any():
+    if n.stores.carrier.eq("co2 sequestered").any():
         limit = co2_sequestration_potential
         add_co2_sequestration_limit(n, config, limit=limit)
 
