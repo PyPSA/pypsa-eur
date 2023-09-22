@@ -65,7 +65,7 @@ rule base_network:
         lines=config["lines"],
         links=config["links"],
         transformers=config["transformers"],
-        tyndp=config["TYNDP2020"]
+        tyndp=config["TYNDP2020"],
     input:
         eg_buses="data/entsoegridkit/buses.csv",
         eg_lines="data/entsoegridkit/lines.csv",

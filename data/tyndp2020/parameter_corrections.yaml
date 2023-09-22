@@ -1,14 +1,13 @@
-    
 Line:
   length:
     index:
       "TYNDP2020_134": 70 # https://tyndp2020-project-platform.azurewebsites.net/projectsheets/transmission/1059
       "TYNDP2020_133": 70 # https://tyndp2020-project-platform.azurewebsites.net/projectsheets/transmission/1059
-      "TYNDP2020_91": # https://tyndp2020-project-platform.azurewebsites.net/projectsheets/transmission/265 
+      "TYNDP2020_91": # https://tyndp2020-project-platform.azurewebsites.net/projectsheets/transmission/265
       "TYNDP2020_87": 1 # https://tyndp2020-project-platform.azurewebsites.net/projectsheets/transmission/263
       "TYNDP2020_86": 1 # https://tyndp2020-project-platform.azurewebsites.net/projectsheets/transmission/263
       "TYNDP2020_60": 100 # https://tyndp2020-project-platform.azurewebsites.net/projectsheets/transmission/227
-      
+
 Link:
   bus1:
     index:
