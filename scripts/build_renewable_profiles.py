@@ -211,11 +211,7 @@ if __name__ == "__main__":
     correction_factor = params.get("correction_factor", 1.0)
     capacity_per_sqkm = params["capacity_per_sqkm"]
     p_nom_max_meth = params.get("potential", "conservative")
-    snapshots = {
-        "start": snakemake.config["snapshots"]["start"],
-        "end": snakemake.config["snapshots"]["end"],
-        "inclusive": snakemake.config["snapshots"]["inclusive"],
-    }
+    snapshots = snakemake.params.snapshots
 
     if isinstance(params.get("corine", {}), list):
         params["corine"] = {"grid_codes": params["corine"]}

@@ -141,11 +141,7 @@ if not (config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]):
 
 rule build_heat_demands:
     params:
-        snapshots={
-            "start": config["snapshots"]["start"],
-            "end": config["snapshots"]["end"],
-            "inclusive": config["snapshots"]["inclusive"],
-        },
+        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},
     input:
         pop_layout=RESOURCES + "pop_layout_{scope}.nc",
         regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
@@ -167,11 +163,7 @@ rule build_heat_demands:
 
 rule build_temperature_profiles:
     params:
-        snapshots={
-            "start": config["snapshots"]["start"],
-            "end": config["snapshots"]["end"],
-            "inclusive": config["snapshots"]["inclusive"],
-        },
+        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},
     input:
         pop_layout=RESOURCES + "pop_layout_{scope}.nc",
         regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
@@ -223,11 +215,7 @@ rule build_cop_profiles:
 
 rule build_solar_thermal_profiles:
     params:
-        snapshots={
-            "start": config["snapshots"]["start"],
-            "end": config["snapshots"]["end"],
-            "inclusive": config["snapshots"]["inclusive"],
-        },
+        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},
         solar_thermal=config["solar_thermal"],
     input:
         pop_layout=RESOURCES + "pop_layout_{scope}.nc",
@@ -689,11 +677,7 @@ rule build_shipping_demand:
 
 rule build_transport_demand:
     params:
-        snapshots={
-            "start": config["snapshots"]["start"],
-            "end": config["snapshots"]["end"],
-            "inclusive": config["snapshots"]["inclusive"],
-        },
+        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},
         sector=config["sector"],
     input:
         clustered_pop_layout=RESOURCES + "pop_layout_elec_s{simpl}_{clusters}.csv",

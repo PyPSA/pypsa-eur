@@ -709,11 +709,7 @@ def base_network(
     transformers = _set_electrical_parameters_transformers(transformers, config)
     links = _set_electrical_parameters_links(links, config, links_p_nom)
     converters = _set_electrical_parameters_converters(converters, config)
-    snapshots = {
-        "start": config["snapshots"]["start"],
-        "end": config["snapshots"]["end"],
-        "inclusive": config["snapshots"]["inclusive"],
-    }
+    snapshots = snakemake.params.snapshots
 
     n = pypsa.Network()
     n.name = "PyPSA-Eur"

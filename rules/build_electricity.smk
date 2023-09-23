@@ -20,11 +20,7 @@ if config["enable"].get("prepare_links_p_nom", False):
 
 rule build_electricity_demand:
     params:
-        snapshots={
-            "start": config["snapshots"]["start"],
-            "end": config["snapshots"]["end"],
-            "inclusive": config["snapshots"]["inclusive"],
-        },
+        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},
         countries=config["countries"],
         load=config["load"],
     input:
@@ -65,11 +61,7 @@ rule build_powerplants:
 rule base_network:
     params:
         countries=config["countries"],
-        snapshots={
-            "start": config["snapshots"]["start"],
-            "end": config["snapshots"]["end"],
-            "inclusive": config["snapshots"]["inclusive"],
-        },
+        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},
         lines=config["lines"],
         links=config["links"],
         transformers=config["transformers"],
@@ -152,11 +144,7 @@ if config["enable"].get("build_cutout", False):
 
     rule build_cutout:
         params:
-            snapshots={
-                "start": config["snapshots"]["start"],
-                "end": config["snapshots"]["end"],
-                "inclusive": config["snapshots"]["inclusive"],
-            },
+            snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},
             cutouts=config["atlite"]["cutouts"],
         input:
             regions_onshore=RESOURCES + "regions_onshore.geojson",
@@ -220,6 +208,7 @@ rule build_ship_raster:
 
 rule build_renewable_profiles:
     params:
+        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},
         renewable=config["renewable"],
     input:
         base_network=RESOURCES + "networks/base.nc",
@@ -310,6 +299,8 @@ rule build_hydro_profile:
 if config["lines"]["dynamic_line_rating"]["activate"]:
 
     rule build_line_rating:
+        params:
+            snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},
         input:
             base_network=RESOURCES + "networks/base.nc",
             cutout="cutouts/"

@@ -314,26 +314,22 @@ if __name__ == "__main__":
     # temporal averaging
     nhours_config = snakemake.params.snapshots.get("resolution", False)
     nhours_wildcard = get_opt(opts, r"^\d+h$")
-    if nhours_wildcard is not None or isinstance(nhours_config, str):
-        nhours = nhours_wildcard or nhours_config
+    nhours = nhours_wildcard or nhours_config
+    if nhours:
         n = average_every_nhours(n, nhours)
 
     # segments with package tsam
     time_seg_config = snakemake.params.snapshots.get("segmentation", False)
     time_seg_wildcard = get_opt(opts, r"^\d+seg$")
-    if time_seg_wildcard is not None or isinstance(time_seg_config, str):
-        time_seg = time_seg_wildcard or time_seg_config
+    time_seg = time_seg_wildcard or time_seg_config
+    if time_seg:
         solver_name = snakemake.config["solving"]["solver"]["name"]
         n = apply_time_segmentation(n, time_seg, solver_name)
 
-    Co2L_config = snakemake.params.co2limit_enable and isinstance(
-        snakemake.params.co2limit, float
-    )
+    Co2L_config = snakemake.params.co2limit_enable
     Co2L_wildcard, co2limit_wildcard = find_opt(opts, "Co2L")
     if Co2L_wildcard or Co2L_config:
-        if (
-            co2limit_wildcard is not None
-        ):  # TODO: what if you wat to determine the factor through the wildcard?
+        if co2limit_wildcard is not None:
             co2limit = co2limit_wildcard * snakemake.params.co2base
             add_co2limit(n, co2limit, Nyears)
             logger.info("Setting CO2 limit according to wildcard value.")
@@ -341,14 +337,10 @@ if __name__ == "__main__":
             add_co2limit(n, snakemake.params.co2limit, Nyears)
             logger.info("Setting CO2 limit according to config value.")
 
-    CH4L_config = snakemake.params.gaslimit_enable and isinstance(
-        snakemake.params.gaslimit, float
-    )
+    CH4L_config = snakemake.params.gaslimit_enable
     CH4L_wildcard, gaslimit_wildcard = find_opt(opts, "CH4L")
     if CH4L_wildcard or CH4L_config:
-        if (
-            gaslimit_wildcard is not None
-        ):  # TODO: what if you wat to determine the factor through the wildcard?
+        if gaslimit_wildcard is not None:
             gaslimit = gaslimit_wildcard * 1e6
             add_gaslimit(n, gaslimit, Nyears)
             logger.info("Setting gas usage limit according to wildcard value.")
@@ -375,20 +367,18 @@ if __name__ == "__main__":
                     sel = c.df.carrier.str.contains(carrier)
                     c.df.loc[sel, attr] *= factor
 
-    Ept_config = snakemake.params.costs["emission_prices"].get(
-        "co2_monthly_prices", False
-    )
-    for o in opts:
-        if "Ept" in o or Ept_config:
-            logger.info(
-                "Setting time dependent emission prices according spot market price"
-            )
-            add_dynamic_emission_prices(n)
-            Ept_config = True
-
-    Ep_config = snakemake.params.costs["emission_prices"].get("enable", False)
+    emission_prices = snakemake.params.costs["emission_prices"]
+    Ept_config = emission_prices.get("co2_monthly_prices", False)
+    Ept_wildcard = "Ept" in opts
+    Ep_config = emission_prices.get("enable", False)
     Ep_wildcard, co2_wildcard = find_opt(opts, "Ep")
-    if (Ep_wildcard or Ep_config) and not Ept_config:
+
+    if Ept_wildcard or Ept_config:
+        logger.info(
+            "Setting time dependent emission prices according spot market price"
+        )
+        add_dynamic_emission_prices(n)
+    elif Ep_wildcard or Ep_config:
         if co2_wildcard is not None:
             logger.info("Setting CO2 prices according to wildcard value.")
             add_emission_prices(n, dict(co2=co2_wildcard))
