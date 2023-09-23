@@ -46,12 +46,6 @@ wildcard_constraints:
     sector_opts="[-+a-zA-Z0-9\.\s]*",
 
 
-rule all:
-    input:
-        RESULTS + "graphs/costs.pdf",
-    default_target: True
-
-
 include: "rules/common.smk"
 include: "rules/collect.smk"
 include: "rules/retrieve.smk"
@@ -70,6 +64,12 @@ if config["foresight"] == "overnight":
 if config["foresight"] == "myopic":
 
     include: "rules/solve_myopic.smk"
+
+
+rule all:
+    input:
+        RESULTS + "graphs/costs.pdf",
+    default_target: True
 
 
 rule purge:
