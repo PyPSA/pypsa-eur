@@ -645,21 +645,22 @@ def solve_network(n, config, solving, opts="", **kwargs):
 
     # check if enhanced_geothermal_performant might have changed model results
     if (
-        snakemake.config["sector"]["enhanced_geothermal"] and
-        snakemake.config["sector"]["enhanced_geothermal_performant"]
-        ):
-        mask = (
-            (mask := n.links.carrier == "geothermal heat") &
-            (n.links.loc[mask, "p_nom_max"] > 0.)
+        snakemake.config["sector"]["enhanced_geothermal"]
+        and snakemake.config["sector"]["enhanced_geothermal_performant"]
+    ):
+        mask = (mask := n.links.carrier == "geothermal heat") & (
+            n.links.loc[mask, "p_nom_max"] > 0.0
         )
-        
+
         saturated = n.links.loc[mask, "p_nom_max"] == n.links.loc[mask, "p_nom_opt"]
 
         if len(satbus := n.links.loc[saturated, "location"].unique()) > 0:
-            logger.warning((
-                f"Potential for enhanced geothermal heat is saturated at bus(es): {satbus}\n"
-                "Consider setting config['sector']['enhanced_geothermal_performant'] to False."
-            ))
+            logger.warning(
+                (
+                    f"Potential for enhanced geothermal heat is saturated at bus(es): {satbus}\n"
+                    "Consider setting config['sector']['enhanced_geothermal_performant'] to False."
+                )
+            )
 
     return n
 
