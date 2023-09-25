@@ -645,12 +645,11 @@ def solve_network(n, config, solving, opts="", **kwargs):
 
     # check if enhanced_geothermal_performant might have changed model results
     if (
-        snakemake.config["sector"]["enhanced_geothermal"] and
-        snakemake.config["sector"]["enhanced_geothermal_performant"]
-        ):
-        mask = (
-            (mask := n.links.carrier == "geothermal heat") &
-            (n.links.loc[mask, "p_nom_max"] > 0.)
+        snakemake.config["sector"]["enhanced_geothermal"]
+        and snakemake.config["sector"]["enhanced_geothermal_performant"]
+    ):
+        mask = (mask := n.links.carrier == "geothermal heat") & (
+            n.links.loc[mask, "p_nom_max"] > 0.0
         )
 
         saturated = n.links.loc[mask, "p_nom_max"] == n.links.loc[mask, "p_nom_opt"]
