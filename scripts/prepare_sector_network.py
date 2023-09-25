@@ -3301,7 +3301,6 @@ def add_enhanced_geothermal(
     )
 
     config = snakemake.config
-    print(costs.loc[costs.index.str.contains("geothermal")])
 
     overlap = pd.read_csv(egs_overlap, index_col=0)
     egs_potentials = pd.read_csv(egs_potentials, index_col=0)
@@ -3314,7 +3313,11 @@ def add_enhanced_geothermal(
 
     egs_potentials["capital_cost"] = (
         (egs_annuity + 0.02 / 1.02) * egs_potentials["CAPEX"] * Nyears
+        # (egs_annuity + (opex := costs.at["geothermal", "FOM"]) / (1. + opex)) 
+        # * egs_potentials["CAPEX"] * Nyears
     )
+    # fixed OPEX of 2 % taken from NREL https://atb.nrel.gov/electricity/2023/index
+    # out-commented version will replace current one, once tech-data is updated
 
     # Uncommented for causing a crash for runs with default config.
     # this throws an error, as the retrieved costs are not
