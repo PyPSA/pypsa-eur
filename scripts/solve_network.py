@@ -652,12 +652,13 @@ def solve_network(n, config, solving, opts="", **kwargs):
             (mask := n.links.carrier == "geothermal heat") &
             (n.links.loc[mask, "p_nom_max"] > 0.)
         )
-        
+
         saturated = n.links.loc[mask, "p_nom_max"] == n.links.loc[mask, "p_nom_opt"]
 
-        if len(satbus := n.links.loc[saturated, "location"].unique()) > 0:
+        if saturated.any():
             logger.warning((
-                f"Potential for enhanced geothermal heat is saturated at bus(es): {satbus}\n"
+                "Potential for enhanced geothermal heat is saturated at bus(es):\n"
+                f"{', '.join(n.links.loc[saturated.loc[saturated.astype(bool)].index, 'location'].tolist())}.\n"
                 "Consider setting config['sector']['enhanced_geothermal_performant'] to False."
             ))
 

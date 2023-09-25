@@ -3301,6 +3301,7 @@ def add_enhanced_geothermal(
     )
 
     config = snakemake.config
+    print(costs.loc[costs.index.str.contains("geothermal")])
 
     overlap = pd.read_csv(egs_overlap, index_col=0)
     egs_potentials = pd.read_csv(egs_potentials, index_col=0)
@@ -3360,7 +3361,7 @@ def add_enhanced_geothermal(
         bus_egs["p_nom_max"] = bus_egs["p_nom_max"].multiply(bus_overlap)
         bus_egs = bus_egs.loc[bus_egs.p_nom_max > 0.0]
 
-        if config["sector"]["enhanced_geothermal_best_only"]:
+        if config["sector"]["enhanced_geothermal_performant"]:
             bus_egs = bus_egs.sort_values(by="capital_cost").iloc[:1]
             appendix = pd.Index([""])
         else:
@@ -3377,6 +3378,7 @@ def add_enhanced_geothermal(
         n.madd(
             "Link",
             f"{bus} enhanced geothermal" + appendix,
+            location=bus,
             bus0="EU geothermal heat",
             bus1=bus,
             bus2="co2 atmosphere",
