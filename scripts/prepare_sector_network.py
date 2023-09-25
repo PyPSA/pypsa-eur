@@ -3312,8 +3312,10 @@ def add_enhanced_geothermal(
     egs_annuity = calculate_annuity(lt, dr)
 
     egs_potentials["capital_cost"] = (
-        (egs_annuity + 0.02 / 1.02) * egs_potentials["CAPEX"] * Nyears
-        # (egs_annuity + (opex := costs.at["geothermal", "FOM"]) / (1. + opex)) 
+        (egs_annuity + 0.02 / 1.02)
+        * egs_potentials["CAPEX"]
+        * Nyears
+        # (egs_annuity + (opex := costs.at["geothermal", "FOM"]) / (1. + opex))
         # * egs_potentials["CAPEX"] * Nyears
     )
     # fixed OPEX of 2 % taken from NREL https://atb.nrel.gov/electricity/2023/index
