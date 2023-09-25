@@ -20,6 +20,8 @@ Upcoming Release
 
 * Files extracted from sector-coupled data bundle have been moved from ``data/`` to ``data/sector-bundle``.
 
+* Added Enhanced Geothermal Systems for electricity generation.
+
 PyPSA-Eur 0.8.1 (27th July 2023)
 ================================
 
