@@ -3303,6 +3303,7 @@ def add_enhanced_geothermal(
     config = snakemake.config
 
     overlap = pd.read_csv(egs_overlap, index_col=0)
+    overlap.columns = overlap.columns.astype(int)
     egs_potentials = pd.read_csv(egs_potentials, index_col=0)
 
     Nyears = n.snapshot_weightings.generators.sum() / 8760
@@ -3343,20 +3344,16 @@ def add_enhanced_geothermal(
         "EU geothermal heat",
         bus="EU geothermal heat",
         carrier="geothermal heat",
-        p_nom_max=np.inf,
+        p_nom_max=egs_potentials["p_nom_max"].sum() / efficiency,
         p_nom_extendable=True,
     )
-
-    egs_potentials.index = np.arange(len(egs_potentials)).astype(str)
-    overlap.columns = egs_potentials.index
 
     for bus, bus_overlap in overlap.iterrows():
         if not bus_overlap.sum():
             continue
 
         overlap = bus_overlap.loc[bus_overlap > 0.0]
-
-        bus_egs = egs_potentials.loc[bus_overlap.loc[bus_overlap > 0.0].index]
+        bus_egs = egs_potentials.loc[overlap.index]
 
         if not len(bus_egs):
             continue
@@ -3567,7 +3564,7 @@ if __name__ == "__main__":
     if options.get("cluster_heat_buses", False) and not first_year_myopic:
         cluster_heat_buses(n)
 
-    if options.get("enhanced_geothermal"):
+    if options.get("enhanced_geothermal", False):
         logger.info("Adding Enhanced Geothermal Potential.")
         add_enhanced_geothermal(
             n, snakemake.input["egs_potentials"], snakemake.input["egs_overlap"], costs
