@@ -223,7 +223,7 @@ def prepare_building_stock_data():
         usecols=[0, 1, 2, 3],
         encoding="ISO-8859-1",
     )
-    area_tot = area_tot.append(area_missing.unstack(level=-1).dropna().stack())
+    area_tot = pd.concat([area_tot, area_missing.unstack(level=-1).dropna().stack()])
     area_tot = area_tot.loc[~area_tot.index.duplicated(keep="last")]
 
     # for still missing countries calculate floor area by population size
@@ -246,7 +246,7 @@ def prepare_building_stock_data():
         averaged_data.index = index
         averaged_data["estimated"] = 1
         if ct not in area_tot.index.levels[0]:
-            area_tot = area_tot.append(averaged_data, sort=True)
+            area_tot = pd.concat([area_tot, averaged_data], sort=True)
         else:
             area_tot.loc[averaged_data.index] = averaged_data
 
@@ -272,7 +272,7 @@ def prepare_building_stock_data():
             ][x["bage"]].iloc[0],
             axis=1,
         )
-        data_PL_final = data_PL_final.append(data_PL)
+        data_PL_final = pd.concat([data_PL_final, data_PL])
 
     u_values = pd.concat([u_values, data_PL_final]).reset_index(drop=True)
 
@@ -966,7 +966,7 @@ def sample_dE_costs_area(
             .mean(level=1)
             .set_index(pd.MultiIndex.from_product([[ct], cost_dE.index.levels[1]]))
         )
-        cost_dE = cost_dE.append(averaged_data)
+        cost_dE = pd.concat(cost_dE, averaged_data)
 
     # weights costs after construction index
     if construction_index:
@@ -995,12 +995,12 @@ def sample_dE_costs_area(
             )
         )
     )
-    cost_dE = cost_dE.append(tot).unstack().stack()
+    cost_dE = pd.concat(cost_dE, tot).unstack().stack()
 
     summed_area = pd.DataFrame(area_tot.groupby("country").sum()).set_index(
         pd.MultiIndex.from_product([area_tot.index.unique(level="country"), ["tot"]])
     )
-    area_tot = area_tot.append(summed_area).unstack().stack()
+    area_tot = pd.concat(area_tot, summed_area).unstack().stack()
 
     cost_per_saving = cost_dE["cost"] / (
         1 - cost_dE["dE"]
