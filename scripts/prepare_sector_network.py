@@ -3280,119 +3280,6 @@ def set_temporal_aggregation(n, opts, solver_name):
     return n
 
 
-def add_enhanced_geothermal(
-    n,
-    egs_potentials,
-    egs_overlap,
-    costs,
-):
-    """
-    Adds EGS potential to model.
-
-    Built in scripts/build_egs_potentials.py
-    """
-
-    n.add(
-        "Carrier",
-        "geothermal heat",
-        nice_name="Geothermal Heat",
-        color=snakemake.config["plotting"]["tech_colors"]["geothermal"],
-        co2_emissions=costs.at["geothermal", "CO2 intensity"],
-    )
-
-    config = snakemake.config
-
-    overlap = pd.read_csv(egs_overlap, index_col=0)
-    overlap.columns = overlap.columns.astype(int)
-    egs_potentials = pd.read_csv(egs_potentials, index_col=0)
-
-    Nyears = n.snapshot_weightings.generators.sum() / 8760
-    dr = config["costs"]["fill_values"]["discount rate"]
-    lt = costs.at["geothermal", "lifetime"]
-
-    egs_annuity = calculate_annuity(lt, dr)
-
-    egs_potentials["capital_cost"] = (
-        (egs_annuity + 0.02 / 1.02)
-        * egs_potentials["CAPEX"]
-        * Nyears
-        # (egs_annuity + (opex := costs.at["geothermal", "FOM"]) / (1. + opex))
-        # * egs_potentials["CAPEX"] * Nyears
-    )
-    # fixed OPEX of 2 % taken from NREL https://atb.nrel.gov/electricity/2023/index
-    # out-commented version will replace current one, once tech-data is updated
-
-    # Uncommented for causing a crash for runs with default config.
-    # this throws an error, as the retrieved costs are not
-    # the same as the ones built by tech-data.
-    # efficiency = costs.at["geothermal", "efficiency electricity"]
-    efficiency = 0.1
-
-    # p_nom_max conversion GW -> MW
-    # capital_cost conversion Euro/kW -> Euro/MW
-    egs_potentials["p_nom_max"] = egs_potentials["p_nom_max"] * 1000.0
-    egs_potentials["capital_cost"] = egs_potentials["capital_cost"] * 1000.0
-
-    n.add(
-        "Bus",
-        "EU geothermal heat",
-        carrier="geothermal heat",
-        unit="MWh_th",
-        location="EU",
-    )
-
-    n.add(
-        "Generator",
-        "EU geothermal heat",
-        bus="EU geothermal heat",
-        carrier="geothermal heat",
-        p_nom_max=egs_potentials["p_nom_max"].sum() / efficiency,
-        p_nom_extendable=True,
-    )
-
-    for bus, bus_overlap in overlap.iterrows():
-        if not bus_overlap.sum():
-            continue
-
-        overlap = bus_overlap.loc[bus_overlap > 0.0]
-        bus_egs = egs_potentials.loc[overlap.index]
-
-        if not len(bus_egs):
-            continue
-
-        bus_egs["p_nom_max"] = bus_egs["p_nom_max"].multiply(bus_overlap)
-        bus_egs = bus_egs.loc[bus_egs.p_nom_max > 0.0]
-
-        if config["sector"]["enhanced_geothermal_performant"]:
-            bus_egs = bus_egs.sort_values(by="capital_cost").iloc[:1]
-            appendix = pd.Index([""])
-        else:
-            appendix = " " + pd.Index(np.arange(len(bus_egs)).astype(str))
-
-        bus_egs.index = np.arange(len(bus_egs)).astype(str)
-
-        p_nom_max = bus_egs["p_nom_max"]
-        p_nom_max.index = f"{bus} enhanced geothermal" + appendix
-
-        capital_cost = bus_egs["capital_cost"]
-        capital_cost.index = f"{bus} enhanced geothermal" + appendix
-
-        n.madd(
-            "Link",
-            f"{bus} enhanced geothermal" + appendix,
-            location=bus,
-            bus0="EU geothermal heat",
-            bus1=bus,
-            bus2="co2 atmosphere",
-            carrier="geothermal heat",
-            p_nom_extendable=True,
-            p_nom_max=p_nom_max / efficiency,
-            capital_cost=capital_cost * efficiency,
-            efficiency=efficiency,
-            efficiency2=costs.at["geothermal", "CO2 intensity"] * efficiency,
-        )
-
-
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -3565,12 +3452,6 @@ if __name__ == "__main__":
 
     if options.get("cluster_heat_buses", False) and not first_year_myopic:
         cluster_heat_buses(n)
-
-    if options.get("enhanced_geothermal", False):
-        logger.info("Adding Enhanced Geothermal Potential.")
-        add_enhanced_geothermal(
-            n, snakemake.input["egs_potentials"], snakemake.input["egs_overlap"], costs
-        )
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
 

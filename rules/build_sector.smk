@@ -703,24 +703,6 @@ rule build_transport_demand:
         "../scripts/build_transport_demand.py"
 
 
-rule build_egs_potentials:
-    input:
-        egs_cost="data/egs_costs.json",
-        shapes=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
-    output:
-        egs_potentials=RESOURCES + "egs_potentials_s{simpl}_{clusters}.csv",
-        egs_overlap=RESOURCES + "egs_overlap_s{simpl}_{clusters}.csv",
-    threads: 1
-    resources:
-        mem_mb=2000,
-    log:
-        LOGS + "build_egs_potentials_s{simpl}_{clusters}.log",
-    conda:
-        "../envs/environment.yaml"
-    script:
-        "../scripts/build_egs_potentials.py"
-
-
 rule prepare_sector_network:
     params:
         co2_budget=config["co2_budget"],
@@ -782,8 +764,6 @@ rule prepare_sector_network:
         cop_air_total=RESOURCES + "cop_air_total_elec_s{simpl}_{clusters}.nc",
         cop_air_rural=RESOURCES + "cop_air_rural_elec_s{simpl}_{clusters}.nc",
         cop_air_urban=RESOURCES + "cop_air_urban_elec_s{simpl}_{clusters}.nc",
-        egs_potentials=RESOURCES + "egs_potentials_s{simpl}_{clusters}.csv",
-        egs_overlap=RESOURCES + "egs_overlap_s{simpl}_{clusters}.csv",
         solar_thermal_total=RESOURCES
         + "solar_thermal_total_elec_s{simpl}_{clusters}.nc"
         if config["sector"]["solar_thermal"]
