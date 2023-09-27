@@ -203,7 +203,7 @@ def prepare_building_stock_data():
         (building_data.type == "Heated area [Mm²]")
         & (building_data.detail != "Total")
     ]
-    area_tot = area.groupby(["country", "sector"]).sum()
+    area_tot = area[["country", "sector", "value"]].groupby(["country", "sector"]).sum()
     area = pd.concat(
         [
             area,
