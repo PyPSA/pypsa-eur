@@ -66,6 +66,12 @@ if config["foresight"] == "myopic":
     include: "rules/solve_myopic.smk"
 
 
+rule all:
+    input:
+        RESULTS + "graphs/costs.pdf",
+    default_target: True
+
+
 rule purge:
     message:
         "Purging generated resources, results and docs. Downloads are kept."

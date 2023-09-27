@@ -20,7 +20,10 @@ Upcoming Release
 
 * Files extracted from sector-coupled data bundle have been moved from ``data/`` to ``data/sector-bundle``.
 
-* Added Enhanced Geothermal Systems for electricity generation.
+
+**Bugs and Compatibility**
+
+* A bug preventing custom powerplants specified in ``data/custom_powerplants.csv`` was fixed. (https://github.com/PyPSA/pypsa-eur/pull/732)
 
 PyPSA-Eur 0.8.1 (27th July 2023)
 ================================
