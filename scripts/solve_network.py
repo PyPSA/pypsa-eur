@@ -33,7 +33,7 @@ import numpy as np
 import pandas as pd
 import pypsa
 import xarray as xr
-from _helpers import configure_logging, update_config_with_sector_opts, get_opt
+from _helpers import configure_logging, get_opt, update_config_with_sector_opts
 
 logger = logging.getLogger(__name__)
 pypsa.pf.logger.setLevel(logging.WARNING)
@@ -542,7 +542,6 @@ def add_chp_constraints(n):
     # back-pressure
     if not electric.empty:
         lhs = (
-
             p.loc[:, heat] * (n.links.efficiency[heat] * n.links.c_b[electric].values)
             - p.loc[:, electric] * n.links.efficiency[electric]
         )
@@ -582,18 +581,24 @@ def extra_functionality(n, snapshots):
     opts = n.opts
     config = n.config
     constraints = config["solving"].get("constraints", {})
-    if ("BAU" in opts or constraints.get("BAU",False)) and n.generators.p_nom_extendable.any():
+    if (
+        "BAU" in opts or constraints.get("BAU", False)
+    ) and n.generators.p_nom_extendable.any():
         add_BAU_constraints(n, config)
-    if ("SAFE" in opts or constraints.get("SAFE",False)) and n.generators.p_nom_extendable.any():
+    if (
+        "SAFE" in opts or constraints.get("SAFE", False)
+    ) and n.generators.p_nom_extendable.any():
         add_SAFE_constraints(n, config)
-    if ("CCL" in opts or constraints.get("CCL",False)) and n.generators.p_nom_extendable.any():
+    if (
+        "CCL" in opts or constraints.get("CCL", False)
+    ) and n.generators.p_nom_extendable.any():
         add_CCL_constraints(n, config)
 
     reserve = config["electricity"].get("operational_reserve", {})
     if reserve.get("activate"):
         add_operational_reserve_margin(n, snapshots, config)
 
-    EQ_config = constraints.get("EQ",False)
+    EQ_config = constraints.get("EQ", False)
     EQ_wildcard = get_opt(opts, r"^EQ+[0-9]*\.?[0-9]+(c|)")
     EQ_o = EQ_wildcard or EQ_config
     if EQ_o:

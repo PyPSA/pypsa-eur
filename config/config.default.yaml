@@ -622,7 +622,7 @@ solving:
     transmission_losses: 0
     linearized_unit_commitment: true
     horizon: 365
-    
+
   constraints:
     CCL: false
     EQ: false
