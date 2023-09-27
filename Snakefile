@@ -75,7 +75,10 @@ rule all:
 rule purge:
     run:
         import builtins
-        do_purge = builtins.input("Do you really want to delete all generated resources, \nresults and docs (downloads are kept)? [y/N] ")
+
+        do_purge = builtins.input(
+            "Do you really want to delete all generated resources, \nresults and docs (downloads are kept)? [y/N] "
+        )
         if do_purge == "y":
             rmtree("resources/", ignore_errors=True)
             rmtree("results/", ignore_errors=True)
