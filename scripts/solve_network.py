@@ -643,26 +643,6 @@ def solve_network(n, config, solving, opts="", **kwargs):
     if "infeasible" in condition:
         raise RuntimeError("Solving status 'infeasible'")
 
-    # check if enhanced_geothermal_performant might have changed model results
-    if (
-        snakemake.config["sector"]["enhanced_geothermal"]
-        and snakemake.config["sector"]["enhanced_geothermal_performant"]
-    ):
-        mask = (mask := n.links.carrier == "geothermal heat") & (
-            n.links.loc[mask, "p_nom_max"] > 0.0
-        )
-
-        saturated = n.links.loc[mask, "p_nom_max"] == n.links.loc[mask, "p_nom_opt"]
-
-        if saturated.any():
-            logger.warning(
-                (
-                    "Potential for enhanced geothermal heat is saturated at bus(es):\n"
-                    f"{', '.join(n.links.loc[saturated.loc[saturated.astype(bool)].index, 'location'].tolist())}.\n"
-                    "Consider setting config['sector']['enhanced_geothermal_performant'] to False."
-                )
-            )
-
     return n
 
 
