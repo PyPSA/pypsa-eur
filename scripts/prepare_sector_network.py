@@ -264,6 +264,8 @@ def build_carbon_budget(o, input_eurostat, fn, emissions_scope, report_year, inp
     )
 
     planning_horizons = snakemake.params.planning_horizons
+    if not isinstance(planning_horizons, list):
+        planning_horizons = [planning_horizons]
     t_0 = planning_horizons[0]
 
     if "be" in o:
@@ -2252,6 +2254,7 @@ def add_biomass(n, costs):
             marginal_cost=costs.at["solid biomass", "fuel"]
             + bus_transport_costs * average_distance,
         )
+
         n.add(
             "GlobalConstraint",
             "biomass limit",
