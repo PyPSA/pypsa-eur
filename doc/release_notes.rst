@@ -25,6 +25,9 @@ Upcoming Release
 
 * In pathway mode, the biomass potential is linked to the investment year.
 
+* Rule ``purge`` now initiates a dialog to confirm if purge is desired.
+
+
 **Bugs and Compatibility**
 
 * A bug preventing custom powerplants specified in ``data/custom_powerplants.csv`` was fixed. (https://github.com/PyPSA/pypsa-eur/pull/732)
