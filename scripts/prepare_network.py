@@ -63,7 +63,7 @@ import re
 import numpy as np
 import pandas as pd
 import pypsa
-from _helpers import configure_logging, get_opt, find_opt
+from _helpers import configure_logging, find_opt, get_opt
 from add_electricity import load_costs, update_transmission_costs
 from pypsa.descriptors import expand_series
 

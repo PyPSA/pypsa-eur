@@ -36,6 +36,7 @@ def get_opt(opts, expr, flags=None):
             return match.group(0)
     return None
 
+
 def find_opt(opts, expr):
     """
     Return if available the float after the expression.
@@ -48,6 +49,7 @@ def find_opt(opts, expr):
             else:
                 return True, None
     return False, None
+
 
 # Define a context manager to temporarily mute print statements
 @contextlib.contextmanager
