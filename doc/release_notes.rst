@@ -20,6 +20,7 @@ Upcoming Release
 
 * Files extracted from sector-coupled data bundle have been moved from ``data/`` to ``data/sector-bundle``.
 
+* Rule ``purge`` now initiates a dialog to confirm if purge is desired.
 
 **Bugs and Compatibility**
 
