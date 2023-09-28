@@ -63,27 +63,13 @@ import re
 import numpy as np
 import pandas as pd
 import pypsa
-from _helpers import configure_logging, get_opt
+from _helpers import configure_logging, get_opt, find_opt
 from add_electricity import load_costs, update_transmission_costs
 from pypsa.descriptors import expand_series
 
 idx = pd.IndexSlice
 
 logger = logging.getLogger(__name__)
-
-
-def find_opt(opts, expr):
-    """
-    Return if available the float after the expression.
-    """
-    for o in opts:
-        if expr in o:
-            m = re.findall("[0-9]*\.?[0-9]+$", o)
-            if len(m) > 0:
-                return True, float(m[0])
-            else:
-                return True, None
-    return False, None
 
 
 def add_co2limit(n, co2limit, Nyears=1.0):
@@ -320,7 +306,7 @@ if __name__ == "__main__":
 
     # segments with package tsam
     time_seg_config = snakemake.params.snapshots.get("segmentation", False)
-    time_seg_wildcard = get_opt(opts, r"^\d+seg$")
+    time_seg_wildcard = get_opt(opts, r"^\d+seg$")[:-3]
     time_seg = time_seg_wildcard or time_seg_config
     if time_seg:
         solver_name = snakemake.config["solving"]["solver"]["name"]

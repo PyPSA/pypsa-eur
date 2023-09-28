@@ -36,6 +36,18 @@ def get_opt(opts, expr, flags=None):
             return match.group(0)
     return None
 
+def find_opt(opts, expr):
+    """
+    Return if available the float after the expression.
+    """
+    for o in opts:
+        if expr in o:
+            m = re.findall("[0-9]*\.?[0-9]+$", o)
+            if len(m) > 0:
+                return True, float(m[0])
+            else:
+                return True, None
+    return False, None
 
 # Define a context manager to temporarily mute print statements
 @contextlib.contextmanager

@@ -598,8 +598,8 @@ def extra_functionality(n, snapshots):
     if reserve.get("activate"):
         add_operational_reserve_margin(n, snapshots, config)
 
-    EQ_config = constraints.get("EQ", False)
-    EQ_wildcard = get_opt(opts, r"^EQ+[0-9]*\.?[0-9]+(c|)")
+    EQ_config = constraints.get("EQ",False)
+    EQ_wildcard = get_opt(opts, r"^EQ+[0-9]*\.?[0-9]+(c|)")[2:]
     EQ_o = EQ_wildcard or EQ_config
     if EQ_o:
         add_EQ_constraints(n, EQ_o)
