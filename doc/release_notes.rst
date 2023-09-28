@@ -20,7 +20,13 @@ Upcoming Release
 
 * Files extracted from sector-coupled data bundle have been moved from ``data/`` to ``data/sector-bundle``.
 
+* It is now possible to specify years for biomass potentials which do not exist
+  in the JRC-ENSPRESO database, e.g. 2037. These are linearly interpolated.
+
+* In pathway mode, the biomass potential is linked to the investment year.
+
 * Rule ``purge`` now initiates a dialog to confirm if purge is desired.
+
 
 **Bugs and Compatibility**
 
