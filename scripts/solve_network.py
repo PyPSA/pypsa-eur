@@ -602,7 +602,7 @@ def extra_functionality(n, snapshots):
     EQ_wildcard = get_opt(opts, r"^EQ+[0-9]*\.?[0-9]+(c|)")
     EQ_o = EQ_wildcard or EQ_config
     if EQ_o:
-        add_EQ_constraints(n, EQ_o.replace("EQ",""))
+        add_EQ_constraints(n, EQ_o.replace("EQ", ""))
 
     add_battery_constraints(n)
     add_pipe_retrofit_constraint(n)

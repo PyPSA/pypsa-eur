@@ -310,7 +310,7 @@ if __name__ == "__main__":
     time_seg = time_seg_wildcard or time_seg_config
     if time_seg:
         solver_name = snakemake.config["solving"]["solver"]["name"]
-        n = apply_time_segmentation(n, time_seg.replace("seg",""), solver_name)
+        n = apply_time_segmentation(n, time_seg.replace("seg", ""), solver_name)
 
     Co2L_config = snakemake.params.co2limit_enable
     Co2L_wildcard, co2limit_wildcard = find_opt(opts, "Co2L")
