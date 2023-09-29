@@ -14,12 +14,6 @@ localrules:
     plot_networks,
 
 
-rule all:
-    input:
-        RESULTS + "graphs/costs.pdf",
-    default_target: True
-
-
 rule cluster_networks:
     input:
         expand(RESOURCES + "networks/elec_s{simpl}_{clusters}.nc", **config["scenario"]),

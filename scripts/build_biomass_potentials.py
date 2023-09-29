@@ -7,8 +7,14 @@ Compute biogas and solid biomass potentials for each clustered model region
 using data from JRC ENSPRESO.
 """
 
+import logging
+
+logger = logging.getLogger(__name__)
 import geopandas as gpd
+import numpy as np
 import pandas as pd
+
+AVAILABLE_BIOMASS_YEARS = [2010, 2020, 2030, 2040, 2050]
 
 
 def build_nuts_population_data(year=2013):
@@ -208,13 +214,41 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_biomass_potentials", simpl="", clusters="5")
+        snakemake = mock_snakemake(
+            "build_biomass_potentials",
+            simpl="",
+            clusters="5",
+            planning_horizons=2050,
+        )
 
+    overnight = snakemake.config["foresight"] == "overnight"
     params = snakemake.params.biomass
-    year = params["year"]
+    investment_year = int(snakemake.wildcards.planning_horizons)
+    year = params["year"] if overnight else investment_year
     scenario = params["scenario"]
 
-    enspreso = enspreso_biomass_potentials(year, scenario)
+    if year > 2050:
+        logger.info("No biomass potentials for years after 2050, using 2050.")
+        max_year = max(AVAILABLE_BIOMASS_YEARS)
+        enspreso = enspreso_biomass_potentials(max_year, scenario)
+
+    elif year not in AVAILABLE_BIOMASS_YEARS:
+        before = int(np.floor(year / 10) * 10)
+        after = int(np.ceil(year / 10) * 10)
+        logger.info(
+            f"No biomass potentials for {year}, interpolating linearly between {before} and {after}."
+        )
+
+        enspreso_before = enspreso_biomass_potentials(before, scenario)
+        enspreso_after = enspreso_biomass_potentials(after, scenario)
+
+        fraction = (year - before) / (after - before)
+
+        enspreso = enspreso_before + fraction * (enspreso_after - enspreso_before)
+
+    else:
+        logger.info(f"Using biomass potentials for {year}.")
+        enspreso = enspreso_biomass_potentials(year, scenario)
 
     enspreso = disaggregate_nuts0(enspreso)
 
