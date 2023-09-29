@@ -312,7 +312,7 @@ if config["lines"]["dynamic_line_rating"]["activate"]:
             benchmarks("build_line_rating")
         threads: ATLITE_NPROCESSES
         resources:
-            mem_mb=ATLITE_NPROCESSES * 1000,
+            mem_mb=ATLITE_NPROCESSES * 3000,
         conda:
             "../envs/environment.yaml"
         script:
