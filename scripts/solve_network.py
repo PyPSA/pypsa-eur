@@ -194,7 +194,7 @@ def add_co2_sequestration_limit(n, config, limit=200):
         limit = float(o[o.find("seq") + 3 :]) * 1e6
         break
 
-    if config["foresight"] == "perfect":
+    if not n.investment_periods.empty:
         periods = n.investment_periods
         names = pd.Index([f"co2_sequestration_limit-{period}" for period in periods])
     else:
