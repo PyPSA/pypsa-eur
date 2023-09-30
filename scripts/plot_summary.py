@@ -385,9 +385,6 @@ def historical_emissions(countries):
     e["waste management"] = "5 - Waste management"
     e["other"] = "6 - Other Sector"
     e["indirect"] = "ind_CO2 - Indirect CO2"
-    # e["total wL"] = "Total (with LULUCF)"
-    # e["total woL"] = "Total (without LULUCF)"
-
     e["other LULUCF"] = "4.H - Other LULUCF"
 
     pol = ["CO2"]  # ["All greenhouse gases - (CO2 equivalent)"]
