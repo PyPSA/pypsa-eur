@@ -79,6 +79,7 @@ allam_cycle,--,"{true, false}",Add option to include `Allam cycle gas power plan
 hydrogen_fuel_cell,--,"{true, false}",Add option to include hydrogen fuel cell for re-electrification. Assuming OCGT technology costs
 hydrogen_turbine,--,"{true, false}",Add option to include hydrogen turbine for re-electrification. Assuming OCGT technology costs
 SMR,--,"{true, false}",Add option for transforming natural gas into hydrogen and CO2 using Steam Methane Reforming (SMR)
+SMR CC,--,"{true, false}",Add option for transforming natural gas into hydrogen and CO2 using Steam Methane Reforming (SMR) and Carbon Capture (CC)
 regional_co2 _sequestration_potential,,,
 -- enable,--,"{true, false}",Add option for regionally-resolved geological carbon dioxide sequestration potentials based on `CO2StoP <https://setis.ec.europa.eu/european-co2-storage-database_en>`_.
 -- attribute,--,string,Name of the attribute for the sequestration potential
