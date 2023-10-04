@@ -493,6 +493,7 @@ sector:
   gas_distribution_grid_cost_factor: 1.0
   biomass_spatial: false
   biomass_transport: false
+  biomass_upgrading_cc: false
   conventional_generation:
     OCGT: gas
   biomass_to_liquid: false
