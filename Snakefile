@@ -46,12 +46,6 @@ wildcard_constraints:
     sector_opts="[-+a-zA-Z0-9\.\s]*",
 
 
-rule all:
-    input:
-        RESULTS + "graphs/costs.pdf",
-    default_target: True
-
-
 include: "rules/common.smk"
 include: "rules/collect.smk"
 include: "rules/retrieve.smk"
@@ -72,13 +66,26 @@ if config["foresight"] == "myopic":
     include: "rules/solve_myopic.smk"
 
 
+rule all:
+    input:
+        RESULTS + "graphs/costs.pdf",
+    default_target: True
+
+
 rule purge:
-    message:
-        "Purging generated resources, results and docs. Downloads are kept."
     run:
-        rmtree("resources/", ignore_errors=True)
-        rmtree("results/", ignore_errors=True)
-        rmtree("doc/_build", ignore_errors=True)
+        import builtins
+
+        do_purge = builtins.input(
+            "Do you really want to delete all generated resources, \nresults and docs (downloads are kept)? [y/N] "
+        )
+        if do_purge == "y":
+            rmtree("resources/", ignore_errors=True)
+            rmtree("results/", ignore_errors=True)
+            rmtree("doc/_build", ignore_errors=True)
+            print("Purging generated resources, results and docs. Downloads are kept.")
+        else:
+            raise Exception(f"Input {do_purge}. Aborting purge.")
 
 
 rule dag:
