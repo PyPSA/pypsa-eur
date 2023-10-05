@@ -667,28 +667,34 @@ def add_pipe_retrofit_constraint(n):
 
 
 def add_v2g_constraint(n):
-    bev_charger = n.links[n.links.carrier.str.contains('BEV charger')].index
-    lhs2 = n.model["Link-p_nom"].loc[bev_charger]
-    v2g = n.links[n.links.carrier.str.contains('V2G')].index
-    lhs1 = n.model["Link-p_nom"].loc[v2g]
+    bev_charger = n.links.carrier.str.contains('BEV charger')
+    bev_charger_ext = n.links[bev_charger].query("p_nom_extendable").index
+    lhs1 = n.model["Link-p_nom"].loc[bev_charger_ext]
+    v2g = n.links.carrier.str.contains('V2G')
+    v2g_ext = n.links[v2g].query("p_nom_extendable").index
+    lhs2 = n.model["Link-p_nom"].loc[v2g_ext]
     lhs = lhs1 - lhs2
     rhs = 0
     n.model.add_constraints(lhs==rhs, name="constraint_v2g")
 
 def add_EV_storage_constraint(n):
-    bev_charger = n.links[n.links.carrier.str.contains('BEV charger')].index
-    lhs1 = n.model["Link-p_nom"].loc[bev_charger]/n.config['sector']['bev_charge_rate']
-    ev_store = n.stores[n.stores.carrier.str.contains('EV battery storage')].index
-    lhs2 = n.model.variables['Store-e_nom'].loc[ev_store]/n.config['sector']['bev_energy']
+    bev_charger = n.links.carrier.str.contains('BEV charger')
+    bev_charger_ext = n.links[bev_charger].query("p_nom_extendable").index
+    lhs1 = n.model["Link-p_nom"].loc[bev_charger_ext]/n.config['sector']['bev_charge_rate']
+    ev_store = n.stores.carrier.str.contains('EV battery storage')
+    ev_store_ext = n.stores[ev_store].query("e_nom_extendable").index
+    lhs2 = n.model.variables['Store-e_nom'].loc[ev_store_ext]/(n.config['sector']['bev_energy']*n.config["sector"]["bev_availability"])
     lhs = lhs1-lhs2
     rhs = 0
     n.model.add_constraints(lhs==rhs, name="constraint_EV_storage")
 
 def add_EV_number_constraint(n):
-    bev_charger = n.links[n.links.carrier.str.contains('BEV charger')].index
-    lhs1 = n.model["Link-p_nom"].loc[bev_charger]/n.config['sector']['bev_charge_rate']
-    ev = n.links[n.links.carrier.str.contains('land transport EV')].index
-    lhs2 = n.model["Link-p_nom"].loc[ev]/n.config['sector']['EV_consumption_1car']
+    bev_charger = n.links.carrier.str.contains('BEV charger')
+    bev_charger_ext = n.links[bev_charger].query("p_nom_extendable").index
+    lhs1 = n.model["Link-p_nom"].loc[bev_charger_ext]/n.config['sector']['bev_charge_rate']
+    ev = n.links.carrier.str.contains('land transport EV')
+    ev_ext = n.links[ev].query("p_nom_extendable").index
+    lhs2 = n.model["Link-p_nom"].loc[ev_ext]/n.config['sector']['EV_consumption_1car']
     lhs = lhs1-lhs2
     rhs = 0
     n.model.add_constraints(lhs==rhs, name="constraint_EV_number")

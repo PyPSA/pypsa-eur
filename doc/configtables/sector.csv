@@ -7,8 +7,8 @@ cluster_heat_buses,--,"{true, false}",Cluster residential and service heat buses
 ,,,
 bev_dsm_restriction _value,--,float,Adds a lower state of charge (SOC) limit for battery electric vehicles (BEV) to manage its own energy demand (DSM). Located in `build_transport_demand.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_transport_demand.py>`_. Set to 0 for no restriction on BEV DSM
 bev_dsm_restriction _time,--,float,Time at which SOC of BEV has to be dsm_restriction_value
-transport_heating _deadband_upper,Â°C,float,"The maximum temperature in the vehicle. At higher temperatures, the energy required for cooling in the vehicle increases."
-transport_heating _deadband_lower,Â°C,float,"The minimum temperature in the vehicle. At lower temperatures, the energy required for heating in the vehicle increases."
+transport_heating _deadband_upper,°C,float,"The maximum temperature in the vehicle. At higher temperatures, the energy required for cooling in the vehicle increases."
+transport_heating _deadband_lower,°C,float,"The minimum temperature in the vehicle. At lower temperatures, the energy required for heating in the vehicle increases."
 ,,,
 ICE_lower_degree_factor,--,float,Share increase in energy demand in internal combustion engine (ICE) for each degree difference between the cold environment and the minimum temperature.
 ICE_upper_degree_factor,--,float,Share increase in energy demand in internal combustion engine (ICE) for each degree difference between the hot environment and the maximum temperature.
@@ -24,6 +24,10 @@ bev_charge_rate,MWh,float,The power consumption for one electric vehicle (EV) in
 bev_avail_max,--,float,The maximum share plugged-in availability for passenger electric vehicles.
 bev_avail_mean,--,float,The average share plugged-in availability for passenger electric vehicles.
 v2g,--,"{true, false}",Allows feed-in to grid from EV battery
+endogenous transport,--,"{true, false}",Allows to optimize land transport shares endogenously
+EV_consumption_1car,MWh_elec/hour,float,assuming 0.2 kWh/km https://github.com/PyPSA/pypsa-eur/blob/1fbe971ab8dab60d972d3a7b905b9cec7171c0ad/config/config.default.yaml#L382 and velocity of 50km/h
+ICE_consumption_1car,Mwh_oil/hour,float,"assuming 0.66 kWh_oil/km and 50 km/h (with the link efficiency 0.3, they are equivalent to 0.01 MWh_elec/hour"
+H2_consumption_1car,Mwh_H2/hour,float,"assuming 0.4 kWh_H2/km and 50km/h) (with efficiency 0.5, they are equivalent to 0.01 MWh_elec/hour"
 land_transport_fuel_cell _share,--,Dictionary with planning horizons as keys.,The share of vehicles that uses fuel cells in a given year
 land_transport_electric _share,--,Dictionary with planning horizons as keys.,The share of vehicles that uses electric vehicles (EV) in a given year
 land_transport_ice _share,--,Dictionary with planning horizons as keys.,The share of vehicles that uses internal combustion engines (ICE) in a given year. What is not EV or FCEV is oil-fuelled ICE.
@@ -48,7 +52,7 @@ aviation_demand_factor,--,float,The proportion of demand for aviation compared t
 HVC_demand_factor,--,float,The proportion of demand for high-value chemicals compared to today's consumption
 ,,,
 time_dep_hp_cop,--,"{true, false}",Consider the time dependent coefficient of performance (COP) of the heat pump
-heat_pump_sink_T,Â°C,float,The temperature heat sink used in heat pumps based on DTU / large area radiators. The value is conservatively high to cover hot water and space heating in poorly-insulated buildings
+heat_pump_sink_T,°C,float,The temperature heat sink used in heat pumps based on DTU / large area radiators. The value is conservatively high to cover hot water and space heating in poorly-insulated buildings
 reduce_space_heat _exogenously,--,"{true, false}",Influence on space heating demand by a certain factor (applied before losses in district heating).
 reduce_space_heat _exogenously_factor,--,Dictionary with planning horizons as keys.,"A positive factor can mean renovation or demolition of a building. If the factor is negative, it can mean an increase in floor area, increased thermal comfort, population growth. The default factors are determined by the `Eurocalc Homes and buildings decarbonization scenario <http://tool.european-calculator.eu/app/buildings/building-types-area/?levers=1ddd4444421213bdbbbddd44444ffffff11f411111221111211l212221>`_"
 retrofitting,,,
@@ -59,7 +63,7 @@ retrofitting,,,
 -- tax_weighting,--,"{true, false}",Weight the costs of retrofitting depending on taxes in countries
 -- construction_index,--,"{true, false}",Weight the costs of retrofitting depending on labour/material costs per country
 tes,--,"{true, false}",Add option for storing thermal energy in large water pits associated with district heating systems and individual thermal energy storage (TES)
-tes_tau,,,The time constant used to calculate the decay of thermal energy in thermal energy storage (TES): 1- :math:`e^{-1/24Ï„}`.
+tes_tau,,,The time constant used to calculate the decay of thermal energy in thermal energy storage (TES): 1- :math:`e^{-1/24?}`.
 -- decentral,days,float,The time constant in decentralized thermal energy storage (TES)
 -- central,days,float,The time constant in centralized thermal energy storage (TES)
 boilers,--,"{true, false}",Add option for transforming electricity into heat using resistive heater

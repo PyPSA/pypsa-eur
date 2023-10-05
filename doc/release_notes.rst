@@ -20,6 +20,8 @@ Upcoming Release
 
 * Files extracted from sector-coupled data bundle have been moved from ``data/`` to ``data/sector-bundle``.
 
+* Add option to optimize fuel type shares of land transport endogenously in configuration file (https://github.com/PyPSA/pypsa-eur/pull/734)
+
 PyPSA-Eur 0.8.1 (27th July 2023)
 ================================
 
