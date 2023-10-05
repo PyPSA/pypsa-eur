@@ -41,7 +41,7 @@ The following heat gains and losses are considered:
 
 - heat gain through resistive losses
 - heat gain through solar radiation
-- heat loss through radiation of the trasnmission line
+- heat loss through radiation of the transmission line
 - heat loss through forced convection with wind
 - heat loss through natural convection
 
