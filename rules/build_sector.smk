@@ -67,80 +67,61 @@ rule build_simplified_population_layouts:
         "../scripts/build_clustered_population_layouts.py"
 
 
-if config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]:
-
-    rule build_gas_network:
-        input:
-            gas_network="data/gas_network/scigrid-gas/data/IGGIELGN_PipeSegments.geojson",
-        output:
-            cleaned_gas_network=resources("gas_network.csv"),
-        resources:
-            mem_mb=4000,
-        log:
-            logs("build_gas_network.log"),
-        conda:
-            "../envs/environment.yaml"
-        script:
-            "../scripts/build_gas_network.py"
-
-    rule build_gas_input_locations:
-        input:
-            lng=HTTP.remote(
-                "https://globalenergymonitor.org/wp-content/uploads/2023/07/Europe-Gas-Tracker-2023-03-v3.xlsx",
-                keep_local=True,
-            ),
-            entry="data/gas_network/scigrid-gas/data/IGGIELGN_BorderPoints.geojson",
-            production="data/gas_network/scigrid-gas/data/IGGIELGN_Productions.geojson",
-            regions_onshore=resources(
-                "regions_onshore_elec_s{simpl}_{clusters}.geojson"
-            ),
-            regions_offshore=resources(
-                "regions_offshore_elec_s{simpl}_{clusters}.geojson"
-            ),
-        output:
-            gas_input_nodes=resources("gas_input_locations_s{simpl}_{clusters}.geojson"),
-            gas_input_nodes_simplified=resources(
-                "gas_input_locations_s{simpl}_{clusters}_simplified.csv"
-            ),
-        resources:
-            mem_mb=2000,
-        log:
-            logs("build_gas_input_locations_s{simpl}_{clusters}.log"),
-        conda:
-            "../envs/environment.yaml"
-        script:
-            "../scripts/build_gas_input_locations.py"
-
-    rule cluster_gas_network:
-        input:
-            cleaned_gas_network=resources("gas_network.csv"),
-            regions_onshore=resources(
-                "regions_onshore_elec_s{simpl}_{clusters}.geojson"
-            ),
-            regions_offshore=resources(
-                "regions_offshore_elec_s{simpl}_{clusters}.geojson"
-            ),
-        output:
-            clustered_gas_network=resources("gas_network_elec_s{simpl}_{clusters}.csv"),
-        resources:
-            mem_mb=4000,
-        log:
-            logs("cluster_gas_network_s{simpl}_{clusters}.log"),
-        conda:
-            "../envs/environment.yaml"
-        script:
-            "../scripts/cluster_gas_network.py"
-
-    gas_infrastructure = {
-        **rules.cluster_gas_network.output,
-        **rules.build_gas_input_locations.output,
-    }
+rule build_gas_network:
+    input:
+        gas_network="data/gas_network/scigrid-gas/data/IGGIELGN_PipeSegments.geojson",
+    output:
+        cleaned_gas_network=resources("gas_network.csv"),
+    resources:
+        mem_mb=4000,
+    log:
+        logs("build_gas_network.log"),
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_gas_network.py"
 
 
-if not (config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]):
-    # this is effecively an `else` statement which is however not liked by snakefmt
+rule build_gas_input_locations:
+    input:
+        lng=HTTP.remote(
+            "https://globalenergymonitor.org/wp-content/uploads/2023/07/Europe-Gas-Tracker-2023-03-v3.xlsx",
+            keep_local=True,
+        ),
+        entry="data/gas_network/scigrid-gas/data/IGGIELGN_BorderPoints.geojson",
+        production="data/gas_network/scigrid-gas/data/IGGIELGN_Productions.geojson",
+        regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
+        regions_offshore=resources("regions_offshore_elec_s{simpl}_{clusters}.geojson"),
+    output:
+        gas_input_nodes=resources("gas_input_locations_s{simpl}_{clusters}.geojson"),
+        gas_input_nodes_simplified=resources(
+            "gas_input_locations_s{simpl}_{clusters}_simplified.csv"
+        ),
+    resources:
+        mem_mb=2000,
+    log:
+        logs("build_gas_input_locations_s{simpl}_{clusters}.log"),
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_gas_input_locations.py"
 
-    gas_infrastructure = {}
+
+rule cluster_gas_network:
+    input:
+        cleaned_gas_network=resources("gas_network.csv"),
+        regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
+        regions_offshore=resources("regions_offshore_elec_s{simpl}_{clusters}.geojson"),
+    output:
+        clustered_gas_network=resources("gas_network_elec_s{simpl}_{clusters}.csv"),
+    resources:
+        mem_mb=4000,
+    log:
+        logs("cluster_gas_network_s{simpl}_{clusters}.log"),
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/cluster_gas_network.py"
 
 
 rule build_heat_demands:
@@ -753,8 +734,9 @@ rule prepare_sector_network:
     input:
         **build_retro_cost_output,
         **build_biomass_transport_costs_output,
-        **gas_infrastructure,
         **build_sequestration_potentials_output,
+        **rules.cluster_gas_network.output,
+        **rules.build_gas_input_locations.output,
         network=resources("networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"),
         energy_totals_name=resources("energy_totals.csv"),
         eurostat=input_eurostat,
