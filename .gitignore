@@ -8,6 +8,7 @@ __pycache__
 *dconf
 gurobi.log
 .vscode
+*.orig
 
 /bak
 /resources

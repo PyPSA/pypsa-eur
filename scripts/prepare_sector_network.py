@@ -220,7 +220,7 @@ def co2_emissions_year(
 
 
 # TODO: move to own rule with sector-opts wildcard?
-def build_carbon_budget(o, input_eurostat, fn, emissions_scope, report_year, input_co2):
+def build_carbon_budget(o, input_eurostat, fn, emissions_scope, report_year):
     """
     Distribute carbon budget following beta or exponential transition path.
     """
@@ -577,6 +577,7 @@ def add_co2_tracking(n, options):
         capital_cost=options["co2_sequestration_cost"],
         carrier="co2 stored",
         bus=spatial.co2.nodes,
+        lifetime=options["co2_sequestration_lifetime"],
     )
 
     n.add("Carrier", "co2 stored")
@@ -3325,7 +3326,7 @@ if __name__ == "__main__":
 
     spatial = define_spatial(pop_layout.index, options)
 
-    if snakemake.params.foresight == "myopic":
+    if snakemake.params.foresight in ["myopic", "perfect"]:
         add_lifetime_wind_solar(n, costs)
 
         conventional = snakemake.params.conventional_carriers
@@ -3402,7 +3403,7 @@ if __name__ == "__main__":
         if "cb" not in o:
             continue
         limit_type = "carbon budget"
-        fn = "results/" + snakemake.params.RDIR + "csvs/carbon_budget_distribution.csv"
+        fn = "results/" + snakemake.params.RDIR + "/csvs/carbon_budget_distribution.csv"
         if not os.path.exists(fn):
             emissions_scope = snakemake.params.emissions_scope
             report_year = snakemake.params.eurostat_report_year
@@ -3446,7 +3447,7 @@ if __name__ == "__main__":
     if options["electricity_grid_connection"]:
         add_electricity_grid_connection(n, costs)
 
-    first_year_myopic = (snakemake.params.foresight == "myopic") and (
+    first_year_myopic = (snakemake.params.foresight in ["myopic", "perfect"]) and (
         snakemake.params.planning_horizons[0] == investment_year
     )
 
