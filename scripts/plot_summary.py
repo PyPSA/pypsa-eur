@@ -553,7 +553,7 @@ def plot_carbon_budget_distribution(input_eurostat):
         markersize=12,
         markerfacecolor="black",
         markeredgecolor="black",
-        label="EU commited target",
+        label="EU committed target",
     )
 
     for col in co2_cap.columns:

@@ -200,7 +200,7 @@ def concat_networks(years):
 
                 else:
                     # this is to avoid adding multiple times assets with
-                    # infinit lifetime as ror
+                    # infinite lifetime as ror
                     cols = pnl_year.columns.difference(pnl[k].columns)
                     pnl[k] = pd.concat([pnl[k], pnl_year[cols]], axis=1)
 
@@ -233,7 +233,7 @@ def adjust_stores(n):
     Make sure that stores still behave cyclic over one year and not whole
     modelling horizon.
     """
-    # cylclic constraint
+    # cyclic constraint
     cyclic_i = n.stores[n.stores.e_cyclic].index
     n.stores.loc[cyclic_i, "e_cyclic_per_period"] = True
     n.stores.loc[cyclic_i, "e_cyclic"] = False
