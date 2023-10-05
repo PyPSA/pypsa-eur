@@ -102,7 +102,10 @@ def define_spatial(nodes, options):
         spatial.gas.biogas = ["EU biogas"]
         spatial.gas.industry = ["gas for industry"]
         spatial.gas.biogas_to_gas = ["EU biogas to gas"]
-        spatial.gas.biogas_to_gas_cc = ["EU biogas to gas CC"]
+        if options.get("biomass_spatial", options["biomass_transport"]):
+            spatial.gas.biogas_to_gas_cc = nodes + " biogas to gas CC"
+        else:
+            spatial.gas.biogas_to_gas_cc = ["EU biogas to gas CC"]
         if options.get("co2_spatial", options["co2network"]):
             spatial.gas.industry_cc = nodes + " gas for industry CC"
         else:
@@ -2257,13 +2260,12 @@ def add_biomass(n, costs):
         # Assuming for costs that the CO2 from upgrading is pure, such as in amine scrubbing. I.e., with and without CC is
         # equivalent. Adding biomass CHP capture because biogas is often small-scale and decentral so further
         # from e.g. CO2 grid or buyers. This is a proxy for the added cost for e.g. a raw biogas pipeline to a central upgrading facility
-
         n.madd(
             "Link",
             spatial.gas.biogas_to_gas_cc,
             bus0=spatial.gas.biogas,
             bus1=spatial.gas.nodes,
-            bus2="co2 stored",
+            bus2=spatial.co2.nodes,
             bus3="co2 atmosphere",
             carrier="biogas to gas CC",
             capital_cost=costs.at["biogas CC", "fixed"]
@@ -2734,6 +2736,7 @@ def add_industry(n, costs):
             carrier="methanolisation",
             p_nom_extendable=True,
             p_min_pu=options.get("min_part_load_methanolisation", 0),
+            marginal_cost=options["MWh_MeOH_per_MWh_H2"] * costs.at["fuel cell", "VOM"],
             capital_cost=costs.at["methanolisation", "fixed"]
             * options["MWh_MeOH_per_MWh_H2"],  # EUR/MW_H2/a
             marginal_cost=options["MWh_MeOH_per_MWh_H2"]
