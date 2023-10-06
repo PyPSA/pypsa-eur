@@ -29,6 +29,8 @@ Upcoming Release
 
 * Rule ``purge`` now initiates a dialog to confirm if purge is desired.
 
+* Rule ``retrieve_irena`` get updated values for renewables capacities.
+
 
 **Bugs and Compatibility**
 

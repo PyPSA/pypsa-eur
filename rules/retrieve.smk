@@ -38,6 +38,27 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
         script:
             "../scripts/retrieve_databundle.py"
 
+if config["enable"].get("retrieve_irena", True):
+
+    datafiles=[
+        "offwind_capacity_IRENA.csv",
+        "onwind_capacity_IRENA.csv",
+        "solar_capacity_IRENA.csv",
+    ]
+
+    rule retrieve_irena:
+        output:
+            expand("data/existing_infrastructure/{file}", file=datafiles),
+        log:
+            LOGS + "retrieve_irena.log",
+        resources:
+            mem_mb=1000,
+        retries: 2
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/retrieve_irena.py"
+
 
 if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True):
 
