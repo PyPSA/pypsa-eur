@@ -14,12 +14,6 @@ localrules:
     plot_networks,
 
 
-rule all:
-    input:
-        RESULTS + "graphs/costs.pdf",
-    default_target: True
-
-
 rule cluster_networks:
     input:
         expand(
@@ -72,10 +66,34 @@ rule solve_sector_networks:
         ),
 
 
+rule solve_sector_networks_perfect:
+    input:
+        expand(
+            RESULTS
+            + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years.nc",
+            **config["scenario"]
+        ),
+
+
 rule plot_networks:
     input:
         expand(
             RESULTS
             + "maps/elec{weather_year}_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
             **config["scenario"]
+        ),
+
+
+rule validate_elec_networks:
+    input:
+        expand(
+            RESULTS
+            + "figures/.statistics_plots_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}",
+            **config["scenario"]
+        ),
+        expand(
+            RESULTS
+            + "figures/.validation_{kind}_plots_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}",
+            **config["scenario"],
+            kind=["production", "prices", "cross_border"]
         ),

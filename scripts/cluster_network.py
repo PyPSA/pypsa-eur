@@ -485,6 +485,23 @@ if __name__ == "__main__":
     else:
         n_clusters = int(snakemake.wildcards.clusters)
 
+    if params.cluster_network.get("consider_efficiency_classes", False):
+        carriers = []
+        for c in aggregate_carriers:
+            gens = n.generators.query("carrier == @c")
+            low = gens.efficiency.quantile(0.10)
+            high = gens.efficiency.quantile(0.90)
+            if low >= high:
+                carriers += [c]
+            else:
+                labels = ["low", "medium", "high"]
+                suffix = pd.cut(
+                    gens.efficiency, bins=[0, low, high, 1], labels=labels
+                ).astype(str)
+                carriers += [f"{c} {label} efficiency" for label in labels]
+                n.generators.carrier.update(gens.carrier + " " + suffix + " efficiency")
+        aggregate_carriers = carriers
+
     if n_clusters == len(n.buses):
         # Fast-path if no clustering is necessary
         busmap = n.buses.index.to_series()
@@ -525,6 +542,11 @@ if __name__ == "__main__":
         )
 
     update_p_nom_max(clustering.network)
+
+    if params.cluster_network.get("consider_efficiency_classes"):
+        labels = [f" {label} efficiency" for label in ["low", "medium", "high"]]
+        nc = clustering.network
+        nc.generators["carrier"] = nc.generators.carrier.replace(labels, "", regex=True)
 
     clustering.network.meta = dict(
         snakemake.config, **dict(wildcards=dict(snakemake.wildcards))
