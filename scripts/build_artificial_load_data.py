@@ -6,6 +6,7 @@
 This rule downloads the load data.
 """
 
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -20,8 +21,7 @@ if __name__ == "__main__":
 
     configure_logging(snakemake)
 
-    weather_year = snakemake.wildcards.weather_year
-    if weather_year:
+    if weather_year := snakemake.wildcards.weather_year:
         snapshots = dict(
             start=weather_year, end=str(int(weather_year) + 1), inclusive="left"
         )

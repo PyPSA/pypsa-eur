@@ -153,12 +153,10 @@ def _add_land_use_constraint_m(n, planning_horizons, config):
     for carrier in ["solar", "onwind", "offwind-ac", "offwind-dc"]:
         existing = n.generators.loc[n.generators.carrier == carrier, "p_nom"]
         ind = list(
-            set(
-                [
-                    i.split(sep=" ")[0] + " " + i.split(sep=" ")[1]
-                    for i in existing.index
-                ]
-            )
+            {
+                i.split(sep=" ")[0] + " " + i.split(sep=" ")[1]
+                for i in existing.index
+            }
         )
 
         previous_years = [
@@ -217,7 +215,6 @@ def add_carbon_constraint(n, snapshots):
     if glcs.empty:
         return
     for name, glc in glcs.iterrows():
-        rhs = glc.constant
         carattr = glc.carrier_attribute
         emissions = n.carriers.query(f"{carattr} != 0")[carattr]
 
@@ -227,14 +224,15 @@ def add_carbon_constraint(n, snapshots):
         # stores
         n.stores["carrier"] = n.stores.bus.map(n.buses.carrier)
         stores = n.stores.query("carrier in @emissions.index and not e_cyclic")
-        time_valid = int(glc.loc["investment_period"])
         if not stores.empty:
             last = n.snapshot_weightings.reset_index().groupby("period").last()
             last_i = last.set_index([last.index, last.timestep]).index
             final_e = n.model["Store-e"].loc[last_i, stores.index]
+            time_valid = int(glc.loc["investment_period"])
             time_i = pd.IndexSlice[time_valid, :]
             lhs = final_e.loc[time_i, :] - final_e.shift(snapshot=1).loc[time_i, :]
 
+            rhs = glc.constant
             n.model.add_constraints(lhs <= rhs, name=f"GlobalConstraint-{name}")
 
 
@@ -243,7 +241,6 @@ def add_carbon_budget_constraint(n, snapshots):
     if glcs.empty:
         return
     for name, glc in glcs.iterrows():
-        rhs = glc.constant
         carattr = glc.carrier_attribute
         emissions = n.carriers.query(f"{carattr} != 0")[carattr]
 
@@ -253,15 +250,16 @@ def add_carbon_budget_constraint(n, snapshots):
         # stores
         n.stores["carrier"] = n.stores.bus.map(n.buses.carrier)
         stores = n.stores.query("carrier in @emissions.index and not e_cyclic")
-        time_valid = int(glc.loc["investment_period"])
-        weighting = n.investment_period_weightings.loc[time_valid, "years"]
         if not stores.empty:
             last = n.snapshot_weightings.reset_index().groupby("period").last()
             last_i = last.set_index([last.index, last.timestep]).index
             final_e = n.model["Store-e"].loc[last_i, stores.index]
+            time_valid = int(glc.loc["investment_period"])
             time_i = pd.IndexSlice[time_valid, :]
+            weighting = n.investment_period_weightings.loc[time_valid, "years"]
             lhs = final_e.loc[time_i, :] * weighting
 
+            rhs = glc.constant
             n.model.add_constraints(lhs <= rhs, name=f"GlobalConstraint-{name}")
 
 
@@ -350,8 +348,7 @@ def prepare_network(
         ):
             df.where(df > solve_opts["clip_p_max_pu"], other=0.0, inplace=True)
 
-    load_shedding = solve_opts.get("load_shedding")
-    if load_shedding:
+    if load_shedding := solve_opts.get("load_shedding"):
         # intersect between macroeconomic and surveybased willingness to pay
         # http://journal.frontiersin.org/article/10.3389/fenrg.2015.00055/full
         # TODO: retrieve color and nice name from config
@@ -803,9 +800,7 @@ def solve_network(n, config, solving, opts="", **kwargs):
     set_of_options = solving["solver"]["options"]
     cf_solving = solving["options"]
 
-    kwargs["multi_investment_periods"] = (
-        True if config["foresight"] == "perfect" else False
-    )
+    kwargs["multi_investment_periods"] = config["foresight"] == "perfect"
     kwargs["solver_options"] = (
         solving["solver_options"][set_of_options] if set_of_options else {}
     )
@@ -904,7 +899,7 @@ if __name__ == "__main__":
             log_fn=snakemake.log.solver,
         )
 
-    logger.info("Maximum memory usage: {}".format(mem.mem_usage))
+    logger.info(f"Maximum memory usage: {mem.mem_usage}")
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     n.export_to_netcdf(snakemake.output[0])

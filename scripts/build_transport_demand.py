@@ -81,13 +81,11 @@ def build_transport_demand(traffic_fn, airtemp_fn, nodes, nodal_transport_data):
         - pop_weighted_energy_totals["electricity rail"]
     )
 
-    transport = (
+    return (
         (transport_shape.multiply(energy_totals_transport) * 1e6 * nyears)
         .divide(efficiency_gain * ice_correction)
         .multiply(1 + dd_EV)
     )
-
-    return transport
 
 
 def transport_degree_factor(
@@ -132,13 +130,11 @@ def bev_availability_profile(fn, snapshots, nodes, options):
         traffic.mean() - traffic.min()
     )
 
-    avail_profile = generate_periodic_profiles(
+    return generate_periodic_profiles(
         dt_index=snapshots,
         nodes=nodes,
         weekly_profile=avail.values,
     )
-
-    return avail_profile
 
 
 def bev_dsm_profile(snapshots, nodes, options):
@@ -148,13 +144,11 @@ def bev_dsm_profile(snapshots, nodes, options):
         "bev_dsm_restriction_value"
     ]
 
-    dsm_profile = generate_periodic_profiles(
+    return generate_periodic_profiles(
         dt_index=snapshots,
         nodes=nodes,
         weekly_profile=dsm_week,
     )
-
-    return dsm_profile
 
 
 if __name__ == "__main__":

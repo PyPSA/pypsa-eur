@@ -6,6 +6,7 @@
 Build mapping between cutout grid cells and population (total, urban, rural).
 """
 
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -29,8 +30,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=snakemake.config["logging"]["level"])
 
     cutout_name = snakemake.input.cutout
-    year = snakemake.wildcards.weather_year
-    if year:
+    if year := snakemake.wildcards.weather_year:
         cutout_name = cutout_name.format(weather_year=year)
     cutout = atlite.Cutout(cutout_name)
 

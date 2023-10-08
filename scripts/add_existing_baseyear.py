@@ -45,7 +45,7 @@ def add_build_year_to_new_assets(n, baseyear):
 
         # add -baseyear to name
         rename = pd.Series(c.df.index, c.df.index)
-        rename[assets] += "-" + str(baseyear)
+        rename[assets] += f"-{str(baseyear)}"
         c.df.rename(index=rename, inplace=True)
 
         # rename time-dependent
@@ -252,7 +252,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
             if "m" in snakemake.wildcards.clusters:
                 for ind in new_capacity.index:
                     # existing capacities are split evenly among regions in every country
-                    inv_ind = [i for i in inv_busmap[ind]]
+                    inv_ind = list(inv_busmap[ind])
 
                     # for offshore the splitting only includes coastal regions
                     inv_ind = [

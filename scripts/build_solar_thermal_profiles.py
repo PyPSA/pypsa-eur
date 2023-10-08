@@ -6,6 +6,7 @@
 Build solar thermal collector time series.
 """
 
+
 import atlite
 import geopandas as gpd
 import numpy as np
@@ -31,9 +32,7 @@ if __name__ == "__main__":
     config = snakemake.params.solar_thermal
 
     cutout_name = snakemake.input.cutout
-    year = snakemake.wildcards.weather_year
-
-    if year:
+    if year := snakemake.wildcards.weather_year:
         snapshots = dict(start=year, end=str(int(year) + 1), inclusive="left")
         cutout_name = cutout_name.format(weather_year=year)
     else:

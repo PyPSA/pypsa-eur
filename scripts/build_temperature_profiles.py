@@ -6,6 +6,7 @@
 Build time series for air and soil temperatures per clustered model region.
 """
 
+
 import atlite
 import geopandas as gpd
 import numpy as np
@@ -28,9 +29,7 @@ if __name__ == "__main__":
     cluster = LocalCluster(n_workers=nprocesses, threads_per_worker=1)
     client = Client(cluster, asynchronous=True)
     cutout_name = snakemake.input.cutout
-    year = snakemake.wildcards.weather_year
-
-    if year:
+    if year := snakemake.wildcards.weather_year:
         snapshots = dict(start=year, end=str(int(year) + 1), inclusive="left")
         cutout_name = cutout_name.format(weather_year=year)
     else:

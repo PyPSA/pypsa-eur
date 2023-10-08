@@ -194,8 +194,7 @@ if __name__ == "__main__":
     eia_stats.to_csv(snakemake.output.eia_hydro)
 
     weather_year = snakemake.wildcards.weather_year
-    norm_year = config_hydro.get("eia_norm_year")
-    if norm_year:
+    if norm_year := config_hydro.get("eia_norm_year"):
         eia_stats.loc[weather_year] = eia_stats.loc[norm_year]
     elif weather_year and weather_year not in eia_stats.index:
         eia_stats.loc[weather_year] = eia_stats.median()

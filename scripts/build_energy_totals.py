@@ -151,8 +151,6 @@ def build_swiss(year=None):
 
 def idees_per_country(country, base_dir):
 
-    ct_totals = {}
-
     ct_idees = idees_rename.get(country, country)
     fn_residential = f"{base_dir}/JRC-IDEES-2015_Residential_{ct_idees}.xlsx"
     fn_tertiary = f"{base_dir}/JRC-IDEES-2015_Tertiary_{ct_idees}.xlsx"
@@ -162,11 +160,11 @@ def idees_per_country(country, base_dir):
 
     df = pd.read_excel(fn_residential, "RES_hh_fec", index_col=0)
 
-    ct_totals["total residential space"] = df.loc["Space heating"]
-
     rows = ["Advanced electric heating", "Conventional electric heating"]
-    ct_totals["electricity residential space"] = df.loc[rows].sum()
-
+    ct_totals = {
+        "total residential space": df.loc["Space heating"],
+        "electricity residential space": df.loc[rows].sum(),
+    }
     ct_totals["total residential water"] = df.loc["Water heating"]
 
     assert df.index[23] == "Electricity"
