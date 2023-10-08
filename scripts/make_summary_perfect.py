@@ -706,7 +706,6 @@ def to_csv(df):
         df[key].to_csv(snakemake.output[key])
 
 
-# %%
 if __name__ == "__main__":
     # Detect running outside of snakemake and mock snakemake for testing
     if "snakemake" not in globals():

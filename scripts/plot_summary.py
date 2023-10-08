@@ -568,7 +568,6 @@ def plot_carbon_budget_distribution(input_eurostat):
     plt.savefig(path, bbox_inches="tight")
 
 
-# %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
