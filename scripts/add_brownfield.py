@@ -42,11 +42,11 @@ def add_brownfield(n, n_p, year):
         # since CHP heat Link is proportional to CHP electric Link, make sure threshold is compatible
         chp_heat = c.df.index[
             (
-                c.df[attr + "_nom_extendable"]
+                c.df[f"{attr}_nom_extendable"]
                 & c.df.index.str.contains("urban central")
-                & c.df.index.str.contains("CHP")
-                & c.df.index.str.contains("heat")
             )
+            & c.df.index.str.contains("CHP")
+            & c.df.index.str.contains("heat")
         ]
 
         threshold = snakemake.params.threshold_capacity
@@ -60,21 +60,22 @@ def add_brownfield(n, n_p, year):
             )
             n_p.mremove(
                 c.name,
-                chp_heat[c.df.loc[chp_heat, attr + "_nom_opt"] < threshold_chp_heat],
+                chp_heat[
+                    c.df.loc[chp_heat, f"{attr}_nom_opt"] < threshold_chp_heat
+                ],
             )
 
         n_p.mremove(
             c.name,
             c.df.index[
-                c.df[attr + "_nom_extendable"]
-                & ~c.df.index.isin(chp_heat)
-                & (c.df[attr + "_nom_opt"] < threshold)
+                (c.df[f"{attr}_nom_extendable"] & ~c.df.index.isin(chp_heat))
+                & (c.df[f"{attr}_nom_opt"] < threshold)
             ],
         )
 
         # copy over assets but fix their capacity
-        c.df[attr + "_nom"] = c.df[attr + "_nom_opt"]
-        c.df[attr + "_nom_extendable"] = False
+        c.df[f"{attr}_nom"] = c.df[f"{attr}_nom_opt"]
+        c.df[f"{attr}_nom_extendable"] = False
 
         n.import_components_from_dataframe(c.df, c.name)
 

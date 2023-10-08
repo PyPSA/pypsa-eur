@@ -66,11 +66,11 @@ def salt_cavern_potential_by_region(caverns, regions):
         "capacity_per_area * share * area_caverns / 1000"
     )  # TWh
 
-    caverns_regions = (
-        overlay.groupby(["name", "storage_type"]).e_nom.sum().unstack("storage_type")
+    return (
+        overlay.groupby(["name", "storage_type"])
+        .e_nom.sum()
+        .unstack("storage_type")
     )
-
-    return caverns_regions
 
 
 if __name__ == "__main__":
