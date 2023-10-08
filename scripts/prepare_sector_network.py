@@ -412,7 +412,9 @@ def update_wind_solar_costs(n, costs):
             # e.g. clusters == 37m means that VRE generators are left
             # at clustering of simplified network, but that they are
             # connected to 37-node network
-            genmap = busmap_s if snakemake.wildcards.clusters[-1:] == "m" else clustermaps
+            genmap = (
+                busmap_s if snakemake.wildcards.clusters[-1:] == "m" else clustermaps
+            )
             connection_cost = (connection_cost * weight).groupby(
                 genmap
             ).sum() / weight.groupby(genmap).sum()
@@ -500,9 +502,7 @@ def remove_non_electric_buses(n):
     """
     Remove buses from pypsa-eur with carriers which are not AC buses.
     """
-    if to_drop := list(
-        n.buses.query("carrier not in ['AC', 'DC']").carrier.unique()
-    ):
+    if to_drop := list(n.buses.query("carrier not in ['AC', 'DC']").carrier.unique()):
         logger.info(f"Drop buses from PyPSA-Eur with carrier: {to_drop}")
         n.buses = n.buses[n.buses.carrier.isin(["AC", "DC"])]
 
