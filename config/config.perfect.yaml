@@ -1,0 +1,43 @@
+# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: CC0-1.0
+run:
+  name: "perfect"
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#foresight
+foresight: perfect
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#scenario
+# Wildcard docs in https://pypsa-eur.readthedocs.io/en/latest/wildcards.html
+scenario:
+  simpl:
+  - ''
+  ll:
+  - v1.0
+  clusters:
+  - 37
+  opts:
+  - ''
+  sector_opts:
+  - 1p5-4380H-T-H-B-I-A-solar+p3-dist1
+  - 1p7-4380H-T-H-B-I-A-solar+p3-dist1
+  - 2p0-4380H-T-H-B-I-A-solar+p3-dist1
+  planning_horizons:
+  - 2020
+  - 2030
+  - 2040
+  - 2050
+
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
+co2_budget:
+  # update of IPCC 6th AR compared to the 1.5SR. (discussed here: https://twitter.com/JoeriRogelj/status/1424743828339167233)
+  1p5: 34.2  # 25.7 # Budget in Gt CO2 for 1.5 for Europe, global 420 Gt, assuming per capita share
+  1p6: 43.259666  # 35  # Budget in Gt CO2 for 1.6 for Europe, global 580 Gt
+  1p7: 51.4  # 45  # Budget in Gt CO2 for 1.7 for Europe, global 800 Gt
+  2p0: 69.778  # 73.9 # Budget in Gt CO2 for 2 for Europe, global 1170 Gt
+
+
+sector:
+  min_part_load_fischer_tropsch: 0
+  min_part_load_methanolisation: 0
