@@ -382,7 +382,7 @@ def calculate_supply_energy(n, label, supply_energy):
 
         for c in n.iterate_components(n.branch_components):
             for end in [col[3:] for col in c.df.columns if col[:3] == "bus"]:
-                items = c.df.index[c.df["bus" + str(end)].map(bus_map).fillna(False)]
+                items = c.df.index[c.df[f"bus{str(end)}"].map(bus_map).fillna(False)]
 
                 if len(items) == 0:
                     continue
@@ -483,7 +483,7 @@ def calculate_weighted_prices(n, label, weighted_prices):
         "H2": ["Sabatier", "H2 Fuel Cell"],
     }
 
-    for carrier in link_loads:
+    for carrier, value in link_loads.items():
         if carrier == "electricity":
             suffix = ""
         elif carrier[:5] == "space":
@@ -496,12 +496,12 @@ def calculate_weighted_prices(n, label, weighted_prices):
         if buses.empty:
             continue
 
-        if carrier in ["H2", "gas"]:
-            load = pd.DataFrame(index=n.snapshots, columns=buses, data=0.0)
-        else:
-            load = n.loads_t.p_set.reindex(buses, axis=1)
-
-        for tech in link_loads[carrier]:
+        load = (
+            pd.DataFrame(index=n.snapshots, columns=buses, data=0.0)
+            if carrier in ["H2", "gas"]
+            else n.loads_t.p_set.reindex(buses, axis=1)
+        )
+        for tech in value:
             names = n.links.index[n.links.index.to_series().str[-len(tech) :] == tech]
 
             if names.empty:
