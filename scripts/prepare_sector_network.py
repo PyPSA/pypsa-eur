@@ -2894,6 +2894,30 @@ def add_industry(n, costs):
             p_set=p_set,
         )
 
+    primary_steel = get(
+        snakemake.config["industry"]["St_primary_fraction"], investment_year
+    )
+    dri_steel = get(snakemake.config["industry"]["DRI_fraction"], investment_year)
+    bof_steel = primary_steel - dri_steel
+
+    if bof_steel > 0:
+        add_carrier_buses(n, "coal")
+
+        mwh_coal_per_mwh_coke = 1.366  # from eurostat energy balance
+        p_set = (
+            industrial_demand["coal"].sum()
+            + mwh_coal_per_mwh_coke * industrial_demand["coke"].sum()
+        ) / nhours
+
+        n.madd(
+            "Load",
+            spatial.coal.nodes,
+            suffix=" for industry",
+            bus=spatial.coal.nodes,
+            carrier="coal for industry",
+            p_set=p_set,
+        )
+
 
 def add_waste_heat(n):
     # TODO options?
