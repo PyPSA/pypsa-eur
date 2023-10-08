@@ -41,10 +41,10 @@ Perfect foresight scenarios
 
 .. warning::
 
-  Perfect foresight is currently under development and not yet implemented.
+  Perfect foresight is currently implemented as a first test version.
 
-For running perfect foresight scenarios, in future versions you will be able to
-set in the ``config/config.yaml``:
+For running perfect foresight scenarios, you can adjust the
+ ``config/config.perfect.yaml``:
 
 .. code:: yaml
 

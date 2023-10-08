@@ -406,6 +406,7 @@ def attach_wind_and_solar(
                 capital_cost=capital_cost,
                 efficiency=costs.at[supcar, "efficiency"],
                 p_max_pu=ds["profile"].transpose("time", "bus").to_pandas(),
+                lifetime=costs.at[supcar, "lifetime"],
             )
 
 

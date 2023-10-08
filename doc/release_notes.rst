@@ -18,6 +18,24 @@ Upcoming Release
 
 * The minimum capacity for renewable generators when using the myopic option has been fixed.
 
+* Files downloaded from zenodo are now write-protected to prevent accidental re-download.
+
+* Files extracted from sector-coupled data bundle have been moved from ``data/`` to ``data/sector-bundle``.
+
+* New feature multi-decade optimisation with  perfect foresight.
+
+* It is now possible to specify years for biomass potentials which do not exist
+  in the JRC-ENSPRESO database, e.g. 2037. These are linearly interpolated.
+
+* In pathway mode, the biomass potential is linked to the investment year.
+
+* Rule ``purge`` now initiates a dialog to confirm if purge is desired.
+
+
+**Bugs and Compatibility**
+
+* A bug preventing custom powerplants specified in ``data/custom_powerplants.csv`` was fixed. (https://github.com/PyPSA/pypsa-eur/pull/732)
+
 
 PyPSA-Eur 0.8.1 (27th July 2023)
 ================================
