@@ -41,10 +41,7 @@ def add_brownfield(n, n_p, year):
         # remove assets if their optimized nominal capacity is lower than a threshold
         # since CHP heat Link is proportional to CHP electric Link, make sure threshold is compatible
         chp_heat = c.df.index[
-            (
-                c.df[f"{attr}_nom_extendable"]
-                & c.df.index.str.contains("urban central")
-            )
+            (c.df[f"{attr}_nom_extendable"] & c.df.index.str.contains("urban central"))
             & c.df.index.str.contains("CHP")
             & c.df.index.str.contains("heat")
         ]
@@ -60,9 +57,7 @@ def add_brownfield(n, n_p, year):
             )
             n_p.mremove(
                 c.name,
-                chp_heat[
-                    c.df.loc[chp_heat, f"{attr}_nom_opt"] < threshold_chp_heat
-                ],
+                chp_heat[c.df.loc[chp_heat, f"{attr}_nom_opt"] < threshold_chp_heat],
             )
 
         n_p.mremove(
