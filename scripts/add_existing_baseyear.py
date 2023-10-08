@@ -545,9 +545,7 @@ def add_heating_capacities_installed_before_baseyear(
                 bus0=nodes[name],
                 bus1=nodes[name] + " " + name + " heat",
                 carrier=name + " resistive heater",
-                efficiency=costs.at[
-                    f"{name_type} resistive heater", "efficiency"
-                ],
+                efficiency=costs.at[f"{name_type} resistive heater", "efficiency"],
                 capital_cost=(
                     costs.at[f"{name_type} resistive heater", "efficiency"]
                     * costs.at[f"{name_type} resistive heater", "fixed"]

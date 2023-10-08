@@ -86,8 +86,7 @@ def cross_border_time_series(countries, data):
             )
             title = "Historic" if (axis % 2) == 0 else "Optimized"
             ax[axis].set_title(
-                f"{title} Import / Export for "
-                + cc.convert(country, to="name_short")
+                f"{title} Import / Export for " + cc.convert(country, to="name_short")
             )
 
             # Custom legend elements

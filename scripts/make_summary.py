@@ -517,7 +517,9 @@ def calculate_weighted_prices(n, label, weighted_prices):
 
             if not names.empty:
                 load += (
-                    n.links_t.p0[names].groupby(n.links.loc[names, "bus0"], axis=1).sum()
+                    n.links_t.p0[names]
+                    .groupby(n.links.loc[names, "bus0"], axis=1)
+                    .sum()
                 )
 
         # Add H2 Store when charging

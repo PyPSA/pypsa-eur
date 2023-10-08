@@ -36,11 +36,7 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
 
-    opts = (
-        f"{snakemake.wildcards.opts}-{snakemake.wildcards.sector_opts}".split(
-            "-"
-        )
-    )
+    opts = f"{snakemake.wildcards.opts}-{snakemake.wildcards.sector_opts}".split("-")
     opts = [o for o in opts if o != ""]
     solve_opts = snakemake.params.options
 

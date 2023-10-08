@@ -260,9 +260,7 @@ def group_pipes(df, drop_direction=False):
         lambda x: f"H2 pipeline {x.bus0.replace(' H2', '')} -> {x.bus1.replace(' H2', '')}",
         axis=1,
     )
-    return df.groupby(level=0).agg(
-        {"p_nom_opt": sum, "bus0": "first", "bus1": "first"}
-    )
+    return df.groupby(level=0).agg({"p_nom_opt": sum, "bus0": "first", "bus1": "first"})
 
 
 def plot_h2_map(network, regions):

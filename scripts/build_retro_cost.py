@@ -609,10 +609,7 @@ def calculate_costs(u_values, l, cost_retro, window_assumptions):
         / x.A_C_Ref
         if x.name[3] != "Window"
         else (
-            (
-                window_cost(x[f"new_U_{l}"], cost_retro, window_assumptions)
-                * x.A_element
-            )
+            (window_cost(x[f"new_U_{l}"], cost_retro, window_assumptions) * x.A_element)
             / x.A_C_Ref
         )
         if x.value > window_limit(float(l), window_assumptions)

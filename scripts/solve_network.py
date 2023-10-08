@@ -153,10 +153,7 @@ def _add_land_use_constraint_m(n, planning_horizons, config):
     for carrier in ["solar", "onwind", "offwind-ac", "offwind-dc"]:
         existing = n.generators.loc[n.generators.carrier == carrier, "p_nom"]
         ind = list(
-            {
-                i.split(sep=" ")[0] + " " + i.split(sep=" ")[1]
-                for i in existing.index
-            }
+            {i.split(sep=" ")[0] + " " + i.split(sep=" ")[1] for i in existing.index}
         )
 
         previous_years = [

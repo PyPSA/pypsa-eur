@@ -583,8 +583,5 @@ if __name__ == "__main__":
 
     for sector_opts in snakemake.params.sector_opts:
         opts = sector_opts.split("-")
-        if (
-            any("cb" in o for o in opts)
-            or snakemake.config["foresight"] == "perfect"
-        ):
+        if any("cb" in o for o in opts) or snakemake.config["foresight"] == "perfect":
             plot_carbon_budget_distribution(snakemake.input.eurostat)
