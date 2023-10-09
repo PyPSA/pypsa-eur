@@ -240,6 +240,7 @@ lines:
   s_nom_max: .inf
   max_extension: .inf
   length_factor: 1.25
+  reconnect_crimea: true
   under_construction: 'zero' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
   dynamic_line_rating:
     activate: false
