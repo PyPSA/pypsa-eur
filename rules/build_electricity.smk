@@ -215,6 +215,11 @@ rule determine_availability_matrix_MD_UA:
             if "max_depth" in config["renewable"][w.technology].keys()
             else []
         ),
+        ship_density=lambda w: (
+            RESOURCES + "shipdensity_raster.tif"
+            if "ship_threshold" in config["renewable"][w.technology].keys()
+            else []
+        ),
         country_shapes=RESOURCES + "country_shapes.geojson",
         offshore_shapes=RESOURCES + "offshore_shapes.geojson",
         regions=lambda w: (

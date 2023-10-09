@@ -81,6 +81,13 @@ if __name__ == "__main__":
             snakemake.input.country_shapes, buffer=buffer, invert=True
         )
 
+    if "ship_threshold" in config:
+        shipping_threshold = config["ship_threshold"] * 8760 * 6
+        func = functools.partial(np.less, shipping_threshold)
+        excluder.add_raster(
+            snakemake.input.ship_density, codes=func, crs=4326, allow_no_overlap=True
+        )
+
     kwargs = dict(nprocesses=nprocesses, disable_progressbar=noprogress)
     if noprogress:
         logger.info("Calculate landuse availabilities...")
