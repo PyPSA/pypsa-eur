@@ -8,11 +8,17 @@ import logging
 import time
 
 import atlite
+import fiona
 import geopandas as gpd
 import numpy as np
 from _helpers import configure_logging
 
 logger = logging.getLogger(__name__)
+
+def get_wdpa_layer_name(wdpa_fn, layer_substring):
+    """Get layername from file "wdpa_fn" whose name contains "layer_substring"."""
+    l = fiona.listlayers(wdpa_fn)
+    return [_ for _ in l if layer_substring in _][0]
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -63,6 +69,29 @@ if __name__ == "__main__":
         excluder.add_raster(
             snakemake.input.copernicus, codes=codes, buffer=buffer, crs="EPSG:4326"
         )
+
+    if config["natura"]:
+        wdpa_fn = snakemake.input.wdpa_marine if "offwind" in snakemake.wildcards.technology else snakemake.input.wdpa
+        layer = get_wdpa_layer_name(wdpa_fn, "polygons")
+        wdpa = gpd.read_file(
+            wdpa_fn,
+            bbox=regions.geometry,
+            layer=layer,
+        ).to_crs(3035)
+        if not wdpa.empty:
+            excluder.add_geometry(wdpa.geometry)
+
+        layer = get_wdpa_layer_name(wdpa_fn, "points")
+        wdpa_pts = gpd.read_file(
+            wdpa_fn,
+            bbox=regions.geometry,
+            layer=layer,
+        ).to_crs(3035)
+        wdpa_pts = wdpa_pts[wdpa_pts["REP_AREA"] > 1]
+        wdpa_pts["buffer_radius"] = np.sqrt(wdpa_pts["REP_AREA"] / np.pi) * 1000
+        wdpa_pts = wdpa_pts.set_geometry(wdpa_pts["geometry"].buffer(wdpa_pts["buffer_radius"]))
+        if not wdpa_pts.empty:
+            excluder.add_geometry(wdpa_pts.geometry)
 
     if "max_depth" in config:
         # lambda not supported for atlite + multiprocessing
