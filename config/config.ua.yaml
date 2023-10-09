@@ -13,7 +13,7 @@ scenario:
   - 2050
 
 countries:
-  - UA
+- UA
 
 enable:
   retrieve: true
@@ -21,4 +21,3 @@ enable:
   retrieve_sector_databundle: false
   retrieve_cost_data: true
   retrieve_cutout: false
-

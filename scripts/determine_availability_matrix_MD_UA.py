@@ -18,10 +18,14 @@ from rasterio.plot import show
 
 logger = logging.getLogger(__name__)
 
+
 def get_wdpa_layer_name(wdpa_fn, layer_substring):
-    """Get layername from file "wdpa_fn" whose name contains "layer_substring"."""
+    """
+    Get layername from file "wdpa_fn" whose name contains "layer_substring".
+    """
     l = fiona.listlayers(wdpa_fn)
     return [_ for _ in l if layer_substring in _][0]
+
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -32,7 +36,7 @@ if __name__ == "__main__":
         )
     configure_logging(snakemake)
 
-    nprocesses = None # snakemake.config["atlite"].get("nprocesses")
+    nprocesses = None  # snakemake.config["atlite"].get("nprocesses")
     noprogress = not snakemake.config["atlite"].get("show_progress", True)
     config = snakemake.config["renewable"][snakemake.wildcards.technology]
 
@@ -74,7 +78,11 @@ if __name__ == "__main__":
         )
 
     if config["natura"]:
-        wdpa_fn = snakemake.input.wdpa_marine if "offwind" in snakemake.wildcards.technology else snakemake.input.wdpa
+        wdpa_fn = (
+            snakemake.input.wdpa_marine
+            if "offwind" in snakemake.wildcards.technology
+            else snakemake.input.wdpa
+        )
         layer = get_wdpa_layer_name(wdpa_fn, "polygons")
         wdpa = gpd.read_file(
             wdpa_fn,
@@ -92,7 +100,9 @@ if __name__ == "__main__":
         ).to_crs(3035)
         wdpa_pts = wdpa_pts[wdpa_pts["REP_AREA"] > 1]
         wdpa_pts["buffer_radius"] = np.sqrt(wdpa_pts["REP_AREA"] / np.pi) * 1000
-        wdpa_pts = wdpa_pts.set_geometry(wdpa_pts["geometry"].buffer(wdpa_pts["buffer_radius"]))
+        wdpa_pts = wdpa_pts.set_geometry(
+            wdpa_pts["geometry"].buffer(wdpa_pts["buffer_radius"])
+        )
         if not wdpa_pts.empty:
             excluder.add_geometry(wdpa_pts.geometry)
 
@@ -135,7 +145,7 @@ if __name__ == "__main__":
     fig, ax = plt.subplots(figsize=(4, 8))
     gpd.GeoSeries(regions_geometry.unary_union).plot(ax=ax, color="none")
     show(band, transform=transform, cmap="Greens", ax=ax)
-    plt.axis('off')
+    plt.axis("off")
     plt.savefig(snakemake.output.availability_map, bbox_inches="tight", dpi=500)
 
     # Limit results only to buses for UA and MD

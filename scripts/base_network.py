@@ -368,16 +368,19 @@ def _apply_parameter_corrections(n, parameter_corrections):
 
 def _reconnect_crimea(lines):
     logger.info("Reconnecting Crimea to the Ukrainian grid.")
-    lines_to_crimea = pd.DataFrame({
-        "bus0": ["3065", "3181", "3181"],
-        "bus1": ["3057", "3055", "3057"],
-        "v_nom": [300, 300, 300],
-        "num_parallel": [1, 1, 1],
-        "length": [140, 120, 140],
-        "carrier": ["AC", "AC", "AC"],
-        "underground": [False, False, False],
-        "under_construction": [False, False, False],
-    }, index=["Melitopol", "Liubymivka left", "Luibymivka right"])
+    lines_to_crimea = pd.DataFrame(
+        {
+            "bus0": ["3065", "3181", "3181"],
+            "bus1": ["3057", "3055", "3057"],
+            "v_nom": [300, 300, 300],
+            "num_parallel": [1, 1, 1],
+            "length": [140, 120, 140],
+            "carrier": ["AC", "AC", "AC"],
+            "underground": [False, False, False],
+            "under_construction": [False, False, False],
+        },
+        index=["Melitopol", "Liubymivka left", "Luibymivka right"],
+    )
 
     return pd.concat([lines, lines_to_crimea])
 

@@ -210,10 +210,8 @@ rule determine_availability_matrix_MD_UA:
     input:
         copernicus=RESOURCES
         + "Copernicus_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
-        wdpa=RESOURCES
-        + f"WDPA_{bYYYY}.gpkg",
-        wdpa_marine=RESOURCES
-        + f"WDPA_WDOECM_{bYYYY}_marine.gpkg",
+        wdpa=RESOURCES + f"WDPA_{bYYYY}.gpkg",
+        wdpa_marine=RESOURCES + f"WDPA_WDOECM_{bYYYY}_marine.gpkg",
         gebco=lambda w: (
             "data/bundle/GEBCO_2014_2D.nc"
             if "max_depth" in config["renewable"][w.technology].keys()
