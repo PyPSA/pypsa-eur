@@ -452,12 +452,12 @@ def _remove_dangling_branches(branches, buses):
     )
 
 
-def _remove_unconnected_components(network):
+def _remove_unconnected_components(network, threshold=6):
     _, labels = csgraph.connected_components(network.adjacency_matrix(), directed=False)
     component = pd.Series(labels, index=network.buses.index)
 
     component_sizes = component.value_counts()
-    components_to_remove = component_sizes.iloc[1:]
+    components_to_remove = component_sizes.loc[component_sizes < threshold]
 
     logger.info(
         "Removing {} unconnected network components with less than {} buses. In total {} buses.".format(
