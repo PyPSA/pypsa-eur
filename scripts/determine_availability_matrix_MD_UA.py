@@ -41,28 +41,10 @@ if __name__ == "__main__":
         if snakemake.wildcards.technology == "solar":
             codes = [20, 30, 40, 50, 60, 90, 100]
         elif snakemake.wildcards.technology == "onwind":
-            codes = [
-                20,
-                30,
-                40,
-                60,
-                100,
-                111,
-                112,
-                113,
-                114,
-                115,
-                116,
-                121,
-                122,
-                123,
-                124,
-                125,
-                126,
-            ]
-        elif snakemake.wildcards.technology == "offshore-ac":
+            codes = [20, 30, 40, 60, 100]
+        elif snakemake.wildcards.technology == "offwind-ac":
             codes = [80, 200]
-        elif snakemake.wildcards.technology == "offshore-dc":
+        elif snakemake.wildcards.technology == "offwind-dc":
             codes = [80, 200]
         else:
             assert False, "technology not supported"
