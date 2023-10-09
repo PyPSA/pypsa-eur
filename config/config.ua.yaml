@@ -1,0 +1,24 @@
+scenario:
+  simpl:
+  - ''
+  ll:
+  - v1.5
+  clusters:
+  - 6
+  opts:
+  - '24H'
+  sector_opts:
+  - ''
+  planning_horizons:
+  - 2050
+
+countries:
+  - UA
+
+enable:
+  retrieve: true
+  retrieve_databundle: true
+  retrieve_sector_databundle: false
+  retrieve_cost_data: true
+  retrieve_cutout: false
+

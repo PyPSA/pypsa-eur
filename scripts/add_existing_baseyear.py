@@ -305,6 +305,18 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
             if "EU" not in vars(spatial)[carrier[generator]].locations:
                 bus0 = bus0.intersection(capacity.index + " gas")
 
+            # check for missing bus
+            missing_bus = pd.Index(bus0).difference(n.buses.index)
+            if not missing_bus.empty:
+                logger.info(f"add buses {bus0}")
+                n.madd(
+                    "Bus",
+                    bus0,
+                    carrier=generator,
+                    location=vars(spatial)[carrier[generator]].locations,
+                    unit="MWh_el",
+                )
+
             already_build = n.links.index.intersection(asset_i)
             new_build = asset_i.difference(n.links.index)
             lifetime_assets = lifetime.loc[grouping_year, generator].dropna()
@@ -435,15 +447,23 @@ def add_heating_capacities_installed_before_baseyear(
 
     # split existing capacities between residential and services
     # proportional to energy demand
+    p_set_sum = n.loads_t.p_set.sum()
     ratio_residential = pd.Series(
         [
             (
-                n.loads_t.p_set.sum()[f"{node} residential rural heat"]
+                p_set_sum[f"{node} residential rural heat"]
                 / (
-                    n.loads_t.p_set.sum()[f"{node} residential rural heat"]
-                    + n.loads_t.p_set.sum()[f"{node} services rural heat"]
+                    p_set_sum[f"{node} residential rural heat"]
+                    + p_set_sum[f"{node} services rural heat"]
                 )
             )
+            # if rural heating demand for one of the nodes doesn't exist,
+            # then columns were dropped before and heating demand share should be 0.0
+            if all(
+                f"{node} {service} rural heat" in p_set_sum.index
+                for service in ["residential", "services"]
+            )
+            else 0.0
             for node in nodal_df.index
         ],
         index=nodal_df.index,
@@ -597,6 +617,10 @@ def add_heating_capacities_installed_before_baseyear(
                 ],
             )
 
+            # drop assets which are at the end of their lifetime
+            links_i = n.links[(n.links.build_year + n.links.lifetime <= baseyear)].index
+            n.mremove("Link", links_i)
+
 
 # %%
 if __name__ == "__main__":
@@ -605,13 +629,13 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "add_existing_baseyear",
-            configfiles="config/test/config.myopic.yaml",
+            # configfiles="config/test/config.myopic.yaml",
             simpl="",
-            clusters="5",
-            ll="v1.5",
+            clusters="37",
+            ll="v1.0",
             opts="",
-            sector_opts="24H-T-H-B-I-A-solar+p3-dist1",
-            planning_horizons=2030,
+            sector_opts="1p7-4380H-T-H-B-I-A-solar+p3-dist1",
+            planning_horizons=2020,
         )
 
     logging.basicConfig(level=snakemake.config["logging"]["level"])

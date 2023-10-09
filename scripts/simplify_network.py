@@ -613,6 +613,7 @@ if __name__ == "__main__":
         "substation_lv",
         "substation_off",
         "geometry",
+        "underground",
     ]
     n.buses.drop(remove, axis=1, inplace=True, errors="ignore")
     n.lines.drop(remove, axis=1, errors="ignore", inplace=True)

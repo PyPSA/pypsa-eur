@@ -57,5 +57,5 @@ dependencies:
 
 
 - pip:
-  - tsam>=1.1.0
-  - pypsa>=0.25.1
+  - git+https://github.com/fneum/tsam.git@performance
+  - pypsa>=0.25.2

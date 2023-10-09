@@ -337,7 +337,7 @@ def _load_lines_from_eg(buses, eg_lines):
     )
 
     lines["length"] /= 1e3
-
+    lines["carrier"] = "AC"
     lines = _remove_dangling_branches(lines, buses)
 
     return lines
