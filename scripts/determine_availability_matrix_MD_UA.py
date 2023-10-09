@@ -23,7 +23,7 @@ if __name__ == "__main__":
         )
     configure_logging(snakemake)
 
-    nprocesses = snakemake.config["atlite"].get("nprocesses")
+    nprocesses = None # snakemake.config["atlite"].get("nprocesses")
     noprogress = not snakemake.config["atlite"].get("show_progress", True)
     config = snakemake.config["renewable"][snakemake.wildcards.technology]
 
