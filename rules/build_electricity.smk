@@ -237,6 +237,7 @@ rule determine_availability_matrix_MD_UA:
         + ".nc",
     output:
         availability_matrix=RESOURCES + "availability_matrix_MD-UA_{technology}.nc",
+        availability_map=RESOURCES + "availability_matrix_MD-UA_{technology}.png",
     log:
         LOGS + "determine_availability_matrix_MD_UA_{technology}.log",
     threads: ATLITE_NPROCESSES

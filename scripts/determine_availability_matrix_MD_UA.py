@@ -10,8 +10,11 @@ import time
 import atlite
 import fiona
 import geopandas as gpd
+import matplotlib.pyplot as plt
 import numpy as np
 from _helpers import configure_logging
+from atlite.gis import shape_availability
+from rasterio.plot import show
 
 logger = logging.getLogger(__name__)
 
@@ -126,6 +129,14 @@ if __name__ == "__main__":
         logger.info(f"Completed availability calculation ({duration:2.2f}s)")
     else:
         availability = cutout.availabilitymatrix(regions, excluder, **kwargs)
+
+    regions_geometry = regions.to_crs(3035).geometry
+    band, transform = shape_availability(regions_geometry, excluder)
+    fig, ax = plt.subplots(figsize=(4, 8))
+    gpd.GeoSeries(regions_geometry.unary_union).plot(ax=ax, color="none")
+    show(band, transform=transform, cmap="Greens", ax=ax)
+    plt.axis('off')
+    plt.savefig(snakemake.output.availability_map, bbox_inches="tight", dpi=500)
 
     # Limit results only to buses for UA and MD
     buses = regions.loc[regions["country"].isin(["UA", "MD"])].index.values
