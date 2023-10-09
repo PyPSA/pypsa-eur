@@ -146,8 +146,7 @@ if __name__ == "__main__":
         ppl, snakemake.input.custom_powerplants, custom_ppl_query
     )
 
-    countries_wo_ppl = set(countries) - set(ppl.Country.unique())
-    if countries_wo_ppl:
+    if countries_wo_ppl := set(countries) - set(ppl.Country.unique()):
         logging.warning(f"No powerplants known in: {', '.join(countries_wo_ppl)}")
 
     substations = n.buses.query("substation_lv")
