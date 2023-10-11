@@ -990,19 +990,22 @@ def sample_dE_costs_area(
     sec_w = area_tot.div(area_tot.groupby(level=0).transform('sum'))
     # get the total cost-energy-savings weight by sector area
     tot = (
-        cost_dE.mul(sec_w, axis=0)
-        .groupby(level="country_code")
+        # sec_w has columns "estimated" and "value"
+        cost_dE.mul(sec_w.value, axis=0)
+        # for some reasons names of the levels were lost somewhere
+        #.groupby(level="country_code")
+        .groupby(level=0)
         .sum()
         .set_index(
             pd.MultiIndex.from_product(
-                [cost_dE.index.unique(level="country_code"), ["tot"]]
+                [cost_dE.index.unique(level=0), ["tot"]]
             )
         )
     )
     cost_dE = pd.concat([cost_dE, tot]).unstack().stack()
 
-    summed_area = pd.DataFrame(area_tot.groupby("country").sum()).set_index(
-        pd.MultiIndex.from_product([area_tot.index.unique(level="country"), ["tot"]])
+    summed_area = pd.DataFrame(area_tot.groupby(level=0).sum()).set_index(
+        pd.MultiIndex.from_product([area_tot.index.unique(level=0), ["tot"]])
     )
     area_tot = pd.concat([area_tot, summed_area]).unstack().stack()
 
