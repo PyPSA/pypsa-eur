@@ -1960,7 +1960,7 @@ def add_heat(n, costs):
         # demand 'dE' [per unit of original heat demand] for each country and
         # different retrofitting strengths [additional insulation thickness in m]
         retro_data = pd.read_csv(
-            snakemake.input.retro_cost_energy,
+            snakemake.input.retro_cost,
             index_col=[0, 1],
             skipinitialspace=True,
             header=[0, 1],
