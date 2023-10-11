@@ -198,6 +198,8 @@ def prepare_building_stock_data():
         }
     )
 
+    building_data["country_code"] = building_data["country"].map(country_iso_dic)    
+
     # heated floor area ----------------------------------------------------------
     area = building_data[
         (building_data.type == "Heated area [Mm²]")
