@@ -970,7 +970,7 @@ def sample_dE_costs_area(
             .mean()
             .set_index(pd.MultiIndex.from_product([[ct], cost_dE.index.levels[1]]))
         )
-        cost_dE = pd.concat(cost_dE, averaged_data)
+        cost_dE = pd.concat([cost_dE, averaged_data])
 
     # weights costs after construction index
     if construction_index:
@@ -999,12 +999,12 @@ def sample_dE_costs_area(
             )
         )
     )
-    cost_dE = pd.concat(cost_dE, tot).unstack().stack()
+    cost_dE = pd.concat([cost_dE, tot]).unstack().stack()
 
     summed_area = pd.DataFrame(area_tot.groupby("country").sum()).set_index(
         pd.MultiIndex.from_product([area_tot.index.unique(level="country"), ["tot"]])
     )
-    area_tot = pd.concat(area_tot, summed_area).unstack().stack()
+    area_tot = pd.concat([area_tot, summed_area]).unstack().stack()
 
     cost_per_saving = cost_dE["cost"] / (
         1 - cost_dE["dE"]
