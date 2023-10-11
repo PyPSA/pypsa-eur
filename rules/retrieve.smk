@@ -38,9 +38,9 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
         script:
             "../scripts/retrieve_databundle.py"
 
-if config["enable"].get("retrieve_irena", True):
 
-    datafiles=[
+if config["enable"].get("retrieve_irena", True):
+    datafiles = [
         "offwind_capacity_IRENA.csv",
         "onwind_capacity_IRENA.csv",
         "solar_capacity_IRENA.csv",
