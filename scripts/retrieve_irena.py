@@ -102,6 +102,6 @@ if __name__ == "__main__":
     )
     df_pv = irena[irena.Technology.str.contains("Solar")].drop(columns=["Technology"])
 
-    df_offwind.to_csv(snakemake.output[0])
-    df_onwind.to_csv(snakemake.output[1])
-    df_pv.to_csv(snakemake.output[2])
+    df_offwind.to_csv(snakemake.output["offwind"])
+    df_onwind.to_csv(snakemake.output["onwind"])
+    df_pv.to_csv(snakemake.output["solar"])

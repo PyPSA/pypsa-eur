@@ -40,15 +40,11 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
 
 
 if config["enable"].get("retrieve_irena"):
-    datafiles = [
-        "offwind_capacity_IRENA.csv",
-        "onwind_capacity_IRENA.csv",
-        "solar_capacity_IRENA.csv",
-    ]
-
     rule retrieve_irena:
         output:
-            expand("data/existing_infrastructure/{file}", file=datafiles),
+            offwind="data/existing_infrastructure/offwind_capacity_IRENA.csv",
+            onwind="data/existing_infrastructure/onwind_capacity_IRENA.csv",
+            solar="data/existing_infrastructure/solar_capacity_IRENA.csv",
         log:
             LOGS + "retrieve_irena.log",
         resources:
