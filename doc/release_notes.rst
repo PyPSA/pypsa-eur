@@ -31,6 +31,9 @@ Upcoming Release
 
 * Rule ``retrieve_irena`` get updated values for renewables capacities.
 
+* Split configuration to enable SMR and SMR CC.
+
+
 
 **Bugs and Compatibility**
 
