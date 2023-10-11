@@ -949,7 +949,8 @@ def sample_dE_costs_area(
             .rename(index=rename_sectors, level=2)
             .reset_index()
         )
-        .rename(columns={"country": "country_code"})
+        # if uncommented, leads to the second `country_code` column
+        # .rename(columns={"country": "country_code"})
         .set_index(["country_code", "subsector", "bage"])
     )
 
