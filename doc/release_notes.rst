@@ -29,6 +29,8 @@ Upcoming Release
 
 * Rule ``purge`` now initiates a dialog to confirm if purge is desired.
 
+* Split configuration to enable SMR and SMR CC.
+
 
 **Bugs and Compatibility**
 

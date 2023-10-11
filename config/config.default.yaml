@@ -452,6 +452,7 @@ sector:
   hydrogen_fuel_cell: true
   hydrogen_turbine: false
   SMR: true
+  SMR_cc: true
   regional_co2_sequestration_potential:
     enable: false
     attribute: 'conservative estimate Mt'

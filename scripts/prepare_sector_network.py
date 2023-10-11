@@ -1392,7 +1392,7 @@ def add_storage_and_grids(n, costs):
             lifetime=costs.at["coal", "lifetime"],
         )
 
-    if options["SMR"]:
+    if options["SMR_cc"]:
         n.madd(
             "Link",
             spatial.nodes,
@@ -1410,6 +1410,7 @@ def add_storage_and_grids(n, costs):
             lifetime=costs.at["SMR CC", "lifetime"],
         )
 
+    if options["SMR"]:
         n.madd(
             "Link",
             nodes + " SMR",
