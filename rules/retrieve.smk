@@ -40,6 +40,7 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
 
 
 if config["enable"].get("retrieve_irena"):
+
     rule retrieve_irena:
         output:
             offwind="data/existing_infrastructure/offwind_capacity_IRENA.csv",
