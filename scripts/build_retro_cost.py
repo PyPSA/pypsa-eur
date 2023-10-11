@@ -987,7 +987,7 @@ def sample_dE_costs_area(
     # drop not considered countries
     cost_dE = cost_dE.reindex(countries, level=0)
     # get share of residential and service floor area
-    sec_w = area_tot.value / area_tot.value.groupby(level=0).sum()
+    sec_w = area_tot.div(area_tot.groupby(level=0).transform('sum'))
     # get the total cost-energy-savings weight by sector area
     tot = (
         cost_dE.mul(sec_w, axis=0)
