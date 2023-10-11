@@ -963,7 +963,7 @@ def sample_dE_costs_area(
     )
 
     # map missing countries
-    for ct in countries.difference(cost_dE.index.levels[0]):
+    for ct in set(countries).difference(cost_dE.index.levels[0]):
         averaged_data = (
             cost_dE.reindex(index=map_for_missings[ct], level=0)
             .mean(level=1)
