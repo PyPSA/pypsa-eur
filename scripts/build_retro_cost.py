@@ -966,7 +966,8 @@ def sample_dE_costs_area(
     for ct in set(countries).difference(cost_dE.index.levels[0]):
         averaged_data = (
             cost_dE.reindex(index=map_for_missings[ct], level=0)
-            .mean(level=1)
+            .groupby(level=1)
+            .mean()
             .set_index(pd.MultiIndex.from_product([[ct], cost_dE.index.levels[1]]))
         )
         cost_dE = pd.concat(cost_dE, averaged_data)
