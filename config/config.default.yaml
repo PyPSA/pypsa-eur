@@ -458,7 +458,7 @@ sector:
   helmeth: false
   coal_cc: false
   dac: true
-  co2_vent: false
+  co2_vent: true
   allam_cycle_gas: false
   hydrogen_fuel_cell: true
   hydrogen_turbine: false
