@@ -3593,6 +3593,8 @@ def add_waste_heat(n):
 
     logger.info("Add possibility to use industrial waste heat in district heating")
 
+    cf_industry = snakemake.params.industry
+
     # AC buses with district heating
     urban_central = n.buses.index[n.buses.carrier == "urban central heat"]
     if not urban_central.empty:
@@ -3613,6 +3615,17 @@ def add_waste_heat(n):
             )
             n.links.loc[urban_central + " Sabatier", "efficiency3"] = (
                 0.95 - n.links.loc[urban_central + " Sabatier", "efficiency"]
+            )
+
+        # DEA quotes 15% of total input (11% of which are high-value heat)
+        if options["use_haber_bosch_waste_heat"]:
+            n.links.loc[urban_central + " Haber-Bosch", "bus3"] = (
+                urban_central + " urban central heat"
+            )
+            total_energy_input = (cf_industry["MWh_H2_per_tNH3_electrolysis"] + cf_industry["MWh_elec_per_tNH3_electrolysis"]) /  cf_industry["MWh_NH3_per_tNH3"]
+            electricity_input = cf_industry["MWh_elec_per_tNH3_electrolysis"] /  cf_industry["MWh_NH3_per_tNH3"]
+            n.links.loc[urban_central + " Haber-Bosch", "efficiency3"] = (
+                0.15 * total_energy_input / electricity_input
             )
 
         if options["use_methanolisation_waste_heat"]:
