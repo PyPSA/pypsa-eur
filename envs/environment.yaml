@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-name: pypsa-eur-eee
+name: pypsa-eur
 channels:
 - conda-forge
 - bioconda
