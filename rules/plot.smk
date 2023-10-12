@@ -348,3 +348,14 @@ rule plot_import_options:
         multiext(RESULTS + "graphics/import_options_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}", ".png", ".pdf")
     script:
         "../scripts/plot_import_options.py"
+
+
+rule plot_import_shares:
+    input:
+        network=RESULTS
+        + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        rc="matplotlibrc",
+    output:
+        multiext(RESULTS + "graphics/import_shares/s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}", ".png", ".pdf")
+    script:
+        "../scripts/plot_import_shares.py"
