@@ -611,12 +611,11 @@ def calculate_costs(u_values, l, cost_retro, window_assumptions):
         / x.A_C_Ref
         if x.name[3] != "Window"
         else (
-            window_cost(x["new_U_{}".format(l)], cost_retro, window_assumptions)
-            * x.A_element
+            (window_cost(x[f"new_U_{l}"], cost_retro, window_assumptions) * x.A_element)
             / x.A_C_Ref
-            if x.value > window_limit(float(l), window_assumptions)
-            else 0
-        ),
+        )
+        if x.value > window_limit(float(l), window_assumptions)
+        else 0,
         axis=1,
     )
 
@@ -741,12 +740,12 @@ def calculate_heat_losses(u_values, data_tabula, l_strength, temperature_factor)
     #  (1) by transmission
     # calculate new U values of building elements due to additional insulation
     for l in l_strength:
-        u_values["new_U_{}".format(l)] = calculate_new_u(
+        u_values[f"new_U_{l}"] = calculate_new_u(
             u_values, l, l_weight, window_assumptions
         )
     # surface area of building components [m^2]
     area_element = (
-        data_tabula[["A_{}".format(e) for e in u_values.index.levels[3]]]
+        data_tabula[[f"A_{e}" for e in u_values.index.levels[3]]]
         .rename(columns=lambda x: x[2:])
         .stack()
         .unstack(-2)
@@ -758,7 +757,7 @@ def calculate_heat_losses(u_values, data_tabula, l_strength, temperature_factor)
 
     # heat transfer H_tr_e [W/m^2K] through building element
     # U_e * A_e / A_C_Ref
-    columns = ["value"] + ["new_U_{}".format(l) for l in l_strength]
+    columns = ["value"] + [f"new_U_{l}" for l in l_strength]
     heat_transfer = pd.concat(
         [u_values[columns].mul(u_values.A_element, axis=0), u_values.A_element], axis=1
     )
@@ -877,10 +876,7 @@ def calculate_gain_utilisation_factor(heat_transfer_perm2, Q_ht, Q_gain):
     alpha = alpha_H_0 + (tau / tau_H_0)
     # heat balance ratio
     gamma = (1 / Q_ht).mul(Q_gain.sum(axis=1), axis=0)
-    # gain utilisation factor
-    nu = (1 - gamma**alpha) / (1 - gamma ** (alpha + 1))
-
-    return nu
+    return (1 - gamma**alpha) / (1 - gamma ** (alpha + 1))
 
 
 def calculate_space_heat_savings(

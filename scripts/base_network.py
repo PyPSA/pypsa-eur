@@ -151,9 +151,7 @@ def _load_buses_from_eg(eg_buses, europe_shape, config_elec):
         buses.v_nom.isin(config_elec["voltages"]) | buses.v_nom.isnull()
     )
     logger.info(
-        "Removing buses with voltages {}".format(
-            pd.Index(buses.v_nom.unique()).dropna().difference(config_elec["voltages"])
-        )
+        f'Removing buses with voltages {pd.Index(buses.v_nom.unique()).dropna().difference(config_elec["voltages"])}'
     )
 
     return pd.DataFrame(buses.loc[buses_in_europe_b & buses_with_v_nom_to_keep_b])
@@ -460,11 +458,7 @@ def _remove_unconnected_components(network):
     components_to_remove = component_sizes.iloc[1:]
 
     logger.info(
-        "Removing {} unconnected network components with less than {} buses. In total {} buses.".format(
-            len(components_to_remove),
-            components_to_remove.max(),
-            components_to_remove.sum(),
-        )
+        f"Removing {len(components_to_remove)} unconnected network components with less than {components_to_remove.max()} buses. In total {components_to_remove.sum()} buses."
     )
 
     return network[component == component_sizes.index[0]]
