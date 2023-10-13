@@ -11,7 +11,7 @@ dependencies:
 - pip
 
 - atlite>=0.2.9
-- dask<=2023.9.1
+- dask
 
   # Dependencies of the workflow itself
 - xlrd
