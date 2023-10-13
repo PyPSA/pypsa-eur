@@ -198,12 +198,11 @@ def prepare_building_stock_data():
         }
     )
 
-    building_data["country_code"] = building_data["country"].map(country_iso_dic)    
+    building_data["country_code"] = building_data["country"].map(country_iso_dic)
 
     # heated floor area ----------------------------------------------------------
     area = building_data[
-        (building_data.type == "Heated area [Mm²]")
-        & (building_data.detail != "Total")
+        (building_data.type == "Heated area [Mm²]") & (building_data.detail != "Total")
     ]
     area_tot = area[["country", "sector", "value"]].groupby(["country", "sector"]).sum()
     area = pd.concat(
@@ -983,20 +982,16 @@ def sample_dE_costs_area(
     # drop not considered countries
     cost_dE = cost_dE.reindex(countries, level=0)
     # get share of residential and service floor area
-    sec_w = area_tot.div(area_tot.groupby(level=0).transform('sum'))
+    sec_w = area_tot.div(area_tot.groupby(level=0).transform("sum"))
     # get the total cost-energy-savings weight by sector area
     tot = (
         # sec_w has columns "estimated" and "value"
         cost_dE.mul(sec_w.value, axis=0)
         # for some reasons names of the levels were lost somewhere
-        #.groupby(level="country_code")
+        # .groupby(level="country_code")
         .groupby(level=0)
         .sum()
-        .set_index(
-            pd.MultiIndex.from_product(
-                [cost_dE.index.unique(level=0), ["tot"]]
-            )
-        )
+        .set_index(pd.MultiIndex.from_product([cost_dE.index.unique(level=0), ["tot"]]))
     )
     cost_dE = pd.concat([cost_dE, tot]).unstack().stack()
 
