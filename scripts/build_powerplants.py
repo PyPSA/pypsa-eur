@@ -169,16 +169,16 @@ if __name__ == "__main__":
     # The following lines correct the major issues.
     logger.warning("Hard coded correction of GB hydro powerplants.")
 
-    # default 2016, see https://en.wikipedia.org/wiki/Dinorwig_Power_Station
-    ppl.loc[ppl.EIC == "{'48WSTN10000DINOQ'}", "Capacity"] = 1728
-    # according to data source has 1.80 GW capacity, however based on coords, there is
-    # no ppl of this size, true value could not be found dropping more correct than keeping.
-    ppl.drop(ppl.loc[ppl.EIC == "{'48WSTN00000STVEO'}"].index, inplace=True)
-    # from 999, see https://openinframap.org/stats/area/United%20Kingdom/plants/956053729 
+    # is 2016, but see https://en.wikipedia.org/wiki/Dinorwig_Power_Station
+    ppl.loc[ppl.EIC == "{'48WSTN10000DINOQ'}", "Capacity"] = 1728.
+    # is 999, but see https://openinframap.org/stats/area/United%20Kingdom/plants/956053729 
     ppl.loc[ppl.EIC == "{'48WSTN00000LOCGL'}", "Capacity"] = 6.
-    # from 999, see https://www.scottish-places.info/features/featurefirst3844.html
+    # is 999, but see https://www.scottish-places.info/features/featurefirst3844.html
     ppl.loc[ppl.EIC == "{'48WSTN00000GAURQ'}", "Capacity"] = 6.4
-    # from 999, see https://en.wikipedia.org/wiki/Shira_Hydro-Electric_Scheme
+    # is 999, but see https://en.wikipedia.org/wiki/Shira_Hydro-Electric_Scheme
     ppl.loc[ppl.EIC == "{'48WSTN00000SROM0'}", "Capacity"] = 40.
+    # according to data source has 1.80 GW capacity, however based on coords, there is
+    # no plant of this size, true value could not be found; dropping more correct than keeping.
+    ppl.drop(ppl.loc[ppl.EIC == "{'48WSTN00000STVEO'}"].index, inplace=True)
 
     ppl.reset_index(drop=True).to_csv(snakemake.output[0])
