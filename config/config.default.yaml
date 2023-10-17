@@ -636,14 +636,14 @@ solving:
       parallel: "on"
       random_seed: 123
     gurobi-default:
-      threads: 4
+      threads: 8
       method: 2 # barrier
       crossover: 0
-      BarConvTol: 1.e-6
+      # BarConvTol: 1.e-6
       Seed: 123
       AggFill: 0
       PreDual: 0
-      GURO_PAR_BARDENSETHRESH: 200
+      # GURO_PAR_BARDENSETHRESH: 200
     gurobi-numeric-focus:
       name: gurobi
       NumericFocus: 3       # Favour numeric stability over speed
