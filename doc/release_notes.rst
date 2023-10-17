@@ -31,6 +31,8 @@ Upcoming Release
 
 * Split configuration to enable SMR and SMR CC.
 
+* Corrected estimation of hydropower generation in GB by ~5 GW.
+
 
 **Bugs and Compatibility**
 
