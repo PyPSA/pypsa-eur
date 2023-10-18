@@ -609,7 +609,7 @@ if config["sector"]["retrofitting"]["retro_endogen"]:
             countries=config["countries"],
         input:
             building_stock="data/retro/data_building_stock.csv",
-            data_tabula="data/retro/tabula-calculator-calcsetbuilding.csv",
+            data_tabula="data/bundle-sector/retro/tabula-calculator-calcsetbuilding.csv",
             air_temperature=RESOURCES + "temp_air_total_elec_s{simpl}_{clusters}.nc",
             u_values_PL="data/retro/u_values_poland.csv",
             tax_w="data/retro/electricity_taxes_eu.csv",
