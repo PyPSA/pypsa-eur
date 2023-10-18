@@ -630,7 +630,6 @@ def add_heating_capacities_installed_before_baseyear(
             n.mremove("Link", links_i)
 
 
-# %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
