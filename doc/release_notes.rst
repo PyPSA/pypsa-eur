@@ -29,7 +29,10 @@ Upcoming Release
 
 * Rule ``purge`` now initiates a dialog to confirm if purge is desired.
 
+* Rule ``retrieve_irena`` get updated values for renewables capacities.
+
 * Split configuration to enable SMR and SMR CC.
+
 
 
 **Bugs and Compatibility**
