@@ -349,6 +349,27 @@ rule plot_import_options:
     script:
         "../scripts/plot_import_options.py"
 
+rule plot_import_world_map:
+    input:
+        imports="data/imports/results.csv",
+        profiles="data/imports/combined_weighted_generator_timeseries.nc",
+        gadm_arg=HTTP.remote(
+            "https://geodata.ucdavis.edu/gadm/gadm4.1/gpkg/gadm41_ARG.gpkg",
+            keep_local=True,
+            static=True,
+        ),
+        copernicus_glc=HTTP.remote(
+            "https://zenodo.org/records/3939050/files/PROBAV_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
+            keep_local=True,
+            static=True,
+        ),
+        rc="matplotlibrc",
+    output:
+        multiext(RESOURCES + "graphics/import_world_map", ".png", ".pdf")
+    script:
+        "../scripts/plot_import_world_map.py"
+
+
 
 rule plot_import_shares:
     input:
