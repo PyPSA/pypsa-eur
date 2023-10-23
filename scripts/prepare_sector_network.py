@@ -1582,6 +1582,7 @@ def add_storage_and_grids(n, costs):
             bus2=spatial.co2.nodes,
             p_nom_extendable=True,
             carrier="Sabatier",
+            p_min_pu=options.get("min_part_load_methanation", 0),
             efficiency=costs.at["methanation", "efficiency"],
             efficiency2=-costs.at["methanation", "efficiency"]
             * costs.at["gas", "CO2 intensity"],
