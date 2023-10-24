@@ -764,7 +764,7 @@ def add_pipe_retrofit_constraint(n):
     n.model.add_constraints(lhs == rhs, name="Link-pipe_retrofit")
 
 
-def add_co2limit_country(n, config, limit_countries, nyears=1.0):
+def add_co2limit_country(n, limit_countries, nyears=1.0):
     """
     Add a set of emissions limit constraints for specified countries.
 
@@ -780,10 +780,7 @@ def add_co2limit_country(n, config, limit_countries, nyears=1.0):
     """
     logger.info(f"Adding CO2 budget limit for each country as per unit of 1990 levels")
 
-    # TODO: n.config (submodule) vs snakemake.config (main module, overwrite/overwritten config)?
-    # countries = config.countries
-    # print(config)
-    countries = ['AT', 'BE', 'CH', 'CZ', 'DE', 'DK', 'FR', 'GB', 'LU', 'NL', 'NO', 'PL', 'SE']
+    countries = n.config["countries"]
 
     # TODO: import function from prepare_sector_network? Move to common place?
     sectors = emission_sectors_from_opts(opts)
@@ -814,7 +811,7 @@ def add_co2limit_country(n, config, limit_countries, nyears=1.0):
                 n.links["efficiency"].apply(lambda x: 1.0).rename("efficiency0")
             )
         elif port == str(1):
-            efficiency = n.links["efficiency"].rename("efficiency1")
+            efficiency = n.links["efficiency"]
         else:
             efficiency = n.links[f"efficiency{port}"]
         mask = n.links[f"bus{port}"].map(n.buses.carrier).eq("co2")
@@ -889,7 +886,7 @@ def extra_functionality(n, snapshots):
 
         # add co2 constraint for each country
         logger.info(f"Add CO2 limit for each country")
-        add_co2limit_country(n, config, limit_countries, nyears)
+        add_co2limit_country(n, limit_countries, nyears)
 
 
 def solve_network(n, config, solving, opts="", **kwargs):
