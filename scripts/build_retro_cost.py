@@ -155,6 +155,7 @@ def prepare_building_stock_data():
     building_data["type"].replace(
         {
             "Covered area: heated  [Mm²]": "Heated area [Mm²]",
+            "Construction features (U-value)": "Construction features (U-values)",
             "Windows ": "Window",
             "Windows": "Window",
             "Walls ": "Wall",
