@@ -1581,7 +1581,9 @@ def add_land_transport(n, costs):
             spatial.oil.land_transport,
             bus=spatial.oil.land_transport,
             carrier="land transport oil",
-            p_set=ice_share / ice_efficiency * transport[nodes].rename(columns=lambda x: x + " land transport oil"),
+            p_set=ice_share
+            / ice_efficiency
+            * transport[nodes].rename(columns=lambda x: x + " land transport oil"),
         )
 
         n.madd(
@@ -2644,7 +2646,10 @@ def add_industry(n, costs):
             bus2="co2 atmosphere",
             carrier="shipping methanol",
             p_nom_extendable=True,
-            efficiency2=1 / options["MWh_MeOH_per_tCO2"], # CO2 intensity methanol based on stoichiometric calculation with 22.7 GJ/t methanol (32 g/mol), CO2 (44 g/mol), 277.78 MWh/TJ = 0.218 t/MWh
+            efficiency2=1
+            / options[
+                "MWh_MeOH_per_tCO2"
+            ],  # CO2 intensity methanol based on stoichiometric calculation with 22.7 GJ/t methanol (32 g/mol), CO2 (44 g/mol), 277.78 MWh/TJ = 0.218 t/MWh
         )
 
     if "oil" not in n.buses.carrier.unique():
@@ -2761,7 +2766,15 @@ def add_industry(n, costs):
     # NB: CO2 gets released again to atmosphere when plastics decay
     # except for the process emissions when naphtha is used for petrochemicals, which can be captured with other industry process emissions
     # convert process emissions from feedstock from MtCO2 to energy demand
-    p_set = demand_factor * (industrial_demand.loc[nodes, "naphtha"] - industrial_demand.loc[nodes, "process emission from feedstock"] / costs.at["oil", "CO2 intensity"]).sum() / nhours
+    p_set = (
+        demand_factor
+        * (
+            industrial_demand.loc[nodes, "naphtha"]
+            - industrial_demand.loc[nodes, "process emission from feedstock"]
+            / costs.at["oil", "CO2 intensity"]
+        ).sum()
+        / nhours
+    )
 
     n.add(
         "Bus",
