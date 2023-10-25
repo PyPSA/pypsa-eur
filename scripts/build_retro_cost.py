@@ -169,7 +169,7 @@ def prepare_building_stock_data():
             "Construction features (U-value)": "Construction features (U-values)",
         },
         inplace=True,
-    )     
+    )
 
     building_data.country_code = building_data.country_code.str.upper()
     building_data["subsector"].replace(
