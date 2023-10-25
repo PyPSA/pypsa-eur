@@ -57,7 +57,7 @@ def assign_location(n):
             if i == -1:
                 continue
             names = ifind.index[ifind == i]
-            c.df.loc[names, "location"] = names.str[:i]
+            c.df.loc[names, "location"] = names.str[:i]    
 
 
 def plot_map(
@@ -273,4 +273,3 @@ if __name__ == "__main__":
         map_opts["boundaries"] = regions.total_bounds[[0, 2, 1, 3]] + [-1, 1, -1, 1]
 
     plot_map(n)
-

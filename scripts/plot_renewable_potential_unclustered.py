@@ -3,7 +3,7 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Plot unclustered wind and solar renewable potentials.
+Plot unclustered wind and solar renewable potentials and capacity factors.
 """
 
 import cartopy
