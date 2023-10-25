@@ -71,6 +71,10 @@ if __name__ == "__main__":
     secax = ax.secondary_xaxis('top', functions=(lambda x: 100 - x, lambda x: 100 -x))
     secax.set_xlabel('import share [%]', fontsize=11, color='coral')
 
+    ticks = range(10, 100, 20)
+    ax.set_xticks(ticks, minor=True)
+    secax.set_xticks(ticks, minor=True)
+
     for i in ["top", "right", "left", "bottom"]:
         secax.spines[i].set_visible(False)
         ax.spines[i].set_visible(False)
