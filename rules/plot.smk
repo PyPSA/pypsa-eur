@@ -370,6 +370,17 @@ rule plot_import_world_map:
         "../scripts/plot_import_world_map.py"
 
 
+rule plot_import_networks:
+    input:
+        network=RESULTS
+        + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        regions=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+        rc="matplotlibrc",
+    output:
+        multiext(RESULTS + "graphics/import_networks/s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}", ".png", ".pdf")
+    script:
+        "../scripts/plot_import_networks.py"
+
 
 rule plot_import_shares:
     input:
