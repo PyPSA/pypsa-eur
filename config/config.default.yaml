@@ -1126,14 +1126,14 @@ plotting:
     DC: "#8a1caf"
     DC-DC: "#8a1caf"
     DC link: "#8a1caf"
-    import pipeline-h2: '#fff6e0'
-    import shipping-lh2: '#ebe1ca'
-    import shipping-lch4: '#d6cbb2'
-    import shipping-lnh3: '#c6c093'
-    import shipping-ftfuel: '#bdb093'
-    import shipping-meoh: '#91856a'
-    import shipping-steel: '#736c5d'
-    import hvdc-to-elec: '#47443d'
+    import pipeline-h2: '#db8ccd'
+    import shipping-lh2: '#d9b8d3'
+    import shipping-lch4: '#f7a572'
+    import shipping-lnh3: '#87d0e6'
+    import shipping-ftfuel: '#95decb'
+    import shipping-meoh: '#b7dbdb'
+    import shipping-steel: '#94a4be'
+    import hvdc-to-elec: '#91856a'
     external H2: '#f7cdf0'
     external H2 Turbine: '#991f83'
     external H2 Electrolysis: '#991f83'
