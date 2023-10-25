@@ -111,7 +111,7 @@ if __name__ == "__main__":
         line_widths=0.75,
         link_widths=0.75,
         link_colors=link_colors,
-        boundaries=[-11, 48, 26.5, 70],
+        boundaries=[-11, 48, 25.25, 71.5],
         margin=0,
     )
 
