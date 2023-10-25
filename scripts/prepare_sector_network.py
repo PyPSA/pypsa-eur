@@ -184,10 +184,7 @@ def get(item, investment_year=None):
     """
     Check whether item depends on investment year.
     """
-    if isinstance(item, dict):
-        return item[investment_year]
-    else:
-        return item
+    return item[investment_year] if isinstance(item, dict) else item
 
 
 def co2_emissions_year(
@@ -220,7 +217,7 @@ def co2_emissions_year(
 
 
 # TODO: move to own rule with sector-opts wildcard?
-def build_carbon_budget(o, input_eurostat, fn, emissions_scope, report_year, input_co2):
+def build_carbon_budget(o, input_eurostat, fn, emissions_scope, report_year):
     """
     Distribute carbon budget following beta or exponential transition path.
     """
@@ -413,11 +410,9 @@ def update_wind_solar_costs(n, costs):
             # e.g. clusters == 37m means that VRE generators are left
             # at clustering of simplified network, but that they are
             # connected to 37-node network
-            if snakemake.wildcards.clusters[-1:] == "m":
-                genmap = busmap_s
-            else:
-                genmap = clustermaps
-
+            genmap = (
+                busmap_s if snakemake.wildcards.clusters[-1:] == "m" else clustermaps
+            )
             connection_cost = (connection_cost * weight).groupby(
                 genmap
             ).sum() / weight.groupby(genmap).sum()
@@ -505,8 +500,7 @@ def remove_non_electric_buses(n):
     """
     Remove buses from pypsa-eur with carriers which are not AC buses.
     """
-    to_drop = list(n.buses.query("carrier not in ['AC', 'DC']").carrier.unique())
-    if to_drop:
+    if to_drop := list(n.buses.query("carrier not in ['AC', 'DC']").carrier.unique()):
         logger.info(f"Drop buses from PyPSA-Eur with carrier: {to_drop}")
         n.buses = n.buses[n.buses.carrier.isin(["AC", "DC"])]
 
@@ -577,6 +571,7 @@ def add_co2_tracking(n, options):
         capital_cost=options["co2_sequestration_cost"],
         carrier="co2 stored",
         bus=spatial.co2.nodes,
+        lifetime=options["co2_sequestration_lifetime"],
     )
 
     n.add("Carrier", "co2 stored")
@@ -1231,11 +1226,9 @@ def add_storage_and_grids(n, costs):
 
         # apply k_edge_augmentation weighted by length of complement edges
         k_edge = options.get("gas_network_connectivity_upgrade", 3)
-        augmentation = list(
+        if augmentation := list(
             k_edge_augmentation(G, k_edge, avail=complement_edges.values)
-        )
-
-        if augmentation:
+        ):
             new_gas_pipes = pd.DataFrame(augmentation, columns=["bus0", "bus1"])
             new_gas_pipes["length"] = new_gas_pipes.apply(haversine, axis=1)
 
@@ -1399,7 +1392,7 @@ def add_storage_and_grids(n, costs):
             lifetime=costs.at["coal", "lifetime"],
         )
 
-    if options["SMR"]:
+    if options["SMR_cc"]:
         n.madd(
             "Link",
             spatial.nodes,
@@ -1417,6 +1410,7 @@ def add_storage_and_grids(n, costs):
             lifetime=costs.at["SMR CC", "lifetime"],
         )
 
+    if options["SMR"]:
         n.madd(
             "Link",
             nodes + " SMR",
@@ -1960,7 +1954,7 @@ def add_heat(n, costs):
         # demand 'dE' [per unit of original heat demand] for each country and
         # different retrofitting strengths [additional insulation thickness in m]
         retro_data = pd.read_csv(
-            snakemake.input.retro_cost_energy,
+            snakemake.input.retro_cost,
             index_col=[0, 1],
             skipinitialspace=True,
             header=[0, 1],
@@ -2893,6 +2887,30 @@ def add_industry(n, costs):
             p_set=p_set,
         )
 
+    primary_steel = get(
+        snakemake.config["industry"]["St_primary_fraction"], investment_year
+    )
+    dri_steel = get(snakemake.config["industry"]["DRI_fraction"], investment_year)
+    bof_steel = primary_steel - dri_steel
+
+    if bof_steel > 0:
+        add_carrier_buses(n, "coal")
+
+        mwh_coal_per_mwh_coke = 1.366  # from eurostat energy balance
+        p_set = (
+            industrial_demand["coal"].sum()
+            + mwh_coal_per_mwh_coke * industrial_demand["coke"].sum()
+        ) / nhours
+
+        n.madd(
+            "Load",
+            spatial.coal.nodes,
+            suffix=" for industry",
+            bus=spatial.coal.nodes,
+            carrier="coal for industry",
+            p_set=p_set,
+        )
+
 
 def add_waste_heat(n):
     # TODO options?
@@ -3325,7 +3343,7 @@ if __name__ == "__main__":
 
     spatial = define_spatial(pop_layout.index, options)
 
-    if snakemake.params.foresight == "myopic":
+    if snakemake.params.foresight in ["myopic", "perfect"]:
         add_lifetime_wind_solar(n, costs)
 
         conventional = snakemake.params.conventional_carriers
@@ -3402,7 +3420,7 @@ if __name__ == "__main__":
         if "cb" not in o:
             continue
         limit_type = "carbon budget"
-        fn = "results/" + snakemake.params.RDIR + "csvs/carbon_budget_distribution.csv"
+        fn = "results/" + snakemake.params.RDIR + "/csvs/carbon_budget_distribution.csv"
         if not os.path.exists(fn):
             emissions_scope = snakemake.params.emissions_scope
             report_year = snakemake.params.eurostat_report_year
@@ -3446,7 +3464,7 @@ if __name__ == "__main__":
     if options["electricity_grid_connection"]:
         add_electricity_grid_connection(n, costs)
 
-    first_year_myopic = (snakemake.params.foresight == "myopic") and (
+    first_year_myopic = (snakemake.params.foresight in ["myopic", "perfect"]) and (
         snakemake.params.planning_horizons[0] == investment_year
     )
 

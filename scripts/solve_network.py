@@ -33,7 +33,9 @@ import numpy as np
 import pandas as pd
 import pypsa
 import xarray as xr
+from _benchmark import memory_logger
 from _helpers import configure_logging, update_config_with_sector_opts
+from pypsa.descriptors import get_activity_mask
 
 logger = logging.getLogger(__name__)
 pypsa.pf.logger.setLevel(logging.WARNING)
@@ -45,6 +47,69 @@ def add_land_use_constraint(n, planning_horizons, config):
         _add_land_use_constraint_m(n, planning_horizons, config)
     else:
         _add_land_use_constraint(n)
+
+
+def add_land_use_constraint_perfect(n):
+    """
+    Add global constraints for tech capacity limit.
+    """
+    logger.info("Add land-use constraint for perfect foresight")
+
+    def compress_series(s):
+        def process_group(group):
+            if group.nunique() == 1:
+                return pd.Series(group.iloc[0], index=[None])
+            else:
+                return group
+
+        return s.groupby(level=[0, 1]).apply(process_group)
+
+    def new_index_name(t):
+        # Convert all elements to string and filter out None values
+        parts = [str(x) for x in t if x is not None]
+        # Join with space, but use a dash for the last item if not None
+        return " ".join(parts[:2]) + (f"-{parts[-1]}" if len(parts) > 2 else "")
+
+    def check_p_min_p_max(p_nom_max):
+        p_nom_min = n.generators[ext_i].groupby(grouper).sum().p_nom_min
+        p_nom_min = p_nom_min.reindex(p_nom_max.index)
+        check = (
+            p_nom_min.groupby(level=[0, 1]).sum()
+            > p_nom_max.groupby(level=[0, 1]).min()
+        )
+        if check.sum():
+            logger.warning(
+                f"summed p_min_pu values at node larger than technical potential {check[check].index}"
+            )
+
+    grouper = [n.generators.carrier, n.generators.bus, n.generators.build_year]
+    ext_i = n.generators.p_nom_extendable
+    # get technical limit per node and investment period
+    p_nom_max = n.generators[ext_i].groupby(grouper).min().p_nom_max
+    # drop carriers without tech limit
+    p_nom_max = p_nom_max[~p_nom_max.isin([np.inf, np.nan])]
+    # carrier
+    carriers = p_nom_max.index.get_level_values(0).unique()
+    gen_i = n.generators[(n.generators.carrier.isin(carriers)) & (ext_i)].index
+    n.generators.loc[gen_i, "p_nom_min"] = 0
+    # check minimum capacities
+    check_p_min_p_max(p_nom_max)
+    # drop multi entries in case p_nom_max stays constant in different periods
+    # p_nom_max = compress_series(p_nom_max)
+    # adjust name to fit syntax of nominal constraint per bus
+    df = p_nom_max.reset_index()
+    df["name"] = df.apply(
+        lambda row: f"nom_max_{row['carrier']}"
+        + (f"_{row['build_year']}" if row["build_year"] is not None else ""),
+        axis=1,
+    )
+
+    for name in df.name.unique():
+        df_carrier = df[df.name == name]
+        bus = df_carrier.bus
+        n.buses.loc[bus, name] = df_carrier.p_nom_max.values
+
+    return n
 
 
 def _add_land_use_constraint(n):
@@ -82,19 +147,13 @@ def _add_land_use_constraint(n):
 def _add_land_use_constraint_m(n, planning_horizons, config):
     # if generators clustering is lower than network clustering, land_use accounting is at generators clusters
 
-    planning_horizons = param["planning_horizons"]
     grouping_years = config["existing_capacities"]["grouping_years"]
     current_horizon = snakemake.wildcards.planning_horizons
 
     for carrier in ["solar", "onwind", "offwind-ac", "offwind-dc"]:
         existing = n.generators.loc[n.generators.carrier == carrier, "p_nom"]
         ind = list(
-            set(
-                [
-                    i.split(sep=" ")[0] + " " + i.split(sep=" ")[1]
-                    for i in existing.index
-                ]
-            )
+            {i.split(sep=" ")[0] + " " + i.split(sep=" ")[1] for i in existing.index}
         )
 
         previous_years = [
@@ -116,7 +175,7 @@ def _add_land_use_constraint_m(n, planning_horizons, config):
     n.generators.p_nom_max.clip(lower=0, inplace=True)
 
 
-def add_co2_sequestration_limit(n, limit=200):
+def add_co2_sequestration_limit(n, config, limit=200):
     """
     Add a global constraint on the amount of Mt CO2 that can be sequestered.
     """
@@ -130,14 +189,144 @@ def add_co2_sequestration_limit(n, limit=200):
         limit = float(o[o.find("seq") + 3 :]) * 1e6
         break
 
-    n.add(
+    if not n.investment_periods.empty:
+        periods = n.investment_periods
+        names = pd.Index([f"co2_sequestration_limit-{period}" for period in periods])
+    else:
+        periods = [np.nan]
+        names = pd.Index(["co2_sequestration_limit"])
+
+    n.madd(
         "GlobalConstraint",
-        "co2_sequestration_limit",
+        names,
         sense="<=",
         constant=limit,
         type="primary_energy",
         carrier_attribute="co2_absorptions",
+        investment_period=periods,
     )
+
+
+def add_carbon_constraint(n, snapshots):
+    glcs = n.global_constraints.query('type == "co2_limit"')
+    if glcs.empty:
+        return
+    for name, glc in glcs.iterrows():
+        carattr = glc.carrier_attribute
+        emissions = n.carriers.query(f"{carattr} != 0")[carattr]
+
+        if emissions.empty:
+            continue
+
+        # stores
+        n.stores["carrier"] = n.stores.bus.map(n.buses.carrier)
+        stores = n.stores.query("carrier in @emissions.index and not e_cyclic")
+        if not stores.empty:
+            last = n.snapshot_weightings.reset_index().groupby("period").last()
+            last_i = last.set_index([last.index, last.timestep]).index
+            final_e = n.model["Store-e"].loc[last_i, stores.index]
+            time_valid = int(glc.loc["investment_period"])
+            time_i = pd.IndexSlice[time_valid, :]
+            lhs = final_e.loc[time_i, :] - final_e.shift(snapshot=1).loc[time_i, :]
+
+            rhs = glc.constant
+            n.model.add_constraints(lhs <= rhs, name=f"GlobalConstraint-{name}")
+
+
+def add_carbon_budget_constraint(n, snapshots):
+    glcs = n.global_constraints.query('type == "Co2Budget"')
+    if glcs.empty:
+        return
+    for name, glc in glcs.iterrows():
+        carattr = glc.carrier_attribute
+        emissions = n.carriers.query(f"{carattr} != 0")[carattr]
+
+        if emissions.empty:
+            continue
+
+        # stores
+        n.stores["carrier"] = n.stores.bus.map(n.buses.carrier)
+        stores = n.stores.query("carrier in @emissions.index and not e_cyclic")
+        if not stores.empty:
+            last = n.snapshot_weightings.reset_index().groupby("period").last()
+            last_i = last.set_index([last.index, last.timestep]).index
+            final_e = n.model["Store-e"].loc[last_i, stores.index]
+            time_valid = int(glc.loc["investment_period"])
+            time_i = pd.IndexSlice[time_valid, :]
+            weighting = n.investment_period_weightings.loc[time_valid, "years"]
+            lhs = final_e.loc[time_i, :] * weighting
+
+            rhs = glc.constant
+            n.model.add_constraints(lhs <= rhs, name=f"GlobalConstraint-{name}")
+
+
+def add_max_growth(n, config):
+    """
+    Add maximum growth rates for different carriers.
+    """
+
+    opts = snakemake.params["sector"]["limit_max_growth"]
+    # take maximum yearly difference between investment periods since historic growth is per year
+    factor = n.investment_period_weightings.years.max() * opts["factor"]
+    for carrier in opts["max_growth"].keys():
+        max_per_period = opts["max_growth"][carrier] * factor
+        logger.info(
+            f"set maximum growth rate per investment period of {carrier} to {max_per_period} GW."
+        )
+        n.carriers.loc[carrier, "max_growth"] = max_per_period * 1e3
+
+    for carrier in opts["max_relative_growth"].keys():
+        max_r_per_period = opts["max_relative_growth"][carrier]
+        logger.info(
+            f"set maximum relative growth per investment period of {carrier} to {max_r_per_period}."
+        )
+        n.carriers.loc[carrier, "max_relative_growth"] = max_r_per_period
+
+    return n
+
+
+def add_retrofit_gas_boiler_constraint(n, snapshots):
+    """
+    Allow retrofitting of existing gas boilers to H2 boilers.
+    """
+    c = "Link"
+    logger.info("Add constraint for retrofitting gas boilers to H2 boilers.")
+    # existing gas boilers
+    mask = n.links.carrier.str.contains("gas boiler") & ~n.links.p_nom_extendable
+    gas_i = n.links[mask].index
+    mask = n.links.carrier.str.contains("retrofitted H2 boiler")
+    h2_i = n.links[mask].index
+
+    n.links.loc[gas_i, "p_nom_extendable"] = True
+    p_nom = n.links.loc[gas_i, "p_nom"]
+    n.links.loc[gas_i, "p_nom"] = 0
+
+    # heat profile
+    cols = n.loads_t.p_set.columns[
+        n.loads_t.p_set.columns.str.contains("heat")
+        & ~n.loads_t.p_set.columns.str.contains("industry")
+        & ~n.loads_t.p_set.columns.str.contains("agriculture")
+    ]
+    profile = n.loads_t.p_set[cols].div(
+        n.loads_t.p_set[cols].groupby(level=0).max(), level=0
+    )
+    # to deal if max value is zero
+    profile.fillna(0, inplace=True)
+    profile.rename(columns=n.loads.bus.to_dict(), inplace=True)
+    profile = profile.reindex(columns=n.links.loc[gas_i, "bus1"])
+    profile.columns = gas_i
+
+    rhs = profile.mul(p_nom)
+
+    dispatch = n.model["Link-p"]
+    active = get_activity_mask(n, c, snapshots, gas_i)
+    rhs = rhs[active]
+    p_gas = dispatch.sel(Link=gas_i)
+    p_h2 = dispatch.sel(Link=h2_i)
+
+    lhs = p_gas + p_h2
+
+    n.model.add_constraints(lhs == rhs, name="gas_retrofit")
 
 
 def prepare_network(
@@ -156,8 +345,7 @@ def prepare_network(
         ):
             df.where(df > solve_opts["clip_p_max_pu"], other=0.0, inplace=True)
 
-    load_shedding = solve_opts.get("load_shedding")
-    if load_shedding:
+    if load_shedding := solve_opts.get("load_shedding"):
         # intersect between macroeconomic and surveybased willingness to pay
         # http://journal.frontiersin.org/article/10.3389/fenrg.2015.00055/full
         # TODO: retrieve color and nice name from config
@@ -200,9 +388,14 @@ def prepare_network(
     if foresight == "myopic":
         add_land_use_constraint(n, planning_horizons, config)
 
+    if foresight == "perfect":
+        n = add_land_use_constraint_perfect(n)
+        if snakemake.params["sector"]["limit_max_growth"]["enable"]:
+            n = add_max_growth(n, config)
+
     if n.stores.carrier.eq("co2 stored").any():
         limit = co2_sequestration_potential
-        add_co2_sequestration_limit(n, limit=limit)
+        add_co2_sequestration_limit(n, config, limit=limit)
 
     return n
 
@@ -594,12 +787,17 @@ def extra_functionality(n, snapshots):
             add_EQ_constraints(n, o)
     add_battery_constraints(n)
     add_pipe_retrofit_constraint(n)
+    if n._multi_invest:
+        add_carbon_constraint(n, snapshots)
+        add_carbon_budget_constraint(n, snapshots)
+        add_retrofit_gas_boiler_constraint(n, snapshots)
 
 
 def solve_network(n, config, solving, opts="", **kwargs):
     set_of_options = solving["solver"]["options"]
     cf_solving = solving["options"]
 
+    kwargs["multi_investment_periods"] = config["foresight"] == "perfect"
     kwargs["solver_options"] = (
         solving["solver_options"][set_of_options] if set_of_options else {}
     )
@@ -651,13 +849,14 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "solve_network",
+            "solve_sector_network_perfect",
+            configfiles="../config/test/config.perfect.yaml",
             simpl="",
-            opts="Ept",
-            clusters="37",
-            ll="v1.0",
-            sector_opts="",
-            planning_horizons="2020",
+            opts="",
+            clusters="5",
+            ll="v1.5",
+            sector_opts="8760H-T-H-B-I-A-solar+p3-dist1",
+            planning_horizons="2030",
         )
     configure_logging(snakemake)
     if "sector_opts" in snakemake.wildcards.keys():
@@ -684,13 +883,18 @@ if __name__ == "__main__":
         co2_sequestration_potential=snakemake.params["co2_sequestration_potential"],
     )
 
-    n = solve_network(
-        n,
-        config=snakemake.config,
-        solving=snakemake.params.solving,
-        opts=opts,
-        log_fn=snakemake.log.solver,
-    )
+    with memory_logger(
+        filename=getattr(snakemake.log, "memory", None), interval=30.0
+    ) as mem:
+        n = solve_network(
+            n,
+            config=snakemake.config,
+            solving=snakemake.params.solving,
+            opts=opts,
+            log_fn=snakemake.log.solver,
+        )
+
+    logger.info(f"Maximum memory usage: {mem.mem_usage}")
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     n.export_to_netcdf(snakemake.output[0])

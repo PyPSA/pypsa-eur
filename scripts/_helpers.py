@@ -303,10 +303,7 @@ def generate_periodic_profiles(dt_index, nodes, weekly_profile, localize=None):
 
 
 def parse(l):
-    if len(l) == 1:
-        return yaml.safe_load(l[0])
-    else:
-        return {l.pop(0): parse(l)}
+    return yaml.safe_load(l[0]) if len(l) == 1 else {l.pop(0): parse(l)}
 
 
 def update_config_with_sector_opts(config, sector_opts):

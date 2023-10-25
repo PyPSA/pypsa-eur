@@ -280,15 +280,16 @@ rule build_biomass_potentials:
         country_shapes=RESOURCES + "country_shapes.geojson",
     output:
         biomass_potentials_all=RESOURCES
-        + "biomass_potentials_all_s{simpl}_{clusters}.csv",
-        biomass_potentials=RESOURCES + "biomass_potentials_s{simpl}_{clusters}.csv",
+        + "biomass_potentials_all_s{simpl}_{clusters}_{planning_horizons}.csv",
+        biomass_potentials=RESOURCES
+        + "biomass_potentials_s{simpl}_{clusters}_{planning_horizons}.csv",
     threads: 1
     resources:
         mem_mb=1000,
     log:
-        LOGS + "build_biomass_potentials_s{simpl}_{clusters}.log",
+        LOGS + "build_biomass_potentials_s{simpl}_{clusters}_{planning_horizons}.log",
     benchmark:
-        BENCHMARKS + "build_biomass_potentials_s{simpl}_{clusters}"
+        BENCHMARKS + "build_biomass_potentials_s{simpl}_{clusters}_{planning_horizons}"
     conda:
         "../envs/environment.yaml"
     script:
@@ -608,7 +609,7 @@ if config["sector"]["retrofitting"]["retro_endogen"]:
             countries=config["countries"],
         input:
             building_stock="data/retro/data_building_stock.csv",
-            data_tabula="data/retro/tabula-calculator-calcsetbuilding.csv",
+            data_tabula="data/bundle-sector/retro/tabula-calculator-calcsetbuilding.csv",
             air_temperature=RESOURCES + "temp_air_total_elec_s{simpl}_{clusters}.nc",
             u_values_PL="data/retro/u_values_poland.csv",
             tax_w="data/retro/electricity_taxes_eu.csv",
@@ -735,7 +736,12 @@ rule prepare_sector_network:
         dsm_profile=RESOURCES + "dsm_profile_s{simpl}_{clusters}.csv",
         co2_totals_name=RESOURCES + "co2_totals.csv",
         co2="data/bundle-sector/eea/UNFCCC_v23.csv",
-        biomass_potentials=RESOURCES + "biomass_potentials_s{simpl}_{clusters}.csv",
+        biomass_potentials=RESOURCES
+        + "biomass_potentials_s{simpl}_{clusters}_"
+        + "{}.csv".format(config["biomass"]["year"])
+        if config["foresight"] == "overnight"
+        else RESOURCES
+        + "biomass_potentials_s{simpl}_{clusters}_{planning_horizons}.csv",
         heat_profile="data/heat_load_profile_BDEW.csv",
         costs="data/costs_{}.csv".format(config["costs"]["year"])
         if config["foresight"] == "overnight"
