@@ -60,11 +60,6 @@ def plot_choropleth(
 
     ax.axis("off")
 
-    # ensure path exists, since snakemake does not create path for directory outputs
-    # https://github.com/snakemake/snakemake/issues/774
-    if not os.path.exists(dir):
-        os.makedirs(dir)
-
     carrier_fn = carrier.replace("-", "_").replace(" ", "_")
     fn = f"map-{carrier_fn}"
     plt.savefig(dir + "/" + fn + ".pdf", bbox_inches="tight")
@@ -84,6 +79,12 @@ if __name__ == "__main__":
 
     plt.style.use(snakemake.input.rc)
 
+    # ensure path exists, since snakemake does not create path for directory outputs
+    # https://github.com/snakemake/snakemake/issues/774
+    dir = snakemake.output[0]
+    if not os.path.exists(dir):
+        os.makedirs(dir)
+
     n = pypsa.Network(snakemake.input.network)
 
     df = (
@@ -98,15 +99,9 @@ if __name__ == "__main__":
 
     regions_offshore = gpd.read_file(snakemake.input.regions_offshore).set_index("name")
 
-    plot_choropleth(df, regions_onshore, "onwind", vmax=50, dir=snakemake.output[0])
-    plot_choropleth(
-        df, regions_onshore, "solar", "Oranges", vmax=15, dir=snakemake.output[0]
-    )
-    plot_choropleth(df, regions_onshore, "ror", "GnBu", dir=snakemake.output[0])
+    plot_choropleth(df, regions_onshore, "onwind", vmax=50, dir=dir)
+    plot_choropleth(df, regions_onshore, "solar", "Oranges", vmax=15, dir=dir)
+    plot_choropleth(df, regions_onshore, "ror", "GnBu", dir=dir)
 
-    plot_choropleth(
-        df, regions_offshore, "offwind-dc", vmax=50, dir=snakemake.output[0]
-    )
-    plot_choropleth(
-        df, regions_offshore, "offwind-ac", vmax=50, dir=snakemake.output[0]
-    )
+    plot_choropleth(df, regions_offshore, "offwind-dc", vmax=50, dir=dir)
+    plot_choropleth(df, regions_offshore, "offwind-ac", vmax=50, dir=dir)
