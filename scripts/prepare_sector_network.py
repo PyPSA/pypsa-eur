@@ -4582,6 +4582,18 @@ if __name__ == "__main__":
     if "nodistrict" in opts:
         options["district_heating"]["progress"] = 0.0
 
+    if "nowasteheat" in opts:
+        logger.info("Disabling waste heat.")
+        options["use_fischer_tropsch_waste_heat"] = False
+        options["use_methanolisation_waste_heat"] = False
+        options["use_haber_bosch_waste_heat"] = False
+        options["use_methanation_waste_heat"] = False
+        options["use_fuel_cell_waste_heat"] = False
+        options["use_electrolysis_waste_heat"] = False
+
+    if "nobiogascc" in opts:
+        options["biomass_upgrading_cc"] = False
+
     if "T" in opts:
         add_land_transport(n, costs)
 
