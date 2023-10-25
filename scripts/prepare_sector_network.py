@@ -4049,7 +4049,11 @@ def add_import_options(
         "shipping-meoh": ("methanolisation", "carbondioxide-input"),
     }
 
-    import_costs = pd.read_csv(snakemake.input.import_costs, delimiter=";")
+    import_costs = pd.read_csv(snakemake.input.import_costs, delimiter=";", keep_default_na=False)
+
+    # temporary bugfix for Namibia
+    import_costs["exporter"] = import_costs.exporter.replace("", "NA")
+
     cols = ["esc", "exporter", "importer", "value"]
     fields = ["Cost per MWh delivered", "Cost per t delivered"]
     import_costs = import_costs.query("subcategory in @fields")[cols]
