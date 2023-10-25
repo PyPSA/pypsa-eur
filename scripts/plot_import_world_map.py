@@ -171,11 +171,15 @@ if __name__ == "__main__":
 
     # load import costs
 
-    df = pd.read_csv(import_fn, sep=";")
+    df = pd.read_csv(import_fn, sep=";", keep_default_na=False)
+
+    # bugfix for Namibia
+    df["exporter"] = df.exporter.replace("", "NA")
 
     import_costs = df.query("subcategory == 'Cost per MWh delivered' and esc == 'shipping-meoh'").groupby("exporter").value.min()
-    import_costs.index = cc.convert(import_costs.index.str.split("-").str[0], to="ISO3")
-    import_costs.drop("RUS", inplace=True)
+    import_costs.index = cc.convert(import_costs.index.str.split("-").str[0], src='iso2', to='iso3')
+
+    import_costs.drop("RUS", inplace=True, errors="ignore")
 
     composition_arg = get_cost_composition(
         df,
@@ -219,9 +223,9 @@ if __name__ == "__main__":
         ax=ax,
         cmap='Greens_r',
         legend=True,
-        vmin=90,
-        vmax=140,
-        legend_kwds=dict(label="Cost for methanol fuel delivered [€/MWh]", orientation="horizontal", extend='max', shrink=.6, aspect=30, pad=.01),
+        vmin=100,
+        vmax=150,
+        legend_kwds=dict(label="Cost for methanol fuel delivered to Europe [€/MWh]", orientation="horizontal", extend='max', shrink=.6, aspect=30, pad=.01),
         missing_kwds=dict(color="#eee", label="not considered"),
     )
 
@@ -308,7 +312,9 @@ if __name__ == "__main__":
     ax_arg.set_title("Import costs from\nArgentina to Europe", fontsize=9)
 
     ax_arg.set_xlabel("")
-    ax_arg.set_ylim(0, 100)
+    ax_arg.set_ylim(0, 110)
+    ax_arg.set_yticks(range(0, 111, 20))
+    ax_arg.set_yticks(range(10, 111, 20), minor=True)
     ax_arg.set_ylabel("€/MWh", fontsize=10)
     ax_arg.grid(axis="x")
     for spine in ax_arg.spines.values():
@@ -339,8 +345,9 @@ if __name__ == "__main__":
     ax_sau.set_xlabel("")
     ax_sau.set_ylabel("€/MWh", fontsize=10)
     ax_sau.grid(axis="x")
-    ax_sau.set_ylim(0, 80)
-    ax_sau.set_yticks(range(0, 81, 20))
+    ax_sau.set_ylim(0, 90)
+    ax_sau.set_yticks(range(0, 91, 20))
+    ax_sau.set_yticks(range(10, 91, 20), minor=True)
     for spine in ax_sau.spines.values():
         spine.set_visible(False)
 
@@ -370,6 +377,7 @@ if __name__ == "__main__":
     ax_aus.set_ylabel("€/tonne", fontsize=10)
     ax_aus.grid(axis="x")
     ax_aus.set_yticks(range(0, 600, 100))
+    ax_aus.set_yticks(range(50, 600, 100), minor=True)
     for spine in ax_aus.spines.values():
         spine.set_visible(False)
 
