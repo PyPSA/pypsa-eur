@@ -2778,7 +2778,8 @@ def add_industry(n, costs):
 
     p_set_process_emissions = (
         demand_factor
-        * (industrial_demand.loc[nodes, "process emission from feedstock"]
+        * (
+            industrial_demand.loc[nodes, "process emission from feedstock"]
             / costs.at["oil", "CO2 intensity"]
         ).sum()
         / nhours
