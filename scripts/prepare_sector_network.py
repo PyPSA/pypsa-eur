@@ -2766,11 +2766,19 @@ def add_industry(n, costs):
     # NB: CO2 gets released again to atmosphere when plastics decay
     # except for the process emissions when naphtha is used for petrochemicals, which can be captured with other industry process emissions
     # convert process emissions from feedstock from MtCO2 to energy demand
-    p_set = (
+    p_set_plastics = (
         demand_factor
         * (
             industrial_demand.loc[nodes, "naphtha"]
             - industrial_demand.loc[nodes, "process emission from feedstock"]
+            / costs.at["oil", "CO2 intensity"]
+        ).sum()
+        / nhours
+    )
+
+    p_set_process_emissions = (
+        demand_factor
+        * (industrial_demand.loc[nodes, "process emission from feedstock"]
             / costs.at["oil", "CO2 intensity"]
         ).sum()
         / nhours
@@ -2789,7 +2797,15 @@ def add_industry(n, costs):
         "naphtha for industry",
         bus="EU naphtha for industry",
         carrier="naphtha for industry",
-        p_set=p_set,
+        p_set=p_set_plastics,
+    )
+
+    n.madd(
+        "Load",
+        ["naphtha for industry into process emissions from feedstock"],
+        bus=spatial.oil.nodes,
+        carrier="naphtha for industry",
+        p_set=p_set_process_emissions,
     )
 
     if len(spatial.oil.nodes) == 1:
