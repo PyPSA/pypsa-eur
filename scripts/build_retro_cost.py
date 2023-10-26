@@ -102,7 +102,7 @@ solar_energy_transmittance = (
 )
 # solar global radiation [kWh/(m^2a)]
 solar_global_radiation = pd.Series(
-    [246, 401, 246, 148],
+    [271, 392, 271, 160],
     index=["east", "south", "west", "north"],
     name="solar_global_radiation [kWh/(m^2a)]",
 )
@@ -164,6 +164,12 @@ def prepare_building_stock_data():
         },
         inplace=True,
     )
+    building_data["feature"].replace(
+        {
+            "Construction features (U-value)": "Construction features (U-values)",
+        },
+        inplace=True,
+    )
 
     building_data.country_code = building_data.country_code.str.upper()
     building_data["subsector"].replace(
@@ -202,7 +208,8 @@ def prepare_building_stock_data():
 
     # heated floor area ----------------------------------------------------------
     area = building_data[
-        (building_data.type == "Heated area [Mm²]") & (building_data.detail != "Total")
+        (building_data.type == "Heated area [Mm²]")
+        & (building_data.subsector != "Total")
     ]
     area_tot = area[["country", "sector", "value"]].groupby(["country", "sector"]).sum()
     area = pd.concat(
