@@ -1751,6 +1751,19 @@ def add_heat(n, costs):
             unit="MWh_th",
         )
 
+        # add flexibility to waste heat
+        n.madd(
+            "Generator",
+            nodes[name] + f" {name} heat waste",
+            bus=nodes[name] + f" {name} heat",
+            carrier=name + " heat waste",
+            p_nom_extendable=True,
+            marginal_cost=0.1,
+            capital_cost=0.1,
+            sign=-1,
+            unit="MWh_th",
+        )
+
         ## Add heat load
 
         for sector in sectors:

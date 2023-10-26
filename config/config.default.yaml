@@ -869,6 +869,16 @@ plotting:
     low-temperature heat for industry: '#8f2727'
     process heat: '#ff0000'
     agriculture heat: '#d9a5a5'
+    # heat waste
+    residential rural heat waste: '#cb5f1f'     # More orange
+    services rural heat waste: '#cb5f1f'     # More orange
+    central heat waste: '#cb5f1f'               # More orange
+    urban central heat waste: '#cb5f1f'        # More orange
+    decentral heat waste: '#cb5f1f'             # More orange
+    residential urban decentral heat waste: '#cb5f1f' # More orange
+    services urban decentral heat waste: '#cb5f1f'   # More orange
+
+
     # heat supply
     heat pumps: '#2fb537'
     heat pump: '#2fb537'
