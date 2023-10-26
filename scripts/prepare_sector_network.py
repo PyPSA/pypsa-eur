@@ -2782,9 +2782,25 @@ def add_industry(n, costs):
     # convert process emissions from feedstock from MtCO2 to energy demand
     # need to aggregate potentials if oil not nodally resolved
     if options["co2_budget_national"]:
-        p_set = demand_factor * (industrial_demand.loc[nodes, "naphtha"] - industrial_demand.loc[nodes, "process emission from feedstock"] / costs.at["oil", "CO2 intensity"]) / nhours
+        p_set_plastics = demand_factor * (industrial_demand.loc[nodes, "naphtha"] - industrial_demand.loc[nodes, "process emission from feedstock"] / costs.at["oil", "CO2 intensity"]) / nhours
     else:
-        p_set = demand_factor * (industrial_demand.loc[nodes, "naphtha"] - industrial_demand.loc[nodes, "process emission from feedstock"] / costs.at["oil", "CO2 intensity"]).sum() / nhours
+        p_set_plastics = demand_factor * (industrial_demand.loc[nodes, "naphtha"] - industrial_demand.loc[nodes, "process emission from feedstock"] / costs.at["oil", "CO2 intensity"]).sum() / nhours
+
+    if options["co2_budget_national"]:
+        p_set_process_emissions = (
+            demand_factor
+            * (industrial_demand.loc[nodes, "process emission from feedstock"]
+                / costs.at["oil", "CO2 intensity"])
+            / nhours
+        )
+    else:
+        p_set_process_emissions = (
+            demand_factor
+            * (industrial_demand.loc[nodes, "process emission from feedstock"]
+                / costs.at["oil", "CO2 intensity"]
+            ).sum()
+            / nhours
+        )
 
     n.madd(
         "Bus",
@@ -2799,7 +2815,15 @@ def add_industry(n, costs):
         spatial.oil.naphtha,
         bus=spatial.oil.naphtha,
         carrier="naphtha for industry",
-        p_set=p_set,
+        p_set=p_set_plastics,
+    )
+
+    n.madd(
+        "Load",
+        ["naphtha for industry into process emissions from feedstock"],
+        bus=spatial.oil.nodes,
+        carrier="naphtha for industry",
+        p_set=p_set_process_emissions,
     )
 
     n.madd(
