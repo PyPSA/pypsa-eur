@@ -3836,6 +3836,8 @@ def add_endogenous_hvdc_import_options(n, cost_factor=1.0):
 
     import_links = pd.concat([import_links, pd.Series(xlinks)], axis=0)
     import_links = import_links.drop_duplicates(keep="first")
+    duplicated = import_links.index.duplicated(keep='first')
+    import_links = import_links.loc[~duplicated]
 
     hvdc_cost = (
         import_links.values * cf["length_factor"] * costs.at["HVDC submarine", "fixed"]
