@@ -161,7 +161,7 @@ renewable:
     capacity_per_sqkm: 3
     # correction_factor: 0.93
     corine:
-      grid_codes: [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 31, 32]
+      grid_codes: [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 26, 27, 28, 29, 31, 32]
       distance: 1000
       distance_grid_codes: [1, 2, 3, 4, 5, 6]
     natura: true
