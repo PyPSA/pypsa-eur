@@ -6,13 +6,12 @@
 Plot average capacity factor map.
 """
 
-import os
-
 import cartopy
 import cartopy.crs as ccrs
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import pypsa
+from _helpers import ensure_output_dir_exists
 
 
 def plot_choropleth(
@@ -62,8 +61,10 @@ def plot_choropleth(
 
     carrier_fn = carrier.replace("-", "_").replace(" ", "_")
     fn = f"map-{carrier_fn}"
-    plt.savefig(dir + "/" + fn + ".pdf", bbox_inches="tight")
-    plt.savefig(dir + "/" + fn + ".png", bbox_inches="tight")
+    if not dir.endswith("-"):
+        dir += "/"
+    plt.savefig(dir + fn + ".pdf", bbox_inches="tight")
+    plt.savefig(dir + fn + ".png", bbox_inches="tight")
     plt.close()
 
 
@@ -79,11 +80,8 @@ if __name__ == "__main__":
 
     plt.style.use(snakemake.input.rc)
 
-    # ensure path exists, since snakemake does not create path for directory outputs
-    # https://github.com/snakemake/snakemake/issues/774
+    ensure_output_dir_exists(snakemake)
     dir = snakemake.output[0]
-    if not os.path.exists(dir):
-        os.makedirs(dir)
 
     n = pypsa.Network(snakemake.input.network)
 

@@ -9,6 +9,7 @@ Plot share of potential used on map.
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import pypsa
+from _helpers import ensure_output_dir_exists
 from plot_choropleth_capacity_factors import plot_choropleth
 
 POTENTIAL = [
@@ -42,6 +43,8 @@ if __name__ == "__main__":
         )
 
     plt.style.use(snakemake.input.rc)
+
+    ensure_output_dir_exists(snakemake)
 
     regions_onshore = gpd.read_file(snakemake.input.regions_onshore).set_index("name")
     regions_offshore = gpd.read_file(snakemake.input.regions_offshore).set_index("name")

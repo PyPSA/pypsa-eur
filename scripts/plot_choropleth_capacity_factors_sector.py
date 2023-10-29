@@ -10,6 +10,7 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import pandas as pd
 import xarray as xr
+from _helpers import ensure_output_dir_exists
 from plot_choropleth_capacity_factors import plot_choropleth
 
 if __name__ == "__main__":
@@ -24,6 +25,8 @@ if __name__ == "__main__":
         )
 
     plt.style.use(snakemake.input.rc)
+
+    ensure_output_dir_exists(snakemake)
 
     regions_onshore = gpd.read_file(snakemake.input.regions_onshore).set_index("name")
 

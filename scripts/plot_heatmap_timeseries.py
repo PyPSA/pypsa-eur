@@ -7,13 +7,13 @@ Plot heatmap time series (results).
 """
 
 import logging
-import os
 from multiprocessing import Pool
 
 import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
 import seaborn as sns
+from _helpers import ensure_output_dir_exists
 
 logger = logging.getLogger(__name__)
 
@@ -137,11 +137,9 @@ if __name__ == "__main__":
 
     plt.style.use(["bmh", snakemake.input.rc])
 
-    # ensure path exists, since snakemake does not create path for directory outputs
-    # https://github.com/snakemake/snakemake/issues/774
+    ensure_output_dir_exists(snakemake)
+
     dir = snakemake.output[0]
-    if not os.path.exists(dir):
-        os.makedirs(dir)
 
     n = pypsa.Network(snakemake.input.network)
 

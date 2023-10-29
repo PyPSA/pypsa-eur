@@ -6,14 +6,13 @@
 Plot choropleth regional demands.
 """
 
-import os
-
 import cartopy
 import cartopy.crs as ccrs
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
+from _helpers import ensure_output_dir_exists
 from pypsa.descriptors import get_switchable_as_dense as as_dense
 
 TITLES = {
@@ -217,11 +216,8 @@ if __name__ == "__main__":
 
     plt.style.use(snakemake.input.rc)
 
-    # ensure path exists, since snakemake does not create path for directory outputs
-    # https://github.com/snakemake/snakemake/issues/774
+    ensure_output_dir_exists(snakemake)
     dir = snakemake.output[0]
-    if not os.path.exists(dir):
-        os.makedirs(dir)
 
     n = pypsa.Network(snakemake.input.network)
 

@@ -29,6 +29,14 @@ def mute_print():
             yield
 
 
+def ensure_output_dir_exists(snakemake):
+    # ensure path exists, since snakemake does not create path for directory outputs
+    # https://github.com/snakemake/snakemake/issues/774
+    dir = snakemake.output[0]
+    if not os.path.exists(dir):
+        os.makedirs(dir)
+
+
 def configure_logging(snakemake, skip_handlers=False):
     """
     Configure the basic behaviour for the logging module.

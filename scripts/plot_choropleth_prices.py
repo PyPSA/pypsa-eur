@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pypsa
+from _helpers import ensure_output_dir_exists
 from plot_choropleth_capacity_factors import plot_choropleth
 
 ROUNDER = 20
@@ -64,7 +65,8 @@ def get_market_values(n):
         ]
     )
 
-    mv = mv.unstack().drop(["", "EU"]).dropna(how="all", axis=1)
+    to_drop = list(n.buses.index[n.buses.index.str.len() == 2]) + ["", "EU", "process"]
+    mv = mv.drop(to_drop, errors='ignore').unstack().dropna(how="all", axis=1)
 
     return mv
 
@@ -81,6 +83,8 @@ if __name__ == "__main__":
         )
 
     plt.style.use(snakemake.input.rc)
+
+    ensure_output_dir_exists(snakemake)
 
     regions_onshore = gpd.read_file(snakemake.input.regions_onshore).set_index("name")
     regions_offshore = gpd.read_file(snakemake.input.regions_offshore).set_index("name")
@@ -102,7 +106,7 @@ if __name__ == "__main__":
             vmin=vmins[carrier],
             label="average market price [€/MWh]",
             title=n.carriers.at[carrier, "nice_name"],
-            dir=snakemake.output.market_prices,
+            dir=snakemake.output[0] + "/market-prices-",
         )
 
     mv = get_market_values(n)
@@ -126,5 +130,5 @@ if __name__ == "__main__":
             vmin=vmins[carrier],
             label="average market value [€/MWh]",
             title=n.carriers.at[carrier, "nice_name"],
-            dir=snakemake.output.market_values,
+            dir=snakemake.output[0] + "/market-values-",
         )

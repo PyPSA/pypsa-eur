@@ -27,16 +27,24 @@ if __name__ == "__main__":
             "plot_import_options",
             simpl="",
             opts="",
-            clusters="100",
-            ll="v1.5",
-            sector_opts="Co2L0-2190SEG-T-H-B-I-S-A-imp",
+            clusters="110",
+            ll="vopt",
+            sector_opts="Co2L0-2190SEG-T-H-B-I-S-A-imp+AC",
             planning_horizons="2050",
-            configfiles="../../config/config.100n-seg.yaml",
+            configfiles="../../config/config.20231025-zecm.yaml",
         )
 
     configure_logging(snakemake)
 
     plt.style.use(snakemake.input.rc)
+
+    # dummy output if no imports considered
+    if "-imp" not in snakemake.wildcards.sector_opts:
+        import sys
+        fig, ax = plt.subplots()
+        for fn in snakemake.output:
+            plt.savefig(fn, bbox_inches="tight")
+        sys.exit(0)
 
     tech_colors = snakemake.config["plotting"]["tech_colors"]
     tech_colors["lng"] = "tomato"
@@ -200,10 +208,10 @@ if __name__ == "__main__":
     translate = {
         "import shipping-ftfuel": "€/MWh FT",
         "import shipping-meoh": "€/MWh MeOh",
-        "import pipeline-h2": r"€/MWh H2$_{(g)}$",
-        "import shipping-lh2": r"€/MWh H2$_{(l)}$",
-        "import shipping-lch4": r"€/MWh CH4$_{(l)}$",
-        "import shipping-lnh3": r"€/MWh NH3$_{(l)}$",
+        "import pipeline-h2": r"€/MWh H$_{2 (g)}$",
+        "import shipping-lh2": r"€/MWh H$_{2 (l)}$",
+        "import shipping-lch4": r"€/MWh CH$_{4 (l)}$",
+        "import shipping-lnh3": r"€/MWh NH$_{3 (l)}$",
         "import shipping-steel": r"€/t steel",
     }
     text = ""

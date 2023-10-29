@@ -194,8 +194,7 @@ rule plot_choropleth_prices:
         regions_offshore=RESOURCES + "regions_offshore_elec_s{simpl}_{clusters}.geojson",
         rc="matplotlibrc",
     output:
-        market_prices=directory(RESULTS + "graphics/market_prices/s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"),
-        market_values=directory(RESULTS + "graphics/market_values/s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"),
+        directory(RESULTS + "graphics/prices/s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"),
     script:
         "../scripts/plot_choropleth_prices.py"
 
@@ -224,7 +223,7 @@ rule plot_choropleth_demand:
         regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
         rc="matplotlibrc",
     output:
-        directory(RESOURCES + "graphics/regional_demand/s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"),
+        directory(RESULTS + "graphics/regional_demand/s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"),
     script:
         "../scripts/plot_choropleth_demand.py"
 
@@ -259,7 +258,7 @@ rule plot_heatmap_timeseries_resources:
         rc="matplotlibrc",
     threads: 12
     output:
-        directory(RESULTS + "graphics/heatmap_timeseries/s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}")
+        directory(RESULTS + "graphics/heatmap_timeseries_resources/s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}")
     script:
         "../scripts/plot_heatmap_timeseries_resources.py"
 
@@ -379,7 +378,7 @@ rule plot_import_networks:
     output:
         multiext(RESULTS + "graphics/import_networks/s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}", ".png", ".pdf")
     script:
-        "../scripts/plot_import_networks.py"
+        "../scripts/plot_import_network.py"
 
 
 rule plot_import_shares:
@@ -391,3 +390,46 @@ rule plot_import_shares:
         multiext(RESULTS + "graphics/import_shares/s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}", ".png", ".pdf")
     script:
         "../scripts/plot_import_shares.py"
+
+
+rule plot_all_resources:
+    input:
+        rules.plot_power_network_unclustered.output,
+        rules.plot_gas_network_unclustered.output,
+        rules.plot_renewable_potential_unclustered.output,
+        rules.plot_weather_data_map.output,
+        rules.plot_industrial_sites.output,
+        rules.plot_powerplants.output,
+        rules.plot_salt_caverns_unclustered.output,
+        rules.plot_import_world_map.output,
+        expand(RESOURCES + "graphics/salt-caverns-s{simpl}-{clusters}-onshore.pdf", **config["scenario"]),
+        expand(RESOURCES + "graphics/power-network-{clusters}.pdf", **config["scenario"]),
+        expand(RESOURCES + "graphics/biomass-potentials-s{simpl}-{clusters}-biogas.pdf", **config["scenario"]),
+        expand(RESOURCES + "graphics/capacity-factor/s{simpl}-{clusters}", **config["scenario"]),
+        expand(RESOURCES + "graphics/capacity-factor-sector/s{simpl}-{clusters}", **config["scenario"]),
+
+
+rule plot_all_results_single:
+    input:
+        RESULTS + "graphics/p_nom_opt/s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}",
+        RESULTS + "graphics/prices/s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}",
+        RESULTS + "graphics/potential_used/s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}",
+        RESULTS + "graphics/balance_timeseries/s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}",
+        RESULTS + "graphics/heatmap_timeseries/s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}",
+        RESULTS + "graphics/heatmap_timeseries_resources/s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}",
+        RESULTS + "graphics/regional_demand/s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}",
+        RESULTS + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
+        RESULTS + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-h2_network_{planning_horizons}.pdf",
+        RESULTS + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-ch4_network_{planning_horizons}.pdf",
+        RESULTS + "graphics/import_options_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.pdf",
+        RESULTS + "graphics/import_networks/s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.pdf",
+        RESULTS + "graphics/import_shares/s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.pdf",
+    output:
+        RESULTS + "graphics/s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.touch"
+    shell:
+        "touch {output}"
+
+
+rule plot_all_results:
+    input:
+        expand(RESULTS + "graphics/s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.touch", **config["scenario"]),

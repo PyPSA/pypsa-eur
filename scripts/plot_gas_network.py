@@ -16,9 +16,9 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
 from _helpers import configure_logging
+from plot_power_network import assign_location
 from pypsa.plot import add_legend_circles, add_legend_lines, add_legend_patches
 
-from plot_power_network import assign_location
 
 def plot_ch4_map(n):
     # if "gas pipeline" not in n.links.carrier.unique():
@@ -220,8 +220,8 @@ def plot_ch4_map(n):
         legend_kw=legend_kw,
     )
 
-    for fn in snakemake.output[0]:
-        plt.savefig(fn)
+    for fn in snakemake.output:
+        plt.savefig(fn, bbox_inches="tight")
 
 
 if __name__ == "__main__":

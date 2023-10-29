@@ -241,8 +241,8 @@ def plot_map(
             legend_kw=legend_kw,
         )
 
-    for fn in snakemake.output[0]:
-        plt.savefig(fn)
+    for fn in snakemake.output:
+        plt.savefig(fn, bbox_inches="tight")
 
 
 if __name__ == "__main__":

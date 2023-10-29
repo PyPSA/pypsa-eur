@@ -11,7 +11,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pypsa
+from _helpers import ensure_output_dir_exists
 from plot_choropleth_capacity_factors import plot_choropleth
+from plot_power_network import assign_location
 
 ROUNDER = 10
 
@@ -89,7 +91,9 @@ def get_optimal_capacity(n):
         ]
     )
 
-    p_nom_opt = p_nom_opt.unstack().drop(["", "EU"]).dropna(how="all", axis=1)
+    # drop import locations and copperplated buses
+    to_drop = list(n.buses.index[n.buses.index.str.len() == 2]) + ["", "EU", "process"]
+    p_nom_opt = p_nom_opt.drop(to_drop).unstack().dropna(how="all", axis=1)
 
     p_nom_opt = p_nom_opt.loc[:, ~p_nom_opt.columns.isin(IGNORE_LINKS)]
 
@@ -103,16 +107,23 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "plot_choropleth_capacities",
             simpl="",
-            clusters=128,
-            configfiles=["../../config/config.test.yaml"],
+            clusters=110,
+            ll='vopt',
+            opts="",
+            sector_opts="Co2L0-2190SEG-T-H-B-I-S-A-onwind+p0.5-imp",
+            planning_horizons=2050,
+            configfiles=["../../config/config.20231025-zecm.yaml"],
         )
 
     plt.style.use(snakemake.input.rc)
+
+    ensure_output_dir_exists(snakemake)
 
     regions_onshore = gpd.read_file(snakemake.input.regions_onshore).set_index("name")
     regions_offshore = gpd.read_file(snakemake.input.regions_offshore).set_index("name")
 
     n = pypsa.Network(snakemake.input.network)
+    assign_location(n)
 
     p_nom_opt = get_optimal_capacity(n)
 
