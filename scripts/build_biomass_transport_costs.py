@@ -24,14 +24,16 @@ ENERGY_CONTENT = 4.8  # unit MWh/t (wood pellets)
 
 
 def get_countries():
-    pandas_options = dict(skiprows=range(6), header=None, index_col=0, encoding='cp1252')
+    pandas_options = dict(
+        skiprows=range(6), header=None, index_col=0, encoding="cp1252"
+    )
 
     return tbl.read_pdf(
         str(snakemake.input.transport_cost_data),
         pages="145",
         multiple_tables=False,
         pandas_options=pandas_options,
-        encoding='cp1252',
+        encoding="cp1252",
     )[0].index
 
 
@@ -42,7 +44,7 @@ def get_cost_per_tkm(page, countries):
         sep=" |,",
         engine="python",
         index_col=False,
-        encoding='cp1252',
+        encoding="cp1252",
     )
 
     sc = tbl.read_pdf(
@@ -50,7 +52,7 @@ def get_cost_per_tkm(page, countries):
         pages=page,
         multiple_tables=False,
         pandas_options=pandas_options,
-        encoding='cp1252',
+        encoding="cp1252",
     )[0]
     sc.index = countries
     sc.columns = sc.columns.str.replace("€", "EUR")
