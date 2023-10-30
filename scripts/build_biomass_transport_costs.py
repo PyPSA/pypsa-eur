@@ -24,13 +24,14 @@ ENERGY_CONTENT = 4.8  # unit MWh/t (wood pellets)
 
 
 def get_countries():
-    pandas_options = dict(skiprows=range(6), header=None, index_col=0)
+    pandas_options = dict(skiprows=range(6), header=None, index_col=0, encoding='cp1252')
 
     return tbl.read_pdf(
         str(snakemake.input.transport_cost_data),
         pages="145",
         multiple_tables=False,
         pandas_options=pandas_options,
+        encoding='cp1252',
     )[0].index
 
 
@@ -41,6 +42,7 @@ def get_cost_per_tkm(page, countries):
         sep=" |,",
         engine="python",
         index_col=False,
+        encoding='cp1252',
     )
 
     sc = tbl.read_pdf(
@@ -48,6 +50,7 @@ def get_cost_per_tkm(page, countries):
         pages=page,
         multiple_tables=False,
         pandas_options=pandas_options,
+        encoding='cp1252',
     )[0]
     sc.index = countries
     sc.columns = sc.columns.str.replace("€", "EUR")
@@ -80,4 +83,15 @@ def build_biomass_transport_costs():
 
 
 if __name__ == "__main__":
+    if "snakemake" not in globals():
+        from _helpers import mock_snakemake
+
+        snakemake = mock_snakemake(
+            "build_biomass_transport_costs",
+            simpl="",
+            clusters=48,
+            ll="v1.0",
+            sector_opts="Co2L0-168H-T-H-B-I-solar3-dist1",
+        )
+
     build_biomass_transport_costs()
