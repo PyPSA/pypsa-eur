@@ -1565,6 +1565,16 @@ def add_land_transport(n, costs):
                 unit="MWh_LHV",
             )
 
+        if "oil" not in n.generators.carrier.unique():
+            n.madd(
+            "Generator",
+            spatial.oil.nodes,
+            bus=spatial.oil.nodes,
+            p_nom_extendable=True,
+            carrier="oil",
+            marginal_cost=costs.at["oil", "fuel"],
+        )
+
         ice_efficiency = options["transport_internal_combustion_efficiency"]
 
         n.madd(
