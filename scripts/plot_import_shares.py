@@ -54,7 +54,7 @@ if __name__ == "__main__":
     ie = ie / ie.sum() * 100
 
 
-    fig, ax = plt.subplots(figsize=(8, 4))
+    fig, ax = plt.subplots(figsize=(6, 4))
     sel = list(CARRIERS.keys())[::-1]
     ie[sel].rename(columns=CARRIERS).T.plot.barh(
         stacked=True,

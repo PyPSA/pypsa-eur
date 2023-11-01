@@ -342,6 +342,7 @@ rule plot_import_options:
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
         regions=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
         entrypoints=RESOURCES + "gas_input_locations_s{simpl}_{clusters}_simplified.csv",
+        imports="data/imports/results.csv",
         rc="matplotlibrc",
     output:
         multiext(RESULTS + "graphics/import_options_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}", ".png", ".pdf")
