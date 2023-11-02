@@ -656,12 +656,12 @@ def add_land_transport_installed_before_baseyear(
         bus2="co2 atmosphere",
         carrier="land transport oil",
         capital_cost = 0,
-        efficiency = 1.0/ice_efficiency  * p_set_year[nodes], 
+        efficiency = options["transport_internal_combustion_efficiency"], 
         efficiency2 = costs.at['oil', 'CO2 intensity'], 
         lifetime = costs.at['Liquid fuels ICE (passenger cars)', 'lifetime'], 
         p_nom = set_p_nom, 
-        p_min_pu = p_set_year/set_p_nom*ice_efficiency/p_set_year[nodes],
-        p_max_pu = p_set_year/set_p_nom*ice_efficiency/p_set_year[nodes],
+        p_min_pu = p_set_year/(set_p_nom*ice_efficiency),
+        p_max_pu = p_set_year/(set_p_nom*ice_efficiency),
         build_year = year
         ) 
 
@@ -736,7 +736,6 @@ if __name__ == "__main__":
     endo_transport = ( (options["land_transport_electric_share"][baseyear] is None ) 
         and (options["land_transport_fuel_cell_share"][baseyear] is None)
         and (options["land_transport_ice_share"][baseyear] is None))
-    
     if "T" in opts and options["endogenous_transport"] and endo_transport:
         add_land_transport_installed_before_baseyear(n, baseyear)
 
