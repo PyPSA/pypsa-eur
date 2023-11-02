@@ -33,6 +33,7 @@ Upcoming Release
 
 * Split configuration to enable SMR and SMR CC.
 
+* The ``mock_snakemake`` function can now be used with a Snakefile from a different directory using the new ``root_dir`` argument.
 
 
 **Bugs and Compatibility**
