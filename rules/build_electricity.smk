@@ -248,7 +248,7 @@ rule build_renewable_profiles:
         BENCHMARKS + "build_renewable_profiles_{technology}"
     threads: ATLITE_NPROCESSES
     resources:
-        mem_mb=ATLITE_NPROCESSES * 5000,
+        mem_mb=ATLITE_NPROCESSES * 9000,
     wildcard_constraints:
         technology="(?!hydro).*",  # Any technology other than hydro
     conda:

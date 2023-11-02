@@ -29,25 +29,25 @@ def diameter_to_capacity(pipe_diameter_mm):
     Based on p.15 of
     https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf
     """
-    # slopes definitions
-    m0 = (1500 - 0) / (500 - 0)
     m1 = (5000 - 1500) / (600 - 500)
     m2 = (11250 - 5000) / (900 - 600)
-    m3 = (21700 - 11250) / (1200 - 900)
-
-    # intercept
-    a0 = 0
     a1 = -16000
     a2 = -7500
-    a3 = -20100
-
     if pipe_diameter_mm < 500:
+        # slopes definitions
+        m0 = (1500 - 0) / (500 - 0)
+        # intercept
+        a0 = 0
         return a0 + m0 * pipe_diameter_mm
     elif pipe_diameter_mm < 600:
         return a1 + m1 * pipe_diameter_mm
     elif pipe_diameter_mm < 900:
         return a2 + m2 * pipe_diameter_mm
     else:
+        m3 = (21700 - 11250) / (1200 - 900)
+
+        a3 = -20100
+
         return a3 + m3 * pipe_diameter_mm
 
 

@@ -7,8 +7,8 @@ cluster_heat_buses,--,"{true, false}",Cluster residential and service heat buses
 ,,,
 bev_dsm_restriction _value,--,float,Adds a lower state of charge (SOC) limit for battery electric vehicles (BEV) to manage its own energy demand (DSM). Located in `build_transport_demand.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_transport_demand.py>`_. Set to 0 for no restriction on BEV DSM
 bev_dsm_restriction _time,--,float,Time at which SOC of BEV has to be dsm_restriction_value
-transport_heating _deadband_upper,°C,float,"The maximum temperature in the vehicle. At higher temperatures, the energy required for cooling in the vehicle increases."
-transport_heating _deadband_lower,°C,float,"The minimum temperature in the vehicle. At lower temperatures, the energy required for heating in the vehicle increases."
+transport_heating _deadband_upper,Â°C,float,"The maximum temperature in the vehicle. At higher temperatures, the energy required for cooling in the vehicle increases."
+transport_heating _deadband_lower,Â°C,float,"The minimum temperature in the vehicle. At lower temperatures, the energy required for heating in the vehicle increases."
 ,,,
 ICE_lower_degree_factor,--,float,Share increase in energy demand in internal combustion engine (ICE) for each degree difference between the cold environment and the minimum temperature.
 ICE_upper_degree_factor,--,float,Share increase in energy demand in internal combustion engine (ICE) for each degree difference between the hot environment and the maximum temperature.
@@ -52,7 +52,7 @@ aviation_demand_factor,--,float,The proportion of demand for aviation compared t
 HVC_demand_factor,--,float,The proportion of demand for high-value chemicals compared to today's consumption
 ,,,
 time_dep_hp_cop,--,"{true, false}",Consider the time dependent coefficient of performance (COP) of the heat pump
-heat_pump_sink_T,°C,float,The temperature heat sink used in heat pumps based on DTU / large area radiators. The value is conservatively high to cover hot water and space heating in poorly-insulated buildings
+heat_pump_sink_T,Â°C,float,The temperature heat sink used in heat pumps based on DTU / large area radiators. The value is conservatively high to cover hot water and space heating in poorly-insulated buildings
 reduce_space_heat _exogenously,--,"{true, false}",Influence on space heating demand by a certain factor (applied before losses in district heating).
 reduce_space_heat _exogenously_factor,--,Dictionary with planning horizons as keys.,"A positive factor can mean renovation or demolition of a building. If the factor is negative, it can mean an increase in floor area, increased thermal comfort, population growth. The default factors are determined by the `Eurocalc Homes and buildings decarbonization scenario <http://tool.european-calculator.eu/app/buildings/building-types-area/?levers=1ddd4444421213bdbbbddd44444ffffff11f411111221111211l212221>`_"
 retrofitting,,,
@@ -63,7 +63,7 @@ retrofitting,,,
 -- tax_weighting,--,"{true, false}",Weight the costs of retrofitting depending on taxes in countries
 -- construction_index,--,"{true, false}",Weight the costs of retrofitting depending on labour/material costs per country
 tes,--,"{true, false}",Add option for storing thermal energy in large water pits associated with district heating systems and individual thermal energy storage (TES)
-tes_tau,,,The time constant used to calculate the decay of thermal energy in thermal energy storage (TES): 1- :math:`e^{-1/24?}`.
+tes_tau,,,The time constant used to calculate the decay of thermal energy in thermal energy storage (TES): 1- :math:`e^{-1/24Ï„}`.
 -- decentral,days,float,The time constant in decentralized thermal energy storage (TES)
 -- central,days,float,The time constant in centralized thermal energy storage (TES)
 boilers,--,"{true, false}",Add option for transforming electricity into heat using resistive heater
@@ -83,6 +83,7 @@ allam_cycle,--,"{true, false}",Add option to include `Allam cycle gas power plan
 hydrogen_fuel_cell,--,"{true, false}",Add option to include hydrogen fuel cell for re-electrification. Assuming OCGT technology costs
 hydrogen_turbine,--,"{true, false}",Add option to include hydrogen turbine for re-electrification. Assuming OCGT technology costs
 SMR,--,"{true, false}",Add option for transforming natural gas into hydrogen and CO2 using Steam Methane Reforming (SMR)
+SMR CC,--,"{true, false}",Add option for transforming natural gas into hydrogen and CO2 using Steam Methane Reforming (SMR) and Carbon Capture (CC)
 regional_co2 _sequestration_potential,,,
 -- enable,--,"{true, false}",Add option for regionally-resolved geological carbon dioxide sequestration potentials based on `CO2StoP <https://setis.ec.europa.eu/european-co2-storage-database_en>`_.
 -- attribute,--,string,Name of the attribute for the sequestration potential

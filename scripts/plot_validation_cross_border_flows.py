@@ -84,13 +84,9 @@ def cross_border_time_series(countries, data):
             df_neg.plot.area(
                 ax=ax[axis], stacked=True, linewidth=0.0, color=color, ylim=[-1, 1]
             )
-            if (axis % 2) == 0:
-                title = "Historic"
-            else:
-                title = "Optimized"
-
+            title = "Historic" if (axis % 2) == 0 else "Optimized"
             ax[axis].set_title(
-                title + " Import / Export for " + cc.convert(country, to="name_short")
+                f"{title} Import / Export for " + cc.convert(country, to="name_short")
             )
 
             # Custom legend elements
@@ -137,16 +133,12 @@ def cross_border_bar(countries, data):
             df_country = sort_one_country(country, df)
             df_neg, df_pos = df_country.clip(upper=0), df_country.clip(lower=0)
 
-            if (order % 2) == 0:
-                title = "Historic"
-            else:
-                title = "Optimized"
-
+            title = "Historic" if (order % 2) == 0 else "Optimized"
             df_positive_new = pd.DataFrame(data=df_pos.sum()).T.rename(
-                {0: title + " " + cc.convert(country, to="name_short")}
+                {0: f"{title} " + cc.convert(country, to="name_short")}
             )
             df_negative_new = pd.DataFrame(data=df_neg.sum()).T.rename(
-                {0: title + " " + cc.convert(country, to="name_short")}
+                {0: f"{title} " + cc.convert(country, to="name_short")}
             )
 
             df_positive = pd.concat([df_positive_new, df_positive])

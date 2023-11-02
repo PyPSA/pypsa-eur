@@ -293,24 +293,23 @@ def attach_load(n, regions, load, nuts3_shapes, countries, scaling=1.0):
         l = opsd_load[cntry]
         if len(group) == 1:
             return pd.DataFrame({group.index[0]: l})
-        else:
-            nuts3_cntry = nuts3.loc[nuts3.country == cntry]
-            transfer = shapes_to_shapes(group, nuts3_cntry.geometry).T.tocsr()
-            gdp_n = pd.Series(
-                transfer.dot(nuts3_cntry["gdp"].fillna(1.0).values), index=group.index
-            )
-            pop_n = pd.Series(
-                transfer.dot(nuts3_cntry["pop"].fillna(1.0).values), index=group.index
-            )
+        nuts3_cntry = nuts3.loc[nuts3.country == cntry]
+        transfer = shapes_to_shapes(group, nuts3_cntry.geometry).T.tocsr()
+        gdp_n = pd.Series(
+            transfer.dot(nuts3_cntry["gdp"].fillna(1.0).values), index=group.index
+        )
+        pop_n = pd.Series(
+            transfer.dot(nuts3_cntry["pop"].fillna(1.0).values), index=group.index
+        )
 
-            # relative factors 0.6 and 0.4 have been determined from a linear
-            # regression on the country to continent load data
-            factors = normed(0.6 * normed(gdp_n) + 0.4 * normed(pop_n))
-            return pd.DataFrame(
-                factors.values * l.values[:, np.newaxis],
-                index=l.index,
-                columns=factors.index,
-            )
+        # relative factors 0.6 and 0.4 have been determined from a linear
+        # regression on the country to continent load data
+        factors = normed(0.6 * normed(gdp_n) + 0.4 * normed(pop_n))
+        return pd.DataFrame(
+            factors.values * l.values[:, np.newaxis],
+            index=l.index,
+            columns=factors.index,
+        )
 
     load = pd.concat(
         [
@@ -406,6 +405,7 @@ def attach_wind_and_solar(
                 capital_cost=capital_cost,
                 efficiency=costs.at[supcar, "efficiency"],
                 p_max_pu=ds["profile"].transpose("time", "bus").to_pandas(),
+                lifetime=costs.at[supcar, "lifetime"],
             )
 
 
@@ -434,7 +434,7 @@ def attach_conventional_generators(
     ppl = (
         ppl.query("carrier in @carriers")
         .join(costs, on="carrier", rsuffix="_r")
-        .rename(index=lambda s: "C" + str(s))
+        .rename(index=lambda s: f"C{str(s)}")
     )
     ppl["efficiency"] = ppl.efficiency.fillna(ppl.efficiency_r)
 
@@ -511,7 +511,7 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **par
     ppl = (
         ppl.query('carrier == "hydro"')
         .reset_index(drop=True)
-        .rename(index=lambda s: str(s) + " hydro")
+        .rename(index=lambda s: f"{str(s)} hydro")
     )
     ror = ppl.query('technology == "Run-Of-River"')
     phs = ppl.query('technology == "Pumped Storage"')
@@ -608,16 +608,13 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **par
         )
         if not missing_countries.empty:
             logger.warning(
-                "Assuming max_hours=6 for hydro reservoirs in the countries: {}".format(
-                    ", ".join(missing_countries)
-                )
+                f'Assuming max_hours=6 for hydro reservoirs in the countries: {", ".join(missing_countries)}'
             )
         hydro_max_hours = hydro.max_hours.where(
             hydro.max_hours > 0, hydro.country.map(max_hours_country)
         ).fillna(6)
 
-        flatten_dispatch = params.get("flatten_dispatch", False)
-        if flatten_dispatch:
+        if flatten_dispatch := params.get("flatten_dispatch", False):
             buffer = params.get("flatten_dispatch_buffer", 0.2)
             average_capacity_factor = inflow_t[hydro.index].mean() / hydro["p_nom"]
             p_max_pu = (average_capacity_factor + buffer).clip(upper=1)
