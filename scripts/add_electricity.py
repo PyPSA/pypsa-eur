@@ -95,6 +95,7 @@ import xarray as xr
 from _helpers import configure_logging, update_p_nom_max
 from powerplantmatching.export import map_country_bus
 from shapely.prepared import prep
+from typing import Dict, List
 
 idx = pd.IndexSlice
 
@@ -717,7 +718,17 @@ def attach_extendable_generators(n, costs, ppl, carriers):
             )
 
 
-def attach_OPSD_renewables(n, tech_map):
+def attach_OPSD_renewables(n: pypsa.Network, tech_map: Dict[str, List[str]]) -> None:
+    """
+    Attach renewable capacities from the OPSD dataset to the network.
+
+    Args:
+    - n: The PyPSA network to attach the capacities to.
+    - tech_map: A dictionary mapping fuel types to carrier names.
+
+    Returns:
+    - None
+    """
     tech_string = ", ".join(sum(tech_map.values(), []))
     logger.info(f"Using OPSD renewable capacities for carriers {tech_string}.")
 
@@ -742,7 +753,24 @@ def attach_OPSD_renewables(n, tech_map):
         n.generators.p_nom_min.update(gens.bus.map(caps).dropna())
 
 
-def estimate_renewable_capacities(n, year, tech_map, expansion_limit, countries):
+def estimate_renewable_capacities(
+    n: pypsa.Network, year: int, tech_map: dict, expansion_limit: bool, countries: list
+) -> None:
+    """
+    Estimate a different between renewable capacities in the network and reported country totals from IRENASTAT dataset. Distribute the difference with a heuristic.
+
+    Heuristic: n.generators_t.p_max_pu.mean() * n.generators.p_nom_max
+
+    Args:
+    - n: The PyPSA network.
+    - year: The year of optimisation.
+    - tech_map: A dictionary mapping fuel types to carrier names.
+    - expansion_limit: Boolean value from config file
+    - countries: A list of country codes to estimate capacities for.
+
+    Returns:
+    - None
+    """
     if not len(countries) or not len(tech_map):
         return
 
