@@ -84,6 +84,7 @@ It further adds extendable ``generators`` with **zero** capacity for
 
 import logging
 from itertools import product
+from typing import Dict, List
 
 import geopandas as gpd
 import numpy as np
@@ -95,7 +96,6 @@ import xarray as xr
 from _helpers import configure_logging, update_p_nom_max
 from powerplantmatching.export import map_country_bus
 from shapely.prepared import prep
-from typing import Dict, List
 
 idx = pd.IndexSlice
 
@@ -757,7 +757,9 @@ def estimate_renewable_capacities(
     n: pypsa.Network, year: int, tech_map: dict, expansion_limit: bool, countries: list
 ) -> None:
     """
-    Estimate a different between renewable capacities in the network and reported country totals from IRENASTAT dataset. Distribute the difference with a heuristic.
+    Estimate a different between renewable capacities in the network and
+    reported country totals from IRENASTAT dataset. Distribute the difference
+    with a heuristic.
 
     Heuristic: n.generators_t.p_max_pu.mean() * n.generators.p_nom_max
 
