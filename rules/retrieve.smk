@@ -2,6 +2,9 @@
 #
 # SPDX-License-Identifier: MIT
 
+import requests
+from datetime import datetime, timedelta
+
 if config["enable"].get("retrieve", "auto") == "auto":
     config["enable"]["retrieve"] = has_internet_access()
 
@@ -223,11 +226,20 @@ if config["enable"]["retrieve"]:
 
 if config["enable"]["retrieve"]:
 
-    from datetime import datetime
     current_month = datetime.now().strftime('%b')
     current_year = datetime.now().strftime('%Y')
     bYYYY = f"{current_month}{current_year}"
 
+    def check_file_exists(url):
+        response = requests.head(url)
+        return response.status_code == 200
+
+    url = f'https://d1gam3xoknrgr2.cloudfront.net/current/WDPA_{bYYYY}_Public.zip'
+
+    if not check_file_exists(url):
+        prev_month = (datetime.now()-timedelta(30)).strftime('%b')
+        bYYYY = f"{prev_month}{current_year}"
+        assert check_file_exists(f'https://d1gam3xoknrgr2.cloudfront.net/current/WDPA_{bYYYY}_Public.zip'), "The file does not exist."
 
     # Downloading protected area database from WDPA
     # extract the main zip and then merge the contained 3 zipped shapefiles
