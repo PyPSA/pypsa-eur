@@ -759,7 +759,10 @@ def estimate_renewable_capacities(n, year, tech_map, expansion_limit, countries)
 
     for ppm_technology, techs in tech_map.items():
         tech_i = n.generators.query("carrier in @techs").index
-        stats = capacities.loc[ppm_technology].reindex(countries, fill_value=0.0)
+        if ppm_technology in capacities.index.get_level_values("Technology"):
+            stats = capacities.loc[ppm_technology].reindex(countries, fill_value=0.0)
+        else:
+            stats = pd.Series(0.0, index=countries)
         country = n.generators.bus[tech_i].map(n.buses.country)
         existent = n.generators.p_nom[tech_i].groupby(country).sum()
         missing = stats - existent
