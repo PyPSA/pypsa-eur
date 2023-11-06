@@ -10,6 +10,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Add floating wind to PyPSA-Eur
+
 * Updated Global Energy Monitor LNG terminal data to March 2023 version.
 
 * For industry distribution, use EPRTR as fallback if ETS data is not available.
