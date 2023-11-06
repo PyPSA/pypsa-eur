@@ -45,7 +45,7 @@ repos:
     args: ["--in-place", "--make-summary-multi-line", "--pre-summary-newline"]
 
 - repo: https://github.com/keewis/blackdoc
-  rev: v0.3.8
+  rev: v0.3.9
   hooks:
   - id: blackdoc
 
