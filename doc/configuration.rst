@@ -287,7 +287,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 .. csv-table::
    :header-rows: 1
    :widths: 22,7,22,33
-   :file: configtables/offwind-dc.csv
+   :file: configtables/offwind-float.csv
 
 .. note::
    ``offwind-ac``,  ``offwind-dc`` , ``offwind-float`` have the same assumption on
