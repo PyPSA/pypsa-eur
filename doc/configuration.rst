@@ -265,6 +265,23 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at:   offwind-dc:
+   :end-before:   offwind-float:
+
+.. csv-table::
+   :header-rows: 1
+   :widths: 22,7,22,33
+   :file: configtables/offwind-dc.csv
+
+.. note::
+   Both ``offwind-ac`` and ``offwind-dc`` have the same assumption on
+   ``capacity_per_sqkm`` and ``correction_factor``.
+
+``offwind-float``
+---------------
+
+.. literalinclude:: ../config/config.default.yaml
+   :language: yaml
+   :start-at:   offwind-float:
    :end-before:   solar:
 
 .. csv-table::
@@ -273,9 +290,8 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
    :file: configtables/offwind-dc.csv
 
 .. note::
-   both ``offwind-ac`` and ``offwind-dc`` have the same assumption on
+   ``offwind-ac``,  ``offwind-dc`` , ``offwind-float`` have the same assumption on
    ``capacity_per_sqkm`` and ``correction_factor``.
-
 ``solar``
 ---------------
 

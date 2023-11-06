@@ -211,6 +211,8 @@ renewable:
     # until done more rigorously in #153
     corine: [44, 255]
     natura: true
+    ship_threshold: 400
+    excluder_resolution: 200
     min_depth: 60
     max_depth: 1000
     potential: simple # or conservative

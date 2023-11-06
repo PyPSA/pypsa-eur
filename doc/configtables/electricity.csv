@@ -24,13 +24,13 @@ custom_powerplants,--,"use `pandas.query <https://pandas.pydata.org/pandas-docs/
 ,,,
 conventional_carriers,--,"Any subset of {nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass}","List of conventional power plants to include in the model from ``resources/powerplants.csv``. If an included carrier is also listed in ``extendable_carriers``, the capacity is taken as a lower bound."
 ,,,
-renewable_carriers,--,"Any subset of {solar, onwind, offwind-ac, offwind-dc, hydro}",List of renewable generators to include in the model.
+renewable_carriers,--,"Any subset of {solar, onwind, offwind-ac, offwind-dc, offwind-float, hydro}",List of renewable generators to include in the model.
 estimate_renewable_capacities,,,
 -- enable,,bool,Activate routine to estimate renewable capacities
 -- from_opsd,--,bool,Add renewable capacities from `OPSD database <https://data.open-power-system-data.org/renewable_power_plants/2020-08-25>`_. The value is depreciated but still can be used.
 -- year,--,bool,Renewable capacities are based on existing capacities reported by IRENA (IRENASTAT) for the specified year
 -- expansion_limit,--,float or false,"Artificially limit maximum IRENA capacities to a factor.  For example, an ``expansion_limit: 1.1`` means 110% of capacities . If false are chosen, the estimated renewable potentials determine by the workflow are used."
 -- technology_mapping,,,Mapping between PyPSA-Eur and powerplantmatching technology names
--- -- Offshore,--,"Any subset of {offwind-ac, offwind-dc}","List of PyPSA-Eur carriers that is considered as (IRENA, OPSD) onshore technology."
+-- -- Offshore,--,"Any subset of {offwind-ac, offwind-dc, offwind-float}","List of PyPSA-Eur carriers that is considered as (IRENA, OPSD) onshore technology."
 -- -- Offshore,--,{onwind},"List of PyPSA-Eur carriers that is considered as (IRENA, OPSD) offshore technology."
 -- -- PV,--,{solar},"List of PyPSA-Eur carriers that is considered as (IRENA, OPSD) PV technology."

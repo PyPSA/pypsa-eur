@@ -32,7 +32,7 @@ electricity:
     Store: [H2]
     Link: [H2 pipeline]
 
-  renewable_carriers: [solar, onwind, offwind-ac, offwind-dc]
+  renewable_carriers: [solar, onwind, offwind-ac, offwind-dc, offwind-float]
 
 
 atlite:
@@ -51,6 +51,9 @@ renewable:
     cutout: be-03-2013-era5
     max_depth: false
   offwind-dc:
+    cutout: be-03-2013-era5
+    max_depth: false
+  offwind-float:
     cutout: be-03-2013-era5
     max_depth: false
   solar:

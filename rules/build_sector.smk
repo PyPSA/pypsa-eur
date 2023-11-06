@@ -748,6 +748,7 @@ rule prepare_sector_network:
         else "data/costs_{planning_horizons}.csv",
         profile_offwind_ac=RESOURCES + "profile_offwind-ac.nc",
         profile_offwind_dc=RESOURCES + "profile_offwind-dc.nc",
+        profile_offwind_float=RESOURCES + "profile_offwind-float.nc",
         h2_cavern=RESOURCES + "salt_cavern_potentials_s{simpl}_{clusters}.csv",
         busmap_s=RESOURCES + "busmap_elec_s{simpl}.csv",
         busmap=RESOURCES + "busmap_elec_s{simpl}_{clusters}.csv",
