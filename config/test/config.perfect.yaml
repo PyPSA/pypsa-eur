@@ -65,6 +65,7 @@ renewable:
   offwind-float:
     cutout: be-03-2013-era5
     max_depth: false
+    min_depth: false
   solar:
     cutout: be-03-2013-era5
 
