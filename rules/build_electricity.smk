@@ -220,7 +220,10 @@ rule build_renewable_profiles:
         gebco=ancient(
             lambda w: (
                 "data/bundle/GEBCO_2014_2D.nc"
-                if (config["renewable"][w.technology].get("max_depth") or config["renewable"][w.technology].get("min_depth"))
+                if (
+                    config["renewable"][w.technology].get("max_depth")
+                    or config["renewable"][w.technology].get("min_depth")
+                )
                 else []
             )
         ),

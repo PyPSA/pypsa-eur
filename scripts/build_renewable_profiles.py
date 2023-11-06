@@ -267,10 +267,12 @@ if __name__ == "__main__":
         # and exclude areas where: -max_depth > grid cell depth
         func = functools.partial(np.greater, -params["max_depth"])
         excluder.add_raster(snakemake.input.gebco, codes=func, crs=4326, nodata=-1000)
-        
+
     if params.get("min_depth"):
-        func = functools.partial(np.greater,-params['min_depth'])
-        excluder.add_raster(snakemake.input.gebco, codes=func, crs=4326, nodata=-1000, invert=True)
+        func = functools.partial(np.greater, -params["min_depth"])
+        excluder.add_raster(
+            snakemake.input.gebco, codes=func, crs=4326, nodata=-1000, invert=True
+        )
 
     if "min_shore_distance" in params:
         buffer = params["min_shore_distance"]
