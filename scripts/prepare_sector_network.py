@@ -145,6 +145,7 @@ def define_spatial(nodes, options):
         spatial.oil.nodes = nodes + " oil"
         spatial.oil.locations = nodes
         spatial.oil.naphtha = nodes + " naphtha for industry"
+        spatial.oil.naphtha_process_emissions = nodes + " naphtha process emissions"
         spatial.oil.kerosene = nodes + " kerosene for aviation"
         spatial.oil.shipping = nodes + " shipping oil"
         spatial.oil.agriculture_machinery = nodes + " agriculture machinery oil"
@@ -152,6 +153,7 @@ def define_spatial(nodes, options):
         spatial.oil.nodes = ["EU oil"]
         spatial.oil.locations = ["EU"]
         spatial.oil.naphtha = ["EU naphtha for industry"]
+        spatial.oil.naphtha_process_emissions = "EU naphtha process emissions"
         spatial.oil.kerosene = ["EU kerosene for aviation"]
         spatial.oil.shipping = ["EU shipping oil"]
         spatial.oil.agriculture_machinery = ["EU agriculture machinery oil"]
@@ -2443,9 +2445,14 @@ def add_industry(n, costs):
         efficiency=1.0,
     )
 
+    if len(spatial.biomass.industry_cc)<=1 and len(spatial.co2.nodes)>1:
+        link_names = nodes + " " + spatial.biomass.industry_cc
+    else:
+        link_names = spatial.biomass.industry_cc
+
     n.madd(
         "Link",
-        spatial.biomass.industry_cc,
+        link_names,
         bus0=spatial.biomass.nodes,
         bus1=spatial.biomass.industry,
         bus2="co2 atmosphere",
@@ -2820,7 +2827,7 @@ def add_industry(n, costs):
 
     n.madd(
         "Load",
-        ["naphtha for industry into process emissions from feedstock"],
+        spatial.oil.naphtha_process_emissions,
         bus=spatial.oil.nodes,
         carrier="naphtha for industry",
         p_set=p_set_process_emissions,
