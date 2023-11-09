@@ -14,12 +14,6 @@ localrules:
     plot_networks,
 
 
-rule all:
-    input:
-        RESULTS + "graphs/costs.pdf",
-    default_target: True
-
-
 rule cluster_networks:
     input:
         expand(RESOURCES + "networks/elec_s{simpl}_{clusters}.nc", **config["scenario"]),
@@ -62,6 +56,15 @@ rule solve_sector_networks:
         expand(
             RESULTS
             + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+            **config["scenario"]
+        ),
+
+
+rule solve_sector_networks_perfect:
+    input:
+        expand(
+            RESULTS
+            + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years.nc",
             **config["scenario"]
         ),
 

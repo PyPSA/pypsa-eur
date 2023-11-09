@@ -41,7 +41,7 @@ The following heat gains and losses are considered:
 
 - heat gain through resistive losses
 - heat gain through solar radiation
-- heat loss through radiation of the trasnmission line
+- heat loss through radiation of the transmission line
 - heat loss through forced convection with wind
 - heat loss through natural convection
 
@@ -83,8 +83,7 @@ def calculate_resistance(T, R_ref, T_ref=293, alpha=0.00403):
     -------
     Resistance of at given temperature.
     """
-    R = R_ref * (1 + alpha * (T - T_ref))
-    return R
+    return R_ref * (1 + alpha * (T - T_ref))
 
 
 def calculate_line_rating(n, cutout):
@@ -125,13 +124,12 @@ def calculate_line_rating(n, cutout):
         R = calculate_resistance(T=353, R_ref=R)
     Imax = cutout.line_rating(shapes, R, D=0.0218, Ts=353, epsilon=0.8, alpha=0.8)
     line_factor = relevant_lines.eval("v_nom * n_bundle * num_parallel") / 1e3  # in mW
-    da = xr.DataArray(
+    return xr.DataArray(
         data=np.sqrt(3) * Imax * line_factor.values.reshape(-1, 1),
         attrs=dict(
             description="Maximal possible power in MW for given line considering line rating"
         ),
     )
-    return da
 
 
 if __name__ == "__main__":

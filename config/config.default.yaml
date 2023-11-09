@@ -68,6 +68,7 @@ enable:
   retrieve_sector_databundle: true
   retrieve_cost_data: true
   build_cutout: false
+  retrieve_irena: false
   retrieve_cutout: true
   build_natura_raster: false
   retrieve_natura_raster: true
@@ -452,6 +453,7 @@ sector:
   hydrogen_fuel_cell: true
   hydrogen_turbine: false
   SMR: true
+  SMR_cc: true
   regional_co2_sequestration_potential:
     enable: false
     attribute: 'conservative estimate Mt'
@@ -461,6 +463,7 @@ sector:
     years_of_storage: 25
   co2_sequestration_potential: 200
   co2_sequestration_cost: 10
+  co2_sequestration_lifetime: 50
   co2_spatial: false
   co2network: false
   cc_fraction: 0.9
@@ -491,6 +494,20 @@ sector:
     OCGT: gas
   biomass_to_liquid: false
   biosng: false
+  limit_max_growth:
+    enable: false
+    # allowing 30% larger than max historic growth
+    factor: 1.3
+    max_growth:  # unit GW
+      onwind: 16 # onshore max grow so far 16 GW in Europe https://www.iea.org/reports/renewables-2020/wind
+      solar: 28 # solar max grow so far 28 GW in Europe https://www.iea.org/reports/renewables-2020/solar-pv
+      offwind-ac: 35 # offshore max grow so far 3.5 GW in Europe https://windeurope.org/about-wind/statistics/offshore/european-offshore-wind-industry-key-trends-statistics-2019/
+      offwind-dc: 35
+    max_relative_growth:
+      onwind: 3
+      solar: 3
+      offwind-ac: 3
+      offwind-dc: 3
   enhanced_geothermal: true
   enhanced_geothermal_optimism: false # if true, egs costs are reducing towards 2050 according to Aghahosseini et al., (2020)
   enhanced_geothermal_performant: true # if true, adds only the cheapest patch of EGS potential to each region
@@ -546,11 +563,13 @@ industry:
   hotmaps_locate_missing: false
   reference_year: 2015
 
+
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 costs:
   year: 2030
   version: v0.6.0
   rooftop_share: 0.14  # based on the potentials, assuming  (0.1 kW/m2 and 10 m2/person)
+  social_discountrate: 0.02
   fill_values:
     FOM: 0
     VOM: 0
@@ -764,6 +783,7 @@ plotting:
     gas pipeline new: '#a87c62'
     # oil
     oil: '#c9c9c9'
+    imported oil: '#a3a3a3'
     oil boiler: '#adadad'
     residential rural oil boiler: '#a9a9a9'
     services rural oil boiler: '#a5a5a5'
@@ -782,6 +802,7 @@ plotting:
     Coal: '#545454'
     coal: '#545454'
     Coal marginal: '#545454'
+    coal for industry: '#343434'
     solid: '#545454'
     Lignite: '#826837'
     lignite: '#826837'
@@ -895,6 +916,7 @@ plotting:
     H2 for shipping: "#ebaee0"
     H2: '#bf13a0'
     hydrogen: '#bf13a0'
+    retrofitted H2 boiler: '#e5a0d9'
     SMR: '#870c71'
     SMR CC: '#4f1745'
     H2 liquefaction: '#d647bd'

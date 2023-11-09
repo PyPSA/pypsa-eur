@@ -119,7 +119,7 @@ def countries(naturalearth, country_list):
     fieldnames = (
         df[x].where(lambda s: s != "-99") for x in ("ISO_A2", "WB_A2", "ADM0_A3")
     )
-    df["name"] = reduce(lambda x, y: x.fillna(y), fieldnames, next(fieldnames)).str[0:2]
+    df["name"] = reduce(lambda x, y: x.fillna(y), fieldnames, next(fieldnames)).str[:2]
 
     df = df.loc[
         df.name.isin(country_list) & ((df["scalerank"] == 0) | (df["scalerank"] == 5))
