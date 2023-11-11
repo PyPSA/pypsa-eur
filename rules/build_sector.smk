@@ -705,12 +705,20 @@ rule build_transport_demand:
 
 
 rule build_egs_potentials:
+    params:
+        snapshots=config["snapshots"],
     input:
         egs_cost="data/egs_costs.json",
-        shapes=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+        regions=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+        air_temperature=RESOURCES + "temp_air_total_elec_s{simpl}_{clusters}.nc" 
+        if config["sector"]["enhanced_geothermal_var_cf"]
+        else [],
     output:
         egs_potentials=RESOURCES + "egs_potentials_s{simpl}_{clusters}.csv",
         egs_overlap=RESOURCES + "egs_overlap_s{simpl}_{clusters}.csv",
+        egs_capacity_factors=RESOURCES + "egs_capacity_factors_s{simpl}_{clusters}.csv",
+        if config["sector"]["enhanced_geothermal_var_cf"]
+        else [],
     threads: 1
     resources:
         mem_mb=2000,
@@ -790,6 +798,9 @@ rule prepare_sector_network:
         cop_air_urban=RESOURCES + "cop_air_urban_elec_s{simpl}_{clusters}.nc",
         egs_potentials=RESOURCES + "egs_potentials_s{simpl}_{clusters}.csv",
         egs_overlap=RESOURCES + "egs_overlap_s{simpl}_{clusters}.csv",
+        egs_capacity_factors=RESOURCES + "egs_capacity_factors_s{simpl}_{clusters}.csv",
+        if config["sector"]["enhanced_geothermal_var_cf"]
+        else [],
         solar_thermal_total=RESOURCES
         + "solar_thermal_total_elec_s{simpl}_{clusters}.nc"
         if config["sector"]["solar_thermal"]

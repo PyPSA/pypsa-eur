@@ -511,6 +511,8 @@ sector:
   enhanced_geothermal: true
   enhanced_geothermal_optimism: false # if true, egs costs are reducing towards 2050 according to Aghahosseini et al., (2020)
   enhanced_geothermal_performant: true # if true, adds only the cheapest patch of EGS potential to each region
+  enhanced_geothermal_flexible: true # if true, adds a storage unit simulating flexible operation of EGS, see Ricks et al. 2023
+  enhanced_geothermal_var_cf: true # if true, adds time-dependent capacity factor to EGS, see Ricks et al. 2023
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
 industry:
