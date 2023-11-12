@@ -763,13 +763,14 @@ def add_pipe_retrofit_constraint(n):
 
 
 def add_geothermal_chp_constraint(n):
-    elec_index = n.links.loc[n.links.carrier == 'geothermal organic rankine cycle'].index
-    heat_index = n.links.loc[n.links.carrier == 'geothermal heat district heat'].index
+    elec_index = n.links.loc[
+        n.links.carrier == "geothermal organic rankine cycle"
+    ].index
+    heat_index = n.links.loc[n.links.carrier == "geothermal heat district heat"].index
 
     p_nom_lhs = (
-        n.model["Link-p_nom"].loc[heat_index]
-        - n.model["Link-p_nom"].loc[elec_index]
-	)
+        n.model["Link-p_nom"].loc[heat_index] - n.model["Link-p_nom"].loc[elec_index]
+    )
 
     n.model.add_constraints(
         p_nom_lhs == 0,
