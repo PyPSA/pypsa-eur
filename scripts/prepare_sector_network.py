@@ -3315,6 +3315,9 @@ def add_enhanced_geothermal(
     Built in scripts/build_egs_potentials.py
     """
 
+    if len(spatial.geothermal_heat.nodes) > 1:
+        logger.warning("'add_enhanced_geothermal' not implemented for multiple geothermal nodes.")
+
     config = snakemake.config
 
     # matrix defining the overlap between gridded geothermal potential estimation, and bus regions
@@ -3325,24 +3328,32 @@ def add_enhanced_geothermal(
     Nyears = n.snapshot_weightings.generators.sum() / 8760
     dr = config["costs"]["fill_values"]["discount rate"]
     lt = costs.at["geothermal", "lifetime"]
+    FOM = costs.at["geothermal", "FOM"]
 
     egs_annuity = calculate_annuity(lt, dr)
 
+    # cost for ORC is subtracted, as it is already included in the geothermal cost.
+    # The orc cost are attributed to a separate link representing the ORC.
     egs_potentials["capital_cost"] = (
-        (egs_annuity + 0.02 / 1.02)
-        * egs_potentials["CAPEX"]
+        (egs_annuity + FOM / (1. + FOM))
+        * (egs_potentials["CAPEX"] - costs.at["organice rankine cycle", "investment"])
         * Nyears
-        # (egs_annuity + (opex := costs.at["geothermal", "FOM"]) / (1. + opex))
-        # * egs_potentials["CAPEX"] * Nyears
+        * 1000.
     )
-    # fixed OPEX of 2 % taken from NREL https://atb.nrel.gov/electricity/2023/index
-    # out-commented version will replace current one, once tech-data is updated
+    assert (egs_potentials["capital_cost"] > 0).all(), "Error in EGS cost, negative values found."
 
-    # Uncommented for causing a crash for runs with default config.
-    # this throws an error, as the retrieved costs are not
-    # the same as the ones built by tech-data.
-    # efficiency = costs.at["geothermal", "efficiency electricity"]
-    efficiency = 0.1
+    plant_annuity = calculate_annuity(
+        costs.at["organic rankine cycle", "lifetime"],
+        dr
+        )
+    plant_capital_cost = (
+        (plant_annuity + FOM / (1 + FOM)) * 
+        costs.at["organic rankine cycle", "investment"] *
+        Nyears
+    )
+
+    efficiency_orc = costs.at["organic rankine cycle", "efficiency"]
+    efficiency_dh = costs.at["geothermal", "efficiency residential heat"]
 
     # p_nom_max conversion GW -> MW
     # capital_cost conversion Euro/kW -> Euro/MW
@@ -3360,9 +3371,6 @@ def add_enhanced_geothermal(
         unit="MWh_th",
     )
 
-    if len(spatial.geothermal.nodes) > 1:
-        logger.warning("'add_geothermal' not implemented for multiple geothermal nodes.")
-
     n.add(
         "Generator",
         spatial.geothermal_heat.nodes,
@@ -3371,8 +3379,20 @@ def add_enhanced_geothermal(
         p_nom_extendable=True,
     )
 
-    if 
+    if snakemake.params.sector["enhanced_geothermal_var_cf"]:
+        efficiency = pd.read_csv(
+            snakemake.input.egs_capacity_factors,
+            parse_dates=True,
+            index_col=0
+            )
+        logger.info("Adding Enhanced Geothermal with time-varying capacity factors.")
+    else:
+        efficiency = pd.Series(1, overlap.index)
 
+    # if urban central heat exists, adds geothermal as CHP
+    as_chp = 'urban central heat' in n.buses.carrier
+    if as_chp:
+        logger.info("Adding Enhanced Geothermal as Combined Heat and Power.")
 
     for bus, bus_overlap in overlap.iterrows():
         if not bus_overlap.sum():
@@ -3407,7 +3427,12 @@ def add_enhanced_geothermal(
             f"geothermal heat surface {bus}",
             location=bus,
             )
-        
+
+        bus_eta = pd.concat((
+            efficiency[bus].rename(idx) 
+            for idx in f"{bus} enhanced geothermal" + appendix
+        ), axis=1)
+
         n.madd(
             "Link",
             f"{bus} enhanced geothermal" + appendix,
@@ -3418,8 +3443,32 @@ def add_enhanced_geothermal(
             p_nom_extendable=True,
             p_nom_max=p_nom_max / efficiency,
             capital_cost=capital_cost * efficiency,
-            efficiency=efficiency,
+            efficiency=bus_eta,
         )
+
+        n.add(
+            "Link",
+            bus + ' geothermal organic rankine cycle',
+            bus0=f"geothermal heat surface {bus}",
+            bus1=bus,
+            p_nom_extendable=True,
+            carrier="geothermal organic rankine cycle",
+            capital_cost=plant_capital_cost * efficiency_orc,
+            efficiency=efficiency_orc if not as_chp else efficiency_orc * 2.,
+        )
+
+        if as_chp and bus + " urban central heat" in n.buses.index:
+            n.add(
+                "Link",
+                bus + ' geothermal heat district heat',
+                bus0=f"geothermal heat surface {bus}",
+                bus1=bus + ' urban central heat',
+                carrier="geothermal district heat",
+                capital_cost=plant_capital_cost * efficiency_orc * costs.at["geothermal", "district heating cost"],
+                efficiency=efficiency_dh * 2.,
+                p_nom_extendable=True,
+            )
+
 
 
 if __name__ == "__main__":

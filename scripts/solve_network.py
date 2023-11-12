@@ -762,6 +762,21 @@ def add_pipe_retrofit_constraint(n):
     n.model.add_constraints(lhs == rhs, name="Link-pipe_retrofit")
 
 
+def add_geothermal_chp_constraint(n):
+    elec_index = n.links.loc[n.links.carrier == 'geothermal organic rankine cycle'].index
+    heat_index = n.links.loc[n.links.carrier == 'geothermal heat district heat'].index
+
+    p_nom_lhs = (
+        n.model["Link-p_nom"].loc[heat_index]
+        - n.model["Link-p_nom"].loc[elec_index]
+	)
+
+    n.model.add_constraints(
+        p_nom_lhs == 0,
+        name="equalizes_p_nom_of_chp_elec_and_chp_district_heat",
+    )
+
+
 def extra_functionality(n, snapshots):
     """
     Collects supplementary constraints which will be passed to
@@ -791,6 +806,8 @@ def extra_functionality(n, snapshots):
         add_carbon_constraint(n, snapshots)
         add_carbon_budget_constraint(n, snapshots)
         add_retrofit_gas_boiler_constraint(n, snapshots)
+    if "geothermal district heat" in n.links.carrier:
+        add_geothermal_chp_constraint(n)
 
 
 def solve_network(n, config, solving, opts="", **kwargs):
