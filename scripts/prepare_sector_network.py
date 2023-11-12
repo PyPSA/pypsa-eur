@@ -151,6 +151,11 @@ def define_spatial(nodes, options):
     spatial.lignite.nodes = ["EU lignite"]
     spatial.lignite.locations = ["EU"]
 
+    # deep geothermal
+    spatial.geothermal_heat = SimpleNamespace()
+    spatial.geothermal_heat.nodes = ["EU deep geothermal"]
+    spatial.geothermal_heat.locations = ["EU"]
+
     return spatial
 
 
@@ -3310,16 +3315,9 @@ def add_enhanced_geothermal(
     Built in scripts/build_egs_potentials.py
     """
 
-    n.add(
-        "Carrier",
-        "geothermal heat",
-        nice_name="Geothermal Heat",
-        color=snakemake.config["plotting"]["tech_colors"]["geothermal"],
-        co2_emissions=costs.at["geothermal", "CO2 intensity"],
-    )
-
     config = snakemake.config
 
+    # matrix defining the overlap between gridded geothermal potential estimation, and bus regions
     overlap = pd.read_csv(egs_overlap, index_col=0)
     overlap.columns = overlap.columns.astype(int)
     egs_potentials = pd.read_csv(egs_potentials, index_col=0)
@@ -3351,22 +3349,30 @@ def add_enhanced_geothermal(
     egs_potentials["p_nom_max"] = egs_potentials["p_nom_max"] * 1000.0
     egs_potentials["capital_cost"] = egs_potentials["capital_cost"] * 1000.0
 
-    n.add(
+    # not using add_carrier_buses, as we are not interested in a Store
+    n.add("Carrier", "geothermal heat")
+
+    n.madd(
         "Bus",
-        "EU geothermal heat",
+        spatial.geothermal_heat.nodes,
+        location=spatial.geothermal_heat.locations,
         carrier="geothermal heat",
         unit="MWh_th",
-        location="EU",
     )
+
+    if len(spatial.geothermal.nodes) > 1:
+        logger.warning("'add_geothermal' not implemented for multiple geothermal nodes.")
 
     n.add(
         "Generator",
-        "EU geothermal heat",
-        bus="EU geothermal heat",
+        spatial.geothermal_heat.nodes,
+        bus=spatial.geothermal_heat.nodes,
         carrier="geothermal heat",
-        p_nom_max=egs_potentials["p_nom_max"].sum() / efficiency,
         p_nom_extendable=True,
     )
+
+    if 
+
 
     for bus, bus_overlap in overlap.iterrows():
         if not bus_overlap.sum():
@@ -3395,19 +3401,24 @@ def add_enhanced_geothermal(
         capital_cost = bus_egs["capital_cost"]
         capital_cost.index = f"{bus} enhanced geothermal" + appendix
 
+        # add surface bus
+        n.add(
+            "Bus",
+            f"geothermal heat surface {bus}",
+            location=bus,
+            )
+        
         n.madd(
             "Link",
             f"{bus} enhanced geothermal" + appendix,
             location=bus,
-            bus0="EU geothermal heat",
-            bus1=bus,
-            bus2="co2 atmosphere",
+            bus0=spatial.geothermal_heat.nodes,
+            bus1=f"geothermal heat surface {bus}",
             carrier="geothermal heat",
             p_nom_extendable=True,
             p_nom_max=p_nom_max / efficiency,
             capital_cost=capital_cost * efficiency,
             efficiency=efficiency,
-            efficiency2=costs.at["geothermal", "CO2 intensity"] * efficiency,
         )
 
 

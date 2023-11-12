@@ -716,7 +716,7 @@ rule build_egs_potentials:
     output:
         egs_potentials=RESOURCES + "egs_potentials_s{simpl}_{clusters}.csv",
         egs_overlap=RESOURCES + "egs_overlap_s{simpl}_{clusters}.csv",
-        egs_capacity_factors=RESOURCES + "egs_capacity_factors_s{simpl}_{clusters}.csv",
+        egs_capacity_factors=RESOURCES + "egs_capacity_factors_s{simpl}_{clusters}.csv"
         if config["sector"]["enhanced_geothermal_var_cf"]
         else [],
     threads: 1
@@ -798,7 +798,7 @@ rule prepare_sector_network:
         cop_air_urban=RESOURCES + "cop_air_urban_elec_s{simpl}_{clusters}.nc",
         egs_potentials=RESOURCES + "egs_potentials_s{simpl}_{clusters}.csv",
         egs_overlap=RESOURCES + "egs_overlap_s{simpl}_{clusters}.csv",
-        egs_capacity_factors=RESOURCES + "egs_capacity_factors_s{simpl}_{clusters}.csv",
+        egs_capacity_factors=RESOURCES + "egs_capacity_factors_s{simpl}_{clusters}.csv"
         if config["sector"]["enhanced_geothermal_var_cf"]
         else [],
         solar_thermal_total=RESOURCES
