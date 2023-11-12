@@ -3316,7 +3316,9 @@ def add_enhanced_geothermal(
     """
 
     if len(spatial.geothermal_heat.nodes) > 1:
-        logger.warning("'add_enhanced_geothermal' not implemented for multiple geothermal nodes.")
+        logger.warning(
+            "'add_enhanced_geothermal' not implemented for multiple geothermal nodes."
+        )
 
     config = snakemake.config
 
@@ -3335,21 +3337,20 @@ def add_enhanced_geothermal(
     # cost for ORC is subtracted, as it is already included in the geothermal cost.
     # The orc cost are attributed to a separate link representing the ORC.
     egs_potentials["capital_cost"] = (
-        (egs_annuity + FOM / (1. + FOM))
+        (egs_annuity + FOM / (1.0 + FOM))
         * (egs_potentials["CAPEX"] - costs.at["organice rankine cycle", "investment"])
         * Nyears
-        * 1000.
+        * 1000.0
     )
-    assert (egs_potentials["capital_cost"] > 0).all(), "Error in EGS cost, negative values found."
+    assert (
+        egs_potentials["capital_cost"] > 0
+    ).all(), "Error in EGS cost, negative values found."
 
-    plant_annuity = calculate_annuity(
-        costs.at["organic rankine cycle", "lifetime"],
-        dr
-        )
+    plant_annuity = calculate_annuity(costs.at["organic rankine cycle", "lifetime"], dr)
     plant_capital_cost = (
-        (plant_annuity + FOM / (1 + FOM)) * 
-        costs.at["organic rankine cycle", "investment"] *
-        Nyears
+        (plant_annuity + FOM / (1 + FOM))
+        * costs.at["organic rankine cycle", "investment"]
+        * Nyears
     )
 
     efficiency_orc = costs.at["organic rankine cycle", "efficiency"]
@@ -3381,16 +3382,14 @@ def add_enhanced_geothermal(
 
     if snakemake.params.sector["enhanced_geothermal_var_cf"]:
         efficiency = pd.read_csv(
-            snakemake.input.egs_capacity_factors,
-            parse_dates=True,
-            index_col=0
-            )
+            snakemake.input.egs_capacity_factors, parse_dates=True, index_col=0
+        )
         logger.info("Adding Enhanced Geothermal with time-varying capacity factors.")
     else:
         efficiency = pd.Series(1, overlap.index)
 
     # if urban central heat exists, adds geothermal as CHP
-    as_chp = 'urban central heat' in n.buses.carrier
+    as_chp = "urban central heat" in n.buses.carrier
     if as_chp:
         logger.info("Adding Enhanced Geothermal as Combined Heat and Power.")
 
@@ -3426,12 +3425,15 @@ def add_enhanced_geothermal(
             "Bus",
             f"geothermal heat surface {bus}",
             location=bus,
-            )
+        )
 
-        bus_eta = pd.concat((
-            efficiency[bus].rename(idx) 
-            for idx in f"{bus} enhanced geothermal" + appendix
-        ), axis=1)
+        bus_eta = pd.concat(
+            (
+                efficiency[bus].rename(idx)
+                for idx in f"{bus} enhanced geothermal" + appendix
+            ),
+            axis=1,
+        )
 
         n.madd(
             "Link",
@@ -3448,27 +3450,28 @@ def add_enhanced_geothermal(
 
         n.add(
             "Link",
-            bus + ' geothermal organic rankine cycle',
+            bus + " geothermal organic rankine cycle",
             bus0=f"geothermal heat surface {bus}",
             bus1=bus,
             p_nom_extendable=True,
             carrier="geothermal organic rankine cycle",
             capital_cost=plant_capital_cost * efficiency_orc,
-            efficiency=efficiency_orc if not as_chp else efficiency_orc * 2.,
+            efficiency=efficiency_orc if not as_chp else efficiency_orc * 2.0,
         )
 
         if as_chp and bus + " urban central heat" in n.buses.index:
             n.add(
                 "Link",
-                bus + ' geothermal heat district heat',
+                bus + " geothermal heat district heat",
                 bus0=f"geothermal heat surface {bus}",
-                bus1=bus + ' urban central heat',
+                bus1=bus + " urban central heat",
                 carrier="geothermal district heat",
-                capital_cost=plant_capital_cost * efficiency_orc * costs.at["geothermal", "district heating cost"],
-                efficiency=efficiency_dh * 2.,
+                capital_cost=plant_capital_cost
+                * efficiency_orc
+                * costs.at["geothermal", "district heating cost"],
+                efficiency=efficiency_dh * 2.0,
                 p_nom_extendable=True,
             )
-
 
 
 if __name__ == "__main__":
