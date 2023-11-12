@@ -513,6 +513,8 @@ sector:
   enhanced_geothermal_performant: true # if true, adds only the cheapest patch of EGS potential to each region
   enhanced_geothermal_flexible: true # if true, adds a storage unit simulating flexible operation of EGS, see Ricks et al. 2023
   enhanced_geothermal_var_cf: true # if true, adds time-dependent capacity factor to EGS, see Ricks et al. 2023
+  enhanced_geothermal_reservoir_max_hours: 240 # relavant for flexible EGS, see Ricks et al. 2023
+  enhanced_geothermal_reservoir_max_boost: 0.25 # share of generation that can be added by flexible EGS, see Ricks et al. 2023
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
 industry:

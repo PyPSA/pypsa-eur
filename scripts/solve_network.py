@@ -777,6 +777,23 @@ def add_geothermal_chp_constraint(n):
     )
 
 
+def add_flexible_egs_constraint(n):
+    well_index = n.links.loc[n.links.carrier == 'geothermal heat'].index
+    storage_index = n.storage_units.loc[n.storage_units.carrier == 'geothermal heat  '].index
+
+    p_nom_rhs = (
+        n.model["Link-p_nom"].loc[well_index]
+	)
+    p_nom_lhs = (
+        n.model["StorageUnit-p_nom"].loc[storage_index]
+	)
+
+    n.model.add_constraints(
+        p_nom_lhs <= p_nom_rhs,
+        name="Upper bounds the charging capacity of the storage unit",
+    )
+
+
 def extra_functionality(n, snapshots):
     """
     Collects supplementary constraints which will be passed to
@@ -808,6 +825,8 @@ def extra_functionality(n, snapshots):
         add_retrofit_gas_boiler_constraint(n, snapshots)
     if "geothermal district heat" in n.links.carrier:
         add_geothermal_chp_constraint(n)
+    if config["sector"]["enhanced_geothermal_flexible"]:
+        add_flexible_egs_constraint(n)
 
 
 def solve_network(n, config, solving, opts="", **kwargs):
