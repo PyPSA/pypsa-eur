@@ -710,7 +710,7 @@ rule build_egs_potentials:
     input:
         egs_cost="data/egs_costs.json",
         regions=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
-        air_temperature=RESOURCES + "temp_air_total_elec_s{simpl}_{clusters}.nc" 
+        air_temperature=RESOURCES + "temp_air_total_elec_s{simpl}_{clusters}.nc"
         if config["sector"]["enhanced_geothermal_var_cf"]
         else [],
     output:

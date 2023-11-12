@@ -22,10 +22,10 @@ logger = logging.getLogger(__name__)
 
 import json
 
+import geopandas as gpd
 import numpy as np
 import pandas as pd
 import xarray as xr
-import geopandas as gpd
 from shapely.geometry import Polygon
 
 
@@ -86,14 +86,12 @@ def prepare_egs_data(egs_file):
     return egs_data
 
 
-def get_capacity_factors(
-        network_regions_file,
-        air_temperatures_file
-        ):
+def get_capacity_factors(network_regions_file, air_temperatures_file):
     """
-    Performance of EGS is higher for lower temperatures, due to more efficient air cooling
-    Data from Ricks et al.: The Role of Flexible Geothermal Power in Decarbonized Elec Systems
-    """ 
+    Performance of EGS is higher for lower temperatures, due to more efficient
+    air cooling Data from Ricks et al.: The Role of Flexible Geothermal Power
+    in Decarbonized Elec Systems.
+    """
 
     delta_T = [-15, -10, -5, 0, 5, 10, 15, 20]
     cf = [1.17, 1.13, 1.07, 1, 0.925, 0.84, 0.75, 0.65]
@@ -123,9 +121,8 @@ def get_capacity_factors(
     for bus in index:
         temp = air_temp.sel(name=bus).to_dataframe()["temperature"]
         capacity_factors[bus] = np.interp((temp - temp.mean()).values, x, y)
-    
-    return capacity_factors
 
+    return capacity_factors
 
 
 if __name__ == "__main__":
