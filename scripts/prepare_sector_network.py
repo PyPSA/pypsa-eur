@@ -3371,7 +3371,7 @@ def add_enhanced_geothermal(
         p_nom_extendable=True,
     )
 
-    if 
+    if
 
 
     for bus, bus_overlap in overlap.iterrows():
@@ -3407,7 +3407,7 @@ def add_enhanced_geothermal(
             f"geothermal heat surface {bus}",
             location=bus,
             )
-        
+
         n.madd(
             "Link",
             f"{bus} enhanced geothermal" + appendix,
