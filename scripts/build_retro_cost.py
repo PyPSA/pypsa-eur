@@ -102,7 +102,7 @@ solar_energy_transmittance = (
 )
 # solar global radiation [kWh/(m^2a)]
 solar_global_radiation = pd.Series(
-    [246, 401, 246, 148],
+    [271, 392, 271, 160],
     index=["east", "south", "west", "north"],
     name="solar_global_radiation [kWh/(m^2a)]",
 )
@@ -161,6 +161,12 @@ def prepare_building_stock_data():
             "Walls": "Wall",
             "Roof ": "Roof",
             "Floor ": "Floor",
+        },
+        inplace=True,
+    )
+    building_data["feature"].replace(
+        {
+            "Construction features (U-value)": "Construction features (U-values)",
         },
         inplace=True,
     )

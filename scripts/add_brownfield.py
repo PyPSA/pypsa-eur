@@ -67,6 +67,13 @@ def add_brownfield(n, n_p, year):
                 & (c.df[f"{attr}_nom_opt"] < threshold)
             ],
         )
+        
+        if not snakemake.config["sector"]["endogenous_transport"]:
+            n_p.mremove(
+                c.name,
+                c.df.index[c.df.carrier.str.contains("land transport" or "V2G" or "EV battery storage" or "BEV charger")
+                ],
+            )
 
         # copy over assets but fix their capacity
         c.df[f"{attr}_nom"] = c.df[f"{attr}_nom_opt"]

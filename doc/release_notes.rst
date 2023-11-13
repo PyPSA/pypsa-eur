@@ -35,6 +35,8 @@ Upcoming Release
 
 * Add option to optimize fuel type shares of land transport endogenously in configuration file (https://github.com/PyPSA/pypsa-eur/pull/734)
 
+* The ``mock_snakemake`` function can now be used with a Snakefile from a different directory using the new ``root_dir`` argument.
+
 
 **Bugs and Compatibility**
 

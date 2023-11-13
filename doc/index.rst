@@ -185,7 +185,7 @@ For sector-coupling studies: ::
         pages = "1--25"
         year = "2023",
         eprint = "2207.05816",
-        doi = "10.1016/j.joule.2022.04.016",
+        doi = "10.1016/j.joule.2023.06.016",
     }
 
 For sector-coupling studies with pathway optimisation: ::

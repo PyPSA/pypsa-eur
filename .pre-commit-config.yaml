@@ -45,13 +45,13 @@ repos:
     args: ["--in-place", "--make-summary-multi-line", "--pre-summary-newline"]
 
 - repo: https://github.com/keewis/blackdoc
-  rev: v0.3.8
+  rev: v0.3.9
   hooks:
   - id: blackdoc
 
   # Formatting with "black" coding style
 - repo: https://github.com/psf/black
-  rev: 23.9.1
+  rev: 23.10.1
   hooks:
       # Format Python files
   - id: black

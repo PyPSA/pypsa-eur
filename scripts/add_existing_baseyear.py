@@ -665,6 +665,11 @@ def add_land_transport_installed_before_baseyear(
         build_year = year
         ) 
 
+    number_cars = pd.read_csv(snakemake.input.existing_transport, index_col=0)[
+        "number cars"
+    ]
+    logger.info(f"The model only assumes the minimum number of ICE vehicles to supply the transport demand which represents {round(int(snakemake.config['scenario']['clusters'][0])*p_set.max(axis=0).sum()/number_cars.sum()*100,2)}% of the existing ICE vehicle fleet in 2020")
+
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
