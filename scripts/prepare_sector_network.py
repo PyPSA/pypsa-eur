@@ -3431,10 +3431,7 @@ def add_enhanced_geothermal(
         well_name = f"{bus} enhanced geothermal" + appendix
 
         bus_eta = pd.concat(
-            (
-                efficiency[bus].rename(idx)
-                for idx in well_name
-            ),
+            (efficiency[bus].rename(idx) for idx in well_name),
             axis=1,
         )
 
@@ -3480,7 +3477,9 @@ def add_enhanced_geothermal(
                 p_nom_extendable=True,
             )
         elif as_chp and not bus + " urban central heat" in n.buses.index:
-            n.links.at[bus + " geothermal organic rankine cycle", "efficiency"] = efficiency_orc
+            n.links.at[
+                bus + " geothermal organic rankine cycle", "efficiency"
+            ] = efficiency_orc
 
         if snakemake.params.sector["enhanced_geothermal_flexible"]:
             # this StorageUnit represents flexible operation using the geothermal reservoir.
@@ -3495,7 +3494,7 @@ def add_enhanced_geothermal(
             max_hours = max_hours * boost
             n.add(
                 "StorageUnit",
-                bus + ' geothermal reservoir',
+                bus + " geothermal reservoir",
                 bus=f"{bus} geothermal heat surface",
                 carrier="geothermal heat",
                 p_nom_extendable=True,
