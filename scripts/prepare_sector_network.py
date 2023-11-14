@@ -1561,14 +1561,7 @@ def add_land_transport(n, costs):
         )
 
     if ice_share > 0:
-        if "oil" not in n.buses.carrier.unique():
-            n.madd(
-                "Bus",
-                spatial.oil.nodes,
-                location=spatial.oil.locations,
-                carrier="oil",
-                unit="MWh_LHV",
-            )
+        add_carrier_buses(n, "oil")
 
         ice_efficiency = options["transport_internal_combustion_efficiency"]
 
