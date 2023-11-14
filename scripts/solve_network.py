@@ -779,15 +779,13 @@ def add_geothermal_chp_constraint(n):
 
 
 def add_flexible_egs_constraint(n):
-    well_index = n.links.loc[n.links.carrier == 'geothermal heat'].index
-    storage_index = n.storage_units.loc[n.storage_units.carrier == 'geothermal heat  '].index
+    well_index = n.links.loc[n.links.carrier == "geothermal heat"].index
+    storage_index = n.storage_units.loc[
+        n.storage_units.carrier == "geothermal heat  "
+    ].index
 
-    p_nom_rhs = (
-        n.model["Link-p_nom"].loc[well_index]
-	)
-    p_nom_lhs = (
-        n.model["StorageUnit-p_nom"].loc[storage_index]
-	)
+    p_nom_rhs = n.model["Link-p_nom"].loc[well_index]
+    p_nom_lhs = n.model["StorageUnit-p_nom"].loc[storage_index]
 
     n.model.add_constraints(
         p_nom_lhs <= p_nom_rhs,

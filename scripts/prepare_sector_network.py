@@ -3473,12 +3473,13 @@ def add_enhanced_geothermal(
             n.links.at[bus + " geothermal organic rankine cycle", "efficiency"] = efficiency_orc
 
         if snakemake.params.sector["enhanced_geothermal_flexible"]:
-            
             # this StorageUnit represents flexible operation using the geothermal reservoir.
             # Hence, it is counter-intuitive to install it at the surface bus,
             # this is however the more lean and computationally efficient solution.
-            
-            max_hours = snakemake.params.sector["enhanced_geothermal_reservoir_max_hours"]
+
+            max_hours = snakemake.params.sector[
+                "enhanced_geothermal_reservoir_max_hours"
+            ]
             boost = snakemake.params.sector["enhanced_geothermal_reservoir_max_boost"]
 
             max_hours = max_hours * boost
@@ -3488,7 +3489,7 @@ def add_enhanced_geothermal(
                 bus=f"{bus} geothermal heat surface",
                 carrier="geothermal heat",
                 p_nom_extendable=True,
-                p_min_pu=-1. - boost, 
+                p_min_pu=-1.0 - boost,
                 max_hours=max_hours,
             )
 
