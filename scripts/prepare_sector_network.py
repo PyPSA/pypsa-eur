@@ -3339,7 +3339,7 @@ def add_enhanced_geothermal(
     orc_capex = (
         costs.at["organic rankine cycle", "investment"]
         if not snakemake.params.sector["enhanced_geothermal_optimism"]
-        else 0.
+        else 0.0
     )
 
     # cost for ORC is subtracted, as it is already included in the geothermal cost.
@@ -3348,7 +3348,7 @@ def add_enhanced_geothermal(
 
     egs_potentials["capital_cost"] = (
         (egs_annuity + FOM / (1.0 + FOM))
-        * (egs_potentials["CAPEX"] * 1000. - orc_capex)
+        * (egs_potentials["CAPEX"] * 1000.0 - orc_capex)
         * Nyears
     )
 
@@ -3357,11 +3357,7 @@ def add_enhanced_geothermal(
     ).all(), "Error in EGS cost, negative values found."
 
     plant_annuity = calculate_annuity(costs.at["organic rankine cycle", "lifetime"], dr)
-    plant_capital_cost = (
-        (plant_annuity + FOM / (1 + FOM))
-        * orc_capex
-        * Nyears
-    )
+    plant_capital_cost = (plant_annuity + FOM / (1 + FOM)) * orc_capex * Nyears
 
     efficiency_orc = costs.at["organic rankine cycle", "efficiency"]
     efficiency_dh = costs.at["geothermal", "efficiency residential heat"]
@@ -3501,7 +3497,7 @@ def add_enhanced_geothermal(
                 p_min_pu=-1.0 - boost,
                 max_hours=max_hours,
             )
-        n.links.to_csv('links.csv')
+        n.links.to_csv("links.csv")
 
 
 if __name__ == "__main__":
