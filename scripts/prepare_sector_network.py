@@ -3334,13 +3334,24 @@ def add_enhanced_geothermal(
 
     egs_annuity = calculate_annuity(lt, dr)
 
+    # under egs optimism, the expected cost reductions also cover costs for ORC
+    # hence, the ORC costs are no longer taken from technology-data
+    orc_capex = (
+        costs.at["organic rankine cycle", "investment"]
+        if not snakemake.params.sector["enhanced_geothermal_optimism"]
+        else 0.
+    )
+
     # cost for ORC is subtracted, as it is already included in the geothermal cost.
     # The orc cost are attributed to a separate link representing the ORC.
+    # also capital_cost conversion Euro/kW -> Euro/MW
+
     egs_potentials["capital_cost"] = (
         (egs_annuity + FOM / (1.0 + FOM))
-        * (egs_potentials["CAPEX"] * 1000. - costs.at["organic rankine cycle", "investment"])
+        * (egs_potentials["CAPEX"] * 1000. - orc_capex)
         * Nyears
     )
+
     assert (
         egs_potentials["capital_cost"] > 0
     ).all(), "Error in EGS cost, negative values found."
@@ -3348,7 +3359,7 @@ def add_enhanced_geothermal(
     plant_annuity = calculate_annuity(costs.at["organic rankine cycle", "lifetime"], dr)
     plant_capital_cost = (
         (plant_annuity + FOM / (1 + FOM))
-        * costs.at["organic rankine cycle", "investment"]
+        * orc_capex
         * Nyears
     )
 
@@ -3356,9 +3367,7 @@ def add_enhanced_geothermal(
     efficiency_dh = costs.at["geothermal", "efficiency residential heat"]
 
     # p_nom_max conversion GW -> MW
-    # capital_cost conversion Euro/kW -> Euro/MW
     egs_potentials["p_nom_max"] = egs_potentials["p_nom_max"] * 1000.0
-    egs_potentials["capital_cost"] = egs_potentials["capital_cost"] * 1000.0
 
     # not using add_carrier_buses, as we are not interested in a Store
     n.add("Carrier", "geothermal heat")
@@ -3388,7 +3397,8 @@ def add_enhanced_geothermal(
         efficiency = pd.Series(1, overlap.index)
 
     # if urban central heat exists, adds geothermal as CHP
-    as_chp = "urban central heat" in n.buses.carrier
+    as_chp = "urban central heat" in n.loads.carrier.unique()
+
     if as_chp:
         logger.info("Adding Enhanced Geothermal as Combined Heat and Power.")
 
@@ -3441,7 +3451,7 @@ def add_enhanced_geothermal(
             carrier="geothermal heat",
             p_nom_extendable=True,
             p_nom_max=p_nom_max.set_axis(well_name) / efficiency_orc,
-            capital_cost=capital_cost.set_axis(well_name),
+            capital_cost=capital_cost.set_axis(well_name) * efficiency_orc,
             efficiency=bus_eta,
         )
 
@@ -3492,6 +3502,7 @@ def add_enhanced_geothermal(
                 p_min_pu=-1.0 - boost,
                 max_hours=max_hours,
             )
+        n.links.to_csv('links.csv')
 
 
 if __name__ == "__main__":
