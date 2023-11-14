@@ -3344,7 +3344,7 @@ def add_enhanced_geothermal(
 
     # cost for ORC is subtracted, as it is already included in the geothermal cost.
     # The orc cost are attributed to a separate link representing the ORC.
-    # also capital_cost conversion Euro/kW -> Euro/MW
+    # also capital_cost conversion Eurofalse/kW -> Euro/MW
 
     egs_potentials["capital_cost"] = (
         (egs_annuity + FOM / (1.0 + FOM))
@@ -3501,7 +3501,6 @@ def add_enhanced_geothermal(
                 p_min_pu=-1.0 - boost,
                 max_hours=max_hours,
             )
-        n.links.to_csv('links.csv')
 
 
 if __name__ == "__main__":

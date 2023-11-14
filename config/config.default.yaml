@@ -508,7 +508,7 @@ sector:
       solar: 3
       offwind-ac: 3
       offwind-dc: 3
-  enhanced_geothermal: true
+  enhanced_geothermal: false
   enhanced_geothermal_optimism: false # if true, egs costs are reducing towards 2050 according to Aghahosseini et al., (2020)
   enhanced_geothermal_performant: true # if true, adds only the cheapest patch of EGS potential to each region
   enhanced_geothermal_flexible: true # if true, adds a storage unit simulating flexible operation of EGS, see Ricks et al. 2023
