@@ -3338,9 +3338,8 @@ def add_enhanced_geothermal(
     # The orc cost are attributed to a separate link representing the ORC.
     egs_potentials["capital_cost"] = (
         (egs_annuity + FOM / (1.0 + FOM))
-        * (egs_potentials["CAPEX"] - costs.at["organice rankine cycle", "investment"])
+        * (egs_potentials["CAPEX"] * 1000. - costs.at["organic rankine cycle", "investment"])
         * Nyears
-        * 1000.0
     )
     assert (
         egs_potentials["capital_cost"] > 0
@@ -3372,7 +3371,7 @@ def add_enhanced_geothermal(
         unit="MWh_th",
     )
 
-    n.add(
+    n.madd(
         "Generator",
         spatial.geothermal_heat.nodes,
         bus=spatial.geothermal_heat.nodes,
@@ -3412,46 +3411,44 @@ def add_enhanced_geothermal(
         else:
             appendix = " " + pd.Index(np.arange(len(bus_egs)).astype(str))
 
-        bus_egs.index = np.arange(len(bus_egs)).astype(str)
-
-        p_nom_max = bus_egs["p_nom_max"]
-        p_nom_max.index = f"{bus} enhanced geothermal" + appendix
-
-        capital_cost = bus_egs["capital_cost"]
-        capital_cost.index = f"{bus} enhanced geothermal" + appendix
-
         # add surface bus
         n.add(
             "Bus",
-            f"geothermal heat surface {bus}",
-            location=bus,
+            f"{bus} geothermal heat surface",
         )
+
+        bus_egs.index = np.arange(len(bus_egs)).astype(str)
+        well_name = f"{bus} enhanced geothermal" + appendix
 
         bus_eta = pd.concat(
             (
                 efficiency[bus].rename(idx)
-                for idx in f"{bus} enhanced geothermal" + appendix
+                for idx in well_name
             ),
             axis=1,
         )
 
+        p_nom_max = bus_egs["p_nom_max"]
+        capital_cost = bus_egs["capital_cost"]
+        bus1 = pd.Series(f"{bus} geothermal heat surface", well_name)
+
         n.madd(
             "Link",
-            f"{bus} enhanced geothermal" + appendix,
+            well_name,
             location=bus,
             bus0=spatial.geothermal_heat.nodes,
-            bus1=f"geothermal heat surface {bus}",
+            bus1=bus1,
             carrier="geothermal heat",
             p_nom_extendable=True,
-            p_nom_max=p_nom_max / efficiency,
-            capital_cost=capital_cost * efficiency,
+            p_nom_max=p_nom_max.set_axis(well_name) / efficiency_orc,
+            capital_cost=capital_cost.set_axis(well_name),
             efficiency=bus_eta,
         )
 
         n.add(
             "Link",
             bus + " geothermal organic rankine cycle",
-            bus0=f"geothermal heat surface {bus}",
+            bus0=f"{bus} geothermal heat surface",
             bus1=bus,
             p_nom_extendable=True,
             carrier="geothermal organic rankine cycle",
@@ -3463,7 +3460,7 @@ def add_enhanced_geothermal(
             n.add(
                 "Link",
                 bus + " geothermal heat district heat",
-                bus0=f"geothermal heat surface {bus}",
+                bus0=f"{bus} geothermal heat surface",
                 bus1=bus + " urban central heat",
                 carrier="geothermal district heat",
                 capital_cost=plant_capital_cost
@@ -3472,13 +3469,13 @@ def add_enhanced_geothermal(
                 efficiency=efficiency_dh * 2.0,
                 p_nom_extendable=True,
             )
-        else:
+        elif as_chp and not bus + " urban central heat" in n.buses.index:
             n.links.at[bus + " geothermal organic rankine cycle", "efficiency"] = efficiency_orc
 
         if snakemake.params.sector["enhanced_geothermal_flexible"]:
             
             # this StorageUnit represents flexible operation using the geothermal reservoir.
-            # Hence, it is intuitively wrong to install it at the surface bus,
+            # Hence, it is counter-intuitive to install it at the surface bus,
             # this is however the more lean and computationally efficient solution.
             
             max_hours = snakemake.params.sector["enhanced_geothermal_reservoir_max_hours"]
@@ -3488,7 +3485,7 @@ def add_enhanced_geothermal(
             n.add(
                 "StorageUnit",
                 bus + ' geothermal reservoir',
-                bus=f"geothermal heat surface {bus}",
+                bus=f"{bus} geothermal heat surface",
                 carrier="geothermal heat",
                 p_nom_extendable=True,
                 p_min_pu=-1. - boost, 
