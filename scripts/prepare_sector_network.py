@@ -1487,14 +1487,11 @@ def add_EVs(n, nodes, avail_profile, dsm_profile, p_set, electric_share,
         suffix=" BEV charger",
         bus0=nodes,
         bus1=nodes + " EV battery",
-        p_nom_extendable = True,
+        p_nom_extendable=True,
         carrier="BEV charger",
         p_max_pu=avail_profile[nodes],
-        efficiency=1, # instead of options.get("bev_charge_efficiency", 0.9) -> efficiency already accounted for in build_transport_demand
+        efficiency=options.get("bev_charge_efficiency", 0.9), 
         lifetime = lifetime, 
-        # These were set non-zero to find LU infeasibility when availability = 0.25
-        # p_nom_min=p_nom,
-        # capital_cost=1e6,  #i.e. so high it only gets built where necessary
     )
 
     # Only when v2g option is True, add the v2g link
@@ -1505,7 +1502,7 @@ def add_EVs(n, nodes, avail_profile, dsm_profile, p_set, electric_share,
             suffix=" V2G",
             bus1=nodes,
             bus0=nodes + " EV battery",
-            p_nom_extendable = True,
+            p_nom_extendable=True,
             carrier="V2G",
             p_max_pu=avail_profile[nodes],
             efficiency=options.get("bev_charge_efficiency", 0.9),
@@ -1513,10 +1510,11 @@ def add_EVs(n, nodes, avail_profile, dsm_profile, p_set, electric_share,
         )
 
 
-    # add bev management when enabled
-    n.add("Carrier", "EV battery storage")
-
+    
     if options["bev_dsm"]:
+        # add bev management when enabled
+        n.add("Carrier", "EV battery storage")
+        
         n.madd(
             "Store",
             nodes,
@@ -1533,6 +1531,8 @@ def add_EVs(n, nodes, avail_profile, dsm_profile, p_set, electric_share,
     capital_cost = (costs.at["Battery electric (passenger cars)", "fixed"]
                     /options['EV_consumption_1car'])
     
+    profile = p_set/p_set.max(axis=0) 
+    
     n.madd(
         "Link",
         nodes,
@@ -1543,27 +1543,30 @@ def add_EVs(n, nodes, avail_profile, dsm_profile, p_set, electric_share,
         lifetime = lifetime, 
         capital_cost = capital_cost,
         efficiency = 1, #costs.at['Battery electric (passenger cars)', 'efficiency'],     #efficiency already accounted for in build_transport_demand  
-        p_min_pu = p_set/p_set.max(axis=0),
-        p_max_pu = p_set/p_set.max(axis=0),
+        p_min_pu = profile,
+        p_max_pu = profile,
         p_nom_extendable=True,
     )
     
-    #exogenous pathway if electric share is defined
+    # exogenous pathway if electric share is defined
     if float(electric_share or 0) > 0:
         # set p_nom to fulfill electric share, capital cost to 0
         n.links.loc[n.links.carrier=='land transport EV', "p_nom_extendable"] = False
 
         #available EVs for land transport demand
-        p_use = electric_share * p_set.max(axis=0).values #p_set/(number_cars * options.get("bev_charge_rate", 0.011)) 
-        n.links.loc[n.links.carrier=="land transport EV",'p_nom'] = p_use
-        n.links_t.p_min_pu[n.links[(n.links.carrier=="land transport EV")].index] = p_set/p_set.max(axis=0)
-        n.links_t.p_max_pu[n.links[(n.links.carrier=="land transport EV")].index] = p_set/p_set.max(axis=0)
-        n.links.loc[n.links.carrier=='land transport EV', "capital_cost"] = 0
+        p_use = electric_share * p_set.max(axis=0) #p_set/(number_cars * options.get("bev_charge_rate", 0.011))
+        p_use.rename(index= lambda x: x + " land transport EV", inplace=True)
+        ev_index = n.links.carrier=="land transport EV"
+        n.links.loc[ev_index,'p_nom'] = p_use
+        n.links_t.p_min_pu.loc[:, ev_index] = profile
+        n.links_t.p_min_pu.loc[:, ev_index] = profile
+        n.links.loc[ev_index, "capital_cost"] = 0
         
         #available EVs for charging/discharging
         p_availEV = number_cars * options.get("bev_charge_rate", 0.011) * electric_share 
-        n.links.loc[n.links.carrier=="BEV charger", "p_nom_extendable"] = False
-        n.links.loc[(n.links.carrier=="BEV charger"), "p_nom"] = p_availEV.values
+        bev_index = n.links.carrier=="BEV charger"
+        n.links.loc[bev_index, "p_nom_extendable"] = False
+        n.links.loc[bev_index, "p_nom"] = p_availEV.values
               
         
         if options["v2g"]:
@@ -1571,10 +1574,11 @@ def add_EVs(n, nodes, avail_profile, dsm_profile, p_set, electric_share,
             n.links.loc[(n.links.carrier=="V2G"), "p_nom"] = p_availEV.values
                         
         if options["bev_dsm"]:
-            n.stores.loc[n.stores.carrier=="EV battery storage", "e_nom_extendable"] = False
+            store_index  =n.stores.carrier=="EV battery storage"
+            n.stores.loc[store_index, "e_nom_extendable"] = False
             e_nom = (number_cars* options.get("bev_energy", 0.05) 
                      * options["bev_availability"] * electric_share)
-            n.stores.loc[(n.stores.carrier=="EV battery storage"), "e_nom"] = e_nom
+            n.stores.loc[store_index, "e_nom"] = e_nom
 
 
 def add_fuel_cell_cars(n, nodes, p_set, fuel_cell_share):
@@ -1582,6 +1586,7 @@ def add_fuel_cell_cars(n, nodes, p_set, fuel_cell_share):
     capital_cost = (costs.at["Hydrogen fuel cell (passenger cars)", "fixed"]
                     /options["H2_consumption_1car"])
     profile = p_set/(p_set.max(axis=0) * options["transport_fuel_cell_efficiency"])
+    
     n.madd(
         "Link",
         nodes,
@@ -1597,14 +1602,15 @@ def add_fuel_cell_cars(n, nodes, p_set, fuel_cell_share):
         p_max_pu = profile,
 
     )
-    #exogenous pathway if fuel_cell_share is defined
+    # exogenous pathway if fuel_cell_share is defined
     if float(fuel_cell_share or 0) > 0:
-
-        n.links.loc[n.links.carrier=='land transport fuel cell', "p_nom_extendable"] = False
-        n.links.loc[(n.links.carrier=="land transport fuel cell"),'p_nom'] = fuel_cell_share * p_set.max(axis=0).values
-        #n.links_t.p_min_pu[n.links[(n.links.carrier=="land transport fuel cell")].index] = p_set / (p_set.max(axis=0) * options["transport_fuel_cell_efficiency"]) 
-        #n.links_t.p_max_pu[n.links[(n.links.carrier=="land transport fuel cell")].index] = p_set / (p_set.max(axis=0) * options["transport_fuel_cell_efficiency"])
-        n.links.loc[n.links.carrier=='land transport fuel cell', "capital_cost"] = 0
+        fuel_cell_i = n.links.carrier=='land transport fuel cell'
+        n.links.loc[fuel_cell_i, "p_nom_extendable"] = False
+        n.links.loc[fuel_cell_i, 'p_nom'] = fuel_cell_share * p_set.max(axis=0).values
+        # profile =  p_set / (p_set.max(axis=0) * options["transport_fuel_cell_efficiency"]) 
+        #n.links_t.p_min_pu.loc[:, fuel_cell_i] = profile
+        #n.links_t.p_max_pu.loc[:, fuel_cell_i] = profile
+        n.links.loc[fuel_cell_i, "capital_cost"] = 0
      
         
 def add_ice_cars(n, nodes, p_set, ice_share):
@@ -1641,13 +1647,12 @@ def add_ice_cars(n, nodes, p_set, ice_share):
     
     #exogenous pathway if ice_share is defined
     if float(ice_share or 0) > 0:
-        ice_efficiency = options["transport_internal_combustion_efficiency"]
-        n.links.loc[n.links.carrier=='land transport oil', "p_nom_extendable"] = False
-        n.links.loc[n.links.carrier=="land transport oil" ,'p_nom'] = ice_share * p_set.max(axis=0).values
-        n.links_t.p_min_pu[n.links[(n.links.carrier=="land transport oil") ].index] = p_set / (p_set.max(axis=0) * ice_efficiency)
-        n.links_t.p_max_pu[n.links[(n.links.carrier=="land transport oil") ].index] = p_set / (p_set.max(axis=0) * ice_efficiency)
-        n.links.loc[n.links.carrier=='land transport oil', "capital_cost"] = 0
-    
+        ice_i = n.links.carrier=='land transport oil'
+
+        n.links.loc[ice_i, "p_nom_extendable"] = False
+        n.links.loc[ice_i ,'p_nom'] = ice_share * p_set.max(axis=0).values
+        n.links.loc[ice_i, "capital_cost"] = 0
+        
     
 def add_land_transport(n, costs):
     # TODO options?
