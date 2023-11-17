@@ -3480,14 +3480,13 @@ def add_enhanced_geothermal(
             ]
             boost = snakemake.params.sector["enhanced_geothermal_reservoir_max_boost"]
 
-            max_hours = max_hours * boost
             n.add(
                 "StorageUnit",
                 bus + " geothermal reservoir",
                 bus=f"{bus} geothermal heat surface",
                 carrier="geothermal heat",
                 p_nom_extendable=True,
-                p_min_pu=-1.0 - boost,
+                p_min_pu=-boost,
                 max_hours=max_hours,
             )
 
