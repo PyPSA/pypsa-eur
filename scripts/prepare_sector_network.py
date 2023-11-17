@@ -1525,7 +1525,7 @@ def add_EVs(n, nodes, avail_profile, dsm_profile, p_set, electric_share,
             e_nom_extendable=True,
             e_max_pu=1,
             e_min_pu=dsm_profile[nodes],
-            lifetime = lifetime, 
+            lifetime=lifetime, 
         )
     
     capital_cost = (costs.at["Battery electric (passenger cars)", "fixed"]
@@ -1538,13 +1538,13 @@ def add_EVs(n, nodes, avail_profile, dsm_profile, p_set, electric_share,
         nodes,
         suffix=" land transport EV",
         bus0=nodes + " EV battery",                              
-        bus1 =nodes + " land transport",
+        bus1=nodes + " land transport",
         carrier="land transport EV",
-        lifetime = lifetime, 
-        capital_cost = capital_cost,
-        efficiency = 1, #costs.at['Battery electric (passenger cars)', 'efficiency'],     #efficiency already accounted for in build_transport_demand  
-        p_min_pu = profile,
-        p_max_pu = profile,
+        lifetime=lifetime, 
+        capital_cost=capital_cost,
+        efficiency=1, #costs.at['Battery electric (passenger cars)', 'efficiency'],     #efficiency already accounted for in build_transport_demand  
+        p_min_pu=profile,
+        p_max_pu=profile,
         p_nom_extendable=True,
     )
     
@@ -1574,7 +1574,7 @@ def add_EVs(n, nodes, avail_profile, dsm_profile, p_set, electric_share,
             n.links.loc[(n.links.carrier=="V2G"), "p_nom"] = p_availEV.values
                         
         if options["bev_dsm"]:
-            store_index  =n.stores.carrier=="EV battery storage"
+            store_index = n.stores.carrier=="EV battery storage"
             n.stores.loc[store_index, "e_nom_extendable"] = False
             e_nom = (number_cars* options.get("bev_energy", 0.05) 
                      * options["bev_availability"] * electric_share)

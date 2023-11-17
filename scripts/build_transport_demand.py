@@ -15,13 +15,16 @@ from _helpers import generate_periodic_profiles
 
 
 def build_nodal_transport_data(fn, pop_layout):
+    # get numbers of car and fuel efficieny per country
     transport_data = pd.read_csv(fn, index_col=0)
-
+    
+    # break number of cars down to nodal level based on population density
     nodal_transport_data = transport_data.loc[pop_layout.ct].fillna(0.0)
     nodal_transport_data.index = pop_layout.index
     nodal_transport_data["number cars"] = (
         pop_layout["fraction"] * nodal_transport_data["number cars"]
     )
+    # fill missing fuel efficiency with average data
     nodal_transport_data.loc[
         nodal_transport_data["average fuel efficiency"] == 0.0,
         "average fuel efficiency",
@@ -32,9 +35,11 @@ def build_nodal_transport_data(fn, pop_layout):
 
 def build_transport_demand(traffic_fn, airtemp_fn, nodes, nodal_transport_data):
     ## Get overall demand curve for all vehicles
-
+    
+    # averaged weekly counts from the year 2010-2015
     traffic = pd.read_csv(traffic_fn, skiprows=2, usecols=["count"]).squeeze("columns")
-
+    
+    # create annual profile take account time zone + summer time
     transport_shape = generate_periodic_profiles(
         dt_index=snapshots,
         nodes=nodes,
@@ -43,7 +48,6 @@ def build_transport_demand(traffic_fn, airtemp_fn, nodes, nodal_transport_data):
     transport_shape = transport_shape / transport_shape.sum()
 
     # electric motors are more efficient, so alter transport demand
-
     plug_to_wheels_eta = options["bev_plug_to_wheel_efficiency"]
     battery_to_wheels_eta = plug_to_wheels_eta * options["bev_charge_efficiency"]
 
@@ -121,11 +125,15 @@ def bev_availability_profile(fn, snapshots, nodes, options):
     """
     Derive plugged-in availability for passenger electric vehicles.
     """
+    # car count in typical week
     traffic = pd.read_csv(fn, skiprows=2, usecols=["count"]).squeeze("columns")
-
+    
+    # maximum share plugged-in availability for passenger electric vehicles
     avail_max = options["bev_avail_max"]
+    # average share plugged-in availability for passenger electric vehicles
     avail_mean = options["bev_avail_mean"]
-
+    
+    # linear scaling, highest when traffic is lowest, decreases if traffic increases
     avail = avail_max - (avail_max - avail_mean) * (traffic - traffic.min()) / (
         traffic.mean() - traffic.min()
     )
@@ -139,7 +147,8 @@ def bev_availability_profile(fn, snapshots, nodes, options):
 
 def bev_dsm_profile(snapshots, nodes, options):
     dsm_week = np.zeros((24 * 7,))
-
+    # assuming that at a certain time ("bev_dsm_restriction_time") EVs have to
+    # be charged to a minimum value (defined in bev_dsm_restriction_value)
     dsm_week[(np.arange(0, 7, 1) * 24 + options["bev_dsm_restriction_time"])] = options[
         "bev_dsm_restriction_value"
     ]
@@ -158,7 +167,7 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "build_transport_demand",
             simpl="",
-            clusters=48,
+            clusters=37,
         )
 
     pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
