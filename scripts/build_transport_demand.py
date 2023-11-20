@@ -47,13 +47,6 @@ def build_transport_demand(traffic_fn, airtemp_fn, nodes, nodal_transport_data):
     )
     transport_shape = transport_shape / transport_shape.sum()
 
-    # electric motors are more efficient, so alter transport demand
-    plug_to_wheels_eta = options["bev_plug_to_wheel_efficiency"]
-    battery_to_wheels_eta = plug_to_wheels_eta * options["bev_charge_efficiency"]
-
-    efficiency_gain = (
-        nodal_transport_data["average fuel efficiency"] / battery_to_wheels_eta
-    )
 
     # get heating demand for correction to demand time series
     temperature = xr.open_dataarray(airtemp_fn).to_pandas()
@@ -67,14 +60,6 @@ def build_transport_demand(traffic_fn, airtemp_fn, nodes, nodal_transport_data):
         options["ICE_upper_degree_factor"],
     )
 
-    dd_EV = transport_degree_factor(
-        temperature,
-        options["transport_heating_deadband_lower"],
-        options["transport_heating_deadband_upper"],
-        options["EV_lower_degree_factor"],
-        options["EV_upper_degree_factor"],
-    )
-
     # divide out the heating/cooling demand from ICE totals
     # and multiply back in the heating/cooling demand for EVs
     ice_correction = (transport_shape * (1 + dd_ICE)).sum() / transport_shape.sum()
@@ -84,11 +69,11 @@ def build_transport_demand(traffic_fn, airtemp_fn, nodes, nodal_transport_data):
         + pop_weighted_energy_totals["total rail"]
         - pop_weighted_energy_totals["electricity rail"]
     )
-
+    
+    # calculate actual energy demand independent of ICE
     return (
         (transport_shape.multiply(energy_totals_transport) * 1e6 * nyears)
-        .divide(efficiency_gain * ice_correction)
-        .multiply(1 + dd_EV)
+        .divide(nodal_transport_data["average fuel efficiency"] * ice_correction)
     )
 
 
