@@ -795,7 +795,7 @@ def add_co2limit_country(n, limit_countries, nyears=1.0):
 
     p = n.model["Link-p"]  # dimension: (time, component)
 
-    # NB: Most country-specific links retain their locational information in bus1 (except for DAC, where it is in bus2)
+    # NB: Most country-specific links retain their locational information in bus1 (except for DAC, where it is in bus2, and process emissions, where it is in bus0)
     country = n.links.bus1.map(n.buses.location).map(n.buses.country)
     country_DAC = (
         n.links[n.links.carrier == "DAC"]
@@ -803,6 +803,12 @@ def add_co2limit_country(n, limit_countries, nyears=1.0):
         .map(n.buses.country)
     )
     country[country_DAC.index] = country_DAC
+    country_process_emissions = (
+        n.links[n.links.carrier.str.contains("process emissions")]
+        .bus0.map(n.buses.location)
+        .map(n.buses.country)
+    )
+    country[country_process_emissions.index] = country_process_emissions
 
     lhs = []
     for port in [col[3:] for col in n.links if col.startswith("bus")]:
@@ -818,13 +824,18 @@ def add_co2limit_country(n, limit_countries, nyears=1.0):
 
         idx = n.links[mask].index
 
+        international = n.links.carrier.map(
+            lambda x: 0.4 if x in ["kerosene for aviation", "shipping oil"] else 1.0
+        )
         grouping = country.loc[idx]
 
         if not grouping.isnull().all():
             expr = (
-                (p.loc[:, idx] * efficiency[idx])
+                ((p.loc[:, idx] * efficiency[idx] * international[idx])
                 .groupby(grouping, axis=1)
                 .sum()
+                *n.snapshot_weightings.generators
+                )
                 .sum(dims="snapshot")
             )
             lhs.append(expr)
@@ -935,6 +946,10 @@ def solve_network(n, config, solving, opts="", **kwargs):
             f"Solving status '{status}' with termination condition '{condition}'"
         )
     if "infeasible" in condition:
+        m = n.model
+        labels = m.compute_infeasibilities()
+        print(labels)
+        m.print_infeasibilities()
         raise RuntimeError("Solving status 'infeasible'")
 
     return n
