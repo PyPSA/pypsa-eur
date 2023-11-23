@@ -2941,7 +2941,6 @@ def add_industry(n, costs):
         )
 
         if options.get("coal_for_industry_cc", False):
-
             n.madd(
                 "Link",
                 spatial.coal.industry_cc,
