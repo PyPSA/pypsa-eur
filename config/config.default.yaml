@@ -18,6 +18,8 @@ remote:
   ssh: ""
   path: ""
 
+focus_weights: false
+
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
   name: ""
