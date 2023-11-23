@@ -446,6 +446,7 @@ sector:
   methanation: true
   helmeth: false
   coal_cc: false
+  coal_for_industry_cc: false
   dac: true
   co2_vent: false
   allam_cycle: false

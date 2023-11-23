@@ -2940,25 +2940,27 @@ def add_industry(n, costs):
             efficiency2=costs.at["coal", "CO2 intensity"],
         )
 
-        n.madd(
-            "Link",
-            spatial.coal.industry_cc,
-            bus0=spatial.coal.nodes,
-            bus1=spatial.coal.industry,
-            bus2="co2 atmosphere",
-            bus3=spatial.co2.nodes,
-            carrier="coal for industry CC",
-            p_min_pu=1.0,
-            p_nom_extendable=True,
-            capital_cost=costs.at["cement capture", "fixed"]
-            * costs.at["coal", "CO2 intensity"],
-            efficiency=0.9,
-            efficiency2=costs.at["coal", "CO2 intensity"]
-            * (1 - costs.at["cement capture", "capture_rate"]),
-            efficiency3=costs.at["coal", "CO2 intensity"]
-            * costs.at["cement capture", "capture_rate"],
-            lifetime=costs.at["cement capture", "lifetime"],
-        )
+        if options.get("coal_for_industry_cc", False):
+
+            n.madd(
+                "Link",
+                spatial.coal.industry_cc,
+                bus0=spatial.coal.nodes,
+                bus1=spatial.coal.industry,
+                bus2="co2 atmosphere",
+                bus3=spatial.co2.nodes,
+                carrier="coal for industry CC",
+                p_min_pu=1.0,
+                p_nom_extendable=True,
+                capital_cost=costs.at["cement capture", "fixed"]
+                * costs.at["coal", "CO2 intensity"],
+                efficiency=0.9,
+                efficiency2=costs.at["coal", "CO2 intensity"]
+                * (1 - costs.at["cement capture", "capture_rate"]),
+                efficiency3=costs.at["coal", "CO2 intensity"]
+                * costs.at["cement capture", "capture_rate"],
+                lifetime=costs.at["cement capture", "lifetime"],
+            )
 
 
 def add_waste_heat(n):
