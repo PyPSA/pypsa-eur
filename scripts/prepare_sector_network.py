@@ -153,7 +153,7 @@ def define_spatial(nodes, options):
         spatial.oil.nodes = ["EU oil"]
         spatial.oil.locations = ["EU"]
         spatial.oil.naphtha = ["EU naphtha for industry"]
-        spatial.oil.naphtha_process_emissions = "EU naphtha process emissions"
+        spatial.oil.naphtha_process_emissions = ["EU naphtha process emissions"]
         spatial.oil.kerosene = ["EU kerosene for aviation"]
         spatial.oil.shipping = ["EU shipping oil"]
         spatial.oil.agriculture_machinery = ["EU agriculture machinery oil"]
