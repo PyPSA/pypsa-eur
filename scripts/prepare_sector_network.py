@@ -1603,7 +1603,9 @@ def add_land_transport(n, costs):
             spatial.oil.land_transport,
             bus=spatial.oil.land_transport,
             carrier="land transport oil",
-            p_set=ice_share / ice_efficiency * transport[nodes].rename(columns=lambda x: x + " land transport oil"),
+            p_set=ice_share
+            / ice_efficiency
+            * transport[nodes].rename(columns=lambda x: x + " land transport oil"),
         )
 
         n.madd(
@@ -2445,7 +2447,7 @@ def add_industry(n, costs):
         efficiency=1.0,
     )
 
-    if len(spatial.biomass.industry_cc)<=1 and len(spatial.co2.nodes)>1:
+    if len(spatial.biomass.industry_cc) <= 1 and len(spatial.co2.nodes) > 1:
         link_names = nodes + " " + spatial.biomass.industry_cc
     else:
         link_names = spatial.biomass.industry_cc
@@ -2671,7 +2673,10 @@ def add_industry(n, costs):
             bus2="co2 atmosphere",
             carrier="shipping methanol",
             p_nom_extendable=True,
-            efficiency2=1 / options["MWh_MeOH_per_tCO2"], # CO2 intensity methanol based on stoichiometric calculation with 22.7 GJ/t methanol (32 g/mol), CO2 (44 g/mol), 277.78 MWh/TJ = 0.218 t/MWh
+            efficiency2=1
+            / options[
+                "MWh_MeOH_per_tCO2"
+            ],  # CO2 intensity methanol based on stoichiometric calculation with 22.7 GJ/t methanol (32 g/mol), CO2 (44 g/mol), 277.78 MWh/TJ = 0.218 t/MWh
         )
 
     if "oil" not in n.buses.carrier.unique():
@@ -2789,21 +2794,40 @@ def add_industry(n, costs):
     # convert process emissions from feedstock from MtCO2 to energy demand
     # need to aggregate potentials if oil not nodally resolved
     if options["co2_budget_national"]:
-        p_set_plastics = demand_factor * (industrial_demand.loc[nodes, "naphtha"] - industrial_demand.loc[nodes, "process emission from feedstock"] / costs.at["oil", "CO2 intensity"]) / nhours
+        p_set_plastics = (
+            demand_factor
+            * (
+                industrial_demand.loc[nodes, "naphtha"]
+                - industrial_demand.loc[nodes, "process emission from feedstock"]
+                / costs.at["oil", "CO2 intensity"]
+            )
+            / nhours
+        )
     else:
-        p_set_plastics = demand_factor * (industrial_demand.loc[nodes, "naphtha"] - industrial_demand.loc[nodes, "process emission from feedstock"] / costs.at["oil", "CO2 intensity"]).sum() / nhours
+        p_set_plastics = (
+            demand_factor
+            * (
+                industrial_demand.loc[nodes, "naphtha"]
+                - industrial_demand.loc[nodes, "process emission from feedstock"]
+                / costs.at["oil", "CO2 intensity"]
+            ).sum()
+            / nhours
+        )
 
     if options["co2_budget_national"]:
         p_set_process_emissions = (
             demand_factor
-            * (industrial_demand.loc[nodes, "process emission from feedstock"]
-                / costs.at["oil", "CO2 intensity"])
+            * (
+                industrial_demand.loc[nodes, "process emission from feedstock"]
+                / costs.at["oil", "CO2 intensity"]
+            )
             / nhours
         )
     else:
         p_set_process_emissions = (
             demand_factor
-            * (industrial_demand.loc[nodes, "process emission from feedstock"]
+            * (
+                industrial_demand.loc[nodes, "process emission from feedstock"]
                 / costs.at["oil", "CO2 intensity"]
             ).sum()
             / nhours
@@ -3114,9 +3138,9 @@ def add_agriculture(n, costs):
             f"Total agriculture machinery shares sum up to {total_share:.2%}, corresponding to increased or decreased demand assumptions."
         )
 
-    machinery_nodal_energy = pop_weighted_energy_totals.loc[
-        nodes, "total agriculture machinery"
-    ] * 1e6
+    machinery_nodal_energy = (
+        pop_weighted_energy_totals.loc[nodes, "total agriculture machinery"] * 1e6
+    )
 
     if electric_share > 0:
         efficiency_gain = (
@@ -3130,10 +3154,7 @@ def add_agriculture(n, costs):
             suffix=" agriculture machinery electric",
             bus=nodes,
             carrier="agriculture machinery electric",
-            p_set=electric_share
-            / efficiency_gain
-            * machinery_nodal_energy
-            / nhours,
+            p_set=electric_share / efficiency_gain * machinery_nodal_energy / nhours,
         )
 
     if oil_share > 0:
