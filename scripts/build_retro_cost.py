@@ -259,32 +259,6 @@ def prepare_building_stock_data():
         else:
             area_tot.loc[averaged_data.index] = averaged_data
 
-    # u_values for Poland are missing -> take them from eurostat -----------
-    u_values_PL = pd.read_csv(snakemake.input.u_values_PL)
-    u_values_PL.component.replace({"Walls": "Wall", "Windows": "Window"}, inplace=True)
-    area_PL = area.loc["Poland"].reset_index()
-    data_PL = pd.DataFrame(columns=u_values.columns, index=area_PL.index)
-    data_PL["country"] = "Poland"
-    data_PL["country_code"] = "PL"
-    # data from area
-    for col in ["sector", "subsector", "bage"]:
-        data_PL[col] = area_PL[col]
-    data_PL["btype"] = area_PL["subsector"]
-
-    data_PL_final = pd.DataFrame()
-    for component in components:
-        data_PL["type"] = component
-        data_PL["value"] = data_PL.apply(
-            lambda x: u_values_PL[
-                (u_values_PL.component == component)
-                & (u_values_PL.sector == x["sector"])
-            ][x["bage"]].iloc[0],
-            axis=1,
-        )
-        data_PL_final = pd.concat([data_PL_final, data_PL])
-
-    u_values = pd.concat([u_values, data_PL_final]).reset_index(drop=True)
-
     # clean data ---------------------------------------------------------------
     # smallest possible today u values for windows 0.8 (passive house standard)
     # maybe the u values for the glass and not the whole window including frame
