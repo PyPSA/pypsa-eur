@@ -611,7 +611,6 @@ if config["sector"]["retrofitting"]["retro_endogen"]:
             building_stock="data/retro/building_stock_2023.csv",
             data_tabula="data/bundle-sector/retro/tabula-calculator-calcsetbuilding.csv",
             air_temperature=RESOURCES + "temp_air_total_elec_s{simpl}_{clusters}.nc",
-            u_values_PL="data/retro/u_values_poland.csv",
             tax_w="data/retro/electricity_taxes_eu.csv",
             construction_index="data/retro/comparative_level_investment.csv",
             floor_area_missing="data/retro/floor_area_missing.csv",
