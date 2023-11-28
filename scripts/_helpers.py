@@ -191,7 +191,7 @@ def progress_retrieve(url, file, disable=False):
             urllib.request.urlretrieve(url, file, reporthook=update_to)
 
 
-def mock_snakemake(rulename, configfiles=[], **wildcards):
+def mock_snakemake(rulename, root_dir=None, configfiles=[], **wildcards):
     """
     This function is expected to be executed from the 'scripts'-directory of '
     the snakemake project. It returns a snakemake.script.Snakemake object,
@@ -203,6 +203,8 @@ def mock_snakemake(rulename, configfiles=[], **wildcards):
     ----------
     rulename: str
         name of the rule for which the snakemake object should be generated
+    root_dir: str/path-like
+        path to the root directory of the snakemake project
     configfiles: list, str
         list of configfiles to be used to update the config
     **wildcards:
@@ -217,7 +219,10 @@ def mock_snakemake(rulename, configfiles=[], **wildcards):
     from snakemake.script import Snakemake
 
     script_dir = Path(__file__).parent.resolve()
-    root_dir = script_dir.parent
+    if root_dir is None:
+        root_dir = script_dir.parent
+    else:
+        root_dir = Path(root_dir).resolve()
 
     user_in_script_dir = Path.cwd().resolve() == script_dir
     if user_in_script_dir:
@@ -303,10 +308,7 @@ def generate_periodic_profiles(dt_index, nodes, weekly_profile, localize=None):
 
 
 def parse(l):
-    if len(l) == 1:
-        return yaml.safe_load(l[0])
-    else:
-        return {l.pop(0): parse(l)}
+    return yaml.safe_load(l[0]) if len(l) == 1 else {l.pop(0): parse(l)}
 
 
 def update_config_with_sector_opts(config, sector_opts):

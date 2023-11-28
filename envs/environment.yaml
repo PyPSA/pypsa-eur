@@ -27,7 +27,7 @@ dependencies:
 - numpy
 - pandas>=1.4
 - geopandas>=0.11.0
-- xarray
+- xarray<=2023.8.0
 - rioxarray
 - netcdf4
 - networkx
@@ -55,5 +55,5 @@ dependencies:
 
 
 - pip:
-  - tsam>=1.1.0
-  - pypsa>=0.25.1
+  - tsam>=2.3.1
+  - pypsa>=0.25.2

@@ -45,7 +45,7 @@ def add_build_year_to_new_assets(n, baseyear):
 
         # add -baseyear to name
         rename = pd.Series(c.df.index, c.df.index)
-        rename[assets] += "-" + str(baseyear)
+        rename[assets] += f"-{str(baseyear)}"
         c.df.rename(index=rename, inplace=True)
 
         # rename time-dependent
@@ -252,7 +252,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
             if "m" in snakemake.wildcards.clusters:
                 for ind in new_capacity.index:
                     # existing capacities are split evenly among regions in every country
-                    inv_ind = [i for i in inv_busmap[ind]]
+                    inv_ind = list(inv_busmap[ind])
 
                     # for offshore the splitting only includes coastal regions
                     inv_ind = [
@@ -304,6 +304,18 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
             bus0 = vars(spatial)[carrier[generator]].nodes
             if "EU" not in vars(spatial)[carrier[generator]].locations:
                 bus0 = bus0.intersection(capacity.index + " gas")
+
+            # check for missing bus
+            missing_bus = pd.Index(bus0).difference(n.buses.index)
+            if not missing_bus.empty:
+                logger.info(f"add buses {bus0}")
+                n.madd(
+                    "Bus",
+                    bus0,
+                    carrier=generator,
+                    location=vars(spatial)[carrier[generator]].locations,
+                    unit="MWh_el",
+                )
 
             already_build = n.links.index.intersection(asset_i)
             new_build = asset_i.difference(n.links.index)
@@ -533,13 +545,17 @@ def add_heating_capacities_installed_before_baseyear(
                 bus0=nodes[name],
                 bus1=nodes[name] + " " + name + " heat",
                 carrier=name + " resistive heater",
-                efficiency=costs.at[name_type + " resistive heater", "efficiency"],
-                capital_cost=costs.at[name_type + " resistive heater", "efficiency"]
-                * costs.at[name_type + " resistive heater", "fixed"],
-                p_nom=0.5
-                * nodal_df[f"{heat_type} resistive heater"][nodes[name]]
-                * ratio
-                / costs.at[name_type + " resistive heater", "efficiency"],
+                efficiency=costs.at[f"{name_type} resistive heater", "efficiency"],
+                capital_cost=(
+                    costs.at[f"{name_type} resistive heater", "efficiency"]
+                    * costs.at[f"{name_type} resistive heater", "fixed"]
+                ),
+                p_nom=(
+                    0.5
+                    * nodal_df[f"{heat_type} resistive heater"][nodes[name]]
+                    * ratio
+                    / costs.at[f"{name_type} resistive heater", "efficiency"]
+                ),
                 build_year=int(grouping_year),
                 lifetime=costs.at[costs_name, "lifetime"],
             )
@@ -552,16 +568,20 @@ def add_heating_capacities_installed_before_baseyear(
                 bus1=nodes[name] + " " + name + " heat",
                 bus2="co2 atmosphere",
                 carrier=name + " gas boiler",
-                efficiency=costs.at[name_type + " gas boiler", "efficiency"],
+                efficiency=costs.at[f"{name_type} gas boiler", "efficiency"],
                 efficiency2=costs.at["gas", "CO2 intensity"],
-                capital_cost=costs.at[name_type + " gas boiler", "efficiency"]
-                * costs.at[name_type + " gas boiler", "fixed"],
-                p_nom=0.5
-                * nodal_df[f"{heat_type} gas boiler"][nodes[name]]
-                * ratio
-                / costs.at[name_type + " gas boiler", "efficiency"],
+                capital_cost=(
+                    costs.at[f"{name_type} gas boiler", "efficiency"]
+                    * costs.at[f"{name_type} gas boiler", "fixed"]
+                ),
+                p_nom=(
+                    0.5
+                    * nodal_df[f"{heat_type} gas boiler"][nodes[name]]
+                    * ratio
+                    / costs.at[f"{name_type} gas boiler", "efficiency"]
+                ),
                 build_year=int(grouping_year),
-                lifetime=costs.at[name_type + " gas boiler", "lifetime"],
+                lifetime=costs.at[f"{name_type} gas boiler", "lifetime"],
             )
 
             n.madd(
@@ -581,7 +601,7 @@ def add_heating_capacities_installed_before_baseyear(
                 * ratio
                 / costs.at["decentral oil boiler", "efficiency"],
                 build_year=int(grouping_year),
-                lifetime=costs.at[name_type + " gas boiler", "lifetime"],
+                lifetime=costs.at[f"{name_type} gas boiler", "lifetime"],
             )
 
             # delete links with p_nom=nan corresponding to extra nodes in country
@@ -605,21 +625,24 @@ def add_heating_capacities_installed_before_baseyear(
                 ],
             )
 
+            # drop assets which are at the end of their lifetime
+            links_i = n.links[(n.links.build_year + n.links.lifetime <= baseyear)].index
+            n.mremove("Link", links_i)
 
-# %%
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "add_existing_baseyear",
-            configfiles="config/test/config.myopic.yaml",
+            # configfiles="config/test/config.myopic.yaml",
             simpl="",
-            clusters="5",
-            ll="v1.5",
+            clusters="37",
+            ll="v1.0",
             opts="",
-            sector_opts="24H-T-H-B-I-A-solar+p3-dist1",
-            planning_horizons=2030,
+            sector_opts="1p7-4380H-T-H-B-I-A-solar+p3-dist1",
+            planning_horizons=2020,
         )
 
     logging.basicConfig(level=snakemake.config["logging"]["level"])

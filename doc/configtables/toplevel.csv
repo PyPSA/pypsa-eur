@@ -10,3 +10,4 @@ private,,,
 remote,,,
 -- ssh,--,,Optionally specify the SSH of a remote cluster to be synchronized.
 -- path,--,,Optionally specify the file path within the remote cluster to be synchronized.
+focus_weights,,,Optionally specify the focus weights for the clustering of countries. For instance: `DE: 0.8` will distribute 80% of all nodes to Germany and 20% to the rest of the countries.
