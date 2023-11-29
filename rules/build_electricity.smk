@@ -226,7 +226,7 @@ rule build_renewable_profiles:
         ),
         ship_density=lambda w: (
             RESOURCES + "shipdensity_raster.tif"
-            if "ship_threshold" in config["renewable"][w.technology].keys()
+            if config["renewable"][w.technology].get("ship_threshold", False)
             else []
         ),
         country_shapes=RESOURCES + "country_shapes.geojson",
