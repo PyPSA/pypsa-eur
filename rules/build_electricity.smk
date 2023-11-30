@@ -24,7 +24,7 @@ rule build_electricity_demand:
         countries=config["countries"],
         load=config["load"],
     input:
-        ancient("data/load_raw.csv"),
+        ancient(RESOURCES + "load_raw.csv"),
     output:
         RESOURCES + "load.csv",
     log:
@@ -226,7 +226,7 @@ rule build_renewable_profiles:
         ),
         ship_density=lambda w: (
             RESOURCES + "shipdensity_raster.tif"
-            if "ship_threshold" in config["renewable"][w.technology].keys()
+            if config["renewable"][w.technology].get("ship_threshold", False)
             else []
         ),
         country_shapes=RESOURCES + "country_shapes.geojson",
