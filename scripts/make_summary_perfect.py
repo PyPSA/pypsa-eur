@@ -30,12 +30,13 @@ opt_name = {"Store": "e", "Line": "s", "Transformer": "s"}
 
 def reindex_columns(df, cols):
     investments = cols.levels[3]
-    if len(cols.names)!=len(df.columns.levels):
+    if len(cols.names) != len(df.columns.levels):
         df = pd.concat([df] * len(investments), axis=1)
-        df.columns = cols        
+        df.columns = cols
     df = df.reindex(cols, axis=1)
-    
+
     return df
+
 
 def calculate_costs(n, label, costs):
     investments = n.investment_periods
@@ -48,7 +49,7 @@ def calculate_costs(n, label, costs):
         ],
         names=costs.columns.names[:3] + ["year"],
     )
-        
+
     costs = reindex_columns(costs, cols)
 
     for c in n.iterate_components(
