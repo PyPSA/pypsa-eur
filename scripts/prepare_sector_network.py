@@ -1693,7 +1693,7 @@ def add_heat(n, costs):
             unit="MWh_th",
         )
 
-        if (name == "urban central") & (options["central_heat_vent"]):
+        if name == "urban central" and options.get("central_heat_vent"):
             n.madd(
                 "Generator",
                 nodes[name] + f" {name} heat vent",
