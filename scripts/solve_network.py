@@ -841,10 +841,10 @@ def add_co2limit_country(n, limit_countries, nyears=1.0):
             lhs.append(expr)
 
     lhs = sum(lhs)  # dimension: (country)
-    lhs = lhs.rename({list(lhs.dims.keys())[0]: "country"})
+    lhs = lhs.rename({list(lhs.dims.keys())[0]: "snapshot"})
     rhs = pd.Series(co2_limit_countries)  # dimension: (country)
 
-    for ct in lhs.indexes["country"]:
+    for ct in lhs.indexes["snapshot"]:
         n.model.add_constraints(
             lhs.loc[ct] <= rhs[ct],
             name=f"GlobalConstraint-co2_limit_per_country{ct}",
