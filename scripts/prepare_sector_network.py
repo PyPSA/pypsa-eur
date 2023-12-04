@@ -1693,6 +1693,18 @@ def add_heat(n, costs):
             unit="MWh_th",
         )
 
+        if name == "urban central" and options.get("central_heat_vent"):
+            n.madd(
+                "Generator",
+                nodes[name] + f" {name} heat vent",
+                location=nodes[name],
+                carrier=name + " heat vent",
+                p_nom_extendable=True,
+                p_max_pu=0,
+                p_min_pu=-1,
+                unit="MWh_th",
+            )
+
         ## Add heat load
 
         for sector in sectors:
