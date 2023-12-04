@@ -40,5 +40,4 @@ co2_budget:
 
 sector:
   central_heat_vent: true
-  # min_part_load_fischer_tropsch: 0
   min_part_load_methanolisation: 0
