@@ -11,7 +11,8 @@ dependencies:
 - pip
 
 - atlite>=0.2.9
-- linopy<=0.2.6
+- pypsa>=0.25.2
+- linopy
 - dask
 
   # Dependencies of the workflow itself
@@ -28,14 +29,14 @@ dependencies:
 - numpy
 - pandas>=1.4
 - geopandas>=0.11.0
-- xarray<=2023.8.0
+- xarray
 - rioxarray
 - netcdf4
 - networkx
 - scipy
 - shapely>=2.0
 - pyomo
-- matplotlib<3.6
+- matplotlib
 - proj
 - fiona
 - country_converter
@@ -57,4 +58,3 @@ dependencies:
 
 - pip:
   - tsam>=2.3.1
-  - pypsa>=0.25.2
