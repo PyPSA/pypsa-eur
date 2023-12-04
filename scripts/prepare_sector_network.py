@@ -1692,7 +1692,19 @@ def add_heat(n, costs):
             carrier=name + " heat",
             unit="MWh_th",
         )
-
+        
+        if (name == "urban central") & (options["central_heat_vent"]):
+            n.madd(
+                "Generator",
+                nodes[name] + f" {name} heat vent",
+                location=nodes[name],
+                carrier=name + " heat vent",
+                p_nom_extendable=True,
+                p_max_pu=0,
+                p_min_pu=-1,
+                unit="MWh_th",
+            )
+           
         ## Add heat load
 
         for sector in sectors:
@@ -3289,7 +3301,6 @@ def set_temporal_aggregation(n, opts, solver_name):
             n = apply_time_segmentation(n, segments, solver_name=solver_name)
             break
     return n
-
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
