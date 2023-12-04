@@ -814,7 +814,7 @@ def add_co2limit_country(n, limit_countries, nyears=1.0):
     for port in [col[3:] for col in n.links if col.startswith("bus")]:
         if port == str(0):
             efficiency = (
-                n.links["efficiency"].apply(lambda x: 1.0).rename("efficiency0")
+                n.links["efficiency"].apply(lambda x: -1.0).rename("efficiency0")
             )
         elif port == str(1):
             efficiency = n.links["efficiency"]
