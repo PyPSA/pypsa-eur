@@ -230,7 +230,8 @@ def aggregate_costs(n, flatten=False, opts=None, existing_only=False):
 
     costs = {}
     for c, (p_nom, p_attr) in zip(
-        n.iterate_components(components.keys(), skip_empty=False), components.values()
+        n.iterate_components(components.keys(), skip_empty=False),
+        components.values(),
     ):
         if c.df.empty:
             continue
@@ -275,7 +276,7 @@ def progress_retrieve(url, file, disable=False):
             urllib.request.urlretrieve(url, file, reporthook=update_to)
 
 
-def mock_snakemake(rulename, configfiles=[], **wildcards):
+def mock_snakemake(rulename, root_dir=None, configfiles=[], **wildcards):
     """
     This function is expected to be executed from the 'scripts'-directory of '
     the snakemake project. It returns a snakemake.script.Snakemake object,
@@ -301,7 +302,10 @@ def mock_snakemake(rulename, configfiles=[], **wildcards):
     from snakemake.script import Snakemake
 
     script_dir = Path(__file__).parent.resolve()
-    root_dir = script_dir.parent
+    if root_dir is None:
+        root_dir = script_dir.parent
+    else:
+        root_dir = Path(root_dir).resolve()
 
     user_in_script_dir = Path.cwd().resolve() == script_dir
     if user_in_script_dir:

@@ -480,7 +480,7 @@ def add_carrier_buses(n, carrier, nodes=None):
         e_nom_extendable=True,
         e_cyclic=True,
         carrier=carrier,
-        capital_cost=0.2
+        capital_cost=1
         * costs.at[carrier, "discount rate"],  # preliminary value to avoid zeros
     )
 

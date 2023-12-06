@@ -313,6 +313,7 @@ if config["lines"]["dynamic_line_rating"]["activate"]:
         threads: ATLITE_NPROCESSES
         resources:
             mem_mb=ATLITE_NPROCESSES * 3000,
+            walltime="02:00:00",
         conda:
             "../envs/environment.yaml"
         script:
