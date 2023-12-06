@@ -2003,7 +2003,11 @@ def add_heat(n, costs):
             space_heat_demand = demand * w_space[sec][node]
             # normed time profile of space heat demand 'space_pu' (values between 0-1),
             # p_max_pu/p_min_pu of retrofitting generators
-            space_pu = (space_heat_demand / space_heat_demand.max()).to_frame(name=node).fillna(0)
+            space_pu = (
+                (space_heat_demand / space_heat_demand.max())
+                .to_frame(name=node)
+                .fillna(0)
+            )
 
             # minimum heat demand 'dE' after retrofitting in units of original heat demand (values between 0-1)
             dE = retro_data.loc[(ct, sec), ("dE")]
