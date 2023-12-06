@@ -374,7 +374,9 @@ rule simplify_network:
     params:
         simplify_network=config["clustering"]["simplify_network"],
         aggregation_strategies=config["clustering"].get("aggregation_strategies", {}),
-        focus_weights=config["clustering"].get("focus_weights", config.get("focus_weights")),
+        focus_weights=config["clustering"].get(
+            "focus_weights", config.get("focus_weights")
+        ),
         renewable_carriers=config["electricity"]["renewable_carriers"],
         max_hours=config["electricity"]["max_hours"],
         length_factor=config["lines"]["length_factor"],
@@ -409,7 +411,9 @@ rule cluster_network:
         cluster_network=config["clustering"]["cluster_network"],
         aggregation_strategies=config["clustering"].get("aggregation_strategies", {}),
         custom_busmap=config["enable"].get("custom_busmap", False),
-        focus_weights=config["clustering"].get("focus_weights", config.get("focus_weights")),
+        focus_weights=config["clustering"].get(
+            "focus_weights", config.get("focus_weights")
+        ),
         renewable_carriers=config["electricity"]["renewable_carriers"],
         conventional_carriers=config["electricity"].get("conventional_carriers", []),
         max_hours=config["electricity"]["max_hours"],
