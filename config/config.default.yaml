@@ -18,8 +18,6 @@ remote:
   ssh: ""
   path: ""
 
-focus_weights: false
-
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
   name: ""
@@ -601,12 +599,14 @@ clustering:
     to_substations: false
     algorithm: kmeans # choose from: [hac, kmeans]
     feature: solar+onwind-time
+    focus_weights: false
     exclude_carriers: []
     remove_stubs: true
     remove_stubs_across_borders: true
   cluster_network:
     algorithm: kmeans
     feature: solar+onwind-time
+    focus_weights: false
     exclude_carriers: []
     consider_efficiency_classes: false
   aggregation_strategies:
