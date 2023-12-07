@@ -29,6 +29,7 @@ rule solve_sector_network:
     resources:
         mem_mb=config_provider("solving", "mem"),
         walltime=config_provider("solving", "walltime", default="12:00:00"),
+        partition=config_provider("solving", "partition", default=None),
     benchmark:
         (
             BENCHMARKS
