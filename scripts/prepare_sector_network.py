@@ -145,7 +145,6 @@ def define_spatial(nodes, options):
         spatial.oil.nodes = nodes + " oil"
         spatial.oil.locations = nodes
         spatial.oil.naphtha = nodes + " naphtha for industry"
-        spatial.oil.naphtha_process_emissions = nodes + " naphtha process emissions"
         spatial.oil.kerosene = nodes + " kerosene for aviation"
         spatial.oil.shipping = nodes + " shipping oil"
         spatial.oil.agriculture_machinery = nodes + " agriculture machinery oil"
@@ -153,7 +152,6 @@ def define_spatial(nodes, options):
         spatial.oil.nodes = ["EU oil"]
         spatial.oil.locations = ["EU"]
         spatial.oil.naphtha = ["EU naphtha for industry"]
-        spatial.oil.naphtha_process_emissions = ["EU naphtha process emissions"]
         spatial.oil.kerosene = ["EU kerosene for aviation"]
         spatial.oil.shipping = ["EU shipping oil"]
         spatial.oil.agriculture_machinery = ["EU agriculture machinery oil"]
@@ -2783,31 +2781,10 @@ def add_industry(n, costs):
     if demand_factor != 1:
         logger.warning(f"Changing HVC demand by {demand_factor*100-100:+.2f}%.")
 
-    # NB: CO2 gets released again to atmosphere when plastics decay
-    # except for the process emissions when naphtha is used for petrochemicals, which can be captured with other industry process emissions
-    # convert process emissions from feedstock from MtCO2 to energy demand
-    # need to aggregate potentials if oil not nodally resolved
     if options["co2_budget_national"]:
-        p_set_plastics = demand_factor * (industrial_demand.loc[nodes, "naphtha"] - industrial_demand.loc[nodes, "process emission from feedstock"] / costs.at["oil", "CO2 intensity"]).rename(lambda x: x + " naphtha for industry") / nhours
+        p_set_plastics = demand_factor * industrial_demand.loc[nodes, "naphtha"].rename(lambda x: x + " naphtha for industry") / nhours
     else:
-        p_set_plastics = demand_factor * (industrial_demand.loc[nodes, "naphtha"] - industrial_demand.loc[nodes, "process emission from feedstock"] / costs.at["oil", "CO2 intensity"]).sum() / nhours
-
-
-    if options["co2_budget_national"]:
-        p_set_process_emissions = (
-            demand_factor
-            * (industrial_demand.loc[nodes, "process emission from feedstock"]
-                / costs.at["oil", "CO2 intensity"]).rename(lambda x: x + " naphtha process emissions")
-            / nhours
-        )
-    else:
-        p_set_process_emissions = (
-            demand_factor
-            * (industrial_demand.loc[nodes, "process emission from feedstock"]
-                / costs.at["oil", "CO2 intensity"]
-            ).sum()
-            / nhours
-        )
+        p_set_plastics = demand_factor * industrial_demand.loc[nodes, "naphtha"].sum() / nhours
 
     n.madd(
         "Bus",
@@ -2825,13 +2802,10 @@ def add_industry(n, costs):
         p_set=p_set_plastics,
     )
 
-    n.madd(
-        "Load",
-        spatial.oil.naphtha_process_emissions,
-        bus=spatial.oil.nodes,
-        carrier="naphtha for industry",
-        p_set=p_set_process_emissions,
-    )
+    # some CO2 from naphtha are process emissions from steam cracker
+    # rest of CO2 released to atmosphere either in waste-to-energy or decay
+    process_co2_per_naphtha = industrial_demand.loc[nodes, "process emission from feedstock"].sum() / industrial_demand.loc[nodes, "naphtha"].sum()
+    emitted_co2_per_naphtha = costs.at["oil", "CO2 intensity"] - process_co2_per_naphtha
 
     n.madd(
         "Link",
@@ -2839,9 +2813,11 @@ def add_industry(n, costs):
         bus0=spatial.oil.nodes,
         bus1=spatial.oil.naphtha,
         bus2="co2 atmosphere",
+        bus3=spatial.co2.process_emissions,
         carrier="naphtha for industry",
         p_nom_extendable=True,
-        efficiency2=costs.at["oil", "CO2 intensity"],
+        efficiency2=emitted_co2_per_naphtha,
+        efficiency3=process_co2_per_naphtha,
     )
 
     # aviation
@@ -2941,7 +2917,7 @@ def add_industry(n, costs):
         unit="t_co2",
     )
 
-    sel = ["process emission", "process emission from feedstock"]
+    sel = ["process emission"]
     if options["co2_spatial"] or options["co2network"]:
         p_set = (
             -industrial_demand.loc[nodes, sel]
@@ -2952,8 +2928,6 @@ def add_industry(n, costs):
     else:
         p_set = -industrial_demand.loc[nodes, sel].sum(axis=1).sum() / nhours
 
-    # this should be process emissions fossil+feedstock
-    # then need load on atmosphere for feedstock emissions that are currently going to atmosphere via Link Fischer-Tropsch demand
     n.madd(
         "Load",
         spatial.co2.process_emissions,
