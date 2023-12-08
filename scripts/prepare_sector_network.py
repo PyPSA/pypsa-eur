@@ -2643,7 +2643,7 @@ def add_industry(n, costs):
 
         # need to aggregate potentials if methanol not nodally resolved
         if options["co2_budget_national"]:
-            p_set_methanol = shipping_methanol_share * p_set * efficiency
+            p_set_methanol = shipping_methanol_share * p_set.rename(lambda x : x + " shipping methanol") * efficiency
         else:
             p_set_methanol = shipping_methanol_share * p_set.sum() * efficiency
 
@@ -2707,7 +2707,7 @@ def add_industry(n, costs):
     if shipping_oil_share:
         # need to aggregate potentials if oil not nodally resolved
         if options["co2_budget_national"]:
-            p_set_oil = shipping_oil_share * p_set
+            p_set_oil = shipping_oil_share * p_set.rename(lambda x: x + " shipping oil")
         else:
             p_set_oil = shipping_oil_share * p_set.sum()
 
@@ -2789,15 +2789,16 @@ def add_industry(n, costs):
     # convert process emissions from feedstock from MtCO2 to energy demand
     # need to aggregate potentials if oil not nodally resolved
     if options["co2_budget_national"]:
-        p_set_plastics = demand_factor * (industrial_demand.loc[nodes, "naphtha"] - industrial_demand.loc[nodes, "process emission from feedstock"] / costs.at["oil", "CO2 intensity"]) / nhours
+        p_set_plastics = demand_factor * (industrial_demand.loc[nodes, "naphtha"] - industrial_demand.loc[nodes, "process emission from feedstock"] / costs.at["oil", "CO2 intensity"]).rename(lambda x: x + " naphtha for industry") / nhours
     else:
         p_set_plastics = demand_factor * (industrial_demand.loc[nodes, "naphtha"] - industrial_demand.loc[nodes, "process emission from feedstock"] / costs.at["oil", "CO2 intensity"]).sum() / nhours
+
 
     if options["co2_budget_national"]:
         p_set_process_emissions = (
             demand_factor
             * (industrial_demand.loc[nodes, "process emission from feedstock"]
-                / costs.at["oil", "CO2 intensity"])
+                / costs.at["oil", "CO2 intensity"]).rename(lambda x: x + " naphtha process emissions")
             / nhours
         )
     else:
@@ -2857,7 +2858,7 @@ def add_industry(n, costs):
             * pop_weighted_energy_totals.loc[nodes, all_aviation].sum(axis=1)
             * 1e6
             / nhours
-        )
+        ).rename(lambda x: x + " kerosene for aviation")
     else:
         p_set = (
             demand_factor
@@ -3139,7 +3140,7 @@ def add_agriculture(n, costs):
     if oil_share > 0:
         # need to aggregate potentials if oil not nodally resolved
         if options["co2_budget_national"]:
-            p_set = oil_share * machinery_nodal_energy / nhours
+            p_set = oil_share * machinery_nodal_energy.rename(lambda x: x + " agriculture machinery oil") / nhours
         else:
             p_set = oil_share * machinery_nodal_energy.sum() / nhours
 
