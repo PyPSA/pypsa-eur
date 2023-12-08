@@ -1613,7 +1613,6 @@ def add_land_transport(n, costs):
             bus1=spatial.oil.land_transport,
             bus2="co2 atmosphere",
             carrier="land transport oil",
-            efficiency=ice_efficiency,
             efficiency2=costs.at["oil", "CO2 intensity"],
             p_nom_extendable=True,
         )
