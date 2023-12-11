@@ -38,7 +38,7 @@ scenario:
   ll:
   - v1.5
   clusters:
-  - 39
+  - 37
   - 128
   - 256
   - 512
@@ -54,7 +54,7 @@ scenario:
   - 2050
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#countries
-countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MD', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK', 'UA']
+countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK']
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#snapshots
 snapshots:
@@ -90,8 +90,8 @@ co2_budget:
 electricity:
   voltages: [220., 300., 380., 500., 750.]
   gaslimit: false
-  co2limit: 9.59e+7
-  co2base: 1.918e+9
+  co2limit: 7.75e+7
+  co2base: 1.487e+9
   agg_p_nom_limits: data/agg_p_nom_minmax.csv
 
   operational_reserve:

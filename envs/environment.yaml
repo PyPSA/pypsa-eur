@@ -14,8 +14,6 @@ dependencies:
 - pypsa==0.25.2
 - linopy
 - dask
-- jupyter
-- nbconvert
 
   # Dependencies of the workflow itself
 - xlrd
