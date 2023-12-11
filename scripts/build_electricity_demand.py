@@ -311,7 +311,9 @@ if __name__ == "__main__":
         load_ua = load_timeseries(snakemake.input[0], "2018", ["UA"], False)
         snapshot_year = str(snapshots.year.unique().item())
         time_diff = pd.Timestamp("2018") - pd.Timestamp(snapshot_year)
-        load_ua.index -= time_diff  # hack indices (currently, UA is manually set to 2018)
+        load_ua.index -= (
+            time_diff  # hack indices (currently, UA is manually set to 2018)
+        )
         load["UA"] = load_ua
         # attach load of MD (no time-series available, use 2020-totals and distribute according to UA):
         # https://www.iea.org/data-and-statistics/data-browser/?country=MOLDOVA&fuel=Energy%20consumption&indicator=TotElecCons
