@@ -195,7 +195,7 @@ if config["enable"]["retrieve"]:
                 static=True,
             ),
         output:
-            "data/load_raw.csv",
+            RESOURCES + "load_raw.csv",
         log:
             LOGS + "retrieve_electricity_demand.log",
         resources:
