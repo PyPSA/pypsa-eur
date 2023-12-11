@@ -11,6 +11,8 @@ dependencies:
 - pip
 
 - atlite>=0.2.9
+- pypsa==0.25.2
+- linopy
 - dask
 - jupyter
 - nbconvert
@@ -36,7 +38,7 @@ dependencies:
 - scipy
 - shapely>=2.0
 - pyomo
-- matplotlib<3.6
+- matplotlib
 - proj
 - fiona
 - country_converter
@@ -57,5 +59,4 @@ dependencies:
 
 
 - pip:
-  - git+https://github.com/fneum/tsam.git@performance
-  - pypsa>=0.25.2
+  - tsam>=2.3.1

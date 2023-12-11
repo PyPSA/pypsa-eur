@@ -237,7 +237,7 @@ def distribute_clusters(n, n_clusters, focus_weights=None, solver_name="cbc"):
         n_clusters >= len(N) and n_clusters <= N.sum()
     ), f"Number of clusters must be {len(N)} <= n_clusters <= {N.sum()} for this selection of countries."
 
-    if focus_weights is not None:
+    if isinstance(focus_weights, dict):
         total_focus = sum(list(focus_weights.values()))
 
         assert (
@@ -271,7 +271,7 @@ def distribute_clusters(n, n_clusters, focus_weights=None, solver_name="cbc"):
     )
 
     opt = po.SolverFactory(solver_name)
-    if not opt.has_capability("quadratic_objective"):
+    if solver_name == "appsi_highs" or not opt.has_capability("quadratic_objective"):
         logger.warning(
             f"The configured solver `{solver_name}` does not support quadratic objectives. Falling back to `ipopt`."
         )
@@ -466,6 +466,7 @@ if __name__ == "__main__":
 
     params = snakemake.params
     solver_name = snakemake.config["solving"]["solver"]["name"]
+    solver_name = "appsi_highs" if solver_name == "highs" else solver_name
 
     n = pypsa.Network(snakemake.input.network)
 

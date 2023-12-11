@@ -29,10 +29,17 @@ Upcoming Release
 
 * Rule ``purge`` now initiates a dialog to confirm if purge is desired.
 
+* Rule ``retrieve_irena`` get updated values for renewables capacities.
+
+* Split configuration to enable SMR and SMR CC.
+
+* The ``mock_snakemake`` function can now be used with a Snakefile from a different directory using the new ``root_dir`` argument.
+
 
 **Bugs and Compatibility**
 
 * A bug preventing custom powerplants specified in ``data/custom_powerplants.csv`` was fixed. (https://github.com/PyPSA/pypsa-eur/pull/732)
+* Fix nodal fraction in ``add_existing_year`` when using distributed generators
 
 
 PyPSA-Eur 0.8.1 (27th July 2023)

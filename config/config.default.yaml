@@ -18,6 +18,8 @@ remote:
   ssh: ""
   path: ""
 
+focus_weights: false
+
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
   name: ""
@@ -68,6 +70,7 @@ enable:
   retrieve_sector_databundle: true
   retrieve_cost_data: true
   build_cutout: false
+  retrieve_irena: false
   retrieve_cutout: true
   build_natura_raster: false
   retrieve_natura_raster: true
@@ -451,10 +454,12 @@ sector:
   coal_cc: false
   dac: true
   co2_vent: false
+  central_heat_vent: false
   allam_cycle: false
   hydrogen_fuel_cell: true
   hydrogen_turbine: false
   SMR: true
+  SMR_cc: true
   regional_co2_sequestration_potential:
     enable: false
     attribute: 'conservative estimate Mt'
@@ -801,6 +806,7 @@ plotting:
     Coal: '#545454'
     coal: '#545454'
     Coal marginal: '#545454'
+    coal for industry: '#343434'
     solid: '#545454'
     Lignite: '#826837'
     lignite: '#826837'
@@ -877,6 +883,7 @@ plotting:
     services rural heat: '#ff9c9c'
     central heat: '#cc1f1f'
     urban central heat: '#d15959'
+    urban central heat vent: '#a74747'
     decentral heat: '#750606'
     residential urban decentral heat: '#a33c3c'
     services urban decentral heat: '#cc1f1f'

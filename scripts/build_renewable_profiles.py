@@ -251,7 +251,7 @@ if __name__ == "__main__":
             snakemake.input.corine, codes=codes, buffer=buffer, crs=3035
         )
 
-    if "ship_threshold" in params:
+    if params.get("ship_threshold"):
         shipping_threshold = (
             params["ship_threshold"] * 8760 * 6
         )  # approximation because 6 years of data which is hourly collected

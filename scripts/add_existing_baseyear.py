@@ -88,7 +88,9 @@ def add_existing_renewables(df_agg):
             ]
             cfs = n.generators_t.p_max_pu[gens].mean()
             cfs_key = cfs / cfs.sum()
-            nodal_fraction.loc[n.generators.loc[gens, "bus"]] = cfs_key.values
+            nodal_fraction.loc[n.generators.loc[gens, "bus"]] = cfs_key.groupby(
+                n.generators.loc[gens, "bus"]
+            ).sum()
 
         nodal_df = df.loc[n.buses.loc[elec_buses, "country"]]
         nodal_df.index = elec_buses
@@ -630,7 +632,6 @@ def add_heating_capacities_installed_before_baseyear(
             n.mremove("Link", links_i)
 
 
-# %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake

@@ -33,8 +33,6 @@ if __name__ == "__main__":
         lambda s: s != "", "lightgrey"
     )
 
-    # %%
-
     def rename_index(ds):
         specific = ds.index.map(lambda x: f"{x[1]}\n({x[0]})")
         generic = ds.index.get_level_values("carrier")

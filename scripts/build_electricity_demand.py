@@ -31,7 +31,7 @@ Relevant Settings
 Inputs
 ------
 
-- ``data/load_raw.csv``:
+- ``resources/load_raw.csv``:
 
 Outputs
 -------

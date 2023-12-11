@@ -1392,7 +1392,7 @@ def add_storage_and_grids(n, costs):
             lifetime=costs.at["coal", "lifetime"],
         )
 
-    if options["SMR"]:
+    if options["SMR_cc"]:
         n.madd(
             "Link",
             spatial.nodes,
@@ -1410,6 +1410,7 @@ def add_storage_and_grids(n, costs):
             lifetime=costs.at["SMR CC", "lifetime"],
         )
 
+    if options["SMR"]:
         n.madd(
             "Link",
             nodes + " SMR",
@@ -1555,14 +1556,7 @@ def add_land_transport(n, costs):
         )
 
     if ice_share > 0:
-        if "oil" not in n.buses.carrier.unique():
-            n.madd(
-                "Bus",
-                spatial.oil.nodes,
-                location=spatial.oil.locations,
-                carrier="oil",
-                unit="MWh_LHV",
-            )
+        add_carrier_buses(n, "oil")
 
         ice_efficiency = options["transport_internal_combustion_efficiency"]
 
@@ -1698,6 +1692,18 @@ def add_heat(n, costs):
             carrier=name + " heat",
             unit="MWh_th",
         )
+
+        if name == "urban central" and options.get("central_heat_vent"):
+            n.madd(
+                "Generator",
+                nodes[name] + f" {name} heat vent",
+                location=nodes[name],
+                carrier=name + " heat vent",
+                p_nom_extendable=True,
+                p_max_pu=0,
+                p_min_pu=-1,
+                unit="MWh_th",
+            )
 
         ## Add heat load
 
@@ -1953,7 +1959,7 @@ def add_heat(n, costs):
         # demand 'dE' [per unit of original heat demand] for each country and
         # different retrofitting strengths [additional insulation thickness in m]
         retro_data = pd.read_csv(
-            snakemake.input.retro_cost_energy,
+            snakemake.input.retro_cost,
             index_col=[0, 1],
             skipinitialspace=True,
             header=[0, 1],
@@ -1997,7 +2003,11 @@ def add_heat(n, costs):
             space_heat_demand = demand * w_space[sec][node]
             # normed time profile of space heat demand 'space_pu' (values between 0-1),
             # p_max_pu/p_min_pu of retrofitting generators
-            space_pu = (space_heat_demand / space_heat_demand.max()).to_frame(name=node)
+            space_pu = (
+                (space_heat_demand / space_heat_demand.max())
+                .to_frame(name=node)
+                .fillna(0)
+            )
 
             # minimum heat demand 'dE' after retrofitting in units of original heat demand (values between 0-1)
             dE = retro_data.loc[(ct, sec), ("dE")]
@@ -2009,6 +2019,9 @@ def add_heat(n, costs):
                 * floor_area_node
                 / ((1 - dE) * space_heat_demand.max())
             )
+            if space_heat_demand.max() == 0:
+                capital_cost = capital_cost.apply(lambda b: 0 if b == np.inf else b)
+
             # number of possible retrofitting measures 'strengths' (set in list at config.yaml 'l_strength')
             # given in additional insulation thickness [m]
             # for each measure, a retrofitting generator is added at the node

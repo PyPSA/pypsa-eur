@@ -28,6 +28,16 @@ idx = pd.IndexSlice
 opt_name = {"Store": "e", "Line": "s", "Transformer": "s"}
 
 
+def reindex_columns(df, cols):
+    investments = cols.levels[3]
+    if len(cols.names) != len(df.columns.levels):
+        df = pd.concat([df] * len(investments), axis=1)
+        df.columns = cols
+    df = df.reindex(cols, axis=1)
+
+    return df
+
+
 def calculate_costs(n, label, costs):
     investments = n.investment_periods
     cols = pd.MultiIndex.from_product(
@@ -39,7 +49,8 @@ def calculate_costs(n, label, costs):
         ],
         names=costs.columns.names[:3] + ["year"],
     )
-    costs = costs.reindex(cols, axis=1)
+
+    costs = reindex_columns(costs, cols)
 
     for c in n.iterate_components(
         n.branch_components | n.controllable_one_port_components ^ {"Load"}
@@ -176,7 +187,7 @@ def calculate_capacities(n, label, capacities):
         ],
         names=capacities.columns.names[:3] + ["year"],
     )
-    capacities = capacities.reindex(cols, axis=1)
+    capacities = reindex_columns(capacities, cols)
 
     for c in n.iterate_components(
         n.branch_components | n.controllable_one_port_components ^ {"Load"}
@@ -229,7 +240,7 @@ def calculate_energy(n, label, energy):
         ],
         names=energy.columns.names[:3] + ["year"],
     )
-    energy = energy.reindex(cols, axis=1)
+    energy = reindex_columns(energy, cols)
 
     for c in n.iterate_components(n.one_port_components | n.branch_components):
         if c.name in n.one_port_components:
@@ -336,7 +347,7 @@ def calculate_supply_energy(n, label, supply_energy):
         ],
         names=supply_energy.columns.names[:3] + ["year"],
     )
-    supply_energy = supply_energy.reindex(cols, axis=1)
+    supply_energy = reindex_columns(supply_energy, cols)
 
     bus_carriers = n.buses.carrier.unique()
 
@@ -604,7 +615,7 @@ def calculate_price_statistics(n, label, price_statistics):
     price_statistics.at["mean", label] = n.buses_t.marginal_price[buses].mean().mean()
 
     price_statistics.at["standard_deviation", label] = (
-        n.buses_t.marginal_price[buses].droplevel(0).unstack().std()
+        n.buses_t.marginal_price[buses].std().std()
     )
 
     return price_statistics
@@ -706,7 +717,6 @@ def to_csv(df):
         df[key].to_csv(snakemake.output[key])
 
 
-# %%
 if __name__ == "__main__":
     # Detect running outside of snakemake and mock snakemake for testing
     if "snakemake" not in globals():
