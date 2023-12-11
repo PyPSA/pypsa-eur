@@ -35,6 +35,16 @@ Upcoming Release
 
 * The ``mock_snakemake`` function can now be used with a Snakefile from a different directory using the new ``root_dir`` argument.
 
+* Merged option to extend geographical scope to Ukraine and Moldova. These
+  countries are excluded by default and is currently constrained to power-sector
+  only parts of the workflow. A special config file
+  `config/config.entsoe-all.yaml` was added as an example to run the workflow
+  with all ENTSO-E member countries (including observer members like Ukraine and
+  Moldova). Moldova can currently only be included in conjunction with Ukraine
+  due to the absence of demand data. The Crimean power system is manually
+  reconnected to the main Ukrainian grid with the configuration option
+  `reconnect_crimea`.
+
 
 **Bugs and Compatibility**
 
