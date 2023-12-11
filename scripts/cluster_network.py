@@ -16,8 +16,7 @@ Relevant Settings
     clustering:
       cluster_network:
       aggregation_strategies:
-
-    focus_weights:
+      focus_weights:
 
     solving:
         solver:
