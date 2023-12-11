@@ -150,7 +150,9 @@ def prepare_building_stock_data():
 
     """
     # building_data = pd.read_csv(snakemake.input.building_stock, usecols=list(range(13)))
-    building_data = pd.read_csv(snakemake.input.building_stock, sep="|", usecols=list(range(13)))
+    building_data = pd.read_csv(
+        snakemake.input.building_stock, sep="|", usecols=list(range(13))
+    )
 
     # standardize data
     building_data["type"].replace(
