@@ -39,6 +39,7 @@ Upcoming Release
 **Bugs and Compatibility**
 
 * A bug preventing custom powerplants specified in ``data/custom_powerplants.csv`` was fixed. (https://github.com/PyPSA/pypsa-eur/pull/732)
+* Fix nodal fraction in ``add_existing_year`` when using distributed generators
 
 
 PyPSA-Eur 0.8.1 (27th July 2023)
