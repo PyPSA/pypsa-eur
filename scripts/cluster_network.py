@@ -469,6 +469,9 @@ if __name__ == "__main__":
 
     n = pypsa.Network(snakemake.input.network)
 
+    # remove integer outputs for compatibility with PyPSA v0.26.0
+    n.generators.drop("n_mod", axis=1, inplace=True, errors='ignore')
+
     exclude_carriers = params.cluster_network["exclude_carriers"]
     aggregate_carriers = set(n.generators.carrier) - set(exclude_carriers)
     conventional_carriers = set(params.conventional_carriers)
