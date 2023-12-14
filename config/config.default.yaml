@@ -18,8 +18,6 @@ remote:
   ssh: ""
   path: ""
 
-focus_weights: false
-
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
   name: ""
@@ -88,7 +86,7 @@ co2_budget:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
-  voltages: [220., 300., 380.]
+  voltages: [220., 300., 380., 500., 750.]
   gaslimit: false
   co2limit: 7.75e+7
   co2base: 1.487e+9
@@ -137,14 +135,14 @@ atlite:
       # module: era5
     europe-2013-era5:
       module: era5 # in priority order
-      x: [-12., 35.]
+      x: [-12., 42.]
       y: [33., 72]
       dx: 0.3
       dy: 0.3
       time: ['2013', '2013']
     europe-2013-sarah:
       module: [sarah, era5] # in priority order
-      x: [-12., 45.]
+      x: [-12., 42.]
       y: [33., 65]
       dx: 0.2
       dy: 0.2
@@ -237,10 +235,13 @@ lines:
     220.: "Al/St 240/40 2-bundle 220.0"
     300.: "Al/St 240/40 3-bundle 300.0"
     380.: "Al/St 240/40 4-bundle 380.0"
+    500.: "Al/St 240/40 4-bundle 380.0"
+    750.: "Al/St 560/50 4-bundle 750.0"
   s_max_pu: 0.7
   s_nom_max: .inf
   max_extension: .inf
   length_factor: 1.25
+  reconnect_crimea: true
   under_construction: 'zero' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
   dynamic_line_rating:
     activate: false
@@ -449,6 +450,7 @@ sector:
   methanation: true
   helmeth: false
   coal_cc: false
+  coal_for_industry_cc: false
   dac: true
   co2_vent: false
   central_heat_vent: false
@@ -597,6 +599,7 @@ costs:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#clustering
 clustering:
+  focus_weights: false
   simplify_network:
     to_substations: false
     algorithm: kmeans # choose from: [hac, kmeans]
@@ -722,6 +725,7 @@ plotting:
     H2: "Hydrogen Storage"
     lines: "Transmission Lines"
     ror: "Run of River"
+    load: "Load Shedding"
     ac: "AC"
     dc: "DC"
 
@@ -988,3 +992,4 @@ plotting:
     DC: "#8a1caf"
     DC-DC: "#8a1caf"
     DC link: "#8a1caf"
+    load: "#dd2e23"

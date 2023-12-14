@@ -145,6 +145,8 @@ def define_spatial(nodes, options):
     spatial.coal = SimpleNamespace()
     spatial.coal.nodes = ["EU coal"]
     spatial.coal.locations = ["EU"]
+    spatial.coal.industry = ["coal for industry"]
+    spatial.coal.industry_cc = ["coal for industry CC"]
 
     # lignite
     spatial.lignite = SimpleNamespace()
@@ -2003,7 +2005,11 @@ def add_heat(n, costs):
             space_heat_demand = demand * w_space[sec][node]
             # normed time profile of space heat demand 'space_pu' (values between 0-1),
             # p_max_pu/p_min_pu of retrofitting generators
-            space_pu = (space_heat_demand / space_heat_demand.max()).to_frame(name=node)
+            space_pu = (
+                (space_heat_demand / space_heat_demand.max())
+                .to_frame(name=node)
+                .fillna(0)
+            )
 
             # minimum heat demand 'dE' after retrofitting in units of original heat demand (values between 0-1)
             dE = retro_data.loc[(ct, sec), ("dE")]
@@ -2015,6 +2021,9 @@ def add_heat(n, costs):
                 * floor_area_node
                 / ((1 - dE) * space_heat_demand.max())
             )
+            if space_heat_demand.max() == 0:
+                capital_cost = capital_cost.apply(lambda b: 0 if b == np.inf else b)
+
             # number of possible retrofitting measures 'strengths' (set in list at config.yaml 'l_strength')
             # given in additional insulation thickness [m]
             # for each measure, a retrofitting generator is added at the node
@@ -2908,13 +2917,54 @@ def add_industry(n, costs):
         ) / nhours
 
         n.madd(
+            "Bus",
+            spatial.coal.industry,
+            location=spatial.coal.locations,
+            carrier="coal for industry",
+            unit="MWh_LHV",
+        )
+
+        n.madd(
             "Load",
-            spatial.coal.nodes,
-            suffix=" for industry",
-            bus=spatial.coal.nodes,
+            spatial.coal.industry,
+            bus=spatial.coal.industry,
             carrier="coal for industry",
             p_set=p_set,
         )
+
+        n.madd(
+            "Link",
+            spatial.coal.industry,
+            bus0=spatial.coal.nodes,
+            bus1=spatial.coal.industry,
+            bus2="co2 atmosphere",
+            carrier="coal for industry",
+            p_nom_extendable=True,
+            p_min_pu=1.0,
+            efficiency=1.0,
+            efficiency2=costs.at["coal", "CO2 intensity"],
+        )
+
+        if options.get("coal_for_industry_cc", False):
+            n.madd(
+                "Link",
+                spatial.coal.industry_cc,
+                bus0=spatial.coal.nodes,
+                bus1=spatial.coal.industry,
+                bus2="co2 atmosphere",
+                bus3=spatial.co2.nodes,
+                carrier="coal for industry CC",
+                p_min_pu=1.0,
+                p_nom_extendable=True,
+                capital_cost=costs.at["cement capture", "fixed"]
+                * costs.at["coal", "CO2 intensity"],
+                efficiency=0.9,
+                efficiency2=costs.at["coal", "CO2 intensity"]
+                * (1 - costs.at["cement capture", "capture_rate"]),
+                efficiency3=costs.at["coal", "CO2 intensity"]
+                * costs.at["cement capture", "capture_rate"],
+                lifetime=costs.at["cement capture", "lifetime"],
+            )
 
 
 def add_waste_heat(n):

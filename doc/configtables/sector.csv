@@ -73,6 +73,7 @@ marginal_cost_storage,currency/MWh ,float,The marginal cost of discharging batte
 methanation,--,"{true, false}",Add option for transforming hydrogen and CO2 into methane using methanation.
 helmeth,--,"{true, false}",Add option for transforming power into gas using HELMETH (Integrated High-Temperature ELectrolysis and METHanation for Effective Power to Gas Conversion)
 coal_cc,--,"{true, false}",Add option for coal CHPs with carbon capture
+coal_for_industry_cc,--,"{true, false}",Add option for carbon capture in integrated steel making (blast furnaces)
 dac,--,"{true, false}",Add option for Direct Air Capture (DAC)
 co2_vent,--,"{true, false}",Add option for vent out CO2 from storages to the atmosphere.
 allam_cycle,--,"{true, false}",Add option to include `Allam cycle gas power plants <https://en.wikipedia.org/wiki/Allam_power_cycle>`_
