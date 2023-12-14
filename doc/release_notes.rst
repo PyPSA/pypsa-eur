@@ -12,8 +12,6 @@ Upcoming Release
 
 * Updated Global Energy Monitor LNG terminal data to March 2023 version.
 
-* Add option for carbon capture in integrated steelworks.
-
 * For industry distribution, use EPRTR as fallback if ETS data is not available.
 
 * The minimum capacity for renewable generators when using the myopic option has been fixed.
