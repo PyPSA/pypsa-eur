@@ -450,7 +450,6 @@ sector:
   methanation: true
   helmeth: false
   coal_cc: false
-  coal_for_industry_cc: false
   dac: true
   co2_vent: false
   central_heat_vent: false
