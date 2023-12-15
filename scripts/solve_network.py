@@ -905,7 +905,7 @@ def extra_functionality(n, snapshots):
         sys.path.append(os.path.dirname(snakemake.input.additional_functionality))
         additional_functionality = importlib.import_module(os.path.splitext(os.path.basename(snakemake.input.additional_functionality))[0])
 
-        additional_functionality.additional_functionality(n, snapshots, snakemake.wildcards.planning_horizons)
+        additional_functionality.additional_functionality(n, snapshots, snakemake.wildcards, config)
 
 
 def solve_network(n, config, solving, opts="", **kwargs):
