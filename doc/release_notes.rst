@@ -33,12 +33,27 @@ Upcoming Release
 
 * Split configuration to enable SMR and SMR CC.
 
+* The configuration setting for country focus weights when clustering the
+  network has been moved from ``focus_weights:`` to ``clustering:
+  focus_weights:``. Backwards compatibility to old config files is maintained.
+
 * The ``mock_snakemake`` function can now be used with a Snakefile from a different directory using the new ``root_dir`` argument.
+
+* Merged option to extend geographical scope to Ukraine and Moldova. These
+  countries are excluded by default and is currently constrained to power-sector
+  only parts of the workflow. A special config file
+  `config/config.entsoe-all.yaml` was added as an example to run the workflow
+  with all ENTSO-E member countries (including observer members like Ukraine and
+  Moldova). Moldova can currently only be included in conjunction with Ukraine
+  due to the absence of demand data. The Crimean power system is manually
+  reconnected to the main Ukrainian grid with the configuration option
+  `reconnect_crimea`.
 
 
 **Bugs and Compatibility**
 
 * A bug preventing custom powerplants specified in ``data/custom_powerplants.csv`` was fixed. (https://github.com/PyPSA/pypsa-eur/pull/732)
+* Fix nodal fraction in ``add_existing_year`` when using distributed generators
 
 
 PyPSA-Eur 0.8.1 (27th July 2023)

@@ -2,6 +2,9 @@
 #
 # SPDX-License-Identifier: MIT
 
+import requests
+from datetime import datetime, timedelta
+
 if config["enable"].get("retrieve", "auto") == "auto":
     config["enable"]["retrieve"] = has_internet_access()
 
@@ -195,7 +198,7 @@ if config["enable"]["retrieve"]:
                 static=True,
             ),
         output:
-            "data/load_raw.csv",
+            RESOURCES + "load_raw.csv",
         log:
             LOGS + "retrieve_electricity_demand.log",
         resources:
@@ -223,6 +226,87 @@ if config["enable"]["retrieve"]:
         retries: 2
         run:
             move(input[0], output[0])
+
+if config["enable"]["retrieve"]:
+
+    # Downloading Copernicus Global Land Cover for land cover and land use:
+    # Website: https://land.copernicus.eu/global/products/lc
+    rule download_copernicus_land_cover:
+        input:
+            HTTP.remote(
+                "zenodo.org/record/3939050/files/PROBAV_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
+                static=True,
+            ),
+        output:
+            RESOURCES + "Copernicus_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
+        run: move(input[0], output[0])
+
+
+if config["enable"]["retrieve"]:
+
+    current_month = datetime.now().strftime('%b')
+    current_year = datetime.now().strftime('%Y')
+    bYYYY = f"{current_month}{current_year}"
+
+    def check_file_exists(url):
+        response = requests.head(url)
+        return response.status_code == 200
+
+    url = f'https://d1gam3xoknrgr2.cloudfront.net/current/WDPA_{bYYYY}_Public.zip'
+
+    if not check_file_exists(url):
+        prev_month = (datetime.now()-timedelta(30)).strftime('%b')
+        bYYYY = f"{prev_month}{current_year}"
+        assert check_file_exists(f'https://d1gam3xoknrgr2.cloudfront.net/current/WDPA_{bYYYY}_Public.zip'), "The file does not exist."
+
+    # Downloading protected area database from WDPA
+    # extract the main zip and then merge the contained 3 zipped shapefiles
+    # Website: https://www.protectedplanet.net/en/thematic-areas/wdpa
+    rule download_wdpa:
+        input:
+            HTTP.remote(
+                f"d1gam3xoknrgr2.cloudfront.net/current/WDPA_{bYYYY}_Public_shp.zip",
+                static=True,
+                keep_local=True,
+            )
+        params:
+            zip=RESOURCES + f"WDPA_{bYYYY}_shp.zip",
+            folder=directory(RESOURCES + f"WDPA_{bYYYY}"),
+        output:
+            gpkg=RESOURCES + f"WDPA_{bYYYY}.gpkg",
+        run:
+            shell("cp {input} {params.zip}")
+            shell("unzip -o {params.zip} -d {params.folder}")
+            for i in range(3):
+                # vsizip is special driver for directly working with zipped shapefiles in ogr2ogr
+                layer_path = f"/vsizip/{params.folder}/WDPA_{bYYYY}_Public_shp_{i}.zip"
+                print(f"Adding layer {i+1} of 3 to combined output file.")
+                shell("ogr2ogr -f gpkg -update -append {output.gpkg} {layer_path}")
+
+
+    # Downloading Marine protected area database from WDPA
+    # extract the main zip and then merge the contained 3 zipped shapefiles
+    # Website: https://www.protectedplanet.net/en/thematic-areas/marine-protected-areas
+    rule download_wdpa_marine:
+        input:
+            HTTP.remote(
+                f"d1gam3xoknrgr2.cloudfront.net/current/WDPA_WDOECM_{bYYYY}_Public_marine_shp.zip",
+                static=True,
+                keep_local=True,
+            ),
+        params:
+            zip=RESOURCES + f"WDPA_WDOECM_{bYYYY}_marine.zip",
+            folder=directory(RESOURCES + f"WDPA_WDOECM_{bYYYY}_marine"),
+        output:
+            gpkg=RESOURCES + f"WDPA_WDOECM_{bYYYY}_marine.gpkg",
+        run:
+            shell("cp {input} {params.zip}")
+            shell("unzip -o {params.zip} -d {params.folder}")
+            for i in range(3):
+                # vsizip is special driver for directly working with zipped shapefiles in ogr2ogr
+                layer_path = f"/vsizip/{params.folder}/WDPA_WDOECM_{bYYYY}_Public_marine_shp_{i}.zip"
+                print(f"Adding layer {i+1} of 3 to combined output file.")
+                shell("ogr2ogr -f gpkg -update -append {output.gpkg} {layer_path}")
 
 
 if config["enable"]["retrieve"]:

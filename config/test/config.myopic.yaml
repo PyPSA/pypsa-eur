@@ -30,6 +30,9 @@ snapshots:
   start: "2013-03-01"
   end: "2013-03-08"
 
+sector:
+  central_heat_vent: true
+
 electricity:
   co2limit: 100.e+6
 
