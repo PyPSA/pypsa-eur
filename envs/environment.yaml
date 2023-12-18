@@ -11,7 +11,7 @@ dependencies:
 - pip
 
 - atlite>=0.2.9
-- pypsa
+- pypsa>=0.26.0
 - linopy
 - dask
 
@@ -27,9 +27,9 @@ dependencies:
 - lxml
 - powerplantmatching>=0.5.5
 - numpy
-- pandas>=1.4
+- pandas>=2.1
 - geopandas>=0.11.0
-- xarray
+- xarray<=2023.8.0
 - rioxarray
 - netcdf4
 - networkx
@@ -46,6 +46,7 @@ dependencies:
 - tabula-py
 - pyxlsb
 - graphviz
+- ipopt
 
   # Keep in conda environment when calling ipython
 - ipython
