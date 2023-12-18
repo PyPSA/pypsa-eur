@@ -243,7 +243,7 @@ def _aggregate_and_move_components(
     def replace_components(n, c, df, pnl):
         n.mremove(c, n.df(c).index)
 
-        import_components_from_dataframe(n, df, c)
+        import_components_from_dataframe(n, df.fillna(0), c)
         for attr, df in pnl.items():
             if not df.empty:
                 import_series_from_dataframe(n, df, c, attr)
