@@ -560,7 +560,7 @@ def _set_countries_and_substations(n, config, country_shapes, offshore_shapes):
         ~buses["under_construction"]
     )
 
-    c_nan_b = buses.country == 'na'
+    c_nan_b = buses.country == "na"
     if c_nan_b.sum() > 0:
         c_tag = _get_country(buses.loc[c_nan_b])
         c_tag.loc[~c_tag.isin(countries)] = np.nan
