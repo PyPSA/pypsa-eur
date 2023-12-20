@@ -259,17 +259,3 @@ if config["enable"]["retrieve"]:
             "../envs/environment.yaml"
         script:
             "../scripts/retrieve_monthly_fuel_prices.py"
-
-
-rule modify_cost_data:
-    input:
-        costs="data/costs_{year}.csv",
-    output:
-        "data/costs_{year}-modified.csv"
-    log:
-        LOGS + "modify_cost_data_{year}.log",
-    resources:
-        mem_mb=1000,
-    retries: 2
-    script:
-        "../scripts/modify_cost_data.py"

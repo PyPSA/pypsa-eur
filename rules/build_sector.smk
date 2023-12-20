@@ -743,9 +743,9 @@ rule prepare_sector_network:
         else RESOURCES
         + "biomass_potentials_s{simpl}_{clusters}_{planning_horizons}.csv",
         heat_profile="data/heat_load_profile_BDEW.csv",
-        costs="data/costs_{}-modified.csv".format(config["costs"]["year"])
+        costs="data/costs_{}.csv".format(config["costs"]["year"])
         if config["foresight"] == "overnight"
-        else "data/costs_{planning_horizons}-modified.csv",
+        else "data/costs_{planning_horizons}.csv",
         profile_offwind_ac=RESOURCES + "profile_offwind-ac.nc",
         profile_offwind_dc=RESOURCES + "profile_offwind-dc.nc",
         h2_cavern=RESOURCES + "salt_cavern_potentials_s{simpl}_{clusters}.csv",
