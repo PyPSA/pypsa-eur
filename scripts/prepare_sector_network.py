@@ -1986,7 +1986,12 @@ def add_heat(n, costs):
             ct = pop_layout.loc[node, "ct"]
 
             # weighting 'f' depending on the size of the population at the node
-            f = urban_fraction[node] if "urban" in name else (1 - urban_fraction[node])
+            if "urban central" in name:
+                f = dist_fraction[node]
+            elif "urban decentral" in name:
+                f = urban_fraction[node] - dist_fraction[node]
+            else:
+                f = 1 - urban_fraction[node]            
             if f == 0:
                 continue
             # get sector name ("residential"/"services"/or both "tot" for urban central)
