@@ -1990,9 +1990,12 @@ def add_heat(n, costs):
             if f == 0:
                 continue
             # get sector name ("residential"/"services"/or both "tot" for urban central)
-            if 'urban central' in name: sec = 'tot'
-            if 'residential' in name: sec = 'residential'
-            if 'services' in name: sec = 'services'
+            if "urban central" in name:
+                sec = "tot"
+            if "residential" in name:
+                sec = "residential"
+            if "services" in name:
+                sec = "services"
 
             # get floor aread at node and region (urban/rural) in m^2
             floor_area_node = (
