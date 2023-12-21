@@ -2045,7 +2045,7 @@ def add_heat(n, costs):
 
             # add for each retrofitting strength a generator with heat generation profile following the profile of the heat demand
             for strength in strengths:
-                node_name = " ".join([i for i in name.split(" ")[2::]])
+                node_name = " ".join(name.split(" ")[2::])
                 n.madd(
                     "Generator",
                     [node],
