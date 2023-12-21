@@ -471,6 +471,8 @@ sector:
   SMR: true
   SMR_cc: true
   co2_budget_national: false
+  regional_methanol_demand: false  #set to true if regional CO2 constraints needed
+  regional_oil_demand: false  #set to true if regional CO2 constraints needed
   regional_co2_sequestration_potential:
     enable: false
     attribute: 'conservative estimate Mt'

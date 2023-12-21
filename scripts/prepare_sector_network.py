@@ -127,35 +127,42 @@ def define_spatial(nodes, options):
     spatial.h2.locations = nodes
 
     # methanol
+
+    #beware: unlike other carriers, uses locations rather than locations+carriername
+    #this allows to avoid separation between nodes and locations
+
     spatial.methanol = SimpleNamespace()
 
-    if options["co2_budget_national"]:
-        spatial.methanol.nodes = nodes + " methanol"
-        spatial.methanol.locations = nodes
+    spatial.methanol.nodes = ["EU methanol"]
+    spatial.methanol.locations = ["EU"]
+
+    if options["regional_methanol_demand"]:
+        spatial.methanol.demand_locations = nodes
         spatial.methanol.shipping = nodes + " shipping methanol"
     else:
-        spatial.methanol.nodes = ["EU methanol"]
-        spatial.methanol.locations = ["EU"]
+        spatial.methanol.demand_locations = ["EU"]
         spatial.methanol.shipping = ["EU shipping methanol"]
 
     # oil
     spatial.oil = SimpleNamespace()
 
-    if options["co2_budget_national"]:
-        spatial.oil.nodes = nodes + " oil"
-        spatial.oil.locations = nodes
+    spatial.oil.nodes = ["EU oil"]
+    spatial.oil.locations = ["EU"]
+
+    if options["regional_oil_demand"]:
+        spatial.oil.demand_locations = nodes
         spatial.oil.naphtha = nodes + " naphtha for industry"
         spatial.oil.kerosene = nodes + " kerosene for aviation"
         spatial.oil.shipping = nodes + " shipping oil"
         spatial.oil.agriculture_machinery = nodes + " agriculture machinery oil"
+        spatial.oil.land_transport = nodes + " land transport oil"
     else:
-        spatial.oil.nodes = ["EU oil"]
-        spatial.oil.locations = ["EU"]
+        spatial.oil.demand_locations = ["EU"]
         spatial.oil.naphtha = ["EU naphtha for industry"]
         spatial.oil.kerosene = ["EU kerosene for aviation"]
         spatial.oil.shipping = ["EU shipping oil"]
         spatial.oil.agriculture_machinery = ["EU agriculture machinery oil"]
-    spatial.oil.land_transport = nodes + " land transport oil"
+        spatial.oil.land_transport = ["EU land transport oil"]
 
     # uranium
     spatial.uranium = SimpleNamespace()
@@ -1588,10 +1595,15 @@ def add_land_transport(n, costs):
 
         ice_efficiency = options["transport_internal_combustion_efficiency"]
 
+        p_set_land_transport_oil = ice_share / ice_efficiency * transport[nodes].rename(columns=lambda x: x + " land transport oil")
+
+        if not options["regional_oil_demand"]:
+            p_set_land_transport_oil = p_set_land_transport_oil.sum(axis=1).to_frame(name="EU land transport oil")
+
         n.madd(
             "Bus",
             spatial.oil.land_transport,
-            location=nodes,
+            location=spatial.oil.demand_locations,
             carrier="land transport oil",
             unit="land transport",
         )
@@ -1601,7 +1613,7 @@ def add_land_transport(n, costs):
             spatial.oil.land_transport,
             bus=spatial.oil.land_transport,
             carrier="land transport oil",
-            p_set=ice_share / ice_efficiency * transport[nodes].rename(columns=lambda x: x + " land transport oil"),
+            p_set=p_set_land_transport_oil,
         )
 
         n.madd(
@@ -2638,16 +2650,15 @@ def add_industry(n, costs):
             options["shipping_oil_efficiency"] / options["shipping_methanol_efficiency"]
         )
 
-        # need to aggregate potentials if methanol not nodally resolved
-        if options["co2_budget_national"]:
-            p_set_methanol = shipping_methanol_share * p_set.rename(lambda x : x + " shipping methanol") * efficiency
-        else:
-            p_set_methanol = shipping_methanol_share * p_set.sum() * efficiency
+        p_set_methanol = shipping_methanol_share * p_set.rename(lambda x : x + " shipping methanol") * efficiency
+
+        if not options["regional_methanol_demand"]:
+            p_set_methanol = p_set_methanol.sum()
 
         n.madd(
             "Bus",
             spatial.methanol.shipping,
-            location=spatial.methanol.locations,
+            location=spatial.methanol.demand_locations,
             carrier="shipping methanol",
             unit="MWh_LHV",
         )
@@ -2684,7 +2695,8 @@ def add_industry(n, costs):
         # could correct to e.g. 0.001 EUR/kWh * annuity and O&M
         n.madd(
             "Store",
-            [oil_bus + " Store" for oil_bus in spatial.oil.nodes],
+            spatial.oil.nodes,
+            suffix=" Store",
             bus=spatial.oil.nodes,
             e_nom_extendable=True,
             e_cyclic=True,
@@ -2702,16 +2714,16 @@ def add_industry(n, costs):
         )
 
     if shipping_oil_share:
-        # need to aggregate potentials if oil not nodally resolved
-        if options["co2_budget_national"]:
-            p_set_oil = shipping_oil_share * p_set.rename(lambda x: x + " shipping oil")
-        else:
-            p_set_oil = shipping_oil_share * p_set.sum()
+
+        p_set_oil = shipping_oil_share * p_set.rename(lambda x: x + " shipping oil")
+
+        if not options["regional_oil_demand"]:
+            p_set_oil = p_set_oil.sum()
 
         n.madd(
             "Bus",
             spatial.oil.shipping,
-            location=spatial.oil.locations,
+            location=spatial.oil.demand_locations,
             carrier="shipping oil",
             unit="MWh_LHV",
         )
@@ -2781,15 +2793,15 @@ def add_industry(n, costs):
     if demand_factor != 1:
         logger.warning(f"Changing HVC demand by {demand_factor*100-100:+.2f}%.")
 
-    if options["co2_budget_national"]:
-        p_set_plastics = demand_factor * industrial_demand.loc[nodes, "naphtha"].rename(lambda x: x + " naphtha for industry") / nhours
-    else:
-        p_set_plastics = demand_factor * industrial_demand.loc[nodes, "naphtha"].sum() / nhours
+    p_set_plastics = demand_factor * industrial_demand.loc[nodes, "naphtha"].rename(lambda x: x + " naphtha for industry") / nhours
+
+    if not options["regional_oil_demand"]:
+        p_set_plastics = p_set_plastics.sum()
 
     n.madd(
         "Bus",
         spatial.oil.naphtha,
-        location=spatial.oil.locations,
+        location=spatial.oil.demand_locations,
         carrier="naphtha for industry",
         unit="MWh_LHV",
     )
@@ -2826,26 +2838,21 @@ def add_industry(n, costs):
         logger.warning(f"Changing aviation demand by {demand_factor*100-100:+.2f}%.")
 
     all_aviation = ["total international aviation", "total domestic aviation"]
-    # need to aggregate potentials if oil not nodally resolved
-    if options["co2_budget_national"]:
-        p_set = (
+
+    p_set = (
             demand_factor
             * pop_weighted_energy_totals.loc[nodes, all_aviation].sum(axis=1)
             * 1e6
             / nhours
         ).rename(lambda x: x + " kerosene for aviation")
-    else:
-        p_set = (
-            demand_factor
-            * pop_weighted_energy_totals.loc[nodes, all_aviation].sum(axis=1).sum()
-            * 1e6
-            / nhours
-        )
+
+    if not options["regional_oil_demand"]:
+        p_set = p_set.sum()
 
     n.madd(
         "Bus",
         spatial.oil.kerosene,
-        location=spatial.oil.locations,
+        location=spatial.oil.demand_locations,
         carrier="kerosene for aviation",
         unit="MWh_LHV",
     )
@@ -3111,16 +3118,16 @@ def add_agriculture(n, costs):
         )
 
     if oil_share > 0:
-        # need to aggregate potentials if oil not nodally resolved
-        if options["co2_budget_national"]:
-            p_set = oil_share * machinery_nodal_energy.rename(lambda x: x + " agriculture machinery oil") / nhours
-        else:
-            p_set = oil_share * machinery_nodal_energy.sum() / nhours
+
+        p_set = oil_share * machinery_nodal_energy.rename(lambda x: x + " agriculture machinery oil") / nhours
+
+        if not options["regional_oil_demand"]:
+            p_set = p_set.sum()
 
         n.madd(
             "Bus",
             spatial.oil.agriculture_machinery,
-            location=spatial.oil.locations,
+            location=spatial.oil.demand_locations,
             carrier="agriculture machinery oil",
             unit="MWh_LHV",
         )
