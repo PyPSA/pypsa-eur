@@ -246,13 +246,12 @@ if config["enable"]["retrieve"]:
 
 
 if config["enable"]["retrieve"]:
-
     # Some logic to find the correct file URL
     # Sometimes files are released delayed or ahead of schedule, check which file is currently available
 
     def check_file_exists(url):
-            response = requests.head(url)
-            return response.status_code == 200
+        response = requests.head(url)
+        return response.status_code == 200
 
     # Basic pattern where WDPA files can be found
     url_pattern = "https://d1gam3xoknrgr2.cloudfront.net/current/WDPA_{bY}_Public.zip"
@@ -270,7 +269,9 @@ if config["enable"]["retrieve"]:
             # If None of the three URLs are working
             url = False
 
-    assert url, f"No WDPA files found at {url_pattern} for bY='{current_monthyear}, {prev_monthyear}, or {next_monthyear}'"
+    assert (
+        url
+    ), f"No WDPA files found at {url_pattern} for bY='{current_monthyear}, {prev_monthyear}, or {next_monthyear}'"
 
     # Downloading protected area database from WDPA
     # extract the main zip and then merge the contained 3 zipped shapefiles
