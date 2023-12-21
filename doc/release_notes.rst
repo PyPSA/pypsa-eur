@@ -31,6 +31,8 @@ Upcoming Release
 
 * Rule ``retrieve_irena`` get updated values for renewables capacities.
 
+* Rule ``retrieve_wdpa`` updated to not only check for current and previous, but also potentially next months dataset availability.
+
 * Split configuration to enable SMR and SMR CC.
 
 * The configuration setting for country focus weights when clustering the
