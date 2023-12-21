@@ -3415,7 +3415,7 @@ if __name__ == "__main__":
     if "I" in opts:
         add_industry(n, costs)
 
-    if "I" in opts and "H" in opts:
+    if "H" in opts:
         add_waste_heat(n)
 
     if "A" in opts:  # requires H and I
