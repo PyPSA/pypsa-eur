@@ -1991,7 +1991,7 @@ def add_heat(n, costs):
             elif "urban decentral" in name:
                 f = urban_fraction[node] - dist_fraction[node]
             else:
-                f = 1 - urban_fraction[node]            
+                f = 1 - urban_fraction[node]
             if f == 0:
                 continue
             # get sector name ("residential"/"services"/or both "tot" for urban central)
