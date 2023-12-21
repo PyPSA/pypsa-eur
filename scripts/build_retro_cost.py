@@ -534,15 +534,15 @@ def prepare_temperature_data():
     temperature = xr.open_dataarray(snakemake.input.air_temperature).to_pandas()
     d_heat = (
         temperature.T.groupby(temperature.columns.str[:2])
-        .mean().T
-        .resample("1D")
+        .mean()
+        .T.resample("1D")
         .mean()
         < t_threshold
     ).sum()
     temperature_average_d_heat = (
         temperature.T.groupby(temperature.columns.str[:2])
-        .mean().T
-        .apply(
+        .mean()
+        .T.apply(
             lambda x: get_average_temperature_during_heating_season(x, t_threshold=15)
         )
     )
@@ -839,8 +839,8 @@ def calculate_heat_losses(u_values, data_tabula, l_strength, temperature_factor)
 
     Q_ht = (
         heat_transfer_perm2.T.groupby(level=1)
-        .sum().T
-        .mul(F_red_temp.droplevel(0, axis=1))
+        .sum()
+        .T.mul(F_red_temp.droplevel(0, axis=1))
         .mul(temperature_factor.reindex(heat_transfer_perm2.index, level=0), axis=0)
     )
 
