@@ -1722,16 +1722,18 @@ def add_heat(n, costs):
 
             if sector in name:
                 heat_load = (
-                    heat_demand[[sector + " water", sector + " space"]].T
-                    .groupby(level=1)
-                    .sum().T[nodes[name]]
+                    heat_demand[[sector + " water", sector + " space"]]
+                    .T.groupby(level=1)
+                    .sum()
+                    .T[nodes[name]]
                     .multiply(factor)
                 )
 
         if name == "urban central":
             heat_load = (
                 heat_demand.T.groupby(level=1)
-                .sum().T[nodes[name]]
+                .sum()
+                .T[nodes[name]]
                 .multiply(
                     factor * (1 + options["district_heating"]["district_heating_loss"])
                 )
