@@ -10,6 +10,9 @@ Release Notes
 Upcoming Release
 ================
 
+* Pin ``snakemake`` version to below 8.0.0, as the new version is not yet
+  supported by ``pypsa-eur``.
+
 * Updated Global Energy Monitor LNG terminal data to March 2023 version.
 
 * For industry distribution, use EPRTR as fallback if ETS data is not available.
