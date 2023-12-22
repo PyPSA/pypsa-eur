@@ -254,7 +254,9 @@ if config["enable"]["retrieve"]:
         return response.status_code == 200
 
     # Basic pattern where WDPA files can be found
-    url_pattern = "https://d1gam3xoknrgr2.cloudfront.net/current/WDPA_{bYYYY}_Public.zip"
+    url_pattern = (
+        "https://d1gam3xoknrgr2.cloudfront.net/current/WDPA_{bYYYY}_Public.zip"
+    )
 
     # 3-letter month + 4 digit year for current/previous/next month to test
     current_monthyear = datetime.now().strftime("%b%Y")
