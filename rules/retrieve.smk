@@ -254,7 +254,7 @@ if config["enable"]["retrieve"]:
         return response.status_code == 200
 
     # Basic pattern where WDPA files can be found
-    url_pattern = "https://d1gam3xoknrgr2.cloudfront.net/current/WDPA_{bY}_Public.zip"
+    url_pattern = "https://d1gam3xoknrgr2.cloudfront.net/current/WDPA_{bYYYY}_Public.zip"
 
     # 3-letter month + 4 digit year for current/previous/next month to test
     current_monthyear = datetime.now().strftime("%b%Y")
@@ -262,8 +262,8 @@ if config["enable"]["retrieve"]:
     next_monthyear = (datetime.now() + timedelta(30)).strftime("%b%Y")
 
     # Test prioritised: current month -> previous -> next
-    for bY in [current_monthyear, prev_monthyear, next_monthyear]:
-        if check_file_exists(url := url_pattern.format(bY=bY)):
+    for bYYYY in [current_monthyear, prev_monthyear, next_monthyear]:
+        if check_file_exists(url := url_pattern.format(bYYYY=bYYYY)):
             break
         else:
             # If None of the three URLs are working
