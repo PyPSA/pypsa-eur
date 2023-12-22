@@ -24,7 +24,7 @@ rule build_electricity_demand:
         countries=config["countries"],
         load=config["load"],
     input:
-        ancient("data/load_raw.csv"),
+        ancient(RESOURCES + "load_raw.csv"),
     output:
         RESOURCES + "load.csv",
     log:
@@ -62,6 +62,9 @@ rule base_network:
     params:
         countries=config["countries"],
         snapshots=config["snapshots"],
+        lines=config["lines"],
+        links=config["links"],
+        transformers=config["transformers"],
     input:
         eg_buses="data/entsoegridkit/buses.csv",
         eg_lines="data/entsoegridkit/lines.csv",
@@ -203,10 +206,62 @@ rule build_ship_raster:
         "../scripts/build_ship_raster.py"
 
 
+rule determine_availability_matrix_MD_UA:
+    input:
+        copernicus=RESOURCES
+        + "Copernicus_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
+        wdpa=RESOURCES + f"WDPA_{bYYYY}.gpkg",
+        wdpa_marine=RESOURCES + f"WDPA_WDOECM_{bYYYY}_marine.gpkg",
+        gebco=lambda w: (
+            "data/bundle/GEBCO_2014_2D.nc"
+            if "max_depth" in config["renewable"][w.technology].keys()
+            else []
+        ),
+        ship_density=lambda w: (
+            RESOURCES + "shipdensity_raster.tif"
+            if "ship_threshold" in config["renewable"][w.technology].keys()
+            else []
+        ),
+        country_shapes=RESOURCES + "country_shapes.geojson",
+        offshore_shapes=RESOURCES + "offshore_shapes.geojson",
+        regions=lambda w: (
+            RESOURCES + "regions_onshore.geojson"
+            if w.technology in ("onwind", "solar")
+            else RESOURCES + "regions_offshore.geojson"
+        ),
+        cutout=lambda w: "cutouts/"
+        + CDIR
+        + config["renewable"][w.technology]["cutout"]
+        + ".nc",
+    output:
+        availability_matrix=RESOURCES + "availability_matrix_MD-UA_{technology}.nc",
+        availability_map=RESOURCES + "availability_matrix_MD-UA_{technology}.png",
+    log:
+        LOGS + "determine_availability_matrix_MD_UA_{technology}.log",
+    threads: ATLITE_NPROCESSES
+    resources:
+        mem_mb=ATLITE_NPROCESSES * 5000,
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/determine_availability_matrix_MD_UA.py"
+
+
+# Optional input when having Ukraine (UA) or Moldova (MD) in the countries list
+if {"UA", "MD"}.intersection(set(config["countries"])):
+    opt = {
+        "availability_matrix_MD_UA": RESOURCES
+        + "availability_matrix_MD-UA_{technology}.nc"
+    }
+else:
+    opt = {}
+
+
 rule build_renewable_profiles:
     params:
         renewable=config["renewable"],
     input:
+        **opt,
         base_network=RESOURCES + "networks/base.nc",
         corine=ancient("data/bundle/corine/g250_clc06_V18_5.tif"),
         natura=lambda w: (
@@ -223,7 +278,7 @@ rule build_renewable_profiles:
         ),
         ship_density=lambda w: (
             RESOURCES + "shipdensity_raster.tif"
-            if "ship_threshold" in config["renewable"][w.technology].keys()
+            if config["renewable"][w.technology].get("ship_threshold", False)
             else []
         ),
         country_shapes=RESOURCES + "country_shapes.geojson",
@@ -254,6 +309,24 @@ rule build_renewable_profiles:
         "../scripts/build_renewable_profiles.py"
 
 
+rule build_monthly_prices:
+    input:
+        co2_price_raw="data/validation/emission-spot-primary-market-auction-report-2019-data.xls",
+        fuel_price_raw="data/validation/energy-price-trends-xlsx-5619002.xlsx",
+    output:
+        co2_price=RESOURCES + "co2_price.csv",
+        fuel_price=RESOURCES + "monthly_fuel_price.csv",
+    log:
+        LOGS + "build_monthly_prices.log",
+    threads: 1
+    resources:
+        mem_mb=5000,
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_monthly_prices.py"
+
+
 rule build_hydro_profile:
     params:
         hydro=config["renewable"]["hydro"],
@@ -274,6 +347,30 @@ rule build_hydro_profile:
         "../scripts/build_hydro_profile.py"
 
 
+if config["lines"]["dynamic_line_rating"]["activate"]:
+
+    rule build_line_rating:
+        input:
+            base_network=RESOURCES + "networks/base.nc",
+            cutout="cutouts/"
+            + CDIR
+            + config["lines"]["dynamic_line_rating"]["cutout"]
+            + ".nc",
+        output:
+            output=RESOURCES + "networks/line_rating.nc",
+        log:
+            LOGS + "build_line_rating.log",
+        benchmark:
+            BENCHMARKS + "build_line_rating"
+        threads: ATLITE_NPROCESSES
+        resources:
+            mem_mb=ATLITE_NPROCESSES * 1000,
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/build_line_rating.py"
+
+
 rule add_electricity:
     params:
         length_factor=config["lines"]["length_factor"],
@@ -281,7 +378,7 @@ rule add_electricity:
         countries=config["countries"],
         renewable=config["renewable"],
         electricity=config["electricity"],
-        conventional=config.get("conventional", {}),
+        conventional=config["conventional"],
         costs=config["costs"],
     input:
         **{
@@ -291,17 +388,26 @@ rule add_electricity:
         **{
             f"conventional_{carrier}_{attr}": fn
             for carrier, d in config.get("conventional", {None: {}}).items()
+            if carrier in config["electricity"]["conventional_carriers"]
             for attr, fn in d.items()
             if str(fn).startswith("data/")
         },
         base_network=RESOURCES + "networks/base.nc",
+        line_rating=RESOURCES + "networks/line_rating.nc"
+        if config["lines"]["dynamic_line_rating"]["activate"]
+        else RESOURCES + "networks/base.nc",
         tech_costs=COSTS,
         regions=RESOURCES + "regions_onshore.geojson",
         powerplants=RESOURCES + "powerplants.csv",
         hydro_capacities=ancient("data/bundle/hydro_capacities.csv"),
         geth_hydro_capacities="data/geth2015_hydro_capacities.csv",
+        unit_commitment="data/unit_commitment.csv",
+        fuel_price=RESOURCES + "monthly_fuel_price.csv"
+        if config["conventional"]["dynamic_fuel_price"]
+        else [],
         load=RESOURCES + "load.csv",
         nuts3_shapes=RESOURCES + "nuts3_shapes.geojson",
+        ua_md_gdp="data/GDP_PPP_30arcsec_v3_mapped_default.csv",
     output:
         RESOURCES + "networks/elec.nc",
     log:
@@ -310,7 +416,7 @@ rule add_electricity:
         BENCHMARKS + "add_electricity"
     threads: 1
     resources:
-        mem_mb=5000,
+        mem_mb=10000,
     conda:
         "../envs/environment.yaml"
     script:
@@ -321,7 +427,9 @@ rule simplify_network:
     params:
         simplify_network=config["clustering"]["simplify_network"],
         aggregation_strategies=config["clustering"].get("aggregation_strategies", {}),
-        focus_weights=config.get("focus_weights", None),
+        focus_weights=config["clustering"].get(
+            "focus_weights", config.get("focus_weights")
+        ),
         renewable_carriers=config["electricity"]["renewable_carriers"],
         max_hours=config["electricity"]["max_hours"],
         length_factor=config["lines"]["length_factor"],
@@ -344,7 +452,7 @@ rule simplify_network:
         BENCHMARKS + "simplify_network/elec_s{simpl}"
     threads: 1
     resources:
-        mem_mb=4000,
+        mem_mb=12000,
     conda:
         "../envs/environment.yaml"
     script:
@@ -356,7 +464,9 @@ rule cluster_network:
         cluster_network=config["clustering"]["cluster_network"],
         aggregation_strategies=config["clustering"].get("aggregation_strategies", {}),
         custom_busmap=config["enable"].get("custom_busmap", False),
-        focus_weights=config.get("focus_weights", None),
+        focus_weights=config["clustering"].get(
+            "focus_weights", config.get("focus_weights")
+        ),
         renewable_carriers=config["electricity"]["renewable_carriers"],
         conventional_carriers=config["electricity"].get("conventional_carriers", []),
         max_hours=config["electricity"]["max_hours"],
@@ -385,7 +495,7 @@ rule cluster_network:
         BENCHMARKS + "cluster_network/elec_s{simpl}_{clusters}"
     threads: 1
     resources:
-        mem_mb=6000,
+        mem_mb=10000,
     conda:
         "../envs/environment.yaml"
     script:
@@ -408,7 +518,7 @@ rule add_extra_components:
         BENCHMARKS + "add_extra_components/elec_s{simpl}_{clusters}_ec"
     threads: 1
     resources:
-        mem_mb=3000,
+        mem_mb=4000,
     conda:
         "../envs/environment.yaml"
     script:
@@ -427,6 +537,7 @@ rule prepare_network:
     input:
         RESOURCES + "networks/elec_s{simpl}_{clusters}_ec.nc",
         tech_costs=COSTS,
+        co2_price=lambda w: RESOURCES + "co2_price.csv" if "Ept" in w.opts else [],
     output:
         RESOURCES + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
     log:

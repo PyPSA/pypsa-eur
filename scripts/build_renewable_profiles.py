@@ -186,6 +186,7 @@ import time
 import atlite
 import geopandas as gpd
 import numpy as np
+import pandas as pd
 import xarray as xr
 from _helpers import configure_logging
 from dask.distributed import Client
@@ -222,7 +223,8 @@ if __name__ == "__main__":
     else:
         client = None
 
-    cutout = atlite.Cutout(snakemake.input.cutout)
+    sns = pd.date_range(freq="h", **snakemake.config["snapshots"])
+    cutout = atlite.Cutout(snakemake.input.cutout).sel(time=sns)
     regions = gpd.read_file(snakemake.input.regions)
     assert not regions.empty, (
         f"List of regions in {snakemake.input.regions} is empty, please "
@@ -249,7 +251,7 @@ if __name__ == "__main__":
             snakemake.input.corine, codes=codes, buffer=buffer, crs=3035
         )
 
-    if "ship_threshold" in params:
+    if params.get("ship_threshold"):
         shipping_threshold = (
             params["ship_threshold"] * 8760 * 6
         )  # approximation because 6 years of data which is hourly collected
@@ -284,6 +286,14 @@ if __name__ == "__main__":
         logger.info(f"Completed availability calculation ({duration:2.2f}s)")
     else:
         availability = cutout.availabilitymatrix(regions, excluder, **kwargs)
+
+    # For Moldova and Ukraine: Overwrite parts not covered by Corine with
+    # externally determined available areas
+    if "availability_matrix_MD_UA" in snakemake.input.keys():
+        availability_MDUA = xr.open_dataarray(
+            snakemake.input["availability_matrix_MD_UA"]
+        )
+        availability.loc[availability_MDUA.coords] = availability_MDUA
 
     area = cutout.grid.to_crs(3035).area / 1e6
     area = xr.DataArray(
@@ -372,4 +382,6 @@ if __name__ == "__main__":
         ds["profile"] = ds["profile"].where(ds["profile"] >= min_p_max_pu, 0)
 
     ds.to_netcdf(snakemake.output.profile)
-    client.shutdown()
+
+    if client is not None:
+        client.shutdown()

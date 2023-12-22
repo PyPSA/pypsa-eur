@@ -102,7 +102,7 @@ solar_energy_transmittance = (
 )
 # solar global radiation [kWh/(m^2a)]
 solar_global_radiation = pd.Series(
-    [246, 401, 246, 148],
+    [271, 392, 271, 160],
     index=["east", "south", "west", "north"],
     name="solar_global_radiation [kWh/(m^2a)]",
 )
@@ -164,6 +164,12 @@ def prepare_building_stock_data():
         },
         inplace=True,
     )
+    building_data["feature"].replace(
+        {
+            "Construction features (U-value)": "Construction features (U-values)",
+        },
+        inplace=True,
+    )
 
     building_data.country_code = building_data.country_code.str.upper()
     building_data["subsector"].replace(
@@ -198,12 +204,14 @@ def prepare_building_stock_data():
         }
     )
 
+    building_data["country_code"] = building_data["country"].map(country_iso_dic)
+
     # heated floor area ----------------------------------------------------------
     area = building_data[
         (building_data.type == "Heated area [Mm²]")
         & (building_data.subsector != "Total")
     ]
-    area_tot = area.groupby(["country", "sector"]).sum()
+    area_tot = area[["country", "sector", "value"]].groupby(["country", "sector"]).sum()
     area = pd.concat(
         [
             area,
@@ -223,7 +231,7 @@ def prepare_building_stock_data():
         usecols=[0, 1, 2, 3],
         encoding="ISO-8859-1",
     )
-    area_tot = area_tot.append(area_missing.unstack(level=-1).dropna().stack())
+    area_tot = pd.concat([area_tot, area_missing.unstack(level=-1).dropna().stack()])
     area_tot = area_tot.loc[~area_tot.index.duplicated(keep="last")]
 
     # for still missing countries calculate floor area by population size
@@ -246,7 +254,7 @@ def prepare_building_stock_data():
         averaged_data.index = index
         averaged_data["estimated"] = 1
         if ct not in area_tot.index.levels[0]:
-            area_tot = area_tot.append(averaged_data, sort=True)
+            area_tot = pd.concat([area_tot, averaged_data], sort=True)
         else:
             area_tot.loc[averaged_data.index] = averaged_data
 
@@ -272,7 +280,7 @@ def prepare_building_stock_data():
             ][x["bage"]].iloc[0],
             axis=1,
         )
-        data_PL_final = data_PL_final.append(data_PL)
+        data_PL_final = pd.concat([data_PL_final, data_PL])
 
     u_values = pd.concat([u_values, data_PL_final]).reset_index(drop=True)
 
@@ -609,12 +617,11 @@ def calculate_costs(u_values, l, cost_retro, window_assumptions):
         / x.A_C_Ref
         if x.name[3] != "Window"
         else (
-            window_cost(x["new_U_{}".format(l)], cost_retro, window_assumptions)
-            * x.A_element
+            (window_cost(x[f"new_U_{l}"], cost_retro, window_assumptions) * x.A_element)
             / x.A_C_Ref
-            if x.value > window_limit(float(l), window_assumptions)
-            else 0
-        ),
+        )
+        if x.value > window_limit(float(l), window_assumptions)
+        else 0,
         axis=1,
     )
 
@@ -739,12 +746,12 @@ def calculate_heat_losses(u_values, data_tabula, l_strength, temperature_factor)
     #  (1) by transmission
     # calculate new U values of building elements due to additional insulation
     for l in l_strength:
-        u_values["new_U_{}".format(l)] = calculate_new_u(
+        u_values[f"new_U_{l}"] = calculate_new_u(
             u_values, l, l_weight, window_assumptions
         )
     # surface area of building components [m^2]
     area_element = (
-        data_tabula[["A_{}".format(e) for e in u_values.index.levels[3]]]
+        data_tabula[[f"A_{e}" for e in u_values.index.levels[3]]]
         .rename(columns=lambda x: x[2:])
         .stack()
         .unstack(-2)
@@ -756,7 +763,7 @@ def calculate_heat_losses(u_values, data_tabula, l_strength, temperature_factor)
 
     # heat transfer H_tr_e [W/m^2K] through building element
     # U_e * A_e / A_C_Ref
-    columns = ["value"] + ["new_U_{}".format(l) for l in l_strength]
+    columns = ["value"] + [f"new_U_{l}" for l in l_strength]
     heat_transfer = pd.concat(
         [u_values[columns].mul(u_values.A_element, axis=0), u_values.A_element], axis=1
     )
@@ -875,10 +882,7 @@ def calculate_gain_utilisation_factor(heat_transfer_perm2, Q_ht, Q_gain):
     alpha = alpha_H_0 + (tau / tau_H_0)
     # heat balance ratio
     gamma = (1 / Q_ht).mul(Q_gain.sum(axis=1), axis=0)
-    # gain utilisation factor
-    nu = (1 - gamma**alpha) / (1 - gamma ** (alpha + 1))
-
-    return nu
+    return (1 - gamma**alpha) / (1 - gamma ** (alpha + 1))
 
 
 def calculate_space_heat_savings(
@@ -947,7 +951,8 @@ def sample_dE_costs_area(
             .rename(index=rename_sectors, level=2)
             .reset_index()
         )
-        .rename(columns={"country": "country_code"})
+        # if uncommented, leads to the second `country_code` column
+        # .rename(columns={"country": "country_code"})
         .set_index(["country_code", "subsector", "bage"])
     )
 
@@ -960,13 +965,14 @@ def sample_dE_costs_area(
     )
 
     # map missing countries
-    for ct in countries.difference(cost_dE.index.levels[0]):
+    for ct in set(countries).difference(cost_dE.index.levels[0]):
         averaged_data = (
             cost_dE.reindex(index=map_for_missings[ct], level=0)
-            .mean(level=1)
+            .groupby(level=1)
+            .mean()
             .set_index(pd.MultiIndex.from_product([[ct], cost_dE.index.levels[1]]))
         )
-        cost_dE = cost_dE.append(averaged_data)
+        cost_dE = pd.concat([cost_dE, averaged_data])
 
     # weights costs after construction index
     if construction_index:
@@ -983,24 +989,23 @@ def sample_dE_costs_area(
     # drop not considered countries
     cost_dE = cost_dE.reindex(countries, level=0)
     # get share of residential and service floor area
-    sec_w = area_tot.value / area_tot.value.groupby(level=0).sum()
+    sec_w = area_tot.div(area_tot.groupby(level=0).transform("sum"))
     # get the total cost-energy-savings weight by sector area
     tot = (
-        cost_dE.mul(sec_w, axis=0)
-        .groupby(level="country_code")
+        # sec_w has columns "estimated" and "value"
+        cost_dE.mul(sec_w.value, axis=0)
+        # for some reasons names of the levels were lost somewhere
+        # .groupby(level="country_code")
+        .groupby(level=0)
         .sum()
-        .set_index(
-            pd.MultiIndex.from_product(
-                [cost_dE.index.unique(level="country_code"), ["tot"]]
-            )
-        )
+        .set_index(pd.MultiIndex.from_product([cost_dE.index.unique(level=0), ["tot"]]))
     )
-    cost_dE = cost_dE.append(tot).unstack().stack()
+    cost_dE = pd.concat([cost_dE, tot]).unstack().stack()
 
-    summed_area = pd.DataFrame(area_tot.groupby("country").sum()).set_index(
-        pd.MultiIndex.from_product([area_tot.index.unique(level="country"), ["tot"]])
+    summed_area = pd.DataFrame(area_tot.groupby(level=0).sum()).set_index(
+        pd.MultiIndex.from_product([area_tot.index.unique(level=0), ["tot"]])
     )
-    area_tot = area_tot.append(summed_area).unstack().stack()
+    area_tot = pd.concat([area_tot, summed_area]).unstack().stack()
 
     cost_per_saving = cost_dE["cost"] / (
         1 - cost_dE["dE"]

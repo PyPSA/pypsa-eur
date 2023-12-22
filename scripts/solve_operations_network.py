@@ -7,15 +7,12 @@ Solves linear optimal dispatch in hourly resolution using the capacities of
 previous capacity expansion in rule :mod:`solve_network`.
 """
 
+
 import logging
 
 import numpy as np
 import pypsa
-from _helpers import (
-    configure_logging,
-    override_component_attrs,
-    update_config_with_sector_opts,
-)
+from _helpers import configure_logging, update_config_with_sector_opts
 from solve_network import prepare_network, solve_network
 
 logger = logging.getLogger(__name__)
@@ -39,17 +36,13 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
 
-    opts = (snakemake.wildcards.opts + "-" + snakemake.wildcards.sector_opts).split("-")
+    opts = f"{snakemake.wildcards.opts}-{snakemake.wildcards.sector_opts}".split("-")
     opts = [o for o in opts if o != ""]
     solve_opts = snakemake.params.options
 
     np.random.seed(solve_opts.get("seed", 123))
 
-    if "overrides" in snakemake.input:
-        overrides = override_component_attrs(snakemake.input.overrides)
-        n = pypsa.Network(snakemake.input.network, override_component_attrs=overrides)
-    else:
-        n = pypsa.Network(snakemake.input.network)
+    n = pypsa.Network(snakemake.input.network)
 
     n.optimize.fix_optimal_capacities()
     n = prepare_network(n, solve_opts, config=snakemake.config)

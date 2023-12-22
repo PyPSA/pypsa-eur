@@ -72,92 +72,6 @@ def configure_logging(snakemake, skip_handlers=False):
     logging.basicConfig(**kwargs)
 
 
-def load_network(import_name=None, custom_components=None):
-    """
-    Helper for importing a pypsa.Network with additional custom components.
-
-    Parameters
-    ----------
-    import_name : str
-        As in pypsa.Network(import_name)
-    custom_components : dict
-        Dictionary listing custom components.
-        For using ``snakemake.params['override_components']``
-        in ``config/config.yaml`` define:
-
-        .. code:: yaml
-
-            override_components:
-                ShadowPrice:
-                    component: ["shadow_prices","Shadow price for a global constraint.",np.nan]
-                    attributes:
-                    name: ["string","n/a","n/a","Unique name","Input (required)"]
-                    value: ["float","n/a",0.,"shadow value","Output"]
-
-    Returns
-    -------
-    pypsa.Network
-    """
-    import pypsa
-    from pypsa.descriptors import Dict
-
-    override_components = None
-    override_component_attrs = None
-
-    if custom_components is not None:
-        override_components = pypsa.components.components.copy()
-        override_component_attrs = Dict(
-            {k: v.copy() for k, v in pypsa.components.component_attrs.items()}
-        )
-        for k, v in custom_components.items():
-            override_components.loc[k] = v["component"]
-            override_component_attrs[k] = pd.DataFrame(
-                columns=["type", "unit", "default", "description", "status"]
-            )
-            for attr, val in v["attributes"].items():
-                override_component_attrs[k].loc[attr] = val
-
-    return pypsa.Network(
-        import_name=import_name,
-        override_components=override_components,
-        override_component_attrs=override_component_attrs,
-    )
-
-
-def load_network_for_plots(fn, tech_costs, config, combine_hydro_ps=True):
-    import pypsa
-    from add_electricity import load_costs, update_transmission_costs
-
-    n = pypsa.Network(fn)
-
-    n.loads["carrier"] = n.loads.bus.map(n.buses.carrier) + " load"
-    n.stores["carrier"] = n.stores.bus.map(n.buses.carrier)
-
-    n.links["carrier"] = (
-        n.links.bus0.map(n.buses.carrier) + "-" + n.links.bus1.map(n.buses.carrier)
-    )
-    n.lines["carrier"] = "AC line"
-    n.transformers["carrier"] = "AC transformer"
-
-    n.lines["s_nom"] = n.lines["s_nom_min"]
-    n.links["p_nom"] = n.links["p_nom_min"]
-
-    if combine_hydro_ps:
-        n.storage_units.loc[
-            n.storage_units.carrier.isin({"PHS", "hydro"}), "carrier"
-        ] = "hydro+PHS"
-
-    # if the carrier was not set on the heat storage units
-    # bus_carrier = n.storage_units.bus.map(n.buses.carrier)
-    # n.storage_units.loc[bus_carrier == "heat","carrier"] = "water tanks"
-
-    Nyears = n.snapshot_weightings.objective.sum() / 8760.0
-    costs = load_costs(tech_costs, config["costs"], config["electricity"], Nyears)
-    update_transmission_costs(n, costs)
-
-    return n
-
-
 def update_p_nom_max(n):
     # if extendable carriers (solar/onwind/...) have capacity >= 0,
     # e.g. existing assets from the OPSD project are included to the network,
@@ -277,7 +191,7 @@ def progress_retrieve(url, file, disable=False):
             urllib.request.urlretrieve(url, file, reporthook=update_to)
 
 
-def mock_snakemake(rulename, configfiles=[], **wildcards):
+def mock_snakemake(rulename, root_dir=None, configfiles=[], **wildcards):
     """
     This function is expected to be executed from the 'scripts'-directory of '
     the snakemake project. It returns a snakemake.script.Snakemake object,
@@ -289,6 +203,8 @@ def mock_snakemake(rulename, configfiles=[], **wildcards):
     ----------
     rulename: str
         name of the rule for which the snakemake object should be generated
+    root_dir: str/path-like
+        path to the root directory of the snakemake project
     configfiles: list, str
         list of configfiles to be used to update the config
     **wildcards:
@@ -303,7 +219,10 @@ def mock_snakemake(rulename, configfiles=[], **wildcards):
     from snakemake.script import Snakemake
 
     script_dir = Path(__file__).parent.resolve()
-    root_dir = script_dir.parent
+    if root_dir is None:
+        root_dir = script_dir.parent
+    else:
+        root_dir = Path(root_dir).resolve()
 
     user_in_script_dir = Path.cwd().resolve() == script_dir
     if user_in_script_dir:
@@ -367,34 +286,6 @@ def mock_snakemake(rulename, configfiles=[], **wildcards):
     return snakemake
 
 
-def override_component_attrs(directory):
-    """
-    Tell PyPSA that links can have multiple outputs by overriding the
-    component_attrs. This can be done for as many buses as you need with format
-    busi for i = 2,3,4,5,.... See https://pypsa.org/doc/components.html#link-
-    with-multiple-outputs-or-inputs.
-
-    Parameters
-    ----------
-    directory : string
-        Folder where component attributes to override are stored
-        analogous to ``pypsa/component_attrs``, e.g. `links.csv`.
-
-    Returns
-    -------
-    Dictionary of overridden component attributes.
-    """
-    attrs = Dict({k: v.copy() for k, v in component_attrs.items()})
-
-    for component, list_name in components.list_name.items():
-        fn = f"{directory}/{list_name}.csv"
-        if os.path.isfile(fn):
-            overrides = pd.read_csv(fn, index_col=0, na_values="n/a")
-            attrs[component] = overrides.combine_first(attrs[component])
-
-    return attrs
-
-
 def generate_periodic_profiles(dt_index, nodes, weekly_profile, localize=None):
     """
     Give a 24*7 long list of weekly hourly profiles, generate this for each
@@ -417,10 +308,7 @@ def generate_periodic_profiles(dt_index, nodes, weekly_profile, localize=None):
 
 
 def parse(l):
-    if len(l) == 1:
-        return yaml.safe_load(l[0])
-    else:
-        return {l.pop(0): parse(l)}
+    return yaml.safe_load(l[0]) if len(l) == 1 else {l.pop(0): parse(l)}
 
 
 def update_config_with_sector_opts(config, sector_opts):

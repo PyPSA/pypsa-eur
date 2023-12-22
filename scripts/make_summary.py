@@ -16,7 +16,6 @@ import sys
 import numpy as np
 import pandas as pd
 import pypsa
-from _helpers import override_component_attrs
 from prepare_sector_network import prepare_costs
 
 idx = pd.IndexSlice
@@ -34,10 +33,7 @@ def assign_locations(n):
         ifind = pd.Series(c.df.index.str.find(" ", start=4), c.df.index)
         for i in ifind.unique():
             names = ifind.index[ifind == i]
-            if i == -1:
-                c.df.loc[names, "location"] = ""
-            else:
-                c.df.loc[names, "location"] = names.str[:i]
+            c.df.loc[names, "location"] = "" if i == -1 else names.str[:i]
 
 
 def calculate_nodal_cfs(n, label, nodal_cfs):
@@ -300,9 +296,9 @@ def calculate_energy(n, label, energy):
                 )
                 # remove values where bus is missing (bug in nomopyomo)
                 no_bus = c.df.index[c.df["bus" + port] == ""]
-                totals.loc[no_bus] = n.component_attrs[c.name].loc[
-                    "p" + port, "default"
-                ]
+                totals.loc[no_bus] = float(
+                    n.component_attrs[c.name].loc["p" + port, "default"]
+                )
                 c_energies -= totals.groupby(c.df.carrier).sum()
 
         c_energies = pd.concat([c_energies], keys=[c.list_name])
@@ -398,7 +394,7 @@ def calculate_supply_energy(n, label, supply_energy):
 
         for c in n.iterate_components(n.branch_components):
             for end in [col[3:] for col in c.df.columns if col[:3] == "bus"]:
-                items = c.df.index[c.df["bus" + str(end)].map(bus_map).fillna(False)]
+                items = c.df.index[c.df[f"bus{str(end)}"].map(bus_map).fillna(False)]
 
                 if len(items) == 0:
                     continue
@@ -494,7 +490,7 @@ def calculate_weighted_prices(n, label, weighted_prices):
         "H2": ["Sabatier", "H2 Fuel Cell"],
     }
 
-    for carrier in link_loads:
+    for carrier, value in link_loads.items():
         if carrier == "electricity":
             suffix = ""
         elif carrier[:5] == "space":
@@ -516,15 +512,15 @@ def calculate_weighted_prices(n, label, weighted_prices):
         else:
             load = n.loads_t.p_set[buses]
 
-        for tech in link_loads[carrier]:
+        for tech in value:
             names = n.links.index[n.links.index.to_series().str[-len(tech) :] == tech]
 
-            if names.empty:
-                continue
-
-            load += (
-                n.links_t.p0[names].groupby(n.links.loc[names, "bus0"], axis=1).sum()
-            )
+            if not names.empty:
+                load += (
+                    n.links_t.p0[names]
+                    .groupby(n.links.loc[names, "bus0"], axis=1)
+                    .sum()
+                )
 
         # Add H2 Store when charging
         # if carrier == "H2":
@@ -651,16 +647,11 @@ def make_summaries(networks_dict):
         networks_dict.keys(), names=["cluster", "ll", "opt", "planning_horizon"]
     )
 
-    df = {}
-
-    for output in outputs:
-        df[output] = pd.DataFrame(columns=columns, dtype=float)
-
+    df = {output: pd.DataFrame(columns=columns, dtype=float) for output in outputs}
     for label, filename in networks_dict.items():
         logger.info(f"Make summary for scenario {label}, using {filename}")
 
-        overrides = override_component_attrs(snakemake.input.overrides)
-        n = pypsa.Network(filename, override_component_attrs=overrides)
+        n = pypsa.Network(filename)
 
         assign_carriers(n)
         assign_locations(n)
@@ -713,5 +704,5 @@ if __name__ == "__main__":
     if snakemake.params.foresight == "myopic":
         cumulative_cost = calculate_cumulative_cost()
         cumulative_cost.to_csv(
-            "results/" + snakemake.params.RDIR + "/csvs/cumulative_cost.csv"
+            "results/" + snakemake.params.RDIR + "csvs/cumulative_cost.csv"
         )
