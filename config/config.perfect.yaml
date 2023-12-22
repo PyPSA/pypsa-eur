@@ -24,8 +24,11 @@ scenario:
   - 2p0-4380H-T-H-B-I-A-solar+p3-dist1
   planning_horizons:
   - 2020
+  - 2025
   - 2030
+  - 2035
   - 2040
+  - 2045
   - 2050
 
 
