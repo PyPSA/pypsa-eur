@@ -445,7 +445,7 @@ def add_CCL_constraints(n, config):
         )
 
 
-def add_EQ_constraints(n, level, by_country, config, scaling=1e-1):
+def add_EQ_constraints(n, level, by_country, config):
     """
     Add equity constraints to the network.
 
@@ -509,7 +509,13 @@ def add_EQ_constraints(n, level, by_country, config, scaling=1e-1):
     Parameters
     ----------
     n : pypsa.Network
-    o : str
+    level : float
+        The equity level, between 0 and 1.
+    by_country : bool
+        Whether to enforce the equity constraint on a country level
+        instead of a node level.
+    config : dict
+        The PyPSA-Eur configuration dictionary.
 
     Example
     -------
