@@ -467,7 +467,7 @@ def add_carrier_buses(n, carrier, nodes=None):
         * costs.at[carrier, "discount rate"],  # preliminary value to avoid zeros
     )
 
-    if carrier == 'gas':
+    if carrier == "gas":
         return
 
     n.madd(
