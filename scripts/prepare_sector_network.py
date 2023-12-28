@@ -1827,7 +1827,7 @@ def add_heat(n, costs):
                 lifetime=costs.at[name_type + " water tank storage", "lifetime"],
             )
 
-        if options["boilers"]:
+        if options["resistive_heaters"]:
             key = f"{name_type} resistive heater"
 
             n.madd(
@@ -1842,6 +1842,7 @@ def add_heat(n, costs):
                 lifetime=costs.at[key, "lifetime"],
             )
 
+        if options["boilers"]:
             key = f"{name_type} gas boiler"
 
             n.madd(
@@ -3415,7 +3416,7 @@ if __name__ == "__main__":
     if "I" in opts:
         add_industry(n, costs)
 
-    if "I" in opts and "H" in opts:
+    if "H" in opts:
         add_waste_heat(n)
 
     if "A" in opts:  # requires H and I
