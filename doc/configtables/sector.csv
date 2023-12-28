@@ -62,7 +62,7 @@ tes,--,"{true, false}",Add option for storing thermal energy in large water pits
 tes_tau,,,The time constant used to calculate the decay of thermal energy in thermal energy storage (TES): 1- :math:`e^{-1/24τ}`.
 -- decentral,days,float,The time constant in decentralized thermal energy storage (TES)
 -- central,days,float,The time constant in centralized thermal energy storage (TES)
-boilers,--,"{true, false}",Add option for transforming electricity into heat using resistive heater
+boilers,--,"{true, false}",Add option for transforming gas into heat using gas boilers
 resistive_heaters,--,"{true, false}",Add option for using resistive heaters separately from boilers
 oil_boilers,--,"{true, false}",Add option for transforming oil into heat using boilers
 biomass_boiler,--,"{true, false}",Add option for transforming biomass into heat using boilers
