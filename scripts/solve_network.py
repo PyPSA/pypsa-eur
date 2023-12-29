@@ -790,7 +790,9 @@ def add_co2limit_country(n, limit_countries, nyears=1.0):
     co2_totals = 1e6 * pd.read_csv(snakemake.input.co2_totals_name, index_col=0)
 
     co2_limit_countries = co2_totals.loc[countries, sectors].sum(axis=1)
-    co2_limit_countries = co2_limit_countries.loc[co2_limit_countries.index.isin(limit_countries.keys())]
+    co2_limit_countries = co2_limit_countries.loc[
+        co2_limit_countries.index.isin(limit_countries.keys())
+    ]
 
     co2_limit_countries *= co2_limit_countries.index.map(limit_countries) * nyears
 
@@ -832,13 +834,11 @@ def add_co2limit_country(n, limit_countries, nyears=1.0):
 
         if not grouping.isnull().all():
             expr = (
-                ((p.loc[:, idx] * efficiency[idx] * international[idx])
+                (p.loc[:, idx] * efficiency[idx] * international[idx])
                 .groupby(grouping, axis=1)
                 .sum()
-                *n.snapshot_weightings.generators
-                )
-                .sum(dims="snapshot")
-            )
+                * n.snapshot_weightings.generators
+            ).sum(dims="snapshot")
             lhs.append(expr)
 
     lhs = sum(lhs)  # dimension: (country)
@@ -901,7 +901,6 @@ def extra_functionality(n, snapshots):
         add_co2limit_country(n, limit_countries, nyears)
 
     if "additional_functionality" in snakemake.params.keys():
-
         source_path = snakemake.params.additional_functionality
         module_name = os.path.splitext(os.path.basename(source_path))[0]
         module = importlib.import_module(module_name)
