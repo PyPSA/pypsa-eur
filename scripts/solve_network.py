@@ -26,7 +26,9 @@ Additionally, some extra constraints specified in :mod:`solve_network` are added
     the workflow for all scenarios in the configuration file (``scenario:``)
     based on the rule :mod:`solve_network`.
 """
+import importlib
 import logging
+import os
 import re
 
 import numpy as np
@@ -39,10 +41,8 @@ from pypsa.descriptors import get_activity_mask
 
 logger = logging.getLogger(__name__)
 pypsa.pf.logger.setLevel(logging.WARNING)
-from pypsa.descriptors import get_switchable_as_dense as get_as_dense
-
 from prepare_sector_network import emission_sectors_from_opts
-
+from pypsa.descriptors import get_switchable_as_dense as get_as_dense
 
 
 def add_land_use_constraint(n, planning_horizons, config):
@@ -900,12 +900,13 @@ def extra_functionality(n, snapshots):
         logger.info(f"Add CO2 limit for each country")
         add_co2limit_country(n, limit_countries, nyears)
 
-    if "additional_functionality" in snakemake.input.keys():
-        import importlib, os, sys
-        sys.path.append(os.path.dirname(snakemake.input.additional_functionality))
-        additional_functionality = importlib.import_module(os.path.splitext(os.path.basename(snakemake.input.additional_functionality))[0])
+    if "additional_functionality" in snakemake.params.keys():
 
-        additional_functionality.additional_functionality(n, snapshots, snakemake.wildcards, config)
+        source_path = snakemake.params.additional_functionality
+        module_name = os.path.splitext(os.path.basename(source_path))[0]
+        module = importlib.import_module(module_name)
+
+        module.additional_functionality(n, snapshots, snakemake.wildcards, config)
 
 
 def solve_network(n, config, solving, opts="", **kwargs):
