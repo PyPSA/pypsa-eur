@@ -210,7 +210,6 @@ def idees_per_country(ct, year, base_dir):
     assert df.index[50] == "Thermal uses"
     ct_totals["thermal uses residential"] = df.iloc[50]
 
-
     # services
 
     df = pd.read_excel(fn_tertiary, "SER_hh_fec", index_col=0)[year]
@@ -240,7 +239,6 @@ def idees_per_country(ct, year, base_dir):
 
     assert df.index[49] == "Derived heat"
     ct_totals["derived heat services"] = df.iloc[49]
-
 
     assert df.index[53] == "Thermal uses"
     ct_totals["thermal uses services"] = df.iloc[53]
