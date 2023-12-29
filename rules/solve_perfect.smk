@@ -118,6 +118,9 @@ rule solve_sector_network_perfect:
         co2_sequestration_potential=config["sector"].get(
             "co2_sequestration_potential", 200
         ),
+        custom_extra_functionality=workflow.source_path(
+            config["solver"]["options"].get("custom_extra_functionality", "")
+        ),
     input:
         network=RESULTS
         + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years.nc",
