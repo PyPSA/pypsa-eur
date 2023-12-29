@@ -255,7 +255,7 @@ if config["enable"]["retrieve"]:
 
     # Basic pattern where WDPA files can be found
     url_pattern = (
-        "https://d1gam3xoknrgr2.cloudfront.net/current/WDPA_{bYYYY}_Public.zip"
+        "https://d1gam3xoknrgr2.cloudfront.net/current/WDPA_{bYYYY}_Public_shp.zip"
     )
 
     # 3-letter month + 4 digit year for current/previous/next month to test
