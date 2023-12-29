@@ -796,6 +796,7 @@ def extra_functionality(n, snapshots):
 
     if snakemake.params.custom_extra_functionality:
         source_path = snakemake.params.custom_extra_functionality
+        assert os.path.exists(source_path), f"{source_path} does not exist"
         module_name = os.path.splitext(os.path.basename(source_path))[0]
         module = importlib.import_module(module_name)
         module.custom_extra_functionality(n, snapshots)
