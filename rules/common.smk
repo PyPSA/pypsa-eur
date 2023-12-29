@@ -3,8 +3,10 @@
 # SPDX-License-Identifier: MIT
 
 import os, sys
+
 sys.path.insert(0, os.path.abspath("scripts"))
 from _helpers import validate_checksum
+
 
 def memory(w):
     factor = 3.0

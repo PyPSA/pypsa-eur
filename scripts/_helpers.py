@@ -340,8 +340,8 @@ def get_checksum_from_zenodo(file_url):
 def validate_checksum(file_path, zenodo_url=None, checksum=None):
     """
     Validate file checksum against provided or Zenodo-retrieved checksum.
-    Calculates the hash of a file using 64KB chunks. Compares it against a given
-    checksum or one from a Zenodo URL.
+    Calculates the hash of a file using 64KB chunks. Compares it against a
+    given checksum or one from a Zenodo URL.
 
     Parameters
     ----------
@@ -360,8 +360,11 @@ def validate_checksum(file_path, zenodo_url=None, checksum=None):
 
     Examples
     --------
-    >>> validate_checksum('/path/to/file', checksum='md5:abc123...')
-    >>> validate_checksum('/path/to/file', zenodo_url='https://zenodo.org/record/12345/files/example.txt')
+    >>> validate_checksum("/path/to/file", checksum="md5:abc123...")
+    >>> validate_checksum(
+    ...     "/path/to/file",
+    ...     zenodo_url="https://zenodo.org/record/12345/files/example.txt",
+    ... )
 
     If the checksum is invalid, an AssertionError will be raised.
     """
