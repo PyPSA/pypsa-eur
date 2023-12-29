@@ -2709,7 +2709,7 @@ def add_industry(n, costs):
                 nodes_heat[name] + f" {name} oil boiler",
                 p_nom_extendable=True,
                 bus0=spatial.oil.nodes,
-                bus1=nodes_heat[name] + f" {name}  heat",
+                bus1=nodes_heat[name] + f" {name} heat",
                 bus2="co2 atmosphere",
                 carrier=f"{name} oil boiler",
                 efficiency=costs.at["decentral oil boiler", "efficiency"],
