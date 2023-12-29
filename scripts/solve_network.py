@@ -801,6 +801,7 @@ def extra_functionality(n, snapshots):
         module = importlib.import_module(module_name)
         module.custom_extra_functionality(n, snapshots)
 
+
 def solve_network(n, config, solving, opts="", **kwargs):
     set_of_options = solving["solver"]["options"]
     cf_solving = solving["options"]
