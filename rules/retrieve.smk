@@ -77,6 +77,7 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True
         retries: 2
         run:
             move(input[0], output[0])
+            validate_checksum(output[0], input[0])
 
 
 if config["enable"]["retrieve"] and config["enable"].get("retrieve_cost_data", True):
@@ -113,7 +114,7 @@ if config["enable"]["retrieve"] and config["enable"].get(
                 static=True,
             ),
         output:
-            protected(RESOURCES + "natura.tiff"),
+            RESOURCES + "natura.tiff",
         log:
             LOGS + "retrieve_natura_raster.log",
         resources:
@@ -121,6 +122,7 @@ if config["enable"]["retrieve"] and config["enable"].get(
         retries: 2
         run:
             move(input[0], output[0])
+            validate_checksum(output[0], input[0])
 
 
 if config["enable"]["retrieve"] and config["enable"].get(
@@ -226,6 +228,7 @@ if config["enable"]["retrieve"]:
         retries: 2
         run:
             move(input[0], output[0])
+            validate_checksum(output[0], input[0])
 
 
 if config["enable"]["retrieve"]:
@@ -243,6 +246,7 @@ if config["enable"]["retrieve"]:
             + "Copernicus_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
         run:
             move(input[0], output[0])
+            validate_checksum(output[0], input[0])
 
 
 if config["enable"]["retrieve"]:

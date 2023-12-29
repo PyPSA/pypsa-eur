@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 import tarfile
 from pathlib import Path
 
-from _helpers import configure_logging, progress_retrieve
+from _helpers import configure_logging, progress_retrieve, validate_checksum
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -33,6 +33,8 @@ if __name__ == "__main__":
     logger.info(f"Downloading databundle from '{url}'.")
     disable_progress = snakemake.config["run"].get("disable_progressbar", False)
     progress_retrieve(url, tarball_fn, disable=disable_progress)
+
+    validate_checksum(tarball_fn, url)
 
     logger.info("Extracting databundle.")
     tarfile.open(tarball_fn).extractall(to_fn)

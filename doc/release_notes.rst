@@ -54,6 +54,9 @@ Upcoming Release
   reconnected to the main Ukrainian grid with the configuration option
   `reconnect_crimea`.
 
+* Validate downloads from Zenodo using MD5 checksums. This identifies corrupted
+  or incomplete downloads.
+
 
 **Bugs and Compatibility**
 
