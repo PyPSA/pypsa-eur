@@ -41,10 +41,8 @@ from pypsa.descriptors import get_activity_mask
 
 logger = logging.getLogger(__name__)
 pypsa.pf.logger.setLevel(logging.WARNING)
-from pypsa.descriptors import get_switchable_as_dense as get_as_dense
-
 from prepare_sector_network import emission_sectors_from_opts
-
+from pypsa.descriptors import get_switchable_as_dense as get_as_dense
 
 
 def add_land_use_constraint(n, planning_horizons, config):
@@ -792,7 +790,9 @@ def add_co2limit_country(n, limit_countries, nyears=1.0):
     co2_totals = 1e6 * pd.read_csv(snakemake.input.co2_totals_name, index_col=0)
 
     co2_limit_countries = co2_totals.loc[countries, sectors].sum(axis=1)
-    co2_limit_countries = co2_limit_countries.loc[co2_limit_countries.index.isin(limit_countries.keys())]
+    co2_limit_countries = co2_limit_countries.loc[
+        co2_limit_countries.index.isin(limit_countries.keys())
+    ]
 
     co2_limit_countries *= co2_limit_countries.index.map(limit_countries) * nyears
 
@@ -834,13 +834,11 @@ def add_co2limit_country(n, limit_countries, nyears=1.0):
 
         if not grouping.isnull().all():
             expr = (
-                ((p.loc[:, idx] * efficiency[idx] * international[idx])
+                (p.loc[:, idx] * efficiency[idx] * international[idx])
                 .groupby(grouping, axis=1)
                 .sum()
-                *n.snapshot_weightings.generators
-                )
-                .sum(dims="snapshot")
-            )
+                * n.snapshot_weightings.generators
+            ).sum(dims="snapshot")
             lhs.append(expr)
 
     lhs = sum(lhs)  # dimension: (country)
@@ -903,11 +901,20 @@ def extra_functionality(n, snapshots):
         add_co2limit_country(n, limit_countries, nyears)
 
     if "additional_functionality" in snakemake.input.keys():
-        import importlib, os, sys
-        sys.path.append(os.path.dirname(snakemake.input.additional_functionality))
-        additional_functionality = importlib.import_module(os.path.splitext(os.path.basename(snakemake.input.additional_functionality))[0])
+        import importlib
+        import os
+        import sys
 
-        additional_functionality.additional_functionality(n, snapshots, snakemake.wildcards, config)
+        sys.path.append(os.path.dirname(snakemake.input.additional_functionality))
+        additional_functionality = importlib.import_module(
+            os.path.splitext(
+                os.path.basename(snakemake.input.additional_functionality)
+            )[0]
+        )
+
+        additional_functionality.additional_functionality(
+            n, snapshots, snakemake.wildcards, config
+        )
 
 
 def solve_network(n, config, solving, opts="", **kwargs):
