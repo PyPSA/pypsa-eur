@@ -89,7 +89,7 @@ rule solve_sector_network_myopic:
             "co2_sequestration_potential", 200
         ),
         custom_extra_functionality=workflow.source_path(
-            config["solver"]["options"].get("custom_extra_functionality", "")
+            config["solving"]["options"].get("custom_extra_functionality", "")
         ),
     input:
         network=RESULTS
