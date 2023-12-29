@@ -11,7 +11,7 @@ dependencies:
 - pip
 
 - atlite>=0.2.9
-- pypsa>=0.26.0
+- pypsa>=0.26.1
 - linopy
 - dask
 
