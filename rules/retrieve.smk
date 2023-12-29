@@ -255,7 +255,7 @@ if config["enable"]["retrieve"]:
 
     # Basic pattern where WDPA files can be found
     url_pattern = (
-        "https://d1gam3xoknrgr2.cloudfront.net/current/WDPA_{bYYYY}_Public.zip"
+        "https://d1gam3xoknrgr2.cloudfront.net/current/WDPA_{bYYYY}_Public_shp.zip"
     )
 
     # 3-letter month + 4 digit year for current/previous/next month to test
@@ -286,10 +286,10 @@ if config["enable"]["retrieve"]:
                 keep_local=True,
             ),
         params:
-            zip=RESOURCES + f"WDPA_{bYYYY}_shp.zip",
-            folder=directory(RESOURCES + f"WDPA_{bYYYY}"),
+            zip=RESOURCES + f"WDPA_shp.zip",
+            folder=directory(RESOURCES + f"WDPA"),
         output:
-            gpkg=RESOURCES + f"WDPA_{bYYYY}.gpkg",
+            gpkg=RESOURCES + f"WDPA.gpkg",
         run:
             shell("cp {input} {params.zip}")
             shell("unzip -o {params.zip} -d {params.folder}")
@@ -312,10 +312,10 @@ if config["enable"]["retrieve"]:
                 keep_local=True,
             ),
         params:
-            zip=RESOURCES + f"WDPA_WDOECM_{bYYYY}_marine.zip",
-            folder=directory(RESOURCES + f"WDPA_WDOECM_{bYYYY}_marine"),
+            zip=RESOURCES + f"WDPA_WDOECM_marine.zip",
+            folder=directory(RESOURCES + f"WDPA_WDOECM_marine"),
         output:
-            gpkg=RESOURCES + f"WDPA_WDOECM_{bYYYY}_marine.gpkg",
+            gpkg=RESOURCES + f"WDPA_WDOECM_marine.gpkg",
         run:
             shell("cp {input} {params.zip}")
             shell("unzip -o {params.zip} -d {params.folder}")
