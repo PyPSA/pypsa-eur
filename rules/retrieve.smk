@@ -113,7 +113,7 @@ if config["enable"]["retrieve"] and config["enable"].get(
                 static=True,
             ),
         output:
-            protected(RESOURCES + "natura.tiff"),
+            RESOURCES + "natura.tiff",
         log:
             LOGS + "retrieve_natura_raster.log",
         resources:
