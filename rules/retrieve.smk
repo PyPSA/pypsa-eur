@@ -246,22 +246,34 @@ if config["enable"]["retrieve"]:
 
 
 if config["enable"]["retrieve"]:
-    current_month = datetime.now().strftime("%b")
-    current_year = datetime.now().strftime("%Y")
-    bYYYY = f"{current_month}{current_year}"
+    # Some logic to find the correct file URL
+    # Sometimes files are released delayed or ahead of schedule, check which file is currently available
 
     def check_file_exists(url):
         response = requests.head(url)
         return response.status_code == 200
 
-    url = f"https://d1gam3xoknrgr2.cloudfront.net/current/WDPA_{bYYYY}_Public.zip"
+    # Basic pattern where WDPA files can be found
+    url_pattern = (
+        "https://d1gam3xoknrgr2.cloudfront.net/current/WDPA_{bYYYY}_Public.zip"
+    )
 
-    if not check_file_exists(url):
-        prev_month = (datetime.now() - timedelta(30)).strftime("%b")
-        bYYYY = f"{prev_month}{current_year}"
-        assert check_file_exists(
-            f"https://d1gam3xoknrgr2.cloudfront.net/current/WDPA_{bYYYY}_Public.zip"
-        ), "The file does not exist."
+    # 3-letter month + 4 digit year for current/previous/next month to test
+    current_monthyear = datetime.now().strftime("%b%Y")
+    prev_monthyear = (datetime.now() - timedelta(30)).strftime("%b%Y")
+    next_monthyear = (datetime.now() + timedelta(30)).strftime("%b%Y")
+
+    # Test prioritised: current month -> previous -> next
+    for bYYYY in [current_monthyear, prev_monthyear, next_monthyear]:
+        if check_file_exists(url := url_pattern.format(bYYYY=bYYYY)):
+            break
+        else:
+            # If None of the three URLs are working
+            url = False
+
+    assert (
+        url
+    ), f"No WDPA files found at {url_pattern} for bY='{current_monthyear}, {prev_monthyear}, or {next_monthyear}'"
 
     # Downloading protected area database from WDPA
     # extract the main zip and then merge the contained 3 zipped shapefiles
@@ -269,7 +281,7 @@ if config["enable"]["retrieve"]:
     rule download_wdpa:
         input:
             HTTP.remote(
-                f"d1gam3xoknrgr2.cloudfront.net/current/WDPA_{bYYYY}_Public_shp.zip",
+                url,
                 static=True,
                 keep_local=True,
             ),
