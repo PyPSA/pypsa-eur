@@ -208,10 +208,9 @@ rule build_ship_raster:
 
 rule determine_availability_matrix_MD_UA:
     input:
-        copernicus=RESOURCES
-        + "Copernicus_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
-        wdpa=RESOURCES + f"WDPA.gpkg",
-        wdpa_marine=RESOURCES + f"WDPA_WDOECM_marine.gpkg",
+        copernicus="data/Copernicus_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
+        wdpa="data/WDPA.gpkg",
+        wdpa_marine="data/WDPA_WDOECM_marine.gpkg",
         gebco=lambda w: (
             "data/bundle/GEBCO_2014_2D.nc"
             if "max_depth" in config["renewable"][w.technology].keys()

@@ -239,8 +239,7 @@ if config["enable"]["retrieve"]:
                 static=True,
             ),
         output:
-            RESOURCES
-            + "Copernicus_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
+            "data/Copernicus_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
         run:
             move(input[0], output[0])
 
@@ -286,10 +285,10 @@ if config["enable"]["retrieve"]:
                 keep_local=True,
             ),
         params:
-            zip=RESOURCES + f"WDPA_shp.zip",
-            folder=directory(RESOURCES + f"WDPA"),
+            zip="data/WDPA_shp.zip",
+            folder=directory("data/WDPA"),
         output:
-            gpkg=RESOURCES + f"WDPA.gpkg",
+            gpkg=protected("data/WDPA.gpkg"),
         run:
             shell("cp {input} {params.zip}")
             shell("unzip -o {params.zip} -d {params.folder}")
@@ -312,10 +311,10 @@ if config["enable"]["retrieve"]:
                 keep_local=True,
             ),
         params:
-            zip=RESOURCES + f"WDPA_WDOECM_marine.zip",
-            folder=directory(RESOURCES + f"WDPA_WDOECM_marine"),
+            zip="data/WDPA_WDOECM_marine.zip",
+            folder=directory("data/WDPA_WDOECM_marine"),
         output:
-            gpkg=RESOURCES + f"WDPA_WDOECM_marine.gpkg",
+            gpkg=protected("data/WDPA_WDOECM_marine.gpkg"),
         run:
             shell("cp {input} {params.zip}")
             shell("unzip -o {params.zip} -d {params.folder}")
