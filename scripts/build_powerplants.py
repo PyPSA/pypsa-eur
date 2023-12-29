@@ -89,7 +89,7 @@ logger = logging.getLogger(__name__)
 def add_custom_powerplants(ppl, custom_powerplants, custom_ppl_query=False):
     if not custom_ppl_query:
         return ppl
-    add_ppls = pd.read_csv(custom_powerplants, index_col=0, dtype={"bus": "str"})
+    add_ppls = pd.read_csv(custom_powerplants, dtype={"bus": "str"})
     if isinstance(custom_ppl_query, str):
         add_ppls.query(custom_ppl_query, inplace=True)
     return pd.concat(
@@ -146,8 +146,7 @@ if __name__ == "__main__":
         ppl, snakemake.input.custom_powerplants, custom_ppl_query
     )
 
-    countries_wo_ppl = set(countries) - set(ppl.Country.unique())
-    if countries_wo_ppl:
+    if countries_wo_ppl := set(countries) - set(ppl.Country.unique()):
         logging.warning(f"No powerplants known in: {', '.join(countries_wo_ppl)}")
 
     substations = n.buses.query("substation_lv")

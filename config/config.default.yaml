@@ -3,12 +3,20 @@
 # SPDX-License-Identifier: CC0-1.0
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#top-level-configuration
-version: 0.8.0
+version: 0.8.1
 tutorial: false
 
 logging:
   level: INFO
   format: '%(levelname)s:%(name)s:%(message)s'
+
+private:
+  keys:
+    entsoe_api:
+
+remote:
+  ssh: ""
+  path: ""
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
@@ -60,6 +68,7 @@ enable:
   retrieve_sector_databundle: true
   retrieve_cost_data: true
   build_cutout: false
+  retrieve_irena: false
   retrieve_cutout: true
   build_natura_raster: false
   retrieve_natura_raster: true
@@ -77,7 +86,7 @@ co2_budget:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
-  voltages: [220., 300., 380.]
+  voltages: [220., 300., 380., 500., 750.]
   gaslimit: false
   co2limit: 7.75e+7
   co2base: 1.487e+9
@@ -126,14 +135,14 @@ atlite:
       # module: era5
     europe-2013-era5:
       module: era5 # in priority order
-      x: [-12., 35.]
+      x: [-12., 42.]
       y: [33., 72]
       dx: 0.3
       dy: 0.3
       time: ['2013', '2013']
     europe-2013-sarah:
       module: [sarah, era5] # in priority order
-      x: [-12., 45.]
+      x: [-12., 42.]
       y: [33., 65]
       dx: 0.2
       dy: 0.2
@@ -209,10 +218,14 @@ renewable:
     carriers: [ror, PHS, hydro]
     PHS_max_hours: 6
     hydro_max_hours: "energy_capacity_totals_by_country" # one of energy_capacity_totals_by_country, estimate_by_large_installations or a float
+    flatten_dispatch: false
+    flatten_dispatch_buffer: 0.2
     clip_min_inflow: 1.0
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#conventional
 conventional:
+  unit_commitment: false
+  dynamic_fuel_price: false
   nuclear:
     p_max_pu: "data/nuclear_p_max_pu.csv" # float of file name
 
@@ -222,11 +235,20 @@ lines:
     220.: "Al/St 240/40 2-bundle 220.0"
     300.: "Al/St 240/40 3-bundle 300.0"
     380.: "Al/St 240/40 4-bundle 380.0"
+    500.: "Al/St 240/40 4-bundle 380.0"
+    750.: "Al/St 560/50 4-bundle 750.0"
   s_max_pu: 0.7
   s_nom_max: .inf
   max_extension: .inf
   length_factor: 1.25
+  reconnect_crimea: true
   under_construction: 'zero' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
+  dynamic_line_rating:
+    activate: false
+    cutout: europe-2013-era5
+    correction_factor: 0.95
+    max_voltage_difference: false
+    max_line_rating: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#links
 links:
@@ -430,10 +452,12 @@ sector:
   coal_cc: false
   dac: true
   co2_vent: false
+  central_heat_vent: false
   allam_cycle: false
   hydrogen_fuel_cell: true
   hydrogen_turbine: false
   SMR: true
+  SMR_cc: true
   regional_co2_sequestration_potential:
     enable: false
     attribute: 'conservative estimate Mt'
@@ -443,6 +467,7 @@ sector:
     years_of_storage: 25
   co2_sequestration_potential: 200
   co2_sequestration_cost: 10
+  co2_sequestration_lifetime: 50
   co2_spatial: false
   co2network: false
   cc_fraction: 0.9
@@ -473,6 +498,20 @@ sector:
     OCGT: gas
   biomass_to_liquid: false
   biosng: false
+  limit_max_growth:
+    enable: false
+    # allowing 30% larger than max historic growth
+    factor: 1.3
+    max_growth:  # unit GW
+      onwind: 16 # onshore max grow so far 16 GW in Europe https://www.iea.org/reports/renewables-2020/wind
+      solar: 28 # solar max grow so far 28 GW in Europe https://www.iea.org/reports/renewables-2020/solar-pv
+      offwind-ac: 35 # offshore max grow so far 3.5 GW in Europe https://windeurope.org/about-wind/statistics/offshore/european-offshore-wind-industry-key-trends-statistics-2019/
+      offwind-dc: 35
+    max_relative_growth:
+      onwind: 3
+      solar: 3
+      offwind-ac: 3
+      offwind-dc: 3
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
 industry:
@@ -525,11 +564,13 @@ industry:
   hotmaps_locate_missing: false
   reference_year: 2015
 
+
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 costs:
   year: 2030
   version: v0.6.0
   rooftop_share: 0.14  # based on the potentials, assuming  (0.1 kW/m2 and 10 m2/person)
+  social_discountrate: 0.02
   fill_values:
     FOM: 0
     VOM: 0
@@ -557,6 +598,7 @@ costs:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#clustering
 clustering:
+  focus_weights: false
   simplify_network:
     to_substations: false
     algorithm: kmeans # choose from: [hac, kmeans]
@@ -568,16 +610,12 @@ clustering:
     algorithm: kmeans
     feature: solar+onwind-time
     exclude_carriers: []
+    consider_efficiency_classes: false
   aggregation_strategies:
     generators:
-      p_nom_max: sum
-      p_nom_min: sum
-      p_min_pu: mean
-      marginal_cost: mean
       committable: any
       ramp_limit_up: max
       ramp_limit_down: max
-      efficiency: mean
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solving
 solving:
@@ -585,13 +623,17 @@ solving:
   options:
     clip_p_max_pu: 1.e-2
     load_shedding: false
-    transmission_losses: 0
     noisy_costs: true
     skip_iterations: true
+    rolling_horizon: false
+    seed: 123
+    # options that go into the optimize function
     track_iterations: false
     min_iterations: 4
     max_iterations: 6
-    seed: 123
+    transmission_losses: 0
+    linearized_unit_commitment: true
+    horizon: 365
 
   solver:
     name: gurobi
@@ -619,7 +661,6 @@ solving:
       AggFill: 0
       PreDual: 0
       GURO_PAR_BARDENSETHRESH: 200
-      seed: 10              # Consistent seed for all plattforms
     gurobi-numeric-focus:
       name: gurobi
       NumericFocus: 3       # Favour numeric stability over speed
@@ -652,6 +693,7 @@ solving:
     glpk-default: {} # Used in CI
 
   mem: 30000 #memory in MB; 20 GB enough for 50+B+I+H2; 100 GB for 181+B+I+H2
+  walltime: "12:00:00"
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#plotting
 plotting:
@@ -682,6 +724,9 @@ plotting:
     H2: "Hydrogen Storage"
     lines: "Transmission Lines"
     ror: "Run of River"
+    load: "Load Shedding"
+    ac: "AC"
+    dc: "DC"
 
   tech_colors:
     # wind
@@ -741,6 +786,7 @@ plotting:
     gas pipeline new: '#a87c62'
     # oil
     oil: '#c9c9c9'
+    imported oil: '#a3a3a3'
     oil boiler: '#adadad'
     residential rural oil boiler: '#a9a9a9'
     services rural oil boiler: '#a5a5a5'
@@ -759,6 +805,7 @@ plotting:
     Coal: '#545454'
     coal: '#545454'
     Coal marginal: '#545454'
+    coal for industry: '#343434'
     solid: '#545454'
     Lignite: '#826837'
     lignite: '#826837'
@@ -835,6 +882,7 @@ plotting:
     services rural heat: '#ff9c9c'
     central heat: '#cc1f1f'
     urban central heat: '#d15959'
+    urban central heat vent: '#a74747'
     decentral heat: '#750606'
     residential urban decentral heat: '#a33c3c'
     services urban decentral heat: '#cc1f1f'
@@ -872,6 +920,7 @@ plotting:
     H2 for shipping: "#ebaee0"
     H2: '#bf13a0'
     hydrogen: '#bf13a0'
+    retrofitted H2 boiler: '#e5a0d9'
     SMR: '#870c71'
     SMR CC: '#4f1745'
     H2 liquefaction: '#d647bd'
@@ -942,3 +991,4 @@ plotting:
     DC: "#8a1caf"
     DC-DC: "#8a1caf"
     DC link: "#8a1caf"
+    load: "#dd2e23"

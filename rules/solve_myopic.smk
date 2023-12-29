@@ -92,7 +92,7 @@ rule solve_sector_network_myopic:
         network=RESULTS
         + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
         costs="data/costs_{planning_horizons}.csv",
-        config=RESULTS + "config/config.yaml",
+        config=RESULTS + "config.yaml",
     output:
         RESULTS
         + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
@@ -106,6 +106,7 @@ rule solve_sector_network_myopic:
     threads: 4
     resources:
         mem_mb=config["solving"]["mem"],
+        walltime=config["solving"].get("walltime", "12:00:00"),
     benchmark:
         (
             BENCHMARKS

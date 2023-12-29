@@ -86,7 +86,7 @@ if config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]:
     rule build_gas_input_locations:
         input:
             lng=HTTP.remote(
-                "https://globalenergymonitor.org/wp-content/uploads/2022/09/Europe-Gas-Tracker-August-2022.xlsx",
+                "https://globalenergymonitor.org/wp-content/uploads/2023/07/Europe-Gas-Tracker-2023-03-v3.xlsx",
                 keep_local=True,
             ),
             entry="data/gas_network/scigrid-gas/data/IGGIELGN_BorderPoints.geojson",
@@ -242,9 +242,9 @@ rule build_energy_totals:
         energy=config["energy"],
     input:
         nuts3_shapes=RESOURCES + "nuts3_shapes.geojson",
-        co2="data/eea/UNFCCC_v23.csv",
-        swiss="data/switzerland-sfoe/switzerland-new_format.csv",
-        idees="data/jrc-idees-2015",
+        co2="data/bundle-sector/eea/UNFCCC_v23.csv",
+        swiss="data/bundle-sector/switzerland-sfoe/switzerland-new_format.csv",
+        idees="data/bundle-sector/jrc-idees-2015",
         district_heat_share="data/district_heat_share.csv",
         eurostat=input_eurostat,
     output:
@@ -269,10 +269,10 @@ rule build_biomass_potentials:
         biomass=config["biomass"],
     input:
         enspreso_biomass=HTTP.remote(
-            "https://cidportal.jrc.ec.europa.eu/ftp/jrc-opendata/ENSPRESO/ENSPRESO_BIOMASS.xlsx",
+            "https://zenodo.org/records/10356004/files/ENSPRESO_BIOMASS.xlsx",
             keep_local=True,
         ),
-        nuts2="data/nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson",  # https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/#nuts21
+        nuts2="data/bundle-sector/nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson",  # https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/#nuts21
         regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
         nuts3_population=ancient("data/bundle/nama_10r_3popgdp.tsv.gz"),
         swiss_cantons=ancient("data/bundle/ch_cantons.csv"),
@@ -280,22 +280,23 @@ rule build_biomass_potentials:
         country_shapes=RESOURCES + "country_shapes.geojson",
     output:
         biomass_potentials_all=RESOURCES
-        + "biomass_potentials_all_s{simpl}_{clusters}.csv",
-        biomass_potentials=RESOURCES + "biomass_potentials_s{simpl}_{clusters}.csv",
+        + "biomass_potentials_all_s{simpl}_{clusters}_{planning_horizons}.csv",
+        biomass_potentials=RESOURCES
+        + "biomass_potentials_s{simpl}_{clusters}_{planning_horizons}.csv",
     threads: 1
     resources:
         mem_mb=1000,
     log:
-        LOGS + "build_biomass_potentials_s{simpl}_{clusters}.log",
+        LOGS + "build_biomass_potentials_s{simpl}_{clusters}_{planning_horizons}.log",
     benchmark:
-        BENCHMARKS + "build_biomass_potentials_s{simpl}_{clusters}"
+        BENCHMARKS + "build_biomass_potentials_s{simpl}_{clusters}_{planning_horizons}"
     conda:
         "../envs/environment.yaml"
     script:
         "../scripts/build_biomass_potentials.py"
 
 
-if config["sector"]["biomass_transport"]:
+if config["sector"]["biomass_transport"] or config["sector"]["biomass_spatial"]:
 
     rule build_biomass_transport_costs:
         input:
@@ -320,9 +321,8 @@ if config["sector"]["biomass_transport"]:
     build_biomass_transport_costs_output = rules.build_biomass_transport_costs.output
 
 
-if not config["sector"]["biomass_transport"]:
+if not (config["sector"]["biomass_transport"] or config["sector"]["biomass_spatial"]):
     # this is effecively an `else` statement which is however not liked by snakefmt
-
     build_biomass_transport_costs_output = {}
 
 
@@ -367,7 +367,7 @@ if not config["sector"]["regional_co2_sequestration_potential"]["enable"]:
 
 rule build_salt_cavern_potentials:
     input:
-        salt_caverns="data/h2_salt_caverns_GWh_per_sqkm.geojson",
+        salt_caverns="data/bundle-sector/h2_salt_caverns_GWh_per_sqkm.geojson",
         regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
         regions_offshore=RESOURCES + "regions_offshore_elec_s{simpl}_{clusters}.geojson",
     output:
@@ -389,7 +389,7 @@ rule build_ammonia_production:
     params:
         countries=config["countries"],
     input:
-        usgs="data/myb1-2017-nitro.xls",
+        usgs="data/bundle-sector/myb1-2017-nitro.xls",
     output:
         ammonia_production=RESOURCES + "ammonia_production.csv",
     threads: 1
@@ -411,7 +411,7 @@ rule build_industry_sector_ratios:
         ammonia=config["sector"].get("ammonia", False),
     input:
         ammonia_production=RESOURCES + "ammonia_production.csv",
-        idees="data/jrc-idees-2015",
+        idees="data/bundle-sector/jrc-idees-2015",
     output:
         industry_sector_ratios=RESOURCES + "industry_sector_ratios.csv",
     threads: 1
@@ -433,8 +433,8 @@ rule build_industrial_production_per_country:
         countries=config["countries"],
     input:
         ammonia_production=RESOURCES + "ammonia_production.csv",
-        jrc="data/jrc-idees-2015",
-        eurostat="data/eurostat-energy_balances-may_2018_edition",
+        jrc="data/bundle-sector/jrc-idees-2015",
+        eurostat="data/bundle-sector/eurostat-energy_balances-may_2018_edition",
     output:
         industrial_production_per_country=RESOURCES
         + "industrial_production_per_country.csv",
@@ -484,7 +484,7 @@ rule build_industrial_distribution_key:
     input:
         regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
         clustered_pop_layout=RESOURCES + "pop_layout_elec_s{simpl}_{clusters}.csv",
-        hotmaps_industrial_database="data/Industrial_Database.csv",
+        hotmaps_industrial_database="data/bundle-sector/Industrial_Database.csv",
     output:
         industrial_distribution_key=RESOURCES
         + "industrial_distribution_key_elec_s{simpl}_{clusters}.csv",
@@ -559,7 +559,7 @@ rule build_industrial_energy_demand_per_country_today:
         countries=config["countries"],
         industry=config["industry"],
     input:
-        jrc="data/jrc-idees-2015",
+        jrc="data/bundle-sector/jrc-idees-2015",
         ammonia_production=RESOURCES + "ammonia_production.csv",
         industrial_production_per_country=RESOURCES
         + "industrial_production_per_country.csv",
@@ -609,7 +609,7 @@ if config["sector"]["retrofitting"]["retro_endogen"]:
             countries=config["countries"],
         input:
             building_stock="data/retro/data_building_stock.csv",
-            data_tabula="data/retro/tabula-calculator-calcsetbuilding.csv",
+            data_tabula="data/bundle-sector/retro/tabula-calculator-calcsetbuilding.csv",
             air_temperature=RESOURCES + "temp_air_total_elec_s{simpl}_{clusters}.nc",
             u_values_PL="data/retro/u_values_poland.csv",
             tax_w="data/retro/electricity_taxes_eu.csv",
@@ -685,8 +685,8 @@ rule build_transport_demand:
         pop_weighted_energy_totals=RESOURCES
         + "pop_weighted_energy_totals_s{simpl}_{clusters}.csv",
         transport_data=RESOURCES + "transport_data.csv",
-        traffic_data_KFZ="data/emobility/KFZ__count",
-        traffic_data_Pkw="data/emobility/Pkw__count",
+        traffic_data_KFZ="data/bundle-sector/emobility/KFZ__count",
+        traffic_data_Pkw="data/bundle-sector/emobility/Pkw__count",
         temp_air_total=RESOURCES + "temp_air_total_elec_s{simpl}_{clusters}.nc",
     output:
         transport_demand=RESOURCES + "transport_demand_s{simpl}_{clusters}.csv",
@@ -735,8 +735,13 @@ rule prepare_sector_network:
         avail_profile=RESOURCES + "avail_profile_s{simpl}_{clusters}.csv",
         dsm_profile=RESOURCES + "dsm_profile_s{simpl}_{clusters}.csv",
         co2_totals_name=RESOURCES + "co2_totals.csv",
-        co2="data/eea/UNFCCC_v23.csv",
-        biomass_potentials=RESOURCES + "biomass_potentials_s{simpl}_{clusters}.csv",
+        co2="data/bundle-sector/eea/UNFCCC_v23.csv",
+        biomass_potentials=RESOURCES
+        + "biomass_potentials_s{simpl}_{clusters}_"
+        + "{}.csv".format(config["biomass"]["year"])
+        if config["foresight"] == "overnight"
+        else RESOURCES
+        + "biomass_potentials_s{simpl}_{clusters}_{planning_horizons}.csv",
         heat_profile="data/heat_load_profile_BDEW.csv",
         costs="data/costs_{}.csv".format(config["costs"]["year"])
         if config["foresight"] == "overnight"
