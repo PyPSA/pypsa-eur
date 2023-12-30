@@ -85,9 +85,8 @@ if config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]:
 
     rule build_gas_input_locations:
         input:
-            lng=HTTP.remote(
+            lng=storage(
                 "https://globalenergymonitor.org/wp-content/uploads/2023/07/Europe-Gas-Tracker-2023-03-v3.xlsx",
-                keep_local=True,
             ),
             entry="data/gas_network/scigrid-gas/data/IGGIELGN_BorderPoints.geojson",
             production="data/gas_network/scigrid-gas/data/IGGIELGN_Productions.geojson",
@@ -268,9 +267,8 @@ rule build_biomass_potentials:
     params:
         biomass=config["biomass"],
     input:
-        enspreso_biomass=HTTP.remote(
+        enspreso_biomass=storage(
             "https://zenodo.org/records/10356004/files/ENSPRESO_BIOMASS.xlsx",
-            keep_local=True,
         ),
         nuts2="data/bundle-sector/nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson",  # https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/#nuts21
         regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
@@ -300,9 +298,8 @@ if config["sector"]["biomass_transport"] or config["sector"]["biomass_spatial"]:
 
     rule build_biomass_transport_costs:
         input:
-            transport_cost_data=HTTP.remote(
-                "publications.jrc.ec.europa.eu/repository/bitstream/JRC98626/biomass potentials in europe_web rev.pdf",
-                keep_local=True,
+            transport_cost_data=storage(
+                "https://publications.jrc.ec.europa.eu/repository/bitstream/JRC98626/biomass potentials in europe_web rev.pdf",
             ),
         output:
             biomass_transport_costs=RESOURCES + "biomass_transport_costs.csv",
@@ -334,9 +331,8 @@ if config["sector"]["regional_co2_sequestration_potential"]["enable"]:
                 "regional_co2_sequestration_potential"
             ],
         input:
-            sequestration_potential=HTTP.remote(
+            sequestration_potential=storage(
                 "https://raw.githubusercontent.com/ericzhou571/Co2Storage/main/resources/complete_map_2020_unit_Mt.geojson",
-                keep_local=True,
             ),
             regions_onshore=RESOURCES
             + "regions_onshore_elec_s{simpl}_{clusters}.geojson",

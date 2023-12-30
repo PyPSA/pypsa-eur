@@ -5,10 +5,6 @@
 from os.path import normpath, exists
 from shutil import copyfile, move, rmtree
 
-from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
-
-HTTP = HTTPRemoteProvider()
-
 from snakemake.utils import min_version
 
 min_version("7.7")

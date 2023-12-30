@@ -64,9 +64,8 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True
 
     rule retrieve_cutout:
         input:
-            HTTP.remote(
-                "zenodo.org/record/6382570/files/{cutout}.nc",
-                static=True,
+            storage(
+                "https://zenodo.org/record/6382570/files/{cutout}.nc",
             ),
         output:
             protected("cutouts/" + CDIR + "{cutout}.nc"),
@@ -83,12 +82,11 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cost_data", T
 
     rule retrieve_cost_data:
         input:
-            HTTP.remote(
-                "raw.githubusercontent.com/PyPSA/technology-data/{}/outputs/".format(
+            storage(
+                "https://raw.githubusercontent.com/PyPSA/technology-data/{}/outputs/".format(
                     config["costs"]["version"]
                 )
                 + "costs_{year}.csv",
-                keep_local=True,
             ),
         output:
             "data/costs_{year}.csv",
@@ -107,10 +105,8 @@ if config["enable"]["retrieve"] and config["enable"].get(
 
     rule retrieve_natura_raster:
         input:
-            HTTP.remote(
-                "zenodo.org/record/4706686/files/natura.tiff",
-                keep_local=True,
-                static=True,
+            storage(
+                "https://zenodo.org/record/4706686/files/natura.tiff",
             ),
         output:
             RESOURCES + "natura.tiff",
@@ -188,14 +184,12 @@ if config["enable"]["retrieve"]:
 
     rule retrieve_electricity_demand:
         input:
-            HTTP.remote(
-                "data.open-power-system-data.org/time_series/{version}/time_series_60min_singleindex.csv".format(
+            storage(
+                "https://data.open-power-system-data.org/time_series/{version}/time_series_60min_singleindex.csv".format(
                 version="2019-06-05"
                     if config["snapshots"]["end"] < "2019"
                     else "2020-10-06"
                 ),
-                keep_local=True,
-                static=True,
             ),
         output:
             RESOURCES + "load_raw.csv",
@@ -212,10 +206,8 @@ if config["enable"]["retrieve"]:
 
     rule retrieve_ship_raster:
         input:
-            HTTP.remote(
+            storage(
                 "https://zenodo.org/record/6953563/files/shipdensity_global.zip",
-                keep_local=True,
-                static=True,
             ),
         output:
             protected("data/shipdensity_global.zip"),
@@ -234,9 +226,8 @@ if config["enable"]["retrieve"]:
     # Website: https://land.copernicus.eu/global/products/lc
     rule download_copernicus_land_cover:
         input:
-            HTTP.remote(
-                "zenodo.org/record/3939050/files/PROBAV_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
-                static=True,
+            storage(
+                "https://zenodo.org/record/3939050/files/PROBAV_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
             ),
         output:
             "data/Copernicus_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
@@ -279,11 +270,7 @@ if config["enable"]["retrieve"]:
     # Website: https://www.protectedplanet.net/en/thematic-areas/wdpa
     rule download_wdpa:
         input:
-            HTTP.remote(
-                url,
-                static=True,
-                keep_local=True,
-            ),
+            storage(url),
         params:
             zip="data/WDPA_shp.zip",
             folder=directory("data/WDPA"),
@@ -305,10 +292,8 @@ if config["enable"]["retrieve"]:
         # extract the main zip and then merge the contained 3 zipped shapefiles
         # Website: https://www.protectedplanet.net/en/thematic-areas/marine-protected-areas
         input:
-            HTTP.remote(
-                f"d1gam3xoknrgr2.cloudfront.net/current/WDPA_WDOECM_{bYYYY}_Public_marine_shp.zip",
-                static=True,
-                keep_local=True,
+            storage(
+                f"https://d1gam3xoknrgr2.cloudfront.net/current/WDPA_WDOECM_{bYYYY}_Public_marine_shp.zip",
             ),
         params:
             zip="data/WDPA_WDOECM_marine.zip",
@@ -330,10 +315,8 @@ if config["enable"]["retrieve"]:
 
     rule retrieve_monthly_co2_prices:
         input:
-            HTTP.remote(
+            storage(
                 "https://www.eex.com/fileadmin/EEX/Downloads/EUA_Emission_Spot_Primary_Market_Auction_Report/Archive_Reports/emission-spot-primary-market-auction-report-2019-data.xls",
-                keep_local=True,
-                static=True,
             ),
         output:
             "data/validation/emission-spot-primary-market-auction-report-2019-data.xls",
