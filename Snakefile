@@ -7,7 +7,7 @@ from shutil import copyfile, move, rmtree
 
 from snakemake.utils import min_version
 
-min_version("7.7")
+min_version("8")
 
 
 if not exists("config/config.yaml"):
