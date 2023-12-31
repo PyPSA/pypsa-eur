@@ -87,6 +87,7 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cost_data", T
                     config["costs"]["version"]
                 )
                 + "costs_{year}.csv",
+                keep_local=True,
             ),
         output:
             "data/costs_{year}.csv",
@@ -107,6 +108,7 @@ if config["enable"]["retrieve"] and config["enable"].get(
         input:
             storage(
                 "https://zenodo.org/record/4706686/files/natura.tiff",
+                keep_local=True,
             ),
         output:
             RESOURCES + "natura.tiff",
@@ -190,6 +192,7 @@ if config["enable"]["retrieve"]:
                     if config["snapshots"]["end"] < "2019"
                     else "2020-10-06"
                 ),
+                keep_local=True,
             ),
         output:
             RESOURCES + "load_raw.csv",
@@ -208,6 +211,7 @@ if config["enable"]["retrieve"]:
         input:
             storage(
                 "https://zenodo.org/record/6953563/files/shipdensity_global.zip",
+                keep_local=True,
             ),
         output:
             protected("data/shipdensity_global.zip"),
@@ -270,7 +274,7 @@ if config["enable"]["retrieve"]:
     # Website: https://www.protectedplanet.net/en/thematic-areas/wdpa
     rule download_wdpa:
         input:
-            storage(url),
+            storage(url, keep_local=True),
         params:
             zip="data/WDPA_shp.zip",
             folder=directory("data/WDPA"),
@@ -294,6 +298,7 @@ if config["enable"]["retrieve"]:
         input:
             storage(
                 f"https://d1gam3xoknrgr2.cloudfront.net/current/WDPA_WDOECM_{bYYYY}_Public_marine_shp.zip",
+                keep_local=True,
             ),
         params:
             zip="data/WDPA_WDOECM_marine.zip",
@@ -317,6 +322,7 @@ if config["enable"]["retrieve"]:
         input:
             storage(
                 "https://www.eex.com/fileadmin/EEX/Downloads/EUA_Emission_Spot_Primary_Market_Auction_Report/Archive_Reports/emission-spot-primary-market-auction-report-2019-data.xls",
+                keep_local=True,
             ),
         output:
             "data/validation/emission-spot-primary-market-auction-report-2019-data.xls",
