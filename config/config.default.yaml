@@ -627,7 +627,7 @@ solving:
     skip_iterations: true
     rolling_horizon: false
     seed: 123
-    custom_extra_functionality: "data/custom_extra_functionality.py"
+    custom_extra_functionality: "../data/custom_extra_functionality.py"
     # options that go into the optimize function
     track_iterations: false
     min_iterations: 4
