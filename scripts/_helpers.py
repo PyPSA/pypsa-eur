@@ -214,9 +214,17 @@ def mock_snakemake(rulename, root_dir=None, configfiles=[], **wildcards):
     import os
 
     import snakemake as sm
-    from packaging.version import Version, parse
     from pypsa.descriptors import Dict
+    from snakemake.api import Workflow
+    from snakemake.common import SNAKEFILE_CHOICES
     from snakemake.script import Snakemake
+    from snakemake.settings import (
+        ConfigSettings,
+        DAGSettings,
+        ResourceSettings,
+        StorageSettings,
+        WorkflowSettings,
+    )
 
     script_dir = Path(__file__).parent.resolve()
     if root_dir is None:
@@ -233,17 +241,26 @@ def mock_snakemake(rulename, root_dir=None, configfiles=[], **wildcards):
             f" {root_dir} or scripts directory {script_dir}"
         )
     try:
-        for p in sm.SNAKEFILE_CHOICES:
+        for p in SNAKEFILE_CHOICES:
             if os.path.exists(p):
                 snakefile = p
                 break
-        kwargs = (
-            dict(rerun_triggers=[]) if parse(sm.__version__) > Version("7.7.0") else {}
-        )
         if isinstance(configfiles, str):
             configfiles = [configfiles]
 
-        workflow = sm.Workflow(snakefile, overwrite_configfiles=configfiles, **kwargs)
+        resource_settings = ResourceSettings()
+        config_settings = ConfigSettings(configfiles=configfiles)
+        workflow_settings = WorkflowSettings()
+        storage_settings = StorageSettings()
+        dag_settings = DAGSettings(rerun_triggers=[])
+        workflow = Workflow(
+            config_settings,
+            resource_settings,
+            workflow_settings,
+            storage_settings,
+            dag_settings,
+            storage_provider_settings=dict(),
+        )
         workflow.include(snakefile)
 
         if configfiles:
