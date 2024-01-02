@@ -2974,8 +2974,10 @@ def add_waste_heat(n):
     if not urban_central.empty:
         urban_central = urban_central.str[: -len(" urban central heat")]
 
+        link_carriers = n.links.carrier.unique()
+
         # TODO what is the 0.95 and should it be a config option?
-        if options["use_fischer_tropsch_waste_heat"]:
+        if options["use_fischer_tropsch_waste_heat"] and "Fischer-Tropsch" in link_carriers:
             n.links.loc[urban_central + " Fischer-Tropsch", "bus3"] = (
                 urban_central + " urban central heat"
             )
@@ -2983,7 +2985,7 @@ def add_waste_heat(n):
                 0.95 - n.links.loc[urban_central + " Fischer-Tropsch", "efficiency"]
             )
 
-        if options["use_methanation_waste_heat"]:
+        if options["use_methanation_waste_heat"] and "Sabatier" in link_carriers:
             n.links.loc[urban_central + " Sabatier", "bus3"] = (
                 urban_central + " urban central heat"
             )
@@ -2992,7 +2994,7 @@ def add_waste_heat(n):
             )
 
         # DEA quotes 15% of total input (11% of which are high-value heat)
-        if options["use_haber_bosch_waste_heat"]:
+        if options["use_haber_bosch_waste_heat"] and "Haber-Bosch" in link_carriers:
             n.links.loc[urban_central + " Haber-Bosch", "bus3"] = (
                 urban_central + " urban central heat"
             )
@@ -3008,7 +3010,7 @@ def add_waste_heat(n):
                 0.15 * total_energy_input / electricity_input
             )
 
-        if options["use_methanolisation_waste_heat"]:
+        if options["use_methanolisation_waste_heat"] and "methanolisation" in link_carriers:
             n.links.loc[urban_central + " methanolisation", "bus4"] = (
                 urban_central + " urban central heat"
             )
@@ -3018,7 +3020,7 @@ def add_waste_heat(n):
             )
 
         # TODO integrate usable waste heat efficiency into technology-data from DEA
-        if options.get("use_electrolysis_waste_heat", False):
+        if options.get("use_electrolysis_waste_heat", False) and "H2 Electrolysis" in link_carriers:
             n.links.loc[urban_central + " H2 Electrolysis", "bus2"] = (
                 urban_central + " urban central heat"
             )
@@ -3026,7 +3028,7 @@ def add_waste_heat(n):
                 0.84 - n.links.loc[urban_central + " H2 Electrolysis", "efficiency"]
             )
 
-        if options["use_fuel_cell_waste_heat"]:
+        if options["use_fuel_cell_waste_heat"] and "H2 Fuel Cell" in link_carriers:
             n.links.loc[urban_central + " H2 Fuel Cell", "bus2"] = (
                 urban_central + " urban central heat"
             )
