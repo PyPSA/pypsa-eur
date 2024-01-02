@@ -2170,14 +2170,12 @@ def add_biomass(n, costs):
         bus0=spatial.gas.biogas,
         bus1=spatial.gas.nodes,
         bus2="co2 atmosphere",
-        bus3="co2 stored",
         carrier="biogas to gas",
         capital_cost=costs.at["biogas", "fixed"]
         + costs.at["biogas upgrading", "fixed"],
         marginal_cost=costs.at["biogas upgrading", "VOM"],
         efficiency=costs.at["biogas", "efficiency"],
         efficiency2=-costs.at["gas", "CO2 intensity"],
-        efficiency3=costs.at["biogas", "CO2 stored"],
         p_nom_extendable=True
     )
 
