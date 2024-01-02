@@ -2996,8 +2996,14 @@ def add_waste_heat(n):
             n.links.loc[urban_central + " Haber-Bosch", "bus3"] = (
                 urban_central + " urban central heat"
             )
-            total_energy_input = (cf_industry["MWh_H2_per_tNH3_electrolysis"] + cf_industry["MWh_elec_per_tNH3_electrolysis"]) /  cf_industry["MWh_NH3_per_tNH3"]
-            electricity_input = cf_industry["MWh_elec_per_tNH3_electrolysis"] /  cf_industry["MWh_NH3_per_tNH3"]
+            total_energy_input = (
+                cf_industry["MWh_H2_per_tNH3_electrolysis"]
+                + cf_industry["MWh_elec_per_tNH3_electrolysis"]
+            ) / cf_industry["MWh_NH3_per_tNH3"]
+            electricity_input = (
+                cf_industry["MWh_elec_per_tNH3_electrolysis"]
+                / cf_industry["MWh_NH3_per_tNH3"]
+            )
             n.links.loc[urban_central + " Haber-Bosch", "efficiency3"] = (
                 0.15 * total_energy_input / electricity_input
             )
