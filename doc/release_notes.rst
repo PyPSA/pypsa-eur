@@ -48,6 +48,8 @@ Upcoming Release
 
 * The ``mock_snakemake`` function can now be used with a Snakefile from a different directory using the new ``root_dir`` argument.
 
+* Add option to capture CO2 contained in biogas when upgrading (``sector: biogas_to_gas_cc``).
+
 * Merged option to extend geographical scope to Ukraine and Moldova. These
   countries are excluded by default and is currently constrained to power-sector
   only parts of the workflow. A special config file
