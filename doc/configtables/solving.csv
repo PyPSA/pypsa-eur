@@ -1,0 +1,19 @@
+,Unit,Values,Description
+options,,,
+-- clip_p_max_pu,p.u.,float,To avoid too small values in the renewables` per-unit availability time series values below this threshold are set to zero.
+-- load_shedding,bool/float,"{'true','false', float}","Add generators with very high marginal cost to simulate load shedding and avoid problem infeasibilities. If load shedding is a float, it denotes the marginal cost in EUR/kWh."
+-- noisy_costs,bool,"{'true','false'}","Add random noise to marginal cost of generators by :math:`\mathcal{U}(0.009,0,011)` and capital cost of lines and links by :math:`\mathcal{U}(0.09,0,11)`."
+-- skip_iterations,bool,"{'true','false'}","Skip iterating, do not update impedances of branches. Defaults to true."
+-- rolling_horizon,bool,"{'true','false'}","Whether to optimize the network in a rolling horizon manner, where the snapshot range is split into slices of size `horizon` which are solved consecutively."
+-- seed,--,int,Random seed for increased deterministic behaviour.
+-- track_iterations,bool,"{'true','false'}",Flag whether to store the intermediate branch capacities and objective function values are recorded for each iteration in ``network.lines['s_nom_opt_X']`` (where ``X`` labels the iteration)
+-- min_iterations,--,int,Minimum number of solving iterations in between which resistance and reactence (``x/r``) are updated for branches according to ``s_nom_opt`` of the previous run.
+-- max_iterations,--,int,Maximum number of solving iterations in between which resistance and reactence (``x/r``) are updated for branches according to ``s_nom_opt`` of the previous run.
+-- transmission_losses,int,[0-9],"Add piecewise linear approximation of transmission losses based on n tangents. Defaults to 0, which means losses are ignored."
+-- linearized_unit_commitment,bool,"{'true','false'}",Whether to optimise using the linearized unit commitment formulation.
+-- horizon,--,int,Number of snapshots to consider in each iteration. Defaults to 100.
+solver,,,
+-- name,--,"One of {'gurobi', 'cplex', 'cbc', 'glpk', 'ipopt'}; potentially more possible",Solver to use for optimisation problems in the workflow; e.g. clustering and linear optimal power flow.
+-- options,--,Key listed under ``solver_options``.,Link to specific parameter settings.
+solver_options,,dict,Dictionaries with solver-specific parameter settings.
+mem,MB,int,Estimated maximum memory requirement for solving networks.

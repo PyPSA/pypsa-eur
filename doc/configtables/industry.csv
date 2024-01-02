@@ -1,0 +1,31 @@
+,Unit,Values,Description
+St_primary_fraction,--,Dictionary with planning horizons as keys.,The fraction of steel produced via primary route versus secondary route (scrap+EAF). Current fraction is 0.6
+DRI_fraction,--,Dictionary with planning horizons as keys.,The fraction of the primary route DRI + EAF
+,,,
+H2_DRI,--,float,The hydrogen consumption in Direct Reduced Iron (DRI)  Mwh_H2 LHV/ton_Steel from 51kgH2/tSt in `Vogl et al (2018) <https://doi.org/10.1016/j.jclepro.2018.08.279>`_
+elec_DRI,MWh/tSt,float,The electricity consumed in Direct Reduced Iron (DRI) shaft. From `HYBRIT brochure <https://ssabwebsitecdn.azureedge.net/-/media/hybrit/files/hybrit_brochure.pdf>`_
+Al_primary_fraction,--,Dictionary with planning horizons as keys.,The fraction of aluminium produced via the primary route versus scrap. Current fraction is 0.4
+MWh_NH3_per_tNH3,LHV,float,The energy amount per ton of ammonia.
+MWh_CH4_per_tNH3_SMR,--,float,The energy amount of methane needed to produce a ton of ammonia using steam methane reforming (SMR). Value derived from 2012's demand from `Center for European Policy Studies (2008) <https://ec.europa.eu/docsroom/documents/4165/attachments/1/translations/en/renditions/pdf>`_
+MWh_elec_per_tNH3_SMR,--,float,"The energy amount of electricity needed to produce a ton of ammonia using steam methane reforming (SMR). same source, assuming 94-6% split methane-elec of total energy demand 11.5 MWh/tNH3"
+Mwh_H2_per_tNH3 _electrolysis,--,float,"The energy amount of hydrogen needed to produce a ton of ammonia using Haber–Bosch process. From  `Wang et al (2018) <https://doi.org/10.1016/j.joule.2018.04.017>`_, Base value assumed around 0.197 tH2/tHN3 (>3/17 since some H2 lost and used for energy)"
+Mwh_elec_per_tNH3 _electrolysis,--,float,"The energy amount of electricity needed to produce a ton of ammonia using Haber–Bosch process. From  `Wang et al (2018) <https://doi.org/10.1016/j.joule.2018.04.017>`_, Table 13 (air separation and HB)"
+Mwh_NH3_per_MWh _H2_cracker,--,float,The energy amount of amonia needed to produce an energy amount hydrogen using ammonia cracker
+NH3_process_emissions,MtCO2/a,float,The emission of ammonia production from steam methane reforming (SMR). From UNFCCC for 2015 for EU28
+petrochemical_process _emissions,MtCO2/a,float,The emission of petrochemical production. From UNFCCC for 2015 for EU28
+HVC_primary_fraction,--,float,The fraction of high value chemicals (HVC) produced via primary route
+HVC_mechanical_recycling _fraction,--,float,The fraction of high value chemicals (HVC) produced using mechanical recycling
+HVC_chemical_recycling _fraction,--,float,The fraction of high value chemicals (HVC) produced using chemical recycling
+,,,
+HVC_production_today,MtHVC/a,float,"The amount of high value chemicals (HVC) produced. This includes ethylene, propylene and BTX. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, Figure 16, page 107"
+Mwh_elec_per_tHVC _mechanical_recycling,MWh/tHVC,float,"The energy amount of electricity needed to produce a ton of high value chemical (HVC) using mechanical recycling. From SI of `Meys et al (2020) <https://doi.org/10.1016/j.resconrec.2020.105010>`_, Table S5, for HDPE, PP, PS, PET. LDPE would be 0.756."
+Mwh_elec_per_tHVC _chemical_recycling,MWh/tHVC,float,"The energy amount of electricity needed to produce a ton of high value chemical (HVC) using chemical recycling. The default value is based on pyrolysis and electric steam cracking. From `Material Economics (2019) <https://materialeconomics.com/latest-updates/industrial-transformation-2050>`_, page 125"
+,,,
+chlorine_production _today,MtCl/a,float,"The amount of chlorine produced. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, Table 7, page 43"
+MWh_elec_per_tCl,MWh/tCl,float,"The energy amount of electricity needed to produce a ton of chlorine. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, Table 6 page 43"
+MWh_H2_per_tCl,MWhH2/tCl,float,"The energy amount of hydrogen needed to produce a ton of chlorine. The value is negative since hydrogen produced in chloralkali process. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 43"
+methanol_production _today,MtMeOH/a,float,"The amount of methanol produced. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 62"
+MWh_elec_per_tMeOH,MWh/tMeOH,float,"The energy amount of electricity needed to produce a ton of methanol. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, Table 14, page 65"
+MWh_CH4_per_tMeOH,MWhCH4/tMeOH,float,"The energy amount of methane needed to produce a ton of methanol. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, Table 14, page 65"
+hotmaps_locate_missing,--,"{true,false}",Locate industrial sites without valid locations based on city and countries.
+reference_year,year,YYYY,The year used as the baseline for industrial energy demand and production. Data extracted from `JRC-IDEES 2015 <https://data.jrc.ec.europa.eu/dataset/jrc-10110-10001>`_

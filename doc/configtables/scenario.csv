@@ -1,0 +1,7 @@
+,Unit,Values,Description
+simpl,--,cf. :ref:`simpl`,"List of ``{simpl}`` wildcards to run."
+clusters,--,cf. :ref:`clusters`,"List of ``{clusters}`` wildcards to run."
+ll,--,cf. :ref:`ll`,"List of ``{ll}`` wildcards to run."
+opts,--,cf. :ref:`opts`,"List of ``{opts}`` wildcards to run."
+sector_opts,--,cf. :ref:`sector_opts`,"List of ``{sector_opts}`` wildcards to run."
+planning_horizons,--,cf. :ref:`planning_horizons`,"List of ``{planning_horizon}`` wildcards to run."

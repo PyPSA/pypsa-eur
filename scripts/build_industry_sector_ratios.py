@@ -1,6 +1,13 @@
-"""Build industry sector ratios."""
+# -*- coding: utf-8 -*-
+# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: MIT
+"""
+Build specific energy consumption by carrier and industries.
+"""
 
 import pandas as pd
+from _helpers import mute_print
 
 # GWh/ktoe OR MWh/toe
 toe_to_MWh = 11.630
@@ -67,20 +74,20 @@ index = [
 
 
 def load_idees_data(sector, country="EU28"):
-
     suffixes = {"out": "", "fec": "_fec", "ued": "_ued", "emi": "_emi"}
     sheets = {k: sheet_names[sector] + v for k, v in suffixes.items()}
 
     def usecols(x):
         return isinstance(x, str) or x == year
 
-    idees = pd.read_excel(
-        f"{snakemake.input.idees}/JRC-IDEES-2015_Industry_{country}.xlsx",
-        sheet_name=list(sheets.values()),
-        index_col=0,
-        header=0,
-        usecols=usecols,
-    )
+    with mute_print():
+        idees = pd.read_excel(
+            f"{snakemake.input.idees}/JRC-IDEES-2015_Industry_{country}.xlsx",
+            sheet_name=list(sheets.values()),
+            index_col=0,
+            header=0,
+            usecols=usecols,
+        )
 
     for k, v in sheets.items():
         idees[k] = idees.pop(v).squeeze()
@@ -89,7 +96,6 @@ def load_idees_data(sector, country="EU28"):
 
 
 def iron_and_steel():
-
     # There are two different approaches to produce iron and steel:
     # i.e., integrated steelworks and electric arc.
     # Electric arc approach has higher efficiency and relies more on electricity.
@@ -179,10 +185,10 @@ def iron_and_steel():
     df[sector] = df["Electric arc"]
 
     # add H2 consumption for DRI at 1.7 MWh H2 /ton steel
-    df.at["hydrogen", sector] = config["H2_DRI"]
+    df.at["hydrogen", sector] = params["H2_DRI"]
 
     # add electricity consumption in DRI shaft (0.322 MWh/tSl)
-    df.at["elec", sector] += config["elec_DRI"]
+    df.at["elec", sector] += params["elec_DRI"]
 
     ## Integrated steelworks
     # could be used in combination with CCS)
@@ -377,19 +383,19 @@ def chemicals_industry():
     assert s_emi.index[0] == sector
 
     # convert from MtHVC/a to ktHVC/a
-    s_out = config["HVC_production_today"] * 1e3
+    s_out = params["HVC_production_today"] * 1e3
 
     # tCO2/t material
     df.loc["process emission", sector] += (
         s_emi["Process emissions"]
-        - config["petrochemical_process_emissions"] * 1e3
-        - config["NH3_process_emissions"] * 1e3
+        - params["petrochemical_process_emissions"] * 1e3
+        - params["NH3_process_emissions"] * 1e3
     ) / s_out
 
     # emissions originating from feedstock, could be non-fossil origin
     # tCO2/t material
     df.loc["process emission from feedstock", sector] += (
-        config["petrochemical_process_emissions"] * 1e3
+        params["petrochemical_process_emissions"] * 1e3
     ) / s_out
 
     # convert from ktoe/a to GWh/a
@@ -399,18 +405,18 @@ def chemicals_industry():
     # subtract ammonia energy demand (in ktNH3/a)
     ammonia = pd.read_csv(snakemake.input.ammonia_production, index_col=0)
     ammonia_total = ammonia.loc[ammonia.index.intersection(eu28), str(year)].sum()
-    df.loc["methane", sector] -= ammonia_total * config["MWh_CH4_per_tNH3_SMR"]
-    df.loc["elec", sector] -= ammonia_total * config["MWh_elec_per_tNH3_SMR"]
+    df.loc["methane", sector] -= ammonia_total * params["MWh_CH4_per_tNH3_SMR"]
+    df.loc["elec", sector] -= ammonia_total * params["MWh_elec_per_tNH3_SMR"]
 
     # subtract chlorine demand
-    chlorine_total = config["chlorine_production_today"]
-    df.loc["hydrogen", sector] -= chlorine_total * config["MWh_H2_per_tCl"]
-    df.loc["elec", sector] -= chlorine_total * config["MWh_elec_per_tCl"]
+    chlorine_total = params["chlorine_production_today"]
+    df.loc["hydrogen", sector] -= chlorine_total * params["MWh_H2_per_tCl"]
+    df.loc["elec", sector] -= chlorine_total * params["MWh_elec_per_tCl"]
 
     # subtract methanol demand
-    methanol_total = config["methanol_production_today"]
-    df.loc["methane", sector] -= methanol_total * config["MWh_CH4_per_tMeOH"]
-    df.loc["elec", sector] -= methanol_total * config["MWh_elec_per_tMeOH"]
+    methanol_total = params["methanol_production_today"]
+    df.loc["methane", sector] -= methanol_total * params["MWh_CH4_per_tMeOH"]
+    df.loc["elec", sector] -= methanol_total * params["MWh_elec_per_tMeOH"]
 
     # MWh/t material
     df.loc[sources, sector] = df.loc[sources, sector] / s_out
@@ -421,37 +427,37 @@ def chemicals_industry():
 
     sector = "HVC (mechanical recycling)"
     df[sector] = 0.0
-    df.loc["elec", sector] = config["MWh_elec_per_tHVC_mechanical_recycling"]
+    df.loc["elec", sector] = params["MWh_elec_per_tHVC_mechanical_recycling"]
 
     # HVC chemical recycling
 
     sector = "HVC (chemical recycling)"
     df[sector] = 0.0
-    df.loc["elec", sector] = config["MWh_elec_per_tHVC_chemical_recycling"]
+    df.loc["elec", sector] = params["MWh_elec_per_tHVC_chemical_recycling"]
 
     # Ammonia
 
     sector = "Ammonia"
     df[sector] = 0.0
-    if snakemake.config["sector"].get("ammonia", False):
-        df.loc["ammonia", sector] = config["MWh_NH3_per_tNH3"]
+    if snakemake.params.ammonia:
+        df.loc["ammonia", sector] = params["MWh_NH3_per_tNH3"]
     else:
-        df.loc["hydrogen", sector] = config["MWh_H2_per_tNH3_electrolysis"]
-        df.loc["elec", sector] = config["MWh_elec_per_tNH3_electrolysis"]
+        df.loc["hydrogen", sector] = params["MWh_H2_per_tNH3_electrolysis"]
+        df.loc["elec", sector] = params["MWh_elec_per_tNH3_electrolysis"]
 
     # Chlorine
 
     sector = "Chlorine"
     df[sector] = 0.0
-    df.loc["hydrogen", sector] = config["MWh_H2_per_tCl"]
-    df.loc["elec", sector] = config["MWh_elec_per_tCl"]
+    df.loc["hydrogen", sector] = params["MWh_H2_per_tCl"]
+    df.loc["elec", sector] = params["MWh_elec_per_tCl"]
 
     # Methanol
 
     sector = "Methanol"
     df[sector] = 0.0
-    df.loc["methane", sector] = config["MWh_CH4_per_tMeOH"]
-    df.loc["elec", sector] = config["MWh_elec_per_tMeOH"]
+    df.loc["methane", sector] = params["MWh_CH4_per_tMeOH"]
+    df.loc["elec", sector] = params["MWh_elec_per_tMeOH"]
 
     # Other chemicals
 
@@ -600,7 +606,6 @@ def chemicals_industry():
 
 
 def nonmetalic_mineral_products():
-
     # This includes cement, ceramic and glass production.
     # This includes process emissions related to the fabrication of clinker.
 
@@ -787,7 +792,6 @@ def nonmetalic_mineral_products():
 
 
 def pulp_paper_printing():
-
     # Pulp, paper and printing can be completely electrified.
     # There are no process emissions associated to this sector.
 
@@ -940,7 +944,6 @@ def pulp_paper_printing():
 
 
 def food_beverages_tobacco():
-
     # Food, beverages and tobaco can be completely electrified.
     # There are no process emissions associated to this sector.
 
@@ -1000,7 +1003,6 @@ def food_beverages_tobacco():
 
 
 def non_ferrous_metals():
-
     sector = "Non Ferrous Metals"
     idees = load_idees_data(sector)
 
@@ -1203,7 +1205,6 @@ def non_ferrous_metals():
 
 
 def transport_equipment():
-
     sector = "Transport Equipment"
     idees = load_idees_data(sector)
 
@@ -1254,7 +1255,6 @@ def transport_equipment():
 
 
 def machinery_equipment():
-
     sector = "Machinery Equipment"
 
     idees = load_idees_data(sector)
@@ -1307,7 +1307,6 @@ def machinery_equipment():
 
 
 def textiles_and_leather():
-
     sector = "Textiles and leather"
 
     idees = load_idees_data(sector)
@@ -1356,7 +1355,6 @@ def textiles_and_leather():
 
 
 def wood_and_wood_products():
-
     sector = "Wood and wood products"
 
     idees = load_idees_data(sector)
@@ -1402,7 +1400,6 @@ def wood_and_wood_products():
 
 
 def other_industrial_sectors():
-
     sector = "Other Industrial Sectors"
 
     idees = load_idees_data(sector)
@@ -1463,14 +1460,15 @@ def other_industrial_sectors():
 
 
 if __name__ == "__main__":
-    if 'snakemake' not in globals():
-        from helper import mock_snakemake
-        snakemake = mock_snakemake('build_industry_sector_ratios')
+    if "snakemake" not in globals():
+        from _helpers import mock_snakemake
 
-    # TODO make config option
+        snakemake = mock_snakemake("build_industry_sector_ratios")
+
+    # TODO make params option
     year = 2015
 
-    config = snakemake.config["industry"]
+    params = snakemake.params.industry
 
     df = pd.concat(
         [

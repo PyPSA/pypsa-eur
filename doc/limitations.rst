@@ -1,3 +1,8 @@
+..
+  SPDX-FileCopyrightText: 2019-2023 The PyPSA-Eur Authors
+
+  SPDX-License-Identifier: CC-BY-4.0
+
 ##########################################
 Limitations
 ##########################################
@@ -9,9 +14,12 @@ The limitations of the dataset are listed below,
 both as a warning to the user and as an encouragement to assist in
 improving the approximations.
 
-This list of limitations is incomplete and will be added to over time.
+.. warning::
 
-See also the `GitHub repository issues <https://github.com/PyPSA/pypsa-eur-sec/issues>`_.
+  This list of limitations is incomplete and will be added to over time.
+
+.. seealso::
+  See also the `GitHub repository issues <https://github.com/PyPSA/pypsa-eur/issues>`_.
 
 - **Electricity transmission network topology:**
   The grid data is based on a map of the ENTSO-E area that is known
@@ -36,7 +44,7 @@ See also the `GitHub repository issues <https://github.com/PyPSA/pypsa-eur-sec/i
   industry away from fossil fuels is determined exogenously.
 
 - **Industry materials production constant and inelastic:**
-  For industry, the production of different materials per country is 
+  For industry, the production of different materials per country is
   assumed to remain constant and no industry demand elasticity is included in the modelled.
 
 - **Energy demand distribution within countries:**
@@ -47,6 +55,13 @@ See also the `GitHub repository issues <https://github.com/PyPSA/pypsa-eur-sec/i
   data on load time series may not correspond to the true vertical load and is
   not spatially disaggregated; assuming, as we have done, that the load time series
   shape is the same at each node within each country ignores local differences.
+
+- **Currently installed renewable capacities:**
+  Information on existing wind, solar and small hydro, geothermal, marine and
+  biomass power plants are excluded from the dataset because of a lack of data
+  availability in many countries. Approximate distributions of wind and solar
+  plants in each country can be generated that are proportional to the capacity
+  factor at each location.
 
 - **Hydro-electric power plants:**
   The database of hydro-electric power plants does not include plant-specific

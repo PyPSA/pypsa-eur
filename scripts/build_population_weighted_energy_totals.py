@@ -1,13 +1,20 @@
-"""Build population-weighted energy totals."""
+# -*- coding: utf-8 -*-
+# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: MIT
+"""
+Distribute country-level energy demands by population.
+"""
 
 import pandas as pd
 
-if __name__ == '__main__':
-    if 'snakemake' not in globals():
-        from helper import mock_snakemake
+if __name__ == "__main__":
+    if "snakemake" not in globals():
+        from _helpers import mock_snakemake
+
         snakemake = mock_snakemake(
-            'build_population_weighted_energy_totals',
-            simpl='',
+            "build_population_weighted_energy_totals",
+            simpl="",
             clusters=48,
         )
 
@@ -15,7 +22,7 @@ if __name__ == '__main__':
 
     energy_totals = pd.read_csv(snakemake.input.energy_totals, index_col=0)
 
-    nodal_energy_totals = energy_totals.loc[pop_layout.ct].fillna(0.)
+    nodal_energy_totals = energy_totals.loc[pop_layout.ct].fillna(0.0)
     nodal_energy_totals.index = pop_layout.index
     nodal_energy_totals = nodal_energy_totals.multiply(pop_layout.fraction, axis=0)
 

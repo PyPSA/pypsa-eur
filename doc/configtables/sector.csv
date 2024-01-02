@@ -1,0 +1,123 @@
+,Unit,Values,Description
+district_heating,--,,`prepare_sector_network.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/prepare_sector_network.py>`_
+-- potential,--,float,maximum fraction of urban demand which can be supplied by district heating
+-- progress,--,Dictionary with planning horizons as keys., Increase of today's district heating demand to potential maximum district heating share. Progress = 0 means today's district heating share. Progress = 1 means maximum fraction of urban demand is supplied by district heating
+-- district_heating_loss,--,float,Share increase in district heat demand in urban central due to heat losses
+cluster_heat_buses,--,"{true, false}",Cluster residential and service heat buses in `prepare_sector_network.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/prepare_sector_network.py>`_  to one to save memory.
+,,,
+bev_dsm_restriction _value,--,float,Adds a lower state of charge (SOC) limit for battery electric vehicles (BEV) to manage its own energy demand (DSM). Located in `build_transport_demand.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_transport_demand.py>`_. Set to 0 for no restriction on BEV DSM
+bev_dsm_restriction _time,--,float,Time at which SOC of BEV has to be dsm_restriction_value
+transport_heating _deadband_upper,°C,float,"The maximum temperature in the vehicle. At higher temperatures, the energy required for cooling in the vehicle increases."
+transport_heating _deadband_lower,°C,float,"The minimum temperature in the vehicle. At lower temperatures, the energy required for heating in the vehicle increases."
+,,,
+ICE_lower_degree_factor,--,float,Share increase in energy demand in internal combustion engine (ICE) for each degree difference between the cold environment and the minimum temperature.
+ICE_upper_degree_factor,--,float,Share increase in energy demand in internal combustion engine (ICE) for each degree difference between the hot environment and the maximum temperature.
+EV_lower_degree_factor,--,float,Share increase in energy demand in electric vehicles (EV) for each degree difference between the cold environment and the minimum temperature.
+EV_upper_degree_factor,--,float,Share increase in energy demand in electric vehicles (EV) for each degree difference between the hot environment and the maximum temperature.
+bev_dsm,--,"{true, false}",Add the option for battery electric vehicles (BEV) to participate in demand-side management (DSM)
+,,,
+bev_availability,--,float,The share for battery electric vehicles (BEV) that are able to do demand side management (DSM)
+bev_energy,--,float,The average size of battery electric vehicles (BEV) in MWh
+bev_charge_efficiency,--,float,Battery electric vehicles (BEV) charge and discharge efficiency
+bev_plug_to_wheel _efficiency,km/kWh,float,The distance battery electric vehicles (BEV) can travel in km per kWh of energy charge in battery.  Base value comes from `Tesla Model S <https://www.fueleconomy.gov/feg/>`_
+bev_charge_rate,MWh,float,The power consumption for one electric vehicle (EV) in MWh. Value derived from 3-phase charger with 11 kW.
+bev_avail_max,--,float,The maximum share plugged-in availability for passenger electric vehicles.
+bev_avail_mean,--,float,The average share plugged-in availability for passenger electric vehicles.
+v2g,--,"{true, false}",Allows feed-in to grid from EV battery
+land_transport_fuel_cell _share,--,Dictionary with planning horizons as keys.,The share of vehicles that uses fuel cells in a given year
+land_transport_electric _share,--,Dictionary with planning horizons as keys.,The share of vehicles that uses electric vehicles (EV) in a given year
+land_transport_ice _share,--,Dictionary with planning horizons as keys.,The share of vehicles that uses internal combustion engines (ICE) in a given year. What is not EV or FCEV is oil-fuelled ICE.
+transport_fuel_cell _efficiency,--,float,The H2 conversion efficiencies of fuel cells in transport
+transport_internal _combustion_efficiency,--,float,The oil conversion efficiencies of internal combustion engine (ICE) in transport
+agriculture_machinery _electric_share,--,float,The share for agricultural machinery that uses electricity
+agriculture_machinery _oil_share,--,float,The share for agricultural machinery that uses oil
+agriculture_machinery _fuel_efficiency,--,float,The efficiency of electric-powered machinery in the conversion of electricity to meet agricultural needs.
+agriculture_machinery _electric_efficiency,--,float,The efficiency of oil-powered machinery in the conversion of oil to meet agricultural needs.
+Mwh_MeOH_per_MWh_H2,LHV,float,"The energy amount of the produced methanol per energy amount of hydrogen. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 64."
+MWh_MeOH_per_tCO2,LHV,float,"The energy amount of the produced methanol per ton of CO2. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 64."
+MWh_MeOH_per_MWh_e,LHV,float,"The energy amount of the produced methanol per energy amount of electricity. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 64."
+shipping_hydrogen _liquefaction,--,"{true, false}",Whether to include liquefaction costs for hydrogen demand in shipping.
+,,,
+shipping_hydrogen_share,--,Dictionary with planning horizons as keys.,The share of ships powered by hydrogen in a given year
+shipping_methanol_share,--,Dictionary with planning horizons as keys.,The share of ships powered by methanol in a given year
+shipping_oil_share,--,Dictionary with planning horizons as keys.,The share of ships powered by oil in a given year
+shipping_methanol _efficiency,--,float,The efficiency of methanol-powered ships in the conversion of methanol to meet shipping needs (propulsion). The efficiency increase from oil can be 10-15% higher according to the `IEA <https://www.iea-amf.org/app/webroot/files/file/Annex%20Reports/AMF_Annex_56.pdf>`_
+,,,
+shipping_oil_efficiency,--,float,The efficiency of oil-powered ships in the conversion of oil to meet shipping needs (propulsion). Base value derived from 2011
+aviation_demand_factor,--,float,The proportion of demand for aviation compared to today's consumption
+HVC_demand_factor,--,float,The proportion of demand for high-value chemicals compared to today's consumption
+,,,
+time_dep_hp_cop,--,"{true, false}",Consider the time dependent coefficient of performance (COP) of the heat pump
+heat_pump_sink_T,°C,float,The temperature heat sink used in heat pumps based on DTU / large area radiators. The value is conservatively high to cover hot water and space heating in poorly-insulated buildings
+reduce_space_heat _exogenously,--,"{true, false}",Influence on space heating demand by a certain factor (applied before losses in district heating).
+reduce_space_heat _exogenously_factor,--,Dictionary with planning horizons as keys.,"A positive factor can mean renovation or demolition of a building. If the factor is negative, it can mean an increase in floor area, increased thermal comfort, population growth. The default factors are determined by the `Eurocalc Homes and buildings decarbonization scenario <http://tool.european-calculator.eu/app/buildings/building-types-area/?levers=1ddd4444421213bdbbbddd44444ffffff11f411111221111211l212221>`_"
+retrofitting,,,
+-- retro_endogen,--,"{true, false}",Add retrofitting as an endogenous system which co-optimise space heat savings.
+-- cost_factor,--,float,Weight costs for building renovation
+-- interest_rate,--,float,The interest rate for investment in building components
+-- annualise_cost,--,"{true, false}",Annualise the investment costs of retrofitting
+-- tax_weighting,--,"{true, false}",Weight the costs of retrofitting depending on taxes in countries
+-- construction_index,--,"{true, false}",Weight the costs of retrofitting depending on labour/material costs per country
+tes,--,"{true, false}",Add option for storing thermal energy in large water pits associated with district heating systems and individual thermal energy storage (TES)
+tes_tau,,,The time constant used to calculate the decay of thermal energy in thermal energy storage (TES): 1- :math:`e^{-1/24τ}`.
+-- decentral,days,float,The time constant in decentralized thermal energy storage (TES)
+-- central,days,float,The time constant in centralized thermal energy storage (TES)
+boilers,--,"{true, false}",Add option for transforming electricity into heat using resistive heater
+oil_boilers,--,"{true, false}",Add option for transforming oil into heat using boilers
+biomass_boiler,--,"{true, false}",Add option for transforming biomass into heat using boilers
+chp,--,"{true, false}",Add option for using Combined Heat and Power (CHP)
+micro_chp,--,"{true, false}",Add option for using Combined Heat and Power (CHP) for decentral areas.
+solar_thermal,--,"{true, false}",Add option for using solar thermal to generate heat.
+solar_cf_correction,--,float,The correction factor for the value provided by the solar thermal profile calculations
+marginal_cost_storage,currency/MWh ,float,The marginal cost of discharging batteries in distributed grids
+methanation,--,"{true, false}",Add option for transforming hydrogen and CO2 into methane using methanation.
+helmeth,--,"{true, false}",Add option for transforming power into gas using HELMETH (Integrated High-Temperature ELectrolysis and METHanation for Effective Power to Gas Conversion)
+coal_cc,--,"{true, false}",Add option for coal CHPs with carbon capture
+dac,--,"{true, false}",Add option for Direct Air Capture (DAC)
+co2_vent,--,"{true, false}",Add option for vent out CO2 from storages to the atmosphere.
+allam_cycle,--,"{true, false}",Add option to include `Allam cycle gas power plants <https://en.wikipedia.org/wiki/Allam_power_cycle>`_
+hydrogen_fuel_cell,--,"{true, false}",Add option to include hydrogen fuel cell for re-electrification. Assuming OCGT technology costs
+hydrogen_turbine,--,"{true, false}",Add option to include hydrogen turbine for re-electrification. Assuming OCGT technology costs
+SMR,--,"{true, false}",Add option for transforming natural gas into hydrogen and CO2 using Steam Methane Reforming (SMR)
+SMR CC,--,"{true, false}",Add option for transforming natural gas into hydrogen and CO2 using Steam Methane Reforming (SMR) and Carbon Capture (CC)
+regional_co2 _sequestration_potential,,,
+-- enable,--,"{true, false}",Add option for regionally-resolved geological carbon dioxide sequestration potentials based on `CO2StoP <https://setis.ec.europa.eu/european-co2-storage-database_en>`_.
+-- attribute,--,string,Name of the attribute for the sequestration potential
+-- include_onshore,--,"{true, false}",Add options for including onshore sequestration potentials
+-- min_size,Gt ,float,Any sites with lower potential than this value will be excluded
+-- max_size,Gt ,float,The maximum sequestration potential for any one site.
+-- years_of_storage,years,float,The years until potential exhausted at optimised annual rate
+co2_sequestration_potential,MtCO2/a,float,The potential of sequestering CO2 in Europe per year
+co2_sequestration_cost,currency/tCO2,float,The cost of sequestering a ton of CO2
+co2_spatial,--,"{true, false}","Add option to spatially resolve carrier representing stored carbon dioxide. This allows for more detailed modelling of CCUTS, e.g. regarding the capturing of industrial process emissions, usage as feedstock for electrofuels, transport of carbon dioxide, and geological sequestration sites."
+,,,
+co2network,--,"{true, false}",Add option for planning a new carbon dioxide transmission network
+,,,
+cc_fraction,--,float,The default fraction of CO2 captured with post-combustion capture
+hydrogen_underground _storage,--,"{true, false}",Add options for storing hydrogen underground. Storage potential depends regionally.
+hydrogen_underground _storage_locations,,"{onshore, nearshore, offshore}","The location where hydrogen underground storage can be located. Onshore, nearshore, offshore means it must be located more than 50 km away from the sea, within 50 km of the sea, or within the sea itself respectively."
+,,,
+ammonia,--,"{true, false, regional}","Add ammonia as a carrrier. It can be either true (copperplated NH3), false (no NH3 carrier) or ""regional"" (regionalised NH3 without network)"
+min_part_load_fischer _tropsch,per unit of p_nom ,float,The minimum unit dispatch (``p_min_pu``) for the Fischer-Tropsch process
+min_part_load _methanolisation,per unit of p_nom ,float,The minimum unit dispatch (``p_min_pu``) for the methanolisation process
+,,,
+use_fischer_tropsch _waste_heat,--,"{true, false}",Add option for using waste heat of Fischer Tropsch in district heating networks
+use_fuel_cell_waste_heat,--,"{true, false}",Add option for using waste heat of fuel cells in district heating networks
+use_electrolysis_waste _heat,--,"{true, false}",Add option for using waste heat of electrolysis in district heating networks
+electricity_distribution _grid,--,"{true, false}",Add a simplified representation of the exchange capacity between transmission and distribution grid level through a link.
+electricity_distribution _grid_cost_factor,,,Multiplies the investment cost of the electricity distribution grid
+,,,
+electricity_grid _connection,--,"{true, false}",Add the cost of electricity grid connection for onshore wind and solar
+H2_network,--,"{true, false}",Add option for new hydrogen pipelines
+gas_network,--,"{true, false}","Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. The existing gas network is added with a lossless transport model. A length-weighted `k-edge augmentation algorithm   <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_   can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well."
+H2_retrofit,--,"{true, false}",Add option for retrofiting existing pipelines to transport hydrogen.
+H2_retrofit_capacity _per_CH4,--,float,"The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The `European Hydrogen Backbone (April, 2020) p.15 <https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf>`_ 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity."
+gas_network_connectivity _upgrade ,--,float,The number of desired edge connectivity (k) in the length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ used for the gas network
+gas_distribution_grid,--,"{true, false}",Add a gas distribution grid
+gas_distribution_grid _cost_factor,,,Multiplier for the investment cost of the gas distribution grid
+,,,
+biomass_spatial,--,"{true, false}",Add option for resolving biomass demand regionally
+biomass_transport,--,"{true, false}",Add option for transporting solid biomass between nodes
+conventional_generation,,,Add a more detailed description of conventional carriers. Any power generation requires the consumption of fuel from nodes representing that fuel.
+biomass_to_liquid,--,"{true, false}",Add option for transforming solid biomass into liquid fuel with the same properties as oil
+biosng,--,"{true, false}",Add option for transforming solid biomass into synthesis gas with the same properties as natural gas

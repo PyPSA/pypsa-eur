@@ -1,0 +1,28 @@
+description,file/folder,licence,source
+JRC IDEES database,jrc-idees-2015/,CC BY 4.0,https://ec.europa.eu/jrc/en/potencia/jrc-idees
+urban/rural fraction,urban_percent.csv,unknown,unknown
+JRC biomass potentials,biomass/,unknown,https://doi.org/10.2790/39014
+JRC ENSPRESO biomass potentials,remote,CC BY 4.0,https://data.jrc.ec.europa.eu/dataset/74ed5a04-7d74-4807-9eab-b94774309d9f
+EEA emission statistics,eea/UNFCCC_v23.csv,EEA standard re-use policy,https://www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-16
+Eurostat Energy Balances,eurostat-energy_balances-*/,Eurostat,https://ec.europa.eu/eurostat/web/energy/data/energy-balances
+Swiss energy statistics from Swiss Federal Office of Energy,switzerland-sfoe/,unknown,http://www.bfe.admin.ch/themen/00526/00541/00542/02167/index.html?dossier_id=02169
+BASt emobility statistics,emobility/,unknown,http://www.bast.de/DE/Verkehrstechnik/Fachthemen/v2-verkehrszaehlung/Stundenwerte.html?nn=626916
+BDEW heating profile,heat_load_profile_BDEW.csv,unknown,https://github.com/oemof/demandlib
+heating profiles for Aarhus,heat_load_profile_DK_AdamJensen.csv,unknown,Adam Jensen MA thesis at Aarhus University
+George Lavidas wind/wave costs,WindWaveWEC_GLTB.xlsx,unknown,George Lavidas
+co2 budgets,co2_budget.csv,CC BY 4.0,https://arxiv.org/abs/2004.11009
+existing heating potentials,existing_infrastructure/existing_heating_raw.csv,unknown,https://ec.europa.eu/energy/studies/mapping-and-analyses-current-and-future-2020-2030-heatingcooling-fuel-deployment_en?redir=1
+IRENA existing VRE capacities,existing_infrastructure/{solar|onwind|offwind}_capcity_IRENA.csv,unknown,https://www.irena.org/Statistics/Download-Data
+USGS ammonia production,myb1-2017-nitro.xls,unknown,https://www.usgs.gov/centers/nmic/nitrogen-statistics-and-information
+hydrogen salt cavern potentials,h2_salt_caverns_GWh_per_sqkm.geojson,CC BY 4.0,https://doi.org/10.1016/j.ijhydene.2019.12.161 https://doi.org/10.20944/preprints201910.0187.v1
+international port trade volumes,attributed_ports.json,CC BY 4.0,https://datacatalog.worldbank.org/search/dataset/0038118/Global---International-Ports
+hotmaps industrial site database,Industrial_Database.csv,CC BY 4.0,https://gitlab.com/hotmaps/industrial_sites/industrial_sites_Industrial_Database
+Hotmaps building stock data,data_building_stock.csv,CC BY 4.0,https://gitlab.com/hotmaps/building-stock
+U-values Poland,u_values_poland.csv,unknown,https://data.europa.eu/euodp/de/data/dataset/building-stock-observatory
+Floor area missing in hotmaps building stock data,floor_area_missing.csv,unknown,https://data.europa.eu/euodp/de/data/dataset/building-stock-observatory
+Comparative level investment,comparative_level_investment.csv,Eurostat,https://ec.europa.eu/eurostat/statistics-explained/index.php?title=Comparative_price_levels_for_investment
+Electricity taxes,electricity_taxes_eu.csv,Eurostat,https://appsso.eurostat.ec.europa.eu/nui/show.do?dataset=nrg_pc_204&lang=en
+Building topologies and corresponding standard values,tabula-calculator-calcsetbuilding.csv,unknown,https://episcope.eu/fileadmin/tabula/public/calc/tabula-calculator.xlsx
+Retrofitting thermal envelope costs for Germany,retro_cost_germany.csv,unknown,https://www.iwu.de/forschung/handlungslogiken/kosten-energierelevanter-bau-und-anlagenteile-bei-modernisierung/
+District heating most countries,jrc-idees-2015/,CC BY 4.0,https://ec.europa.eu/jrc/en/potencia/jrc-idees,,
+District heating missing countries,district_heat_share.csv,unknown,https://www.euroheat.org/knowledge-hub/country-profiles,,
