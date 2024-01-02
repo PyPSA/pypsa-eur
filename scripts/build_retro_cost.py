@@ -836,8 +836,9 @@ def calculate_heat_losses(u_values, data_tabula, l_strength, temperature_factor)
     F_red_temp = map_to_lstrength(l_strength, F_red_temp)
 
     Q_ht = (
-        heat_transfer_perm2.T.groupby(level=1).sum().T
-        .mul(F_red_temp.droplevel(0, axis=1))
+        heat_transfer_perm2.T.groupby(level=1)
+        .sum()
+        .T.mul(F_red_temp.droplevel(0, axis=1))
         .mul(temperature_factor.reindex(heat_transfer_perm2.index, level=0), axis=0)
     )
 
