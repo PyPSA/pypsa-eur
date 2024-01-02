@@ -48,6 +48,8 @@ Upcoming Release
 
 * The ``mock_snakemake`` function can now be used with a Snakefile from a different directory using the new ``root_dir`` argument.
 
+* Switch to using hydrogen and electricity inputs for Haber-Bosch from https://github.com/PyPSA/technology-data.
+
 * Add option to capture CO2 contained in biogas when upgrading (``sector: biogas_to_gas_cc``).
 
 * Merged option to extend geographical scope to Ukraine and Moldova. These
