@@ -185,6 +185,8 @@ PyPSA-Eur 0.8.1 (27th July 2023)
   (https://github.com/PyPSA/pypsa-eur/pull/672)
 
 
+* Addressed deprecation warnings for ``pandas=2.0``. ``pandas=2.0`` is now minimum requirement.
+
 PyPSA-Eur 0.8.0 (18th March 2023)
 =================================
 
