@@ -1697,6 +1697,7 @@ def add_heat(n, costs):
             n.madd(
                 "Generator",
                 nodes[name] + f" {name} heat vent",
+                bus=nodes[name] + f" {name} heat",
                 location=nodes[name],
                 carrier=name + " heat vent",
                 p_nom_extendable=True,
