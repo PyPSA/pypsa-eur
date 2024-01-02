@@ -10,6 +10,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Adapt equity constraint option (EQ) to sector-coupled networks.
+
 * Pin ``snakemake`` version to below 8.0.0, as the new version is not yet
   supported by ``pypsa-eur``.
 
