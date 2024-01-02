@@ -497,6 +497,7 @@ sector:
   gas_distribution_grid_cost_factor: 1.0
   biomass_spatial: false
   biomass_transport: false
+  biomass_upgrading_cc: false
   conventional_generation:
     OCGT: gas
   biomass_to_liquid: false
@@ -778,6 +779,7 @@ plotting:
     fossil gas: '#e05b09'
     natural gas: '#e05b09'
     biogas to gas: '#e36311'
+    biogas to gas CC: '#e51245'
     CCGT: '#a85522'
     CCGT marginal: '#a85522'
     allam: '#B98F76'
