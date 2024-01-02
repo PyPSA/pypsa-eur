@@ -2178,7 +2178,7 @@ def add_biomass(n, costs):
         p_nom_extendable=True,
     )
 
-    if options.get("biomass_upgrading_cc"):
+    if options.get("biogas_upgrading_cc"):
         # Assuming for costs that the CO2 from upgrading is pure, such as in amine scrubbing. I.e., with and without CC is
         # equivalent. Adding biomass CHP capture because biogas is often small-scale and decentral so further
         # from e.g. CO2 grid or buyers. This is a proxy for the added cost for e.g. a raw biogas pipeline to a central upgrading facility
