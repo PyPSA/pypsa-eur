@@ -796,6 +796,10 @@ def add_ammonia(n, costs):
         "Bus", spatial.ammonia.nodes, location=spatial.ammonia.locations, carrier="NH3"
     )
 
+    MWh_elec_per_MWh_NH3 = (
+        cf_industry["MWh_elec_per_tNH3_electrolysis"] / cf_industry["MWh_NH3_per_tNH3"]
+    )
+
     n.madd(
         "Link",
         nodes,
@@ -805,14 +809,10 @@ def add_ammonia(n, costs):
         bus2=nodes + " H2",
         p_nom_extendable=True,
         carrier="Haber-Bosch",
-        efficiency=1
-        / (
-            cf_industry["MWh_elec_per_tNH3_electrolysis"]
-            / cf_industry["MWh_NH3_per_tNH3"]
-        ),  # output: MW_NH3 per MW_elec
+        efficiency=1 / MWh_elec_per_MWh_NH3,
         efficiency2=-cf_industry["MWh_H2_per_tNH3_electrolysis"]
         / cf_industry["MWh_elec_per_tNH3_electrolysis"],  # input: MW_H2 per MW_elec
-        capital_cost=costs.at["Haber-Bosch", "fixed"],
+        capital_cost=costs.at["Haber-Bosch", "fixed"] / MWh_elec_per_MWh_NH3,
         lifetime=costs.at["Haber-Bosch", "lifetime"],
     )
 
