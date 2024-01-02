@@ -793,9 +793,16 @@ def extra_functionality(n, snapshots):
         add_retrofit_gas_boiler_constraint(n, snapshots)
 
     if "additional_functionality" in snakemake.input.keys():
-        import importlib, os, sys
+        import importlib
+        import os
+        import sys
+
         sys.path.append(os.path.dirname(snakemake.input.additional_functionality))
-        additional_functionality = importlib.import_module(os.path.splitext(os.path.basename(snakemake.input.additional_functionality))[0])
+        additional_functionality = importlib.import_module(
+            os.path.splitext(
+                os.path.basename(snakemake.input.additional_functionality)
+            )[0]
+        )
 
         additional_functionality.additional_functionality(n, snapshots, snakemake)
 

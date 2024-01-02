@@ -128,8 +128,8 @@ def define_spatial(nodes, options):
 
     # methanol
 
-    #beware: unlike other carriers, uses locations rather than locations+carriername
-    #this allows to avoid separation between nodes and locations
+    # beware: unlike other carriers, uses locations rather than locations+carriername
+    # this allows to avoid separation between nodes and locations
 
     spatial.methanol = SimpleNamespace()
 
@@ -1595,10 +1595,16 @@ def add_land_transport(n, costs):
 
         ice_efficiency = options["transport_internal_combustion_efficiency"]
 
-        p_set_land_transport_oil = ice_share / ice_efficiency * transport[nodes].rename(columns=lambda x: x + " land transport oil")
+        p_set_land_transport_oil = (
+            ice_share
+            / ice_efficiency
+            * transport[nodes].rename(columns=lambda x: x + " land transport oil")
+        )
 
         if not options["regional_oil_demand"]:
-            p_set_land_transport_oil = p_set_land_transport_oil.sum(axis=1).to_frame(name="EU land transport oil")
+            p_set_land_transport_oil = p_set_land_transport_oil.sum(axis=1).to_frame(
+                name="EU land transport oil"
+            )
 
         n.madd(
             "Bus",
@@ -2454,7 +2460,7 @@ def add_industry(n, costs):
         efficiency=1.0,
     )
 
-    if len(spatial.biomass.industry_cc)<=1 and len(spatial.co2.nodes)>1:
+    if len(spatial.biomass.industry_cc) <= 1 and len(spatial.co2.nodes) > 1:
         link_names = nodes + " " + spatial.biomass.industry_cc
     else:
         link_names = spatial.biomass.industry_cc
@@ -2650,7 +2656,11 @@ def add_industry(n, costs):
             options["shipping_oil_efficiency"] / options["shipping_methanol_efficiency"]
         )
 
-        p_set_methanol = shipping_methanol_share * p_set.rename(lambda x : x + " shipping methanol") * efficiency
+        p_set_methanol = (
+            shipping_methanol_share
+            * p_set.rename(lambda x: x + " shipping methanol")
+            * efficiency
+        )
 
         if not options["regional_methanol_demand"]:
             p_set_methanol = p_set_methanol.sum()
@@ -2679,7 +2689,10 @@ def add_industry(n, costs):
             bus2="co2 atmosphere",
             carrier="shipping methanol",
             p_nom_extendable=True,
-            efficiency2=1 / options["MWh_MeOH_per_tCO2"], # CO2 intensity methanol based on stoichiometric calculation with 22.7 GJ/t methanol (32 g/mol), CO2 (44 g/mol), 277.78 MWh/TJ = 0.218 t/MWh
+            efficiency2=1
+            / options[
+                "MWh_MeOH_per_tCO2"
+            ],  # CO2 intensity methanol based on stoichiometric calculation with 22.7 GJ/t methanol (32 g/mol), CO2 (44 g/mol), 277.78 MWh/TJ = 0.218 t/MWh
         )
 
     if "oil" not in n.buses.carrier.unique():
@@ -2714,7 +2727,6 @@ def add_industry(n, costs):
         )
 
     if shipping_oil_share:
-
         p_set_oil = shipping_oil_share * p_set.rename(lambda x: x + " shipping oil")
 
         if not options["regional_oil_demand"]:
@@ -2793,7 +2805,13 @@ def add_industry(n, costs):
     if demand_factor != 1:
         logger.warning(f"Changing HVC demand by {demand_factor*100-100:+.2f}%.")
 
-    p_set_plastics = demand_factor * industrial_demand.loc[nodes, "naphtha"].rename(lambda x: x + " naphtha for industry") / nhours
+    p_set_plastics = (
+        demand_factor
+        * industrial_demand.loc[nodes, "naphtha"].rename(
+            lambda x: x + " naphtha for industry"
+        )
+        / nhours
+    )
 
     if not options["regional_oil_demand"]:
         p_set_plastics = p_set_plastics.sum()
@@ -2816,7 +2834,10 @@ def add_industry(n, costs):
 
     # some CO2 from naphtha are process emissions from steam cracker
     # rest of CO2 released to atmosphere either in waste-to-energy or decay
-    process_co2_per_naphtha = industrial_demand.loc[nodes, "process emission from feedstock"].sum() / industrial_demand.loc[nodes, "naphtha"].sum()
+    process_co2_per_naphtha = (
+        industrial_demand.loc[nodes, "process emission from feedstock"].sum()
+        / industrial_demand.loc[nodes, "naphtha"].sum()
+    )
     emitted_co2_per_naphtha = costs.at["oil", "CO2 intensity"] - process_co2_per_naphtha
 
     n.madd(
@@ -2840,11 +2861,11 @@ def add_industry(n, costs):
     all_aviation = ["total international aviation", "total domestic aviation"]
 
     p_set = (
-            demand_factor
-            * pop_weighted_energy_totals.loc[nodes, all_aviation].sum(axis=1)
-            * 1e6
-            / nhours
-        ).rename(lambda x: x + " kerosene for aviation")
+        demand_factor
+        * pop_weighted_energy_totals.loc[nodes, all_aviation].sum(axis=1)
+        * 1e6
+        / nhours
+    ).rename(lambda x: x + " kerosene for aviation")
 
     if not options["regional_oil_demand"]:
         p_set = p_set.sum()
@@ -3095,9 +3116,9 @@ def add_agriculture(n, costs):
             f"Total agriculture machinery shares sum up to {total_share:.2%}, corresponding to increased or decreased demand assumptions."
         )
 
-    machinery_nodal_energy = pop_weighted_energy_totals.loc[
-        nodes, "total agriculture machinery"
-    ] * 1e6
+    machinery_nodal_energy = (
+        pop_weighted_energy_totals.loc[nodes, "total agriculture machinery"] * 1e6
+    )
 
     if electric_share > 0:
         efficiency_gain = (
@@ -3111,15 +3132,15 @@ def add_agriculture(n, costs):
             suffix=" agriculture machinery electric",
             bus=nodes,
             carrier="agriculture machinery electric",
-            p_set=electric_share
-            / efficiency_gain
-            * machinery_nodal_energy
-            / nhours,
+            p_set=electric_share / efficiency_gain * machinery_nodal_energy / nhours,
         )
 
     if oil_share > 0:
-
-        p_set = oil_share * machinery_nodal_energy.rename(lambda x: x + " agriculture machinery oil") / nhours
+        p_set = (
+            oil_share
+            * machinery_nodal_energy.rename(lambda x: x + " agriculture machinery oil")
+            / nhours
+        )
 
         if not options["regional_oil_demand"]:
             p_set = p_set.sum()
