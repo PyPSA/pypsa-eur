@@ -536,6 +536,9 @@ if __name__ == "__main__":
     n = pypsa.Network(snakemake.input.network)
     Nyears = n.snapshot_weightings.objective.sum() / 8760
 
+    # remove integer outputs for compatibility with PyPSA v0.26.0
+    n.generators.drop("n_mod", axis=1, inplace=True, errors="ignore")
+
     n, trafo_map = simplify_network_to_380(n)
 
     technology_costs = load_costs(

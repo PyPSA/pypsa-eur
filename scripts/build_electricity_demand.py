@@ -31,7 +31,7 @@ Relevant Settings
 Inputs
 ------
 
-- ``data/load_raw.csv``:
+- ``resources/load_raw.csv``:
 
 Outputs
 -------
@@ -81,7 +81,7 @@ def load_timeseries(fn, years, countries, powerstatistics=True):
         return s[: -len(pattern)]
 
     return (
-        pd.read_csv(fn, index_col=0, parse_dates=[0])
+        pd.read_csv(fn, index_col=0, parse_dates=[0], date_format="%Y-%m-%dT%H:%M:%SZ")
         .tz_localize(None)
         .filter(like=pattern)
         .rename(columns=rename)
@@ -155,7 +155,7 @@ def copy_timeslice(load, cntry, start, stop, delta, fn_load=None):
             ].values
 
 
-def manual_adjustment(load, fn_load, powerstatistics):
+def manual_adjustment(load, fn_load, powerstatistics, countries):
     """
     Adjust gaps manual for load data from OPSD time-series package.
 
@@ -278,6 +278,14 @@ def manual_adjustment(load, fn_load, powerstatistics):
             load, "LU", "2019-02-05 20:00", "2019-02-06 19:00", Delta(weeks=-1)
         )
 
+    if "UA" in countries:
+        copy_timeslice(
+            load, "UA", "2013-01-25 14:00", "2013-01-28 21:00", Delta(weeks=1)
+        )
+        copy_timeslice(
+            load, "UA", "2013-10-28 03:00", "2013-10-28 20:00", Delta(weeks=1)
+        )
+
     return load
 
 
@@ -298,8 +306,22 @@ if __name__ == "__main__":
 
     load = load_timeseries(snakemake.input[0], years, countries, powerstatistics)
 
+    if "UA" in countries:
+        # attach load of UA (best data only for entsoe transparency)
+        load_ua = load_timeseries(snakemake.input[0], "2018", ["UA"], False)
+        snapshot_year = str(snapshots.year.unique().item())
+        time_diff = pd.Timestamp("2018") - pd.Timestamp(snapshot_year)
+        load_ua.index -= (
+            time_diff  # hack indices (currently, UA is manually set to 2018)
+        )
+        load["UA"] = load_ua
+        # attach load of MD (no time-series available, use 2020-totals and distribute according to UA):
+        # https://www.iea.org/data-and-statistics/data-browser/?country=MOLDOVA&fuel=Energy%20consumption&indicator=TotElecCons
+        if "MD" in countries:
+            load["MD"] = 6.2e6 * (load_ua / load_ua.sum())
+
     if snakemake.params.load["manual_adjustments"]:
-        load = manual_adjustment(load, snakemake.input[0], powerstatistics)
+        load = manual_adjustment(load, snakemake.input[0], powerstatistics, countries)
 
     if load.empty:
         logger.warning("Build electricity demand time series is empty.")

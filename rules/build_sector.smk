@@ -269,7 +269,7 @@ rule build_biomass_potentials:
         biomass=config["biomass"],
     input:
         enspreso_biomass=HTTP.remote(
-            "https://cidportal.jrc.ec.europa.eu/ftp/jrc-opendata/ENSPRESO/ENSPRESO_BIOMASS.xlsx",
+            "https://zenodo.org/records/10356004/files/ENSPRESO_BIOMASS.xlsx",
             keep_local=True,
         ),
         nuts2="data/bundle-sector/nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson",  # https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/#nuts21

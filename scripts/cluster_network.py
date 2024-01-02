@@ -16,8 +16,7 @@ Relevant Settings
     clustering:
       cluster_network:
       aggregation_strategies:
-
-    focus_weights:
+      focus_weights:
 
     solving:
         solver:
@@ -271,7 +270,7 @@ def distribute_clusters(n, n_clusters, focus_weights=None, solver_name="cbc"):
     )
 
     opt = po.SolverFactory(solver_name)
-    if not opt.has_capability("quadratic_objective"):
+    if solver_name == "appsi_highs" or not opt.has_capability("quadratic_objective"):
         logger.warning(
             f"The configured solver `{solver_name}` does not support quadratic objectives. Falling back to `ipopt`."
         )
@@ -466,8 +465,12 @@ if __name__ == "__main__":
 
     params = snakemake.params
     solver_name = snakemake.config["solving"]["solver"]["name"]
+    solver_name = "appsi_highs" if solver_name == "highs" else solver_name
 
     n = pypsa.Network(snakemake.input.network)
+
+    # remove integer outputs for compatibility with PyPSA v0.26.0
+    n.generators.drop("n_mod", axis=1, inplace=True, errors="ignore")
 
     exclude_carriers = params.cluster_network["exclude_carriers"]
     aggregate_carriers = set(n.generators.carrier) - set(exclude_carriers)

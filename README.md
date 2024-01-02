@@ -61,9 +61,9 @@ The dataset consists of:
 
 - A grid model based on a modified [GridKit](https://github.com/bdw/GridKit)
   extraction of the [ENTSO-E Transmission System
-  Map](https://www.entsoe.eu/data/map/). The grid model contains 6763 lines
+  Map](https://www.entsoe.eu/data/map/). The grid model contains 7072 lines
   (alternating current lines at and above 220kV voltage level and all high
-  voltage direct current lines) and 3642 substations.
+  voltage direct current lines) and 3803 substations.
 - The open power plant database
   [powerplantmatching](https://github.com/FRESNA/powerplantmatching).
 - Electrical demand time series from the
