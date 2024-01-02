@@ -189,12 +189,12 @@ def idees_per_country(ct, year, base_dir):
     ct_totals["total residential water"] = df.at["Water heating"]
 
     assert df.index[23] == "Electricity"
-    ct_totals["electricity residential water"] = df[23]
+    ct_totals["electricity residential water"] = df.iloc[23]
 
     ct_totals["total residential cooking"] = df["Cooking"]
 
     assert df.index[30] == "Electricity"
-    ct_totals["electricity residential cooking"] = df[30]
+    ct_totals["electricity residential cooking"] = df.iloc[30]
 
     df = pd.read_excel(fn_residential, "RES_summary", index_col=0)[year]
 
@@ -202,13 +202,13 @@ def idees_per_country(ct, year, base_dir):
     ct_totals["total residential"] = df[row]
 
     assert df.index[47] == "Electricity"
-    ct_totals["electricity residential"] = df[47]
+    ct_totals["electricity residential"] = df.iloc[47]
 
     assert df.index[46] == "Derived heat"
-    ct_totals["derived heat residential"] = df[46]
+    ct_totals["derived heat residential"] = df.iloc[46]
 
     assert df.index[50] == "Thermal uses"
-    ct_totals["thermal uses residential"] = df[50]
+    ct_totals["thermal uses residential"] = df.iloc[50]
 
     # services
 
@@ -222,12 +222,12 @@ def idees_per_country(ct, year, base_dir):
     ct_totals["total services water"] = df["Hot water"]
 
     assert df.index[24] == "Electricity"
-    ct_totals["electricity services water"] = df[24]
+    ct_totals["electricity services water"] = df.iloc[24]
 
     ct_totals["total services cooking"] = df["Catering"]
 
     assert df.index[31] == "Electricity"
-    ct_totals["electricity services cooking"] = df[31]
+    ct_totals["electricity services cooking"] = df.iloc[31]
 
     df = pd.read_excel(fn_tertiary, "SER_summary", index_col=0)[year]
 
@@ -235,13 +235,13 @@ def idees_per_country(ct, year, base_dir):
     ct_totals["total services"] = df[row]
 
     assert df.index[50] == "Electricity"
-    ct_totals["electricity services"] = df[50]
+    ct_totals["electricity services"] = df.iloc[50]
 
     assert df.index[49] == "Derived heat"
-    ct_totals["derived heat services"] = df[49]
+    ct_totals["derived heat services"] = df.iloc[49]
 
     assert df.index[53] == "Thermal uses"
-    ct_totals["thermal uses services"] = df[53]
+    ct_totals["thermal uses services"] = df.iloc[53]
 
     # agriculture, forestry and fishing
 
@@ -282,28 +282,28 @@ def idees_per_country(ct, year, base_dir):
     ct_totals["total two-wheel"] = df["Powered 2-wheelers (Gasoline)"]
 
     assert df.index[19] == "Passenger cars"
-    ct_totals["total passenger cars"] = df[19]
+    ct_totals["total passenger cars"] = df.iloc[19]
 
     assert df.index[30] == "Battery electric vehicles"
-    ct_totals["electricity passenger cars"] = df[30]
+    ct_totals["electricity passenger cars"] = df.iloc[30]
 
     assert df.index[31] == "Motor coaches, buses and trolley buses"
-    ct_totals["total other road passenger"] = df[31]
+    ct_totals["total other road passenger"] = df.iloc[31]
 
     assert df.index[39] == "Battery electric vehicles"
-    ct_totals["electricity other road passenger"] = df[39]
+    ct_totals["electricity other road passenger"] = df.iloc[39]
 
     assert df.index[41] == "Light duty vehicles"
-    ct_totals["total light duty road freight"] = df[41]
+    ct_totals["total light duty road freight"] = df.iloc[41]
 
     assert df.index[49] == "Battery electric vehicles"
-    ct_totals["electricity light duty road freight"] = df[49]
+    ct_totals["electricity light duty road freight"] = df.iloc[49]
 
     row = "Heavy duty vehicles (Diesel oil incl. biofuels)"
     ct_totals["total heavy duty road freight"] = df[row]
 
     assert df.index[61] == "Passenger cars"
-    ct_totals["passenger car efficiency"] = df[61]
+    ct_totals["passenger car efficiency"] = df.iloc[61]
 
     df = pd.read_excel(fn_transport, "TrRail_ene", index_col=0)[year]
 
@@ -312,39 +312,39 @@ def idees_per_country(ct, year, base_dir):
     ct_totals["electricity rail"] = df["Electricity"]
 
     assert df.index[15] == "Passenger transport"
-    ct_totals["total rail passenger"] = df[15]
+    ct_totals["total rail passenger"] = df.iloc[15]
 
     assert df.index[16] == "Metro and tram, urban light rail"
     assert df.index[19] == "Electric"
     assert df.index[20] == "High speed passenger trains"
-    ct_totals["electricity rail passenger"] = df[[16, 19, 20]].sum()
+    ct_totals["electricity rail passenger"] = df.iloc[[16, 19, 20]].sum()
 
     assert df.index[21] == "Freight transport"
-    ct_totals["total rail freight"] = df[21]
+    ct_totals["total rail freight"] = df.iloc[21]
 
     assert df.index[23] == "Electric"
-    ct_totals["electricity rail freight"] = df[23]
+    ct_totals["electricity rail freight"] = df.iloc[23]
 
     df = pd.read_excel(fn_transport, "TrAvia_ene", index_col=0)[year]
 
     assert df.index[6] == "Passenger transport"
-    ct_totals["total aviation passenger"] = df[6]
+    ct_totals["total aviation passenger"] = df.iloc[6]
 
     assert df.index[10] == "Freight transport"
-    ct_totals["total aviation freight"] = df[10]
+    ct_totals["total aviation freight"] = df.iloc[10]
 
     assert df.index[7] == "Domestic"
-    ct_totals["total domestic aviation passenger"] = df[7]
+    ct_totals["total domestic aviation passenger"] = df.iloc[7]
 
     assert df.index[8] == "International - Intra-EU"
     assert df.index[9] == "International - Extra-EU"
-    ct_totals["total international aviation passenger"] = df[[8, 9]].sum()
+    ct_totals["total international aviation passenger"] = df.iloc[[8, 9]].sum()
 
     assert df.index[11] == "Domestic and International - Intra-EU"
-    ct_totals["total domestic aviation freight"] = df[11]
+    ct_totals["total domestic aviation freight"] = df.iloc[11]
 
     assert df.index[12] == "International - Extra-EU"
-    ct_totals["total international aviation freight"] = df[12]
+    ct_totals["total international aviation freight"] = df.iloc[12]
 
     ct_totals["total domestic aviation"] = (
         ct_totals["total domestic aviation freight"]
@@ -364,7 +364,7 @@ def idees_per_country(ct, year, base_dir):
     df = pd.read_excel(fn_transport, "TrRoad_act", index_col=0)[year]
 
     assert df.index[85] == "Passenger cars"
-    ct_totals["passenger cars"] = df[85]
+    ct_totals["passenger cars"] = df.iloc[85]
 
     return pd.Series(ct_totals, name=ct)
 
