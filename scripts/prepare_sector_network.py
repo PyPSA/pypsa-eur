@@ -2163,7 +2163,6 @@ def add_biomass(n, costs):
         e_initial=solid_biomass_potentials_spatial,
     )
 
-
     n.madd(
         "Link",
         spatial.gas.biogas_to_gas,
@@ -2178,9 +2177,8 @@ def add_biomass(n, costs):
         efficiency=costs.at["biogas", "efficiency"],
         efficiency2=-costs.at["gas", "CO2 intensity"],
         efficiency3=costs.at["biogas", "CO2 stored"],
-        p_nom_extendable=True
+        p_nom_extendable=True,
     )
-
 
     if options.get("biomass_upgrading_cc"):
         # Assuming for costs that the CO2 from upgrading is pure, such as in amine scrubbing. I.e., with and without CC is
