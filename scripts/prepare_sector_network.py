@@ -810,8 +810,7 @@ def add_ammonia(n, costs):
         p_nom_extendable=True,
         carrier="Haber-Bosch",
         efficiency=1 / MWh_elec_per_MWh_NH3,
-        efficiency2=-cf_industry["MWh_H2_per_tNH3_electrolysis"]
-        / cf_industry["MWh_elec_per_tNH3_electrolysis"],  # input: MW_H2 per MW_elec
+        efficiency2=-costs.at["Haber-Bosch", "hydrogen-input"] / MWh_elec_per_MWh_NH3,
         capital_cost=costs.at["Haber-Bosch", "fixed"] / MWh_elec_per_MWh_NH3,
         lifetime=costs.at["Haber-Bosch", "lifetime"],
     )
