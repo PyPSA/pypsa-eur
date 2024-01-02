@@ -548,7 +548,7 @@ industry:
   MWh_CH4_per_tNH3_SMR: 10.8
   MWh_elec_per_tNH3_SMR: 0.7
   MWh_H2_per_tNH3_electrolysis: 5.93
-  MWh_elec_per_tNH3_electrolysis: 1.17
+  MWh_elec_per_tNH3_electrolysis: 0.2473
   MWh_NH3_per_MWh_H2_cracker: 1.46 # https://github.com/euronion/trace/blob/44a5ff8401762edbef80eff9cfe5a47c8d3c8be4/data/efficiencies.csv
   NH3_process_emissions: 24.5
   petrochemical_process_emissions: 25.5
