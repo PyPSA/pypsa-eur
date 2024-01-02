@@ -796,7 +796,9 @@ def add_ammonia(n, costs):
         "Bus", spatial.ammonia.nodes, location=spatial.ammonia.locations, carrier="NH3"
     )
 
-    MWh_elec_per_MWh_NH3 = cf_industry["MWh_elec_per_tNH3_electrolysis"] / cf_industry["MWh_NH3_per_tNH3"]
+    MWh_elec_per_MWh_NH3 = (
+        cf_industry["MWh_elec_per_tNH3_electrolysis"] / cf_industry["MWh_NH3_per_tNH3"]
+    )
 
     n.madd(
         "Link",
