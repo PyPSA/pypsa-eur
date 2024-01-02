@@ -813,6 +813,7 @@ def add_ammonia(n, costs):
         efficiency2=-cf_industry["MWh_H2_per_tNH3_electrolysis"]
         / cf_industry["MWh_elec_per_tNH3_electrolysis"],  # input: MW_H2 per MW_elec
         capital_cost=costs.at["Haber-Bosch", "fixed"] / MWh_elec_per_MWh_NH3,
+        marginal_cost=costs.at["Haber-Bosch", "VOM"] / MWh_elec_per_MWh_NH3,
         lifetime=costs.at["Haber-Bosch", "lifetime"],
     )
 
@@ -1023,7 +1024,7 @@ def insert_gas_distribution_costs(n, costs):
         f"Inserting gas distribution grid with investment cost factor of {f_costs}"
     )
 
-    capital_cost = costs.loc["electricity distribution grid"]["fixed"] * f_costs
+    capital_cost = costs.at["electricity distribution grid", "fixed"] * f_costs
 
     # gas boilers
     gas_b = n.links.index[
@@ -1100,6 +1101,7 @@ def add_storage_and_grids(n, costs):
             efficiency=costs.at["OCGT", "efficiency"],
             capital_cost=costs.at["OCGT", "fixed"]
             * costs.at["OCGT", "efficiency"],  # NB: fixed cost is per MWel
+            marginal_cost=costs.at["OCGT", "VOM"],
             lifetime=costs.at["OCGT", "lifetime"],
         )
 
@@ -2168,8 +2170,8 @@ def add_biomass(n, costs):
         bus1=spatial.gas.nodes,
         bus2="co2 atmosphere",
         carrier="biogas to gas",
-        capital_cost=costs.loc["biogas upgrading", "fixed"],
-        marginal_cost=costs.loc["biogas upgrading", "VOM"],
+        capital_cost=costs.at["biogas upgrading", "fixed"],
+        marginal_cost=costs.at["biogas upgrading", "VOM"],
         efficiency2=-costs.at["gas", "CO2 intensity"],
         p_nom_extendable=True,
     )
@@ -2318,7 +2320,7 @@ def add_biomass(n, costs):
             + costs.at["BtL", "CO2 stored"],
             p_nom_extendable=True,
             capital_cost=costs.at["BtL", "fixed"],
-            marginal_cost=costs.at["BtL", "efficiency"] * costs.loc["BtL", "VOM"],
+            marginal_cost=costs.at["BtL", "efficiency"] * costs.at["BtL", "VOM"],
         )
 
         # TODO: Update with energy penalty
@@ -2339,7 +2341,7 @@ def add_biomass(n, costs):
             p_nom_extendable=True,
             capital_cost=costs.at["BtL", "fixed"]
             + costs.at["biomass CHP capture", "fixed"] * costs.at["BtL", "CO2 stored"],
-            marginal_cost=costs.at["BtL", "efficiency"] * costs.loc["BtL", "VOM"],
+            marginal_cost=costs.at["BtL", "efficiency"] * costs.at["BtL", "VOM"],
         )
 
     # BioSNG from solid biomass
@@ -2358,7 +2360,7 @@ def add_biomass(n, costs):
             + costs.at["BioSNG", "CO2 stored"],
             p_nom_extendable=True,
             capital_cost=costs.at["BioSNG", "fixed"],
-            marginal_cost=costs.at["BioSNG", "efficiency"] * costs.loc["BioSNG", "VOM"],
+            marginal_cost=costs.at["BioSNG", "efficiency"] * costs.at["BioSNG", "VOM"],
         )
 
         # TODO: Update with energy penalty for CC
@@ -2382,7 +2384,7 @@ def add_biomass(n, costs):
             capital_cost=costs.at["BioSNG", "fixed"]
             + costs.at["biomass CHP capture", "fixed"]
             * costs.at["BioSNG", "CO2 stored"],
-            marginal_cost=costs.at["BioSNG", "efficiency"] * costs.loc["BioSNG", "VOM"],
+            marginal_cost=costs.at["BioSNG", "efficiency"] * costs.at["BioSNG", "VOM"],
         )
 
 
@@ -2615,6 +2617,8 @@ def add_industry(n, costs):
             p_min_pu=options.get("min_part_load_methanolisation", 0),
             capital_cost=costs.at["methanolisation", "fixed"]
             * options["MWh_MeOH_per_MWh_H2"],  # EUR/MW_H2/a
+            marginal_cost=options["MWh_MeOH_per_MWh_H2"]
+            * costs.at["methanolisation", "VOM"],
             lifetime=costs.at["methanolisation", "lifetime"],
             efficiency=options["MWh_MeOH_per_MWh_H2"],
             efficiency2=-options["MWh_MeOH_per_MWh_H2"] / options["MWh_MeOH_per_MWh_e"],
@@ -2732,6 +2736,8 @@ def add_industry(n, costs):
         efficiency=costs.at["Fischer-Tropsch", "efficiency"],
         capital_cost=costs.at["Fischer-Tropsch", "fixed"]
         * costs.at["Fischer-Tropsch", "efficiency"],  # EUR/MW_H2/a
+        marginal_cost=costs.at["Fischer-Tropsch", "efficiency"]
+        * costs.at["Fischer-Tropsch", "VOM"],
         efficiency2=-costs.at["oil", "CO2 intensity"]
         * costs.at["Fischer-Tropsch", "efficiency"],
         p_nom_extendable=True,
