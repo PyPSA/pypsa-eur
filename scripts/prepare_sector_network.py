@@ -808,9 +808,12 @@ def add_ammonia(n, costs):
         p_nom_extendable=True,
         carrier="Haber-Bosch",
         efficiency=1 / costs.at["Haber-Bosch", "electricity-input"],
-        efficiency2=-costs.at["Haber-Bosch", "hydrogen-input"] / costs.at["Haber-Bosch", "electricity-input"],
-        capital_cost=costs.at["Haber-Bosch", "fixed"] / costs.at["Haber-Bosch", "electricity-input"],
-        marginal_cost=costs.at["Haber-Bosch", "VOM"] / costs.at["Haber-Bosch", "electricity-input"],
+        efficiency2=-costs.at["Haber-Bosch", "hydrogen-input"]
+        / costs.at["Haber-Bosch", "electricity-input"],
+        capital_cost=costs.at["Haber-Bosch", "fixed"]
+        / costs.at["Haber-Bosch", "electricity-input"],
+        marginal_cost=costs.at["Haber-Bosch", "VOM"]
+        / costs.at["Haber-Bosch", "electricity-input"],
         lifetime=costs.at["Haber-Bosch", "lifetime"],
     )
 
