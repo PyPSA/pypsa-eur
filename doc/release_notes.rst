@@ -46,6 +46,8 @@ Upcoming Release
 
 * Add VOM as marginal cost to PtX processes.
 
+* Add pelletizing costs for biomass boilers.
+
 * The ``mock_snakemake`` function can now be used with a Snakefile from a different directory using the new ``root_dir`` argument.
 
 * Add option to capture CO2 contained in biogas when upgrading (``sector: biogas_to_gas_cc``).
