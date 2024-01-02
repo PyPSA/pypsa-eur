@@ -836,8 +836,7 @@ def calculate_heat_losses(u_values, data_tabula, l_strength, temperature_factor)
     F_red_temp = map_to_lstrength(l_strength, F_red_temp)
 
     Q_ht = (
-        heat_transfer_perm2.groupby(level=1, axis=1)
-        .sum()
+        heat_transfer_perm2.T.groupby(level=1).sum().T
         .mul(F_red_temp.droplevel(0, axis=1))
         .mul(temperature_factor.reindex(heat_transfer_perm2.index, level=0), axis=0)
     )
@@ -878,7 +877,7 @@ def calculate_gain_utilisation_factor(heat_transfer_perm2, Q_ht, Q_gain):
     Calculates gain utilisation factor nu.
     """
     # time constant of the building tau [h] = c_m [Wh/(m^2K)] * 1 /(H_tr_e+H_tb*H_ve) [m^2 K /W]
-    tau = c_m / heat_transfer_perm2.groupby(level=1, axis=1).sum()
+    tau = c_m / heat_transfer_perm2.T.groupby(axis=1).sum().T
     alpha = alpha_H_0 + (tau / tau_H_0)
     # heat balance ratio
     gamma = (1 / Q_ht).mul(Q_gain.sum(axis=1), axis=0)

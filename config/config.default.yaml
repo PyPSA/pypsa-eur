@@ -158,6 +158,7 @@ renewable:
     resource:
       method: wind
       turbine: Vestas_V112_3MW
+      add_cutout_windspeed: true
     capacity_per_sqkm: 3
     # correction_factor: 0.93
     corine:
@@ -173,6 +174,7 @@ renewable:
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_5MW_offshore
+      add_cutout_windspeed: true
     capacity_per_sqkm: 2
     correction_factor: 0.8855
     corine: [44, 255]
@@ -188,6 +190,7 @@ renewable:
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_5MW_offshore
+      add_cutout_windspeed: true
     capacity_per_sqkm: 2
     correction_factor: 0.8855
     corine: [44, 255]

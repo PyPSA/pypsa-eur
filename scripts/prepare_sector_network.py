@@ -1630,7 +1630,7 @@ def build_heat_demand(n):
     electric_nodes = n.loads.index[n.loads.carrier == "electricity"]
     n.loads_t.p_set[electric_nodes] = (
         n.loads_t.p_set[electric_nodes]
-        - electric_heat_supply.groupby(level=1, axis=1).sum()[electric_nodes]
+        - electric_heat_supply.T.groupby(level=1).sum().T[electric_nodes]
     )
 
     return heat_demand
@@ -1724,15 +1724,15 @@ def add_heat(n, costs):
             if sector in name:
                 heat_load = (
                     heat_demand[[sector + " water", sector + " space"]]
-                    .groupby(level=1, axis=1)
-                    .sum()[nodes[name]]
+                    .T.groupby(level=1)
+                    .sum().T[nodes[name]]
                     .multiply(factor)
                 )
 
         if name == "urban central":
             heat_load = (
-                heat_demand.groupby(level=1, axis=1)
-                .sum()[nodes[name]]
+                heat_demand.T.groupby(level=1)
+                .sum().T[nodes[name]]
                 .multiply(
                     factor * (1 + options["district_heating"]["district_heating_loss"])
                 )
