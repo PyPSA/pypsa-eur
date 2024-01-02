@@ -173,7 +173,7 @@ renewable:
     cutout: europe-2013-era5
     resource:
       method: wind
-      turbine: NREL_ReferenceTurbine_5MW_offshore
+      turbine: NREL_ReferenceTurbine_2020ATB_5.5MW
       add_cutout_windspeed: true
     capacity_per_sqkm: 2
     correction_factor: 0.8855
@@ -189,7 +189,7 @@ renewable:
     cutout: europe-2013-era5
     resource:
       method: wind
-      turbine: NREL_ReferenceTurbine_5MW_offshore
+      turbine: NREL_ReferenceTurbine_2020ATB_5.5MW
       add_cutout_windspeed: true
     capacity_per_sqkm: 2
     correction_factor: 0.8855
