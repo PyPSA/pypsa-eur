@@ -44,6 +44,14 @@ Upcoming Release
   network has been moved from ``focus_weights:`` to ``clustering:
   focus_weights:``. Backwards compatibility to old config files is maintained.
 
+* Extend options for waste usage from Haber-Bosch, methanolisation and methanation.
+
+* Use electrolysis waste heat by default.
+
+* Add new ``sector_opts`` wildcard option "nowasteheat" to disable all waste heat usage.
+
+* Set minimum part loads for PtX processes to 30% for methanolisation and methanation, and to 70% for Fischer-Tropsch synthesis.
+
 * Add VOM as marginal cost to PtX processes.
 
 * The ``mock_snakemake`` function can now be used with a Snakefile from a different directory using the new ``root_dir`` argument.

@@ -1345,6 +1345,7 @@ def add_storage_and_grids(n, costs):
             bus2=spatial.co2.nodes,
             p_nom_extendable=True,
             carrier="Sabatier",
+            p_min_pu=options.get("min_part_load_methanation", 0),
             efficiency=costs.at["methanation", "efficiency"],
             efficiency2=-costs.at["methanation", "efficiency"]
             * costs.at["gas", "CO2 intensity"],
@@ -2982,6 +2983,34 @@ def add_waste_heat(n):
                 0.95 - n.links.loc[urban_central + " Fischer-Tropsch", "efficiency"]
             )
 
+        if options["use_methanation_waste_heat"]:
+            n.links.loc[urban_central + " Sabatier", "bus3"] = (
+                urban_central + " urban central heat"
+            )
+            n.links.loc[urban_central + " Sabatier", "efficiency3"] = (
+                0.95 - n.links.loc[urban_central + " Sabatier", "efficiency"]
+            )
+
+        # DEA quotes 15% of total input (11% of which are high-value heat)
+        if options["use_haber_bosch_waste_heat"]:
+            n.links.loc[urban_central + " Haber-Bosch", "bus3"] = (
+                urban_central + " urban central heat"
+            )
+            total_energy_input = (cf_industry["MWh_H2_per_tNH3_electrolysis"] + cf_industry["MWh_elec_per_tNH3_electrolysis"]) /  cf_industry["MWh_NH3_per_tNH3"]
+            electricity_input = cf_industry["MWh_elec_per_tNH3_electrolysis"] /  cf_industry["MWh_NH3_per_tNH3"]
+            n.links.loc[urban_central + " Haber-Bosch", "efficiency3"] = (
+                0.15 * total_energy_input / electricity_input
+            )
+
+        if options["use_methanolisation_waste_heat"]:
+            n.links.loc[urban_central + " methanolisation", "bus4"] = (
+                urban_central + " urban central heat"
+            )
+            n.links.loc[urban_central + " methanolisation", "efficiency4"] = (
+                costs.at["methanolisation", "heat-output"]
+                / costs.at["methanolisation", "hydrogen-input"]
+            )
+
         # TODO integrate usable waste heat efficiency into technology-data from DEA
         if options.get("use_electrolysis_waste_heat", False):
             n.links.loc[urban_central + " H2 Electrolysis", "bus2"] = (
@@ -3425,6 +3454,15 @@ if __name__ == "__main__":
 
     if "nodistrict" in opts:
         options["district_heating"]["progress"] = 0.0
+
+    if "nowasteheat" in opts:
+        logger.info("Disabling waste heat.")
+        options["use_fischer_tropsch_waste_heat"] = False
+        options["use_methanolisation_waste_heat"] = False
+        options["use_haber_bosch_waste_heat"] = False
+        options["use_methanation_waste_heat"] = False
+        options["use_fuel_cell_waste_heat"] = False
+        options["use_electrolysis_waste_heat"] = False
 
     if "T" in opts:
         add_land_transport(n, costs)
