@@ -84,22 +84,6 @@ co2_budget:
   2045: 0.032
   2050: 0.000
 
-co2_budget_national:
-  2030:
-    'DE': 0.350
-    'AT': 0.450
-    'BE': 0.450
-    'CH': 0.450
-    'CZ': 0.450
-    'DK': 0.450
-    'FR': 0.450
-    'GB': 0.450
-    'LU': 0.450
-    'NL': 0.450
-    'NO': 0.450
-    'PL': 0.450
-    'SE': 0.450
-
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
   voltages: [220., 300., 380.]
@@ -470,7 +454,6 @@ sector:
   hydrogen_turbine: false
   SMR: true
   SMR_cc: true
-  co2_budget_national: false
   regional_methanol_demand: false  #set to true if regional CO2 constraints needed
   regional_oil_demand: false  #set to true if regional CO2 constraints needed
   regional_co2_sequestration_potential:
