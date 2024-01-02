@@ -38,6 +38,8 @@ Upcoming Release
 
 * Split configuration to enable SMR and SMR CC.
 
+* Bugfix: The unit of the capital cost of Haber-Bosch plants was corrected.
+
 * The configuration setting for country focus weights when clustering the
   network has been moved from ``focus_weights:`` to ``clustering:
   focus_weights:``. Backwards compatibility to old config files is maintained.
