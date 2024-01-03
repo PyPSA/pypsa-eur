@@ -169,6 +169,7 @@ if config["enable"]["retrieve"] and (
         "IGGIELGN_LNGs.geojson",
         "IGGIELGN_BorderPoints.geojson",
         "IGGIELGN_Productions.geojson",
+        "IGGIELGN_Storages.geojson",
         "IGGIELGN_PipeSegments.geojson",
     ]
 
