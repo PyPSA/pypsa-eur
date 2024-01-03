@@ -107,6 +107,11 @@ electricity_distribution _grid,--,"{true, false}",Add a simplified representatio
 electricity_distribution _grid_cost_factor,,,Multiplies the investment cost of the electricity distribution grid
 ,,,
 electricity_grid _connection,--,"{true, false}",Add the cost of electricity grid connection for onshore wind and solar
+transmission_efficiency,,,Section to specify transmission losses or compression energy demands of bidirectional links. Splits them into two capacity-linked unidirectional links.
+-- {carrier},--,str,The carrier of the link.
+-- -- efficiency_static,p.u.,float,Length-independent transmission efficiency.
+-- -- efficiency_per_1000km,p.u. per 1000 km,float,Length-dependent transmission efficiency ($\eta^{\text{length}}$)
+-- -- compression_per_1000km,p.u. per 1000 km,float,Length-dependent electricity demand for compression ($\eta \cdot \text{length}$) implemented as multi-link to local electricity bus.
 H2_network,--,"{true, false}",Add option for new hydrogen pipelines
 gas_network,--,"{true, false}","Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. The existing gas network is added with a lossless transport model. A length-weighted `k-edge augmentation algorithm   <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_   can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well."
 H2_retrofit,--,"{true, false}",Add option for retrofiting existing pipelines to transport hydrogen.

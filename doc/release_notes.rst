@@ -10,6 +10,13 @@ Release Notes
 Upcoming Release
 ================
 
+* Add option to specify losses for bidirectional links, e.g. pipelines or HVDC
+  links, in configuration file under ``sector: transmission_efficiency:``. Users
+  can specify static or length-dependent values as well as a length-dependent
+  electricity demand for compression, which is implemented as a multi-link to
+  the local electricity buses. The bidirectional links will then be split into
+  two unidirectional links with linked capacities.
+
 * Pin ``snakemake`` version to below 8.0.0, as the new version is not yet
   supported by ``pypsa-eur``.
 
