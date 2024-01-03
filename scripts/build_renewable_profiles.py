@@ -326,7 +326,9 @@ if __name__ == "__main__":
     )
 
     duration = time.time() - start
-    logger.info(f"Completed weighted capacity factor time series calculation ({duration:2.2f}s)")
+    logger.info(
+        f"Completed weighted capacity factor time series calculation ({duration:2.2f}s)"
+    )
 
     logger.info(f"Calculating maximal capacity per bus (method '{p_nom_max_meth}')")
     if p_nom_max_meth == "simple":
