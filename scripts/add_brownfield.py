@@ -119,32 +119,39 @@ def add_brownfield(n, n_p, year):
             n.links.loc[new_pipes, "p_nom"] = 0.0
             n.links.loc[new_pipes, "p_nom_min"] = 0.0
 
+
 def disable_grid_expansion_if_LV_limit_hit(n):
     if not "lv_limit" in n.global_constraints.index:
         return
 
-    #calculate minimum LV
+    # calculate minimum LV
     attr = "nom_min"
     dc = n.links.index[n.links.carrier == "DC"]
-    tot = (n.lines["s_" + attr]*n.lines["length"]).sum() + (n.links.loc[dc,"p_" + attr]*n.links.loc[dc,"length"]).sum()
+    tot = (n.lines["s_" + attr] * n.lines["length"]).sum() + (
+        n.links.loc[dc, "p_" + attr] * n.links.loc[dc, "length"]
+    ).sum()
 
-    diff = n.global_constraints.at["lv_limit","constant"]-tot
+    diff = n.global_constraints.at["lv_limit", "constant"] - tot
 
-    #allow small numerical differences
+    # allow small numerical differences
     limit = 1
 
     if diff < limit:
-        logger.info(f"LV is already reached (gap {diff}), disabling expansion and LV limit")
+        logger.info(
+            f"LV is already reached (gap {diff}), disabling expansion and LV limit"
+        )
         expandable_acs = n.lines.index[n.lines.s_nom_extendable]
-        n.lines.loc[expandable_acs,"s_nom_extendable"] = False
-        n.lines.loc[expandable_acs,"s_nom"] = n.lines.loc[expandable_acs,"s_nom_min"]
+        n.lines.loc[expandable_acs, "s_nom_extendable"] = False
+        n.lines.loc[expandable_acs, "s_nom"] = n.lines.loc[expandable_acs, "s_nom_min"]
 
-        expandable_dcs = n.links.index[n.links.p_nom_extendable & (n.links.carrier == "DC")]
-        n.links.loc[expandable_dcs,"p_nom_extendable"] = False
-        n.links.loc[expandable_dcs,"p_nom"] = n.links.loc[expandable_dcs,"p_nom_min"]
+        expandable_dcs = n.links.index[
+            n.links.p_nom_extendable & (n.links.carrier == "DC")
+        ]
+        n.links.loc[expandable_dcs, "p_nom_extendable"] = False
+        n.links.loc[expandable_dcs, "p_nom"] = n.links.loc[expandable_dcs, "p_nom_min"]
 
-        n.global_constraints.drop("lv_limit",
-                                  inplace=True)
+        n.global_constraints.drop("lv_limit", inplace=True)
+
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
