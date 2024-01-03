@@ -236,23 +236,28 @@ if __name__ == "__main__":
     if params["natura"]:
         excluder.add_raster(snakemake.input.natura, nodata=0, allow_no_overlap=True)
 
-    for landuse in ["corine", "luisa"]:
-        kwargs = {"nodata": 0} if landuse == "luisa" else {}
-        landuse = params.get(landuse, {})
-        if not landuse:
-            continue
-        if isinstance(landuse, list):
-            landuse = {"grid_codes": landuse}
-        if "grid_codes" in landuse:
-            codes = landuse["grid_codes"]
-            excluder.add_raster(
-                snakemake.input[landuse], codes=codes, invert=True, crs=3035, **kwargs
+    for dataset in ["corine", "luisa"]:
+        kwargs = {"nodata": 0} if dataset == "luisa" else {}
+        if dataset == "luisa" and res > 50:
+            logger.info(
+                "LUISA data is available at 50m resolution, "
+                f"but coarser {res}m resolution is used."
             )
-        if landuse.get("distance", 0.0) > 0.0:
-            codes = landuse["distance_grid_codes"]
-            buffer = landuse["distance"]
+        settings = params.get(dataset, {})
+        if not settings:
+            continue
+        if isinstance(settings, list):
+            settings = {"grid_codes": settings}
+        if "grid_codes" in settings:
+            codes = settings["grid_codes"]
             excluder.add_raster(
-                snakemake.input[landuse], codes=codes, buffer=buffer, crs=3035, **kwargs
+                snakemake.input[dataset], codes=codes, invert=True, crs=3035, **kwargs
+            )
+        if settings.get("distance", 0.0) > 0.0:
+            codes = settings["distance_grid_codes"]
+            buffer = settings["distance"]
+            excluder.add_raster(
+                snakemake.input[dataset], codes=codes, buffer=buffer, crs=3035, **kwargs
             )
 
     if params.get("ship_threshold"):
