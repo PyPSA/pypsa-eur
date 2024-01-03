@@ -511,6 +511,9 @@ sector:
     OCGT: gas
   biomass_to_liquid: false
   biosng: false
+  endogenous_steel: false
+  relocation_steel: false
+  flexibility_steel: false
   limit_max_growth:
     enable: false
     # allowing 30% larger than max historic growth
@@ -581,7 +584,7 @@ industry:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 costs:
   year: 2030
-  version: v0.6.0
+  version: v0.6.2
   rooftop_share: 0.14  # based on the potentials, assuming  (0.1 kW/m2 and 10 m2/person)
   social_discountrate: 0.02
   fill_values:
@@ -1005,4 +1008,5 @@ plotting:
     DC: "#8a1caf"
     DC-DC: "#8a1caf"
     DC link: "#8a1caf"
+    DRI + Electric arc: '#b1bbc9'
     load: "#dd2e23"

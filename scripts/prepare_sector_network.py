@@ -2427,8 +2427,105 @@ def add_industry(n, costs):
 
     # 1e6 to convert TWh to MWh
     industrial_demand = (
-        pd.read_csv(snakemake.input.industrial_demand, index_col=0) * 1e6
-    ) * nyears
+        pd.read_csv(snakemake.input.industrial_demand, index_col=[0, 1]) * 1e6 * nyears
+    )
+    industrial_demand_today = (
+        pd.read_csv(snakemake.input.industrial_demand_today, index_col=0) * 1e6 * nyears
+    )
+
+    industrial_production = (
+        pd.read_csv(snakemake.input.industrial_production, index_col=0)
+        * 1e3
+        * nyears  # kt/a -> t/a
+    )
+
+    endogenous_sectors = ["DRI + Electric arc"] if options["endogenous_steel"] else []
+    sectors_b = ~industrial_demand.index.get_level_values("sector").isin(
+        endogenous_sectors
+    )
+
+    if options["endogenous_steel"]:
+        logger.info("Adding endogenous primary steel demand in tonnes.")
+
+        sector = "DRI + Electric arc"
+
+        no_relocation = not options.get("relocation_steel", False)
+        no_flexibility = not options.get("flexibility_steel", False)
+
+        s = " not" if no_relocation else " "
+        logger.info(f"Steel industry relocation{s} activated.")
+
+        s = " not" if no_flexibility else " "
+        logger.info(f"Steel industry flexibility{s} activated.")
+
+        n.add(
+            "Bus",
+            "EU steel",
+            location="EU",
+            carrier="steel",
+            unit="t",
+        )
+
+        n.add(
+            "Load",
+            "EU steel",
+            bus="EU steel",
+            carrier="steel",
+            p_set=industrial_production[sector].sum() / nhours,
+        )
+
+        if not no_flexibility:
+            n.add(
+                "Store",
+                "EU steel Store",
+                bus="EU steel",
+                e_nom_extendable=True,
+                e_cyclic=True,
+                carrier="steel",
+            )
+
+        electricity_input = (
+            costs.at["direct iron reduction furnace", "electricity-input"]
+            * costs.at["electric arc furnace", "hbi-input"]
+            + costs.at["electric arc furnace", "electricity-input"]
+        )
+
+        hydrogen_input = (
+            costs.at["direct iron reduction furnace", "hydrogen-input"]
+            * costs.at["electric arc furnace", "hbi-input"]
+        )
+
+        # so that for each region supply matches consumption
+        p_nom = industrial_production[sector] * electricity_input / nhours
+
+        marginal_cost = (
+            costs.at["iron ore DRI-ready", "commodity"]
+            * costs.at["direct iron reduction furnace", "ore-input"]
+            * costs.at["electric arc furnace", "hbi-input"]
+            / electricity_input
+        )
+
+        capital_cost = (
+            costs.at["direct iron reduction furnace", "fixed"]
+            + costs.at["electric arc furnace", "fixed"]
+        ) / electricity_input
+
+        n.madd(
+            "Link",
+            nodes,
+            suffix=f" {sector}",
+            carrier=sector,
+            capital_cost=capital_cost,
+            marginal_cost=marginal_cost,
+            p_nom_max=p_nom if no_relocation else np.inf,
+            p_nom_extendable=True,
+            p_min_pu=1 if no_flexibility else 0,
+            bus0=nodes,
+            bus1="EU steel",
+            bus2=nodes + " H2",
+            efficiency=1 / electricity_input,
+            efficiency2=-hydrogen_input / electricity_input,
+        )
 
     n.madd(
         "Bus",
@@ -2440,13 +2537,16 @@ def add_industry(n, costs):
 
     if options.get("biomass_spatial", options["biomass_transport"]):
         p_set = (
-            industrial_demand.loc[spatial.biomass.locations, "solid biomass"].rename(
-                index=lambda x: x + " solid biomass for industry"
-            )
+            industrial_demand.loc[
+                (spatial.biomass.locations, sectors_b), "solid biomass"
+            ]
+            .groupby(level="nodes")
+            .sum()
+            .rename(index=lambda x: x + " solid biomass for industry")
             / nhours
         )
     else:
-        p_set = industrial_demand["solid biomass"].sum() / nhours
+        p_set = industrial_demand.loc[sectors_b, "solid biomass"].sum() / nhours
 
     n.madd(
         "Load",
@@ -2493,7 +2593,10 @@ def add_industry(n, costs):
         unit="MWh_LHV",
     )
 
-    gas_demand = industrial_demand.loc[nodes, "methane"] / nhours
+    gas_demand = (
+        industrial_demand.loc[(nodes, sectors_b), "methane"].groupby(level="node").sum()
+        / nhours
+    )
 
     if options["gas_network"]:
         spatial_gas_demand = gas_demand.rename(index=lambda x: x + " gas for industry")
@@ -2545,7 +2648,10 @@ def add_industry(n, costs):
         suffix=" H2 for industry",
         bus=nodes + " H2",
         carrier="H2 for industry",
-        p_set=industrial_demand.loc[nodes, "hydrogen"] / nhours,
+        p_set=industrial_demand.loc[(nodes, sectors_b), "hydrogen"]
+        .groupby(level="node")
+        .sum()
+        / nhours,
     )
 
     shipping_hydrogen_share = get(options["shipping_hydrogen_share"], investment_year)
@@ -2776,7 +2882,11 @@ def add_industry(n, costs):
     )
 
     demand_factor = options.get("HVC_demand_factor", 1)
-    p_set = demand_factor * industrial_demand.loc[nodes, "naphtha"].sum() / nhours
+    p_set = (
+        demand_factor
+        * industrial_demand.loc[(nodes, sectors_b), "naphtha"].sum()
+        / nhours
+    )
     if demand_factor != 1:
         logger.warning(f"Changing HVC demand by {demand_factor*100-100:+.2f}%.")
 
@@ -2813,7 +2923,10 @@ def add_industry(n, costs):
     co2_release = ["naphtha for industry", "kerosene for aviation"]
     co2 = (
         n.loads.loc[co2_release, "p_set"].sum() * costs.at["oil", "CO2 intensity"]
-        - industrial_demand.loc[nodes, "process emission from feedstock"].sum() / nhours
+        - industrial_demand.loc[
+            (nodes, sectors_b), "process emission from feedstock"
+        ].sum()
+        / nhours
     )
 
     n.add(
@@ -2836,7 +2949,10 @@ def add_industry(n, costs):
             for node in nodes
         ],
         carrier="low-temperature heat for industry",
-        p_set=industrial_demand.loc[nodes, "low-temperature heat"] / nhours,
+        p_set=industrial_demand.loc[(nodes, sectors_b), "low-temperature heat"]
+        .groupby(level="node")
+        .sum()
+        / nhours,
     )
 
     # remove today's industrial electricity demand by scaling down total electricity demand
@@ -2850,7 +2966,7 @@ def add_industry(n, costs):
             continue
         factor = (
             1
-            - industrial_demand.loc[loads_i, "current electricity"].sum()
+            - industrial_demand_today.loc[loads_i, "electricity"].sum()
             / n.loads_t.p_set[loads_i].sum().sum()
         )
         n.loads_t.p_set[loads_i] *= factor
@@ -2861,7 +2977,10 @@ def add_industry(n, costs):
         suffix=" industry electricity",
         bus=nodes,
         carrier="industry electricity",
-        p_set=industrial_demand.loc[nodes, "electricity"] / nhours,
+        p_set=industrial_demand.loc[(nodes, sectors_b), "electricity"]
+        .groupby(level="node")
+        .sum()
+        / nhours,
     )
 
     n.madd(
@@ -2875,13 +2994,17 @@ def add_industry(n, costs):
     sel = ["process emission", "process emission from feedstock"]
     if options["co2_spatial"] or options["co2network"]:
         p_set = (
-            -industrial_demand.loc[nodes, sel]
+            -industrial_demand.loc[(nodes, sectors_b), sel]
+            .groupby(level="node")
+            .sum()
             .sum(axis=1)
             .rename(index=lambda x: x + " process emissions")
             / nhours
         )
     else:
-        p_set = -industrial_demand.loc[nodes, sel].sum(axis=1).sum() / nhours
+        p_set = (
+            -industrial_demand.loc[(nodes, sectors_b), sel].sum(axis=1).sum() / nhours
+        )
 
     # this should be process emissions fossil+feedstock
     # then need load on atmosphere for feedstock emissions that are currently going to atmosphere via Link Fischer-Tropsch demand
@@ -2922,13 +3045,14 @@ def add_industry(n, costs):
     if options.get("ammonia"):
         if options["ammonia"] == "regional":
             p_set = (
-                industrial_demand.loc[spatial.ammonia.locations, "ammonia"].rename(
-                    index=lambda x: x + " NH3"
-                )
+                industrial_demand.loc[(spatial.ammonia.locations, sectors_b), "ammonia"]
+                .groupby(level="node")
+                .sum()
+                .rename(index=lambda x: x + " NH3")
                 / nhours
             )
         else:
-            p_set = industrial_demand["ammonia"].sum() / nhours
+            p_set = industrial_demand.loc[sectors_b, "ammonia"].sum() / nhours
 
         n.madd(
             "Load",
@@ -3530,6 +3654,11 @@ if __name__ == "__main__":
         options["use_methanation_waste_heat"] = False
         options["use_fuel_cell_waste_heat"] = False
         options["use_electrolysis_waste_heat"] = False
+
+    if "nosteelrelocation" in opts:
+        logger.info("Disabling steel industry relocation and flexibility.")
+        options["relocation_steel"] = False
+        options["flexibility_steel"] = False
 
     if "T" in opts:
         add_land_transport(n, costs)
