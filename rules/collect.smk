@@ -60,6 +60,15 @@ rule solve_sector_networks:
         ),
 
 
+rule solve_sector_networks_perfect:
+    input:
+        expand(
+            RESULTS
+            + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years.nc",
+            **config["scenario"]
+        ),
+
+
 rule plot_networks:
     input:
         expand(

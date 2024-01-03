@@ -8,6 +8,7 @@ __pycache__
 *dconf
 gurobi.log
 .vscode
+*.orig
 
 /bak
 /resources
@@ -45,6 +46,7 @@ data/costs_*.csv
 
 dask-worker-space/
 publications.jrc.ec.europa.eu/
+d1gam3xoknrgr2.cloudfront.net/
 
 *.org
 

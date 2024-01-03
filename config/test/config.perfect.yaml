@@ -5,20 +5,20 @@
 tutorial: true
 
 run:
-  name: "test-sector-myopic"
+  name: "test-sector-perfect"
   disable_progressbar: true
   shared_resources: true
   shared_cutouts: true
 
-foresight: myopic
+foresight: perfect
 
 scenario:
   ll:
-  - v1.5
+  - v1.0
   clusters:
   - 5
   sector_opts:
-  - 24H-T-H-B-I-A-solar+p3-dist1
+  - 8760H-T-H-B-I-A-solar+p3-dist1
   planning_horizons:
   - 2030
   - 2040
@@ -30,9 +30,6 @@ snapshots:
   start: "2013-03-01"
   end: "2013-03-08"
 
-sector:
-  central_heat_vent: true
-
 electricity:
   co2limit: 100.e+6
 
@@ -43,6 +40,10 @@ electricity:
     Link: [H2 pipeline]
 
   renewable_carriers: [solar, onwind, offwind-ac, offwind-dc]
+
+sector:
+  min_part_load_fischer_tropsch: 0
+  min_part_load_methanolisation: 0
 
 atlite:
   default_cutout: be-03-2013-era5
@@ -67,6 +68,7 @@ renewable:
 
 industry:
   St_primary_fraction:
+    2020: 0.8
     2030: 0.6
     2040: 0.5
     2050: 0.4

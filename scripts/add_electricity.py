@@ -84,6 +84,7 @@ It further adds extendable ``generators`` with **zero** capacity for
 
 import logging
 from itertools import product
+from typing import Dict, List
 
 import geopandas as gpd
 import numpy as np
@@ -255,6 +256,7 @@ def load_powerplants(ppl_fn):
         "bioenergy": "biomass",
         "ccgt, thermal": "CCGT",
         "hard coal": "coal",
+        "natural gas": "OCGT",
     }
     return (
         pd.read_csv(ppl_fn, index_col=0, dtype={"bus": "str"})
@@ -279,10 +281,12 @@ def shapes_to_shapes(orig, dest):
     return transfer
 
 
-def attach_load(n, regions, load, nuts3_shapes, countries, scaling=1.0):
+def attach_load(n, regions, load, nuts3_shapes, ua_md_gdp, countries, scaling=1.0):
     substation_lv_i = n.buses.index[n.buses["substation_lv"]]
     regions = gpd.read_file(regions).set_index("name").reindex(substation_lv_i)
     opsd_load = pd.read_csv(load, index_col=0, parse_dates=True).filter(items=countries)
+
+    ua_md_gdp = pd.read_csv(ua_md_gdp, dtype={"name": "str"}).set_index("name")
 
     logger.info(f"Load data scaled with scalling factor {scaling}.")
     opsd_load *= scaling
@@ -291,26 +295,29 @@ def attach_load(n, regions, load, nuts3_shapes, countries, scaling=1.0):
 
     def upsample(cntry, group):
         l = opsd_load[cntry]
+
         if len(group) == 1:
             return pd.DataFrame({group.index[0]: l})
-        else:
-            nuts3_cntry = nuts3.loc[nuts3.country == cntry]
-            transfer = shapes_to_shapes(group, nuts3_cntry.geometry).T.tocsr()
-            gdp_n = pd.Series(
-                transfer.dot(nuts3_cntry["gdp"].fillna(1.0).values), index=group.index
-            )
-            pop_n = pd.Series(
-                transfer.dot(nuts3_cntry["pop"].fillna(1.0).values), index=group.index
-            )
+        nuts3_cntry = nuts3.loc[nuts3.country == cntry]
+        transfer = shapes_to_shapes(group, nuts3_cntry.geometry).T.tocsr()
+        gdp_n = pd.Series(
+            transfer.dot(nuts3_cntry["gdp"].fillna(1.0).values), index=group.index
+        )
+        pop_n = pd.Series(
+            transfer.dot(nuts3_cntry["pop"].fillna(1.0).values), index=group.index
+        )
 
-            # relative factors 0.6 and 0.4 have been determined from a linear
-            # regression on the country to continent load data
-            factors = normed(0.6 * normed(gdp_n) + 0.4 * normed(pop_n))
-            return pd.DataFrame(
-                factors.values * l.values[:, np.newaxis],
-                index=l.index,
-                columns=factors.index,
-            )
+        # relative factors 0.6 and 0.4 have been determined from a linear
+        # regression on the country to continent load data
+        factors = normed(0.6 * normed(gdp_n) + 0.4 * normed(pop_n))
+        if cntry in ["UA", "MD"]:
+            # overwrite factor because nuts3 provides no data for UA+MD
+            factors = normed(ua_md_gdp.loc[group.index, "GDP_PPP"].squeeze())
+        return pd.DataFrame(
+            factors.values * l.values[:, np.newaxis],
+            index=l.index,
+            columns=factors.index,
+        )
 
     load = pd.concat(
         [
@@ -406,6 +413,7 @@ def attach_wind_and_solar(
                 capital_cost=capital_cost,
                 efficiency=costs.at[supcar, "efficiency"],
                 p_max_pu=ds["profile"].transpose("time", "bus").to_pandas(),
+                lifetime=costs.at[supcar, "lifetime"],
             )
 
 
@@ -434,7 +442,7 @@ def attach_conventional_generators(
     ppl = (
         ppl.query("carrier in @carriers")
         .join(costs, on="carrier", rsuffix="_r")
-        .rename(index=lambda s: "C" + str(s))
+        .rename(index=lambda s: f"C{str(s)}")
     )
     ppl["efficiency"] = ppl.efficiency.fillna(ppl.efficiency_r)
 
@@ -511,7 +519,7 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **par
     ppl = (
         ppl.query('carrier == "hydro"')
         .reset_index(drop=True)
-        .rename(index=lambda s: str(s) + " hydro")
+        .rename(index=lambda s: f"{str(s)} hydro")
     )
     ror = ppl.query('technology == "Run-Of-River"')
     phs = ppl.query('technology == "Pumped Storage"')
@@ -608,16 +616,13 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **par
         )
         if not missing_countries.empty:
             logger.warning(
-                "Assuming max_hours=6 for hydro reservoirs in the countries: {}".format(
-                    ", ".join(missing_countries)
-                )
+                f'Assuming max_hours=6 for hydro reservoirs in the countries: {", ".join(missing_countries)}'
             )
         hydro_max_hours = hydro.max_hours.where(
             hydro.max_hours > 0, hydro.country.map(max_hours_country)
         ).fillna(6)
 
-        flatten_dispatch = params.get("flatten_dispatch", False)
-        if flatten_dispatch:
+        if flatten_dispatch := params.get("flatten_dispatch", False):
             buffer = params.get("flatten_dispatch_buffer", 0.2)
             average_capacity_factor = inflow_t[hydro.index].mean() / hydro["p_nom"]
             p_max_pu = (average_capacity_factor + buffer).clip(upper=1)
@@ -713,7 +718,17 @@ def attach_extendable_generators(n, costs, ppl, carriers):
             )
 
 
-def attach_OPSD_renewables(n, tech_map):
+def attach_OPSD_renewables(n: pypsa.Network, tech_map: Dict[str, List[str]]) -> None:
+    """
+    Attach renewable capacities from the OPSD dataset to the network.
+
+    Args:
+    - n: The PyPSA network to attach the capacities to.
+    - tech_map: A dictionary mapping fuel types to carrier names.
+
+    Returns:
+    - None
+    """
     tech_string = ", ".join(sum(tech_map.values(), []))
     logger.info(f"Using OPSD renewable capacities for carriers {tech_string}.")
 
@@ -738,7 +753,26 @@ def attach_OPSD_renewables(n, tech_map):
         n.generators.p_nom_min.update(gens.bus.map(caps).dropna())
 
 
-def estimate_renewable_capacities(n, year, tech_map, expansion_limit, countries):
+def estimate_renewable_capacities(
+    n: pypsa.Network, year: int, tech_map: dict, expansion_limit: bool, countries: list
+) -> None:
+    """
+    Estimate a different between renewable capacities in the network and
+    reported country totals from IRENASTAT dataset. Distribute the difference
+    with a heuristic.
+
+    Heuristic: n.generators_t.p_max_pu.mean() * n.generators.p_nom_max
+
+    Args:
+    - n: The PyPSA network.
+    - year: The year of optimisation.
+    - tech_map: A dictionary mapping fuel types to carrier names.
+    - expansion_limit: Boolean value from config file
+    - countries: A list of country codes to estimate capacities for.
+
+    Returns:
+    - None
+    """
     if not len(countries) or not len(tech_map):
         return
 
@@ -755,7 +789,10 @@ def estimate_renewable_capacities(n, year, tech_map, expansion_limit, countries)
 
     for ppm_technology, techs in tech_map.items():
         tech_i = n.generators.query("carrier in @techs").index
-        stats = capacities.loc[ppm_technology].reindex(countries, fill_value=0.0)
+        if ppm_technology in capacities.index.get_level_values("Technology"):
+            stats = capacities.loc[ppm_technology].reindex(countries, fill_value=0.0)
+        else:
+            stats = pd.Series(0.0, index=countries)
         country = n.generators.bus[tech_i].map(n.buses.country)
         existent = n.generators.p_nom[tech_i].groupby(country).sum()
         missing = stats - existent
@@ -828,6 +865,7 @@ if __name__ == "__main__":
         snakemake.input.regions,
         snakemake.input.load,
         snakemake.input.nuts3_shapes,
+        snakemake.input.ua_md_gdp,
         params.countries,
         params.scaling_factor,
     )

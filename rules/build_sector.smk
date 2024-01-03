@@ -85,12 +85,12 @@ if config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]:
 
     rule build_gas_input_locations:
         input:
-            lng=HTTP.remote(
+            gem=HTTP.remote(
                 "https://globalenergymonitor.org/wp-content/uploads/2023/07/Europe-Gas-Tracker-2023-03-v3.xlsx",
                 keep_local=True,
             ),
             entry="data/gas_network/scigrid-gas/data/IGGIELGN_BorderPoints.geojson",
-            production="data/gas_network/scigrid-gas/data/IGGIELGN_Productions.geojson",
+            storage="data/gas_network/scigrid-gas/data/IGGIELGN_Storages.geojson",
             regions_onshore=RESOURCES
             + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
             regions_offshore=RESOURCES
@@ -269,7 +269,7 @@ rule build_biomass_potentials:
         biomass=config["biomass"],
     input:
         enspreso_biomass=HTTP.remote(
-            "https://cidportal.jrc.ec.europa.eu/ftp/jrc-opendata/ENSPRESO/ENSPRESO_BIOMASS.xlsx",
+            "https://zenodo.org/records/10356004/files/ENSPRESO_BIOMASS.xlsx",
             keep_local=True,
         ),
         nuts2="data/bundle-sector/nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson",  # https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/#nuts21
@@ -609,7 +609,7 @@ if config["sector"]["retrofitting"]["retro_endogen"]:
             countries=config["countries"],
         input:
             building_stock="data/retro/data_building_stock.csv",
-            data_tabula="data/retro/tabula-calculator-calcsetbuilding.csv",
+            data_tabula="data/bundle-sector/retro/tabula-calculator-calcsetbuilding.csv",
             air_temperature=RESOURCES + "temp_air_total_elec_s{simpl}_{clusters}.nc",
             u_values_PL="data/retro/u_values_poland.csv",
             tax_w="data/retro/electricity_taxes_eu.csv",

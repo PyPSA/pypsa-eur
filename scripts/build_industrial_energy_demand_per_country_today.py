@@ -167,9 +167,7 @@ def industrial_energy_demand(countries, year):
     with mp.Pool(processes=nprocesses) as pool:
         demand_l = list(tqdm(pool.imap(func, countries), **tqdm_kwargs))
 
-    demand = pd.concat(demand_l, keys=countries)
-
-    return demand
+    return pd.concat(demand_l, keys=countries)
 
 
 if __name__ == "__main__":

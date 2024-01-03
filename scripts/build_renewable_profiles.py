@@ -252,7 +252,7 @@ if __name__ == "__main__":
             snakemake.input.corine, codes=codes, buffer=buffer, crs=3035
         )
 
-    if "ship_threshold" in params:
+    if params.get("ship_threshold"):
         shipping_threshold = (
             params["ship_threshold"] * 8760 * 6
         )  # approximation because 6 years of data which is hourly collected
@@ -287,6 +287,14 @@ if __name__ == "__main__":
         logger.info(f"Completed availability calculation ({duration:2.2f}s)")
     else:
         availability = cutout.availabilitymatrix(regions, excluder, **kwargs)
+
+    # For Moldova and Ukraine: Overwrite parts not covered by Corine with
+    # externally determined available areas
+    if "availability_matrix_MD_UA" in snakemake.input.keys():
+        availability_MDUA = xr.open_dataarray(
+            snakemake.input["availability_matrix_MD_UA"]
+        )
+        availability.loc[availability_MDUA.coords] = availability_MDUA
 
     area = cutout.grid.to_crs(3035).area / 1e6
     area = xr.DataArray(

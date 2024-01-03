@@ -274,7 +274,6 @@ def set_line_nom_max(
     n.links.p_nom_max.clip(upper=p_nom_max_set, inplace=True)
 
 
-# %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake

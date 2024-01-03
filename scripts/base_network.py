@@ -151,9 +151,7 @@ def _load_buses_from_eg(eg_buses, europe_shape, config_elec):
         buses.v_nom.isin(config_elec["voltages"]) | buses.v_nom.isnull()
     )
     logger.info(
-        "Removing buses with voltages {}".format(
-            pd.Index(buses.v_nom.unique()).dropna().difference(config_elec["voltages"])
-        )
+        f'Removing buses with voltages {pd.Index(buses.v_nom.unique()).dropna().difference(config_elec["voltages"])}'
     )
 
     return pd.DataFrame(buses.loc[buses_in_europe_b & buses_with_v_nom_to_keep_b])
@@ -368,6 +366,25 @@ def _apply_parameter_corrections(n, parameter_corrections):
                 df.loc[inds, attr] = r[inds].astype(df[attr].dtype)
 
 
+def _reconnect_crimea(lines):
+    logger.info("Reconnecting Crimea to the Ukrainian grid.")
+    lines_to_crimea = pd.DataFrame(
+        {
+            "bus0": ["3065", "3181", "3181"],
+            "bus1": ["3057", "3055", "3057"],
+            "v_nom": [300, 300, 300],
+            "num_parallel": [1, 1, 1],
+            "length": [140, 120, 140],
+            "carrier": ["AC", "AC", "AC"],
+            "underground": [False, False, False],
+            "under_construction": [False, False, False],
+        },
+        index=["Melitopol", "Liubymivka left", "Luibymivka right"],
+    )
+
+    return pd.concat([lines, lines_to_crimea])
+
+
 def _set_electrical_parameters_lines(lines, config):
     v_noms = config["electricity"]["voltages"]
     linetypes = config["lines"]["types"]
@@ -452,19 +469,15 @@ def _remove_dangling_branches(branches, buses):
     )
 
 
-def _remove_unconnected_components(network):
+def _remove_unconnected_components(network, threshold=6):
     _, labels = csgraph.connected_components(network.adjacency_matrix(), directed=False)
     component = pd.Series(labels, index=network.buses.index)
 
     component_sizes = component.value_counts()
-    components_to_remove = component_sizes.iloc[1:]
+    components_to_remove = component_sizes.loc[component_sizes < threshold]
 
     logger.info(
-        "Removing {} unconnected network components with less than {} buses. In total {} buses.".format(
-            len(components_to_remove),
-            components_to_remove.max(),
-            components_to_remove.sum(),
-        )
+        f"Removing {len(components_to_remove)} unconnected network components with less than {components_to_remove.max()} buses. In total {components_to_remove.sum()} buses."
     )
 
     return network[component == component_sizes.index[0]]
@@ -547,7 +560,7 @@ def _set_countries_and_substations(n, config, country_shapes, offshore_shapes):
         ~buses["under_construction"]
     )
 
-    c_nan_b = buses.country.isnull()
+    c_nan_b = buses.country == "na"
     if c_nan_b.sum() > 0:
         c_tag = _get_country(buses.loc[c_nan_b])
         c_tag.loc[~c_tag.isin(countries)] = np.nan
@@ -704,6 +717,9 @@ def base_network(
 
     lines = _load_lines_from_eg(buses, eg_lines)
     transformers = _load_transformers_from_eg(buses, eg_transformers)
+
+    if config["lines"].get("reconnect_crimea", True) and "UA" in config["countries"]:
+        lines = _reconnect_crimea(lines)
 
     lines = _set_electrical_parameters_lines(lines, config)
     transformers = _set_electrical_parameters_transformers(transformers, config)

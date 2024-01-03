@@ -71,6 +71,7 @@ enable:
   retrieve_sector_databundle: true
   retrieve_cost_data: true
   build_cutout: false
+  retrieve_irena: false
   retrieve_cutout: true
   build_natura_raster: false
   retrieve_natura_raster: true
@@ -90,6 +91,7 @@ co2_budget:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
   voltages: [220., 300., 380.]
+  voltages: [220., 300., 380., 500., 750.]
   gaslimit_enable: false
   gaslimit: false
   co2limit_enable: false
@@ -144,14 +146,14 @@ atlite:
       # module: era5
     europe-2013-era5:
       module: era5 # in priority order
-      x: [-12., 35.]
+      x: [-12., 42.]
       y: [33., 72]
       dx: 0.3
       dy: 0.3
       time: ['2013', '2013']
     europe-2013-sarah:
       module: [sarah, era5] # in priority order
-      x: [-12., 45.]
+      x: [-12., 42.]
       y: [33., 65]
       dx: 0.2
       dy: 0.2
@@ -167,6 +169,7 @@ renewable:
     resource:
       method: wind
       turbine: Vestas_V112_3MW
+      add_cutout_windspeed: true
     capacity_per_sqkm: 3
     # correction_factor: 0.93
     corine:
@@ -181,7 +184,8 @@ renewable:
     cutout: europe-2013-era5
     resource:
       method: wind
-      turbine: NREL_ReferenceTurbine_5MW_offshore
+      turbine: NREL_ReferenceTurbine_2020ATB_5.5MW
+      add_cutout_windspeed: true
     capacity_per_sqkm: 2
     correction_factor: 0.8855
     corine: [44, 255]
@@ -196,7 +200,8 @@ renewable:
     cutout: europe-2013-era5
     resource:
       method: wind
-      turbine: NREL_ReferenceTurbine_5MW_offshore
+      turbine: NREL_ReferenceTurbine_2020ATB_5.5MW
+      add_cutout_windspeed: true
     capacity_per_sqkm: 2
     correction_factor: 0.8855
     corine: [44, 255]
@@ -244,10 +249,13 @@ lines:
     220.: "Al/St 240/40 2-bundle 220.0"
     300.: "Al/St 240/40 3-bundle 300.0"
     380.: "Al/St 240/40 4-bundle 380.0"
+    500.: "Al/St 240/40 4-bundle 380.0"
+    750.: "Al/St 560/50 4-bundle 750.0"
   s_max_pu: 0.7
   s_nom_max: .inf
   max_extension: .inf
   length_factor: 1.25
+  reconnect_crimea: true
   under_construction: 'zero' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
   dynamic_line_rating:
     activate: false
@@ -458,10 +466,12 @@ sector:
   coal_cc: false
   dac: true
   co2_vent: false
+  central_heat_vent: false
   allam_cycle: false
   hydrogen_fuel_cell: true
   hydrogen_turbine: false
   SMR: true
+  SMR_cc: true
   regional_co2_sequestration_potential:
     enable: false
     attribute: 'conservative estimate Mt'
@@ -471,6 +481,7 @@ sector:
     years_of_storage: 25
   co2_sequestration_potential: 200
   co2_sequestration_cost: 10
+  co2_sequestration_lifetime: 50
   co2_spatial: false
   co2network: false
   cc_fraction: 0.9
@@ -480,11 +491,15 @@ sector:
   - nearshore    # within 50 km of sea
     # - offshore
   ammonia: false
-  min_part_load_fischer_tropsch: 0.9
-  min_part_load_methanolisation: 0.5
+  min_part_load_fischer_tropsch: 0.7
+  min_part_load_methanolisation: 0.3
+  min_part_load_methanation: 0.3
   use_fischer_tropsch_waste_heat: true
+  use_haber_bosch_waste_heat: true
+  use_methanolisation_waste_heat: true
+  use_methanation_waste_heat: true
   use_fuel_cell_waste_heat: true
-  use_electrolysis_waste_heat: false
+  use_electrolysis_waste_heat: true
   electricity_distribution_grid: true
   electricity_distribution_grid_cost_factor: 1.0
   electricity_grid_connection: true
@@ -497,10 +512,25 @@ sector:
   gas_distribution_grid_cost_factor: 1.0
   biomass_spatial: false
   biomass_transport: false
+  biogas_upgrading_cc: false
   conventional_generation:
     OCGT: gas
   biomass_to_liquid: false
   biosng: false
+  limit_max_growth:
+    enable: false
+    # allowing 30% larger than max historic growth
+    factor: 1.3
+    max_growth:  # unit GW
+      onwind: 16 # onshore max grow so far 16 GW in Europe https://www.iea.org/reports/renewables-2020/wind
+      solar: 28 # solar max grow so far 28 GW in Europe https://www.iea.org/reports/renewables-2020/solar-pv
+      offwind-ac: 35 # offshore max grow so far 3.5 GW in Europe https://windeurope.org/about-wind/statistics/offshore/european-offshore-wind-industry-key-trends-statistics-2019/
+      offwind-dc: 35
+    max_relative_growth:
+      onwind: 3
+      solar: 3
+      offwind-ac: 3
+      offwind-dc: 3
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
 industry:
@@ -533,8 +563,8 @@ industry:
   MWh_NH3_per_tNH3: 5.166
   MWh_CH4_per_tNH3_SMR: 10.8
   MWh_elec_per_tNH3_SMR: 0.7
-  MWh_H2_per_tNH3_electrolysis: 6.5
-  MWh_elec_per_tNH3_electrolysis: 1.17
+  MWh_H2_per_tNH3_electrolysis: 5.93
+  MWh_elec_per_tNH3_electrolysis: 0.2473
   MWh_NH3_per_MWh_H2_cracker: 1.46 # https://github.com/euronion/trace/blob/44a5ff8401762edbef80eff9cfe5a47c8d3c8be4/data/efficiencies.csv
   NH3_process_emissions: 24.5
   petrochemical_process_emissions: 25.5
@@ -553,11 +583,13 @@ industry:
   hotmaps_locate_missing: false
   reference_year: 2015
 
+
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 costs:
   year: 2030
   version: v0.6.0
   rooftop_share: 0.14  # based on the potentials, assuming  (0.1 kW/m2 and 10 m2/person)
+  social_discountrate: 0.02
   fill_values:
     FOM: 0
     VOM: 0
@@ -587,6 +619,7 @@ costs:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#clustering
 clustering:
+  focus_weights: false
   simplify_network:
     to_substations: false
     algorithm: kmeans # choose from: [hac, kmeans]
@@ -718,6 +751,7 @@ plotting:
     H2: "Hydrogen Storage"
     lines: "Transmission Lines"
     ror: "Run of River"
+    load: "Load Shedding"
     ac: "AC"
     dc: "DC"
 
@@ -768,6 +802,7 @@ plotting:
     fossil gas: '#e05b09'
     natural gas: '#e05b09'
     biogas to gas: '#e36311'
+    biogas to gas CC: '#e51245'
     CCGT: '#a85522'
     CCGT marginal: '#a85522'
     allam: '#B98F76'
@@ -779,6 +814,7 @@ plotting:
     gas pipeline new: '#a87c62'
     # oil
     oil: '#c9c9c9'
+    imported oil: '#a3a3a3'
     oil boiler: '#adadad'
     residential rural oil boiler: '#a9a9a9'
     services rural oil boiler: '#a5a5a5'
@@ -797,6 +833,7 @@ plotting:
     Coal: '#545454'
     coal: '#545454'
     Coal marginal: '#545454'
+    coal for industry: '#343434'
     solid: '#545454'
     Lignite: '#826837'
     lignite: '#826837'
@@ -867,12 +904,14 @@ plotting:
     # heat demand
     Heat load: '#cc1f1f'
     heat: '#cc1f1f'
+    heat vent: '#aa3344'
     heat demand: '#cc1f1f'
     rural heat: '#ff5c5c'
     residential rural heat: '#ff7c7c'
     services rural heat: '#ff9c9c'
     central heat: '#cc1f1f'
     urban central heat: '#d15959'
+    urban central heat vent: '#a74747'
     decentral heat: '#750606'
     residential urban decentral heat: '#a33c3c'
     services urban decentral heat: '#cc1f1f'
@@ -910,6 +949,7 @@ plotting:
     H2 for shipping: "#ebaee0"
     H2: '#bf13a0'
     hydrogen: '#bf13a0'
+    retrofitted H2 boiler: '#e5a0d9'
     SMR: '#870c71'
     SMR CC: '#4f1745'
     H2 liquefaction: '#d647bd'
@@ -980,3 +1020,4 @@ plotting:
     DC: "#8a1caf"
     DC-DC: "#8a1caf"
     DC link: "#8a1caf"
+    load: "#dd2e23"
