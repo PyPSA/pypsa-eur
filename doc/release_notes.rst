@@ -84,7 +84,7 @@ Upcoming Release
   By default, steel plants cannot relocate. This can be changed by setting
   ``sector: relocation_steel: true``. Relocation costs are not included.
 
-* Switch to new ``technology-data`` version 0.6.2. 
+* Switch to new ``technology-data`` version 0.6.2.
 
 * Validate downloads from Zenodo using MD5 checksums. This identifies corrupted
   or incomplete downloads.
