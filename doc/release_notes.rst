@@ -17,6 +17,9 @@ Upcoming Release
   the local electricity buses. The bidirectional links will then be split into
   two unidirectional links with linked capacities.
 
+* Pin ``snakemake`` version to below 8.0.0, as the new version is not yet
+  supported by ``pypsa-eur``.
+
 * Updated Global Energy Monitor LNG terminal data to March 2023 version.
 
 * For industry distribution, use EPRTR as fallback if ETS data is not available.
@@ -36,10 +39,45 @@ Upcoming Release
 
 * Rule ``purge`` now initiates a dialog to confirm if purge is desired.
 
+* Rule ``retrieve_irena`` get updated values for renewables capacities.
+
+* Rule ``retrieve_wdpa`` updated to not only check for current and previous, but also potentially next months dataset availability.
+
+* Split configuration to enable SMR and SMR CC.
+
+* Bugfix: The unit of the capital cost of Haber-Bosch plants was corrected.
+
+* The configuration setting for country focus weights when clustering the
+  network has been moved from ``focus_weights:`` to ``clustering:
+  focus_weights:``. Backwards compatibility to old config files is maintained.
+
+* Add VOM as marginal cost to PtX processes.
+
+* The ``mock_snakemake`` function can now be used with a Snakefile from a different directory using the new ``root_dir`` argument.
+
+* Switch to using hydrogen and electricity inputs for Haber-Bosch from https://github.com/PyPSA/technology-data.
+
+* Add option to capture CO2 contained in biogas when upgrading (``sector: biogas_to_gas_cc``).
+
+* Merged option to extend geographical scope to Ukraine and Moldova. These
+  countries are excluded by default and is currently constrained to power-sector
+  only parts of the workflow. A special config file
+  `config/config.entsoe-all.yaml` was added as an example to run the workflow
+  with all ENTSO-E member countries (including observer members like Ukraine and
+  Moldova). Moldova can currently only be included in conjunction with Ukraine
+  due to the absence of demand data. The Crimean power system is manually
+  reconnected to the main Ukrainian grid with the configuration option
+  `reconnect_crimea`.
+
+* Validate downloads from Zenodo using MD5 checksums. This identifies corrupted
+  or incomplete downloads.
+
 
 **Bugs and Compatibility**
 
 * A bug preventing custom powerplants specified in ``data/custom_powerplants.csv`` was fixed. (https://github.com/PyPSA/pypsa-eur/pull/732)
+* Fix nodal fraction in ``add_existing_year`` when using distributed generators
+* Fix typo in buses definition for oil boilers in ``add_industry`` in ``prepare_sector_network``
 
 
 PyPSA-Eur 0.8.1 (27th July 2023)
@@ -164,6 +202,8 @@ PyPSA-Eur 0.8.1 (27th July 2023)
   regions no cavern storage is available.
   (https://github.com/PyPSA/pypsa-eur/pull/672)
 
+
+* Addressed deprecation warnings for ``pandas=2.0``. ``pandas=2.0`` is now minimum requirement.
 
 PyPSA-Eur 0.8.0 (18th March 2023)
 =================================

@@ -297,11 +297,7 @@ def plot_balances():
             df.abs().max(axis=1) < snakemake.params.plotting["energy_threshold"] / 10
         ]
 
-        if v[0] in co2_carriers:
-            units = "MtCO2/a"
-        else:
-            units = "TWh/a"
-
+        units = "MtCO2/a" if v[0] in co2_carriers else "TWh/a"
         logger.debug(
             f"Dropping technology energy balance smaller than {snakemake.params['plotting']['energy_threshold']/10} {units}"
         )
@@ -456,7 +452,6 @@ def plot_carbon_budget_distribution(input_eurostat):
 
     sns.set()
     sns.set_style("ticks")
-    plt.style.use("seaborn-ticks")
     plt.rcParams["xtick.direction"] = "in"
     plt.rcParams["ytick.direction"] = "in"
     plt.rcParams["xtick.labelsize"] = 20
@@ -568,7 +563,6 @@ def plot_carbon_budget_distribution(input_eurostat):
     plt.savefig(path, bbox_inches="tight")
 
 
-# %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -587,7 +581,5 @@ if __name__ == "__main__":
 
     for sector_opts in snakemake.params.sector_opts:
         opts = sector_opts.split("-")
-        if any(["cb" in o for o in opts]) or (
-            snakemake.config["foresight"] == "perfect"
-        ):
+        if any("cb" in o for o in opts) or snakemake.config["foresight"] == "perfect":
             plot_carbon_budget_distribution(snakemake.input.eurostat)

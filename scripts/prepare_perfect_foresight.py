@@ -56,7 +56,7 @@ def get_investment_weighting(time_weighting, r=0.01):
     end = time_weighting.cumsum()
     start = time_weighting.cumsum().shift().fillna(0)
     return pd.concat([start, end], axis=1).apply(
-        lambda x: sum([get_social_discount(t, r) for t in range(int(x[0]), int(x[1]))]),
+        lambda x: sum(get_social_discount(t, r) for t in range(int(x[0]), int(x[1]))),
         axis=1,
     )
 
@@ -306,7 +306,7 @@ def set_carbon_constraints(n, opts):
         if m is not None:
             budget = snakemake.config["co2_budget"][m.group(0)] * 1e9
     if budget != None:
-        logger.info("add carbon budget of {}".format(budget))
+        logger.info(f"add carbon budget of {budget}")
         n.add(
             "GlobalConstraint",
             "Budget",
@@ -340,9 +340,7 @@ def set_carbon_constraints(n, opts):
         first_year = n.snapshots.levels[0][0]
         time_weightings = n.investment_period_weightings.loc[first_year, "years"]
         co2min = emissions_2019 - ((first_year - 2019) * annual_reduction)
-        logger.info(
-            "add minimum emissions for {} of {} t CO2/a".format(first_year, co2min)
-        )
+        logger.info(f"add minimum emissions for {first_year} of {co2min} t CO2/a")
         n.add(
             "GlobalConstraint",
             f"Co2Min-{first_year}",
@@ -495,7 +493,6 @@ def set_temporal_aggregation_SEG(n, opts, solver_name):
     return n
 
 
-# %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -519,9 +516,7 @@ if __name__ == "__main__":
             social_discountrate = float(o.replace("sdr", "")) / 100
 
     logger.info(
-        "Concat networks of investment period {} with social discount rate of {}%".format(
-            years, social_discountrate * 100
-        )
+        f"Concat networks of investment period {years} with social discount rate of {social_discountrate * 100}%"
     )
 
     # concat prenetworks of planning horizon to single network ------------

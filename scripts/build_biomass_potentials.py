@@ -134,7 +134,7 @@ def disaggregate_nuts0(bio):
     # get population in nuts2
     pop_nuts2 = pop.loc[pop.index.str.len() == 4]
     by_country = pop_nuts2.total.groupby(pop_nuts2.ct).sum()
-    pop_nuts2["fraction"] = pop_nuts2.total / pop_nuts2.ct.map(by_country)
+    pop_nuts2.loc[:, "fraction"] = pop_nuts2.total / pop_nuts2.ct.map(by_country)
 
     # distribute nuts0 data to nuts2 by population
     bio_nodal = bio.loc[pop_nuts2.ct]
@@ -263,7 +263,7 @@ if __name__ == "__main__":
     df.to_csv(snakemake.output.biomass_potentials_all)
 
     grouper = {v: k for k, vv in params["classes"].items() for v in vv}
-    df = df.groupby(grouper, axis=1).sum()
+    df = df.T.groupby(grouper).sum().T
 
     df *= 1e6  # TWh/a to MWh/a
     df.index.name = "MWh/a"

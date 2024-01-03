@@ -152,22 +152,20 @@ def _prepare_connection_costs_per_link(n, costs, renewable_carriers, length_fact
     if n.links.empty:
         return {}
 
-    connection_costs_per_link = {}
-
-    for tech in renewable_carriers:
-        if tech.startswith("offwind"):
-            connection_costs_per_link[tech] = (
-                n.links.length
-                * length_factor
-                * (
-                    n.links.underwater_fraction
-                    * costs.at[tech + "-connection-submarine", "capital_cost"]
-                    + (1.0 - n.links.underwater_fraction)
-                    * costs.at[tech + "-connection-underground", "capital_cost"]
-                )
+    return {
+        tech: (
+            n.links.length
+            * length_factor
+            * (
+                n.links.underwater_fraction
+                * costs.at[tech + "-connection-submarine", "capital_cost"]
+                + (1.0 - n.links.underwater_fraction)
+                * costs.at[tech + "-connection-underground", "capital_cost"]
             )
-
-    return connection_costs_per_link
+        )
+        for tech in renewable_carriers
+        if tech.startswith("offwind")
+    }
 
 
 def _compute_connection_costs_to_bus(
@@ -537,6 +535,9 @@ if __name__ == "__main__":
 
     n = pypsa.Network(snakemake.input.network)
     Nyears = n.snapshot_weightings.objective.sum() / 8760
+
+    # remove integer outputs for compatibility with PyPSA v0.26.0
+    n.generators.drop("n_mod", axis=1, inplace=True, errors="ignore")
 
     n, trafo_map = simplify_network_to_380(n)
 
