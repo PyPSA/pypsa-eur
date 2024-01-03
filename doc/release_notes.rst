@@ -79,6 +79,8 @@ Upcoming Release
   Energy Monitor's `Europe Gas Tracker
   <https://globalenergymonitor.org/projects/europe-gas-tracker>`_.
 
+* Remove HELMETH option.
+
 **Bugs and Compatibility**
 
 * A bug preventing custom powerplants specified in ``data/custom_powerplants.csv`` was fixed. (https://github.com/PyPSA/pypsa-eur/pull/732)

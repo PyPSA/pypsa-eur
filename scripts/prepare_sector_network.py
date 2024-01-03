@@ -1369,23 +1369,6 @@ def add_storage_and_grids(n, costs):
             lifetime=costs.at["methanation", "lifetime"],
         )
 
-    if options["helmeth"]:
-        n.madd(
-            "Link",
-            spatial.nodes,
-            suffix=" helmeth",
-            bus0=nodes,
-            bus1=spatial.gas.nodes,
-            bus2=spatial.co2.nodes,
-            carrier="helmeth",
-            p_nom_extendable=True,
-            efficiency=costs.at["helmeth", "efficiency"],
-            efficiency2=-costs.at["helmeth", "efficiency"]
-            * costs.at["gas", "CO2 intensity"],
-            capital_cost=costs.at["helmeth", "fixed"],
-            lifetime=costs.at["helmeth", "lifetime"],
-        )
-
     if options.get("coal_cc"):
         n.madd(
             "Link",

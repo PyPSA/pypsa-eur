@@ -71,7 +71,6 @@ solar_thermal,--,"{true, false}",Add option for using solar thermal to generate 
 solar_cf_correction,--,float,The correction factor for the value provided by the solar thermal profile calculations
 marginal_cost_storage,currency/MWh ,float,The marginal cost of discharging batteries in distributed grids
 methanation,--,"{true, false}",Add option for transforming hydrogen and CO2 into methane using methanation.
-helmeth,--,"{true, false}",Add option for transforming power into gas using HELMETH (Integrated High-Temperature ELectrolysis and METHanation for Effective Power to Gas Conversion)
 coal_cc,--,"{true, false}",Add option for coal CHPs with carbon capture
 dac,--,"{true, false}",Add option for Direct Air Capture (DAC)
 co2_vent,--,"{true, false}",Add option for vent out CO2 from storages to the atmosphere.
