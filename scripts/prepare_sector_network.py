@@ -2436,7 +2436,9 @@ def add_industry(n, costs):
     )
 
     industrial_production = (
-        pd.read_csv(snakemake.input.industrial_production, index_col=0) * 1e3 * nyears # kt/a -> t/a
+        pd.read_csv(snakemake.input.industrial_production, index_col=0)
+        * 1e3
+        * nyears  # kt/a -> t/a
     )
 
     endogenous_sectors = ["DRI + Electric arc"] if options["endogenous_steel"] else []
@@ -2445,7 +2447,6 @@ def add_industry(n, costs):
     )
 
     if options["endogenous_steel"]:
-
         logger.info("Adding endogenous primary steel demand in tonnes.")
 
         sector = "DRI + Electric arc"
