@@ -69,6 +69,7 @@ enable:
   retrieve_sector_databundle: true
   retrieve_cost_data: true
   build_cutout: false
+  retrieve_irena: false
   retrieve_cutout: true
   retrieve_opsd_load_data: true
   retrieve_artificial_load_data: false
@@ -89,7 +90,7 @@ co2_budget:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
-  voltages: [220., 300., 380.]
+  voltages: [220., 300., 380., 500., 750.]
   gaslimit: false
   co2limit: 7.75e+7
   co2base: 1.487e+9
@@ -138,14 +139,14 @@ atlite:
       # module: era5
     europe-2013-era5:
       module: era5 # in priority order
-      x: [-12., 35.]
+      x: [-12., 42.]
       y: [33., 72]
       dx: 0.3
       dy: 0.3
       time: ['2013', '2013']
     europe-2013-sarah:
       module: [sarah, era5] # in priority order
-      x: [-12., 45.]
+      x: [-12., 42.]
       y: [33., 65]
       dx: 0.2
       dy: 0.2
@@ -161,6 +162,7 @@ renewable:
     resource:
       method: wind
       turbine: Vestas_V112_3MW
+      add_cutout_windspeed: true
     capacity_per_sqkm: 3
     # correction_factor: 0.93
     corine:
@@ -169,13 +171,13 @@ renewable:
       distance_grid_codes: [1, 2, 3, 4, 5, 6]
     natura: true
     excluder_resolution: 100
-    potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   offwind-ac:
     cutout: europe-2013-era5
     resource:
       method: wind
-      turbine: NREL_ReferenceTurbine_5MW_offshore
+      turbine: NREL_ReferenceTurbine_2020ATB_5.5MW
+      add_cutout_windspeed: true
     capacity_per_sqkm: 2
     correction_factor: 0.8855
     corine: [44, 255]
@@ -184,13 +186,13 @@ renewable:
     max_depth: 50
     max_shore_distance: 30000
     excluder_resolution: 200
-    potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   offwind-dc:
     cutout: europe-2013-era5
     resource:
       method: wind
-      turbine: NREL_ReferenceTurbine_5MW_offshore
+      turbine: NREL_ReferenceTurbine_2020ATB_5.5MW
+      add_cutout_windspeed: true
     capacity_per_sqkm: 2
     correction_factor: 0.8855
     corine: [44, 255]
@@ -199,7 +201,6 @@ renewable:
     max_depth: 50
     min_shore_distance: 30000
     excluder_resolution: 200
-    potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   solar:
     cutout: europe-2013-sarah
@@ -214,7 +215,6 @@ renewable:
     corine: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 26, 31, 32]
     natura: true
     excluder_resolution: 100
-    potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   hydro:
     cutout: europe-2013-era5
@@ -241,10 +241,13 @@ lines:
     220.: "Al/St 240/40 2-bundle 220.0"
     300.: "Al/St 240/40 3-bundle 300.0"
     380.: "Al/St 240/40 4-bundle 380.0"
+    500.: "Al/St 240/40 4-bundle 380.0"
+    750.: "Al/St 560/50 4-bundle 750.0"
   s_max_pu: 0.7
   s_nom_max: .inf
   max_extension: .inf
   length_factor: 1.25
+  reconnect_crimea: true
   under_construction: 'zero' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
   dynamic_line_rating:
     activate: false
@@ -452,14 +455,15 @@ sector:
   solar_cf_correction: 0.788457  # =  >>> 1/1.2683
   marginal_cost_storage: 0. #1e-4
   methanation: true
-  helmeth: false
   coal_cc: false
   dac: true
   co2_vent: false
+  central_heat_vent: false
   allam_cycle: false
   hydrogen_fuel_cell: true
   hydrogen_turbine: false
   SMR: true
+  SMR_cc: true
   regional_co2_sequestration_potential:
     enable: false
     attribute: 'conservative estimate Mt'
@@ -479,11 +483,15 @@ sector:
   - nearshore    # within 50 km of sea
     # - offshore
   ammonia: false
-  min_part_load_fischer_tropsch: 0.9
-  min_part_load_methanolisation: 0.5
+  min_part_load_fischer_tropsch: 0.7
+  min_part_load_methanolisation: 0.3
+  min_part_load_methanation: 0.3
   use_fischer_tropsch_waste_heat: true
+  use_haber_bosch_waste_heat: true
+  use_methanolisation_waste_heat: true
+  use_methanation_waste_heat: true
   use_fuel_cell_waste_heat: true
-  use_electrolysis_waste_heat: false
+  use_electrolysis_waste_heat: true
   electricity_distribution_grid: true
   electricity_distribution_grid_cost_factor: 1.0
   electricity_grid_connection: true
@@ -496,6 +504,7 @@ sector:
   gas_distribution_grid_cost_factor: 1.0
   biomass_spatial: false
   biomass_transport: false
+  biogas_upgrading_cc: false
   conventional_generation:
     OCGT: gas
   biomass_to_liquid: false
@@ -546,8 +555,8 @@ industry:
   MWh_NH3_per_tNH3: 5.166
   MWh_CH4_per_tNH3_SMR: 10.8
   MWh_elec_per_tNH3_SMR: 0.7
-  MWh_H2_per_tNH3_electrolysis: 6.5
-  MWh_elec_per_tNH3_electrolysis: 1.17
+  MWh_H2_per_tNH3_electrolysis: 5.93
+  MWh_elec_per_tNH3_electrolysis: 0.2473
   MWh_NH3_per_MWh_H2_cracker: 1.46 # https://github.com/euronion/trace/blob/44a5ff8401762edbef80eff9cfe5a47c8d3c8be4/data/efficiencies.csv
   NH3_process_emissions: 24.5
   petrochemical_process_emissions: 25.5
@@ -600,6 +609,7 @@ costs:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#clustering
 clustering:
+  focus_weights: false
   simplify_network:
     to_substations: false
     algorithm: kmeans # choose from: [hac, kmeans]
@@ -741,6 +751,7 @@ plotting:
     H2: "Hydrogen Storage"
     lines: "Transmission Lines"
     ror: "Run of River"
+    load: "Load Shedding"
     ac: "AC"
     dc: "DC"
 
@@ -791,6 +802,7 @@ plotting:
     fossil gas: '#e05b09'
     natural gas: '#e05b09'
     biogas to gas: '#e36311'
+    biogas to gas CC: '#e51245'
     CCGT: '#a85522'
     CCGT marginal: '#a85522'
     allam: '#B98F76'
@@ -821,6 +833,7 @@ plotting:
     Coal: '#545454'
     coal: '#545454'
     Coal marginal: '#545454'
+    coal for industry: '#343434'
     solid: '#545454'
     Lignite: '#826837'
     lignite: '#826837'
@@ -891,12 +904,14 @@ plotting:
     # heat demand
     Heat load: '#cc1f1f'
     heat: '#cc1f1f'
+    heat vent: '#aa3344'
     heat demand: '#cc1f1f'
     rural heat: '#ff5c5c'
     residential rural heat: '#ff7c7c'
     services rural heat: '#ff9c9c'
     central heat: '#cc1f1f'
     urban central heat: '#d15959'
+    urban central heat vent: '#a74747'
     decentral heat: '#750606'
     residential urban decentral heat: '#a33c3c'
     services urban decentral heat: '#cc1f1f'
@@ -959,7 +974,6 @@ plotting:
     Sabatier: '#9850ad'
     methanation: '#c44ce6'
     methane: '#c44ce6'
-    helmeth: '#e899ff'
     # synfuels
     Fischer-Tropsch: '#25c49a'
     liquid: '#25c49a'
@@ -1005,3 +1019,4 @@ plotting:
     DC: "#8a1caf"
     DC-DC: "#8a1caf"
     DC link: "#8a1caf"
+    load: "#dd2e23"

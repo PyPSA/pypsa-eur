@@ -1,4 +1,5 @@
 ,Unit,Values,Description
+focus_weights,,,Optionally specify the focus weights for the clustering of countries. For instance: `DE: 0.8` will distribute 80% of all nodes to Germany and 20% to the rest of the countries.
 simplify_network,,,
 -- to_substations,bool,"{'true','false'}","Aggregates all nodes without power injection (positive or negative, i.e. demand or generation) to electrically closest ones"
 -- algorithm,str,"One of {‘kmeans’, ‘hac’, ‘modularity‘}",

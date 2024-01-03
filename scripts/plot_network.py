@@ -31,7 +31,7 @@ def rename_techs_tyndp(tech):
     tech = rename_techs(tech)
     if "heat pump" in tech or "resistive heater" in tech:
         return "power-to-heat"
-    elif tech in ["H2 Electrolysis", "methanation", "helmeth", "H2 liquefaction"]:
+    elif tech in ["H2 Electrolysis", "methanation", "H2 liquefaction"]:
         return "power-to-gas"
     elif tech == "H2":
         return "H2 storage"
@@ -145,12 +145,12 @@ def plot_map(
     ac_color = "rosybrown"
     dc_color = "darkseagreen"
 
+    title = "added grid"
+
     if snakemake.wildcards["ll"] == "v1.0":
         # should be zero
         line_widths = n.lines.s_nom_opt - n.lines.s_nom
         link_widths = n.links.p_nom_opt - n.links.p_nom
-        title = "added grid"
-
         if transmission:
             line_widths = n.lines.s_nom_opt
             link_widths = n.links.p_nom_opt
@@ -160,8 +160,6 @@ def plot_map(
     else:
         line_widths = n.lines.s_nom_opt - n.lines.s_nom_min
         link_widths = n.links.p_nom_opt - n.links.p_nom_min
-        title = "added grid"
-
         if transmission:
             line_widths = n.lines.s_nom_opt
             link_widths = n.links.p_nom_opt
@@ -262,12 +260,7 @@ def group_pipes(df, drop_direction=False):
         lambda x: f"H2 pipeline {x.bus0.replace(' H2', '')} -> {x.bus1.replace(' H2', '')}",
         axis=1,
     )
-    # group pipe lines connecting the same buses and rename them for plotting
-    pipe_capacity = df.groupby(level=0).agg(
-        {"p_nom_opt": sum, "bus0": "first", "bus1": "first"}
-    )
-
-    return pipe_capacity
+    return df.groupby(level=0).agg({"p_nom_opt": sum, "bus0": "first", "bus1": "first"})
 
 
 def plot_h2_map(network, regions):
@@ -502,7 +495,7 @@ def plot_ch4_map(network):
     # make a fake MultiIndex so that area is correct for legend
     fossil_gas.index = pd.MultiIndex.from_product([fossil_gas.index, ["fossil gas"]])
 
-    methanation_i = n.links[n.links.carrier.isin(["helmeth", "Sabatier"])].index
+    methanation_i = n.links.query("carrier == 'Sabatier'").index
     methanation = (
         abs(
             n.links_t.p1.loc[:, methanation_i].mul(
@@ -766,11 +759,13 @@ def plot_series(network, carrier="AC", name="test"):
             supply = pd.concat(
                 (
                     supply,
-                    (-1)
-                    * c.pnl["p" + str(i)]
-                    .loc[:, c.df.index[c.df["bus" + str(i)].isin(buses)]]
-                    .groupby(c.df.carrier, axis=1)
-                    .sum(),
+                    (
+                        -1
+                        * c.pnl[f"p{str(i)}"]
+                        .loc[:, c.df.index[c.df[f"bus{str(i)}"].isin(buses)]]
+                        .groupby(c.df.carrier, axis=1)
+                        .sum()
+                    ),
                 ),
                 axis=1,
             )
@@ -1065,7 +1060,6 @@ def plot_map_perfect(
         )
 
 
-# %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake

@@ -149,11 +149,9 @@ def build_swiss(year=None):
     return df
 
 
-def idees_per_country(country, base_dir):
-
+def idees_per_country(ct, year, base_dir):
     ct_totals = {}
-
-    ct_idees = idees_rename.get(country, country)
+    ct_idees = idees_rename.get(ct, ct)
     fn_residential = f"{base_dir}/JRC-IDEES-2015_Residential_{ct_idees}.xlsx"
     fn_tertiary = f"{base_dir}/JRC-IDEES-2015_Tertiary_{ct_idees}.xlsx"
     fn_transport = f"{base_dir}/JRC-IDEES-2015_Transport_{ct_idees}.xlsx"
@@ -188,7 +186,7 @@ def idees_per_country(country, base_dir):
     assert df.index[46] == "Derived heat"
     ct_totals["derived heat residential"] = df.iloc[46]
 
-    assert df.index[50] == 'Thermal uses'
+    assert df.index[50] == "Thermal uses"
     ct_totals["thermal uses residential"] = df.iloc[50]
 
     # services
@@ -221,7 +219,7 @@ def idees_per_country(country, base_dir):
     assert df.index[49] == "Derived heat"
     ct_totals["derived heat services"] = df.iloc[49]
 
-    assert df.index[53] == 'Thermal uses'
+    assert df.index[53] == "Thermal uses"
     ct_totals["thermal uses services"] = df.iloc[53]
 
     # agriculture, forestry and fishing
@@ -319,7 +317,7 @@ def idees_per_country(country, base_dir):
 
     assert df.index[8] == "International - Intra-EU"
     assert df.index[9] == "International - Extra-EU"
-    ct_totals["total international aviation passenger"] = df.iloc[[8,9]].sum()
+    ct_totals["total international aviation passenger"] = df.iloc[[8, 9]].sum()
 
     assert df.index[11] == "Domestic and International - Intra-EU"
     ct_totals["total domestic aviation freight"] = df.iloc[11]

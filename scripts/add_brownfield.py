@@ -41,12 +41,9 @@ def add_brownfield(n, n_p, year):
         # remove assets if their optimized nominal capacity is lower than a threshold
         # since CHP heat Link is proportional to CHP electric Link, make sure threshold is compatible
         chp_heat = c.df.index[
-            (
-                c.df[attr + "_nom_extendable"]
-                & c.df.index.str.contains("urban central")
-                & c.df.index.str.contains("CHP")
-                & c.df.index.str.contains("heat")
-            )
+            (c.df[f"{attr}_nom_extendable"] & c.df.index.str.contains("urban central"))
+            & c.df.index.str.contains("CHP")
+            & c.df.index.str.contains("heat")
         ]
 
         threshold = snakemake.params.threshold_capacity
@@ -60,21 +57,20 @@ def add_brownfield(n, n_p, year):
             )
             n_p.mremove(
                 c.name,
-                chp_heat[c.df.loc[chp_heat, attr + "_nom_opt"] < threshold_chp_heat],
+                chp_heat[c.df.loc[chp_heat, f"{attr}_nom_opt"] < threshold_chp_heat],
             )
 
         n_p.mremove(
             c.name,
             c.df.index[
-                c.df[attr + "_nom_extendable"]
-                & ~c.df.index.isin(chp_heat)
-                & (c.df[attr + "_nom_opt"] < threshold)
+                (c.df[f"{attr}_nom_extendable"] & ~c.df.index.isin(chp_heat))
+                & (c.df[f"{attr}_nom_opt"] < threshold)
             ],
         )
 
         # copy over assets but fix their capacity
-        c.df[attr + "_nom"] = c.df[attr + "_nom_opt"]
-        c.df[attr + "_nom_extendable"] = False
+        c.df[f"{attr}_nom"] = c.df[f"{attr}_nom_opt"]
+        c.df[f"{attr}_nom_extendable"] = False
 
         n.import_components_from_dataframe(c.df, c.name)
 
@@ -124,7 +120,33 @@ def add_brownfield(n, n_p, year):
             n.links.loc[new_pipes, "p_nom_min"] = 0.0
 
 
-# %%
+def disable_grid_expansion_if_LV_limit_hit(n):
+    if not "lv_limit" in n.global_constraints.index:
+        return
+
+    total_expansion = (
+        n.lines.eval("s_nom_min * length").sum()
+        + n.links.query("carrier == 'DC'").eval("p_nom_min * length").sum()
+    ).sum()
+
+    lv_limit = n.global_constraints.at["lv_limit", "constant"]
+
+    # allow small numerical differences
+    if lv_limit - total_expansion < 1:
+        logger.info(
+            f"LV is already reached (gap {diff} MWkm), disabling expansion and LV limit"
+        )
+        extendable_acs = n.lines.query("s_nom_extendable").index
+        n.lines.loc[extendable_acs, "s_nom_extendable"] = False
+        n.lines.loc[extendable_acs, "s_nom"] = n.lines.loc[extendable_acs, "s_nom_min"]
+
+        extendable_dcs = n.links.query("carrier == 'DC' and p_nom_extendable").index
+        n.links.loc[extendable_dcs, "p_nom_extendable"] = False
+        n.links.loc[extendable_dcs, "p_nom"] = n.links.loc[extendable_dcs, "p_nom_min"]
+
+        n.global_constraints.drop("lv_limit", inplace=True)
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -155,6 +177,8 @@ if __name__ == "__main__":
     n_p = pypsa.Network(snakemake.input.network_p)
 
     add_brownfield(n, n_p, year)
+
+    disable_grid_expansion_if_LV_limit_hit(n)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     n.export_to_netcdf(snakemake.output[0])

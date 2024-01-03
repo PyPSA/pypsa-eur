@@ -64,7 +64,7 @@ if __name__ == "__main__":
     with zipfile.ZipFile(snakemake.input.ship_density) as zip_f:
         zip_f.extract("shipdensity_global.tif")
         with rioxarray.open_rasterio("shipdensity_global.tif") as ship_density:
-            ship_density = ship_density.drop(["band"]).sel(
+            ship_density = ship_density.drop_vars(["band"]).sel(
                 x=slice(min(xs), max(Xs)), y=slice(max(Ys), min(ys))
             )
             ship_density.rio.to_raster(snakemake.output[0])
