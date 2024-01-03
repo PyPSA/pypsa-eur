@@ -65,6 +65,9 @@ Upcoming Release
 * Validate downloads from Zenodo using MD5 checksums. This identifies corrupted
   or incomplete downloads.
 
+* Add locations, capacities and costs of existing gas storage using Global
+  Energy Monitor's `Europe Gas Tracker
+  <https://globalenergymonitor.org/projects/europe-gas-tracker>`_.
 
 **Bugs and Compatibility**
 
