@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: MIT
 
 import contextlib
+import hashlib
 import logging
 import os
 import urllib
@@ -11,6 +12,7 @@ from pathlib import Path
 
 import pandas as pd
 import pytz
+import requests
 import yaml
 from pypsa.components import component_attrs, components
 from pypsa.descriptors import Dict
@@ -191,7 +193,7 @@ def progress_retrieve(url, file, disable=False):
             urllib.request.urlretrieve(url, file, reporthook=update_to)
 
 
-def mock_snakemake(rulename, configfiles=[], **wildcards):
+def mock_snakemake(rulename, root_dir=None, configfiles=[], **wildcards):
     """
     This function is expected to be executed from the 'scripts'-directory of '
     the snakemake project. It returns a snakemake.script.Snakemake object,
@@ -203,6 +205,8 @@ def mock_snakemake(rulename, configfiles=[], **wildcards):
     ----------
     rulename: str
         name of the rule for which the snakemake object should be generated
+    root_dir: str/path-like
+        path to the root directory of the snakemake project
     configfiles: list, str
         list of configfiles to be used to update the config
     **wildcards:
@@ -217,7 +221,10 @@ def mock_snakemake(rulename, configfiles=[], **wildcards):
     from snakemake.script import Snakemake
 
     script_dir = Path(__file__).parent.resolve()
-    root_dir = script_dir.parent
+    if root_dir is None:
+        root_dir = script_dir.parent
+    else:
+        root_dir = Path(root_dir).resolve()
 
     user_in_script_dir = Path.cwd().resolve() == script_dir
     if user_in_script_dir:
@@ -303,10 +310,7 @@ def generate_periodic_profiles(dt_index, nodes, weekly_profile, localize=None):
 
 
 def parse(l):
-    if len(l) == 1:
-        return yaml.safe_load(l[0])
-    else:
-        return {l.pop(0): parse(l)}
+    return yaml.safe_load(l[0]) if len(l) == 1 else {l.pop(0): parse(l)}
 
 
 def update_config_with_sector_opts(config, sector_opts):
@@ -316,3 +320,63 @@ def update_config_with_sector_opts(config, sector_opts):
         if o.startswith("CF+"):
             l = o.split("+")[1:]
             update_config(config, parse(l))
+
+
+def get_checksum_from_zenodo(file_url):
+    parts = file_url.split("/")
+    record_id = parts[parts.index("record") + 1]
+    filename = parts[-1]
+
+    response = requests.get(f"https://zenodo.org/api/records/{record_id}", timeout=30)
+    response.raise_for_status()
+    data = response.json()
+
+    for file in data["files"]:
+        if file["key"] == filename:
+            return file["checksum"]
+    return None
+
+
+def validate_checksum(file_path, zenodo_url=None, checksum=None):
+    """
+    Validate file checksum against provided or Zenodo-retrieved checksum.
+    Calculates the hash of a file using 64KB chunks. Compares it against a
+    given checksum or one from a Zenodo URL.
+
+    Parameters
+    ----------
+    file_path : str
+        Path to the file for checksum validation.
+    zenodo_url : str, optional
+        URL of the file on Zenodo to fetch the checksum.
+    checksum : str, optional
+        Checksum (format 'hash_type:checksum_value') for validation.
+
+    Raises
+    ------
+    AssertionError
+        If the checksum does not match, or if neither `checksum` nor `zenodo_url` is provided.
+
+
+    Examples
+    --------
+    >>> validate_checksum("/path/to/file", checksum="md5:abc123...")
+    >>> validate_checksum(
+    ...     "/path/to/file",
+    ...     zenodo_url="https://zenodo.org/record/12345/files/example.txt",
+    ... )
+
+    If the checksum is invalid, an AssertionError will be raised.
+    """
+    assert checksum or zenodo_url, "Either checksum or zenodo_url must be provided"
+    if zenodo_url:
+        checksum = get_checksum_from_zenodo(zenodo_url)
+    hash_type, checksum = checksum.split(":")
+    hasher = hashlib.new(hash_type)
+    with open(file_path, "rb") as f:
+        for chunk in iter(lambda: f.read(65536), b""):  # 64kb chunks
+            hasher.update(chunk)
+    calculated_checksum = hasher.hexdigest()
+    assert (
+        calculated_checksum == checksum
+    ), "Checksum is invalid. This may be due to an incomplete download. Delete the file and re-execute the rule."

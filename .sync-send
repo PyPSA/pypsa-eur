@@ -1,0 +1,11 @@
+# SPDX-FileCopyrightText: : 2021-2023 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: CC0-1.0
+
+rules
+scripts
+config
+config/test
+envs
+matplotlibrc
+Snakefile
