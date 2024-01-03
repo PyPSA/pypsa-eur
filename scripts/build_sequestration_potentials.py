@@ -28,9 +28,7 @@ def allocate_sequestration_potential(
     overlay["share"] = area(overlay) / overlay["area_sqkm"]
     adjust_cols = overlay.columns.difference({"name", "area_sqkm", "geometry", "share"})
     overlay[adjust_cols] = overlay[adjust_cols].multiply(overlay["share"], axis=0)
-    gdf_regions = overlay.groupby("name").sum()
-    gdf_regions.drop(["area_sqkm", "share"], axis=1, inplace=True)
-    return gdf_regions.squeeze()
+    return overlay.dissolve("name", aggfunc="sum")[attr]
 
 
 if __name__ == "__main__":

@@ -5,41 +5,71 @@
 
 localrules:
     copy_config,
-    copy_conda_env,
 
 
-rule plot_network:
-    params:
-        foresight=config["foresight"],
-        plotting=config["plotting"],
-    input:
-        network=RESULTS
-        + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
-        regions=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
-    output:
-        map=RESULTS
-        + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
-        today=RESULTS
-        + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}-today.pdf",
-    threads: 2
-    resources:
-        mem_mb=10000,
-    benchmark:
-        (
+if config["foresight"] != "perfect":
+
+    rule plot_network:
+        params:
+            foresight=config["foresight"],
+            plotting=config["plotting"],
+        input:
+            network=RESULTS
+            + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+            regions=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+        output:
+            map=RESULTS
+            + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
+            today=RESULTS
+            + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}-today.pdf",
+        threads: 2
+        resources:
+            mem_mb=10000,
+        benchmark:
+            (
+                BENCHMARKS
+                + "plot_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+            )
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/plot_network.py"
+
+
+if config["foresight"] == "perfect":
+
+    rule plot_network:
+        params:
+            foresight=config["foresight"],
+            plotting=config["plotting"],
+        input:
+            network=RESULTS
+            + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years.nc",
+            regions=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+        output:
+            **{
+                f"map_{year}": RESULTS
+                + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_"
+                + f"{year}.pdf"
+                for year in config["scenario"]["planning_horizons"]
+            },
+        threads: 2
+        resources:
+            mem_mb=10000,
+        benchmark:
             BENCHMARKS
-            + "plot_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
-        )
-    conda:
-        "../envs/environment.yaml"
-    script:
-        "../scripts/plot_network.py"
+            +"postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years_benchmark"
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/plot_network.py"
 
 
 rule copy_config:
     params:
         RDIR=RDIR,
     output:
-        RESULTS + "config/config.yaml",
+        RESULTS + "config.yaml",
     threads: 1
     resources:
         mem_mb=1000,
@@ -49,22 +79,6 @@ rule copy_config:
         "../envs/environment.yaml"
     script:
         "../scripts/copy_config.py"
-
-
-rule copy_conda_env:
-    output:
-        RESULTS + "config/environment.yaml",
-    threads: 1
-    resources:
-        mem_mb=500,
-    log:
-        LOGS + "copy_conda_env.log",
-    benchmark:
-        BENCHMARKS + "copy_conda_env"
-    conda:
-        "../envs/environment.yaml"
-    shell:
-        "conda env export -f {output} --no-builds"
 
 
 rule make_summary:
@@ -122,6 +136,8 @@ rule plot_summary:
         countries=config["countries"],
         planning_horizons=config["scenario"]["planning_horizons"],
         sector_opts=config["scenario"]["sector_opts"],
+        emissions_scope=config["energy"]["emissions"],
+        eurostat_report_year=config["energy"]["eurostat_report_year"],
         plotting=config["plotting"],
         RDIR=RDIR,
     input:
@@ -129,6 +145,7 @@ rule plot_summary:
         energy=RESULTS + "csvs/energy.csv",
         balances=RESULTS + "csvs/supply_energy.csv",
         eurostat=input_eurostat,
+        co2="data/bundle-sector/eea/UNFCCC_v23.csv",
     output:
         costs=RESULTS + "graphs/costs.pdf",
         energy=RESULTS + "graphs/energy.pdf",
@@ -144,3 +161,34 @@ rule plot_summary:
         "../envs/environment.yaml"
     script:
         "../scripts/plot_summary.py"
+
+
+STATISTICS_BARPLOTS = [
+    "capacity_factor",
+    "installed_capacity",
+    "optimal_capacity",
+    "capital_expenditure",
+    "operational_expenditure",
+    "curtailment",
+    "supply",
+    "withdrawal",
+    "market_value",
+]
+
+
+rule plot_elec_statistics:
+    params:
+        plotting=config["plotting"],
+        barplots=STATISTICS_BARPLOTS,
+    input:
+        network=RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+    output:
+        **{
+            f"{plot}_bar": RESULTS
+            + f"figures/statistics_{plot}_bar_elec_s{{simpl}}_{{clusters}}_ec_l{{ll}}_{{opts}}.pdf"
+            for plot in STATISTICS_BARPLOTS
+        },
+        barplots_touch=RESULTS
+        + "figures/.statistics_plots_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}",
+    script:
+        "../scripts/plot_statistics.py"

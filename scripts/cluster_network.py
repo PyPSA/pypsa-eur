@@ -16,8 +16,7 @@ Relevant Settings
     clustering:
       cluster_network:
       aggregation_strategies:
-
-    focus_weights:
+      focus_weights:
 
     solving:
         solver:
@@ -237,7 +236,7 @@ def distribute_clusters(n, n_clusters, focus_weights=None, solver_name="cbc"):
         n_clusters >= len(N) and n_clusters <= N.sum()
     ), f"Number of clusters must be {len(N)} <= n_clusters <= {N.sum()} for this selection of countries."
 
-    if focus_weights is not None:
+    if isinstance(focus_weights, dict):
         total_focus = sum(list(focus_weights.values()))
 
         assert (
@@ -271,7 +270,7 @@ def distribute_clusters(n, n_clusters, focus_weights=None, solver_name="cbc"):
     )
 
     opt = po.SolverFactory(solver_name)
-    if not opt.has_capability("quadratic_objective"):
+    if solver_name == "appsi_highs" or not opt.has_capability("quadratic_objective"):
         logger.warning(
             f"The configured solver `{solver_name}` does not support quadratic objectives. Falling back to `ipopt`."
         )
@@ -322,9 +321,9 @@ def busmap_for_n_clusters(
                 neighbor_bus = n.lines.query(
                     "bus0 == @disconnected_bus or bus1 == @disconnected_bus"
                 ).iloc[0][["bus0", "bus1"]]
-                new_country = list(
-                    set(n.buses.loc[neighbor_bus].country) - set([country])
-                )[0]
+                new_country = list(set(n.buses.loc[neighbor_bus].country) - {country})[
+                    0
+                ]
 
                 logger.info(
                     f"overwriting country `{country}` of bus `{disconnected_bus}` "
@@ -461,13 +460,17 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("cluster_network", simpl="", clusters="37c")
+        snakemake = mock_snakemake("cluster_network", simpl="", clusters="37")
     configure_logging(snakemake)
 
     params = snakemake.params
     solver_name = snakemake.config["solving"]["solver"]["name"]
+    solver_name = "appsi_highs" if solver_name == "highs" else solver_name
 
     n = pypsa.Network(snakemake.input.network)
+
+    # remove integer outputs for compatibility with PyPSA v0.26.0
+    n.generators.drop("n_mod", axis=1, inplace=True, errors="ignore")
 
     exclude_carriers = params.cluster_network["exclude_carriers"]
     aggregate_carriers = set(n.generators.carrier) - set(exclude_carriers)
@@ -482,6 +485,23 @@ if __name__ == "__main__":
         n_clusters = len(n.buses)
     else:
         n_clusters = int(snakemake.wildcards.clusters)
+
+    if params.cluster_network.get("consider_efficiency_classes", False):
+        carriers = []
+        for c in aggregate_carriers:
+            gens = n.generators.query("carrier == @c")
+            low = gens.efficiency.quantile(0.10)
+            high = gens.efficiency.quantile(0.90)
+            if low >= high:
+                carriers += [c]
+            else:
+                labels = ["low", "medium", "high"]
+                suffix = pd.cut(
+                    gens.efficiency, bins=[0, low, high, 1], labels=labels
+                ).astype(str)
+                carriers += [f"{c} {label} efficiency" for label in labels]
+                n.generators.carrier.update(gens.carrier + " " + suffix + " efficiency")
+        aggregate_carriers = carriers
 
     if n_clusters == len(n.buses):
         # Fast-path if no clustering is necessary
@@ -523,6 +543,11 @@ if __name__ == "__main__":
         )
 
     update_p_nom_max(clustering.network)
+
+    if params.cluster_network.get("consider_efficiency_classes"):
+        labels = [f" {label} efficiency" for label in ["low", "medium", "high"]]
+        nc = clustering.network
+        nc.generators["carrier"] = nc.generators.carrier.replace(labels, "", regex=True)
 
     clustering.network.meta = dict(
         snakemake.config, **dict(wildcards=dict(snakemake.wildcards))
