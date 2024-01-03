@@ -451,7 +451,6 @@ sector:
   solar_cf_correction: 0.788457  # =  >>> 1/1.2683
   marginal_cost_storage: 0. #1e-4
   methanation: true
-  helmeth: false
   coal_cc: false
   dac: true
   co2_vent: false
@@ -954,7 +953,6 @@ plotting:
     Sabatier: '#9850ad'
     methanation: '#c44ce6'
     methane: '#c44ce6'
-    helmeth: '#e899ff'
     # synfuels
     Fischer-Tropsch: '#25c49a'
     liquid: '#25c49a'
