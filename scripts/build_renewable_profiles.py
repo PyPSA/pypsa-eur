@@ -268,15 +268,14 @@ if __name__ == "__main__":
             snakemake.input.country_shapes, buffer=buffer, invert=True
         )
 
+    logger.info("Calculate landuse availability...")
+    start = time.time()
+
     kwargs = dict(nprocesses=nprocesses, disable_progressbar=noprogress)
-    if noprogress:
-        logger.info("Calculate landuse availabilities...")
-        start = time.time()
-        availability = cutout.availabilitymatrix(regions, excluder, **kwargs)
-        duration = time.time() - start
-        logger.info(f"Completed availability calculation ({duration:2.2f}s)")
-    else:
-        availability = cutout.availabilitymatrix(regions, excluder, **kwargs)
+    availability = cutout.availabilitymatrix(regions, excluder, **kwargs)
+
+    duration = time.time() - start
+    logger.info(f"Completed landuse availability calculation ({duration:2.2f}s)")
 
     # For Moldova and Ukraine: Overwrite parts not covered by Corine with
     # externally determined available areas
@@ -295,8 +294,19 @@ if __name__ == "__main__":
     func = getattr(cutout, resource.pop("method"))
     if client is not None:
         resource["dask_kwargs"] = {"scheduler": client}
+
+    logger.info("Calculate average capacity factor...")
+    start = time.time()
+
     capacity_factor = correction_factor * func(capacity_factor=True, **resource)
     layout = capacity_factor * area * capacity_per_sqkm
+
+    duration = time.time() - start
+    logger.info(f"Completed average capacity factor calculation ({duration:2.2f}s)")
+
+    logger.info("Calculate weighted capacity factor time series...")
+    start = time.time()
+
     profile, capacities = func(
         matrix=availability.stack(spatial=["y", "x"]),
         layout=layout,
@@ -304,6 +314,11 @@ if __name__ == "__main__":
         per_unit=True,
         return_capacity=True,
         **resource,
+    )
+
+    duration = time.time() - start
+    logger.info(
+        f"Completed weighted capacity factor time series calculation ({duration:2.2f}s)"
     )
 
     logger.info(f"Calculating maximal capacity per bus")
