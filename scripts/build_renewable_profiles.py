@@ -7,10 +7,10 @@
 """
 Calculates for each network node the (i) installable capacity (based on land-
 use), (ii) the available generation time series (based on weather data), and
-(iii) the average distance from the node for onshore wind, AC-connected
-offshore wind, DC-connected offshore wind and solar PV generators. In addition
-for offshore wind it calculates the fraction of the grid connection which is
-under water.
+(iii) the average distance from the node for onshore wind, AC-connected offshore
+wind, DC-connected offshore wind and solar PV generators. In addition for
+offshore wind it calculates the fraction of the grid connection which is under
+water.
 
 .. note:: Hydroelectric profiles are built in script :mod:`build_hydro_profiles`.
 
@@ -26,7 +26,7 @@ Relevant settings
 
     renewable:
         {technology}:
-            cutout: corine: grid_codes: distance: natura: max_depth:
+            cutout: corine: luisa: grid_codes: distance: natura: max_depth:
             max_shore_distance: min_shore_distance: capacity_per_sqkm:
             correction_factor: min_p_max_pu: clip_p_max_pu: resource:
 
@@ -40,10 +40,17 @@ Inputs
 - ``data/bundle/corine/g250_clc06_V18_5.tif``: `CORINE Land Cover (CLC)
   <https://land.copernicus.eu/pan-european/corine-land-cover>`_ inventory on `44
   classes <https://wiki.openstreetmap.org/wiki/Corine_Land_Cover#Tagging>`_ of
-  land use (e.g. forests, arable land, industrial, urban areas).
+  land use (e.g. forests, arable land, industrial, urban areas) at 100m
+  resolution.
 
     .. image:: img/corine.png
         :scale: 33 %
+
+- ``data/LUISA_basemap_020321_50m.tif``: `LUISA Base Map
+  <https://publications.jrc.ec.europa.eu/repository/handle/JRC124621>`_ land
+  coverage dataset at 50m resolution similar to CORINE. For codes in relation to
+  CORINE land cover, see `Annex 1 of the technical documentation
+  <https://publications.jrc.ec.europa.eu/repository/bitstream/JRC124621/technical_report_luisa_basemap_2018_v7_final.pdf>`_.
 
 - ``data/bundle/GEBCO_2014_2D.nc``: A `bathymetric
   <https://en.wikipedia.org/wiki/Bathymetry>`_ data set with a global terrain
@@ -133,9 +140,10 @@ of a combination of the available land at each grid cell and the capacity factor
 there.
 
 First the script computes how much of the technology can be installed at each
-cutout grid cell and each node using the `GLAES
-<https://github.com/FZJ-IEK3-VSA/glaes>`_ library. This uses the CORINE land use
-data, Natura2000 nature reserves and GEBCO bathymetry data.
+cutout grid cell and each node using the `atlite
+<https://github.com/pypsa/atlite>`_ library. This uses the CORINE land use data,
+LUISA land use data, Natura2000 nature reserves, GEBCO bathymetry data, and
+shipping lanes.
 
 .. image:: img/eligibility.png
     :scale: 50 %
@@ -166,10 +174,10 @@ This layout is then used to compute the generation availability time series from
 the weather data cutout from ``atlite``.
 
 The maximal installable potential for the node (`p_nom_max`) is computed by
-adding up the installable potentials of the individual grid cells.
-If the model comes close to this limit, then the time series may slightly
-overestimate production since it is assumed the geographical distribution is
-proportional to capacity factor.
+adding up the installable potentials of the individual grid cells. If the model
+comes close to this limit, then the time series may slightly overestimate
+production since it is assumed the geographical distribution is proportional to
+capacity factor.
 """
 import functools
 import logging
@@ -203,9 +211,6 @@ if __name__ == "__main__":
     correction_factor = params.get("correction_factor", 1.0)
     capacity_per_sqkm = params["capacity_per_sqkm"]
 
-    if isinstance(params.get("corine", {}), list):
-        params["corine"] = {"grid_codes": params["corine"]}
-
     if correction_factor != 1.0:
         logger.info(f"correction_factor is set as {correction_factor}")
 
@@ -231,16 +236,24 @@ if __name__ == "__main__":
     if params["natura"]:
         excluder.add_raster(snakemake.input.natura, nodata=0, allow_no_overlap=True)
 
-    corine = params.get("corine", {})
-    if "grid_codes" in corine:
-        codes = corine["grid_codes"]
-        excluder.add_raster(snakemake.input.corine, codes=codes, invert=True, crs=3035)
-    if corine.get("distance", 0.0) > 0.0:
-        codes = corine["distance_grid_codes"]
-        buffer = corine["distance"]
-        excluder.add_raster(
-            snakemake.input.corine, codes=codes, buffer=buffer, crs=3035
-        )
+    for landuse in ["corine", "luisa"]:
+        kwargs = {"nodata": 0} if landuse == "luisa" else {}
+        landuse = params.get(landuse, {})
+        if not landuse:
+            continue
+        if isinstance(landuse, list):
+            landuse = {"grid_codes": landuse}
+        if "grid_codes" in landuse:
+            codes = landuse["grid_codes"]
+            excluder.add_raster(
+                snakemake.input[landuse], codes=codes, invert=True, crs=3035, **kwargs
+            )
+        if landuse.get("distance", 0.0) > 0.0:
+            codes = landuse["distance_grid_codes"]
+            buffer = landuse["distance"]
+            excluder.add_raster(
+                snakemake.input[landuse], codes=codes, buffer=buffer, crs=3035, **kwargs
+            )
 
     if params.get("ship_threshold"):
         shipping_threshold = (

@@ -268,6 +268,11 @@ rule build_renewable_profiles:
             if config["renewable"][w.technology]["natura"]
             else []
         ),
+        luisa=lambda w: (
+            "data/LUISA_basemap_020321_50m.tif"
+            if config["renewable"][w.technology].get("luisa")
+            else []
+        ),
         gebco=ancient(
             lambda w: (
                 "data/bundle/GEBCO_2014_2D.nc"
