@@ -3441,8 +3441,9 @@ def lossy_bidirectional_links(n, carrier, efficiencies={}):
     rev_links = (
         n.links.loc[carrier_i]
         .copy()
-        .rename({"bus0": "bus1", "bus1": "bus0", "length": "length_original"}, axis=1)
+        .rename({"bus0": "bus1", "bus1": "bus0"}, axis=1)
     )
+    rev_links["length_original"] = rev_links["length"]
     rev_links["capital_cost"] = 0
     rev_links["length"] = 0
     rev_links["reversed"] = True
