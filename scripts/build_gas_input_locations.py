@@ -161,8 +161,12 @@ if __name__ == "__main__":
 
     gas_input_nodes.to_file(snakemake.output.gas_input_nodes, driver="GeoJSON")
 
+    ensure_columns = ["lng", "pipeline", "production", "storage"]
     gas_input_nodes_s = (
-        gas_input_nodes.groupby(["bus", "type"])["capacity"].sum().unstack()
+        gas_input_nodes.groupby(["bus", "type"])["capacity"]
+        .sum()
+        .unstack()
+        .reindex(columns=ensure_columns)
     )
     gas_input_nodes_s.columns.name = "capacity"
 
