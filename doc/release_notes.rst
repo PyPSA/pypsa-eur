@@ -72,6 +72,20 @@ Upcoming Release
   reconnected to the main Ukrainian grid with the configuration option
   `reconnect_crimea`.
 
+* Added option to endogenously optimise the capacity and operation of green
+  steel production (``sector: endogenous_steel:``), whereby a bus for steel and
+  a combined link for DRI+EAF are introduced. The link includes the capital cost
+  for DRI and EAF as well as the cost for the iron ore. The option is disabled
+  by default.
+
+  By default, plants run with a constant production rate. This can be changed by
+  setting ``sector: flexibility_steel: true``.
+
+  By default, steel plants cannot relocate. This can be changed by setting
+  ``sector: relocation_steel: true``. Relocation costs are not included.
+
+* Switch to new ``technology-data`` version 0.6.2. 
+
 * Validate downloads from Zenodo using MD5 checksums. This identifies corrupted
   or incomplete downloads.
 
