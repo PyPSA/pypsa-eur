@@ -85,12 +85,12 @@ if config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]:
 
     rule build_gas_input_locations:
         input:
-            lng=HTTP.remote(
+            gem=HTTP.remote(
                 "https://globalenergymonitor.org/wp-content/uploads/2023/07/Europe-Gas-Tracker-2023-03-v3.xlsx",
                 keep_local=True,
             ),
             entry="data/gas_network/scigrid-gas/data/IGGIELGN_BorderPoints.geojson",
-            production="data/gas_network/scigrid-gas/data/IGGIELGN_Productions.geojson",
+            storage="data/gas_network/scigrid-gas/data/IGGIELGN_Storages.geojson",
             regions_onshore=RESOURCES
             + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
             regions_offshore=RESOURCES

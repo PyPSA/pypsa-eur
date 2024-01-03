@@ -454,10 +454,11 @@ def add_carrier_buses(n, carrier, nodes=None):
     n.add("Carrier", carrier)
 
     unit = "MWh_LHV" if carrier == "gas" else "MWh_th"
+    # preliminary value for non-gas carriers to avoid zeros
+    capital_cost = costs.at["gas storage", "fixed"] if carrier == "gas" else 0.02
 
     n.madd("Bus", nodes, location=location, carrier=carrier, unit=unit)
 
-    # capital cost could be corrected to e.g. 0.2 EUR/kWh * annuity and O&M
     n.madd(
         "Store",
         nodes + " Store",
@@ -465,8 +466,7 @@ def add_carrier_buses(n, carrier, nodes=None):
         e_nom_extendable=True,
         e_cyclic=True,
         carrier=carrier,
-        capital_cost=0.2
-        * costs.at[carrier, "discount rate"],  # preliminary value to avoid zeros
+        capital_cost=capital_cost,
     )
 
     n.madd(
@@ -1162,7 +1162,7 @@ def add_storage_and_grids(n, costs):
 
     if options["gas_network"]:
         logger.info(
-            "Add natural gas infrastructure, incl. LNG terminals, production and entry-points."
+            "Add natural gas infrastructure, incl. LNG terminals, production, storage and entry-points."
         )
 
         if options["H2_retrofit"]:
@@ -1207,9 +1207,24 @@ def add_storage_and_grids(n, costs):
         remove_i = n.generators[gas_i & internal_i].index
         n.generators.drop(remove_i, inplace=True)
 
-        p_nom = gas_input_nodes.sum(axis=1).rename(lambda x: x + " gas")
+        input_types = ["lng", "pipeline", "production"]
+        p_nom = gas_input_nodes[input_types].sum(axis=1).rename(lambda x: x + " gas")
         n.generators.loc[gas_i, "p_nom_extendable"] = False
         n.generators.loc[gas_i, "p_nom"] = p_nom
+
+        # add existing gas storage capacity
+        gas_i = n.stores.carrier == "gas"
+        e_nom = (
+            gas_input_nodes["storage"]
+            .rename(lambda x: x + " gas Store")
+            .reindex(n.stores.index)
+            .fillna(0.0)
+            * 1e3
+        )  # MWh_LHV
+        e_nom.clip(
+            upper=e_nom.quantile(0.98), inplace=True
+        )  # limit extremely large storage
+        n.stores.loc[gas_i, "e_nom_min"] = e_nom
 
         # add candidates for new gas pipelines to achieve full connectivity
 
@@ -1345,6 +1360,7 @@ def add_storage_and_grids(n, costs):
             bus2=spatial.co2.nodes,
             p_nom_extendable=True,
             carrier="Sabatier",
+            p_min_pu=options.get("min_part_load_methanation", 0),
             efficiency=costs.at["methanation", "efficiency"],
             efficiency2=-costs.at["methanation", "efficiency"]
             * costs.at["gas", "CO2 intensity"],
@@ -2331,6 +2347,7 @@ def add_biomass(n, costs):
                 efficiency=costs.at["biomass boiler", "efficiency"],
                 capital_cost=costs.at["biomass boiler", "efficiency"]
                 * costs.at["biomass boiler", "fixed"],
+                marginal_cost=costs.at["biomass boiler", "pelletizing cost"],
                 lifetime=costs.at["biomass boiler", "lifetime"],
             )
 
@@ -2973,8 +2990,13 @@ def add_waste_heat(n):
     if not urban_central.empty:
         urban_central = urban_central.str[: -len(" urban central heat")]
 
+        link_carriers = n.links.carrier.unique()
+
         # TODO what is the 0.95 and should it be a config option?
-        if options["use_fischer_tropsch_waste_heat"]:
+        if (
+            options["use_fischer_tropsch_waste_heat"]
+            and "Fischer-Tropsch" in link_carriers
+        ):
             n.links.loc[urban_central + " Fischer-Tropsch", "bus3"] = (
                 urban_central + " urban central heat"
             )
@@ -2982,8 +3004,48 @@ def add_waste_heat(n):
                 0.95 - n.links.loc[urban_central + " Fischer-Tropsch", "efficiency"]
             )
 
+        if options["use_methanation_waste_heat"] and "Sabatier" in link_carriers:
+            n.links.loc[urban_central + " Sabatier", "bus3"] = (
+                urban_central + " urban central heat"
+            )
+            n.links.loc[urban_central + " Sabatier", "efficiency3"] = (
+                0.95 - n.links.loc[urban_central + " Sabatier", "efficiency"]
+            )
+
+        # DEA quotes 15% of total input (11% of which are high-value heat)
+        if options["use_haber_bosch_waste_heat"] and "Haber-Bosch" in link_carriers:
+            n.links.loc[urban_central + " Haber-Bosch", "bus3"] = (
+                urban_central + " urban central heat"
+            )
+            total_energy_input = (
+                cf_industry["MWh_H2_per_tNH3_electrolysis"]
+                + cf_industry["MWh_elec_per_tNH3_electrolysis"]
+            ) / cf_industry["MWh_NH3_per_tNH3"]
+            electricity_input = (
+                cf_industry["MWh_elec_per_tNH3_electrolysis"]
+                / cf_industry["MWh_NH3_per_tNH3"]
+            )
+            n.links.loc[urban_central + " Haber-Bosch", "efficiency3"] = (
+                0.15 * total_energy_input / electricity_input
+            )
+
+        if (
+            options["use_methanolisation_waste_heat"]
+            and "methanolisation" in link_carriers
+        ):
+            n.links.loc[urban_central + " methanolisation", "bus4"] = (
+                urban_central + " urban central heat"
+            )
+            n.links.loc[urban_central + " methanolisation", "efficiency4"] = (
+                costs.at["methanolisation", "heat-output"]
+                / costs.at["methanolisation", "hydrogen-input"]
+            )
+
         # TODO integrate usable waste heat efficiency into technology-data from DEA
-        if options.get("use_electrolysis_waste_heat", False):
+        if (
+            options.get("use_electrolysis_waste_heat", False)
+            and "H2 Electrolysis" in link_carriers
+        ):
             n.links.loc[urban_central + " H2 Electrolysis", "bus2"] = (
                 urban_central + " urban central heat"
             )
@@ -2991,7 +3053,7 @@ def add_waste_heat(n):
                 0.84 - n.links.loc[urban_central + " H2 Electrolysis", "efficiency"]
             )
 
-        if options["use_fuel_cell_waste_heat"]:
+        if options["use_fuel_cell_waste_heat"] and "H2 Fuel Cell" in link_carriers:
             n.links.loc[urban_central + " H2 Fuel Cell", "bus2"] = (
                 urban_central + " urban central heat"
             )
@@ -3477,6 +3539,15 @@ if __name__ == "__main__":
 
     if "nodistrict" in opts:
         options["district_heating"]["progress"] = 0.0
+
+    if "nowasteheat" in opts:
+        logger.info("Disabling waste heat.")
+        options["use_fischer_tropsch_waste_heat"] = False
+        options["use_methanolisation_waste_heat"] = False
+        options["use_haber_bosch_waste_heat"] = False
+        options["use_methanation_waste_heat"] = False
+        options["use_fuel_cell_waste_heat"] = False
+        options["use_electrolysis_waste_heat"] = False
 
     if "T" in opts:
         add_land_transport(n, costs)
