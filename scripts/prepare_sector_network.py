@@ -1214,8 +1214,16 @@ def add_storage_and_grids(n, costs):
 
         # add existing gas storage capacity
         gas_i = n.stores.carrier == "gas"
-        e_nom = gas_input_nodes["storage"].rename(lambda x: x + " gas Store").reindex(n.stores.index).fillna(0.) * 1e3 # MWh_LHV
-        e_nom.clip(upper=e_nom.quantile(0.98), inplace=True) # limit extremely large storage
+        e_nom = (
+            gas_input_nodes["storage"]
+            .rename(lambda x: x + " gas Store")
+            .reindex(n.stores.index)
+            .fillna(0.0)
+            * 1e3
+        )  # MWh_LHV
+        e_nom.clip(
+            upper=e_nom.quantile(0.98), inplace=True
+        )  # limit extremely large storage
         n.stores.loc[gas_i, "e_nom_min"] = e_nom
 
         # add candidates for new gas pipelines to achieve full connectivity
