@@ -10,6 +10,13 @@ Release Notes
 Upcoming Release
 ================
 
+* Add option to specify losses for bidirectional links, e.g. pipelines or HVDC
+  links, in configuration file under ``sector: transmission_efficiency:``. Users
+  can specify static or length-dependent values as well as a length-dependent
+  electricity demand for compression, which is implemented as a multi-link to
+  the local electricity buses. The bidirectional links will then be split into
+  two unidirectional links with linked capacities.
+
 * Updated Global Energy Monitor LNG terminal data to March 2023 version.
 
 * For industry distribution, use EPRTR as fallback if ETS data is not available.
