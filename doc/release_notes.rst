@@ -81,6 +81,9 @@ Upcoming Release
 
 * Remove HELMETH option.
 
+* Print Irreducible Infeasible Subset (IIS) if model is infeasible. Only for
+  solvers with IIS support.
+
 **Bugs and Compatibility**
 
 * A bug preventing custom powerplants specified in ``data/custom_powerplants.csv`` was fixed. (https://github.com/PyPSA/pypsa-eur/pull/732)
