@@ -28,7 +28,6 @@ if __name__ == "__main__":
         gpd.read_file(snakemake.input.regions_onshore)
         .set_index("name")
         .buffer(0)
-        .squeeze()
     )
 
     I = cutout.indicatormatrix(clustered_regions)
