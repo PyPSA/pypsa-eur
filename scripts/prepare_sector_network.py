@@ -4593,6 +4593,11 @@ if __name__ == "__main__":
         options["use_fuel_cell_waste_heat"] = False
         options["use_electrolysis_waste_heat"] = False
 
+    if "nosteelrelocation" in opts:
+        logger.info("Disabling steel industry relocation and flexibility.")
+        options["relocation_steel"] = False
+        options["flexibility_steel"] = False
+
     if "nobiogascc" in opts:
         options["biomass_upgrading_cc"] = False
 
