@@ -691,13 +691,24 @@ def add_lossy_bidirectional_link_constraints(n):
     if not n.links.p_nom_extendable.any() or not "reversed" in n.links.columns:
         return
 
-    reversed_links = n.links.reversed.fillna(0).astype(bool)
-    carriers = n.links.loc[reversed_links, "carrier"].unique()
+    n.links["reversed"] = n.links.reversed.fillna(0).astype(bool)
+    carriers = n.links.loc[n.links.reversed, "carrier"].unique()
 
     forward_i = n.links.query(
         "carrier in @carriers and ~reversed and p_nom_extendable"
     ).index
-    backward_i = forward_i + "-reversed"
+
+    def get_backward_i(forward_i):
+        return pd.Index(
+            [
+                re.sub(r"-(\d{4})$", r"-reversed-\1", s)
+                if re.search(r"-\d{4}$", s)
+                else s + "-reversed"
+                for s in forward_i
+            ]
+        )
+
+    backward_i = get_backward_i(forward_i)
 
     lhs = n.model["Link-p_nom"].loc[backward_i]
     rhs = n.model["Link-p_nom"].loc[forward_i]
