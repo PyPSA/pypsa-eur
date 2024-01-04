@@ -121,7 +121,6 @@ preferred_order = pd.Index(
         "gas boiler",
         "gas",
         "natural gas",
-        "helmeth",
         "methanation",
         "ammonia",
         "hydrogen storage",
@@ -452,7 +451,6 @@ def plot_carbon_budget_distribution(input_eurostat):
 
     sns.set()
     sns.set_style("ticks")
-    plt.style.use("seaborn-ticks")
     plt.rcParams["xtick.direction"] = "in"
     plt.rcParams["ytick.direction"] = "in"
     plt.rcParams["xtick.labelsize"] = 20

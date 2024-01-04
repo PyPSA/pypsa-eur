@@ -124,31 +124,25 @@ def disable_grid_expansion_if_LV_limit_hit(n):
     if not "lv_limit" in n.global_constraints.index:
         return
 
-    # calculate minimum LV
-    attr = "nom_min"
-    dc = n.links.index[n.links.carrier == "DC"]
-    tot = (n.lines["s_" + attr] * n.lines["length"]).sum() + (
-        n.links.loc[dc, "p_" + attr] * n.links.loc[dc, "length"]
+    total_expansion = (
+        n.lines.eval("s_nom_min * length").sum()
+        + n.links.query("carrier == 'DC'").eval("p_nom_min * length").sum()
     ).sum()
 
-    diff = n.global_constraints.at["lv_limit", "constant"] - tot
+    lv_limit = n.global_constraints.at["lv_limit", "constant"]
 
     # allow small numerical differences
-    limit = 1
-
-    if diff < limit:
+    if lv_limit - total_expansion < 1:
         logger.info(
-            f"LV is already reached (gap {diff}), disabling expansion and LV limit"
+            f"LV is already reached (gap {diff} MWkm), disabling expansion and LV limit"
         )
-        expandable_acs = n.lines.index[n.lines.s_nom_extendable]
-        n.lines.loc[expandable_acs, "s_nom_extendable"] = False
-        n.lines.loc[expandable_acs, "s_nom"] = n.lines.loc[expandable_acs, "s_nom_min"]
+        extendable_acs = n.lines.query("s_nom_extendable").index
+        n.lines.loc[extendable_acs, "s_nom_extendable"] = False
+        n.lines.loc[extendable_acs, "s_nom"] = n.lines.loc[extendable_acs, "s_nom_min"]
 
-        expandable_dcs = n.links.index[
-            n.links.p_nom_extendable & (n.links.carrier == "DC")
-        ]
-        n.links.loc[expandable_dcs, "p_nom_extendable"] = False
-        n.links.loc[expandable_dcs, "p_nom"] = n.links.loc[expandable_dcs, "p_nom_min"]
+        extendable_dcs = n.links.query("carrier == 'DC' and p_nom_extendable").index
+        n.links.loc[extendable_dcs, "p_nom_extendable"] = False
+        n.links.loc[extendable_dcs, "p_nom"] = n.links.loc[extendable_dcs, "p_nom_min"]
 
         n.global_constraints.drop("lv_limit", inplace=True)
 

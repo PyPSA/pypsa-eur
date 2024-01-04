@@ -116,7 +116,7 @@ of the individual parts.
     topics we are working on. Please feel free to help or make suggestions.
 
 This project is currently maintained by the `Department of Digital
-Transformation in Energy Systems <https:/www.ensys.tu-berlin.de>`_ at the
+Transformation in Energy Systems <https://www.tu.berlin/en/ensys>`_ at the
 `Technische Universität Berlin <https://www.tu.berlin>`_. Previous versions were
 developed within the `IAI <http://www.iai.kit.edu>`_ at the `Karlsruhe Institute
 of Technology (KIT) <http://www.kit.edu/english/index.php>`_ which was funded by
@@ -185,7 +185,7 @@ For sector-coupling studies: ::
         pages = "1--25"
         year = "2023",
         eprint = "2207.05816",
-        doi = "10.1016/j.joule.2022.04.016",
+        doi = "10.1016/j.joule.2023.06.016",
     }
 
 For sector-coupling studies with pathway optimisation: ::

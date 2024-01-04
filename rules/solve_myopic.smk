@@ -88,13 +88,12 @@ rule solve_sector_network_myopic:
         co2_sequestration_potential=config["sector"].get(
             "co2_sequestration_potential", 200
         ),
-        countries=config["countries"],
+        custom_extra_functionality=input_custom_extra_functionality,
     input:
         network=RESULTS
         + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
         costs="data/costs_{planning_horizons}.csv",
         config=RESULTS + "config.yaml",
-        co2_totals_name=RESOURCES + "co2_totals.csv",
     output:
         RESULTS
         + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",

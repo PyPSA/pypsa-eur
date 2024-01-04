@@ -31,7 +31,7 @@ def rename_techs_tyndp(tech):
     tech = rename_techs(tech)
     if "heat pump" in tech or "resistive heater" in tech:
         return "power-to-heat"
-    elif tech in ["H2 Electrolysis", "methanation", "helmeth", "H2 liquefaction"]:
+    elif tech in ["H2 Electrolysis", "methanation", "H2 liquefaction"]:
         return "power-to-gas"
     elif tech == "H2":
         return "H2 storage"
@@ -495,7 +495,7 @@ def plot_ch4_map(network):
     # make a fake MultiIndex so that area is correct for legend
     fossil_gas.index = pd.MultiIndex.from_product([fossil_gas.index, ["fossil gas"]])
 
-    methanation_i = n.links[n.links.carrier.isin(["helmeth", "Sabatier"])].index
+    methanation_i = n.links.query("carrier == 'Sabatier'").index
     methanation = (
         abs(
             n.links_t.p1.loc[:, methanation_i].mul(

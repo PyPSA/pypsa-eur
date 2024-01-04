@@ -26,8 +26,11 @@ Additionally, some extra constraints specified in :mod:`solve_network` are added
     the workflow for all scenarios in the configuration file (``scenario:``)
     based on the rule :mod:`solve_network`.
 """
+import importlib
 import logging
+import os
 import re
+import sys
 
 import numpy as np
 import pandas as pd
@@ -687,6 +690,35 @@ def add_battery_constraints(n):
     n.model.add_constraints(lhs == 0, name="Link-charger_ratio")
 
 
+def add_lossy_bidirectional_link_constraints(n):
+    if not n.links.p_nom_extendable.any() or not "reversed" in n.links.columns:
+        return
+
+    n.links["reversed"] = n.links.reversed.fillna(0).astype(bool)
+    carriers = n.links.loc[n.links.reversed, "carrier"].unique()
+
+    forward_i = n.links.query(
+        "carrier in @carriers and ~reversed and p_nom_extendable"
+    ).index
+
+    def get_backward_i(forward_i):
+        return pd.Index(
+            [
+                re.sub(r"-(\d{4})$", r"-reversed-\1", s)
+                if re.search(r"-\d{4}$", s)
+                else s + "-reversed"
+                for s in forward_i
+            ]
+        )
+
+    backward_i = get_backward_i(forward_i)
+
+    lhs = n.model["Link-p_nom"].loc[backward_i]
+    rhs = n.model["Link-p_nom"].loc[forward_i]
+
+    n.model.add_constraints(lhs == rhs, name="Link-bidirectional_sync")
+
+
 def add_chp_constraints(n):
     electric = (
         n.links.index.str.contains("urban central")
@@ -745,9 +777,13 @@ def add_pipe_retrofit_constraint(n):
     """
     Add constraint for retrofitting existing CH4 pipelines to H2 pipelines.
     """
-    gas_pipes_i = n.links.query("carrier == 'gas pipeline' and p_nom_extendable").index
+    if "reversed" not in n.links.columns:
+        n.links["reversed"] = False
+    gas_pipes_i = n.links.query(
+        "carrier == 'gas pipeline' and p_nom_extendable and ~reversed"
+    ).index
     h2_retrofitted_i = n.links.query(
-        "carrier == 'H2 pipeline retrofitted' and p_nom_extendable"
+        "carrier == 'H2 pipeline retrofitted' and p_nom_extendable and ~reversed"
     ).index
 
     if h2_retrofitted_i.empty or gas_pipes_i.empty:
@@ -786,25 +822,20 @@ def extra_functionality(n, snapshots):
         if "EQ" in o:
             add_EQ_constraints(n, o)
     add_battery_constraints(n)
+    add_lossy_bidirectional_link_constraints(n)
     add_pipe_retrofit_constraint(n)
     if n._multi_invest:
         add_carbon_constraint(n, snapshots)
         add_carbon_budget_constraint(n, snapshots)
         add_retrofit_gas_boiler_constraint(n, snapshots)
 
-    if "additional_functionality" in snakemake.input.keys():
-        import importlib
-        import os
-        import sys
-
-        sys.path.append(os.path.dirname(snakemake.input.additional_functionality))
-        additional_functionality = importlib.import_module(
-            os.path.splitext(
-                os.path.basename(snakemake.input.additional_functionality)
-            )[0]
-        )
-
-        additional_functionality.additional_functionality(n, snapshots, snakemake)
+    if snakemake.params.custom_extra_functionality:
+        source_path = snakemake.params.custom_extra_functionality
+        assert os.path.exists(source_path), f"{source_path} does not exist"
+        sys.path.append(os.path.dirname(source_path))
+        module_name = os.path.splitext(os.path.basename(source_path))[0]
+        module = importlib.import_module(module_name)
+        module.custom_extra_functionality(n, snapshots)
 
 
 def solve_network(n, config, solving, opts="", **kwargs):
@@ -853,10 +884,9 @@ def solve_network(n, config, solving, opts="", **kwargs):
             f"Solving status '{status}' with termination condition '{condition}'"
         )
     if "infeasible" in condition:
-        m = n.model
-        labels = m.compute_infeasibilities()
-        print(labels)
-        m.print_infeasibilities()
+        labels = n.model.compute_infeasibilities()
+        logger.info("Labels:\n" + labels)
+        n.model.print_infeasibilities()
         raise RuntimeError("Solving status 'infeasible'")
 
     return n

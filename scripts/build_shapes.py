@@ -174,8 +174,8 @@ def nuts3(country_shapes, nuts3, nuts3pop, nuts3gdp, ch_cantons, ch_popgdp):
             pd.MultiIndex.from_tuples(pop.pop("unit,geo\\time").str.split(","))
         )
         .loc["THS"]
-        .applymap(lambda x: pd.to_numeric(x, errors="coerce"))
-        .fillna(method="bfill", axis=1)
+        .map(lambda x: pd.to_numeric(x, errors="coerce"))
+        .bfill(axis=1)
     )["2014"]
 
     gdp = pd.read_table(nuts3gdp, na_values=[":"], delimiter=" ?\t", engine="python")
@@ -184,8 +184,8 @@ def nuts3(country_shapes, nuts3, nuts3pop, nuts3gdp, ch_cantons, ch_popgdp):
             pd.MultiIndex.from_tuples(gdp.pop("unit,geo\\time").str.split(","))
         )
         .loc["EUR_HAB"]
-        .applymap(lambda x: pd.to_numeric(x, errors="coerce"))
-        .fillna(method="bfill", axis=1)
+        .map(lambda x: pd.to_numeric(x, errors="coerce"))
+        .bfill(axis=1)
     )["2014"]
 
     cantons = pd.read_csv(ch_cantons)
