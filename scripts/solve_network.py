@@ -835,7 +835,7 @@ def extra_functionality(n, snapshots):
         sys.path.append(os.path.dirname(source_path))
         module_name = os.path.splitext(os.path.basename(source_path))[0]
         module = importlib.import_module(module_name)
-        module.custom_extra_functionality(n, snapshots)
+        module.custom_extra_functionality(n, snapshots, snakemake)
 
 
 def solve_network(n, config, solving, opts="", **kwargs):
