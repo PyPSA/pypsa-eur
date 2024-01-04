@@ -28,6 +28,13 @@ def memory(w):
         return int(factor * (10000 + 195 * int(w.clusters)))
 
 
+def input_custom_extra_functionality(w):
+    path = config["solving"]["options"].get("custom_extra_functionality", False)
+    if path:
+        return workflow.source_path(path)
+    return []
+
+
 # Check if the workflow has access to the internet by trying to access the HEAD of specified url
 def has_internet_access(url="www.zenodo.org") -> bool:
     import http.client as http_client

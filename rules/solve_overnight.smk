@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: MIT
 
-
 rule solve_sector_network:
     params:
         solving=config["solving"],
@@ -11,9 +10,7 @@ rule solve_sector_network:
         co2_sequestration_potential=config["sector"].get(
             "co2_sequestration_potential", 200
         ),
-        custom_extra_functionality=workflow.source_path(
-            config["solving"]["options"].get("custom_extra_functionality", "")
-        ),
+        custom_extra_functionality=input_custom_extra_functionality,
     input:
         network=RESULTS
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
