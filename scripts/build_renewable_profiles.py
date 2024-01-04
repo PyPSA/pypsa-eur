@@ -238,14 +238,14 @@ if __name__ == "__main__":
 
     for dataset in ["corine", "luisa"]:
         kwargs = {"nodata": 0} if dataset == "luisa" else {}
+        settings = params.get(dataset, {})
+        if not settings:
+            continue
         if dataset == "luisa" and res > 50:
             logger.info(
                 "LUISA data is available at 50m resolution, "
                 f"but coarser {res}m resolution is used."
             )
-        settings = params.get(dataset, {})
-        if not settings:
-            continue
         if isinstance(settings, list):
             settings = {"grid_codes": settings}
         if "grid_codes" in settings:
