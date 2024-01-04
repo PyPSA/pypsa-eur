@@ -2736,7 +2736,6 @@ def add_industry(n, costs):
             carrier="methanolisation",
             p_nom_extendable=True,
             p_min_pu=options.get("min_part_load_methanolisation", 0),
-            marginal_cost=options["MWh_MeOH_per_MWh_H2"] * costs.at["fuel cell", "VOM"],
             capital_cost=costs.at["methanolisation", "fixed"]
             * options["MWh_MeOH_per_MWh_H2"],  # EUR/MW_H2/a
             marginal_cost=options["MWh_MeOH_per_MWh_H2"]
