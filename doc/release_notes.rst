@@ -10,6 +10,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Default to full electrification of land transport by 2050.
+
 * Default to approximating transmission losses in HVAC lines
   (``transmission_losses: 2``).
 
