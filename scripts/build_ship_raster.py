@@ -42,8 +42,8 @@ Description
 """
 
 import logging
-import os
 import zipfile
+from pathlib import Path
 
 import rioxarray
 from _helpers import configure_logging
