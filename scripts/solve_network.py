@@ -854,6 +854,9 @@ def solve_network(n, config, solving, opts="", **kwargs):
     )
     kwargs["assign_all_duals"] = cf_solving.get("assign_all_duals", False)
 
+    if kwargs["solver_name"] == "gurobi":
+        logging.getLogger('gurobipy').setLevel(logging.CRITICAL)
+
     rolling_horizon = cf_solving.pop("rolling_horizon", False)
     skip_iterations = cf_solving.pop("skip_iterations", False)
     if not n.lines.s_nom_extendable.any():
