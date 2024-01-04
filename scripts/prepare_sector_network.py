@@ -2998,8 +2998,9 @@ def add_industry(n, costs):
 
     if options["co2_spatial"] or options["co2network"]:
         p_set = (
-            -industrial_demand.loc[nodes, "process emission"]
-            .rename(index=lambda x: x + " process emissions")
+            -industrial_demand.loc[nodes, "process emission"].rename(
+                index=lambda x: x + " process emissions"
+            )
             / nhours
         )
     else:
@@ -3412,6 +3413,7 @@ def cluster_heat_buses(n):
         pnl = c.pnl
         agg = define_clustering(pd.Index(pnl.keys()), aggregate_dict)
         for k in pnl.keys():
+
             def renamer(s):
                 return s.replace("residential ", "").replace("services ", "")
 

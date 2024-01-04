@@ -163,7 +163,6 @@ if config["enable"]["retrieve"] and config["enable"].get(
 
 
 if config["enable"]["retrieve"]:
-
     datafiles = [
         "IGGIELGN_LNGs.geojson",
         "IGGIELGN_BorderPoints.geojson",

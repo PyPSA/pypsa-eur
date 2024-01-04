@@ -90,13 +90,10 @@ rule build_gas_input_locations:
         ),
         entry="data/gas_network/scigrid-gas/data/IGGIELGN_BorderPoints.geojson",
         storage="data/gas_network/scigrid-gas/data/IGGIELGN_Storages.geojson",
-        regions_onshore=RESOURCES
-        + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
-        regions_offshore=RESOURCES
-        + "regions_offshore_elec_s{simpl}_{clusters}.geojson",
+        regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+        regions_offshore=RESOURCES + "regions_offshore_elec_s{simpl}_{clusters}.geojson",
     output:
-        gas_input_nodes=RESOURCES
-        + "gas_input_locations_s{simpl}_{clusters}.geojson",
+        gas_input_nodes=RESOURCES + "gas_input_locations_s{simpl}_{clusters}.geojson",
         gas_input_nodes_simplified=RESOURCES
         + "gas_input_locations_s{simpl}_{clusters}_simplified.csv",
     resources:
@@ -112,10 +109,8 @@ rule build_gas_input_locations:
 rule cluster_gas_network:
     input:
         cleaned_gas_network=RESOURCES + "gas_network.csv",
-        regions_onshore=RESOURCES
-        + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
-        regions_offshore=RESOURCES
-        + "regions_offshore_elec_s{simpl}_{clusters}.geojson",
+        regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+        regions_offshore=RESOURCES + "regions_offshore_elec_s{simpl}_{clusters}.geojson",
     output:
         clustered_gas_network=RESOURCES + "gas_network_elec_s{simpl}_{clusters}.csv",
     resources:
