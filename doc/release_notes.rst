@@ -10,6 +10,9 @@ Release Notes
 Upcoming Release
 ================
 
+* Default to approximating transmission losses in HVAC lines
+  (``transmission_losses: 2``).
+
 * Remove all negative loads on the ``co2 atmosphere`` bus representing emissions
   for e.g. fixed fossil demands for transport oil. Instead these are handled
   more transparently with a fixed transport oil demand and a link taking care of

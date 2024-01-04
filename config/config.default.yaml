@@ -654,7 +654,7 @@ solving:
     track_iterations: false
     min_iterations: 4
     max_iterations: 6
-    transmission_losses: 0
+    transmission_losses: 2
     linearized_unit_commitment: true
     horizon: 365
 
