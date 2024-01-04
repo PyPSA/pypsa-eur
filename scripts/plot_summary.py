@@ -121,7 +121,6 @@ preferred_order = pd.Index(
         "gas boiler",
         "gas",
         "natural gas",
-        "helmeth",
         "methanation",
         "ammonia",
         "hydrogen storage",

@@ -81,7 +81,7 @@ def load_timeseries(fn, years, countries, powerstatistics=True):
         return s[: -len(pattern)]
 
     return (
-        pd.read_csv(fn, index_col=0, parse_dates=[0])
+        pd.read_csv(fn, index_col=0, parse_dates=[0], date_format="%Y-%m-%dT%H:%M:%SZ")
         .tz_localize(None)
         .filter(like=pattern)
         .rename(columns=rename)

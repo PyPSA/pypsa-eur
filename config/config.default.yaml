@@ -158,6 +158,7 @@ renewable:
     resource:
       method: wind
       turbine: Vestas_V112_3MW
+      add_cutout_windspeed: true
     capacity_per_sqkm: 3
     # correction_factor: 0.93
     corine:
@@ -166,13 +167,13 @@ renewable:
       distance_grid_codes: [1, 2, 3, 4, 5, 6]
     natura: true
     excluder_resolution: 100
-    potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   offwind-ac:
     cutout: europe-2013-era5
     resource:
       method: wind
-      turbine: NREL_ReferenceTurbine_5MW_offshore
+      turbine: NREL_ReferenceTurbine_2020ATB_5.5MW
+      add_cutout_windspeed: true
     capacity_per_sqkm: 2
     correction_factor: 0.8855
     corine: [44, 255]
@@ -181,13 +182,13 @@ renewable:
     max_depth: 50
     max_shore_distance: 30000
     excluder_resolution: 200
-    potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   offwind-dc:
     cutout: europe-2013-era5
     resource:
       method: wind
-      turbine: NREL_ReferenceTurbine_5MW_offshore
+      turbine: NREL_ReferenceTurbine_2020ATB_5.5MW
+      add_cutout_windspeed: true
     capacity_per_sqkm: 2
     correction_factor: 0.8855
     corine: [44, 255]
@@ -196,7 +197,6 @@ renewable:
     max_depth: 50
     min_shore_distance: 30000
     excluder_resolution: 200
-    potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   solar:
     cutout: europe-2013-sarah
@@ -211,7 +211,6 @@ renewable:
     corine: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 26, 31, 32]
     natura: true
     excluder_resolution: 100
-    potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   hydro:
     cutout: europe-2013-era5
@@ -448,7 +447,6 @@ sector:
   solar_cf_correction: 0.788457  # =  >>> 1/1.2683
   marginal_cost_storage: 0. #1e-4
   methanation: true
-  helmeth: false
   coal_cc: false
   dac: true
   co2_vent: false
@@ -477,14 +475,28 @@ sector:
   - nearshore    # within 50 km of sea
     # - offshore
   ammonia: false
-  min_part_load_fischer_tropsch: 0.9
-  min_part_load_methanolisation: 0.5
+  min_part_load_fischer_tropsch: 0.7
+  min_part_load_methanolisation: 0.3
+  min_part_load_methanation: 0.3
   use_fischer_tropsch_waste_heat: true
+  use_haber_bosch_waste_heat: true
+  use_methanolisation_waste_heat: true
+  use_methanation_waste_heat: true
   use_fuel_cell_waste_heat: true
-  use_electrolysis_waste_heat: false
+  use_electrolysis_waste_heat: true
   electricity_distribution_grid: true
   electricity_distribution_grid_cost_factor: 1.0
   electricity_grid_connection: true
+  transmission_efficiency:
+    DC:
+      efficiency_static: 0.98
+      efficiency_per_1000km: 0.977
+    H2 pipeline:
+      efficiency_per_1000km: 1 # 0.979
+      compression_per_1000km: 0.019
+    gas pipeline:
+      efficiency_per_1000km: 1 #0.977
+      compression_per_1000km: 0.01
   H2_network: true
   gas_network: false
   H2_retrofit: false
@@ -494,6 +506,7 @@ sector:
   gas_distribution_grid_cost_factor: 1.0
   biomass_spatial: false
   biomass_transport: false
+  biogas_upgrading_cc: false
   conventional_generation:
     OCGT: gas
   biomass_to_liquid: false
@@ -544,8 +557,8 @@ industry:
   MWh_NH3_per_tNH3: 5.166
   MWh_CH4_per_tNH3_SMR: 10.8
   MWh_elec_per_tNH3_SMR: 0.7
-  MWh_H2_per_tNH3_electrolysis: 6.5
-  MWh_elec_per_tNH3_electrolysis: 1.17
+  MWh_H2_per_tNH3_electrolysis: 5.93
+  MWh_elec_per_tNH3_electrolysis: 0.2473
   MWh_NH3_per_MWh_H2_cracker: 1.46 # https://github.com/euronion/trace/blob/44a5ff8401762edbef80eff9cfe5a47c8d3c8be4/data/efficiencies.csv
   NH3_process_emissions: 24.5
   petrochemical_process_emissions: 25.5
@@ -776,6 +789,7 @@ plotting:
     fossil gas: '#e05b09'
     natural gas: '#e05b09'
     biogas to gas: '#e36311'
+    biogas to gas CC: '#e51245'
     CCGT: '#a85522'
     CCGT marginal: '#a85522'
     allam: '#B98F76'
@@ -877,6 +891,7 @@ plotting:
     # heat demand
     Heat load: '#cc1f1f'
     heat: '#cc1f1f'
+    heat vent: '#aa3344'
     heat demand: '#cc1f1f'
     rural heat: '#ff5c5c'
     residential rural heat: '#ff7c7c'
@@ -946,7 +961,6 @@ plotting:
     Sabatier: '#9850ad'
     methanation: '#c44ce6'
     methane: '#c44ce6'
-    helmeth: '#e899ff'
     # synfuels
     Fischer-Tropsch: '#25c49a'
     liquid: '#25c49a'

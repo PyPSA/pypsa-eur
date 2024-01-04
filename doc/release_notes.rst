@@ -10,6 +10,13 @@ Release Notes
 Upcoming Release
 ================
 
+* Add option to specify losses for bidirectional links, e.g. pipelines or HVDC
+  links, in configuration file under ``sector: transmission_efficiency:``. Users
+  can specify static or length-dependent values as well as a length-dependent
+  electricity demand for compression, which is implemented as a multi-link to
+  the local electricity buses. The bidirectional links will then be split into
+  two unidirectional links with linked capacities.
+
 * Pin ``snakemake`` version to below 8.0.0, as the new version is not yet
   supported by ``pypsa-eur``.
 
@@ -38,11 +45,29 @@ Upcoming Release
 
 * Split configuration to enable SMR and SMR CC.
 
+* Bugfix: The unit of the capital cost of Haber-Bosch plants was corrected.
+
 * The configuration setting for country focus weights when clustering the
   network has been moved from ``focus_weights:`` to ``clustering:
   focus_weights:``. Backwards compatibility to old config files is maintained.
 
+* Extend options for waste usage from Haber-Bosch, methanolisation and methanation.
+
+* Use electrolysis waste heat by default.
+
+* Add new ``sector_opts`` wildcard option "nowasteheat" to disable all waste heat usage.
+
+* Set minimum part loads for PtX processes to 30% for methanolisation and methanation, and to 70% for Fischer-Tropsch synthesis.
+
+* Add VOM as marginal cost to PtX processes.
+
+* Add pelletizing costs for biomass boilers.
+
 * The ``mock_snakemake`` function can now be used with a Snakefile from a different directory using the new ``root_dir`` argument.
+
+* Switch to using hydrogen and electricity inputs for Haber-Bosch from https://github.com/PyPSA/technology-data.
+
+* Add option to capture CO2 contained in biogas when upgrading (``sector: biogas_to_gas_cc``).
 
 * Merged option to extend geographical scope to Ukraine and Moldova. These
   countries are excluded by default and is currently constrained to power-sector
@@ -59,6 +84,17 @@ Upcoming Release
   default setting points to an empty hull at
   ``data/custom_extra_functionality.py``.
 
+* Validate downloads from Zenodo using MD5 checksums. This identifies corrupted
+  or incomplete downloads.
+
+* Add locations, capacities and costs of existing gas storage using Global
+  Energy Monitor's `Europe Gas Tracker
+  <https://globalenergymonitor.org/projects/europe-gas-tracker>`_.
+
+* Remove HELMETH option.
+
+* Print Irreducible Infeasible Subset (IIS) if model is infeasible. Only for
+  solvers with IIS support.
 
 **Bugs and Compatibility**
 
@@ -189,6 +225,8 @@ PyPSA-Eur 0.8.1 (27th July 2023)
   regions no cavern storage is available.
   (https://github.com/PyPSA/pypsa-eur/pull/672)
 
+
+* Addressed deprecation warnings for ``pandas=2.0``. ``pandas=2.0`` is now minimum requirement.
 
 PyPSA-Eur 0.8.0 (18th March 2023)
 =================================
