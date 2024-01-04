@@ -2996,16 +2996,14 @@ def add_industry(n, costs):
         unit="t_co2",
     )
 
-    sel = ["process emission"]
     if options["co2_spatial"] or options["co2network"]:
         p_set = (
-            -industrial_demand.loc[nodes, sel]
-            .sum(axis=1)
+            -industrial_demand.loc[nodes, "process emission"]
             .rename(index=lambda x: x + " process emissions")
             / nhours
         )
     else:
-        p_set = -industrial_demand.loc[nodes, sel].sum(axis=1).sum() / nhours
+        p_set = -industrial_demand.loc[nodes, "process emission"].sum() / nhours
 
     n.madd(
         "Load",
