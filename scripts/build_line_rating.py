@@ -119,7 +119,7 @@ def calculate_line_rating(n, cutout):
             .apply(lambda x: int(re.findall(r"(\d+)-bundle", x)[0]))
         )
         # Set default number of bundles per line
-        relevant_lines["n_bundle"].fillna(1, inplace=True)
+        relevant_lines["n_bundle"] = relevant_lines["n_bundle"].fillna(1)
         R *= relevant_lines["n_bundle"]
         R = calculate_resistance(T=353, R_ref=R)
     Imax = cutout.line_rating(shapes, R, D=0.0218, Ts=353, epsilon=0.8, alpha=0.8)

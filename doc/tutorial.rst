@@ -25,7 +25,7 @@ full model, which allows the user to explore most of its functionalities on a
 local machine. The tutorial will cover examples on how to configure and
 customise the PyPSA-Eur model and run the ``snakemake`` workflow step by step
 from network creation to the solved network. The configuration for the tutorial
-is located at ``test/config.electricity.yaml``. It includes parts deviating from
+is located at ``config/test/config.electricity.yaml``. It includes parts deviating from
 the default config file ``config/config.default.yaml``. To run the tutorial with this
 configuration, execute
 
@@ -96,7 +96,7 @@ open-source solver GLPK.
    :start-at: solver:
    :end-before: plotting:
 
-Note, that ``test/config.electricity.yaml`` only includes changes relative to
+Note, that ``config/test/config.electricity.yaml`` only includes changes relative to
 the default configuration. There are many more configuration options, which are
 documented at :ref:`config`.
 
