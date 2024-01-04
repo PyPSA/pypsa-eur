@@ -10,6 +10,23 @@ Release Notes
 Upcoming Release
 ================
 
+* Remove all negative loads on the ``co2 atmosphere`` bus representing emissions
+  for e.g. fixed fossil demands for transport oil. Instead these are handled
+  more transparently with a fixed transport oil demand and a link taking care of
+  the emissions to the ``co2 atmosphere`` bus. This is also a preparation for
+  endogenous transport optimisation, where demand will be subject to
+  optimisation (e.g. fuel switching in the transport sector).
+
+* Allow possibility to go from copperplated to regionally resolved methanol and
+  oil demand with switches ``sector: regional_methanol_demand: true`` and
+  ``sector: regional_oil_demand: true``. This allows nodal/regional CO2
+  constraints to be applied.
+
+* Process emissions from steam crackers (i.e. naphtha processing for HVC) are now
+  piped from the consumption link to the process emissions bus where the model
+  can decide about carbon capture. Previously the process emissions for naphtha
+  were a fixed load.
+
 * Add option to specify losses for bidirectional links, e.g. pipelines or HVDC
   links, in configuration file under ``sector: transmission_efficiency:``. Users
   can specify static or length-dependent values as well as a length-dependent
