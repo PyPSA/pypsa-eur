@@ -77,6 +77,7 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True
         retries: 2
         run:
             move(input[0], output[0])
+            validate_checksum(output[0], input[0])
 
 
 if config["enable"]["retrieve"] and config["enable"].get("retrieve_cost_data", True):
@@ -113,7 +114,7 @@ if config["enable"]["retrieve"] and config["enable"].get(
                 static=True,
             ),
         output:
-            protected(RESOURCES + "natura.tiff"),
+            RESOURCES + "natura.tiff",
         log:
             LOGS + "retrieve_natura_raster.log",
         resources:
@@ -121,6 +122,7 @@ if config["enable"]["retrieve"] and config["enable"].get(
         retries: 2
         run:
             move(input[0], output[0])
+            validate_checksum(output[0], input[0])
 
 
 if config["enable"]["retrieve"] and config["enable"].get(
@@ -167,6 +169,7 @@ if config["enable"]["retrieve"] and (
         "IGGIELGN_LNGs.geojson",
         "IGGIELGN_BorderPoints.geojson",
         "IGGIELGN_Productions.geojson",
+        "IGGIELGN_Storages.geojson",
         "IGGIELGN_PipeSegments.geojson",
     ]
 
@@ -226,6 +229,7 @@ if config["enable"]["retrieve"]:
         retries: 2
         run:
             move(input[0], output[0])
+            validate_checksum(output[0], input[0])
 
 
 if config["enable"]["retrieve"]:
@@ -239,29 +243,57 @@ if config["enable"]["retrieve"]:
                 static=True,
             ),
         output:
-            RESOURCES
-            + "Copernicus_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
+            "data/Copernicus_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
+        run:
+            move(input[0], output[0])
+            validate_checksum(output[0], input[0])
+
+
+if config["enable"]["retrieve"]:
+
+    # Downloading LUISA Base Map for land cover and land use:
+    # Website: https://ec.europa.eu/jrc/en/luisa
+    rule retrieve_luisa_land_cover:
+        input:
+            HTTP.remote(
+                "jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/LUISA/EUROPE/Basemaps/LandUse/2018/LATEST/LUISA_basemap_020321_50m.tif",
+                static=True,
+            ),
+        output:
+            "data/LUISA_basemap_020321_50m.tif",
         run:
             move(input[0], output[0])
 
 
 if config["enable"]["retrieve"]:
-    current_month = datetime.now().strftime("%b")
-    current_year = datetime.now().strftime("%Y")
-    bYYYY = f"{current_month}{current_year}"
+    # Some logic to find the correct file URL
+    # Sometimes files are released delayed or ahead of schedule, check which file is currently available
 
     def check_file_exists(url):
         response = requests.head(url)
         return response.status_code == 200
 
-    url = f"https://d1gam3xoknrgr2.cloudfront.net/current/WDPA_{bYYYY}_Public.zip"
+    # Basic pattern where WDPA files can be found
+    url_pattern = (
+        "https://d1gam3xoknrgr2.cloudfront.net/current/WDPA_{bYYYY}_Public_shp.zip"
+    )
 
-    if not check_file_exists(url):
-        prev_month = (datetime.now() - timedelta(30)).strftime("%b")
-        bYYYY = f"{prev_month}{current_year}"
-        assert check_file_exists(
-            f"https://d1gam3xoknrgr2.cloudfront.net/current/WDPA_{bYYYY}_Public.zip"
-        ), "The file does not exist."
+    # 3-letter month + 4 digit year for current/previous/next month to test
+    current_monthyear = datetime.now().strftime("%b%Y")
+    prev_monthyear = (datetime.now() - timedelta(30)).strftime("%b%Y")
+    next_monthyear = (datetime.now() + timedelta(30)).strftime("%b%Y")
+
+    # Test prioritised: current month -> previous -> next
+    for bYYYY in [current_monthyear, prev_monthyear, next_monthyear]:
+        if check_file_exists(url := url_pattern.format(bYYYY=bYYYY)):
+            break
+        else:
+            # If None of the three URLs are working
+            url = False
+
+    assert (
+        url
+    ), f"No WDPA files found at {url_pattern} for bY='{current_monthyear}, {prev_monthyear}, or {next_monthyear}'"
 
     # Downloading protected area database from WDPA
     # extract the main zip and then merge the contained 3 zipped shapefiles
@@ -269,15 +301,15 @@ if config["enable"]["retrieve"]:
     rule download_wdpa:
         input:
             HTTP.remote(
-                f"d1gam3xoknrgr2.cloudfront.net/current/WDPA_{bYYYY}_Public_shp.zip",
+                url,
                 static=True,
                 keep_local=True,
             ),
         params:
-            zip=RESOURCES + f"WDPA_{bYYYY}_shp.zip",
-            folder=directory(RESOURCES + f"WDPA_{bYYYY}"),
+            zip="data/WDPA_shp.zip",
+            folder=directory("data/WDPA"),
         output:
-            gpkg=RESOURCES + f"WDPA_{bYYYY}.gpkg",
+            gpkg=protected("data/WDPA.gpkg"),
         run:
             shell("cp {input} {params.zip}")
             shell("unzip -o {params.zip} -d {params.folder}")
@@ -300,10 +332,10 @@ if config["enable"]["retrieve"]:
                 keep_local=True,
             ),
         params:
-            zip=RESOURCES + f"WDPA_WDOECM_{bYYYY}_marine.zip",
-            folder=directory(RESOURCES + f"WDPA_WDOECM_{bYYYY}_marine"),
+            zip="data/WDPA_WDOECM_marine.zip",
+            folder=directory("data/WDPA_WDOECM_marine"),
         output:
-            gpkg=RESOURCES + f"WDPA_WDOECM_{bYYYY}_marine.gpkg",
+            gpkg=protected("data/WDPA_WDOECM_marine.gpkg"),
         run:
             shell("cp {input} {params.zip}")
             shell("unzip -o {params.zip} -d {params.folder}")

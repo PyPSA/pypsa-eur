@@ -10,6 +10,30 @@ Release Notes
 Upcoming Release
 ================
 
+* Remove all negative loads on the ``co2 atmosphere`` bus representing emissions
+  for e.g. fixed fossil demands for transport oil. Instead these are handled
+  more transparently with a fixed transport oil demand and a link taking care of
+  the emissions to the ``co2 atmosphere`` bus. This is also a preparation for
+  endogenous transport optimisation, where demand will be subject to
+  optimisation (e.g. fuel switching in the transport sector).
+
+* Allow possibility to go from copperplated to regionally resolved methanol and
+  oil demand with switches ``sector: regional_methanol_demand: true`` and
+  ``sector: regional_oil_demand: true``. This allows nodal/regional CO2
+  constraints to be applied.
+
+* Process emissions from steam crackers (i.e. naphtha processing for HVC) are now
+  piped from the consumption link to the process emissions bus where the model
+  can decide about carbon capture. Previously the process emissions for naphtha
+  were a fixed load.
+
+* Add option to specify losses for bidirectional links, e.g. pipelines or HVDC
+  links, in configuration file under ``sector: transmission_efficiency:``. Users
+  can specify static or length-dependent values as well as a length-dependent
+  electricity demand for compression, which is implemented as a multi-link to
+  the local electricity buses. The bidirectional links will then be split into
+  two unidirectional links with linked capacities.
+
 * Pin ``snakemake`` version to below 8.0.0, as the new version is not yet
   supported by ``pypsa-eur``.
 
@@ -34,13 +58,33 @@ Upcoming Release
 
 * Rule ``retrieve_irena`` get updated values for renewables capacities.
 
+* Rule ``retrieve_wdpa`` updated to not only check for current and previous, but also potentially next months dataset availability.
+
 * Split configuration to enable SMR and SMR CC.
+
+* Bugfix: The unit of the capital cost of Haber-Bosch plants was corrected.
 
 * The configuration setting for country focus weights when clustering the
   network has been moved from ``focus_weights:`` to ``clustering:
   focus_weights:``. Backwards compatibility to old config files is maintained.
 
+* Extend options for waste usage from Haber-Bosch, methanolisation and methanation.
+
+* Use electrolysis waste heat by default.
+
+* Add new ``sector_opts`` wildcard option "nowasteheat" to disable all waste heat usage.
+
+* Set minimum part loads for PtX processes to 30% for methanolisation and methanation, and to 70% for Fischer-Tropsch synthesis.
+
+* Add VOM as marginal cost to PtX processes.
+
+* Add pelletizing costs for biomass boilers.
+
 * The ``mock_snakemake`` function can now be used with a Snakefile from a different directory using the new ``root_dir`` argument.
+
+* Switch to using hydrogen and electricity inputs for Haber-Bosch from https://github.com/PyPSA/technology-data.
+
+* Add option to capture CO2 contained in biogas when upgrading (``sector: biogas_to_gas_cc``).
 
 * Merged option to extend geographical scope to Ukraine and Moldova. These
   countries are excluded by default and is currently constrained to power-sector
@@ -52,11 +96,38 @@ Upcoming Release
   reconnected to the main Ukrainian grid with the configuration option
   `reconnect_crimea`.
 
+* Add option to reference an additional source file where users can specify
+  custom ``extra_functionality`` constraints in the configuration file. The
+  default setting points to an empty hull at
+  ``data/custom_extra_functionality.py``.
+
+* Validate downloads from Zenodo using MD5 checksums. This identifies corrupted
+  or incomplete downloads.
+
+* Add locations, capacities and costs of existing gas storage using Global
+  Energy Monitor's `Europe Gas Tracker
+  <https://globalenergymonitor.org/projects/europe-gas-tracker>`_.
+
+* Remove HELMETH option.
+
+* Print Irreducible Infeasible Subset (IIS) if model is infeasible. Only for
+  solvers with IIS support.
+
+* Add option to use `LUISA Base Map
+  <https://publications.jrc.ec.europa.eu/repository/handle/JRC124621>`_ 50m land
+  coverage dataset for land eligibility analysis in
+  :mod:`build_renewable_profiles`. Settings are analogous to the CORINE dataset
+  but with the key ``luisa:`` in the configuration file. To leverage the
+  dataset's full advantages, set the excluder resolution to 50m
+  (``excluder_resolution: 50``). For land category codes, see `Annex 1 of the
+  technical documentation
+  <https://publications.jrc.ec.europa.eu/repository/bitstream/JRC124621/technical_report_luisa_basemap_2018_v7_final.pdf>`_.
 
 **Bugs and Compatibility**
 
 * A bug preventing custom powerplants specified in ``data/custom_powerplants.csv`` was fixed. (https://github.com/PyPSA/pypsa-eur/pull/732)
 * Fix nodal fraction in ``add_existing_year`` when using distributed generators
+* Fix typo in buses definition for oil boilers in ``add_industry`` in ``prepare_sector_network``
 
 
 PyPSA-Eur 0.8.1 (27th July 2023)
@@ -181,6 +252,8 @@ PyPSA-Eur 0.8.1 (27th July 2023)
   regions no cavern storage is available.
   (https://github.com/PyPSA/pypsa-eur/pull/672)
 
+
+* Addressed deprecation warnings for ``pandas=2.0``. ``pandas=2.0`` is now minimum requirement.
 
 PyPSA-Eur 0.8.0 (18th March 2023)
 =================================
