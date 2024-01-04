@@ -162,9 +162,8 @@ if config["enable"]["retrieve"] and config["enable"].get(
             "../scripts/retrieve_sector_databundle.py"
 
 
-if config["enable"]["retrieve"] and (
-    config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]
-):
+if config["enable"]["retrieve"]:
+
     datafiles = [
         "IGGIELGN_LNGs.geojson",
         "IGGIELGN_BorderPoints.geojson",
