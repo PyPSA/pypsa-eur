@@ -591,7 +591,9 @@ def add_co2_tracking(n, costs, options):
     n.add("Carrier", "co2 stored")
 
     # this tracks CO2 sequestered, e.g. underground
-    sequestration_buses = pd.Index(spatial.co2.nodes).str.replace(" stored", " sequestered")
+    sequestration_buses = pd.Index(spatial.co2.nodes).str.replace(
+        " stored", " sequestered"
+    )
     n.madd(
         "Bus",
         sequestration_buses,
