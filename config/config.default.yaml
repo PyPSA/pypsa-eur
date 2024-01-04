@@ -295,6 +295,7 @@ pypsa_eur:
   - offwind-dc
   - solar
   - ror
+  - nuclear
   StorageUnit:
   - PHS
   - hydro
