@@ -96,6 +96,16 @@ Upcoming Release
 * Print Irreducible Infeasible Subset (IIS) if model is infeasible. Only for
   solvers with IIS support.
 
+* Add option to use `LUISA Base Map
+  <https://publications.jrc.ec.europa.eu/repository/handle/JRC124621>`_ 50m land
+  coverage dataset for land eligibility analysis in
+  :mod:`build_renewable_profiles`. Settings are analogous to the CORINE dataset
+  but with the key ``luisa:`` in the configuration file. To leverage the
+  dataset's full advantages, set the excluder resolution to 50m
+  (``excluder_resolution: 50``). For land category codes, see `Annex 1 of the
+  technical documentation
+  <https://publications.jrc.ec.europa.eu/repository/bitstream/JRC124621/technical_report_luisa_basemap_2018_v7_final.pdf>`_.
+
 **Bugs and Compatibility**
 
 * A bug preventing custom powerplants specified in ``data/custom_powerplants.csv`` was fixed. (https://github.com/PyPSA/pypsa-eur/pull/732)
