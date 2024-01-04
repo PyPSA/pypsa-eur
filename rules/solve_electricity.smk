@@ -11,6 +11,7 @@ rule solve_network:
         co2_sequestration_potential=config["sector"].get(
             "co2_sequestration_potential", 200
         ),
+        custom_extra_functionality=input_custom_extra_functionality,
     input:
         network=RESOURCES + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
         config=RESULTS + "config.yaml",

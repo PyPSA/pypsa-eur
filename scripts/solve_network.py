@@ -26,8 +26,11 @@ Additionally, some extra constraints specified in :mod:`solve_network` are added
     the workflow for all scenarios in the configuration file (``scenario:``)
     based on the rule :mod:`solve_network`.
 """
+import importlib
 import logging
+import os
 import re
+import sys
 
 import numpy as np
 import pandas as pd
@@ -825,6 +828,14 @@ def extra_functionality(n, snapshots):
         add_carbon_constraint(n, snapshots)
         add_carbon_budget_constraint(n, snapshots)
         add_retrofit_gas_boiler_constraint(n, snapshots)
+
+    if snakemake.params.custom_extra_functionality:
+        source_path = snakemake.params.custom_extra_functionality
+        assert os.path.exists(source_path), f"{source_path} does not exist"
+        sys.path.append(os.path.dirname(source_path))
+        module_name = os.path.splitext(os.path.basename(source_path))[0]
+        module = importlib.import_module(module_name)
+        module.custom_extra_functionality(n, snapshots)
 
 
 def solve_network(n, config, solving, opts="", **kwargs):

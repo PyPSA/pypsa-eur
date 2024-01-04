@@ -79,6 +79,11 @@ Upcoming Release
   reconnected to the main Ukrainian grid with the configuration option
   `reconnect_crimea`.
 
+* Add option to reference an additional source file where users can specify
+  custom ``extra_functionality`` constraints in the configuration file. The
+  default setting points to an empty hull at
+  ``data/custom_extra_functionality.py``.
+
 * Validate downloads from Zenodo using MD5 checksums. This identifies corrupted
   or incomplete downloads.
 
