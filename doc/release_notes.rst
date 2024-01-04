@@ -10,6 +10,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Increase deployment density of solar to 5.1 MW/sqkm by default.
+
 * Default to full electrification of land transport by 2050.
 
 * Default to approximating transmission losses in HVAC lines
