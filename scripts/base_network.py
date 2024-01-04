@@ -778,7 +778,9 @@ def _read_tyndp2020_lines(tyndp_file, config_elec):
     df["v_nom"] = df["v_nom"].astype(int)
     allowed_voltages = config_elec["voltages"]
     df = df[df.v_nom >= min(allowed_voltages)]
-    df["v_nom"] = df["v_nom"].apply(lambda x: min(allowed_voltages, key=lambda y: abs(y - x)))
+    df["v_nom"] = df["v_nom"].apply(
+        lambda x: min(allowed_voltages, key=lambda y: abs(y - x))
+    )
     df["num_parallel"] = 2.0
     df["carrier"] = "AC"
     return df
