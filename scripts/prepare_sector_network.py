@@ -3286,7 +3286,8 @@ def remove_h2_network(n):
 
 def maybe_adjust_costs_and_potentials(n, opts):
     for o in opts:
-        if "+" not in o:
+        flags = ["+e", "+p", "+m"]
+        if all(flag not in o for flag in flags):
             continue
         oo = o.split("+")
         carrier_list = np.hstack(
