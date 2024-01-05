@@ -460,7 +460,7 @@ def update_wind_solar_costs(n, costs):
 
             logger.info(
                 "Added connection cost of {:0.0f}-{:0.0f} Eur/MW/a to {}".format(
-                    connection_cost[0].min(), connection_cost[0].max(), tech
+                    connection_cost.min(), connection_cost.max(), tech
                 )
             )
 
@@ -1910,7 +1910,7 @@ def add_heat(n, costs):
                 lifetime=costs.at[name_type + " water tank storage", "lifetime"],
             )
 
-        if options["boilers"]:
+        if options["resistive_heaters"]:
             key = f"{name_type} resistive heater"
 
             n.madd(
@@ -1925,6 +1925,7 @@ def add_heat(n, costs):
                 lifetime=costs.at[key, "lifetime"],
             )
 
+        if options["boilers"]:
             key = f"{name_type} gas boiler"
 
             n.madd(
@@ -2062,7 +2063,7 @@ def add_heat(n, costs):
             )
         w_space["tot"] = (
             heat_demand_r["services space"] + heat_demand_r["residential space"]
-        ) / heat_demand_r.groupby(level=[1], axis=1).sum()
+        ) / heat_demand_r.T.groupby(level=[1]).sum().T
 
         for name in n.loads[
             n.loads.carrier.isin([x + " heat" for x in heat_systems])
@@ -2071,11 +2072,21 @@ def add_heat(n, costs):
             ct = pop_layout.loc[node, "ct"]
 
             # weighting 'f' depending on the size of the population at the node
-            f = urban_fraction[node] if "urban" in name else (1 - urban_fraction[node])
+            if "urban central" in name:
+                f = dist_fraction[node]
+            elif "urban decentral" in name:
+                f = urban_fraction[node] - dist_fraction[node]
+            else:
+                f = 1 - urban_fraction[node]
             if f == 0:
                 continue
             # get sector name ("residential"/"services"/or both "tot" for urban central)
-            sec = [x if x in name else "tot" for x in sectors][0]
+            if "urban central" in name:
+                sec = "tot"
+            if "residential" in name:
+                sec = "residential"
+            if "services" in name:
+                sec = "services"
 
             # get floor aread at node and region (urban/rural) in m^2
             floor_area_node = (
@@ -2119,14 +2130,15 @@ def add_heat(n, costs):
                 strengths = strengths.drop(s)
 
             # reindex normed time profile of space heat demand back to hourly resolution
-            space_pu = space_pu.reindex(index=heat_demand.index).fillna(method="ffill")
+            space_pu = space_pu.reindex(index=heat_demand.index).ffill()
 
             # add for each retrofitting strength a generator with heat generation profile following the profile of the heat demand
             for strength in strengths:
+                node_name = " ".join(name.split(" ")[2::])
                 n.madd(
                     "Generator",
                     [node],
-                    suffix=" retrofitting " + strength + " " + name[6::],
+                    suffix=" retrofitting " + strength + " " + node_name,
                     bus=name,
                     carrier="retrofitting",
                     p_nom_extendable=True,
@@ -3464,7 +3476,7 @@ def cluster_heat_buses(n):
             def renamer(s):
                 return s.replace("residential ", "").replace("services ", "")
 
-            pnl[k] = pnl[k].groupby(renamer, axis=1).agg(agg[k], **agg_group_kwargs)
+            pnl[k] = pnl[k].T.groupby(renamer).agg(agg[k], **agg_group_kwargs).T
 
         # remove unclustered assets of service/residential
         to_drop = c.df.index.difference(df.index)
@@ -3722,7 +3734,7 @@ if __name__ == "__main__":
     if "I" in opts:
         add_industry(n, costs)
 
-    if "I" in opts and "H" in opts:
+    if "H" in opts:
         add_waste_heat(n)
 
     if "A" in opts:  # requires H and I

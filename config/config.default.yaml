@@ -457,6 +457,7 @@ sector:
     decentral: 3
     central: 180
   boilers: true
+  resistive_heaters: true
   oil_boilers: false
   biomass_boiler: true
   chp: true
