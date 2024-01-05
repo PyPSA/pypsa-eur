@@ -6,6 +6,7 @@ options,,,
 -- skip_iterations,bool,"{'true','false'}","Skip iterating, do not update impedances of branches. Defaults to true."
 -- rolling_horizon,bool,"{'true','false'}","Whether to optimize the network in a rolling horizon manner, where the snapshot range is split into slices of size `horizon` which are solved consecutively."
 -- seed,--,int,Random seed for increased deterministic behaviour.
+-- custom_extra_functionality,--,str,Path to a Python file with custom extra functionality code to be injected into the solving rules of the workflow relative to ``rules`` directory.
 -- track_iterations,bool,"{'true','false'}",Flag whether to store the intermediate branch capacities and objective function values are recorded for each iteration in ``network.lines['s_nom_opt_X']`` (where ``X`` labels the iteration)
 -- min_iterations,--,int,Minimum number of solving iterations in between which resistance and reactence (``x/r``) are updated for branches according to ``s_nom_opt`` of the previous run.
 -- max_iterations,--,int,Maximum number of solving iterations in between which resistance and reactence (``x/r``) are updated for branches according to ``s_nom_opt`` of the previous run.

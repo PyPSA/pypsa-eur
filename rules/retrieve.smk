@@ -162,9 +162,7 @@ if config["enable"]["retrieve"] and config["enable"].get(
             "../scripts/retrieve_sector_databundle.py"
 
 
-if config["enable"]["retrieve"] and (
-    config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]
-):
+if config["enable"]["retrieve"]:
     datafiles = [
         "IGGIELGN_LNGs.geojson",
         "IGGIELGN_BorderPoints.geojson",
@@ -247,6 +245,22 @@ if config["enable"]["retrieve"]:
         run:
             move(input[0], output[0])
             validate_checksum(output[0], input[0])
+
+
+if config["enable"]["retrieve"]:
+
+    # Downloading LUISA Base Map for land cover and land use:
+    # Website: https://ec.europa.eu/jrc/en/luisa
+    rule retrieve_luisa_land_cover:
+        input:
+            HTTP.remote(
+                "jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/LUISA/EUROPE/Basemaps/LandUse/2018/LATEST/LUISA_basemap_020321_50m.tif",
+                static=True,
+            ),
+        output:
+            "data/LUISA_basemap_020321_50m.tif",
+        run:
+            move(input[0], output[0])
 
 
 if config["enable"]["retrieve"]:

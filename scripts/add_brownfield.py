@@ -120,6 +120,31 @@ def add_brownfield(n, n_p, year):
             n.links.loc[new_pipes, "p_nom_min"] = 0.0
 
 
+def disable_grid_expansion_if_LV_limit_hit(n):
+    if not "lv_limit" in n.global_constraints.index:
+        return
+
+    total_expansion = (
+        n.lines.eval("s_nom_min * length").sum()
+        + n.links.query("carrier == 'DC'").eval("p_nom_min * length").sum()
+    ).sum()
+
+    lv_limit = n.global_constraints.at["lv_limit", "constant"]
+
+    # allow small numerical differences
+    if lv_limit - total_expansion < 1:
+        logger.info(f"LV is already reached, disabling expansion and LV limit")
+        extendable_acs = n.lines.query("s_nom_extendable").index
+        n.lines.loc[extendable_acs, "s_nom_extendable"] = False
+        n.lines.loc[extendable_acs, "s_nom"] = n.lines.loc[extendable_acs, "s_nom_min"]
+
+        extendable_dcs = n.links.query("carrier == 'DC' and p_nom_extendable").index
+        n.links.loc[extendable_dcs, "p_nom_extendable"] = False
+        n.links.loc[extendable_dcs, "p_nom"] = n.links.loc[extendable_dcs, "p_nom_min"]
+
+        n.global_constraints.drop("lv_limit", inplace=True)
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -149,6 +174,8 @@ if __name__ == "__main__":
     n_p = pypsa.Network(snakemake.input.network_p)
 
     add_brownfield(n, n_p, year)
+
+    disable_grid_expansion_if_LV_limit_hit(n)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     n.export_to_netcdf(snakemake.output[0])

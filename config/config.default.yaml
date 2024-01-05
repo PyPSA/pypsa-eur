@@ -176,9 +176,12 @@ renewable:
       grid_codes: [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 31, 32]
       distance: 1000
       distance_grid_codes: [1, 2, 3, 4, 5, 6]
+    luisa: false
+      # grid_codes: [1111, 1121, 1122, 1123, 1130, 1210, 1221, 1222, 1230, 1241, 1242]
+      # distance: 1000
+      # distance_grid_codes: [1111, 1121, 1122, 1123, 1130, 1210, 1221, 1222, 1230, 1241, 1242]
     natura: true
     excluder_resolution: 100
-    potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   offwind-ac:
     cutout: europe-2013-era5
@@ -189,12 +192,12 @@ renewable:
     capacity_per_sqkm: 2
     correction_factor: 0.8855
     corine: [44, 255]
+    luisa: false # [0, 5230]
     natura: true
     ship_threshold: 400
     max_depth: 50
     max_shore_distance: 30000
     excluder_resolution: 200
-    potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   offwind-dc:
     cutout: europe-2013-era5
@@ -205,12 +208,12 @@ renewable:
     capacity_per_sqkm: 2
     correction_factor: 0.8855
     corine: [44, 255]
+    luisa: false # [0, 5230]
     natura: true
     ship_threshold: 400
     max_depth: 50
     min_shore_distance: 30000
     excluder_resolution: 200
-    potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   solar:
     cutout: europe-2013-sarah
@@ -220,12 +223,12 @@ renewable:
       orientation:
         slope: 35.
         azimuth: 180.
-    capacity_per_sqkm: 1.7
+    capacity_per_sqkm: 5.1
     # correction_factor: 0.854337
     corine: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 26, 31, 32]
+    luisa: false # [1111, 1121, 1122, 1123, 1130, 1210, 1221, 1222, 1230, 1241, 1242, 1310, 1320, 1330, 1410, 1421, 1422, 2110, 2120, 2130, 2210, 2220, 2230, 2310, 2410, 2420, 3210, 3320, 3330]
     natura: true
     excluder_resolution: 100
-    potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   hydro:
     cutout: europe-2013-era5
@@ -303,6 +306,7 @@ pypsa_eur:
   - offwind-dc
   - solar
   - ror
+  - nuclear
   StorageUnit:
   - PHS
   - hydro
@@ -389,14 +393,14 @@ sector:
   v2g: true
   land_transport_fuel_cell_share:
     2020: 0
-    2030: 0.05
-    2040: 0.1
-    2050: 0.15
+    2030: 0
+    2040: 0
+    2050: 0
   land_transport_electric_share:
     2020: 0
-    2030: 0.25
-    2040: 0.6
-    2050: 0.85
+    2030: 0.3
+    2040: 0.7
+    2050: 1
   land_transport_ice_share:
     2020: 1
     2030: 0.7
@@ -462,7 +466,6 @@ sector:
   solar_cf_correction: 0.788457  # =  >>> 1/1.2683
   marginal_cost_storage: 0. #1e-4
   methanation: true
-  helmeth: false
   coal_cc: false
   dac: true
   co2_vent: false
@@ -472,6 +475,8 @@ sector:
   hydrogen_turbine: false
   SMR: true
   SMR_cc: true
+  regional_methanol_demand: false
+  regional_oil_demand: false
   regional_co2_sequestration_potential:
     enable: false
     attribute: 'conservative estimate Mt'
@@ -484,6 +489,7 @@ sector:
   co2_sequestration_lifetime: 50
   co2_spatial: false
   co2network: false
+  co2_network_cost_factor: 1
   cc_fraction: 0.9
   hydrogen_underground_storage: true
   hydrogen_underground_storage_locations:
@@ -503,6 +509,16 @@ sector:
   electricity_distribution_grid: true
   electricity_distribution_grid_cost_factor: 1.0
   electricity_grid_connection: true
+  transmission_efficiency:
+    DC:
+      efficiency_static: 0.98
+      efficiency_per_1000km: 0.977
+    H2 pipeline:
+      efficiency_per_1000km: 1 # 0.979
+      compression_per_1000km: 0.019
+    gas pipeline:
+      efficiency_per_1000km: 1 #0.977
+      compression_per_1000km: 0.01
   H2_network: true
   gas_network: false
   H2_retrofit: false
@@ -648,11 +664,12 @@ solving:
     skip_iterations: true
     rolling_horizon: false
     seed: 123
+    custom_extra_functionality: "../data/custom_extra_functionality.py"
     # options that go into the optimize function
     track_iterations: false
     min_iterations: 4
     max_iterations: 6
-    transmission_losses: 0
+    transmission_losses: 2
     linearized_unit_commitment: true
     horizon: 365
 
@@ -974,7 +991,6 @@ plotting:
     Sabatier: '#9850ad'
     methanation: '#c44ce6'
     methane: '#c44ce6'
-    helmeth: '#e899ff'
     # synfuels
     Fischer-Tropsch: '#25c49a'
     liquid: '#25c49a'
@@ -989,6 +1005,7 @@ plotting:
     CO2 sequestration: '#f29dae'
     DAC: '#ff5270'
     co2 stored: '#f2385a'
+    co2 sequestered: '#f2682f'
     co2: '#f29dae'
     co2 vent: '#ffd4dc'
     CO2 pipeline: '#f5627f'
