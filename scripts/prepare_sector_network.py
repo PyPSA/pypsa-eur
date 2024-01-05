@@ -102,7 +102,10 @@ def define_spatial(nodes, options):
         spatial.gas.biogas = ["EU biogas"]
         spatial.gas.industry = ["gas for industry"]
         spatial.gas.biogas_to_gas = ["EU biogas to gas"]
-        spatial.gas.biogas_to_gas_cc = ["EU biogas to gas CC"]
+        if options.get("biomass_spatial", options["biomass_transport"]):
+            spatial.gas.biogas_to_gas_cc = nodes + " biogas to gas CC"
+        else:
+            spatial.gas.biogas_to_gas_cc = ["EU biogas to gas CC"]
         if options.get("co2_spatial", options["co2network"]):
             spatial.gas.industry_cc = nodes + " gas for industry CC"
         else:
@@ -549,7 +552,7 @@ def patch_electricity_network(n):
     n.loads_t.p_set.rename(lambda x: x.strip(), axis=1, inplace=True)
 
 
-def add_co2_tracking(n, options):
+def add_co2_tracking(n, costs, options):
     # minus sign because opposite to how fossil fuels used:
     # CH4 burning puts CH4 down, atmosphere up
     n.add("Carrier", "co2", co2_emissions=-1.0)
@@ -567,13 +570,46 @@ def add_co2_tracking(n, options):
         bus="co2 atmosphere",
     )
 
-    # this tracks CO2 stored, e.g. underground
+    # add CO2 tanks
     n.madd(
         "Bus",
         spatial.co2.nodes,
         location=spatial.co2.locations,
         carrier="co2 stored",
         unit="t_co2",
+    )
+
+    n.madd(
+        "Store",
+        spatial.co2.nodes,
+        e_nom_extendable=True,
+        capital_cost=costs.at["CO2 storage tank", "fixed"],
+        carrier="co2 stored",
+        e_cyclic=True,
+        bus=spatial.co2.nodes,
+    )
+    n.add("Carrier", "co2 stored")
+
+    # this tracks CO2 sequestered, e.g. underground
+    sequestration_buses = pd.Index(spatial.co2.nodes).str.replace(
+        " stored", " sequestered"
+    )
+    n.madd(
+        "Bus",
+        sequestration_buses,
+        location=spatial.co2.locations,
+        carrier="co2 sequestered",
+        unit="t_co2",
+    )
+
+    n.madd(
+        "Link",
+        sequestration_buses,
+        bus0=spatial.co2.nodes,
+        bus1=sequestration_buses,
+        carrier="co2 sequestered",
+        efficiency=1.0,
+        p_nom_extendable=True,
     )
 
     if options["regional_co2_sequestration_potential"]["enable"]:
@@ -591,22 +627,22 @@ def add_co2_tracking(n, options):
             .mul(1e6)
             / annualiser
         )  # t
-        e_nom_max = e_nom_max.rename(index=lambda x: x + " co2 stored")
+        e_nom_max = e_nom_max.rename(index=lambda x: x + " co2 sequestered")
     else:
         e_nom_max = np.inf
 
     n.madd(
         "Store",
-        spatial.co2.nodes,
+        sequestration_buses,
         e_nom_extendable=True,
         e_nom_max=e_nom_max,
         capital_cost=options["co2_sequestration_cost"],
-        carrier="co2 stored",
-        bus=spatial.co2.nodes,
+        bus=sequestration_buses,
         lifetime=options["co2_sequestration_lifetime"],
+        carrier="co2 sequestered",
     )
 
-    n.add("Carrier", "co2 stored")
+    n.add("Carrier", "co2 sequestered")
 
     if options["co2_vent"]:
         n.madd(
@@ -635,6 +671,8 @@ def add_co2_network(n, costs):
         * co2_links.length
     )
     capital_cost = cost_onshore + cost_submarine
+    cost_factor = snakemake.config["sector"]["co2_network_cost_factor"]
+    capital_cost *= cost_factor
 
     n.madd(
         "Link",
@@ -2224,13 +2262,12 @@ def add_biomass(n, costs):
         # Assuming for costs that the CO2 from upgrading is pure, such as in amine scrubbing. I.e., with and without CC is
         # equivalent. Adding biomass CHP capture because biogas is often small-scale and decentral so further
         # from e.g. CO2 grid or buyers. This is a proxy for the added cost for e.g. a raw biogas pipeline to a central upgrading facility
-
         n.madd(
             "Link",
             spatial.gas.biogas_to_gas_cc,
             bus0=spatial.gas.biogas,
             bus1=spatial.gas.nodes,
-            bus2="co2 stored",
+            bus2=spatial.co2.nodes,
             bus3="co2 atmosphere",
             carrier="biogas to gas CC",
             capital_cost=costs.at["biogas CC", "fixed"]
@@ -2296,6 +2333,14 @@ def add_biomass(n, costs):
             p_nom=10000,
             marginal_cost=costs.at["solid biomass", "fuel"]
             + bus_transport_costs * average_distance,
+        )
+        n.add(
+            "GlobalConstraint",
+            "biomass limit",
+            carrier_attribute="solid biomass",
+            sense="<=",
+            constant=biomass_potentials["solid biomass"].sum(),
+            type="operational_limit",
         )
 
     # AC buses with district heating
@@ -3628,7 +3673,7 @@ if __name__ == "__main__":
         for carrier in conventional:
             add_carrier_buses(n, carrier)
 
-    add_co2_tracking(n, options)
+    add_co2_tracking(n, costs, options)
 
     add_generation(n, costs)
 

@@ -10,6 +10,13 @@ Release Notes
 Upcoming Release
 ================
 
+* Distinguish between stored and sequestered CO2. Stored CO2 is stored
+  overground in tanks and can be used for CCU (e.g. methanolisation).
+  Sequestered CO2 is stored underground and can no longer be used for CCU. This
+  distinction is made because storage in tanks is more expensive than
+  underground storage. The link that connects stored and sequestered CO2 is
+  unidirectional.
+
 * Increase deployment density of solar to 5.1 MW/sqkm by default.
 
 * Default to full electrification of land transport by 2050.
