@@ -10,6 +10,14 @@ Release Notes
 Upcoming Release
 ================
 
+* Add separate option to add resistive heaters to the technology choices
+  (``sector: resistive_heaters:``). Previously they were always added when
+  boilers were added.
+
+* Resolve code issues for endogenous building retrofitting. Select correct
+  sector names, address deprecations, distinguish between district heating, decentral
+  heating in urban areas or rural areas for floor area calculations.
+
 * Remove all negative loads on the ``co2 atmosphere`` bus representing emissions
   for e.g. fixed fossil demands for transport oil. Instead these are handled
   more transparently with a fixed transport oil demand and a link taking care of
