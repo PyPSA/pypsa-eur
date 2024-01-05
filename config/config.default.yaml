@@ -90,7 +90,6 @@ co2_budget:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
-  voltages: [220., 300., 380.]
   voltages: [220., 300., 380., 500., 750.]
   gaslimit_enable: false
   gaslimit: false
