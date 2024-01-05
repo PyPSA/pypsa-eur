@@ -280,7 +280,7 @@ transformers:
   s_nom: 2000.
   type: ''
 
-# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#load
+# docs-load in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#load
 load:
   power_statistics: true
   interpolate_limit: 3

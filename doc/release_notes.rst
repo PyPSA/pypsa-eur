@@ -158,6 +158,8 @@ PyPSA-Eur 0.9.0 (5th January 2024)
 * Remove "conservative" renewable potentials estimation option
   (https://github.com/PyPSA/pypsa-eur/pull/838).
 
+* With this release we stop posting updates to the network pre-builts.
+
 **Changes**
 
 * Updated Global Energy Monitor LNG terminal data to March 2023 version
@@ -1675,9 +1677,5 @@ Release Process
 * Tag a release on Github via ``git tag v0.x.x``, ``git push``, ``git push --tags``. Include release notes in the tag message.
 
 * Make a `GitHub release <https://github.com/PyPSA/pypsa-eur-sec/releases>`_, which automatically triggers archiving to the `zenodo code repository <https://doi.org/10.5281/zenodo.3520874>`_ with `MIT license <https://opensource.org/licenses/MIT>`_.
-
-* Create pre-built networks for ``config.default.yaml`` by running ``snakemake -call prepare_sector_networks``.
-
-* Upload pre-built networks to `zenodo data repository <https://doi.org/10.5281/zenodo.3601881>`_ with `CC BY 4.0 <https://creativecommons.org/licenses/by/4.0/>`_ license.
 
 * Send announcement on the `PyPSA mailing list <https://groups.google.com/forum/#!forum/pypsa>`_.
