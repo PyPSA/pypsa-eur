@@ -63,7 +63,7 @@ import re
 import numpy as np
 import pandas as pd
 import pypsa
-from _helpers import configure_logging
+from _helpers import configure_logging, find_opt, get_opt
 from add_electricity import load_costs, update_transmission_costs
 from pypsa.descriptors import expand_series
 
@@ -296,42 +296,42 @@ if __name__ == "__main__":
 
     set_line_s_max_pu(n, snakemake.params.lines["s_max_pu"])
 
-    for o in opts:
-        m = re.match(r"^\d+h$", o, re.IGNORECASE)
-        if m is not None:
-            n = average_every_nhours(n, m.group(0))
-            break
+    # temporal averaging
+    nhours_config = snakemake.params.snapshots.get("resolution", False)
+    nhours_wildcard = get_opt(opts, r"^\d+h$")
+    nhours = nhours_wildcard or nhours_config
+    if nhours:
+        n = average_every_nhours(n, nhours)
 
-    for o in opts:
-        m = re.match(r"^\d+seg$", o, re.IGNORECASE)
-        if m is not None:
-            solver_name = snakemake.config["solving"]["solver"]["name"]
-            n = apply_time_segmentation(n, m.group(0)[:-3], solver_name)
-            break
+    # segments with package tsam
+    time_seg_config = snakemake.params.snapshots.get("segmentation", False)
+    time_seg_wildcard = get_opt(opts, r"^\d+seg$")
+    time_seg = time_seg_wildcard or time_seg_config
+    if time_seg:
+        solver_name = snakemake.config["solving"]["solver"]["name"]
+        n = apply_time_segmentation(n, time_seg.replace("seg", ""), solver_name)
 
-    for o in opts:
-        if "Co2L" in o:
-            m = re.findall("[0-9]*\.?[0-9]+$", o)
-            if len(m) > 0:
-                co2limit = float(m[0]) * snakemake.params.co2base
-                add_co2limit(n, co2limit, Nyears)
-                logger.info("Setting CO2 limit according to wildcard value.")
-            else:
-                add_co2limit(n, snakemake.params.co2limit, Nyears)
-                logger.info("Setting CO2 limit according to config value.")
-            break
+    Co2L_config = snakemake.params.co2limit_enable
+    Co2L_wildcard, co2limit_wildcard = find_opt(opts, "Co2L")
+    if Co2L_wildcard or Co2L_config:
+        if co2limit_wildcard is not None:
+            co2limit = co2limit_wildcard * snakemake.params.co2base
+            add_co2limit(n, co2limit, Nyears)
+            logger.info("Setting CO2 limit according to wildcard value.")
+        else:
+            add_co2limit(n, snakemake.params.co2limit, Nyears)
+            logger.info("Setting CO2 limit according to config value.")
 
-    for o in opts:
-        if "CH4L" in o:
-            m = re.findall("[0-9]*\.?[0-9]+$", o)
-            if len(m) > 0:
-                limit = float(m[0]) * 1e6
-                add_gaslimit(n, limit, Nyears)
-                logger.info("Setting gas usage limit according to wildcard value.")
-            else:
-                add_gaslimit(n, snakemake.params.gaslimit, Nyears)
-                logger.info("Setting gas usage limit according to config value.")
-            break
+    CH4L_config = snakemake.params.gaslimit_enable
+    CH4L_wildcard, gaslimit_wildcard = find_opt(opts, "CH4L")
+    if CH4L_wildcard or CH4L_config:
+        if gaslimit_wildcard is not None:
+            gaslimit = gaslimit_wildcard * 1e6
+            add_gaslimit(n, gaslimit, Nyears)
+            logger.info("Setting gas usage limit according to wildcard value.")
+        else:
+            add_gaslimit(n, snakemake.params.gaslimit, Nyears)
+            logger.info("Setting gas usage limit according to config value.")
 
     for o in opts:
         if "+" not in o:
@@ -352,21 +352,26 @@ if __name__ == "__main__":
                     sel = c.df.carrier.str.contains(carrier)
                     c.df.loc[sel, attr] *= factor
 
-    for o in opts:
-        if "Ept" in o:
-            logger.info(
-                "Setting time dependent emission prices according spot market price"
+    emission_prices = snakemake.params.costs["emission_prices"]
+    Ept_config = emission_prices.get("co2_monthly_prices", False)
+    Ept_wildcard = "Ept" in opts
+    Ep_config = emission_prices.get("enable", False)
+    Ep_wildcard, co2_wildcard = find_opt(opts, "Ep")
+
+    if Ept_wildcard or Ept_config:
+        logger.info(
+            "Setting time dependent emission prices according spot market price"
+        )
+        add_dynamic_emission_prices(n)
+    elif Ep_wildcard or Ep_config:
+        if co2_wildcard is not None:
+            logger.info("Setting CO2 prices according to wildcard value.")
+            add_emission_prices(n, dict(co2=co2_wildcard))
+        else:
+            logger.info("Setting CO2 prices according to config value.")
+            add_emission_prices(
+                n, dict(co2=snakemake.params.costs["emission_prices"]["co2"])
             )
-            add_dynamic_emission_prices(n)
-        elif "Ep" in o:
-            m = re.findall("[0-9]*\.?[0-9]+$", o)
-            if len(m) > 0:
-                logger.info("Setting emission prices according to wildcard value.")
-                add_emission_prices(n, dict(co2=float(m[0])))
-            else:
-                logger.info("Setting emission prices according to config value.")
-                add_emission_prices(n, snakemake.params.costs["emission_prices"])
-            break
 
     ll_type, factor = snakemake.wildcards.ll[0], snakemake.wildcards.ll[1:]
     set_transmission_limit(n, ll_type, factor, costs, Nyears)
@@ -379,10 +384,12 @@ if __name__ == "__main__":
         p_nom_max_ext=snakemake.params.links.get("max_extension", np.inf),
     )
 
-    if "ATK" in opts:
-        enforce_autarky(n)
-    elif "ATKc" in opts:
-        enforce_autarky(n, only_crossborder=True)
+    autarky_config = snakemake.params.autarky
+    if "ATK" in opts or autarky_config.get("enable", False):
+        only_crossborder = False
+        if "ATKc" in opts or autarky_config.get("by_country", False):
+            only_crossborder = True
+        enforce_autarky(n, only_crossborder=only_crossborder)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     n.export_to_netcdf(snakemake.output[0])

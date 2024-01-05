@@ -37,7 +37,7 @@ import pandas as pd
 import pypsa
 import xarray as xr
 from _benchmark import memory_logger
-from _helpers import configure_logging, update_config_with_sector_opts
+from _helpers import configure_logging, get_opt, update_config_with_sector_opts
 from pypsa.descriptors import get_activity_mask
 
 logger = logging.getLogger(__name__)
@@ -806,18 +806,30 @@ def extra_functionality(n, snapshots):
     """
     opts = n.opts
     config = n.config
-    if "BAU" in opts and n.generators.p_nom_extendable.any():
+    constraints = config["solving"].get("constraints", {})
+    if (
+        "BAU" in opts or constraints.get("BAU", False)
+    ) and n.generators.p_nom_extendable.any():
         add_BAU_constraints(n, config)
-    if "SAFE" in opts and n.generators.p_nom_extendable.any():
+    if (
+        "SAFE" in opts or constraints.get("SAFE", False)
+    ) and n.generators.p_nom_extendable.any():
         add_SAFE_constraints(n, config)
-    if "CCL" in opts and n.generators.p_nom_extendable.any():
+    if (
+        "CCL" in opts or constraints.get("CCL", False)
+    ) and n.generators.p_nom_extendable.any():
         add_CCL_constraints(n, config)
+
     reserve = config["electricity"].get("operational_reserve", {})
     if reserve.get("activate"):
         add_operational_reserve_margin(n, snapshots, config)
-    for o in opts:
-        if "EQ" in o:
-            add_EQ_constraints(n, o)
+
+    EQ_config = constraints.get("EQ", False)
+    EQ_wildcard = get_opt(opts, r"^EQ+[0-9]*\.?[0-9]+(c|)")
+    EQ_o = EQ_wildcard or EQ_config
+    if EQ_o:
+        add_EQ_constraints(n, EQ_o.replace("EQ", ""))
+
     add_battery_constraints(n)
     add_lossy_bidirectional_link_constraints(n)
     add_pipe_retrofit_constraint(n)

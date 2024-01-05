@@ -10,6 +10,11 @@ Release Notes
 Upcoming Release
 ================
 
+* More wildcard options now have a corresponding config entry. If the wildcard
+  is given, then its value is used. If the wildcard is not given but the options
+  in config are enabled, then the value from config is used. If neither is
+  given, the options are skipped.
+
 * Distinguish between stored and sequestered CO2. Stored CO2 is stored
   overground in tanks and can be used for CCU (e.g. methanolisation).
   Sequestered CO2 is stored underground and can no longer be used for CCU. This

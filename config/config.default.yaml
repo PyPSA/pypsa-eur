@@ -59,6 +59,9 @@ snapshots:
   start: "2013-01-01"
   end: "2014-01-01"
   inclusive: 'left'
+  resolution: false
+  segmentation: false
+  #representative: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#enable
 enable:
@@ -74,6 +77,7 @@ enable:
   retrieve_natura_raster: true
   custom_busmap: false
 
+
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
 co2_budget:
   2020: 0.701
@@ -87,7 +91,9 @@ co2_budget:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
   voltages: [220., 300., 380., 500., 750.]
+  gaslimit_enable: false
   gaslimit: false
+  co2limit_enable: false
   co2limit: 7.75e+7
   co2base: 1.487e+9
   agg_p_nom_limits: data/agg_p_nom_minmax.csv
@@ -123,6 +129,10 @@ electricity:
       Offshore: [offwind-ac, offwind-dc]
       Onshore: [onwind]
       PV: [solar]
+
+  autarky:
+    enable: false
+    by_country: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#atlite
 atlite:
@@ -618,7 +628,9 @@ costs:
     battery: 0.
     battery inverter: 0.
   emission_prices:
+    enable: false
     co2: 0.
+    co2_monthly_prices: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#clustering
 clustering:
@@ -659,6 +671,12 @@ solving:
     transmission_losses: 2
     linearized_unit_commitment: true
     horizon: 365
+
+  constraints:
+    CCL: false
+    EQ: false
+    BAU: false
+    SAFE: false
 
   solver:
     name: gurobi
