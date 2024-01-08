@@ -134,6 +134,11 @@ def add_everywhere_powerplants(ppl, substations, everywhere_powerplants):
     everywhere_ppl["Technology"] = everywhere_ppl["Fueltype"]
     everywhere_ppl["Capacity"] = 0.0
 
+    # Assign plausible values for the commissioning and decommissioning years
+    # required for multi-year models 
+    everywhere_ppl["DateIn"] = ppl["DateIn"].min()
+    everywhere_ppl["DateOut"] = ppl["DateOut"].max()
+
     # NaN values for efficiency will be replaced by the generic efficiency by attach_conventional_generators(...) in add_electricity.py later
     everywhere_ppl["Efficiency"] = np.nan
 
