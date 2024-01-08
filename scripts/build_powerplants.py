@@ -84,9 +84,9 @@ In addition the configuration option ``electricity: everywhere_powerplants`` can
         everywhere_powerplants: ['Natural Gas', 'Coal', 'nuclear', 'OCGT']
 """
 
+import itertools
 import logging
 
-import itertools
 import numpy as np
 import pandas as pd
 import powerplantmatching as pm
@@ -107,18 +107,29 @@ def add_custom_powerplants(ppl, custom_powerplants, custom_ppl_query=False):
         [ppl, add_ppls], sort=False, ignore_index=True, verify_integrity=True
     )
 
+
 def add_everywhere_powerplants(ppl, substations, everywhere_powerplants):
     # Create a dataframe with "everywhere_powerplants" of stated carriers at the location of all substations
     generic_ppl = (
-        pd.DataFrame(itertools.product(substations.index.values, everywhere_powerplants), columns=["substation_index","Fueltype"])
-        .merge(substations[["x","y","country"]], left_on="substation_index", right_index=True)
+        pd.DataFrame(
+            itertools.product(substations.index.values, everywhere_powerplants),
+            columns=["substation_index", "Fueltype"],
+        ).merge(
+            substations[["x", "y", "country"]],
+            left_on="substation_index",
+            right_index=True,
+        )
     ).drop(columns="substation_index")
 
     # PPL uses different columns names compared to substations dataframe -> rename
-    everywhere_ppl = everywhere_ppl.rename(columns={"x":"lon","y":"lat","country":"Country"})
+    everywhere_ppl = everywhere_ppl.rename(
+        columns={"x": "lon", "y": "lat", "country": "Country"}
+    )
 
     # Add default values for the generic powerplants
-    everywhere_ppl["Name"] = "Automatically added everywhere-powerplant " + generic_ppl.Fueltype
+    everywhere_ppl["Name"] = (
+        "Automatically added everywhere-powerplant " + generic_ppl.Fueltype
+    )
     everywhere_ppl["Set"] = "PP"
     everywhere_ppl["Technology"] = generic_ppl["Fueltype"]
     everywhere_ppl["Capacity"] = 0.0
@@ -129,6 +140,7 @@ def add_everywhere_powerplants(ppl, substations, everywhere_powerplants):
     return pd.concat(
         [ppl, everywhere_ppl], sort=False, ignore_index=True, verify_integrity=True
     )
+
 
 def replace_natural_gas_technology(df):
     mapping = {"Steam Turbine": "CCGT", "Combustion Engine": "OCGT"}
