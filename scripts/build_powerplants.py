@@ -126,12 +126,12 @@ def add_everywhere_powerplants(ppl, substations, everywhere_powerplants):
         columns={"x": "lon", "y": "lat", "country": "Country"}
     )
 
-    # Add default values for the generic powerplants
+    # Add default values for the powerplants
     everywhere_ppl["Name"] = (
-        "Automatically added everywhere-powerplant " + generic_ppl.Fueltype
+        "Automatically added everywhere-powerplant " + everywhere_ppl.Fueltype
     )
     everywhere_ppl["Set"] = "PP"
-    everywhere_ppl["Technology"] = generic_ppl["Fueltype"]
+    everywhere_ppl["Technology"] = everywhere_ppl["Fueltype"]
     everywhere_ppl["Capacity"] = 0.0
 
     # NaN values for efficiency will be replaced by the generic efficiency by attach_conventional_generators(...) in add_electricity.py later
