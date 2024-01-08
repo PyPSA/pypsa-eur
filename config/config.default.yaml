@@ -36,20 +36,20 @@ scenario:
   ll:
   - v1.5
   clusters:
-  - 37
-  - 128
-  - 256
-  - 512
-  - 1024
+  - 42
+  # - 128
+  # - 256
+  # - 512
+  # - 1024
   opts:
   - ''
   sector_opts:
   - Co2L0-3H-T-H-B-I-A-solar+p3-dist1
   planning_horizons:
-  # - 2020
+  - 2020
   # - 2030
   # - 2040
-  - 2050
+  # - 2050
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#countries
 countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK']
@@ -63,16 +63,16 @@ snapshots:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#enable
 enable:
   retrieve: auto
-  prepare_links_p_nom: false
+  prepare_links_p_nom: false # false
   retrieve_databundle: true
   retrieve_sector_databundle: true
   retrieve_cost_data: true
-  build_cutout: false
-  retrieve_irena: false
+  build_cutout: false # false
+  retrieve_irena: false # false
   retrieve_cutout: true
-  build_natura_raster: false
-  retrieve_natura_raster: true
-  custom_busmap: false
+  build_natura_raster: false # false
+  retrieve_natura_raster: false # false
+  custom_busmap: false # false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
 co2_budget:
@@ -831,6 +831,7 @@ plotting:
     solid biomass for industry co2 from atmosphere: '#736412'
     solid biomass for industry co2 to stored: '#47411c'
     urban central solid biomass CHP: '#9d9042'
+    urban central solid biomass OP: '#859d42'
     urban central solid biomass CHP CC: '#6c5d28'
     biomass boiler: '#8A9A5B'
     residential rural biomass boiler: '#a1a066'
@@ -912,6 +913,8 @@ plotting:
     Ambient: '#98eb9d'
     CHP: '#8a5751'
     urban central gas CHP: '#8d5e56'
+    urban central lignite CHP: '#8d5e56'
+    urban central coal CHP: '#8d5e56'
     CHP CC: '#634643'
     urban central gas CHP CC: '#6e4e4c'
     CHP heat: '#8a5751'

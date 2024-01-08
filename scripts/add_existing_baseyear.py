@@ -367,7 +367,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                         suffix=name_suffix,
                         bus0=spatial.biomass.df.loc[new_capacity.index]["nodes"].values,
                         bus1=new_capacity.index,
-                        carrier=generator,  # technology name? - define color for carrier in config.yaml biomass op
+                        carrier=generator,
                         p_nom=new_capacity / costs.at[key, "efficiency"],
                         capital_cost=costs.at[key, "fixed"]
                         * costs.at[key, "efficiency"],
@@ -444,7 +444,7 @@ def add_heating_capacities_installed_before_baseyear(
     phased_out = df_CHP_agg[df_CHP_agg["DateOut"] < baseyear].index
     df_CHP_agg.drop(phased_out, inplace=True)
     # drop Hydro [2], Waste [3] and Oil [2] - keep coal [32] lignite [14] and gas [263]
-    # TODO: lignite plants with coal parameters
+
     df_CHP_agg = df_CHP_agg[~df_CHP_agg.Fueltype.isin(["Hydro", "Waste", "Oil"])]
     df_CHP_agg.Fueltype = df_CHP_agg.Fueltype.map(rename_fuel)
     # calculate remaining lifetime before phase-out (+1 because assuming
@@ -501,7 +501,7 @@ def add_heating_capacities_installed_before_baseyear(
                 bus1=capacity.index + " urban central heat",  # urban central heat
                 bus2=capacity.index,  # electricity
                 bus3="co2 atmosphere",  # CO2 emissions
-                carrier="urban central CHP",  # urban central CHP
+                carrier=f"urban central {generator} CHP",  # urban central gas/lignite/coal CHP
                 p_nom=capacity / costs.at[key, "efficiency"],
                 capital_cost=costs.at[key, "fixed"] * costs.at[key, "efficiency"],
                 marginal_cost=costs.at[key, "VOM"],
