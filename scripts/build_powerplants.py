@@ -135,7 +135,7 @@ def add_everywhere_powerplants(ppl, substations, everywhere_powerplants):
     everywhere_ppl["Capacity"] = 0.0
 
     # Assign plausible values for the commissioning and decommissioning years
-    # required for multi-year models 
+    # required for multi-year models
     everywhere_ppl["DateIn"] = ppl["DateIn"].min()
     everywhere_ppl["DateOut"] = ppl["DateOut"].max()
 
