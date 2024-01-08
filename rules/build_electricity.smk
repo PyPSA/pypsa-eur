@@ -41,6 +41,7 @@ rule build_powerplants:
     params:
         powerplants_filter=config["electricity"]["powerplants_filter"],
         custom_powerplants=config["electricity"]["custom_powerplants"],
+        everywhere_powerplants=config["electricity"]["everywhere_powerplants"],
         countries=config["countries"],
     input:
         base_network=RESOURCES + "networks/base.nc",
