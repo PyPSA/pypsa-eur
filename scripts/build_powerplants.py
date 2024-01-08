@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
@@ -10,6 +10,7 @@ Retrieves conventional powerplant capacities and locations from
 these to buses and creates a ``.csv`` file. It is possible to amend the
 powerplant database with custom entries provided in
 ``data/custom_powerplants.csv``.
+Lastly, for every substation, powerplants with zero-initial capacity can be added for certain fuel types automatically.
 
 Relevant Settings
 -----------------
@@ -19,6 +20,7 @@ Relevant Settings
     electricity:
       powerplants_filter:
       custom_powerplants:
+      everywhere_powerplants:
 
 .. seealso::
     Documentation of the configuration file ``config/config.yaml`` at
@@ -44,6 +46,7 @@ Description
 -----------
 
 The configuration options ``electricity: powerplants_filter`` and ``electricity: custom_powerplants`` can be used to control whether data should be retrieved from the original powerplants database or from custom amendmends. These specify `pandas.query <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.query.html>`_ commands.
+In addition the configuration option ``electricity: everywhere_powerplants`` can be used to place powerplants with zero-initial capacity of certain fuel types at all substations.
 
 1. Adding all powerplants from custom:
 
@@ -73,10 +76,18 @@ The configuration options ``electricity: powerplants_filter`` and ``electricity:
 
         powerplants_filter: Country not in ['Germany'] and YearCommissioned <= 2015
         custom_powerplants: YearCommissioned <= 2015
+
+4. Adding powerplants at all substations for 4 conventional carrier types:
+
+    .. code:: yaml
+
+        everywhere_powerplants: ['Natural Gas', 'Coal', 'nuclear', 'OCGT']
 """
 
 import logging
 
+import itertools
+import numpy as np
 import pandas as pd
 import powerplantmatching as pm
 import pypsa
@@ -96,6 +107,28 @@ def add_custom_powerplants(ppl, custom_powerplants, custom_ppl_query=False):
         [ppl, add_ppls], sort=False, ignore_index=True, verify_integrity=True
     )
 
+def add_everywhere_powerplants(ppl, substations, everywhere_powerplants):
+    # Create a dataframe with "everywhere_powerplants" of stated carriers at the location of all substations
+    generic_ppl = (
+        pd.DataFrame(itertools.product(substations.index.values, everywhere_powerplants), columns=["substation_index","Fueltype"])
+        .merge(substations[["x","y","country"]], left_on="substation_index", right_index=True)
+    ).drop(columns="substation_index")
+
+    # PPL uses different columns names compared to substations dataframe -> rename
+    everywhere_ppl = everywhere_ppl.rename(columns={"x":"lon","y":"lat","country":"Country"})
+
+    # Add default values for the generic powerplants
+    everywhere_ppl["Name"] = "Automatically added everywhere-powerplant " + generic_ppl.Fueltype
+    everywhere_ppl["Set"] = "PP"
+    everywhere_ppl["Technology"] = generic_ppl["Fueltype"]
+    everywhere_ppl["Capacity"] = 0.0
+
+    # NaN values for efficiency will be replaced by the generic efficiency by attach_conventional_generators(...) in add_electricity.py later
+    everywhere_ppl["Efficiency"] = np.nan
+
+    return pd.concat(
+        [ppl, everywhere_ppl], sort=False, ignore_index=True, verify_integrity=True
+    )
 
 def replace_natural_gas_technology(df):
     mapping = {"Steam Turbine": "CCGT", "Combustion Engine": "OCGT"}
@@ -148,6 +181,11 @@ if __name__ == "__main__":
 
     if countries_wo_ppl := set(countries) - set(ppl.Country.unique()):
         logging.warning(f"No powerplants known in: {', '.join(countries_wo_ppl)}")
+
+    # Add "everywhere powerplants" to all bus locations
+    ppl = add_everywhere_powerplants(
+        ppl, n.buses.query("substation_lv"), snakemake.params.everywhere_powerplants
+    )
 
     substations = n.buses.query("substation_lv")
     ppl = ppl.dropna(subset=["lat", "lon"])
