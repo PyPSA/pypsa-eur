@@ -41,14 +41,13 @@ Outputs
 import logging
 
 logger = logging.getLogger(__name__)
-import dateutil
 import numpy as np
 import pandas as pd
 from _helpers import configure_logging
 from pandas import Timedelta as Delta
 
 
-def load_timeseries(fn, years, countries, powerstatistics=True):
+def load_timeseries(fn, years, snapshots, countries, powerstatistics=True):
     """
     Read load data from OPSD time-series package version 2020-10-06.
 
@@ -57,6 +56,8 @@ def load_timeseries(fn, years, countries, powerstatistics=True):
     years : None or slice()
         Years for which to read load data (defaults to
         slice("2018","2019"))
+    snapshots : pandas.DateTimeIndex
+        Climatic year reference used as index for data
     fn : str
         File name or url location (file format .csv)
     countries : listlike
@@ -88,6 +89,7 @@ def load_timeseries(fn, years, countries, powerstatistics=True):
         .rename(columns={"GB_UKM": "GB"})
         .filter(items=countries)
         .loc[years]
+        .set_index(snapshots)
     )
 
 
@@ -300,11 +302,11 @@ if __name__ == "__main__":
     interpolate_limit = snakemake.params.load["interpolate_limit"]
     countries = snakemake.params.countries
     snapshots = pd.date_range(freq="h", **snakemake.params.snapshots)
-    years = slice(pd.Timestamp(f'{snakemake.config["load"]["load_year"]}-01-01'),
-                  pd.Timestamp(f'{snakemake.config["load"]["load_year"]}-12-31'))
+    years = slice(pd.Timestamp(f'{snakemake.config["load"]["load_year"]}-01-01 00:00:00'),
+                  pd.Timestamp(f'{snakemake.config["load"]["load_year"]}-12-31 23:00:00'))
     time_shift = snakemake.params.load["time_shift_for_large_gaps"]
 
-    load = load_timeseries(snakemake.input[0], years, countries, powerstatistics)
+    load = load_timeseries(snakemake.input[0], years, snapshots, countries, powerstatistics)
 
     if "UA" in countries:
         # attach load of UA (best data only for entsoe transparency)
