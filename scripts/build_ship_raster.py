@@ -42,8 +42,8 @@ Description
 """
 
 import logging
-import os
 import zipfile
+from pathlib import Path
 
 import rioxarray
 from _helpers import configure_logging
@@ -62,11 +62,13 @@ if __name__ == "__main__":
     xs, Xs, ys, Ys = zip(*(determine_cutout_xXyY(cutout) for cutout in cutouts))
 
     with zipfile.ZipFile(snakemake.input.ship_density) as zip_f:
-        zip_f.extract("shipdensity_global.tif")
-        with rioxarray.open_rasterio("shipdensity_global.tif") as ship_density:
-            ship_density = ship_density.drop(["band"]).sel(
-                x=slice(min(xs), max(Xs)), y=slice(max(Ys), min(ys))
-            )
-            ship_density.rio.to_raster(snakemake.output[0])
+        resources = Path(snakemake.output[0]).parent
+        fn = "shipdensity_global.tif"
+        zip_f.extract(fn, resources)
+    with rioxarray.open_rasterio(resources / fn) as ship_density:
+        ship_density = ship_density.drop_vars(["band"]).sel(
+            x=slice(min(xs), max(Xs)), y=slice(max(Ys), min(ys))
+        )
+        ship_density.rio.to_raster(snakemake.output[0])
 
-    os.remove("shipdensity_global.tif")
+    (resources / fn).unlink()

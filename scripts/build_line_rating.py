@@ -119,7 +119,7 @@ def calculate_line_rating(n, cutout):
             .apply(lambda x: int(re.findall(r"(\d+)-bundle", x)[0]))
         )
         # Set default number of bundles per line
-        relevant_lines["n_bundle"].fillna(1, inplace=True)
+        relevant_lines["n_bundle"] = relevant_lines["n_bundle"].fillna(1)
         R *= relevant_lines["n_bundle"]
         R = calculate_resistance(T=353, R_ref=R)
     Imax = cutout.line_rating(shapes, R, D=0.0218, Ts=353, epsilon=0.8, alpha=0.8)
@@ -146,8 +146,10 @@ if __name__ == "__main__":
         )
     configure_logging(snakemake)
 
+    snapshots = snakemake.params.snapshots
+
     n = pypsa.Network(snakemake.input.base_network)
-    time = pd.date_range(freq="h", **snakemake.config["snapshots"])
+    time = pd.date_range(freq="h", **snapshots)
     cutout = atlite.Cutout(snakemake.input.cutout).sel(time=time)
 
     da = calculate_line_rating(n, cutout)

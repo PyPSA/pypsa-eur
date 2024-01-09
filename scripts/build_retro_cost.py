@@ -533,16 +533,16 @@ def prepare_temperature_data():
     """
     temperature = xr.open_dataarray(snakemake.input.air_temperature).to_pandas()
     d_heat = (
-        temperature.groupby(temperature.columns.str[:2], axis=1)
+        temperature.T.groupby(temperature.columns.str[:2])
         .mean()
-        .resample("1D")
+        .T.resample("1D")
         .mean()
         < t_threshold
     ).sum()
     temperature_average_d_heat = (
-        temperature.groupby(temperature.columns.str[:2], axis=1)
+        temperature.T.groupby(temperature.columns.str[:2])
         .mean()
-        .apply(
+        .T.apply(
             lambda x: get_average_temperature_during_heating_season(x, t_threshold=15)
         )
     )
@@ -610,7 +610,7 @@ def calculate_costs(u_values, l, cost_retro, window_assumptions):
             cost_retro.loc[x.name[3], "cost_var"]
             * 100
             * float(l)
-            * l_weight.loc[x.name[3]][0]
+            * l_weight.loc[x.name[3]].iloc[0]
             + cost_retro.loc[x.name[3], "cost_fix"]
         )
         * x.A_element
@@ -720,6 +720,7 @@ def map_to_lstrength(l_strength, df):
         .swaplevel(axis=1)
         .dropna(axis=1)
     )
+
     return pd.concat([df.drop([2, 3], axis=1, level=1), l_strength_df], axis=1)
 
 
@@ -800,6 +801,7 @@ def calculate_heat_losses(u_values, data_tabula, l_strength, temperature_factor)
         * data_tabula.A_envelope
         / data_tabula.A_C_Ref
     )
+
     heat_transfer_perm2 = pd.concat(
         [
             heat_transfer_perm2,
@@ -836,9 +838,9 @@ def calculate_heat_losses(u_values, data_tabula, l_strength, temperature_factor)
     F_red_temp = map_to_lstrength(l_strength, F_red_temp)
 
     Q_ht = (
-        heat_transfer_perm2.groupby(level=1, axis=1)
+        heat_transfer_perm2.T.groupby(level=1)
         .sum()
-        .mul(F_red_temp.droplevel(0, axis=1))
+        .T.mul(F_red_temp.droplevel(0, axis=1))
         .mul(temperature_factor.reindex(heat_transfer_perm2.index, level=0), axis=0)
     )
 
@@ -878,7 +880,7 @@ def calculate_gain_utilisation_factor(heat_transfer_perm2, Q_ht, Q_gain):
     Calculates gain utilisation factor nu.
     """
     # time constant of the building tau [h] = c_m [Wh/(m^2K)] * 1 /(H_tr_e+H_tb*H_ve) [m^2 K /W]
-    tau = c_m / heat_transfer_perm2.groupby(level=1, axis=1).sum()
+    tau = c_m / heat_transfer_perm2.T.groupby(axis=1).sum().T
     alpha = alpha_H_0 + (tau / tau_H_0)
     # heat balance ratio
     gamma = (1 / Q_ht).mul(Q_gain.sum(axis=1), axis=0)

@@ -14,7 +14,7 @@ from snakemake.utils import min_version
 min_version("7.7")
 
 
-if not exists("config/config.yaml"):
+if not exists("config/config.yaml") and exists("config/config.default.yaml"):
     copyfile("config/config.default.yaml", "config/config.yaml")
 
 
@@ -125,6 +125,7 @@ rule sync:
     shell:
         """
         rsync -uvarh --ignore-missing-args --files-from=.sync-send . {params.cluster}
+        rsync -uvarh --no-g {params.cluster}/resources . || echo "No resources directory, skipping rsync"
         rsync -uvarh --no-g {params.cluster}/results . || echo "No results directory, skipping rsync"
         rsync -uvarh --no-g {params.cluster}/logs . || echo "No logs directory, skipping rsync"
         """

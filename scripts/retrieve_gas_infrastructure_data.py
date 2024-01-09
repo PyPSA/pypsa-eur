@@ -11,7 +11,7 @@ import logging
 import zipfile
 from pathlib import Path
 
-from _helpers import progress_retrieve
+from _helpers import progress_retrieve, validate_checksum
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +34,8 @@ if __name__ == "__main__":
     logger.info(f"Downloading databundle from '{url}'.")
     disable_progress = snakemake.config["run"].get("disable_progressbar", False)
     progress_retrieve(url, zip_fn, disable=disable_progress)
+
+    validate_checksum(zip_fn, url)
 
     logger.info("Extracting databundle.")
     zipfile.ZipFile(zip_fn).extractall(to_fn)

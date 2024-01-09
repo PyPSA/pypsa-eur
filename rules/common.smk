@@ -2,6 +2,16 @@
 #
 # SPDX-License-Identifier: MIT
 
+import os, sys, glob
+
+helper_source_path = [match for match in glob.glob("**/_helpers.py", recursive=True)]
+
+for path in helper_source_path:
+    path = os.path.dirname(os.path.abspath(path))
+    sys.path.insert(0, os.path.abspath(path))
+
+from _helpers import validate_checksum
+
 
 def memory(w):
     factor = 3.0
@@ -21,6 +31,13 @@ def memory(w):
         return int(factor * (18000 + 180 * 4000))
     else:
         return int(factor * (10000 + 195 * int(w.clusters)))
+
+
+def input_custom_extra_functionality(w):
+    path = config["solving"]["options"].get("custom_extra_functionality", False)
+    if path:
+        return workflow.source_path(path)
+    return []
 
 
 # Check if the workflow has access to the internet by trying to access the HEAD of specified url

@@ -62,7 +62,8 @@ tes,--,"{true, false}",Add option for storing thermal energy in large water pits
 tes_tau,,,The time constant used to calculate the decay of thermal energy in thermal energy storage (TES): 1- :math:`e^{-1/24τ}`.
 -- decentral,days,float,The time constant in decentralized thermal energy storage (TES)
 -- central,days,float,The time constant in centralized thermal energy storage (TES)
-boilers,--,"{true, false}",Add option for transforming electricity into heat using resistive heater
+boilers,--,"{true, false}",Add option for transforming gas into heat using gas boilers
+resistive_heaters,--,"{true, false}",Add option for transforming electricity into heat using resistive heaters (independently from gas boilers)
 oil_boilers,--,"{true, false}",Add option for transforming oil into heat using boilers
 biomass_boiler,--,"{true, false}",Add option for transforming biomass into heat using boilers
 chp,--,"{true, false}",Add option for using Combined Heat and Power (CHP)
@@ -71,7 +72,6 @@ solar_thermal,--,"{true, false}",Add option for using solar thermal to generate 
 solar_cf_correction,--,float,The correction factor for the value provided by the solar thermal profile calculations
 marginal_cost_storage,currency/MWh ,float,The marginal cost of discharging batteries in distributed grids
 methanation,--,"{true, false}",Add option for transforming hydrogen and CO2 into methane using methanation.
-helmeth,--,"{true, false}",Add option for transforming power into gas using HELMETH (Integrated High-Temperature ELectrolysis and METHanation for Effective Power to Gas Conversion)
 coal_cc,--,"{true, false}",Add option for coal CHPs with carbon capture
 dac,--,"{true, false}",Add option for Direct Air Capture (DAC)
 co2_vent,--,"{true, false}",Add option for vent out CO2 from storages to the atmosphere.
@@ -80,6 +80,8 @@ hydrogen_fuel_cell,--,"{true, false}",Add option to include hydrogen fuel cell f
 hydrogen_turbine,--,"{true, false}",Add option to include hydrogen turbine for re-electrification. Assuming OCGT technology costs
 SMR,--,"{true, false}",Add option for transforming natural gas into hydrogen and CO2 using Steam Methane Reforming (SMR)
 SMR CC,--,"{true, false}",Add option for transforming natural gas into hydrogen and CO2 using Steam Methane Reforming (SMR) and Carbon Capture (CC)
+regional_methanol_demand,--,"{true, false}",Spatially resolve methanol demand. Set to true if regional CO2 constraints needed.
+regional_oil_demand,--,"{true, false}",Spatially resolve oil demand. Set to true if regional CO2 constraints needed.
 regional_co2 _sequestration_potential,,,
 -- enable,--,"{true, false}",Add option for regionally-resolved geological carbon dioxide sequestration potentials based on `CO2StoP <https://setis.ec.europa.eu/european-co2-storage-database_en>`_.
 -- attribute,--,string,Name of the attribute for the sequestration potential
@@ -89,9 +91,11 @@ regional_co2 _sequestration_potential,,,
 -- years_of_storage,years,float,The years until potential exhausted at optimised annual rate
 co2_sequestration_potential,MtCO2/a,float,The potential of sequestering CO2 in Europe per year
 co2_sequestration_cost,currency/tCO2,float,The cost of sequestering a ton of CO2
+co2_sequestration_lifetime,years,int,The lifetime of a CO2 sequestration site
 co2_spatial,--,"{true, false}","Add option to spatially resolve carrier representing stored carbon dioxide. This allows for more detailed modelling of CCUTS, e.g. regarding the capturing of industrial process emissions, usage as feedstock for electrofuels, transport of carbon dioxide, and geological sequestration sites."
 ,,,
 co2network,--,"{true, false}",Add option for planning a new carbon dioxide transmission network
+co2_network_cost_factor,p.u.,float,The cost factor for the capital cost of the carbon dioxide transmission network
 ,,,
 cc_fraction,--,float,The default fraction of CO2 captured with post-combustion capture
 hydrogen_underground _storage,--,"{true, false}",Add options for storing hydrogen underground. Storage potential depends regionally.
@@ -108,6 +112,11 @@ electricity_distribution _grid,--,"{true, false}",Add a simplified representatio
 electricity_distribution _grid_cost_factor,,,Multiplies the investment cost of the electricity distribution grid
 ,,,
 electricity_grid _connection,--,"{true, false}",Add the cost of electricity grid connection for onshore wind and solar
+transmission_efficiency,,,Section to specify transmission losses or compression energy demands of bidirectional links. Splits them into two capacity-linked unidirectional links.
+-- {carrier},--,str,The carrier of the link.
+-- -- efficiency_static,p.u.,float,Length-independent transmission efficiency.
+-- -- efficiency_per_1000km,p.u. per 1000 km,float,Length-dependent transmission efficiency ($\eta^{\text{length}}$)
+-- -- compression_per_1000km,p.u. per 1000 km,float,Length-dependent electricity demand for compression ($\eta \cdot \text{length}$) implemented as multi-link to local electricity bus.
 H2_network,--,"{true, false}",Add option for new hydrogen pipelines
 gas_network,--,"{true, false}","Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. The existing gas network is added with a lossless transport model. A length-weighted `k-edge augmentation algorithm   <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_   can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well."
 H2_retrofit,--,"{true, false}",Add option for retrofiting existing pipelines to transport hydrogen.
@@ -118,6 +127,14 @@ gas_distribution_grid _cost_factor,,,Multiplier for the investment cost of the g
 ,,,
 biomass_spatial,--,"{true, false}",Add option for resolving biomass demand regionally
 biomass_transport,--,"{true, false}",Add option for transporting solid biomass between nodes
+biogas_upgrading_cc,--,"{true, false}",Add option to capture CO2 from biomass upgrading
 conventional_generation,,,Add a more detailed description of conventional carriers. Any power generation requires the consumption of fuel from nodes representing that fuel.
 biomass_to_liquid,--,"{true, false}",Add option for transforming solid biomass into liquid fuel with the same properties as oil
 biosng,--,"{true, false}",Add option for transforming solid biomass into synthesis gas with the same properties as natural gas
+limit_max_growth,,,
+-- enable,--,"{true, false}",Add option to limit the maximum growth of a carrier
+-- factor,p.u.,float,The maximum growth factor of a carrier (e.g. 1.3 allows  30% larger than max historic growth)
+-- max_growth,,,
+-- -- {carrier},GW,float,The historic maximum growth of a carrier
+-- max_relative_growth,
+-- -- {carrier},p.u.,float,The historic maximum relative growth of a carrier
