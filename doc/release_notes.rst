@@ -10,60 +10,9 @@ Release Notes
 Upcoming Release
 ================
 
-* New configuration option ``everywhere_powerplants`` to build conventional powerplants everywhere, irrespective of existing powerplants locations, in the network (https://github.com/PyPSA/pypsa-eur/pull/850).
+* Updated Global Energy Monitor LNG terminal data to March 2023 version.
 
-PyPSA-Eur 0.9.0 (5th January 2024)
-==================================
-
-**New Features**
-
-* Add option to specify losses for bidirectional links, e.g. pipelines or HVDC
-  links, in configuration file under ``sector: transmission_efficiency:``. Users
-  can specify static or length-dependent values as well as a length-dependent
-  electricity demand for compression, which is implemented as a multi-link to
-  the local electricity buses. The bidirectional links will then be split into
-  two unidirectional links with linked capacities (https://github.com/PyPSA/pypsa-eur/pull/739).
-
-* Merged option to extend geographical scope to Ukraine and Moldova. These
-  countries are excluded by default and is currently constrained to power-sector
-  only parts of the workflow. A special config file
-  `config/config.entsoe-all.yaml` was added as an example to run the workflow
-  with all ENTSO-E member countries (including observer members like Ukraine and
-  Moldova). Moldova can currently only be included in conjunction with Ukraine
-  due to the absence of demand data. The Crimean power system is manually
-  reconnected to the main Ukrainian grid with the configuration option
-  `reconnect_crimea` (https://github.com/PyPSA/pypsa-eur/pull/321).
-
-* New experimental support for multi-decade optimisation with perfect foresight
-  (``foresight: perfect``). Maximum growth rates for carriers, global carbon
-  budget constraints and emission constraints for particular investment periods.
-
-* Add option to reference an additional source file where users can specify
-  custom ``extra_functionality`` constraints in the configuration file. The
-  default setting points to an empty hull at
-  ``data/custom_extra_functionality.py`` (https://github.com/PyPSA/pypsa-eur/pull/824).
-
-* Add locations, capacities and costs of existing gas storage using Global
-  Energy Monitor's `Europe Gas Tracker
-  <https://globalenergymonitor.org/projects/europe-gas-tracker>`_
-  (https://github.com/PyPSA/pypsa-eur/pull/835).
-
-* Add option to use `LUISA Base Map
-  <https://publications.jrc.ec.europa.eu/repository/handle/JRC124621>`_ 50m land
-  coverage dataset for land eligibility analysis in
-  :mod:`build_renewable_profiles`. Settings are analogous to the CORINE dataset
-  but with the key ``luisa:`` in the configuration file. To leverage the
-  dataset's full advantages, set the excluder resolution to 50m
-  (``excluder_resolution: 50``). For land category codes, see `Annex 1 of the
-  technical documentation
-  <https://publications.jrc.ec.europa.eu/repository/bitstream/JRC124621/technical_report_luisa_basemap_2018_v7_final.pdf>`_
-  (https://github.com/PyPSA/pypsa-eur/pull/842).
-
-* Add option to capture CO2 contained in biogas when upgrading (``sector:
-  biogas_to_gas_cc``) (https://github.com/PyPSA/pypsa-eur/pull/615).
-
-* If load shedding is activated, it is now applied to all carriers, not only
-  electricity (https://github.com/PyPSA/pypsa-eur/pull/784).
+* For industry distribution, use EPRTR as fallback if ETS data is not available.
 
 * Add option for heat vents in district heating (``sector:
   central_heat_vent:``). The combination of must-run conditions for some
