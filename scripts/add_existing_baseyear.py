@@ -518,6 +518,7 @@ def add_heating_capacities_installed_before_baseyear(
                 suffix=key,
                 bus0=spatial.biomass.df.loc[capacity.index]["nodes"].values,
                 bus1=capacity.index,
+                bus2=capacity.index + " urban central heat",
                 carrier=generator,
                 p_nom=capacity / costs.at[key, "efficiency"],
                 capital_cost=costs.at[key, "fixed"] * costs.at[key, "efficiency"],
