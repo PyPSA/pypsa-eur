@@ -1324,6 +1324,16 @@ def add_storage_and_grids(n, costs):
         h2_pipes = create_network_topology(
             n, "H2 pipeline ", carriers=["DC", "gas pipeline"]
         )
+        h2_pipes["p_nom"] = 0.
+
+        if "custom_h2_pipelines" in snakemake.input:
+            fn = snakemake.input.custom_h2_pipelines
+            wkn = pd.read_csv(fn, index_col=0)
+            # hat Spalte "p_nom"
+
+            h2_pipes = pd.concat([h2_pipes, wkn])
+            # fillna(0) für p_nom von h2_pipes
+            # duplicates entfernen aus h2_pipes
 
         # TODO Add efficiency losses
         n.madd(
@@ -1333,6 +1343,7 @@ def add_storage_and_grids(n, costs):
             bus1=h2_pipes.bus1.values + " H2",
             p_min_pu=-1,
             p_nom_extendable=True,
+            p_nom_min=h2_pipes.p_nom.values,
             length=h2_pipes.length.values,
             capital_cost=costs.at["H2 (g) pipeline", "fixed"] * h2_pipes.length.values,
             carrier="H2 pipeline",
