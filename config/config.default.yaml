@@ -814,7 +814,6 @@ plotting:
     hydroelectricity: '#298c81'
     PHS: '#51dbcc'
     hydro+PHS: "#08ad97"
-    wave: '#a7d4cf'
     # solar
     solar: "#f9d002"
     solar PV: "#f9d002"
