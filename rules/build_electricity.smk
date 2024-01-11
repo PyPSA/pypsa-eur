@@ -259,6 +259,7 @@ else:
 rule build_renewable_profiles:
     params:
         renewable=config["renewable"],
+        foresight=config["foresight"],
     input:
         **opt,
         base_network=RESOURCES + "networks/base.nc",
