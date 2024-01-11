@@ -3677,25 +3677,26 @@ if __name__ == "__main__":
         options["use_fuel_cell_waste_heat"] = False
         options["use_electrolysis_waste_heat"] = False
 
-    if "T" in opts:
+    if "T" in opts or options.get("transport", False):
         add_land_transport(n, costs)
 
-    if "H" in opts:
+    if "H" in opts or options.get("heating", False):
         add_heat(n, costs)
 
-    if "B" in opts:
+    if "B" in opts or options.get("biomass", False):
         add_biomass(n, costs)
 
     if options["ammonia"]:
         add_ammonia(n, costs)
 
-    if "I" in opts:
+    if "I" in opts or options.get("industry", False):
         add_industry(n, costs)
 
-    if "H" in opts:
+    if "H" in opts or options.get("heating", False):
         add_waste_heat(n)
 
-    if "A" in opts:  # requires H and I
+    # requires H and I
+    if "A" in opts or options.get("agriculture", False):
         add_agriculture(n, costs)
 
     if options["dac"]:

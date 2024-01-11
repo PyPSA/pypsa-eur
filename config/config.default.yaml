@@ -365,6 +365,11 @@ existing_capacities:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#sector
 sector:
+  transport: true
+  heating: true
+  biomass: true
+  industry: true
+  agriculture: true
   district_heating:
     potential: 0.6
     progress:

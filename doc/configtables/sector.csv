@@ -1,4 +1,9 @@
 ,Unit,Values,Description
+transport,--,"{true, false}",Flag to include transport sector.
+heating,--,"{true, false}",Flag to include heating sector.
+biomass,--,"{true, false}",Flag to include biomass sector.
+industry,--,"{true, false}",Flag to include industry sector.
+agriculture,--,"{true, false}",Flag to include agriculture sector.
 district_heating,--,,`prepare_sector_network.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/prepare_sector_network.py>`_
 -- potential,--,float,maximum fraction of urban demand which can be supplied by district heating
 -- progress,--,Dictionary with planning horizons as keys., Increase of today's district heating demand to potential maximum district heating share. Progress = 0 means today's district heating share. Progress = 1 means maximum fraction of urban demand is supplied by district heating
