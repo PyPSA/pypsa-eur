@@ -12,7 +12,8 @@ Upcoming Release
 
 * New configuration option ``everywhere_powerplants`` to build conventional powerplants everywhere, irrespective of existing powerplants locations, in the network (https://github.com/PyPSA/pypsa-eur/pull/850).
 
-* Remove option for wave energy as technology data is not maintained. 
+* Remove option for wave energy as technology data is not maintained.
+* Add warning when BEV availability weekly profile has negative values in `build_transport_demand`.
 
 
 PyPSA-Eur 0.9.0 (5th January 2024)

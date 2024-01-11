@@ -8,10 +8,16 @@ improvements due to drivetrain changes, time series for electric vehicle
 availability and demand-side management constraints.
 """
 
+import logging
+
 import numpy as np
 import pandas as pd
 import xarray as xr
+
+from _helpers import configure_logging
 from _helpers import generate_periodic_profiles
+
+logger = logging.getLogger(__name__)
 
 
 def build_nodal_transport_data(fn, pop_layout):
@@ -130,6 +136,10 @@ def bev_availability_profile(fn, snapshots, nodes, options):
         traffic.mean() - traffic.min()
     )
 
+    if not avail[avail < 0].empty:
+        logger.warning("The BEV availability weekly profile has negative values which can "
+                       "lead to infeasibility.")
+
     return generate_periodic_profiles(
         dt_index=snapshots,
         nodes=nodes,
@@ -160,6 +170,7 @@ if __name__ == "__main__":
             simpl="",
             clusters=48,
         )
+    configure_logging(snakemake)
 
     pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
 
