@@ -533,16 +533,16 @@ def prepare_temperature_data():
     """
     temperature = xr.open_dataarray(snakemake.input.air_temperature).to_pandas()
     d_heat = (
-        temperature.groupby(temperature.columns.str[:2], axis=1)
+        temperature.T.groupby(temperature.columns.str[:2])
         .mean()
-        .resample("1D")
+        .T.resample("1D")
         .mean()
         < t_threshold
     ).sum()
     temperature_average_d_heat = (
-        temperature.groupby(temperature.columns.str[:2], axis=1)
+        temperature.T.groupby(temperature.columns.str[:2])
         .mean()
-        .apply(
+        .T.apply(
             lambda x: get_average_temperature_during_heating_season(x, t_threshold=15)
         )
     )
@@ -610,7 +610,7 @@ def calculate_costs(u_values, l, cost_retro, window_assumptions):
             cost_retro.loc[x.name[3], "cost_var"]
             * 100
             * float(l)
-            * l_weight.loc[x.name[3]][0]
+            * l_weight.loc[x.name[3]].iloc[0]
             + cost_retro.loc[x.name[3], "cost_fix"]
         )
         * x.A_element
@@ -720,6 +720,7 @@ def map_to_lstrength(l_strength, df):
         .swaplevel(axis=1)
         .dropna(axis=1)
     )
+
     return pd.concat([df.drop([2, 3], axis=1, level=1), l_strength_df], axis=1)
 
 
@@ -800,6 +801,7 @@ def calculate_heat_losses(u_values, data_tabula, l_strength, temperature_factor)
         * data_tabula.A_envelope
         / data_tabula.A_C_Ref
     )
+
     heat_transfer_perm2 = pd.concat(
         [
             heat_transfer_perm2,

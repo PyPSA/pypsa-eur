@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: CC0-1.0
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#top-level-configuration
-version: 0.8.1
+version: 0.9.0
 tutorial: false
 
 logging:
@@ -59,6 +59,9 @@ snapshots:
   start: "2013-01-01"
   end: "2014-01-01"
   inclusive: 'left'
+  resolution: false
+  segmentation: false
+  #representative: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#enable
 enable:
@@ -74,6 +77,7 @@ enable:
   retrieve_natura_raster: true
   custom_busmap: false
 
+
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
 co2_budget:
   2020: 0.701
@@ -87,7 +91,9 @@ co2_budget:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
   voltages: [220., 300., 380., 500., 750.]
+  gaslimit_enable: false
   gaslimit: false
+  co2limit_enable: false
   co2limit: 7.75e+7
   co2base: 1.487e+9
   agg_p_nom_limits: data/agg_p_nom_minmax.csv
@@ -110,6 +116,7 @@ electricity:
 
   powerplants_filter: (DateOut >= 2022 or DateOut != DateOut)
   custom_powerplants: false
+  everywhere_powerplants: [nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
 
   conventional_carriers: [nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
   renewable_carriers: [solar, onwind, offwind-ac, offwind-dc, hydro]
@@ -123,6 +130,10 @@ electricity:
       Offshore: [offwind-ac, offwind-dc]
       Onshore: [onwind]
       PV: [solar]
+
+  autarky:
+    enable: false
+    by_country: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#atlite
 atlite:
@@ -221,7 +232,7 @@ renewable:
       orientation:
         slope: 35.
         azimuth: 180.
-    capacity_per_sqkm: 1.7
+    capacity_per_sqkm: 5.1
     # correction_factor: 0.854337
     corine: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 26, 31, 32]
     luisa: false # [1111, 1121, 1122, 1123, 1130, 1210, 1221, 1222, 1230, 1241, 1242, 1310, 1320, 1330, 1410, 1421, 1422, 2110, 2120, 2130, 2210, 2220, 2230, 2310, 2410, 2420, 3210, 3320, 3330]
@@ -254,7 +265,7 @@ lines:
     750.: "Al/St 560/50 4-bundle 750.0"
   s_max_pu: 0.7
   s_nom_max: .inf
-  max_extension: .inf
+  max_extension: 20000 #MW
   length_factor: 1.25
   reconnect_crimea: true
   under_construction: 'zero' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
@@ -269,7 +280,7 @@ lines:
 links:
   p_max_pu: 1.0
   p_nom_max: .inf
-  max_extension: .inf
+  max_extension: 30000 #MW
   include_tyndp: true
   under_construction: 'zero' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
 
@@ -279,7 +290,7 @@ transformers:
   s_nom: 2000.
   type: ''
 
-# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#load
+# docs-load in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#load
 load:
   power_statistics: true
   interpolate_limit: 3
@@ -304,6 +315,7 @@ pypsa_eur:
   - offwind-dc
   - solar
   - ror
+  - nuclear
   StorageUnit:
   - PHS
   - hydro
@@ -366,8 +378,11 @@ sector:
     potential: 0.6
     progress:
       2020: 0.0
+      2025: 0.15
       2030: 0.3
+      2035: 0.45
       2040: 0.6
+      2045: 0.8
       2050: 1.0
     district_heating_loss: 0.15
   cluster_heat_buses: false
@@ -390,18 +405,27 @@ sector:
   v2g: true
   land_transport_fuel_cell_share:
     2020: 0
-    2030: 0.05
-    2040: 0.1
-    2050: 0.15
+    2025: 0
+    2030: 0
+    2035: 0
+    2040: 0
+    2045: 0
+    2050: 0
   land_transport_electric_share:
     2020: 0
-    2030: 0.25
-    2040: 0.6
-    2050: 0.85
+    2025: 0.15
+    2030: 0.3
+    2035: 0.45
+    2040: 0.7
+    2045: 0.85
+    2050: 1
   land_transport_ice_share:
     2020: 1
+    2025: 0.85
     2030: 0.7
+    2035: 0.55
     2040: 0.3
+    2045: 0.15
     2050: 0
   transport_fuel_cell_efficiency: 0.5
   transport_internal_combustion_efficiency: 0.3
@@ -415,18 +439,27 @@ sector:
   shipping_hydrogen_liquefaction: false
   shipping_hydrogen_share:
     2020: 0
+    2025: 0
     2030: 0
+    2035: 0
     2040: 0
+    2045: 0
     2050: 0
   shipping_methanol_share:
     2020: 0
+    2025: 0.15
     2030: 0.3
+    2035: 0.5
     2040: 0.7
+    2045: 0.85
     2050: 1
   shipping_oil_share:
     2020: 1
+    2025: 0.85
     2030: 0.7
+    2035: 0.5
     2040: 0.3
+    2045: 0.15
     2050: 0
   shipping_methanol_efficiency: 0.46
   shipping_oil_efficiency: 0.40
@@ -455,6 +488,7 @@ sector:
     decentral: 3
     central: 180
   boilers: true
+  resistive_heaters: true
   oil_boilers: false
   biomass_boiler: true
   chp: true
@@ -472,6 +506,8 @@ sector:
   hydrogen_turbine: false
   SMR: true
   SMR_cc: true
+  regional_methanol_demand: false
+  regional_oil_demand: false
   regional_co2_sequestration_potential:
     enable: false
     attribute: 'conservative estimate Mt'
@@ -484,6 +520,7 @@ sector:
   co2_sequestration_lifetime: 50
   co2_spatial: false
   co2network: false
+  co2_network_cost_factor: 1
   cc_fraction: 0.9
   hydrogen_underground_storage: true
   hydrogen_underground_storage_locations:
@@ -623,7 +660,9 @@ costs:
     battery: 0.
     battery inverter: 0.
   emission_prices:
+    enable: false
     co2: 0.
+    co2_monthly_prices: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#clustering
 clustering:
@@ -661,9 +700,15 @@ solving:
     track_iterations: false
     min_iterations: 4
     max_iterations: 6
-    transmission_losses: 0
+    transmission_losses: 2
     linearized_unit_commitment: true
     horizon: 365
+
+  constraints:
+    CCL: false
+    EQ: false
+    BAU: false
+    SAFE: false
 
   solver:
     name: gurobi
@@ -778,7 +823,6 @@ plotting:
     hydroelectricity: '#298c81'
     PHS: '#51dbcc'
     hydro+PHS: "#08ad97"
-    wave: '#a7d4cf'
     # solar
     solar: "#f9d002"
     solar PV: "#f9d002"
@@ -991,6 +1035,7 @@ plotting:
     CO2 sequestration: '#f29dae'
     DAC: '#ff5270'
     co2 stored: '#f2385a'
+    co2 sequestered: '#f2682f'
     co2: '#f29dae'
     co2 vent: '#ffd4dc'
     CO2 pipeline: '#f5627f'

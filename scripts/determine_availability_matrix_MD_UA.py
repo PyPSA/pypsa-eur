@@ -2,6 +2,9 @@
 # SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
+"""
+Create land elibility analysis for Ukraine and Moldova with different datasets.
+"""
 
 import functools
 import logging
