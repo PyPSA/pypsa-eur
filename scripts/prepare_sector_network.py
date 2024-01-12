@@ -761,6 +761,7 @@ def add_co2limit(n, nyears=1.0, limit=0.0):
         "CO2Limit",
         carrier_attribute="co2_emissions",
         sense="<=",
+        type="co2_atmosphere",
         constant=co2_limit,
     )
 
@@ -3606,8 +3607,8 @@ if __name__ == "__main__":
             configfiles="test/config.overnight.yaml",
             simpl="",
             opts="",
-            clusters="5",
-            ll="v1.5",
+            clusters="37",
+            ll="v1.0",
             sector_opts="CO2L0-24H-T-H-B-I-A-solar+p3-dist1",
             planning_horizons="2030",
         )
