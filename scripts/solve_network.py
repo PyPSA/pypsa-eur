@@ -208,7 +208,7 @@ def add_co2_sequestration_limit(n, config, limit=200):
 
 
 def add_carbon_constraint(n, snapshots):
-    glcs = n.global_constraints.query('type == "co2_limit"')
+    glcs = n.global_constraints.query('type == "co2_atmosphere"')
     if glcs.empty:
         return
     for name, glc in glcs.iterrows():
@@ -795,6 +795,28 @@ def add_pipe_retrofit_constraint(n):
     n.model.add_constraints(lhs == rhs, name="Link-pipe_retrofit")
 
 
+def add_co2_atmosphere_constraint(n, snapshots):
+    glcs = n.global_constraints[n.global_constraints.type=="co2_atmosphere"]
+    
+    if glcs.empty:
+        return
+    for name, glc in glcs.iterrows():
+        carattr = glc.carrier_attribute
+        emissions = n.carriers.query(f"{carattr} != 0")[carattr]
+
+        if emissions.empty:
+            continue
+
+        # stores
+        n.stores["carrier"] = n.stores.bus.map(n.buses.carrier)
+        stores = n.stores.query("carrier in @emissions.index and not e_cyclic")
+        if not stores.empty:
+            last_i = snapshots[-1]
+            lhs = n.model["Store-e"].loc[last_i, stores.index]        
+            rhs = glc.constant
+            
+            n.model.add_constraints(lhs <= rhs, name=f"GlobalConstraint-{name}")
+
 def extra_functionality(n, snapshots):
     """
     Collects supplementary constraints which will be passed to
@@ -837,6 +859,8 @@ def extra_functionality(n, snapshots):
         add_carbon_constraint(n, snapshots)
         add_carbon_budget_constraint(n, snapshots)
         add_retrofit_gas_boiler_constraint(n, snapshots)
+    else:
+        add_co2_atmosphere_constraint(n, snapshots)
 
     if snakemake.params.custom_extra_functionality:
         source_path = snakemake.params.custom_extra_functionality
@@ -910,13 +934,13 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "solve_sector_network_perfect",
+            "solve_sector_network",
             configfiles="../config/test/config.perfect.yaml",
             simpl="",
             opts="",
-            clusters="5",
-            ll="v1.5",
-            sector_opts="8760H-T-H-B-I-A-solar+p3-dist1",
+            clusters="37",
+            ll="v1.0",
+            sector_opts="CO2L0-1H-T-H-B-I-A-solar+p3-dist1",
             planning_horizons="2030",
         )
     configure_logging(snakemake)
