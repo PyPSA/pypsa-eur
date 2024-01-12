@@ -708,7 +708,7 @@ def map_to_lstrength(l_strength, df):
     Renames column names from a pandas dataframe to map tabula retrofitting
     strengths [2 = moderate, 3 = ambitious] to l_strength.
     """
-    middle = len(l_strength) // 2
+    middle = len(l_strength) - 1 # only 26 mm is ambitious
     map_to_l = pd.MultiIndex.from_arrays(
         [middle * [2] + len(l_strength[middle:]) * [3], l_strength]
     )
@@ -880,7 +880,7 @@ def calculate_gain_utilisation_factor(heat_transfer_perm2, Q_ht, Q_gain):
     Calculates gain utilisation factor nu.
     """
     # time constant of the building tau [h] = c_m [Wh/(m^2K)] * 1 /(H_tr_e+H_tb*H_ve) [m^2 K /W]
-    tau = c_m / heat_transfer_perm2.T.groupby(axis=1).sum().T
+    tau = c_m / heat_transfer_perm2.T.groupby(level=1).sum().T
     alpha = alpha_H_0 + (tau / tau_H_0)
     # heat balance ratio
     gamma = (1 / Q_ht).mul(Q_gain.sum(axis=1), axis=0)

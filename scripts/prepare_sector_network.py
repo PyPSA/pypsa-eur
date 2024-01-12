@@ -1937,6 +1937,7 @@ def add_heat(n, costs):
                 lifetime=costs.at["central gas CHP", "lifetime"],
             )
 
+        if options["chp"] and options["chp_cc"] and name == "urban central":
             n.madd(
                 "Link",
                 nodes[name] + " urban central gas CHP CC",
@@ -2336,6 +2337,7 @@ def add_biomass(n, costs):
             lifetime=costs.at[key, "lifetime"],
         )
 
+    if not urban_central.empty and options["chp"] and options["chp_cc"]:
         n.madd(
             "Link",
             urban_central + " urban central solid biomass CHP CC",
