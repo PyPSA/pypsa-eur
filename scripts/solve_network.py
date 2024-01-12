@@ -796,8 +796,8 @@ def add_pipe_retrofit_constraint(n):
 
 
 def add_co2_atmosphere_constraint(n, snapshots):
-    glcs = n.global_constraints[n.global_constraints.type=="co2_atmosphere"]
-    
+    glcs = n.global_constraints[n.global_constraints.type == "co2_atmosphere"]
+
     if glcs.empty:
         return
     for name, glc in glcs.iterrows():
@@ -812,10 +812,11 @@ def add_co2_atmosphere_constraint(n, snapshots):
         stores = n.stores.query("carrier in @emissions.index and not e_cyclic")
         if not stores.empty:
             last_i = snapshots[-1]
-            lhs = n.model["Store-e"].loc[last_i, stores.index]        
+            lhs = n.model["Store-e"].loc[last_i, stores.index]
             rhs = glc.constant
-            
+
             n.model.add_constraints(lhs <= rhs, name=f"GlobalConstraint-{name}")
+
 
 def extra_functionality(n, snapshots):
     """
