@@ -502,6 +502,10 @@ def add_carrier_buses(n, carrier, nodes=None):
         capital_cost=capital_cost,
     )
 
+    # omit gas generators
+    if carrier == "gas":
+        return
+
     n.madd(
         "Generator",
         nodes,
