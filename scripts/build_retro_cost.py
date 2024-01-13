@@ -708,7 +708,7 @@ def map_to_lstrength(l_strength, df):
     Renames column names from a pandas dataframe to map tabula retrofitting
     strengths [2 = moderate, 3 = ambitious] to l_strength.
     """
-    middle = len(l_strength) - 1 # only 26 mm is ambitious
+    middle = len(l_strength) - 1  # only 26 mm is ambitious
     map_to_l = pd.MultiIndex.from_arrays(
         [middle * [2] + len(l_strength[middle:]) * [3], l_strength]
     )
