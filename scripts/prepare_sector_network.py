@@ -2180,25 +2180,24 @@ def add_biomass(n, costs):
             pd.read_csv(snakemake.input.industrial_demand, index_col=0) * 1e6
         ) * nyears
         if options.get("biomass_spatial", options["biomass_transport"]):
-            p_set = (
+            e_set = (
                 industrial_demand.loc[spatial.biomass.locations, "solid biomass"].rename(
-                    index=lambda x: x + " solid biomass for industry"
+                    index=lambda x: x + " solid biomass"
                 )
-                / nhours
             )
         else:
-            p_set = industrial_demand["solid biomass"].sum() / nhours
+            e_set = industrial_demand["solid biomass"].sum()
     else:
         # if the industry is modelled, keep full biomass potentials
-        p_set = 0
+        e_set = 0
 
 
     if options.get("biomass_spatial", options["biomass_transport"]):
         solid_biomass_potentials_spatial = biomass_potentials["solid biomass"].rename(
             index=lambda x: x + " solid biomass"
-        ) - p_set
+        ) - e_set
     else:
-        solid_biomass_potentials_spatial = biomass_potentials["solid biomass"].sum() - p_set
+        solid_biomass_potentials_spatial = biomass_potentials["solid biomass"].sum() - e_set
 
     n.add("Carrier", "biogas")
     n.add("Carrier", "solid biomass")
