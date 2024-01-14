@@ -2194,11 +2194,11 @@ def add_biomass(n, costs):
                 index=lambda x: x + " solid biomass"
             )
             - e_set
-        )
+        ).clip(lower=0)
     else:
         solid_biomass_potentials_spatial = (
             biomass_potentials["solid biomass"].sum() - e_set
-        )
+        ).clip(lower=0)
 
     n.add("Carrier", "biogas")
     n.add("Carrier", "solid biomass")
