@@ -256,6 +256,7 @@ rule build_energy_totals:
         energy_name=RESOURCES + "energy_totals.csv",
         co2_name=RESOURCES + "co2_totals.csv",
         transport_name=RESOURCES + "transport_data.csv",
+        district_heat_share=RESOURCES + "district_heat_share.csv",
     threads: 16
     resources:
         mem_mb=10000,
