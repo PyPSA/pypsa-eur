@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd
 import pypsa
 import xarray as xr
-from _helpers import generate_periodic_profiles, update_config_with_sector_opts
+from _helpers import update_config_with_sector_opts
 from add_electricity import calculate_annuity, sanitize_carriers
 from build_energy_totals import build_co2_totals, build_eea_co2, build_eurostat_co2
 from networkx.algorithms import complement
@@ -1629,14 +1629,8 @@ def add_land_transport(n, costs):
 
 
 def build_heat_demand(n):
-    # copy forward the daily average heat demand into each hour, so it can be multiplied by the intraday profile
-    daily_space_heat_demand = (
-        xr.open_dataarray(snakemake.input.heat_demand_total)
-        .to_pandas()
-        .reindex(index=n.snapshots, method="ffill")
-    )
 
-    intraday_profiles = pd.read_csv(snakemake.input.heat_profile, index_col=0)
+    heat_demand_shape = xr.open_dataset(snakemake.input.hourly_heat_demand_total).to_dataframe().unstack(level=1)
 
     sectors = ["residential", "services"]
     uses = ["water", "space"]
@@ -1644,25 +1638,14 @@ def build_heat_demand(n):
     heat_demand = {}
     electric_heat_supply = {}
     for sector, use in product(sectors, uses):
-        weekday = list(intraday_profiles[f"{sector} {use} weekday"])
-        weekend = list(intraday_profiles[f"{sector} {use} weekend"])
-        weekly_profile = weekday * 5 + weekend * 2
-        intraday_year_profile = generate_periodic_profiles(
-            daily_space_heat_demand.index.tz_localize("UTC"),
-            nodes=daily_space_heat_demand.columns,
-            weekly_profile=weekly_profile,
-        )
 
-        if use == "space":
-            heat_demand_shape = daily_space_heat_demand * intraday_year_profile
-        else:
-            heat_demand_shape = intraday_year_profile
+        name = f"{sector} {use}"
 
-        heat_demand[f"{sector} {use}"] = (
-            heat_demand_shape / heat_demand_shape.sum()
+        heat_demand[name] = (
+            heat_demand_shape[name] / heat_demand_shape[name].sum()
         ).multiply(pop_weighted_energy_totals[f"total {sector} {use}"]) * 1e6
         electric_heat_supply[f"{sector} {use}"] = (
-            heat_demand_shape / heat_demand_shape.sum()
+            heat_demand_shape[name] / heat_demand_shape[name].sum()
         ).multiply(pop_weighted_energy_totals[f"electricity {sector} {use}"]) * 1e6
 
     heat_demand = pd.concat(heat_demand, axis=1)
