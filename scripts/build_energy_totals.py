@@ -571,7 +571,7 @@ def build_energy_totals(countries, eurostat, swiss, idees):
     return df
 
 
-def build_district_heat_share(idees):
+def build_district_heat_share(countries, idees):
 
     # district heating share
     district_heat = idees[
@@ -580,6 +580,8 @@ def build_district_heat_share(idees):
     total_heat = idees[["thermal uses residential", "thermal uses services"]].sum(axis=1)
 
     district_heat_share = district_heat/total_heat
+
+    district_heat_share = district_heat_share.reindex(countries)
 
     # Missing district heating share
     dh_share = pd.read_csv(
@@ -761,7 +763,7 @@ if __name__ == "__main__":
     energy = build_energy_totals(countries, eurostat, swiss, idees)
     energy.to_csv(snakemake.output.energy_name)
 
-    district_heat_share = build_district_heat_share(idees)
+    district_heat_share = build_district_heat_share(countries, idees)
     district_heat_share.to_csv(snakemake.output.district_heat_share)
 
     base_year_emissions = params["base_emissions_year"]

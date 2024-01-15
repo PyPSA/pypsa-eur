@@ -26,9 +26,4 @@ if __name__ == "__main__":
     nodal_energy_totals.index = pop_layout.index
     nodal_energy_totals = nodal_energy_totals.multiply(pop_layout.fraction, axis=0)
 
-    # district heating share should not be divided by population fraction
-    dh_share = energy_totals["district heat share"].loc[pop_layout.ct].fillna(0.0)
-    dh_share.index = pop_layout.index
-    nodal_energy_totals["district heat share"] = dh_share
-
     nodal_energy_totals.to_csv(snakemake.output[0])
