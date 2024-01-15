@@ -1678,7 +1678,10 @@ def add_heat(n, costs):
 
     heat_demand = build_heat_demand(n)
 
-    nodes, dist_fraction, urban_fraction = create_nodes_for_heat_sector()
+    district_heat_info = pd.read_csv(snakemake.input.district_heat_share,
+                                     index_col=0)
+    dist_fraction = district_heat_info["district fraction of node"]
+    urban_fraction = district_heat_info["urban fraction"]
 
     # NB: must add costs of central heating afterwards (EUR 400 / kWpeak, 50a, 1% FOM from Fraunhofer ISE)
 
@@ -1715,6 +1718,8 @@ def add_heat(n, costs):
         # 1e3 converts from W/m^2 to MW/(1000m^2) = kW/m^2
         solar_thermal = options["solar_cf_correction"] * solar_thermal / 1e3
 
+    nodes = pop_layout.index
+
     for name in heat_systems:
         name_type = "central" if name == "urban central" else "decentral"
 
@@ -1722,8 +1727,8 @@ def add_heat(n, costs):
 
         n.madd(
             "Bus",
-            nodes[name] + f" {name} heat",
-            location=nodes[name],
+            nodes + f" {name} heat",
+            location=nodes,
             carrier=name + " heat",
             unit="MWh_th",
         )
@@ -1731,9 +1736,9 @@ def add_heat(n, costs):
         if name == "urban central" and options.get("central_heat_vent"):
             n.madd(
                 "Generator",
-                nodes[name] + f" {name} heat vent",
-                bus=nodes[name] + f" {name} heat",
-                location=nodes[name],
+                nodes + f" {name} heat vent",
+                bus=nodes + f" {name} heat",
+                location=nodes,
                 carrier=name + " heat vent",
                 p_nom_extendable=True,
                 p_max_pu=0,
@@ -1746,11 +1751,11 @@ def add_heat(n, costs):
         for sector in sectors:
             # heat demand weighting
             if "rural" in name:
-                factor = 1 - urban_fraction[nodes[name]]
+                factor = 1 - urban_fraction[nodes]
             elif "urban central" in name:
-                factor = dist_fraction[nodes[name]]
+                factor = dist_fraction[nodes]
             elif "urban decentral" in name:
-                factor = urban_fraction[nodes[name]] - dist_fraction[nodes[name]]
+                factor = urban_fraction[nodes] - dist_fraction[nodes]
             else:
                 raise NotImplementedError(
                     f" {name} not in " f"heat systems: {heat_systems}"
@@ -1761,7 +1766,7 @@ def add_heat(n, costs):
                     heat_demand[[sector + " water", sector + " space"]]
                     .T.groupby(level=1)
                     .sum()
-                    .T[nodes[name]]
+                    .T[nodes]
                     .multiply(factor)
                 )
 
@@ -1769,7 +1774,7 @@ def add_heat(n, costs):
             heat_load = (
                 heat_demand.T.groupby(level=1)
                 .sum()
-                .T[nodes[name]]
+                .T[nodes]
                 .multiply(
                     factor * (1 + options["district_heating"]["district_heating_loss"])
                 )
@@ -1777,9 +1782,9 @@ def add_heat(n, costs):
 
         n.madd(
             "Load",
-            nodes[name],
+            nodes,
             suffix=f" {name} heat",
-            bus=nodes[name] + f" {name} heat",
+            bus=nodes + f" {name} heat",
             carrier=name + " heat",
             p_set=heat_load,
         )
@@ -1790,17 +1795,17 @@ def add_heat(n, costs):
 
         costs_name = f"{name_type} {heat_pump_type}-sourced heat pump"
         efficiency = (
-            cop[heat_pump_type][nodes[name]]
+            cop[heat_pump_type][nodes]
             if options["time_dep_hp_cop"]
             else costs.at[costs_name, "efficiency"]
         )
 
         n.madd(
             "Link",
-            nodes[name],
+            nodes,
             suffix=f" {name} {heat_pump_type} heat pump",
-            bus0=nodes[name],
-            bus1=nodes[name] + f" {name} heat",
+            bus0=nodes,
+            bus1=nodes + f" {name} heat",
             carrier=f"{name} {heat_pump_type} heat pump",
             efficiency=efficiency,
             capital_cost=costs.at[costs_name, "efficiency"]
@@ -1814,17 +1819,17 @@ def add_heat(n, costs):
 
             n.madd(
                 "Bus",
-                nodes[name] + f" {name} water tanks",
-                location=nodes[name],
+                nodes + f" {name} water tanks",
+                location=nodes,
                 carrier=name + " water tanks",
                 unit="MWh_th",
             )
 
             n.madd(
                 "Link",
-                nodes[name] + f" {name} water tanks charger",
-                bus0=nodes[name] + f" {name} heat",
-                bus1=nodes[name] + f" {name} water tanks",
+                nodes + f" {name} water tanks charger",
+                bus0=nodes + f" {name} heat",
+                bus1=nodes + f" {name} water tanks",
                 efficiency=costs.at["water tank charger", "efficiency"],
                 carrier=name + " water tanks charger",
                 p_nom_extendable=True,
@@ -1832,9 +1837,9 @@ def add_heat(n, costs):
 
             n.madd(
                 "Link",
-                nodes[name] + f" {name} water tanks discharger",
-                bus0=nodes[name] + f" {name} water tanks",
-                bus1=nodes[name] + f" {name} heat",
+                nodes + f" {name} water tanks discharger",
+                bus0=nodes + f" {name} water tanks",
+                bus1=nodes + f" {name} heat",
                 carrier=name + " water tanks discharger",
                 efficiency=costs.at["water tank discharger", "efficiency"],
                 p_nom_extendable=True,
@@ -1853,8 +1858,8 @@ def add_heat(n, costs):
 
             n.madd(
                 "Store",
-                nodes[name] + f" {name} water tanks",
-                bus=nodes[name] + f" {name} water tanks",
+                nodes + f" {name} water tanks",
+                bus=nodes + f" {name} water tanks",
                 e_cyclic=True,
                 e_nom_extendable=True,
                 carrier=name + " water tanks",
@@ -1868,9 +1873,9 @@ def add_heat(n, costs):
 
             n.madd(
                 "Link",
-                nodes[name] + f" {name} resistive heater",
-                bus0=nodes[name],
-                bus1=nodes[name] + f" {name} heat",
+                nodes + f" {name} resistive heater",
+                bus0=nodes,
+                bus1=nodes + f" {name} heat",
                 carrier=name + " resistive heater",
                 efficiency=costs.at[key, "efficiency"],
                 capital_cost=costs.at[key, "efficiency"] * costs.at[key, "fixed"],
@@ -1883,10 +1888,10 @@ def add_heat(n, costs):
 
             n.madd(
                 "Link",
-                nodes[name] + f" {name} gas boiler",
+                nodes + f" {name} gas boiler",
                 p_nom_extendable=True,
-                bus0=spatial.gas.df.loc[nodes[name], "nodes"].values,
-                bus1=nodes[name] + f" {name} heat",
+                bus0=spatial.gas.df.loc[nodes, "nodes"].values,
+                bus1=nodes + f" {name} heat",
                 bus2="co2 atmosphere",
                 carrier=name + " gas boiler",
                 efficiency=costs.at[key, "efficiency"],
@@ -1900,13 +1905,13 @@ def add_heat(n, costs):
 
             n.madd(
                 "Generator",
-                nodes[name],
+                nodes,
                 suffix=f" {name} solar thermal collector",
-                bus=nodes[name] + f" {name} heat",
+                bus=nodes + f" {name} heat",
                 carrier=name + " solar thermal",
                 p_nom_extendable=True,
                 capital_cost=costs.at[name_type + " solar thermal", "fixed"],
-                p_max_pu=solar_thermal[nodes[name]],
+                p_max_pu=solar_thermal[nodes],
                 lifetime=costs.at[name_type + " solar thermal", "lifetime"],
             )
 
@@ -1914,10 +1919,10 @@ def add_heat(n, costs):
             # add gas CHP; biomass CHP is added in biomass section
             n.madd(
                 "Link",
-                nodes[name] + " urban central gas CHP",
-                bus0=spatial.gas.df.loc[nodes[name], "nodes"].values,
-                bus1=nodes[name],
-                bus2=nodes[name] + " urban central heat",
+                nodes + " urban central gas CHP",
+                bus0=spatial.gas.df.loc[nodes, "nodes"].values,
+                bus1=nodes,
+                bus2=nodes + " urban central heat",
                 bus3="co2 atmosphere",
                 carrier="urban central gas CHP",
                 p_nom_extendable=True,
@@ -1933,12 +1938,12 @@ def add_heat(n, costs):
 
             n.madd(
                 "Link",
-                nodes[name] + " urban central gas CHP CC",
-                bus0=spatial.gas.df.loc[nodes[name], "nodes"].values,
-                bus1=nodes[name],
-                bus2=nodes[name] + " urban central heat",
+                nodes + " urban central gas CHP CC",
+                bus0=spatial.gas.df.loc[nodes, "nodes"].values,
+                bus1=nodes,
+                bus2=nodes + " urban central heat",
                 bus3="co2 atmosphere",
-                bus4=spatial.co2.df.loc[nodes[name], "nodes"].values,
+                bus4=spatial.co2.df.loc[nodes, "nodes"].values,
                 carrier="urban central gas CHP CC",
                 p_nom_extendable=True,
                 capital_cost=costs.at["central gas CHP", "fixed"]
@@ -1970,11 +1975,11 @@ def add_heat(n, costs):
         if options["chp"] and options["micro_chp"] and name != "urban central":
             n.madd(
                 "Link",
-                nodes[name] + f" {name} micro gas CHP",
+                nodes + f" {name} micro gas CHP",
                 p_nom_extendable=True,
-                bus0=spatial.gas.df.loc[nodes[name], "nodes"].values,
-                bus1=nodes[name],
-                bus2=nodes[name] + f" {name} heat",
+                bus0=spatial.gas.df.loc[nodes, "nodes"].values,
+                bus1=nodes,
+                bus2=nodes + f" {name} heat",
                 bus3="co2 atmosphere",
                 carrier=name + " micro gas CHP",
                 efficiency=costs.at["micro CHP", "efficiency"],
@@ -2103,50 +2108,6 @@ def add_heat(n, costs):
                     capital_cost=capital_cost[strength]
                     * options["retrofitting"]["cost_factor"],
                 )
-
-
-def create_nodes_for_heat_sector():
-    # TODO pop_layout
-
-    # rural are areas with low heating density and individual heating
-    # urban are areas with high heating density
-    # urban can be split into district heating (central) and individual heating (decentral)
-
-    ct_urban = pop_layout.urban.groupby(pop_layout.ct).sum()
-    # distribution of urban population within a country
-    pop_layout["urban_ct_fraction"] = pop_layout.urban / pop_layout.ct.map(ct_urban.get)
-
-    sectors = ["residential", "services"]
-
-    nodes = {}
-    urban_fraction = pop_layout.urban / pop_layout[["rural", "urban"]].sum(axis=1)
-
-    for sector in sectors:
-        nodes[sector + " rural"] = pop_layout.index
-        nodes[sector + " urban decentral"] = pop_layout.index
-
-    district_heat_share = pop_weighted_energy_totals["district heat share"]
-
-    # maximum potential of urban demand covered by district heating
-    central_fraction = options["district_heating"]["potential"]
-    # district heating share at each node
-    dist_fraction_node = (
-        district_heat_share * pop_layout["urban_ct_fraction"] / pop_layout["fraction"]
-    )
-    nodes["urban central"] = dist_fraction_node.index
-    # if district heating share larger than urban fraction -> set urban
-    # fraction to district heating share
-    urban_fraction = pd.concat([urban_fraction, dist_fraction_node], axis=1).max(axis=1)
-    # difference of max potential and today's share of district heating
-    diff = (urban_fraction * central_fraction) - dist_fraction_node
-    progress = get(options["district_heating"]["progress"], investment_year)
-    dist_fraction_node += diff * progress
-    logger.info(
-        f"Increase district heating share by a progress factor of {progress:.2%} "
-        f"resulting in new average share of {dist_fraction_node.mean():.2%}"
-    )
-
-    return nodes, dist_fraction_node, urban_fraction
 
 
 def add_biomass(n, costs):
@@ -2366,7 +2327,7 @@ def add_biomass(n, costs):
 
     if options["biomass_boiler"]:
         # TODO: Add surcharge for pellets
-        nodes_heat = create_nodes_for_heat_sector()[0]
+        nodes = pop_layout.index
         for name in [
             "residential rural",
             "services rural",
@@ -2375,10 +2336,10 @@ def add_biomass(n, costs):
         ]:
             n.madd(
                 "Link",
-                nodes_heat[name] + f" {name} biomass boiler",
+                nodes + f" {name} biomass boiler",
                 p_nom_extendable=True,
-                bus0=spatial.biomass.df.loc[nodes_heat[name], "nodes"].values,
-                bus1=nodes_heat[name] + f" {name} heat",
+                bus0=spatial.biomass.df.loc[nodes, "nodes"].values,
+                bus1=nodes + f" {name} heat",
                 carrier=name + " biomass boiler",
                 efficiency=costs.at["biomass boiler", "efficiency"],
                 capital_cost=costs.at["biomass boiler", "efficiency"]
@@ -2821,7 +2782,7 @@ def add_industry(n, costs):
         )
 
     if options["oil_boilers"]:
-        nodes_heat = create_nodes_for_heat_sector()[0]
+        nodes = pop_layout.index
 
         for name in [
             "residential rural",
@@ -2831,10 +2792,10 @@ def add_industry(n, costs):
         ]:
             n.madd(
                 "Link",
-                nodes_heat[name] + f" {name} oil boiler",
+                nodes + f" {name} oil boiler",
                 p_nom_extendable=True,
                 bus0=spatial.oil.nodes,
-                bus1=nodes_heat[name] + f" {name} heat",
+                bus1=nodes + f" {name} heat",
                 bus2="co2 atmosphere",
                 carrier=f"{name} oil boiler",
                 efficiency=costs.at["decentral oil boiler", "efficiency"],

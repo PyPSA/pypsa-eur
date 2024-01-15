@@ -710,6 +710,27 @@ rule build_transport_demand:
         "../scripts/build_transport_demand.py"
 
 
+
+
+rule build_district_heat_share:
+    params:
+        sector=config["sector"],
+    input:
+        district_heat_share=RESOURCES + "district_heat_share.csv",
+        clustered_pop_layout=RESOURCES + "pop_layout_elec_s{simpl}_{clusters}.csv",
+    output:
+        district_heat_share=RESOURCES + "district_heat_share_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
+    threads: 1
+    resources:
+        mem_mb=1000,
+    log:
+        LOGS + "build_district_heat_share_s{simpl}_{clusters}_{planning_horizons}.log",
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_district_heat_share.py"
+
+
 rule prepare_sector_network:
     params:
         co2_budget=config["co2_budget"],
@@ -762,6 +783,7 @@ rule prepare_sector_network:
         industrial_demand=RESOURCES
         + "industrial_energy_demand_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
         hourly_heat_demand_total=RESOURCES + "hourly_heat_demand_total_elec_s{simpl}_{clusters}.nc",
+	district_heat_share=RESOURCES + "district_heat_share_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
         temp_soil_total=RESOURCES + "temp_soil_total_elec_s{simpl}_{clusters}.nc",
         temp_soil_rural=RESOURCES + "temp_soil_rural_elec_s{simpl}_{clusters}.nc",
         temp_soil_urban=RESOURCES + "temp_soil_urban_elec_s{simpl}_{clusters}.nc",
