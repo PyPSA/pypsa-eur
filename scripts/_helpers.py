@@ -224,11 +224,12 @@ def progress_retrieve(url, file, disable=False):
 
 
 def mock_snakemake(
-        rulename, 
-        root_dir=None, 
-        configfiles=[],
-        submodule_dir="workflow/submodules/pypsa-eur",
-        **wildcards):
+    rulename,
+    root_dir=None,
+    configfiles=[],
+    submodule_dir="workflow/submodules/pypsa-eur",
+    **wildcards,
+):
     """
     This function is expected to be executed from the 'scripts'-directory of '
     the snakemake project. It returns a snakemake.script.Snakemake object,
@@ -245,7 +246,7 @@ def mock_snakemake(
     configfiles: list, str
         list of configfiles to be used to update the config
     submodule_dir: str, Path
-        in case PyPSA-Eur is used as a submodule, submodule_dir is 
+        in case PyPSA-Eur is used as a submodule, submodule_dir is
         the path of pypsa-eur relative to the project directory.
     **wildcards:
         keyword arguments fixing the wildcards. Only necessary if wildcards are
@@ -267,7 +268,7 @@ def mock_snakemake(
     user_in_script_dir = Path.cwd().resolve() == script_dir
     if str(submodule_dir) in __file__:
         # the submodule_dir path is only need to locate the project dir
-        os.chdir(Path(__file__[:__file__.find(str(submodule_dir))]))
+        os.chdir(Path(__file__[: __file__.find(str(submodule_dir))]))
     elif user_in_script_dir:
         os.chdir(root_dir)
     elif Path.cwd().resolve() != root_dir:
