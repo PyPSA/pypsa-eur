@@ -498,11 +498,11 @@ def add_heating_capacities_installed_before_baseyear(
                 "Link",
                 asset_i,  # e.g. DE1 0 coal CHP-1980
                 bus0=vars(spatial)[generator].nodes,  # EU gas/coal/lignite EU
-                bus1=capacity.index + " urban central heat",  # urban central heat
-                bus2=capacity.index,  # electricity
+                bus1=capacity.index,  # electricity
+                bus2=capacity.index + " urban central heat",  # urban central heat
                 bus3="co2 atmosphere",  # CO2 emissions
                 carrier=f"urban central {generator} CHP",  # urban central gas/lignite/coal CHP
-                p_nom=capacity / costs.at[key, "efficiency"],
+                p_nom=capacity[0] / costs.at[key, "efficiency"],
                 capital_cost=costs.at[key, "fixed"] * costs.at[key, "efficiency"],
                 marginal_cost=costs.at[key, "VOM"],
                 efficiency=costs.at[key, "efficiency"],
