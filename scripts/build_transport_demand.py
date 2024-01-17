@@ -13,9 +13,7 @@ import logging
 import numpy as np
 import pandas as pd
 import xarray as xr
-
-from _helpers import configure_logging
-from _helpers import generate_periodic_profiles
+from _helpers import configure_logging, generate_periodic_profiles
 
 logger = logging.getLogger(__name__)
 
@@ -137,8 +135,10 @@ def bev_availability_profile(fn, snapshots, nodes, options):
     )
 
     if not avail[avail < 0].empty:
-        logger.warning("The BEV availability weekly profile has negative values which can "
-                       "lead to infeasibility.")
+        logger.warning(
+            "The BEV availability weekly profile has negative values which can "
+            "lead to infeasibility."
+        )
 
     return generate_periodic_profiles(
         dt_index=snapshots,
