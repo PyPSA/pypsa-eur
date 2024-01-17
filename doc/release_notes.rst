@@ -14,6 +14,8 @@ Upcoming Release
 
 * Remove option for wave energy as technology data is not maintained.
 
+* Bugfix: Assure entering of code block which corrects Norwegian heat demand.
+
 
 PyPSA-Eur 0.9.0 (5th January 2024)
 ==================================
