@@ -304,7 +304,9 @@ def plot_balances():
 
         df = df.drop(to_drop)
 
-        logger.debug(f"Total energy balance for {v} of {round(df.sum().iloc[0],2)} {units}")
+        logger.debug(
+            f"Total energy balance for {v} of {round(df.sum().iloc[0],2)} {units}"
+        )
 
         if df.empty:
             continue
