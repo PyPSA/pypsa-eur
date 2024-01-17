@@ -273,7 +273,7 @@ def plot_h2_map(network, regions):
     h2_storage = n.stores.query("carrier == 'H2'")
     regions["H2"] = h2_storage.rename(
         index=h2_storage.bus.map(n.buses.location)
-    ).e_nom_opt.div(
+    ).e_nom_opt.groupby(level=0).sum().div(
         1e6
     )  # TWh
     regions["H2"] = regions["H2"].where(regions["H2"] > 0.1)
@@ -1068,9 +1068,10 @@ if __name__ == "__main__":
             "plot_network",
             simpl="",
             opts="",
-            clusters="37",
-            ll="v1.0",
-            sector_opts="4380H-T-H-B-I-A-solar+p3-dist1",
+            clusters="22",
+            ll="v1.2",
+            sector_opts="365H-T-H-B-I-A-solar+p3-linemaxext15",
+            planning_horizons="2040",
         )
 
     logging.basicConfig(level=snakemake.config["logging"]["level"])
