@@ -16,6 +16,8 @@ Upcoming Release
 
 * Bugfix: Assure entering of code block which corrects Norwegian heat demand.
 
+* Add warning when BEV availability weekly profile has negative values in `build_transport_demand`.
+
 
 PyPSA-Eur 0.9.0 (5th January 2024)
 ==================================
