@@ -271,10 +271,11 @@ def plot_h2_map(network, regions):
     assign_location(n)
 
     h2_storage = n.stores.query("carrier == 'H2'")
-    regions["H2"] = h2_storage.rename(
-        index=h2_storage.bus.map(n.buses.location)
-    ).e_nom_opt.div(
-        1e6
+    regions["H2"] = (
+        h2_storage.rename(index=h2_storage.bus.map(n.buses.location))
+        .e_nom_opt.groupby(level=0)
+        .sum()
+        .div(1e6)
     )  # TWh
     regions["H2"] = regions["H2"].where(regions["H2"] > 0.1)
 
