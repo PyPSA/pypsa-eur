@@ -14,6 +14,9 @@ Upcoming Release
 
 * Remove option for wave energy as technology data is not maintained.
 
+* Define global constraint for CO2 emissions on the final state of charge of the
+  CO2 atmosphere store. This gives a more sparse constraint that should improve
+  the performance of the solving process.
 
 PyPSA-Eur 0.9.0 (5th January 2024)
 ==================================
