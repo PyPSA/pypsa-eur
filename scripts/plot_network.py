@@ -1069,10 +1069,9 @@ if __name__ == "__main__":
             "plot_network",
             simpl="",
             opts="",
-            clusters="22",
-            ll="v1.2",
-            sector_opts="365H-T-H-B-I-A-solar+p3-linemaxext15",
-            planning_horizons="2040",
+            clusters="37",
+            ll="v1.0",
+            sector_opts="4380H-T-H-B-I-A-solar+p3-dist1",
         )
 
     logging.basicConfig(level=snakemake.config["logging"]["level"])
