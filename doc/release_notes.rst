@@ -16,6 +16,10 @@ Upcoming Release
 
 * Remove option for wave energy as technology data is not maintained.
 
+* Define global constraint for CO2 emissions on the final state of charge of the
+  CO2 atmosphere store. This gives a more sparse constraint that should improve
+  the performance of the solving process.
+
 * Bugfix: Assure entering of code block which corrects Norwegian heat demand.
 
 * Add warning when BEV availability weekly profile has negative values in `build_transport_demand`.
@@ -23,6 +27,7 @@ Upcoming Release
 * Stacktrace of uncaught exceptions should now be correctly included inside log files (via `configure_logging(..)`).
 
 * Cluster residential and services heat buses by default. Can be disabled with ``cluster_heat_buses: false``.
+
 
 PyPSA-Eur 0.9.0 (5th January 2024)
 ==================================
