@@ -120,7 +120,7 @@ rename_sectors = {
 
 
 # additional insulation thickness, determines maximum possible savings [m]
-l_strength = ["0.07", "0.075", "0.08", "0.1", "0.15", "0.22", "0.24", "0.26"]
+l_strength = ["0.076", "0.197"]
 
 
 # (ii) --- FUNCTIONS ----------------------------------------------------------
@@ -709,8 +709,11 @@ def map_to_lstrength(l_strength, df):
     strengths [2 = moderate, 3 = ambitious] to l_strength.
     """
     middle = len(l_strength) - 1  # only 26 mm is ambitious
+    logger.warning("Warning: Refurbishment state is currently chosen as strong refurbishment")
+    # reflects in capital costs, otherwise moderate cost assumptions are too high,
+    # compared to ambitious ones (this setting lowers them by approx. 10%)
     map_to_l = pd.MultiIndex.from_arrays(
-        [middle * [2] + len(l_strength[middle:]) * [3], l_strength]
+        [middle * [3] + len(l_strength[middle:]) * [3], l_strength]
     )
     l_strength_df = (
         df.stack(-2)
@@ -1022,7 +1025,7 @@ def sample_dE_costs_area(
         [moderate_dE_cost.columns, ["moderate"]]
     )
 
-    ambitious_dE_cost = cost_dE.xs("0.26", level=1, axis=1)
+    ambitious_dE_cost = cost_dE.xs("0.197", level=1, axis=1)
     ambitious_dE_cost.columns = pd.MultiIndex.from_product(
         [ambitious_dE_cost.columns, ["ambitious"]]
     )
