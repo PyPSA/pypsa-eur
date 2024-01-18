@@ -479,7 +479,7 @@ def build_energy_totals(countries, eurostat, swiss, idees):
     # The main heating source for about 73 per cent of the households is based on electricity
     # => 26% is non-electric
 
-    if "NO" in df:
+    if "NO" in df.index:
         elec_fraction = 0.73
 
         no_norway = df.drop("NO")

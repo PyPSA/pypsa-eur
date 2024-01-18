@@ -58,7 +58,7 @@ if __name__ == "__main__":
             gen = client.query_generation(country, start=start, end=end, nett=True)
             gen = gen.tz_localize(None).resample("1h").mean()
             gen = gen.loc[start.tz_localize(None) : end.tz_localize(None)]
-            gen = gen.rename(columns=carrier_grouper).groupby(level=0, axis=1).sum()
+            gen = gen.rename(columns=carrier_grouper).T.groupby(level=0).sum().T
             generation.append(gen)
         except NoMatchingDataError:
             unavailable_countries.append(country)

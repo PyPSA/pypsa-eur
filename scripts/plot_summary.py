@@ -154,7 +154,7 @@ def plot_costs():
 
     df = df.drop(to_drop)
 
-    logger.info(f"Total system cost of {round(df.sum()[0])} EUR billion per year")
+    logger.info(f"Total system cost of {round(df.sum().iloc[0])} EUR billion per year")
 
     new_index = preferred_order.intersection(df.index).append(
         df.index.difference(preferred_order)
@@ -214,7 +214,7 @@ def plot_energy():
 
     df = df.drop(to_drop)
 
-    logger.info(f"Total energy of {round(df.sum()[0])} TWh/a")
+    logger.info(f"Total energy of {round(df.sum().iloc[0])} TWh/a")
 
     if df.empty:
         fig, ax = plt.subplots(figsize=(12, 8))
@@ -304,7 +304,9 @@ def plot_balances():
 
         df = df.drop(to_drop)
 
-        logger.debug(f"Total energy balance for {v} of {round(df.sum()[0],2)} {units}")
+        logger.debug(
+            f"Total energy balance for {v} of {round(df.sum().iloc[0],2)} {units}"
+        )
 
         if df.empty:
             continue
