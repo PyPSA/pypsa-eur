@@ -99,9 +99,10 @@ if __name__ == "__main__":
         pop_rural += pop_cells_ct.where(pop_ct_rural_b, 0.0)
         pop_urban += pop_cells_ct.where(pop_ct_urban_b, 0.0)
 
-    pop_cells = {"total": pop_cells}
+    pop_cells = {}
     pop_cells["rural"] = pop_rural
     pop_cells["urban"] = pop_urban
+    pop_cells["total"] = pop_urban + pop_rural
 
     for key, pop in pop_cells.items():
         ycoords = ("y", cutout.coords["y"].data)
