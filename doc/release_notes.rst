@@ -10,6 +10,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Bugfix: Correct technology keys for the electricity production plotting to work out the box.
+
 * New configuration option ``everywhere_powerplants`` to build conventional powerplants everywhere, irrespective of existing powerplants locations, in the network (https://github.com/PyPSA/pypsa-eur/pull/850).
 
 * Remove option for wave energy as technology data is not maintained.
