@@ -18,6 +18,8 @@ Upcoming Release
 
 * Add warning when BEV availability weekly profile has negative values in `build_transport_demand`.
 
+* Stacktrace of uncaught exceptions should now be correctly included inside log files (via `configure_logging(..)`).
+
 * Cluster residential and services heat buses by default. Can be disabled with ``cluster_heat_buses: false``.
 
 PyPSA-Eur 0.9.0 (5th January 2024)
