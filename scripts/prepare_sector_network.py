@@ -1726,10 +1726,14 @@ def add_heat(n, costs):
         # 1e3 converts from W/m^2 to MW/(1000m^2) = kW/m^2
         solar_thermal = options["solar_cf_correction"] * solar_thermal / 1e3
 
-    nodes = pop_layout.index
 
     for name in heat_systems:
         name_type = "central" if name == "urban central" else "decentral"
+
+        if name == "urban central":
+            nodes = dist_fraction.index[dist_fraction > 0]
+        else:
+            nodes = pop_layout.index
 
         n.add("Carrier", name + " heat")
 
