@@ -1326,7 +1326,7 @@ def add_storage_and_grids(n, costs):
 
         h2_pipes["p_nom"] = 0.0
 
-        if snakemake.input.get("custom_h2_pipelines"):
+        if "custom_h2_pipelines" in snakemake.input:
             fn = snakemake.input.custom_h2_pipelines
             wkn = pd.read_csv(fn, index_col=0)
 
