@@ -8,16 +8,14 @@ Prepares brownfield data from previous planning horizon.
 
 import logging
 
-logger = logging.getLogger(__name__)
-
-import pandas as pd
-
-idx = pd.IndexSlice
-
 import numpy as np
+import pandas as pd
 import pypsa
 from _helpers import update_config_with_sector_opts
 from add_existing_baseyear import add_build_year_to_new_assets
+
+logger = logging.getLogger(__name__)
+idx = pd.IndexSlice
 
 
 def add_brownfield(n, n_p, year):

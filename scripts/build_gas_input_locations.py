@@ -9,11 +9,11 @@ production sites with data from SciGRID_gas and Global Energy Monitor.
 
 import logging
 
-logger = logging.getLogger(__name__)
-
 import geopandas as gpd
 import pandas as pd
 from cluster_gas_network import load_bus_regions
+
+logger = logging.getLogger(__name__)
 
 
 def read_scigrid_gas(fn):

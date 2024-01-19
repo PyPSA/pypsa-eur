@@ -8,9 +8,6 @@ capacity factors, curtailment, energy balances, prices and other metrics.
 """
 
 import logging
-
-logger = logging.getLogger(__name__)
-
 import sys
 
 import numpy as np
@@ -19,7 +16,7 @@ import pypsa
 from prepare_sector_network import prepare_costs
 
 idx = pd.IndexSlice
-
+logger = logging.getLogger(__name__)
 opt_name = {"Store": "e", "Line": "s", "Transformer": "s"}
 
 

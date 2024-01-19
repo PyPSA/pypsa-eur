@@ -8,12 +8,11 @@ Creates plots from summary CSV files.
 
 import logging
 
-logger = logging.getLogger(__name__)
-
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import pandas as pd
 
+logger = logging.getLogger(__name__)
 plt.style.use("ggplot")
 
 from prepare_sector_network import co2_emissions_year

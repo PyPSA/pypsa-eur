@@ -39,10 +39,10 @@ import xarray as xr
 from _benchmark import memory_logger
 from _helpers import configure_logging, get_opt, update_config_with_sector_opts
 from pypsa.descriptors import get_activity_mask
+from pypsa.descriptors import get_switchable_as_dense as get_as_dense
 
 logger = logging.getLogger(__name__)
 pypsa.pf.logger.setLevel(logging.WARNING)
-from pypsa.descriptors import get_switchable_as_dense as get_as_dense
 
 
 def add_land_use_constraint(n, planning_horizons, config):

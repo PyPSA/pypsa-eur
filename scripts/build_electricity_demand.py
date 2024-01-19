@@ -41,11 +41,12 @@ Outputs
 
 import logging
 
-logger = logging.getLogger(__name__)
 import numpy as np
 import pandas as pd
 from _helpers import configure_logging
 from pandas import Timedelta as Delta
+
+logger = logging.getLogger(__name__)
 
 
 def load_timeseries(fn, years, countries, powerstatistics=True):

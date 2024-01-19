@@ -7,9 +7,6 @@ Build spatial distribution of industries from Hotmaps database.
 """
 
 import logging
-
-logger = logging.getLogger(__name__)
-
 import uuid
 from itertools import product
 
@@ -18,6 +15,7 @@ import geopandas as gpd
 import pandas as pd
 from packaging.version import Version, parse
 
+logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
 
 

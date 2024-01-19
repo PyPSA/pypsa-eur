@@ -9,12 +9,12 @@ Preprocess gas network based on data from bthe SciGRID_gas project
 
 import logging
 
-logger = logging.getLogger(__name__)
-
 import geopandas as gpd
 import pandas as pd
 from pypsa.geo import haversine_pts
 from shapely.geometry import Point
+
+logger = logging.getLogger(__name__)
 
 
 def diameter_to_capacity(pipe_diameter_mm):

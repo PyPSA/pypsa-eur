@@ -8,14 +8,13 @@ Build mapping between cutout grid cells and population (total, urban, rural).
 
 import logging
 
-logger = logging.getLogger(__name__)
-
-
 import atlite
 import geopandas as gpd
 import numpy as np
 import pandas as pd
 import xarray as xr
+
+logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     if "snakemake" not in globals():

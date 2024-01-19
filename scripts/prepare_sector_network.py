@@ -11,6 +11,7 @@ import logging
 import os
 import re
 from itertools import product
+from types import SimpleNamespace
 
 import networkx as nx
 import numpy as np
@@ -22,18 +23,13 @@ from add_electricity import calculate_annuity, sanitize_carriers
 from build_energy_totals import build_co2_totals, build_eea_co2, build_eurostat_co2
 from networkx.algorithms import complement
 from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentation
+from packaging.version import Version, parse
 from pypsa.geo import haversine_pts
 from pypsa.io import import_components_from_dataframe
 from scipy.stats import beta
 
-logger = logging.getLogger(__name__)
-
-from types import SimpleNamespace
-
 spatial = SimpleNamespace()
-
-from packaging.version import Version, parse
-
+logger = logging.getLogger(__name__)
 pd_version = parse(pd.__version__)
 agg_group_kwargs = dict(numeric_only=False) if pd_version >= Version("1.3") else {}
 

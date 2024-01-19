@@ -7,9 +7,6 @@ Build total energy demands per country using JRC IDEES, eurostat, and EEA data.
 """
 
 import logging
-
-logger = logging.getLogger(__name__)
-
 import multiprocessing as mp
 from functools import partial
 
@@ -21,7 +18,7 @@ from _helpers import mute_print
 from tqdm import tqdm
 
 cc = coco.CountryConverter()
-
+logger = logging.getLogger(__name__)
 idx = pd.IndexSlice
 
 

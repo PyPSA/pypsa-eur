@@ -9,11 +9,11 @@ using data from JRC ENSPRESO.
 
 import logging
 
-logger = logging.getLogger(__name__)
 import geopandas as gpd
 import numpy as np
 import pandas as pd
 
+logger = logging.getLogger(__name__)
 AVAILABLE_BIOMASS_YEARS = [2010, 2020, 2030, 2040, 2050]
 
 
