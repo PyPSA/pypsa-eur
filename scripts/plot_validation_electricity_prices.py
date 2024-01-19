@@ -9,7 +9,6 @@ import pandas as pd
 import pypsa
 import seaborn as sns
 from _helpers import configure_logging
-from pypsa.statistics import get_bus_and_carrier
 
 sns.set_theme("paper", style="whitegrid")
 

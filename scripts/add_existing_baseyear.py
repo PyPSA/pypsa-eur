@@ -8,25 +8,20 @@ horizon.
 """
 
 import logging
-
-logger = logging.getLogger(__name__)
-
-import pandas as pd
-
-idx = pd.IndexSlice
-
 from types import SimpleNamespace
 
 import country_converter as coco
 import numpy as np
+import pandas as pd
 import pypsa
 import xarray as xr
 from _helpers import update_config_with_sector_opts
 from add_electricity import sanitize_carriers
 from prepare_sector_network import cluster_heat_buses, define_spatial, prepare_costs
 
+logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
-
+idx = pd.IndexSlice
 spatial = SimpleNamespace()
 
 

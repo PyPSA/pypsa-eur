@@ -8,13 +8,13 @@ Cluster gas transmission network to clustered model regions.
 
 import logging
 
-logger = logging.getLogger(__name__)
-
 import geopandas as gpd
 import pandas as pd
 from packaging.version import Version, parse
 from pypsa.geo import haversine_pts
 from shapely import wkt
+
+logger = logging.getLogger(__name__)
 
 
 def concat_gdf(gdf_list, crs="EPSG:4326"):

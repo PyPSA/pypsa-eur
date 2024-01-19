@@ -294,10 +294,10 @@ def attach_load(n, regions, load, nuts3_shapes, ua_md_gdp, countries, scaling=1.
     nuts3 = gpd.read_file(nuts3_shapes).set_index("index")
 
     def upsample(cntry, group):
-        l = opsd_load[cntry]
+        load = opsd_load[cntry]
 
         if len(group) == 1:
-            return pd.DataFrame({group.index[0]: l})
+            return pd.DataFrame({group.index[0]: load})
         nuts3_cntry = nuts3.loc[nuts3.country == cntry]
         transfer = shapes_to_shapes(group, nuts3_cntry.geometry).T.tocsr()
         gdp_n = pd.Series(
@@ -314,8 +314,8 @@ def attach_load(n, regions, load, nuts3_shapes, ua_md_gdp, countries, scaling=1.
             # overwrite factor because nuts3 provides no data for UA+MD
             factors = normed(ua_md_gdp.loc[group.index, "GDP_PPP"].squeeze())
         return pd.DataFrame(
-            factors.values * l.values[:, np.newaxis],
-            index=l.index,
+            factors.values * load.values[:, np.newaxis],
+            index=load.index,
             columns=factors.index,
         )
 
@@ -622,7 +622,7 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **par
             hydro.max_hours > 0, hydro.country.map(max_hours_country)
         ).fillna(6)
 
-        if flatten_dispatch := params.get("flatten_dispatch", False):
+        if params.get("flatten_dispatch", False):
             buffer = params.get("flatten_dispatch_buffer", 0.2)
             average_capacity_factor = inflow_t[hydro.index].mean() / hydro["p_nom"]
             p_max_pu = (average_capacity_factor + buffer).clip(upper=1)

@@ -7,11 +7,8 @@ Build industrial production per country.
 """
 
 import logging
-from functools import partial
-
-logger = logging.getLogger(__name__)
-
 import multiprocessing as mp
+from functools import partial
 
 import country_converter as coco
 import numpy as np
@@ -19,6 +16,7 @@ import pandas as pd
 from _helpers import mute_print
 from tqdm import tqdm
 
+logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
 
 tj_to_ktoe = 0.0238845

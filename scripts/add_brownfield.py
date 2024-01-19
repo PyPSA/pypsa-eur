@@ -8,16 +8,14 @@ Prepares brownfield data from previous planning horizon.
 
 import logging
 
-logger = logging.getLogger(__name__)
-
-import pandas as pd
-
-idx = pd.IndexSlice
-
 import numpy as np
+import pandas as pd
 import pypsa
 from _helpers import update_config_with_sector_opts
 from add_existing_baseyear import add_build_year_to_new_assets
+
+logger = logging.getLogger(__name__)
+idx = pd.IndexSlice
 
 
 def add_brownfield(n, n_p, year):
@@ -121,7 +119,7 @@ def add_brownfield(n, n_p, year):
 
 
 def disable_grid_expansion_if_LV_limit_hit(n):
-    if not "lv_limit" in n.global_constraints.index:
+    if "lv_limit" not in n.global_constraints.index:
         return
 
     total_expansion = (
@@ -133,7 +131,7 @@ def disable_grid_expansion_if_LV_limit_hit(n):
 
     # allow small numerical differences
     if lv_limit - total_expansion < 1:
-        logger.info(f"LV is already reached, disabling expansion and LV limit")
+        logger.info("LV is already reached, disabling expansion and LV limit")
         extendable_acs = n.lines.query("s_nom_extendable").index
         n.lines.loc[extendable_acs, "s_nom_extendable"] = False
         n.lines.loc[extendable_acs, "s_nom"] = n.lines.loc[extendable_acs, "s_nom_min"]

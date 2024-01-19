@@ -86,7 +86,7 @@ The rule :mod:`simplify_network` does up to four things:
 """
 
 import logging
-from functools import partial, reduce
+from functools import reduce
 
 import numpy as np
 import pandas as pd

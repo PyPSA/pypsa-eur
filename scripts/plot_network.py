@@ -13,8 +13,6 @@ nodes.
 
 import logging
 
-logger = logging.getLogger(__name__)
-
 import cartopy.crs as ccrs
 import geopandas as gpd
 import matplotlib.pyplot as plt
@@ -24,6 +22,7 @@ from make_summary import assign_carriers
 from plot_summary import preferred_order, rename_techs
 from pypsa.plot import add_legend_circles, add_legend_lines, add_legend_patches
 
+logger = logging.getLogger(__name__)
 plt.style.use(["ggplot"])
 
 
@@ -896,14 +895,12 @@ def plot_series(network, carrier="AC", name="test"):
     fig.tight_layout()
 
     fig.savefig(
-        "{}/{RDIR}maps/series-{}-{}-{}-{}-{}.pdf".format(
-            "results",
+        "results/{}maps/series-{}-{}-{}-{}.pdf".format(
             snakemake.params.RDIR,
             snakemake.wildcards["ll"],
             carrier,
             start,
             stop,
-            name,
         ),
         transparent=True,
     )

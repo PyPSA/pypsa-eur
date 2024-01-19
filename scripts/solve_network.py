@@ -39,10 +39,10 @@ import xarray as xr
 from _benchmark import memory_logger
 from _helpers import configure_logging, get_opt, update_config_with_sector_opts
 from pypsa.descriptors import get_activity_mask
+from pypsa.descriptors import get_switchable_as_dense as get_as_dense
 
 logger = logging.getLogger(__name__)
 pypsa.pf.logger.setLevel(logging.WARNING)
-from pypsa.descriptors import get_switchable_as_dense as get_as_dense
 
 
 def add_land_use_constraint(n, planning_horizons, config):
@@ -572,7 +572,7 @@ def add_SAFE_constraints(n, config):
     peakdemand = n.loads_t.p_set.sum(axis=1).max()
     margin = 1.0 + config["electricity"]["SAFE_reservemargin"]
     reserve_margin = peakdemand * margin
-    conventional_carriers = config["electricity"]["conventional_carriers"]
+    conventional_carriers = config["electricity"]["conventional_carriers"]  # noqa: F841
     ext_gens_i = n.generators.query(
         "carrier in @conventional_carriers & p_nom_extendable"
     ).index
@@ -690,11 +690,11 @@ def add_battery_constraints(n):
 
 
 def add_lossy_bidirectional_link_constraints(n):
-    if not n.links.p_nom_extendable.any() or not "reversed" in n.links.columns:
+    if not n.links.p_nom_extendable.any() or "reversed" not in n.links.columns:
         return
 
     n.links["reversed"] = n.links.reversed.fillna(0).astype(bool)
-    carriers = n.links.loc[n.links.reversed, "carrier"].unique()
+    carriers = n.links.loc[n.links.reversed, "carrier"].unique()  # noqa: F841
 
     forward_i = n.links.query(
         "carrier in @carriers and ~reversed and p_nom_extendable"

@@ -8,9 +8,6 @@ capacity factors, curtailment, energy balances, prices and other metrics.
 """
 
 import logging
-
-logger = logging.getLogger(__name__)
-
 import sys
 
 import numpy as np
@@ -19,7 +16,7 @@ import pypsa
 from prepare_sector_network import prepare_costs
 
 idx = pd.IndexSlice
-
+logger = logging.getLogger(__name__)
 opt_name = {"Store": "e", "Line": "s", "Transformer": "s"}
 
 
@@ -509,10 +506,6 @@ def calculate_weighted_prices(n, label, weighted_prices):
 
         if carrier in ["H2", "gas"]:
             load = pd.DataFrame(index=n.snapshots, columns=buses, data=0.0)
-        elif carrier[:5] == "space":
-            load = heat_demand_df[buses.str[:2]].rename(
-                columns=lambda i: str(i) + suffix
-            )
         else:
             load = n.loads_t.p_set[buses]
 
