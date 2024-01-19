@@ -360,8 +360,24 @@ def generate_periodic_profiles(dt_index, nodes, weekly_profile, localize=None):
     return week_df
 
 
-def parse(l):
-    return yaml.safe_load(l[0]) if len(l) == 1 else {l.pop(0): parse(l)}
+def parse(infix):
+    """
+    Recursively parse a list into a dictionary or a YAML object.
+
+    Parameters
+    ----------
+    list_to_parse : list
+        The list to parse.
+
+    Returns
+    -------
+    dict or YAML object
+        The parsed list.
+    """
+    if len(infix) == 1:
+        return yaml.safe_load(infix[0])
+    else:
+        return {infix[0]: parse(infix[1:])}
 
 
 def update_config_with_sector_opts(config, sector_opts):
@@ -369,8 +385,8 @@ def update_config_with_sector_opts(config, sector_opts):
 
     for o in sector_opts.split("-"):
         if o.startswith("CF+"):
-            l = o.split("+")[1:]
-            update_config(config, parse(l))
+            infix = o.split("+")[1:]
+            update_config(config, parse(infix))
 
 
 def get_checksum_from_zenodo(file_url):

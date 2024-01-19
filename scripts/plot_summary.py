@@ -11,11 +11,10 @@ import logging
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import pandas as pd
+from prepare_sector_network import co2_emissions_year
 
 logger = logging.getLogger(__name__)
 plt.style.use("ggplot")
-
-from prepare_sector_network import co2_emissions_year
 
 
 # consolidate and rename

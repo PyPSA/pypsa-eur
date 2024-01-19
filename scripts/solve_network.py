@@ -572,7 +572,7 @@ def add_SAFE_constraints(n, config):
     peakdemand = n.loads_t.p_set.sum(axis=1).max()
     margin = 1.0 + config["electricity"]["SAFE_reservemargin"]
     reserve_margin = peakdemand * margin
-    conventional_carriers = config["electricity"]["conventional_carriers"]
+    conventional_carriers = config["electricity"]["conventional_carriers"]  # noqa: F841
     ext_gens_i = n.generators.query(
         "carrier in @conventional_carriers & p_nom_extendable"
     ).index
@@ -694,7 +694,7 @@ def add_lossy_bidirectional_link_constraints(n):
         return
 
     n.links["reversed"] = n.links.reversed.fillna(0).astype(bool)
-    carriers = n.links.loc[n.links.reversed, "carrier"].unique()
+    carriers = n.links.loc[n.links.reversed, "carrier"].unique()  # noqa: F841
 
     forward_i = n.links.query(
         "carrier in @carriers and ~reversed and p_nom_extendable"

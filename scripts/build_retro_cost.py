@@ -554,7 +554,7 @@ def prepare_temperature_data():
 
 
 # windows ---------------------------------------------------------------
-def window_limit(l, window_assumptions):
+def window_limit(l, window_assumptions):  # noqa: E741
     """
     Define limit u value from which on window is retrofitted.
     """
@@ -567,7 +567,7 @@ def window_limit(l, window_assumptions):
     return m * l + a
 
 
-def u_retro_window(l, window_assumptions):
+def u_retro_window(l, window_assumptions):  # noqa: E741
     """
     Define retrofitting value depending on renovation strength.
     """
@@ -580,7 +580,7 @@ def u_retro_window(l, window_assumptions):
     return max(m * l + a, 0.8)
 
 
-def window_cost(u, cost_retro, window_assumptions):
+def window_cost(u, cost_retro, window_assumptions):  # noqa: E741
     """
     Get costs for new windows depending on u value.
     """
@@ -600,7 +600,7 @@ def window_cost(u, cost_retro, window_assumptions):
     return window_cost
 
 
-def calculate_costs(u_values, l, cost_retro, window_assumptions):
+def calculate_costs(u_values, l, cost_retro, window_assumptions):  # noqa: E741
     """
     Returns costs for a given retrofitting strength weighted by the average
     surface/volume ratio of the component for each building type.
@@ -626,7 +626,7 @@ def calculate_costs(u_values, l, cost_retro, window_assumptions):
     )
 
 
-def calculate_new_u(u_values, l, l_weight, window_assumptions, k=0.035):
+def calculate_new_u(u_values, l, l_weight, window_assumptions, k=0.035):  # noqa: E741
     """
     Calculate U-values after building retrofitting, depending on the old
     U-values (u_values). This is for simple insulation measuers, adding an
@@ -746,7 +746,7 @@ def calculate_heat_losses(u_values, data_tabula, l_strength, temperature_factor)
     """
     #  (1) by transmission
     # calculate new U values of building elements due to additional insulation
-    for l in l_strength:
+    for l in l_strength:  # noqa: E741
         u_values[f"new_U_{l}"] = calculate_new_u(
             u_values, l, l_weight, window_assumptions
         )

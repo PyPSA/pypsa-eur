@@ -133,6 +133,7 @@ import pyomo.environ as po
 import pypsa
 import seaborn as sns
 from _helpers import configure_logging, update_p_nom_max
+from add_electricity import load_costs
 from pypsa.clustering.spatial import (
     busmap_by_greedy_modularity,
     busmap_by_hac,
@@ -141,11 +142,7 @@ from pypsa.clustering.spatial import (
 )
 
 warnings.filterwarnings(action="ignore", category=UserWarning)
-
-from add_electricity import load_costs
-
 idx = pd.IndexSlice
-
 logger = logging.getLogger(__name__)
 
 

@@ -895,8 +895,7 @@ def plot_series(network, carrier="AC", name="test"):
     fig.tight_layout()
 
     fig.savefig(
-        "{}/{RDIR}maps/series-{}-{}-{}-{}-{}.pdf".format(
-            "results",
+        "results/{}maps/series-{}-{}-{}-{}.pdf".format(
             snakemake.params.RDIR,
             snakemake.wildcards["ll"],
             carrier,

@@ -27,8 +27,11 @@ def build_gem_lng_data(fn):
     df = pd.read_excel(fn[0], sheet_name="LNG terminals - data")
     df = df.set_index("ComboID")
 
-    remove_country = ["Cyprus", "Turkey"]
-    remove_terminal = ["Puerto de la Luz LNG Terminal", "Gran Canaria LNG Terminal"]
+    remove_country = ["Cyprus", "Turkey"]  # noqa: F841
+    remove_terminal = [
+        "Puerto de la Luz LNG Terminal",
+        "Gran Canaria LNG Terminal",
+    ]  # noqa: F841
 
     df = df.query(
         "Status != 'Cancelled' \
@@ -45,8 +48,8 @@ def build_gem_prod_data(fn):
     df = pd.read_excel(fn[0], sheet_name="Gas extraction - main")
     df = df.set_index("GEM Unit ID")
 
-    remove_country = ["Cyprus", "Türkiye"]
-    remove_fuel_type = ["oil"]
+    remove_country = ["Cyprus", "Türkiye"]  # noqa: F841
+    remove_fuel_type = ["oil"]  # noqa: F841
 
     df = df.query(
         "Status != 'shut in' \
@@ -96,8 +99,8 @@ def build_gas_input_locations(gem_fn, entry_fn, sto_fn, countries):
     ]
 
     sto = read_scigrid_gas(sto_fn)
-    remove_country = ["RU", "UA", "TR", "BY"]
-    sto = sto.query("country_code != @remove_country")
+    remove_country = ["RU", "UA", "TR", "BY"]  # noqa: F841
+    sto = sto.query("country_code not in @remove_country")
 
     # production sites inside the model scope
     prod = build_gem_prod_data(gem_fn)
