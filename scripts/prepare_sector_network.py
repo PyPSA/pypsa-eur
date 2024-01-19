@@ -1328,9 +1328,9 @@ def add_storage_and_grids(n, costs):
 
         if "custom_h2_pipelines" in snakemake.input:
             fn = snakemake.input.custom_h2_pipelines
-            wkn = pd.read_csv(fn, index_col=0)
+            custom_pipes = pd.read_csv(fn, index_col=0)
 
-            h2_pipes = pd.concat([h2_pipes, wkn])
+            h2_pipes = pd.concat([h2_pipes, custom_pipes])
 
             # drop duplicates according to buses (order can be different) and keep pipe with highest p_nom
             h2_pipes["buses_sorted"] = h2_pipes.apply(
