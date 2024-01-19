@@ -28,10 +28,10 @@ def build_gem_lng_data(fn):
     df = df.set_index("ComboID")
 
     remove_country = ["Cyprus", "Turkey"]  # noqa: F841
-    remove_terminal = [
+    remove_terminal = [  # noqa: F841
         "Puerto de la Luz LNG Terminal",
         "Gran Canaria LNG Terminal",
-    ]  # noqa: F841
+    ]
 
     df = df.query(
         "Status != 'Cancelled' \
