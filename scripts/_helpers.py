@@ -362,7 +362,8 @@ def generate_periodic_profiles(dt_index, nodes, weekly_profile, localize=None):
 
 def parse(infix):
     """
-    Recursively parse a list into a dictionary or a YAML object.
+    Recursively parse a chained wildcard expression into a dictionary or a YAML
+    object.
 
     Parameters
     ----------
@@ -377,7 +378,7 @@ def parse(infix):
     if len(infix) == 1:
         return yaml.safe_load(infix[0])
     else:
-        return {infix[0]: parse(infix[1:])}
+        return {infix.pop(0): parse(infix)}
 
 
 def update_config_with_sector_opts(config, sector_opts):
