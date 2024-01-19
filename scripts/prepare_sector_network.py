@@ -1333,9 +1333,7 @@ def add_storage_and_grids(n, costs):
             h2_pipes = pd.concat([h2_pipes, custom_pipes])
 
             # drop duplicates according to buses (order can be different) and keep pipe with highest p_nom
-            h2_pipes["buses_sorted"] = h2_pipes.apply(
-                lambda row: tuple(sorted([row["bus0"], row["bus1"]])), axis=1
-            )
+            h2_pipes["buses_sorted"] = h2_pipes[["bus0", "bus1"]].apply(sorted, axis=1)
             h2_pipes = (
                 h2_pipes.sort_values("p_nom")
                 .drop_duplicates(subset=["buses_sorted"], keep="last")
