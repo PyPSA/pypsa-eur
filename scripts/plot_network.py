@@ -903,7 +903,6 @@ def plot_series(network, carrier="AC", name="test"):
             carrier,
             start,
             stop,
-            name,
         ),
         transparent=True,
     )

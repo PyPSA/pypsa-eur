@@ -121,7 +121,7 @@ def add_brownfield(n, n_p, year):
 
 
 def disable_grid_expansion_if_LV_limit_hit(n):
-    if not "lv_limit" in n.global_constraints.index:
+    if "lv_limit" not in n.global_constraints.index:
         return
 
     total_expansion = (
@@ -133,7 +133,7 @@ def disable_grid_expansion_if_LV_limit_hit(n):
 
     # allow small numerical differences
     if lv_limit - total_expansion < 1:
-        logger.info(f"LV is already reached, disabling expansion and LV limit")
+        logger.info("LV is already reached, disabling expansion and LV limit")
         extendable_acs = n.lines.query("s_nom_extendable").index
         n.lines.loc[extendable_acs, "s_nom_extendable"] = False
         n.lines.loc[extendable_acs, "s_nom"] = n.lines.loc[extendable_acs, "s_nom_min"]

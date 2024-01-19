@@ -50,7 +50,6 @@ With a heat balance considering the maximum temperature threshold of the transmi
 the maximal possible capacity factor "s_max_pu" for each transmission line at each time step is calculated.
 """
 
-import logging
 import re
 
 import atlite

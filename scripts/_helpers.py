@@ -15,8 +15,6 @@ import pandas as pd
 import pytz
 import requests
 import yaml
-from pypsa.components import component_attrs, components
-from pypsa.descriptors import Dict
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)

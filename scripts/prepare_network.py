@@ -58,7 +58,6 @@ Description
 """
 
 import logging
-import re
 
 import numpy as np
 import pandas as pd

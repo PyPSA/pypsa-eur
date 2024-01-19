@@ -340,7 +340,7 @@ if __name__ == "__main__":
         f"Completed weighted capacity factor time series calculation ({duration:2.2f}s)"
     )
 
-    logger.info(f"Calculating maximal capacity per bus")
+    logger.info("Calculating maximal capacity per bus")
     p_nom_max = capacity_per_sqkm * availability @ area
 
     logger.info("Calculate average distances.")

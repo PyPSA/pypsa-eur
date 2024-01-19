@@ -690,7 +690,7 @@ def add_battery_constraints(n):
 
 
 def add_lossy_bidirectional_link_constraints(n):
-    if not n.links.p_nom_extendable.any() or not "reversed" in n.links.columns:
+    if not n.links.p_nom_extendable.any() or "reversed" not in n.links.columns:
         return
 
     n.links["reversed"] = n.links.reversed.fillna(0).astype(bool)
