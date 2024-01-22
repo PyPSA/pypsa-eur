@@ -451,7 +451,7 @@ def add_heating_capacities_installed_before_baseyear(
                 efficiency=efficiency,
                 capital_cost=costs.at[costs_name, "efficiency"]
                 * costs.at[costs_name, "fixed"],
-                p_nom=existing_heating[(name, f"{heat_pump_type} heat pump")][nodes] * ratio / costs.at[costs_name, "efficiency"],
+                p_nom=existing_heating.loc[nodes, (name, f"{heat_pump_type} heat pump")] * ratio / costs.at[costs_name, "efficiency"],
                 build_year=int(grouping_year),
                 lifetime=costs.at[costs_name, "lifetime"],
             )
@@ -470,7 +470,7 @@ def add_heating_capacities_installed_before_baseyear(
                     * costs.at[f"{name_type} resistive heater", "fixed"]
                 ),
                 p_nom=(
-                    existing_heating[(name, "resistive heater")][nodes]
+                    existing_heating.loc[nodes, (name, "resistive heater")]
                     * ratio
                     / costs.at[f"{name_type} resistive heater", "efficiency"]
                 ),
@@ -493,7 +493,7 @@ def add_heating_capacities_installed_before_baseyear(
                     * costs.at[f"{name_type} gas boiler", "fixed"]
                 ),
                 p_nom=(
-                    existing_heating[(name, "gas boiler")][nodes]
+                    existing_heating.loc[nodes, (name, "gas boiler")]
                     * ratio
                     / costs.at[f"{name_type} gas boiler", "efficiency"]
                 ),
@@ -514,7 +514,7 @@ def add_heating_capacities_installed_before_baseyear(
                 capital_cost=costs.at["decentral oil boiler", "efficiency"]
                 * costs.at["decentral oil boiler", "fixed"],
                 p_nom= (
-                    existing_heating[(name, "oil boiler")][nodes]
+                    existing_heating.loc[nodes, (name, "oil boiler")]
                     * ratio
                     / costs.at["decentral oil boiler", "efficiency"]),
                 build_year=int(grouping_year),

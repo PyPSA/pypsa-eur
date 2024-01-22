@@ -28,6 +28,24 @@ Upcoming Release
 
 * Cluster residential and services heat buses by default. Can be disabled with ``cluster_heat_buses: false``.
 
+* Bugfix: Do not reduce district heat share when building population-weighted
+  energy statistics. Previously the district heating share was being multiplied
+  by the population weighting, reducing the DH share with multiple nodes.
+
+* Move building of daily heat profile to its own rule
+  :mod:`build_hourly_heat_demand` from :mod:`prepare_sector_network`.
+
+* In :mod:`build_energy_totals`, district heating shares are now reported in a
+  separate file.
+
+* Move calculation of district heating share to its own rule
+  :mod:`build_district_heat_share`.
+
+* Move building of distribution of existing heating to own rule
+  :mod:`build_existing_heating_distribution`. This makes the distribution of
+  existing heating to urban/rural, residential/services and spatially more
+  transparent.
+
 
 PyPSA-Eur 0.9.0 (5th January 2024)
 ==================================

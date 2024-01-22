@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -21,9 +21,10 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "build_heat_demands",
+            "build_district_heat_share",
             simpl="",
             clusters=48,
+            planning_horizons="2050",
         )
 
     investment_year = int(snakemake.wildcards.planning_horizons[-4:])
@@ -68,10 +69,10 @@ if __name__ == "__main__":
         f"resulting in new average share of {dist_fraction_node.mean():.2%}"
     )
 
-    df = pd.DataFrame(dtype=float)
-
-    df["original district heat share"] = district_heat_share
-    df["district fraction of node"] = dist_fraction_node
-    df["urban fraction"] = urban_fraction
+    df = pd.DataFrame({
+        "original district heat share": district_heat_share,
+        "district fraction of node": dist_fraction_node,
+        "urban fraction": urban_fraction
+    }, dtype=float)
 
     df.to_csv(snakemake.output.district_heat_share)

@@ -1654,7 +1654,7 @@ def build_heat_demand(n):
         heat_demand[name] = (
             heat_demand_shape[name] / heat_demand_shape[name].sum()
         ).multiply(pop_weighted_energy_totals[f"total {sector} {use}"]) * 1e6
-        electric_heat_supply[f"{sector} {use}"] = (
+        electric_heat_supply[name] = (
             heat_demand_shape[name] / heat_demand_shape[name].sum()
         ).multiply(pop_weighted_energy_totals[f"electricity {sector} {use}"]) * 1e6
 

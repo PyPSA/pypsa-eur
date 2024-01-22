@@ -583,10 +583,10 @@ def build_district_heat_share(countries, idees):
     # Missing district heating share
     dh_share = pd.read_csv(
         snakemake.input.district_heat_share, index_col=0, usecols=[0, 1]
-    )
+    ).div(100).squeeze()
     # make conservative assumption and take minimum from both data sets
     district_heat_share = pd.concat(
-        [district_heat_share, dh_share.reindex(index=district_heat_share.index) / 100], axis=1
+        [district_heat_share, dh_share.reindex_like(district_heat_share)], axis=1
     ).min(axis=1)
 
     district_heat_share.name = "district heat share"

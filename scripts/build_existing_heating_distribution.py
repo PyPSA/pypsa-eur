@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -7,8 +7,6 @@ Builds table of existing heat generation capacities for initial planning
 horizon.
 """
 import pandas as pd
-import sys
-from pypsa.descriptors import Dict
 import numpy as np
 import country_converter as coco
 
@@ -17,19 +15,13 @@ cc = coco.CountryConverter()
 
 def build_existing_heating():
     # retrieve existing heating capacities
-    techs = [
-        "gas boiler",
-        "oil boiler",
-        "resistive heater",
-        "air heat pump",
-        "ground heat pump",
-    ]
 
     existing_heating = pd.read_csv(snakemake.input.existing_heating,
                                    index_col=0,
                                    header=0)
 
-    # data for Albania, Montenegro and Macedonia not included in database                                                                          existing_heating.loc["Albania"] = np.nan
+    # data for Albania, Montenegro and Macedonia not included in database
+    existing_heating.loc["Albania"] = np.nan
     existing_heating.loc["Montenegro"] = np.nan
     existing_heating.loc["Macedonia"] = np.nan
 
@@ -104,5 +96,14 @@ def build_existing_heating():
 
 
 if __name__ == "__main__":
+    if "snakemake" not in globals():
+        from _helpers import mock_snakemake
+
+        snakemake = mock_snakemake(
+            "build_existing_heating_distribution",
+            simpl="",
+            clusters=48,
+            planning_horizons=2050,
+        )
 
     build_existing_heating()
