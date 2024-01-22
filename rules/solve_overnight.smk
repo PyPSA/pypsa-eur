@@ -28,9 +28,7 @@ rule solve_sector_network:
         + "logs/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_memory.log",
         python=RESULTS
         + "logs/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_python.log",
-    threads: config["solving"]["solver_options"][config["solving"]["solver"]["options"]].get(
-    "threads", 4
-)
+    threads: solver_threads
     resources:
         mem_mb=config["solving"]["mem"],
         walltime=config["solving"].get("walltime", "12:00:00"),
