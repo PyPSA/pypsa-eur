@@ -147,7 +147,7 @@ rule build_daily_heat_demand:
 
 rule build_hourly_heat_demand:
     params:
-        snapshots=config["snapshots"],
+        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},
     input:
         heat_profile="data/heat_load_profile_BDEW.csv",
         heat_demand=RESOURCES + "daily_heat_demand_{scope}_elec_s{simpl}_{clusters}.nc",
