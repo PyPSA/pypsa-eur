@@ -13,6 +13,13 @@ for path in helper_source_path:
 from _helpers import validate_checksum
 
 
+def solver_threads(w):
+    solver_options = config["solving"]["solver_options"]
+    option_set = config["solving"]["solver"]["options"]
+    threads = solver_options[option_set].get("threads", 4)
+    return threads
+
+
 def memory(w):
     factor = 3.0
     for o in w.opts.split("-"):

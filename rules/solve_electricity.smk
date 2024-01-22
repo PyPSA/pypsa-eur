@@ -25,7 +25,7 @@ rule solve_network:
         + "solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_python.log",
     benchmark:
         BENCHMARKS + "solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}"
-    threads: 4
+    threads: solver_threads
     resources:
         mem_mb=memory,
         walltime=config["solving"].get("walltime", "12:00:00"),

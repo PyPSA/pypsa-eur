@@ -46,6 +46,8 @@ Upcoming Release
   existing heating to urban/rural, residential/services and spatially more
   transparent.
 
+* Bugfix: Correctly read out number of solver threads from configuration file.
+
 
 PyPSA-Eur 0.9.0 (5th January 2024)
 ==================================

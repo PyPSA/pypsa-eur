@@ -127,7 +127,7 @@ rule solve_sector_network_perfect:
     output:
         RESULTS
         + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years.nc",
-    threads: 4
+    threads: solver_threads
     resources:
         mem_mb=config["solving"]["mem"],
     shadow:
