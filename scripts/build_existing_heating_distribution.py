@@ -16,20 +16,13 @@ cc = coco.CountryConverter()
 
 
 def build_existing_heating():
-    # retrieve existing heating capacities
-    techs = [
-        "gas boiler",
-        "oil boiler",
-        "resistive heater",
-        "air heat pump",
-        "ground heat pump",
-    ]
 
     existing_heating = pd.read_csv(snakemake.input.existing_heating,
                                    index_col=0,
                                    header=0)
 
-    # data for Albania, Montenegro and Macedonia not included in database                                                                          existing_heating.loc["Albania"] = np.nan
+    # data for Albania, Montenegro and Macedonia not included in database
+    existing_heating.loc["Albania"] = np.nan
     existing_heating.loc["Montenegro"] = np.nan
     existing_heating.loc["Macedonia"] = np.nan
 
