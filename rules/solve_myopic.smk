@@ -11,8 +11,10 @@ rule build_existing_heating_distribution:
     input:
         existing_heating="data/existing_infrastructure/existing_heating_raw.csv",
         clustered_pop_layout=RESOURCES + "pop_layout_elec_s{simpl}_{clusters}.csv",
-        clustered_pop_energy_layout=RESOURCES + "pop_weighted_energy_totals_s{simpl}_{clusters}.csv",
-        district_heat_share=RESOURCES + "district_heat_share_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
+        clustered_pop_energy_layout=RESOURCES
+        + "pop_weighted_energy_totals_s{simpl}_{clusters}.csv",
+        district_heat_share=RESOURCES
+        + "district_heat_share_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
     output:
         existing_heating_distribution=RESOURCES
         + "existing_heating_distribution_elec_s{simpl}_{clusters}_{planning_horizons}.csv",

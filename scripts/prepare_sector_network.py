@@ -1639,8 +1639,11 @@ def add_land_transport(n, costs):
 
 
 def build_heat_demand(n):
-
-    heat_demand_shape = xr.open_dataset(snakemake.input.hourly_heat_demand_total).to_dataframe().unstack(level=1)
+    heat_demand_shape = (
+        xr.open_dataset(snakemake.input.hourly_heat_demand_total)
+        .to_dataframe()
+        .unstack(level=1)
+    )
 
     sectors = ["residential", "services"]
     uses = ["water", "space"]
@@ -1648,7 +1651,6 @@ def build_heat_demand(n):
     heat_demand = {}
     electric_heat_supply = {}
     for sector, use in product(sectors, uses):
-
         name = f"{sector} {use}"
 
         heat_demand[name] = (
@@ -1678,8 +1680,7 @@ def add_heat(n, costs):
 
     heat_demand = build_heat_demand(n)
 
-    district_heat_info = pd.read_csv(snakemake.input.district_heat_share,
-                                     index_col=0)
+    district_heat_info = pd.read_csv(snakemake.input.district_heat_share, index_col=0)
     dist_fraction = district_heat_info["district fraction of node"]
     urban_fraction = district_heat_info["urban fraction"]
 
@@ -1717,7 +1718,6 @@ def add_heat(n, costs):
         )
         # 1e3 converts from W/m^2 to MW/(1000m^2) = kW/m^2
         solar_thermal = options["solar_cf_correction"] * solar_thermal / 1e3
-
 
     for name in heat_systems:
         name_type = "central" if name == "urban central" else "decentral"

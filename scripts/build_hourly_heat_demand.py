@@ -48,16 +48,16 @@ if __name__ == "__main__":
         )
 
         if use == "space":
-            heat_demand[f"{sector} {use}"] = daily_space_heat_demand * intraday_year_profile
+            heat_demand[f"{sector} {use}"] = (
+                daily_space_heat_demand * intraday_year_profile
+            )
         else:
             heat_demand[f"{sector} {use}"] = intraday_year_profile
 
-    heat_demand = pd.concat(heat_demand,
-                            axis=1,
-                            names = ["sector use", "node"])
+    heat_demand = pd.concat(heat_demand, axis=1, names=["sector use", "node"])
 
-    heat_demand.index.name="snapshots"
+    heat_demand.index.name = "snapshots"
 
-    ds = heat_demand.stack().to_xarray()    
+    ds = heat_demand.stack().to_xarray()
 
     ds.to_netcdf(snakemake.output.heat_demand)
