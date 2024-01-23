@@ -28,6 +28,8 @@ Upcoming Release
 
 * Cluster residential and services heat buses by default. Can be disabled with ``cluster_heat_buses: false``.
 
+* Air-sourced heat pumps can now also be built in rural areas. Previously, only
+  ground-sourced heat pumps were considered for this category.
 
 PyPSA-Eur 0.9.0 (5th January 2024)
 ==================================
