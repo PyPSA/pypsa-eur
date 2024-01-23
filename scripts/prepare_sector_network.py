@@ -1806,7 +1806,6 @@ def add_heat(n, costs):
         heat_pump_types = ["air"] if "urban" in name else ["ground", "air"]
 
         for heat_pump_type in heat_pump_types:
-
             costs_name = f"{name_type} {heat_pump_type}-sourced heat pump"
             efficiency = (
                 cop[heat_pump_type][nodes[name]]
