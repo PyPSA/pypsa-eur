@@ -1803,28 +1803,29 @@ def add_heat(n, costs):
 
         ## Add heat pumps
 
-        heat_pump_type = "air" if "urban" in name else "ground"
+        heat_pump_types = ["air"] if "urban" in name else ["ground", "air"]
 
-        costs_name = f"{name_type} {heat_pump_type}-sourced heat pump"
-        efficiency = (
-            cop[heat_pump_type][nodes[name]]
-            if options["time_dep_hp_cop"]
-            else costs.at[costs_name, "efficiency"]
-        )
+        for heat_pump_type in heat_pump_types:
+            costs_name = f"{name_type} {heat_pump_type}-sourced heat pump"
+            efficiency = (
+                cop[heat_pump_type][nodes[name]]
+                if options["time_dep_hp_cop"]
+                else costs.at[costs_name, "efficiency"]
+            )
 
-        n.madd(
-            "Link",
-            nodes[name],
-            suffix=f" {name} {heat_pump_type} heat pump",
-            bus0=nodes[name],
-            bus1=nodes[name] + f" {name} heat",
-            carrier=f"{name} {heat_pump_type} heat pump",
-            efficiency=efficiency,
-            capital_cost=costs.at[costs_name, "efficiency"]
-            * costs.at[costs_name, "fixed"],
-            p_nom_extendable=True,
-            lifetime=costs.at[costs_name, "lifetime"],
-        )
+            n.madd(
+                "Link",
+                nodes[name],
+                suffix=f" {name} {heat_pump_type} heat pump",
+                bus0=nodes[name],
+                bus1=nodes[name] + f" {name} heat",
+                carrier=f"{name} {heat_pump_type} heat pump",
+                efficiency=efficiency,
+                capital_cost=costs.at[costs_name, "efficiency"]
+                * costs.at[costs_name, "fixed"],
+                p_nom_extendable=True,
+                lifetime=costs.at[costs_name, "lifetime"],
+            )
 
         if options["tes"]:
             n.add("Carrier", name + " water tanks")
