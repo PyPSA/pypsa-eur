@@ -13,9 +13,10 @@ from snakemake.utils import min_version
 
 min_version("7.7")
 
-
-if not exists("config/config.yaml") and exists("config/config.default.yaml"):
-    copyfile("config/config.default.yaml", "config/config.yaml")
+conf_file = os.path.join(workflow.current_basedir, "config/config.yaml")
+conf_default_file = os.path.join(workflow.current_basedir, "config/config.default.yaml")
+if not exists(conf_file) and exists(conf_default_file):
+    copyfile(conf_default_file, conf_file)
 
 
 configfile: "config/config.yaml"
