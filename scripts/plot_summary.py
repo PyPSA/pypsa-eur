@@ -282,7 +282,10 @@ def plot_balances():
         # remove trailing link ports
         df.index = [
             i[:-1]
-            if ((i not in ["co2", "NH3", "H2"]) and (i[-1:] in ["0", "1", "2", "3"]))
+            if (
+                (i not in ["co2", "NH3", "H2"])
+                and (i[-1:] in ["0", "1", "2", "3", "4"])
+            )
             else i
             for i in df.index
         ]
