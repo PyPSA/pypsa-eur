@@ -33,6 +33,8 @@ Upcoming Release
 
 * Bugfix: Correctly read out number of solver threads from configuration file.
 
+* Add support for the linopy ``io_api`` option; set to ``"direct"`` to increase model reading and writing performance for the highs and gurobi solvers. 
+
 
 PyPSA-Eur 0.9.0 (5th January 2024)
 ==================================
