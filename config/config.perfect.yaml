@@ -19,9 +19,9 @@ scenario:
   opts:
   - ''
   sector_opts:
-  - 1p5-4380H-T-H-B-I-A-solar+p3-dist1
-  - 1p7-4380H-T-H-B-I-A-solar+p3-dist1
-  - 2p0-4380H-T-H-B-I-A-solar+p3-dist1
+  - 1p5-4380H-T-H-B-I-A-dist1
+  - 1p7-4380H-T-H-B-I-A-dist1
+  - 2p0-4380H-T-H-B-I-A-dist1
   planning_horizons:
   - 2020
   - 2025

@@ -18,7 +18,7 @@ scenario:
   clusters:
   - 5
   sector_opts:
-  - 24H-T-H-B-I-A-solar+p3-dist1
+  - 24H-T-H-B-I-A-dist1
   planning_horizons:
   - 2030
   - 2040

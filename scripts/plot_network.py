@@ -1068,7 +1068,7 @@ if __name__ == "__main__":
             opts="",
             clusters="37",
             ll="v1.0",
-            sector_opts="4380H-T-H-B-I-A-solar+p3-dist1",
+            sector_opts="4380H-T-H-B-I-A-dist1",
         )
 
     logging.basicConfig(level=snakemake.config["logging"]["level"])
