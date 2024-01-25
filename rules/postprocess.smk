@@ -14,7 +14,8 @@ if config["foresight"] != "perfect":
             plotting=config["plotting"],
         input:
             network=RESOURCES + "networks/elec_s{simpl}_{clusters}.nc",
-            regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+            regions_onshore=RESOURCES
+            + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
             rc="matplotlibrc",
         output:
             map=RESULTS + "maps/power-network-{clusters}.pdf",
@@ -27,7 +28,6 @@ if config["foresight"] != "perfect":
             "../envs/environment.yaml"
         script:
             "../scripts/plot_power_network_clustered.py"
-
 
     rule plot_power_network:
         params:
