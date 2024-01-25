@@ -35,6 +35,8 @@ Upcoming Release
 
 * Add support for the linopy ``io_api`` option; set to ``"direct"`` to increase model reading and writing performance for the highs and gurobi solvers.
 
+* Add several map projection options for plotting.
+
 
 PyPSA-Eur 0.9.0 (5th January 2024)
 ==================================

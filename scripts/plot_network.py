@@ -170,7 +170,7 @@ def plot_map(
     line_widths = line_widths.replace(line_lower_threshold, 0)
     link_widths = link_widths.replace(line_lower_threshold, 0)
 
-    fig, ax = plt.subplots(subplot_kw={"projection": ccrs.EqualEarth()})
+    fig, ax = plt.subplots(subplot_kw={"projection": proj})
     fig.set_size_inches(7, 6)
 
     n.plot(
@@ -358,7 +358,6 @@ def plot_h2_map(network, regions):
     n.links.bus0 = n.links.bus0.str.replace(" H2", "")
     n.links.bus1 = n.links.bus1.str.replace(" H2", "")
 
-    proj = ccrs.EqualEarth()
     regions = regions.to_crs(proj.proj4_init)
 
     fig, ax = plt.subplots(figsize=(7, 6), subplot_kw={"projection": proj})
@@ -568,7 +567,7 @@ def plot_ch4_map(network):
         "biogas": "seagreen",
     }
 
-    fig, ax = plt.subplots(figsize=(7, 6), subplot_kw={"projection": ccrs.EqualEarth()})
+    fig, ax = plt.subplots(figsize=(7, 6), subplot_kw={"projection": proj})
 
     n.plot(
         bus_sizes=bus_sizes,
@@ -679,7 +678,7 @@ def plot_map_without(network):
     # Drop non-electric buses so they don't clutter the plot
     n.buses.drop(n.buses.index[n.buses.carrier != "AC"], inplace=True)
 
-    fig, ax = plt.subplots(figsize=(7, 6), subplot_kw={"projection": ccrs.EqualEarth()})
+    fig, ax = plt.subplots(figsize=(7, 6), subplot_kw={"projection": proj})
 
     # PDF has minimum width, so set these to zero
     line_lower_threshold = 200.0
@@ -993,7 +992,7 @@ def plot_map_perfect(
     link_widths[link_widths > line_upper_threshold] = line_upper_threshold
 
     for year in costs.columns:
-        fig, ax = plt.subplots(subplot_kw={"projection": ccrs.PlateCarree()})
+        fig, ax = plt.subplots(subplot_kw={"projection": proj})
         fig.set_size_inches(7, 6)
         fig.suptitle(year)
 
@@ -1081,6 +1080,26 @@ if __name__ == "__main__":
 
     if map_opts["boundaries"] is None:
         map_opts["boundaries"] = regions.total_bounds[[0, 2, 1, 3]] + [-1, 1, -1, 1]
+
+    proj_str = snakemake.params.plotting.get("projection", "EqualEarth")
+    central_coords = dict(central_longitude=10.0, central_latitude=50.0)
+    if proj_str == "EqualEarth":
+        # Equal area but large distortions towards the poles.
+        proj = ccrs.EqualEarth()
+    elif proj_str == "EuroPP":
+        # UTM Zone 32 projection
+        proj = ccrs.EuroPP()
+    elif proj_str == "LambertConformal":
+        # The European Environment Agency recommends using this
+        # projection for conformal pan-European mapping
+        proj = ccrs.LambertConformal(standard_parallels=(35, 65), **central_coords)
+    elif proj_str == "Orthographic":
+        proj = ccrs.Orthographic(**central_coords)
+    else:
+        logger.warning(
+            f"Plotting project {proj_str} not recognised; falling back on EqualEarth"
+        )
+        proj = ccrs.EqualEarth()
 
     if snakemake.params["foresight"] == "perfect":
         plot_map_perfect(

@@ -773,6 +773,7 @@ plotting:
     color_geomap:
       ocean: white
       land: white
+  projection: "EqualEarth"
   eu_node_location:
     x: -5.5
     y: 46.
