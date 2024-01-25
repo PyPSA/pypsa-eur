@@ -32,7 +32,6 @@ if config["foresight"] != "perfect":
         script:
             "../scripts/plot_power_network.py"
 
-
     rule plot_hydrogen_network:
         params:
             plotting=config["plotting"],
@@ -55,7 +54,6 @@ if config["foresight"] != "perfect":
             "../envs/environment.yaml"
         script:
             "../scripts/plot_hydrogen_network.py"
-
 
     rule plot_gas_network:
         params:

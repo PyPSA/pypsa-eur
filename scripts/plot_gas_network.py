@@ -3,7 +3,8 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Creates map of optimised gas network, storage and selected other infrastructure.
+Creates map of optimised gas network, storage and selected other
+infrastructure.
 """
 
 import logging
@@ -13,8 +14,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
 from _helpers import configure_logging
-from pypsa.plot import add_legend_circles, add_legend_lines, add_legend_patches
 from plot_power_network import assign_location, load_projection
+from pypsa.plot import add_legend_circles, add_legend_lines, add_legend_patches
 
 logger = logging.getLogger(__name__)
 

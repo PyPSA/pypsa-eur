@@ -14,9 +14,9 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
 from _helpers import configure_logging
-from pypsa.plot import add_legend_circles, add_legend_lines
-from plot_power_network import assign_location, rename_techs_tyndp, load_projection
+from plot_power_network import assign_location, load_projection, rename_techs_tyndp
 from plot_summary import preferred_order
+from pypsa.plot import add_legend_circles, add_legend_lines
 
 logger = logging.getLogger(__name__)
 
