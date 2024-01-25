@@ -75,6 +75,21 @@ if config["foresight"] == "perfect":
 rule all:
     input:
         RESULTS + "graphs/costs.pdf",
+        expand(
+            RESULTS
+            + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
+            **config["scenario"]
+        ),
+        expand(
+            RESULTS
+            + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-h2_network_{planning_horizons}.pdf",
+            **config["scenario"]
+        ),
+        expand(
+            RESULTS
+            + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-ch4_network_{planning_horizons}.pdf",
+            **config["scenario"]
+        ),
     default_target: True
 
 

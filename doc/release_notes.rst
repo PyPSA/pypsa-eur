@@ -40,9 +40,6 @@ Upcoming Release
 * The rule ``plot_network`` has been split into separate rules for plotting
   electricity, hydrogen and gas networks.
 
-* Added new collection rule ``plot_all`` which should be used instead of
-  ``plot_summary``. This allows running the rule :mod:`make_summary` and
-  :mod:`plot_summary` even if the network plotting rules fail.
 
 PyPSA-Eur 0.9.0 (5th January 2024)
 ==================================
