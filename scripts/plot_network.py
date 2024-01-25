@@ -1081,25 +1081,9 @@ if __name__ == "__main__":
     if map_opts["boundaries"] is None:
         map_opts["boundaries"] = regions.total_bounds[[0, 2, 1, 3]] + [-1, 1, -1, 1]
 
-    proj_str = snakemake.params.plotting.get("projection", "EqualEarth")
-    central_coords = dict(central_longitude=10.0, central_latitude=50.0)
-    if proj_str == "EqualEarth":
-        # Equal area but large distortions towards the poles.
-        proj = ccrs.EqualEarth()
-    elif proj_str == "EuroPP":
-        # UTM Zone 32 projection
-        proj = ccrs.EuroPP()
-    elif proj_str == "LambertConformal":
-        # The European Environment Agency recommends using this
-        # projection for conformal pan-European mapping
-        proj = ccrs.LambertConformal(standard_parallels=(35, 65), **central_coords)
-    elif proj_str == "Orthographic":
-        proj = ccrs.Orthographic(**central_coords)
-    else:
-        logger.warning(
-            f"Plotting project {proj_str} not recognised; falling back on EqualEarth"
-        )
-        proj = ccrs.EqualEarth()
+    proj_kwargs = snakemake.params.plotting.get("projection", dict(name="EqualEarth"))
+    proj_func = getattr(ccrs, proj_kwargs.pop("name"))
+    proj = proj_func(**proj_kwargs)
 
     if snakemake.params["foresight"] == "perfect":
         plot_map_perfect(
