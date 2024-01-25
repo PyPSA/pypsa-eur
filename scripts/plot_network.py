@@ -170,7 +170,7 @@ def plot_map(
     line_widths = line_widths.replace(line_lower_threshold, 0)
     link_widths = link_widths.replace(line_lower_threshold, 0)
 
-    fig, ax = plt.subplots(subplot_kw={"projection": ccrs.EqualEarth()})
+    fig, ax = plt.subplots(subplot_kw={"projection": proj})
     fig.set_size_inches(7, 6)
 
     n.plot(
@@ -358,7 +358,6 @@ def plot_h2_map(network, regions):
     n.links.bus0 = n.links.bus0.str.replace(" H2", "")
     n.links.bus1 = n.links.bus1.str.replace(" H2", "")
 
-    proj = ccrs.EqualEarth()
     regions = regions.to_crs(proj.proj4_init)
 
     fig, ax = plt.subplots(figsize=(7, 6), subplot_kw={"projection": proj})
@@ -568,7 +567,7 @@ def plot_ch4_map(network):
         "biogas": "seagreen",
     }
 
-    fig, ax = plt.subplots(figsize=(7, 6), subplot_kw={"projection": ccrs.EqualEarth()})
+    fig, ax = plt.subplots(figsize=(7, 6), subplot_kw={"projection": proj})
 
     n.plot(
         bus_sizes=bus_sizes,
@@ -679,7 +678,7 @@ def plot_map_without(network):
     # Drop non-electric buses so they don't clutter the plot
     n.buses.drop(n.buses.index[n.buses.carrier != "AC"], inplace=True)
 
-    fig, ax = plt.subplots(figsize=(7, 6), subplot_kw={"projection": ccrs.EqualEarth()})
+    fig, ax = plt.subplots(figsize=(7, 6), subplot_kw={"projection": proj})
 
     # PDF has minimum width, so set these to zero
     line_lower_threshold = 200.0
@@ -993,7 +992,7 @@ def plot_map_perfect(
     link_widths[link_widths > line_upper_threshold] = line_upper_threshold
 
     for year in costs.columns:
-        fig, ax = plt.subplots(subplot_kw={"projection": ccrs.PlateCarree()})
+        fig, ax = plt.subplots(subplot_kw={"projection": proj})
         fig.set_size_inches(7, 6)
         fig.suptitle(year)
 
@@ -1068,7 +1067,7 @@ if __name__ == "__main__":
             opts="",
             clusters="37",
             ll="v1.0",
-            sector_opts="4380H-T-H-B-I-A-solar+p3-dist1",
+            sector_opts="4380H-T-H-B-I-A-dist1",
         )
 
     logging.basicConfig(level=snakemake.config["logging"]["level"])
@@ -1081,6 +1080,10 @@ if __name__ == "__main__":
 
     if map_opts["boundaries"] is None:
         map_opts["boundaries"] = regions.total_bounds[[0, 2, 1, 3]] + [-1, 1, -1, 1]
+
+    proj_kwargs = snakemake.params.plotting.get("projection", dict(name="EqualEarth"))
+    proj_func = getattr(ccrs, proj_kwargs.pop("name"))
+    proj = proj_func(**proj_kwargs)
 
     if snakemake.params["foresight"] == "perfect":
         plot_map_perfect(

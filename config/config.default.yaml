@@ -44,7 +44,7 @@ scenario:
   opts:
   - ''
   sector_opts:
-  - Co2L0-3H-T-H-B-I-A-solar+p3-dist1
+  - Co2L0-3H-T-H-B-I-A-dist1
   planning_horizons:
   # - 2020
   # - 2030
@@ -687,6 +687,7 @@ solving:
     rolling_horizon: false
     seed: 123
     custom_extra_functionality: "../data/custom_extra_functionality.py"
+    # io_api: "direct"  # Increases performance but only supported for the highs and gurobi solvers
     # options that go into the optimize function
     track_iterations: false
     min_iterations: 4
@@ -772,6 +773,13 @@ plotting:
     color_geomap:
       ocean: white
       land: white
+  projection:
+    name: "EqualEarth"
+    # See https://scitools.org.uk/cartopy/docs/latest/reference/projections.html for alternatives, for example:
+    # name: "LambertConformal"
+    # central_longitude: 10.
+    # central_latitude: 50.
+    # standard_parallels: [35, 65]
   eu_node_location:
     x: -5.5
     y: 46.

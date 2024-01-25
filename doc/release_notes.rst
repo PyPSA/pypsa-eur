@@ -48,6 +48,15 @@ Upcoming Release
 
 * Bugfix: Correctly read out number of solver threads from configuration file.
 
+* Air-sourced heat pumps can now also be built in rural areas. Previously, only
+  ground-sourced heat pumps were considered for this category.
+
+* Bugfix: Correctly read out number of solver threads from configuration file.
+
+* Add support for the linopy ``io_api`` option; set to ``"direct"`` to increase model reading and writing performance for the highs and gurobi solvers.
+
+* Add the option to customise map projection in plotting config.
+
 
 PyPSA-Eur 0.9.0 (5th January 2024)
 ==================================

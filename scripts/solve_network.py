@@ -890,6 +890,7 @@ def solve_network(n, config, solving, opts="", **kwargs):
         "linearized_unit_commitment", False
     )
     kwargs["assign_all_duals"] = cf_solving.get("assign_all_duals", False)
+    kwargs["io_api"] = cf_solving.get("io_api", None)
 
     if kwargs["solver_name"] == "gurobi":
         logging.getLogger("gurobipy").setLevel(logging.CRITICAL)
@@ -943,7 +944,7 @@ if __name__ == "__main__":
             opts="",
             clusters="37",
             ll="v1.0",
-            sector_opts="CO2L0-1H-T-H-B-I-A-solar+p3-dist1",
+            sector_opts="CO2L0-1H-T-H-B-I-A-dist1",
             planning_horizons="2030",
         )
     configure_logging(snakemake)

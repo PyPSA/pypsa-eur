@@ -503,7 +503,7 @@ if __name__ == "__main__":
             opts="",
             clusters="37",
             ll="v1.5",
-            sector_opts="1p7-4380H-T-H-B-I-A-solar+p3-dist1",
+            sector_opts="1p7-4380H-T-H-B-I-A-dist1",
         )
 
     update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
