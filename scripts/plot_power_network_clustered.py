@@ -24,8 +24,6 @@ if __name__ == "__main__":
             configfiles=["../../config/config.test.yaml"],
         )
 
-    plt.style.use(snakemake.input.rc)
-
     lw_factor = 2e3
 
     n = pypsa.Network(snakemake.input.network)

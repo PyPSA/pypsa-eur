@@ -16,9 +16,8 @@ if config["foresight"] != "perfect":
             network=RESOURCES + "networks/elec_s{simpl}_{clusters}.nc",
             regions_onshore=RESOURCES
             + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
-            rc="matplotlibrc",
         output:
-            map=RESULTS + "maps/power-network-{clusters}.pdf",
+            map=RESULTS + "maps/power-network-s{simpl}-{clusters}.pdf",
         threads: 1
         resources:
             mem_mb=4000,
