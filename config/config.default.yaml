@@ -773,6 +773,13 @@ plotting:
     color_geomap:
       ocean: white
       land: white
+  projection:
+    name: "EqualEarth"
+    # See https://scitools.org.uk/cartopy/docs/latest/reference/projections.html for alternatives, for example:
+    # name: "LambertConformal"
+    # central_longitude: 10.
+    # central_latitude: 50.
+    # standard_parallels: [35, 65]
   eu_node_location:
     x: -5.5
     y: 46.
