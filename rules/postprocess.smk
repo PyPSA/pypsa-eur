@@ -150,6 +150,10 @@ rule make_summary:
         scenario=config["scenario"],
         RDIR=RDIR,
     input:
+        expand(
+            RESULTS + "maps/power-network-s{simpl}-{clusters}.pdf",
+            **config["scenario"]
+        ),
         networks=expand(
             RESULTS
             + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
@@ -158,10 +162,6 @@ rule make_summary:
         costs="data/costs_{}.csv".format(config["costs"]["year"])
         if config["foresight"] == "overnight"
         else "data/costs_{}.csv".format(config["scenario"]["planning_horizons"][0]),
-        expand(
-            RESULTS + "maps/power-network-s{simpl}-{clusters}.pdf",
-            **config["scenario"]
-        ),
         costs_plot=expand(
             RESULTS
             + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
