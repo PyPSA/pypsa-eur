@@ -1,6 +1,40 @@
-# SPDX-FileCopyrightText: : 2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2023-4 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
+
+
+rule build_existing_heating_distribution:
+    params:
+        baseyear=config["scenario"]["planning_horizons"][0],
+        sector=config["sector"],
+        existing_capacities=config["existing_capacities"],
+    input:
+        existing_heating="data/existing_infrastructure/existing_heating_raw.csv",
+        clustered_pop_layout=RESOURCES + "pop_layout_elec_s{simpl}_{clusters}.csv",
+        clustered_pop_energy_layout=RESOURCES
+        + "pop_weighted_energy_totals_s{simpl}_{clusters}.csv",
+        district_heat_share=RESOURCES
+        + "district_heat_share_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
+    output:
+        existing_heating_distribution=RESOURCES
+        + "existing_heating_distribution_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
+    wildcard_constraints:
+        planning_horizons=config["scenario"]["planning_horizons"][0],  #only applies to baseyear
+    threads: 1
+    resources:
+        mem_mb=2000,
+    log:
+        LOGS
+        + "build_existing_heating_distribution_elec_s{simpl}_{clusters}_{planning_horizons}.log",
+    benchmark:
+        (
+            BENCHMARKS
+            + "build_existing_heating_distribution/elec_s{simpl}_{clusters}_{planning_horizons}"
+        )
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_existing_heating_distribution.py"
 
 
 rule add_existing_baseyear:
@@ -19,7 +53,8 @@ rule add_existing_baseyear:
         costs="data/costs_{}.csv".format(config["scenario"]["planning_horizons"][0]),
         cop_soil_total=RESOURCES + "cop_soil_total_elec_s{simpl}_{clusters}.nc",
         cop_air_total=RESOURCES + "cop_air_total_elec_s{simpl}_{clusters}.nc",
-        existing_heating="data/existing_infrastructure/existing_heating_raw.csv",
+        existing_heating_distribution=RESOURCES
+        + "existing_heating_distribution_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
         existing_solar="data/existing_infrastructure/solar_capacity_IRENA.csv",
         existing_onwind="data/existing_infrastructure/onwind_capacity_IRENA.csv",
         existing_offwind="data/existing_infrastructure/offwind_capacity_IRENA.csv",
