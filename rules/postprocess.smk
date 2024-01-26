@@ -158,7 +158,7 @@ rule make_summary:
         costs="data/costs_{}.csv".format(config["costs"]["year"])
         if config["foresight"] == "overnight"
         else "data/costs_{}.csv".format(config["scenario"]["planning_horizons"][0]),
-        expand(
+        ac_plot=expand(
             RESULTS + "maps/power-network-s{simpl}-{clusters}.pdf",
             **config["scenario"]
         ),
