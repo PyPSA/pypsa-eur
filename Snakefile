@@ -86,12 +86,16 @@ rule all:
         ),
         expand(
             RESULTS
-            + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-h2_network_{planning_horizons}.pdf",
+            + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-h2_network_{planning_horizons}.pdf"
+            if config["sector"]["H2_network"]
+            else [],
             **config["scenario"]
         ),
         expand(
             RESULTS
-            + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-ch4_network_{planning_horizons}.pdf",
+            + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-ch4_network_{planning_horizons}.pdf"
+            if config["sector"]["gas_network"]
+            else [],
             **config["scenario"]
         ),
     default_target: True
