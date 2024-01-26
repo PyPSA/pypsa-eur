@@ -729,8 +729,8 @@ def add_dac(n, costs):
         carrier="DAC",
         capital_cost=costs.at["direct air capture", "fixed"],
         efficiency=-heat_input / electricity_input,
-        efficiency2=-electricity_input,
-        efficiency3=electricity_input,
+        efficiency2=-1 / electricity_input,
+        efficiency3=1 / electricity_input,
         p_nom_extendable=True,
         lifetime=costs.at["direct air capture", "lifetime"],
     )
