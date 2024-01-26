@@ -57,6 +57,9 @@ Upcoming Release
 
 * Add the option to customise map projection in plotting config.
 
+* The rule ``plot_network`` has been split into separate rules for plotting
+  electricity, hydrogen and gas networks.
+
 
 PyPSA-Eur 0.9.0 (5th January 2024)
 ==================================

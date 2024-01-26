@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2023-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
@@ -9,9 +9,27 @@ localrules:
 
 if config["foresight"] != "perfect":
 
-    rule plot_network:
+    rule plot_power_network_clustered:
         params:
-            foresight=config["foresight"],
+            plotting=config["plotting"],
+        input:
+            network=RESOURCES + "networks/elec_s{simpl}_{clusters}.nc",
+            regions_onshore=RESOURCES
+            + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+        output:
+            map=RESULTS + "maps/power-network-s{simpl}-{clusters}.pdf",
+        threads: 1
+        resources:
+            mem_mb=4000,
+        benchmark:
+            BENCHMARKS + "plot_power_network_clustered/elec_s{simpl}_{clusters}"
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/plot_power_network_clustered.py"
+
+    rule plot_power_network:
+        params:
             plotting=config["plotting"],
         input:
             network=RESULTS
@@ -20,27 +38,70 @@ if config["foresight"] != "perfect":
         output:
             map=RESULTS
             + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
-            today=RESULTS
-            + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}-today.pdf",
         threads: 2
         resources:
             mem_mb=10000,
         benchmark:
             (
                 BENCHMARKS
-                + "plot_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+                + "plot_power_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
             )
         conda:
             "../envs/environment.yaml"
         script:
-            "../scripts/plot_network.py"
+            "../scripts/plot_power_network.py"
+
+    rule plot_hydrogen_network:
+        params:
+            plotting=config["plotting"],
+        input:
+            network=RESULTS
+            + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+            regions=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+        output:
+            map=RESULTS
+            + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-h2_network_{planning_horizons}.pdf",
+        threads: 2
+        resources:
+            mem_mb=10000,
+        benchmark:
+            (
+                BENCHMARKS
+                + "plot_hydrogen_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+            )
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/plot_hydrogen_network.py"
+
+    rule plot_gas_network:
+        params:
+            plotting=config["plotting"],
+        input:
+            network=RESULTS
+            + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+            regions=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+        output:
+            map=RESULTS
+            + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-ch4_network_{planning_horizons}.pdf",
+        threads: 2
+        resources:
+            mem_mb=10000,
+        benchmark:
+            (
+                BENCHMARKS
+                + "plot_gas_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+            )
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/plot_gas_network.py"
 
 
 if config["foresight"] == "perfect":
 
-    rule plot_network:
+    rule plot_power_network_perfect:
         params:
-            foresight=config["foresight"],
             plotting=config["plotting"],
         input:
             network=RESULTS
@@ -62,7 +123,7 @@ if config["foresight"] == "perfect":
         conda:
             "../envs/environment.yaml"
         script:
-            "../scripts/plot_network.py"
+            "../scripts/plot_power_network_perfect.py"
 
 
 rule copy_config:
@@ -89,6 +150,10 @@ rule make_summary:
         scenario=config["scenario"],
         RDIR=RDIR,
     input:
+        expand(
+            RESULTS + "maps/power-network-s{simpl}-{clusters}.pdf",
+            **config["scenario"]
+        ),
         networks=expand(
             RESULTS
             + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
@@ -97,9 +162,27 @@ rule make_summary:
         costs="data/costs_{}.csv".format(config["costs"]["year"])
         if config["foresight"] == "overnight"
         else "data/costs_{}.csv".format(config["scenario"]["planning_horizons"][0]),
-        plots=expand(
+        ac_plot=expand(
+            RESULTS + "maps/power-network-s{simpl}-{clusters}.pdf",
+            **config["scenario"]
+        ),
+        costs_plot=expand(
             RESULTS
             + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
+            **config["scenario"]
+        ),
+        h2_plot=expand(
+            RESULTS
+            + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-h2_network_{planning_horizons}.pdf"
+            if config["sector"]["H2_network"]
+            else [],
+            **config["scenario"]
+        ),
+        ch4_plot=expand(
+            RESULTS
+            + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-ch4_network_{planning_horizons}.pdf"
+            if config["sector"]["gas_network"]
+            else [],
             **config["scenario"]
         ),
     output:
