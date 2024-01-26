@@ -37,6 +37,8 @@ Upcoming Release
 
 * Add the option to customise map projection in plotting config.
 
+* The order of buses (bus0, bus1, ...) for DAC components has changed to meet the convention of the other components. Therefore, `bus0` refers to the electricity bus (input), `bus1` to the heat bus (input), 'bus2' to the CO2 atmosphere bus (input), and `bus3` to the CO2 storage bus (output).
+
 
 PyPSA-Eur 0.9.0 (5th January 2024)
 ==================================
