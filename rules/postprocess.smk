@@ -158,6 +158,29 @@ rule make_summary:
         costs="data/costs_{}.csv".format(config["costs"]["year"])
         if config["foresight"] == "overnight"
         else "data/costs_{}.csv".format(config["scenario"]["planning_horizons"][0]),
+        expand(
+            RESULTS + "maps/power-network-s{simpl}-{clusters}.pdf",
+            **config["scenario"]
+        ),
+        costs_plot=expand(
+            RESULTS
+            + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
+            **config["scenario"]
+        ),
+        h2_plot=expand(
+            RESULTS
+            + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-h2_network_{planning_horizons}.pdf"
+            if config["sector"]["H2_network"]
+            else [],
+            **config["scenario"]
+        ),
+        ch4_plot=expand(
+            RESULTS
+            + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-ch4_network_{planning_horizons}.pdf"
+            if config["sector"]["gas_network"]
+            else [],
+            **config["scenario"]
+        ),
     output:
         nodal_costs=RESULTS + "csvs/nodal_costs.csv",
         nodal_capacities=RESULTS + "csvs/nodal_capacities.csv",
