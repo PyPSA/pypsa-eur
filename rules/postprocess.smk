@@ -150,6 +150,10 @@ rule make_summary:
         scenario=config["scenario"],
         RDIR=RDIR,
     input:
+        expand(
+            RESULTS + "maps/power-network-s{simpl}-{clusters}.pdf",
+            **config["scenario"]
+        ),
         networks=expand(
             RESULTS
             + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
