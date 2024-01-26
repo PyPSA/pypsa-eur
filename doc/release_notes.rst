@@ -28,6 +28,26 @@ Upcoming Release
 
 * Cluster residential and services heat buses by default. Can be disabled with ``cluster_heat_buses: false``.
 
+* Bugfix: Do not reduce district heat share when building population-weighted
+  energy statistics. Previously the district heating share was being multiplied
+  by the population weighting, reducing the DH share with multiple nodes.
+
+* Move building of daily heat profile to its own rule
+  :mod:`build_hourly_heat_demand` from :mod:`prepare_sector_network`.
+
+* In :mod:`build_energy_totals`, district heating shares are now reported in a
+  separate file.
+
+* Move calculation of district heating share to its own rule
+  :mod:`build_district_heat_share`.
+
+* Move building of distribution of existing heating to own rule
+  :mod:`build_existing_heating_distribution`. This makes the distribution of
+  existing heating to urban/rural, residential/services and spatially more
+  transparent.
+
+* Bugfix: Correctly read out number of solver threads from configuration file.
+
 * Air-sourced heat pumps can now also be built in rural areas. Previously, only
   ground-sourced heat pumps were considered for this category.
 
@@ -38,6 +58,9 @@ Upcoming Release
 * Add the option to customise map projection in plotting config.
 
 * The order of buses (bus0, bus1, ...) for DAC components has changed to meet the convention of the other components. Therefore, `bus0` refers to the electricity bus (input), `bus1` to the heat bus (input), 'bus2' to the CO2 atmosphere bus (input), and `bus3` to the CO2 storage bus (output).
+
+* The rule ``plot_network`` has been split into separate rules for plotting
+  electricity, hydrogen and gas networks.
 
 
 PyPSA-Eur 0.9.0 (5th January 2024)
