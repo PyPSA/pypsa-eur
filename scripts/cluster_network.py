@@ -122,6 +122,7 @@ Exemplary unsolved network clustered to 37 nodes:
 """
 
 import logging
+import os
 import warnings
 from functools import reduce
 
@@ -259,12 +260,14 @@ def distribute_clusters(n, n_clusters, focus_weights=None, solver_name="scip"):
         lower=1, upper=N, coords=[L.index], name="n", integer=True
     )
     m.add_constraints(clusters.sum() == n_clusters, name="tot")
-    m.objective = (
-        clusters * clusters - 2 * clusters * L * n_clusters
-    )  # + (L * n_clusters) ** 2 (constant)
+    # leave out constant in objective L * n_clusters ** 2
+    m.objective = (clusters * clusters - 2 * clusters * L * n_clusters).sum()
     if solver_name == "gurobi":
         logging.getLogger("gurobipy").propagate = False
-    else:
+    elif solver_name != "scip":
+        logger.info(
+            f"The configured solver `{solver_name}` does not support quadratic objectives. Falling back to `scip`."
+        )
         solver_name = "scip"
     m.solve(solver_name=solver_name)
     return m.solution["n"].to_series().astype(int)
@@ -374,7 +377,7 @@ def clustering_for_n_clusters(
     aggregate_carriers=None,
     line_length_factor=1.25,
     aggregation_strategies=dict(),
-    solver_name="cbc",
+    solver_name="scip",
     algorithm="hac",
     feature=None,
     extended_link_costs=0,
@@ -451,7 +454,6 @@ if __name__ == "__main__":
 
     params = snakemake.params
     solver_name = snakemake.config["solving"]["solver"]["name"]
-    solver_name = "appsi_highs" if solver_name == "highs" else solver_name
 
     n = pypsa.Network(snakemake.input.network)
 
