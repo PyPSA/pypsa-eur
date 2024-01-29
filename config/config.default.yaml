@@ -483,6 +483,7 @@ sector:
   resistive_heaters: true
   oil_boilers: false
   biomass_boiler: true
+  overdimension_individual_heating: 1.1  #to cover demand peaks bigger than data
   chp: true
   micro_chp: false
   solar_thermal: true

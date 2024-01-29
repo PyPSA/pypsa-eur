@@ -592,7 +592,9 @@ if __name__ == "__main__":
             .to_pandas()
             .reindex(index=n.snapshots)
         )
-        default_lifetime = snakemake.params.existing_capacities["default_heating_lifetime"]
+        default_lifetime = snakemake.params.existing_capacities[
+            "default_heating_lifetime"
+        ]
         add_heating_capacities_installed_before_baseyear(
             n,
             baseyear,
