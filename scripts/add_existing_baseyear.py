@@ -429,7 +429,7 @@ def add_heating_capacities_installed_before_baseyear(
             if int(grouping_year) + default_lifetime <= int(baseyear):
                 continue
 
-            # installation is assumed to be linear for the past 25 years (default lifetime)
+            # installation is assumed to be linear for the past default_lifetime years
             ratio = (int(grouping_year) - int(grouping_years[i - 1])) / default_lifetime
 
             n.madd(
@@ -536,12 +536,6 @@ def add_heating_capacities_installed_before_baseyear(
                 ],
             )
 
-            # drop assets which are at the end of their lifetime
-            links_i = n.links[(n.links.build_year + n.links.lifetime <= baseyear)].index
-            logger.info("Removing following links because at end of their lifetime:")
-            logger.info(links_i)
-            n.mremove("Link", links_i)
-
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -598,7 +592,7 @@ if __name__ == "__main__":
             .to_pandas()
             .reindex(index=n.snapshots)
         )
-        default_lifetime = snakemake.params.costs["fill_values"]["lifetime"]
+        default_lifetime = snakemake.params.existing_capacities["default_heating_lifetime"]
         add_heating_capacities_installed_before_baseyear(
             n,
             baseyear,
