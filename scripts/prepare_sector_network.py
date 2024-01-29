@@ -727,7 +727,7 @@ def add_dac(n, costs):
         bus2="co2 atmosphere",
         bus3=spatial.co2.df.loc[locations, "nodes"].values,
         carrier="DAC",
-        capital_cost=costs.at["direct air capture", "fixed"],
+        capital_cost=costs.at["direct air capture", "fixed"] / electricity_input,
         efficiency=-heat_input / electricity_input,
         efficiency2=-1 / electricity_input,
         efficiency3=1 / electricity_input,
