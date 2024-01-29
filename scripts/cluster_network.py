@@ -126,10 +126,10 @@ import warnings
 from functools import reduce
 
 import geopandas as gpd
+import linopy
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import pyomo.environ as po
 import pypsa
 import seaborn as sns
 from _helpers import configure_logging, update_p_nom_max
@@ -214,7 +214,7 @@ def get_feature_for_hac(n, buses_i=None, feature=None):
     return feature_data
 
 
-def distribute_clusters(n, n_clusters, focus_weights=None, solver_name="cbc"):
+def distribute_clusters(n, n_clusters, focus_weights=None, solver_name="scip"):
     """
     Determine the number of clusters per country.
     """
@@ -254,31 +254,20 @@ def distribute_clusters(n, n_clusters, focus_weights=None, solver_name="cbc"):
         L.sum(), 1.0, rtol=1e-3
     ), f"Country weights L must sum up to 1.0 when distributing clusters. Is {L.sum()}."
 
-    m = po.ConcreteModel()
-
-    def n_bounds(model, *n_id):
-        return (1, N[n_id])
-
-    m.n = po.Var(list(L.index), bounds=n_bounds, domain=po.Integers)
-    m.tot = po.Constraint(expr=(po.summation(m.n) == n_clusters))
-    m.objective = po.Objective(
-        expr=sum((m.n[i] - L.loc[i] * n_clusters) ** 2 for i in L.index),
-        sense=po.minimize,
+    m = linopy.Model()
+    clusters = m.add_variables(
+        lower=1, upper=N, coords=[L.index], name="n", integer=True
     )
-
-    opt = po.SolverFactory(solver_name)
-    if solver_name == "appsi_highs" or not opt.has_capability("quadratic_objective"):
-        logger.warning(
-            f"The configured solver `{solver_name}` does not support quadratic objectives. Falling back to `ipopt`."
-        )
-        opt = po.SolverFactory("ipopt")
-
-    results = opt.solve(m)
-    assert (
-        results["Solver"][0]["Status"] == "ok"
-    ), f"Solver returned non-optimally: {results}"
-
-    return pd.Series(m.n.get_values(), index=L.index).round().astype(int)
+    m.add_constraints(clusters.sum() == n_clusters, name="tot")
+    m.objective = (
+        clusters * clusters - 2 * clusters * L * n_clusters
+    )  # + (L * n_clusters) ** 2 (constant)
+    if solver_name == "gurobi":
+        logging.getLogger("gurobipy").propagate = False
+    else:
+        solver_name = "scip"
+    m.solve(solver_name=solver_name)
+    return m.solution["n"].to_series().astype(int)
 
 
 def busmap_for_n_clusters(

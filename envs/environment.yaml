@@ -36,7 +36,7 @@ dependencies:
 - networkx
 - scipy
 - shapely>=2.0
-- pyomo
+- scipopt
 - matplotlib
 - proj
 - fiona
@@ -47,7 +47,6 @@ dependencies:
 - tabula-py
 - pyxlsb
 - graphviz
-- ipopt
 
   # Keep in conda environment when calling ipython
 - ipython
