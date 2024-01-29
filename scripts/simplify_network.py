@@ -468,9 +468,9 @@ def aggregate_to_substations(n, aggregation_strategies=dict(), buses_i=None):
         dijkstra(adj, directed=False, indices=bus_indexer), buses_i, n.buses.index
     )
 
-    dist[
-        buses_i
-    ] = np.inf  # bus in buses_i should not be assigned to different bus in buses_i
+    dist[buses_i] = (
+        np.inf
+    )  # bus in buses_i should not be assigned to different bus in buses_i
 
     for c in n.buses.country.unique():
         incountry_b = n.buses.country == c

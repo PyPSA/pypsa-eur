@@ -458,9 +458,9 @@ def update_wind_solar_costs(n, costs):
                 )
             )
 
-            n.generators.loc[
-                n.generators.carrier == tech, "capital_cost"
-            ] = capital_cost.rename(index=lambda node: node + " " + tech)
+            n.generators.loc[n.generators.carrier == tech, "capital_cost"] = (
+                capital_cost.rename(index=lambda node: node + " " + tech)
+            )
 
 
 def add_carrier_buses(n, carrier, nodes=None):
@@ -2932,9 +2932,11 @@ def add_industry(n, costs):
         nodes,
         suffix=" low-temperature heat for industry",
         bus=[
-            node + " urban central heat"
-            if node + " urban central heat" in n.buses.index
-            else node + " services urban decentral heat"
+            (
+                node + " urban central heat"
+                if node + " urban central heat" in n.buses.index
+                else node + " services urban decentral heat"
+            )
             for node in nodes
         ],
         carrier="low-temperature heat for industry",
@@ -3529,10 +3531,9 @@ def lossy_bidirectional_links(n, carrier, efficiencies={}):
     )
 
     n.links.loc[carrier_i, "p_min_pu"] = 0
-    n.links.loc[
-        carrier_i, "efficiency"
-    ] = efficiency_static * efficiency_per_1000km ** (
-        n.links.loc[carrier_i, "length"] / 1e3
+    n.links.loc[carrier_i, "efficiency"] = (
+        efficiency_static
+        * efficiency_per_1000km ** (n.links.loc[carrier_i, "length"] / 1e3)
     )
     rev_links = (
         n.links.loc[carrier_i].copy().rename({"bus0": "bus1", "bus1": "bus0"}, axis=1)

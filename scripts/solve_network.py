@@ -703,9 +703,11 @@ def add_lossy_bidirectional_link_constraints(n):
     def get_backward_i(forward_i):
         return pd.Index(
             [
-                re.sub(r"-(\d{4})$", r"-reversed-\1", s)
-                if re.search(r"-\d{4}$", s)
-                else s + "-reversed"
+                (
+                    re.sub(r"-(\d{4})$", r"-reversed-\1", s)
+                    if re.search(r"-\d{4}$", s)
+                    else s + "-reversed"
+                )
                 for s in forward_i
             ]
         )
