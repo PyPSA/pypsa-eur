@@ -407,13 +407,6 @@ def add_heating_capacities_installed_before_baseyear(
     """
     logger.debug(f"Adding heating capacities installed before {baseyear}")
 
-    # Add existing heating capacities, data comes from the study
-    # "Mapping and analyses of the current and future (2020 - 2030)
-    # heating/cooling fuel deployment (fossil/renewables) "
-    # https://ec.europa.eu/energy/studies/mapping-and-analyses-current-and-future-2020-2030-heatingcooling-fuel-deployment_en?redir=1
-    # file: "WP2_DataAnnex_1_BuildingTechs_ForPublication_201603.xls" -> "existing_heating_raw.csv".
-    # TODO start from original file
-
     existing_heating = pd.read_csv(snakemake.input.existing_heating_distribution,
                                    header=[0,1],
                                    index_col=0)
