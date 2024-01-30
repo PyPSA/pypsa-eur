@@ -391,13 +391,6 @@ def build_idees(countries, year):
     # convert TWh/100km to kWh/km
     totals.loc["passenger car efficiency"] *= 10
 
-    # district heating share
-    district_heat = totals.loc[
-        ["derived heat residential", "derived heat services"]
-    ].sum()
-    total_heat = totals.loc[["thermal uses residential", "thermal uses services"]].sum()
-    totals.loc["district heat share"] = district_heat.div(total_heat)
-
     return totals.T
 
 
@@ -572,16 +565,36 @@ def build_energy_totals(countries, eurostat, swiss, idees):
         ratio = df.at["BA", "total residential"] / df.at["RS", "total residential"]
         df.loc["BA", missing] = ratio * df.loc["RS", missing]
 
+    return df
+
+
+def build_district_heat_share(countries, idees):
+    # district heating share
+    district_heat = idees[["derived heat residential", "derived heat services"]].sum(
+        axis=1
+    )
+    total_heat = idees[["thermal uses residential", "thermal uses services"]].sum(
+        axis=1
+    )
+
+    district_heat_share = district_heat / total_heat
+
+    district_heat_share = district_heat_share.reindex(countries)
+
     # Missing district heating share
-    dh_share = pd.read_csv(
-        snakemake.input.district_heat_share, index_col=0, usecols=[0, 1]
+    dh_share = (
+        pd.read_csv(snakemake.input.district_heat_share, index_col=0, usecols=[0, 1])
+        .div(100)
+        .squeeze()
     )
     # make conservative assumption and take minimum from both data sets
-    df["district heat share"] = pd.concat(
-        [df["district heat share"], dh_share.reindex(index=df.index) / 100], axis=1
+    district_heat_share = pd.concat(
+        [district_heat_share, dh_share.reindex_like(district_heat_share)], axis=1
     ).min(axis=1)
 
-    return df
+    district_heat_share.name = "district heat share"
+
+    return district_heat_share
 
 
 def build_eea_co2(input_co2, year=1990, emissions_scope="CO2"):
@@ -749,6 +762,9 @@ if __name__ == "__main__":
 
     energy = build_energy_totals(countries, eurostat, swiss, idees)
     energy.to_csv(snakemake.output.energy_name)
+
+    district_heat_share = build_district_heat_share(countries, idees)
+    district_heat_share.to_csv(snakemake.output.district_heat_share)
 
     base_year_emissions = params["base_emissions_year"]
     emissions_scope = snakemake.params.energy["emissions"]

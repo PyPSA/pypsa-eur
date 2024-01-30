@@ -18,7 +18,8 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "build_heat_demands",
+            "build_daily_heat_demands",
+            scope="total",
             simpl="",
             clusters=48,
         )
