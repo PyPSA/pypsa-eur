@@ -260,7 +260,7 @@ def distribute_clusters(n, n_clusters, focus_weights=None, solver_name="scip"):
         lower=1, upper=N, coords=[L.index], name="n", integer=True
     )
     m.add_constraints(clusters.sum() == n_clusters, name="tot")
-    # leave out constant in objective L * n_clusters ** 2
+    # leave out constant in objective (L * n_clusters) ** 2
     m.objective = (clusters * clusters - 2 * clusters * L * n_clusters).sum()
     if solver_name == "gurobi":
         logging.getLogger("gurobipy").propagate = False
