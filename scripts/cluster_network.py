@@ -364,7 +364,7 @@ def busmap_for_n_clusters(
 
     return (
         n.buses.groupby(["country", "sub_network"], group_keys=False)
-        .apply(busmap_for_country)
+        .apply(busmap_for_country, include_groups=False)
         .squeeze()
         .rename("busmap")
     )

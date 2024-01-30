@@ -36,7 +36,7 @@ dependencies:
 - networkx
 - scipy
 - shapely>=2.0
-- scipopt
+- pyscipopt
 - matplotlib
 - proj
 - fiona
