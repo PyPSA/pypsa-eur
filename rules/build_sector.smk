@@ -798,7 +798,7 @@ rule prepare_sector_network:
         industrial_demand=RESOURCES
         + "industrial_energy_demand_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
         hourly_heat_demand_total=RESOURCES + "hourly_heat_demand_total_elec_s{simpl}_{clusters}.nc",
-	district_heat_share=RESOURCES + "district_heat_share_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
+        district_heat_share=RESOURCES + "district_heat_share_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
         temp_soil_total=RESOURCES + "temp_soil_total_elec_s{simpl}_{clusters}.nc",
         temp_soil_rural=RESOURCES + "temp_soil_rural_elec_s{simpl}_{clusters}.nc",
         temp_soil_urban=RESOURCES + "temp_soil_urban_elec_s{simpl}_{clusters}.nc",
