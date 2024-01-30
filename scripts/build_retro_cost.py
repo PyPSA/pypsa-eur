@@ -607,21 +607,28 @@ def calculate_costs(u_values, l, cost_retro, window_assumptions):  # noqa: E741
     """
     return u_values.apply(
         lambda x: (
-            cost_retro.loc[x.name[3], "cost_var"]
-            * 100
-            * float(l)
-            * l_weight.loc[x.name[3]].iloc[0]
-            + cost_retro.loc[x.name[3], "cost_fix"]
-        )
-        * x.A_element
-        / x.A_C_Ref
-        if x.name[3] != "Window"
-        else (
-            (window_cost(x[f"new_U_{l}"], cost_retro, window_assumptions) * x.A_element)
+            (
+                cost_retro.loc[x.name[3], "cost_var"]
+                * 100
+                * float(l)
+                * l_weight.loc[x.name[3]].iloc[0]
+                + cost_retro.loc[x.name[3], "cost_fix"]
+            )
+            * x.A_element
             / x.A_C_Ref
-        )
-        if x.value > window_limit(float(l), window_assumptions)
-        else 0,
+            if x.name[3] != "Window"
+            else (
+                (
+                    (
+                        window_cost(x[f"new_U_{l}"], cost_retro, window_assumptions)
+                        * x.A_element
+                    )
+                    / x.A_C_Ref
+                )
+                if x.value > window_limit(float(l), window_assumptions)
+                else 0
+            )
+        ),
         axis=1,
     )
 
@@ -648,12 +655,14 @@ def calculate_new_u(u_values, l, l_weight, window_assumptions, k=0.035):  # noqa
     k: thermal conductivity
     """
     return u_values.apply(
-        lambda x: k / ((k / x.value) + (float(l) * l_weight.loc[x.name[3]]))
-        if x.name[3] != "Window"
-        else (
-            min(x.value, u_retro_window(float(l), window_assumptions))
-            if x.value > window_limit(float(l), window_assumptions)
-            else x.value
+        lambda x: (
+            k / ((k / x.value) + (float(l) * l_weight.loc[x.name[3]]))
+            if x.name[3] != "Window"
+            else (
+                min(x.value, u_retro_window(float(l), window_assumptions))
+                if x.value > window_limit(float(l), window_assumptions)
+                else x.value
+            )
         ),
         axis=1,
     )
