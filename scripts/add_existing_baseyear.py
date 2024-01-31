@@ -168,7 +168,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
     # Intermediate fix for DateIn & DateOut
     # Fill missing DateIn
     biomass_i = df_agg.loc[df_agg.Fueltype == "urban central solid biomass OP"].index
-    mean = df_agg.loc[biomass_i, "DateIn"].mean()
+    mean = df_agg.loc[biomass_i, "DateIn"].mean(skipna=True) 
     df_agg.loc[biomass_i, "DateIn"] = df_agg.loc[biomass_i, "DateIn"].fillna(int(mean))
     # Fill missing DateOut
     dateout = (
