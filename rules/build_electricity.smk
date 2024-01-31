@@ -40,11 +40,14 @@ rule build_electricity_demand:
 rule build_powerplants:
     params:
         powerplants_filter=config["electricity"]["powerplants_filter"],
+        chp_filter=config["electricity"]["chp_filter"],
         custom_powerplants=config["electricity"]["custom_powerplants"],
+        custom_chps=config["electricity"]["custom_chps"],
         countries=config["countries"],
     input:
         base_network=RESOURCES + "networks/base.nc",
         custom_powerplants="data/custom_powerplants.csv",
+        custom_chps="data/german_chp.csv",
     output:
         RESOURCES + "powerplants.csv",
     log:
