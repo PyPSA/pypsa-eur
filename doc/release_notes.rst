@@ -64,8 +64,6 @@ Upcoming Release
 
 * The ``highs`` solver was added to the default environment file.
 
-* The default solver for testing the workflow in the CI has been changed from ``glpk`` to ``highs``.
-
 
 
 PyPSA-Eur 0.9.0 (5th January 2024)

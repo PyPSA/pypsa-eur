@@ -73,8 +73,8 @@ industry:
 
 solving:
   solver:
-    name: highs
-    options: highs-default
+    name: glpk
+    options: glpk-default
   mem: 4000
 
 plotting:

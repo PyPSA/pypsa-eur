@@ -35,6 +35,7 @@ dependencies:
 - netcdf4
 - networkx
 - scipy
+- glpk
 - shapely>=2.0
 - pyscipopt
 - matplotlib
