@@ -150,9 +150,7 @@ if __name__ == "__main__":
     )
     # add CHPs from MaStR data:
     custom_CHP_query = snakemake.params.custom_chps
-    ppl = add_custom_powerplants(
-        ppl, snakemake.input.custom_chps, custom_CHP_query
-    )
+    ppl = add_custom_powerplants(ppl, snakemake.input.custom_chps, custom_CHP_query)
 
     if countries_wo_ppl := set(countries) - set(ppl.Country.unique()):
         logging.warning(f"No powerplants known in: {', '.join(countries_wo_ppl)}")

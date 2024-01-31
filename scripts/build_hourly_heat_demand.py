@@ -6,12 +6,11 @@
 Build hourly heat demand time series from daily ones.
 """
 
+from itertools import product
+
 import pandas as pd
 import xarray as xr
 from _helpers import generate_periodic_profiles, update_config_with_sector_opts
-from itertools import product
-
-
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -48,21 +47,21 @@ if __name__ == "__main__":
         )
 
         if use == "space":
-            heat_demand[f"{sector} {use}"] = daily_space_heat_demand * intraday_year_profile
+            heat_demand[f"{sector} {use}"] = (
+                daily_space_heat_demand * intraday_year_profile
+            )
         else:
             heat_demand[f"{sector} {use}"] = intraday_year_profile
 
-    heat_demand = pd.concat(heat_demand,
-                            axis=1,
-                            names = ["sector use", "node"])
+    heat_demand = pd.concat(heat_demand, axis=1, names=["sector use", "node"])
 
-    heat_demand.index.name="snapshots"
+    heat_demand.index.name = "snapshots"
 
     print(heat_demand)
 
     print(heat_demand.stack())
 
-    ds = heat_demand.stack().to_xarray()#xr.Dataset.from_dataframe(heat_demand)
+    ds = heat_demand.stack().to_xarray()  # xr.Dataset.from_dataframe(heat_demand)
 
     print(ds)
 

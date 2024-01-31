@@ -1629,8 +1629,11 @@ def add_land_transport(n, costs):
 
 
 def build_heat_demand(n):
-
-    heat_demand_shape = xr.open_dataset(snakemake.input.hourly_heat_demand_total).to_dataframe().unstack(level=1)
+    heat_demand_shape = (
+        xr.open_dataset(snakemake.input.hourly_heat_demand_total)
+        .to_dataframe()
+        .unstack(level=1)
+    )
 
     sectors = ["residential", "services"]
     uses = ["water", "space"]
@@ -1638,7 +1641,6 @@ def build_heat_demand(n):
     heat_demand = {}
     electric_heat_supply = {}
     for sector, use in product(sectors, uses):
-
         name = f"{sector} {use}"
 
         heat_demand[name] = (
@@ -1670,8 +1672,7 @@ def add_heat(n, costs):
 
     overdim_factor = options["overdimension_individual_heating"]
 
-    district_heat_info = pd.read_csv(snakemake.input.district_heat_share,
-                                     index_col=0)
+    district_heat_info = pd.read_csv(snakemake.input.district_heat_share, index_col=0)
     dist_fraction = district_heat_info["district fraction of node"]
     urban_fraction = district_heat_info["urban fraction"]
 
@@ -1709,7 +1710,6 @@ def add_heat(n, costs):
         )
         # 1e3 converts from W/m^2 to MW/(1000m^2) = kW/m^2
         solar_thermal = options["solar_cf_correction"] * solar_thermal / 1e3
-
 
     for name in heat_systems:
         name_type = "central" if name == "urban central" else "decentral"
@@ -1805,7 +1805,8 @@ def add_heat(n, costs):
             carrier=f"{name} {heat_pump_type} heat pump",
             efficiency=efficiency,
             capital_cost=costs.at[costs_name, "efficiency"]
-            * costs.at[costs_name, "fixed"] * overdim_factor,
+            * costs.at[costs_name, "fixed"]
+            * overdim_factor,
             p_nom_extendable=True,
             lifetime=costs.at[costs_name, "lifetime"],
         )
@@ -1875,7 +1876,8 @@ def add_heat(n, costs):
                 carrier=name + " resistive heater",
                 efficiency=costs.at[key, "efficiency"],
                 capital_cost=costs.at[key, "efficiency"]
-                * costs.at[key, "fixed"] * overdim_factor,
+                * costs.at[key, "fixed"]
+                * overdim_factor,
                 p_nom_extendable=True,
                 lifetime=costs.at[key, "lifetime"],
             )
@@ -1893,7 +1895,8 @@ def add_heat(n, costs):
                 efficiency=costs.at[key, "efficiency"],
                 efficiency2=costs.at["gas", "CO2 intensity"],
                 capital_cost=costs.at[key, "efficiency"]
-                * costs.at[key, "fixed"] * overdim_factor,
+                * costs.at[key, "fixed"]
+                * overdim_factor,
                 lifetime=costs.at[key, "lifetime"],
             )
 
@@ -2877,7 +2880,6 @@ def add_industry(n, costs):
         p_set = p_set.sum()
 
     for scope in ["domestic", "international"]:
-
         n.madd(
             "Bus",
             spatial.oil.kerosene,
@@ -2958,8 +2960,9 @@ def add_industry(n, costs):
 
     if options["co2_spatial"] or options["co2network"]:
         p_set = (
-            -industrial_demand.loc[nodes, "process emission"]
-            .rename(index=lambda x: x + " process emissions")
+            -industrial_demand.loc[nodes, "process emission"].rename(
+                index=lambda x: x + " process emissions"
+            )
             / nhours
         )
     else:

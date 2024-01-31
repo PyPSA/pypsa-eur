@@ -168,7 +168,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
     # Intermediate fix for DateIn & DateOut
     # Fill missing DateIn
     biomass_i = df_agg.loc[df_agg.Fueltype == "urban central solid biomass OP"].index
-    mean = df_agg.loc[biomass_i, "DateIn"].mean(skipna=True) 
+    mean = df_agg.loc[biomass_i, "DateIn"].mean(skipna=True)
     df_agg.loc[biomass_i, "DateIn"] = df_agg.loc[biomass_i, "DateIn"].fillna(int(mean))
     # Fill missing DateOut
     dateout = (
@@ -350,10 +350,13 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                 new_capacity = capacity.loc[new_build.str.replace(name_suffix, "")]
 
                 if generator != "urban central solid biomass OP":
-                    
                     # missing lifetimes are filled with mean lifetime
                     # if mean cannot be built, lifetime is taken from costs.csv
-                    lifetime_assets = lifetime_assets.reindex(capacity.index).fillna(lifetime_assets.mean()).fillna(costs.at[generator, "lifetime"])
+                    lifetime_assets = (
+                        lifetime_assets.reindex(capacity.index)
+                        .fillna(lifetime_assets.mean())
+                        .fillna(costs.at[generator, "lifetime"])
+                    )
 
                     n.madd(
                         "Link",
@@ -428,15 +431,13 @@ def add_heating_capacities_installed_before_baseyear(
     """
     logger.debug(f"Adding heating capacities installed before {baseyear}")
 
-    existing_heating = pd.read_csv(snakemake.input.existing_heating_distribution,
-                                   header=[0,1],
-                                   index_col=0)
-
+    existing_heating = pd.read_csv(
+        snakemake.input.existing_heating_distribution, header=[0, 1], index_col=0
+    )
 
     techs = existing_heating.columns.get_level_values(1).unique()
 
     for name in existing_heating.columns.get_level_values(0).unique():
-
         name_type = "central" if name == "urban central" else "decentral"
 
         nodes = pd.Index(n.buses.location[n.buses.index.str.contains(f"{name} heat")])
@@ -470,7 +471,9 @@ def add_heating_capacities_installed_before_baseyear(
                 efficiency=efficiency,
                 capital_cost=costs.at[costs_name, "efficiency"]
                 * costs.at[costs_name, "fixed"],
-                p_nom=existing_heating[(name, f"{heat_pump_type} heat pump")][nodes] * ratio / costs.at[costs_name, "efficiency"],
+                p_nom=existing_heating[(name, f"{heat_pump_type} heat pump")][nodes]
+                * ratio
+                / costs.at[costs_name, "efficiency"],
                 build_year=int(grouping_year),
                 lifetime=costs.at[costs_name, "lifetime"],
             )
@@ -532,10 +535,11 @@ def add_heating_capacities_installed_before_baseyear(
                 efficiency2=costs.at["oil", "CO2 intensity"],
                 capital_cost=costs.at["decentral oil boiler", "efficiency"]
                 * costs.at["decentral oil boiler", "fixed"],
-                p_nom= (
+                p_nom=(
                     existing_heating[(name, "oil boiler")][nodes]
                     * ratio
-                    / costs.at["decentral oil boiler", "efficiency"]),
+                    / costs.at["decentral oil boiler", "efficiency"]
+                ),
                 build_year=int(grouping_year),
                 lifetime=costs.at[f"{name_type} gas boiler", "lifetime"],
             )
@@ -577,13 +581,15 @@ def add_heating_capacities_installed_before_baseyear(
     }
 
     df_CHP_agg = pd.read_csv(snakemake.input.powerplants, index_col=0)
-    df_CHP_agg = df_CHP_agg[(df_CHP_agg.Set == "CHP")]  # | (df_CHP_agg.Fueltype == "Bioenergy")]
+    df_CHP_agg = df_CHP_agg[
+        (df_CHP_agg.Set == "CHP")
+    ]  # | (df_CHP_agg.Fueltype == "Bioenergy")]
     # drop assets which are already phased out / decommissioned
     phased_out = df_CHP_agg[df_CHP_agg["DateOut"] < baseyear].index
     phased_in = df_CHP_agg[df_CHP_agg["DateIn"] > np.max(grouping_years)].index
     df_CHP_agg.drop(phased_out, inplace=True)
     df_CHP_agg.drop(phased_in, inplace=True)
-    
+
     # drop Hydro [2], Waste [3] and Oil [2] - keep coal [32] lignite [14] and gas [263]
     df_CHP_agg = df_CHP_agg[~df_CHP_agg.Fueltype.isin(["Hydro", "Waste", "Oil"])]
     df_CHP_agg.Fueltype = df_CHP_agg.Fueltype.map(rename_fuel)
@@ -669,6 +675,7 @@ def add_heating_capacities_installed_before_baseyear(
                 lifetime=costs.at[key, "lifetime"],
             )
 
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -724,7 +731,9 @@ if __name__ == "__main__":
             .to_pandas()
             .reindex(index=n.snapshots)
         )
-        default_lifetime = snakemake.params.existing_capacities["default_heating_lifetime"]
+        default_lifetime = snakemake.params.existing_capacities[
+            "default_heating_lifetime"
+        ]
         add_heating_capacities_installed_before_baseyear(
             n,
             baseyear,

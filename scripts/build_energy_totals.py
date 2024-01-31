@@ -572,14 +572,15 @@ def build_energy_totals(countries, eurostat, swiss, idees):
 
 
 def build_district_heat_share(countries, idees):
-
     # district heating share
-    district_heat = idees[
-        ["derived heat residential", "derived heat services"]
-    ].sum(axis=1)
-    total_heat = idees[["thermal uses residential", "thermal uses services"]].sum(axis=1)
+    district_heat = idees[["derived heat residential", "derived heat services"]].sum(
+        axis=1
+    )
+    total_heat = idees[["thermal uses residential", "thermal uses services"]].sum(
+        axis=1
+    )
 
-    district_heat_share = district_heat/total_heat
+    district_heat_share = district_heat / total_heat
 
     district_heat_share = district_heat_share.reindex(countries)
 
@@ -589,7 +590,8 @@ def build_district_heat_share(countries, idees):
     )
     # make conservative assumption and take minimum from both data sets
     district_heat_share = pd.concat(
-        [district_heat_share, dh_share.reindex(index=district_heat_share.index) / 100], axis=1
+        [district_heat_share, dh_share.reindex(index=district_heat_share.index) / 100],
+        axis=1,
     ).min(axis=1)
 
     district_heat_share.name = "district heat share"

@@ -193,7 +193,13 @@ def progress_retrieve(url, file, disable=False):
             urllib.request.urlretrieve(url, file, reporthook=update_to)
 
 
-def mock_snakemake(rulename, root_dir=None, configfiles=[], submodule_dir = "workflow/submodules/pypsa-eur", **wildcards):
+def mock_snakemake(
+    rulename,
+    root_dir=None,
+    configfiles=[],
+    submodule_dir="workflow/submodules/pypsa-eur",
+    **wildcards,
+):
     """
     This function is expected to be executed from the 'scripts'-directory of '
     the snakemake project. It returns a snakemake.script.Snakemake object,
