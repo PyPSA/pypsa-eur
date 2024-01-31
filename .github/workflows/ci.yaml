@@ -46,16 +46,6 @@ jobs:
       run: |
         echo -ne "url: ${CDSAPI_URL}\nkey: ${CDSAPI_TOKEN}\n" > ~/.cdsapirc
 
-    - name: Add solver to environment
-      run: |
-        echo -e "- glpk\n- ipopt<3.13.3" >> envs/environment.yaml
-      if: ${{ matrix.os }} == 'windows-latest'
-
-    - name: Add solver to environment
-      run: |
-        echo -e "- glpk\n- ipopt" >> envs/environment.yaml
-      if: ${{ matrix.os }} != 'windows-latest'
-
     - name: Setup micromamba
       uses: mamba-org/setup-micromamba@v1
       with:

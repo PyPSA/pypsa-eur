@@ -65,8 +65,8 @@ sector:
 
 solving:
   solver:
-    name: glpk
-    options: glpk-default
+    name: highs
+    options: highs-default
   mem: 4000
 
 plotting:

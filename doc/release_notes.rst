@@ -62,6 +62,11 @@ Upcoming Release
 
 * To determine the optimal topology to meet the number of clusters, the workflow used pyomo in combination with ``ipopt`` or ``gurobi``. This dependency has been replaced by using ``linopy`` in combination with ``scipopt`` or ``gurobi``. The environment file has been updated accordingly.
 
+* The ``highs`` solver was added to the default environment file.
+
+* The default solver for testing the workflow in the CI has been changed from ``glpk`` to ``highs``.
+
+
 
 PyPSA-Eur 0.9.0 (5th January 2024)
 ==================================
