@@ -269,8 +269,8 @@ def set_line_nom_max(
         hvdc = n.links.index[n.links.carrier == "DC"]
         n.links.loc[hvdc, "p_nom_max"] = n.links.loc[hvdc, "p_nom"] + p_nom_max_ext
 
-    n.lines.s_nom_max.clip(upper=s_nom_max_set, inplace=True)
-    n.links.p_nom_max.clip(upper=p_nom_max_set, inplace=True)
+    n.lines["s_nom_max"] = n.lines.s_nom_max.clip(upper=s_nom_max_set)
+    n.links["p_nom_max"] = n.links.p_nom_max.clip(upper=p_nom_max_set)
 
 
 if __name__ == "__main__":

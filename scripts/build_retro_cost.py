@@ -297,8 +297,8 @@ def prepare_building_stock_data():
         errors="ignore",
     )
 
-    u_values.subsector.replace(rename_sectors, inplace=True)
-    u_values.btype.replace(rename_sectors, inplace=True)
+    u_values["subsector"] = u_values.subsector.replace(rename_sectors)
+    u_values["btype"] = u_values.btype.replace(rename_sectors)
 
     # for missing weighting of surfaces of building types assume MFH
     u_values["assumed_subsector"] = u_values.subsector
@@ -306,8 +306,8 @@ def prepare_building_stock_data():
         ~u_values.subsector.isin(rename_sectors.values()), "assumed_subsector"
     ] = "MFH"
 
-    u_values.country_code.replace({"UK": "GB"}, inplace=True)
-    u_values.bage.replace({"Berfore 1945": "Before 1945"}, inplace=True)
+    u_values["country_code"] = u_values.country_code.replace({"UK": "GB"})
+    u_values["bage"] = u_values.bage.replace({"Berfore 1945": "Before 1945"})
     u_values = u_values[~u_values.bage.isna()]
 
     u_values.set_index(["country_code", "subsector", "bage", "type"], inplace=True)
