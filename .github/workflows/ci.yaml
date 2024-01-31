@@ -32,7 +32,14 @@ jobs:
         - ubuntu-latest
         - macos-latest
         - windows-latest
-
+        inhouse:
+        - stable
+        - master
+        exclude:
+        - os: macos-latest
+          inhouse: master
+        - os: windows-latest
+          inhouse: master
     runs-on: ${{ matrix.os }}
 
     defaults:
@@ -56,6 +63,11 @@ jobs:
         cache-environment: true
         cache-downloads: true
 
+    - name: Install inhouse packages
+      run: |
+        pip install git+https://github.com/PyPSA/atlite.git@master git+https://github.com/PyPSA/powerplantmatching.git@master git+https://github.com/PyPSA/linopy.git@master
+      if: ${{ matrix.inhouse }} == 'master'
+
     - name: Set cache dates
       run: |
         echo "WEEK=$(date +'%Y%U')" >> $GITHUB_ENV
@@ -76,7 +88,7 @@ jobs:
         snakemake -call all --configfile config/test/config.perfect.yaml --rerun-triggers=mtime
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4.3.0
       with:
         name: resources-results
         path: |
@@ -84,3 +96,4 @@ jobs:
           results
         if-no-files-found: warn
         retention-days: 1
+      if: matrix.os == 'ubuntu' && matrix.inhouse == 'stable'
