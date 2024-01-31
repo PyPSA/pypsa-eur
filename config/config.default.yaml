@@ -345,6 +345,7 @@ existing_capacities:
   grouping_years_power: [1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2020, 2025, 2030]
   grouping_years_heat: [1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2019] # these should not extend 2020
   threshold_capacity: 10
+  default_heating_lifetime: 20
   conventional_carriers:
   - lignite
   - coal
@@ -448,6 +449,7 @@ sector:
   boilers: true
   oil_boilers: false
   biomass_boiler: true
+  overdimension_individual_heating: 1.1  #to cover demand peaks bigger than data
   chp: true
   micro_chp: false
   solar_thermal: true
@@ -978,6 +980,8 @@ plotting:
     Fischer-Tropsch: '#25c49a'
     liquid: '#25c49a'
     kerosene for aviation: '#a1ffe6'
+    kerosene for aviation international: '#a1ffe6'
+    kerosene for aviation domestic: '#90ccc6'
     naphtha for industry: '#57ebc4'
     methanolisation: '#83d6d5'
     methanol: '#468c8b'

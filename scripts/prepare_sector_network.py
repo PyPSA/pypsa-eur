@@ -1668,6 +1668,8 @@ def add_heat(n, costs):
 
     heat_demand = build_heat_demand(n)
 
+    overdim_factor = options["overdimension_individual_heating"]
+
     district_heat_info = pd.read_csv(snakemake.input.district_heat_share,
                                      index_col=0)
     dist_fraction = district_heat_info["district fraction of node"]
@@ -1803,7 +1805,7 @@ def add_heat(n, costs):
             carrier=f"{name} {heat_pump_type} heat pump",
             efficiency=efficiency,
             capital_cost=costs.at[costs_name, "efficiency"]
-            * costs.at[costs_name, "fixed"],
+            * costs.at[costs_name, "fixed"] * overdim_factor,
             p_nom_extendable=True,
             lifetime=costs.at[costs_name, "lifetime"],
         )
@@ -1872,7 +1874,8 @@ def add_heat(n, costs):
                 bus1=nodes + f" {name} heat",
                 carrier=name + " resistive heater",
                 efficiency=costs.at[key, "efficiency"],
-                capital_cost=costs.at[key, "efficiency"] * costs.at[key, "fixed"],
+                capital_cost=costs.at[key, "efficiency"]
+                * costs.at[key, "fixed"] * overdim_factor,
                 p_nom_extendable=True,
                 lifetime=costs.at[key, "lifetime"],
             )
@@ -1889,7 +1892,8 @@ def add_heat(n, costs):
                 carrier=name + " gas boiler",
                 efficiency=costs.at[key, "efficiency"],
                 efficiency2=costs.at["gas", "CO2 intensity"],
-                capital_cost=costs.at[key, "efficiency"] * costs.at[key, "fixed"],
+                capital_cost=costs.at[key, "efficiency"]
+                * costs.at[key, "fixed"] * overdim_factor,
                 lifetime=costs.at[key, "lifetime"],
             )
 
@@ -1903,7 +1907,8 @@ def add_heat(n, costs):
                 bus=nodes + f" {name} heat",
                 carrier=name + " solar thermal",
                 p_nom_extendable=True,
-                capital_cost=costs.at[name_type + " solar thermal", "fixed"],
+                capital_cost=costs.at[name_type + " solar thermal", "fixed"]
+                * overdim_factor,
                 p_max_pu=solar_thermal[nodes],
                 lifetime=costs.at[name_type + " solar thermal", "lifetime"],
             )
@@ -2318,7 +2323,8 @@ def add_biomass(n, costs):
                 carrier=name + " biomass boiler",
                 efficiency=costs.at["biomass boiler", "efficiency"],
                 capital_cost=costs.at["biomass boiler", "efficiency"]
-                * costs.at["biomass boiler", "fixed"],
+                * costs.at["biomass boiler", "fixed"]
+                * options["overdimension_individual_heating"],
                 marginal_cost=costs.at["biomass boiler", "pelletizing cost"],
                 lifetime=costs.at["biomass boiler", "lifetime"],
             )
@@ -2776,7 +2782,8 @@ def add_industry(n, costs):
                 efficiency=costs.at["decentral oil boiler", "efficiency"],
                 efficiency2=costs.at["oil", "CO2 intensity"],
                 capital_cost=costs.at["decentral oil boiler", "efficiency"]
-                * costs.at["decentral oil boiler", "fixed"],
+                * costs.at["decentral oil boiler", "fixed"]
+                * options["overdimension_individual_heating"],
                 lifetime=costs.at["decentral oil boiler", "lifetime"],
             )
 
@@ -2861,7 +2868,7 @@ def add_industry(n, costs):
 
     p_set = (
         demand_factor
-        * pop_weighted_energy_totals.loc[nodes, all_aviation].sum(axis=1)
+        * pop_weighted_energy_totals.loc[nodes, all_aviation]
         * 1e6
         / nhours
     ).rename(lambda x: x + " kerosene for aviation")
@@ -2869,32 +2876,37 @@ def add_industry(n, costs):
     if not options["regional_oil_demand"]:
         p_set = p_set.sum()
 
-    n.madd(
-        "Bus",
-        spatial.oil.kerosene,
-        location=spatial.oil.demand_locations,
-        carrier="kerosene for aviation",
-        unit="MWh_LHV",
-    )
+    for scope in ["domestic", "international"]:
 
-    n.madd(
-        "Load",
-        spatial.oil.kerosene,
-        bus=spatial.oil.kerosene,
-        carrier="kerosene for aviation",
-        p_set=p_set,
-    )
+        n.madd(
+            "Bus",
+            spatial.oil.kerosene,
+            suffix=f" {scope}",
+            location=spatial.oil.demand_locations,
+            carrier=f"kerosene for aviation {scope}",
+            unit="MWh_LHV",
+        )
 
-    n.madd(
-        "Link",
-        spatial.oil.kerosene,
-        bus0=spatial.oil.nodes,
-        bus1=spatial.oil.kerosene,
-        bus2="co2 atmosphere",
-        carrier="kerosene for aviation",
-        p_nom_extendable=True,
-        efficiency2=costs.at["oil", "CO2 intensity"],
-    )
+        n.madd(
+            "Load",
+            spatial.oil.kerosene,
+            suffix=f" {scope}",
+            bus=spatial.oil.kerosene + f" {scope}",
+            carrier=f"kerosene for aviation {scope}",
+            p_set=p_set[f"total {scope} aviation"],
+        )
+
+        n.madd(
+            "Link",
+            spatial.oil.kerosene,
+            suffix=f" {scope}",
+            bus0=spatial.oil.nodes,
+            bus1=spatial.oil.kerosene + f" {scope}",
+            bus2="co2 atmosphere",
+            carrier=f"kerosene for aviation {scope}",
+            p_nom_extendable=True,
+            efficiency2=costs.at["oil", "CO2 intensity"],
+        )
 
     # TODO simplify bus expression
     n.madd(
