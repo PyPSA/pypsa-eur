@@ -98,7 +98,7 @@ jobs:
         snakemake -call all --configfile config/test/config.perfect.yaml --rerun-triggers=mtime
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4.3.0
       with:
         name: resources-results
         path: |
@@ -106,3 +106,4 @@ jobs:
           results
         if-no-files-found: warn
         retention-days: 1
+      if: matrix.os == 'ubuntu' && matrix.inhouse == 'stable'
