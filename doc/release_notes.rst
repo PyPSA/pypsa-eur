@@ -64,6 +64,9 @@ Upcoming Release
 
 * The ``highs`` solver was added to the default environment file.
 
+* It is now possible to determine the directory for shared resources by setting `shared_resources` to a string.
+
+* A ``test.sh`` script was added to the repository to run the tests locally.
 
 
 PyPSA-Eur 0.9.0 (5th January 2024)
