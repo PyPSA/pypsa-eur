@@ -76,7 +76,7 @@ jobs:
     - name: Install inhouse packages
       run: |
         pip install git+https://github.com/PyPSA/atlite.git@master git+https://github.com/PyPSA/powerplantmatching.git@master git+https://github.com/PyPSA/linopy.git@master
-        if: ${{ matrix.inhouse }} == 'master'
+      if: ${{ matrix.inhouse }} == 'master'
 
     - name: Set cache dates
       run: |
