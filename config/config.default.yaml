@@ -976,8 +976,6 @@ plotting:
     Fischer-Tropsch: '#25c49a'
     liquid: '#25c49a'
     kerosene for aviation: '#a1ffe6'
-    kerosene for aviation international: '#a1ffe6'
-    kerosene for aviation domestic: '#90ccc6'
     naphtha for industry: '#57ebc4'
     methanolisation: '#83d6d5'
     methanol: '#468c8b'
