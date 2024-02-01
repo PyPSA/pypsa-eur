@@ -6,12 +6,10 @@
 Build district heat shares at each node, depending on investment year.
 """
 
-import pandas as pd
-
-from prepare_sector_network import get
-
 import logging
 
+import pandas as pd
+from prepare_sector_network import get
 
 logger = logging.getLogger(__name__)
 
@@ -28,11 +26,11 @@ if __name__ == "__main__":
 
     investment_year = int(snakemake.wildcards.planning_horizons[-4:])
 
-    pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout,
-                             index_col=0)
+    pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
 
-    district_heat_share = pd.read_csv(snakemake.input.district_heat_share,
-                                      index_col=0).squeeze()
+    district_heat_share = pd.read_csv(
+        snakemake.input.district_heat_share, index_col=0
+    ).squeeze()
 
     # make ct-based share nodal
     district_heat_share = district_heat_share.loc[pop_layout.ct]
@@ -61,7 +59,9 @@ if __name__ == "__main__":
 
     # difference of max potential and today's share of district heating
     diff = (urban_fraction * central_fraction) - dist_fraction_node
-    progress = get(snakemake.config["sector"]["district_heating"]["progress"], investment_year)
+    progress = get(
+        snakemake.config["sector"]["district_heating"]["progress"], investment_year
+    )
     dist_fraction_node += diff * progress
     logger.info(
         f"Increase district heating share by a progress factor of {progress:.2%} "

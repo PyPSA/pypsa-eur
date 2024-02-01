@@ -407,15 +407,13 @@ def add_heating_capacities_installed_before_baseyear(
     """
     logger.debug(f"Adding heating capacities installed before {baseyear}")
 
-    existing_heating = pd.read_csv(snakemake.input.existing_heating_distribution,
-                                   header=[0,1],
-                                   index_col=0)
-
+    existing_heating = pd.read_csv(
+        snakemake.input.existing_heating_distribution, header=[0, 1], index_col=0
+    )
 
     techs = existing_heating.columns.get_level_values(1).unique()
 
     for name in existing_heating.columns.get_level_values(0).unique():
-
         name_type = "central" if name == "urban central" else "decentral"
 
         nodes = pd.Index(n.buses.location[n.buses.index.str.contains(f"{name} heat")])
@@ -449,7 +447,9 @@ def add_heating_capacities_installed_before_baseyear(
                 efficiency=efficiency,
                 capital_cost=costs.at[costs_name, "efficiency"]
                 * costs.at[costs_name, "fixed"],
-                p_nom=existing_heating[(name, f"{heat_pump_type} heat pump")][nodes] * ratio / costs.at[costs_name, "efficiency"],
+                p_nom=existing_heating[(name, f"{heat_pump_type} heat pump")][nodes]
+                * ratio
+                / costs.at[costs_name, "efficiency"],
                 build_year=int(grouping_year),
                 lifetime=costs.at[costs_name, "lifetime"],
             )
@@ -511,10 +511,11 @@ def add_heating_capacities_installed_before_baseyear(
                 efficiency2=costs.at["oil", "CO2 intensity"],
                 capital_cost=costs.at["decentral oil boiler", "efficiency"]
                 * costs.at["decentral oil boiler", "fixed"],
-                p_nom= (
+                p_nom=(
                     existing_heating[(name, "oil boiler")][nodes]
                     * ratio
-                    / costs.at["decentral oil boiler", "efficiency"]),
+                    / costs.at["decentral oil boiler", "efficiency"]
+                ),
                 build_year=int(grouping_year),
                 lifetime=costs.at[f"{name_type} gas boiler", "lifetime"],
             )
@@ -596,7 +597,9 @@ if __name__ == "__main__":
             .to_pandas()
             .reindex(index=n.snapshots)
         )
-        default_lifetime = snakemake.params.existing_capacities["default_heating_lifetime"]
+        default_lifetime = snakemake.params.existing_capacities[
+            "default_heating_lifetime"
+        ]
         add_heating_capacities_installed_before_baseyear(
             n,
             baseyear,
