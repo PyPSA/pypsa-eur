@@ -2868,7 +2868,7 @@ def add_industry(n, costs):
 
     p_set = (
         demand_factor
-        * pop_weighted_energy_totals.loc[nodes, all_aviation]
+        * pop_weighted_energy_totals.loc[nodes, all_aviation].sum(axis=1)
         * 1e6
         / nhours
     ).rename(lambda x: x + " kerosene for aviation")
@@ -2876,37 +2876,32 @@ def add_industry(n, costs):
     if not options["regional_oil_demand"]:
         p_set = p_set.sum()
 
-    for scope in ["domestic", "international"]:
+    n.madd(
+        "Bus",
+        spatial.oil.kerosene,
+        location=spatial.oil.demand_locations,
+        carrier="kerosene for aviation",
+        unit="MWh_LHV",
+    )
 
-        n.madd(
-            "Bus",
-            spatial.oil.kerosene,
-            suffix=f" {scope}",
-            location=spatial.oil.demand_locations,
-            carrier=f"kerosene for aviation {scope}",
-            unit="MWh_LHV",
-        )
+    n.madd(
+        "Load",
+        spatial.oil.kerosene,
+        bus=spatial.oil.kerosene,
+        carrier="kerosene for aviation",
+        p_set=p_set,
+    )
 
-        n.madd(
-            "Load",
-            spatial.oil.kerosene,
-            suffix=f" {scope}",
-            bus=spatial.oil.kerosene + f" {scope}",
-            carrier=f"kerosene for aviation {scope}",
-            p_set=p_set[f"total {scope} aviation"],
-        )
-
-        n.madd(
-            "Link",
-            spatial.oil.kerosene,
-            suffix=f" {scope}",
-            bus0=spatial.oil.nodes,
-            bus1=spatial.oil.kerosene + f" {scope}",
-            bus2="co2 atmosphere",
-            carrier=f"kerosene for aviation {scope}",
-            p_nom_extendable=True,
-            efficiency2=costs.at["oil", "CO2 intensity"],
-        )
+    n.madd(
+        "Link",
+        spatial.oil.kerosene,
+        bus0=spatial.oil.nodes,
+        bus1=spatial.oil.kerosene,
+        bus2="co2 atmosphere",
+        carrier="kerosene for aviation",
+        p_nom_extendable=True,
+        efficiency2=costs.at["oil", "CO2 intensity"],
+    )
 
     # TODO simplify bus expression
     n.madd(
