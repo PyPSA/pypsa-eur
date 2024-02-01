@@ -162,15 +162,17 @@ def concat_networks(years):
         add_build_year_to_new_assets(network, year)
 
         # static ----------------------------------
-        # (1) add buses and carriers
-        for component in network.iterate_components(["Bus", "Carrier"]):
-            df_year = component.df
-            # get missing assets
-            missing = get_missing(df_year, n, component.list_name)
-            import_components_from_dataframe(n, missing, component.name)
-        # (2) add generators, links, stores and loads
         for component in network.iterate_components(
-            ["Generator", "Link", "Store", "Load", "Line", "StorageUnit"]
+            [
+                "Bus",
+                "Carrier",
+                "Generator",
+                "Link",
+                "Store",
+                "Load",
+                "Line",
+                "StorageUnit",
+            ]
         ):
             df_year = component.df.copy()
             missing = get_missing(df_year, n, component.list_name)
