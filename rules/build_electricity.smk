@@ -47,7 +47,7 @@ rule build_powerplants:
     input:
         base_network=RESOURCES + "networks/base.nc",
         custom_powerplants="data/custom_powerplants.csv",
-        custom_chps="data/german_chp.csv",
+        custom_chps=RESOURCES + "german_chp.csv",
     output:
         RESOURCES + "powerplants.csv",
     log:

@@ -615,6 +615,106 @@ def add_heating_capacities_installed_before_baseyear(
         grouping_years, np.digitize(df_CHP_agg.DateIn, grouping_years, right=True)
     )
 
+    # check if the CHPs were read in from MaStR for Germany
+    if "Capacity_thermal" in df_CHP_agg.columns:
+        df_KWK = df_CHP_agg[~df_CHP_agg['Capacity_thermal'].isna()]
+        df_CHP_agg = df_CHP_agg[df_CHP_agg['Capacity_thermal'].isna()]
+
+        df_CHP_power = df_KWK[df_KWK['Capacity'] > df_KWK['Capacity_thermal']]
+        df_CHP_therm = df_KWK[df_KWK['Capacity'] <= df_KWK['Capacity_thermal']]
+        
+        df_CHP_power.loc[:, 'Capacity'] = df_CHP_power['Capacity'] / df_CHP_power['Efficiency']
+        df_CHP_power = df_CHP_power.rename(columns={'Capacity': 'p_nom'})
+        df_CHP_power = df_CHP_power.rename(columns={'Efficiency': 'efficiency_1'})
+        df_CHP_power['efficiency_2'] = df_CHP_power['Capacity_thermal'] / df_CHP_power['p_nom']
+
+        df_CHP_therm.loc[:, 'Capacity_thermal'] = df_CHP_therm['Capacity_thermal'] / costs.at['biomass CHP', 'efficiency-heat']
+        df_CHP_therm = df_CHP_therm.rename(columns={'Capacity_thermal': 'p_nom'})
+        df_CHP_therm['Efficiency'] = df_CHP_therm['Capacity'] / df_CHP_therm['p_nom']
+        df_CHP_therm = df_CHP_therm.rename(columns={'Efficiency': 'efficiency_1'})
+        df_CHP_therm['efficiency_2'] = costs.at['biomass CHP', 'efficiency-heat']
+
+        df_KWK = pd.concat([df_CHP_power, df_CHP_therm])
+        df_KWK = df_KWK.round(2)
+
+        df_KWK_eff_1 = df_KWK.pivot_table(
+            index=["grouping_year", "Fueltype"],
+            columns="cluster_bus",
+            values="efficiency_1",
+            aggfunc=lambda x: np.average(x, weights=df_KWK.loc[x.index, 'p_nom']),
+        )
+        
+        df_KWK_eff_2 = df_KWK.pivot_table(
+            index=["grouping_year", "Fueltype"],
+            columns="cluster_bus",
+            values="efficiency_2",
+            aggfunc=lambda x: np.average(x, weights=df_KWK.loc[x.index, 'p_nom']),
+        )
+
+        df_KWK_cap = df_KWK.pivot_table(
+            index=["grouping_year", "Fueltype"],
+            columns="cluster_bus",
+            values="p_nom",
+            aggfunc="sum",
+        )
+
+        # add everything as Link
+        for grouping_year, generator in df_KWK_cap.index:
+            # capacity is the capacity in MW at each node for this
+            capacity = df_KWK_cap.loc[grouping_year, generator]
+            capacity = capacity[~capacity.isna()]
+            capacity = capacity[
+                capacity > snakemake.params.existing_capacities["threshold_capacity"]
+            ]
+            asset_i = (
+                capacity.index + f" CHP {generator} {grouping_year}"
+            )  # e.g. DE1 0 coal CHP-1980
+            efficiency_1 = df_KWK_eff_1.loc[grouping_year, generator]
+            efficiency_2 = df_KWK_eff_2.loc[grouping_year, generator]
+            # No check of missing buses necessary
+            if generator != "urban central solid biomass CHP":
+                if generator != "lignite":
+                    key = f"central {generator} CHP"
+                else:
+                    # lignite CHPs are not in DEA database - use coal CHP parameters
+                    key = "central coal CHP"
+
+                n.madd(
+                    "Link",
+                    asset_i,  # e.g. DE1 0 coal CHP-1980
+                    bus0=vars(spatial)[generator].nodes,  # EU gas/coal/lignite EU
+                    bus1=capacity.index,  # electricity
+                    bus2=capacity.index + " urban central heat",  # urban central heat
+                    bus3="co2 atmosphere",  # CO2 emissions
+                    carrier=f"urban central {generator} CHP",  # urban central gas/lignite/coal CHP
+                    p_nom=capacity[0],
+                    capital_cost=costs.at[key, "fixed"] * costs.at[key, "efficiency"],
+                    marginal_cost=costs.at[key, "VOM"],
+                    efficiency=efficiency_1,
+                    efficiency2=efficiency_2,
+                    efficiency3=costs.at[generator, "CO2 intensity"],
+                    build_year=grouping_year,
+                    lifetime=costs.at[key, "lifetime"],
+                )
+            else:
+                key = "central solid biomass CHP"
+                n.madd(
+                    "Link",
+                    capacity.index,
+                    suffix=key,
+                    bus0=spatial.biomass.df.loc[capacity.index]["nodes"].values,
+                    bus1=capacity.index,
+                    bus2=capacity.index + " urban central heat",
+                    carrier=generator,
+                    p_nom=capacity,
+                    capital_cost=costs.at[key, "fixed"] * costs.at[key, "efficiency"],
+                    marginal_cost=costs.at[key, "VOM"],
+                    efficiency=efficiency_1,
+                    efficiency2=efficiency_2,
+                    build_year=grouping_year,
+                    lifetime=costs.at[key, "lifetime"],
+                )
+
     df_CHP = df_CHP_agg.pivot_table(
         index=["grouping_year", "Fueltype"],
         columns="cluster_bus",
@@ -652,7 +752,8 @@ def add_heating_capacities_installed_before_baseyear(
                 capital_cost=costs.at[key, "fixed"] * costs.at[key, "efficiency"],
                 marginal_cost=costs.at[key, "VOM"],
                 efficiency=costs.at[key, "efficiency"],
-                efficiency2=costs.at[generator, "CO2 intensity"],
+                efficiency2=0.71,
+                efficiency3=costs.at[generator, "CO2 intensity"],
                 build_year=grouping_year,
                 lifetime=costs.at[key, "lifetime"],
             )
