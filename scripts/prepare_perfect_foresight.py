@@ -199,8 +199,13 @@ def concat_networks(years):
                     pnl[k].loc[pnl_year.index, pnl_year.columns] = pnl_year
 
                 else:
-                    # this is to avoid adding multiple times assets with
-                    # infinite lifetime as ror
+                    # For components that aren't new, we just extend
+                    # time-varying data from the previous investment
+                    # period.
+                    if i > 0:
+                        pnl[k].loc[(year,)] = pnl[k].loc[(years[i - 1],)].values
+
+                    # Now, add time-varying data for new components.
                     cols = pnl_year.columns.difference(pnl[k].columns)
                     pnl[k] = pd.concat([pnl[k], pnl_year[cols]], axis=1)
 
