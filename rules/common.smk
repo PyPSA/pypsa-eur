@@ -4,7 +4,7 @@
 
 import os, sys, glob
 
-helper_source_path = [match for match in glob.glob('**/_helpers.py', recursive=True)]
+helper_source_path = [match for match in glob.glob("**/_helpers.py", recursive=True)]
 
 for path in helper_source_path:
     path = os.path.dirname(os.path.abspath(path))
