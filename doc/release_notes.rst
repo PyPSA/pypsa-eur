@@ -64,6 +64,8 @@ Upcoming Release
 
 * The ``highs`` solver was added to the default environment file.
 
+* Various minor bugfixes to the perfect foresight workflow, though perfect foresight must still be considered experimental.
+
 
 
 PyPSA-Eur 0.9.0 (5th January 2024)
