@@ -35,8 +35,9 @@ dependencies:
 - netcdf4
 - networkx
 - scipy
+- glpk
 - shapely>=2.0
-- pyomo
+- pyscipopt
 - matplotlib
 - proj
 - fiona
@@ -47,7 +48,7 @@ dependencies:
 - tabula-py
 - pyxlsb
 - graphviz
-- ipopt
+- pre-commit
 
   # Keep in conda environment when calling ipython
 - ipython
@@ -60,3 +61,4 @@ dependencies:
 
 - pip:
   - tsam>=2.3.1
+  - highspy
