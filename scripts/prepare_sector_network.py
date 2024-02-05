@@ -3481,10 +3481,12 @@ def set_temporal_aggregation(n, opts, solver_name):
     return n
 
 
-def lossy_bidirectional_links(n, carrier, efficiencies={}):
+def lossy_bidirectional_links(n, carrier, efficiencies={}, subset=None):
     "Split bidirectional links into two unidirectional links to include transmission losses."
 
-    carrier_i = n.links.query("carrier == @carrier").index
+    if subset is None:
+        subset = n.links.index
+    carrier_i = n.links.query("carrier == @carrier").index.intersection(subset)
 
     if (
         not any((v != 1.0) or (v >= 0) for v in efficiencies.values())
