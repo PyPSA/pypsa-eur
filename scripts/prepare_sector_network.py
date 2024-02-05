@@ -549,6 +549,9 @@ def patch_electricity_network(n):
 def add_eu_bus(n, x=-5.5, y=46):
     """
     Add EU bus to the network.
+
+    This cosmetic bus serves as a reference point for the location of
+    the EU buses in the plots and summaries.
     """
     n.add("Bus", "EU", location="EU", x=x, y=y, carrier="none")
     n.add("Carrier", "none")
