@@ -64,6 +64,8 @@ Upcoming Release
 
 * The ``highs`` solver was added to the default environment file.
 
+* Various minor bugfixes to the perfect foresight workflow, though perfect foresight must still be considered experimental.
+
 * It is now possible to determine the directory for shared resources by setting `shared_resources` to a string.
 
 * A ``test.sh`` script was added to the repository to run the tests locally.

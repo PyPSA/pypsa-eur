@@ -45,38 +45,6 @@ rule add_existing_baseyear:
         "../scripts/add_existing_baseyear.py"
 
 
-rule add_brownfield:
-    params:
-        H2_retrofit=config["sector"]["H2_retrofit"],
-        H2_retrofit_capacity_per_CH4=config["sector"]["H2_retrofit_capacity_per_CH4"],
-        threshold_capacity=config["existing_capacities"]["threshold_capacity"],
-    input:
-        network=RESULTS
-        + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
-        network_p=solved_previous_horizon,  #solved network at previous time step
-        costs="data/costs_{planning_horizons}.csv",
-        cop_soil_total=RESOURCES + "cop_soil_total_elec_s{simpl}_{clusters}.nc",
-        cop_air_total=RESOURCES + "cop_air_total_elec_s{simpl}_{clusters}.nc",
-    output:
-        RESULTS
-        + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
-    threads: 4
-    resources:
-        mem_mb=10000,
-    log:
-        LOGS
-        + "add_brownfield_elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log",
-    benchmark:
-        (
-            BENCHMARKS
-            + "add_brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
-        )
-    conda:
-        "../envs/environment.yaml"
-    script:
-        "../scripts/add_brownfield.py"
-
-
 rule prepare_perfect_foresight:
     input:
         **{
@@ -192,6 +160,3 @@ rule make_summary_perfect:
         "../envs/environment.yaml"
     script:
         "../scripts/make_summary_perfect.py"
-
-
-ruleorder: add_existing_baseyear > add_brownfield
