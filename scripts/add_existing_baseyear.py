@@ -482,7 +482,7 @@ def add_heating_capacities_installed_before_baseyear(
                 "Link",
                 nodes,
                 suffix=f" {name} gas boiler-{grouping_year}",
-                bus0=spatial.gas.nodes,
+                bus0="EU gas" if "EU gas" in spatial.gas.nodes else nodes + " gas",
                 bus1=nodes + " " + name + " heat",
                 bus2="co2 atmosphere",
                 carrier=name + " gas boiler",
