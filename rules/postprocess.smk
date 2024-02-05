@@ -54,6 +54,7 @@ if config["foresight"] != "perfect":
     rule plot_hydrogen_network:
         params:
             plotting=config["plotting"],
+            foresight=config["foresight"],
         input:
             network=RESULTS
             + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
