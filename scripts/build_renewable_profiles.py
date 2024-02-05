@@ -200,14 +200,25 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_renewable_profiles", technology="solar")
+        snakemake = mock_snakemake("build_renewable_profiles", technology="onwind")
     configure_logging(snakemake)
 
     nprocesses = int(snakemake.threads)
     noprogress = snakemake.config["run"].get("disable_progressbar", True)
     noprogress = noprogress or not snakemake.config["atlite"]["show_progress"]
+    year = snakemake.params.renewable["year"]
+    foresight = snakemake.params.foresight
     params = snakemake.params.renewable[snakemake.wildcards.technology]
     resource = params["resource"]  # pv panel params / wind turbine params
+
+    year_dependent_techs = {
+        k: resource.get(k)
+        for k in ["panel", "turbine"]
+        if isinstance(resource.get(k), dict)
+    }
+    for key, techs in year_dependent_techs.items():
+        resource[key] = resource[key][year]
+
     correction_factor = params.get("correction_factor", 1.0)
     capacity_per_sqkm = params["capacity_per_sqkm"]
     snapshots = snakemake.params.snapshots
@@ -335,6 +346,29 @@ if __name__ == "__main__":
         **resource,
     )
 
+    if year_dependent_techs and foresight != "overnight":
+        for key, techs in year_dependent_techs.items():
+            year_profiles = list()
+            tech_profiles = dict()
+            tech_profiles[resource[key]] = profile
+            for year, tech in techs.items():
+                resource[key] = tech
+                if tech not in tech_profiles:
+                    tech_profiles[tech] = func(
+                        matrix=availability.stack(spatial=["y", "x"]),
+                        layout=layout,
+                        index=buses,
+                        per_unit=True,
+                        return_capacity=False,
+                        **resource,
+                    )
+                year_profile = tech_profiles[tech]
+                year_profile = year_profile.expand_dims({"year": [year]}).rename(
+                    "year_profiles"
+                )
+                year_profiles.append(year_profile)
+        year_profiles = xr.merge(year_profiles)
+
     duration = time.time() - start
     logger.info(
         f"Completed weighted capacity factor time series calculation ({duration:2.2f}s)"
@@ -373,6 +407,9 @@ if __name__ == "__main__":
         ]
     )
 
+    if year_dependent_techs:
+        ds = xr.merge([ds, year_profiles * correction_factor])
+
     if snakemake.wildcards.technology.startswith("offwind"):
         logger.info("Calculate underwater fraction of connections.")
         offshore_shape = gpd.read_file(snakemake.input["offshore_shapes"]).unary_union
@@ -396,6 +433,9 @@ if __name__ == "__main__":
     if "clip_p_max_pu" in params:
         min_p_max_pu = params["clip_p_max_pu"]
         ds["profile"] = ds["profile"].where(ds["profile"] >= min_p_max_pu, 0)
+        ds["year_profiles"] = ds["year_profiles"].where(
+            ds["year_profiles"] >= min_p_max_pu, 0
+        )
 
     ds.to_netcdf(snakemake.output.profile)
 

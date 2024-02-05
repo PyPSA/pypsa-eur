@@ -261,6 +261,7 @@ rule build_renewable_profiles:
     params:
         snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},
         renewable=config["renewable"],
+        foresight=config["foresight"],
     input:
         **opt,
         base_network=RESOURCES + "networks/base.nc",
