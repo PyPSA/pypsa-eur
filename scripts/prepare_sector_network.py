@@ -19,7 +19,7 @@ import pandas as pd
 import pypsa
 import xarray as xr
 from _helpers import update_config_with_sector_opts
-from add_electricity import calculate_annuity, sanitize_carriers
+from add_electricity import calculate_annuity, sanitize_carriers, sanitize_locations
 from build_energy_totals import build_co2_totals, build_eea_co2, build_eurostat_co2
 from networkx.algorithms import complement
 from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentation
@@ -546,6 +546,17 @@ def patch_electricity_network(n):
     n.loads_t.p_set.rename(lambda x: x.strip(), axis=1, inplace=True)
 
 
+def add_eu_bus(n, x=-5.5, y=46):
+    """
+    Add EU bus to the network.
+
+    This cosmetic bus serves as a reference point for the location of
+    the EU buses in the plots and summaries.
+    """
+    n.add("Bus", "EU", location="EU", x=x, y=y, carrier="none")
+    n.add("Carrier", "none")
+
+
 def add_co2_tracking(n, costs, options):
     # minus sign because opposite to how fossil fuels used:
     # CH4 burning puts CH4 down, atmosphere up
@@ -1005,6 +1016,7 @@ def insert_electricity_distribution_grid(n, costs):
         "Store",
         nodes + " home battery",
         bus=nodes + " home battery",
+        location=nodes,
         e_cyclic=True,
         e_nom_extendable=True,
         carrier="home battery",
@@ -3594,6 +3606,8 @@ if __name__ == "__main__":
         for carrier in conventional:
             add_carrier_buses(n, carrier)
 
+    add_eu_bus(n)
+
     add_co2_tracking(n, costs, options)
 
     add_generation(n, costs)
@@ -3733,5 +3747,6 @@ if __name__ == "__main__":
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
 
     sanitize_carriers(n, snakemake.config)
+    sanitize_locations(n)
 
     n.export_to_netcdf(snakemake.output[0])

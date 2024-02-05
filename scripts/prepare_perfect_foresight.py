@@ -221,7 +221,7 @@ def concat_networks(years):
     # set investment periods
     n.investment_periods = n.snapshots.levels[0]
     # weighting of the investment period -> assuming last period same weighting as the period before
-    time_w = n.investment_periods.to_series().diff().shift(-1).fillna(method="ffill")
+    time_w = n.investment_periods.to_series().diff().shift(-1).ffill()
     n.investment_period_weightings["years"] = time_w
     # set objective weightings
     objective_w = get_investment_weighting(
