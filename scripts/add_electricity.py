@@ -178,6 +178,15 @@ def sanitize_carriers(n, config):
     n.carriers["color"] = n.carriers.color.where(n.carriers.color != "", colors)
 
 
+def sanitize_locations(n):
+    n.buses["x"] = n.buses.x.where(n.buses.x != 0, n.buses.location.map(n.buses.x))
+    n.buses["y"] = n.buses.y.where(n.buses.y != 0, n.buses.location.map(n.buses.y))
+    n.buses["country"] = n.buses.country.where(
+        n.buses.country.ne("") & n.buses.country.notnull(),
+        n.buses.location.map(n.buses.country),
+    )
+
+
 def add_co2_emissions(n, costs, carriers):
     """
     Add CO2 emissions to the network's carriers attribute.
