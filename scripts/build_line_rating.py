@@ -98,7 +98,7 @@ def calculate_line_rating(n, cutout):
     -------
     xarray DataArray object with maximal power.
     """
-    relevant_lines = n.lines[~n.lines["underground"]]
+    relevant_lines = n.lines[~n.lines["underground"]].copy()
     buses = relevant_lines[["bus0", "bus1"]].values
     x = n.buses.x
     y = n.buses.y

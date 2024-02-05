@@ -81,11 +81,7 @@ jobs:
         key: data-cutouts-${{ env.WEEK }}-${{ env.DATA_CACHE_NUMBER }}
 
     - name: Test snakemake workflow
-      run: |
-        snakemake -call solve_elec_networks --configfile config/test/config.electricity.yaml --rerun-triggers=mtime
-        snakemake -call all --configfile config/test/config.overnight.yaml --rerun-triggers=mtime
-        snakemake -call all --configfile config/test/config.myopic.yaml --rerun-triggers=mtime
-        snakemake -call all --configfile config/test/config.perfect.yaml --rerun-triggers=mtime
+      run: ./test.sh
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4.3.0
