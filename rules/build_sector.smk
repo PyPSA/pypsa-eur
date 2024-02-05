@@ -797,15 +797,19 @@ rule prepare_sector_network:
         dsm_profile=RESOURCES + "dsm_profile_s{simpl}_{clusters}.csv",
         co2_totals_name=RESOURCES + "co2_totals.csv",
         co2="data/bundle-sector/eea/UNFCCC_v23.csv",
-        biomass_potentials=RESOURCES
-        + "biomass_potentials_s{simpl}_{clusters}_"
-        + "{}.csv".format(config["biomass"]["year"])
-        if config["foresight"] == "overnight"
-        else RESOURCES
-        + "biomass_potentials_s{simpl}_{clusters}_{planning_horizons}.csv",
-        costs="data/costs_{}.csv".format(config["costs"]["year"])
-        if config["foresight"] == "overnight"
-        else "data/costs_{planning_horizons}.csv",
+        biomass_potentials=(
+            RESOURCES
+            + "biomass_potentials_s{simpl}_{clusters}_"
+            + "{}.csv".format(config["biomass"]["year"])
+            if config["foresight"] == "overnight"
+            else RESOURCES
+            + "biomass_potentials_s{simpl}_{clusters}_{planning_horizons}.csv"
+        ),
+        costs=(
+            "data/costs_{}.csv".format(config["costs"]["year"])
+            if config["foresight"] == "overnight"
+            else "data/costs_{planning_horizons}.csv"
+        ),
         profile_offwind_ac=RESOURCES + "profile_offwind-ac.nc",
         profile_offwind_dc=RESOURCES + "profile_offwind-dc.nc",
         h2_cavern=RESOURCES + "salt_cavern_potentials_s{simpl}_{clusters}.csv",
@@ -831,18 +835,21 @@ rule prepare_sector_network:
         cop_air_total=RESOURCES + "cop_air_total_elec_s{simpl}_{clusters}.nc",
         cop_air_rural=RESOURCES + "cop_air_rural_elec_s{simpl}_{clusters}.nc",
         cop_air_urban=RESOURCES + "cop_air_urban_elec_s{simpl}_{clusters}.nc",
-        solar_thermal_total=RESOURCES
-        + "solar_thermal_total_elec_s{simpl}_{clusters}.nc"
-        if config["sector"]["solar_thermal"]
-        else [],
-        solar_thermal_urban=RESOURCES
-        + "solar_thermal_urban_elec_s{simpl}_{clusters}.nc"
-        if config["sector"]["solar_thermal"]
-        else [],
-        solar_thermal_rural=RESOURCES
-        + "solar_thermal_rural_elec_s{simpl}_{clusters}.nc"
-        if config["sector"]["solar_thermal"]
-        else [],
+        solar_thermal_total=(
+            RESOURCES + "solar_thermal_total_elec_s{simpl}_{clusters}.nc"
+            if config["sector"]["solar_thermal"]
+            else []
+        ),
+        solar_thermal_urban=(
+            RESOURCES + "solar_thermal_urban_elec_s{simpl}_{clusters}.nc"
+            if config["sector"]["solar_thermal"]
+            else []
+        ),
+        solar_thermal_rural=(
+            RESOURCES + "solar_thermal_rural_elec_s{simpl}_{clusters}.nc"
+            if config["sector"]["solar_thermal"]
+            else []
+        ),
     output:
         RESULTS
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
