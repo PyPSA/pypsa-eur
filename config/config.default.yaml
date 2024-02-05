@@ -606,9 +606,34 @@ industry:
   MWh_NH3_per_MWh_H2_cracker: 1.46 # https://github.com/euronion/trace/blob/44a5ff8401762edbef80eff9cfe5a47c8d3c8be4/data/efficiencies.csv
   NH3_process_emissions: 24.5
   petrochemical_process_emissions: 25.5
-  HVC_primary_fraction: 1.
-  HVC_mechanical_recycling_fraction: 0.
-  HVC_chemical_recycling_fraction: 0.
+  #HVC primary/recycling based on values used in Neumann et al https://doi.org/10.1016/j.joule.2023.06.016, linearly interpolated between 2020 and 2050
+  #2020 recycling rates based on Agora https://static.agora-energiewende.de/fileadmin/Projekte/2021/2021_02_EU_CEAP/A-EW_254_Mobilising-circular-economy_study_WEB.pdf
+  #fractions refer to the total primary HVC production in 2020
+  #assumes 6.7 Mtplastics produced from recycling in 2020
+  HVC_primary_fraction:
+    2020: 1.0
+    2025: 0.9
+    2030: 0.8
+    2035: 0.7
+    2040: 0.6
+    2045: 0.5
+    2050: 0.4
+  HVC_mechanical_recycling_fraction:
+    2020: 0.12
+    2025: 0.15
+    2030: 0.18
+    2035: 0.21
+    2040: 0.24
+    2045: 0.27
+    2050: 0.30
+  HVC_chemical_recycling_fraction:
+    2020: 0.0
+    2025: 0.0
+    2030: 0.04
+    2035: 0.08
+    2040: 0.12
+    2045: 0.16
+    2050: 0.20
   HVC_production_today: 52.
   MWh_elec_per_tHVC_mechanical_recycling: 0.547
   MWh_elec_per_tHVC_chemical_recycling: 6.9

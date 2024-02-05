@@ -66,6 +66,12 @@ Upcoming Release
 
 * Various minor bugfixes to the perfect foresight workflow, though perfect foresight must still be considered experimental.
 
+* Default settings for recycling rates and primary product shares of high-value
+  chemicals have been set in accordance with the values used in `Neumann et al.
+  (2023) <https://doi.org/10.1016/j.joule.2023.06.016>`_ linearly interpolated
+  between 2020 and 2050. The recycling rates are based on data from `Agora
+  Energiewende (2021)
+  <https://static.agora-energiewende.de/fileadmin/Projekte/2021/2021_02_EU_CEAP/A-EW_254_Mobilising-circular-economy_study_WEB.pdf>`_.
 
 
 PyPSA-Eur 0.9.0 (5th January 2024)
