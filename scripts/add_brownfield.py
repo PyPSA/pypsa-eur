@@ -145,78 +145,53 @@ def disable_grid_expansion_if_LV_limit_hit(n):
         n.global_constraints.drop("lv_limit", inplace=True)
 
 
-def adjust_renewable_profiles(n, input_profiles, config, year):
+def adjust_renewable_profiles(n, input_profiles, params, year):
     """
-    Adjusts renewable profiles according to the renewable technology specified.
-
-    If the planning horizon is not available, the closest year is used
-    instead.
+    Adjusts renewable profiles according to the renewable technology specified,
+    using the latest year below or equal to the selected year.
     """
 
+    # spatial clustering
     cluster_busmap = pd.read_csv(snakemake.input.cluster_busmap, index_col=0).squeeze()
     simplify_busmap = pd.read_csv(
         snakemake.input.simplify_busmap, index_col=0
     ).squeeze()
     clustermaps = simplify_busmap.map(cluster_busmap)
     clustermaps.index = clustermaps.index.astype(str)
-    dr = pd.date_range(**config["snapshots"], freq="H")
+
+    # temporal clustering
+    dr = pd.date_range(**params["snapshots"], freq="h")
     snapshotmaps = (
         pd.Series(dr, index=dr).where(lambda x: x.isin(n.snapshots), pd.NA).ffill()
     )
 
-    for carrier in config["electricity"]["renewable_carriers"]:
-        if carrier == "hydro":
-            continue
-
-    clustermaps.index = clustermaps.index.astype(str)
-    dr = pd.date_range(**config["snapshots"], freq="H")
-    snapshotmaps = (
-        pd.Series(dr, index=dr).where(lambda x: x.isin(n.snapshots), pd.NA).ffill()
-    )
-    for carrier in config["electricity"]["renewable_carriers"]:
+    for carrier in params["carriers"]:
         if carrier == "hydro":
             continue
         with xr.open_dataset(getattr(input_profiles, "profile_" + carrier)) as ds:
             if ds.indexes["bus"].empty or "year" not in ds.indexes:
                 continue
-            if year in ds.indexes["year"]:
-                p_max_pu = (
-                    ds["year_profiles"]
-                    .sel(year=year)
-                    .transpose("time", "bus")
-                    .to_pandas()
-                )
-            else:
-                available_previous_years = [
-                    available_year
-                    for available_year in ds.indexes["year"]
-                    if available_year < year
-                ]
-                available_following_years = [
-                    available_year
-                    for available_year in ds.indexes["year"]
-                    if available_year > year
-                ]
-                if available_previous_years:
-                    closest_year = max(available_previous_years)
-                if available_following_years:
-                    closest_year = min(available_following_years)
-                logging.warning(
-                    f"Planning horizon {year} not in {carrier} profiles. Using closest year {closest_year} instead."
-                )
-                p_max_pu = (
-                    ds["year_profiles"]
-                    .sel(year=closest_year)
-                    .transpose("time", "bus")
-                    .to_pandas()
-                )
+
+            closest_year = max(
+                (y for y in ds.year.values if y <= year), default=min(ds.year.values)
+            )
+
+            p_max_pu = (
+                ds["profile"]
+                .sel(year=closest_year)
+                .transpose("time", "bus")
+                .to_pandas()
+            )
+
             # spatial clustering
-            weight = ds["weight"].to_pandas()
+            weight = ds["weight"].sel(year=closest_year).to_pandas()
             weight = weight.groupby(clustermaps).transform(normed_or_uniform)
             p_max_pu = (p_max_pu * weight).T.groupby(clustermaps).sum().T
             p_max_pu.columns = p_max_pu.columns + f" {carrier}"
+
             # temporal_clustering
             p_max_pu = p_max_pu.groupby(snapshotmaps).mean()
+
             # replace renewable time series
             n.generators_t.p_max_pu.loc[:, p_max_pu.columns] = p_max_pu
 
@@ -245,7 +220,7 @@ if __name__ == "__main__":
 
     n = pypsa.Network(snakemake.input.network)
 
-    adjust_renewable_profiles(n, snakemake.input, snakemake.config, year)
+    adjust_renewable_profiles(n, snakemake.input, snakemake.params, year)
 
     add_build_year_to_new_assets(n, year)
 

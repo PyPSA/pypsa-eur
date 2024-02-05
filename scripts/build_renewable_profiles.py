@@ -200,24 +200,20 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_renewable_profiles", technology="onwind")
+        snakemake = mock_snakemake("build_renewable_profiles", technology="offwind-dc")
     configure_logging(snakemake)
 
     nprocesses = int(snakemake.threads)
     noprogress = snakemake.config["run"].get("disable_progressbar", True)
     noprogress = noprogress or not snakemake.config["atlite"]["show_progress"]
-    year = snakemake.params.renewable["year"]
-    foresight = snakemake.params.foresight
     params = snakemake.params.renewable[snakemake.wildcards.technology]
     resource = params["resource"]  # pv panel params / wind turbine params
 
-    year_dependent_techs = {
-        k: resource.get(k)
-        for k in ["panel", "turbine"]
-        if isinstance(resource.get(k), dict)
-    }
-    for key, techs in year_dependent_techs.items():
-        resource[key] = resource[key][year]
+    tech = next(t for t in ["panel", "turbine"] if t in resource)
+    models = resource[tech]
+    if not isinstance(models, dict):
+        models = {0: models}
+    resource[tech] = models[next(iter(models))]
 
     correction_factor = params.get("correction_factor", 1.0)
     capacity_per_sqkm = params["capacity_per_sqkm"]
@@ -334,45 +330,40 @@ if __name__ == "__main__":
     duration = time.time() - start
     logger.info(f"Completed average capacity factor calculation ({duration:2.2f}s)")
 
-    logger.info("Calculate weighted capacity factor time series...")
-    start = time.time()
+    profiles = []
+    capacities = []
+    for year, model in models.items():
 
-    profile, capacities = func(
-        matrix=availability.stack(spatial=["y", "x"]),
-        layout=layout,
-        index=buses,
-        per_unit=True,
-        return_capacity=True,
-        **resource,
-    )
+        logger.info(
+            f"Calculate weighted capacity factor time series for model {model}..."
+        )
+        start = time.time()
 
-    if year_dependent_techs and foresight != "overnight":
-        for key, techs in year_dependent_techs.items():
-            year_profiles = list()
-            tech_profiles = dict()
-            tech_profiles[resource[key]] = profile
-            for year, tech in techs.items():
-                resource[key] = tech
-                if tech not in tech_profiles:
-                    tech_profiles[tech] = func(
-                        matrix=availability.stack(spatial=["y", "x"]),
-                        layout=layout,
-                        index=buses,
-                        per_unit=True,
-                        return_capacity=False,
-                        **resource,
-                    )
-                year_profile = tech_profiles[tech]
-                year_profile = year_profile.expand_dims({"year": [year]}).rename(
-                    "year_profiles"
-                )
-                year_profiles.append(year_profile)
-        year_profiles = xr.merge(year_profiles)
+        resource[tech] = model
 
-    duration = time.time() - start
-    logger.info(
-        f"Completed weighted capacity factor time series calculation ({duration:2.2f}s)"
-    )
+        profile, capacity = func(
+            matrix=availability.stack(spatial=["y", "x"]),
+            layout=layout,
+            index=buses,
+            per_unit=True,
+            return_capacity=True,
+            **resource,
+        )
+
+        dim = {"year": [year]}
+        profile = profile.expand_dims(dim)
+        capacity = capacity.expand_dims(dim)
+
+        profiles.append(profile.rename("profile"))
+        capacities.append(capacity.rename("weight"))
+
+        duration = time.time() - start
+        logger.info(
+            f"Completed weighted capacity factor time series calculation for model {model} ({duration:2.2f}s)"
+        )
+
+    profiles = xr.merge(profiles)
+    capacities = xr.merge(capacities)
 
     logger.info("Calculating maximal capacity per bus")
     p_nom_max = capacity_per_sqkm * availability @ area
@@ -399,16 +390,13 @@ if __name__ == "__main__":
 
     ds = xr.merge(
         [
-            (correction_factor * profile).rename("profile"),
-            capacities.rename("weight"),
+            correction_factor * profiles,
+            capacities,
             p_nom_max.rename("p_nom_max"),
             potential.rename("potential"),
             average_distance.rename("average_distance"),
         ]
     )
-
-    if year_dependent_techs:
-        ds = xr.merge([ds, year_profiles * correction_factor])
 
     if snakemake.wildcards.technology.startswith("offwind"):
         logger.info("Calculate underwater fraction of connections.")
@@ -425,7 +413,7 @@ if __name__ == "__main__":
     # select only buses with some capacity and minimal capacity factor
     ds = ds.sel(
         bus=(
-            (ds["profile"].mean("time") > params.get("min_p_max_pu", 0.0))
+            (ds["profile"].mean("time").max("year") > params.get("min_p_max_pu", 0.0))
             & (ds["p_nom_max"] > params.get("min_p_nom_max", 0.0))
         )
     )
@@ -433,9 +421,6 @@ if __name__ == "__main__":
     if "clip_p_max_pu" in params:
         min_p_max_pu = params["clip_p_max_pu"]
         ds["profile"] = ds["profile"].where(ds["profile"] >= min_p_max_pu, 0)
-        ds["year_profiles"] = ds["year_profiles"].where(
-            ds["year_profiles"] >= min_p_max_pu, 0
-        )
 
     ds.to_netcdf(snakemake.output.profile)
 

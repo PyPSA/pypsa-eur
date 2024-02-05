@@ -164,14 +164,11 @@ atlite:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#renewable
 renewable:
-  year: 2020
   onwind:
     cutout: europe-2013-era5
     resource:
       method: wind
-      turbine:
-        2020: Vestas_V112_3MW
-        2030: NREL_ReferenceTurbine_2020ATB_5.5MW
+      turbine: Vestas_V112_3MW
       add_cutout_windspeed: true
     capacity_per_sqkm: 3
     # correction_factor: 0.93
@@ -190,9 +187,7 @@ renewable:
     cutout: europe-2013-era5
     resource:
       method: wind
-      turbine:
-        2020: NREL_ReferenceTurbine_5MW_offshore.yaml
-        2030: NREL_ReferenceTurbine_2020ATB_15MW_offshore
+      turbine: NREL_ReferenceTurbine_5MW_offshore
       add_cutout_windspeed: true
     capacity_per_sqkm: 2
     correction_factor: 0.8855
@@ -208,10 +203,7 @@ renewable:
     cutout: europe-2013-era5
     resource:
       method: wind
-      turbine:
-        2020: Vestas_V164_7MW_offshore
-        2025: NREL_ReferenceTurbine_2020ATB_15MW_offshore
-        2030: NREL_ReferenceTurbine_2020ATB_18MW_offshore
+      turbine: Vestas_V164_7MW_offshore
       add_cutout_windspeed: true
     capacity_per_sqkm: 2
     correction_factor: 0.8855
@@ -227,8 +219,7 @@ renewable:
     cutout: europe-2013-sarah
     resource:
       method: pv
-      panel:
-        2020: CSi
+      panel: CSi
       orientation:
         slope: 35.
         azimuth: 180.
