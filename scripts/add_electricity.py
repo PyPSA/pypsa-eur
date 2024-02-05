@@ -288,7 +288,7 @@ def attach_load(n, regions, load, nuts3_shapes, ua_md_gdp, countries, scaling=1.
 
     ua_md_gdp = pd.read_csv(ua_md_gdp, dtype={"name": "str"}).set_index("name")
 
-    logger.info(f"Load data scaled with scalling factor {scaling}.")
+    logger.info(f"Load data scaled by factor {scaling}.")
     opsd_load *= scaling
 
     nuts3 = gpd.read_file(nuts3_shapes).set_index("index")

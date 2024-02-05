@@ -57,6 +57,8 @@ Upcoming Release
 
 * Add the option to customise map projection in plotting config.
 
+* The order of buses (bus0, bus1, ...) for DAC components has changed to meet the convention of the other components. Therefore, `bus0` refers to the electricity bus (input), `bus1` to the heat bus (input), 'bus2' to the CO2 atmosphere bus (input), and `bus3` to the CO2 storage bus (output).
+
 * The rule ``plot_network`` has been split into separate rules for plotting
   electricity, hydrogen and gas networks.
 
