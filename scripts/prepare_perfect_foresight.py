@@ -162,15 +162,17 @@ def concat_networks(years):
         add_build_year_to_new_assets(network, year)
 
         # static ----------------------------------
-        # (1) add buses and carriers
-        for component in network.iterate_components(["Bus", "Carrier"]):
-            df_year = component.df
-            # get missing assets
-            missing = get_missing(df_year, n, component.list_name)
-            import_components_from_dataframe(n, missing, component.name)
-        # (2) add generators, links, stores and loads
         for component in network.iterate_components(
-            ["Generator", "Link", "Store", "Load", "Line", "StorageUnit"]
+            [
+                "Bus",
+                "Carrier",
+                "Generator",
+                "Link",
+                "Store",
+                "Load",
+                "Line",
+                "StorageUnit",
+            ]
         ):
             df_year = component.df.copy()
             missing = get_missing(df_year, n, component.list_name)
@@ -199,8 +201,13 @@ def concat_networks(years):
                     pnl[k].loc[pnl_year.index, pnl_year.columns] = pnl_year
 
                 else:
-                    # this is to avoid adding multiple times assets with
-                    # infinite lifetime as ror
+                    # For components that aren't new, we just extend
+                    # time-varying data from the previous investment
+                    # period.
+                    if i > 0:
+                        pnl[k].loc[(year,)] = pnl[k].loc[(years[i - 1],)].values
+
+                    # Now, add time-varying data for new components.
                     cols = pnl_year.columns.difference(pnl[k].columns)
                     pnl[k] = pd.concat([pnl[k], pnl_year[cols]], axis=1)
 
@@ -214,7 +221,7 @@ def concat_networks(years):
     # set investment periods
     n.investment_periods = n.snapshots.levels[0]
     # weighting of the investment period -> assuming last period same weighting as the period before
-    time_w = n.investment_periods.to_series().diff().shift(-1).fillna(method="ffill")
+    time_w = n.investment_periods.to_series().diff().shift(-1).ffill()
     n.investment_period_weightings["years"] = time_w
     # set objective weightings
     objective_w = get_investment_weighting(

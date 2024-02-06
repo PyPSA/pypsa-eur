@@ -401,18 +401,22 @@ rule add_electricity:
             if str(fn).startswith("data/")
         },
         base_network=RESOURCES + "networks/base.nc",
-        line_rating=RESOURCES + "networks/line_rating.nc"
-        if config["lines"]["dynamic_line_rating"]["activate"]
-        else RESOURCES + "networks/base.nc",
+        line_rating=(
+            RESOURCES + "networks/line_rating.nc"
+            if config["lines"]["dynamic_line_rating"]["activate"]
+            else RESOURCES + "networks/base.nc"
+        ),
         tech_costs=COSTS,
         regions=RESOURCES + "regions_onshore.geojson",
         powerplants=RESOURCES + "powerplants.csv",
         hydro_capacities=ancient("data/bundle/hydro_capacities.csv"),
         geth_hydro_capacities="data/geth2015_hydro_capacities.csv",
         unit_commitment="data/unit_commitment.csv",
-        fuel_price=RESOURCES + "monthly_fuel_price.csv"
-        if config["conventional"]["dynamic_fuel_price"]
-        else [],
+        fuel_price=(
+            RESOURCES + "monthly_fuel_price.csv"
+            if config["conventional"]["dynamic_fuel_price"]
+            else []
+        ),
         load=RESOURCES + "load.csv",
         nuts3_shapes=RESOURCES + "nuts3_shapes.geojson",
         ua_md_gdp="data/GDP_PPP_30arcsec_v3_mapped_default.csv",

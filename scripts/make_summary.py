@@ -507,7 +507,7 @@ def calculate_weighted_prices(n, label, weighted_prices):
         if carrier in ["H2", "gas"]:
             load = pd.DataFrame(index=n.snapshots, columns=buses, data=0.0)
         else:
-            load = n.loads_t.p_set[buses]
+            load = n.loads_t.p_set[buses.intersection(n.loads.index)]
 
         for tech in value:
             names = n.links.index[n.links.index.to_series().str[-len(tech) :] == tech]
@@ -560,7 +560,10 @@ def calculate_market_values(n, label, market_values):
         )
         revenue = dispatch * n.buses_t.marginal_price[buses]
 
-        market_values.at[tech, label] = revenue.sum().sum() / dispatch.sum().sum()
+        if total_dispatch := dispatch.sum().sum():
+            market_values.at[tech, label] = revenue.sum().sum() / total_dispatch
+        else:
+            market_values.at[tech, label] = np.nan
 
     ## Now do market value of links ##
 
@@ -583,7 +586,10 @@ def calculate_market_values(n, label, market_values):
 
             revenue = dispatch * n.buses_t.marginal_price[buses]
 
-            market_values.at[tech, label] = revenue.sum().sum() / dispatch.sum().sum()
+            if total_dispatch := dispatch.sum().sum():
+                market_values.at[tech, label] = revenue.sum().sum() / total_dispatch
+            else:
+                market_values.at[tech, label] = np.nan
 
     return market_values
 

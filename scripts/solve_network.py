@@ -418,7 +418,7 @@ def add_CCL_constraints(n, config):
     Example
     -------
     scenario:
-        opts: [Co2L-CCL-24H]
+        opts: [Co2L-CCL-24h]
     electricity:
         agg_p_nom_limits: data/agg_p_nom_minmax.csv
     """
@@ -463,7 +463,7 @@ def add_EQ_constraints(n, o, scaling=1e-1):
     Example
     -------
     scenario:
-        opts: [Co2L-EQ0.7-24H]
+        opts: [Co2L-EQ0.7-24h]
 
     Require each country or node to on average produce a minimal share
     of its total electricity consumption itself. Example: EQ0.7c demands each country
@@ -527,7 +527,7 @@ def add_BAU_constraints(n, config):
     Example
     -------
     scenario:
-        opts: [Co2L-BAU-24H]
+        opts: [Co2L-BAU-24h]
     electricity:
         BAU_mincapacities:
             solar: 0
@@ -564,7 +564,7 @@ def add_SAFE_constraints(n, config):
     config.yaml requires to specify opts:
 
     scenario:
-        opts: [Co2L-SAFE-24H]
+        opts: [Co2L-SAFE-24h]
     electricity:
         SAFE_reservemargin: 0.1
     Which sets a reserve margin of 10% above the peak demand.
