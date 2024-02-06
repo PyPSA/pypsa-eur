@@ -411,9 +411,13 @@ if __name__ == "__main__":
         ds["underwater_fraction"] = xr.DataArray(underwater_fraction, [buses])
 
     # select only buses with some capacity and minimal capacity factor
+    mean_profile = ds["profile"].mean("time")
+    if "year" in ds.indexes:
+        mean_profile.max("year")
+
     ds = ds.sel(
         bus=(
-            (ds["profile"].mean("time").max("year") > params.get("min_p_max_pu", 0.0))
+            (mean_profile > params.get("min_p_max_pu", 0.0))
             & (ds["p_nom_max"] > params.get("min_p_nom_max", 0.0))
         )
     )
