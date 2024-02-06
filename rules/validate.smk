@@ -17,7 +17,7 @@ rule build_electricity_production:
     The data is used for validation of the optimization results.
     """
     params:
-        snapshots=config["snapshots"],
+        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},
         countries=config["countries"],
     output:
         RESOURCES + "historical_electricity_production.csv",
@@ -35,7 +35,7 @@ rule build_cross_border_flows:
     The data is used for validation of the optimization results.
     """
     params:
-        snapshots=config["snapshots"],
+        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},
         countries=config["countries"],
     input:
         network=RESOURCES + "networks/base.nc",
@@ -55,7 +55,7 @@ rule build_electricity_prices:
     The data is used for validation of the optimization results.
     """
     params:
-        snapshots=config["snapshots"],
+        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},
         countries=config["countries"],
     output:
         RESOURCES + "historical_electricity_prices.csv",

@@ -121,7 +121,6 @@ preferred_order = pd.Index(
         "gas boiler",
         "gas",
         "natural gas",
-        "helmeth",
         "methanation",
         "ammonia",
         "hydrogen storage",
@@ -444,7 +443,7 @@ def historical_emissions(countries):
     return emissions
 
 
-def plot_carbon_budget_distribution(input_eurostat):
+def plot_carbon_budget_distribution(input_eurostat,opts):
     """
     Plot historical carbon emissions in the EU and decarbonization path.
     """
@@ -452,7 +451,6 @@ def plot_carbon_budget_distribution(input_eurostat):
 
     sns.set()
     sns.set_style("ticks")
-    plt.style.use("seaborn-ticks")
     plt.rcParams["xtick.direction"] = "in"
     plt.rcParams["ytick.direction"] = "in"
     plt.rcParams["xtick.labelsize"] = 20
@@ -481,8 +479,10 @@ def plot_carbon_budget_distribution(input_eurostat):
 
     if snakemake.config["foresight"] == "myopic":
         path_cb = "results/" + snakemake.params.RDIR + "/csvs/"
-        co2_cap = pd.read_csv(path_cb + "carbon_budget_distribution.csv", index_col=0)[
-            ["cb"]
+        print(opts[-1])
+        print(path_cb + "carbon_budget_distribution"+ str(opts[-1]) +".csv")
+        co2_cap = pd.read_csv(path_cb + "carbon_budget_distribution"+ str(opts[-1]) +".csv", index_col=0)[
+            [opts[-1]]
         ]
         co2_cap *= e_1990
     else:
@@ -583,4 +583,4 @@ if __name__ == "__main__":
     for sector_opts in snakemake.params.sector_opts:
         opts = sector_opts.split("-")
         if any("cb" in o for o in opts) or snakemake.config["foresight"] == "perfect":
-            plot_carbon_budget_distribution(snakemake.input.eurostat)
+            plot_carbon_budget_distribution(snakemake.input.eurostat,opts)

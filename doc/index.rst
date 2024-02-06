@@ -35,6 +35,8 @@ PyPSA-Eur: A Sector-Coupled Open Optimisation Model of the European Energy Syste
    :target: https://stackoverflow.com/questions/tagged/pypsa
    :alt: Stackoverflow
 
+|
+
 PyPSA-Eur is an open model dataset of the European energy system at the
 transmission network level that covers the full ENTSO-E area. It covers demand
 and supply for all energy sectors. From version v0.8.0, PyPSA-Eur includes all
@@ -116,7 +118,7 @@ of the individual parts.
     topics we are working on. Please feel free to help or make suggestions.
 
 This project is currently maintained by the `Department of Digital
-Transformation in Energy Systems <https:/www.ensys.tu-berlin.de>`_ at the
+Transformation in Energy Systems <https://www.tu.berlin/en/ensys>`_ at the
 `Technische Universität Berlin <https://www.tu.berlin>`_. Previous versions were
 developed within the `IAI <http://www.iai.kit.edu>`_ at the `Karlsruhe Institute
 of Technology (KIT) <http://www.kit.edu/english/index.php>`_ which was funded by
@@ -207,24 +209,6 @@ If you want to cite a specific PyPSA-Eur version, each release of PyPSA-Eur is s
 
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3520874.svg
    :target: https://doi.org/10.5281/zenodo.3520874
-
-
-Pre-Built Networks as a Dataset
-===============================
-
-There are pre-built networks available as a dataset on Zenodo as well for every release of PyPSA-Eur.
-
-.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3601881.svg
-   :target: https://doi.org/10.5281/zenodo.3601881
-
-The included ``.nc`` files are PyPSA network files which can be imported with PyPSA via:
-
-.. code:: python
-
-    import pypsa
-
-    filename = "elec_s_1024_ec.nc"  # example
-    n = pypsa.Network(filename)
 
 
 Operating Systems

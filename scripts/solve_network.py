@@ -26,15 +26,18 @@ Additionally, some extra constraints specified in :mod:`solve_network` are added
     the workflow for all scenarios in the configuration file (``scenario:``)
     based on the rule :mod:`solve_network`.
 """
+import importlib
 import logging
+import os
 import re
+import sys
 
 import numpy as np
 import pandas as pd
 import pypsa
 import xarray as xr
 from _benchmark import memory_logger
-from _helpers import configure_logging, update_config_with_sector_opts
+from _helpers import configure_logging, get_opt, update_config_with_sector_opts
 from pypsa.descriptors import get_activity_mask
 
 logger = logging.getLogger(__name__)
@@ -187,9 +190,6 @@ def add_co2_sequestration_limit(n, config, limit=200):
     """
     Add a global constraint on the amount of Mt CO2 that can be sequestered.
     """
-    n.carriers.loc["co2 stored", "co2_absorptions"] = -1
-    n.carriers.co2_absorptions = n.carriers.co2_absorptions.fillna(0)
-
     limit = limit * 1e6
     for o in opts:
         if "seq" not in o:
@@ -207,10 +207,10 @@ def add_co2_sequestration_limit(n, config, limit=200):
     n.madd(
         "GlobalConstraint",
         names,
-        sense="<=",
-        constant=limit,
-        type="primary_energy",
-        carrier_attribute="co2_absorptions",
+        sense=">=",
+        constant=-limit,
+        type="operational_limit",
+        carrier_attribute="co2 sequestered",
         investment_period=periods,
     )
 
@@ -358,7 +358,7 @@ def prepare_network(
         # http://journal.frontiersin.org/article/10.3389/fenrg.2015.00055/full
         # TODO: retrieve color and nice name from config
         n.add("Carrier", "load", color="#dd2e23", nice_name="Load shedding")
-        buses_i = n.buses.query("carrier == 'AC'").index
+        buses_i = n.buses.index
         if not np.isscalar(load_shedding):
             # TODO: do not scale via sign attribute (use Eur/MWh instead of Eur/kWh)
             load_shedding = 1e2  # Eur/kWh
@@ -401,7 +401,7 @@ def prepare_network(
         if snakemake.params["sector"]["limit_max_growth"]["enable"]:
             n = add_max_growth(n, config)
 
-    if n.stores.carrier.eq("co2 stored").any():
+    if n.stores.carrier.eq("co2 sequestered").any():
         limit = co2_sequestration_potential
         add_co2_sequestration_limit(n, config, limit=limit)
 
@@ -695,6 +695,35 @@ def add_battery_constraints(n):
     n.model.add_constraints(lhs == 0, name="Link-charger_ratio")
 
 
+def add_lossy_bidirectional_link_constraints(n):
+    if not n.links.p_nom_extendable.any() or not "reversed" in n.links.columns:
+        return
+
+    n.links["reversed"] = n.links.reversed.fillna(0).astype(bool)
+    carriers = n.links.loc[n.links.reversed, "carrier"].unique()
+
+    forward_i = n.links.query(
+        "carrier in @carriers and ~reversed and p_nom_extendable"
+    ).index
+
+    def get_backward_i(forward_i):
+        return pd.Index(
+            [
+                re.sub(r"-(\d{4})$", r"-reversed-\1", s)
+                if re.search(r"-\d{4}$", s)
+                else s + "-reversed"
+                for s in forward_i
+            ]
+        )
+
+    backward_i = get_backward_i(forward_i)
+
+    lhs = n.model["Link-p_nom"].loc[backward_i]
+    rhs = n.model["Link-p_nom"].loc[forward_i]
+
+    n.model.add_constraints(lhs == rhs, name="Link-bidirectional_sync")
+
+
 def add_chp_constraints(n):
     electric = (
         n.links.index.str.contains("urban central")
@@ -753,9 +782,13 @@ def add_pipe_retrofit_constraint(n):
     """
     Add constraint for retrofitting existing CH4 pipelines to H2 pipelines.
     """
-    gas_pipes_i = n.links.query("carrier == 'gas pipeline' and p_nom_extendable").index
+    if "reversed" not in n.links.columns:
+        n.links["reversed"] = False
+    gas_pipes_i = n.links.query(
+        "carrier == 'gas pipeline' and p_nom_extendable and ~reversed"
+    ).index
     h2_retrofitted_i = n.links.query(
-        "carrier == 'H2 pipeline retrofitted' and p_nom_extendable"
+        "carrier == 'H2 pipeline retrofitted' and p_nom_extendable and ~reversed"
     ).index
 
     if h2_retrofitted_i.empty or gas_pipes_i.empty:
@@ -911,19 +944,32 @@ def extra_functionality(n, snapshots):
     """
     opts = n.opts
     config = n.config
-    if "BAU" in opts and n.generators.p_nom_extendable.any():
+    constraints = config["solving"].get("constraints", {})
+    if (
+        "BAU" in opts or constraints.get("BAU", False)
+    ) and n.generators.p_nom_extendable.any():
         add_BAU_constraints(n, config)
-    if "SAFE" in opts and n.generators.p_nom_extendable.any():
+    if (
+        "SAFE" in opts or constraints.get("SAFE", False)
+    ) and n.generators.p_nom_extendable.any():
         add_SAFE_constraints(n, config)
-    if "CCL" in opts and n.generators.p_nom_extendable.any():
+    if (
+        "CCL" in opts or constraints.get("CCL", False)
+    ) and n.generators.p_nom_extendable.any():
         add_CCL_constraints(n, config)
+
     reserve = config["electricity"].get("operational_reserve", {})
     if reserve.get("activate"):
         add_operational_reserve_margin(n, snapshots, config)
-    for o in opts:
-        if "EQ" in o:
-            add_EQ_constraints(n, o)
+
+    EQ_config = constraints.get("EQ", False)
+    EQ_wildcard = get_opt(opts, r"^EQ+[0-9]*\.?[0-9]+(c|)")
+    EQ_o = EQ_wildcard or EQ_config
+    if EQ_o:
+        add_EQ_constraints(n, EQ_o.replace("EQ", ""))
+
     add_battery_constraints(n)
+    add_lossy_bidirectional_link_constraints(n)
     add_pipe_retrofit_constraint(n)
     if n._multi_invest:
         add_carbon_constraint(n, snapshots)
@@ -931,11 +977,20 @@ def extra_functionality(n, snapshots):
         add_retrofit_gas_boiler_constraint(n, snapshots)
     current_horizon = int(snakemake.wildcards.planning_horizons)
     if config['sector']["land_transport_electric_share"][current_horizon] is None:
-        add_EV_number_constraint(n)
+        #add_EV_number_constraint(n)
         if config['sector']["bev_dsm"]:
           add_EV_storage_constraint(n)
         if config['sector']["v2g"]:
           add_v2g_constraint(n)
+
+    if snakemake.params.custom_extra_functionality:
+        source_path = snakemake.params.custom_extra_functionality
+        assert os.path.exists(source_path), f"{source_path} does not exist"
+        sys.path.append(os.path.dirname(source_path))
+        module_name = os.path.splitext(os.path.basename(source_path))[0]
+        module = importlib.import_module(module_name)
+        custom_extra_functionality = getattr(module, module_name)
+        custom_extra_functionality(n, snapshots, snakemake)
 
 
 def solve_network(n, config, solving, opts="", **kwargs):
@@ -953,7 +1008,11 @@ def solve_network(n, config, solving, opts="", **kwargs):
         "linearized_unit_commitment", False
     )
     kwargs["assign_all_duals"] = cf_solving.get("assign_all_duals", False)
-    kwargs["solver_dir"] = tmpdir
+    #kwargs["solver_dir"] = tmpdir
+
+    if kwargs["solver_name"] == "gurobi":
+        logging.getLogger("gurobipy").setLevel(logging.CRITICAL)
+
     rolling_horizon = cf_solving.pop("rolling_horizon", False)
     skip_iterations = cf_solving.pop("skip_iterations", False)
     if not n.lines.s_nom_extendable.any():
@@ -984,6 +1043,9 @@ def solve_network(n, config, solving, opts="", **kwargs):
             f"Solving status '{status}' with termination condition '{condition}'"
         )
     if "infeasible" in condition:
+        labels = n.model.compute_infeasibilities()
+        logger.info("Labels:\n" + ' '.join([str(elem) for i, elem in enumerate(labels)])) #labels)
+        n.model.print_infeasibilities()
         raise RuntimeError("Solving status 'infeasible'")
 
     return n

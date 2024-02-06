@@ -446,6 +446,10 @@ def calculate_metrics(n, label, metrics):
     if "CO2Limit" in n.global_constraints.index:
         metrics.at["co2_shadow", label] = n.global_constraints.at["CO2Limit", "mu"]
 
+    if "co2_sequestration_limit" in n.global_constraints.index:
+        metrics.at["co2_storage_shadow", label] = n.global_constraints.at[
+            "co2_sequestration_limit", "mu"
+        ]
     return metrics
 
 

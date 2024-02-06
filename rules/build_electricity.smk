@@ -20,11 +20,11 @@ if config["enable"].get("prepare_links_p_nom", False):
 
 rule build_electricity_demand:
     params:
-        snapshots=config["snapshots"],
+        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},
         countries=config["countries"],
         load=config["load"],
     input:
-        ancient("data/load_raw.csv"),
+        ancient(RESOURCES + "load_raw.csv"),
     output:
         RESOURCES + "load.csv",
     log:
@@ -41,6 +41,7 @@ rule build_powerplants:
     params:
         powerplants_filter=config["electricity"]["powerplants_filter"],
         custom_powerplants=config["electricity"]["custom_powerplants"],
+        everywhere_powerplants=config["electricity"]["everywhere_powerplants"],
         countries=config["countries"],
     input:
         base_network=RESOURCES + "networks/base.nc",
@@ -61,7 +62,7 @@ rule build_powerplants:
 rule base_network:
     params:
         countries=config["countries"],
-        snapshots=config["snapshots"],
+        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},
         lines=config["lines"],
         links=config["links"],
         transformers=config["transformers"],
@@ -144,7 +145,7 @@ if config["enable"].get("build_cutout", False):
 
     rule build_cutout:
         params:
-            snapshots=config["snapshots"],
+            snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},
             cutouts=config["atlite"]["cutouts"],
         input:
             regions_onshore=RESOURCES + "regions_onshore.geojson",
@@ -206,15 +207,72 @@ rule build_ship_raster:
         "../scripts/build_ship_raster.py"
 
 
+rule determine_availability_matrix_MD_UA:
+    input:
+        copernicus="data/Copernicus_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
+        wdpa="data/WDPA.gpkg",
+        wdpa_marine="data/WDPA_WDOECM_marine.gpkg",
+        gebco=lambda w: (
+            "data/bundle/GEBCO_2014_2D.nc"
+            if "max_depth" in config["renewable"][w.technology].keys()
+            else []
+        ),
+        ship_density=lambda w: (
+            RESOURCES + "shipdensity_raster.tif"
+            if "ship_threshold" in config["renewable"][w.technology].keys()
+            else []
+        ),
+        country_shapes=RESOURCES + "country_shapes.geojson",
+        offshore_shapes=RESOURCES + "offshore_shapes.geojson",
+        regions=lambda w: (
+            RESOURCES + "regions_onshore.geojson"
+            if w.technology in ("onwind", "solar")
+            else RESOURCES + "regions_offshore.geojson"
+        ),
+        cutout=lambda w: "cutouts/"
+        + CDIR
+        + config["renewable"][w.technology]["cutout"]
+        + ".nc",
+    output:
+        availability_matrix=RESOURCES + "availability_matrix_MD-UA_{technology}.nc",
+        availability_map=RESOURCES + "availability_matrix_MD-UA_{technology}.png",
+    log:
+        LOGS + "determine_availability_matrix_MD_UA_{technology}.log",
+    threads: ATLITE_NPROCESSES
+    resources:
+        mem_mb=ATLITE_NPROCESSES * 5000,
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/determine_availability_matrix_MD_UA.py"
+
+
+# Optional input when having Ukraine (UA) or Moldova (MD) in the countries list
+if {"UA", "MD"}.intersection(set(config["countries"])):
+    opt = {
+        "availability_matrix_MD_UA": RESOURCES
+        + "availability_matrix_MD-UA_{technology}.nc"
+    }
+else:
+    opt = {}
+
+
 rule build_renewable_profiles:
     params:
+        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},
         renewable=config["renewable"],
     input:
+        **opt,
         base_network=RESOURCES + "networks/base.nc",
         corine=ancient("data/bundle/corine/g250_clc06_V18_5.tif"),
         natura=lambda w: (
             RESOURCES + "natura.tiff"
             if config["renewable"][w.technology]["natura"]
+            else []
+        ),
+        luisa=lambda w: (
+            "data/LUISA_basemap_020321_50m.tif"
+            if config["renewable"][w.technology].get("luisa")
             else []
         ),
         gebco=ancient(
@@ -226,7 +284,7 @@ rule build_renewable_profiles:
         ),
         ship_density=lambda w: (
             RESOURCES + "shipdensity_raster.tif"
-            if "ship_threshold" in config["renewable"][w.technology].keys()
+            if config["renewable"][w.technology].get("ship_threshold", False)
             else []
         ),
         country_shapes=RESOURCES + "country_shapes.geojson",
@@ -298,6 +356,8 @@ rule build_hydro_profile:
 if config["lines"]["dynamic_line_rating"]["activate"]:
 
     rule build_line_rating:
+        params:
+            snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},
         input:
             base_network=RESOURCES + "networks/base.nc",
             cutout="cutouts/"
@@ -355,6 +415,7 @@ rule add_electricity:
         else [],
         load=RESOURCES + "load.csv",
         nuts3_shapes=RESOURCES + "nuts3_shapes.geojson",
+        ua_md_gdp="data/GDP_PPP_30arcsec_v3_mapped_default.csv",
     output:
         RESOURCES + "networks/elec.nc",
     log:
@@ -374,7 +435,9 @@ rule simplify_network:
     params:
         simplify_network=config["clustering"]["simplify_network"],
         aggregation_strategies=config["clustering"].get("aggregation_strategies", {}),
-        focus_weights=config.get("focus_weights", None),
+        focus_weights=config["clustering"].get(
+            "focus_weights", config.get("focus_weights")
+        ),
         renewable_carriers=config["electricity"]["renewable_carriers"],
         max_hours=config["electricity"]["max_hours"],
         length_factor=config["lines"]["length_factor"],
@@ -409,7 +472,9 @@ rule cluster_network:
         cluster_network=config["clustering"]["cluster_network"],
         aggregation_strategies=config["clustering"].get("aggregation_strategies", {}),
         custom_busmap=config["enable"].get("custom_busmap", False),
-        focus_weights=config.get("focus_weights", None),
+        focus_weights=config["clustering"].get(
+            "focus_weights", config.get("focus_weights")
+        ),
         renewable_carriers=config["electricity"]["renewable_carriers"],
         conventional_carriers=config["electricity"].get("conventional_carriers", []),
         max_hours=config["electricity"]["max_hours"],
@@ -470,13 +535,20 @@ rule add_extra_components:
 
 rule prepare_network:
     params:
+        snapshots={
+            "resolution": config["snapshots"].get("resolution", False),
+            "segmentation": config["snapshots"].get("segmentation", False),
+        },
         links=config["links"],
         lines=config["lines"],
         co2base=config["electricity"]["co2base"],
+        co2limit_enable=config["electricity"].get("co2limit_enable", False),
         co2limit=config["electricity"]["co2limit"],
+        gaslimit_enable=config["electricity"].get("gaslimit_enable", False),
         gaslimit=config["electricity"].get("gaslimit"),
         max_hours=config["electricity"]["max_hours"],
         costs=config["costs"],
+        autarky=config["electricity"].get("autarky", {}),
     input:
         RESOURCES + "networks/elec_s{simpl}_{clusters}_ec.nc",
         tech_costs=COSTS,

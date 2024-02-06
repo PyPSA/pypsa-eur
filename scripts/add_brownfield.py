@@ -126,6 +126,47 @@ def add_brownfield(n, n_p, year):
             n.links.loc[new_pipes, "p_nom"] = 0.0
             n.links.loc[new_pipes, "p_nom_min"] = 0.0
 
+def adjust_EVs(n, n_p, year):
+    # set p_min_pu and p_max_pu for solved network, so that only the EV link for the current time horizon
+    # is not constraint (constraining all land transport link with p_min_pu/p_max_pu while p_nom_extentable=True leads to infeasible by gurobi)
+    lifetime_EV = n.links.lifetime[n.links[(n.links.carrier=="land transport EV") ].index[0]]
+    i = 0
+    while (year-lifetime_EV+i) < year:
+        if not n.links_t.efficiency[(n.links.filter(like="land transport EV-"+str(int(year-lifetime_EV+i)),axis=0)).index].empty:
+            p_set =  n_p.loads_t.p[n.loads[n.loads.carrier.str.contains('land transport demand')].index]
+            eff = n.links_t.efficiency[(n.links.filter(like="land transport EV-"+str(int(year-lifetime_EV+i)),axis=0)).index]
+            p_set = p_set.add_suffix(' EV-'+str(int(year-lifetime_EV+i)))
+            p_set = p_set.drop([col for col in p_set.columns if col in p_set.columns and col not in eff.columns], axis=1)
+            pnom = (p_set.divide(eff)).max()
+            pu=p_set.divide(eff)/pnom
+            n.links_t.p_min_pu[(n.links.filter(like="land transport EV-"+str(int(year-lifetime_EV+i)),axis=0)).index] = pu.values
+            n.links_t.p_max_pu[(n.links.filter(like="land transport EV-"+str(int(year-lifetime_EV+i)),axis=0)).index] = pu.values
+        i = i+1   
+
+def disable_grid_expansion_if_LV_limit_hit(n):
+    if not "lv_limit" in n.global_constraints.index:
+        return
+
+    total_expansion = (
+        n.lines.eval("s_nom_min * length").sum()
+        + n.links.query("carrier == 'DC'").eval("p_nom_min * length").sum()
+    ).sum()
+
+    lv_limit = n.global_constraints.at["lv_limit", "constant"]
+
+    # allow small numerical differences
+    if lv_limit - total_expansion < 1:
+        logger.info(f"LV is already reached, disabling expansion and LV limit")
+        extendable_acs = n.lines.query("s_nom_extendable").index
+        n.lines.loc[extendable_acs, "s_nom_extendable"] = False
+        n.lines.loc[extendable_acs, "s_nom"] = n.lines.loc[extendable_acs, "s_nom_min"]
+
+        extendable_dcs = n.links.query("carrier == 'DC' and p_nom_extendable").index
+        n.links.loc[extendable_dcs, "p_nom_extendable"] = False
+        n.links.loc[extendable_dcs, "p_nom"] = n.links.loc[extendable_dcs, "p_nom_min"]
+
+        n.global_constraints.drop("lv_limit", inplace=True)
+
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -156,6 +197,11 @@ if __name__ == "__main__":
     n_p = pypsa.Network(snakemake.input.network_p)
 
     add_brownfield(n, n_p, year)
+
+    disable_grid_expansion_if_LV_limit_hit(n)
+
+    if snakemake.config["sector"]["endogenous_transport"]:
+        adjust_EVs(n, n_p, year)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     n.export_to_netcdf(snakemake.output[0])

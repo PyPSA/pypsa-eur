@@ -89,6 +89,7 @@ rule solve_sector_network_myopic:
         co2_sequestration_potential=config["sector"].get(
             "co2_sequestration_potential", 200
         ),
+        custom_extra_functionality=input_custom_extra_functionality,
     input:
         network=RESULTS
         + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
@@ -108,6 +109,7 @@ rule solve_sector_network_myopic:
     resources:
         mem_mb=config["solving"]["mem"],
         walltime=config["solving"].get("walltime", "12:00:00"),
+        disk_mb=700000
     benchmark:
         (
             BENCHMARKS

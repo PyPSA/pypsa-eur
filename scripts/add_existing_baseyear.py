@@ -88,7 +88,9 @@ def add_existing_renewables(df_agg):
             ]
             cfs = n.generators_t.p_max_pu[gens].mean()
             cfs_key = cfs / cfs.sum()
-            nodal_fraction.loc[n.generators.loc[gens, "bus"]] = cfs_key.values
+            nodal_fraction.loc[n.generators.loc[gens, "bus"]] = cfs_key.groupby(
+                n.generators.loc[gens, "bus"]
+            ).sum()
 
         nodal_df = df.loc[n.buses.loc[elec_buses, "country"]]
         nodal_df.index = elec_buses
@@ -303,7 +305,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
         else:
             bus0 = vars(spatial)[carrier[generator]].nodes
             if "EU" not in vars(spatial)[carrier[generator]].locations:
-                bus0 = bus0.intersection(capacity.index + " gas")
+                bus0 = bus0.intersection(capacity.index + " " + carrier[generator])
 
             # check for missing bus
             missing_bus = pd.Index(bus0).difference(n.buses.index)
@@ -634,18 +636,25 @@ def add_land_transport_installed_before_baseyear(
         n,
         grouping_year,       
 ):
-    
+    # transport demand is fulfilled by ICEs for first planning_horizon in myopic pathway
     pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
     nodes = pop_layout.index
-
-    ice_efficiency = options["transport_internal_combustion_efficiency"]
-    p_set = n.loads_t.p_set[n.loads[n.loads.carrier.str.contains('land transport demand')].index]
-    p_set.columns = p_set.columns.str.rstrip('land transport')
-    
+    # calculate p_nom and profile
+    land_transport_demand_index = n.loads.carrier=='land transport demand'
+    p_set = n.loads_t.p_set.loc[:,land_transport_demand_index]
+    ice_index = n.links.carrier=='land transport oil'
+    eff_ICE = n.links_t.efficiency.loc[:, ice_index]
+    p_set = p_set.add_suffix(' oil')
+    eff_ICE.columns = eff_ICE.columns.str.rstrip('-'+str(grouping_year))
     split_years = costs.at['Liquid fuels ICE (passenger cars)', 'lifetime'] - 1
     year = range(int(grouping_year-split_years), int(grouping_year),1)
-    set_p_nom = p_set.max(axis=0)/len(year)
+    pnom = ((p_set/eff_ICE).max()) / len(year)
+    set_p_nom = pnom 
     p_set_year = p_set/(len(year))
+    profile = p_set_year.divide(eff_ICE)/pnom
+    profile.columns = profile.columns.str.rstrip('land transport oil')
+    eff_ICE.columns = eff_ICE.columns.str.rstrip('land transport oil')
+    #divide ICE build year linearly 
     for year in year:
         n.madd(
         "Link",
@@ -656,15 +665,19 @@ def add_land_transport_installed_before_baseyear(
         bus2="co2 atmosphere",
         carrier="land transport oil",
         capital_cost = 0,
-        efficiency = options["transport_internal_combustion_efficiency"], 
+        efficiency = eff_ICE,
         efficiency2 = costs.at['oil', 'CO2 intensity'], 
         lifetime = costs.at['Liquid fuels ICE (passenger cars)', 'lifetime'], 
         p_nom = set_p_nom, 
-        p_min_pu = p_set_year/(set_p_nom*ice_efficiency),
-        p_max_pu = p_set_year/(set_p_nom*ice_efficiency),
+        p_min_pu = profile, 
+        p_max_pu = profile, 
         build_year = year
-        ) 
+        )
 
+    n.links.loc[(n.links.filter(like="land transport oil-"+str(year+1),axis=0)).index,'p_nom_extendable'] = False
+    n.links.loc[(n.links.filter(like="land transport EV-"+str(year+1),axis=0)).index, 'p_nom_extendable'] = False
+    n.links.loc[(n.links.filter(like="BEV charger-"+str(year+1),axis=0)).index, 'p_nom_extendable'] = False
+    n.links.loc[(n.links.filter(like="land transport fuel cell-"+str(year+1),axis=0)).index, 'p_nom_extendable'] = False
     number_cars = pd.read_csv(snakemake.input.existing_transport, index_col=0)[
         "number cars"
     ]
@@ -741,7 +754,7 @@ if __name__ == "__main__":
     endo_transport = ( (options["land_transport_electric_share"][baseyear] is None ) 
         and (options["land_transport_fuel_cell_share"][baseyear] is None)
         and (options["land_transport_ice_share"][baseyear] is None))
-    if "T" in opts and options["endogenous_transport"] and endo_transport:
+    if "T" in opts and options["endogenous_transport"] and endo_transport and snakemake.config["foresight"]=="myopic":
         add_land_transport_installed_before_baseyear(n, baseyear)
 
     if options.get("cluster_heat_buses", False):
