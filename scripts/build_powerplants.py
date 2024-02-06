@@ -76,7 +76,7 @@ The configuration options ``electricity: powerplants_filter`` and ``electricity:
 """
 
 import logging
-
+import os
 import pandas as pd
 import powerplantmatching as pm
 import pypsa
@@ -139,18 +139,12 @@ if __name__ == "__main__":
     ppl_query = snakemake.params.powerplants_filter
     if isinstance(ppl_query, str):
         ppl.query(ppl_query, inplace=True)
-    chp_query = snakemake.params.chp_filter
-    if isinstance(chp_query, str):
-        ppl.query(chp_query, inplace=True)
 
     # add carriers from own powerplant files:
     custom_ppl_query = snakemake.params.custom_powerplants
     ppl = add_custom_powerplants(
-        ppl, snakemake.input.custom_powerplants, custom_ppl_query
+        ppl, snakemake.params.custom_file, custom_ppl_query
     )
-    # add CHPs from MaStR data:
-    custom_CHP_query = snakemake.params.custom_chps
-    ppl = add_custom_powerplants(ppl, snakemake.input.custom_chps, custom_CHP_query)
 
     if countries_wo_ppl := set(countries) - set(ppl.Country.unique()):
         logging.warning(f"No powerplants known in: {', '.join(countries_wo_ppl)}")
