@@ -400,7 +400,7 @@ def add_H2_boilers(n):
     c = "Link"
     logger.info("Add H2 boilers.")
     # existing gas boilers
-    mask = n.links.carrier.str.contains("gas boiler") & (not n.links.p_nom_extendable)
+    mask = n.links.carrier.str.contains("gas boiler") & ~n.links.p_nom_extendable
     gas_i = n.links[mask].index
     df = n.links.loc[gas_i]
     # adjust bus 0
