@@ -421,6 +421,11 @@ def update_wind_solar_costs(n, costs):
         tech = "offwind-" + connection
         profile = snakemake.input["profile_offwind_" + connection]
         with xr.open_dataset(profile) as ds:
+
+            # if-statement for compatibility with old profiles
+            if "year" in ds.indexes:
+                ds = ds.sel(year=ds.year.min(), drop=True)
+
             underwater_fraction = ds["underwater_fraction"].to_pandas()
             connection_cost = (
                 snakemake.params.length_factor

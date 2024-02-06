@@ -79,6 +79,12 @@ Upcoming Release
   Energiewende (2021)
   <https://static.agora-energiewende.de/fileadmin/Projekte/2021/2021_02_EU_CEAP/A-EW_254_Mobilising-circular-economy_study_WEB.pdf>`_.
 
+* Added option to specify turbine and solar panel models for specific years as a
+  dictionary (e.g. ``renewable: onwind: resource: turbine:``). The years will be
+  interpreted as years from when the the corresponding turbine model substitutes
+  the previous model for new installations. This will only have an effect on
+  workflows with foresight "myopic" and still needs to be added foresight option
+  "perfect".
 
 
 PyPSA-Eur 0.9.0 (5th January 2024)

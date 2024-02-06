@@ -385,6 +385,10 @@ def attach_wind_and_solar(
             if ds.indexes["bus"].empty:
                 continue
 
+            # if-statement for compatibility with old profiles
+            if "year" in ds.indexes:
+                ds = ds.sel(year=ds.year.min(), drop=True)
+
             supcar = car.split("-", 2)[0]
             if supcar == "offwind":
                 underwater_fraction = ds["underwater_fraction"].to_pandas()
