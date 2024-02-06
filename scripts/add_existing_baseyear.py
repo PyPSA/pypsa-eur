@@ -48,7 +48,7 @@ def add_build_year_to_new_assets(n, baseyear):
             "series"
         ) & n.component_attrs[c.name].status.str.contains("Input")
         for attr in n.component_attrs[c.name].index[selection]:
-            c.pnl[attr].rename(columns=rename, inplace=True)
+            c.pnl[attr] = c.pnl[attr].rename(columns=rename)
 
 
 def add_existing_renewables(df_agg):

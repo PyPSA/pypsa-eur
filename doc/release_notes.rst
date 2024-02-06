@@ -57,12 +57,20 @@ Upcoming Release
 
 * Add the option to customise map projection in plotting config.
 
+* The order of buses (bus0, bus1, ...) for DAC components has changed to meet the convention of the other components. Therefore, `bus0` refers to the electricity bus (input), `bus1` to the heat bus (input), 'bus2' to the CO2 atmosphere bus (input), and `bus3` to the CO2 storage bus (output).
+
 * The rule ``plot_network`` has been split into separate rules for plotting
   electricity, hydrogen and gas networks.
 
 * To determine the optimal topology to meet the number of clusters, the workflow used pyomo in combination with ``ipopt`` or ``gurobi``. This dependency has been replaced by using ``linopy`` in combination with ``scipopt`` or ``gurobi``. The environment file has been updated accordingly.
 
 * The ``highs`` solver was added to the default environment file.
+
+* Various minor bugfixes to the perfect foresight workflow, though perfect foresight must still be considered experimental.
+
+* It is now possible to determine the directory for shared resources by setting `shared_resources` to a string.
+
+* A ``test.sh`` script was added to the repository to run the tests locally.
 
 * Default settings for recycling rates and primary product shares of high-value
   chemicals have been set in accordance with the values used in `Neumann et al.
@@ -77,6 +85,7 @@ Upcoming Release
   the previous model for new installations. This will only have an effect on
   workflows with foresight "myopic" and still needs to be added foresight option
   "perfect".
+
 
 PyPSA-Eur 0.9.0 (5th January 2024)
 ==================================

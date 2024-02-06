@@ -3,40 +3,6 @@
 # SPDX-License-Identifier: MIT
 
 
-rule build_existing_heating_distribution:
-    params:
-        baseyear=config["scenario"]["planning_horizons"][0],
-        sector=config["sector"],
-        existing_capacities=config["existing_capacities"],
-    input:
-        existing_heating="data/existing_infrastructure/existing_heating_raw.csv",
-        clustered_pop_layout=RESOURCES + "pop_layout_elec_s{simpl}_{clusters}.csv",
-        clustered_pop_energy_layout=RESOURCES
-        + "pop_weighted_energy_totals_s{simpl}_{clusters}.csv",
-        district_heat_share=RESOURCES
-        + "district_heat_share_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
-    output:
-        existing_heating_distribution=RESOURCES
-        + "existing_heating_distribution_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
-    wildcard_constraints:
-        planning_horizons=config["scenario"]["planning_horizons"][0],  #only applies to baseyear
-    threads: 1
-    resources:
-        mem_mb=2000,
-    log:
-        LOGS
-        + "build_existing_heating_distribution_elec_s{simpl}_{clusters}_{planning_horizons}.log",
-    benchmark:
-        (
-            BENCHMARKS
-            + "build_existing_heating_distribution/elec_s{simpl}_{clusters}_{planning_horizons}"
-        )
-    conda:
-        "../envs/environment.yaml"
-    script:
-        "../scripts/build_existing_heating_distribution.py"
-
-
 rule add_existing_baseyear:
     params:
         baseyear=config["scenario"]["planning_horizons"][0],

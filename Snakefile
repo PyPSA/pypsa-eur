@@ -31,7 +31,12 @@ CDIR = RDIR if not run.get("shared_cutouts") else ""
 
 LOGS = "logs/" + RDIR
 BENCHMARKS = "benchmarks/" + RDIR
-RESOURCES = "resources/" + RDIR if not run.get("shared_resources") else "resources/"
+if not (shared_resources := run.get("shared_resources")):
+    RESOURCES = "resources/" + RDIR
+elif isinstance(shared_resources, str):
+    RESOURCES = "resources/" + shared_resources + "/"
+else:
+    RESOURCES = "resources/"
 RESULTS = "results/" + RDIR
 
 
