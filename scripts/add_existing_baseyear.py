@@ -543,12 +543,6 @@ def add_heating_capacities_installed_before_baseyear(
                 ],
             )
 
-            # drop assets which are at the end of their lifetime
-            links_i = n.links[(n.links.build_year + n.links.lifetime <= baseyear)].index
-            logger.info("Removing following links because at end of their lifetime:")
-            logger.info(links_i)
-            n.mremove("Link", links_i)
-
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
