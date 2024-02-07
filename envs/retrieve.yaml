@@ -1,0 +1,13 @@
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: MIT
+
+name: pypsa-eur-retrieve
+channels:
+- conda-forge
+- bioconda
+dependencies:
+- python>=3.8
+- snakemake-minimal>=7.7.0,<8.0.0
+- pandas>=2.1
+- tqdm

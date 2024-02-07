@@ -200,7 +200,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_renewable_profiles", technology="solar")
+        snakemake = mock_snakemake("build_renewable_profiles", technology="offwind-dc")
     configure_logging(snakemake)
 
     nprocesses = int(snakemake.threads)
@@ -208,8 +208,16 @@ if __name__ == "__main__":
     noprogress = noprogress or not snakemake.config["atlite"]["show_progress"]
     params = snakemake.params.renewable[snakemake.wildcards.technology]
     resource = params["resource"]  # pv panel params / wind turbine params
+
+    tech = next(t for t in ["panel", "turbine"] if t in resource)
+    models = resource[tech]
+    if not isinstance(models, dict):
+        models = {0: models}
+    resource[tech] = models[next(iter(models))]
+
     correction_factor = params.get("correction_factor", 1.0)
     capacity_per_sqkm = params["capacity_per_sqkm"]
+    snapshots = snakemake.params.snapshots
 
     if correction_factor != 1.0:
         logger.info(f"correction_factor is set as {correction_factor}")
@@ -219,7 +227,7 @@ if __name__ == "__main__":
     else:
         client = None
 
-    sns = pd.date_range(freq="h", **snakemake.config["snapshots"])
+    sns = pd.date_range(freq="h", **snapshots)
     cutout = atlite.Cutout(snakemake.input.cutout).sel(time=sns)
     regions = gpd.read_file(snakemake.input.regions)
     assert not regions.empty, (
@@ -322,24 +330,42 @@ if __name__ == "__main__":
     duration = time.time() - start
     logger.info(f"Completed average capacity factor calculation ({duration:2.2f}s)")
 
-    logger.info("Calculate weighted capacity factor time series...")
-    start = time.time()
+    profiles = []
+    capacities = []
+    for year, model in models.items():
 
-    profile, capacities = func(
-        matrix=availability.stack(spatial=["y", "x"]),
-        layout=layout,
-        index=buses,
-        per_unit=True,
-        return_capacity=True,
-        **resource,
-    )
+        logger.info(
+            f"Calculate weighted capacity factor time series for model {model}..."
+        )
+        start = time.time()
 
-    duration = time.time() - start
-    logger.info(
-        f"Completed weighted capacity factor time series calculation ({duration:2.2f}s)"
-    )
+        resource[tech] = model
 
-    logger.info(f"Calculating maximal capacity per bus")
+        profile, capacity = func(
+            matrix=availability.stack(spatial=["y", "x"]),
+            layout=layout,
+            index=buses,
+            per_unit=True,
+            return_capacity=True,
+            **resource,
+        )
+
+        dim = {"year": [year]}
+        profile = profile.expand_dims(dim)
+        capacity = capacity.expand_dims(dim)
+
+        profiles.append(profile.rename("profile"))
+        capacities.append(capacity.rename("weight"))
+
+        duration = time.time() - start
+        logger.info(
+            f"Completed weighted capacity factor time series calculation for model {model} ({duration:2.2f}s)"
+        )
+
+    profiles = xr.merge(profiles)
+    capacities = xr.merge(capacities)
+
+    logger.info("Calculating maximal capacity per bus")
     p_nom_max = capacity_per_sqkm * availability @ area
 
     logger.info("Calculate average distances.")
@@ -364,8 +390,8 @@ if __name__ == "__main__":
 
     ds = xr.merge(
         [
-            (correction_factor * profile).rename("profile"),
-            capacities.rename("weight"),
+            correction_factor * profiles,
+            capacities,
             p_nom_max.rename("p_nom_max"),
             potential.rename("potential"),
             average_distance.rename("average_distance"),
@@ -385,9 +411,13 @@ if __name__ == "__main__":
         ds["underwater_fraction"] = xr.DataArray(underwater_fraction, [buses])
 
     # select only buses with some capacity and minimal capacity factor
+    mean_profile = ds["profile"].mean("time")
+    if "year" in ds.indexes:
+        mean_profile = mean_profile.max("year")
+
     ds = ds.sel(
         bus=(
-            (ds["profile"].mean("time") > params.get("min_p_max_pu", 0.0))
+            (mean_profile > params.get("min_p_max_pu", 0.0))
             & (ds["p_nom_max"] > params.get("min_p_nom_max", 0.0))
         )
     )

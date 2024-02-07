@@ -383,7 +383,7 @@ overwrite the existing values.
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
-   :start-after:   type:
+   :start-after: # docs-load
    :end-before: # docs
 
 .. csv-table::

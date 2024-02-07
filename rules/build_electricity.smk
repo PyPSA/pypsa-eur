@@ -20,7 +20,7 @@ if config["enable"].get("prepare_links_p_nom", False):
 
 rule build_electricity_demand:
     params:
-        snapshots=config["snapshots"],
+        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},
         countries=config["countries"],
         load=config["load"],
     input:
@@ -41,6 +41,7 @@ rule build_powerplants:
     params:
         powerplants_filter=config["electricity"]["powerplants_filter"],
         custom_powerplants=config["electricity"]["custom_powerplants"],
+        everywhere_powerplants=config["electricity"]["everywhere_powerplants"],
         countries=config["countries"],
     input:
         base_network=RESOURCES + "networks/base.nc",
@@ -61,7 +62,7 @@ rule build_powerplants:
 rule base_network:
     params:
         countries=config["countries"],
-        snapshots=config["snapshots"],
+        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},
         lines=config["lines"],
         links=config["links"],
         transformers=config["transformers"],
@@ -144,7 +145,7 @@ if config["enable"].get("build_cutout", False):
 
     rule build_cutout:
         params:
-            snapshots=config["snapshots"],
+            snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},
             cutouts=config["atlite"]["cutouts"],
         input:
             regions_onshore=RESOURCES + "regions_onshore.geojson",
@@ -258,6 +259,7 @@ else:
 
 rule build_renewable_profiles:
     params:
+        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},
         renewable=config["renewable"],
     input:
         **opt,
@@ -354,6 +356,8 @@ rule build_hydro_profile:
 if config["lines"]["dynamic_line_rating"]["activate"]:
 
     rule build_line_rating:
+        params:
+            snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},
         input:
             base_network=RESOURCES + "networks/base.nc",
             cutout="cutouts/"
@@ -397,18 +401,22 @@ rule add_electricity:
             if str(fn).startswith("data/")
         },
         base_network=RESOURCES + "networks/base.nc",
-        line_rating=RESOURCES + "networks/line_rating.nc"
-        if config["lines"]["dynamic_line_rating"]["activate"]
-        else RESOURCES + "networks/base.nc",
+        line_rating=(
+            RESOURCES + "networks/line_rating.nc"
+            if config["lines"]["dynamic_line_rating"]["activate"]
+            else RESOURCES + "networks/base.nc"
+        ),
         tech_costs=COSTS,
         regions=RESOURCES + "regions_onshore.geojson",
         powerplants=RESOURCES + "powerplants.csv",
         hydro_capacities=ancient("data/bundle/hydro_capacities.csv"),
         geth_hydro_capacities="data/geth2015_hydro_capacities.csv",
         unit_commitment="data/unit_commitment.csv",
-        fuel_price=RESOURCES + "monthly_fuel_price.csv"
-        if config["conventional"]["dynamic_fuel_price"]
-        else [],
+        fuel_price=(
+            RESOURCES + "monthly_fuel_price.csv"
+            if config["conventional"]["dynamic_fuel_price"]
+            else []
+        ),
         load=RESOURCES + "load.csv",
         nuts3_shapes=RESOURCES + "nuts3_shapes.geojson",
         ua_md_gdp="data/GDP_PPP_30arcsec_v3_mapped_default.csv",
@@ -531,13 +539,20 @@ rule add_extra_components:
 
 rule prepare_network:
     params:
+        snapshots={
+            "resolution": config["snapshots"].get("resolution", False),
+            "segmentation": config["snapshots"].get("segmentation", False),
+        },
         links=config["links"],
         lines=config["lines"],
         co2base=config["electricity"]["co2base"],
+        co2limit_enable=config["electricity"].get("co2limit_enable", False),
         co2limit=config["electricity"]["co2limit"],
+        gaslimit_enable=config["electricity"].get("gaslimit_enable", False),
         gaslimit=config["electricity"].get("gaslimit"),
         max_hours=config["electricity"]["max_hours"],
         costs=config["costs"],
+        autarky=config["electricity"].get("autarky", {}),
     input:
         RESOURCES + "networks/elec_s{simpl}_{clusters}_ec.nc",
         tech_costs=COSTS,

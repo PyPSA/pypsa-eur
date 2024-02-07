@@ -8,25 +8,20 @@ horizon.
 """
 
 import logging
-
-logger = logging.getLogger(__name__)
-
-import pandas as pd
-
-idx = pd.IndexSlice
-
 from types import SimpleNamespace
 
 import country_converter as coco
 import numpy as np
+import pandas as pd
 import pypsa
 import xarray as xr
 from _helpers import update_config_with_sector_opts
 from add_electricity import sanitize_carriers
 from prepare_sector_network import cluster_heat_buses, define_spatial, prepare_costs
 
+logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
-
+idx = pd.IndexSlice
 spatial = SimpleNamespace()
 
 
@@ -53,7 +48,7 @@ def add_build_year_to_new_assets(n, baseyear):
             "series"
         ) & n.component_attrs[c.name].status.str.contains("Input")
         for attr in n.component_attrs[c.name].index[selection]:
-            c.pnl[attr].rename(columns=rename, inplace=True)
+            c.pnl[attr] = c.pnl[attr].rename(columns=rename)
 
 
 def add_existing_renewables(df_agg):
@@ -407,6 +402,13 @@ def add_heating_capacities_installed_before_baseyear(
     """
     logger.debug(f"Adding heating capacities installed before {baseyear}")
 
+    # Add existing heating capacities, data comes from the study
+    # "Mapping and analyses of the current and future (2020 - 2030)
+    # heating/cooling fuel deployment (fossil/renewables) "
+    # https://ec.europa.eu/energy/studies/mapping-and-analyses-current-and-future-2020-2030-heatingcooling-fuel-deployment_en?redir=1
+    # file: "WP2_DataAnnex_1_BuildingTechs_ForPublication_201603.xls" -> "existing_heating_raw.csv".
+    # TODO start from original file
+
     existing_heating = pd.read_csv(
         snakemake.input.existing_heating_distribution, header=[0, 1], index_col=0
     )
@@ -447,7 +449,7 @@ def add_heating_capacities_installed_before_baseyear(
                 efficiency=efficiency,
                 capital_cost=costs.at[costs_name, "efficiency"]
                 * costs.at[costs_name, "fixed"],
-                p_nom=existing_heating[(name, f"{heat_pump_type} heat pump")][nodes]
+                p_nom=existing_heating.loc[nodes, (name, f"{heat_pump_type} heat pump")]
                 * ratio
                 / costs.at[costs_name, "efficiency"],
                 build_year=int(grouping_year),
@@ -468,7 +470,7 @@ def add_heating_capacities_installed_before_baseyear(
                     * costs.at[f"{name_type} resistive heater", "fixed"]
                 ),
                 p_nom=(
-                    existing_heating[(name, "resistive heater")][nodes]
+                    existing_heating.loc[nodes, (name, "resistive heater")]
                     * ratio
                     / costs.at[f"{name_type} resistive heater", "efficiency"]
                 ),
@@ -480,7 +482,7 @@ def add_heating_capacities_installed_before_baseyear(
                 "Link",
                 nodes,
                 suffix=f" {name} gas boiler-{grouping_year}",
-                bus0=spatial.gas.nodes,
+                bus0="EU gas" if "EU gas" in spatial.gas.nodes else nodes + " gas",
                 bus1=nodes + " " + name + " heat",
                 bus2="co2 atmosphere",
                 carrier=name + " gas boiler",
@@ -491,7 +493,7 @@ def add_heating_capacities_installed_before_baseyear(
                     * costs.at[f"{name_type} gas boiler", "fixed"]
                 ),
                 p_nom=(
-                    existing_heating[(name, "gas boiler")][nodes]
+                    existing_heating.loc[nodes, (name, "gas boiler")]
                     * ratio
                     / costs.at[f"{name_type} gas boiler", "efficiency"]
                 ),
@@ -512,7 +514,7 @@ def add_heating_capacities_installed_before_baseyear(
                 capital_cost=costs.at["decentral oil boiler", "efficiency"]
                 * costs.at["decentral oil boiler", "fixed"],
                 p_nom=(
-                    existing_heating[(name, "oil boiler")][nodes]
+                    existing_heating.loc[nodes, (name, "oil boiler")]
                     * ratio
                     / costs.at["decentral oil boiler", "efficiency"]
                 ),
@@ -541,6 +543,12 @@ def add_heating_capacities_installed_before_baseyear(
                 ],
             )
 
+            # drop assets which are at the end of their lifetime
+            links_i = n.links[(n.links.build_year + n.links.lifetime <= baseyear)].index
+            logger.info("Removing following links because at end of their lifetime:")
+            logger.info(links_i)
+            n.mremove("Link", links_i)
+
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -553,7 +561,7 @@ if __name__ == "__main__":
             clusters="37",
             ll="v1.0",
             opts="",
-            sector_opts="1p7-4380H-T-H-B-I-A-solar+p3-dist1",
+            sector_opts="1p7-4380H-T-H-B-I-A-dist1",
             planning_horizons=2020,
         )
 

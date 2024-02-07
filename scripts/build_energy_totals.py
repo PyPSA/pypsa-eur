@@ -7,9 +7,6 @@ Build total energy demands per country using JRC IDEES, eurostat, and EEA data.
 """
 
 import logging
-
-logger = logging.getLogger(__name__)
-
 import multiprocessing as mp
 from functools import partial
 
@@ -21,7 +18,7 @@ from _helpers import mute_print
 from tqdm import tqdm
 
 cc = coco.CountryConverter()
-
+logger = logging.getLogger(__name__)
 idx = pd.IndexSlice
 
 
@@ -472,7 +469,7 @@ def build_energy_totals(countries, eurostat, swiss, idees):
     # The main heating source for about 73 per cent of the households is based on electricity
     # => 26% is non-electric
 
-    if "NO" in df:
+    if "NO" in df.index:
         elec_fraction = 0.73
 
         no_norway = df.drop("NO")
@@ -585,13 +582,14 @@ def build_district_heat_share(countries, idees):
     district_heat_share = district_heat_share.reindex(countries)
 
     # Missing district heating share
-    dh_share = pd.read_csv(
-        snakemake.input.district_heat_share, index_col=0, usecols=[0, 1]
+    dh_share = (
+        pd.read_csv(snakemake.input.district_heat_share, index_col=0, usecols=[0, 1])
+        .div(100)
+        .squeeze()
     )
     # make conservative assumption and take minimum from both data sets
     district_heat_share = pd.concat(
-        [district_heat_share, dh_share.reindex(index=district_heat_share.index) / 100],
-        axis=1,
+        [district_heat_share, dh_share.reindex_like(district_heat_share)], axis=1
     ).min(axis=1)
 
     district_heat_share.name = "district heat share"

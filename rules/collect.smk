@@ -11,7 +11,6 @@ localrules:
     prepare_sector_networks,
     solve_elec_networks,
     solve_sector_networks,
-    plot_networks,
 
 
 rule cluster_networks:
@@ -30,7 +29,7 @@ rule prepare_elec_networks:
     input:
         expand(
             RESOURCES + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
-            **config["scenario"]
+            **config["scenario"],
         ),
 
 
@@ -39,7 +38,7 @@ rule prepare_sector_networks:
         expand(
             RESULTS
             + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
-            **config["scenario"]
+            **config["scenario"],
         ),
 
 
@@ -47,7 +46,7 @@ rule solve_elec_networks:
     input:
         expand(
             RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
-            **config["scenario"]
+            **config["scenario"],
         ),
 
 
@@ -56,7 +55,7 @@ rule solve_sector_networks:
         expand(
             RESULTS
             + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
-            **config["scenario"]
+            **config["scenario"],
         ),
 
 
@@ -65,16 +64,7 @@ rule solve_sector_networks_perfect:
         expand(
             RESULTS
             + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years.nc",
-            **config["scenario"]
-        ),
-
-
-rule plot_networks:
-    input:
-        expand(
-            RESULTS
-            + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
-            **config["scenario"]
+            **config["scenario"],
         ),
 
 
@@ -83,11 +73,11 @@ rule validate_elec_networks:
         expand(
             RESULTS
             + "figures/.statistics_plots_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}",
-            **config["scenario"]
+            **config["scenario"],
         ),
         expand(
             RESULTS
             + "figures/.validation_{kind}_plots_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}",
             **config["scenario"],
-            kind=["production", "prices", "cross_border"]
+            kind=["production", "prices", "cross_border"],
         ),

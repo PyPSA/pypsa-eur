@@ -138,7 +138,9 @@ def _load_buses_from_eg(eg_buses, europe_shape, config_elec):
     )
 
     buses["carrier"] = buses.pop("dc").map({True: "DC", False: "AC"})
-    buses["under_construction"] = buses["under_construction"].fillna(False).astype(bool)
+    buses["under_construction"] = buses.under_construction.where(
+        lambda s: s.notnull(), False
+    ).astype(bool)
 
     # remove all buses outside of all countries including exclusive economic zones (offshore)
     europe_shape = gpd.read_file(europe_shape).loc[0, "geometry"]
@@ -525,9 +527,9 @@ def _set_countries_and_substations(n, config, country_shapes, offshore_shapes):
     gb = buses.loc[substation_b].groupby(
         ["x", "y"], as_index=False, group_keys=False, sort=False
     )
-    bus_map_low = gb.apply(prefer_voltage, "min")
+    bus_map_low = gb.apply(prefer_voltage, "min", include_groups=False)
     lv_b = (bus_map_low == bus_map_low.index).reindex(buses.index, fill_value=False)
-    bus_map_high = gb.apply(prefer_voltage, "max")
+    bus_map_high = gb.apply(prefer_voltage, "max", include_groups=False)
     hv_b = (bus_map_high == bus_map_high.index).reindex(buses.index, fill_value=False)
 
     onshore_b = pd.Series(False, buses.index)
@@ -725,11 +727,12 @@ def base_network(
     transformers = _set_electrical_parameters_transformers(transformers, config)
     links = _set_electrical_parameters_links(links, config, links_p_nom)
     converters = _set_electrical_parameters_converters(converters, config)
+    snapshots = snakemake.params.snapshots
 
     n = pypsa.Network()
     n.name = "PyPSA-Eur"
 
-    n.set_snapshots(pd.date_range(freq="h", **config["snapshots"]))
+    n.set_snapshots(pd.date_range(freq="h", **snapshots))
     n.madd("Carrier", ["AC", "DC"])
 
     n.import_components_from_dataframe(buses, "Bus")

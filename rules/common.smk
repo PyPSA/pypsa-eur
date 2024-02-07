@@ -13,6 +13,13 @@ for path in helper_source_path:
 from _helpers import validate_checksum
 
 
+def solver_threads(w):
+    solver_options = config["solving"]["solver_options"]
+    option_set = config["solving"]["solver"]["options"]
+    threads = solver_options[option_set].get("threads", 4)
+    return threads
+
+
 def memory(w):
     factor = 3.0
     for o in w.opts.split("-"):
@@ -36,7 +43,7 @@ def memory(w):
 def input_custom_extra_functionality(w):
     path = config["solving"]["options"].get("custom_extra_functionality", False)
     if path:
-        return workflow.source_path(path)
+        return os.path.join(os.path.dirname(workflow.snakefile), path)
     return []
 
 
