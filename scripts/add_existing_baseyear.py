@@ -402,10 +402,9 @@ def add_heating_capacities_installed_before_baseyear(
     """
     logger.debug(f"Adding heating capacities installed before {baseyear}")
 
-    existing_heating = pd.read_csv(snakemake.input.existing_heating_distribution,
-                                   header=[0,1],
-                                   index_col=0)
-
+    existing_heating = pd.read_csv(
+        snakemake.input.existing_heating_distribution, header=[0, 1], index_col=0
+    )
 
     techs = existing_heating.columns.get_level_values(1).unique()
 

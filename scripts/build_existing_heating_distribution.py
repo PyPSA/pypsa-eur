@@ -24,9 +24,9 @@ def build_existing_heating():
     # data is for buildings only (i.e. NOT district heating) and represents the year 2012
     # TODO start from original file
 
-    existing_heating = pd.read_csv(snakemake.input.existing_heating,
-                                   index_col=0,
-                                   header=0)
+    existing_heating = pd.read_csv(
+        snakemake.input.existing_heating, index_col=0, header=0
+    )
 
     # data for Albania, Montenegro and Macedonia not included in database
     existing_heating.loc["Albania"] = np.nan
@@ -75,14 +75,17 @@ def build_existing_heating():
         nodal_sectoral_totals.sum(axis=1), axis=0
     )
 
-    nodal_heat_name_fraction = pd.DataFrame(index=district_heat_info.index,
-                                            dtype=float)
+    nodal_heat_name_fraction = pd.DataFrame(index=district_heat_info.index, dtype=float)
 
-    nodal_heat_name_fraction["urban central"] = 0.
+    nodal_heat_name_fraction["urban central"] = 0.0
 
     for sector in sectors:
-        nodal_heat_name_fraction[f"{sector} rural"] = nodal_sectoral_fraction[sector]*(1 - urban_fraction)
-        nodal_heat_name_fraction[f"{sector} urban decentral"] = nodal_sectoral_fraction[sector]*urban_fraction
+        nodal_heat_name_fraction[f"{sector} rural"] = nodal_sectoral_fraction[
+            sector
+        ] * (1 - urban_fraction)
+        nodal_heat_name_fraction[f"{sector} urban decentral"] = (
+            nodal_sectoral_fraction[sector] * urban_fraction
+        )
 
     nodal_heat_name_tech = pd.concat(
         {
