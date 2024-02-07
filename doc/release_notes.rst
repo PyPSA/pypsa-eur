@@ -10,6 +10,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Remove long-deprecated function ``attach_extendable_generators`` in :mod:`add_electricity`.
+
 * Upgrade techno-economic assumptions to ``technology-data`` v0.7.0.
 
 * Bugfix: Correct technology keys for the electricity production plotting to work out the box.
