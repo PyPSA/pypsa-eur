@@ -10,6 +10,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Upgrade techno-economic assumptions to ``technology-data`` v0.7.0.
+
 * Bugfix: Correct technology keys for the electricity production plotting to work out the box.
 
 * New configuration option ``everywhere_powerplants`` to build conventional powerplants everywhere, irrespective of existing powerplants locations, in the network (https://github.com/PyPSA/pypsa-eur/pull/850).
