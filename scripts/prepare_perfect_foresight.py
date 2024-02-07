@@ -56,7 +56,9 @@ def get_investment_weighting(time_weighting, r=0.01):
     end = time_weighting.cumsum()
     start = time_weighting.cumsum().shift().fillna(0)
     return pd.concat([start, end], axis=1).apply(
-        lambda x: sum(get_social_discount(t, r) for t in range(int(x[0]), int(x[1]))),
+        lambda x: sum(
+            get_social_discount(t, r) for t in range(int(x.iloc[0]), int(x.iloc[1]))
+        ),
         axis=1,
     )
 
@@ -188,7 +190,7 @@ def concat_networks(years):
             pnl = getattr(n, component.list_name + "_t")
             for k in iterkeys(component.pnl):
                 pnl_year = component.pnl[k].copy().reindex(snapshots, level=1)
-                if pnl_year.empty and ~(component.name == "Load" and k == "p_set"):
+                if pnl_year.empty and (not (component.name == "Load" and k == "p_set")):
                     continue
                 if component.name == "Load":
                     static_load = network.loads.loc[network.loads.p_set != 0]
