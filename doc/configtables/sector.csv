@@ -66,6 +66,7 @@ boilers,--,"{true, false}",Add option for transforming gas into heat using gas b
 resistive_heaters,--,"{true, false}",Add option for transforming electricity into heat using resistive heaters (independently from gas boilers)
 oil_boilers,--,"{true, false}",Add option for transforming oil into heat using boilers
 biomass_boiler,--,"{true, false}",Add option for transforming biomass into heat using boilers
+overdimension_individual_heating,--,"float",Add option for overdimensioning individual heating systems by a certain factor. This allows them to cover heat demand peaks e.g. 10% higher than those in the data with a setting of 1.1.
 chp,--,"{true, false}",Add option for using Combined Heat and Power (CHP)
 micro_chp,--,"{true, false}",Add option for using Combined Heat and Power (CHP) for decentral areas.
 solar_thermal,--,"{true, false}",Add option for using solar thermal to generate heat.

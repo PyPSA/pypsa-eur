@@ -10,6 +10,19 @@ Release Notes
 Upcoming Release
 ================
 
+* Add new default to overdimension heating in individual buildings. This allows
+  them to cover heat demand peaks e.g. 10% higher than those in the data. The
+  disadvantage of manipulating the costs is that the capacity is then not quite
+  right. This way at least the costs are right.
+
+* Add option to specify to set a default heating lifetime for existing heating
+  (``existing_capacities: default_heating_lifetime:``). 
+
+* Correctly source the existing heating technologies for buildings since the
+  source URL has changed. It represents the year 2012 and is only for
+  buildings, not district heating. So the capacities for urban central are now
+  set to zero from this source.
+
 * Remove long-deprecated function ``attach_extendable_generators`` in :mod:`add_electricity`.
 
 * The filtering of power plants in the ``config.default.yaml`` has been updated regarding phased-out power plants in 2023.
