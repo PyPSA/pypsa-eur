@@ -12,6 +12,8 @@ Upcoming Release
 
 * Remove long-deprecated function ``attach_extendable_generators`` in :mod:`add_electricity`.
 
+* The filtering of power plants in the ``config.default.yaml`` has been updated regarding phased-out power plants in 2023.
+
 * Upgrade techno-economic assumptions to ``technology-data`` v0.7.0.
 
 * Bugfix: Correct technology keys for the electricity production plotting to work out the box.

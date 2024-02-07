@@ -114,7 +114,7 @@ electricity:
     Store: [battery, H2]
     Link: [] # H2 pipeline
 
-  powerplants_filter: (DateOut >= 2022 or DateOut != DateOut)
+  powerplants_filter: (DateOut >= 2023 or DateOut != DateOut) and not (Country == 'Germany' and Fueltype == 'Nuclear')
   custom_powerplants: false
   everywhere_powerplants: [nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
 
