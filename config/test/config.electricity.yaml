@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
-tutorial: true
+tutorial: false
 
 
 run:
