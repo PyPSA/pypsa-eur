@@ -16,7 +16,7 @@ Upcoming Release
   right. This way at least the costs are right.
 
 * Add option to specify to set a default heating lifetime for existing heating
-  (``existing_capacities: default_heating_lifetime:``). 
+  (``existing_capacities: default_heating_lifetime:``).
 
 * Correctly source the existing heating technologies for buildings since the
   source URL has changed. It represents the year 2012 and is only for
