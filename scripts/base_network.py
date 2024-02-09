@@ -78,9 +78,12 @@ import shapely.prepared
 import shapely.wkt
 import yaml
 from _helpers import configure_logging
+from packaging.version import Version, parse
 from scipy import spatial
 from scipy.sparse import csgraph
 from shapely.geometry import LineString, Point
+
+PD_GE_2_2 = parse(pd.__version__) >= Version("2.2")
 
 logger = logging.getLogger(__name__)
 
@@ -524,12 +527,13 @@ def _set_countries_and_substations(n, config, country_shapes, offshore_shapes):
         )
         return pd.Series(key, index)
 
+    compat_kws = dict(include_groups=False) if PD_GE_2_2 else {}
     gb = buses.loc[substation_b].groupby(
         ["x", "y"], as_index=False, group_keys=False, sort=False
     )
-    bus_map_low = gb.apply(prefer_voltage, "min", include_groups=False)
+    bus_map_low = gb.apply(prefer_voltage, "min", **compat_kws)
     lv_b = (bus_map_low == bus_map_low.index).reindex(buses.index, fill_value=False)
-    bus_map_high = gb.apply(prefer_voltage, "max", include_groups=False)
+    bus_map_high = gb.apply(prefer_voltage, "max", **compat_kws)
     hv_b = (bus_map_high == bus_map_high.index).reindex(buses.index, fill_value=False)
 
     onshore_b = pd.Series(False, buses.index)

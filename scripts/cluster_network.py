@@ -135,12 +135,15 @@ import pypsa
 import seaborn as sns
 from _helpers import configure_logging, update_p_nom_max
 from add_electricity import load_costs
+from packaging.version import Version, parse
 from pypsa.clustering.spatial import (
     busmap_by_greedy_modularity,
     busmap_by_hac,
     busmap_by_kmeans,
     get_clustering_from_busmap,
 )
+
+PD_GE_2_2 = parse(pd.__version__) >= Version("2.2")
 
 warnings.filterwarnings(action="ignore", category=UserWarning)
 idx = pd.IndexSlice
@@ -362,9 +365,11 @@ def busmap_for_n_clusters(
                 f"`algorithm` must be one of 'kmeans' or 'hac'. Is {algorithm}."
             )
 
+    compat_kws = dict(include_groups=False) if PD_GE_2_2 else {}
+
     return (
         n.buses.groupby(["country", "sub_network"], group_keys=False)
-        .apply(busmap_for_country, include_groups=False)
+        .apply(busmap_for_country, **compat_kws)
         .squeeze()
         .rename("busmap")
     )
