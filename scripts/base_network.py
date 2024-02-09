@@ -555,6 +555,7 @@ def _set_countries_and_substations(n, config, country_shapes, offshore_shapes):
     for b, df in product(("bus0", "bus1"), (n.lines, n.links)):
         has_connections_b |= ~df.groupby(b).under_construction.min()
 
+    buses["onshore_bus"] = onshore_b
     buses["substation_lv"] = (
         lv_b & onshore_b & (~buses["under_construction"]) & has_connections_b
     )
