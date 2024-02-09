@@ -619,22 +619,29 @@ def add_heating_capacities_installed_before_baseyear(
 
     # check if the CHPs were read in from MaStR for Germany
     if "Capacity_thermal" in df_CHP_agg.columns:
-        df_KWK = df_CHP_agg[~df_CHP_agg['Capacity_thermal'].isna()]
-        df_CHP_agg = df_CHP_agg[df_CHP_agg['Capacity_thermal'].isna()]
+        df_KWK = df_CHP_agg[~df_CHP_agg["Capacity_thermal"].isna()]
+        df_CHP_agg = df_CHP_agg[df_CHP_agg["Capacity_thermal"].isna()]
 
-        df_CHP_power = df_KWK[df_KWK['Capacity'] > df_KWK['Capacity_thermal']]
-        df_CHP_therm = df_KWK[df_KWK['Capacity'] <= df_KWK['Capacity_thermal']]
-        
-        df_CHP_power.loc[:, 'Capacity'] = df_CHP_power['Capacity'] / df_CHP_power['Efficiency']
-        df_CHP_power = df_CHP_power.rename(columns={'Capacity': 'p_nom'})
-        df_CHP_power = df_CHP_power.rename(columns={'Efficiency': 'efficiency_1'})
-        df_CHP_power['efficiency_2'] = df_CHP_power['Capacity_thermal'] / df_CHP_power['p_nom']
+        df_CHP_power = df_KWK[df_KWK["Capacity"] > df_KWK["Capacity_thermal"]]
+        df_CHP_therm = df_KWK[df_KWK["Capacity"] <= df_KWK["Capacity_thermal"]]
 
-        df_CHP_therm.loc[:, 'Capacity_thermal'] = df_CHP_therm['Capacity_thermal'] / costs.at['biomass CHP', 'efficiency-heat']
-        df_CHP_therm = df_CHP_therm.rename(columns={'Capacity_thermal': 'p_nom'})
-        df_CHP_therm['Efficiency'] = df_CHP_therm['Capacity'] / df_CHP_therm['p_nom']
-        df_CHP_therm = df_CHP_therm.rename(columns={'Efficiency': 'efficiency_1'})
-        df_CHP_therm['efficiency_2'] = costs.at['biomass CHP', 'efficiency-heat']
+        df_CHP_power.loc[:, "Capacity"] = (
+            df_CHP_power["Capacity"] / df_CHP_power["Efficiency"]
+        )
+        df_CHP_power = df_CHP_power.rename(columns={"Capacity": "p_nom"})
+        df_CHP_power = df_CHP_power.rename(columns={"Efficiency": "efficiency_1"})
+        df_CHP_power["efficiency_2"] = (
+            df_CHP_power["Capacity_thermal"] / df_CHP_power["p_nom"]
+        )
+
+        df_CHP_therm.loc[:, "Capacity_thermal"] = (
+            df_CHP_therm["Capacity_thermal"]
+            / costs.at["biomass CHP", "efficiency-heat"]
+        )
+        df_CHP_therm = df_CHP_therm.rename(columns={"Capacity_thermal": "p_nom"})
+        df_CHP_therm["Efficiency"] = df_CHP_therm["Capacity"] / df_CHP_therm["p_nom"]
+        df_CHP_therm = df_CHP_therm.rename(columns={"Efficiency": "efficiency_1"})
+        df_CHP_therm["efficiency_2"] = costs.at["biomass CHP", "efficiency-heat"]
 
         df_KWK = pd.concat([df_CHP_power, df_CHP_therm])
         df_KWK = df_KWK.round(2)
@@ -643,14 +650,14 @@ def add_heating_capacities_installed_before_baseyear(
             index=["grouping_year", "Fueltype"],
             columns="cluster_bus",
             values="efficiency_1",
-            aggfunc=lambda x: np.average(x, weights=df_KWK.loc[x.index, 'p_nom']),
+            aggfunc=lambda x: np.average(x, weights=df_KWK.loc[x.index, "p_nom"]),
         )
-        
+
         df_KWK_eff_2 = df_KWK.pivot_table(
             index=["grouping_year", "Fueltype"],
             columns="cluster_bus",
             values="efficiency_2",
-            aggfunc=lambda x: np.average(x, weights=df_KWK.loc[x.index, 'p_nom']),
+            aggfunc=lambda x: np.average(x, weights=df_KWK.loc[x.index, "p_nom"]),
         )
 
         df_KWK_cap = df_KWK.pivot_table(

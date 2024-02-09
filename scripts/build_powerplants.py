@@ -192,9 +192,7 @@ if __name__ == "__main__":
 
     # add carriers from own powerplant files:
     custom_ppl_query = snakemake.params.custom_powerplants
-    ppl = add_custom_powerplants(
-        ppl, snakemake.params.custom_file, custom_ppl_query
-    )
+    ppl = add_custom_powerplants(ppl, snakemake.params.custom_file, custom_ppl_query)
 
     if countries_wo_ppl := set(countries) - set(ppl.Country.unique()):
         logging.warning(f"No powerplants known in: {', '.join(countries_wo_ppl)}")
