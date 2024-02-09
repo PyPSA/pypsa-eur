@@ -44,7 +44,7 @@ scenario:
   opts:
   - ''
   sector_opts:
-  - Co2L0-3H-T-H-B-I-A-dist1
+  - Co2L0-3h-T-H-B-I-A-dist1
   planning_horizons:
   # - 2020
   # - 2030
@@ -813,6 +813,13 @@ plotting:
   energy_max: 20000
   energy_min: -20000
   energy_threshold: 50.
+  countries:
+  - all
+  carriers:
+  - electricity
+  - heat
+  carrier_groups:
+    electricity: [AC, low_voltage]
 
   nice_names:
     OCGT: "Open-Cycle Gas"
