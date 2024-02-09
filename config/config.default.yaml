@@ -357,6 +357,7 @@ existing_capacities:
   grouping_years_power: [1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2020, 2025, 2030]
   grouping_years_heat: [1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2019] # these should not extend 2020
   threshold_capacity: 10
+  default_heating_lifetime: 20
   conventional_carriers:
   - lignite
   - coal
@@ -482,6 +483,7 @@ sector:
   resistive_heaters: true
   oil_boilers: false
   biomass_boiler: true
+  overdimension_individual_heating: 1.1  #to cover demand peaks bigger than data
   chp: true
   micro_chp: false
   solar_thermal: true
@@ -1006,9 +1008,11 @@ plotting:
     air heat pump: '#36eb41'
     residential urban decentral air heat pump: '#48f74f'
     services urban decentral air heat pump: '#5af95d'
+    services rural air heat pump: '#5af95d'
     urban central air heat pump: '#6cfb6b'
     ground heat pump: '#2fb537'
     residential rural ground heat pump: '#48f74f'
+    residential rural air heat pump: '#48f74f'
     services rural ground heat pump: '#5af95d'
     Ambient: '#98eb9d'
     CHP: '#8a5751'
