@@ -41,11 +41,11 @@ rule build_powerplants:
     params:
         powerplants_filter=config["electricity"]["powerplants_filter"],
         custom_powerplants=config["electricity"]["custom_powerplants"],
-        custom_file=config["electricity"]["custom_file"],
         everywhere_powerplants=config["electricity"]["everywhere_powerplants"],
         countries=config["countries"],
     input:
         base_network=RESOURCES + "networks/base.nc",
+        custom_powerplants="data/custom_powerplants.csv",
     output:
         RESOURCES + "powerplants.csv",
     log:

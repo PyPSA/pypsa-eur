@@ -7,6 +7,9 @@ Adds existing power and heat generation capacities for initial planning
 horizon.
 """
 
+import sys
+import os
+
 import logging
 from types import SimpleNamespace
 
@@ -23,6 +26,8 @@ logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
 idx = pd.IndexSlice
 spatial = SimpleNamespace()
+
+from build_powerplants import add_custom_powerplants
 
 
 def add_build_year_to_new_assets(n, baseyear):
@@ -118,6 +123,11 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
     )
 
     df_agg = pd.read_csv(snakemake.input.powerplants, index_col=0)
+
+    if snakemake.input.get("custom_powerplants"):
+        df_agg = add_custom_powerplants(
+            df_agg, snakemake.input.custom_powerplants, True
+        )
 
     rename_fuel = {
         "Hard Coal": "coal",
