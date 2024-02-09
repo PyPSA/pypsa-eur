@@ -501,6 +501,7 @@ sector:
   SMR_cc: true
   regional_methanol_demand: false
   regional_oil_demand: false
+  regional_coal_demand: false
   regional_co2_sequestration_potential:
     enable: false
     attribute: 'conservative estimate Mt'
