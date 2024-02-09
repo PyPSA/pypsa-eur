@@ -1,17 +1,14 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
 Builds table of existing heat generation capacities for initial planning
 horizon.
 """
-import sys
-
 import country_converter as coco
 import numpy as np
 import pandas as pd
-from pypsa.descriptors import Dict
 
 cc = coco.CountryConverter()
 
@@ -118,4 +115,14 @@ def build_existing_heating():
 
 
 if __name__ == "__main__":
+    if "snakemake" not in globals():
+        from _helpers import mock_snakemake
+
+        snakemake = mock_snakemake(
+            "build_existing_heating_distribution",
+            simpl="",
+            clusters=48,
+            planning_horizons=2050,
+        )
+
     build_existing_heating()

@@ -8,14 +8,13 @@ Build mapping between cutout grid cells and population (total, urban, rural).
 
 import logging
 
-logger = logging.getLogger(__name__)
-
-
 import atlite
 import geopandas as gpd
 import numpy as np
 import pandas as pd
 import xarray as xr
+
+logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -34,7 +33,7 @@ if __name__ == "__main__":
     nuts3 = gpd.read_file(snakemake.input.nuts3_shapes).set_index("index")
 
     # Indicator matrix NUTS3 -> grid cells
-    I = atlite.cutout.compute_indicatormatrix(nuts3.geometry, grid_cells)
+    I = atlite.cutout.compute_indicatormatrix(nuts3.geometry, grid_cells)  # noqa: E741
 
     # Indicator matrix grid_cells -> NUTS3; inprinciple Iinv*I is identity
     # but imprecisions mean not perfect
@@ -84,7 +83,8 @@ if __name__ == "__main__":
 
         # correct for imprecision of Iinv*I
         pop_ct = nuts3.loc[nuts3.country == ct, "pop"].sum()
-        pop_cells_ct *= pop_ct / pop_cells_ct.sum()
+        if pop_cells_ct.sum() != 0:
+            pop_cells_ct *= pop_ct / pop_cells_ct.sum()
 
         # The first low density grid cells to reach rural fraction are rural
         asc_density_i = density_cells_ct.sort_values().index

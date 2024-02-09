@@ -7,9 +7,6 @@ Build spatial distribution of industries from Hotmaps database.
 """
 
 import logging
-
-logger = logging.getLogger(__name__)
-
 import uuid
 from itertools import product
 
@@ -18,6 +15,7 @@ import geopandas as gpd
 import pandas as pd
 from packaging.version import Version, parse
 
+logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
 
 
@@ -32,7 +30,7 @@ def locate_missing_industrial_sites(df):
     try:
         from geopy.extra.rate_limiter import RateLimiter
         from geopy.geocoders import Nominatim
-    except:
+    except ImportError:
         raise ModuleNotFoundError(
             "Optional dependency 'geopy' not found."
             "Install via 'conda install -c conda-forge geopy'"
@@ -101,7 +99,7 @@ def prepare_hotmaps_database(regions):
         # get all duplicated entries
         duplicated_i = gdf.index[gdf.index.duplicated()]
         # convert from raw data country name to iso-2-code
-        code = cc.convert(gdf.loc[duplicated_i, "Country"], to="iso2")
+        code = cc.convert(gdf.loc[duplicated_i, "Country"], to="iso2")  # noqa: F841
         # screen out malformed country allocation
         gdf_filtered = gdf.loc[duplicated_i].query("country == @code")
         # concat not duplicated and filtered gdf
@@ -130,7 +128,7 @@ def build_nodal_distribution_key(hotmaps, regions, countries):
 
         if not facilities.empty:
             emissions = facilities["Emissions_ETS_2014"].fillna(
-                hotmaps["Emissions_EPRTR_2014"]
+                hotmaps["Emissions_EPRTR_2014"].dropna()
             )
             if emissions.sum() == 0:
                 key = pd.Series(1 / len(facilities), facilities.index)

@@ -8,13 +8,13 @@ Cluster gas transmission network to clustered model regions.
 
 import logging
 
-logger = logging.getLogger(__name__)
-
 import geopandas as gpd
 import pandas as pd
 from packaging.version import Version, parse
 from pypsa.geo import haversine_pts
 from shapely import wkt
+
+logger = logging.getLogger(__name__)
 
 
 def concat_gdf(gdf_list, crs="EPSG:4326"):
@@ -75,10 +75,10 @@ def build_clustered_gas_network(df, bus_regions, length_factor=1.25):
     return df
 
 
-def reindex_pipes(df):
+def reindex_pipes(df, prefix="gas pipeline"):
     def make_index(x):
         connector = " <-> " if x.bidirectional else " -> "
-        return "gas pipeline " + x.bus0 + connector + x.bus1
+        return prefix + " " + x.bus0 + connector + x.bus1
 
     df.index = df.apply(make_index, axis=1)
 

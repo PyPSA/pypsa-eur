@@ -13,9 +13,10 @@ from snakemake.utils import min_version
 
 min_version("7.7")
 
-
-if not exists("config/config.yaml") and exists("config/config.default.yaml"):
-    copyfile("config/config.default.yaml", "config/config.yaml")
+conf_file = os.path.join(workflow.current_basedir, "config/config.yaml")
+conf_default_file = os.path.join(workflow.current_basedir, "config/config.default.yaml")
+if not exists(conf_file) and exists(conf_default_file):
+    copyfile(conf_default_file, conf_file)
 
 
 configfile: "config/config.yaml"
@@ -30,7 +31,12 @@ CDIR = RDIR if not run.get("shared_cutouts") else ""
 
 LOGS = "logs/" + RDIR
 BENCHMARKS = "benchmarks/" + RDIR
-RESOURCES = "resources/" + RDIR if not run.get("shared_resources") else "resources/"
+if not (shared_resources := run.get("shared_resources")):
+    RESOURCES = "resources/" + RDIR
+elif isinstance(shared_resources, str):
+    RESOURCES = "resources/" + shared_resources + "/"
+else:
+    RESOURCES = "resources/"
 RESULTS = "results/" + RDIR
 
 
@@ -125,6 +131,7 @@ rule sync:
     shell:
         """
         rsync -uvarh --ignore-missing-args --files-from=.sync-send . {params.cluster}
+        rsync -uvarh --no-g {params.cluster}/resources . || echo "No resources directory, skipping rsync"
         rsync -uvarh --no-g {params.cluster}/results . || echo "No results directory, skipping rsync"
         rsync -uvarh --no-g {params.cluster}/logs . || echo "No logs directory, skipping rsync"
         """

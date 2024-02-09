@@ -85,7 +85,16 @@ rule add_brownfield:
         H2_retrofit=config["sector"]["H2_retrofit"],
         H2_retrofit_capacity_per_CH4=config["sector"]["H2_retrofit_capacity_per_CH4"],
         threshold_capacity=config["existing_capacities"]["threshold_capacity"],
+        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},
+        carriers=config["electricity"]["renewable_carriers"],
     input:
+        **{
+            f"profile_{tech}": RESOURCES + f"profile_{tech}.nc"
+            for tech in config["electricity"]["renewable_carriers"]
+            if tech != "hydro"
+        },
+        simplify_busmap=RESOURCES + "busmap_elec_s{simpl}.csv",
+        cluster_busmap=RESOURCES + "busmap_elec_s{simpl}_{clusters}.csv",
         network=RESULTS
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
         network_p=solved_previous_horizon,  #solved network at previous time step
@@ -139,7 +148,7 @@ rule solve_sector_network_myopic:
         + "elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_solver.log",
         python=LOGS
         + "elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_python.log",
-    threads: 4
+    threads: solver_threads
     resources:
         mem_mb=config["solving"]["mem"],
         walltime=config["solving"].get("walltime", "12:00:00"),

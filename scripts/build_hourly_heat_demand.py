@@ -10,14 +10,15 @@ from itertools import product
 
 import pandas as pd
 import xarray as xr
-from _helpers import generate_periodic_profiles, update_config_with_sector_opts
+from _helpers import generate_periodic_profiles
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "build_heat_demands",
+            "build_hourly_heat_demands",
+            scope="total",
             simpl="",
             clusters=48,
         )
@@ -57,12 +58,6 @@ if __name__ == "__main__":
 
     heat_demand.index.name = "snapshots"
 
-    print(heat_demand)
-
-    print(heat_demand.stack())
-
-    ds = heat_demand.stack().to_xarray()  # xr.Dataset.from_dataframe(heat_demand)
-
-    print(ds)
+    ds = heat_demand.stack().to_xarray()
 
     ds.to_netcdf(snakemake.output.heat_demand)

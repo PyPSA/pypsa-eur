@@ -7,6 +7,7 @@ import contextlib
 import hashlib
 import logging
 import os
+import re
 import urllib
 from pathlib import Path
 
@@ -14,13 +15,40 @@ import pandas as pd
 import pytz
 import requests
 import yaml
-from pypsa.components import component_attrs, components
-from pypsa.descriptors import Dict
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
 REGION_COLS = ["geometry", "name", "x", "y", "country"]
+
+
+def get_opt(opts, expr, flags=None):
+    """
+    Return the first option matching the regular expression.
+
+    The regular expression is case-insensitive by default.
+    """
+    if flags is None:
+        flags = re.IGNORECASE
+    for o in opts:
+        match = re.match(expr, o, flags=flags)
+        if match:
+            return match.group(0)
+    return None
+
+
+def find_opt(opts, expr):
+    """
+    Return if available the float after the expression.
+    """
+    for o in opts:
+        if expr in o:
+            m = re.findall("[0-9]*\.?[0-9]+$", o)
+            if len(m) > 0:
+                return True, float(m[0])
+            else:
+                return True, None
+    return False, None
 
 
 # Define a context manager to temporarily mute print statements
@@ -50,6 +78,7 @@ def configure_logging(snakemake, skip_handlers=False):
         Do (not) skip the default handlers created for redirecting output to STDERR and file.
     """
     import logging
+    import sys
 
     kwargs = snakemake.config.get("logging", dict()).copy()
     kwargs.setdefault("level", "INFO")
@@ -72,6 +101,16 @@ def configure_logging(snakemake, skip_handlers=False):
             }
         )
     logging.basicConfig(**kwargs)
+
+    # Setup a function to handle uncaught exceptions and include them with their stacktrace into logfiles
+    def handle_exception(exc_type, exc_value, exc_traceback):
+        # Log the exception
+        logger = logging.getLogger()
+        logger.error(
+            "Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback)
+        )
+
+    sys.excepthook = handle_exception
 
 
 def update_p_nom_max(n):
@@ -321,8 +360,25 @@ def generate_periodic_profiles(dt_index, nodes, weekly_profile, localize=None):
     return week_df
 
 
-def parse(l):
-    return yaml.safe_load(l[0]) if len(l) == 1 else {l.pop(0): parse(l)}
+def parse(infix):
+    """
+    Recursively parse a chained wildcard expression into a dictionary or a YAML
+    object.
+
+    Parameters
+    ----------
+    list_to_parse : list
+        The list to parse.
+
+    Returns
+    -------
+    dict or YAML object
+        The parsed list.
+    """
+    if len(infix) == 1:
+        return yaml.safe_load(infix[0])
+    else:
+        return {infix.pop(0): parse(infix)}
 
 
 def update_config_with_sector_opts(config, sector_opts):
@@ -330,8 +386,8 @@ def update_config_with_sector_opts(config, sector_opts):
 
     for o in sector_opts.split("-"):
         if o.startswith("CF+"):
-            l = o.split("+")[1:]
-            update_config(config, parse(l))
+            infix = o.split("+")[1:]
+            update_config(config, parse(infix))
 
 
 def get_checksum_from_zenodo(file_url):

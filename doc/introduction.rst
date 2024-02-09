@@ -89,8 +89,8 @@ Folder Structure
 - ``results``: Stores the solved PyPSA network data, summary files and plots.
 - ``logs``: Stores log files.
 - ``benchmarks``: Stores ``snakemake`` benchmarks.
-- ``test``: Includes the test configuration files used for continuous integration.
 - ``doc``: Includes the documentation of PyPSA-Eur.
+- ``graphics``: Includes some graphics for the documentation of PyPSA-Eur.
 
 System Requirements
 ===================
