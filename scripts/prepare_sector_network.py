@@ -3090,7 +3090,6 @@ def add_industry(n, costs):
         )
 
 
-
 def add_waste_heat(n):
     # TODO options?
 
