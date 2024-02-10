@@ -40,8 +40,8 @@ from _benchmark import memory_logger
 from _helpers import (
     configure_logging,
     get_opt,
-    update_config_with_sector_opts,
     set_scenario_config,
+    update_config_with_sector_opts,
 )
 from pypsa.descriptors import get_activity_mask
 from pypsa.descriptors import get_switchable_as_dense as get_as_dense

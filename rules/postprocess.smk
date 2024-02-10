@@ -162,7 +162,7 @@ rule make_summary:
     params:
         foresight=config_provider("foresight"),
         costs=config_provider("costs"),
-        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]}, # TODO: use config_provider
+        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},  # TODO: use config_provider
         scenario=config_provider("scenario"),
         RDIR=RDIR,
     input:
@@ -174,7 +174,7 @@ rule make_summary:
             RESULTS
             + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
             **config["scenario"],
-            run=config["run"]["name"]
+            run=config["run"]["name"],
         ),
         costs=(
             "data/costs_{}.csv".format(config["costs"]["year"])
@@ -189,7 +189,7 @@ rule make_summary:
             RESULTS
             + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
             **config["scenario"],
-            run=config["run"]["name"]
+            run=config["run"]["name"],
         ),
         h2_plot=expand(
             (
@@ -199,7 +199,7 @@ rule make_summary:
                 else []
             ),
             **config["scenario"],
-            run=config["run"]["name"]
+            run=config["run"]["name"],
         ),
         ch4_plot=expand(
             (
@@ -209,7 +209,7 @@ rule make_summary:
                 else []
             ),
             **config["scenario"],
-            run=config["run"]["name"]
+            run=config["run"]["name"],
         ),
     output:
         nodal_costs=RESULTS + "csvs/nodal_costs.csv",

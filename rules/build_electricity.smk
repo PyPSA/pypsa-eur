@@ -20,7 +20,7 @@ if config["enable"].get("prepare_links_p_nom", False):
 
 rule build_electricity_demand:
     params:
-        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]}, # TODO: use config provider
+        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},  # TODO: use config provider
         countries=config_provider("countries"),
         load=config_provider("load"),
     input:
@@ -62,7 +62,7 @@ rule build_powerplants:
 rule base_network:
     params:
         countries=config_provider("countries"),
-        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]}, # TODO: use config provider
+        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},  # TODO: use config provider
         lines=config_provider("lines"),
         links=config_provider("links"),
         transformers=config_provider("transformers"),
@@ -145,7 +145,7 @@ if config["enable"].get("build_cutout", False):
 
     rule build_cutout:
         params:
-            snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]}, # TODO: use config provider
+            snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},  # TODO: use config provider
             cutouts=config_provider("atlite", "cutouts"),
         input:
             regions_onshore=resources("regions_onshore.geojson"),
@@ -259,7 +259,7 @@ else:
 
 rule build_renewable_profiles:
     params:
-        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]}, # TODO: use config provider
+        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},  # TODO: use config provider
         renewable=config_provider("renewable"),
     input:
         **opt,
@@ -401,18 +401,22 @@ rule add_electricity:
             if str(fn).startswith("data/")
         },
         base_network=resources("networks/base.nc"),
-        line_rating=resources("networks/line_rating.nc")
-        if config["lines"]["dynamic_line_rating"]["activate"]
-        else resources("networks/base.nc"),
+        line_rating=(
+            resources("networks/line_rating.nc")
+            if config["lines"]["dynamic_line_rating"]["activate"]
+            else resources("networks/base.nc")
+        ),
         tech_costs=COSTS,
         regions=resources("regions_onshore.geojson"),
         powerplants=resources("powerplants.csv"),
         hydro_capacities=ancient("data/bundle/hydro_capacities.csv"),
         geth_hydro_capacities="data/geth2015_hydro_capacities.csv",
         unit_commitment="data/unit_commitment.csv",
-        fuel_price=resources("monthly_fuel_price.csv")
-        if config["conventional"]["dynamic_fuel_price"]
-        else [],
+        fuel_price=(
+            resources("monthly_fuel_price.csv")
+            if config["conventional"]["dynamic_fuel_price"]
+            else []
+        ),
         load=resources("load.csv"),
         nuts3_shapes=resources("nuts3_shapes.geojson"),
         ua_md_gdp="data/GDP_PPP_30arcsec_v3_mapped_default.csv",
@@ -540,7 +544,8 @@ rule prepare_network:
         snapshots={
             "resolution": config["snapshots"].get("resolution", False),
             "segmentation": config["snapshots"].get("segmentation", False),
-        }, # TODO: use config provider
+        },
+        # TODO: use config provider
         links=config_provider("links"),
         lines=config_provider("lines"),
         co2base=config_provider("electricity", "co2base"),

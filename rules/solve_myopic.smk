@@ -21,7 +21,9 @@ rule add_existing_baseyear:
         ),
         cop_soil_total=resources("cop_soil_total_elec_s{simpl}_{clusters}.nc"),
         cop_air_total=resources("cop_air_total_elec_s{simpl}_{clusters}.nc"),
-        existing_heating_distribution=resources("existing_heating_distribution_elec_s{simpl}_{clusters}_{planning_horizons}.csv"),
+        existing_heating_distribution=resources(
+            "existing_heating_distribution_elec_s{simpl}_{clusters}_{planning_horizons}.csv"
+        ),
         existing_solar="data/existing_infrastructure/solar_capacity_IRENA.csv",
         existing_onwind="data/existing_infrastructure/onwind_capacity_IRENA.csv",
         existing_offwind="data/existing_infrastructure/offwind_capacity_IRENA.csv",
@@ -54,7 +56,7 @@ rule add_brownfield:
             "sector", "H2_retrofit_capacity_per_CH4"
         ),
         threshold_capacity=config_provider("existing_capacities", " threshold_capacity"),
-        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]}, # TODO: use config_provider
+        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},  # TODO: use config_provider
         carriers=config_provider("electricity", "renewable_carriers"),
     input:
         **{

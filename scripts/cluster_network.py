@@ -133,7 +133,7 @@ import numpy as np
 import pandas as pd
 import pypsa
 import seaborn as sns
-from _helpers import configure_logging, update_p_nom_max, set_scenario_config
+from _helpers import configure_logging, set_scenario_config, update_p_nom_max
 from add_electricity import load_costs
 from packaging.version import Version, parse
 from pypsa.clustering.spatial import (
