@@ -13,12 +13,6 @@ localrules:
     solve_sector_networks,
 
 
-rule all:
-    input:
-        expand(RESULTS + "graphs/costs.pdf", run=config["run"]["name"]),
-    default_target: True
-
-
 rule cluster_networks:
     input:
         expand(

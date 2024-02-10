@@ -19,12 +19,11 @@ rule solve_network:
         network=RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
     log:
         solver=normpath(
-            LOGS + "solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_solver.log"
+            logs("solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_solver.log")
         ),
-        python=LOGS
-        + "solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_python.log",
+        python=logs("solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_python.log"),
     benchmark:
-        BENCHMARKS + "solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}"
+        benchmarks("solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}")
     threads: solver_threads
     resources:
         mem_mb=memory,
@@ -46,16 +45,11 @@ rule solve_operations_network:
         network=RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op.nc",
     log:
         solver=normpath(
-            LOGS
-            + "solve_operations_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op_solver.log"
+            logs("solve_operations_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op_solver.log")
         ),
-        python=LOGS
-        + "solve_operations_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op_python.log",
+        python=logs("solve_operations_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op_python.log"),
     benchmark:
-        (
-            BENCHMARKS
-            + "solve_operations_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}"
-        )
+        benchmarks("solve_operations_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}")
     threads: 4
     resources:
         mem_mb=(lambda w: 10000 + 372 * int(w.clusters)),

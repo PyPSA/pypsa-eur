@@ -13,16 +13,15 @@ if config_provider("foresight") != "perfect":
         params:
             plotting=config_provider("plotting"),
         input:
-            network=RESOURCES + "networks/elec_s{simpl}_{clusters}.nc",
-            regions_onshore=RESOURCES
-            + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+            network=resources("networks/elec_s{simpl}_{clusters}.nc"),
+            regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
         output:
             map=RESULTS + "maps/power-network-s{simpl}-{clusters}.pdf",
         threads: 1
         resources:
             mem_mb=4000,
         benchmark:
-            BENCHMARKS + "plot_power_network_clustered/elec_s{simpl}_{clusters}"
+            benchmarks("plot_power_network_clustered/elec_s{simpl}_{clusters}")
         conda:
             "../envs/environment.yaml"
         script:
@@ -34,7 +33,7 @@ if config_provider("foresight") != "perfect":
         input:
             network=RESULTS
             + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
-            regions=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+            regions=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
         output:
             map=RESULTS
             + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
@@ -42,15 +41,9 @@ if config_provider("foresight") != "perfect":
         resources:
             mem_mb=10000,
         log:
-            (
-                LOGS
-                + "plot_power_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log"
-            ),
+            logs("plot_power_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log")
         benchmark:
-            (
-                BENCHMARKS
-                + "plot_power_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
-            )
+            benchmarks("plot_power_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}")
         conda:
             "../envs/environment.yaml"
         script:
@@ -63,7 +56,7 @@ if config_provider("foresight") != "perfect":
         input:
             network=RESULTS
             + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
-            regions=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+            regions=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
         output:
             map=RESULTS
             + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-h2_network_{planning_horizons}.pdf",
@@ -71,15 +64,9 @@ if config_provider("foresight") != "perfect":
         resources:
             mem_mb=10000,
         log:
-            (
-                LOGS
-                + "plot_hydrogen_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log"
-            ),
+            logs("plot_hydrogen_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log"),
         benchmark:
-            (
-                BENCHMARKS
-                + "plot_hydrogen_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
-            )
+            benchmarks("plot_hydrogen_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}")
         conda:
             "../envs/environment.yaml"
         script:
@@ -91,7 +78,7 @@ if config_provider("foresight") != "perfect":
         input:
             network=RESULTS
             + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
-            regions=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+            regions=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
         output:
             map=RESULTS
             + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-ch4_network_{planning_horizons}.pdf",
@@ -99,15 +86,9 @@ if config_provider("foresight") != "perfect":
         resources:
             mem_mb=10000,
         log:
-            (
-                LOGS
-                + "plot_gas_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log"
-            ),
+            logs("plot_gas_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log"),
         benchmark:
-            (
-                BENCHMARKS
-                + "plot_gas_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
-            )
+            benchmarks("plot_gas_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}")
         conda:
             "../envs/environment.yaml"
         script:
@@ -122,7 +103,7 @@ if config_provider("foresight") == "perfect":
         input:
             network=RESULTS
             + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years.nc",
-            regions=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+            regions=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
         output:
             **{
                 f"map_{year}": RESULTS
@@ -134,8 +115,7 @@ if config_provider("foresight") == "perfect":
         resources:
             mem_mb=10000,
         benchmark:
-            BENCHMARKS
-            +"postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years_benchmark"
+            benchmarks("postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years_benchmark")
         conda:
             "../envs/environment.yaml"
         script:
@@ -151,7 +131,7 @@ rule copy_config:
     resources:
         mem_mb=1000,
     benchmark:
-        BENCHMARKS + "copy_config"
+        benchmarks("copy_config")
     conda:
         "../envs/environment.yaml"
     script:
@@ -162,7 +142,7 @@ rule make_summary:
     params:
         foresight=config_provider("foresight"),
         costs=config_provider("costs"),
-        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},  # TODO: use config_provider
+        snapshots={k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]}, 
         scenario=config_provider("scenario"),
         RDIR=RDIR,
     input:
@@ -177,9 +157,9 @@ rule make_summary:
             run=config["run"]["name"],
         ),
         costs=(
-            "data/costs_{}.csv".format(config["costs"]["year"])
+            "data/costs_{}.csv".format(config_provider("costs", "year"))
             if config_provider("foresight") == "overnight"
-            else "data/costs_{}.csv".format(config["scenario"]["planning_horizons"][0])
+            else "data/costs_{}.csv".format(config_provider("scenario", "planning_horizons", 0))
         ),
         ac_plot=expand(
             RESULTS + "maps/power-network-s{simpl}-{clusters}.pdf",
@@ -195,7 +175,7 @@ rule make_summary:
             (
                 RESULTS
                 + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-h2_network_{planning_horizons}.pdf"
-                if config["sector"]["H2_network"]
+                if config_provider("sector", "H2_network")
                 else []
             ),
             **config["scenario"],
@@ -205,7 +185,7 @@ rule make_summary:
             (
                 RESULTS
                 + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-ch4_network_{planning_horizons}.pdf"
-                if config["sector"]["gas_network"]
+                if config_provider("sector", "gas_network")
                 else []
             ),
             **config["scenario"],
@@ -231,9 +211,9 @@ rule make_summary:
     resources:
         mem_mb=10000,
     log:
-        LOGS + "make_summary.log",
+        logs("make_summary.log"),
     benchmark:
-        BENCHMARKS + "make_summary"
+        benchmarks("make_summary")
     conda:
         "../envs/environment.yaml"
     script:
@@ -263,9 +243,9 @@ rule plot_summary:
     resources:
         mem_mb=10000,
     log:
-        LOGS + "plot_summary.log",
+        logs("plot_summary.log"),
     benchmark:
-        BENCHMARKS + "plot_summary"
+        benchmarks("plot_summary")
     conda:
         "../envs/environment.yaml"
     script:

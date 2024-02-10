@@ -33,10 +33,7 @@ rule solve_sector_network:
         mem_mb=config_provider("solving", "mem"),
         walltime=config_provider("solving", "walltime", default="12:00:00"),
     benchmark:
-        (
-            BENCHMARKS
-            + "solve_sector_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
-        )
+        benchmarks("solve_sector_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}")
     conda:
         "../envs/environment.yaml"
     script:

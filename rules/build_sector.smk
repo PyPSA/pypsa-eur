@@ -7,7 +7,7 @@ rule build_population_layouts:
     input:
         nuts3_shapes=resources("nuts3_shapes.geojson"),
         urban_percent="data/urban_percent.csv",
-        cutout="cutouts/" + CDIR + config["atlite"]["default_cutout"] + ".nc",
+        cutout="cutouts/" + CDIR + config_provider("atlite", "default_cutout") + ".nc",
     output:
         pop_layout_total=resources("pop_layout_total.nc"),
         pop_layout_urban=resources("pop_layout_urban.nc"),
@@ -31,7 +31,7 @@ rule build_clustered_population_layouts:
         pop_layout_urban=resources("pop_layout_urban.nc"),
         pop_layout_rural=resources("pop_layout_rural.nc"),
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
-        cutout="cutouts/" + CDIR + config["atlite"]["default_cutout"] + ".nc",
+        cutout="cutouts/" + CDIR + config_provider("atlite", "default_cutout") + ".nc",
     output:
         clustered_pop_layout=resources("pop_layout_elec_s{simpl}_{clusters}.csv"),
     log:
@@ -52,7 +52,7 @@ rule build_simplified_population_layouts:
         pop_layout_urban=resources("pop_layout_urban.nc"),
         pop_layout_rural=resources("pop_layout_rural.nc"),
         regions_onshore=resources("regions_onshore_elec_s{simpl}.geojson"),
-        cutout="cutouts/" + CDIR + config["atlite"]["default_cutout"] + ".nc",
+        cutout="cutouts/" + CDIR + config_provider("atlite", "default_cutout") + ".nc",
     output:
         clustered_pop_layout=resources("pop_layout_elec_s{simpl}.csv"),
     resources:
@@ -126,11 +126,11 @@ rule cluster_gas_network:
 
 rule build_daily_heat_demand:
     params:
-        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},  # TODO: use config_provider
+        snapshots={k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]}, 
     input:
         pop_layout=resources("pop_layout_{scope}.nc"),
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
-        cutout="cutouts/" + CDIR + config["atlite"]["default_cutout"] + ".nc",
+        cutout="cutouts/" + CDIR + config_provider("atlite", "default_cutout") + ".nc",
     output:
         heat_demand=resources("daily_heat_demand_{scope}_elec_s{simpl}_{clusters}.nc"),
     resources:
@@ -148,19 +148,19 @@ rule build_daily_heat_demand:
 
 rule build_hourly_heat_demand:
     params:
-        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},
+        snapshots={k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]},
     input:
         heat_profile="data/heat_load_profile_BDEW.csv",
-        heat_demand=RESOURCES + "daily_heat_demand_{scope}_elec_s{simpl}_{clusters}.nc",
+        heat_demand=resources("daily_heat_demand_{scope}_elec_s{simpl}_{clusters}.nc"),
     output:
-        heat_demand=RESOURCES + "hourly_heat_demand_{scope}_elec_s{simpl}_{clusters}.nc",
+        heat_demand=resources("hourly_heat_demand_{scope}_elec_s{simpl}_{clusters}.nc"),
     resources:
         mem_mb=2000,
     threads: 8
     log:
-        LOGS + "build_hourly_heat_demand_{scope}_{simpl}_{clusters}.loc",
+        logs("build_hourly_heat_demand_{scope}_{simpl}_{clusters}.loc"),
     benchmark:
-        BENCHMARKS + "build_hourly_heat_demand/{scope}_s{simpl}_{clusters}"
+        benchmarks("build_hourly_heat_demand/{scope}_s{simpl}_{clusters}")
     conda:
         "../envs/environment.yaml"
     script:
@@ -169,11 +169,11 @@ rule build_hourly_heat_demand:
 
 rule build_temperature_profiles:
     params:
-        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},  # TODO: use config_provider
+        snapshots={k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]}, 
     input:
         pop_layout=resources("pop_layout_{scope}.nc"),
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
-        cutout="cutouts/" + CDIR + config["atlite"]["default_cutout"] + ".nc",
+        cutout="cutouts/" + CDIR + config_provider("atlite", "default_cutout") + ".nc",
     output:
         temp_soil=resources("temp_soil_{scope}_elec_s{simpl}_{clusters}.nc"),
         temp_air=resources("temp_air_{scope}_elec_s{simpl}_{clusters}.nc"),
@@ -221,12 +221,12 @@ rule build_cop_profiles:
 
 rule build_solar_thermal_profiles:
     params:
-        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},  # TODO use config_provider
+        snapshots={k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]},  # TODO use config_provider
         solar_thermal=config_provider("solar_thermal"),
     input:
         pop_layout=resources("pop_layout_{scope}.nc"),
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
-        cutout="cutouts/" + CDIR + config["atlite"]["default_cutout"] + ".nc",
+        cutout="cutouts/" + CDIR + config_provider("atlite", "default_cutout") + ".nc",
     output:
         solar_thermal=resources("solar_thermal_{scope}_elec_s{simpl}_{clusters}.nc"),
     resources:
@@ -711,7 +711,7 @@ rule build_shipping_demand:
 
 rule build_transport_demand:
     params:
-        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},  # TODO: use config_provider
+        snapshots={k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]}, 
         sector=config_provider("sector"),
     input:
         clustered_pop_layout=resources("pop_layout_elec_s{simpl}_{clusters}.csv"),
@@ -740,18 +740,17 @@ rule build_transport_demand:
 
 rule build_district_heat_share:
     params:
-        sector=config["sector"],
+        sector=config_provider("sector"),
     input:
-        district_heat_share=RESOURCES + "district_heat_share.csv",
-        clustered_pop_layout=RESOURCES + "pop_layout_elec_s{simpl}_{clusters}.csv",
+        district_heat_share=resources("district_heat_share.csv"),
+        clustered_pop_layout=resources("pop_layout_elec_s{simpl}_{clusters}.csv"),
     output:
-        district_heat_share=RESOURCES
-        + "district_heat_share_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
+        district_heat_share=resources("district_heat_share_elec_s{simpl}_{clusters}_{planning_horizons}.csv"),
     threads: 1
     resources:
         mem_mb=1000,
     log:
-        LOGS + "build_district_heat_share_s{simpl}_{clusters}_{planning_horizons}.log",
+        logs("build_district_heat_share_s{simpl}_{clusters}_{planning_horizons}.log"),
     conda:
         "../envs/environment.yaml"
     script:
@@ -760,32 +759,25 @@ rule build_district_heat_share:
 
 rule build_existing_heating_distribution:
     params:
-        baseyear=config["scenario"]["planning_horizons"][0],
-        sector=config["sector"],
-        existing_capacities=config["existing_capacities"],
+        baseyear=config_provider("scenario", "planning_horizons", 0),
+        sector=config_provider("sector"),
+        existing_capacities=config_provider("existing_capacities"),
     input:
         existing_heating="data/existing_infrastructure/existing_heating_raw.csv",
-        clustered_pop_layout=RESOURCES + "pop_layout_elec_s{simpl}_{clusters}.csv",
-        clustered_pop_energy_layout=RESOURCES
-        + "pop_weighted_energy_totals_s{simpl}_{clusters}.csv",
-        district_heat_share=RESOURCES
-        + "district_heat_share_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
+        clustered_pop_layout=resources("pop_layout_elec_s{simpl}_{clusters}.csv"),
+        clustered_pop_energy_layout=resources("pop_weighted_energy_totals_s{simpl}_{clusters}.csv"),
+        district_heat_share=resources("district_heat_share_elec_s{simpl}_{clusters}_{planning_horizons}.csv"),
     output:
-        existing_heating_distribution=RESOURCES
-        + "existing_heating_distribution_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
+        existing_heating_distribution=resources("existing_heating_distribution_elec_s{simpl}_{clusters}_{planning_horizons}.csv"),
     wildcard_constraints:
-        planning_horizons=config["scenario"]["planning_horizons"][0],  #only applies to baseyear
+        planning_horizons=config_provider("scenario", "planning_horizons", 0),  #only applies to baseyear
     threads: 1
     resources:
         mem_mb=2000,
     log:
-        LOGS
-        + "build_existing_heating_distribution_elec_s{simpl}_{clusters}_{planning_horizons}.log",
+        logs("build_existing_heating_distribution_elec_s{simpl}_{clusters}_{planning_horizons}.log"),
     benchmark:
-        (
-            BENCHMARKS
-            + "build_existing_heating_distribution/elec_s{simpl}_{clusters}_{planning_horizons}"
-        )
+        benchmarks("build_existing_heating_distribution/elec_s{simpl}_{clusters}_{planning_horizons}")
     conda:
         "../envs/environment.yaml"
     script:
@@ -831,16 +823,16 @@ rule prepare_sector_network:
         biomass_potentials=(
             resources(
                 "biomass_potentials_s{simpl}_{clusters}_"
-                + "{}.csv".format(config["biomass"]["year"])
+                + "{}.csv".format(config_provider("biomass", "year"))
             )
-            if config["foresight"] == "overnight"
+            if config_provider("foresight") == "overnight"
             else resources(
                 "biomass_potentials_s{simpl}_{clusters}_{planning_horizons}.csv"
             )
         ),
         costs=(
-            "data/costs_{}.csv".format(config["costs"]["year"])
-            if config["foresight"] == "overnight"
+            "data/costs_{}.csv".format(config_provider("costs", "year"))
+            if config_provider("foresight") == "overnight"
             else "data/costs_{planning_horizons}.csv"
         ),
         profile_offwind_ac=resources("profile_offwind-ac.nc"),
@@ -873,17 +865,17 @@ rule prepare_sector_network:
         cop_air_urban=resources("cop_air_urban_elec_s{simpl}_{clusters}.nc"),
         solar_thermal_total=(
             resources("solar_thermal_total_elec_s{simpl}_{clusters}.nc")
-            if config["sector"]["solar_thermal"]
+            if config_provider("sector", "solar_thermal")
             else []
         ),
         solar_thermal_urban=(
             resources("solar_thermal_urban_elec_s{simpl}_{clusters}.nc")
-            if config["sector"]["solar_thermal"]
+            if config_provider("sector", "solar_thermal")
             else []
         ),
         solar_thermal_rural=(
             resources("solar_thermal_rural_elec_s{simpl}_{clusters}.nc")
-            if config["sector"]["solar_thermal"]
+            if config_provider("sector", "solar_thermal")
             else []
         ),
     output:
@@ -893,13 +885,9 @@ rule prepare_sector_network:
     resources:
         mem_mb=2000,
     log:
-        LOGS
-        + "prepare_sector_network_elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log",
+        logs("prepare_sector_network_elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log"),
     benchmark:
-        (
-            BENCHMARKS
-            + "prepare_sector_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
-        )
+        benchmarks("prepare_sector_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}")
     conda:
         "../envs/environment.yaml"
     script:

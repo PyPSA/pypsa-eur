@@ -36,13 +36,9 @@ rule add_existing_baseyear:
     resources:
         mem_mb=2000,
     log:
-        LOGS
-        + "add_existing_baseyear_elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log",
+        logs("add_existing_baseyear_elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log"),
     benchmark:
-        (
-            BENCHMARKS
-            + "add_existing_baseyear/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
-        )
+        benchmarks("add_existing_baseyear/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}")
     conda:
         "../envs/environment.yaml"
     script:
@@ -56,16 +52,16 @@ rule add_brownfield:
             "sector", "H2_retrofit_capacity_per_CH4"
         ),
         threshold_capacity=config_provider("existing_capacities", " threshold_capacity"),
-        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},  # TODO: use config_provider
+        snapshots={k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]}, 
         carriers=config_provider("electricity", "renewable_carriers"),
     input:
         **{
-            f"profile_{tech}": RESOURCES + f"profile_{tech}.nc"
-            for tech in config["electricity"]["renewable_carriers"]
+            f"profile_{tech}": resources(f"profile_{tech}.nc")
+            for tech in config_provider("electricity", "renewable_carriers")
             if tech != "hydro"
         },
-        simplify_busmap=RESOURCES + "busmap_elec_s{simpl}.csv",
-        cluster_busmap=RESOURCES + "busmap_elec_s{simpl}_{clusters}.csv",
+        simplify_busmap=resources("busmap_elec_s{simpl}.csv"),
+        cluster_busmap=resources("busmap_elec_s{simpl}_{clusters}.csv"),
         network=RESULTS
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
         network_p=solved_previous_horizon,  #solved network at previous time step
@@ -79,13 +75,9 @@ rule add_brownfield:
     resources:
         mem_mb=10000,
     log:
-        LOGS
-        + "add_brownfield_elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log",
+        logs("add_brownfield_elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log"),
     benchmark:
-        (
-            BENCHMARKS
-            + "add_brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
-        )
+        benchmarks("add_brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}")
     conda:
         "../envs/environment.yaml"
     script:
@@ -115,19 +107,14 @@ rule solve_sector_network_myopic:
     shadow:
         "shallow"
     log:
-        solver=LOGS
-        + "elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_solver.log",
-        python=LOGS
-        + "elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_python.log",
+        solver=logs("elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_solver.log"),
+        python=logs("elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_python.log"),
     threads: solver_threads
     resources:
         mem_mb=config_provider("solving", "mem"),
         walltime=config_provider("solving", "walltime", default="12:00:00"),
     benchmark:
-        (
-            BENCHMARKS
-            + "solve_sector_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
-        )
+        benchmarks("solve_sector_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}")
     conda:
         "../envs/environment.yaml"
     script:

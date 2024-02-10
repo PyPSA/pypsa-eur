@@ -91,7 +91,7 @@ if config["foresight"] == "perfect":
 
 rule all:
     input:
-        RESULTS + "graphs/costs.pdf",
+        expand(RESULTS + "graphs/costs.pdf", run=config["run"]["name"]),
     default_target: True
 
 

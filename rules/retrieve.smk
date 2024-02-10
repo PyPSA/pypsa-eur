@@ -50,7 +50,7 @@ if config["enable"].get("retrieve_irena"):
             onwind="data/existing_infrastructure/onwind_capacity_IRENA.csv",
             solar="data/existing_infrastructure/solar_capacity_IRENA.csv",
         log:
-            LOGS + "retrieve_irena.log",
+            logs("retrieve_irena.log"),
         resources:
             mem_mb=1000,
         retries: 2
@@ -86,7 +86,7 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cost_data", T
         input:
             HTTP.remote(
                 "raw.githubusercontent.com/PyPSA/technology-data/{}/outputs/".format(
-                    config["costs"]["version"]
+                    config_provider("costs", "version")
                 )
                 + "costs_{year}.csv",
                 keep_local=True,

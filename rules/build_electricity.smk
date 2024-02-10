@@ -20,7 +20,7 @@ if config["enable"].get("prepare_links_p_nom", False):
 
 rule build_electricity_demand:
     params:
-        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},  # TODO: use config provider
+        snapshots={k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]},
         countries=config_provider("countries"),
         load=config_provider("load"),
     input:
@@ -62,7 +62,7 @@ rule build_powerplants:
 rule base_network:
     params:
         countries=config_provider("countries"),
-        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},  # TODO: use config provider
+        snapshots={k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]}, 
         lines=config_provider("lines"),
         links=config_provider("links"),
         transformers=config_provider("transformers"),
@@ -145,7 +145,7 @@ if config["enable"].get("build_cutout", False):
 
     rule build_cutout:
         params:
-            snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},  # TODO: use config provider
+            snapshots={k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]}, 
             cutouts=config_provider("atlite", "cutouts"),
         input:
             regions_onshore=resources("regions_onshore.geojson"),
@@ -170,7 +170,7 @@ if config["enable"].get("build_natura_raster", False):
     rule build_natura_raster:
         input:
             natura=ancient("data/bundle/natura/Natura2000_end2015.shp"),
-            cutouts=expand("cutouts/" + CDIR + "{cutouts}.nc", **config["atlite"]),
+            cutouts=expand("cutouts/" + CDIR + "{cutouts}.nc", **config_provider("atlite")),
         output:
             resources("natura.tiff"),
         resources:
@@ -189,8 +189,8 @@ rule build_ship_raster:
         cutouts=expand(
             "cutouts/" + CDIR + "{cutout}.nc",
             cutout=[
-                config["renewable"][k]["cutout"]
-                for k in config["electricity"]["renewable_carriers"]
+                config_provider("renewable", k, "cutout")
+                for k in config_provider("electricity", "renewable_carriers")
             ],
         ),
     output:
@@ -214,30 +214,30 @@ rule determine_availability_matrix_MD_UA:
         wdpa_marine="data/WDPA_WDOECM_marine.gpkg",
         gebco=lambda w: (
             "data/bundle/GEBCO_2014_2D.nc"
-            if "max_depth" in config["renewable"][w.technology].keys()
+            if config_provider("renewable", w.technology)(w).get("max_depth")
             else []
         ),
         ship_density=lambda w: (
-            RESOURCES + "shipdensity_raster.tif"
-            if "ship_threshold" in config["renewable"][w.technology].keys()
+            resources("shipdensity_raster.tif")
+            if "ship_threshold" in config_provider("renewable", w.technology)(w).keys()
             else []
         ),
-        country_shapes=RESOURCES + "country_shapes.geojson",
-        offshore_shapes=RESOURCES + "offshore_shapes.geojson",
+        country_shapes=resources("country_shapes.geojson"),
+        offshore_shapes=resources("offshore_shapes.geojson"),
         regions=lambda w: (
-            RESOURCES + "regions_onshore.geojson"
+            resources("regions_onshore.geojson")
             if w.technology in ("onwind", "solar")
-            else RESOURCES + "regions_offshore.geojson"
+            else resources("regions_offshore.geojson")
         ),
         cutout=lambda w: "cutouts/"
         + CDIR
-        + config["renewable"][w.technology]["cutout"]
+        + config_provider("renewable", w.technology, "cutout")(w)
         + ".nc",
     output:
-        availability_matrix=RESOURCES + "availability_matrix_MD-UA_{technology}.nc",
-        availability_map=RESOURCES + "availability_matrix_MD-UA_{technology}.png",
+        availability_matrix=resources("availability_matrix_MD-UA_{technology}.nc"),
+        availability_map=resources("availability_matrix_MD-UA_{technology}.png"),
     log:
-        LOGS + "determine_availability_matrix_MD_UA_{technology}.log",
+        logs("determine_availability_matrix_MD_UA_{technology}.log"),
     threads: ATLITE_NPROCESSES
     resources:
         mem_mb=ATLITE_NPROCESSES * 5000,
@@ -250,8 +250,7 @@ rule determine_availability_matrix_MD_UA:
 # Optional input when having Ukraine (UA) or Moldova (MD) in the countries list
 if {"UA", "MD"}.intersection(set(config["countries"])):
     opt = {
-        "availability_matrix_MD_UA": RESOURCES
-        + "availability_matrix_MD-UA_{technology}.nc"
+        "availability_matrix_MD_UA": resources("availability_matrix_MD-UA_{technology}.nc")
     }
 else:
     opt = {}
@@ -259,7 +258,7 @@ else:
 
 rule build_renewable_profiles:
     params:
-        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},  # TODO: use config provider
+        snapshots={k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]}, 
         renewable=config_provider("renewable"),
     input:
         **opt,
@@ -272,7 +271,7 @@ rule build_renewable_profiles:
         ),
         luisa=lambda w: (
             "data/LUISA_basemap_020321_50m.tif"
-            if config["renewable"][w.technology].get("luisa")
+            if config_provider("renewable", w.technology, "luisa")(w)
             else []
         ),
         gebco=ancient(
@@ -340,7 +339,7 @@ rule build_hydro_profile:
     input:
         country_shapes=resources("country_shapes.geojson"),
         eia_hydro_generation="data/eia_hydro_annual_generation.csv",
-        cutout=f"cutouts/" + CDIR + config["renewable"]["hydro"]["cutout"] + ".nc",
+        cutout=f"cutouts/" + CDIR + config_provider("renewable", "hydro", "cutout") + ".nc",
     output:
         resources("profile_hydro.nc"),
     log:
@@ -357,12 +356,12 @@ if config["lines"]["dynamic_line_rating"]["activate"]:
 
     rule build_line_rating:
         params:
-            snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},
+            snapshots={k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]},
         input:
             base_network=resources("networks/base.nc"),
             cutout="cutouts/"
             + CDIR
-            + config["lines"]["dynamic_line_rating"]["cutout"]
+            + config_provider("lines", "dynamic_line_rating", "cutout")
             + ".nc",
         output:
             output=resources("networks/line_rating.nc"),
@@ -391,19 +390,19 @@ rule add_electricity:
     input:
         **{
             f"profile_{tech}": resources(f"profile_{tech}.nc")
-            for tech in config["electricity"]["renewable_carriers"]
+            for tech in config_provider("electricity", "renewable_carriers")
         },
         **{
             f"conventional_{carrier}_{attr}": fn
             for carrier, d in config.get("conventional", {None: {}}).items()
-            if carrier in config["electricity"]["conventional_carriers"]
+            if carrier in config_provider("electricity", "conventional_carriers")
             for attr, fn in d.items()
             if str(fn).startswith("data/")
         },
         base_network=resources("networks/base.nc"),
         line_rating=(
             resources("networks/line_rating.nc")
-            if config["lines"]["dynamic_line_rating"]["activate"]
+            if config_provider("lines", "dynamic_line_rating", "activate")
             else resources("networks/base.nc")
         ),
         tech_costs=COSTS,
@@ -414,7 +413,7 @@ rule add_electricity:
         unit_commitment="data/unit_commitment.csv",
         fuel_price=(
             resources("monthly_fuel_price.csv")
-            if config["conventional"]["dynamic_fuel_price"]
+            if config_provider("conventional", "dynamic_fuel_price")
             else []
         ),
         load=resources("load.csv"),
@@ -493,7 +492,7 @@ rule cluster_network:
         busmap=ancient(resources("busmap_elec_s{simpl}.csv")),
         custom_busmap=(
             "data/custom_busmap_elec_s{simpl}_{clusters}.csv"
-            if config["enable"].get("custom_busmap", False)
+            if config_provider("enable", "custom_busmap", default=False)
             else []
         ),
         tech_costs=COSTS,
@@ -542,10 +541,10 @@ rule add_extra_components:
 rule prepare_network:
     params:
         snapshots={
-            "resolution": config["snapshots"].get("resolution", False),
-            "segmentation": config["snapshots"].get("segmentation", False),
+            "resolution": config_provider("snapshots", "resolution", default=False),
+            "segmentation": config_provider("snapshots", "segmentation", default=False),
         },
-        # TODO: use config provider
+       
         links=config_provider("links"),
         lines=config_provider("lines"),
         co2base=config_provider("electricity", "co2base"),
