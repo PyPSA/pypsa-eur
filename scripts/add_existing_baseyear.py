@@ -7,10 +7,9 @@ Adds existing power and heat generation capacities for initial planning
 horizon.
 """
 
-import sys
-import os
-
 import logging
+import os
+import sys
 from types import SimpleNamespace
 
 import country_converter as coco
@@ -627,14 +626,22 @@ def add_heating_capacities_installed_before_baseyear(
 
         mastr_chp_power["p_nom"] = mastr_chp_power.eval("Capacity / Efficiency")
         mastr_chp_power["c_b"] = mastr_chp_power.eval("Capacity / Capacity_thermal")
-        mastr_chp_power["c_b"].clip(upper=costs.at["CCGT", "c_b"], inplace=True) # exclude outliers
+        mastr_chp_power["c_b"].clip(
+            upper=costs.at["CCGT", "c_b"], inplace=True
+        )  # exclude outliers
         mastr_chp_power["efficiency-heat"] = mastr_chp_power.eval("Efficiency / c_b")
 
         # these CHPs are mainly biomass CHPs
-        mastr_chp_heat["efficiency-heat"] = costs.at["central solid biomass CHP", "efficiency-heat"]
-        mastr_chp_heat["p_nom"] = mastr_chp_heat.Capacity_thermal / mastr_chp_heat['efficiency-heat']
+        mastr_chp_heat["efficiency-heat"] = costs.at[
+            "central solid biomass CHP", "efficiency-heat"
+        ]
+        mastr_chp_heat["p_nom"] = (
+            mastr_chp_heat.Capacity_thermal / mastr_chp_heat["efficiency-heat"]
+        )
         mastr_chp_heat["Efficiency"] = mastr_chp_heat.eval("Capacity / p_nom")
-        eff_total_max = costs.loc["central solid biomass CHP", ["efficiency-heat", "efficiency"]].sum()
+        eff_total_max = costs.loc[
+            "central solid biomass CHP", ["efficiency-heat", "efficiency"]
+        ].sum()
         eff_heat = mastr_chp_heat["efficiency-heat"]
         mastr_chp_heat["Efficiency"].clip(upper=eff_total_max - eff_heat, inplace=True)
 
@@ -744,7 +751,7 @@ def add_heating_capacities_installed_before_baseyear(
             n.madd(
                 "Link",
                 asset_i,
-                bus0=vars(spatial)[generator].nodes, # EU gas/coal/lignite EU
+                bus0=vars(spatial)[generator].nodes,  # EU gas/coal/lignite EU
                 bus1=p_nom.index,
                 bus2=p_nom.index + " urban central heat",
                 bus3="co2 atmosphere",
