@@ -31,13 +31,10 @@ if __name__ == "__main__":
     cutout = atlite.Cutout(snakemake.input.cutout).sel(time=time)
 
     clustered_regions = (
-        gpd.read_file(snakemake.input.regions_onshore)
-        .set_index("name")
-        .buffer(0)
-        .squeeze()
+        gpd.read_file(snakemake.input.regions_onshore).set_index("name").buffer(0)
     )
 
-    I = cutout.indicatormatrix(clustered_regions)
+    I = cutout.indicatormatrix(clustered_regions)  # noqa: E741
 
     pop_layout = xr.open_dataarray(snakemake.input.pop_layout)
 

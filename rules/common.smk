@@ -5,6 +5,16 @@
 import copy
 from functools import partial, lru_cache
 
+import os, sys, glob
+
+helper_source_path = [match for match in glob.glob("**/_helpers.py", recursive=True)]
+
+for path in helper_source_path:
+    path = os.path.dirname(os.path.abspath(path))
+    sys.path.insert(0, os.path.abspath(path))
+
+from _helpers import validate_checksum
+
 
 def get_config(config, keys, default=None):
     """Retrieve a nested value from a dictionary using a tuple of keys."""
@@ -67,6 +77,13 @@ def config_provider(*keys, default=None):
         return partial(static_getter, keys=keys, default=default)
 
 
+def solver_threads(w):
+    solver_options = config["solving"]["solver_options"]
+    option_set = config["solving"]["solver"]["options"]
+    threads = solver_options[option_set].get("threads", 4)
+    return threads
+
+
 def memory(w):
     factor = 3.0
     for o in w.opts.split("-"):
@@ -85,6 +102,13 @@ def memory(w):
         return int(factor * (18000 + 180 * 4000))
     else:
         return int(factor * (10000 + 195 * int(w.clusters)))
+
+
+def input_custom_extra_functionality(w):
+    path = config["solving"]["options"].get("custom_extra_functionality", False)
+    if path:
+        return os.path.join(os.path.dirname(workflow.snakefile), path)
+    return []
 
 
 # Check if the workflow has access to the internet by trying to access the HEAD of specified url
@@ -106,7 +130,7 @@ def has_internet_access(url="www.zenodo.org") -> bool:
 def input_eurostat(w):
     # 2016 includes BA, 2017 does not
     report_year = config["energy"]["eurostat_report_year"]
-    return f"data/eurostat-energy_balances-june_{report_year}_edition"
+    return f"data/bundle-sector/eurostat-energy_balances-june_{report_year}_edition"
 
 
 def solved_previous_horizon(wildcards):

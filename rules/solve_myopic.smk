@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2023-4 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
@@ -21,7 +21,7 @@ rule add_existing_baseyear:
         ),
         cop_soil_total=resources("cop_soil_total_elec_s{simpl}_{clusters}.nc"),
         cop_air_total=resources("cop_air_total_elec_s{simpl}_{clusters}.nc"),
-        existing_heating="data/existing_infrastructure/existing_heating_raw.csv",
+        existing_heating_distribution=resources("existing_heating_distribution_elec_s{simpl}_{clusters}_{planning_horizons}.csv"),
         existing_solar="data/existing_infrastructure/solar_capacity_IRENA.csv",
         existing_onwind="data/existing_infrastructure/onwind_capacity_IRENA.csv",
         existing_offwind="data/existing_infrastructure/offwind_capacity_IRENA.csv",
@@ -54,7 +54,16 @@ rule add_brownfield:
             "sector", "H2_retrofit_capacity_per_CH4"
         ),
         threshold_capacity=config_provider("existing_capacities", " threshold_capacity"),
+        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]}, # TODO: use config_provider
+        carriers=config_provider("electricity", "renewable_carriers"),
     input:
+        **{
+            f"profile_{tech}": RESOURCES + f"profile_{tech}.nc"
+            for tech in config["electricity"]["renewable_carriers"]
+            if tech != "hydro"
+        },
+        simplify_busmap=RESOURCES + "busmap_elec_s{simpl}.csv",
+        cluster_busmap=RESOURCES + "busmap_elec_s{simpl}_{clusters}.csv",
         network=RESULTS
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
         network_p=solved_previous_horizon,  #solved network at previous time step
@@ -92,6 +101,7 @@ rule solve_sector_network_myopic:
         co2_sequestration_potential=config_provider(
             "sector", "co2_sequestration_potential", default=200
         ),
+        custom_extra_functionality=input_custom_extra_functionality,
     input:
         network=RESULTS
         + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
@@ -107,7 +117,7 @@ rule solve_sector_network_myopic:
         + "elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_solver.log",
         python=LOGS
         + "elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_python.log",
-    threads: 4
+    threads: solver_threads
     resources:
         mem_mb=config_provider("solving", "mem"),
         walltime=config_provider("solving", "walltime", default="12:00:00"),

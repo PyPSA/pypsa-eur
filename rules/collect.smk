@@ -11,7 +11,6 @@ localrules:
     prepare_sector_networks,
     solve_elec_networks,
     solve_sector_networks,
-    plot_networks,
 
 
 rule all:
@@ -76,17 +75,7 @@ rule solve_sector_networks:
         ),
 
 
-rule plot_elec_networks:
-    input:
-        expand(
-            RESULTS
-            + "figures/.statistics_plots_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}",
-            **config["scenario"],
-            run=config["run"]["name"]
-        ),
-
-
-rule plot_networks:
+rule solve_sector_networks_perfect:
     input:
         expand(
             RESULTS

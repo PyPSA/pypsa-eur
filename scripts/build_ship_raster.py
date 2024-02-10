@@ -42,7 +42,6 @@ Description
 """
 
 import logging
-import os
 import zipfile
 from pathlib import Path
 
@@ -68,7 +67,7 @@ if __name__ == "__main__":
         fn = "shipdensity_global.tif"
         zip_f.extract(fn, resources)
     with rioxarray.open_rasterio(resources / fn) as ship_density:
-        ship_density = ship_density.drop(["band"]).sel(
+        ship_density = ship_density.drop_vars(["band"]).sel(
             x=slice(min(xs), max(Xs)), y=slice(max(Ys), min(ys))
         )
         ship_density.rio.to_raster(snakemake.output[0])

@@ -13,9 +13,10 @@ from scripts._helpers import path_provider
 min_version("7.7")
 HTTP = HTTPRemoteProvider()
 
-
-if not exists("config/config.yaml"):
-    copyfile("config/config.default.yaml", "config/config.yaml")
+conf_file = os.path.join(workflow.current_basedir, "config/config.yaml")
+conf_default_file = os.path.join(workflow.current_basedir, "config/config.default.yaml")
+if not exists(conf_file) and exists(conf_default_file):
+    copyfile(conf_default_file, conf_file)
 
 
 configfile: "config/config.yaml"
@@ -42,6 +43,12 @@ resources = path_provider("resources/", RDIR, run["shared_resources"])
 CDIR = "" if run["shared_cutouts"] else RDIR
 LOGS = "logs/" + RDIR
 BENCHMARKS = "benchmarks/" + RDIR
+if not (shared_resources := run.get("shared_resources")):
+    RESOURCES = "resources/" + RDIR
+elif isinstance(shared_resources, str):
+    RESOURCES = "resources/" + shared_resources + "/"
+else:
+    RESOURCES = "resources/"
 RESULTS = "results/" + RDIR
 
 
@@ -77,13 +84,31 @@ if config["foresight"] == "myopic":
     include: "rules/solve_myopic.smk"
 
 
+if config["foresight"] == "perfect":
+
+    include: "rules/solve_perfect.smk"
+
+
+rule all:
+    input:
+        RESULTS + "graphs/costs.pdf",
+    default_target: True
+
+
 rule purge:
-    message:
-        "Purging generated resources, results and docs. Downloads are kept."
     run:
-        rmtree("resources/", ignore_errors=True)
-        rmtree("results/", ignore_errors=True)
-        rmtree("doc/_build", ignore_errors=True)
+        import builtins
+
+        do_purge = builtins.input(
+            "Do you really want to delete all generated resources, \nresults and docs (downloads are kept)? [y/N] "
+        )
+        if do_purge == "y":
+            rmtree("resources/", ignore_errors=True)
+            rmtree("results/", ignore_errors=True)
+            rmtree("doc/_build", ignore_errors=True)
+            print("Purging generated resources, results and docs. Downloads are kept.")
+        else:
+            raise Exception(f"Input {do_purge}. Aborting purge.")
 
 
 rule dag:
@@ -118,6 +143,7 @@ rule sync:
     shell:
         """
         rsync -uvarh --ignore-missing-args --files-from=.sync-send . {params.cluster}
+        rsync -uvarh --no-g {params.cluster}/resources . || echo "No resources directory, skipping rsync"
         rsync -uvarh --no-g {params.cluster}/results . || echo "No results directory, skipping rsync"
         rsync -uvarh --no-g {params.cluster}/logs . || echo "No logs directory, skipping rsync"
         """

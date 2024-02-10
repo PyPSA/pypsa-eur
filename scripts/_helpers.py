@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: MIT
 
 import contextlib
+import hashlib
 import logging
 import os
 import re
@@ -13,6 +14,7 @@ from pathlib import Path
 
 import pandas as pd
 import pytz
+import requests
 import yaml
 from snakemake.utils import update_config
 from tqdm import tqdm
@@ -90,6 +92,35 @@ def path_provider(dir, rdir, shared_resources):
     return partial(get_run_path, dir=dir, rdir=rdir, shared_resources=shared_resources)
 
 
+def get_opt(opts, expr, flags=None):
+    """
+    Return the first option matching the regular expression.
+
+    The regular expression is case-insensitive by default.
+    """
+    if flags is None:
+        flags = re.IGNORECASE
+    for o in opts:
+        match = re.match(expr, o, flags=flags)
+        if match:
+            return match.group(0)
+    return None
+
+
+def find_opt(opts, expr):
+    """
+    Return if available the float after the expression.
+    """
+    for o in opts:
+        if expr in o:
+            m = re.findall("[0-9]*\.?[0-9]+$", o)
+            if len(m) > 0:
+                return True, float(m[0])
+            else:
+                return True, None
+    return False, None
+
+
 # Define a context manager to temporarily mute print statements
 @contextlib.contextmanager
 def mute_print():
@@ -132,6 +163,7 @@ def configure_logging(snakemake, skip_handlers=False):
         Do (not) skip the default handlers created for redirecting output to STDERR and file.
     """
     import logging
+    import sys
 
     kwargs = snakemake.config.get("logging", dict()).copy()
     kwargs.setdefault("level", "INFO")
@@ -154,6 +186,16 @@ def configure_logging(snakemake, skip_handlers=False):
             }
         )
     logging.basicConfig(**kwargs)
+
+    # Setup a function to handle uncaught exceptions and include them with their stacktrace into logfiles
+    def handle_exception(exc_type, exc_value, exc_traceback):
+        # Log the exception
+        logger = logging.getLogger()
+        logger.error(
+            "Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback)
+        )
+
+    sys.excepthook = handle_exception
 
 
 def update_p_nom_max(n):
@@ -275,7 +317,13 @@ def progress_retrieve(url, file, disable=False):
             urllib.request.urlretrieve(url, file, reporthook=update_to)
 
 
-def mock_snakemake(rulename, configfiles=[], **wildcards):
+def mock_snakemake(
+    rulename,
+    root_dir=None,
+    configfiles=[],
+    submodule_dir="workflow/submodules/pypsa-eur",
+    **wildcards,
+):
     """
     This function is expected to be executed from the 'scripts'-directory of '
     the snakemake project. It returns a snakemake.script.Snakemake object,
@@ -287,8 +335,13 @@ def mock_snakemake(rulename, configfiles=[], **wildcards):
     ----------
     rulename: str
         name of the rule for which the snakemake object should be generated
+    root_dir: str/path-like
+        path to the root directory of the snakemake project
     configfiles: list, str
         list of configfiles to be used to update the config
+    submodule_dir: str, Path
+        in case PyPSA-Eur is used as a submodule, submodule_dir is
+        the path of pypsa-eur relative to the project directory.
     **wildcards:
         keyword arguments fixing the wildcards. Only necessary if wildcards are
         needed.
@@ -296,15 +349,20 @@ def mock_snakemake(rulename, configfiles=[], **wildcards):
     import os
 
     import snakemake as sm
-    from packaging.version import Version, parse
     from pypsa.descriptors import Dict
     from snakemake.script import Snakemake
 
     script_dir = Path(__file__).parent.resolve()
-    root_dir = script_dir.parent
+    if root_dir is None:
+        root_dir = script_dir.parent
+    else:
+        root_dir = Path(root_dir).resolve()
 
     user_in_script_dir = Path.cwd().resolve() == script_dir
-    if user_in_script_dir:
+    if str(submodule_dir) in __file__:
+        # the submodule_dir path is only need to locate the project dir
+        os.chdir(Path(__file__[: __file__.find(str(submodule_dir))]))
+    elif user_in_script_dir:
         os.chdir(root_dir)
     elif Path.cwd().resolve() != root_dir:
         raise RuntimeError(
@@ -316,13 +374,12 @@ def mock_snakemake(rulename, configfiles=[], **wildcards):
             if os.path.exists(p):
                 snakefile = p
                 break
-        kwargs = (
-            dict(rerun_triggers=[]) if parse(sm.__version__) > Version("7.7.0") else {}
-        )
         if isinstance(configfiles, str):
             configfiles = [configfiles]
 
-        workflow = sm.Workflow(snakefile, overwrite_configfiles=configfiles, **kwargs)
+        workflow = sm.Workflow(
+            snakefile, overwrite_configfiles=configfiles, rerun_triggers=[]
+        )
         workflow.include(snakefile)
 
         if configfiles:
@@ -386,17 +443,89 @@ def generate_periodic_profiles(dt_index, nodes, weekly_profile, localize=None):
     return week_df
 
 
-def parse(l):
-    if len(l) == 1:
-        return yaml.safe_load(l[0])
+def parse(infix):
+    """
+    Recursively parse a chained wildcard expression into a dictionary or a YAML
+    object.
+
+    Parameters
+    ----------
+    list_to_parse : list
+        The list to parse.
+
+    Returns
+    -------
+    dict or YAML object
+        The parsed list.
+    """
+    if len(infix) == 1:
+        return yaml.safe_load(infix[0])
     else:
-        return {l.pop(0): parse(l)}
+        return {infix.pop(0): parse(infix)}
 
 
 def update_config_with_sector_opts(config, sector_opts):
-    from snakemake.utils import update_config
-
     for o in sector_opts.split("-"):
         if o.startswith("CF+"):
-            l = o.split("+")[1:]
-            update_config(config, parse(l))
+            infix = o.split("+")[1:]
+            update_config(config, parse(infix))
+
+
+def get_checksum_from_zenodo(file_url):
+    parts = file_url.split("/")
+    record_id = parts[parts.index("record") + 1]
+    filename = parts[-1]
+
+    response = requests.get(f"https://zenodo.org/api/records/{record_id}", timeout=30)
+    response.raise_for_status()
+    data = response.json()
+
+    for file in data["files"]:
+        if file["key"] == filename:
+            return file["checksum"]
+    return None
+
+
+def validate_checksum(file_path, zenodo_url=None, checksum=None):
+    """
+    Validate file checksum against provided or Zenodo-retrieved checksum.
+    Calculates the hash of a file using 64KB chunks. Compares it against a
+    given checksum or one from a Zenodo URL.
+
+    Parameters
+    ----------
+    file_path : str
+        Path to the file for checksum validation.
+    zenodo_url : str, optional
+        URL of the file on Zenodo to fetch the checksum.
+    checksum : str, optional
+        Checksum (format 'hash_type:checksum_value') for validation.
+
+    Raises
+    ------
+    AssertionError
+        If the checksum does not match, or if neither `checksum` nor `zenodo_url` is provided.
+
+
+    Examples
+    --------
+    >>> validate_checksum("/path/to/file", checksum="md5:abc123...")
+    >>> validate_checksum(
+    ...     "/path/to/file",
+    ...     zenodo_url="https://zenodo.org/record/12345/files/example.txt",
+    ... )
+
+    If the checksum is invalid, an AssertionError will be raised.
+    """
+    assert checksum or zenodo_url, "Either checksum or zenodo_url must be provided"
+    if zenodo_url:
+        checksum = get_checksum_from_zenodo(zenodo_url)
+    hash_type, checksum = checksum.split(":")
+    hasher = hashlib.new(hash_type)
+    with open(file_path, "rb") as f:
+        for chunk in iter(lambda: f.read(65536), b""):  # 64kb chunks
+            hasher.update(chunk)
+    calculated_checksum = hasher.hexdigest()
+    assert (
+        calculated_checksum == checksum
+    ), "Checksum is invalid. This may be due to an incomplete download. Delete the file and re-execute the rule."

@@ -9,9 +9,8 @@ Swiss energy statistics from Swiss Federal Office of Energy,switzerland-sfoe/,un
 BASt emobility statistics,emobility/,unknown,http://www.bast.de/DE/Verkehrstechnik/Fachthemen/v2-verkehrszaehlung/Stundenwerte.html?nn=626916
 BDEW heating profile,heat_load_profile_BDEW.csv,unknown,https://github.com/oemof/demandlib
 heating profiles for Aarhus,heat_load_profile_DK_AdamJensen.csv,unknown,Adam Jensen MA thesis at Aarhus University
-George Lavidas wind/wave costs,WindWaveWEC_GLTB.xlsx,unknown,George Lavidas
 co2 budgets,co2_budget.csv,CC BY 4.0,https://arxiv.org/abs/2004.11009
-existing heating potentials,existing_infrastructure/existing_heating_raw.csv,unknown,https://ec.europa.eu/energy/studies/mapping-and-analyses-current-and-future-2020-2030-heatingcooling-fuel-deployment_en?redir=1
+existing heating potentials,existing_infrastructure/existing_heating_raw.csv,unknown,https://energy.ec.europa.eu/publications/mapping-and-analyses-current-and-future-2020-2030-heatingcooling-fuel-deployment-fossilrenewables-1_en
 IRENA existing VRE capacities,existing_infrastructure/{solar|onwind|offwind}_capcity_IRENA.csv,unknown,https://www.irena.org/Statistics/Download-Data
 USGS ammonia production,myb1-2017-nitro.xls,unknown,https://www.usgs.gov/centers/nmic/nitrogen-statistics-and-information
 hydrogen salt cavern potentials,h2_salt_caverns_GWh_per_sqkm.geojson,CC BY 4.0,https://doi.org/10.1016/j.ijhydene.2019.12.161 https://doi.org/10.20944/preprints201910.0187.v1

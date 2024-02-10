@@ -41,12 +41,12 @@ Outputs
 
 import logging
 
-logger = logging.getLogger(__name__)
-import dateutil
 import numpy as np
 import pandas as pd
 from _helpers import configure_logging, set_scenario_config
 from pandas import Timedelta as Delta
+
+logger = logging.getLogger(__name__)
 
 
 def load_timeseries(fn, years, countries):
@@ -69,7 +69,7 @@ def load_timeseries(fn, years, countries):
         Load time-series with UTC timestamps x ISO-2 countries
     """
     return (
-        pd.read_csv(fn, index_col=0, parse_dates=[0])
+        pd.read_csv(fn, index_col=0, parse_dates=[0], date_format="%Y-%m-%dT%H:%M:%SZ")
         .tz_localize(None)
         .dropna(how="all", axis=0)
         .rename(columns={"GB_UKM": "GB"})
@@ -247,6 +247,14 @@ def manual_adjustment(load, fn_load):
     copy_timeslice(load, "LU", "2019-01-02 11:00", "2019-01-05 05:00", Delta(weeks=-1))
     copy_timeslice(load, "LU", "2019-02-05 20:00", "2019-02-06 19:00", Delta(weeks=-1))
 
+    if "UA" in countries:
+        copy_timeslice(
+            load, "UA", "2013-01-25 14:00", "2013-01-28 21:00", Delta(weeks=1)
+        )
+        copy_timeslice(
+            load, "UA", "2013-10-28 03:00", "2013-10-28 20:00", Delta(weeks=1)
+        )
+
     return load
 
 
@@ -266,6 +274,20 @@ if __name__ == "__main__":
     time_shift = snakemake.params.load["time_shift_for_large_gaps"]
 
     load = load_timeseries(snakemake.input[0], years, countries)
+
+    if "UA" in countries:
+        # attach load of UA (best data only for entsoe transparency)
+        load_ua = load_timeseries(snakemake.input[0], "2018", ["UA"], False)
+        snapshot_year = str(snapshots.year.unique().item())
+        time_diff = pd.Timestamp("2018") - pd.Timestamp(snapshot_year)
+        load_ua.index -= (
+            time_diff  # hack indices (currently, UA is manually set to 2018)
+        )
+        load["UA"] = load_ua
+        # attach load of MD (no time-series available, use 2020-totals and distribute according to UA):
+        # https://www.iea.org/data-and-statistics/data-browser/?country=MOLDOVA&fuel=Energy%20consumption&indicator=TotElecCons
+        if "MD" in countries:
+            load["MD"] = 6.2e6 * (load_ua / load_ua.sum())
 
     if snakemake.params.load["manual_adjustments"]:
         load = manual_adjustment(load, snakemake.input[0])

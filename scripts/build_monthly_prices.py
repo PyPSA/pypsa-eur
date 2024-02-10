@@ -6,11 +6,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Tue May 16 10:37:35 2023.
-
-This script extracts monthly fuel prices of oil, gas, coal and lignite,
-as well as CO2 prices
-
+This script extracts monthly fuel prices of oil, gas, coal and lignite, as well
+as CO2 prices.
 
 Inputs
 ------
