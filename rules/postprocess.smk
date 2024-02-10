@@ -14,7 +14,9 @@ if config_provider("foresight") != "perfect":
             plotting=config_provider("plotting"),
         input:
             network=resources("networks/elec_s{simpl}_{clusters}.nc"),
-            regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
+            regions_onshore=resources(
+                "regions_onshore_elec_s{simpl}_{clusters}.geojson"
+            ),
         output:
             map=RESULTS + "maps/power-network-s{simpl}-{clusters}.pdf",
         threads: 1
@@ -41,9 +43,13 @@ if config_provider("foresight") != "perfect":
         resources:
             mem_mb=10000,
         log:
-            logs("plot_power_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log")
+            logs(
+                "plot_power_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log"
+            ),
         benchmark:
-            benchmarks("plot_power_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}")
+            benchmarks(
+                "plot_power_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+            )
         conda:
             "../envs/environment.yaml"
         script:
@@ -64,9 +70,13 @@ if config_provider("foresight") != "perfect":
         resources:
             mem_mb=10000,
         log:
-            logs("plot_hydrogen_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log"),
+            logs(
+                "plot_hydrogen_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log"
+            ),
         benchmark:
-            benchmarks("plot_hydrogen_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}")
+            benchmarks(
+                "plot_hydrogen_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+            )
         conda:
             "../envs/environment.yaml"
         script:
@@ -86,9 +96,13 @@ if config_provider("foresight") != "perfect":
         resources:
             mem_mb=10000,
         log:
-            logs("plot_gas_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log"),
+            logs(
+                "plot_gas_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log"
+            ),
         benchmark:
-            benchmarks("plot_gas_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}")
+            benchmarks(
+                "plot_gas_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+            )
         conda:
             "../envs/environment.yaml"
         script:
@@ -115,7 +129,9 @@ if config_provider("foresight") == "perfect":
         resources:
             mem_mb=10000,
         benchmark:
-            benchmarks("postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years_benchmark")
+            benchmarks(
+                "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years_benchmark"
+            )
         conda:
             "../envs/environment.yaml"
         script:
@@ -142,7 +158,9 @@ rule make_summary:
     params:
         foresight=config_provider("foresight"),
         costs=config_provider("costs"),
-        snapshots={k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]}, 
+        snapshots={
+            k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]
+        },
         scenario=config_provider("scenario"),
         RDIR=RDIR,
     input:
@@ -159,7 +177,9 @@ rule make_summary:
         costs=(
             "data/costs_{}.csv".format(config_provider("costs", "year"))
             if config_provider("foresight") == "overnight"
-            else "data/costs_{}.csv".format(config_provider("scenario", "planning_horizons", 0))
+            else "data/costs_{}.csv".format(
+                config_provider("scenario", "planning_horizons", 0)
+            )
         ),
         ac_plot=expand(
             RESULTS + "maps/power-network-s{simpl}-{clusters}.pdf",

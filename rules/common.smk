@@ -105,7 +105,9 @@ def memory(w):
 
 
 def input_custom_extra_functionality(w):
-    path = config_provider("solving", "options", "custom_extra_functionality", default=False)
+    path = config_provider(
+        "solving", "options", "custom_extra_functionality", default=False
+    )
     if path:
         return os.path.join(os.path.dirname(workflow.snakefile), path)
     return []

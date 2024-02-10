@@ -126,7 +126,9 @@ rule cluster_gas_network:
 
 rule build_daily_heat_demand:
     params:
-        snapshots={k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]}, 
+        snapshots={
+            k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]
+        },
     input:
         pop_layout=resources("pop_layout_{scope}.nc"),
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
@@ -148,7 +150,9 @@ rule build_daily_heat_demand:
 
 rule build_hourly_heat_demand:
     params:
-        snapshots={k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]},
+        snapshots={
+            k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]
+        },
     input:
         heat_profile="data/heat_load_profile_BDEW.csv",
         heat_demand=resources("daily_heat_demand_{scope}_elec_s{simpl}_{clusters}.nc"),
@@ -169,7 +173,9 @@ rule build_hourly_heat_demand:
 
 rule build_temperature_profiles:
     params:
-        snapshots={k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]}, 
+        snapshots={
+            k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]
+        },
     input:
         pop_layout=resources("pop_layout_{scope}.nc"),
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
@@ -221,7 +227,9 @@ rule build_cop_profiles:
 
 rule build_solar_thermal_profiles:
     params:
-        snapshots={k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]},  # TODO use config_provider
+        snapshots={
+            k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]
+        },  # TODO use config_provider
         solar_thermal=config_provider("solar_thermal"),
     input:
         pop_layout=resources("pop_layout_{scope}.nc"),
@@ -711,7 +719,9 @@ rule build_shipping_demand:
 
 rule build_transport_demand:
     params:
-        snapshots={k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]}, 
+        snapshots={
+            k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]
+        },
         sector=config_provider("sector"),
     input:
         clustered_pop_layout=resources("pop_layout_elec_s{simpl}_{clusters}.csv"),
@@ -745,7 +755,9 @@ rule build_district_heat_share:
         district_heat_share=resources("district_heat_share.csv"),
         clustered_pop_layout=resources("pop_layout_elec_s{simpl}_{clusters}.csv"),
     output:
-        district_heat_share=resources("district_heat_share_elec_s{simpl}_{clusters}_{planning_horizons}.csv"),
+        district_heat_share=resources(
+            "district_heat_share_elec_s{simpl}_{clusters}_{planning_horizons}.csv"
+        ),
     threads: 1
     resources:
         mem_mb=1000,
@@ -765,19 +777,29 @@ rule build_existing_heating_distribution:
     input:
         existing_heating="data/existing_infrastructure/existing_heating_raw.csv",
         clustered_pop_layout=resources("pop_layout_elec_s{simpl}_{clusters}.csv"),
-        clustered_pop_energy_layout=resources("pop_weighted_energy_totals_s{simpl}_{clusters}.csv"),
-        district_heat_share=resources("district_heat_share_elec_s{simpl}_{clusters}_{planning_horizons}.csv"),
+        clustered_pop_energy_layout=resources(
+            "pop_weighted_energy_totals_s{simpl}_{clusters}.csv"
+        ),
+        district_heat_share=resources(
+            "district_heat_share_elec_s{simpl}_{clusters}_{planning_horizons}.csv"
+        ),
     output:
-        existing_heating_distribution=resources("existing_heating_distribution_elec_s{simpl}_{clusters}_{planning_horizons}.csv"),
+        existing_heating_distribution=resources(
+            "existing_heating_distribution_elec_s{simpl}_{clusters}_{planning_horizons}.csv"
+        ),
     wildcard_constraints:
         planning_horizons=config_provider("scenario", "planning_horizons", 0),  #only applies to baseyear
     threads: 1
     resources:
         mem_mb=2000,
     log:
-        logs("build_existing_heating_distribution_elec_s{simpl}_{clusters}_{planning_horizons}.log"),
+        logs(
+            "build_existing_heating_distribution_elec_s{simpl}_{clusters}_{planning_horizons}.log"
+        ),
     benchmark:
-        benchmarks("build_existing_heating_distribution/elec_s{simpl}_{clusters}_{planning_horizons}")
+        benchmarks(
+            "build_existing_heating_distribution/elec_s{simpl}_{clusters}_{planning_horizons}"
+        )
     conda:
         "../envs/environment.yaml"
     script:
@@ -885,9 +907,13 @@ rule prepare_sector_network:
     resources:
         mem_mb=2000,
     log:
-        logs("prepare_sector_network_elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log"),
+        logs(
+            "prepare_sector_network_elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log"
+        ),
     benchmark:
-        benchmarks("prepare_sector_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}")
+        benchmarks(
+            "prepare_sector_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+        )
     conda:
         "../envs/environment.yaml"
     script:

@@ -17,7 +17,9 @@ rule build_electricity_production:
     The data is used for validation of the optimization results.
     """
     params:
-        snapshots={k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]},
+        snapshots={
+            k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]
+        },
         countries=config_provider("countries"),
     output:
         resources("historical_electricity_production.csv"),
@@ -35,7 +37,9 @@ rule build_cross_border_flows:
     The data is used for validation of the optimization results.
     """
     params:
-        snapshots={k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]},
+        snapshots={
+            k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]
+        },
         countries=config_provider("countries"),
     input:
         network=resources("networks/base.nc"),
@@ -55,7 +59,9 @@ rule build_electricity_prices:
     The data is used for validation of the optimization results.
     """
     params:
-        snapshots={k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]},
+        snapshots={
+            k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]
+        },
         countries=config_provider("countries"),
     output:
         resources("historical_electricity_prices.csv"),

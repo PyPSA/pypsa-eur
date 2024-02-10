@@ -20,7 +20,9 @@ if config["enable"].get("prepare_links_p_nom", False):
 
 rule build_electricity_demand:
     params:
-        snapshots={k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]},
+        snapshots={
+            k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]
+        },
         countries=config_provider("countries"),
         load=config_provider("load"),
     input:
@@ -62,7 +64,9 @@ rule build_powerplants:
 rule base_network:
     params:
         countries=config_provider("countries"),
-        snapshots={k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]}, 
+        snapshots={
+            k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]
+        },
         lines=config_provider("lines"),
         links=config_provider("links"),
         transformers=config_provider("transformers"),
@@ -145,7 +149,10 @@ if config["enable"].get("build_cutout", False):
 
     rule build_cutout:
         params:
-            snapshots={k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]}, 
+            snapshots={
+                k: config_provider("snapshots", k)
+                for k in ["start", "end", "inclusive"]
+            },
             cutouts=config_provider("atlite", "cutouts"),
         input:
             regions_onshore=resources("regions_onshore.geojson"),
@@ -170,7 +177,9 @@ if config["enable"].get("build_natura_raster", False):
     rule build_natura_raster:
         input:
             natura=ancient("data/bundle/natura/Natura2000_end2015.shp"),
-            cutouts=expand("cutouts/" + CDIR + "{cutouts}.nc", **config_provider("atlite")),
+            cutouts=expand(
+                "cutouts/" + CDIR + "{cutouts}.nc", **config_provider("atlite")
+            ),
         output:
             resources("natura.tiff"),
         resources:
@@ -250,7 +259,9 @@ rule determine_availability_matrix_MD_UA:
 # Optional input when having Ukraine (UA) or Moldova (MD) in the countries list
 if {"UA", "MD"}.intersection(set(config["countries"])):
     opt = {
-        "availability_matrix_MD_UA": resources("availability_matrix_MD-UA_{technology}.nc")
+        "availability_matrix_MD_UA": resources(
+            "availability_matrix_MD-UA_{technology}.nc"
+        )
     }
 else:
     opt = {}
@@ -258,7 +269,9 @@ else:
 
 rule build_renewable_profiles:
     params:
-        snapshots={k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]}, 
+        snapshots={
+            k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]
+        },
         renewable=config_provider("renewable"),
     input:
         **opt,
@@ -339,7 +352,10 @@ rule build_hydro_profile:
     input:
         country_shapes=resources("country_shapes.geojson"),
         eia_hydro_generation="data/eia_hydro_annual_generation.csv",
-        cutout=f"cutouts/" + CDIR + config_provider("renewable", "hydro", "cutout") + ".nc",
+        cutout=f"cutouts/"
+        + CDIR
+        + config_provider("renewable", "hydro", "cutout")
+        + ".nc",
     output:
         resources("profile_hydro.nc"),
     log:
@@ -356,7 +372,10 @@ if config["lines"]["dynamic_line_rating"]["activate"]:
 
     rule build_line_rating:
         params:
-            snapshots={k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]},
+            snapshots={
+                k: config_provider("snapshots", k)
+                for k in ["start", "end", "inclusive"]
+            },
         input:
             base_network=resources("networks/base.nc"),
             cutout="cutouts/"
@@ -542,9 +561,10 @@ rule prepare_network:
     params:
         snapshots={
             "resolution": config_provider("snapshots", "resolution", default=False),
-            "segmentation": config_provider("snapshots", "segmentation", default=False),
+            "segmentation": config_provider(
+                "snapshots", "segmentation", default=False
+            ),
         },
-       
         links=config_provider("links"),
         lines=config_provider("lines"),
         co2base=config_provider("electricity", "co2base"),
