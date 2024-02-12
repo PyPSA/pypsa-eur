@@ -22,7 +22,7 @@ def rename_index(ds):
     return ds.set_axis(index)
 
 
-def plot_static_per_carrier(ds, ax, drop_zero=True):
+def plot_static_per_carrier(ds, ax):
     ds = ds[ds != 0]
     ds = ds.dropna()
     c = tech_colors[ds.index.get_level_values("carrier").map(rename_techs)]

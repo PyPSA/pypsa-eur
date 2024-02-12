@@ -10,6 +10,7 @@ Release Notes
 Upcoming Release
 ================
 
+* Add plotting routine with statistics where we allow for plotting of individual energy carriers and countries. Besides the plots, we create all necessary csv files for the plotting routine.
 * Add new default to overdimension heating in individual buildings. This allows
   them to cover heat demand peaks e.g. 10% higher than those in the data. The
   disadvantage of manipulating the costs is that the capacity is then not quite

@@ -54,6 +54,7 @@ def plot_static_comparison(df, ax, stacked=False):
 
 def read_csv(input, output):
     try:
+        # filter required csv to plot the wanted output
         files = list(filter(lambda x: output in x, input))
         pattern = r"elec_.*?(\d{4})"
         network_labels = [re.search(pattern, f).group() for f in files]
