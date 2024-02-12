@@ -1,15 +1,13 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020 @JanFrederickUnnewehr, The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2020 @JanFrederickUnnewehr, 2020-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
-This rule downloads the load data from `Open Power System Data Time series.
-
+This rule downloads the load data from `Open Power System Data Time series
 <https://data.open-power-system-data.org/time_series/>`_. For all countries in
-the network, the per country load timeseries with suffix
-``_load_actual_entsoe_transparency`` are extracted from the dataset. After
-filling small gaps linearly and large gaps by copying time-slice of a given
-period, the load data is exported to a ``.csv`` file.
+the network, the per country load timeseries are extracted from the dataset.
+After filling small gaps linearly and large gaps by copying time-slice of a
+given period, the load data is exported to a ``.csv`` file.
 
 Relevant Settings
 -----------------
@@ -19,9 +17,7 @@ Relevant Settings
     snapshots:
 
     load:
-        interpolate_limit:
-        time_shift_for_large_gaps:
-        manual_adjustments:
+        interpolate_limit: time_shift_for_large_gaps: manual_adjustments:
 
 
 .. seealso::
@@ -31,12 +27,12 @@ Relevant Settings
 Inputs
 ------
 
-- ``data/electricity_demand.csv``:
+- ``data/electricity_demand_raw.csv``:
 
 Outputs
 -------
 
-- ``resources/load.csv``:
+- ``resources/electricity_demand.csv``:
 """
 
 import logging
@@ -141,7 +137,7 @@ def copy_timeslice(load, cntry, start, stop, delta, fn_load=None):
             ].values
 
 
-def manual_adjustment(load, fn_load):
+def manual_adjustment(load, fn_load, countries):
     """
     Adjust gaps manual for load data from OPSD time-series package.
 
@@ -290,7 +286,7 @@ if __name__ == "__main__":
             load["MD"] = 6.2e6 * (load_ua / load_ua.sum())
 
     if snakemake.params.load["manual_adjustments"]:
-        load = manual_adjustment(load, snakemake.input[0])
+        load = manual_adjustment(load, snakemake.input[0], countries)
 
     if load.empty:
         logger.warning("Build electricity demand time series is empty.")
