@@ -13,6 +13,7 @@ from snakemake.utils import min_version
 
 min_version("7.7")
 
+
 configfile: "config/config.default.yaml"
 configfile: "config/config.yaml"
 
