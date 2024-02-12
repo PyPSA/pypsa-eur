@@ -278,10 +278,9 @@ STATISTICS_BARPLOTS = [
     "supply",
     "withdrawal",
     "market_value",
-    "energy_balance",
 ]
 
-STATISTICS_CSV = [
+STATISTICS = [
     "capacity_factor",
     "installed_capacity",
     "optimal_capacity",
@@ -291,12 +290,14 @@ STATISTICS_CSV = [
     "supply",
     "withdrawal",
     "market_value",
+    "energy_balance",
+    "total_cost",
 ]
 
 
 rule save_statistics_csv:
     params:
-        barplots=STATISTICS_CSV,
+        barplots=STATISTICS,
     input:
         network=RESULTS
         + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
@@ -306,7 +307,7 @@ rule save_statistics_csv:
             + "statistics/csv/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/{carrier}_"
             + f"{csv}.csv"
             for carrier in config["plotting"].get("carriers", "all")
-            for csv in STATISTICS_CSV
+            for csv in STATISTICS
         },
         csv_touch=RESULTS
         + "statistics/csv/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/.statistics_{carrier}_csv",
@@ -317,14 +318,14 @@ rule save_statistics_csv:
 rule plot_statistics_single:
     params:
         plotting=config["plotting"],
-        barplots=STATISTICS_BARPLOTS,
+        barplots=STATISTICS,
     input:
         **{
             f"{csv}": RESULTS
             + "statistics/csv/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/{carrier}_"
             + f"{csv}.csv"
             for carrier in config["plotting"].get("carriers", "all")
-            for csv in STATISTICS_CSV
+            for csv in STATISTICS
         },
     output:
         **{
@@ -332,7 +333,7 @@ rule plot_statistics_single:
             + "statistics/figures/single/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/{carrier}_"
             + f"{plot}.pdf"
             for carrier in config["plotting"].get("carriers", "all")
-            for plot in STATISTICS_BARPLOTS
+            for plot in STATISTICS
         },
         barplots_touch=RESULTS
         + "statistics/figures/single/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/.statistics_{carrier}_plots",
@@ -343,13 +344,13 @@ rule plot_statistics_single:
 rule plot_statistics_comparison:
     params:
         plotting=config["plotting"],
-        barplots=STATISTICS_BARPLOTS,
+        barplots=STATISTICS,
     input:
         expand(
             RESULTS
             + "statistics/csv/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/{carrier}_{csv}.csv",
             **config["scenario"],
-            csv=STATISTICS_CSV,
+            csv=STATISTICS,
             allow_missing=True,
         ),
     output:
@@ -358,7 +359,7 @@ rule plot_statistics_comparison:
             + "statistics/figures/comparison/country_{country}/{carrier}_"
             + f"{plot}.pdf"
             for carrier in config["plotting"].get("carriers", "all")
-            for plot in STATISTICS_BARPLOTS
+            for plot in STATISTICS
         },
         barplots_touch=RESULTS
         + "statistics/figures/comparison/country_{country}/.statistics_{carrier}_plots",
@@ -376,7 +377,7 @@ rule plot_elec_statistics:
         **{
             f"{plot}_bar": RESULTS
             + f"figures/statistics_{plot}_bar_elec_s{{simpl}}_{{clusters}}_ec_l{{ll}}_{{opts}}.pdf"
-            for plot in STATISTICS_BARPLOTS
+            for plot in STATISTICS
         },
         barplots_touch=RESULTS
         + "figures/.statistics_plots_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}",

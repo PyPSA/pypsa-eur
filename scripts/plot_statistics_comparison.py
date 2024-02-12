@@ -59,7 +59,10 @@ def read_csv(input, output):
         pattern = r"elec_.*?(\d{4})"
         network_labels = [re.search(pattern, f).group() for f in files]
         df = pd.concat(
-            [pd.read_csv(f).set_index(["component", "carrier"]) for f in files],
+            [
+                pd.read_csv(f, skiprows=2).set_index(["component", "carrier"])
+                for f in files
+            ],
             axis=1,
             keys=network_labels,
         )
@@ -91,16 +94,20 @@ if __name__ == "__main__":
                 pass
                 continue
         fig, ax = plt.subplots()
-        if "energy_balance" not in output:
-            df = read_csv(snakemake.input, output)
-        else:
-            supply = read_csv(snakemake.input, "supply")
-            withdrawal = read_csv(snakemake.input, "withdrawal")
-            df = (
-                pd.concat([supply, withdrawal.mul(-1)])
-                .groupby(["component", "carrier"])
-                .sum()
-            )
+        # if output == "energy_balance":
+        #     supply = read_csv(snakemake.input, "supply")
+        #     withdrawal = read_csv(snakemake.input, "withdrawal")
+        #     df = (
+        #         pd.concat([supply, withdrawal.mul(-1)])
+        #         .groupby(["component", "carrier"])
+        #         .sum()
+        #     )
+        # elif output == "total_cost":
+        #     opex = read_csv(snakemake.input, "opex")
+        #     capex = read_csv(snakemake.input, "capex")
+        #     df = opex.add(capex, fill_value=0)
+        # else:
+        df = read_csv(snakemake.input, output)
         if df.empty:
             fig.savefig(snakemake.output[output])
             continue

@@ -23,7 +23,6 @@ def rename_index(ds):
 
 
 def plot_static_per_carrier(ds, ax):
-    ds = ds[ds != 0]
     ds = ds.dropna()
     c = tech_colors[ds.index.get_level_values("carrier").map(rename_techs)]
     ds = ds.pipe(rename_index)
@@ -33,7 +32,7 @@ def plot_static_per_carrier(ds, ax):
 
 def read_csv(input):
     try:
-        df = pd.read_csv(input)
+        df = pd.read_csv(input, skiprows=2)
         df = df.set_index(["component", "carrier"]).squeeze()
     except Exception as e:
         print(f"An error occurred reading file {input}: {e}")
@@ -66,12 +65,7 @@ if __name__ == "__main__":
                 pass
             continue
         fig, ax = plt.subplots()
-        if output != "energy_balance":
-            ds = read_csv(snakemake.input[output])
-        else:
-            supply = read_csv(snakemake.input["supply"])
-            withdrawal = read_csv(snakemake.input["withdrawal"])
-            ds = pd.concat([supply, withdrawal.mul(-1)])
+        ds = read_csv(snakemake.input[output])
         if ds.empty:
             fig.savefig(snakemake.output[output])
             continue

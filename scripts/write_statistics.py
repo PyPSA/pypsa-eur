@@ -21,6 +21,16 @@ def groupby_country_and_carrier(n, c, nice_names=False):
     return [country, carrier]
 
 
+def call_with_handle(func, **kwargs):
+    try:
+        ds = func(**kwargs)
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        ds = pd.Series()
+        pass
+    return ds
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -74,25 +84,35 @@ if __name__ == "__main__":
     for output in snakemake.output.keys():
         if "touch" in output:
             continue
-        if output != "energy_balance":
+        if output == "energy_balance":
+            supply = call_with_handle(n.statistics.supply, **kwargs)
+            withdrawal = call_with_handle(n.statistics.withdrawal, **kwargs)
+            ds = (
+                pd.concat([supply, withdrawal.mul(-1)])
+                .groupby(["component", "carrier"])
+                .sum()
+            )
+            ds.attrs = supply.attrs
+            ds.attrs["name"] = "Energy Balance"
+        elif output == "total_cost":
+            opex = call_with_handle(n.statistics.opex, **kwargs)
+            capex = call_with_handle(n.statistics.capex, **kwargs)
+            ds = opex.add(capex, fill_value=0)
+            ds.attrs["name"] = "Total Cost"
+        else:
             func = eval(f"n.statistics.{output}")
-            try:
-                ds = func(**kwargs)
-                if ds.empty:
-                    print(
-                        f"Empty series for {output} with bus carrier {bus_carrier} and country {country}."
-                    )
-                    pd.Series().to_csv(snakemake.output[output])
-                    continue
-            except Exception as e:
-                print(f"An error occurred: {e}")
-                pd.Series().to_csv(snakemake.output[output])
-                pass
-                continue
-            if country and country != "all":
-                ds = ds.xs(country, level="country")
-            ds.name = ds.attrs["name"]
-            ds.dropna().to_csv(snakemake.output[output])
-        # touch file
+            ds = call_with_handle(func, **kwargs)
+
+        if ds.empty:
+            print(
+                f"Empty series for {output} with bus carrier {bus_carrier} and country {country}."
+            )
+            pd.Series().to_csv(snakemake.output[output])
+            continue
+        if country and country != "all":
+            ds = ds.xs(country, level="country")
+        pd.Series(ds.attrs).to_csv(snakemake.output[output], header=False)
+        ds.dropna().to_csv(snakemake.output[output], mode="a")
+    # touch file
     with open(snakemake.output.csv_touch, "a"):
         pass
