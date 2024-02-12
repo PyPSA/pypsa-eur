@@ -14,6 +14,8 @@ import country_converter as coco
 import geopandas as gpd
 import pandas as pd
 
+from _helpers import configure_logging, set_scenario_config
+
 logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
 
@@ -148,8 +150,8 @@ if __name__ == "__main__":
             simpl="",
             clusters=128,
         )
-
-    logging.basicConfig(level=snakemake.config["logging"]["level"])
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     countries = snakemake.params.countries
 

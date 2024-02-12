@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 import pypsa
 import xarray as xr
-from _helpers import update_config_with_sector_opts
+from _helpers import update_config_with_sector_opts, configure_logging, set_scenario_config
 from add_existing_baseyear import add_build_year_to_new_assets
 from pypsa.clustering.spatial import normed_or_uniform
 
@@ -210,7 +210,8 @@ if __name__ == "__main__":
             planning_horizons=2030,
         )
 
-    logging.basicConfig(level=snakemake.config["logging"]["level"])
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
 

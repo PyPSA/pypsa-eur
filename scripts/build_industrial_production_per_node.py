@@ -7,6 +7,7 @@ Build industrial production per model region.
 """
 
 from itertools import product
+from _helpers import set_scenario_config
 
 import pandas as pd
 
@@ -72,5 +73,6 @@ if __name__ == "__main__":
             simpl="",
             clusters=48,
         )
+    set_scenario_config(snakemake)
 
     build_nodal_industrial_production()

@@ -10,6 +10,7 @@ import logging
 
 import pandas as pd
 from prepare_sector_network import get
+from _helpers import configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +25,8 @@ if __name__ == "__main__":
             clusters=48,
             planning_horizons="2050",
         )
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     investment_year = int(snakemake.wildcards.planning_horizons[-4:])
 

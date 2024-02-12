@@ -10,7 +10,7 @@ from itertools import product
 
 import pandas as pd
 import xarray as xr
-from _helpers import generate_periodic_profiles
+from _helpers import generate_periodic_profiles, set_scenario_config
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -22,6 +22,7 @@ if __name__ == "__main__":
             simpl="",
             clusters=48,
         )
+    set_scenario_config(snakemake)
 
     snapshots = pd.date_range(freq="h", **snakemake.params.snapshots)
 

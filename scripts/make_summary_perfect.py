@@ -19,6 +19,7 @@ from make_summary import assign_carriers, assign_locations
 from prepare_sector_network import prepare_costs
 from pypsa.descriptors import get_active_assets
 from six import iteritems
+from _helpers import set_scenario_config
 
 idx = pd.IndexSlice
 
@@ -722,6 +723,7 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("make_summary_perfect")
+    set_scenario_config(snakemake)
 
     run = snakemake.config["run"]["name"]
     if run != "":

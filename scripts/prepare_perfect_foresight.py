@@ -12,7 +12,7 @@ import re
 import numpy as np
 import pandas as pd
 import pypsa
-from _helpers import update_config_with_sector_opts
+from _helpers import update_config_with_sector_opts, set_scenario_config, configure_logging
 from add_existing_baseyear import add_build_year_to_new_assets
 from pypsa.descriptors import expand_series
 from pypsa.io import import_components_from_dataframe
@@ -514,6 +514,8 @@ if __name__ == "__main__":
             ll="v1.5",
             sector_opts="1p7-4380H-T-H-B-I-A-dist1",
         )
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
     # parameters -----------------------------------------------------------

@@ -12,6 +12,7 @@ import logging
 import geopandas as gpd
 import pandas as pd
 from cluster_gas_network import load_bus_regions
+from _helpers import configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
@@ -134,7 +135,8 @@ if __name__ == "__main__":
             clusters="128",
         )
 
-    logging.basicConfig(level=snakemake.config["logging"]["level"])
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     regions = load_bus_regions(
         snakemake.input.regions_onshore, snakemake.input.regions_offshore

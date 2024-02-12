@@ -15,6 +15,8 @@ https://doi.org/10.1039/C2EE22653G.
 
 import xarray as xr
 
+from _helpers import set_scenario_config
+
 
 def coefficient_of_performance(delta_T, source="air"):
     if source == "air":
@@ -34,6 +36,8 @@ if __name__ == "__main__":
             simpl="",
             clusters=48,
         )
+
+    set_scenario_config(snakemake)
 
     for area in ["total", "urban", "rural"]:
         for source in ["air", "soil"]:

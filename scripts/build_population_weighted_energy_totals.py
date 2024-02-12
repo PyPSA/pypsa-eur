@@ -8,6 +8,8 @@ Distribute country-level energy demands by population.
 
 import pandas as pd
 
+from _helpers import set_scenario_config
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -17,6 +19,7 @@ if __name__ == "__main__":
             simpl="",
             clusters=48,
         )
+    set_scenario_config(snakemake)
 
     pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
 

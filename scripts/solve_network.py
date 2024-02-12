@@ -956,6 +956,7 @@ if __name__ == "__main__":
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
+
     if "sector_opts" in snakemake.wildcards.keys():
         update_config_with_sector_opts(
             snakemake.config, snakemake.wildcards.sector_opts

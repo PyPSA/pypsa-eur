@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 import pypsa
 import xarray as xr
-from _helpers import update_config_with_sector_opts
+from _helpers import update_config_with_sector_opts, set_scenario_config, configure_logging
 from add_electricity import sanitize_carriers
 from prepare_sector_network import cluster_heat_buses, define_spatial, prepare_costs
 
@@ -552,7 +552,8 @@ if __name__ == "__main__":
             planning_horizons=2020,
         )
 
-    logging.basicConfig(level=snakemake.config["logging"]["level"])
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
 

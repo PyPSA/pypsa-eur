@@ -11,7 +11,7 @@ import logging
 import zipfile
 from pathlib import Path
 
-from _helpers import progress_retrieve, validate_checksum
+from _helpers import progress_retrieve, validate_checksum, set_scenario_config, configure_logging
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +24,8 @@ if __name__ == "__main__":
         rootpath = ".."
     else:
         rootpath = "."
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     url = "https://zenodo.org/record/4767098/files/IGGIELGN.zip"
 

@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from dask.distributed import Client, LocalCluster
+from _helpers import set_scenario_config
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -22,6 +23,7 @@ if __name__ == "__main__":
             simpl="",
             clusters=48,
         )
+    set_scenario_config(snakemake)
 
     nprocesses = int(snakemake.threads)
     cluster = LocalCluster(n_workers=nprocesses, threads_per_worker=1)
