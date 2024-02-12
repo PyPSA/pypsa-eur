@@ -7,7 +7,6 @@
 import re
 
 import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
 import pandas as pd
 import seaborn as sns
 from _helpers import configure_logging
@@ -40,11 +39,15 @@ def rename_index(df):
 
 
 def plot_static_comparison(df, ax, stacked=False):
+    factor, unit = conversion[output]
     df = df[df != 0]
     df = df.dropna(axis=0, how="all").fillna(0)
+    if df.empty:
+        return
     c = tech_colors[df.index.get_level_values("carrier").map(rename_techs)]
     df = df.pipe(rename_index).T
-    df.plot.bar(color=c.values, ax=ax, stacked=stacked, legend=False)
+    df = df.div(float(factor)) if factor != "-" else df
+    df.plot.bar(color=c.values, ax=ax, stacked=stacked, legend=False, ylabel=unit)
     ax.legend(
         bbox_to_anchor=(1, 1),
         loc="upper left",
@@ -87,6 +90,7 @@ if __name__ == "__main__":
     configure_logging(snakemake)
 
     tech_colors = pd.Series(snakemake.params.plotting["tech_colors"])
+    conversion = pd.Series(snakemake.params.statistics)
 
     for output in snakemake.output.keys():
         if "touch" in output:
@@ -94,19 +98,6 @@ if __name__ == "__main__":
                 pass
                 continue
         fig, ax = plt.subplots()
-        # if output == "energy_balance":
-        #     supply = read_csv(snakemake.input, "supply")
-        #     withdrawal = read_csv(snakemake.input, "withdrawal")
-        #     df = (
-        #         pd.concat([supply, withdrawal.mul(-1)])
-        #         .groupby(["component", "carrier"])
-        #         .sum()
-        #     )
-        # elif output == "total_cost":
-        #     opex = read_csv(snakemake.input, "opex")
-        #     capex = read_csv(snakemake.input, "capex")
-        #     df = opex.add(capex, fill_value=0)
-        # else:
         df = read_csv(snakemake.input, output)
         if df.empty:
             fig.savefig(snakemake.output[output])

@@ -280,24 +280,24 @@ STATISTICS_BARPLOTS = [
     "market_value",
 ]
 
-STATISTICS = [
-    "capacity_factor",
-    "installed_capacity",
-    "optimal_capacity",
-    "capex",
-    "opex",
-    "curtailment",
-    "supply",
-    "withdrawal",
-    "market_value",
-    "energy_balance",
-    "total_cost",
-]
+STATISTICS = {
+    "capacity_factor": ("-", "p.u."),
+    "installed_capacity": (1e3, "GW"),
+    "optimal_capacity": (1e3, "GW"),
+    "capex": (1e9, "bn €"),
+    "opex": (1e9, "bn €"),
+    "total_cost": ("1e9", "bn €"),
+    "curtailment": (1e3, "GWh"),
+    "supply": (1e6, "TWh"),
+    "withdrawal": (1e6, "TWh"),
+    "energy_balance": (1e6, "TWh"),
+    "market_value": ("-", "€/MWh"),
+}
 
 
 rule save_statistics_csv:
     params:
-        barplots=STATISTICS,
+        statistics=STATISTICS,
     input:
         network=RESULTS
         + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
@@ -318,7 +318,7 @@ rule save_statistics_csv:
 rule plot_statistics_single:
     params:
         plotting=config["plotting"],
-        barplots=STATISTICS,
+        statistics=STATISTICS,
     input:
         **{
             f"{csv}": RESULTS
@@ -344,7 +344,7 @@ rule plot_statistics_single:
 rule plot_statistics_comparison:
     params:
         plotting=config["plotting"],
-        barplots=STATISTICS,
+        statistics=STATISTICS,
     input:
         expand(
             RESULTS
@@ -377,7 +377,7 @@ rule plot_elec_statistics:
         **{
             f"{plot}_bar": RESULTS
             + f"figures/statistics_{plot}_bar_elec_s{{simpl}}_{{clusters}}_ec_l{{ll}}_{{opts}}.pdf"
-            for plot in STATISTICS
+            for plot in STATISTICS_BARPLOTS
         },
         barplots_touch=RESULTS
         + "figures/.statistics_plots_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}",

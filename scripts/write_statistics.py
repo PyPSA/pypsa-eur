@@ -89,7 +89,7 @@ if __name__ == "__main__":
             withdrawal = call_with_handle(n.statistics.withdrawal, **kwargs)
             ds = (
                 pd.concat([supply, withdrawal.mul(-1)])
-                .groupby(["component", "carrier"])
+                .groupby(supply.index.names)
                 .sum()
             )
             ds.attrs = supply.attrs

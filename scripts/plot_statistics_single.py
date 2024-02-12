@@ -9,7 +9,6 @@ import pandas as pd
 import seaborn as sns
 from _helpers import configure_logging
 from plot_summary import rename_techs
-from pypsa.statistics import get_carrier
 
 sns.set_theme("paper", style="whitegrid")
 
@@ -22,11 +21,13 @@ def rename_index(ds):
     return ds.set_axis(index)
 
 
-def plot_static_per_carrier(ds, ax):
+def plot_static_single(ds, ax):
+    factor, unit = conversion[output]
     ds = ds.dropna()
     c = tech_colors[ds.index.get_level_values("carrier").map(rename_techs)]
     ds = ds.pipe(rename_index)
-    ds.T.plot.barh(color=c.values, ax=ax)
+    ds = ds.div(float(factor)) if factor != "-" else ds
+    ds.T.plot.barh(color=c.values, ax=ax, ylabel=unit)
     ax.grid(axis="x")
 
 
@@ -58,6 +59,7 @@ if __name__ == "__main__":
     configure_logging(snakemake)
 
     tech_colors = pd.Series(snakemake.params.plotting["tech_colors"])
+    conversion = pd.Series(snakemake.params.statistics)
 
     for output in snakemake.output.keys():
         if "touch" in output:
@@ -69,5 +71,5 @@ if __name__ == "__main__":
         if ds.empty:
             fig.savefig(snakemake.output[output])
             continue
-        plot_static_per_carrier(ds, ax)
+        plot_static_single(ds, ax)
         fig.savefig(snakemake.output[output], bbox_inches="tight")
