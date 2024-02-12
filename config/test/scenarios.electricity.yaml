@@ -6,9 +6,6 @@ test-elec-no-offshore-wind:
   electricity:
     renewable_carriers: [solar, onwind]
 
-
 test-elec-no-onshore-wind:
   electricity:
-    extendable_carriers:
-      Generator: [OCGT]
     renewable_carriers: [solar, offwind-ac, offwind-dc]
