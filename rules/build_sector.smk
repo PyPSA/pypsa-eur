@@ -229,7 +229,8 @@ rule build_solar_thermal_profiles:
     params:
         snapshots={
             k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]
-        },  # TODO use config_provider
+        },
+        # TODO use config_provider
         solar_thermal=config_provider("solar_thermal"),
     input:
         pop_layout=resources("pop_layout_{scope}.nc"),
