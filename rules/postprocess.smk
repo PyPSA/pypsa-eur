@@ -45,7 +45,7 @@ if config["foresight"] != "perfect":
             (
                 LOGS
                 + "plot_power_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log"
-            )
+            ),
         benchmark:
             (
                 BENCHMARKS
@@ -74,7 +74,7 @@ if config["foresight"] != "perfect":
             (
                 LOGS
                 + "plot_hydrogen_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log"
-            )
+            ),
         benchmark:
             (
                 BENCHMARKS
@@ -102,7 +102,7 @@ if config["foresight"] != "perfect":
             (
                 LOGS
                 + "plot_gas_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log"
-            )
+            ),
         benchmark:
             (
                 BENCHMARKS
@@ -311,7 +311,7 @@ rule save_statistics_csv:
         csv_touch=RESULTS
         + "statistics/csv/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/.statistics_{carrier}_csv",
     script:
-        "../scripts/make_statistics_csv.py"
+        "../scripts/write_statistics.py"
 
 
 rule plot_statistics_single:
