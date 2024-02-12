@@ -7,7 +7,7 @@ localrules:
     copy_config,
 
 
-if config_provider("foresight") != "perfect":
+if config["foresight"] != "perfect":
 
     rule plot_power_network_clustered:
         params:
@@ -109,7 +109,7 @@ if config_provider("foresight") != "perfect":
             "../scripts/plot_gas_network.py"
 
 
-if config_provider("foresight") == "perfect":
+if config["foresight"] == "perfect":
 
     rule plot_power_network_perfect:
         params:
