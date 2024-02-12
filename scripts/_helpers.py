@@ -264,7 +264,6 @@ def mock_snakemake(
     import os
 
     import snakemake as sm
-    from packaging.version import Version, parse
     from pypsa.descriptors import Dict
     from snakemake.script import Snakemake
 
@@ -290,13 +289,12 @@ def mock_snakemake(
             if os.path.exists(p):
                 snakefile = p
                 break
-        kwargs = (
-            dict(rerun_triggers=[]) if parse(sm.__version__) > Version("7.7.0") else {}
-        )
         if isinstance(configfiles, str):
             configfiles = [configfiles]
 
-        workflow = sm.Workflow(snakefile, overwrite_configfiles=configfiles, **kwargs)
+        workflow = sm.Workflow(
+            snakefile, overwrite_configfiles=configfiles, rerun_triggers=[]
+        )
         workflow.include(snakefile)
 
         if configfiles:

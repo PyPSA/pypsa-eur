@@ -11,6 +11,10 @@ Upcoming Release
 ================
 
 * Add plotting routine with statistics where we allow for plotting of individual energy carriers and countries. Besides the plots, we create all necessary csv files for the plotting routine.
+
+* Merged two OPSD time series data versions into such that the option ``load:
+  power_statistics:`` becomes superfluous and was hence removed.
+
 * Add new default to overdimension heating in individual buildings. This allows
   them to cover heat demand peaks e.g. 10% higher than those in the data. The
   disadvantage of manipulating the costs is that the capacity is then not quite
