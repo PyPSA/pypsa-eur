@@ -24,9 +24,9 @@ rule build_electricity_demand:
         countries=config["countries"],
         load=config["load"],
     input:
-        ancient(RESOURCES + "electricity_demand.csv"),
+        ancient("data/electricity_demand_raw.csv"),
     output:
-        RESOURCES + "load.csv",
+        RESOURCES + "electricity_demand.csv",
     log:
         LOGS + "build_electricity_demand.log",
     resources:
@@ -417,7 +417,7 @@ rule add_electricity:
             if config["conventional"]["dynamic_fuel_price"]
             else []
         ),
-        load=RESOURCES + "load.csv",
+        load=RESOURCES + "electricity_demand.csv",
         nuts3_shapes=RESOURCES + "nuts3_shapes.geojson",
         ua_md_gdp="data/GDP_PPP_30arcsec_v3_mapped_default.csv",
     output:
