@@ -14,7 +14,6 @@ https://doi.org/10.1039/C2EE22653G.
 """
 
 import xarray as xr
-
 from _helpers import set_scenario_config
 
 

@@ -222,7 +222,7 @@ if __name__ == "__main__":
             clusters="5",
             planning_horizons=2050,
         )
-    
+
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 

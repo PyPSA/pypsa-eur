@@ -9,8 +9,8 @@ Build district heat shares at each node, depending on investment year.
 import logging
 
 import pandas as pd
-from prepare_sector_network import get
 from _helpers import configure_logging, set_scenario_config
+from prepare_sector_network import get
 
 logger = logging.getLogger(__name__)
 

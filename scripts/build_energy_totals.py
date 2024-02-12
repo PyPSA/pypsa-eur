@@ -14,7 +14,7 @@ import country_converter as coco
 import geopandas as gpd
 import numpy as np
 import pandas as pd
-from _helpers import mute_print, configure_logging, set_scenario_config
+from _helpers import configure_logging, mute_print, set_scenario_config
 from tqdm import tqdm
 
 cc = coco.CountryConverter()

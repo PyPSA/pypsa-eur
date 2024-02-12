@@ -11,8 +11,8 @@ import logging
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import pandas as pd
-from prepare_sector_network import co2_emissions_year
 from _helpers import configure_logging, set_scenario_config
+from prepare_sector_network import co2_emissions_year
 
 logger = logging.getLogger(__name__)
 plt.style.use("ggplot")

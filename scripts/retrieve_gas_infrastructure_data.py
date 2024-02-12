@@ -11,7 +11,12 @@ import logging
 import zipfile
 from pathlib import Path
 
-from _helpers import progress_retrieve, validate_checksum, set_scenario_config, configure_logging
+from _helpers import (
+    configure_logging,
+    progress_retrieve,
+    set_scenario_config,
+    validate_checksum,
+)
 
 logger = logging.getLogger(__name__)
 

@@ -11,7 +11,6 @@ import atlite
 import geopandas as gpd
 import pandas as pd
 import xarray as xr
-
 from _helpers import set_scenario_config
 
 if __name__ == "__main__":

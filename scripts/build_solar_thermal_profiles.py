@@ -11,9 +11,8 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import xarray as xr
-from dask.distributed import Client, LocalCluster
-
 from _helpers import set_scenario_config
+from dask.distributed import Client, LocalCluster
 
 if __name__ == "__main__":
     if "snakemake" not in globals():

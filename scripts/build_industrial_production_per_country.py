@@ -13,7 +13,7 @@ from functools import partial
 import country_converter as coco
 import numpy as np
 import pandas as pd
-from _helpers import mute_print, set_scenario_config, configure_logging
+from _helpers import configure_logging, mute_print, set_scenario_config
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)

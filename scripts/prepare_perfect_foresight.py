@@ -12,7 +12,11 @@ import re
 import numpy as np
 import pandas as pd
 import pypsa
-from _helpers import update_config_with_sector_opts, set_scenario_config, configure_logging
+from _helpers import (
+    configure_logging,
+    set_scenario_config,
+    update_config_with_sector_opts,
+)
 from add_existing_baseyear import add_build_year_to_new_assets
 from pypsa.descriptors import expand_series
 from pypsa.io import import_components_from_dataframe

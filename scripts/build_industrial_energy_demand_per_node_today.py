@@ -10,7 +10,6 @@ from itertools import product
 
 import numpy as np
 import pandas as pd
-
 from _helpers import set_scenario_config
 
 # map JRC/our sectors to hotmaps sector, where mapping exist

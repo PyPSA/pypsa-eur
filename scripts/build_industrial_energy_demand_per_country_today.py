@@ -11,8 +11,8 @@ from functools import partial
 
 import country_converter as coco
 import pandas as pd
-from tqdm import tqdm
 from _helpers import set_scenario_config
+from tqdm import tqdm
 
 cc = coco.CountryConverter()
 

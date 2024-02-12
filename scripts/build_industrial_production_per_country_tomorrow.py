@@ -7,9 +7,8 @@ Build future industrial production per country.
 """
 
 import pandas as pd
-from prepare_sector_network import get
-
 from _helpers import set_scenario_config
+from prepare_sector_network import get
 
 if __name__ == "__main__":
     if "snakemake" not in globals():

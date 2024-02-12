@@ -7,7 +7,6 @@ Build industrial energy demand per model region.
 """
 
 import pandas as pd
-
 from _helpers import set_scenario_config
 
 if __name__ == "__main__":

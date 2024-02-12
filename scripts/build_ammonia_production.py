@@ -8,7 +8,6 @@ Build historical annual ammonia production per country in ktonNH3/a.
 
 import country_converter as coco
 import pandas as pd
-
 from _helpers import set_scenario_config
 
 cc = coco.CountryConverter()

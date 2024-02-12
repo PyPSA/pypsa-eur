@@ -7,9 +7,9 @@ Build industrial production per model region.
 """
 
 from itertools import product
-from _helpers import set_scenario_config
 
 import pandas as pd
+from _helpers import set_scenario_config
 
 # map JRC/our sectors to hotmaps sector, where mapping exist
 sector_mapping = {
