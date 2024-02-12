@@ -4,11 +4,8 @@
 
 import os, sys, glob
 
-helper_source_path = workflow.source_path("scripts/_helpers.py")
-
-for path in helper_source_path:
-    path = os.path.dirname(os.path.abspath(path))
-    sys.path.insert(0, os.path.abspath(path))
+for path in ["../scripts", "./scripts"]:
+    sys.path.insert(0, os.path.abspath(path)
 
 from _helpers import validate_checksum
 
