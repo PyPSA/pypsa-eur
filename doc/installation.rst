@@ -118,11 +118,10 @@ Nevertheless, you can still use open-source solvers for smaller problems.
 Handling Configuration Files
 ============================
 
-PyPSA-Eur has several configuration options that must be specified in a
-``config/config.yaml`` file located in the root directory. An example configuration
-``config/config.default.yaml`` is maintained in the repository, which will be used to
-automatically create your customisable ``config/config.yaml`` on first use. More
-details on the configuration options are in :ref:`config`.
+PyPSA-Eur has several configuration options that users can specify in a
+``config/config.yaml`` file. The default configuration
+``config/config.default.yaml`` is maintained in the repository. More details on
+the configuration options are in :ref:`config`.
 
 You can also use ``snakemake`` to specify another file, e.g.
 ``config/config.mymodifications.yaml``, to update the settings of the ``config/config.yaml``.
@@ -131,7 +130,3 @@ You can also use ``snakemake`` to specify another file, e.g.
 
     .../pypsa-eur % snakemake -call --configfile config/config.mymodifications.yaml
 
-.. warning::
-    Users are advised to regularly check their own ``config/config.yaml`` against changes
-    in the ``config/config.default.yaml`` when pulling a new version from the remote
-    repository.
