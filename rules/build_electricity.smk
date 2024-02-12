@@ -20,8 +20,9 @@ if config["enable"].get("prepare_links_p_nom", False):
 
 rule build_electricity_demand:
     params:
-        snapshots={
-            k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]
+        snapshots=lambda w: {
+            k: config_provider("snapshots", k)(w)
+            for k in ["start", "end", "inclusive"]
         },
         countries=config_provider("countries"),
         load=config_provider("load"),
@@ -64,8 +65,9 @@ rule build_powerplants:
 rule base_network:
     params:
         countries=config_provider("countries"),
-        snapshots={
-            k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]
+        snapshots=lambda w: {
+            k: config_provider("snapshots", k)(w)
+            for k in ["start", "end", "inclusive"]
         },
         lines=config_provider("lines"),
         links=config_provider("links"),
@@ -177,8 +179,8 @@ if config["enable"].get("build_natura_raster", False):
     rule build_natura_raster:
         input:
             natura=ancient("data/bundle/natura/Natura2000_end2015.shp"),
-            cutouts=expand(
-                "cutouts/" + CDIR + "{cutouts}.nc", **config_provider("atlite")
+            cutouts=lambda w: expand(
+                "cutouts/" + CDIR + "{cutouts}.nc", **config_provider("atlite")(w)
             ),
         output:
             resources("natura.tiff"),
@@ -195,11 +197,11 @@ if config["enable"].get("build_natura_raster", False):
 rule build_ship_raster:
     input:
         ship_density="data/shipdensity_global.zip",
-        cutouts=expand(
+        cutouts=lambda w: expand(
             "cutouts/" + CDIR + "{cutout}.nc",
             cutout=[
-                config_provider("renewable", k, "cutout")
-                for k in config_provider("electricity", "renewable_carriers")
+                config_provider("renewable", k, "cutout")(w)
+                for k in config_provider("electricity", "renewable_carriers")(w)
             ],
         ),
     output:
@@ -269,8 +271,9 @@ else:
 
 rule build_renewable_profiles:
     params:
-        snapshots={
-            k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]
+        snapshots=lambda w: {
+            k: config_provider("snapshots", k)(w)
+            for k in ["start", "end", "inclusive"]
         },
         renewable=config_provider("renewable"),
     input:
@@ -352,9 +355,9 @@ rule build_hydro_profile:
     input:
         country_shapes=resources("country_shapes.geojson"),
         eia_hydro_generation="data/eia_hydro_annual_generation.csv",
-        cutout=f"cutouts/"
+        cutout=lambda w: f"cutouts/"
         + CDIR
-        + config_provider("renewable", "hydro", "cutout")
+        + config_provider("renewable", "hydro", "cutout")(w)
         + ".nc",
     output:
         resources("profile_hydro.nc"),
@@ -397,6 +400,23 @@ if config["lines"]["dynamic_line_rating"]["activate"]:
             "../scripts/build_line_rating.py"
 
 
+def input_profile_tech(w):
+    return {
+        f"profile_{tech}": resources(f"profile_{tech}.nc")
+        for tech in config_provider("electricity", "renewable_carriers")(w)
+    }
+
+
+def input_conventional(w):
+    return {
+        f"conventional_{carrier}_{attr}": fn
+        for carrier, d in config_provider("conventional", default={None: {}})(w).items()
+        if carrier in config_provider("electricity", "conventional_carriers")(w)
+        for attr, fn in d.items()
+        if str(fn).startswith("data/")
+    }
+
+
 rule add_electricity:
     params:
         length_factor=config_provider("lines", "length_factor"),
@@ -407,21 +427,12 @@ rule add_electricity:
         conventional=config_provider("conventional"),
         costs=config_provider("costs"),
     input:
-        **{
-            f"profile_{tech}": resources(f"profile_{tech}.nc")
-            for tech in config_provider("electricity", "renewable_carriers")
-        },
-        **{
-            f"conventional_{carrier}_{attr}": fn
-            for carrier, d in config.get("conventional", {None: {}}).items()
-            if carrier in config_provider("electricity", "conventional_carriers")
-            for attr, fn in d.items()
-            if str(fn).startswith("data/")
-        },
+        unpack(input_profile_tech),
+        unpack(input_conventional),
         base_network=resources("networks/base.nc"),
-        line_rating=(
+        line_rating=lambda w: (
             resources("networks/line_rating.nc")
-            if config_provider("lines", "dynamic_line_rating", "activate")
+            if config_provider("lines", "dynamic_line_rating", "activate")(w)
             else resources("networks/base.nc")
         ),
         tech_costs=COSTS,
@@ -430,9 +441,9 @@ rule add_electricity:
         hydro_capacities=ancient("data/bundle/hydro_capacities.csv"),
         geth_hydro_capacities="data/geth2015_hydro_capacities.csv",
         unit_commitment="data/unit_commitment.csv",
-        fuel_price=(
+        fuel_price=lambda w: (
             resources("monthly_fuel_price.csv")
-            if config_provider("conventional", "dynamic_fuel_price")
+            if config_provider("conventional", "dynamic_fuel_price")(w)
             else []
         ),
         load=resources("electricity_demand.csv"),
@@ -509,9 +520,9 @@ rule cluster_network:
         regions_onshore=resources("regions_onshore_elec_s{simpl}.geojson"),
         regions_offshore=resources("regions_offshore_elec_s{simpl}.geojson"),
         busmap=ancient(resources("busmap_elec_s{simpl}.csv")),
-        custom_busmap=(
+        custom_busmap=lambda w: (
             "data/custom_busmap_elec_s{simpl}_{clusters}.csv"
-            if config_provider("enable", "custom_busmap", default=False)
+            if config_provider("enable", "custom_busmap", default=False)(w)
             else []
         ),
         tech_costs=COSTS,

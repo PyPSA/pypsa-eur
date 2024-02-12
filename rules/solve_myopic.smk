@@ -49,6 +49,14 @@ rule add_existing_baseyear:
         "../scripts/add_existing_baseyear.py"
 
 
+def input_profile_tech_brownfield(w):
+    return {
+        f"profile_{tech}": resources(f"profile_{tech}.nc")
+        for tech in config_provider("electricity", "renewable_carriers")(w)
+        if tech != "hydro"
+    }
+
+
 rule add_brownfield:
     params:
         H2_retrofit=config_provider("sector", "H2_retrofit"),
@@ -56,16 +64,13 @@ rule add_brownfield:
             "sector", "H2_retrofit_capacity_per_CH4"
         ),
         threshold_capacity=config_provider("existing_capacities", " threshold_capacity"),
-        snapshots={
-            k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]
+        snapshots=lambda w: {
+            k: config_provider("snapshots", k)(w)
+            for k in ["start", "end", "inclusive"]
         },
         carriers=config_provider("electricity", "renewable_carriers"),
     input:
-        **{
-            f"profile_{tech}": resources(f"profile_{tech}.nc")
-            for tech in config_provider("electricity", "renewable_carriers")
-            if tech != "hydro"
-        },
+        unpack(input_profile_tech_brownfield),
         simplify_busmap=resources("busmap_elec_s{simpl}.csv"),
         cluster_busmap=resources("busmap_elec_s{simpl}_{clusters}.csv"),
         network=RESULTS

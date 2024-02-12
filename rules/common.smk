@@ -78,8 +78,8 @@ def config_provider(*keys, default=None):
 
 
 def solver_threads(w):
-    solver_options = config_provider("solving", "solver_options")
-    option_set = config_provider("solving", "solver", "options")
+    solver_options = config_provider("solving", "solver_options")(w)
+    option_set = config_provider("solving", "solver", "options")(w)
     threads = solver_options[option_set].get("threads", 4)
     return threads
 
@@ -107,7 +107,7 @@ def memory(w):
 def input_custom_extra_functionality(w):
     path = config_provider(
         "solving", "options", "custom_extra_functionality", default=False
-    )
+    )(w)
     if path:
         return os.path.join(os.path.dirname(workflow.snakefile), path)
     return []
@@ -131,7 +131,7 @@ def has_internet_access(url="www.zenodo.org") -> bool:
 
 def input_eurostat(w):
     # 2016 includes BA, 2017 does not
-    report_year = config_provider("energy", "eurostat_report_year")
+    report_year = config_provider("energy", "eurostat_report_year")(w)
     return f"data/bundle-sector/eurostat-energy_balances-june_{report_year}_edition"
 
 

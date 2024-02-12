@@ -48,14 +48,17 @@ rule add_existing_baseyear:
         "../scripts/add_existing_baseyear.py"
 
 
+def input_network_year(w):
+    return {
+        f"network_{year}": RESULTS
+        + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{year}.nc"
+        for year in config_provider("scenario", "planning_horizons")(w)[1:]
+    }
+
+
 rule prepare_perfect_foresight:
     input:
-        **{
-            f"network_{year}": RESULTS
-            + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_"
-            + f"{year}.nc"
-            for year in config_provider("scenario", "planning_horizons")[1:]
-        },
+        unpack(input_network_year),
         brownfield_network=lambda w: (
             RESULTS
             + "prenetworks-brownfield/"
@@ -122,11 +125,21 @@ rule solve_sector_network_perfect:
         "../scripts/solve_network.py"
 
 
+def input_networks_make_summary_perfect(w):
+    return {
+        f"networks_{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}": RESULTS
+        + f"postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years.nc"
+        for simpl in config_provider("scenario", "simpl")(w)
+        for clusters in config_provider("scenario", "clusters")(w)
+        for opts in config_provider("scenario", "opts")(w)
+        for sector_opts in config_provider("scenario", "sector_opts")(w)
+        for ll in config_provider("scenario", "ll")(w)
+    }
+
+
 rule make_summary_perfect:
     input:
-        **{
-            f"networks_{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}": RESULTS
-            + f"postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years.nc"
+        unpack(input_networks_make_summary_perfect),
         costs="resources/costs_2020.csv",
     output:
         nodal_costs=RESULTS + "csvs/nodal_costs.csv",

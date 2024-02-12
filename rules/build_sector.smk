@@ -7,7 +7,10 @@ rule build_population_layouts:
     input:
         nuts3_shapes=resources("nuts3_shapes.geojson"),
         urban_percent="data/urban_percent.csv",
-        cutout="cutouts/" + CDIR + config_provider("atlite", "default_cutout") + ".nc",
+        cutout=lambda w: "cutouts/"
+        + CDIR
+        + config_provider("atlite", "default_cutout")(w)
+        + ".nc",
     output:
         pop_layout_total=resources("pop_layout_total.nc"),
         pop_layout_urban=resources("pop_layout_urban.nc"),
@@ -31,7 +34,10 @@ rule build_clustered_population_layouts:
         pop_layout_urban=resources("pop_layout_urban.nc"),
         pop_layout_rural=resources("pop_layout_rural.nc"),
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
-        cutout="cutouts/" + CDIR + config_provider("atlite", "default_cutout") + ".nc",
+        cutout=lambda w: "cutouts/"
+        + CDIR
+        + config_provider("atlite", "default_cutout")(w)
+        + ".nc",
     output:
         clustered_pop_layout=resources("pop_layout_elec_s{simpl}_{clusters}.csv"),
     log:
@@ -52,7 +58,10 @@ rule build_simplified_population_layouts:
         pop_layout_urban=resources("pop_layout_urban.nc"),
         pop_layout_rural=resources("pop_layout_rural.nc"),
         regions_onshore=resources("regions_onshore_elec_s{simpl}.geojson"),
-        cutout="cutouts/" + CDIR + config_provider("atlite", "default_cutout") + ".nc",
+        cutout=lambda w: "cutouts/"
+        + CDIR
+        + config_provider("atlite", "default_cutout")(w)
+        + ".nc",
     output:
         clustered_pop_layout=resources("pop_layout_elec_s{simpl}.csv"),
     resources:
@@ -126,13 +135,17 @@ rule cluster_gas_network:
 
 rule build_daily_heat_demand:
     params:
-        snapshots={
-            k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]
+        snapshots=lambda w: {
+            k: config_provider("snapshots", k)(w)
+            for k in ["start", "end", "inclusive"]
         },
     input:
         pop_layout=resources("pop_layout_{scope}.nc"),
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
-        cutout="cutouts/" + CDIR + config_provider("atlite", "default_cutout") + ".nc",
+        cutout=lambda w: "cutouts/"
+        + CDIR
+        + config_provider("atlite", "default_cutout")(w)
+        + ".nc",
     output:
         heat_demand=resources("daily_heat_demand_{scope}_elec_s{simpl}_{clusters}.nc"),
     resources:
@@ -150,8 +163,9 @@ rule build_daily_heat_demand:
 
 rule build_hourly_heat_demand:
     params:
-        snapshots={
-            k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]
+        snapshots=lambda w: {
+            k: config_provider("snapshots", k)(w)
+            for k in ["start", "end", "inclusive"]
         },
     input:
         heat_profile="data/heat_load_profile_BDEW.csv",
@@ -173,13 +187,17 @@ rule build_hourly_heat_demand:
 
 rule build_temperature_profiles:
     params:
-        snapshots={
-            k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]
+        snapshots=lambda w: {
+            k: config_provider("snapshots", k)(w)
+            for k in ["start", "end", "inclusive"]
         },
     input:
         pop_layout=resources("pop_layout_{scope}.nc"),
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
-        cutout="cutouts/" + CDIR + config_provider("atlite", "default_cutout") + ".nc",
+        cutout=lambda w: "cutouts/"
+        + CDIR
+        + config_provider("atlite", "default_cutout")(w)
+        + ".nc",
     output:
         temp_soil=resources("temp_soil_{scope}_elec_s{simpl}_{clusters}.nc"),
         temp_air=resources("temp_air_{scope}_elec_s{simpl}_{clusters}.nc"),
@@ -227,15 +245,18 @@ rule build_cop_profiles:
 
 rule build_solar_thermal_profiles:
     params:
-        snapshots={
-            k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]
+        snapshots=lambda w: {
+            k: config_provider("snapshots", k)(w)
+            for k in ["start", "end", "inclusive"]
         },
-        # TODO use config_provider
         solar_thermal=config_provider("solar_thermal"),
     input:
         pop_layout=resources("pop_layout_{scope}.nc"),
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
-        cutout="cutouts/" + CDIR + config_provider("atlite", "default_cutout") + ".nc",
+        cutout=lambda w: "cutouts/"
+        + CDIR
+        + config_provider("atlite", "default_cutout")(w)
+        + ".nc",
     output:
         solar_thermal=resources("solar_thermal_{scope}_elec_s{simpl}_{clusters}.nc"),
     resources:
@@ -314,76 +335,54 @@ rule build_biomass_potentials:
         "../scripts/build_biomass_potentials.py"
 
 
-if config["sector"]["biomass_transport"] or config["sector"]["biomass_spatial"]:
-
-    rule build_biomass_transport_costs:
-        input:
-            transport_cost_data=HTTP.remote(
-                "publications.jrc.ec.europa.eu/repository/bitstream/JRC98626/biomass potentials in europe_web rev.pdf",
-                keep_local=True,
-            ),
-        output:
-            biomass_transport_costs=resources("biomass_transport_costs.csv"),
-        threads: 1
-        resources:
-            mem_mb=1000,
-        log:
-            logs("build_biomass_transport_costs.log"),
-        benchmark:
-            benchmarks("build_biomass_transport_costs")
-        conda:
-            "../envs/environment.yaml"
-        script:
-            "../scripts/build_biomass_transport_costs.py"
-
-    build_biomass_transport_costs_output = rules.build_biomass_transport_costs.output
+rule build_biomass_transport_costs:
+    input:
+        transport_cost_data=HTTP.remote(
+            "publications.jrc.ec.europa.eu/repository/bitstream/JRC98626/biomass potentials in europe_web rev.pdf",
+            keep_local=True,
+        ),
+    output:
+        biomass_transport_costs=resources("biomass_transport_costs.csv"),
+    threads: 1
+    resources:
+        mem_mb=1000,
+    log:
+        logs("build_biomass_transport_costs.log"),
+    benchmark:
+        benchmarks("build_biomass_transport_costs")
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_biomass_transport_costs.py"
 
 
-if not (config["sector"]["biomass_transport"] or config["sector"]["biomass_spatial"]):
-    # this is effecively an `else` statement which is however not liked by snakefmt
-    build_biomass_transport_costs_output = {}
-
-
-if config["sector"]["regional_co2_sequestration_potential"]["enable"]:
-
-    rule build_sequestration_potentials:
-        params:
-            sequestration_potential=config_provider(
-                "sector", "regional_co2_sequestration_potential"
-            ),
-        input:
-            sequestration_potential=HTTP.remote(
-                "https://raw.githubusercontent.com/ericzhou571/Co2Storage/main/resources/complete_map_2020_unit_Mt.geojson",
-                keep_local=True,
-            ),
-            regions_onshore=resources(
-                "regions_onshore_elec_s{simpl}_{clusters}.geojson"
-            ),
-            regions_offshore=resources(
-                "regions_offshore_elec_s{simpl}_{clusters}.geojson"
-            ),
-        output:
-            sequestration_potential=resources(
-                "co2_sequestration_potential_elec_s{simpl}_{clusters}.csv"
-            ),
-        threads: 1
-        resources:
-            mem_mb=4000,
-        log:
-            logs("build_sequestration_potentials_s{simpl}_{clusters}.log"),
-        benchmark:
-            benchmarks("build_sequestration_potentials_s{simpl}_{clusters}")
-        conda:
-            "../envs/environment.yaml"
-        script:
-            "../scripts/build_sequestration_potentials.py"
-
-    build_sequestration_potentials_output = rules.build_sequestration_potentials.output
-
-
-if not config["sector"]["regional_co2_sequestration_potential"]["enable"]:
-    # this is effecively an `else` statement which is however not liked by snakefmt
-    build_sequestration_potentials_output = {}
+rule build_sequestration_potentials:
+    params:
+        sequestration_potential=config_provider(
+            "sector", "regional_co2_sequestration_potential"
+        ),
+    input:
+        sequestration_potential=HTTP.remote(
+            "https://raw.githubusercontent.com/ericzhou571/Co2Storage/main/resources/complete_map_2020_unit_Mt.geojson",
+            keep_local=True,
+        ),
+        regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
+        regions_offshore=resources("regions_offshore_elec_s{simpl}_{clusters}.geojson"),
+    output:
+        sequestration_potential=resources(
+            "co2_sequestration_potential_elec_s{simpl}_{clusters}.csv"
+        ),
+    threads: 1
+    resources:
+        mem_mb=4000,
+    log:
+        logs("build_sequestration_potentials_s{simpl}_{clusters}.log"),
+    benchmark:
+        benchmarks("build_sequestration_potentials_s{simpl}_{clusters}")
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_sequestration_potentials.py"
 
 
 rule build_salt_cavern_potentials:
@@ -643,43 +642,34 @@ rule build_industrial_energy_demand_per_node_today:
         "../scripts/build_industrial_energy_demand_per_node_today.py"
 
 
-if config["sector"]["retrofitting"]["retro_endogen"]:
-
-    rule build_retro_cost:
-        params:
-            retrofitting=config_provider("sector", "retrofitting"),
-            countries=config_provider("countries"),
-        input:
-            building_stock="data/retro/data_building_stock.csv",
-            data_tabula="data/bundle-sector/retro/tabula-calculator-calcsetbuilding.csv",
-            air_temperature=resources("temp_air_total_elec_s{simpl}_{clusters}.nc"),
-            u_values_PL="data/retro/u_values_poland.csv",
-            tax_w="data/retro/electricity_taxes_eu.csv",
-            construction_index="data/retro/comparative_level_investment.csv",
-            floor_area_missing="data/retro/floor_area_missing.csv",
-            clustered_pop_layout=resources("pop_layout_elec_s{simpl}_{clusters}.csv"),
-            cost_germany="data/retro/retro_cost_germany.csv",
-            window_assumptions="data/retro/window_assumptions.csv",
-        output:
-            retro_cost=resources("retro_cost_elec_s{simpl}_{clusters}.csv"),
-            floor_area=resources("floor_area_elec_s{simpl}_{clusters}.csv"),
-        resources:
-            mem_mb=1000,
-        log:
-            logs("build_retro_cost_s{simpl}_{clusters}.log"),
-        benchmark:
-            benchmarks("build_retro_cost/s{simpl}_{clusters}")
-        conda:
-            "../envs/environment.yaml"
-        script:
-            "../scripts/build_retro_cost.py"
-
-    build_retro_cost_output = rules.build_retro_cost.output
-
-
-if not config["sector"]["retrofitting"]["retro_endogen"]:
-    # this is effecively an `else` statement which is however not liked by snakefmt
-    build_retro_cost_output = {}
+rule build_retro_cost:
+    params:
+        retrofitting=config_provider("sector", "retrofitting"),
+        countries=config_provider("countries"),
+    input:
+        building_stock="data/retro/data_building_stock.csv",
+        data_tabula="data/bundle-sector/retro/tabula-calculator-calcsetbuilding.csv",
+        air_temperature=resources("temp_air_total_elec_s{simpl}_{clusters}.nc"),
+        u_values_PL="data/retro/u_values_poland.csv",
+        tax_w="data/retro/electricity_taxes_eu.csv",
+        construction_index="data/retro/comparative_level_investment.csv",
+        floor_area_missing="data/retro/floor_area_missing.csv",
+        clustered_pop_layout=resources("pop_layout_elec_s{simpl}_{clusters}.csv"),
+        cost_germany="data/retro/retro_cost_germany.csv",
+        window_assumptions="data/retro/window_assumptions.csv",
+    output:
+        retro_cost=resources("retro_cost_elec_s{simpl}_{clusters}.csv"),
+        floor_area=resources("floor_area_elec_s{simpl}_{clusters}.csv"),
+    resources:
+        mem_mb=1000,
+    log:
+        logs("build_retro_cost_s{simpl}_{clusters}.log"),
+    benchmark:
+        benchmarks("build_retro_cost/s{simpl}_{clusters}")
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_retro_cost.py"
 
 
 rule build_population_weighted_energy_totals:
@@ -720,8 +710,9 @@ rule build_shipping_demand:
 
 rule build_transport_demand:
     params:
-        snapshots={
-            k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]
+        snapshots=lambda w: {
+            k: config_provider("snapshots", k)(w)
+            for k in ["start", "end", "inclusive"]
         },
         sector=config_provider("sector"),
     input:
@@ -825,11 +816,31 @@ rule prepare_sector_network:
         eurostat_report_year=config_provider("energy", "eurostat_report_year"),
         RDIR=RDIR,
     input:
-        **build_retro_cost_output,
-        **build_biomass_transport_costs_output,
         **rules.cluster_gas_network.output,
         **rules.build_gas_input_locations.output,
-        **build_sequestration_potentials_output,
+        retro_cost=lambda w: (
+            resources("retro_cost_elec_s{simpl}_{clusters}.csv")
+            if config_provider("sector", "retrofitting", "retro_endogen")(w)
+            else []
+        ),
+        floor_area=lambda w: (
+            resources("floor_area_elec_s{simpl}_{clusters}.csv")
+            if config_provider("sector", "retrofitting", "retro_endogen")(w)
+            else []
+        ),
+        biomass_transport_costs=lambda w: (
+            resources("biomass_transport_costs.csv")
+            if config_provider("sector", "biomass_transport")(w)
+            or config_provider("sector", "biomass_spatial")(w)
+            else []
+        ),
+        sequestration_potential=lambda w: (
+            resources("co2_sequestration_potential_elec_s{simpl}_{clusters}.csv")
+            if config_provider(
+                "sector", "regional_co2_sequestration_potential", "enable"
+            )(w)
+            else []
+        ),
         network=resources("networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"),
         energy_totals_name=resources("energy_totals.csv"),
         eurostat=input_eurostat,
@@ -843,12 +854,12 @@ rule prepare_sector_network:
         dsm_profile=resources("dsm_profile_s{simpl}_{clusters}.csv"),
         co2_totals_name=resources("co2_totals.csv"),
         co2="data/bundle-sector/eea/UNFCCC_v23.csv",
-        biomass_potentials=(
+        biomass_potentials=lambda w: (
             resources(
                 "biomass_potentials_s{simpl}_{clusters}_"
                 + "{}.csv".format(config_provider("biomass", "year"))
             )
-            if config_provider("foresight") == "overnight"
+            if config_provider("foresight")(w) == "overnight"
             else resources(
                 "biomass_potentials_s{simpl}_{clusters}_{planning_horizons}.csv"
             )
@@ -886,19 +897,19 @@ rule prepare_sector_network:
         cop_air_total=resources("cop_air_total_elec_s{simpl}_{clusters}.nc"),
         cop_air_rural=resources("cop_air_rural_elec_s{simpl}_{clusters}.nc"),
         cop_air_urban=resources("cop_air_urban_elec_s{simpl}_{clusters}.nc"),
-        solar_thermal_total=(
+        solar_thermal_total=lambda w: (
             resources("solar_thermal_total_elec_s{simpl}_{clusters}.nc")
-            if config_provider("sector", "solar_thermal")
+            if config_provider("sector", "solar_thermal")(w)
             else []
         ),
-        solar_thermal_urban=(
+        solar_thermal_urban=lambda w: (
             resources("solar_thermal_urban_elec_s{simpl}_{clusters}.nc")
-            if config_provider("sector", "solar_thermal")
+            if config_provider("sector", "solar_thermal")(w)
             else []
         ),
-        solar_thermal_rural=(
+        solar_thermal_rural=lambda w: (
             resources("solar_thermal_rural_elec_s{simpl}_{clusters}.nc")
-            if config_provider("sector", "solar_thermal")
+            if config_provider("sector", "solar_thermal")(w)
             else []
         ),
     output:

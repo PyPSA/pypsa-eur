@@ -8,6 +8,8 @@ from pathlib import Path
 import yaml
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 from snakemake.utils import min_version
+
+# TODO: check if this works with mock_snakemake
 from scripts._helpers import path_provider
 
 min_version("7.7")

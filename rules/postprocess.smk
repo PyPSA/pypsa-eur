@@ -111,6 +111,14 @@ if config["foresight"] != "perfect":
 
 if config["foresight"] == "perfect":
 
+    def output_map_year(w):
+        return {
+            f"map_{year}": RESULTS
+            + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_"
+            + f"{year}.pdf"
+            for year in config_provider("scenario", "planning_horizons")(w)
+        }
+
     rule plot_power_network_perfect:
         params:
             plotting=config_provider("plotting"),
@@ -119,12 +127,7 @@ if config["foresight"] == "perfect":
             + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years.nc",
             regions=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
         output:
-            **{
-                f"map_{year}": RESULTS
-                + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_"
-                + f"{year}.pdf"
-                for year in config_provider("scenario", "planning_horizons")
-            },
+            unpack(output_map_year),
         threads: 2
         resources:
             mem_mb=10000,
@@ -158,8 +161,9 @@ rule make_summary:
     params:
         foresight=config_provider("foresight"),
         costs=config_provider("costs"),
-        snapshots={
-            k: config_provider("snapshots", k) for k in ["start", "end", "inclusive"]
+        snapshots=lambda w: {
+            k: config_provider("snapshots", k)(w)
+            for k in ["start", "end", "inclusive"]
         },
         scenario=config_provider("scenario"),
         RDIR=RDIR,
