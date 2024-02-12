@@ -22,7 +22,7 @@ if not exists(conf_file) and exists(conf_default_file):
 configfile: "config/config.yaml"
 
 
-COSTS = f"data/costs_{config['costs']['year']}.csv"
+COSTS = f"resources/costs_{config['costs']['year']}.csv"
 ATLITE_NPROCESSES = config["atlite"].get("nprocesses", 4)
 
 run = config["run"]

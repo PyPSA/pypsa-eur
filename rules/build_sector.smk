@@ -853,10 +853,10 @@ rule prepare_sector_network:
                 "biomass_potentials_s{simpl}_{clusters}_{planning_horizons}.csv"
             )
         ),
-        costs=(
-            "data/costs_{}.csv".format(config_provider("costs", "year"))
-            if config_provider("foresight") == "overnight"
-            else "data/costs_{planning_horizons}.csv"
+        costs=lambda w: (
+            "resources/costs_{}.csv".format(config_provider("costs", "year"))
+            if config_provider("foresight")(w) == "overnight"
+            else "resources/costs_{planning_horizons}.csv"
         ),
         profile_offwind_ac=resources("profile_offwind-ac.nc"),
         profile_offwind_dc=resources("profile_offwind-dc.nc"),

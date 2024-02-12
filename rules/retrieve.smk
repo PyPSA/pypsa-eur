@@ -83,23 +83,17 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True
 if config["enable"]["retrieve"] and config["enable"].get("retrieve_cost_data", True):
 
     rule retrieve_cost_data:
-        input:
-            HTTP.remote(
-                "raw.githubusercontent.com/PyPSA/technology-data/{}/outputs/".format(
-                    config_provider("costs", "version")
-                )
-                + "costs_{year}.csv",
-                keep_local=True,
-            ),
+        params:
+            version=lambda w: config_provider("costs", "version")(w),
         output:
-            "data/costs_{year}.csv",
+            resources("costs_{year}.csv"),
         log:
             "logs/retrieve_cost_data_{year}.log",
         resources:
             mem_mb=1000,
         retries: 2
-        run:
-            move(input[0], output[0])
+        script:
+            "../scripts/retrieve_cost_data.py"
 
 
 if config["enable"]["retrieve"] and config["enable"].get(

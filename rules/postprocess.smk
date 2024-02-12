@@ -174,10 +174,10 @@ rule make_summary:
             **config["scenario"],
             run=config["run"]["name"],
         ),
-        costs=(
-            "data/costs_{}.csv".format(config_provider("costs", "year"))
-            if config_provider("foresight") == "overnight"
-            else "data/costs_{}.csv".format(
+        costs=lambda w: (
+            "resources/costs_{}.csv".format(config_provider("costs", "year"))
+            if config_provider("foresight")(w) == "overnight"
+            else "resources/costs_{}.csv".format(
                 config_provider("scenario", "planning_horizons", 0)
             )
         ),
