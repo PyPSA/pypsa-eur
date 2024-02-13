@@ -8,16 +8,13 @@ Creates plots from summary CSV files.
 
 import logging
 
-logger = logging.getLogger(__name__)
-
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
-
-plt.style.use("ggplot")
-
 from prepare_sector_network import co2_emissions_year
+
+logger = logging.getLogger(__name__)
+plt.style.use("ggplot")
 
 
 # consolidate and rename
@@ -154,7 +151,7 @@ def plot_costs():
 
     df = df.drop(to_drop)
 
-    logger.info(f"Total system cost of {round(df.sum()[0])} EUR billion per year")
+    logger.info(f"Total system cost of {round(df.sum().iloc[0])} EUR billion per year")
 
     new_index = preferred_order.intersection(df.index).append(
         df.index.difference(preferred_order)
@@ -214,7 +211,7 @@ def plot_energy():
 
     df = df.drop(to_drop)
 
-    logger.info(f"Total energy of {round(df.sum()[0])} TWh/a")
+    logger.info(f"Total energy of {round(df.sum().iloc[0])} TWh/a")
 
     if df.empty:
         fig, ax = plt.subplots(figsize=(12, 8))
@@ -284,9 +281,14 @@ def plot_balances():
 
         # remove trailing link ports
         df.index = [
-            i[:-1]
-            if ((i not in ["co2", "NH3", "H2"]) and (i[-1:] in ["0", "1", "2", "3"]))
-            else i
+            (
+                i[:-1]
+                if (
+                    (i not in ["co2", "NH3", "H2"])
+                    and (i[-1:] in ["0", "1", "2", "3", "4"])
+                )
+                else i
+            )
             for i in df.index
         ]
 
@@ -304,7 +306,9 @@ def plot_balances():
 
         df = df.drop(to_drop)
 
-        logger.debug(f"Total energy balance for {v} of {round(df.sum()[0],2)} {units}")
+        logger.debug(
+            f"Total energy balance for {v} of {round(df.sum().iloc[0],2)} {units}"
+        )
 
         if df.empty:
             continue

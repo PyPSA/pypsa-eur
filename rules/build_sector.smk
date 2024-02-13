@@ -67,103 +67,108 @@ rule build_simplified_population_layouts:
         "../scripts/build_clustered_population_layouts.py"
 
 
-if config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]:
-
-    rule build_gas_network:
-        input:
-            gas_network="data/gas_network/scigrid-gas/data/IGGIELGN_PipeSegments.geojson",
-        output:
-            cleaned_gas_network=RESOURCES + "gas_network.csv",
-        resources:
-            mem_mb=4000,
-        log:
-            LOGS + "build_gas_network.log",
-        conda:
-            "../envs/environment.yaml"
-        script:
-            "../scripts/build_gas_network.py"
-
-    rule build_gas_input_locations:
-        input:
-            gem=HTTP.remote(
-                "https://globalenergymonitor.org/wp-content/uploads/2023/07/Europe-Gas-Tracker-2023-03-v3.xlsx",
-                keep_local=True,
-            ),
-            entry="data/gas_network/scigrid-gas/data/IGGIELGN_BorderPoints.geojson",
-            storage="data/gas_network/scigrid-gas/data/IGGIELGN_Storages.geojson",
-            regions_onshore=RESOURCES
-            + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
-            regions_offshore=RESOURCES
-            + "regions_offshore_elec_s{simpl}_{clusters}.geojson",
-        output:
-            gas_input_nodes=RESOURCES
-            + "gas_input_locations_s{simpl}_{clusters}.geojson",
-            gas_input_nodes_simplified=RESOURCES
-            + "gas_input_locations_s{simpl}_{clusters}_simplified.csv",
-        resources:
-            mem_mb=2000,
-        log:
-            LOGS + "build_gas_input_locations_s{simpl}_{clusters}.log",
-        conda:
-            "../envs/environment.yaml"
-        script:
-            "../scripts/build_gas_input_locations.py"
-
-    rule cluster_gas_network:
-        input:
-            cleaned_gas_network=RESOURCES + "gas_network.csv",
-            regions_onshore=RESOURCES
-            + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
-            regions_offshore=RESOURCES
-            + "regions_offshore_elec_s{simpl}_{clusters}.geojson",
-        output:
-            clustered_gas_network=RESOURCES + "gas_network_elec_s{simpl}_{clusters}.csv",
-        resources:
-            mem_mb=4000,
-        log:
-            LOGS + "cluster_gas_network_s{simpl}_{clusters}.log",
-        conda:
-            "../envs/environment.yaml"
-        script:
-            "../scripts/cluster_gas_network.py"
-
-    gas_infrastructure = {
-        **rules.cluster_gas_network.output,
-        **rules.build_gas_input_locations.output,
-    }
+rule build_gas_network:
+    input:
+        gas_network="data/gas_network/scigrid-gas/data/IGGIELGN_PipeSegments.geojson",
+    output:
+        cleaned_gas_network=RESOURCES + "gas_network.csv",
+    resources:
+        mem_mb=4000,
+    log:
+        LOGS + "build_gas_network.log",
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_gas_network.py"
 
 
-if not (config["sector"]["gas_network"] or config["sector"]["H2_retrofit"]):
-    # this is effecively an `else` statement which is however not liked by snakefmt
+rule build_gas_input_locations:
+    input:
+        gem=HTTP.remote(
+            "https://globalenergymonitor.org/wp-content/uploads/2023/07/Europe-Gas-Tracker-2023-03-v3.xlsx",
+            keep_local=True,
+        ),
+        entry="data/gas_network/scigrid-gas/data/IGGIELGN_BorderPoints.geojson",
+        storage="data/gas_network/scigrid-gas/data/IGGIELGN_Storages.geojson",
+        regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+        regions_offshore=RESOURCES + "regions_offshore_elec_s{simpl}_{clusters}.geojson",
+    output:
+        gas_input_nodes=RESOURCES + "gas_input_locations_s{simpl}_{clusters}.geojson",
+        gas_input_nodes_simplified=RESOURCES
+        + "gas_input_locations_s{simpl}_{clusters}_simplified.csv",
+    resources:
+        mem_mb=2000,
+    log:
+        LOGS + "build_gas_input_locations_s{simpl}_{clusters}.log",
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_gas_input_locations.py"
 
-    gas_infrastructure = {}
+
+rule cluster_gas_network:
+    input:
+        cleaned_gas_network=RESOURCES + "gas_network.csv",
+        regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+        regions_offshore=RESOURCES + "regions_offshore_elec_s{simpl}_{clusters}.geojson",
+    output:
+        clustered_gas_network=RESOURCES + "gas_network_elec_s{simpl}_{clusters}.csv",
+    resources:
+        mem_mb=4000,
+    log:
+        LOGS + "cluster_gas_network_s{simpl}_{clusters}.log",
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/cluster_gas_network.py"
 
 
-rule build_heat_demands:
+rule build_daily_heat_demand:
     params:
-        snapshots=config["snapshots"],
+        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},
     input:
         pop_layout=RESOURCES + "pop_layout_{scope}.nc",
         regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
         cutout="cutouts/" + CDIR + config["atlite"]["default_cutout"] + ".nc",
     output:
-        heat_demand=RESOURCES + "heat_demand_{scope}_elec_s{simpl}_{clusters}.nc",
+        heat_demand=RESOURCES + "daily_heat_demand_{scope}_elec_s{simpl}_{clusters}.nc",
     resources:
         mem_mb=20000,
     threads: 8
     log:
-        LOGS + "build_heat_demands_{scope}_{simpl}_{clusters}.loc",
+        LOGS + "build_daily_heat_demand_{scope}_{simpl}_{clusters}.loc",
     benchmark:
-        BENCHMARKS + "build_heat_demands/{scope}_s{simpl}_{clusters}"
+        BENCHMARKS + "build_daily_heat_demand/{scope}_s{simpl}_{clusters}"
     conda:
         "../envs/environment.yaml"
     script:
-        "../scripts/build_heat_demand.py"
+        "../scripts/build_daily_heat_demand.py"
+
+
+rule build_hourly_heat_demand:
+    params:
+        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},
+    input:
+        heat_profile="data/heat_load_profile_BDEW.csv",
+        heat_demand=RESOURCES + "daily_heat_demand_{scope}_elec_s{simpl}_{clusters}.nc",
+    output:
+        heat_demand=RESOURCES + "hourly_heat_demand_{scope}_elec_s{simpl}_{clusters}.nc",
+    resources:
+        mem_mb=2000,
+    threads: 8
+    log:
+        LOGS + "build_hourly_heat_demand_{scope}_{simpl}_{clusters}.loc",
+    benchmark:
+        BENCHMARKS + "build_hourly_heat_demand/{scope}_s{simpl}_{clusters}"
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_hourly_heat_demand.py"
 
 
 rule build_temperature_profiles:
     params:
-        snapshots=config["snapshots"],
+        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},
     input:
         pop_layout=RESOURCES + "pop_layout_{scope}.nc",
         regions_onshore=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
@@ -215,7 +220,7 @@ rule build_cop_profiles:
 
 rule build_solar_thermal_profiles:
     params:
-        snapshots=config["snapshots"],
+        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},
         solar_thermal=config["solar_thermal"],
     input:
         pop_layout=RESOURCES + "pop_layout_{scope}.nc",
@@ -251,6 +256,7 @@ rule build_energy_totals:
         energy_name=RESOURCES + "energy_totals.csv",
         co2_name=RESOURCES + "co2_totals.csv",
         transport_name=RESOURCES + "transport_data.csv",
+        district_heat_share=RESOURCES + "district_heat_share.csv",
     threads: 16
     resources:
         mem_mb=10000,
@@ -678,7 +684,7 @@ rule build_shipping_demand:
 
 rule build_transport_demand:
     params:
-        snapshots=config["snapshots"],
+        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},
         sector=config["sector"],
     input:
         clustered_pop_layout=RESOURCES + "pop_layout_elec_s{simpl}_{clusters}.csv",
@@ -704,6 +710,60 @@ rule build_transport_demand:
         "../scripts/build_transport_demand.py"
 
 
+rule build_district_heat_share:
+    params:
+        sector=config["sector"],
+    input:
+        district_heat_share=RESOURCES + "district_heat_share.csv",
+        clustered_pop_layout=RESOURCES + "pop_layout_elec_s{simpl}_{clusters}.csv",
+    output:
+        district_heat_share=RESOURCES
+        + "district_heat_share_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
+    threads: 1
+    resources:
+        mem_mb=1000,
+    log:
+        LOGS + "build_district_heat_share_s{simpl}_{clusters}_{planning_horizons}.log",
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_district_heat_share.py"
+
+
+rule build_existing_heating_distribution:
+    params:
+        baseyear=config["scenario"]["planning_horizons"][0],
+        sector=config["sector"],
+        existing_capacities=config["existing_capacities"],
+    input:
+        existing_heating="data/existing_infrastructure/existing_heating_raw.csv",
+        clustered_pop_layout=RESOURCES + "pop_layout_elec_s{simpl}_{clusters}.csv",
+        clustered_pop_energy_layout=RESOURCES
+        + "pop_weighted_energy_totals_s{simpl}_{clusters}.csv",
+        district_heat_share=RESOURCES
+        + "district_heat_share_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
+    output:
+        existing_heating_distribution=RESOURCES
+        + "existing_heating_distribution_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
+    wildcard_constraints:
+        planning_horizons=config["scenario"]["planning_horizons"][0],  #only applies to baseyear
+    threads: 1
+    resources:
+        mem_mb=2000,
+    log:
+        LOGS
+        + "build_existing_heating_distribution_elec_s{simpl}_{clusters}_{planning_horizons}.log",
+    benchmark:
+        (
+            BENCHMARKS
+            + "build_existing_heating_distribution/elec_s{simpl}_{clusters}_{planning_horizons}"
+        )
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_existing_heating_distribution.py"
+
+
 rule prepare_sector_network:
     params:
         co2_budget=config["co2_budget"],
@@ -722,7 +782,8 @@ rule prepare_sector_network:
     input:
         **build_retro_cost_output,
         **build_biomass_transport_costs_output,
-        **gas_infrastructure,
+        **rules.cluster_gas_network.output,
+        **rules.build_gas_input_locations.output,
         **build_sequestration_potentials_output,
         network=RESOURCES + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
         energy_totals_name=RESOURCES + "energy_totals.csv",
@@ -736,16 +797,19 @@ rule prepare_sector_network:
         dsm_profile=RESOURCES + "dsm_profile_s{simpl}_{clusters}.csv",
         co2_totals_name=RESOURCES + "co2_totals.csv",
         co2="data/bundle-sector/eea/UNFCCC_v23.csv",
-        biomass_potentials=RESOURCES
-        + "biomass_potentials_s{simpl}_{clusters}_"
-        + "{}.csv".format(config["biomass"]["year"])
-        if config["foresight"] == "overnight"
-        else RESOURCES
-        + "biomass_potentials_s{simpl}_{clusters}_{planning_horizons}.csv",
-        heat_profile="data/heat_load_profile_BDEW.csv",
-        costs="data/costs_{}.csv".format(config["costs"]["year"])
-        if config["foresight"] == "overnight"
-        else "data/costs_{planning_horizons}.csv",
+        biomass_potentials=(
+            RESOURCES
+            + "biomass_potentials_s{simpl}_{clusters}_"
+            + "{}.csv".format(config["biomass"]["year"])
+            if config["foresight"] == "overnight"
+            else RESOURCES
+            + "biomass_potentials_s{simpl}_{clusters}_{planning_horizons}.csv"
+        ),
+        costs=(
+            "data/costs_{}.csv".format(config["costs"]["year"])
+            if config["foresight"] == "overnight"
+            else "data/costs_{planning_horizons}.csv"
+        ),
         profile_offwind_ac=RESOURCES + "profile_offwind-ac.nc",
         profile_offwind_dc=RESOURCES + "profile_offwind-dc.nc",
         h2_cavern=RESOURCES + "salt_cavern_potentials_s{simpl}_{clusters}.csv",
@@ -755,9 +819,10 @@ rule prepare_sector_network:
         simplified_pop_layout=RESOURCES + "pop_layout_elec_s{simpl}.csv",
         industrial_demand=RESOURCES
         + "industrial_energy_demand_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
-        heat_demand_urban=RESOURCES + "heat_demand_urban_elec_s{simpl}_{clusters}.nc",
-        heat_demand_rural=RESOURCES + "heat_demand_rural_elec_s{simpl}_{clusters}.nc",
-        heat_demand_total=RESOURCES + "heat_demand_total_elec_s{simpl}_{clusters}.nc",
+        hourly_heat_demand_total=RESOURCES
+        + "hourly_heat_demand_total_elec_s{simpl}_{clusters}.nc",
+        district_heat_share=RESOURCES
+        + "district_heat_share_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
         temp_soil_total=RESOURCES + "temp_soil_total_elec_s{simpl}_{clusters}.nc",
         temp_soil_rural=RESOURCES + "temp_soil_rural_elec_s{simpl}_{clusters}.nc",
         temp_soil_urban=RESOURCES + "temp_soil_urban_elec_s{simpl}_{clusters}.nc",
@@ -770,18 +835,21 @@ rule prepare_sector_network:
         cop_air_total=RESOURCES + "cop_air_total_elec_s{simpl}_{clusters}.nc",
         cop_air_rural=RESOURCES + "cop_air_rural_elec_s{simpl}_{clusters}.nc",
         cop_air_urban=RESOURCES + "cop_air_urban_elec_s{simpl}_{clusters}.nc",
-        solar_thermal_total=RESOURCES
-        + "solar_thermal_total_elec_s{simpl}_{clusters}.nc"
-        if config["sector"]["solar_thermal"]
-        else [],
-        solar_thermal_urban=RESOURCES
-        + "solar_thermal_urban_elec_s{simpl}_{clusters}.nc"
-        if config["sector"]["solar_thermal"]
-        else [],
-        solar_thermal_rural=RESOURCES
-        + "solar_thermal_rural_elec_s{simpl}_{clusters}.nc"
-        if config["sector"]["solar_thermal"]
-        else [],
+        solar_thermal_total=(
+            RESOURCES + "solar_thermal_total_elec_s{simpl}_{clusters}.nc"
+            if config["sector"]["solar_thermal"]
+            else []
+        ),
+        solar_thermal_urban=(
+            RESOURCES + "solar_thermal_urban_elec_s{simpl}_{clusters}.nc"
+            if config["sector"]["solar_thermal"]
+            else []
+        ),
+        solar_thermal_rural=(
+            RESOURCES + "solar_thermal_rural_elec_s{simpl}_{clusters}.nc"
+            if config["sector"]["solar_thermal"]
+            else []
+        ),
     output:
         RESULTS
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",

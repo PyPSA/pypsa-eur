@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: MIT
 
 
-def custom_extra_functionality(n, snapshots):
+def custom_extra_functionality(n, snapshots, snakemake):
     """
     Add custom extra functionality constraints.
     """

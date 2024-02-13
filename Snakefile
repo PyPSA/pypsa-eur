@@ -2,8 +2,8 @@
 #
 # SPDX-License-Identifier: MIT
 
-from os.path import normpath, exists
-from shutil import copyfile, move, rmtree
+from os.path import normpath
+from shutil import move, rmtree
 
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 
@@ -14,10 +14,7 @@ from snakemake.utils import min_version
 min_version("7.7")
 
 
-if not exists("config/config.yaml") and exists("config/config.default.yaml"):
-    copyfile("config/config.default.yaml", "config/config.yaml")
-
-
+configfile: "config/config.default.yaml"
 configfile: "config/config.yaml"
 
 
@@ -30,7 +27,12 @@ CDIR = RDIR if not run.get("shared_cutouts") else ""
 
 LOGS = "logs/" + RDIR
 BENCHMARKS = "benchmarks/" + RDIR
-RESOURCES = "resources/" + RDIR if not run.get("shared_resources") else "resources/"
+if not (shared_resources := run.get("shared_resources")):
+    RESOURCES = "resources/" + RDIR
+elif isinstance(shared_resources, str):
+    RESOURCES = "resources/" + shared_resources + "/"
+else:
+    RESOURCES = "resources/"
 RESULTS = "results/" + RDIR
 
 
@@ -125,6 +127,7 @@ rule sync:
     shell:
         """
         rsync -uvarh --ignore-missing-args --files-from=.sync-send . {params.cluster}
+        rsync -uvarh --no-g {params.cluster}/resources . || echo "No resources directory, skipping rsync"
         rsync -uvarh --no-g {params.cluster}/results . || echo "No results directory, skipping rsync"
         rsync -uvarh --no-g {params.cluster}/logs . || echo "No logs directory, skipping rsync"
         """

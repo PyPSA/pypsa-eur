@@ -41,7 +41,7 @@ Perfect foresight scenarios
 
 .. warning::
 
-  Perfect foresight is currently implemented as a first test version.
+  Perfect foresight is currently implemented as an experimental test version.
 
 For running perfect foresight scenarios, you can adjust the
  ``config/config.perfect.yaml``:

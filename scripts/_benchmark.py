@@ -13,15 +13,15 @@ import os
 import sys
 import time
 
+from memory_profiler import _get_memory, choose_backend
+
 logger = logging.getLogger(__name__)
 
 # TODO: provide alternative when multiprocessing is not available
 try:
     from multiprocessing import Pipe, Process
 except ImportError:
-    from multiprocessing.dummy import Process, Pipe
-
-from memory_profiler import _get_memory, choose_backend
+    from multiprocessing.dummy import Pipe, Process
 
 
 # The memory logging facilities have been adapted from memory_profiler

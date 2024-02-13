@@ -9,7 +9,7 @@
 Configuration
 ##########################################
 
-PyPSA-Eur has several configuration options which are documented in this section and are collected in a ``config/config.yaml`` file located in the root directory. Users should copy the provided default configuration (``config/config.default.yaml``) and amend their own modifications and assumptions in the user-specific configuration file (``config/config.yaml``); confer installation instructions at :ref:`defaultconfig`.
+PyPSA-Eur has several configuration options which are documented in this section and are collected in a ``config/config.yaml`` file. This file defines deviations from the default configuration (``config/config.default.yaml``); confer installation instructions at :ref:`defaultconfig`.
 
 .. _toplevel_cf:
 
@@ -383,7 +383,7 @@ overwrite the existing values.
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
-   :start-after:   type:
+   :start-after: # docs-load
    :end-before: # docs
 
 .. csv-table::

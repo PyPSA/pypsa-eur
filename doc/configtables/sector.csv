@@ -62,9 +62,11 @@ tes,--,"{true, false}",Add option for storing thermal energy in large water pits
 tes_tau,,,The time constant used to calculate the decay of thermal energy in thermal energy storage (TES): 1- :math:`e^{-1/24τ}`.
 -- decentral,days,float,The time constant in decentralized thermal energy storage (TES)
 -- central,days,float,The time constant in centralized thermal energy storage (TES)
-boilers,--,"{true, false}",Add option for transforming electricity into heat using resistive heater
+boilers,--,"{true, false}",Add option for transforming gas into heat using gas boilers
+resistive_heaters,--,"{true, false}",Add option for transforming electricity into heat using resistive heaters (independently from gas boilers)
 oil_boilers,--,"{true, false}",Add option for transforming oil into heat using boilers
 biomass_boiler,--,"{true, false}",Add option for transforming biomass into heat using boilers
+overdimension_individual_heating,--,"float",Add option for overdimensioning individual heating systems by a certain factor. This allows them to cover heat demand peaks e.g. 10% higher than those in the data with a setting of 1.1.
 chp,--,"{true, false}",Add option for using Combined Heat and Power (CHP)
 micro_chp,--,"{true, false}",Add option for using Combined Heat and Power (CHP) for decentral areas.
 solar_thermal,--,"{true, false}",Add option for using solar thermal to generate heat.
@@ -79,6 +81,8 @@ hydrogen_fuel_cell,--,"{true, false}",Add option to include hydrogen fuel cell f
 hydrogen_turbine,--,"{true, false}",Add option to include hydrogen turbine for re-electrification. Assuming OCGT technology costs
 SMR,--,"{true, false}",Add option for transforming natural gas into hydrogen and CO2 using Steam Methane Reforming (SMR)
 SMR CC,--,"{true, false}",Add option for transforming natural gas into hydrogen and CO2 using Steam Methane Reforming (SMR) and Carbon Capture (CC)
+regional_methanol_demand,--,"{true, false}",Spatially resolve methanol demand. Set to true if regional CO2 constraints needed.
+regional_oil_demand,--,"{true, false}",Spatially resolve oil demand. Set to true if regional CO2 constraints needed.
 regional_co2 _sequestration_potential,,,
 -- enable,--,"{true, false}",Add option for regionally-resolved geological carbon dioxide sequestration potentials based on `CO2StoP <https://setis.ec.europa.eu/european-co2-storage-database_en>`_.
 -- attribute,--,string,Name of the attribute for the sequestration potential
@@ -88,9 +92,11 @@ regional_co2 _sequestration_potential,,,
 -- years_of_storage,years,float,The years until potential exhausted at optimised annual rate
 co2_sequestration_potential,MtCO2/a,float,The potential of sequestering CO2 in Europe per year
 co2_sequestration_cost,currency/tCO2,float,The cost of sequestering a ton of CO2
+co2_sequestration_lifetime,years,int,The lifetime of a CO2 sequestration site
 co2_spatial,--,"{true, false}","Add option to spatially resolve carrier representing stored carbon dioxide. This allows for more detailed modelling of CCUTS, e.g. regarding the capturing of industrial process emissions, usage as feedstock for electrofuels, transport of carbon dioxide, and geological sequestration sites."
 ,,,
 co2network,--,"{true, false}",Add option for planning a new carbon dioxide transmission network
+co2_network_cost_factor,p.u.,float,The cost factor for the capital cost of the carbon dioxide transmission network
 ,,,
 cc_fraction,--,float,The default fraction of CO2 captured with post-combustion capture
 hydrogen_underground _storage,--,"{true, false}",Add options for storing hydrogen underground. Storage potential depends regionally.
@@ -126,3 +132,10 @@ biogas_upgrading_cc,--,"{true, false}",Add option to capture CO2 from biomass up
 conventional_generation,,,Add a more detailed description of conventional carriers. Any power generation requires the consumption of fuel from nodes representing that fuel.
 biomass_to_liquid,--,"{true, false}",Add option for transforming solid biomass into liquid fuel with the same properties as oil
 biosng,--,"{true, false}",Add option for transforming solid biomass into synthesis gas with the same properties as natural gas
+limit_max_growth,,,
+-- enable,--,"{true, false}",Add option to limit the maximum growth of a carrier
+-- factor,p.u.,float,The maximum growth factor of a carrier (e.g. 1.3 allows  30% larger than max historic growth)
+-- max_growth,,,
+-- -- {carrier},GW,float,The historic maximum growth of a carrier
+-- max_relative_growth,
+-- -- {carrier},p.u.,float,The historic maximum relative growth of a carrier

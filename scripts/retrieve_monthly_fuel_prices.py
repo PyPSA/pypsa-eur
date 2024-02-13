@@ -7,12 +7,11 @@ Retrieve monthly fuel prices from Destatis.
 """
 
 import logging
-
-logger = logging.getLogger(__name__)
-
 from pathlib import Path
 
 from _helpers import configure_logging, progress_retrieve
+
+logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
