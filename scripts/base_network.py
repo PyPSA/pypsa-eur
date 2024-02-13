@@ -860,7 +860,7 @@ def base_network(
     lines = _load_lines_from_eg(buses, eg_lines)
     transformers = _load_transformers_from_eg(buses, eg_transformers)
 
-    if config["TYNDP2020"].get("include"):
+    if config["TYNDP2020"].get("include", False):
         logger.info(
             "Adding TYNDP2020 lines, buses and links... "
             "warning - this dataset is not yet evaluated and may lead to unexpected results."
@@ -902,7 +902,7 @@ def base_network(
     _set_lines_s_nom_from_linetypes(n)
 
     _apply_parameter_corrections(n, parameter_corrections)
-    if config["TYNDP2020"].get("include"):
+    if config["TYNDP2020"].get("include", False):
         _apply_parameter_corrections(n, parameter_corrections_tyndp)
 
     n = _remove_unconnected_components(n)
