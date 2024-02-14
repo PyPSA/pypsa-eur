@@ -433,6 +433,30 @@ rule build_industry_sector_ratios:
         "../scripts/build_industry_sector_ratios.py"
 
 
+rule build_industry_sector_ratios_intermediate:
+    params:
+        industry=config["industry"],
+    input:
+        industry_sector_ratios=RESOURCES + "industry_sector_ratios.csv",
+        industrial_energy_demand_per_country_today=RESOURCES
+        + "industrial_energy_demand_per_country_today.csv",
+        industrial_production_per_country=RESOURCES
+        + "industrial_production_per_country.csv",
+    output:
+        industry_sector_ratios=RESOURCES + "industry_sector_ratios_{planning_horizons}.csv",
+    threads: 1
+    resources:
+        mem_mb=1000,
+    log:
+        LOGS + "build_industry_sector_ratios_{planning_horizons}.log",
+    benchmark:
+        BENCHMARKS + "build_industry_sector_ratios_{planning_horizons}"
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_industry_sector_ratios_intermediate.py"
+
+
 rule build_industrial_production_per_country:
     params:
         industry=config["industry"],
@@ -535,7 +559,7 @@ rule build_industrial_production_per_node:
 
 rule build_industrial_energy_demand_per_node:
     input:
-        industry_sector_ratios=RESOURCES + "industry_sector_ratios.csv",
+        industry_sector_ratios=RESOURCES + "industry_sector_ratios_{planning_horizons}.csv",
         industrial_production_per_node=RESOURCES
         + "industrial_production_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
         industrial_energy_demand_per_node_today=RESOURCES
