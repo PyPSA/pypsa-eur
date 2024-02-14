@@ -566,7 +566,6 @@ rule build_industrial_energy_demand_per_country_today:
         industry=config["industry"],
     input:
         jrc="data/bundle-sector/jrc-idees-2015",
-        ammonia_production=RESOURCES + "ammonia_production.csv",
         industrial_production_per_country=RESOURCES
         + "industrial_production_per_country.csv",
     output:
