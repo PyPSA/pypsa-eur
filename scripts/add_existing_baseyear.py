@@ -330,7 +330,10 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
 
             already_build = n.links.index.intersection(asset_i)
             new_build = asset_i.difference(n.links.index)
-            lifetime_assets = lifetime.loc[grouping_year, generator].dropna()
+            if (grouping_year, generator) in lifetime.index:
+                lifetime_assets = lifetime.loc[grouping_year, generator].dropna()
+            else:
+                lifetime_assets = costs.at[generator, "lifetime"]
 
             # this is for the year 2020
             if not already_build.empty:
@@ -344,11 +347,12 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                 if generator != "urban central solid biomass OP":
                     # missing lifetimes are filled with mean lifetime
                     # if mean cannot be built, lifetime is taken from costs.csv
-                    lifetime_assets = (
-                        lifetime_assets.reindex(capacity.index)
-                        .fillna(lifetime_assets.mean())
-                        .fillna(costs.at[generator, "lifetime"])
-                    )
+                    if isinstance(lifetime_assets, pd.Series):
+                        lifetime_assets = (
+                            lifetime_assets.reindex(capacity.index)
+                            .fillna(lifetime_assets.mean())
+                            .fillna(costs.at[generator, "lifetime"])
+                        )
 
                     n.madd(
                         "Link",
@@ -366,7 +370,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                         efficiency=costs.at[generator, "efficiency"],
                         efficiency2=costs.at[carrier[generator], "CO2 intensity"],
                         build_year=grouping_year,
-                        lifetime=lifetime_assets.loc[new_capacity.index],
+                        lifetime=lifetime_assets.loc[new_capacity.index] if isinstance(lifetime_assets, pd.Series) else lifetime_assets
                     )
                 else:
                     # for the power only biomass plants, technology parameters of CHP plants are used
@@ -571,6 +575,8 @@ def add_heating_capacities_installed_before_baseyear(
         "Lignite": "lignite",
         "Natural Gas": "gas",
         "Bioenergy": "urban central solid biomass CHP",
+        "Oil": "oil",
+        "Waste": "waste",
     }
 
     ppl = pd.read_csv(snakemake.input.powerplants, index_col=0)
@@ -581,7 +587,7 @@ def add_heating_capacities_installed_before_baseyear(
     # drop assets which are already phased out / decommissioned
     # drop hydro, waste and oil fueltypes for CHP
     limit = np.max(grouping_years)
-    drop_fueltypes = ["Hydro", "Waste", "Oil"]
+    drop_fueltypes = ["Hydro"]
     chp = ppl.query(
         "Set == 'CHP' and DateOut >= @baseyear and DateIn <= @limit and Fueltype not in @drop_fueltypes"
     ).copy()
@@ -668,6 +674,11 @@ def add_heating_capacities_installed_before_baseyear(
             aggfunc="sum",
         )
 
+        keys = {"coal": "central coal CHP",
+                "gas": "central gas CHP",
+                "waste": "waste CHP",
+                "oil": "central gas CHP",
+                "lignite": "central coal CHP"}
         # add everything as Link
         for grouping_year, generator in mastr_chp_p_nom.index:
             # capacity is the capacity in MW at each node for this
@@ -683,12 +694,7 @@ def add_heating_capacities_installed_before_baseyear(
 
             if generator != "urban central solid biomass CHP":
                 # lignite CHPs are not in DEA database - use coal CHP parameters
-                key = (
-                    f"central {generator} CHP"
-                    if generator != "lignite"
-                    else "central coal CHP"
-                )
-
+                key = keys[generator]
                 n.madd(
                     "Link",
                     asset_i,
@@ -742,11 +748,7 @@ def add_heating_capacities_installed_before_baseyear(
 
         if generator != "urban central solid biomass CHP":
             # lignite CHPs are not in DEA database - use coal CHP parameters
-            key = (
-                f"central {generator} CHP"
-                if generator != "lignite"
-                else "central coal CHP"
-            )
+            key = keys[generator]
 
             n.madd(
                 "Link",
@@ -809,6 +811,7 @@ if __name__ == "__main__":
 
     baseyear = snakemake.params.baseyear
 
+    # n = pypsa.Network('/home/toni-seibold/Documents/CHP/pypsa-ariadne/results/240209-365H-fixcoalco2/prenetworks/elec_s_22_lv1.2__365H-T-H-B-I-A_2020.nc')
     n = pypsa.Network(snakemake.input.network)
 
     # define spatial resolution of carriers
