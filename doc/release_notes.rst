@@ -10,6 +10,14 @@ Release Notes
 Upcoming Release
 ================
 
+* The default configuration ``config/config.default.yaml`` is now automatically
+  used as a base configuration file and no longer copied to
+  ``config/config.yaml`` on first use. The file ``config/config.yaml`` should be
+  used to define deviations from the default configuration.
+
+* Merged two OPSD time series data versions into such that the option ``load:
+  power_statistics:`` becomes superfluous and was hence removed.
+
 * Add new default to overdimension heating in individual buildings. This allows
   them to cover heat demand peaks e.g. 10% higher than those in the data. The
   disadvantage of manipulating the costs is that the capacity is then not quite
