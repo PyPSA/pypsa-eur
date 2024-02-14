@@ -637,6 +637,7 @@ industry:
     2040: 0.12
     2045: 0.16
     2050: 0.20
+  basic_chemicals_without_NH3_energy_demand_today: 1138. #TWh/a
   HVC_production_today: 52.
   MWh_elec_per_tHVC_mechanical_recycling: 0.547
   MWh_elec_per_tHVC_chemical_recycling: 6.9
