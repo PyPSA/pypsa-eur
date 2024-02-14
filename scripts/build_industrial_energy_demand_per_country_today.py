@@ -96,19 +96,35 @@ def industrial_energy_demand_per_country(country, year, jrc_dir):
 
 def separate_basic_chemicals(demand, production):
 
-    ammonia = pd.DataFrame({"hydrogen": production["Ammonia"] * params["MWh_H2_per_tNH3_electrolysis"],
-                            "electricity" : production["Ammonia"] * params["MWh_elec_per_tNH3_electrolysis"]}).T
-    chlorine = pd.DataFrame({"hydrogen": production["Chlorine"] * params["MWh_H2_per_tCl"],
-                             "electricity" : production["Chlorine"] * params["MWh_elec_per_tCl"]}).T
-    methanol = pd.DataFrame({"gas": production["Methanol"] * params["MWh_CH4_per_tMeOH"],
-                             "electricity" : production["Methanol"] * params["MWh_elec_per_tMeOH"]}).T
+    ammonia = pd.DataFrame(
+        {
+            "hydrogen": production["Ammonia"] * params["MWh_H2_per_tNH3_electrolysis"],
+            "electricity": production["Ammonia"]
+            * params["MWh_elec_per_tNH3_electrolysis"],
+        }
+    ).T
+    chlorine = pd.DataFrame(
+        {
+            "hydrogen": production["Chlorine"] * params["MWh_H2_per_tCl"],
+            "electricity": production["Chlorine"] * params["MWh_elec_per_tCl"],
+        }
+    ).T
+    methanol = pd.DataFrame(
+        {
+            "gas": production["Methanol"] * params["MWh_CH4_per_tMeOH"],
+            "electricity": production["Methanol"] * params["MWh_elec_per_tMeOH"],
+        }
+    ).T
 
     demand["Ammonia"] = ammonia.unstack().reindex(index=demand.index, fill_value=0.0)
     demand["Chlorine"] = chlorine.unstack().reindex(index=demand.index, fill_value=0.0)
     demand["Methanol"] = methanol.unstack().reindex(index=demand.index, fill_value=0.0)
 
     demand["HVC"] = (
-        demand["Basic chemicals"] - demand["Ammonia"] - demand["Methanol"] - demand["Chlorine"]
+        demand["Basic chemicals"]
+        - demand["Ammonia"]
+        - demand["Methanol"]
+        - demand["Chlorine"]
     )
 
     demand.drop(columns="Basic chemicals", inplace=True)
@@ -166,8 +182,10 @@ if __name__ == "__main__":
     demand = industrial_energy_demand(countries.intersection(eu28), year)
 
     # output in MtMaterial/a
-    production = pd.read_csv(snakemake.input.industrial_production_per_country,
-                             index_col=0) / 1e3
+    production = (
+        pd.read_csv(snakemake.input.industrial_production_per_country, index_col=0)
+        / 1e3
+    )
 
     demand = separate_basic_chemicals(demand, production)
 

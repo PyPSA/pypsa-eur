@@ -443,7 +443,8 @@ rule build_industry_sector_ratios_intermediate:
         industrial_production_per_country=RESOURCES
         + "industrial_production_per_country.csv",
     output:
-        industry_sector_ratios=RESOURCES + "industry_sector_ratios_{planning_horizons}.csv",
+        industry_sector_ratios=RESOURCES
+        + "industry_sector_ratios_{planning_horizons}.csv",
     threads: 1
     resources:
         mem_mb=1000,
@@ -559,7 +560,8 @@ rule build_industrial_production_per_node:
 
 rule build_industrial_energy_demand_per_node:
     input:
-        industry_sector_ratios=RESOURCES + "industry_sector_ratios_{planning_horizons}.csv",
+        industry_sector_ratios=RESOURCES
+        + "industry_sector_ratios_{planning_horizons}.csv",
         industrial_production_per_node=RESOURCES
         + "industrial_production_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
         industrial_energy_demand_per_node_today=RESOURCES

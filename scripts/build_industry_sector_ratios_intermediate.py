@@ -4,39 +4,45 @@
 # SPDX-License-Identifier: MIT
 """
 Build specific energy consumption by carrier and industries and by country,
-that interpolates between the current average energy consumption (from 2015-2020)
-and the ideal future best-in-class consumption.
+that interpolates between the current average energy consumption (from
+2015-2020) and the ideal future best-in-class consumption.
 """
 
 import pandas as pd
-
 from prepare_sector_network import get
+
 
 def build_industry_sector_ratios_intermediate():
 
     # in TWh/a
-    demand = pd.read_csv(snakemake.input.industrial_energy_demand_per_country_today,
-                         header=[0,1],
-                         index_col=0)
+    demand = pd.read_csv(
+        snakemake.input.industrial_energy_demand_per_country_today,
+        header=[0, 1],
+        index_col=0,
+    )
 
     # in Mt/a
-    production = pd.read_csv(snakemake.input.industrial_production_per_country,
-                             index_col=0) / 1e3
+    production = (
+        pd.read_csv(snakemake.input.industrial_production_per_country, index_col=0)
+        / 1e3
+    )
     production = production.unstack().swaplevel()
 
     # in MWh/t
-    future_sector_ratios = pd.read_csv(snakemake.input.industry_sector_ratios,
-                                       index_col=0)
+    future_sector_ratios = pd.read_csv(
+        snakemake.input.industry_sector_ratios, index_col=0
+    )
 
-    production.index.names = [None,None]
+    production.index.names = [None, None]
 
     today_sector_ratios = demand.div(production, axis=1)
 
-    today_sector_ratios.drop(columns=today_sector_ratios.columns[today_sector_ratios.isna().all()],
-                             inplace=True)
+    today_sector_ratios.drop(
+        columns=today_sector_ratios.columns[today_sector_ratios.isna().all()],
+        inplace=True,
+    )
 
-    rename = pd.Series(today_sector_ratios.index,
-                       today_sector_ratios.index)
+    rename = pd.Series(today_sector_ratios.index, today_sector_ratios.index)
     rename["waste"] = "biomass"
     rename["electricity"] = "elec"
     rename["solid"] = "coke"
@@ -44,9 +50,7 @@ def build_industry_sector_ratios_intermediate():
     rename["other"] = "biomass"
     rename["liquid"] = "naphtha"
 
-    today_sector_ratios.rename(rename,
-                               inplace=True)
-
+    today_sector_ratios.rename(rename, inplace=True)
 
     fraction_future = get(params["sector_ratios_fraction_future"], year)
 
@@ -56,13 +60,21 @@ def build_industry_sector_ratios_intermediate():
 
         intermediate_sector_ratio = future_sector_ratios.copy()
 
-        intermediate_sector_ratio.loc[today_sector_ratios[ct].index,today_sector_ratios[ct].columns] = (fraction_future*intermediate_sector_ratio.loc[today_sector_ratios[ct].index,today_sector_ratios[ct].columns]
-                                                                                                        + (1 - fraction_future)*today_sector_ratios[ct])
+        intermediate_sector_ratio.loc[
+            today_sector_ratios[ct].index, today_sector_ratios[ct].columns
+        ] = (
+            fraction_future
+            * intermediate_sector_ratio.loc[
+                today_sector_ratios[ct].index, today_sector_ratios[ct].columns
+            ]
+            + (1 - fraction_future) * today_sector_ratios[ct]
+        )
         intermediate_sector_ratios[ct] = intermediate_sector_ratio
 
     intermediate_sector_ratios = pd.concat(intermediate_sector_ratios, axis=1)
 
     intermediate_sector_ratios.to_csv(snakemake.output.industry_sector_ratios)
+
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
