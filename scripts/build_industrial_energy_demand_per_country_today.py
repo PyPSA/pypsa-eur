@@ -73,7 +73,7 @@ def industrial_energy_demand_per_country(country, year, jrc_dir):
     def get_subsector_data(sheet):
         df = df_dict[sheet][year].groupby(fuels).sum()
 
-        df["ammonia"] = 0.0
+        df["hydrogen"] = 0.0
 
         df["other"] = df["all"] - df.loc[df.index != "all"].sum()
 
@@ -94,35 +94,40 @@ def industrial_energy_demand_per_country(country, year, jrc_dir):
     return df
 
 
-def add_ammonia_energy_demand(demand):
+def separate_basic_chemicals(demand):
     # MtNH3/a
     fn = snakemake.input.ammonia_production
     ammonia = pd.read_csv(fn, index_col=0)[str(year)] / 1e3
 
-    def get_ammonia_by_fuel(x):
-        fuels = {
-            "gas": params["MWh_CH4_per_tNH3_SMR"],
-            "electricity": params["MWh_elec_per_tNH3_SMR"],
-        }
-
-        return pd.Series({k: x * v for k, v in fuels.items()})
-
-    ammonia_by_fuel = ammonia.apply(get_ammonia_by_fuel).T
-    ammonia_by_fuel = ammonia_by_fuel.unstack().reindex(
-        index=demand.index, fill_value=0.0
-    )
-
-    ammonia = pd.DataFrame({"ammonia": ammonia * params["MWh_NH3_per_tNH3"]}).T
+    ammonia = pd.DataFrame({"gas": ammonia * params["MWh_CH4_per_tNH3_SMR"],
+                            "electricity" : ammonia * params["MWh_elec_per_tNH3_SMR"]}).T
 
     demand["Ammonia"] = ammonia.unstack().reindex(index=demand.index, fill_value=0.0)
 
     demand["Basic chemicals (without ammonia)"] = (
-        demand["Basic chemicals"] - ammonia_by_fuel
+        demand["Basic chemicals"] - demand["Ammonia"]
     )
 
-    demand["Basic chemicals (without ammonia)"].clip(lower=0, inplace=True)
-
     demand.drop(columns="Basic chemicals", inplace=True)
+
+    distribution = demand["Basic chemicals (without ammonia)"].groupby(level=0).sum()/params["basic_chemicals_without_NH3_energy_demand_today"]
+
+    chlorine = pd.DataFrame({"hydrogen": distribution * params["chlorine_production_today"] * params["MWh_H2_per_tCl"],
+                             "electricity" : distribution * params["chlorine_production_today"] * params["MWh_elec_per_tCl"]}).T
+
+    methanol = pd.DataFrame({"gas": distribution * params["methanol_production_today"] * params["MWh_CH4_per_tMeOH"],
+                             "electricity" : distribution * params["methanol_production_today"] * params["MWh_elec_per_tMeOH"]}).T
+
+    demand["Chlorine"] = chlorine.unstack().reindex(index=demand.index, fill_value=0.0)
+    demand["Methanol"] = methanol.unstack().reindex(index=demand.index, fill_value=0.0)
+
+    demand["HVC"] = (
+        demand["Basic chemicals (without ammonia)"] -demand["Methanol"] - demand["Chlorine"]
+    )
+
+    demand.drop(columns="Basic chemicals (without ammonia)", inplace=True)
+
+    demand["HVC"].clip(lower=0, inplace=True)
 
     return demand
 
@@ -134,11 +139,6 @@ def add_non_eu28_industrial_energy_demand(countries, demand):
     # output in MtMaterial/a
     fn = snakemake.input.industrial_production_per_country
     production = pd.read_csv(fn, index_col=0) / 1e3
-
-    # recombine HVC, Chlorine and Methanol to Basic chemicals (without ammonia)
-    chemicals = ["HVC", "Chlorine", "Methanol"]
-    production["Basic chemicals (without ammonia)"] = production[chemicals].sum(axis=1)
-    production.drop(columns=chemicals, inplace=True)
 
     eu28_production = production.loc[countries.intersection(eu28)].sum()
     eu28_energy = demand.groupby(level=1).sum()
@@ -182,7 +182,7 @@ if __name__ == "__main__":
 
     demand = industrial_energy_demand(countries.intersection(eu28), year)
 
-    demand = add_ammonia_energy_demand(demand)
+    demand = separate_basic_chemicals(demand)
 
     demand = add_non_eu28_industrial_energy_demand(countries, demand)
 
