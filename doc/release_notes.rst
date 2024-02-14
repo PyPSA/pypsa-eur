@@ -17,6 +17,11 @@ Upcoming Release
   names to run under ``run: name:`` in the configuration file. The latter must
   be a subset of toplevel keys in the scenario file.
 
+* The default configuration ``config/config.default.yaml`` is now automatically
+  used as a base configuration file and no longer copied to
+  ``config/config.yaml`` on first use. The file ``config/config.yaml`` should be
+  used to define deviations from the default configuration.
+
 * Merged two OPSD time series data versions into such that the option ``load:
   power_statistics:`` becomes superfluous and was hence removed.
 

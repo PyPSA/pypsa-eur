@@ -7,11 +7,8 @@ from functools import partial, lru_cache
 
 import os, sys, glob
 
-helper_source_path = [match for match in glob.glob("**/_helpers.py", recursive=True)]
-
-for path in helper_source_path:
-    path = os.path.dirname(os.path.abspath(path))
-    sys.path.insert(0, os.path.abspath(path))
+path = workflow.source_path("../scripts/_helpers.py")
+sys.path.insert(0, os.path.dirname(path))
 
 from _helpers import validate_checksum
 
