@@ -141,7 +141,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
     # If heat is considered, add CHPs in the add_heating_capacities function.
     # Assume that all oil power plants are not CHPs.
     if "H" in snakemake.wildcards.sector_opts.split("-"):
-        df_agg = df_agg.query("Set != 'CHP' or Fueltype == 'Oil'")
+        df_agg = df_agg.query("Set != 'CHP'")
 
     # Replace Fueltype "Natural Gas" with the respective technology (OCGT or CCGT)
     df_agg.loc[df_agg["Fueltype"] == "Natural Gas", "Fueltype"] = df_agg.loc[
