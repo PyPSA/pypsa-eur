@@ -13,7 +13,6 @@ from itertools import product
 import country_converter as coco
 import geopandas as gpd
 import pandas as pd
-from packaging.version import Version, parse
 
 logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
@@ -84,12 +83,7 @@ def prepare_hotmaps_database(regions):
 
     gdf = gpd.GeoDataFrame(df, geometry="coordinates", crs="EPSG:4326")
 
-    kws = (
-        dict(op="within")
-        if parse(gpd.__version__) < Version("0.10")
-        else dict(predicate="within")
-    )
-    gdf = gpd.sjoin(gdf, regions, how="inner", **kws)
+    gdf = gpd.sjoin(gdf, regions, how="inner", predicate="within")
 
     gdf.rename(columns={"index_right": "bus"}, inplace=True)
     gdf["country"] = gdf.bus.str[:2]

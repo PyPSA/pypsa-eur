@@ -23,15 +23,12 @@ from add_electricity import calculate_annuity, sanitize_carriers, sanitize_locat
 from build_energy_totals import build_co2_totals, build_eea_co2, build_eurostat_co2
 from networkx.algorithms import complement
 from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentation
-from packaging.version import Version, parse
 from pypsa.geo import haversine_pts
 from pypsa.io import import_components_from_dataframe
 from scipy.stats import beta
 
 spatial = SimpleNamespace()
 logger = logging.getLogger(__name__)
-pd_version = parse(pd.__version__)
-agg_group_kwargs = dict(numeric_only=False) if pd_version >= Version("1.3") else {}
 
 
 def define_spatial(nodes, options):
@@ -1860,16 +1857,7 @@ def add_heat(n, costs):
                 p_nom_extendable=True,
             )
 
-            if isinstance(options["tes_tau"], dict):
-                tes_time_constant_days = options["tes_tau"][name_type]
-            else:
-                logger.warning(
-                    "Deprecated: a future version will require you to specify 'tes_tau' ",
-                    "for 'decentral' and 'central' separately.",
-                )
-                tes_time_constant_days = (
-                    options["tes_tau"] if name_type == "decentral" else 180.0
-                )
+            tes_time_constant_days = options["tes_tau"][name_type]
 
             n.madd(
                 "Store",
@@ -3436,7 +3424,7 @@ def cluster_heat_buses(n):
         # cluster heat nodes
         # static dataframe
         agg = define_clustering(df.columns, aggregate_dict)
-        df = df.groupby(level=0).agg(agg, **agg_group_kwargs)
+        df = df.groupby(level=0).agg(agg, numeric_only=False)
         # time-varying data
         pnl = c.pnl
         agg = define_clustering(pd.Index(pnl.keys()), aggregate_dict)
@@ -3445,7 +3433,7 @@ def cluster_heat_buses(n):
             def renamer(s):
                 return s.replace("residential ", "").replace("services ", "")
 
-            pnl[k] = pnl[k].T.groupby(renamer).agg(agg[k], **agg_group_kwargs).T
+            pnl[k] = pnl[k].T.groupby(renamer).agg(agg[k], numeric_only=False).T
 
         # remove unclustered assets of service/residential
         to_drop = c.df.index.difference(df.index)
