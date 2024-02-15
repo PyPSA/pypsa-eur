@@ -200,7 +200,8 @@ if __name__ == "__main__":
 
     disable_grid_expansion_if_LV_limit_hit(n)
 
-    if snakemake.config["sector"]["endogenous_transport"]:
+    opts = snakemake.wildcards.sector_opts.split("-")
+    if "T" in opts and snakemake.config["sector"]["endogenous_transport"]:
         adjust_EVs(n, n_p, year)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))

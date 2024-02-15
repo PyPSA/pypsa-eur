@@ -66,12 +66,11 @@ def build_transport_demand(traffic_fn, airtemp_fn, nodes, nodal_transport_data):
         options["EV_lower_degree_factor"],
         options["EV_upper_degree_factor"],
     )
-    print(dd_ICE.head())
-    print(dd_EV.head())
+
     # divide out the heating/cooling demand from ICE totals
     # and multiply back in the heating/cooling demand for EVs
     ice_correction = (transport_shape * (1 + dd_ICE)).sum() / transport_shape.sum()
-    print(ice_correction)
+
     energy_totals_transport = (
         pop_weighted_energy_totals["total road"]
         + pop_weighted_energy_totals["total rail"]

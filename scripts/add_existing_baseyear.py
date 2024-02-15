@@ -652,6 +652,7 @@ def add_land_transport_installed_before_baseyear(
     set_p_nom = pnom 
     p_set_year = p_set/(len(year))
     profile = p_set_year.divide(eff_ICE)/pnom
+    set_p_nom.index = set_p_nom.index.str.rstrip('land transport oil')
     profile.columns = profile.columns.str.rstrip('land transport oil')
     eff_ICE.columns = eff_ICE.columns.str.rstrip('land transport oil')
     #divide ICE build year linearly 
