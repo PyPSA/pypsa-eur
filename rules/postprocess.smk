@@ -45,7 +45,7 @@ if config["foresight"] != "perfect":
             (
                 LOGS
                 + "plot_power_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log"
-            )
+            ),
         benchmark:
             (
                 BENCHMARKS
@@ -74,7 +74,7 @@ if config["foresight"] != "perfect":
             (
                 LOGS
                 + "plot_hydrogen_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log"
-            )
+            ),
         benchmark:
             (
                 BENCHMARKS
@@ -102,7 +102,7 @@ if config["foresight"] != "perfect":
             (
                 LOGS
                 + "plot_gas_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log"
-            )
+            ),
         benchmark:
             (
                 BENCHMARKS
