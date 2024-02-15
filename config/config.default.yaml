@@ -538,8 +538,8 @@ sector:
       efficiency_static: 0.98
       efficiency_per_1000km: 0.977
     H2 pipeline:
-      efficiency_per_1000km: 1 # 0.979
-      compression_per_1000km: 0.019
+      efficiency_per_1000km: 0.996
+      compression_per_1000km: 0.018
     gas pipeline:
       efficiency_per_1000km: 1 #0.977
       compression_per_1000km: 0.01
