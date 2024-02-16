@@ -113,6 +113,8 @@ Upcoming Release
   workflows with foresight "myopic" and still needs to be added foresight option
   "perfect".
 
+* Switched the energy totals year from 2011 to 2013 to comply with the assumed default weather year.
+
 
 PyPSA-Eur 0.9.0 (5th January 2024)
 ==================================

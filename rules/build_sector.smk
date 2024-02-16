@@ -248,7 +248,7 @@ rule build_energy_totals:
     input:
         nuts3_shapes=RESOURCES + "nuts3_shapes.geojson",
         co2="data/bundle-sector/eea/UNFCCC_v23.csv",
-        swiss="data/bundle-sector/switzerland-sfoe/switzerland-new_format.csv",
+        swiss="data/switzerland-new_format-all_years.csv",
         idees="data/bundle-sector/jrc-idees-2015",
         district_heat_share="data/district_heat_share.csv",
         eurostat=input_eurostat,
