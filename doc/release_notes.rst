@@ -10,6 +10,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Bugfix: Correct units of subtracted chlorine and methanol demand in
+  :mod:`build_industry_sector_ratios`.
 
 * Include all countries in ammonia production resource. This is so that the full
   EU28 ammonia demand can be correctly subtracted in the rule
