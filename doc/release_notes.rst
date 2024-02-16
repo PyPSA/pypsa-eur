@@ -10,6 +10,11 @@ Release Notes
 Upcoming Release
 ================
 
+
+* Include all countries in ammonia production resource. This is so that the full
+  EU28 ammonia demand can be correctly subtracted in the rule
+  :mod:`build_industry_sector_ratios`.
+
 * Regions are assigned to all buses with unique coordinates in the network with
   a preference given to substations. Previously, only substations had assigned
   regions, but this could lead to issues when a high spatial resolution was
