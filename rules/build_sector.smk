@@ -392,8 +392,6 @@ rule build_salt_cavern_potentials:
 
 
 rule build_ammonia_production:
-    params:
-        countries=config["countries"],
     input:
         usgs="data/bundle-sector/myb1-2017-nitro.xls",
     output:

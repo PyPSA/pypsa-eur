@@ -10,6 +10,10 @@ Release Notes
 Upcoming Release
 ================
 
+* Include all countries in ammonia production resource. This is so that the full
+  EU28 ammonia demand can be correctly subtracted in the rule
+  :mod:`build_industry_sector_ratios`.
+
 * The default configuration ``config/config.default.yaml`` is now automatically
   used as a base configuration file and no longer copied to
   ``config/config.yaml`` on first use. The file ``config/config.yaml`` should be
