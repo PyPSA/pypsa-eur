@@ -1,0 +1,25 @@
+country,item,2010,2011,2012,2013,2014,2015
+CH,total residential,268.2,223.4,243.4,261.3,214.2,229.1
+CH,total residential space,192.2,149.0,168.1,185.5,139.7,154.4
+CH,total residential water,32.2,31.6,31.9,32.2,31.7,31.9
+CH,total residential cooking,9.3,9.3,9.3,9.4,9.5,9.6
+CH,electricity residential,67.9,63.7,65.7,67.6,63.0,64.4
+CH,electricity residential space,15.9,12.8,14.3,15.8,12.3,13.5
+CH,electricity residential water,8.8,8.5,8.5,8.6,8.5,8.6
+CH,electricity residential cooking,4.9,4.9,4.9,4.9,5.0,5.0
+CH,total services,145.9,127.4,136.7,144.0,124.5,132.5
+CH,total services space,80.0,62.2,70.8,77.4,58.3,64.3
+CH,total services water,10.1,10.0,10.1,10.1,10.0,10.0
+CH,total services cooking,2.5,2.4,2.3,2.3,2.4,2.3
+CH,electricity services,60.5,59.2,60.3,61.4,60.3,62.6
+CH,electricity services space,4.0,3.2,3.8,4.2,3.3,3.6
+CH,electricity services water,0.7,0.7,0.7,0.7,0.7,0.7
+CH,electricity services cooking,2.5,2.4,2.3,2.3,2.4,2.3
+CH,total rail,11.5,11.1,11.2,11.4,11.1,11.4
+CH,total road,199.4,200.4,200.4,201.2,202.0,203.1
+CH,electricity road,0.,0.,0.,0.,0.,0.
+CH,electricity rail,11.5,11.1,11.2,11.4,11.1,11.4
+CH,total domestic aviation,3.3,3.2,3.4,3.4,3.5,3.5
+CH,total international aviation,58.0,62.0,63.5,64.2,64.5,66.8
+CH,total domestic navigation,1.6,1.6,1.6,1.6,1.6,1.6
+CH,total international navigation,0.,0.,0.,0.,0.,0.
