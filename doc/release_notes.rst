@@ -19,6 +19,8 @@ Upcoming Release
   today to tomorrow's energy consumption is set with the ``industry:
   sector_ratios_fraction_future:`` parameter.
 
+* Fix plotting of retrofitted hydrogen pipelines with pathway optimisation.
+
 * Bugfix: Correct units of subtracted chlorine and methanol demand in
   :mod:`build_industry_sector_ratios`.
 
