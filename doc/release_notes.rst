@@ -10,6 +10,9 @@ Release Notes
 Upcoming Release
 ================
 
+* Bugfix: Correct units of subtracted chlorine and methanol demand in
+  :mod:`build_industry_sector_ratios`.
+
 * The default configuration ``config/config.default.yaml`` is now automatically
   used as a base configuration file and no longer copied to
   ``config/config.yaml`` on first use. The file ``config/config.yaml`` should be
