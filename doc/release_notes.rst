@@ -10,6 +10,15 @@ Release Notes
 Upcoming Release
 ================
 
+* Improved representation of industry transition pathways. A new script was
+  added to interpolate industry sector ratios from today's status quo to future
+  systems (i.e. specific emissions and demands for energy and feedstocks). For
+  each country we gradually switch industry processes from today's specific
+  energy carrier usage per ton material output to the best-in-class energy
+  consumption of tomorrow. This is done on a per-country basis. The ratio of
+  today to tomorrow's energy consumption is set with the ``industry:
+  sector_ratios_fraction_future:`` parameter.
+
 * Bugfix: Correct units of subtracted chlorine and methanol demand in
   :mod:`build_industry_sector_ratios`.
 
