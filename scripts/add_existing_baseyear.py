@@ -142,6 +142,9 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
     # Assume that all oil power plants are not CHPs.
     if "H" in snakemake.wildcards.sector_opts.split("-"):
         df_agg = df_agg.query("Set != 'CHP'")
+    else:
+        if "I" not in snakemake.wildcards.sector_opts.split("-"):
+            df_agg.query("Industry" == False, inplace=True)
 
     # Replace Fueltype "Natural Gas" with the respective technology (OCGT or CCGT)
     df_agg.loc[df_agg["Fueltype"] == "Natural Gas", "Fueltype"] = df_agg.loc[
@@ -616,6 +619,9 @@ def add_heating_capacities_installed_before_baseyear(
 
     # check if the CHPs were read in from MaStR for Germany
     if "Capacity_thermal" in chp.columns:
+        if "I" not in snakemake.wildcards.sector_opts.split("-"):
+            chp.query("Industry == False", inplace=True)
+
         thermal_capacity_b = ~chp.Capacity_thermal.isna()
         mastr_chp = chp[thermal_capacity_b]
 
@@ -811,7 +817,6 @@ if __name__ == "__main__":
 
     baseyear = snakemake.params.baseyear
 
-    # n = pypsa.Network('/home/toni-seibold/Documents/CHP/pypsa-ariadne/results/240209-365H-fixcoalco2/prenetworks/elec_s_22_lv1.2__365H-T-H-B-I-A_2020.nc')
     n = pypsa.Network(snakemake.input.network)
 
     # define spatial resolution of carriers
