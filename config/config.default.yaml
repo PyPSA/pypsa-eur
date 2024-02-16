@@ -314,7 +314,7 @@ pypsa_eur:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#energy
 energy:
-  energy_totals_year: 2011
+  energy_totals_year: 2013
   base_emissions_year: 1990
   eurostat_report_year: 2016
   emissions: CO2
@@ -501,6 +501,7 @@ sector:
   SMR_cc: true
   regional_methanol_demand: false
   regional_oil_demand: false
+  regional_coal_demand: false
   regional_co2_sequestration_potential:
     enable: false
     attribute: 'conservative estimate Mt'

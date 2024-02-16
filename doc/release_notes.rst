@@ -10,6 +10,18 @@ Release Notes
 Upcoming Release
 ================
 
+* Bugfix: Correct units of subtracted chlorine and methanol demand in
+  :mod:`build_industry_sector_ratios`.
+
+* Include all countries in ammonia production resource. This is so that the full
+  EU28 ammonia demand can be correctly subtracted in the rule
+  :mod:`build_industry_sector_ratios`.
+
+* Regions are assigned to all buses with unique coordinates in the network with
+  a preference given to substations. Previously, only substations had assigned
+  regions, but this could lead to issues when a high spatial resolution was
+  applied.
+
 * The default configuration ``config/config.default.yaml`` is now automatically
   used as a base configuration file and no longer copied to
   ``config/config.yaml`` on first use. The file ``config/config.yaml`` should be
@@ -17,6 +29,10 @@ Upcoming Release
 
 * Merged two OPSD time series data versions into such that the option ``load:
   power_statistics:`` becomes superfluous and was hence removed.
+* Bugfix: The industry coal emissions for industry were not properly tracked.
+
+* Allow industrial coal demand to be regional so its emissions can be included
+  in regional emission limits.
 
 * Add new default to overdimension heating in individual buildings. This allows
   them to cover heat demand peaks e.g. 10% higher than those in the data. The
@@ -112,6 +128,8 @@ Upcoming Release
   the previous model for new installations. This will only have an effect on
   workflows with foresight "myopic" and still needs to be added foresight option
   "perfect".
+
+* Switched the energy totals year from 2011 to 2013 to comply with the assumed default weather year.
 
 
 PyPSA-Eur 0.9.0 (5th January 2024)
