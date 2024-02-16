@@ -29,6 +29,10 @@ Upcoming Release
 
 * Merged two OPSD time series data versions into such that the option ``load:
   power_statistics:`` becomes superfluous and was hence removed.
+* Bugfix: The industry coal emissions for industry were not properly tracked.
+
+* Allow industrial coal demand to be regional so its emissions can be included
+  in regional emission limits.
 
 * Add new default to overdimension heating in individual buildings. This allows
   them to cover heat demand peaks e.g. 10% higher than those in the data. The
