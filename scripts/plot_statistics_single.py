@@ -24,7 +24,12 @@ def rename_index(ds):
 def plot_static_single(ds, ax):
     factor, unit = conversion[output]
     ds = ds.dropna()
-    c = tech_colors[ds.index.get_level_values("carrier").map(rename_techs)]
+    carriers = ds.index.get_level_values("carrier").map(rename_techs)
+    if not carriers.difference(tech_colors.index).empty:
+        print(
+            f"Missing colors for carrier: {carriers.difference(tech_colors.index).values}\n Dark grey used instead."
+        )
+    c = carriers.map(lambda x: tech_colors.get(x, "#808080"))
     ds = ds.pipe(rename_index)
     ds = ds.div(float(factor)) if factor != "-" else ds
     ds.T.plot.barh(color=c.values, ax=ax, xlabel=unit)

@@ -44,7 +44,12 @@ def plot_static_comparison(df, ax, stacked=False):
     df = df.dropna(axis=0, how="all").fillna(0)
     if df.empty:
         return
-    c = tech_colors[df.index.get_level_values("carrier").map(rename_techs)]
+    carriers = df.index.get_level_values("carrier").map(rename_techs)
+    if not carriers.difference(tech_colors.index).empty:
+        print(
+            f"Missing colors for carrier: {carriers.difference(tech_colors.index).values}\n Dark grey used instead."
+        )
+    c = carriers.map(lambda x: tech_colors.get(x, "#808080"))
     df = df.pipe(rename_index).T
     df = df.div(float(factor)) if factor != "-" else df
     df.plot.bar(color=c.values, ax=ax, stacked=stacked, legend=False, ylabel=unit)
