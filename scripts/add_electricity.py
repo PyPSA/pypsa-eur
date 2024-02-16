@@ -903,9 +903,5 @@ if __name__ == "__main__":
 
     sanitize_carriers(n, snakemake.config)
 
-    # set locations and units of electricity buses
-    n.buses["location"] = n.buses.index
-    n.buses["unit"] = "MWh_el"
-
     n.meta = snakemake.config
     n.export_to_netcdf(snakemake.output[0])
