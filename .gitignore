@@ -27,7 +27,7 @@ doc/_build
 /scripts/create_scenarios.py
 /config/create_scenarios.py
 
-config.yaml
+config/config.yaml
 config/scenarios.yaml
 
 

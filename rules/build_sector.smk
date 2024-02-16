@@ -857,7 +857,7 @@ rule prepare_sector_network:
         biomass_potentials=lambda w: (
             resources(
                 "biomass_potentials_s{simpl}_{clusters}_"
-                + "{}.csv".format(config_provider("biomass", "year"))
+                + "{}.csv".format(config_provider("biomass", "year")(w))
             )
             if config_provider("foresight")(w) == "overnight"
             else resources(
@@ -865,9 +865,9 @@ rule prepare_sector_network:
             )
         ),
         costs=lambda w: (
-            "resources/costs_{}.csv".format(config_provider("costs", "year"))
+            resources("costs_{}.csv".format(config_provider("costs", "year")(w)))
             if config_provider("foresight")(w) == "overnight"
-            else "resources/costs_{planning_horizons}.csv"
+            else resources("costs_{planning_horizons}.csv")
         ),
         profile_offwind_ac=resources("profile_offwind-ac.nc"),
         profile_offwind_dc=resources("profile_offwind-dc.nc"),

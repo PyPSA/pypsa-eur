@@ -18,7 +18,7 @@ if config["foresight"] != "perfect":
                 "regions_onshore_elec_s{simpl}_{clusters}.geojson"
             ),
         output:
-            map=RESULTS + "maps/power-network-s{simpl}-{clusters}.pdf",
+            map=resources("maps/power-network-s{simpl}-{clusters}.pdf"),
         threads: 1
         resources:
             mem_mb=4000,
@@ -149,8 +149,6 @@ rule copy_config:
     threads: 1
     resources:
         mem_mb=1000,
-    benchmark:
-        benchmarks("copy_config")
     conda:
         "../envs/environment.yaml"
     script:
@@ -168,10 +166,6 @@ rule make_summary:
         scenario=config_provider("scenario"),
         RDIR=RDIR,
     input:
-        expand(
-            RESULTS + "maps/power-network-s{simpl}-{clusters}.pdf",
-            **config["scenario"],
-        ),
         networks=expand(
             RESULTS
             + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
@@ -179,15 +173,16 @@ rule make_summary:
             run=config["run"]["name"],
         ),
         costs=lambda w: (
-            "resources/costs_{}.csv".format(config_provider("costs", "year"))
+            resources("costs_{}.csv".format(config_provider("costs", "year")(w)))
             if config_provider("foresight")(w) == "overnight"
-            else "resources/costs_{}.csv".format(
+            else resources("costs_{}.csv".format(
                 config_provider("scenario", "planning_horizons", 0)
-            )
+            ))
         ),
         ac_plot=expand(
-            RESULTS + "maps/power-network-s{simpl}-{clusters}.pdf",
+            resources("maps/power-network-s{simpl}-{clusters}.pdf"),
             **config["scenario"],
+            run=config["run"]["name"],
         ),
         costs_plot=expand(
             RESULTS
@@ -235,9 +230,7 @@ rule make_summary:
     resources:
         mem_mb=10000,
     log:
-        logs("make_summary.log"),
-    benchmark:
-        benchmarks("make_summary")
+        RESULTS + "logs/make_summary.log",
     conda:
         "../envs/environment.yaml"
     script:
@@ -267,9 +260,7 @@ rule plot_summary:
     resources:
         mem_mb=10000,
     log:
-        logs("plot_summary.log"),
-    benchmark:
-        benchmarks("plot_summary")
+        RESULTS + "logs/plot_summary.log",
     conda:
         "../envs/environment.yaml"
     script:

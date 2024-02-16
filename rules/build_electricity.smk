@@ -162,12 +162,12 @@ if config["enable"].get("build_cutout", False):
         output:
             protected("cutouts/" + CDIR + "{cutout}.nc"),
         log:
-            "logs/" + CDIR + "build_cutout/{cutout}.log",
+            logs(CDIR + "build_cutout/{cutout}.log"),
         benchmark:
             "benchmarks/" + CDIR + "build_cutout_{cutout}"
-        threads: ATLITE_NPROCESSES
+        threads: config["atlite"].get("nprocesses", 4)
         resources:
-            mem_mb=ATLITE_NPROCESSES * 1000,
+            mem_mb=config["atlite"].get("nprocesses", 4) * 1000,
         conda:
             "../envs/environment.yaml"
         script:
@@ -249,9 +249,9 @@ rule determine_availability_matrix_MD_UA:
         availability_map=resources("availability_matrix_MD-UA_{technology}.png"),
     log:
         logs("determine_availability_matrix_MD_UA_{technology}.log"),
-    threads: ATLITE_NPROCESSES
+    threads: config["atlite"].get("nprocesses", 4)
     resources:
-        mem_mb=ATLITE_NPROCESSES * 5000,
+        mem_mb=config["atlite"].get("nprocesses", 4) * 5000,
     conda:
         "../envs/environment.yaml"
     script:
@@ -319,9 +319,9 @@ rule build_renewable_profiles:
         logs("build_renewable_profile_{technology}.log"),
     benchmark:
         benchmarks("build_renewable_profiles_{technology}")
-    threads: ATLITE_NPROCESSES
+    threads: config["atlite"].get("nprocesses", 4)
     resources:
-        mem_mb=ATLITE_NPROCESSES * 5000,
+        mem_mb=config["atlite"].get("nprocesses", 4) * 5000,
     wildcard_constraints:
         technology="(?!hydro).*",  # Any technology other than hydro
     conda:
@@ -391,9 +391,9 @@ if config["lines"]["dynamic_line_rating"]["activate"]:
             logs("build_line_rating.log"),
         benchmark:
             benchmarks("build_line_rating")
-        threads: ATLITE_NPROCESSES
+        threads: config["atlite"].get("nprocesses", 4)
         resources:
-            mem_mb=ATLITE_NPROCESSES * 1000,
+            mem_mb=config["atlite"].get("nprocesses", 4) * 1000,
         conda:
             "../envs/environment.yaml"
         script:
@@ -435,7 +435,7 @@ rule add_electricity:
             if config_provider("lines", "dynamic_line_rating", "activate")(w)
             else resources("networks/base.nc")
         ),
-        tech_costs=COSTS,
+        tech_costs=resources(f"costs_{config['costs']['year']}.csv"),
         regions=resources("regions_onshore.geojson"),
         powerplants=resources("powerplants.csv"),
         hydro_capacities=ancient("data/bundle/hydro_capacities.csv"),
@@ -478,7 +478,7 @@ rule simplify_network:
         costs=config_provider("costs"),
     input:
         network=resources("networks/elec.nc"),
-        tech_costs=COSTS,
+        tech_costs=resources(f"costs_{config['costs']['year']}.csv"),
         regions_onshore=resources("regions_onshore.geojson"),
         regions_offshore=resources("regions_offshore.geojson"),
     output:
@@ -525,7 +525,7 @@ rule cluster_network:
             if config_provider("enable", "custom_busmap", default=False)(w)
             else []
         ),
-        tech_costs=COSTS,
+        tech_costs=resources(f"costs_{config['costs']['year']}.csv"),
     output:
         network=resources("networks/elec_s{simpl}_{clusters}.nc"),
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
@@ -552,7 +552,7 @@ rule add_extra_components:
         costs=config_provider("costs"),
     input:
         network=resources("networks/elec_s{simpl}_{clusters}.nc"),
-        tech_costs=COSTS,
+        tech_costs=resources(f"costs_{config['costs']['year']}.csv"),
     output:
         resources("networks/elec_s{simpl}_{clusters}_ec.nc"),
     log:
@@ -570,11 +570,11 @@ rule add_extra_components:
 
 rule prepare_network:
     params:
-        snapshots={
-            "resolution": config_provider("snapshots", "resolution", default=False),
+        snapshots=lambda w: {
+            "resolution": config_provider("snapshots", "resolution", default=False)(w),
             "segmentation": config_provider(
                 "snapshots", "segmentation", default=False
-            ),
+            )(w),
         },
         links=config_provider("links"),
         lines=config_provider("lines"),
@@ -588,7 +588,7 @@ rule prepare_network:
         autarky=config_provider("electricity", "autarky", default={}),
     input:
         resources("networks/elec_s{simpl}_{clusters}_ec.nc"),
-        tech_costs=COSTS,
+        tech_costs=resources(f"costs_{config['costs']['year']}.csv"),
         co2_price=lambda w: resources("co2_price.csv") if "Ept" in w.opts else [],
     output:
         resources("networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"),

@@ -20,9 +20,6 @@ configfile: "config/config.default.yaml"
 configfile: "config/config.yaml"
 
 
-COSTS = f"resources/costs_{config['costs']['year']}.csv"
-ATLITE_NPROCESSES = config["atlite"].get("nprocesses", 4)
-
 run = config["run"]
 scenarios = run.get("scenarios", {})
 if run["name"]:
@@ -39,15 +36,16 @@ benchmarks = path_provider("benchmarks/", RDIR, run["shared_resources"])
 resources = path_provider("resources/", RDIR, run["shared_resources"])
 
 CDIR = "" if run["shared_cutouts"] else RDIR
-LOGS = "logs/" + RDIR
-BENCHMARKS = "benchmarks/" + RDIR
-if not (shared_resources := run.get("shared_resources")):
-    RESOURCES = "resources/" + RDIR
-elif isinstance(shared_resources, str):
-    RESOURCES = "resources/" + shared_resources + "/"
-else:
-    RESOURCES = "resources/"
 RESULTS = "results/" + RDIR
+
+# TODO: this needs to be aligned with new scenario management
+# if not (shared_resources := run.get("shared_resources")):
+#     RESOURCES = "resources/" + RDIR
+# elif isinstance(shared_resources, str):
+#     RESOURCES = "resources/" + shared_resources + "/"
+# else:
+#     RESOURCES = "resources/"
+
 
 
 localrules:

@@ -52,15 +52,16 @@ def get_run_path(fn, dir, rdir, shared_resources):
 
     Notes
     -----
-    Special case for "base" allows no wildcards other than
-    "technology" and excludes filenames starting with "networks/elec" or
+    Special case for "base" allows no wildcards other than "technology", "year"
+    and "scope" and excludes filenames starting with "networks/elec" or
     "add_electricity".
     """
     pattern = r"\{([^{}]+)\}"
-    existing_wildcards = list(re.findall(pattern, fn))
+    existing_wildcards = set(re.findall(pattern, fn))
     if shared_resources == "base":
         # special case for shared "base" resources
-        no_relevant_wildcards = not len(set(existing_wildcards) - {"technology"})
+        irrelevant_wildcards = {"technology", "year", "scope"}
+        no_relevant_wildcards = not len(existing_wildcards - irrelevant_wildcards)
         no_elec_rule = not fn.startswith("networks/elec") and not fn.startswith(
             "add_electricity"
         )
@@ -68,7 +69,7 @@ def get_run_path(fn, dir, rdir, shared_resources):
     elif isinstance(shared_resources, (str, list)):
         if isinstance(shared_resources, str):
             shared_resources = [shared_resources]
-        is_shared = set(existing_wildcards).issubset(shared_resources)
+        is_shared = (existing_wildcards).issubset(shared_resources)
     else:
         is_shared = shared_resources
 

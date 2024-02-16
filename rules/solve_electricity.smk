@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: MIT
 
-
 rule solve_network:
     params:
         solving=config_provider("solving"),
