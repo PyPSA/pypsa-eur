@@ -27,14 +27,14 @@ def plot_static_single(ds, ax):
     c = tech_colors[ds.index.get_level_values("carrier").map(rename_techs)]
     ds = ds.pipe(rename_index)
     ds = ds.div(float(factor)) if factor != "-" else ds
-    ds.T.plot.barh(color=c.values, ax=ax, ylabel=unit)
-    ax.grid(axis="x")
+    ds.T.plot.barh(color=c.values, ax=ax, xlabel=unit)
+    ax.grid(axis="y")
 
 
 def read_csv(input):
     try:
         df = pd.read_csv(input, skiprows=2)
-        df = df.set_index(["component", "carrier"]).squeeze()
+        df = df.set_index(["component", "carrier"]).iloc[:, 0]
     except Exception as e:
         print(f"An error occurred reading file {input}: {e}")
         df = pd.DataFrame()
