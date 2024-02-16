@@ -10,6 +10,11 @@ Release Notes
 Upcoming Release
 ================
 
+* Regions are assigned to all buses with unique coordinates in the network with
+  a preference given to substations. Previously, only substations had assigned
+  regions, but this could lead to issues when a high spatial resolution was
+  applied.
+
 * The default configuration ``config/config.default.yaml`` is now automatically
   used as a base configuration file and no longer copied to
   ``config/config.yaml`` on first use. The file ``config/config.yaml`` should be
