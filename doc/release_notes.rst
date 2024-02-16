@@ -10,6 +10,11 @@ Release Notes
 Upcoming Release
 ================
 
+* Bugfix: The industry coal emissions for industry were not properly tracked.
+
+* Allow industrial coal demand to be regional so its emissions can be included
+  in regional emission limits.
+
 * Add new default to overdimension heating in individual buildings. This allows
   them to cover heat demand peaks e.g. 10% higher than those in the data. The
   disadvantage of manipulating the costs is that the capacity is then not quite
