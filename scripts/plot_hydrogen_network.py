@@ -24,6 +24,7 @@ def group_pipes(df, drop_direction=False):
     """
     Group pipes which connect same buses and return overall capacity.
     """
+    df = df.copy()
     if drop_direction:
         positive_order = df.bus0 < df.bus1
         df_p = df[positive_order]
@@ -32,12 +33,13 @@ def group_pipes(df, drop_direction=False):
         df = pd.concat([df_p, df_n])
 
     # there are pipes for each investment period rename to AC buses name for plotting
+    df["index_orig"] = df.index
     df.index = df.apply(
         lambda x: f"H2 pipeline {x.bus0.replace(' H2', '')} -> {x.bus1.replace(' H2', '')}",
         axis=1,
     )
     return df.groupby(level=0).agg(
-        {"p_nom_opt": "sum", "bus0": "first", "bus1": "first"}
+        {"p_nom_opt": "sum", "bus0": "first", "bus1": "first", "index_orig": "first"}
     )
 
 
@@ -95,17 +97,18 @@ def plot_h2_map(n, regions):
             )
 
     if not h2_retro.empty:
-        positive_order = h2_retro.bus0 < h2_retro.bus1
-        h2_retro_p = h2_retro[positive_order]
-        swap_buses = {"bus0": "bus1", "bus1": "bus0"}
-        h2_retro_n = h2_retro[~positive_order].rename(columns=swap_buses)
-        h2_retro = pd.concat([h2_retro_p, h2_retro_n])
+        if snakemake.params.foresight != "myopic":
+            positive_order = h2_retro.bus0 < h2_retro.bus1
+            h2_retro_p = h2_retro[positive_order]
+            swap_buses = {"bus0": "bus1", "bus1": "bus0"}
+            h2_retro_n = h2_retro[~positive_order].rename(columns=swap_buses)
+            h2_retro = pd.concat([h2_retro_p, h2_retro_n])
 
-        h2_retro["index_orig"] = h2_retro.index
-        h2_retro.index = h2_retro.apply(
-            lambda x: f"H2 pipeline {x.bus0.replace(' H2', '')} -> {x.bus1.replace(' H2', '')}",
-            axis=1,
-        )
+            h2_retro["index_orig"] = h2_retro.index
+            h2_retro.index = h2_retro.apply(
+                lambda x: f"H2 pipeline {x.bus0.replace(' H2', '')} -> {x.bus1.replace(' H2', '')}",
+                axis=1,
+            )
 
         retro_w_new_i = h2_retro.index.intersection(h2_new.index)
         h2_retro_w_new = h2_retro.loc[retro_w_new_i]
