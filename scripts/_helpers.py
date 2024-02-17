@@ -39,10 +39,9 @@ def get_run_path(fn, dir, rdir, shared_resources):
         The base directory.
     rdir : str
         Relative directory for non-shared resources.
-    shared_resources : str, list, or bool
+    shared_resources : str or bool
         Specifies which resources should be shared.
-        - If string or list, assumed to be superset of wildcards for sharing.
-        - If "base", special handling for shared "base" resources.
+        - If string is "base", special handling for shared "base" resources (see notes).
         - If boolean, directly specifies if the resource is shared.
 
     Returns
@@ -54,24 +53,23 @@ def get_run_path(fn, dir, rdir, shared_resources):
     -----
     Special case for "base" allows no wildcards other than "technology", "year"
     and "scope" and excludes filenames starting with "networks/elec" or
-    "add_electricity".
+    "add_electricity". All other resources are shared.
     """
-    pattern = r"\{([^{}]+)\}"
-    existing_wildcards = set(re.findall(pattern, fn))
     if shared_resources == "base":
-        # special case for shared "base" resources
+        pattern = r"\{([^{}]+)\}"
+        existing_wildcards = set(re.findall(pattern, fn))
         irrelevant_wildcards = {"technology", "year", "scope"}
-        no_relevant_wildcards = not len(existing_wildcards - irrelevant_wildcards)
+        no_relevant_wildcards = not (existing_wildcards - irrelevant_wildcards)
         no_elec_rule = not fn.startswith("networks/elec") and not fn.startswith(
             "add_electricity"
         )
         is_shared = no_relevant_wildcards and no_elec_rule
-    elif isinstance(shared_resources, (str, list)):
-        if isinstance(shared_resources, str):
-            shared_resources = [shared_resources]
-        is_shared = (existing_wildcards).issubset(shared_resources)
-    else:
+    elif isinstance(shared_resources, bool):
         is_shared = shared_resources
+    else:
+        raise ValueError(
+            "shared_resources must be a boolean or 'base' for special handling."
+        )
 
     if is_shared:
         return f"{dir}{fn}"
