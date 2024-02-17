@@ -276,7 +276,7 @@ rule build_renewable_profiles:
         ),
         luisa=lambda w: (
             "data/LUISA_basemap_020321_50m.tif"
-            if config_provider("renewable", w.technology, "luisa")
+            if config_provider("renewable", w.technology, "luisa")(w)
             else []
         ),
         gebco=ancient(
