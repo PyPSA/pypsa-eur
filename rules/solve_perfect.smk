@@ -58,14 +58,14 @@ def input_network_year(w):
 
 rule prepare_perfect_foresight:
     params:
-        costs=config["costs"],
+        costs=config_provider("costs"),
     input:
         unpack(input_network_year),
         brownfield_network=lambda w: (
             RESULTS
             + "prenetworks-brownfield/"
             + "elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_"
-            + "{}.nc".format(str(config_provider("scenario", "planning_horizons", 0)))
+            + "{}.nc".format(str(config_provider("scenario", "planning_horizons", 0)(w)))
         ),
     output:
         RESULTS

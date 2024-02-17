@@ -250,14 +250,15 @@ rule determine_availability_matrix_MD_UA:
 
 
 # Optional input when having Ukraine (UA) or Moldova (MD) in the countries list
-if {"UA", "MD"}.intersection(set(config["countries"])):
-    opt = {
-        "availability_matrix_MD_UA": resources(
-            "availability_matrix_MD-UA_{technology}.nc"
-        )
-    }
-else:
-    opt = {}
+def input_ua_md_availability_matrix(w):
+    countries = set(config_provider("countries")(w))
+    if {"UA", "MD"}.intersection(countries):
+        return {
+            "availability_matrix_MD_UA": resources(
+                "availability_matrix_MD-UA_{technology}.nc"
+            )
+        }
+    return {}
 
 
 rule build_renewable_profiles:
@@ -265,7 +266,7 @@ rule build_renewable_profiles:
         snapshots=config_provider("snapshots"),
         renewable=config_provider("renewable"),
     input:
-        **opt,
+        unpack(input_ua_md_availability_matrix),
         base_network=resources("networks/base.nc"),
         corine=ancient("data/bundle/corine/g250_clc06_V18_5.tif"),
         natura=lambda w: (
@@ -359,30 +360,28 @@ rule build_hydro_profile:
         "../scripts/build_hydro_profile.py"
 
 
-if config["lines"]["dynamic_line_rating"]["activate"]:
-
-    rule build_line_rating:
-        params:
-            snapshots=config_provider("snapshots"),
-        input:
-            base_network=resources("networks/base.nc"),
-            cutout="cutouts/"
-            + CDIR
-            + config_provider("lines", "dynamic_line_rating", "cutout")
-            + ".nc",
-        output:
-            output=resources("networks/line_rating.nc"),
-        log:
-            logs("build_line_rating.log"),
-        benchmark:
-            benchmarks("build_line_rating")
-        threads: config["atlite"].get("nprocesses", 4)
-        resources:
-            mem_mb=config["atlite"].get("nprocesses", 4) * 1000,
-        conda:
-            "../envs/environment.yaml"
-        script:
-            "../scripts/build_line_rating.py"
+rule build_line_rating:
+    params:
+        snapshots=config_provider("snapshots"),
+    input:
+        base_network=resources("networks/base.nc"),
+        cutout="cutouts/"
+        + CDIR
+        + config_provider("lines", "dynamic_line_rating", "cutout")
+        + ".nc",
+    output:
+        output=resources("networks/line_rating.nc"),
+    log:
+        logs("build_line_rating.log"),
+    benchmark:
+        benchmarks("build_line_rating")
+    threads: config["atlite"].get("nprocesses", 4)
+    resources:
+        mem_mb=config["atlite"].get("nprocesses", 4) * 1000,
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_line_rating.py"
 
 
 def input_profile_tech(w):
@@ -420,7 +419,7 @@ rule add_electricity:
             if config_provider("lines", "dynamic_line_rating", "activate")(w)
             else resources("networks/base.nc")
         ),
-        tech_costs=resources(f"costs_{config['costs']['year']}.csv"),
+        tech_costs=resources(f"costs_{config_provider('costs', 'year')(w)}.csv"),
         regions=resources("regions_onshore.geojson"),
         powerplants=resources("powerplants.csv"),
         hydro_capacities=ancient("data/bundle/hydro_capacities.csv"),
@@ -463,7 +462,7 @@ rule simplify_network:
         costs=config_provider("costs"),
     input:
         network=resources("networks/elec.nc"),
-        tech_costs=resources(f"costs_{config['costs']['year']}.csv"),
+        tech_costs=resources(f"costs_{config_provider('costs', 'year')(w)}.csv"),
         regions_onshore=resources("regions_onshore.geojson"),
         regions_offshore=resources("regions_offshore.geojson"),
     output:
@@ -510,7 +509,7 @@ rule cluster_network:
             if config_provider("enable", "custom_busmap", default=False)(w)
             else []
         ),
-        tech_costs=resources(f"costs_{config['costs']['year']}.csv"),
+        tech_costs=resources(f"costs_{config_provider('costs', 'year')(w)}.csv"),
     output:
         network=resources("networks/elec_s{simpl}_{clusters}.nc"),
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
@@ -537,7 +536,7 @@ rule add_extra_components:
         costs=config_provider("costs"),
     input:
         network=resources("networks/elec_s{simpl}_{clusters}.nc"),
-        tech_costs=resources(f"costs_{config['costs']['year']}.csv"),
+        tech_costs=resources(f"costs_{config_provider('costs', 'year')(w)}.csv"),
     output:
         resources("networks/elec_s{simpl}_{clusters}_ec.nc"),
     log:
@@ -569,7 +568,7 @@ rule prepare_network:
         autarky=config_provider("electricity", "autarky", default={}),
     input:
         resources("networks/elec_s{simpl}_{clusters}_ec.nc"),
-        tech_costs=resources(f"costs_{config['costs']['year']}.csv"),
+        tech_costs=resources(f"costs_{config_provider('costs', 'year')(w)}.csv"),
         co2_price=lambda w: resources("co2_price.csv") if "Ept" in w.opts else [],
     output:
         resources("networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"),

@@ -172,9 +172,11 @@ rule make_summary:
         costs=lambda w: (
             resources("costs_{}.csv".format(config_provider("costs", "year")(w)))
             if config_provider("foresight")(w) == "overnight"
-            else resources("costs_{}.csv".format(
-                config_provider("scenario", "planning_horizons", 0)
-            ))
+            else resources(
+                "costs_{}.csv".format(
+                    config_provider("scenario", "planning_horizons", 0)(w)
+                )
+            )
         ),
         ac_plot=expand(
             resources("maps/power-network-s{simpl}-{clusters}.pdf"),
