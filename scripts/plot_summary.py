@@ -584,8 +584,8 @@ if __name__ == "__main__":
 
     plot_balances()
 
+    co2_budget = snakemake.params["co2_budget"]
     if (
-        snakemake.params["co2_budget"].startswith("cb")
-        or snakemake.params["foresight"] == "perfect"
-    ):
+        isinstance(co2_budget, str) and co2_budget.startswith("cb")
+    ) or snakemake.params["foresight"] == "perfect":
         plot_carbon_budget_distribution(snakemake.input.eurostat)

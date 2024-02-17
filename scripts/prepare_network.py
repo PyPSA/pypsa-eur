@@ -62,7 +62,11 @@ import logging
 import numpy as np
 import pandas as pd
 import pypsa
-from _helpers import configure_logging, update_config_from_wildcards, set_scenario_config
+from _helpers import (
+    configure_logging,
+    set_scenario_config,
+    update_config_from_wildcards,
+)
 from add_electricity import load_costs, update_transmission_costs
 from pypsa.descriptors import expand_series
 

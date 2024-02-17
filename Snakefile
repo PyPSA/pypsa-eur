@@ -47,7 +47,6 @@ RESULTS = "results/" + RDIR
 #     RESOURCES = "resources/"
 
 
-
 localrules:
     purge,
 
