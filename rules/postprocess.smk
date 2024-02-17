@@ -162,7 +162,7 @@ rule make_summary:
     params:
         foresight=config["foresight"],
         costs=config["costs"],
-        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},
+        snapshots=config["snapshots"],
         scenario=config["scenario"],
         RDIR=RDIR,
     input:
@@ -240,10 +240,11 @@ rule plot_summary:
     params:
         countries=config["countries"],
         planning_horizons=config["scenario"]["planning_horizons"],
-        sector_opts=config["scenario"]["sector_opts"],
         emissions_scope=config["energy"]["emissions"],
         eurostat_report_year=config["energy"]["eurostat_report_year"],
         plotting=config["plotting"],
+        foresight=config["foresight"],
+        co2_budget=config["co2_budget"],
         RDIR=RDIR,
     input:
         costs=RESULTS + "csvs/costs.csv",

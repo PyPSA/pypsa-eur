@@ -46,6 +46,8 @@ rule add_existing_baseyear:
 
 
 rule prepare_perfect_foresight:
+    params:
+        costs=config["costs"],
     input:
         **{
             f"network_{year}": RESULTS

@@ -20,7 +20,7 @@ if config["enable"].get("prepare_links_p_nom", False):
 
 rule build_electricity_demand:
     params:
-        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},
+        snapshots=config["snapshots"],
         countries=config["countries"],
         load=config["load"],
     input:
@@ -62,7 +62,7 @@ rule build_powerplants:
 rule base_network:
     params:
         countries=config["countries"],
-        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},
+        snapshots=config["snapshots"],
         lines=config["lines"],
         links=config["links"],
         transformers=config["transformers"],
@@ -145,7 +145,7 @@ if config["enable"].get("build_cutout", False):
 
     rule build_cutout:
         params:
-            snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},
+            snapshots=config["snapshots"],
             cutouts=config["atlite"]["cutouts"],
         input:
             regions_onshore=RESOURCES + "regions_onshore.geojson",
@@ -259,7 +259,7 @@ else:
 
 rule build_renewable_profiles:
     params:
-        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},
+        snapshots=config["snapshots"],
         renewable=config["renewable"],
     input:
         **opt,
@@ -357,7 +357,7 @@ if config["lines"]["dynamic_line_rating"]["activate"]:
 
     rule build_line_rating:
         params:
-            snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},
+            snapshots=config["snapshots"],
         input:
             base_network=RESOURCES + "networks/base.nc",
             cutout="cutouts/"
@@ -539,10 +539,7 @@ rule add_extra_components:
 
 rule prepare_network:
     params:
-        snapshots={
-            "resolution": config["snapshots"].get("resolution", False),
-            "segmentation": config["snapshots"].get("segmentation", False),
-        },
+        time_resolution=config["clustering"]["temporal"]["resolution_elec"],
         links=config["links"],
         lines=config["lines"],
         co2base=config["electricity"]["co2base"],
@@ -552,6 +549,7 @@ rule prepare_network:
         gaslimit=config["electricity"].get("gaslimit"),
         max_hours=config["electricity"]["max_hours"],
         costs=config["costs"],
+        adjustments=config["adjustments"]["electricity"],
         autarky=config["electricity"].get("autarky", {}),
     input:
         RESOURCES + "networks/elec_s{simpl}_{clusters}_ec.nc",

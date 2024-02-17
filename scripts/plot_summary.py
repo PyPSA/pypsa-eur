@@ -582,7 +582,8 @@ if __name__ == "__main__":
 
     plot_balances()
 
-    for sector_opts in snakemake.params.sector_opts:
-        opts = sector_opts.split("-")
-        if any("cb" in o for o in opts) or snakemake.config["foresight"] == "perfect":
-            plot_carbon_budget_distribution(snakemake.input.eurostat)
+    if (
+        snakemake.params["co2_budget"].startswith("cb")
+        or snakemake.params["foresight"] == "perfect"
+    ):
+        plot_carbon_budget_distribution(snakemake.input.eurostat)

@@ -59,9 +59,6 @@ snapshots:
   start: "2013-01-01"
   end: "2014-01-01"
   inclusive: 'left'
-  resolution: false
-  segmentation: false
-  #representative: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#enable
 enable:
@@ -366,6 +363,11 @@ existing_capacities:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#sector
 sector:
+  transport: true
+  heating: true
+  biomass: true
+  industry: true
+  agriculture: true
   district_heating:
     potential: 0.6
     progress:
@@ -531,6 +533,7 @@ sector:
   use_methanation_waste_heat: true
   use_fuel_cell_waste_heat: true
   use_electrolysis_waste_heat: true
+  electricity_transmission_grid: true
   electricity_distribution_grid: true
   electricity_distribution_grid_cost_factor: 1.0
   electricity_grid_connection: true
@@ -712,6 +715,14 @@ clustering:
       committable: any
       ramp_limit_up: max
       ramp_limit_down: max
+  temporal:
+    resolution_elec: false
+    resolution_sector: false
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#adjustments
+adjustments:
+  electricity: false
+  sector: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solving
 solving:

@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 import pypsa
 import xarray as xr
-from _helpers import update_config_with_sector_opts
+from _helpers import update_config_from_wildcards
 from add_existing_baseyear import add_build_year_to_new_assets
 from pypsa.clustering.spatial import normed_or_uniform
 
@@ -212,7 +212,7 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=snakemake.config["logging"]["level"])
 
-    update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
+    update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     logger.info(f"Preparing brownfield from the file {snakemake.input.network_p}")
 
