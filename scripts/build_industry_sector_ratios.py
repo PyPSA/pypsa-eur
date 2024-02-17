@@ -408,15 +408,15 @@ def chemicals_industry():
     df.loc["methane", sector] -= ammonia_total * params["MWh_CH4_per_tNH3_SMR"]
     df.loc["elec", sector] -= ammonia_total * params["MWh_elec_per_tNH3_SMR"]
 
-    # subtract chlorine demand
+    # subtract chlorine demand (in MtCl/a)
     chlorine_total = params["chlorine_production_today"]
-    df.loc["hydrogen", sector] -= chlorine_total * params["MWh_H2_per_tCl"]
-    df.loc["elec", sector] -= chlorine_total * params["MWh_elec_per_tCl"]
+    df.loc["hydrogen", sector] -= chlorine_total * params["MWh_H2_per_tCl"] * 1e3
+    df.loc["elec", sector] -= chlorine_total * params["MWh_elec_per_tCl"] * 1e3
 
-    # subtract methanol demand
+    # subtract methanol demand (in MtMeOH/a)
     methanol_total = params["methanol_production_today"]
-    df.loc["methane", sector] -= methanol_total * params["MWh_CH4_per_tMeOH"]
-    df.loc["elec", sector] -= methanol_total * params["MWh_elec_per_tMeOH"]
+    df.loc["methane", sector] -= methanol_total * params["MWh_CH4_per_tMeOH"] * 1e3
+    df.loc["elec", sector] -= methanol_total * params["MWh_elec_per_tMeOH"] * 1e3
 
     # MWh/t material
     df.loc[sources, sector] = df.loc[sources, sector] / s_out

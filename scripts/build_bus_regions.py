@@ -136,7 +136,13 @@ if __name__ == "__main__":
         c_b = n.buses.country == country
 
         onshore_shape = country_shapes[country]
-        onshore_locs = n.buses.loc[c_b & n.buses.substation_lv, ["x", "y"]]
+        onshore_locs = (
+            n.buses.loc[c_b & n.buses.onshore_bus]
+            .sort_values(
+                by="substation_lv", ascending=False
+            )  # preference for substations
+            .drop_duplicates(subset=["x", "y"], keep="first")[["x", "y"]]
+        )
         onshore_regions.append(
             gpd.GeoDataFrame(
                 {

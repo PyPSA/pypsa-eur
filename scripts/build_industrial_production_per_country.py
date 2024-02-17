@@ -261,7 +261,11 @@ def separate_basic_chemicals(demand, year):
     demand["Basic chemicals"].clip(lower=0.0, inplace=True)
 
     # assume HVC, methanol, chlorine production proportional to non-ammonia basic chemicals
-    distribution_key = demand["Basic chemicals"] / demand["Basic chemicals"].sum()
+    distribution_key = (
+        demand["Basic chemicals"]
+        / params["basic_chemicals_without_NH3_production_today"]
+        / 1e3
+    )
     demand["HVC"] = params["HVC_production_today"] * 1e3 * distribution_key
     demand["Chlorine"] = params["chlorine_production_today"] * 1e3 * distribution_key
     demand["Methanol"] = params["methanol_production_today"] * 1e3 * distribution_key

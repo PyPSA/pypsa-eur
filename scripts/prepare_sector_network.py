@@ -176,6 +176,13 @@ def define_spatial(nodes, options):
     spatial.coal.nodes = ["EU coal"]
     spatial.coal.locations = ["EU"]
 
+    if options["regional_coal_demand"]:
+        spatial.coal.demand_locations = nodes
+        spatial.coal.industry = nodes + " coal for industry"
+    else:
+        spatial.coal.demand_locations = ["EU"]
+        spatial.coal.industry = ["EU coal for industry"]
+
     # lignite
     spatial.lignite = SimpleNamespace()
     spatial.lignite.nodes = ["EU lignite"]
@@ -3052,17 +3059,38 @@ def add_industry(n, costs):
 
         mwh_coal_per_mwh_coke = 1.366  # from eurostat energy balance
         p_set = (
-            industrial_demand["coal"].sum()
-            + mwh_coal_per_mwh_coke * industrial_demand["coke"].sum()
+            industrial_demand["coal"]
+            + mwh_coal_per_mwh_coke * industrial_demand["coke"]
         ) / nhours
+
+        if not options["regional_coal_demand"]:
+            p_set = p_set.sum()
+
+        n.madd(
+            "Bus",
+            spatial.coal.industry,
+            location=spatial.coal.demand_locations,
+            carrier="coal for industry",
+            unit="MWh_LHV",
+        )
 
         n.madd(
             "Load",
-            spatial.coal.nodes,
-            suffix=" for industry",
-            bus=spatial.coal.nodes,
+            spatial.coal.industry,
+            bus=spatial.coal.industry,
             carrier="coal for industry",
             p_set=p_set,
+        )
+
+        n.madd(
+            "Link",
+            spatial.coal.industry,
+            bus0=spatial.coal.nodes,
+            bus1=spatial.coal.industry,
+            bus2="co2 atmosphere",
+            carrier="coal for industry",
+            p_nom_extendable=True,
+            efficiency2=costs.at["coal", "CO2 intensity"],
         )
 
 

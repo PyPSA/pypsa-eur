@@ -612,6 +612,7 @@ if __name__ == "__main__":
         "symbol",
         "tags",
         "under_construction",
+        "onshore_bus",
         "substation_lv",
         "substation_off",
         "geometry",

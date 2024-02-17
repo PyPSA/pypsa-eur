@@ -28,13 +28,14 @@ if __name__ == "__main__":
         header=0,
         index_col=0,
         skipfooter=19,
+        na_values=["--"],
     )
 
     ammonia.index = cc.convert(ammonia.index, to="iso2")
 
     years = [str(i) for i in range(2013, 2018)]
-    countries = ammonia.index.intersection(snakemake.params.countries)
-    ammonia = ammonia.loc[countries, years].astype(float)
+
+    ammonia = ammonia[years]
 
     # convert from ktonN to ktonNH3
     ammonia *= 17 / 14
