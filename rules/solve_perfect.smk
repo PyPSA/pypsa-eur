@@ -32,7 +32,7 @@ rule add_existing_baseyear:
         RESULTS
         + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
     wildcard_constraints:
-        planning_horizons=config_provider("scenario", "planning_horizons", 0),  #only applies to baseyear
+        planning_horizons=config["scenario"]["planning_horizons"][0],  #only applies to baseyear
     threads: 1
     resources:
         mem_mb=2000,
@@ -53,7 +53,8 @@ rule add_existing_baseyear:
 def input_network_year(w):
     return {
         f"network_{year}": RESULTS
-        + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{year}.nc"
+        + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}"
+        + f"_{year}.nc"
         for year in config_provider("scenario", "planning_horizons")(w)[1:]
     }
 
@@ -61,6 +62,7 @@ def input_network_year(w):
 rule prepare_perfect_foresight:
     params:
         costs=config_provider("costs"),
+        time_resolution=config_provider("clustering", "temporal", "sector"),
     input:
         unpack(input_network_year),
         brownfield_network=lambda w: (
@@ -98,7 +100,7 @@ rule solve_sector_network_perfect:
         sector=config_provider("sector"),
         planning_horizons=config_provider("scenario", "planning_horizons"),
         co2_sequestration_potential=config_provider(
-            "sector", "co2_sequestration_potential", 200
+            "sector", "co2_sequestration_potential", default=200
         ),
         custom_extra_functionality=input_custom_extra_functionality,
     input:
@@ -122,8 +124,9 @@ rule solve_sector_network_perfect:
         memory=RESULTS
         + "logs/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years_memory.log",
     benchmark:
-        benchmarks(
-            "solve_sector_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years}"
+        (
+            RESULTS
+            + "benchmarks/solve_sector_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years}"
         )
     conda:
         "../envs/environment.yaml"

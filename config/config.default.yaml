@@ -25,7 +25,7 @@ run:
     enable: false
     file: config/scenarios.yaml
   disable_progressbar: false
-  shared_resources: false # TODO: splitting resources by wildcard does not work well, neither does true, only base works well
+  shared_resources: false
   shared_cutouts: true
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#foresight

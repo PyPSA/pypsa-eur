@@ -43,12 +43,12 @@ if config["foresight"] != "perfect":
         resources:
             mem_mb=10000,
         log:
-            logs(
-                "plot_power_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log"
-            ),
+            RESULTS
+            + "logs/plot_power_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log",
         benchmark:
-            benchmarks(
-                "plot_power_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+            (
+                RESULTS
+                + "benchmarksplot_power_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
             )
         conda:
             "../envs/environment.yaml"
@@ -70,12 +70,12 @@ if config["foresight"] != "perfect":
         resources:
             mem_mb=10000,
         log:
-            logs(
-                "plot_hydrogen_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log"
-            ),
+            RESULTS
+            + "logs/plot_hydrogen_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log",
         benchmark:
-            benchmarks(
-                "plot_hydrogen_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+            (
+                RESULTS
+                + "benchmarks/plot_hydrogen_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
             )
         conda:
             "../envs/environment.yaml"
@@ -96,12 +96,12 @@ if config["foresight"] != "perfect":
         resources:
             mem_mb=10000,
         log:
-            logs(
-                "plot_gas_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log"
-            ),
+            RESULTS
+            + "logs/plot_gas_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log",
         benchmark:
-            benchmarks(
-                "plot_gas_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+            (
+                RESULTS
+                + "benchmarks/plot_gas_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
             )
         conda:
             "../envs/environment.yaml"
@@ -131,10 +131,6 @@ if config["foresight"] == "perfect":
         threads: 2
         resources:
             mem_mb=10000,
-        benchmark:
-            benchmarks(
-                "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years_benchmark"
-            )
         conda:
             "../envs/environment.yaml"
         script:
@@ -167,7 +163,7 @@ rule make_summary:
             RESULTS
             + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
             **config["scenario"],
-            run=config["run"]["name"],
+            allow_missing=True,
         ),
         costs=lambda w: (
             resources("costs_{}.csv".format(config_provider("costs", "year")(w)))
@@ -181,13 +177,13 @@ rule make_summary:
         ac_plot=expand(
             resources("maps/power-network-s{simpl}-{clusters}.pdf"),
             **config["scenario"],
-            run=config["run"]["name"],
+            allow_missing=True,
         ),
         costs_plot=expand(
             RESULTS
             + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
             **config["scenario"],
-            run=config["run"]["name"],
+            allow_missing=True,
         ),
         h2_plot=lambda w: expand(
             (
@@ -197,7 +193,7 @@ rule make_summary:
                 else []
             ),
             **config["scenario"],
-            run=config["run"]["name"],
+            allow_missing=True,
         ),
         ch4_plot=lambda w: expand(
             (
@@ -207,7 +203,7 @@ rule make_summary:
                 else []
             ),
             **config["scenario"],
-            run=config["run"]["name"],
+            allow_missing=True,
         ),
     output:
         nodal_costs=RESULTS + "csvs/nodal_costs.csv",
@@ -245,6 +241,7 @@ rule plot_summary:
         plotting=config_provider("plotting"),
         foresight=config_provider("foresight"),
         co2_budget=config_provider("co2_budget"),
+        sector=config_provider("sector"),
         RDIR=RDIR,
     input:
         costs=RESULTS + "csvs/costs.csv",

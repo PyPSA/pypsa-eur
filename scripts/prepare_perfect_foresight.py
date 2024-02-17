@@ -517,7 +517,7 @@ if __name__ == "__main__":
 
     # temporal aggregate
     solver_name = snakemake.config["solving"]["solver"]["name"]
-    segments = snakemake.params["clustering"]["temporal"]["resolution_sector"]
+    segments = snakemake.params.time_resolution
     if isinstance(segments, (int, float)):
         n = apply_time_segmentation_perfect(n, segments, solver_name=solver_name)
 

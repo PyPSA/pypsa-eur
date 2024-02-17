@@ -136,10 +136,11 @@ def input_eurostat(w):
     return f"data/bundle-sector/eurostat-energy_balances-june_{report_year}_edition"
 
 
-def solved_previous_horizon(wildcards):
-    planning_horizons = config_provider("scenario", "planning_horizons")
-    i = planning_horizons.index(int(wildcards.planning_horizons))
+def solved_previous_horizon(w):
+    planning_horizons = config_provider("scenario", "planning_horizons")(w)
+    i = planning_horizons.index(int(w.planning_horizons))
     planning_horizon_p = str(planning_horizons[i - 1])
+
     return (
         RESULTS
         + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_"

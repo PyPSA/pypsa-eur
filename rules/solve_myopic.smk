@@ -33,17 +33,20 @@ rule add_existing_baseyear:
         RESULTS
         + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
     wildcard_constraints:
-        planning_horizons=config_provider("scenario", "planning_horizons", 0),  #only applies to baseyear
+        # TODO: The first planning_horizon needs to be aligned across scenarios
+        # snakemake does not support passing functions to wildcard_constraints
+        # reference: https://github.com/snakemake/snakemake/issues/2703
+        planning_horizons=config["scenario"]["planning_horizons"][0],  #only applies to baseyear
     threads: 1
     resources:
         mem_mb=2000,
     log:
-        logs(
-            "add_existing_baseyear_elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log"
-        ),
+        RESULTS
+        + "logs/add_existing_baseyear_elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log",
     benchmark:
-        benchmarks(
-            "add_existing_baseyear/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+        (
+            RESULTS
+            + "benchmarks/add_existing_baseyear/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
         )
     conda:
         "../envs/environment.yaml"
@@ -85,12 +88,12 @@ rule add_brownfield:
     resources:
         mem_mb=10000,
     log:
-        logs(
-            "add_brownfield_elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log"
-        ),
+        RESULTS
+        + "logs/add_brownfield_elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log",
     benchmark:
-        benchmarks(
-            "add_brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+        (
+            RESULTS
+            + "benchmarks/add_brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
         )
     conda:
         "../envs/environment.yaml"
@@ -121,19 +124,18 @@ rule solve_sector_network_myopic:
     shadow:
         "shallow"
     log:
-        solver=logs(
-            "elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_solver.log"
-        ),
-        python=logs(
-            "elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_python.log"
-        ),
+        solver=RESULTS
+        + "logs/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_solver.log",
+        python=RESULTS
+        + "logs/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_python.log",
     threads: solver_threads
     resources:
         mem_mb=config_provider("solving", "mem"),
         walltime=config_provider("solving", "walltime", default="12:00:00"),
     benchmark:
-        benchmarks(
-            "solve_sector_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+        (
+            RESULTS
+            + "benchmarks/solve_sector_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
         )
     conda:
         "../envs/environment.yaml"
