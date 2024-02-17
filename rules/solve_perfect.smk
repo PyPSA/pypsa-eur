@@ -14,9 +14,9 @@ rule add_existing_baseyear:
         busmap_s=resources("busmap_elec_s{simpl}.csv"),
         busmap=resources("busmap_elec_s{simpl}_{clusters}.csv"),
         clustered_pop_layout=resources("pop_layout_elec_s{simpl}_{clusters}.csv"),
-        costs=resources("costs_{}.csv".format(
-            config_provider("scenario", "planning_horizons", 0)
-        )),
+        costs=resources(
+            "costs_{}.csv".format(config_provider("scenario", "planning_horizons", 0))
+        ),
         cop_soil_total=resources("cop_soil_total_elec_s{simpl}_{clusters}.nc"),
         cop_air_total=resources("cop_air_total_elec_s{simpl}_{clusters}.nc"),
         existing_heating_distribution=resources(
@@ -65,7 +65,9 @@ rule prepare_perfect_foresight:
             RESULTS
             + "prenetworks-brownfield/"
             + "elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_"
-            + "{}.nc".format(str(config_provider("scenario", "planning_horizons", 0)(w)))
+            + "{}.nc".format(
+                str(config_provider("scenario", "planning_horizons", 0)(w))
+            )
         ),
     output:
         RESULTS
