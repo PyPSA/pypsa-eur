@@ -189,21 +189,21 @@ rule make_summary:
             **config["scenario"],
             run=config["run"]["name"],
         ),
-        h2_plot=expand(
+        h2_plot=lambda w: expand(
             (
                 RESULTS
                 + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-h2_network_{planning_horizons}.pdf"
-                if config_provider("sector", "H2_network")
+                if config_provider("sector", "H2_network")(w)
                 else []
             ),
             **config["scenario"],
             run=config["run"]["name"],
         ),
-        ch4_plot=expand(
+        ch4_plot=lambda w: expand(
             (
                 RESULTS
                 + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-ch4_network_{planning_horizons}.pdf"
-                if config_provider("sector", "gas_network")
+                if config_provider("sector", "gas_network")(w)
                 else []
             ),
             **config["scenario"],
