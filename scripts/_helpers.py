@@ -4,11 +4,11 @@
 # SPDX-License-Identifier: MIT
 
 import contextlib
+import copy
 import hashlib
 import logging
 import os
 import re
-import copy
 import urllib
 from functools import partial
 from pathlib import Path
@@ -117,9 +117,9 @@ def find_opt(opts, expr):
     """
     for o in opts:
         if expr in o:
-            m = re.findall("^m?\d*(\.|p)?\d+$", o)
+            m = re.findall(r"m?\d+(?:[\.p]\d+)?", o)
             if len(m) > 0:
-                return True, float(m[0].replace("p", ".").replace("m", "-"))
+                return True, float(m[-1].replace("p", ".").replace("m", "-"))
             else:
                 return True, None
     return False, None
