@@ -10,6 +10,7 @@ import os, sys, glob
 path = workflow.source_path("../scripts/_helpers.py")
 sys.path.insert(0, os.path.dirname(path))
 
+from _helpers import validate_checksum, update_config_from_wildcards
 from snakemake.utils import update_config
 
 
@@ -41,7 +42,10 @@ def scenario_config(scenario_name):
 
 def static_getter(wildcards, keys, default):
     """Getter function for static config values."""
-    return get_config(config, keys, default)
+    config_with_wildcards = update_config_from_wildcards(
+        config, wildcards, inplace=False
+    )
+    return get_config(config_with_wildcards, keys, default)
 
 
 def dynamic_getter(wildcards, keys, default):
@@ -53,7 +57,11 @@ def dynamic_getter(wildcards, keys, default):
         raise ValueError(
             f"Scenario {scenario_name} not found in file {config['run']['scenario']['file']}."
         )
-    return get_config(scenario_config(scenario_name), keys, default)
+    config_with_scenario = scenario_config(scenario_name)
+    config_with_wildcards = update_config_from_wildcards(
+        config_with_scenario, wildcards, inplace=False
+    )
+    return get_config(config_with_wildcards, keys, default)
 
 
 def config_provider(*keys, default=None):

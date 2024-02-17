@@ -8,6 +8,7 @@ import hashlib
 import logging
 import os
 import re
+import copy
 import urllib
 from functools import partial
 from pathlib import Path
@@ -469,12 +470,13 @@ def parse(infix):
         return {infix.pop(0): parse(infix)}
 
 
-def update_config_from_wildcards(config, w):
+def update_config_from_wildcards(config, w, inplace=True):
     """
     Parses configuration settings from wildcards and updates the config.
-
-    - TODO: Should be run inside config_provider function.
     """
+
+    if not inplace:
+        config = copy.deepcopy(config)
 
     if w.get("opts"):
         opts = w.opts.split("-")
@@ -640,6 +642,9 @@ def update_config_from_wildcards(config, w):
             if o.startswith("CF+"):
                 infix = o.split("+")[1:]
                 update_config(config, parse(infix))
+
+    if not inplace:
+        return config
 
 
 def get_checksum_from_zenodo(file_url):
