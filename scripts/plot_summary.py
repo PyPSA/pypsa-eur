@@ -428,13 +428,13 @@ def historical_emissions(countries):
     )
 
     emissions = co2_totals.loc["electricity"]
-    if "T" in opts:
+    if options["transport"]:
         emissions += co2_totals.loc[[i + " non-elec" for i in ["rail", "road"]]].sum()
-    if "H" in opts:
+    if options["heating"]:
         emissions += co2_totals.loc[
             [i + " non-elec" for i in ["residential", "services"]]
         ].sum()
-    if "I" in opts:
+    if options["industry"]:
         emissions += co2_totals.loc[
             [
                 "industrial non-elec",
@@ -448,7 +448,7 @@ def historical_emissions(countries):
     return emissions
 
 
-def plot_carbon_budget_distribution(input_eurostat):
+def plot_carbon_budget_distribution(input_eurostat, options):
     """
     Plot historical carbon emissions in the EU and decarbonization path.
     """
@@ -470,7 +470,7 @@ def plot_carbon_budget_distribution(input_eurostat):
     e_1990 = co2_emissions_year(
         countries,
         input_eurostat,
-        opts,
+        options,
         emissions_scope,
         report_year,
         input_co2,
@@ -588,4 +588,5 @@ if __name__ == "__main__":
     if (
         isinstance(co2_budget, str) and co2_budget.startswith("cb")
     ) or snakemake.params["foresight"] == "perfect":
-        plot_carbon_budget_distribution(snakemake.input.eurostat)
+        options = snakemake.params.sector
+        plot_carbon_budget_distribution(snakemake.input.eurostat, options)
