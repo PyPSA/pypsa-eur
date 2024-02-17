@@ -14,9 +14,11 @@ rule add_existing_baseyear:
         busmap_s=resources("busmap_elec_s{simpl}.csv"),
         busmap=resources("busmap_elec_s{simpl}_{clusters}.csv"),
         clustered_pop_layout=resources("pop_layout_elec_s{simpl}_{clusters}.csv"),
-        costs=lambda w: resources("costs_{}.csv".format(
-            config_provider("scenario", "planning_horizons", 0)(w)
-        )),
+        costs=lambda w: resources(
+            "costs_{}.csv".format(
+                config_provider("scenario", "planning_horizons", 0)(w)
+            )
+        ),
         cop_soil_total=resources("cop_soil_total_elec_s{simpl}_{clusters}.nc"),
         cop_air_total=resources("cop_air_total_elec_s{simpl}_{clusters}.nc"),
         existing_heating_distribution=resources(
