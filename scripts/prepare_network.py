@@ -291,7 +291,7 @@ def set_line_nom_max(
         n.lines["s_nom_max"] = n.lines["s_nom"] + s_nom_max_ext
 
     if np.isfinite(p_nom_max_ext) and p_nom_max_ext > 0:
-        logger.info(f"Limiting line extensions to {p_nom_max_ext} MW")
+        logger.info(f"Limiting link extensions to {p_nom_max_ext} MW")
         hvdc = n.links.index[n.links.carrier == "DC"]
         n.links.loc[hvdc, "p_nom_max"] = n.links.loc[hvdc, "p_nom"] + p_nom_max_ext
 
@@ -322,13 +322,16 @@ if __name__ == "__main__":
     set_line_s_max_pu(n, snakemake.params.lines["s_max_pu"])
 
     # temporal averaging
-    if nhours := snakemake.params.time_resolution:
-        n = average_every_nhours(n, nhours)
+    time_resolution = snakemake.params.time_resolution
+    is_string = isinstance(time_resolution, str)
+    if is_string and time_resolution.lower().endswith("h"):
+        n = average_every_nhours(n, time_resolution)
 
     # segments with package tsam
-    if time_seg := snakemake.params.time_resolution:
+    if is_string and time_resolution.lower().endswith("seg"):
         solver_name = snakemake.config["solving"]["solver"]["name"]
-        n = apply_time_segmentation(n, time_seg.replace("seg", ""), solver_name)
+        segments = int(time_resolution.replace("seg", ""))
+        n = apply_time_segmentation(n, segments, solver_name)
 
     if snakemake.params.co2limit_enable:
         add_co2limit(n, snakemake.params.co2limit, Nyears)
