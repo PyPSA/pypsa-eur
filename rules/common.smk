@@ -10,7 +10,7 @@ import os, sys, glob
 path = workflow.source_path("../scripts/_helpers.py")
 sys.path.insert(0, os.path.dirname(path))
 
-from _helpers import validate_checksum
+from snakemake.utils import update_config
 
 
 def get_config(config, keys, default=None):
@@ -29,11 +29,7 @@ def get_config(config, keys, default=None):
 def merge_configs(base_config, scenario_config):
     """Merge base config with a specific scenario without modifying the original."""
     merged = copy.deepcopy(base_config)
-    for key, value in scenario_config.items():
-        if key in merged and isinstance(merged[key], dict):
-            merged[key] = merge_configs(merged[key], value)
-        else:
-            merged[key] = value
+    update_config(merged, scenario_config)
     return merged
 
 
