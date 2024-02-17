@@ -30,21 +30,12 @@ if run["name"]:
 else:
     RDIR = ""
 
-# for possibly shared resources
 logs = path_provider("logs/", RDIR, run["shared_resources"])
 benchmarks = path_provider("benchmarks/", RDIR, run["shared_resources"])
 resources = path_provider("resources/", RDIR, run["shared_resources"])
 
 CDIR = "" if run["shared_cutouts"] else RDIR
 RESULTS = "results/" + RDIR
-
-# TODO: this needs to be aligned with new scenario management
-# if not (shared_resources := run.get("shared_resources")):
-#     RESOURCES = "resources/" + RDIR
-# elif isinstance(shared_resources, str):
-#     RESOURCES = "resources/" + shared_resources + "/"
-# else:
-#     RESOURCES = "resources/"
 
 
 localrules:

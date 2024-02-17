@@ -321,7 +321,7 @@ def progress_retrieve(url, file, disable=False):
 def mock_snakemake(
     rulename,
     root_dir=None,
-    configfiles=[],
+    configfiles=None,
     submodule_dir="workflow/submodules/pypsa-eur",
     **wildcards,
 ):
@@ -375,7 +375,9 @@ def mock_snakemake(
             if os.path.exists(p):
                 snakefile = p
                 break
-        if isinstance(configfiles, str):
+        if configfiles is None:
+            configfiles = []
+        elif isinstance(configfiles, str):
             configfiles = [configfiles]
 
         workflow = sm.Workflow(
@@ -397,7 +399,7 @@ def mock_snakemake(
 
         def make_accessable(*ios):
             for io in ios:
-                for i in range(len(io)):
+                for i, _ in enumerate(io):
                     io[i] = os.path.abspath(io[i])
 
         make_accessable(job.input, job.output, job.log)
