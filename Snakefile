@@ -26,7 +26,9 @@ if run["name"]:
     if scenarios.get("enable"):
         fn = Path(scenarios["file"])
         scenarios = yaml.safe_load(fn.read_text())
-    RDIR = "{run}/"
+        RDIR = "{run}/"
+    else:
+        RDIR = run["name"] + "/"
 else:
     RDIR = ""
 
