@@ -276,7 +276,7 @@ rule build_renewable_profiles:
         ),
         luisa=lambda w: (
             "data/LUISA_basemap_020321_50m.tif"
-            if config_provider("renewable", w.technology, "luisa")(w)
+            if config_provider("renewable", w.technology, "luisa")
             else []
         ),
         gebco=ancient(
@@ -365,9 +365,9 @@ rule build_line_rating:
         snapshots=config_provider("snapshots"),
     input:
         base_network=resources("networks/base.nc"),
-        cutout="cutouts/"
+        cutout=lambda w: "cutouts/"
         + CDIR
-        + config_provider("lines", "dynamic_line_rating", "cutout")
+        + config_provider("lines", "dynamic_line_rating", "cutout")(w)
         + ".nc",
     output:
         output=resources("networks/line_rating.nc"),
@@ -419,7 +419,7 @@ rule add_electricity:
             if config_provider("lines", "dynamic_line_rating", "activate")(w)
             else resources("networks/base.nc")
         ),
-        tech_costs=resources(f"costs_{config_provider('costs', 'year')(w)}.csv"),
+        tech_costs=lambda w: resources(f"costs_{config_provider('costs', 'year')(w)}.csv"),
         regions=resources("regions_onshore.geojson"),
         powerplants=resources("powerplants.csv"),
         hydro_capacities=ancient("data/bundle/hydro_capacities.csv"),
@@ -462,7 +462,7 @@ rule simplify_network:
         costs=config_provider("costs"),
     input:
         network=resources("networks/elec.nc"),
-        tech_costs=resources(f"costs_{config_provider('costs', 'year')(w)}.csv"),
+        tech_costs=lambda w: resources(f"costs_{config_provider('costs', 'year')(w)}.csv"),
         regions_onshore=resources("regions_onshore.geojson"),
         regions_offshore=resources("regions_offshore.geojson"),
     output:
@@ -509,7 +509,7 @@ rule cluster_network:
             if config_provider("enable", "custom_busmap", default=False)(w)
             else []
         ),
-        tech_costs=resources(f"costs_{config_provider('costs', 'year')(w)}.csv"),
+        tech_costs=lambda w: resources(f"costs_{config_provider('costs', 'year')(w)}.csv"),
     output:
         network=resources("networks/elec_s{simpl}_{clusters}.nc"),
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
@@ -536,7 +536,7 @@ rule add_extra_components:
         costs=config_provider("costs"),
     input:
         network=resources("networks/elec_s{simpl}_{clusters}.nc"),
-        tech_costs=resources(f"costs_{config_provider('costs', 'year')(w)}.csv"),
+        tech_costs=lambda w: resources(f"costs_{config_provider('costs', 'year')(w)}.csv"),
     output:
         resources("networks/elec_s{simpl}_{clusters}_ec.nc"),
     log:
@@ -564,11 +564,11 @@ rule prepare_network:
         gaslimit=config_provider("electricity", "gaslimit"),
         max_hours=config_provider("electricity", "max_hours"),
         costs=config_provider("costs"),
-        adjustments=config_provider("adjustments", "electricity",
+        adjustments=config_provider("adjustments", "electricity"),
         autarky=config_provider("electricity", "autarky", default={}),
     input:
         resources("networks/elec_s{simpl}_{clusters}_ec.nc"),
-        tech_costs=resources(f"costs_{config_provider('costs', 'year')(w)}.csv"),
+        tech_costs=lambda w: resources(f"costs_{config_provider('costs', 'year')(w)}.csv"),
         co2_price=lambda w: resources("co2_price.csv") if "Ept" in w.opts else [],
     output:
         resources("networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"),

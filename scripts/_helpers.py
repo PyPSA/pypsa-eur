@@ -72,7 +72,7 @@ def get_run_path(fn, dir, rdir, shared_resources):
         is_shared = shared_resources
     else:
         raise ValueError(
-            "shared_resources must be a boolean or 'base' for special handling."
+            "shared_resources must be a boolean, str, or 'base' for special handling."
         )
 
     if is_shared:

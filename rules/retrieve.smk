@@ -84,7 +84,7 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cost_data", T
 
     rule retrieve_cost_data:
         params:
-            version=lambda w: config_provider("costs", "version")(w),
+            version=config_provider("costs", "version"),
         output:
             resources("costs_{year}.csv"),
         log:
