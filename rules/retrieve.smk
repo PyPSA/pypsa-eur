@@ -169,9 +169,7 @@ if config["enable"]["retrieve"]:
 
     rule retrieve_gas_infrastructure_data:
         output:
-            protected(
-                expand("data/gas_network/scigrid-gas/data/{files}", files=datafiles)
-            ),
+            expand("data/gas_network/scigrid-gas/data/{files}", files=datafiles),
         log:
             "logs/retrieve_gas_infrastructure_data.log",
         retries: 2
