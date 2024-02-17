@@ -15,7 +15,7 @@ import xarray as xr
 from _helpers import (
     configure_logging,
     set_scenario_config,
-    update_config_with_sector_opts,
+    update_config_from_wildcards,
 )
 from add_existing_baseyear import add_build_year_to_new_assets
 from pypsa.clustering.spatial import normed_or_uniform
@@ -217,7 +217,7 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
+    update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     logger.info(f"Preparing brownfield from the file {snakemake.input.network_p}")
 

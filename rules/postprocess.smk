@@ -159,10 +159,7 @@ rule make_summary:
     params:
         foresight=config_provider("foresight"),
         costs=config_provider("costs"),
-        snapshots=lambda w: {
-            k: config_provider("snapshots", k)(w)
-            for k in ["start", "end", "inclusive"]
-        },
+        snapshots=config_provider("snapshots"),
         scenario=config_provider("scenario"),
         RDIR=RDIR,
     input:
@@ -241,10 +238,11 @@ rule plot_summary:
     params:
         countries=config_provider("countries"),
         planning_horizons=config_provider("scenario", "planning_horizons"),
-        sector_opts=config_provider("scenario", "sector_opts"),
         emissions_scope=config_provider("energy", "emissions"),
         eurostat_report_year=config_provider("energy", "eurostat_report_year"),
         plotting=config_provider("plotting"),
+        foresight=config_provider("foresight"),
+        co2_budget=config_provider("co2_budget"),
         RDIR=RDIR,
     input:
         costs=RESULTS + "csvs/costs.csv",

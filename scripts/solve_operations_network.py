@@ -15,7 +15,7 @@ import pypsa
 from _helpers import (
     configure_logging,
     set_scenario_config,
-    update_config_with_sector_opts,
+    update_config_from_wildcards,
 )
 from solve_network import prepare_network, solve_network
 
@@ -39,10 +39,8 @@ if __name__ == "__main__":
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
-    update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
+    update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
-    opts = f"{snakemake.wildcards.opts}-{snakemake.wildcards.sector_opts}".split("-")
-    opts = [o for o in opts if o != ""]
     solve_opts = snakemake.params.options
 
     np.random.seed(solve_opts.get("seed", 123))
@@ -51,9 +49,7 @@ if __name__ == "__main__":
 
     n.optimize.fix_optimal_capacities()
     n = prepare_network(n, solve_opts, config=snakemake.config)
-    n = solve_network(
-        n, config=snakemake.config, opts=opts, log_fn=snakemake.log.solver
-    )
+    n = solve_network(n, config=snakemake.config, log_fn=snakemake.log.solver)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     n.export_to_netcdf(snakemake.output[0])

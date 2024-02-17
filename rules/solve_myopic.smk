@@ -64,10 +64,7 @@ rule add_brownfield:
             "sector", "H2_retrofit_capacity_per_CH4"
         ),
         threshold_capacity=config_provider("existing_capacities", " threshold_capacity"),
-        snapshots=lambda w: {
-            k: config_provider("snapshots", k)(w)
-            for k in ["start", "end", "inclusive"]
-        },
+        snapshots=config_provider("snapshots"),
         carriers=config_provider("electricity", "renewable_carriers"),
     input:
         unpack(input_profile_tech_brownfield),

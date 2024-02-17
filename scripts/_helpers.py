@@ -114,9 +114,9 @@ def find_opt(opts, expr):
     """
     for o in opts:
         if expr in o:
-            m = re.findall("[0-9]*\.?[0-9]+$", o)
+            m = re.findall("^m?\d*(\.|p)?\d+$", o)
             if len(m) > 0:
-                return True, float(m[0])
+                return True, float(m[0].replace("p", ".").replace("m", "-"))
             else:
                 return True, None
     return False, None
@@ -465,11 +465,177 @@ def parse(infix):
         return {infix.pop(0): parse(infix)}
 
 
-def update_config_with_sector_opts(config, sector_opts):
-    for o in sector_opts.split("-"):
-        if o.startswith("CF+"):
-            infix = o.split("+")[1:]
-            update_config(config, parse(infix))
+def update_config_from_wildcards(config, w):
+    """
+    Parses configuration settings from wildcards and updates the config.
+
+    - TODO: Should be run inside config_provider function.
+    """
+
+    if w.get("opts"):
+        opts = w.opts.split("-")
+
+        if nhours := get_opt(opts, r"^\d+(h|seg)$"):
+            config["clustering"]["temporal"]["resolution_elec"] = nhours
+
+        co2l_enable, co2l_value = find_opt(opts, "Co2L")
+        if co2l_enable:
+            config["electricity"]["co2limit_enable"] = True
+            if co2l_value is not None:
+                config["electricity"]["co2limit"] = (
+                    co2l_value * config["electricity"]["co2base"]
+                )
+
+        gasl_enable, gasl_value = find_opt(opts, "CH4L")
+        if gasl_enable:
+            config["electricity"]["gaslimit_enable"] = True
+            if gasl_value is not None:
+                config["electricity"]["gaslimit"] = gasl_value * 1e6
+
+        if "Ept" in opts:
+            config["costs"]["emission_prices"]["co2_monthly_prices"] = True
+
+        ep_enable, ep_value = find_opt(opts, "Ep")
+        if ep_enable:
+            config["costs"]["emission_prices"]["enable"] = True
+            if ep_value is not None:
+                config["costs"]["emission_prices"]["co2"] = ep_value
+
+        if "ATK" in opts:
+            config["autarky"]["enable"] = True
+            if "ATKc" in opts:
+                config["autarky"]["by_country"] = True
+
+        attr_lookup = {
+            "p": "p_nom_max",
+            "e": "e_nom_max",
+            "c": "capital_cost",
+            "m": "marginal_cost",
+        }
+        for o in opts:
+            flags = ["+e", "+p", "+m", "+c"]
+            if all(flag not in o for flag in flags):
+                continue
+            carrier, attr_factor = o.split("+")
+            attr = attr_lookup[attr_factor[0]]
+            factor = float(attr_factor[1:])
+            if not isinstance(config["adjustments"]["electricity"], dict):
+                config["adjustments"]["electricity"] = dict()
+            update_config(
+                config["adjustments"]["electricity"], {attr: {carrier: factor}}
+            )
+
+    if w.get("sector_opts"):
+        opts = w.sector_opts.split("-")
+
+        if "T" in opts:
+            config["sector"]["transport"] = True
+
+        if "H" in opts:
+            config["sector"]["heating"] = True
+
+        if "B" in opts:
+            config["sector"]["biomass"] = True
+
+        if "I" in opts:
+            config["sector"]["industry"] = True
+
+        if "A" in opts:
+            config["sector"]["agriculture"] = True
+
+        if "CCL" in opts:
+            config["solving"]["constraints"]["CCL"] = True
+
+        eq_value = get_opt(opts, r"^EQ+\d*\.?\d+(c|)")
+        for o in opts:
+            if eq_value is not None:
+                config["solving"]["constraints"]["EQ"] = eq_value
+            elif "EQ" in o:
+                config["solving"]["constraints"]["EQ"] = True
+            break
+
+        if "BAU" in opts:
+            config["solving"]["constraints"]["BAU"] = True
+
+        if "SAFE" in opts:
+            config["solving"]["constraints"]["SAFE"] = True
+
+        if nhours := get_opt(opts, r"^\d+(h|sn|seg)$"):
+            config["clustering"]["temporal"]["resolution_sector"] = nhours
+
+        if "decentral" in opts:
+            config["sector"]["electricity_transmission_grid"] = False
+
+        if "noH2network" in opts:
+            config["sector"]["H2_network"] = False
+
+        if "nowasteheat" in opts:
+            config["sector"]["use_fischer_tropsch_waste_heat"] = False
+            config["sector"]["use_methanolisation_waste_heat"] = False
+            config["sector"]["use_haber_bosch_waste_heat"] = False
+            config["sector"]["use_methanation_waste_heat"] = False
+            config["sector"]["use_fuel_cell_waste_heat"] = False
+            config["sector"]["use_electrolysis_waste_heat"] = False
+
+        if "nodistrict" in opts:
+            config["sector"]["district_heating"]["progress"] = 0.0
+
+        dg_enable, dg_factor = find_opt(opts, "dist")
+        if dg_enable:
+            config["sector"]["electricity_distribution_grid"] = True
+            if dg_factor is not None:
+                config["sector"][
+                    "electricity_distribution_grid_cost_factor"
+                ] = dg_factor
+
+        if "biomasstransport" in opts:
+            config["sector"]["biomass_transport"] = True
+
+        _, maxext = find_opt(opts, "linemaxext")
+        if maxext is not None:
+            config["lines"]["max_extension"] = maxext * 1e3
+            config["links"]["max_extension"] = maxext * 1e3
+
+        _, co2l_value = find_opt(opts, "Co2L")
+        if co2l_value is not None:
+            config["co2_budget"] = float(co2l_value)
+
+        if co2_distribution := get_opt(opts, r"^(cb)\d+(\.\d+)?(ex|be)$"):
+            config["co2_budget"] = co2_distribution
+
+        if co2_budget := get_opt(opts, r"^(cb)\d+(\.\d+)?$"):
+            config["co2_budget"] = float(co2_budget[2:])
+
+        attr_lookup = {
+            "p": "p_nom_max",
+            "e": "e_nom_max",
+            "c": "capital_cost",
+            "m": "marginal_cost",
+        }
+        for o in opts:
+            flags = ["+e", "+p", "+m", "+c"]
+            if all(flag not in o for flag in flags):
+                continue
+            carrier, attr_factor = o.split("+")
+            attr = attr_lookup[attr_factor[0]]
+            factor = float(attr_factor[1:])
+            if not isinstance(config["adjustments"]["sector"], dict):
+                config["adjustments"]["sector"] = dict()
+            update_config(config["adjustments"]["sector"], {attr: {carrier: factor}})
+
+        _, sdr_value = find_opt(opts, "sdr")
+        if sdr_value is not None:
+            config["costs"]["social_discountrate"] = sdr_value / 100
+
+        _, seq_limit = find_opt(opts, "seq")
+        if seq_limit is not None:
+            config["sector"]["co2_sequestration_potential"] = seq_limit
+
+        # any config option can be represented in wildcard
+        for o in opts:
+            if o.startswith("CF+"):
+                infix = o.split("+")[1:]
+                update_config(config, parse(infix))
 
 
 def get_checksum_from_zenodo(file_url):

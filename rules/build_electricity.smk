@@ -20,10 +20,7 @@ if config["enable"].get("prepare_links_p_nom", False):
 
 rule build_electricity_demand:
     params:
-        snapshots=lambda w: {
-            k: config_provider("snapshots", k)(w)
-            for k in ["start", "end", "inclusive"]
-        },
+        snapshots=config_provider("snapshots"),
         countries=config_provider("countries"),
         load=config_provider("load"),
     input:
@@ -65,10 +62,7 @@ rule build_powerplants:
 rule base_network:
     params:
         countries=config_provider("countries"),
-        snapshots=lambda w: {
-            k: config_provider("snapshots", k)(w)
-            for k in ["start", "end", "inclusive"]
-        },
+        snapshots=config_provider("snapshots"),
         lines=config_provider("lines"),
         links=config_provider("links"),
         transformers=config_provider("transformers"),
@@ -151,10 +145,7 @@ if config["enable"].get("build_cutout", False):
 
     rule build_cutout:
         params:
-            snapshots={
-                k: config_provider("snapshots", k)
-                for k in ["start", "end", "inclusive"]
-            },
+            snapshots=config_provider("snapshots"),
             cutouts=config_provider("atlite", "cutouts"),
         input:
             regions_onshore=resources("regions_onshore.geojson"),
@@ -271,10 +262,7 @@ else:
 
 rule build_renewable_profiles:
     params:
-        snapshots=lambda w: {
-            k: config_provider("snapshots", k)(w)
-            for k in ["start", "end", "inclusive"]
-        },
+        snapshots=config_provider("snapshots"),
         renewable=config_provider("renewable"),
     input:
         **opt,
@@ -375,10 +363,7 @@ if config["lines"]["dynamic_line_rating"]["activate"]:
 
     rule build_line_rating:
         params:
-            snapshots={
-                k: config_provider("snapshots", k)
-                for k in ["start", "end", "inclusive"]
-            },
+            snapshots=config_provider("snapshots"),
         input:
             base_network=resources("networks/base.nc"),
             cutout="cutouts/"
@@ -570,12 +555,7 @@ rule add_extra_components:
 
 rule prepare_network:
     params:
-        snapshots=lambda w: {
-            "resolution": config_provider("snapshots", "resolution", default=False)(w),
-            "segmentation": config_provider(
-                "snapshots", "segmentation", default=False
-            )(w),
-        },
+        time_resolution=config_provider("clustering", "temporal", "resolution_elec"),
         links=config_provider("links"),
         lines=config_provider("lines"),
         co2base=config_provider("electricity", "co2base"),
@@ -585,6 +565,7 @@ rule prepare_network:
         gaslimit=config_provider("electricity", "gaslimit"),
         max_hours=config_provider("electricity", "max_hours"),
         costs=config_provider("costs"),
+        adjustments=config_provider("adjustments", "electricity",
         autarky=config_provider("electricity", "autarky", default={}),
     input:
         resources("networks/elec_s{simpl}_{clusters}_ec.nc"),

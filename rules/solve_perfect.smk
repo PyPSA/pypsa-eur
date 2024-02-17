@@ -57,6 +57,8 @@ def input_network_year(w):
 
 
 rule prepare_perfect_foresight:
+    params:
+        costs=config["costs"],
     input:
         unpack(input_network_year),
         brownfield_network=lambda w: (

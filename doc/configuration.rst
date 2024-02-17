@@ -561,6 +561,21 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
    use ``min`` in ``p_nom_max:`` for more `
    conservative assumptions.
 
+.. _adjustments_cf:
+
+``adjustments``
+=============
+
+.. literalinclude:: ../config/config.default.yaml
+   :language: yaml
+   :start-at: adjustments:
+   :end-before: # docs
+
+.. csv-table::
+   :header-rows: 1
+   :widths: 22,7,22,33
+   :file: configtables/adjustments.csv
+
 .. _solving_cf:
 
 ``solving``

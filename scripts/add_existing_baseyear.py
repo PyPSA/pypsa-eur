@@ -18,7 +18,7 @@ import xarray as xr
 from _helpers import (
     configure_logging,
     set_scenario_config,
-    update_config_with_sector_opts,
+    update_config_from_wildcards,
 )
 from add_electricity import sanitize_carriers
 from prepare_sector_network import cluster_heat_buses, define_spatial, prepare_costs
@@ -559,10 +559,9 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
+    update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     options = snakemake.params.sector
-    opts = snakemake.wildcards.sector_opts.split("-")
 
     baseyear = snakemake.params.baseyear
 
@@ -585,7 +584,7 @@ if __name__ == "__main__":
         n, grouping_years_power, costs, baseyear
     )
 
-    if "H" in opts:
+    if options["heating"]:
         time_dep_hp_cop = options["time_dep_hp_cop"]
         ashp_cop = (
             xr.open_dataarray(snakemake.input.cop_air_total)

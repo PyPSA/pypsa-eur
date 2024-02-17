@@ -135,10 +135,7 @@ rule cluster_gas_network:
 
 rule build_daily_heat_demand:
     params:
-        snapshots=lambda w: {
-            k: config_provider("snapshots", k)(w)
-            for k in ["start", "end", "inclusive"]
-        },
+        snapshots=config_provider("snapshots"),
     input:
         pop_layout=resources("pop_layout_{scope}.nc"),
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
@@ -163,10 +160,7 @@ rule build_daily_heat_demand:
 
 rule build_hourly_heat_demand:
     params:
-        snapshots=lambda w: {
-            k: config_provider("snapshots", k)(w)
-            for k in ["start", "end", "inclusive"]
-        },
+        snapshots=config_provider("snapshots"),
     input:
         heat_profile="data/heat_load_profile_BDEW.csv",
         heat_demand=resources("daily_heat_demand_{scope}_elec_s{simpl}_{clusters}.nc"),
@@ -187,10 +181,7 @@ rule build_hourly_heat_demand:
 
 rule build_temperature_profiles:
     params:
-        snapshots=lambda w: {
-            k: config_provider("snapshots", k)(w)
-            for k in ["start", "end", "inclusive"]
-        },
+        snapshots=config_provider("snapshots"),
     input:
         pop_layout=resources("pop_layout_{scope}.nc"),
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
@@ -245,10 +236,7 @@ rule build_cop_profiles:
 
 rule build_solar_thermal_profiles:
     params:
-        snapshots=lambda w: {
-            k: config_provider("snapshots", k)(w)
-            for k in ["start", "end", "inclusive"]
-        },
+        snapshots=config_provider("snapshots"),
         solar_thermal=config_provider("solar_thermal"),
     input:
         pop_layout=resources("pop_layout_{scope}.nc"),
@@ -732,10 +720,7 @@ rule build_shipping_demand:
 
 rule build_transport_demand:
     params:
-        snapshots=lambda w: {
-            k: config_provider("snapshots", k)(w)
-            for k in ["start", "end", "inclusive"]
-        },
+        snapshots=config_provider("snapshots"),
         sector=config_provider("sector"),
     input:
         clustered_pop_layout=resources("pop_layout_elec_s{simpl}_{clusters}.csv"),
@@ -822,6 +807,7 @@ rule build_existing_heating_distribution:
 
 rule prepare_sector_network:
     params:
+        time_resolution=config_provider("clustering", "temporal", "resolution_sector"),
         co2_budget=config_provider("co2_budget"),
         conventional_carriers=config_provider(
             "existing_capacities", "conventional_carriers"
@@ -830,10 +816,12 @@ rule prepare_sector_network:
         costs=config_provider("costs"),
         sector=config_provider("sector"),
         industry=config_provider("industry"),
+        lines=config_provider("lines"),
         pypsa_eur=config_provider("pypsa_eur"),
         length_factor=config_provider("lines", "length_factor"),
         planning_horizons=config_provider("scenario", "planning_horizons"),
         countries=config_provider("countries"),
+        adjustments=config_provider("adjustments", "sector"),
         emissions_scope=config_provider("energy", "emissions"),
         eurostat_report_year=config_provider("energy", "eurostat_report_year"),
         RDIR=RDIR,
