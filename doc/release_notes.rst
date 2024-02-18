@@ -41,8 +41,7 @@ Upcoming Release
   applied.
 
 * The default configuration ``config/config.default.yaml`` is now automatically
-  used as a base configuration file and no longer copied to
-  ``config/config.yaml`` on first use. The file ``config/config.yaml`` should be
+  used as a base configuration file. The file ``config/config.yaml`` should be
   used to define deviations from the default configuration.
 
 * Merged two OPSD time series data versions into such that the option ``load:
