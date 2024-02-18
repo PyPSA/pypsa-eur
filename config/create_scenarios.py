@@ -25,10 +25,7 @@ scenario{scenario_number}:
 
 # Define all possible combinations of config values.
 # This must define all config values that are used in the template.
-config_values = dict(
-    config_value=["true", "false"],
-    config_value2=[1, 2, 3, 4]
-)
+config_values = dict(config_value=["true", "false"], config_value2=[1, 2, 3, 4])
 
 combinations = [
     dict(zip(config_values.keys(), values))
