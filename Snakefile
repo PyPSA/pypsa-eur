@@ -25,6 +25,7 @@ for template, target in default_files.items():
     if not exists(target) and exists(template):
         copyfile(template, target)
 
+
 configfile: "config/config.default.yaml"
 configfile: "config/config.yaml"
 
