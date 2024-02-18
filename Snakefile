@@ -16,10 +16,15 @@ from scripts._helpers import path_provider
 min_version("7.7")
 HTTP = HTTPRemoteProvider()
 
-conf_file = os.path.join(workflow.current_basedir, "config/config.yaml")
-conf_default_file = os.path.join(workflow.current_basedir, "config/config.default.yaml")
-if not exists(conf_file) and exists(conf_default_file):
-    copyfile(conf_default_file, conf_file)
+default_files = {
+    "config/config.default.yaml": "config/config.yaml",
+    "config/scenarios.template.yaml": "config/scenarios.yaml",
+}
+for template, target in default_files.items():
+    target = os.path.join(workflow.current_basedir, target)
+    template = os.path.join(workflow.current_basedir, template)
+    if not exists(target) and exists(template):
+        copyfile(template, target)
 
 configfile: "config/config.default.yaml"
 configfile: "config/config.yaml"
