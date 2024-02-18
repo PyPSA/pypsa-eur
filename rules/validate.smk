@@ -17,10 +17,7 @@ rule build_electricity_production:
     The data is used for validation of the optimization results.
     """
     params:
-        snapshots=lambda w: {
-            k: config_provider("snapshots", k)(w)
-            for k in ["start", "end", "inclusive"]
-        },
+        snapshots=config_provider("snapshots"),
         countries=config_provider("countries"),
     output:
         resources("historical_electricity_production.csv"),
