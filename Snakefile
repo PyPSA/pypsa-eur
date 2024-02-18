@@ -93,6 +93,13 @@ rule all:
     default_target: True
 
 
+rule create_scenarios:
+    output:
+        config["run"]["scenarios"]["file"],
+    script:
+        "config/create_scenarios.py"
+
+
 rule purge:
     run:
         import builtins
