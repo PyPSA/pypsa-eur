@@ -10,7 +10,6 @@ import yaml
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 from snakemake.utils import min_version
 
-# TODO: check if this works with mock_snakemake
 from scripts._helpers import path_provider
 
 min_version("7.7")
@@ -32,13 +31,14 @@ configfile: "config/config.yaml"
 
 run = config["run"]
 scenarios = run.get("scenarios", {})
-if run["name"]:
-    if scenarios.get("enable"):
-        fn = Path(scenarios["file"])
-        scenarios = yaml.safe_load(fn.read_text())
-        RDIR = "{run}/"
-    else:
-        RDIR = run["name"] + "/"
+if run["name"] and scenarios.get("enable"):
+    fn = Path(scenarios["file"])
+    scenarios = yaml.safe_load(fn.read_text())
+    RDIR = "{run}/"
+    if run["name"] == "all":
+        config["run"]["name"] = list(scenarios.keys())
+elif run["name"]:
+    RDIR = run["name"] + "/"
 else:
     RDIR = ""
 
