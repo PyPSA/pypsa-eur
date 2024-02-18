@@ -10,7 +10,7 @@ run:
   - test-elec-no-onshore-wind
   scenarios:
     enable: true
-    file: "config/test/scenarios.electricity.yaml"
+    file: "config/test/scenarios.yaml"
   disable_progressbar: true
   shared_resources: base
   shared_cutouts: true

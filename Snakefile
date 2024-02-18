@@ -97,6 +97,8 @@ rule all:
 rule create_scenarios:
     output:
         config["run"]["scenarios"]["file"],
+    conda:
+        "envs/retrieve.yaml"
     script:
         "config/create_scenarios.py"
 
