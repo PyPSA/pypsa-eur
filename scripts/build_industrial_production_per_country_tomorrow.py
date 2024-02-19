@@ -7,6 +7,7 @@ Build future industrial production per country.
 """
 
 import pandas as pd
+from _helpers import set_scenario_config
 from prepare_sector_network import get
 
 if __name__ == "__main__":
@@ -14,6 +15,7 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_industrial_production_per_country_tomorrow")
+    set_scenario_config(snakemake)
 
     params = snakemake.params.industry
 

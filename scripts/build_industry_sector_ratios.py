@@ -7,7 +7,7 @@ Build specific energy consumption by carrier and industries.
 """
 
 import pandas as pd
-from _helpers import mute_print
+from _helpers import mute_print, set_scenario_config
 
 # GWh/ktoe OR MWh/toe
 toe_to_MWh = 11.630
@@ -1464,6 +1464,7 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_industry_sector_ratios")
+    set_scenario_config(snakemake)
 
     # TODO make params option
     year = 2015

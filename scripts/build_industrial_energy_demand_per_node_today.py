@@ -10,6 +10,7 @@ from itertools import product
 
 import numpy as np
 import pandas as pd
+from _helpers import set_scenario_config
 
 # map JRC/our sectors to hotmaps sector, where mapping exist
 sector_mapping = {
@@ -75,5 +76,6 @@ if __name__ == "__main__":
             simpl="",
             clusters=48,
         )
+    set_scenario_config(snakemake)
 
     build_nodal_industrial_energy_demand()

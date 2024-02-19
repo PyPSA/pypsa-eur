@@ -10,10 +10,105 @@ Release Notes
 Upcoming Release
 ================
 
-* Add plotting routine with statistics where we allow for plotting of individual energy carriers and countries. Besides the plots, we create all necessary csv files for the plotting routine.
+* Added new scenario management that supports the simultaneous execution of
+  multiple scenarios with a single ``snakemake`` call. For this purpose, a
+  ``scenarios.yaml`` file is introduced which contains customizable scenario
+  names with configuration overrides. To enable it, set the ``run: scenarios:
+  true`` and define the list of scenario names to run under ``run: name:`` in
+  the configuration file. The latter must be a subset of toplevel keys in the
+  scenario file.
+
+  - To get started, a scenarios template file ``config/scenarios.template.yaml``
+    is included in the repository, which is copied to ``config/scenarios.yaml``
+    on first use.
+
+  - The scenario file can be changed via ``run: scenarios: file:``.
+
+  - If scenario management is activated with ``run: scenarios: enable: true``, a
+    new wildcard ``{run}`` is introduced. This means that the configuration
+    settings may depend on the new ``{run}`` wildcard. Therefore, a new
+    ``config_provider()`` function is used in the ``Snakefile`` and ``.smk``
+    files, which takes wildcard values into account. The calls to the ``config``
+    object have been reduced in ``.smk`` files since there is no awareness of
+    wildcard values outside rule definitions.
+
+  - The scenario files can also be programmatically created using the template
+    script ``config/create_scenarios.py``. This script can be run with
+    ``snakemake -j1 create_scenarios`` and creates the scenarios file referenced
+    under ``run: scenarios: file:``.
+
+  - The setting ``run: name: all`` will run all scenarios in
+    ``config/scenarios.yaml``. Otherwise, it will run those passed as list in
+    ``run: name:`` as long as ``run: scenarios: enable: true``.
+
+  - The setting ``run: shared_resources:`` indicates via a boolean whether the
+    resources should be encapsulated by the ``run: name:``. The special setting
+    ``run: shared_resources: base`` shares resources until ``add_electricity``
+    that do not contain wildcards other than ``{"technology", "year",
+    "scope"}``.
+
+  - Added new configuration options for all ``{opts}`` and ``{sector_opts}``
+    wildcard values to create a unique configuration file (``config.yaml``) per
+    PyPSA network file. This is done with the help of a new function
+    ``update_config_from_wildcards()`` which parses configuration settings from
+    wildcards and updates the ``snakemake.config`` object. These updated
+    configuration settings are used in the scripts rather than directly parsed
+    values from ``snakemake.wildcards``.
+
+  - The cost data was moved from ``data/costs_{year}.csv`` to
+    ``resources/costs_{year}.csv`` since it depends on configuration settings.
+    The ``retrieve_cost_data`` rule was changed to calling a Python script.
+
+  - Moved time clustering settings to ``clustering: temporal:`` from
+    ``snapshots:`` so that the latter is only used to define the
+    ``pandas.DatetimeIndex`` which simplifies the scenario management.
+
+  - Collection rules get a new wildcard ``run=config["run"]["name"]`` so they
+    can collect outputs across different scenarios.
+
+  - **Warning:** One caveat remains for the scenario management with myopic or
+    perfect foresight pathway optimisation. The first investment period must be
+    shared across all scenarios. The reason is that the ``wildcard_constraints``
+    defined for the rule ``add_existing_baseyear`` do not accept wildcard-aware
+    input functions (cf.
+    `https://github.com/snakemake/snakemake/issues/2703`_).
+
+* The outputs of the rule ``retrieve_gas_infrastructure_data`` no longer
+  marked as ``protected()`` as the download size is small.
+
+* Improved representation of industry transition pathways. A new script was
+  added to interpolate industry sector ratios from today's status quo to future
+  systems (i.e. specific emissions and demands for energy and feedstocks). For
+  each country we gradually switch industry processes from today's specific
+  energy carrier usage per ton material output to the best-in-class energy
+  consumption of tomorrow. This is done on a per-country basis. The ratio of
+  today to tomorrow's energy consumption is set with the ``industry:
+  sector_ratios_fraction_future:`` parameter.
+
+* Fix plotting of retrofitted hydrogen pipelines with pathway optimisation.
+
+* Bugfix: Correct units of subtracted chlorine and methanol demand in
+  :mod:`build_industry_sector_ratios`.
+
+* Include all countries in ammonia production resource. This is so that the full
+  EU28 ammonia demand can be correctly subtracted in the rule
+  :mod:`build_industry_sector_ratios`.
+
+* Regions are assigned to all buses with unique coordinates in the network with
+  a preference given to substations. Previously, only substations had assigned
+  regions, but this could lead to issues when a high spatial resolution was
+  applied.
+
+* The default configuration ``config/config.default.yaml`` is now automatically
+  used as a base configuration file. The file ``config/config.yaml`` should be
+  used to define deviations from the default configuration.
 
 * Merged two OPSD time series data versions into such that the option ``load:
   power_statistics:`` becomes superfluous and was hence removed.
+* Bugfix: The industry coal emissions for industry were not properly tracked.
+
+* Allow industrial coal demand to be regional so its emissions can be included
+  in regional emission limits.
 
 * Add new default to overdimension heating in individual buildings. This allows
   them to cover heat demand peaks e.g. 10% higher than those in the data. The
@@ -109,6 +204,8 @@ Upcoming Release
   the previous model for new installations. This will only have an effect on
   workflows with foresight "myopic" and still needs to be added foresight option
   "perfect".
+
+* Switched the energy totals year from 2011 to 2013 to comply with the assumed default weather year.
 
 
 PyPSA-Eur 0.9.0 (5th January 2024)

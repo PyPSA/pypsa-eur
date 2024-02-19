@@ -13,6 +13,7 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import xarray as xr
+from _helpers import configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +23,8 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_population_layouts")
 
-    logging.basicConfig(level=snakemake.config["logging"]["level"])
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     cutout = atlite.Cutout(snakemake.input.cutout)
 

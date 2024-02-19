@@ -13,7 +13,7 @@ from functools import partial
 import country_converter as coco
 import numpy as np
 import pandas as pd
-from _helpers import mute_print
+from _helpers import configure_logging, mute_print, set_scenario_config
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
@@ -261,7 +261,11 @@ def separate_basic_chemicals(demand, year):
     demand["Basic chemicals"].clip(lower=0.0, inplace=True)
 
     # assume HVC, methanol, chlorine production proportional to non-ammonia basic chemicals
-    distribution_key = demand["Basic chemicals"] / params["basic_chemicals_without_NH3_production_today"] / 1e3
+    distribution_key = (
+        demand["Basic chemicals"]
+        / params["basic_chemicals_without_NH3_production_today"]
+        / 1e3
+    )
     demand["HVC"] = params["HVC_production_today"] * 1e3 * distribution_key
     demand["Chlorine"] = params["chlorine_production_today"] * 1e3 * distribution_key
     demand["Methanol"] = params["methanol_production_today"] * 1e3 * distribution_key
@@ -274,8 +278,8 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_industrial_production_per_country")
-
-    logging.basicConfig(level=snakemake.config["logging"]["level"])
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     countries = snakemake.params.countries
 

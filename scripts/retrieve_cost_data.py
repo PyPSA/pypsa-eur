@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
-Retrieve monthly fuel prices from Destatis.
+Retrieve cost data from ``technology-data``.
 """
 
 import logging
@@ -17,19 +17,28 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("retrieve_monthly_fuel_prices")
+        snakemake = mock_snakemake("retrieve_cost_data", year=2030)
         rootpath = ".."
     else:
         rootpath = "."
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    url = "https://www.destatis.de/EN/Themes/Economy/Prices/Publications/Downloads-Energy-Price-Trends/energy-price-trends-xlsx-5619002.xlsx?__blob=publicationFile"
+    version = snakemake.params.version
+    baseurl = (
+        f"https://raw.githubusercontent.com/PyPSA/technology-data/{version}/outputs/"
+    )
+    filepath = Path(snakemake.output[0])
+    url = baseurl + filepath.name
 
-    to_fn = Path(rootpath) / Path(snakemake.output[0])
+    print(url)
 
-    logger.info(f"Downloading monthly fuel prices from '{url}'.")
+    to_fn = Path(rootpath) / filepath
+
+    print(to_fn)
+
+    logger.info(f"Downloading technology data from '{url}'.")
     disable_progress = snakemake.config["run"].get("disable_progressbar", False)
     progress_retrieve(url, to_fn, disable=disable_progress)
 
-    logger.info(f"Monthly fuel prices available at {to_fn}")
+    logger.info(f"Technology data available at at {to_fn}")

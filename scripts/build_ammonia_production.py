@@ -9,6 +9,7 @@ Build historical annual ammonia production per country in ktonNH3/a.
 import country_converter as coco
 import numpy as np
 import pandas as pd
+from _helpers import set_scenario_config
 
 cc = coco.CountryConverter()
 
@@ -19,6 +20,8 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_ammonia_production")
 
+    set_scenario_config(snakemake)
+
     ammonia = pd.read_excel(
         snakemake.input.usgs,
         sheet_name="T12",
@@ -26,6 +29,7 @@ if __name__ == "__main__":
         header=0,
         index_col=0,
         skipfooter=19,
+        na_values=["--"],
     )
 
     ammonia.index = cc.convert(ammonia.index, to="iso2")

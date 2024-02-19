@@ -93,7 +93,7 @@ import powerplantmatching as pm
 import pypsa
 import scipy.sparse as sparse
 import xarray as xr
-from _helpers import configure_logging, update_p_nom_max
+from _helpers import configure_logging, set_scenario_config, update_p_nom_max
 from powerplantmatching.export import map_country_bus
 from shapely.prepared import prep
 
@@ -790,6 +790,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("add_electricity")
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     params = snakemake.params
 
