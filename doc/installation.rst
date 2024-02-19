@@ -79,31 +79,9 @@ Nevertheless, you can still use open-source solvers for smaller problems.
     `Instructions how to install a solver in the documentation of PyPSA <https://pypsa.readthedocs.io/en/latest/installation.html#getting-a-solver-for-linear-optimisation>`_
 
 .. note::
-    The rules :mod:`cluster_network` and :mod:`simplify_network` solve a quadratic optimisation problem for clustering.
-    The open-source solvers Cbc and GlPK cannot handle this. A fallback to Ipopt is implemented in this case, but requires
-    it to be installed. For an open-source solver setup install in your ``conda`` environment on OSX/Linux
-
-    .. code:: bash
-
-        mamba activate pypsa-eur
-        mamba install -c conda-forge ipopt coincbc
-
-    and on Windows
-
-    .. code:: bash
-
-        mamba activate pypsa-eur
-        mamba install -c conda-forge ipopt glpk
-
-    For HiGHS, run
-
-    .. code:: bash
-
-        mamba activate pypsa-eur
-        mamba install -c conda-forge ipopt
-        pip install highspy
-
-    For Gurobi, run
+    The rules :mod:`cluster_network` and :mod:`simplify_network` solve a mixed-integer quadratic optimisation problem for clustering.
+    The open-source solvers HiGHS, Cbc and GlPK cannot handle this. A fallback to SCIP is implemented in this case.
+    For an open-source solver setup install in your ``conda`` environment on OSX/Linux. To install the default solver Gurobi, run
 
     .. code:: bash
 

@@ -61,6 +61,8 @@ PyPSA-Eur 0.10.0 (19th February 2024)
 * It is now possible to determine the directory for shared resources by setting
   `shared_resources` to a string (https://github.com/PyPSA/pypsa-eur/pull/906).
 
+* Improve ``mock_snakemake()`` for usage in Snakemake modules
+  (https://github.com/PyPSA/pypsa-eur/pull/869).
 
 **Breaking Changes**
 
