@@ -10,13 +10,39 @@ Release Notes
 Upcoming Release
 ================
 
+* Improved representation of industry transition pathways. A new script was
+  added to interpolate industry sector ratios from today's status quo to future
+  systems (i.e. specific emissions and demands for energy and feedstocks). For
+  each country we gradually switch industry processes from today's specific
+  energy carrier usage per ton material output to the best-in-class energy
+  consumption of tomorrow. This is done on a per-country basis. The ratio of
+  today to tomorrow's energy consumption is set with the ``industry:
+  sector_ratios_fraction_future:`` parameter.
+
+* Fix plotting of retrofitted hydrogen pipelines with pathway optimisation.
+
+* Bugfix: Correct units of subtracted chlorine and methanol demand in
+  :mod:`build_industry_sector_ratios`.
+
+* Include all countries in ammonia production resource. This is so that the full
+  EU28 ammonia demand can be correctly subtracted in the rule
+  :mod:`build_industry_sector_ratios`.
+
+* Regions are assigned to all buses with unique coordinates in the network with
+  a preference given to substations. Previously, only substations had assigned
+  regions, but this could lead to issues when a high spatial resolution was
+  applied.
+
 * The default configuration ``config/config.default.yaml`` is now automatically
-  used as a base configuration file and no longer copied to
-  ``config/config.yaml`` on first use. The file ``config/config.yaml`` should be
+  used as a base configuration file. The file ``config/config.yaml`` should be
   used to define deviations from the default configuration.
 
 * Merged two OPSD time series data versions into such that the option ``load:
   power_statistics:`` becomes superfluous and was hence removed.
+* Bugfix: The industry coal emissions for industry were not properly tracked.
+
+* Allow industrial coal demand to be regional so its emissions can be included
+  in regional emission limits.
 
 * Add new default to overdimension heating in individual buildings. This allows
   them to cover heat demand peaks e.g. 10% higher than those in the data. The
@@ -112,6 +138,8 @@ Upcoming Release
   the previous model for new installations. This will only have an effect on
   workflows with foresight "myopic" and still needs to be added foresight option
   "perfect".
+
+* Switched the energy totals year from 2011 to 2013 to comply with the assumed default weather year.
 
 
 PyPSA-Eur 0.9.0 (5th January 2024)

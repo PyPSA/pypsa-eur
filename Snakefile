@@ -1,9 +1,9 @@
-# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
-from os.path import normpath
-from shutil import move, rmtree
+from os.path import normpath, exists
+from shutil import copyfile, move, rmtree
 
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 
@@ -13,6 +13,10 @@ from snakemake.utils import min_version
 
 min_version("7.7")
 
+conf_file = os.path.join(workflow.current_basedir, "config/config.yaml")
+conf_default_file = os.path.join(workflow.current_basedir, "config/config.default.yaml")
+if not exists(conf_file) and exists(conf_default_file):
+    copyfile(conf_default_file, conf_file)
 
 configfile: "config/config.default.yaml"
 configfile: "config/config.yaml"

@@ -248,7 +248,7 @@ rule build_energy_totals:
     input:
         nuts3_shapes=RESOURCES + "nuts3_shapes.geojson",
         co2="data/bundle-sector/eea/UNFCCC_v23.csv",
-        swiss="data/bundle-sector/switzerland-sfoe/switzerland-new_format.csv",
+        swiss="data/switzerland-new_format-all_years.csv",
         idees="data/bundle-sector/jrc-idees-2015",
         district_heat_share="data/district_heat_share.csv",
         eurostat=input_eurostat,
@@ -392,8 +392,6 @@ rule build_salt_cavern_potentials:
 
 
 rule build_ammonia_production:
-    params:
-        countries=config["countries"],
     input:
         usgs="data/bundle-sector/myb1-2017-nitro.xls",
     output:
@@ -431,6 +429,31 @@ rule build_industry_sector_ratios:
         "../envs/environment.yaml"
     script:
         "../scripts/build_industry_sector_ratios.py"
+
+
+rule build_industry_sector_ratios_intermediate:
+    params:
+        industry=config["industry"],
+    input:
+        industry_sector_ratios=RESOURCES + "industry_sector_ratios.csv",
+        industrial_energy_demand_per_country_today=RESOURCES
+        + "industrial_energy_demand_per_country_today.csv",
+        industrial_production_per_country=RESOURCES
+        + "industrial_production_per_country.csv",
+    output:
+        industry_sector_ratios=RESOURCES
+        + "industry_sector_ratios_{planning_horizons}.csv",
+    threads: 1
+    resources:
+        mem_mb=1000,
+    log:
+        LOGS + "build_industry_sector_ratios_{planning_horizons}.log",
+    benchmark:
+        BENCHMARKS + "build_industry_sector_ratios_{planning_horizons}"
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_industry_sector_ratios_intermediate.py"
 
 
 rule build_industrial_production_per_country:
@@ -535,7 +558,8 @@ rule build_industrial_production_per_node:
 
 rule build_industrial_energy_demand_per_node:
     input:
-        industry_sector_ratios=RESOURCES + "industry_sector_ratios.csv",
+        industry_sector_ratios=RESOURCES
+        + "industry_sector_ratios_{planning_horizons}.csv",
         industrial_production_per_node=RESOURCES
         + "industrial_production_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
         industrial_energy_demand_per_node_today=RESOURCES
@@ -566,7 +590,6 @@ rule build_industrial_energy_demand_per_country_today:
         industry=config["industry"],
     input:
         jrc="data/bundle-sector/jrc-idees-2015",
-        ammonia_production=RESOURCES + "ammonia_production.csv",
         industrial_production_per_country=RESOURCES
         + "industrial_production_per_country.csv",
     output:
