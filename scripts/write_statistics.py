@@ -12,11 +12,19 @@ from _helpers import configure_logging
 from pypsa.statistics import get_carrier
 
 
+def get_country(df):
+    country_map = df.filter(like="bus").apply(
+        lambda ds: ds.map(n.buses.location.map(n.buses.country))
+    )
+    country_map = country_map.apply(lambda x: ",".join(x.dropna().unique()), axis=1)
+    country_map = country_map.rename("country")
+    return country_map
+
+
 # grouperfunctions = hier schreiben und dann in statistics.
 def groupby_country_and_carrier(n, c, nice_names=False):
     df = n.df(c)
-    bus = "bus1" if "bus" not in n.df(c) else "bus"
-    country = df[bus].map(n.buses.location).map(n.buses.country).rename("country")
+    country = df.pipe(get_country)
     carrier = get_carrier(n, c, nice_names)
     return [country, carrier]
 
@@ -76,10 +84,7 @@ if __name__ == "__main__":
             f"Carrier {carrier} not found in network or carrier group in config."
         )
 
-    if country == "all" or not country:
-        kwargs["groupby"] = get_carrier
-    else:
-        kwargs["groupby"] = groupby_country_and_carrier
+    kwargs["groupby"] = groupby_country_and_carrier
 
     for output in snakemake.output.keys():
         if "touch" in output:
@@ -89,7 +94,7 @@ if __name__ == "__main__":
             withdrawal = call_with_handle(n.statistics.withdrawal, **kwargs)
             ds = (
                 pd.concat([supply, withdrawal.mul(-1)])
-                .groupby(supply.index.names)
+                .groupby(level=["component", "country", "carrier"])
                 .sum()
             )
             ds.attrs = supply.attrs
@@ -110,7 +115,9 @@ if __name__ == "__main__":
             pd.Series().to_csv(snakemake.output[output])
             continue
         if country and country != "all":
-            ds = ds.xs(country, level="country")
+            mask = ds.index.get_level_values("country").str.contains(country)
+            ds = ds[mask]
+        ds = ds.groupby(level=["component", "carrier"]).sum()
         pd.Series(ds.attrs).to_csv(snakemake.output[output], header=False)
         ds.dropna().to_csv(snakemake.output[output], mode="a")
     # touch file

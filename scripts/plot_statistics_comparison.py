@@ -44,7 +44,8 @@ def plot_static_comparison(df, ax, stacked=False):
     df = df.dropna(axis=0, how="all").fillna(0)
     if df.empty:
         return
-    carriers = df.index.get_level_values("carrier").map(rename_techs)
+    df = df.rename(index=rename_techs).groupby(["component", "carrier"]).sum()
+    carriers = df.index.get_level_values("carrier")
     if not carriers.difference(tech_colors.index).empty:
         print(
             f"Missing colors for carrier: {carriers.difference(tech_colors.index).values}\n Dark grey used instead."
@@ -94,7 +95,11 @@ if __name__ == "__main__":
         )
     configure_logging(snakemake)
 
-    tech_colors = pd.Series(snakemake.params.plotting["tech_colors"])
+    tech_colors = (
+        pd.Series(snakemake.params.plotting["tech_colors"])
+        .groupby(rename_techs)
+        .first()
+    )
     conversion = pd.Series(snakemake.params.statistics)
 
     for output in snakemake.output.keys():
