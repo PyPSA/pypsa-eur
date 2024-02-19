@@ -7,17 +7,14 @@ Build spatial distribution of industries from Hotmaps database.
 """
 
 import logging
-
-logger = logging.getLogger(__name__)
-
 import uuid
 from itertools import product
 
 import country_converter as coco
 import geopandas as gpd
 import pandas as pd
-from packaging.version import Version, parse
 
+logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
 
 
@@ -32,7 +29,7 @@ def locate_missing_industrial_sites(df):
     try:
         from geopy.extra.rate_limiter import RateLimiter
         from geopy.geocoders import Nominatim
-    except:
+    except ImportError:
         raise ModuleNotFoundError(
             "Optional dependency 'geopy' not found."
             "Install via 'conda install -c conda-forge geopy'"
@@ -86,12 +83,7 @@ def prepare_hotmaps_database(regions):
 
     gdf = gpd.GeoDataFrame(df, geometry="coordinates", crs="EPSG:4326")
 
-    kws = (
-        dict(op="within")
-        if parse(gpd.__version__) < Version("0.10")
-        else dict(predicate="within")
-    )
-    gdf = gpd.sjoin(gdf, regions, how="inner", **kws)
+    gdf = gpd.sjoin(gdf, regions, how="inner", predicate="within")
 
     gdf.rename(columns={"index_right": "bus"}, inplace=True)
     gdf["country"] = gdf.bus.str[:2]
@@ -101,7 +93,7 @@ def prepare_hotmaps_database(regions):
         # get all duplicated entries
         duplicated_i = gdf.index[gdf.index.duplicated()]
         # convert from raw data country name to iso-2-code
-        code = cc.convert(gdf.loc[duplicated_i, "Country"], to="iso2")
+        code = cc.convert(gdf.loc[duplicated_i, "Country"], to="iso2")  # noqa: F841
         # screen out malformed country allocation
         gdf_filtered = gdf.loc[duplicated_i].query("country == @code")
         # concat not duplicated and filtered gdf

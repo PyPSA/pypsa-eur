@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2023-4 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
@@ -19,7 +19,8 @@ rule add_existing_baseyear:
         costs="data/costs_{}.csv".format(config["scenario"]["planning_horizons"][0]),
         cop_soil_total=RESOURCES + "cop_soil_total_elec_s{simpl}_{clusters}.nc",
         cop_air_total=RESOURCES + "cop_air_total_elec_s{simpl}_{clusters}.nc",
-        existing_heating="data/existing_infrastructure/existing_heating_raw.csv",
+        existing_heating_distribution=RESOURCES
+        + "existing_heating_distribution_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
         existing_solar="data/existing_infrastructure/solar_capacity_IRENA.csv",
         existing_onwind="data/existing_infrastructure/onwind_capacity_IRENA.csv",
         existing_offwind="data/existing_infrastructure/offwind_capacity_IRENA.csv",
@@ -50,7 +51,16 @@ rule add_brownfield:
         H2_retrofit=config["sector"]["H2_retrofit"],
         H2_retrofit_capacity_per_CH4=config["sector"]["H2_retrofit_capacity_per_CH4"],
         threshold_capacity=config["existing_capacities"]["threshold_capacity"],
+        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},
+        carriers=config["electricity"]["renewable_carriers"],
     input:
+        **{
+            f"profile_{tech}": RESOURCES + f"profile_{tech}.nc"
+            for tech in config["electricity"]["renewable_carriers"]
+            if tech != "hydro"
+        },
+        simplify_busmap=RESOURCES + "busmap_elec_s{simpl}.csv",
+        cluster_busmap=RESOURCES + "busmap_elec_s{simpl}_{clusters}.csv",
         network=RESULTS
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
         network_p=solved_previous_horizon,  #solved network at previous time step
@@ -104,7 +114,7 @@ rule solve_sector_network_myopic:
         + "elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_solver.log",
         python=LOGS
         + "elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_python.log",
-    threads: 4
+    threads: solver_threads
     resources:
         mem_mb=config["solving"]["mem"],
         walltime=config["solving"].get("walltime", "12:00:00"),

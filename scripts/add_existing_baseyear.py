@@ -8,25 +8,20 @@ horizon.
 """
 
 import logging
-
-logger = logging.getLogger(__name__)
-
-import pandas as pd
-
-idx = pd.IndexSlice
-
 from types import SimpleNamespace
 
 import country_converter as coco
 import numpy as np
+import pandas as pd
 import pypsa
 import xarray as xr
 from _helpers import update_config_with_sector_opts
 from add_electricity import sanitize_carriers
 from prepare_sector_network import cluster_heat_buses, define_spatial, prepare_costs
 
+logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
-
+idx = pd.IndexSlice
 spatial = SimpleNamespace()
 
 
@@ -53,7 +48,7 @@ def add_build_year_to_new_assets(n, baseyear):
             "series"
         ) & n.component_attrs[c.name].status.str.contains("Input")
         for attr in n.component_attrs[c.name].index[selection]:
-            c.pnl[attr].rename(columns=rename, inplace=True)
+            c.pnl[attr] = c.pnl[attr].rename(columns=rename)
 
 
 def add_existing_renewables(df_agg):
@@ -407,104 +402,18 @@ def add_heating_capacities_installed_before_baseyear(
     """
     logger.debug(f"Adding heating capacities installed before {baseyear}")
 
-    # Add existing heating capacities, data comes from the study
-    # "Mapping and analyses of the current and future (2020 - 2030)
-    # heating/cooling fuel deployment (fossil/renewables) "
-    # https://ec.europa.eu/energy/studies/mapping-and-analyses-current-and-future-2020-2030-heatingcooling-fuel-deployment_en?redir=1
-    # file: "WP2_DataAnnex_1_BuildingTechs_ForPublication_201603.xls" -> "existing_heating_raw.csv".
-    # TODO start from original file
-
-    # retrieve existing heating capacities
-    techs = [
-        "gas boiler",
-        "oil boiler",
-        "resistive heater",
-        "air heat pump",
-        "ground heat pump",
-    ]
-    df = pd.read_csv(snakemake.input.existing_heating, index_col=0, header=0)
-
-    # data for Albania, Montenegro and Macedonia not included in database
-    df.loc["Albania"] = np.nan
-    df.loc["Montenegro"] = np.nan
-    df.loc["Macedonia"] = np.nan
-
-    df.fillna(0.0, inplace=True)
-
-    # convert GW to MW
-    df *= 1e3
-
-    df.index = cc.convert(df.index, to="iso2")
-
-    # coal and oil boilers are assimilated to oil boilers
-    df["oil boiler"] = df["oil boiler"] + df["coal boiler"]
-    df.drop(["coal boiler"], axis=1, inplace=True)
-
-    # distribute technologies to nodes by population
-    pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
-
-    nodal_df = df.loc[pop_layout.ct]
-    nodal_df.index = pop_layout.index
-    nodal_df = nodal_df.multiply(pop_layout.fraction, axis=0)
-
-    # split existing capacities between residential and services
-    # proportional to energy demand
-    p_set_sum = n.loads_t.p_set.sum()
-    ratio_residential = pd.Series(
-        [
-            (
-                p_set_sum[f"{node} residential rural heat"]
-                / (
-                    p_set_sum[f"{node} residential rural heat"]
-                    + p_set_sum[f"{node} services rural heat"]
-                )
-            )
-            # if rural heating demand for one of the nodes doesn't exist,
-            # then columns were dropped before and heating demand share should be 0.0
-            if all(
-                f"{node} {service} rural heat" in p_set_sum.index
-                for service in ["residential", "services"]
-            )
-            else 0.0
-            for node in nodal_df.index
-        ],
-        index=nodal_df.index,
+    existing_heating = pd.read_csv(
+        snakemake.input.existing_heating_distribution, header=[0, 1], index_col=0
     )
 
-    for tech in techs:
-        nodal_df["residential " + tech] = nodal_df[tech] * ratio_residential
-        nodal_df["services " + tech] = nodal_df[tech] * (1 - ratio_residential)
+    techs = existing_heating.columns.get_level_values(1).unique()
 
-    names = [
-        "residential rural",
-        "services rural",
-        "residential urban decentral",
-        "services urban decentral",
-        "urban central",
-    ]
-
-    nodes = {}
-    p_nom = {}
-    for name in names:
+    for name in existing_heating.columns.get_level_values(0).unique():
         name_type = "central" if name == "urban central" else "decentral"
-        nodes[name] = pd.Index(
-            [
-                n.buses.at[index, "location"]
-                for index in n.buses.index[
-                    n.buses.index.str.contains(name)
-                    & n.buses.index.str.contains("heat")
-                ]
-            ]
-        )
-        heat_pump_type = "air" if "urban" in name else "ground"
-        heat_type = "residential" if "residential" in name else "services"
 
-        if name == "urban central":
-            p_nom[name] = nodal_df["air heat pump"][nodes[name]]
-        else:
-            p_nom[name] = nodal_df[f"{heat_type} {heat_pump_type} heat pump"][
-                nodes[name]
-            ]
+        nodes = pd.Index(n.buses.location[n.buses.index.str.contains(f"{name} heat")])
+
+        heat_pump_type = "air" if "urban" in name else "ground"
 
         # Add heat pumps
         costs_name = f"decentral {heat_pump_type}-sourced heat pump"
@@ -512,7 +421,7 @@ def add_heating_capacities_installed_before_baseyear(
         cop = {"air": ashp_cop, "ground": gshp_cop}
 
         if time_dep_hp_cop:
-            efficiency = cop[heat_pump_type][nodes[name]]
+            efficiency = cop[heat_pump_type][nodes]
         else:
             efficiency = costs.at[costs_name, "efficiency"]
 
@@ -520,32 +429,33 @@ def add_heating_capacities_installed_before_baseyear(
             if int(grouping_year) + default_lifetime <= int(baseyear):
                 continue
 
-            # installation is assumed to be linear for the past 25 years (default lifetime)
+            # installation is assumed to be linear for the past default_lifetime years
             ratio = (int(grouping_year) - int(grouping_years[i - 1])) / default_lifetime
 
             n.madd(
                 "Link",
-                nodes[name],
+                nodes,
                 suffix=f" {name} {heat_pump_type} heat pump-{grouping_year}",
-                bus0=nodes[name],
-                bus1=nodes[name] + " " + name + " heat",
+                bus0=nodes,
+                bus1=nodes + " " + name + " heat",
                 carrier=f"{name} {heat_pump_type} heat pump",
                 efficiency=efficiency,
                 capital_cost=costs.at[costs_name, "efficiency"]
                 * costs.at[costs_name, "fixed"],
-                p_nom=p_nom[name] * ratio / costs.at[costs_name, "efficiency"],
+                p_nom=existing_heating.loc[nodes, (name, f"{heat_pump_type} heat pump")]
+                * ratio
+                / costs.at[costs_name, "efficiency"],
                 build_year=int(grouping_year),
                 lifetime=costs.at[costs_name, "lifetime"],
             )
 
             # add resistive heater, gas boilers and oil boilers
-            # (50% capacities to rural buses, 50% to urban buses)
             n.madd(
                 "Link",
-                nodes[name],
+                nodes,
                 suffix=f" {name} resistive heater-{grouping_year}",
-                bus0=nodes[name],
-                bus1=nodes[name] + " " + name + " heat",
+                bus0=nodes,
+                bus1=nodes + " " + name + " heat",
                 carrier=name + " resistive heater",
                 efficiency=costs.at[f"{name_type} resistive heater", "efficiency"],
                 capital_cost=(
@@ -553,21 +463,20 @@ def add_heating_capacities_installed_before_baseyear(
                     * costs.at[f"{name_type} resistive heater", "fixed"]
                 ),
                 p_nom=(
-                    0.5
-                    * nodal_df[f"{heat_type} resistive heater"][nodes[name]]
+                    existing_heating.loc[nodes, (name, "resistive heater")]
                     * ratio
                     / costs.at[f"{name_type} resistive heater", "efficiency"]
                 ),
                 build_year=int(grouping_year),
-                lifetime=costs.at[costs_name, "lifetime"],
+                lifetime=costs.at[f"{name_type} resistive heater", "lifetime"],
             )
 
             n.madd(
                 "Link",
-                nodes[name],
+                nodes,
                 suffix=f" {name} gas boiler-{grouping_year}",
-                bus0=spatial.gas.nodes,
-                bus1=nodes[name] + " " + name + " heat",
+                bus0="EU gas" if "EU gas" in spatial.gas.nodes else nodes + " gas",
+                bus1=nodes + " " + name + " heat",
                 bus2="co2 atmosphere",
                 carrier=name + " gas boiler",
                 efficiency=costs.at[f"{name_type} gas boiler", "efficiency"],
@@ -577,8 +486,7 @@ def add_heating_capacities_installed_before_baseyear(
                     * costs.at[f"{name_type} gas boiler", "fixed"]
                 ),
                 p_nom=(
-                    0.5
-                    * nodal_df[f"{heat_type} gas boiler"][nodes[name]]
+                    existing_heating.loc[nodes, (name, "gas boiler")]
                     * ratio
                     / costs.at[f"{name_type} gas boiler", "efficiency"]
                 ),
@@ -588,20 +496,21 @@ def add_heating_capacities_installed_before_baseyear(
 
             n.madd(
                 "Link",
-                nodes[name],
+                nodes,
                 suffix=f" {name} oil boiler-{grouping_year}",
                 bus0=spatial.oil.nodes,
-                bus1=nodes[name] + " " + name + " heat",
+                bus1=nodes + " " + name + " heat",
                 bus2="co2 atmosphere",
                 carrier=name + " oil boiler",
                 efficiency=costs.at["decentral oil boiler", "efficiency"],
                 efficiency2=costs.at["oil", "CO2 intensity"],
                 capital_cost=costs.at["decentral oil boiler", "efficiency"]
                 * costs.at["decentral oil boiler", "fixed"],
-                p_nom=0.5
-                * nodal_df[f"{heat_type} oil boiler"][nodes[name]]
-                * ratio
-                / costs.at["decentral oil boiler", "efficiency"],
+                p_nom=(
+                    existing_heating.loc[nodes, (name, "oil boiler")]
+                    * ratio
+                    / costs.at["decentral oil boiler", "efficiency"]
+                ),
                 build_year=int(grouping_year),
                 lifetime=costs.at[f"{name_type} gas boiler", "lifetime"],
             )
@@ -627,10 +536,6 @@ def add_heating_capacities_installed_before_baseyear(
                 ],
             )
 
-            # drop assets which are at the end of their lifetime
-            links_i = n.links[(n.links.build_year + n.links.lifetime <= baseyear)].index
-            n.mremove("Link", links_i)
-
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -643,7 +548,7 @@ if __name__ == "__main__":
             clusters="37",
             ll="v1.0",
             opts="",
-            sector_opts="1p7-4380H-T-H-B-I-A-solar+p3-dist1",
+            sector_opts="1p7-4380H-T-H-B-I-A-dist1",
             planning_horizons=2020,
         )
 
@@ -687,7 +592,9 @@ if __name__ == "__main__":
             .to_pandas()
             .reindex(index=n.snapshots)
         )
-        default_lifetime = snakemake.params.costs["fill_values"]["lifetime"]
+        default_lifetime = snakemake.params.existing_capacities[
+            "default_heating_lifetime"
+        ]
         add_heating_capacities_installed_before_baseyear(
             n,
             baseyear,

@@ -37,7 +37,7 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
             mem_mb=1000,
         retries: 2
         conda:
-            "../envs/environment.yaml"
+            "../envs/retrieve.yaml"
         script:
             "../scripts/retrieve_databundle.py"
 
@@ -55,7 +55,7 @@ if config["enable"].get("retrieve_irena"):
             mem_mb=1000,
         retries: 2
         conda:
-            "../envs/environment.yaml"
+            "../envs/retrieve.yaml"
         script:
             "../scripts/retrieve_irena.py"
 
@@ -157,7 +157,7 @@ if config["enable"]["retrieve"] and config["enable"].get(
             LOGS + "retrieve_sector_databundle.log",
         retries: 2
         conda:
-            "../envs/environment.yaml"
+            "../envs/retrieve.yaml"
         script:
             "../scripts/retrieve_sector_databundle.py"
 
@@ -180,7 +180,7 @@ if config["enable"]["retrieve"]:
             LOGS + "retrieve_gas_infrastructure_data.log",
         retries: 2
         conda:
-            "../envs/environment.yaml"
+            "../envs/retrieve.yaml"
         script:
             "../scripts/retrieve_gas_infrastructure_data.py"
 
@@ -188,25 +188,17 @@ if config["enable"]["retrieve"]:
 if config["enable"]["retrieve"]:
 
     rule retrieve_electricity_demand:
-        input:
-            HTTP.remote(
-                "data.open-power-system-data.org/time_series/{version}/time_series_60min_singleindex.csv".format(
-                version="2019-06-05"
-                    if config["snapshots"]["end"] < "2019"
-                    else "2020-10-06"
-                ),
-                keep_local=True,
-                static=True,
-            ),
+        params:
+            versions=["2019-06-05", "2020-10-06"],
         output:
-            RESOURCES + "load_raw.csv",
+            "data/electricity_demand_raw.csv",
         log:
             LOGS + "retrieve_electricity_demand.log",
         resources:
             mem_mb=5000,
         retries: 2
-        run:
-            move(input[0], output[0])
+        script:
+            "../scripts/retrieve_electricity_demand.py"
 
 
 if config["enable"]["retrieve"]:
@@ -316,7 +308,7 @@ if config["enable"]["retrieve"]:
                 layer_path = (
                     f"/vsizip/{params.folder}/WDPA_{bYYYY}_Public_shp_{i}.zip"
                 )
-                print(f"Adding layer {i+1} of 3 to combined output file.")
+                print(f"Adding layer {i + 1} of 3 to combined output file.")
                 shell("ogr2ogr -f gpkg -update -append {output.gpkg} {layer_path}")
 
     rule download_wdpa_marine:
@@ -340,7 +332,7 @@ if config["enable"]["retrieve"]:
             for i in range(3):
                 # vsizip is special driver for directly working with zipped shapefiles in ogr2ogr
                 layer_path = f"/vsizip/{params.folder}/WDPA_WDOECM_{bYYYY}_Public_marine_shp_{i}.zip"
-                print(f"Adding layer {i+1} of 3 to combined output file.")
+                print(f"Adding layer {i + 1} of 3 to combined output file.")
                 shell("ogr2ogr -f gpkg -update -append {output.gpkg} {layer_path}")
 
 
@@ -376,6 +368,6 @@ if config["enable"]["retrieve"]:
             mem_mb=5000,
         retries: 2
         conda:
-            "../envs/environment.yaml"
+            "../envs/retrieve.yaml"
         script:
             "../scripts/retrieve_monthly_fuel_prices.py"

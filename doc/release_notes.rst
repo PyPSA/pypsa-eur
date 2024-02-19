@@ -10,9 +10,108 @@ Release Notes
 Upcoming Release
 ================
 
+* The default configuration ``config/config.default.yaml`` is now automatically
+  used as a base configuration file and no longer copied to
+  ``config/config.yaml`` on first use. The file ``config/config.yaml`` should be
+  used to define deviations from the default configuration.
+
+* Merged two OPSD time series data versions into such that the option ``load:
+  power_statistics:`` becomes superfluous and was hence removed.
+
+* Add new default to overdimension heating in individual buildings. This allows
+  them to cover heat demand peaks e.g. 10% higher than those in the data. The
+  disadvantage of manipulating the costs is that the capacity is then not quite
+  right. This way at least the costs are right.
+
+* Add option to specify to set a default heating lifetime for existing heating
+  (``existing_capacities: default_heating_lifetime:``).
+
+* Correctly source the existing heating technologies for buildings since the
+  source URL has changed. It represents the year 2012 and is only for
+  buildings, not district heating. So the capacities for urban central are now
+  set to zero from this source.
+
+* Remove long-deprecated function ``attach_extendable_generators`` in :mod:`add_electricity`.
+
+* The filtering of power plants in the ``config.default.yaml`` has been updated regarding phased-out power plants in 2023.
+
+* Upgrade techno-economic assumptions to ``technology-data`` v0.7.0.
+
+* Bugfix: Correct technology keys for the electricity production plotting to work out the box.
+
 * New configuration option ``everywhere_powerplants`` to build conventional powerplants everywhere, irrespective of existing powerplants locations, in the network (https://github.com/PyPSA/pypsa-eur/pull/850).
 
 * Remove option for wave energy as technology data is not maintained.
+
+* Define global constraint for CO2 emissions on the final state of charge of the
+  CO2 atmosphere store. This gives a more sparse constraint that should improve
+  the performance of the solving process.
+
+* Bugfix: Assure entering of code block which corrects Norwegian heat demand.
+
+* Add warning when BEV availability weekly profile has negative values in `build_transport_demand`.
+
+* Stacktrace of uncaught exceptions should now be correctly included inside log files (via `configure_logging(..)`).
+
+* Cluster residential and services heat buses by default. Can be disabled with ``cluster_heat_buses: false``.
+
+* Bugfix: Do not reduce district heat share when building population-weighted
+  energy statistics. Previously the district heating share was being multiplied
+  by the population weighting, reducing the DH share with multiple nodes.
+
+* Move building of daily heat profile to its own rule
+  :mod:`build_hourly_heat_demand` from :mod:`prepare_sector_network`.
+
+* In :mod:`build_energy_totals`, district heating shares are now reported in a
+  separate file.
+
+* Move calculation of district heating share to its own rule
+  :mod:`build_district_heat_share`.
+
+* Move building of distribution of existing heating to own rule
+  :mod:`build_existing_heating_distribution`. This makes the distribution of
+  existing heating to urban/rural, residential/services and spatially more
+  transparent.
+
+* Bugfix: Correctly read out number of solver threads from configuration file.
+
+* Air-sourced heat pumps can now also be built in rural areas. Previously, only
+  ground-sourced heat pumps were considered for this category.
+
+* Bugfix: Correctly read out number of solver threads from configuration file.
+
+* Add support for the linopy ``io_api`` option; set to ``"direct"`` to increase model reading and writing performance for the highs and gurobi solvers.
+
+* Add the option to customise map projection in plotting config.
+
+* The order of buses (bus0, bus1, ...) for DAC components has changed to meet the convention of the other components. Therefore, `bus0` refers to the electricity bus (input), `bus1` to the heat bus (input), 'bus2' to the CO2 atmosphere bus (input), and `bus3` to the CO2 storage bus (output).
+
+* The rule ``plot_network`` has been split into separate rules for plotting
+  electricity, hydrogen and gas networks.
+
+* To determine the optimal topology to meet the number of clusters, the workflow used pyomo in combination with ``ipopt`` or ``gurobi``. This dependency has been replaced by using ``linopy`` in combination with ``scipopt`` or ``gurobi``. The environment file has been updated accordingly.
+
+* The ``highs`` solver was added to the default environment file.
+
+* Various minor bugfixes to the perfect foresight workflow, though perfect foresight must still be considered experimental.
+
+* It is now possible to determine the directory for shared resources by setting `shared_resources` to a string.
+
+* A ``test.sh`` script was added to the repository to run the tests locally.
+
+* Default settings for recycling rates and primary product shares of high-value
+  chemicals have been set in accordance with the values used in `Neumann et al.
+  (2023) <https://doi.org/10.1016/j.joule.2023.06.016>`_ linearly interpolated
+  between 2020 and 2050. The recycling rates are based on data from `Agora
+  Energiewende (2021)
+  <https://static.agora-energiewende.de/fileadmin/Projekte/2021/2021_02_EU_CEAP/A-EW_254_Mobilising-circular-economy_study_WEB.pdf>`_.
+
+* Added option to specify turbine and solar panel models for specific years as a
+  dictionary (e.g. ``renewable: onwind: resource: turbine:``). The years will be
+  interpreted as years from when the the corresponding turbine model substitutes
+  the previous model for new installations. This will only have an effect on
+  workflows with foresight "myopic" and still needs to be added foresight option
+  "perfect".
 
 
 PyPSA-Eur 0.9.0 (5th January 2024)

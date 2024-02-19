@@ -50,7 +50,6 @@ With a heat balance considering the maximum temperature threshold of the transmi
 the maximal possible capacity factor "s_max_pu" for each transmission line at each time step is calculated.
 """
 
-import logging
 import re
 
 import atlite
@@ -99,7 +98,7 @@ def calculate_line_rating(n, cutout):
     -------
     xarray DataArray object with maximal power.
     """
-    relevant_lines = n.lines[(n.lines["underground"] == False)]
+    relevant_lines = n.lines[~n.lines["underground"]].copy()
     buses = relevant_lines[["bus0", "bus1"]].values
     x = n.buses.x
     y = n.buses.y

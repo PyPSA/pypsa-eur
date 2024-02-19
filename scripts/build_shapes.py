@@ -158,7 +158,7 @@ def country_cover(country_shapes, eez_shapes=None):
         shapes = pd.concat([shapes, eez_shapes])
     europe_shape = shapes.unary_union
     if isinstance(europe_shape, MultiPolygon):
-        europe_shape = max(europe_shape, key=attrgetter("area"))
+        europe_shape = max(europe_shape.geoms, key=attrgetter("area"))
     return Polygon(shell=europe_shape.exterior)
 
 

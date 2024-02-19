@@ -24,6 +24,7 @@ gurobi.log
 doc/_build
 
 config.yaml
+config/config.yaml
 
 dconf
 /data/links_p_nom.csv

@@ -297,8 +297,8 @@ def prepare_building_stock_data():
         errors="ignore",
     )
 
-    u_values.subsector.replace(rename_sectors, inplace=True)
-    u_values.btype.replace(rename_sectors, inplace=True)
+    u_values["subsector"] = u_values.subsector.replace(rename_sectors)
+    u_values["btype"] = u_values.btype.replace(rename_sectors)
 
     # for missing weighting of surfaces of building types assume MFH
     u_values["assumed_subsector"] = u_values.subsector
@@ -306,8 +306,8 @@ def prepare_building_stock_data():
         ~u_values.subsector.isin(rename_sectors.values()), "assumed_subsector"
     ] = "MFH"
 
-    u_values.country_code.replace({"UK": "GB"}, inplace=True)
-    u_values.bage.replace({"Berfore 1945": "Before 1945"}, inplace=True)
+    u_values["country_code"] = u_values.country_code.replace({"UK": "GB"})
+    u_values["bage"] = u_values.bage.replace({"Berfore 1945": "Before 1945"})
     u_values = u_values[~u_values.bage.isna()]
 
     u_values.set_index(["country_code", "subsector", "bage", "type"], inplace=True)
@@ -554,7 +554,7 @@ def prepare_temperature_data():
 
 
 # windows ---------------------------------------------------------------
-def window_limit(l, window_assumptions):
+def window_limit(l, window_assumptions):  # noqa: E741
     """
     Define limit u value from which on window is retrofitted.
     """
@@ -567,7 +567,7 @@ def window_limit(l, window_assumptions):
     return m * l + a
 
 
-def u_retro_window(l, window_assumptions):
+def u_retro_window(l, window_assumptions):  # noqa: E741
     """
     Define retrofitting value depending on renovation strength.
     """
@@ -580,7 +580,7 @@ def u_retro_window(l, window_assumptions):
     return max(m * l + a, 0.8)
 
 
-def window_cost(u, cost_retro, window_assumptions):
+def window_cost(u, cost_retro, window_assumptions):  # noqa: E741
     """
     Get costs for new windows depending on u value.
     """
@@ -600,33 +600,40 @@ def window_cost(u, cost_retro, window_assumptions):
     return window_cost
 
 
-def calculate_costs(u_values, l, cost_retro, window_assumptions):
+def calculate_costs(u_values, l, cost_retro, window_assumptions):  # noqa: E741
     """
     Returns costs for a given retrofitting strength weighted by the average
     surface/volume ratio of the component for each building type.
     """
     return u_values.apply(
         lambda x: (
-            cost_retro.loc[x.name[3], "cost_var"]
-            * 100
-            * float(l)
-            * l_weight.loc[x.name[3]].iloc[0]
-            + cost_retro.loc[x.name[3], "cost_fix"]
-        )
-        * x.A_element
-        / x.A_C_Ref
-        if x.name[3] != "Window"
-        else (
-            (window_cost(x[f"new_U_{l}"], cost_retro, window_assumptions) * x.A_element)
+            (
+                cost_retro.loc[x.name[3], "cost_var"]
+                * 100
+                * float(l)
+                * l_weight.loc[x.name[3]].iloc[0]
+                + cost_retro.loc[x.name[3], "cost_fix"]
+            )
+            * x.A_element
             / x.A_C_Ref
-        )
-        if x.value > window_limit(float(l), window_assumptions)
-        else 0,
+            if x.name[3] != "Window"
+            else (
+                (
+                    (
+                        window_cost(x[f"new_U_{l}"], cost_retro, window_assumptions)
+                        * x.A_element
+                    )
+                    / x.A_C_Ref
+                )
+                if x.value > window_limit(float(l), window_assumptions)
+                else 0
+            )
+        ),
         axis=1,
     )
 
 
-def calculate_new_u(u_values, l, l_weight, window_assumptions, k=0.035):
+def calculate_new_u(u_values, l, l_weight, window_assumptions, k=0.035):  # noqa: E741
     """
     Calculate U-values after building retrofitting, depending on the old
     U-values (u_values). This is for simple insulation measuers, adding an
@@ -648,12 +655,14 @@ def calculate_new_u(u_values, l, l_weight, window_assumptions, k=0.035):
     k: thermal conductivity
     """
     return u_values.apply(
-        lambda x: k / ((k / x.value) + (float(l) * l_weight.loc[x.name[3]]))
-        if x.name[3] != "Window"
-        else (
-            min(x.value, u_retro_window(float(l), window_assumptions))
-            if x.value > window_limit(float(l), window_assumptions)
-            else x.value
+        lambda x: (
+            k / ((k / x.value) + (float(l) * l_weight.loc[x.name[3]]))
+            if x.name[3] != "Window"
+            else (
+                min(x.value, u_retro_window(float(l), window_assumptions))
+                if x.value > window_limit(float(l), window_assumptions)
+                else x.value
+            )
         ),
         axis=1,
     )
@@ -749,7 +758,7 @@ def calculate_heat_losses(u_values, data_tabula, l_strength, temperature_factor)
     """
     #  (1) by transmission
     # calculate new U values of building elements due to additional insulation
-    for l in l_strength:
+    for l in l_strength:  # noqa: E741
         u_values[f"new_U_{l}"] = calculate_new_u(
             u_values, l, l_weight, window_assumptions
         )

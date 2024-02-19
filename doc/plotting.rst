@@ -22,7 +22,22 @@ Rule ``plot_summary``
 
 .. _map_plot:
 
-Rule ``plot_network``
-========================
+Rule ``plot_power_network``
+===========================
 
-.. automodule:: plot_network
+.. automodule:: plot_power_network
+
+Rule ``plot_power_network_perfect``
+===================================
+
+.. automodule:: plot_power_network_perfect
+
+Rule ``plot_hydrogen_network``
+==============================
+
+.. automodule:: plot_hydrogen_network
+
+Rule ``plot_gas_network``
+=========================
+
+.. automodule:: plot_gas_network
