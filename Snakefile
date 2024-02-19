@@ -18,6 +18,7 @@ conf_default_file = os.path.join(workflow.current_basedir, "config/config.defaul
 if not exists(conf_file) and exists(conf_default_file):
     copyfile(conf_default_file, conf_file)
 
+
 configfile: "config/config.default.yaml"
 configfile: "config/config.yaml"
 
