@@ -808,6 +808,11 @@ rule prepare_sector_network:
         **rules.cluster_gas_network.output,
         **rules.build_gas_input_locations.output,
         **build_sequestration_potentials_output,
+        **{
+            f"profile_offwind_{tech}": RESOURCES + f"profile_offwind-{tech}.nc"
+            for tech in ["ac", "dc"]
+            if (f"offwind-{tech}" in config["electricity"]["renewable_carriers"])
+        },
         network=RESOURCES + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
         energy_totals_name=RESOURCES + "energy_totals.csv",
         eurostat=input_eurostat,
@@ -833,8 +838,6 @@ rule prepare_sector_network:
             if config["foresight"] == "overnight"
             else "data/costs_{planning_horizons}.csv"
         ),
-        profile_offwind_ac=RESOURCES + "profile_offwind-ac.nc",
-        profile_offwind_dc=RESOURCES + "profile_offwind-dc.nc",
         h2_cavern=RESOURCES + "salt_cavern_potentials_s{simpl}_{clusters}.csv",
         busmap_s=RESOURCES + "busmap_elec_s{simpl}.csv",
         busmap=RESOURCES + "busmap_elec_s{simpl}_{clusters}.csv",
