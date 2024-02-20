@@ -14,7 +14,7 @@ import country_converter as coco
 import geopandas as gpd
 import numpy as np
 import pandas as pd
-from _helpers import mute_print
+from _helpers import configure_logging, mute_print, set_scenario_config
 from tqdm import tqdm
 
 cc = coco.CountryConverter()
@@ -743,7 +743,8 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_energy_totals")
 
-    logging.basicConfig(level=snakemake.config["logging"]["level"])
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     params = snakemake.params.energy
 

@@ -6,10 +6,10 @@
 Plot clustered electricity transmission network.
 """
 
-import cartopy.crs as ccrs
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import pypsa
+from _helpers import set_scenario_config
 from matplotlib.lines import Line2D
 from plot_power_network import load_projection
 from pypsa.plot import add_legend_lines
@@ -23,6 +23,7 @@ if __name__ == "__main__":
             clusters=128,
             configfiles=["../../config/config.test.yaml"],
         )
+    set_scenario_config(snakemake)
 
     lw_factor = 2e3
 

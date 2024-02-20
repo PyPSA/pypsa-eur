@@ -11,6 +11,7 @@ from functools import partial
 
 import country_converter as coco
 import pandas as pd
+from _helpers import set_scenario_config
 from tqdm import tqdm
 
 cc = coco.CountryConverter()
@@ -174,6 +175,7 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_industrial_energy_demand_per_country_today")
+    set_scenario_config(snakemake)
 
     params = snakemake.params.industry
     year = params.get("reference_year", 2015)

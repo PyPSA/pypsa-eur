@@ -9,7 +9,6 @@ technologies for the buildings, transport and industry sectors.
 
 import logging
 import os
-import re
 from itertools import product
 from types import SimpleNamespace
 
@@ -18,11 +17,16 @@ import numpy as np
 import pandas as pd
 import pypsa
 import xarray as xr
-from _helpers import update_config_with_sector_opts
+from _helpers import (
+    configure_logging,
+    set_scenario_config,
+    update_config_from_wildcards,
+)
 from add_electricity import calculate_annuity, sanitize_carriers, sanitize_locations
 from build_energy_totals import build_co2_totals, build_eea_co2, build_eurostat_co2
 from networkx.algorithms import complement
 from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentation
+from prepare_network import maybe_adjust_costs_and_potentials
 from pypsa.geo import haversine_pts
 from pypsa.io import import_components_from_dataframe
 from scipy.stats import beta
@@ -190,13 +194,13 @@ def define_spatial(nodes, options):
 spatial = SimpleNamespace()
 
 
-def emission_sectors_from_opts(opts):
+def determine_emission_sectors(options):
     sectors = ["electricity"]
-    if "T" in opts:
+    if options["transport"]:
         sectors += ["rail non-elec", "road non-elec"]
-    if "H" in opts:
+    if options["heating"]:
         sectors += ["residential non-elec", "services non-elec"]
-    if "I" in opts:
+    if options["industry"]:
         sectors += [
             "industrial non-elec",
             "industrial processes",
@@ -205,7 +209,7 @@ def emission_sectors_from_opts(opts):
             "domestic navigation",
             "international navigation",
         ]
-    if "A" in opts:
+    if options["agriculture"]:
         sectors += ["agriculture"]
 
     return sectors
@@ -215,11 +219,36 @@ def get(item, investment_year=None):
     """
     Check whether item depends on investment year.
     """
-    return item[investment_year] if isinstance(item, dict) else item
+    if not isinstance(item, dict):
+        return item
+    elif investment_year in item.keys():
+        return item[investment_year]
+    else:
+        logger.warning(
+            f"Investment key {investment_year} not found in dictionary {item}."
+        )
+        keys = sorted(item.keys())
+        if investment_year < keys[0]:
+            logger.warning(f"Lower than minimum key. Taking minimum key {keys[0]}")
+            return item[keys[0]]
+        elif investment_year > keys[-1]:
+            logger.warning(f"Higher than maximum key. Taking maximum key {keys[0]}")
+            return item[keys[-1]]
+        else:
+            logger.warning(
+                "Interpolate linearly between the next lower and next higher year."
+            )
+            lower_key = max(k for k in keys if k < investment_year)
+            higher_key = min(k for k in keys if k > investment_year)
+            lower = item[lower_key]
+            higher = item[higher_key]
+            return lower + (higher - lower) * (investment_year - lower_key) / (
+                higher_key - lower_key
+            )
 
 
 def co2_emissions_year(
-    countries, input_eurostat, opts, emissions_scope, report_year, input_co2, year
+    countries, input_eurostat, options, emissions_scope, report_year, input_co2, year
 ):
     """
     Calculate CO2 emissions in one specific year (e.g. 1990 or 2018).
@@ -237,7 +266,7 @@ def co2_emissions_year(
 
     co2_totals = build_co2_totals(countries, eea_co2, eurostat_co2)
 
-    sectors = emission_sectors_from_opts(opts)
+    sectors = determine_emission_sectors(options)
 
     co2_emissions = co2_totals.loc[countries, sectors].sum().sum()
 
@@ -248,11 +277,12 @@ def co2_emissions_year(
 
 
 # TODO: move to own rule with sector-opts wildcard?
-def build_carbon_budget(o, input_eurostat, fn, emissions_scope, report_year):
+def build_carbon_budget(
+    o, input_eurostat, fn, emissions_scope, report_year, input_co2, options
+):
     """
     Distribute carbon budget following beta or exponential transition path.
     """
-    # opts?
 
     if "be" in o:
         # beta decay
@@ -268,7 +298,7 @@ def build_carbon_budget(o, input_eurostat, fn, emissions_scope, report_year):
     e_1990 = co2_emissions_year(
         countries,
         input_eurostat,
-        opts,
+        options,
         emissions_scope,
         report_year,
         input_co2,
@@ -279,7 +309,7 @@ def build_carbon_budget(o, input_eurostat, fn, emissions_scope, report_year):
     e_0 = co2_emissions_year(
         countries,
         input_eurostat,
-        opts,
+        options,
         emissions_scope,
         report_year,
         input_co2,
@@ -758,12 +788,12 @@ def add_dac(n, costs):
     )
 
 
-def add_co2limit(n, nyears=1.0, limit=0.0):
+def add_co2limit(n, options, nyears=1.0, limit=0.0):
     logger.info(f"Adding CO2 budget limit as per unit of 1990 levels of {limit}")
 
     countries = snakemake.params.countries
 
-    sectors = emission_sectors_from_opts(opts)
+    sectors = determine_emission_sectors(options)
 
     # convert Mt to tCO2
     co2_totals = 1e6 * pd.read_csv(snakemake.input.co2_totals_name, index_col=0)
@@ -2002,13 +2032,6 @@ def add_heat(n, costs):
     if options["retrofitting"]["retro_endogen"]:
         logger.info("Add retrofitting endogenously")
 
-        # resample heat demand temporal 'heat_demand_r' depending on in config
-        # specified temporal resolution, to not overestimate retrofitting
-        hours = list(filter(re.compile(r"^\d+h$", re.IGNORECASE).search, opts))
-        if len(hours) == 0:
-            hours = [n.snapshots[1] - n.snapshots[0]]
-        heat_demand_r = heat_demand.resample(hours[0]).mean()
-
         # retrofitting data 'retro_data' with 'costs' [EUR/m^2] and heat
         # demand 'dE' [per unit of original heat demand] for each country and
         # different retrofitting strengths [additional insulation thickness in m]
@@ -2026,12 +2049,12 @@ def add_heat(n, costs):
         # share of space heat demand 'w_space' of total heat demand
         w_space = {}
         for sector in sectors:
-            w_space[sector] = heat_demand_r[sector + " space"] / (
-                heat_demand_r[sector + " space"] + heat_demand_r[sector + " water"]
+            w_space[sector] = heat_demand[sector + " space"] / (
+                heat_demand[sector + " space"] + heat_demand[sector + " water"]
             )
         w_space["tot"] = (
-            heat_demand_r["services space"] + heat_demand_r["residential space"]
-        ) / heat_demand_r.T.groupby(level=[1]).sum().T
+            heat_demand["services space"] + heat_demand["residential space"]
+        ) / heat_demand.T.groupby(level=[1]).sum().T
 
         for name in n.loads[
             n.loads.carrier.isin([x + " heat" for x in heat_systems])
@@ -2061,7 +2084,7 @@ def add_heat(n, costs):
                 pop_layout.loc[node].fraction * floor_area.loc[ct, "value"] * 10**6
             ).loc[sec] * f
             # total heat demand at node [MWh]
-            demand = n.loads_t.p_set[name].resample(hours[0]).mean()
+            demand = n.loads_t.p_set[name]
 
             # space heat demand at node [MWh]
             space_heat_demand = demand * w_space[sec][node]
@@ -3061,6 +3084,8 @@ def add_industry(n, costs):
             + mwh_coal_per_mwh_coke * industrial_demand["coke"]
         ) / nhours
 
+        p_set.rename(lambda x: x + " coal for industry", inplace=True)
+
         if not options["regional_coal_demand"]:
             p_set = p_set.sum()
 
@@ -3294,52 +3319,6 @@ def remove_h2_network(n):
         n.stores.drop("EU H2 Store", inplace=True)
 
 
-def maybe_adjust_costs_and_potentials(n, opts):
-    for o in opts:
-        flags = ["+e", "+p", "+m", "+c"]
-        if all(flag not in o for flag in flags):
-            continue
-        oo = o.split("+")
-        carrier_list = np.hstack(
-            (
-                n.generators.carrier.unique(),
-                n.links.carrier.unique(),
-                n.stores.carrier.unique(),
-                n.storage_units.carrier.unique(),
-            )
-        )
-        suptechs = map(lambda c: c.split("-", 2)[0], carrier_list)
-        if oo[0].startswith(tuple(suptechs)):
-            carrier = oo[0]
-            attr_lookup = {
-                "p": "p_nom_max",
-                "e": "e_nom_max",
-                "c": "capital_cost",
-                "m": "marginal_cost",
-            }
-            attr = attr_lookup[oo[1][0]]
-            factor = float(oo[1][1:])
-            # beware if factor is 0 and p_nom_max is np.inf, 0*np.inf is nan
-            if carrier == "AC":  # lines do not have carrier
-                n.lines[attr] *= factor
-            else:
-                if attr == "p_nom_max":
-                    comps = {"Generator", "Link", "StorageUnit"}
-                elif attr == "e_nom_max":
-                    comps = {"Store"}
-                else:
-                    comps = {"Generator", "Link", "StorageUnit", "Store"}
-                for c in n.iterate_components(comps):
-                    if carrier == "solar":
-                        sel = c.df.carrier.str.contains(
-                            carrier
-                        ) & ~c.df.carrier.str.contains("solar rooftop")
-                    else:
-                        sel = c.df.carrier.str.contains(carrier)
-                    c.df.loc[sel, attr] *= factor
-            logger.info(f"changing {attr} for {carrier} by factor {factor}")
-
-
 def limit_individual_line_extension(n, maxext):
     logger.info(f"Limiting new HVAC and HVDC extensions to {maxext} MW")
     n.lines["s_nom_max"] = n.lines["s_nom"] + maxext
@@ -3509,31 +3488,31 @@ def apply_time_segmentation(
     return n
 
 
-def set_temporal_aggregation(n, opts, solver_name):
+def set_temporal_aggregation(n, resolution, solver_name):
     """
     Aggregate network temporally.
     """
-    for o in opts:
-        # temporal averaging
-        m = re.match(r"^\d+h$", o, re.IGNORECASE)
-        if m is not None:
-            n = average_every_nhours(n, m.group(0))
-            break
-        # representative snapshots
-        m = re.match(r"(^\d+)sn$", o, re.IGNORECASE)
-        if m is not None:
-            sn = int(m[1])
-            logger.info(f"Use every {sn} snapshot as representative")
-            n.set_snapshots(n.snapshots[::sn])
-            n.snapshot_weightings *= sn
-            break
-        # segments with package tsam
-        m = re.match(r"^(\d+)seg$", o, re.IGNORECASE)
-        if m is not None:
-            segments = int(m[1])
-            logger.info(f"Use temporal segmentation with {segments} segments")
-            n = apply_time_segmentation(n, segments, solver_name=solver_name)
-            break
+    if not resolution:
+        return n
+
+    # representative snapshots
+    if "sn" in resolution.lower():
+        sn = int(resolution[:-2])
+        logger.info("Use every %s snapshot as representative", sn)
+        n.set_snapshots(n.snapshots[::sn])
+        n.snapshot_weightings *= sn
+
+    # segments with package tsam
+    elif "seg" in resolution.lower():
+        segments = int(resolution[:-3])
+        logger.info("Use temporal segmentation with %s segments", segments)
+        n = apply_time_segmentation(n, segments, solver_name=solver_name)
+
+    # temporal averaging
+    elif "h" in resolution.lower():
+        logger.info("Aggregate to frequency %s", resolution)
+        n = average_every_nhours(n, resolution)
+
     return n
 
 
@@ -3602,13 +3581,11 @@ if __name__ == "__main__":
             planning_horizons="2030",
         )
 
-    logging.basicConfig(level=snakemake.config["logging"]["level"])
-
-    update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
+    update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     options = snakemake.params.sector
-
-    opts = snakemake.wildcards.sector_opts.split("-")
 
     investment_year = int(snakemake.wildcards.planning_horizons[-4:])
 
@@ -3647,56 +3624,34 @@ if __name__ == "__main__":
 
     add_storage_and_grids(n, costs)
 
-    # TODO merge with opts cost adjustment below
-    for o in opts:
-        if o[:4] == "dist":
-            options["electricity_distribution_grid"] = True
-            options["electricity_distribution_grid_cost_factor"] = float(
-                o[4:].replace("p", ".").replace("m", "-")
-            )
-        if o == "biomasstransport":
-            options["biomass_transport"] = True
-
-    if "nodistrict" in opts:
-        options["district_heating"]["progress"] = 0.0
-
-    if "nowasteheat" in opts:
-        logger.info("Disabling waste heat.")
-        options["use_fischer_tropsch_waste_heat"] = False
-        options["use_methanolisation_waste_heat"] = False
-        options["use_haber_bosch_waste_heat"] = False
-        options["use_methanation_waste_heat"] = False
-        options["use_fuel_cell_waste_heat"] = False
-        options["use_electrolysis_waste_heat"] = False
-
-    if "T" in opts:
+    if options["transport"]:
         add_land_transport(n, costs)
 
-    if "H" in opts:
+    if options["heating"]:
         add_heat(n, costs)
 
-    if "B" in opts:
+    if options["biomass"]:
         add_biomass(n, costs)
 
     if options["ammonia"]:
         add_ammonia(n, costs)
 
-    if "I" in opts:
+    if options["industry"]:
         add_industry(n, costs)
 
-    if "H" in opts:
+    if options["heating"]:
         add_waste_heat(n)
 
-    if "A" in opts:  # requires H and I
+    if options["agriculture"]:  # requires H and I
         add_agriculture(n, costs)
 
     if options["dac"]:
         add_dac(n, costs)
 
-    if "decentral" in opts:
+    if not options["electricity_transmission_grid"]:
         decentral(n)
 
-    if "noH2network" in opts:
+    if not options["H2_network"]:
         remove_h2_network(n)
 
     if options["co2network"]:
@@ -3706,51 +3661,39 @@ if __name__ == "__main__":
         add_allam(n, costs)
 
     solver_name = snakemake.config["solving"]["solver"]["name"]
-    n = set_temporal_aggregation(n, opts, solver_name)
+    resolution = snakemake.params.time_resolution
+    n = set_temporal_aggregation(n, resolution, solver_name)
 
-    limit_type = "config"
-    limit = get(snakemake.params.co2_budget, investment_year)
-    for o in opts:
-        if "cb" not in o:
-            continue
-        limit_type = "carbon budget"
+    co2_budget = snakemake.params.co2_budget
+    if isinstance(co2_budget, str) and co2_budget.startswith("cb"):
         fn = "results/" + snakemake.params.RDIR + "/csvs/carbon_budget_distribution.csv"
         if not os.path.exists(fn):
             emissions_scope = snakemake.params.emissions_scope
             report_year = snakemake.params.eurostat_report_year
             input_co2 = snakemake.input.co2
             build_carbon_budget(
-                o,
+                co2_budget,
                 snakemake.input.eurostat,
                 fn,
                 emissions_scope,
                 report_year,
                 input_co2,
+                options,
             )
         co2_cap = pd.read_csv(fn, index_col=0).squeeze()
         limit = co2_cap.loc[investment_year]
-        break
-    for o in opts:
-        if "Co2L" not in o:
-            continue
-        limit_type = "wildcard"
-        limit = o[o.find("Co2L") + 4 :]
-        limit = float(limit.replace("p", ".").replace("m", "-"))
-        break
-    logger.info(f"Add CO2 limit from {limit_type}")
-    add_co2limit(n, nyears, limit)
+    else:
+        limit = get(co2_budget, investment_year)
+    add_co2limit(n, options, nyears, limit)
 
-    for o in opts:
-        if not o[:10] == "linemaxext":
-            continue
-        maxext = float(o[10:]) * 1e3
+    maxext = snakemake.params["lines"]["max_extension"]
+    if maxext is not None:
         limit_individual_line_extension(n, maxext)
-        break
 
     if options["electricity_distribution_grid"]:
         insert_electricity_distribution_grid(n, costs)
 
-    maybe_adjust_costs_and_potentials(n, opts)
+    maybe_adjust_costs_and_potentials(n, snakemake.params["adjustments"])
 
     if options["gas_distribution_grid"]:
         insert_gas_distribution_costs(n, costs)

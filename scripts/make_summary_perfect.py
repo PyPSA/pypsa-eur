@@ -12,6 +12,7 @@ other metrics.
 import numpy as np
 import pandas as pd
 import pypsa
+from _helpers import set_scenario_config
 from make_summary import calculate_cfs  # noqa: F401
 from make_summary import calculate_nodal_cfs  # noqa: F401
 from make_summary import calculate_nodal_costs  # noqa: F401
@@ -722,6 +723,7 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("make_summary_perfect")
+    set_scenario_config(snakemake)
 
     run = snakemake.config["run"]["name"]
     if run != "":

@@ -16,6 +16,8 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 AVAILABLE_BIOMASS_YEARS = [2010, 2020, 2030, 2040, 2050]
 
+from _helpers import configure_logging, set_scenario_config
+
 
 def build_nuts_population_data(year=2013):
     pop = pd.read_csv(
@@ -220,6 +222,9 @@ if __name__ == "__main__":
             clusters="5",
             planning_horizons=2050,
         )
+
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     overnight = snakemake.config["foresight"] == "overnight"
     params = snakemake.params.biomass

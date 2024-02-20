@@ -15,7 +15,7 @@ import fiona
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import numpy as np
-from _helpers import configure_logging
+from _helpers import configure_logging, set_scenario_config
 from atlite.gis import shape_availability
 from rasterio.plot import show
 
@@ -38,6 +38,7 @@ if __name__ == "__main__":
             "determine_availability_matrix_MD_UA", technology="solar"
         )
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     nprocesses = None  # snakemake.config["atlite"].get("nprocesses")
     noprogress = not snakemake.config["atlite"].get("show_progress", True)
