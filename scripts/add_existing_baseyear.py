@@ -575,11 +575,11 @@ def add_heating_capacities_installed_before_baseyear(
     # rename fuel of CHPs - lignite not in DEA database
     rename_fuel = {
         "Hard Coal": "coal",
+        "Coal": "coal",
         "Lignite": "lignite",
         "Natural Gas": "gas",
         "Bioenergy": "urban central solid biomass CHP",
         "Oil": "oil",
-        "Waste": "waste",
     }
 
     ppl = pd.read_csv(snakemake.input.powerplants, index_col=0)
@@ -590,7 +590,7 @@ def add_heating_capacities_installed_before_baseyear(
     # drop assets which are already phased out / decommissioned
     # drop hydro, waste and oil fueltypes for CHP
     limit = np.max(grouping_years)
-    drop_fueltypes = ["Hydro"]
+    drop_fueltypes = ["Hydro", "Other", "Waste", "nicht biogener Abfall"]
     chp = ppl.query(
         "Set == 'CHP' and DateOut >= @baseyear and DateIn <= @limit and Fueltype not in @drop_fueltypes"
     ).copy()
@@ -604,12 +604,9 @@ def add_heating_capacities_installed_before_baseyear(
     busmap_s = pd.read_csv(snakemake.input.busmap_s, index_col=0).squeeze()
     busmap = pd.read_csv(snakemake.input.busmap, index_col=0).squeeze()
 
-    inv_busmap = {}
-    for k, v in busmap.items():
-        inv_busmap[v] = inv_busmap.get(v, []) + [k]
-
     clustermaps = busmap_s.map(busmap)
     clustermaps.index = clustermaps.index.astype(int)
+    chp["bus"] = chp["bus"].astype(int)
 
     chp["cluster_bus"] = chp.bus.map(clustermaps)
 
@@ -638,9 +635,7 @@ def add_heating_capacities_installed_before_baseyear(
 
         mastr_chp_power["p_nom"] = mastr_chp_power.eval("Capacity / Efficiency")
         mastr_chp_power["c_b"] = mastr_chp_power.eval("Capacity / Capacity_thermal")
-        mastr_chp_power["c_b"].clip(
-            upper=costs.at["CCGT", "c_b"], inplace=True
-        )  # exclude outliers
+        mastr_chp_power["c_b"] = mastr_chp_power["c_b"].clip(upper=costs.at["CCGT", "c_b"]) # exclude outliers
         mastr_chp_power["efficiency-heat"] = mastr_chp_power.eval("Efficiency / c_b")
 
         # these CHPs are mainly biomass CHPs
@@ -655,7 +650,7 @@ def add_heating_capacities_installed_before_baseyear(
             "central solid biomass CHP", ["efficiency-heat", "efficiency"]
         ].sum()
         eff_heat = mastr_chp_heat["efficiency-heat"]
-        mastr_chp_heat["Efficiency"].clip(upper=eff_total_max - eff_heat, inplace=True)
+        mastr_chp_heat["Efficiency"] = mastr_chp_heat["Efficiency"].clip(upper=eff_total_max - eff_heat)
 
         mastr_chp = pd.concat([mastr_chp_power, mastr_chp_heat])
 
@@ -712,8 +707,8 @@ def add_heating_capacities_installed_before_baseyear(
                     p_nom=p_nom.values,
                     capital_cost=costs.at[key, "fixed"] * costs.at[key, "efficiency"],
                     marginal_cost=costs.at[key, "VOM"],
-                    efficiency=efficiency_power,
-                    efficiency2=efficiency_heat,
+                    efficiency=efficiency_power.dropna(),
+                    efficiency2=efficiency_heat.dropna(),
                     efficiency3=costs.at[generator, "CO2 intensity"],
                     build_year=grouping_year,
                     lifetime=costs.at[key, "lifetime"],
