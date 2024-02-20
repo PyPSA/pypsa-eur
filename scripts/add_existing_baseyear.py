@@ -592,8 +592,10 @@ def add_heating_capacities_installed_before_baseyear(
     limit = np.max(grouping_years)
     drop_fueltypes = ["Hydro", "Other", "Waste", "nicht biogener Abfall"]
     chp = ppl.query(
-        "Set == 'CHP' and DateOut >= @baseyear and DateIn <= @limit and Fueltype not in @drop_fueltypes"
+        "Set == 'CHP' and DateIn <= @limit and Fueltype not in @drop_fueltypes"
     ).copy()
+    is_null_condition = ppl['DateOut'].isna()
+    chp = chp[is_null_condition | (chp.DateOut > baseyear)]
 
     # calculate remaining lifetime before phase-out (+1 because assuming
     # phase out date at the end of the year)
