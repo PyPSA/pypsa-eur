@@ -7,9 +7,11 @@
 Release Notes
 ##########################################
 
-.. Upcoming Release
-.. ================
-..
+Upcoming Release
+================
+
+* Linearly interpolate missing investment periods in year-dependent
+  configuration options.
 
 PyPSA-Eur 0.10.0 (19th February 2024)
 =====================================
