@@ -13,11 +13,6 @@ Upcoming Release
 * Linearly interpolate missing investment periods in year-dependent
   configuration options.
 
-PyPSA-Eur 0.10.0 (19th February 2024)
-=====================================
-
-**New Features**
-
 * Added new scenario management that supports the simultaneous execution of
   multiple scenarios with a single ``snakemake`` call. For this purpose, a
   ``scenarios.yaml`` file is introduced which contains customizable scenario
@@ -83,6 +78,11 @@ PyPSA-Eur 0.10.0 (19th February 2024)
 
 * The outputs of the rule ``retrieve_gas_infrastructure_data`` no longer
   marked as ``protected()`` as the download size is small.
+
+PyPSA-Eur 0.10.0 (19th February 2024)
+=====================================
+
+**New Features**
 
 * Improved representation of industry transition pathways. A new script was
   added to interpolate industry sector ratios from today's status quo to future
