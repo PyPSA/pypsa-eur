@@ -1,9 +1,9 @@
-# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: CC0-1.0
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#top-level-configuration
-version: 0.9.0
+version: 0.10.0
 tutorial: false
 
 logging:
@@ -668,7 +668,7 @@ industry:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 costs:
   year: 2030
-  version: v0.7.0
+  version: v0.8.0
   rooftop_share: 0.14  # based on the potentials, assuming  (0.1 kW/m2 and 10 m2/person)
   social_discountrate: 0.02
   fill_values:

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -3056,6 +3056,8 @@ def add_industry(n, costs):
             industrial_demand["coal"]
             + mwh_coal_per_mwh_coke * industrial_demand["coke"]
         ) / nhours
+
+        p_set.rename(lambda x: x + " coal for industry", inplace=True)
 
         if not options["regional_coal_demand"]:
             p_set = p_set.sum()

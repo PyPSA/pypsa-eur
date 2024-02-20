@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """

@@ -26,6 +26,7 @@ for template, target in default_files.items():
         copyfile(template, target)
 
 
+
 configfile: "config/config.default.yaml"
 configfile: "config/config.yaml"
 
