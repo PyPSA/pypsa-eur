@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
@@ -77,7 +77,7 @@ import shapely
 import shapely.prepared
 import shapely.wkt
 import yaml
-from _helpers import configure_logging
+from _helpers import configure_logging, set_scenario_config
 from packaging.version import Version, parse
 from scipy import spatial
 from scipy.sparse import csgraph
@@ -769,6 +769,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("base_network")
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     n = base_network(
         snakemake.input.eg_buses,

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -11,6 +11,7 @@ import logging
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import pandas as pd
+from _helpers import configure_logging, set_scenario_config
 from prepare_sector_network import co2_emissions_year
 
 logger = logging.getLogger(__name__)
@@ -427,13 +428,13 @@ def historical_emissions(countries):
     )
 
     emissions = co2_totals.loc["electricity"]
-    if "T" in opts:
+    if options["transport"]:
         emissions += co2_totals.loc[[i + " non-elec" for i in ["rail", "road"]]].sum()
-    if "H" in opts:
+    if options["heating"]:
         emissions += co2_totals.loc[
             [i + " non-elec" for i in ["residential", "services"]]
         ].sum()
-    if "I" in opts:
+    if options["industry"]:
         emissions += co2_totals.loc[
             [
                 "industrial non-elec",
@@ -447,7 +448,7 @@ def historical_emissions(countries):
     return emissions
 
 
-def plot_carbon_budget_distribution(input_eurostat):
+def plot_carbon_budget_distribution(input_eurostat, options):
     """
     Plot historical carbon emissions in the EU and decarbonization path.
     """
@@ -469,7 +470,7 @@ def plot_carbon_budget_distribution(input_eurostat):
     e_1990 = co2_emissions_year(
         countries,
         input_eurostat,
-        opts,
+        options,
         emissions_scope,
         report_year,
         input_co2,
@@ -572,7 +573,8 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("plot_summary")
 
-    logging.basicConfig(level=snakemake.config["logging"]["level"])
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     n_header = 4
 
@@ -582,7 +584,9 @@ if __name__ == "__main__":
 
     plot_balances()
 
-    for sector_opts in snakemake.params.sector_opts:
-        opts = sector_opts.split("-")
-        if any("cb" in o for o in opts) or snakemake.config["foresight"] == "perfect":
-            plot_carbon_budget_distribution(snakemake.input.eurostat)
+    co2_budget = snakemake.params["co2_budget"]
+    if (
+        isinstance(co2_budget, str) and co2_budget.startswith("cb")
+    ) or snakemake.params["foresight"] == "perfect":
+        options = snakemake.params.sector
+        plot_carbon_budget_distribution(snakemake.input.eurostat, options)

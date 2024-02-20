@@ -17,3 +17,6 @@ aggregation_strategies,,,
 -- -- {key},str,"{key} can be any of the component of the generator (str). It’s value can be any that can be converted to pandas.Series using getattr(). For example one of {min, max, sum}.","Aggregates the component according to the given strategy. For example, if sum, then all values within each cluster are summed to represent the new generator."
 -- buses,,,
 -- -- {key},str,"{key} can be any of the component of the bus (str). It’s value can be any that can be converted to pandas.Series using getattr(). For example one of {min, max, sum}.","Aggregates the component according to the given strategy. For example, if sum, then all values within each cluster are summed to represent the new bus."
+temporal,,,Options for temporal resolution
+-- resolution_elec,--,"{false,``nH``; i.e. ``2H``-``6H``}","Resample the time-resolution by averaging over every ``n`` snapshots in :mod:`prepare_network`. **Warning:** This option should currently only be used with electricity-only networks, not for sector-coupled networks."
+-- resolution_sector,--,"{false,``nH``; i.e. ``2H``-``6H``}","Resample the time-resolution by averaging over every ``n`` snapshots in :mod:`prepare_sector_network`."

@@ -1,9 +1,9 @@
-# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: CC0-1.0
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#top-level-configuration
-version: 0.9.0
+version: 0.10.0
 tutorial: false
 
 logging:
@@ -21,6 +21,9 @@ remote:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
   name: ""
+  scenarios:
+    enable: false
+    file: config/scenarios.yaml
   disable_progressbar: false
   shared_resources: false
   shared_cutouts: true
@@ -59,9 +62,6 @@ snapshots:
   start: "2013-01-01"
   end: "2014-01-01"
   inclusive: 'left'
-  resolution: false
-  segmentation: false
-  #representative: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#enable
 enable:
@@ -366,6 +366,11 @@ existing_capacities:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#sector
 sector:
+  transport: true
+  heating: true
+  biomass: true
+  industry: true
+  agriculture: true
   district_heating:
     potential: 0.6
     progress:
@@ -532,6 +537,7 @@ sector:
   use_methanation_waste_heat: true
   use_fuel_cell_waste_heat: true
   use_electrolysis_waste_heat: true
+  electricity_transmission_grid: true
   electricity_distribution_grid: true
   electricity_distribution_grid_cost_factor: 1.0
   electricity_grid_connection: true
@@ -663,7 +669,7 @@ industry:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 costs:
   year: 2030
-  version: v0.7.0
+  version: v0.8.0
   rooftop_share: 0.14  # based on the potentials, assuming  (0.1 kW/m2 and 10 m2/person)
   social_discountrate: 0.02
   fill_values:
@@ -713,6 +719,14 @@ clustering:
       committable: any
       ramp_limit_up: max
       ramp_limit_down: max
+  temporal:
+    resolution_elec: false
+    resolution_sector: false
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#adjustments
+adjustments:
+  electricity: false
+  sector: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solving
 solving:

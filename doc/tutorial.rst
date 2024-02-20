@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2019-2023 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: 2019-2024 The PyPSA-Eur Authors
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -133,82 +133,89 @@ This triggers a workflow of multiple preceding jobs that depend on each rule's i
         graph[bgcolor=white, margin=0];
         node[shape=box, style=rounded, fontname=sans,                 fontsize=10, penwidth=2];
         edge[penwidth=2, color=grey];
-            0[label = "solve_network", color = "0.33 0.6 0.85", style="rounded"];
-            1[label = "prepare_network\nll: copt\nopts: Co2L-24H", color = "0.03 0.6 0.85", style="rounded"];
-            2[label = "add_extra_components", color = "0.45 0.6 0.85", style="rounded"];
-            3[label = "cluster_network\nclusters: 6", color = "0.46 0.6 0.85", style="rounded"];
-            4[label = "simplify_network\nsimpl: ", color = "0.52 0.6 0.85", style="rounded"];
-            5[label = "add_electricity", color = "0.55 0.6 0.85", style="rounded"];
-            6[label = "build_renewable_profiles\ntechnology: solar", color = "0.15 0.6 0.85", style="rounded"];
-            7[label = "base_network", color = "0.37 0.6 0.85", style="rounded,dashed"];
-            8[label = "build_shapes", color = "0.07 0.6 0.85", style="rounded,dashed"];
-            9[label = "retrieve_databundle", color = "0.60 0.6 0.85", style="rounded"];
-            10[label = "retrieve_natura_raster", color = "0.42 0.6 0.85", style="rounded"];
-            11[label = "build_bus_regions", color = "0.09 0.6 0.85", style="rounded,dashed"];
-            12[label = "build_renewable_profiles\ntechnology: onwind", color = "0.15 0.6 0.85", style="rounded"];
-            13[label = "build_renewable_profiles\ntechnology: offwind-ac", color = "0.15 0.6 0.85", style="rounded"];
-            14[label = "build_ship_raster", color = "0.02 0.6 0.85", style="rounded"];
-            15[label = "retrieve_ship_raster", color = "0.40 0.6 0.85", style="rounded"];
-            16[label = "build_renewable_profiles\ntechnology: offwind-dc", color = "0.15 0.6 0.85", style="rounded"];
-            17[label = "build_line_rating", color = "0.32 0.6 0.85", style="rounded"];
-            18[label = "retrieve_cost_data\nyear: 2030", color = "0.50 0.6 0.85", style="rounded"];
-            19[label = "build_powerplants", color = "0.64 0.6 0.85", style="rounded,dashed"];
-            20[label = "build_electricity_demand", color = "0.13 0.6 0.85", style="rounded,dashed"];
-            21[label = "retrieve_electricity_demand", color = "0.31 0.6 0.85", style="rounded"];
-            22[label = "copy_config", color = "0.23 0.6 0.85", style="rounded"];
+            0[label = "solve_network", color = "0.39 0.6 0.85", style="rounded"];
+            1[label = "prepare_network\nll: copt\nopts: Co2L-24H", color = "0.29 0.6 0.85", style="rounded"];
+            2[label = "add_extra_components", color = "0.28 0.6 0.85", style="rounded"];
+            3[label = "cluster_network\nclusters: 6", color = "0.19 0.6 0.85", style="rounded"];
+            4[label = "simplify_network\nsimpl: ", color = "0.01 0.6 0.85", style="rounded"];
+            5[label = "add_electricity", color = "0.49 0.6 0.85", style="rounded"];
+            6[label = "build_renewable_profiles\ntechnology: solar", color = "0.21 0.6 0.85", style="rounded"];
+            7[label = "base_network", color = "0.27 0.6 0.85", style="rounded"];
+            8[label = "build_shapes", color = "0.26 0.6 0.85", style="rounded"];
+            9[label = "retrieve_databundle", color = "0.59 0.6 0.85", style="rounded"];
+            10[label = "retrieve_natura_raster", color = "0.47 0.6 0.85", style="rounded"];
+            11[label = "build_bus_regions", color = "0.13 0.6 0.85", style="rounded"];
+            12[label = "retrieve_cutout\ncutout: be-03-2013-era5", color = "0.36 0.6 0.85", style="rounded,dashed"];
+            13[label = "build_renewable_profiles\ntechnology: onwind", color = "0.21 0.6 0.85", style="rounded"];
+            14[label = "build_renewable_profiles\ntechnology: offwind-ac", color = "0.21 0.6 0.85", style="rounded"];
+            15[label = "build_ship_raster", color = "0.00 0.6 0.85", style="rounded"];
+            16[label = "retrieve_ship_raster", color = "0.51 0.6 0.85", style="rounded,dashed"];
+            17[label = "build_renewable_profiles\ntechnology: offwind-dc", color = "0.21 0.6 0.85", style="rounded"];
+            18[label = "build_line_rating", color = "0.05 0.6 0.85", style="rounded"];
+            19[label = "retrieve_cost_data\nyear: 2030", color = "0.15 0.6 0.85", style="rounded"];
+            20[label = "build_powerplants", color = "0.54 0.6 0.85", style="rounded"];
+            21[label = "build_electricity_demand", color = "0.52 0.6 0.85", style="rounded"];
+            22[label = "retrieve_electricity_demand", color = "0.22 0.6 0.85", style="rounded"];
+            23[label = "copy_config", color = "0.44 0.6 0.85", style="rounded"];
             1 -> 0
-            22 -> 0
+            23 -> 0
             2 -> 1
-            18 -> 1
+            19 -> 1
             3 -> 2
-            18 -> 2
+            19 -> 2
             4 -> 3
-            18 -> 3
+            19 -> 3
             5 -> 4
-            18 -> 4
+            19 -> 4
             11 -> 4
             6 -> 5
-            12 -> 5
             13 -> 5
-            16 -> 5
-            7 -> 5
+            14 -> 5
             17 -> 5
+            7 -> 5
             18 -> 5
-            11 -> 5
             19 -> 5
-            9 -> 5
+            11 -> 5
             20 -> 5
+            9 -> 5
+            21 -> 5
             8 -> 5
             7 -> 6
             9 -> 6
             10 -> 6
             8 -> 6
             11 -> 6
+            12 -> 6
             8 -> 7
             9 -> 8
             8 -> 11
             7 -> 11
-            7 -> 12
-            9 -> 12
-            10 -> 12
-            8 -> 12
-            11 -> 12
             7 -> 13
             9 -> 13
             10 -> 13
-            14 -> 13
             8 -> 13
             11 -> 13
+            12 -> 13
+            7 -> 14
+            9 -> 14
+            10 -> 14
             15 -> 14
-            7 -> 16
-            9 -> 16
-            10 -> 16
-            14 -> 16
-            8 -> 16
-            11 -> 16
+            8 -> 14
+            11 -> 14
+            12 -> 14
+            16 -> 15
+            12 -> 15
             7 -> 17
-            7 -> 19
-            21 -> 20
+            9 -> 17
+            10 -> 17
+            15 -> 17
+            8 -> 17
+            11 -> 17
+            12 -> 17
+            7 -> 18
+            12 -> 18
+            7 -> 20
+            22 -> 21
     }
 
 |
@@ -218,26 +225,29 @@ In the terminal, this will show up as a list of jobs to be run:
 .. code:: bash
 
     Building DAG of jobs...
-    job                         count    min threads    max threads
-    ------------------------  -------  -------------  -------------
-    add_electricity                 1              1              1
-    add_extra_components            1              1              1
-    base_network                    1              1              1
-    build_bus_regions               1              1              1
-    build_hydro_profile             1              1              1
-    build_electricity_demand        1              1              1
-    build_powerplants               1              1              1
-    build_renewable_profiles        4              1              1
-    build_shapes                    1              1              1
-    build_ship_raster               1              1              1
-    cluster_network                 1              1              1
-    prepare_network                 1              1              1
-    retrieve_cost_data              1              1              1
-    retrieve_databundle             1              1              1
-    retrieve_natura_raster          1              1              1
-    simplify_network                1              1              1
-    solve_network                   1              1              1
-    total                          20              1              1
+    Job stats:
+    job                            count
+    ---------------------------  -------
+    add_electricity                    1
+    add_extra_components               1
+    base_network                       1
+    build_bus_regions                  1
+    build_electricity_demand           1
+    build_line_rating                  1
+    build_powerplants                  1
+    build_renewable_profiles           4
+    build_shapes                       1
+    build_ship_raster                  1
+    cluster_network                    1
+    copy_config                        1
+    prepare_network                    1
+    retrieve_cost_data                 1
+    retrieve_databundle                1
+    retrieve_electricity_demand        1
+    retrieve_natura_raster             1
+    simplify_network                   1
+    solve_network                      1
+    total                             22
 
 
 ``snakemake`` then runs these jobs in the correct order.
@@ -246,16 +256,16 @@ A job (here ``simplify_network``) will display its attributes and normally some 
 
 .. code:: bash
 
-    [Mon Jan 1 00:00:00 2023]
+    [Mon Feb 19 17:06:17 2024]
     rule simplify_network:
-        input: networks/elec.nc, resources/costs.csv, resources/regions_onshore.geojson, resources/regions_offshore.geojson
-        output: networks/elec_s.nc, resources/regions_onshore_elec_s.geojson, resources/regions_offshore_elec_s.geojson, resources/busmap_elec_s.csv, resources/connection_costs_s.csv
-        log: logs/simplify_network/elec_s.log
+        input: resources/test/networks/elec.nc, data/costs_2030.csv, resources/test/regions_onshore.geojson, resources/test/regions_offshore.geojson
+        output: resources/test/networks/elec_s.nc, resources/test/regions_onshore_elec_s.geojson, resources/test/regions_offshore_elec_s.geojson, resources/test/busmap_elec_s.csv, resources/test/connection_costs_s.csv
+        log: logs/test-elec/simplify_network/elec_s.log
         jobid: 4
-        benchmark: benchmarks/simplify_network/elec_s
-        reason: Missing output files: resources/busmap_elec_s.csv, resources/regions_onshore_elec_s.geojson, networks/elec_s.nc, resources/regions_offshore_elec_s.geojson; Input files updated by another job: resources/regions_offshore.geojson, resources/regions_onshore.geojson, resources/costs.csv, networks/elec.nc
+        benchmark: benchmarks/test-elec/simplify_network/elec_s
+        reason: Missing output files: resources/test/regions_offshore_elec_s.geojson, resources/test/busmap_elec_s.csv, resources/test/regions_onshore_elec_s.geojson, resources/test/networks/elec_s.nc; Input files updated by another job: resources/test/regions_offshore.geojson, resources/test/networks/elec.nc, resources/test/regions_onshore.geojson, data/costs_2030.csv
         wildcards: simpl=
-        resources: tmpdir=/tmp, mem_mb=4000, mem_mib=3815
+        resources: tmpdir=/tmp, mem_mb=12000, mem_mib=11445
 
 Once the whole worktree is finished, it should state so in the terminal.
 
