@@ -12,7 +12,11 @@ import re
 import numpy as np
 import pandas as pd
 import pypsa
-from _helpers import update_config_with_sector_opts
+from _helpers import (
+    configure_logging,
+    set_scenario_config,
+    update_config_from_wildcards,
+)
 from add_existing_baseyear import add_build_year_to_new_assets
 from pypsa.descriptors import expand_series
 from pypsa.io import import_components_from_dataframe
@@ -304,17 +308,14 @@ def set_all_phase_outs(n):
     n.mremove("Link", remove_i)
 
 
-def set_carbon_constraints(n, opts):
+def set_carbon_constraints(n):
     """
     Add global constraints for carbon emissions.
     """
-    budget = None
-    for o in opts:
-        # other budgets
-        m = re.match(r"^\d+p\d$", o, re.IGNORECASE)
-        if m is not None:
-            budget = snakemake.config["co2_budget"][m.group(0)] * 1e9
-    if budget is not None:
+    budget = snakemake.config["co2_budget"]
+    if budget and isinstance(budget, float):
+        budget *= 1e9  # convert to t CO2
+
         logger.info(f"add carbon budget of {budget}")
         n.add(
             "GlobalConstraint",
@@ -341,7 +342,7 @@ def set_carbon_constraints(n, opts):
         )
 
     # set minimum CO2 emission constraint to avoid too fast reduction
-    if "co2min" in opts:
+    if "co2min" in snakemake.wildcards.sector_opts.split("-"):
         emissions_1990 = 4.53693
         emissions_2019 = 3.344096
         target_2030 = 0.45 * emissions_1990
@@ -487,21 +488,6 @@ def apply_time_segmentation_perfect(
     return n
 
 
-def set_temporal_aggregation_SEG(n, opts, solver_name):
-    """
-    Aggregate network temporally with tsam.
-    """
-    for o in opts:
-        # segments with package tsam
-        m = re.match(r"^(\d+)seg$", o, re.IGNORECASE)
-        if m is not None:
-            segments = int(m[1])
-            logger.info(f"Use temporal segmentation with {segments} segments")
-            n = apply_time_segmentation_perfect(n, segments, solver_name=solver_name)
-            break
-    return n
-
-
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -514,15 +500,13 @@ if __name__ == "__main__":
             ll="v1.5",
             sector_opts="1p7-4380H-T-H-B-I-A-dist1",
         )
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
-    update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
+    update_config_from_wildcards(snakemake.config, snakemake.wildcards)
     # parameters -----------------------------------------------------------
     years = snakemake.config["scenario"]["planning_horizons"]
-    opts = snakemake.wildcards.sector_opts.split("-")
-    social_discountrate = snakemake.config["costs"]["social_discountrate"]
-    for o in opts:
-        if "sdr" in o:
-            social_discountrate = float(o.replace("sdr", "")) / 100
+    social_discountrate = snakemake.params.costs["social_discountrate"]
 
     logger.info(
         f"Concat networks of investment period {years} with social discount rate of {social_discountrate * 100}%"
@@ -532,9 +516,10 @@ if __name__ == "__main__":
     n = concat_networks(years)
 
     # temporal aggregate
-    opts = snakemake.wildcards.sector_opts.split("-")
     solver_name = snakemake.config["solving"]["solver"]["name"]
-    n = set_temporal_aggregation_SEG(n, opts, solver_name)
+    segments = snakemake.params.time_resolution
+    if isinstance(segments, (int, float)):
+        n = apply_time_segmentation_perfect(n, segments, solver_name=solver_name)
 
     # adjust global constraints lv limit if the same for all years
     n = adjust_lvlimit(n)
@@ -550,8 +535,7 @@ if __name__ == "__main__":
     add_H2_boilers(n)
 
     # set carbon constraints
-    opts = snakemake.wildcards.sector_opts.split("-")
-    n = set_carbon_constraints(n, opts)
+    n = set_carbon_constraints(n)
 
     # export network
     n.export_to_netcdf(snakemake.output[0])

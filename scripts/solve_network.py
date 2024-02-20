@@ -37,7 +37,11 @@ import pandas as pd
 import pypsa
 import xarray as xr
 from _benchmark import memory_logger
-from _helpers import configure_logging, get_opt, update_config_with_sector_opts
+from _helpers import (
+    configure_logging,
+    set_scenario_config,
+    update_config_from_wildcards,
+)
 from pypsa.descriptors import get_activity_mask
 from pypsa.descriptors import get_switchable_as_dense as get_as_dense
 
@@ -178,16 +182,10 @@ def _add_land_use_constraint_m(n, planning_horizons, config):
     n.generators.p_nom_max.clip(lower=0, inplace=True)
 
 
-def add_co2_sequestration_limit(n, config, limit=200):
+def add_co2_sequestration_limit(n, limit=200):
     """
     Add a global constraint on the amount of Mt CO2 that can be sequestered.
     """
-    limit = limit * 1e6
-    for o in opts:
-        if "seq" not in o:
-            continue
-        limit = float(o[o.find("seq") + 3 :]) * 1e6
-        break
 
     if not n.investment_periods.empty:
         periods = n.investment_periods
@@ -200,7 +198,7 @@ def add_co2_sequestration_limit(n, config, limit=200):
         "GlobalConstraint",
         names,
         sense=">=",
-        constant=-limit,
+        constant=-limit * 1e6,
         type="operational_limit",
         carrier_attribute="co2 sequestered",
         investment_period=periods,
@@ -260,7 +258,7 @@ def add_carbon_budget_constraint(n, snapshots):
             n.model.add_constraints(lhs <= rhs, name=f"GlobalConstraint-{name}")
 
 
-def add_max_growth(n, config):
+def add_max_growth(n):
     """
     Add maximum growth rates for different carriers.
     """
@@ -393,11 +391,11 @@ def prepare_network(
     if foresight == "perfect":
         n = add_land_use_constraint_perfect(n)
         if snakemake.params["sector"]["limit_max_growth"]["enable"]:
-            n = add_max_growth(n, config)
+            n = add_max_growth(n)
 
     if n.stores.carrier.eq("co2 sequestered").any():
         limit = co2_sequestration_potential
-        add_co2_sequestration_limit(n, config, limit=limit)
+        add_co2_sequestration_limit(n, limit=limit)
 
     return n
 
@@ -831,30 +829,20 @@ def extra_functionality(n, snapshots):
     location to add them. The arguments ``opts`` and
     ``snakemake.config`` are expected to be attached to the network.
     """
-    opts = n.opts
     config = n.config
     constraints = config["solving"].get("constraints", {})
-    if (
-        "BAU" in opts or constraints.get("BAU", False)
-    ) and n.generators.p_nom_extendable.any():
+    if constraints["BAU"] and n.generators.p_nom_extendable.any():
         add_BAU_constraints(n, config)
-    if (
-        "SAFE" in opts or constraints.get("SAFE", False)
-    ) and n.generators.p_nom_extendable.any():
+    if constraints["SAFE"] and n.generators.p_nom_extendable.any():
         add_SAFE_constraints(n, config)
-    if (
-        "CCL" in opts or constraints.get("CCL", False)
-    ) and n.generators.p_nom_extendable.any():
+    if constraints["CCL"] and n.generators.p_nom_extendable.any():
         add_CCL_constraints(n, config)
 
     reserve = config["electricity"].get("operational_reserve", {})
     if reserve.get("activate"):
         add_operational_reserve_margin(n, snapshots, config)
 
-    EQ_config = constraints.get("EQ", False)
-    EQ_wildcard = get_opt(opts, r"^EQ+[0-9]*\.?[0-9]+(c|)")
-    EQ_o = EQ_wildcard or EQ_config
-    if EQ_o:
+    if EQ_o := constraints["EQ"]:
         add_EQ_constraints(n, EQ_o.replace("EQ", ""))
 
     add_battery_constraints(n)
@@ -877,7 +865,7 @@ def extra_functionality(n, snapshots):
         custom_extra_functionality(n, snapshots, snakemake)
 
 
-def solve_network(n, config, solving, opts="", **kwargs):
+def solve_network(n, config, solving, **kwargs):
     set_of_options = solving["solver"]["options"]
     cf_solving = solving["options"]
 
@@ -905,7 +893,6 @@ def solve_network(n, config, solving, opts="", **kwargs):
 
     # add to network for extra_functionality
     n.config = config
-    n.opts = opts
 
     if rolling_horizon:
         kwargs["horizon"] = cf_solving.get("horizon", 365)
@@ -950,15 +937,9 @@ if __name__ == "__main__":
             planning_horizons="2030",
         )
     configure_logging(snakemake)
-    if "sector_opts" in snakemake.wildcards.keys():
-        update_config_with_sector_opts(
-            snakemake.config, snakemake.wildcards.sector_opts
-        )
+    set_scenario_config(snakemake)
+    update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
-    opts = snakemake.wildcards.opts
-    if "sector_opts" in snakemake.wildcards.keys():
-        opts += "-" + snakemake.wildcards.sector_opts
-    opts = [o for o in opts.split("-") if o != ""]
     solve_opts = snakemake.params.solving["options"]
 
     np.random.seed(solve_opts.get("seed", 123))
@@ -981,7 +962,6 @@ if __name__ == "__main__":
             n,
             config=snakemake.config,
             solving=snakemake.params.solving,
-            opts=opts,
             log_fn=snakemake.log.solver,
         )
 

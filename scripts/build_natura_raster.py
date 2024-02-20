@@ -46,7 +46,7 @@ import logging
 import atlite
 import geopandas as gpd
 import rasterio as rio
-from _helpers import configure_logging
+from _helpers import configure_logging, set_scenario_config
 from rasterio.features import geometry_mask
 from rasterio.warp import transform_bounds
 
@@ -92,6 +92,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_natura_raster")
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     cutouts = snakemake.input.cutouts
     xs, Xs, ys, Ys = zip(*(determine_cutout_xXyY(cutout) for cutout in cutouts))

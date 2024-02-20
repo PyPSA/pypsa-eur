@@ -13,6 +13,7 @@ import sys
 import numpy as np
 import pandas as pd
 import pypsa
+from _helpers import configure_logging, set_scenario_config
 from prepare_sector_network import prepare_costs
 
 idx = pd.IndexSlice
@@ -673,7 +674,8 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("make_summary")
 
-    logging.basicConfig(level=snakemake.config["logging"]["level"])
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     networks_dict = {
         (cluster, ll, opt + sector_opt, planning_horizon): "results/"

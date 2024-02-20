@@ -13,7 +13,7 @@ import logging
 import numpy as np
 import pandas as pd
 import xarray as xr
-from _helpers import configure_logging, generate_periodic_profiles
+from _helpers import configure_logging, generate_periodic_profiles, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
@@ -171,6 +171,7 @@ if __name__ == "__main__":
             clusters=48,
         )
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
 

@@ -10,6 +10,7 @@ import logging
 
 import geopandas as gpd
 import pandas as pd
+from _helpers import configure_logging, set_scenario_config
 from pypsa.geo import haversine_pts
 from shapely import wkt
 
@@ -105,8 +106,8 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("cluster_gas_network", simpl="", clusters="37")
-
-    logging.basicConfig(level=snakemake.config["logging"]["level"])
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     fn = snakemake.input.cleaned_gas_network
     df = pd.read_csv(fn, index_col=0)

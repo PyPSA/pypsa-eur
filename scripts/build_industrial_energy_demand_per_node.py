@@ -7,6 +7,7 @@ Build industrial energy demand per model region.
 """
 
 import pandas as pd
+from _helpers import set_scenario_config
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -18,6 +19,7 @@ if __name__ == "__main__":
             clusters=48,
             planning_horizons=2030,
         )
+    set_scenario_config(snakemake)
 
     # import ratios
     fn = snakemake.input.industry_sector_ratios
