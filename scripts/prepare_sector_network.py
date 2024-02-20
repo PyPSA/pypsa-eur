@@ -3059,8 +3059,7 @@ def add_industry(n, costs):
             + mwh_coal_per_mwh_coke * industrial_demand["coke"]
         ) / nhours
 
-        p_set.rename(lambda x: x + " coal for industry",
-                     inplace=True)
+        p_set.rename(lambda x: x + " coal for industry", inplace=True)
 
         if not options["regional_coal_demand"]:
             p_set = p_set.sum()
