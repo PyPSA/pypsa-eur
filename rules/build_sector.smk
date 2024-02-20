@@ -808,6 +808,14 @@ rule build_existing_heating_distribution:
         "../scripts/build_existing_heating_distribution.py"
 
 
+def input_profile_offwind(w):
+    return {
+        f"profile_{tech}": resources(f"profile_{tech}.nc")
+        for tech in ["offwind-ac", "offwind-dc"]
+        if (tech in config_provider("electricity", "renewable_carriers")(w))
+    }
+
+
 rule prepare_sector_network:
     params:
         time_resolution=config_provider("clustering", "temporal", "resolution_sector"),
@@ -829,13 +837,9 @@ rule prepare_sector_network:
         eurostat_report_year=config_provider("energy", "eurostat_report_year"),
         RDIR=RDIR,
     input:
+        unpack(input_profile_offwind),
         **rules.cluster_gas_network.output,
         **rules.build_gas_input_locations.output,
-        **{
-            f"profile_offwind_{tech}": RESOURCES + f"profile_offwind-{tech}.nc"
-            for tech in ["ac", "dc"]
-            if (f"offwind-{tech}" in config["electricity"]["renewable_carriers"])
-        },
         retro_cost=lambda w: (
             resources("retro_cost_elec_s{simpl}_{clusters}.csv")
             if config_provider("sector", "retrofitting", "retro_endogen")(w)
