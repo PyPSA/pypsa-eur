@@ -65,8 +65,11 @@ def has_internet_access(url="www.zenodo.org") -> bool:
 
 def input_eurostat(w):
     # 2016 includes BA, 2017 does not
-    report_year = config["energy"]["eurostat_report_year"]
-    return f"data/bundle-sector/eurostat-energy_balances-june_{report_year}_edition"
+    if config["energy"]["eurostat_report_year"] != 2023:
+        report_year = config["energy"]["eurostat_report_year"]
+        return f"data/bundle-sector/eurostat-energy_balances-june_{report_year}_edition"
+    else:
+        return "data/bundle-sector/eurostat-energy_balances-april_2023_edition"
 
 
 def solved_previous_horizon(wildcards):
