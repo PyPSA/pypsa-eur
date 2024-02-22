@@ -79,6 +79,8 @@ Upcoming Release
 * The outputs of the rule ``retrieve_gas_infrastructure_data`` no longer
   marked as ``protected()`` as the download size is small.
 
+* Bugfix: allow modelling sector-coupled landlocked regions. (Fixed handling of offshore wind.)
+
 PyPSA-Eur 0.10.0 (19th February 2024)
 =====================================
 
