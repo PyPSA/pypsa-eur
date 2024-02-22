@@ -719,7 +719,9 @@ def map_to_lstrength(l_strength, df):
     strengths [2 = moderate, 3 = ambitious] to l_strength.
     """
     middle = len(l_strength) - 1  # only 26 mm is ambitious
-    logger.warning("Warning: Refurbishment state is currently chosen as strong refurbishment")
+    logger.warning(
+        "Warning: Refurbishment state is currently chosen as strong refurbishment"
+    )
     # reflects in capital costs, otherwise moderate cost assumptions are too high,
     # compared to ambitious ones (this setting lowers them by approx. 10%)
     map_to_l = pd.MultiIndex.from_arrays(

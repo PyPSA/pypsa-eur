@@ -2161,7 +2161,7 @@ def add_biomass(n, costs):
     else:
         biogas_potentials_spatial = biomass_potentials["biogas"].sum()
 
-    if "I" not in opts:
+    if options["industry"]:
         # if the industry is not modelled, remove industrial demand from biomass potentials
         industrial_demand = (
             pd.read_csv(snakemake.input.industrial_demand, index_col=0) * 1e6
