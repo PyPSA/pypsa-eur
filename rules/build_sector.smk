@@ -808,6 +808,14 @@ rule build_existing_heating_distribution:
         "../scripts/build_existing_heating_distribution.py"
 
 
+def input_profile_offwind(w):
+    return {
+        f"profile_{tech}": resources(f"profile_{tech}.nc")
+        for tech in ["offwind-ac", "offwind-dc"]
+        if (tech in config_provider("electricity", "renewable_carriers")(w))
+    }
+
+
 rule prepare_sector_network:
     params:
         time_resolution=config_provider("clustering", "temporal", "resolution_sector"),
@@ -829,6 +837,7 @@ rule prepare_sector_network:
         eurostat_report_year=config_provider("energy", "eurostat_report_year"),
         RDIR=RDIR,
     input:
+        unpack(input_profile_offwind),
         **rules.cluster_gas_network.output,
         **rules.build_gas_input_locations.output,
         retro_cost=lambda w: (
@@ -882,8 +891,6 @@ rule prepare_sector_network:
             if config_provider("foresight")(w) == "overnight"
             else resources("costs_{planning_horizons}.csv")
         ),
-        profile_offwind_ac=resources("profile_offwind-ac.nc"),
-        profile_offwind_dc=resources("profile_offwind-dc.nc"),
         h2_cavern=resources("salt_cavern_potentials_s{simpl}_{clusters}.csv"),
         busmap_s=resources("busmap_elec_s{simpl}.csv"),
         busmap=resources("busmap_elec_s{simpl}_{clusters}.csv"),

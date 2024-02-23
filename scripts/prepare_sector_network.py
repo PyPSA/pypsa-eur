@@ -453,7 +453,9 @@ def update_wind_solar_costs(n, costs):
     # code adapted from pypsa-eur/scripts/add_electricity.py
     for connection in ["dc", "ac"]:
         tech = "offwind-" + connection
-        profile = snakemake.input["profile_offwind_" + connection]
+        if tech not in n.generators.carrier.values:
+            continue
+        profile = snakemake.input["profile_offwind-" + connection]
         with xr.open_dataset(profile) as ds:
 
             # if-statement for compatibility with old profiles
