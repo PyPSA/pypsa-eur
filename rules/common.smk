@@ -137,6 +137,7 @@ def input_eurostat(w):
     else:
         return "data/bundle-sector/eurostat-energy_balances-april_2023_edition"
 
+
 def solved_previous_horizon(w):
     planning_horizons = config_provider("scenario", "planning_horizons")(w)
     i = planning_horizons.index(int(w.planning_horizons))
