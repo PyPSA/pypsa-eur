@@ -416,7 +416,7 @@ def add_heating_capacities_installed_before_baseyear(
         name_type = "central" if name == "urban central" else "decentral"
 
         nodes = pd.Index(n.buses.location[n.buses.index.str.contains(f"{name} heat")])
-        
+
         if (name_type != "central") and options["electricity_distribution_grid"]:
             nodes_elec = nodes + " low voltage"
         else:
@@ -545,7 +545,8 @@ def add_heating_capacities_installed_before_baseyear(
                 ],
             )
 
-#%%
+
+# %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
