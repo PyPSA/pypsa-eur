@@ -518,6 +518,25 @@ def add_heating_capacities_installed_before_baseyear(
                 build_year=int(grouping_year),
                 lifetime=costs.at[f"{name_type} gas boiler", "lifetime"],
             )
+            # add biomass boilers
+            n.madd(
+                "Link",
+                nodes,
+                suffix=f" {name} biomass boiler-{grouping_year}",
+                bus0=nodes + " solid biomass",
+                bus1=nodes + " " + name + " heat",
+                carrier=name + " biomass boiler",
+                efficiency=costs.at["biomass boiler", "efficiency"],
+                capital_cost=costs.at["biomass boiler", "efficiency"]
+                * costs.at["biomass boiler", "fixed"],
+                p_nom=(
+                    existing_heating.loc[nodes, (name, "biomass boiler")]
+                    * ratio
+                    / costs.at["biomass boiler", "efficiency"]
+                ),
+                build_year=int(grouping_year),
+                lifetime=costs.at["biomass boiler", "lifetime"],
+            )
 
             # delete links with p_nom=nan corresponding to extra nodes in country
             n.mremove(
