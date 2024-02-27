@@ -64,6 +64,7 @@ def build_industry_sector_ratios_intermediate():
 
     intermediate_sector_ratios.to_csv(snakemake.output.industry_sector_ratios)
 
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
