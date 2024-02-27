@@ -160,13 +160,16 @@ if config["enable"]["retrieve"] and config["enable"].get(
     rule retrieve_eurostat_data:
         output:
             protected(
-            directory("data/bundle-sector/eurostat-energy_balances-april_2023_edition")
-        ),
+                directory(
+                    "data/bundle-sector/eurostat-energy_balances-april_2023_edition"
+                )
+            ),
         log:
             "logs/retrieve_eurostat_data.log",
         retries: 2
         script:
             "../scripts/retrieve_eurostat_data.py"
+
 
 if config["enable"]["retrieve"]:
     datafiles = [
