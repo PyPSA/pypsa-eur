@@ -8,6 +8,7 @@ Build total energy demands per country using JRC IDEES, eurostat, and EEA data.
 
 import logging
 import multiprocessing as mp
+import os
 from functools import partial
 
 import country_converter as coco
@@ -16,7 +17,6 @@ import numpy as np
 import pandas as pd
 from _helpers import configure_logging, mute_print, set_scenario_config
 from tqdm import tqdm
-import os
 
 cc = coco.CountryConverter()
 logger = logging.getLogger(__name__)
@@ -757,12 +757,14 @@ def build_transport_data(countries, population, idees):
 
     return transport_data
 
+
 def rescale(idees_countries, energy, eurostat):
-    '''
-    Takes JRC IDEES data from 2015 and rescales it by the ratio of the 
-    eurostat data and the 2015 eurostat data.
+    """
+    Takes JRC IDEES data from 2015 and rescales it by the ratio of the eurostat
+    data and the 2015 eurostat data.
+
     missing data: ['passenger car efficiency', 'passenger cars']
-    '''
+    """
     # read in the eurostat data for 2015
     eurostat_2015 = build_eurostat(input_eurostat, countries, 2023, 2015)[["Total all products", "Electricity"]]
     eurostat_year = eurostat[["Total all products", "Electricity"]]
@@ -826,9 +828,9 @@ def rescale(idees_countries, energy, eurostat):
     'total international aviation'
     ]
     avia_domestic = [
-        'total domestic aviation passenger',
-        'total domestic aviation freight',
-        'total domestic aviation',
+        "total domestic aviation passenger",
+        "total domestic aviation freight",
+        "total domestic aviation",
     ]
     navigation = [
         "total domestic navigation",
@@ -846,10 +848,11 @@ def rescale(idees_countries, energy, eurostat):
         energy.loc[country, avia_inter] *= avi_i[['total']].iloc[0,0]
         energy.loc[country, avia_domestic] *= avi_d[['total']].iloc[0,0]
 
-        nav = ratio.loc[(country, slice(None), 'Domestic Navigation')]
-        energy.loc[country, navigation] *= nav[['total']].iloc[0,0]
+        nav = ratio.loc[(country, slice(None), "Domestic Navigation")]
+        energy.loc[country, navigation] *= nav[["total"]].iloc[0, 0]
 
     return energy
+
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -880,14 +883,16 @@ if __name__ == "__main__":
         idees = build_idees(idees_countries, data_year)
 
     energy = build_energy_totals(countries, eurostat, swiss, idees)
-    
+
     if data_year > 2015:
         energy = rescale(idees_countries, energy, eurostat)
-    
+
     energy.to_csv(snakemake.output.energy_name)
 
     # use rescaled idees data to calculate district heat share
-    district_heat_share = build_district_heat_share(countries, energy.loc[idees_countries])
+    district_heat_share = build_district_heat_share(
+        countries, energy.loc[idees_countries]
+    )
     district_heat_share.to_csv(snakemake.output.district_heat_share)
 
     base_year_emissions = params["base_emissions_year"]
