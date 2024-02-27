@@ -142,6 +142,9 @@ if config["enable"]["retrieve"] and config["enable"].get(
         protected(
             directory("data/bundle-sector/eurostat-energy_balances-may_2018_edition")
         ),
+        protected(
+            directory("data/bundle-sector/eurostat-energy_balances-april_2023_edition")
+        ),
         protected(directory("data/bundle-sector/jrc-idees-2015")),
     ]
 
