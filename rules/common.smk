@@ -129,6 +129,7 @@ def has_internet_access(url="www.zenodo.org") -> bool:
     finally:
         conn.close()
 
+
 def solved_previous_horizon(w):
     planning_horizons = config_provider("scenario", "planning_horizons")(w)
     i = planning_horizons.index(int(w.planning_horizons))
