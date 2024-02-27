@@ -922,7 +922,7 @@ if __name__ == "__main__":
     input_eurostat = snakemake.input.eurostat
     eurostat = build_eurostat(input_eurostat, countries, data_year)
     swiss = build_swiss(data_year)
-    # data from idees only exists for 2015
+    # data from idees only exists from 2000-2015
     if data_year > 2015:
         # read in latest data and rescale later
         idees = build_idees(idees_countries, 2015)
