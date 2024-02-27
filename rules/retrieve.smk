@@ -142,9 +142,6 @@ if config["enable"]["retrieve"] and config["enable"].get(
         protected(
             directory("data/bundle-sector/eurostat-energy_balances-may_2018_edition")
         ),
-        protected(
-            directory("data/bundle-sector/eurostat-energy_balances-april_2023_edition")
-        ),
         protected(directory("data/bundle-sector/jrc-idees-2015")),
     ]
 
@@ -160,6 +157,16 @@ if config["enable"]["retrieve"] and config["enable"].get(
         script:
             "../scripts/retrieve_sector_databundle.py"
 
+    rule retrieve_eurostat_data:
+        output:
+            protected(
+            directory("data/bundle-sector/eurostat-energy_balances-april_2023_edition")
+        ),
+        log:
+            "logs/retrieve_eurostat_data.log",
+        retries: 2
+        script:
+            "../scripts/retrieve_eurostat_data.py"
 
 if config["enable"]["retrieve"]:
     datafiles = [
