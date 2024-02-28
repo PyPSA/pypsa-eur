@@ -9,6 +9,7 @@ Release Notes
 
 Upcoming Release
 ================
+* Upgrade default techno-economic assumptions to ``technology-data`` v0.8.1.
 
 * Linearly interpolate missing investment periods in year-dependent
   configuration options.
