@@ -81,6 +81,8 @@ Upcoming Release
 
 * Bugfix: allow modelling sector-coupled landlocked regions. (Fixed handling of offshore wind.)
 
+* Adapt the disabling of transmission expansion in myopic foresight optimisations when limit is already reached to also handle cost limits.
+
 PyPSA-Eur 0.10.0 (19th February 2024)
 =====================================
 
