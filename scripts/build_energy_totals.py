@@ -356,7 +356,7 @@ def build_idees(countries, year=None):
     func = partial(idees_per_country, year=year, base_dir=snakemake.input.idees)
     tqdm_kwargs = dict(
         ascii=False,
-        unit="" country",
+        unit=" country",
         total=len(countries),
         desc="Build from IDEES database",
         disable=disable_progress
@@ -381,9 +381,6 @@ def build_idees(countries, year=None):
     subset = ["thermal uses residential", "thermal uses services"]
     total_heat = df[subset].sum(axis=1)
     df["district heat share"] = district_heat.div(total_heat)
-
-    if year:
-        df = df.xs(int(year), level='year')
 
     df.columns.name = 'item'
 
@@ -741,12 +738,13 @@ if __name__ == "__main__":
 
     countries = snakemake.params.countries
     idees_countries = pd.Index(countries).intersection(eu28)
+    countries_without_ch = pd.Index(countries).difference(["CH"])
 
     data_year = params["energy_totals_year"]
     report_year = snakemake.params.energy["eurostat_report_year"]
     input_eurostat = snakemake.input.eurostat
-    eurostat = build_eurostat(input_eurostat, countries, report_year, data_year)
-    swiss = build_swiss(data_year)
+    eurostat = build_eurostat(countries_without_ch)
+    swiss = build_swiss()
     idees = build_idees(idees_countries, data_year)
 
     energy = build_energy_totals(countries, eurostat, swiss, idees)

@@ -150,7 +150,7 @@ rule build_heat_demands:
     params:
         snapshots=config["snapshots"],
     input:
-        pop_layout=RESOURCES + "pop_layout{weather_year}_{scope}.nc",
+        pop_layout=RESOURCES + "pop_layout_{scope}{weather_year}.nc",
         regions_onshore=RESOURCES
         + "regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson",
         cutout="cutouts/" + CDIR + config["atlite"]["default_cutout"] + ".nc",
@@ -174,7 +174,7 @@ rule build_temperature_profiles:
     params:
         snapshots=config["snapshots"],
     input:
-        pop_layout=RESOURCES + "pop_layout{weather_year}_{scope}.nc",
+        pop_layout=RESOURCES + "pop_layout_{scope}{weather_year}.nc",
         regions_onshore=RESOURCES
         + "regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson",
         cutout="cutouts/" + CDIR + config["atlite"]["default_cutout"] + ".nc",
@@ -246,7 +246,7 @@ rule build_solar_thermal_profiles:
         snapshots=config["snapshots"],
         solar_thermal=config["solar_thermal"],
     input:
-        pop_layout=RESOURCES + "pop_layout{weather_year}_{scope}.nc",
+        pop_layout=RESOURCES + "pop_layout_{scope}{weather_year}.nc",
         regions_onshore=RESOURCES
         + "regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson",
         cutout="cutouts/" + CDIR + config["atlite"]["default_cutout"] + ".nc",
@@ -684,7 +684,8 @@ if config["sector"]["retrofitting"]["retro_endogen"]:
         input:
             building_stock="data/retro/data_building_stock.csv",
             data_tabula="data/bundle-sector/retro/tabula-calculator-calcsetbuilding.csv",
-            air_temperature=RESOURCES + "temp_air_total_elec{weather_year}_s{simpl}_{clusters}.nc",
+            air_temperature=RESOURCES
+            + "temp_air_total_elec{weather_year}_s{simpl}_{clusters}.nc",
             u_values_PL="data/retro/u_values_poland.csv",
             tax_w="data/retro/electricity_taxes_eu.csv",
             construction_index="data/retro/comparative_level_investment.csv",
@@ -719,7 +720,7 @@ if not config["sector"]["retrofitting"]["retro_endogen"]:
 
 rule build_population_weighted_energy_totals:
     input:
-        energy_totals=RESOURCES + "{kind}}_totals.csv",
+        energy_totals=RESOURCES + "{kind}_totals.csv",
         clustered_pop_layout=RESOURCES
         + "pop_layout_elec{weather_year}_s{simpl}_{clusters}.csv",
     output:
@@ -743,6 +744,8 @@ rule build_shipping_demand:
         regions=RESOURCES
         + "regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson",
         demand=RESOURCES + "energy_totals.csv",
+    params:
+        energy_totals_year=config["energy"]["energy_totals_year"],
     output:
         RESOURCES + "shipping_demand{weather_year}_s{simpl}_{clusters}.csv",
     threads: 1

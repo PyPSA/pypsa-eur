@@ -29,6 +29,14 @@ def approximate_heat_demand(energy_totals, hdd):
             Y = demand[c].dropna()
             X = hdd.loc[Y.index, c]
 
+            # Sometimes (looking at you, Switzerland) we only have
+            # _one_ year of heating data to base the prediction on. In
+            # this case we add a point at 0, 0 to make a "polynomial"
+            # fit work.
+            if len(X) == len(Y) == 1:
+                X.loc[-1] = 0
+                Y.loc[-1] = 0
+
             to_predict = hdd.index.difference(Y.index)
             X_pred = hdd.loc[to_predict, c]
 

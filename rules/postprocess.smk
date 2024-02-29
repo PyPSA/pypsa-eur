@@ -28,7 +28,7 @@ if config["foresight"] != "perfect":
         benchmark:
             (
                 BENCHMARKS
-                + "plot_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+                + "plot_network/elec{weather_year}_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
             )
         conda:
             "../envs/environment.yaml"
@@ -181,14 +181,14 @@ rule plot_elec_statistics:
         plotting=config["plotting"],
         barplots=STATISTICS_BARPLOTS,
     input:
-        network=RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+        network=RESULTS + "networks/elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
     output:
         **{
             f"{plot}_bar": RESULTS
-            + f"figures/statistics_{plot}_bar_elec_s{{simpl}}_{{clusters}}_ec_l{{ll}}_{{opts}}.pdf"
+            + f"figures/statistics_{plot}_bar_elec{{weather_year}}_s{{simpl}}_{{clusters}}_ec_l{{ll}}_{{opts}}.pdf"
             for plot in STATISTICS_BARPLOTS
         },
         barplots_touch=RESULTS
-        + "figures/.statistics_plots_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}",
+        + "figures/.statistics_plots_elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}",
     script:
         "../scripts/plot_statistics.py"

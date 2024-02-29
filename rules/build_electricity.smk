@@ -202,12 +202,26 @@ if config["enable"].get("build_cutout", False):
             "../scripts/build_cutout.py"
 
 
+# TODO: consider if it's fine to just use the default cutout instead, i.e.:
+# cutout="cutouts/" + CDIR + config["atlite"]["default_cutout"] + ".nc",
+def cutouts_for_extent_input(wildcards):
+    # We only need these cutouts in order to determine geographic
+    # boundaries, so just pick the first weather year available
+    weather_year = config["scenario"]["weather_year"][0]
+    cutouts = []
+    for k in config["electricity"]["renewable_carriers"]:
+        cutout = config["renewable"][k]["cutout"]
+        cutout = cutout.replace("{weather_year}", weather_year)
+        cutouts.append(f"cutouts/{CDIR}{cutout}.nc")
+    return cutouts
+
+
 if config["enable"].get("build_natura_raster", False):
 
     rule build_natura_raster:
         input:
             natura=ancient("data/bundle/natura/Natura2000_end2015.shp"),
-            cutouts=expand("cutouts/" + CDIR + "{cutouts}.nc", **config["atlite"]),
+            cutouts=cutouts_for_extent_input,
         output:
             RESOURCES + "natura.tiff",
         resources:
@@ -223,13 +237,7 @@ if config["enable"].get("build_natura_raster", False):
 rule build_ship_raster:
     input:
         ship_density="data/shipdensity_global.zip",
-        cutouts=expand(
-            "cutouts/" + CDIR + "{cutout}.nc",
-            cutout=[
-                config["renewable"][k]["cutout"]
-                for k in config["electricity"]["renewable_carriers"]
-            ],
-        ),
+        cutouts=cutouts_for_extent_input,
     output:
         RESOURCES + "shipdensity_raster.tif",
     log:
