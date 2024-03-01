@@ -2877,7 +2877,10 @@ def add_industry(n, costs):
         investment_year,
     )
 
-    if snakemake.config["industry"]["waste_to_energy"] and options["regional_oil_demand"]:
+    if (
+        snakemake.config["industry"]["waste_to_energy"]
+        and options["regional_oil_demand"]
+    ):
 
         n.madd(
             "Bus",
@@ -2885,7 +2888,7 @@ def add_industry(n, costs):
             location=spatial.oil.demand_locations,
             carrier="non-sequestered HVC",
             unit="MWh_LHV",
-            )
+        )
 
         n.madd(
             "Link",
@@ -2896,7 +2899,9 @@ def add_industry(n, costs):
             bus3=spatial.co2.process_emissions,
             carrier="naphtha for industry",
             p_nom_extendable=True,
-            efficiency2=non_sequestered*emitted_co2_per_naphtha/costs.at["oil", "CO2 intensity"],
+            efficiency2=non_sequestered
+            * emitted_co2_per_naphtha
+            / costs.at["oil", "CO2 intensity"],
             efficiency3=process_co2_per_naphtha,
         )
 
@@ -2910,7 +2915,7 @@ def add_industry(n, costs):
             efficiency=costs.at["oil", "CO2 intensity"],
         )
 
-        #TODO add heat
+        # TODO add heat
         n.madd(
             "Link",
             spatial.oil.demand_locations + " waste CHP",
@@ -2920,14 +2925,16 @@ def add_industry(n, costs):
             carrier="waste CHP",
             p_nom_extendable=True,
             # p_nom=biomass_potential['municipal solid waste'] / 8760,
-            capital_cost=costs.at['waste CHP', 'fixed'] * costs.at['waste CHP', 'efficiency'],
-            marginal_cost=costs.at['waste CHP', 'VOM'],
-            efficiency=costs.at['waste CHP', 'efficiency'],
-            #efficiency4=costs.at['waste CHP', 'efficiency-heat'],
-            efficiency2=costs.at['oil', 'CO2 intensity'],
-            lifetime=costs.at['waste CHP', 'lifetime'])
+            capital_cost=costs.at["waste CHP", "fixed"]
+            * costs.at["waste CHP", "efficiency"],
+            marginal_cost=costs.at["waste CHP", "VOM"],
+            efficiency=costs.at["waste CHP", "efficiency"],
+            # efficiency4=costs.at['waste CHP', 'efficiency-heat'],
+            efficiency2=costs.at["oil", "CO2 intensity"],
+            lifetime=costs.at["waste CHP", "lifetime"],
+        )
 
-        #TODO add heat
+        # TODO add heat
         n.madd(
             "Link",
             spatial.oil.demand_locations + " waste CHP CC",
@@ -2938,14 +2945,15 @@ def add_industry(n, costs):
             carrier="waste CHP CC",
             p_nom_extendable=True,
             # p_nom=biomass_potential['municipal solid waste'] / 8760,
-            capital_cost=costs.at['waste CHP CC', 'fixed'] * costs.at['waste CHP CC', 'efficiency'],
-            marginal_cost=costs.at['waste CHP CC', 'VOM'],
-            efficiency=costs.at['waste CHP CC', 'efficiency'],
-            #efficiency4=costs.at['waste CHP', 'efficiency-heat'],
-            efficiency2=costs.at['oil', 'CO2 intensity']*(1 - options["cc_fraction"]),
-            efficiency3=costs.at['oil', 'CO2 intensity']*options["cc_fraction"],
-            lifetime=costs.at['waste CHP CC', 'lifetime'])
-
+            capital_cost=costs.at["waste CHP CC", "fixed"]
+            * costs.at["waste CHP CC", "efficiency"],
+            marginal_cost=costs.at["waste CHP CC", "VOM"],
+            efficiency=costs.at["waste CHP CC", "efficiency"],
+            # efficiency4=costs.at['waste CHP', 'efficiency-heat'],
+            efficiency2=costs.at["oil", "CO2 intensity"] * (1 - options["cc_fraction"]),
+            efficiency3=costs.at["oil", "CO2 intensity"] * options["cc_fraction"],
+            lifetime=costs.at["waste CHP CC", "lifetime"],
+        )
 
     else:
 
@@ -2958,7 +2966,7 @@ def add_industry(n, costs):
             bus3=spatial.co2.process_emissions,
             carrier="naphtha for industry",
             p_nom_extendable=True,
-            efficiency2=emitted_co2_per_naphtha*non_sequestered,
+            efficiency2=emitted_co2_per_naphtha * non_sequestered,
             efficiency3=process_co2_per_naphtha,
         )
 
