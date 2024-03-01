@@ -3425,7 +3425,7 @@ def cluster_heat_buses(n):
 
 
 def apply_time_segmentation(
-    n, segments, solver_name="cbc", overwrite_time_dependent=True
+    n, segments, solver_name="cbc", overwrite_time_dependent=True, drop_leap_day=False
 ):
     """
     Aggregating time series to segments with different lengths.
