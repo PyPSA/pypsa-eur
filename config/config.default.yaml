@@ -644,6 +644,7 @@ industry:
     2045: 0.16
     2050: 0.20
   HVC_environment_sequestration_fraction: 0.
+  waste_to_energy: false
   sector_ratios_fraction_future:
     2020: 0.0
     2025: 0.1
@@ -1132,3 +1133,6 @@ plotting:
     DC-DC: "#8a1caf"
     DC link: "#8a1caf"
     load: "#dd2e23"
+    waste CHP: '#e3d37d'
+    waste CHP CC: '#e3d3ff'
+    HVC to air: 'k'

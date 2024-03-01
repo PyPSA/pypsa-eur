@@ -2876,19 +2876,90 @@ def add_industry(n, costs):
         snakemake.config["industry"]["HVC_environment_sequestration_fraction"], investment_year
     )
 
+    if snakemake.config["industry"]["waste_to_energy"] and options["regional_oil_demand"]:
 
-    n.madd(
-        "Link",
-        spatial.oil.naphtha,
-        bus0=spatial.oil.nodes,
-        bus1=spatial.oil.naphtha,
-        bus2="co2 atmosphere",
-        bus3=spatial.co2.process_emissions,
-        carrier="naphtha for industry",
-        p_nom_extendable=True,
-        efficiency2=emitted_co2_per_naphtha*non_sequestered,
-        efficiency3=process_co2_per_naphtha,
-    )
+        n.madd(
+            "Bus",
+            spatial.oil.demand_locations + " non-sequestered HVC",
+            location=spatial.oil.demand_locations,
+            carrier="non-sequestered HVC",
+            unit="MWh_LHV",
+            )
+
+        n.madd(
+            "Link",
+            spatial.oil.naphtha,
+            bus0=spatial.oil.nodes,
+            bus1=spatial.oil.naphtha,
+            bus2=spatial.oil.demand_locations + " non-sequestered HVC",
+            bus3=spatial.co2.process_emissions,
+            carrier="naphtha for industry",
+            p_nom_extendable=True,
+            efficiency2=non_sequestered*emitted_co2_per_naphtha/costs.at["oil", "CO2 intensity"],
+            efficiency3=process_co2_per_naphtha,
+        )
+
+        n.madd(
+            "Link",
+            spatial.oil.demand_locations + " HVC to air",
+            bus0=spatial.oil.demand_locations + " non-sequestered HVC",
+            bus1="co2 atmosphere",
+            carrier="HVC to air",
+            p_nom_extendable=True,
+            efficiency=costs.at["oil", "CO2 intensity"],
+        )
+
+        #TODO add heat
+        n.madd(
+            "Link",
+            spatial.oil.demand_locations + " waste CHP",
+            bus0=spatial.oil.demand_locations + " non-sequestered HVC",
+            bus1=spatial.oil.demand_locations,
+            bus2="co2 atmosphere",
+            carrier="waste CHP",
+            p_nom_extendable=True,
+            # p_nom=biomass_potential['municipal solid waste'] / 8760,
+            capital_cost=costs.at['waste CHP', 'fixed'] * costs.at['waste CHP', 'efficiency'],
+            marginal_cost=costs.at['waste CHP', 'VOM'],
+            efficiency=costs.at['waste CHP', 'efficiency'],
+            #efficiency4=costs.at['waste CHP', 'efficiency-heat'],
+            efficiency2=costs.at['oil', 'CO2 intensity'],
+            lifetime=costs.at['waste CHP', 'lifetime'])
+
+        #TODO add heat
+        n.madd(
+            "Link",
+            spatial.oil.demand_locations + " waste CHP CC",
+            bus0=spatial.oil.demand_locations + " non-sequestered HVC",
+            bus1=spatial.oil.demand_locations,
+            bus2="co2 atmosphere",
+            bus3=spatial.co2.nodes,
+            carrier="waste CHP CC",
+            p_nom_extendable=True,
+            # p_nom=biomass_potential['municipal solid waste'] / 8760,
+            capital_cost=costs.at['waste CHP CC', 'fixed'] * costs.at['waste CHP CC', 'efficiency'],
+            marginal_cost=costs.at['waste CHP CC', 'VOM'],
+            efficiency=costs.at['waste CHP CC', 'efficiency'],
+            #efficiency4=costs.at['waste CHP', 'efficiency-heat'],
+            efficiency2=costs.at['oil', 'CO2 intensity']*(1 - options["cc_fraction"]),
+            efficiency3=costs.at['oil', 'CO2 intensity']*options["cc_fraction"],
+            lifetime=costs.at['waste CHP CC', 'lifetime'])
+
+
+    else:
+
+        n.madd(
+            "Link",
+            spatial.oil.naphtha,
+            bus0=spatial.oil.nodes,
+            bus1=spatial.oil.naphtha,
+            bus2="co2 atmosphere",
+            bus3=spatial.co2.process_emissions,
+            carrier="naphtha for industry",
+            p_nom_extendable=True,
+            efficiency2=emitted_co2_per_naphtha*non_sequestered,
+            efficiency3=process_co2_per_naphtha,
+        )
 
     # aviation
     demand_factor = options.get("aviation_demand_factor", 1)
