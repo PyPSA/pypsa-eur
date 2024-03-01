@@ -54,9 +54,9 @@ rule build_clustered_population_layouts:
 
 rule build_simplified_population_layouts:
     input:
-        pop_layout_total=resources("pop_layout_total{weather_year}"),
-        pop_layout_urban=resources("pop_layout_urban{weather_year}"),
-        pop_layout_rural=resources("pop_layout_rural{weather_year}"),
+        pop_layout_total=resources("pop_layout_total{weather_year}.nc"),
+        pop_layout_urban=resources("pop_layout_urban{weather_year}.nc"),
+        pop_layout_rural=resources("pop_layout_rural{weather_year}.nc"),
         regions_onshore=resources("regions_onshore_elec{weather_year}_s{simpl}.geojson"),
         cutout=lambda w: "cutouts/"
         + CDIR
@@ -398,8 +398,8 @@ rule build_sequestration_potentials:
 rule build_salt_cavern_potentials:
     input:
         salt_caverns="data/bundle-sector/h2_salt_caverns_GWh_per_sqkm.geojson",
-        regions_onshore=resources("regions_onshore{weather_year}_elec_s{simpl}_{clusters}.geojson"),
-        regions_offshore=resources("regions_offshore{weather_year}_elec_s{simpl}_{clusters}.geojson"),
+        regions_onshore=resources("regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson"),
+        regions_offshore=resources("regions_offshore_elec{weather_year}_s{simpl}_{clusters}.geojson"),
     output:
         h2_cavern_potential=resources("salt_cavern_potentials{weather_year}_s{simpl}_{clusters}.csv"),
     threads: 1
