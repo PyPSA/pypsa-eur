@@ -194,6 +194,7 @@ rule build_daily_heat_demand:
 rule build_hourly_heat_demand:
     params:
         snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
         heat_profile="data/heat_load_profile_BDEW.csv",
         heat_demand=resources(

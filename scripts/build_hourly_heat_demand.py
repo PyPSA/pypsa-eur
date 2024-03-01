@@ -24,7 +24,16 @@ if __name__ == "__main__":
         )
     set_scenario_config(snakemake)
 
-    snapshots = pd.date_range(freq="h", **snakemake.params.snapshots)
+    year = snakemake.wildcards.weather_year
+
+    if year:
+        snapshots = dict(start=year, end=str(int(year) + 1), inclusive="left")
+    else:
+        snapshots = snakemake.params.snapshots
+
+    snapshots = pd.date_range(freq="h", **snapshots)
+    if snakemake.params.drop_leap_day:
+        snapshots = snapshots[~((snapshots.month == 2) & (snapshots.day == 29))]
 
     daily_space_heat_demand = (
         xr.open_dataarray(snakemake.input.heat_demand)
