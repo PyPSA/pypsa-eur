@@ -1627,24 +1627,22 @@ def add_ice_cars(n, nodes, p_set, ice_share, temperature):
 
     ice_efficiency = options["transport_internal_combustion_efficiency"]
     
-    if not options["regional_oil_demand"]:
-        p_nom = ice_share * p_set.sum(axis=1).max() / ice_efficiency
-    else:
-        p_nom =  ice_share * p_set.max() / ice_efficiency
+    p_nom =  ice_share * p_set.max() / ice_efficiency
+    suffix = " land transport ICE"
+    p_nom.rename(lambda x: x + suffix, inplace=True)
        
     
     n.madd(
         "Link",
-        nodes + " land transport ICE",
+        nodes + suffix,
         bus0=spatial.oil.nodes,
         bus1=nodes + " land transport",
         bus2=["co2 atmosphere"],
         carrier="land transport oil",
         efficiency=ice_efficiency,
         efficiency2=costs.at["oil", "CO2 intensity"],
-        p_nom_extendable=True,
-        # p_nom=p_nom,
-        capital_cost=1e4,
+        p_nom_extendable=False,
+        p_nom=p_nom,
     )
     
 def add_land_transport(n, costs):
