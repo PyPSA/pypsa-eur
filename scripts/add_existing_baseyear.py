@@ -757,7 +757,7 @@ if __name__ == "__main__":
         and (options["land_transport_ice_share"][baseyear] is None))
     if "T" in opts and options["endogenous_transport"] and endo_transport and snakemake.config["foresight"]=="myopic":
         add_land_transport_installed_before_baseyear(n, baseyear)
-
+        
     if options.get("cluster_heat_buses", False):
         cluster_heat_buses(n)
 

@@ -1638,22 +1638,23 @@ def add_land_transport(n, costs):
             n.links.loc[ev_index, "capital_cost"] = 0
             
             # available EVs for charging/discharging
-            p_availEV = number_cars * options.get("bev_charge_rate", 0.011) * electric_share 
+            p_availEV = number_cars * options.get("bev_charge_rate", 0.011)
             bev_charger_index = n.links.carrier=="BEV charger"
             n.links.loc[bev_charger_index, "p_nom_extendable"] = False
             n.links.loc[bev_charger_index, "p_nom"] = p_availEV.add_suffix(' BEV charger')
+
                   
             
             if options["v2g"]:
                 v2g_index = n.links.carrier=="V2G"
                 n.links.loc[v2g_index, "p_nom_extendable"] = False
-                n.links.loc[v2g_index, "p_nom"] = p_availEV.add_suffix(' V2G')
+                n.links.loc[v2g_index, "p_nom"] = p_availEV.add_suffix(' V2G') * electric_share 
                             
             if options["bev_dsm"]:
                 ev_battery_storage_index = n.stores.carrier=="EV battery storage"
                 n.stores.loc[ev_battery_storage_index, "e_nom_extendable"] = False
                 e_nom = number_cars* options.get("bev_energy", 0.05) * options["bev_availability"] * electric_share
-                n.stores.loc[ev_battery_storage_index, "e_nom"] = e_nom
+                n.stores.loc[ev_battery_storage_index, "e_nom"] = e_nom.add_suffix(" EV battery storage")
 
 
     # Add hydrogen vehicle links
@@ -1748,7 +1749,7 @@ def adjust_land_transport(n):
     # with p_min_pu/p_max_pu while p_nom_extentable=True leads to solving infeasibility by gurobi      
     if electric_share!= 0:
         ev_index = n.links.carrier=='land transport EV'
-        eff = n.links_t.efficiency.loc[:,ev_index]
+        eff = n.links_t.efficiency.loc[:, ev_index]
         pset = p_set.add_suffix(' EV')
         pnom = (pset.divide(eff)).max()
         pu=pset.divide(eff)/pnom

@@ -67,8 +67,11 @@ def add_brownfield(n, n_p, year):
                 & (c.df[f"{attr}_nom_opt"] < threshold)
             ],
         )
+        check_transport = ( (snakemake.config["sector"]["land_transport_electric_share"][year] is not None ) 
+        or (snakemake.config["sector"]["land_transport_fuel_cell_share"][year] is not None)
+        or (snakemake.config["sector"]["land_transport_ice_share"][year] is not None))
         
-        if not snakemake.config["sector"]["endogenous_transport"]:
+        if not snakemake.config["sector"]["endogenous_transport"] or check_transport:
             n_p.mremove(
                 c.name,
                 c.df.index[c.df.carrier.str.contains("land transport" or "V2G" or "EV battery storage" or "BEV charger")

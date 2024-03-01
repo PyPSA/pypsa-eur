@@ -981,8 +981,7 @@ def extra_functionality(n, snapshots):
         if config['sector']["bev_dsm"]:
           add_EV_storage_constraint(n)
         if config['sector']["v2g"]:
-          add_v2g_constraint(n)
-
+          add_v2g_constraint(n) 
     if snakemake.params.custom_extra_functionality:
         source_path = snakemake.params.custom_extra_functionality
         assert os.path.exists(source_path), f"{source_path} does not exist"
@@ -1044,7 +1043,7 @@ def solve_network(n, config, solving, opts="", **kwargs):
         )
     if "infeasible" in condition:
         labels = n.model.compute_infeasibilities()
-        logger.info("Labels:\n" + ' '.join([str(elem) for i, elem in enumerate(labels)])) #labels)
+        logger.info("Labels:\n{labels}") # + ' '.join([str(elem) for i, elem in enumerate(labels)])) #labels)
         n.model.print_infeasibilities()
         raise RuntimeError("Solving status 'infeasible'")
 
