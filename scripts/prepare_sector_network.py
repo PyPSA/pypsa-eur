@@ -2873,9 +2873,9 @@ def add_industry(n, costs):
     emitted_co2_per_naphtha = costs.at["oil", "CO2 intensity"] - process_co2_per_naphtha
 
     non_sequestered = 1 - get(
-        snakemake.config["industry"]["HVC_environment_sequestration_fraction"], investment_year
+        snakemake.config["industry"]["HVC_environment_sequestration_fraction"],
+        investment_year,
     )
-
 
     n.madd(
         "Link",
@@ -2886,7 +2886,7 @@ def add_industry(n, costs):
         bus3=spatial.co2.process_emissions,
         carrier="naphtha for industry",
         p_nom_extendable=True,
-        efficiency2=emitted_co2_per_naphtha*non_sequestered,
+        efficiency2=emitted_co2_per_naphtha * non_sequestered,
         efficiency3=process_co2_per_naphtha,
     )
 
