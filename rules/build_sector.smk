@@ -151,6 +151,19 @@ rule cluster_gas_network:
         "../scripts/cluster_gas_network.py"
 
 
+def heat_demand_cutout(wildcards):
+    c = config_provider("sector", "heat_demand_cutout")(wildcards)
+    if c == "default":
+        return (
+            "cutouts/"
+            + CDIR
+            + config_provider("atlite", "default_cutout")(wildcards)
+            + ".nc"
+        )
+    else:
+        return "cutouts/" + CDIR + c + ".nc"
+
+
 rule build_daily_heat_demand:
     params:
         snapshots=config_provider("snapshots"),
@@ -160,12 +173,7 @@ rule build_daily_heat_demand:
         regions_onshore=resources(
             "regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson"
         ),
-        cutout=(
-            lambda w: "cutouts/"
-            + CDIR
-            + config_provider("atlite", "default_cutout")(w)
-            + ".nc",
-        ),
+        cutout=heat_demand_cutout,
     output:
         heat_demand=resources(
             "daily_heat_demand_{scope}_elec{weather_year}_s{simpl}_{clusters}.nc"
@@ -217,10 +225,7 @@ rule build_temperature_profiles:
         regions_onshore=resources(
             "regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson"
         ),
-        cutout=lambda w: "cutouts/"
-        + CDIR
-        + config_provider("atlite", "default_cutout")(w)
-        + ".nc",
+        cutout=heat_demand_cutout,
     output:
         temp_soil=resources(
             "temp_soil_{scope}_elec{weather_year}_s{simpl}_{clusters}.nc"
@@ -294,6 +299,19 @@ rule build_cop_profiles:
         "../scripts/build_cop_profiles.py"
 
 
+def solar_thermal_cutout(wildcards):
+    c = config_provider("solar_thermal", "cutout")(wildcards)
+    if c == "default":
+        return (
+            "cutouts/"
+            + CDIR
+            + config_provider("atlite", "default_cutout")(wildcards)
+            + ".nc"
+        )
+    else:
+        return "cutouts/" + CDIR + c + ".nc"
+
+
 rule build_solar_thermal_profiles:
     params:
         snapshots=config_provider("snapshots"),
@@ -304,10 +322,7 @@ rule build_solar_thermal_profiles:
         regions_onshore=resources(
             "regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson"
         ),
-        cutout=lambda w: "cutouts/"
-        + CDIR
-        + config_provider("atlite", "default_cutout")(w)
-        + ".nc",
+        cutout=solar_thermal_cutout,
     output:
         solar_thermal=resources(
             "solar_thermal_{scope}_elec{weather_year}_s{simpl}_{clusters}.nc"
@@ -949,7 +964,7 @@ rule build_existing_heating_distribution:
 
 def input_profile_offwind(w):
     return {
-        f"profile_{tech}": resources(f"profile{weather_year}_{tech}.nc")
+        f"profile_{tech}": resources(f"profile{{weather_year}}_{tech}.nc")
         for tech in ["offwind-ac", "offwind-dc"]
         if (tech in config_provider("electricity", "renewable_carriers")(w))
     }

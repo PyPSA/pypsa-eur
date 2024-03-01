@@ -359,6 +359,7 @@ solar_thermal:
   orientation:
     slope: 45.
     azimuth: 180.
+  cutout: default
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#existing-capacities
 existing_capacities:
@@ -391,6 +392,7 @@ sector:
       2050: 1.0
     district_heating_loss: 0.15
   cluster_heat_buses: true
+  heat_demand_cutout: default
   bev_dsm_restriction_value: 0.75
   bev_dsm_restriction_time: 7
   transport_heating_deadband_upper: 20.

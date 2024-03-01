@@ -31,6 +31,7 @@ if __name__ == "__main__":
     client = Client(cluster, asynchronous=True)
 
     config = snakemake.params.solar_thermal
+    config.pop("cutout", None)
 
     cutout_name = snakemake.input.cutout
     year = snakemake.wildcards.weather_year
