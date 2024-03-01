@@ -3515,7 +3515,9 @@ def set_temporal_aggregation(n, resolution, solver_name, drop_leap_day=False):
     elif "seg" in resolution.lower():
         segments = int(resolution[:-3])
         logger.info("Use temporal segmentation with %s segments", segments)
-        n = apply_time_segmentation(n, segments, solver_name=solver_name, drop_leap_day=drop_leap_day)
+        n = apply_time_segmentation(
+            n, segments, solver_name=solver_name, drop_leap_day=drop_leap_day
+        )
 
     # temporal averaging
     elif "h" in resolution.lower():
