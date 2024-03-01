@@ -175,7 +175,7 @@ rule make_summary:
             )
         ),
         ac_plot=expand(
-            resources("maps/power-network-s{simpl}-{clusters}.pdf"),
+            resources("maps/power-network{weather_year}-s{simpl}-{clusters}.pdf"),
             **config["scenario"],
             allow_missing=True,
         ),
