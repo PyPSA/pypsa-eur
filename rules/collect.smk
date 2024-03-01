@@ -34,7 +34,9 @@ rule extra_components_networks:
 rule prepare_elec_networks:
     input:
         expand(
-            resources("networks/elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"),
+            resources(
+                "networks/elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"
+            ),
             **config["scenario"],
             run=config["run"]["name"],
         ),
@@ -53,7 +55,8 @@ rule prepare_sector_networks:
 rule solve_elec_networks:
     input:
         expand(
-            RESULTS + "networks/elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+            RESULTS
+            + "networks/elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
             **config["scenario"],
             run=config["run"]["name"],
         ),

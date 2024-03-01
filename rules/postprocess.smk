@@ -23,7 +23,9 @@ if config["foresight"] != "perfect":
         resources:
             mem_mb=4000,
         benchmark:
-            benchmarks("plot_power_network_clustered/elec{weather_year}_s{simpl}_{clusters}")
+            benchmarks(
+                "plot_power_network_clustered/elec{weather_year}_s{simpl}_{clusters}"
+            )
         conda:
             "../envs/environment.yaml"
         script:
@@ -35,7 +37,9 @@ if config["foresight"] != "perfect":
         input:
             network=RESULTS
             + "postnetworks/elec{weather_year}_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
-            regions=resources("regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson"),
+            regions=resources(
+                "regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson"
+            ),
         output:
             map=RESULTS
             + "maps/elec{weather_year}_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
@@ -62,7 +66,9 @@ if config["foresight"] != "perfect":
         input:
             network=RESULTS
             + "postnetworks/elec{weather_year}_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
-            regions=resources("regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson"),
+            regions=resources(
+                "regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson"
+            ),
         output:
             map=RESULTS
             + "maps/elec{weather_year}_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-h2_network_{planning_horizons}.pdf",
@@ -88,7 +94,9 @@ if config["foresight"] != "perfect":
         input:
             network=RESULTS
             + "postnetworks/elec{weather_year}_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
-            regions=resources("regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson"),
+            regions=resources(
+                "regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson"
+            ),
         output:
             map=RESULTS
             + "maps/elec{weather_year}_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-ch4_network_{planning_horizons}.pdf",
@@ -125,7 +133,9 @@ if config["foresight"] == "perfect":
         input:
             network=RESULTS
             + "postnetworks/elec{weather_year}_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years.nc",
-            regions=resources("regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson"),
+            regions=resources(
+                "regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson"
+            ),
         output:
             unpack(output_map_year),
         threads: 2
@@ -282,11 +292,12 @@ rule plot_elec_statistics:
         plotting=config_provider("plotting"),
         barplots=STATISTICS_BARPLOTS,
     input:
-        network=RESULTS + "networks/elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+        network=RESULTS
+        + "networks/elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
     output:
         **{
             f"{plot}_bar": RESULTS
-            + f"figures/statistics_{plot}_bar_elec{{weather_year}}_s{{simpl}}_{{clusters}}_ec_l{{ll}}_{{opts}}.pdf"
+            + f"figures/statistics_{plot}_bar_elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}.pdf"
             for plot in STATISTICS_BARPLOTS
         },
         barplots_touch=RESULTS

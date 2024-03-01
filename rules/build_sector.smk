@@ -33,19 +33,25 @@ rule build_clustered_population_layouts:
         pop_layout_total=resources("pop_layout_total{weather_year}.nc"),
         pop_layout_urban=resources("pop_layout_urban{weather_year}.nc"),
         pop_layout_rural=resources("pop_layout_rural{weather_year}.nc"),
-        regions_onshore=resources("regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson"),
+        regions_onshore=resources(
+            "regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson"
+        ),
         cutout=lambda w: "cutouts/"
         + CDIR
         + config_provider("atlite", "default_cutout")(w)
         + ".nc",
     output:
-        clustered_pop_layout=resources("pop_layout_elec{weather_year}_s{simpl}_{clusters}.csv"),
+        clustered_pop_layout=resources(
+            "pop_layout_elec{weather_year}_s{simpl}_{clusters}.csv"
+        ),
     log:
         logs("build_clustered_population_layouts{weather_year}_{simpl}_{clusters}.log"),
     resources:
         mem_mb=10000,
     benchmark:
-        benchmarks("build_clustered_population_layouts/{weather_year}s{simpl}_{clusters}")
+        benchmarks(
+            "build_clustered_population_layouts/{weather_year}s{simpl}_{clusters}"
+        )
     conda:
         "../envs/environment.yaml"
     script:
@@ -99,10 +105,16 @@ rule build_gas_input_locations:
         ),
         entry="data/gas_network/scigrid-gas/data/IGGIELGN_BorderPoints.geojson",
         storage="data/gas_network/scigrid-gas/data/IGGIELGN_Storages.geojson",
-        regions_onshore=resources("regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson"),
-        regions_offshore=resources("regions_offshore_elec{weather_year}_s{simpl}_{clusters}.geojson"),
+        regions_onshore=resources(
+            "regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson"
+        ),
+        regions_offshore=resources(
+            "regions_offshore_elec{weather_year}_s{simpl}_{clusters}.geojson"
+        ),
     output:
-        gas_input_nodes=resources("gas_input_locations{weather_year}_s{simpl}_{clusters}.geojson"),
+        gas_input_nodes=resources(
+            "gas_input_locations{weather_year}_s{simpl}_{clusters}.geojson"
+        ),
         gas_input_nodes_simplified=resources(
             "gas_input_locations{weather_year}_s{simpl}_{clusters}_simplified.csv"
         ),
@@ -119,10 +131,16 @@ rule build_gas_input_locations:
 rule cluster_gas_network:
     input:
         cleaned_gas_network=resources("gas_network.csv"),
-        regions_onshore=resources("regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson"),
-        regions_offshore=resources("regions_offshore_elec{weather_year}_s{simpl}_{clusters}.geojson"),
+        regions_onshore=resources(
+            "regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson"
+        ),
+        regions_offshore=resources(
+            "regions_offshore_elec{weather_year}_s{simpl}_{clusters}.geojson"
+        ),
     output:
-        clustered_gas_network=resources("gas_network_elec{weather_year}_s{simpl}_{clusters}.csv"),
+        clustered_gas_network=resources(
+            "gas_network_elec{weather_year}_s{simpl}_{clusters}.csv"
+        ),
     resources:
         mem_mb=4000,
     log:
@@ -139,13 +157,19 @@ rule build_daily_heat_demand:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
         pop_layout=resources("pop_layout_{scope}{weather_year}.nc"),
-        regions_onshore=resources("regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson"),
-        cutout=lambda w: "cutouts/"
-        + CDIR
-        + config_provider("atlite", "default_cutout")(w)
-        + ".nc",
+        regions_onshore=resources(
+            "regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson"
+        ),
+        cutout=(
+            lambda w: "cutouts/"
+            + CDIR
+            + config_provider("atlite", "default_cutout")(w)
+            + ".nc",
+        ),
     output:
-        heat_demand=resources("daily_heat_demand_{scope}_elec{weather_year}_s{simpl}_{clusters}.nc"),
+        heat_demand=resources(
+            "daily_heat_demand_{scope}_elec{weather_year}_s{simpl}_{clusters}.nc"
+        ),
     resources:
         mem_mb=20000,
     threads: 8
@@ -164,9 +188,13 @@ rule build_hourly_heat_demand:
         snapshots=config_provider("snapshots"),
     input:
         heat_profile="data/heat_load_profile_BDEW.csv",
-        heat_demand=resources("daily_heat_demand_{scope}_elec{weather_year}_s{simpl}_{clusters}.nc"),
+        heat_demand=resources(
+            "daily_heat_demand_{scope}_elec{weather_year}_s{simpl}_{clusters}.nc"
+        ),
     output:
-        heat_demand=resources("hourly_heat_demand_{scope}_elec{weather_year}_s{simpl}_{clusters}.nc"),
+        heat_demand=resources(
+            "hourly_heat_demand_{scope}_elec{weather_year}_s{simpl}_{clusters}.nc"
+        ),
     resources:
         mem_mb=2000,
     threads: 8
@@ -186,13 +214,17 @@ rule build_temperature_profiles:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
         pop_layout=resources("pop_layout_{scope}{weather_year}.nc"),
-        regions_onshore=resources("regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson"),
+        regions_onshore=resources(
+            "regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson"
+        ),
         cutout=lambda w: "cutouts/"
         + CDIR
         + config_provider("atlite", "default_cutout")(w)
         + ".nc",
     output:
-        temp_soil=resources("temp_soil_{scope}_elec{weather_year}_s{simpl}_{clusters}.nc"),
+        temp_soil=resources(
+            "temp_soil_{scope}_elec{weather_year}_s{simpl}_{clusters}.nc"
+        ),
         temp_air=resources("temp_air_{scope}_elec{weather_year}_s{simpl}_{clusters}.nc"),
     resources:
         mem_mb=20000,
@@ -200,7 +232,9 @@ rule build_temperature_profiles:
     log:
         logs("build_temperature_profiles_{scope}_{weather_year}_{simpl}_{clusters}.log"),
     benchmark:
-        benchmarks("build_temperature_profiles/{scope}_{weather_year}_s{simpl}_{clusters}")
+        benchmarks(
+            "build_temperature_profiles/{scope}_{weather_year}_s{simpl}_{clusters}"
+        )
     conda:
         "../envs/environment.yaml"
     script:
@@ -211,19 +245,43 @@ rule build_cop_profiles:
     params:
         heat_pump_sink_T=config_provider("sector", "heat_pump_sink_T"),
     input:
-        temp_soil_total=resources("temp_soil_total_elec{weather_year}_s{simpl}_{clusters}.nc"),
-        temp_soil_rural=resources("temp_soil_rural_elec{weather_year}_s{simpl}_{clusters}.nc"),
-        temp_soil_urban=resources("temp_soil_urban_elec{weather_year}_s{simpl}_{clusters}.nc"),
-        temp_air_total=resources("temp_air_total_elec{weather_year}_s{simpl}_{clusters}.nc"),
-        temp_air_rural=resources("temp_air_rural_elec{weather_year}_s{simpl}_{clusters}.nc"),
-        temp_air_urban=resources("temp_air_urban_elec{weather_year}_s{simpl}_{clusters}.nc"),
+        temp_soil_total=resources(
+            "temp_soil_total_elec{weather_year}_s{simpl}_{clusters}.nc"
+        ),
+        temp_soil_rural=resources(
+            "temp_soil_rural_elec{weather_year}_s{simpl}_{clusters}.nc"
+        ),
+        temp_soil_urban=resources(
+            "temp_soil_urban_elec{weather_year}_s{simpl}_{clusters}.nc"
+        ),
+        temp_air_total=resources(
+            "temp_air_total_elec{weather_year}_s{simpl}_{clusters}.nc"
+        ),
+        temp_air_rural=resources(
+            "temp_air_rural_elec{weather_year}_s{simpl}_{clusters}.nc"
+        ),
+        temp_air_urban=resources(
+            "temp_air_urban_elec{weather_year}_s{simpl}_{clusters}.nc"
+        ),
     output:
-        cop_soil_total=resources("cop_soil_total_elec{weather_year}_s{simpl}_{clusters}.nc"),
-        cop_soil_rural=resources("cop_soil_rural_elec{weather_year}_s{simpl}_{clusters}.nc"),
-        cop_soil_urban=resources("cop_soil_urban_elec{weather_year}_s{simpl}_{clusters}.nc"),
-        cop_air_total=resources("cop_air_total_elec{weather_year}_s{simpl}_{clusters}.nc"),
-        cop_air_rural=resources("cop_air_rural_elec{weather_year}_s{simpl}_{clusters}.nc"),
-        cop_air_urban=resources("cop_air_urban_elec{weather_year}_s{simpl}_{clusters}.nc"),
+        cop_soil_total=resources(
+            "cop_soil_total_elec{weather_year}_s{simpl}_{clusters}.nc"
+        ),
+        cop_soil_rural=resources(
+            "cop_soil_rural_elec{weather_year}_s{simpl}_{clusters}.nc"
+        ),
+        cop_soil_urban=resources(
+            "cop_soil_urban_elec{weather_year}_s{simpl}_{clusters}.nc"
+        ),
+        cop_air_total=resources(
+            "cop_air_total_elec{weather_year}_s{simpl}_{clusters}.nc"
+        ),
+        cop_air_rural=resources(
+            "cop_air_rural_elec{weather_year}_s{simpl}_{clusters}.nc"
+        ),
+        cop_air_urban=resources(
+            "cop_air_urban_elec{weather_year}_s{simpl}_{clusters}.nc"
+        ),
     resources:
         mem_mb=20000,
     log:
@@ -243,20 +301,28 @@ rule build_solar_thermal_profiles:
         solar_thermal=config_provider("solar_thermal"),
     input:
         pop_layout=resources("pop_layout_{scope}{weather_year}.nc"),
-        regions_onshore=resources("regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson"),
+        regions_onshore=resources(
+            "regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson"
+        ),
         cutout=lambda w: "cutouts/"
         + CDIR
         + config_provider("atlite", "default_cutout")(w)
         + ".nc",
     output:
-        solar_thermal=resources("solar_thermal_{scope}_elec{weather_year}_s{simpl}_{clusters}.nc"),
+        solar_thermal=resources(
+            "solar_thermal_{scope}_elec{weather_year}_s{simpl}_{clusters}.nc"
+        ),
     resources:
         mem_mb=20000,
     threads: 16
     log:
-        logs("build_solar_thermal_profiles_{scope}_{weather_year}_s{simpl}_{clusters}.log"),
+        logs(
+            "build_solar_thermal_profiles_{scope}_{weather_year}_s{simpl}_{clusters}.log"
+        ),
     benchmark:
-        benchmarks("build_solar_thermal_profiles/{scope}_{weather_year}_s{simpl}_{clusters}")
+        benchmarks(
+            "build_solar_thermal_profiles/{scope}_{weather_year}_s{simpl}_{clusters}"
+        )
     conda:
         "../envs/environment.yaml"
     script:
@@ -304,7 +370,7 @@ rule build_heat_totals:
     log:
         logs("build_heat_totals.log"),
     benchmark:
-        benchmarks("build_heat_totals"),
+        benchmarks("build_heat_totals")
     conda:
         "../envs/environment.yaml"
     script:
@@ -320,7 +386,9 @@ rule build_biomass_potentials:
             keep_local=True,
         ),
         nuts2="data/bundle-sector/nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson",  # https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/#nuts21
-        regions_onshore=resources("regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson"),
+        regions_onshore=resources(
+            "regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson"
+        ),
         nuts3_population=ancient("data/bundle/nama_10r_3popgdp.tsv.gz"),
         swiss_cantons=ancient("data/bundle/ch_cantons.csv"),
         swiss_population=ancient("data/bundle/je-e-21.03.02.xls"),
@@ -336,9 +404,13 @@ rule build_biomass_potentials:
     resources:
         mem_mb=1000,
     log:
-        logs("build_biomass_potentials{weather_year}_s{simpl}_{clusters}_{planning_horizons}.log"),
+        logs(
+            "build_biomass_potentials{weather_year}_s{simpl}_{clusters}_{planning_horizons}.log"
+        ),
     benchmark:
-        benchmarks("build_biomass_potentials{weather_year}_s{simpl}_{clusters}_{planning_horizons}")
+        benchmarks(
+            "build_biomass_potentials{weather_year}_s{simpl}_{clusters}_{planning_horizons}"
+        )
     conda:
         "../envs/environment.yaml"
     script:
@@ -376,8 +448,12 @@ rule build_sequestration_potentials:
             "https://raw.githubusercontent.com/ericzhou571/Co2Storage/main/resources/complete_map_2020_unit_Mt.geojson",
             keep_local=True,
         ),
-        regions_onshore=resources("regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson"),
-        regions_offshore=resources("regions_offshore_elec{weather_year}_s{simpl}_{clusters}.geojson"),
+        regions_onshore=resources(
+            "regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson"
+        ),
+        regions_offshore=resources(
+            "regions_offshore_elec{weather_year}_s{simpl}_{clusters}.geojson"
+        ),
     output:
         sequestration_potential=resources(
             "co2_sequestration_potential_elec{weather_year}_s{simpl}_{clusters}.csv"
@@ -398,10 +474,16 @@ rule build_sequestration_potentials:
 rule build_salt_cavern_potentials:
     input:
         salt_caverns="data/bundle-sector/h2_salt_caverns_GWh_per_sqkm.geojson",
-        regions_onshore=resources("regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson"),
-        regions_offshore=resources("regions_offshore_elec{weather_year}_s{simpl}_{clusters}.geojson"),
+        regions_onshore=resources(
+            "regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson"
+        ),
+        regions_offshore=resources(
+            "regions_offshore_elec{weather_year}_s{simpl}_{clusters}.geojson"
+        ),
     output:
-        h2_cavern_potential=resources("salt_cavern_potentials{weather_year}_s{simpl}_{clusters}.csv"),
+        h2_cavern_potential=resources(
+            "salt_cavern_potentials{weather_year}_s{simpl}_{clusters}.csv"
+        ),
     threads: 1
     resources:
         mem_mb=2000,
@@ -543,8 +625,12 @@ rule build_industrial_distribution_key:
         ),
         countries=config_provider("countries"),
     input:
-        regions_onshore=resources("regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson"),
-        clustered_pop_layout=resources("pop_layout_elec{weather_year}_s{simpl}_{clusters}.csv"),
+        regions_onshore=resources(
+            "regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson"
+        ),
+        clustered_pop_layout=resources(
+            "pop_layout_elec{weather_year}_s{simpl}_{clusters}.csv"
+        ),
         hotmaps_industrial_database="data/bundle-sector/Industrial_Database.csv",
     output:
         industrial_distribution_key=resources(
@@ -556,7 +642,9 @@ rule build_industrial_distribution_key:
     log:
         logs("build_industrial_distribution_key{weather_year}_s{simpl}_{clusters}.log"),
     benchmark:
-        benchmarks("build_industrial_distribution_key/{weather_year}s{simpl}_{clusters}")
+        benchmarks(
+            "build_industrial_distribution_key/{weather_year}s{simpl}_{clusters}"
+        )
     conda:
         "../envs/environment.yaml"
     script:
@@ -670,9 +758,13 @@ rule build_industrial_energy_demand_per_node_today:
     resources:
         mem_mb=1000,
     log:
-        logs("build_industrial_energy_demand_per_node_today{weather_year}_s{simpl}_{clusters}.log"),
+        logs(
+            "build_industrial_energy_demand_per_node_today{weather_year}_s{simpl}_{clusters}.log"
+        ),
     benchmark:
-        benchmarks("build_industrial_energy_demand_per_node_today/{weather_year}s{simpl}_{clusters}")
+        benchmarks(
+            "build_industrial_energy_demand_per_node_today/{weather_year}s{simpl}_{clusters}"
+        )
     conda:
         "../envs/environment.yaml"
     script:
@@ -686,12 +778,16 @@ rule build_retro_cost:
     input:
         building_stock="data/retro/data_building_stock.csv",
         data_tabula="data/bundle-sector/retro/tabula-calculator-calcsetbuilding.csv",
-        air_temperature=resources("temp_air_total_elec{weather_year}_s{simpl}_{clusters}.nc"),
+        air_temperature=resources(
+            "temp_air_total_elec{weather_year}_s{simpl}_{clusters}.nc"
+        ),
         u_values_PL="data/retro/u_values_poland.csv",
         tax_w="data/retro/elec{weather_year}tricity_taxes_eu.csv",
         construction_index="data/retro/comparative_level_investment.csv",
         floor_area_missing="data/retro/floor_area_missing.csv",
-        clustered_pop_layout=resources("pop_layout_elec{weather_year}_s{simpl}_{clusters}.csv"),
+        clustered_pop_layout=resources(
+            "pop_layout_elec{weather_year}_s{simpl}_{clusters}.csv"
+        ),
         cost_germany="data/retro/retro_cost_germany.csv",
         window_assumptions="data/retro/window_assumptions.csv",
     output:
@@ -712,14 +808,18 @@ rule build_retro_cost:
 rule build_population_weighted_energy_totals:
     input:
         energy_totals=resources("{kind}_totals.csv"),
-        clustered_pop_layout=resources("pop_layout_elec{weather_year}_s{simpl}_{clusters}.csv"),
+        clustered_pop_layout=resources(
+            "pop_layout_elec{weather_year}_s{simpl}_{clusters}.csv"
+        ),
     output:
         resources("pop_weighted_{kind}_totals{weather_year}_s{simpl}_{clusters}.csv"),
     threads: 1
     resources:
         mem_mb=2000,
     log:
-        logs("build_population_weighted_{kind}_totals{weather_year}_s{simpl}_{clusters}.log"),
+        logs(
+            "build_population_weighted_{kind}_totals{weather_year}_s{simpl}_{clusters}.log"
+        ),
     conda:
         "../envs/environment.yaml"
     script:
@@ -730,7 +830,9 @@ rule build_shipping_demand:
     input:
         ports="data/attributed_ports.json",
         scope=resources("europe_shape.geojson"),
-        regions=resources("regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson"),
+        regions=resources(
+            "regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson"
+        ),
         demand=resources("energy_totals.csv"),
     params:
         energy_totals_year=config_provider("energy", "energy_totals_year"),
@@ -753,16 +855,22 @@ rule build_transport_demand:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         sector=config_provider("sector"),
     input:
-        clustered_pop_layout=resources("pop_layout_elec{weather_year}_s{simpl}_{clusters}.csv"),
+        clustered_pop_layout=resources(
+            "pop_layout_elec{weather_year}_s{simpl}_{clusters}.csv"
+        ),
         pop_weighted_energy_totals=resources(
             "pop_weighted_energy_totals{weather_year}_s{simpl}_{clusters}.csv"
         ),
         transport_data=resources("transport_data.csv"),
         traffic_data_KFZ="data/bundle-sector/emobility/KFZ__count",
         traffic_data_Pkw="data/bundle-sector/emobility/Pkw__count",
-        temp_air_total=resources("temp_air_total_elec{weather_year}_s{simpl}_{clusters}.nc"),
+        temp_air_total=resources(
+            "temp_air_total_elec{weather_year}_s{simpl}_{clusters}.nc"
+        ),
     output:
-        transport_demand=resources("transport_demand{weather_year}_s{simpl}_{clusters}.csv"),
+        transport_demand=resources(
+            "transport_demand{weather_year}_s{simpl}_{clusters}.csv"
+        ),
         transport_data=resources("transport_data{weather_year}_s{simpl}_{clusters}.csv"),
         avail_profile=resources("avail_profile{weather_year}_s{simpl}_{clusters}.csv"),
         dsm_profile=resources("dsm_profile{weather_year}_s{simpl}_{clusters}.csv"),
@@ -782,7 +890,9 @@ rule build_district_heat_share:
         sector=config_provider("sector"),
     input:
         district_heat_share=resources("district_heat_share.csv"),
-        clustered_pop_layout=resources("pop_layout_elec{weather_year}_s{simpl}_{clusters}.csv"),
+        clustered_pop_layout=resources(
+            "pop_layout_elec{weather_year}_s{simpl}_{clusters}.csv"
+        ),
     output:
         district_heat_share=resources(
             "district_heat_share_elec{weather_year}_s{simpl}_{clusters}_{planning_horizons}.csv"
@@ -791,7 +901,9 @@ rule build_district_heat_share:
     resources:
         mem_mb=1000,
     log:
-        logs("build_district_heat_share{weather_year}_s{simpl}_{clusters}_{planning_horizons}.log"),
+        logs(
+            "build_district_heat_share{weather_year}_s{simpl}_{clusters}_{planning_horizons}.log"
+        ),
     conda:
         "../envs/environment.yaml"
     script:
@@ -805,7 +917,9 @@ rule build_existing_heating_distribution:
         existing_capacities=config_provider("existing_capacities"),
     input:
         existing_heating="data/existing_infrastructure/existing_heating_raw.csv",
-        clustered_pop_layout=resources("pop_layout_elec{weather_year}_s{simpl}_{clusters}.csv"),
+        clustered_pop_layout=resources(
+            "pop_layout_elec{weather_year}_s{simpl}_{clusters}.csv"
+        ),
         clustered_pop_energy_layout=resources(
             "pop_weighted_energy_totals{weather_year}_s{simpl}_{clusters}.csv"
         ),
@@ -835,7 +949,7 @@ rule build_existing_heating_distribution:
 
 def input_profile_offwind(w):
     return {
-        f"profile_{tech}": resources(f"profile{{weather_year}}_{tech}.nc")
+        f"profile_{tech}": resources(f"profile{weather_year}_{tech}.nc")
         for tech in ["offwind-ac", "offwind-dc"]
         if (tech in config_provider("electricity", "renewable_carriers")(w))
     }
@@ -883,13 +997,17 @@ rule prepare_sector_network:
             else []
         ),
         sequestration_potential=lambda w: (
-            resources("co2_sequestration_potential_elec{weather_year}_s{simpl}_{clusters}.csv")
+            resources(
+                "co2_sequestration_potential_elec{weather_year}_s{simpl}_{clusters}.csv"
+            )
             if config_provider(
                 "sector", "regional_co2_sequestration_potential", "enable"
             )(w)
             else []
         ),
-        network=resources("networks/elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"),
+        network=resources(
+            "networks/elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"
+        ),
         energy_totals_name=resources("energy_totals.csv"),
         eurostat=input_eurostat,
         pop_weighted_energy_totals=resources(
@@ -898,8 +1016,12 @@ rule prepare_sector_network:
         pop_weighted_heat_totals=resources(
             "pop_weighted_heat_totals{weather_year}_s{simpl}_{clusters}.csv"
         ),
-        shipping_demand=resources("shipping_demand{weather_year}_s{simpl}_{clusters}.csv"),
-        transport_demand=resources("transport_demand{weather_year}_s{simpl}_{clusters}.csv"),
+        shipping_demand=resources(
+            "shipping_demand{weather_year}_s{simpl}_{clusters}.csv"
+        ),
+        transport_demand=resources(
+            "transport_demand{weather_year}_s{simpl}_{clusters}.csv"
+        ),
         transport_data=resources("transport_data{weather_year}_s{simpl}_{clusters}.csv"),
         avail_profile=resources("avail_profile{weather_year}_s{simpl}_{clusters}.csv"),
         dsm_profile=resources("dsm_profile{weather_year}_s{simpl}_{clusters}.csv"),
@@ -920,10 +1042,14 @@ rule prepare_sector_network:
             if config_provider("foresight")(w) == "overnight"
             else resources("costs_{planning_horizons}.csv")
         ),
-        h2_cavern=resources("salt_cavern_potentials{weather_year}_s{simpl}_{clusters}.csv"),
+        h2_cavern=resources(
+            "salt_cavern_potentials{weather_year}_s{simpl}_{clusters}.csv"
+        ),
         busmap_s=resources("busmap_elec{weather_year}_s{simpl}.csv"),
         busmap=resources("busmap_elec{weather_year}_s{simpl}_{clusters}.csv"),
-        clustered_pop_layout=resources("pop_layout_elec{weather_year}_s{simpl}_{clusters}.csv"),
+        clustered_pop_layout=resources(
+            "pop_layout_elec{weather_year}_s{simpl}_{clusters}.csv"
+        ),
         simplified_pop_layout=resources("pop_layout_elec{weather_year}_s{simpl}.csv"),
         industrial_demand=resources(
             "industrial_energy_demand_elec{weather_year}_s{simpl}_{clusters}_{planning_horizons}.csv"
@@ -934,18 +1060,42 @@ rule prepare_sector_network:
         district_heat_share=resources(
             "district_heat_share_elec{weather_year}_s{simpl}_{clusters}_{planning_horizons}.csv"
         ),
-        temp_soil_total=resources("temp_soil_total_elec{weather_year}_s{simpl}_{clusters}.nc"),
-        temp_soil_rural=resources("temp_soil_rural_elec{weather_year}_s{simpl}_{clusters}.nc"),
-        temp_soil_urban=resources("temp_soil_urban_elec{weather_year}_s{simpl}_{clusters}.nc"),
-        temp_air_total=resources("temp_air_total_elec{weather_year}_s{simpl}_{clusters}.nc"),
-        temp_air_rural=resources("temp_air_rural_elec{weather_year}_s{simpl}_{clusters}.nc"),
-        temp_air_urban=resources("temp_air_urban_elec{weather_year}_s{simpl}_{clusters}.nc"),
-        cop_soil_total=resources("cop_soil_total_elec{weather_year}_s{simpl}_{clusters}.nc"),
-        cop_soil_rural=resources("cop_soil_rural_elec{weather_year}_s{simpl}_{clusters}.nc"),
-        cop_soil_urban=resources("cop_soil_urban_elec{weather_year}_s{simpl}_{clusters}.nc"),
-        cop_air_total=resources("cop_air_total_elec{weather_year}_s{simpl}_{clusters}.nc"),
-        cop_air_rural=resources("cop_air_rural_elec{weather_year}_s{simpl}_{clusters}.nc"),
-        cop_air_urban=resources("cop_air_urban_elec{weather_year}_s{simpl}_{clusters}.nc"),
+        temp_soil_total=resources(
+            "temp_soil_total_elec{weather_year}_s{simpl}_{clusters}.nc"
+        ),
+        temp_soil_rural=resources(
+            "temp_soil_rural_elec{weather_year}_s{simpl}_{clusters}.nc"
+        ),
+        temp_soil_urban=resources(
+            "temp_soil_urban_elec{weather_year}_s{simpl}_{clusters}.nc"
+        ),
+        temp_air_total=resources(
+            "temp_air_total_elec{weather_year}_s{simpl}_{clusters}.nc"
+        ),
+        temp_air_rural=resources(
+            "temp_air_rural_elec{weather_year}_s{simpl}_{clusters}.nc"
+        ),
+        temp_air_urban=resources(
+            "temp_air_urban_elec{weather_year}_s{simpl}_{clusters}.nc"
+        ),
+        cop_soil_total=resources(
+            "cop_soil_total_elec{weather_year}_s{simpl}_{clusters}.nc"
+        ),
+        cop_soil_rural=resources(
+            "cop_soil_rural_elec{weather_year}_s{simpl}_{clusters}.nc"
+        ),
+        cop_soil_urban=resources(
+            "cop_soil_urban_elec{weather_year}_s{simpl}_{clusters}.nc"
+        ),
+        cop_air_total=resources(
+            "cop_air_total_elec{weather_year}_s{simpl}_{clusters}.nc"
+        ),
+        cop_air_rural=resources(
+            "cop_air_rural_elec{weather_year}_s{simpl}_{clusters}.nc"
+        ),
+        cop_air_urban=resources(
+            "cop_air_urban_elec{weather_year}_s{simpl}_{clusters}.nc"
+        ),
         solar_thermal_total=lambda w: (
             resources("solar_thermal_total_elec{weather_year}_s{simpl}_{clusters}.nc")
             if config_provider("sector", "solar_thermal")(w)

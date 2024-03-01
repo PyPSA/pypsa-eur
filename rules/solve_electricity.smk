@@ -13,7 +13,9 @@ rule solve_network:
         ),
         custom_extra_functionality=input_custom_extra_functionality,
     input:
-        network=resources("networks/elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"),
+        network=resources(
+            "networks/elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"
+        ),
         config=RESULTS + "config.yaml",
     output:
         network=RESULTS
@@ -26,7 +28,10 @@ rule solve_network:
         python=RESULTS
         + "logs/solve_network/elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}_python.log",
     benchmark:
-        RESULTS + "benchmarks/solve_network/elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}"
+        (
+            RESULTS
+            + "benchmarks/solve_network/elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}"
+        )
     threads: solver_threads
     resources:
         mem_mb=memory,
