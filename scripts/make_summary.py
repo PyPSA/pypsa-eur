@@ -681,7 +681,7 @@ if __name__ == "__main__":
     networks_dict = {
         (weather_year, cluster, ll, opt + sector_opt, planning_horizon): "results/"
         + snakemake.params.RDIR
-        + f"/postnetworks/elec_s{simpl}_{cluster}_l{ll}_{opt}_{sector_opt}_{planning_horizon}.nc"
+        + f"postnetworks/elec{weather_year}_s{simpl}_{cluster}_l{ll}_{opt}_{sector_opt}_{planning_horizon}.nc"
         for weather_year in snakemake.params.scenario["weather_year"]
         for simpl in snakemake.params.scenario["simpl"]
         for cluster in snakemake.params.scenario["clusters"]

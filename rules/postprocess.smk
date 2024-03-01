@@ -297,7 +297,7 @@ rule plot_elec_statistics:
     output:
         **{
             f"{plot}_bar": RESULTS
-            + f"figures/statistics_{plot}_bar_elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}.pdf"
+            + f"figures/statistics_{plot}_bar_elec{{weather_year}}_s{{simpl}}_{{clusters}}_ec_l{{ll}}_{{opts}}.pdf"
             for plot in STATISTICS_BARPLOTS
         },
         barplots_touch=RESULTS
