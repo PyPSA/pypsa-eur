@@ -119,21 +119,9 @@ clustered down to 6 buses and every 24 hours aggregated to one snapshot. The com
 
 orders ``snakemake`` to run the rule :mod:`solve_network` that produces the solved network and stores it in ``results/networks`` with the name ``elec_s_6_ec_lcopt_Co2L-24H.nc``:
 
-<<<<<<< HEAD
-.. code::
-
-    rule solve_network:
-        input: "networks/elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"
-        output: "results/networks/elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"
-        [...]
-        script: "scripts/solve_network.py"
-
-.. until https://github.com/snakemake/snakemake/issues/46 closed
-=======
 .. literalinclude:: ../rules/solve_electricity.smk
    :start-at: rule solve_network:
    :end-before: rule solve_operations_network:
->>>>>>> master
 
 This triggers a workflow of multiple preceding jobs that depend on each rule's inputs and outputs:
 
