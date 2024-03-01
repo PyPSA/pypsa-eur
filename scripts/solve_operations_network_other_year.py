@@ -8,7 +8,6 @@ import logging
 
 import numpy as np
 import pypsa
-from helper import override_component_attrs
 from solve_network import prepare_network, solve_network
 
 logger = logging.getLogger(__name__)
@@ -120,10 +119,8 @@ if __name__ == "__main__":
 
         Path(tmpdir).mkdir(parents=True, exist_ok=True)
 
-    overrides = override_component_attrs(snakemake.input.overrides)
-
-    n = pypsa.Network(snakemake.input.pre, override_component_attrs=overrides)
-    n_post = pypsa.Network(snakemake.input.post, override_component_attrs=overrides)
+    n = pypsa.Network(snakemake.input.pre)
+    n_post = pypsa.Network(snakemake.input.post)
     n = set_parameters_from_optimized(n, n_post)
     del n_post
 

@@ -1,0 +1,8 @@
+,Unit,Values,Description
+adjustments,,,
+-- electricity,bool or dict,,"Parameter adjustments for capital cost, marginal cost, and maximum capacities of carriers. Applied in :mod:`prepare_network.`"
+-- -- {attr},,,"Attribute can be ``e_nom_opt``, ``p_nom_opt``, ``marginal_cost`` or ``capital_cost``"
+-- -- -- {carrier},float,per-unit,"Any carrier of the network to which parameter adjustment factor should be applied."
+-- sector,bool or dict,,"Parameter adjustments for capital cost, marginal cost, and maximum capacities of carriers. Applied in :mod:`prepare_sector_network.`"
+-- -- {attr},,,"Attribute can be ``e_nom_opt``, ``p_nom_opt``, ``marginal_cost`` or ``capital_cost``"
+-- -- -- {carrier},float,per-unit,"Any carrier of the network to which parameter adjustment factor should be applied."

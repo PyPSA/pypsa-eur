@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -7,9 +7,6 @@ Build total energy demands per country using JRC IDEES, eurostat, and EEA data.
 """
 
 import logging
-
-logger = logging.getLogger(__name__)
-
 import multiprocessing as mp
 from functools import partial
 
@@ -17,11 +14,11 @@ import country_converter as coco
 import geopandas as gpd
 import numpy as np
 import pandas as pd
-from _helpers import mute_print
+from _helpers import configure_logging, mute_print, set_scenario_config
 from tqdm import tqdm
 
 cc = coco.CountryConverter()
-
+logger = logging.getLogger(__name__)
 idx = pd.IndexSlice
 
 
@@ -364,27 +361,18 @@ def build_idees(countries, year=None):
 
     with mute_print():
         with mp.Pool(processes=nprocesses) as pool:
-            dfs = list(tqdm(pool.imap(func, countries), **tqdm_kwargs))
+            totals_list = list(tqdm(pool.imap(func, countries), **tqdm_kwargs))
 
-    df = pd.concat(dfs, keys=countries, names=['country', 'year'])
+    totals = pd.concat(totals_list, keys=countries, names=['country', 'year'])
 
     # convert ktoe to TWh
-    exclude = df.columns.str.fullmatch("passenger cars")
-    df.loc[:,~exclude] *= 11.63 / 1e3
+    exclude = totals.columns.str.fullmatch("passenger cars")
+    totals.loc[:, ~exclude] *= 11.63 / 1e3
 
     # convert TWh/100km to kWh/km
-    df["passenger car efficiency"] *= 10
+    totals.loc[:, "passenger car efficiency"] *= 10
 
-    # district heating share
-    subset = ["derived heat residential", "derived heat services"]
-    district_heat = df[subset].sum(axis=1)
-    subset = ["thermal uses residential", "thermal uses services"]
-    total_heat = df[subset].sum(axis=1)
-    df["district heat share"] = district_heat.div(total_heat)
-
-    df.columns.name = 'item'
-
-    return df
+    return totals
 
 
 def build_energy_totals(countries, eurostat, swiss, idees):
@@ -479,7 +467,7 @@ def build_energy_totals(countries, eurostat, swiss, idees):
     # The main heating source for about 73 per cent of the households is based on electricity
     # => 26% is non-electric
 
-    if "NO" in df:
+    if "NO" in df.index:
         elec_fraction = 0.73
 
         no_norway = df.drop("NO")
@@ -573,18 +561,39 @@ def build_energy_totals(countries, eurostat, swiss, idees):
         ratio = (df.loc["BA"].loc[2014:2020] / df.loc["RS"].loc[2014:2020]).mean()
         df.loc["BA"] = (ratio * df.loc["RS"]).values
 
-    # Missing district heating share
-    dh_share = pd.read_csv(snakemake.input.district_heat_share,
-                        index_col=0, usecols=[0, 1])
+    return df
 
-    dh_share = pd.concat({y: dh_share for y in range(1990, 2021)}, names=["year", "country"]).swaplevel()
-    dh_share = dh_share.div(100).reindex(df.index)
+
+def build_district_heat_share(countries, idees):
+    # district heating share
+    district_heat = idees[["derived heat residential", "derived heat services"]].sum(
+        axis=1
+    )
+    total_heat = idees[["thermal uses residential", "thermal uses services"]].sum(
+        axis=1
+    )
+
+    district_heat_share = district_heat / total_heat
+
+    district_heat_share = district_heat_share.reindex(countries, level="country")
+
+    # Missing district heating share
+    dh_share = pd.read_csv(
+        snakemake.input.district_heat_share, index_col=0, usecols=[0, 1]
+    )
+
+    dh_share = pd.concat(
+        {y: dh_share for y in range(1990, 2021)}, names=["year", "country"]
+    ).swaplevel()
+    dh_share = dh_share.div(100)
+    dh_share = dh_share.reindex(district_heat_share.index)
 
     # make conservative assumption and take minimum from both data sets
-    item = "district heat share"
-    df[item] = pd.concat([dh_share, df[item]], axis=1).min(axis=1)
+    district_heat_share = pd.concat([district_heat_share, dh_share], axis=1).min(axis=1)
 
-    return df
+    district_heat_share.name = "district heat share"
+
+    return district_heat_share
 
 
 def build_eea_co2(input_co2, year=1990, emissions_scope="CO2"):
@@ -729,7 +738,8 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_energy_totals")
 
-    logging.basicConfig(level=snakemake.config["logging"]["level"])
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     params = snakemake.params.energy
 
@@ -749,6 +759,9 @@ if __name__ == "__main__":
 
     energy = build_energy_totals(countries, eurostat, swiss, idees)
     energy.to_csv(snakemake.output.energy_name)
+
+    district_heat_share = build_district_heat_share(countries, idees)
+    district_heat_share.to_csv(snakemake.output.district_heat_share)
 
     base_year_emissions = params["base_emissions_year"]
     emissions_scope = snakemake.params.energy["emissions"]

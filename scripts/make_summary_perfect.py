@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -12,15 +12,13 @@ other metrics.
 import numpy as np
 import pandas as pd
 import pypsa
-from make_summary import (
-    assign_carriers,
-    assign_locations,
-    calculate_cfs,
-    calculate_nodal_cfs,
-    calculate_nodal_costs,
-)
+from _helpers import set_scenario_config
+from make_summary import calculate_cfs  # noqa: F401
+from make_summary import calculate_nodal_cfs  # noqa: F401
+from make_summary import calculate_nodal_costs  # noqa: F401
+from make_summary import assign_carriers, assign_locations
 from prepare_sector_network import prepare_costs
-from pypsa.descriptors import get_active_assets, nominal_attrs
+from pypsa.descriptors import get_active_assets
 from six import iteritems
 
 idx = pd.IndexSlice
@@ -249,8 +247,9 @@ def calculate_energy(n, label, energy):
                 .groupby(level=0)
                 .sum()
                 .multiply(c.df.sign)
-                .groupby(c.df.carrier, axis=1)
+                .T.groupby(c.df.carrier)
                 .sum()
+                .T
             )
         else:
             c_energies = pd.DataFrame(
@@ -268,7 +267,7 @@ def calculate_energy(n, label, energy):
                 totals[no_bus] = float(
                     n.component_attrs[c.name].loc["p" + port, "default"]
                 )
-                c_energies -= totals.groupby(c.df.carrier, axis=1).sum()
+                c_energies -= totals.T.groupby(c.df.carrier).sum().T
 
         c_energies = pd.concat([c_energies.T], keys=[c.list_name])
 
@@ -379,9 +378,8 @@ def calculate_supply_energy(n, label, supply_energy):
                 .groupby(level=0)
                 .sum()
                 .multiply(c.df.loc[items, "sign"])
-                .groupby(c.df.loc[items, "carrier"], axis=1)
+                .T.groupby(c.df.loc[items, "carrier"])
                 .sum()
-                .T
             )
             s = pd.concat([s], keys=[c.list_name])
             s = pd.concat([s], keys=[i])
@@ -398,16 +396,9 @@ def calculate_supply_energy(n, label, supply_energy):
                 if len(items) == 0:
                     continue
 
-                s = (
-                    (-1)
-                    * c.pnl["p" + end]
-                    .reindex(items, axis=1)
-                    .multiply(n.snapshot_weightings.objective, axis=0)
-                    .groupby(level=0)
-                    .sum()
-                    .groupby(c.df.loc[items, "carrier"], axis=1)
-                    .sum()
-                ).T
+                s = (-1) * c.pnl["p" + end].reindex(items, axis=1).multiply(
+                    n.snapshot_weightings.objective, axis=0
+                ).groupby(level=0).sum().T.groupby(c.df.loc[items, "carrier"]).sum()
                 s.index = s.index + end
                 s = pd.concat([s], keys=[c.list_name])
                 s = pd.concat([s], keys=[i])
@@ -502,7 +493,7 @@ def calculate_weighted_prices(n, label, weighted_prices):
         else:
             suffix = " " + carrier
 
-        buses = n.buses.index[n.buses.index.str[2:] == suffix]
+        buses = n.buses.index[n.buses.index.str[5:] == suffix]
 
         if buses.empty:
             continue
@@ -513,14 +504,14 @@ def calculate_weighted_prices(n, label, weighted_prices):
             else n.loads_t.p_set.reindex(buses, axis=1)
         )
         for tech in value:
-            names = n.links.index[n.links.index.to_series().str[-len(tech) :] == tech]
+            names = n.links.index[
+                n.links.index.to_series().str[-len(tech) - 5 : -5] == tech
+            ]
 
             if names.empty:
                 continue
 
-            load += (
-                n.links_t.p0[names].groupby(n.links.loc[names, "bus0"], axis=1).sum()
-            )
+            load += n.links_t.p0[names].T.groupby(n.links.loc[names, "bus0"]).sum().T
 
         # Add H2 Store when charging
         # if carrier == "H2":
@@ -528,9 +519,12 @@ def calculate_weighted_prices(n, label, weighted_prices):
         #    stores[stores > 0.] = 0.
         #    load += -stores
 
-        weighted_prices.loc[carrier, label] = (
-            load * n.buses_t.marginal_price[buses]
-        ).sum().sum() / load.sum().sum()
+        if total_load := load.sum().sum():
+            weighted_prices.loc[carrier, label] = (
+                load * n.buses_t.marginal_price[buses]
+            ).sum().sum() / total_load
+        else:
+            weighted_prices.loc[carrier, label] = np.nan
 
         if carrier[:5] == "space":
             print(load * n.buses_t.marginal_price[buses])
@@ -558,14 +552,17 @@ def calculate_market_values(n, label, market_values):
 
         dispatch = (
             n.generators_t.p[gens]
-            .groupby(n.generators.loc[gens, "bus"], axis=1)
+            .T.groupby(n.generators.loc[gens, "bus"])
             .sum()
-            .reindex(columns=buses, fill_value=0.0)
+            .T.reindex(columns=buses, fill_value=0.0)
         )
 
         revenue = dispatch * n.buses_t.marginal_price[buses]
 
-        market_values.at[tech, label] = revenue.sum().sum() / dispatch.sum().sum()
+        if total_dispatch := dispatch.sum().sum():
+            market_values.at[tech, label] = revenue.sum().sum() / total_dispatch
+        else:
+            market_values.at[tech, label] = np.nan
 
     ## Now do market value of links ##
 
@@ -581,14 +578,17 @@ def calculate_market_values(n, label, market_values):
 
             dispatch = (
                 n.links_t["p" + i][links]
-                .groupby(n.links.loc[links, "bus" + i], axis=1)
+                .T.groupby(n.links.loc[links, "bus" + i])
                 .sum()
-                .reindex(columns=buses, fill_value=0.0)
+                .T.reindex(columns=buses, fill_value=0.0)
             )
 
             revenue = dispatch * n.buses_t.marginal_price[buses]
 
-            market_values.at[tech, label] = revenue.sum().sum() / dispatch.sum().sum()
+            if total_dispatch := dispatch.sum().sum():
+                market_values.at[tech, label] = revenue.sum().sum() / total_dispatch
+            else:
+                market_values.at[tech, label] = np.nan
 
     return market_values
 
@@ -647,7 +647,7 @@ def calculate_co2_emissions(n, label, df):
         emitted = n.generators_t.p[gens.index].mul(em_pu)
 
         emitted_grouped = (
-            emitted.groupby(level=0).sum().groupby(n.generators.carrier, axis=1).sum().T
+            emitted.groupby(level=0).sum().T.groupby(n.generators.carrier).sum()
         )
 
         df = df.reindex(emitted_grouped.index.union(df.index))
@@ -723,6 +723,7 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("make_summary_perfect")
+    set_scenario_config(snakemake)
 
     run = snakemake.config["run"]["name"]
     if run != "":

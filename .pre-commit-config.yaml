@@ -51,7 +51,7 @@ repos:
 
   # Formatting with "black" coding style
 - repo: https://github.com/psf/black-pre-commit-mirror
-  rev: 23.12.1
+  rev: 24.2.0
   hooks:
       # Format Python files
   - id: black
@@ -74,7 +74,7 @@ repos:
 
   # Format Snakemake rule / workflow files
 - repo: https://github.com/snakemake/snakefmt
-  rev: v0.8.5
+  rev: v0.10.0
   hooks:
   - id: snakefmt
 
@@ -87,6 +87,6 @@ repos:
 
   # Check for FSFE REUSE compliance (licensing)
 - repo: https://github.com/fsfe/reuse-tool
-  rev: v2.1.0
+  rev: v3.0.1
   hooks:
   - id: reuse

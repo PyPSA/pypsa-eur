@@ -1,6 +1,8 @@
 ,Unit,Values,Description
 voltages,kV,"Any subset of {220., 300., 380.}",Voltage levels to consider
+gaslimit_enable,bool,true or false,Add an overall absolute gas limit configured in ``electricity: gaslimit``.
 gaslimit,MWhth,float or false,Global gas usage limit
+co2limit_enable,bool,true or false,Add an overall absolute carbon-dioxide emissions limit configured in ``electricity: co2limit``.
 co2limit,:math:`t_{CO_2-eq}/a`,float,Cap on total annual system carbon dioxide emissions
 co2base,:math:`t_{CO_2-eq}/a`,float,Reference value of total annual system carbon dioxide emissions if relative emission reduction target is specified in ``{opts}`` wildcard.
 agg_p_nom_limits,file,path,Reference to ``.csv`` file specifying per carrier generator nominal capacity constraints for individual countries if ``'CCL'`` is in ``{opts}`` wildcard. Defaults to ``data/agg_p_nom_minmax.csv``.
@@ -22,6 +24,8 @@ powerplants_filter,--,"use `pandas.query <https://pandas.pydata.org/pandas-docs/
 ,,,
 custom_powerplants,--,"use `pandas.query <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.query.html>`_ strings here, e.g. ``Country in ['Germany']``",Filter query for the custom powerplant database.
 ,,,
+everywhere_powerplants,--,"Any subset of {nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass}","List of conventional power plants to add to every node in the model with zero initial capacity. To be used in combination with ``extendable_carriers`` to allow for building conventional powerplants irrespective of existing locations."
+,,,
 conventional_carriers,--,"Any subset of {nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass}","List of conventional power plants to include in the model from ``resources/powerplants.csv``. If an included carrier is also listed in ``extendable_carriers``, the capacity is taken as a lower bound."
 ,,,
 renewable_carriers,--,"Any subset of {solar, onwind, offwind-ac, offwind-dc, hydro}",List of renewable generators to include in the model.
@@ -34,3 +38,6 @@ estimate_renewable_capacities,,,
 -- -- Offshore,--,"Any subset of {offwind-ac, offwind-dc}","List of PyPSA-Eur carriers that is considered as (IRENA, OPSD) onshore technology."
 -- -- Offshore,--,{onwind},"List of PyPSA-Eur carriers that is considered as (IRENA, OPSD) offshore technology."
 -- -- PV,--,{solar},"List of PyPSA-Eur carriers that is considered as (IRENA, OPSD) PV technology."
+autarky,,,
+-- enable,bool,true or false,Require each node to be autarkic by removing all lines and links.
+-- by_country,bool,true or false,Require each country to be autarkic by removing all cross-border lines and links. ``electricity: autarky`` must be enabled.

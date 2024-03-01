@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2021-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2021-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -9,11 +9,12 @@ production sites with data from SciGRID_gas and Global Energy Monitor.
 
 import logging
 
-logger = logging.getLogger(__name__)
-
 import geopandas as gpd
 import pandas as pd
+from _helpers import configure_logging, set_scenario_config
 from cluster_gas_network import load_bus_regions
+
+logger = logging.getLogger(__name__)
 
 
 def read_scigrid_gas(fn):
@@ -27,8 +28,11 @@ def build_gem_lng_data(fn):
     df = pd.read_excel(fn[0], sheet_name="LNG terminals - data")
     df = df.set_index("ComboID")
 
-    remove_country = ["Cyprus", "Turkey"]
-    remove_terminal = ["Puerto de la Luz LNG Terminal", "Gran Canaria LNG Terminal"]
+    remove_country = ["Cyprus", "Turkey"]  # noqa: F841
+    remove_terminal = [  # noqa: F841
+        "Puerto de la Luz LNG Terminal",
+        "Gran Canaria LNG Terminal",
+    ]
 
     df = df.query(
         "Status != 'Cancelled' \
@@ -45,8 +49,8 @@ def build_gem_prod_data(fn):
     df = pd.read_excel(fn[0], sheet_name="Gas extraction - main")
     df = df.set_index("GEM Unit ID")
 
-    remove_country = ["Cyprus", "Türkiye"]
-    remove_fuel_type = ["oil"]
+    remove_country = ["Cyprus", "Türkiye"]  # noqa: F841
+    remove_fuel_type = ["oil"]  # noqa: F841
 
     df = df.query(
         "Status != 'shut in' \
@@ -96,8 +100,8 @@ def build_gas_input_locations(gem_fn, entry_fn, sto_fn, countries):
     ]
 
     sto = read_scigrid_gas(sto_fn)
-    remove_country = ["RU", "UA", "TR", "BY"]
-    sto = sto.query("country_code != @remove_country")
+    remove_country = ["RU", "UA", "TR", "BY"]  # noqa: F841
+    sto = sto.query("country_code not in @remove_country")
 
     # production sites inside the model scope
     prod = build_gem_prod_data(gem_fn)
@@ -131,7 +135,8 @@ if __name__ == "__main__":
             clusters="128",
         )
 
-    logging.basicConfig(level=snakemake.config["logging"]["level"])
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     regions = load_bus_regions(
         snakemake.input.regions_onshore, snakemake.input.regions_offshore

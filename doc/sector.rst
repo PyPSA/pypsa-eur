@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2023 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: 2023-2024 The PyPSA-Eur Authors
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -19,6 +19,12 @@ Rule ``add_existing_baseyear``
 ==============================================================================
 
 .. automodule:: add_existing_baseyear
+
+Rule ``build_existing_heating_distribution``
+==============================================================================
+
+.. automodule:: build_existing_heating_distribution
+
 
 Rule ``build_ammonia_production``
 ==============================================================================
@@ -60,10 +66,20 @@ Rule ``build_gas_network``
 
 .. automodule:: build_gas_network
 
-Rule ``build_heat_demand``
+Rule ``build_daily_heat_demand``
 ==============================================================================
 
-.. automodule:: build_heat_demand
+.. automodule:: build_daily_heat_demand
+
+Rule ``build_hourly_heat_demand``
+==============================================================================
+
+.. automodule:: build_hourly_heat_demand
+
+Rule ``build_district_heat_share``
+==============================================================================
+
+.. automodule:: build_district_heat_share
 
 Rule ``build_industrial_distribution_key``
 ==============================================================================

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -11,6 +11,7 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import xarray as xr
+from _helpers import set_scenario_config
 from dask.distributed import Client, LocalCluster
 
 if __name__ == "__main__":
@@ -18,11 +19,13 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "build_heat_demands",
+            "build_daily_heat_demands",
+            scope="total",
             weather_year="",
             simpl="",
             clusters=48,
         )
+    set_scenario_config(snakemake)
 
     nprocesses = int(snakemake.threads)
     cluster = LocalCluster(n_workers=nprocesses, threads_per_worker=1)
@@ -37,10 +40,9 @@ if __name__ == "__main__":
     else:
         snapshots = snakemake.params.snapshots
 
-    drop_leap_day = snakemake.config["atlite"].get("drop_leap_day", False)
     time = pd.date_range(freq="h", **snapshots)
     daily = pd.date_range(freq="D", **snapshots)
-    if drop_leap_day:
+    if snakemake.params.drop_leap_day:
         time = time[~((time.month == 2) & (time.day == 29))]
         daily = daily[~((daily.month == 2) & (daily.day == 29))]
 
@@ -50,7 +52,7 @@ if __name__ == "__main__":
         gpd.read_file(snakemake.input.regions_onshore).set_index("name").buffer(0)
     )
 
-    I = cutout.indicatormatrix(clustered_regions)
+    I = cutout.indicatormatrix(clustered_regions)  # noqa: E741
 
     pop_layout = xr.open_dataarray(snakemake.input.pop_layout)
 

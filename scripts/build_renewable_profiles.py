@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -26,7 +26,7 @@ Relevant settings
 
     renewable:
         {technology}:
-            cutout: corine: grid_codes: distance: natura: max_depth:
+            cutout: corine: luisa: grid_codes: distance: natura: max_depth:
             max_shore_distance: min_shore_distance: capacity_per_sqkm:
             correction_factor: min_p_max_pu: clip_p_max_pu: resource:
 
@@ -40,10 +40,17 @@ Inputs
 - ``data/bundle/corine/g250_clc06_V18_5.tif``: `CORINE Land Cover (CLC)
   <https://land.copernicus.eu/pan-european/corine-land-cover>`_ inventory on `44
   classes <https://wiki.openstreetmap.org/wiki/Corine_Land_Cover#Tagging>`_ of
-  land use (e.g. forests, arable land, industrial, urban areas).
+  land use (e.g. forests, arable land, industrial, urban areas) at 100m
+  resolution.
 
     .. image:: img/corine.png
         :scale: 33 %
+
+- ``data/LUISA_basemap_020321_50m.tif``: `LUISA Base Map
+  <https://publications.jrc.ec.europa.eu/repository/handle/JRC124621>`_ land
+  coverage dataset at 50m resolution similar to CORINE. For codes in relation to
+  CORINE land cover, see `Annex 1 of the technical documentation
+  <https://publications.jrc.ec.europa.eu/repository/bitstream/JRC124621/technical_report_luisa_basemap_2018_v7_final.pdf>`_.
 
 - ``data/bundle/GEBCO_2014_2D.nc``: A `bathymetric
   <https://en.wikipedia.org/wiki/Bathymetry>`_ data set with a global terrain
@@ -133,9 +140,10 @@ of a combination of the available land at each grid cell and the capacity factor
 there.
 
 First the script computes how much of the technology can be installed at each
-cutout grid cell and each node using the `GLAES
-<https://github.com/FZJ-IEK3-VSA/glaes>`_ library. This uses the CORINE land use
-data, Natura2000 nature reserves and GEBCO bathymetry data.
+cutout grid cell and each node using the `atlite
+<https://github.com/pypsa/atlite>`_ library. This uses the CORINE land use data,
+LUISA land use data, Natura2000 nature reserves, GEBCO bathymetry data, and
+shipping lanes.
 
 .. image:: img/eligibility.png
     :scale: 50 %
@@ -166,10 +174,10 @@ This layout is then used to compute the generation availability time series from
 the weather data cutout from ``atlite``.
 
 The maximal installable potential for the node (`p_nom_max`) is computed by
-adding up the installable potentials of the individual grid cells.
-If the model comes close to this limit, then the time series may slightly
-overestimate production since it is assumed the geographical distribution is
-proportional to capacity factor.
+adding up the installable potentials of the individual grid cells. If the model
+comes close to this limit, then the time series may slightly overestimate
+production since it is assumed the geographical distribution is proportional to
+capacity factor.
 """
 import functools
 import logging
@@ -180,7 +188,7 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import xarray as xr
-from _helpers import configure_logging
+from _helpers import configure_logging, set_scenario_config
 from dask.distributed import Client
 from pypsa.geo import haversine
 from shapely.geometry import LineString
@@ -193,20 +201,25 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "build_renewable_profiles", technology="solar", weather_year=""
+            "build_renewable_profiles", technology="offwind-dc", weather_year=""
         )
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     nprocesses = int(snakemake.threads)
     noprogress = snakemake.config["run"].get("disable_progressbar", True)
     noprogress = noprogress or not snakemake.config["atlite"]["show_progress"]
     params = snakemake.params.renewable[snakemake.wildcards.technology]
     resource = params["resource"]  # pv panel params / wind turbine params
+
+    tech = next(t for t in ["panel", "turbine"] if t in resource)
+    models = resource[tech]
+    if not isinstance(models, dict):
+        models = {0: models}
+    resource[tech] = models[next(iter(models))]
+
     correction_factor = params.get("correction_factor", 1.0)
     capacity_per_sqkm = params["capacity_per_sqkm"]
-
-    if isinstance(params.get("corine", {}), list):
-        params["corine"] = {"grid_codes": params["corine"]}
 
     if correction_factor != 1.0:
         logger.info(f"correction_factor is set as {correction_factor}")
@@ -222,7 +235,7 @@ if __name__ == "__main__":
             start=weather_year, end=str(int(weather_year) + 1), inclusive="left"
         )
     else:
-        snapshots = snakemake.config["snapshots"]
+        snapshots = snakemake.params.snapshots
     sns = pd.date_range(freq="h", **snapshots)
 
     cutout = atlite.Cutout(snakemake.input.cutout).sel(time=sns)
@@ -241,16 +254,29 @@ if __name__ == "__main__":
     if params["natura"]:
         excluder.add_raster(snakemake.input.natura, nodata=0, allow_no_overlap=True)
 
-    corine = params.get("corine", {})
-    if "grid_codes" in corine:
-        codes = corine["grid_codes"]
-        excluder.add_raster(snakemake.input.corine, codes=codes, invert=True, crs=3035)
-    if corine.get("distance", 0.0) > 0.0:
-        codes = corine["distance_grid_codes"]
-        buffer = corine["distance"]
-        excluder.add_raster(
-            snakemake.input.corine, codes=codes, buffer=buffer, crs=3035
-        )
+    for dataset in ["corine", "luisa"]:
+        kwargs = {"nodata": 0} if dataset == "luisa" else {}
+        settings = params.get(dataset, {})
+        if not settings:
+            continue
+        if dataset == "luisa" and res > 50:
+            logger.info(
+                "LUISA data is available at 50m resolution, "
+                f"but coarser {res}m resolution is used."
+            )
+        if isinstance(settings, list):
+            settings = {"grid_codes": settings}
+        if "grid_codes" in settings:
+            codes = settings["grid_codes"]
+            excluder.add_raster(
+                snakemake.input[dataset], codes=codes, invert=True, crs=3035, **kwargs
+            )
+        if settings.get("distance", 0.0) > 0.0:
+            codes = settings["distance_grid_codes"]
+            buffer = settings["distance"]
+            excluder.add_raster(
+                snakemake.input[dataset], codes=codes, buffer=buffer, crs=3035, **kwargs
+            )
 
     if params.get("ship_threshold"):
         shipping_threshold = (
@@ -314,24 +340,42 @@ if __name__ == "__main__":
     duration = time.time() - start
     logger.info(f"Completed average capacity factor calculation ({duration:2.2f}s)")
 
-    logger.info("Calculate weighted capacity factor time series...")
-    start = time.time()
+    profiles = []
+    capacities = []
+    for year, model in models.items():
 
-    profile, capacities = func(
-        matrix=availability.stack(spatial=["y", "x"]),
-        layout=layout,
-        index=buses,
-        per_unit=True,
-        return_capacity=True,
-        **resource,
-    )
+        logger.info(
+            f"Calculate weighted capacity factor time series for model {model}..."
+        )
+        start = time.time()
 
-    duration = time.time() - start
-    logger.info(
-        f"Completed weighted capacity factor time series calculation ({duration:2.2f}s)"
-    )
+        resource[tech] = model
 
-    logger.info(f"Calculating maximal capacity per bus")
+        profile, capacity = func(
+            matrix=availability.stack(spatial=["y", "x"]),
+            layout=layout,
+            index=buses,
+            per_unit=True,
+            return_capacity=True,
+            **resource,
+        )
+
+        dim = {"year": [year]}
+        profile = profile.expand_dims(dim)
+        capacity = capacity.expand_dims(dim)
+
+        profiles.append(profile.rename("profile"))
+        capacities.append(capacity.rename("weight"))
+
+        duration = time.time() - start
+        logger.info(
+            f"Completed weighted capacity factor time series calculation for model {model} ({duration:2.2f}s)"
+        )
+
+    profiles = xr.merge(profiles)
+    capacities = xr.merge(capacities)
+
+    logger.info("Calculating maximal capacity per bus")
     p_nom_max = capacity_per_sqkm * availability @ area
 
     logger.info("Calculate average distances.")
@@ -356,8 +400,8 @@ if __name__ == "__main__":
 
     ds = xr.merge(
         [
-            (correction_factor * profile).rename("profile"),
-            capacities.rename("weight"),
+            correction_factor * profiles,
+            capacities,
             p_nom_max.rename("p_nom_max"),
             potential.rename("potential"),
             average_distance.rename("average_distance"),
@@ -377,9 +421,13 @@ if __name__ == "__main__":
         ds["underwater_fraction"] = xr.DataArray(underwater_fraction, [buses])
 
     # select only buses with some capacity and minimal capacity factor
+    mean_profile = ds["profile"].mean("time")
+    if "year" in ds.indexes:
+        mean_profile = mean_profile.max("year")
+
     ds = ds.sel(
         bus=(
-            (ds["profile"].mean("time") > params.get("min_p_max_pu", 0.0))
+            (mean_profile > params.get("min_p_max_pu", 0.0))
             & (ds["p_nom_max"] > params.get("min_p_nom_max", 0.0))
         )
     )

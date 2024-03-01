@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2023-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -11,6 +11,7 @@ import json
 
 import geopandas as gpd
 import pandas as pd
+from _helpers import set_scenario_config
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -21,6 +22,7 @@ if __name__ == "__main__":
             simpl="",
             clusters=48,
         )
+    set_scenario_config(snakemake)
 
     scope = gpd.read_file(snakemake.input.scope).geometry[0]
     regions = gpd.read_file(snakemake.input.regions).set_index("name")

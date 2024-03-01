@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
@@ -26,7 +26,7 @@ dependencies:
 - yaml
 - pytables
 - lxml
-- powerplantmatching>=0.5.5
+- powerplantmatching>=0.5.5,!=0.5.9
 - numpy
 - pandas>=2.1
 - geopandas>=0.11.0
@@ -35,8 +35,9 @@ dependencies:
 - netcdf4
 - networkx
 - scipy
+- glpk
 - shapely>=2.0
-- pyomo
+- pyscipopt
 - matplotlib
 - proj
 - fiona
@@ -47,7 +48,7 @@ dependencies:
 - tabula-py
 - pyxlsb
 - graphviz
-- ipopt
+- pre-commit
 
   # Keep in conda environment when calling ipython
 - ipython
@@ -60,3 +61,4 @@ dependencies:
 
 - pip:
   - tsam>=2.3.1
+  - highspy

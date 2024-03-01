@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -9,12 +9,13 @@ Preprocess gas network based on data from bthe SciGRID_gas project
 
 import logging
 
-logger = logging.getLogger(__name__)
-
 import geopandas as gpd
 import pandas as pd
+from _helpers import configure_logging, set_scenario_config
 from pypsa.geo import haversine_pts
 from shapely.geometry import Point
+
+logger = logging.getLogger(__name__)
 
 
 def diameter_to_capacity(pipe_diameter_mm):
@@ -114,12 +115,10 @@ def prepare_dataset(
     df["p_nom_diameter"] = df.diameter_mm.apply(diameter_to_capacity)
     ratio = df.p_nom / df.p_nom_diameter
     not_nordstream = df.max_pressure_bar < 220
-    df.p_nom.update(
-        df.p_nom_diameter.where(
-            (df.p_nom <= 500)
-            | ((ratio > correction_threshold_p_nom) & not_nordstream)
-            | ((ratio < 1 / correction_threshold_p_nom) & not_nordstream)
-        )
+    df["p_nom"] = df.p_nom_diameter.where(
+        (df.p_nom <= 500)
+        | ((ratio > correction_threshold_p_nom) & not_nordstream)
+        | ((ratio < 1 / correction_threshold_p_nom) & not_nordstream)
     )
 
     # lines which have way too discrepant line lengths
@@ -130,12 +129,10 @@ def prepare_dataset(
         axis=1,
     )
     ratio = df.eval("length / length_haversine")
-    df["length"].update(
-        df.length_haversine.where(
-            (df["length"] < 20)
-            | (ratio > correction_threshold_length)
-            | (ratio < 1 / correction_threshold_length)
-        )
+    df["length"] = df.length_haversine.where(
+        (df["length"] < 20)
+        | (ratio > correction_threshold_length)
+        | (ratio < 1 / correction_threshold_length)
     )
 
     return df
@@ -147,7 +144,8 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_gas_network")
 
-    logging.basicConfig(level=snakemake.config["logging"]["level"])
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     gas_network = load_dataset(snakemake.input.gas_network)
 

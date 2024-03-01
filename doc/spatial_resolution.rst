@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2021-2023 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: 2021-2024 The PyPSA-Eur Authors
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -45,7 +45,7 @@ Here are some examples of how spatial resolution is set for different sectors in
 
 •	CO2: It can be modeled as a single node for Europe or it can be nodally resolved with CO2 transport pipelines if activated in the `config <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L248>`_. It should mentioned that in single node mode a transport and storage cost is added for sequestered CO2, the cost of which can be adjusted in the `config <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L247>`_.
 
-•	Liquid hydrocarbons: Modeled as a single node for Europe, since transport costs for liquids are low and no bottlenecks are expected.
+•	Carbonaceous fuels: Modeled as a single node for Europe by default, since transport costs for liquids are low and no bottlenecks are expected. Can be regionally resolved in configuration.
 
 **Electricity distribution network**
 

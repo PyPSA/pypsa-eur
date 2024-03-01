@@ -1,0 +1,60 @@
+# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: CC0-1.0
+
+tutorial: true
+
+run:
+  name:
+  - test-elec-no-offshore-wind
+  - test-elec-no-onshore-wind
+  scenarios:
+    enable: true
+    file: "config/test/scenarios.yaml"
+  disable_progressbar: true
+  shared_resources: base
+  shared_cutouts: true
+
+scenario:
+  clusters:
+  - 5
+  opts:
+  - Co2L-24H
+
+countries: ['BE']
+
+snapshots:
+  start: "2013-03-01"
+  end: "2013-03-08"
+
+electricity:
+  extendable_carriers:
+    Generator: [OCGT]
+    StorageUnit: [battery, H2]
+    Store: []
+
+atlite:
+  default_cutout: be-03-2013-era5
+  cutouts:
+    be-03-2013-era5:
+      module: era5
+      x: [4., 15.]
+      y: [46., 56.]
+      time: ["2013-03-01", "2013-03-08"]
+
+renewable:
+  onwind:
+    cutout: be-03-2013-era5
+  offwind-ac:
+    cutout: be-03-2013-era5
+    max_depth: false
+  offwind-dc:
+    cutout: be-03-2013-era5
+    max_depth: false
+  solar:
+    cutout: be-03-2013-era5
+
+solving:
+  solver:
+    name: glpk
+    options: "glpk-default"

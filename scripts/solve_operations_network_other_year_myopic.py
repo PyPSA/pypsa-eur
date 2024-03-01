@@ -8,7 +8,6 @@ import logging
 
 import pandas as pd
 import pypsa
-from helper import override_component_attrs
 from solve_network import prepare_network, solve_network
 from solve_operations_network import (
     add_load_shedding,
@@ -131,17 +130,14 @@ if __name__ == "__main__":
         Path(tmpdir).mkdir(parents=True, exist_ok=True)
 
     config = snakemake.config["operations"]
-    overrides = override_component_attrs(snakemake.input.overrides)
 
-    n = pypsa.Network(snakemake.input.pre, override_component_attrs=overrides)
+    n = pypsa.Network(snakemake.input.pre)
 
-    n_post = pypsa.Network(snakemake.input.post, override_component_attrs=overrides)
+    n_post = pypsa.Network(snakemake.input.post)
     n = set_parameters_from_optimized(n, n_post)
     del n_post
 
-    n_previous = pypsa.Network(
-        snakemake.input.previous, override_component_attrs=overrides
-    )
+    n_previous = pypsa.Network(snakemake.input.previous)
     store_soc = n_previous.stores_t.e.iloc[-1]
     storage_unit_soc = n_previous.storage_units_t.state_of_charge.iloc[-1]
     del n_previous

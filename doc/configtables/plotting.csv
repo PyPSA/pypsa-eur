@@ -1,6 +1,9 @@
 ,Unit,Values,Description
 map,,,
 -- boundaries,°,"[x1,x2,y1,y2]",Boundaries of the map plots in degrees latitude (y) and longitude (x)
+projection,,,,
+-- name,--,"Valid Cartopy projection name","See https://scitools.org.uk/cartopy/docs/latest/reference/projections.html for list of available projections."
+-- args,--,--,"Other entries under 'projection' are passed as keyword arguments to the projection constructor, e.g. ``central_longitude: 10.``."
 costs_max,bn Euro,float,Upper y-axis limit in cost bar plots.
 costs_threshold,bn Euro,float,Threshold below which technologies will not be shown in cost bar plots.
 energy_max,TWh,float,Upper y-axis limit in energy bar plots.

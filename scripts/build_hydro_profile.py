@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -65,8 +65,8 @@ import atlite
 import country_converter as coco
 import geopandas as gpd
 import pandas as pd
-from _helpers import configure_logging
 from numpy.polynomial import Polynomial
+from _helpers import configure_logging, set_scenario_config
 
 cc = coco.CountryConverter()
 
@@ -169,6 +169,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_hydro_profile", weather_year="")
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     params_hydro = snakemake.params.hydro
     cutout = atlite.Cutout(snakemake.input.cutout)

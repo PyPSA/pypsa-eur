@@ -6,12 +6,19 @@ options,,,
 -- skip_iterations,bool,"{'true','false'}","Skip iterating, do not update impedances of branches. Defaults to true."
 -- rolling_horizon,bool,"{'true','false'}","Whether to optimize the network in a rolling horizon manner, where the snapshot range is split into slices of size `horizon` which are solved consecutively."
 -- seed,--,int,Random seed for increased deterministic behaviour.
+-- custom_extra_functionality,--,str,Path to a Python file with custom extra functionality code to be injected into the solving rules of the workflow relative to ``rules`` directory.
+-- io_api,string,"{'lp','mps','direct'}",Passed to linopy and determines the API used to communicate with the solver. With the ``'lp'`` and ``'mps'`` options linopy passes a file to the solver; with the ``'direct'`` option (only supported for HIGHS and Gurobi) linopy uses an in-memory python API resulting in better performance.
 -- track_iterations,bool,"{'true','false'}",Flag whether to store the intermediate branch capacities and objective function values are recorded for each iteration in ``network.lines['s_nom_opt_X']`` (where ``X`` labels the iteration)
 -- min_iterations,--,int,Minimum number of solving iterations in between which resistance and reactence (``x/r``) are updated for branches according to ``s_nom_opt`` of the previous run.
 -- max_iterations,--,int,Maximum number of solving iterations in between which resistance and reactence (``x/r``) are updated for branches according to ``s_nom_opt`` of the previous run.
 -- transmission_losses,int,[0-9],"Add piecewise linear approximation of transmission losses based on n tangents. Defaults to 0, which means losses are ignored."
 -- linearized_unit_commitment,bool,"{'true','false'}",Whether to optimise using the linearized unit commitment formulation.
 -- horizon,--,int,Number of snapshots to consider in each iteration. Defaults to 100.
+constraints ,,,
+-- CCL,bool,"{'true','false'}",Add minimum and maximum levels of generator nominal capacity per carrier for individual countries. These can be specified in the file linked at ``electricity: agg_p_nom_limits`` in the configuration. File defaults to ``data/agg_p_nom_minmax.csv``.
+-- EQ,bool/string,"{'false',`n(c| )``; i.e. ``0.5``-``0.7c``}",Require each country or node to on average produce a minimal share of its total consumption itself. Example: ``EQ0.5c`` demands each country to produce on average at least 50% of its consumption; ``EQ0.5`` demands each node to produce on average at least 50% of its consumption.
+-- BAU,bool,"{'true','false'}",Add a per-``carrier`` minimal overall capacity; i.e. at least ``40GW`` of ``OCGT`` in Europe; configured in ``electricity: BAU_mincapacities``
+-- SAFE,bool,"{'true','false'}",Add a capacity reserve margin of a certain fraction above the peak demand to which renewable generators and storage do *not* contribute. Ignores network.
 solver,,,
 -- name,--,"One of {'gurobi', 'cplex', 'cbc', 'glpk', 'ipopt'}; potentially more possible",Solver to use for optimisation problems in the workflow; e.g. clustering and linear optimal power flow.
 -- options,--,Key listed under ``solver_options``.,Link to specific parameter settings.
