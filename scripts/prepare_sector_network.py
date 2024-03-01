@@ -2837,7 +2837,7 @@ def add_industry(n, costs):
     if demand_factor != 1:
         logger.warning(f"Changing HVC demand by {demand_factor*100-100:+.2f}%.")
 
-    p_set_plastics = (
+    p_set_naphtha = (
         demand_factor
         * industrial_demand.loc[nodes, "naphtha"].rename(
             lambda x: x + " naphtha for industry"
@@ -2846,7 +2846,7 @@ def add_industry(n, costs):
     )
 
     if not options["regional_oil_demand"]:
-        p_set_plastics = p_set_plastics.sum()
+        p_set_naphtha = p_set_naphtha.sum()
 
     n.madd(
         "Bus",
@@ -2861,7 +2861,7 @@ def add_industry(n, costs):
         spatial.oil.naphtha,
         bus=spatial.oil.naphtha,
         carrier="naphtha for industry",
-        p_set=p_set_plastics,
+        p_set=p_set_naphtha,
     )
 
     # some CO2 from naphtha are process emissions from steam cracker
@@ -2872,6 +2872,11 @@ def add_industry(n, costs):
     )
     emitted_co2_per_naphtha = costs.at["oil", "CO2 intensity"] - process_co2_per_naphtha
 
+    non_sequestered = 1 - get(
+        snakemake.config["industry"]["HVC_environment_sequestration_fraction"], investment_year
+    )
+
+
     n.madd(
         "Link",
         spatial.oil.naphtha,
@@ -2881,7 +2886,7 @@ def add_industry(n, costs):
         bus3=spatial.co2.process_emissions,
         carrier="naphtha for industry",
         p_nom_extendable=True,
-        efficiency2=emitted_co2_per_naphtha,
+        efficiency2=emitted_co2_per_naphtha*non_sequestered,
         efficiency3=process_co2_per_naphtha,
     )
 
