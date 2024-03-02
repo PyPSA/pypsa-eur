@@ -431,6 +431,7 @@ def clustering_for_n_clusters(
 def cluster_regions(busmaps, input=None, output=None):
     busmap = reduce(lambda x, y: x.map(y), busmaps[1:], busmaps[0])
 
+    clustered_regions=[]
     for which in ("regions_onshore", "regions_offshore"):
         regions = gpd.read_file(getattr(input, which))
         regions = regions.reindex(columns=["name", "geometry"]).set_index("name")
@@ -438,7 +439,18 @@ def cluster_regions(busmaps, input=None, output=None):
         regions_c.index.name = "name"
         regions_c = regions_c.reset_index()
         regions_c.to_file(getattr(output, which))
+        # 
+        # logger.info(f'{regions_c}')
+        # logger.info(f'{regions_c.index}')
+        # logger.info(f'{regions_c.index.name}')
+        # logger.info(f"{regions_c.columns}")
+        # 
+        regions_c.rename(columns={'name': 'idx'})
+        regions_c["component"]=which
+        regions_c["type"]="country_shape"
+        clustered_regions.append(regions_c)
 
+    return pd.concat(clustered_regions,ignore_index=True)
 
 def plot_busmap_for_n_clusters(n, n_clusters, fn=None):
     busmap = busmap_for_n_clusters(n, n_clusters)
@@ -548,11 +560,25 @@ if __name__ == "__main__":
     clustering.network.meta = dict(
         snakemake.config, **dict(wildcards=dict(snakemake.wildcards))
     )
-    clustering.network.export_to_netcdf(snakemake.output.network)
+    
     for attr in (
         "busmap",
         "linemap",
     ):  # also available: linemap_positive, linemap_negative
         getattr(clustering, attr).to_csv(snakemake.output[attr])
 
-    cluster_regions((clustering.busmap,), snakemake.input, snakemake.output)
+    clustered_regions = cluster_regions((clustering.busmap,), snakemake.input, snakemake.output)
+    
+    # logger.info(f"{clustering.network.shapes}")
+    # logger.info(f"{clustering.network.shapes.index}")
+    # logger.info(f"{clustering.network.shapes.index.name}")
+    # logger.info(f"{clustering.network.shapes.columns}")
+    
+    index_name=clustering.network.shapes.index.name
+    
+    clustering.network.shapes=pd.concat([clustering.network.shapes,clustered_regions], ignore_index=True)
+    
+    clustering.network.shapes.reset_index()
+    clustering.network.shapes.index.name=index_name
+    
+    clustering.network.export_to_netcdf(snakemake.output.network)
