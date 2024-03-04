@@ -1597,6 +1597,7 @@ def add_EVs(
         p_max_pu=profile,
         p_nom=p_nom,
         p_nom_extendable=False,
+        lifetime=1,
     )
 
     p_nom = number_cars * options.get("bev_charge_rate", 0.011) * electric_share
@@ -1679,6 +1680,7 @@ def add_fuel_cell_cars(n, nodes, p_set, fuel_cell_share, temperature):
         p_nom=p_nom,
         p_min_pu=profile,
         p_max_pu=profile,
+        lifetime=1,
     )
 
 
@@ -1713,6 +1715,7 @@ def add_ice_cars(n, nodes, p_set, ice_share, temperature):
         efficiency2=costs.at["oil", "CO2 intensity"],
         p_nom_extendable=False,
         p_nom=p_nom,
+        lifetime=1,
     )
 
 
