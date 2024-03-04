@@ -9,6 +9,10 @@ Release Notes
 
 Upcoming Release
 ================
+* Add TYNDP 2020 projects to the network if wanted. The option in
+ is the config is ``TYNDP2020``.By default, they are not included.
+ There are some limitations connected to this options which are
+ described in limitations section in the documentation.
 
 * The default configuration ``config/config.default.yaml`` is now automatically
   used as a base configuration file and no longer copied to

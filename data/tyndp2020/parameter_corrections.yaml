@@ -7,6 +7,9 @@ Line:
       "TYNDP2020_87": 1 # https://tyndp2020-project-platform.azurewebsites.net/projectsheets/transmission/263
       "TYNDP2020_86": 1 # https://tyndp2020-project-platform.azurewebsites.net/projectsheets/transmission/263
       "TYNDP2020_60": 100 # https://tyndp2020-project-platform.azurewebsites.net/projectsheets/transmission/227
+  bus1:
+    index:
+      "TYNDP2020_53": "5769"
 
 Link:
   bus1:

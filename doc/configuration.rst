@@ -333,6 +333,24 @@ overwrite the existing values.
    :widths: 22,7,22,33
    :file: configtables/conventional.csv
 
+``TYNDP2020``
+================
+
+Define whether one wants to integrate the TYNDP2020 data into the model.
+
+.. literalinclude:: ../config/config.default.yaml
+   :language: yaml
+   :start-at:   TYNDP2020:
+   :end-before: # docs
+
+.. csv-table::
+   :header-rows: 1
+   :widths: 22,7,22,33
+   :file: configtables/tyndp2020.csv
+
+.. note::
+
+
 ``lines``
 =============
 

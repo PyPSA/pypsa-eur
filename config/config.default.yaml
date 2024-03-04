@@ -246,6 +246,7 @@ conventional:
   nuclear:
     p_max_pu: "data/nuclear_p_max_pu.csv" # float of file name
 
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#tyndp2020
 TYNDP2020:
   include: false
   allowed_statuses: ['in_permitting', 'under_construction']  # 'planned_not_yet_permitting', 'under_consideration'
