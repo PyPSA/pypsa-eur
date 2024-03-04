@@ -165,8 +165,6 @@ rule build_bus_regions:
 
 if config["enable"].get("build_cutout", False):
 
-    ruleorder: build_cutout_year > build_cutout
-
     rule build_cutout:
         params:
             snapshots=config_provider("snapshots"),
@@ -183,23 +181,6 @@ if config["enable"].get("build_cutout", False):
         threads: config["atlite"].get("nprocesses", 4)
         resources:
             mem_mb=config["atlite"].get("nprocesses", 4) * 1000,
-        conda:
-            "../envs/environment.yaml"
-        script:
-            "../scripts/build_cutout.py"
-
-    rule build_cutout_year:
-        input:
-            rules.build_cutout.input,
-        output:
-            protected("cutouts/" + CDIR + "{cutout}-.nc"),
-        log:
-            logs(CDIR + "build_cutout/{cutout}-.log"),
-        benchmark:
-            benchmarks(CDIR + "build_cutout_{cutout}-")
-        threads: ATLITE_NPROCESSES
-        resources:
-            mem_mb=ATLITE_NPROCESSES * 1000,
         conda:
             "../envs/environment.yaml"
         script:
