@@ -1701,9 +1701,9 @@ def add_ice_cars(n, nodes, p_set, ice_share, temperature):
     suffix = " land transport ICE"
 
     p_nom = ice_share * p_set.div(efficiency).max()
-    
+
     profile = p_set.div(efficiency) / p_set.div(efficiency).max()
-    
+
     n.madd(
         "Link",
         nodes,
@@ -3690,30 +3690,32 @@ def lossy_bidirectional_links(n, carrier, efficiencies={}):
         )
 
 
-
 def adjust_transport_temporal_agg(n):
-    
-    engine_types = {"fuel_cell":'land transport fuel cell',
-                    "electric": 'land transport EV',
-                    "ice": 'land transport oil'}
-    
-    p_set = n.loads_t.p_set.loc[:, n.loads.carrier=="land transport demand"]
-    
+
+    engine_types = {
+        "fuel_cell": "land transport fuel cell",
+        "electric": "land transport EV",
+        "ice": "land transport oil",
+    }
+
+    p_set = n.loads_t.p_set.loc[:, n.loads.carrier == "land transport demand"]
+
     for engine, carrier in engine_types.items():
         share = get(options[f"land_transport_{engine}_share"], investment_year)
-        
-        if share==0: continue
-        links_i = n.links[n.links.carrier==carrier].index
+
+        if share == 0:
+            continue
+        links_i = n.links[n.links.carrier == carrier].index
         efficiency = n.links_t.efficiency.loc[:, links_i]
         p_set.columns = efficiency.columns
         p_nom = share * p_set.div(efficiency).max()
         profile = p_set.div(efficiency) / p_set.div(efficiency).max()
-        
+
         n.links.loc[links_i, "p_nom"] = p_nom
         n.links_t.p_max_pu[links_i] = profile
         n.links_t.p_min_pu[links_i] = profile
-   
-    
+
+
 # %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -3812,7 +3814,7 @@ if __name__ == "__main__":
     solver_name = snakemake.config["solving"]["solver"]["name"]
     resolution = snakemake.params.time_resolution
     n = set_temporal_aggregation(n, resolution, solver_name)
-    
+
     adjust_transport_temporal_agg(n)
 
     co2_budget = snakemake.params.co2_budget
