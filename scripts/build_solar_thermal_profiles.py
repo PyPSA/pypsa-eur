@@ -20,7 +20,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_solar_thermal_profiles",
-            weather_year="",
             simpl="",
             clusters=48,
         )

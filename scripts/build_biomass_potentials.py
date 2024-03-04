@@ -218,7 +218,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_biomass_potentials",
-            weather_year="",
             simpl="",
             clusters="5",
             planning_horizons=2050,

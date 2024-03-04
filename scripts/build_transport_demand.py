@@ -167,7 +167,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_transport_demand",
-            weather_year="",
             simpl="",
             clusters=48,
         )

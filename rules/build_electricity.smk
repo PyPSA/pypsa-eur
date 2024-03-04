@@ -28,9 +28,9 @@ if config["enable"].get("retrieve_opsd_load_data", True):
         input:
             ancient("data/electricity_demand_raw.csv"),
         output:
-            resources("electricity_demand{weather_year}.csv"),
+            resources("electricity_demand.csv"),
         log:
-            logs("build_electricity_demand{weather_year}.log"),
+            logs("build_electricity_demand.log"),
         resources:
             mem_mb=5000,
         conda:
@@ -45,9 +45,9 @@ if config["enable"].get("retrieve_artificial_load_data", False):
         input:
             ancient("data/load_artificial_raw.csv"),
         output:
-            resources("electricity_demand{weather_year}.csv"),
+            resources("electricity_demand.csv"),
         log:
-            logs("build_artificial_load_data{weather_year}.log"),
+            logs("build_artificial_load_data.log"),
         resources:
             mem_mb=5000,
         conda:
@@ -192,11 +192,11 @@ if config["enable"].get("build_cutout", False):
         input:
             rules.build_cutout.input,
         output:
-            protected("cutouts/" + CDIR + "{cutout}-{weather_year}.nc"),
+            protected("cutouts/" + CDIR + "{cutout}-.nc"),
         log:
-            logs(CDIR + "build_cutout/{cutout}-{weather_year}.log"),
+            logs(CDIR + "build_cutout/{cutout}-.log"),
         benchmark:
-            benchmarks(CDIR + "build_cutout_{cutout}-{weather_year}")
+            benchmarks(CDIR + "build_cutout_{cutout}-")
         threads: ATLITE_NPROCESSES
         resources:
             mem_mb=ATLITE_NPROCESSES * 1000,
@@ -342,11 +342,11 @@ rule build_renewable_profiles:
         + config_provider("renewable", w.technology, "cutout")(w)
         + ".nc",
     output:
-        profile=resources("profile{weather_year}_{technology}.nc"),
+        profile=resources("profile_{technology}.nc"),
     log:
-        logs("build_renewable_profile{weather_year}_{technology}.log"),
+        logs("build_renewable_profile_{technology}.log"),
     benchmark:
-        benchmarks("build_renewable_profiles{weather_year}_{technology}")
+        benchmarks("build_renewable_profiles_{technology}")
     threads: config["atlite"].get("nprocesses", 4)
     resources:
         mem_mb=config["atlite"].get("nprocesses", 4) * 5000,
@@ -390,10 +390,10 @@ rule build_hydro_profile:
         + config_provider("renewable", "hydro", "cutout")(w)
         + ".nc",
     output:
-        profile=resources("profile{weather_year}_hydro.nc"),
-        eia_hydro=resources("eia_hydro_stats{weather_year}.csv"),
+        profile=resources("profile_hydro.nc"),
+        eia_hydro=resources("eia_hydro_stats.csv"),
     log:
-        logs("build_hydro_profile{weather_year}.log"),
+        logs("build_hydro_profile.log"),
     resources:
         mem_mb=5000,
     conda:
@@ -428,7 +428,7 @@ rule build_line_rating:
 
 def input_profile_tech(w):
     return {
-        f"profile_{tech}": resources(f"profile{{weather_year}}_{tech}.nc")
+        f"profile_{tech}": resources(f"profile{}_{tech}.nc")
         for tech in config_provider("electricity", "renewable_carriers")(w)
     }
 
@@ -475,15 +475,15 @@ rule add_electricity:
             if config_provider("conventional", "dynamic_fuel_price")(w)
             else []
         ),
-        load=resources("electricity_demand{weather_year}.csv"),
+        load=resources("electricity_demand.csv"),
         nuts3_shapes=resources("nuts3_shapes.geojson"),
         ua_md_gdp="data/GDP_PPP_30arcsec_v3_mapped_default.csv",
     output:
-        resources("networks/elec{weather_year}.nc"),
+        resources("networks/elec.nc"),
     log:
-        logs("add_electricity{weather_year}.log"),
+        logs("add_electricity.log"),
     benchmark:
-        benchmarks("add_electricity{weather_year}")
+        benchmarks("add_electricity")
     threads: 1
     resources:
         mem_mb=10000,
@@ -506,24 +506,24 @@ rule simplify_network:
         p_max_pu=config_provider("links", "p_max_pu", default=1.0),
         costs=config_provider("costs"),
     input:
-        network=resources("networks/elec{weather_year}.nc"),
+        network=resources("networks/elec.nc"),
         tech_costs=lambda w: resources(
             f"costs_{config_provider('costs', 'year')(w)}.csv"
         ),
         regions_onshore=resources("regions_onshore.geojson"),
         regions_offshore=resources("regions_offshore.geojson"),
     output:
-        network=resources("networks/elec{weather_year}_s{simpl}.nc"),
-        regions_onshore=resources("regions_onshore_elec{weather_year}_s{simpl}.geojson"),
+        network=resources("networks/elec_s{simpl}.nc"),
+        regions_onshore=resources("regions_onshore_elec_s{simpl}.geojson"),
         regions_offshore=resources(
-            "regions_offshore_elec{weather_year}_s{simpl}.geojson"
+            "regions_offshore_elec_s{simpl}.geojson"
         ),
-        busmap=resources("busmap_elec{weather_year}_s{simpl}.csv"),
-        connection_costs=resources("connection_costs{weather_year}_s{simpl}.csv"),
+        busmap=resources("busmap_elec_s{simpl}.csv"),
+        connection_costs=resources("connection_costs_s{simpl}.csv"),
     log:
-        logs("simplify_network/elec{weather_year}_s{simpl}.log"),
+        logs("simplify_network/elec_s{simpl}.log"),
     benchmark:
-        benchmarks("simplify_network/elec{weather_year}_s{simpl}")
+        benchmarks("simplify_network/elec_s{simpl}")
     threads: 1
     resources:
         mem_mb=12000,
@@ -549,12 +549,12 @@ rule cluster_network:
         length_factor=config_provider("lines", "length_factor"),
         costs=config_provider("costs"),
     input:
-        network=resources("networks/elec{weather_year}_s{simpl}.nc"),
-        regions_onshore=resources("regions_onshore_elec{weather_year}_s{simpl}.geojson"),
+        network=resources("networks/elec_s{simpl}.nc"),
+        regions_onshore=resources("regions_onshore_elec_s{simpl}.geojson"),
         regions_offshore=resources(
-            "regions_offshore_elec{weather_year}_s{simpl}.geojson"
+            "regions_offshore_elec_s{simpl}.geojson"
         ),
-        busmap=ancient(resources("busmap_elec{weather_year}_s{simpl}.csv")),
+        busmap=ancient(resources("busmap_elec_s{simpl}.csv")),
         custom_busmap=lambda w: (
             "data/custom_busmap_elec_s{simpl}_{clusters}.csv"
             if config_provider("enable", "custom_busmap", default=False)(w)
@@ -564,19 +564,19 @@ rule cluster_network:
             f"costs_{config_provider('costs', 'year')(w)}.csv"
         ),
     output:
-        network=resources("networks/elec{weather_year}_s{simpl}_{clusters}.nc"),
+        network=resources("networks/elec_s{simpl}_{clusters}.nc"),
         regions_onshore=resources(
-            "regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson"
+            "regions_onshore_elec_s{simpl}_{clusters}.geojson"
         ),
         regions_offshore=resources(
-            "regions_offshore_elec{weather_year}_s{simpl}_{clusters}.geojson"
+            "regions_offshore_elec_s{simpl}_{clusters}.geojson"
         ),
-        busmap=resources("busmap_elec{weather_year}_s{simpl}_{clusters}.csv"),
-        linemap=resources("linemap_elec{weather_year}_s{simpl}_{clusters}.csv"),
+        busmap=resources("busmap_elec_s{simpl}_{clusters}.csv"),
+        linemap=resources("linemap_elec_s{simpl}_{clusters}.csv"),
     log:
-        logs("cluster_network/elec{weather_year}_s{simpl}_{clusters}.log"),
+        logs("cluster_network/elec_s{simpl}_{clusters}.log"),
     benchmark:
-        benchmarks("cluster_network/elec{weather_year}_s{simpl}_{clusters}")
+        benchmarks("cluster_network/elec_s{simpl}_{clusters}")
     threads: 1
     resources:
         mem_mb=10000,
@@ -592,16 +592,16 @@ rule add_extra_components:
         max_hours=config_provider("electricity", "max_hours"),
         costs=config_provider("costs"),
     input:
-        network=resources("networks/elec{weather_year}_s{simpl}_{clusters}.nc"),
+        network=resources("networks/elec_s{simpl}_{clusters}.nc"),
         tech_costs=lambda w: resources(
             f"costs_{config_provider('costs', 'year')(w)}.csv"
         ),
     output:
-        resources("networks/elec{weather_year}_s{simpl}_{clusters}_ec.nc"),
+        resources("networks/elec_s{simpl}_{clusters}_ec.nc"),
     log:
-        logs("add_extra_components/elec{weather_year}_s{simpl}_{clusters}.log"),
+        logs("add_extra_components/elec_s{simpl}_{clusters}.log"),
     benchmark:
-        benchmarks("add_extra_components/elec{weather_year}_s{simpl}_{clusters}_ec")
+        benchmarks("add_extra_components/elec_s{simpl}_{clusters}_ec")
     threads: 1
     resources:
         mem_mb=4000,
@@ -626,21 +626,21 @@ rule prepare_network:
         adjustments=config_provider("adjustments", "electricity"),
         autarky=config_provider("electricity", "autarky", default={}),
     input:
-        resources("networks/elec{weather_year}_s{simpl}_{clusters}_ec.nc"),
+        resources("networks/elec_s{simpl}_{clusters}_ec.nc"),
         tech_costs=lambda w: resources(
             f"costs_{config_provider('costs', 'year')(w)}.csv"
         ),
         co2_price=lambda w: resources("co2_price.csv") if "Ept" in w.opts else [],
     output:
-        resources("networks/elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"),
+        resources("networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"),
     log:
         logs(
-            "prepare_network/elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}.log"
+            "prepare_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.log"
         ),
     benchmark:
         (
             benchmarks(
-                "prepare_network/elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}"
+                "prepare_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}"
             )
         )
     threads: 1

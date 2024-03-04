@@ -12,8 +12,6 @@ run:
   shared_cutouts: true
 
 scenario:
-  weather_year:
-  - ""
   clusters:
   - 5
   opts:

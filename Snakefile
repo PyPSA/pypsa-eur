@@ -56,7 +56,6 @@ localrules:
 
 
 wildcard_constraints:
-    weather_year="[0-9]{4}|",
     simpl="[a-zA-Z0-9]*",
     clusters="[0-9]+(m|c)?|all",
     ll="(v|c)([0-9\.]+|opt)",

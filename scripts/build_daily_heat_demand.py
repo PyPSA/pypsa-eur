@@ -21,7 +21,6 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "build_daily_heat_demands",
             scope="total",
-            weather_year="",
             simpl="",
             clusters=48,
         )

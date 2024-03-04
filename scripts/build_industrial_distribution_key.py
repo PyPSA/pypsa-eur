@@ -146,7 +146,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_industrial_distribution_key",
-            weather_year="",
             simpl="",
             clusters=128,
         )

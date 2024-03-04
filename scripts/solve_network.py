@@ -929,7 +929,6 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "solve_sector_network",
             configfiles="../config/test/config.perfect.yaml",
-            weather_year="",
             simpl="",
             opts="",
             clusters="37",

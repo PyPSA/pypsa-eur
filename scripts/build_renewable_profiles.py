@@ -201,7 +201,7 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "build_renewable_profiles", technology="offwind-dc", weather_year=""
+            "build_renewable_profiles", technology="offwind-dc"
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)

@@ -15,7 +15,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_population_weighted_energy_totals",
-            weather_year="",
             simpl="",
             clusters=48,
         )

@@ -32,28 +32,28 @@ Relevant Settings
 Inputs
 ------
 
-- ``resources/regions_onshore_elec{weather_year}_s{simpl}.geojson``: confer :ref:`simplify`
-- ``resources/regions_offshore_elec{weather_year}_s{simpl}.geojson``: confer :ref:`simplify`
-- ``networks/elec{weather_year}_s{simpl}.nc``: confer :ref:`simplify`
-- ``resources/busmap_elec{weather_year}_s{simpl}.csv``: confer :ref:`simplify`
-- ``data/custom_busmap_elec{weather_year}_s{simpl}_{clusters}.csv``: optional input
+- ``resources/regions_onshore_elec_s{simpl}.geojson``: confer :ref:`simplify`
+- ``resources/regions_offshore_elec_s{simpl}.geojson``: confer :ref:`simplify`
+- ``networks/elec_s{simpl}.nc``: confer :ref:`simplify`
+- ``resources/busmap_elec_s{simpl}.csv``: confer :ref:`simplify`
+- ``data/custom_busmap_elec_s{simpl}_{clusters}.csv``: optional input
 
 Outputs
 -------
 
-- ``resources/regions_onshore_elec{weather_year}_s{simpl}_{clusters}.geojson``:
+- ``resources/regions_onshore_elec_s{simpl}_{clusters}.geojson``:
 
     .. image:: img/regions_onshore_elec_s_X.png
         :scale: 33 %
 
-- ``resources/regions_offshore_elec{weather_year}_s{simpl}_{clusters}.geojson``:
+- ``resources/regions_offshore_elec_s{simpl}_{clusters}.geojson``:
 
     .. image:: img/regions_offshore_elec_s_X.png
         :scale: 33 %
 
-- ``resources/busmap_elec{weather_year}_s{simpl}_{clusters}.csv``: Mapping of buses from ``networks/elec_s{simpl}.nc`` to ``networks/elec_s{simpl}_{clusters}.nc``;
-- ``resources/linemap{weather_year}_elec_s{simpl}_{clusters}.csv``: Mapping of lines from ``networks/elec_s{simpl}.nc`` to ``networks/elec_s{simpl}_{clusters}.nc``;
-- ``networks/elec{weather_year}_s{simpl}_{clusters}.nc``:
+- ``resources/busmap_elec_s{simpl}_{clusters}.csv``: Mapping of buses from ``networks/elec_s{simpl}.nc`` to ``networks/elec_s{simpl}_{clusters}.nc``;
+- ``resources/linemap_elec_s{simpl}_{clusters}.csv``: Mapping of lines from ``networks/elec_s{simpl}.nc`` to ``networks/elec_s{simpl}_{clusters}.nc``;
+- ``networks/elec_s{simpl}_{clusters}.nc``:
 
     .. image:: img/elec_s_X.png
         :scale: 40  %
@@ -455,7 +455,7 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "cluster_network", simpl="", clusters="5", weather_year=""
+            "cluster_network", simpl="", clusters="5",
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)

@@ -14,23 +14,23 @@ rule solve_network:
         custom_extra_functionality=input_custom_extra_functionality,
     input:
         network=resources(
-            "networks/elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"
+            "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"
         ),
         config=RESULTS + "config.yaml",
     output:
         network=RESULTS
-        + "networks/elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+        + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
     log:
         solver=normpath(
             RESULTS
-            + "logs/solve_network/elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}_solver.log"
+            + "logs/solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_solver.log"
         ),
         python=RESULTS
-        + "logs/solve_network/elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}_python.log",
+        + "logs/solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_python.log",
     benchmark:
         (
             RESULTS
-            + "benchmarks/solve_network/elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}"
+            + "benchmarks/solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}"
         )
     threads: solver_threads
     resources:
@@ -49,21 +49,21 @@ rule solve_operations_network:
         options=config_provider("solving", "options"),
     input:
         network=RESULTS
-        + "networks/elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+        + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
     output:
         network=RESULTS
-        + "networks/elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}_op.nc",
+        + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op.nc",
     log:
         solver=normpath(
             RESULTS
-            + "logs/solve_operations_network/elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}_op_solver.log"
+            + "logs/solve_operations_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op_solver.log"
         ),
         python=RESULTS
-        + "logs/solve_operations_network/elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}_op_python.log",
+        + "logs/solve_operations_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op_python.log",
     benchmark:
         (
             RESULTS
-            + "benchmarks/solve_operations_network/elec{weather_year}_s{simpl}_{clusters}_ec_l{ll}_{opts}"
+            + "benchmarks/solve_operations_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}"
         )
     threads: 4
     resources:

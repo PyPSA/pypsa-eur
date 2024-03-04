@@ -34,7 +34,6 @@ foresight: overnight
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#scenario
 # Wildcard docs in https://pypsa-eur.readthedocs.io/en/latest/wildcards.html
 scenario:
-  weather_year: [''] # for backwards compatibility
   simpl:
   - ''
   ll:

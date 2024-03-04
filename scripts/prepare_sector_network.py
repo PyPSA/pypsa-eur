@@ -3584,7 +3584,6 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "prepare_sector_network",
             configfiles="test/config.overnight.yaml",
-            weather_year="",
             simpl="",
             opts="",
             clusters="37",

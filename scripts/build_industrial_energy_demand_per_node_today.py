@@ -73,7 +73,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_industrial_energy_demand_per_node_today",
-            weather_year="",
             simpl="",
             clusters=48,
         )

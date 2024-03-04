@@ -55,18 +55,18 @@ Inputs
 Outputs
 -------
 
-- ``resources/regions_onshore_elec{weather_year}_s{simpl}.geojson``:
+- ``resources/regions_onshore_elec_s{simpl}.geojson``:
 
     .. image:: img/regions_onshore_elec_s.png
             :scale: 33 %
 
-- ``resources/regions_offshore_elec{weather_year}_s{simpl}.geojson``:
+- ``resources/regions_offshore_elec_s{simpl}.geojson``:
 
     .. image:: img/regions_offshore_elec_s  .png
             :scale: 33 %
 
-- ``resources/busmap_elec{weather_year}_s{simpl}.h5``: Mapping of buses from ``networks/elec.nc`` to ``networks/elec{weather_year}_s{simpl}.nc``; has keys ['/busmap_s']
-- ``networks/elec{weather_year}_s{simpl}.nc``:
+- ``resources/busmap_elec_s{simpl}.h5``: Mapping of buses from ``networks/elec.nc`` to ``networks/elec_s{simpl}.nc``; has keys ['/busmap_s']
+- ``networks/elec_s{simpl}.nc``:
 
     .. image:: img/elec_s.png
         :scale: 33 %
@@ -527,7 +527,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("simplify_network", weather_year="", simpl="")
+        snakemake = mock_snakemake("simplify_network", simpl="")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
