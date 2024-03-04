@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 def build_nodal_transport_data(fn, pop_layout):
     # get numbers of car and fuel efficieny per country
     transport_data = pd.read_csv(fn, index_col=0)
-    
+
     # break number of cars down to nodal level based on population density
     nodal_transport_data = transport_data.loc[pop_layout.ct].fillna(0.0)
     nodal_transport_data.index = pop_layout.index
@@ -39,12 +39,11 @@ def build_nodal_transport_data(fn, pop_layout):
 
 def build_transport_demand(traffic_fn, airtemp_fn, nodes, nodal_transport_data):
     """
-    returns transport demand per bus in unit kinetic energy.
+    Returns transport demand per bus in unit kinetic energy.
     """
     # averaged weekly counts from the year 2010-2015
-    traffic = pd.read_csv(traffic_fn, skiprows=2,
-                          usecols=["count"]).squeeze("columns")
-    
+    traffic = pd.read_csv(traffic_fn, skiprows=2, usecols=["count"]).squeeze("columns")
+
     # create annual profile take account time zone + summer time
     transport_shape = generate_periodic_profiles(
         dt_index=snapshots,
@@ -65,7 +64,6 @@ def build_transport_demand(traffic_fn, airtemp_fn, nodes, nodal_transport_data):
         options["ICE_upper_degree_factor"],
     )
 
-    
     # divide out the heating/cooling demand from ICE totals
     ice_correction = (transport_shape * (1 + dd_ICE)).sum() / transport_shape.sum()
 
@@ -75,9 +73,8 @@ def build_transport_demand(traffic_fn, airtemp_fn, nodes, nodal_transport_data):
         - pop_weighted_energy_totals["electricity rail"]
     )
 
-    return (
-        (transport_shape.multiply(energy_totals_transport) * 1e6 * nyears)
-        .divide(nodal_transport_data["average fuel efficiency"] * ice_correction)
+    return (transport_shape.multiply(energy_totals_transport) * 1e6 * nyears).divide(
+        nodal_transport_data["average fuel efficiency"] * ice_correction
     )
 
 
@@ -141,7 +138,7 @@ def bev_availability_profile(fn, snapshots, nodes, options):
 
 def bev_dsm_profile(snapshots, nodes, options):
     dsm_week = np.zeros((24 * 7,))
-    
+
     # assuming that at a certain time ("bev_dsm_restriction_time") EVs have to
     # be charged to a minimum value (defined in bev_dsm_restriction_value)
     dsm_week[(np.arange(0, 7, 1) * 24 + options["bev_dsm_restriction_time"])] = options[
@@ -154,7 +151,8 @@ def bev_dsm_profile(snapshots, nodes, options):
         weekly_profile=dsm_week,
     )
 
-#%%
+
+# %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake

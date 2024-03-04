@@ -1505,15 +1505,22 @@ def add_storage_and_grids(n, costs):
 
 def check_land_transport_shares(shares):
     # Sums up the shares, ignoring None values
-    total_share = sum(filter(None, shares)) 
+    total_share = sum(filter(None, shares))
     if total_share != 1:
         logger.warning(
             f"Total land transport shares sum up to {total_share:.2%},"
             "corresponding to increased or decreased demand assumptions."
         )
 
-def get_temp_efficency(car_efficiency, temperature, deadband_lw, deadband_up,
-                       degree_factor_lw, degree_factor_up):
+
+def get_temp_efficency(
+    car_efficiency,
+    temperature,
+    deadband_lw,
+    deadband_up,
+    degree_factor_lw,
+    degree_factor_up,
+):
     """
     Correct temperature depending on heating and cooling for respective car
     type.
@@ -1526,14 +1533,23 @@ def get_temp_efficency(car_efficiency, temperature, deadband_lw, deadband_up,
         degree_factor_lw,
         degree_factor_up,
     )
-    
-    temp_eff = 1 / (1+dd)
-    
+
+    temp_eff = 1 / (1 + dd)
+
     return car_efficiency * temp_eff
 
-def add_EVs(n, nodes, avail_profile, dsm_profile, p_set, electric_share,
-        number_cars, temperature):
-    
+
+def add_EVs(
+    n,
+    nodes,
+    avail_profile,
+    dsm_profile,
+    p_set,
+    electric_share,
+    number_cars,
+    temperature,
+):
+
     n.add("Carrier", "Li ion")
 
     n.madd(
@@ -1544,35 +1560,37 @@ def add_EVs(n, nodes, avail_profile, dsm_profile, p_set, electric_share,
         carrier="Li ion",
         unit="MWh_el",
     )
-    
-    car_efficiency = costs.at['Battery electric (passenger cars)', 'efficiency']
-    
-    # temperature corrected efficiency    
-    efficiency = get_temp_efficency(car_efficiency, temperature,
-                                    options["transport_heating_deadband_lower"],
-                                    options["transport_heating_deadband_upper"],
-                                    options["EV_lower_degree_factor"],
-                                    options["EV_upper_degree_factor"])
+
+    car_efficiency = costs.at["Battery electric (passenger cars)", "efficiency"]
+
+    # temperature corrected efficiency
+    efficiency = get_temp_efficency(
+        car_efficiency,
+        temperature,
+        options["transport_heating_deadband_lower"],
+        options["transport_heating_deadband_upper"],
+        options["EV_lower_degree_factor"],
+        options["EV_upper_degree_factor"],
+    )
     suffix = " land transport EV"
-    
+
     p_nom = electric_share * p_set.div(efficiency).max()
-    
-    profile = p_set.div(efficiency)/p_set.div(efficiency).max()
-    
+
+    profile = p_set.div(efficiency) / p_set.div(efficiency).max()
+
     n.madd(
         "Link",
         nodes,
         suffix=suffix,
-        bus0=nodes + " EV battery",                              
+        bus0=nodes + " EV battery",
         bus1=nodes + " land transport",
         carrier="land transport EV",
-        efficiency=efficiency,     
+        efficiency=efficiency,
         p_min_pu=profile,
         p_max_pu=profile,
         p_nom=p_nom,
         p_nom_extendable=False,
     )
-    
 
     p_nom = number_cars * options.get("bev_charge_rate", 0.011) * electric_share
 
@@ -1600,7 +1618,7 @@ def add_EVs(n, nodes, avail_profile, dsm_profile, p_set, electric_share,
             p_max_pu=avail_profile[nodes],
             efficiency=options.get("bev_charge_efficiency", 0.9),
         )
-    
+
     if options["bev_dsm"]:
         e_nom = (
             number_cars
@@ -1608,7 +1626,7 @@ def add_EVs(n, nodes, avail_profile, dsm_profile, p_set, electric_share,
             * options["bev_availability"]
             * electric_share
         )
-    
+
         n.madd(
             "Store",
             nodes,
@@ -1620,56 +1638,62 @@ def add_EVs(n, nodes, avail_profile, dsm_profile, p_set, electric_share,
             e_max_pu=1,
             e_min_pu=dsm_profile[nodes],
         )
-        
+
+
 def add_fuel_cell_cars(n, nodes, p_set, fuel_cell_share, temperature):
-    
+
     car_efficiency = options["transport_fuel_cell_efficiency"]
-    
-    # temperature corrected efficiency    
-    efficiency = get_temp_efficency(car_efficiency, temperature,
-                                    options["transport_heating_deadband_lower"],
-                                    options["transport_heating_deadband_upper"],
-                                    options["ICE_lower_degree_factor"],
-                                    options["ICE_upper_degree_factor"])
-    
+
+    # temperature corrected efficiency
+    efficiency = get_temp_efficency(
+        car_efficiency,
+        temperature,
+        options["transport_heating_deadband_lower"],
+        options["transport_heating_deadband_upper"],
+        options["ICE_lower_degree_factor"],
+        options["ICE_upper_degree_factor"],
+    )
+
     suffix = " land transport fuel cell"
-        
+
     p_nom = fuel_cell_share * p_set.div(efficiency).max()
-    
-    profile = p_set.div(efficiency)/p_set.div(efficiency).max()
-    
+
+    profile = p_set.div(efficiency) / p_set.div(efficiency).max()
+
     n.madd(
         "Link",
         nodes,
         suffix=suffix,
         bus0=spatial.h2.nodes,
         bus1=nodes + " land transport",
-        carrier="land transport fuel cell", 
-        efficiency=efficiency, 
+        carrier="land transport fuel cell",
+        efficiency=efficiency,
         p_nom_extendable=False,
         p_nom=p_nom,
         p_min_pu=profile,
         p_max_pu=profile,
     )
-    
-    
+
+
 def add_ice_cars(n, nodes, p_set, ice_share, temperature):
-    
+
     add_carrier_buses(n, "oil")
-    
+
     car_efficiency = options["transport_internal_combustion_efficiency"]
-    
-    # temperature corrected efficiency    
-    efficiency = get_temp_efficency(car_efficiency, temperature,
-                                    options["transport_heating_deadband_lower"],
-                                    options["transport_heating_deadband_upper"],
-                                    options["ICE_lower_degree_factor"],
-                                    options["ICE_upper_degree_factor"])
+
+    # temperature corrected efficiency
+    efficiency = get_temp_efficency(
+        car_efficiency,
+        temperature,
+        options["transport_heating_deadband_lower"],
+        options["transport_heating_deadband_upper"],
+        options["ICE_lower_degree_factor"],
+        options["ICE_upper_degree_factor"],
+    )
     suffix = " land transport ICE"
-    
-    p_nom =  ice_share * p_set.div(efficiency).max()
-    
-     
+
+    p_nom = ice_share * p_set.div(efficiency).max()
+
     n.madd(
         "Link",
         nodes,
@@ -1683,12 +1707,13 @@ def add_ice_cars(n, nodes, p_set, ice_share, temperature):
         p_nom_extendable=False,
         p_nom=p_nom,
     )
-    
+
+
 def add_land_transport(n, costs):
     # TODO options?
 
     logger.info("Add land transport")
-    
+
     # read in transport demand in units kinetic energy
     transport = pd.read_csv(
         snakemake.input.transport_demand, index_col=0, parse_dates=True
@@ -1702,54 +1727,62 @@ def add_land_transport(n, costs):
     dsm_profile = pd.read_csv(
         snakemake.input.dsm_profile, index_col=0, parse_dates=True
     )
-    
+
     # exogenous share of passenger car type
     engine_types = ["fuel_cell", "electric", "ice"]
     shares = pd.Series()
     for engine in engine_types:
-        shares[engine] = get(options[f"land_transport_{engine}_share"],
-                             investment_year)
+        shares[engine] = get(options[f"land_transport_{engine}_share"], investment_year)
         logger.info(f"{engine} share: {shares[engine]*100}%")
-        
-    check_land_transport_shares(shares)    
-    
+
+    check_land_transport_shares(shares)
+
     nodes = spatial.nodes
-    
+
     # Add load for transport demand
     n.add("Carrier", "land transport demand")
 
-    n.madd("Bus", 
-            nodes,
-            location=nodes,
-            suffix=" land transport",
-            carrier="land transport demand",
-            unit="MWh_kinetic")
-    
+    n.madd(
+        "Bus",
+        nodes,
+        location=nodes,
+        suffix=" land transport",
+        carrier="land transport demand",
+        unit="MWh_kinetic",
+    )
+
     p_set = transport[nodes]
-    
-    # add demand 
+
+    # add demand
     n.madd(
         "Load",
         nodes,
         suffix=" land transport",
         bus=nodes + " land transport",
         carrier="land transport demand",
-        p_set=p_set, 
+        p_set=p_set,
     )
-    
+
     # temperature for correction factor for heating/cooling
     temperature = xr.open_dataarray(snakemake.input.temp_air_total).to_pandas()
-    
+
     if shares["electric"] > 0:
-        add_EVs(n, nodes, avail_profile, dsm_profile, p_set, shares["electric"],
-                number_cars, temperature)
-        
+        add_EVs(
+            n,
+            nodes,
+            avail_profile,
+            dsm_profile,
+            p_set,
+            shares["electric"],
+            number_cars,
+            temperature,
+        )
+
     if shares["fuel_cell"] > 0:
         add_fuel_cell_cars(n, nodes, p_set, shares["fuel_cell"], temperature)
 
     if shares["ice"] > 0:
         add_ice_cars(n, nodes, p_set, shares["ice"], temperature)
-        
 
 
 def build_heat_demand(n):
@@ -3643,7 +3676,8 @@ def lossy_bidirectional_links(n, carrier, efficiencies={}):
             -compression_per_1000km * n.links.loc[carrier_i, "length_original"] / 1e3
         )
 
-#%%
+
+# %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
