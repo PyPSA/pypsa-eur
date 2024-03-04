@@ -828,21 +828,6 @@ solving:
   walltime: "12:00:00"
 
 
-operations:
-  rolling_horizon:
-    window: 10 # days
-    overlap: 8 # days
-  bidding_prices: # EUR/MW
-    H2 Electrolysis: -10
-    H2 Fuel Cell: 200
-    urban central water tanks charger: -10
-    urban central water tanks discharger: 10
-    hydro: 70
-    solid biomass: 150
-    biogas: 100
-  co2_price: 500 # EUR/t
-  co2_sequestation_limit: 200 # Mt/a
-
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#plotting
 plotting:
   map:
