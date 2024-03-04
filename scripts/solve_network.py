@@ -921,19 +921,19 @@ def solve_network(n, config, solving, **kwargs):
 
     return n
 
-
+#%%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "solve_sector_network",
-            configfiles="../config/test/config.perfect.yaml",
+            # configfiles="../config/test/config.perfect.yaml",
             simpl="",
             opts="",
             clusters="37",
             ll="v1.0",
-            sector_opts="CO2L0-1H-T-H-B-I-A-dist1",
+            sector_opts="730H-T-H-B-I-A-dist1",
             planning_horizons="2030",
         )
     configure_logging(snakemake)
