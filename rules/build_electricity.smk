@@ -18,45 +18,26 @@ if config["enable"].get("prepare_links_p_nom", False):
             "../scripts/prepare_links_p_nom.py"
 
 
-if config["enable"].get("retrieve_opsd_load_data", True):
-
-    rule build_electricity_demand:
-        params:
-            snapshots=config_provider("snapshots"),
-            countries=config_provider("countries"),
-            load=config_provider("load"),
-        input:
-            ancient("data/electricity_demand_raw.csv"),
-        output:
-            resources("electricity_demand.csv"),
-        log:
-            logs("build_electricity_demand.log"),
-        resources:
-            mem_mb=5000,
-        conda:
-            "../envs/environment.yaml"
-        script:
-            "../scripts/build_electricity_demand.py"
-
-
-if config["enable"].get("retrieve_artificial_load_data", False):
-
-    rule build_artificial_load_data:
-        input:
-            ancient("data/load_artificial_raw.csv"),
-        output:
-            resources("electricity_demand.csv"),
-        log:
-            logs("build_artificial_load_data.log"),
-        resources:
-            mem_mb=5000,
-        conda:
-            "../envs/environment.yaml"
-        script:
-            "../scripts/build_artificial_load_data.py"
-
-
-ruleorder: build_artificial_load_data > build_electricity_demand
+rule build_electricity_demand:
+    params:
+        snapshots=config_provider("snapshots"),
+        countries=config_provider("countries"),
+        load=config_provider("load"),
+    input:
+        reported=ancient("data/electricity_demand_raw.csv"),
+        artificial=lambda w: ancient("data/load_artificial_raw.csv")
+        if config_provider("load", "supplement_missing_data_artificially")(w)
+        else [],
+    output:
+        resources("electricity_demand.csv"),
+    log:
+        logs("build_electricity_demand.log"),
+    resources:
+        mem_mb=5000,
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_electricity_demand.py"
 
 
 rule build_powerplants:

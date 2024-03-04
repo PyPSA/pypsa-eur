@@ -277,16 +277,15 @@ if __name__ == "__main__":
 
     time_shift = snakemake.params.load["time_shift_for_large_gaps"]
 
-    load = load_timeseries(snakemake.input[0], years, countries)
+    load = load_timeseries(snakemake.input.reported, years, countries)
 
     if "UA" in countries:
         # attach load of UA (best data only for entsoe transparency)
-        load_ua = load_timeseries(snakemake.input[0], "2018", ["UA"], False)
+        load_ua = load_timeseries(snakemake.input.reported, "2018", ["UA"])
         snapshot_year = str(snapshots.year.unique().item())
         time_diff = pd.Timestamp("2018") - pd.Timestamp(snapshot_year)
-        load_ua.index -= (
-            time_diff  # hack indices (currently, UA is manually set to 2018)
-        )
+        # hack indices (currently, UA is manually set to 2018)
+        load_ua.index -= time_diff
         load["UA"] = load_ua
         # attach load of MD (no time-series available, use 2020-totals and distribute according to UA):
         # https://www.iea.org/data-and-statistics/data-browser/?country=MOLDOVA&fuel=Energy%20consumption&indicator=TotElecCons
@@ -306,6 +305,13 @@ if __name__ == "__main__":
         "Filling larger gaps by copying time-slices of period " f"'{time_shift}'."
     )
     load = load.apply(fill_large_gaps, shift=time_shift)
+
+    if snakemake.params.load["supplement_missing_data_artificially"]:
+        logger.info("Supplement missing data with artificial data.")
+        fn = snakemake.input.artificial
+        artificial_load = pd.read_csv(fn, index_col=0, parse_dates=True)
+        artificial_load = artificial_load.loc[snapshots, countries]
+        load = load.combine_first(artificial_load)
 
     assert not load.isna().any().any(), (
         "Load data contains nans. Adjust the parameters "

@@ -180,9 +180,7 @@ if config["enable"]["retrieve"]:
             "../scripts/retrieve_gas_infrastructure_data.py"
 
 
-if config["enable"]["retrieve"] and config["enable"].get(
-    "retrieve_opsd_load_data", True
-):
+if config["enable"]["retrieve"]:
 
     rule retrieve_electricity_demand:
         params:
@@ -200,9 +198,7 @@ if config["enable"]["retrieve"] and config["enable"].get(
             "../scripts/retrieve_electricity_demand.py"
 
 
-if config["enable"]["retrieve"] and config["enable"].get(
-    "retrieve_artificial_load_data", False
-):
+if config["enable"]["retrieve"]:
 
     rule retrieve_artificial_load_data:
         input:
@@ -220,6 +216,7 @@ if config["enable"]["retrieve"] and config["enable"].get(
         retries: 2
         run:
             move(input[0], output[0])
+            validate_checksum(output[0], input[0])
 
 
 if config["enable"]["retrieve"]:

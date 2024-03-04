@@ -73,8 +73,6 @@ enable:
   build_cutout: false
   retrieve_irena: false
   retrieve_cutout: true
-  retrieve_opsd_load_data: true
-  retrieve_artificial_load_data: false
   build_natura_raster: false
   retrieve_natura_raster: true
   custom_busmap: false
@@ -295,6 +293,7 @@ load:
   manual_adjustments: true # false
   scaling_factor: 1.0
   fixed_year: false # false or year (e.g. 2013)
+  supplement_missing_data_artificially: true
 
 # docs
 # TODO: PyPSA-Eur merge issue in prepare_sector_network.py
