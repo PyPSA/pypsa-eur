@@ -25,9 +25,11 @@ rule build_electricity_demand:
         load=config_provider("load"),
     input:
         reported=ancient("data/electricity_demand_raw.csv"),
-        artificial=lambda w: ancient("data/load_artificial_raw.csv")
-        if config_provider("load", "supplement_missing_data_artificially")(w)
-        else [],
+        artificial=lambda w: (
+            ancient("data/load_artificial_raw.csv")
+            if config_provider("load", "supplement_missing_data_artificially")(w)
+            else []
+        ),
     output:
         resources("electricity_demand.csv"),
     log:
