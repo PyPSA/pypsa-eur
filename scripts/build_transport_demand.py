@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 def build_nodal_transport_data(fn, pop_layout):
-    # get numbers of car and fuel efficieny per country
+    # get numbers of car and fuel efficiency per country
     transport_data = pd.read_csv(fn, index_col=0)
 
     # break number of cars down to nodal level based on population density
