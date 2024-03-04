@@ -9,6 +9,11 @@ Release Notes
 
 Upcoming Release
 ================
+* fix bug in land transport for temperature correction of ICEs and fuel cell cars
+
+* restructure land transport, demand is now attached to one single node, the 
+different car types (ICE, EV, fuel cell) are modelled as links
+
 * Upgrade default techno-economic assumptions to ``technology-data`` v0.8.1.
 
 * Linearly interpolate missing investment periods in year-dependent
