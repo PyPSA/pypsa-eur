@@ -1512,6 +1512,25 @@ def check_land_transport_shares(shares):
             "corresponding to increased or decreased demand assumptions."
         )
 
+def get_temp_efficency(car_efficiency, temperature, deadband_lw, deadband_up,
+                       degree_factor_lw, degree_factor_up):
+    """
+    Correct temperature depending on heating and cooling for respective car
+    type.
+    """
+    # temperature correction for EVs
+    dd = transport_degree_factor(
+        temperature,
+        deadband_lw,
+        deadband_up,
+        degree_factor_lw,
+        degree_factor_up,
+    )
+    
+    temp_eff = 1 / (1+dd)
+    
+    return car_efficiency * temp_eff
+
 def add_EVs(n, nodes, avail_profile, dsm_profile, p_set, electric_share,
         number_cars, temperature):
     
@@ -1526,22 +1545,16 @@ def add_EVs(n, nodes, avail_profile, dsm_profile, p_set, electric_share,
         unit="MWh_el",
     )
     
-    # temperature correction for EVs
-    dd_EV = transport_degree_factor(
-        temperature,
-        options["transport_heating_deadband_lower"],
-        options["transport_heating_deadband_upper"],
-        options["EV_lower_degree_factor"],
-        options["EV_upper_degree_factor"],
-    )
-    
-    temp_eff = 1 / (1+dd_EV)
-    
-    profile = p_set/p_set.max()
-    
     car_efficiency = costs.at['Battery electric (passenger cars)', 'efficiency']
     
-    efficiency = car_efficiency * temp_eff
+    # temperature corrected efficiency    
+    efficiency = get_temp_efficency(car_efficiency, temperature,
+                                    options["transport_heating_deadband_lower"],
+                                    options["transport_heating_deadband_upper"],
+                                    options["EV_lower_degree_factor"],
+                                    options["EV_upper_degree_factor"])
+    
+    profile = p_set/p_set.max()
     
     n.madd(
         "Link",
@@ -1553,7 +1566,7 @@ def add_EVs(n, nodes, avail_profile, dsm_profile, p_set, electric_share,
         efficiency=efficiency,     
         p_min_pu=profile,
         p_max_pu=profile,
-        p_nom=electric_share*p_set.max()/efficiency,
+        p_nom=electric_share*p_set.max()/car_efficiency,
         p_nom_extendable=False,
     )
     
@@ -1607,21 +1620,18 @@ def add_EVs(n, nodes, avail_profile, dsm_profile, p_set, electric_share,
         
 def add_fuel_cell_cars(n, nodes, p_set, fuel_cell_share, temperature):
     
-    # correction factors for vehicle heating + cooling
-    dd_ICE = transport_degree_factor(
-        temperature,
-        options["transport_heating_deadband_lower"],
-        options["transport_heating_deadband_upper"],
-        options["ICE_lower_degree_factor"],
-        options["ICE_upper_degree_factor"],
-    )
-    temp_eff = 1 / (1+dd_ICE)
     car_efficiency = options["transport_fuel_cell_efficiency"]
-    efficiency = car_efficiency * temp_eff
+    
+    # temperature corrected efficiency    
+    efficiency = get_temp_efficency(car_efficiency, temperature,
+                                    options["transport_heating_deadband_lower"],
+                                    options["transport_heating_deadband_upper"],
+                                    options["ICE_lower_degree_factor"],
+                                    options["ICE_upper_degree_factor"])
     
     
     profile = p_set / p_set.max()
-    p_nom = fuel_cell_share * p_set / car_efficiency
+    p_nom = fuel_cell_share * p_set.max() / car_efficiency
     
     n.madd(
         "Link",
@@ -1642,19 +1652,14 @@ def add_ice_cars(n, nodes, p_set, ice_share, temperature):
     
     add_carrier_buses(n, "oil")
     
-    # correction factors for vehicle heating + cooling
-    dd_ICE = transport_degree_factor(
-        temperature,
-        options["transport_heating_deadband_lower"],
-        options["transport_heating_deadband_upper"],
-        options["ICE_lower_degree_factor"],
-        options["ICE_upper_degree_factor"],
-    )
-    temp_eff = 1 / (1+dd_ICE)
-
     car_efficiency = options["transport_internal_combustion_efficiency"]
     
-    efficiency = car_efficiency * temp_eff
+    # temperature corrected efficiency    
+    efficiency = get_temp_efficency(car_efficiency, temperature,
+                                    options["transport_heating_deadband_lower"],
+                                    options["transport_heating_deadband_upper"],
+                                    options["ICE_lower_degree_factor"],
+                                    options["ICE_upper_degree_factor"])
     
     p_nom =  ice_share * p_set.max() / car_efficiency
     suffix = " land transport ICE"
