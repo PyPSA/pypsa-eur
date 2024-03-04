@@ -1553,20 +1553,23 @@ def add_EVs(n, nodes, avail_profile, dsm_profile, p_set, electric_share,
                                     options["transport_heating_deadband_upper"],
                                     options["EV_lower_degree_factor"],
                                     options["EV_upper_degree_factor"])
+    suffix = " land transport EV"
     
-    profile = p_set/p_set.max()
+    p_nom = electric_share * p_set.div(efficiency).max()
+    
+    profile = p_set.div(efficiency)/p_set.div(efficiency).max()
     
     n.madd(
         "Link",
         nodes,
-        suffix=" land transport EV",
+        suffix=suffix,
         bus0=nodes + " EV battery",                              
         bus1=nodes + " land transport",
         carrier="land transport EV",
         efficiency=efficiency,     
         p_min_pu=profile,
         p_max_pu=profile,
-        p_nom=electric_share*p_set.max()/car_efficiency,
+        p_nom=p_nom,
         p_nom_extendable=False,
     )
     
@@ -1629,14 +1632,16 @@ def add_fuel_cell_cars(n, nodes, p_set, fuel_cell_share, temperature):
                                     options["ICE_lower_degree_factor"],
                                     options["ICE_upper_degree_factor"])
     
+    suffix = " land transport fuel cell"
+        
+    p_nom = fuel_cell_share * p_set.div(efficiency).max()
     
-    profile = p_set / p_set.max()
-    p_nom = fuel_cell_share * p_set.max() / car_efficiency
+    profile = p_set.div(efficiency)/p_set.div(efficiency).max()
     
     n.madd(
         "Link",
         nodes,
-        suffix=" land transport fuel cell",
+        suffix=suffix,
         bus0=spatial.h2.nodes,
         bus1=nodes + " land transport",
         carrier="land transport fuel cell", 
@@ -1660,15 +1665,15 @@ def add_ice_cars(n, nodes, p_set, ice_share, temperature):
                                     options["transport_heating_deadband_upper"],
                                     options["ICE_lower_degree_factor"],
                                     options["ICE_upper_degree_factor"])
-    
-    p_nom =  ice_share * p_set.max() / car_efficiency
     suffix = " land transport ICE"
-    p_nom.rename(lambda x: x + suffix, inplace=True)
-       
     
+    p_nom =  ice_share * p_set.div(efficiency).max()
+    
+     
     n.madd(
         "Link",
-        nodes + suffix,
+        nodes,
+        suffix=suffix,
         bus0=spatial.oil.nodes,
         bus1=nodes + " land transport",
         bus2=["co2 atmosphere"],
