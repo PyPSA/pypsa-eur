@@ -813,7 +813,7 @@ def add_co2limit(n, options, nyears=1.0, limit=0.0):
 
 
 # TODO PyPSA-Eur merge issue
-def average_every_nhours(n, offset, drop_leap_day=False):
+def average_every_nhours(n, offset):
     logger.info(f"Resampling the network to {offset}")
     m = n.copy(with_time=False)
 
@@ -831,10 +831,6 @@ def average_every_nhours(n, offset, drop_leap_day=False):
                     pnl[k] = df.resample(offset).max()
                 else:
                     pnl[k] = df.resample(offset).mean()
-
-    if drop_leap_day:
-        sns = m.snapshots[~((m.snapshots.month == 2) & (m.snapshots.day == 29))]
-        m.set_snapshots(sns)
 
     return m
 
@@ -3425,7 +3421,7 @@ def cluster_heat_buses(n):
 
 
 def apply_time_segmentation(
-    n, segments, solver_name="cbc", overwrite_time_dependent=True, drop_leap_day=False
+    n, segments, solver_name="cbc", overwrite_time_dependent=True
 ):
     """
     Aggregating time series to segments with different lengths.
@@ -3489,11 +3485,6 @@ def apply_time_segmentation(
         for component, key in values_t.columns.droplevel(2).unique():
             n.pnl(component)[key] = values_t[component, key]
 
-    # TODO: need to check that this actually works as intended.
-    if drop_leap_day:
-        sns = n.snapshots[~((n.snapshots.month == 2) & (n.snapshots.day == 29))]
-        n.set_snapshots(sns)
-
     return n
 
 
@@ -3515,14 +3506,16 @@ def set_temporal_aggregation(n, resolution, solver_name, drop_leap_day=False):
     elif "seg" in resolution.lower():
         segments = int(resolution[:-3])
         logger.info("Use temporal segmentation with %s segments", segments)
-        n = apply_time_segmentation(
-            n, segments, solver_name=solver_name, drop_leap_day=drop_leap_day
-        )
+        n = apply_time_segmentation(n, segments, solver_name=solver_name)
 
     # temporal averaging
     elif "h" in resolution.lower():
         logger.info("Aggregate to frequency %s", resolution)
-        n = average_every_nhours(n, resolution, drop_leap_day)
+        n = average_every_nhours(n, resolution)
+
+    if drop_leap_day:
+        sns = n.snapshots[~((n.snapshots.month == 2) & (n.snapshots.day == 29))]
+        n.set_snapshots(sns)
 
     return n
 
