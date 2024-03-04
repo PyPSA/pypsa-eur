@@ -19,6 +19,8 @@ gurobi.log
 /logs
 /notebooks
 /data
+/data/links_p_nom.csv
+/data/tyndp2020/
 /cutouts
 /tmp
 doc/_build

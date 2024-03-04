@@ -9,6 +9,11 @@ Release Notes
 
 Upcoming Release
 ================
+* Add TYNDP 2020 projects to the network if wanted. The option in
+ is the config is ``TYNDP2020``. By default, they are not included.
+ There are some limitations connected to this option which are
+ described in limitations section in the documentation.
+
 * Upgrade default techno-economic assumptions to ``technology-data`` v0.8.1.
 
 * Linearly interpolate missing investment periods in year-dependent

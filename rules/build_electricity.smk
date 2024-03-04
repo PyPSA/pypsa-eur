@@ -66,6 +66,7 @@ rule base_network:
         lines=config_provider("lines"),
         links=config_provider("links"),
         transformers=config_provider("transformers"),
+        tyndp=config_provider("TYNDP2020"),
     input:
         eg_buses="data/entsoegridkit/buses.csv",
         eg_lines="data/entsoegridkit/lines.csv",
@@ -78,6 +79,13 @@ rule base_network:
         country_shapes=resources("country_shapes.geojson"),
         offshore_shapes=resources("offshore_shapes.geojson"),
         europe_shape=resources("europe_shape.geojson"),
+        tyndp2020_new_buses="data/tyndp2020/new_buses.csv",
+        tyndp2020_new_lines="data/tyndp2020/new_lines.csv",
+        tyndp2020_new_links="data/tyndp2020/new_links.csv",
+        tyndp2020_upg_buses="data/tyndp2020/upgraded_buses.csv",
+        tyndp2020_upg_lines="data/tyndp2020/upgraded_lines.csv",
+        tyndp2020_upg_links="data/tyndp2020/upgraded_links.csv",
+        parameter_corrections_tyndp="data/tyndp2020/parameter_corrections.yaml",
     output:
         resources("networks/base.nc"),
     log:

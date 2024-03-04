@@ -1,0 +1,4 @@
+,Unit,Values,Description
+include,bool,true or false,Whether to include TYNDP2020 projects or not
+allowed_statuses,list of str,"Allowed values ['in_permitting', 'under_construction', 'planned_not_yet_permitting', 'under_consideration']",Which TYNDP2020 projects statuses should be included
+ignored_projects,list of str,Project ID,"TYND2020 projects ID which should be ignored, e.g. '335' for North Sea Wind Power Hub. Project ID may include several investments, e.g. buses and lines!"

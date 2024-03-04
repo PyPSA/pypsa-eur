@@ -31,7 +31,7 @@ Top-level configuration
 .. _run_cf:
 
 ``run``
-=======
+=============
 
 It is common conduct to analyse energy system optimisation models for **multiple scenarios** for a variety of reasons,
 e.g. assessing their sensitivity towards changing the temporal and/or geographical resolution or investigating how
@@ -332,6 +332,24 @@ overwrite the existing values.
    :header-rows: 1
    :widths: 22,7,22,33
    :file: configtables/conventional.csv
+
+``TYNDP2020``
+================
+
+Define whether one wants to integrate the TYNDP2020 data into the model.
+
+.. literalinclude:: ../config/config.default.yaml
+   :language: yaml
+   :start-at:   TYNDP2020:
+   :end-before: # docs
+
+.. csv-table::
+   :header-rows: 1
+   :widths: 22,7,22,33
+   :file: configtables/tyndp2020.csv
+
+.. note::
+
 
 ``lines``
 =============

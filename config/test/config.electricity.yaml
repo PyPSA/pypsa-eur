@@ -73,6 +73,10 @@ solving:
     options: "glpk-default"
 
 
+TYNDP2020:
+  include: true
+
+
 plotting:
   map:
     boundaries:

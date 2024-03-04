@@ -15,6 +15,7 @@ Relevant Settings
 
 .. code:: yaml
 
+
     snapshots:
 
     countries:
@@ -98,6 +99,13 @@ def _get_oid(df):
 def _get_country(df):
     if "tags" in df.columns:
         return df.tags.str.extract('"country"=>"([A-Z]{2})"', expand=False)
+    else:
+        return pd.Series(np.nan, df.index)
+
+
+def _get_tyndp_project_id(df):
+    if "tags" in df.columns:
+        return df.tags.str.extract('"tyndp2020_proj_id"=>"(\d+)"', expand=False)
     else:
         return pd.Series(np.nan, df.index)
 
@@ -700,6 +708,127 @@ def _adjust_capacities_of_under_construction_branches(n, config):
     return n
 
 
+def _integrate_tyndp_2020(
+    buses,
+    lines,
+    links,
+    new_buses,
+    new_lines,
+    new_links,
+    upg_buses,
+    upg_lines,
+    upg_links,
+    config,
+):
+    new_buses = _read_tyndp2020_buses(new_buses)
+    new_lines = _read_tyndp2020_lines(new_lines, config["electricity"])
+    new_links = _read_tyndp2020_links(new_links)
+
+    upg_buses = _read_tyndp2020_buses(upg_buses)
+    upg_lines = _read_tyndp2020_lines(upg_lines, config["electricity"])
+    upg_links = _read_tyndp2020_links(upg_links)
+
+    allowed_statuses = config["TYNDP2020"].get("allowed_statuses")
+    ignored_projects = config["TYNDP2020"].get("ignored_projects")
+
+    new_buses = _filter_assets(new_buses, allowed_statuses, ignored_projects)
+    new_lines = _filter_assets(new_lines, allowed_statuses, ignored_projects)
+    new_links = _filter_assets(new_links, allowed_statuses, ignored_projects)
+
+    upg_buses = _filter_assets(upg_buses, allowed_statuses, ignored_projects)
+    upg_lines = _filter_assets(upg_lines, allowed_statuses, ignored_projects)
+    upg_links = _filter_assets(upg_links, allowed_statuses, ignored_projects)
+
+    # add 'commissioning_year' to existing assets (beginning of UNIX time)
+    if len(buses) > 0:
+        buses.loc[:, "commissioning_year"] = pd.to_datetime(0)
+    if len(lines) > 0:
+        lines.loc[:, "commissioning_year"] = pd.to_datetime(0)
+    if len(links) > 0:
+        links.loc[:, "commissioning_year"] = pd.to_datetime(0)
+
+    # append new assets
+    buses = pd.concat([buses, new_buses])
+    lines = pd.concat([lines, new_lines])
+    links = pd.concat([links, new_links])
+
+    # upgrade existing assets
+    buses = _add_upg_assets(buses, upg_buses)
+    lines = _add_upg_assets(lines, upg_lines)
+    links = _add_upg_assets(links, upg_links)
+
+    # Drop lines or links if their 'bus0' or 'bus1' columns contain
+    # buses that were dropped due to their 'tyndp_status'.
+    lines = lines.loc[lines.bus0.isin(buses.index) & lines.bus1.isin(buses.index)]
+    links = links.loc[links.bus0.isin(buses.index) & links.bus1.isin(buses.index)]
+
+    return buses, lines, links
+
+
+def _read_tyndp2020_buses(tyndp_file):
+    df = pd.read_csv(tyndp_file, index_col=0)
+    df.index = df.index.astype(str)
+    df.index.name = "bus_id"
+    df["carrier"] = df.pop("dc").map({True: "DC", False: "AC"})
+    df["commissioning_year"] = pd.to_datetime(df["commissioning_year"], format="%Y")
+    df["symbol"] = "substation"
+
+    return df
+
+
+def _read_tyndp2020_lines(tyndp_file, config_elec):
+    df = pd.read_csv(tyndp_file, index_col=0, dtype={"bus0": "str", "bus1": "str"})
+    df.index = df.index.astype(str)
+    df.index.name = "line_id"
+    df["commissioning_year"] = pd.to_datetime(df["commissioning_year"], format="%Y")
+    df["v_nom"] = df["v_nom"].replace(np.nan, 220)
+    df["v_nom"] = df["v_nom"].astype(int)
+    allowed_voltages = config_elec["voltages"]
+    df = df[df.v_nom >= min(allowed_voltages)]
+    df["v_nom"] = df["v_nom"].apply(
+        lambda x: min(allowed_voltages, key=lambda y: abs(y - x))
+    )
+    df["num_parallel"] = 2.0
+    df["carrier"] = "AC"
+    return df
+
+
+def _read_tyndp2020_links(tyndp_file):
+    df = pd.read_csv(tyndp_file, index_col=0, dtype={"bus0": "str", "bus1": "str"})
+    df.index = df.index.astype(str)
+    df.index.name = "link_id"
+    df["carrier"] = "DC"
+    df["commissioning_year"] = pd.to_datetime(df["commissioning_year"], format="%Y")
+    df = df.drop("v_nom", axis=1)
+    return df
+
+
+def _filter_assets(df, allowed_statuses, ignore_projects):
+    df = df.loc[df["tyndp_status"].isin(allowed_statuses)]
+    if ignore_projects:
+        df["project_id"] = _get_tyndp_project_id(df)
+        df = df.loc[~df.loc[:, "project_id"].isin(ignore_projects)]
+        df = df.drop("project_id", axis=1)
+
+    df = df.assign(under_construction=False)
+    return df.drop("tyndp_status", axis=1)
+
+
+def _add_upg_assets(gridx_assets, tyndp_upg):
+    intersected_idx = tyndp_upg.index.intersection(gridx_assets.index)
+    missing_in_gridx = tyndp_upg.index.difference(gridx_assets.index, sort=False)
+
+    if not missing_in_gridx.empty:
+        msg = (
+            f"Updating {missing_in_gridx} failed because the assets "
+            "do not exist or were excluded from the model."
+        )
+        logger.warning(msg)
+
+    gridx_assets.loc[intersected_idx] = tyndp_upg.loc[intersected_idx]
+    return gridx_assets
+
+
 def base_network(
     eg_buses,
     eg_converters,
@@ -712,6 +841,13 @@ def base_network(
     country_shapes,
     offshore_shapes,
     parameter_corrections,
+    parameter_corrections_tyndp,
+    tyndp2020_new_buses,
+    tyndp2020_new_lines,
+    tyndp2020_new_links,
+    tyndp2020_upg_buses,
+    tyndp2020_upg_lines,
+    tyndp2020_upg_links,
     config,
 ):
     buses = _load_buses_from_eg(eg_buses, europe_shape, config["electricity"])
@@ -724,6 +860,24 @@ def base_network(
 
     lines = _load_lines_from_eg(buses, eg_lines)
     transformers = _load_transformers_from_eg(buses, eg_transformers)
+
+    if config["TYNDP2020"].get("include", False):
+        logger.info(
+            "Adding TYNDP2020 lines, buses and links... "
+            "warning - this dataset is not yet evaluated and may lead to unexpected results."
+        )
+        buses, lines, links = _integrate_tyndp_2020(
+            buses,
+            lines,
+            links,
+            tyndp2020_new_buses,
+            tyndp2020_new_lines,
+            tyndp2020_new_links,
+            tyndp2020_upg_buses,
+            tyndp2020_upg_lines,
+            tyndp2020_upg_links,
+            config,
+        )
 
     if config["lines"].get("reconnect_crimea", True) and "UA" in config["countries"]:
         lines = _reconnect_crimea(lines)
@@ -749,6 +903,8 @@ def base_network(
     _set_lines_s_nom_from_linetypes(n)
 
     _apply_parameter_corrections(n, parameter_corrections)
+    if config["TYNDP2020"].get("include", False):
+        _apply_parameter_corrections(n, parameter_corrections_tyndp)
 
     n = _remove_unconnected_components(n)
 
@@ -783,8 +939,16 @@ if __name__ == "__main__":
         snakemake.input.country_shapes,
         snakemake.input.offshore_shapes,
         snakemake.input.parameter_corrections,
+        snakemake.input.parameter_corrections_tyndp,
+        snakemake.input.tyndp2020_new_buses,
+        snakemake.input.tyndp2020_new_lines,
+        snakemake.input.tyndp2020_new_links,
+        snakemake.input.tyndp2020_upg_buses,
+        snakemake.input.tyndp2020_upg_lines,
+        snakemake.input.tyndp2020_upg_links,
         snakemake.config,
     )
 
     n.meta = snakemake.config
+
     n.export_to_netcdf(snakemake.output[0])

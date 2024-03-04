@@ -29,6 +29,12 @@ improving the approximations.
   particular lines. There is no openly available data on busbar configurations, switch
   locations, transformers or reactive power compensation assets.
 
+- **TYNDP 2020 projects implementation:**
+  With the TYNDP 2020 option in the config, one can add the lines from the TYNDP 2020.
+  These lines are not validated to ensure they connect to the correct substations
+  in the model. Furthermore, some lines may be duplicated since they might already
+  be integrated into the model through the grid data from ENTSO-E.
+
 - **Assignment of electricity demand to transmission nodes:**
   Using Voronoi cells to aggregate load and generator data to transmission
   network substations ignores the topology of the underlying distribution network,
