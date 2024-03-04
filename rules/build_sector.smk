@@ -160,9 +160,9 @@ rule build_daily_heat_demand:
         mem_mb=20000,
     threads: 8
     log:
-        logs("build_daily_heat_demand_{scope}__{simpl}_{clusters}.loc"),
+        logs("build_daily_heat_demand_{scope}_{simpl}_{clusters}.loc"),
     benchmark:
-        benchmarks("build_daily_heat_demand/{scope}__s{simpl}_{clusters}")
+        benchmarks("build_daily_heat_demand/{scope}_s{simpl}_{clusters}")
     conda:
         "../envs/environment.yaml"
     script:
@@ -206,9 +206,9 @@ rule build_temperature_profiles:
         mem_mb=20000,
     threads: 8
     log:
-        logs("build_temperature_profiles_{scope}__{simpl}_{clusters}.log"),
+        logs("build_temperature_profiles_{scope}_{simpl}_{clusters}.log"),
     benchmark:
-        benchmarks("build_temperature_profiles/{scope}__s{simpl}_{clusters}")
+        benchmarks("build_temperature_profiles/{scope}_s{simpl}_{clusters}")
     conda:
         "../envs/environment.yaml"
     script:
@@ -272,9 +272,9 @@ rule build_solar_thermal_profiles:
         mem_mb=20000,
     threads: 16
     log:
-        logs("build_solar_thermal_profiles_{scope}__s{simpl}_{clusters}.log"),
+        logs("build_solar_thermal_profiles_{scope}_s{simpl}_{clusters}.log"),
     benchmark:
-        benchmarks("build_solar_thermal_profiles/{scope}__s{simpl}_{clusters}")
+        benchmarks("build_solar_thermal_profiles/{scope}_s{simpl}_{clusters}")
     conda:
         "../envs/environment.yaml"
     script:
@@ -853,7 +853,7 @@ rule build_existing_heating_distribution:
 
 def input_profile_offwind(w):
     return {
-        f"profile_{tech}": resources(f"profile{}_{tech}.nc")
+        f"profile_{tech}": resources(f"profile_{tech}.nc")
         for tech in ["offwind-ac", "offwind-dc"]
         if (tech in config_provider("electricity", "renewable_carriers")(w))
     }

@@ -34,8 +34,8 @@ Inputs
 
 - ``resources/regions_onshore_elec_s{simpl}.geojson``: confer :ref:`simplify`
 - ``resources/regions_offshore_elec_s{simpl}.geojson``: confer :ref:`simplify`
-- ``networks/elec_s{simpl}.nc``: confer :ref:`simplify`
 - ``resources/busmap_elec_s{simpl}.csv``: confer :ref:`simplify`
+- ``networks/elec_s{simpl}.nc``: confer :ref:`simplify`
 - ``data/custom_busmap_elec_s{simpl}_{clusters}.csv``: optional input
 
 Outputs
@@ -454,11 +454,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake(
-            "cluster_network",
-            simpl="",
-            clusters="5",
-        )
+        snakemake = mock_snakemake("cluster_network", simpl="", clusters="5")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
