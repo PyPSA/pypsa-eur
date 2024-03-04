@@ -496,9 +496,7 @@ rule simplify_network:
     output:
         network=resources("networks/elec_s{simpl}.nc"),
         regions_onshore=resources("regions_onshore_elec_s{simpl}.geojson"),
-        regions_offshore=resources(
-            "regions_offshore_elec_s{simpl}.geojson"
-        ),
+        regions_offshore=resources("regions_offshore_elec_s{simpl}.geojson"),
         busmap=resources("busmap_elec_s{simpl}.csv"),
         connection_costs=resources("connection_costs_s{simpl}.csv"),
     log:
@@ -532,9 +530,7 @@ rule cluster_network:
     input:
         network=resources("networks/elec_s{simpl}.nc"),
         regions_onshore=resources("regions_onshore_elec_s{simpl}.geojson"),
-        regions_offshore=resources(
-            "regions_offshore_elec_s{simpl}.geojson"
-        ),
+        regions_offshore=resources("regions_offshore_elec_s{simpl}.geojson"),
         busmap=ancient(resources("busmap_elec_s{simpl}.csv")),
         custom_busmap=lambda w: (
             "data/custom_busmap_elec_s{simpl}_{clusters}.csv"
@@ -546,12 +542,8 @@ rule cluster_network:
         ),
     output:
         network=resources("networks/elec_s{simpl}_{clusters}.nc"),
-        regions_onshore=resources(
-            "regions_onshore_elec_s{simpl}_{clusters}.geojson"
-        ),
-        regions_offshore=resources(
-            "regions_offshore_elec_s{simpl}_{clusters}.geojson"
-        ),
+        regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
+        regions_offshore=resources("regions_offshore_elec_s{simpl}_{clusters}.geojson"),
         busmap=resources("busmap_elec_s{simpl}_{clusters}.csv"),
         linemap=resources("linemap_elec_s{simpl}_{clusters}.csv"),
     log:
@@ -615,15 +607,9 @@ rule prepare_network:
     output:
         resources("networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"),
     log:
-        logs(
-            "prepare_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.log"
-        ),
+        logs("prepare_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.log"),
     benchmark:
-        (
-            benchmarks(
-                "prepare_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}"
-            )
-        )
+        (benchmarks("prepare_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}"))
     threads: 1
     resources:
         mem_mb=4000,

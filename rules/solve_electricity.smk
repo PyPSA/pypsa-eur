@@ -13,13 +13,10 @@ rule solve_network:
         ),
         custom_extra_functionality=input_custom_extra_functionality,
     input:
-        network=resources(
-            "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"
-        ),
+        network=resources("networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"),
         config=RESULTS + "config.yaml",
     output:
-        network=RESULTS
-        + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+        network=RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
     log:
         solver=normpath(
             RESULTS
@@ -28,10 +25,7 @@ rule solve_network:
         python=RESULTS
         + "logs/solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_python.log",
     benchmark:
-        (
-            RESULTS
-            + "benchmarks/solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}"
-        )
+        (RESULTS + "benchmarks/solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}")
     threads: solver_threads
     resources:
         mem_mb=memory,
@@ -48,11 +42,9 @@ rule solve_operations_network:
     params:
         options=config_provider("solving", "options"),
     input:
-        network=RESULTS
-        + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+        network=RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
     output:
-        network=RESULTS
-        + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op.nc",
+        network=RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op.nc",
     log:
         solver=normpath(
             RESULTS
