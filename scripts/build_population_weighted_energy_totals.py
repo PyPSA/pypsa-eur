@@ -21,9 +21,13 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     config = snakemake.config["energy"]
-    data_year = int(config["energy_totals_year"])
-    if snakemake.wildcards.weather_year and snakemake.wildcards.kind == "heat":
-        data_year = int(snakemake.wildcards.weather_year)
+
+    if snakemake.wildcards.kind == "heat":
+        years = pd.date_range(freq="YE", **snakemake.config["snapshots"]).year
+        assert len(years) == 1, "Currently only works for single year."
+        data_year = years[0]
+    else:
+        data_year = int(config["energy_totals_year"])
 
     pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
 

@@ -109,10 +109,6 @@ if __name__ == "__main__":
 
     cutout_params = snakemake.params.cutouts[snakemake.wildcards.cutout]
 
-    if hasattr(snakemake.wildcards, "weather_year"):
-        time = snakemake.wildcards.weather_year
-        cutout_params["time"] = [time, time]
-
     if "time" not in cutout_params:
         snapshots = pd.date_range(freq="h", **snakemake.params.snapshots)
         cutout_params["time"] = [snapshots[0], snapshots[-1]]

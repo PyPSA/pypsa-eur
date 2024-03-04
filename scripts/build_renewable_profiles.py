@@ -229,14 +229,7 @@ if __name__ == "__main__":
     else:
         client = None
 
-    weather_year = snakemake.wildcards.weather_year
-    if weather_year:
-        snapshots = dict(
-            start=weather_year, end=str(int(weather_year) + 1), inclusive="left"
-        )
-    else:
-        snapshots = snakemake.params.snapshots
-    sns = pd.date_range(freq="h", **snapshots)
+    sns = pd.date_range(freq="h", **snakemake.params.snapshots)
 
     cutout = atlite.Cutout(snakemake.input.cutout).sel(time=sns)
     regions = gpd.read_file(snakemake.input.regions)

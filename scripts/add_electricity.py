@@ -805,14 +805,7 @@ if __name__ == "__main__":
 
     n = pypsa.Network(snakemake.input.base_network)
 
-    weather_year = snakemake.wildcards.weather_year
-    if weather_year:
-        snapshots = dict(
-            start=weather_year, end=str(int(weather_year) + 1), inclusive="left"
-        )
-    else:
-        snapshots = snakemake.config["snapshots"]
-    n.set_snapshots(pd.date_range(freq="h", **snapshots))
+    n.set_snapshots(pd.date_range(freq="h", **snakemake.params.snapshots))
 
     Nyears = n.snapshot_weightings.objective.sum() / 8760.0
 

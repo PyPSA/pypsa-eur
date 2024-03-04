@@ -31,16 +31,9 @@ if __name__ == "__main__":
     client = Client(cluster, asynchronous=True)
 
     cutout_name = snakemake.input.cutout
-    year = snakemake.wildcards.weather_year
 
-    if year:
-        snapshots = dict(start=year, end=str(int(year) + 1), inclusive="left")
-        cutout_name = cutout_name.format(weather_year=year)
-    else:
-        snapshots = snakemake.params.snapshots
-
-    time = pd.date_range(freq="h", **snapshots)
-    daily = pd.date_range(freq="D", **snapshots)
+    time = pd.date_range(freq="h", **snakemake.params.snapshots)
+    daily = pd.date_range(freq="D", **snakemake.params.snapshots)
     if snakemake.params.drop_leap_day:
         time = time[~((time.month == 2) & (time.day == 29))]
         daily = daily[~((daily.month == 2) & (daily.day == 29))]

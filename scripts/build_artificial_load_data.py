@@ -20,14 +20,7 @@ if __name__ == "__main__":
 
     configure_logging(snakemake)
 
-    weather_year = snakemake.wildcards.weather_year
-    if weather_year:
-        snapshots = dict(
-            start=weather_year, end=str(int(weather_year) + 1), inclusive="left"
-        )
-    else:
-        snapshots = snakemake.config["snapshots"]
-    snapshots = pd.date_range(freq="h", **snapshots)
+    snapshots = pd.date_range(freq="h", **snakemake.params.snapshots)
 
     fixed_year = snakemake.config["load"].get("fixed_year", False)
     years = (

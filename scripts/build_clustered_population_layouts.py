@@ -25,11 +25,7 @@ if __name__ == "__main__":
 
     set_scenario_config(snakemake)
 
-    cutout_name = snakemake.input.cutout
-    year = snakemake.wildcards.weather_year
-    if year:
-        cutout_name = cutout_name.format(weather_year=year)
-    cutout = atlite.Cutout(cutout_name)
+    cutout = atlite.Cutout(snakemake.input.cutout)
 
     clustered_regions = (
         gpd.read_file(snakemake.input.regions_onshore).set_index("name").buffer(0)

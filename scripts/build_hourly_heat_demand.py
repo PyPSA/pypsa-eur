@@ -24,14 +24,7 @@ if __name__ == "__main__":
         )
     set_scenario_config(snakemake)
 
-    year = snakemake.wildcards.weather_year
-
-    if year:
-        snapshots = dict(start=year, end=str(int(year) + 1), inclusive="left")
-    else:
-        snapshots = snakemake.params.snapshots
-
-    snapshots = pd.date_range(freq="h", **snapshots)
+    snapshots = pd.date_range(freq="h", **snakemake.params.snapshots)
     if snakemake.params.drop_leap_day:
         snapshots = snapshots[~((snapshots.month == 2) & (snapshots.day == 29))]
 

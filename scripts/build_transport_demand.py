@@ -183,13 +183,7 @@ if __name__ == "__main__":
 
     options = snakemake.params.sector
 
-    year = snakemake.wildcards.weather_year
-    snapshots = (
-        dict(start=year, end=str(int(year) + 1), inclusive="left")
-        if year
-        else snakemake.params.snapshots
-    )
-    snapshots = pd.date_range(freq="h", **snapshots, tz="UTC")
+    snapshots = pd.date_range(freq="h", **snakemake.params.snapshots, tz="UTC")
     if snakemake.params.drop_leap_day:
         leap_day = (snapshots.month == 2) & (snapshots.day == 29)
         snapshots = snapshots[~leap_day]

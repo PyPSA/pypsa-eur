@@ -65,8 +65,8 @@ import atlite
 import country_converter as coco
 import geopandas as gpd
 import pandas as pd
-from _helpers import configure_logging, set_scenario_config
 from numpy.polynomial import Polynomial
+from _helpers import configure_logging, set_scenario_config
 
 cc = coco.CountryConverter()
 
@@ -167,7 +167,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_hydro_profile", weather_year="")
+        snakemake = mock_snakemake("build_hydro_profile")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
@@ -197,12 +197,12 @@ if __name__ == "__main__":
 
     eia_stats.to_csv(snakemake.output.eia_hydro)
 
-    weather_year = snakemake.wildcards.weather_year
+    contained_years = pd.date_range(freq="YE", **snakemake.params.snapshots).year
     norm_year = config_hydro.get("eia_norm_year")
     if norm_year:
-        eia_stats.loc[weather_year] = eia_stats.loc[norm_year]
-    elif weather_year and weather_year not in eia_stats.index:
-        eia_stats.loc[weather_year] = eia_stats.median()
+        eia_stats.loc[contained_years] = eia_stats.loc[norm_year]
+    elif missing_years := eia_stats.index.difference(contained_years):
+        eia_stats.loc[missing_years] = eia_stats.median()
 
     inflow = cutout.runoff(
         shapes=country_shapes,
