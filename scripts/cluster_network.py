@@ -455,7 +455,9 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "cluster_network", simpl="", clusters="5",
+            "cluster_network",
+            simpl="",
+            clusters="5",
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
