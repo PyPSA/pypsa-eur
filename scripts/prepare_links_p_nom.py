@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -40,7 +40,7 @@ Description
 import logging
 
 import pandas as pd
-from _helpers import configure_logging
+from _helpers import configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
@@ -69,6 +69,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("prepare_links_p_nom", simpl="")
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     links_p_nom = pd.read_html(
         "https://en.wikipedia.org/wiki/List_of_HVDC_projects", header=0, match="SwePol"

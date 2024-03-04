@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: CC0-1.0
 
@@ -22,10 +22,18 @@ gurobi.log
 /data/links_p_nom.csv
 /data/tyndp2020/
 /cutouts
-
+/tmp
 doc/_build
 
+/scripts/old
+/scripts/create_scenarios.py
+/config/create_scenarios.py
+
+config/config.yaml
+config/scenarios.yaml
+
 config.yaml
+config/config.yaml
 
 dconf
 /data/links_p_nom.csv
@@ -55,25 +63,15 @@ d1gam3xoknrgr2.cloudfront.net/
 *.nc
 
 *~
-/scripts/old
 
 *.pyc
-/cutouts
-/tmp
-/pypsa
 
 *.xlsx
-
-config.yaml
-
-doc/_build
 
 *.xls
 
 *.geojson
 
 *.ipynb
-
-data/costs_*
 
 merger-todos.md

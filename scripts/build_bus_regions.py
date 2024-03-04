@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -47,7 +47,7 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import pypsa
-from _helpers import REGION_COLS, configure_logging
+from _helpers import REGION_COLS, configure_logging, set_scenario_config
 from scipy.spatial import Voronoi
 from shapely.geometry import Polygon
 
@@ -115,6 +115,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_bus_regions")
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     countries = snakemake.params.countries
 
@@ -135,7 +136,13 @@ if __name__ == "__main__":
         c_b = n.buses.country == country
 
         onshore_shape = country_shapes[country]
-        onshore_locs = n.buses.loc[c_b & n.buses.substation_lv, ["x", "y"]]
+        onshore_locs = (
+            n.buses.loc[c_b & n.buses.onshore_bus]
+            .sort_values(
+                by="substation_lv", ascending=False
+            )  # preference for substations
+            .drop_duplicates(subset=["x", "y"], keep="first")[["x", "y"]]
+        )
         onshore_regions.append(
             gpd.GeoDataFrame(
                 {

@@ -1,15 +1,15 @@
-# SPDX-FileCopyrightText: : 2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2023-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
 
 rule solve_sector_network:
     params:
-        solving=config["solving"],
-        foresight=config["foresight"],
-        planning_horizons=config["scenario"]["planning_horizons"],
-        co2_sequestration_potential=config["sector"].get(
-            "co2_sequestration_potential", 200
+        solving=config_provider("solving"),
+        foresight=config_provider("foresight"),
+        planning_horizons=config_provider("scenario", "planning_horizons"),
+        co2_sequestration_potential=config_provider(
+            "sector", "co2_sequestration_potential", default=200
         ),
         custom_extra_functionality=input_custom_extra_functionality,
     input:
@@ -30,13 +30,12 @@ rule solve_sector_network:
         + "logs/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_python.log",
     threads: solver_threads
     resources:
-        mem_mb=config["solving"]["mem"],
-        walltime=config["solving"].get("walltime", "12:00:00"),
+        mem_mb=config_provider("solving", "mem"),
+        walltime=config_provider("solving", "walltime", default="12:00:00"),
     benchmark:
         (
             RESULTS
-            + BENCHMARKS
-            + "solve_sector_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+            + "benchmarks/solve_sector_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
         )
     conda:
         "../envs/environment.yaml"

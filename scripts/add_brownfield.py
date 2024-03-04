@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -12,7 +12,11 @@ import numpy as np
 import pandas as pd
 import pypsa
 import xarray as xr
-from _helpers import update_config_with_sector_opts
+from _helpers import (
+    configure_logging,
+    set_scenario_config,
+    update_config_from_wildcards,
+)
 from add_existing_baseyear import add_build_year_to_new_assets
 from pypsa.clustering.spatial import normed_or_uniform
 
@@ -210,9 +214,10 @@ if __name__ == "__main__":
             planning_horizons=2030,
         )
 
-    logging.basicConfig(level=snakemake.config["logging"]["level"])
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
-    update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
+    update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     logger.info(f"Preparing brownfield from the file {snakemake.input.network_p}")
 

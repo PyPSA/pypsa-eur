@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -15,7 +15,11 @@ import numpy as np
 import pandas as pd
 import pypsa
 import xarray as xr
-from _helpers import update_config_with_sector_opts
+from _helpers import (
+    configure_logging,
+    set_scenario_config,
+    update_config_from_wildcards,
+)
 from add_electricity import sanitize_carriers
 from prepare_sector_network import cluster_heat_buses, define_spatial, prepare_costs
 
@@ -413,6 +417,11 @@ def add_heating_capacities_installed_before_baseyear(
 
         nodes = pd.Index(n.buses.location[n.buses.index.str.contains(f"{name} heat")])
 
+        if (name_type != "central") and options["electricity_distribution_grid"]:
+            nodes_elec = nodes + " low voltage"
+        else:
+            nodes_elec = nodes
+
         heat_pump_type = "air" if "urban" in name else "ground"
 
         # Add heat pumps
@@ -436,7 +445,7 @@ def add_heating_capacities_installed_before_baseyear(
                 "Link",
                 nodes,
                 suffix=f" {name} {heat_pump_type} heat pump-{grouping_year}",
-                bus0=nodes,
+                bus0=nodes_elec,
                 bus1=nodes + " " + name + " heat",
                 carrier=f"{name} {heat_pump_type} heat pump",
                 efficiency=efficiency,
@@ -454,7 +463,7 @@ def add_heating_capacities_installed_before_baseyear(
                 "Link",
                 nodes,
                 suffix=f" {name} resistive heater-{grouping_year}",
-                bus0=nodes,
+                bus0=nodes_elec,
                 bus1=nodes + " " + name + " heat",
                 carrier=name + " resistive heater",
                 efficiency=costs.at[f"{name_type} resistive heater", "efficiency"],
@@ -537,6 +546,7 @@ def add_heating_capacities_installed_before_baseyear(
             )
 
 
+# %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -548,16 +558,16 @@ if __name__ == "__main__":
             clusters="37",
             ll="v1.0",
             opts="",
-            sector_opts="1p7-4380H-T-H-B-I-A-dist1",
+            sector_opts="8760-T-H-B-I-A-dist1",
             planning_horizons=2020,
         )
 
-    logging.basicConfig(level=snakemake.config["logging"]["level"])
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
-    update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
+    update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     options = snakemake.params.sector
-    opts = snakemake.wildcards.sector_opts.split("-")
 
     baseyear = snakemake.params.baseyear
 
@@ -580,7 +590,7 @@ if __name__ == "__main__":
         n, grouping_years_power, costs, baseyear
     )
 
-    if "H" in opts:
+    if options["heating"]:
         time_dep_hp_cop = options["time_dep_hp_cop"]
         ashp_cop = (
             xr.open_dataarray(snakemake.input.cop_air_total)

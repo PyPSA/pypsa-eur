@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2019-2023 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: 2019-2024 The PyPSA-Eur Authors
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -31,7 +31,7 @@ Top-level configuration
 .. _run_cf:
 
 ``run``
-=======
+=============
 
 It is common conduct to analyse energy system optimisation models for **multiple scenarios** for a variety of reasons,
 e.g. assessing their sensitivity towards changing the temporal and/or geographical resolution or investigating how
@@ -578,6 +578,21 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 .. tip::
    use ``min`` in ``p_nom_max:`` for more `
    conservative assumptions.
+
+.. _adjustments_cf:
+
+``adjustments``
+=============
+
+.. literalinclude:: ../config/config.default.yaml
+   :language: yaml
+   :start-at: adjustments:
+   :end-before: # docs
+
+.. csv-table::
+   :header-rows: 1
+   :widths: 22,7,22,33
+   :file: configtables/adjustments.csv
 
 .. _solving_cf:
 

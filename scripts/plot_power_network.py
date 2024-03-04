@@ -14,7 +14,7 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
-from _helpers import configure_logging
+from _helpers import configure_logging, set_scenario_config
 from plot_summary import preferred_order, rename_techs
 from pypsa.plot import add_legend_circles, add_legend_lines, add_legend_patches
 
@@ -257,6 +257,7 @@ if __name__ == "__main__":
         )
 
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     n = pypsa.Network(snakemake.input.network)
 
