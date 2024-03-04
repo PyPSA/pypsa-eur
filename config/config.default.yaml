@@ -981,6 +981,7 @@ plotting:
     BEV charger: '#baf238'
     V2G: '#e5ffa8'
     land transport EV: '#baf238'
+    land transport demand: '#38baf2'
     Li ion: '#baf238'
     # hot water storage
     water tanks: '#e69487'
