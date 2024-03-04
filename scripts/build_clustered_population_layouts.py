@@ -24,7 +24,7 @@ if __name__ == "__main__":
         )
 
     set_scenario_config(snakemake)
-    
+
     cutout_name = snakemake.input.cutout
     year = snakemake.wildcards.weather_year
     if year:

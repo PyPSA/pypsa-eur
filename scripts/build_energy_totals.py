@@ -35,6 +35,7 @@ def reverse(dictionary):
     """
     return {v: k for k, v in dictionary.items()}
 
+
 non_EU = ["NO", "CH", "ME", "MK", "RS", "BA", "AL"]
 
 idees_rename = {"GR": "EL", "GB": "UK"}
@@ -72,7 +73,10 @@ to_ipcc = {
 def eurostat_per_country(country):
 
     country_fn = idees_rename.get(country, country)
-    fn = snakemake.input.eurostat + f"/{country_fn}-Energy-balance-sheets-June-2021-edition.xlsb"
+    fn = (
+        snakemake.input.eurostat
+        + f"/{country_fn}-Energy-balance-sheets-June-2021-edition.xlsb"
+    )
 
     df = pd.read_excel(
         fn,
@@ -93,27 +97,31 @@ def build_eurostat(countries, year=None):
     """
 
     nprocesses = snakemake.threads
-    tqdm_kwargs = dict(ascii=False, unit=' country', total=len(countries),
-                    desc='Build from eurostat database')
+    tqdm_kwargs = dict(
+        ascii=False,
+        unit=" country",
+        total=len(countries),
+        desc="Build from eurostat database",
+    )
     with mp.Pool(processes=nprocesses) as pool:
         dfs = list(tqdm(pool.imap(eurostat_per_country, countries), **tqdm_kwargs))
 
-    index_names = ['country', 'year', 'lvl1', 'lvl2', 'lvl3']
+    index_names = ["country", "year", "lvl1", "lvl2", "lvl3"]
     df = pd.concat(dfs, keys=countries, names=index_names)
 
-    df.dropna(how='all', axis=0, inplace=True)
-    df.dropna(how='all', axis=1, inplace=True)
-    df = df[df.index.get_level_values('lvl1') != 'ktoe']
+    df.dropna(how="all", axis=0, inplace=True)
+    df.dropna(how="all", axis=1, inplace=True)
+    df = df[df.index.get_level_values("lvl1") != "ktoe"]
 
     i = df.index.to_frame(index=False)
-    i.loc[i.lvl2 == 'Primary production', ['lvl1', 'lvl3']] = 'Main'
-    i.loc[i.lvl2 == 'Gross electricity production', 'lvl1'] = "Gross production"
+    i.loc[i.lvl2 == "Primary production", ["lvl1", "lvl3"]] = "Main"
+    i.loc[i.lvl2 == "Gross electricity production", "lvl1"] = "Gross production"
     i.ffill(inplace=True)
     df.index = pd.MultiIndex.from_frame(i)
 
     df.drop(list(range(1990, 2020)), axis=1, inplace=True)
     df.drop("Unnamed: 7", axis=1, inplace=True)
-    df.fillna(0., inplace=True)
+    df.fillna(0.0, inplace=True)
 
     # convert ktoe/a to TWh/a
     df *= 11.63 / 1e3
@@ -121,7 +129,7 @@ def build_eurostat(countries, year=None):
     df.index = df.index.set_levels(df.index.levels[1].astype(int), level=1)
 
     if year:
-        df = df.xs(year, level='year')
+        df = df.xs(year, level="year")
 
     return df
 
@@ -133,12 +141,12 @@ def build_swiss(year=None):
 
     fn = snakemake.input.swiss
 
-    df = pd.read_csv(fn, index_col=[0,1]).stack().unstack('item')
+    df = pd.read_csv(fn, index_col=[0, 1]).stack().unstack("item")
     df.index.names = ["country", "year"]
     df.index = df.index.set_levels(df.index.levels[1].astype(int), level=1)
 
     if year:
-        df = df.xs(year, level='year')
+        df = df.xs(year, level="year")
 
     # convert PJ/a to TWh/a
     df /= 3.6
@@ -356,14 +364,14 @@ def build_idees(countries, year=None):
         unit=" country",
         total=len(countries),
         desc="Build from IDEES database",
-        disable=disable_progress
+        disable=disable_progress,
     )
 
     with mute_print():
         with mp.Pool(processes=nprocesses) as pool:
             totals_list = list(tqdm(pool.imap(func, countries), **tqdm_kwargs))
 
-    totals = pd.concat(totals_list, keys=countries, names=['country', 'year'])
+    totals = pd.concat(totals_list, keys=countries, names=["country", "year"])
 
     # convert ktoe to TWh
     exclude = totals.columns.str.fullmatch("passenger cars")
@@ -377,23 +385,19 @@ def build_idees(countries, year=None):
 
 def build_energy_totals(countries, eurostat, swiss, idees):
 
-    eurostat_fuels = dict(
-        electricity="Electricity",
-        total="Total"
-    )
+    eurostat_fuels = dict(electricity="Electricity", total="Total")
 
     eurostat_sectors = dict(
         residential="Households",
         services="Commercial & public services",
         road="Road",
-        rail="Rail"
+        rail="Rail",
     )
 
     to_drop = ["passenger cars", "passenger car efficiency"]
 
     new_index = pd.MultiIndex.from_product(
-        [countries, eurostat.index.levels[1]],
-        names=["country", "year"]
+        [countries, eurostat.index.levels[1]], names=["country", "year"]
     )
 
     df = idees.reindex(new_index).drop(to_drop, axis=1)
@@ -404,7 +408,7 @@ def build_energy_totals(countries, eurostat, swiss, idees):
     # add international navigation
 
     slicer = idx[in_eurostat, :, :, "International maritime bunkers", :]
-    fill_values = eurostat.loc[slicer, "Total"].groupby(level=[0,1]).sum()
+    fill_values = eurostat.loc[slicer, "Total"].groupby(level=[0, 1]).sum()
     df.loc[in_eurostat, "total international navigation"] = fill_values
 
     # add swiss energy data
@@ -414,11 +418,14 @@ def build_energy_totals(countries, eurostat, swiss, idees):
     # get values for missing countries based on Eurostat EnergyBalances
     # divide cooking/space/water according to averages in EU28
 
-    to_fill = df.index[df["total residential"].isna() & df.index.get_level_values('country').isin(eurostat_countries)]
+    to_fill = df.index[
+        df["total residential"].isna()
+        & df.index.get_level_values("country").isin(eurostat_countries)
+    ]
     uses = ["space", "cooking", "water"]
 
-    c = to_fill.get_level_values('country')
-    y = to_fill.get_level_values('year')
+    c = to_fill.get_level_values("country")
+    y = to_fill.get_level_values("year")
 
     for sector in ["residential", "services", "road", "rail"]:
 
@@ -427,7 +434,9 @@ def build_energy_totals(countries, eurostat, swiss, idees):
         for fuel in ["electricity", "total"]:
 
             slicer = idx[c, y, :, :, eurostat_sectors[sector]]
-            fill_values = eurostat.loc[slicer, eurostat_fuels[fuel]].groupby(level=[0,1]).sum()
+            fill_values = (
+                eurostat.loc[slicer, eurostat_fuels[fuel]].groupby(level=[0, 1]).sum()
+            )
             df.loc[to_fill, f"{fuel} {sector}"] = fill_values
 
     for sector in ["residential", "services"]:
@@ -488,7 +497,9 @@ def build_energy_totals(countries, eurostat, swiss, idees):
                     no_norway[f"total {sector}"] - no_norway[f"electricity {sector}"]
                 )
                 fraction = nonelectric_use.div(nonelectric).mean()
-                df.loc["NO", f"total {sector} {use}"] = (total_heating * fraction).values
+                df.loc["NO", f"total {sector} {use}"] = (
+                    total_heating * fraction
+                ).values
                 df.loc["NO", f"electricity {sector} {use}"] = (
                     total_heating * fraction * elec_fraction
                 ).values
@@ -496,17 +507,17 @@ def build_energy_totals(countries, eurostat, swiss, idees):
     # Missing aviation
 
     slicer = idx[c, y, :, :, "Domestic aviation"]
-    fill_values = eurostat.loc[slicer, "Total"].groupby(level=[0,1]).sum()
+    fill_values = eurostat.loc[slicer, "Total"].groupby(level=[0, 1]).sum()
     df.loc[to_fill, "total domestic aviation"] = fill_values
 
     slicer = idx[c, y, :, "International aviation", :]
-    fill_values = eurostat.loc[slicer, "Total"].groupby(level=[0,1]).sum()
+    fill_values = eurostat.loc[slicer, "Total"].groupby(level=[0, 1]).sum()
     df.loc[to_fill, "total international aviation"] = fill_values
 
     # missing domestic navigation
 
     slicer = idx[c, y, :, :, "Domestic navigation"]
-    fill_values = eurostat.loc[slicer, "Total"].groupby(level=[0,1]).sum()
+    fill_values = eurostat.loc[slicer, "Total"].groupby(level=[0, 1]).sum()
     df.loc[to_fill, "total domestic navigation"] = fill_values
 
     # split road traffic for non-IDEES
@@ -653,13 +664,15 @@ def build_eurostat_co2(countries, eurostat=None, year=1990):
     if eurostat is None:
         df = build_eurostat(countries, year)
     else:
-        df = eurostat.xs(year, level='year')
+        df = eurostat.xs(year, level="year")
 
     specific_emissions = pd.Series(index=df.columns, dtype=float)
 
     # emissions in tCO2_equiv per MWh_th
     specific_emissions["Solid fossil fuels"] = 0.36  # Approximates coal
-    specific_emissions["Oil and petroleum products"] = 0.285  # Average of distillate and residue
+    specific_emissions["Oil and petroleum products"] = (
+        0.285  # Average of distillate and residue
+    )
     specific_emissions["Natural gas"] = 0.2  # For natural gas
 
     # oil values from https://www.eia.gov/tools/faqs/faq.cfm?id=74&t=11
@@ -675,19 +688,60 @@ def build_co2_totals(countries, eea_co2, eurostat_co2):
 
     for ct in pd.Index(countries).intersection(["BA", "RS", "AL", "ME", "MK"]):
         mappings = {
-            "electricity": (ct, "Transformation input", "Electricity & heat generation", "Main"),
-            "residential non-elec": (ct, "Final energy consumption", "Other sectors", "Households"),
-            "services non-elec": (ct, "Final energy consumption", "Other sectors", "Commercial & public services"),
-            "road non-elec": (ct, "Final energy consumption", "Transport sector", "Road"),
-            "rail non-elec": (ct, "Final energy consumption", "Transport sector", "Rail"),
-            "domestic navigation": (ct, "Final energy consumption", "Transport sector", "Domestic navigation"),
+            "electricity": (
+                ct,
+                "Transformation input",
+                "Electricity & heat generation",
+                "Main",
+            ),
+            "residential non-elec": (
+                ct,
+                "Final energy consumption",
+                "Other sectors",
+                "Households",
+            ),
+            "services non-elec": (
+                ct,
+                "Final energy consumption",
+                "Other sectors",
+                "Commercial & public services",
+            ),
+            "road non-elec": (
+                ct,
+                "Final energy consumption",
+                "Transport sector",
+                "Road",
+            ),
+            "rail non-elec": (
+                ct,
+                "Final energy consumption",
+                "Transport sector",
+                "Rail",
+            ),
+            "domestic navigation": (
+                ct,
+                "Final energy consumption",
+                "Transport sector",
+                "Domestic navigation",
+            ),
             "international navigation": (ct, "Main", "International maritime bunkers"),
-            "domestic aviation": (ct, "Final energy consumption", "Transport sector", "Domestic aviation"),
+            "domestic aviation": (
+                ct,
+                "Final energy consumption",
+                "Transport sector",
+                "Domestic aviation",
+            ),
             "international aviation": (ct, "Main", "International aviation"),
             # does not include industrial process emissions or fuel processing/refining
-            "industrial non-elec": (ct, "Final energy consumption", "Industry sector", "Non-energy use in industry sector"),
+            "industrial non-elec": (
+                ct,
+                "Final energy consumption",
+                "Industry sector",
+                "Non-energy use in industry sector",
+            ),
             # does not include non-energy emissions
-            "agriculture": (eurostat_co2.index.get_level_values(0) == ct) & eurostat_co2.index.isin(["Agriculture & forestry", "Fishing"], level=3),
+            "agriculture": (eurostat_co2.index.get_level_values(0) == ct)
+            & eurostat_co2.index.isin(["Agriculture & forestry", "Fishing"], level=3),
         }
 
         for i, mi in mappings.items():
@@ -771,6 +825,6 @@ if __name__ == "__main__":
     co2 = build_co2_totals(countries, eea_co2, eurostat_co2)
     co2.to_csv(snakemake.output.co2_name)
 
-    idees_transport = idees.xs(data_year, level='year')
+    idees_transport = idees.xs(data_year, level="year")
     transport = build_transport_data(countries, population, idees_transport)
     transport.to_csv(snakemake.output.transport_name)

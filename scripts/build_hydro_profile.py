@@ -65,8 +65,8 @@ import atlite
 import country_converter as coco
 import geopandas as gpd
 import pandas as pd
-from numpy.polynomial import Polynomial
 from _helpers import configure_logging, set_scenario_config
+from numpy.polynomial import Polynomial
 
 cc = coco.CountryConverter()
 
