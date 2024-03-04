@@ -15,20 +15,14 @@ rule add_existing_baseyear:
         powerplants=resources("powerplants.csv"),
         busmap_s=resources("busmap_elec_s{simpl}.csv"),
         busmap=resources("busmap_elec_s{simpl}_{clusters}.csv"),
-        clustered_pop_layout=resources(
-            "pop_layout_elec_s{simpl}_{clusters}.csv"
-        ),
+        clustered_pop_layout=resources("pop_layout_elec_s{simpl}_{clusters}.csv"),
         costs=lambda w: resources(
             "costs_{}.csv".format(
                 config_provider("scenario", "planning_horizons", 0)(w)
             )
         ),
-        cop_soil_total=resources(
-            "cop_soil_total_elec_s{simpl}_{clusters}.nc"
-        ),
-        cop_air_total=resources(
-            "cop_air_total_elec_s{simpl}_{clusters}.nc"
-        ),
+        cop_soil_total=resources("cop_soil_total_elec_s{simpl}_{clusters}.nc"),
+        cop_air_total=resources("cop_air_total_elec_s{simpl}_{clusters}.nc"),
         existing_heating_distribution=resources(
             "existing_heating_distribution_elec_s{simpl}_{clusters}_{planning_horizons}.csv"
         ),
@@ -85,12 +79,8 @@ rule add_brownfield:
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
         network_p=solved_previous_horizon,  #solved network at previous time step
         costs=resources("costs_{planning_horizons}.csv"),
-        cop_soil_total=resources(
-            "cop_soil_total_elec_s{simpl}_{clusters}.nc"
-        ),
-        cop_air_total=resources(
-            "cop_air_total_elec_s{simpl}_{clusters}.nc"
-        ),
+        cop_soil_total=resources("cop_soil_total_elec_s{simpl}_{clusters}.nc"),
+        cop_air_total=resources("cop_air_total_elec_s{simpl}_{clusters}.nc"),
     output:
         RESULTS
         + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
