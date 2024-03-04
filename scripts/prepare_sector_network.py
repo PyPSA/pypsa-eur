@@ -1573,18 +1573,17 @@ def add_EVs(
         options["EV_upper_degree_factor"],
     )
     suffix = " land transport EV"
-    
+
     p_shifted = (p_set + cycling_shift(p_set, 1) + cycling_shift(p_set, 2)) / 3
-    
+
     cyclic_eff = p_set.div(p_shifted)
-    
+
     efficiency *= cyclic_eff
-       
+
     p_nom = electric_share * p_set.div(efficiency).max()
 
     profile = p_shifted.div(efficiency) / p_shifted.div(efficiency).max()
-    
-   
+
     n.madd(
         "Link",
         nodes,
