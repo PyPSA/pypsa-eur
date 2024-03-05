@@ -28,9 +28,9 @@ if __name__ == "__main__":
 
     disable_progress = snakemake.config["run"].get("disable_progressbar", False)
     url_eurostat = "https://ec.europa.eu/eurostat/documents/38154/4956218/Balances-December2022.zip/f7cf0d19-5c0f-60ad-4e48-098a5ddd6e48?t=1671184070589"
-    tarball_fn = Path(f"{rootpath}/data/bundle-sector/eurostat_2023.zip")
+    tarball_fn = Path(f"{rootpath}/data/eurostat/eurostat_2023.zip")
     to_fn = Path(
-        f"{rootpath}/data/bundle-sector/eurostat-energy_balances-april_2023_edition/"
+        f"{rootpath}/data/eurostat/eurostat-energy_balances-april_2023_edition/"
     )
 
     logger.info(f"Downloading Eurostat data from '{url_eurostat}'.")

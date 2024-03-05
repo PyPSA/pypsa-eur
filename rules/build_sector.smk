@@ -270,7 +270,7 @@ rule build_energy_totals:
         swiss="data/switzerland-new_format-all_years.csv",
         idees="data/bundle-sector/jrc-idees-2015",
         district_heat_share="data/district_heat_share.csv",
-        eurostat="data/bundle-sector/eurostat-energy_balances-april_2023_edition",
+        eurostat="data/eurostat/eurostat-energy_balances-april_2023_edition",
     output:
         energy_name=resources("energy_totals.csv"),
         co2_name=resources("co2_totals.csv"),
@@ -865,7 +865,7 @@ rule prepare_sector_network:
         ),
         network=resources("networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"),
         energy_totals_name=resources("energy_totals.csv"),
-        eurostat="data/bundle-sector/eurostat-energy_balances-april_2023_edition",
+        eurostat="data/eurostat/eurostat-energy_balances-april_2023_edition",
         pop_weighted_energy_totals=resources(
             "pop_weighted_energy_totals_s{simpl}_{clusters}.csv"
         ),

@@ -135,20 +135,10 @@ if config["enable"]["retrieve"] and config["enable"].get(
         "h2_salt_caverns_GWh_per_sqkm.geojson",
     ]
 
-    datafolders = [
-        protected(
-            directory("data/bundle-sector/eurostat-energy_balances-june_2016_edition")
-        ),
-        protected(
-            directory("data/bundle-sector/eurostat-energy_balances-may_2018_edition")
-        ),
-        protected(directory("data/bundle-sector/jrc-idees-2015")),
-    ]
-
     rule retrieve_sector_databundle:
         output:
             protected(expand("data/bundle-sector/{files}", files=datafiles)),
-            *datafolders,
+            protected(directory("data/bundle-sector/jrc-idees-2015")),
         log:
             "logs/retrieve_sector_databundle.log",
         retries: 2
@@ -159,11 +149,7 @@ if config["enable"]["retrieve"] and config["enable"].get(
 
     rule retrieve_eurostat_data:
         output:
-            protected(
-                directory(
-                    "data/bundle-sector/eurostat-energy_balances-april_2023_edition"
-                )
-            ),
+            directory("data/eurostat/eurostat-energy_balances-april_2023_edition"),
         log:
             "logs/retrieve_eurostat_data.log",
         retries: 2
