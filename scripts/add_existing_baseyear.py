@@ -523,7 +523,7 @@ def add_heating_capacities_installed_before_baseyear(
                 "Link",
                 nodes,
                 suffix=f" {name} biomass boiler-{grouping_year}",
-                bus0=nodes + " solid biomass",
+                bus0=spatial.biomass.nodes,
                 bus1=nodes + " " + name + " heat",
                 carrier=name + " biomass boiler",
                 efficiency=costs.at["biomass boiler", "efficiency"],
