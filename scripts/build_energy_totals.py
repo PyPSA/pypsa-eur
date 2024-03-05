@@ -37,54 +37,6 @@ def reverse(dictionary):
     return {v: k for k, v in dictionary.items()}
 
 
-eurostat_codes = {
-    "EU28": "EU",
-    "EA19": "EA",
-    "Belgium": "BE",
-    "Bulgaria": "BG",
-    "Czech Republic": "CZ",
-    "Denmark": "DK",
-    "Germany": "DE",
-    "Estonia": "EE",
-    "Ireland": "IE",
-    "Greece": "GR",
-    "Spain": "ES",
-    "France": "FR",
-    "Croatia": "HR",
-    "Italy": "IT",
-    "Cyprus": "CY",
-    "Latvia": "LV",
-    "Lithuania": "LT",
-    "Luxembourg": "LU",
-    "Hungary": "HU",
-    "Malta": "MA",
-    "Netherlands": "NL",
-    "Austria": "AT",
-    "Poland": "PL",
-    "Portugal": "PT",
-    "Romania": "RO",
-    "Slovenia": "SI",
-    "Slovakia": "SK",
-    "Finland": "FI",
-    "Sweden": "SE",
-    "United Kingdom": "GB",
-    "Iceland": "IS",
-    "Norway": "NO",
-    "Montenegro": "ME",
-    "FYR of Macedonia": "MK",
-    "Albania": "AL",
-    "Serbia": "RS",
-    "Turkey": "TU",
-    "Bosnia and Herzegovina": "BA",
-    "Kosovo\n(UNSCR 1244/99)": "KO",  # 2017 version
-    # 2016 version
-    "Kosovo\n(under United Nations Security Council Resolution 1244/99)": "KO",
-    "Moldova": "MO",
-    "Ukraine": "UK",
-    "Switzerland": "CH",
-}
-
-
 idees_rename = {"GR": "EL", "GB": "UK"}
 
 eu28 = cc.EU28as("ISO2").ISO2.tolist()
@@ -121,79 +73,54 @@ def build_eurostat(input_eurostat, countries, year):
     """
     Return multi-index for all countries' energy data in TWh/a.
     """
-    # read in every country file in countries
-    eurostat = pd.DataFrame()
-    countries = [country if country != "GB" else "UK" for country in countries]
-    countries = [country if country != "GR" else "EL" for country in countries]
+    df = {}
+    countries = {idees_rename.get(country, country) for country in countries} - {"CH"}
     for country in countries:
-        filename = f"/{country}-Energy-balance-sheets-April-2023-edition.xlsb"
-        if os.path.exists(input_eurostat + filename):
-            df = pd.read_excel(
-                input_eurostat + filename,
-                engine="pyxlsb",
-                sheet_name=str(year),
-                skiprows=4,
-                index_col=list(range(4)),
-            )
-            # replace entry 'Z' with 0
-            df.replace("Z", 0, inplace=True)
-            # write 'International aviation' to the 2nd level of the multiindex
-            index_number = (
-                df.index.get_level_values(1) == "International aviation"
-            ).argmax()
-            new_index = (
-                "-",
-                "International aviation",
-                "International aviation",
-                "ktoe",
-            )
-            modified_index = list(df.index)
-            modified_index[index_number] = new_index
-            df.index = pd.MultiIndex.from_tuples(modified_index, names=df.index.names)
-            # drop the annoying subhead line
-            df.drop(df[df[year] == year].index, inplace=True)
-            # replace 'Z' with 0
-            df = df.replace("Z", 0)
-            # add country to the multiindex
-            new_tuple = [(country, *idx) for idx in df.index]
-            new_mindex = pd.MultiIndex.from_tuples(
-                new_tuple, names=["country", None, "name", None, "unit"]
-            )
-            df.index = new_mindex
-            # make numeric values where possible
-            df = df.apply(pd.to_numeric, errors="coerce")
-            # drop non-numeric columns
-            non_numeric_cols = df.columns[df.dtypes != float]
-            df.drop(non_numeric_cols, axis=1, inplace=True)
-            # concatenate the dataframes
-            eurostat = pd.concat([eurostat, df], axis=0)
+        filename = (
+            f"{input_eurostat}/{country}-Energy-balance-sheets-April-2023-edition.xlsb"
+        )
+        sheet = pd.read_excel(
+            filename,
+            engine="pyxlsb",
+            sheet_name=str(year),
+            skiprows=4,
+            index_col=list(range(4)),
+        )
+        df[country] = sheet
+    df = pd.concat(df, axis=0)
 
-    eurostat.drop(["Unnamed: 4", year, "Unnamed: 6"], axis=1, inplace=True)
+    # drop columns with all NaNs
+    unnamed_cols = df.columns[df.columns.astype(str).str.startswith("Unnamed")]
+    df.drop(unnamed_cols, axis=1, inplace=True)
+    df.drop(year, axis=1, inplace=True)
+
+    # make numeric values where possible
+    df.replace("Z", 0, inplace=True)
+    df = df.apply(pd.to_numeric, errors="coerce")
+    df = df.select_dtypes(include=[np.number])
+
+    # write 'International aviation' to the 2nd level of the multiindex
+    int_avia = df.index.get_level_values(2) == "International aviation"
+    temp = df.loc[int_avia]
+    temp.index = pd.MultiIndex.from_frame(
+        temp.index.to_frame().fillna("International aviation")
+    )
+    df = pd.concat([temp, df.loc[~int_avia]])
+
     # Renaming some indices
-    rename = {
+    index_rename = {
         "Households": "Residential",
         "Commercial & public services": "Services",
         "Domestic navigation": "Domestic Navigation",
+        "International maritime bunkers": "Bunkers",
     }
-    for name, rename in rename.items():
-        eurostat.index = eurostat.index.set_levels(
-            eurostat.index.levels[3].where(eurostat.index.levels[3] != name, rename),
-            level=3,
-        )
-    new_index = eurostat.index.set_levels(
-        eurostat.index.levels[2].where(
-            eurostat.index.levels[2] != "International maritime bunkers", "Bunkers"
-        ),
-        level=2,
-    )
-    eurostat.index = new_index
+    columns_rename = {"Total": "Total all products", "UK": "GB"}
+    df.rename(index=index_rename, columns=columns_rename, inplace=True)
+    df.sort_index(inplace=True)
+    df.index.names = [None] * len(df.index.names)
 
-    eurostat.rename(columns={"Total": "Total all products"}, inplace=True)
-    eurostat.index = eurostat.index.set_levels(
-        eurostat.index.levels[0].where(eurostat.index.levels[0] != "UK", "GB"), level=0
-    )
-
-    df = eurostat * 11.63 / 1e3
+    # convert to TWh/a from ktoe/a
+    df *= 11.63 / 1e3
 
     return df
 
@@ -776,25 +703,25 @@ def build_transport_data(countries, population, idees):
     return transport_data
 
 
-def rescale(idees_countries, energy, eurostat):
+def rescale_idees_from_eurostat(
+    idees_countries, energy, eurostat, input_eurostat, countries
+):
     """
     Takes JRC IDEES data from 2015 and rescales it by the ratio of the eurostat
     data and the 2015 eurostat data.
 
     missing data: ['passenger car efficiency', 'passenger cars']
     """
+    main_cols = ["Total all products", "Electricity"]
     # read in the eurostat data for 2015
-    eurostat_2015 = build_eurostat(input_eurostat, countries, 2023, 2015)[
-        ["Total all products", "Electricity"]
-    ]
-    eurostat_year = eurostat[["Total all products", "Electricity"]]
+    eurostat_2015 = build_eurostat(input_eurostat, countries, 2015)[main_cols]
+    eurostat_year = eurostat[main_cols]
     # calculate the ratio of the two data sets
     ratio = eurostat_year / eurostat_2015
     ratio = ratio.droplevel([1, 4])
-    ratio.rename(
-        columns={"Total all products": "total", "Electricity": "ele"}, inplace=True
-    )
-    ratio = ratio.rename(index={"EL": "GR"}, level=0)
+    cols_rename = {"Total all products": "total", "Electricity": "ele"}
+    index_rename = {v: k for k, v in idees_rename.items()}
+    ratio.rename(columns=cols_rename, index=index_rename, inplace=True)
 
     mappings = {
         "Residential": {
@@ -887,16 +814,16 @@ def rescale(idees_countries, energy, eurostat):
         for sector, mapping in mappings.items():
             sector_ratio = ratio.loc[(country, slice(None), sector)]
 
-            energy.loc[country, mapping["total"]] *= sector_ratio[["total"]].iloc[0, 0]
-            energy.loc[country, mapping["elec"]] *= sector_ratio[["ele"]].iloc[0, 0]
+            energy.loc[country, mapping["total"]] *= sector_ratio["total"].iloc[0]
+            energy.loc[country, mapping["elec"]] *= sector_ratio["ele"].iloc[0]
 
-        avi_d = ratio.loc[(country, slice(None), "Domestic aviation")]
-        avi_i = ratio.loc[(country, "International aviation", slice(None))]
-        energy.loc[country, avia_inter] *= avi_i[["total"]].iloc[0, 0]
-        energy.loc[country, avia_domestic] *= avi_d[["total"]].iloc[0, 0]
+        avi_d = ratio.loc[(country, slice(None), "Domestic aviation"), "total"]
+        avi_i = ratio.loc[(country, "International aviation", slice(None)), "total"]
+        energy.loc[country, avia_inter] *= avi_i.iloc[0]
+        energy.loc[country, avia_domestic] *= avi_d.iloc[0]
 
-        nav = ratio.loc[(country, slice(None), "Domestic Navigation")]
-        energy.loc[country, navigation] *= nav[["total"]].iloc[0, 0]
+        nav = ratio.loc[(country, slice(None), "Domestic Navigation"), "total"]
+        energy.loc[country, navigation] *= nav.iloc[0]
 
     return energy
 
@@ -922,17 +849,16 @@ if __name__ == "__main__":
     input_eurostat = snakemake.input.eurostat
     eurostat = build_eurostat(input_eurostat, countries, data_year)
     swiss = build_swiss(data_year)
-    # data from idees only exists from 2000-2015
-    if data_year > 2015:
-        # read in latest data and rescale later
-        idees = build_idees(idees_countries, 2015)
-    else:
-        idees = build_idees(idees_countries, data_year)
+    # data from idees only exists from 2000-2015. read in latest data and rescale later
+    idees = build_idees(idees_countries, min(2015, data_year))
 
     energy = build_energy_totals(countries, eurostat, swiss, idees)
 
     if data_year > 2015:
-        energy = rescale(idees_countries, energy, eurostat)
+        logger.info("Data year is after 2015. Rescaling IDEES data based on eurostat.")
+        energy = rescale_idees_from_eurostat(
+            idees_countries, energy, eurostat, input_eurostat, countries
+        )
 
     energy.to_csv(snakemake.output.energy_name)
 
