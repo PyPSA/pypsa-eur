@@ -9,7 +9,7 @@ Release Notes
 
 Upcoming Release
 ================
-* Corrected a bug leading to power plants operating after their DateOut 
+* Corrected a bug leading to power plants operating after their DateOut
   (https://github.com/PyPSA/pypsa-eur/pull/958). Added additional grouping years
   before 1980.
 
