@@ -287,7 +287,6 @@ transformers:
 
 # docs-load in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#load
 load:
-  power_statistics: true
   interpolate_limit: 3
   time_shift_for_large_gaps: 1w
   manual_adjustments: true # false
