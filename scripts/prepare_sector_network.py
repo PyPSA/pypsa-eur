@@ -275,9 +275,7 @@ def co2_emissions_year(
 
 
 # TODO: move to own rule with sector-opts wildcard?
-def build_carbon_budget(
-    o, input_eurostat, fn, emissions_scope, input_co2, options
-):
+def build_carbon_budget(o, input_eurostat, fn, emissions_scope, input_co2, options):
     """
     Distribute carbon budget following beta or exponential transition path.
     """
