@@ -171,8 +171,6 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
     phased_out = df_agg[df_agg["DateOut"] < baseyear].index
     df_agg.drop(phased_out, inplace=True)
 
-
-
     # assign clustered bus
     busmap_s = pd.read_csv(snakemake.input.busmap_s, index_col=0).squeeze()
     busmap = pd.read_csv(snakemake.input.busmap, index_col=0).squeeze()
@@ -195,7 +193,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
 
     # calculate (adjusted) remaining lifetime before phase-out (+1 because assuming
     # phase out date at the end of the year)
-    df_agg["lifetime"] = df_agg.DateOut - df_agg["grouping_year"]  + 1
+    df_agg["lifetime"] = df_agg.DateOut - df_agg["grouping_year"] + 1
 
     df = df_agg.pivot_table(
         index=["grouping_year", "Fueltype"],
