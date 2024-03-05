@@ -314,9 +314,8 @@ pypsa_eur:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#energy
 energy:
-  energy_totals_year: 2013
+  energy_totals_year: 2019
   base_emissions_year: 1990
-  eurostat_report_year: 2016
   emissions: CO2
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#biomass

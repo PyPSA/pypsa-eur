@@ -9,6 +9,19 @@ Release Notes
 
 Upcoming Release
 ================
+
+* The Eurostat data was updated to the 2023 version in :mod:`build_energy_totals`.
+
+* The latest `Swiss energy totals
+  <https://www.bfe.admin.ch/bfe/de/home/versorgung/statistik-und-geodaten/energiestatistiken/energieverbrauch-nach-verwendungszweck.html/>`_
+  have been updated to the 2023 version.
+
+* The JRC-IDEES data is only available until 2015. For energy totals years (``energy: energy_totals_year``) after
+  2015, the data scaled using the ratio of Eurostat data reported for the energy
+  totals year and 2015.
+
+* The default energy totals year (``energy: energy_totals_year``) was updated to 2019.
+
 * Upgrade default techno-economic assumptions to ``technology-data`` v0.8.1.
 
 * Linearly interpolate missing investment periods in year-dependent
