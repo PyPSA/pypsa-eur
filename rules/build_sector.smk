@@ -834,7 +834,6 @@ rule prepare_sector_network:
         countries=config_provider("countries"),
         adjustments=config_provider("adjustments", "sector"),
         emissions_scope=config_provider("energy", "emissions"),
-        eurostat_report_year=config_provider("energy", "eurostat_report_year"),
         RDIR=RDIR,
     input:
         unpack(input_profile_offwind),

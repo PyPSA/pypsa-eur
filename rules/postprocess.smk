@@ -237,7 +237,6 @@ rule plot_summary:
         countries=config_provider("countries"),
         planning_horizons=config_provider("scenario", "planning_horizons"),
         emissions_scope=config_provider("energy", "emissions"),
-        eurostat_report_year=config_provider("energy", "eurostat_report_year"),
         plotting=config_provider("plotting"),
         foresight=config_provider("foresight"),
         co2_budget=config_provider("co2_budget"),
