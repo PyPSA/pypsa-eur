@@ -9,6 +9,8 @@ Release Notes
 
 Upcoming Release
 ================
+* Corrected a bug leading to power plants operating after their DateOut (https://github.com/PyPSA/pypsa-eur/pull/958).
+
 * Upgrade default techno-economic assumptions to ``technology-data`` v0.8.1.
 
 * Linearly interpolate missing investment periods in year-dependent
