@@ -468,7 +468,7 @@ rule build_industrial_production_per_country:
     input:
         ammonia_production=resources("ammonia_production.csv"),
         jrc="data/bundle-sector/jrc-idees-2015",
-        eurostat="data/bundle-sector/eurostat-energy_balances-may_2018_edition",
+        eurostat="data/eurostat/eurostat-energy_balances-april_2023_edition",
     output:
         industrial_production_per_country=resources(
             "industrial_production_per_country.csv"
