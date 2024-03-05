@@ -96,8 +96,8 @@ rule validate_elec_networks:
         ),
 
 
-#temporarily comment out since conflicting with scenario management
-#rule plot_statistics:
+# temporarily comment out since conflicting with scenario management
+# rule plot_statistics:
 #    input:
 #        [
 #            expand(
