@@ -21,7 +21,7 @@ from _helpers import (
     update_config_from_wildcards,
 )
 from add_electricity import sanitize_carriers
-from prepare_sector_network import cluster_heat_buses, define_spatial, prepare_costs
+from prepare_sector_network import cluster_heat_buses, define_spatial, prepare_costs, get
 
 logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
@@ -55,6 +55,47 @@ def add_build_year_to_new_assets(n, baseyear):
             c.pnl[attr] = c.pnl[attr].rename(columns=rename)
 
 
+def add_existing_land_transport(baseyear, options):
+    # today ICE capacity assuming all internal combustion
+    share = get(options["land_transport_ice_share"], baseyear)
+    ice_i = n.links[n.links.carrier=="land transport oil"].index
+    p_nom = n.links[ice_i, "p_nom"] / share
+    efficiency = n.links_t.efficiency[ice_i]
+    p_max_pu = n.links_t.p_max_pu[ice_i]
+    
+    # TODO car ages
+    car_ages = {
+              2020: 0.15,  # 0-4 years (2020-2025)
+              2015: 0.20,  # 5-9 years (2010-2015)
+              2010: 0.20,  # 10-14 years (2005-2010)
+              2005: 0.15,  # 15-19 years (2000-2005)
+              2000: 0.30   # 20+ years
+            }
+    for build_year, share in car_ages.items():
+        df = n.links.loc[ice_i]
+        df = df[df.lifetime + build_year > baseyear]
+        if df.empty: continue
+        df["build_year"] = build_year
+        df["p_nom"] = share * p_nom
+        df["p_nom_extendable"] = False
+        df.rename(index=lambda x: x + f"-{build_year}", inplace=True)
+        
+        n.madd(
+            "Link",
+            df.index,
+            bus0=df.bus0,
+            bus1=df.bus1,
+            bus2=df.bus2,
+            carrier=df.carrier,
+            efficiency=efficiency,
+            efficiency2=df.efficiency2,
+            p_nom_extendable=False,
+            p_nom=df.p_nom,
+            p_min_pu=p_max_pu,
+            p_max_pu=p_max_pu,
+            lifetime=df.lifetime,
+        )
+        
 def add_existing_renewables(df_agg):
     """
     Append existing renewables to the df_agg pd.DataFrame with the conventional
@@ -558,7 +599,7 @@ if __name__ == "__main__":
             clusters="37",
             ll="v1.0",
             opts="",
-            sector_opts="8760-T-H-B-I-A-dist1",
+            sector_opts="730H-T-H-B-I-A-dist1",
             planning_horizons=2020,
         )
 
@@ -618,7 +659,9 @@ if __name__ == "__main__":
 
     if options.get("cluster_heat_buses", False):
         cluster_heat_buses(n)
-
+    
+    if options["endogenous_transport"]:
+        add_existing_land_transport(baseyear, options)
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
 
     sanitize_carriers(n, snakemake.config)
