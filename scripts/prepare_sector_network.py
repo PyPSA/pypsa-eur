@@ -1618,6 +1618,7 @@ def add_EVs(
             p_nom=p_nom,
             carrier="V2G",
             p_max_pu=avail_profile[nodes],
+            lifetime=1,
             efficiency=options.get("bev_charge_efficiency", 0.9),
         )
 
@@ -1717,6 +1718,40 @@ def add_ice_cars(n, nodes, p_set, ice_share, temperature):
     )
 
 
+def adjust_endogenous_transport(n):
+    carrier = ['land transport EV', 'land transport oil',
+               "land transport fuel cell", "BEV charger", "V2G"] 
+    
+    links_i = n.links[n.links.carrier.isin(carrier)].index
+    n.links.loc[links_i, "p_nom_extendable"] = True
+    
+    # costs todo
+    # assume here for all of Europe
+    # average driving distance 15 000 km /year and car
+    # EV --------------------------
+    # average consumption EV 18 kWh/100 km
+    # annual demand per car 18 kWh/100km * 150 100km/a = 2.7 MWh/a
+    cost_EV = costs.loc["Battery electric (passenger cars)", "fixed"]/2.7
+    # FCE ----------------------------
+    # average consumption 0.7-1 kg_H2/100km assume 0.85-> 0.85*33.33 kWh_H2/100 km
+    # annual demand per car 33.33 kWh/100km * 150 100km/a = 4.25 MWh/a
+    cost_FCE = costs.loc["Hydrogen fuel cell (passenger cars)", "fixed"]/4.25
+    # ICE ---------------------------------------------------------
+    # average consumption 6.5liter/100km
+    # energy content gasoline 9.7 kWh/liter
+    # annual demand per car 6.5 * 9.7 kWh/100km * 150 100km/a = 9.46
+    cost_ICE = costs.at["Liquid fuels ICE (passenger cars)", "fixed"]/9.46
+    # cost in unit input depending on car type
+    costs_car_type = {'land transport EV': cost_EV,
+                      "land transport fuel cell": cost_FCE,
+                      'land transport oil': cost_ICE,
+        }
+    
+    for car_type, cost in costs_car_type.items():
+        car_i = n.links[n.links.carrier==car_type].index
+        n.links.loc[car_i, "capital_cost"] = cost
+        n.links.loc[car_i, "lifetime"] = 15
+
 def add_land_transport(n, costs):
     # TODO options?
 
@@ -1744,7 +1779,8 @@ def add_land_transport(n, costs):
         logger.info(f"{engine} share: {shares[engine]*100}%")
 
     check_land_transport_shares(shares)
-
+    
+    endogenous = options["endogenous_transport"]
     nodes = spatial.nodes
 
     # Add load for transport demand
@@ -1774,7 +1810,7 @@ def add_land_transport(n, costs):
     # temperature for correction factor for heating/cooling
     temperature = xr.open_dataarray(snakemake.input.temp_air_total).to_pandas()
 
-    if shares["electric"] > 0:
+    if shares["electric"] > 0 or endogenous:
         add_EVs(
             n,
             nodes,
@@ -1786,12 +1822,15 @@ def add_land_transport(n, costs):
             temperature,
         )
 
-    if shares["fuel_cell"] > 0:
+    if shares["fuel_cell"] > 0 or endogenous:
         add_fuel_cell_cars(n, nodes, p_set, shares["fuel_cell"], temperature)
 
-    if shares["ice"] > 0:
+    if shares["ice"] > 0 or endogenous:
         add_ice_cars(n, nodes, p_set, shares["ice"], temperature)
-
+        
+    
+    if endogenous:
+        adjust_endogenous_transport(n)
 
 def build_heat_demand(n):
     heat_demand_shape = (
@@ -3724,7 +3763,7 @@ if __name__ == "__main__":
             clusters="37",
             ll="v1.0",
             sector_opts="730H-T-H-B-I-A-dist1",
-            planning_horizons="2050",
+            planning_horizons="2030",
         )
 
     configure_logging(snakemake)
