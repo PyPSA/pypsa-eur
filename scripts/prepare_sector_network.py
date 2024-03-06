@@ -2907,7 +2907,7 @@ def add_industry(n, costs):
 
     if (
         snakemake.config["industry"]["waste_to_energy"]
-        and options["regional_oil_demand"]
+        and options["regional_oil_demand"] # Should warn if regional_oil_demand is not true!!?
     ):
 
         n.madd(
@@ -2943,13 +2943,13 @@ def add_industry(n, costs):
             efficiency=costs.at["oil", "CO2 intensity"],
         )
 
-        # TODO add heat
         n.madd(
             "Link",
             spatial.oil.demand_locations + " waste CHP",
             bus0=spatial.oil.demand_locations + " non-sequestered HVC",
             bus1=spatial.oil.demand_locations,
-            bus2="co2 atmosphere",
+            bus2=spatial.oil.demand_locations + "urban central heat",
+            bus3="co2 atmosphere",
             carrier="waste CHP",
             p_nom_extendable=True,
             # p_nom=biomass_potential['municipal solid waste'] / 8760,
@@ -2957,19 +2957,19 @@ def add_industry(n, costs):
             * costs.at["waste CHP", "efficiency"],
             marginal_cost=costs.at["waste CHP", "VOM"],
             efficiency=costs.at["waste CHP", "efficiency"],
-            # efficiency4=costs.at['waste CHP', 'efficiency-heat'],
-            efficiency2=costs.at["oil", "CO2 intensity"],
+            efficiency2=costs.at['waste CHP', 'efficiency-heat'],
+            efficiency3=costs.at["oil", "CO2 intensity"],
             lifetime=costs.at["waste CHP", "lifetime"],
         )
 
-        # TODO add heat
         n.madd(
             "Link",
             spatial.oil.demand_locations + " waste CHP CC",
             bus0=spatial.oil.demand_locations + " non-sequestered HVC",
             bus1=spatial.oil.demand_locations,
-            bus2="co2 atmosphere",
-            bus3=spatial.co2.nodes,
+            bus2=spatial.oil.demand_locations + "urban central heat",
+            bus3="co2 atmosphere",
+            bus4=spatial.co2.nodes,
             carrier="waste CHP CC",
             p_nom_extendable=True,
             # p_nom=biomass_potential['municipal solid waste'] / 8760,
@@ -2977,9 +2977,9 @@ def add_industry(n, costs):
             * costs.at["waste CHP CC", "efficiency"],
             marginal_cost=costs.at["waste CHP CC", "VOM"],
             efficiency=costs.at["waste CHP CC", "efficiency"],
-            # efficiency4=costs.at['waste CHP', 'efficiency-heat'],
-            efficiency2=costs.at["oil", "CO2 intensity"] * (1 - options["cc_fraction"]),
-            efficiency3=costs.at["oil", "CO2 intensity"] * options["cc_fraction"],
+            efficiency2=costs.at["waste CHP CC", 'efficiency-heat'],
+            efficiency3=costs.at["oil", "CO2 intensity"] * (1 - options["cc_fraction"]),
+            efficiency4=costs.at["oil", "CO2 intensity"] * options["cc_fraction"],
             lifetime=costs.at["waste CHP CC", "lifetime"],
         )
 
