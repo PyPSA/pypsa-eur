@@ -237,7 +237,6 @@ rule plot_summary:
         countries=config_provider("countries"),
         planning_horizons=config_provider("scenario", "planning_horizons"),
         emissions_scope=config_provider("energy", "emissions"),
-        eurostat_report_year=config_provider("energy", "eurostat_report_year"),
         plotting=config_provider("plotting"),
         foresight=config_provider("foresight"),
         co2_budget=config_provider("co2_budget"),
@@ -247,7 +246,7 @@ rule plot_summary:
         costs=RESULTS + "csvs/costs.csv",
         energy=RESULTS + "csvs/energy.csv",
         balances=RESULTS + "csvs/supply_energy.csv",
-        eurostat=input_eurostat,
+        eurostat="data/eurostat/eurostat-energy_balances-april_2023_edition",
         co2="data/bundle-sector/eea/UNFCCC_v23.csv",
     output:
         costs=RESULTS + "graphs/costs.pdf",

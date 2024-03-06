@@ -462,7 +462,6 @@ def plot_carbon_budget_distribution(input_eurostat, options):
     plt.rcParams["ytick.labelsize"] = 20
 
     emissions_scope = snakemake.params.emissions_scope
-    report_year = snakemake.params.eurostat_report_year
     input_co2 = snakemake.input.co2
 
     # historic emissions
@@ -472,7 +471,6 @@ def plot_carbon_budget_distribution(input_eurostat, options):
         input_eurostat,
         options,
         emissions_scope,
-        report_year,
         input_co2,
         year=1990,
     )
