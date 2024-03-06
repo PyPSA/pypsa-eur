@@ -859,15 +859,17 @@ def rescale_idees_from_eurostat(
         slicer_target = idx[country, 2016:2021, :, :]
         slicer_source = idx[country, 2015, :, :]
         for sector, mapping in mappings.items():
-            sector_ratio = ratio.loc[(country, slice(None), slice(None), sector)].droplevel("lvl2")
+            sector_ratio = ratio.loc[
+                (country, slice(None), slice(None), sector)
+            ].droplevel("lvl2")
 
             energy.loc[slicer_target, mapping["total"]] = cartesian(
                 sector_ratio.loc[2016:2021, "total"],
-                energy.loc[slicer_source, mapping["total"]].squeeze()
+                energy.loc[slicer_source, mapping["total"]].squeeze(),
             ).values
             energy.loc[slicer_target, mapping["elec"]] = cartesian(
                 sector_ratio.loc[2016:2021, "ele"],
-                energy.loc[slicer_source, mapping["elec"]].squeeze()
+                energy.loc[slicer_source, mapping["elec"]].squeeze(),
             ).values
 
         level_drops = ["country", "lvl2", "lvl3"]
@@ -882,18 +884,15 @@ def rescale_idees_from_eurostat(
         nav = ratio.loc[slicer, "total"].droplevel(level_drops)
 
         energy.loc[slicer_target, avia_inter] = cartesian(
-            avi_i.loc[2016:2021],
-            energy.loc[slicer_source, avia_inter].squeeze()
+            avi_i.loc[2016:2021], energy.loc[slicer_source, avia_inter].squeeze()
         ).values
 
         energy.loc[slicer_target, avia_domestic] = cartesian(
-            avi_d.loc[2016:2021],
-            energy.loc[slicer_source, avia_domestic].squeeze()
+            avi_d.loc[2016:2021], energy.loc[slicer_source, avia_domestic].squeeze()
         ).values
 
         energy.loc[slicer_target, navigation] = cartesian(
-            nav.loc[2016:2021],
-            energy.loc[slicer_source, navigation]
+            nav.loc[2016:2021], energy.loc[slicer_source, navigation]
         ).values
 
     return energy
@@ -925,9 +924,7 @@ if __name__ == "__main__":
 
     # Data from IDEES only exists from 2000-2015.
     logger.info("Extrapolate IDEES data based on eurostat for years 2015-2021.")
-    energy = rescale_idees_from_eurostat(
-        idees_countries, energy, eurostat
-    )
+    energy = rescale_idees_from_eurostat(idees_countries, energy, eurostat)
 
     energy.to_csv(snakemake.output.energy_name)
 
