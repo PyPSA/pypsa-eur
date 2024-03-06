@@ -122,27 +122,16 @@ def build_eurostat(input_eurostat, countries, year):
     # convert to TWh/a from ktoe/a
     df *= 11.63 / 1e3
 
-    df.index = df.index.set_levels(df.index.levels[1].astype(int), level=1)
-
-    if year:
-        df = df.xs(year, level="year")
-
     return df
 
 
-def build_swiss(year=None):
+def build_swiss(year):
     """
-    Return a pd.DataFrame of Swiss energy data in TWh/a.
+    Return a pd.Series of Swiss energy data in TWh/a.
     """
-
     fn = snakemake.input.swiss
 
-    df = pd.read_csv(fn, index_col=[0, 1]).stack().unstack("item")
-    df.index.names = ["country", "year"]
-    df.index = df.index.set_levels(df.index.levels[1].astype(int), level=1)
-
-    if year:
-        df = df.xs(year, level="year")
+    df = pd.read_csv(fn, index_col=[0, 1]).loc["CH", str(year)]
 
     # convert PJ/a to TWh/a
     df /= 3.6
@@ -151,7 +140,6 @@ def build_swiss(year=None):
 
 
 def idees_per_country(ct, year, base_dir):
-    ct_totals = {}
     ct_idees = idees_rename.get(ct, ct)
     fn_residential = f"{base_dir}/JRC-IDEES-2015_Residential_{ct_idees}.xlsx"
     fn_tertiary = f"{base_dir}/JRC-IDEES-2015_Tertiary_{ct_idees}.xlsx"
@@ -159,27 +147,27 @@ def idees_per_country(ct, year, base_dir):
 
     # residential
 
-    df = pd.read_excel(fn_residential, "RES_hh_fec", index_col=0)
-
-    ct_totals["total residential space"] = df.loc["Space heating"]
+    df = pd.read_excel(fn_residential, "RES_hh_fec", index_col=0)[year]
 
     rows = ["Advanced electric heating", "Conventional electric heating"]
-    ct_totals["electricity residential space"] = df.loc[rows].sum()
-
-    ct_totals["total residential water"] = df.loc["Water heating"]
+    ct_totals = {
+        "total residential space": df["Space heating"],
+        "electricity residential space": df[rows].sum(),
+    }
+    ct_totals["total residential water"] = df.at["Water heating"]
 
     assert df.index[23] == "Electricity"
     ct_totals["electricity residential water"] = df.iloc[23]
 
-    ct_totals["total residential cooking"] = df.loc["Cooking"]
+    ct_totals["total residential cooking"] = df["Cooking"]
 
     assert df.index[30] == "Electricity"
     ct_totals["electricity residential cooking"] = df.iloc[30]
 
-    df = pd.read_excel(fn_residential, "RES_summary", index_col=0)
+    df = pd.read_excel(fn_residential, "RES_summary", index_col=0)[year]
 
     row = "Energy consumption by fuel - Eurostat structure (ktoe)"
-    ct_totals["total residential"] = df.loc[row]
+    ct_totals["total residential"] = df[row]
 
     assert df.index[47] == "Electricity"
     ct_totals["electricity residential"] = df.iloc[47]
@@ -192,27 +180,27 @@ def idees_per_country(ct, year, base_dir):
 
     # services
 
-    df = pd.read_excel(fn_tertiary, "SER_hh_fec", index_col=0)
+    df = pd.read_excel(fn_tertiary, "SER_hh_fec", index_col=0)[year]
 
-    ct_totals["total services space"] = df.loc["Space heating"]
+    ct_totals["total services space"] = df["Space heating"]
 
     rows = ["Advanced electric heating", "Conventional electric heating"]
-    ct_totals["electricity services space"] = df.loc[rows].sum()
+    ct_totals["electricity services space"] = df[rows].sum()
 
-    ct_totals["total services water"] = df.loc["Hot water"]
+    ct_totals["total services water"] = df["Hot water"]
 
     assert df.index[24] == "Electricity"
     ct_totals["electricity services water"] = df.iloc[24]
 
-    ct_totals["total services cooking"] = df.loc["Catering"]
+    ct_totals["total services cooking"] = df["Catering"]
 
     assert df.index[31] == "Electricity"
     ct_totals["electricity services cooking"] = df.iloc[31]
 
-    df = pd.read_excel(fn_tertiary, "SER_summary", index_col=0)
+    df = pd.read_excel(fn_tertiary, "SER_summary", index_col=0)[year]
 
     row = "Energy consumption by fuel - Eurostat structure (ktoe)"
-    ct_totals["total services"] = df.loc[row]
+    ct_totals["total services"] = df[row]
 
     assert df.index[50] == "Electricity"
     ct_totals["electricity services"] = df.iloc[50]
@@ -228,7 +216,7 @@ def idees_per_country(ct, year, base_dir):
     start = "Detailed split of energy consumption (ktoe)"
     end = "Market shares of energy uses (%)"
 
-    df = pd.read_excel(fn_tertiary, "AGR_fec", index_col=0).loc[start:end]
+    df = pd.read_excel(fn_tertiary, "AGR_fec", index_col=0).loc[start:end, year]
 
     rows = [
         "Lighting",
@@ -236,30 +224,30 @@ def idees_per_country(ct, year, base_dir):
         "Specific electricity uses",
         "Pumping devices (electric)",
     ]
-    ct_totals["total agriculture electricity"] = df.loc[rows].sum()
+    ct_totals["total agriculture electricity"] = df[rows].sum()
 
     rows = ["Specific heat uses", "Low enthalpy heat"]
-    ct_totals["total agriculture heat"] = df.loc[rows].sum()
+    ct_totals["total agriculture heat"] = df[rows].sum()
 
     rows = [
         "Motor drives",
         "Farming machine drives (diesel oil incl. biofuels)",
         "Pumping devices (diesel oil incl. biofuels)",
     ]
-    ct_totals["total agriculture machinery"] = df.loc[rows].sum()
+    ct_totals["total agriculture machinery"] = df[rows].sum()
 
     row = "Agriculture, forestry and fishing"
-    ct_totals["total agriculture"] = df.loc[row]
+    ct_totals["total agriculture"] = df[row]
 
     # transport
 
-    df = pd.read_excel(fn_transport, "TrRoad_ene", index_col=0)
+    df = pd.read_excel(fn_transport, "TrRoad_ene", index_col=0)[year]
 
-    ct_totals["total road"] = df.loc["by fuel (EUROSTAT DATA)"]
+    ct_totals["total road"] = df["by fuel (EUROSTAT DATA)"]
 
-    ct_totals["electricity road"] = df.loc["Electricity"]
+    ct_totals["electricity road"] = df["Electricity"]
 
-    ct_totals["total two-wheel"] = df.loc["Powered 2-wheelers (Gasoline)"]
+    ct_totals["total two-wheel"] = df["Powered 2-wheelers (Gasoline)"]
 
     assert df.index[19] == "Passenger cars"
     ct_totals["total passenger cars"] = df.iloc[19]
@@ -280,16 +268,16 @@ def idees_per_country(ct, year, base_dir):
     ct_totals["electricity light duty road freight"] = df.iloc[49]
 
     row = "Heavy duty vehicles (Diesel oil incl. biofuels)"
-    ct_totals["total heavy duty road freight"] = df.loc[row]
+    ct_totals["total heavy duty road freight"] = df[row]
 
     assert df.index[61] == "Passenger cars"
     ct_totals["passenger car efficiency"] = df.iloc[61]
 
-    df = pd.read_excel(fn_transport, "TrRail_ene", index_col=0)
+    df = pd.read_excel(fn_transport, "TrRail_ene", index_col=0)[year]
 
-    ct_totals["total rail"] = df.loc["by fuel (EUROSTAT DATA)"]
+    ct_totals["total rail"] = df["by fuel (EUROSTAT DATA)"]
 
-    ct_totals["electricity rail"] = df.loc["Electricity"]
+    ct_totals["electricity rail"] = df["Electricity"]
 
     assert df.index[15] == "Passenger transport"
     ct_totals["total rail passenger"] = df.iloc[15]
@@ -305,7 +293,7 @@ def idees_per_country(ct, year, base_dir):
     assert df.index[23] == "Electric"
     ct_totals["electricity rail freight"] = df.iloc[23]
 
-    df = pd.read_excel(fn_transport, "TrAvia_ene", index_col=0)
+    df = pd.read_excel(fn_transport, "TrAvia_ene", index_col=0)[year]
 
     assert df.index[6] == "Passenger transport"
     ct_totals["total aviation passenger"] = df.iloc[6]
@@ -336,21 +324,20 @@ def idees_per_country(ct, year, base_dir):
         + ct_totals["total international aviation passenger"]
     )
 
-    df = pd.read_excel(fn_transport, "TrNavi_ene", index_col=0)
+    df = pd.read_excel(fn_transport, "TrNavi_ene", index_col=0)[year]
 
     # coastal and inland
-    ct_totals["total domestic navigation"] = df.loc["by fuel (EUROSTAT DATA)"]
+    ct_totals["total domestic navigation"] = df["by fuel (EUROSTAT DATA)"]
 
-    df = pd.read_excel(fn_transport, "TrRoad_act", index_col=0)
+    df = pd.read_excel(fn_transport, "TrRoad_act", index_col=0)[year]
 
     assert df.index[85] == "Passenger cars"
     ct_totals["passenger cars"] = df.iloc[85]
 
-    return pd.DataFrame(ct_totals)
+    return pd.Series(ct_totals, name=ct)
 
 
-def build_idees(countries, year=None):
-
+def build_idees(countries, year):
     nprocesses = snakemake.threads
     disable_progress = snakemake.config["run"].get("disable_progressbar", False)
 
@@ -362,49 +349,35 @@ def build_idees(countries, year=None):
         desc="Build from IDEES database",
         disable=disable_progress,
     )
-
     with mute_print():
         with mp.Pool(processes=nprocesses) as pool:
             totals_list = list(tqdm(pool.imap(func, countries), **tqdm_kwargs))
 
-    totals = pd.concat(totals_list, keys=countries, names=["country", "year"])
+    totals = pd.concat(totals_list, axis=1)
 
     # convert ktoe to TWh
-    exclude = totals.columns.str.fullmatch("passenger cars")
-    totals.loc[:, ~exclude] *= 11.63 / 1e3
+    exclude = totals.index.str.fullmatch("passenger cars")
+    totals.loc[~exclude] *= 11.63 / 1e3
 
     # convert TWh/100km to kWh/km
-    totals.loc[:, "passenger car efficiency"] *= 10
+    totals.loc["passenger car efficiency"] *= 10
 
-    return totals
+    return totals.T
 
 
 def build_energy_totals(countries, eurostat, swiss, idees):
-
-    eurostat_fuels = dict(electricity="Electricity", total="Total")
-
-    eurostat_sectors = dict(
-        residential="Households",
-        services="Commercial & public services",
-        road="Road",
-        rail="Rail",
-    )
+    eurostat_fuels = {"electricity": "Electricity", "total": "Total all products"}
 
     to_drop = ["passenger cars", "passenger car efficiency"]
-
-    new_index = pd.MultiIndex.from_product(
-        [countries, eurostat.index.levels[1]], names=["country", "year"]
-    )
-
-    df = idees.reindex(new_index).drop(to_drop, axis=1)
+    df = idees.reindex(countries).drop(to_drop, axis=1)
 
     eurostat_countries = eurostat.index.levels[0]
-    in_eurostat = df.index.levels[0].intersection(eurostat_countries)
+    in_eurostat = df.index.intersection(eurostat_countries)
 
     # add international navigation
 
-    slicer = idx[in_eurostat, :, :, "International maritime bunkers", :]
-    fill_values = eurostat.loc[slicer, "Total"].groupby(level=[0, 1]).sum()
+    slicer = idx[in_eurostat, :, "Bunkers", :]
+    fill_values = eurostat.loc[slicer, "Total all products"].groupby(level=0).sum()
     df.loc[in_eurostat, "total international navigation"] = fill_values
 
     # add swiss energy data
@@ -414,24 +387,19 @@ def build_energy_totals(countries, eurostat, swiss, idees):
     # get values for missing countries based on Eurostat EnergyBalances
     # divide cooking/space/water according to averages in EU28
 
-    to_fill = df.index[
-        df["total residential"].isna()
-        & df.index.get_level_values("country").isin(eurostat_countries)
-    ]
+    missing = df.index[df["total residential"].isna()]
+    to_fill = missing.intersection(eurostat_countries)
     uses = ["space", "cooking", "water"]
 
-    c = to_fill.get_level_values("country")
-    y = to_fill.get_level_values("year")
-
     for sector in ["residential", "services", "road", "rail"]:
+        eurostat_sector = sector.capitalize()
 
         # fuel use
 
         for fuel in ["electricity", "total"]:
-
-            slicer = idx[c, y, :, :, eurostat_sectors[sector]]
+            slicer = idx[to_fill, :, :, eurostat_sector]
             fill_values = (
-                eurostat.loc[slicer, eurostat_fuels[fuel]].groupby(level=[0, 1]).sum()
+                eurostat.loc[slicer, eurostat_fuels[fuel]].groupby(level=0).sum()
             )
             df.loc[to_fill, f"{fuel} {sector}"] = fill_values
 
@@ -493,32 +461,30 @@ def build_energy_totals(countries, eurostat, swiss, idees):
                     no_norway[f"total {sector}"] - no_norway[f"electricity {sector}"]
                 )
                 fraction = nonelectric_use.div(nonelectric).mean()
-                df.loc["NO", f"total {sector} {use}"] = (
-                    total_heating * fraction
-                ).values
+                df.loc["NO", f"total {sector} {use}"] = total_heating * fraction
                 df.loc["NO", f"electricity {sector} {use}"] = (
                     total_heating * fraction * elec_fraction
-                ).values
+                )
 
     # Missing aviation
 
-    slicer = idx[c, y, :, :, "Domestic aviation"]
-    fill_values = eurostat.loc[slicer, "Total"].groupby(level=[0, 1]).sum()
+    slicer = idx[to_fill, :, :, "Domestic aviation"]
+    fill_values = eurostat.loc[slicer, "Total all products"].groupby(level=0).sum()
     df.loc[to_fill, "total domestic aviation"] = fill_values
 
-    slicer = idx[c, y, :, "International aviation", :]
-    fill_values = eurostat.loc[slicer, "Total"].groupby(level=[0, 1]).sum()
+    slicer = idx[to_fill, :, :, "International aviation"]
+    fill_values = eurostat.loc[slicer, "Total all products"].groupby(level=0).sum()
     df.loc[to_fill, "total international aviation"] = fill_values
 
     # missing domestic navigation
 
-    slicer = idx[c, y, :, :, "Domestic navigation"]
-    fill_values = eurostat.loc[slicer, "Total"].groupby(level=[0, 1]).sum()
+    slicer = idx[to_fill, :, :, "Domestic Navigation"]
+    fill_values = eurostat.loc[slicer, "Total all products"].groupby(level=0).sum()
     df.loc[to_fill, "total domestic navigation"] = fill_values
 
     # split road traffic for non-IDEES
     missing = df.index[df["total passenger cars"].isna()]
-    for fuel in ["electricity", "total"]:
+    for fuel in ["total", "electricity"]:
         selection = [
             f"{fuel} passenger cars",
             f"{fuel} other road passenger",
@@ -564,9 +530,11 @@ def build_energy_totals(countries, eurostat, swiss, idees):
         )
 
     if "BA" in df.index:
-        # fill missing data for BA proportional to RS
-        ratio = (df.loc["BA"].loc[2014:2020] / df.loc["RS"].loc[2014:2020]).mean()
-        df.loc["BA"] = (ratio * df.loc["RS"]).values
+        # fill missing data for BA (services and road energy data)
+        # proportional to RS with ratio of total residential demand
+        missing = df.loc["BA"] == 0.0
+        ratio = df.at["BA", "total residential"] / df.at["RS", "total residential"]
+        df.loc["BA", missing] = ratio * df.loc["RS", missing]
 
     return df
 
@@ -582,21 +550,18 @@ def build_district_heat_share(countries, idees):
 
     district_heat_share = district_heat / total_heat
 
-    district_heat_share = district_heat_share.reindex(countries, level="country")
+    district_heat_share = district_heat_share.reindex(countries)
 
     # Missing district heating share
-    dh_share = pd.read_csv(
-        snakemake.input.district_heat_share, index_col=0, usecols=[0, 1]
+    dh_share = (
+        pd.read_csv(snakemake.input.district_heat_share, index_col=0, usecols=[0, 1])
+        .div(100)
+        .squeeze()
     )
-
-    dh_share = pd.concat(
-        {y: dh_share for y in range(1990, 2021)}, names=["year", "country"]
-    ).swaplevel()
-    dh_share = dh_share.div(100)
-    dh_share = dh_share.reindex(district_heat_share.index)
-
     # make conservative assumption and take minimum from both data sets
-    district_heat_share = pd.concat([district_heat_share, dh_share], axis=1).min(axis=1)
+    district_heat_share = pd.concat(
+        [district_heat_share, dh_share.reindex_like(district_heat_share)], axis=1
+    ).min(axis=1)
 
     district_heat_share.name = "district heat share"
 
@@ -612,6 +577,8 @@ def build_eea_co2(input_co2, year=1990, emissions_scope="CO2"):
     df.Year = df.Year.astype(int)
     index_col = ["Country_code", "Pollutant_name", "Year", "Sector_name"]
     df = df.set_index(index_col).sort_index()
+
+    emissions_scope = emissions_scope
 
     cts = ["CH", "EUA", "NO"] + eu28_eea
 
@@ -658,26 +625,19 @@ def build_eea_co2(input_co2, year=1990, emissions_scope="CO2"):
 def build_eurostat_co2(input_eurostat, countries, year=1990):
     eurostat = build_eurostat(input_eurostat, countries, year)
 
-    if eurostat is None:
-        df = build_eurostat(countries, year)
-    else:
-        df = eurostat.xs(year, level="year")
-
-    specific_emissions = pd.Series(index=df.columns, dtype=float)
+    specific_emissions = pd.Series(index=eurostat.columns, dtype=float)
 
     # emissions in tCO2_equiv per MWh_th
-    specific_emissions["Solid fossil fuels"] = 0.36  # Approximates coal
-    specific_emissions["Oil and petroleum products"] = (
-        0.285  # Average of distillate and residue
-    )
-    specific_emissions["Natural gas"] = 0.2  # For natural gas
+    specific_emissions["Solid fuels"] = 0.36  # Approximates coal
+    specific_emissions["Oil (total)"] = 0.285  # Average of distillate and residue
+    specific_emissions["Gas"] = 0.2  # For natural gas
 
     # oil values from https://www.eia.gov/tools/faqs/faq.cfm?id=74&t=11
     # Distillate oil (No. 2)  0.276
     # Residual oil (No. 6)  0.298
     # https://www.eia.gov/electricity/annual/html/epa_a_03.html
 
-    return df.multiply(specific_emissions).sum(axis=1)
+    return eurostat.multiply(specific_emissions).sum(axis=1)
 
 
 def build_co2_totals(countries, eea_co2, eurostat_co2):
@@ -884,7 +844,6 @@ if __name__ == "__main__":
 
     countries = snakemake.params.countries
     idees_countries = pd.Index(countries).intersection(eu28)
-    countries_without_ch = pd.Index(countries).difference(["CH"])
 
     data_year = params["energy_totals_year"]
     input_eurostat = snakemake.input.eurostat
@@ -917,6 +876,5 @@ if __name__ == "__main__":
     co2 = build_co2_totals(countries, eea_co2, eurostat_co2)
     co2.to_csv(snakemake.output.co2_name)
 
-    idees_transport = idees.xs(data_year, level="year")
-    transport = build_transport_data(countries, population, idees_transport)
+    transport = build_transport_data(countries, population, idees)
     transport.to_csv(snakemake.output.transport_name)
