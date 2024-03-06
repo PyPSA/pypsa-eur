@@ -291,7 +291,7 @@ rule build_energy_totals:
         swiss="data/switzerland-new_format-all_years.csv",
         idees="data/bundle-sector/jrc-idees-2015",
         district_heat_share="data/district_heat_share.csv",
-        eurostat="data/eurostat-energy_balances-june_2021_edition",
+        eurostat="data/eurostat/eurostat-energy_balances-april_2023_edition",
     output:
         energy_name=resources("energy_totals.csv"),
         co2_name=resources("co2_totals.csv"),
@@ -508,7 +508,7 @@ rule build_industrial_production_per_country:
     input:
         ammonia_production=resources("ammonia_production.csv"),
         jrc="data/bundle-sector/jrc-idees-2015",
-        eurostat="data/bundle-sector/eurostat-energy_balances-may_2018_edition",
+        eurostat="data/eurostat/eurostat-energy_balances-april_2023_edition",
     output:
         industrial_production_per_country=resources(
             "industrial_production_per_country.csv"
@@ -878,7 +878,6 @@ rule prepare_sector_network:
         countries=config_provider("countries"),
         adjustments=config_provider("adjustments", "sector"),
         emissions_scope=config_provider("energy", "emissions"),
-        eurostat_report_year=config_provider("energy", "eurostat_report_year"),
         RDIR=RDIR,
     input:
         unpack(input_profile_offwind),
@@ -909,7 +908,7 @@ rule prepare_sector_network:
         ),
         network=resources("networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"),
         energy_totals_name=resources("energy_totals.csv"),
-        eurostat=input_eurostat,
+        eurostat="data/eurostat/eurostat-energy_balances-april_2023_edition",
         pop_weighted_energy_totals=resources(
             "pop_weighted_energy_totals_s{simpl}_{clusters}.csv"
         ),

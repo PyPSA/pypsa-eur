@@ -319,9 +319,8 @@ pypsa_eur:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#energy
 energy:
-  energy_totals_year: 2013
+  energy_totals_year: 2019
   base_emissions_year: 1990
-  eurostat_report_year: 2016
   emissions: CO2
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#biomass
@@ -360,7 +359,7 @@ solar_thermal:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#existing-capacities
 existing_capacities:
-  grouping_years_power: [1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2020, 2025, 2030]
+  grouping_years_power: [1960, 1965, 1970, 1975, 1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2020, 2025, 2030]
   grouping_years_heat: [1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2019] # these should not extend 2020
   threshold_capacity: 10
   default_heating_lifetime: 20

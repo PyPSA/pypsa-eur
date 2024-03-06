@@ -130,12 +130,6 @@ def has_internet_access(url="www.zenodo.org") -> bool:
         conn.close()
 
 
-def input_eurostat(w):
-    # 2016 includes BA, 2017 does not
-    report_year = config_provider("energy", "eurostat_report_year")(w)
-    return f"data/bundle-sector/eurostat-energy_balances-june_{report_year}_edition"
-
-
 def solved_previous_horizon(w):
     planning_horizons = config_provider("scenario", "planning_horizons")(w)
     i = planning_horizons.index(int(w.planning_horizons))
