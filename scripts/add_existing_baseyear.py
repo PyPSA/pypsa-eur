@@ -64,7 +64,7 @@ def add_existing_land_transport(baseyear, options):
     # today ICE capacity assuming all internal combustion
     share = get(options["land_transport_ice_share"], baseyear)
     ice_i = n.links[n.links.carrier == "land transport oil"].index
-    p_nom = n.links[ice_i, "p_nom"] / share
+    p_nom = n.links.loc[ice_i, "p_nom"] / share
     efficiency = n.links_t.efficiency[ice_i]
     p_max_pu = n.links_t.p_max_pu[ice_i]
 
@@ -601,13 +601,13 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "add_existing_baseyear",
-            # configfiles="config/test/config.myopic.yaml",
+            configfiles="config/test/config.myopic.yaml",
             simpl="",
-            clusters="37",
-            ll="v1.0",
+            clusters="5",
+            ll="v1.5",
             opts="",
-            sector_opts="730H-T-H-B-I-A-dist1",
-            planning_horizons=2020,
+            sector_opts="24H-T-H-B-I-A-dist1",
+            planning_horizons=2030,
         )
 
     configure_logging(snakemake)
