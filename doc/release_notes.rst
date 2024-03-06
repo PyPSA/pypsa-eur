@@ -68,6 +68,8 @@ Upcoming Release
   (https://github.com/PyPSA/pypsa-eur/pull/958). Added additional grouping years
   before 1980.
 
+* Add decommissioning of renewables assets in `add_existing_baseyear`.
+
 * The Eurostat data was updated to the 2023 version in :mod:`build_energy_totals`.
 
 * The latest `Swiss energy totals
