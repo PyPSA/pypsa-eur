@@ -1618,6 +1618,7 @@ def add_EVs(
             p_nom=p_nom,
             carrier="V2G",
             p_max_pu=avail_profile[nodes],
+            lifetime=1,
             efficiency=options.get("bev_charge_efficiency", 0.9),
         )
 
