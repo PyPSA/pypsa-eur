@@ -672,9 +672,11 @@ rule build_retro_cost:
         clustered_pop_layout=resources("pop_layout_elec_s{simpl}_{clusters}.csv"),
         cost_germany="data/retro/retro_cost_germany.csv",
         window_assumptions="data/retro/window_assumptions.csv",
+        households="data/retro/households.csv"
     output:
         retro_cost=resources("retro_cost_elec_s{simpl}_{clusters}.csv"),
         floor_area=resources("floor_area_elec_s{simpl}_{clusters}.csv"),
+        WWHR_costs=resources("WWHR_costs_elec_s{simpl}_{clusters}.csv"),
     resources:
         mem_mb=1000,
     log:
@@ -835,6 +837,7 @@ rule prepare_sector_network:
         adjustments=config_provider("adjustments", "sector"),
         emissions_scope=config_provider("energy", "emissions"),
         eurostat_report_year=config_provider("energy", "eurostat_report_year"),
+        snapshots=config_provider("snapshots"),
         RDIR=RDIR,
     input:
         unpack(input_profile_offwind),
@@ -843,6 +846,11 @@ rule prepare_sector_network:
         retro_cost=lambda w: (
             resources("retro_cost_elec_s{simpl}_{clusters}.csv")
             if config_provider("sector", "retrofitting", "retro_endogen")(w)
+            else []
+        ),
+        WWHR_cost=lambda w: (
+            resources("WWHR_costs_elec_s{simpl}_{clusters}.csv")
+            if config_provider("sector", "retrofitting", "WWHR_endogen")(w)
             else []
         ),
         floor_area=lambda w: (

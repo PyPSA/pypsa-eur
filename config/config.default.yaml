@@ -475,6 +475,7 @@ sector:
     2050: 0.29
   retrofitting:
     retro_endogen: false
+    WWHR_endogen: true # Waste Water Heat Recovery
     cost_factor: 1.0
     interest_rate: 0.04
     annualise_cost: true

@@ -28,6 +28,8 @@ The energy savings calculations are based on the
       - tabula https://episcope.eu/fileadmin/tabula/public/calc/tabula-calculator.xlsx
 
 
+The energy savings for hot water are based on [...]
+
 Basic Equations
 ---------------
 
@@ -724,8 +726,10 @@ def map_to_lstrength(l_strength, df):
     )
     # reflects in capital costs, otherwise moderate cost assumptions are too high,
     # compared to ambitious ones (this setting lowers them by approx. 10%)
+    # previously: middle = len(l_strength) // 2
     map_to_l = pd.MultiIndex.from_arrays(
         [middle * [3] + len(l_strength[middle:]) * [3], l_strength]
+        # previously: [middle * [2] + len(l_strength[middle:]) * [3], l_strength]
     )
     l_strength_df = (
         df.stack(-2)
@@ -1046,6 +1050,16 @@ def sample_dE_costs_area(
 
     return cost_dE_new, area_tot
 
+def WWHR_costs(households):
+    """
+    calculates the costs for waste water heat recovery (WWHR) based on the number of households per region
+    """
+    pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
+    housholds_spatial = pd.merge(pop_layout.reset_index(), households, on="ct").set_index("name")
+    housholds_spatial = housholds_spatial.fraction * housholds_spatial["Households (thousands)"] * 1000 #number in thousands
+    costs_WWHR = 30*housholds_spatial # costs for waste water heat recovery is 600; currently hard-coded based on a report
+
+    return costs_WWHR
 
 # %% --- MAIN --------------------------------------------------------------
 if __name__ == "__main__":
@@ -1062,6 +1076,8 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     #  ********  config  *********************************************************
+
+    households = pd.read_csv(snakemake.input.households).rename(columns={"Country":"ct"})
 
     retro_opts = snakemake.params.retrofitting
     interest_rate = retro_opts["interest_rate"]
@@ -1109,6 +1125,10 @@ if __name__ == "__main__":
         area, area_tot, costs, dE_space, countries, construction_index, tax_weighting
     )
 
+    # Calculare the costs for waste water heat recovery
+    WWHR_costs = WWHR_costs(households)
+
     #   save *********************************************************************
     cost_dE.to_csv(snakemake.output.retro_cost)
     area_tot.to_csv(snakemake.output.floor_area)
+    WWHR_costs.to_csv(snakemake.output.WWHR_costs)

@@ -21,6 +21,7 @@ from _helpers import (
     configure_logging,
     set_scenario_config,
     update_config_from_wildcards,
+    generate_periodic_profiles,
 )
 from add_electricity import calculate_annuity, sanitize_carriers, sanitize_locations
 from build_energy_totals import build_co2_totals, build_eea_co2, build_eurostat_co2
@@ -261,6 +262,7 @@ def co2_emissions_year(
         eurostat_co2 = build_eurostat_co2(
             input_eurostat, countries, report_year, year=2014
         )
+
     else:
         eurostat_co2 = build_eurostat_co2(input_eurostat, countries, report_year, year)
 
@@ -2147,6 +2149,64 @@ def add_heat(n, costs):
                     * options["retrofitting"]["cost_factor"],
                 )
 
+    if options["retrofitting"]["WWHR_endogen"]:
+        WWHR_costs = pd.read_csv(snakemake.input.WWHR_cost, index_col=0)
+        heat_demand_shape = (
+            xr.open_dataset(snakemake.input.hourly_heat_demand_total)
+                .to_dataframe()
+                .unstack(level=1)
+        )
+
+        name = f"residential water"
+
+        hotwaterprofile = (
+            heat_demand_shape[name] / heat_demand_shape[name].sum()
+        ).multiply(pop_weighted_energy_totals[f"total {name}"]) * 1e6
+
+        # 80% of hot water is used for showers
+        # 35% is the assumed reduction of demand due to WWHR technology
+        WWHR_week = 0.8 * 0.35 * np.ones((24 * 7,))
+
+        WWHR_profile = generate_periodic_profiles(
+            dt_index=pd.date_range(freq="h", **snakemake.params.snapshots, tz="UTC"),
+            nodes=hotwaterprofile.columns,
+            weekly_profile=WWHR_week,
+        )
+
+        heat_systems_residential_water = [
+            "residential rural",
+            "residential urban decentral",
+            "urban central",
+        ]
+
+        for name in n.loads[
+            n.loads.carrier.isin([x + " heat" for x in heat_systems_residential_water])
+        ].index:
+
+            node = n.buses.loc[name, "location"]
+            ct = pop_layout.loc[node, "ct"]
+
+            if "urban central" in name:
+                f = dist_fraction[node]
+            elif "urban decentral" in name:
+                f = urban_fraction[node] - dist_fraction[node]
+            else:
+                f = 1 - urban_fraction[node]
+
+            node_name = " ".join(name.split(" ")[2::])
+            n.madd(
+                "Generator",
+                [node],
+                suffix=" WWHRS " + node_name,
+                bus=name,
+                carrier="WWHRS",
+                p_nom_extendable=True,
+                p_nom_max=f*hotwaterprofile[node].max(),  # maximum energy savings
+                p_max_pu=pd.DataFrame(WWHR_profile[node]),
+                p_min_pu=pd.DataFrame(WWHR_profile[node]),
+                country=ct,
+                capital_cost=WWHR_costs.loc[node].max()/hotwaterprofile[node].max(),
+            )
 
 def add_biomass(n, costs):
     logger.info("Add biomass")
