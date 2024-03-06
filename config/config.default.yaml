@@ -382,6 +382,7 @@ sector:
       2050: 1.0
     district_heating_loss: 0.15
   cluster_heat_buses: true
+  endogenous_transport: true
   bev_dsm_restriction_value: 0.75
   bev_dsm_restriction_time: 7
   transport_heating_deadband_upper: 20.
