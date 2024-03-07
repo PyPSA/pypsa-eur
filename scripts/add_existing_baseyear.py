@@ -84,8 +84,9 @@ def add_existing_land_transport(baseyear, options):
         df["build_year"] = build_year
         df["p_nom"] = share * p_nom
         df["p_nom_extendable"] = False
-        df.rename(index=lambda x: x.replace(f"-{baseyear}", f"-{build_year}"),
-                  inplace=True)
+        df.rename(
+            index=lambda x: x.replace(f"-{baseyear}", f"-{build_year}"), inplace=True
+        )
 
         n.madd(
             "Link",
@@ -102,8 +103,9 @@ def add_existing_land_transport(baseyear, options):
             p_max_pu=p_max_pu,
             lifetime=df.lifetime,
         )
-        
+
     n.links.loc[ice_i, "p_nom"] = 0
+
 
 def add_existing_renewables(df_agg):
     """
