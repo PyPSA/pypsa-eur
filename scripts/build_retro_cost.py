@@ -1057,7 +1057,17 @@ def WWHR_costs(households):
     pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
     housholds_spatial = pd.merge(pop_layout.reset_index(), households, on="ct").set_index("name")
     housholds_spatial = housholds_spatial.fraction * housholds_spatial["Households (thousands)"] * 1000 #number in thousands
-    costs_WWHR = 30*housholds_spatial # costs for waste water heat recovery is 600; currently hard-coded based on a report
+    costs_WWHR = pd.read_csv(
+        snakemake.input.cost_germany, index_col=0, usecols=[0, 1, 2, 3]
+    ).loc["hot water (WWHRS)"].astype(float)
+
+    if annualise_cost:
+        if interest_rate > 0:
+            costs_WWHR = interest_rate / (1.0 - 1.0 / (1.0 + interest_rate) ** costs_WWHR.loc["life_time"])
+        else:
+            costs_WWHR = 1 / costs_WWHR.loc["life_time"]
+
+    costs_WWHR = costs_WWHR*housholds_spatial # costs for waste water heat recovery is 600; currently hard-coded based on a report
 
     return costs_WWHR
 
