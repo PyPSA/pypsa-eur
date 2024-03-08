@@ -19,9 +19,9 @@ import pypsa
 import xarray as xr
 from _helpers import (
     configure_logging,
+    generate_periodic_profiles,
     set_scenario_config,
     update_config_from_wildcards,
-    generate_periodic_profiles,
 )
 from add_electricity import calculate_annuity, sanitize_carriers, sanitize_locations
 from build_energy_totals import build_co2_totals, build_eea_co2, build_eurostat_co2
@@ -2153,8 +2153,8 @@ def add_heat(n, costs):
         WWHR_costs = pd.read_csv(snakemake.input.WWHR_cost, index_col=0)
         heat_demand_shape = (
             xr.open_dataset(snakemake.input.hourly_heat_demand_total)
-                .to_dataframe()
-                .unstack(level=1)
+            .to_dataframe()
+            .unstack(level=1)
         )
 
         name = f"residential water"
@@ -2168,14 +2168,18 @@ def add_heat(n, costs):
         WWHR_profile = generate_periodic_profiles(
             dt_index=pd.date_range(freq="h", **snakemake.params.snapshots, tz="UTC"),
             nodes=hotwaterprofile.columns,
-            weekly_profile=0.8*0.35*np.ones((24 * 7,)),
+            weekly_profile=0.8 * 0.35 * np.ones((24 * 7,)),
         )
 
         limit_WWHRS = get(options["reduce_hot_water_factor"], investment_year)
-        logger.info(f"Assumed hot water heat reduction in up to {limit_WWHRS:.2%} of households")
+        logger.info(
+            f"Assumed hot water heat reduction in up to {limit_WWHRS:.2%} of households"
+        )
 
         heat_systems_residential_water = [
-            "residential rural", "residential urban decentral", "urban central",
+            "residential rural",
+            "residential urban decentral",
+            "urban central",
         ]
 
         for name in n.loads[
@@ -2200,13 +2204,16 @@ def add_heat(n, costs):
                 bus=name,
                 carrier="WWHRS",
                 p_nom_extendable=True,
-                p_nom_max=limit_WWHRS*f*hotwaterprofile[node].max(),  # maximum energy savings
+                p_nom_max=limit_WWHRS
+                * f
+                * hotwaterprofile[node].max(),  # maximum energy savings
                 p_max_pu=pd.DataFrame(WWHR_profile[node]),
                 p_min_pu=pd.DataFrame(WWHR_profile[node]),
                 country=ct,
                 # convert costs Euro -> Euro/MW
-                capital_cost = WWHR_costs.loc[node].max()/hotwaterprofile[node].max(),
+                capital_cost=WWHR_costs.loc[node].max() / hotwaterprofile[node].max(),
             )
+
 
 def add_biomass(n, costs):
     logger.info("Add biomass")

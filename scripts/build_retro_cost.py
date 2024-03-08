@@ -1050,26 +1050,37 @@ def sample_dE_costs_area(
 
     return cost_dE_new, area_tot
 
+
 def WWHR_costs(households):
     """
-    calculates the costs for waste water heat recovery (WWHR) based on the number of households per region
+    Calculates the costs for waste water heat recovery (WWHR) based on the
+    number of households per region.
     """
     pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
-    housholds_spatial = pd.merge(pop_layout.reset_index(), households, on="ct").set_index("name")
-    housholds_spatial = housholds_spatial.fraction * housholds_spatial["Households (thousands)"] * 1000 #number in thousands
-    costs_WWHR = pd.read_csv(
-        snakemake.input.cost_germany, index_col=0, usecols=[0, 1, 2, 3]
-    ).loc["hot water (WWHRS)"].astype(float)
+    housholds_spatial = pd.merge(
+        pop_layout.reset_index(), households, on="ct"
+    ).set_index("name")
+    housholds_spatial = (
+        housholds_spatial.fraction * housholds_spatial["Households (thousands)"] * 1000
+    )  # number in thousands
+    costs_WWHR = (
+        pd.read_csv(snakemake.input.cost_germany, index_col=0, usecols=[0, 1, 2, 3])
+        .loc["hot water (WWHRS)"]
+        .astype(float)
+    )
 
     if annualise_cost:
         if interest_rate > 0:
-            costs_WWHR = interest_rate / (1.0 - 1.0 / (1.0 + interest_rate) ** costs_WWHR.loc["life_time"])
+            costs_WWHR = interest_rate / (
+                1.0 - 1.0 / (1.0 + interest_rate) ** costs_WWHR.loc["life_time"]
+            )
         else:
             costs_WWHR = 1 / costs_WWHR.loc["life_time"]
 
-    costs_WWHR = costs_WWHR*housholds_spatial
+    costs_WWHR = costs_WWHR * housholds_spatial
 
     return costs_WWHR
+
 
 # %% --- MAIN --------------------------------------------------------------
 if __name__ == "__main__":
@@ -1087,7 +1098,9 @@ if __name__ == "__main__":
 
     #  ********  config  *********************************************************
 
-    households = pd.read_csv(snakemake.input.households).rename(columns={"Country":"ct"})
+    households = pd.read_csv(snakemake.input.households).rename(
+        columns={"Country": "ct"}
+    )
 
     retro_opts = snakemake.params.retrofitting
     interest_rate = retro_opts["interest_rate"]

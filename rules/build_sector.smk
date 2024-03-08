@@ -672,7 +672,7 @@ rule build_retro_cost:
         clustered_pop_layout=resources("pop_layout_elec_s{simpl}_{clusters}.csv"),
         cost_germany="data/retro/retro_cost_germany.csv",
         window_assumptions="data/retro/window_assumptions.csv",
-        households="data/retro/households.csv"
+        households="data/retro/households.csv",
     output:
         retro_cost=resources("retro_cost_elec_s{simpl}_{clusters}.csv"),
         floor_area=resources("floor_area_elec_s{simpl}_{clusters}.csv"),
