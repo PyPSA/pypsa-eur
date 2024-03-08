@@ -126,6 +126,8 @@ rule solve_sector_network_myopic:
     log:
         solver=RESULTS
         + "logs/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_solver.log",
+        memory=RESULTS
+        + "logs/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_memory.log",
         python=RESULTS
         + "logs/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_python.log",
     threads: solver_threads
