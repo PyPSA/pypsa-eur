@@ -60,3 +60,4 @@ dependencies:
 - pip:
   - tsam>=2.3.1
   - snakemake-storage-plugin-http
+  - snakemake-executor-plugin-slurm
