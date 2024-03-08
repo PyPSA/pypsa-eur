@@ -236,7 +236,7 @@ if config["enable"]["retrieve"]:
     # Website: https://ec.europa.eu/jrc/en/luisa
     rule retrieve_luisa_land_cover:
         input:
-            HTTP.remote(
+            storage(
                 "jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/LUISA/EUROPE/Basemaps/LandUse/2018/LATEST/LUISA_basemap_020321_50m.tif",
                 static=True,
             ),

@@ -325,7 +325,7 @@ rule build_biomass_potentials:
 
 rule build_biomass_transport_costs:
     input:
-        transport_cost_data=HTTP.remote(
+        transport_cost_data=storage(
             "publications.jrc.ec.europa.eu/repository/bitstream/JRC98626/biomass potentials in europe_web rev.pdf",
             keep_local=True,
         ),
@@ -350,7 +350,7 @@ rule build_sequestration_potentials:
             "sector", "regional_co2_sequestration_potential"
         ),
     input:
-        sequestration_potential=HTTP.remote(
+        sequestration_potential=storage(
             "https://raw.githubusercontent.com/ericzhou571/Co2Storage/main/resources/complete_map_2020_unit_Mt.geojson",
             keep_local=True,
         ),
