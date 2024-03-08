@@ -473,6 +473,12 @@ sector:
     2040: 0.16
     2045: 0.21
     2050: 0.29
+  reduce_hot_water_factor: # WWHRS is extremely cost competititve, thus we limit the expansion
+    2030: 0.05
+    2035: 0.1
+    2040: 0.2
+    0.45: 0.4
+    2050: 0.6
   retrofitting:
     retro_endogen: false
     WWHR_endogen: true # Waste Water Heat Recovery

@@ -2165,18 +2165,17 @@ def add_heat(n, costs):
 
         # 80% of hot water is used for showers
         # 35% is the assumed reduction of demand due to WWHR technology
-        WWHR_week = 0.8 * 0.35 * np.ones((24 * 7,))
-
         WWHR_profile = generate_periodic_profiles(
             dt_index=pd.date_range(freq="h", **snakemake.params.snapshots, tz="UTC"),
             nodes=hotwaterprofile.columns,
-            weekly_profile=WWHR_week,
+            weekly_profile=0.8*0.35*np.ones((24 * 7,)),
         )
 
+        limit_WWHRS = get(options["reduce_hot_water_factor"], investment_year)
+        logger.info(f"Assumed hot water heat reduction in up to {limit_WWHRS:.2%} of households")
+
         heat_systems_residential_water = [
-            "residential rural",
-            "residential urban decentral",
-            "urban central",
+            "residential rural", "residential urban decentral", "urban central",
         ]
 
         for name in n.loads[
@@ -2201,11 +2200,12 @@ def add_heat(n, costs):
                 bus=name,
                 carrier="WWHRS",
                 p_nom_extendable=True,
-                p_nom_max=f*hotwaterprofile[node].max(),  # maximum energy savings
+                p_nom_max=limit_WWHRS*f*hotwaterprofile[node].max(),  # maximum energy savings
                 p_max_pu=pd.DataFrame(WWHR_profile[node]),
                 p_min_pu=pd.DataFrame(WWHR_profile[node]),
                 country=ct,
-                capital_cost=WWHR_costs.loc[node].max()/hotwaterprofile[node].max(),
+                # convert costs Euro -> Euro/MW
+                capital_cost = WWHR_costs.loc[node].max()/hotwaterprofile[node].max(),
             )
 
 def add_biomass(n, costs):
@@ -2242,11 +2242,11 @@ def add_biomass(n, costs):
                 index=lambda x: x + " solid biomass"
             )
             - e_set
-        ).clip(lower=0)
+        ).clip(0)
     else:
         solid_biomass_potentials_spatial = (
             biomass_potentials["solid biomass"].sum() - e_set
-        ).clip(lower=0)
+        ).clip(0)
 
     n.add("Carrier", "biogas")
     n.add("Carrier", "solid biomass")
