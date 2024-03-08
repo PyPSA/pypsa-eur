@@ -1,32 +1,51 @@
-# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
 from os.path import normpath, exists
 from shutil import copyfile, move, rmtree
+from pathlib import Path
+import yaml
 
 from snakemake.utils import min_version
 
 min_version("8")
 
+from scripts._helpers import path_provider
 
-if not exists("config/config.yaml"):
-    copyfile("config/config.default.yaml", "config/config.yaml")
+default_files = {
+    "config/config.default.yaml": "config/config.yaml",
+    "config/scenarios.template.yaml": "config/scenarios.yaml",
+}
+for template, target in default_files.items():
+    target = os.path.join(workflow.current_basedir, target)
+    template = os.path.join(workflow.current_basedir, template)
+    if not exists(target) and exists(template):
+        copyfile(template, target)
 
 
+configfile: "config/config.default.yaml"
 configfile: "config/config.yaml"
 
 
-COSTS = f"data/costs_{config['costs']['year']}.csv"
-ATLITE_NPROCESSES = config["atlite"].get("nprocesses", 4)
+run = config["run"]
+scenarios = run.get("scenarios", {})
+if run["name"] and scenarios.get("enable"):
+    fn = Path(scenarios["file"])
+    scenarios = yaml.safe_load(fn.read_text())
+    RDIR = "{run}/"
+    if run["name"] == "all":
+        config["run"]["name"] = list(scenarios.keys())
+elif run["name"]:
+    RDIR = run["name"] + "/"
+else:
+    RDIR = ""
 
-run = config.get("run", {})
-RDIR = run["name"] + "/" if run.get("name") else ""
-CDIR = RDIR if not run.get("shared_cutouts") else ""
+logs = path_provider("logs/", RDIR, run["shared_resources"])
+benchmarks = path_provider("benchmarks/", RDIR, run["shared_resources"])
+resources = path_provider("resources/", RDIR, run["shared_resources"])
 
-LOGS = "logs/" + RDIR
-BENCHMARKS = "benchmarks/" + RDIR
-RESOURCES = "resources/" + RDIR if not run.get("shared_resources") else "resources/"
+CDIR = "" if run["shared_cutouts"] else RDIR
 RESULTS = "results/" + RDIR
 
 
@@ -69,8 +88,17 @@ if config["foresight"] == "perfect":
 
 rule all:
     input:
-        RESULTS + "graphs/costs.pdf",
+        expand(RESULTS + "graphs/costs.pdf", run=config["run"]["name"]),
     default_target: True
+
+
+rule create_scenarios:
+    output:
+        config["run"]["scenarios"]["file"],
+    conda:
+        "envs/retrieve.yaml"
+    script:
+        "config/create_scenarios.py"
 
 
 rule purge:
@@ -93,9 +121,9 @@ rule dag:
     message:
         "Creating DAG of workflow."
     output:
-        dot=RESOURCES + "dag.dot",
-        pdf=RESOURCES + "dag.pdf",
-        png=RESOURCES + "dag.png",
+        dot=resources("dag.dot"),
+        pdf=resources("dag.pdf"),
+        png=resources("dag.png"),
     conda:
         "envs/environment.yaml"
     shell:
@@ -121,6 +149,7 @@ rule sync:
     shell:
         """
         rsync -uvarh --ignore-missing-args --files-from=.sync-send . {params.cluster}
+        rsync -uvarh --no-g {params.cluster}/resources . || echo "No resources directory, skipping rsync"
         rsync -uvarh --no-g {params.cluster}/results . || echo "No results directory, skipping rsync"
         rsync -uvarh --no-g {params.cluster}/logs . || echo "No logs directory, skipping rsync"
         """

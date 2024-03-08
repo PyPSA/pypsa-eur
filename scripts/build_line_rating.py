@@ -50,7 +50,6 @@ With a heat balance considering the maximum temperature threshold of the transmi
 the maximal possible capacity factor "s_max_pu" for each transmission line at each time step is calculated.
 """
 
-import logging
 import re
 
 import atlite
@@ -59,7 +58,7 @@ import numpy as np
 import pandas as pd
 import pypsa
 import xarray as xr
-from _helpers import configure_logging
+from _helpers import configure_logging, set_scenario_config
 from shapely.geometry import LineString as Line
 from shapely.geometry import Point
 
@@ -99,7 +98,7 @@ def calculate_line_rating(n, cutout):
     -------
     xarray DataArray object with maximal power.
     """
-    relevant_lines = n.lines[(n.lines["underground"] == False)]
+    relevant_lines = n.lines[~n.lines["underground"]].copy()
     buses = relevant_lines[["bus0", "bus1"]].values
     x = n.buses.x
     y = n.buses.y
@@ -119,7 +118,7 @@ def calculate_line_rating(n, cutout):
             .apply(lambda x: int(re.findall(r"(\d+)-bundle", x)[0]))
         )
         # Set default number of bundles per line
-        relevant_lines["n_bundle"].fillna(1, inplace=True)
+        relevant_lines["n_bundle"] = relevant_lines["n_bundle"].fillna(1)
         R *= relevant_lines["n_bundle"]
         R = calculate_resistance(T=353, R_ref=R)
     Imax = cutout.line_rating(shapes, R, D=0.0218, Ts=353, epsilon=0.8, alpha=0.8)
@@ -145,9 +144,12 @@ if __name__ == "__main__":
             opts="Co2L-4H",
         )
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
+
+    snapshots = snakemake.params.snapshots
 
     n = pypsa.Network(snakemake.input.base_network)
-    time = pd.date_range(freq="h", **snakemake.config["snapshots"])
+    time = pd.date_range(freq="h", **snapshots)
     cutout = atlite.Cutout(snakemake.input.cutout).sel(time=time)
 
     da = calculate_line_rating(n, cutout)

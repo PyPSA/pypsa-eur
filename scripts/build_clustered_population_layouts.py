@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -11,6 +11,7 @@ import atlite
 import geopandas as gpd
 import pandas as pd
 import xarray as xr
+from _helpers import set_scenario_config
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -22,16 +23,15 @@ if __name__ == "__main__":
             clusters=48,
         )
 
+    set_scenario_config(snakemake)
+
     cutout = atlite.Cutout(snakemake.input.cutout)
 
     clustered_regions = (
-        gpd.read_file(snakemake.input.regions_onshore)
-        .set_index("name")
-        .buffer(0)
-        .squeeze()
+        gpd.read_file(snakemake.input.regions_onshore).set_index("name").buffer(0)
     )
 
-    I = cutout.indicatormatrix(clustered_regions)
+    I = cutout.indicatormatrix(clustered_regions)  # noqa: E741
 
     pop = {}
     for item in ["total", "urban", "rural"]:

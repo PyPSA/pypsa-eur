@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -52,7 +52,7 @@ Inputs
         :scale: 34 %
 
 - ``data/geth2015_hydro_capacities.csv``: alternative to capacities above; not currently used!
-- ``resources/load.csv`` Hourly per-country load profiles.
+- ``resources/electricity_demand.csv`` Hourly per-country electricity demand profiles.
 - ``resources/regions_onshore.geojson``: confer :ref:`busregions`
 - ``resources/nuts3_shapes.geojson``: confer :ref:`shapes`
 - ``resources/powerplants.csv``: confer :ref:`powerplants`
@@ -93,7 +93,7 @@ import powerplantmatching as pm
 import pypsa
 import scipy.sparse as sparse
 import xarray as xr
-from _helpers import configure_logging, update_p_nom_max
+from _helpers import configure_logging, set_scenario_config, update_p_nom_max
 from powerplantmatching.export import map_country_bus
 from shapely.prepared import prep
 
@@ -176,6 +176,15 @@ def sanitize_carriers(n, config):
         missing_i = list(colors.index[colors.isna()])
         logger.warning(f"tech_colors for carriers {missing_i} not defined in config.")
     n.carriers["color"] = n.carriers.color.where(n.carriers.color != "", colors)
+
+
+def sanitize_locations(n):
+    n.buses["x"] = n.buses.x.where(n.buses.x != 0, n.buses.location.map(n.buses.x))
+    n.buses["y"] = n.buses.y.where(n.buses.y != 0, n.buses.location.map(n.buses.y))
+    n.buses["country"] = n.buses.country.where(
+        n.buses.country.ne("") & n.buses.country.notnull(),
+        n.buses.location.map(n.buses.country),
+    )
 
 
 def add_co2_emissions(n, costs, carriers):
@@ -288,16 +297,16 @@ def attach_load(n, regions, load, nuts3_shapes, ua_md_gdp, countries, scaling=1.
 
     ua_md_gdp = pd.read_csv(ua_md_gdp, dtype={"name": "str"}).set_index("name")
 
-    logger.info(f"Load data scaled with scalling factor {scaling}.")
+    logger.info(f"Load data scaled by factor {scaling}.")
     opsd_load *= scaling
 
     nuts3 = gpd.read_file(nuts3_shapes).set_index("index")
 
     def upsample(cntry, group):
-        l = opsd_load[cntry]
+        load = opsd_load[cntry]
 
         if len(group) == 1:
-            return pd.DataFrame({group.index[0]: l})
+            return pd.DataFrame({group.index[0]: load})
         nuts3_cntry = nuts3.loc[nuts3.country == cntry]
         transfer = shapes_to_shapes(group, nuts3_cntry.geometry).T.tocsr()
         gdp_n = pd.Series(
@@ -314,8 +323,8 @@ def attach_load(n, regions, load, nuts3_shapes, ua_md_gdp, countries, scaling=1.
             # overwrite factor because nuts3 provides no data for UA+MD
             factors = normed(ua_md_gdp.loc[group.index, "GDP_PPP"].squeeze())
         return pd.DataFrame(
-            factors.values * l.values[:, np.newaxis],
-            index=l.index,
+            factors.values * load.values[:, np.newaxis],
+            index=load.index,
             columns=factors.index,
         )
 
@@ -327,7 +336,9 @@ def attach_load(n, regions, load, nuts3_shapes, ua_md_gdp, countries, scaling=1.
         axis=1,
     )
 
-    n.madd("Load", substation_lv_i, bus=substation_lv_i, p_set=load)
+    n.madd(
+        "Load", substation_lv_i, bus=substation_lv_i, p_set=load
+    )  # carrier="electricity"
 
 
 def update_transmission_costs(n, costs, length_factor=1.0):
@@ -373,6 +384,10 @@ def attach_wind_and_solar(
         with xr.open_dataset(getattr(input_profiles, "profile_" + car)) as ds:
             if ds.indexes["bus"].empty:
                 continue
+
+            # if-statement for compatibility with old profiles
+            if "year" in ds.indexes:
+                ds = ds.sel(year=ds.year.min(), drop=True)
 
             supcar = car.split("-", 2)[0]
             if supcar == "offwind":
@@ -504,8 +519,8 @@ def attach_conventional_generators(
                     snakemake.input[f"conventional_{carrier}_{attr}"], index_col=0
                 ).iloc[:, 0]
                 bus_values = n.buses.country.map(values)
-                n.generators[attr].update(
-                    n.generators.loc[idx].bus.map(bus_values).dropna()
+                n.generators.update(
+                    {attr: n.generators.loc[idx].bus.map(bus_values).dropna()}
                 )
             else:
                 # Single value affecting all generators of technology k indiscriminantely of country
@@ -622,7 +637,7 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **par
             hydro.max_hours > 0, hydro.country.map(max_hours_country)
         ).fillna(6)
 
-        if flatten_dispatch := params.get("flatten_dispatch", False):
+        if params.get("flatten_dispatch", False):
             buffer = params.get("flatten_dispatch_buffer", 0.2)
             average_capacity_factor = inflow_t[hydro.index].mean() / hydro["p_nom"]
             p_max_pu = (average_capacity_factor + buffer).clip(upper=1)
@@ -645,77 +660,6 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **par
             cyclic_state_of_charge=True,
             inflow=inflow_t.loc[:, hydro.index],
         )
-
-
-def attach_extendable_generators(n, costs, ppl, carriers):
-    logger.warning(
-        "The function `attach_extendable_generators` is deprecated in v0.5.0."
-    )
-    add_missing_carriers(n, carriers)
-    add_co2_emissions(n, costs, carriers)
-
-    for tech in carriers:
-        if tech.startswith("OCGT"):
-            ocgt = (
-                ppl.query("carrier in ['OCGT', 'CCGT']")
-                .groupby("bus", as_index=False)
-                .first()
-            )
-            n.madd(
-                "Generator",
-                ocgt.index,
-                suffix=" OCGT",
-                bus=ocgt["bus"],
-                carrier=tech,
-                p_nom_extendable=True,
-                p_nom=0.0,
-                capital_cost=costs.at["OCGT", "capital_cost"],
-                marginal_cost=costs.at["OCGT", "marginal_cost"],
-                efficiency=costs.at["OCGT", "efficiency"],
-            )
-
-        elif tech.startswith("CCGT"):
-            ccgt = (
-                ppl.query("carrier in ['OCGT', 'CCGT']")
-                .groupby("bus", as_index=False)
-                .first()
-            )
-            n.madd(
-                "Generator",
-                ccgt.index,
-                suffix=" CCGT",
-                bus=ccgt["bus"],
-                carrier=tech,
-                p_nom_extendable=True,
-                p_nom=0.0,
-                capital_cost=costs.at["CCGT", "capital_cost"],
-                marginal_cost=costs.at["CCGT", "marginal_cost"],
-                efficiency=costs.at["CCGT", "efficiency"],
-            )
-
-        elif tech.startswith("nuclear"):
-            nuclear = (
-                ppl.query("carrier == 'nuclear'").groupby("bus", as_index=False).first()
-            )
-            n.madd(
-                "Generator",
-                nuclear.index,
-                suffix=" nuclear",
-                bus=nuclear["bus"],
-                carrier=tech,
-                p_nom_extendable=True,
-                p_nom=0.0,
-                capital_cost=costs.at["nuclear", "capital_cost"],
-                marginal_cost=costs.at["nuclear", "marginal_cost"],
-                efficiency=costs.at["nuclear", "efficiency"],
-            )
-
-        else:
-            raise NotImplementedError(
-                "Adding extendable generators for carrier "
-                "'{tech}' is not implemented, yet. "
-                "Only OCGT, CCGT and nuclear are allowed at the moment."
-            )
 
 
 def attach_OPSD_renewables(n: pypsa.Network, tech_map: Dict[str, List[str]]) -> None:
@@ -749,8 +693,8 @@ def attach_OPSD_renewables(n: pypsa.Network, tech_map: Dict[str, List[str]]) -> 
         caps = caps.groupby(["bus"]).Capacity.sum()
         caps = caps / gens_per_bus.reindex(caps.index, fill_value=1)
 
-        n.generators.p_nom.update(gens.bus.map(caps).dropna())
-        n.generators.p_nom_min.update(gens.bus.map(caps).dropna())
+        n.generators.update({"p_nom": gens.bus.map(caps).dropna()})
+        n.generators.update({"p_nom_min": gens.bus.map(caps).dropna()})
 
 
 def estimate_renewable_capacities(
@@ -846,6 +790,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("add_electricity")
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     params = snakemake.params
 

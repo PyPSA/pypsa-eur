@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2019-2023 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: 2019-2024 The PyPSA-Eur Authors
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -94,6 +94,13 @@ Rule ``build_electricity_demand``
 
 .. automodule:: build_electricity_demand
 
+.. _monthlyprices:
+
+Rule ``build_monthly_prices``
+=============================
+
+.. automodule:: build_monthly_prices
+
 .. _ship:
 
 Rule ``build_ship_raster``
@@ -102,6 +109,12 @@ Rule ``build_ship_raster``
 
 .. automodule:: build_ship_raster
 
+.. _availabilitymatrixmdua:
+
+Rule ``determine_availability_matrix_MD_UA``
+============================================
+
+.. automodule:: determine_availability_matrix_MD_UA
 
 .. _renewableprofiles:
 

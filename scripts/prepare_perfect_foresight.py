@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -12,7 +12,11 @@ import re
 import numpy as np
 import pandas as pd
 import pypsa
-from _helpers import update_config_with_sector_opts
+from _helpers import (
+    configure_logging,
+    set_scenario_config,
+    update_config_from_wildcards,
+)
 from add_existing_baseyear import add_build_year_to_new_assets
 from pypsa.descriptors import expand_series
 from pypsa.io import import_components_from_dataframe
@@ -56,7 +60,9 @@ def get_investment_weighting(time_weighting, r=0.01):
     end = time_weighting.cumsum()
     start = time_weighting.cumsum().shift().fillna(0)
     return pd.concat([start, end], axis=1).apply(
-        lambda x: sum(get_social_discount(t, r) for t in range(int(x[0]), int(x[1]))),
+        lambda x: sum(
+            get_social_discount(t, r) for t in range(int(x.iloc[0]), int(x.iloc[1]))
+        ),
         axis=1,
     )
 
@@ -162,15 +168,17 @@ def concat_networks(years):
         add_build_year_to_new_assets(network, year)
 
         # static ----------------------------------
-        # (1) add buses and carriers
-        for component in network.iterate_components(["Bus", "Carrier"]):
-            df_year = component.df
-            # get missing assets
-            missing = get_missing(df_year, n, component.list_name)
-            import_components_from_dataframe(n, missing, component.name)
-        # (2) add generators, links, stores and loads
         for component in network.iterate_components(
-            ["Generator", "Link", "Store", "Load", "Line", "StorageUnit"]
+            [
+                "Bus",
+                "Carrier",
+                "Generator",
+                "Link",
+                "Store",
+                "Load",
+                "Line",
+                "StorageUnit",
+            ]
         ):
             df_year = component.df.copy()
             missing = get_missing(df_year, n, component.list_name)
@@ -186,7 +194,7 @@ def concat_networks(years):
             pnl = getattr(n, component.list_name + "_t")
             for k in iterkeys(component.pnl):
                 pnl_year = component.pnl[k].copy().reindex(snapshots, level=1)
-                if pnl_year.empty and ~(component.name == "Load" and k == "p_set"):
+                if pnl_year.empty and (not (component.name == "Load" and k == "p_set")):
                     continue
                 if component.name == "Load":
                     static_load = network.loads.loc[network.loads.p_set != 0]
@@ -199,8 +207,13 @@ def concat_networks(years):
                     pnl[k].loc[pnl_year.index, pnl_year.columns] = pnl_year
 
                 else:
-                    # this is to avoid adding multiple times assets with
-                    # infinite lifetime as ror
+                    # For components that aren't new, we just extend
+                    # time-varying data from the previous investment
+                    # period.
+                    if i > 0:
+                        pnl[k].loc[(year,)] = pnl[k].loc[(years[i - 1],)].values
+
+                    # Now, add time-varying data for new components.
                     cols = pnl_year.columns.difference(pnl[k].columns)
                     pnl[k] = pd.concat([pnl[k], pnl_year[cols]], axis=1)
 
@@ -214,7 +227,7 @@ def concat_networks(years):
     # set investment periods
     n.investment_periods = n.snapshots.levels[0]
     # weighting of the investment period -> assuming last period same weighting as the period before
-    time_w = n.investment_periods.to_series().diff().shift(-1).fillna(method="ffill")
+    time_w = n.investment_periods.to_series().diff().shift(-1).ffill()
     n.investment_period_weightings["years"] = time_w
     # set objective weightings
     objective_w = get_investment_weighting(
@@ -295,17 +308,14 @@ def set_all_phase_outs(n):
     n.mremove("Link", remove_i)
 
 
-def set_carbon_constraints(n, opts):
+def set_carbon_constraints(n):
     """
     Add global constraints for carbon emissions.
     """
-    budget = None
-    for o in opts:
-        # other budgets
-        m = re.match(r"^\d+p\d$", o, re.IGNORECASE)
-        if m is not None:
-            budget = snakemake.config["co2_budget"][m.group(0)] * 1e9
-    if budget != None:
+    budget = snakemake.config["co2_budget"]
+    if budget and isinstance(budget, float):
+        budget *= 1e9  # convert to t CO2
+
         logger.info(f"add carbon budget of {budget}")
         n.add(
             "GlobalConstraint",
@@ -332,7 +342,7 @@ def set_carbon_constraints(n, opts):
         )
 
     # set minimum CO2 emission constraint to avoid too fast reduction
-    if "co2min" in opts:
+    if "co2min" in snakemake.wildcards.sector_opts.split("-"):
         emissions_1990 = 4.53693
         emissions_2019 = 3.344096
         target_2030 = 0.45 * emissions_1990
@@ -428,7 +438,7 @@ def apply_time_segmentation_perfect(
     """
     try:
         import tsam.timeseriesaggregation as tsam
-    except:
+    except ImportError:
         raise ModuleNotFoundError(
             "Optional dependency 'tsam' not found." "Install via 'pip install tsam'"
         )
@@ -478,21 +488,6 @@ def apply_time_segmentation_perfect(
     return n
 
 
-def set_temporal_aggregation_SEG(n, opts, solver_name):
-    """
-    Aggregate network temporally with tsam.
-    """
-    for o in opts:
-        # segments with package tsam
-        m = re.match(r"^(\d+)seg$", o, re.IGNORECASE)
-        if m is not None:
-            segments = int(m[1])
-            logger.info(f"Use temporal segmentation with {segments} segments")
-            n = apply_time_segmentation_perfect(n, segments, solver_name=solver_name)
-            break
-    return n
-
-
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -503,17 +498,15 @@ if __name__ == "__main__":
             opts="",
             clusters="37",
             ll="v1.5",
-            sector_opts="1p7-4380H-T-H-B-I-A-solar+p3-dist1",
+            sector_opts="1p7-4380H-T-H-B-I-A-dist1",
         )
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
-    update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
+    update_config_from_wildcards(snakemake.config, snakemake.wildcards)
     # parameters -----------------------------------------------------------
     years = snakemake.config["scenario"]["planning_horizons"]
-    opts = snakemake.wildcards.sector_opts.split("-")
-    social_discountrate = snakemake.config["costs"]["social_discountrate"]
-    for o in opts:
-        if "sdr" in o:
-            social_discountrate = float(o.replace("sdr", "")) / 100
+    social_discountrate = snakemake.params.costs["social_discountrate"]
 
     logger.info(
         f"Concat networks of investment period {years} with social discount rate of {social_discountrate * 100}%"
@@ -523,9 +516,10 @@ if __name__ == "__main__":
     n = concat_networks(years)
 
     # temporal aggregate
-    opts = snakemake.wildcards.sector_opts.split("-")
     solver_name = snakemake.config["solving"]["solver"]["name"]
-    n = set_temporal_aggregation_SEG(n, opts, solver_name)
+    segments = snakemake.params.time_resolution
+    if isinstance(segments, (int, float)):
+        n = apply_time_segmentation_perfect(n, segments, solver_name=solver_name)
 
     # adjust global constraints lv limit if the same for all years
     n = adjust_lvlimit(n)
@@ -541,8 +535,7 @@ if __name__ == "__main__":
     add_H2_boilers(n)
 
     # set carbon constraints
-    opts = snakemake.wildcards.sector_opts.split("-")
-    n = set_carbon_constraints(n, opts)
+    n = set_carbon_constraints(n)
 
     # export network
     n.export_to_netcdf(snakemake.output[0])

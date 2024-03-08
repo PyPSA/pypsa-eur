@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
 import seaborn as sns
-from _helpers import configure_logging
+from _helpers import configure_logging, set_scenario_config
 from pypsa.statistics import get_bus_and_carrier
 
 sns.set_theme("paper", style="whitegrid")
@@ -35,6 +35,7 @@ if __name__ == "__main__":
             ll="v1.0",
         )
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     n = pypsa.Network(snakemake.input.network)
     n.loads.carrier = "load"
@@ -45,6 +46,12 @@ if __name__ == "__main__":
         header=[0, 1],
         parse_dates=True,
     )
+    subset_technologies = ["Geothermal", "Nuclear", "Biomass", "Lignite", "Oil", "Coal"]
+    lowercase_technologies = [
+        technology.lower() if technology in subset_technologies else technology
+        for technology in historic.columns.levels[1]
+    ]
+    historic.columns = historic.columns.set_levels(lowercase_technologies, level=1)
 
     colors = n.carriers.set_index("nice_name").color.where(
         lambda s: s != "", "lightgrey"
