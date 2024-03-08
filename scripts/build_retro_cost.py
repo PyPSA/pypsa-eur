@@ -1067,7 +1067,7 @@ def WWHR_costs(households):
         else:
             costs_WWHR = 1 / costs_WWHR.loc["life_time"]
 
-    costs_WWHR = costs_WWHR*housholds_spatial # costs for waste water heat recovery is 600; currently hard-coded based on a report
+    costs_WWHR = costs_WWHR*housholds_spatial
 
     return costs_WWHR
 
