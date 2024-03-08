@@ -28,7 +28,8 @@ The energy savings calculations are based on the
       - tabula https://episcope.eu/fileadmin/tabula/public/calc/tabula-calculator.xlsx
 
 
-The energy savings for hot water are based on [...]
+The energy savings for hot water are based on this report by the University of Innsbruck:
+https://diglib.uibk.ac.at/ulbtirolfodok/content/titleinfo/7640369
 
 Basic Equations
 ---------------
