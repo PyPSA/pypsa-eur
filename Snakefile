@@ -9,7 +9,7 @@ import yaml
 
 from snakemake.utils import min_version
 
-min_version("8")
+min_version("8.5")
 
 from scripts._helpers import path_provider
 
