@@ -238,7 +238,6 @@ if config["enable"]["retrieve"]:
         input:
             storage(
                 "https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/LUISA/EUROPE/Basemaps/LandUse/2018/LATEST/LUISA_basemap_020321_50m.tif",
-                static=True,
             ),
         output:
             "data/LUISA_basemap_020321_50m.tif",
