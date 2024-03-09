@@ -326,7 +326,7 @@ rule build_biomass_potentials:
 rule build_biomass_transport_costs:
     input:
         transport_cost_data=storage(
-            "publications.jrc.ec.europa.eu/repository/bitstream/JRC98626/biomass potentials in europe_web rev.pdf",
+            "https://publications.jrc.ec.europa.eu/repository/bitstream/JRC98626/biomass potentials in europe_web rev.pdf",
             keep_local=True,
         ),
     output:
