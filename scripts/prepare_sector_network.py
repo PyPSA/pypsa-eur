@@ -1640,6 +1640,7 @@ def add_EVs(
             e_nom=e_nom,
             e_max_pu=1,
             e_min_pu=dsm_profile[nodes],
+            lifetime=1,
         )
 
 
@@ -1729,7 +1730,10 @@ def adjust_endogenous_transport(n):
 
     links_i = n.links[n.links.carrier.isin(carrier)].index
     n.links.loc[links_i, "p_nom_extendable"] = True
-
+    
+    store_i = n.stores[n.stores.carrier=="battery storage"].index
+    n.stores.loc[store_i, "e_nom_extendable"] = True
+    
     # costs todo
     # assume here for all of Europe
     # average driving distance 15 000 km /year and car
