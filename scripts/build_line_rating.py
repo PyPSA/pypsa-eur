@@ -58,7 +58,7 @@ import numpy as np
 import pandas as pd
 import pypsa
 import xarray as xr
-from _helpers import configure_logging
+from _helpers import configure_logging, set_scenario_config
 from shapely.geometry import LineString as Line
 from shapely.geometry import Point
 
@@ -144,6 +144,7 @@ if __name__ == "__main__":
             opts="Co2L-4H",
         )
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     snapshots = snakemake.params.snapshots
 

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -7,7 +7,7 @@ Build specific energy consumption by carrier and industries.
 """
 
 import pandas as pd
-from _helpers import mute_print
+from _helpers import mute_print, set_scenario_config
 
 # GWh/ktoe OR MWh/toe
 toe_to_MWh = 11.630
@@ -408,15 +408,15 @@ def chemicals_industry():
     df.loc["methane", sector] -= ammonia_total * params["MWh_CH4_per_tNH3_SMR"]
     df.loc["elec", sector] -= ammonia_total * params["MWh_elec_per_tNH3_SMR"]
 
-    # subtract chlorine demand
+    # subtract chlorine demand (in MtCl/a)
     chlorine_total = params["chlorine_production_today"]
-    df.loc["hydrogen", sector] -= chlorine_total * params["MWh_H2_per_tCl"]
-    df.loc["elec", sector] -= chlorine_total * params["MWh_elec_per_tCl"]
+    df.loc["hydrogen", sector] -= chlorine_total * params["MWh_H2_per_tCl"] * 1e3
+    df.loc["elec", sector] -= chlorine_total * params["MWh_elec_per_tCl"] * 1e3
 
-    # subtract methanol demand
+    # subtract methanol demand (in MtMeOH/a)
     methanol_total = params["methanol_production_today"]
-    df.loc["methane", sector] -= methanol_total * params["MWh_CH4_per_tMeOH"]
-    df.loc["elec", sector] -= methanol_total * params["MWh_elec_per_tMeOH"]
+    df.loc["methane", sector] -= methanol_total * params["MWh_CH4_per_tMeOH"] * 1e3
+    df.loc["elec", sector] -= methanol_total * params["MWh_elec_per_tMeOH"] * 1e3
 
     # MWh/t material
     df.loc[sources, sector] = df.loc[sources, sector] / s_out
@@ -1464,6 +1464,7 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_industry_sector_ratios")
+    set_scenario_config(snakemake)
 
     # TODO make params option
     year = 2015

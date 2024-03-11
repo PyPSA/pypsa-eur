@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -68,6 +68,7 @@ The script has the following structure:
 """
 import pandas as pd
 import xarray as xr
+from _helpers import set_scenario_config
 
 # (i) --- FIXED PARAMETER / STANDARD VALUES -----------------------------------
 
@@ -1053,6 +1054,7 @@ if __name__ == "__main__":
             ll="v1.0",
             sector_opts="Co2L0-168H-T-H-B-I-solar3-dist1",
         )
+    set_scenario_config(snakemake)
 
     #  ********  config  *********************************************************
 

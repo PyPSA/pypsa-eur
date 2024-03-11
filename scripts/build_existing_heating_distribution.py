@@ -9,6 +9,7 @@ horizon.
 import country_converter as coco
 import numpy as np
 import pandas as pd
+from _helpers import set_scenario_config
 
 cc = coco.CountryConverter()
 
@@ -126,5 +127,6 @@ if __name__ == "__main__":
             clusters=48,
             planning_horizons=2050,
         )
+    set_scenario_config(snakemake)
 
     build_existing_heating()

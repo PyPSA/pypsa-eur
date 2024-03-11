@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Copyright 2023 Thomas Gilon (Climact)
-# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -26,7 +26,7 @@ This rule downloads the existing capacities from `IRENASTAT <https://www.irena.o
 import logging
 
 import pandas as pd
-from _helpers import configure_logging
+from _helpers import configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
@@ -80,6 +80,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("retrieve_irena")
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     irena_raw = pd.read_csv(
         "https://pxweb.irena.org:443/sq/99e64b12-fe03-4a7b-92ea-a22cc3713b92",
