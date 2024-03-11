@@ -131,20 +131,24 @@ def add_brownfield(n, n_p, year):
 
 def adjust_EVs(n, n_p, year):
     # set p_min_pu and p_max_pu for solved network, so that only the EV link for the current time horizon
-    # is not constraint (constraining all land transport link with p_min_pu/p_max_pu while p_nom_extentable=True leads to infeasible by gurobi)
-    lifetime_EV = n.links.lifetime[n.links[(n.links.carrier=="land transport EV") ].index[0]]
-    i = 0
-    while (year-lifetime_EV+i) < year:
-        if not n.links_t.efficiency[(n.links.filter(like="land transport EV-"+str(int(year-lifetime_EV+i)),axis=0)).index].empty:
-            p_set =  n_p.loads_t.p[n.loads[n.loads.carrier.str.contains('land transport demand')].index]
-            eff = n.links_t.efficiency[(n.links.filter(like="land transport EV-"+str(int(year-lifetime_EV+i)),axis=0)).index]
-            p_set = p_set.add_suffix(' EV-'+str(int(year-lifetime_EV+i)))
-            p_set = p_set.drop([col for col in p_set.columns if col in p_set.columns and col not in eff.columns], axis=1)
-            pnom = (p_set.divide(eff)).max()
-            pu=p_set.divide(eff)/pnom
-            n.links_t.p_min_pu[(n.links.filter(like="land transport EV-"+str(int(year-lifetime_EV+i)),axis=0)).index] = pu.values
-            n.links_t.p_max_pu[(n.links.filter(like="land transport EV-"+str(int(year-lifetime_EV+i)),axis=0)).index] = pu.values
-        i = i+1   
+    # is not constraint (constraining all land transport link with p_min_pu/p_max_pu while p_nom_extentable=True leads to infeasible by gurobi
+
+    for car in ["EV","fuel cell","oil"]:
+        cartype = "land transport " + car
+        lifetime_EV = n.links.lifetime[n.links[(n.links.carrier==cartype) ].index[0]]
+        i = 0
+        while (year-lifetime_EV+i) < year:
+            if not n.links_t.p_min_pu[(n.links.filter(like=cartype +"-"+str(int(year-lifetime_EV+i)),axis=0)).index].empty:
+                #p_set =  n_p.loads_t.p[n.loads[n.loads.carrier.str.contains('land transport demand')].index]
+                #eff = n.links_t.efficiency[(n.links.filter(like="land transport EV-"+str(int(year-lifetime_EV+i)),axis=0)).index]
+                #p_set = p_set.add_suffix(' EV-'+str(int(year-lifetime_EV+i)))
+                #p_set = p_set.drop([col for col in p_set.columns if col in p_set.columns and col not in eff.columns], axis=1)
+                #pnom = (p_set.divide(eff)).max()
+                pu=n.links_t.p_min_pu[(n.links.filter(like=cartype +"-"+str(int(year-lifetime_EV+i)),axis=0)).index] #p_set.divide(eff)/pnom
+                n.links_t.p_max_pu[(n.links.filter(like=cartype +"-"+str(int(year-lifetime_EV+i)),axis=0)).index] = pu.values
+                print(n.links_t.p_max_pu[(n.links.filter(like=cartype +"-"+str(int(year-lifetime_EV+i)),axis=0)).index])
+                #n.links_t.p_max_pu[(n.links.filter(like="land transpo-"+str(int(year-lifetime_EV+i)),axis=0)).index] = pu.values
+            i = i+1   
 
 def disable_grid_expansion_if_LV_limit_hit(n):
     if not "lv_limit" in n.global_constraints.index:
