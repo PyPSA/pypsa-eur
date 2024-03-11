@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2023-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
@@ -29,7 +29,7 @@ rule solve_network:
     threads: solver_threads
     resources:
         mem_mb=memory,
-        walltime=config_provider("solving", "walltime", default="12:00:00"),
+        runtime=config_provider("solving", "runtime", default="6h"),
     shadow:
         "minimal"
     conda:
@@ -60,7 +60,7 @@ rule solve_operations_network:
     threads: 4
     resources:
         mem_mb=(lambda w: 10000 + 372 * int(w.clusters)),
-        walltime=config_provider("solving", "walltime", default="12:00:00"),
+        runtime=config_provider("solving", "runtime", default="6h"),
     shadow:
         "minimal"
     conda:

@@ -1,9 +1,9 @@
-# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: CC0-1.0
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#top-level-configuration
-version: 0.9.0
+version: 0.10.0
 tutorial: false
 
 logging:
@@ -314,9 +314,8 @@ pypsa_eur:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#energy
 energy:
-  energy_totals_year: 2013
+  energy_totals_year: 2019
   base_emissions_year: 1990
-  eurostat_report_year: 2016
   emissions: CO2
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#biomass
@@ -814,8 +813,8 @@ solving:
     cbc-default: {} # Used in CI
     glpk-default: {} # Used in CI
 
-  mem: 30000 #memory in MB; 20 GB enough for 50+B+I+H2; 100 GB for 181+B+I+H2
-  walltime: "12:00:00"
+  mem_mb: 30000 #memory in MB; 20 GB enough for 50+B+I+H2; 100 GB for 181+B+I+H2
+  runtime: 6h #runtime in humanfriendly style https://humanfriendly.readthedocs.io/en/latest/
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#plotting
 plotting:

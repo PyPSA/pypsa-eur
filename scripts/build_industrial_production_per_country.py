@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -97,33 +97,18 @@ fields = {
     "Other Industrial Sectors": "Physical output (index)",
 }
 
-eb_names = {
-    "NO": "Norway",
-    "AL": "Albania",
-    "BA": "Bosnia and Herzegovina",
-    "MK": "FYR of Macedonia",
-    "GE": "Georgia",
-    "IS": "Iceland",
-    "KO": "Kosovo",
-    "MD": "Moldova",
-    "ME": "Montenegro",
-    "RS": "Serbia",
-    "UA": "Ukraine",
-    "TR": "Turkey",
-}
-
 eb_sectors = {
-    "Iron & steel industry": "Iron and steel",
-    "Chemical and Petrochemical industry": "Chemicals Industry",
-    "Non-ferrous metal industry": "Non-metallic mineral products",
-    "Paper, Pulp and Print": "Pulp, paper and printing",
-    "Food and Tabacco": "Food, beverages and tobacco",
-    "Non-metallic Minerals (Glass, pottery & building mat. Industry)": "Non Ferrous Metals",
-    "Transport Equipment": "Transport Equipment",
+    "Iron & steel": "Iron and steel",
+    "Chemical & petrochemical": "Chemicals Industry",
+    "Non-ferrous metals": "Non-metallic mineral products",
+    "Paper, pulp & printing": "Pulp, paper and printing",
+    "Food, beverages & tobacco": "Food, beverages and tobacco",
+    "Non-metallic minerals": "Non Ferrous Metals",
+    "Transport equipment": "Transport Equipment",
     "Machinery": "Machinery Equipment",
-    "Textile and Leather": "Textiles and leather",
-    "Wood and Wood Products": "Wood and wood products",
-    "Non-specified (Industry)": "Other Industrial Sectors",
+    "Textile & leather": "Textiles and leather",
+    "Wood & wood products": "Wood and wood products",
+    "Not elsewhere specified (industry)": "Other Industrial Sectors",
 }
 
 # TODO: this should go in a csv in `data`
@@ -160,12 +145,15 @@ def get_energy_ratio(country, eurostat_dir, jrc_dir, year):
         e_country = e_switzerland * tj_to_ktoe
     else:
         # estimate physical output, energy consumption in the sector and country
-        fn = f"{eurostat_dir}/{eb_names[country]}.XLSX"
-        with mute_print():
-            df = pd.read_excel(
-                fn, sheet_name="2016", index_col=2, header=0, skiprows=1
-            ).squeeze("columns")
-        e_country = df.loc[eb_sectors.keys(), "Total all products"].rename(eb_sectors)
+        fn = f"{eurostat_dir}/{country}-Energy-balance-sheets-April-2023-edition.xlsb"
+        df = pd.read_excel(
+            fn,
+            sheet_name=str(min(2021, year)),
+            index_col=2,
+            header=0,
+            skiprows=4,
+        )
+        e_country = df.loc[eb_sectors.keys(), "Total"].rename(eb_sectors)
 
     fn = f"{jrc_dir}/JRC-IDEES-2015_Industry_EU28.xlsx"
 

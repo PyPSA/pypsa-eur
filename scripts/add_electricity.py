@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -586,7 +586,7 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **par
         # fill missing max hours to params value and
         # assume no natural inflow due to lack of data
         max_hours = params.get("PHS_max_hours", 6)
-        phs = phs.replace({"max_hours": {0: max_hours}})
+        phs = phs.replace({"max_hours": {0: max_hours, np.nan: max_hours}})
         n.madd(
             "StorageUnit",
             phs.index,

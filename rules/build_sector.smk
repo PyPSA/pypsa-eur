@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2023-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
@@ -93,7 +93,7 @@ rule build_gas_network:
 
 rule build_gas_input_locations:
     input:
-        gem=HTTP.remote(
+        gem=storage(
             "https://globalenergymonitor.org/wp-content/uploads/2023/07/Europe-Gas-Tracker-2023-03-v3.xlsx",
             keep_local=True,
         ),
@@ -270,7 +270,7 @@ rule build_energy_totals:
         swiss="data/switzerland-new_format-all_years.csv",
         idees="data/bundle-sector/jrc-idees-2015",
         district_heat_share="data/district_heat_share.csv",
-        eurostat=input_eurostat,
+        eurostat="data/eurostat/eurostat-energy_balances-april_2023_edition",
     output:
         energy_name=resources("energy_totals.csv"),
         co2_name=resources("co2_totals.csv"),
@@ -293,7 +293,7 @@ rule build_biomass_potentials:
     params:
         biomass=config_provider("biomass"),
     input:
-        enspreso_biomass=HTTP.remote(
+        enspreso_biomass=storage(
             "https://zenodo.org/records/10356004/files/ENSPRESO_BIOMASS.xlsx",
             keep_local=True,
         ),
@@ -325,8 +325,8 @@ rule build_biomass_potentials:
 
 rule build_biomass_transport_costs:
     input:
-        transport_cost_data=HTTP.remote(
-            "publications.jrc.ec.europa.eu/repository/bitstream/JRC98626/biomass potentials in europe_web rev.pdf",
+        transport_cost_data=storage(
+            "https://publications.jrc.ec.europa.eu/repository/bitstream/JRC98626/biomass potentials in europe_web rev.pdf",
             keep_local=True,
         ),
     output:
@@ -350,7 +350,7 @@ rule build_sequestration_potentials:
             "sector", "regional_co2_sequestration_potential"
         ),
     input:
-        sequestration_potential=HTTP.remote(
+        sequestration_potential=storage(
             "https://raw.githubusercontent.com/ericzhou571/Co2Storage/main/resources/complete_map_2020_unit_Mt.geojson",
             keep_local=True,
         ),
@@ -468,7 +468,7 @@ rule build_industrial_production_per_country:
     input:
         ammonia_production=resources("ammonia_production.csv"),
         jrc="data/bundle-sector/jrc-idees-2015",
-        eurostat="data/bundle-sector/eurostat-energy_balances-may_2018_edition",
+        eurostat="data/eurostat/eurostat-energy_balances-april_2023_edition",
     output:
         industrial_production_per_country=resources(
             "industrial_production_per_country.csv"
@@ -808,6 +808,14 @@ rule build_existing_heating_distribution:
         "../scripts/build_existing_heating_distribution.py"
 
 
+def input_profile_offwind(w):
+    return {
+        f"profile_{tech}": resources(f"profile_{tech}.nc")
+        for tech in ["offwind-ac", "offwind-dc"]
+        if (tech in config_provider("electricity", "renewable_carriers")(w))
+    }
+
+
 rule prepare_sector_network:
     params:
         time_resolution=config_provider("clustering", "temporal", "resolution_sector"),
@@ -826,9 +834,9 @@ rule prepare_sector_network:
         countries=config_provider("countries"),
         adjustments=config_provider("adjustments", "sector"),
         emissions_scope=config_provider("energy", "emissions"),
-        eurostat_report_year=config_provider("energy", "eurostat_report_year"),
         RDIR=RDIR,
     input:
+        unpack(input_profile_offwind),
         **rules.cluster_gas_network.output,
         **rules.build_gas_input_locations.output,
         retro_cost=lambda w: (
@@ -856,7 +864,7 @@ rule prepare_sector_network:
         ),
         network=resources("networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"),
         energy_totals_name=resources("energy_totals.csv"),
-        eurostat=input_eurostat,
+        eurostat="data/eurostat/eurostat-energy_balances-april_2023_edition",
         pop_weighted_energy_totals=resources(
             "pop_weighted_energy_totals_s{simpl}_{clusters}.csv"
         ),
@@ -882,8 +890,6 @@ rule prepare_sector_network:
             if config_provider("foresight")(w) == "overnight"
             else resources("costs_{planning_horizons}.csv")
         ),
-        profile_offwind_ac=resources("profile_offwind-ac.nc"),
-        profile_offwind_dc=resources("profile_offwind-dc.nc"),
         h2_cavern=resources("salt_cavern_potentials_s{simpl}_{clusters}.csv"),
         busmap_s=resources("busmap_elec_s{simpl}.csv"),
         busmap=resources("busmap_elec_s{simpl}_{clusters}.csv"),

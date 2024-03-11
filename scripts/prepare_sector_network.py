@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -219,11 +219,36 @@ def get(item, investment_year=None):
     """
     Check whether item depends on investment year.
     """
-    return item[investment_year] if isinstance(item, dict) else item
+    if not isinstance(item, dict):
+        return item
+    elif investment_year in item.keys():
+        return item[investment_year]
+    else:
+        logger.warning(
+            f"Investment key {investment_year} not found in dictionary {item}."
+        )
+        keys = sorted(item.keys())
+        if investment_year < keys[0]:
+            logger.warning(f"Lower than minimum key. Taking minimum key {keys[0]}")
+            return item[keys[0]]
+        elif investment_year > keys[-1]:
+            logger.warning(f"Higher than maximum key. Taking maximum key {keys[0]}")
+            return item[keys[-1]]
+        else:
+            logger.warning(
+                "Interpolate linearly between the next lower and next higher year."
+            )
+            lower_key = max(k for k in keys if k < investment_year)
+            higher_key = min(k for k in keys if k > investment_year)
+            lower = item[lower_key]
+            higher = item[higher_key]
+            return lower + (higher - lower) * (investment_year - lower_key) / (
+                higher_key - lower_key
+            )
 
 
 def co2_emissions_year(
-    countries, input_eurostat, options, emissions_scope, report_year, input_co2, year
+    countries, input_eurostat, options, emissions_scope, input_co2, year
 ):
     """
     Calculate CO2 emissions in one specific year (e.g. 1990 or 2018).
@@ -233,11 +258,9 @@ def co2_emissions_year(
     # TODO: read Eurostat data from year > 2014
     # this only affects the estimation of CO2 emissions for BA, RS, AL, ME, MK
     if year > 2014:
-        eurostat_co2 = build_eurostat_co2(
-            input_eurostat, countries, report_year, year=2014
-        )
+        eurostat_co2 = build_eurostat_co2(input_eurostat, countries, 2014)
     else:
-        eurostat_co2 = build_eurostat_co2(input_eurostat, countries, report_year, year)
+        eurostat_co2 = build_eurostat_co2(input_eurostat, countries, year)
 
     co2_totals = build_co2_totals(countries, eea_co2, eurostat_co2)
 
@@ -252,9 +275,7 @@ def co2_emissions_year(
 
 
 # TODO: move to own rule with sector-opts wildcard?
-def build_carbon_budget(
-    o, input_eurostat, fn, emissions_scope, report_year, input_co2, options
-):
+def build_carbon_budget(o, input_eurostat, fn, emissions_scope, input_co2, options):
     """
     Distribute carbon budget following beta or exponential transition path.
     """
@@ -275,7 +296,6 @@ def build_carbon_budget(
         input_eurostat,
         options,
         emissions_scope,
-        report_year,
         input_co2,
         year=1990,
     )
@@ -286,7 +306,6 @@ def build_carbon_budget(
         input_eurostat,
         options,
         emissions_scope,
-        report_year,
         input_co2,
         year=2018,
     )
@@ -428,7 +447,9 @@ def update_wind_solar_costs(n, costs):
     # code adapted from pypsa-eur/scripts/add_electricity.py
     for connection in ["dc", "ac"]:
         tech = "offwind-" + connection
-        profile = snakemake.input["profile_offwind_" + connection]
+        if tech not in n.generators.carrier.values:
+            continue
+        profile = snakemake.input["profile_offwind-" + connection]
         with xr.open_dataset(profile) as ds:
 
             # if-statement for compatibility with old profiles
@@ -3648,14 +3669,12 @@ if __name__ == "__main__":
         fn = "results/" + snakemake.params.RDIR + "/csvs/carbon_budget_distribution.csv"
         if not os.path.exists(fn):
             emissions_scope = snakemake.params.emissions_scope
-            report_year = snakemake.params.eurostat_report_year
             input_co2 = snakemake.input.co2
             build_carbon_budget(
                 co2_budget,
                 snakemake.input.eurostat,
                 fn,
                 emissions_scope,
-                report_year,
                 input_co2,
                 options,
             )
