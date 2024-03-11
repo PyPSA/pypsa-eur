@@ -132,8 +132,8 @@ rule solve_sector_network_myopic:
         + "logs/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_python.log",
     threads: solver_threads
     resources:
-        mem_mb=config_provider("solving", "mem"),
-        walltime=config_provider("solving", "walltime", default="12:00:00"),
+        mem_mb=config_provider("solving", "mem_mb"),
+        runtime=config_provider("solving", "runtime", default="6h"),
     benchmark:
         (
             RESULTS
