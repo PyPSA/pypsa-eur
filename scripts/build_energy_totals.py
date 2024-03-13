@@ -712,15 +712,25 @@ def build_co2_totals(countries, eea_co2, eurostat_co2):
 
 
 def build_transport_data(countries, population, idees):
-    transport_data = pd.DataFrame(index=countries)
+    # first collect number of cars
 
-    # collect number of cars
+    transport_data = pd.DataFrame(idees["passenger cars"])
 
-    transport_data["number cars"] = idees["passenger cars"]
-
-    # CH from http://ec.europa.eu/eurostat/statistics-explained/index.php/Passenger_cars_in_the_EU#Luxembourg_has_the_highest_number_of_passenger_cars_per_inhabitant
+# https://www.bfs.admin.ch/bfs/en/home/statistics/mobility-transport/transport-infrastructure-vehicles/vehicles/road-vehicles-stock-level-motorisation.html
     if "CH" in countries:
-        transport_data.at["CH", "number cars"] = 4.136e6
+        fn = snakemake.input.swiss_transport
+        swiss_cars = pd.read_csv(fn, index_col=0).loc[1990:2021, ["passenger cars"]]
+
+        swiss_cars.index = pd.MultiIndex.from_product(
+            [["CH"], swiss_cars.index],
+            names=["country", "year"]
+        )
+
+        transport_data = pd.concat([transport_data, swiss_cars]).sort_index()
+
+    transport_data.rename(
+        columns={"passenger cars": "number cars"}, inplace=True
+    )
 
     missing = transport_data.index[transport_data["number cars"].isna()]
     if not missing.empty:

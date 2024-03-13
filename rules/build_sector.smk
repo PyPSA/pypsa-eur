@@ -289,6 +289,7 @@ rule build_energy_totals:
         nuts3_shapes=resources("nuts3_shapes.geojson"),
         co2="data/bundle-sector/eea/UNFCCC_v23.csv",
         swiss="data/switzerland-new_format-all_years.csv",
+        swiss_transport="data/gr-e-11.03.02.01.01-cc.csv",
         idees="data/bundle-sector/jrc-idees-2015",
         district_heat_share="data/district_heat_share.csv",
         eurostat="data/eurostat/eurostat-energy_balances-april_2023_edition",
