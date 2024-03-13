@@ -721,21 +721,18 @@ def build_transport_data(countries, population, idees):
 
     transport_data = pd.DataFrame(idees["passenger cars"])
 
-# https://www.bfs.admin.ch/bfs/en/home/statistics/mobility-transport/transport-infrastructure-vehicles/vehicles/road-vehicles-stock-level-motorisation.html
+    # https://www.bfs.admin.ch/bfs/en/home/statistics/mobility-transport/transport-infrastructure-vehicles/vehicles/road-vehicles-stock-level-motorisation.html
     if "CH" in countries:
         fn = snakemake.input.swiss_transport
         swiss_cars = pd.read_csv(fn, index_col=0).loc[1990:2021, ["passenger cars"]]
 
         swiss_cars.index = pd.MultiIndex.from_product(
-            [["CH"], swiss_cars.index],
-            names=["country", "year"]
+            [["CH"], swiss_cars.index], names=["country", "year"]
         )
 
         transport_data = pd.concat([transport_data, swiss_cars]).sort_index()
 
-    transport_data.rename(
-        columns={"passenger cars": "number cars"}, inplace=True
-    )
+    transport_data.rename(columns={"passenger cars": "number cars"}, inplace=True)
 
     missing = transport_data.index[transport_data["number cars"].isna()]
     if not missing.empty:
