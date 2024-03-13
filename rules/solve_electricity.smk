@@ -14,9 +14,9 @@ rule solve_network:
         custom_extra_functionality=input_custom_extra_functionality,
     input:
         network=resources("networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"),
-        config=RESULTS + "config.yaml",
     output:
         network=RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+        config=RESULTS + "configs/config.elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.yaml",
     log:
         solver=normpath(
             RESULTS

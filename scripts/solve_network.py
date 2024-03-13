@@ -36,6 +36,7 @@ import numpy as np
 import pandas as pd
 import pypsa
 import xarray as xr
+import yaml
 from _benchmark import memory_logger
 from _helpers import (
     configure_logging,
@@ -968,4 +969,13 @@ if __name__ == "__main__":
     logger.info(f"Maximum memory usage: {mem.mem_usage}")
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
-    n.export_to_netcdf(snakemake.output[0])
+    n.export_to_netcdf(snakemake.output.network)
+
+    with open(snakemake.output.config, "w") as file:
+        yaml.dump(
+            n.meta,
+            file,
+            default_flow_style=False,
+            allow_unicode=True,
+            sort_keys=False,
+        )
