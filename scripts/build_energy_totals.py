@@ -611,6 +611,11 @@ def build_district_heat_share(countries, idees):
 
     district_heat_share.name = "district heat share"
 
+    # restrict to available years
+    district_heat_share = (
+        district_heat_share.unstack().dropna(how="all", axis=1).ffill(axis=1)
+    )
+
     return district_heat_share
 
 
