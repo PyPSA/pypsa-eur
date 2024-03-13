@@ -10,6 +10,11 @@ Release Notes
 Upcoming Release
 ================
 
+* Upgrade to Snakemake v8.5+. This version is the new minimum version required.
+  To upgrade an existing environment, run ``conda install -c bioconda
+  snakemake-minimal">=8.5"`` and ``pip install snakemake-storage-plugin-http``
+  (https://github.com/PyPSA/pypsa-eur/pull/825).
+
 * Corrected a bug leading to power plants operating after their DateOut
   (https://github.com/PyPSA/pypsa-eur/pull/958). Added additional grouping years
   before 1980.
@@ -98,6 +103,8 @@ Upcoming Release
   marked as ``protected()`` as the download size is small.
 
 * Bugfix: allow modelling sector-coupled landlocked regions. (Fixed handling of offshore wind.)
+
+* Adapt the disabling of transmission expansion in myopic foresight optimisations when limit is already reached to also handle cost limits.
 
 PyPSA-Eur 0.10.0 (19th February 2024)
 =====================================

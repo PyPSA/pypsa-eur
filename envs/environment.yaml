@@ -20,8 +20,7 @@ dependencies:
 - openpyxl!=3.1.1
 - pycountry
 - seaborn
-  # snakemake 8 introduced a number of breaking changes which the workflow has yet to be made compatible with
-- snakemake-minimal>=7.7.0,<8.0.0
+- snakemake-minimal>=8.5
 - memory_profiler
 - yaml
 - pytables
@@ -61,4 +60,7 @@ dependencies:
 
 - pip:
   - tsam>=2.3.1
+  - snakemake-storage-plugin-http
+  - snakemake-executor-plugin-slurm
+  - snakemake-executor-plugin-cluster-generic
   - highspy

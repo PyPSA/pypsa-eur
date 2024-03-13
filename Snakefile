@@ -7,13 +7,11 @@ from shutil import copyfile, move, rmtree
 from pathlib import Path
 import yaml
 
-from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 from snakemake.utils import min_version
 
-from scripts._helpers import path_provider
+min_version("8.5")
 
-min_version("7.7")
-HTTP = HTTPRemoteProvider()
+from scripts._helpers import path_provider
 
 default_files = {
     "config/config.default.yaml": "config/config.yaml",
