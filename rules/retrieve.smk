@@ -198,10 +198,9 @@ if config["enable"]["retrieve"]:
 
     rule retrieve_artificial_load_data:
         input:
-            HTTP.remote(
+            storage(
                 "https://zenodo.org/record/7070438/files/demand_hourly.csv",
                 keep_local=True,
-                static=True,
             ),
         output:
             "data/load_artificial_raw.csv",
