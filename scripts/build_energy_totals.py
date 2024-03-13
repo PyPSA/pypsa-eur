@@ -856,44 +856,52 @@ def rescale_idees_from_eurostat(
     ]
 
     for country in idees_countries:
-        slicer_target = idx[country, 2016:2021, :, :]
-        slicer_source = idx[country, 2015, :, :]
-        for sector, mapping in mappings.items():
-            sector_ratio = ratio.loc[
-                (country, slice(None), slice(None), sector)
-            ].droplevel("lvl2")
+        filling_years = [(2015, slice(2016, 2021)), (2000, slice(1990, 1999))]
 
-            energy.loc[slicer_target, mapping["total"]] = cartesian(
-                sector_ratio.loc[2016:2021, "total"],
-                energy.loc[slicer_source, mapping["total"]].squeeze(),
+        for source_year, target_years in filling_years:
+
+            slicer_source = idx[country, source_year, :, :]
+            slicer_target = idx[country, target_years, :, :]
+
+            for sector, mapping in mappings.items():
+                sector_ratio = ratio.loc[
+                    (country, slice(None), slice(None), sector)
+                ].droplevel("lvl2")
+
+                energy.loc[slicer_target, mapping["total"]] = cartesian(
+                    sector_ratio.loc[target_years, "total"],
+                    energy.loc[slicer_source, mapping["total"]].squeeze(axis=0),
+                ).values
+                energy.loc[slicer_target, mapping["elec"]] = cartesian(
+                    sector_ratio.loc[target_years, "ele"],
+                    energy.loc[slicer_source, mapping["elec"]].squeeze(axis=0),
+                ).values
+
+            level_drops = ["country", "lvl2", "lvl3"]
+
+            slicer = idx[country, :, :, "Domestic aviation"]
+            avi_d = ratio.loc[slicer, "total"].droplevel(level_drops)
+
+            slicer = idx[country, :, :, "International aviation"]
+            avi_i = ratio.loc[slicer, "total"].droplevel(level_drops)
+
+            slicer = idx[country, :, :, "Domestic Navigation"]
+            nav = ratio.loc[slicer, "total"].droplevel(level_drops)
+
+            energy.loc[slicer_target, avia_inter] = cartesian(
+                avi_i.loc[target_years],
+                energy.loc[slicer_source, avia_inter].squeeze(axis=0),
             ).values
-            energy.loc[slicer_target, mapping["elec"]] = cartesian(
-                sector_ratio.loc[2016:2021, "ele"],
-                energy.loc[slicer_source, mapping["elec"]].squeeze(),
+
+            energy.loc[slicer_target, avia_domestic] = cartesian(
+                avi_d.loc[target_years],
+                energy.loc[slicer_source, avia_domestic].squeeze(axis=0),
             ).values
 
-        level_drops = ["country", "lvl2", "lvl3"]
-
-        slicer = idx[country, :, :, "Domestic aviation"]
-        avi_d = ratio.loc[slicer, "total"].droplevel(level_drops)
-
-        slicer = idx[country, :, :, "International aviation"]
-        avi_i = ratio.loc[slicer, "total"].droplevel(level_drops)
-
-        slicer = idx[country, :, :, "Domestic Navigation"]
-        nav = ratio.loc[slicer, "total"].droplevel(level_drops)
-
-        energy.loc[slicer_target, avia_inter] = cartesian(
-            avi_i.loc[2016:2021], energy.loc[slicer_source, avia_inter].squeeze()
-        ).values
-
-        energy.loc[slicer_target, avia_domestic] = cartesian(
-            avi_d.loc[2016:2021], energy.loc[slicer_source, avia_domestic].squeeze()
-        ).values
-
-        energy.loc[slicer_target, navigation] = cartesian(
-            nav.loc[2016:2021], energy.loc[slicer_source, navigation]
-        ).values
+            energy.loc[slicer_target, navigation] = cartesian(
+                nav.loc[target_years],
+                energy.loc[slicer_source, navigation].squeeze(axis=0),
+            ).values
 
     return energy
 
