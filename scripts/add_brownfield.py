@@ -14,6 +14,7 @@ import pypsa
 import xarray as xr
 from _helpers import (
     configure_logging,
+    get_snapshots
     set_scenario_config,
     update_config_from_wildcards,
 )
@@ -192,7 +193,7 @@ def adjust_renewable_profiles(n, input_profiles, params, year):
     clustermaps.index = clustermaps.index.astype(str)
 
     # temporal clustering
-    dr = pd.date_range(**params["snapshots"], freq="h")
+    dr = get_snapshots(params["snapshots"], params["drop_leap_day"])
     snapshotmaps = (
         pd.Series(dr, index=dr).where(lambda x: x.isin(n.snapshots), pd.NA).ffill()
     )
