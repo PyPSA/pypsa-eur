@@ -76,7 +76,7 @@ def add_existing_land_transport(baseyear, options):
         2005: 0.15,  # 15-19 years (2000-2005)
         2000: 0.30,  # 20+ years
     }
-    
+
     for build_year, share in car_ages.items():
         df = n.links.loc[ice_i]
         df = df[df.lifetime + build_year > baseyear]
@@ -88,10 +88,12 @@ def add_existing_land_transport(baseyear, options):
         df.rename(
             index=lambda x: x.replace(f"-{baseyear}", f"-{build_year}"), inplace=True
         )
-        p_max_pu.rename(columns=lambda x: x.replace(f"-{baseyear}", f"-{build_year}"),
-                        inplace=True)
-        efficiency.rename(columns=lambda x: x.replace(f"-{baseyear}", f"-{build_year}"),
-                        inplace=True)
+        p_max_pu.rename(
+            columns=lambda x: x.replace(f"-{baseyear}", f"-{build_year}"), inplace=True
+        )
+        efficiency.rename(
+            columns=lambda x: x.replace(f"-{baseyear}", f"-{build_year}"), inplace=True
+        )
         n.madd(
             "Link",
             df.index,
@@ -107,11 +109,9 @@ def add_existing_land_transport(baseyear, options):
             p_max_pu=p_max_pu,
             lifetime=df.lifetime,
         )
-        
-        
+
     n.links.loc[ice_i, "p_nom"] = 0
 
-        
 
 def add_existing_renewables(df_agg):
     """
@@ -679,7 +679,7 @@ if __name__ == "__main__":
 
     if options["endogenous_transport"]:
         add_existing_land_transport(baseyear, options)
-        
+
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
 
     sanitize_carriers(n, snakemake.config)

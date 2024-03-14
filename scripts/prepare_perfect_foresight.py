@@ -166,7 +166,7 @@ def concat_networks(years):
         year = years[i]
         network = pypsa.Network(network_path)
         adjust_electricity_grid(network, year, years)
-        if not i==0:
+        if not i == 0:
             add_build_year_to_new_assets(network, year)
 
         # static ----------------------------------
