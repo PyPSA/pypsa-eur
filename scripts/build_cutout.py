@@ -109,11 +109,9 @@ if __name__ == "__main__":
 
     cutout_params = snakemake.params.cutouts[snakemake.wildcards.cutout]
 
-    if "time" not in cutout_params:
-        snapshots = pd.date_range(freq="h", **snakemake.params.snapshots)
-        cutout_params["time"] = [snapshots[0], snapshots[-1]]
-
-    cutout_params["time"] = slice(*cutout_params["time"])
+    snapshots = pd.date_range(freq="h", **snakemake.params.snapshots)
+    time = [snapshots[0], snapshots[-1]]
+    cutout_params["time"] = slice(*cutout_params.get("time", time))
 
     if {"x", "y", "bounds"}.isdisjoint(cutout_params):
         # Determine the bounds from bus regions with a buffer of two grid cells
