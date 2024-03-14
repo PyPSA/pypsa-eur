@@ -74,11 +74,10 @@ cc = coco.CountryConverter()
 def get_eia_annual_hydro_generation(fn, countries, capacities=False):
     # in billion kWh/a = TWh/a
     df = pd.read_csv(
-        fn, skiprows=2, index_col=1, na_values=[" ", "--"], decimal=","
+        fn, skiprows=2, index_col=1, na_values=[" ", "--"]
     ).iloc[1:, 1:]
     df.index = df.index.str.strip()
     df.columns = df.columns.astype(int)
-    df = df.astype(float)
 
     former_countries = {
         "Former Czechoslovakia": dict(
