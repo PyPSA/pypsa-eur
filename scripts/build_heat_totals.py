@@ -16,7 +16,7 @@ idx = pd.IndexSlice
 
 def approximate_heat_demand(energy_totals, hdd):
 
-    countries = hdd.columns
+    countries = hdd.columns.intersection(energy_totals.index.levels[0])
 
     demands = {}
 
