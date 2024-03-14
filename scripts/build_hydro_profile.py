@@ -77,6 +77,8 @@ def get_eia_annual_hydro_generation(fn, countries, capacities=False):
         fn, skiprows=2, index_col=1, na_values=[" ", "--"], decimal=","
     ).iloc[1:, 1:]
     df.index = df.index.str.strip()
+    df.columns = df.columns.astype(int)
+    df = df.astype(float)
 
     former_countries = {
         "Former Czechoslovakia": dict(
@@ -100,7 +102,7 @@ def get_eia_annual_hydro_generation(fn, countries, capacities=False):
     }
 
     for k, v in former_countries.items():
-        period = [str(i) for i in range(v["start"], v["end"] + 1)]
+        period = [i for i in range(v["start"], v["end"] + 1)]
         ratio = df.loc[v["countries"]].T.dropna().sum()
         ratio /= ratio.sum()
         for country in v["countries"]:
@@ -128,7 +130,7 @@ def get_eia_annual_hydro_generation(fn, countries, capacities=False):
 
 def correct_eia_stats_by_capacity(eia_stats, fn, countries, baseyear=2019):
     cap = get_eia_annual_hydro_generation(fn, countries, capacities=True)
-    ratio = cap / cap.loc[str(baseyear)]
+    ratio = cap / cap.loc[baseyear]
     eia_stats_corrected = eia_stats / ratio
     to_keep = ["AL", "AT", "CH", "DE", "GB", "NL", "RS", "RO", "SK"]
     to_correct = eia_stats_corrected.columns.difference(to_keep)
@@ -137,9 +139,10 @@ def correct_eia_stats_by_capacity(eia_stats, fn, countries, baseyear=2019):
 
 def approximate_missing_eia_stats(eia_stats, runoff_fn, countries):
     runoff = pd.read_csv(runoff_fn, index_col=0).T[countries]
+    runoff.index = runoff.index.astype(int)
 
-    # fix ES, PT data points
-    runoff.loc["1978", ["ES", "PT"]] = runoff.loc["1979", ["ES", "PT"]]
+    # fix outliers; exceptional floods in 1977-1979 in ES & PT
+    runoff.loc[1978, ["ES", "PT"]] = runoff.loc[1979, ["ES", "PT"]]
 
     runoff_eia = runoff.loc[eia_stats.index]
 

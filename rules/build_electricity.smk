@@ -344,6 +344,7 @@ rule build_hydro_profile:
     params:
         hydro=config_provider("renewable", "hydro"),
         countries=config_provider("countries"),
+        snapshots=config_provider("snapshots"),
     input:
         country_shapes=resources("country_shapes.geojson"),
         eia_hydro_generation="data/eia_hydro_annual_generation.csv",
