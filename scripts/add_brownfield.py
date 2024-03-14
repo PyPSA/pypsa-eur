@@ -124,29 +124,57 @@ def add_brownfield(n, n_p, year):
             n.links.loc[new_pipes, "p_nom_min"] = 0.0
 
 
-def disable_grid_expansion_if_LV_limit_hit(n):
-    if "lv_limit" not in n.global_constraints.index:
-        return
+def disable_grid_expansion_if_limit_hit(n):
+    """
+    Check if transmission expansion limit is already reached; then turn off.
 
-    total_expansion = (
-        n.lines.eval("s_nom_min * length").sum()
-        + n.links.query("carrier == 'DC'").eval("p_nom_min * length").sum()
-    ).sum()
+    In particular, this function checks if the total transmission
+    capital cost or volume implied by s_nom_min and p_nom_min are
+    numerically close to the respective global limit set in
+    n.global_constraints. If so, the nominal capacities are set to the
+    minimum and extendable is turned off; the corresponding global
+    constraint is then dropped.
+    """
+    cols = {"cost": "capital_cost", "volume": "length"}
+    for limit_type in ["cost", "volume"]:
+        glcs = n.global_constraints.query(
+            f"type == 'transmission_expansion_{limit_type}_limit'"
+        )
 
-    lv_limit = n.global_constraints.at["lv_limit", "constant"]
+        for name, glc in glcs.iterrows():
+            total_expansion = (
+                (
+                    n.lines.query("p_nom_extendable")
+                    .eval(f"s_nom_min * {cols[limit_type]}")
+                    .sum()
+                )
+                + (
+                    n.links.query("carrier == 'DC' and p_nom_extendable")
+                    .eval(f"p_nom_min * {cols[limit_type]}")
+                    .sum()
+                )
+            ).sum()
 
-    # allow small numerical differences
-    if lv_limit - total_expansion < 1:
-        logger.info("LV is already reached, disabling expansion and LV limit")
-        extendable_acs = n.lines.query("s_nom_extendable").index
-        n.lines.loc[extendable_acs, "s_nom_extendable"] = False
-        n.lines.loc[extendable_acs, "s_nom"] = n.lines.loc[extendable_acs, "s_nom_min"]
+            # Allow small numerical differences
+            if np.abs(glc.constant - total_expansion) / glc.constant < 1e-6:
+                logger.info(
+                    f"Transmission expansion {limit_type} is already reached, disabling expansion and limit"
+                )
+                extendable_acs = n.lines.query("s_nom_extendable").index
+                n.lines.loc[extendable_acs, "s_nom_extendable"] = False
+                n.lines.loc[extendable_acs, "s_nom"] = n.lines.loc[
+                    extendable_acs, "s_nom_min"
+                ]
 
-        extendable_dcs = n.links.query("carrier == 'DC' and p_nom_extendable").index
-        n.links.loc[extendable_dcs, "p_nom_extendable"] = False
-        n.links.loc[extendable_dcs, "p_nom"] = n.links.loc[extendable_dcs, "p_nom_min"]
+                extendable_dcs = n.links.query(
+                    "carrier == 'DC' and p_nom_extendable"
+                ).index
+                n.links.loc[extendable_dcs, "p_nom_extendable"] = False
+                n.links.loc[extendable_dcs, "p_nom"] = n.links.loc[
+                    extendable_dcs, "p_nom_min"
+                ]
 
-        n.global_constraints.drop("lv_limit", inplace=True)
+                n.global_constraints.drop(name, inplace=True)
 
 
 def adjust_renewable_profiles(n, input_profiles, params, year):
@@ -233,7 +261,7 @@ if __name__ == "__main__":
 
     add_brownfield(n, n_p, year)
 
-    disable_grid_expansion_if_LV_limit_hit(n)
+    disable_grid_expansion_if_limit_hit(n)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     n.export_to_netcdf(snakemake.output[0])

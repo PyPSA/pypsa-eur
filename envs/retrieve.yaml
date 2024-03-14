@@ -8,6 +8,11 @@ channels:
 - bioconda
 dependencies:
 - python>=3.8
-- snakemake-minimal>=7.7.0,<8.0.0
+- pip
+- snakemake-minimal>=8.5
 - pandas>=2.1
 - tqdm
+- pip:
+  - snakemake-storage-plugin-http
+  - snakemake-executor-plugin-slurm
+  - snakemake-executor-plugin-cluster-generic

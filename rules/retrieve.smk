@@ -64,9 +64,8 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True
 
     rule retrieve_cutout:
         input:
-            HTTP.remote(
-                "zenodo.org/record/6382570/files/{cutout}.nc",
-                static=True,
+            storage(
+                "https://zenodo.org/record/6382570/files/{cutout}.nc",
             ),
         output:
             protected("cutouts/" + CDIR + "{cutout}.nc"),
@@ -104,10 +103,9 @@ if config["enable"]["retrieve"] and config["enable"].get(
 
     rule retrieve_natura_raster:
         input:
-            HTTP.remote(
-                "zenodo.org/record/4706686/files/natura.tiff",
+            storage(
+                "https://zenodo.org/record/4706686/files/natura.tiff",
                 keep_local=True,
-                static=True,
             ),
         output:
             resources("natura.tiff"),
@@ -200,10 +198,9 @@ if config["enable"]["retrieve"]:
 
     rule retrieve_ship_raster:
         input:
-            HTTP.remote(
+            storage(
                 "https://zenodo.org/record/6953563/files/shipdensity_global.zip",
                 keep_local=True,
-                static=True,
             ),
         output:
             protected("data/shipdensity_global.zip"),
@@ -223,9 +220,8 @@ if config["enable"]["retrieve"]:
     # Website: https://land.copernicus.eu/global/products/lc
     rule download_copernicus_land_cover:
         input:
-            HTTP.remote(
-                "zenodo.org/record/3939050/files/PROBAV_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
-                static=True,
+            storage(
+                "https://zenodo.org/record/3939050/files/PROBAV_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
             ),
         output:
             "data/Copernicus_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
@@ -240,9 +236,8 @@ if config["enable"]["retrieve"]:
     # Website: https://ec.europa.eu/jrc/en/luisa
     rule retrieve_luisa_land_cover:
         input:
-            HTTP.remote(
-                "jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/LUISA/EUROPE/Basemaps/LandUse/2018/LATEST/LUISA_basemap_020321_50m.tif",
-                static=True,
+            storage(
+                "https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/LUISA/EUROPE/Basemaps/LandUse/2018/LATEST/LUISA_basemap_020321_50m.tif",
             ),
         output:
             "data/LUISA_basemap_020321_50m.tif",
@@ -285,11 +280,7 @@ if config["enable"]["retrieve"]:
     # Website: https://www.protectedplanet.net/en/thematic-areas/wdpa
     rule download_wdpa:
         input:
-            HTTP.remote(
-                url,
-                static=True,
-                keep_local=True,
-            ),
+            storage(url, keep_local=True),
         params:
             zip="data/WDPA_shp.zip",
             folder=directory("data/WDPA"),
@@ -311,9 +302,8 @@ if config["enable"]["retrieve"]:
         # extract the main zip and then merge the contained 3 zipped shapefiles
         # Website: https://www.protectedplanet.net/en/thematic-areas/marine-protected-areas
         input:
-            HTTP.remote(
-                f"d1gam3xoknrgr2.cloudfront.net/current/WDPA_WDOECM_{bYYYY}_Public_marine_shp.zip",
-                static=True,
+            storage(
+                f"https://d1gam3xoknrgr2.cloudfront.net/current/WDPA_WDOECM_{bYYYY}_Public_marine_shp.zip",
                 keep_local=True,
             ),
         params:
@@ -336,10 +326,9 @@ if config["enable"]["retrieve"]:
 
     rule retrieve_monthly_co2_prices:
         input:
-            HTTP.remote(
+            storage(
                 "https://www.eex.com/fileadmin/EEX/Downloads/EUA_Emission_Spot_Primary_Market_Auction_Report/Archive_Reports/emission-spot-primary-market-auction-report-2019-data.xls",
                 keep_local=True,
-                static=True,
             ),
         output:
             "data/validation/emission-spot-primary-market-auction-report-2019-data.xls",
