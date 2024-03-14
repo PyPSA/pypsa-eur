@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2021-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2021-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -10,7 +10,12 @@ import logging
 import tarfile
 from pathlib import Path
 
-from _helpers import configure_logging, progress_retrieve, validate_checksum
+from _helpers import (
+    configure_logging,
+    progress_retrieve,
+    set_scenario_config,
+    validate_checksum,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +28,7 @@ if __name__ == "__main__":
     else:
         rootpath = "."
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     url = "https://zenodo.org/record/5824485/files/pypsa-eur-sec-data-bundle.tar.gz"
 

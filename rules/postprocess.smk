@@ -11,18 +11,19 @@ if config["foresight"] != "perfect":
 
     rule plot_power_network_clustered:
         params:
-            plotting=config["plotting"],
+            plotting=config_provider("plotting"),
         input:
-            network=RESOURCES + "networks/elec_s{simpl}_{clusters}.nc",
-            regions_onshore=RESOURCES
-            + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+            network=resources("networks/elec_s{simpl}_{clusters}.nc"),
+            regions_onshore=resources(
+                "regions_onshore_elec_s{simpl}_{clusters}.geojson"
+            ),
         output:
-            map=RESULTS + "maps/power-network-s{simpl}-{clusters}.pdf",
+            map=resources("maps/power-network-s{simpl}-{clusters}.pdf"),
         threads: 1
         resources:
             mem_mb=4000,
         benchmark:
-            BENCHMARKS + "plot_power_network_clustered/elec_s{simpl}_{clusters}"
+            benchmarks("plot_power_network_clustered/elec_s{simpl}_{clusters}")
         conda:
             "../envs/environment.yaml"
         script:
@@ -30,11 +31,11 @@ if config["foresight"] != "perfect":
 
     rule plot_power_network:
         params:
-            plotting=config["plotting"],
+            plotting=config_provider("plotting"),
         input:
             network=RESULTS
             + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
-            regions=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+            regions=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
         output:
             map=RESULTS
             + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
@@ -42,14 +43,12 @@ if config["foresight"] != "perfect":
         resources:
             mem_mb=10000,
         log:
-            (
-                LOGS
-                + "plot_power_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log"
-            ),
+            RESULTS
+            + "logs/plot_power_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log",
         benchmark:
             (
-                BENCHMARKS
-                + "plot_power_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+                RESULTS
+                + "benchmarksplot_power_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
             )
         conda:
             "../envs/environment.yaml"
@@ -58,12 +57,12 @@ if config["foresight"] != "perfect":
 
     rule plot_hydrogen_network:
         params:
-            plotting=config["plotting"],
-            foresight=config["foresight"],
+            plotting=config_provider("plotting"),
+            foresight=config_provider("foresight"),
         input:
             network=RESULTS
             + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
-            regions=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+            regions=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
         output:
             map=RESULTS
             + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-h2_network_{planning_horizons}.pdf",
@@ -71,14 +70,12 @@ if config["foresight"] != "perfect":
         resources:
             mem_mb=10000,
         log:
-            (
-                LOGS
-                + "plot_hydrogen_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log"
-            ),
+            RESULTS
+            + "logs/plot_hydrogen_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log",
         benchmark:
             (
-                BENCHMARKS
-                + "plot_hydrogen_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+                RESULTS
+                + "benchmarks/plot_hydrogen_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
             )
         conda:
             "../envs/environment.yaml"
@@ -87,11 +84,11 @@ if config["foresight"] != "perfect":
 
     rule plot_gas_network:
         params:
-            plotting=config["plotting"],
+            plotting=config_provider("plotting"),
         input:
             network=RESULTS
             + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
-            regions=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+            regions=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
         output:
             map=RESULTS
             + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-ch4_network_{planning_horizons}.pdf",
@@ -99,14 +96,12 @@ if config["foresight"] != "perfect":
         resources:
             mem_mb=10000,
         log:
-            (
-                LOGS
-                + "plot_gas_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log"
-            ),
+            RESULTS
+            + "logs/plot_gas_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log",
         benchmark:
             (
-                BENCHMARKS
-                + "plot_gas_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+                RESULTS
+                + "benchmarks/plot_gas_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
             )
         conda:
             "../envs/environment.yaml"
@@ -116,26 +111,26 @@ if config["foresight"] != "perfect":
 
 if config["foresight"] == "perfect":
 
+    def output_map_year(w):
+        return {
+            f"map_{year}": RESULTS
+            + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_"
+            + f"{year}.pdf"
+            for year in config_provider("scenario", "planning_horizons")(w)
+        }
+
     rule plot_power_network_perfect:
         params:
-            plotting=config["plotting"],
+            plotting=config_provider("plotting"),
         input:
             network=RESULTS
             + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years.nc",
-            regions=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+            regions=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
         output:
-            **{
-                f"map_{year}": RESULTS
-                + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_"
-                + f"{year}.pdf"
-                for year in config["scenario"]["planning_horizons"]
-            },
+            unpack(output_map_year),
         threads: 2
         resources:
             mem_mb=10000,
-        benchmark:
-            BENCHMARKS
-            +"postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years_benchmark"
         conda:
             "../envs/environment.yaml"
         script:
@@ -150,8 +145,6 @@ rule copy_config:
     threads: 1
     resources:
         mem_mb=1000,
-    benchmark:
-        BENCHMARKS + "copy_config"
     conda:
         "../envs/environment.yaml"
     script:
@@ -160,52 +153,57 @@ rule copy_config:
 
 rule make_summary:
     params:
-        foresight=config["foresight"],
-        costs=config["costs"],
-        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},
-        scenario=config["scenario"],
+        foresight=config_provider("foresight"),
+        costs=config_provider("costs"),
+        snapshots=config_provider("snapshots"),
+        scenario=config_provider("scenario"),
         RDIR=RDIR,
     input:
-        expand(
-            RESULTS + "maps/power-network-s{simpl}-{clusters}.pdf",
-            **config["scenario"],
-        ),
         networks=expand(
             RESULTS
             + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
             **config["scenario"],
+            allow_missing=True,
         ),
-        costs=(
-            "data/costs_{}.csv".format(config["costs"]["year"])
-            if config["foresight"] == "overnight"
-            else "data/costs_{}.csv".format(config["scenario"]["planning_horizons"][0])
+        costs=lambda w: (
+            resources("costs_{}.csv".format(config_provider("costs", "year")(w)))
+            if config_provider("foresight")(w) == "overnight"
+            else resources(
+                "costs_{}.csv".format(
+                    config_provider("scenario", "planning_horizons", 0)(w)
+                )
+            )
         ),
         ac_plot=expand(
-            RESULTS + "maps/power-network-s{simpl}-{clusters}.pdf",
+            resources("maps/power-network-s{simpl}-{clusters}.pdf"),
             **config["scenario"],
+            allow_missing=True,
         ),
         costs_plot=expand(
             RESULTS
             + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
             **config["scenario"],
+            allow_missing=True,
         ),
-        h2_plot=expand(
+        h2_plot=lambda w: expand(
             (
                 RESULTS
                 + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-h2_network_{planning_horizons}.pdf"
-                if config["sector"]["H2_network"]
+                if config_provider("sector", "H2_network")(w)
                 else []
             ),
             **config["scenario"],
+            allow_missing=True,
         ),
-        ch4_plot=expand(
+        ch4_plot=lambda w: expand(
             (
                 RESULTS
                 + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-ch4_network_{planning_horizons}.pdf"
-                if config["sector"]["gas_network"]
+                if config_provider("sector", "gas_network")(w)
                 else []
             ),
             **config["scenario"],
+            allow_missing=True,
         ),
     output:
         nodal_costs=RESULTS + "csvs/nodal_costs.csv",
@@ -227,9 +225,7 @@ rule make_summary:
     resources:
         mem_mb=10000,
     log:
-        LOGS + "make_summary.log",
-    benchmark:
-        BENCHMARKS + "make_summary"
+        RESULTS + "logs/make_summary.log",
     conda:
         "../envs/environment.yaml"
     script:
@@ -238,18 +234,19 @@ rule make_summary:
 
 rule plot_summary:
     params:
-        countries=config["countries"],
-        planning_horizons=config["scenario"]["planning_horizons"],
-        sector_opts=config["scenario"]["sector_opts"],
-        emissions_scope=config["energy"]["emissions"],
-        eurostat_report_year=config["energy"]["eurostat_report_year"],
-        plotting=config["plotting"],
+        countries=config_provider("countries"),
+        planning_horizons=config_provider("scenario", "planning_horizons"),
+        emissions_scope=config_provider("energy", "emissions"),
+        plotting=config_provider("plotting"),
+        foresight=config_provider("foresight"),
+        co2_budget=config_provider("co2_budget"),
+        sector=config_provider("sector"),
         RDIR=RDIR,
     input:
         costs=RESULTS + "csvs/costs.csv",
         energy=RESULTS + "csvs/energy.csv",
         balances=RESULTS + "csvs/supply_energy.csv",
-        eurostat=input_eurostat,
+        eurostat="data/eurostat/eurostat-energy_balances-april_2023_edition",
         co2="data/bundle-sector/eea/UNFCCC_v23.csv",
     output:
         costs=RESULTS + "graphs/costs.pdf",
@@ -259,9 +256,7 @@ rule plot_summary:
     resources:
         mem_mb=10000,
     log:
-        LOGS + "plot_summary.log",
-    benchmark:
-        BENCHMARKS + "plot_summary"
+        RESULTS + "logs/plot_summary.log",
     conda:
         "../envs/environment.yaml"
     script:
@@ -280,10 +275,96 @@ STATISTICS_BARPLOTS = [
     "market_value",
 ]
 
+STATISTICS = {
+    "capacity_factor": ("-", "p.u."),
+    "installed_capacity": (1e3, "GW"),
+    "optimal_capacity": (1e3, "GW"),
+    "capex": (1e9, "bn €"),
+    "opex": (1e9, "bn €"),
+    "total_cost": ("1e9", "bn €"),
+    "curtailment": (1e3, "GWh"),
+    "supply": (1e6, "TWh"),
+    "withdrawal": (1e6, "TWh"),
+    "energy_balance": (1e6, "TWh"),
+    "market_value": ("-", "€/MWh"),
+}
+
+
+rule save_statistics_csv:
+    params:
+        statistics=STATISTICS,
+    input:
+        network=RESULTS
+        + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+    output:
+        **{
+            f"{csv}": RESULTS
+            + "statistics/csv/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/{carrier}_"
+            + f"{csv}.csv"
+            for carrier in config["plotting"].get("carriers", "all")
+            for csv in STATISTICS
+        },
+        csv_touch=RESULTS
+        + "statistics/csv/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/.statistics_{carrier}_csv",
+    script:
+        "../scripts/write_statistics.py"
+
+
+rule plot_statistics_single:
+    params:
+        plotting=config["plotting"],
+        statistics=STATISTICS,
+    input:
+        **{
+            f"{csv}": RESULTS
+            + "statistics/csv/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/{carrier}_"
+            + f"{csv}.csv"
+            for carrier in config["plotting"].get("carriers", "all")
+            for csv in STATISTICS
+        },
+    output:
+        **{
+            f"{plot}": RESULTS
+            + "statistics/figures/single/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/{carrier}_"
+            + f"{plot}.pdf"
+            for carrier in config["plotting"].get("carriers", "all")
+            for plot in STATISTICS
+        },
+        barplots_touch=RESULTS
+        + "statistics/figures/single/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/.statistics_{carrier}_plots",
+    script:
+        "../scripts/plot_statistics_single.py"
+
+
+rule plot_statistics_comparison:
+    params:
+        plotting=config["plotting"],
+        statistics=STATISTICS,
+    input:
+        expand(
+            RESULTS
+            + "statistics/csv/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/{carrier}_{csv}.csv",
+            **config["scenario"],
+            csv=STATISTICS,
+            allow_missing=True,
+        ),
+    output:
+        **{
+            f"{plot}": RESULTS
+            + "statistics/figures/comparison/country_{country}/{carrier}_"
+            + f"{plot}.pdf"
+            for carrier in config["plotting"].get("carriers", "all")
+            for plot in STATISTICS
+        },
+        barplots_touch=RESULTS
+        + "statistics/figures/comparison/country_{country}/.statistics_{carrier}_plots",
+    script:
+        "../scripts/plot_statistics_comparison.py"
+
 
 rule plot_elec_statistics:
     params:
-        plotting=config["plotting"],
+        plotting=config_provider("plotting"),
         barplots=STATISTICS_BARPLOTS,
     input:
         network=RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",

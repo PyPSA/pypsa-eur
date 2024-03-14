@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2023-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
@@ -32,7 +32,7 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
         output:
             protected(expand("data/bundle/{file}", file=datafiles)),
         log:
-            LOGS + "retrieve_databundle.log",
+            "logs/retrieve_databundle.log",
         resources:
             mem_mb=1000,
         retries: 2
@@ -50,7 +50,7 @@ if config["enable"].get("retrieve_irena"):
             onwind="data/existing_infrastructure/onwind_capacity_IRENA.csv",
             solar="data/existing_infrastructure/solar_capacity_IRENA.csv",
         log:
-            LOGS + "retrieve_irena.log",
+            logs("retrieve_irena.log"),
         resources:
             mem_mb=1000,
         retries: 2
@@ -64,9 +64,8 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True
 
     rule retrieve_cutout:
         input:
-            HTTP.remote(
-                "zenodo.org/record/6382570/files/{cutout}.nc",
-                static=True,
+            storage(
+                "https://zenodo.org/record/6382570/files/{cutout}.nc",
             ),
         output:
             protected("cutouts/" + CDIR + "{cutout}.nc"),
@@ -83,23 +82,19 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True
 if config["enable"]["retrieve"] and config["enable"].get("retrieve_cost_data", True):
 
     rule retrieve_cost_data:
-        input:
-            HTTP.remote(
-                "raw.githubusercontent.com/PyPSA/technology-data/{}/outputs/".format(
-                    config["costs"]["version"]
-                )
-                + "costs_{year}.csv",
-                keep_local=True,
-            ),
+        params:
+            version=config_provider("costs", "version"),
         output:
-            "data/costs_{year}.csv",
+            resources("costs_{year}.csv"),
         log:
-            LOGS + "retrieve_cost_data_{year}.log",
+            logs("retrieve_cost_data_{year}.log"),
         resources:
             mem_mb=1000,
         retries: 2
-        run:
-            move(input[0], output[0])
+        conda:
+            "../envs/retrieve.yaml"
+        script:
+            "../scripts/retrieve_cost_data.py"
 
 
 if config["enable"]["retrieve"] and config["enable"].get(
@@ -108,15 +103,14 @@ if config["enable"]["retrieve"] and config["enable"].get(
 
     rule retrieve_natura_raster:
         input:
-            HTTP.remote(
-                "zenodo.org/record/4706686/files/natura.tiff",
+            storage(
+                "https://zenodo.org/record/4706686/files/natura.tiff",
                 keep_local=True,
-                static=True,
             ),
         output:
-            RESOURCES + "natura.tiff",
+            resources("natura.tiff"),
         log:
-            LOGS + "retrieve_natura_raster.log",
+            logs("retrieve_natura_raster.log"),
         resources:
             mem_mb=5000,
         retries: 2
@@ -139,27 +133,26 @@ if config["enable"]["retrieve"] and config["enable"].get(
         "h2_salt_caverns_GWh_per_sqkm.geojson",
     ]
 
-    datafolders = [
-        protected(
-            directory("data/bundle-sector/eurostat-energy_balances-june_2016_edition")
-        ),
-        protected(
-            directory("data/bundle-sector/eurostat-energy_balances-may_2018_edition")
-        ),
-        protected(directory("data/bundle-sector/jrc-idees-2015")),
-    ]
-
     rule retrieve_sector_databundle:
         output:
             protected(expand("data/bundle-sector/{files}", files=datafiles)),
-            *datafolders,
+            protected(directory("data/bundle-sector/jrc-idees-2015")),
         log:
-            LOGS + "retrieve_sector_databundle.log",
+            "logs/retrieve_sector_databundle.log",
         retries: 2
         conda:
             "../envs/retrieve.yaml"
         script:
             "../scripts/retrieve_sector_databundle.py"
+
+    rule retrieve_eurostat_data:
+        output:
+            directory("data/eurostat/eurostat-energy_balances-april_2023_edition"),
+        log:
+            "logs/retrieve_eurostat_data.log",
+        retries: 2
+        script:
+            "../scripts/retrieve_eurostat_data.py"
 
 
 if config["enable"]["retrieve"]:
@@ -173,11 +166,9 @@ if config["enable"]["retrieve"]:
 
     rule retrieve_gas_infrastructure_data:
         output:
-            protected(
-                expand("data/gas_network/scigrid-gas/data/{files}", files=datafiles)
-            ),
+            expand("data/gas_network/scigrid-gas/data/{files}", files=datafiles),
         log:
-            LOGS + "retrieve_gas_infrastructure_data.log",
+            "logs/retrieve_gas_infrastructure_data.log",
         retries: 2
         conda:
             "../envs/retrieve.yaml"
@@ -188,42 +179,33 @@ if config["enable"]["retrieve"]:
 if config["enable"]["retrieve"]:
 
     rule retrieve_electricity_demand:
-        input:
-            HTTP.remote(
-                "data.open-power-system-data.org/time_series/{version}/time_series_60min_singleindex.csv".format(
-                    version=(
-                        "2019-06-05"
-                        if config["snapshots"]["end"] < "2019"
-                        else "2020-10-06"
-                    )
-                ),
-                keep_local=True,
-                static=True,
-            ),
+        params:
+            versions=["2019-06-05", "2020-10-06"],
         output:
-            RESOURCES + "load_raw.csv",
+            "data/electricity_demand_raw.csv",
         log:
-            LOGS + "retrieve_electricity_demand.log",
+            "logs/retrieve_electricity_demand.log",
         resources:
             mem_mb=5000,
         retries: 2
-        run:
-            move(input[0], output[0])
+        conda:
+            "../envs/retrieve.yaml"
+        script:
+            "../scripts/retrieve_electricity_demand.py"
 
 
 if config["enable"]["retrieve"]:
 
     rule retrieve_ship_raster:
         input:
-            HTTP.remote(
+            storage(
                 "https://zenodo.org/record/6953563/files/shipdensity_global.zip",
                 keep_local=True,
-                static=True,
             ),
         output:
             protected("data/shipdensity_global.zip"),
         log:
-            LOGS + "retrieve_ship_raster.log",
+            "logs/retrieve_ship_raster.log",
         resources:
             mem_mb=5000,
         retries: 2
@@ -238,9 +220,8 @@ if config["enable"]["retrieve"]:
     # Website: https://land.copernicus.eu/global/products/lc
     rule download_copernicus_land_cover:
         input:
-            HTTP.remote(
-                "zenodo.org/record/3939050/files/PROBAV_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
-                static=True,
+            storage(
+                "https://zenodo.org/record/3939050/files/PROBAV_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
             ),
         output:
             "data/Copernicus_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
@@ -255,9 +236,8 @@ if config["enable"]["retrieve"]:
     # Website: https://ec.europa.eu/jrc/en/luisa
     rule retrieve_luisa_land_cover:
         input:
-            HTTP.remote(
-                "jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/LUISA/EUROPE/Basemaps/LandUse/2018/LATEST/LUISA_basemap_020321_50m.tif",
-                static=True,
+            storage(
+                "https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/LUISA/EUROPE/Basemaps/LandUse/2018/LATEST/LUISA_basemap_020321_50m.tif",
             ),
         output:
             "data/LUISA_basemap_020321_50m.tif",
@@ -300,11 +280,7 @@ if config["enable"]["retrieve"]:
     # Website: https://www.protectedplanet.net/en/thematic-areas/wdpa
     rule download_wdpa:
         input:
-            HTTP.remote(
-                url,
-                static=True,
-                keep_local=True,
-            ),
+            storage(url, keep_local=True),
         params:
             zip="data/WDPA_shp.zip",
             folder=directory("data/WDPA"),
@@ -326,9 +302,8 @@ if config["enable"]["retrieve"]:
         # extract the main zip and then merge the contained 3 zipped shapefiles
         # Website: https://www.protectedplanet.net/en/thematic-areas/marine-protected-areas
         input:
-            HTTP.remote(
-                f"d1gam3xoknrgr2.cloudfront.net/current/WDPA_WDOECM_{bYYYY}_Public_marine_shp.zip",
-                static=True,
+            storage(
+                f"https://d1gam3xoknrgr2.cloudfront.net/current/WDPA_WDOECM_{bYYYY}_Public_marine_shp.zip",
                 keep_local=True,
             ),
         params:
@@ -351,15 +326,14 @@ if config["enable"]["retrieve"]:
 
     rule retrieve_monthly_co2_prices:
         input:
-            HTTP.remote(
+            storage(
                 "https://www.eex.com/fileadmin/EEX/Downloads/EUA_Emission_Spot_Primary_Market_Auction_Report/Archive_Reports/emission-spot-primary-market-auction-report-2019-data.xls",
                 keep_local=True,
-                static=True,
             ),
         output:
             "data/validation/emission-spot-primary-market-auction-report-2019-data.xls",
         log:
-            LOGS + "retrieve_monthly_co2_prices.log",
+            "logs/retrieve_monthly_co2_prices.log",
         resources:
             mem_mb=5000,
         retries: 2
@@ -373,7 +347,7 @@ if config["enable"]["retrieve"]:
         output:
             "data/validation/energy-price-trends-xlsx-5619002.xlsx",
         log:
-            LOGS + "retrieve_monthly_fuel_prices.log",
+            "logs/retrieve_monthly_fuel_prices.log",
         resources:
             mem_mb=5000,
         retries: 2

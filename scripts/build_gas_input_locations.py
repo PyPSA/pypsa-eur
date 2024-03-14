@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2021-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2021-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -11,6 +11,7 @@ import logging
 
 import geopandas as gpd
 import pandas as pd
+from _helpers import configure_logging, set_scenario_config
 from cluster_gas_network import load_bus_regions
 
 logger = logging.getLogger(__name__)
@@ -24,7 +25,7 @@ def read_scigrid_gas(fn):
 
 
 def build_gem_lng_data(fn):
-    df = pd.read_excel(fn[0], sheet_name="LNG terminals - data")
+    df = pd.read_excel(fn, sheet_name="LNG terminals - data")
     df = df.set_index("ComboID")
 
     remove_country = ["Cyprus", "Turkey"]  # noqa: F841
@@ -45,7 +46,7 @@ def build_gem_lng_data(fn):
 
 
 def build_gem_prod_data(fn):
-    df = pd.read_excel(fn[0], sheet_name="Gas extraction - main")
+    df = pd.read_excel(fn, sheet_name="Gas extraction - main")
     df = df.set_index("GEM Unit ID")
 
     remove_country = ["Cyprus", "Türkiye"]  # noqa: F841
@@ -59,7 +60,7 @@ def build_gem_prod_data(fn):
               & ~Longitude.isna()"
     ).copy()
 
-    p = pd.read_excel(fn[0], sheet_name="Gas extraction - production")
+    p = pd.read_excel(fn, sheet_name="Gas extraction - production")
     p = p.set_index("GEM Unit ID")
     p = p[p["Fuel description"] == "gas"]
 
@@ -134,7 +135,8 @@ if __name__ == "__main__":
             clusters="128",
         )
 
-    logging.basicConfig(level=snakemake.config["logging"]["level"])
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     regions = load_bus_regions(
         snakemake.input.regions_onshore, snakemake.input.regions_offshore

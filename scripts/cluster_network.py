@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
@@ -133,14 +133,17 @@ import numpy as np
 import pandas as pd
 import pypsa
 import seaborn as sns
-from _helpers import configure_logging, update_p_nom_max
+from _helpers import configure_logging, set_scenario_config, update_p_nom_max
 from add_electricity import load_costs
+from packaging.version import Version, parse
 from pypsa.clustering.spatial import (
     busmap_by_greedy_modularity,
     busmap_by_hac,
     busmap_by_kmeans,
     get_clustering_from_busmap,
 )
+
+PD_GE_2_2 = parse(pd.__version__) >= Version("2.2")
 
 warnings.filterwarnings(action="ignore", category=UserWarning)
 idx = pd.IndexSlice
@@ -264,7 +267,7 @@ def distribute_clusters(n, n_clusters, focus_weights=None, solver_name="scip"):
     m.objective = (clusters * clusters - 2 * clusters * L * n_clusters).sum()
     if solver_name == "gurobi":
         logging.getLogger("gurobipy").propagate = False
-    elif solver_name != "scip":
+    elif solver_name not in ["scip", "cplex"]:
         logger.info(
             f"The configured solver `{solver_name}` does not support quadratic objectives. Falling back to `scip`."
         )
@@ -362,9 +365,11 @@ def busmap_for_n_clusters(
                 f"`algorithm` must be one of 'kmeans' or 'hac'. Is {algorithm}."
             )
 
+    compat_kws = dict(include_groups=False) if PD_GE_2_2 else {}
+
     return (
         n.buses.groupby(["country", "sub_network"], group_keys=False)
-        .apply(busmap_for_country, include_groups=False)
+        .apply(busmap_for_country, **compat_kws)
         .squeeze()
         .rename("busmap")
     )
@@ -451,6 +456,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("cluster_network", simpl="", clusters="37")
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     params = snakemake.params
     solver_name = snakemake.config["solving"]["solver"]["name"]

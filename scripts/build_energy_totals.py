@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -8,13 +8,14 @@ Build total energy demands per country using JRC IDEES, eurostat, and EEA data.
 
 import logging
 import multiprocessing as mp
+import os
 from functools import partial
 
 import country_converter as coco
 import geopandas as gpd
 import numpy as np
 import pandas as pd
-from _helpers import mute_print
+from _helpers import configure_logging, mute_print, set_scenario_config
 from tqdm import tqdm
 
 cc = coco.CountryConverter()
@@ -34,54 +35,6 @@ def reverse(dictionary):
     Reverses a keys and values of a dictionary.
     """
     return {v: k for k, v in dictionary.items()}
-
-
-eurostat_codes = {
-    "EU28": "EU",
-    "EA19": "EA",
-    "Belgium": "BE",
-    "Bulgaria": "BG",
-    "Czech Republic": "CZ",
-    "Denmark": "DK",
-    "Germany": "DE",
-    "Estonia": "EE",
-    "Ireland": "IE",
-    "Greece": "GR",
-    "Spain": "ES",
-    "France": "FR",
-    "Croatia": "HR",
-    "Italy": "IT",
-    "Cyprus": "CY",
-    "Latvia": "LV",
-    "Lithuania": "LT",
-    "Luxembourg": "LU",
-    "Hungary": "HU",
-    "Malta": "MA",
-    "Netherlands": "NL",
-    "Austria": "AT",
-    "Poland": "PL",
-    "Portugal": "PT",
-    "Romania": "RO",
-    "Slovenia": "SI",
-    "Slovakia": "SK",
-    "Finland": "FI",
-    "Sweden": "SE",
-    "United Kingdom": "GB",
-    "Iceland": "IS",
-    "Norway": "NO",
-    "Montenegro": "ME",
-    "FYR of Macedonia": "MK",
-    "Albania": "AL",
-    "Serbia": "RS",
-    "Turkey": "TU",
-    "Bosnia and Herzegovina": "BA",
-    "Kosovo\n(UNSCR 1244/99)": "KO",  # 2017 version
-    # 2016 version
-    "Kosovo\n(under United Nations Security Council Resolution 1244/99)": "KO",
-    "Moldova": "MO",
-    "Ukraine": "UK",
-    "Switzerland": "CH",
-}
 
 
 idees_rename = {"GR": "EL", "GB": "UK"}
@@ -116,39 +69,57 @@ to_ipcc = {
 }
 
 
-def build_eurostat(input_eurostat, countries, report_year, year):
+def build_eurostat(input_eurostat, countries, year):
     """
     Return multi-index for all countries' energy data in TWh/a.
     """
-    filenames = {
-        2016: f"/{year}-Energy-Balances-June2016edition.xlsx",
-        2017: f"/{year}-ENERGY-BALANCES-June2017edition.xlsx",
-    }
-
-    with mute_print():
-        dfs = pd.read_excel(
-            input_eurostat + filenames[report_year],
-            sheet_name=None,
-            skiprows=1,
+    df = {}
+    countries = {idees_rename.get(country, country) for country in countries} - {"CH"}
+    for country in countries:
+        filename = (
+            f"{input_eurostat}/{country}-Energy-balance-sheets-April-2023-edition.xlsb"
+        )
+        sheet = pd.read_excel(
+            filename,
+            engine="pyxlsb",
+            sheet_name=str(year),
+            skiprows=4,
             index_col=list(range(4)),
         )
+        df[country] = sheet
+    df = pd.concat(df, axis=0)
 
-    # sorted_index necessary for slicing
-    lookup = eurostat_codes
-    labelled_dfs = {
-        lookup[df.columns[0]]: df
-        for df in dfs.values()
-        if lookup[df.columns[0]] in countries
+    # drop columns with all NaNs
+    unnamed_cols = df.columns[df.columns.astype(str).str.startswith("Unnamed")]
+    df.drop(unnamed_cols, axis=1, inplace=True)
+    df.drop(year, axis=1, inplace=True)
+
+    # make numeric values where possible
+    df.replace("Z", 0, inplace=True)
+    df = df.apply(pd.to_numeric, errors="coerce")
+    df = df.select_dtypes(include=[np.number])
+
+    # write 'International aviation' to the 2nd level of the multiindex
+    int_avia = df.index.get_level_values(2) == "International aviation"
+    temp = df.loc[int_avia]
+    temp.index = pd.MultiIndex.from_frame(
+        temp.index.to_frame().fillna("International aviation")
+    )
+    df = pd.concat([temp, df.loc[~int_avia]])
+
+    # Renaming some indices
+    index_rename = {
+        "Households": "Residential",
+        "Commercial & public services": "Services",
+        "Domestic navigation": "Domestic Navigation",
+        "International maritime bunkers": "Bunkers",
     }
-    df = pd.concat(labelled_dfs, sort=True).sort_index()
+    columns_rename = {"Total": "Total all products", "UK": "GB"}
+    df.rename(index=index_rename, columns=columns_rename, inplace=True)
+    df.sort_index(inplace=True)
+    df.index.names = [None] * len(df.index.names)
 
-    # drop non-numeric and country columns
-    non_numeric_cols = df.columns[df.dtypes != float]
-    country_cols = df.columns.intersection(lookup.keys())
-    to_drop = non_numeric_cols.union(country_cols)
-    df.drop(to_drop, axis=1, inplace=True)
-
-    # convert ktoe/a to TWh/a
+    # convert to TWh/a from ktoe/a
     df *= 11.63 / 1e3
 
     return df
@@ -651,8 +622,8 @@ def build_eea_co2(input_co2, year=1990, emissions_scope="CO2"):
     return emissions / 1e3
 
 
-def build_eurostat_co2(input_eurostat, countries, report_year, year=1990):
-    eurostat = build_eurostat(input_eurostat, countries, report_year, year)
+def build_eurostat_co2(input_eurostat, countries, year=1990):
+    eurostat = build_eurostat(input_eurostat, countries, year)
 
     specific_emissions = pd.Series(index=eurostat.columns, dtype=float)
 
@@ -674,12 +645,7 @@ def build_co2_totals(countries, eea_co2, eurostat_co2):
 
     for ct in pd.Index(countries).intersection(["BA", "RS", "AL", "ME", "MK"]):
         mappings = {
-            "electricity": (
-                ct,
-                "+",
-                "Conventional Thermal Power Stations",
-                "of which From Coal",
-            ),
+            "electricity": (ct, "+", "Electricity & heat generation", np.nan),
             "residential non-elec": (ct, "+", "+", "Residential"),
             "services non-elec": (ct, "+", "+", "Services"),
             "road non-elec": (ct, "+", "+", "Road"),
@@ -687,12 +653,12 @@ def build_co2_totals(countries, eea_co2, eurostat_co2):
             "domestic navigation": (ct, "+", "+", "Domestic Navigation"),
             "international navigation": (ct, "-", "Bunkers"),
             "domestic aviation": (ct, "+", "+", "Domestic aviation"),
-            "international aviation": (ct, "+", "+", "International aviation"),
+            "international aviation": (ct, "-", "International aviation"),
             # does not include industrial process emissions or fuel processing/refining
-            "industrial non-elec": (ct, "+", "Industry"),
+            "industrial non-elec": (ct, "+", "Industry sector"),
             # does not include non-energy emissions
             "agriculture": (eurostat_co2.index.get_level_values(0) == ct)
-            & eurostat_co2.index.isin(["Agriculture / Forestry", "Fishing"], level=3),
+            & eurostat_co2.index.isin(["Agriculture & forestry", "Fishing"], level=3),
         }
 
         for i, mi in mappings.items():
@@ -737,13 +703,139 @@ def build_transport_data(countries, population, idees):
     return transport_data
 
 
+def rescale_idees_from_eurostat(
+    idees_countries, energy, eurostat, input_eurostat, countries
+):
+    """
+    Takes JRC IDEES data from 2015 and rescales it by the ratio of the eurostat
+    data and the 2015 eurostat data.
+
+    missing data: ['passenger car efficiency', 'passenger cars']
+    """
+    main_cols = ["Total all products", "Electricity"]
+    # read in the eurostat data for 2015
+    eurostat_2015 = build_eurostat(input_eurostat, countries, 2015)[main_cols]
+    eurostat_year = eurostat[main_cols]
+    # calculate the ratio of the two data sets
+    ratio = eurostat_year / eurostat_2015
+    ratio = ratio.droplevel([1, 4])
+    cols_rename = {"Total all products": "total", "Electricity": "ele"}
+    index_rename = {v: k for k, v in idees_rename.items()}
+    ratio.rename(columns=cols_rename, index=index_rename, inplace=True)
+
+    mappings = {
+        "Residential": {
+            "total": [
+                "total residential space",
+                "total residential water",
+                "total residential cooking",
+                "total residential",
+                "derived heat residential",
+                "thermal uses residential",
+            ],
+            "elec": [
+                "electricity residential space",
+                "electricity residential water",
+                "electricity residential cooking",
+                "electricity residential",
+            ],
+        },
+        "Services": {
+            "total": [
+                "total services space",
+                "total services water",
+                "total services cooking",
+                "total services",
+                "derived heat services",
+                "thermal uses services",
+            ],
+            "elec": [
+                "electricity services space",
+                "electricity services water",
+                "electricity services cooking",
+                "electricity services",
+            ],
+        },
+        "Agriculture & forestry": {
+            "total": [
+                "total agriculture heat",
+                "total agriculture machinery",
+                "total agriculture",
+            ],
+            "elec": [
+                "total agriculture electricity",
+            ],
+        },
+        "Road": {
+            "total": [
+                "total road",
+                "total passenger cars",
+                "total other road passenger",
+                "total light duty road freight",
+            ],
+            "elec": [
+                "electricity road",
+                "electricity passenger cars",
+                "electricity other road passenger",
+                "electricity light duty road freight",
+            ],
+        },
+        "Rail": {
+            "total": [
+                "total rail",
+                "total rail passenger",
+                "total rail freight",
+            ],
+            "elec": [
+                "electricity rail",
+                "electricity rail passenger",
+                "electricity rail freight",
+            ],
+        },
+    }
+
+    avia_inter = [
+        "total aviation passenger",
+        "total aviation freight",
+        "total international aviation passenger",
+        "total international aviation freight",
+        "total international aviation",
+    ]
+    avia_domestic = [
+        "total domestic aviation passenger",
+        "total domestic aviation freight",
+        "total domestic aviation",
+    ]
+    navigation = [
+        "total domestic navigation",
+    ]
+
+    for country in idees_countries:
+        for sector, mapping in mappings.items():
+            sector_ratio = ratio.loc[(country, slice(None), sector)]
+
+            energy.loc[country, mapping["total"]] *= sector_ratio["total"].iloc[0]
+            energy.loc[country, mapping["elec"]] *= sector_ratio["ele"].iloc[0]
+
+        avi_d = ratio.loc[(country, slice(None), "Domestic aviation"), "total"]
+        avi_i = ratio.loc[(country, "International aviation", slice(None)), "total"]
+        energy.loc[country, avia_inter] *= avi_i.iloc[0]
+        energy.loc[country, avia_domestic] *= avi_d.iloc[0]
+
+        nav = ratio.loc[(country, slice(None), "Domestic Navigation"), "total"]
+        energy.loc[country, navigation] *= nav.iloc[0]
+
+    return energy
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_energy_totals")
 
-    logging.basicConfig(level=snakemake.config["logging"]["level"])
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     params = snakemake.params.energy
 
@@ -754,24 +846,32 @@ if __name__ == "__main__":
     idees_countries = pd.Index(countries).intersection(eu28)
 
     data_year = params["energy_totals_year"]
-    report_year = snakemake.params.energy["eurostat_report_year"]
     input_eurostat = snakemake.input.eurostat
-    eurostat = build_eurostat(input_eurostat, countries, report_year, data_year)
+    eurostat = build_eurostat(input_eurostat, countries, data_year)
     swiss = build_swiss(data_year)
-    idees = build_idees(idees_countries, data_year)
+    # data from idees only exists from 2000-2015. read in latest data and rescale later
+    idees = build_idees(idees_countries, min(2015, data_year))
 
     energy = build_energy_totals(countries, eurostat, swiss, idees)
+
+    if data_year > 2015:
+        logger.info("Data year is after 2015. Rescaling IDEES data based on eurostat.")
+        energy = rescale_idees_from_eurostat(
+            idees_countries, energy, eurostat, input_eurostat, countries
+        )
+
     energy.to_csv(snakemake.output.energy_name)
 
-    district_heat_share = build_district_heat_share(countries, idees)
+    # use rescaled idees data to calculate district heat share
+    district_heat_share = build_district_heat_share(
+        countries, energy.loc[idees_countries]
+    )
     district_heat_share.to_csv(snakemake.output.district_heat_share)
 
     base_year_emissions = params["base_emissions_year"]
     emissions_scope = snakemake.params.energy["emissions"]
     eea_co2 = build_eea_co2(snakemake.input.co2, base_year_emissions, emissions_scope)
-    eurostat_co2 = build_eurostat_co2(
-        input_eurostat, countries, report_year, base_year_emissions
-    )
+    eurostat_co2 = build_eurostat_co2(input_eurostat, countries, base_year_emissions)
 
     co2 = build_co2_totals(countries, eea_co2, eurostat_co2)
     co2.to_csv(snakemake.output.co2_name)

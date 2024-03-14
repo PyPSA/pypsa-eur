@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -11,6 +11,7 @@ import logging
 
 import geopandas as gpd
 import pandas as pd
+from _helpers import configure_logging, set_scenario_config
 from pypsa.geo import haversine_pts
 from shapely.geometry import Point
 
@@ -143,7 +144,8 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_gas_network")
 
-    logging.basicConfig(level=snakemake.config["logging"]["level"])
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     gas_network = load_dataset(snakemake.input.gas_network)
 

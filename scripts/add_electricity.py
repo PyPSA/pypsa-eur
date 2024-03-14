@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -52,7 +52,7 @@ Inputs
         :scale: 34 %
 
 - ``data/geth2015_hydro_capacities.csv``: alternative to capacities above; not currently used!
-- ``resources/load.csv`` Hourly per-country load profiles.
+- ``resources/electricity_demand.csv`` Hourly per-country electricity demand profiles.
 - ``resources/regions_onshore.geojson``: confer :ref:`busregions`
 - ``resources/nuts3_shapes.geojson``: confer :ref:`shapes`
 - ``resources/powerplants.csv``: confer :ref:`powerplants`
@@ -93,7 +93,7 @@ import powerplantmatching as pm
 import pypsa
 import scipy.sparse as sparse
 import xarray as xr
-from _helpers import configure_logging, update_p_nom_max
+from _helpers import configure_logging, set_scenario_config, update_p_nom_max
 from powerplantmatching.export import map_country_bus
 from shapely.prepared import prep
 
@@ -586,7 +586,7 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **par
         # fill missing max hours to params value and
         # assume no natural inflow due to lack of data
         max_hours = params.get("PHS_max_hours", 6)
-        phs = phs.replace({"max_hours": {0: max_hours}})
+        phs = phs.replace({"max_hours": {0: max_hours, np.nan: max_hours}})
         n.madd(
             "StorageUnit",
             phs.index,
@@ -790,6 +790,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("add_electricity")
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     params = snakemake.params
 

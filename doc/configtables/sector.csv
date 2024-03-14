@@ -1,4 +1,9 @@
 ,Unit,Values,Description
+transport,--,"{true, false}",Flag to include transport sector.
+heating,--,"{true, false}",Flag to include heating sector.
+biomass,--,"{true, false}",Flag to include biomass sector.
+industry,--,"{true, false}",Flag to include industry sector.
+agriculture,--,"{true, false}",Flag to include agriculture sector.
 district_heating,--,,`prepare_sector_network.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/prepare_sector_network.py>`_
 -- potential,--,float,maximum fraction of urban demand which can be supplied by district heating
 -- progress,--,Dictionary with planning horizons as keys., Increase of today's district heating demand to potential maximum district heating share. Progress = 0 means today's district heating share. Progress = 1 means maximum fraction of urban demand is supplied by district heating
@@ -66,6 +71,7 @@ boilers,--,"{true, false}",Add option for transforming gas into heat using gas b
 resistive_heaters,--,"{true, false}",Add option for transforming electricity into heat using resistive heaters (independently from gas boilers)
 oil_boilers,--,"{true, false}",Add option for transforming oil into heat using boilers
 biomass_boiler,--,"{true, false}",Add option for transforming biomass into heat using boilers
+overdimension_individual_heating,--,"float",Add option for overdimensioning individual heating systems by a certain factor. This allows them to cover heat demand peaks e.g. 10% higher than those in the data with a setting of 1.1.
 chp,--,"{true, false}",Add option for using Combined Heat and Power (CHP)
 micro_chp,--,"{true, false}",Add option for using Combined Heat and Power (CHP) for decentral areas.
 solar_thermal,--,"{true, false}",Add option for using solar thermal to generate heat.
@@ -108,6 +114,7 @@ min_part_load _methanolisation,per unit of p_nom ,float,The minimum unit dispatc
 use_fischer_tropsch _waste_heat,--,"{true, false}",Add option for using waste heat of Fischer Tropsch in district heating networks
 use_fuel_cell_waste_heat,--,"{true, false}",Add option for using waste heat of fuel cells in district heating networks
 use_electrolysis_waste _heat,--,"{true, false}",Add option for using waste heat of electrolysis in district heating networks
+electricity_transmission _grid,--,"{true, false}",Switch for enabling/disabling the electricity transmission grid.
 electricity_distribution _grid,--,"{true, false}",Add a simplified representation of the exchange capacity between transmission and distribution grid level through a link.
 electricity_distribution _grid_cost_factor,,,Multiplies the investment cost of the electricity distribution grid
 ,,,

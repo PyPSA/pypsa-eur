@@ -10,26 +10,29 @@ rule build_existing_heating_distribution:
         existing_capacities=config["existing_capacities"],
     input:
         existing_heating="data/existing_infrastructure/existing_heating_raw.csv",
-        clustered_pop_layout=RESOURCES + "pop_layout_elec_s{simpl}_{clusters}.csv",
-        clustered_pop_energy_layout=RESOURCES
-        + "pop_weighted_energy_totals_s{simpl}_{clusters}.csv",
-        district_heat_share=RESOURCES
-        + "district_heat_share_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
+        clustered_pop_layout=resources("pop_layout_elec_s{simpl}_{clusters}.csv"),
+        clustered_pop_energy_layout=resources(
+            "pop_weighted_energy_totals_s{simpl}_{clusters}.csv"
+        ),
+        district_heat_share=resources(
+            "district_heat_share_elec_s{simpl}_{clusters}_{planning_horizons}.csv"
+        ),
     output:
-        existing_heating_distribution=RESOURCES
-        + "existing_heating_distribution_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
+        existing_heating_distribution=resources(
+            "existing_heating_distribution_elec_s{simpl}_{clusters}_{planning_horizons}.csv"
+        ),
     wildcard_constraints:
         planning_horizons=config["scenario"]["planning_horizons"][0],  #only applies to baseyear
     threads: 1
     resources:
         mem_mb=2000,
     log:
-        LOGS
-        + "build_existing_heating_distribution_elec_s{simpl}_{clusters}_{planning_horizons}.log",
+        logs(
+            "build_existing_heating_distribution_elec_s{simpl}_{clusters}_{planning_horizons}.log"
+        ),
     benchmark:
-        (
-            BENCHMARKS
-            + "build_existing_heating_distribution/elec_s{simpl}_{clusters}_{planning_horizons}"
+        benchmarks(
+            "build_existing_heating_distribution/elec_s{simpl}_{clusters}_{planning_horizons}"
         )
     conda:
         "../envs/environment.yaml"
@@ -39,22 +42,27 @@ rule build_existing_heating_distribution:
 
 rule add_existing_baseyear:
     params:
-        baseyear=config["scenario"]["planning_horizons"][0],
-        sector=config["sector"],
-        existing_capacities=config["existing_capacities"],
-        costs=config["costs"],
+        baseyear=config_provider("scenario", "planning_horizons", 0),
+        sector=config_provider("sector"),
+        existing_capacities=config_provider("existing_capacities"),
+        costs=config_provider("costs"),
     input:
         network=RESULTS
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
-        powerplants=RESOURCES + "powerplants.csv",
-        busmap_s=RESOURCES + "busmap_elec_s{simpl}.csv",
-        busmap=RESOURCES + "busmap_elec_s{simpl}_{clusters}.csv",
-        clustered_pop_layout=RESOURCES + "pop_layout_elec_s{simpl}_{clusters}.csv",
-        costs="data/costs_{}.csv".format(config["scenario"]["planning_horizons"][0]),
-        cop_soil_total=RESOURCES + "cop_soil_total_elec_s{simpl}_{clusters}.nc",
-        cop_air_total=RESOURCES + "cop_air_total_elec_s{simpl}_{clusters}.nc",
-        existing_heating_distribution=RESOURCES
-        + "existing_heating_distribution_elec_s{simpl}_{clusters}_{planning_horizons}.csv",
+        powerplants=resources("powerplants.csv"),
+        busmap_s=resources("busmap_elec_s{simpl}.csv"),
+        busmap=resources("busmap_elec_s{simpl}_{clusters}.csv"),
+        clustered_pop_layout=resources("pop_layout_elec_s{simpl}_{clusters}.csv"),
+        costs=lambda w: resources(
+            "costs_{}.csv".format(
+                config_provider("scenario", "planning_horizons", 0)(w)
+            )
+        ),
+        cop_soil_total=resources("cop_soil_total_elec_s{simpl}_{clusters}.nc"),
+        cop_air_total=resources("cop_air_total_elec_s{simpl}_{clusters}.nc"),
+        existing_heating_distribution=resources(
+            "existing_heating_distribution_elec_s{simpl}_{clusters}_{planning_horizons}.csv"
+        ),
         existing_solar="data/existing_infrastructure/solar_capacity_IRENA.csv",
         existing_onwind="data/existing_infrastructure/onwind_capacity_IRENA.csv",
         existing_offwind="data/existing_infrastructure/offwind_capacity_IRENA.csv",
@@ -62,17 +70,20 @@ rule add_existing_baseyear:
         RESULTS
         + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
     wildcard_constraints:
+        # TODO: The first planning_horizon needs to be aligned across scenarios
+        # snakemake does not support passing functions to wildcard_constraints
+        # reference: https://github.com/snakemake/snakemake/issues/2703
         planning_horizons=config["scenario"]["planning_horizons"][0],  #only applies to baseyear
     threads: 1
     resources:
         mem_mb=2000,
     log:
-        LOGS
-        + "add_existing_baseyear_elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log",
+        RESULTS
+        + "logs/add_existing_baseyear_elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log",
     benchmark:
         (
-            BENCHMARKS
-            + "add_existing_baseyear/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+            RESULTS
+            + "benchmarks/add_existing_baseyear/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
         )
     conda:
         "../envs/environment.yaml"
@@ -80,27 +91,33 @@ rule add_existing_baseyear:
         "../scripts/add_existing_baseyear.py"
 
 
+def input_profile_tech_brownfield(w):
+    return {
+        f"profile_{tech}": resources(f"profile_{tech}.nc")
+        for tech in config_provider("electricity", "renewable_carriers")(w)
+        if tech != "hydro"
+    }
+
+
 rule add_brownfield:
     params:
-        H2_retrofit=config["sector"]["H2_retrofit"],
-        H2_retrofit_capacity_per_CH4=config["sector"]["H2_retrofit_capacity_per_CH4"],
-        threshold_capacity=config["existing_capacities"]["threshold_capacity"],
-        snapshots={k: config["snapshots"][k] for k in ["start", "end", "inclusive"]},
-        carriers=config["electricity"]["renewable_carriers"],
+        H2_retrofit=config_provider("sector", "H2_retrofit"),
+        H2_retrofit_capacity_per_CH4=config_provider(
+            "sector", "H2_retrofit_capacity_per_CH4"
+        ),
+        threshold_capacity=config_provider("existing_capacities", " threshold_capacity"),
+        snapshots=config_provider("snapshots"),
+        carriers=config_provider("electricity", "renewable_carriers"),
     input:
-        **{
-            f"profile_{tech}": RESOURCES + f"profile_{tech}.nc"
-            for tech in config["electricity"]["renewable_carriers"]
-            if tech != "hydro"
-        },
-        simplify_busmap=RESOURCES + "busmap_elec_s{simpl}.csv",
-        cluster_busmap=RESOURCES + "busmap_elec_s{simpl}_{clusters}.csv",
+        unpack(input_profile_tech_brownfield),
+        simplify_busmap=resources("busmap_elec_s{simpl}.csv"),
+        cluster_busmap=resources("busmap_elec_s{simpl}_{clusters}.csv"),
         network=RESULTS
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
         network_p=solved_previous_horizon,  #solved network at previous time step
-        costs="data/costs_{planning_horizons}.csv",
-        cop_soil_total=RESOURCES + "cop_soil_total_elec_s{simpl}_{clusters}.nc",
-        cop_air_total=RESOURCES + "cop_air_total_elec_s{simpl}_{clusters}.nc",
+        costs=resources("costs_{planning_horizons}.csv"),
+        cop_soil_total=resources("cop_soil_total_elec_s{simpl}_{clusters}.nc"),
+        cop_air_total=resources("cop_air_total_elec_s{simpl}_{clusters}.nc"),
     output:
         RESULTS
         + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
@@ -108,12 +125,12 @@ rule add_brownfield:
     resources:
         mem_mb=10000,
     log:
-        LOGS
-        + "add_brownfield_elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log",
+        RESULTS
+        + "logs/add_brownfield_elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log",
     benchmark:
         (
-            BENCHMARKS
-            + "add_brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+            RESULTS
+            + "benchmarks/add_brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
         )
     conda:
         "../envs/environment.yaml"
@@ -126,17 +143,17 @@ ruleorder: add_existing_baseyear > add_brownfield
 
 rule solve_sector_network_myopic:
     params:
-        solving=config["solving"],
-        foresight=config["foresight"],
-        planning_horizons=config["scenario"]["planning_horizons"],
-        co2_sequestration_potential=config["sector"].get(
-            "co2_sequestration_potential", 200
+        solving=config_provider("solving"),
+        foresight=config_provider("foresight"),
+        planning_horizons=config_provider("scenario", "planning_horizons"),
+        co2_sequestration_potential=config_provider(
+            "sector", "co2_sequestration_potential", default=200
         ),
         custom_extra_functionality=input_custom_extra_functionality,
     input:
         network=RESULTS
         + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
-        costs="data/costs_{planning_horizons}.csv",
+        costs=resources("costs_{planning_horizons}.csv"),
         config=RESULTS + "config.yaml",
     output:
         RESULTS
@@ -144,18 +161,20 @@ rule solve_sector_network_myopic:
     shadow:
         "shallow"
     log:
-        solver=LOGS
-        + "elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_solver.log",
-        python=LOGS
-        + "elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_python.log",
+        solver=RESULTS
+        + "logs/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_solver.log",
+        memory=RESULTS
+        + "logs/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_memory.log",
+        python=RESULTS
+        + "logs/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_python.log",
     threads: solver_threads
     resources:
-        mem_mb=config["solving"]["mem"],
-        walltime=config["solving"].get("walltime", "12:00:00"),
+        mem_mb=config_provider("solving", "mem_mb"),
+        runtime=config_provider("solving", "runtime", default="6h"),
     benchmark:
         (
-            BENCHMARKS
-            + "solve_sector_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+            RESULTS
+            + "benchmarks/solve_sector_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
         )
     conda:
         "../envs/environment.yaml"

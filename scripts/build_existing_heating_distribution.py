@@ -9,11 +9,20 @@ horizon.
 import country_converter as coco
 import numpy as np
 import pandas as pd
+from _helpers import set_scenario_config
 
 cc = coco.CountryConverter()
 
 
 def build_existing_heating():
+    # Add existing heating capacities, data comes from the study
+    # "Mapping and analyses of the current and future (2020 - 2030)
+    # heating/cooling fuel deployment (fossil/renewables) "
+    # https://energy.ec.europa.eu/publications/mapping-and-analyses-current-and-future-2020-2030-heatingcooling-fuel-deployment-fossilrenewables-1_en
+    # file: "WP2_DataAnnex_1_BuildingTechs_ForPublication_201603.xls" -> "existing_heating_raw.csv".
+    # data is for buildings only (i.e. NOT district heating) and represents the year 2012
+    # TODO start from original file
+
     # Add existing heating capacities, data comes from the study
     # "Mapping and analyses of the current and future (2020 - 2030)
     # heating/cooling fuel deployment (fossil/renewables) "
@@ -124,5 +133,6 @@ if __name__ == "__main__":
             clusters=48,
             planning_horizons=2050,
         )
+    set_scenario_config(snakemake)
 
     build_existing_heating()

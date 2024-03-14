@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -13,7 +13,7 @@ from itertools import product
 import country_converter as coco
 import geopandas as gpd
 import pandas as pd
-from packaging.version import Version, parse
+from _helpers import configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
@@ -84,12 +84,7 @@ def prepare_hotmaps_database(regions):
 
     gdf = gpd.GeoDataFrame(df, geometry="coordinates", crs="EPSG:4326")
 
-    kws = (
-        dict(op="within")
-        if parse(gpd.__version__) < Version("0.10")
-        else dict(predicate="within")
-    )
-    gdf = gpd.sjoin(gdf, regions, how="inner", **kws)
+    gdf = gpd.sjoin(gdf, regions, how="inner", predicate="within")
 
     gdf.rename(columns={"index_right": "bus"}, inplace=True)
     gdf["country"] = gdf.bus.str[:2]
@@ -154,8 +149,8 @@ if __name__ == "__main__":
             simpl="",
             clusters=128,
         )
-
-    logging.basicConfig(level=snakemake.config["logging"]["level"])
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     countries = snakemake.params.countries
 

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -24,6 +24,7 @@ onshore (>50km from sea), offshore (Figure 7).
 
 import geopandas as gpd
 import pandas as pd
+from _helpers import set_scenario_config
 
 
 def concat_gdf(gdf_list, crs="EPSG:4326"):
@@ -76,6 +77,8 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "build_salt_cavern_potentials", simpl="", clusters="37"
         )
+
+    set_scenario_config(snakemake)
 
     fn_onshore = snakemake.input.regions_onshore
     fn_offshore = snakemake.input.regions_offshore

@@ -17,6 +17,8 @@ HVC_primary_fraction,--,float,The fraction of high value chemicals (HVC) produce
 HVC_mechanical_recycling _fraction,--,float,The fraction of high value chemicals (HVC) produced using mechanical recycling
 HVC_chemical_recycling _fraction,--,float,The fraction of high value chemicals (HVC) produced using chemical recycling
 ,,,
+sector_ratios_fraction_future,--,Dictionary with planning horizons as keys.,The fraction of total progress in fuel and process switching achieved in the industry sector.
+basic_chemicals_without_NH3_production_today,Mt/a,float,"The amount of basic chemicals produced without ammonia (= 86 Mtethylene-equiv - 17 MtNH3)."
 HVC_production_today,MtHVC/a,float,"The amount of high value chemicals (HVC) produced. This includes ethylene, propylene and BTX. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, Figure 16, page 107"
 Mwh_elec_per_tHVC _mechanical_recycling,MWh/tHVC,float,"The energy amount of electricity needed to produce a ton of high value chemical (HVC) using mechanical recycling. From SI of `Meys et al (2020) <https://doi.org/10.1016/j.resconrec.2020.105010>`_, Table S5, for HDPE, PP, PS, PET. LDPE would be 0.756."
 Mwh_elec_per_tHVC _chemical_recycling,MWh/tHVC,float,"The energy amount of electricity needed to produce a ton of high value chemical (HVC) using chemical recycling. The default value is based on pyrolysis and electric steam cracking. From `Material Economics (2019) <https://materialeconomics.com/latest-updates/industrial-transformation-2050>`_, page 125"
