@@ -729,6 +729,8 @@ rule build_retro_cost:
 
 
 rule build_population_weighted_energy_totals:
+    params:
+        snapshots=config_provider("snapshots"),
     input:
         energy_totals=resources("{kind}_totals.csv"),
         clustered_pop_layout=resources("pop_layout_elec_s{simpl}_{clusters}.csv"),
@@ -771,6 +773,7 @@ rule build_transport_demand:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         sector=config_provider("sector"),
+        energy_totals_year=config_provider("energy", "energy_totals_year"),
     input:
         clustered_pop_layout=resources("pop_layout_elec_s{simpl}_{clusters}.csv"),
         pop_weighted_energy_totals=resources(
@@ -799,6 +802,7 @@ rule build_transport_demand:
 rule build_district_heat_share:
     params:
         sector=config_provider("sector"),
+        energy_totals_year=config_provider("energy", "energy_totals_year"),
     input:
         district_heat_share=resources("district_heat_share.csv"),
         clustered_pop_layout=resources("pop_layout_elec_s{simpl}_{clusters}.csv"),

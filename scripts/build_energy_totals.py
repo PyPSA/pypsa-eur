@@ -721,10 +721,18 @@ def build_transport_data(countries, population, idees):
 
     transport_data = pd.DataFrame(idees["passenger cars"])
 
+    countries_without_ch = set(countries) - {"CH"}
+    new_index = pd.MultiIndex.from_product(
+        [countries_without_ch, transport_data.index.levels[1]],
+        names=["country", "year"]
+    )
+
+    transport_data = transport_data.reindex(index=new_index)
+
     # https://www.bfs.admin.ch/bfs/en/home/statistics/mobility-transport/transport-infrastructure-vehicles/vehicles/road-vehicles-stock-level-motorisation.html
     if "CH" in countries:
         fn = snakemake.input.swiss_transport
-        swiss_cars = pd.read_csv(fn, index_col=0).loc[1990:2021, ["passenger cars"]]
+        swiss_cars = pd.read_csv(fn, index_col=0).loc[2000:2015, ["passenger cars"]]
 
         swiss_cars.index = pd.MultiIndex.from_product(
             [["CH"], swiss_cars.index], names=["country", "year"]
@@ -741,7 +749,14 @@ def build_transport_data(countries, population, idees):
         )
 
         cars_pp = transport_data["number cars"] / population
-        transport_data.loc[missing, "number cars"] = cars_pp.mean() * population
+
+        fill_values = {year: cars_pp.mean() * population for year in transport_data.index.levels[1]}
+        fill_values = pd.DataFrame(fill_values).stack()
+        fill_values = pd.DataFrame(fill_values, columns=["number cars"])
+        fill_values.index.names = ["country", "year"]
+        fill_values = fill_values.reindex(transport_data.index)
+
+        transport_data = transport_data.combine_first(fill_values)
 
     # collect average fuel efficiency in kWh/km
 

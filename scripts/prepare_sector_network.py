@@ -813,7 +813,7 @@ def average_every_nhours(n, offset):
 
     snapshot_weightings = n.snapshot_weightings.resample(offset).sum()
     sns = snapshot_weightings.index
-    if snakemake.params.drop_leap_days:
+    if snakemake.params.drop_leap_day:
         sns = sns[~((sns.month == 2) & (sns.day == 29))]
     snapshot_weightings = snapshot_weightings.loc[sns]
     m.set_snapshots(snapshot_weightings.index)
