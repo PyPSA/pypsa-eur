@@ -183,7 +183,7 @@ def manual_adjustment(load, fn_load, countries):
         elif "MK" in load:
             load["AL"] = load["MK"] * (4.1 / 7.4)
 
-    if "MK" in countries:
+    if "MK" in countries and "MK" in countries:
         if "MK" not in load or load.MK.isnull().sum() > len(load) / 2:
             if "ME" in load:
                 load["MK"] = load.ME * (6.7 / 2.9)
@@ -192,7 +192,7 @@ def manual_adjustment(load, fn_load, countries):
         if "ME" in load:
             load["BA"] = load.HR * (11.0 / 16.2)
 
-    if "KV" not in load or load.KV.isnull().values.all():
+    if ("KV" not in load or load.KV.isnull().values.all()) and "KV" in countries:
         if "RS" in load:
             load["KV"] = load["RS"] * (4.8 / 27.0)
 
@@ -267,7 +267,7 @@ if __name__ == "__main__":
         snakemake.params.snapshots, snakemake.params.drop_leap_day
     )
 
-    fixed_year = snakemake.config["load"].get("fixed_year", False)
+    fixed_year = snakemake.params["load"].get("fixed_year", False)
     years = (
         slice(str(fixed_year), str(fixed_year))
         if fixed_year
@@ -280,6 +280,8 @@ if __name__ == "__main__":
     time_shift = snakemake.params.load["time_shift_for_large_gaps"]
 
     load = load_timeseries(snakemake.input.reported, years, countries)
+
+    load = load.reindex(index=snapshots)
 
     if "UA" in countries:
         # attach load of UA (best data only for entsoe transparency)
@@ -296,9 +298,6 @@ if __name__ == "__main__":
 
     if snakemake.params.load["manual_adjustments"]:
         load = manual_adjustment(load, snakemake.input[0], countries)
-
-    if load.empty:
-        logger.warning("Build electricity demand time series is empty.")
 
     logger.info(f"Linearly interpolate gaps of size {interpolate_limit} and less.")
     load = load.interpolate(method="linear", limit=interpolate_limit)
