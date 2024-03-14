@@ -419,7 +419,7 @@ def build_energy_totals(countries, eurostat, swiss, idees):
 
     # add swiss energy data
 
-    df = pd.concat([df.drop("CH"), swiss]).sort_index()
+    df = pd.concat([df.drop("CH", errors='ignore'), swiss]).sort_index()
 
     # get values for missing countries based on Eurostat EnergyBalances
     # divide cooking/space/water according to averages in EU28
