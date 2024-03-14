@@ -14,7 +14,7 @@ import pypsa
 import xarray as xr
 from _helpers import (
     configure_logging,
-    get_snapshots
+    get_snapshots,
     set_scenario_config,
     update_config_from_wildcards,
 )
