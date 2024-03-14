@@ -3486,7 +3486,7 @@ def apply_time_segmentation(
     return n
 
 
-def set_temporal_aggregation(n, resolution, solver_name, drop_leap_day=False):
+def set_temporal_aggregation(n, resolution, solver_name):
     """
     Aggregate network temporally.
     """
