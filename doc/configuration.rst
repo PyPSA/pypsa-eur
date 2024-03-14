@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2019-2023 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: 2019-2024 The PyPSA-Eur Authors
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -9,7 +9,7 @@
 Configuration
 ##########################################
 
-PyPSA-Eur has several configuration options which are documented in this section and are collected in a ``config/config.yaml`` file located in the root directory. Users should copy the provided default configuration (``config/config.default.yaml``) and amend their own modifications and assumptions in the user-specific configuration file (``config/config.yaml``); confer installation instructions at :ref:`defaultconfig`.
+PyPSA-Eur has several configuration options which are documented in this section and are collected in a ``config/config.yaml`` file. This file defines deviations from the default configuration (``config/config.default.yaml``); confer installation instructions at :ref:`defaultconfig`.
 
 .. _toplevel_cf:
 
@@ -383,7 +383,7 @@ overwrite the existing values.
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
-   :start-after:   type:
+   :start-after: # docs-load
    :end-before: # docs
 
 .. csv-table::
@@ -560,6 +560,21 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 .. tip::
    use ``min`` in ``p_nom_max:`` for more `
    conservative assumptions.
+
+.. _adjustments_cf:
+
+``adjustments``
+=============
+
+.. literalinclude:: ../config/config.default.yaml
+   :language: yaml
+   :start-at: adjustments:
+   :end-before: # docs
+
+.. csv-table::
+   :header-rows: 1
+   :widths: 22,7,22,33
+   :file: configtables/adjustments.csv
 
 .. _solving_cf:
 

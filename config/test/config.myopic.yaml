@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: CC0-1.0
 
@@ -7,7 +7,7 @@ tutorial: true
 run:
   name: "test-sector-myopic"
   disable_progressbar: true
-  shared_resources: true
+  shared_resources: "test"
   shared_cutouts: true
 
 foresight: myopic
@@ -18,7 +18,7 @@ scenario:
   clusters:
   - 5
   sector_opts:
-  - 24H-T-H-B-I-A-solar+p3-dist1
+  - 24h-T-H-B-I-A-dist1
   planning_horizons:
   - 2030
   - 2040
@@ -29,6 +29,9 @@ countries: ['BE']
 snapshots:
   start: "2013-03-01"
   end: "2013-03-08"
+
+sector:
+  central_heat_vent: true
 
 electricity:
   co2limit: 100.e+6

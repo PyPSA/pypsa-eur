@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
 import matplotlib.pyplot as plt
 import pypsa
 import seaborn as sns
-from _helpers import configure_logging
+from _helpers import configure_logging, set_scenario_config
 
 sns.set_theme("paper", style="whitegrid")
 
@@ -24,6 +24,7 @@ if __name__ == "__main__":
             ll="v1.0",
         )
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     n = pypsa.Network(snakemake.input.network)
 
@@ -58,7 +59,7 @@ if __name__ == "__main__":
     fig, ax = plt.subplots()
     ds = n.statistics.installed_capacity().dropna()
     ds = ds.drop("Line")
-    ds = ds.drop(("Generator", "Load"))
+    ds = ds.drop(("Generator", "Load"), errors="ignore")
     ds = ds / 1e3
     ds.attrs["unit"] = "GW"
     plot_static_per_carrier(ds, ax)
@@ -67,7 +68,7 @@ if __name__ == "__main__":
     fig, ax = plt.subplots()
     ds = n.statistics.optimal_capacity()
     ds = ds.drop("Line")
-    ds = ds.drop(("Generator", "Load"))
+    ds = ds.drop(("Generator", "Load"), errors="ignore")
     ds = ds / 1e3
     ds.attrs["unit"] = "GW"
     plot_static_per_carrier(ds, ax)

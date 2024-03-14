@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -26,7 +26,7 @@ Relevant Settings
 Inputs
 ------
 
-- ``data/bundle/EIA_hydro_generation_2000_2014.csv``: Hydroelectricity net generation per country and year (`EIA <https://www.eia.gov/beta/international/data/browser/#/?pa=000000000000000000000000000000g&c=1028i008006gg6168g80a4k000e0ag00gg0004g800ho00g8&ct=0&ug=8&tl_id=2-A&vs=INTL.33-12-ALB-BKWH.A&cy=2014&vo=0&v=H&start=2000&end=2016>`_)
+- ``data/bundle/eia_hydro_annual_generation.csv``: Hydroelectricity net generation per country and year (`EIA <https://www.eia.gov/beta/international/data/browser/#/?pa=000000000000000000000000000000g&c=1028i008006gg6168g80a4k000e0ag00gg0004g800ho00g8&ct=0&ug=8&tl_id=2-A&vs=INTL.33-12-ALB-BKWH.A&cy=2014&vo=0&v=H&start=2000&end=2016>`_)
 
     .. image:: img/hydrogeneration.png
         :scale: 33 %
@@ -65,19 +65,21 @@ import atlite
 import country_converter as coco
 import geopandas as gpd
 import pandas as pd
-from _helpers import configure_logging
+from _helpers import configure_logging, set_scenario_config
 
 cc = coco.CountryConverter()
 
 
 def get_eia_annual_hydro_generation(fn, countries):
     # in billion kWh/a = TWh/a
-    df = pd.read_csv(fn, skiprows=2, index_col=1, na_values=[" ", "--"]).iloc[1:, 1:]
+    df = pd.read_csv(
+        fn, skiprows=2, index_col=1, na_values=[" ", "--"], decimal=","
+    ).iloc[1:, 1:]
     df.index = df.index.str.strip()
 
     former_countries = {
         "Former Czechoslovakia": dict(
-            countries=["Czech Republic", "Slovakia"], start=1980, end=1992
+            countries=["Czechia", "Slovakia"], start=1980, end=1992
         ),
         "Former Serbia and Montenegro": dict(
             countries=["Serbia", "Montenegro"], start=1992, end=2005
@@ -129,6 +131,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_hydro_profile")
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     params_hydro = snakemake.params.hydro
     cutout = atlite.Cutout(snakemake.input.cutout)

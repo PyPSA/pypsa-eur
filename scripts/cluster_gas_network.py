@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -8,13 +8,13 @@ Cluster gas transmission network to clustered model regions.
 
 import logging
 
-logger = logging.getLogger(__name__)
-
 import geopandas as gpd
 import pandas as pd
-from packaging.version import Version, parse
+from _helpers import configure_logging, set_scenario_config
 from pypsa.geo import haversine_pts
 from shapely import wkt
+
+logger = logging.getLogger(__name__)
 
 
 def concat_gdf(gdf_list, crs="EPSG:4326"):
@@ -41,12 +41,9 @@ def build_clustered_gas_network(df, bus_regions, length_factor=1.25):
     for i in [0, 1]:
         gdf = gpd.GeoDataFrame(geometry=df[f"point{i}"], crs="EPSG:4326")
 
-        kws = (
-            dict(op="within")
-            if parse(gpd.__version__) < Version("0.10")
-            else dict(predicate="within")
-        )
-        bus_mapping = gpd.sjoin(gdf, bus_regions, how="left", **kws).index_right
+        bus_mapping = gpd.sjoin(
+            gdf, bus_regions, how="left", predicate="within"
+        ).index_right
         bus_mapping = bus_mapping.groupby(bus_mapping.index).first()
 
         df[f"bus{i}"] = bus_mapping
@@ -75,10 +72,10 @@ def build_clustered_gas_network(df, bus_regions, length_factor=1.25):
     return df
 
 
-def reindex_pipes(df):
+def reindex_pipes(df, prefix="gas pipeline"):
     def make_index(x):
         connector = " <-> " if x.bidirectional else " -> "
-        return "gas pipeline " + x.bus0 + connector + x.bus1
+        return prefix + " " + x.bus0 + connector + x.bus1
 
     df.index = df.apply(make_index, axis=1)
 
@@ -109,8 +106,8 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("cluster_gas_network", simpl="", clusters="37")
-
-    logging.basicConfig(level=snakemake.config["logging"]["level"])
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     fn = snakemake.input.cleaned_gas_network
     df = pd.read_csv(fn, index_col=0)

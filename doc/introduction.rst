@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2019-2023 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: 2019-2024 The PyPSA-Eur Authors
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -74,7 +74,7 @@ what data to retrieve and what files to produce. Details are explained in
 :ref:`wildcards` and :ref:`scenario`.
 
 The model also has several further configuration options collected in the
-``config/config.yaml`` file located in the root directory, which that are not part of
+``config/config.default.yaml`` file located in the root directory, which that are not part of
 the scenarios. Options are explained in :ref:`config`.
 
 Folder Structure
@@ -89,8 +89,8 @@ Folder Structure
 - ``results``: Stores the solved PyPSA network data, summary files and plots.
 - ``logs``: Stores log files.
 - ``benchmarks``: Stores ``snakemake`` benchmarks.
-- ``test``: Includes the test configuration files used for continuous integration.
 - ``doc``: Includes the documentation of PyPSA-Eur.
+- ``graphics``: Includes some graphics for the documentation of PyPSA-Eur.
 
 System Requirements
 ===================

@@ -5,6 +5,7 @@ s_nom_max,MW,"float","Global upper limit for the maximum capacity of each extend
 max_extension,MW,"float","Upper limit for the extended capacity of each extendable line."
 length_factor,--,float,"Correction factor to account for the fact that buses are *not* connected by lines through air-line distance."
 under_construction,--,"One of {'zero': set capacity to zero, 'remove': remove completely, 'keep': keep with full capacity}","Specifies how to handle lines which are currently under construction."
+reconnect_crimea,--,"true or false","Whether to reconnect Crimea to the Ukrainian grid"
 dynamic_line_rating,,,
 -- activate,bool,"true or false","Whether to take dynamic line rating into account"
 -- cutout,--,"Should be a folder listed in the configuration ``atlite: cutouts:`` (e.g. 'europe-2013-era5') or reference an existing folder in the directory ``cutouts``. Source module must be ERA5.","Specifies the directory where the relevant weather data ist stored."
