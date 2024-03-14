@@ -267,6 +267,7 @@ def input_ua_md_availability_matrix(w):
 rule build_renewable_profiles:
     params:
         snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
         renewable=config_provider("renewable"),
     input:
         unpack(input_ua_md_availability_matrix),
@@ -345,6 +346,7 @@ rule build_hydro_profile:
         hydro=config_provider("renewable", "hydro"),
         countries=config_provider("countries"),
         snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
         country_shapes=resources("country_shapes.geojson"),
         eia_hydro_generation="data/eia_hydro_annual_generation.csv",
@@ -370,6 +372,7 @@ rule build_hydro_profile:
 rule build_line_rating:
     params:
         snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
         base_network=resources("networks/base.nc"),
         cutout=lambda w: "cutouts/"
@@ -413,6 +416,7 @@ rule add_electricity:
         length_factor=config_provider("lines", "length_factor"),
         scaling_factor=config_provider("load", "scaling_factor"),
         countries=config_provider("countries"),
+        snapshots=config_provider("snapshots"),
         renewable=config_provider("renewable"),
         electricity=config_provider("electricity"),
         conventional=config_provider("conventional"),

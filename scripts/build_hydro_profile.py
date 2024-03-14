@@ -174,7 +174,12 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     params_hydro = snakemake.params.hydro
-    cutout = atlite.Cutout(snakemake.input.cutout)
+
+    time = pd.date_range(freq="h", **snakemake.params.snapshots)
+    if snakemake.params.drop_leap_day:
+        time = time[~((time.month == 2) & (time.day == 29))]
+
+    cutout = atlite.Cutout(snakemake.input.cutout).sel(time=time)
 
     countries = snakemake.params.countries
     country_shapes = (

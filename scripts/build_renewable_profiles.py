@@ -227,9 +227,11 @@ if __name__ == "__main__":
     else:
         client = None
 
-    sns = pd.date_range(freq="h", **snakemake.params.snapshots)
+    time = pd.date_range(freq="h", **snakemake.params.snapshots)
+    if snakemake.params.drop_leap_day:
+        time = time[~((time.month == 2) & (time.day == 29))]
 
-    cutout = atlite.Cutout(snakemake.input.cutout).sel(time=sns)
+    cutout = atlite.Cutout(snakemake.input.cutout).sel(time=time)
     regions = gpd.read_file(snakemake.input.regions)
     assert not regions.empty, (
         f"List of regions in {snakemake.input.regions} is empty, please "
