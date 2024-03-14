@@ -24,7 +24,7 @@ if __name__ == "__main__":
     config = snakemake.config["energy"]
 
     if snakemake.wildcards.kind == "heat":
-        years = pd.date_range(freq="YE", **snakemake.params.snapshots).year
+        years = pd.date_range(freq="h", **snakemake.params.snapshots).year.unique()
         assert len(years) == 1, "Currently only works for single year."
         data_year = years[0]
     else:
