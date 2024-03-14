@@ -377,7 +377,11 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                         efficiency=costs.at[generator, "efficiency"],
                         efficiency2=costs.at[carrier[generator], "CO2 intensity"],
                         build_year=grouping_year,
-                        lifetime=lifetime_assets.loc[new_capacity.index] if isinstance(lifetime_assets, pd.Series) else lifetime_assets
+                        lifetime=(
+                            lifetime_assets.loc[new_capacity.index]
+                            if isinstance(lifetime_assets, pd.Series)
+                            else lifetime_assets
+                        ),
                     )
                 else:
                     # for the power only biomass plants, technology parameters of CHP plants are used
@@ -612,7 +616,9 @@ def add_heating_capacities_installed_before_baseyear(
     # drop hydro, waste and oil fueltypes for CHP
     limit = np.max(grouping_years)
     drop_fueltypes = ["Hydro", "Other", "Waste", "nicht biogener Abfall"]
-    chp = ppl.query("Set == 'CHP' and (DateOut >= @baseyear or DateOut != DateOut) and (DateIn <= @limit or DateIn != DateIn) and Fueltype not in @drop_fueltypes").copy()
+    chp = ppl.query(
+        "Set == 'CHP' and (DateOut >= @baseyear or DateOut != DateOut) and (DateIn <= @limit or DateIn != DateIn) and Fueltype not in @drop_fueltypes"
+    ).copy()
     # chp = ppl.query(
     #     "Set == 'CHP' and DateIn <= @limit and Fueltype not in @drop_fueltypes"
     # ).copy()
@@ -659,7 +665,9 @@ def add_heating_capacities_installed_before_baseyear(
 
         mastr_chp_power["p_nom"] = mastr_chp_power.eval("Capacity / Efficiency")
         mastr_chp_power["c_b"] = mastr_chp_power.eval("Capacity / Capacity_thermal")
-        mastr_chp_power["c_b"] = mastr_chp_power["c_b"].clip(upper=costs.at["CCGT", "c_b"]) # exclude outliers
+        mastr_chp_power["c_b"] = mastr_chp_power["c_b"].clip(
+            upper=costs.at["CCGT", "c_b"]
+        )  # exclude outliers
         mastr_chp_power["efficiency-heat"] = mastr_chp_power.eval("Efficiency / c_b")
 
         # these CHPs are mainly biomass CHPs
@@ -674,7 +682,9 @@ def add_heating_capacities_installed_before_baseyear(
             "central solid biomass CHP", ["efficiency-heat", "efficiency"]
         ].sum()
         eff_heat = mastr_chp_heat["efficiency-heat"]
-        mastr_chp_heat["Efficiency"] = mastr_chp_heat["Efficiency"].clip(upper=eff_total_max - eff_heat)
+        mastr_chp_heat["Efficiency"] = mastr_chp_heat["Efficiency"].clip(
+            upper=eff_total_max - eff_heat
+        )
 
         mastr_chp = pd.concat([mastr_chp_power, mastr_chp_heat])
 
@@ -699,11 +709,13 @@ def add_heating_capacities_installed_before_baseyear(
             aggfunc="sum",
         )
 
-        keys = {"coal": "central coal CHP",
-                "gas": "central gas CHP",
-                "waste": "waste CHP",
-                "oil": "central gas CHP",
-                "lignite": "central coal CHP"}
+        keys = {
+            "coal": "central coal CHP",
+            "gas": "central gas CHP",
+            "waste": "waste CHP",
+            "oil": "central gas CHP",
+            "lignite": "central coal CHP",
+        }
         # add everything as Link
         for grouping_year, generator in mastr_chp_p_nom.index:
             # capacity is the capacity in MW at each node for this
