@@ -821,44 +821,55 @@ def add_co2_atmosphere_constraint(n, snapshots):
 
 
 def add_endogenous_transport_constraints(n, snapshots):
-    """add constraints to relate number of EVs to EV charger, V2G and DSM."""
-    
+    """
+    Add constraints to relate number of EVs to EV charger, V2G and DSM.
+    """
+
     # get index TODO only extendable
     link_ext = n.links[n.links.p_nom_extendable]
-    ev_i = link_ext[link_ext.carrier=="land transport EV"].index 
-    bev_i = link_ext[link_ext.carrier=="BEV charger"].index 
-    v2g_i = link_ext[link_ext.carrier=="V2G"].index 
-    bev_dsm_i = n.stores[(n.stores.carrier=="battery storage")
-                         & n.stores.e_nom_extendable].index
-    
-    if ev_i.empty: return
+    ev_i = link_ext[link_ext.carrier == "land transport EV"].index
+    bev_i = link_ext[link_ext.carrier == "BEV charger"].index
+    v2g_i = link_ext[link_ext.carrier == "V2G"].index
+    bev_dsm_i = n.stores[
+        (n.stores.carrier == "battery storage") & n.stores.e_nom_extendable
+    ].index
+
+    if ev_i.empty:
+        return
     # factor
-    f = (n.links.loc[ev_i, "p_nom"].rename(n.links.bus0)
-         .div(n.links.loc[bev_i, "p_nom"].rename(n.links.bus1)))
-    
+    f = (
+        n.links.loc[ev_i, "p_nom"]
+        .rename(n.links.bus0)
+        .div(n.links.loc[bev_i, "p_nom"].rename(n.links.bus1))
+    )
+
     # variables
     link_p_nom = n.model.variables.Link_p_nom
-    
+
     # constraint for BEV charger
     lhs = link_p_nom.loc[ev_i] - (link_p_nom.loc[bev_i] * f.values)
-    n.model.add_constraints(lhs==0, name="p_nom-EV-BEV")
-    
+    n.model.add_constraints(lhs == 0, name="p_nom-EV-BEV")
+
     if not v2g_i.empty:
         # constraint for V2G
-        lhs = link_p_nom.loc[ev_i] - (link_p_nom.loc[v2g_i] * f.values)   
-        n.model.add_constraints(lhs==0, name="p_nom-EV-V2G")
-    
+        lhs = link_p_nom.loc[ev_i] - (link_p_nom.loc[v2g_i] * f.values)
+        n.model.add_constraints(lhs == 0, name="p_nom-EV-V2G")
+
     if not bev_dsm_i.empty:
         # factor
-        f = (n.links.loc[ev_i, "p_nom"].rename(n.links.bus0)
-             .div(n.stores.loc[bev_dsm_i, "e_nom"].rename(n.links.bus1)))
-        
+        f = (
+            n.links.loc[ev_i, "p_nom"]
+            .rename(n.links.bus0)
+            .div(n.stores.loc[bev_dsm_i, "e_nom"].rename(n.links.bus1))
+        )
+
         store_e_nom = n.model.variables.Store_e_nom
-        
+
         # constraint for DSM
         lhs = link_p_nom.loc[ev_i] - (store_e_nom.loc[bev_dsm_i] * f.values)
-        n.model.add_constraints(lhs==0, name="e_nom-EV-DSM")
-    
+        n.model.add_constraints(lhs == 0, name="e_nom-EV-DSM")
+
+
 def extra_functionality(n, snapshots):
     """
     Collects supplementary constraints which will be passed to
@@ -893,7 +904,7 @@ def extra_functionality(n, snapshots):
         add_retrofit_gas_boiler_constraint(n, snapshots)
     else:
         add_co2_atmosphere_constraint(n, snapshots)
-    
+
     if n.config["sector"]["endogenous_transport"]:
         add_endogenous_transport_constraints(n, snapshots)
     if snakemake.params.custom_extra_functionality:
