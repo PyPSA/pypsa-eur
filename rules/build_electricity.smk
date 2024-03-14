@@ -588,6 +588,7 @@ rule prepare_network:
         costs=config_provider("costs"),
         adjustments=config_provider("adjustments", "electricity"),
         autarky=config_provider("electricity", "autarky", default={}),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
         resources("networks/elec_s{simpl}_{clusters}_ec.nc"),
         tech_costs=lambda w: resources(

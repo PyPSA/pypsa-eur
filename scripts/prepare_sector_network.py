@@ -812,6 +812,10 @@ def average_every_nhours(n, offset):
     m = n.copy(with_time=False)
 
     snapshot_weightings = n.snapshot_weightings.resample(offset).sum()
+    sns = snapshot_weightings.index
+    if snakemake.params.drop_leap_days:
+        sns = sns[~((sns.month == 2) & (sns.day == 29))]
+    snapshot_weightings = snapshot_weightings.loc[sns]
     m.set_snapshots(snapshot_weightings.index)
     m.snapshot_weightings = snapshot_weightings
 
@@ -3660,8 +3664,7 @@ if __name__ == "__main__":
 
     solver_name = snakemake.config["solving"]["solver"]["name"]
     resolution = snakemake.params.time_resolution
-    drop_leap_day = snakemake.params.drop_leap_day
-    n = set_temporal_aggregation(n, resolution, solver_name, drop_leap_day)
+    n = set_temporal_aggregation(n, resolution, solver_name)
 
     co2_budget = snakemake.params.co2_budget
     if isinstance(co2_budget, str) and co2_budget.startswith("cb"):
