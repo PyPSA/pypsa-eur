@@ -66,20 +66,17 @@ def get_run_path(fn, dir, rdir, shared_resources):
             "add_electricity"
         )
         is_shared = no_relevant_wildcards and no_elec_rule
+        rdir = "" if is_shared else rdir
     elif isinstance(shared_resources, str):
         rdir = shared_resources + "/"
-        is_shared = False
     elif isinstance(shared_resources, bool):
-        is_shared = shared_resources
+        rdir = ""
     else:
         raise ValueError(
             "shared_resources must be a boolean, str, or 'base' for special handling."
         )
 
-    if is_shared:
-        return f"{dir}{fn}"
-    else:
-        return f"{dir}{rdir}{fn}"
+    return f"{dir}{rdir}{fn}"
 
 
 def path_provider(dir, rdir, shared_resources):
