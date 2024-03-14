@@ -15,16 +15,21 @@ idx = pd.IndexSlice
 
 
 def approximate_heat_demand(energy_totals, hdd):
-    if isinstance(hdd, str):
-        hdd = pd.read_csv(hdd, index_col=0).T
-    hdd.index = hdd.index.astype(int)
+
+    countries = hdd.columns
 
     demands = {}
 
     for kind, sector in product(["total", "electricity"], ["services", "residential"]):
-        row = idx[:, 2007:2015]
+        # reduced number years (2007-2021) for regression because it implicitly
+        # assumes a constant building stock
+        row = idx[:, 2007:2021]
         col = f"{kind} {sector} space"
         demand = energy_totals.loc[row, col].unstack(0)
+
+        # ffill for GB in 2020- and bfill for CH 2007-2009
+        # compromise to have more years available for the fit
+        demand = demand.ffill(axis=0).bfill(axis=0)
 
         demand_approx = {}
 
@@ -62,15 +67,14 @@ def approximate_heat_demand(energy_totals, hdd):
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from helper import mock_snakemake
+        from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_energy_totals")
+        snakemake = mock_snakemake("build_heat_totals")
 
     hdd = pd.read_csv(snakemake.input.hdd, index_col=0).T
+    hdd.index = hdd.index.astype(int)
 
     energy_totals = pd.read_csv(snakemake.input.energy_totals, index_col=[0, 1])
-
-    countries = hdd.columns
 
     heat_demand = approximate_heat_demand(energy_totals, hdd)
 
