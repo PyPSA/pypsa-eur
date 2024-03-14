@@ -273,7 +273,7 @@ if __name__ == "__main__":
 
     if "UA" in countries:
         # attach load of UA (best data only for entsoe transparency)
-        load_ua = load_timeseries(snakemake.input[0], "2018", ["UA"], False)
+        load_ua = load_timeseries(snakemake.input[0], "2018", ["UA"])
         snapshot_year = str(snapshots.year.unique().item())
         time_diff = pd.Timestamp("2018") - pd.Timestamp(snapshot_year)
         load_ua.index -= (
