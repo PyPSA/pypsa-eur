@@ -93,7 +93,12 @@ import powerplantmatching as pm
 import pypsa
 import scipy.sparse as sparse
 import xarray as xr
-from _helpers import configure_logging, set_scenario_config, update_p_nom_max
+from _helpers import (
+    configure_logging,
+    get_snapshots,
+    set_scenario_config,
+    update_p_nom_max,
+)
 from powerplantmatching.export import map_country_bus
 from shapely.prepared import prep
 
@@ -760,15 +765,6 @@ def estimate_renewable_capacities(
             )
 
 
-def drop_leap_day(n):
-    if not n.snapshots.is_leap_year.any():
-        return
-    leap_days = (n.snapshots.day == 29) & (n.snapshots.month == 2)
-    n.set_snapshots(n.snapshots[~leap_days])
-    n.snapshot_weightings[:] = 8760 / len(n.snapshots)
-    logger.info("Dropped February 29 from leap year.")
-
-
 def attach_line_rating(
     n, rating, s_max_pu, correction_factor, max_voltage_difference, max_line_rating
 ):
@@ -805,7 +801,8 @@ if __name__ == "__main__":
 
     n = pypsa.Network(snakemake.input.base_network)
 
-    n.set_snapshots(pd.date_range(freq="h", **snakemake.params.snapshots))
+    time = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
+    n.set_snapshots(time)
 
     Nyears = n.snapshot_weightings.objective.sum() / 8760.0
 
@@ -915,9 +912,6 @@ if __name__ == "__main__":
         )
 
     sanitize_carriers(n, snakemake.config)
-
-    if snakemake.params.drop_leap_day:
-        drop_leap_day(n)
 
     n.meta = snakemake.config
     n.export_to_netcdf(snakemake.output[0])

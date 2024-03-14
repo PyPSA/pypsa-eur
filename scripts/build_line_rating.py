@@ -58,7 +58,7 @@ import numpy as np
 import pandas as pd
 import pypsa
 import xarray as xr
-from _helpers import configure_logging, set_scenario_config
+from _helpers import configure_logging, get_snapshots, set_scenario_config
 from shapely.geometry import LineString as Line
 from shapely.geometry import Point
 
@@ -147,9 +147,7 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     n = pypsa.Network(snakemake.input.base_network)
-    time = pd.date_range(freq="h", **snakemake.params.snapshots)
-    if snakemake.params.drop_leap_day:
-        time = time[~((time.month == 2) & (time.day == 29))]
+    time = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
 
     cutout = atlite.Cutout(snakemake.input.cutout).sel(time=time)
 

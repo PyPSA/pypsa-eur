@@ -11,7 +11,7 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import xarray as xr
-from _helpers import set_scenario_config
+from _helpers import get_snapshots, set_scenario_config
 from dask.distributed import Client, LocalCluster
 
 if __name__ == "__main__":
@@ -32,11 +32,12 @@ if __name__ == "__main__":
 
     cutout_name = snakemake.input.cutout
 
-    time = pd.date_range(freq="h", **snakemake.params.snapshots)
-    daily = pd.date_range(freq="D", **snakemake.params.snapshots)
-    if snakemake.params.drop_leap_day:
-        time = time[~((time.month == 2) & (time.day == 29))]
-        daily = daily[~((daily.month == 2) & (daily.day == 29))]
+    time = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
+    daily = get_snapshots(
+        snakemake.params.snapshots,
+        snakemake.params.drop_leap_day,
+        freq="D",
+    )
 
     cutout = atlite.Cutout(cutout_name).sel(time=time)
 

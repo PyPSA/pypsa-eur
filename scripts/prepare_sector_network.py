@@ -3507,10 +3507,6 @@ def set_temporal_aggregation(n, resolution, solver_name, drop_leap_day=False):
         logger.info("Aggregate to frequency %s", resolution)
         n = average_every_nhours(n, resolution)
 
-    if drop_leap_day:
-        sns = n.snapshots[~((n.snapshots.month == 2) & (n.snapshots.day == 29))]
-        n.set_snapshots(sns)
-
     return n
 
 

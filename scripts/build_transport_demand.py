@@ -13,7 +13,12 @@ import logging
 import numpy as np
 import pandas as pd
 import xarray as xr
-from _helpers import configure_logging, generate_periodic_profiles, set_scenario_config
+from _helpers import (
+    configure_logging,
+    generate_periodic_profiles,
+    get_snapshots,
+    set_scenario_config,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -183,10 +188,9 @@ if __name__ == "__main__":
 
     options = snakemake.params.sector
 
-    snapshots = pd.date_range(freq="h", **snakemake.params.snapshots, tz="UTC")
-    if snakemake.params.drop_leap_day:
-        leap_day = (snapshots.month == 2) & (snapshots.day == 29)
-        snapshots = snapshots[~leap_day]
+    snapshots = get_snapshots(
+        snakemake.params.snapshots, snakemake.params.drop_leap_day, tz="UTC"
+    )
 
     nyears = len(snapshots) / 8760
 

@@ -75,7 +75,7 @@ import shapely
 import shapely.prepared
 import shapely.wkt
 import yaml
-from _helpers import configure_logging, set_scenario_config
+from _helpers import configure_logging, get_snapshots, set_scenario_config
 from packaging.version import Version, parse
 from scipy import spatial
 from scipy.sparse import csgraph
@@ -730,12 +730,12 @@ def base_network(
     transformers = _set_electrical_parameters_transformers(transformers, config)
     links = _set_electrical_parameters_links(links, config, links_p_nom)
     converters = _set_electrical_parameters_converters(converters, config)
-    snapshots = snakemake.params.snapshots
 
     n = pypsa.Network()
     n.name = "PyPSA-Eur"
 
-    n.set_snapshots(pd.date_range(freq="h", **snapshots))
+    time = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
+    n.set_snapshots(time)
     n.madd("Carrier", ["AC", "DC"])
 
     n.import_components_from_dataframe(buses, "Bus")

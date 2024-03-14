@@ -65,7 +65,7 @@ import atlite
 import country_converter as coco
 import geopandas as gpd
 import pandas as pd
-from _helpers import configure_logging, set_scenario_config
+from _helpers import configure_logging, get_snapshots, set_scenario_config
 from numpy.polynomial import Polynomial
 
 cc = coco.CountryConverter()
@@ -73,9 +73,7 @@ cc = coco.CountryConverter()
 
 def get_eia_annual_hydro_generation(fn, countries, capacities=False):
     # in billion kWh/a = TWh/a
-    df = pd.read_csv(
-        fn, skiprows=2, index_col=1, na_values=[" ", "--"]
-    ).iloc[1:, 1:]
+    df = pd.read_csv(fn, skiprows=2, index_col=1, na_values=[" ", "--"]).iloc[1:, 1:]
     df.index = df.index.str.strip()
     df.columns = df.columns.astype(int)
 
@@ -175,9 +173,7 @@ if __name__ == "__main__":
 
     params_hydro = snakemake.params.hydro
 
-    time = pd.date_range(freq="h", **snakemake.params.snapshots)
-    if snakemake.params.drop_leap_day:
-        time = time[~((time.month == 2) & (time.day == 29))]
+    time = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
 
     cutout = atlite.Cutout(snakemake.input.cutout).sel(time=time)
 

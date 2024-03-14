@@ -724,3 +724,15 @@ def validate_checksum(file_path, zenodo_url=None, checksum=None):
     assert (
         calculated_checksum == checksum
     ), "Checksum is invalid. This may be due to an incomplete download. Delete the file and re-execute the rule."
+
+
+def get_snapshots(snapshots, drop_leap_day=False, freq="h", **kwargs):
+    """
+    Returns pandas DateTimeIndex potentially without leap days.
+    """
+
+    time = pd.date_range(freq=freq, **snapshots, **kwargs)
+    if drop_leap_day and time.is_leap_year.any():
+        time = time[~((time.month == 2) & (time.day == 29))]
+
+    return time

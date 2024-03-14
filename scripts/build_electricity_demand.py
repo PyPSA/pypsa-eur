@@ -39,7 +39,7 @@ import logging
 
 import numpy as np
 import pandas as pd
-from _helpers import configure_logging, set_scenario_config
+from _helpers import configure_logging, get_snapshots, set_scenario_config
 from pandas import Timedelta as Delta
 
 logger = logging.getLogger(__name__)
@@ -263,7 +263,9 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    snapshots = pd.date_range(freq="h", **snakemake.params.snapshots)
+    snapshots = get_snapshots(
+        snakemake.params.snapshots, snakemake.params.drop_leap_day
+    )
 
     fixed_year = snakemake.config["load"].get("fixed_year", False)
     years = (

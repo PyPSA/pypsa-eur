@@ -21,6 +21,7 @@ if config["enable"].get("prepare_links_p_nom", False):
 rule build_electricity_demand:
     params:
         snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
         countries=config_provider("countries"),
         load=config_provider("load"),
     input:
@@ -68,6 +69,7 @@ rule base_network:
     params:
         countries=config_provider("countries"),
         snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
         lines=config_provider("lines"),
         links=config_provider("links"),
         transformers=config_provider("transformers"),
