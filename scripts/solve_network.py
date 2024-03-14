@@ -165,7 +165,7 @@ def _add_land_use_constraint_m(n, planning_horizons, config):
 
         previous_years = [
             str(y)
-            for y in planning_horizons + grouping_years
+            for y in set(planning_horizons + grouping_years)
             if y < int(snakemake.wildcards.planning_horizons)
         ]
 
