@@ -908,7 +908,6 @@ rule prepare_sector_network:
             else []
         ),
         network=resources("networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"),
-        energy_totals_name=resources("energy_totals.csv"),
         eurostat="data/eurostat/eurostat-energy_balances-april_2023_edition",
         pop_weighted_energy_totals=resources(
             "pop_weighted_energy_totals_s{simpl}_{clusters}.csv"

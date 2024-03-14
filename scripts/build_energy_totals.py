@@ -750,7 +750,7 @@ def build_transport_data(countries, population, idees):
     missing = transport_data.index[transport_data["average fuel efficiency"].isna()]
     if not missing.empty:
         logger.info(
-            f"Missing data on fuel efficiency from:\n{list(missing)}\nFilling gapswith averaged data."
+            f"Missing data on fuel efficiency from:\n{list(missing)}\nFilling gaps with averaged data."
         )
 
         fill_values = transport_data["average fuel efficiency"].mean()

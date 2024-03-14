@@ -18,7 +18,7 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "build_shipping_demand_per_node",
+            "build_shipping_demand",
             simpl="",
             clusters=48,
         )

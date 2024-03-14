@@ -15,8 +15,9 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_population_weighted_energy_totals",
+            kind='energy',
             simpl="",
-            clusters=48,
+            clusters=60,
         )
     set_scenario_config(snakemake)
 
