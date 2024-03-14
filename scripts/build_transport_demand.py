@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 def build_nodal_transport_data(fn, pop_layout, year):
     transport_data = pd.read_csv(fn, index_col=[0, 1])
-    transport_data = transport_data.xs(min(2015, year), level='year')
+    transport_data = transport_data.xs(min(2015, year), level="year")
 
     nodal_transport_data = transport_data.loc[pop_layout.ct].fillna(0.0)
     nodal_transport_data.index = pop_layout.index

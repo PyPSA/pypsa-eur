@@ -419,7 +419,7 @@ def build_energy_totals(countries, eurostat, swiss, idees):
 
     # add swiss energy data
 
-    df = pd.concat([df.drop("CH", errors='ignore'), swiss]).sort_index()
+    df = pd.concat([df.drop("CH", errors="ignore"), swiss]).sort_index()
 
     # get values for missing countries based on Eurostat EnergyBalances
     # divide cooking/space/water according to averages in EU28
@@ -724,7 +724,7 @@ def build_transport_data(countries, population, idees):
     countries_without_ch = set(countries) - {"CH"}
     new_index = pd.MultiIndex.from_product(
         [countries_without_ch, transport_data.index.levels[1]],
-        names=["country", "year"]
+        names=["country", "year"],
     )
 
     transport_data = transport_data.reindex(index=new_index)
@@ -750,7 +750,9 @@ def build_transport_data(countries, population, idees):
 
         cars_pp = transport_data["number cars"] / population
 
-        fill_values = {year: cars_pp.mean() * population for year in transport_data.index.levels[1]}
+        fill_values = {
+            year: cars_pp.mean() * population for year in transport_data.index.levels[1]
+        }
         fill_values = pd.DataFrame(fill_values).stack()
         fill_values = pd.DataFrame(fill_values, columns=["number cars"])
         fill_values.index.names = ["country", "year"]
