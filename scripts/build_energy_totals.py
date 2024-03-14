@@ -84,14 +84,11 @@ def eurostat_per_country(input_eurostat, country):
     return pd.concat(sheet)
 
 
-def build_eurostat(input_eurostat, countries):
+def build_eurostat(input_eurostat, countries, nprocesses=1, disable_progressbar=False):
     """
     Return multi-index for all countries' energy data in TWh/a.
     """
     countries = {idees_rename.get(country, country) for country in countries} - {"CH"}
-
-    nprocesses = snakemake.threads
-    disable_progress = snakemake.config["run"].get("disable_progressbar", False)
 
     func = partial(eurostat_per_country, input_eurostat)
     tqdm_kwargs = dict(
@@ -99,7 +96,7 @@ def build_eurostat(input_eurostat, countries):
         unit=" country",
         total=len(countries),
         desc="Build from eurostat database",
-        disable=disable_progress,
+        disable=disable_progressbar,
     )
     with mute_print():
         with mp.Pool(processes=nprocesses) as pool:
@@ -953,7 +950,12 @@ if __name__ == "__main__":
     idees_countries = pd.Index(countries).intersection(eu28)
 
     input_eurostat = snakemake.input.eurostat
-    eurostat = build_eurostat(input_eurostat, countries)
+    eurostat = build_eurostat(
+        input_eurostat,
+        countries,
+        nprocesses=snakemake.threads,
+        disable_progressbar=snakemake.config["run"].get("disable_progressbar", False),
+    )
     swiss = build_swiss()
     idees = build_idees(idees_countries)
 
