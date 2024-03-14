@@ -10,6 +10,12 @@ Release Notes
 Upcoming Release
 ================
 
+
+* fix bug in land transport for temperature correction of ICEs and fuel cell cars
+
+* restructure land transport, demand is now attached to one single node, the
+different car types (ICE, EV, fuel cell) are modelled as links
+
 * Upgrade to Snakemake v8.5+. This version is the new minimum version required.
   To upgrade an existing environment, run ``conda install -c bioconda
   snakemake-minimal">=8.5"`` and ``pip install snakemake-storage-plugin-http``

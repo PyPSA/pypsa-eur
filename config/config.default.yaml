@@ -382,6 +382,7 @@ sector:
       2050: 1.0
     district_heating_loss: 0.15
   cluster_heat_buses: true
+  endogenous_transport: true
   bev_dsm_restriction_value: 0.75
   bev_dsm_restriction_time: 7
   transport_heating_deadband_upper: 20.
@@ -980,6 +981,7 @@ plotting:
     BEV charger: '#baf238'
     V2G: '#e5ffa8'
     land transport EV: '#baf238'
+    land transport demand: '#38baf2'
     Li ion: '#baf238'
     # hot water storage
     water tanks: '#e69487'
