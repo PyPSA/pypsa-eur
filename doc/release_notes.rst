@@ -9,6 +9,7 @@ Release Notes
 
 Upcoming Release
 ================
+* Group existing capacities to the earlier grouping_year for consistency with optimized capacities
 
 * Include gas and oil fields and saline aquifers in estimation of CO2 sequestration potential.
 
