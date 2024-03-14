@@ -1720,6 +1720,8 @@ def add_ice_cars(n, nodes, p_set, ice_share, temperature):
 
 
 def adjust_endogenous_transport(n):
+    
+    logger.info("Assume endogenous land transport")
     carrier = [
         "land transport EV",
         "land transport oil",
@@ -1730,8 +1732,10 @@ def adjust_endogenous_transport(n):
 
     links_i = n.links[n.links.carrier.isin(carrier)].index
     n.links.loc[links_i, "p_nom_extendable"] = True
+    n.links.loc[links_i, "lifetime"] = 15
     
-    store_i = n.stores[n.stores.carrier=="battery storage"].index
+    store_carrier = ["battery storage", "Li ion"]
+    store_i = n.stores[n.stores.carrier.isin(store_carrier)].index
     n.stores.loc[store_i, "e_nom_extendable"] = True
     
     # costs todo
@@ -1766,14 +1770,29 @@ def adjust_endogenous_transport(n):
         " load",
         bus=buses_i,
         carrier="load",
-        marginal_cost=1e5,
-        p_nom=1e9,
+        marginal_cost=1e9,
+        p_nom=1e5,
     )
+    
+    n.madd(
+        "Generator",
+        buses_i,
+        " load",
+        bus=buses_i,
+        carrier="load",
+        marginal_cost=1e9,
+        p_nom=1e5,
+        p_max_pu=0,
+        p_min_pu=-1,
+        sign=-1,
+    )
+    
+    
 
     for car_type, cost in costs_car_type.items():
         car_i = n.links[n.links.carrier == car_type].index
         n.links.loc[car_i, "capital_cost"] = cost
-        n.links.loc[car_i, "lifetime"] = 15
+        
 
 
 def add_land_transport(n, costs):
@@ -3759,11 +3778,11 @@ def adjust_transport_temporal_agg(n):
     p_set = n.loads_t.p_set.loc[:, n.loads.carrier == "land transport demand"]
 
     for engine, carrier in engine_types.items():
+        
+        links_i = n.links[n.links.carrier == carrier].index       
+        if links_i.empty: continue
+    
         share = get(options[f"land_transport_{engine}_share"], investment_year)
-
-        if share == 0:
-            continue
-        links_i = n.links[n.links.carrier == carrier].index
         efficiency = n.links_t.efficiency.loc[:, links_i]
         p_set.columns = efficiency.columns
         p_nom = share * p_set.div(efficiency).max()
