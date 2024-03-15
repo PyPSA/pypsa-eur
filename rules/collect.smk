@@ -104,6 +104,7 @@ rule plot_statistics:
                 + "statistics/figures/comparison/country_{country}/.statistics_{carrier}_plots",
                 country=config["plotting"].get("countries", "all"),
                 carrier=config["plotting"].get("carriers", ["all"]),
+                run=config["run"]["name"],
             ),
             expand(
                 RESULTS
@@ -111,5 +112,6 @@ rule plot_statistics:
                 **config["scenario"],
                 country=config["plotting"].get("countries", "all"),
                 carrier=config["plotting"].get("carriers", ["all"]),
+                run=config["run"]["name"],
             ),
         ],

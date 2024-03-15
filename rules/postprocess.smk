@@ -306,6 +306,9 @@ rule save_statistics_csv:
         },
         csv_touch=RESULTS
         + "statistics/csv/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/.statistics_{carrier}_csv",
+    log:
+        RESULTS
+        + "logs/save_statistics_csv/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_country-{country}_carrier-{carrier}.log",
     script:
         "../scripts/write_statistics.py"
 
@@ -332,6 +335,9 @@ rule plot_statistics_single:
         },
         barplots_touch=RESULTS
         + "statistics/figures/single/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/.statistics_{carrier}_plots",
+    log:
+        RESULTS
+        + "logs/plot_statistics_single/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_country-{country}_carrier-{carrier}.log",
     script:
         "../scripts/plot_statistics_single.py"
 
@@ -358,6 +364,9 @@ rule plot_statistics_comparison:
         },
         barplots_touch=RESULTS
         + "statistics/figures/comparison/country_{country}/.statistics_{carrier}_plots",
+    log:
+        RESULTS
+        + "logs/plot_statistics_comparison/country-{country}_carrier-{carrier}.log",
     script:
         "../scripts/plot_statistics_comparison.py"
 

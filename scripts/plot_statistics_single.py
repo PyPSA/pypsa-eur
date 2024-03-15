@@ -4,12 +4,15 @@
 #
 # SPDX-License-Identifier: MIT
 
+import logging
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 from _helpers import configure_logging
 from plot_summary import rename_techs
 
+logger = logging.getLogger(__name__)
 sns.set_theme("paper", style="whitegrid")
 
 
