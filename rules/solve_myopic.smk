@@ -118,10 +118,11 @@ rule solve_sector_network_myopic:
         network=RESULTS
         + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
         costs=resources("costs_{planning_horizons}.csv"),
-        config=RESULTS + "config.yaml",
     output:
-        RESULTS
+        network=RESULTS
         + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        config=RESULTS
+        + "configs/config.elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.yaml",
     shadow:
         "shallow"
     log:

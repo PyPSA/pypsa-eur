@@ -56,6 +56,9 @@ Upcoming Release
     script can be found in this `Github gist
     <https://gist.github.com/fneum/47b857862dd9148a22eca5a2e85caa9a>`_.
 
+* Removed rule ``copy_config``. Instead, a config file is created for each
+  network output of the ``solve_*`` rules, with the same content as ``n.meta``.
+
 * Upgrade to Snakemake v8.5+. This version is the new minimum version required.
   To upgrade an existing environment, run ``conda install -c bioconda
   snakemake-minimal">=8.5"`` and ``pip install snakemake-storage-plugin-http``
@@ -151,6 +154,8 @@ Upcoming Release
 * Bugfix: allow modelling sector-coupled landlocked regions. (Fixed handling of offshore wind.)
 
 * Adapt the disabling of transmission expansion in myopic foresight optimisations when limit is already reached to also handle cost limits.
+
+* Fix duplicated years in `add_land_use_constraint_m`.
 
 PyPSA-Eur 0.10.0 (19th February 2024)
 =====================================
