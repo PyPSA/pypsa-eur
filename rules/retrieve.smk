@@ -199,7 +199,7 @@ if config["enable"]["retrieve"]:
     rule retrieve_artificial_load_data:
         input:
             storage(
-                "https://zenodo.org/record/7070438/files/demand_hourly.csv",
+                "https://zenodo.org/records/10820928/files/demand_hourly.csv",
                 keep_local=True,
             ),
         output:
