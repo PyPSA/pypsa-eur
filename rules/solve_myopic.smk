@@ -70,6 +70,7 @@ rule add_brownfield:
         ),
         threshold_capacity=config_provider("existing_capacities", " threshold_capacity"),
         snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
         carriers=config_provider("electricity", "renewable_carriers"),
     input:
         unpack(input_profile_tech_brownfield),

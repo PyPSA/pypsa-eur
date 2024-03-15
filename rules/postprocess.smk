@@ -138,6 +138,7 @@ rule make_summary:
         foresight=config_provider("foresight"),
         costs=config_provider("costs"),
         snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
         scenario=config_provider("scenario"),
         RDIR=RDIR,
     input:

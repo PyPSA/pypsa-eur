@@ -25,7 +25,7 @@ rule solve_network:
         python=RESULTS
         + "logs/solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_python.log",
     benchmark:
-        RESULTS + "benchmarks/solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}"
+        (RESULTS + "benchmarks/solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}")
     threads: solver_threads
     resources:
         mem_mb=memory,

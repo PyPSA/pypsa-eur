@@ -9,9 +9,8 @@ Build time series for air and soil temperatures per clustered model region.
 import atlite
 import geopandas as gpd
 import numpy as np
-import pandas as pd
 import xarray as xr
-from _helpers import set_scenario_config
+from _helpers import get_snapshots, set_scenario_config
 from dask.distributed import Client, LocalCluster
 
 if __name__ == "__main__":
@@ -29,7 +28,8 @@ if __name__ == "__main__":
     cluster = LocalCluster(n_workers=nprocesses, threads_per_worker=1)
     client = Client(cluster, asynchronous=True)
 
-    time = pd.date_range(freq="h", **snakemake.params.snapshots)
+    time = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
+
     cutout = atlite.Cutout(snakemake.input.cutout).sel(time=time)
 
     clustered_regions = (

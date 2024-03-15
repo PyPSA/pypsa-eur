@@ -93,7 +93,12 @@ import powerplantmatching as pm
 import pypsa
 import scipy.sparse as sparse
 import xarray as xr
-from _helpers import configure_logging, set_scenario_config, update_p_nom_max
+from _helpers import (
+    configure_logging,
+    get_snapshots,
+    set_scenario_config,
+    update_p_nom_max,
+)
 from powerplantmatching.export import map_country_bus
 from shapely.prepared import prep
 
@@ -795,6 +800,10 @@ if __name__ == "__main__":
     params = snakemake.params
 
     n = pypsa.Network(snakemake.input.base_network)
+
+    time = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
+    n.set_snapshots(time)
+
     Nyears = n.snapshot_weightings.objective.sum() / 8760.0
 
     costs = load_costs(

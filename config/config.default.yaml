@@ -76,6 +76,7 @@ enable:
   build_natura_raster: false
   retrieve_natura_raster: true
   custom_busmap: false
+  drop_leap_day: true
 
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
@@ -238,6 +239,9 @@ renewable:
     flatten_dispatch: false
     flatten_dispatch_buffer: 0.2
     clip_min_inflow: 1.0
+    eia_norm_year: false
+    eia_correct_by_capacity: false
+    eia_approximate_missing: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#conventional
 conventional:
@@ -283,11 +287,12 @@ transformers:
 
 # docs-load in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#load
 load:
-  power_statistics: true
   interpolate_limit: 3
   time_shift_for_large_gaps: 1w
   manual_adjustments: true # false
   scaling_factor: 1.0
+  fixed_year: false # false or year (e.g. 2013)
+  supplement_synthetic: true
 
 # docs
 # TODO: PyPSA-Eur merge issue in prepare_sector_network.py
@@ -350,6 +355,7 @@ solar_thermal:
   orientation:
     slope: 45.
     azimuth: 180.
+  cutout: default
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#existing-capacities
 existing_capacities:
@@ -382,6 +388,7 @@ sector:
       2050: 1.0
     district_heating_loss: 0.15
   cluster_heat_buses: true
+  heat_demand_cutout: default
   bev_dsm_restriction_value: 0.75
   bev_dsm_restriction_time: 7
   transport_heating_deadband_upper: 20.
@@ -815,6 +822,7 @@ solving:
 
   mem_mb: 30000 #memory in MB; 20 GB enough for 50+B+I+H2; 100 GB for 181+B+I+H2
   runtime: 6h #runtime in humanfriendly style https://humanfriendly.readthedocs.io/en/latest/
+
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#plotting
 plotting:
