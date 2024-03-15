@@ -196,15 +196,15 @@ if config["enable"]["retrieve"]:
 
 if config["enable"]["retrieve"]:
 
-    rule retrieve_artificial_load_data:
+    rule retrieve_synthetic_electricity_demand:
         input:
             storage(
                 "https://zenodo.org/records/10820928/files/demand_hourly.csv",
             ),
         output:
-            "data/load_artificial_raw.csv",
+            "data/load_synthetic_raw.csv",
         log:
-            "logs/retrieve_artificial_load_data.log",
+            "logs/retrieve_synthetic_electricity_demand.log",
         resources:
             mem_mb=5000,
         retries: 2

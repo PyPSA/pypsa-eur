@@ -10,6 +10,52 @@ Release Notes
 Upcoming Release
 ================
 
+* Enhanced support for choosing different weather years
+  (https://github.com/PyPSA/pypsa-eur/pull/204):
+
+  - Processed energy statistics from eurostat (1990-2021) and IDEES (2000-2015)
+    are now initially stored for all available years and filtered by the year
+    given in ``energy: energy_totals_year:``.
+
+  - Added option to supplement electricity load data with synthetic time series
+    for years not contained in OPSD (from https://zenodo.org/records/10820928,
+    ``load: supplement_synthetic:``).
+
+  - The total annual heat demand for years not contained in the energy
+    statistics by eurostat (1990-2021) or IDEES (2000-2015)  are scaled based on
+    a regression between the total number of heating degree days and the total
+    annual heat demand between the years 2007-2021, assuming a similar building
+    stock.
+
+  - Added option to scale annual hydro-electricity generation data for years not
+    contained in the in EIA (1980-2021) based on a regression between annual
+    generation and total runoff per country for the years 1980-2021
+    (``renewable: hydro: eia_approximate_missing:``)
+
+  - Added option to normalize annual hydro generation data by the associated
+    installed capacity reported by EIA (1980-2021) in order to eliminate changes
+    in generation due to newly built capacity (``renewable: hydro:
+    eia_approximate_missing: eia_correct_by_capacity:``).
+
+  - Added option to make hydro generation data independent of weather year
+    (``renewable: hydro: eia_approximate_missing: eia_norm_year:``).
+
+  - Added option to drop leap days (``enable: drop_leap_day:``).
+
+  - Added option to make electric load data independent of weather year
+    (``load: fixed_year:``).
+
+  - Include time series of Swiss number of passenger vehicles from the `Swiss
+    Federal Statistical Office
+    <https://www.bfs.admin.ch/bfs/en/home/statistics/mobility-transport/transport-infrastructure-vehicles/vehicles/road-vehicles-stock-level-motorisation.html>`_.
+
+  - Updated hydro-electricity generation and capacity data from EIA.
+
+  - The easiest way to sweep over multiple weather years is to use the new
+    scenario management. An example for the necessary `create_scenarios.py`
+    script can be found in this `Github gist
+    <https://gist.github.com/fneum/47b857862dd9148a22eca5a2e85caa9a>`_.
+
 * Upgrade to Snakemake v8.5+. This version is the new minimum version required.
   To upgrade an existing environment, run ``conda install -c bioconda
   snakemake-minimal">=8.5"`` and ``pip install snakemake-storage-plugin-http``

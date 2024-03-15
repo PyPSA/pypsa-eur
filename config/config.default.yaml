@@ -292,7 +292,7 @@ load:
   manual_adjustments: true # false
   scaling_factor: 1.0
   fixed_year: false # false or year (e.g. 2013)
-  supplement_missing_data_artificially: true
+  supplement_synthetic: true
 
 # docs
 # TODO: PyPSA-Eur merge issue in prepare_sector_network.py

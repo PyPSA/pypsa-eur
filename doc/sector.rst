@@ -56,6 +56,11 @@ Rule ``build_energy_totals``
 
 .. automodule:: build_energy_totals
 
+Rule ``build_heat_totals``
+==============================================================================
+
+.. automodule:: build_heat_totals
+
 Rule ``build_gas_input_locations``
 ==============================================================================
 

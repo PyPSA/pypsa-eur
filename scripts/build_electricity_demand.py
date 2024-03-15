@@ -307,12 +307,12 @@ if __name__ == "__main__":
     )
     load = load.apply(fill_large_gaps, shift=time_shift)
 
-    if snakemake.params.load["supplement_missing_data_artificially"]:
-        logger.info("Supplement missing data with artificial data.")
-        fn = snakemake.input.artificial
-        artificial_load = pd.read_csv(fn, index_col=0, parse_dates=True)
-        artificial_load = artificial_load.loc[snapshots, countries]
-        load = load.combine_first(artificial_load)
+    if snakemake.params.load["supplement_synthetic"]:
+        logger.info("Supplement missing data with synthetic data.")
+        fn = snakemake.input.synthetic
+        synthetic_load = pd.read_csv(fn, index_col=0, parse_dates=True)
+        synthetic_load = synthetic_load.loc[snapshots, countries]
+        load = load.combine_first(synthetic_load)
 
     assert not load.isna().any().any(), (
         "Load data contains nans. Adjust the parameters "
