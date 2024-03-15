@@ -171,11 +171,6 @@ Rule ``cluster_gas_network``
 
 .. automodule:: cluster_gas_network
 
-Rule ``copy_config``
-==============================================================================
-
-.. automodule:: copy_config
-
 Rule ``prepare_sector_network``
 ==============================================================================
 

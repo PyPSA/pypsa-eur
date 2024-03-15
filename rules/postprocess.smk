@@ -3,10 +3,6 @@
 # SPDX-License-Identifier: MIT
 
 
-localrules:
-    copy_config,
-
-
 if config["foresight"] != "perfect":
 
     rule plot_power_network_clustered:
@@ -135,20 +131,6 @@ if config["foresight"] == "perfect":
             "../envs/environment.yaml"
         script:
             "../scripts/plot_power_network_perfect.py"
-
-
-rule copy_config:
-    params:
-        RDIR=RDIR,
-    output:
-        RESULTS + "config.yaml",
-    threads: 1
-    resources:
-        mem_mb=1000,
-    conda:
-        "../envs/environment.yaml"
-    script:
-        "../scripts/copy_config.py"
 
 
 rule make_summary:
