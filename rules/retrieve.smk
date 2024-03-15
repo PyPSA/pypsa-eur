@@ -168,7 +168,7 @@ if config["enable"]["retrieve"]:
         output:
             expand("data/gas_network/scigrid-gas/data/{files}", files=datafiles),
         log:
-            logs("retrieve_gas_infrastructure_data.log"),
+            "logs/retrieve_gas_infrastructure_data.log",
         retries: 2
         conda:
             "../envs/retrieve.yaml"
@@ -184,7 +184,7 @@ if config["enable"]["retrieve"]:
         output:
             "data/electricity_demand_raw.csv",
         log:
-            logs("retrieve_electricity_demand.log"),
+            "logs/retrieve_electricity_demand.log",
         resources:
             mem_mb=5000,
         retries: 2
@@ -204,7 +204,7 @@ if config["enable"]["retrieve"]:
         output:
             "data/load_artificial_raw.csv",
         log:
-            logs("retrieve_artificial_load_data.log"),
+            "logs/retrieve_artificial_load_data.log",
         resources:
             mem_mb=5000,
         retries: 2
@@ -223,7 +223,7 @@ if config["enable"]["retrieve"]:
         output:
             protected("data/shipdensity_global.zip"),
         log:
-            logs("retrieve_ship_raster.log"),
+            "logs/retrieve_ship_raster.log",
         resources:
             mem_mb=5000,
         retries: 2
@@ -351,7 +351,7 @@ if config["enable"]["retrieve"]:
         output:
             "data/validation/emission-spot-primary-market-auction-report-2019-data.xls",
         log:
-            logs("retrieve_monthly_co2_prices.log"),
+            "logs/retrieve_monthly_co2_prices.log",
         resources:
             mem_mb=5000,
         retries: 2
@@ -365,7 +365,7 @@ if config["enable"]["retrieve"]:
         output:
             "data/validation/energy-price-trends-xlsx-5619002.xlsx",
         log:
-            logs("retrieve_monthly_fuel_prices.log"),
+            "logs/retrieve_monthly_fuel_prices.log",
         resources:
             mem_mb=5000,
         retries: 2
