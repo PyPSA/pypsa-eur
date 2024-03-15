@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
@@ -14,8 +14,6 @@ Relevant Settings
 -----------------
 
 .. code:: yaml
-
-    snapshots:
 
     countries:
 
@@ -77,10 +75,13 @@ import shapely
 import shapely.prepared
 import shapely.wkt
 import yaml
-from _helpers import configure_logging
+from _helpers import configure_logging, get_snapshots, set_scenario_config
+from packaging.version import Version, parse
 from scipy import spatial
 from scipy.sparse import csgraph
 from shapely.geometry import LineString, Point
+
+PD_GE_2_2 = parse(pd.__version__) >= Version("2.2")
 
 logger = logging.getLogger(__name__)
 
@@ -138,7 +139,9 @@ def _load_buses_from_eg(eg_buses, europe_shape, config_elec):
     )
 
     buses["carrier"] = buses.pop("dc").map({True: "DC", False: "AC"})
-    buses["under_construction"] = buses["under_construction"].fillna(False).astype(bool)
+    buses["under_construction"] = buses.under_construction.where(
+        lambda s: s.notnull(), False
+    ).astype(bool)
 
     # remove all buses outside of all countries including exclusive economic zones (offshore)
     europe_shape = gpd.read_file(europe_shape).loc[0, "geometry"]
@@ -522,12 +525,13 @@ def _set_countries_and_substations(n, config, country_shapes, offshore_shapes):
         )
         return pd.Series(key, index)
 
+    compat_kws = dict(include_groups=False) if PD_GE_2_2 else {}
     gb = buses.loc[substation_b].groupby(
         ["x", "y"], as_index=False, group_keys=False, sort=False
     )
-    bus_map_low = gb.apply(prefer_voltage, "min")
+    bus_map_low = gb.apply(prefer_voltage, "min", **compat_kws)
     lv_b = (bus_map_low == bus_map_low.index).reindex(buses.index, fill_value=False)
-    bus_map_high = gb.apply(prefer_voltage, "max")
+    bus_map_high = gb.apply(prefer_voltage, "max", **compat_kws)
     hv_b = (bus_map_high == bus_map_high.index).reindex(buses.index, fill_value=False)
 
     onshore_b = pd.Series(False, buses.index)
@@ -553,6 +557,7 @@ def _set_countries_and_substations(n, config, country_shapes, offshore_shapes):
     for b, df in product(("bus0", "bus1"), (n.lines, n.links)):
         has_connections_b |= ~df.groupby(b).under_construction.min()
 
+    buses["onshore_bus"] = onshore_b
     buses["substation_lv"] = (
         lv_b & onshore_b & (~buses["under_construction"]) & has_connections_b
     )
@@ -560,7 +565,7 @@ def _set_countries_and_substations(n, config, country_shapes, offshore_shapes):
         ~buses["under_construction"]
     )
 
-    c_nan_b = buses.country.isnull()
+    c_nan_b = buses.country.fillna("na") == "na"
     if c_nan_b.sum() > 0:
         c_tag = _get_country(buses.loc[c_nan_b])
         c_tag.loc[~c_tag.isin(countries)] = np.nan
@@ -729,7 +734,8 @@ def base_network(
     n = pypsa.Network()
     n.name = "PyPSA-Eur"
 
-    n.set_snapshots(pd.date_range(freq="h", **config["snapshots"]))
+    time = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
+    n.set_snapshots(time)
     n.madd("Carrier", ["AC", "DC"])
 
     n.import_components_from_dataframe(buses, "Bus")
@@ -761,6 +767,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("base_network")
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     n = base_network(
         snakemake.input.eg_buses,

@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
 import logging
 
 import pandas as pd
-from _helpers import configure_logging
+from _helpers import configure_logging, set_scenario_config
 from entsoe import EntsoePandasClient
 from entsoe.exceptions import NoMatchingDataError
 
@@ -39,6 +39,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_electricity_production")
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     api_key = snakemake.config["private"]["keys"]["entsoe_api"]
     client = EntsoePandasClient(api_key=api_key)
@@ -58,7 +59,7 @@ if __name__ == "__main__":
             gen = client.query_generation(country, start=start, end=end, nett=True)
             gen = gen.tz_localize(None).resample("1h").mean()
             gen = gen.loc[start.tz_localize(None) : end.tz_localize(None)]
-            gen = gen.rename(columns=carrier_grouper).groupby(level=0, axis=1).sum()
+            gen = gen.rename(columns=carrier_grouper).T.groupby(level=0).sum().T
             generation.append(gen)
         except NoMatchingDataError:
             unavailable_countries.append(country)

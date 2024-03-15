@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2021-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2021-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -9,11 +9,12 @@ production sites with data from SciGRID_gas and Global Energy Monitor.
 
 import logging
 
-logger = logging.getLogger(__name__)
-
 import geopandas as gpd
 import pandas as pd
+from _helpers import configure_logging, set_scenario_config
 from cluster_gas_network import load_bus_regions
+
+logger = logging.getLogger(__name__)
 
 
 def read_scigrid_gas(fn):
@@ -23,13 +24,15 @@ def read_scigrid_gas(fn):
     return df
 
 
-def build_gem_lng_data(lng_fn):
-    df = pd.read_excel(lng_fn[0], sheet_name="LNG terminals - data")
+def build_gem_lng_data(fn):
+    df = pd.read_excel(fn, sheet_name="LNG terminals - data")
     df = df.set_index("ComboID")
 
-    remove_status = ["Cancelled"]
-    remove_country = ["Cyprus", "Turkey"]
-    remove_terminal = ["Puerto de la Luz LNG Terminal", "Gran Canaria LNG Terminal"]
+    remove_country = ["Cyprus", "Turkey"]  # noqa: F841
+    remove_terminal = [  # noqa: F841
+        "Puerto de la Luz LNG Terminal",
+        "Gran Canaria LNG Terminal",
+    ]
 
     df = df.query(
         "Status != 'Cancelled' \
@@ -42,9 +45,50 @@ def build_gem_lng_data(lng_fn):
     return gpd.GeoDataFrame(df, geometry=geometry, crs="EPSG:4326")
 
 
-def build_gas_input_locations(lng_fn, entry_fn, prod_fn, countries):
+def build_gem_prod_data(fn):
+    df = pd.read_excel(fn, sheet_name="Gas extraction - main")
+    df = df.set_index("GEM Unit ID")
+
+    remove_country = ["Cyprus", "Türkiye"]  # noqa: F841
+    remove_fuel_type = ["oil"]  # noqa: F841
+
+    df = df.query(
+        "Status != 'shut in' \
+              & 'Fuel type' != 'oil' \
+              & Country != @remove_country \
+              & ~Latitude.isna() \
+              & ~Longitude.isna()"
+    ).copy()
+
+    p = pd.read_excel(fn, sheet_name="Gas extraction - production")
+    p = p.set_index("GEM Unit ID")
+    p = p[p["Fuel description"] == "gas"]
+
+    capacities = pd.DataFrame(index=df.index)
+    for key in ["production", "production design capacity", "reserves"]:
+        cap = (
+            p.loc[p["Production/reserves"] == key, "Quantity (converted)"]
+            .groupby("GEM Unit ID")
+            .sum()
+            .reindex(df.index)
+        )
+        # assume capacity such that 3% of reserves can be extracted per year (25% quantile)
+        annualization_factor = 0.03 if key == "reserves" else 1.0
+        capacities[key] = cap * annualization_factor
+
+    df["mcm_per_year"] = (
+        capacities["production"]
+        .combine_first(capacities["production design capacity"])
+        .combine_first(capacities["reserves"])
+    )
+
+    geometry = gpd.points_from_xy(df["Longitude"], df["Latitude"])
+    return gpd.GeoDataFrame(df, geometry=geometry, crs="EPSG:4326")
+
+
+def build_gas_input_locations(gem_fn, entry_fn, sto_fn, countries):
     # LNG terminals
-    lng = build_gem_lng_data(lng_fn)
+    lng = build_gem_lng_data(gem_fn)
 
     # Entry points from outside the model scope
     entry = read_scigrid_gas(entry_fn)
@@ -55,25 +99,30 @@ def build_gas_input_locations(lng_fn, entry_fn, prod_fn, countries):
         | (entry.from_country == "NO")  # malformed datapoint  # entries from NO to GB
     ]
 
+    sto = read_scigrid_gas(sto_fn)
+    remove_country = ["RU", "UA", "TR", "BY"]  # noqa: F841
+    sto = sto.query("country_code not in @remove_country")
+
     # production sites inside the model scope
-    prod = read_scigrid_gas(prod_fn)
-    prod = prod.loc[
-        (prod.geometry.y > 35) & (prod.geometry.x < 30) & (prod.country_code != "DE")
-    ]
+    prod = build_gem_prod_data(gem_fn)
 
     mcm_per_day_to_mw = 437.5  # MCM/day to MWh/h
+    mcm_per_year_to_mw = 1.199  #  MCM/year to MWh/h
     mtpa_to_mw = 1649.224  # mtpa to MWh/h
-    lng["p_nom"] = lng["CapacityInMtpa"] * mtpa_to_mw
-    entry["p_nom"] = entry["max_cap_from_to_M_m3_per_d"] * mcm_per_day_to_mw
-    prod["p_nom"] = prod["max_supply_M_m3_per_d"] * mcm_per_day_to_mw
+    mcm_to_gwh = 11.36  # MCM to GWh
+    lng["capacity"] = lng["CapacityInMtpa"] * mtpa_to_mw
+    entry["capacity"] = entry["max_cap_from_to_M_m3_per_d"] * mcm_per_day_to_mw
+    prod["capacity"] = prod["mcm_per_year"] * mcm_per_year_to_mw
+    sto["capacity"] = sto["max_cushionGas_M_m3"] * mcm_to_gwh
 
     lng["type"] = "lng"
     entry["type"] = "pipeline"
     prod["type"] = "production"
+    sto["type"] = "storage"
 
-    sel = ["geometry", "p_nom", "type"]
+    sel = ["geometry", "capacity", "type"]
 
-    return pd.concat([prod[sel], entry[sel], lng[sel]], ignore_index=True)
+    return pd.concat([prod[sel], entry[sel], lng[sel], sto[sel]], ignore_index=True)
 
 
 if __name__ == "__main__":
@@ -83,10 +132,11 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "build_gas_input_locations",
             simpl="",
-            clusters="37",
+            clusters="128",
         )
 
-    logging.basicConfig(level=snakemake.config["logging"]["level"])
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     regions = load_bus_regions(
         snakemake.input.regions_onshore, snakemake.input.regions_offshore
@@ -104,9 +154,9 @@ if __name__ == "__main__":
     countries = regions.index.str[:2].unique().str.replace("GB", "UK")
 
     gas_input_locations = build_gas_input_locations(
-        snakemake.input.lng,
+        snakemake.input.gem,
         snakemake.input.entry,
-        snakemake.input.production,
+        snakemake.input.storage,
         countries,
     )
 
@@ -116,9 +166,13 @@ if __name__ == "__main__":
 
     gas_input_nodes.to_file(snakemake.output.gas_input_nodes, driver="GeoJSON")
 
+    ensure_columns = ["lng", "pipeline", "production", "storage"]
     gas_input_nodes_s = (
-        gas_input_nodes.groupby(["bus", "type"])["p_nom"].sum().unstack()
+        gas_input_nodes.groupby(["bus", "type"])["capacity"]
+        .sum()
+        .unstack()
+        .reindex(columns=ensure_columns)
     )
-    gas_input_nodes_s.columns.name = "p_nom"
+    gas_input_nodes_s.columns.name = "capacity"
 
     gas_input_nodes_s.to_csv(snakemake.output.gas_input_nodes_simplified)
