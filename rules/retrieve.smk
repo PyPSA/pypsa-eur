@@ -200,7 +200,6 @@ if config["enable"]["retrieve"]:
         input:
             storage(
                 "https://zenodo.org/records/10820928/files/demand_hourly.csv",
-                keep_local=True,
             ),
         output:
             "data/load_artificial_raw.csv",
@@ -211,7 +210,6 @@ if config["enable"]["retrieve"]:
         retries: 2
         run:
             move(input[0], output[0])
-            validate_checksum(output[0], input[0])
 
 
 if config["enable"]["retrieve"]:
