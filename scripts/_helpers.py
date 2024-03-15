@@ -60,7 +60,7 @@ def get_run_path(fn, dir, rdir, shared_resources):
     if shared_resources == "base":
         pattern = r"\{([^{}]+)\}"
         existing_wildcards = set(re.findall(pattern, fn))
-        irrelevant_wildcards = {"technology", "year", "scope"}
+        irrelevant_wildcards = {"technology", "year", "scope", "kind"}
         no_relevant_wildcards = not existing_wildcards - irrelevant_wildcards
         no_elec_rule = not fn.startswith("networks/elec") and not fn.startswith(
             "add_electricity"
@@ -68,7 +68,7 @@ def get_run_path(fn, dir, rdir, shared_resources):
         is_shared = no_relevant_wildcards and no_elec_rule
     elif isinstance(shared_resources, str):
         rdir = shared_resources + "/"
-        is_shared = True
+        is_shared = False
     elif isinstance(shared_resources, bool):
         is_shared = shared_resources
     else:
