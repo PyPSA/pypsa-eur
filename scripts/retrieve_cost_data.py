@@ -25,9 +25,10 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     version = snakemake.params.version
-    baseurl = (
-        f"https://raw.githubusercontent.com/PyPSA/technology-data/{version}/outputs/"
-    )
+    if "/" in version:
+        baseurl = f"https://raw.githubusercontent.com/{version}/outputs"
+    else:
+        baseurl = f"https://raw.githubusercontent.com/PyPSA/technology-data/{version}/outputs/"
     filepath = Path(snakemake.output[0])
     url = baseurl + filepath.name
 
