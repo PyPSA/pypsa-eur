@@ -11,7 +11,9 @@ import os
 import re
 import urllib
 from functools import partial
+from os.path import exists
 from pathlib import Path
+from shutil import copyfile
 
 import pandas as pd
 import pytz
@@ -23,6 +25,33 @@ from tqdm import tqdm
 logger = logging.getLogger(__name__)
 
 REGION_COLS = ["geometry", "name", "x", "y", "country"]
+
+
+def copy_default_files(workflow):
+    default_files = {
+        "config/config.default.yaml": "config/config.yaml",
+        "config/scenarios.template.yaml": "config/scenarios.yaml",
+    }
+    for template, target in default_files.items():
+        target = os.path.join(workflow.current_basedir, target)
+        template = os.path.join(workflow.current_basedir, template)
+        if not exists(target) and exists(template):
+            copyfile(template, target)
+
+
+def process_run_config(run):
+    scenarios = run.get("scenarios", {})
+    if run["name"] and scenarios.get("enable"):
+        fn = Path(scenarios["file"])
+        scenarios = yaml.safe_load(fn.read_text())
+        RDIR = "{run}/"
+        if run["name"] == "all":
+            run["name"] = list(scenarios.keys())
+    elif run["name"]:
+        RDIR = run["name"] + "/"
+    else:
+        RDIR = ""
+    return RDIR
 
 
 def get_run_path(fn, dir, rdir, shared_resources):
