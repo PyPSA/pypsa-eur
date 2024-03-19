@@ -82,6 +82,8 @@ Upcoming Release
 
 * Upgrade default techno-economic assumptions to ``technology-data`` v0.8.1.
 
+* Add possibility to download cost data from custom fork of ``technology-data``.
+
 * Linearly interpolate missing investment periods in year-dependent
   configuration options.
 
