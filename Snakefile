@@ -10,7 +10,7 @@ from snakemake.utils import min_version
 
 min_version("8.5")
 
-from scripts._helpers import path_provider, copy_default_files, process_run_config
+from scripts._helpers import path_provider, copy_default_files, get_scenarios, get_rdir
 
 
 copy_default_files(workflow)
@@ -21,7 +21,8 @@ configfile: "config/config.yaml"
 
 
 run = config["run"]
-RDIR = process_run_config(run)
+scenarios = get_scenarios(run)
+RDIR = get_rdir(run)
 
 logs = path_provider("logs/", RDIR, run["shared_resources"])
 benchmarks = path_provider("benchmarks/", RDIR, run["shared_resources"])
