@@ -8,15 +8,18 @@ Build hourly heat demand time series from daily ones.
 
 from itertools import product
 
+import numpy as np
 import pandas as pd
 import xarray as xr
-import numpy as np
 from _helpers import generate_periodic_profiles, set_scenario_config
+
 
 def heat_dsm_profile(snapshots, nodes, options):
 
-    weekly_profile=np.ones((24 * 7))
-    weekly_profile[(np.arange(0, 7, 1) * 24 + options["residential_heat_restriction_time"])] = 0
+    weekly_profile = np.ones((24 * 7))
+    weekly_profile[
+        (np.arange(0, 7, 1) * 24 + options["residential_heat_restriction_time"])
+    ] = 0
 
     dsm_profile = generate_periodic_profiles(
         dt_index=pd.date_range(freq="h", **snakemake.params.snapshots, tz="UTC"),
@@ -25,6 +28,7 @@ def heat_dsm_profile(snapshots, nodes, options):
     )
 
     return dsm_profile
+
 
 if __name__ == "__main__":
     if "snakemake" not in globals():

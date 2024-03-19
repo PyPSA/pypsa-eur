@@ -1837,10 +1837,11 @@ def add_heat(n, costs):
             p_set=heat_load,
         )
 
-        if (
-            options["residential_heat_dsm"] and
-            name in ["residential rural", "residential urban decentral", "urban central"]
-        ):
+        if options["residential_heat_dsm"] and name in [
+            "residential rural",
+            "residential urban decentral",
+            "urban central",
+        ]:
             if "rural" in name:
                 factor = 1 - urban_fraction[nodes]
             elif "urban central" in name:
@@ -1848,7 +1849,9 @@ def add_heat(n, costs):
             elif "urban decentral" in name:
                 factor = urban_fraction[nodes] - dist_fraction[nodes]
 
-            heat_dsm_profile = pd.read_csv(snakemake.input.heat_dsm_profile, header=[1], index_col=[0])[nodes]
+            heat_dsm_profile = pd.read_csv(
+                snakemake.input.heat_dsm_profile, header=[1], index_col=[0]
+            )[nodes]
             heat_dsm_profile.index = n.snapshots
 
             e_nom = (
@@ -1867,7 +1870,7 @@ def add_heat(n, costs):
                 .multiply(factor)
             ) * options["residential_heat_restriction_value"]
 
-            heat_dsm_profile = heat_dsm_profile * e_nom/e_nom.max()
+            heat_dsm_profile = heat_dsm_profile * e_nom / e_nom.max()
             e_nom = e_nom.max()
 
             n.madd(
@@ -2198,7 +2201,7 @@ def add_heat(n, costs):
     if options["retrofitting"]["WWHR_endogen"]:
         name = f"residential water"
 
-        #n.add("Carrier", name + " WWHRS")
+        # n.add("Carrier", name + " WWHRS")
 
         WWHR_costs = pd.read_csv(snakemake.input.WWHR_cost, index_col=0)
         heat_demand_shape = (

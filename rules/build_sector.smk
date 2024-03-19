@@ -167,7 +167,9 @@ rule build_hourly_heat_demand:
         heat_demand=resources("daily_heat_demand_{scope}_elec_s{simpl}_{clusters}.nc"),
     output:
         heat_demand=resources("hourly_heat_demand_{scope}_elec_s{simpl}_{clusters}.nc"),
-        heat_dsm_profile=resources("residential_heat_dsm_profile_{scope}_s{simpl}_{clusters}.csv"),
+        heat_dsm_profile=resources(
+            "residential_heat_dsm_profile_{scope}_s{simpl}_{clusters}.csv"
+        ),
     resources:
         mem_mb=2000,
     threads: 8
@@ -884,7 +886,9 @@ rule prepare_sector_network:
         transport_data=resources("transport_data_s{simpl}_{clusters}.csv"),
         avail_profile=resources("avail_profile_s{simpl}_{clusters}.csv"),
         dsm_profile=resources("dsm_profile_s{simpl}_{clusters}.csv"),
-        heat_dsm_profile=resources("residential_heat_dsm_profile_total_s{simpl}_{clusters}.csv"),
+        heat_dsm_profile=resources(
+            "residential_heat_dsm_profile_total_s{simpl}_{clusters}.csv"
+        ),
         co2_totals_name=resources("co2_totals.csv"),
         co2="data/bundle-sector/eea/UNFCCC_v23.csv",
         biomass_potentials=lambda w: (
