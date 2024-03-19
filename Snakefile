@@ -4,8 +4,8 @@
 
 from pathlib import Path
 import yaml
-from os.path import normpath
-from shutil import move, rmtree
+from os.path import normpath, exists
+from shutil import copyfile, move, rmtree
 from snakemake.utils import min_version
 
 min_version("8.5")
