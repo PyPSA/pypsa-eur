@@ -3582,7 +3582,8 @@ def add_enhanced_geothermal(
             "'add_enhanced_geothermal' not implemented for multiple geothermal nodes."
         )
 
-    config = snakemake.config
+    egs_config = snakemake.params["sector"]["enhanced_geothermal"]
+    costs_config = snakemake.config["costs"]
 
     # matrix defining the overlap between gridded geothermal potential estimation, and bus regions
     overlap = pd.read_csv(egs_overlap, index_col=0)
@@ -3590,7 +3591,7 @@ def add_enhanced_geothermal(
     egs_potentials = pd.read_csv(egs_potentials, index_col=0)
 
     Nyears = n.snapshot_weightings.generators.sum() / 8760
-    dr = config["costs"]["fill_values"]["discount rate"]
+    dr = costs_config["fill_values"]["discount rate"]
     lt = costs.at["geothermal", "lifetime"]
     FOM = costs.at["geothermal", "FOM"]
 
@@ -3673,7 +3674,7 @@ def add_enhanced_geothermal(
         bus_egs["p_nom_max"] = bus_egs["p_nom_max"].multiply(bus_overlap)
         bus_egs = bus_egs.loc[bus_egs.p_nom_max > 0.0]
 
-        if config["sector"]["enhanced_geothermal_performant"]:
+        if egs_config["performant"]:
             bus_egs = bus_egs.sort_values(by="capital_cost").iloc[:1]
             appendix = pd.Index([""])
         else:
@@ -3718,7 +3719,7 @@ def add_enhanced_geothermal(
             p_nom_extendable=True,
             carrier="geothermal organic rankine cycle",
             capital_cost=plant_capital_cost * efficiency_orc,
-            efficiency=efficiency_orc if not as_chp else efficiency_orc * 2.0,
+            efficiency=efficiency_orc,
         )
 
         if as_chp and bus + " urban central heat" in n.buses.index:
@@ -3731,7 +3732,7 @@ def add_enhanced_geothermal(
                 capital_cost=plant_capital_cost
                 * efficiency_orc
                 * costs.at["geothermal", "district heating cost"],
-                efficiency=efficiency_dh * 2.0,
+                efficiency=efficiency_dh,
                 p_nom_extendable=True,
             )
         elif as_chp and not bus + " urban central heat" in n.buses.index:
@@ -3739,15 +3740,13 @@ def add_enhanced_geothermal(
                 efficiency_orc
             )
 
-        if snakemake.params.sector["enhanced_geothermal_flexible"]:
+        if egs_config["flexible"]:
             # this StorageUnit represents flexible operation using the geothermal reservoir.
             # Hence, it is counter-intuitive to install it at the surface bus,
             # this is however the more lean and computationally efficient solution.
 
-            max_hours = snakemake.params.sector[
-                "enhanced_geothermal_reservoir_max_hours"
-            ]
-            boost = snakemake.params.sector["enhanced_geothermal_reservoir_max_boost"]
+            max_hours = egs_config["reservoir_max_hours"]
+            boost = egs_config["reservoir_max_boost"]
 
             n.add(
                 "StorageUnit",
@@ -3912,7 +3911,7 @@ if __name__ == "__main__":
     if options.get("cluster_heat_buses", False) and not first_year_myopic:
         cluster_heat_buses(n)
 
-    if options.get("enhanced_geothermal", False):
+    if options["enhanced_geothermal"].get("enable", False):
         logger.info("Adding Enhanced Geothermal Potential.")
         add_enhanced_geothermal(
             n, snakemake.input["egs_potentials"], snakemake.input["egs_overlap"], costs

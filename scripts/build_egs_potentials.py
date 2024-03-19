@@ -93,6 +93,10 @@ def get_capacity_factors(network_regions_file, air_temperatures_file):
     in Decarbonized Elec Systems.
     """
 
+    # these values are taken from the paper's
+    # Supplementary Figure 20 from https://zenodo.org/records/7093330
+    # and relate deviations of the ambient temperature from the year-average
+    # ambient temperature to EGS capacity factors.
     delta_T = [-15, -10, -5, 0, 5, 10, 15, 20]
     cf = [1.17, 1.13, 1.07, 1, 0.925, 0.84, 0.75, 0.65]
 
@@ -118,6 +122,10 @@ def get_capacity_factors(network_regions_file, air_temperatures_file):
     snapshots = pd.date_range(freq="h", **snakemake.params.snapshots)
     capacity_factors = pd.DataFrame(index=snapshots)
 
+    # bespoke computation of capacity factors for each bus.
+    # Considering the respective temperatures, we compute
+    # the deviation from the average temperature and relate it
+    # to capacity factors based on the data from above.
     for bus in index:
         temp = air_temp.sel(name=bus).to_dataframe()["temperature"]
         capacity_factors[bus] = np.interp((temp - temp.mean()).values, x, y)
@@ -135,18 +143,20 @@ if __name__ == "__main__":
             clusters=37,
         )
 
-    sustainability_factor = 0.0025
+    egs_config = snakemake.params["sector"]["enhanced_geothermal"]
+    costs_config = snakemake.params["costs"]
+
+    sustainability_factor = egs_config["sustainability_factor"]
     # the share of heat that is replenished from the earth's core.
     # we are not constraining ourselves to the sustainable share, but
     # inversely apply it to our underlying data, which refers to the
-    # sustainable heat.
-
-    config = snakemake.config
+    # sustainable heat. Source: Relative magnitude of sustainable heat vs
+    # nonsustainable heat in the paper "From hot rock to useful energy..."
 
     egs_data = prepare_egs_data(snakemake.input.egs_cost)
 
-    if config["sector"]["enhanced_geothermal_optimism"]:
-        egs_data = egs_data[(year := config["costs"]["year"])]
+    if egs_config["optimism"]:
+        egs_data = egs_data[(year := costs_config["year"])]
         logger.info(
             f"EGS optimism! Building EGS potentials with costs estimated for {year}."
         )

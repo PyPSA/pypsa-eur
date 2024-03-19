@@ -816,36 +816,6 @@ def input_profile_offwind(w):
     }
 
 
-rule build_egs_potentials:
-    params:
-        snapshots=config_provider("snapshots"),
-    input:
-        egs_cost="data/egs_costs.json",
-        regions=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
-        air_temperature=(
-            resources("temp_air_total_elec_s{simpl}_{clusters}.nc")
-            if config_provider("sector", "enhanced_geothermal_var_cf")
-            else []
-        ),
-    output:
-        egs_potentials=resources("egs_potentials_s{simpl}_{clusters}.csv"),
-        egs_overlap=resources("egs_overlap_s{simpl}_{clusters}.csv"),
-        egs_capacity_factors=(
-            resources("egs_capacity_factors_s{simpl}_{clusters}.csv")
-            if config_provider("sector", "enhanced_geothermal_var_cf")
-            else []
-        ),
-    threads: 1
-    resources:
-        mem_mb=2000,
-    log:
-        logs("build_egs_potentials_s{simpl}_{clusters}.log"),
-    conda:
-        "../envs/environment.yaml"
-    script:
-        "../scripts/build_egs_potentials.py"
-
-
 rule prepare_sector_network:
     params:
         time_resolution=config_provider("clustering", "temporal", "resolution_sector"),
@@ -946,13 +916,6 @@ rule prepare_sector_network:
         cop_air_total=resources("cop_air_total_elec_s{simpl}_{clusters}.nc"),
         cop_air_rural=resources("cop_air_rural_elec_s{simpl}_{clusters}.nc"),
         cop_air_urban=resources("cop_air_urban_elec_s{simpl}_{clusters}.nc"),
-        egs_potentials=RESOURCES + "egs_potentials_s{simpl}_{clusters}.csv",
-        egs_overlap=RESOURCES + "egs_overlap_s{simpl}_{clusters}.csv",
-        egs_capacity_factors=(
-            RESOURCES + "egs_capacity_factors_s{simpl}_{clusters}.csv"
-            if config["sector"]["enhanced_geothermal_var_cf"]
-            else []
-        ),
         solar_thermal_total=lambda w: (
             resources("solar_thermal_total_elec_s{simpl}_{clusters}.nc")
             if config_provider("sector", "solar_thermal")(w)
