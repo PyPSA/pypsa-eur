@@ -145,7 +145,7 @@ def disable_grid_expansion_if_limit_hit(n):
         for name, glc in glcs.iterrows():
             total_expansion = (
                 (
-                    n.lines.query("p_nom_extendable")
+                    n.lines.query("s_nom_extendable")
                     .eval(f"s_nom_min * {cols[limit_type]}")
                     .sum()
                 )

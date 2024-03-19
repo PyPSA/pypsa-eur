@@ -202,9 +202,10 @@ if __name__ == "__main__":
 
     contained_years = pd.date_range(freq="YE", **snakemake.params.snapshots).year
     norm_year = config_hydro.get("eia_norm_year")
+    missing_years = contained_years.difference(eia_stats.index)
     if norm_year:
         eia_stats.loc[contained_years] = eia_stats.loc[norm_year]
-    elif missing_years := eia_stats.index.difference(contained_years):
+    elif missing_years.any():
         eia_stats.loc[missing_years] = eia_stats.median()
 
     inflow = cutout.runoff(
