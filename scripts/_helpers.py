@@ -39,14 +39,21 @@ def copy_default_files(workflow):
             copyfile(template, target)
 
 
-def process_run_config(run):
-    scenarios = run.get("scenarios", {})
-    if run["name"] and scenarios.get("enable"):
-        fn = Path(scenarios["file"])
+def get_scenarios(run):
+    scenario_config = run.get("scenarios", {})
+    if run["name"] and scenario_config.get("enable"):
+        fn = Path(scenario_config["file"])
         scenarios = yaml.safe_load(fn.read_text())
-        RDIR = "{run}/"
         if run["name"] == "all":
             run["name"] = list(scenarios.keys())
+        return scenarios
+    return {}
+
+
+def get_rdir(run):
+    scenario_config = run.get("scenarios", {})
+    if run["name"] and scenario_config.get("enable"):
+        RDIR = "{run}/"
     elif run["name"]:
         RDIR = run["name"] + "/"
     else:
