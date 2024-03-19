@@ -184,12 +184,13 @@ def sanitize_carriers(n, config):
 
 
 def sanitize_locations(n):
-    n.buses["x"] = n.buses.x.where(n.buses.x != 0, n.buses.location.map(n.buses.x))
-    n.buses["y"] = n.buses.y.where(n.buses.y != 0, n.buses.location.map(n.buses.y))
-    n.buses["country"] = n.buses.country.where(
-        n.buses.country.ne("") & n.buses.country.notnull(),
-        n.buses.location.map(n.buses.country),
-    )
+    if "location" in n.buses.columns:
+        n.buses["x"] = n.buses.x.where(n.buses.x != 0, n.buses.location.map(n.buses.x))
+        n.buses["y"] = n.buses.y.where(n.buses.y != 0, n.buses.location.map(n.buses.y))
+        n.buses["country"] = n.buses.country.where(
+            n.buses.country.ne("") & n.buses.country.notnull(),
+            n.buses.location.map(n.buses.country),
+        )
 
 
 def add_co2_emissions(n, costs, carriers):
