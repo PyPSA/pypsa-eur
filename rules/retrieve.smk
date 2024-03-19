@@ -50,7 +50,7 @@ if config["enable"].get("retrieve_irena"):
             onwind="data/existing_infrastructure/onwind_capacity_IRENA.csv",
             solar="data/existing_infrastructure/solar_capacity_IRENA.csv",
         log:
-            logs("retrieve_irena.log"),
+            "logs/retrieve_irena.log",
         resources:
             mem_mb=1000,
         retries: 2
