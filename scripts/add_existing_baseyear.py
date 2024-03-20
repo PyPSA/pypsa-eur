@@ -188,7 +188,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
     add_existing_renewables(df_agg)
 
     df_agg["grouping_year"] = np.take(
-        grouping_years, np.digitize(df_agg.DateIn, grouping_years, right=True)
+        grouping_years[::-1], np.digitize(df_agg.DateIn, grouping_years[::-1])
     )
 
     # calculate (adjusted) remaining lifetime before phase-out (+1 because assuming
@@ -434,12 +434,23 @@ def add_heating_capacities_installed_before_baseyear(
         else:
             efficiency = costs.at[costs_name, "efficiency"]
 
-        for i, grouping_year in enumerate(grouping_years):
-            if int(grouping_year) + default_lifetime <= int(baseyear):
-                continue
+        valid_grouping_years = pd.Series(
+            [
+                int(gy)
+                for gy in grouping_years
+                if int(baseyear) - default_lifetime <= int(gy) < int(baseyear)
+            ]
+        )
+        # Installation is assumed to be linear for the past
+        _intervals = (
+            pd.concat(
+                [valid_grouping_years[1:], pd.Series(baseyear)], ignore_index=True
+            )
+            - valid_grouping_years
+        )
+        ratios = _intervals / _intervals.sum()
 
-            # installation is assumed to be linear for the past default_lifetime years
-            ratio = (int(grouping_year) - int(grouping_years[i - 1])) / default_lifetime
+        for ratio, grouping_year in zip(ratios, valid_grouping_years):
 
             n.madd(
                 "Link",

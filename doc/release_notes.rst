@@ -15,6 +15,8 @@ Upcoming Release
   
 * Upgrade default techno-economic assumptions to ``technology-data`` v0.8.1.
 
+* Group existing capacities to the earlier grouping_year for consistency with optimized capacities
+
 * Upgrade to Snakemake v8.5+. This version is the new minimum version required.
   To upgrade an existing environment, run ``conda install -c bioconda
   snakemake-minimal">=8.5"`` and ``pip install snakemake-storage-plugin-http``
