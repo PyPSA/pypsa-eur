@@ -1,6 +1,6 @@
 ,Unit,Values,Description
 year,--,YYYY; e.g. '2030',Year for which to retrieve cost assumptions of ``resources/costs.csv``.
-version,--,vX.X.X; e.g. 'v0.5.0',Version of ``technology-data`` repository to use.
+version,--,vX.X.X or <user>/<repo>/vX.X.X; e.g. 'v0.5.0',Version of ``technology-data`` repository to use. If this string is of the form <user>/<repo>/<version> then costs are instead retrieved from ``github.com/<user>/<repo>`` at the <version> tag.
 rooftop_share,--,float,Share of rooftop PV when calculating capital cost of solar (joint rooftop and utility-scale PV).
 social_discountrate,p.u.,float,Social discount rate to compare costs in different investment periods. 0.02 corresponds to a social discount rate of 2%.
 fill_values,--,float,Default values if not specified for a technology in ``resources/costs.csv``.
