@@ -26,7 +26,7 @@ if __name__ == "__main__":
 
     version = snakemake.params.version
     if "/" in version:
-        baseurl = f"https://raw.githubusercontent.com/{version}/outputs"
+        baseurl = f"https://raw.githubusercontent.com/{version}/outputs/"
     else:
         baseurl = f"https://raw.githubusercontent.com/PyPSA/technology-data/{version}/outputs/"
     filepath = Path(snakemake.output[0])

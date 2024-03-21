@@ -115,7 +115,7 @@ if config["enable"]["retrieve"] and config["enable"].get(
             mem_mb=5000,
         retries: 2
         run:
-            move(input[0], output[0])
+            copyfile(input[0], output[0])
             validate_checksum(output[0], input[0])
 
 

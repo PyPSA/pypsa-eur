@@ -267,7 +267,7 @@ def distribute_clusters(n, n_clusters, focus_weights=None, solver_name="scip"):
     m.objective = (clusters * clusters - 2 * clusters * L * n_clusters).sum()
     if solver_name == "gurobi":
         logging.getLogger("gurobipy").propagate = False
-    elif solver_name not in ["scip", "cplex"]:
+    elif solver_name not in ["scip", "cplex", "xpress", "copt", "mosek"]:
         logger.info(
             f"The configured solver `{solver_name}` does not support quadratic objectives. Falling back to `scip`."
         )
