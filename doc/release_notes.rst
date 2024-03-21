@@ -61,6 +61,9 @@ Upcoming Release
 * Removed rule ``copy_config``. Instead, a config file is created for each
   network output of the ``solve_*`` rules, with the same content as ``n.meta``.
 
+* Added new HVDC transmission projects from `TYNDP 2024 draft projects
+  <https://tyndp.entsoe.eu/news/176-pan-european-electricity-transmission-projects-and-33-storage-projects-will-be-assessed-in-tyndp-2024>`_.
+
 * Upgrade to Snakemake v8.5+. This version is the new minimum version required.
   To upgrade an existing environment, run ``conda install -c bioconda
   snakemake-minimal">=8.5"`` and ``pip install snakemake-storage-plugin-http``
