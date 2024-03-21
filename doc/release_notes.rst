@@ -10,6 +10,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Allow the use of more solvers in clustering (Xpress, COPT, Gurobi, CPLEX, SCIP, MOSEK).
+
 * Enhanced support for choosing different weather years
   (https://github.com/PyPSA/pypsa-eur/pull/204):
 
