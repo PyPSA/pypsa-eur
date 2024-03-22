@@ -164,6 +164,8 @@ Upcoming Release
 
 * Fix duplicated years in `add_land_use_constraint_m`.
 
+* Fix type error with `m` option in `cluster_network`.
+
 PyPSA-Eur 0.10.0 (19th February 2024)
 =====================================
 
