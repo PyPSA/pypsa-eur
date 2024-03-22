@@ -20,14 +20,17 @@ rule solve_sector_network:
         + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
     shadow:
         "shallow"
+    retries: 3
     log:
         solver=LOGS
         + "elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_solver.log",
         python=LOGS
         + "elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_python.log",
+        memory=LOGS
+        + "elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_memory.log",
     threads: config["solving"]["solver"].get("threads", 4)
     resources:
-        mem_mb=config["solving"]["mem"],
+        mem_mb=lambda wildcards, attempt: config["solving"]["mem"] + config["solving"].get("mem_increment", 32000) * (attempt - 1),
         walltime=config["solving"].get("walltime", "12:00:00"),
     benchmark:
         (

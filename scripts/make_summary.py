@@ -670,6 +670,8 @@ def make_summaries(networks_dict):
         for output in outputs:
             df[output] = globals()["calculate_" + output](n, label, df[output])
 
+        del n
+
     return df
 
 

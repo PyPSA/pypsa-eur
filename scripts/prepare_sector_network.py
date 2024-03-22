@@ -4510,12 +4510,12 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "prepare_sector_network",
-            configfiles="../../../config/config.yaml",
+            configfiles="../../config/config.20231025-zecm.yaml",
             simpl="",
             opts="",
-            clusters="128",
-            ll="v1.5",
-            sector_opts="CO2L0-3H-T-H-B-I-A",
+            clusters="110",
+            ll="vopt",
+            sector_opts="Co2L0-2190SEG-T-H-B-I-S-A-imp",
             planning_horizons="2050",
         )
 

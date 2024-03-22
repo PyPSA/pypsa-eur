@@ -1089,6 +1089,7 @@ plotting:
     methanolisation: '#83d6d5'
     methanol: '#468c8b'
     shipping methanol: '#468c8b'
+    methanol-to-kerosene: '#579d9c'
     # co2
     CC: '#f29dae'
     CCS: '#f29dae'

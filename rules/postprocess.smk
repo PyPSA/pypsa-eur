@@ -57,7 +57,7 @@ rule make_summary:
         metrics=RESULTS + "csvs/metrics.csv",
     threads: 2
     resources:
-        mem_mb=10000,
+        mem_mb=20000,
     log:
         LOGS + "make_summary.log",
     benchmark:
