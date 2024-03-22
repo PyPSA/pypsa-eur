@@ -594,18 +594,6 @@ if __name__ == "__main__":
             )
             busmaps.append(busmap_hac)
 
-    if snakemake.wildcards.simpl:
-        n, cluster_map = cluster(
-            n,
-            int(snakemake.wildcards.simpl),
-            params.focus_weights,
-            solver_name,
-            params.simplify_network["algorithm"],
-            params.simplify_network["feature"],
-            params.aggregation_strategies,
-        )
-        busmaps.append(cluster_map)
-
     # some entries in n.buses are not updated in previous functions, therefore can be wrong. as they are not needed
     # and are lost when clustering (for example with the simpl wildcard), we remove them for consistency:
     remove = [
@@ -620,6 +608,18 @@ if __name__ == "__main__":
     ]
     n.buses.drop(remove, axis=1, inplace=True, errors="ignore")
     n.lines.drop(remove, axis=1, errors="ignore", inplace=True)
+
+    if snakemake.wildcards.simpl:
+        n, cluster_map = cluster(
+            n,
+            int(snakemake.wildcards.simpl),
+            params.focus_weights,
+            solver_name,
+            params.simplify_network["algorithm"],
+            params.simplify_network["feature"],
+            params.aggregation_strategies,
+        )
+        busmaps.append(cluster_map)
 
     update_p_nom_max(n)
 

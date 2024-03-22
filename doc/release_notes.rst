@@ -164,6 +164,8 @@ Upcoming Release
 
 * Fix duplicated years in `add_land_use_constraint_m`.
 
+* Fix error with `symbol` of `buses` in `simplify_network`.
+
 PyPSA-Eur 0.10.0 (19th February 2024)
 =====================================
 
