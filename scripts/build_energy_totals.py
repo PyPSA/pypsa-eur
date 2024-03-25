@@ -842,7 +842,7 @@ def rescale_idees_from_eurostat(
             "total": [
                 "total agriculture heat",
                 "total agriculture machinery",
-                "total agriculture", # = sum of all other agriculture categories
+                "total agriculture",  # = sum of all other agriculture categories
             ],
             "elec": [
                 "total agriculture electricity",
@@ -850,7 +850,7 @@ def rescale_idees_from_eurostat(
         },
         "Road": {
             "total": [
-                "total road", # = sum of all other road categories
+                "total road",  # = sum of all other road categories
                 "total passenger cars",
                 "total other road passenger",
                 "total light duty road freight",
@@ -942,15 +942,30 @@ def rescale_idees_from_eurostat(
             ).values
 
     # set the total of agriculture/road to the sum of all agriculture/road categories (corresponding to the IDEES data)
-    energy.loc[country, "total agriculture"] = energy.loc[country, ["total agriculture electricity", "total agriculture heat", "total agriculture machinery"]].sum(axis=1)
+    energy.loc[country, "total agriculture"] = energy.loc[
+        country,
+        [
+            "total agriculture electricity",
+            "total agriculture heat",
+            "total agriculture machinery",
+        ],
+    ].sum(axis=1)
 
-    energy.loc[country, :]["total road"] = energy[["total passenger cars",
+    energy.loc[country, :]["total road"] = (
+        energy[
+            [
+                "total passenger cars",
                 "total other road passenger",
                 "total light duty road freight",
                 "electricity road",
                 "electricity passenger cars",
                 "electricity other road passenger",
-                "electricity light duty road freight"]].loc[country, :].sum(axis=1)
+                "electricity light duty road freight",
+            ]
+        ]
+        .loc[country, :]
+        .sum(axis=1)
+    )
 
     return energy
 
