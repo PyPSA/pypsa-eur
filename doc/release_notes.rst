@@ -164,6 +164,8 @@ Upcoming Release
 
 * Fix duplicated years in `add_land_use_constraint_m`.
 
+* Fix index of existing capacities in `add_power_capacities_installed_before_baseyear` with `m` option.
+
 PyPSA-Eur 0.10.0 (19th February 2024)
 =====================================
 
