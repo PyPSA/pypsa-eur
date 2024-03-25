@@ -106,7 +106,7 @@ def get_run_path(fn, dir, rdir, shared_resources):
     elif isinstance(shared_resources, str):
         rdir = shared_resources + "/"
     elif isinstance(shared_resources, bool):
-        rdir = ""
+        rdir = "" if shared_resources else rdir
     else:
         raise ValueError(
             "shared_resources must be a boolean, str, or 'base' for special handling."
