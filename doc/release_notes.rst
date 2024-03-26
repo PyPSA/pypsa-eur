@@ -10,6 +10,13 @@ Release Notes
 Upcoming Release
 ================
 
+
+
+* fix bug in land transport for temperature correction of ICEs and fuel cell cars
+
+* restructure land transport, demand is now attached to one single node, the
+different car types (ICE, EV, fuel cell) are modelled as links
+
 * Allow the use of more solvers in clustering (Xpress, COPT, Gurobi, CPLEX, SCIP, MOSEK).
 
 * Enhanced support for choosing different weather years
