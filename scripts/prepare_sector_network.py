@@ -23,15 +23,13 @@ from _helpers import (
     update_config_from_wildcards,
 )
 from add_electricity import calculate_annuity, sanitize_carriers, sanitize_locations
-
-from build_transport_demand import transport_degree_factor
-
 from build_energy_totals import (
     build_co2_totals,
     build_eea_co2,
     build_eurostat,
     build_eurostat_co2,
 )
+from build_transport_demand import transport_degree_factor
 from networkx.algorithms import complement
 from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentation
 from prepare_network import maybe_adjust_costs_and_potentials
