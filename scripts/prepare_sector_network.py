@@ -19,6 +19,7 @@ import pypsa
 import xarray as xr
 from _helpers import (
     configure_logging,
+    generate_periodic_profiles,
     set_scenario_config,
     update_config_from_wildcards,
 )
@@ -261,6 +262,7 @@ def co2_emissions_year(
         eurostat_co2 = build_eurostat_co2(
             input_eurostat, countries, report_year, year=2014
         )
+
     else:
         eurostat_co2 = build_eurostat_co2(input_eurostat, countries, report_year, year)
 
@@ -1835,6 +1837,55 @@ def add_heat(n, costs):
             p_set=heat_load,
         )
 
+        if options["residential_heat_dsm"] and name in [
+            "residential rural",
+            "residential urban decentral",
+            "urban central",
+        ]:
+            if "rural" in name:
+                factor = 1 - urban_fraction[nodes]
+            elif "urban central" in name:
+                factor = dist_fraction[nodes]
+            elif "urban decentral" in name:
+                factor = urban_fraction[nodes] - dist_fraction[nodes]
+
+            heat_dsm_profile = pd.read_csv(
+                snakemake.input.heat_dsm_profile, header=[1], index_col=[0]
+            )[nodes]
+            heat_dsm_profile.index = n.snapshots
+
+            e_nom = (
+                heat_demand[["residential space"]]
+                .T.groupby(level=1)
+                .sum()
+                .T[nodes]
+                .multiply(factor)
+            ).max() * options["residential_heat_restriction_value"]
+
+            e_nom = (
+                heat_demand[["residential space"]]
+                .T.groupby(level=1)
+                .sum()
+                .T[nodes]
+                .multiply(factor)
+            ) * options["residential_heat_restriction_value"]
+
+            heat_dsm_profile = heat_dsm_profile * e_nom / e_nom.max()
+            e_nom = e_nom.max()
+
+            n.madd(
+                "Store",
+                nodes,
+                suffix=f" {name} heat flexibility",
+                bus=nodes + f" {name} heat",
+                carrier="residential heating flexibility",
+                e_cyclic=True,
+                e_nom=e_nom,
+                e_max_pu=heat_dsm_profile,
+            )
+
+            logger.info(f"adding heat dsm in {name} heating.")
+
         ## Add heat pumps
 
         heat_pump_types = ["air"] if "urban" in name else ["ground", "air"]
@@ -2147,6 +2198,73 @@ def add_heat(n, costs):
                     * options["retrofitting"]["cost_factor"],
                 )
 
+    if options["retrofitting"]["WWHR_endogen"]:
+        name = f"residential water"
+
+        # n.add("Carrier", name + " WWHRS")
+
+        WWHR_costs = pd.read_csv(snakemake.input.WWHR_cost, index_col=0)
+        heat_demand_shape = (
+            xr.open_dataset(snakemake.input.hourly_heat_demand_total)
+            .to_dataframe()
+            .unstack(level=1)
+        )
+
+        hotwaterprofile = (
+            heat_demand_shape[name] / heat_demand_shape[name].sum()
+        ).multiply(pop_weighted_energy_totals[f"total {name}"]) * 1e6
+
+        # 80% of hot water is used for showers
+        # 35% is the assumed reduction of demand due to WWHR technology
+        WWHR_profile = generate_periodic_profiles(
+            dt_index=pd.date_range(freq="h", **snakemake.params.snapshots, tz="UTC"),
+            nodes=hotwaterprofile.columns,
+            weekly_profile=0.8 * 0.35 * np.ones((24 * 7,)),
+        )
+
+        limit_WWHRS = get(options["reduce_hot_water_factor"], investment_year)
+        logger.info(
+            f"Assumed hot water heat reduction in up to {limit_WWHRS:.2%} of households"
+        )
+
+        heat_systems_residential_water = [
+            "residential rural",
+            "residential urban decentral",
+            "urban central",
+        ]
+
+        for name in n.loads[
+            n.loads.carrier.isin([x + " heat" for x in heat_systems_residential_water])
+        ].index:
+
+            node = n.buses.loc[name, "location"]
+            ct = pop_layout.loc[node, "ct"]
+
+            if "urban central" in name:
+                f = dist_fraction[node]
+            elif "urban decentral" in name:
+                f = urban_fraction[node] - dist_fraction[node]
+            else:
+                f = 1 - urban_fraction[node]
+
+            node_name = " ".join(name.split(" ")[2::])
+            n.madd(
+                "Generator",
+                [node],
+                suffix=" WWHRS " + node_name,
+                bus=name,
+                carrier="WWHRS",
+                p_nom_extendable=True,
+                p_nom_max=limit_WWHRS
+                * f
+                * hotwaterprofile[node].max(),  # maximum energy savings
+                p_max_pu=pd.DataFrame(WWHR_profile[node]),
+                p_min_pu=pd.DataFrame(WWHR_profile[node]),
+                country=ct,
+                # convert costs Euro -> Euro/MW
+                capital_cost=WWHR_costs.loc[node].max() / hotwaterprofile[node].max(),
+            )
+
 
 def add_biomass(n, costs):
     logger.info("Add biomass")
@@ -2182,11 +2300,11 @@ def add_biomass(n, costs):
                 index=lambda x: x + " solid biomass"
             )
             - e_set
-        ).clip(lower=0)
+        ).clip(0)
     else:
         solid_biomass_potentials_spatial = (
             biomass_potentials["solid biomass"].sum() - e_set
-        ).clip(lower=0)
+        ).clip(0)
 
     n.add("Carrier", "biogas")
     n.add("Carrier", "solid biomass")

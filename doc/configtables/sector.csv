@@ -56,8 +56,10 @@ time_dep_hp_cop,--,"{true, false}",Consider the time dependent coefficient of pe
 heat_pump_sink_T,°C,float,The temperature heat sink used in heat pumps based on DTU / large area radiators. The value is conservatively high to cover hot water and space heating in poorly-insulated buildings
 reduce_space_heat _exogenously,--,"{true, false}",Influence on space heating demand by a certain factor (applied before losses in district heating).
 reduce_space_heat _exogenously_factor,--,Dictionary with planning horizons as keys.,"A positive factor can mean renovation or demolition of a building. If the factor is negative, it can mean an increase in floor area, increased thermal comfort, population growth. The default factors are determined by the `Eurocalc Homes and buildings decarbonization scenario <http://tool.european-calculator.eu/app/buildings/building-types-area/?levers=1ddd4444421213bdbbbddd44444ffffff11f411111221111211l212221>`_"
+reduce_hot_water_factor,--,Dictionary with planning horizons as keys.,"Waste water heat recovery systems are extremely cost-competitive, and the model typically builds it in all households. Therefore we limit the number of housholds that invest in WWHR. The number given here is the assumed share of households that will invest in WWHRS by the selected investment year."
 retrofitting,,,
 -- retro_endogen,--,"{true, false}",Add retrofitting as an endogenous system which co-optimise space heat savings.
+-- WWHR_endogen,--,"{true, false}",Add waste water hear recovery (WWHR) systems as an endogenous system which co-optimise hot water savings.
 -- cost_factor,--,float,Weight costs for building renovation
 -- interest_rate,--,float,The interest rate for investment in building components
 -- annualise_cost,--,"{true, false}",Annualise the investment costs of retrofitting
