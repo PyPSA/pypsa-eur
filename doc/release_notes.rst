@@ -10,6 +10,8 @@ Release Notes
 Upcoming Release
 ================
 
+* bugfix: convert Strings to pathlib.Path objects as input to ConfigSettings
+
 * Allow the use of more solvers in clustering (Xpress, COPT, Gurobi, CPLEX, SCIP, MOSEK).
 
 * Enhanced support for choosing different weather years
