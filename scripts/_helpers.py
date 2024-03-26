@@ -393,7 +393,7 @@ def mock_snakemake(
             configfiles = [configfiles]
 
         resource_settings = ResourceSettings()
-        config_settings = ConfigSettings(configfiles=configfiles)
+        config_settings = ConfigSettings(configfiles=map(Path, configfiles))
         workflow_settings = WorkflowSettings()
         storage_settings = StorageSettings()
         dag_settings = DAGSettings(rerun_triggers=[])
