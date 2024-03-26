@@ -44,7 +44,7 @@ if __name__ == "__main__":
 
     cf = snakemake.params.sequestration_potential
 
-    gdf = gpd.read_file(snakemake.input.sequestration_potential[0])
+    gdf = gpd.read_file(snakemake.input.sequestration_potential)
 
     regions = gpd.read_file(snakemake.input.regions_offshore)
     if cf["include_onshore"]:

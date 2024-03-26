@@ -2,26 +2,18 @@
 #
 # SPDX-License-Identifier: MIT
 
-from os.path import normpath, exists
-from shutil import copyfile, move, rmtree
 from pathlib import Path
 import yaml
-
+from os.path import normpath, exists
+from shutil import copyfile, move, rmtree
 from snakemake.utils import min_version
 
 min_version("8.5")
 
-from scripts._helpers import path_provider
+from scripts._helpers import path_provider, copy_default_files, get_scenarios, get_rdir
 
-default_files = {
-    "config/config.default.yaml": "config/config.yaml",
-    "config/scenarios.template.yaml": "config/scenarios.yaml",
-}
-for template, target in default_files.items():
-    target = os.path.join(workflow.current_basedir, target)
-    template = os.path.join(workflow.current_basedir, template)
-    if not exists(target) and exists(template):
-        copyfile(template, target)
+
+copy_default_files(workflow)
 
 
 configfile: "config/config.default.yaml"
@@ -29,17 +21,8 @@ configfile: "config/config.yaml"
 
 
 run = config["run"]
-scenarios = run.get("scenarios", {})
-if run["name"] and scenarios.get("enable"):
-    fn = Path(scenarios["file"])
-    scenarios = yaml.safe_load(fn.read_text())
-    RDIR = "{run}/"
-    if run["name"] == "all":
-        config["run"]["name"] = list(scenarios.keys())
-elif run["name"]:
-    RDIR = run["name"] + "/"
-else:
-    RDIR = ""
+scenarios = get_scenarios(run)
+RDIR = get_rdir(run)
 
 logs = path_provider("logs/", RDIR, run["shared_resources"])
 benchmarks = path_provider("benchmarks/", RDIR, run["shared_resources"])
@@ -56,9 +39,9 @@ localrules:
 wildcard_constraints:
     simpl="[a-zA-Z0-9]*",
     clusters="[0-9]+(m|c)?|all",
-    ll="(v|c)([0-9\.]+|opt)",
-    opts="[-+a-zA-Z0-9\.]*",
-    sector_opts="[-+a-zA-Z0-9\.\s]*",
+    ll=r"(v|c)([0-9\.]+|opt)",
+    opts=r"[-+a-zA-Z0-9\.]*",
+    sector_opts=r"[-+a-zA-Z0-9\.\s]*",
 
 
 include: "rules/common.smk"
@@ -127,7 +110,7 @@ rule dag:
     conda:
         "envs/environment.yaml"
     shell:
-        """
+        r"""
         snakemake --rulegraph all | sed -n "/digraph/,\$p" > {output.dot}
         dot -Tpdf -o {output.pdf} {output.dot}
         dot -Tpng -o {output.png} {output.dot}

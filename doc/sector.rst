@@ -56,6 +56,11 @@ Rule ``build_energy_totals``
 
 .. automodule:: build_energy_totals
 
+Rule ``build_heat_totals``
+==============================================================================
+
+.. automodule:: build_heat_totals
+
 Rule ``build_gas_input_locations``
 ==============================================================================
 
@@ -170,11 +175,6 @@ Rule ``cluster_gas_network``
 ==============================================================================
 
 .. automodule:: cluster_gas_network
-
-Rule ``copy_config``
-==============================================================================
-
-.. automodule:: copy_config
 
 Rule ``prepare_sector_network``
 ==============================================================================

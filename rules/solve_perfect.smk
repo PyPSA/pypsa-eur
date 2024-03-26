@@ -107,10 +107,11 @@ rule solve_sector_network_perfect:
         network=RESULTS
         + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years.nc",
         costs=resources("costs_2030.csv"),
-        config=RESULTS + "config.yaml",
     output:
-        RESULTS
+        network=RESULTS
         + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years.nc",
+        config=RESULTS
+        + "configs/config.elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years.yaml",
     threads: solver_threads
     resources:
         mem_mb=config_provider("solving", "mem"),
