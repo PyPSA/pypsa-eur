@@ -23,7 +23,12 @@ from _helpers import (
     update_config_from_wildcards,
 )
 from add_electricity import calculate_annuity, sanitize_carriers, sanitize_locations
-from build_energy_totals import build_co2_totals, build_eea_co2, build_eurostat_co2
+from build_energy_totals import (
+    build_co2_totals,
+    build_eea_co2,
+    build_eurostat,
+    build_eurostat_co2,
+)
 from networkx.algorithms import complement
 from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentation
 from prepare_network import maybe_adjust_costs_and_potentials
@@ -260,12 +265,10 @@ def co2_emissions_year(
     """
     eea_co2 = build_eea_co2(input_co2, year, emissions_scope)
 
-    # TODO: read Eurostat data from year > 2014
+    eurostat = build_eurostat(input_eurostat, countries)
+
     # this only affects the estimation of CO2 emissions for BA, RS, AL, ME, MK
-    if year > 2014:
-        eurostat_co2 = build_eurostat_co2(input_eurostat, countries, 2014)
-    else:
-        eurostat_co2 = build_eurostat_co2(input_eurostat, countries, year)
+    eurostat_co2 = build_eurostat_co2(eurostat, year)
 
     co2_totals = build_co2_totals(countries, eea_co2, eurostat_co2)
 
@@ -817,6 +820,10 @@ def average_every_nhours(n, offset):
     m = n.copy(with_time=False)
 
     snapshot_weightings = n.snapshot_weightings.resample(offset).sum()
+    sns = snapshot_weightings.index
+    if snakemake.params.drop_leap_day:
+        sns = sns[~((sns.month == 2) & (sns.day == 29))]
+    snapshot_weightings = snapshot_weightings.loc[sns]
     m.set_snapshots(snapshot_weightings.index)
     m.snapshot_weightings = snapshot_weightings
 
@@ -3800,6 +3807,10 @@ if __name__ == "__main__":
     pop_weighted_energy_totals = (
         pd.read_csv(snakemake.input.pop_weighted_energy_totals, index_col=0) * nyears
     )
+    pop_weighted_heat_totals = (
+        pd.read_csv(snakemake.input.pop_weighted_heat_totals, index_col=0) * nyears
+    )
+    pop_weighted_energy_totals.update(pop_weighted_heat_totals)
 
     patch_electricity_network(n)
 

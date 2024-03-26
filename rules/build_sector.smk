@@ -133,16 +133,27 @@ rule cluster_gas_network:
         "../scripts/cluster_gas_network.py"
 
 
+def heat_demand_cutout(wildcards):
+    c = config_provider("sector", "heat_demand_cutout")(wildcards)
+    if c == "default":
+        return (
+            "cutouts/"
+            + CDIR
+            + config_provider("atlite", "default_cutout")(wildcards)
+            + ".nc"
+        )
+    else:
+        return "cutouts/" + CDIR + c + ".nc"
+
+
 rule build_daily_heat_demand:
     params:
         snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
         pop_layout=resources("pop_layout_{scope}.nc"),
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
-        cutout=lambda w: "cutouts/"
-        + CDIR
-        + config_provider("atlite", "default_cutout")(w)
-        + ".nc",
+        cutout=heat_demand_cutout,
     output:
         heat_demand=resources("daily_heat_demand_{scope}_elec_s{simpl}_{clusters}.nc"),
     resources:
@@ -161,6 +172,7 @@ rule build_daily_heat_demand:
 rule build_hourly_heat_demand:
     params:
         snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
         heat_profile="data/heat_load_profile_BDEW.csv",
         heat_demand=resources("daily_heat_demand_{scope}_elec_s{simpl}_{clusters}.nc"),
@@ -182,13 +194,11 @@ rule build_hourly_heat_demand:
 rule build_temperature_profiles:
     params:
         snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
         pop_layout=resources("pop_layout_{scope}.nc"),
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
-        cutout=lambda w: "cutouts/"
-        + CDIR
-        + config_provider("atlite", "default_cutout")(w)
-        + ".nc",
+        cutout=heat_demand_cutout,
     output:
         temp_soil=resources("temp_soil_{scope}_elec_s{simpl}_{clusters}.nc"),
         temp_air=resources("temp_air_{scope}_elec_s{simpl}_{clusters}.nc"),
@@ -234,17 +244,28 @@ rule build_cop_profiles:
         "../scripts/build_cop_profiles.py"
 
 
+def solar_thermal_cutout(wildcards):
+    c = config_provider("solar_thermal", "cutout")(wildcards)
+    if c == "default":
+        return (
+            "cutouts/"
+            + CDIR
+            + config_provider("atlite", "default_cutout")(wildcards)
+            + ".nc"
+        )
+    else:
+        return "cutouts/" + CDIR + c + ".nc"
+
+
 rule build_solar_thermal_profiles:
     params:
         snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
         solar_thermal=config_provider("solar_thermal"),
     input:
         pop_layout=resources("pop_layout_{scope}.nc"),
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
-        cutout=lambda w: "cutouts/"
-        + CDIR
-        + config_provider("atlite", "default_cutout")(w)
-        + ".nc",
+        cutout=solar_thermal_cutout,
     output:
         solar_thermal=resources("solar_thermal_{scope}_elec_s{simpl}_{clusters}.nc"),
     resources:
@@ -268,6 +289,7 @@ rule build_energy_totals:
         nuts3_shapes=resources("nuts3_shapes.geojson"),
         co2="data/bundle-sector/eea/UNFCCC_v23.csv",
         swiss="data/switzerland-new_format-all_years.csv",
+        swiss_transport="data/gr-e-11.03.02.01.01-cc.csv",
         idees="data/bundle-sector/jrc-idees-2015",
         district_heat_share="data/district_heat_share.csv",
         eurostat="data/eurostat/eurostat-energy_balances-april_2023_edition",
@@ -287,6 +309,25 @@ rule build_energy_totals:
         "../envs/environment.yaml"
     script:
         "../scripts/build_energy_totals.py"
+
+
+rule build_heat_totals:
+    input:
+        hdd="data/era5-annual-HDD-per-country.csv",
+        energy_totals=resources("energy_totals.csv"),
+    output:
+        heat_totals=resources("heat_totals.csv"),
+    threads: 1
+    resources:
+        mem_mb=2000,
+    log:
+        logs("build_heat_totals.log"),
+    benchmark:
+        benchmarks("build_heat_totals")
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_heat_totals.py"
 
 
 rule build_biomass_potentials:
@@ -688,16 +729,18 @@ rule build_retro_cost:
 
 
 rule build_population_weighted_energy_totals:
+    params:
+        snapshots=config_provider("snapshots"),
     input:
-        energy_totals=resources("energy_totals.csv"),
+        energy_totals=resources("{kind}_totals.csv"),
         clustered_pop_layout=resources("pop_layout_elec_s{simpl}_{clusters}.csv"),
     output:
-        resources("pop_weighted_energy_totals_s{simpl}_{clusters}.csv"),
+        resources("pop_weighted_{kind}_totals_s{simpl}_{clusters}.csv"),
     threads: 1
     resources:
         mem_mb=2000,
     log:
-        logs("build_population_weighted_energy_totals_s{simpl}_{clusters}.log"),
+        logs("build_population_weighted_{kind}_totals_s{simpl}_{clusters}.log"),
     conda:
         "../envs/environment.yaml"
     script:
@@ -710,6 +753,8 @@ rule build_shipping_demand:
         scope=resources("europe_shape.geojson"),
         regions=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
         demand=resources("energy_totals.csv"),
+    params:
+        energy_totals_year=config_provider("energy", "energy_totals_year"),
     output:
         resources("shipping_demand_s{simpl}_{clusters}.csv"),
     threads: 1
@@ -726,7 +771,9 @@ rule build_shipping_demand:
 rule build_transport_demand:
     params:
         snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
         sector=config_provider("sector"),
+        energy_totals_year=config_provider("energy", "energy_totals_year"),
     input:
         clustered_pop_layout=resources("pop_layout_elec_s{simpl}_{clusters}.csv"),
         pop_weighted_energy_totals=resources(
@@ -755,6 +802,7 @@ rule build_transport_demand:
 rule build_district_heat_share:
     params:
         sector=config_provider("sector"),
+        energy_totals_year=config_provider("energy", "energy_totals_year"),
     input:
         district_heat_share=resources("district_heat_share.csv"),
         clustered_pop_layout=resources("pop_layout_elec_s{simpl}_{clusters}.csv"),
@@ -847,6 +895,7 @@ rule build_egs_potentials:
 rule prepare_sector_network:
     params:
         time_resolution=config_provider("clustering", "temporal", "resolution_sector"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
         co2_budget=config_provider("co2_budget"),
         conventional_carriers=config_provider(
             "existing_capacities", "conventional_carriers"
@@ -891,10 +940,12 @@ rule prepare_sector_network:
             else []
         ),
         network=resources("networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"),
-        energy_totals_name=resources("energy_totals.csv"),
         eurostat="data/eurostat/eurostat-energy_balances-april_2023_edition",
         pop_weighted_energy_totals=resources(
             "pop_weighted_energy_totals_s{simpl}_{clusters}.csv"
+        ),
+        pop_weighted_heat_totals=resources(
+            "pop_weighted_heat_totals_s{simpl}_{clusters}.csv"
         ),
         shipping_demand=resources("shipping_demand_s{simpl}_{clusters}.csv"),
         transport_demand=resources("transport_demand_s{simpl}_{clusters}.csv"),

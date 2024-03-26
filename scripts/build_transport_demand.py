@@ -13,13 +13,19 @@ import logging
 import numpy as np
 import pandas as pd
 import xarray as xr
-from _helpers import configure_logging, generate_periodic_profiles, set_scenario_config
+from _helpers import (
+    configure_logging,
+    generate_periodic_profiles,
+    get_snapshots,
+    set_scenario_config,
+)
 
 logger = logging.getLogger(__name__)
 
 
-def build_nodal_transport_data(fn, pop_layout):
-    transport_data = pd.read_csv(fn, index_col=0)
+def build_nodal_transport_data(fn, pop_layout, year):
+    transport_data = pd.read_csv(fn, index_col=[0, 1])
+    transport_data = transport_data.xs(min(2015, year), level="year")
 
     nodal_transport_data = transport_data.loc[pop_layout.ct].fillna(0.0)
     nodal_transport_data.index = pop_layout.index
@@ -168,7 +174,7 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "build_transport_demand",
             simpl="",
-            clusters=48,
+            clusters=60,
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
@@ -183,12 +189,15 @@ if __name__ == "__main__":
 
     options = snakemake.params.sector
 
-    snapshots = pd.date_range(freq="h", **snakemake.params.snapshots, tz="UTC")
+    snapshots = get_snapshots(
+        snakemake.params.snapshots, snakemake.params.drop_leap_day, tz="UTC"
+    )
 
     nyears = len(snapshots) / 8760
 
+    energy_totals_year = snakemake.params.energy_totals_year
     nodal_transport_data = build_nodal_transport_data(
-        snakemake.input.transport_data, pop_layout
+        snakemake.input.transport_data, pop_layout, energy_totals_year
     )
 
     transport_demand = build_transport_demand(
