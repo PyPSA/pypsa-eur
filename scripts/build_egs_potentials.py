@@ -30,6 +30,9 @@ from shapely.geometry import Polygon
 
 
 def prepare_egs_data(egs_file):
+    """
+    Processes the original .json file EGS data to a more human-readable format.
+    """
     with open(egs_file) as f:
         jsondata = json.load(f)
 
@@ -84,6 +87,65 @@ def prepare_egs_data(egs_file):
         egs_data[year] = gdf
 
     return egs_data
+
+
+def prepare_capex(prepared_data):
+    """
+    The source paper provides only data for year and regions where LCOE <
+    100Euro/MWh. However, this implementations starts with the costs for 2020
+    for all regions and then adjusts the costs according to the user's chosen
+    setting in the config file.
+
+    As such, for regions where cost data is available only from, say,
+    2035, we need to reverse-engineer the costs for 2020. This is done
+    in the following (unfortunately verbose) function.
+    """
+
+    default_year = 2020
+
+    # obtains all available CAPEX data
+    capex_df = pd.DataFrame(columns=prepared_data.keys())
+
+    for year in capex_df.columns:
+
+        year_data = prepared_data[year].groupby("geometry").mean().reset_index()
+
+        for g in year_data.geometry:
+
+            if not g in year_data.geometry.tolist():
+                # weird but apparently necessary
+                continue
+
+            capex_df.loc[g, year] = year_data.loc[
+                year_data.geometry == g, "CAPEX"
+            ].values[0]
+
+    capex_df = capex_df.loc[:, default_year:]
+
+    # fill up missing values assuming cost reduction factors similar to existing values
+    for sooner, later in zip(capex_df.columns[::-1][1:], capex_df.columns[::-1]):
+
+        missing_mask = capex_df[sooner].isna()
+        cr_factor = (
+            capex_df.loc[~missing_mask, later] / capex_df.loc[~missing_mask, sooner]
+        )
+
+        capex_df.loc[missing_mask, sooner] = (
+            capex_df.loc[missing_mask, later] / cr_factor.mean()
+        )
+
+    # harmonice capacity and CAPEX
+    p_nom_max = prepared_data[2050].groupby("geometry")["PowerSust"].mean()
+    p_nom_max = p_nom_max.loc[p_nom_max > 0]
+
+    capex_df = capex_df.loc[p_nom_max.index]
+
+    data = (
+        pd.concat((capex_df[default_year], p_nom_max), axis=1)
+        .reset_index()
+        .rename(columns={2020: "CAPEX"})
+    )
+    return gpd.GeoDataFrame(data, geometry=data.geometry)
 
 
 def get_capacity_factors(network_regions_file, air_temperatures_file):
@@ -146,28 +208,9 @@ if __name__ == "__main__":
     egs_config = snakemake.params["sector"]["enhanced_geothermal"]
     costs_config = snakemake.params["costs"]
 
-    sustainability_factor = egs_config["sustainability_factor"]
-    # the share of heat that is replenished from the earth's core.
-    # we are not constraining ourselves to the sustainable share, but
-    # inversely apply it to our underlying data, which refers to the
-    # sustainable heat. Source: Relative magnitude of sustainable heat vs
-    # nonsustainable heat in the paper "From hot rock to useful energy..."
-
     egs_data = prepare_egs_data(snakemake.input.egs_cost)
+    egs_data = prepare_capex(egs_data)
 
-    if egs_config["optimism"]:
-        egs_data = egs_data[(year := costs_config["year"])]
-        logger.info(
-            f"EGS optimism! Building EGS potentials with costs estimated for {year}."
-        )
-
-    else:
-        egs_data = egs_data[(default_year := 2020)]
-        logger.info(
-            f"No EGS optimism! Building EGS potentials with {default_year} costs."
-        )
-
-    egs_data = egs_data.loc[egs_data["PowerSust"] > 0].reset_index(drop=True)
     egs_regions = egs_data.geometry
 
     network_regions = (
@@ -188,7 +231,12 @@ if __name__ == "__main__":
 
     overlap_matrix.to_csv(snakemake.output["egs_overlap"])
 
-    # consider not only replenished heat
+    # the share of heat that is replenished from the earth's core.
+    # we are not constraining ourselves to the sustainable share, but
+    # inversely apply it to our underlying data, which refers to the
+    # sustainable heat. Source: Relative magnitude of sustainable heat vs
+    # nonsustainable heat in the paper "From hot rock to useful energy..."
+    sustainability_factor = egs_config["sustainability_factor"]
     egs_data["p_nom_max"] = egs_data["PowerSust"] / sustainability_factor
 
     egs_data[["p_nom_max", "CAPEX"]].to_csv(snakemake.output["egs_potentials"])

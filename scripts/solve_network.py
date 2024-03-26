@@ -801,7 +801,7 @@ def add_geothermal_chp_constraint(n):
     elec_index = n.links.loc[
         n.links.carrier == "geothermal organic rankine cycle"
     ].index
-    heat_index = n.links.loc[n.links.carrier == "geothermal heat district heat"].index
+    heat_index = n.links.loc[n.links.carrier == "geothermal district heat"].index
 
     p_nom_lhs = (
         n.model["Link-p_nom"].loc[heat_index] - n.model["Link-p_nom"].loc[elec_index]
@@ -824,7 +824,7 @@ def add_flexible_egs_constraint(n):
 
     n.model.add_constraints(
         p_nom_lhs <= p_nom_rhs,
-        name="Upper bounds the charging capacity of the storage unit",
+        name="Upper bounds the charging capacity of the geothermal reservoir according to the well capacity",
     )
 
 
@@ -953,28 +953,6 @@ def solve_network(n, config, solving, **kwargs):
         logger.info(f"Labels:\n{labels}")
         n.model.print_infeasibilities()
         raise RuntimeError("Solving status 'infeasible'")
-
-    # check if enhanced_geothermal_performant might have changed model results
-    if (
-        snakemake.config["sector"]["enhanced_geothermal"]
-        and snakemake.config["sector"]["enhanced_geothermal_performant"]
-    ):
-        mask = (mask := n.links.carrier == "geothermal heat") & (
-            n.links.loc[mask, "p_nom_max"] > 0.0
-        )
-
-        saturated = n.links.loc[mask, "p_nom_max"] == n.links.loc[mask, "p_nom_opt"]
-
-        if saturated.any():
-            logger.warning(
-                (
-                    "Potential for enhanced geothermal heat is saturated at bus(es):\n"
-                    f"{', '.join(n.links.loc[saturated.loc[saturated.astype(bool)].index, 'location'].tolist())}.\n"
-                    "Consider setting config['sector']['enhanced_geothermal_performant'] to False."
-                )
-            )
-
-    return n
 
 
 if __name__ == "__main__":
