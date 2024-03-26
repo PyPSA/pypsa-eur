@@ -797,23 +797,11 @@ def add_pipe_retrofit_constraint(n):
     n.model.add_constraints(lhs == rhs, name="Link-pipe_retrofit")
 
 
-def add_geothermal_chp_constraint(n):
-    elec_index = n.links.loc[
-        n.links.carrier == "geothermal organic rankine cycle"
-    ].index
-    heat_index = n.links.loc[n.links.carrier == "geothermal district heat"].index
-
-    p_nom_lhs = (
-        n.model["Link-p_nom"].loc[heat_index] - n.model["Link-p_nom"].loc[elec_index]
-    )
-
-    n.model.add_constraints(
-        p_nom_lhs == 0,
-        name="equalizes_p_nom_of_chp_elec_and_chp_district_heat",
-    )
-
-
 def add_flexible_egs_constraint(n):
+    """
+    Upper bounds the charging capacity of the geothermal reservoir according to
+    the well capacity.
+    """
     well_index = n.links.loc[n.links.carrier == "geothermal heat"].index
     storage_index = n.storage_units.loc[
         n.storage_units.carrier == "geothermal heat"
@@ -824,7 +812,7 @@ def add_flexible_egs_constraint(n):
 
     n.model.add_constraints(
         p_nom_lhs <= p_nom_rhs,
-        name="Upper bounds the charging capacity of the geothermal reservoir according to the well capacity",
+        name="upper_bound_charging_capacity_of_geothermal_reservoir",
     )
 
 
@@ -883,12 +871,11 @@ def extra_functionality(n, snapshots):
         add_carbon_constraint(n, snapshots)
         add_carbon_budget_constraint(n, snapshots)
         add_retrofit_gas_boiler_constraint(n, snapshots)
-    if "geothermal district heat" in n.links.carrier:
-        add_geothermal_chp_constraint(n)
-    if config["sector"]["enhanced_geothermal_flexible"]:
-        add_flexible_egs_constraint(n)
     else:
         add_co2_atmosphere_constraint(n, snapshots)
+
+    if config["sector"]["enhanced_geothermal_flexible"]:
+        add_flexible_egs_constraint(n)
 
     if snakemake.params.custom_extra_functionality:
         source_path = snakemake.params.custom_extra_functionality

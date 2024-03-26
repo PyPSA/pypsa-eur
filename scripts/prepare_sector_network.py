@@ -3607,7 +3607,7 @@ def add_enhanced_geothermal(
 
     egs_potentials["capital_cost"] = (
         (egs_annuity + FOM / (1.0 + FOM))
-        * (egs_potentials["CAPEX"] * 1000.0 - orc_capex)
+        * (egs_potentials["CAPEX"] * 1e3 - orc_capex)
         * Nyears
     )
 
