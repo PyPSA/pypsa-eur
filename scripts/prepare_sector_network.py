@@ -1744,16 +1744,19 @@ def adjust_endogenous_transport(n):
     # EV --------------------------
     # average consumption EV 18 kWh/100 km
     # annual demand per car 18 kWh/100km * 150 100km/a = 2.7 MWh/a
-    cost_EV = costs.loc["Battery electric (passenger cars)", "fixed"] / 2.7
+    car_efficiency = costs.at["Battery electric (passenger cars)", "efficiency"]
+    cost_EV = costs.loc["Battery electric (passenger cars)", "fixed"] / 2.7 / car_efficiency
     # FCE ----------------------------
     # average consumption 0.7-1 kg_H2/100km assume 0.85-> 0.85*33.33 kWh_H2/100 km
     # annual demand per car 33.33 kWh/100km * 150 100km/a = 4.25 MWh/a
-    cost_FCE = costs.loc["Hydrogen fuel cell (passenger cars)", "fixed"] / 4.25
+    car_efficiency = options["transport_fuel_cell_efficiency"]
+    cost_FCE = costs.loc["Hydrogen fuel cell (passenger cars)", "fixed"] / 4.25 / car_efficiency
     # ICE ---------------------------------------------------------
     # average consumption 6.5liter/100km
     # energy content gasoline 9.7 kWh/liter
     # annual demand per car 6.5 * 9.7 kWh/100km * 150 100km/a = 9.46
-    cost_ICE = costs.at["Liquid fuels ICE (passenger cars)", "fixed"] / 9.46
+    car_efficiency = options["transport_internal_combustion_efficiency"]
+    cost_ICE = costs.at["Liquid fuels ICE (passenger cars)", "fixed"] / 9.46 / car_efficiency
     # cost in unit input depending on car type
     costs_car_type = {
         "land transport EV": cost_EV,
