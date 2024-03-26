@@ -43,10 +43,11 @@ def get_scenarios(run):
     scenario_config = run.get("scenarios", {})
     if run["name"] and scenario_config.get("enable"):
         fn = Path(scenario_config["file"])
-        scenarios = yaml.safe_load(fn.read_text())
-        if run["name"] == "all":
-            run["name"] = list(scenarios.keys())
-        return scenarios
+        if fn.exists():
+            scenarios = yaml.safe_load(fn.read_text())
+            if run["name"] == "all":
+                run["name"] = list(scenarios.keys())
+            return scenarios
     return {}
 
 
