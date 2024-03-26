@@ -951,7 +951,7 @@ def rescale_idees_from_eurostat(
         ],
     ].sum(axis=1)
 
-    energy.loc[country, :]["total road"] = (
+    energy.loc[country, "total road"] = (
         energy[
             [
                 "total passenger cars",
