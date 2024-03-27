@@ -1643,7 +1643,29 @@ def add_EVs(
             lifetime=1,
         )
 
-
+def add_electrobiofuels(n, nodes):
+    
+    print('Adding electrobiofuels')
+    efuel_scale_factor = costs.at['BtL', 'C stored']
+    n.madd("Link",
+           nodes + " electrobiofuels",
+           bus0=spatial.biomass.nodes,
+           bus1=spatial.oil.nodes,
+           bus2=spatial.h2.nodes,
+           bus3="co2 atmosphere",
+           carrier="electrobiofuels",
+           lifetime=costs.at['electrobiofuels', 'lifetime'],
+           efficiency=costs.at['electrobiofuels', 'efficiency-biomass'],
+           efficiency2=-costs.at['electrobiofuels', 'efficiency-hydrogen'],
+           efficiency3=-costs.at['solid biomass', 'CO2 intensity'] + costs.at['BtL', 'CO2 stored'] * (1 - costs.at['Fischer-Tropsch', 'capture rate']),
+           p_nom_extendable=True,
+           capital_cost=costs.at['BtL', 'fixed'] * costs.at['electrobiofuels', 'efficiency-biomass'] \
+                        + efuel_scale_factor * costs.at['Fischer-Tropsch', 'fixed'] * costs.at['electrobiofuels', 'efficiency-hydrogen'],
+           marginal_cost=costs.at['BtL', 'VOM'] * costs.at['electrobiofuels', 'efficiency-biomass'] \
+                         + efuel_scale_factor * costs.at['Fischer-Tropsch', 'VOM'] * costs.at['electrobiofuels', 'efficiency-hydrogen']
+           )
+        
+        
 def add_fuel_cell_cars(n, nodes, p_set, fuel_cell_share, temperature):
 
     car_efficiency = options["transport_fuel_cell_efficiency"]
@@ -1777,18 +1799,18 @@ def adjust_endogenous_transport(n):
         p_nom=1e5,
     )
 
-    n.madd(
-        "Generator",
-        buses_i,
-        " load",
-        bus=buses_i,
-        carrier="load",
-        marginal_cost=1e9,
-        p_nom=1e5,
-        p_max_pu=0,
-        p_min_pu=-1,
-        sign=-1,
-    )
+    # n.madd(
+    #     "Generator",
+    #     buses_i,
+    #     " load negative",
+    #     bus=buses_i,
+    #     carrier="load",
+    #     marginal_cost=1e9,
+    #     p_nom=1e5,
+    #     p_max_pu=0,
+    #     p_min_pu=-1,
+    #     sign=-1,
+    # )
 
     for car_type, cost in costs_car_type.items():
         car_i = n.links[n.links.carrier == car_type].index
@@ -1873,6 +1895,9 @@ def add_land_transport(n, costs):
 
     if endogenous:
         adjust_endogenous_transport(n)
+        
+    if options['electrobiofuels']:
+        add_electrobiofuels(n, nodes)
 
 
 def build_heat_demand(n):

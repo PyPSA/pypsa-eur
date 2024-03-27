@@ -383,6 +383,7 @@ sector:
     district_heating_loss: 0.15
   cluster_heat_buses: true
   endogenous_transport: true
+  electrobiofuels: true
   bev_dsm_restriction_value: 0.75
   bev_dsm_restriction_time: 7
   transport_heating_deadband_upper: 20.
@@ -914,6 +915,7 @@ plotting:
     gas pipeline: '#ebbca0'
     gas pipeline new: '#a87c62'
     # oil
+    electrobiofuels: '#a1b5ae'
     oil: '#c9c9c9'
     imported oil: '#a3a3a3'
     oil boiler: '#adadad'
