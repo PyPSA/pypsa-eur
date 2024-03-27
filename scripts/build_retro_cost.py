@@ -156,7 +156,7 @@ def prepare_building_stock_data():
     )
 
     # standardize data
-    building_data["type"].replace(
+    building_data["type"] = building_data["type"].replace(
         {
             "Covered area: heated  [Mm²]": "Heated area [Mm²]",
             "Windows ": "Window",
@@ -166,22 +166,19 @@ def prepare_building_stock_data():
             "Roof ": "Roof",
             "Floor ": "Floor",
         },
-        inplace=True,
     )
-    building_data["feature"].replace(
+    building_data["feature"] = building_data["feature"].replace(
         {
             "Construction features (U-value)": "Construction features (U-values)",
         },
-        inplace=True,
     )
 
     building_data.country_code = building_data.country_code.str.upper()
-    building_data["subsector"].replace(
-        {"Hotels and Restaurants": "Hotels and restaurants"}, inplace=True
+    building_data["subsector"] = building_data["subsector"].replace(
+        {"Hotels and Restaurants": "Hotels and restaurants"},
     )
-    building_data["sector"].replace(
+    building_data["sector"] = building_data["sector"].replace(
         {"Residential sector": "residential", "Service sector": "services"},
-        inplace=True,
     )
 
     # extract u-values
@@ -275,8 +272,8 @@ def prepare_building_stock_data():
         errors="ignore",
     )
 
-    u_values["subsector"] = u_values.subsector.replace(rename_sectors)
-    u_values["btype"] = u_values.btype.replace(rename_sectors)
+    u_values["subsector"] = u_values["subsector"].replace(rename_sectors)
+    u_values["btype"] = u_values["btype"].replace(rename_sectors)
 
     # for missing weighting of surfaces of building types assume MFH
     u_values["assumed_subsector"] = u_values.subsector
@@ -284,8 +281,8 @@ def prepare_building_stock_data():
         ~u_values.subsector.isin(rename_sectors.values()), "assumed_subsector"
     ] = "MFH"
 
-    u_values["country_code"] = u_values.country_code.replace({"UK": "GB"})
-    u_values["bage"] = u_values.bage.replace({"Berfore 1945": "Before 1945"})
+    u_values["country_code"] = u_values["country_code"].replace({"UK": "GB"})
+    u_values["bage"] = u_values["bage"].replace({"Berfore 1945": "Before 1945"})
     u_values = u_values[~u_values.bage.isna()]
 
     u_values.set_index(["country_code", "subsector", "bage", "type"], inplace=True)
