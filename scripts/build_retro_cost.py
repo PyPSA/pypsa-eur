@@ -232,7 +232,9 @@ def prepare_building_stock_data():
         usecols=[0, 1, 2, 3],
         encoding="ISO-8859-1",
     )
-    area_tot = pd.concat([area_tot, area_missing.unstack(level=-1).dropna().stack()])
+    area_tot = pd.concat(
+        [area_tot, area_missing.unstack(level=-1).dropna().stack(future_stack=True)]
+    )
     area_tot = area_tot.loc[~area_tot.index.duplicated(keep="last")]
 
     # for still missing countries calculate floor area by population size
@@ -697,7 +699,7 @@ def map_to_lstrength(l_strength, df):
         [middle * [2] + len(l_strength[middle:]) * [3], l_strength]
     )
     l_strength_df = (
-        df.stack(-2)
+        df.stack(-2, future_stack=True)
         .reindex(map_to_l, axis=1, level=0)
         .droplevel(0, axis=1)
         .unstack()
@@ -738,9 +740,9 @@ def calculate_heat_losses(u_values, data_tabula, l_strength, temperature_factor)
     area_element = (
         data_tabula[[f"A_{e}" for e in u_values.index.levels[3]]]
         .rename(columns=lambda x: x[2:])
-        .stack()
+        .stack(future_stack=True)
         .unstack(-2)
-        .stack()
+        .stack(future_stack=True)
     )
     u_values["A_element"] = map_tabula_to_hotmaps(
         area_element, u_values, "A_element"
@@ -986,12 +988,12 @@ def sample_dE_costs_area(
         .sum()
         .set_index(pd.MultiIndex.from_product([cost_dE.index.unique(level=0), ["tot"]]))
     )
-    cost_dE = pd.concat([cost_dE, tot]).unstack().stack()
+    cost_dE = pd.concat([cost_dE, tot]).unstack().stack(future_stack=True)
 
     summed_area = pd.DataFrame(area_tot.groupby(level=0).sum()).set_index(
         pd.MultiIndex.from_product([area_tot.index.unique(level=0), ["tot"]])
     )
-    area_tot = pd.concat([area_tot, summed_area]).unstack().stack()
+    area_tot = pd.concat([area_tot, summed_area]).unstack().stack(future_stack=True)
 
     cost_per_saving = cost_dE["cost"] / (
         1 - cost_dE["dE"]
