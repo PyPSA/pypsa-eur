@@ -150,10 +150,13 @@ def prepare_building_stock_data():
                        type and period
 
     """
-    building_data = pd.read_csv(snakemake.input.building_stock, usecols=list(range(13)))
+    # building_data = pd.read_csv(snakemake.input.building_stock, usecols=list(range(13)))
+    building_data = pd.read_csv(
+        snakemake.input.building_stock, sep="|", usecols=list(range(13))
+    )
 
     # standardize data
-    building_data["type"].replace(
+    building_data["type"] = building_data["type"].replace(
         {
             "Covered area: heated  [Mm²]": "Heated area [Mm²]",
             "Windows ": "Window",
@@ -163,22 +166,19 @@ def prepare_building_stock_data():
             "Roof ": "Roof",
             "Floor ": "Floor",
         },
-        inplace=True,
     )
-    building_data["feature"].replace(
+    building_data["feature"] = building_data["feature"].replace(
         {
             "Construction features (U-value)": "Construction features (U-values)",
         },
-        inplace=True,
     )
 
     building_data.country_code = building_data.country_code.str.upper()
-    building_data["subsector"].replace(
-        {"Hotels and Restaurants": "Hotels and restaurants"}, inplace=True
+    building_data["subsector"] = building_data["subsector"].replace(
+        {"Hotels and Restaurants": "Hotels and restaurants"},
     )
-    building_data["sector"].replace(
+    building_data["sector"] = building_data["sector"].replace(
         {"Residential sector": "residential", "Service sector": "services"},
-        inplace=True,
     )
 
     # extract u-values
@@ -232,7 +232,9 @@ def prepare_building_stock_data():
         usecols=[0, 1, 2, 3],
         encoding="ISO-8859-1",
     )
-    area_tot = pd.concat([area_tot, area_missing.unstack(level=-1).dropna().stack()])
+    area_tot = pd.concat(
+        [area_tot, area_missing.unstack(level=-1).dropna().stack(future_stack=True)]
+    )
     area_tot = area_tot.loc[~area_tot.index.duplicated(keep="last")]
 
     # for still missing countries calculate floor area by population size
@@ -259,32 +261,6 @@ def prepare_building_stock_data():
         else:
             area_tot.loc[averaged_data.index] = averaged_data
 
-    # u_values for Poland are missing -> take them from eurostat -----------
-    u_values_PL = pd.read_csv(snakemake.input.u_values_PL)
-    u_values_PL.component.replace({"Walls": "Wall", "Windows": "Window"}, inplace=True)
-    area_PL = area.loc["Poland"].reset_index()
-    data_PL = pd.DataFrame(columns=u_values.columns, index=area_PL.index)
-    data_PL["country"] = "Poland"
-    data_PL["country_code"] = "PL"
-    # data from area
-    for col in ["sector", "subsector", "bage"]:
-        data_PL[col] = area_PL[col]
-    data_PL["btype"] = area_PL["subsector"]
-
-    data_PL_final = pd.DataFrame()
-    for component in components:
-        data_PL["type"] = component
-        data_PL["value"] = data_PL.apply(
-            lambda x: u_values_PL[
-                (u_values_PL.component == component)
-                & (u_values_PL.sector == x["sector"])
-            ][x["bage"]].iloc[0],
-            axis=1,
-        )
-        data_PL_final = pd.concat([data_PL_final, data_PL])
-
-    u_values = pd.concat([u_values, data_PL_final]).reset_index(drop=True)
-
     # clean data ---------------------------------------------------------------
     # smallest possible today u values for windows 0.8 (passive house standard)
     # maybe the u values for the glass and not the whole window including frame
@@ -298,8 +274,8 @@ def prepare_building_stock_data():
         errors="ignore",
     )
 
-    u_values["subsector"] = u_values.subsector.replace(rename_sectors)
-    u_values["btype"] = u_values.btype.replace(rename_sectors)
+    u_values["subsector"] = u_values["subsector"].replace(rename_sectors)
+    u_values["btype"] = u_values["btype"].replace(rename_sectors)
 
     # for missing weighting of surfaces of building types assume MFH
     u_values["assumed_subsector"] = u_values.subsector
@@ -307,8 +283,8 @@ def prepare_building_stock_data():
         ~u_values.subsector.isin(rename_sectors.values()), "assumed_subsector"
     ] = "MFH"
 
-    u_values["country_code"] = u_values.country_code.replace({"UK": "GB"})
-    u_values["bage"] = u_values.bage.replace({"Berfore 1945": "Before 1945"})
+    u_values["country_code"] = u_values["country_code"].replace({"UK": "GB"})
+    u_values["bage"] = u_values["bage"].replace({"Berfore 1945": "Before 1945"})
     u_values = u_values[~u_values.bage.isna()]
 
     u_values.set_index(["country_code", "subsector", "bage", "type"], inplace=True)
@@ -723,7 +699,7 @@ def map_to_lstrength(l_strength, df):
         [middle * [2] + len(l_strength[middle:]) * [3], l_strength]
     )
     l_strength_df = (
-        df.stack(-2)
+        df.stack(-2, future_stack=True)
         .reindex(map_to_l, axis=1, level=0)
         .droplevel(0, axis=1)
         .unstack()
@@ -764,9 +740,9 @@ def calculate_heat_losses(u_values, data_tabula, l_strength, temperature_factor)
     area_element = (
         data_tabula[[f"A_{e}" for e in u_values.index.levels[3]]]
         .rename(columns=lambda x: x[2:])
-        .stack()
+        .stack(future_stack=True)
         .unstack(-2)
-        .stack()
+        .stack(future_stack=True)
     )
     u_values["A_element"] = map_tabula_to_hotmaps(
         area_element, u_values, "A_element"
@@ -890,7 +866,7 @@ def calculate_gain_utilisation_factor(heat_transfer_perm2, Q_ht, Q_gain):
     Calculates gain utilisation factor nu.
     """
     # time constant of the building tau [h] = c_m [Wh/(m^2K)] * 1 /(H_tr_e+H_tb*H_ve) [m^2 K /W]
-    tau = c_m / heat_transfer_perm2.T.groupby(axis=1).sum().T
+    tau = c_m / heat_transfer_perm2.T.groupby(level=1).sum().T
     alpha = alpha_H_0 + (tau / tau_H_0)
     # heat balance ratio
     gamma = (1 / Q_ht).mul(Q_gain.sum(axis=1), axis=0)
@@ -1012,12 +988,12 @@ def sample_dE_costs_area(
         .sum()
         .set_index(pd.MultiIndex.from_product([cost_dE.index.unique(level=0), ["tot"]]))
     )
-    cost_dE = pd.concat([cost_dE, tot]).unstack().stack()
+    cost_dE = pd.concat([cost_dE, tot]).unstack().stack(future_stack=True)
 
     summed_area = pd.DataFrame(area_tot.groupby(level=0).sum()).set_index(
         pd.MultiIndex.from_product([area_tot.index.unique(level=0), ["tot"]])
     )
-    area_tot = pd.concat([area_tot, summed_area]).unstack().stack()
+    area_tot = pd.concat([area_tot, summed_area]).unstack().stack(future_stack=True)
 
     cost_per_saving = cost_dE["cost"] / (
         1 - cost_dE["dE"]

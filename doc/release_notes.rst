@@ -10,6 +10,8 @@ Release Notes
 Upcoming Release
 ================
 
+* The building stock data was updated to 2023 version in :mod:`build_retro_cost`
+
 * bugfix: convert Strings to pathlib.Path objects as input to ConfigSettings
 
 * Allow the use of more solvers in clustering (Xpress, COPT, Gurobi, CPLEX, SCIP, MOSEK).
