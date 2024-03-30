@@ -353,7 +353,7 @@ def prepare_network(
         buses_i = n.buses.index
         if not np.isscalar(load_shedding):
             # TODO: do not scale via sign attribute (use Eur/MWh instead of Eur/kWh)
-            load_shedding = 1e2  # Eur/kWh
+            load_shedding = 1e4  # Eur/kWh
 
         n.madd(
             "Generator",
@@ -984,10 +984,10 @@ if __name__ == "__main__":
             # configfiles="../config/test/config.perfect.yaml",
             simpl="",
             opts="",
-            clusters="5",
-            ll="v1.5",
-            sector_opts="CO2L0-24h-T-H-B-I-A-dist1",
-            planning_horizons="2030",
+            clusters="37",
+            ll="v1.0",
+            sector_opts="Co2L0-25sn-T-H-B-I-A-dist1",
+            planning_horizons="2050",
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
