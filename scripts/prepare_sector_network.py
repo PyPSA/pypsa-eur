@@ -3119,7 +3119,7 @@ def add_industry(n, costs):
 
     p_set = (
         demand_factor
-        * pop_weighted_energy_totals.loc[nodes, all_aviation].sum(axis=1)
+        * pop_weighted_energy_totals.loc[nodes, all_aviation].replace(np.inf, 0).sum(axis=1)
         * 1e6
         / nhours
     ).rename(lambda x: x + " kerosene for aviation")
@@ -3803,8 +3803,8 @@ if __name__ == "__main__":
             opts="",
             clusters="37",
             ll="v1.0",
-            sector_opts="730H-T-H-B-I-A-dist1",
-            planning_horizons="2030",
+            sector_opts="25sn-T-H-B-I-A-dist1",
+            planning_horizons="2050",
         )
 
     configure_logging(snakemake)
