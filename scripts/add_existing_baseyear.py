@@ -107,6 +107,7 @@ def add_existing_land_transport(baseyear, options):
             p_nom=df.p_nom,
             p_min_pu=p_max_pu,
             p_max_pu=p_max_pu,
+            build_year=df.buildyear,
             lifetime=df.lifetime,
         )
 
