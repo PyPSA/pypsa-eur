@@ -786,7 +786,6 @@ solving:
       PreDual: 0
       GURO_PAR_BARDENSETHRESH: 200
     gurobi-numeric-focus:
-      name: gurobi
       NumericFocus: 3       # Favour numeric stability over speed
       method: 2             # barrier
       crossover: 0          # do not use crossover
@@ -798,7 +797,6 @@ solving:
       threads: 8
       Seed: 123
     gurobi-fallback:        # Use gurobi defaults
-      name: gurobi
       crossover: 0
       method: 2             # barrier
       BarHomogeneous: 1     # Use homogeneous barrier if standard does not converge
