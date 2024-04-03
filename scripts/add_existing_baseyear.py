@@ -55,7 +55,7 @@ def add_build_year_to_new_assets(n, baseyear):
             c.pnl[attr] = c.pnl[attr].rename(columns=rename)
 
 
-def add_existing_renewables(df_agg):
+def add_existing_renewables(df_agg, costs):
     """
     Append existing renewables to the df_agg pd.DataFrame with the conventional
     power plants.
@@ -103,6 +103,8 @@ def add_existing_renewables(df_agg):
                     df_agg.at[name, "Fueltype"] = tech
                     df_agg.at[name, "Capacity"] = capacity
                     df_agg.at[name, "DateIn"] = year
+                    df_agg.at[name, "lifetime"] = costs.at[tech, "lifetime"]
+                    df_agg.at[name, "DateOut"] = year + costs.at[tech, "lifetime"] - 1
                     df_agg.at[name, "cluster_bus"] = node
 
 
@@ -167,10 +169,6 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
     )
     df_agg.loc[biomass_i, "DateOut"] = df_agg.loc[biomass_i, "DateOut"].fillna(dateout)
 
-    # drop assets which are already phased out / decommissioned
-    phased_out = df_agg[df_agg["DateOut"] < baseyear].index
-    df_agg.drop(phased_out, inplace=True)
-
     # assign clustered bus
     busmap_s = pd.read_csv(snakemake.input.busmap_s, index_col=0).squeeze()
     busmap = pd.read_csv(snakemake.input.busmap, index_col=0).squeeze()
@@ -185,7 +183,11 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
     df_agg["cluster_bus"] = df_agg.bus.map(clustermaps)
 
     # include renewables in df_agg
-    add_existing_renewables(df_agg)
+    add_existing_renewables(df_agg, costs)
+
+    # drop assets which are already phased out / decommissioned
+    phased_out = df_agg[df_agg["DateOut"] < baseyear].index
+    df_agg.drop(phased_out, inplace=True)
 
     df_agg["grouping_year"] = np.take(
         grouping_years, np.digitize(df_agg.DateIn, grouping_years, right=True)
