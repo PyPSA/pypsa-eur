@@ -10,6 +10,8 @@ Release Notes
 Upcoming Release
 ================
 
+* bugfix: convert Strings to pathlib.Path objects as input to ConfigSettings
+
 * Allow the use of more solvers in clustering (Xpress, COPT, Gurobi, CPLEX, SCIP, MOSEK).
 
 * Enhanced support for choosing different weather years
@@ -162,7 +164,11 @@ Upcoming Release
 
 * Adapt the disabling of transmission expansion in myopic foresight optimisations when limit is already reached to also handle cost limits.
 
-* Fix duplicated years in `add_land_use_constraint_m`.
+* Fix duplicated years and grouping years reference in `add_land_use_constraint_m`.
+
+* Fix type error with `m` option in `cluster_network`.
+
+* Fix error with `symbol` of `buses` in `simplify_network`.
 
 * Fix index of existing capacities in `add_power_capacities_installed_before_baseyear` with `m` option.
 

@@ -231,7 +231,7 @@ def distribute_clusters(n, n_clusters, focus_weights=None, solver_name="scip"):
         .pipe(normed)
     )
 
-    N = n.buses.groupby(["country", "sub_network"]).size()
+    N = n.buses.groupby(["country", "sub_network"]).size()[L.index]
 
     assert (
         n_clusters >= len(N) and n_clusters <= N.sum()
@@ -454,7 +454,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("cluster_network", simpl="", clusters="5")
+        snakemake = mock_snakemake("cluster_network", simpl="", clusters="40")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
@@ -471,7 +471,7 @@ if __name__ == "__main__":
     conventional_carriers = set(params.conventional_carriers)
     if snakemake.wildcards.clusters.endswith("m"):
         n_clusters = int(snakemake.wildcards.clusters[:-1])
-        aggregate_carriers = params.conventional_carriers & aggregate_carriers
+        aggregate_carriers = conventional_carriers & aggregate_carriers
     elif snakemake.wildcards.clusters.endswith("c"):
         n_clusters = int(snakemake.wildcards.clusters[:-1])
         aggregate_carriers = aggregate_carriers - conventional_carriers

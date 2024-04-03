@@ -43,10 +43,11 @@ def get_scenarios(run):
     scenario_config = run.get("scenarios", {})
     if run["name"] and scenario_config.get("enable"):
         fn = Path(scenario_config["file"])
-        scenarios = yaml.safe_load(fn.read_text())
-        if run["name"] == "all":
-            run["name"] = list(scenarios.keys())
-        return scenarios
+        if fn.exists():
+            scenarios = yaml.safe_load(fn.read_text())
+            if run["name"] == "all":
+                run["name"] = list(scenarios.keys())
+            return scenarios
     return {}
 
 
@@ -106,7 +107,7 @@ def get_run_path(fn, dir, rdir, shared_resources):
     elif isinstance(shared_resources, str):
         rdir = shared_resources + "/"
     elif isinstance(shared_resources, bool):
-        rdir = ""
+        rdir = "" if shared_resources else rdir
     else:
         raise ValueError(
             "shared_resources must be a boolean, str, or 'base' for special handling."
@@ -426,7 +427,7 @@ def mock_snakemake(
             configfiles = [configfiles]
 
         resource_settings = ResourceSettings()
-        config_settings = ConfigSettings(configfiles=configfiles)
+        config_settings = ConfigSettings(configfiles=map(Path, configfiles))
         workflow_settings = WorkflowSettings()
         storage_settings = StorageSettings()
         dag_settings = DAGSettings(rerun_triggers=[])

@@ -44,7 +44,7 @@ if config["foresight"] != "perfect":
         benchmark:
             (
                 RESULTS
-                + "benchmarksplot_power_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+                + "benchmarks/plot_power_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
             )
         conda:
             "../envs/environment.yaml"
