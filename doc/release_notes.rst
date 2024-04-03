@@ -172,6 +172,8 @@ Upcoming Release
 
 * Fix error with `symbol` of `buses` in `simplify_network`.
 
+* Fix index of existing capacities in `add_power_capacities_installed_before_baseyear` with `m` option.
+
 PyPSA-Eur 0.10.0 (19th February 2024)
 =====================================
 
