@@ -164,7 +164,7 @@ Upcoming Release
 
 * Adapt the disabling of transmission expansion in myopic foresight optimisations when limit is already reached to also handle cost limits.
 
-* Fix duplicated years in `add_land_use_constraint_m`.
+* Fix duplicated years and grouping years reference in `add_land_use_constraint_m`.
 
 * Fix type error with `m` option in `cluster_network`.
 
