@@ -113,7 +113,8 @@ rule solve_sector_network_perfect:
         + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years.nc",
     threads: solver_threads
     resources:
-        mem_mb=config_provider("solving", "mem"),
+        mem_mb=config_provider("solving", "mem_mb"),
+        runtime=config_provider("solving", "runtime", default="24h"),
     shadow:
         "shallow"
     log:
