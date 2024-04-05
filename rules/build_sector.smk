@@ -735,6 +735,7 @@ rule build_transport_demand:
         transport_data=resources("transport_data.csv"),
         traffic_data_KFZ="data/bundle-sector/emobility/KFZ__count",
         traffic_data_Pkw="data/bundle-sector/emobility/Pkw__count",
+        traffic_data_Lkw="data/bundle-sector/emobility/Lkw__count",
         temp_air_total=resources("temp_air_total_elec_s{simpl}_{clusters}.nc"),
     output:
         transport_demand=resources("transport_demand_s{simpl}_{clusters}.csv"),
