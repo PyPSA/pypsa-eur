@@ -47,8 +47,6 @@ def build_nodal_transport_data(fn, pop_layout):
             col,
         ] = transport_data[col].mean()
     
-    # TODO missing data for countries AL, RS, BA, NO, MK, CH, ME
-
     return nodal_transport_data
 
 
@@ -90,13 +88,6 @@ def build_transport_demand(traffic_fn_Pkw, traffic_fn_Lkw,
     # divide out the heating/cooling demand from ICE totals
     ice_correction_light = (transport_shape_light * (1 + dd_ICE)).sum() / transport_shape_light.sum()
     ice_correction_heavy = (transport_shape_light * (1 + dd_ICE)).sum() / transport_shape_heavy.sum()
-    
-
-    energy_totals_transport = (
-        pop_weighted_energy_totals["total road"]
-        + pop_weighted_energy_totals["total rail"]
-        - pop_weighted_energy_totals["electricity rail"]
-    )
     
     light_duty_cols = ['total two-wheel', 'total passenger cars',
                        'total light duty road freight']
