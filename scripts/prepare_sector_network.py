@@ -1765,7 +1765,7 @@ def adjust_endogenous_transport(n):
     # average driving distance 15 000 km /year and car
     # EV --------------------------
     # average consumption EV 18 kWh/100 km
-    # annual demand per car 18 kWh/100km * 150 100km/a = 2.7 MWh/a
+    # annual demand per car 18 kWh/100km * 150 000km/a = 2.7 MWh/a
     car_efficiency = costs.at["Battery electric (passenger cars)", "efficiency"]
     cost_EV = costs.loc["Battery electric (passenger cars)", "fixed"] / 2.7 / car_efficiency
     # FCE ----------------------------
@@ -1857,7 +1857,7 @@ def add_land_transport(n, costs):
         location=nodes,
         suffix=" land transport",
         carrier="land transport demand",
-        unit="MWh_kinetic",
+        unit="100 km",
     )
 
     p_set = transport[nodes]
