@@ -243,6 +243,7 @@ def idees_per_country(ct, year, base_dir):
     
     df = pd.read_excel(fn_transport, "TrRoad_ene", index_col=0)[year]
     
+    # energy consumptiob by fuel (ktoe)
     ct_totals["total road"] = df["by fuel (EUROSTAT DATA)"]
 
     ct_totals["electricity road"] = df["Electricity"]
@@ -269,7 +270,8 @@ def idees_per_country(ct, year, base_dir):
 
     row = "Heavy duty vehicles (Diesel oil incl. biofuels)"
     ct_totals["total heavy duty road freight"] = df[row]
-
+    
+    # vehicle efficiency (kgoe/100km)
     assert df.index[61] == "Passenger cars"
     ct_totals["passenger car efficiency"] = df.iloc[61]
     
@@ -707,16 +709,16 @@ def build_transport_data(countries, population, idees):
 
     # CH from http://ec.europa.eu/eurostat/statistics-explained/index.php/Passenger_cars_in_the_EU#Luxembourg_has_the_highest_number_of_passenger_cars_per_inhabitant
     if "CH" in countries:
-        transport_data.at["CH", "number cars"] = 4.136e6
-
-    missing = transport_data.index[transport_data["number cars"].isna()]
-    if not missing.empty:
-        logger.info(
-            f"Missing data on cars from:\n{list(missing)}\nFilling gaps with averaged data."
-        )
-
-        cars_pp = transport_data["number cars"] / population
-        transport_data.loc[missing, "number cars"] = cars_pp.mean() * population
+        transport_data.at["CH", "Number Passenger cars"] = 4.136e6
+    
+    for col in car_cols:
+        missing = transport_data.index[transport_data[col].isna()]
+        if not missing.empty:
+            logger.info(
+                f"Missing data on {col} from:\n{list(missing)}\nFilling gaps with averaged data."
+            )
+            cars_pp = transport_data[col] / population
+            transport_data.loc[missing, col] = cars_pp.mean() * population
 
     # collect average fuel efficiency in kWh/km
     for vehicle_type in ["passenger car", "heavy duty"]:
