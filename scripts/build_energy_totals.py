@@ -240,9 +240,9 @@ def idees_per_country(ct, year, base_dir):
     ct_totals["total agriculture"] = df[row]
 
     # transport
-
+    
     df = pd.read_excel(fn_transport, "TrRoad_ene", index_col=0)[year]
-
+    
     ct_totals["total road"] = df["by fuel (EUROSTAT DATA)"]
 
     ct_totals["electricity road"] = df["Electricity"]
@@ -272,6 +272,9 @@ def idees_per_country(ct, year, base_dir):
 
     assert df.index[61] == "Passenger cars"
     ct_totals["passenger car efficiency"] = df.iloc[61]
+    
+    assert df.index[81] == "Heavy duty vehicles"
+    ct_totals["heavy duty efficiency"] = df.iloc[81]
 
     df = pd.read_excel(fn_transport, "TrRail_ene", index_col=0)[year]
 
@@ -330,9 +333,25 @@ def idees_per_country(ct, year, base_dir):
     ct_totals["total domestic navigation"] = df["by fuel (EUROSTAT DATA)"]
 
     df = pd.read_excel(fn_transport, "TrRoad_act", index_col=0)[year]
-
+    
+    # total number of light duty vehicles
     assert df.index[85] == "Passenger cars"
-    ct_totals["passenger cars"] = df.iloc[85]
+    
+    ct_totals["Number Passenger cars"] = df.iloc[85]
+    
+    assert df.index[84] == "Powered 2-wheelers"
+    ct_totals['Number Powered 2-wheelers'] = df.iloc[84]
+    
+    assert df.index[99] == "Light duty vehicles"
+    ct_totals['Number Light duty vehicles'] = df.iloc[99]
+    
+    # total number of heavy duty vehicles
+    
+    assert df.index[92] == "Motor coaches, buses and trolley buses"
+    ct_totals["Number Motor coaches, buses and trolley buses"] = df.iloc[92]
+    
+    assert df.index[105] == 'Heavy duty vehicles'
+    ct_totals['Number Heavy duty vehicles'] = df.iloc[105]
 
     return pd.Series(ct_totals, name=ct)
 
@@ -356,11 +375,12 @@ def build_idees(countries, year):
     totals = pd.concat(totals_list, axis=1)
 
     # convert ktoe to TWh
-    exclude = totals.index.str.fullmatch("passenger cars")
+    exclude = totals.index.str.contains("Number")
     totals.loc[~exclude] *= 11.63 / 1e3
 
     # convert TWh/100km to kWh/km
     totals.loc["passenger car efficiency"] *= 10
+    totals.loc["heavy duty efficiency"] *= 10
 
     return totals.T
 
@@ -368,7 +388,13 @@ def build_idees(countries, year):
 def build_energy_totals(countries, eurostat, swiss, idees):
     eurostat_fuels = {"electricity": "Electricity", "total": "Total all products"}
 
-    to_drop = ["passenger cars", "passenger car efficiency"]
+    to_drop = ["Number Passenger cars",
+            "Number Powered 2-wheelers",
+            "Number Light duty vehicles",
+            "Number Motor coaches, buses and trolley buses",
+            "Number Heavy duty vehicles",
+            "passenger car efficiency",
+            "heavy duty efficiency"]
     df = idees.reindex(countries).drop(to_drop, axis=1)
 
     eurostat_countries = eurostat.index.levels[0]
@@ -671,8 +697,13 @@ def build_transport_data(countries, population, idees):
     transport_data = pd.DataFrame(index=countries)
 
     # collect number of cars
-
-    transport_data["number cars"] = idees["passenger cars"]
+    car_cols = ["Number Passenger cars",
+                "Number Powered 2-wheelers",
+                "Number Light duty vehicles",
+                "Number Motor coaches, buses and trolley buses",
+                "Number Heavy duty vehicles"]
+    
+    transport_data[car_cols] = idees[car_cols]
 
     # CH from http://ec.europa.eu/eurostat/statistics-explained/index.php/Passenger_cars_in_the_EU#Luxembourg_has_the_highest_number_of_passenger_cars_per_inhabitant
     if "CH" in countries:
@@ -688,17 +719,17 @@ def build_transport_data(countries, population, idees):
         transport_data.loc[missing, "number cars"] = cars_pp.mean() * population
 
     # collect average fuel efficiency in kWh/km
-
-    transport_data["average fuel efficiency"] = idees["passenger car efficiency"]
-
-    missing = transport_data.index[transport_data["average fuel efficiency"].isna()]
-    if not missing.empty:
-        logger.info(
-            f"Missing data on fuel efficiency from:\n{list(missing)}\nFilling gapswith averaged data."
-        )
-
-        fill_values = transport_data["average fuel efficiency"].mean()
-        transport_data.loc[missing, "average fuel efficiency"] = fill_values
+    for vehicle_type in ["passenger car", "heavy duty"]:
+        transport_data[f"average fuel efficiency {vehicle_type}"] = idees[f"{vehicle_type} efficiency"]
+    
+        missing = transport_data.index[transport_data[f"average fuel efficiency {vehicle_type}"].isna()]
+        if not missing.empty:
+            logger.info(
+                f"Missing data on fuel efficiency from:\n{list(missing)}\nFilling gapswith averaged data."
+            )
+    
+            fill_values = transport_data[f"average fuel efficiency {vehicle_type}"].mean()
+            transport_data.loc[missing, f"average fuel efficiency {vehicle_type}"] = fill_values
 
     return transport_data
 
@@ -827,7 +858,7 @@ def rescale_idees_from_eurostat(
 
     return energy
 
-
+#%%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
