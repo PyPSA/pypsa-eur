@@ -570,9 +570,18 @@ def update_config_from_wildcards(config, w, inplace=True):
 
         if "CCL" in opts:
             config["solving"]["constraints"]["CCL"] = True
-
+            
+        co2_budget = {
+                    "1p5": 34.2 , # 25.7 # Budget in Gt CO2 for 1.5 for Europe, global 420 Gt, assuming per capita share
+                    "1p6": 43.259666 , # 35  # Budget in Gt CO2 for 1.6 for Europe, global 580 Gt
+                    "1p7": 51.4,  # 45  # Budget in Gt CO2 for 1.7 for Europe, global 800 Gt
+                    "2p0": 69.778 , # 73.9 # Budget in Gt CO2 for 2 for Europe, global 1170 Gt
+                    }
         eq_value = get_opt(opts, r"^EQ+\d*\.?\d+(c|)")
         for o in opts:
+            m = re.match(r"^\d+p\d$", o, re.IGNORECASE)
+            if m is not None:
+                config["co2_budget"]= co2_budget[m.group(0)]
             if eq_value is not None:
                 config["solving"]["constraints"]["EQ"] = eq_value
             elif "EQ" in o:
