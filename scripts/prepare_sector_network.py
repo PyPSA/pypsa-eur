@@ -1554,7 +1554,11 @@ def add_EVs(
         carrier="Li ion",
         unit="MWh_el",
     )
-
+    
+    # https://ev-database.org/de/cheatsheet/energy-consumption-electric-car
+    # average energy consumption 188 Wh/km = 0.188 kWh/km = 18.8 kWh/100 km = 0.0188 MWh/ 100 km
+    # 1/0.188 -> 1 MWh = 53.19 * 100 km
+    costs.at["Battery electric (passenger cars)", "efficiency"] = 53.19
     car_efficiency = costs.at["Battery electric (passenger cars)", "efficiency"]
 
     # temperature corrected efficiency
@@ -1668,7 +1672,11 @@ def add_electrobiofuels(n, nodes):
         
 def add_fuel_cell_cars(n, nodes, p_set, fuel_cell_share, temperature):
 
-    car_efficiency = options["transport_fuel_cell_efficiency"]
+    # https://h2-mobility.de/wp-content/uploads/2021/02/H2M_Flottenpapier_English_20180822.pdf
+    # assume in average 1kg_H2 per 100 km -> 1kg_H2 = 33 kWh_H2 (LHV)
+    # 1 MWh_H2 = 30.003 100km
+
+    car_efficiency = 30.003 # options["transport_fuel_cell_efficiency"]
 
     # temperature corrected efficiency
     efficiency = get_temp_efficency(
@@ -1705,8 +1713,13 @@ def add_fuel_cell_cars(n, nodes, p_set, fuel_cell_share, temperature):
 def add_ice_cars(n, nodes, p_set, ice_share, temperature):
 
     add_carrier_buses(n, "oil")
-
-    car_efficiency = options["transport_internal_combustion_efficiency"]
+    
+    # average consumption 7 liter per 100 km
+    # 0.008889 MWh_petrol = 1 liter
+    # 0.062223 MWh_petrol / 100 km
+    # 1 MWh_petrol = 16.0712
+    
+    car_efficiency = 16.0712 # options["transport_internal_combustion_efficiency"]
 
     # temperature corrected efficiency
     efficiency = get_temp_efficency(
@@ -1762,23 +1775,13 @@ def adjust_endogenous_transport(n):
 
     # costs todo
     # assume here for all of Europe
-    # average driving distance 15 000 km /year and car
+    # average driving distance 15 000 km /year and car = 150 100km /year
     # EV --------------------------
-    # average consumption EV 18 kWh/100 km
-    # annual demand per car 18 kWh/100km * 150 000km/a = 2.7 MWh/a
-    car_efficiency = costs.at["Battery electric (passenger cars)", "efficiency"]
-    cost_EV = costs.loc["Battery electric (passenger cars)", "fixed"] / 2.7 / car_efficiency
+    cost_EV = costs.loc["Battery electric (passenger cars)", "fixed"] / 150
     # FCE ----------------------------
-    # average consumption 0.7-1 kg_H2/100km assume 0.85-> 0.85*33.33 kWh_H2/100 km
-    # annual demand per car 33.33 kWh/100km * 150 100km/a = 4.25 MWh/a
-    car_efficiency = options["transport_fuel_cell_efficiency"]
-    cost_FCE = costs.loc["Hydrogen fuel cell (passenger cars)", "fixed"] / 4.25 / car_efficiency
+    cost_FCE = costs.loc["Hydrogen fuel cell (passenger cars)", "fixed"] / 150
     # ICE ---------------------------------------------------------
-    # average consumption 6.5liter/100km
-    # energy content gasoline 9.7 kWh/liter
-    # annual demand per car 6.5 * 9.7 kWh/100km * 150 100km/a = 9.46
-    car_efficiency = options["transport_internal_combustion_efficiency"]
-    cost_ICE = costs.at["Liquid fuels ICE (passenger cars)", "fixed"] / 9.46 / car_efficiency
+    cost_ICE = costs.at["Liquid fuels ICE (passenger cars)", "fixed"] / 150
     # cost in unit input depending on car type
     costs_car_type = {
         "land transport EV": cost_EV,
@@ -1822,13 +1825,19 @@ def add_land_transport(n, costs):
 
     logger.info("Add land transport")
 
-    # read in transport demand in units kinetic energy
+    # read in transport demand in units 100 km
     transport = pd.read_csv(
-        snakemake.input.transport_demand, index_col=0, parse_dates=True
-    )
-    number_cars = pd.read_csv(snakemake.input.transport_data, index_col=0)[
-        "number cars"
-    ]
+        snakemake.input.transport_demand, index_col=[0], header=[0,1],
+        parse_dates=True
+    )["light"]
+    car_cols = ['Number Passenger cars', 'Number Powered 2-wheelers',
+               'Number Light duty vehicles',
+               'Number Motor coaches, buses and trolley buses',
+               'Number Heavy duty vehicles']
+    number_cars = pd.read_csv(snakemake.input.transport_data, index_col=0,
+                              )[
+        car_cols
+    ].sum(axis=1)
     avail_profile = pd.read_csv(
         snakemake.input.avail_profile, index_col=0, parse_dates=True
     )
