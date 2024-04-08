@@ -23,7 +23,7 @@ def build_nodal_transport_data(fn, pop_layout):
     transport_data = pd.read_csv(fn, index_col=0)
 
     # TODO check what is going wrong in LU
-    transport_data.loc['LU', 'average fuel efficiency heavy duty'] = transport_data.loc['SI', 'average fuel efficiency heavy duty']
+    # transport_data.loc['LU', 'average fuel efficiency heavy duty'] = transport_data.loc['SI', 'average fuel efficiency heavy duty']
        
     # break number of cars down to nodal level based on population density
     nodal_transport_data = transport_data.loc[pop_layout.ct].fillna(0.0)
@@ -38,7 +38,7 @@ def build_nodal_transport_data(fn, pop_layout):
     nodal_transport_data[car_cols] = (
         nodal_transport_data[car_cols].mul(pop_layout["fraction"], axis=0)
     )
-    # fill missing fuel efficiency with average data
+    # fill missing fuel efficiency [kWh/km] with average data
     eff_cols = ['average fuel efficiency passenger car',
                 'average fuel efficiency heavy duty']
     for col in eff_cols:
@@ -111,10 +111,11 @@ def build_transport_demand(traffic_fn_Pkw, traffic_fn_Lkw,
         return pd.concat([demand], keys=[name], axis=1)
 
     demand_light = get_demand(transport_shape_light, light_duty, nyears,
-                              nodal_transport_data["average fuel efficiency passenger car"],
+                              # convert 1 kWh/km = 0.1 MWh/ 100 km
+                              0.1*nodal_transport_data["average fuel efficiency passenger car"],
                               ice_correction_light, name="light")
     demand_heavy = get_demand(transport_shape_heavy, (heavy_duty + rail), nyears,
-                              nodal_transport_data["average fuel efficiency heavy duty"],
+                              0.1*nodal_transport_data["average fuel efficiency heavy duty"],
                               ice_correction_heavy, name="heavy")
     
     return pd.concat([demand_light, demand_heavy], axis=1)
