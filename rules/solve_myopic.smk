@@ -10,6 +10,8 @@ rule add_existing_baseyear:
         existing_capacities=config_provider("existing_capacities"),
         costs=config_provider("costs"),
     input:
+        car_ages=resources("car_ages.csv"),
+        truck_ages=resources("truck_ages.csv"),
         network=RESULTS
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
         powerplants=resources("powerplants.csv"),

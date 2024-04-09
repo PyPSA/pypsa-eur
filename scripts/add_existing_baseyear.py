@@ -68,22 +68,28 @@ def add_existing_land_transport(baseyear, options):
     efficiency = n.links_t.efficiency[ice_i]
     p_max_pu = n.links_t.p_max_pu[ice_i]
 
-    # TODO car ages
-    car_ages = {
-        2020: 0.15,  # 0-4 years (2020-2025)
-        2015: 0.20,  # 5-9 years (2010-2015)
-        2010: 0.20,  # 10-14 years (2005-2010)
-        2005: 0.15,  # 15-19 years (2000-2005)
-        2000: 0.30,  # 20+ years
-    }
-
-    for build_year, share in car_ages.items():
+    car_ages = pd.read_csv(snakemake.input.car_ages, index_col=[0]).iloc[:,:-2]
+    car_ages.columns = car_ages.columns.astype(int)
+    # group data in 5 years interval
+    interval = 5
+    # mapping forward (mapping backward would be year//5*5)
+    group_mapping = {year: year//interval*interval+4 for year in car_ages.columns}
+    
+    grouped = car_ages.T.groupby(group_mapping).sum().T
+    
+    pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
+    
+    grouped = (grouped.reindex(pop_layout.ct)
+               .fillna(grouped.mean()).set_index(pop_layout.index))
+    
+    for build_year in grouped.columns:
         df = n.links.loc[ice_i]
         df = df[df.lifetime + build_year > baseyear]
         if df.empty:
             continue
+        share = grouped[build_year]
         df["build_year"] = build_year
-        df["p_nom"] = share * p_nom
+        df["p_nom"] = p_nom.mul(share.values)
         df["p_nom_extendable"] = False
         df.rename(
             index=lambda x: x.replace(f"-{baseyear}", f"-{build_year}"), inplace=True
