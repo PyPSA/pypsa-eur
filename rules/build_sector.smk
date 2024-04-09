@@ -323,6 +323,31 @@ rule build_biomass_potentials:
         "../scripts/build_biomass_potentials.py"
 
 
+rule build_existing_car_ages:
+    input:
+        ACEA_report=storage(
+            "https://www.acea.auto/files/ACEA-Report-Vehicles-on-European-roads-.pdf",
+            keep_local=True,
+        ),
+    output:
+        car_ages=resources(
+            "car_ages.csv"
+        ),
+        truck_ages=resources(
+            "truck_ages.csv"
+        ),
+    threads: 1
+    resources:
+        mem_mb=1000,
+    log:
+        logs("build_existing_car_ages.log"),
+    benchmark:
+        benchmarks("build_existing_car_ages")
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_existing_car_ages.py"
+
 rule build_biomass_transport_costs:
     input:
         transport_cost_data=storage(
