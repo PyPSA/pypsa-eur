@@ -88,12 +88,11 @@ def add_existing_land_transport(baseyear, options):
         df.rename(
             index=lambda x: x.replace(f"-{baseyear}", f"-{build_year}"), inplace=True
         )
-        p_max_pu.rename(
-            columns=lambda x: x.replace(f"-{baseyear}", f"-{build_year}"), inplace=True
-        )
-        efficiency.rename(
-            columns=lambda x: x.replace(f"-{baseyear}", f"-{build_year}"), inplace=True
-        )
+        profile = p_max_pu.rename(
+            columns=lambda x: x.replace(f"-{baseyear}", f"-{build_year}"))
+        eff = efficiency.rename(
+            columns=lambda x: x.replace(f"-{baseyear}", f"-{build_year}"))
+        
         n.madd(
             "Link",
             df.index,
@@ -101,12 +100,14 @@ def add_existing_land_transport(baseyear, options):
             bus1=df.bus1,
             bus2=df.bus2,
             carrier=df.carrier,
-            efficiency=efficiency,
+            efficiency=eff,
+            capital_cost=df.capital_cost,
+            marginal_cost=df.marginal_cost,
             efficiency2=df.efficiency2,
             p_nom_extendable=False,
             p_nom=df.p_nom,
-            p_min_pu=p_max_pu,
-            p_max_pu=p_max_pu,
+            p_min_pu=profile,
+            p_max_pu=profile,
             build_year=df.build_year,
             lifetime=df.lifetime,
         )
@@ -612,13 +613,13 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "add_existing_baseyear",
-            configfiles="config/test/config.myopic.yaml",
+            # configfiles="config/config.myopic.yaml",
             simpl="",
-            clusters="5",
-            ll="v1.5",
+            clusters="37",
+            ll="v1.0",
             opts="",
-            sector_opts="24h-T-H-B-I-A-dist1",
-            planning_horizons=2030,
+            sector_opts="49sn-T-H-B-I-A-dist1",
+            planning_horizons=2025,
         )
 
     configure_logging(snakemake)
