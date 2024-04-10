@@ -173,12 +173,31 @@ if __name__ == "__main__":
         offshore_regions_c = offshore_regions_c.loc[offshore_regions_c.area > 1e-2]
         offshore_regions.append(offshore_regions_c)
 
-    pd.concat(onshore_regions, ignore_index=True).to_file(
-        snakemake.output.regions_onshore
+    gdf = pd.concat(onshore_regions, ignore_index=True)
+    gdf.to_file(snakemake.output.regions_onshore)
+
+    index = gdf.index.astype(int) + n.shapes.index.astype(int).max() + 1
+    n.madd(
+        "Shape",
+        index,
+        geometry=gdf.geometry,
+        idx=index,
+        component="Bus",
+        type="onshore",
     )
     if offshore_regions:
-        pd.concat(offshore_regions, ignore_index=True).to_file(
-            snakemake.output.regions_offshore
+        gdf = pd.concat(offshore_regions, ignore_index=True)
+        gdf.to_file(snakemake.output.regions_offshore)
+
+        index = gdf.index.astype(int) + n.shapes.index.astype(int).max() + 1
+        n.madd(
+            "Shape",
+            index,
+            geometry=gdf.geometry,
+            idx=index,
+            component="Bus",
+            type="offshore",
         )
+
     else:
         offshore_shapes.to_frame().to_file(snakemake.output.regions_offshore)
