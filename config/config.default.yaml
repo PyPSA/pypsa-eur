@@ -515,7 +515,7 @@ sector:
   regional_coal_demand: false
   regional_co2_sequestration_potential:
     enable: false
-    attribute: 
+    attribute:
     - conservative estimate Mt
     - conservative estimate GAS Mt
     - conservative estimate OIL Mt
