@@ -10,6 +10,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Include gas and oil fields and saline aquifers in estimation of CO2 sequestration potential.
+
 * bugfix: convert Strings to pathlib.Path objects as input to ConfigSettings
 
 * Allow the use of more solvers in clustering (Xpress, COPT, Gurobi, CPLEX, SCIP, MOSEK).
@@ -151,6 +153,9 @@ Upcoming Release
 
   - Collection rules get a new wildcard ``run=config["run"]["name"]`` so they
     can collect outputs across different scenarios.
+
+  - It is further possible to encapsulate your scenarios in a directory using
+    the setting ``run: prefix:``.
 
   - **Warning:** One caveat remains for the scenario management with myopic or
     perfect foresight pathway optimisation. The first investment period must be
