@@ -428,16 +428,31 @@ def clustering_for_n_clusters(
     return clustering
 
 
-def cluster_regions(busmaps, input=None, output=None):
+def cluster_regions(busmaps, which, input=None, output=None):
     busmap = reduce(lambda x, y: x.map(y), busmaps[1:], busmaps[0])
 
-    for which in ("regions_onshore", "regions_offshore"):
-        regions = gpd.read_file(getattr(input, which))
-        regions = regions.reindex(columns=["name", "geometry"]).set_index("name")
-        regions_c = regions.dissolve(busmap)
-        regions_c.index.name = "name"
-        regions_c = regions_c.reset_index()
-        regions_c.to_file(getattr(output, which))
+    regions = gpd.read_file(getattr(input, which))
+    regions = regions.reindex(columns=["name", "geometry"]).set_index("name")
+    regions_c = regions.dissolve(busmap)
+    regions_c.index.name = "name"
+    regions_c = regions_c.reset_index()
+    regions_c.to_file(getattr(output, which))
+
+    # remove old regions
+    remove = n.shapes.query("component == 'Bus' and type == @which").index
+    n.mremove("Shape", remove)
+
+    # add new clustered regions
+    index = regions_c.index.astype(int) + n.shapes.index.astype(int).max() + 1
+    type = which.split("_")[1]
+    n.madd(
+        "Shape",
+        index,
+        geometry=regions_c.geometry,
+        idx=index,
+        component="Bus",
+        type="which",
+    )
 
 
 def plot_busmap_for_n_clusters(n, n_clusters, fn=None):
@@ -555,4 +570,5 @@ if __name__ == "__main__":
     ):  # also available: linemap_positive, linemap_negative
         getattr(clustering, attr).to_csv(snakemake.output[attr])
 
-    cluster_regions((clustering.busmap,), snakemake.input, snakemake.output)
+    for which in ["regions_onshore", "regions_offshore"]:
+        cluster_regions((clustering.busmap,), which, snakemake.input, snakemake.output)
