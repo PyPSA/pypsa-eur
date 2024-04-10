@@ -629,4 +629,5 @@ if __name__ == "__main__":
     busmap_s = reduce(lambda x, y: x.map(y), busmaps[1:], busmaps[0])
     busmap_s.to_csv(snakemake.output.busmap)
 
-    cluster_regions(busmaps, snakemake.input, snakemake.output)
+    for which in ["regions_onshore", "regions_offshore"]:
+        cluster_regions(busmaps, which, snakemake.input, snakemake.output)

@@ -443,7 +443,8 @@ def cluster_regions(busmaps, which, input=None, output=None):
     n.mremove("Shape", remove)
 
     # add new clustered regions
-    index = regions_c.index.astype(int) + n.shapes.index.astype(int).max() + 1
+    offset = n.shapes.index.astype(int).max() + 1 if not n.shapes.empty else 0
+    index = regions_c.index.astype(int) + offset
     type = which.split("_")[1]
     n.madd(
         "Shape",
