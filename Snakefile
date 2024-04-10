@@ -22,13 +22,7 @@ configfile: "config/config.yaml"
 
 run = config["run"]
 scenarios = get_scenarios(run)
-prefix = run.get("prefix", "")
-rdir = get_rdir(run)
-
-if prefix:
-    RDIR = f"{prefix}/{rdir}"
-else:
-    RDIR = rdir
+RDIR = get_rdir(run)
 
 logs = path_provider("logs/", RDIR, run["shared_resources"])
 benchmarks = path_provider("benchmarks/", RDIR, run["shared_resources"])
