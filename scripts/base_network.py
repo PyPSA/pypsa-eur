@@ -697,6 +697,7 @@ def _adjust_capacities_of_under_construction_branches(n, config):
 
     return n
 
+
 def _set_shapes(n, country_shapes, offshore_shapes):
     # Write the geodataframes country_shapes and offshore_shapes to the network.shapes component
     country_shapes = gpd.read_file(country_shapes).rename(columns={"name": "idx"})
@@ -704,7 +705,8 @@ def _set_shapes(n, country_shapes, offshore_shapes):
     offshore_shapes = gpd.read_file(offshore_shapes).rename(columns={"name": "idx"})
     offshore_shapes["type"] = "offshore"
     all_shapes = pd.concat([country_shapes, offshore_shapes])
-    n.shapes = pd.concat([n.shapes, all_shapes])                   
+    n.shapes = pd.concat([n.shapes, all_shapes])
+
 
 def base_network(
     eg_buses,
@@ -773,8 +775,10 @@ def base_network(
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
         import os
+
+        from _helpers import mock_snakemake
+
         os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
         snakemake = mock_snakemake("base_network")
