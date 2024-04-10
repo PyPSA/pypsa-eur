@@ -20,6 +20,7 @@ remote:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
+  prefix: ""
   name: ""
   scenarios:
     enable: false
