@@ -515,7 +515,11 @@ sector:
   regional_coal_demand: false
   regional_co2_sequestration_potential:
     enable: false
-    attribute: ['conservative estimate Mt', 'conservative estimate GAS Mt', 'conservative estimate OIL Mt', 'conservative estimate aquifer Mt']
+    attribute: 
+    - conservative estimate Mt
+    - conservative estimate GAS Mt
+    - conservative estimate OIL Mt
+    - conservative estimate aquifer Mt
     include_onshore: false
     min_size: 3
     max_size: 25

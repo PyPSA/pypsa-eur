@@ -10,7 +10,7 @@ Release Notes
 Upcoming Release
 ================
 
-* correct estimation of CO2 sequestration potential to including hydrocarbon fields (gas + oil) or saline aquifers
+* Include gas and oil fields and saline aquifers in estimation of CO2 sequestration potential.
 
 * bugfix: convert Strings to pathlib.Path objects as input to ConfigSettings
 

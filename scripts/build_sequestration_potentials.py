@@ -23,6 +23,8 @@ def area(gdf):
 def allocate_sequestration_potential(
     gdf, regions, attr="conservative estimate Mt", threshold=3
 ):
+    if isinstance(attr, str):
+        attr = [attr]
     gdf = gdf.loc[gdf[attr].sum(axis=1) > threshold, attr + ["geometry"]]
     gdf["area_sqkm"] = area(gdf)
     overlay = gpd.overlay(regions, gdf, keep_geom_type=True)
