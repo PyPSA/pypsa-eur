@@ -59,6 +59,11 @@ def get_rdir(run):
         RDIR = run["name"] + "/"
     else:
         RDIR = ""
+
+    prefix = run.get("prefix", "")
+    if prefix:
+        RDIR = f"{prefix}/{RDIR}"
+
     return RDIR
 
 
