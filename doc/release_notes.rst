@@ -10,6 +10,8 @@ Release Notes
 Upcoming Release
 ================
 
+* correct estimation of CO2 sequestration potential to including hydrocarbon fields (gas + oil) or saline aquifers
+
 * bugfix: convert Strings to pathlib.Path objects as input to ConfigSettings
 
 * Allow the use of more solvers in clustering (Xpress, COPT, Gurobi, CPLEX, SCIP, MOSEK).
