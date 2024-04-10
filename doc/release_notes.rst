@@ -152,6 +152,9 @@ Upcoming Release
   - Collection rules get a new wildcard ``run=config["run"]["name"]`` so they
     can collect outputs across different scenarios.
 
+  - It is further possible to encapsulate your scenarios in a directory using
+    the setting ``run: prefix:``.
+
   - **Warning:** One caveat remains for the scenario management with myopic or
     perfect foresight pathway optimisation. The first investment period must be
     shared across all scenarios. The reason is that the ``wildcard_constraints``
