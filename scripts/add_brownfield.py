@@ -135,20 +135,21 @@ def adjust_EVs(n, n_p, year):
 
     for car in ["EV","fuel cell","oil"]:
         cartype = "land transport " + car
-        lifetime_EV = n.links.lifetime[n.links[(n.links.carrier==cartype) ].index[0]]
-        i = 0
-        while (year-lifetime_EV+i) < year:
-            if not n.links_t.p_min_pu[(n.links.filter(like=cartype +"-"+str(int(year-lifetime_EV+i)),axis=0)).index].empty:
-                #p_set =  n_p.loads_t.p[n.loads[n.loads.carrier.str.contains('land transport demand')].index]
-                #eff = n.links_t.efficiency[(n.links.filter(like="land transport EV-"+str(int(year-lifetime_EV+i)),axis=0)).index]
-                #p_set = p_set.add_suffix(' EV-'+str(int(year-lifetime_EV+i)))
-                #p_set = p_set.drop([col for col in p_set.columns if col in p_set.columns and col not in eff.columns], axis=1)
-                #pnom = (p_set.divide(eff)).max()
-                pu=n.links_t.p_min_pu[(n.links.filter(like=cartype +"-"+str(int(year-lifetime_EV+i)),axis=0)).index] #p_set.divide(eff)/pnom
-                n.links_t.p_max_pu[(n.links.filter(like=cartype +"-"+str(int(year-lifetime_EV+i)),axis=0)).index] = pu.values
-                print(n.links_t.p_max_pu[(n.links.filter(like=cartype +"-"+str(int(year-lifetime_EV+i)),axis=0)).index])
-                #n.links_t.p_max_pu[(n.links.filter(like="land transpo-"+str(int(year-lifetime_EV+i)),axis=0)).index] = pu.values
-            i = i+1   
+        if not n.links[(n.links.carrier==cartype) ].index.empty:
+            lifetime_EV = n.links.lifetime[n.links[(n.links.carrier==cartype) ].index[0]]
+            i = 0
+            while (year-lifetime_EV+i) < year:
+                if not n.links_t.p_min_pu[(n.links.filter(like=cartype +"-"+str(int(year-lifetime_EV+i)),axis=0)).index].empty:
+                    #p_set =  n_p.loads_t.p[n.loads[n.loads.carrier.str.contains('land transport demand')].index]
+                    #eff = n.links_t.efficiency[(n.links.filter(like="land transport EV-"+str(int(year-lifetime_EV+i)),axis=0)).index]
+                    #p_set = p_set.add_suffix(' EV-'+str(int(year-lifetime_EV+i)))
+                    #p_set = p_set.drop([col for col in p_set.columns if col in p_set.columns and col not in eff.columns], axis=1)
+                    #pnom = (p_set.divide(eff)).max()
+                    pu=n.links_t.p_min_pu[(n.links.filter(like=cartype +"-"+str(int(year-lifetime_EV+i)),axis=0)).index] #p_set.divide(eff)/pnom
+                    n.links_t.p_max_pu[(n.links.filter(like=cartype +"-"+str(int(year-lifetime_EV+i)),axis=0)).index] = pu.values
+                    print(n.links_t.p_max_pu[(n.links.filter(like=cartype +"-"+str(int(year-lifetime_EV+i)),axis=0)).index])
+                    #n.links_t.p_max_pu[(n.links.filter(like="land transpo-"+str(int(year-lifetime_EV+i)),axis=0)).index] = pu.values
+                i = i+1   
 
 def disable_grid_expansion_if_LV_limit_hit(n):
     if not "lv_limit" in n.global_constraints.index:
@@ -208,7 +209,7 @@ if __name__ == "__main__":
     disable_grid_expansion_if_LV_limit_hit(n)
 
     opts = snakemake.wildcards.sector_opts.split("-")
-    if "T" in opts and snakemake.config["sector"]["endogenous_transport"]:
+    if "T" in opts: # and snakemake.config["sector"]["endogenous_transport"]:
         adjust_EVs(n, n_p, year)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))

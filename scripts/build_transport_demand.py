@@ -70,16 +70,49 @@ def build_transport_demand(traffic_fn, airtemp_fn, nodes, nodal_transport_data):
     # divide out the heating/cooling demand from ICE totals
     # and multiply back in the heating/cooling demand for EVs
     ice_correction = (transport_shape * (1 + dd_ICE)).sum() / transport_shape.sum()
-
+    print("ice correction",ice_correction)
     energy_totals_transport = (
         pop_weighted_energy_totals["total road"]
         + pop_weighted_energy_totals["total rail"]
         - pop_weighted_energy_totals["electricity rail"]
     )
+    plug_to_wheels_eta = options["bev_plug_to_wheel_efficiency"]
+    battery_to_wheels_eta = plug_to_wheels_eta * options["bev_charge_efficiency"]
+
+    efficiency_gain = (
+        nodal_transport_data["average fuel efficiency"] / battery_to_wheels_eta
+    )
+    print("only transport",(energy_totals_transport).sum().sum())
+    print("transport",(transport_shape.multiply(energy_totals_transport)).sum().sum() * 1e6 * nyears)
+    print("previous", (transport_shape.multiply(energy_totals_transport) * 1e6 * nyears)
+        .divide(efficiency_gain * ice_correction)
+        .multiply(1 + dd_EV))
+    print(efficiency_gain)
+    print(nodal_transport_data["average fuel efficiency"])
+    print("current",(transport_shape.multiply(energy_totals_transport) * 1e9 * nyears)
+       .multiply(nodal_transport_data["average fuel efficiency"]*(1+dd_ICE)))
+    
+    print("try",(transport_shape.multiply(energy_totals_transport) * nyears)
+       .divide(1e3 * nodal_transport_data["average fuel efficiency"]*(1+dd_ICE)))
+    
+    print("try",(transport_shape.multiply(energy_totals_transport) * 1e6 * nyears * options["transport_internal_combustion_efficiency"])
+       .divide((ice_correction)))
+    
+
+    A = (transport_shape.multiply(energy_totals_transport) * 1e6 * nyears * options["transport_internal_combustion_efficiency"]).divide((ice_correction))
+
+    print(A.sum().sum())
+
+    print("years", nyears)
     # calculate actual energy demand independent of ICE
+    # return (
+    #     (transport_shape.multiply(energy_totals_transport) * 1e6 * nyears)
+    #    .divide(nodal_transport_data["average fuel efficiency"]*ice_correction)
+    # )
     return (
-        (transport_shape.multiply(energy_totals_transport) * 1e6 * nyears)
-       .divide(nodal_transport_data["average fuel efficiency"]*ice_correction)
+        (transport_shape.multiply(energy_totals_transport) * 1e6 * nyears * options["transport_internal_combustion_efficiency"])
+       .divide((ice_correction))
+   
     )
 
 

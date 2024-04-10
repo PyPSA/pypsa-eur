@@ -1611,7 +1611,7 @@ def add_land_transport(n, costs):
                 lifetime = costs.at['Battery electric (passenger cars)', 'lifetime'], 
             )
         
-        eff = costs.at['Battery electric (passenger cars)', 'efficiency']#/(1+dd_EV)
+        eff = costs.at['Battery electric (passenger cars)', 'efficiency']/(1+dd_EV)
         n.madd(
             "Link",
             nodes,
@@ -1659,7 +1659,7 @@ def add_land_transport(n, costs):
 
     # Add hydrogen vehicle links
     if fuel_cell_share != 0:
-        eff = options["transport_fuel_cell_efficiency"]#/(1+dd_ICE)
+        eff = options["transport_fuel_cell_efficiency"]/(1+dd_ICE)
         
         n.madd(
             "Link",
@@ -1687,7 +1687,7 @@ def add_land_transport(n, costs):
     if ice_share != 0:
         add_carrier_buses(n, "oil")
 
-        eff = options["transport_internal_combustion_efficiency"]#/(1+dd_ICE)
+        eff = options["transport_internal_combustion_efficiency"]/(1+dd_ICE)
         
         n.madd(
             "Link",
@@ -1744,48 +1744,49 @@ def adjust_land_transport(n):
     if ice_share != 0:
         name = "land transport oil"
         ice_index = n.links.carrier==name
-        #eff = n.links_t.efficiency.loc[:, ice_index]
-        eff = n.links.efficiency.loc[ice_index]
-        eff = eff/(1+dd_ICE.add_suffix(" land transport oil"))
+        eff = n.links_t.efficiency.loc[:, ice_index]
+        print("eff", eff)
+        #eff = n.links.efficiency.loc[ice_index]
+        #eff = eff/(1+dd_ICE.add_suffix(" land transport oil"))
         pset = p_set.add_suffix(' oil')
         pnom = (pset.divide(eff)).max()
-        profile=pset.divide(eff)/pnom/(1+dd_ICE.add_suffix(" land transport oil"))
+        profile=pset.divide(eff)/pnom #/(1+dd_ICE.add_suffix(" land transport oil"))
         n.links_t.p_min_pu[n.links[ice_index].index] = profile
         #n.links_t.p_max_pu[n.links[ice_index].index] = profile
         if float(ice_share or 0) > 0:
             n.links.loc[ice_index,'p_nom'] = ice_share * pnom 
-            n.links_t.p_max_pu[n.links[ice_index].index] = profile
+            #n.links_t.p_max_pu[n.links[ice_index].index] = profile
             
     if fuel_cell_share != 0:
         fuel_cell_index = n.links.carrier=='land transport fuel cell'
-        #eff = n.links_t.efficiency.loc[:, fuel_cell_index]
-        eff = n.links.efficiency.loc[fuel_cell_index]
-        eff = eff/(1+dd_ICE.add_suffix(" land transport fuel cell"))
+        eff = n.links_t.efficiency.loc[:, fuel_cell_index]
+        #eff = n.links.efficiency.loc[fuel_cell_index]
+        #eff = eff/(1+dd_ICE.add_suffix(" land transport fuel cell"))
         pset = p_set.add_suffix(' fuel cell')
         pnom = (pset.divide(eff)).max()
-        pu=pset.divide(eff)/pnom/(1+dd_ICE.add_suffix(" land transport fuel cell"))
+        pu=pset.divide(eff)/pnom #/(1+dd_ICE.add_suffix(" land transport fuel cell"))
         n.links_t.p_min_pu[n.links[fuel_cell_index].index] = pu
         #n.links_t.p_max_pu[n.links[fuel_cell_index].index] = pu
         if float(fuel_cell_share or 0) > 0:
             n.links.loc[fuel_cell_index,'p_nom'] = fuel_cell_share * pnom 
-            n.links_t.p_max_pu[n.links[fuel_cell_index].index] = pu
+            #n.links_t.p_max_pu[n.links[fuel_cell_index].index] = pu
 
     # EV link for endogenous transport is not constraint because constraining all land transport link 
     # with p_min_pu/p_max_pu while p_nom_extentable=True leads to solving infeasibility by gurobi      
     if electric_share!= 0:
         ev_index = n.links.carrier=='land transport EV'
-        #eff = n.links_t.efficiency.loc[:, ev_index]
-        eff = n.links.efficiency.loc[ev_index]
-        eff = eff/(1+dd_EV.add_suffix(" land transport EV"))
+        eff = n.links_t.efficiency.loc[:, ev_index]
+        #eff = n.links.efficiency.loc[ev_index]
+        #eff = eff/(1+dd_EV.add_suffix(" land transport EV"))
         pset = p_set.add_suffix(' EV')
         pnom = (pset.divide(eff)).max()
-        pu=pset.divide(eff)/pnom/(1+dd_EV.add_suffix(" land transport EV"))
+        pu=pset.divide(eff)/pnom #/(1+dd_EV.add_suffix(" land transport EV"))
         n.links_t.p_min_pu[n.links[ev_index].index] = pu
         #n.links_t.p_max_pu[n.links[ev_index].index] = pu 
         if float(electric_share or 0) > 0:
             n.links.loc[ev_index,'p_nom'] = electric_share * pnom 
             #n.links_t.p_min_pu[n.links[ev_index].index] = pu
-            n.links_t.p_max_pu[n.links[ev_index].index] = pu   
+            #n.links_t.p_max_pu[n.links[ev_index].index] = pu   
 
 
 def build_heat_demand(n):
@@ -3840,7 +3841,7 @@ if __name__ == "__main__":
 
     if "T" in opts:
         add_land_transport(n, costs)
-        adjust_land_transport(n)
+        #adjust_land_transport(n)
 
     if "H" in opts:
         add_heat(n, costs)
@@ -3878,8 +3879,8 @@ if __name__ == "__main__":
     solver_name = snakemake.config["solving"]["solver"]["name"]
     n = set_temporal_aggregation(n, opts, solver_name)
 
-    # if "T" in opts:
-    #     adjust_land_transport(n)
+    if "T" in opts:
+        adjust_land_transport(n)
 
     limit_type = "config"
     limit = get(snakemake.params.co2_budget, investment_year)
