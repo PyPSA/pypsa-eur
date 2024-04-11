@@ -47,4 +47,4 @@ We strive to keep documentation useful and up to date for all PyPSA users. If yo
 #. Compile your changes by running the following command in your terminal in the ``doc`` folder: ``make html``
    You may encounter some warnings, but end up with a message such as ``build succeeded, XX warnings.``. html files to review your changes can then be found under ``doc/_build/html``.
 #. Contribute your documentation in a pull request (`here is a guide <https://help.github.com/en/articles/about-pull-requests>`_).
-   
+
