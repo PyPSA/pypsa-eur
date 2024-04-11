@@ -705,6 +705,10 @@ def _set_shapes(n, country_shapes, offshore_shapes):
     offshore_shapes = gpd.read_file(offshore_shapes).rename(columns={"name": "idx"})
     offshore_shapes["type"] = "offshore"
     all_shapes = pd.concat([country_shapes, offshore_shapes], ignore_index=True)
+<<<<<<< HEAD
+=======
+
+>>>>>>> dce7d57a (add AC & DC lines)
     n.madd(
         "Shape",
         all_shapes.index,
@@ -712,6 +716,69 @@ def _set_shapes(n, country_shapes, offshore_shapes):
         idx=all_shapes.idx,
         type=all_shapes.type,
     )
+<<<<<<< HEAD
+=======
+
+    # Write the AC and DC line shapes to the network.shapes component
+    start_index = n.shapes.index.astype(int).max() + 1
+    index_AC = pd.RangeIndex(start=start_index, stop=start_index + len(n.lines))
+    geo_AC = gpd.GeoSeries(
+        n.lines.geometry.apply(shapely.wkt.loads).fillna(
+            n.lines[["bus0", "bus1"]].apply(
+                lambda x: LineString(
+                    [n.buses.loc[x[0], ["x", "y"]], n.buses.loc[x[1], ["x", "y"]]]
+                ),
+                axis=1,
+            )
+        )
+    )
+    geo_AC.index = index_AC
+
+    n.madd(
+        "Shape",
+        index_AC,
+        geometry=geo_AC.values,
+        idx=n.lines.index,
+        component="Line",
+        type=n.lines.carrier.values,
+    )
+
+    if n.links.empty:
+        return
+    start_index = n.shapes.index.astype(int).max() + 1
+    index_DC = pd.RangeIndex(start=start_index, stop=start_index + len(n.links))
+    if "geometry" in n.links.columns:
+        geo_DC = gpd.GeoSeries(
+            n.links.geometry.apply(shapely.wkt.loads).fillna(
+                n.links[["bus0", "bus1"]].apply(
+                    lambda x: LineString(
+                        [n.buses.loc[x[0], ["x", "y"]], n.buses.loc[x[1], ["x", "y"]]]
+                    ),
+                    axis=1,
+                )
+            )
+        )
+    else:
+        geo_DC = gpd.GeoSeries(
+            n.links[["bus0", "bus1"]].apply(
+                lambda x: LineString(
+                    [n.buses.loc[x[0], ["x", "y"]], n.buses.loc[x[1], ["x", "y"]]]
+                ),
+                axis=1,
+            )
+        )
+
+        geo_DC = gpd.GeoSeries(geo_DC)
+
+    n.madd(
+        "Shape",
+        index_DC,
+        geometry=geo_DC.values,
+        idx=n.links.index,
+        component="Link",
+        type=n.links.carrier.values,
+    )
+>>>>>>> dce7d57a (add AC & DC lines)
 
 
 def base_network(
