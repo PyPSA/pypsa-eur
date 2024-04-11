@@ -705,19 +705,13 @@ def _set_shapes(n, country_shapes, offshore_shapes):
     offshore_shapes = gpd.read_file(offshore_shapes).rename(columns={"name": "idx"})
     offshore_shapes["type"] = "offshore"
     all_shapes = pd.concat([country_shapes, offshore_shapes], ignore_index=True)
-<<<<<<< HEAD
-=======
-
->>>>>>> dce7d57a (add AC & DC lines)
     n.madd(
         "Shape",
         all_shapes.index,
         geometry=all_shapes.geometry,
         idx=all_shapes.idx,
-        type=all_shapes.type,
+        type=all_shapes["type"],
     )
-<<<<<<< HEAD
-=======
 
     # Write the AC and DC line shapes to the network.shapes component
     start_index = n.shapes.index.astype(int).max() + 1
@@ -778,7 +772,6 @@ def _set_shapes(n, country_shapes, offshore_shapes):
         component="Link",
         type=n.links.carrier.values,
     )
->>>>>>> dce7d57a (add AC & DC lines)
 
 
 def base_network(
