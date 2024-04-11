@@ -10,12 +10,18 @@ Release Notes
 Upcoming Release
 ================
 
+
+* Group existing capacities to the earlier grouping_year for consistency with optimized capacities.
+
+* bugfix: installed heating capacities were 5% lower than existing heating capacities
+
 * bugfix: convert Strings to pathlib.Path objects as input to ConfigSettings
-* Corrected a bug leading to power plants operating after their DateOut 
+* Corrected a bug leading to power plants operating after their DateOut
   (https://github.com/PyPSA/pypsa-eur/pull/958). Added additional grouping years
   before 1980.
-  
+
 * Upgrade default techno-economic assumptions to ``technology-data`` v0.8.1.
+
 
 * Upgrade to Snakemake v8.5+. This version is the new minimum version required.
   To upgrade an existing environment, run ``conda install -c bioconda
