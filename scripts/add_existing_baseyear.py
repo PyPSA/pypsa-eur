@@ -189,18 +189,20 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
     phased_out = df_agg[df_agg["DateOut"] < baseyear].index
     df_agg.drop(phased_out, inplace=True)
 
-    older_assets = (df_agg.DateIn<min(grouping_years)).sum()
+    older_assets = (df_agg.DateIn < min(grouping_years)).sum()
     if older_assets:
-        logger.warning(f"There are {older_assets} assets with build year "
-                       f"before first power grouping year {min(grouping_years)}. "
-                       "These assets are dropped and not considered."
-                       "Consider to redefine the grouping years to keep them.")
-        to_drop = df_agg[df_agg.DateIn<min(grouping_years)].index
+        logger.warning(
+            f"There are {older_assets} assets with build year "
+            f"before first power grouping year {min(grouping_years)}. "
+            "These assets are dropped and not considered."
+            "Consider to redefine the grouping years to keep them."
+        )
+        to_drop = df_agg[df_agg.DateIn < min(grouping_years)].index
         df_agg.drop(to_drop, inplace=True)
-        
+
     df_agg["grouping_year"] = np.take(
-        grouping_years[::-1],
-        np.digitize(df_agg.DateIn, grouping_years[::-1]))
+        grouping_years[::-1], np.digitize(df_agg.DateIn, grouping_years[::-1])
+    )
 
     # calculate (adjusted) remaining lifetime before phase-out (+1 because assuming
     # phase out date at the end of the year)
@@ -461,10 +463,13 @@ def add_heating_capacities_installed_before_baseyear(
                 and int(grouping_year) < int(baseyear)
             ]
         )
-        
+
         # get number of years of each interval
-        _years = (valid_grouping_years.diff().shift(-1)
-                  .fillna(baseyear-valid_grouping_years.iloc[-1]))
+        _years = (
+            valid_grouping_years.diff()
+            .shift(-1)
+            .fillna(baseyear - valid_grouping_years.iloc[-1])
+        )
         # Installation is assumed to be linear for the past
         ratios = _years / _years.sum()
 
