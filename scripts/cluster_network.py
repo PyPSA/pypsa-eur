@@ -135,6 +135,7 @@ import pypsa
 import seaborn as sns
 from _helpers import configure_logging, set_scenario_config, update_p_nom_max
 from add_electricity import load_costs
+from build_bus_regions import append_bus_shapes
 from packaging.version import Version, parse
 from pypsa.clustering.spatial import (
     busmap_by_greedy_modularity,
@@ -447,33 +448,6 @@ def cluster_regions(busmaps, regions):
     return regions_c.reset_index()
 
 
-def append_bus_shapes(n, shapes, type):
-    """
-    Append shapes to the network.
-
-    Parameters:
-        n (pypsa.Network): The network to which the shapes will be appended.
-        shapes (geopandas.GeoDataFrame): The shapes to be appended.
-        **kwargs: Additional keyword arguments used in `n.madd`.
-
-    Returns:
-        None
-    """
-    remove = n.shapes.query("component == 'Bus' and type == @which").index
-    n.mremove("Shape", remove)
-
-    offset = n.shapes.index.astype(int).max() + 1 if not n.shapes.empty else 0
-    shapes.index = shapes.index.astype(int) + offset
-    n.madd(
-        "Shape",
-        shapes.index,
-        geometry=shapes.geometry,
-        idx=shapes.name,
-        component="Bus",
-        type=type,
-    )
-
-
 def plot_busmap_for_n_clusters(n, n_clusters, solver_name="scip", fn=None):
     busmap = busmap_for_n_clusters(n, n_clusters, solver_name)
     cs = busmap.unique()
@@ -589,8 +563,8 @@ if __name__ == "__main__":
     for which in ["regions_onshore", "regions_offshore"]:
         regions = gpd.read_file(snakemake.input[which])
         clustered_regions = cluster_regions((clustering.busmap,), regions)
-        append_bus_shapes(nc, clustered_regions, type=which.split("_")[1])
         clustered_regions.to_file(snakemake.output[which])
+        append_bus_shapes(nc, clustered_regions, type=which.split("_")[1])
 
     nc.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     nc.export_to_netcdf(snakemake.output.network)

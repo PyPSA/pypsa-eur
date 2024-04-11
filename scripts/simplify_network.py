@@ -88,12 +88,14 @@ The rule :mod:`simplify_network` does up to four things:
 import logging
 from functools import reduce
 
+import geopandas as gpd
 import numpy as np
 import pandas as pd
 import pypsa
 import scipy as sp
 from _helpers import configure_logging, set_scenario_config, update_p_nom_max
 from add_electricity import load_costs
+from build_bus_regions import append_bus_shapes
 from cluster_network import cluster_regions, clustering_for_n_clusters
 from pypsa.clustering.spatial import (
     aggregateoneport,
@@ -610,6 +612,7 @@ if __name__ == "__main__":
     n.lines.drop(remove, axis=1, errors="ignore", inplace=True)
 
     if snakemake.wildcards.simpl:
+        shapes = n.shapes
         n, cluster_map = cluster(
             n,
             int(snakemake.wildcards.simpl),
@@ -619,15 +622,19 @@ if __name__ == "__main__":
             params.simplify_network["feature"],
             params.aggregation_strategies,
         )
+        n.shapes = shapes
         busmaps.append(cluster_map)
 
     update_p_nom_max(n)
-
-    n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
-    n.export_to_netcdf(snakemake.output.network)
 
     busmap_s = reduce(lambda x, y: x.map(y), busmaps[1:], busmaps[0])
     busmap_s.to_csv(snakemake.output.busmap)
 
     for which in ["regions_onshore", "regions_offshore"]:
-        cluster_regions(n, busmaps, which, snakemake.input, snakemake.output)
+        regions = gpd.read_file(snakemake.input[which])
+        clustered_regions = cluster_regions(busmaps, regions)
+        clustered_regions.to_file(snakemake.output[which])
+        append_bus_shapes(n, clustered_regions, type=which.split("_")[1])
+
+    n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
+    n.export_to_netcdf(snakemake.output.network)
