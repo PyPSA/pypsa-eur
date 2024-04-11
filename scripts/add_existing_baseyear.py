@@ -468,14 +468,12 @@ def add_heating_capacities_installed_before_baseyear(
                 and int(grouping_year) < int(baseyear)
             ]
         )
+        
+        # get number of years of each interval
+        _years = (valid_grouping_years.diff().shift(-1)
+                  .fillna(baseyear-valid_grouping_years.iloc[-1]))
         # Installation is assumed to be linear for the past
-        _intervals = (
-            pd.concat(
-                [valid_grouping_years[1:], pd.Series(baseyear)], ignore_index=True
-            )
-            - valid_grouping_years
-        )
-        ratios = _intervals / _intervals.sum()
+        ratios = _years / _years.sum()
 
         for ratio, grouping_year in zip(ratios, valid_grouping_years):
 
