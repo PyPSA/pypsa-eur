@@ -181,6 +181,16 @@ Upcoming Release
 
 * Fix custom busmap read in `cluster_network`.
 
+* Improved the behaviour of `agg_p_nom_limits`:
+
+  - Moved the associated configuration to `solving`. This allows *Snakemake* to correctly decide which rules to run when the configuration changes.
+
+  - Added the ability to enable aggregation of all *offwind* types (*offwind-ac* and *offwind-dc*) when writing the constraint.
+
+  - Added the possibility to take existing capacities into account when writing the constraint.
+
+  - Added the possibility to have a different file for each planning horizon.
+
 PyPSA-Eur 0.10.0 (19th February 2024)
 =====================================
 

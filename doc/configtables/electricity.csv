@@ -5,7 +5,6 @@ gaslimit,MWhth,float or false,Global gas usage limit
 co2limit_enable,bool,true or false,Add an overall absolute carbon-dioxide emissions limit configured in ``electricity: co2limit``.
 co2limit,:math:`t_{CO_2-eq}/a`,float,Cap on total annual system carbon dioxide emissions
 co2base,:math:`t_{CO_2-eq}/a`,float,Reference value of total annual system carbon dioxide emissions if relative emission reduction target is specified in ``{opts}`` wildcard.
-agg_p_nom_limits,file,path,Reference to ``.csv`` file specifying per carrier generator nominal capacity constraints for individual countries if ``'CCL'`` is in ``{opts}`` wildcard. Defaults to ``data/agg_p_nom_minmax.csv``.
 operational_reserve,,,Settings for reserve requirements following `GenX <https://genxproject.github.io/GenX/dev/core/#Reserves>`_
 ,,,
 -- activate,bool,true or false,Whether to take operational reserve requirements into account during optimisation

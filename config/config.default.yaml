@@ -98,7 +98,6 @@ electricity:
   co2limit_enable: false
   co2limit: 7.75e+7
   co2base: 1.487e+9
-  agg_p_nom_limits: data/agg_p_nom_minmax.csv
 
   operational_reserve:
     activate: false
@@ -757,6 +756,14 @@ solving:
     transmission_losses: 2
     linearized_unit_commitment: true
     horizon: 365
+
+  agg_p_nom_limits:
+    agg_offwind: false
+    include_existing: false
+    years:
+      2030: data/agg_p_nom_minmax.csv
+      2040: data/agg_p_nom_minmax.csv
+      2050: data/agg_p_nom_minmax.csv
 
   constraints:
     CCL: false
