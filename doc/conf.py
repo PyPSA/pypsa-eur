@@ -34,7 +34,7 @@ sys.path.insert(0, os.path.abspath("../scripts"))
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc',
+    "sphinx.ext.autodoc",
     #'sphinx.ext.autosummary',
     "myst_parser",
     # "sphinx.ext.autosectionlabel",
@@ -50,7 +50,18 @@ extensions = [
     "sphinx.ext.imgconverter",  # for SVG conversion
 ]
 
-autodoc_mock_imports = ["atlite", "snakemake", "pycountry", "rioxarray", "country_converter", "tabula", "memory_profiler", "powerplantmatching", "rasterio", "dask.distributed"]
+autodoc_mock_imports = [
+    "atlite",
+    "snakemake",
+    "pycountry",
+    "rioxarray",
+    "country_converter",
+    "tabula",
+    "memory_profiler",
+    "powerplantmatching",
+    "rasterio",
+    "dask.distributed",
+]
 
 autodoc_default_flags = ["members"]
 autosummary_generate = True
