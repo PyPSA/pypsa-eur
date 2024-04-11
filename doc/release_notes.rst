@@ -181,6 +181,8 @@ Upcoming Release
 
 * Fix custom busmap read in `cluster_network`.
 
+* Increase default capital cost for gas storage and default marginal cost for allam cycle in `prepare_sector_network`.
+
 PyPSA-Eur 0.10.0 (19th February 2024)
 =====================================
 

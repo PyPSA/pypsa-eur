@@ -520,7 +520,8 @@ def add_carrier_buses(n, carrier, nodes=None):
 
     unit = "MWh_LHV" if carrier == "gas" else "MWh_th"
     # preliminary value for non-gas carriers to avoid zeros
-    capital_cost = costs.at["gas storage", "fixed"] if carrier == "gas" else 0.02
+    capital_cost = costs.at["gas storage", "fixed"] if carrier == "gas"\
+        else 200 * costs.at[carrier, "discount rate"]
 
     n.madd("Bus", nodes, location=location, carrier=carrier, unit=unit)
 
@@ -747,7 +748,7 @@ def add_allam(n, costs):
         p_nom_extendable=True,
         # TODO: add costs to technology-data
         capital_cost=0.6 * 1.5e6 * 0.1,  # efficiency * EUR/MW * annuity
-        marginal_cost=2,
+        marginal_cost=costs.at["gas", "fuel"]/0.6,  # Fuel cost of gas * efficiency (MWth to MWe)
         efficiency=0.6,
         efficiency2=costs.at["gas", "CO2 intensity"],
         lifetime=30.0,
