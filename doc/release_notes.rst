@@ -181,6 +181,8 @@ Upcoming Release
 
 * Fix custom busmap read in `cluster_network`.
 
+* Data on existing renewable capacities is now consistently taken from powerplantmatching (instead of being retrieved separately); the dataset has also been updated to include 2023 values. 
+
 PyPSA-Eur 0.10.0 (19th February 2024)
 =====================================
 
