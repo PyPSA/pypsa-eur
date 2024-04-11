@@ -454,14 +454,22 @@ def add_heating_capacities_installed_before_baseyear(
             efficiency = costs.at[costs_name, "efficiency"]
 
         valid_grouping_years = pd.Series(
-            [int(gy) for gy in grouping_years if
-            int(baseyear) - default_lifetime <= int(gy) < int(baseyear)])
+            [
+                int(grouping_year)
+                for grouping_year in grouping_years
+                if int(grouping_year) + default_lifetime > int(baseyear)
+                and int(grouping_year) < int(baseyear)
+            ]
+        )
         # Installation is assumed to be linear for the past
-        _intervals = pd.concat(
-            [valid_grouping_years[1:], pd.Series(baseyear)],
-            ignore_index=True) - valid_grouping_years
+        _intervals = (
+            pd.concat(
+                [valid_grouping_years[1:], pd.Series(baseyear)], ignore_index=True
+            )
+            - valid_grouping_years
+        )
         ratios = _intervals / _intervals.sum()
-        
+
         for ratio, grouping_year in zip(ratios, valid_grouping_years):
 
             n.madd(
