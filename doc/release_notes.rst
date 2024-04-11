@@ -81,6 +81,9 @@ Upcoming Release
 
 * Bugfix: allow modelling sector-coupled landlocked regions. (Fixed handling of offshore wind.)
 
+* Allow the expansion of waste water heat recovery systems (WWHRS) as new technology and a part of
+  building retrofitting
+
 PyPSA-Eur 0.10.0 (19th February 2024)
 =====================================
 

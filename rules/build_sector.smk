@@ -161,11 +161,15 @@ rule build_daily_heat_demand:
 rule build_hourly_heat_demand:
     params:
         snapshots=config_provider("snapshots"),
+        sector=config_provider("sector"),
     input:
         heat_profile="data/heat_load_profile_BDEW.csv",
         heat_demand=resources("daily_heat_demand_{scope}_elec_s{simpl}_{clusters}.nc"),
     output:
         heat_demand=resources("hourly_heat_demand_{scope}_elec_s{simpl}_{clusters}.nc"),
+        heat_dsm_profile=resources(
+            "residential_heat_dsm_profile_{scope}_s{simpl}_{clusters}.csv"
+        ),
     resources:
         mem_mb=2000,
     threads: 8
@@ -672,9 +676,11 @@ rule build_retro_cost:
         clustered_pop_layout=resources("pop_layout_elec_s{simpl}_{clusters}.csv"),
         cost_germany="data/retro/retro_cost_germany.csv",
         window_assumptions="data/retro/window_assumptions.csv",
+        households="data/retro/households.csv",
     output:
         retro_cost=resources("retro_cost_elec_s{simpl}_{clusters}.csv"),
         floor_area=resources("floor_area_elec_s{simpl}_{clusters}.csv"),
+        WWHR_costs=resources("WWHR_costs_elec_s{simpl}_{clusters}.csv"),
     resources:
         mem_mb=1000,
     log:
@@ -835,6 +841,7 @@ rule prepare_sector_network:
         adjustments=config_provider("adjustments", "sector"),
         emissions_scope=config_provider("energy", "emissions"),
         eurostat_report_year=config_provider("energy", "eurostat_report_year"),
+        snapshots=config_provider("snapshots"),
         RDIR=RDIR,
     input:
         unpack(input_profile_offwind),
@@ -843,6 +850,11 @@ rule prepare_sector_network:
         retro_cost=lambda w: (
             resources("retro_cost_elec_s{simpl}_{clusters}.csv")
             if config_provider("sector", "retrofitting", "retro_endogen")(w)
+            else []
+        ),
+        WWHR_cost=lambda w: (
+            resources("WWHR_costs_elec_s{simpl}_{clusters}.csv")
+            if config_provider("sector", "retrofitting", "WWHR_endogen")(w)
             else []
         ),
         floor_area=lambda w: (
@@ -874,6 +886,9 @@ rule prepare_sector_network:
         transport_data=resources("transport_data_s{simpl}_{clusters}.csv"),
         avail_profile=resources("avail_profile_s{simpl}_{clusters}.csv"),
         dsm_profile=resources("dsm_profile_s{simpl}_{clusters}.csv"),
+        heat_dsm_profile=resources(
+            "residential_heat_dsm_profile_total_s{simpl}_{clusters}.csv"
+        ),
         co2_totals_name=resources("co2_totals.csv"),
         co2="data/bundle-sector/eea/UNFCCC_v23.csv",
         biomass_potentials=lambda w: (
