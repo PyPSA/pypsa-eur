@@ -362,13 +362,20 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                     )
                 else:
                     key = "central solid biomass CHP"
+                    central_heat = n.buses.query(
+                        "carrier == 'urban central heat'"
+                    ).location.unique()
+                    heat_buses = new_capacity.index.map(
+                        lambda i: i + " urban central heat" if i in central_heat else ""
+                    )
+
                     n.madd(
                         "Link",
                         new_capacity.index,
                         suffix=name_suffix,
                         bus0=spatial.biomass.df.loc[new_capacity.index]["nodes"].values,
                         bus1=new_capacity.index,
-                        bus2=new_capacity.index + " urban central heat",
+                        bus2=heat_buses,
                         carrier=generator,
                         p_nom=new_capacity / costs.at[key, "efficiency"],
                         capital_cost=costs.at[key, "fixed"]
