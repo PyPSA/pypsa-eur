@@ -762,8 +762,6 @@ def _set_shapes(n, country_shapes, offshore_shapes):
             )
         )
 
-        geo_DC = gpd.GeoSeries(geo_DC)
-
     n.madd(
         "Shape",
         index_DC,
