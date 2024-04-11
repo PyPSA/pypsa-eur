@@ -15,18 +15,18 @@ Instead we provide separate data bundles which can be obtained
 using the ``retrieve*`` rules (:ref:`data`).
 Having downloaded the necessary data,
 
-- :mod:`build_shapes` generates GeoJSON files with shapes of the countries, exclusive economic zones and `NUTS3 <https://en.wikipedia.org/wiki/Nomenclature_of_Territorial_Units_for_Statistics>`_ areas.
-- :mod:`build_cutout` prepares smaller weather data portions from `ERA5 <https://www.ecmwf.int/en/forecasts/datasets/reanalysis-datasets/era5>`_ for cutout ``europe-2013-era5`` and SARAH for cutout ``europe-2013-sarah``.
+- :mod:`build_shapes` generates GeoJSON files with shapes of the countries, exclusive economic zones and `NUTS3 <https://en.wikipedia.org/wiki/Nomenclature_of_Territorial_Units_for_Statistics>`__ areas.
+- :mod:`build_cutout` prepares smaller weather data portions from `ERA5 <https://www.ecmwf.int/en/forecasts/datasets/reanalysis-datasets/era5>`__ for cutout ``europe-2013-era5`` and SARAH for cutout ``europe-2013-sarah``.
 
 With these and the externally extracted ENTSO-E online map topology
 (``data/entsoegridkit``), it can build a base PyPSA network with the following rules:
 
 - :mod:`base_network` builds and stores the base network with all buses, HVAC lines and HVDC links, while
-- :mod:`build_bus_regions` determines `Voronoi cells <https://en.wikipedia.org/wiki/Voronoi_diagram>`_ for all substations.
+- :mod:`build_bus_regions` determines `Voronoi cells <https://en.wikipedia.org/wiki/Voronoi_diagram>`__ for all substations.
 
 Then the process continues by calculating conventional power plant capacities, potentials, and per-unit availability time series for variable renewable energy carriers and hydro power plants with the following rules:
 
-- :mod:`build_powerplants` for today's thermal power plant capacities using `powerplantmatching <https://github.com/FRESNA/powerplantmatching>`_ allocating these to the closest substation for each powerplant,
+- :mod:`build_powerplants` for today's thermal power plant capacities using `powerplantmatching <https://github.com/FRESNA/powerplantmatching>`__ allocating these to the closest substation for each powerplant,
 - :mod:`build_natura_raster` for rasterising NATURA2000 natural protection areas,
 - :mod:`build_ship_raster` for building shipping traffic density,
 - :mod:`build_renewable_profiles` for the hourly capacity factors and installation potentials constrained by land-use in each substation's Voronoi cell for PV, onshore and offshore wind, and
