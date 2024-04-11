@@ -16,10 +16,10 @@ Upcoming Release
 * bugfix: installed heating capacities were 5% lower than existing heating capacities
 
 * bugfix: convert Strings to pathlib.Path objects as input to ConfigSettings
-* Corrected a bug leading to power plants operating after their DateOut 
+* Corrected a bug leading to power plants operating after their DateOut
   (https://github.com/PyPSA/pypsa-eur/pull/958). Added additional grouping years
   before 1980.
-  
+
 * Upgrade default techno-economic assumptions to ``technology-data`` v0.8.1.
 
 
