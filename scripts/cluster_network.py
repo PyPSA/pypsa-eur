@@ -428,7 +428,20 @@ def clustering_for_n_clusters(
     return clustering
 
 
-def cluster_regions(busmaps, which, input=None, output=None):
+def cluster_regions(n, busmaps, which, input=None, output=None):
+    """
+    Cluster regions based on busmaps and save the results to a file and to the
+    network.
+
+    Parameters:
+    - busmaps (list): A list of busmaps used for clustering.
+    - which (str): The type of regions to cluster.
+    - input (str, optional): The input file path. Defaults to None.
+    - output (str, optional): The output file path. Defaults to None.
+
+    Returns:
+    None
+    """
     busmap = reduce(lambda x, y: x.map(y), busmaps[1:], busmaps[0])
 
     regions = gpd.read_file(getattr(input, which))
@@ -438,7 +451,7 @@ def cluster_regions(busmaps, which, input=None, output=None):
     regions_c = regions_c.reset_index()
     regions_c.to_file(getattr(output, which))
 
-    # remove old regions
+    # remove original regions
     remove = n.shapes.query("component == 'Bus' and type == @which").index
     n.mremove("Shape", remove)
 
@@ -456,8 +469,8 @@ def cluster_regions(busmaps, which, input=None, output=None):
     )
 
 
-def plot_busmap_for_n_clusters(n, n_clusters, fn=None):
-    busmap = busmap_for_n_clusters(n, n_clusters)
+def plot_busmap_for_n_clusters(n, n_clusters, solver_name="scip", fn=None):
+    busmap = busmap_for_n_clusters(n, n_clusters, solver_name)
     cs = busmap.unique()
     cr = sns.color_palette("hls", len(cs))
     n.plot(bus_colors=busmap.map(dict(zip(cs, cr))))
@@ -554,17 +567,15 @@ if __name__ == "__main__":
             params.focus_weights,
         )
 
-    update_p_nom_max(clustering.network)
+    nc = clustering.network
+    update_p_nom_max(nc)
 
     if params.cluster_network.get("consider_efficiency_classes"):
         labels = [f" {label} efficiency" for label in ["low", "medium", "high"]]
-        nc = clustering.network
         nc.generators["carrier"] = nc.generators.carrier.replace(labels, "", regex=True)
 
-    clustering.network.meta = dict(
-        snakemake.config, **dict(wildcards=dict(snakemake.wildcards))
-    )
-    clustering.network.export_to_netcdf(snakemake.output.network)
+    nc.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
+    nc.export_to_netcdf(snakemake.output.network)
     for attr in (
         "busmap",
         "linemap",
@@ -572,4 +583,6 @@ if __name__ == "__main__":
         getattr(clustering, attr).to_csv(snakemake.output[attr])
 
     for which in ["regions_onshore", "regions_offshore"]:
-        cluster_regions((clustering.busmap,), which, snakemake.input, snakemake.output)
+        cluster_regions(
+            nc, (clustering.busmap,), which, snakemake.input, snakemake.output
+        )

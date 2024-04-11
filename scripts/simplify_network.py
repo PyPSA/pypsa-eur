@@ -630,4 +630,4 @@ if __name__ == "__main__":
     busmap_s.to_csv(snakemake.output.busmap)
 
     for which in ["regions_onshore", "regions_offshore"]:
-        cluster_regions(busmaps, which, snakemake.input, snakemake.output)
+        cluster_regions(n, busmaps, which, snakemake.input, snakemake.output)
