@@ -445,9 +445,10 @@ def add_heating_capacities_installed_before_baseyear(
 
         valid_grouping_years = pd.Series(
             [
-                int(gy)
-                for gy in grouping_years
-                if int(baseyear) - default_lifetime <= int(gy) < int(baseyear)
+                int(grouping_year)
+                for grouping_year in grouping_years
+                if int(grouping_year) + default_lifetime > int(baseyear)
+                and int(grouping_year) < int(baseyear)
             ]
         )
         # Installation is assumed to be linear for the past
