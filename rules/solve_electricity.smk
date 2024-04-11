@@ -14,9 +14,9 @@ rule solve_network:
         custom_extra_functionality=input_custom_extra_functionality,
     input:
         network=resources("networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"),
-        config=RESULTS + "config.yaml",
     output:
         network=RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+        config=RESULTS + "configs/config.elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.yaml",
     log:
         solver=normpath(
             RESULTS
@@ -25,13 +25,13 @@ rule solve_network:
         python=RESULTS
         + "logs/solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_python.log",
     benchmark:
-        RESULTS + "benchmarks/solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}"
+        (RESULTS + "benchmarks/solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}")
     threads: solver_threads
     resources:
         mem_mb=memory,
-        walltime=config_provider("solving", "walltime", default="12:00:00"),
+        runtime=config_provider("solving", "runtime", default="6h"),
     shadow:
-        "minimal"
+        "shallow"
     conda:
         "../envs/environment.yaml"
     script:
@@ -60,9 +60,9 @@ rule solve_operations_network:
     threads: 4
     resources:
         mem_mb=(lambda w: 10000 + 372 * int(w.clusters)),
-        walltime=config_provider("solving", "walltime", default="12:00:00"),
+        runtime=config_provider("solving", "runtime", default="6h"),
     shadow:
-        "minimal"
+        "shallow"
     conda:
         "../envs/environment.yaml"
     script:

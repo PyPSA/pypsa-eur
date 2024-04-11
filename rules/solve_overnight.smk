@@ -15,10 +15,11 @@ rule solve_sector_network:
     input:
         network=RESULTS
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
-        config=RESULTS + "config.yaml",
     output:
-        RESULTS
+        network=RESULTS
         + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        config=RESULTS
+        + "configs/config.elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.yaml",
     shadow:
         "shallow"
     log:
@@ -30,8 +31,8 @@ rule solve_sector_network:
         + "logs/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_python.log",
     threads: solver_threads
     resources:
-        mem_mb=config_provider("solving", "mem"),
-        walltime=config_provider("solving", "walltime", default="12:00:00"),
+        mem_mb=config_provider("solving", "mem_mb"),
+        runtime=config_provider("solving", "runtime", default="6h"),
     benchmark:
         (
             RESULTS

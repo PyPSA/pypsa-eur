@@ -93,7 +93,12 @@ import powerplantmatching as pm
 import pypsa
 import scipy.sparse as sparse
 import xarray as xr
-from _helpers import configure_logging, set_scenario_config, update_p_nom_max
+from _helpers import (
+    configure_logging,
+    get_snapshots,
+    set_scenario_config,
+    update_p_nom_max,
+)
 from powerplantmatching.export import map_country_bus
 from shapely.prepared import prep
 
@@ -179,12 +184,13 @@ def sanitize_carriers(n, config):
 
 
 def sanitize_locations(n):
-    n.buses["x"] = n.buses.x.where(n.buses.x != 0, n.buses.location.map(n.buses.x))
-    n.buses["y"] = n.buses.y.where(n.buses.y != 0, n.buses.location.map(n.buses.y))
-    n.buses["country"] = n.buses.country.where(
-        n.buses.country.ne("") & n.buses.country.notnull(),
-        n.buses.location.map(n.buses.country),
-    )
+    if "location" in n.buses.columns:
+        n.buses["x"] = n.buses.x.where(n.buses.x != 0, n.buses.location.map(n.buses.x))
+        n.buses["y"] = n.buses.y.where(n.buses.y != 0, n.buses.location.map(n.buses.y))
+        n.buses["country"] = n.buses.country.where(
+            n.buses.country.ne("") & n.buses.country.notnull(),
+            n.buses.location.map(n.buses.country),
+        )
 
 
 def add_co2_emissions(n, costs, carriers):
@@ -586,7 +592,7 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **par
         # fill missing max hours to params value and
         # assume no natural inflow due to lack of data
         max_hours = params.get("PHS_max_hours", 6)
-        phs = phs.replace({"max_hours": {0: max_hours}})
+        phs = phs.replace({"max_hours": {0: max_hours, np.nan: max_hours}})
         n.madd(
             "StorageUnit",
             phs.index,
@@ -795,6 +801,10 @@ if __name__ == "__main__":
     params = snakemake.params
 
     n = pypsa.Network(snakemake.input.base_network)
+
+    time = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
+    n.set_snapshots(time)
+
     Nyears = n.snapshot_weightings.objective.sum() / 8760.0
 
     costs = load_costs(

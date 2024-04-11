@@ -10,6 +10,91 @@ Release Notes
 Upcoming Release
 ================
 
+* Include gas and oil fields and saline aquifers in estimation of CO2 sequestration potential.
+
+* bugfix: convert Strings to pathlib.Path objects as input to ConfigSettings
+
+* Allow the use of more solvers in clustering (Xpress, COPT, Gurobi, CPLEX, SCIP, MOSEK).
+
+* Enhanced support for choosing different weather years
+  (https://github.com/PyPSA/pypsa-eur/pull/204):
+
+  - Processed energy statistics from eurostat (1990-2021) and IDEES (2000-2015)
+    are now initially stored for all available years and filtered by the year
+    given in ``energy: energy_totals_year:``.
+
+  - Added option to supplement electricity load data with synthetic time series
+    for years not contained in OPSD (from https://zenodo.org/records/10820928,
+    ``load: supplement_synthetic:``).
+
+  - The total annual heat demand for years not contained in the energy
+    statistics by eurostat (1990-2021) or IDEES (2000-2015)  are scaled based on
+    a regression between the total number of heating degree days and the total
+    annual heat demand between the years 2007-2021, assuming a similar building
+    stock.
+
+  - Added option to scale annual hydro-electricity generation data for years not
+    contained in the in EIA (1980-2021) based on a regression between annual
+    generation and total runoff per country for the years 1980-2021
+    (``renewable: hydro: eia_approximate_missing:``)
+
+  - Added option to normalize annual hydro generation data by the associated
+    installed capacity reported by EIA (1980-2021) in order to eliminate changes
+    in generation due to newly built capacity (``renewable: hydro:
+    eia_approximate_missing: eia_correct_by_capacity:``).
+
+  - Added option to make hydro generation data independent of weather year
+    (``renewable: hydro: eia_approximate_missing: eia_norm_year:``).
+
+  - Added option to drop leap days (``enable: drop_leap_day:``).
+
+  - Added option to make electric load data independent of weather year
+    (``load: fixed_year:``).
+
+  - Include time series of Swiss number of passenger vehicles from the `Swiss
+    Federal Statistical Office
+    <https://www.bfs.admin.ch/bfs/en/home/statistics/mobility-transport/transport-infrastructure-vehicles/vehicles/road-vehicles-stock-level-motorisation.html>`_.
+
+  - Updated hydro-electricity generation and capacity data from EIA.
+
+  - The easiest way to sweep over multiple weather years is to use the new
+    scenario management. An example for the necessary `create_scenarios.py`
+    script can be found in this `Github gist
+    <https://gist.github.com/fneum/47b857862dd9148a22eca5a2e85caa9a>`_.
+
+* Removed rule ``copy_config``. Instead, a config file is created for each
+  network output of the ``solve_*`` rules, with the same content as ``n.meta``.
+
+* Added new HVDC transmission projects from `TYNDP 2024 draft projects
+  <https://tyndp.entsoe.eu/news/176-pan-european-electricity-transmission-projects-and-33-storage-projects-will-be-assessed-in-tyndp-2024>`_.
+
+* Upgrade to Snakemake v8.5+. This version is the new minimum version required.
+  To upgrade an existing environment, run ``conda install -c bioconda
+  snakemake-minimal">=8.5"`` and ``pip install snakemake-storage-plugin-http``
+  (https://github.com/PyPSA/pypsa-eur/pull/825).
+
+* Corrected a bug leading to power plants operating after their DateOut
+  (https://github.com/PyPSA/pypsa-eur/pull/958). Added additional grouping years
+  before 1980.
+
+* Add decommissioning of existing renewables assets in `add_existing_baseyear`.
+
+* The Eurostat data was updated to the 2023 version in :mod:`build_energy_totals`.
+
+* The latest `Swiss energy totals
+  <https://www.bfe.admin.ch/bfe/de/home/versorgung/statistik-und-geodaten/energiestatistiken/energieverbrauch-nach-verwendungszweck.html/>`_
+  have been updated to the 2023 version.
+
+* The JRC-IDEES data is only available until 2015. For energy totals years (``energy: energy_totals_year``) after
+  2015, the data scaled using the ratio of Eurostat data reported for the energy
+  totals year and 2015.
+
+* The default energy totals year (``energy: energy_totals_year``) was updated to 2019.
+
+* Upgrade default techno-economic assumptions to ``technology-data`` v0.8.1.
+
+* Add possibility to download cost data from custom fork of ``technology-data``.
+
 * Linearly interpolate missing investment periods in year-dependent
   configuration options.
 
@@ -69,6 +154,9 @@ Upcoming Release
   - Collection rules get a new wildcard ``run=config["run"]["name"]`` so they
     can collect outputs across different scenarios.
 
+  - It is further possible to encapsulate your scenarios in a directory using
+    the setting ``run: prefix:``.
+
   - **Warning:** One caveat remains for the scenario management with myopic or
     perfect foresight pathway optimisation. The first investment period must be
     shared across all scenarios. The reason is that the ``wildcard_constraints``
@@ -80,6 +168,18 @@ Upcoming Release
   marked as ``protected()`` as the download size is small.
 
 * Bugfix: allow modelling sector-coupled landlocked regions. (Fixed handling of offshore wind.)
+
+* Adapt the disabling of transmission expansion in myopic foresight optimisations when limit is already reached to also handle cost limits.
+
+* Fix duplicated years and grouping years reference in `add_land_use_constraint_m`.
+
+* Fix type error with `m` option in `cluster_network`.
+
+* Fix error with `symbol` of `buses` in `simplify_network`.
+
+* Fix index of existing capacities in `add_power_capacities_installed_before_baseyear` with `m` option.
+
+* Fix custom busmap read in `cluster_network`.
 
 * Allow the expansion of waste water heat recovery systems (WWHRS) as new technology and a part of
   building retrofitting

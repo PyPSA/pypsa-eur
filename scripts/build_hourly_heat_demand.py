@@ -11,7 +11,7 @@ from itertools import product
 import numpy as np
 import pandas as pd
 import xarray as xr
-from _helpers import generate_periodic_profiles, set_scenario_config
+from _helpers import generate_periodic_profiles, get_snapshots, set_scenario_config
 
 
 def heat_dsm_profile(snapshots, nodes, options):
@@ -42,7 +42,9 @@ if __name__ == "__main__":
         )
     set_scenario_config(snakemake)
 
-    snapshots = pd.date_range(freq="h", **snakemake.params.snapshots)
+    snapshots = get_snapshots(
+        snakemake.params.snapshots, snakemake.params.drop_leap_day
+    )
     options = snakemake.params.sector
 
     daily_space_heat_demand = (

@@ -24,7 +24,12 @@ from _helpers import (
     update_config_from_wildcards,
 )
 from add_electricity import calculate_annuity, sanitize_carriers, sanitize_locations
-from build_energy_totals import build_co2_totals, build_eea_co2, build_eurostat_co2
+from build_energy_totals import (
+    build_co2_totals,
+    build_eea_co2,
+    build_eurostat,
+    build_eurostat_co2,
+)
 from networkx.algorithms import complement
 from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentation
 from prepare_network import maybe_adjust_costs_and_potentials
@@ -249,22 +254,17 @@ def get(item, investment_year=None):
 
 
 def co2_emissions_year(
-    countries, input_eurostat, options, emissions_scope, report_year, input_co2, year
+    countries, input_eurostat, options, emissions_scope, input_co2, year
 ):
     """
     Calculate CO2 emissions in one specific year (e.g. 1990 or 2018).
     """
     eea_co2 = build_eea_co2(input_co2, year, emissions_scope)
 
-    # TODO: read Eurostat data from year > 2014
-    # this only affects the estimation of CO2 emissions for BA, RS, AL, ME, MK
-    if year > 2014:
-        eurostat_co2 = build_eurostat_co2(
-            input_eurostat, countries, report_year, year=2014
-        )
+    eurostat = build_eurostat(input_eurostat, countries)
 
-    else:
-        eurostat_co2 = build_eurostat_co2(input_eurostat, countries, report_year, year)
+    # this only affects the estimation of CO2 emissions for BA, RS, AL, ME, MK
+    eurostat_co2 = build_eurostat_co2(eurostat, year)
 
     co2_totals = build_co2_totals(countries, eea_co2, eurostat_co2)
 
@@ -279,9 +279,7 @@ def co2_emissions_year(
 
 
 # TODO: move to own rule with sector-opts wildcard?
-def build_carbon_budget(
-    o, input_eurostat, fn, emissions_scope, report_year, input_co2, options
-):
+def build_carbon_budget(o, input_eurostat, fn, emissions_scope, input_co2, options):
     """
     Distribute carbon budget following beta or exponential transition path.
     """
@@ -302,7 +300,6 @@ def build_carbon_budget(
         input_eurostat,
         options,
         emissions_scope,
-        report_year,
         input_co2,
         year=1990,
     )
@@ -313,7 +310,6 @@ def build_carbon_budget(
         input_eurostat,
         options,
         emissions_scope,
-        report_year,
         input_co2,
         year=2018,
     )
@@ -824,6 +820,10 @@ def average_every_nhours(n, offset):
     m = n.copy(with_time=False)
 
     snapshot_weightings = n.snapshot_weightings.resample(offset).sum()
+    sns = snapshot_weightings.index
+    if snakemake.params.drop_leap_day:
+        sns = sns[~((sns.month == 2) & (sns.day == 29))]
+    snapshot_weightings = snapshot_weightings.loc[sns]
     m.set_snapshots(snapshot_weightings.index)
     m.snapshot_weightings = snapshot_weightings
 
@@ -3748,6 +3748,10 @@ if __name__ == "__main__":
     pop_weighted_energy_totals = (
         pd.read_csv(snakemake.input.pop_weighted_energy_totals, index_col=0) * nyears
     )
+    pop_weighted_heat_totals = (
+        pd.read_csv(snakemake.input.pop_weighted_heat_totals, index_col=0) * nyears
+    )
+    pop_weighted_energy_totals.update(pop_weighted_heat_totals)
 
     patch_electricity_network(n)
 
@@ -3813,14 +3817,12 @@ if __name__ == "__main__":
         fn = "results/" + snakemake.params.RDIR + "/csvs/carbon_budget_distribution.csv"
         if not os.path.exists(fn):
             emissions_scope = snakemake.params.emissions_scope
-            report_year = snakemake.params.eurostat_report_year
             input_co2 = snakemake.input.co2
             build_carbon_budget(
                 co2_budget,
                 snakemake.input.eurostat,
                 fn,
                 emissions_scope,
-                report_year,
                 input_co2,
                 options,
             )
