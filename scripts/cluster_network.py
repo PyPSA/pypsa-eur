@@ -428,7 +428,7 @@ def clustering_for_n_clusters(
     return clustering
 
 
-def cluster_regions(n, busmaps, which, input=None, output=None):
+def cluster_regions(busmaps, regions):
     """
     Cluster regions based on busmaps and save the results to a file and to the
     network.
@@ -436,36 +436,41 @@ def cluster_regions(n, busmaps, which, input=None, output=None):
     Parameters:
     - busmaps (list): A list of busmaps used for clustering.
     - which (str): The type of regions to cluster.
-    - input (str, optional): The input file path. Defaults to None.
-    - output (str, optional): The output file path. Defaults to None.
 
     Returns:
     None
     """
     busmap = reduce(lambda x, y: x.map(y), busmaps[1:], busmaps[0])
-
-    regions = gpd.read_file(getattr(input, which))
     regions = regions.reindex(columns=["name", "geometry"]).set_index("name")
     regions_c = regions.dissolve(busmap)
     regions_c.index.name = "name"
-    regions_c = regions_c.reset_index()
-    regions_c.to_file(getattr(output, which))
+    return regions_c.reset_index()
 
-    # remove original regions
+
+def append_bus_shapes(n, shapes, type):
+    """
+    Append shapes to the network.
+
+    Parameters:
+        n (pypsa.Network): The network to which the shapes will be appended.
+        shapes (geopandas.GeoDataFrame): The shapes to be appended.
+        **kwargs: Additional keyword arguments used in `n.madd`.
+
+    Returns:
+        None
+    """
     remove = n.shapes.query("component == 'Bus' and type == @which").index
     n.mremove("Shape", remove)
 
-    # add new clustered regions
     offset = n.shapes.index.astype(int).max() + 1 if not n.shapes.empty else 0
-    index = regions_c.index.astype(int) + offset
-    type = which.split("_")[1]
+    shapes.index = shapes.index.astype(int) + offset
     n.madd(
         "Shape",
-        index,
-        geometry=regions_c.geometry,
-        idx=index,
+        shapes.index,
+        geometry=shapes.geometry,
+        idx=shapes.name,
         component="Bus",
-        type="which",
+        type=type,
     )
 
 
@@ -574,15 +579,18 @@ if __name__ == "__main__":
         labels = [f" {label} efficiency" for label in ["low", "medium", "high"]]
         nc.generators["carrier"] = nc.generators.carrier.replace(labels, "", regex=True)
 
-    nc.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
-    nc.export_to_netcdf(snakemake.output.network)
     for attr in (
         "busmap",
         "linemap",
     ):  # also available: linemap_positive, linemap_negative
         getattr(clustering, attr).to_csv(snakemake.output[attr])
 
+    nc.shapes = n.shapes.copy()
     for which in ["regions_onshore", "regions_offshore"]:
-        cluster_regions(
-            nc, (clustering.busmap,), which, snakemake.input, snakemake.output
-        )
+        regions = gpd.read_file(snakemake.input[which])
+        clustered_regions = cluster_regions((clustering.busmap,), regions)
+        append_bus_shapes(nc, clustered_regions, type=which.split("_")[1])
+        clustered_regions.to_file(snakemake.output[which])
+
+    nc.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
+    nc.export_to_netcdf(snakemake.output.network)
