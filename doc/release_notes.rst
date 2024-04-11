@@ -10,7 +10,9 @@ Release Notes
 Upcoming Release
 ================
 
-* Group existing capacities to the earlier grouping_year for consistency with optimized capacities
+* Group existing capacities to the earlier grouping_year for consistency with optimized capacities.
+
+* bugfix: installed heating capacities were 5% lower than existing heating capacities
 
 * Upgrade to Snakemake v8.5+. This version is the new minimum version required.
   To upgrade an existing environment, run ``conda install -c bioconda
