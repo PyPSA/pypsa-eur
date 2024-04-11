@@ -181,6 +181,8 @@ Upcoming Release
 
 * Fix custom busmap read in `cluster_network`.
 
+* Clarify suffix usage in `add_existing_baseyear`.
+
 PyPSA-Eur 0.10.0 (19th February 2024)
 =====================================
 
