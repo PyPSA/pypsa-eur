@@ -704,8 +704,14 @@ def _set_shapes(n, country_shapes, offshore_shapes):
     country_shapes["type"] = "country"
     offshore_shapes = gpd.read_file(offshore_shapes).rename(columns={"name": "idx"})
     offshore_shapes["type"] = "offshore"
-    all_shapes = pd.concat([country_shapes, offshore_shapes])
-    n.shapes = pd.concat([n.shapes, all_shapes], ignore_index=True)
+    all_shapes = pd.concat([country_shapes, offshore_shapes], ignore_index=True)
+    n.madd(
+        "Shape",
+        all_shapes.index,
+        geometry=all_shapes.geometry,
+        idx=all_shapes.idx,
+        type=all_shapes.type,
+    )
 
 
 def base_network(
