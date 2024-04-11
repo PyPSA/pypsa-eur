@@ -11,7 +11,9 @@ import os
 import re
 import urllib
 from functools import partial
+from os.path import exists
 from pathlib import Path
+from shutil import copyfile
 
 import pandas as pd
 import pytz
@@ -23,6 +25,45 @@ from tqdm import tqdm
 logger = logging.getLogger(__name__)
 
 REGION_COLS = ["geometry", "name", "x", "y", "country"]
+
+
+def copy_default_files(workflow):
+    default_files = {
+        "config/config.default.yaml": "config/config.yaml",
+        "config/scenarios.template.yaml": "config/scenarios.yaml",
+    }
+    for template, target in default_files.items():
+        target = os.path.join(workflow.current_basedir, target)
+        template = os.path.join(workflow.current_basedir, template)
+        if not exists(target) and exists(template):
+            copyfile(template, target)
+
+
+def get_scenarios(run):
+    scenario_config = run.get("scenarios", {})
+    if run["name"] and scenario_config.get("enable"):
+        fn = Path(scenario_config["file"])
+        scenarios = yaml.safe_load(fn.read_text())
+        if run["name"] == "all":
+            run["name"] = list(scenarios.keys())
+        return scenarios
+    return {}
+
+
+def get_rdir(run):
+    scenario_config = run.get("scenarios", {})
+    if run["name"] and scenario_config.get("enable"):
+        RDIR = "{run}/"
+    elif run["name"]:
+        RDIR = run["name"] + "/"
+    else:
+        RDIR = ""
+
+    prefix = run.get("prefix", "")
+    if prefix:
+        RDIR = f"{prefix}/{RDIR}"
+
+    return RDIR
 
 
 def get_run_path(fn, dir, rdir, shared_resources):
@@ -393,7 +434,7 @@ def mock_snakemake(
             configfiles = [configfiles]
 
         resource_settings = ResourceSettings()
-        config_settings = ConfigSettings(configfiles=configfiles)
+        config_settings = ConfigSettings(configfiles=map(Path, configfiles))
         workflow_settings = WorkflowSettings()
         storage_settings = StorageSettings()
         dag_settings = DAGSettings(rerun_triggers=[])

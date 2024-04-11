@@ -913,6 +913,10 @@ def solve_network(n, config, solving, **kwargs):
         logger.warning(
             f"Solving status '{status}' with termination condition '{condition}'"
         )
+
+    if status == "warning":
+        raise RuntimeError("Solving status 'warning'. Results may not be reliable. Aborting.")
+    
     if "infeasible" in condition:
         labels = n.model.compute_infeasibilities()
         logger.info(f"Labels:\n{labels}")
