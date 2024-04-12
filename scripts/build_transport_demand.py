@@ -78,10 +78,10 @@ def build_transport_demand(traffic_fn, airtemp_fn, nodes, nodal_transport_data):
         + pop_weighted_energy_totals["total rail"]
         - pop_weighted_energy_totals["electricity rail"]
     )
-    
+
     # convert average fuel efficiency from kW/100 km -> MW/100km
     eff = nodal_transport_data["average fuel efficiency"] * 1e3
-    
+
     return (transport_shape.multiply(energy_totals_transport) * 1e6 * nyears).divide(
         eff * ice_correction
     )
