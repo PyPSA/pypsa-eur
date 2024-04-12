@@ -394,7 +394,7 @@ def build_idees(countries):
         keys=countries,
         names=["country", "year"],
     )
-    
+
     # efficiency kgoe/100km -> ktoe/100km
     totals.loc[:, "passenger car efficiency"] *= 1e3
     # convert ktoe to TWh
