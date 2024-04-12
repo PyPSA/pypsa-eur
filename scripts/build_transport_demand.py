@@ -45,7 +45,7 @@ def build_nodal_transport_data(fn, pop_layout, year):
 
 def build_transport_demand(traffic_fn, airtemp_fn, nodes, nodal_transport_data):
     """
-    Returns transport demand per bus in unit kinetic energy.
+    Returns transport demand per bus in unit km driven [100 km].
     """
     # averaged weekly counts from the year 2010-2015
     traffic = pd.read_csv(traffic_fn, skiprows=2, usecols=["count"]).squeeze("columns")
@@ -78,9 +78,12 @@ def build_transport_demand(traffic_fn, airtemp_fn, nodes, nodal_transport_data):
         + pop_weighted_energy_totals["total rail"]
         - pop_weighted_energy_totals["electricity rail"]
     )
-
+    
+    # convert average fuel efficiency from kW/100 km -> MW/100km
+    eff = nodal_transport_data["average fuel efficiency"] * 1e3
+    
     return (transport_shape.multiply(energy_totals_transport) * 1e6 * nyears).divide(
-        nodal_transport_data["average fuel efficiency"] * ice_correction
+        eff * ice_correction
     )
 
 

@@ -1562,7 +1562,7 @@ def add_EVs(
         unit="MWh_el",
     )
 
-    car_efficiency = costs.at["Battery electric (passenger cars)", "efficiency"]
+    car_efficiency = options["transport_electric_efficiency"]
 
     # temperature corrected efficiency
     efficiency = get_temp_efficency(
@@ -1730,7 +1730,7 @@ def add_land_transport(n, costs):
 
     logger.info("Add land transport")
 
-    # read in transport demand in units kinetic energy
+    # read in transport demand in units driven km [100 km]
     transport = pd.read_csv(
         snakemake.input.transport_demand, index_col=0, parse_dates=True
     )
@@ -1764,7 +1764,7 @@ def add_land_transport(n, costs):
         location=nodes,
         suffix=" land transport",
         carrier="land transport demand",
-        unit="MWh_kinetic",
+        unit="100 km",
     )
 
     p_set = transport[nodes]

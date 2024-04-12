@@ -430,8 +430,8 @@ sector:
     2040: 0.3
     2045: 0.15
     2050: 0
-  transport_fuel_cell_efficiency: 0.5
-  transport_internal_combustion_efficiency: 0.3
+  transport_fuel_cell_efficiency: 30.003 # MWh_H2 per 100 km
+  transport_internal_combustion_efficiency: 16.0712 # MWh_oil per 100 km
   agriculture_machinery_electric_share: 0
   agriculture_machinery_oil_share: 1
   agriculture_machinery_fuel_efficiency: 0.7
