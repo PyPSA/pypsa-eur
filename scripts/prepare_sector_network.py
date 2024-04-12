@@ -1690,7 +1690,7 @@ def add_ice_cars(n, nodes, p_set, ice_share, temperature):
 
     add_carrier_buses(n, "oil")
 
-    car_efficiency = options["transport_internal_combustion_efficiency"]
+    car_efficiency = options["transport_ice_efficiency"]
 
     # temperature corrected efficiency
     efficiency = get_temp_efficency(
