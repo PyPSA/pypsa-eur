@@ -9,6 +9,9 @@ Release Notes
 
 Upcoming Release
 ================
+* Group existing capacities to the earlier grouping_year for consistency with optimized capacities.
+
+* bugfix: installed heating capacities were 5% lower than existing heating capacities
 
 * Include gas and oil fields and saline aquifers in estimation of CO2 sequestration potential.
 
