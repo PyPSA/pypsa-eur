@@ -181,6 +181,8 @@ Upcoming Release
 
 * Fix custom busmap read in `cluster_network`.
 
+* Add `nodal_supply_energy` to `make_summary`.
+
 PyPSA-Eur 0.10.0 (19th February 2024)
 =====================================
 
