@@ -148,6 +148,7 @@ if config["enable"]["retrieve"] and config["enable"].get(
     rule retrieve_eurostat_data:
         output:
             directory("data/eurostat/eurostat-energy_balances-april_2023_edition"),
+            "data/eurostat/eurostat-household_energy_balances-february_2024.csv",
         log:
             "logs/retrieve_eurostat_data.log",
         retries: 2
