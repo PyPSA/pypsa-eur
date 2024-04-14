@@ -7,10 +7,10 @@ Retrieve and extract eurostat energy balances data.
 """
 
 
-import logging
-import zipfile
 import gzip
+import logging
 import shutil
+import zipfile
 from pathlib import Path
 
 from _helpers import configure_logging, progress_retrieve, set_scenario_config
@@ -50,11 +50,15 @@ if __name__ == "__main__":
         f"{rootpath}/data/eurostat/eurostat-household_energy_balances-february_2024.csv"
     )
 
-    logger.info(f"Downloading Eurostats' disaggregated household energy balances data from '{url_eurostat_household}'.")
+    logger.info(
+        f"Downloading Eurostats' disaggregated household energy balances data from '{url_eurostat_household}'."
+    )
     progress_retrieve(url_eurostat_household, tarball_fn, disable=disable_progress)
 
     logger.info("Extracting Eurostat's disaggregated household energy balance data.")
-    with gzip.open(tarball_fn, 'rb') as f_in, open(to_fn, 'wb') as f_out:
+    with gzip.open(tarball_fn, "rb") as f_in, open(to_fn, "wb") as f_out:
         shutil.copyfileobj(f_in, f_out)
 
-    logger.info(f"Eurostat's disaggregated household energy balance data available in '{to_fn}'.")
+    logger.info(
+        f"Eurostat's disaggregated household energy balance data available in '{to_fn}'."
+    )

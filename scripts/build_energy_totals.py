@@ -945,18 +945,21 @@ def rescale_idees_from_eurostat(
 
 def update_residential_from_eurostat(energy):
     """
-        Updates energy balances for residential from disaggregated data from Eurostat
+    Updates energy balances for residential from disaggregated data from
+    Eurostat.
     """
     # Read disaggregated Eurostat's data
     fn = snakemake.input.eurostat_households
     eurostat_data = pd.read_csv(fn)
 
-    # Column mapping for energy type 
-    nrg_type = {"total residential":"FC_OTH_HH_E",
-                "total residential space":"FC_OTH_HH_E_SH",
-                "total residential water":"FC_OTH_HH_E_WH",
-                "total residential cooking":"FC_OTH_HH_E_CK"}
-    
+    # Column mapping for energy type
+    nrg_type = {
+        "total residential": "FC_OTH_HH_E",
+        "total residential space": "FC_OTH_HH_E_SH",
+        "total residential water": "FC_OTH_HH_E_WH",
+        "total residential cooking": "FC_OTH_HH_E_CK",
+    }
+
     # Make temporary copy of energy_totals
     energy_totals = energy.copy().reset_index()
 
@@ -964,19 +967,29 @@ def update_residential_from_eurostat(energy):
         # Select energy balance type
         nrg_data = eurostat_data.query("nrg_bal in @code").copy()
         # Rename columns
-        nrg_data.rename(columns={"geo":"country", "TIME_PERIOD":"year", "OBS_VALUE":nrg_name}, inplace=True)
+        nrg_data.rename(
+            columns={"geo": "country", "TIME_PERIOD": "year", "OBS_VALUE": nrg_name},
+            inplace=True,
+        )
         # Convert TJ to TWh
         nrg_data[nrg_name] = nrg_data[nrg_name] / 3.6e3
-        # Select value, country, year columns 
-        nrg_data = nrg_data[["country","year", nrg_name]]
-        # To update energy data with Eurostat households data 
+        # Select value, country, year columns
+        nrg_data = nrg_data[["country", "year", nrg_name]]
+        # To update energy data with Eurostat households data
         # 1) Merge the two DataFrames on 'year' and 'country'
-        merged_df = energy_totals.merge(nrg_data, on=['year', 'country'], suffixes=('_energy_totals', '_nrg_data'), how='left')
+        merged_df = energy_totals.merge(
+            nrg_data,
+            on=["year", "country"],
+            suffixes=("_energy_totals", "_nrg_data"),
+            how="left",
+        )
         # 2) Update the 'nrg_name' column in energy with the values from nrg_data
-        energy_totals[nrg_name] = merged_df[f'{nrg_name}_nrg_data'].combine_first(merged_df[f'{nrg_name}_energy_totals'])
-        
+        energy_totals[nrg_name] = merged_df[f"{nrg_name}_nrg_data"].combine_first(
+            merged_df[f"{nrg_name}_energy_totals"]
+        )
+
     # Set indexes back
-    energy_totals.set_index(['country', 'year'], inplace=True)
+    energy_totals.set_index(["country", "year"], inplace=True)
 
     return energy_totals
 
