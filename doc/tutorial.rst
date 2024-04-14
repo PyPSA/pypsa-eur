@@ -323,4 +323,4 @@ Jupyter Notebooks).
 
     n = pypsa.Network("results/networks/elec_s_6_ec_lcopt_Co2L-24H.nc")
 
-For inspiration, read the `examples section in the PyPSA documentation <https://pypsa.readthedocs.io/en/latest/examples-basic.html>`_.
+For inspiration, read the `examples section in the PyPSA documentation <https://pypsa.readthedocs.io/en/latest/examples-basic.html>`__.
