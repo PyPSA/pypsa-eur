@@ -9,6 +9,11 @@ Release Notes
 
 Upcoming Release
 ================
+* Group existing capacities to the earlier grouping_year for consistency with optimized capacities.
+
+* bugfix: installed heating capacities were 5% lower than existing heating capacities
+
+* Include gas and oil fields and saline aquifers in estimation of CO2 sequestration potential.
 
 * bugfix: convert Strings to pathlib.Path objects as input to ConfigSettings
 
@@ -151,6 +156,9 @@ Upcoming Release
 
   - Collection rules get a new wildcard ``run=config["run"]["name"]`` so they
     can collect outputs across different scenarios.
+
+  - It is further possible to encapsulate your scenarios in a directory using
+    the setting ``run: prefix:``.
 
   - **Warning:** One caveat remains for the scenario management with myopic or
     perfect foresight pathway optimisation. The first investment period must be
