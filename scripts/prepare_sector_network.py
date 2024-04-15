@@ -1511,9 +1511,17 @@ def add_land_transport(n, costs):
     transport = pd.read_csv(
         snakemake.input.transport_demand, index_col=0, parse_dates=True
     )
+    # transport growth factor
+    demand_factor = get(options["land_transport_demand_factor"], investment_year)
+    if demand_factor != 1:
+        logger.warning(f"Changing land transport demand by {demand_factor*100-100:+.2f}%.")
+    
+    transport = demand_factor * transport
+
     number_cars = pd.read_csv(snakemake.input.transport_data, index_col=0)[
         "number cars"
     ]
+    number_cars = demand_factor * number_cars
     avail_profile = pd.read_csv(
         snakemake.input.avail_profile, index_col=0, parse_dates=True
     )
