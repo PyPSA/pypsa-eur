@@ -44,6 +44,8 @@ def get_scenarios(run):
     if run["name"] and scenario_config.get("enable"):
         fn = Path(scenario_config["file"])
         scenarios = yaml.safe_load(fn.read_text())
+        if scenarios == None:
+            raise Exception("The scenarios file appears to be empty. Make sure the scenarios are specified correctly and try re-starting the workflow, or disable the scenario management.")
         if run["name"] == "all":
             run["name"] = list(scenarios.keys())
         return scenarios
