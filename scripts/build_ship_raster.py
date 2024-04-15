@@ -45,6 +45,7 @@ import logging
 import zipfile
 from pathlib import Path
 
+import atlite
 import rioxarray
 from _helpers import configure_logging, set_scenario_config
 
