@@ -198,8 +198,6 @@ if __name__ == "__main__":
         fn = snakemake.input.era5_runoff
         eia_stats = approximate_missing_eia_stats(eia_stats, fn, countries)
 
-    eia_stats.to_csv(snakemake.output.eia_hydro)
-
     contained_years = pd.date_range(freq="YE", **snakemake.params.snapshots).year
     norm_year = config_hydro.get("eia_norm_year")
     missing_years = contained_years.difference(eia_stats.index)
