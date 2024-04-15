@@ -92,7 +92,7 @@ def define_spatial(nodes, options):
         spatial.gas.industry = nodes + " gas for industry"
         spatial.gas.industry_cc = nodes + " gas for industry CC"
         spatial.gas.biogas_to_gas = nodes + " biogas to gas"
-        spatial.gas.biogas_to_gas_cc = nodes + "biogas to gas CC"
+        spatial.gas.biogas_to_gas_cc = nodes + " biogas to gas CC"
     else:
         spatial.gas.nodes = ["EU gas"]
         spatial.gas.locations = ["EU"]
@@ -1917,10 +1917,15 @@ def add_heat(n, costs):
         if options["boilers"]:
             key = f"{name_type} gas boiler"
 
+            if investment_year < 2024:
+                extend_gas_boilers = False
+            else:
+                extend_gas_boilers = True
+
             n.madd(
                 "Link",
                 nodes + f" {name} gas boiler",
-                p_nom_extendable=True,
+                p_nom_extendable=extend_gas_boilers,
                 bus0=spatial.gas.df.loc[nodes, "nodes"].values,
                 bus1=nodes + f" {name} heat",
                 bus2="co2 atmosphere",
