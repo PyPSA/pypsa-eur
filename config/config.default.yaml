@@ -20,6 +20,7 @@ remote:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
+  prefix: ""
   name: ""
   scenarios:
     enable: false
@@ -359,8 +360,8 @@ solar_thermal:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#existing-capacities
 existing_capacities:
-  grouping_years_power: [1960, 1965, 1970, 1975, 1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2020, 2025, 2030]
-  grouping_years_heat: [1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2019] # these should not extend 2020
+  grouping_years_power: [1895, 1920, 1950, 1955, 1960, 1965, 1970, 1975, 1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2020, 2025, 2030]
+  grouping_years_heat: [1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2020] # heat grouping years >= baseyear will be ignored
   threshold_capacity: 10
   default_heating_lifetime: 20
   conventional_carriers:
@@ -516,7 +517,11 @@ sector:
   regional_coal_demand: false
   regional_co2_sequestration_potential:
     enable: false
-    attribute: 'conservative estimate Mt'
+    attribute:
+    - conservative estimate Mt
+    - conservative estimate GAS Mt
+    - conservative estimate OIL Mt
+    - conservative estimate aquifer Mt
     include_onshore: false
     min_size: 3
     max_size: 25
@@ -787,7 +792,6 @@ solving:
       PreDual: 0
       GURO_PAR_BARDENSETHRESH: 200
     gurobi-numeric-focus:
-      name: gurobi
       NumericFocus: 3       # Favour numeric stability over speed
       method: 2             # barrier
       crossover: 0          # do not use crossover
@@ -799,7 +803,6 @@ solving:
       threads: 8
       Seed: 123
     gurobi-fallback:        # Use gurobi defaults
-      name: gurobi
       crossover: 0
       method: 2             # barrier
       BarHomogeneous: 1     # Use homogeneous barrier if standard does not converge

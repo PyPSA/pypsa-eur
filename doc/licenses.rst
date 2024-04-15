@@ -10,12 +10,12 @@ Licenses
 
 PyPSA-Eur is released under multiple licenses:
 
-* All original source code is licensed as free software under `MIT <LICENSES/MIT.txt>`_.
-* The documentation is licensed under `CC-BY-4.0 <LICENSES/CC-BY-4.0.txt>`_.
-* Configuration files are mostly licensed under `CC0-1.0 <LICENSES/CC0-1.0.txt>`_.
-* Data files are licensed under `CC-BY-4.0 <LICENSES/CC-BY-4.0.txt>`_.
+* All original source code is licensed as free software under `MIT <LICENSES/MIT.txt>`__.
+* The documentation is licensed under `CC-BY-4.0 <LICENSES/CC-BY-4.0.txt>`__.
+* Configuration files are mostly licensed under `CC0-1.0 <LICENSES/CC0-1.0.txt>`__.
+* Data files are licensed under `CC-BY-4.0 <LICENSES/CC-BY-4.0.txt>`__.
 
-See the individual files and the `dep5 <.reuse/dep5>`_ file for license details.
+See the individual files and the `dep5 <.reuse/dep5>`__ file for license details.
 
 Additionally, different licenses and terms of use also apply to the various
 input data for both electricity-only and sector-coupled modelling exercises,
@@ -26,7 +26,7 @@ Electricity Systems Databundle
 
 .. note::
   More details are included in `the description of the
-  data bundles on zenodo <https://zenodo.org/record/3517935#.XbGeXvzRZGo>`_.
+  data bundles on zenodo <https://zenodo.org/record/3517935#.XbGeXvzRZGo>`__.
 
 .. csv-table::
    :header-rows: 1

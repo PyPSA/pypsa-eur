@@ -40,8 +40,8 @@ def add_brownfield(n, n_p, year):
         # CO2 or global EU values since these are already in n
         n_p.mremove(c.name, c.df.index[c.df.lifetime == np.inf])
 
-        # remove assets whose build_year + lifetime < year
-        n_p.mremove(c.name, c.df.index[c.df.build_year + c.df.lifetime < year])
+        # remove assets whose build_year + lifetime <= year
+        n_p.mremove(c.name, c.df.index[c.df.build_year + c.df.lifetime <= year])
 
         # remove assets if their optimized nominal capacity is lower than a threshold
         # since CHP heat Link is proportional to CHP electric Link, make sure threshold is compatible
