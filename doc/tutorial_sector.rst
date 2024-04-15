@@ -119,8 +119,6 @@ which were already included in the electricity-only tutorial:
     retrieve_databundle                                     1
     retrieve_electricity_demand                             1
     retrieve_gas_infrastructure_data                        1
-    retrieve_natura_raster                                  1
-    retrieve_sector_databundle                              1
     simplify_network                                        1
     solve_sector_network                                    1
     total                                                  60
@@ -153,7 +151,6 @@ successfully.
             8[label = "base_network", color = "0.31 0.6 0.85", style="rounded"];
             9[label = "build_shapes", color = "0.36 0.6 0.85", style="rounded"];
             10[label = "retrieve_databundle", color = "0.29 0.6 0.85", style="rounded"];
-            11[label = "retrieve_natura_raster", color = "0.01 0.6 0.85", style="rounded"];
             12[label = "build_bus_regions", color = "0.10 0.6 0.85", style="rounded"];
             13[label = "retrieve_cutout\ncutout: be-03-2013-era5", color = "0.37 0.6 0.85", style="rounded,dashed"];
             14[label = "build_renewable_profiles\ntechnology: onwind", color = "0.20 0.6 0.85", style="rounded"];
@@ -174,7 +171,6 @@ successfully.
             29[label = "prepare_network\nll: v1.5\nopts: ", color = "0.49 0.6 0.85", style="rounded"];
             30[label = "add_extra_components", color = "0.14 0.6 0.85", style="rounded"];
             31[label = "build_energy_totals", color = "0.39 0.6 0.85", style="rounded"];
-            32[label = "retrieve_sector_databundle", color = "0.58 0.6 0.85", style="rounded"];
             33[label = "build_population_weighted_energy_totals", color = "0.56 0.6 0.85", style="rounded"];
             34[label = "build_clustered_population_layouts", color = "0.49 0.6 0.85", style="rounded"];
             35[label = "build_population_layouts", color = "0.06 0.6 0.85", style="rounded"];
@@ -440,7 +436,6 @@ workflow:
             8[label = "base_network", color = "0.12 0.6 0.85", style="rounded"];
             9[label = "build_shapes", color = "0.23 0.6 0.85", style="rounded"];
             10[label = "retrieve_databundle", color = "0.61 0.6 0.85", style="rounded"];
-            11[label = "retrieve_natura_raster", color = "0.50 0.6 0.85", style="rounded"];
             12[label = "build_bus_regions", color = "0.51 0.6 0.85", style="rounded"];
             13[label = "retrieve_cutout\ncutout: be-03-2013-era5", color = "0.37 0.6 0.85", style="rounded,dashed"];
             14[label = "build_renewable_profiles\ntechnology: onwind", color = "0.63 0.6 0.85", style="rounded"];
@@ -462,7 +457,6 @@ workflow:
             30[label = "prepare_network\nll: v1.5\nopts: ", color = "0.56 0.6 0.85", style="rounded"];
             31[label = "add_extra_components", color = "0.11 0.6 0.85", style="rounded"];
             32[label = "build_energy_totals", color = "0.18 0.6 0.85", style="rounded"];
-            33[label = "retrieve_sector_databundle", color = "0.06 0.6 0.85", style="rounded"];
             34[label = "build_population_weighted_energy_totals", color = "0.03 0.6 0.85", style="rounded"];
             35[label = "build_clustered_population_layouts", color = "0.25 0.6 0.85", style="rounded"];
             36[label = "build_population_layouts", color = "0.57 0.6 0.85", style="rounded"];

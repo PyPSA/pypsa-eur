@@ -34,8 +34,7 @@ configuration, execute
 
     snakemake -call results/test-elec/networks/elec_s_6_ec_lcopt_Co2L-24H.nc --configfile config/test/config.electricity.yaml
 
-This configuration is set to download a reduced data set via the rules :mod:`retrieve_databundle`,
-:mod:`retrieve_natura_raster`, :mod:`retrieve_cutout`.
+This configuration is set to download a reduced cutout via the rule :mod:`retrieve_cutout`.
 For more information on the data dependencies of PyPSA-Eur, continue reading :ref:`data`.
 
 How to configure runs?
@@ -143,7 +142,6 @@ This triggers a workflow of multiple preceding jobs that depend on each rule's i
             7[label = "base_network", color = "0.27 0.6 0.85", style="rounded"];
             8[label = "build_shapes", color = "0.26 0.6 0.85", style="rounded"];
             9[label = "retrieve_databundle", color = "0.59 0.6 0.85", style="rounded"];
-            10[label = "retrieve_natura_raster", color = "0.47 0.6 0.85", style="rounded"];
             11[label = "build_bus_regions", color = "0.13 0.6 0.85", style="rounded"];
             12[label = "retrieve_cutout\ncutout: be-03-2013-era5", color = "0.36 0.6 0.85", style="rounded,dashed"];
             13[label = "build_renewable_profiles\ntechnology: onwind", color = "0.21 0.6 0.85", style="rounded"];
@@ -244,7 +242,6 @@ In the terminal, this will show up as a list of jobs to be run:
     retrieve_cost_data                 1
     retrieve_databundle                1
     retrieve_electricity_demand        1
-    retrieve_natura_raster             1
     simplify_network                   1
     solve_network                      1
     total                             22

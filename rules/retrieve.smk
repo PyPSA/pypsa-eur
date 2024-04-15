@@ -14,23 +14,27 @@ if config["enable"]["retrieve"] is False:
 
 if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", True):
     datafiles = [
-        "ch_cantons.csv",
         "je-e-21.03.02.xls",
         "eez/World_EEZ_v8_2014.shp",
-        "hydro_capacities.csv",
         "naturalearth/ne_10m_admin_0_countries.shp",
         "NUTS_2013_60M_SH/data/NUTS_RG_60M_2013.shp",
         "nama_10r_3popgdp.tsv.gz",
         "nama_10r_3gdp.tsv.gz",
         "corine/g250_clc06_V18_5.tif",
+        "eea/UNFCCC_v23.csv",
+        "nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson",
+        "myb1-2017-nitro.xls",
+        "emobility/KFZ__count",
+        "emobility/Pkw__count",
+        "h2_salt_caverns_GWh_per_sqkm.geojson",
+        "natura/natura.tiff",
+        "gebco/GEBCO_2014_2D.nc",
     ]
-
-    if not config.get("tutorial", False):
-        datafiles.extend(["natura/Natura2000_end2015.shp", "GEBCO_2014_2D.nc"])
 
     rule retrieve_databundle:
         output:
             protected(expand("data/bundle/{file}", file=datafiles)),
+            protected(directory("data/bundle/jrc-idees-2015")),
         log:
             "logs/retrieve_databundle.log",
         resources:
@@ -40,6 +44,15 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
             "../envs/retrieve.yaml"
         script:
             "../scripts/retrieve_databundle.py"
+
+    rule retrieve_eurostat_data:
+        output:
+            directory("data/eurostat/eurostat-energy_balances-april_2023_edition"),
+        log:
+            "logs/retrieve_eurostat_data.log",
+        retries: 2
+        script:
+            "../scripts/retrieve_eurostat_data.py"
 
 
 if config["enable"].get("retrieve_irena"):
@@ -95,64 +108,6 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cost_data", T
             "../envs/retrieve.yaml"
         script:
             "../scripts/retrieve_cost_data.py"
-
-
-if config["enable"]["retrieve"] and config["enable"].get(
-    "retrieve_natura_raster", True
-):
-
-    rule retrieve_natura_raster:
-        input:
-            storage(
-                "https://zenodo.org/record/4706686/files/natura.tiff",
-                keep_local=True,
-            ),
-        output:
-            resources("natura.tiff"),
-        log:
-            logs("retrieve_natura_raster.log"),
-        resources:
-            mem_mb=5000,
-        retries: 2
-        run:
-            copyfile(input[0], output[0])
-            validate_checksum(output[0], input[0])
-
-
-if config["enable"]["retrieve"] and config["enable"].get(
-    "retrieve_sector_databundle", True
-):
-    datafiles = [
-        "eea/UNFCCC_v23.csv",
-        "switzerland-sfoe/switzerland-new_format.csv",
-        "nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson",
-        "myb1-2017-nitro.xls",
-        "Industrial_Database.csv",
-        "emobility/KFZ__count",
-        "emobility/Pkw__count",
-        "h2_salt_caverns_GWh_per_sqkm.geojson",
-    ]
-
-    rule retrieve_sector_databundle:
-        output:
-            protected(expand("data/bundle-sector/{files}", files=datafiles)),
-            protected(directory("data/bundle-sector/jrc-idees-2015")),
-        log:
-            "logs/retrieve_sector_databundle.log",
-        retries: 2
-        conda:
-            "../envs/retrieve.yaml"
-        script:
-            "../scripts/retrieve_sector_databundle.py"
-
-    rule retrieve_eurostat_data:
-        output:
-            directory("data/eurostat/eurostat-energy_balances-april_2023_edition"),
-        log:
-            "logs/retrieve_eurostat_data.log",
-        retries: 2
-        script:
-            "../scripts/retrieve_eurostat_data.py"
 
 
 if config["enable"]["retrieve"]:
