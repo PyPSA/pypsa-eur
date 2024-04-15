@@ -11,6 +11,28 @@ Upcoming Release
 ================
 * Group existing capacities to the earlier grouping_year for consistency with optimized capacities.
 
+* Update data bundle:
+
+  - Merge electricity-only and sector-coupled data bundles into `one bundle
+    <https://zenodo.org/records/10973944>`_. This means that the rule
+    ``retrieve_sector_databundle`` was removed.
+
+  - Include rasterised ``natura.tiff`` in data bundle and remove rule
+    ``retrieve_natura_raster``.
+
+  - Remove rule ``build_natura_raster`` as this rule is rarely run and increases
+    the data bundle size considerably.
+
+  - Remove outdated files from data bundle (e.g., Eurostat energy balances)
+
+  - Reduce spatial scope of GEBCO bathymetry data to Europe to save space.
+
+  - Remove the use of a separate data bundle for tutorials.
+
+  - Directly download `Hotmaps Industrial Database
+    <https://gitlab.com/hotmaps/industrial_sites/industrial_sites_Industrial_Database/-/blob/master/data/Industrial_Database.csv>`__
+    from source and remove ``Industrial_Database.csv`` from data bundle.
+
 * bugfix: installed heating capacities were 5% lower than existing heating capacities
 
 * Include gas and oil fields and saline aquifers in estimation of CO2 sequestration potential.
