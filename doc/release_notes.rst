@@ -1529,7 +1529,7 @@ This release is known to work with `PyPSA-Eur
 **Gas Transmission Network**
 
 * New rule ``retrieve_gas_infrastructure_data`` that downloads and extracts the
-  SciGRID_gas `IGGIELGN <https://zenodo.org/record/4767098>`__ dataset from
+  SciGRID_gas `IGGIELGN <https://zenodo.org/records/4767098>`__ dataset from
   zenodo. It includes data on the transmission routes, pipe diameters,
   capacities, pressure, and whether the pipeline is bidirectional and carries
   H-Gas or L-Gas.
@@ -1689,7 +1689,7 @@ This release is known to work with `PyPSA-Eur
   PyPSA network.
 
 * Updated `data bundle
-  <https://zenodo.org/record/5824485/files/pypsa-eur-sec-data-bundle.tar.gz>`__
+  <https://zenodo.org/records/5824485/files/pypsa-eur-sec-data-bundle.tar.gz>`__
   that includes the hydrogan salt cavern storage potentials.
 
 * Updated and extended documentation in
@@ -2049,7 +2049,7 @@ PyPSA-Eur-Sec codebase in Version 0.2.0 above.
 
 This model has `its own github repository
 <https://github.com/martavp/pypsa-eur-sec-30-path>`__ and is `archived
-on Zenodo <https://zenodo.org/record/4014807>`__.
+on Zenodo <https://zenodo.org/records/4014807>`__.
 
 
 
@@ -2065,7 +2065,7 @@ European countries with one node per country. It includes demand and
 supply for electricity, space and water heating in buildings, and land
 transport.
 
-It is `archived on Zenodo <https://zenodo.org/record/1146666>`__.
+It is `archived on Zenodo <https://zenodo.org/records/1146666>`__.
 
 
 Release Process
