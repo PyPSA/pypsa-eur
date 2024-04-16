@@ -124,7 +124,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
     )
 
     df_agg = pd.read_csv(snakemake.input.powerplants, index_col=0)
-
+    
     rename_fuel = {
         "Hard Coal": "coal",
         "Lignite": "lignite",
@@ -653,26 +653,26 @@ def add_land_transport_installed_before_baseyear(
     land_transport_demand_index = n.loads.carrier=='land transport demand'
     p_set = n.loads_t.p_set.loc[:,land_transport_demand_index]
     ice_index = n.links.carrier=='land transport oil'
-    eff_ICE = n.links_t.efficiency.loc[:, ice_index]
-    eff_ICE.columns = eff_ICE.columns.str.rstrip('-'+str(grouping_year))
-    #eff_ICE = n.links.efficiency.loc[ice_index]
+    #eff_ICE = n.links_t.efficiency.loc[:, ice_index]
+    #eff_ICE.columns = eff_ICE.columns.str.rstrip('-'+str(grouping_year))
+    eff_ICE = n.links.efficiency.loc[ice_index]
     p_set = p_set.add_suffix(' oil')
-    #eff_ICE.index = eff_ICE.index.str.rstrip('-'+str(grouping_year))
+    eff_ICE.index = eff_ICE.index.str.rstrip('-'+str(grouping_year))
     split_years = costs.at['Liquid fuels ICE (passenger cars)', 'lifetime'] - 1
     year = range(int(grouping_year-split_years), int(grouping_year),1)
     pnom = (p_set/eff_ICE).max()/len(year)
     #pnom = ((p_set/(eff_ICE/(1+dd_ICE.add_suffix(" land transport oil")))).max()) / len(year) 
-    #pnom.index = pnom.index.str.rstrip('-'+str(grouping_year))
+    pnom.index = pnom.index.str.rstrip('-'+str(grouping_year))
     set_p_nom = pnom 
     p_set_year = p_set/(len(year))
-    profile = p_set_year.divide(eff_ICE/(1+dd_ICE.add_suffix(" land transport oil")))/pnom/(1+dd_ICE.add_suffix(" land transport oil"))
-    #profile = n.links_t.p_min_pu.loc[:,ice_index]
-    print(profile)
+    #profile = p_set_year.divide(eff_ICE/(1+dd_ICE.add_suffix(" land transport oil")))/pnom/(1+dd_ICE.add_suffix(" land transport oil"))
+    profile = n.links_t.p_min_pu.loc[:,ice_index]
+    
     set_p_nom.index = set_p_nom.index.str.rstrip('land transport oil')
     profile.columns = profile.columns.str.rstrip('-'+str(grouping_year))
     profile.columns = profile.columns.str.rstrip('land transport oil')
-    #eff_ICE.index = eff_ICE.index.str.rstrip('land transport oil')
-    eff_ICE.columns = eff_ICE.columns.str.rstrip('land transport oil')
+    eff_ICE.index = eff_ICE.index.str.rstrip('land transport oil')
+    #eff_ICE.columns = eff_ICE.columns.str.rstrip('land transport oil')
     #divide ICE build year linearly 
     for year in year:
         n.madd(
@@ -695,7 +695,7 @@ def add_land_transport_installed_before_baseyear(
     print(eff_ICE)
     print(n.links_t.p_max_pu[(n.links.filter(like="land transport oil" +"-"+str(int(year)),axis=0)).index])
     print(n.links.loc[(n.links.filter(like="land transport oil-"+str(year),axis=0)).index,'efficiency'])
-    print(n.links_t.efficiency[(n.links.filter(like="land transport oil" +"-"+str(int(year)),axis=0)).index])
+    #print(n.links_t.efficiency[(n.links.filter(like="land transport oil" +"-"+str(int(year)),axis=0)).index])
     n.links.loc[(n.links.filter(like="land transport oil-"+str(year+1),axis=0)).index,'p_nom_extendable'] = False
     n.links.loc[(n.links.filter(like="land transport EV-"+str(year+1),axis=0)).index, 'p_nom_extendable'] = False
     n.links.loc[(n.links.filter(like="BEV charger-"+str(year+1),axis=0)).index, 'p_nom_extendable'] = False

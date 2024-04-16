@@ -1611,7 +1611,7 @@ def add_land_transport(n, costs):
                 lifetime = costs.at['Battery electric (passenger cars)', 'lifetime'], 
             )
         
-        eff = costs.at['Battery electric (passenger cars)', 'efficiency']/(1+dd_EV)
+        eff = costs.at['Battery electric (passenger cars)', 'efficiency'] #/(1+dd_EV)
         n.madd(
             "Link",
             nodes,
@@ -1659,7 +1659,7 @@ def add_land_transport(n, costs):
 
     # Add hydrogen vehicle links
     if fuel_cell_share != 0:
-        eff = options["transport_fuel_cell_efficiency"]/(1+dd_ICE)
+        eff = options["transport_fuel_cell_efficiency"] #/(1+dd_ICE)
         
         n.madd(
             "Link",
@@ -1687,7 +1687,7 @@ def add_land_transport(n, costs):
     if ice_share != 0:
         add_carrier_buses(n, "oil")
 
-        eff = options["transport_internal_combustion_efficiency"]/(1+dd_ICE)
+        eff = options["transport_internal_combustion_efficiency"] #/(1+dd_ICE)
         
         n.madd(
             "Link",
@@ -1744,9 +1744,9 @@ def adjust_land_transport(n):
     if ice_share != 0:
         name = "land transport oil"
         ice_index = n.links.carrier==name
-        eff = n.links_t.efficiency.loc[:, ice_index]
-        print("eff", eff)
-        #eff = n.links.efficiency.loc[ice_index]
+        #eff = n.links_t.efficiency.loc[:, ice_index]
+        #print("eff", eff)
+        eff = n.links.efficiency.loc[ice_index]
         #eff = eff/(1+dd_ICE.add_suffix(" land transport oil"))
         pset = p_set.add_suffix(' oil')
         pnom = (pset.divide(eff)).max()
@@ -1759,8 +1759,8 @@ def adjust_land_transport(n):
             
     if fuel_cell_share != 0:
         fuel_cell_index = n.links.carrier=='land transport fuel cell'
-        eff = n.links_t.efficiency.loc[:, fuel_cell_index]
-        #eff = n.links.efficiency.loc[fuel_cell_index]
+        #eff = n.links_t.efficiency.loc[:, fuel_cell_index]
+        eff = n.links.efficiency.loc[fuel_cell_index]
         #eff = eff/(1+dd_ICE.add_suffix(" land transport fuel cell"))
         pset = p_set.add_suffix(' fuel cell')
         pnom = (pset.divide(eff)).max()
@@ -1775,8 +1775,8 @@ def adjust_land_transport(n):
     # with p_min_pu/p_max_pu while p_nom_extentable=True leads to solving infeasibility by gurobi      
     if electric_share!= 0:
         ev_index = n.links.carrier=='land transport EV'
-        eff = n.links_t.efficiency.loc[:, ev_index]
-        #eff = n.links.efficiency.loc[ev_index]
+        #eff = n.links_t.efficiency.loc[:, ev_index]
+        eff = n.links.efficiency.loc[ev_index]
         #eff = eff/(1+dd_EV.add_suffix(" land transport EV"))
         pset = p_set.add_suffix(' EV')
         pnom = (pset.divide(eff)).max()
@@ -3954,5 +3954,5 @@ if __name__ == "__main__":
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
 
     sanitize_carriers(n, snakemake.config)
-
+    print("nuclear",n.generators.build_year[n.generators.carrier.str.contains("nuclear")])
     n.export_to_netcdf(snakemake.output[0])

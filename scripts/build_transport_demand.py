@@ -111,7 +111,7 @@ def build_transport_demand(traffic_fn, airtemp_fn, nodes, nodal_transport_data):
     # )
     return (
         (transport_shape.multiply(energy_totals_transport) * 1e6 * nyears * options["transport_internal_combustion_efficiency"])
-       .divide((ice_correction))
+       #.divide((ice_correction))
    
     )
 
