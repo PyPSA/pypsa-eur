@@ -303,7 +303,7 @@ def chemicals_industry():
     # There are Solids, Refinery gas, LPG, Diesel oil, Residual fuel oil,
     # Other liquids, Naphtha, Natural gas for feedstock.
     # Naphta represents 47%, methane 17%. LPG (18%) solids, refinery gas,
-    # diesel oil, residual fuel oils and other liquids are asimilated to Naphtha
+    # diesel oil, residual fuel oils and other liquids are assimilated to Naphtha
 
     s_fec = idees["fec"][13:22]
     assert s_fec.index[0] == subsector
