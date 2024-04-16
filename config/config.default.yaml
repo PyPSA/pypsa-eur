@@ -430,9 +430,31 @@ sector:
     2040: 0.3
     2045: 0.15
     2050: 0
-  transport_electric_efficiency: 53.19 # 1 MWh_el = 53.19*100 km
-  transport_fuel_cell_efficiency: 30.003 # 1 MWh_H2 = 30.003*100 km
-  transport_ice_efficiency: 16.0712 # 1 MWh_oil = 16.0712 * 100 km
+  transport_electric_efficiency:
+    # https://ev-database.org/de/cheatsheet/energy-consumption-electric-car
+    # average energy consumption 188 Wh/km = 0.188 kWh/km = 18.8 kWh/100 km = 0.0188 MWh/ 100 km
+    # 1/0.188 -> 1 MWh = 53.19 * 100 km
+    light: 53.19
+    # assume 40 kWh/100 km = 0.04 MWh/100 km
+    heavy: 25
+  transport_fuel_cell_efficiency:
+    # https://h2-mobility.de/wp-content/uploads/2021/02/H2M_Flottenpapier_English_20180822.pdf
+    # assume in average 1kg_H2 per 100 km -> 1kg_H2 = 33 kWh_H2 (LHV)
+    # 1 MWh_H2 = 30.003 100km
+    light: 30.003
+    # assume 8.5 kg_H2 per 100 km -> 0.2805 MWh_H2 per 100 km
+    heavy: 3.565
+  transport_ice_efficiency:
+    # average consumption 7 liter per 100 km
+    # 0.008889 MWh_petrol = 1 liter
+    # 0.062223 MWh_petrol / 100 km
+    # 1 MWh_petrol = 16.0712
+    light: 16.0712
+    # average consumption 30 liter per 100 km
+    # 0.008889 MWh_petrol = 1 liter
+    # 0.26667 MWh_petrol / 100 km
+    # 1 MWh_petrol = 3.75
+    heavy: 3.75
   agriculture_machinery_electric_share: 0
   agriculture_machinery_oil_share: 1
   agriculture_machinery_fuel_efficiency: 0.7
