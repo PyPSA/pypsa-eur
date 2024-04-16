@@ -181,6 +181,8 @@ Upcoming Release
 
 * Fix custom busmap read in `cluster_network`.
 
+* Added shapes to .nc file for different stages of the network object in `base_network`, `build_bus_regions`, and `cluster_network`.
+
 PyPSA-Eur 0.10.0 (19th February 2024)
 =====================================
 
