@@ -9,6 +9,10 @@ Release Notes
 
 Upcoming Release
 ================
+* Add config land_transport_demand_factor to model growth in land transport demand for different time horizons.
+
+* Allow dictionary for the config aviation_demand_factor.
+
 * Group existing capacities to the earlier grouping_year for consistency with optimized capacities.
 
 * bugfix: installed heating capacities were 5% lower than existing heating capacities
