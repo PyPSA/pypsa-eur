@@ -360,7 +360,6 @@ rule build_hydro_profile:
         + ".nc",
     output:
         profile=resources("profile_hydro.nc"),
-        eia_hydro=resources("eia_hydro_stats.csv"),
     log:
         logs("build_hydro_profile.log"),
     resources:
