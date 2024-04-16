@@ -31,23 +31,24 @@ def build_nodal_transport_data(fn, pop_layout, year):
     # break number of cars down to nodal level based on population density
     nodal_transport_data = transport_data.loc[pop_layout.ct].fillna(0.0)
     nodal_transport_data.index = pop_layout.index
-    nodal_transport_data["number cars"] = (
-        pop_layout["fraction"] * nodal_transport_data["number cars"]
+    
+    car_cols = transport_data.columns[~transport_data.columns.str.contains("efficiency")]
+    nodal_transport_data[car_cols] = (
+       nodal_transport_data[car_cols].mul(pop_layout["fraction"], axis=0)
     )
-    # fill missing fuel efficiency with average data
-    nodal_transport_data.loc[
-        nodal_transport_data["average fuel efficiency"] == 0.0,
-        "average fuel efficiency",
-    ] = transport_data["average fuel efficiency"].mean()
+    # fill missing fuel efficiency [kWh/100 km] with average data
+    eff_cols = ['average fuel efficiency passenger car',
+                'average fuel efficiency heavy duty']
+    for col in eff_cols:
+        nodal_transport_data.loc[
+            nodal_transport_data[col] == 0.0,
+            col,
+        ] = transport_data[col].mean()
 
     return nodal_transport_data
 
 
-def build_transport_demand(traffic_fn, airtemp_fn, nodes, nodal_transport_data):
-    """
-    Returns transport demand per bus in unit km driven [100 km].
-    """
-    # averaged weekly counts from the year 2010-2015
+def get_shape(traffic_fn):
     traffic = pd.read_csv(traffic_fn, skiprows=2, usecols=["count"]).squeeze("columns")
 
     # create annual profile take account time zone + summer time
@@ -57,6 +58,22 @@ def build_transport_demand(traffic_fn, airtemp_fn, nodes, nodal_transport_data):
         weekly_profile=traffic.values,
     )
     transport_shape = transport_shape / transport_shape.sum()
+    
+    return transport_shape
+
+
+def build_transport_demand(traffic_fn_Pkw, traffic_fn_Lkw,
+                           airtemp_fn, nodes, nodal_transport_data):
+    """
+    Returns transport demand per bus in unit driven km [100km].
+    """
+    transport_shape_light =  get_shape(traffic_fn_Pkw)
+    
+    transport_shape_heavy =  get_shape(traffic_fn_Lkw)
+
+    # get heating demand for correction to demand time series
+    temperature = xr.open_dataarray(airtemp_fn).to_pandas()
+
 
     # get heating demand for correction to demand time series
     temperature = xr.open_dataarray(airtemp_fn).to_pandas()
@@ -70,21 +87,43 @@ def build_transport_demand(traffic_fn, airtemp_fn, nodes, nodal_transport_data):
         options["ICE_upper_degree_factor"],
     )
 
-    # divide out the heating/cooling demand from ICE totals
-    ice_correction = (transport_shape * (1 + dd_ICE)).sum() / transport_shape.sum()
+     # adjust for the heating/cooling demand from ICE totals
+    ice_correction_light = ((transport_shape_light * (1 + dd_ICE)).sum()
+                            / transport_shape_light.sum())
+    ice_correction_heavy = ((transport_shape_light * (1 + dd_ICE)).sum()
+                            / transport_shape_heavy.sum())
+    
+    light_duty_cols = ['mio km-driven Light duty vehicles',
+                       'mio km-driven Powered 2-wheelers',
+                       'mio km-driven passenger cars']
+    heavy_duty_cols = ['mio km-driven Motor coaches, buses and trolley buses',
+                       'mio km-driven Heavy duty vehicles']
+    
+    # non-electrified rail
+    non_elec_rail = (1 - (pop_weighted_energy_totals["electricity rail"]
+                          / pop_weighted_energy_totals["total rail"]))
+    
+    # total demand of driven vehicle-km [mio km]
+    light_duty = nodal_transport_data[light_duty_cols].sum(axis=1)
+    heavy_duty = pd.concat([nodal_transport_data[heavy_duty_cols],
+                             non_elec_rail * nodal_transport_data['mio km-driven Rail']],
+                            axis=1).sum(axis=1)
+    
+    def get_demand(profile, total, nyears, ice_correction, name):
+        """Returns from total demand [mio km], given profile and ICE correction
+        demand time-series in unit [100 km]."""
 
-    energy_totals_transport = (
-        pop_weighted_energy_totals["total road"]
-        + pop_weighted_energy_totals["total rail"]
-        - pop_weighted_energy_totals["electricity rail"]
-    )
+        demand = ((profile.multiply(total) * 1e4 * nyears)
+                  .divide(ice_correction))
 
-    # convert average fuel efficiency from kW/100 km -> MW/100km
-    eff = nodal_transport_data["average fuel efficiency"] / 1e3
+        return pd.concat([demand], keys=[name], axis=1)
 
-    return (transport_shape.multiply(energy_totals_transport) * 1e6 * nyears).divide(
-        eff * ice_correction
-    )
+    demand_light = get_demand(transport_shape_light, light_duty, nyears,
+                              ice_correction_light, name="light")
+    demand_heavy = get_demand(transport_shape_heavy, heavy_duty, nyears,
+                              ice_correction_heavy, name="heavy")
+
+    return pd.concat([demand_light, demand_heavy], axis=1)
 
 
 def transport_degree_factor(
@@ -196,7 +235,8 @@ if __name__ == "__main__":
     )
 
     transport_demand = build_transport_demand(
-        snakemake.input.traffic_data_KFZ,
+        snakemake.input.traffic_data_Pkw,
+        snakemake.input.traffic_data_Lkw,
         snakemake.input.temp_air_total,
         nodes,
         nodal_transport_data,
