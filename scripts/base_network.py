@@ -781,11 +781,8 @@ def base_network(
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        import os
 
         from _helpers import mock_snakemake
-
-        os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
         snakemake = mock_snakemake("base_network")
     configure_logging(snakemake)
