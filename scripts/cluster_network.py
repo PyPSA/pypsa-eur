@@ -231,7 +231,7 @@ def distribute_clusters(n, n_clusters, focus_weights=None, solver_name="scip"):
         .pipe(normed)
     )
 
-    N = n.buses.groupby(["country", "sub_network"]).size()
+    N = n.buses.groupby(["country", "sub_network"]).size()[L.index]
 
     assert (
         n_clusters >= len(N) and n_clusters <= N.sum()
@@ -267,7 +267,7 @@ def distribute_clusters(n, n_clusters, focus_weights=None, solver_name="scip"):
     m.objective = (clusters * clusters - 2 * clusters * L * n_clusters).sum()
     if solver_name == "gurobi":
         logging.getLogger("gurobipy").propagate = False
-    elif solver_name not in ["scip", "cplex"]:
+    elif solver_name not in ["scip", "cplex", "xpress", "copt", "mosek"]:
         logger.info(
             f"The configured solver `{solver_name}` does not support quadratic objectives. Falling back to `scip`."
         )
@@ -454,7 +454,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("cluster_network", simpl="", clusters="37")
+        snakemake = mock_snakemake("cluster_network", simpl="", clusters="40")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
@@ -471,7 +471,7 @@ if __name__ == "__main__":
     conventional_carriers = set(params.conventional_carriers)
     if snakemake.wildcards.clusters.endswith("m"):
         n_clusters = int(snakemake.wildcards.clusters[:-1])
-        aggregate_carriers = params.conventional_carriers & aggregate_carriers
+        aggregate_carriers = conventional_carriers & aggregate_carriers
     elif snakemake.wildcards.clusters.endswith("c"):
         n_clusters = int(snakemake.wildcards.clusters[:-1])
         aggregate_carriers = aggregate_carriers - conventional_carriers
@@ -519,8 +519,8 @@ if __name__ == "__main__":
         custom_busmap = params.custom_busmap
         if custom_busmap:
             custom_busmap = pd.read_csv(
-                snakemake.input.custom_busmap, index_col=0, squeeze=True
-            )
+                snakemake.input.custom_busmap, index_col=0
+            ).squeeze()
             custom_busmap.index = custom_busmap.index.astype(str)
             logger.info(f"Imported custom busmap from {snakemake.input.custom_busmap}")
 

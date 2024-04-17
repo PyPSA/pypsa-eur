@@ -59,8 +59,7 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    cutouts = snakemake.input.cutouts
-    xs, Xs, ys, Ys = zip(*(determine_cutout_xXyY(cutout) for cutout in cutouts))
+    x, X, y, Y = determine_cutout_xXyY(snakemake.input.cutout)
 
     with zipfile.ZipFile(snakemake.input.ship_density) as zip_f:
         resources = Path(snakemake.output[0]).parent
@@ -68,7 +67,7 @@ if __name__ == "__main__":
         zip_f.extract(fn, resources)
     with rioxarray.open_rasterio(resources / fn) as ship_density:
         ship_density = ship_density.drop_vars(["band"]).sel(
-            x=slice(min(xs), max(Xs)), y=slice(max(Ys), min(ys))
+            x=slice(x, X), y=slice(Y, y)
         )
         ship_density.rio.to_raster(snakemake.output[0])
 

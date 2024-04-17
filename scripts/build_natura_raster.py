@@ -94,9 +94,8 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    cutouts = snakemake.input.cutouts
-    xs, Xs, ys, Ys = zip(*(determine_cutout_xXyY(cutout) for cutout in cutouts))
-    bounds = transform_bounds(4326, 3035, min(xs), min(ys), max(Xs), max(Ys))
+    x, X, y, Y = determine_cutout_xXyY(snakemake.input.cutout)
+    bounds = transform_bounds(4326, 3035, x, y, X, Y)
     transform, out_shape = get_transform_and_shape(bounds, res=100)
 
     # adjusted boundaries

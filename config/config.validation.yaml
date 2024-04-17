@@ -69,9 +69,6 @@ conventional:
   biomass:
     p_max_pu: 0.65
 
-load:
-  power_statistics: false
-
 lines:
   s_max_pu: 0.23
   under_construction: 'remove'

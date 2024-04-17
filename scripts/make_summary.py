@@ -13,7 +13,7 @@ import sys
 import numpy as np
 import pandas as pd
 import pypsa
-from _helpers import configure_logging, set_scenario_config
+from _helpers import configure_logging, get_snapshots, set_scenario_config
 from prepare_sector_network import prepare_costs
 
 idx = pd.IndexSlice
@@ -645,7 +645,8 @@ def make_summaries(networks_dict):
     ]
 
     columns = pd.MultiIndex.from_tuples(
-        networks_dict.keys(), names=["cluster", "ll", "opt", "planning_horizon"]
+        networks_dict.keys(),
+        names=["cluster", "ll", "opt", "planning_horizon"],
     )
 
     df = {output: pd.DataFrame(columns=columns, dtype=float) for output in outputs}
@@ -689,7 +690,8 @@ if __name__ == "__main__":
         for planning_horizon in snakemake.params.scenario["planning_horizons"]
     }
 
-    Nyears = len(pd.date_range(freq="h", **snakemake.params.snapshots)) / 8760
+    time = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
+    Nyears = len(time) / 8760
 
     costs_db = prepare_costs(
         snakemake.input.costs,

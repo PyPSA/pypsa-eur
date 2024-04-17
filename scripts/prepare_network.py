@@ -204,6 +204,9 @@ def average_every_nhours(n, offset):
     m = n.copy(with_time=False)
 
     snapshot_weightings = n.snapshot_weightings.resample(offset).sum()
+    sns = snapshot_weightings.index
+    if snakemake.params.drop_leap_day:
+        sns = sns[~((sns.month == 2) & (sns.day == 29))]
     m.set_snapshots(snapshot_weightings.index)
     m.snapshot_weightings = snapshot_weightings
 
@@ -304,7 +307,11 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "prepare_network", simpl="", clusters="37", ll="v1.0", opts="Co2L-4H"
+            "prepare_network",
+            simpl="",
+            clusters="37",
+            ll="v1.0",
+            opts="Co2L-4H",
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
