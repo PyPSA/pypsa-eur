@@ -1917,15 +1917,10 @@ def add_heat(n, costs):
         if options["boilers"]:
             key = f"{name_type} gas boiler"
 
-            if investment_year < 2024:
-                extend_gas_boilers = False
-            else:
-                extend_gas_boilers = True
-
             n.madd(
                 "Link",
                 nodes + f" {name} gas boiler",
-                p_nom_extendable=extend_gas_boilers,
+                p_nom_extendable=True,
                 bus0=spatial.gas.df.loc[nodes, "nodes"].values,
                 bus1=nodes + f" {name} heat",
                 bus2="co2 atmosphere",

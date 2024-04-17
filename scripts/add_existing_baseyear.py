@@ -726,9 +726,6 @@ def add_heating_capacities_installed_before_baseyear(
             threshold = snakemake.params.existing_capacities["threshold_capacity"]
             p_nom = p_nom[p_nom > threshold]
 
-            # e.g. DE1 0 coal CHP-1980
-            asset_i = p_nom.index + f" {generator} CHP-{grouping_year}"
-
             efficiency_power = mastr_chp_efficiency_power.loc[grouping_year, generator]
             efficiency_heat = mastr_chp_efficiency_heat.loc[grouping_year, generator]
 
@@ -738,16 +735,17 @@ def add_heating_capacities_installed_before_baseyear(
                 if "EU" in vars(spatial)[generator].locations:
                     bus0 = vars(spatial)[generator].nodes
                 else:
-                    bus0 = vars(spatial)[generator].df.loc[p_nom.index, "nodes"].values
+                    bus0 = vars(spatial)[generator].df.loc[p_nom.index, "nodes"]
                 n.madd(
                     "Link",
-                    asset_i,
+                    p_nom.index,
+                    suffix=f" urban central {generator} CHP-{grouping_year}",
                     bus0=bus0,
                     bus1=p_nom.index,
                     bus2=p_nom.index + " urban central heat",
                     bus3="co2 atmosphere",
                     carrier=f"urban central {generator} CHP",
-                    p_nom=p_nom.values,
+                    p_nom=p_nom,
                     capital_cost=costs.at[key, "fixed"] * costs.at[key, "efficiency"],
                     marginal_cost=costs.at[key, "VOM"],
                     efficiency=efficiency_power.dropna(),
@@ -761,12 +759,12 @@ def add_heating_capacities_installed_before_baseyear(
                 n.madd(
                     "Link",
                     p_nom.index,
-                    suffix=" " + key + f"-{grouping_year}",
-                    bus0=spatial.biomass.df.loc[p_nom.index]["nodes"].values,
+                    suffix=f" urban {key}-{grouping_year}",
+                    bus0=spatial.biomass.df.loc[p_nom.index]["nodes"],
                     bus1=p_nom.index,
                     bus2=p_nom.index + " urban central heat",
                     carrier=generator,
-                    p_nom=p_nom.values,
+                    p_nom=p_nom,
                     capital_cost=costs.at[key, "fixed"] * costs.at[key, "efficiency"],
                     marginal_cost=costs.at[key, "VOM"],
                     efficiency=efficiency_power,
@@ -787,25 +785,23 @@ def add_heating_capacities_installed_before_baseyear(
         threshold = snakemake.params.existing_capacities["threshold_capacity"]
         p_nom = p_nom[p_nom > threshold]
 
-        # e.g. DE1 0 coal CHP-1980
-        asset_i = p_nom.index + f" {generator} CHP-{grouping_year}"
-
         if generator != "urban central solid biomass CHP":
             # lignite CHPs are not in DEA database - use coal CHP parameters
             key = keys[generator]
             if "EU" in vars(spatial)[generator].locations:
                 bus0 = vars(spatial)[generator].nodes
             else:
-                bus0 = vars(spatial)[generator].df.loc[p_nom.index, "nodes"].values
+                bus0 = vars(spatial)[generator].df.loc[p_nom.index, "nodes"]
             n.madd(
                 "Link",
-                asset_i,
+                p_nom.index,
+                suffix=f" urban central {generator} CHP-{grouping_year}",
                 bus0=bus0,
                 bus1=p_nom.index,
                 bus2=p_nom.index + " urban central heat",
                 bus3="co2 atmosphere",
                 carrier=f"urban central {generator} CHP",
-                p_nom=p_nom.values / costs.at[key, "efficiency"],
+                p_nom=p_nom / costs.at[key, "efficiency"],
                 capital_cost=costs.at[key, "fixed"] * costs.at[key, "efficiency"],
                 marginal_cost=costs.at[key, "VOM"],
                 efficiency=costs.at[key, "efficiency"],
@@ -819,12 +815,12 @@ def add_heating_capacities_installed_before_baseyear(
             n.madd(
                 "Link",
                 p_nom.index,
-                suffix=" " + key + f"-{grouping_year}",
-                bus0=spatial.biomass.df.loc[p_nom.index]["nodes"].values,
+                suffix=f" urban {key}-{grouping_year}",
+                bus0=spatial.biomass.df.loc[p_nom.index]["nodes"],
                 bus1=p_nom.index,
                 bus2=p_nom.index + " urban central heat",
                 carrier=generator,
-                p_nom=p_nom.values / costs.at[key, "efficiency"],
+                p_nom=p_nom / costs.at[key, "efficiency"],
                 capital_cost=costs.at[key, "fixed"] * costs.at[key, "efficiency"],
                 marginal_cost=costs.at[key, "VOM"],
                 efficiency=costs.at[key, "efficiency"],
