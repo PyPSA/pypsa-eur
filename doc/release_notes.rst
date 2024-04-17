@@ -184,6 +184,8 @@ Upcoming Release
 
 * Fix custom busmap read in `cluster_network`.
 
+* Added shapes to .nc file for different stages of the network object in `base_network`, `build_bus_regions`, and `cluster_network`.
+
 * Fix p_nom_min of renewables generators for myopic approach and add check of existing capacities in `add_land_use_constraint_m`.
 
 * Add documentation section for how to contribute documentation
