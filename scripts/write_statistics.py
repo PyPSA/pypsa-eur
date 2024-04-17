@@ -4,21 +4,15 @@
 #
 # SPDX-License-Identifier: MIT
 
+import logging
 import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
 import seaborn as sns
 from _helpers import configure_logging
-from pypsa.statistics import get_carrier
+from pypsa.statistics import get_carrier, get_country_and_carrier
 
-
-# grouperfunctions = hier schreiben und dann in statistics.
-def groupby_country_and_carrier(n, c, nice_names=False):
-    df = n.df(c)
-    bus = "bus1" if "bus" not in n.df(c) else "bus"
-    country = df[bus].map(n.buses.location).map(n.buses.country).rename("country")
-    carrier = get_carrier(n, c, nice_names)
-    return [country, carrier]
+logger = logging.getLogger(__name__)
 
 
 def call_with_handle(func, **kwargs):
@@ -37,16 +31,18 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "save_statistics_csv",
+            run = "240219-test/normal",
             simpl="",
-            ll="v1.5",
-            clusters="5",
+            ll="v1.2",
+            clusters="22",
             opts="",
-            sector_opts="24h-T-H-B-I-A-dist1",
-            planning_horizons="2040",
-            country="all",
-            carrier="electricity",
+            sector_opts="none",
+            planning_horizons="2020",
+            country="DE",
+            carrier="H2",
         )
-    # configure_logging(snakemake)
+        
+    configure_logging(snakemake)
     config = snakemake.config
 
     n = pypsa.Network(snakemake.input.network)
@@ -79,7 +75,7 @@ if __name__ == "__main__":
     if country == "all" or not country:
         kwargs["groupby"] = get_carrier
     else:
-        kwargs["groupby"] = groupby_country_and_carrier
+        kwargs["groupby"] = get_country_and_carrier
 
     for output in snakemake.output.keys():
         if "touch" in output:

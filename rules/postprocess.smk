@@ -140,6 +140,7 @@ if config["foresight"] == "perfect":
 rule copy_config:
     params:
         RDIR=RDIR,
+        config=lambda wildcards: scenario_config(wildcards.run) if "run" in wildcards else config,
     output:
         RESULTS + "config.yaml",
     threads: 1
@@ -332,6 +333,8 @@ rule plot_statistics_single:
         },
         barplots_touch=RESULTS
         + "statistics/figures/single/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/.statistics_{carrier}_plots",
+    log:
+        RESULTS + "logs/plot_statistics_single/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_country-{country}_carrier-{carrier}.log",
     script:
         "../scripts/plot_statistics_single.py"
 
@@ -358,6 +361,8 @@ rule plot_statistics_comparison:
         },
         barplots_touch=RESULTS
         + "statistics/figures/comparison/country_{country}/.statistics_{carrier}_plots",
+    log:
+        RESULTS + "logs/plot_statistics_comparison/country-{country}_carrier-{carrier}.log",
     script:
         "../scripts/plot_statistics_comparison.py"
 
