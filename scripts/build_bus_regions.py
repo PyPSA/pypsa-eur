@@ -109,6 +109,34 @@ def voronoi_partition_pts(points, outline):
     return polygons
 
 
+def append_bus_shapes(n, shapes, type):
+    """
+    Append shapes to the network. If shapes with the same component and type
+    already exist, they will be removed.
+
+    Parameters:
+        n (pypsa.Network): The network to which the shapes will be appended.
+        shapes (geopandas.GeoDataFrame): The shapes to be appended.
+        **kwargs: Additional keyword arguments used in `n.madd`.
+
+    Returns:
+        None
+    """
+    remove = n.shapes.query("component == 'Bus' and type == @type").index
+    n.mremove("Shape", remove)
+
+    offset = n.shapes.index.astype(int).max() + 1 if not n.shapes.empty else 0
+    shapes = shapes.rename(lambda x: int(x) + offset)
+    n.madd(
+        "Shape",
+        shapes.index,
+        geometry=shapes.geometry,
+        idx=shapes.name,
+        component="Bus",
+        type=type,
+    )
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -119,7 +147,8 @@ if __name__ == "__main__":
 
     countries = snakemake.params.countries
 
-    n = pypsa.Network(snakemake.input.base_network)
+    base_network = snakemake.input.base_network
+    n = pypsa.Network(base_network)
 
     country_shapes = gpd.read_file(snakemake.input.country_shapes).set_index("name")[
         "geometry"
@@ -173,12 +202,17 @@ if __name__ == "__main__":
         offshore_regions_c = offshore_regions_c.loc[offshore_regions_c.area > 1e-2]
         offshore_regions.append(offshore_regions_c)
 
-    pd.concat(onshore_regions, ignore_index=True).to_file(
-        snakemake.output.regions_onshore
-    )
+    shapes = pd.concat(onshore_regions, ignore_index=True)
+    shapes.to_file(snakemake.output.regions_onshore)
+    append_bus_shapes(n, shapes, "onshore")
+
     if offshore_regions:
-        pd.concat(offshore_regions, ignore_index=True).to_file(
-            snakemake.output.regions_offshore
-        )
+        shapes = pd.concat(offshore_regions, ignore_index=True)
+        shapes.to_file(snakemake.output.regions_offshore)
+        append_bus_shapes(n, shapes, "offshore")
+
     else:
         offshore_shapes.to_frame().to_file(snakemake.output.regions_offshore)
+
+    # save network with shapes
+    n.export_to_netcdf(base_network)
