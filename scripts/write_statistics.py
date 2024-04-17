@@ -5,6 +5,7 @@
 # SPDX-License-Identifier: MIT
 
 import logging
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
@@ -31,7 +32,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "save_statistics_csv",
-            run = "240219-test/normal",
+            run="240219-test/normal",
             simpl="",
             ll="v1.2",
             clusters="22",
@@ -41,7 +42,7 @@ if __name__ == "__main__":
             country="DE",
             carrier="H2",
         )
-        
+
     configure_logging(snakemake)
     config = snakemake.config
 

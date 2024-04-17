@@ -45,7 +45,9 @@ def get_scenarios(run):
         fn = Path(scenario_config["file"])
         scenarios = yaml.safe_load(fn.read_text())
         if scenarios == None:
-            print("WARNING! Scenario management enabled but scenarios file appears to be empty.")
+            print(
+                "WARNING! Scenario management enabled but scenarios file appears to be empty."
+            )
         if run["name"] == "all":
             run["name"] = list(scenarios.keys())
         return scenarios

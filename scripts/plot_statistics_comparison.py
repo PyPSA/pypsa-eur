@@ -4,8 +4,9 @@
 #
 # SPDX-License-Identifier: MIT
 
-import re
 import logging
+import re
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
