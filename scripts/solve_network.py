@@ -45,6 +45,7 @@ from _helpers import (
 )
 from pypsa.descriptors import get_activity_mask
 from pypsa.descriptors import get_switchable_as_dense as get_as_dense
+from pypsa.optimization.abstract import optimize_transmission_expansion_iteratively
 
 logger = logging.getLogger(__name__)
 pypsa.pf.logger.setLevel(logging.WARNING)
@@ -919,11 +920,13 @@ def solve_network(n, config, solving, **kwargs):
     elif skip_iterations:
         status, condition = n.optimize(**kwargs)
     else:
-        kwargs["track_iterations"] = (cf_solving.get("track_iterations", False),)
-        kwargs["min_iterations"] = (cf_solving.get("min_iterations", 4),)
-        kwargs["max_iterations"] = (cf_solving.get("max_iterations", 6),)
-        status, condition = n.optimize.optimize_transmission_expansion_iteratively(
-            **kwargs
+        kwargs["track_iterations"] = cf_solving["track_iterations"]
+        kwargs["min_iterations"] = cf_solving["min_iterations"]
+        kwargs["max_iterations"] = cf_solving["max_iterations"]
+        kwargs["lines_disc"] = config["post-discretization"]["lines"]
+        kwargs["links_disc"] = config["post-discretization"]["links"]
+        status, condition = optimize_transmission_expansion_iteratively(
+            n, **kwargs
         )
 
     if status != "ok" and not rolling_horizon:
