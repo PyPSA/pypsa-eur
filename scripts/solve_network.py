@@ -925,9 +925,7 @@ def solve_network(n, config, solving, **kwargs):
         kwargs["max_iterations"] = cf_solving["max_iterations"]
         kwargs["lines_disc"] = config["post-discretization"]["lines"]
         kwargs["links_disc"] = config["post-discretization"]["links"]
-        status, condition = optimize_transmission_expansion_iteratively(
-            n, **kwargs
-        )
+        status, condition = optimize_transmission_expansion_iteratively(n, **kwargs)
 
     if status != "ok" and not rolling_horizon:
         logger.warning(
