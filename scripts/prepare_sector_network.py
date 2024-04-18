@@ -1505,12 +1505,9 @@ def add_storage_and_grids(n, costs):
 
 
 def check_land_transport_shares(shares):
-    # Sums up the shares, ignoring None values
-    total_share = sum(filter(None, shares))
-    if total_share != 1:
+    if any(shares.sum()!=1):
         logger.warning(
-            f"Total land transport shares sum up to {total_share:.2%},"
-            "corresponding to increased or decreased demand assumptions."
+            f"Total land transport shares sum up to {shares.sum()}."
         )
 
 
@@ -1755,17 +1752,31 @@ def add_land_transport(n, costs):
 
     # exogenous share of passenger car type
     engine_types = ["fuel_cell", "electric", "ice"]
-    shares = pd.Series()
-    car_efficiencies = pd.Series()
+    transport_types = transport.columns.levels[0]
+    
+    shares = pd.DataFrame()
+    car_efficiencies =  pd.DataFrame()
     for engine in engine_types:
-        shares[engine] = get(options[f"land_transport_{engine}_share"],
-                             investment_year)
-        car_efficiencies[engine] = options[f"transport_{engine}_efficiency"]
-        logger.info(f"{engine} share: {shares[engine]*100}%")
+        for transport_type in transport_types:
+            shares.loc[engine, transport_type] = get(options[f"land_transport_{engine}_share"][transport_type],
+                                 investment_year)
+            car_efficiencies.loc[engine, transport_type] = options[f"transport_{engine}_efficiency"][transport_type]
+            logger.info(f"{engine} {transport_type} share: {shares.loc[engine, transport_type]*100}%")
 
     check_land_transport_shares(shares)
     
-    transport_types = transport.columns.levels[0]
+    # temperature for correction factor for heating/cooling
+    temperature = xr.open_dataarray(snakemake.input.temp_air_total).to_pandas()
+    
+    # respective columns for light and heavy duty
+    car_cols = {"light" :  ['Number Passenger cars',
+                            'Number Powered 2-wheelers',
+                            'Number Light duty vehicles'],
+                "heavy": ['Number Motor coaches, buses and trolley buses',
+                          'Number Heavy duty vehicles']
+                }
+    
+    
     for transport_type in transport_types:
         # Add load for transport demand
         n.add("Carrier", f"land transport demand {transport_type}")
@@ -1791,53 +1802,41 @@ def add_land_transport(n, costs):
             p_set=p_set,
         )
 
-    # temperature for correction factor for heating/cooling
-    temperature = xr.open_dataarray(snakemake.input.temp_air_total).to_pandas()
-    
-    # respective columns for light and heavy duty
-    car_cols = {"light" :  ['Number Passenger cars',
-                            'Number Powered 2-wheelers',
-                            'Number Light duty vehicles'],
-                "heavy": ['Number Motor coaches, buses and trolley buses',
-                          'Number Heavy duty vehicles']
-                }
-    
-    if shares["electric"] > 0:
 
-        for transport_type in transport_types:
-            car_efficiency = car_efficiencies["fuel_cell"][transport_type]
-            suffix =  f" land transport EV {transport_type}"
+        # electric vehicles
+        if shares.loc["electric", transport_type] > 0:
+            car_efficiency = car_efficiencies.loc["electric",transport_type]
             cols = car_cols[transport_type]
             add_EVs(
                 n,
                 nodes,
                 avail_profile,
                 dsm_profile,
-                transport["light"],
-                shares["electric"],
+                transport[transport_type],
+                shares.loc["electric", transport_type],
                 number_cars[cols].sum(axis=1),
                 temperature,
                 car_efficiency,
-                suffix,
-                transport_type
+                suffix=f" land transport EV {transport_type}",
+                transport_type=transport_type
             )
         
-
-    if shares["fuel_cell"] > 0:
-        # add fuel cell cars + trucks
-        for transport_type in transport_types:
-            car_efficiency = car_efficiencies["fuel_cell"][transport_type]
+        
+        # fuel cell vehicles
+        if shares.loc["fuel_cell", transport_type] > 0:
+            car_efficiency = car_efficiencies.loc["fuel_cell", transport_type]
             add_fuel_cell_cars(n, nodes, transport[transport_type],
-                               shares["fuel_cell"],
+                               shares.loc["fuel_cell", transport_type],
                                temperature,
                                car_efficiency,
                                suffix=f" land transport fuel cell {transport_type}",
                                transport_type=transport_type)
         
-    if shares["ice"] > 0:
-        for transport_type in transport_types:
-            car_efficiency = car_efficiencies["ice"][transport_type]
-            add_ice_cars(n, nodes, transport[transport_type], shares["ice"],
+        # internal combustion cars
+        if shares.loc["ice", transport_type]>0:
+            car_efficiency = car_efficiencies.loc["ice", transport_type]
+            add_ice_cars(n, nodes, transport[transport_type],
+                         shares.loc["ice", transport_type],
                          temperature, car_efficiency,
                          suffix=f" land transport oil {transport_type}",
                          transport_type=transport_type
@@ -3744,22 +3743,26 @@ def adjust_transport_temporal_agg(n):
         "ice": "land transport oil",
     }
 
-    p_set = n.loads_t.p_set.loc[:, n.loads.carrier == "land transport demand"]
+    
+    for transport_type in ["light", "heavy"]:
+        p_set = n.loads_t.p_set.loc[:, n.loads.carrier == f"land transport demand {transport_type}"]
+        for engine, carrier in engine_types.items():
+            
+            share = get(options[f"land_transport_{engine}_share"][transport_type],
+                        investment_year)
+    
+            if share == 0: continue
+                
+            links_i = n.links[n.links.carrier == carrier + f" {transport_type}"].index
+            efficiency = n.links_t.efficiency.loc[:, links_i]
 
-    for engine, carrier in engine_types.items():
-        share = get(options[f"land_transport_{engine}_share"], investment_year)
-
-        if share == 0:
-            continue
-        links_i = n.links[n.links.carrier == carrier].index
-        efficiency = n.links_t.efficiency.loc[:, links_i]
-        p_set.columns = efficiency.columns
-        p_nom = share * p_set.div(efficiency).max()
-        profile = p_set.div(efficiency) / p_set.div(efficiency).max()
-
-        n.links.loc[links_i, "p_nom"] = p_nom
-        n.links_t.p_max_pu[links_i] = profile
-        n.links_t.p_min_pu[links_i] = profile
+            p_set.columns = efficiency.columns
+            p_nom = share * p_set.div(efficiency).max()
+            profile = p_set.div(efficiency) / p_set.div(efficiency).max()
+    
+            n.links.loc[links_i, "p_nom"] = p_nom
+            n.links_t.p_max_pu[links_i] = profile
+            n.links_t.p_min_pu[links_i] = profile
 
 
 # %%

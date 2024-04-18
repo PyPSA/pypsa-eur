@@ -407,29 +407,57 @@ sector:
   bev_avail_mean: 0.8
   v2g: true
   land_transport_fuel_cell_share:
-    2020: 0
-    2025: 0
-    2030: 0
-    2035: 0
-    2040: 0
-    2045: 0
-    2050: 0
+    light:
+      2020: 0
+      2025: 0
+      2030: 0
+      2035: 0
+      2040: 0
+      2045: 0
+      2050: 0
+    heavy:
+      2020: 0
+      2025: 0
+      2030: 0.1
+      2035: 0.2
+      2040: 0.3
+      2045: 0.4
+      2050: 0.5
   land_transport_electric_share:
-    2020: 0
-    2025: 0.15
-    2030: 0.3
-    2035: 0.45
-    2040: 0.7
-    2045: 0.85
-    2050: 1
+    light:
+      2020: 0
+      2025: 0.15
+      2030: 0.3
+      2035: 0.45
+      2040: 0.7
+      2045: 0.85
+      2050: 1
+    heavy:
+      2020: 0
+      2025: 0
+      2030: 0.1
+      2035: 0.2
+      2040: 0.3
+      2045: 0.4
+      2050: 0.5
   land_transport_ice_share:
-    2020: 1
-    2025: 0.85
-    2030: 0.7
-    2035: 0.55
-    2040: 0.3
-    2045: 0.15
-    2050: 0
+    light:
+      2020: 1
+      2025: 0.85
+      2030: 0.7
+      2035: 0.55
+      2040: 0.3
+      2045: 0.15
+      2050: 0
+    heavy:
+      2020: 1
+      2025: 1
+      2030: 0.8
+      2035: 0.6
+      2040: 0.4
+      2045: 0.2
+      2050: 0
+
   transport_electric_efficiency:
     # https://ev-database.org/de/cheatsheet/energy-consumption-electric-car
     # average energy consumption 188 Wh/km = 0.188 kWh/km = 18.8 kWh/100 km = 0.0188 MWh/ 100 km
@@ -954,7 +982,8 @@ plotting:
     services urban decentral oil boiler: '#999999'
     agriculture machinery oil: '#949494'
     shipping oil: "#808080"
-    land transport oil: '#afafaf'
+    land transport oil light: '#afafaf'
+    land transport oil heavy: '#afafab'
     # nuclear
     Nuclear: '#ff8c00'
     Nuclear marginal: '#ff8c00'
@@ -1010,8 +1039,10 @@ plotting:
     home battery discharger: '#3c5221'
     BEV charger: '#baf238'
     V2G: '#e5ffa8'
-    land transport EV: '#baf238'
-    land transport demand: '#38baf2'
+    land transport EV light: '#baf238'
+    land transport EV heavy: '#baf240'
+    land transport demand light: '#38baf2'
+    land transport demand heavy: '#38ba40'
     Li ion: '#baf238'
     # hot water storage
     water tanks: '#e69487'
@@ -1090,7 +1121,8 @@ plotting:
     hydrogen storage: '#bf13a0'
     H2 Store: '#bf13a0'
     H2 storage: '#bf13a0'
-    land transport fuel cell: '#6b3161'
+    land transport fuel cell light: '#6b3161'
+    land transport fuel cell heavy: '#6b3180'
     H2 pipeline: '#f081dc'
     H2 pipeline retrofitted: '#ba99b5'
     H2 Fuel Cell: '#c251ae'
