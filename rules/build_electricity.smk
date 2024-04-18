@@ -487,7 +487,6 @@ rule simplify_network:
         regions_onshore=resources("regions_onshore_elec_s{simpl}.geojson"),
         regions_offshore=resources("regions_offshore_elec_s{simpl}.geojson"),
         busmap=resources("busmap_elec_s{simpl}.csv"),
-        connection_costs=resources("connection_costs_s{simpl}.csv"),
     log:
         logs("simplify_network/elec_s{simpl}.log"),
     benchmark:
