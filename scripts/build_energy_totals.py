@@ -990,6 +990,7 @@ def update_residential_from_eurostat(energy):
 
     # Set indexes back
     energy_totals.set_index(["country", "year"], inplace=True)
+    logger.info("Updated energy balances for residential using disaggregate final energy consumption data in Households from Eurostat")
 
     return energy_totals
 
