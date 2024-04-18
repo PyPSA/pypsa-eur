@@ -1549,21 +1549,23 @@ def add_EVs(
     electric_share,
     number_cars,
     temperature,
+    car_efficiency,
+    suffix,
+    transport_type="light"
 ):
-
-    n.add("Carrier", "Li ion")
+    
+    if not "Li ion" in n.carriers.index:
+        n.add("Carrier", "Li ion")
 
     n.madd(
         "Bus",
         nodes,
-        suffix=" EV battery",
+        suffix=f" EV battery {transport_type}",
         location=nodes,
         carrier="Li ion",
         unit="MWh_el",
     )
-
-    car_efficiency = options["transport_electric_efficiency"]
-
+        
     # temperature corrected efficiency
     efficiency = get_temp_efficency(
         car_efficiency,
@@ -1573,7 +1575,6 @@ def add_EVs(
         options["EV_lower_degree_factor"],
         options["EV_upper_degree_factor"],
     )
-    suffix = " land transport EV"
 
     p_shifted = (p_set + cycling_shift(p_set, 1) + cycling_shift(p_set, 2)) / 3
 
@@ -1589,9 +1590,9 @@ def add_EVs(
         "Link",
         nodes,
         suffix=suffix,
-        bus0=nodes + " EV battery",
-        bus1=nodes + " land transport light",
-        carrier="land transport EV",
+        bus0=nodes + f" EV battery {transport_type}",
+        bus1=nodes + f" land transport {transport_type}",
+        carrier=suffix[1:],
         efficiency=efficiency,
         p_min_pu=profile,
         p_max_pu=profile,
@@ -1606,23 +1607,23 @@ def add_EVs(
     n.madd(
         "Link",
         nodes,
-        suffix=" BEV charger",
+        suffix=f" BEV charger {transport_type}",
         bus0=nodes,
-        bus1=nodes + " EV battery",
+        bus1=nodes + f" EV battery {transport_type}",
         p_nom=p_nom,
-        carrier="BEV charger",
+        carrier=f"BEV charger {transport_type}",
         p_max_pu=avail_profile[nodes],
         lifetime=1,
         efficiency=options.get("bev_charge_efficiency", 0.9),
     )
 
-    if options["v2g"]:
+    if options["v2g"] and transport_type=="light":
         n.madd(
             "Link",
             nodes,
             suffix=" V2G",
             bus1=nodes,
-            bus0=nodes + " EV battery",
+            bus0=nodes + f" EV battery {transport_type}",
             p_nom=p_nom,
             carrier="V2G",
             p_max_pu=avail_profile[nodes],
@@ -1630,7 +1631,7 @@ def add_EVs(
             efficiency=options.get("bev_charge_efficiency", 0.9),
         )
 
-    if options["bev_dsm"]:
+    if options["bev_dsm"] and transport_type=="light":
         e_nom = (
             number_cars
             * options.get("bev_energy", 0.05)
@@ -1642,7 +1643,7 @@ def add_EVs(
             "Store",
             nodes,
             suffix=" battery storage",
-            bus=nodes + " EV battery",
+            bus=nodes + f" EV battery {transport_type}",
             carrier="battery storage",
             e_cyclic=True,
             e_nom=e_nom,
@@ -1792,21 +1793,35 @@ def add_land_transport(n, costs):
 
     # temperature for correction factor for heating/cooling
     temperature = xr.open_dataarray(snakemake.input.temp_air_total).to_pandas()
-
+    
+    # respective columns for light and heavy duty
+    car_cols = {"light" :  ['Number Passenger cars',
+                            'Number Powered 2-wheelers',
+                            'Number Light duty vehicles'],
+                "heavy": ['Number Motor coaches, buses and trolley buses',
+                          'Number Heavy duty vehicles']
+                }
+    
     if shares["electric"] > 0:
-        light_cols = ['Number Passenger cars',
-                      'Number Powered 2-wheelers',
-                      'Number Light duty vehicles']
-        add_EVs(
-            n,
-            nodes,
-            avail_profile,
-            dsm_profile,
-            transport["light"],
-            shares["electric"],
-            number_cars[light_cols].sum(axis=1),
-            temperature,
-        )
+
+        for transport_type in transport_types:
+            car_efficiency = car_efficiencies["fuel_cell"][transport_type]
+            suffix =  f" land transport EV {transport_type}"
+            cols = car_cols[transport_type]
+            add_EVs(
+                n,
+                nodes,
+                avail_profile,
+                dsm_profile,
+                transport["light"],
+                shares["electric"],
+                number_cars[cols].sum(axis=1),
+                temperature,
+                car_efficiency,
+                suffix,
+                transport_type
+            )
+        
 
     if shares["fuel_cell"] > 0:
         # add fuel cell cars + trucks
