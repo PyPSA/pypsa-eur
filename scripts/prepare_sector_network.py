@@ -1791,15 +1791,19 @@ def add_land_transport(n, costs):
         )
     
         p_set = transport[transport_type]
-    
+        carrier = carrier=f"land transport demand {transport_type}"
+        
+        if carrier in options["vary_demand"].keys():
+            factor = get(options["vary_demand"][carrier], investment_year)
+            logger.info(f"Vary {carrier} by factor {factor} in {investment_year}")
         # add demand
         n.madd(
             "Load",
             nodes,
             suffix=f" land transport {transport_type}",
             bus=nodes + f" land transport {transport_type}",
-            carrier=f"land transport demand {transport_type}",
-            p_set=p_set,
+            carrier=carrier,
+            p_set=factor*p_set,
         )
 
 
