@@ -449,7 +449,7 @@ def plot_busmap_for_n_clusters(n, n_clusters, fn=None):
         plt.savefig(fn, bbox_inches="tight")
     del cs, cr
 
-
+#%%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -526,7 +526,7 @@ if __name__ == "__main__":
 
         clustering = clustering_for_n_clusters(
             n,
-            n_clusters,
+            n_clusters-1,
             custom_busmap,
             aggregate_carriers,
             params.length_factor,
@@ -548,6 +548,9 @@ if __name__ == "__main__":
     clustering.network.meta = dict(
         snakemake.config, **dict(wildcards=dict(snakemake.wildcards))
     )
+    
+    if len(pd.Index(clustering.busmap.values).unique())!= n_clusters:
+        print("warning n_clusters and clustered buses in busmap are not equal")
     clustering.network.export_to_netcdf(snakemake.output.network)
     for attr in (
         "busmap",

@@ -1753,6 +1753,7 @@ def add_land_transport(n, costs):
     # exogenous share of passenger car type
     engine_types = ["fuel_cell", "electric", "ice"]
     transport_types = transport.columns.levels[0]
+    endogenous = options["endogenous_transport"]
     
     shares = pd.DataFrame()
     car_efficiencies =  pd.DataFrame()
@@ -1761,9 +1762,17 @@ def add_land_transport(n, costs):
             shares.loc[engine, transport_type] = get(options[f"land_transport_{engine}_share"][transport_type],
                                  investment_year)
             car_efficiencies.loc[engine, transport_type] = options[f"transport_{engine}_efficiency"][transport_type]
-            logger.info(f"{engine} {transport_type} share: {shares.loc[engine, transport_type]*100}%")
-
-    check_land_transport_shares(shares)
+            if not endogenous:
+                logger.info(f"{engine} {transport_type} share: {shares.loc[engine, transport_type]*100}%")
+    
+    
+    
+    if not endogenous:
+        check_land_transport_shares(shares)
+    else:
+        logger.info("Endogenous optimisation of land transport sector")
+        # todo make this nicer
+        shares.loc[:,:] = 1/3
     
     # temperature for correction factor for heating/cooling
     temperature = xr.open_dataarray(snakemake.input.temp_air_total).to_pandas()
@@ -1845,8 +1854,111 @@ def add_land_transport(n, costs):
                          suffix=f" land transport oil {transport_type}",
                          transport_type=transport_type
                          )
+            
+        if endogenous:
+            adjust_endogenous_transport(n)
 
 
+def adjust_endogenous_transport(n):
+
+    logger.info("Assume endogenous land transport")
+    carrier = [
+        "land transport EV light",
+        "land transport EV heavy",
+        "land transport oil light",
+        "land transport oil heavy",
+        "land transport fuel cell light",
+        "land transport fuel cell heavy",
+        "BEV charger",
+        "V2G",
+    ]
+
+    links_i = n.links[n.links.carrier.isin(carrier)].index
+    n.links.loc[links_i, "p_nom_extendable"] = True
+    n.links.loc[links_i, "lifetime"] = 15
+
+    store_carrier = ["battery storage", "Li ion"]
+    store_i = n.stores[n.stores.carrier.isin(store_carrier)].index
+    n.stores.loc[store_i, "e_nom_extendable"] = True
+
+    # costs todo
+    # assume here for all of Europe
+    # average driving distance
+    # passenger cars EU28 JRC 2015 11 360 km /year and car = 113.6 100km /year
+    light_100km_per_vehicle = 113.6
+    # mean of buses and heavy duty freight
+    heavy_100km_per_vehicle = (396.783 + 172.843)/2
+    
+    engine_types = ["fuel_cell", "electric", "ice"]
+    transport_types = ["light", "heavy"]
+    car_efficiencies =  pd.DataFrame()
+    for engine in engine_types:
+        for transport_type in transport_types:
+            car_efficiencies.loc[engine, transport_type] = options[f"transport_{engine}_efficiency"][transport_type]
+    # EV --------------------------
+    cost_EV = (costs.loc["Battery electric (passenger cars)", "fixed"]
+               / light_100km_per_vehicle / car_efficiencies.loc["electric", "light"])
+    
+    cost_Etruck = (costs.loc['Battery electric (trucks)', "fixed"]
+                   / heavy_100km_per_vehicle /
+                   car_efficiencies.loc["electric", "heavy"])
+    # FCE ----------------------------
+    cost_FCE = (costs.loc["Hydrogen fuel cell (passenger cars)", "fixed"]
+                / light_100km_per_vehicle
+                / car_efficiencies.loc["fuel_cell", "light"])
+    cost_FCtruck = (costs.loc['Hydrogen fuel cell (trucks)', "fixed"]
+                    / heavy_100km_per_vehicle
+                    / car_efficiencies.loc["fuel_cell", "heavy"])
+
+    # ICE ---------------------------------------------------------
+    cost_ICE = (costs.at["Liquid fuels ICE (passenger cars)", "fixed"]
+                / light_100km_per_vehicle
+                / car_efficiencies.loc["ice", "light"])
+    cost_ICtruck = (costs.loc['Hydrogen fuel cell (trucks)', "fixed"]
+                    / heavy_100km_per_vehicle
+                    / car_efficiencies.loc["ice", "heavy"])
+    # cost in unit input depending on car type
+    costs_car_type = {
+        "land transport EV light": cost_EV,
+        "land transport EV heavy": cost_Etruck,
+        'land transport fuel cell light': cost_FCE,
+        'land transport fuel cell heavy': cost_FCtruck,
+        'land transport oil light': cost_ICE,
+        'land transport oil heavy': cost_ICtruck,
+            
+    }
+
+    # add dummy generator only needed for solving with glpk with higher solver tolerance
+    # n.add("Carrier", "dummy transport", color="#dd2e23", nice_name="Dummy transport")
+    buses_i = n.buses[n.buses.carrier == "land transport demand"].index
+    n.madd(
+        "Generator",
+        buses_i,
+        " load",
+        bus=buses_i,
+        carrier="load",
+        marginal_cost=1e9,
+        p_nom=1e5,
+    )
+
+    # n.madd(
+    #     "Generator",
+    #     buses_i,
+    #     " load negative",
+    #     bus=buses_i,
+    #     carrier="load",
+    #     marginal_cost=1e9,
+    #     p_nom=1e5,
+    #     p_max_pu=0,
+    #     p_min_pu=-1,
+    #     sign=-1,
+    # )
+
+    for car_type, cost in costs_car_type.items():
+        car_i = n.links[n.links.carrier == car_type].index
+        n.links.loc[car_i, "capital_cost"] = cost
+        
+        
 def build_heat_demand(n):
     heat_demand_shape = (
         xr.open_dataset(snakemake.input.hourly_heat_demand_total)
@@ -3779,7 +3891,7 @@ if __name__ == "__main__":
             # configfiles="test/config.overnight.yaml",
             simpl="",
             opts="",
-            clusters="37",
+            clusters="40",
             ll="v1.0",
             sector_opts="730H-T-H-B-I-A-dist1",
             planning_horizons="2030",

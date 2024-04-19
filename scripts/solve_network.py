@@ -354,7 +354,7 @@ def prepare_network(
         buses_i = n.buses.index
         if not np.isscalar(load_shedding):
             # TODO: do not scale via sign attribute (use Eur/MWh instead of Eur/kWh)
-            load_shedding = 1e2  # Eur/kWh
+            load_shedding = 1e4  # Eur/kWh
 
         n.madd(
             "Generator",
@@ -399,6 +399,56 @@ def prepare_network(
         add_co2_sequestration_limit(n, limit=limit)
 
     return n
+
+
+def add_endogenous_transport_constraints(n, snapshots):
+    """
+    Add constraints to relate number of EVs to EV charger, V2G and DSM.
+    """
+
+    # get index TODO only extendable
+    link_ext = n.links[n.links.p_nom_extendable]
+    ev_i = link_ext[link_ext.carrier == "land transport EV"].index
+    bev_i = link_ext[link_ext.carrier == "BEV charger"].index
+    v2g_i = link_ext[link_ext.carrier == "V2G"].index
+    bev_dsm_i = n.stores[
+        (n.stores.carrier == "battery storage") & n.stores.e_nom_extendable
+    ].index
+
+    if ev_i.empty:
+        return
+    # factor
+    f = (
+        n.links.loc[ev_i, "p_nom"]
+        .rename(n.links.bus0)
+        .div(n.links.loc[bev_i, "p_nom"].rename(n.links.bus1))
+    )
+
+    # variables
+    link_p_nom = n.model.variables.Link_p_nom
+
+    # constraint for BEV charger
+    lhs = link_p_nom.loc[ev_i] - (link_p_nom.loc[bev_i] * f.values)
+    n.model.add_constraints(lhs == 0, name="p_nom-EV-BEV")
+
+    if not v2g_i.empty:
+        # constraint for V2G
+        lhs = link_p_nom.loc[ev_i] - (link_p_nom.loc[v2g_i] * f.values)
+        n.model.add_constraints(lhs == 0, name="p_nom-EV-V2G")
+
+    if not bev_dsm_i.empty:
+        # factor
+        f = (
+            n.links.loc[ev_i, "p_nom"]
+            .rename(n.links.bus0)
+            .div(n.stores.loc[bev_dsm_i, "e_nom"].rename(n.links.bus1))
+        )
+
+        store_e_nom = n.model.variables.Store_e_nom
+
+        # constraint for DSM
+        lhs = link_p_nom.loc[ev_i] - (store_e_nom.loc[bev_dsm_i] * f.values)
+        n.model.add_constraints(lhs == 0, name="e_nom-EV-DSM")
 
 
 def add_CCL_constraints(n, config):
@@ -855,7 +905,10 @@ def extra_functionality(n, snapshots):
         add_retrofit_gas_boiler_constraint(n, snapshots)
     else:
         add_co2_atmosphere_constraint(n, snapshots)
-
+    
+    if n.config["sector"]["endogenous_transport"]:
+        add_endogenous_transport_constraints(n, snapshots)
+        
     if snakemake.params.custom_extra_functionality:
         source_path = snakemake.params.custom_extra_functionality
         assert os.path.exists(source_path), f"{source_path} does not exist"
@@ -929,12 +982,12 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "solve_sector_network",
-            configfiles="../config/test/config.perfect.yaml",
+            # configfiles="../config/test/config.perfect.yaml",
             simpl="",
             opts="",
-            clusters="37",
+            clusters="40",
             ll="v1.0",
-            sector_opts="CO2L0-1H-T-H-B-I-A-dist1",
+            sector_opts="730H-T-H-B-I-A-dist1",
             planning_horizons="2030",
         )
     configure_logging(snakemake)

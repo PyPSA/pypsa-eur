@@ -653,7 +653,13 @@ def make_summaries(networks_dict):
     for label, filename in networks_dict.items():
         logger.info(f"Make summary for scenario {label}, using {filename}")
 
-        n = pypsa.Network(filename)
+        try:
+            n = pypsa.Network(filename)
+        except FileNotFoundError:
+            logger.info(f"{label} not yet solved.")
+            continue
+
+        if not hasattr(n, "objective"): continue
 
         assign_carriers(n)
         assign_locations(n)

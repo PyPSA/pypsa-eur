@@ -390,6 +390,7 @@ sector:
     district_heating_loss: 0.15
   cluster_heat_buses: true
   heat_demand_cutout: default
+  endogenous_transport: false
   bev_dsm_restriction_value: 0.75
   bev_dsm_restriction_time: 7
   transport_heating_deadband_upper: 20.

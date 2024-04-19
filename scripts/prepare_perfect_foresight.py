@@ -166,7 +166,8 @@ def concat_networks(years):
         year = years[i]
         network = pypsa.Network(network_path)
         adjust_electricity_grid(network, year, years)
-        add_build_year_to_new_assets(network, year)
+        if not i == 0:
+            add_build_year_to_new_assets(network, year)
 
         # static ----------------------------------
         for component in network.iterate_components(
@@ -335,7 +336,7 @@ def set_carbon_constraints(n):
         n.add(
             "GlobalConstraint",
             "carbon_neutral",
-            type="co2_limit",
+            type="co2_atmosphere",
             carrier_attribute="co2_emissions",
             sense="<=",
             constant=0,
@@ -498,8 +499,8 @@ if __name__ == "__main__":
             simpl="",
             opts="",
             clusters="37",
-            ll="v1.5",
-            sector_opts="1p7-4380H-T-H-B-I-A-dist1",
+            ll="v1.0",
+            sector_opts="1p5-730H-T-H-B-I-A-dist1",
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
@@ -538,9 +539,6 @@ if __name__ == "__main__":
 
     # set carbon constraints
     n = set_carbon_constraints(n)
-
-    # update meta
-    n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
 
     # export network
     n.export_to_netcdf(snakemake.output[0])
