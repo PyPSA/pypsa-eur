@@ -75,6 +75,13 @@ Upcoming Release
 * Added new HVDC transmission projects from `TYNDP 2024 draft projects
   <https://tyndp.entsoe.eu/news/176-pan-european-electricity-transmission-projects-and-33-storage-projects-will-be-assessed-in-tyndp-2024>`__.
 
+* bugfix: convert Strings to pathlib.Path objects as input to ConfigSettings
+* Corrected a bug leading to power plants operating after their DateOut 
+  (https://github.com/PyPSA/pypsa-eur/pull/958). Added additional grouping years
+  before 1980.
+  
+* Upgrade default techno-economic assumptions to ``technology-data`` v0.8.1.
+
 * Upgrade to Snakemake v8.5+. This version is the new minimum version required.
   To upgrade an existing environment, run ``conda install -c bioconda
   snakemake-minimal">=8.5"`` and ``pip install snakemake-storage-plugin-http``
