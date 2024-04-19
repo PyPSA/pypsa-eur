@@ -468,6 +468,7 @@ sector:
   shipping_methanol_efficiency: 0.46
   shipping_oil_efficiency: 0.40
   aviation_demand_factor: 1.
+  land_transport_demand_factor: 1.
   HVC_demand_factor: 1.
   time_dep_hp_cop: true
   heat_pump_sink_T: 55.

@@ -9,6 +9,10 @@ Release Notes
 
 Upcoming Release
 ================
+* Add config land_transport_demand_factor to model growth in land transport demand for different time horizons.
+
+* Allow dictionary for the config aviation_demand_factor.
+
 * Group existing capacities to the earlier grouping_year for consistency with optimized capacities.
 
 * bugfix: installed heating capacities were 5% lower than existing heating capacities
@@ -197,7 +201,10 @@ Upcoming Release
 
 * Fix custom busmap read in `cluster_network`.
 
+* Fix p_nom_min of renewables generators for myopic approach and add check of existing capacities in `add_land_use_constraint_m`.
+
 * Add documentation section for how to contribute documentation
+
 
 PyPSA-Eur 0.10.0 (19th February 2024)
 =====================================
