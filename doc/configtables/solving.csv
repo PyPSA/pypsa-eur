@@ -17,7 +17,7 @@ options,,,
 agg_p_nom_limits,,,Configure per carrier generator nominal capacity constraints for individual countries if ``'CCL'`` is in ``{opts}`` wildcard.
 -- agg_offwind,bool,"{'true','false'}",Aggregate together all the types of offwind when writing the constraint. Default is false.
 -- include_existing,bool,"{'true','false'}",Take existing capacities into account when writing the constraint. Default is false.
--- years,-,Dictionary with planning horizons as key and path as value,Reference to ``.csv`` file for each planning horizon. Defaults to ``data/agg_p_nom_minmax.csv``.
+-- file,file,path,Reference to ``.csv`` file specifying per carrier generator nominal capacity constraints for individual countries and planning horizons. Defaults to ``data/agg_p_nom_minmax.csv``.
 constraints ,,,
 -- CCL,bool,"{'true','false'}",Add minimum and maximum levels of generator nominal capacity per carrier for individual countries. These can be specified in the file linked at ``electricity: agg_p_nom_limits`` in the configuration. File defaults to ``data/agg_p_nom_minmax.csv``.
 -- EQ,bool/string,"{'false',`n(c| )``; i.e. ``0.5``-``0.7c``}",Require each country or node to on average produce a minimal share of its total consumption itself. Example: ``EQ0.5c`` demands each country to produce on average at least 50% of its consumption; ``EQ0.5`` demands each node to produce on average at least 50% of its consumption.

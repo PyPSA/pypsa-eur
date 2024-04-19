@@ -760,10 +760,7 @@ solving:
   agg_p_nom_limits:
     agg_offwind: false
     include_existing: false
-    years:
-      2030: data/agg_p_nom_minmax.csv
-      2040: data/agg_p_nom_minmax.csv
-      2050: data/agg_p_nom_minmax.csv
+    file: data/agg_p_nom_minmax.csv
 
   constraints:
     CCL: false
