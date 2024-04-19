@@ -90,9 +90,9 @@ For each wildcard, a **list of values** is provided. The rule
 ``results/networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc`` for **all
 combinations** of the provided wildcard values as defined by Python's
 `itertools.product(...)
-<https://docs.python.org/2/library/itertools.html#itertools.product>`_ function
+<https://docs.python.org/2/library/itertools.html#itertools.product>`__ function
 that snakemake's `expand(...) function
-<https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#targets>`_
+<https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#targets>`__
 uses.
 
 An exemplary dependency graph (starting from the simplification rules) then looks like this:
@@ -129,7 +129,7 @@ An exemplary dependency graph (starting from the simplification rules) then look
 ``snapshots``
 =============
 
-Specifies the temporal range to build an energy system model for as arguments to `pandas.date_range <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.date_range.html>`_
+Specifies the temporal range to build an energy system model for as arguments to `pandas.date_range <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.date_range.html>`__
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
@@ -197,7 +197,7 @@ Switches for some rules and optional features.
 ``atlite``
 ==========
 
-Define and specify the ``atlite.Cutout`` used for calculating renewable potentials and time-series. All options except for ``features`` are directly used as `cutout parameters <https://atlite.readthedocs.io/en/latest/ref_api.html#cutout>`_.
+Define and specify the ``atlite.Cutout`` used for calculating renewable potentials and time-series. All options except for ``features`` are directly used as `cutout parameters <https://atlite.readthedocs.io/en/latest/ref_api.html#cutout>`__.
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
@@ -427,7 +427,7 @@ overwrite the existing values.
    :widths: 22,7,22,33
    :file: configtables/biomass.csv
 
-The list of available biomass is given by the category in `ENSPRESO_BIOMASS <https://cidportal.jrc.ec.europa.eu/ftp/jrc-opendata/ENSPRESO/ENSPRESO_BIOMASS.xlsx>`_, namely:
+The list of available biomass is given by the category in `ENSPRESO_BIOMASS <https://cidportal.jrc.ec.europa.eu/ftp/jrc-opendata/ENSPRESO/ENSPRESO_BIOMASS.xlsx>`__, namely:
 
 - Agricultural waste
 - Manure solid, liquid
@@ -564,7 +564,7 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 .. _adjustments_cf:
 
 ``adjustments``
-=============
+===============
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
