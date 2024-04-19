@@ -200,6 +200,17 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
         to_drop = df_agg[df_agg.DateIn < min(grouping_years)].index
         df_agg.drop(to_drop, inplace=True)
 
+    older_assets = (df_agg.DateIn < min(grouping_years)).sum()
+    if older_assets:
+        logger.warning(
+            f"There are {older_assets} assets with build year "
+            f"before first power grouping year {min(grouping_years)}. "
+            "These assets are dropped and not considered."
+            "Consider to redefine the grouping years to keep them."
+        )
+        to_drop = df_agg[df_agg.DateIn < min(grouping_years)].index
+        df_agg.drop(to_drop, inplace=True)
+
     df_agg["grouping_year"] = np.take(
         grouping_years[::-1], np.digitize(df_agg.DateIn, grouping_years[::-1])
     )
@@ -384,7 +395,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                         "Link",
                         new_capacity.index,
                         suffix=name_suffix,
-                        bus0=spatial.biomass.df.loc[new_capacity.index]["nodes"].values,
+                        bus0=spatial.biomass.df.loc[new_capacity.index, "nodes"].values,
                         bus1=new_capacity.index,
                         bus2=heat_buses,
                         carrier=generator,
@@ -569,7 +580,7 @@ def add_heating_capacities_installed_before_baseyear(
                 "Link",
                 nodes,
                 suffix=f" {name} biomass boiler-{grouping_year}",
-                bus0=spatial.biomass.nodes,
+                bus0=spatial.biomass.df.loc[nodes, "nodes"].values,
                 bus1=nodes + " " + name + " heat",
                 carrier=name + " biomass boiler",
                 efficiency=costs.at["biomass boiler", "efficiency"],
