@@ -9,6 +9,13 @@ Release Notes
 
 Upcoming Release
 ================
+* Group existing capacities to the earlier grouping_year for consistency with optimized capacities.
+
+* bugfix: installed heating capacities were 5% lower than existing heating capacities
+
+* Include gas and oil fields and saline aquifers in estimation of CO2 sequestration potential.
+
+* bugfix: convert Strings to pathlib.Path objects as input to ConfigSettings
 
 
 
@@ -79,6 +86,8 @@ different car types (ICE, EV, fuel cell) are modelled as links
 * Corrected a bug leading to power plants operating after their DateOut
   (https://github.com/PyPSA/pypsa-eur/pull/958). Added additional grouping years
   before 1980.
+
+* Add decommissioning of existing renewables assets in `add_existing_baseyear`.
 
 * The Eurostat data was updated to the 2023 version in :mod:`build_energy_totals`.
 
@@ -155,6 +164,9 @@ different car types (ICE, EV, fuel cell) are modelled as links
   - Collection rules get a new wildcard ``run=config["run"]["name"]`` so they
     can collect outputs across different scenarios.
 
+  - It is further possible to encapsulate your scenarios in a directory using
+    the setting ``run: prefix:``.
+
   - **Warning:** One caveat remains for the scenario management with myopic or
     perfect foresight pathway optimisation. The first investment period must be
     shared across all scenarios. The reason is that the ``wildcard_constraints``
@@ -169,9 +181,15 @@ different car types (ICE, EV, fuel cell) are modelled as links
 
 * Adapt the disabling of transmission expansion in myopic foresight optimisations when limit is already reached to also handle cost limits.
 
-* Fix duplicated years in `add_land_use_constraint_m`.
+* Fix duplicated years and grouping years reference in `add_land_use_constraint_m`.
 
 * Fix type error with `m` option in `cluster_network`.
+
+* Fix error with `symbol` of `buses` in `simplify_network`.
+
+* Fix index of existing capacities in `add_power_capacities_installed_before_baseyear` with `m` option.
+
+* Fix custom busmap read in `cluster_network`.
 
 PyPSA-Eur 0.10.0 (19th February 2024)
 =====================================
