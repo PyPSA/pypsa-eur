@@ -19,13 +19,16 @@ assuming as an approximation energy content of wood pellets
 
 import pandas as pd
 import tabula as tbl
+import platform
 
 ENERGY_CONTENT = 4.8  # unit MWh/t (wood pellets)
+system = platform.system()
+encoding = 'cp1252' if system == 'Windows' else None
 
 
 def get_countries():
     pandas_options = dict(
-        skiprows=range(6), header=None, index_col=0, encoding="cp1252"
+        skiprows=range(6), header=None, index_col=0, encoding=encoding
     )
 
     return tbl.read_pdf(
@@ -33,7 +36,7 @@ def get_countries():
         pages="145",
         multiple_tables=False,
         pandas_options=pandas_options,
-        encoding="cp1252",
+        encoding=encoding,
     )[0].index
 
 
@@ -44,7 +47,7 @@ def get_cost_per_tkm(page, countries):
         sep=" |,",
         engine="python",
         index_col=False,
-        encoding="cp1252",
+        encoding=encoding,
     )
 
     sc = tbl.read_pdf(
@@ -52,7 +55,7 @@ def get_cost_per_tkm(page, countries):
         pages=page,
         multiple_tables=False,
         pandas_options=pandas_options,
-        encoding="cp1252",
+        encoding=encoding,
     )[0]
     sc.index = countries
     sc.columns = sc.columns.str.replace("€", "EUR")
