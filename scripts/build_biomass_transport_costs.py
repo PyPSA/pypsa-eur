@@ -91,12 +91,6 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake(
-            "build_biomass_transport_costs",
-            simpl="",
-            clusters=48,
-            ll="v1.0",
-            sector_opts="Co2L0-168H-T-H-B-I-solar3-dist1",
-        )
+        snakemake = mock_snakemake("build_biomass_transport_costs")
 
     build_biomass_transport_costs()
