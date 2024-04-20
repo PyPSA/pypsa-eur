@@ -17,13 +17,14 @@ assuming as an approximation energy content of wood pellets
 @author: bw0928
 """
 
+import platform
+
 import pandas as pd
 import tabula as tbl
-import platform
 
 ENERGY_CONTENT = 4.8  # unit MWh/t (wood pellets)
 system = platform.system()
-encoding = 'cp1252' if system == 'Windows' else None
+encoding = "cp1252" if system == "Windows" else None
 
 
 def get_countries():
