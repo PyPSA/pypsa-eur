@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
@@ -55,8 +55,8 @@ import logging
 import numpy as np
 import pandas as pd
 import pypsa
-from _helpers import configure_logging
-from add_electricity import load_costs, sanitize_carriers
+from _helpers import configure_logging, set_scenario_config
+from add_electricity import load_costs, sanitize_carriers, sanitize_locations
 
 idx = pd.IndexSlice
 
@@ -100,10 +100,9 @@ def attach_stores(n, costs, extendable_carriers):
     n.madd("Carrier", carriers)
 
     buses_i = n.buses.index
-    bus_sub_dict = {k: n.buses[k].values for k in ["x", "y", "country"]}
 
     if "H2" in carriers:
-        h2_buses_i = n.madd("Bus", buses_i + " H2", carrier="H2", **bus_sub_dict)
+        h2_buses_i = n.madd("Bus", buses_i + " H2", carrier="H2", location=buses_i)
 
         n.madd(
             "Store",
@@ -143,7 +142,7 @@ def attach_stores(n, costs, extendable_carriers):
 
     if "battery" in carriers:
         b_buses_i = n.madd(
-            "Bus", buses_i + " battery", carrier="battery", **bus_sub_dict
+            "Bus", buses_i + " battery", carrier="battery", location=buses_i
         )
 
         n.madd(
@@ -231,6 +230,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("add_extra_components", simpl="", clusters=5)
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     n = pypsa.Network(snakemake.input.network)
     extendable_carriers = snakemake.params.extendable_carriers
@@ -246,6 +246,7 @@ if __name__ == "__main__":
     attach_hydrogen_pipelines(n, costs, extendable_carriers)
 
     sanitize_carriers(n, snakemake.config)
+    sanitize_locations(n)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     n.export_to_netcdf(snakemake.output[0])

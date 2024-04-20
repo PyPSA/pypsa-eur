@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: CC0-1.0
 
@@ -8,14 +8,14 @@ tutorial: true
 run:
   name: "test-elec" # use this to keep track of runs with different settings
   disable_progressbar: true
-  shared_resources: true
+  shared_resources: "test"
   shared_cutouts: true
 
 scenario:
   clusters:
   - 5
   opts:
-  - Co2L-24H
+  - Co2L-24h
 
 countries: ['BE']
 

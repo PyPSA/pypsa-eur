@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -8,16 +8,14 @@ Creates plots from summary CSV files.
 
 import logging
 
-logger = logging.getLogger(__name__)
-
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
-
-plt.style.use("ggplot")
-
+from _helpers import configure_logging, set_scenario_config
 from prepare_sector_network import co2_emissions_year
+
+logger = logging.getLogger(__name__)
+plt.style.use("ggplot")
 
 
 # consolidate and rename
@@ -121,7 +119,6 @@ preferred_order = pd.Index(
         "gas boiler",
         "gas",
         "natural gas",
-        "helmeth",
         "methanation",
         "ammonia",
         "hydrogen storage",
@@ -155,7 +152,7 @@ def plot_costs():
 
     df = df.drop(to_drop)
 
-    logger.info(f"Total system cost of {round(df.sum()[0])} EUR billion per year")
+    logger.info(f"Total system cost of {round(df.sum().iloc[0])} EUR billion per year")
 
     new_index = preferred_order.intersection(df.index).append(
         df.index.difference(preferred_order)
@@ -215,7 +212,7 @@ def plot_energy():
 
     df = df.drop(to_drop)
 
-    logger.info(f"Total energy of {round(df.sum()[0])} TWh/a")
+    logger.info(f"Total energy of {round(df.sum().iloc[0])} TWh/a")
 
     if df.empty:
         fig, ax = plt.subplots(figsize=(12, 8))
@@ -285,9 +282,14 @@ def plot_balances():
 
         # remove trailing link ports
         df.index = [
-            i[:-1]
-            if ((i not in ["co2", "NH3", "H2"]) and (i[-1:] in ["0", "1", "2", "3"]))
-            else i
+            (
+                i[:-1]
+                if (
+                    (i not in ["co2", "NH3", "H2"])
+                    and (i[-1:] in ["0", "1", "2", "3", "4"])
+                )
+                else i
+            )
             for i in df.index
         ]
 
@@ -305,7 +307,9 @@ def plot_balances():
 
         df = df.drop(to_drop)
 
-        logger.debug(f"Total energy balance for {v} of {round(df.sum()[0],2)} {units}")
+        logger.debug(
+            f"Total energy balance for {v} of {round(df.sum().iloc[0],2)} {units}"
+        )
 
         if df.empty:
             continue
@@ -424,13 +428,13 @@ def historical_emissions(countries):
     )
 
     emissions = co2_totals.loc["electricity"]
-    if "T" in opts:
+    if options["transport"]:
         emissions += co2_totals.loc[[i + " non-elec" for i in ["rail", "road"]]].sum()
-    if "H" in opts:
+    if options["heating"]:
         emissions += co2_totals.loc[
             [i + " non-elec" for i in ["residential", "services"]]
         ].sum()
-    if "I" in opts:
+    if options["industry"]:
         emissions += co2_totals.loc[
             [
                 "industrial non-elec",
@@ -444,7 +448,7 @@ def historical_emissions(countries):
     return emissions
 
 
-def plot_carbon_budget_distribution(input_eurostat):
+def plot_carbon_budget_distribution(input_eurostat, options):
     """
     Plot historical carbon emissions in the EU and decarbonization path.
     """
@@ -452,14 +456,12 @@ def plot_carbon_budget_distribution(input_eurostat):
 
     sns.set()
     sns.set_style("ticks")
-    plt.style.use("seaborn-ticks")
     plt.rcParams["xtick.direction"] = "in"
     plt.rcParams["ytick.direction"] = "in"
     plt.rcParams["xtick.labelsize"] = 20
     plt.rcParams["ytick.labelsize"] = 20
 
     emissions_scope = snakemake.params.emissions_scope
-    report_year = snakemake.params.eurostat_report_year
     input_co2 = snakemake.input.co2
 
     # historic emissions
@@ -467,9 +469,8 @@ def plot_carbon_budget_distribution(input_eurostat):
     e_1990 = co2_emissions_year(
         countries,
         input_eurostat,
-        opts,
+        options,
         emissions_scope,
-        report_year,
         input_co2,
         year=1990,
     )
@@ -570,7 +571,8 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("plot_summary")
 
-    logging.basicConfig(level=snakemake.config["logging"]["level"])
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     n_header = 4
 
@@ -580,7 +582,9 @@ if __name__ == "__main__":
 
     plot_balances()
 
-    for sector_opts in snakemake.params.sector_opts:
-        opts = sector_opts.split("-")
-        if any("cb" in o for o in opts) or snakemake.config["foresight"] == "perfect":
-            plot_carbon_budget_distribution(snakemake.input.eurostat)
+    co2_budget = snakemake.params["co2_budget"]
+    if (
+        isinstance(co2_budget, str) and co2_budget.startswith("cb")
+    ) or snakemake.params["foresight"] == "perfect":
+        options = snakemake.params.sector
+        plot_carbon_budget_distribution(snakemake.input.eurostat, options)

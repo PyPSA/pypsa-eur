@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2023-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
@@ -17,12 +17,12 @@ rule build_electricity_production:
     The data is used for validation of the optimization results.
     """
     params:
-        snapshots=config["snapshots"],
-        countries=config["countries"],
+        snapshots=config_provider("snapshots"),
+        countries=config_provider("countries"),
     output:
-        RESOURCES + "historical_electricity_production.csv",
+        resources("historical_electricity_production.csv"),
     log:
-        LOGS + "build_electricity_production.log",
+        logs("build_electricity_production.log"),
     resources:
         mem_mb=5000,
     script:
@@ -35,14 +35,14 @@ rule build_cross_border_flows:
     The data is used for validation of the optimization results.
     """
     params:
-        snapshots=config["snapshots"],
-        countries=config["countries"],
+        snapshots=config_provider("snapshots"),
+        countries=config_provider("countries"),
     input:
-        network=RESOURCES + "networks/base.nc",
+        network=resources("networks/base.nc"),
     output:
-        RESOURCES + "historical_cross_border_flows.csv",
+        resources("historical_cross_border_flows.csv"),
     log:
-        LOGS + "build_cross_border_flows.log",
+        logs("build_cross_border_flows.log"),
     resources:
         mem_mb=5000,
     script:
@@ -55,12 +55,12 @@ rule build_electricity_prices:
     The data is used for validation of the optimization results.
     """
     params:
-        snapshots=config["snapshots"],
-        countries=config["countries"],
+        snapshots=config_provider("snapshots"),
+        countries=config_provider("countries"),
     output:
-        RESOURCES + "historical_electricity_prices.csv",
+        resources("historical_electricity_prices.csv"),
     log:
-        LOGS + "build_electricity_prices.log",
+        logs("build_electricity_prices.log"),
     resources:
         mem_mb=5000,
     script:
@@ -70,7 +70,7 @@ rule build_electricity_prices:
 rule plot_validation_electricity_production:
     input:
         network=RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
-        electricity_production=RESOURCES + "historical_electricity_production.csv",
+        electricity_production=resources("historical_electricity_production.csv"),
     output:
         **{
             plot: RESULTS
@@ -85,10 +85,10 @@ rule plot_validation_electricity_production:
 
 rule plot_validation_cross_border_flows:
     params:
-        countries=config["countries"],
+        countries=config_provider("countries"),
     input:
         network=RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
-        cross_border_flows=RESOURCES + "historical_cross_border_flows.csv",
+        cross_border_flows=resources("historical_cross_border_flows.csv"),
     output:
         **{
             plot: RESULTS
@@ -104,7 +104,7 @@ rule plot_validation_cross_border_flows:
 rule plot_validation_electricity_prices:
     input:
         network=RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
-        electricity_prices=RESOURCES + "historical_electricity_prices.csv",
+        electricity_prices=resources("historical_electricity_prices.csv"),
     output:
         **{
             plot: RESULTS

@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2019-2023 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: 2019-2024 The PyPSA-Eur Authors
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -8,8 +8,8 @@ Techno-Economic Assumptions
 ############################
 
 The database of cost assumptions is retrieved from the repository
-`PyPSA/technology-data <https://github.com/pypsa/technology-data>`_ and then
-saved to a file ``data/costs_{year}.csv``. The ``config/config.yaml`` provides options
+`PyPSA/technology-data <https://github.com/pypsa/technology-data>`__ and then
+saved to a file ``resources/costs_{year}.csv``. The ``config/config.yaml`` provides options
 to choose a reference year and use a specific version of the repository.
 
 .. literalinclude:: ../config/config.default.yaml
@@ -30,7 +30,7 @@ years compiled from various sources, namely for
 - carbon-dioxide intensity.
 
 Many values are taken from a database published by the Danish Energy Agency (`DEA
-<https://ens.dk/en/our-services/projections-and-models/technology-data>`_).
+<https://ens.dk/en/our-services/projections-and-models/technology-data>`__).
 
 
 The given overnight capital costs are annualised to net present costs
@@ -50,7 +50,7 @@ Modifying Assumptions
 Some cost assumptions (e.g. marginal cost and capital cost) can be directly
 set in the ``config/config.yaml`` (cf. Section  :ref:`costs_cf`  in
 :ref:`config`). To change cost assumptions in more detail, make a copy of
-``data/costs_{year}.csv`` and reference the new cost file in the ``Snakefile``:
+``resources/costs_{year}.csv`` and reference the new cost file in the ``Snakefile``:
 
 .. literalinclude:: ../Snakefile
    :start-at: COSTS

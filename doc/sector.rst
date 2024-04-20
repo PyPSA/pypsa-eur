@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2023 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: 2023-2024 The PyPSA-Eur Authors
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -7,8 +7,15 @@
 Building Sector-Coupled Networks
 ##########################################
 
-.. warning::
-  This part of the documentation is under development.
+The preparation process of the sector-coupled version of the PyPSA-Eur energy system model consists of a group of ``snakemake`` rules which are briefly outlined and explained in detail in the sections below.
+
+Not all data dependencies are shipped with the git repository.
+Instead we provide separate data bundles which can be obtained
+using the ``retrieve*`` rules (:ref:`data`).
+Having downloaded the necessary data,
+
+- :mod:`add_brownfield` builds and stores the base network with all buses, HVAC lines and HVDC links, while
+
 
 Rule ``add_brownfield``
 ==============================================================================
@@ -19,6 +26,12 @@ Rule ``add_existing_baseyear``
 ==============================================================================
 
 .. automodule:: add_existing_baseyear
+
+Rule ``build_existing_heating_distribution``
+==============================================================================
+
+.. automodule:: build_existing_heating_distribution
+
 
 Rule ``build_ammonia_production``
 ==============================================================================
@@ -50,6 +63,11 @@ Rule ``build_energy_totals``
 
 .. automodule:: build_energy_totals
 
+Rule ``build_heat_totals``
+==============================================================================
+
+.. automodule:: build_heat_totals
+
 Rule ``build_gas_input_locations``
 ==============================================================================
 
@@ -60,10 +78,20 @@ Rule ``build_gas_network``
 
 .. automodule:: build_gas_network
 
-Rule ``build_heat_demand``
+Rule ``build_daily_heat_demand``
 ==============================================================================
 
-.. automodule:: build_heat_demand
+.. automodule:: build_daily_heat_demand
+
+Rule ``build_hourly_heat_demand``
+==============================================================================
+
+.. automodule:: build_hourly_heat_demand
+
+Rule ``build_district_heat_share``
+==============================================================================
+
+.. automodule:: build_district_heat_share
 
 Rule ``build_industrial_distribution_key``
 ==============================================================================
@@ -154,11 +182,6 @@ Rule ``cluster_gas_network``
 ==============================================================================
 
 .. automodule:: cluster_gas_network
-
-Rule ``copy_config``
-==============================================================================
-
-.. automodule:: copy_config
 
 Rule ``prepare_sector_network``
 ==============================================================================

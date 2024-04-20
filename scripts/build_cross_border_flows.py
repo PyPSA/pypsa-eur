@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
@@ -8,7 +8,7 @@ import logging
 
 import pandas as pd
 import pypsa
-from _helpers import configure_logging
+from _helpers import configure_logging, set_scenario_config
 from entsoe import EntsoePandasClient
 from entsoe.exceptions import InvalidBusinessParameterError, NoMatchingDataError
 from requests import HTTPError
@@ -21,6 +21,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_cross_border_flows")
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     api_key = snakemake.config["private"]["keys"]["entsoe_api"]
     client = EntsoePandasClient(api_key=api_key)

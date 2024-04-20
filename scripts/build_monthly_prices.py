@@ -1,16 +1,13 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Tue May 16 10:37:35 2023.
-
-This script extracts monthly fuel prices of oil, gas, coal and lignite,
-as well as CO2 prices
-
+This script extracts monthly fuel prices of oil, gas, coal and lignite, as well
+as CO2 prices.
 
 Inputs
 ------
@@ -46,7 +43,7 @@ Data was accessed at 16.5.2023
 import logging
 
 import pandas as pd
-from _helpers import configure_logging
+from _helpers import configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
@@ -114,6 +111,7 @@ if __name__ == "__main__":
         snakemake = mock_snakemake("build_monthly_prices")
 
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     fuel_price = get_fuel_price()
     fuel_price.to_csv(snakemake.output.fuel_price)
