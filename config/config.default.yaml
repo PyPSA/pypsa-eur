@@ -702,9 +702,15 @@ costs:
     lifetime: 25
     "CO2 intensity": 0
     "discount rate": 0.07
-  # Marginal and capital costs can be overwritten
+  # lifetime and investment costs, as well as
+  # marginal and capital costs (annualised investments)
+  # can be overwritten
   # capital_cost:
-  #   onwind: 500
+  #   onwind: 500 # EUR / MW / a
+  # investment: # ignored if capital_cost are given
+  #   onwind: 1200000 # EUR / MW
+  # lifetime:
+  #   onwind: 35 # years
   marginal_cost:
     solar: 0.01
     onwind: 0.015
