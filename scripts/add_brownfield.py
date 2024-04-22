@@ -20,6 +20,7 @@ from _helpers import (
 )
 from add_existing_baseyear import add_build_year_to_new_assets
 from pypsa.clustering.spatial import normed_or_uniform
+from add_existing_baseyear import add_ocgt_retro
 
 logger = logging.getLogger(__name__)
 idx = pd.IndexSlice
@@ -261,6 +262,9 @@ if __name__ == "__main__":
     n_p = pypsa.Network(snakemake.input.network_p)
 
     add_brownfield(n, n_p, year)
+
+    if snakemake.params.H2_OCGT_retrofit:
+        add_ocgt_retro(n, year, snakemake.params.H2_retrofit_start)
 
     disable_grid_expansion_if_limit_hit(n)
 

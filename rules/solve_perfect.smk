@@ -7,6 +7,8 @@ rule add_existing_baseyear:
         sector=config_provider("sector"),
         existing_capacities=config_provider("existing_capacities"),
         costs=config_provider("costs"),
+        H2_OCGT_retrofit = config_provider("electricity", "H2_OCGT_retrofit", "enable"),
+        H2_retrofit_start = config_provider("electricity", "H2_OCGT_retrofit", "year"),
     input:
         network=RESULTS
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",

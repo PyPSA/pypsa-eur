@@ -137,6 +137,10 @@ electricity:
     enable: false
     by_country: false
 
+  H2_OCGT_retrofit:
+    enable: false
+    year: 2020
+
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#atlite
 atlite:
   default_cutout: europe-2013-era5
@@ -931,6 +935,7 @@ plotting:
     gas for industry CC: '#692e0a'
     gas pipeline: '#ebbca0'
     gas pipeline new: '#a87c62'
+    OCGT H2 retrofitted: '#e0986c'
     # oil
     oil: '#c9c9c9'
     imported oil: '#a3a3a3'

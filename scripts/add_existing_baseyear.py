@@ -22,6 +22,7 @@ from _helpers import (
 )
 from add_electricity import sanitize_carriers
 from prepare_sector_network import cluster_heat_buses, define_spatial, prepare_costs
+from pypsa.io import import_components_from_dataframe
 
 logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
@@ -616,6 +617,57 @@ def add_heating_capacities_installed_before_baseyear(
                 ],
             )
 
+def add_ocgt_retro(n, baseyear, start):
+    """
+    Function to add OCGT H2 retrofitting of existing plants.
+    """
+    logger.info(
+        "Add OCGT H2 retrofitting."
+    )
+    # repurposing cost of OCGT gas to H2 in % investment cost in EUR/MW
+    # source: Christidis et al (2023) - H2-Ready-Gaskraftwerke, Table 3
+    # https://reiner-lemoine-institut.de/wp-content/uploads/2023/11/RLI-Studie-H2-ready_DE.pdf
+    retro_factor_ocgt = 0.15
+    efficiency_ocgt = 0.39
+
+    # existing OCGT gas plants
+    # code reference: implementation follows analogue to https://github.com/PyPSA/pypsa-eur/blob/2096131b03070fff5d221d37966262de52ac8b8e/scripts/prepare_perfect_foresight.py#L385-L412
+    ocgt_i = n.links.query("carrier == 'OCGT' and ~p_nom_extendable and p_nom > 0")
+    # only allow the retrofitting of OCGT plants from a certain year on
+    ocgt_i = ocgt_i.loc[ocgt_i.index.str[-4:].astype(int) >= int(start)].index
+    if ocgt_i.empty:
+        logger.info(
+            "No more OCGT retrofitting potential."
+        )
+        return
+    # set ocgt gas plants to extendable for constraint in solve_network()
+    n.links.loc[ocgt_i, "p_nom_extendable"] = True
+    n.links.loc[ocgt_i, "p_nom_max"] = n.links.loc[ocgt_i, "p_nom"]
+
+    df = n.links.loc[ocgt_i].copy()
+    # adjust bus 0
+    df["bus0"] = df.bus0.map(n.buses.location) + " H2"
+    # rename carrier and index
+    df["carrier"] = df.carrier.apply(
+        lambda x: x.replace("OCGT", "OCGT H2 retrofitted")
+    )
+    df.rename(
+        index=lambda x: x.replace("OCGT", "OCGT H2 retrofitted") + f"-{baseyear}", inplace=True
+    )
+    df.loc[:, "capital_cost"] *= retro_factor_ocgt
+    df.loc[:, "efficiency"] = efficiency_ocgt
+    # set p_nom_max to OCGT gas p_nom and existing capacity to zero
+    df.loc[:, "p_nom_max"] = df["p_nom"]
+    df.loc[:, "p_nom"] = 0
+    df.loc[:, "p_nom_extendable"] = True
+    # set co2 emissions to 0
+    df.loc[:, "efficiency2"] = 0.0
+    # build_year and lifetime will stay the same as decommissioning of gas plant
+    # will also lead to decommissioning of retrofitted use
+    # TODO: research extension of lifetime
+    # add OCGT H2 to network
+    import_components_from_dataframe(n, df, "Link")
+
 
 # %%
 if __name__ == "__main__":
@@ -624,13 +676,16 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "add_existing_baseyear",
-            configfiles="config/test/config.myopic.yaml",
+            root_dir="/home/toni-seibold/Documents/02_repos/pypsa-ariadne/",
+            configfiles="config/scenarios.automated.yaml",
+            submodule_dir="workflow/submodules/pypsa-eur",
             simpl="",
-            clusters="37",
-            ll="v1.0",
+            clusters="22",
+            ll="vopt",
             opts="",
-            sector_opts="8760-T-H-B-I-A-dist1",
+            sector_opts="none",
             planning_horizons=2020,
+            run="KN2045_H2_v4"
         )
 
     configure_logging(snakemake)
@@ -689,6 +744,10 @@ if __name__ == "__main__":
 
     if options.get("cluster_heat_buses", False):
         cluster_heat_buses(n)
+
+    if snakemake.params.H2_OCGT_retrofit:
+        # only enable H2 OCGT from a certain year on
+        add_ocgt_retro(n, baseyear, snakemake.params.H2_retrofit_start)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
 

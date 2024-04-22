@@ -814,6 +814,32 @@ def add_pipe_retrofit_constraint(n):
     n.model.add_constraints(lhs == rhs, name="Link-pipe_retrofit")
 
 
+def add_ocgt_retrofit_constraint(n):
+    """
+    Add constraint for retrofitting existing OCGT to H2 OCGT.
+    """
+    # existing OCGT plants
+    gas_i = n.links.query("carrier == 'OCGT' and p_nom_extendable and p_nom > 0").index
+    h2_i = n.links.query("carrier == 'OCGT H2 retrofitted' and p_nom_extendable").index
+    if h2_i.empty or gas_i.empty:
+        return
+
+    # filter gas plants from current planning horizon
+    current_horizon = snakemake.wildcards.planning_horizons
+    gas_i = gas_i[~gas_i.str.endswith(current_horizon)]
+
+    # store p_nom value for rhs of constraint
+    p_nom = n.model["Link-p_nom"]
+
+    # sum of p_nom OCGT and retrofitted must be <= installed capacity of OCGT
+    CH4_per_H2 = n.links.loc[h2_i].efficiency.values / n.links.loc[gas_i].efficiency.values
+
+    lhs = CH4_per_H2 * (p_nom.loc[h2_i] + p_nom.loc[gas_i])
+    rhs = p_nom.loc[gas_i]
+    n.model.add_constraints(lhs == rhs, name="OCGT_retrofit")
+    logger.info("Added constraint for retrofitting OCGT gas to OCGT H2.")
+
+
 def add_co2_atmosphere_constraint(n, snapshots):
     glcs = n.global_constraints[n.global_constraints.type == "co2_atmosphere"]
 
@@ -843,7 +869,7 @@ def extra_functionality(n, snapshots):
     ``pypsa.optimization.optimize``.
 
     If you want to enforce additional custom constraints, this is a good
-    location to add them. The arguments ``opts`` and
+    location to add them. The arguments ``opts`` andelec_s_22_lvopt__none_2040.nc
     ``snakemake.config`` are expected to be attached to the network.
     """
     config = n.config
@@ -865,6 +891,7 @@ def extra_functionality(n, snapshots):
     add_battery_constraints(n)
     add_lossy_bidirectional_link_constraints(n)
     add_pipe_retrofit_constraint(n)
+    add_ocgt_retrofit_constraint(n)
     if n._multi_invest:
         add_carbon_constraint(n, snapshots)
         add_carbon_budget_constraint(n, snapshots)
@@ -951,13 +978,16 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "solve_sector_network",
-            configfiles="../config/test/config.perfect.yaml",
+            root_dir="/home/toni-seibold/Documents/02_repos/pypsa-ariadne/",
+            configfiles="config/scenarios.automated.yaml",
+            submodule_dir="workflow/submodules/pypsa-eur",
             simpl="",
             opts="",
-            clusters="37",
-            ll="v1.0",
-            sector_opts="CO2L0-1H-T-H-B-I-A-dist1",
+            clusters="32",
+            ll="vopt",
+            sector_opts="",
             planning_horizons="2030",
+            run="KN2045_H2_v4",
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
