@@ -18,9 +18,8 @@ from _helpers import (
     set_scenario_config,
     update_config_from_wildcards,
 )
-from add_existing_baseyear import add_build_year_to_new_assets
+from add_existing_baseyear import add_build_year_to_new_assets, add_ocgt_retro
 from pypsa.clustering.spatial import normed_or_uniform
-from add_existing_baseyear import add_ocgt_retro
 
 logger = logging.getLogger(__name__)
 idx = pd.IndexSlice

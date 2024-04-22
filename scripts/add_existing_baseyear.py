@@ -617,13 +617,12 @@ def add_heating_capacities_installed_before_baseyear(
                 ],
             )
 
+
 def add_ocgt_retro(n, baseyear, start):
     """
     Function to add OCGT H2 retrofitting of existing plants.
     """
-    logger.info(
-        "Add OCGT H2 retrofitting."
-    )
+    logger.info("Add OCGT H2 retrofitting.")
     # repurposing cost of OCGT gas to H2 in % investment cost in EUR/MW
     # source: Christidis et al (2023) - H2-Ready-Gaskraftwerke, Table 3
     # https://reiner-lemoine-institut.de/wp-content/uploads/2023/11/RLI-Studie-H2-ready_DE.pdf
@@ -636,9 +635,7 @@ def add_ocgt_retro(n, baseyear, start):
     # only allow the retrofitting of OCGT plants from a certain year on
     ocgt_i = ocgt_i.loc[ocgt_i.index.str[-4:].astype(int) >= int(start)].index
     if ocgt_i.empty:
-        logger.info(
-            "No more OCGT retrofitting potential."
-        )
+        logger.info("No more OCGT retrofitting potential.")
         return
     # set ocgt gas plants to extendable for constraint in solve_network()
     n.links.loc[ocgt_i, "p_nom_extendable"] = True
@@ -648,11 +645,10 @@ def add_ocgt_retro(n, baseyear, start):
     # adjust bus 0
     df["bus0"] = df.bus0.map(n.buses.location) + " H2"
     # rename carrier and index
-    df["carrier"] = df.carrier.apply(
-        lambda x: x.replace("OCGT", "OCGT H2 retrofitted")
-    )
+    df["carrier"] = df.carrier.apply(lambda x: x.replace("OCGT", "OCGT H2 retrofitted"))
     df.rename(
-        index=lambda x: x.replace("OCGT", "OCGT H2 retrofitted") + f"-{baseyear}", inplace=True
+        index=lambda x: x.replace("OCGT", "OCGT H2 retrofitted") + f"-{baseyear}",
+        inplace=True,
     )
     df.loc[:, "capital_cost"] *= retro_factor_ocgt
     df.loc[:, "efficiency"] = efficiency_ocgt
@@ -685,7 +681,7 @@ if __name__ == "__main__":
             opts="",
             sector_opts="none",
             planning_horizons=2020,
-            run="KN2045_H2_v4"
+            run="KN2045_H2_v4",
         )
 
     configure_logging(snakemake)

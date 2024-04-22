@@ -832,7 +832,9 @@ def add_ocgt_retrofit_constraint(n):
     p_nom = n.model["Link-p_nom"]
 
     # sum of p_nom OCGT and retrofitted must be <= installed capacity of OCGT
-    CH4_per_H2 = n.links.loc[h2_i].efficiency.values / n.links.loc[gas_i].efficiency.values
+    CH4_per_H2 = (
+        n.links.loc[h2_i].efficiency.values / n.links.loc[gas_i].efficiency.values
+    )
 
     lhs = CH4_per_H2 * (p_nom.loc[h2_i] + p_nom.loc[gas_i])
     rhs = p_nom.loc[gas_i]
