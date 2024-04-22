@@ -592,64 +592,68 @@ def add_heating_capacities_installed_before_baseyear(
 
 
 def add_existing_land_transport(baseyear, options):
-    # today ICE capacity assuming all internal combustion
-    share = get(options["land_transport_ice_share"], baseyear)
-    ice_i = n.links[n.links.carrier == "land transport oil"].index
-    p_nom = n.links.loc[ice_i, "p_nom"] / share
-    efficiency = n.links_t.efficiency[ice_i]
-    p_max_pu = n.links_t.p_max_pu[ice_i]
+    transport_types = options["land_transport_ice_share"].keys()
+    fn_dict = {"light": snakemake.input.car_ages,
+               "heavy": snakemake.input.truck_ages}
+    for transport_type in transport_types:
+        # today ICE capacity assuming all internal combustion
+        share = get(options["land_transport_ice_share"][transport_type], baseyear)
+        ice_i = n.links[n.links.carrier == f"land transport oil {transport_type}"].index
+        p_nom = n.links.loc[ice_i, "p_nom"] / share
+        efficiency = n.links_t.efficiency[ice_i]
+        p_max_pu = n.links_t.p_max_pu[ice_i]
+    
+        car_ages = pd.read_csv(fn_dict[transport_type], index_col=[0]).iloc[:,:-2]
+        car_ages.columns = car_ages.columns.astype(int)
+        # group data in 5 years interval
+        interval = 5
+        # mapping forward (mapping backward would be year//5*5)
+        group_mapping = {year: year//interval*interval+4 for year in car_ages.columns}
+    
+        grouped = car_ages.T.groupby(group_mapping).sum().T
+    
+        pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
+    
+        grouped = (grouped.reindex(pop_layout.ct)
+                   .fillna(grouped.mean()).set_index(pop_layout.index))
+    
+        for build_year in grouped.columns:
+            df = n.links.loc[ice_i]
+            df = df[df.lifetime + build_year > baseyear]
+            if df.empty:
+                continue
+            share = grouped[build_year]
+            df["build_year"] = build_year
+            df["p_nom"] = p_nom.mul(share.values)
+            df["p_nom_extendable"] = False
+            df.rename(
+                index=lambda x: x.replace(f"-{baseyear}", f"-{build_year}"), inplace=True
+            )
+            profile = p_max_pu.rename(
+                columns=lambda x: x.replace(f"-{baseyear}", f"-{build_year}"))
+            eff = efficiency.rename(
+                columns=lambda x: x.replace(f"-{baseyear}", f"-{build_year}"))
+    
+            n.madd(
+                "Link",
+                df.index,
+                bus0=df.bus0,
+                bus1=df.bus1,
+                bus2=df.bus2,
+                carrier=df.carrier,
+                efficiency=eff,
+                capital_cost=df.capital_cost,
+                marginal_cost=df.marginal_cost,
+                efficiency2=df.efficiency2,
+                p_nom_extendable=False,
+                p_nom=df.p_nom,
+                p_min_pu=profile,
+                p_max_pu=profile,
+                build_year=df.build_year,
+                lifetime=df.lifetime,
+            )
 
-    car_ages = pd.read_csv(snakemake.input.car_ages, index_col=[0]).iloc[:,:-2]
-    car_ages.columns = car_ages.columns.astype(int)
-    # group data in 5 years interval
-    interval = 5
-    # mapping forward (mapping backward would be year//5*5)
-    group_mapping = {year: year//interval*interval+4 for year in car_ages.columns}
-
-    grouped = car_ages.T.groupby(group_mapping).sum().T
-
-    pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
-
-    grouped = (grouped.reindex(pop_layout.ct)
-               .fillna(grouped.mean()).set_index(pop_layout.index))
-
-    for build_year in grouped.columns:
-        df = n.links.loc[ice_i]
-        df = df[df.lifetime + build_year > baseyear]
-        if df.empty:
-            continue
-        share = grouped[build_year]
-        df["build_year"] = build_year
-        df["p_nom"] = p_nom.mul(share.values)
-        df["p_nom_extendable"] = False
-        df.rename(
-            index=lambda x: x.replace(f"-{baseyear}", f"-{build_year}"), inplace=True
-        )
-        profile = p_max_pu.rename(
-            columns=lambda x: x.replace(f"-{baseyear}", f"-{build_year}"))
-        eff = efficiency.rename(
-            columns=lambda x: x.replace(f"-{baseyear}", f"-{build_year}"))
-
-        n.madd(
-            "Link",
-            df.index,
-            bus0=df.bus0,
-            bus1=df.bus1,
-            bus2=df.bus2,
-            carrier=df.carrier,
-            efficiency=eff,
-            capital_cost=df.capital_cost,
-            marginal_cost=df.marginal_cost,
-            efficiency2=df.efficiency2,
-            p_nom_extendable=False,
-            p_nom=df.p_nom,
-            p_min_pu=profile,
-            p_max_pu=profile,
-            build_year=df.build_year,
-            lifetime=df.lifetime,
-        )
-
-    n.links.loc[ice_i, "p_nom"] = 0
+        n.links.loc[ice_i, "p_nom"] = 0
 # %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -659,11 +663,11 @@ if __name__ == "__main__":
             "add_existing_baseyear",
             configfiles="config/test/config.myopic.yaml",
             simpl="",
-            clusters="37",
-            ll="v1.0",
+            clusters="5",
+            ll="v1.5",
             opts="",
-            sector_opts="8760-T-H-B-I-A-dist1",
-            planning_horizons=2020,
+            sector_opts="24h-T-H-B-I-A-dist1",
+            planning_horizons=2030,
         )
 
     configure_logging(snakemake)

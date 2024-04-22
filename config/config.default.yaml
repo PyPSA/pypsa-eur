@@ -390,7 +390,7 @@ sector:
     district_heating_loss: 0.15
   cluster_heat_buses: true
   heat_demand_cutout: default
-  endogenous_transport: false
+  endogenous_transport: true
   bev_dsm_restriction_value: 0.75
   bev_dsm_restriction_time: 7
   transport_heating_deadband_upper: 20.
@@ -1005,6 +1005,7 @@ plotting:
     services urban decentral oil boiler: '#999999'
     agriculture machinery oil: '#949494'
     shipping oil: "#808080"
+    land transport oil: '#afafaf'
     land transport oil light: '#afafaf'
     land transport oil heavy: '#afafab'
     # nuclear
@@ -1061,7 +1062,10 @@ plotting:
     home battery charger: '#5e8032'
     home battery discharger: '#3c5221'
     BEV charger: '#baf238'
+    BEV charger heavy: '#baf233'
+    BEV charger light: '#baf23'
     V2G: '#e5ffa8'
+    land transport EV: '#baf238'
     land transport EV light: '#baf238'
     land transport EV heavy: '#baf240'
     land transport demand light: '#38baf2'
@@ -1144,6 +1148,7 @@ plotting:
     hydrogen storage: '#bf13a0'
     H2 Store: '#bf13a0'
     H2 storage: '#bf13a0'
+    land transport fuel cell: '#6b3161'
     land transport fuel cell light: '#6b3161'
     land transport fuel cell heavy: '#6b3180'
     H2 pipeline: '#f081dc'
