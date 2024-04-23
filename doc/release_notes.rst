@@ -181,6 +181,8 @@ Upcoming Release
 
 * Fix custom busmap read in `cluster_network`.
 
+* Fix gas network retrofitting in `add_brownfield`.
+
 PyPSA-Eur 0.10.0 (19th February 2024)
 =====================================
 
