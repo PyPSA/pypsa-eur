@@ -880,6 +880,7 @@ rule prepare_sector_network:
         ),
         foresight=config_provider("foresight"),
         costs=config_provider("costs"),
+        electricity=config_provider("electricity"),
         sector=config_provider("sector"),
         industry=config_provider("industry"),
         lines=config_provider("lines"),
