@@ -669,16 +669,13 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "add_existing_baseyear",
-            root_dir="/home/toni-seibold/Documents/02_repos/pypsa-ariadne/",
-            configfiles="config/scenarios.automated.yaml",
-            submodule_dir="workflow/submodules/pypsa-eur",
+            configfiles="config/test/config.myopic.yaml",
             simpl="",
-            clusters="22",
-            ll="vopt",
+            clusters="37",
+            ll="v1.0",
             opts="",
-            sector_opts="none",
+            sector_opts="8760-T-H-B-I-A-dist1",
             planning_horizons=2020,
-            run="KN2045_H2_v4",
         )
 
     configure_logging(snakemake)

@@ -982,16 +982,13 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "solve_sector_network",
-            root_dir="/home/toni-seibold/Documents/02_repos/pypsa-ariadne/",
-            configfiles="config/scenarios.automated.yaml",
-            submodule_dir="workflow/submodules/pypsa-eur",
+            configfiles="config/test/config.perfect.yaml",
             simpl="",
             opts="",
-            clusters="32",
-            ll="vopt",
-            sector_opts="",
+            clusters="37",
+            ll="v1.0",
+            sector_opts="CO2L0-1H-T-H-B-I-A-dist1",
             planning_horizons="2030",
-            run="KN2045_H2_v4",
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
