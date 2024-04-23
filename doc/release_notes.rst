@@ -9,6 +9,8 @@ Release Notes
 
 Upcoming Release
 ================
+* Add H2_OCGT_retrofit to enable the retrofit of existing OCGT plants to hydrogen for plants built from a certain year on.
+
 * Add config land_transport_demand_factor to model growth in land transport demand for different time horizons.
 
 * Allow dictionary for the config aviation_demand_factor.
