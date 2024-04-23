@@ -873,7 +873,7 @@ def extra_functionality(n, snapshots):
     ``pypsa.optimization.optimize``.
 
     If you want to enforce additional custom constraints, this is a good
-    location to add them. The arguments ``opts`` andelec_s_22_lvopt__none_2040.nc
+    location to add them. The arguments ``opts`` and
     ``snakemake.config`` are expected to be attached to the network.
     """
     config = n.config
