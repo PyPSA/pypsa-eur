@@ -511,13 +511,14 @@ def add_carrier_buses(n, carrier, nodes=None):
     location = vars(spatial)[carrier].locations
 
     # skip if carrier already exists
-    if carrier in n.carriers.index:
+    if carrier in n.carriers.index and not carrier == 'coal':
         return
 
     if not isinstance(nodes, pd.Index):
         nodes = pd.Index(nodes)
 
-    n.add("Carrier", carrier)
+    if not carrier == 'coal':
+        n.add("Carrier", carrier)
 
     unit = "MWh_LHV" if carrier == "gas" else "MWh_th"
     # preliminary value for non-gas carriers to avoid zeros
@@ -534,10 +535,6 @@ def add_carrier_buses(n, carrier, nodes=None):
         carrier=carrier,
         capital_cost=capital_cost,
     )
-
-    # omit gas generators
-    if carrier == "gas":
-        return
 
     n.madd(
         "Generator",
@@ -3716,12 +3713,12 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "prepare_sector_network",
-            configfiles="test/config.overnight.yaml",
+            configfiles="../../configs/EEE_study/config.rigid-industry_2030.yaml",
             simpl="",
             opts="",
-            clusters="37",
-            ll="v1.0",
-            sector_opts="CO2L0-24H-T-H-B-I-A-dist1",
+            clusters="48",
+            ll="v1.15",
+            sector_opts="CO2L0.45-100H-T-H-B-I",
             planning_horizons="2030",
         )
 
