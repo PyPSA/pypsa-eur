@@ -510,7 +510,7 @@ def add_carrier_buses(n, carrier, nodes=None):
         nodes = vars(spatial)[carrier].nodes
     location = vars(spatial)[carrier].locations
 
-    # skip if carrier already exists
+    # skip if carrier already exists (continue with coal because it can be already added by in generators)
     if carrier in n.carriers.index and not carrier == 'coal':
         return
 
