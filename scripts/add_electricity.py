@@ -269,7 +269,7 @@ def load_costs(tech_costs, config, max_hours, Nyears=1.0):
         max_hours=max_hours["H2"],
     )
 
-    for attr in ("marginal_cost", "capital_cost"):
+    for attr in ("marginal_cost", "capital_cost", "fuel"):
         overwrites = config.get(attr)
         if overwrites is not None:
             overwrites = pd.Series(overwrites)
