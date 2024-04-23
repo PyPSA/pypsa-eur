@@ -631,7 +631,7 @@ def add_ocgt_retro(n, baseyear, start):
 
     # existing OCGT gas plants
     # code reference: implementation follows analogue to https://github.com/PyPSA/pypsa-eur/blob/2096131b03070fff5d221d37966262de52ac8b8e/scripts/prepare_perfect_foresight.py#L385-L412
-    ocgt_i = n.links.query("carrier == 'OCGT' and ~p_nom_extendable and p_nom > 0")
+    ocgt_i = n.links.query("carrier == 'OCGT' and ~p_nom_extendable and p_nom > 1e-3")
     # only allow the retrofitting of OCGT plants from a certain year on
     ocgt_i = ocgt_i.loc[ocgt_i.index.str[-4:].astype(int) >= int(start)].index
     if ocgt_i.empty:
