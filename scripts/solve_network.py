@@ -819,7 +819,9 @@ def add_ocgt_retrofit_constraint(n):
     Add constraint for retrofitting existing OCGT to H2 OCGT.
     """
     # existing OCGT plants
-    gas_i = n.links.query("carrier == 'OCGT' and p_nom_extendable and p_nom > 1e-3").index
+    gas_i = n.links.query(
+        "carrier == 'OCGT' and p_nom_extendable and p_nom > 1e-3"
+    ).index
     h2_i = n.links.query("carrier == 'OCGT H2 retrofitted' and p_nom_extendable").index
     if h2_i.empty or gas_i.empty:
         return
