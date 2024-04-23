@@ -606,3 +606,37 @@ rule prepare_network:
         "../envs/environment.yaml"
     script:
         "../scripts/prepare_network.py"
+
+
+if config["osm"].get("retrieve", True):
+    rule retrieve_osm_data:
+        output:
+            cables_way="data/osm/raw/{country}/cables_way_raw.geojson",
+            lines_way="data/osm/raw/{country}/lines_way_raw.geojson",
+            substations_way="data/osm/raw/{country}/substations_way_raw.geojson",
+            substations_node="data/osm/raw/{country}/substations_node_raw.geojson",
+            transformers_way="data/osm/raw/{country}/transformers_way_raw.geojson",
+            transformers_node="data/osm/raw/{country}/transformers_node_raw.geojson",
+        log:
+            logs("retrieve_osm_data_{country}.log"),
+        script:
+            "../scripts/retrieve_osm_data.py"
+
+rule clean_osm_data:
+    # params:
+    #     countries=config["countries"],
+    input:
+        cables_way=[f"data/osm/raw/{country}/cables_way_raw.geojson" for country in config["countries"]],
+        lines_way=[f"data/osm/raw/{country}/lines_way_raw.geojson" for country in config["countries"]],
+        substations_way=[f"data/osm/raw/{country}/substations_way_raw.geojson" for country in config["countries"]],
+        substations_node=[f"data/osm/raw/{country}/substations_node_raw.geojson" for country in config["countries"]],
+        transformers_way=[f"data/osm/raw/{country}/transformers_way_raw.geojson" for country in config["countries"]],
+        transformers_node=[f"data/osm/raw/{country}/transformers_node_raw.geojson" for country in config["countries"]],
+    output:
+        dummy="data/osm/raw/dummy.txt"
+        # cables="resources/RDIR/cables_clean_.geojson"
+        # lines=
+    log:
+        logs("clean_osm_data.log"),
+    script:
+        "../scripts/clean_osm_data.py"

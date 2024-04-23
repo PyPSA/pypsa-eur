@@ -48,6 +48,7 @@ dependencies:
 - pyxlsb
 - graphviz
 - pre-commit
+- geojson
 
   # Keep in conda environment when calling ipython
 - ipython
@@ -64,3 +65,4 @@ dependencies:
   - snakemake-executor-plugin-slurm
   - snakemake-executor-plugin-cluster-generic
   - highspy
+  - overpass

@@ -64,6 +64,10 @@ snapshots:
   end: "2014-01-01"
   inclusive: 'left'
 
+osm:
+  retrieve: true
+  use-prebuilt: false
+
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#enable
 enable:
   retrieve: auto
@@ -78,7 +82,6 @@ enable:
   retrieve_natura_raster: true
   custom_busmap: false
   drop_leap_day: true
-
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
 co2_budget:
