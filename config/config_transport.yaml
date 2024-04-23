@@ -21,16 +21,16 @@ remote:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
   prefix: ""
-  name: ""
+  name: "test_heavy"
   scenarios:
     enable: false
     file: config/scenarios.yaml
   disable_progressbar: false
-  shared_resources: false
+  shared_resources: "test_heavy"
   shared_cutouts: true
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#foresight
-foresight: overnight
+foresight: myopic
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#scenario
 # Wildcard docs in https://pypsa-eur.readthedocs.io/en/latest/wildcards.html
@@ -38,21 +38,18 @@ scenario:
   simpl:
   - ''
   ll:
-  - v1.5
+  - v1.0
   clusters:
-  - 37
-  - 128
-  - 256
-  - 512
-  - 1024
+  - 38
+
   opts:
   - ''
   sector_opts:
-  - Co2L0-3H-T-H-B-I-A-dist1
+  - 25sn-T-H-B-I-A-dist1
   planning_horizons:
-  # - 2020
-  # - 2030
-  # - 2040
+  - 2025
+  - 2030
+  - 2040
   - 2050
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#countries
@@ -68,12 +65,12 @@ snapshots:
 enable:
   retrieve: auto
   prepare_links_p_nom: false
-  retrieve_databundle: true
+  retrieve_databundle: false
   retrieve_sector_databundle: true
   retrieve_cost_data: true
   build_cutout: false
   retrieve_irena: false
-  retrieve_cutout: true
+  retrieve_cutout: false
   build_natura_raster: false
   retrieve_natura_raster: true
   custom_busmap: false
@@ -1005,7 +1002,6 @@ plotting:
     services urban decentral oil boiler: '#999999'
     agriculture machinery oil: '#949494'
     shipping oil: "#808080"
-    land transport oil: '#afafaf'
     land transport oil light: '#afafaf'
     land transport oil heavy: '#afafab'
     # nuclear
@@ -1062,10 +1058,7 @@ plotting:
     home battery charger: '#5e8032'
     home battery discharger: '#3c5221'
     BEV charger: '#baf238'
-    BEV charger heavy: '#baf233'
-    BEV charger light: '#baf238'
     V2G: '#e5ffa8'
-    land transport EV: '#baf238'
     land transport EV light: '#baf238'
     land transport EV heavy: '#baf240'
     land transport demand light: '#38baf2'
@@ -1148,7 +1141,6 @@ plotting:
     hydrogen storage: '#bf13a0'
     H2 Store: '#bf13a0'
     H2 storage: '#bf13a0'
-    land transport fuel cell: '#6b3161'
     land transport fuel cell light: '#6b3161'
     land transport fuel cell heavy: '#6b3180'
     H2 pipeline: '#f081dc'
