@@ -3689,12 +3689,12 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "prepare_sector_network",
-            configfiles="../../configs/EEE_study/config.rigid-industry_2030.yaml",
+            configfiles="test/config.overnight.yaml",
             simpl="",
             opts="",
-            clusters="48",
-            ll="v1.15",
-            sector_opts="CO2L0.45-100H-T-H-B-I",
+            clusters="37",
+            ll="v1.0",
+            sector_opts="CO2L0-24H-T-H-B-I-A-dist1",
             planning_horizons="2030",
         )
 
