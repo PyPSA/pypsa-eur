@@ -847,7 +847,7 @@ def cycling_shift(df, steps=1):
     return df
 
 
-def add_generation(n, costs):
+def add_generation(n, costs, capacities_OCGT=0, efficiencies_OCGT=None):
     logger.info("Adding electricity generation")
 
     nodes = pop_layout.index
@@ -871,8 +871,14 @@ def add_generation(n, costs):
             capital_cost=costs.at[generator, "efficiency"]
             * costs.at[generator, "fixed"],  # NB: fixed cost is per MWel
             p_nom_extendable=True,
+            p_nom=capacities_OCGT if carrier == "gas" else 0,
+            p_nom_min=capacities_OCGT if carrier == "gas" else 0,
             carrier=generator,
-            efficiency=costs.at[generator, "efficiency"],
+            efficiency=(
+                efficiencies_OCGT
+                if (carrier == "gas" and efficiencies_OCGT is not None)
+                else costs.at[generator, "efficiency"]
+            ),
             efficiency2=costs.at[carrier, "CO2 intensity"],
             lifetime=costs.at[generator, "lifetime"],
         )
@@ -3682,6 +3688,24 @@ def lossy_bidirectional_links(n, carrier, efficiencies={}):
         )
 
 
+def get_capacities_from_elec(n, carrier, component):
+    """
+    Gets capacities for {carrier} in n.{component} that were previously
+    assigned in add_electricity.
+    """
+    component_list = ["generators", "storage_units", "links", "stores"]
+    component_dict = {name: getattr(n, name) for name in component_list}
+    e_nom_carriers = ["stores"]
+    nom_col = {x: "e_nom" if x in e_nom_carriers else "p_nom" for x in component_list}
+    eff_col = "efficiency"
+
+    capacity = component_dict[component].query("carrier in @carrier")[
+        nom_col[component]
+    ]
+    efficiency = component_dict[component].query("carrier in @carrier")[eff_col]
+    return capacity, efficiency
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -3718,10 +3742,7 @@ if __name__ == "__main__":
         nyears,
     )
     costs = costs.rename(
-        columns={
-            "capital_cost": "fixed",
-            "co2_emissions": "CO2 intensity"
-        }
+        columns={"capital_cost": "fixed", "co2_emissions": "CO2 intensity"}
     )
 
     pop_weighted_energy_totals = (
@@ -3731,6 +3752,13 @@ if __name__ == "__main__":
         pd.read_csv(snakemake.input.pop_weighted_heat_totals, index_col=0) * nyears
     )
     pop_weighted_energy_totals.update(pop_weighted_heat_totals)
+
+    if options.get("keep_OCGT", False):
+        capacities_OCGT, efficiencies_OCGT = get_capacities_from_elec(
+            n, carrier="OCGT", component="generators"
+        )
+    else:
+        capacities_OCGT, efficiencies_OCGT = 0, None
 
     patch_electricity_network(n)
 
@@ -3747,7 +3775,7 @@ if __name__ == "__main__":
 
     add_co2_tracking(n, costs, options)
 
-    add_generation(n, costs)
+    add_generation(n, costs, capacities_OCGT, efficiencies_OCGT)
 
     add_storage_and_grids(n, costs)
 
