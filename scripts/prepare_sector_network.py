@@ -511,13 +511,13 @@ def add_carrier_buses(n, carrier, nodes=None):
     location = vars(spatial)[carrier].locations
 
     # skip if carrier already exists (continue with coal because it can be already added by in generators)
-    if carrier in n.carriers.index and not carrier == 'coal':
+    if carrier in n.carriers.index and not carrier == "coal":
         return
 
     if not isinstance(nodes, pd.Index):
         nodes = pd.Index(nodes)
 
-    if not carrier == 'coal':
+    if not carrier == "coal":
         n.add("Carrier", carrier)
 
     unit = "MWh_LHV" if carrier == "gas" else "MWh_th"
@@ -3719,10 +3719,7 @@ if __name__ == "__main__":
         nyears,
     )
     costs = costs.rename(
-        columns={
-            "capital_cost": "fixed",
-            "co2_emissions": "CO2 intensity"
-        }
+        columns={"capital_cost": "fixed", "co2_emissions": "CO2 intensity"}
     )
 
     pop_weighted_energy_totals = (
