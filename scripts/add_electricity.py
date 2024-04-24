@@ -209,8 +209,22 @@ def load_costs(tech_costs, config, max_hours, Nyears=1.0):
     costs.loc[costs.unit.str.contains("/kW"), "value"] *= 1e3
     costs.unit = costs.unit.str.replace("/kW", "/MW")
 
+    # min_count=1 is important to generate NaNs which are then filled by fillna
+    costs = (
+        costs.loc[:, "value"].unstack(level=1).groupby("technology").sum(min_count=1)
+    )
+
     fill_values = config["fill_values"]
-    costs = costs.value.unstack().fillna(fill_values)
+    costs = costs.fillna(fill_values)
+
+    for attr in ("investment", "lifetime"):
+        overwrites = config.get(attr)
+        if overwrites is not None:
+            overwrites = pd.Series(overwrites)
+            costs.loc[overwrites.index, attr] = overwrites
+            logger.info(
+                f"Overwriting {attr} of {overwrites.index} to {overwrites.values}"
+            )
 
     costs["capital_cost"] = (
         (
@@ -255,11 +269,14 @@ def load_costs(tech_costs, config, max_hours, Nyears=1.0):
         max_hours=max_hours["H2"],
     )
 
-    for attr in ("marginal_cost", "capital_cost"):
+    for attr in ("marginal_cost", "capital_cost", "fuel"):
         overwrites = config.get(attr)
         if overwrites is not None:
             overwrites = pd.Series(overwrites)
             costs.loc[overwrites.index, attr] = overwrites
+            logger.info(
+                f"Overwriting {attr} of {overwrites.index} to {overwrites.values}"
+            )
 
     return costs
 

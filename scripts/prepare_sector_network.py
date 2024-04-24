@@ -23,7 +23,7 @@ from _helpers import (
     set_scenario_config,
     update_config_from_wildcards,
 )
-from add_electricity import calculate_annuity, sanitize_carriers, sanitize_locations
+from add_electricity import load_costs, sanitize_carriers, sanitize_locations
 from build_energy_totals import (
     build_co2_totals,
     build_eea_co2,
@@ -535,10 +535,6 @@ def add_carrier_buses(n, carrier, nodes=None):
         capital_cost=capital_cost,
     )
 
-    # omit gas generators
-    if carrier == "gas":
-        return
-
     n.madd(
         "Generator",
         nodes,
@@ -849,30 +845,6 @@ def cycling_shift(df, steps=1):
     new_index = np.roll(df.index, steps)
     df.values[:] = df.reindex(index=new_index).values
     return df
-
-
-def prepare_costs(cost_file, params, nyears):
-    # set all asset costs and other parameters
-    costs = pd.read_csv(cost_file, index_col=[0, 1]).sort_index()
-
-    # correct units to MW and EUR
-    costs.loc[costs.unit.str.contains("/kW"), "value"] *= 1e3
-
-    # min_count=1 is important to generate NaNs which are then filled by fillna
-    costs = (
-        costs.loc[:, "value"].unstack(level=1).groupby("technology").sum(min_count=1)
-    )
-
-    costs = costs.fillna(params["fill_values"])
-
-    def annuity_factor(v):
-        return calculate_annuity(v["lifetime"], v["discount rate"]) + v["FOM"] / 100
-
-    costs["fixed"] = [
-        annuity_factor(v) * v["investment"] * nyears for i, v in costs.iterrows()
-    ]
-
-    return costs
 
 
 def add_generation(n, costs, capacities_OCGT=0, efficiencies_OCGT=None):
@@ -3758,10 +3730,17 @@ if __name__ == "__main__":
     nhours = n.snapshot_weightings.generators.sum()
     nyears = nhours / 8760
 
-    costs = prepare_costs(
+    costs = load_costs(
         snakemake.input.costs,
         snakemake.params.costs,
+        snakemake.params.electricity["max_hours"],
         nyears,
+    )
+    costs = costs.rename(
+        columns={
+            "capital_cost": "fixed",
+            "co2_emissions": "CO2 intensity"
+        }
     )
 
     pop_weighted_energy_totals = (
