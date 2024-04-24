@@ -3753,9 +3753,12 @@ if __name__ == "__main__":
     )
     pop_weighted_energy_totals.update(pop_weighted_heat_totals)
 
-    capacities_OCGT, efficiencies_OCGT = get_capacities(
-        n, carrier="OCGT", component="generators"
-    )
+    if options.get("keep_OCGT", False):
+        capacities_OCGT, efficiencies_OCGT = get_capacities_from_elec(
+            n, carrier="OCGT", component="generators"
+        )
+    else:
+        capacities_OCGT, efficiencies_OCGT = 0, None
 
     patch_electricity_network(n)
 
