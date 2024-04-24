@@ -622,16 +622,21 @@ if config["osm"].get("retrieve", True):
         script:
             "../scripts/retrieve_osm_data.py"
 
+FEATURES = ["cables_way", "lines_way", "substations_way", "substations_node", "transformers_way", "transformers_node"]
 rule clean_osm_data:
     # params:
     #     countries=config["countries"],
     input:
-        cables_way=[f"data/osm/raw/{country}/cables_way_raw.geojson" for country in config["countries"]],
-        lines_way=[f"data/osm/raw/{country}/lines_way_raw.geojson" for country in config["countries"]],
-        substations_way=[f"data/osm/raw/{country}/substations_way_raw.geojson" for country in config["countries"]],
-        substations_node=[f"data/osm/raw/{country}/substations_node_raw.geojson" for country in config["countries"]],
-        transformers_way=[f"data/osm/raw/{country}/transformers_way_raw.geojson" for country in config["countries"]],
-        transformers_node=[f"data/osm/raw/{country}/transformers_node_raw.geojson" for country in config["countries"]],
+        **{
+            f"{country}": [f"data/osm/raw/{country}/{feature}.geojson" for feature in FEATURES]
+            for country in config["countries"]
+            },
+        # cables_way[country]=[f"data/osm/raw/{country}/cables_way_raw.geojson" for country in config["countries"]],
+        # lines_way=[f"data/osm/raw/{country}/lines_way_raw.geojson" for country in config["countries"]],
+        # substations_way=[f"data/osm/raw/{country}/substations_way_raw.geojson" for country in config["countries"]],
+        # substations_node=[f"data/osm/raw/{country}/substations_node_raw.geojson" for country in config["countries"]],
+        # transformers_way=[f"data/osm/raw/{country}/transformers_way_raw.geojson" for country in config["countries"]],
+        # transformers_node=[f"data/osm/raw/{country}/transformers_node_raw.geojson" for country in config["countries"]],
     output:
         dummy="data/osm/raw/dummy.txt"
         # cables="resources/RDIR/cables_clean_.geojson"
@@ -640,3 +645,12 @@ rule clean_osm_data:
         logs("clean_osm_data.log"),
     script:
         "../scripts/clean_osm_data.py"
+
+
+# {
+#             f"{country}": f"{
+#                 f"{feature}": f"data/osm/raw/{country}/{feature}.geojson" 
+#                 }"
+#                 for feature in FEATURES
+#                 for country in config["countries"]
+#             }
