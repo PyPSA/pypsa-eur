@@ -847,7 +847,7 @@ def cycling_shift(df, steps=1):
     return df
 
 
-def add_generation(n, costs, capacities_OCGT=0, efficiencies_OCGT=None):
+def add_generation(n, costs, existing_capacities=0, existing_efficiencies=None):
     logger.info("Adding electricity generation")
 
     nodes = pop_layout.index
@@ -871,13 +871,11 @@ def add_generation(n, costs, capacities_OCGT=0, efficiencies_OCGT=None):
             capital_cost=costs.at[generator, "efficiency"]
             * costs.at[generator, "fixed"],  # NB: fixed cost is per MWel
             p_nom_extendable=True,
-            p_nom=capacities_OCGT if carrier == "gas" else 0,
-            p_nom_min=capacities_OCGT if carrier == "gas" else 0,
+            p_nom=existing_capacities[generator] if not existing_capacities == 0 else 0,
+            p_nom_min=existing_capacities[generator] if not existing_capacities == 0 else 0,
             carrier=generator,
             efficiency=(
-                efficiencies_OCGT
-                if (carrier == "gas" and efficiencies_OCGT is not None)
-                else costs.at[generator, "efficiency"]
+                existing_efficiencies[generator] if existing_efficiencies is not None else costs.at[generator, "efficiency"]
             ),
             efficiency2=costs.at[carrier, "CO2 intensity"],
             lifetime=costs.at[generator, "lifetime"],
@@ -3688,7 +3686,7 @@ def lossy_bidirectional_links(n, carrier, efficiencies={}):
         )
 
 
-def get_capacities_from_elec(n, carrier, component):
+def get_capacities_from_elec(n, carriers, component):
     """
     Gets capacities for {carrier} in n.{component} that were previously
     assigned in add_electricity.
@@ -3699,11 +3697,14 @@ def get_capacities_from_elec(n, carrier, component):
     nom_col = {x: "e_nom" if x in e_nom_carriers else "p_nom" for x in component_list}
     eff_col = "efficiency"
 
-    capacity = component_dict[component].query("carrier in @carrier")[
-        nom_col[component]
-    ]
-    efficiency = component_dict[component].query("carrier in @carrier")[eff_col]
-    return capacity, efficiency
+    capacity_dict = {}
+    efficiency_dict = {}
+    for carrier in carriers:
+        capacity_dict[carrier] = component_dict[component].query("carrier in @carrier")[
+            nom_col[component]
+        ]
+        efficiency_dict[carrier] = component_dict[component].query("carrier in @carrier")[eff_col]
+    return capacity_dict, efficiency_dict
 
 
 if __name__ == "__main__":
@@ -3753,12 +3754,13 @@ if __name__ == "__main__":
     )
     pop_weighted_energy_totals.update(pop_weighted_heat_totals)
 
-    if options.get("keep_OCGT", False):
-        capacities_OCGT, efficiencies_OCGT = get_capacities_from_elec(
-            n, carrier="OCGT", component="generators"
+    if options.get("keep_existing_capacities", False):
+        existing_capacities, existing_efficiencies = get_capacities_from_elec(
+            n, carriers=options.get("conventional_generation").keys(), 
+            component="generators"
         )
     else:
-        capacities_OCGT, efficiencies_OCGT = 0, None
+        existing_capacities, existing_efficiencies = 0, None
 
     patch_electricity_network(n)
 
@@ -3775,7 +3777,7 @@ if __name__ == "__main__":
 
     add_co2_tracking(n, costs, options)
 
-    add_generation(n, costs, capacities_OCGT, efficiencies_OCGT)
+    add_generation(n, costs, existing_capacities, existing_efficiencies)
 
     add_storage_and_grids(n, costs)
 
