@@ -20,7 +20,7 @@ constraints ,,,
 -- BAU,bool,"{'true','false'}",Add a per-``carrier`` minimal overall capacity; i.e. at least ``40GW`` of ``OCGT`` in Europe; configured in ``electricity: BAU_mincapacities``
 -- SAFE,bool,"{'true','false'}",Add a capacity reserve margin of a certain fraction above the peak demand to which renewable generators and storage do *not* contribute. Ignores network.
 solver,,,
--- name,--,"One of {'gurobi', 'cplex', 'cbc', 'glpk', 'ipopt'}; potentially more possible",Solver to use for optimisation problems in the workflow; e.g. clustering and linear optimal power flow.
+-- name,--,"One of {'gurobi', 'cplex', 'highs', 'cbc', 'glpk'}; potentially more possible",Solver to use for optimisation problems in the workflow; e.g. clustering and linear optimal power flow.
 -- options,--,Key listed under ``solver_options``.,Link to specific parameter settings.
 solver_options,,dict,Dictionaries with solver-specific parameter settings.
 mem,MB,int,Estimated maximum memory requirement for solving networks.
