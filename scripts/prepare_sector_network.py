@@ -511,13 +511,16 @@ def add_carrier_buses(n, carrier, nodes=None):
     location = vars(spatial)[carrier].locations
 
     # skip if carrier already exists (continue with coal because it can be already added by in generators)
-    if carrier in n.carriers.index and not carrier in snakemake.config['pypsa_eur']['Generator']:
+    if (
+        carrier in n.carriers.index
+        and not carrier in snakemake.config["pypsa_eur"]["Generator"]
+    ):
         return
 
     if not isinstance(nodes, pd.Index):
         nodes = pd.Index(nodes)
 
-    if not carrier in snakemake.config['pypsa_eur']['Generator']:
+    if not carrier in snakemake.config["pypsa_eur"]["Generator"]:
         n.add("Carrier", carrier)
 
     unit = "MWh_LHV" if carrier == "gas" else "MWh_th"
