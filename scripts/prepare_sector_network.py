@@ -871,10 +871,14 @@ def add_generation(n, costs, capacities_OCGT=0, efficiencies_OCGT=None):
             capital_cost=costs.at[generator, "efficiency"]
             * costs.at[generator, "fixed"],  # NB: fixed cost is per MWel
             p_nom_extendable=True,
-            p_nom = capacities_OCGT if carrier == "gas" else 0,
-            p_nom_min = capacities_OCGT if carrier == "gas" else 0,
+            p_nom=capacities_OCGT if carrier == "gas" else 0,
+            p_nom_min=capacities_OCGT if carrier == "gas" else 0,
             carrier=generator,
-            efficiency=efficiencies_OCGT if (carrier =="gas" and efficiencies_OCGT is not None) else costs.at[generator, "efficiency"],
+            efficiency=(
+                efficiencies_OCGT
+                if (carrier == "gas" and efficiencies_OCGT is not None)
+                else costs.at[generator, "efficiency"]
+            ),
             efficiency2=costs.at[carrier, "CO2 intensity"],
             lifetime=costs.at[generator, "lifetime"],
         )
@@ -3737,10 +3741,7 @@ if __name__ == "__main__":
         nyears,
     )
     costs = costs.rename(
-        columns={
-            "capital_cost": "fixed",
-            "co2_emissions": "CO2 intensity"
-        }
+        columns={"capital_cost": "fixed", "co2_emissions": "CO2 intensity"}
     )
 
     pop_weighted_energy_totals = (
@@ -3751,7 +3752,9 @@ if __name__ == "__main__":
     )
     pop_weighted_energy_totals.update(pop_weighted_heat_totals)
 
-    capacities_OCGT, efficiencies_OCGT = get_capacities(n, carrier="OCGT", component="generators")
+    capacities_OCGT, efficiencies_OCGT = get_capacities(
+        n, carrier="OCGT", component="generators"
+    )
 
     patch_electricity_network(n)
 
