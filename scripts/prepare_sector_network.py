@@ -3690,7 +3690,8 @@ def lossy_bidirectional_links(n, carrier, efficiencies={}):
 
 def get_capacities_from_elec(n, carrier, component):
     """
-    Gets capacities for {carrier} in n.{component} that were previously assigned in add_electricity
+    Gets capacities for {carrier} in n.{component} that were previously
+    assigned in add_electricity.
     """
     component_list = ["generators", "storage_units", "links", "stores"]
     component_dict = {name: getattr(n, name) for name in component_list}
