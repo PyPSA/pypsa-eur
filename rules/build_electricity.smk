@@ -233,7 +233,7 @@ rule determine_availability_matrix_MD_UA:
         offshore_shapes=resources("offshore_shapes.geojson"),
         regions=lambda w: (
             resources("regions_onshore.geojson")
-            if w.technology in ("onwind", "solar")
+            if w.technology in ("onwind", "solar", "solar-hsat")
             else resources("regions_offshore.geojson")
         ),
         cutout=lambda w: "cutouts/"
