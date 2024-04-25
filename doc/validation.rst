@@ -9,7 +9,7 @@ Validation
 
 The PyPSA-Eur model workflow provides a built-in mechanism for validation. This allows users to contrast the outcomes of network optimization against the historical behaviour of the European power system. The snakemake rule ``validate_elec_networks`` enables this by generating comparative figures that encapsulate key data points such as dispatch carrier, cross-border flows, and market prices per price zone.
 
-These comparisons utilize data from the 2019 ENTSO-E Transparency Platform. To enable this, an ENTSO-E API key must be inserted into the ``config.yaml`` file. Detailed steps for this process can be found in the user guide `here <https://transparency.entsoe.eu/content/static_content/Static%20content/web%20api/Guide.html>`_.
+These comparisons utilize data from the 2019 ENTSO-E Transparency Platform. To enable this, an ENTSO-E API key must be inserted into the ``config.yaml`` file. Detailed steps for this process can be found in the user guide `here <https://transparency.entsoe.eu/content/static_content/Static%20content/web%20api/Guide.html>`__.
 
 Once the API key is set, the validation workflow can be triggered by running the following command:
 
