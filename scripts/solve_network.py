@@ -342,6 +342,7 @@ def prepare_network(
             n.generators_t.p_min_pu,
             n.links_t.p_max_pu,
             n.links_t.p_min_pu,
+            n.links_t.efficiency,
             n.storage_units_t.inflow,
         ):
             df.where(df > solve_opts["clip_p_max_pu"], other=0.0, inplace=True)
@@ -408,11 +409,11 @@ def add_endogenous_transport_constraints(n, snapshots):
 
     # get index TODO only extendable
     link_ext = n.links[n.links.p_nom_extendable]
-    ev_i = link_ext[link_ext.carrier == "land transport EV"].index
-    bev_i = link_ext[link_ext.carrier == "BEV charger"].index
-    v2g_i = link_ext[link_ext.carrier == "V2G"].index
+    ev_i = link_ext[link_ext.carrier.str.contains("land transport EV")].index
+    bev_i = link_ext[link_ext.carrier.str.contains("BEV charger")].index
+    v2g_i = link_ext[link_ext.carrier.str.contains("V2G")].index
     bev_dsm_i = n.stores[
-        (n.stores.carrier == "battery storage") & n.stores.e_nom_extendable
+        (n.stores.carrier.str.contains("battery storage") & n.stores.e_nom_extendable)
     ].index
 
     if ev_i.empty:
@@ -430,16 +431,18 @@ def add_endogenous_transport_constraints(n, snapshots):
     # constraint for BEV charger
     lhs = link_p_nom.loc[ev_i] - (link_p_nom.loc[bev_i] * f.values)
     n.model.add_constraints(lhs == 0, name="p_nom-EV-BEV")
-
+    
+    ev_light = link_ext[link_ext.carrier=="land transport EV light"].index
     if not v2g_i.empty:
+        
         # constraint for V2G
-        lhs = link_p_nom.loc[ev_i] - (link_p_nom.loc[v2g_i] * f.values)
+        lhs = link_p_nom.loc[ev_light] - (link_p_nom.loc[v2g_i] * f.values)
         n.model.add_constraints(lhs == 0, name="p_nom-EV-V2G")
 
     if not bev_dsm_i.empty:
         # factor
         f = (
-            n.links.loc[ev_i, "p_nom"]
+            n.links.loc[ev_light, "p_nom"]
             .rename(n.links.bus0)
             .div(n.stores.loc[bev_dsm_i, "e_nom"].rename(n.links.bus1))
         )

@@ -30,6 +30,7 @@ from build_energy_totals import (
     build_eurostat_co2,
 )
 from build_transport_demand import transport_degree_factor
+from prepare_network import set_transmission_limit
 from networkx.algorithms import complement
 from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentation
 from prepare_network import maybe_adjust_costs_and_potentials
@@ -41,6 +42,31 @@ spatial = SimpleNamespace()
 logger = logging.getLogger(__name__)
 
 
+def add_electrobiofuels(n):
+    
+    print('Adding electrobiofuels')
+    nodes = spatial.nodes
+    efuel_scale_factor = costs.at['BtL', 'C stored']
+    
+    n.madd("Link",
+           nodes + " electrobiofuels",
+           bus0=spatial.biomass.nodes,
+           bus1=spatial.oil.nodes,
+           bus2=spatial.h2.nodes,
+           bus3="co2 atmosphere",
+           carrier="electrobiofuels",
+           lifetime=costs.at['electrobiofuels', 'lifetime'],
+           efficiency=costs.at['electrobiofuels', 'efficiency-biomass'],
+           efficiency2=-costs.at['electrobiofuels', 'efficiency-hydrogen'],
+           efficiency3=-costs.at['solid biomass', 'CO2 intensity'] + costs.at['BtL', 'CO2 stored'] * (1 - costs.at['Fischer-Tropsch', 'capture rate']),
+           p_nom_extendable=True,
+           capital_cost=costs.at['BtL', 'fixed'] * costs.at['electrobiofuels', 'efficiency-biomass'] \
+                        + efuel_scale_factor * costs.at['Fischer-Tropsch', 'fixed'] * costs.at['electrobiofuels', 'efficiency-hydrogen'],
+           marginal_cost=costs.at['BtL', 'VOM'] * costs.at['electrobiofuels', 'efficiency-biomass'] \
+                         + efuel_scale_factor * costs.at['Fischer-Tropsch', 'VOM'] * costs.at['electrobiofuels', 'efficiency-hydrogen']
+           )
+        
+        
 def define_spatial(nodes, options):
     """
     Namespace for spatial.
@@ -1000,10 +1026,10 @@ def insert_electricity_distribution_grid(n, costs):
     loads = n.loads.index[n.loads.carrier.str.contains("electric")]
     n.loads.loc[loads, "bus"] += " low voltage"
 
-    bevs = n.links.index[n.links.carrier == "BEV charger"]
+    bevs = n.links.index[n.links.carrier.str.contains("BEV charger")]
     n.links.loc[bevs, "bus0"] += " low voltage"
 
-    v2gs = n.links.index[n.links.carrier == "V2G"]
+    v2gs = n.links.index[n.links.carrier.str.contains("V2G")]
     n.links.loc[v2gs, "bus1"] += " low voltage"
 
     hps = n.links.index[n.links.carrier.str.contains("heat pump")]
@@ -1869,7 +1895,8 @@ def adjust_endogenous_transport(n):
         "land transport oil heavy",
         "land transport fuel cell light",
         "land transport fuel cell heavy",
-        "BEV charger",
+        "BEV charger light",
+        "BEV charger heavy",
         "V2G",
     ]
 
@@ -3198,7 +3225,7 @@ def add_industry(n, costs):
     )
 
     # aviation
-    demand_factor = options.get("aviation_demand_factor", 1)
+    demand_factor = get(options["aviation_demand_factor"], investment_year)
     if demand_factor != 1:
         logger.warning(f"Changing aviation demand by {demand_factor*100-100:+.2f}%.")
 
@@ -3979,6 +4006,9 @@ if __name__ == "__main__":
 
     if options["allam_cycle"]:
         add_allam(n, costs)
+        
+    if options['electrobiofuels']:
+        add_electrobiofuels(n)
 
     solver_name = snakemake.config["solving"]["solver"]["name"]
     resolution = snakemake.params.time_resolution
@@ -4009,6 +4039,12 @@ if __name__ == "__main__":
     maxext = snakemake.params["lines"]["max_extension"]
     if maxext is not None:
         limit_individual_line_extension(n, maxext)
+    
+    ll_type, factor = options["ll"][0], options["ll"][1:]
+    logger.info(f"Transmission lines: {ll_type} with factor {factor}")
+    n.global_constraints.drop(f"l{ll_type}_limit", inplace=True, errors="ignore")
+    costs["capital_cost"] = costs["fixed"]
+    n = set_transmission_limit(n, ll_type, factor, costs, nyears)
 
     if options["electricity_distribution_grid"]:
         insert_electricity_distribution_grid(n, costs)
@@ -4023,6 +4059,14 @@ if __name__ == "__main__":
 
     for k, v in options["transmission_efficiency"].items():
         lossy_bidirectional_links(n, k, v)
+        
+    for parameter in options["vary"].keys():
+        for carrier in options["vary"][parameter].keys():
+            link_i = n.links[n.links.carrier==carrier].index
+            if link_i.empty: continue
+            factor = options["vary"][parameter][carrier]
+            logger.info(f"Modify {parameter} of {carrier} by factor {factor} ")
+            n.links.loc[link_i, parameter] *= factor
 
     # Workaround: Remove lines with conflicting (and unrealistic) properties
     # cf. https://github.com/PyPSA/pypsa-eur/issues/444
