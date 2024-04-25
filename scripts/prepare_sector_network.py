@@ -872,10 +872,14 @@ def add_generation(n, costs, existing_capacities=0, existing_efficiencies=None):
             * costs.at[generator, "fixed"],  # NB: fixed cost is per MWel
             p_nom_extendable=True,
             p_nom=existing_capacities[generator] if not existing_capacities == 0 else 0,
-            p_nom_min=existing_capacities[generator] if not existing_capacities == 0 else 0,
+            p_nom_min=(
+                existing_capacities[generator] if not existing_capacities == 0 else 0
+            ),
             carrier=generator,
             efficiency=(
-                existing_efficiencies[generator] if existing_efficiencies is not None else costs.at[generator, "efficiency"]
+                existing_efficiencies[generator]
+                if existing_efficiencies is not None
+                else costs.at[generator, "efficiency"]
             ),
             efficiency2=costs.at[carrier, "CO2 intensity"],
             lifetime=costs.at[generator, "lifetime"],
@@ -3688,8 +3692,8 @@ def lossy_bidirectional_links(n, carrier, efficiencies={}):
 
 def get_capacities_from_elec(n, carriers, component):
     """
-    Gets capacities and efficiencies for {carrier} in n.{component}
-    that were previously assigned in add_electricity.
+    Gets capacities and efficiencies for {carrier} in n.{component} that were
+    previously assigned in add_electricity.
     """
     component_list = ["generators", "storage_units", "links", "stores"]
     component_dict = {name: getattr(n, name) for name in component_list}
@@ -3703,7 +3707,9 @@ def get_capacities_from_elec(n, carriers, component):
         capacity_dict[carrier] = component_dict[component].query("carrier in @carrier")[
             nom_col[component]
         ]
-        efficiency_dict[carrier] = component_dict[component].query("carrier in @carrier")[eff_col]
+        efficiency_dict[carrier] = component_dict[component].query(
+            "carrier in @carrier"
+        )[eff_col]
     return capacity_dict, efficiency_dict
 
 
@@ -3756,8 +3762,9 @@ if __name__ == "__main__":
 
     if options.get("keep_existing_capacities", False):
         existing_capacities, existing_efficiencies = get_capacities_from_elec(
-            n, carriers=options.get("conventional_generation").keys(), 
-            component="generators"
+            n,
+            carriers=options.get("conventional_generation").keys(),
+            component="generators",
         )
     else:
         existing_capacities, existing_efficiencies = 0, None
