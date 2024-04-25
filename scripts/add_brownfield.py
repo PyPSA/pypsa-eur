@@ -14,6 +14,7 @@ import pypsa
 import xarray as xr
 from _helpers import (
     configure_logging,
+    get_snapshots,
     set_scenario_config,
     update_config_from_wildcards,
 )
@@ -39,8 +40,8 @@ def add_brownfield(n, n_p, year):
         # CO2 or global EU values since these are already in n
         n_p.mremove(c.name, c.df.index[c.df.lifetime == np.inf])
 
-        # remove assets whose build_year + lifetime < year
-        n_p.mremove(c.name, c.df.index[c.df.build_year + c.df.lifetime < year])
+        # remove assets whose build_year + lifetime <= year
+        n_p.mremove(c.name, c.df.index[c.df.build_year + c.df.lifetime <= year])
 
         # remove assets if their optimized nominal capacity is lower than a threshold
         # since CHP heat Link is proportional to CHP electric Link, make sure threshold is compatible
@@ -144,7 +145,7 @@ def disable_grid_expansion_if_limit_hit(n):
         for name, glc in glcs.iterrows():
             total_expansion = (
                 (
-                    n.lines.query("p_nom_extendable")
+                    n.lines.query("s_nom_extendable")
                     .eval(f"s_nom_min * {cols[limit_type]}")
                     .sum()
                 )
@@ -192,7 +193,7 @@ def adjust_renewable_profiles(n, input_profiles, params, year):
     clustermaps.index = clustermaps.index.astype(str)
 
     # temporal clustering
-    dr = pd.date_range(**params["snapshots"], freq="h")
+    dr = get_snapshots(params["snapshots"], params["drop_leap_day"])
     snapshotmaps = (
         pd.Series(dr, index=dr).where(lambda x: x.isin(n.snapshots), pd.NA).ffill()
     )

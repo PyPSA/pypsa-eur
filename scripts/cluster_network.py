@@ -135,6 +135,7 @@ import pypsa
 import seaborn as sns
 from _helpers import configure_logging, set_scenario_config, update_p_nom_max
 from add_electricity import load_costs
+from build_bus_regions import append_bus_shapes
 from packaging.version import Version, parse
 from pypsa.clustering.spatial import (
     busmap_by_greedy_modularity,
@@ -231,7 +232,7 @@ def distribute_clusters(n, n_clusters, focus_weights=None, solver_name="scip"):
         .pipe(normed)
     )
 
-    N = n.buses.groupby(["country", "sub_network"]).size()
+    N = n.buses.groupby(["country", "sub_network"]).size()[L.index]
 
     assert (
         n_clusters >= len(N) and n_clusters <= N.sum()
@@ -267,7 +268,7 @@ def distribute_clusters(n, n_clusters, focus_weights=None, solver_name="scip"):
     m.objective = (clusters * clusters - 2 * clusters * L * n_clusters).sum()
     if solver_name == "gurobi":
         logging.getLogger("gurobipy").propagate = False
-    elif solver_name not in ["scip", "cplex"]:
+    elif solver_name not in ["scip", "cplex", "xpress", "copt", "mosek"]:
         logger.info(
             f"The configured solver `{solver_name}` does not support quadratic objectives. Falling back to `scip`."
         )
@@ -428,20 +429,27 @@ def clustering_for_n_clusters(
     return clustering
 
 
-def cluster_regions(busmaps, input=None, output=None):
+def cluster_regions(busmaps, regions):
+    """
+    Cluster regions based on busmaps and save the results to a file and to the
+    network.
+
+    Parameters:
+    - busmaps (list): A list of busmaps used for clustering.
+    - which (str): The type of regions to cluster.
+
+    Returns:
+    None
+    """
     busmap = reduce(lambda x, y: x.map(y), busmaps[1:], busmaps[0])
-
-    for which in ("regions_onshore", "regions_offshore"):
-        regions = gpd.read_file(getattr(input, which))
-        regions = regions.reindex(columns=["name", "geometry"]).set_index("name")
-        regions_c = regions.dissolve(busmap)
-        regions_c.index.name = "name"
-        regions_c = regions_c.reset_index()
-        regions_c.to_file(getattr(output, which))
+    regions = regions.reindex(columns=["name", "geometry"]).set_index("name")
+    regions_c = regions.dissolve(busmap)
+    regions_c.index.name = "name"
+    return regions_c.reset_index()
 
 
-def plot_busmap_for_n_clusters(n, n_clusters, fn=None):
-    busmap = busmap_for_n_clusters(n, n_clusters)
+def plot_busmap_for_n_clusters(n, n_clusters, solver_name="scip", fn=None):
+    busmap = busmap_for_n_clusters(n, n_clusters, solver_name)
     cs = busmap.unique()
     cr = sns.color_palette("hls", len(cs))
     n.plot(bus_colors=busmap.map(dict(zip(cs, cr))))
@@ -454,7 +462,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("cluster_network", simpl="", clusters="37")
+        snakemake = mock_snakemake("cluster_network", simpl="", clusters="40")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
@@ -471,7 +479,7 @@ if __name__ == "__main__":
     conventional_carriers = set(params.conventional_carriers)
     if snakemake.wildcards.clusters.endswith("m"):
         n_clusters = int(snakemake.wildcards.clusters[:-1])
-        aggregate_carriers = params.conventional_carriers & aggregate_carriers
+        aggregate_carriers = conventional_carriers & aggregate_carriers
     elif snakemake.wildcards.clusters.endswith("c"):
         n_clusters = int(snakemake.wildcards.clusters[:-1])
         aggregate_carriers = aggregate_carriers - conventional_carriers
@@ -519,8 +527,8 @@ if __name__ == "__main__":
         custom_busmap = params.custom_busmap
         if custom_busmap:
             custom_busmap = pd.read_csv(
-                snakemake.input.custom_busmap, index_col=0, squeeze=True
-            )
+                snakemake.input.custom_busmap, index_col=0
+            ).squeeze()
             custom_busmap.index = custom_busmap.index.astype(str)
             logger.info(f"Imported custom busmap from {snakemake.input.custom_busmap}")
 
@@ -538,21 +546,25 @@ if __name__ == "__main__":
             params.focus_weights,
         )
 
-    update_p_nom_max(clustering.network)
+    nc = clustering.network
+    update_p_nom_max(nc)
 
     if params.cluster_network.get("consider_efficiency_classes"):
         labels = [f" {label} efficiency" for label in ["low", "medium", "high"]]
-        nc = clustering.network
         nc.generators["carrier"] = nc.generators.carrier.replace(labels, "", regex=True)
 
-    clustering.network.meta = dict(
-        snakemake.config, **dict(wildcards=dict(snakemake.wildcards))
-    )
-    clustering.network.export_to_netcdf(snakemake.output.network)
     for attr in (
         "busmap",
         "linemap",
     ):  # also available: linemap_positive, linemap_negative
         getattr(clustering, attr).to_csv(snakemake.output[attr])
 
-    cluster_regions((clustering.busmap,), snakemake.input, snakemake.output)
+    nc.shapes = n.shapes.copy()
+    for which in ["regions_onshore", "regions_offshore"]:
+        regions = gpd.read_file(snakemake.input[which])
+        clustered_regions = cluster_regions((clustering.busmap,), regions)
+        clustered_regions.to_file(snakemake.output[which])
+        append_bus_shapes(nc, clustered_regions, type=which.split("_")[1])
+
+    nc.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
+    nc.export_to_netcdf(snakemake.output.network)

@@ -39,7 +39,7 @@ import logging
 
 import numpy as np
 import pandas as pd
-from _helpers import configure_logging, set_scenario_config
+from _helpers import configure_logging, get_snapshots, set_scenario_config
 from pandas import Timedelta as Delta
 
 logger = logging.getLogger(__name__)
@@ -183,7 +183,7 @@ def manual_adjustment(load, fn_load, countries):
         elif "MK" in load:
             load["AL"] = load["MK"] * (4.1 / 7.4)
 
-    if "MK" in countries:
+    if "MK" in countries and "MK" in countries:
         if "MK" not in load or load.MK.isnull().sum() > len(load) / 2:
             if "ME" in load:
                 load["MK"] = load.ME * (6.7 / 2.9)
@@ -192,7 +192,7 @@ def manual_adjustment(load, fn_load, countries):
         if "ME" in load:
             load["BA"] = load.HR * (11.0 / 16.2)
 
-    if "KV" not in load or load.KV.isnull().values.all():
+    if ("KV" not in load or load.KV.isnull().values.all()) and "KV" in countries:
         if "RS" in load:
             load["KV"] = load["RS"] * (4.8 / 27.0)
 
@@ -263,22 +263,33 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
+    snapshots = get_snapshots(
+        snakemake.params.snapshots, snakemake.params.drop_leap_day
+    )
+
+    fixed_year = snakemake.params["load"].get("fixed_year", False)
+    years = (
+        slice(str(fixed_year), str(fixed_year))
+        if fixed_year
+        else slice(snapshots[0], snapshots[-1])
+    )
+
     interpolate_limit = snakemake.params.load["interpolate_limit"]
     countries = snakemake.params.countries
-    snapshots = pd.date_range(freq="h", **snakemake.params.snapshots)
-    years = slice(snapshots[0], snapshots[-1])
+
     time_shift = snakemake.params.load["time_shift_for_large_gaps"]
 
-    load = load_timeseries(snakemake.input[0], years, countries)
+    load = load_timeseries(snakemake.input.reported, years, countries)
+
+    load = load.reindex(index=snapshots)
 
     if "UA" in countries:
         # attach load of UA (best data only for entsoe transparency)
-        load_ua = load_timeseries(snakemake.input[0], "2018", ["UA"])
+        load_ua = load_timeseries(snakemake.input.reported, "2018", ["UA"])
         snapshot_year = str(snapshots.year.unique().item())
         time_diff = pd.Timestamp("2018") - pd.Timestamp(snapshot_year)
-        load_ua.index -= (
-            time_diff  # hack indices (currently, UA is manually set to 2018)
-        )
+        # hack indices (currently, UA is manually set to 2018)
+        load_ua.index -= time_diff
         load["UA"] = load_ua
         # attach load of MD (no time-series available, use 2020-totals and distribute according to UA):
         # https://www.iea.org/data-and-statistics/data-browser/?country=MOLDOVA&fuel=Energy%20consumption&indicator=TotElecCons
@@ -288,9 +299,6 @@ if __name__ == "__main__":
     if snakemake.params.load["manual_adjustments"]:
         load = manual_adjustment(load, snakemake.input[0], countries)
 
-    if load.empty:
-        logger.warning("Build electricity demand time series is empty.")
-
     logger.info(f"Linearly interpolate gaps of size {interpolate_limit} and less.")
     load = load.interpolate(method="linear", limit=interpolate_limit)
 
@@ -299,10 +307,23 @@ if __name__ == "__main__":
     )
     load = load.apply(fill_large_gaps, shift=time_shift)
 
+    if snakemake.params.load["supplement_synthetic"]:
+        logger.info("Supplement missing data with synthetic data.")
+        fn = snakemake.input.synthetic
+        synthetic_load = pd.read_csv(fn, index_col=0, parse_dates=True)
+        # "UA" does not appear in synthetic load data
+        countries = list(set(countries) - set(["UA"]))
+        synthetic_load = synthetic_load.loc[snapshots, countries]
+        load = load.combine_first(synthetic_load)
+
     assert not load.isna().any().any(), (
         "Load data contains nans. Adjust the parameters "
         "`time_shift_for_large_gaps` or modify the `manual_adjustment` function "
         "for implementing the needed load data modifications."
     )
+
+    # need to reindex load time series to target year
+    if fixed_year:
+        load.index = load.index.map(lambda t: t.replace(year=snapshots.year[0]))
 
     load.to_csv(snakemake.output[0])

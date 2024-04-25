@@ -14,7 +14,7 @@
     <iframe width="832" height="468" src="https://www.youtube.com/embed/ty47YU1_eeQ" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 .. note::
-    Find the introductory slides `here <https://docs.google.com/presentation/d/e/2PACX-1vQGQZD7KIVdocRZzRVu8Uk-JC_ltEow5zjtIarhyws46IMJpaqGuux695yincmJA_i5bVEibEs7z2eo/pub?start=false&loop=true&delayms=3000>`_.
+    Find the introductory slides `here <https://docs.google.com/presentation/d/e/2PACX-1vQGQZD7KIVdocRZzRVu8Uk-JC_ltEow5zjtIarhyws46IMJpaqGuux695yincmJA_i5bVEibEs7z2eo/pub?start=false&loop=true&delayms=3000>`__.
 
 .. warning::
     The video only introduces the electricity-only part of PyPSA-Eur.
@@ -23,7 +23,7 @@ Workflow
 =========
 
 The generation of the model is controlled by the open workflow management system
-`Snakemake <https://snakemake.github.io/>`_. In a nutshell, the ``Snakefile``
+`Snakemake <https://snakemake.github.io/>`__. In a nutshell, the ``Snakefile``
 declares for each script in the ``scripts`` directory a rule which describes
 which files the scripts consume and produce (their corresponding input and
 output files). The ``snakemake`` tool then runs the scripts in the correct order
@@ -54,9 +54,9 @@ preceding rules which another rule takes as input data.
 
 For the use of ``snakemake``, it makes sense to familiarize yourself quickly
 with the `basic tutorial
-<https://snakemake.readthedocs.io/en/stable/tutorial/basics.html>`_ and then
+<https://snakemake.readthedocs.io/en/stable/tutorial/basics.html>`__ and then
 read carefully through the documentation of the `command line interface
-<https://snakemake.readthedocs.io/en/stable/executing/cli.html>`_, noting the
+<https://snakemake.readthedocs.io/en/stable/executing/cli.html>`__, noting the
 arguments ``-j``, ``-c``, ``-f``, ``-F``, ``-n``, ``-r``, ``--dag`` and ``-t``
 in particular.
 
@@ -64,10 +64,10 @@ Scenarios, Configuration and Modification
 =========================================
 
 It is easy to run PyPSA-Eur for multiple scenarios using the `wildcards feature
-<https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#wildcards>`_
+<https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#wildcards>`__
 of ``snakemake``. Wildcards allow to generalise a rule to produce all files that
 follow a `regular expression
-<https://en.wikipedia.org/wiki/Regular_expression>`_ pattern, which defines
+<https://en.wikipedia.org/wiki/Regular_expression>`__ pattern, which defines
 a particular scenario. One can think of a wildcard as a parameter that shows
 up in the input/output file names and thereby determines which rules to run,
 what data to retrieve and what files to produce. Details are explained in
@@ -97,5 +97,5 @@ System Requirements
 
 Building the model with the scripts in this repository runs on a regular computer.
 But optimising for investment and operation decisions across many scenarios requires a strong interior-point solver
-like `Gurobi <http://www.gurobi.com/>`_ or `CPLEX <https://www.ibm.com/analytics/cplex-optimizer>`_ with more memory.
+like `Gurobi <http://www.gurobi.com/>`__ or `CPLEX <https://www.ibm.com/analytics/cplex-optimizer>`__ with more memory.
 Open-source solvers like `HiGHS <https://highs.dev>` can also be used for smaller problems.

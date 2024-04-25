@@ -22,7 +22,7 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "build_district_heat_share",
             simpl="",
-            clusters=48,
+            clusters=60,
             planning_horizons="2050",
         )
     configure_logging(snakemake)
@@ -32,12 +32,13 @@ if __name__ == "__main__":
 
     pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
 
+    year = str(snakemake.params.energy_totals_year)
     district_heat_share = pd.read_csv(snakemake.input.district_heat_share, index_col=0)[
-        "district heat share"
+        year
     ]
 
     # make ct-based share nodal
-    district_heat_share = district_heat_share.loc[pop_layout.ct]
+    district_heat_share = district_heat_share.reindex(pop_layout.ct).fillna(0)
     district_heat_share.index = pop_layout.index
 
     # total urban population per country

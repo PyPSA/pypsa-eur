@@ -15,8 +15,6 @@ Relevant Settings
 
 .. code:: yaml
 
-    snapshots:
-
     countries:
 
     electricity:
@@ -77,7 +75,7 @@ import shapely
 import shapely.prepared
 import shapely.wkt
 import yaml
-from _helpers import configure_logging, set_scenario_config
+from _helpers import configure_logging, get_snapshots, set_scenario_config
 from packaging.version import Version, parse
 from scipy import spatial
 from scipy.sparse import csgraph
@@ -700,6 +698,22 @@ def _adjust_capacities_of_under_construction_branches(n, config):
     return n
 
 
+def _set_shapes(n, country_shapes, offshore_shapes):
+    # Write the geodataframes country_shapes and offshore_shapes to the network.shapes component
+    country_shapes = gpd.read_file(country_shapes).rename(columns={"name": "idx"})
+    country_shapes["type"] = "country"
+    offshore_shapes = gpd.read_file(offshore_shapes).rename(columns={"name": "idx"})
+    offshore_shapes["type"] = "offshore"
+    all_shapes = pd.concat([country_shapes, offshore_shapes], ignore_index=True)
+    n.madd(
+        "Shape",
+        all_shapes.index,
+        geometry=all_shapes.geometry,
+        idx=all_shapes.idx,
+        type=all_shapes["type"],
+    )
+
+
 def base_network(
     eg_buses,
     eg_converters,
@@ -732,12 +746,12 @@ def base_network(
     transformers = _set_electrical_parameters_transformers(transformers, config)
     links = _set_electrical_parameters_links(links, config, links_p_nom)
     converters = _set_electrical_parameters_converters(converters, config)
-    snapshots = snakemake.params.snapshots
 
     n = pypsa.Network()
     n.name = "PyPSA-Eur"
 
-    n.set_snapshots(pd.date_range(freq="h", **snapshots))
+    time = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
+    n.set_snapshots(time)
     n.madd("Carrier", ["AC", "DC"])
 
     n.import_components_from_dataframe(buses, "Bus")
@@ -760,11 +774,14 @@ def base_network(
 
     n = _adjust_capacities_of_under_construction_branches(n, config)
 
+    _set_shapes(n, country_shapes, offshore_shapes)
+
     return n
 
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
+
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("base_network")
