@@ -321,7 +321,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                     n.madd(
                         "Generator",
                         new_capacity.index,
-                        suffix=" " + name_suffix,
+                        suffix=name_suffix,
                         bus=new_capacity.index,
                         carrier=generator,
                         p_nom=new_capacity,
