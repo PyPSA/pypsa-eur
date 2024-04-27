@@ -770,7 +770,7 @@ solving:
 
   solver_options:
     highs-default:
-      # refer to https://ergo-code.github.io/HiGHS/options/definitions.html#solver
+      # refer to https://ergo-code.github.io/HiGHS/dev/options/definitions/
       threads: 4
       solver: "ipm"
       run_crossover: "off"
