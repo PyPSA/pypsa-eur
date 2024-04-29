@@ -611,32 +611,34 @@ rule prepare_network:
 if config["osm"].get("retrieve", True):
     rule retrieve_osm_data:
         output:
-            cables_way="data/osm/raw/{country}/cables_way_raw.geojson",
-            lines_way="data/osm/raw/{country}/lines_way_raw.geojson",
-            substations_way="data/osm/raw/{country}/substations_way_raw.geojson",
-            substations_node="data/osm/raw/{country}/substations_node_raw.geojson",
-            transformers_way="data/osm/raw/{country}/transformers_way_raw.geojson",
-            transformers_node="data/osm/raw/{country}/transformers_node_raw.geojson",
+            cables_way="data/osm/raw/{country}/cables_way_raw.json",
+            lines_way="data/osm/raw/{country}/lines_way_raw.json",
+            substations_way="data/osm/raw/{country}/substations_way_raw.json",
+            substations_node="data/osm/raw/{country}/substations_node_raw.json",
+            transformers_way="data/osm/raw/{country}/transformers_way_raw.json",
+            transformers_node="data/osm/raw/{country}/transformers_node_raw.json",
+            relations="data/osm/raw/{country}/relations_raw.json",
         log:
             logs("retrieve_osm_data_{country}.log"),
         script:
             "../scripts/retrieve_osm_data.py"
 
-FEATURES = ["cables_way", "lines_way", "substations_way", "substations_node", "transformers_way", "transformers_node"]
+# FEATURES = ["cables_way", "lines_way", "substations_way", "substations_node", "transformers_way", "transformers_node"]
 rule clean_osm_data:
     # params:
     #     countries=config["countries"],
     input:
-        **{
-            f"{country}": [f"data/osm/raw/{country}/{feature}.geojson" for feature in FEATURES]
-            for country in config["countries"]
-            },
-        # cables_way[country]=[f"data/osm/raw/{country}/cables_way_raw.geojson" for country in config["countries"]],
-        # lines_way=[f"data/osm/raw/{country}/lines_way_raw.geojson" for country in config["countries"]],
-        # substations_way=[f"data/osm/raw/{country}/substations_way_raw.geojson" for country in config["countries"]],
-        # substations_node=[f"data/osm/raw/{country}/substations_node_raw.geojson" for country in config["countries"]],
-        # transformers_way=[f"data/osm/raw/{country}/transformers_way_raw.geojson" for country in config["countries"]],
-        # transformers_node=[f"data/osm/raw/{country}/transformers_node_raw.geojson" for country in config["countries"]],
+        # **{
+        #     f"{country}": [f"data/osm/raw/{country}/{feature}.geojson" for feature in FEATURES]
+        #     for country in config["countries"]
+        #     },
+        cables_way=[f"data/osm/raw/{country}/cables_way_raw.json" for country in config["countries"]],
+        lines_way=[f"data/osm/raw/{country}/lines_way_raw.json" for country in config["countries"]],
+        substations_way=[f"data/osm/raw/{country}/substations_way_raw.json" for country in config["countries"]],
+        substations_node=[f"data/osm/raw/{country}/substations_node_raw.json" for country in config["countries"]],
+        transformers_way=[f"data/osm/raw/{country}/transformers_way_raw.json" for country in config["countries"]],
+        transformers_node=[f"data/osm/raw/{country}/transformers_node_raw.json" for country in config["countries"]],
+        relations=[f"data/osm/raw/{country}/relations_raw.json" for country in config["countries"]],
     output:
         dummy="data/osm/raw/dummy.txt"
         # cables="resources/RDIR/cables_clean_.geojson"

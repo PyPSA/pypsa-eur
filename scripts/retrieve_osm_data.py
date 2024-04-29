@@ -6,9 +6,9 @@
 TODO To fill later
 """
 
-import geojson
+import json
 import logging
-import overpass as op
+# import overpass as op
 import os
 import requests
 import time
@@ -43,7 +43,10 @@ def _get_overpass_areas(countries):
         # Check if the response contains any results
         if "elements" in data and len(data["elements"]) > 0:
             # Extract the area ID from the relation
-            osm_area_id = data["elements"][0]["id"]
+            if c == "FR": # take second one for France
+                osm_area_id = data["elements"][1]["id"]
+            else:
+                osm_area_id = data["elements"][0]["id"]
             osm_areas.append(f"area({osm_area_id})")
         else:
             # Print a warning if no results are found for the country code
@@ -65,9 +68,13 @@ def retrieve_osm_data(
             "substations_node",
             "transformers_way",
             "transformers_node",
+            "relations",
             ]):
     
     op_area = _get_overpass_areas(country)
+
+    # Overpass API endpoint URL
+    overpass_url = "https://overpass-api.de/api/interpreter"
 
     features_dict= {
         'cables_way': 'way["power"="cable"]',
@@ -76,6 +83,7 @@ def retrieve_osm_data(
         'substations_node': 'node["power"="substation"]',
         'transformers_way': 'way["power"="transformer"]',
         'transformers_node': 'node["power"="transformer"]',
+        'relations': 'rel["route"="power"]["type"="route"]'
     }
 
     for f in features:
@@ -86,6 +94,7 @@ def retrieve_osm_data(
         logger.info(f" - Fetching OSM data for feature '{f}' in {country}...")
         # Build the overpass query
         op_query = f'''
+            [out:json];
             {op_area[country]}->.searchArea;
             (
             {features_dict[f]}(area.searchArea);
@@ -94,8 +103,8 @@ def retrieve_osm_data(
         '''
 
         # Send the request
-        # response = requests.post(overpass_url, data = op_query)
-        response = op.API(timeout=300).get(op_query) # returns data in geojson format. Timeout (max.) set to 300s
+        response = requests.post(overpass_url, data = op_query)
+        # response = op.API(timeout=300).get(op_query) # returns data in geojson format. Timeout (max.) set to 300s
 
         filepath = output[f]
         parentfolder = os.path.dirname(filepath)
@@ -104,10 +113,10 @@ def retrieve_osm_data(
             os.makedirs(parentfolder)
 
         with open(filepath, mode = "w") as f:
-            geojson.dump(response,f,indent=2)
-            # geojson.dump(response.json(),f,indent=2)
+            # geojson.dump(response,f,indent=2)
+            json.dump(response.json(),f,indent=2)
         logger.info(" - Done.")
-        time.sleep(5) 
+        # time.sleep(5) 
 
 
 if __name__ == "__main__":
