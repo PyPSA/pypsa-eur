@@ -31,6 +31,7 @@ import logging
 import os
 import re
 import sys
+from functools import reduce
 
 import numpy as np
 import pandas as pd
@@ -43,7 +44,6 @@ from _helpers import (
     set_scenario_config,
     update_config_from_wildcards,
 )
-from functools import reduce
 from pypsa.descriptors import get_activity_mask
 from pypsa.descriptors import get_switchable_as_dense as get_as_dense
 
@@ -124,7 +124,14 @@ def add_land_use_constraint_perfect(n):
 def _add_land_use_constraint(n):
     # warning: this will miss existing offwind which is not classed AC-DC and has carrier 'offwind'
 
-    for carrier in ["solar", "solar rooftop", "solar-hsat", "onwind", "offwind-ac", "offwind-dc"]:
+    for carrier in [
+        "solar",
+        "solar rooftop",
+        "solar-hsat",
+        "onwind",
+        "offwind-ac",
+        "offwind-dc",
+    ]:
         extendable_i = (n.generators.carrier == carrier) & n.generators.p_nom_extendable
         n.generators.loc[extendable_i, "p_nom_min"] = 0
 
@@ -159,7 +166,14 @@ def _add_land_use_constraint_m(n, planning_horizons, config):
     grouping_years = config["existing_capacities"]["grouping_years_power"]
     current_horizon = snakemake.wildcards.planning_horizons
 
-    for carrier in ["solar", "solar rooftop", "solar-hsat", "onwind", "offwind-ac", "offwind-dc"]:
+    for carrier in [
+        "solar",
+        "solar rooftop",
+        "solar-hsat",
+        "onwind",
+        "offwind-ac",
+        "offwind-dc",
+    ]:
         extendable_i = (n.generators.carrier == carrier) & n.generators.p_nom_extendable
         n.generators.loc[extendable_i, "p_nom_min"] = 0
 
@@ -199,7 +213,8 @@ def _add_land_use_constraint_m(n, planning_horizons, config):
 
     n.generators.p_nom_max.clip(lower=0, inplace=True)
 
-def add_solar_potential_constraints(n, config):  
+
+def add_solar_potential_constraints(n, config):
     """
     Add constraint to make sure the sum capacity of all solar technologies (fixed, tracking, ets. ) is below the region potential.
     Example:
@@ -209,51 +224,81 @@ def add_solar_potential_constraints(n, config):
     The constraint ensures that:
            solar_p_nom + solar_hsat_p_nom * 1.13 <= 10 GW
     """
-    land_use_factors= {
-        'solar-hsat'  : config['renewable']['solar']['capacity_per_sqkm']/config['renewable']['solar-hsat']['capacity_per_sqkm'] ,                                                                      
-        }
+    land_use_factors = {
+        "solar-hsat": config["renewable"]["solar"]["capacity_per_sqkm"]
+        / config["renewable"]["solar-hsat"]["capacity_per_sqkm"],
+    }
     gen_index = n.generators[n.generators.p_nom_extendable].index
 
-    filters = [("solar", True), ("thermal", False), ("rooftop", False)]     ## filter all utility solar generation except solar thermal
-    solar = reduce(lambda gen_index, f: gen_index[gen_index.str.contains(f[0]) == f[1]], filters, gen_index)
-    solar_today = n.generators[(n.generators.carrier=='solar') & (n.generators.p_nom_extendable)].index
-    solar_hsat = n.generators[(n.generators.carrier=='solar-hsat') ].index
-    land_use = pd.DataFrame(1, index=solar, columns=['land_use_factor'])
+    filters = [
+        ("solar", True),
+        ("thermal", False),
+        ("rooftop", False),
+    ]  ## filter all utility solar generation except solar thermal
+    solar = reduce(
+        lambda gen_index, f: gen_index[gen_index.str.contains(f[0]) == f[1]],
+        filters,
+        gen_index,
+    )
+    solar_today = n.generators[
+        (n.generators.carrier == "solar") & (n.generators.p_nom_extendable)
+    ].index
+    solar_hsat = n.generators[(n.generators.carrier == "solar-hsat")].index
+    land_use = pd.DataFrame(1, index=solar, columns=["land_use_factor"])
     for key in land_use_factors.keys():
-            land_use = land_use.apply(lambda x: (x*land_use_factors[key]) if key in x.name else x,  axis=1)
+        land_use = land_use.apply(
+            lambda x: (x * land_use_factors[key]) if key in x.name else x, axis=1
+        )
 
     rename = {"Generator-ext": "Generator"}
     if "m" in snakemake.wildcards.clusters:
-        location = (
-        pd.Series([' '.join(i.split(' ')[:2]) for i in n.generators.index], index=n.generators.index)
+        location = pd.Series(
+            [" ".join(i.split(" ")[:2]) for i in n.generators.index],
+            index=n.generators.index,
         )
-        ggrouper= pd.Series(n.generators.loc[solar].index.rename('bus').map(location), index=n.generators.loc[solar].index,).to_xarray()
-        rhs = (n.generators.loc[solar_today,"p_nom_max"]
-                            .groupby(n.generators.loc[solar_today].index.rename('bus').map(location)).sum() -
-               n.generators.loc[solar_hsat,"p_nom_opt"]
-                            .groupby(n.generators.loc[solar_hsat].index.rename('bus').map(location)).sum() * land_use_factors['solar-hsat'] ).clip(lower=0)
+        ggrouper = pd.Series(
+            n.generators.loc[solar].index.rename("bus").map(location),
+            index=n.generators.loc[solar].index,
+        ).to_xarray()
+        rhs = (
+            n.generators.loc[solar_today, "p_nom_max"]
+            .groupby(n.generators.loc[solar_today].index.rename("bus").map(location))
+            .sum()
+            - n.generators.loc[solar_hsat, "p_nom_opt"]
+            .groupby(n.generators.loc[solar_hsat].index.rename("bus").map(location))
+            .sum()
+            * land_use_factors["solar-hsat"]
+        ).clip(lower=0)
 
-    else : 
+    else:
         location = (
             n.buses.location
             if "location" in n.buses.columns
             else pd.Series(n.buses.index, index=n.buses.index)
         )
-        ggrouper= (n.generators.loc[solar].bus)
-        rhs = (n.generators.loc[solar_today,"p_nom_max"]      
-                            .groupby(n.generators.loc[solar_today].bus.map(location)).sum() -
-                n.generators.loc[solar_hsat,"p_nom_opt"]    
-                            .groupby(n.generators.loc[solar_hsat].bus.map(location)).sum() * land_use_factors['solar-hsat'] ).clip(lower=0)
+        ggrouper = n.generators.loc[solar].bus
+        rhs = (
+            n.generators.loc[solar_today, "p_nom_max"]
+            .groupby(n.generators.loc[solar_today].bus.map(location))
+            .sum()
+            - n.generators.loc[solar_hsat, "p_nom_opt"]
+            .groupby(n.generators.loc[solar_hsat].bus.map(location))
+            .sum()
+            * land_use_factors["solar-hsat"]
+        ).clip(lower=0)
 
     lhs = (
-            (n.model["Generator-p_nom"].rename(rename).loc[solar]
-            *land_use.squeeze().values)
-            .groupby(ggrouper) 
-            .sum()
-        )    
+        (
+            n.model["Generator-p_nom"].rename(rename).loc[solar]
+            * land_use.squeeze().values
+        )
+        .groupby(ggrouper)
+        .sum()
+    )
 
-    print('adding solar rooftop constraints...')
-    n.model.add_constraints(lhs <= rhs, name="solar_potential")            
+    print("adding solar rooftop constraints...")
+    n.model.add_constraints(lhs <= rhs, name="solar_potential")
+
 
 def add_co2_sequestration_limit(n, limit=200):
     """
@@ -918,9 +963,8 @@ def extra_functionality(n, snapshots):
     if EQ_o := constraints["EQ"]:
         add_EQ_constraints(n, EQ_o.replace("EQ", ""))
 
-    
-    if config["sector"]['solar_utility_singla_axis_tracking']:
-       add_solar_potential_constraints(n, config)
+    if config["sector"]["solar_utility_singla_axis_tracking"]:
+        add_solar_potential_constraints(n, config)
 
     add_battery_constraints(n)
     add_lossy_bidirectional_link_constraints(n)

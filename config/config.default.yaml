@@ -240,13 +240,13 @@ renewable:
       orientation:
         slope: 35.
         azimuth: 180.
-      tracking: horizontal  
+      tracking: horizontal
     capacity_per_sqkm: 4.43 # 15% higher land usage acc. to NREL
     corine: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 26, 31, 32]
     luisa: false # [1111, 1121, 1122, 1123, 1130, 1210, 1221, 1222, 1230, 1241, 1242, 1310, 1320, 1330, 1410, 1421, 1422, 2110, 2120, 2130, 2210, 2220, 2230, 2310, 2410, 2420, 3210, 3320, 3330]
     natura: true
     excluder_resolution: 100
-    clip_p_max_pu: 1.e-2    
+    clip_p_max_pu: 1.e-2
   hydro:
     cutout: europe-2013-era5
     carriers: [ror, PHS, hydro]
@@ -589,7 +589,7 @@ sector:
   biogas_upgrading_cc: false
   conventional_generation:
     OCGT: gas
-  solar_utility_singla_axis_tracking : true  
+  solar_utility_singla_axis_tracking: true
   biomass_to_liquid: false
   biosng: false
   limit_max_growth:
