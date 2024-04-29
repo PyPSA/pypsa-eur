@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -11,6 +11,7 @@ from functools import partial
 
 import country_converter as coco
 import pandas as pd
+from _helpers import set_scenario_config
 from tqdm import tqdm
 
 cc = coco.CountryConverter()
@@ -73,7 +74,7 @@ def industrial_energy_demand_per_country(country, year, jrc_dir):
     def get_subsector_data(sheet):
         df = df_dict[sheet][year].groupby(fuels).sum()
 
-        df["ammonia"] = 0.0
+        df["hydrogen"] = 0.0
 
         df["other"] = df["all"] - df.loc[df.index != "all"].sum()
 
@@ -94,51 +95,50 @@ def industrial_energy_demand_per_country(country, year, jrc_dir):
     return df
 
 
-def add_ammonia_energy_demand(demand):
-    # MtNH3/a
-    fn = snakemake.input.ammonia_production
-    ammonia = pd.read_csv(fn, index_col=0)[str(year)] / 1e3
+def separate_basic_chemicals(demand, production):
 
-    def get_ammonia_by_fuel(x):
-        fuels = {
-            "gas": params["MWh_CH4_per_tNH3_SMR"],
-            "electricity": params["MWh_elec_per_tNH3_SMR"],
+    ammonia = pd.DataFrame(
+        {
+            "hydrogen": production["Ammonia"] * params["MWh_H2_per_tNH3_electrolysis"],
+            "electricity": production["Ammonia"]
+            * params["MWh_elec_per_tNH3_electrolysis"],
         }
-
-        return pd.Series({k: x * v for k, v in fuels.items()})
-
-    ammonia_by_fuel = ammonia.apply(get_ammonia_by_fuel).T
-    ammonia_by_fuel = ammonia_by_fuel.unstack().reindex(
-        index=demand.index, fill_value=0.0
-    )
-
-    ammonia = pd.DataFrame({"ammonia": ammonia * params["MWh_NH3_per_tNH3"]}).T
+    ).T
+    chlorine = pd.DataFrame(
+        {
+            "hydrogen": production["Chlorine"] * params["MWh_H2_per_tCl"],
+            "electricity": production["Chlorine"] * params["MWh_elec_per_tCl"],
+        }
+    ).T
+    methanol = pd.DataFrame(
+        {
+            "gas": production["Methanol"] * params["MWh_CH4_per_tMeOH"],
+            "electricity": production["Methanol"] * params["MWh_elec_per_tMeOH"],
+        }
+    ).T
 
     demand["Ammonia"] = ammonia.unstack().reindex(index=demand.index, fill_value=0.0)
+    demand["Chlorine"] = chlorine.unstack().reindex(index=demand.index, fill_value=0.0)
+    demand["Methanol"] = methanol.unstack().reindex(index=demand.index, fill_value=0.0)
 
-    demand["Basic chemicals (without ammonia)"] = (
-        demand["Basic chemicals"] - ammonia_by_fuel
+    demand["HVC"] = (
+        demand["Basic chemicals"]
+        - demand["Ammonia"]
+        - demand["Methanol"]
+        - demand["Chlorine"]
     )
 
-    demand["Basic chemicals (without ammonia)"].clip(lower=0, inplace=True)
-
     demand.drop(columns="Basic chemicals", inplace=True)
+
+    demand["HVC"].clip(lower=0, inplace=True)
 
     return demand
 
 
-def add_non_eu28_industrial_energy_demand(countries, demand):
+def add_non_eu28_industrial_energy_demand(countries, demand, production):
     non_eu28 = countries.difference(eu28)
     if non_eu28.empty:
         return demand
-    # output in MtMaterial/a
-    fn = snakemake.input.industrial_production_per_country
-    production = pd.read_csv(fn, index_col=0) / 1e3
-
-    # recombine HVC, Chlorine and Methanol to Basic chemicals (without ammonia)
-    chemicals = ["HVC", "Chlorine", "Methanol"]
-    production["Basic chemicals (without ammonia)"] = production[chemicals].sum(axis=1)
-    production.drop(columns=chemicals, inplace=True)
 
     eu28_production = production.loc[countries.intersection(eu28)].sum()
     eu28_energy = demand.groupby(level=1).sum()
@@ -167,9 +167,7 @@ def industrial_energy_demand(countries, year):
     with mp.Pool(processes=nprocesses) as pool:
         demand_l = list(tqdm(pool.imap(func, countries), **tqdm_kwargs))
 
-    demand = pd.concat(demand_l, keys=countries)
-
-    return demand
+    return pd.concat(demand_l, keys=countries)
 
 
 if __name__ == "__main__":
@@ -177,6 +175,7 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_industrial_energy_demand_per_country_today")
+    set_scenario_config(snakemake)
 
     params = snakemake.params.industry
     year = params.get("reference_year", 2015)
@@ -184,9 +183,15 @@ if __name__ == "__main__":
 
     demand = industrial_energy_demand(countries.intersection(eu28), year)
 
-    demand = add_ammonia_energy_demand(demand)
+    # output in MtMaterial/a
+    production = (
+        pd.read_csv(snakemake.input.industrial_production_per_country, index_col=0)
+        / 1e3
+    )
 
-    demand = add_non_eu28_industrial_energy_demand(countries, demand)
+    demand = separate_basic_chemicals(demand, production)
+
+    demand = add_non_eu28_industrial_energy_demand(countries, demand, production)
 
     # for format compatibility
     demand = demand.stack(dropna=False).unstack(level=[0, 2])

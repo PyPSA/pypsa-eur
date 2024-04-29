@@ -1,4 +1,5 @@
 ,Unit,Values,Description
+focus_weights,,,Optionally specify the focus weights for the clustering of countries. For instance: `DE: 0.8` will distribute 80% of all nodes to Germany and 20% to the rest of the countries.
 simplify_network,,,
 -- to_substations,bool,"{'true','false'}","Aggregates all nodes without power injection (positive or negative, i.e. demand or generation) to electrically closest ones"
 -- algorithm,str,"One of {‘kmeans’, ‘hac’, ‘modularity‘}",
@@ -16,3 +17,6 @@ aggregation_strategies,,,
 -- -- {key},str,"{key} can be any of the component of the generator (str). It’s value can be any that can be converted to pandas.Series using getattr(). For example one of {min, max, sum}.","Aggregates the component according to the given strategy. For example, if sum, then all values within each cluster are summed to represent the new generator."
 -- buses,,,
 -- -- {key},str,"{key} can be any of the component of the bus (str). It’s value can be any that can be converted to pandas.Series using getattr(). For example one of {min, max, sum}.","Aggregates the component according to the given strategy. For example, if sum, then all values within each cluster are summed to represent the new bus."
+temporal,,,Options for temporal resolution
+-- resolution_elec,--,"{false,``nH``; i.e. ``2H``-``6H``}","Resample the time-resolution by averaging over every ``n`` snapshots in :mod:`prepare_network`. **Warning:** This option should currently only be used with electricity-only networks, not for sector-coupled networks."
+-- resolution_sector,--,"{false,``nH``; i.e. ``2H``-``6H``}","Resample the time-resolution by averaging over every ``n`` snapshots in :mod:`prepare_sector_network`."

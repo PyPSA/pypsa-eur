@@ -41,7 +41,7 @@ The following heat gains and losses are considered:
 
 - heat gain through resistive losses
 - heat gain through solar radiation
-- heat loss through radiation of the trasnmission line
+- heat loss through radiation of the transmission line
 - heat loss through forced convection with wind
 - heat loss through natural convection
 
@@ -50,7 +50,6 @@ With a heat balance considering the maximum temperature threshold of the transmi
 the maximal possible capacity factor "s_max_pu" for each transmission line at each time step is calculated.
 """
 
-import logging
 import re
 
 import atlite
@@ -59,7 +58,7 @@ import numpy as np
 import pandas as pd
 import pypsa
 import xarray as xr
-from _helpers import configure_logging
+from _helpers import configure_logging, get_snapshots, set_scenario_config
 from shapely.geometry import LineString as Line
 from shapely.geometry import Point
 
@@ -83,8 +82,7 @@ def calculate_resistance(T, R_ref, T_ref=293, alpha=0.00403):
     -------
     Resistance of at given temperature.
     """
-    R = R_ref * (1 + alpha * (T - T_ref))
-    return R
+    return R_ref * (1 + alpha * (T - T_ref))
 
 
 def calculate_line_rating(n, cutout):
@@ -100,7 +98,7 @@ def calculate_line_rating(n, cutout):
     -------
     xarray DataArray object with maximal power.
     """
-    relevant_lines = n.lines[(n.lines["underground"] == False)]
+    relevant_lines = n.lines[~n.lines["underground"]].copy()
     buses = relevant_lines[["bus0", "bus1"]].values
     x = n.buses.x
     y = n.buses.y
@@ -120,18 +118,17 @@ def calculate_line_rating(n, cutout):
             .apply(lambda x: int(re.findall(r"(\d+)-bundle", x)[0]))
         )
         # Set default number of bundles per line
-        relevant_lines["n_bundle"].fillna(1, inplace=True)
+        relevant_lines["n_bundle"] = relevant_lines["n_bundle"].fillna(1)
         R *= relevant_lines["n_bundle"]
         R = calculate_resistance(T=353, R_ref=R)
     Imax = cutout.line_rating(shapes, R, D=0.0218, Ts=353, epsilon=0.8, alpha=0.8)
     line_factor = relevant_lines.eval("v_nom * n_bundle * num_parallel") / 1e3  # in mW
-    da = xr.DataArray(
+    return xr.DataArray(
         data=np.sqrt(3) * Imax * line_factor.values.reshape(-1, 1),
         attrs=dict(
             description="Maximal possible power in MW for given line considering line rating"
         ),
     )
-    return da
 
 
 if __name__ == "__main__":
@@ -147,9 +144,11 @@ if __name__ == "__main__":
             opts="Co2L-4H",
         )
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     n = pypsa.Network(snakemake.input.base_network)
-    time = pd.date_range(freq="h", **snakemake.config["snapshots"])
+    time = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
+
     cutout = atlite.Cutout(snakemake.input.cutout).sel(time=time)
 
     da = calculate_line_rating(n, cutout)

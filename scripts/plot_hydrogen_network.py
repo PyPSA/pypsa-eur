@@ -1,29 +1,30 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
-Creates map of optimised hydrogen networ, storage and selected other infrastructure.
+Creates map of optimised hydrogen network, storage and selected other
+infrastructure.
 """
 
 import logging
 
-logger = logging.getLogger(__name__)
-
-import cartopy.crs as ccrs
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
-from _helpers import configure_logging
-from plot_power_network import assign_location
+from _helpers import configure_logging, set_scenario_config
+from plot_power_network import assign_location, load_projection
 from pypsa.plot import add_legend_circles, add_legend_lines, add_legend_patches
+
+logger = logging.getLogger(__name__)
 
 
 def group_pipes(df, drop_direction=False):
     """
     Group pipes which connect same buses and return overall capacity.
     """
+    df = df.copy()
     if drop_direction:
         positive_order = df.bus0 < df.bus1
         df_p = df[positive_order]
@@ -32,16 +33,14 @@ def group_pipes(df, drop_direction=False):
         df = pd.concat([df_p, df_n])
 
     # there are pipes for each investment period rename to AC buses name for plotting
+    df["index_orig"] = df.index
     df.index = df.apply(
         lambda x: f"H2 pipeline {x.bus0.replace(' H2', '')} -> {x.bus1.replace(' H2', '')}",
         axis=1,
     )
-    # group pipe lines connecting the same buses and rename them for plotting
-    pipe_capacity = df.groupby(level=0).agg(
-        {"p_nom_opt": sum, "bus0": "first", "bus1": "first"}
+    return df.groupby(level=0).agg(
+        {"p_nom_opt": "sum", "bus0": "first", "bus1": "first", "index_orig": "first"}
     )
-
-    return pipe_capacity
 
 
 def plot_h2_map(n, regions):
@@ -51,10 +50,11 @@ def plot_h2_map(n, regions):
     assign_location(n)
 
     h2_storage = n.stores.query("carrier == 'H2'")
-    regions["H2"] = h2_storage.rename(
-        index=h2_storage.bus.map(n.buses.location)
-    ).e_nom_opt.div(
-        1e6
+    regions["H2"] = (
+        h2_storage.rename(index=h2_storage.bus.map(n.buses.location))
+        .e_nom_opt.groupby(level=0)
+        .sum()
+        .div(1e6)
     )  # TWh
     regions["H2"] = regions["H2"].where(regions["H2"] > 0.1)
 
@@ -97,17 +97,18 @@ def plot_h2_map(n, regions):
             )
 
     if not h2_retro.empty:
-        positive_order = h2_retro.bus0 < h2_retro.bus1
-        h2_retro_p = h2_retro[positive_order]
-        swap_buses = {"bus0": "bus1", "bus1": "bus0"}
-        h2_retro_n = h2_retro[~positive_order].rename(columns=swap_buses)
-        h2_retro = pd.concat([h2_retro_p, h2_retro_n])
+        if snakemake.params.foresight != "myopic":
+            positive_order = h2_retro.bus0 < h2_retro.bus1
+            h2_retro_p = h2_retro[positive_order]
+            swap_buses = {"bus0": "bus1", "bus1": "bus0"}
+            h2_retro_n = h2_retro[~positive_order].rename(columns=swap_buses)
+            h2_retro = pd.concat([h2_retro_p, h2_retro_n])
 
-        h2_retro["index_orig"] = h2_retro.index
-        h2_retro.index = h2_retro.apply(
-            lambda x: f"H2 pipeline {x.bus0.replace(' H2', '')} -> {x.bus1.replace(' H2', '')}",
-            axis=1,
-        )
+            h2_retro["index_orig"] = h2_retro.index
+            h2_retro.index = h2_retro.apply(
+                lambda x: f"H2 pipeline {x.bus0.replace(' H2', '')} -> {x.bus1.replace(' H2', '')}",
+                axis=1,
+            )
 
         retro_w_new_i = h2_retro.index.intersection(h2_new.index)
         h2_retro_w_new = h2_retro.loc[retro_w_new_i]
@@ -138,7 +139,6 @@ def plot_h2_map(n, regions):
     n.links.bus0 = n.links.bus0.str.replace(" H2", "")
     n.links.bus1 = n.links.bus1.str.replace(" H2", "")
 
-    proj = ccrs.EqualEarth()
     regions = regions.to_crs(proj.proj4_init)
 
     fig, ax = plt.subplots(figsize=(7, 6), subplot_kw={"projection": proj})
@@ -240,8 +240,7 @@ def plot_h2_map(n, regions):
 
     ax.set_facecolor("white")
 
-    for fn in snakemake.output:
-        plt.savefig(fn, bbox_inches="tight")
+    fig.savefig(snakemake.output.map, bbox_inches="tight")
 
 
 if __name__ == "__main__":
@@ -252,15 +251,13 @@ if __name__ == "__main__":
             "plot_hydrogen_network",
             simpl="",
             opts="",
-            clusters="5",
-            ll="v1.5",
-            sector_opts="CO2L0-1H-T-H-B-I-A-solar+p3-dist1",
-            planning_horizons="2030",
+            clusters="37",
+            ll="v1.0",
+            sector_opts="4380H-T-H-B-I-A-dist1",
         )
 
     configure_logging(snakemake)
-
-    plt.style.use(snakemake.input.rc)
+    set_scenario_config(snakemake)
 
     n = pypsa.Network(snakemake.input.network)
 
@@ -270,5 +267,7 @@ if __name__ == "__main__":
 
     if map_opts["boundaries"] is None:
         map_opts["boundaries"] = regions.total_bounds[[0, 2, 1, 3]] + [-1, 1, -1, 1]
+
+    proj = load_projection(snakemake.params.plotting)
 
     plot_h2_map(n, regions)

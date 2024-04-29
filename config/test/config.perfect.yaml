@@ -1,0 +1,92 @@
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: CC0-1.0
+
+tutorial: true
+
+run:
+  name: "test-sector-perfect"
+  disable_progressbar: true
+  shared_resources: "test"
+  shared_cutouts: true
+
+foresight: perfect
+
+scenario:
+  ll:
+  - v1.0
+  clusters:
+  - 5
+  sector_opts:
+  - 8760h-T-H-B-I-A-dist1
+  planning_horizons:
+  - 2030
+  - 2040
+  - 2050
+
+countries: ['BE']
+
+snapshots:
+  start: "2013-03-01"
+  end: "2013-03-08"
+
+electricity:
+  co2limit: 100.e+6
+
+  extendable_carriers:
+    Generator: [OCGT]
+    StorageUnit: [battery]
+    Store: [H2]
+    Link: [H2 pipeline]
+
+  renewable_carriers: [solar, onwind, offwind-ac, offwind-dc]
+
+sector:
+  min_part_load_fischer_tropsch: 0
+  min_part_load_methanolisation: 0
+
+atlite:
+  default_cutout: be-03-2013-era5
+  cutouts:
+    be-03-2013-era5:
+      module: era5
+      x: [4., 15.]
+      y: [46., 56.]
+      time: ["2013-03-01", "2013-03-08"]
+
+renewable:
+  onwind:
+    cutout: be-03-2013-era5
+  offwind-ac:
+    cutout: be-03-2013-era5
+    max_depth: false
+  offwind-dc:
+    cutout: be-03-2013-era5
+    max_depth: false
+  solar:
+    cutout: be-03-2013-era5
+
+industry:
+  St_primary_fraction:
+    2020: 0.8
+    2030: 0.6
+    2040: 0.5
+    2050: 0.4
+
+solving:
+  solver:
+    name: glpk
+    options: glpk-default
+  mem: 4000
+
+plotting:
+  map:
+    boundaries:
+  eu_node_location:
+    x: -5.5
+    y: 46.
+  costs_max: 1000
+  costs_threshold: 0.0000001
+  energy_max:
+  energy_min:
+  energy_threshold: 0.000001

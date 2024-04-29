@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -9,25 +9,23 @@ storage and conversion capacities built.
 
 import logging
 
-logger = logging.getLogger(__name__)
-
 import cartopy.crs as ccrs
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
-from _helpers import configure_logging
+from _helpers import configure_logging, set_scenario_config
 from plot_summary import preferred_order, rename_techs
 from pypsa.plot import add_legend_circles, add_legend_lines, add_legend_patches
+
+logger = logging.getLogger(__name__)
 
 
 def rename_techs_tyndp(tech):
     tech = rename_techs(tech)
     if "heat pump" in tech or "resistive heater" in tech:
         return "power-to-heat"
-    elif "external" in tech:
-        return "import hvdc-to-elec"
-    elif tech in ["H2 Electrolysis", "methanation", "helmeth", "H2 liquefaction"]:
+    elif tech in ["H2 Electrolysis", "methanation", "H2 liquefaction"]:
         return "power-to-gas"
     elif tech == "H2":
         return "H2 storage"
@@ -48,20 +46,24 @@ def rename_techs_tyndp(tech):
 
 
 def assign_location(n):
-    for c in n.iterate_components(
-        n.one_port_components | n.branch_components | {"Bus"}
-    ):
+    for c in n.iterate_components(n.one_port_components | n.branch_components):
         ifind = pd.Series(c.df.index.str.find(" ", start=4), c.df.index)
         for i in ifind.value_counts().index:
             # these have already been assigned defaults
             if i == -1:
                 continue
             names = ifind.index[ifind == i]
-            c.df.loc[names, "location"] = names.str[:i]    
+            c.df.loc[names, "location"] = names.str[:i]
+
+
+def load_projection(plotting_params):
+    proj_kwargs = plotting_params.get("projection", dict(name="EqualEarth"))
+    proj_func = getattr(ccrs, proj_kwargs.pop("name"))
+    return proj_func(**proj_kwargs)
 
 
 def plot_map(
-    network,
+    n,
     components=["links", "stores", "storage_units", "generators"],
     bus_size_factor=2e10,
     transmission=False,
@@ -69,7 +71,6 @@ def plot_map(
 ):
     tech_colors = snakemake.params.plotting["tech_colors"]
 
-    n = network.copy()
     assign_location(n)
     # Drop non-electric buses so they don't clutter the plot
     n.buses.drop(n.buses.index[n.buses.carrier != "AC"], inplace=True)
@@ -97,7 +98,7 @@ def plot_map(
 
         logger.debug(f"{comp}, {costs}")
 
-    costs = costs.groupby(costs.columns, axis=1).sum()
+    costs = costs.T.groupby(costs.columns).sum().T
 
     costs.drop(list(costs.columns[(costs == 0.0).all()]), axis=1, inplace=True)
 
@@ -143,12 +144,12 @@ def plot_map(
     ac_color = "rosybrown"
     dc_color = "darkseagreen"
 
+    title = "added grid"
+
     if snakemake.wildcards["ll"] == "v1.0":
         # should be zero
         line_widths = n.lines.s_nom_opt - n.lines.s_nom
         link_widths = n.links.p_nom_opt - n.links.p_nom
-        title = "added grid"
-
         if transmission:
             line_widths = n.lines.s_nom_opt
             link_widths = n.links.p_nom_opt
@@ -158,8 +159,6 @@ def plot_map(
     else:
         line_widths = n.lines.s_nom_opt - n.lines.s_nom_min
         link_widths = n.links.p_nom_opt - n.links.p_nom_min
-        title = "added grid"
-
         if transmission:
             line_widths = n.lines.s_nom_opt
             link_widths = n.links.p_nom_opt
@@ -171,7 +170,7 @@ def plot_map(
     line_widths = line_widths.replace(line_lower_threshold, 0)
     link_widths = link_widths.replace(line_lower_threshold, 0)
 
-    fig, ax = plt.subplots(subplot_kw={"projection": ccrs.EqualEarth()})
+    fig, ax = plt.subplots(subplot_kw={"projection": proj})
     fig.set_size_inches(7, 6)
 
     n.plot(
@@ -241,8 +240,7 @@ def plot_map(
             legend_kw=legend_kw,
         )
 
-    for fn in snakemake.output:
-        plt.savefig(fn, bbox_inches="tight")
+    fig.savefig(snakemake.output.map, bbox_inches="tight")
 
 
 if __name__ == "__main__":
@@ -253,15 +251,13 @@ if __name__ == "__main__":
             "plot_power_network",
             simpl="",
             opts="",
-            clusters="5",
-            ll="v1.5",
-            sector_opts="CO2L0-1H-T-H-B-I-A-solar+p3-dist1",
-            planning_horizons="2030",
+            clusters="37",
+            ll="v1.0",
+            sector_opts="4380H-T-H-B-I-A-dist1",
         )
 
     configure_logging(snakemake)
-
-    plt.style.use(snakemake.input.rc)
+    set_scenario_config(snakemake)
 
     n = pypsa.Network(snakemake.input.network)
 
@@ -271,5 +267,7 @@ if __name__ == "__main__":
 
     if map_opts["boundaries"] is None:
         map_opts["boundaries"] = regions.total_bounds[[0, 2, 1, 3]] + [-1, 1, -1, 1]
+
+    proj = load_projection(snakemake.params.plotting)
 
     plot_map(n)

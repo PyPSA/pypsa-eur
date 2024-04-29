@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2023- Fabian Neumann
+# SPDX-FileCopyrightText: : 2023-2024 PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
-Plot unclustered electricity transmission network.
+Plot clustered electricity transmission network.
 """
 
-import cartopy.crs as ccrs
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import pypsa
+from _helpers import set_scenario_config
 from matplotlib.lines import Line2D
+from plot_power_network import load_projection
 from pypsa.plot import add_legend_lines
 
 if __name__ == "__main__":
@@ -22,8 +23,7 @@ if __name__ == "__main__":
             clusters=128,
             configfiles=["../../config/config.test.yaml"],
         )
-
-    plt.style.use(snakemake.input.rc)
+    set_scenario_config(snakemake)
 
     lw_factor = 2e3
 
@@ -31,7 +31,8 @@ if __name__ == "__main__":
 
     regions = gpd.read_file(snakemake.input.regions_onshore).set_index("name")
 
-    proj = ccrs.EqualEarth()
+    proj = load_projection(snakemake.params.plotting)
+
     fig, ax = plt.subplots(figsize=(8, 8), subplot_kw={"projection": proj})
     regions.to_crs(proj.proj4_init).plot(
         ax=ax, facecolor="none", edgecolor="lightgray", linewidth=0.75
@@ -75,5 +76,4 @@ if __name__ == "__main__":
         fontsize=13,
     )
 
-    for fn in snakemake.output:
-        plt.savefig(fn)
+    plt.savefig(snakemake.output.map, bbox_inches="tight")

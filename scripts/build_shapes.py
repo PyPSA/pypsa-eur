@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -77,7 +77,7 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import pycountry as pyc
-from _helpers import configure_logging
+from _helpers import configure_logging, set_scenario_config
 from shapely.geometry import MultiPolygon, Polygon
 
 logger = logging.getLogger(__name__)
@@ -119,7 +119,7 @@ def countries(naturalearth, country_list):
     fieldnames = (
         df[x].where(lambda s: s != "-99") for x in ("ISO_A2", "WB_A2", "ADM0_A3")
     )
-    df["name"] = reduce(lambda x, y: x.fillna(y), fieldnames, next(fieldnames)).str[0:2]
+    df["name"] = reduce(lambda x, y: x.fillna(y), fieldnames, next(fieldnames)).str[:2]
 
     df = df.loc[
         df.name.isin(country_list) & ((df["scalerank"] == 0) | (df["scalerank"] == 5))
@@ -158,7 +158,7 @@ def country_cover(country_shapes, eez_shapes=None):
         shapes = pd.concat([shapes, eez_shapes])
     europe_shape = shapes.unary_union
     if isinstance(europe_shape, MultiPolygon):
-        europe_shape = max(europe_shape, key=attrgetter("area"))
+        europe_shape = max(europe_shape.geoms, key=attrgetter("area"))
     return Polygon(shell=europe_shape.exterior)
 
 
@@ -174,8 +174,8 @@ def nuts3(country_shapes, nuts3, nuts3pop, nuts3gdp, ch_cantons, ch_popgdp):
             pd.MultiIndex.from_tuples(pop.pop("unit,geo\\time").str.split(","))
         )
         .loc["THS"]
-        .applymap(lambda x: pd.to_numeric(x, errors="coerce"))
-        .fillna(method="bfill", axis=1)
+        .map(lambda x: pd.to_numeric(x, errors="coerce"))
+        .bfill(axis=1)
     )["2014"]
 
     gdp = pd.read_table(nuts3gdp, na_values=[":"], delimiter=" ?\t", engine="python")
@@ -184,8 +184,8 @@ def nuts3(country_shapes, nuts3, nuts3pop, nuts3gdp, ch_cantons, ch_popgdp):
             pd.MultiIndex.from_tuples(gdp.pop("unit,geo\\time").str.split(","))
         )
         .loc["EUR_HAB"]
-        .applymap(lambda x: pd.to_numeric(x, errors="coerce"))
-        .fillna(method="bfill", axis=1)
+        .map(lambda x: pd.to_numeric(x, errors="coerce"))
+        .bfill(axis=1)
     )["2014"]
 
     cantons = pd.read_csv(ch_cantons)
@@ -254,6 +254,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_shapes")
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     country_shapes = countries(snakemake.input.naturalearth, snakemake.params.countries)
     country_shapes.reset_index().to_file(snakemake.output.country_shapes)

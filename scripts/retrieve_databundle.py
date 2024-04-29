@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Copyright 2019-2022 Fabian Hofmann (TUB, FIAS)
-# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -36,7 +36,12 @@ import logging
 import tarfile
 from pathlib import Path
 
-from _helpers import configure_logging, progress_retrieve
+from _helpers import (
+    configure_logging,
+    progress_retrieve,
+    set_scenario_config,
+    validate_checksum,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -49,9 +54,8 @@ if __name__ == "__main__":
         rootpath = ".."
     else:
         rootpath = "."
-    configure_logging(
-        snakemake
-    )  # TODO Make logging compatible with progressbar (see PR #102)
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     if snakemake.config["tutorial"]:
         url = "https://zenodo.org/record/3517921/files/pypsa-eur-tutorial-data-bundle.tar.xz"
@@ -64,6 +68,8 @@ if __name__ == "__main__":
     logger.info(f"Downloading databundle from '{url}'.")
     disable_progress = snakemake.config["run"].get("disable_progressbar", False)
     progress_retrieve(url, tarball_fn, disable=disable_progress)
+
+    validate_checksum(tarball_fn, url)
 
     logger.info("Extracting databundle.")
     tarfile.open(tarball_fn).extractall(to_fn)

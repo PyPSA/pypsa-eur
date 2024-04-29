@@ -1,0 +1,43 @@
+# SPDX-FileCopyrightText: 2017-2024 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: CC0-1.0
+
+run:
+  name: "entsoe-all"
+  disable_progressbar: true
+  shared_resources: false
+  shared_cutouts: true
+
+scenario:
+  simpl:
+  - ''
+  ll:
+  - vopt
+  clusters:
+  - 39
+  - 128
+  - 256
+  opts:
+  - ''
+  sector_opts:
+  - ''
+  planning_horizons:
+  - ''
+
+# TODO add Turkey (TR)
+countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MD', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK', 'UA']
+
+electricity:
+  custom_powerplants: true
+  co2limit: 9.59e+7
+  co2base: 1.918e+9
+
+lines:
+  reconnect_crimea: true
+
+enable:
+  retrieve: true
+  retrieve_databundle: true
+  retrieve_sector_databundle: false
+  retrieve_cost_data: true
+  retrieve_cutout: true

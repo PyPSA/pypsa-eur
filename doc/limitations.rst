@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2019-2023 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: 2019-2024 The PyPSA-Eur Authors
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -19,7 +19,7 @@ improving the approximations.
   This list of limitations is incomplete and will be added to over time.
 
 .. seealso::
-  See also the `GitHub repository issues <https://github.com/PyPSA/pypsa-eur/issues>`_.
+  See also the `GitHub repository issues <https://github.com/PyPSA/pypsa-eur/issues>`__.
 
 - **Electricity transmission network topology:**
   The grid data is based on a map of the ENTSO-E area that is known
