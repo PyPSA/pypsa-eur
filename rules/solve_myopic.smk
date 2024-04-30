@@ -46,6 +46,7 @@ rule add_existing_baseyear:
         sector=config_provider("sector"),
         existing_capacities=config_provider("existing_capacities"),
         costs=config_provider("costs"),
+        conventional=config_provider("conventional"),
     input:
         network=RESULTS
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
@@ -66,6 +67,7 @@ rule add_existing_baseyear:
         existing_solar="data/existing_infrastructure/solar_capacity_IRENA.csv",
         existing_onwind="data/existing_infrastructure/onwind_capacity_IRENA.csv",
         existing_offwind="data/existing_infrastructure/offwind_capacity_IRENA.csv",
+        unit_commitment="data/unit_commitment.csv",
     output:
         RESULTS
         + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",

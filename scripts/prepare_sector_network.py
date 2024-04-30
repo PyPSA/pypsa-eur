@@ -188,6 +188,18 @@ def define_spatial(nodes, options):
     spatial.lignite.nodes = ["EU lignite"]
     spatial.lignite.locations = ["EU"]
 
+    # waste
+    if options.get("waste_incineration"):
+        spatial.waste = SimpleNamespace()
+        if options.get("waste_incineration") == "regional":
+            spatial.waste.nodes = nodes + " waste"
+            spatial.waste.locations = nodes
+        else:
+            spatial.waste.nodes = ["EU waste"]
+            spatial.waste.locations = ["EU"]
+
+        spatial.waste.df = pd.DataFrame(vars(spatial.waste), index=nodes)
+
     return spatial
 
 
@@ -2006,6 +2018,50 @@ def add_heat(n, costs):
                 lifetime=costs.at["central gas CHP", "lifetime"],
             )
 
+            if options.get("waste_incineration"):
+
+                n.add("Carrier", name + " waste CHP")
+
+                n.madd(
+                    "Bus",
+                    spatial.waste.nodes,
+                    location=spatial.waste.locations,
+                    carrier="waste",
+                    unit="LHV",
+                )
+
+                n.madd(
+                    "Store",
+                    spatial.waste.nodes,
+                    suffix=" Store",
+                    bus=spatial.waste.nodes,
+                    e_nom_extendable=False,
+                    e_cyclic=False,
+                    e_initial=options.get("waste_incineration_potential")
+                    * 2.94e6,  # 10.6 MJ/kg LHV = 10.6 PJ/Mt = 2.94 TWh/Mt
+                    e_nom=options.get("waste_incineration_potential") * 2.94e6,
+                    carrier="waste",
+                )
+
+                n.madd(
+                    "Link",
+                    nodes,
+                    suffix=f" {name} waste CHP",
+                    bus0=spatial.waste.df.loc[nodes, "nodes"].values,
+                    bus1=nodes,
+                    bus2=nodes + f" {name} heat",
+                    bus3="co2 atmosphere",
+                    carrier=f"{name} waste CHP",
+                    efficiency=costs.at["waste CHP", "efficiency"],
+                    efficiency2=costs.at["waste CHP", "efficiency-heat"],
+                    efficiency3=options.get("waste_incineration_co2_intensity"),
+                    p_nom_extendable=True,
+                    p_min_pu=0.75,
+                    capital_cost=costs.at["waste CHP", "fixed"] * overdim_factor,
+                    marginal_cost=costs.at["waste CHP", "VOM"],
+                    lifetime=costs.at["waste CHP", "lifetime"],
+                )
+
         if options["chp"] and options["micro_chp"] and name != "urban central":
             n.madd(
                 "Link",
@@ -3572,13 +3628,13 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "prepare_sector_network",
-            configfiles="test/config.overnight.yaml",
+            configfiles="./config/config.yaml",
+            run="normal",
             simpl="",
             opts="",
-            clusters="37",
-            ll="v1.0",
-            sector_opts="CO2L0-24H-T-H-B-I-A-dist1",
-            planning_horizons="2030",
+            clusters="34",
+            sector_opts="7sn-T-H-B-I-A-solarp3-linemaxext15",
+            planning_horizons="2020",
         )
 
     configure_logging(snakemake)

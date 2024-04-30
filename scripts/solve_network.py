@@ -820,6 +820,26 @@ def add_co2_atmosphere_constraint(n, snapshots):
             n.model.add_constraints(lhs <= rhs, name=f"GlobalConstraint-{name}")
 
 
+def biomass_generation_constraint(n):
+
+    year = snakemake.params.planning_horizons
+
+    weights = n.snapshot_weightings["generators"]
+
+    links_i = n.links.filter(regex="urban central solid biomass CHP", axis=0).index
+
+    if links_i.empty:
+        return
+
+    biomass_gen = n.model["Link-p"].loc[:, links_i] * weights
+
+    rhs = n.links.loc[links_i, "p_nom"] * 0.67 * weights.sum() * 0.25
+
+    lhs = biomass_gen.sum(dims="snapshot")
+
+    n.model.add_constraints(lhs >= rhs, name="GlobalConstraint-biomass_generation")
+
+
 def extra_functionality(n, snapshots):
     """
     Collects supplementary constraints which will be passed to
@@ -848,6 +868,7 @@ def extra_functionality(n, snapshots):
     add_battery_constraints(n)
     add_lossy_bidirectional_link_constraints(n)
     add_pipe_retrofit_constraint(n)
+    biomass_generation_constraint(n)
     if n._multi_invest:
         add_carbon_constraint(n, snapshots)
         add_carbon_budget_constraint(n, snapshots)

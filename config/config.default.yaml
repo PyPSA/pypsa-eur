@@ -241,7 +241,7 @@ renewable:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#conventional
 conventional:
-  unit_commitment: false
+  unit_commitment: true
   dynamic_fuel_price: false
   nuclear:
     p_max_pu: "data/nuclear_p_max_pu.csv" # float of file name
@@ -489,6 +489,9 @@ sector:
   biomass_boiler: true
   overdimension_individual_heating: 1.1  #to cover demand peaks bigger than data
   chp: true
+  waste_incineration: true
+  waste_incineration_potential: 62 # Mt in 2020 https://ec.europa.eu/eurostat/statistics-explained/index.php?title=Municipal_waste_statistics#Municipal_waste_treatment
+  waste_CO2_intensity: 0.41 # tCO2/MWh https://www.ipcc-nggip.iges.or.jp/public/gp/bgp/5_3_Waste_Incineration.pdf
   micro_chp: false
   solar_thermal: true
   solar_cf_correction: 0.788457  # =  >>> 1/1.2683

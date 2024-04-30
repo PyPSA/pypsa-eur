@@ -494,6 +494,7 @@ def add_heating_capacities_installed_before_baseyear(
             )
 
             # add resistive heater, gas boilers and oil boilers
+
             n.madd(
                 "Link",
                 nodes,
@@ -608,6 +609,7 @@ def add_heating_capacities_installed_before_baseyear(
         "Natural Gas": "gas",
         "Bioenergy": "urban central solid biomass CHP",
         "Oil": "oil",
+        "Waste": "waste",
     }
 
     ppl = pd.read_csv(snakemake.input.powerplants, index_col=0)
@@ -618,7 +620,7 @@ def add_heating_capacities_installed_before_baseyear(
     # drop assets which are already phased out / decommissioned
     # drop hydro, waste and oil fueltypes for CHP
     limit = np.max(grouping_years)
-    drop_fueltypes = ["Hydro", "Other", "Waste", "nicht biogener Abfall"]
+    drop_fueltypes = ["Hydro", "Other"]  # , "nicht biogener Abfall"]  # , "Waste"]
     chp = ppl.query(
         "Set == 'CHP' and (DateOut >= @baseyear or DateOut != DateOut) and (DateIn <= @limit or DateIn != DateIn) and Fueltype not in @drop_fueltypes"
     ).copy()
@@ -646,6 +648,18 @@ def add_heating_capacities_installed_before_baseyear(
     chp["grouping_year"] = np.take(
         grouping_years, np.digitize(chp.DateIn, grouping_years, right=True)
     )
+
+    if snakemake.params.conventional["unit_commitment"]:
+        unit_commitment = pd.read_csv(snakemake.input.unit_commitment, index_col=0)
+        committable_attrs = chp.Fueltype.isin(unit_commitment).to_frame("committable")
+        for attr in unit_commitment.index:
+            default = pypsa.components.component_attrs["Generator"].default[attr]
+            committable_attrs[attr] = chp.Fueltype.map(
+                unit_commitment.loc[attr]
+            ).fillna(default)
+        committable_attrs = {}
+    else:
+        committable_attrs = {}
 
     # check if the CHPs were read in from MaStR for Germany
     if "Capacity_thermal" in chp.columns:
@@ -719,6 +733,7 @@ def add_heating_capacities_installed_before_baseyear(
             "oil": "central gas CHP",
             "lignite": "central coal CHP",
         }
+
         # add everything as Link
         for grouping_year, generator in mastr_chp_p_nom.index:
             # capacity is the capacity in MW at each node for this
@@ -736,6 +751,17 @@ def add_heating_capacities_installed_before_baseyear(
                     bus0 = vars(spatial)[generator].nodes
                 else:
                     bus0 = vars(spatial)[generator].df.loc[p_nom.index, "nodes"]
+                if generator == "waste":
+                    co2_intensity = options.get("waste_CO2_intensity")
+                    committable_attrs = {"p_min_pu": 0.75}
+
+                else:
+                    co2_intensity = costs.at[generator, "CO2 intensity"]
+                    if generator in unit_commitment:
+                        committable_attrs = unit_commitment[generator]
+                    else:
+                        committable_attrs = {"p_min_pu": 0.75}
+
                 n.madd(
                     "Link",
                     p_nom.index,
@@ -750,7 +776,7 @@ def add_heating_capacities_installed_before_baseyear(
                     marginal_cost=costs.at[key, "VOM"],
                     efficiency=efficiency_power.dropna(),
                     efficiency2=efficiency_heat.dropna(),
-                    efficiency3=costs.at[generator, "CO2 intensity"],
+                    efficiency3=co2_intensity,
                     build_year=grouping_year,
                     lifetime=costs.at[key, "lifetime"],
                 )
@@ -792,6 +818,8 @@ def add_heating_capacities_installed_before_baseyear(
                 bus0 = vars(spatial)[generator].nodes
             else:
                 bus0 = vars(spatial)[generator].df.loc[p_nom.index, "nodes"]
+            if generator in unit_commitment:
+                committable_attrs = unit_commitment[generator]
             n.madd(
                 "Link",
                 p_nom.index,
@@ -830,20 +858,176 @@ def add_heating_capacities_installed_before_baseyear(
             )
 
 
+def add_unit_committment(n):
+    """
+    Add unit commitment for conventionals
+    based on
+    https://discord.com/channels/914472852571426846/1042037164088766494/1042395972438868030
+    from DIW
+    [1] https://www.diw.de/documents/publikationen/73/diw_01.c.424566.de/diw_datadoc_2013-068.pdf
+
+    [2] update with p.48 https://www.agora-energiewende.de/fileadmin/Projekte/2017/Flexibility_in_thermal_plants/115_flexibility-report-WEB.pdf
+
+    [3] SI Schill et al. p.26 https://static-content.springer.com/esm/art%3A10.1038%2Fnenergy.2017.50/MediaObjects/41560_2017_BFnenergy201750_MOESM196_ESM.pdf
+    [4] MA https://zenodo.org/record/6421682
+    """
+    logger.info("add unit commitment")
+    # OCGT
+    links_i = n.links[n.links.carrier.isin(["OCGT"])].index
+    # n.links.loc[links_i, "p_min_pu"] = 0.2  # [3]   # removed since otherwise NL is not solving
+    n.links.loc[links_i, "start_up_cost"] = (
+        24 * 0.4
+    )  # [3] start-up depreciation costs Eur/MW
+    n.links.loc[links_i, "ramp_limit_up"] = 1  # [2] 8-12% per min
+    n.links.loc[links_i, "ramp_limit_start_up"] = 0.2  # [4] p.41
+    n.links.loc[links_i, "ramp_limit_shut_down"] = 0.2  # [4] p.41
+    # cold/warm start up time within minutes, complete ramp up within one hour
+
+    # CCGT
+    links_i = n.links[n.links.carrier.isin(["CCGT"])].index
+    n.links.loc[links_i, "p_min_pu"] = (
+        0.45  # [2] mean of Minimum load Most commonly used power plants
+    )
+    n.links.loc[links_i, "start_up_cost"] = (
+        144 * 0.57
+    )  # [3] start-up depreciation costs Eur/MW, in [4] 144
+    n.links.loc[links_i, "min_up_time"] = (
+        3  # mean of "Cold start-up time" [2] Most commonly used power plants
+    )
+    n.links.loc[links_i, "min_down_time"] = 2  # [3] Minimum offtime [hours]
+    n.links.loc[links_i, "ramp_limit_up"] = 1  # [2] 2-4% per min
+    n.links.loc[links_i, "ramp_limit_start_up"] = 0.45  # [4] p.41
+    n.links.loc[links_i, "ramp_limit_shut_down"] = 0.45  # [4] p.41
+
+    # gas CHP
+    links_i = n.links.filter(regex="gas CHP", axis=0).index
+    n.links.loc[links_i, "p_min_pu"] = (
+        0.45  # [2] mean of Minimum load Most commonly used power plants
+    )
+    n.links.loc[links_i, "start_up_cost"] = (
+        144 * 0.57
+    )  # [3] start-up depreciation costs Eur/MW, in [4] 144
+    n.links.loc[links_i, "min_up_time"] = (
+        3  # mean of "Cold start-up time" [2] Most commonly used power plants
+    )
+    n.links.loc[links_i, "min_down_time"] = 2  # [3] Minimum offtime [hours]
+    n.links.loc[links_i, "ramp_limit_up"] = 1  # [2] 2-4% per min
+    n.links.loc[links_i, "ramp_limit_start_up"] = 0.45  # [4] p.41
+    n.links.loc[links_i, "ramp_limit_shut_down"] = 0.45  # [4] p.41
+
+    # coal
+    links_i = n.links.filter(regex="coal( CHP)?-", axis=0).index
+    n.links.loc[links_i, "p_min_pu"] = (
+        0.325  # [2] mean of Minimum load Most commonly used power plants
+    )
+    n.links.loc[links_i, "start_up_cost"] = 108 * 0.33  # [4] p.41
+    n.links.loc[links_i, "min_up_time"] = (
+        5  # mean of "Cold start-up time" [2] Most commonly used power plants
+    )
+    n.links.loc[links_i, "min_down_time"] = (
+        6  # [3] Minimum offtime [hours], large plant
+    )
+    n.links.loc[links_i, "ramp_limit_up"] = 1  # [2] 1.5-4% per minute
+    n.links.loc[links_i, "ramp_limit_start_up"] = 0.38  # [4] p.41
+    n.links.loc[links_i, "ramp_limit_shut_down"] = 0.38  # [4] p.41
+
+    # lignite
+    links_i = n.links.filter(regex="lignite( CHP)?-", axis=0).index
+    n.links.loc[links_i, "p_min_pu"] = 0.325  # 0.4  # [3]
+    n.links.loc[links_i, "start_up_cost"] = 58 * 0.33  # [4] p.41
+    n.links.loc[links_i, "min_up_time"] = (
+        7  # mean of "Cold start-up time" [2] Most commonly used power plants
+    )
+    n.links.loc[links_i, "min_down_time"] = (
+        6  # [3] Minimum offtime [hours], large plant
+    )
+    n.links.loc[links_i, "ramp_limit_up"] = 1  # [2] 1-2% per minute
+    n.links.loc[links_i, "ramp_limit_start_up"] = 0.4  # [4] p.41
+    n.links.loc[links_i, "ramp_limit_shut_down"] = 0.4  # [4] p.41
+
+    # nuclear
+    links_i = n.links[n.links.carrier.isin(["nuclear"])].index
+    n.links.loc[links_i, "p_min_pu"] = 0.5  # [3]
+    n.links.loc[links_i, "start_up_cost"] = (
+        50 * 0.33
+    )  # [3]    start-up depreciation costs Eur/MW
+    n.links.loc[links_i, "min_up_time"] = 6  # [1]
+    n.links.loc[links_i, "ramp_limit_up"] = 0.3  # [4]
+    n.links.loc[links_i, "min_down_time"] = 10  # [3] Minimum offtime [hours]
+    n.links.loc[links_i, "ramp_limit_start_up"] = 0.5  # [4] p.41
+    n.links.loc[links_i, "ramp_limit_shut_down"] = 0.5  # [4] p.41
+
+    # oil
+    links_i = n.links.filter(regex="oil( CHP)?-", axis=0).index
+    n.links.loc[links_i, "p_min_pu"] = 0.2  # [4]
+    n.links.loc[links_i, "start_up_cost"] = (
+        1 * 0.35
+    )  # [4]    start-up depreciation costs Eur/MW
+    n.links.loc[links_i, "ramp_limit_start_up"] = 0.2  # [4] p.41
+    n.links.loc[links_i, "ramp_limit_shut_down"] = 0.2  # [4] p.41
+
+    # biomass
+    links_i = n.links[n.links.carrier == "urban central solid biomass CHP"].index
+    n.links.loc[links_i, "p_min_pu"] = 0.38  # [4]
+    n.links.loc[links_i, "start_up_cost"] = 78 * 0.27  # [4]
+    n.links.loc[links_i, "min_up_time"] = 2  # [4]
+    n.links.loc[links_i, "min_down_time"] = 2  # [4]
+    n.links.loc[links_i, "ramp_limit_start_up"] = 0.38  # [4] p.41
+    n.links.loc[links_i, "ramp_limit_shut_down"] = 0.38  # [4] p.41
+
+    links_i = n.links[
+        n.links.carrier.isin(
+            [
+                "OCGT",
+                "CCGT",
+                "nuclear",
+                "coal",
+                "lignite",
+                "oil",
+                "urban central solid biomass CHP",
+            ]
+        )
+    ].index
+    n.links.loc[links_i, "committable"] = True
+
+    # waste
+    links_i = n.links[n.links.carrier == "urban central waste CHP"].index
+    n.links.loc[links_i, "p_min_pu"] = 0.75  # [4]
+
+    links_i = n.links[
+        n.links.carrier.isin(
+            [
+                "OCGT",
+                "CCGT",
+                "nuclear",
+                "coal",
+                "lignite",
+                "oil",
+                "urban central solid biomass CHP",
+            ]
+        )
+    ].index
+    n.links.loc[links_i, "committable"] = True
+
+
 # %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
+        import os
+
+        os.chdir(os.path.dirname(os.path.realpath(__file__)))
         snakemake = mock_snakemake(
             "add_existing_baseyear",
-            # configfiles="config/test/config.myopic.yaml",
+            configfiles="/home/caspar/Code/dev/pypsa-ariadne/results/waste_mustrun_UC_22c_bioconstr_5/config.yaml",
+            run="waste_mustrun_UC_22c_bioconstr_5",
             simpl="",
-            clusters="22",
             ll="v1.2",
             opts="",
-            sector_opts="8760-T-H-B-I-A-dist1",
-            planning_horizons=2020,
+            clusters="22",
+            sector_opts="12sn-T-H-B-I-A-solarp3-linemaxext15",
+            planning_horizons="2020",
         )
 
     configure_logging(snakemake)
@@ -900,6 +1084,9 @@ if __name__ == "__main__":
             costs,
             default_lifetime,
         )
+
+    if snakemake.params.conventional["unit_commitment"]:
+        add_unit_committment(n)
 
     if options.get("cluster_heat_buses", False):
         cluster_heat_buses(n)
