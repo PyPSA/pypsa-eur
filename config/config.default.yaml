@@ -72,7 +72,6 @@ enable:
   retrieve_sector_databundle: true
   retrieve_cost_data: true
   build_cutout: false
-  retrieve_irena: false
   retrieve_cutout: true
   build_natura_raster: false
   retrieve_natura_raster: true
@@ -360,8 +359,8 @@ solar_thermal:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#existing-capacities
 existing_capacities:
-  grouping_years_power: [1960, 1965, 1970, 1975, 1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2020, 2025, 2030]
-  grouping_years_heat: [1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2019] # these should not extend 2020
+  grouping_years_power: [1895, 1920, 1950, 1955, 1960, 1965, 1970, 1975, 1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2020, 2025, 2030]
+  grouping_years_heat: [1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2020] # heat grouping years >= baseyear will be ignored
   threshold_capacity: 10
   default_heating_lifetime: 20
   conventional_carriers:
@@ -770,7 +769,7 @@ solving:
 
   solver_options:
     highs-default:
-      # refer to https://ergo-code.github.io/HiGHS/options/definitions.html#solver
+      # refer to https://ergo-code.github.io/HiGHS/dev/options/definitions/
       threads: 4
       solver: "ipm"
       run_crossover: "off"

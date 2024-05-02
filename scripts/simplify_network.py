@@ -88,12 +88,14 @@ The rule :mod:`simplify_network` does up to four things:
 import logging
 from functools import reduce
 
+import geopandas as gpd
 import numpy as np
 import pandas as pd
 import pypsa
 import scipy as sp
 from _helpers import configure_logging, set_scenario_config, update_p_nom_max
 from add_electricity import load_costs
+from build_bus_regions import append_bus_shapes
 from cluster_network import cluster_regions, clustering_for_n_clusters
 from pypsa.clustering.spatial import (
     aggregateoneport,
@@ -207,7 +209,7 @@ def _compute_connection_costs_to_bus(
     return connection_costs_to_bus
 
 
-def _adjust_capital_costs_using_connection_costs(n, connection_costs_to_bus, output):
+def _adjust_capital_costs_using_connection_costs(n, connection_costs_to_bus):
     connection_costs = {}
     for tech in connection_costs_to_bus:
         tech_b = n.generators.carrier == tech
@@ -228,14 +230,12 @@ def _adjust_capital_costs_using_connection_costs(n, connection_costs_to_bus, out
                 )
             )
             connection_costs[tech] = costs
-    pd.DataFrame(connection_costs).to_csv(output.connection_costs)
 
 
 def _aggregate_and_move_components(
     n,
     busmap,
     connection_costs_to_bus,
-    output,
     aggregate_one_ports={"Load", "StorageUnit"},
     aggregation_strategies=dict(),
     exclude_carriers=None,
@@ -248,7 +248,7 @@ def _aggregate_and_move_components(
             if not df.empty:
                 import_series_from_dataframe(n, df, c, attr)
 
-    _adjust_capital_costs_using_connection_costs(n, connection_costs_to_bus, output)
+    _adjust_capital_costs_using_connection_costs(n, connection_costs_to_bus)
 
     generator_strategies = aggregation_strategies["generators"]
 
@@ -281,7 +281,6 @@ def simplify_links(
     length_factor,
     p_max_pu,
     exclude_carriers,
-    output,
     aggregation_strategies=dict(),
 ):
     ## Complex multi-node links are folded into end-points
@@ -406,7 +405,6 @@ def simplify_links(
         n,
         busmap,
         connection_costs_to_bus,
-        output,
         aggregation_strategies=aggregation_strategies,
         exclude_carriers=exclude_carriers,
     )
@@ -419,7 +417,6 @@ def remove_stubs(
     renewable_carriers,
     length_factor,
     simplify_network,
-    output,
     aggregation_strategies=dict(),
 ):
     logger.info("Removing stubs")
@@ -436,7 +433,6 @@ def remove_stubs(
         n,
         busmap,
         connection_costs_to_bus,
-        output,
         aggregation_strategies=aggregation_strategies,
         exclude_carriers=simplify_network["exclude_carriers"],
     )
@@ -556,7 +552,6 @@ if __name__ == "__main__":
         params.length_factor,
         params.p_max_pu,
         params.simplify_network["exclude_carriers"],
-        snakemake.output,
         params.aggregation_strategies,
     )
 
@@ -569,7 +564,6 @@ if __name__ == "__main__":
             params.renewable_carriers,
             params.length_factor,
             params.simplify_network,
-            snakemake.output,
             aggregation_strategies=params.aggregation_strategies,
         )
         busmaps.append(stub_map)
@@ -610,6 +604,7 @@ if __name__ == "__main__":
     n.lines.drop(remove, axis=1, errors="ignore", inplace=True)
 
     if snakemake.wildcards.simpl:
+        shapes = n.shapes
         n, cluster_map = cluster(
             n,
             int(snakemake.wildcards.simpl),
@@ -619,14 +614,19 @@ if __name__ == "__main__":
             params.simplify_network["feature"],
             params.aggregation_strategies,
         )
+        n.shapes = shapes
         busmaps.append(cluster_map)
 
     update_p_nom_max(n)
 
-    n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
-    n.export_to_netcdf(snakemake.output.network)
-
     busmap_s = reduce(lambda x, y: x.map(y), busmaps[1:], busmaps[0])
     busmap_s.to_csv(snakemake.output.busmap)
 
-    cluster_regions(busmaps, snakemake.input, snakemake.output)
+    for which in ["regions_onshore", "regions_offshore"]:
+        regions = gpd.read_file(snakemake.input[which])
+        clustered_regions = cluster_regions(busmaps, regions)
+        clustered_regions.to_file(snakemake.output[which])
+        append_bus_shapes(n, clustered_regions, type=which.split("_")[1])
+
+    n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
+    n.export_to_netcdf(snakemake.output.network)
