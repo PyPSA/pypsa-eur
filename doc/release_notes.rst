@@ -181,6 +181,8 @@ Upcoming Release
 
 * Fix custom busmap read in `cluster_network`.
 
+* Fix non steel related coal demand during transition (using `sector_ratios_fraction_future`).
+
 PyPSA-Eur 0.10.0 (19th February 2024)
 =====================================
 
