@@ -250,6 +250,9 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
         capacity = capacity[
             capacity > snakemake.params.existing_capacities["threshold_capacity"]
         ]
+        # Assume that any existing offshore wind installed before
+        # baseyear is connected by AC (i.e. relatively close to
+        # shore).
         suffix = "-ac" if generator == "offwind" else ""
         name_suffix = f" {generator}{suffix}-{grouping_year}"
         name_suffix_by = f" {generator}{suffix}-{baseyear}"
@@ -292,7 +295,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                         "Generator",
                         [i + name_suffix for i in inv_ind],
                         bus=ind,
-                        carrier=generator,
+                        carrier=generator + suffix,
                         p_nom=new_capacity[ind]
                         / len(inv_ind),  # split among regions in a country
                         marginal_cost=marginal_cost,
@@ -312,7 +315,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                         new_capacity.index,
                         suffix=name_suffix,
                         bus=new_capacity.index,
-                        carrier=generator,
+                        carrier=generator + suffix,
                         p_nom=new_capacity,
                         marginal_cost=marginal_cost,
                         capital_cost=capital_cost,
