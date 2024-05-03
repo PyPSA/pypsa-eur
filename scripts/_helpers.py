@@ -106,8 +106,11 @@ def get_run_path(fn, dir, rdir, shared_resources, exclude):
         existing_wildcards = set(re.findall(pattern, fn))
         irrelevant_wildcards = {"technology", "year", "scope", "kind"}
         no_relevant_wildcards = not existing_wildcards - irrelevant_wildcards
-        no_elec_rule = not fn.startswith("networks/elec") and not fn.startswith(
-            "add_electricity") and not any(fn.startswith(ex) for ex in exclude)
+        no_elec_rule = (
+            not fn.startswith("networks/elec")
+            and not fn.startswith("add_electricity")
+            and not any(fn.startswith(ex) for ex in exclude)
+        )
         is_shared = no_relevant_wildcards and no_elec_rule
         rdir = "" if is_shared else rdir
     elif isinstance(shared_resources, str):
@@ -133,7 +136,13 @@ def path_provider(dir, rdir, shared_resources, exclude):
         A partial function that takes a filename as input and
         returns the path to the file based on the shared_resources parameter.
     """
-    return partial(get_run_path, dir=dir, rdir=rdir, shared_resources=shared_resources, exclude=exclude)
+    return partial(
+        get_run_path,
+        dir=dir,
+        rdir=rdir,
+        shared_resources=shared_resources,
+        exclude=exclude,
+    )
 
 
 def get_opt(opts, expr, flags=None):
