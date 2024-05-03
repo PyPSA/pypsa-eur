@@ -470,4 +470,3 @@ dependencies:
   - snakemake-executor-plugin-slurm-jobstep==0.2.1
   - snakemake-storage-plugin-http==0.2.3
   - tsam==2.3.1
-prefix: /home/fabian/.miniconda3/envs/pypsa-eur
