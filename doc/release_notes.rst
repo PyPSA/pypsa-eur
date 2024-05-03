@@ -9,6 +9,8 @@ Release Notes
 
 Upcoming Release
 ================
+* Add config [run][exclude] to specify which files should be excluded from filesharing in case of [run][shared_resources]=base.
+
 * Add config land_transport_demand_factor to model growth in land transport demand for different time horizons.
 
 * Allow dictionary for the config aviation_demand_factor.

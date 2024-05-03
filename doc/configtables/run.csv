@@ -7,3 +7,4 @@ scenarios,,,
 disable_progressbar,bool,"{true, false}","Switch to select whether progressbar should be disabled."
 shared_resources,bool/str,,"Switch to select whether resources should be shared across runs. If a string is passed, this is used as a subdirectory name for shared resources. If set to 'base', only resources before creating the elec.nc file are shared."
 shared_cutouts,bool,"{true, false}","Switch to select whether cutouts should be shared across runs."
+exclude,str,"Specify files that should be excluded from shared_resources. Only active if shared_resources=base"
