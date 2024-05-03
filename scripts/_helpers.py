@@ -67,7 +67,7 @@ def get_rdir(run):
     return RDIR
 
 
-def get_run_path(fn, dir, rdir, shared_resources):
+def get_run_path(fn, dir, rdir, shared_resources, exclude):
     """
     Dynamically provide paths based on shared resources and filename.
 
@@ -87,6 +87,8 @@ def get_run_path(fn, dir, rdir, shared_resources):
         - If string is "base", special handling for shared "base" resources (see notes).
         - If random string other than "base", this folder is used instead of the `rdir` keyword.
         - If boolean, directly specifies if the resource is shared.
+    exclude: list
+        List of filenames to exclude from shared resources. Only relevant if shared_resources is "base".
 
     Returns
     -------
@@ -105,8 +107,7 @@ def get_run_path(fn, dir, rdir, shared_resources):
         irrelevant_wildcards = {"technology", "year", "scope", "kind"}
         no_relevant_wildcards = not existing_wildcards - irrelevant_wildcards
         no_elec_rule = not fn.startswith("networks/elec") and not fn.startswith(
-            "add_electricity"
-        )
+            "add_electricity") and not any(fn.startswith(ex) for ex in exclude)
         is_shared = no_relevant_wildcards and no_elec_rule
         rdir = "" if is_shared else rdir
     elif isinstance(shared_resources, str):
@@ -121,7 +122,7 @@ def get_run_path(fn, dir, rdir, shared_resources):
     return f"{dir}{rdir}{fn}"
 
 
-def path_provider(dir, rdir, shared_resources):
+def path_provider(dir, rdir, shared_resources, exclude):
     """
     Returns a partial function that dynamically provides paths based on shared
     resources and the filename.
@@ -132,7 +133,7 @@ def path_provider(dir, rdir, shared_resources):
         A partial function that takes a filename as input and
         returns the path to the file based on the shared_resources parameter.
     """
-    return partial(get_run_path, dir=dir, rdir=rdir, shared_resources=shared_resources)
+    return partial(get_run_path, dir=dir, rdir=rdir, shared_resources=shared_resources, exclude=exclude)
 
 
 def get_opt(opts, expr, flags=None):

@@ -24,9 +24,9 @@ run = config["run"]
 scenarios = get_scenarios(run)
 RDIR = get_rdir(run)
 
-logs = path_provider("logs/", RDIR, run["shared_resources"])
-benchmarks = path_provider("benchmarks/", RDIR, run["shared_resources"])
-resources = path_provider("resources/", RDIR, run["shared_resources"])
+logs = path_provider("logs/", RDIR, run["shared_resources"], run["exclude"])
+benchmarks = path_provider("benchmarks/", RDIR, run["shared_resources"], run["exclude"])
+resources = path_provider("resources/", RDIR, run["shared_resources"], run["exclude"])
 
 CDIR = "" if run["shared_cutouts"] else RDIR
 RESULTS = "results/" + RDIR
