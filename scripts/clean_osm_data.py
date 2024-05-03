@@ -6,12 +6,17 @@
 TODO To fill later
 """
 
+from branca.element import Figure
+import folium
 import geopandas as gpd
 import json
 import logging
+import os
+import numpy as np
 import pandas as pd
 import re
-from shapely.geometry import LineString, Point
+from shapely.geometry import LineString, Point, Polygon
+from shapely.ops import linemerge
 import tqdm.auto as tqdm
 
 from _helpers import configure_logging
@@ -27,6 +32,29 @@ def _create_linestring(row):
     return LineString(coords)
 
 
+def _create_polygon(row):
+    """
+    Create a Shapely Polygon from a list of coordinate dictionaries.
+    
+    Parameters:
+        coords (list): List of dictionaries with 'lat' and 'lon' keys representing coordinates.
+        
+    Returns:
+        shapely.geometry.Polygon: The constructed polygon object.
+    """
+    # Extract coordinates as tuples
+    point_coords = [(coord['lon'], coord['lat']) for coord in row["geometry"]]
+    
+    # Ensure closure by repeating the first coordinate as the last coordinate
+    if point_coords[0] != point_coords[-1]:
+        point_coords.append(point_coords[0])
+    
+    # Create Polygon object
+    polygon = Polygon(point_coords)
+    
+    return polygon
+
+
 def _clean_voltage(column):
     """
     Function to clean the raw voltage column: manual fixing and drop nan values
@@ -37,11 +65,21 @@ def _clean_voltage(column):
     Returns:
     - column: pandas Series, the cleaned column
     """
+    column = column.copy()
+
     column = (
         column
         .astype(str)
         .str.lower()
-        .str.replace("fixme", "")
+        .str.replace("400/220/110 kV'", "400000;220000;110000")
+        .str.replace("400/220/110/20_kv", "400000;220000;110000;20000")
+        .str.replace("2x25000", "25000;25000")
+    )
+
+    column = (
+        column
+        .astype(str)
+        .str.lower()
         .str.replace("(temp 150000)", "")
         .str.replace("low", "1000")
         .str.replace("minor", "1000")
@@ -49,23 +87,20 @@ def _clean_voltage(column):
         .str.replace("med", "33000")
         .str.replace("m", "33000")
         .str.replace("high", "150000")
-        .str.replace("unknown", "")
         .str.replace("23000-109000", "109000")
-        .str.replace("INF", "")
-        .str.replace("<", "")
-        .str.replace("?", "")
-        .str.replace(",", "")
-        .str.replace(" ", "")
-        .str.replace("_", "")
+        .str.replace("380000>220000", "380000;220000")
+        .str.replace(":", ";")
+        .str.replace("<", ";")
+        .str.replace(",", ";")
         .str.replace("kv", "000")
-        .str.replace("v", "")
+        .str.replace("kva", "000")
         .str.replace("/", ";") 
         .str.replace("nan", "")
-        .str.replace("<NA>", "")
+        .str.replace("<na>", "")
     )
 
     # Remove all remaining non-numeric characters except for semicolons
-    column = column.apply(lambda x: re.sub(r'[^0-9;]', '', x))
+    column = column.apply(lambda x: re.sub(r'[^0-9;]', '', str(x)))
 
     column.dropna(inplace=True)
     return column
@@ -88,8 +123,9 @@ def _clean_circuits(column):
         .str.replace("partial", "")
         .str.replace("1operator=RTE operator:wikidata=Q2178795", "")
         .str.lower()
+        .str.replace("1,5", "3") # (way 998005838, should be corrected in OSM soon)
         .str.replace("1/3", "1")
-        .str.replace("<NA>", "")
+        .str.replace("<na>", "")
         .str.replace("nan", "")
     )
 
@@ -100,12 +136,118 @@ def _clean_circuits(column):
     return column.astype(str)
 
 
-def _clean_frequency(column):
+def _clean_cables(column):
+    """
+    Function to clean the raw cables column: manual fixing and drop nan values
+
+    Args:
+    - column: pandas Series, the column to be cleaned
+
+    Returns:
+    - column: pandas Series, the cleaned column
+    """
+    column = column.copy()
+    column = (
+        column
+        .astype(str)
+        .str.lower()
+        .str.replace("1/3", "1")
+        .str.replace("3x2;2", "3")
+        .str.replace("<na>", "")
+        .str.replace("nan", "")
+    )
+
+    # Remove all remaining non-numeric characters except for semicolons
+    column = column.apply(lambda x: re.sub(r'[^0-9;]', '', x))
+
+    column.dropna(inplace=True)
+    return column.astype(str)
+
+
+def _clean_wires(column):
+    """
+    Function to clean the raw wires column: manual fixing and drop nan values
+
+    Args:
+    - column: pandas Series, the column to be cleaned
+
+    Returns:
+    - column: pandas Series, the cleaned column
+    """
+    column = column.copy()
+    column = (
+        column
+        .astype(str)
+        .str.lower()
+        .str.replace("?", "")
+        .str.replace("trzyprzewodowe", "3")
+        .str.replace("pojedyńcze", "1")
+        .str.replace("single", "1")
+        .str.replace("double", "2")
+        .str.replace("triple", "3")
+        .str.replace("quad", "4")
+        .str.replace("fivefold", "5")
+        .str.replace("yes", "3")
+        .str.replace("1/3", "1")
+        .str.replace("3x2;2", "3")
+        .str.replace("_", "")
+        .str.replace("<na>", "")
+        .str.replace("nan", "")
+    )
+
+    # Remove all remaining non-numeric characters except for semicolons
+    column = column.apply(lambda x: re.sub(r'[^0-9;]', '', x))
+
+    column.dropna(inplace=True)
+    return column.astype(str)
+
+
+def _set_frequency(column):
     column = column.copy()
     to_fifty = column.astype(str) != "0"
     column[to_fifty] = "50"    
 
     return column
+
+
+def _check_voltage(voltage, list_voltages):
+    voltages = voltage.split(';')
+    for v in voltages:
+        if v in list_voltages:
+            return True
+    return False
+
+
+def _clean_frequency(column):   
+    column = column.copy()
+    """
+    Function to clean the raw frequency column: manual fixing and drop nan values
+
+    Args:
+    - column: pandas Series, the column to be cleaned
+
+    Returns:
+    - column: pandas Series, the cleaned column
+    """
+    column = column.copy()
+    column = (
+        column
+        .astype(str)
+        .str.lower()
+        .str.replace("16.67", "16.7")
+        .str.replace("16,7", "16.7")
+        .str.replace("?", "")
+        .str.replace("hz", "")
+        .str.replace(" ", "")
+        .str.replace("<NA>", "")
+        .str.replace("nan", "")
+    )
+
+    # Remove all remaining non-numeric characters except for semicolons
+    column = column.apply(lambda x: re.sub(r'[^0-9;.]', '', x))
+
+    column.dropna(inplace=True)
+    return column.astype(str)
 
 
 def _split_voltage(df):
@@ -124,6 +266,7 @@ def _split_voltage(df):
                 'bounds': row['bounds'],
                 'nodes': row['nodes'],
                 'geometry': row['geometry'],
+                'country': row['country'],
                 'power': row['power'],
                 'cables': row['cables'],
                 'circuits': row['circuits'],
@@ -141,6 +284,66 @@ def _split_voltage(df):
     return df_new
 
 
+def _split_cells(df, cols=["voltage"]):
+    """
+    Split semicolon separated cells i.e. [66000;220000] and create new
+    identical rows.
+
+    Parameters
+    ----------
+    df : dataframe
+        Dataframe under analysis
+    cols : list
+        List of target columns over which to perform the analysis
+
+    Example
+    -------
+    Original data:
+    row 1: '66000;220000', '50'
+
+    After applying split_cells():
+    row 1, '66000', '50', 2
+    row 2, '220000', '50', 2
+    """
+    if df.empty:
+        return df
+
+    # Create a dictionary to store the suffix count for each original ID
+    suffix_counts = {}
+    # Create a dictionary to store the number of splits associated with each original ID
+    num_splits = {}
+
+    # Split cells and create new rows
+    x = df.assign(**{col: df[col].str.split(";") for col in cols})
+    x = x.explode(cols, ignore_index=True)
+
+    # Count the number of splits associated with each original ID
+    num_splits = x.groupby('id').size().to_dict()
+
+    # Update the 'split_elements' column
+    x["split_elements"] = x["id"].map(num_splits)
+
+    # Function to generate the new ID with suffix and update the number of splits
+    def generate_new_id(row):
+        original_id = row["id"]
+        if row["split_elements"] == 1:
+            return original_id
+        else:
+            suffix_counts[original_id] = suffix_counts.get(original_id, 0) + 1
+            return f"{original_id}_{suffix_counts[original_id]}"
+
+    # Update the ID column with the new IDs
+    x["id"] = x.apply(generate_new_id, axis=1)
+
+    return x
+
+
+# Function to check if any substring is in valid_strings
+def _any_substring_in_list(s, list_strings):
+    substrings = s.split(';')
+    return any(sub in list_strings for sub in substrings)
+
+
 if __name__ == "__main__":
     # Detect running outside of snakemake and mock snakemake for testing
     if "snakemake" not in globals():
@@ -151,235 +354,360 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     logger.info("Dummy log: clean_osm_data()")
 
-    # input_path = snakemake.input.lines_way + snakemake.input.cables_way
-    # input_path = {
-    #     "lines": snakemake.input.lines_way,
-    #     "cables": snakemake.input.cables_way,
-    # }
+    ############# BUSES / SUBSTATIONS ######################
+    input_path_substations = {
+        "substations_way": snakemake.input.substations_way,
+        "substations_relation": snakemake.input.substations_relation,
+    }
 
-    # columns = ["id", "sub_id", "sub_id_len", "bounds", "nodes", "geometry", "power", "cables", "circuits", "frequency", "voltage", "wires"]
-    # df_lines = pd.DataFrame(columns=columns)
-    # crs = "EPSG:4326"
+    cols_substations_way = ["id", "geometry", "country", "power", "substation", "voltage", "frequency"]
+    cols_substations_relation = ["id", "country", "power", "substation", "voltage", "frequency"]
+    df_substations_way = pd.DataFrame(columns = cols_substations_way)
+    df_substations_relation = pd.DataFrame(columns = cols_substations_relation)
 
-    # # using tqdm loop over input path
-
-    # for key in input_path:
-    #     logger.info(f"Processing {key}...")
-    #     for idx, ip in enumerate(input_path[key]):
-    #         if os.path.exists(ip) and os.path.getsize(ip) > 400: # unpopulated OSM json is about 51 bytes
-    #             logger.info(f" - Importing {key} {str(idx+1).zfill(2)}/{str(len(input_path[key])).zfill(2)}: {ip}")
-    #             with open(ip, "r") as f:
-    #                 data = json.load(f)
+    for key in input_path_substations:
+        logger.info(f"Processing {key}...")
+        for idx, ip in enumerate(input_path_substations[key]):
+            if os.path.exists(ip) and os.path.getsize(ip) > 400: # unpopulated OSM json is about 51 bytes
+                country = os.path.basename(os.path.dirname(input_path_substations[key][idx]))  
+                logger.info(f" - Importing {key} {str(idx+1).zfill(2)}/{str(len(input_path_substations[key])).zfill(2)}: {ip}")
+                with open(ip, "r") as f:
+                    data = json.load(f)
                 
-    #             df = pd.DataFrame(data['elements'])
-    #             df["id"] = df["id"].astype(str)
-    #             df["sub_id"] = "0" # initiate sub_id column with 0
-    #             df["sub_id_len"] = 0 # initiate sub_id column with 0
+                df = pd.DataFrame(data['elements'])
+                df["id"] = df["id"].astype(str)
+                df["country"] = country
 
-    #             col_tags = ["power", "cables", "circuits", "frequency", "voltage", "wires"]
+                col_tags = ["power", "substation", "voltage", "frequency"]
 
-    #             tags = pd.json_normalize(df["tags"]) \
-    #                 .map(lambda x: str(x) if pd.notnull(x) else x)
+                tags = pd.json_normalize(df["tags"]) \
+                    .map(lambda x: str(x) if pd.notnull(x) else x)
                 
-    #             for ct in col_tags:
-    #                 if ct not in tags.columns:
-    #                     tags[ct] = pd.NA
+                for ct in col_tags:
+                    if ct not in tags.columns:
+                        tags[ct] = pd.NA
                 
-    #             tags = tags.loc[:, col_tags]
+                tags = tags.loc[:, col_tags]
 
-    #             df = pd.concat([df, tags], axis="columns") 
-    #             df.drop(columns=["type", "tags"], inplace=True)
+                df = pd.concat([df, tags], axis="columns") 
+
+                if key == "substations_way":
+                    df.drop(columns=["type", "tags", "bounds", "nodes"], inplace=True)
+                    df_substations_way = pd.concat([df_substations_way, df], axis="rows")
+                elif key == "substations_relation":
+                    df.drop(columns=["type", "tags", "bounds"], inplace=True)
+                    df_substations_relation = pd.concat([df_substations_relation, df], axis="rows")
+
+            else:
+                logger.info(f" - Skipping {key} {str(idx+1).zfill(2)}/{str(len(input_path_substations[key])).zfill(2)} (empty): {ip}")
+                continue
+        logger.info("---")
+
+    df_substations_way.drop_duplicates(subset='id', keep='first', inplace=True)
+    df_substations_relation.drop_duplicates(subset='id', keep='first', inplace=True)
+
+    df_substations_way["geometry"] = df_substations_way.apply(_create_polygon, axis=1)
+
+    # Normalise the members column of df_substations_relation
+    cols_members = ["id", "type", "ref", "role", "geometry"]
+    df_substations_relation_members = pd.DataFrame(columns = cols_members)
+
+    for index, row in df_substations_relation.iterrows():
+        col_members = ["type", "ref", "role", "geometry"]
+        df = pd.json_normalize(row["members"]) 
                 
-    #             df_lines = pd.concat([df_lines, df], axis="rows")
+        for cm in col_members:
+            if cm not in df.columns:
+                df[cm] = pd.NA
 
-    #         else:
-    #             logger.info(f" - Skipping {key} {str(idx+1).zfill(2)}/{str(len(input_path[key])).zfill(2)} (empty): {ip}")
-    #             continue
-    #     logger.info("---")
+        df = df.loc[:, col_members]
+        df["id"] = str(row["id"])
+        df["ref"] = df["ref"].astype(str)
+        df = df[df["type"] != "node"]
+        df = df.dropna(subset=["geometry"])
+        df = df[~df["role"].isin(["", "incoming_line", "substation", "inner"])]
+        df_substations_relation_members = pd.concat([df_substations_relation_members, df], axis="rows")
     
-    # # Drop duplicates
-    # df_lines.drop_duplicates(subset="id", inplace=True)
+    df_substations_relation_members.reset_index(inplace=True)
+    df_substations_relation_members["linestring"] = df_substations_relation_members.apply(_create_linestring, axis=1)  
+    df_substations_relation_members_grouped = df_substations_relation_members.groupby('id')['linestring'] \
+        .apply(lambda x: linemerge(x.tolist())).reset_index()
+    df_substations_relation_members_grouped["geometry"] = df_substations_relation_members_grouped["linestring"].apply(lambda x: x.convex_hull)
+    
+    df_substations_relation = df_substations_relation.join(
+        df_substations_relation_members_grouped.set_index('id'), 
+        on='id', how='left'
+        ).drop(columns=["members", "linestring"]) \
+        .dropna(subset=["geometry"])
+    
+    # reorder columns and concatenate
+    df_substations_relation = df_substations_relation[cols_substations_way]
+    df_substations = pd.concat([df_substations_way, df_substations_relation], axis="rows")
 
-    # df_lines["voltage"] = _clean_voltage(df_lines["voltage"])
-    # # drop voltage = ""
-    # df_lines = _split_voltage(df_lines)
-    # df_lines = df_lines[df_lines["voltage"] != ""]
-    # df_lines["voltage"] = df_lines["voltage"].astype(int, errors="ignore")
+    # Create centroids from geometries
+    df_substations.loc[:, "geometry"] = df_substations["geometry"].apply(lambda x: x.centroid)
+    df_substations.loc[:, "lon"] = df_substations["geometry"].apply(lambda x: x.x)
+    df_substations.loc[:, "lat"] = df_substations["geometry"].apply(lambda x: x.y)
 
-    # # Drop voltages below 220 kV
-    # df_lines = df_lines[df_lines["voltage"] >= 220000]
+    # Clean columns
+    df_substations["voltage"] = _clean_voltage(df_substations["voltage"])
+    df_substations["frequency"] = _clean_frequency(df_substations["frequency"])
+    df_substations["frequency"] = df_substations["frequency"].astype(str, errors="ignore")
 
-    # # Clean frequencies
+    list_voltages = df_substations["voltage"].str.split(";").explode().unique().astype(str)
+    list_voltages = list_voltages[np.vectorize(len)(list_voltages) >= 6]
+    list_voltages = list_voltages[~np.char.startswith(list_voltages, '1')]
+
+    bool_voltages = df_substations["voltage"].apply(_check_voltage, list_voltages=list_voltages)
+    df_substations = df_substations[bool_voltages]
+
+    df_substations = _split_cells(df_substations)
+    bool_voltages = df_substations["voltage"].apply(_check_voltage, list_voltages=list_voltages)
+    df_substations = df_substations[bool_voltages]
+    df_substations["split_count"] = df_substations["id"].apply(lambda x: x.split("_")[1] if "_" in x else "0")
+    df_substations["split_count"] = df_substations["split_count"].astype(int)
+
+    bool_split = df_substations["split_elements"] > 1
+    bool_frequency_len = df_substations["frequency"].apply(lambda x: len(x.split(";"))) == df_substations["split_elements"]
+    df_substations.loc[bool_frequency_len & bool_split, "frequency"] = df_substations.loc[bool_frequency_len & bool_split, "frequency"] \
+    
+    op_freq = lambda row: row["frequency"].split(";")[row["split_count"]-1]
+
+    df_substations.loc[bool_frequency_len & bool_split, ["frequency"]] = df_substations.loc[bool_frequency_len & bool_split, ] \
+        .apply(op_freq, axis=1)
+    
+    df_substations = _split_cells(df_substations, cols=["frequency"])
+    bool_invalid_frequency = df_substations["frequency"].apply(lambda x: x not in ["50", "0"])
+    df_substations.loc[bool_invalid_frequency, "frequency"] = "50"
+    df_substations["power"] = "substation"
+    df_substations["substation"] = "transmission"
+    df_substations["dc"] = False
+    df_substations.loc[df_substations["frequency"] == "0", "dc"] = True
+    df_substations["under_construction"] = False
+    df_substations["station_id"] = None
+    df_substations["tag_area"] = None
+
+    # rename columns
+    df_substations.rename(
+        columns={
+            "id": "bus_id", 
+            "power": "symbol",
+            "substation":"tag_substation",
+            }, inplace=True)
+    
+    df_substations = df_substations[[
+        "bus_id",
+        "symbol", 
+        "tag_substation", 
+        "voltage", 
+        "lon", 
+        "lat", 
+        "dc", 
+        "under_construction", 
+        "station_id", 
+        "tag_area", 
+        "country",
+        "geometry",
+        ]]
+    
+    gdf_substations = gpd.GeoDataFrame(df_substations, geometry = "geometry", crs = "EPSG:4326")
+
+    filepath_substations = snakemake.output["substations"]
+    # save substations output
+    logger.info(f"Exporting clean substations to {filepath_substations}")
+    parentfolder_substations = os.path.dirname(filepath_substations)
+    if not os.path.exists(parentfolder_substations):
+        # Create the folder and its parent directories if they don't exist
+        os.makedirs(parentfolder_substations)
+
+    gdf_substations.to_file(filepath_substations, driver="GeoJSON")
+
+    ############# LINES AND CABLES ######################
+
+    input_path_lines_cables = {
+        "lines": snakemake.input.lines_way,
+        "cables": snakemake.input.cables_way,
+    }
+
+    columns = ["id", "sub_id", "sub_id_len", "bounds", "nodes", "geometry", "country", "power", "cables", "circuits", "frequency", "voltage", "wires"]
+    df_lines = pd.DataFrame(columns=columns)
+    crs = "EPSG:4326"
+
+    # using tqdm loop over input path
+
+    for key in input_path_lines_cables:
+        logger.info(f"Processing {key}...")
+        for idx, ip in enumerate(input_path_lines_cables[key]):
+            if os.path.exists(ip) and os.path.getsize(ip) > 400: # unpopulated OSM json is about 51 bytes
+                country = os.path.basename(os.path.dirname(input_path_lines_cables[key][idx]))
+                
+                logger.info(f" - Importing {key} {str(idx+1).zfill(2)}/{str(len(input_path_lines_cables[key])).zfill(2)}: {ip}")
+                with open(ip, "r") as f:
+                    data = json.load(f)
+                
+                df = pd.DataFrame(data['elements'])
+                df["id"] = df["id"].astype(str)
+                df["sub_id"] = "0" # initiate sub_id column with 0
+                df["sub_id_len"] = 0 # initiate sub_id column with 0
+                df["country"] = country
+
+                col_tags = ["power", "cables", "circuits", "frequency", "voltage", "wires"]
+
+                tags = pd.json_normalize(df["tags"]) \
+                    .map(lambda x: str(x) if pd.notnull(x) else x)
+                
+                for ct in col_tags:
+                    if ct not in tags.columns:
+                        tags[ct] = pd.NA
+                
+                tags = tags.loc[:, col_tags]
+
+                df = pd.concat([df, tags], axis="columns") 
+                df.drop(columns=["type", "tags"], inplace=True)
+                
+                df_lines = pd.concat([df_lines, df], axis="rows")
+
+            else:
+                logger.info(f" - Skipping {key} {str(idx+1).zfill(2)}/{str(len(input_path_lines_cables[key])).zfill(2)} (empty): {ip}")
+                continue
+        logger.info("---")
+
+    # Initiate boolean with False, only set to true if all cleaning steps are passed
+    df_lines["cleaned"] = False
+    df_lines["voltage"] = _clean_voltage(df_lines["voltage"])
+
+    list_voltages = df_lines["voltage"].str.split(";").explode().unique().astype(str)
+    list_voltages = list_voltages[np.vectorize(len)(list_voltages) >= 6]
+    list_voltages = list_voltages[~np.char.startswith(list_voltages, '1')]
+
+    bool_voltages = df_lines["voltage"].apply(_check_voltage, list_voltages=list_voltages)
+    df_lines = df_lines[bool_voltages]
+
+    # Additional cleaning
+    df_lines["circuits"] = _clean_circuits(df_lines["circuits"])
+    df_lines["cables"] = _clean_cables(df_lines["cables"])
+    df_lines["frequency"] = _clean_frequency(df_lines["frequency"])
+    df_lines["wires"] = _clean_wires(df_lines["wires"])
+
+    df_lines = _split_cells(df_lines)
+    bool_voltages = df_lines["voltage"].apply(_check_voltage, list_voltages=list_voltages)
+    df_lines = df_lines[bool_voltages]
+
+    bool_ac = df_lines["frequency"] != "0"
+    bool_dc = ~bool_ac
+    bool_noinfo = (df_lines["cables"] == "") & (df_lines["circuits"] == "")
+    valid_frequency = ["50", "0"]
+    bool_invalid_frequency = df_lines["frequency"].apply(lambda x: x not in valid_frequency)
+
+    # Fill in all values where cables info and circuits does not exist. Assuming 1 circuit
+    df_lines.loc[bool_noinfo, "circuits"] = "1"
+    df_lines.loc[bool_noinfo & bool_invalid_frequency, "frequency"] = "50"
+    df_lines.loc[bool_noinfo, "cleaned"] = True
+
+    df_lines
+
+    df_lines[bool_dc]
+
+    df_lines["geometry"] = df_lines.apply(_create_linestring, axis=1)  
+    gdf_lines = gpd.GeoDataFrame(
+        df_lines[["id", "power", "cables", "circuits", "voltage", "geometry"]], 
+        geometry = "geometry", crs = "EPSG:4326"
+        )
+    
+    gdf_lines.explore()
+
+    ### Split into AC and DC
+    df_lines_ac = df_lines[df_lines["frequency"] != "0"].copy()
+    df_lines_dc = df_lines[df_lines["frequency"] == "0"].copy()
+
+    df_lines_dc["cleaned"] = False
+    
+    
+
+
+
+    ########
+    ########
+    ########
+
+
+    fig = Figure(width = "50%", height = 600)
+
+    m = gdf_substations.explore(name = "Buses", color = "red")
+    m = gdf_lines.explore(m = m, name = "Lines")
+
+    folium.LayerControl(collapsed = False).add_to(m)
+
+    fig.add_child(m)
+    m
+
+    gdf_substations.explore()
+    df_lines.voltage.unique()
+
+    np.set_printoptions(threshold=np.inf)
+
+
+    # duplicate_lines = df_lines[df_lines.duplicated(subset=['id'], keep=False)].copy()
+
+    # grouped_duplicates = duplicate_rows.groupby('id').agg({'country': 'list'})
+
+    a = df_lines[(df_lines["cables"].apply(lambda x: len(x.split(";"))) == 1) & ((df_lines["voltage"].apply(lambda x: len(x.split(";"))) == 1)) & (df_lines["cables"] != "")]
+    # Drop duplicates
+    df_lines.drop_duplicates(subset="id", inplace=True)
+
+    df_lines["voltage"] = _clean_voltage(df_lines["voltage"])
     # df_lines["frequency"] = _clean_frequency(df_lines["frequency"])
-    # df_lines["frequency"] = df_lines["frequency"].astype(int, errors="ignore")
+    df_lines["circuits"] = _clean_circuits(df_lines["circuits"])
+   
+    list_voltages = df_lines["voltage"].str.split(";").explode().unique().astype(str)
+    list_voltages = list_voltages[np.vectorize(len)(list_voltages) >= 6]
+    list_voltages[~np.char.startswith(list_voltages, '1')]
 
-    # # Clean circuits
-    # df_lines["circuits"] = _clean_circuits(df_lines["circuits"])
-    # # Map correct circuits to lines that where split
+    # df_lines_subset = df_lines[df_lines["voltage"].apply(_any_substring_in_list, list_voltages)]
+
+    # drop voltage = ""
+    df_lines = _split_voltage(df_lines)
+    df_lines = df_lines[df_lines["voltage"] != ""]
+    df_lines["voltage"] = df_lines["voltage"].astype(int, errors="ignore")
+
+    # Drop voltages below 220 kV
+    df_lines = df_lines[df_lines["voltage"] >= 200000]
+
+    # set frequencies
+    df_lines["frequency"] = _set_frequency(df_lines["frequency"])
+    df_lines["frequency"] = df_lines["frequency"].astype(int, errors="ignore")
+
+    # Clean circuits
+     # Map correct circuits to lines that where split
     
-    # # Initiate new column for cleaned circuits with values that are already valid:
-    # # Condition 1: Length of sub_id is 0, the line was not split
-    # # Condition 2: Number of entries in circuits separated by semicolon is 1, value is unique
-    # # Condition 3: Circuits is not an empty string
-    # # Condition 4: Circuits is not "0"
-    # bool_circuits_valid = (df_lines["sub_id_len"] == 0) & \
-    #     (df_lines["circuits"].apply(lambda x: len(x.split(";"))) == 1) & \
-    #     (df_lines["circuits"] != "") & \
-    #     (df_lines["circuits"] != "0")
+    # Initiate new column for cleaned circuits with values that are already valid:
+    # Condition 1: Length of sub_id is 0, the line was not split
+    # Condition 2: Number of entries in circuits separated by semicolon is 1, value is unique
+    # Condition 3: Circuits is not an empty string
+    # Condition 4: Circuits is not "0"
+    bool_circuits_valid = (df_lines["sub_id_len"] == 0) & \
+        (df_lines["circuits"].apply(lambda x: len(x.split(";"))) == 1) & \
+        (df_lines["circuits"] != "") & \
+        (df_lines["circuits"] != "0")
         
-    # df_lines.loc[bool_circuits_valid, "circuits_clean"] = df_lines.loc[bool_circuits_valid, "circuits"]
+    df_lines.loc[bool_circuits_valid, "circuits_clean"] = df_lines.loc[bool_circuits_valid, "circuits"]
     
-    # # Boolean to check if sub_id_len is equal to the number of circuits
-    # bool_equal = df_lines["sub_id_len"] == df_lines["circuits"] \
-    #                 .apply(lambda x: len(x.split(";")))
-    # op_equal = lambda row: row["circuits"].split(";")[int(row["sub_id"])-1]
+    # Boolean to check if sub_id_len is equal to the number of circuits
+    bool_equal = df_lines["sub_id_len"] == df_lines["circuits"] \
+                    .apply(lambda x: len(x.split(";")))
+    op_equal = lambda row: row["circuits"].split(";")[int(row["sub_id"])-1]
         
-    # df_lines.loc[bool_equal, "circuits_clean"] = df_lines[bool_equal] \
-    #     .apply(op_equal, axis=1)
+    df_lines.loc[bool_equal, "circuits_clean"] = df_lines[bool_equal] \
+        .apply(op_equal, axis=1)
     
-    # bool_larger = df_lines["sub_id_len"] > \
-    #     df_lines["circuits"].apply(lambda x: len(x.split(";")))
+    bool_larger = df_lines["sub_id_len"] > \
+        df_lines["circuits"].apply(lambda x: len(x.split(";")))
     
-    # pd.set_option('display.max_rows', None)
-    # df_lines.loc[bool_larger, ["id", "sub_id", "sub_id_len", "cables", "circuits", "circuits_clean", "frequency"]]
+    pd.set_option('display.max_rows', None)
+    pd.set_option('display.max_columns', None)
+    df_lines.loc[bool_larger, ["id", "sub_id", "sub_id_len", "cables", "circuits", "circuits_clean", "frequency"]]
 
-
-
-
-
-    # df_lines[df_lines["sub_id_len"] > 0]["circuits"]
-
-
-    # df_lines["geometry"] = df_lines.apply(_create_linestring, axis=1)    
-    # gdf = gpd.GeoDataFrame(
-    #     df_lines[["id", "sub_id", "sub_id_len", "power", "cables", "circuits", "voltage", "geometry"]], 
-    #     geometry = "geometry", crs = "EPSG:4326"
-    #     )
-    
-    # gdf.explore()
-    # df_lines.voltage.unique()
-
-    # df_lines.circuits.apply(lambda x: x.split(";")).explode().unique()
-
-    # ol_lines_way = ["id", "power", "cables", "circuits", "frequency", "voltage"]
-
-    # # gdf = gpd.read_file(lines_way[3])
-    # # gdf2 = gpd.GeoDataFrame(gdf, geometry=gdf.geometry)
-    # # df = gdf.to_json()
-
-    # # gdf.to_file("example.geojson", layer_options={"ID_GENERATE": "YES"})
 
 
     output = str(snakemake.output)
     clean_osm_data(output)
-
-
-
-
-# # Example DataFrame
-# data = {'id': ["ID1", "ID2", "ID3", "ID4", "ID5"],
-#         'A': ["220000", "380000", ";100000", "220000;220000;380000", "220000;;400000;700000"],
-#         'B': [1, 2, 3, 4, 5],
-#         'C': [6, 7, 8, 9, 10]}
-# df = pd.DataFrame(data)
-
-# # Split the entries in column A that contain a semicolon
-# split_rows = df[df['A'].str.contains(';')]
-# split_values = split_rows['A'].str.split(';', expand=True)
-
-# # Create two copies of the rows containing semicolons, one for each split value
-# split_rows_1 = split_rows.copy()
-# split_rows_2 = split_rows.copy()
-
-# # Update column A in the split rows to contain the split values
-# split_rows_1['A'] = split_values[0]
-# split_rows_2['A'] = split_values[1]
-
-# # Concatenate the split rows with the original DataFrame, excluding the rows containing semicolons
-# result_df = pd.concat([df[~df.index.isin(split_rows.index)], split_rows_1, split_rows_2], ignore_index=True)
-
-# # Display the result
-# print(result_df)
-
-
-# '# Sample DataFrame
-# data = {'id': ["ID1", "ID2", "ID3", "ID4", "ID5"],
-#         'voltage': ["220000", "380000", ";100000", "220000;220000;380000", "220000;;400000;700000"],
-#         'B': [1, 2, 3, 4, 5],
-#         'C': [6, 7, 8, 9, 10]}
-# df = pd.DataFrame(data)
-
-# # Find rows to split
-# to_split = df['voltage'].str.contains(';')
-
-# # Splitting entries and creating new rows
-
-
-# new_rows = []
-
-# for index, row in df[to_split].iterrows():
-#     split_values = row["voltage"].split(';')
-#     for i, value in enumerate(split_values):
-#         new_id = str(row['id']) + '_' + str(i+1)
-#         new_row = {
-#             'id': new_id, 
-#             'bounds': row['bounds'],
-#             'nodes': row['nodes'],
-#             'geometry': row['geometry'],
-#             'cables': row['cables'],
-#             'circuits': row['circuits'],
-#             'frequency': row['frequency'],
-#             'voltage': value, 
-#             'wires': row['wires'],}
-#         new_rows.append(new_row)
-
-# # Create DataFrame from split rows
-# split_df = pd.DataFrame(new_rows)
-
-# # Append the original DataFrame with split_df
-# final_df = pd.concat([df[~to_split], split_df])
-
-# print(final_df)
-
-
-
-# from shapely.geometry import LineString
-# import numpy as np
-# import matplotlib.pyplot as plt
-
-# def offset_line(original_line, distance):
-#     # Compute the direction vector between the two endpoints
-#     direction_vector = np.array(original_line.coords[1]) - np.array(original_line.coords[0])
-
-#     # Compute the orthogonal vector
-#     orthogonal_vector = np.array([-direction_vector[1], direction_vector[0]])
-
-#     # Normalize the orthogonal vector
-#     orthogonal_vector /= np.linalg.norm(orthogonal_vector)
-
-#     # Compute the offset LineString
-#     offset_points = []
-#     for point in original_line.coords:
-#         offset_point = np.array(point) + distance * orthogonal_vector
-#         offset_points.append((offset_point[0], offset_point[1]))
-
-#     return LineString(offset_points)
-
-# # Example usage:
-# original_line = lines.iloc[5]
-# offset_distance = 1.0
-# b = offset_line(original_line, offset_distance)
-
-# # Plot both LineStrings
-# fig, ax = plt.subplots()
-# x, y = original_line.xy
-# ax.plot(x, y, label='Original LineString')
-# x, y = offset_line.xy
-# ax.plot(x, y, label='Offset LineString')
-# ax.set_aspect('equal')
-# ax.legend()
-# plt.xlabel('X')
-# plt.ylabel('Y')
-# plt.title('Original and Offset LineStrings')
-# plt.grid(True)
-# plt.show()

@@ -615,9 +615,10 @@ if config["osm"].get("retrieve", True):
             lines_way="data/osm/raw/{country}/lines_way_raw.json",
             substations_way="data/osm/raw/{country}/substations_way_raw.json",
             substations_node="data/osm/raw/{country}/substations_node_raw.json",
-            transformers_way="data/osm/raw/{country}/transformers_way_raw.json",
-            transformers_node="data/osm/raw/{country}/transformers_node_raw.json",
-            relations="data/osm/raw/{country}/relations_raw.json",
+            substations_relation="data/osm/raw/{country}/substations_relation_raw.json",
+            # transformers_way="data/osm/raw/{country}/transformers_way_raw.json",
+            # transformers_node="data/osm/raw/{country}/transformers_node_raw.json",
+            # route_relations="data/osm/raw/{country}/route_relations_raw.json",
         log:
             logs("retrieve_osm_data_{country}.log"),
         script:
@@ -636,13 +637,12 @@ rule clean_osm_data:
         lines_way=[f"data/osm/raw/{country}/lines_way_raw.json" for country in config["countries"]],
         substations_way=[f"data/osm/raw/{country}/substations_way_raw.json" for country in config["countries"]],
         substations_node=[f"data/osm/raw/{country}/substations_node_raw.json" for country in config["countries"]],
-        transformers_way=[f"data/osm/raw/{country}/transformers_way_raw.json" for country in config["countries"]],
-        transformers_node=[f"data/osm/raw/{country}/transformers_node_raw.json" for country in config["countries"]],
-        relations=[f"data/osm/raw/{country}/relations_raw.json" for country in config["countries"]],
+        substations_relation=[f"data/osm/raw/{country}/substations_relation_raw.json" for country in config["countries"]],
+        # transformers_way=[f"data/osm/raw/{country}/transformers_way_raw.json" for country in config["countries"]],
+        # transformers_node=[f"data/osm/raw/{country}/transformers_node_raw.json" for country in config["countries"]],
+        # route_relations=[f"data/osm/raw/{country}/route_relations_raw.json" for country in config["countries"]],
     output:
-        dummy="data/osm/raw/dummy.txt"
-        # cables="resources/RDIR/cables_clean_.geojson"
-        # lines=
+        substations="data/osm/clean/substations.geojson",
     log:
         logs("clean_osm_data.log"),
     script:

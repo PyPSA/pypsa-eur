@@ -66,9 +66,10 @@ def retrieve_osm_data(
             "lines_way", 
             "substations_way",
             "substations_node",
-            "transformers_way",
-            "transformers_node",
-            "relations",
+            "substations_relation",
+            # "transformers_way",
+            # "transformers_node",
+            # "route_relations",
             ]):
     
     op_area = _get_overpass_areas(country)
@@ -76,14 +77,22 @@ def retrieve_osm_data(
     # Overpass API endpoint URL
     overpass_url = "https://overpass-api.de/api/interpreter"
 
+    # features_dict= {
+    #     'cables_way': 'way["power"="cable"]',
+    #     'lines_way': 'way["power"="line"]',
+    #     'substations_way': 'way["power"="substation"]',
+    #     'substations_node': 'node["power"="substation"]',
+    #     'transformers_way': 'way["power"="transformer"]',
+    #     'transformers_node': 'node["power"="transformer"]',
+    #     'route_relations': 'rel["route"="power"]["type"="route"]'
+    # }
+
     features_dict= {
         'cables_way': 'way["power"="cable"]',
         'lines_way': 'way["power"="line"]',
         'substations_way': 'way["power"="substation"]',
         'substations_node': 'node["power"="substation"]',
-        'transformers_way': 'way["power"="transformer"]',
-        'transformers_node': 'node["power"="transformer"]',
-        'relations': 'rel["route"="power"]["type"="route"]'
+        'substations_relation': 'relation["power"="substation"]',
     }
 
     for f in features:
