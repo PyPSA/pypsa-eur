@@ -624,7 +624,7 @@ if config["osm"].get("retrieve", True):
         script:
             "../scripts/retrieve_osm_data.py"
 
-# FEATURES = ["cables_way", "lines_way", "substations_way", "substations_node", "transformers_way", "transformers_node"]
+
 rule clean_osm_data:
     # params:
     #     countries=config["countries"],
@@ -650,10 +650,22 @@ rule clean_osm_data:
         "../scripts/clean_osm_data.py"
 
 
-# {
-#             f"{country}": f"{
-#                 f"{feature}": f"data/osm/raw/{country}/{feature}.geojson" 
-#                 }"
-#                 for feature in FEATURES
-#                 for country in config["countries"]
-#             }
+rule build_osm_network:
+    input:
+        substations="data/osm/clean/substations.geojson",
+        lines="data/osm/clean/lines.geojson",
+    output:
+        lines="data/osm/lines.csv",
+        converters="data/osm/converters.csv",
+        transformers="data/osm/transformers.csv",
+        substations="data/osm/buses.csv",
+        lines_geojson="data/osm/lines.geojson",
+        converters_geojson="data/osm/converters.geojson",
+        transformers_geojson="data/osm/transformers.geojson",
+        substations_geojson="data/osm/buses.geojson",
+    log:
+        logs("build_osm_network.log"),
+    benchmark:
+        benchmarks("build_osm_network")
+    script:
+        "../scripts/build_osm_network.py"
