@@ -135,7 +135,7 @@ as part of the `Stromnetze Research Initiative
 Workflow
 ========
 
-.. image:: ../doc/img/workflow.png
+.. image:: img/workflow.png
     :class: full-width
     :align: center
 
