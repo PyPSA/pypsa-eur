@@ -43,6 +43,8 @@ Upcoming Release
 
 * Allow dictionary for the config aviation_demand_factor.
 
+* Post discretize network infrastructure like lines and links.
+
 * Group existing capacities to the earlier grouping_year for consistency with optimized capacities.
 
 * Update data bundle:
