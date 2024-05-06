@@ -59,8 +59,19 @@ Outputs
     .. image:: img/base.png
         :scale: 33 %
 
+- ``resources/regions_onshore.geojson``:
+
+    .. image:: img/regions_onshore.png
+        :scale: 33 %
+
+- ``resources/regions_offshore.geojson``:
+
+    .. image:: img/regions_offshore.png
+        :scale: 33 %
+
 Description
 -----------
+Creates the network topology from an ENTSO-E map extract, and create Voronoi shapes for each bus representing both onshore and offshore regions.
 """
 
 import logging
