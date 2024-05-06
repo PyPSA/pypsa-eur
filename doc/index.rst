@@ -74,7 +74,7 @@ greenhouse gas emitters except waste management, agriculture, forestry and land
 use. The diagram below gives an overview of the sectors and the links between
 them:
 
-.. image:: ../graphics/multisector_figure.png
+.. image:: ../doc/img/multisector_figure.png
     :width: 70%
     :align: center
 
@@ -135,7 +135,7 @@ as part of the `Stromnetze Research Initiative
 Workflow
 ========
 
-.. image:: ../graphics/workflow.png
+.. image:: ../doc/img/workflow.png
     :class: full-width
     :align: center
 

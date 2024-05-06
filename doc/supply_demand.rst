@@ -18,7 +18,7 @@ management, carbon capture and usage/sequestration, and gas networks.
 
 The basic supply (left column) and demand (right column) options in the model are described in this figure:
 
-.. image:: ../graphics/multisector_figure.png
+.. image:: ../doc/img/multisector_figure.png
 
 .. _Electricity supply and demand:
 
@@ -72,11 +72,11 @@ For every country, heat demand is split between low and high population density 
 
 Cooling is electrified and is included in the electricity demand. Cooling demand is assumed to remain at current levels.  An example of regional distribution of the total heat demand for network 181 regions is depicted below.
 
-.. image:: ../graphics/demand-map-heat.png
+.. image:: ../doc/img/demand-map-heat.png
 
 As below figure shows, the current total heat demand in Europe is similar to the total electricity demand but features much more pronounced seasonal variations. The current total building heating demand in Europe adds up to 3084 TWh/a of which 78% occurs in urban areas.
 
-.. image:: ../graphics/Heat_and_el_demand_timeseries.png
+.. image:: ../doc/img/Heat_and_el_demand_timeseries.png
 
 In practice, in PyPSA-Eur-Sec, there are heat demand buses to which the corresponding heat demands are added.
 
@@ -269,7 +269,7 @@ The existing European gas transmission network is represented based on the SciGR
 
 The following figure shows the unclustered European gas transmission network based on the SciGRID Gas IGGIELGN dataset. Pipelines are color-coded by estimated capacities. Markers indicate entry-points, sites of fossil resource extraction, and LNG terminals.
 
-.. image:: ../graphics/gas_pipeline_figure.png
+.. image:: ../doc/img/gas_pipeline_figure.png
 
 .. _Biomass supply:
 
@@ -374,7 +374,7 @@ Where process heat is required, our approach depends on the necessary temperatur
 
 The following figure shows the final consumption of energy and non-energy feedstocks in industry today in comparison to the scenario in 2050 assumed in `Neumann et al <https://arxiv.org/abs/2207.05816>`__.
 
-.. image:: ../graphics/fec_industry_today_tomorrow.png
+.. image:: ../doc/img/fec_industry_today_tomorrow.png
 
 
 The following figure shows the process emissions in industry today (top bar) and in 2050 without
@@ -383,12 +383,12 @@ carbon capture (bottom bar) assumed in `Neumann et al <https://arxiv.org/abs/220
 
 
 
-.. image:: ../graphics/process-emissions.png
+.. image:: ../doc/img/process-emissions.png
 
 
 Inside each country the industrial demand is then distributed using the `Hotmaps Industrial Database <https://zenodo.org/record/4687147#.YvOaxhxBy5c>`__, which is illustrated in the figure below. This open database includes georeferenced industrial sites of energy-intensive industry sectors in EU28, including cement, basic chemicals, glass, iron and steel, non-ferrous metals, non-metallic minerals, paper, and refineries subsectors. The use of this spatial dataset enables the calculation of regional and process-specific energy demands. This approach assumes that there will be no significant migration of energy-intensive industries.
 
-.. image:: ../graphics/hotmaps.png
+.. image:: ../doc/img/hotmaps.png
 
 
 .. _Iron and Steel:

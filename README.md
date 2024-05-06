@@ -80,7 +80,7 @@ all greenhouse gas emitters except waste management and land use.
 This diagram gives an overview of the sectors and the links between
 them:
 
-![sector diagram](graphics/multisector_figure.png)
+![sector diagram](doc/img/multisector_figure.png)
 
 Each of these sectors is built up on the transmission network nodes
 from [PyPSA-Eur](https://github.com/PyPSA/pypsa-eur):
