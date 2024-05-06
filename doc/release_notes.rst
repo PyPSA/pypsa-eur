@@ -172,6 +172,8 @@ Upcoming Release
 
 * Bugfix: allow modelling sector-coupled landlocked regions. (Fixed handling of offshore wind.)
 
+* Bugfix: approximation of hydro power generation if Portugal or Spain are not included works now.
+
 * Adapt the disabling of transmission expansion in myopic foresight optimisations when limit is already reached to also handle cost limits.
 
 * Fix duplicated years and grouping years reference in `add_land_use_constraint_m`.
