@@ -725,6 +725,10 @@ if __name__ == "__main__":
         ]]
     
     df_lines["geometry"] = df_lines.apply(_create_linestring, axis=1)  
+    # Drop all rows where the geometry has equal start and end point
+    bool_circle = df_lines["geometry"].apply(lambda x: x.coords[0] == x.coords[-1]) 
+    df_lines = df_lines[~bool_circle]    
+    
     gdf_lines = gpd.GeoDataFrame(df_lines, geometry = "geometry", crs = "EPSG:4326")
 
     filepath_lines = snakemake.output["lines"]
