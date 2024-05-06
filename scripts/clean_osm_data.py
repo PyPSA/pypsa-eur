@@ -250,40 +250,6 @@ def _clean_frequency(column):
     return column.astype(str)
 
 
-def _split_voltage(df):
-    to_split = df['voltage'].str.contains(';')
-    new_rows = []
-    for index, row in df[to_split].iterrows():
-        split_values = row["voltage"].split(';')
-        new_sub_id_len = int(len(split_values))
-        for i, value in enumerate(split_values):
-            new_sub_id = str(i+1)
-            new_id = str(row['id']) + '_' + new_sub_id
-            new_row = {
-                'id': new_id, 
-                'sub_id': new_sub_id,
-                'sub_id_len': new_sub_id_len,
-                'bounds': row['bounds'],
-                'nodes': row['nodes'],
-                'geometry': row['geometry'],
-                'country': row['country'],
-                'power': row['power'],
-                'cables': row['cables'],
-                'circuits': row['circuits'],
-                'frequency': row['frequency'],
-                'voltage': value, 
-                'wires': row['wires'],}
-            new_rows.append(new_row)
-
-    # Create DataFrame from split rows
-    split_df = pd.DataFrame(new_rows)
-    df_new = pd.concat([df[~to_split], split_df])
-    df_new["sub_id_len"] = df_new["sub_id_len"].astype(int)
-
-    # Append the original DataFrame with split_df
-    return df_new
-
-
 def _split_cells(df, cols=["voltage"]):
     """
     Split semicolon separated cells i.e. [66000;220000] and create new
@@ -336,6 +302,19 @@ def _split_cells(df, cols=["voltage"]):
     x["id"] = x.apply(generate_new_id, axis=1)
 
     return x
+
+
+def _distribute_to_circuits(row):
+    if row["circuits"] != "":
+        circuits = int(row["circuits"])
+    else:
+        cables = int(row["cables"])
+        circuits = cables / 3
+
+    single_circuit = int(max(1, np.floor_divide(circuits, row["split_elements"])))
+    single_circuit = str(single_circuit)
+
+    return single_circuit
 
 
 # Function to check if any substring is in valid_strings
@@ -529,7 +508,7 @@ if __name__ == "__main__":
         "cables": snakemake.input.cables_way,
     }
 
-    columns = ["id", "sub_id", "sub_id_len", "bounds", "nodes", "geometry", "country", "power", "cables", "circuits", "frequency", "voltage", "wires"]
+    columns = ["id", "bounds", "nodes", "geometry", "country", "power", "cables", "circuits", "frequency", "voltage", "wires"]
     df_lines = pd.DataFrame(columns=columns)
     crs = "EPSG:4326"
 
@@ -547,8 +526,6 @@ if __name__ == "__main__":
                 
                 df = pd.DataFrame(data['elements'])
                 df["id"] = df["id"].astype(str)
-                df["sub_id"] = "0" # initiate sub_id column with 0
-                df["sub_id_len"] = 0 # initiate sub_id column with 0
                 df["country"] = country
 
                 col_tags = ["power", "cables", "circuits", "frequency", "voltage", "wires"]
@@ -572,6 +549,18 @@ if __name__ == "__main__":
                 continue
         logger.info("---")
 
+    # Find duplicates based on id column
+    duplicate_rows = df_lines[df_lines.duplicated(subset=['id'], keep=False)].copy()
+    # group rows by id and aggregate the country column to a string split by semicolon
+    grouped_duplicates = duplicate_rows.groupby('id')["country"].agg(lambda x: ';'.join(x)).reset_index()
+    duplicate_rows.drop_duplicates(subset="id", inplace=True)
+    duplicate_rows.drop(columns=["country"], inplace=True)
+    duplicate_rows = duplicate_rows.join(grouped_duplicates.set_index('id'), on='id', how='left')
+
+    # Drop duplicates and update the df_lines dataframe with the cleaned data
+    df_lines = df_lines[~df_lines["id"].isin(duplicate_rows["id"])]
+    df_lines = pd.concat([df_lines, duplicate_rows], axis="rows")
+
     # Initiate boolean with False, only set to true if all cleaning steps are passed
     df_lines["cleaned"] = False
     df_lines["voltage"] = _clean_voltage(df_lines["voltage"])
@@ -589,6 +578,9 @@ if __name__ == "__main__":
     df_lines["frequency"] = _clean_frequency(df_lines["frequency"])
     df_lines["wires"] = _clean_wires(df_lines["wires"])
 
+    df_lines["voltage_original"] = df_lines["voltage"]
+    df_lines["circuits_original"] = df_lines["circuits"]
+
     df_lines = _split_cells(df_lines)
     bool_voltages = df_lines["voltage"].apply(_check_voltage, list_voltages=list_voltages)
     df_lines = df_lines[bool_voltages]
@@ -604,27 +596,147 @@ if __name__ == "__main__":
     df_lines.loc[bool_noinfo & bool_invalid_frequency, "frequency"] = "50"
     df_lines.loc[bool_noinfo, "cleaned"] = True
 
-    df_lines
+    # Fill in all values where cables info exists and split_elements == 1
+    bool_cables_ac = (df_lines["cables"] != "") & \
+        (df_lines["split_elements"] == 1) & \
+        (df_lines["cables"] != "0") & \
+        (df_lines["cables"].apply(lambda x: len(x.split(";")) == 1)) & \
+        (df_lines["circuits"] == "") & \
+        (df_lines["cleaned"] == False) & \
+        bool_ac
+    
+    df_lines.loc[bool_cables_ac, "circuits"] = df_lines.loc[bool_cables_ac, "cables"] \
+        .apply(lambda x: str(int(max(1, np.floor_divide(int(x),3)))))
+    
+    df_lines.loc[bool_cables_ac, "frequency"] = "50"
+    df_lines.loc[bool_cables_ac, "cleaned"] = True
 
-    df_lines[bool_dc]
+    bool_cables_dc = (df_lines["cables"] != "") & \
+        (df_lines["split_elements"] == 1) & \
+        (df_lines["cables"] != "0") & \
+        (df_lines["cables"].apply(lambda x: len(x.split(";")) == 1)) & \
+        (df_lines["circuits"] == "") & \
+        (df_lines["cleaned"] == False) & \
+        bool_dc
+    
+    df_lines.loc[bool_cables_dc, "circuits"] = df_lines.loc[bool_cables_dc, "cables"] \
+        .apply(lambda x: str(int(max(1, np.floor_divide(int(x),2)))))
+    
+    df_lines.loc[bool_cables_dc, "frequency"] = "0"
+    df_lines.loc[bool_cables_dc, "cleaned"] = True
 
+    # Fill in all values where circuits info exists and split_elements == 1
+    bool_lines = (df_lines["circuits"] != "") & \
+        (df_lines["split_elements"] == 1) & \
+        (df_lines["circuits"] != "0") & \
+        (df_lines["circuits"].apply(lambda x: len(x.split(";")) == 1)) & \
+        (df_lines["cleaned"] == False) 
+    
+    df_lines.loc[bool_lines & bool_ac, "frequency"] = "50"
+    df_lines.loc[bool_lines & bool_dc, "frequency"] = "0"
+    df_lines.loc[bool_lines, "cleaned"] = True
+
+    # Clean those values where number of voltages split by semicolon is larger than no cables or no circuits
+    bool_cables = (df_lines["voltage_original"].apply(lambda x: len(x.split(";")) > 1)) & \
+        (df_lines["cables"].apply(lambda x: len(x.split(";")) == 1)) & \
+        (df_lines["circuits"].apply(lambda x: len(x.split(";")) == 1)) & \
+        (df_lines["cleaned"] == False)
+    
+    df_lines.loc[bool_cables, "circuits"] = df_lines[bool_cables] \
+        .apply(_distribute_to_circuits, axis=1)
+    df_lines.loc[bool_cables & bool_ac, "frequency"] = "50"
+    df_lines.loc[bool_cables & bool_dc, "frequency"] = "0"
+    df_lines.loc[bool_cables, "cleaned"] = True
+
+    # Clean those values where multiple circuit values are present, divided by semicolon
+    bool_cables = (df_lines["circuits"].apply(lambda x: len(x.split(";")) > 1)) & \
+        (df_lines.apply(lambda row: len(row["circuits"].split(";")) == row["split_elements"], axis=1)) & \
+        (df_lines["cleaned"] == False)
+    
+    df_lines.loc[bool_cables, "circuits"] = df_lines.loc[bool_cables] \
+        .apply(lambda row: str(row["circuits"].split(";")[
+            int(row["id"].split("_")[-1])-1
+        ]), axis=1)
+    
+    df_lines.loc[bool_cables & bool_ac, "frequency"] = "50"
+    df_lines.loc[bool_cables & bool_dc, "frequency"] = "0"
+    df_lines.loc[bool_cables, "cleaned"] = True
+
+    # Clean those values where multiple cables values are present, divided by semicolon
+    bool_cables = (df_lines["cables"].apply(lambda x: len(x.split(";")) > 1)) & \
+        (df_lines.apply(lambda row: len(row["cables"].split(";")) == row["split_elements"], axis=1)) & \
+        (df_lines["cleaned"] == False)
+
+    df_lines.loc[bool_cables, "circuits"] = df_lines.loc[bool_cables] \
+        .apply(lambda row: 
+            str(max(1,
+                np.floor_divide(
+                    int(row["cables"].split(";")[int(row["id"].split("_")[-1])-1]),
+                    3
+                    )
+                )),
+            axis=1)
+    
+    df_lines.loc[bool_cables & bool_ac, "frequency"] = "50"
+    df_lines.loc[bool_cables & bool_dc, "frequency"] = "0"
+    df_lines.loc[bool_cables, "cleaned"] = True
+
+    # All remaining lines to circuits == 1
+    bool_leftover = (df_lines["cleaned"] == False)
+    str_id = "; ".join(str(id) for id in df_lines.loc[bool_leftover, "id"])
+    logger.info(f"Setting circuits of remaining {sum(bool_leftover)} lines to 1...")
+    logger.info(f"Lines affected: {str_id}")
+    df_lines.loc[bool_leftover, "circuits"] = "1"
+    df_lines.loc[bool_leftover & bool_ac, "frequency"] = "50"
+    df_lines.loc[bool_leftover & bool_dc, "frequency"] = "0"
+    df_lines.loc[bool_leftover, "cleaned"] = True
+
+    # rename columns
+    df_lines.rename(
+        columns={
+            "id": "line_id", 
+            "power": "tag_type",
+            "frequency":"tag_frequency",
+            }, inplace=True)
+    
+    df_lines["bus0"] = None
+    df_lines["bus1"] = None
+    df_lines["length"] = None
+    df_lines.loc[df_lines["tag_type"] == "line", "underground"] = False
+    df_lines.loc[df_lines["tag_type"] == "cable", "underground"] = True
+    df_lines["under_construction"] = False
+    df_lines.loc[df_lines["tag_frequency"] == "0", "dc"] = True
+    df_lines.loc[df_lines["tag_frequency"] == "50", "dc"] = False
+
+    df_lines = df_lines[[
+        "line_id",
+        "circuits",
+        "tag_type",
+        "voltage",
+        "tag_frequency",
+        "bus0",
+        "bus1",
+        "length",
+        "underground",
+        "under_construction",
+        "dc",
+        "country",
+        "geometry",
+        ]]
+    
     df_lines["geometry"] = df_lines.apply(_create_linestring, axis=1)  
-    gdf_lines = gpd.GeoDataFrame(
-        df_lines[["id", "power", "cables", "circuits", "voltage", "geometry"]], 
-        geometry = "geometry", crs = "EPSG:4326"
-        )
+    gdf_lines = gpd.GeoDataFrame(df_lines, geometry = "geometry", crs = "EPSG:4326")
+
+    filepath_lines = snakemake.output["lines"]
+    # save substations output
+    logger.info(f"Exporting clean lines to {filepath_lines}")
+    parentfolder_lines = os.path.dirname(filepath_lines)
+    if not os.path.exists(parentfolder_lines):
+        # Create the folder and its parent directories if they don't exist
+        os.makedirs(parentfolder_lines)
+
+    gdf_lines.to_file(filepath_lines, driver="GeoJSON")
     
-    gdf_lines.explore()
-
-    ### Split into AC and DC
-    df_lines_ac = df_lines[df_lines["frequency"] != "0"].copy()
-    df_lines_dc = df_lines[df_lines["frequency"] == "0"].copy()
-
-    df_lines_dc["cleaned"] = False
-    
-    
-
-
 
     ########
     ########
@@ -642,71 +754,6 @@ if __name__ == "__main__":
     m
 
     gdf_substations.explore()
-    df_lines.voltage.unique()
-
-    np.set_printoptions(threshold=np.inf)
-
-
-    # duplicate_lines = df_lines[df_lines.duplicated(subset=['id'], keep=False)].copy()
-
-    # grouped_duplicates = duplicate_rows.groupby('id').agg({'country': 'list'})
-
-    a = df_lines[(df_lines["cables"].apply(lambda x: len(x.split(";"))) == 1) & ((df_lines["voltage"].apply(lambda x: len(x.split(";"))) == 1)) & (df_lines["cables"] != "")]
-    # Drop duplicates
-    df_lines.drop_duplicates(subset="id", inplace=True)
-
-    df_lines["voltage"] = _clean_voltage(df_lines["voltage"])
-    # df_lines["frequency"] = _clean_frequency(df_lines["frequency"])
-    df_lines["circuits"] = _clean_circuits(df_lines["circuits"])
-   
-    list_voltages = df_lines["voltage"].str.split(";").explode().unique().astype(str)
-    list_voltages = list_voltages[np.vectorize(len)(list_voltages) >= 6]
-    list_voltages[~np.char.startswith(list_voltages, '1')]
-
-    # df_lines_subset = df_lines[df_lines["voltage"].apply(_any_substring_in_list, list_voltages)]
-
-    # drop voltage = ""
-    df_lines = _split_voltage(df_lines)
-    df_lines = df_lines[df_lines["voltage"] != ""]
-    df_lines["voltage"] = df_lines["voltage"].astype(int, errors="ignore")
-
-    # Drop voltages below 220 kV
-    df_lines = df_lines[df_lines["voltage"] >= 200000]
-
-    # set frequencies
-    df_lines["frequency"] = _set_frequency(df_lines["frequency"])
-    df_lines["frequency"] = df_lines["frequency"].astype(int, errors="ignore")
-
-    # Clean circuits
-     # Map correct circuits to lines that where split
-    
-    # Initiate new column for cleaned circuits with values that are already valid:
-    # Condition 1: Length of sub_id is 0, the line was not split
-    # Condition 2: Number of entries in circuits separated by semicolon is 1, value is unique
-    # Condition 3: Circuits is not an empty string
-    # Condition 4: Circuits is not "0"
-    bool_circuits_valid = (df_lines["sub_id_len"] == 0) & \
-        (df_lines["circuits"].apply(lambda x: len(x.split(";"))) == 1) & \
-        (df_lines["circuits"] != "") & \
-        (df_lines["circuits"] != "0")
-        
-    df_lines.loc[bool_circuits_valid, "circuits_clean"] = df_lines.loc[bool_circuits_valid, "circuits"]
-    
-    # Boolean to check if sub_id_len is equal to the number of circuits
-    bool_equal = df_lines["sub_id_len"] == df_lines["circuits"] \
-                    .apply(lambda x: len(x.split(";")))
-    op_equal = lambda row: row["circuits"].split(";")[int(row["sub_id"])-1]
-        
-    df_lines.loc[bool_equal, "circuits_clean"] = df_lines[bool_equal] \
-        .apply(op_equal, axis=1)
-    
-    bool_larger = df_lines["sub_id_len"] > \
-        df_lines["circuits"].apply(lambda x: len(x.split(";")))
-    
-    pd.set_option('display.max_rows', None)
-    pd.set_option('display.max_columns', None)
-    df_lines.loc[bool_larger, ["id", "sub_id", "sub_id_len", "cables", "circuits", "circuits_clean", "frequency"]]
-
 
 
     output = str(snakemake.output)

@@ -643,6 +643,7 @@ rule clean_osm_data:
         # route_relations=[f"data/osm/raw/{country}/route_relations_raw.json" for country in config["countries"]],
     output:
         substations="data/osm/clean/substations.geojson",
+        lines="data/osm/clean/lines.geojson",
     log:
         logs("clean_osm_data.log"),
     script:
