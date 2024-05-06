@@ -184,6 +184,8 @@ Upcoming Release
 
 * Fix custom busmap read in `cluster_network`.
 
+* Fix approximation of hydro power generation if Portugal or Spain are not included
+
 * Data on existing renewable capacities is now consistently taken from powerplantmatching (instead of being retrieved separately); the dataset has also been updated to include 2023 values.
 
 * Added shapes to .nc file for different stages of the network object in `base_network`, `simplify_network`, and `cluster_network`; the `build_bus_regions` rule is now integrated into the `base_network` rule.
