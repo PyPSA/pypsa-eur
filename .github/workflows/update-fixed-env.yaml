@@ -27,7 +27,7 @@ jobs:
 
     - name: Update environment.fixed.yaml
       run: |
-        mamba env export --file envs/environment.fixed.yaml
+        mamba env export --file envs/environment.fixed.yaml  --no-builds
 
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v6
