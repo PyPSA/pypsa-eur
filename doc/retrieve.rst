@@ -118,11 +118,6 @@ This rule downloads techno-economic assumptions from the `technology-data reposi
 
 - ``resources/costs.csv``
 
-Rule ``retrieve_irena``
-================================
-
-.. automodule:: retrieve_irena
-
 Rule ``retrieve_ship_raster``
 ================================
 
