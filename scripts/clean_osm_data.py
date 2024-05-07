@@ -386,7 +386,6 @@ if __name__ == "__main__":
         snakemake = mock_snakemake("clean_osm_data")
     
     configure_logging(snakemake)
-    logger.info("Dummy log: clean_osm_data()")
 
      ############# LINES AND CABLES ######################
 
@@ -401,6 +400,7 @@ if __name__ == "__main__":
 
     # using tqdm loop over input path
 
+    logger.info("Importing lines and cables")
     for key in input_path_lines_cables:
         logger.info(f"Processing {key}...")
         for idx, ip in enumerate(input_path_lines_cables[key]):
@@ -436,6 +436,7 @@ if __name__ == "__main__":
                 continue
         logger.info("---")
 
+    logger.info("Cleaning lines and cables")
     # Find duplicates based on id column
     duplicate_rows = df_lines[df_lines.duplicated(subset=['id'], keep=False)].copy()
     # group rows by id and aggregate the country column to a string split by semicolon
@@ -645,6 +646,7 @@ if __name__ == "__main__":
     df_substations_way = pd.DataFrame(columns = cols_substations_way)
     df_substations_relation = pd.DataFrame(columns = cols_substations_relation)
 
+    logger.info("Importing substations")
     for key in input_path_substations:
         logger.info(f"Processing {key}...")
         for idx, ip in enumerate(input_path_substations[key]):
@@ -732,6 +734,7 @@ if __name__ == "__main__":
     df_substations.loc[:, "lon"] = df_substations["geometry"].apply(lambda x: x.x)
     df_substations.loc[:, "lat"] = df_substations["geometry"].apply(lambda x: x.y)
 
+    logger.info("Cleaning substations")
     # Clean columns
     df_substations["voltage"] = _clean_voltage(df_substations["voltage"])
     df_substations["frequency"] = _clean_frequency(df_substations["frequency"])
@@ -771,11 +774,11 @@ if __name__ == "__main__":
     df_substations["tag_area"] = None
     df_substations["tag_source"] = df_substations["id"]
 
-
     # Create an empty list to store the results
     results = []
 
-    for index, row in tqdm(gdf_lines.iterrows(), total=len(gdf_lines), desc="Processing LineStrings"):
+    logger.info("Removing linestrings within substation polygons...")
+    for index, row in tqdm(gdf_lines.iterrows(), total=len(gdf_lines)):
         line = row['geometry']  
         # Check if the LineString is within any Polygon in 'substations_df'
         is_within_any_substation = any(line.within(substation_polygon) for substation_polygon in df_substations["polygon"])
@@ -804,8 +807,8 @@ if __name__ == "__main__":
         # Create the folder and its parent directories if they don't exist
         os.makedirs(parentfolder_lines)
 
+    logger.info(f"Exporting clean lines to {filepath_lines}")
     gdf_lines.to_file(filepath_lines, driver="GeoJSON")
-
 
     # rename columns
     df_substations.rename(
@@ -833,6 +836,7 @@ if __name__ == "__main__":
     
     df_substations["bus_id"] = df_substations.index
 
+    logger.info("Adding line endings to substations")
     df_substations = add_line_endings_tosubstations(
                 df_substations, gdf_lines
             )
@@ -855,5 +859,6 @@ if __name__ == "__main__":
         # Create the folder and its parent directories if they don't exist
         os.makedirs(parentfolder_substations)
 
+    logger.info(f"Exporting clean substations to {filepath_substations}")
     gdf_substations.to_file(filepath_substations, driver="GeoJSON")    
     

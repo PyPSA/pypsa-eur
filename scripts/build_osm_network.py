@@ -1050,12 +1050,15 @@ def build_network(
                   "tag_type", "tag_frequency", "country", "bounds", 
                   "bus_0_coors", "bus_1_coors", "bus0_lon", "bus0_lat", "bus1_lon", "bus1_lat"]
     
+    cols_lines_csv = ["bus0", "bus1", "voltage", "circuits", "tag_frequency", "length", "underground", "under_construction", "geometry"]
+    lines_csv = lines[cols_lines_csv]
     lines = lines[cols_lines]
-    cols_lines_csv = ["bus_id", "station_id", "voltage", "dc", "symbol", "under_construction", "tags", "x","y"]
+    
 
-    to_csv_nafix(lines, outputs["lines"])  # Generate CSV
-    to_csv_nafix(converters, outputs["converters"])  # Generate CSV
-    to_csv_nafix(transformers, outputs["transformers"])  # Generate CSV
+
+    to_csv_nafix(lines_csv, outputs["lines"], quotechar="'")  # Generate CSV
+    to_csv_nafix(converters, outputs["converters"], quotechar="'")  # Generate CSV
+    to_csv_nafix(transformers, outputs["transformers"], quotechar="'")  # Generate CSV
 
     colstodrop = ["bounds", "bus_0_coors", "bus_1_coors"]
 
@@ -1068,7 +1071,7 @@ def build_network(
     if not os.path.exists(outputs["substations"]):
         os.makedirs(os.path.dirname(outputs["substations"]), exist_ok=True)
     # Generate CSV
-    to_csv_nafix(buses, outputs["substations"])
+    to_csv_nafix(buses, outputs["substations"], quotechar="'")
     save_to_geojson(gpd.GeoDataFrame(buses, geometry = "geometry", crs = geo_crs), outputs["substations_geojson"])
 
     return None

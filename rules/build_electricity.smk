@@ -64,42 +64,80 @@ rule build_powerplants:
     script:
         "../scripts/build_powerplants.py"
 
+if config["base_network"] == "eegk":
+    rule base_network:
+        params:
+            countries=config_provider("countries"),
+            snapshots=config_provider("snapshots"),
+            drop_leap_day=config_provider("enable", "drop_leap_day"),
+            lines=config_provider("lines"),
+            links=config_provider("links"),
+            transformers=config_provider("transformers"),
+        input:
+            eg_buses="data/entsoegridkit/buses.csv",
+            eg_lines="data/entsoegridkit/lines.csv",
+            eg_links="data/entsoegridkit/links.csv",
+            eg_converters="data/entsoegridkit/converters.csv",
+            eg_transformers="data/entsoegridkit/transformers.csv",
+            parameter_corrections="data/parameter_corrections.yaml",
+            links_p_nom="data/links_p_nom.csv",
+            links_tyndp="data/links_tyndp.csv",
+            country_shapes=resources("country_shapes.geojson"),
+            offshore_shapes=resources("offshore_shapes.geojson"),
+            europe_shape=resources("europe_shape.geojson"),
+        output:
+            base_network=resources("networks/base.nc"),
+            regions_onshore=resources("regions_onshore.geojson"),
+            regions_offshore=resources("regions_offshore.geojson"),
+        log:
+            logs("base_network.log"),
+        benchmark:
+            benchmarks("base_network")
+        threads: 1
+        resources:
+            mem_mb=1500,
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/base_network.py"
 
-rule base_network:
-    params:
-        countries=config_provider("countries"),
-        snapshots=config_provider("snapshots"),
-        drop_leap_day=config_provider("enable", "drop_leap_day"),
-        lines=config_provider("lines"),
-        links=config_provider("links"),
-        transformers=config_provider("transformers"),
-    input:
-        eg_buses="data/entsoegridkit/buses.csv",
-        eg_lines="data/entsoegridkit/lines.csv",
-        eg_links="data/entsoegridkit/links.csv",
-        eg_converters="data/entsoegridkit/converters.csv",
-        eg_transformers="data/entsoegridkit/transformers.csv",
-        parameter_corrections="data/parameter_corrections.yaml",
-        links_p_nom="data/links_p_nom.csv",
-        links_tyndp="data/links_tyndp.csv",
-        country_shapes=resources("country_shapes.geojson"),
-        offshore_shapes=resources("offshore_shapes.geojson"),
-        europe_shape=resources("europe_shape.geojson"),
-    output:
-        base_network=resources("networks/base.nc"),
-        regions_onshore=resources("regions_onshore.geojson"),
-        regions_offshore=resources("regions_offshore.geojson"),
-    log:
-        logs("base_network.log"),
-    benchmark:
-        benchmarks("base_network")
-    threads: 1
-    resources:
-        mem_mb=1500,
-    conda:
-        "../envs/environment.yaml"
-    script:
-        "../scripts/base_network.py"
+
+if config["base_network"] == "osm":
+    rule base_network:
+        params:
+            countries=config_provider("countries"),
+            snapshots=config_provider("snapshots"),
+            drop_leap_day=config_provider("enable", "drop_leap_day"),
+            lines=config_provider("lines"),
+            links=config_provider("links"),
+            transformers=config_provider("transformers"),
+        input:
+            eg_buses="data/osm/buses.csv",
+            eg_lines="data/osm/lines.csv",
+            # eg_links="data/entsoegridkit/links.csv",
+            eg_converters="data/osm/converters.csv",
+            eg_transformers="data/osm/transformers.csv",
+            # parameter_corrections="data/parameter_corrections.yaml",
+            links_p_nom="data/links_p_nom.csv",
+            links_tyndp="data/links_tyndp_osm.csv",
+            country_shapes=resources("country_shapes.geojson"),
+            offshore_shapes=resources("offshore_shapes.geojson"),
+            europe_shape=resources("europe_shape.geojson"),
+        output:
+            base_network=resources("networks/base.nc"),
+            regions_onshore=resources("regions_onshore.geojson"),
+            regions_offshore=resources("regions_offshore.geojson"),
+        log:
+            logs("base_network.log"),
+        benchmark:
+            benchmarks("base_network")
+        threads: 1
+        resources:
+            mem_mb=1500,
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/base_network_osm.py"
 
 
 rule build_shapes:
@@ -597,9 +635,6 @@ if config["osm"].get("retrieve", True):
             substations_way="data/osm/raw/{country}/substations_way_raw.json",
             substations_node="data/osm/raw/{country}/substations_node_raw.json",
             substations_relation="data/osm/raw/{country}/substations_relation_raw.json",
-            # transformers_way="data/osm/raw/{country}/transformers_way_raw.json",
-            # transformers_node="data/osm/raw/{country}/transformers_node_raw.json",
-            # route_relations="data/osm/raw/{country}/route_relations_raw.json",
         log:
             logs("retrieve_osm_data_{country}.log"),
         script:
@@ -607,21 +642,12 @@ if config["osm"].get("retrieve", True):
 
 
 rule clean_osm_data:
-    # params:
-    #     countries=config["countries"],
     input:
-        # **{
-        #     f"{country}": [f"data/osm/raw/{country}/{feature}.geojson" for feature in FEATURES]
-        #     for country in config["countries"]
-        #     },
         cables_way=[f"data/osm/raw/{country}/cables_way_raw.json" for country in config["countries"]],
         lines_way=[f"data/osm/raw/{country}/lines_way_raw.json" for country in config["countries"]],
         substations_way=[f"data/osm/raw/{country}/substations_way_raw.json" for country in config["countries"]],
         substations_node=[f"data/osm/raw/{country}/substations_node_raw.json" for country in config["countries"]],
         substations_relation=[f"data/osm/raw/{country}/substations_relation_raw.json" for country in config["countries"]],
-        # transformers_way=[f"data/osm/raw/{country}/transformers_way_raw.json" for country in config["countries"]],
-        # transformers_node=[f"data/osm/raw/{country}/transformers_node_raw.json" for country in config["countries"]],
-        # route_relations=[f"data/osm/raw/{country}/route_relations_raw.json" for country in config["countries"]],
     output:
         substations="data/osm/clean/substations.geojson",
         lines="data/osm/clean/lines.geojson",
@@ -635,6 +661,7 @@ rule build_osm_network:
     input:
         substations="data/osm/clean/substations.geojson",
         lines="data/osm/clean/lines.geojson",
+        country_shapes=resources("country_shapes.geojson"),
     output:
         lines="data/osm/lines.csv",
         converters="data/osm/converters.csv",
