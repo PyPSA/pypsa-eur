@@ -695,6 +695,9 @@ def update_config_from_wildcards(config, w, inplace=True):
         if seq_limit is not None:
             config["sector"]["co2_sequestration_potential"] = seq_limit
 
+        if "aggBuildYear" in opts:
+            config["clustering"]["build_year_aggregation"] = True
+
         # any config option can be represented in wildcard
         for o in opts:
             if o.startswith("CF+"):
