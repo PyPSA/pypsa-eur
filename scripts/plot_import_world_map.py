@@ -21,12 +21,21 @@ from _helpers import configure_logging
 from atlite.gis import ExclusionContainer, shape_availability
 from rasterio.features import geometry_mask
 from rasterio.plot import show
+from shapely.geometry import box
+
+from pypsa.plot import add_legend_patches
 
 logger = logging.getLogger(__name__)
 
 cc = coco.CountryConverter()
 
+# for EU: https://ec.europa.eu/eurostat/databrowser/view/prc_hicp_aind__custom_9900786/default/table?lang=en
+EUR_2015_TO_2020 = 1.002 * 1.017 * 1.019 * 1.015 * 1.007
+
 AREA_CRS = "ESRI:54009"
+
+ARROW_COLOR = "#b3c4ad"
+ARROW_COLOR = "#ccc"
 
 NICE_NAMES = {
     "pipeline-h2": r"H$_2$ (pipeline)",
@@ -65,6 +74,7 @@ def rename(s):
 def get_cost_composition(df, country, escs, production):
     query_str = "category == 'cost' and exporter == @country and esc in @escs"
     composition = df.query(query_str).groupby(["esc", "subcategory", "importer"]).value.min()
+    composition *= EUR_2015_TO_2020
 
     minimal = {}
     for name, group in composition.groupby("esc"):
@@ -91,7 +101,7 @@ def add_land_eligibility_example(ax, shape, glc_fn, wdpa_fn):
         wdpa = gpd.read_file(
             wdpa_fn,
             bbox=shape.to_crs(4326).geometry,
-            layer="WDPA_Oct2023_Public_shp-polygons",
+            layer="WDPA_Mar2024_Public_shp-polygons",
         ).to_crs(AREA_CRS)
         excluder.add_geometry(wdpa.geometry, buffer=1000)
 
@@ -117,11 +127,11 @@ if __name__ == "__main__":
             "plot_import_world_map",
             simpl="",
             opts="",
-            clusters="100",
-            ll="v1.5",
+            clusters="110",
+            ll="vopt",
             sector_opts="Co2L0-2190SEG-T-H-B-I-S-A-imp",
             planning_horizons="2050",
-            configfiles="../../config/config.100n-seg.yaml",
+            configfiles="../../config/config.20231025-zecm.yaml",
         )
 
     configure_logging(snakemake)
@@ -130,7 +140,7 @@ if __name__ == "__main__":
     profile_fn = snakemake.input.profiles
     gadm_fn = snakemake.input.gadm_arg[0]
     glc_fn = snakemake.input.copernicus_glc[0]
-    wdpa_fn = "/home/fneum/bwss/playgrounds/pr/pypsa-eur/resources/WDPA_Oct2023.gpkg"
+    wdpa_fn = snakemake.input.wdpa
 
     config = snakemake.config
 
@@ -166,6 +176,9 @@ if __name__ == "__main__":
     eu_countries = cc.convert(config["countries"], src="iso2", to="iso3")
     europe = world.loc[eu_countries]
 
+    bounding_box = box(-12, 33, 42, 72)
+    europe = gpd.clip(europe, bounding_box)
+
     gadm = gpd.read_file(gadm_fn, layer="ADM_ADM_1").set_index("NAME_1")
     shape = gadm.to_crs(AREA_CRS).loc[["Buenos Aires"]].geometry
 
@@ -177,6 +190,7 @@ if __name__ == "__main__":
     df["exporter"] = df.exporter.replace("", "NA")
 
     import_costs = df.query("subcategory == 'Cost per MWh delivered' and esc == 'shipping-meoh'").groupby("exporter").value.min()
+    import_costs *= EUR_2015_TO_2020
     import_costs.index = cc.convert(import_costs.index.str.split("-").str[0], src='iso2', to='iso3')
 
     import_costs.drop("RUS", inplace=True, errors="ignore")
@@ -223,7 +237,7 @@ if __name__ == "__main__":
         ax=ax,
         cmap='Greens_r',
         legend=True,
-        vmin=100,
+        vmin=110,
         vmax=150,
         legend_kwds=dict(label="Cost for methanol fuel delivered to Europe [€/MWh]", orientation="horizontal", extend='max', shrink=.6, aspect=30, pad=.01),
         missing_kwds=dict(color="#eee", label="not considered"),
@@ -233,7 +247,17 @@ if __name__ == "__main__":
         linewidth=1,
         edgecolor="black",
         ax=ax,
-        color='lavender',
+        color='#cbc7f0',
+    )
+
+    add_legend_patches(
+        ax,
+        ["#eee", "#cbc7f0"],
+        ["country not considered for export", "country in European model scope"],
+        legend_kw = dict(
+            bbox_to_anchor=(1, 0),
+            frameon=False,
+        ),
     )
 
     for spine in ax.spines.values():
@@ -267,7 +291,7 @@ if __name__ == "__main__":
         ncol=2,
         columnspacing=0.8
     )
-    ax_prof.set_xlabel("March 2013", fontsize=8)
+    ax_prof.set_xlabel("Day of March 2013", fontsize=8)
     ax_prof.set_ylabel("profile [p.u.]", fontsize=8)
     ax_prof.tick_params(axis='both', labelsize=8)
 
@@ -289,8 +313,8 @@ if __name__ == "__main__":
         xytext=(0.485, 0.72),
         xycoords='axes fraction',
         arrowprops=dict(
-        edgecolor='#555',
-        facecolor='#555',
+        edgecolor=ARROW_COLOR,
+        facecolor=ARROW_COLOR,
         linewidth=1.5,
         arrowstyle='-|>',
         connectionstyle="arc3,rad=0.2"
@@ -312,9 +336,9 @@ if __name__ == "__main__":
     ax_arg.set_title("Import costs from\nArgentina to Europe", fontsize=9)
 
     ax_arg.set_xlabel("")
-    ax_arg.set_ylim(0, 110)
-    ax_arg.set_yticks(range(0, 111, 20))
-    ax_arg.set_yticks(range(10, 111, 20), minor=True)
+    ax_arg.set_ylim(0, 120)
+    ax_arg.set_yticks(range(0, 121, 20))
+    ax_arg.set_yticks(range(10, 121, 20), minor=True)
     ax_arg.set_ylabel("€/MWh", fontsize=10)
     ax_arg.grid(axis="x")
     for spine in ax_arg.spines.values():
@@ -326,8 +350,8 @@ if __name__ == "__main__":
         xytext=(0.33, 0.2),
         xycoords='axes fraction',
         arrowprops=dict(
-            edgecolor='#555',
-            facecolor='#555',
+            edgecolor=ARROW_COLOR,
+            facecolor=ARROW_COLOR,
             linewidth=1.5,
             arrowstyle='-|>',
             connectionstyle="arc3,rad=-0.2"
@@ -345,9 +369,9 @@ if __name__ == "__main__":
     ax_sau.set_xlabel("")
     ax_sau.set_ylabel("€/MWh", fontsize=10)
     ax_sau.grid(axis="x")
-    ax_sau.set_ylim(0, 90)
-    ax_sau.set_yticks(range(0, 91, 20))
-    ax_sau.set_yticks(range(10, 91, 20), minor=True)
+    ax_sau.set_ylim(0, 100)
+    ax_sau.set_yticks(range(0, 101, 20))
+    ax_sau.set_yticks(range(10, 101, 20), minor=True)
     for spine in ax_sau.spines.values():
         spine.set_visible(False)
 
@@ -357,8 +381,8 @@ if __name__ == "__main__":
         xytext=(0.62, 0.65),
         xycoords='axes fraction',
         arrowprops=dict(
-            edgecolor='#555',
-            facecolor='#555',
+            edgecolor=ARROW_COLOR,
+            facecolor=ARROW_COLOR,
             linewidth=1.5,
             arrowstyle='-|>',
             connectionstyle="arc3,rad=0.2"
@@ -388,8 +412,8 @@ if __name__ == "__main__":
         xytext=(0.815, 0.31),
         xycoords='axes fraction',
         arrowprops=dict(
-            edgecolor='#555',
-            facecolor='#555',
+            edgecolor=ARROW_COLOR,
+            facecolor=ARROW_COLOR,
             linewidth=1.5,
             arrowstyle='-|>',
             connectionstyle="arc3,rad=0.2"
@@ -400,7 +424,7 @@ if __name__ == "__main__":
 
     ax_land = ax.inset_axes([0.315, 0.08, 0.29, 0.29])
 
-    shape.to_crs(crs.proj4_init).plot(ax=ax, color="none", edgecolor='k', linestyle=":", linewidth=1)
+    shape.to_crs(crs.proj4_init).plot(ax=ax, color="none", edgecolor=ARROW_COLOR, linestyle=":", linewidth=1)
 
     add_land_eligibility_example(ax_land, shape, glc_fn, wdpa_fn)
 
@@ -412,8 +436,8 @@ if __name__ == "__main__":
         xytext=(0.35, 0.17),
         xycoords='axes fraction',
         arrowprops=dict(
-            edgecolor='#555',
-            facecolor='#555',
+            edgecolor=ARROW_COLOR,
+            facecolor=ARROW_COLOR,
             linewidth=1.5,
             arrowstyle='-|>',
             connectionstyle="arc3,rad=0.2"

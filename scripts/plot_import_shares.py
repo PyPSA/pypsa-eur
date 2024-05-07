@@ -16,23 +16,23 @@ import pypsa
 from _helpers import configure_logging
 
 CARRIERS = {
-    "AC": "electricity",
-    "H2": "hydrogen",
-    "NH3": "ammonia",
-    "gas": "methane",
-    "methanol": "methanol",
-    "oil": "Fischer-Tropsch",
-    "steel": "steel",
+    "AC": "electricity (HVDC)",
+    "H2": "hydrogen (pipeline)",
+    "NH3": "ammonia (ship)",
+    "gas": "methane (ship)",
+    "methanol": "methanol (ship)",
+    "oil": "Fischer-Tropsch (ship)",
+    "steel": "steel (ship)",
 }
 
 COLOR_MAPPING = {
-    "electricity": "import hvdc-to-elec",
-    "hydrogen": "import pipeline-h2",
-    "ammonia": "import shipping-lnh3",
-    "methane": "import shipping-lch4",
-    "methanol": "import shipping-meoh",
-    "Fischer-Tropsch": "import shipping-ftfuel",
-    "steel": "import shipping-steel",
+    "electricity (HVDC)": "import hvdc-to-elec",
+    "hydrogen (pipeline)": "import pipeline-h2",
+    "ammonia (ship)": "import shipping-lnh3",
+    "methane (ship)": "import shipping-lch4",
+    "methanol (ship)": "import shipping-meoh",
+    "Fischer-Tropsch (ship)": "import shipping-ftfuel",
+    "steel (ship)": "import shipping-steel",
 }
 
 THRESHOLD = 1 # MWh
@@ -76,7 +76,9 @@ if __name__ == "__main__":
 
     fig, (ax, ax_mix) = plt.subplots(2, 1, figsize=(6, 5), gridspec_kw=dict(height_ratios=[5.5, 1]))
     sel = list(CARRIERS.keys())[::-1]
-    ie_rel[sel].rename(columns=CARRIERS).T.plot.barh(
+    ie_rel = ie_rel[sel].rename(columns=CARRIERS).T
+    ie_rel.index = ie_rel.index.str.split(" ").str[0]
+    ie_rel.plot.barh(
         stacked=True,
         ax=ax,
         color=['lightseagreen', 'coral']
@@ -84,7 +86,7 @@ if __name__ == "__main__":
 
     ax.set_ylabel("")
     ax.set_xlabel("domestic share [%]", fontsize=11, color='lightseagreen')
-    ax.legend(ncol=2, bbox_to_anchor=(0.35, 1.25))
+    ax.legend(ncol=2, bbox_to_anchor=(0.3, 1.25))
     ax.grid(axis="y")
     ax.set_xlim(0,100)
 
@@ -104,7 +106,7 @@ if __name__ == "__main__":
 
     ax_mix.text(total_imp * 1.1, -0.75, "TWh", va='center')
     ax_mix.text(total_imp * 1.1, 0.75, "%", va='center')
-    ax_mix.legend(ncol=4, bbox_to_anchor=(1.15, -0.3), title="")
+    ax_mix.legend(ncol=3, bbox_to_anchor=(1.18, -0.3), title="")
 
     ticks = range(10, 100, 20)
     ax.set_xticks(ticks, minor=True)

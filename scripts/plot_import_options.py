@@ -25,6 +25,9 @@ from pypsa.plot import add_legend_circles, add_legend_patches
 
 cc = coco.CountryConverter()
 
+# for EU: https://ec.europa.eu/eurostat/databrowser/view/prc_hicp_aind__custom_9900786/default/table?lang=en
+EUR_2015_TO_2020 = 1.002 * 1.017 * 1.019 * 1.015 * 1.007
+
 NICE_NAMES = {
     "pipeline-h2": r"H$_2$ (pipeline)",
     "shipping-lh2": "H$_2$ (ship)",
@@ -54,13 +57,13 @@ def create_stripplot(ic, ax):
         data=ic,
         x='esc',
         y='value',
-        alpha=0.5,
+        alpha=0.6,
         hue='exporter',
         jitter=.28,
         palette=PALETTE,
         ax=ax,
         order=order,
-        size=3.5
+        size=4
     )
     sns.violinplot(
         data=ic,
@@ -76,16 +79,21 @@ def create_stripplot(ic, ax):
         zorder=-1
     )
 
-    ax.set_ylim(0, 190)
+    ax.set_ylim(0, 200)
     ax.set_xlabel("")
     ax.set_ylabel("import cost [€/MWh]")
     ax.grid(False)
-    ax.set_yticks(np.arange(0, 200, 20))
-    ax.set_yticks(np.arange(10, 200, 20), minor=True)
+    ax.set_yticks(np.arange(0, 210, 20))
+    ax.set_yticks(np.arange(10, 210, 20), minor=True)
     ax.set_xticklabels(ax.get_xticklabels(), rotation=18, ha="right")
     handles, labels = ax.get_legend_handles_labels()
     handles.reverse()
     labels.reverse()
+    new_handles = []
+    for handle in handles:
+        handle.set_markersize(handle.get_markersize() * 2)
+        new_handles.append(handle)
+    handles = new_handles
     for x, y in minimums.items():
         ax.text(x, y - 10, str(y), ha="center", va="bottom", fontsize=9)
     for x, y in maximums.items():
@@ -128,8 +136,8 @@ if __name__ == "__main__":
         sys.exit(0)
 
     tech_colors = snakemake.config["plotting"]["tech_colors"]
-    tech_colors["lng"] = "tomato"
-    tech_colors["pipeline"] = "darksalmon"
+    tech_colors["lng"] = "#e37959"
+    tech_colors["pipeline"] = "#86cfbc"
 
     crs = ccrs.EqualEarth()
 
@@ -155,7 +163,7 @@ if __name__ == "__main__":
     h2_cost = n.generators.filter(regex="import (pipeline-h2|shipping-lh2)", axis=0)
     regions["marginal_cost"] = h2_cost.groupby(
         h2_cost.bus.map(n.buses.location)
-    ).marginal_cost.min()
+    ).marginal_cost.min() * EUR_2015_TO_2020
 
     # patch network
     n.buses.drop(n.buses.index[n.buses.carrier != "AC"], inplace=True)
@@ -170,7 +178,7 @@ if __name__ == "__main__":
 
     link_colors = pd.Series(
         n.links.index.map(
-            lambda x: "seagreen" if "import hvdc-to-elec" in x else "darkseagreen"
+            lambda x: "seagreen" if "import hvdc-to-elec" in x else "#b18ee6"
         ),
         index=n.links.index,
     )
@@ -199,15 +207,16 @@ if __name__ == "__main__":
     ic["exporter"] = ic.exporter.apply(lambda x: cc.convert(names=x, to="name_short") if x in highlighted_countries else "Other")
 
     ic["esc"] = ic.esc.map(NICE_NAMES)
+    ic["value"] *= EUR_2015_TO_2020
 
-    fig, ax = plt.subplots(subplot_kw={"projection": crs}, figsize=(14, 14))
+    fig, ax = plt.subplots(subplot_kw={"projection": crs}, figsize=(10.5, 14))
 
     n.plot(
         ax=ax,
         color_geomap={"ocean": "white", "land": "#efefef"},
         bus_sizes=bus_sizes_plain,
         bus_colors=tech_colors,
-        line_colors="darkseagreen",
+        line_colors="#b18ee6",
         line_widths=1,
         link_widths=1,
         link_colors=link_colors,
@@ -226,7 +235,7 @@ if __name__ == "__main__":
         legend=True,
         legend_kwds={
             "label": r"H$_2$ import cost [€/MWh]",
-            "shrink": 0.48,
+            "shrink": 0.53,
             "pad": 0.015,
             "aspect": 35,
         },
@@ -239,10 +248,16 @@ if __name__ == "__main__":
         "external H2": "hydrogen storage",
     }
     labels = list(names.values()) + ["HVDC import link", "internal power line", "LNG terminal", "pipeline entry"]
-    colors = [tech_colors[c] for c in names.keys()] + ["seagreen", "darkseagreen", "tomato", "darksalmon"]
+    colors = [tech_colors[c] for c in names.keys()] + ["seagreen", "#b18ee6", "#e37959", "#86cfbc"]
 
     legend_kw = dict(
-        loc=(1.2, 0.85), frameon=False, title="", ncol=2
+        loc=(0.595, 0.87),
+        frameon=True,
+        title="",
+        ncol=2,
+        framealpha=1,
+        borderpad=0.5,
+        facecolor="white",
     )
 
     add_legend_patches(
@@ -253,18 +268,21 @@ if __name__ == "__main__":
     )
 
     legend_kw = dict(
-        loc=(1.2, 0.72),
-        frameon=False,
+        loc=(0.623, 0.775),
+        frameon=True,
         title="existing gas import capacity",
         ncol=3,
         labelspacing=1.1,
+        framealpha=1,
+        borderpad=0.5,
+        facecolor="white",
     )
 
     add_legend_circles(
         ax,
         [10e3 / bus_size_factor, 50e3 / bus_size_factor, 100e3 / bus_size_factor],
         ["10 GW", "50 GW", "100 GW"],
-        patch_kw=dict(facecolor="darksalmon"),
+        patch_kw=dict(facecolor="#86cfbc"),
         legend_kw=legend_kw,
     )
 
@@ -280,11 +298,14 @@ if __name__ == "__main__":
         color='k',
     )
 
-    ax_lr = ax.inset_axes([1.2, 0.08, 0.45, 0.59])
-
-    create_stripplot(ic, ax_lr)
 
     plt.tight_layout()
 
-    for fn in snakemake.output:
+    for fn in snakemake.output.map:
+        plt.savefig(fn, bbox_inches="tight")
+
+    fig, ax_lr = plt.subplots(figsize=(3.9, 7.2))
+    create_stripplot(ic, ax_lr)
+    plt.tight_layout()
+    for fn in snakemake.output.distribution:
         plt.savefig(fn, bbox_inches="tight")
