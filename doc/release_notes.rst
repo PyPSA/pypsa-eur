@@ -184,7 +184,9 @@ Upcoming Release
 
 * Fix custom busmap read in `cluster_network`.
 
-* Added shapes to .nc file for different stages of the network object in `base_network`, `build_bus_regions`, and `cluster_network`.
+* Data on existing renewable capacities is now consistently taken from powerplantmatching (instead of being retrieved separately); the dataset has also been updated to include 2023 values.
+
+* Added shapes to .nc file for different stages of the network object in `base_network`, `simplify_network`, and `cluster_network`; the `build_bus_regions` rule is now integrated into the `base_network` rule.
 
 * Fix p_nom_min of renewables generators for myopic approach and add check of existing capacities in `add_land_use_constraint_m`.
 
