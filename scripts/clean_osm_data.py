@@ -777,7 +777,7 @@ if __name__ == "__main__":
     # Create an empty list to store the results
     results = []
 
-    logger.info("Removing linestrings within substation polygons...")
+    logger.info("Identifying and removing lines within substation polygons...")
     for index, row in tqdm(gdf_lines.iterrows(), total=len(gdf_lines)):
         line = row['geometry']  
         # Check if the LineString is within any Polygon in 'substations_df'
@@ -798,6 +798,7 @@ if __name__ == "__main__":
     # fig.add_child(m)
     # m
     gdf_lines = gdf_lines[~gdf_lines["within_substation"]]
+    logger.info(f"Removed {sum(results)} lines within substations.")
 
     filepath_lines = snakemake.output["lines"]
     # save substations output

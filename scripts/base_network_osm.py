@@ -157,7 +157,7 @@ def _load_buses_from_eg(eg_buses, europe_shape, config_elec):
     # remove all buses outside of all countries including exclusive economic zones (offshore)
     europe_shape = gpd.read_file(europe_shape).loc[0, "geometry"]
     # TODO pypsa-eur: Temporary fix: Convex hull, this is important when nodes are between countries
-    europe_shape = europe_shape.convex_hull
+    # europe_shape = europe_shape.convex_hull
 
     europe_shape_prepped = shapely.prepared.prep(europe_shape)
     buses_in_europe_b = buses[["x", "y"]].apply(
