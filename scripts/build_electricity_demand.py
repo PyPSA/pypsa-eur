@@ -129,7 +129,7 @@ def copy_timeslice(load, cntry, start, stop, delta, fn_load=None):
             load.loc[start:stop, cntry] = load.loc[
                 start - delta : stop - delta, cntry
             ].values
-        elif fn_load is not None:
+        elif fn_load is not None and cntry in load:
             duration = pd.date_range(freq="h", start=start - delta, end=stop - delta)
             load_raw = load_timeseries(fn_load, duration, [cntry])
             load.loc[start:stop, cntry] = load_raw.loc[
