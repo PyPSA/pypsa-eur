@@ -539,7 +539,7 @@ def update_config_from_wildcards(config, w, inplace=True):
     if w.get("opts"):
         opts = w.opts.split("-")
 
-        if nhours := get_opt(opts, r"^\d+(h|seg)$"):
+        if nhours := get_opt(opts, r"^\d+(h|seg)$") and not config["clustering"]["temporal"]["resolution_elec"]:
             config["clustering"]["temporal"]["resolution_elec"] = nhours
 
         co2l_enable, co2l_value = find_opt(opts, "Co2L")
@@ -624,7 +624,7 @@ def update_config_from_wildcards(config, w, inplace=True):
         if "SAFE" in opts:
             config["solving"]["constraints"]["SAFE"] = True
 
-        if nhours := get_opt(opts, r"^\d+(h|sn|seg)$"):
+        if nhours := get_opt(opts, r"^\d+(h|sn|seg)$") and not config["clustering"]["temporal"]["resolution_sector"]:
             config["clustering"]["temporal"]["resolution_sector"] = nhours
 
         if "decentral" in opts:
