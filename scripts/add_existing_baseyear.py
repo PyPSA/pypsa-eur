@@ -618,21 +618,19 @@ def add_heating_capacities_installed_before_baseyear(
             )
 
 
-def add_ocgt_retro(n, baseyear, start):
+def add_ocgt_retro(n, baseyear, start, cost, efficiency):
     """
     Function to add OCGT H2 retrofitting of existing plants.
     """
     logger.info("Add OCGT H2 retrofitting.")
-    # repurposing cost of OCGT gas to H2 in % investment cost in EUR/MW
-    # source: Christidis et al (2023) - H2-Ready-Gaskraftwerke, Table 3
-    # https://reiner-lemoine-institut.de/wp-content/uploads/2023/11/RLI-Studie-H2-ready_DE.pdf
-    retro_factor_ocgt = 0.15
-    efficiency_ocgt = 0.39
+    
+    retro_factor_ocgt = cost
+    efficiency_ocgt = efficiency
 
     # existing OCGT gas plants
     ocgt_i = n.links.query("carrier == 'OCGT' and ~p_nom_extendable and p_nom > 1e-3")
     # only allow the retrofitting of OCGT plants from a certain year on
-    ocgt_i = ocgt_i.loc[ocgt_i.index.str[-4:].astype(int) >= int(start)].index
+    ocgt_i = ocgt_i.loc[ocgt_i.build_year >= start].index
     if ocgt_i.empty:
         logger.info("No more OCGT retrofitting potential.")
         return
@@ -669,13 +667,13 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "add_existing_baseyear",
-            configfiles="config/test/config.myopic.yaml",
+            configfiles="config/config.default.yaml",
             simpl="",
-            clusters="37",
-            ll="v1.0",
+            clusters="20",
+            ll="v1.5",
             opts="",
-            sector_opts="8760-T-H-B-I-A-dist1",
-            planning_horizons=2020,
+            sector_opts="none",
+            planning_horizons=2030,
         )
 
     configure_logging(snakemake)
@@ -737,10 +735,12 @@ if __name__ == "__main__":
 
     if snakemake.params.H2_OCGT_retrofit:
         # only enable H2 OCGT from a certain year on
-        add_ocgt_retro(n, baseyear, snakemake.params.H2_retrofit_start)
+        add_ocgt_retro(n, baseyear, snakemake.params.H2_retrofit_start, snakemake.params.H2_retrofit_cost, snakemake.params.H2_retrofit_efficiency)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
 
     sanitize_carriers(n, snakemake.config)
 
     n.export_to_netcdf(snakemake.output[0])
+
+# %%

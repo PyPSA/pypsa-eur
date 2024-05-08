@@ -2,44 +2,6 @@
 #
 # SPDX-License-Identifier: MIT
 
-
-rule build_existing_heating_distribution:
-    params:
-        baseyear=config["scenario"]["planning_horizons"][0],
-        sector=config["sector"],
-        existing_capacities=config["existing_capacities"],
-    input:
-        existing_heating="data/existing_infrastructure/existing_heating_raw.csv",
-        clustered_pop_layout=resources("pop_layout_elec_s{simpl}_{clusters}.csv"),
-        clustered_pop_energy_layout=resources(
-            "pop_weighted_energy_totals_s{simpl}_{clusters}.csv"
-        ),
-        district_heat_share=resources(
-            "district_heat_share_elec_s{simpl}_{clusters}_{planning_horizons}.csv"
-        ),
-    output:
-        existing_heating_distribution=resources(
-            "existing_heating_distribution_elec_s{simpl}_{clusters}_{planning_horizons}.csv"
-        ),
-    wildcard_constraints:
-        planning_horizons=config["scenario"]["planning_horizons"][0],  #only applies to baseyear
-    threads: 1
-    resources:
-        mem_mb=2000,
-    log:
-        logs(
-            "build_existing_heating_distribution_elec_s{simpl}_{clusters}_{planning_horizons}.log"
-        ),
-    benchmark:
-        benchmarks(
-            "build_existing_heating_distribution/elec_s{simpl}_{clusters}_{planning_horizons}"
-        )
-    conda:
-        "../envs/environment.yaml"
-    script:
-        "../scripts/build_existing_heating_distribution.py"
-
-
 rule add_existing_baseyear:
     params:
         baseyear=config_provider("scenario", "planning_horizons", 0),
@@ -48,6 +10,8 @@ rule add_existing_baseyear:
         costs=config_provider("costs"),
         H2_OCGT_retrofit=config_provider("electricity", "H2_OCGT_retrofit", "enable"),
         H2_retrofit_start=config_provider("electricity", "H2_OCGT_retrofit", "year"),
+        H2_retrofit_cost=config_provider("electricity", "H2_OCGT_retrofit", "cost"),
+        H2_retrofit_efficiency=config_provider("electricity", "H2_OCGT_retrofit", "efficiency"),
     input:
         network=RESULTS
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
@@ -113,6 +77,8 @@ rule add_brownfield:
         carriers=config_provider("electricity", "renewable_carriers"),
         H2_OCGT_retrofit=config_provider("electricity", "H2_OCGT_retrofit", "enable"),
         H2_retrofit_start=config_provider("electricity", "H2_OCGT_retrofit", "year"),
+        H2_retrofit_cost=config_provider("electricity", "H2_OCGT_retrofit", "cost"),
+        H2_retrofit_efficiency=config_provider("electricity", "H2_OCGT_retrofit", "efficiency"),
     input:
         unpack(input_profile_tech_brownfield),
         simplify_busmap=resources("busmap_elec_s{simpl}.csv"),

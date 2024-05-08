@@ -140,6 +140,11 @@ electricity:
   H2_OCGT_retrofit:
     enable: false
     year: 2020
+    retro_factor_ocgt: 0.15 # repurposing cost of OCGT gas to H2 in % investment cost in EUR/MW source: Christidis et al (2023) - H2-Ready-Gaskraftwerke, Table 3 https://reiner-lemoine-institut.de/wp-content/uploads/2023/11/RLI-Studie-H2-ready_DE.pdf
+    efficiency_ocgt: 0.39 #Tom expects lower efficinecy to 35%
+    # we should add CCGT plants as well
+    # we should add CHP plants as well
+    # experiment to see if it's actually used
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#atlite
 atlite:
