@@ -623,7 +623,7 @@ def add_ocgt_retro(n, baseyear, start, cost, efficiency):
     Function to add OCGT H2 retrofitting of existing plants.
     """
     logger.info("Add OCGT H2 retrofitting.")
-    
+
     retro_factor_ocgt = cost
     efficiency_ocgt = efficiency
 
@@ -735,7 +735,13 @@ if __name__ == "__main__":
 
     if snakemake.params.H2_OCGT_retrofit:
         # only enable H2 OCGT from a certain year on
-        add_ocgt_retro(n, baseyear, snakemake.params.H2_retrofit_start, snakemake.params.H2_retrofit_cost, snakemake.params.H2_retrofit_efficiency)
+        add_ocgt_retro(
+            n,
+            baseyear,
+            snakemake.params.H2_retrofit_start,
+            snakemake.params.H2_retrofit_cost,
+            snakemake.params.H2_retrofit_efficiency,
+        )
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
 

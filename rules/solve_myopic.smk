@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
+
 rule add_existing_baseyear:
     params:
         baseyear=config_provider("scenario", "planning_horizons", 0),
@@ -11,7 +12,9 @@ rule add_existing_baseyear:
         H2_OCGT_retrofit=config_provider("electricity", "H2_OCGT_retrofit", "enable"),
         H2_retrofit_start=config_provider("electricity", "H2_OCGT_retrofit", "year"),
         H2_retrofit_cost=config_provider("electricity", "H2_OCGT_retrofit", "cost"),
-        H2_retrofit_efficiency=config_provider("electricity", "H2_OCGT_retrofit", "efficiency"),
+        H2_retrofit_efficiency=config_provider(
+            "electricity", "H2_OCGT_retrofit", "efficiency"
+        ),
     input:
         network=RESULTS
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
@@ -78,7 +81,9 @@ rule add_brownfield:
         H2_OCGT_retrofit=config_provider("electricity", "H2_OCGT_retrofit", "enable"),
         H2_retrofit_start=config_provider("electricity", "H2_OCGT_retrofit", "year"),
         H2_retrofit_cost=config_provider("electricity", "H2_OCGT_retrofit", "cost"),
-        H2_retrofit_efficiency=config_provider("electricity", "H2_OCGT_retrofit", "efficiency"),
+        H2_retrofit_efficiency=config_provider(
+            "electricity", "H2_OCGT_retrofit", "efficiency"
+        ),
     input:
         unpack(input_profile_tech_brownfield),
         simplify_busmap=resources("busmap_elec_s{simpl}.csv"),

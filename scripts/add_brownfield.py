@@ -263,7 +263,13 @@ if __name__ == "__main__":
     add_brownfield(n, n_p, year)
 
     if snakemake.params.H2_OCGT_retrofit:
-        add_ocgt_retro(n, year, snakemake.params.H2_retrofit_start, snakemake.params.H2_retrofit_cost, snakemake.params.H2_retrofit_efficiency)
+        add_ocgt_retro(
+            n,
+            year,
+            snakemake.params.H2_retrofit_start,
+            snakemake.params.H2_retrofit_cost,
+            snakemake.params.H2_retrofit_efficiency,
+        )
 
     disable_grid_expansion_if_limit_hit(n)
 
