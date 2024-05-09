@@ -1760,7 +1760,7 @@ def add_heat(n, costs):
     for name in heat_systems:
         name_type = "central" if name == "urban central" else "decentral"
 
-        if name == "urban central":
+        if name == "urban central" and not options["central_heat_everywhere"]:
             nodes = dist_fraction.index[dist_fraction > 0]
         else:
             nodes = pop_layout.index

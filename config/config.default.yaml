@@ -521,6 +521,7 @@ sector:
   dac: true
   co2_vent: false
   central_heat_vent: false
+  central_heat_everywhere: false
   allam_cycle: false
   hydrogen_fuel_cell: true
   hydrogen_turbine: false
