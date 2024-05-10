@@ -7,6 +7,7 @@ options,,,
 -- rolling_horizon,bool,"{'true','false'}","Whether to optimize the network in a rolling horizon manner, where the snapshot range is split into slices of size `horizon` which are solved consecutively."
 -- seed,--,int,Random seed for increased deterministic behaviour.
 -- custom_extra_functionality,--,str,Path to a Python file with custom extra functionality code to be injected into the solving rules of the workflow relative to ``rules`` directory.
+-- io_api,string,"{'lp','mps','direct'}",Passed to linopy and determines the API used to communicate with the solver. With the ``'lp'`` and ``'mps'`` options linopy passes a file to the solver; with the ``'direct'`` option (only supported for HIGHS and Gurobi) linopy uses an in-memory python API resulting in better performance.
 -- track_iterations,bool,"{'true','false'}",Flag whether to store the intermediate branch capacities and objective function values are recorded for each iteration in ``network.lines['s_nom_opt_X']`` (where ``X`` labels the iteration)
 -- min_iterations,--,int,Minimum number of solving iterations in between which resistance and reactence (``x/r``) are updated for branches according to ``s_nom_opt`` of the previous run.
 -- max_iterations,--,int,Maximum number of solving iterations in between which resistance and reactence (``x/r``) are updated for branches according to ``s_nom_opt`` of the previous run.
@@ -19,7 +20,7 @@ constraints ,,,
 -- BAU,bool,"{'true','false'}",Add a per-``carrier`` minimal overall capacity; i.e. at least ``40GW`` of ``OCGT`` in Europe; configured in ``electricity: BAU_mincapacities``
 -- SAFE,bool,"{'true','false'}",Add a capacity reserve margin of a certain fraction above the peak demand to which renewable generators and storage do *not* contribute. Ignores network.
 solver,,,
--- name,--,"One of {'gurobi', 'cplex', 'cbc', 'glpk', 'ipopt'}; potentially more possible",Solver to use for optimisation problems in the workflow; e.g. clustering and linear optimal power flow.
+-- name,--,"One of {'gurobi', 'cplex', 'highs', 'cbc', 'glpk'}; potentially more possible",Solver to use for optimisation problems in the workflow; e.g. clustering and linear optimal power flow.
 -- options,--,Key listed under ``solver_options``.,Link to specific parameter settings.
 solver_options,,dict,Dictionaries with solver-specific parameter settings.
 mem,MB,int,Estimated maximum memory requirement for solving networks.

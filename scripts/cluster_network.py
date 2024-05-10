@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
@@ -122,17 +122,21 @@ Exemplary unsolved network clustered to 37 nodes:
 """
 
 import logging
+import os
 import warnings
 from functools import reduce
 
 import geopandas as gpd
+import linopy
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import pyomo.environ as po
 import pypsa
 import seaborn as sns
-from _helpers import configure_logging, update_p_nom_max
+from _helpers import configure_logging, set_scenario_config, update_p_nom_max
+from add_electricity import load_costs
+from base_network import append_bus_shapes
+from packaging.version import Version, parse
 from pypsa.clustering.spatial import (
     busmap_by_greedy_modularity,
     busmap_by_hac,
@@ -140,12 +144,10 @@ from pypsa.clustering.spatial import (
     get_clustering_from_busmap,
 )
 
+PD_GE_2_2 = parse(pd.__version__) >= Version("2.2")
+
 warnings.filterwarnings(action="ignore", category=UserWarning)
-
-from add_electricity import load_costs
-
 idx = pd.IndexSlice
-
 logger = logging.getLogger(__name__)
 
 
@@ -217,7 +219,7 @@ def get_feature_for_hac(n, buses_i=None, feature=None):
     return feature_data
 
 
-def distribute_clusters(n, n_clusters, focus_weights=None, solver_name="cbc"):
+def distribute_clusters(n, n_clusters, focus_weights=None, solver_name="scip"):
     """
     Determine the number of clusters per country.
     """
@@ -230,7 +232,7 @@ def distribute_clusters(n, n_clusters, focus_weights=None, solver_name="cbc"):
         .pipe(normed)
     )
 
-    N = n.buses.groupby(["country", "sub_network"]).size()
+    N = n.buses.groupby(["country", "sub_network"]).size()[L.index]
 
     assert (
         n_clusters >= len(N) and n_clusters <= N.sum()
@@ -257,31 +259,22 @@ def distribute_clusters(n, n_clusters, focus_weights=None, solver_name="cbc"):
         L.sum(), 1.0, rtol=1e-3
     ), f"Country weights L must sum up to 1.0 when distributing clusters. Is {L.sum()}."
 
-    m = po.ConcreteModel()
-
-    def n_bounds(model, *n_id):
-        return (1, N[n_id])
-
-    m.n = po.Var(list(L.index), bounds=n_bounds, domain=po.Integers)
-    m.tot = po.Constraint(expr=(po.summation(m.n) == n_clusters))
-    m.objective = po.Objective(
-        expr=sum((m.n[i] - L.loc[i] * n_clusters) ** 2 for i in L.index),
-        sense=po.minimize,
+    m = linopy.Model()
+    clusters = m.add_variables(
+        lower=1, upper=N, coords=[L.index], name="n", integer=True
     )
-
-    opt = po.SolverFactory(solver_name)
-    if solver_name == "appsi_highs" or not opt.has_capability("quadratic_objective"):
-        logger.warning(
-            f"The configured solver `{solver_name}` does not support quadratic objectives. Falling back to `ipopt`."
+    m.add_constraints(clusters.sum() == n_clusters, name="tot")
+    # leave out constant in objective (L * n_clusters) ** 2
+    m.objective = (clusters * clusters - 2 * clusters * L * n_clusters).sum()
+    if solver_name == "gurobi":
+        logging.getLogger("gurobipy").propagate = False
+    elif solver_name not in ["scip", "cplex", "xpress", "copt", "mosek"]:
+        logger.info(
+            f"The configured solver `{solver_name}` does not support quadratic objectives. Falling back to `scip`."
         )
-        opt = po.SolverFactory("ipopt")
-
-    results = opt.solve(m)
-    assert (
-        results["Solver"][0]["Status"] == "ok"
-    ), f"Solver returned non-optimally: {results}"
-
-    return pd.Series(m.n.get_values(), index=L.index).round().astype(int)
+        solver_name = "scip"
+    m.solve(solver_name=solver_name)
+    return m.solution["n"].to_series().astype(int)
 
 
 def busmap_for_n_clusters(
@@ -373,9 +366,11 @@ def busmap_for_n_clusters(
                 f"`algorithm` must be one of 'kmeans' or 'hac'. Is {algorithm}."
             )
 
+    compat_kws = dict(include_groups=False) if PD_GE_2_2 else {}
+
     return (
         n.buses.groupby(["country", "sub_network"], group_keys=False)
-        .apply(busmap_for_country)
+        .apply(busmap_for_country, **compat_kws)
         .squeeze()
         .rename("busmap")
     )
@@ -388,7 +383,7 @@ def clustering_for_n_clusters(
     aggregate_carriers=None,
     line_length_factor=1.25,
     aggregation_strategies=dict(),
-    solver_name="cbc",
+    solver_name="scip",
     algorithm="hac",
     feature=None,
     extended_link_costs=0,
@@ -434,20 +429,27 @@ def clustering_for_n_clusters(
     return clustering
 
 
-def cluster_regions(busmaps, input=None, output=None):
+def cluster_regions(busmaps, regions):
+    """
+    Cluster regions based on busmaps and save the results to a file and to the
+    network.
+
+    Parameters:
+    - busmaps (list): A list of busmaps used for clustering.
+    - which (str): The type of regions to cluster.
+
+    Returns:
+    None
+    """
     busmap = reduce(lambda x, y: x.map(y), busmaps[1:], busmaps[0])
-
-    for which in ("regions_onshore", "regions_offshore"):
-        regions = gpd.read_file(getattr(input, which))
-        regions = regions.reindex(columns=["name", "geometry"]).set_index("name")
-        regions_c = regions.dissolve(busmap)
-        regions_c.index.name = "name"
-        regions_c = regions_c.reset_index()
-        regions_c.to_file(getattr(output, which))
+    regions = regions.reindex(columns=["name", "geometry"]).set_index("name")
+    regions_c = regions.dissolve(busmap)
+    regions_c.index.name = "name"
+    return regions_c.reset_index()
 
 
-def plot_busmap_for_n_clusters(n, n_clusters, fn=None):
-    busmap = busmap_for_n_clusters(n, n_clusters)
+def plot_busmap_for_n_clusters(n, n_clusters, solver_name="scip", fn=None):
+    busmap = busmap_for_n_clusters(n, n_clusters, solver_name)
     cs = busmap.unique()
     cr = sns.color_palette("hls", len(cs))
     n.plot(bus_colors=busmap.map(dict(zip(cs, cr))))
@@ -460,12 +462,12 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("cluster_network", simpl="", clusters="37")
+        snakemake = mock_snakemake("cluster_network", simpl="", clusters="40")
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     params = snakemake.params
     solver_name = snakemake.config["solving"]["solver"]["name"]
-    solver_name = "appsi_highs" if solver_name == "highs" else solver_name
 
     n = pypsa.Network(snakemake.input.network)
 
@@ -477,7 +479,7 @@ if __name__ == "__main__":
     conventional_carriers = set(params.conventional_carriers)
     if snakemake.wildcards.clusters.endswith("m"):
         n_clusters = int(snakemake.wildcards.clusters[:-1])
-        aggregate_carriers = params.conventional_carriers & aggregate_carriers
+        aggregate_carriers = conventional_carriers & aggregate_carriers
     elif snakemake.wildcards.clusters.endswith("c"):
         n_clusters = int(snakemake.wildcards.clusters[:-1])
         aggregate_carriers = aggregate_carriers - conventional_carriers
@@ -500,7 +502,9 @@ if __name__ == "__main__":
                     gens.efficiency, bins=[0, low, high, 1], labels=labels
                 ).astype(str)
                 carriers += [f"{c} {label} efficiency" for label in labels]
-                n.generators.carrier.update(gens.carrier + " " + suffix + " efficiency")
+                n.generators.update(
+                    {"carrier": gens.carrier + " " + suffix + " efficiency"}
+                )
         aggregate_carriers = carriers
 
     if n_clusters == len(n.buses):
@@ -523,8 +527,8 @@ if __name__ == "__main__":
         custom_busmap = params.custom_busmap
         if custom_busmap:
             custom_busmap = pd.read_csv(
-                snakemake.input.custom_busmap, index_col=0, squeeze=True
-            )
+                snakemake.input.custom_busmap, index_col=0
+            ).squeeze()
             custom_busmap.index = custom_busmap.index.astype(str)
             logger.info(f"Imported custom busmap from {snakemake.input.custom_busmap}")
 
@@ -542,21 +546,25 @@ if __name__ == "__main__":
             params.focus_weights,
         )
 
-    update_p_nom_max(clustering.network)
+    nc = clustering.network
+    update_p_nom_max(nc)
 
     if params.cluster_network.get("consider_efficiency_classes"):
         labels = [f" {label} efficiency" for label in ["low", "medium", "high"]]
-        nc = clustering.network
         nc.generators["carrier"] = nc.generators.carrier.replace(labels, "", regex=True)
 
-    clustering.network.meta = dict(
-        snakemake.config, **dict(wildcards=dict(snakemake.wildcards))
-    )
-    clustering.network.export_to_netcdf(snakemake.output.network)
     for attr in (
         "busmap",
         "linemap",
     ):  # also available: linemap_positive, linemap_negative
         getattr(clustering, attr).to_csv(snakemake.output[attr])
 
-    cluster_regions((clustering.busmap,), snakemake.input, snakemake.output)
+    nc.shapes = n.shapes.copy()
+    for which in ["regions_onshore", "regions_offshore"]:
+        regions = gpd.read_file(snakemake.input[which])
+        clustered_regions = cluster_regions((clustering.busmap,), regions)
+        clustered_regions.to_file(snakemake.output[which])
+        append_bus_shapes(nc, clustered_regions, type=which.split("_")[1])
+
+    nc.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
+    nc.export_to_netcdf(snakemake.output.network)

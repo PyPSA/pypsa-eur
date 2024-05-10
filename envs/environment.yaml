@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
@@ -20,13 +20,12 @@ dependencies:
 - openpyxl!=3.1.1
 - pycountry
 - seaborn
-  # snakemake 8 introduced a number of breaking changes which the workflow has yet to be made compatible with
-- snakemake-minimal>=7.7.0,<8.0.0
+- snakemake-minimal>=8.11
 - memory_profiler
 - yaml
 - pytables
 - lxml
-- powerplantmatching>=0.5.5
+- powerplantmatching>=0.5.13
 - numpy
 - pandas>=2.1
 - geopandas>=0.11.0
@@ -35,8 +34,9 @@ dependencies:
 - netcdf4
 - networkx
 - scipy
+- glpk
 - shapely>=2.0
-- pyomo
+- pyscipopt
 - matplotlib
 - proj
 - fiona
@@ -47,7 +47,7 @@ dependencies:
 - tabula-py
 - pyxlsb
 - graphviz
-- ipopt
+- pre-commit
 
   # Keep in conda environment when calling ipython
 - ipython
@@ -60,3 +60,7 @@ dependencies:
 
 - pip:
   - tsam>=2.3.1
+  - snakemake-storage-plugin-http
+  - snakemake-executor-plugin-slurm
+  - snakemake-executor-plugin-cluster-generic
+  - highspy

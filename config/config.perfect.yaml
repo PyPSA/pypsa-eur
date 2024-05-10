@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: CC0-1.0
 run:
@@ -19,13 +19,16 @@ scenario:
   opts:
   - ''
   sector_opts:
-  - 1p5-4380H-T-H-B-I-A-solar+p3-dist1
-  - 1p7-4380H-T-H-B-I-A-solar+p3-dist1
-  - 2p0-4380H-T-H-B-I-A-solar+p3-dist1
+  - 1p5-4380H-T-H-B-I-A-dist1
+  - 1p7-4380H-T-H-B-I-A-dist1
+  - 2p0-4380H-T-H-B-I-A-dist1
   planning_horizons:
   - 2020
+  - 2025
   - 2030
+  - 2035
   - 2040
+  - 2045
   - 2050
 
 

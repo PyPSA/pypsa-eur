@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2023-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -11,22 +11,25 @@ import json
 
 import geopandas as gpd
 import pandas as pd
+from _helpers import set_scenario_config
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "build_shipping_demand_per_node",
+            "build_shipping_demand",
             simpl="",
             clusters=48,
         )
+    set_scenario_config(snakemake)
 
     scope = gpd.read_file(snakemake.input.scope).geometry[0]
     regions = gpd.read_file(snakemake.input.regions).set_index("name")
-    demand = pd.read_csv(snakemake.input.demand, index_col=0)[
+    demand = pd.read_csv(snakemake.input.demand, index_col=[0, 1])[
         "total international navigation"
     ]
+    demand = demand.xs(snakemake.params.energy_totals_year, level=1)
 
     # read port data into GeoDataFrame
     with open(snakemake.input.ports, "r", encoding="latin_1") as f:

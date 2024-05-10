@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2021-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2021-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -9,12 +9,14 @@ using data from JRC ENSPRESO.
 
 import logging
 
-logger = logging.getLogger(__name__)
 import geopandas as gpd
 import numpy as np
 import pandas as pd
 
+logger = logging.getLogger(__name__)
 AVAILABLE_BIOMASS_YEARS = [2010, 2020, 2030, 2040, 2050]
+
+from _helpers import configure_logging, set_scenario_config
 
 
 def build_nuts_population_data(year=2013):
@@ -132,14 +134,14 @@ def disaggregate_nuts0(bio):
     pop = build_nuts_population_data()
 
     # get population in nuts2
-    pop_nuts2 = pop.loc[pop.index.str.len() == 4]
+    pop_nuts2 = pop.loc[pop.index.str.len() == 4].copy()
     by_country = pop_nuts2.total.groupby(pop_nuts2.ct).sum()
-    pop_nuts2.loc[:, "fraction"] = pop_nuts2.total / pop_nuts2.ct.map(by_country)
+    pop_nuts2["fraction"] = pop_nuts2.total / pop_nuts2.ct.map(by_country)
 
     # distribute nuts0 data to nuts2 by population
     bio_nodal = bio.loc[pop_nuts2.ct]
     bio_nodal.index = pop_nuts2.index
-    bio_nodal = bio_nodal.mul(pop_nuts2.fraction, axis=0)
+    bio_nodal = bio_nodal.mul(pop_nuts2.fraction, axis=0).astype(float)
 
     # update inplace
     bio.update(bio_nodal)
@@ -220,6 +222,9 @@ if __name__ == "__main__":
             clusters="5",
             planning_horizons=2050,
         )
+
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     overnight = snakemake.config["foresight"] == "overnight"
     params = snakemake.params.biomass
