@@ -9,6 +9,8 @@ Release Notes
 
 Upcoming Release
 ================
+* Add floating wind technology for water depths below 60m
+
 * Group existing capacities to the earlier grouping_year for consistency with optimized capacities.
 
 * bugfix: installed heating capacities were 5% lower than existing heating capacities
