@@ -1866,12 +1866,15 @@ def add_heat(n, costs):
             heat_dsm_profile = heat_dsm_profile * e_nom / e_nom.max()
             e_nom = e_nom.max()
 
+            tes_time_constant_days = options["tes_tau"][name_type]
+
             n.madd(
                 "Store",
                 nodes,
                 suffix=f" {name} heat flexibility",
                 bus=nodes + f" {name} heat",
                 carrier="residential heating flexibility",
+                standing_loss=1 - np.exp(-1 / 24 / tes_time_constant_days),
                 e_cyclic=True,
                 e_nom=e_nom,
                 e_max_pu=heat_dsm_profile,

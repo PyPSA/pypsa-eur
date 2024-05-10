@@ -14,11 +14,12 @@ import xarray as xr
 from _helpers import generate_periodic_profiles, get_snapshots, set_scenario_config
 
 
-def heat_dsm_profile(snapshots, nodes, options):
+def heat_dsm_profile(nodes, options):
 
     weekly_profile = np.ones((24 * 7))
-    weekly_profile[
-        (np.arange(0, 7, 1) * 24 + options["residential_heat_restriction_time"])
+    for i in options["residential_heat_restriction_time"]:
+        weekly_profile[
+        (np.arange(0, 7, 1) * 24 + int(i))
     ] = 0
 
     dsm_profile = generate_periodic_profiles(
@@ -77,7 +78,7 @@ if __name__ == "__main__":
 
             if sector == "residential":
                 dsm_profile[f"{sector} {use}"] = heat_dsm_profile(
-                    snapshots, daily_space_heat_demand.columns, options
+                    daily_space_heat_demand.columns, options
                 )
 
         else:
