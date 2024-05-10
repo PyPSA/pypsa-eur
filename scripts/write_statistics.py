@@ -8,7 +8,11 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
 import seaborn as sns
-from _helpers import configure_logging
+from _helpers import (
+    configure_logging,
+    set_scenario_config,
+    update_config_from_wildcards,
+)
 from pypsa.statistics import get_carrier
 
 
@@ -47,14 +51,16 @@ if __name__ == "__main__":
             "save_statistics_csv",
             simpl="",
             ll="v1.5",
-            clusters="5",
+            clusters="37",
             opts="",
-            sector_opts="24h-T-H-B-I-A-dist1",
-            planning_horizons="2040",
+            sector_opts="",
+            planning_horizons="2050",
             country="all",
             carrier="electricity",
         )
-    # configure_logging(snakemake)
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
+    update_config_from_wildcards(snakemake.config, snakemake.wildcards)
     config = snakemake.config
 
     n = pypsa.Network(snakemake.input.network)
