@@ -52,7 +52,7 @@ Inputs
   CORINE land cover, see `Annex 1 of the technical documentation
   <https://publications.jrc.ec.europa.eu/repository/bitstream/JRC124621/technical_report_luisa_basemap_2018_v7_final.pdf>`_.
 
-- ``data/bundle/GEBCO_2014_2D.nc``: A `bathymetric
+- ``data/bundle/gebco/GEBCO_2014_2D.nc``: A `bathymetric
   <https://en.wikipedia.org/wiki/Bathymetry>`_ data set with a global terrain
   model for ocean and land at 15 arc-second intervals by the `General
   Bathymetric Chart of the Oceans (GEBCO)

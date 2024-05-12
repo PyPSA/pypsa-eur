@@ -34,8 +34,7 @@ configuration, execute
 
     snakemake -call results/test-elec/networks/elec_s_6_ec_lcopt_Co2L-24H.nc --configfile config/test/config.electricity.yaml
 
-This configuration is set to download a reduced data set via the rules :mod:`retrieve_databundle`,
-:mod:`retrieve_natura_raster`, :mod:`retrieve_cutout`.
+This configuration is set to download a reduced cutout via the rule :mod:`retrieve_cutout`.
 For more information on the data dependencies of PyPSA-Eur, continue reading :ref:`data`.
 
 How to configure runs?
@@ -133,82 +132,75 @@ This triggers a workflow of multiple preceding jobs that depend on each rule's i
         graph[bgcolor=white, margin=0];
         node[shape=box, style=rounded, fontname=sans,                 fontsize=10, penwidth=2];
         edge[penwidth=2, color=grey];
-            0[label = "solve_network", color = "0.24 0.6 0.85", style="rounded"];
-            1[label = "prepare_network\nll: vopt\nopts: Co2L-3H", color = "0.10 0.6 0.85", style="rounded"];
-            2[label = "add_extra_components", color = "0.33 0.6 0.85", style="rounded"];
-            3[label = "cluster_network\nclusters: 128", color = "0.59 0.6 0.85", style="rounded"];
-            4[label = "simplify_network\nsimpl: ", color = "0.18 0.6 0.85", style="rounded"];
-            5[label = "add_electricity", color = "0.48 0.6 0.85", style="rounded"];
-            6[label = "build_renewable_profiles\ntechnology: solar", color = "0.29 0.6 0.85", style="rounded"];
-            7[label = "base_network", color = "0.30 0.6 0.85", style="rounded"];
-            8[label = "build_shapes", color = "0.61 0.6 0.85", style="rounded"];
-            9[label = "retrieve_databundle", color = "0.06 0.6 0.85", style="rounded"];
-            10[label = "retrieve_natura_raster", color = "0.03 0.6 0.85", style="rounded"];
-            11[label = "retrieve_cutout\ncutout: europe-2013-sarah", color = "0.50 0.6 0.85", style="rounded"];
-            12[label = "build_renewable_profiles\ntechnology: onwind", color = "0.29 0.6 0.85", style="rounded"];
-            13[label = "retrieve_cutout\ncutout: europe-2013-era5", color = "0.50 0.6 0.85", style="rounded"];
-            14[label = "build_renewable_profiles\ntechnology: offwind-ac", color = "0.29 0.6 0.85", style="rounded"];
-            15[label = "build_ship_raster", color = "0.16 0.6 0.85", style="rounded"];
-            16[label = "retrieve_ship_raster", color = "0.53 0.6 0.85", style="rounded"];
-            17[label = "build_renewable_profiles\ntechnology: offwind-dc", color = "0.29 0.6 0.85", style="rounded"];
-            18[label = "build_hydro_profile", color = "0.47 0.6 0.85", style="rounded"];
-            19[label = "retrieve_cost_data\nyear: 2030", color = "0.21 0.6 0.85", style="rounded"];
-            20[label = "build_powerplants", color = "0.56 0.6 0.85", style="rounded"];
-            21[label = "build_electricity_demand", color = "0.54 0.6 0.85", style="rounded"];
-            22[label = "retrieve_electricity_demand", color = "0.34 0.6 0.85", style="rounded"];
-            23[label = "retrieve_synthetic_electricity_demand", color = "0.65 0.6 0.85", style="rounded"];
+            0[label = "solve_network", color = "0.38 0.6 0.85", style="rounded"];
+            1[label = "prepare_network\nll: copt\nopts: Co2L-24H", color = "0.53 0.6 0.85", style="rounded"];
+            2[label = "add_extra_components", color = "0.01 0.6 0.85", style="rounded"];
+            3[label = "cluster_network\nclusters: 6", color = "0.03 0.6 0.85", style="rounded"];
+            4[label = "simplify_network\nsimpl: ", color = "0.42 0.6 0.85", style="rounded"];
+            5[label = "add_electricity", color = "0.10 0.6 0.85", style="rounded"];
+            6[label = "build_renewable_profiles\ntechnology: solar", color = "0.50 0.6 0.85", style="rounded"];
+            7[label = "base_network", color = "0.22 0.6 0.85", style="rounded"];
+            8[label = "build_shapes", color = "0.44 0.6 0.85", style="rounded"];
+            9[label = "retrieve_databundle", color = "0.29 0.6 0.85", style="rounded"];
+            10[label = "retrieve_cutout\ncutout: be-03-2013-era5", color = "0.49 0.6 0.85", style="rounded"];
+            11[label = "build_renewable_profiles\ntechnology: onwind", color = "0.50 0.6 0.85", style="rounded"];
+            12[label = "build_renewable_profiles\ntechnology: offwind-ac", color = "0.50 0.6 0.85", style="rounded"];
+            13[label = "build_ship_raster", color = "0.19 0.6 0.85", style="rounded"];
+            14[label = "retrieve_ship_raster", color = "0.35 0.6 0.85", style="rounded"];
+            15[label = "build_renewable_profiles\ntechnology: offwind-dc", color = "0.50 0.6 0.85", style="rounded"];
+            16[label = "build_line_rating", color = "0.60 0.6 0.85", style="rounded"];
+            17[label = "retrieve_cost_data\nyear: 2030", color = "0.59 0.6 0.85", style="rounded"];
+            18[label = "build_powerplants", color = "0.06 0.6 0.85", style="rounded"];
+            19[label = "build_electricity_demand", color = "0.13 0.6 0.85", style="rounded"];
+            20[label = "retrieve_electricity_demand", color = "0.49 0.6 0.85", style="rounded"];
+            21[label = "retrieve_synthetic_electricity_demand", color = "0.41 0.6 0.85", style="rounded"];
             1 -> 0
             2 -> 1
-            19 -> 1
+            17 -> 1
             3 -> 2
-            19 -> 2
+            17 -> 2
             4 -> 3
-            19 -> 3
+            17 -> 3
             5 -> 4
-            19 -> 4
+            17 -> 4
             7 -> 4
             6 -> 5
+            11 -> 5
             12 -> 5
-            14 -> 5
+            15 -> 5
+            7 -> 5
+            16 -> 5
             17 -> 5
             18 -> 5
-            7 -> 5
             19 -> 5
-            20 -> 5
-            9 -> 5
-            21 -> 5
             8 -> 5
             7 -> 6
             9 -> 6
-            10 -> 6
             8 -> 6
-            11 -> 6
+            10 -> 6
             8 -> 7
             9 -> 8
+            7 -> 11
+            9 -> 11
+            8 -> 11
+            10 -> 11
             7 -> 12
             9 -> 12
-            10 -> 12
-            8 -> 12
             13 -> 12
-            7 -> 14
-            9 -> 14
-            10 -> 14
-            15 -> 14
-            8 -> 14
-            13 -> 14
-            16 -> 15
+            8 -> 12
+            10 -> 12
+            14 -> 13
+            10 -> 13
+            7 -> 15
+            9 -> 15
             13 -> 15
-            7 -> 17
-            9 -> 17
-            10 -> 17
-            15 -> 17
-            8 -> 17
-            13 -> 17
-            8 -> 18
-            13 -> 18
-            7 -> 20
-            22 -> 21
-            23 -> 21
+            8 -> 15
+            10 -> 15
+            7 -> 16
+            10 -> 16
+            7 -> 18
+            20 -> 19
+            21 -> 19
     }
 
 |
@@ -223,8 +215,12 @@ In the terminal, this will show up as a list of jobs to be run:
     -------------------------------------  -------
     add_electricity                              1
     add_extra_components                         1
+    base_network                                 1
+    build_electricity_demand                     1
     build_line_rating                            1
+    build_powerplants                            1
     build_renewable_profiles                     4
+    build_shapes                                 1
     build_ship_raster                            1
     cluster_network                              1
     prepare_network                              1
@@ -232,12 +228,11 @@ In the terminal, this will show up as a list of jobs to be run:
     retrieve_cutout                              1
     retrieve_databundle                          1
     retrieve_electricity_demand                  1
-    retrieve_natura_raster                       1
     retrieve_ship_raster                         1
     retrieve_synthetic_electricity_demand        1
     simplify_network                             1
     solve_network                                1
-    total                                       19
+    total                                       22
 
 
 ``snakemake`` then runs these jobs in the correct order.
