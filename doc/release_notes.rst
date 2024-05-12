@@ -9,6 +9,9 @@ Release Notes
 
 Upcoming Release
 ================
+
+* Bump minimum ``powerplantmatching`` version to v0.5.15.
+
 * Group existing capacities to the earlier grouping_year for consistency with optimized capacities.
 
 * bugfix: installed heating capacities were 5% lower than existing heating capacities
