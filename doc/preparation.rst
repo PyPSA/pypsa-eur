@@ -21,8 +21,7 @@ Having downloaded the necessary data,
 With these and the externally extracted ENTSO-E online map topology
 (``data/entsoegridkit``), it can build a base PyPSA network with the following rules:
 
-- :mod:`base_network` builds and stores the base network with all buses, HVAC lines and HVDC links, while
-- :mod:`build_bus_regions` determines `Voronoi cells <https://en.wikipedia.org/wiki/Voronoi_diagram>`__ for all substations.
+- :mod:`base_network` builds and stores the base network with all buses, HVAC lines and HVDC links, and determines `Voronoi cells <https://en.wikipedia.org/wiki/Voronoi_diagram>`__ for all substations.
 
 Then the process continues by calculating conventional power plant capacities, potentials, and per-unit availability time series for variable renewable energy carriers and hydro power plants with the following rules:
 
@@ -33,13 +32,6 @@ Then the process continues by calculating conventional power plant capacities, p
 
 The central rule :mod:`add_electricity` then ties all the different data inputs
 together into a detailed PyPSA network stored in ``networks/elec.nc``.
-
-.. _busregions:
-
-Rule ``build_bus_regions``
-=============================
-
-.. automodule:: build_bus_regions
 
 .. _cutout:
 

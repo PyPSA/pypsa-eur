@@ -86,7 +86,9 @@ rule base_network:
         offshore_shapes=resources("offshore_shapes.geojson"),
         europe_shape=resources("europe_shape.geojson"),
     output:
-        resources("networks/base.nc"),
+        base_network=resources("networks/base.nc"),
+        regions_onshore=resources("regions_onshore.geojson"),
+        regions_offshore=resources("regions_offshore.geojson"),
     log:
         logs("base_network.log"),
     benchmark:
@@ -125,27 +127,6 @@ rule build_shapes:
         "../envs/environment.yaml"
     script:
         "../scripts/build_shapes.py"
-
-
-rule build_bus_regions:
-    params:
-        countries=config_provider("countries"),
-    input:
-        country_shapes=resources("country_shapes.geojson"),
-        offshore_shapes=resources("offshore_shapes.geojson"),
-        base_network=resources("networks/base.nc"),
-    output:
-        regions_onshore=resources("regions_onshore.geojson"),
-        regions_offshore=resources("regions_offshore.geojson"),
-    log:
-        logs("build_bus_regions.log"),
-    threads: 1
-    resources:
-        mem_mb=1000,
-    conda:
-        "../envs/environment.yaml"
-    script:
-        "../scripts/build_bus_regions.py"
 
 
 if config["enable"].get("build_cutout", False):
@@ -412,7 +393,7 @@ rule add_electricity:
             else resources("networks/base.nc")
         ),
         tech_costs=lambda w: resources(
-            f"costs_{config_provider('costs', 'year')(w)}.csv"
+            f"costs_{config_provider('costs', 'year') (w)}.csv"
         ),
         regions=resources("regions_onshore.geojson"),
         powerplants=resources("powerplants.csv"),
@@ -457,7 +438,7 @@ rule simplify_network:
     input:
         network=resources("networks/elec.nc"),
         tech_costs=lambda w: resources(
-            f"costs_{config_provider('costs', 'year')(w)}.csv"
+            f"costs_{config_provider('costs', 'year') (w)}.csv"
         ),
         regions_onshore=resources("regions_onshore.geojson"),
         regions_offshore=resources("regions_offshore.geojson"),
@@ -466,7 +447,6 @@ rule simplify_network:
         regions_onshore=resources("regions_onshore_elec_s{simpl}.geojson"),
         regions_offshore=resources("regions_offshore_elec_s{simpl}.geojson"),
         busmap=resources("busmap_elec_s{simpl}.csv"),
-        connection_costs=resources("connection_costs_s{simpl}.csv"),
     log:
         logs("simplify_network/elec_s{simpl}.log"),
     benchmark:
@@ -506,7 +486,7 @@ rule cluster_network:
             else []
         ),
         tech_costs=lambda w: resources(
-            f"costs_{config_provider('costs', 'year')(w)}.csv"
+            f"costs_{config_provider('costs', 'year') (w)}.csv"
         ),
     output:
         network=resources("networks/elec_s{simpl}_{clusters}.nc"),
@@ -535,7 +515,7 @@ rule add_extra_components:
     input:
         network=resources("networks/elec_s{simpl}_{clusters}.nc"),
         tech_costs=lambda w: resources(
-            f"costs_{config_provider('costs', 'year')(w)}.csv"
+            f"costs_{config_provider('costs', 'year') (w)}.csv"
         ),
     output:
         resources("networks/elec_s{simpl}_{clusters}_ec.nc"),
@@ -570,7 +550,7 @@ rule prepare_network:
     input:
         resources("networks/elec_s{simpl}_{clusters}_ec.nc"),
         tech_costs=lambda w: resources(
-            f"costs_{config_provider('costs', 'year')(w)}.csv"
+            f"costs_{config_provider('costs', 'year') (w)}.csv"
         ),
         co2_price=lambda w: resources("co2_price.csv") if "Ept" in w.opts else [],
     output:

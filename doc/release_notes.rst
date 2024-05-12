@@ -194,6 +194,10 @@ Upcoming Release
 
 * Bugfix: allow modelling sector-coupled landlocked regions. (Fixed handling of offshore wind.)
 
+* Bugfix: approximation of hydro power generation if Portugal or Spain are not included works now.
+
+* Bugfix: copy_timeslice does not copy anymore, if country not present in load data.
+
 * Adapt the disabling of transmission expansion in myopic foresight optimisations when limit is already reached to also handle cost limits.
 
 * Fix duplicated years and grouping years reference in `add_land_use_constraint_m`.
@@ -206,7 +210,14 @@ Upcoming Release
 
 * Fix custom busmap read in `cluster_network`.
 
+* Data on existing renewable capacities is now consistently taken from powerplantmatching (instead of being retrieved separately); the dataset has also been updated to include 2023 values.
+
+* Added shapes to .nc file for different stages of the network object in `base_network`, `simplify_network`, and `cluster_network`; the `build_bus_regions` rule is now integrated into the `base_network` rule.
+
+* Fix p_nom_min of renewables generators for myopic approach and add check of existing capacities in `add_land_use_constraint_m`.
+
 * Add documentation section for how to contribute documentation
+
 
 PyPSA-Eur 0.10.0 (19th February 2024)
 =====================================
