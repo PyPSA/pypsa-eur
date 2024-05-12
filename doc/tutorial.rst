@@ -201,7 +201,7 @@ This triggers a workflow of multiple preceding jobs that depend on each rule's i
             7 -> 18
             20 -> 19
             21 -> 19
-    }   
+    }
 
 |
 
