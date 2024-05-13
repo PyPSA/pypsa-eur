@@ -40,17 +40,15 @@ scenario:
   simpl:
   - ''
   ll:
-  - v1.5
+  - vopt
   clusters:
   - 37
   - 128
   - 256
-  - 512
-  - 1024
   opts:
   - ''
   sector_opts:
-  - Co2L0-3H-T-H-B-I-A-dist1
+  - ''
   planning_horizons:
   # - 2020
   # - 2030
@@ -555,7 +553,7 @@ sector:
   - nearshore    # within 50 km of sea
     # - offshore
   ammonia: false
-  min_part_load_fischer_tropsch: 0.7
+  min_part_load_fischer_tropsch: 0.5
   min_part_load_methanolisation: 0.3
   min_part_load_methanation: 0.3
   use_fischer_tropsch_waste_heat: true
