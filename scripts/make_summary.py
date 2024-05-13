@@ -415,8 +415,8 @@ def calculate_supply_energy(n, label, supply_energy):
 
 def calculate_nodal_supply_energy(n, label, nodal_supply_energy):
     """
-    Calculate the total energy supply/consumption of each component at the buses
-    aggregated by carrier and node.
+    Calculate the total energy supply/consumption of each component at the
+    buses aggregated by carrier and node.
     """
 
     bus_carriers = n.buses.carrier.unique()
@@ -432,22 +432,27 @@ def calculate_nodal_supply_energy(n, label, nodal_supply_energy):
                 continue
 
             s = (
-                pd.concat([
-                    (
-                        c.pnl.p[items]
-                        .multiply(n.snapshot_weightings.generators, axis=0)
-                        .sum()
-                        .multiply(c.df.loc[items, "sign"])
-                    ),
-                    c.df.loc[items][["bus", "carrier"]]
-                ], axis=1)
+                pd.concat(
+                    [
+                        (
+                            c.pnl.p[items]
+                            .multiply(n.snapshot_weightings.generators, axis=0)
+                            .sum()
+                            .multiply(c.df.loc[items, "sign"])
+                        ),
+                        c.df.loc[items][["bus", "carrier"]],
+                    ],
+                    axis=1,
+                )
                 .groupby(by=["bus", "carrier"])
                 .sum()[0]
             )
             s = pd.concat([s], keys=[c.list_name])
             s = pd.concat([s], keys=[i])
 
-            nodal_supply_energy = nodal_supply_energy.reindex(s.index.union(nodal_supply_energy.index))
+            nodal_supply_energy = nodal_supply_energy.reindex(
+                s.index.union(nodal_supply_energy.index)
+            )
             nodal_supply_energy.loc[s.index, label] = s
 
         for c in n.iterate_components(n.branch_components):
@@ -458,14 +463,18 @@ def calculate_nodal_supply_energy(n, label, nodal_supply_energy):
                     continue
 
                 s = (
-                    pd.concat([
-                        (
-                            (-1) * c.pnl["p" + end][items]
-                            .multiply(n.snapshot_weightings.generators, axis=0)
-                            .sum()
-                        ),
-                        c.df.loc[items][["bus0", "carrier"]]
-                    ], axis=1)
+                    pd.concat(
+                        [
+                            (
+                                (-1)
+                                * c.pnl["p" + end][items]
+                                .multiply(n.snapshot_weightings.generators, axis=0)
+                                .sum()
+                            ),
+                            c.df.loc[items][["bus0", "carrier"]],
+                        ],
+                        axis=1,
+                    )
                     .groupby(by=["bus0", "carrier"])
                     .sum()[0]
                 )
