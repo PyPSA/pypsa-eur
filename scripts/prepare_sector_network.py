@@ -2943,12 +2943,17 @@ def add_industry(n, costs):
             efficiency=costs.at["oil", "CO2 intensity"],
         )
 
+        if len(non_sequestered_hvc_locations) == 1:
+            waste_source = non_sequestered_hvc_locations[0]
+        else:
+            waste_source = non_sequestered_hvc_locations
+
         if cf_industry["waste_to_energy"]:
 
             n.madd(
                 "Link",
                 spatial.nodes + " waste CHP",
-                bus0=non_sequestered_hvc_locations,
+                bus0=waste_source,
                 bus1=spatial.nodes,
                 bus2=spatial.nodes + " urban central heat",
                 bus3="co2 atmosphere",
@@ -2968,7 +2973,7 @@ def add_industry(n, costs):
             n.madd(
                 "Link",
                 spatial.nodes + " waste CHP CC",
-                bus0=non_sequestered_hvc_locations,
+                bus0=waste_source,
                 bus1=spatial.nodes,
                 bus2=spatial.nodes + " urban central heat",
                 bus3="co2 atmosphere",
