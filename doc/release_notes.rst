@@ -256,6 +256,8 @@ Upcoming Release
 
 * The ``{sector_opts}`` wildcard is now not used by default. All scenario definitions are now done in the ``config.yaml`` file.
 
+* Fix gas network retrofitting in `add_brownfield`.
+
 PyPSA-Eur 0.10.0 (19th February 2024)
 =====================================
 
