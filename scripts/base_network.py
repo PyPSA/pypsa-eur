@@ -569,7 +569,7 @@ def _set_countries_and_substations(n, config, country_shapes, offshore_shapes):
     buses["substation_lv"] = (
         lv_b & onshore_b & (~buses["under_construction"]) & has_connections_b
     )
-    buses["substation_off"] = (offshore_b | (hv_b & onshore_b)) & (
+    buses["substation_off"] = ((hv_b & offshore_b) | (hv_b & onshore_b)) & (
         ~buses["under_construction"]
     )
 

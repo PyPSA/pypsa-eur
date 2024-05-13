@@ -10,6 +10,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Bugfix to avoid duplicated offshore regions.
+
 * Added option ``industry: HVC_environment_sequestration_fraction:`` to specify
   the fraction of carbon contained plastics that is permanently sequestered in
   landfill. The default assumption is that all carbon contained in plastics is
