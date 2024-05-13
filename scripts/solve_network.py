@@ -44,7 +44,7 @@ from _helpers import (
     update_config_from_wildcards,
 )
 from pypsa.clustering.spatial import align_strategies, flatten_multiindex
-from pypsa.descriptors import get_activity_mask
+from pypsa.descriptors import Dict, get_activity_mask
 from pypsa.descriptors import get_switchable_as_dense as get_as_dense
 from pypsa.descriptors import nominal_attrs
 from pypsa.io import import_components_from_dataframe, import_series_from_dataframe
@@ -933,6 +933,16 @@ strategies = dict(
     control=lambda x: "",
     # p_max_pu should be the same, but sometimes not? Need to look into that
     p_max_pu=pd.Series.mean,
+    # The remaining attributes are outputs, and allow the aggregation of solved networks.
+    p_nom_opt=pd.Series.sum,
+    e_nom_opt=pd.Series.sum,
+    p=pd.Series.sum,
+    e=pd.Series.sum,
+    p0=pd.Series.sum,
+    p1=pd.Series.sum,
+    p2=pd.Series.sum,
+    p3=pd.Series.sum,
+    p4=pd.Series.sum,
 )
 
 vars_to_store = [
@@ -962,31 +972,10 @@ def aggregate_build_years(n):
             c.df.loc[non_extendable, f"{attr}_min"] = c.df.loc[non_extendable, attr]
             c.df.loc[non_extendable, f"{attr}_max"] = c.df.loc[non_extendable, attr]
 
-            # If c.df has a "reversed" column, fill na with 0.0 and
-            # cast whole column to bool.
-            if "reversed" in c.df.columns:
-                c.df["reversed"] = c.df["reversed"].fillna(0.0).astype(bool)
-
             # Collect all rows whose index ends with "-YYYY"
             idx_no_year = c.df.index.str.replace(r"-[0-9]{4}$", "", regex=True)
-
-            # Follow pypsa.clustering.spatial for how to cluster components
-            output_columns = c.attrs.index[
-                c.attrs.static & c.attrs.status.str.startswith("Output")
-            ]
-            columns = [col for col in c.df.columns if col not in output_columns]
-
-            static_strategies = align_strategies(strategies, columns, c.name)
-
+            static_strategies = align_strategies(strategies, c.df.columns, c.name)
             df_aggregated = c.df.groupby(idx_no_year).agg(static_strategies)
-            # Add output columns back in, fill with default
-            default = n.components[c.name]["attrs"].default
-            for out_c in output_columns:
-                df_aggregated.loc[:, out_c] = default[out_c]
-
-            df_aggregated.columns = flatten_multiindex(df_aggregated.columns).rename(
-                c.name
-            )
 
             # Now, for each component (row) in df with name ending in
             # "-YYYY", store certain aggregated values to be
@@ -1003,7 +992,7 @@ def aggregate_build_years(n):
                         f"{attr}-{build_year}",
                     ] = c.df.loc[mask, attr].values
 
-            pnl_aggregated = dict()
+            pnl_aggregated = Dict()
             dynamic_strategies = align_strategies(strategies, c.pnl, c.name)
             for attr, data in c.pnl.items():
                 if data.empty:
@@ -1011,12 +1000,8 @@ def aggregate_build_years(n):
                     continue
 
                 strategy = dynamic_strategies[attr]
-                data = n.get_switchable_as_dense(c.name, attr)
-                aggregated = data.T.groupby(idx_no_year).agg(strategy).T
-                aggregated.columns = flatten_multiindex(aggregated.columns).rename(
-                    c.name
-                )
-                pnl_aggregated[attr] = aggregated
+                col_agg_map = pd.Series(idx_no_year, index=c.df.index)[data.columns]
+                pnl_aggregated[attr] = data.T.groupby(col_agg_map).agg(strategy).T
 
             setattr(n, n.components[c.name]["list_name"], df_aggregated)
             setattr(n, n.components[c.name]["list_name"] + "_t", pnl_aggregated)
@@ -1024,7 +1009,7 @@ def aggregate_build_years(n):
     return indices
 
 
-def disaggregate_build_years(n, indices):
+def disaggregate_build_years(n, indices, planning_horizon):
     """
     Disaggregate components which were aggregated by `aggregate_build_years`.
     """
@@ -1044,7 +1029,7 @@ def disaggregate_build_years(n, indices):
             disagg_df["id_no_year"] = disagg_df.index.str.replace(
                 r"-[0-9]{4}$", "", regex=True
             )
-            map_to_agg = disagg_df["id_no_year"].copy()
+            agg_map = disagg_df["id_no_year"].copy()
 
             # Copy values from aggregated component to disaggregated
             disagg_df.loc[:, c.df.columns] = c.df.loc[disagg_df["id_no_year"]].values
@@ -1094,22 +1079,21 @@ def disaggregate_build_years(n, indices):
             # Drop auxiliary column keeping track of aggregated component
             disagg_df.drop("id_no_year", axis=1, inplace=True)
 
-            # Add disaggregated components to c.df
+            # Add disaggregated components to c.df. Watch out: c.df
+            # will still refer to the "old" dataframe.
             import_components_from_dataframe(n, disagg_df, c.name)
-
-            # NOTE: c.df still points to the original DataFrame which
-            # was replaced in the above.
 
             # Also duplicate the corresponding column in pnl
             for v in c.pnl:
                 if c.pnl[v].empty:
                     continue
-                # Insert new columns for idx_with_years
-                # c.pnl[v] = pd.concat([c.pnl[v], pd.DataFrame(columns=idx_diff)], axis=1)
+
                 # Set the new columns to the values of the old columns
-                pnl = c.pnl[v].loc[:, map_to_agg]
-                pnl.columns = idx_diff
+                mask = agg_map.index[agg_map.isin(c.pnl[v].columns)]
+                pnl = c.pnl[v].loc[:, agg_map[mask]]
+                pnl.columns = mask
                 import_series_from_dataframe(n, pnl, c.name, v)
+
                 # Variables that are outputs and don't start with
                 # "mu_" need to be scaled by nominal capacity.
                 if (
@@ -1117,22 +1101,20 @@ def disaggregate_build_years(n, indices):
                 ) and not (v.startswith("mu_")):
                     scaling_factors = (
                         (
-                            disagg_df[attr]
-                            / c.df.loc[map_to_agg, attr].replace(0.0, np.nan).values
+                            disagg_df.loc[mask, attr]
+                            / c.df.loc[agg_map[mask], attr].replace(0.0, np.nan).values
                         )
                         .astype(float)
                         .fillna(0.0)
                         .reindex(c.pnl[v].columns, fill_value=1.0)
                     )
-                    ext_i = idx_diff[
-                        c.df.loc[map_to_agg[idx_diff], f"{attr}_extendable"]
-                    ]
                     # For extendable components, recompute the scaling
                     # factors using attr + "_opt"
+                    ext_i = mask[c.df.loc[agg_map[mask], f"{attr}_extendable"]]
                     scaling_factors.loc[ext_i] = (
                         (
                             disagg_df.loc[ext_i, f"{attr}_opt"]
-                            / c.df.loc[map_to_agg[ext_i], f"{attr}_opt"]
+                            / c.df.loc[agg_map[ext_i], f"{attr}_opt"]
                             .replace(0.0, np.nan)
                             .values
                         )
@@ -1155,7 +1137,11 @@ def disaggregate_build_years(n, indices):
             for _, data in c.pnl.items():
                 if data.empty:
                     continue
-                data.drop(old_idx.difference(indices[c.name]), axis=1, inplace=True)
+                data.drop(
+                    old_idx.difference(indices[c.name]).intersection(data.columns),
+                    axis=1,
+                    inplace=True,
+                )
 
 
 def solve_network(n, config, solving, **kwargs):
@@ -1249,7 +1235,7 @@ if __name__ == "__main__":
     )
 
     with memory_logger(
-        filename=getattr(snakemake.log, "memory", None), interval=30.0
+        filename=getattr(snakemake.log, "memory", None), interval=0.1
     ) as mem:
         if snakemake.params.get("build_year_aggregation", False):
             indices = aggregate_build_years(n)
@@ -1262,7 +1248,7 @@ if __name__ == "__main__":
         )
 
         if snakemake.params.get("build_year_aggregation", False):
-            disaggregate_build_years(n, indices)
+            disaggregate_build_years(n, indices, snakemake.wildcards.planning_horizons)
 
     logger.info(f"Maximum memory usage: {mem.mem_usage}")
 
