@@ -212,15 +212,178 @@ def convert_nuts2_to_regions(bio_nuts2, regions):
     return bio_regions
 
 
+def build_eurostat(input_eurostat, countries, year, idees_rename):
+    """
+    Return multi-index for all countries' energy data in TWh/a.
+    """
+    df = {}
+    countries = {idees_rename.get(country, country) for country in countries} - {"CH"}
+    for country in countries:
+        filename = (
+            f"{input_eurostat}/{country}-Energy-balance-sheets-April-2023-edition.xlsb"
+        )
+        sheet = pd.read_excel(
+            filename,
+            engine="pyxlsb",
+            sheet_name=str(year),
+            skiprows=4,
+            index_col=list(range(4)),
+        )
+        df[country] = sheet
+    df = pd.concat(df, axis=0)
+
+    # drop columns with all NaNs
+    unnamed_cols = df.columns[df.columns.astype(str).str.startswith("Unnamed")]
+    df.drop(unnamed_cols, axis=1, inplace=True)
+    df.drop(year, axis=1, inplace=True)
+
+    # make numeric values where possible
+    df.replace("Z", 0, inplace=True)
+    df = df.apply(pd.to_numeric, errors="coerce")
+    df = df.select_dtypes(include=[np.number])
+
+    # write 'International aviation' to the 2nd level of the multiindex
+    int_avia = df.index.get_level_values(2) == "International aviation"
+    temp = df.loc[int_avia]
+    temp.index = pd.MultiIndex.from_frame(
+        temp.index.to_frame().fillna("International aviation")
+    )
+    df = pd.concat([temp, df.loc[~int_avia]])
+
+    # Renaming some indices
+    index_rename = {
+        "Households": "Residential",
+        "Commercial & public services": "Services",
+        "Domestic navigation": "Domestic Navigation",
+        "International maritime bunkers": "Bunkers",
+    }
+    columns_rename = {"Total": "Total all products", "UK": "GB"}
+    df.rename(index=index_rename, columns=columns_rename, inplace=True)
+    df.sort_index(inplace=True)
+    df.index.names = [None] * len(df.index.names)
+
+    # convert to MWh/a from ktoe/a
+    df *= 11.63 * 1e3
+
+    return df
+
+
+def add_unsustainable_potentials(df):
+    """
+    Add unsustainable biomass potentials to the given dataframe.
+    The difference between the data of JRC and Eurostat is assumed to be
+    unsustainable biomass.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The dataframe with sustainable biomass potentials.
+    unsustainable_biomass : str
+        Path to the file with unsustainable biomass potentials.
+
+    Returns
+    -------
+    pd.DataFrame
+        The dataframe with added unsustainable biomass potentials.
+    """
+    if "GB" in snakemake.config["countries"]:
+        latest_year = 2019
+    else:
+        latest_year = 2021
+    idees_rename = {"GR": "EL", "GB": "UK"}
+    df_unsustainable = (
+        build_eurostat(
+            countries=snakemake.config["countries"],
+            year=max(min(latest_year, snakemake.wildcards.planning_horizons), 1990),
+            input_eurostat=snakemake.input.eurostat,
+            idees_rename=idees_rename,
+        )
+        .xs("Primary production", level=2)
+        .droplevel([1, 2, 3])
+    )
+
+    df_unsustainable.index = df_unsustainable.index.str.strip()
+    df_unsustainable = df_unsustainable.rename(
+        {v: k for k, v in idees_rename.items()}, axis=0
+    )
+
+    bio_carriers = [
+        "Primary solid biofuels",
+        "Biogases",
+        "Renewable municipal waste",
+        "Pure biogasoline",
+        "Blended biogasoline",
+        "Pure biodiesels",
+        "Blended biodiesels",
+        "Pure bio jet kerosene",
+        "Blended bio jet kerosene",
+        "Other liquid biofuels",
+    ]
+
+    df_unsustainable = df_unsustainable[bio_carriers]
+
+    df_wo_ch = df.drop(df.filter(regex="CH\d", axis=0).index)
+    df_unsustainable["Primary solid biofuels"] -= df_unsustainable[
+        "Renewable municipal waste"
+    ]
+
+    # df["country"] = df.index.str[:2]
+
+    df_wo_ch["unsustainable solid biomass"] = (
+        df_wo_ch.apply(
+            lambda c: c.sum()
+            / df_wo_ch.loc[df_wo_ch.index.str[:2] == c.name[:2]].sum().sum()
+            * df_unsustainable.loc[c.name[:2], "Primary solid biofuels"],
+            axis=1,
+        )
+        - df_wo_ch["solid biomass"]
+    ).clip(lower=0)
+
+    df_wo_ch["unsustainable biogas"] = (
+        df_wo_ch.apply(
+            lambda c: c.sum()
+            / df_wo_ch.loc[df_wo_ch.index.str[:2] == c.name[:2]].sum().sum()
+            * df_unsustainable.loc[c.name[:2], "Biogases"],
+            axis=1,
+        )
+        - df_wo_ch["biogas"]
+    ).clip(lower=0)
+
+    df_wo_ch["unsustainable waste"] = (
+        df_wo_ch.apply(
+            lambda c: c.sum()
+            / df_wo_ch.loc[df_wo_ch.index.str[:2] == c.name[:2]].sum().sum()
+            * df_unsustainable.loc[c.name[:2], "Renewable municipal waste"],
+            axis=1,
+        )
+        - df_wo_ch["waste"]
+    ).clip(lower=0)
+
+    df_wo_ch["unsustainable liquid biofuels"] = df_wo_ch.apply(
+        lambda c: c.sum()
+        / df_wo_ch.loc[df_wo_ch.index.str[:2] == c.name[:2]].sum().sum()
+        * df_unsustainable.filter(regex="gasoline|diesel|kerosene|liquid")
+        .sum(axis=1)
+        .loc[c.name[:2]],
+        axis=1,
+    )
+
+    df = df.join(df_wo_ch.filter(like="unsustainable"))
+    return df
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
+        import os
+
+        os.chdir(os.path.dirname(os.path.realpath(__file__)))
         snakemake = mock_snakemake(
             "build_biomass_potentials",
             simpl="",
-            clusters="5",
-            planning_horizons=2050,
+            clusters="37",
+            planning_horizons=2020,
         )
 
     configure_logging(snakemake)
@@ -272,5 +435,7 @@ if __name__ == "__main__":
 
     df *= 1e6  # TWh/a to MWh/a
     df.index.name = "MWh/a"
+
+    df = add_unsustainable_potentials(df)
 
     df.to_csv(snakemake.output.biomass_potentials)
