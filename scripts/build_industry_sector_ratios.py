@@ -313,7 +313,7 @@ def chemicals_industry():
     df.loc["methane", sector] += s_fec["Natural gas"]
 
     # LPG and other feedstock materials are assimilated to naphtha
-    # since they will be produced through Fischer-Tropsh process
+    # since they will be produced through Fischer-Tropsch process
     sel = [
         "Solids",
         "Refinery gas",
