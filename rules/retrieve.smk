@@ -339,6 +339,57 @@ if config["enable"]["retrieve"]:
                 shell("ogr2ogr -f gpkg -update -append {output.gpkg} {layer_path}")
 
 
+if config["enable"]["retrieve"]:
+    # Some logic to find the correct file URL
+    # Sometimes files are released delayed or ahead of schedule, check which file is currently available
+
+    def check_file_exists(url):
+        response = requests.head(url)
+        return response.status_code == 200
+
+    # Basic pattern where WDPA files can be found
+    url_pattern = (
+        "https://d1gam3xoknrgr2.cloudfront.net/current/WDPA_{bYYYY}_Public_shp.zip"
+    )
+
+    # 3-letter month + 4 digit year for current/previous/next month to test
+    current_monthyear = datetime.now().strftime("%b%Y")
+    prev_monthyear = (datetime.now() - timedelta(30)).strftime("%b%Y")
+    next_monthyear = (datetime.now() + timedelta(30)).strftime("%b%Y")
+
+    # Test prioritised: current month -> previous -> next
+    for bYYYY in [current_monthyear, prev_monthyear, next_monthyear]:
+        if check_file_exists(url := url_pattern.format(bYYYY=bYYYY)):
+            break
+        else:
+            # If None of the three URLs are working
+            url = False
+
+    assert (
+        url
+    ), f"No WDPA files found at {url_pattern} for bY='{current_monthyear}, {prev_monthyear}, or {next_monthyear}'"
+
+    # Downloading protected area database from WDPA
+    # extract the main zip and then merge the contained 3 zipped shapefiles
+    # Website: https://www.protectedplanet.net/en/thematic-areas/wdpa
+    rule download_wdpa:
+        input:
+            HTTP.remote(url, keep_local=True),
+        params:
+            zip="data/WDPA_shp.zip",
+            folder=directory("data/WDPA"),
+        output:
+            gpkg=protected("data/WDPA.gpkg"),
+        run:
+            shell("cp {input} {params.zip}")
+            shell("unzip -o {params.zip} -d {params.folder}")
+            for i in range(3):
+                # vsizip is special driver for directly working with zipped shapefiles in ogr2ogr
+                layer_path = (
+                    f"/vsizip/{params.folder}/WDPA_{bYYYY}_Public_shp_{i}.zip"
+                )
+                print(f"Adding layer {i + 1} of 3 to combined output file.")
+                shell("ogr2ogr -f gpkg -update -append {output.gpkg} {layer_path}")
 
 if config["enable"]["retrieve"]:
 

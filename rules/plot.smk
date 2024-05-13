@@ -345,7 +345,8 @@ rule plot_import_options:
         imports="data/imports/results.csv",
         rc="matplotlibrc",
     output:
-        multiext(RESULTS + "graphics/import_options_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}", ".png", ".pdf")
+        map=multiext(RESULTS + "graphics/import_options_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}", ".png", ".pdf"),
+        distribution=multiext(RESULTS + "graphics/import_options_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}-distribution", ".png", ".pdf"),
     script:
         "../scripts/plot_import_options.py"
 
@@ -363,6 +364,7 @@ rule plot_import_world_map:
             keep_local=True,
             static=True,
         ),
+        wdpa="data/WDPA.gpkg",
         rc="matplotlibrc",
     output:
         multiext(RESOURCES + "graphics/import_world_map", ".png", ".pdf")
