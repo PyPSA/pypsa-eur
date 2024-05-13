@@ -9,7 +9,10 @@ Release Notes
 
 Upcoming Release
 ================
-* Add config [run][exclude] to specify which files should be excluded from filesharing in case of [run][shared_resources]=base.
+
+* Add config ``run: shared_resources: exclude:`` to specify additional files that should be excluded from shared resources with the setting ``run: shared_resources: base``.
+
+* Move switch ``run: shared_resources:`` to ``run: shared_resources: policy:``.
 
 * Add config land_transport_demand_factor to model growth in land transport demand for different time horizons.
 
