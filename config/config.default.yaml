@@ -26,9 +26,9 @@ run:
     enable: false
     file: config/scenarios.yaml
   disable_progressbar: false
-  shared_resources: false
-  exclude:
-  - ""
+  shared_resources:
+    policy: false
+    exclude: []
   shared_cutouts: true
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#foresight
