@@ -111,16 +111,12 @@ def add_brownfield(n, n_p, year):
             .groupby(level=0)
             .sum()
         )
-        remaining_capacity = (
-            pipe_capacity
-            - CH4_per_H2
-            * already_retrofitted.reindex(index=pipe_capacity.index).fillna(0)
-        )
+        remaining_capacity = pipe_capacity - CH4_per_H2 * already_retrofitted.reindex(
+            index=pipe_capacity.index
+        ).fillna(0)
         n.links.loc[gas_pipes_i, "p_nom"] = remaining_capacity
     else:
-        new_pipes = n.links.carrier.isin(pipe_carrier) & (
-            n.links.build_year == year
-        )
+        new_pipes = n.links.carrier.isin(pipe_carrier) & (n.links.build_year == year)
         n.links.loc[new_pipes, "p_nom"] = 0.0
         n.links.loc[new_pipes, "p_nom_min"] = 0.0
 
