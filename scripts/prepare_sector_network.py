@@ -23,7 +23,12 @@ from _helpers import (
     update_config_from_wildcards,
 )
 from add_electricity import calculate_annuity, sanitize_carriers, sanitize_locations
-from build_energy_totals import build_co2_totals, build_eea_co2, build_eurostat_co2
+from build_energy_totals import (
+    build_co2_totals,
+    build_eea_co2,
+    build_eurostat,
+    build_eurostat_co2,
+)
 from networkx.algorithms import complement
 from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentation
 from prepare_network import maybe_adjust_costs_and_potentials
@@ -92,7 +97,7 @@ def define_spatial(nodes, options):
         spatial.gas.industry = nodes + " gas for industry"
         spatial.gas.industry_cc = nodes + " gas for industry CC"
         spatial.gas.biogas_to_gas = nodes + " biogas to gas"
-        spatial.gas.biogas_to_gas_cc = nodes + "biogas to gas CC"
+        spatial.gas.biogas_to_gas_cc = nodes + " biogas to gas CC"
     else:
         spatial.gas.nodes = ["EU gas"]
         spatial.gas.locations = ["EU"]
@@ -255,12 +260,10 @@ def co2_emissions_year(
     """
     eea_co2 = build_eea_co2(input_co2, year, emissions_scope)
 
-    # TODO: read Eurostat data from year > 2014
+    eurostat = build_eurostat(input_eurostat, countries)
+
     # this only affects the estimation of CO2 emissions for BA, RS, AL, ME, MK
-    if year > 2014:
-        eurostat_co2 = build_eurostat_co2(input_eurostat, countries, 2014)
-    else:
-        eurostat_co2 = build_eurostat_co2(input_eurostat, countries, year)
+    eurostat_co2 = build_eurostat_co2(eurostat, year)
 
     co2_totals = build_co2_totals(countries, eea_co2, eurostat_co2)
 
@@ -812,6 +815,10 @@ def average_every_nhours(n, offset):
     m = n.copy(with_time=False)
 
     snapshot_weightings = n.snapshot_weightings.resample(offset).sum()
+    sns = snapshot_weightings.index
+    if snakemake.params.drop_leap_day:
+        sns = sns[~((sns.month == 2) & (sns.day == 29))]
+    snapshot_weightings = snapshot_weightings.loc[sns]
     m.set_snapshots(snapshot_weightings.index)
     m.snapshot_weightings = snapshot_weightings
 
@@ -1504,9 +1511,19 @@ def add_land_transport(n, costs):
     transport = pd.read_csv(
         snakemake.input.transport_demand, index_col=0, parse_dates=True
     )
+    # transport growth factor
+    demand_factor = get(options["land_transport_demand_factor"], investment_year)
+    if demand_factor != 1:
+        logger.warning(
+            f"Changing land transport demand by {demand_factor*100-100:+.2f}%."
+        )
+
+    transport = demand_factor * transport
+
     number_cars = pd.read_csv(snakemake.input.transport_data, index_col=0)[
         "number cars"
     ]
+    number_cars = demand_factor * number_cars
     avail_profile = pd.read_csv(
         snakemake.input.avail_profile, index_col=0, parse_dates=True
     )
@@ -2907,7 +2924,7 @@ def add_industry(n, costs):
     )
 
     # aviation
-    demand_factor = options.get("aviation_demand_factor", 1)
+    demand_factor = get(options["aviation_demand_factor"], investment_year)
     if demand_factor != 1:
         logger.warning(f"Changing aviation demand by {demand_factor*100-100:+.2f}%.")
 
@@ -3604,6 +3621,10 @@ if __name__ == "__main__":
     pop_weighted_energy_totals = (
         pd.read_csv(snakemake.input.pop_weighted_energy_totals, index_col=0) * nyears
     )
+    pop_weighted_heat_totals = (
+        pd.read_csv(snakemake.input.pop_weighted_heat_totals, index_col=0) * nyears
+    )
+    pop_weighted_energy_totals.update(pop_weighted_heat_totals)
 
     patch_electricity_network(n)
 

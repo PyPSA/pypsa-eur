@@ -50,7 +50,7 @@ if config["enable"].get("retrieve_irena"):
             onwind="data/existing_infrastructure/onwind_capacity_IRENA.csv",
             solar="data/existing_infrastructure/solar_capacity_IRENA.csv",
         log:
-            logs("retrieve_irena.log"),
+            "logs/retrieve_irena.log",
         resources:
             mem_mb=1000,
         retries: 2
@@ -115,7 +115,7 @@ if config["enable"]["retrieve"] and config["enable"].get(
             mem_mb=5000,
         retries: 2
         run:
-            move(input[0], output[0])
+            copyfile(input[0], output[0])
             validate_checksum(output[0], input[0])
 
 
@@ -192,6 +192,24 @@ if config["enable"]["retrieve"]:
             "../envs/retrieve.yaml"
         script:
             "../scripts/retrieve_electricity_demand.py"
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_synthetic_electricity_demand:
+        input:
+            storage(
+                "https://zenodo.org/records/10820928/files/demand_hourly.csv",
+            ),
+        output:
+            "data/load_synthetic_raw.csv",
+        log:
+            "logs/retrieve_synthetic_electricity_demand.log",
+        resources:
+            mem_mb=5000,
+        retries: 2
+        run:
+            move(input[0], output[0])
 
 
 if config["enable"]["retrieve"]:

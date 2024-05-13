@@ -24,9 +24,11 @@ run = config["run"]
 scenarios = get_scenarios(run)
 RDIR = get_rdir(run)
 
-logs = path_provider("logs/", RDIR, run["shared_resources"])
-benchmarks = path_provider("benchmarks/", RDIR, run["shared_resources"])
-resources = path_provider("resources/", RDIR, run["shared_resources"])
+shared_resources = run["shared_resources"]["policy"]
+exclude_from_shared = run["shared_resources"]["exclude"]
+logs = path_provider("logs/", RDIR, shared_resources, exclude_from_shared)
+benchmarks = path_provider("benchmarks/", RDIR, shared_resources, exclude_from_shared)
+resources = path_provider("resources/", RDIR, shared_resources, exclude_from_shared)
 
 CDIR = "" if run["shared_cutouts"] else RDIR
 RESULTS = "results/" + RDIR
@@ -39,9 +41,9 @@ localrules:
 wildcard_constraints:
     simpl="[a-zA-Z0-9]*",
     clusters="[0-9]+(m|c)?|all",
-    ll="(v|c)([0-9\.]+|opt)",
-    opts="[-+a-zA-Z0-9\.]*",
-    sector_opts="[-+a-zA-Z0-9\.\s]*",
+    ll=r"(v|c)([0-9\.]+|opt)",
+    opts=r"[-+a-zA-Z0-9\.]*",
+    sector_opts=r"[-+a-zA-Z0-9\.\s]*",
 
 
 include: "rules/common.smk"
@@ -110,7 +112,7 @@ rule dag:
     conda:
         "envs/environment.yaml"
     shell:
-        """
+        r"""
         snakemake --rulegraph all | sed -n "/digraph/,\$p" > {output.dot}
         dot -Tpdf -o {output.pdf} {output.dot}
         dot -Tpng -o {output.png} {output.dot}

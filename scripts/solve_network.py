@@ -36,6 +36,7 @@ import numpy as np
 import pandas as pd
 import pypsa
 import xarray as xr
+import yaml
 from _benchmark import memory_logger
 from _helpers import (
     configure_logging,
@@ -154,10 +155,13 @@ def _add_land_use_constraint(n):
 def _add_land_use_constraint_m(n, planning_horizons, config):
     # if generators clustering is lower than network clustering, land_use accounting is at generators clusters
 
-    grouping_years = config["existing_capacities"]["grouping_years"]
+    grouping_years = config["existing_capacities"]["grouping_years_power"]
     current_horizon = snakemake.wildcards.planning_horizons
 
     for carrier in ["solar", "onwind", "offwind-ac", "offwind-dc"]:
+        extendable_i = (n.generators.carrier == carrier) & n.generators.p_nom_extendable
+        n.generators.loc[extendable_i, "p_nom_min"] = 0
+
         existing = n.generators.loc[n.generators.carrier == carrier, "p_nom"]
         ind = list(
             {i.split(sep=" ")[0] + " " + i.split(sep=" ")[1] for i in existing.index}
@@ -165,7 +169,7 @@ def _add_land_use_constraint_m(n, planning_horizons, config):
 
         previous_years = [
             str(y)
-            for y in planning_horizons + grouping_years
+            for y in set(planning_horizons + grouping_years)
             if y < int(snakemake.wildcards.planning_horizons)
         ]
 
@@ -178,6 +182,19 @@ def _add_land_use_constraint_m(n, planning_horizons, config):
             n.generators.loc[sel_current, "p_nom_max"] -= existing.loc[
                 sel_p_year
             ].rename(lambda x: x[:-4] + current_horizon)
+
+    # check if existing capacities are larger than technical potential
+    existing_large = n.generators[
+        n.generators["p_nom_min"] > n.generators["p_nom_max"]
+    ].index
+    if len(existing_large):
+        logger.warning(
+            f"Existing capacities larger than technical potential for {existing_large},\
+                        adjust technical potential to existing capacities"
+        )
+        n.generators.loc[existing_large, "p_nom_max"] = n.generators.loc[
+            existing_large, "p_nom_min"
+        ]
 
     n.generators.p_nom_max.clip(lower=0, inplace=True)
 
@@ -542,7 +559,7 @@ def add_BAU_constraints(n, config):
     ext_carrier_i = xr.DataArray(ext_i.carrier.rename_axis("Generator-ext"))
     lhs = p_nom.groupby(ext_carrier_i).sum()
     index = mincaps.index.intersection(lhs.indexes["carrier"])
-    rhs = mincaps[index].rename_axis("carrier")
+    rhs = mincaps[lhs.indexes["carrier"]].rename_axis("carrier")
     n.model.add_constraints(lhs >= rhs, name="bau_mincaps")
 
 
@@ -974,4 +991,13 @@ if __name__ == "__main__":
     logger.info(f"Maximum memory usage: {mem.mem_usage}")
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
-    n.export_to_netcdf(snakemake.output[0])
+    n.export_to_netcdf(snakemake.output.network)
+
+    with open(snakemake.output.config, "w") as file:
+        yaml.dump(
+            n.meta,
+            file,
+            default_flow_style=False,
+            allow_unicode=True,
+            sort_keys=False,
+        )

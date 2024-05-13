@@ -537,5 +537,8 @@ if __name__ == "__main__":
     # set carbon constraints
     n = set_carbon_constraints(n)
 
+    # update meta
+    n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
+
     # export network
     n.export_to_netcdf(snakemake.output[0])

@@ -3,10 +3,6 @@
 # SPDX-License-Identifier: MIT
 
 
-localrules:
-    copy_config,
-
-
 if config["foresight"] != "perfect":
 
     rule plot_power_network_clustered:
@@ -48,7 +44,7 @@ if config["foresight"] != "perfect":
         benchmark:
             (
                 RESULTS
-                + "benchmarksplot_power_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+                + "benchmarks/plot_power_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
             )
         conda:
             "../envs/environment.yaml"
@@ -159,6 +155,7 @@ rule make_summary:
         foresight=config_provider("foresight"),
         costs=config_provider("costs"),
         snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
         scenario=config_provider("scenario"),
         RDIR=RDIR,
     input:
