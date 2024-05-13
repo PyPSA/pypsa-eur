@@ -906,8 +906,6 @@ def add_ammonia(n, costs):
 
     nodes = pop_layout.index
 
-    cf_industry = snakemake.params.industry
-
     n.add("Carrier", "NH3")
 
     n.madd(
@@ -2901,18 +2899,17 @@ def add_industry(n, costs):
     emitted_co2_per_naphtha = costs.at["oil", "CO2 intensity"] - process_co2_per_naphtha
 
     non_sequestered = 1 - get(
-        snakemake.config["industry"]["HVC_environment_sequestration_fraction"],
+        cf_industry["HVC_environment_sequestration_fraction"],
         investment_year,
     )
 
-    if (
-        snakemake.config["industry"]["waste_to_energy"]
-        and options["regional_oil_demand"] # Should warn if regional_oil_demand is not true!!?
-    ):
+    if cf_industry["waste_to_energy"] or cf_industry["waste_to_energy_cc"]:
+
+        non_sequestered_hvc_locations = pd.Index(spatial.oil.demand_locations) + " non-sequestered HVC"
 
         n.madd(
             "Bus",
-            spatial.oil.demand_locations + " non-sequestered HVC",
+            non_sequestered_hvc_locations,
             location=spatial.oil.demand_locations,
             carrier="non-sequestered HVC",
             unit="MWh_LHV",
@@ -2923,7 +2920,7 @@ def add_industry(n, costs):
             spatial.oil.naphtha,
             bus0=spatial.oil.nodes,
             bus1=spatial.oil.naphtha,
-            bus2=spatial.oil.demand_locations + " non-sequestered HVC",
+            bus2=non_sequestered_hvc_locations,
             bus3=spatial.co2.process_emissions,
             carrier="naphtha for industry",
             p_nom_extendable=True,
@@ -2935,53 +2932,56 @@ def add_industry(n, costs):
 
         n.madd(
             "Link",
-            spatial.oil.demand_locations + " HVC to air",
-            bus0=spatial.oil.demand_locations + " non-sequestered HVC",
+            spatial.oil.demand_locations,
+            suffix=" HVC to air",
+            bus0=non_sequestered_hvc_locations,
             bus1="co2 atmosphere",
             carrier="HVC to air",
             p_nom_extendable=True,
             efficiency=costs.at["oil", "CO2 intensity"],
         )
 
-        n.madd(
-            "Link",
-            spatial.oil.demand_locations + " waste CHP",
-            bus0=spatial.oil.demand_locations + " non-sequestered HVC",
-            bus1=spatial.oil.demand_locations,
-            bus2=spatial.oil.demand_locations + "urban central heat",
-            bus3="co2 atmosphere",
-            carrier="waste CHP",
-            p_nom_extendable=True,
-            # p_nom=biomass_potential['municipal solid waste'] / 8760,
-            capital_cost=costs.at["waste CHP", "fixed"]
-            * costs.at["waste CHP", "efficiency"],
-            marginal_cost=costs.at["waste CHP", "VOM"],
-            efficiency=costs.at["waste CHP", "efficiency"],
-            efficiency2=costs.at['waste CHP', 'efficiency-heat'],
-            efficiency3=costs.at["oil", "CO2 intensity"],
-            lifetime=costs.at["waste CHP", "lifetime"],
-        )
+        if cf_industry["waste_to_energy"]:
 
-        n.madd(
-            "Link",
-            spatial.oil.demand_locations + " waste CHP CC",
-            bus0=spatial.oil.demand_locations + " non-sequestered HVC",
-            bus1=spatial.oil.demand_locations,
-            bus2=spatial.oil.demand_locations + "urban central heat",
-            bus3="co2 atmosphere",
-            bus4=spatial.co2.nodes,
-            carrier="waste CHP CC",
-            p_nom_extendable=True,
-            # p_nom=biomass_potential['municipal solid waste'] / 8760,
-            capital_cost=costs.at["waste CHP CC", "fixed"]
-            * costs.at["waste CHP CC", "efficiency"],
-            marginal_cost=costs.at["waste CHP CC", "VOM"],
-            efficiency=costs.at["waste CHP CC", "efficiency"],
-            efficiency2=costs.at["waste CHP CC", 'efficiency-heat'],
-            efficiency3=costs.at["oil", "CO2 intensity"] * (1 - options["cc_fraction"]),
-            efficiency4=costs.at["oil", "CO2 intensity"] * options["cc_fraction"],
-            lifetime=costs.at["waste CHP CC", "lifetime"],
-        )
+            n.madd(
+                "Link",
+                spatial.nodes + " waste CHP",
+                bus0=non_sequestered_hvc_locations,
+                bus1=spatial.nodes,
+                bus2=spatial.nodes + " urban central heat",
+                bus3="co2 atmosphere",
+                carrier="waste CHP",
+                p_nom_extendable=True,
+                capital_cost=costs.at["waste CHP", "fixed"]
+                * costs.at["waste CHP", "efficiency"],
+                marginal_cost=costs.at["waste CHP", "VOM"],
+                efficiency=costs.at["waste CHP", "efficiency"],
+                efficiency2=costs.at['waste CHP', 'efficiency-heat'],
+                efficiency3=costs.at["oil", "CO2 intensity"],
+                lifetime=costs.at["waste CHP", "lifetime"],
+            )
+
+        if cf_industry["waste_to_energy_cc"]:
+
+            n.madd(
+                "Link",
+                spatial.nodes + " waste CHP CC",
+                bus0=non_sequestered_hvc_locations,
+                bus1=spatial.nodes,
+                bus2=spatial.nodes + " urban central heat",
+                bus3="co2 atmosphere",
+                bus4=spatial.co2.nodes,
+                carrier="waste CHP CC",
+                p_nom_extendable=True,
+                capital_cost=costs.at["waste CHP CC", "fixed"]
+                * costs.at["waste CHP CC", "efficiency"],
+                marginal_cost=costs.at["waste CHP CC", "VOM"],
+                efficiency=costs.at["waste CHP CC", "efficiency"],
+                efficiency2=costs.at["waste CHP CC", 'efficiency-heat'],
+                efficiency3=costs.at["oil", "CO2 intensity"] * (1 - options["cc_fraction"]),
+                efficiency4=costs.at["oil", "CO2 intensity"] * options["cc_fraction"],
+                lifetime=costs.at["waste CHP CC", "lifetime"],
+            )
 
     else:
 
@@ -3207,7 +3207,6 @@ def add_waste_heat(n):
     # TODO options?
 
     logger.info("Add possibility to use industrial waste heat in district heating")
-    cf_industry = snakemake.params.industry
 
     # AC buses with district heating
     urban_central = n.buses.index[n.buses.carrier == "urban central heat"]
@@ -3672,6 +3671,7 @@ if __name__ == "__main__":
     update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     options = snakemake.params.sector
+    cf_industry = snakemake.params.industry
 
     investment_year = int(snakemake.wildcards.planning_horizons[-4:])
 
