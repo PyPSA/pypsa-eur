@@ -10,6 +10,16 @@ Release Notes
 Upcoming Release
 ================
 
+* Added option ``industry: HVC_environment_sequestration_fraction:`` to specify
+  the fraction of carbon contained plastics that is permanently sequestered in
+  landfill. The default assumption is that all carbon contained in plastics is
+  eventually released to the atmosphere.
+
+* Added option for building waste-to-energy plants with and without carbon
+  capture to consume non-recycled and non-sequestered plastics. The config
+  settings are ``industry: waste_to_energy:`` and ``industry:
+  waste_to_energy_cc``. This does not include municipal solid waste.
+
 * Bump minimum ``powerplantmatching`` version to v0.5.15.
 
 * Add floating wind technology for water depths below 60m
