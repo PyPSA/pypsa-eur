@@ -288,7 +288,9 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                         i for i in inv_ind if (i + name_suffix_by) in n.generators.index
                     ]
 
-                    p_max_pu = n.generators_t.p_max_pu[[i + name_suffix_by for i in inv_ind]]
+                    p_max_pu = n.generators_t.p_max_pu[
+                        [i + name_suffix_by for i in inv_ind]
+                    ]
                     p_max_pu.columns = [i + name_suffix for i in inv_ind]
 
                     n.madd(
