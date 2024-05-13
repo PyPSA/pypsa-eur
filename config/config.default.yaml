@@ -233,7 +233,6 @@ renewable:
     excluder_resolution: 200
     min_depth: 60
     max_depth: 1000
-    potential: simple # or conservative
     clip_p_max_pu: 1.e-2
   solar:
     cutout: europe-2013-sarah
