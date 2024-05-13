@@ -2907,7 +2907,9 @@ def add_industry(n, costs):
 
     if (
         snakemake.config["industry"]["waste_to_energy"]
-        and options["regional_oil_demand"] # Should warn if regional_oil_demand is not true!!?
+        and options[
+            "regional_oil_demand"
+        ]  # Should warn if regional_oil_demand is not true!!?
     ):
 
         n.madd(
@@ -2957,7 +2959,7 @@ def add_industry(n, costs):
             * costs.at["waste CHP", "efficiency"],
             marginal_cost=costs.at["waste CHP", "VOM"],
             efficiency=costs.at["waste CHP", "efficiency"],
-            efficiency2=costs.at['waste CHP', 'efficiency-heat'],
+            efficiency2=costs.at["waste CHP", "efficiency-heat"],
             efficiency3=costs.at["oil", "CO2 intensity"],
             lifetime=costs.at["waste CHP", "lifetime"],
         )
@@ -2977,7 +2979,7 @@ def add_industry(n, costs):
             * costs.at["waste CHP CC", "efficiency"],
             marginal_cost=costs.at["waste CHP CC", "VOM"],
             efficiency=costs.at["waste CHP CC", "efficiency"],
-            efficiency2=costs.at["waste CHP CC", 'efficiency-heat'],
+            efficiency2=costs.at["waste CHP CC", "efficiency-heat"],
             efficiency3=costs.at["oil", "CO2 intensity"] * (1 - options["cc_fraction"]),
             efficiency4=costs.at["oil", "CO2 intensity"] * options["cc_fraction"],
             lifetime=costs.at["waste CHP CC", "lifetime"],
