@@ -14,6 +14,21 @@ Upcoming Release
 
 * Add floating wind technology for water depths below 60m
 
+* Add config ``run: shared_resources: exclude:`` to specify additional files
+  that should be excluded from shared resources with the setting ``run:
+  shared_resources: base``. The function ``_helpers/get_run_path()`` now takes
+  an additional keyword argument ``exclude_from_shared`` with a list of files
+  that should not be shared. This keyword argument accepts a list of strings
+  where the string only needs to match the start of a filename (e.g.
+  ``"transport_data"`` would exclude both ``transport_data.csv`` and
+  ``transport_data_{simpl}_{clusters}.csv`` from being shared across scenarios.
+
+* Move switch ``run: shared_resources:`` to ``run: shared_resources: policy:``.
+
+* Add config land_transport_demand_factor to model growth in land transport demand for different time horizons.
+
+* Allow dictionary for the config aviation_demand_factor.
+
 * Group existing capacities to the earlier grouping_year for consistency with optimized capacities.
 
 * Update data bundle:
