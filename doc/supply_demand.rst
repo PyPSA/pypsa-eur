@@ -386,7 +386,7 @@ carbon capture (bottom bar) assumed in `Neumann et al <https://arxiv.org/abs/220
 .. image:: img/process-emissions.png
 
 
-Inside each country the industrial demand is then distributed using the `Hotmaps Industrial Database <https://zenodo.org/record/4687147#.YvOaxhxBy5c>`__, which is illustrated in the figure below. This open database includes georeferenced industrial sites of energy-intensive industry sectors in EU28, including cement, basic chemicals, glass, iron and steel, non-ferrous metals, non-metallic minerals, paper, and refineries subsectors. The use of this spatial dataset enables the calculation of regional and process-specific energy demands. This approach assumes that there will be no significant migration of energy-intensive industries.
+Inside each country the industrial demand is then distributed using the `Hotmaps Industrial Database <https://zenodo.org/records/4687147#.YvOaxhxBy5c>`__, which is illustrated in the figure below. This open database includes georeferenced industrial sites of energy-intensive industry sectors in EU28, including cement, basic chemicals, glass, iron and steel, non-ferrous metals, non-metallic minerals, paper, and refineries subsectors. The use of this spatial dataset enables the calculation of regional and process-specific energy demands. This approach assumes that there will be no significant migration of energy-intensive industries.
 
 .. image:: img/hotmaps.png
 

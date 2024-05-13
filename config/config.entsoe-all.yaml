@@ -38,6 +38,5 @@ lines:
 enable:
   retrieve: true
   retrieve_databundle: true
-  retrieve_sector_databundle: false
   retrieve_cost_data: true
   retrieve_cutout: true
