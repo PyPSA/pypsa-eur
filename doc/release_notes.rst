@@ -222,6 +222,8 @@ Upcoming Release
 
 * Clarify suffix usage in `add_existing_baseyear`.
 
+* The ``{sector_opts}`` wildcard is now not used by default. All scenario definitions are now done in the ``config.yaml`` file.
+
 PyPSA-Eur 0.10.0 (19th February 2024)
 =====================================
 
