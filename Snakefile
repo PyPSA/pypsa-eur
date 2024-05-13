@@ -24,7 +24,7 @@ run = config["run"]
 scenarios = get_scenarios(run)
 RDIR = get_rdir(run)
 
-shared_resources = run["shared_resources"]["mode"]
+shared_resources = run["shared_resources"]["policy"]
 exclude_from_shared = run["shared_resources"]["exclude"]
 logs = path_provider("logs/", RDIR, shared_resources, exclude_from_shared)
 benchmarks = path_provider("benchmarks/", RDIR, shared_resources, exclude_from_shared)
