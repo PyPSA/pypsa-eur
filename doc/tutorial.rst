@@ -32,7 +32,7 @@ configuration, execute
 .. code:: bash
     :class: full-width
 
-    snakemake -call results/test-elec/networks/elec_s_6_ec_lcopt_Co2L-24H.nc --configfile config/test/config.electricity.yaml
+    snakemake -call results/test-elec/networks/elec_s_6_ec_lcopt_.nc --configfile config/test/config.electricity.yaml
 
 This configuration is set to download a reduced cutout via the rule :mod:`retrieve_cutout`.
 For more information on the data dependencies of PyPSA-Eur, continue reading :ref:`data`.
@@ -114,9 +114,9 @@ clustered down to 6 buses and every 24 hours aggregated to one snapshot. The com
 
 .. code:: bash
 
-    snakemake -call results/test-elec/networks/elec_s_6_ec_lcopt_Co2L-24H.nc --configfile config/test/config.electricity.yaml
+    snakemake -call results/test-elec/networks/elec_s_6_ec_lcopt_.nc --configfile config/test/config.electricity.yaml
 
-orders ``snakemake`` to run the rule :mod:`solve_network` that produces the solved network and stores it in ``results/networks`` with the name ``elec_s_6_ec_lcopt_Co2L-24H.nc``:
+orders ``snakemake`` to run the rule :mod:`solve_network` that produces the solved network and stores it in ``results/networks`` with the name ``elec_s_6_ec_lcopt_.nc``:
 
 .. literalinclude:: ../rules/solve_electricity.smk
    :start-at: rule solve_network:
@@ -133,7 +133,7 @@ This triggers a workflow of multiple preceding jobs that depend on each rule's i
         node[shape=box, style=rounded, fontname=sans,                 fontsize=10, penwidth=2];
         edge[penwidth=2, color=grey];
             0[label = "solve_network", color = "0.38 0.6 0.85", style="rounded"];
-            1[label = "prepare_network\nll: copt\nopts: Co2L-24H", color = "0.53 0.6 0.85", style="rounded"];
+            1[label = "prepare_network\nll: copt", color = "0.53 0.6 0.85", style="rounded"];
             2[label = "add_extra_components", color = "0.01 0.6 0.85", style="rounded"];
             3[label = "cluster_network\nclusters: 6", color = "0.03 0.6 0.85", style="rounded"];
             4[label = "simplify_network\nsimpl: ", color = "0.42 0.6 0.85", style="rounded"];
@@ -268,7 +268,7 @@ For example, you can explore the evolution of the PyPSA networks by running
 #. ``snakemake resources/networks/elec.nc -call --configfile config/test/config.electricity.yaml``
 #. ``snakemake resources/networks/elec_s.nc -call --configfile config/test/config.electricity.yaml``
 #. ``snakemake resources/networks/elec_s_6.nc -call --configfile config/test/config.electricity.yaml``
-#. ``snakemake resources/networks/elec_s_6_ec_lcopt_Co2L-24H.nc -call --configfile config/test/config.electricity.yaml``
+#. ``snakemake resources/networks/elec_s_6_ec_lcopt_.nc -call --configfile config/test/config.electricity.yaml``
 
 To run all combinations of wildcard values provided in the ``config/config.yaml`` under ``scenario:``,
 you can use the collection rule ``solve_elec_networks``.
@@ -306,6 +306,6 @@ Jupyter Notebooks).
 
     import pypsa
 
-    n = pypsa.Network("results/networks/elec_s_6_ec_lcopt_Co2L-24H.nc")
+    n = pypsa.Network("results/networks/elec_s_6_ec_lcopt_.nc")
 
 For inspiration, read the `examples section in the PyPSA documentation <https://pypsa.readthedocs.io/en/latest/examples-basic.html>`__.

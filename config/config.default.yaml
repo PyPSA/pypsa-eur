@@ -38,17 +38,15 @@ scenario:
   simpl:
   - ''
   ll:
-  - v1.5
+  - vopt
   clusters:
   - 37
   - 128
   - 256
-  - 512
-  - 1024
   opts:
   - ''
   sector_opts:
-  - Co2L0-3H-T-H-B-I-A-dist1
+  - ''
   planning_horizons:
   # - 2020
   # - 2030

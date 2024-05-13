@@ -9,6 +9,9 @@ Release Notes
 
 Upcoming Release
 ================
+
+* Bump minimum ``powerplantmatching`` version to v0.5.15.
+
 * Add floating wind technology for water depths below 60m
 
 * Group existing capacities to the earlier grouping_year for consistency with optimized capacities.
@@ -223,6 +226,8 @@ Upcoming Release
 * Add documentation section for how to contribute documentation
 
 * Clarify suffix usage in `add_existing_baseyear`.
+
+* The ``{sector_opts}`` wildcard is now not used by default. All scenario definitions are now done in the ``config.yaml`` file.
 
 PyPSA-Eur 0.10.0 (19th February 2024)
 =====================================
