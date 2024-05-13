@@ -72,6 +72,7 @@ resistive_heaters,--,"{true, false}",Add option for transforming electricity int
 oil_boilers,--,"{true, false}",Add option for transforming oil into heat using boilers
 biomass_boiler,--,"{true, false}",Add option for transforming biomass into heat using boilers
 overdimension_individual_heating,--,"float",Add option for overdimensioning individual heating systems by a certain factor. This allows them to cover heat demand peaks e.g. 10% higher than those in the data with a setting of 1.1.
+central_heat_everywhere,--,"{true, false}","Model central heating at every location, even when the district heating share at that location is 0."
 chp,--,"{true, false}",Add option for using Combined Heat and Power (CHP)
 micro_chp,--,"{true, false}",Add option for using Combined Heat and Power (CHP) for decentral areas.
 solar_thermal,--,"{true, false}",Add option for using solar thermal to generate heat.
@@ -81,6 +82,7 @@ methanation,--,"{true, false}",Add option for transforming hydrogen and CO2 into
 coal_cc,--,"{true, false}",Add option for coal CHPs with carbon capture
 dac,--,"{true, false}",Add option for Direct Air Capture (DAC)
 co2_vent,--,"{true, false}",Add option for vent out CO2 from storages to the atmosphere.
+central_heat_vent,--,"{true, false}",Add option to shed excess heat from central heat buses; sometimes needed for model feasibility.
 allam_cycle,--,"{true, false}",Add option to include `Allam cycle gas power plants <https://en.wikipedia.org/wiki/Allam_power_cycle>`_
 hydrogen_fuel_cell,--,"{true, false}",Add option to include hydrogen fuel cell for re-electrification. Assuming OCGT technology costs
 hydrogen_turbine,--,"{true, false}",Add option to include hydrogen turbine for re-electrification. Assuming OCGT technology costs
@@ -119,6 +121,7 @@ electricity_distribution _grid,--,"{true, false}",Add a simplified representatio
 electricity_distribution _grid_cost_factor,,,Multiplies the investment cost of the electricity distribution grid
 ,,,
 electricity_grid _connection,--,"{true, false}",Add the cost of electricity grid connection for onshore wind and solar
+transmission_efficiency_enabled,--,"{true, false}",Enable modelling efficiency losses in links; determines whether the following section has any effect.
 transmission_efficiency,,,Section to specify transmission losses or compression energy demands of bidirectional links. Splits them into two capacity-linked unidirectional links.
 -- {carrier},--,str,The carrier of the link.
 -- -- efficiency_static,p.u.,float,Length-independent transmission efficiency.

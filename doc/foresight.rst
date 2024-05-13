@@ -124,40 +124,38 @@ Grouping years indicates the bins limits for grouping the existing capacities of
 different technologies. Note that separate bins are defined for the power and
 heating plants due to different data sources.
 
-``grouping_years_power: [1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2020,
-2025, 2030]``
-
-``grouping_years_heat: [1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2019]``
-
-
-
-
-
-**threshold capacity**
+.. literalinclude:: ../config/config.default.yaml
+   :language: yaml
+   :start-at:   existing_capacities:
+   :end-before: threshold_capacity:
 
 If for a technology, node, and grouping bin, the capacity is lower than
-threshold_capacity, it is ignored.
+``threshold_capacity`` (in MW), it is ignored.
 
-``threshold_capacity: 10``
-
-
-
-
-**conventional carriers**
+.. literalinclude:: ../config/config.default.yaml
+   :language: yaml
+   :start-at:   threshold_capacity:
+   :end-before: default_heating_lifetime:
 
 Conventional carriers indicate carriers used in the existing conventional
-technologies.
+technologies, allowing the selection of which kinds of existing capacities are to be added to the network and which to be left out. By default, all conventional technologies are included.
 
-    conventional_carriers:
+.. literalinclude:: ../config/config.default.yaml
+   :language: yaml
+   :start-at:   conventional_carriers:
+   :end-before: # docs
 
-    \- lignite
 
-    \- coal
+**build year aggregation**
 
-    \- oil
+The ``build_year_aggregation`` option is found under the ``clustering`` section of the configuration file, and is set to ``false`` by default. By setting this option to ``true``, similar components with different build years aggregated before each optimisation (their capacities summed up, etc.) and disaggregated again after each optimisation. This can lead to drastic improvement in the memory footprint of the optimisations (up to approximately a factor of 5 in common use-cases), especially for optimisations at the later planning horizons.
 
-    \- uranium
+The aggregation has received some limited testing, and has lead to minimal distortion in results. However, caution is advised in the use of this option. To test if it performs correctly in your use-case, use to ``aggBuildYear`` flag in the ``{sector_opts}`` wildcard to run a version of your model with and without build year aggregation, and see if the results are the same.
 
+As of now, the following requirements must be met for build year aggregation to work correctly:
+- Time-step segmentation cannot be used; use uniform time-aggregation instead (e.g.  ``6h`` instead of ``2000seg``). (The time-step segmentation could be different for different planning horizons.)
+- Turn off transmission efficiencies for links by setting ``transmission_efficiency_enabled`` to ``false`` under the ``sector:`` configuration section. Enabling these introduces the ``reversed`` column in ``n.links`` which, with build year aggregation enabled, leads to a netCDF error upon exporting.
+- Make sure that a central heat bus is modelled at every location regardless of district heating fraction by setting ``central_heat_everywhere`` to ``true`` under the ``sector:`` configuration section. Otherwise one might get links (with waste heat) which are connected to central heating in some planning horizons and not in others. Alternatively, turn off all waste heat modelling.
 
 
 

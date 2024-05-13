@@ -511,6 +511,7 @@ sector:
   oil_boilers: false
   biomass_boiler: true
   overdimension_individual_heating: 1.1  #to cover demand peaks bigger than data
+  central_heat_everywhere: false
   chp: true
   micro_chp: false
   solar_thermal: true
@@ -521,7 +522,6 @@ sector:
   dac: true
   co2_vent: false
   central_heat_vent: false
-  central_heat_everywhere: false
   allam_cycle: false
   hydrogen_fuel_cell: true
   hydrogen_turbine: false
@@ -567,6 +567,7 @@ sector:
   electricity_distribution_grid: true
   electricity_distribution_grid_cost_factor: 1.0
   electricity_grid_connection: true
+  transmission_efficiency_enabled: true
   transmission_efficiency:
     DC:
       efficiency_static: 0.98
@@ -748,6 +749,7 @@ clustering:
   temporal:
     resolution_elec: false
     resolution_sector: false
+  build_year_aggregation: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#adjustments
 adjustments:
