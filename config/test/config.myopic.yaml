@@ -34,8 +34,6 @@ sector:
   central_heat_vent: true
 
 electricity:
-  co2limit_enable: false
-  co2limit: 100.e+6
 
   extendable_carriers:
     Generator: [OCGT]

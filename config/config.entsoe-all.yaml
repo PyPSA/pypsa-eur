@@ -29,7 +29,7 @@ countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'F
 
 electricity:
   custom_powerplants: true
-  co2limit: 0
+  co2limit: 9.59e+7
   co2base: 1.918e+9
 
 lines:

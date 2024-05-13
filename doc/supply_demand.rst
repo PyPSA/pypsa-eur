@@ -211,7 +211,7 @@ Today, most of the :math:`H_2` consumed globally is produced from natural gas by
 
 .. math::
 
-   CH_4 + H_2O \xrightarrow{} CO + 3h_2
+   CH_4 + H_2O \xrightarrow{} CO + 3H_2
 
 combined with a water-gas shift reaction
 
@@ -453,7 +453,7 @@ The basic chemicals consumption data from the `JRC IDEES  <https://op.europa.eu/
 Statistics for the production of ammonia, which is commonly used as a fertilizer, are taken from the `USGS <https://www.usgs.gov/media/files/nitrogen-2017-xlsx>`__ for every country. Ammonia can be made from hydrogen and nitrogen using the Haber-Bosch process.
 
 .. math::
-   N_2 + 3h_2 \xrightarrow{}  2NH_3
+   N_2 + 3H_2 \xrightarrow{}  2NH_3
 
 
 
