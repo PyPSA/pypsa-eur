@@ -4391,8 +4391,12 @@ def add_import_options(
     ],
     endogenous_hvdc=False,
 ):
-    if not isinstance(import_options, dict):
+    if not isinstance(import_options[0], dict):
         import_options = {k: 1.0 for k in import_options}
+    else:
+        import_options = {k: v for d in import_options for k, v in d.items()}
+    if not options["gas_network"]:
+        logger.warning("Gas network is not resolved but recommended for import options.")
 
     logger.info("Add import options: " + " ".join(import_options.keys()))
     fn = snakemake.input.gas_input_nodes_simplified
@@ -4401,7 +4405,7 @@ def add_import_options(
 
     import_config = snakemake.config["sector"]["import"]
 
-    ports = pd.read_csv(snakemake.input.ports, index_col=0)
+    ports = pd.read_csv(snakemake.input.import_ports, index_col=0)
 
     translate = {
         "pipeline-h2": "pipeline",
@@ -4582,7 +4586,7 @@ def add_import_options(
             import_costs.query("esc == @tech").marginal_cost.min()
             * import_options[tech]
         )
-
+        # TODO: no bus EU NH3 - no load? no link? - same for steel?
         n.add(
             "Generator",
             f"EU import {tech}",
@@ -4591,47 +4595,6 @@ def add_import_options(
             marginal_cost=marginal_costs,
             p_nom=1e7,
         )
-
-
-def maybe_adjust_costs_and_potentials(n, opts):
-    for o in opts:
-        flags = ["+e", "+p", "+m"]
-        if all(flag not in o for flag in flags):
-            continue
-        oo = o.split("+")
-        carrier_list = np.hstack(
-            (
-                n.generators.carrier.unique(),
-                n.links.carrier.unique(),
-                n.stores.carrier.unique(),
-                n.storage_units.carrier.unique(),
-            )
-        )
-        suptechs = map(lambda c: c.split("-", 2)[0], carrier_list)
-        if oo[0].startswith(tuple(suptechs)):
-            carrier = oo[0]
-            attr_lookup = {"p": "p_nom_max", "e": "e_nom_max", "c": "capital_cost"}
-            attr = attr_lookup[oo[1][0]]
-            factor = float(oo[1][1:])
-            # beware if factor is 0 and p_nom_max is np.inf, 0*np.inf is nan
-            if carrier == "AC":  # lines do not have carrier
-                n.lines[attr] *= factor
-            else:
-                if attr == "p_nom_max":
-                    comps = {"Generator", "Link", "StorageUnit"}
-                elif attr == "e_nom_max":
-                    comps = {"Store"}
-                else:
-                    comps = {"Generator", "Link", "StorageUnit", "Store"}
-                for c in n.iterate_components(comps):
-                    if carrier == "solar":
-                        sel = c.df.carrier.str.contains(
-                            carrier
-                        ) & ~c.df.carrier.str.contains("solar rooftop")
-                    else:
-                        sel = c.df.carrier.str.contains(carrier)
-                    c.df.loc[sel, attr] *= factor
-            logger.info(f"changing {attr} for {carrier} by factor {factor}")
 
 
 def limit_individual_line_extension(n, maxext):
@@ -4887,13 +4850,13 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "prepare_sector_network",
-            configfiles="../../config/config.20231025-zecm.yaml",
+            configfiles="/home/toni-seibold/Documents/02_repos/pypsa-import/config/config.default.yaml",
             simpl="",
             opts="",
-            clusters="37",
-            ll="v1.0",
-            sector_opts="CO2L0-24H-T-H-B-I-A-dist1",
-            planning_horizons="2030",
+            clusters="20",
+            ll="v1.5",
+            sector_opts="",
+            planning_horizons="2050",
         )
 
     configure_logging(snakemake)
@@ -4901,7 +4864,7 @@ if __name__ == "__main__":
     update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     options = snakemake.params.sector
-
+    options["gas_network"] = True
     investment_year = int(snakemake.wildcards.planning_horizons[-4:])
 
     n = pypsa.Network(snakemake.input.network)
@@ -4925,7 +4888,7 @@ if __name__ == "__main__":
     pop_weighted_energy_totals.update(pop_weighted_heat_totals)
 
     country_centroids = pd.read_csv(
-        snakemake.input.country_centroids[0], index_col="ISO"
+        snakemake.input.country_centroids, index_col="ISO"
     )
 
     patch_electricity_network(n)
@@ -4962,10 +4925,10 @@ if __name__ == "__main__":
     if options["industry"]:
         add_industry(n, costs)
 
-    if "S" in opts and not options["shipping_endogenous"]["enable"]:
+    if options["shipping"] and not options["shipping_endogenous"]["enable"]:
         add_shipping(n, costs)
 
-    if "S" in opts and options["shipping_endogenous"]["enable"]:
+    if options["shipping_endogenous"]["enable"]:
         add_shipping_endogenous(n, costs)
 
     if options["heating"]:
@@ -4995,35 +4958,15 @@ if __name__ == "__main__":
         MeOH=["shipping-meoh"],
         St=["shipping-steel"],
     )
-    for o in opts:
-        if not o.startswith("imp"):
-            continue
-        subsets = o.split("+")[1:]
-        if len(subsets):
 
-            def parse_carriers(s):
-                prefixes = sorted(translate.keys(), key=lambda k: len(k), reverse=True)
-                pattern = rf'({"|".join(prefixes)})(\d+(\.\d+)?)?'
-                match = re.search(pattern, s)
-                prefix = match.group(1) if match else None
-                number = float(match.group(2)) if match and match.group(2) else 1.0
-                return {prefix: number}
-
-            carriers = {
-                tk: v
-                for s in subsets
-                for k, v in parse_carriers(s).items()
-                for tk in translate.get(k, [])
-            }
-        else:
-            carriers = options["import"]["options"]
+    if options["imp"]:
+        carriers = options["import"]["options"]
         add_import_options(
             n,
             capacity_boost=options["import"]["capacity_boost"],
             import_options=carriers,
             endogenous_hvdc=options["import"]["endogenous_hvdc_import"]["enable"],
         )
-        break
 
     if options["allam_cycle_gas"]:
         add_allam_cycle_gas(n, costs)

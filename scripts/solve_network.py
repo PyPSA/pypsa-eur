@@ -820,13 +820,6 @@ def add_energy_import_limit(n, sns):
 
     limit = n.config["sector"].get("import", {}).get("limit", False)
     limit_sense = n.config["sector"].get("import", {}).get("limit_sense", "<=")
-    for o in n.opts:
-        if not o.startswith("imp"):
-            continue
-        match = o.split("+")[0][3:]
-        if match:
-            limit = float(match)
-        break
 
     if (import_gens.empty and import_links.empty) or not limit:
         return
@@ -896,7 +889,8 @@ def extra_functionality(n, snapshots):
     add_battery_constraints(n)
     add_lossy_bidirectional_link_constraints(n)
     add_pipe_retrofit_constraint(n)
-    add_energy_import_limit(n, snapshots)
+    if config["sector"]["import"]["limit"]:
+        add_energy_import_limit(n, snapshots)
     if n._multi_invest:
         add_carbon_constraint(n, snapshots)
         add_carbon_budget_constraint(n, snapshots)
@@ -977,13 +971,13 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "solve_sector_network",
-            configfiles="../config/test/config.perfect.yaml",
+            configfiles="./config/config.default.yaml",
             simpl="",
-            opts="",
-            clusters="37",
-            ll="v1.0",
-            sector_opts="CO2L0-1H-T-H-B-I-A-dist1",
-            planning_horizons="2030",
+            opts="s",
+            clusters="20",
+            ll="",
+            sector_opts="",
+            planning_horizons="2050",
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)

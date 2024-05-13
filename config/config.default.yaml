@@ -376,6 +376,8 @@ sector:
   heating: true
   biomass: true
   industry: true
+  shipping: false
+  imp: true
   agriculture: true
   district_heating:
     potential: 0.6
@@ -522,7 +524,7 @@ sector:
   hydrogen_turbine: false
   SMR: true
   SMR_cc: true
-  regional_methanol_demand: false
+  regional_methanol_demand: true
   regional_oil_demand: false
   regional_coal_demand: false
   methanol_reforming: true
@@ -556,7 +558,7 @@ sector:
     # - onshore  # more than 50 km from sea
   - nearshore    # within 50 km of sea
     # - offshore
-  ammonia: false
+  ammonia: true # false
   min_part_load_fischer_tropsch: 0.7
   min_part_load_methanolisation: 0.3
   min_part_load_methanation: 0.3
@@ -581,7 +583,7 @@ sector:
       efficiency_per_1000km: 1 #0.977
       compression_per_1000km: 0.01
   H2_network: true
-  gas_network: false
+  gas_network: true
   H2_retrofit: false
   H2_retrofit_capacity_per_CH4: 0.6
   gas_network_connectivity_upgrade: 1
@@ -600,8 +602,8 @@ sector:
   biosng_cc: false
   biomass_upgrading_cc: false
   electrobiofuels: false
-  endogenous_steel: false
-  endogenous_hvc: false
+  endogenous_steel: true # false
+  endogenous_hvc: true # false
   relocation_steel: false
   flexibility_steel: false
   import:
@@ -609,17 +611,19 @@ sector:
     limit: false # bool or number in TWh
     limit_sense: "=="
     options:
-    - pipeline-h2
-    - shipping-lh2
-    - shipping-lch4
-    - shipping-lnh3
-    - shipping-ftfuel
-    - shipping-meoh
-    - hvdc-to-elec
+    - pipeline-h2: 1.0
+    - shipping-lh2: 1.0
+    - shipping-lch4: 1.0
+    - shipping-lnh3: 1.0
+    - shipping-ftfuel: 1.0
+    - shipping-meoh: 1.0
+    - hvdc-to-elec: 1.0
+    - shipping-steel: 1.0
     p_nom_max:
       pipeline-h2: .inf
     endogenous_hvdc_import:
       enable: false
+      cost_factor: 1.0
       exporters:
       - CN-West
       - DZ
