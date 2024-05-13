@@ -36,6 +36,7 @@ import numpy as np
 import pandas as pd
 import pypsa
 import xarray as xr
+import yaml
 from _benchmark import memory_logger
 from _helpers import (
     configure_logging,
@@ -154,7 +155,7 @@ def _add_land_use_constraint(n):
 def _add_land_use_constraint_m(n, planning_horizons, config):
     # if generators clustering is lower than network clustering, land_use accounting is at generators clusters
 
-    grouping_years = config["existing_capacities"]["grouping_years"]
+    grouping_years = config["existing_capacities"]["grouping_years_power"]
     current_horizon = snakemake.wildcards.planning_horizons
 
     for carrier in ["solar", "onwind", "offwind-ac", "offwind-dc"]:
@@ -165,7 +166,7 @@ def _add_land_use_constraint_m(n, planning_horizons, config):
 
         previous_years = [
             str(y)
-            for y in planning_horizons + grouping_years
+            for y in set(planning_horizons + grouping_years)
             if y < int(snakemake.wildcards.planning_horizons)
         ]
 
@@ -542,7 +543,7 @@ def add_BAU_constraints(n, config):
     ext_carrier_i = xr.DataArray(ext_i.carrier.rename_axis("Generator-ext"))
     lhs = p_nom.groupby(ext_carrier_i).sum()
     index = mincaps.index.intersection(lhs.indexes["carrier"])
-    rhs = mincaps[index].rename_axis("carrier")
+    rhs = mincaps[lhs.indexes["carrier"]].rename_axis("carrier")
     n.model.add_constraints(lhs >= rhs, name="bau_mincaps")
 
 
@@ -913,6 +914,12 @@ def solve_network(n, config, solving, **kwargs):
         logger.warning(
             f"Solving status '{status}' with termination condition '{condition}'"
         )
+
+    if status == "warning":
+        raise RuntimeError(
+            "Solving status 'warning'. Results may not be reliable. Aborting."
+        )
+
     if "infeasible" in condition:
         labels = n.model.compute_infeasibilities()
         logger.info(f"Labels:\n{labels}")
@@ -968,4 +975,13 @@ if __name__ == "__main__":
     logger.info(f"Maximum memory usage: {mem.mem_usage}")
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
-    n.export_to_netcdf(snakemake.output[0])
+    n.export_to_netcdf(snakemake.output.network)
+
+    with open(snakemake.output.config, "w") as file:
+        yaml.dump(
+            n.meta,
+            file,
+            default_flow_style=False,
+            allow_unicode=True,
+            sort_keys=False,
+        )

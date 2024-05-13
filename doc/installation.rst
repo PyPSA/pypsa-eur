@@ -15,7 +15,7 @@ directory in which the commands following the ``%`` should be entered.
 Clone the Repository
 ====================
 
-First of all, clone the `PyPSA-Eur repository <https://github.com/PyPSA/pypsa-eur>`_ using the version control system ``git`` in the command line.
+First of all, clone the `PyPSA-Eur repository <https://github.com/PyPSA/pypsa-eur>`__ using the version control system ``git`` in the command line.
 
 .. code:: bash
 
@@ -30,11 +30,11 @@ Install Python Dependencies
 ===============================
 
 PyPSA-Eur relies on a set of other Python packages to function.
-We recommend using the package manager `mamba <https://mamba.readthedocs.io/en/latest/>`_ to install them and manage your environments.
-For instructions for your operating system follow the ``mamba`` `installation guide <https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html>`_.
+We recommend using the package manager `mamba <https://mamba.readthedocs.io/en/latest/>`__ to install them and manage your environments.
+For instructions for your operating system follow the ``mamba`` `installation guide <https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html>`__.
 You can also use ``conda`` equivalently.
 
-The package requirements are curated in the `envs/environment.yaml <https://github.com/PyPSA/pypsa-eur/blob/master/envs/environment.yaml>`_ file.
+The package requirements are curated in the `envs/environment.yaml <https://github.com/PyPSA/pypsa-eur/blob/master/envs/environment.yaml>`__ file.
 The environment can be installed and activated using
 
 .. code:: bash
@@ -59,16 +59,16 @@ Install a Solver
 PyPSA passes the PyPSA-Eur network model to an external solver for performing the optimisation.
 PyPSA is known to work with the free software
 
-- `HiGHS <https://highs.dev/>`_
-- `Cbc <https://projects.coin-or.org/Cbc#DownloadandInstall>`_
-- `GLPK <https://www.gnu.org/software/glpk/>`_ (`WinGLKP <http://winglpk.sourceforge.net/>`_)
-- `Ipopt <https://coin-or.github.io/Ipopt/INSTALL.html>`_
+- `HiGHS <https://highs.dev/>`__
+- `Cbc <https://projects.coin-or.org/Cbc#DownloadandInstall>`__
+- `GLPK <https://www.gnu.org/software/glpk/>`__ (`WinGLKP <http://winglpk.sourceforge.net/>`__)
+- `Ipopt <https://coin-or.github.io/Ipopt/INSTALL.html>`__
 
 and the non-free, commercial software (for some of which free academic licenses are available)
 
-- `Gurobi <https://www.gurobi.com/documentation/quickstart.html>`_
-- `CPLEX <https://www.ibm.com/products/ilog-cplex-optimization-studio>`_
-- `FICO Xpress Solver <https://www.fico.com/de/products/fico-xpress-solver>`_
+- `Gurobi <https://www.gurobi.com/documentation/quickstart.html>`__
+- `CPLEX <https://www.ibm.com/products/ilog-cplex-optimization-studio>`__
+- `FICO Xpress Solver <https://www.fico.com/de/products/fico-xpress-solver>`__
 
 For installation instructions of these solvers for your operating system, follow the links above.
 Commercial solvers such as Gurobi and CPLEX currently significantly outperform open-source solvers for large-scale problems, and
@@ -76,7 +76,7 @@ it might be the case that you can only retrieve solutions by using a commercial 
 Nevertheless, you can still use open-source solvers for smaller problems.
 
 .. seealso::
-    `Instructions how to install a solver in the documentation of PyPSA <https://pypsa.readthedocs.io/en/latest/installation.html#getting-a-solver-for-linear-optimisation>`_
+    `Instructions how to install a solver in the documentation of PyPSA <https://pypsa.readthedocs.io/en/latest/installation.html#getting-a-solver-for-linear-optimisation>`__
 
 .. note::
     The rules :mod:`cluster_network` and :mod:`simplify_network` solve a mixed-integer quadratic optimisation problem for clustering.
@@ -88,7 +88,7 @@ Nevertheless, you can still use open-source solvers for smaller problems.
         mamba activate pypsa-eur
         mamba install -c gurobi gurobi
 
-    Additionally, you need to setup your `Gurobi license <https://www.gurobi.com/solutions/licensing/>`_.
+    Additionally, you need to setup your `Gurobi license <https://www.gurobi.com/solutions/licensing/>`__.
 
 
 .. _defaultconfig:

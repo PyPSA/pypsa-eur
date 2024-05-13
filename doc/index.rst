@@ -81,16 +81,16 @@ them:
 .. note::
     You can find showcases of the model's capabilities in the Supplementary Materials of the
     Joule paper `The potential role of a hydrogen network in Europe
-    <https://doi.org/10.1016/j.joule.2023.06.016>`_, the Supplementary Materials of another `paper in Joule with a
+    <https://doi.org/10.1016/j.joule.2023.06.016>`__, the Supplementary Materials of another `paper in Joule with a
     description of the industry sector
-    <https://doi.org/10.1016/j.joule.2022.04.016>`_, or in `a 2021 presentation
-    at EMP-E <https://nworbmot.org/energy/brown-empe.pdf>`_.
+    <https://doi.org/10.1016/j.joule.2022.04.016>`__, or in `a 2021 presentation
+    at EMP-E <https://nworbmot.org/energy/brown-empe.pdf>`__.
     The sector-coupled extension of PyPSA-Eur was
     initially described in the paper `Synergies of sector coupling and transmission
     reinforcement in a cost-optimised, highly renewable European energy system
-    <https://arxiv.org/abs/1801.05290>`_ (2018) but it differs by being based on the
+    <https://arxiv.org/abs/1801.05290>`__ (2018) but it differs by being based on the
     higher resolution electricity transmission model `PyPSA-Eur
-    <https://github.com/PyPSA/pypsa-eur>`_ rather than a one-node-per-country model,
+    <https://github.com/PyPSA/pypsa-eur>`__ rather than a one-node-per-country model,
     and by including biomass, industry, industrial feedstocks, aviation, shipping,
     better carbon management, carbon capture and usage/sequestration, and gas
     networks.
@@ -99,8 +99,8 @@ About
 =====
 
 PyPSA-Eur is designed to be imported into the open energy system modelling
-framework `PyPSA <https://www.pypsa.org>`_ for which `documentation
-<https://pypsa.readthedocs.io>`_ is available as well. However, since the
+framework `PyPSA <https://www.pypsa.org>`__ for which `documentation
+<https://pypsa.readthedocs.io>`__ is available as well. However, since the
 workflow is modular, it should be easy to adapt the data workflow to other
 modelling frameworks.
 
@@ -114,22 +114,22 @@ of the individual parts.
     PyPSA-Eur is under active development and has several
     :doc:`limitations` which
     you should understand before using the model. The Github repository
-    `issues <https://github.com/PyPSA/pypsa-eur/issues>`_ collect known
+    `issues <https://github.com/PyPSA/pypsa-eur/issues>`__ collect known
     topics we are working on. Please feel free to help or make suggestions.
 
 This project is currently maintained by the `Department of Digital
-Transformation in Energy Systems <https://www.tu.berlin/en/ensys>`_ at the
-`Technische Universität Berlin <https://www.tu.berlin>`_. Previous versions were
-developed within the `IAI <http://www.iai.kit.edu>`_ at the `Karlsruhe Institute
-of Technology (KIT) <http://www.kit.edu/english/index.php>`_ which was funded by
-the `Helmholtz Association <https://www.helmholtz.de/en/>`_, and by the
+Transformation in Energy Systems <https://www.tu.berlin/en/ensys>`__ at the
+`Technische Universität Berlin <https://www.tu.berlin>`__. Previous versions were
+developed within the `IAI <http://www.iai.kit.edu>`__ at the `Karlsruhe Institute
+of Technology (KIT) <http://www.kit.edu/english/index.php>`__ which was funded by
+the `Helmholtz Association <https://www.helmholtz.de/en/>`__, and by the
 `Renewable Energy Group
-<https://fias.uni-frankfurt.de/physics/schramm/renewable-energy-system-and-network-analysis/>`_
-at `FIAS <https://fias.uni-frankfurt.de/>`_ to carry out simulations for the
-`CoNDyNet project <http://condynet.de/>`_, financed by the `German Federal
-Ministry for Education and Research (BMBF) <https://www.bmbf.de/en/index.html>`_
+<https://fias.uni-frankfurt.de/physics/schramm/renewable-energy-system-and-network-analysis/>`__
+at `FIAS <https://fias.uni-frankfurt.de/>`__ to carry out simulations for the
+`CoNDyNet project <http://condynet.de/>`__, financed by the `German Federal
+Ministry for Education and Research (BMBF) <https://www.bmbf.de/en/index.html>`__
 as part of the `Stromnetze Research Initiative
-<http://forschung-stromnetze.info/projekte/grundlagen-und-konzepte-fuer-effiziente-dezentrale-stromnetze/>`_.
+<http://forschung-stromnetze.info/projekte/grundlagen-und-konzepte-fuer-effiziente-dezentrale-stromnetze/>`__.
 
 
 Workflow
@@ -153,10 +153,10 @@ to reading this documentation.
 
 - Documentation of `PyPSA <https://pypsa.readthedocs.io>`__, the package for
   modelling energy systems which PyPSA-Eur uses under the hood.
-- Course on `Energy Systems <https://nworbmot.org/courses/es-22/>`_ given at
-  Technical University of Berlin by `Prof. Dr. Tom Brown <https://nworbmot.org>`_.
-- Course on `Data Science for Energy System Modelling <https://fneum.github.io/data-science-for-esm/intro.html>`_
-  given at Technical University of Berlin by `Dr. Fabian Neumann <https://neumann.fyi>`_.
+- Course on `Energy Systems <https://nworbmot.org/courses/es-22/>`__ given at
+  Technical University of Berlin by `Prof. Dr. Tom Brown <https://nworbmot.org>`__.
+- Course on `Data Science for Energy System Modelling <https://fneum.github.io/data-science-for-esm/intro.html>`__
+  given at Technical University of Berlin by `Dr. Fabian Neumann <https://neumann.fyi>`__.
 
 
 Citing PyPSA-Eur

@@ -186,9 +186,8 @@ import time
 import atlite
 import geopandas as gpd
 import numpy as np
-import pandas as pd
 import xarray as xr
-from _helpers import configure_logging, set_scenario_config
+from _helpers import configure_logging, get_snapshots, set_scenario_config
 from dask.distributed import Client
 from pypsa.geo import haversine
 from shapely.geometry import LineString
@@ -218,7 +217,6 @@ if __name__ == "__main__":
 
     correction_factor = params.get("correction_factor", 1.0)
     capacity_per_sqkm = params["capacity_per_sqkm"]
-    snapshots = snakemake.params.snapshots
 
     if correction_factor != 1.0:
         logger.info(f"correction_factor is set as {correction_factor}")
@@ -228,7 +226,8 @@ if __name__ == "__main__":
     else:
         client = None
 
-    sns = pd.date_range(freq="h", **snapshots)
+    sns = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
+
     cutout = atlite.Cutout(snakemake.input.cutout).sel(time=sns)
     regions = gpd.read_file(snakemake.input.regions)
     assert not regions.empty, (

@@ -11,7 +11,9 @@ import os
 import re
 import urllib
 from functools import partial
+from os.path import exists
 from pathlib import Path
+from shutil import copyfile
 
 import pandas as pd
 import pytz
@@ -23,6 +25,50 @@ from tqdm import tqdm
 logger = logging.getLogger(__name__)
 
 REGION_COLS = ["geometry", "name", "x", "y", "country"]
+
+
+def copy_default_files(workflow):
+    default_files = {
+        "config/config.default.yaml": "config/config.yaml",
+        "config/scenarios.template.yaml": "config/scenarios.yaml",
+    }
+    for template, target in default_files.items():
+        target = os.path.join(workflow.current_basedir, target)
+        template = os.path.join(workflow.current_basedir, template)
+        if not exists(target) and exists(template):
+            copyfile(template, target)
+
+
+def get_scenarios(run):
+    scenario_config = run.get("scenarios", {})
+    if run["name"] and scenario_config.get("enable"):
+        fn = Path(scenario_config["file"])
+        if fn.exists():
+            scenarios = yaml.safe_load(fn.read_text())
+            if scenarios == None:
+                print("WARNING! Scenario management enabled but scenarios file appears to be empty.")
+            if run["name"] == "all":
+                run["name"] = list(scenarios.keys())
+            return scenarios
+        else:
+            print("WARNING! Scenario management enabled but scenarios file does not exist.")
+    return {}
+
+
+def get_rdir(run):
+    scenario_config = run.get("scenarios", {})
+    if run["name"] and scenario_config.get("enable"):
+        RDIR = "{run}/"
+    elif run["name"]:
+        RDIR = run["name"] + "/"
+    else:
+        RDIR = ""
+
+    prefix = run.get("prefix", "")
+    if prefix:
+        RDIR = f"{prefix}/{RDIR}"
+
+    return RDIR
 
 
 def get_run_path(fn, dir, rdir, shared_resources):
@@ -60,26 +106,23 @@ def get_run_path(fn, dir, rdir, shared_resources):
     if shared_resources == "base":
         pattern = r"\{([^{}]+)\}"
         existing_wildcards = set(re.findall(pattern, fn))
-        irrelevant_wildcards = {"technology", "year", "scope"}
+        irrelevant_wildcards = {"technology", "year", "scope", "kind"}
         no_relevant_wildcards = not existing_wildcards - irrelevant_wildcards
         no_elec_rule = not fn.startswith("networks/elec") and not fn.startswith(
             "add_electricity"
         )
         is_shared = no_relevant_wildcards and no_elec_rule
+        rdir = "" if is_shared else rdir
     elif isinstance(shared_resources, str):
         rdir = shared_resources + "/"
-        is_shared = True
     elif isinstance(shared_resources, bool):
-        is_shared = shared_resources
+        rdir = "" if shared_resources else rdir
     else:
         raise ValueError(
             "shared_resources must be a boolean, str, or 'base' for special handling."
         )
 
-    if is_shared:
-        return f"{dir}{fn}"
-    else:
-        return f"{dir}{rdir}{fn}"
+    return f"{dir}{rdir}{fn}"
 
 
 def path_provider(dir, rdir, shared_resources):
@@ -393,7 +436,7 @@ def mock_snakemake(
             configfiles = [configfiles]
 
         resource_settings = ResourceSettings()
-        config_settings = ConfigSettings(configfiles=configfiles)
+        config_settings = ConfigSettings(configfiles=map(Path, configfiles))
         workflow_settings = WorkflowSettings()
         storage_settings = StorageSettings()
         dag_settings = DAGSettings(rerun_triggers=[])
@@ -724,3 +767,15 @@ def validate_checksum(file_path, zenodo_url=None, checksum=None):
     assert (
         calculated_checksum == checksum
     ), "Checksum is invalid. This may be due to an incomplete download. Delete the file and re-execute the rule."
+
+
+def get_snapshots(snapshots, drop_leap_day=False, freq="h", **kwargs):
+    """
+    Returns pandas DateTimeIndex potentially without leap days.
+    """
+
+    time = pd.date_range(freq=freq, **snapshots, **kwargs)
+    if drop_leap_day and time.is_leap_year.any():
+        time = time[~((time.month == 2) & (time.day == 29))]
+
+    return time

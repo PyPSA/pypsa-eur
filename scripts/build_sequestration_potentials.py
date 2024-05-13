@@ -23,13 +23,15 @@ def area(gdf):
 def allocate_sequestration_potential(
     gdf, regions, attr="conservative estimate Mt", threshold=3
 ):
-    gdf = gdf.loc[gdf[attr] > threshold, [attr, "geometry"]]
+    if isinstance(attr, str):
+        attr = [attr]
+    gdf = gdf.loc[gdf[attr].sum(axis=1) > threshold, attr + ["geometry"]]
     gdf["area_sqkm"] = area(gdf)
     overlay = gpd.overlay(regions, gdf, keep_geom_type=True)
     overlay["share"] = area(overlay) / overlay["area_sqkm"]
     adjust_cols = overlay.columns.difference({"name", "area_sqkm", "geometry", "share"})
     overlay[adjust_cols] = overlay[adjust_cols].multiply(overlay["share"], axis=0)
-    return overlay.dissolve("name", aggfunc="sum")[attr]
+    return overlay.dissolve("name", aggfunc="sum")[attr].sum(axis=1)
 
 
 if __name__ == "__main__":
@@ -37,14 +39,14 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "build_sequestration_potentials", simpl="", clusters="181"
+            "build_sequestration_potentials", simpl="", clusters="128"
         )
 
     set_scenario_config(snakemake)
 
     cf = snakemake.params.sequestration_potential
 
-    gdf = gpd.read_file(snakemake.input.sequestration_potential[0])
+    gdf = gpd.read_file(snakemake.input.sequestration_potential)
 
     regions = gpd.read_file(snakemake.input.regions_offshore)
     if cf["include_onshore"]:

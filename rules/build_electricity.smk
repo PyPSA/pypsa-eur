@@ -21,10 +21,16 @@ if config["enable"].get("prepare_links_p_nom", False):
 rule build_electricity_demand:
     params:
         snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
         countries=config_provider("countries"),
         load=config_provider("load"),
     input:
-        ancient("data/electricity_demand_raw.csv"),
+        reported=ancient("data/electricity_demand_raw.csv"),
+        synthetic=lambda w: (
+            ancient("data/load_synthetic_raw.csv")
+            if config_provider("load", "supplement_synthetic")(w)
+            else []
+        ),
     output:
         resources("electricity_demand.csv"),
     log:
@@ -63,6 +69,7 @@ rule base_network:
     params:
         countries=config_provider("countries"),
         snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
         lines=config_provider("lines"),
         links=config_provider("links"),
         transformers=config_provider("transformers"),
@@ -170,9 +177,10 @@ if config["enable"].get("build_natura_raster", False):
     rule build_natura_raster:
         input:
             natura=ancient("data/bundle/natura/Natura2000_end2015.shp"),
-            cutouts=lambda w: expand(
-                "cutouts/" + CDIR + "{cutouts}.nc", **config_provider("atlite")(w)
-            ),
+            cutout=lambda w: "cutouts/"
+            + CDIR
+            + config_provider("atlite", "default_cutout")(w)
+            + ".nc",
         output:
             resources("natura.tiff"),
         resources:
@@ -188,13 +196,10 @@ if config["enable"].get("build_natura_raster", False):
 rule build_ship_raster:
     input:
         ship_density="data/shipdensity_global.zip",
-        cutouts=lambda w: expand(
-            "cutouts/" + CDIR + "{cutout}.nc",
-            cutout=[
-                config_provider("renewable", k, "cutout")(w)
-                for k in config_provider("electricity", "renewable_carriers")(w)
-            ],
-        ),
+        cutout=lambda w: "cutouts/"
+        + CDIR
+        + config_provider("atlite", "default_cutout")(w)
+        + ".nc",
     output:
         resources("shipdensity_raster.tif"),
     log:
@@ -264,6 +269,7 @@ def input_ua_md_availability_matrix(w):
 rule build_renewable_profiles:
     params:
         snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
         renewable=config_provider("renewable"),
     input:
         unpack(input_ua_md_availability_matrix),
@@ -341,15 +347,19 @@ rule build_hydro_profile:
     params:
         hydro=config_provider("renewable", "hydro"),
         countries=config_provider("countries"),
+        snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
         country_shapes=resources("country_shapes.geojson"),
         eia_hydro_generation="data/eia_hydro_annual_generation.csv",
+        eia_hydro_capacity="data/eia_hydro_annual_capacity.csv",
+        era5_runoff="data/era5-annual-runoff-per-country.csv",
         cutout=lambda w: f"cutouts/"
         + CDIR
         + config_provider("renewable", "hydro", "cutout")(w)
         + ".nc",
     output:
-        resources("profile_hydro.nc"),
+        profile=resources("profile_hydro.nc"),
     log:
         logs("build_hydro_profile.log"),
     resources:
@@ -363,6 +373,7 @@ rule build_hydro_profile:
 rule build_line_rating:
     params:
         snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
         base_network=resources("networks/base.nc"),
         cutout=lambda w: "cutouts/"
@@ -406,10 +417,12 @@ rule add_electricity:
         length_factor=config_provider("lines", "length_factor"),
         scaling_factor=config_provider("load", "scaling_factor"),
         countries=config_provider("countries"),
+        snapshots=config_provider("snapshots"),
         renewable=config_provider("renewable"),
         electricity=config_provider("electricity"),
         conventional=config_provider("conventional"),
         costs=config_provider("costs"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
         unpack(input_profile_tech),
         unpack(input_conventional),
@@ -481,7 +494,7 @@ rule simplify_network:
         benchmarks("simplify_network/elec_s{simpl}")
     threads: 1
     resources:
-        mem_mb=12000,
+        mem_mb=24000,
     conda:
         "../envs/environment.yaml"
     script:
@@ -574,6 +587,7 @@ rule prepare_network:
         costs=config_provider("costs"),
         adjustments=config_provider("adjustments", "electricity"),
         autarky=config_provider("electricity", "autarky", default={}),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
         resources("networks/elec_s{simpl}_{clusters}_ec.nc"),
         tech_costs=lambda w: resources(
