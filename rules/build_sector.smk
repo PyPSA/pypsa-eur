@@ -862,7 +862,7 @@ rule build_existing_heating_distribution:
 def input_profile_offwind(w):
     return {
         f"profile_{tech}": resources(f"profile_{tech}.nc")
-        for tech in ["offwind-ac", "offwind-dc"]
+        for tech in ["offwind-ac", "offwind-dc", "offwind-float"]
         if (tech in config_provider("electricity", "renewable_carriers")(w))
     }
 

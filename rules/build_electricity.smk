@@ -248,7 +248,10 @@ rule build_renewable_profiles:
         gebco=ancient(
             lambda w: (
                 "data/bundle/gebco/GEBCO_2014_2D.nc"
-                if config_provider("renewable", w.technology)(w).get("max_depth")
+                if (
+                    config_provider("renewable", w.technology)(w).get("max_depth")
+                    or config_provider("renewable", w.technology)(w).get("min_depth")
+                )
                 else []
             )
         ),

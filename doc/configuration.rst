@@ -31,7 +31,7 @@ Top-level configuration
 .. _run_cf:
 
 ``run``
-=======
+=============
 
 It is common conduct to analyse energy system optimisation models for **multiple scenarios** for a variety of reasons,
 e.g. assessing their sensitivity towards changing the temporal and/or geographical resolution or investigating how
@@ -265,7 +265,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at:   offwind-dc:
-   :end-before:   solar:
+   :end-before:   offwind-float:
 
 .. csv-table::
    :header-rows: 1
@@ -273,9 +273,25 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
    :file: configtables/offwind-dc.csv
 
 .. note::
-   both ``offwind-ac`` and ``offwind-dc`` have the same assumption on
+   Both ``offwind-ac`` and ``offwind-dc`` have the same assumption on
    ``capacity_per_sqkm`` and ``correction_factor``.
 
+``offwind-float``
+---------------
+
+.. literalinclude:: ../config/config.default.yaml
+   :language: yaml
+   :start-at:   offwind-float:
+   :end-before:   solar:
+
+.. csv-table::
+   :header-rows: 1
+   :widths: 22,7,22,33
+   :file: configtables/offwind-float.csv
+
+.. note::
+   ``offwind-ac``,  ``offwind-dc`` , ``offwind-float`` have the same assumption on
+   ``capacity_per_sqkm`` and ``correction_factor``.
 ``solar``
 ---------------
 
