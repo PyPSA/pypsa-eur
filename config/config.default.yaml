@@ -26,7 +26,9 @@ run:
     enable: false
     file: config/scenarios.yaml
   disable_progressbar: false
-  shared_resources: false
+  shared_resources:
+    policy: false
+    exclude: []
   shared_cutouts: true
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#foresight
@@ -468,6 +470,7 @@ sector:
   shipping_methanol_efficiency: 0.46
   shipping_oil_efficiency: 0.40
   aviation_demand_factor: 1.
+  land_transport_demand_factor: 1.
   HVC_demand_factor: 1.
   time_dep_hp_cop: true
   heat_pump_sink_T: 55.
