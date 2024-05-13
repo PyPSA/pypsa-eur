@@ -9,6 +9,9 @@ Release Notes
 
 Upcoming Release
 ================
+
+* Bump minimum ``powerplantmatching`` version to v0.5.15.
+
 * Add floating wind technology for water depths below 60m
 
 * Group existing capacities to the earlier grouping_year for consistency with optimized capacities.
@@ -212,6 +215,8 @@ Upcoming Release
 
 * Fix custom busmap read in `cluster_network`.
 
+* Add `nodal_supply_energy` to `make_summary`.
+
 * Data on existing renewable capacities is now consistently taken from powerplantmatching (instead of being retrieved separately); the dataset has also been updated to include 2023 values.
 
 * Added shapes to .nc file for different stages of the network object in `base_network`, `simplify_network`, and `cluster_network`; the `build_bus_regions` rule is now integrated into the `base_network` rule.
@@ -227,6 +232,8 @@ Upcoming Release
 * Add an option `central_heat_everywhere` to model central heating at every location in the model, even when there is no district heating there. (This option is necessary when using build year aggregation.)
 
 * Add an option `transmission_efficiency_enabled` to turn off efficiency losses for all carriers.
+
+* The ``{sector_opts}`` wildcard is now not used by default. All scenario definitions are now done in the ``config.yaml`` file.
 
 PyPSA-Eur 0.10.0 (19th February 2024)
 =====================================
