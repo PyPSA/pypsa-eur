@@ -31,7 +31,7 @@ snapshots:
   end: "2013-03-08"
 
 electricity:
-  co2limit_enable: true
+  co2limit_enable: false
   co2limit: 100.e+6
 
   extendable_carriers:
