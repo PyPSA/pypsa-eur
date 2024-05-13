@@ -9,6 +9,9 @@ Release Notes
 
 Upcoming Release
 ================
+
+* Bump minimum ``powerplantmatching`` version to v0.5.15.
+
 * Add floating wind technology for water depths below 60m
 
 * Group existing capacities to the earlier grouping_year for consistency with optimized capacities.
