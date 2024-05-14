@@ -280,6 +280,8 @@ Upcoming Release
 
 * Fix gas network retrofitting in `add_brownfield`.
 
+* Change the methanol energy demand of industry to the low-carbon route defined by `DECHEMA report <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry.pdf>`__.
+
 PyPSA-Eur 0.10.0 (19th February 2024)
 =====================================
 

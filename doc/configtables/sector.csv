@@ -39,7 +39,7 @@ agriculture_machinery _oil_share,--,float,The share for agricultural machinery t
 agriculture_machinery _fuel_efficiency,--,float,The efficiency of electric-powered machinery in the conversion of electricity to meet agricultural needs.
 agriculture_machinery _electric_efficiency,--,float,The efficiency of oil-powered machinery in the conversion of oil to meet agricultural needs.
 Mwh_MeOH_per_MWh_H2,LHV,float,"The energy amount of the produced methanol per energy amount of hydrogen. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 64."
-MWh_MeOH_per_tCO2,LHV,float,"The energy amount of the produced methanol per ton of CO2. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 64."
+MWh_MeOH_per_tCO2,LHV,float,"The energy amount of the produced methanol per ton of CO2. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 66."
 MWh_MeOH_per_MWh_e,LHV,float,"The energy amount of the produced methanol per energy amount of electricity. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 64."
 shipping_hydrogen _liquefaction,--,"{true, false}",Whether to include liquefaction costs for hydrogen demand in shipping.
 ,,,
