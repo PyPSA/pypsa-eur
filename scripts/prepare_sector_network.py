@@ -1032,7 +1032,11 @@ def insert_electricity_distribution_grid(n, costs):
         suffix=" rooftop",
         bus=n.generators.loc[solar, "bus"] + " low voltage",
         carrier="solar rooftop",
-        p_nom_extendable=True,
+        p_nom_extendable=(
+            True if "solar" in
+            snakemake.params.electricity.get("extendable_carriers", dict()).get("Generator", list())
+            else False
+        ), # solar rooftop only extendable if solar is extendable
         p_nom_max=potential,
         marginal_cost=n.generators.loc[solar, "marginal_cost"],
         capital_cost=costs.at["solar-rooftop", "fixed"],
