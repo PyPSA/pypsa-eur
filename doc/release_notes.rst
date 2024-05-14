@@ -9,6 +9,22 @@ Release Notes
 
 Upcoming Release
 ================
+
+* Add config ``run: shared_resources: exclude:`` to specify additional files
+  that should be excluded from shared resources with the setting ``run:
+  shared_resources: base``. The function ``_helpers/get_run_path()`` now takes
+  an additional keyword argument ``exclude_from_shared`` with a list of files
+  that should not be shared. This keyword argument accepts a list of strings
+  where the string only needs to match the start of a filename (e.g.
+  ``"transport_data"`` would exclude both ``transport_data.csv`` and
+  ``transport_data_{simpl}_{clusters}.csv`` from being shared across scenarios.
+
+* Move switch ``run: shared_resources:`` to ``run: shared_resources: policy:``.
+
+* Add config land_transport_demand_factor to model growth in land transport demand for different time horizons.
+
+* Allow dictionary for the config aviation_demand_factor.
+
 * Group existing capacities to the earlier grouping_year for consistency with optimized capacities.
 
 * bugfix: installed heating capacities were 5% lower than existing heating capacities
@@ -70,6 +86,19 @@ Upcoming Release
 
 * Added new HVDC transmission projects from `TYNDP 2024 draft projects
   <https://tyndp.entsoe.eu/news/176-pan-european-electricity-transmission-projects-and-33-storage-projects-will-be-assessed-in-tyndp-2024>`__.
+
+
+* Group existing capacities to the earlier grouping_year for consistency with optimized capacities.
+
+* bugfix: installed heating capacities were 5% lower than existing heating capacities
+
+* bugfix: convert Strings to pathlib.Path objects as input to ConfigSettings
+* Corrected a bug leading to power plants operating after their DateOut
+  (https://github.com/PyPSA/pypsa-eur/pull/958). Added additional grouping years
+  before 1980.
+
+* Upgrade default techno-economic assumptions to ``technology-data`` v0.8.1.
+
 
 * Upgrade to Snakemake v8.5+. This version is the new minimum version required.
   To upgrade an existing environment, run ``conda install -c bioconda

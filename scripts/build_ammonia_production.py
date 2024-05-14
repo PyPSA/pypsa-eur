@@ -7,6 +7,7 @@ Build historical annual ammonia production per country in ktonNH3/a.
 """
 
 import country_converter as coco
+import numpy as np
 import pandas as pd
 from _helpers import set_scenario_config
 
@@ -36,6 +37,8 @@ if __name__ == "__main__":
     years = [str(i) for i in range(2013, 2018)]
 
     ammonia = ammonia[years]
+    ammonia.replace("--", np.nan, inplace=True)
+    ammonia = ammonia.astype(float)
 
     # convert from ktonN to ktonNH3
     ammonia *= 17 / 14

@@ -133,6 +133,23 @@ if config["foresight"] == "perfect":
             "../scripts/plot_power_network_perfect.py"
 
 
+rule copy_config:
+    params:
+        RDIR=RDIR,
+        config=lambda wildcards: (
+            scenario_config(wildcards.run) if "run" in wildcards else config
+        ),
+    output:
+        RESULTS + "config.yaml",
+    threads: 1
+    resources:
+        mem_mb=1000,
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/copy_config.py"
+
+
 rule make_summary:
     params:
         foresight=config_provider("foresight"),
@@ -257,6 +274,98 @@ STATISTICS_BARPLOTS = [
     "withdrawal",
     "market_value",
 ]
+
+STATISTICS = {
+    "capacity_factor": ("-", "p.u."),
+    "installed_capacity": (1e3, "GW"),
+    "optimal_capacity": (1e3, "GW"),
+    "capex": (1e9, "bn €"),
+    "opex": (1e9, "bn €"),
+    "total_cost": ("1e9", "bn €"),
+    "curtailment": (1e3, "GWh"),
+    "supply": (1e6, "TWh"),
+    "withdrawal": (1e6, "TWh"),
+    "energy_balance": (1e6, "TWh"),
+    "market_value": ("-", "€/MWh"),
+}
+
+
+rule save_statistics_csv:
+    params:
+        statistics=STATISTICS,
+    input:
+        network=RESULTS
+        + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+    output:
+        **{
+            f"{csv}": RESULTS
+            + "statistics/csv/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/{carrier}_"
+            + f"{csv}.csv"
+            for carrier in config["plotting"].get("carriers", "all")
+            for csv in STATISTICS
+        },
+        csv_touch=RESULTS
+        + "statistics/csv/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/.statistics_{carrier}_csv",
+    script:
+        "../scripts/write_statistics.py"
+
+
+rule plot_statistics_single:
+    params:
+        plotting=config["plotting"],
+        statistics=STATISTICS,
+    input:
+        **{
+            f"{csv}": RESULTS
+            + "statistics/csv/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/{carrier}_"
+            + f"{csv}.csv"
+            for carrier in config["plotting"].get("carriers", "all")
+            for csv in STATISTICS
+        },
+    output:
+        **{
+            f"{plot}": RESULTS
+            + "statistics/figures/single/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/{carrier}_"
+            + f"{plot}.pdf"
+            for carrier in config["plotting"].get("carriers", "all")
+            for plot in STATISTICS
+        },
+        barplots_touch=RESULTS
+        + "statistics/figures/single/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/.statistics_{carrier}_plots",
+    log:
+        RESULTS
+        + "logs/plot_statistics_single/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_country-{country}_carrier-{carrier}.log",
+    script:
+        "../scripts/plot_statistics_single.py"
+
+
+rule plot_statistics_comparison:
+    params:
+        plotting=config["plotting"],
+        statistics=STATISTICS,
+    input:
+        expand(
+            RESULTS
+            + "statistics/csv/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/{carrier}_{csv}.csv",
+            **config["scenario"],
+            csv=STATISTICS,
+            allow_missing=True,
+        ),
+    output:
+        **{
+            f"{plot}": RESULTS
+            + "statistics/figures/comparison/country_{country}/{carrier}_"
+            + f"{plot}.pdf"
+            for carrier in config["plotting"].get("carriers", "all")
+            for plot in STATISTICS
+        },
+        barplots_touch=RESULTS
+        + "statistics/figures/comparison/country_{country}/.statistics_{carrier}_plots",
+    log:
+        RESULTS
+        + "logs/plot_statistics_comparison/country-{country}_carrier-{carrier}.log",
+    script:
+        "../scripts/plot_statistics_comparison.py"
 
 
 rule plot_elec_statistics:

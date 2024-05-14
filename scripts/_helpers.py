@@ -45,9 +45,17 @@ def get_scenarios(run):
         fn = Path(scenario_config["file"])
         if fn.exists():
             scenarios = yaml.safe_load(fn.read_text())
+            if scenarios == None:
+                print(
+                    "WARNING! Scenario management enabled but scenarios file appears to be empty."
+                )
             if run["name"] == "all":
                 run["name"] = list(scenarios.keys())
             return scenarios
+        else:
+            print(
+                "WARNING! Scenario management enabled but scenarios file does not exist."
+            )
     return {}
 
 
@@ -67,7 +75,7 @@ def get_rdir(run):
     return RDIR
 
 
-def get_run_path(fn, dir, rdir, shared_resources):
+def get_run_path(fn, dir, rdir, shared_resources, exclude_from_shared):
     """
     Dynamically provide paths based on shared resources and filename.
 
@@ -87,6 +95,8 @@ def get_run_path(fn, dir, rdir, shared_resources):
         - If string is "base", special handling for shared "base" resources (see notes).
         - If random string other than "base", this folder is used instead of the `rdir` keyword.
         - If boolean, directly specifies if the resource is shared.
+    exclude_from_shared: list
+        List of filenames to exclude from shared resources. Only relevant if shared_resources is "base".
 
     Returns
     -------
@@ -104,10 +114,12 @@ def get_run_path(fn, dir, rdir, shared_resources):
         existing_wildcards = set(re.findall(pattern, fn))
         irrelevant_wildcards = {"technology", "year", "scope", "kind"}
         no_relevant_wildcards = not existing_wildcards - irrelevant_wildcards
-        no_elec_rule = not fn.startswith("networks/elec") and not fn.startswith(
-            "add_electricity"
+        not_shared_rule = (
+            not fn.startswith("networks/elec")
+            and not fn.startswith("add_electricity")
+            and not any(fn.startswith(ex) for ex in exclude_from_shared)
         )
-        is_shared = no_relevant_wildcards and no_elec_rule
+        is_shared = no_relevant_wildcards and not_shared_rule
         rdir = "" if is_shared else rdir
     elif isinstance(shared_resources, str):
         rdir = shared_resources + "/"
@@ -121,7 +133,7 @@ def get_run_path(fn, dir, rdir, shared_resources):
     return f"{dir}{rdir}{fn}"
 
 
-def path_provider(dir, rdir, shared_resources):
+def path_provider(dir, rdir, shared_resources, exclude_from_shared):
     """
     Returns a partial function that dynamically provides paths based on shared
     resources and the filename.
@@ -132,7 +144,13 @@ def path_provider(dir, rdir, shared_resources):
         A partial function that takes a filename as input and
         returns the path to the file based on the shared_resources parameter.
     """
-    return partial(get_run_path, dir=dir, rdir=rdir, shared_resources=shared_resources)
+    return partial(
+        get_run_path,
+        dir=dir,
+        rdir=rdir,
+        shared_resources=shared_resources,
+        exclude_from_shared=exclude_from_shared,
+    )
 
 
 def get_opt(opts, expr, flags=None):

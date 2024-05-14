@@ -49,7 +49,8 @@ shipping_oil_share,--,Dictionary with planning horizons as keys.,The share of sh
 shipping_methanol _efficiency,--,float,The efficiency of methanol-powered ships in the conversion of methanol to meet shipping needs (propulsion). The efficiency increase from oil can be 10-15% higher according to the `IEA <https://www.iea-amf.org/app/webroot/files/file/Annex%20Reports/AMF_Annex_56.pdf>`_
 ,,,
 shipping_oil_efficiency,--,float,The efficiency of oil-powered ships in the conversion of oil to meet shipping needs (propulsion). Base value derived from 2011
-aviation_demand_factor,--,float,The proportion of demand for aviation compared to today's consumption
+aviation_demand_factor,--,Dictionary with planning horizons as keys,The proportion of demand for aviation in a given year compared to today's consumption
+land_transport_demand_factor,--,Dictionary with planning horizons as keys,The proportion of demand for land transport in a given year compared to today's consumption
 HVC_demand_factor,--,float,The proportion of demand for high-value chemicals compared to today's consumption
 ,,,
 time_dep_hp_cop,--,"{true, false}",Consider the time dependent coefficient of performance (COP) of the heat pump

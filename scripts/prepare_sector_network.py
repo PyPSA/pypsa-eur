@@ -1718,9 +1718,19 @@ def add_land_transport(n, costs):
     transport = pd.read_csv(
         snakemake.input.transport_demand, index_col=0, parse_dates=True
     )
+    # transport growth factor
+    demand_factor = get(options["land_transport_demand_factor"], investment_year)
+    if demand_factor != 1:
+        logger.warning(
+            f"Changing land transport demand by {demand_factor*100-100:+.2f}%."
+        )
+
+    transport = demand_factor * transport
+
     number_cars = pd.read_csv(snakemake.input.transport_data, index_col=0)[
         "number cars"
     ]
+    number_cars = demand_factor * number_cars
     avail_profile = pd.read_csv(
         snakemake.input.avail_profile, index_col=0, parse_dates=True
     )
@@ -3435,7 +3445,7 @@ def add_industry(n, costs):
     )
 
     # aviation
-    demand_factor = options.get("aviation_demand_factor", 1)
+    demand_factor = get(options["aviation_demand_factor"], investment_year)
     if demand_factor != 1:
         logger.warning(f"Changing aviation demand by {demand_factor*100-100:+.2f}%.")
 
@@ -4665,7 +4675,11 @@ def cluster_heat_buses(n):
 
     for c in n.iterate_components(components):
         df = c.df
-        cols = df.columns[df.columns.str.contains("bus") | (df.columns == "carrier")]
+        cols = df.columns[
+            df.columns.str.contains("bus")
+            | (df.columns == "carrier")
+            | (df.columns == "nice_name")
+        ]
 
         # rename columns and index
         df[cols] = df[cols].apply(
@@ -4794,10 +4808,12 @@ def set_temporal_aggregation(n, resolution, solver_name):
     return n
 
 
-def lossy_bidirectional_links(n, carrier, efficiencies={}):
+def lossy_bidirectional_links(n, carrier, efficiencies={}, subset=None):
     "Split bidirectional links into two unidirectional links to include transmission losses."
 
-    carrier_i = n.links.query("carrier == @carrier").index
+    if subset is None:
+        subset = n.links.index
+    carrier_i = n.links.query("carrier == @carrier").index.intersection(subset)
 
     if (
         not any((v != 1.0) or (v >= 0) for v in efficiencies.values())
