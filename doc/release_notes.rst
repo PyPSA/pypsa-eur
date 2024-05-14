@@ -10,6 +10,8 @@ Release Notes
 Upcoming Release
 ================
 
+* The technology-data version was updated to v0.9.0.
+
 * Bugfix to avoid duplicated offshore regions.
 
 * Added option ``industry: HVC_environment_sequestration_fraction:`` to specify
