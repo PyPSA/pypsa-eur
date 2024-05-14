@@ -123,7 +123,7 @@ def add_land_use_constraint_perfect(n):
 def _add_land_use_constraint(n):
     # warning: this will miss existing offwind which is not classed AC-DC and has carrier 'offwind'
 
-    for carrier in ["solar", "onwind", "offwind-ac", "offwind-dc"]:
+    for carrier in ["solar", "onwind", "offwind-ac", "offwind-dc", "offwind-float"]:
         extendable_i = (n.generators.carrier == carrier) & n.generators.p_nom_extendable
         n.generators.loc[extendable_i, "p_nom_min"] = 0
 
@@ -158,7 +158,7 @@ def _add_land_use_constraint_m(n, planning_horizons, config):
     grouping_years = config["existing_capacities"]["grouping_years_power"]
     current_horizon = snakemake.wildcards.planning_horizons
 
-    for carrier in ["solar", "onwind", "offwind-ac", "offwind-dc"]:
+    for carrier in ["solar", "onwind", "offwind-ac", "offwind-dc", "offwind-float"]:
         extendable_i = (n.generators.carrier == carrier) & n.generators.p_nom_extendable
         n.generators.loc[extendable_i, "p_nom_min"] = 0
 

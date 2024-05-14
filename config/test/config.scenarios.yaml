@@ -12,14 +12,15 @@ run:
     enable: true
     file: "config/test/scenarios.yaml"
   disable_progressbar: true
-  shared_resources: base
+  shared_resources:
+    policy: base
   shared_cutouts: true
 
 scenario:
   clusters:
   - 5
   opts:
-  - Co2L-24H
+  - ''
 
 countries: ['BE']
 

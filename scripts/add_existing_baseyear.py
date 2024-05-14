@@ -163,7 +163,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
 
     technology_to_drop = ["Pv", "Storage Technologies"]
 
-    # drop unused fueltyps and technologies
+    # drop unused fueltypes and technologies
     df_agg.drop(df_agg.index[df_agg.Fueltype.isin(fueltype_to_drop)], inplace=True)
     df_agg.drop(df_agg.index[df_agg.Technology.isin(technology_to_drop)], inplace=True)
     df_agg.Fueltype = df_agg.Fueltype.map(rename_fuel)
@@ -252,6 +252,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
         ]
         suffix = "-ac" if generator == "offwind" else ""
         name_suffix = f" {generator}{suffix}-{grouping_year}"
+        name_suffix_by = f" {generator}{suffix}-{baseyear}"
         asset_i = capacity.index + name_suffix
         if generator in ["solar", "onwind", "offwind"]:
             # to consider electricity grid connection costs or a split between
@@ -281,21 +282,13 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
 
                     # for offshore the splitting only includes coastal regions
                     inv_ind = [
-                        i
-                        for i in inv_ind
-                        if (i + name_suffix)
-                        in n.generators.index.str.replace(
-                            str(baseyear), str(grouping_year)
-                        )
+                        i for i in inv_ind if (i + name_suffix_by) in n.generators.index
                     ]
 
                     p_max_pu = n.generators_t.p_max_pu[
-                        [i + name_suffix for i in inv_ind]
+                        [i + name_suffix_by for i in inv_ind]
                     ]
-                    p_max_pu.columns = [
-                        i + name_suffix.replace(str(grouping_year), str(baseyear))
-                        for i in inv_ind
-                    ]
+                    p_max_pu.columns = [i + name_suffix for i in inv_ind]
 
                     n.madd(
                         "Generator",
@@ -313,9 +306,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                     )
 
             else:
-                p_max_pu = n.generators_t.p_max_pu[
-                    capacity.index + f" {generator}{suffix}-{baseyear}"
-                ]
+                p_max_pu = n.generators_t.p_max_pu[capacity.index + name_suffix_by]
 
                 if not new_build.empty:
                     n.madd(
@@ -441,7 +432,7 @@ def add_heating_capacities_installed_before_baseyear(
         linear decommissioning of heating capacities from 2020 to 2045 is
         currently assumed heating capacities split between residential and
         services proportional to heating load in both 50% capacities
-        in rural busess 50% in urban buses
+        in rural buses 50% in urban buses
     """
     logger.debug(f"Adding heating capacities installed before {baseyear}")
 
