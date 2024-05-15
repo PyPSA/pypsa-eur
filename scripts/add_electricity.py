@@ -235,6 +235,8 @@ def load_costs(tech_costs, config, max_hours, Nyears=1.0):
         + (1 - config["rooftop_share"]) * costs.at["solar-utility", "capital_cost"]
     )
 
+    costs = costs.rename({"solar-utility single-axis tracking": "solar-hsat"})
+
     def costs_for_storage(store, link1, link2=None, max_hours=1.0):
         capital_cost = link1["capital_cost"] + max_hours * store["capital_cost"]
         if link2 is not None:
