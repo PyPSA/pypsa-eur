@@ -3323,7 +3323,7 @@ def remove_h2_network(n):
 def remove_solar_tracking(n):
 
     for tech in ["solar-hsat"]:
-        print("removing " + tech)
+        logger.info("removing " + tech)
         n.mremove("Generator", n.generators.index[n.generators.carrier == tech])
 
 

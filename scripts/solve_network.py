@@ -292,7 +292,7 @@ def add_solar_potential_constraints(n, config):
         .sum()
     )
 
-    print("adding solar rooftop constraints...")
+    logger.info("Adding solar potential constraint.")
     n.model.add_constraints(lhs <= rhs, name="solar_potential")
 
 
