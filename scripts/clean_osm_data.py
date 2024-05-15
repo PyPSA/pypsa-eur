@@ -6,8 +6,6 @@
 TODO To fill later
 """
 
-from branca.element import Figure
-import folium
 import geopandas as gpd
 import json
 import logging
@@ -15,7 +13,7 @@ import os
 import numpy as np
 import pandas as pd
 import re
-from shapely.geometry import LineString, Point, Polygon
+from shapely.geometry import LineString, Polygon
 from shapely.ops import linemerge
 from tqdm import tqdm
 
@@ -37,7 +35,8 @@ def _create_polygon(row):
     Create a Shapely Polygon from a list of coordinate dictionaries.
     
     Parameters:
-        coords (list): List of dictionaries with 'lat' and 'lon' keys representing coordinates.
+        coords (list): List of dictionaries with 'lat' and 'lon' keys 
+        representing coordinates.
         
     Returns:
         shapely.geometry.Polygon: The constructed polygon object.
@@ -108,7 +107,8 @@ def _clean_voltage(column):
 
 def _clean_circuits(column):
     """
-    Function to clean the raw circuits column: manual fixing and drop nan values
+    Function to clean the raw circuits column: manual fixing and drop nan 
+    values
 
     Args:
     - column: pandas Series, the column to be cleaned
@@ -123,7 +123,7 @@ def _clean_circuits(column):
         .str.replace("partial", "")
         .str.replace("1operator=RTE operator:wikidata=Q2178795", "")
         .str.lower()
-        .str.replace("1,5", "3") # (way 998005838, should be corrected in OSM soon)
+        .str.replace("1,5", "3")
         .str.replace("1/3", "1")
         .str.replace("<na>", "")
         .str.replace("nan", "")
@@ -221,7 +221,8 @@ def _check_voltage(voltage, list_voltages):
 def _clean_frequency(column):   
     column = column.copy()
     """
-    Function to clean the raw frequency column: manual fixing and drop nan values
+    Function to clean the raw frequency column: manual fixing and drop nan 
+    values
 
     Args:
     - column: pandas Series, the column to be cleaned
@@ -787,16 +788,6 @@ if __name__ == "__main__":
     # Add the results to 'gdf_lines'
     gdf_lines['within_substation'] = results
 
-    # gdf_sub = gpd.GeoDataFrame(df_substations[["id", "polygon"]], geometry = "polygon", crs = "EPSG:4326")
-    # fig = Figure(width = "70%", height = 600)
-
-    # m = gdf_sub.explore(name = "Subs", color = "red")
-    # m = gdf_lines.explore(m = m, name = "lines")
-
-    # folium.LayerControl(collapsed = False).add_to(m)
-
-    # fig.add_child(m)
-    # m
     gdf_lines = gdf_lines[~gdf_lines["within_substation"]]
     logger.info(f"Removed {sum(results)} lines within substations.")
 

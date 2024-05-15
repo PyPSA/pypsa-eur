@@ -836,33 +836,29 @@ def base_network_osm(
 
     n.import_components_from_dataframe(buses, "Bus")
 
-    if config["base_network_osm"]["hvdc_as_lines"]:
-        lines = pd.concat([lines_ac, lines_dc])
-        n.import_components_from_dataframe(lines, "Line")
-    else:
-        lines_dc = _set_electrical_parameters_links(lines_dc, config, links_p_nom)
-        # parse line information into p_nom required for converters
-        lines_dc["p_nom"] = lines_dc.apply(
-            lambda x: x["v_nom"] * n.line_types.i_nom[x["type"]],
-            axis=1,
-            result_type="reduce",
-        )
-        n.import_components_from_dataframe(lines_ac, "Line")
-        # The columns which names starts with "bus" are mixed up with the third-bus specification
-        # when executing additional_linkports()
-        # lines_dc.drop(
-        #     labels=[
-        #         "bus0_lon",
-        #         "bus0_lat",
-        #         "bus1_lon",
-        #         "bus1_lat",
-        #         "bus_0_coors",
-        #         "bus_1_coors",
-        #     ],
-        #     axis=1,
-        #     inplace=True,
-        # )
-        n.import_components_from_dataframe(lines_dc, "Link")
+    lines_dc = _set_electrical_parameters_links(lines_dc, config, links_p_nom)
+    # parse line information into p_nom required for converters
+    lines_dc["p_nom"] = lines_dc.apply(
+        lambda x: x["v_nom"] * n.line_types.i_nom[x["type"]],
+        axis=1,
+        result_type="reduce",
+    )
+    n.import_components_from_dataframe(lines_ac, "Line")
+    # The columns which names starts with "bus" are mixed up with the third-bus specification
+    # when executing additional_linkports()
+    # lines_dc.drop(
+    #     labels=[
+    #         "bus0_lon",
+    #         "bus0_lat",
+    #         "bus1_lon",
+    #         "bus1_lat",
+    #         "bus_0_coors",
+    #         "bus_1_coors",
+    #     ],
+    #     axis=1,
+    #     inplace=True,
+    # )
+    n.import_components_from_dataframe(lines_dc, "Link")
 
     # n.import_components_from_dataframe(lines, "Line")
     n.import_components_from_dataframe(transformers, "Transformer")
@@ -1084,22 +1080,6 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    #TODO pypsa-eur add this
-    # n = base_network(
-    #     snakemake.input.eg_buses,
-    #     snakemake.input.eg_converters,
-    #     snakemake.input.eg_transformers,
-    #     snakemake.input.eg_lines,
-    #     snakemake.input.eg_links,
-    #     snakemake.input.links_p_nom,
-    #     snakemake.input.links_tyndp,
-    #     snakemake.input.europe_shape,
-    #     snakemake.input.country_shapes,
-    #     snakemake.input.offshore_shapes,
-    #     snakemake.input.parameter_corrections,
-    #     snakemake.config,
-    # )
-
     n = base_network_osm(
     snakemake.input.eg_buses,
     snakemake.input.eg_converters,
@@ -1111,6 +1091,8 @@ if __name__ == "__main__":
     snakemake.input.offshore_shapes,
     snakemake.config,
     )
+
+    logger.info("Base network created using OSM.")
 
     onshore_regions, offshore_regions, shapes = build_bus_shapes(
     n,

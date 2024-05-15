@@ -993,16 +993,13 @@ def build_network(
     buses = add_buses_to_empty_countries(countries_config, inputs.country_shapes, buses)
 
     # METHOD to merge buses with same voltage and within tolerance Step 4/5
-    if build_osm_network_config.get("group_close_buses", False):
-        tol = build_osm_network_config.get("group_tolerance_buses", 5000)
-        logger.info(
-            f"Stage 4/5: Aggregate close substations: enabled with tolerance {tol} m"
-        )
-        lines, buses = merge_stations_lines_by_station_id_and_voltage(
-            lines, buses, geo_crs, distance_crs, tol=tol
-        )
-    else:
-        logger.info("Stage 4/5: Aggregate close substations: disabled")
+    tol = build_osm_network_config.get("group_tolerance_buses", 5000)
+    logger.info(
+        f"Stage 4/5: Aggregate close substations: enabled with tolerance {tol} m"
+    )
+    lines, buses = merge_stations_lines_by_station_id_and_voltage(
+        lines, buses, geo_crs, distance_crs, tol=tol
+    )
 
     logger.info("Stage 5/5: Add augmented substation to country with no data")
 
@@ -1133,8 +1130,8 @@ if __name__ == "__main__":
     configure_logging(snakemake)
 
     # load default crs
-    geo_crs = snakemake.config["crs"]["geo_crs"]
-    distance_crs = snakemake.config["crs"]["distance_crs"]
+    geo_crs = "EPSG:4326"
+    distance_crs = "EPSG:3035"
 
     build_osm_network = snakemake.config["build_osm_network"]
     countries = snakemake.config["countries"]
