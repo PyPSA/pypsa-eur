@@ -260,6 +260,8 @@ Upcoming Release
 
 * Fix gas network retrofitting in `add_brownfield`.
 
+* Time aggregation for sector-coupled networks have been split into its own rule. When using time step segmentation, time aggregation is constant over planning horizons of the same network.
+
 PyPSA-Eur 0.10.0 (19th February 2024)
 =====================================
 
