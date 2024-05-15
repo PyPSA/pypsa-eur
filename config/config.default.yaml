@@ -714,7 +714,6 @@ industry:
 costs:
   year: 2030
   version: v0.9.0
-  rooftop_share: 0.14  # based on the potentials, assuming  (0.1 kW/m2 and 10 m2/person)
   social_discountrate: 0.02
   fill_values:
     FOM: 0

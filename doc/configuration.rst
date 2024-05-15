@@ -550,9 +550,6 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
    :widths: 22,7,22,33
    :file: configtables/costs.csv
 
-.. note::
-   ``rooftop_share:`` are based on the potentials, assuming
-   (0.1 kW/m2 and 10 m2/person)
 
 .. _clustering_cf:
 

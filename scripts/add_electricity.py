@@ -230,10 +230,7 @@ def load_costs(tech_costs, config, max_hours, Nyears=1.0):
     costs.at["OCGT", "co2_emissions"] = costs.at["gas", "co2_emissions"]
     costs.at["CCGT", "co2_emissions"] = costs.at["gas", "co2_emissions"]
 
-    costs.at["solar", "capital_cost"] = (
-        config["rooftop_share"] * costs.at["solar-rooftop", "capital_cost"]
-        + (1 - config["rooftop_share"]) * costs.at["solar-utility", "capital_cost"]
-    )
+    costs.at["solar", "capital_cost"] = costs.at["solar-utility", "capital_cost"]
 
     costs = costs.rename({"solar-utility single-axis tracking": "solar-hsat"})
 

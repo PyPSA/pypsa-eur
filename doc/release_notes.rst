@@ -9,6 +9,11 @@ Release Notes
 
 Upcoming Release
 ================
+
+* Remove exogenously set share of rooftop PV (``costs: rooftop_share:``).
+  Rooftop and utility-scale PV are now largely handled as separate technologies
+  with endogenous shares.
+
 * New technology, solar PV with single-axis horizontal tracking (on a N-S axis),
   with a carrier called ``solar-hsat`` to the networks. The default option for adding
   this technology is set to ``true`` in the ``config.yaml``.
