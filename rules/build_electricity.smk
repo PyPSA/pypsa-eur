@@ -618,6 +618,7 @@ rule retrieve_osm_data:
         substations_relation="data/osm/raw/{country}/substations_relation.json",
     log:
         logs("retrieve_osm_data_{country}.log"),
+    threads: 4
     script:
         "../scripts/retrieve_osm_data.py"
 
