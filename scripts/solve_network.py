@@ -31,6 +31,7 @@ import logging
 import os
 import re
 import sys
+import time
 
 import numpy as np
 import pandas as pd
@@ -956,6 +957,7 @@ def aggregate_build_years(n):
     """
     Aggregate components which are identical in all but build year.
     """
+    t = time.time()
     indices = dict()
 
     for c in n.iterate_components():
@@ -1007,6 +1009,7 @@ def aggregate_build_years(n):
             setattr(n, n.components[c.name]["list_name"], df_aggregated)
             setattr(n, n.components[c.name]["list_name"] + "_t", pnl_aggregated)
 
+    logger.info(f"Aggregated build years in {time.time() - t:.1f} seconds")
     return indices
 
 
@@ -1014,6 +1017,8 @@ def disaggregate_build_years(n, indices, planning_horizon):
     """
     Disaggregate components which were aggregated by `aggregate_build_years`.
     """
+    t = time.time()
+
     for c in n.iterate_components():
         if c.name in indices:
             attr = nominal_attrs[c.name]
@@ -1142,6 +1147,8 @@ def disaggregate_build_years(n, indices, planning_horizon):
                     axis=1,
                     inplace=True,
                 )
+
+    logger.info(f"Disaggregated build years in {time.time() - t:.1f} seconds")
 
 
 def solve_network(n, config, solving, **kwargs):
