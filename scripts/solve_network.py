@@ -981,16 +981,17 @@ def aggregate_build_years(n):
             # "-YYYY", store certain aggregated values to be
             # disaggregated again later. These include 'attr',
             # 'attr_max' and elements in `vars_to_store`.
+            attrs_to_store = []
             for attr in [attr, f"{attr}_max"] + vars_to_store:
                 for build_year in c.df.build_year.unique():
                     if build_year == 0:
                         continue
                     mask = c.df.build_year == build_year
-                    idx = c.df.loc[mask].index
-                    df_aggregated.loc[
-                        idx.str.replace(r"-[0-9]{4}$", "", regex=True),
-                        f"{attr}-{build_year}",
-                    ] = c.df.loc[mask, attr].values
+                    col = c.df.loc[mask, attr].copy()
+                    col.index = col.index.str.replace(r"-[0-9]{4}$", "", regex=True)
+                    col.name = f"{attr}-{build_year}"
+                    attrs_to_store.append(col)
+            df_aggregated = pd.concat([df_aggregated] + attrs_to_store, axis=1)
 
             pnl_aggregated = Dict()
             dynamic_strategies = align_strategies(strategies, c.pnl, c.name)
