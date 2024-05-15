@@ -35,8 +35,8 @@ The ``{technology}`` wildcard
 
 The ``{technology}`` wildcard specifies for which renewable energy technology to produce availability time
 series and potentials using the rule :mod:`build_renewable_profiles`.
-It can take the values ``onwind``, ``offwind-ac``, ``offwind-dc``, and ``solar`` but **not** ``hydro``
-(since hydroelectric plant profiles are created by a different rule).
+It can take the values ``onwind``, ``offwind-ac``, ``offwind-dc``, ``offwind-float``, and ``solar`` but **not** ``hydro``
+(since hydroelectric plant profiles are created by a different rule)``
 
 .. _simpl:
 
@@ -101,7 +101,7 @@ The ``{opts}`` wildcard
 The ``{opts}`` wildcard is used for electricity-only studies. It triggers
 optional constraints, which are activated in either :mod:`prepare_network` or
 the :mod:`solve_network` step. It may hold multiple triggers separated by ``-``,
-i.e. ``Co2L-3H`` contains the ``Co2L`` trigger and the ``3H`` switch. There are
+i.e. ``Co2L-3h`` contains the ``Co2L`` trigger and the ``3h`` switch. There are
 currently:
 
 
@@ -121,7 +121,7 @@ The ``{sector_opts}`` wildcard
 
   # Co2Lx specifies the CO2 target in x% of the 1990 values; default will give default (5%);
   # Co2L0p25 will give 25% CO2 emissions; Co2Lm0p05 will give 5% negative emissions
-  # xH is the temporal resolution; 3H is 3-hourly, i.e. one snapshot every 3 hours
+  # xH is the temporal resolution; 3h is 3-hourly, i.e. one snapshot every 3 hours
   # single letters are sectors: T for land transport, H for building heating,
   # B for biomass supply, I for industry, shipping and aviation,
   # A for agriculture, forestry and fishing
