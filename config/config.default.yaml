@@ -770,11 +770,20 @@ solving:
     # io_api: "direct"  # Increases performance but only supported for the highs and gurobi solvers
     # options that go into the optimize function
     track_iterations: false
-    min_iterations: 4
-    max_iterations: 6
+    min_iterations: 2
+    max_iterations: 3
     transmission_losses: 2
     linearized_unit_commitment: true
     horizon: 365
+    post_discretization:
+      enable: false
+      line_unit_size: 1700
+      link_unit_size:
+        DC: 2000
+        H2 pipeline: 1200
+        gas pipeline: 1500
+      line_threshold: 0.3
+      link_threshold: 0.3
 
   constraints:
     CCL: false

@@ -43,7 +43,10 @@ Upcoming Release
 
 * Allow dictionary for the config aviation_demand_factor.
 
-* Post discretize network infrastructure like lines and links.
+* Add option to post-discretize line and link capacities based on unit sizes and
+  rounding thresholds specified in the configuration under ``solving: options:
+  post_discretization:`` when iterative solving is enables (``solving: optiosn:
+  skip_iterations: false``). This option is disabled by default.
 
 * Group existing capacities to the earlier grouping_year for consistency with optimized capacities.
 

@@ -14,6 +14,13 @@ options,,,
 -- transmission_losses,int,[0-9],"Add piecewise linear approximation of transmission losses based on n tangents. Defaults to 0, which means losses are ignored."
 -- linearized_unit_commitment,bool,"{'true','false'}",Whether to optimise using the linearized unit commitment formulation.
 -- horizon,--,int,Number of snapshots to consider in each iteration. Defaults to 100.
+-- post_discretization,,,
+-- -- enable,bool,"{'true','false'}",Switch to enable post-discretization of the network. Disabled by default.
+-- -- line_unit_size,MW,float,Discrete unit size of lines in MW.
+-- -- link_unit_size,MW,float,Discrete unit size of links in MW by carrier (given in dictionary style.
+-- -- -- {carrier},,,
+-- -- line_threshold,,float,The threshold relative to the discrete line unit size beyond which to round up to the next unit. Defaults to 0.3.
+-- -- link_threshold,,float,The threshold relative to the discrete link unit size beyond which to round up to the next unit. Defaults to 0.3.
 constraints ,,,
 -- CCL,bool,"{'true','false'}",Add minimum and maximum levels of generator nominal capacity per carrier for individual countries. These can be specified in the file linked at ``electricity: agg_p_nom_limits`` in the configuration. File defaults to ``data/agg_p_nom_minmax.csv``.
 -- EQ,bool/string,"{'false',`n(c| )``; i.e. ``0.5``-``0.7c``}",Require each country or node to on average produce a minimal share of its total consumption itself. Example: ``EQ0.5c`` demands each country to produce on average at least 50% of its consumption; ``EQ0.5`` demands each node to produce on average at least 50% of its consumption.
