@@ -32,7 +32,8 @@ electricity:
     Store: [H2]
     Link: [H2 pipeline]
 
-  renewable_carriers: [solar, onwind, offwind-ac, offwind-dc]
+  renewable_carriers: [solar, solar-hsat, onwind, offwind-ac, offwind-dc]
+
 
 
 atlite:
