@@ -775,21 +775,53 @@ if __name__ == "__main__":
     df_substations["tag_area"] = None
     df_substations["tag_source"] = df_substations["id"]
 
-    # Create an empty list to store the results
-    results = []
+    gdf_substations_polygon = gpd.GeoDataFrame(
+        df_substations[["id", "polygon"]], 
+        geometry = "polygon", 
+        crs = "EPSG:4326"
+        )
+    
+    filepath_substations_polygon = snakemake.output["substations_polygon"]
+    # save substations output
+    logger.info(f"Exporting clean substations with polygon shapes to {filepath_substations_polygon}")
+    parentfolder_substations_polygon = os.path.dirname(filepath_substations_polygon)
+    if not os.path.exists(parentfolder_substations_polygon):
+        # Create the folder and its parent directories if they don't exist
+        os.makedirs(parentfolder_substations_polygon)
+
+    logger.info(f"Exporting clean substations to {filepath_substations_polygon}")
+    gdf_substations_polygon.to_file(filepath_substations_polygon, driver="GeoJSON")    
+    
 
     logger.info("Identifying and removing lines within substation polygons...")
-    for index, row in tqdm(gdf_lines.iterrows(), total=len(gdf_lines)):
-        line = row['geometry']  
-        # Check if the LineString is within any Polygon in 'substations_df'
-        is_within_any_substation = any(line.within(substation_polygon) for substation_polygon in df_substations["polygon"])
-        results.append(is_within_any_substation)
+    lines_within_substations = gpd.sjoin(
+        gdf_lines[["line_id", "geometry"]], 
+        gdf_substations_polygon, 
+        how = "inner",
+        predicate = "within"
+        )["line_id"]
 
-    # Add the results to 'gdf_lines'
-    gdf_lines['within_substation'] = results
+    logger.info(f"Removed {len(lines_within_substations)}/{len(gdf_lines)} lines within substations.")
+    gdf_lines = gdf_lines[~gdf_lines["line_id"].isin(lines_within_substations)]
+    
+    # # Create an empty list to store the results
+    # results = []
 
-    gdf_lines = gdf_lines[~gdf_lines["within_substation"]]
-    logger.info(f"Removed {sum(results)} lines within substations.")
+    # subset a to find only country equal to "BE"
+    # a[a["country"] == "BE"]
+
+    # logger.info("Identifying and removing lines within substation polygons...")
+    # for index, row in tqdm(gdf_lines.iterrows(), total=len(gdf_lines)):
+    #     line = row['geometry']  
+    #     # Check if the LineString is within any Polygon in 'substations_df'
+    #     is_within_any_substation = any(line.within(substation_polygon) for substation_polygon in df_substations["polygon"])
+    #     results.append(is_within_any_substation)
+
+    # # Add the results to 'gdf_lines'
+    # gdf_lines['within_substation'] = results
+
+    # gdf_lines = gdf_lines[~gdf_lines["within_substation"]]
+    # logger.info(f"Removed {sum(results)} lines within substations.")
 
     filepath_lines = snakemake.output["lines"]
     # save substations output

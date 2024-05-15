@@ -631,6 +631,7 @@ rule clean_osm_data:
         substations_relation=[f"data/osm/raw/{country}/substations_relation.json" for country in config["countries"]],
     output:
         substations=resources("osm/clean/substations.geojson"),
+        substations_polygon=resources("osm/clean/substations_polygon.geojson"),
         lines=resources("osm/clean/lines.geojson"),
     log:
         logs("clean_osm_data.log"),
