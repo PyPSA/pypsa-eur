@@ -959,7 +959,7 @@ def extra_functionality(n, snapshots):
     if EQ_o := constraints["EQ"]:
         add_EQ_constraints(n, EQ_o.replace("EQ", ""))
 
-    if config["sector"]["solar_utility_singla_axis_tracking"]:
+    if config["sector"]["solar_utility_horizontal_axis_tracking"]:
         add_solar_potential_constraints(n, config)
 
     add_battery_constraints(n)

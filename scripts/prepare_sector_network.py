@@ -3703,7 +3703,7 @@ if __name__ == "__main__":
     if options["electricity_distribution_grid"]:
         insert_electricity_distribution_grid(n, costs)
 
-    if not options["solar_utility_singla_axis_tracking"]:
+    if not options["solar_utility_horizontal_axis_tracking"]:
         remove_solar_tracking(n)
 
     maybe_adjust_costs_and_potentials(n, snakemake.params["adjustments"])

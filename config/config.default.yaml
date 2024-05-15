@@ -589,7 +589,7 @@ sector:
   biogas_upgrading_cc: false
   conventional_generation:
     OCGT: gas
-  solar_utility_singla_axis_tracking: true
+  solar_utility_horizontal_axis_tracking: true
   biomass_to_liquid: false
   biosng: false
   limit_max_growth:
