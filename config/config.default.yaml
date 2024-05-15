@@ -117,7 +117,7 @@ electricity:
   everywhere_powerplants: [nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
 
   conventional_carriers: [nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
-  renewable_carriers: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, hydro]
+  renewable_carriers: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float, hydro]
 
   estimate_renewable_capacities:
     enable: true
@@ -339,6 +339,8 @@ pypsa_eur:
   - onwind
   - offwind-ac
   - offwind-dc
+  - offwind-float
+  - solar-hsat
   - solar
   - ror
   - nuclear
@@ -602,7 +604,6 @@ sector:
   biogas_upgrading_cc: false
   conventional_generation:
     OCGT: gas
-  solar_utility_horizontal_axis_tracking: true
   biomass_to_liquid: false
   biosng: false
   limit_max_growth:
@@ -1185,4 +1186,6 @@ plotting:
     DC-DC: "#8a1caf"
     DC link: "#8a1caf"
     load: "#dd2e23"
+    waste CHP: '#e3d37d'
+    waste CHP CC: '#e3d3ff'
     HVC to air: 'k'

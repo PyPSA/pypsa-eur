@@ -3504,13 +3504,6 @@ def remove_h2_network(n):
         n.stores.drop("EU H2 Store", inplace=True)
 
 
-def remove_solar_tracking(n):
-
-    for tech in ["solar-hsat"]:
-        logger.info("removing " + tech)
-        n.mremove("Generator", n.generators.index[n.generators.carrier == tech])
-
-
 def limit_individual_line_extension(n, maxext):
     logger.info(f"Limiting new HVAC and HVDC extensions to {maxext} MW")
     n.lines["s_nom_max"] = n.lines["s_nom"] + maxext
@@ -3888,9 +3881,6 @@ if __name__ == "__main__":
 
     if options["electricity_distribution_grid"]:
         insert_electricity_distribution_grid(n, costs)
-
-    if not options["solar_utility_horizontal_axis_tracking"]:
-        remove_solar_tracking(n)
 
     maybe_adjust_costs_and_potentials(n, snakemake.params["adjustments"])
 
