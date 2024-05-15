@@ -18,7 +18,6 @@ from _helpers import (
     update_config_from_wildcards,
 )
 from add_existing_baseyear import add_build_year_to_new_assets
-from prepare_sector_network import adjust_transport_temporal_agg
 from pypsa.descriptors import expand_series
 from pypsa.io import import_components_from_dataframe
 from six import iterkeys
@@ -521,7 +520,6 @@ if __name__ == "__main__":
     segments = snakemake.params.time_resolution
     if isinstance(segments, (int, float)):
         n = apply_time_segmentation_perfect(n, segments, solver_name=solver_name)
-        adjust_transport_temporal_agg(n)
 
     # adjust global constraints lv limit if the same for all years
     n = adjust_lvlimit(n)
