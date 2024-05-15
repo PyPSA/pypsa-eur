@@ -9,6 +9,9 @@ Release Notes
 
 Upcoming Release
 ================
+* New technology, solar PV with single-axis horizontal tracking (on a N-S axis),
+  with a carrier called ``solar-hsat`` to the networks. The default option for adding
+  this technology is set to ``true`` in the ``config.yaml``.
 
 * The technology-data version was updated to v0.9.0.
 
