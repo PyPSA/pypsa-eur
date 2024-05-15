@@ -18,6 +18,20 @@ logger = logging.getLogger(__name__)
 
 
 def _get_overpass_areas(countries):
+    """
+    Retrieve the OSM area codes for the specified country codes.
+    
+    Parameters
+    ----------
+    countries : str or list
+        A single country code or a list of country codes for which the OSM area codes should be retrieved.
+
+    Returns
+    -------
+    dict
+        A dictionary mapping country codes to their corresponding OSM area codes.
+    """
+
     # If a single country code is provided, convert it to a list
     if not isinstance(countries, list):
         countries = [countries]
@@ -67,10 +81,26 @@ def retrieve_osm_data(
             "substations_way",
             "substations_node",
             "substations_relation",
-            # "transformers_way",
-            # "transformers_node",
-            # "route_relations",
             ]):
+    """
+    Retrieve OSM data for the specified country and save it to the specified output files.
+
+    Parameters
+    ----------
+    country : str
+        The country code for which the OSM data should be retrieved.
+    output : dict
+        A dictionary mapping feature names to the corresponding output file paths. Saving the OSM data to .json files.
+    features : list, optional
+        A list of OSM features to retrieve. The default is [
+            "cables_way",
+            "lines_way",
+            "substations_way",
+            "substations_node",
+            "substations_relation",
+            ].
+    """
+
     
     op_area = _get_overpass_areas(country)
 
