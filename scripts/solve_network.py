@@ -1007,9 +1007,12 @@ def solve_network(n, config, solving, **kwargs):
     elif skip_iterations:
         status, condition = n.optimize(**kwargs)
     else:
-        kwargs["track_iterations"] = (cf_solving.get("track_iterations", False),)
-        kwargs["min_iterations"] = (cf_solving.get("min_iterations", 4),)
-        kwargs["max_iterations"] = (cf_solving.get("max_iterations", 6),)
+        kwargs["track_iterations"] = cf_solving["track_iterations"]
+        kwargs["min_iterations"] = cf_solving["min_iterations"]
+        kwargs["max_iterations"] = cf_solving["max_iterations"]
+        if cf_solving["post_discretization"].pop("enable"):
+            logger.info("Add post-discretization parameters.")
+            kwargs.update(cf_solving["post_discretization"])
         status, condition = n.optimize.optimize_transmission_expansion_iteratively(
             **kwargs
         )
