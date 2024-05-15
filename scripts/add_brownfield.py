@@ -195,9 +195,11 @@ def adjust_renewable_profiles(n, input_profiles, params, year):
     )
 
     for carrier in params["carriers"]:
-        if carrier == "hydro" or (carrier == "solar-hsat" and
-                                  not snakemake.config["sector"]["solar_utility_horizontal_axis_tracking"]
-                                   ): continue
+        if carrier == "hydro" or (
+            carrier == "solar-hsat"
+            and not snakemake.config["sector"]["solar_utility_horizontal_axis_tracking"]
+        ):
+            continue
 
         with xr.open_dataset(getattr(input_profiles, "profile_" + carrier)) as ds:
             if ds.indexes["bus"].empty or "year" not in ds.indexes:

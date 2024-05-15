@@ -63,7 +63,7 @@ renewable:
   solar:
     cutout: be-03-2013-era5
   solar-hsat:
-     cutout: be-03-2013-era5
+    cutout: be-03-2013-era5
 
 clustering:
   temporal:
