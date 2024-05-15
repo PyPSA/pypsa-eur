@@ -10,6 +10,10 @@ Release Notes
 Upcoming Release
 ================
 
+* Doubled solar rooftop potentials to roughly 1 TW for Europe based on `recent
+  European Commission reports
+  <https://www.epj-pv.org/articles/epjpv/full_html/2024/01/pv230071/pv230071.html>`_.
+
 * Remove exogenously set share of rooftop PV (``costs: rooftop_share:``).
   Rooftop and utility-scale PV are now largely handled as separate technologies
   with endogenous shares.

@@ -1024,9 +1024,9 @@ def insert_electricity_distribution_grid(n, costs):
     else:
         pop_solar = pop_layout.total.rename(index=lambda x: x + " solar")
 
-    # add max solar rooftop potential assuming 0.1 kW/m2 and 10 m2/person,
-    # i.e. 1 kW/person (population data is in thousands of people) so we get MW
-    potential = 0.1 * 10 * pop_solar
+    # add max solar rooftop potential assuming 0.1 kW/m2 and 20 m2/person,
+    # i.e. 2 kW/person (population data is in thousands of people) so we get MW
+    potential = 0.1 * 20 * pop_solar
 
     n.madd(
         "Generator",
