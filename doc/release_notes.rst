@@ -78,12 +78,8 @@ Upcoming Release
 
 * bugfix: convert Strings to pathlib.Path objects as input to ConfigSettings
 
-
-
-* fix bug in land transport for temperature correction of ICEs and fuel cell cars
-
-* restructure land transport, demand is now attached to one single node, the
-different car types (ICE, EV, fuel cell) are modelled as links
+* bugfix: fix distinction of temperature-dependent correction factors for the
+  energy demand of electric vehicles, ICES fuel cell cars.
 
 * Allow the use of more solvers in clustering (Xpress, COPT, Gurobi, CPLEX, SCIP, MOSEK).
 
