@@ -923,6 +923,7 @@ def solve_network(n, config, solving, **kwargs):
         kwargs["min_iterations"] = cf_solving["min_iterations"]
         kwargs["max_iterations"] = cf_solving["max_iterations"]
         if cf_solving["post_discretization"].pop("enable"):
+            logger.info("Add post-discretization parameters.")
             kwargs.update(cf_solving["post_discretization"])
         status, condition = n.optimize.optimize_transmission_expansion_iteratively(
             **kwargs

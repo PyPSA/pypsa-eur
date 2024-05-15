@@ -778,12 +778,15 @@ solving:
     post_discretization:
       enable: false
       line_unit_size: 1700
+      line_threshold: 0.3
       link_unit_size:
         DC: 2000
         H2 pipeline: 1200
         gas pipeline: 1500
-      line_threshold: 0.3
-      link_threshold: 0.3
+      link_threshold:
+        DC: 0.3
+        H2 pipeline: 0.3
+        gas pipeline: 0.3
 
   constraints:
     CCL: false
