@@ -431,7 +431,6 @@ sector:
   bev_availability: 0.5
   bev_energy: 0.05
   bev_charge_efficiency: 0.9
-  bev_plug_to_wheel_efficiency: 0.2
   bev_charge_rate: 0.011
   bev_avail_max: 0.95
   bev_avail_mean: 0.8
@@ -460,8 +459,9 @@ sector:
     2040: 0.3
     2045: 0.15
     2050: 0
-  transport_fuel_cell_efficiency: 0.5
-  transport_internal_combustion_efficiency: 0.3
+  transport_electric_efficiency: 53.19 # 1 MWh_el = 53.19*100 km
+  transport_fuel_cell_efficiency: 30.003 # 1 MWh_H2 = 30.003*100 km
+  transport_ice_efficiency: 16.0712 # 1 MWh_oil = 16.0712 * 100 km
   agriculture_machinery_electric_share: 0
   agriculture_machinery_oil_share: 1
   agriculture_machinery_fuel_efficiency: 0.7
@@ -1041,6 +1041,7 @@ plotting:
     BEV charger: '#baf238'
     V2G: '#e5ffa8'
     land transport EV: '#baf238'
+    land transport demand: '#38baf2'
     Li ion: '#baf238'
     # hot water storage
     water tanks: '#e69487'

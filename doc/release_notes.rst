@@ -81,6 +81,9 @@ Upcoming Release
 
 * bugfix: convert Strings to pathlib.Path objects as input to ConfigSettings
 
+* bugfix: fix distinction of temperature-dependent correction factors for the
+  energy demand of electric vehicles, ICES fuel cell cars.
+
 * Allow the use of more solvers in clustering (Xpress, COPT, Gurobi, CPLEX, SCIP, MOSEK).
 
 * Enhanced support for choosing different weather years
