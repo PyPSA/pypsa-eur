@@ -8,7 +8,7 @@ from os.path import normpath, exists
 from shutil import copyfile, move, rmtree
 from snakemake.utils import min_version
 
-min_version("8.5")
+min_version("8.11")
 
 from scripts._helpers import path_provider, copy_default_files, get_scenarios, get_rdir
 
@@ -24,9 +24,11 @@ run = config["run"]
 scenarios = get_scenarios(run)
 RDIR = get_rdir(run)
 
-logs = path_provider("logs/", RDIR, run["shared_resources"])
-benchmarks = path_provider("benchmarks/", RDIR, run["shared_resources"])
-resources = path_provider("resources/", RDIR, run["shared_resources"])
+shared_resources = run["shared_resources"]["policy"]
+exclude_from_shared = run["shared_resources"]["exclude"]
+logs = path_provider("logs/", RDIR, shared_resources, exclude_from_shared)
+benchmarks = path_provider("benchmarks/", RDIR, shared_resources, exclude_from_shared)
+resources = path_provider("resources/", RDIR, shared_resources, exclude_from_shared)
 
 CDIR = "" if run["shared_cutouts"] else RDIR
 RESULTS = "results/" + RDIR

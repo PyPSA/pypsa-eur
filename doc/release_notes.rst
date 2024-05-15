@@ -9,7 +9,68 @@ Release Notes
 
 Upcoming Release
 ================
+
+* The technology-data version was updated to v0.9.0.
+
+* Bugfix to avoid duplicated offshore regions.
+
+* Added option ``industry: HVC_environment_sequestration_fraction:`` to specify
+  the fraction of carbon contained plastics that is permanently sequestered in
+  landfill. The default assumption is that all carbon contained in plastics is
+  eventually released to the atmosphere.
+
+* Added option for building waste-to-energy plants with and without carbon
+  capture to consume non-recycled and non-sequestered plastics. The config
+  settings are ``industry: waste_to_energy:`` and ``industry:
+  waste_to_energy_cc``. This does not include municipal solid waste.
+
+* Bump minimum ``powerplantmatching`` version to v0.5.15.
+
+* Add floating wind technology for water depths below 60m
+
+* Add config ``run: shared_resources: exclude:`` to specify additional files
+  that should be excluded from shared resources with the setting ``run:
+  shared_resources: base``. The function ``_helpers/get_run_path()`` now takes
+  an additional keyword argument ``exclude_from_shared`` with a list of files
+  that should not be shared. This keyword argument accepts a list of strings
+  where the string only needs to match the start of a filename (e.g.
+  ``"transport_data"`` would exclude both ``transport_data.csv`` and
+  ``transport_data_{simpl}_{clusters}.csv`` from being shared across scenarios.
+
+* Move switch ``run: shared_resources:`` to ``run: shared_resources: policy:``.
+
+* Add config land_transport_demand_factor to model growth in land transport demand for different time horizons.
+
+* Allow dictionary for the config aviation_demand_factor.
+
+* Add option to post-discretize line and link capacities based on unit sizes and
+  rounding thresholds specified in the configuration under ``solving: options:
+  post_discretization:`` when iterative solving is enables (``solving: optiosn:
+  skip_iterations: false``). This option is disabled by default.
+
 * Group existing capacities to the earlier grouping_year for consistency with optimized capacities.
+
+* Update data bundle:
+
+  - Merge electricity-only and sector-coupled data bundles into `one bundle
+    <https://zenodo.org/records/10973944>`_. This means that the rule
+    ``retrieve_sector_databundle`` was removed.
+
+  - Include rasterised ``natura.tiff`` in data bundle and remove rule
+    ``retrieve_natura_raster``.
+
+  - Remove rule ``build_natura_raster`` as this rule is rarely run and increases
+    the data bundle size considerably.
+
+  - Remove outdated files from data bundle (e.g., Eurostat energy balances)
+
+  - Reduce spatial scope of GEBCO bathymetry data to Europe to save space.
+
+  - Remove the use of a separate data bundle for tutorials.
+
+  - Directly download `Hotmaps Industrial Database
+    <https://gitlab.com/hotmaps/industrial_sites/industrial_sites_Industrial_Database/-/blob/master/data/Industrial_Database.csv>`__
+    from source and remove ``Industrial_Database.csv`` from data bundle.
 
 * bugfix: installed heating capacities were 5% lower than existing heating capacities
 
@@ -179,6 +240,10 @@ different car types (ICE, EV, fuel cell) are modelled as links
 
 * Bugfix: allow modelling sector-coupled landlocked regions. (Fixed handling of offshore wind.)
 
+* Bugfix: approximation of hydro power generation if Portugal or Spain are not included works now.
+
+* Bugfix: copy_timeslice does not copy anymore, if country not present in load data.
+
 * Adapt the disabling of transmission expansion in myopic foresight optimisations when limit is already reached to also handle cost limits.
 
 * Fix duplicated years and grouping years reference in `add_land_use_constraint_m`.
@@ -191,7 +256,21 @@ different car types (ICE, EV, fuel cell) are modelled as links
 
 * Fix custom busmap read in `cluster_network`.
 
+* Add `nodal_supply_energy` to `make_summary`.
+
+* Data on existing renewable capacities is now consistently taken from powerplantmatching (instead of being retrieved separately); the dataset has also been updated to include 2023 values.
+
+* Added shapes to .nc file for different stages of the network object in `base_network`, `simplify_network`, and `cluster_network`; the `build_bus_regions` rule is now integrated into the `base_network` rule.
+
+* Fix p_nom_min of renewables generators for myopic approach and add check of existing capacities in `add_land_use_constraint_m`.
+
 * Add documentation section for how to contribute documentation
+
+* Clarify suffix usage in `add_existing_baseyear`.
+
+* The ``{sector_opts}`` wildcard is now not used by default. All scenario definitions are now done in the ``config.yaml`` file.
+
+* Fix gas network retrofitting in `add_brownfield`.
 
 PyPSA-Eur 0.10.0 (19th February 2024)
 =====================================
@@ -1514,7 +1593,7 @@ This release is known to work with `PyPSA-Eur
 **Gas Transmission Network**
 
 * New rule ``retrieve_gas_infrastructure_data`` that downloads and extracts the
-  SciGRID_gas `IGGIELGN <https://zenodo.org/record/4767098>`__ dataset from
+  SciGRID_gas `IGGIELGN <https://zenodo.org/records/4767098>`__ dataset from
   zenodo. It includes data on the transmission routes, pipe diameters,
   capacities, pressure, and whether the pipeline is bidirectional and carries
   H-Gas or L-Gas.
@@ -1674,7 +1753,7 @@ This release is known to work with `PyPSA-Eur
   PyPSA network.
 
 * Updated `data bundle
-  <https://zenodo.org/record/5824485/files/pypsa-eur-sec-data-bundle.tar.gz>`__
+  <https://zenodo.org/records/5824485/files/pypsa-eur-sec-data-bundle.tar.gz>`__
   that includes the hydrogan salt cavern storage potentials.
 
 * Updated and extended documentation in
@@ -2034,7 +2113,7 @@ PyPSA-Eur-Sec codebase in Version 0.2.0 above.
 
 This model has `its own github repository
 <https://github.com/martavp/pypsa-eur-sec-30-path>`__ and is `archived
-on Zenodo <https://zenodo.org/record/4014807>`__.
+on Zenodo <https://zenodo.org/records/4014807>`__.
 
 
 
@@ -2050,7 +2129,7 @@ European countries with one node per country. It includes demand and
 supply for electricity, space and water heating in buildings, and land
 transport.
 
-It is `archived on Zenodo <https://zenodo.org/record/1146666>`__.
+It is `archived on Zenodo <https://zenodo.org/records/1146666>`__.
 
 
 Release Process

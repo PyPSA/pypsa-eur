@@ -5,10 +5,7 @@
 
 # coding: utf-8
 """
-Creates the network topology from a `ENTSO-E map extract.
-
-<https://github.com/PyPSA/GridKit/tree/master/entsoe>`_ (March 2022) as a PyPSA
-network.
+Creates the network topology from an `ENTSO-E map extract <https://github.com/PyPSA/GridKit/tree/master/entsoe>`_ (March 2022) as a PyPSA network.
 
 Relevant Settings
 -----------------
@@ -59,8 +56,19 @@ Outputs
     .. image:: img/base.png
         :scale: 33 %
 
+- ``resources/regions_onshore.geojson``:
+
+    .. image:: img/regions_onshore.png
+        :scale: 33 %
+
+- ``resources/regions_offshore.geojson``:
+
+    .. image:: img/regions_offshore.png
+        :scale: 33 %
+
 Description
 -----------
+Creates the network topology from an ENTSO-E map extract, and create Voronoi shapes for each bus representing both onshore and offshore regions.
 """
 
 import logging
@@ -75,11 +83,11 @@ import shapely
 import shapely.prepared
 import shapely.wkt
 import yaml
-from _helpers import configure_logging, get_snapshots, set_scenario_config
+from _helpers import REGION_COLS, configure_logging, get_snapshots, set_scenario_config
 from packaging.version import Version, parse
 from scipy import spatial
 from scipy.sparse import csgraph
-from shapely.geometry import LineString, Point
+from shapely.geometry import LineString, Point, Polygon
 
 PD_GE_2_2 = parse(pd.__version__) >= Version("2.2")
 
@@ -561,7 +569,7 @@ def _set_countries_and_substations(n, config, country_shapes, offshore_shapes):
     buses["substation_lv"] = (
         lv_b & onshore_b & (~buses["under_construction"]) & has_connections_b
     )
-    buses["substation_off"] = (offshore_b | (hv_b & onshore_b)) & (
+    buses["substation_off"] = ((hv_b & offshore_b) | (hv_b & onshore_b)) & (
         ~buses["under_construction"]
     )
 
@@ -698,6 +706,22 @@ def _adjust_capacities_of_under_construction_branches(n, config):
     return n
 
 
+def _set_shapes(n, country_shapes, offshore_shapes):
+    # Write the geodataframes country_shapes and offshore_shapes to the network.shapes component
+    country_shapes = gpd.read_file(country_shapes).rename(columns={"name": "idx"})
+    country_shapes["type"] = "country"
+    offshore_shapes = gpd.read_file(offshore_shapes).rename(columns={"name": "idx"})
+    offshore_shapes["type"] = "offshore"
+    all_shapes = pd.concat([country_shapes, offshore_shapes], ignore_index=True)
+    n.madd(
+        "Shape",
+        all_shapes.index,
+        geometry=all_shapes.geometry,
+        idx=all_shapes.idx,
+        type=all_shapes["type"],
+    )
+
+
 def base_network(
     eg_buses,
     eg_converters,
@@ -758,7 +782,148 @@ def base_network(
 
     n = _adjust_capacities_of_under_construction_branches(n, config)
 
+    _set_shapes(n, country_shapes, offshore_shapes)
+
     return n
+
+
+def voronoi_partition_pts(points, outline):
+    """
+    Compute the polygons of a voronoi partition of `points` within the polygon
+    `outline`. Taken from
+    https://github.com/FRESNA/vresutils/blob/master/vresutils/graph.py.
+
+    Attributes
+    ----------
+    points : Nx2 - ndarray[dtype=float]
+    outline : Polygon
+    Returns
+    -------
+    polygons : N - ndarray[dtype=Polygon|MultiPolygon]
+    """
+    points = np.asarray(points)
+
+    if len(points) == 1:
+        polygons = [outline]
+    else:
+        xmin, ymin = np.amin(points, axis=0)
+        xmax, ymax = np.amax(points, axis=0)
+        xspan = xmax - xmin
+        yspan = ymax - ymin
+
+        # to avoid any network positions outside all Voronoi cells, append
+        # the corners of a rectangle framing these points
+        vor = spatial.Voronoi(
+            np.vstack(
+                (
+                    points,
+                    [
+                        [xmin - 3.0 * xspan, ymin - 3.0 * yspan],
+                        [xmin - 3.0 * xspan, ymax + 3.0 * yspan],
+                        [xmax + 3.0 * xspan, ymin - 3.0 * yspan],
+                        [xmax + 3.0 * xspan, ymax + 3.0 * yspan],
+                    ],
+                )
+            )
+        )
+
+        polygons = []
+        for i in range(len(points)):
+            poly = Polygon(vor.vertices[vor.regions[vor.point_region[i]]])
+
+            if not poly.is_valid:
+                poly = poly.buffer(0)
+
+            with np.errstate(invalid="ignore"):
+                poly = poly.intersection(outline)
+
+            polygons.append(poly)
+
+    return polygons
+
+
+def build_bus_shapes(n, country_shapes, offshore_shapes, countries):
+    country_shapes = gpd.read_file(country_shapes).set_index("name")["geometry"]
+    offshore_shapes = gpd.read_file(offshore_shapes)
+    offshore_shapes = offshore_shapes.reindex(columns=REGION_COLS).set_index("name")[
+        "geometry"
+    ]
+
+    onshore_regions = []
+    offshore_regions = []
+
+    for country in countries:
+        c_b = n.buses.country == country
+
+        onshore_shape = country_shapes[country]
+        onshore_locs = (
+            n.buses.loc[c_b & n.buses.onshore_bus]
+            .sort_values(
+                by="substation_lv", ascending=False
+            )  # preference for substations
+            .drop_duplicates(subset=["x", "y"], keep="first")[["x", "y"]]
+        )
+        onshore_regions.append(
+            gpd.GeoDataFrame(
+                {
+                    "name": onshore_locs.index,
+                    "x": onshore_locs["x"],
+                    "y": onshore_locs["y"],
+                    "geometry": voronoi_partition_pts(
+                        onshore_locs.values, onshore_shape
+                    ),
+                    "country": country,
+                }
+            )
+        )
+
+        if country not in offshore_shapes.index:
+            continue
+        offshore_shape = offshore_shapes[country]
+        offshore_locs = n.buses.loc[c_b & n.buses.substation_off, ["x", "y"]]
+        offshore_regions_c = gpd.GeoDataFrame(
+            {
+                "name": offshore_locs.index,
+                "x": offshore_locs["x"],
+                "y": offshore_locs["y"],
+                "geometry": voronoi_partition_pts(offshore_locs.values, offshore_shape),
+                "country": country,
+            }
+        )
+        offshore_regions_c = offshore_regions_c.loc[offshore_regions_c.area > 1e-2]
+        offshore_regions.append(offshore_regions_c)
+
+    shapes = pd.concat(onshore_regions, ignore_index=True)
+
+    return onshore_regions, offshore_regions, shapes
+
+
+def append_bus_shapes(n, shapes, type):
+    """
+    Append shapes to the network. If shapes with the same component and type
+    already exist, they will be removed.
+
+    Parameters:
+        n (pypsa.Network): The network to which the shapes will be appended.
+        shapes (geopandas.GeoDataFrame): The shapes to be appended.
+        **kwargs: Additional keyword arguments used in `n.madd`.
+
+    Returns:
+        None
+    """
+    remove = n.shapes.query("component == 'Bus' and type == @type").index
+    n.mremove("Shape", remove)
+
+    offset = n.shapes.index.astype(int).max() + 1 if not n.shapes.empty else 0
+    shapes = shapes.rename(lambda x: int(x) + offset)
+    n.madd(
+        "Shape",
+        shapes.index,
+        geometry=shapes.geometry,
+        idx=shapes.name,
+        component="Bus",
+        type=type,
+    )
 
 
 if __name__ == "__main__":
@@ -784,5 +949,22 @@ if __name__ == "__main__":
         snakemake.config,
     )
 
+    onshore_regions, offshore_regions, shapes = build_bus_shapes(
+        n,
+        snakemake.input.country_shapes,
+        snakemake.input.offshore_shapes,
+        snakemake.params.countries,
+    )
+
+    shapes.to_file(snakemake.output.regions_onshore)
+    append_bus_shapes(n, shapes, "onshore")
+
+    if offshore_regions:
+        shapes = pd.concat(offshore_regions, ignore_index=True)
+        shapes.to_file(snakemake.output.regions_offshore)
+        append_bus_shapes(n, shapes, "offshore")
+    else:
+        offshore_shapes.to_frame().to_file(snakemake.output.regions_offshore)
+
     n.meta = snakemake.config
-    n.export_to_netcdf(snakemake.output[0])
+    n.export_to_netcdf(snakemake.output.base_network)

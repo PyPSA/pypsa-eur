@@ -13,6 +13,7 @@ from types import SimpleNamespace
 import country_converter as coco
 import numpy as np
 import pandas as pd
+import powerplantmatching as pm
 import pypsa
 import xarray as xr
 from _helpers import (
@@ -60,14 +61,22 @@ def add_existing_renewables(df_agg, costs):
     Append existing renewables to the df_agg pd.DataFrame with the conventional
     power plants.
     """
-    carriers = {"solar": "solar", "onwind": "onwind", "offwind": "offwind-ac"}
+    tech_map = {"solar": "PV", "onwind": "Onshore", "offwind": "Offshore"}
 
-    for tech in ["solar", "onwind", "offwind"]:
-        carrier = carriers[tech]
+    countries = snakemake.config["countries"]
+    irena = pm.data.IRENASTAT().powerplant.convert_country_to_alpha2()
+    irena = irena.query("Country in @countries")
+    irena = irena.groupby(["Technology", "Country", "Year"]).Capacity.sum()
 
-        df = pd.read_csv(snakemake.input[f"existing_{tech}"], index_col=0).fillna(0.0)
+    irena = irena.unstack().reset_index()
+
+    for carrier, tech in tech_map.items():
+        df = (
+            irena[irena.Technology.str.contains(tech)]
+            .drop(columns=["Technology"])
+            .set_index("Country")
+        )
         df.columns = df.columns.astype(int)
-        df.index = cc.convert(df.index, to="iso2")
 
         # calculate yearly differences
         df.insert(loc=0, value=0.0, column="1999")
@@ -97,14 +106,16 @@ def add_existing_renewables(df_agg, costs):
 
         for year in nodal_df.columns:
             for node in nodal_df.index:
-                name = f"{node}-{tech}-{year}"
+                name = f"{node}-{carrier}-{year}"
                 capacity = nodal_df.loc[node, year]
                 if capacity > 0.0:
-                    df_agg.at[name, "Fueltype"] = tech
+                    df_agg.at[name, "Fueltype"] = carrier
                     df_agg.at[name, "Capacity"] = capacity
                     df_agg.at[name, "DateIn"] = year
-                    df_agg.at[name, "lifetime"] = costs.at[tech, "lifetime"]
-                    df_agg.at[name, "DateOut"] = year + costs.at[tech, "lifetime"] - 1
+                    df_agg.at[name, "lifetime"] = costs.at[carrier, "lifetime"]
+                    df_agg.at[name, "DateOut"] = (
+                        year + costs.at[carrier, "lifetime"] - 1
+                    )
                     df_agg.at[name, "cluster_bus"] = node
 
 
@@ -152,7 +163,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
 
     technology_to_drop = ["Pv", "Storage Technologies"]
 
-    # drop unused fueltyps and technologies
+    # drop unused fueltypes and technologies
     df_agg.drop(df_agg.index[df_agg.Fueltype.isin(fueltype_to_drop)], inplace=True)
     df_agg.drop(df_agg.index[df_agg.Technology.isin(technology_to_drop)], inplace=True)
     df_agg.Fueltype = df_agg.Fueltype.map(rename_fuel)
@@ -241,6 +252,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
         ]
         suffix = "-ac" if generator == "offwind" else ""
         name_suffix = f" {generator}{suffix}-{grouping_year}"
+        name_suffix_by = f" {generator}{suffix}-{baseyear}"
         asset_i = capacity.index + name_suffix
         if generator in ["solar", "onwind", "offwind"]:
             # to consider electricity grid connection costs or a split between
@@ -270,21 +282,13 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
 
                     # for offshore the splitting only includes coastal regions
                     inv_ind = [
-                        i
-                        for i in inv_ind
-                        if (i + name_suffix)
-                        in n.generators.index.str.replace(
-                            str(baseyear), str(grouping_year)
-                        )
+                        i for i in inv_ind if (i + name_suffix_by) in n.generators.index
                     ]
 
                     p_max_pu = n.generators_t.p_max_pu[
-                        [i + name_suffix for i in inv_ind]
+                        [i + name_suffix_by for i in inv_ind]
                     ]
-                    p_max_pu.columns = [
-                        i + name_suffix.replace(str(grouping_year), str(baseyear))
-                        for i in inv_ind
-                    ]
+                    p_max_pu.columns = [i + name_suffix for i in inv_ind]
 
                     n.madd(
                         "Generator",
@@ -302,15 +306,13 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                     )
 
             else:
-                p_max_pu = n.generators_t.p_max_pu[
-                    capacity.index + f" {generator}{suffix}-{baseyear}"
-                ]
+                p_max_pu = n.generators_t.p_max_pu[capacity.index + name_suffix_by]
 
                 if not new_build.empty:
                     n.madd(
                         "Generator",
                         new_capacity.index,
-                        suffix=" " + name_suffix,
+                        suffix=name_suffix,
                         bus=new_capacity.index,
                         carrier=generator,
                         p_nom=new_capacity,
@@ -430,7 +432,7 @@ def add_heating_capacities_installed_before_baseyear(
         linear decommissioning of heating capacities from 2020 to 2045 is
         currently assumed heating capacities split between residential and
         services proportional to heating load in both 50% capacities
-        in rural busess 50% in urban buses
+        in rural buses 50% in urban buses
     """
     logger.debug(f"Adding heating capacities installed before {baseyear}")
 

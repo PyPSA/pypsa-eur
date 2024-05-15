@@ -135,6 +135,7 @@ import pypsa
 import seaborn as sns
 from _helpers import configure_logging, set_scenario_config, update_p_nom_max
 from add_electricity import load_costs
+from base_network import append_bus_shapes
 from packaging.version import Version, parse
 from pypsa.clustering.spatial import (
     busmap_by_greedy_modularity,
@@ -428,20 +429,27 @@ def clustering_for_n_clusters(
     return clustering
 
 
-def cluster_regions(busmaps, input=None, output=None):
+def cluster_regions(busmaps, regions):
+    """
+    Cluster regions based on busmaps and save the results to a file and to the
+    network.
+
+    Parameters:
+    - busmaps (list): A list of busmaps used for clustering.
+    - which (str): The type of regions to cluster.
+
+    Returns:
+    None
+    """
     busmap = reduce(lambda x, y: x.map(y), busmaps[1:], busmaps[0])
-
-    for which in ("regions_onshore", "regions_offshore"):
-        regions = gpd.read_file(getattr(input, which))
-        regions = regions.reindex(columns=["name", "geometry"]).set_index("name")
-        regions_c = regions.dissolve(busmap)
-        regions_c.index.name = "name"
-        regions_c = regions_c.reset_index()
-        regions_c.to_file(getattr(output, which))
+    regions = regions.reindex(columns=["name", "geometry"]).set_index("name")
+    regions_c = regions.dissolve(busmap)
+    regions_c.index.name = "name"
+    return regions_c.reset_index()
 
 
-def plot_busmap_for_n_clusters(n, n_clusters, fn=None):
-    busmap = busmap_for_n_clusters(n, n_clusters)
+def plot_busmap_for_n_clusters(n, n_clusters, solver_name="scip", fn=None):
+    busmap = busmap_for_n_clusters(n, n_clusters, solver_name)
     cs = busmap.unique()
     cr = sns.color_palette("hls", len(cs))
     n.plot(bus_colors=busmap.map(dict(zip(cs, cr))))
@@ -538,21 +546,25 @@ if __name__ == "__main__":
             params.focus_weights,
         )
 
-    update_p_nom_max(clustering.network)
+    nc = clustering.network
+    update_p_nom_max(nc)
 
     if params.cluster_network.get("consider_efficiency_classes"):
         labels = [f" {label} efficiency" for label in ["low", "medium", "high"]]
-        nc = clustering.network
         nc.generators["carrier"] = nc.generators.carrier.replace(labels, "", regex=True)
 
-    clustering.network.meta = dict(
-        snakemake.config, **dict(wildcards=dict(snakemake.wildcards))
-    )
-    clustering.network.export_to_netcdf(snakemake.output.network)
     for attr in (
         "busmap",
         "linemap",
     ):  # also available: linemap_positive, linemap_negative
         getattr(clustering, attr).to_csv(snakemake.output[attr])
 
-    cluster_regions((clustering.busmap,), snakemake.input, snakemake.output)
+    nc.shapes = n.shapes.copy()
+    for which in ["regions_onshore", "regions_offshore"]:
+        regions = gpd.read_file(snakemake.input[which])
+        clustered_regions = cluster_regions((clustering.busmap,), regions)
+        clustered_regions.to_file(snakemake.output[which])
+        append_bus_shapes(nc, clustered_regions, type=which.split("_")[1])
+
+    nc.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
+    nc.export_to_netcdf(snakemake.output.network)

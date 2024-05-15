@@ -62,7 +62,7 @@ PyPSA is known to work with the free software
 - `HiGHS <https://highs.dev/>`__
 - `Cbc <https://projects.coin-or.org/Cbc#DownloadandInstall>`__
 - `GLPK <https://www.gnu.org/software/glpk/>`__ (`WinGLKP <http://winglpk.sourceforge.net/>`__)
-- `Ipopt <https://coin-or.github.io/Ipopt/INSTALL.html>`__
+- `SCIP <https://scipopt.github.io/PySCIPOpt/docs/html/index.html>`__
 
 and the non-free, commercial software (for some of which free academic licenses are available)
 
@@ -80,7 +80,7 @@ Nevertheless, you can still use open-source solvers for smaller problems.
 
 .. note::
     The rules :mod:`cluster_network` and :mod:`simplify_network` solve a mixed-integer quadratic optimisation problem for clustering.
-    The open-source solvers HiGHS, Cbc and GlPK cannot handle this. A fallback to SCIP is implemented in this case.
+    The open-source solvers HiGHS, Cbc and GlPK cannot handle this. A fallback to SCIP is implemented in this case, which is included in the standard environment specifications.
     For an open-source solver setup install in your ``conda`` environment on OSX/Linux. To install the default solver Gurobi, run
 
     .. code:: bash

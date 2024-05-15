@@ -123,7 +123,7 @@ def add_land_use_constraint_perfect(n):
 def _add_land_use_constraint(n):
     # warning: this will miss existing offwind which is not classed AC-DC and has carrier 'offwind'
 
-    for carrier in ["solar", "onwind", "offwind-ac", "offwind-dc"]:
+    for carrier in ["solar", "onwind", "offwind-ac", "offwind-dc", "offwind-float"]:
         extendable_i = (n.generators.carrier == carrier) & n.generators.p_nom_extendable
         n.generators.loc[extendable_i, "p_nom_min"] = 0
 
@@ -158,7 +158,10 @@ def _add_land_use_constraint_m(n, planning_horizons, config):
     grouping_years = config["existing_capacities"]["grouping_years_power"]
     current_horizon = snakemake.wildcards.planning_horizons
 
-    for carrier in ["solar", "onwind", "offwind-ac", "offwind-dc"]:
+    for carrier in ["solar", "onwind", "offwind-ac", "offwind-dc", "offwind-float"]:
+        extendable_i = (n.generators.carrier == carrier) & n.generators.p_nom_extendable
+        n.generators.loc[extendable_i, "p_nom_min"] = 0
+
         existing = n.generators.loc[n.generators.carrier == carrier, "p_nom"]
         ind = list(
             {i.split(sep=" ")[0] + " " + i.split(sep=" ")[1] for i in existing.index}
@@ -179,6 +182,19 @@ def _add_land_use_constraint_m(n, planning_horizons, config):
             n.generators.loc[sel_current, "p_nom_max"] -= existing.loc[
                 sel_p_year
             ].rename(lambda x: x[:-4] + current_horizon)
+
+    # check if existing capacities are larger than technical potential
+    existing_large = n.generators[
+        n.generators["p_nom_min"] > n.generators["p_nom_max"]
+    ].index
+    if len(existing_large):
+        logger.warning(
+            f"Existing capacities larger than technical potential for {existing_large},\
+                        adjust technical potential to existing capacities"
+        )
+        n.generators.loc[existing_large, "p_nom_max"] = n.generators.loc[
+            existing_large, "p_nom_min"
+        ]
 
     n.generators.p_nom_max.clip(lower=0, inplace=True)
 
@@ -903,9 +919,12 @@ def solve_network(n, config, solving, **kwargs):
     elif skip_iterations:
         status, condition = n.optimize(**kwargs)
     else:
-        kwargs["track_iterations"] = (cf_solving.get("track_iterations", False),)
-        kwargs["min_iterations"] = (cf_solving.get("min_iterations", 4),)
-        kwargs["max_iterations"] = (cf_solving.get("max_iterations", 6),)
+        kwargs["track_iterations"] = cf_solving["track_iterations"]
+        kwargs["min_iterations"] = cf_solving["min_iterations"]
+        kwargs["max_iterations"] = cf_solving["max_iterations"]
+        if cf_solving["post_discretization"].pop("enable"):
+            logger.info("Add post-discretization parameters.")
+            kwargs.update(cf_solving["post_discretization"])
         status, condition = n.optimize.optimize_transmission_expansion_iteratively(
             **kwargs
         )

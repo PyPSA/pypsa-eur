@@ -60,6 +60,7 @@ def rename_techs(label):
         "offwind": "offshore wind",
         "offwind-ac": "offshore wind (AC)",
         "offwind-dc": "offshore wind (DC)",
+        "offwind-float": "offshore wind (Float)",
         "onwind": "onshore wind",
         "ror": "hydroelectricity",
         "hydro": "hydroelectricity",
