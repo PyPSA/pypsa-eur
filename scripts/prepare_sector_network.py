@@ -1540,7 +1540,6 @@ def get_temp_efficency(
 
 def add_EVs(
     n,
-    nodes,
     avail_profile,
     dsm_profile,
     p_set,
@@ -1553,9 +1552,9 @@ def add_EVs(
 
     n.madd(
         "Bus",
-        nodes,
+        spatial.nodes,
         suffix=" EV battery",
-        location=nodes,
+        location=spatial.nodes,
         carrier="Li ion",
         unit="MWh_el",
     )
@@ -1571,7 +1570,6 @@ def add_EVs(
         options["EV_lower_degree_factor"],
         options["EV_upper_degree_factor"],
     )
-    suffix = " land transport EV"
 
     p_shifted = (p_set + cycling_shift(p_set, 1) + cycling_shift(p_set, 2)) / 3
 
@@ -1579,36 +1577,28 @@ def add_EVs(
 
     efficiency *= cyclic_eff
 
-    p_nom = electric_share * p_set.div(efficiency).max()
-
-    profile = p_set.div(efficiency) / p_set.div(efficiency).max()
+    profile = electric_share * p_set.div(efficiency)
 
     n.madd(
-        "Link",
-        nodes,
-        suffix=suffix,
-        bus0=nodes + " EV battery",
-        bus1=nodes + " land transport",
+        "Load",
+        spatial.nodes,
+        suffix=" land transport EV",
+        bus=spatial.nodes + " EV battery",
         carrier="land transport EV",
-        efficiency=efficiency,
-        p_min_pu=profile,
-        p_max_pu=profile,
-        p_nom=p_nom,
-        p_nom_extendable=False,
-        lifetime=1,
+        p_set=profile,
     )
 
     p_nom = number_cars * options.get("bev_charge_rate", 0.011) * electric_share
 
     n.madd(
         "Link",
-        nodes,
+        spatial.nodes,
         suffix=" BEV charger",
-        bus0=nodes,
-        bus1=nodes + " EV battery",
+        bus0=spatial.nodes,
+        bus1=spatial.nodes + " EV battery",
         p_nom=p_nom,
         carrier="BEV charger",
-        p_max_pu=avail_profile[nodes],
+        p_max_pu=avail_profile[spatial.nodes],
         lifetime=1,
         efficiency=options.get("bev_charge_efficiency", 0.9),
     )
@@ -1616,13 +1606,13 @@ def add_EVs(
     if options["v2g"]:
         n.madd(
             "Link",
-            nodes,
+            spatial.nodes,
             suffix=" V2G",
-            bus1=nodes,
-            bus0=nodes + " EV battery",
+            bus1=spatial.nodes,
+            bus0=spatial.nodes + " EV battery",
             p_nom=p_nom,
             carrier="V2G",
-            p_max_pu=avail_profile[nodes],
+            p_max_pu=avail_profile[spatial.nodes],
             lifetime=1,
             efficiency=options.get("bev_charge_efficiency", 0.9),
         )
@@ -1637,18 +1627,18 @@ def add_EVs(
 
         n.madd(
             "Store",
-            nodes,
+            spatial.nodes,
             suffix=" battery storage",
-            bus=nodes + " EV battery",
+            bus=spatial.nodes + " EV battery",
             carrier="battery storage",
             e_cyclic=True,
             e_nom=e_nom,
             e_max_pu=1,
-            e_min_pu=dsm_profile[nodes],
+            e_min_pu=dsm_profile[spatial.nodes],
         )
 
 
-def add_fuel_cell_cars(n, nodes, p_set, fuel_cell_share, temperature):
+def add_fuel_cell_cars(n, p_set, fuel_cell_share, temperature):
 
     car_efficiency = options["transport_fuel_cell_efficiency"]
 
@@ -1662,29 +1652,19 @@ def add_fuel_cell_cars(n, nodes, p_set, fuel_cell_share, temperature):
         options["ICE_upper_degree_factor"],
     )
 
-    suffix = " land transport fuel cell"
-
-    p_nom = fuel_cell_share * p_set.div(efficiency).max()
-
-    profile = p_set.div(efficiency) / p_set.div(efficiency).max()
+    profile = fuel_cell_share * p_set.div(efficiency)
 
     n.madd(
-        "Link",
-        nodes,
-        suffix=suffix,
-        bus0=spatial.h2.nodes,
-        bus1=nodes + " land transport",
+        "Load",
+        spatial.nodes,
+        suffix=" land transport fuel cell",
+        bus=spatial.h2.nodes,
         carrier="land transport fuel cell",
-        efficiency=efficiency,
-        p_nom_extendable=False,
-        p_nom=p_nom,
-        p_min_pu=profile,
-        p_max_pu=profile,
-        lifetime=1,
+        p_set=profile,
     )
 
 
-def add_ice_cars(n, nodes, p_set, ice_share, temperature):
+def add_ice_cars(n, p_set, ice_share, temperature):
 
     add_carrier_buses(n, "oil")
 
@@ -1699,32 +1679,43 @@ def add_ice_cars(n, nodes, p_set, ice_share, temperature):
         options["ICE_lower_degree_factor"],
         options["ICE_upper_degree_factor"],
     )
-    suffix = " land transport ICE"
 
-    p_nom = ice_share * p_set.div(efficiency).max()
+    profile = ice_share * p_set.div(efficiency).rename(
+        columns=lambda x: x + " land transport oil"
+    )
 
-    profile = p_set.div(efficiency) / p_set.div(efficiency).max()
+    if not options["regional_oil_demand"]:
+        profile = profile.sum(axis=1).to_frame(name="EU land transport oil")
+
+    n.madd(
+        "Bus",
+        spatial.oil.land_transport,
+        location=spatial.oil.demand_locations,
+        carrier="land transport oil",
+        unit="land transport",
+    )
+
+    n.madd(
+        "Load",
+        spatial.oil.land_transport,
+        bus=spatial.oil.land_transport,
+        carrier="land transport oil",
+        p_set=profile,
+    )
 
     n.madd(
         "Link",
-        nodes,
-        suffix=suffix,
+        spatial.oil.land_transport,
         bus0=spatial.oil.nodes,
-        bus1=nodes + " land transport",
-        bus2=["co2 atmosphere"],
+        bus1=spatial.oil.land_transport,
+        bus2="co2 atmosphere",
         carrier="land transport oil",
-        efficiency=efficiency,
         efficiency2=costs.at["oil", "CO2 intensity"],
-        p_nom_extendable=False,
-        p_nom=p_nom,
-        p_min_pu=profile,
-        p_max_pu=profile,
-        lifetime=1,
+        p_nom_extendable=True,
     )
 
 
 def add_land_transport(n, costs):
-    # TODO options?
 
     logger.info("Add land transport")
 
@@ -1751,31 +1742,7 @@ def add_land_transport(n, costs):
 
     check_land_transport_shares(shares)
 
-    nodes = spatial.nodes
-
-    # Add load for transport demand
-    n.add("Carrier", "land transport demand")
-
-    n.madd(
-        "Bus",
-        nodes,
-        location=nodes,
-        suffix=" land transport",
-        carrier="land transport demand",
-        unit="100 km",
-    )
-
-    p_set = transport[nodes]
-
-    # add demand
-    n.madd(
-        "Load",
-        nodes,
-        suffix=" land transport",
-        bus=nodes + " land transport",
-        carrier="land transport demand",
-        p_set=p_set,
-    )
+    p_set = transport[spatial.nodes]
 
     # temperature for correction factor for heating/cooling
     temperature = xr.open_dataarray(snakemake.input.temp_air_total).to_pandas()
@@ -1783,7 +1750,6 @@ def add_land_transport(n, costs):
     if shares["electric"] > 0:
         add_EVs(
             n,
-            nodes,
             avail_profile,
             dsm_profile,
             p_set,
@@ -1793,10 +1759,10 @@ def add_land_transport(n, costs):
         )
 
     if shares["fuel_cell"] > 0:
-        add_fuel_cell_cars(n, nodes, p_set, shares["fuel_cell"], temperature)
+        add_fuel_cell_cars(n, p_set, shares["fuel_cell"], temperature)
 
     if shares["ice"] > 0:
-        add_ice_cars(n, nodes, p_set, shares["ice"], temperature)
+        add_ice_cars(n, p_set, shares["ice"], temperature)
 
 
 def build_heat_demand(n):
