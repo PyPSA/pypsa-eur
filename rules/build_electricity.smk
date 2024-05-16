@@ -619,7 +619,7 @@ rule retrieve_osm_data:
     log:
         logs("retrieve_osm_data_{country}.log"),
     resources:
-        cores = 2, threads= 1
+        cores = 2, threads= 1,
     script:
         "../scripts/retrieve_osm_data.py"
 
