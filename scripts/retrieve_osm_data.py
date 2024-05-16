@@ -180,7 +180,7 @@ def retrieve_osm_data(
                 logger.error(f"Error for feature '{f}' in country {country}: {e}")
                 logger.debug(f"Response text: {response.text if response else 'No response'}")
                 if attempt < retries - 1:
-                    wait_time += 10
+                    wait_time += 15
                     logger.info(f"Waiting {wait_time} seconds before retrying...")
                     time.sleep(wait_time)
                 else:
