@@ -293,7 +293,9 @@ def add_unsustainable_potentials(df):
     df_unsustainable = (
         build_eurostat(
             countries=snakemake.config["countries"],
-            year=max(min(latest_year, snakemake.wildcards.planning_horizons), 1990),
+            year=max(
+                min(latest_year, int(snakemake.wildcards.planning_horizons)), 1990
+            ),
             input_eurostat=snakemake.input.eurostat,
             idees_rename=idees_rename,
         )
@@ -322,11 +324,21 @@ def add_unsustainable_potentials(df):
     df_unsustainable = df_unsustainable[bio_carriers]
 
     df_wo_ch = df.drop(df.filter(regex="CH\d", axis=0).index)
-    df_unsustainable["Primary solid biofuels"] -= df_unsustainable[
-        "Renewable municipal waste"
-    ]
 
-    # df["country"] = df.index.str[:2]
+    if snakemake.params["waste_incineration"]:
+        df_unsustainable["Primary solid biofuels"] -= df_unsustainable[
+            "Renewable municipal waste"
+        ]
+
+        df_wo_ch["unsustainable waste"] = (
+            df_wo_ch.apply(
+                lambda c: c.sum()
+                / df_wo_ch.loc[df_wo_ch.index.str[:2] == c.name[:2]].sum().sum()
+                * df_unsustainable.loc[c.name[:2], "Renewable municipal waste"],
+                axis=1,
+            )
+            - df_wo_ch["waste"]
+        ).clip(lower=0)
 
     df_wo_ch["unsustainable solid biomass"] = (
         df_wo_ch.apply(
@@ -348,16 +360,6 @@ def add_unsustainable_potentials(df):
         - df_wo_ch["biogas"]
     ).clip(lower=0)
 
-    df_wo_ch["unsustainable waste"] = (
-        df_wo_ch.apply(
-            lambda c: c.sum()
-            / df_wo_ch.loc[df_wo_ch.index.str[:2] == c.name[:2]].sum().sum()
-            * df_unsustainable.loc[c.name[:2], "Renewable municipal waste"],
-            axis=1,
-        )
-        - df_wo_ch["waste"]
-    ).clip(lower=0)
-
     df_wo_ch["unsustainable liquid biofuels"] = df_wo_ch.apply(
         lambda c: c.sum()
         / df_wo_ch.loc[df_wo_ch.index.str[:2] == c.name[:2]].sum().sum()
@@ -367,7 +369,7 @@ def add_unsustainable_potentials(df):
         axis=1,
     )
 
-    df = df.join(df_wo_ch.filter(like="unsustainable"))
+    df = df.join(df_wo_ch.filter(like="unsustainable")).fillna(0)
     return df
 
 
@@ -382,7 +384,7 @@ if __name__ == "__main__":
             "build_biomass_potentials",
             simpl="",
             clusters="37",
-            planning_horizons=2020,
+            planning_horizons=2030,
         )
 
     configure_logging(snakemake)
