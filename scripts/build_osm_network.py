@@ -596,7 +596,7 @@ def merge_stations_lines_by_station_id_and_voltage(
     """
 
     logger.info(
-        "Stage 3a/4: Set substation ids with tolerance of %.2f km" % (tol / 1000)
+        "Stage 4a/5: Set substation ids with tolerance of %.2f km" % (tol / 1000)
     )
 
     # TODO pypsa-eur: Add this fix to pypsa-earth: Buses should not be clustered geographically if they are different 
@@ -656,7 +656,7 @@ def merge_stations_lines_by_station_id_and_voltage(
         lambda p: any([p.within(l) for l in all_dc_boundary_points])
     )
 
-    logger.info("Stage 3b/4: Merge substations with the same id")
+    logger.info("Stage 4b/5: Merge substations with the same id")
 
     # merge buses with same station id and voltage
     if not buses.empty:
@@ -666,7 +666,7 @@ def merge_stations_lines_by_station_id_and_voltage(
         buses = pd.concat([buses_ac, buses_dc], ignore_index=True)
         set_substations_ids(buses, distance_crs, tol=tol)
 
-    logger.info("Stage 3c/4: Specify the bus ids of the line endings")
+    logger.info("Stage 4c/5: Specify the bus ids of the line endings")
 
     # set the bus ids to the line dataset
     lines, buses = set_lines_ids(lines, buses, distance_crs)

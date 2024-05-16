@@ -712,7 +712,19 @@ def _clean_lines(df_lines):
 
 
 def _finalise_lines(df_lines):
+    """
+    Finalises the lines column types and creates geometries.
+
+    Args:
+        df_lines (pandas.DataFrame): The input DataFrame containing lines data.
+
+    Returns:
+        df_lines (pandas.DataFrame(): The DataFrame with finalised column types 
+        and transformed data.
+
+    """
     logger.info("Finalising lines column types.")
+    df_lines = df_lines.copy()
     # Rename columns
     df_lines.rename(
         columns={
@@ -750,18 +762,28 @@ def _finalise_lines(df_lines):
         "geometry",
         ]]
     
-    # Set lines data types
-    df_lines.loc[:, "circuits"] = df_lines["circuits"].astype(int)
-    df_lines.loc[:, "voltage"] = df_lines["voltage"].astype(int)
-    df_lines.loc[:, "tag_frequency"] = df_lines["tag_frequency"].astype(int)
-    
+    # Set lines data types df.apply(pd.to_numeric, args=('coerce',))
+    # This workaround is needed as otherwise the column dtypes remain "objects"
+    df_lines.loc[:, "circuits_num"] = df_lines["circuits"].astype(int)
+    df_lines.loc[:, "voltage_num"] = df_lines["voltage"].astype(int)
+    df_lines.loc[:, "tag_frequency_num"] = df_lines["tag_frequency"].astype(int)
+    df_lines.drop(columns=["circuits", "voltage", "tag_frequency"], inplace=True)
+
+    col_rename_dict = {
+        "circuits_num": "circuits",
+        "voltage_num": "voltage",
+        "tag_frequency_num": "tag_frequency"
+    }   
+
+    df_lines.rename(columns=col_rename_dict, inplace=True)
+
     # Create shapely linestrings from geometries
     df_lines.loc[:, "geometry"] = df_lines.apply(_create_linestring, axis=1)  
 
     # Drop all rows where the geometry has equal start and end point
     # These are usually not lines, but outlines of areas.
     bool_circle = df_lines["geometry"].apply(lambda x: x.coords[0] == x.coords[-1]) 
-    df_lines = df_lines[~bool_circle]  
+    df_lines = df_lines[~bool_circle] 
 
     return df_lines
 
@@ -1059,7 +1081,7 @@ if __name__ == "__main__":
             )
     
     #group gdf_substations by voltage and and geometry (dropping duplicates)
-    df_substations = df_substations.groupby(["voltage", "lon", "lat", "tag_source"]).first().reset_index()
+    df_substations = df_substations.groupby(["voltage", "lon", "lat", "dc", "tag_source"]).first().reset_index()
     df_substations["bus_id"] = df_substations.index
     
     gdf_substations = gpd.GeoDataFrame(df_substations, geometry = "geometry", crs = "EPSG:4326")
