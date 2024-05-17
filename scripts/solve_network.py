@@ -816,29 +816,51 @@ def add_pipe_retrofit_constraint(n):
 
 def add_ocgt_retrofit_constraint(n):
     """
-    Add constraint for retrofitting existing OCGT to H2 OCGT.
+    Add constraint for retrofitting existing gas to H2 plants.
     """
-    # existing OCGT plants
-    gas_i = n.links.query(
+    logger.info("Add constraint for retrofitting gas plants to H2 plants.")
+    # OCGT plants
+    ocgt_i = n.links.query(
         "carrier == 'OCGT' and p_nom_extendable and p_nom > 1e-3"
     )
-    h2_i = n.links.query("carrier == 'OCGT H2 retrofitted' and p_nom_extendable").index
-    if h2_i.empty or gas_i.empty:
+    och2_i = n.links.query("carrier == 'OCGT H2 retrofitted' and p_nom_extendable").index
+    if och2_i.empty or ocgt_i.empty:
         return
 
     # filter gas plants from current planning horizon
     current_horizon = snakemake.wildcards.planning_horizons
-    gas_i = gas_i[gas_i.build_year == current_horizon].index
+    ocgt_i = ocgt_i[ocgt_i.build_year == current_horizon].index
 
     # store p_nom value for rhs of constraint
     p_nom = n.model["Link-p_nom"]
 
     # sum of p_nom OCGT and retrofitted must be <= installed capacity of OCGT
-    lhs = p_nom.loc[h2_i] + p_nom.loc[gas_i] #TODO: ?
-    rhs = p_nom.loc[gas_i]
+    lhs = p_nom.loc[och2_i] + p_nom.loc[ocgt_i]
+    rhs = n.links.p_nom_max[och2_i]
     n.model.add_constraints(lhs == rhs, name="OCGT_retrofit")
     logger.info("Added constraint for retrofitting OCGT gas to OCGT H2.")
 
+    # CCGT plants
+    ccgt_i = n.links.query(
+        "carrier == 'CCGT' and p_nom_extendable and p_nom > 1e-3"
+    )
+    cch2_i = n.links.query("carrier == 'CCGT H2 retrofitted' and p_nom_extendable").index
+    if cch2_i.empty or ccgt_i.empty:
+        return
+
+    # filter gas plants from current planning horizon
+    ccgt_i = ccgt_i[ccgt_i.build_year == current_horizon].index
+
+    # store p_nom value for rhs of constraint
+    p_nom = n.model["Link-p_nom"]
+
+    # sum of p_nom OCGT and retrofitted must be <= installed capacity of CCGT
+    lhs = p_nom.loc[cch2_i] + p_nom.loc[ccgt_i]
+    rhs = n.links.p_nom_max[cch2_i]
+    n.model.add_constraints(lhs == rhs, name="CCGT_retrofit")
+    logger.info("Added constraint for retrofitting CCGT gas to CCGT H2.")
+    logger.info(rhs)
+    logger.info(lhs)
 
 def add_co2_atmosphere_constraint(n, snapshots):
     glcs = n.global_constraints[n.global_constraints.type == "co2_atmosphere"]

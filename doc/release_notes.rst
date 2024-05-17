@@ -9,7 +9,7 @@ Release Notes
 
 Upcoming Release
 ================
-* Add H2_OCGT_retrofit to enable the retrofit of existing OCGT plants to hydrogen for plants built from a certain year on.
+* Add H2_retrofit_plants to enable the retrofit of existing OCGT, CCGT and CHP plants to hydrogen for plants built from a certain year on.
 
 * Add config land_transport_demand_factor to model growth in land transport demand for different time horizons.
 

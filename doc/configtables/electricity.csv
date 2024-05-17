@@ -41,6 +41,10 @@ estimate_renewable_capacities,,,
 autarky,,,
 -- enable,bool,true or false,Require each node to be autarkic by removing all lines and links.
 -- by_country,bool,true or false,Require each country to be autarkic by removing all cross-border lines and links. ``electricity: autarky`` must be enabled.
-H2_OCGT_retrofit,,,
+H2_retrofit_plants,,,
 -- enable,--,true or false,Allowing the retrofit of OCGT to switch to H2
 -- year,--,int,If enable the OCGT plants from that year on are able to be retrofitted
+-- retro_factor_ocgt,EUR2020/kw,float,costs to retrofit ocgt plants to hydrogen
+-- efficiency_ocgt,--,float,efficiency of a retrofitted hydrogen ocgt plant
+-- retro_factor_ccgt,EUR2020/kw,float,costs to retrofit ccgt plants to hydrogen
+-- efficiency_ccgt,--,float,efficiency of a retrofitted hydrogen ccgt plant

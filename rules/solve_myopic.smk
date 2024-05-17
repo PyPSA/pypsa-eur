@@ -9,12 +9,17 @@ rule add_existing_baseyear:
         sector=config_provider("sector"),
         existing_capacities=config_provider("existing_capacities"),
         costs=config_provider("costs"),
-        H2_OCGT_retrofit=config_provider("electricity", "H2_OCGT_retrofit", "enable"),
-        H2_retrofit_start=config_provider("electricity", "H2_OCGT_retrofit", "year"),
-        H2_retrofit_cost=config_provider("electricity", "H2_OCGT_retrofit", "cost"),
-        H2_retrofit_efficiency=config_provider(
-            "electricity", "H2_OCGT_retrofit", "efficiency"
+        H2_retrofit_plants=config_provider("electricity", "H2_retrofit_plants", "enable"),
+        retrofit_start=config_provider("electricity", "H2_retrofit_plants", "year"),
+        retrofit_cost_ocgt=config_provider("electricity", "H2_retrofit_plants", "retro_factor_ocgt"),
+        retrofit_efficiency_ocgt=config_provider(
+            "electricity", "H2_retrofit_plants", "efficiency_ocgt"
         ),
+        retrofit_cost_ccgt=config_provider("electricity", "H2_retrofit_plants", "retro_factor_ccgt"),
+        retrofit_efficiency_ccgt=config_provider(
+            "electricity", "H2_retrofit_plants", "efficiency_ccgt"
+        ),
+
     input:
         network=RESULTS
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
@@ -78,11 +83,15 @@ rule add_brownfield:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         carriers=config_provider("electricity", "renewable_carriers"),
-        H2_OCGT_retrofit=config_provider("electricity", "H2_OCGT_retrofit", "enable"),
-        H2_retrofit_start=config_provider("electricity", "H2_OCGT_retrofit", "year"),
-        H2_retrofit_cost=config_provider("electricity", "H2_OCGT_retrofit", "cost"),
-        H2_retrofit_efficiency=config_provider(
-            "electricity", "H2_OCGT_retrofit", "efficiency"
+        H2_retrofit_plants=config_provider("electricity", "H2_retrofit_plants", "enable"),
+        retrofit_start=config_provider("electricity", "H2_retrofit_plants", "year"),
+        retrofit_cost_ocgt=config_provider("electricity", "H2_retrofit_plants", "retro_factor_ocgt"),
+        retrofit_efficiency_ocgt=config_provider(
+            "electricity", "H2_retrofit_plants", "efficiency_ocgt"
+        ),
+        retrofit_cost_ccgt=config_provider("electricity", "H2_retrofit_plants", "retro_factor_ccgt"),
+        retrofit_efficiency_ccgt=config_provider(
+            "electricity", "H2_retrofit_plants", "efficiency_ccgt"
         ),
     input:
         unpack(input_profile_tech_brownfield),
