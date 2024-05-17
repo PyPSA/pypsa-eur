@@ -821,24 +821,20 @@ def add_ocgt_retrofit_constraint(n):
     # existing OCGT plants
     gas_i = n.links.query(
         "carrier == 'OCGT' and p_nom_extendable and p_nom > 1e-3"
-    ).index
+    )
     h2_i = n.links.query("carrier == 'OCGT H2 retrofitted' and p_nom_extendable").index
     if h2_i.empty or gas_i.empty:
         return
 
     # filter gas plants from current planning horizon
     current_horizon = snakemake.wildcards.planning_horizons
-    gas_i = gas_i[~gas_i.str.endswith(current_horizon)]
+    gas_i = gas_i[gas_i.build_year == current_horizon].index
 
     # store p_nom value for rhs of constraint
     p_nom = n.model["Link-p_nom"]
 
     # sum of p_nom OCGT and retrofitted must be <= installed capacity of OCGT
-    CH4_per_H2 = (
-        n.links.loc[h2_i].efficiency.values / n.links.loc[gas_i].efficiency.values
-    )
-
-    lhs = CH4_per_H2 * (p_nom.loc[h2_i] + p_nom.loc[gas_i])
+    lhs = p_nom.loc[h2_i] + p_nom.loc[gas_i] #TODO: ?
     rhs = p_nom.loc[gas_i]
     n.model.add_constraints(lhs == rhs, name="OCGT_retrofit")
     logger.info("Added constraint for retrofitting OCGT gas to OCGT H2.")
