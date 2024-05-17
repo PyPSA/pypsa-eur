@@ -83,6 +83,18 @@ def define_spatial(nodes, options):
 
         spatial.waste.df = pd.DataFrame(vars(spatial.waste), index=nodes)
 
+    # unsustainable bioliquids
+
+    spatial.bioliquids = SimpleNamespace()
+    if options.get("regional_oil_demand"):
+        spatial.bioliquids.nodes = nodes + " bioliquids"
+        spatial.bioliquids.locations = nodes
+    else:
+        spatial.bioliquids.nodes = ["EU bioliquids"]
+        spatial.bioliquids.locations = ["EU"]
+
+    spatial.bioliquids.df = pd.DataFrame(vars(spatial.bioliquids), index=nodes)
+
     # co2
 
     spatial.co2 = SimpleNamespace()
@@ -2274,11 +2286,11 @@ def add_biomass(n, costs):
 
     if options["regional_oil_demand"]:
         unsustainable_liquid_biofuel_potentials_spatial = biomass_potentials[
-            "unsustainable liquid biofuels"
-        ].rename(index=lambda x: x + " liquid biofuels")
+            "unsustainable bioliquids"
+        ].rename(index=lambda x: x + " bioliquids")
     else:
         unsustainable_liquid_biofuel_potentials_spatial = biomass_potentials[
-            "unsustainable liquid biofuels"
+            "unsustainable bioliquids"
         ].sum()
 
     if options.get("waste_incineration") == "regional":
@@ -2319,7 +2331,7 @@ def add_biomass(n, costs):
         spatial.waste.nodes,
         location=spatial.waste.locations,
         carrier="municipal waste",
-        unit="LHV",
+        unit="MWh_LHV",
     )
 
     n.madd(
@@ -2366,10 +2378,9 @@ def add_biomass(n, costs):
 
     n.madd(
         "Store",
-        spatial.oil.demand_locations,
-        suffix=" unsustainable liquid biofuel",
-        bus=spatial.oil.demand_locations + " liquid biofuel",
-        carrier="unsustainable liquid biofuels",
+        spatial.bioliquids.nodes,
+        bus=spatial.bioliquids.nodes,
+        carrier="unsustainable bioliquids",
         e_nom=unsustainable_liquid_biofuel_potentials_spatial,
         marginal_cost=costs.at["oil", "fuel"],
         e_initial=unsustainable_liquid_biofuel_potentials_spatial,
@@ -2378,12 +2389,11 @@ def add_biomass(n, costs):
     # Create a unidirectional Link from the liquid STore to the oil bus with a connection to the atmosphere uswing the BtL CO2 intensity
     n.madd(
         "Link",
-        spatial.oil.demand_locations,
-        suffix=" liquid biofuel",
-        bus0=spatial.oil.demand_locations + " liquid biofuel",
+        spatial.bioliquids.nodes,
+        bus0=spatial.bioliquids.nodes,
         bus1=spatial.oil.nodes,
         bus2="co2 atmosphere",
-        carrier="liquid biofuels",
+        carrier="unsustainable bioliquids",
         efficiency=1,
         efficiency2=-costs.at["solid biomass", "CO2 intensity"]
         + costs.at["BtL", "CO2 stored"],
@@ -4128,10 +4138,10 @@ if __name__ == "__main__":
             # configfiles="test/config.overnight.yaml",
             simpl="",
             opts="",
-            clusters="37",
-            ll="v1.0",
-            sector_opts="730H-T-H-B-I-A-dist1",
-            planning_horizons="2050",
+            clusters="5",
+            ll="v1.5",
+            sector_opts="CO2L0-24h-T-H-B-I-A-dist1",
+            planning_horizons="2030",
         )
 
     configure_logging(snakemake)
