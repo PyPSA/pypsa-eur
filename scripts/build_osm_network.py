@@ -13,13 +13,12 @@ import numpy as np
 import pandas as pd
 from _helpers import (
     configure_logging,
+    set_scenario_config,
 )
 from shapely.geometry import LineString, Point
 from shapely.ops import linemerge, split
-from shapely import wkt
 from tqdm import tqdm
-from _benchmark import memory_logger
-import yaml
+from _benchmark import memory_logger 
 
 logger = logging.getLogger(__name__)
 
@@ -1128,6 +1127,7 @@ if __name__ == "__main__":
         snakemake = mock_snakemake("build_osm_network")
     
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     # load default crs
     geo_crs = "EPSG:4326"

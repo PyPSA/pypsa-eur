@@ -92,7 +92,6 @@ def retrieve_osm_data(
             "cables_way", 
             "lines_way", 
             "substations_way",
-            "substations_node",
             "substations_relation",
             ]):
     """
@@ -111,7 +110,6 @@ def retrieve_osm_data(
             "cables_way",
             "lines_way",
             "substations_way",
-            "substations_node",
             "substations_relation",
             ].
     """
@@ -136,7 +134,6 @@ def retrieve_osm_data(
         'cables_way': 'way["power"="cable"]',
         'lines_way': 'way["power"="line"]',
         'substations_way': 'way["power"="substation"]',
-        'substations_node': 'node["power"="substation"]',
         'substations_relation': 'relation["power"="substation"]',
     }
 

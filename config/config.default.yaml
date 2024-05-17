@@ -15,13 +15,13 @@ private:
     entsoe_api:
 
 remote:
-  ssh: ""
-  path: ""
+  ssh: "z1"
+  path: "~/scratch/projects/pypsa-eur"
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
   prefix: ""
-  name: ""
+  name: "europe-osm-update-hydro"
   scenarios:
     enable: false
     file: config/scenarios.yaml
@@ -40,13 +40,15 @@ scenario:
   simpl:
   - ''
   ll:
-  - vopt
+  - v1.0 # TODO mit und ohne Netzausbau v1.0
   clusters:
-  - 37
+  - 50
   - 128
   - 256
+  - 512
+  # - 1024
   opts:
-  - ''
+  - 'Co2L0-25H'
   sector_opts:
   - ''
   planning_horizons:
@@ -56,7 +58,20 @@ scenario:
   - 2050
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#countries
+# countries: ["NO"]
 countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK']
+# countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MD', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK', 'UA']
+
+# Settings related to the high-voltage electricity grid
+electricity_network:
+  base_network: "osm"  # "osm" or "gridkit"
+  build_osm_network: true  # If 'true', the network will be built from scratch (retrieving OSM data, cleaning, and building) and stored under resources, 'false' will use snapshots in data/osm
+
+build_osm_network:  # Options of the build_osm_network script; osm = OpenStreetMap
+  group_tolerance_buses: 5000  # [m] (default 5000) Tolerance in meters of the close buses to merge
+  split_overpassing_lines: false  # When True, lines overpassing buses are splitted and connected to the bueses
+  overpassing_lines_tolerance: 1  # [m] (default 1) Tolerance to identify lines overpassing buses
+  force_ac: false  # When true, it forces all components (lines and substation) to be AC-only. To be used if DC assets create problem.
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#snapshots
 snapshots:
@@ -64,18 +79,18 @@ snapshots:
   end: "2014-01-01"
   inclusive: 'left'
 
-osm:
-  retrieve: true
-  use-prebuilt: false
-
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#enable
 enable:
-  retrieve: auto
+  retrieve: true
   prepare_links_p_nom: false
   retrieve_databundle: true
+  retrieve_sector_databundle: true
   retrieve_cost_data: true
   build_cutout: false
+  retrieve_irena: false
   retrieve_cutout: true
+  build_natura_raster: false
+  retrieve_natura_raster: true
   custom_busmap: false
   drop_leap_day: true
 
@@ -91,7 +106,7 @@ co2_budget:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
-  voltages: [220., 300., 380., 500., 750.]
+  voltages: [200., 220., 300., 380., 400., 500., 750.]
   gaslimit_enable: false
   gaslimit: false
   co2limit_enable: false
@@ -110,7 +125,7 @@ electricity:
     H2: 168
 
   extendable_carriers:
-    Generator: [solar, onwind, offwind-ac, offwind-dc, offwind-float, OCGT]
+    Generator: [solar, onwind, offwind-ac, offwind-dc, OCGT]
     StorageUnit: [] # battery, H2
     Store: [battery, H2]
     Link: [] # H2 pipeline
@@ -120,7 +135,7 @@ electricity:
   everywhere_powerplants: [nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
 
   conventional_carriers: [nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
-  renewable_carriers: [solar, onwind, offwind-ac, offwind-dc, offwind-float, hydro]
+  renewable_carriers: [solar, onwind, offwind-ac, offwind-dc, hydro] # hydro removed
 
   estimate_renewable_capacities:
     enable: true
@@ -128,7 +143,7 @@ electricity:
     year: 2020
     expansion_limit: false
     technology_mapping:
-      Offshore: [offwind-ac, offwind-dc, offwind-float]
+      Offshore: [offwind-ac, offwind-dc]
       Onshore: [onwind]
       PV: [solar]
 
@@ -196,7 +211,7 @@ renewable:
     luisa: false # [0, 5230]
     natura: true
     ship_threshold: 400
-    max_depth: 60
+    max_depth: 50
     max_shore_distance: 30000
     excluder_resolution: 200
     clip_p_max_pu: 1.e-2
@@ -212,27 +227,9 @@ renewable:
     luisa: false # [0, 5230]
     natura: true
     ship_threshold: 400
-    max_depth: 60
+    max_depth: 50
     min_shore_distance: 30000
     excluder_resolution: 200
-    clip_p_max_pu: 1.e-2
-  offwind-float:
-    cutout: europe-2013-era5
-    resource:
-      method: wind
-      turbine: NREL_ReferenceTurbine_5MW_offshore
-    # ScholzPhd Tab 4.3.1: 10MW/km^2
-    capacity_per_sqkm: 2
-    correction_factor: 0.8855
-    # proxy for wake losses
-    # from 10.1016/j.energy.2018.08.153
-    # until done more rigorously in #153
-    corine: [44, 255]
-    natura: true
-    ship_threshold: 400
-    excluder_resolution: 200
-    min_depth: 60
-    max_depth: 1000
     clip_p_max_pu: 1.e-2
   solar:
     cutout: europe-2013-sarah
@@ -271,17 +268,27 @@ conventional:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#lines
 lines:
   types:
+    200.: "Al/St 240/40 2-bundle 220.0"
     220.: "Al/St 240/40 2-bundle 220.0"
     300.: "Al/St 240/40 3-bundle 300.0"
     380.: "Al/St 240/40 4-bundle 380.0"
+    400.: "Al/St 240/40 4-bundle 380.0"
     500.: "Al/St 240/40 4-bundle 380.0"
     750.: "Al/St 560/50 4-bundle 750.0"
+  dc_types: # setting only for osm
+    200.: "HVDC XLPE 1000"
+    220.: "HVDC XLPE 1000"
+    300.: "HVDC XLPE 1000"
+    750.: "HVDC XLPE 1000"
+    380.: "HVDC XLPE 1000"
+    400.: "HVDC XLPE 1000"
+    500.: "HVDC XLPE 1000"
   s_max_pu: 0.7
   s_nom_max: .inf
   max_extension: 20000 #MW
   length_factor: 1.25
   reconnect_crimea: true
-  under_construction: 'keep' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
+  under_construction: 'zero' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
   dynamic_line_rating:
     activate: false
     cutout: europe-2013-era5
@@ -294,7 +301,7 @@ links:
   p_max_pu: 1.0
   p_nom_max: .inf
   max_extension: 30000 #MW
-  include_tyndp: true
+  include_tyndp: false
   under_construction: 'zero' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#transformers
@@ -327,7 +334,6 @@ pypsa_eur:
   - onwind
   - offwind-ac
   - offwind-dc
-  - offwind-float
   - solar
   - ror
   - nuclear
@@ -556,7 +562,7 @@ sector:
   - nearshore    # within 50 km of sea
     # - offshore
   ammonia: false
-  min_part_load_fischer_tropsch: 0.5
+  min_part_load_fischer_tropsch: 0.7
   min_part_load_methanolisation: 0.3
   min_part_load_methanation: 0.3
   use_fischer_tropsch_waste_heat: true
@@ -672,9 +678,6 @@ industry:
     2040: 0.12
     2045: 0.16
     2050: 0.20
-  HVC_environment_sequestration_fraction: 0.
-  waste_to_energy: false
-  waste_to_energy_cc: false
   sector_ratios_fraction_future:
     2020: 0.0
     2025: 0.1
@@ -700,7 +703,7 @@ industry:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 costs:
   year: 2030
-  version: v0.9.0
+  version: v0.8.1
   rooftop_share: 0.14  # based on the potentials, assuming  (0.1 kW/m2 and 10 m2/person)
   social_discountrate: 0.02
   fill_values:
@@ -791,7 +794,7 @@ solving:
 
   solver_options:
     highs-default:
-      # refer to https://ergo-code.github.io/HiGHS/dev/options/definitions/
+      # refer to https://ergo-code.github.io/HiGHS/options/definitions.html#solver
       threads: 4
       solver: "ipm"
       run_crossover: "off"
@@ -844,17 +847,23 @@ solving:
     cbc-default: {} # Used in CI
     glpk-default: {} # Used in CI
 
-  mem_mb: 30000 #memory in MB; 20 GB enough for 50+B+I+H2; 100 GB for 181+B+I+H2
-  runtime: 6h #runtime in humanfriendly style https://humanfriendly.readthedocs.io/en/latest/
+  mem_mb: 100000 #memory in MB; 20 GB enough for 50+B+I+H2; 100 GB for 181+B+I+H2
+  runtime: 12h #runtime in humanfriendly style https://humanfriendly.readthedocs.io/en/latest/
 
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#plotting
+
 plotting:
   map:
-    boundaries: [-11, 30, 34, 71]
-    color_geomap:
-      ocean: white
-      land: white
+    boundaries:
+  eu_node_location:
+    x: -5.5
+    y: 46.
+  # costs_max: 1000
+  # costs_threshold: 0.0000001
+  # energy_max:
+  # energy_min:
+  # energy_threshold: 0.000001
   projection:
     name: "EqualEarth"
     # See https://scitools.org.uk/cartopy/docs/latest/reference/projections.html for alternatives, for example:
@@ -862,21 +871,34 @@ plotting:
     # central_longitude: 10.
     # central_latitude: 50.
     # standard_parallels: [35, 65]
-  eu_node_location:
-    x: -5.5
-    y: 46.
-  costs_max: 1000
-  costs_threshold: 1
-  energy_max: 20000
-  energy_min: -20000
-  energy_threshold: 50.
+
+# plotting:
+#   map:
+#     boundaries: [-11, 30, 34, 71]
+#     color_geomap:
+#       ocean: white
+#       land: white
+#   projection:
+#     name: "EqualEarth"
+#     # See https://scitools.org.uk/cartopy/docs/latest/reference/projections.html for alternatives, for example:
+#     # name: "LambertConformal"
+#     # central_longitude: 10.
+#     # central_latitude: 50.
+#     # standard_parallels: [35, 65]
+#   eu_node_location:
+#     x: -5.5
+#     y: 46.
+#   costs_max: 1000
+#   costs_threshold: 1
+#   energy_max: 20000
+#   energy_min: -20000
+#   energy_threshold: 50.
 
   nice_names:
     OCGT: "Open-Cycle Gas"
     CCGT: "Combined-Cycle Gas"
     offwind-ac: "Offshore Wind (AC)"
     offwind-dc: "Offshore Wind (DC)"
-    offwind-float: "Offshore Wind (Floating)"
     onwind: "Onshore Wind"
     solar: "Solar"
     PHS: "Pumped Hydro Storage"
@@ -901,9 +923,6 @@ plotting:
     offwind-dc: "#74c6f2"
     offshore wind (DC): "#74c6f2"
     offshore wind dc: "#74c6f2"
-    offwind-float: "#b5e2fa"
-    offshore wind (Float): "#b5e2fa"
-    offshore wind float: "#b5e2fa"
     # water
     hydro: '#298c81'
     hydro reservoir: '#298c81'
@@ -1159,6 +1178,3 @@ plotting:
     DC-DC: "#8a1caf"
     DC link: "#8a1caf"
     load: "#dd2e23"
-    waste CHP: '#e3d37d'
-    waste CHP CC: '#e3d3ff'
-    HVC to air: 'k'

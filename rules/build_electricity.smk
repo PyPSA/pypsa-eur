@@ -494,7 +494,7 @@ rule simplify_network:
         benchmarks("simplify_network/elec_s{simpl}")
     threads: 1
     resources:
-        mem_mb=12000,
+        mem_mb=40000,
     conda:
         "../envs/environment.yaml"
     script:
@@ -541,7 +541,7 @@ rule cluster_network:
         benchmarks("cluster_network/elec_s{simpl}_{clusters}")
     threads: 1
     resources:
-        mem_mb=10000,
+        mem_mb=40000,
     conda:
         "../envs/environment.yaml"
     script:
@@ -614,7 +614,6 @@ rule retrieve_osm_data:
         cables_way="data/osm/raw/{country}/cables_way.json",
         lines_way="data/osm/raw/{country}/lines_way.json",
         substations_way="data/osm/raw/{country}/substations_way.json",
-        substations_node="data/osm/raw/{country}/substations_node.json",
         substations_relation="data/osm/raw/{country}/substations_relation.json",
     log:
         logs("retrieve_osm_data_{country}.log"),
@@ -629,8 +628,9 @@ rule clean_osm_data:
         cables_way=[f"data/osm/raw/{country}/cables_way.json" for country in config["countries"]],
         lines_way=[f"data/osm/raw/{country}/lines_way.json" for country in config["countries"]],
         substations_way=[f"data/osm/raw/{country}/substations_way.json" for country in config["countries"]],
-        substations_node=[f"data/osm/raw/{country}/substations_node.json" for country in config["countries"]],
         substations_relation=[f"data/osm/raw/{country}/substations_relation.json" for country in config["countries"]],
+        offshore_shapes=resources("offshore_shapes.geojson"),
+        country_shapes=resources("country_shapes.geojson"),
     output:
         substations=resources("osm/clean/substations.geojson"),
         substations_polygon=resources("osm/clean/substations_polygon.geojson"),
