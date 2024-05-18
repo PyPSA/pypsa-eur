@@ -477,9 +477,9 @@ def plot_carbon_budget_distribution(input_eurostat, options):
     )
     emissions = historical_emissions(countries)
     # add other years https://sdi.eea.europa.eu/data/0569441f-2853-4664-a7cd-db969ef54de0
-    emissions.loc[2019] = 3.414362 
-    emissions.loc[2020] = 3.092434 
-    emissions.loc[2021] = 3.290418 
+    emissions.loc[2019] = 3.414362
+    emissions.loc[2020] = 3.092434
+    emissions.loc[2021] = 3.290418
     emissions.loc[2022] = 3.213025
 
     if snakemake.config["foresight"] == "myopic":
