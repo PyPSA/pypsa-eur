@@ -124,7 +124,10 @@ rename_sectors = {
 
 
 # additional insulation thickness, determines maximum possible savings [m]
-l_strength = ["0.076", "0.197"]
+# the assumed values correspond to standard thickness values of Dupont styrofoam product sheet
+# source: https://www.dupont.com/content/dam/dupont/amer/us/en/performance-building-solutions/public/documents/en/styrofoam-brand-square-edge-st-100-pis-43-d100996-enus.pdf
+# 3 inch and 3.5inch + 4inch
+l_strength = ["0.076", "0.1905"]
 
 
 # (ii) --- FUNCTIONS ----------------------------------------------------------
