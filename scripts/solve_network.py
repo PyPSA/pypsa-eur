@@ -1050,7 +1050,7 @@ def solve_network(n, config, solving, **kwargs):
     # add to network for extra_functionality
     n.config = config
 
-    if rolling_horizon:
+    if rolling_horizon and snakemake.rule == 'solve_operations_network':
         kwargs["horizon"] = cf_solving.get("horizon", 365)
         kwargs["overlap"] = cf_solving.get("overlap", 0)
         n.optimize.optimize_with_rolling_horizon(**kwargs)

@@ -303,6 +303,8 @@ Upcoming Release
 
 * Time aggregation for sector-coupled networks have been split into its own rule. When using time step segmentation, time aggregation is constant over planning horizons of the same network.
 
+* Clarify that the rolling-horizon setting ``solving: rolling_horizon:`` only works for the rule :mod:`solve_operations_network` and not for networks with sector-coupling or investment variables.
+
 PyPSA-Eur 0.10.0 (19th February 2024)
 =====================================
 
