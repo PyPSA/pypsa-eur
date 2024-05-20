@@ -146,10 +146,12 @@ def define_spatial(nodes, options):
 
     if options["regional_methanol_demand"]:
         spatial.methanol.demand_locations = nodes
+        spatial.methanol.industry = nodes + " industry methanol"
         spatial.methanol.shipping = nodes + " shipping methanol"
     else:
         spatial.methanol.demand_locations = ["EU"]
         spatial.methanol.shipping = ["EU shipping methanol"]
+        spatial.methanol.industry = ["EU industry methanol"]
 
     # oil
     spatial.oil = SimpleNamespace()
@@ -2745,57 +2747,97 @@ def add_industry(n, costs):
             p_set=p_set_hydrogen,
         )
 
+    n.madd(
+        "Bus",
+        spatial.methanol.nodes,
+        carrier="methanol",
+        location=spatial.methanol.locations,
+        unit="MWh_LHV",
+    )
+
+    n.madd(
+        "Store",
+        spatial.methanol.nodes,
+        suffix=" Store",
+        bus=spatial.methanol.nodes,
+        e_nom_extendable=True,
+        e_cyclic=True,
+        carrier="methanol",
+    )
+
+    n.madd(
+        "Bus",
+        spatial.methanol.industry,
+        carrier="industry methanol",
+        location=spatial.methanol.demand_locations,
+        unit="MWh_LHV",
+    )
+
+    p_set_methanol = (
+            industrial_demand["methanol"]
+            .rename(lambda x: x + " industry methanol")
+            / nhours
+    )
+
+    if not options["regional_methanol_demand"]:
+        p_set_methanol = p_set_methanol.sum()
+
+    n.madd(
+        "Load",
+        spatial.methanol.industry,
+        bus=spatial.methanol.industry,
+        carrier="industry methanol",
+        p_set=p_set_methanol,
+    )
+
+    n.madd(
+        "Link",
+        spatial.methanol.industry,
+        bus0=spatial.methanol.nodes,
+        bus1=spatial.methanol.industry,
+        bus2="co2 atmosphere",
+        carrier="industry methanol",
+        p_nom_extendable=True,
+        efficiency2=1
+                    / options[
+                        "MWh_MeOH_per_tCO2"
+                    ],
+        # CO2 intensity methanol based on stoichiometric calculation with 22.7 GJ/t methanol (32 g/mol), CO2 (44 g/mol), 277.78 MWh/TJ = 0.218 t/MWh
+    )
+
+    n.madd(
+        "Link",
+        spatial.h2.locations + " methanolisation",
+        bus0=spatial.h2.nodes,
+        bus1=spatial.methanol.nodes,
+        bus2=nodes,
+        bus3=spatial.co2.nodes,
+        carrier="methanolisation",
+        p_nom_extendable=True,
+        p_min_pu=options.get("min_part_load_methanolisation", 0),
+        capital_cost=costs.at["methanolisation", "fixed"]
+        * options["MWh_MeOH_per_MWh_H2"],  # EUR/MW_H2/a
+        marginal_cost=options["MWh_MeOH_per_MWh_H2"]
+        * costs.at["methanolisation", "VOM"],
+        lifetime=costs.at["methanolisation", "lifetime"],
+        efficiency=options["MWh_MeOH_per_MWh_H2"],
+        efficiency2=-options["MWh_MeOH_per_MWh_H2"] / options["MWh_MeOH_per_MWh_e"],
+        efficiency3=-options["MWh_MeOH_per_MWh_H2"] / options["MWh_MeOH_per_tCO2"],
+    )
+
     if shipping_methanol_share:
-        n.madd(
-            "Bus",
-            spatial.methanol.nodes,
-            carrier="methanol",
-            location=spatial.methanol.locations,
-            unit="MWh_LHV",
-        )
-
-        n.madd(
-            "Store",
-            spatial.methanol.nodes,
-            suffix=" Store",
-            bus=spatial.methanol.nodes,
-            e_nom_extendable=True,
-            e_cyclic=True,
-            carrier="methanol",
-        )
-
-        n.madd(
-            "Link",
-            spatial.h2.locations + " methanolisation",
-            bus0=spatial.h2.nodes,
-            bus1=spatial.methanol.nodes,
-            bus2=nodes,
-            bus3=spatial.co2.nodes,
-            carrier="methanolisation",
-            p_nom_extendable=True,
-            p_min_pu=options.get("min_part_load_methanolisation", 0),
-            capital_cost=costs.at["methanolisation", "fixed"]
-            * options["MWh_MeOH_per_MWh_H2"],  # EUR/MW_H2/a
-            marginal_cost=options["MWh_MeOH_per_MWh_H2"]
-            * costs.at["methanolisation", "VOM"],
-            lifetime=costs.at["methanolisation", "lifetime"],
-            efficiency=options["MWh_MeOH_per_MWh_H2"],
-            efficiency2=-options["MWh_MeOH_per_MWh_H2"] / options["MWh_MeOH_per_MWh_e"],
-            efficiency3=-options["MWh_MeOH_per_MWh_H2"] / options["MWh_MeOH_per_tCO2"],
-        )
-
         efficiency = (
             options["shipping_oil_efficiency"] / options["shipping_methanol_efficiency"]
         )
 
-        p_set_methanol = (
+        p_set_methanol_shipping = (
             shipping_methanol_share
             * p_set.rename(lambda x: x + " shipping methanol")
             * efficiency
         )
 
         if not options["regional_methanol_demand"]:
-            p_set_methanol = p_set_methanol.sum()
+            p_set_methanol_shipping = p_set_methanol_shipping.sum()
 
         n.madd(
             "Bus",
@@ -2810,7 +2852,7 @@ def add_industry(n, costs):
             spatial.methanol.shipping,
             bus=spatial.methanol.shipping,
             carrier="shipping methanol",
-            p_set=p_set_methanol,
+            p_set=p_set_methanol_shipping,
         )
 
         n.madd(
