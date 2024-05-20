@@ -20,9 +20,12 @@ Relevant Settings
 Inputs
 ------
 
-- ``networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc``: the network whose snapshots are to be aggregated
-- ``resources/hourly_heat_demand_total_elec_s{simpl}_{clusters}.nc``: the total hourly heat demand
-- ``resources/solar_thermal_total_elec_s{simpl}_{clusters}.nc``: the total hourly solar thermal generation
+- ``networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc``: the network whose
+  snapshots are to be aggregated
+- ``resources/hourly_heat_demand_total_elec_s{simpl}_{clusters}.nc``: the total
+  hourly heat demand
+- ``resources/solar_thermal_total_elec_s{simpl}_{clusters}.nc``: the total
+  hourly solar thermal generation
 
 Outputs
 -------
@@ -31,7 +34,10 @@ Outputs
 
 Description
 -----------
-Computes a time aggregation scheme for the given network, in the form of a CSV file with the snapshot weightings, indexed by the new subset of snapshots. This rule only computes said aggregation scheme; aggregation of time-varying network data is done in ``prepare_sector_network.py``.
+Computes a time aggregation scheme for the given network, in the form of a CSV
+file with the snapshot weightings, indexed by the new subset of snapshots. This
+rule only computes said aggregation scheme; aggregation of time-varying network
+data is done in ``prepare_sector_network.py``.
 """
 
 
