@@ -3240,7 +3240,7 @@ def add_industry(n, costs):
             p_set=p_set,
         )
 
-    if (industrial_demand["coke"].sum() + industrial_demand["coal"].sum()) != 0:
+    if industrial_demand[["coke", "coal"]].sum().sum() > 0:
         add_carrier_buses(n, "coal")
 
         mwh_coal_per_mwh_coke = 1.366  # from eurostat energy balance
