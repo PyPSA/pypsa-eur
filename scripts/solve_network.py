@@ -531,23 +531,66 @@ def add_CCL_constraints(n, config):
         agg_p_nom_limits: data/agg_p_nom_minmax.csv
     """
     agg_p_nom_minmax = pd.read_csv(
-        config["electricity"]["agg_p_nom_limits"], index_col=[0, 1]
-    )
+        config["solving"]["agg_p_nom_limits"]["file"], index_col=[0, 1], header=[0, 1]
+    )[snakemake.wildcards.planning_horizons]
     logger.info("Adding generation capacity constraints per carrier and country")
     p_nom = n.model["Generator-p_nom"]
 
     gens = n.generators.query("p_nom_extendable").rename_axis(index="Generator-ext")
-    grouper = pd.concat([gens.bus.map(n.buses.country), gens.carrier])
+    if config["solving"]["agg_p_nom_limits"]["agg_offwind"]:
+        rename_offwind = {
+            "offwind-ac": "offwind-all",
+            "offwind-dc": "offwind-all",
+            "offwind": "offwind-all",
+        }
+        gens = gens.replace(rename_offwind)
+    grouper = pd.concat([gens.bus.map(n.buses.country), gens.carrier], axis=1)
     lhs = p_nom.groupby(grouper).sum().rename(bus="country")
 
-    minimum = xr.DataArray(agg_p_nom_minmax["min"].dropna()).rename(dim_0="group")
+    if config["solving"]["agg_p_nom_limits"]["include_existing"]:
+        gens_cst = n.generators.query("~p_nom_extendable").rename_axis(
+            index="Generator-cst"
+        )
+        gens_cst = gens_cst[
+            (gens_cst["build_year"] + gens_cst["lifetime"])
+            >= int(snakemake.wildcards.planning_horizons)
+        ]
+        if config["solving"]["agg_p_nom_limits"]["agg_offwind"]:
+            gens_cst = gens_cst.replace(rename_offwind)
+        rhs_cst = (
+            pd.concat(
+                [gens_cst.bus.map(n.buses.country), gens_cst[["carrier", "p_nom"]]],
+                axis=1,
+            )
+            .groupby(["bus", "carrier"])
+            .sum()
+        )
+        rhs_cst.index = rhs_cst.index.rename({"bus": "country"})
+        rhs_min = agg_p_nom_minmax["min"].dropna()
+        idx_min = rhs_min.index.join(rhs_cst.index, how="left")
+        rhs_min = rhs_min.reindex(idx_min).fillna(0)
+        rhs = (rhs_min - rhs_cst.reindex(idx_min).fillna(0).p_nom).dropna()
+        rhs[rhs < 0] = 0
+        minimum = xr.DataArray(rhs).rename(dim_0="group")
+    else:
+        minimum = xr.DataArray(agg_p_nom_minmax["min"].dropna()).rename(dim_0="group")
+
     index = minimum.indexes["group"].intersection(lhs.indexes["group"])
     if not index.empty:
         n.model.add_constraints(
             lhs.sel(group=index) >= minimum.loc[index], name="agg_p_nom_min"
         )
 
-    maximum = xr.DataArray(agg_p_nom_minmax["max"].dropna()).rename(dim_0="group")
+    if config["solving"]["agg_p_nom_limits"]["include_existing"]:
+        rhs_max = agg_p_nom_minmax["max"].dropna()
+        idx_max = rhs_max.index.join(rhs_cst.index, how="left")
+        rhs_max = rhs_max.reindex(idx_max).fillna(0)
+        rhs = (rhs_max - rhs_cst.reindex(idx_max).fillna(0).p_nom).dropna()
+        rhs[rhs < 0] = 0
+        maximum = xr.DataArray(rhs).rename(dim_0="group")
+    else:
+        maximum = xr.DataArray(agg_p_nom_minmax["max"].dropna()).rename(dim_0="group")
+
     index = maximum.indexes["group"].intersection(lhs.indexes["group"])
     if not index.empty:
         n.model.add_constraints(
