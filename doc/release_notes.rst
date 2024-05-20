@@ -307,6 +307,8 @@ Upcoming Release
 
 * Fix non steel related coal demand during transition (using `sector_ratios_fraction_future`).
 
+* Fix fill missing data in `build_industry_sector_ratios_intermediate`.
+
 PyPSA-Eur 0.10.0 (19th February 2024)
 =====================================
 
