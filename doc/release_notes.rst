@@ -309,6 +309,11 @@ Upcoming Release
 
 * Fix fill missing data in `build_industry_sector_ratios_intermediate`.
 
+* Add methanol consumption in industry as reported in `DECHEMA report
+  <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry.pdf>`__
+  directly as methanol demand rather than with fixed methane and electricity
+  demands from today's industry sector ratios.
+
 PyPSA-Eur 0.10.0 (19th February 2024)
 =====================================
 

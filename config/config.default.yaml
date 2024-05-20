@@ -707,6 +707,7 @@ industry:
   methanol_production_today: 1.5
   MWh_elec_per_tMeOH: 0.167
   MWh_CH4_per_tMeOH: 10.25
+  MWh_MeOH_per_tMeOH: 5.528
   hotmaps_locate_missing: false
   reference_year: 2015
 
@@ -1152,6 +1153,7 @@ plotting:
     methanolisation: '#83d6d5'
     methanol: '#468c8b'
     shipping methanol: '#468c8b'
+    industry methanol: '#468c8b'
     # co2
     CC: '#f29dae'
     CCS: '#f29dae'
