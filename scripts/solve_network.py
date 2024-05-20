@@ -735,7 +735,7 @@ def add_operational_reserve_margin(n, sns, config):
             .loc[vres_i.intersection(ext_i)]
             .rename({"Generator-ext": "Generator"})
         )
-        lhs = summed_reserve + (p_nom_vres * (-EPSILON_VRES * capacity_factor)).sum(
+        lhs = summed_reserve + (p_nom_vres * (-EPSILON_VRES * xr.DataArray(capacity_factor))).sum(
             "Generator"
         )
 
@@ -767,7 +767,7 @@ def add_operational_reserve_margin(n, sns, config):
 
     p_max_pu = get_as_dense(n, "Generator", "p_max_pu")
 
-    lhs = dispatch + reserve - capacity_variable * p_max_pu[ext_i]
+    lhs = dispatch + reserve - capacity_variable * xr.DataArray(p_max_pu[ext_i])
 
     rhs = (p_max_pu[fix_i] * capacity_fixed).reindex(columns=gen_i, fill_value=0)
 
