@@ -148,7 +148,7 @@ def add_everywhere_powerplants(ppl, substations, everywhere_powerplants):
 
 
 def replace_natural_gas_technology(df):
-    mapping = {"Steam Turbine": "CCGT", "Combustion Engine": "OCGT"}
+    mapping = {"Steam Turbine": "CCGT", "Combustion Engine": "OCGT", "Not Found": "CCGT"}
     tech = df.Technology.replace(mapping).fillna("CCGT")
     return df.Technology.mask(df.Fueltype == "Natural Gas", tech)
 

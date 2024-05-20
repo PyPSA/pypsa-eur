@@ -270,7 +270,6 @@ def load_powerplants(ppl_fn):
         "bioenergy": "biomass",
         "ccgt, thermal": "CCGT",
         "hard coal": "coal",
-        "natural gas": "OCGT",
     }
     return (
         pd.read_csv(ppl_fn, index_col=0, dtype={"bus": "str"})

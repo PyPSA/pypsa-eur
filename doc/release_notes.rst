@@ -10,6 +10,9 @@ Release Notes
 Upcoming Release
 ================
 
+* Bugfix: Make sure that gas-fired power plants are correctly added as OCGT or
+  CCGT in :mod:`add_electricity`. Previously they were always added as OCGT.
+
 * Added default values for power distribution losses, assuming uniform losses of
   3% on distribution grid links (cf. ``sector: transmission_efficiency:
   electricity distribution grid: efficiency_static: 0.97``). Since distribution
