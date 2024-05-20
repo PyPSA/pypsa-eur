@@ -10,6 +10,15 @@ Release Notes
 Upcoming Release
 ================
 
+* Added default values for power distribution losses, assuming uniform losses of
+  3% on distribution grid links (cf. ``sector: transmission_efficiency:
+  electricity distribution grid: efficiency_static: 0.97``). Since distribution
+  losses are included in national load reports (cf. `this report
+  <https://nbviewer.org/github/Open-Power-System-Data/datapackage_timeseries/blob/2020-10-06/main.ipynb>`_),
+  these are deducted from the national load time series to avoid double counting
+  of losses. Further extensions to country-specific loss factors and
+  developments by planning horizon are planned.
+
 * Doubled solar rooftop potentials to roughly 1 TW for Europe based on `recent
   European Commission reports
   <https://www.epj-pv.org/articles/epjpv/full_html/2024/01/pv230071/pv230071.html>`_.
