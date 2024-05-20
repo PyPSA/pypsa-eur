@@ -735,9 +735,9 @@ def add_operational_reserve_margin(n, sns, config):
             .loc[vres_i.intersection(ext_i)]
             .rename({"Generator-ext": "Generator"})
         )
-        lhs = summed_reserve + (p_nom_vres * (-EPSILON_VRES * xr.DataArray(capacity_factor))).sum(
-            "Generator"
-        )
+        lhs = summed_reserve + (
+            p_nom_vres * (-EPSILON_VRES * xr.DataArray(capacity_factor))
+        ).sum("Generator")
 
     # Total demand per t
     demand = get_as_dense(n, "Load", "p_set").sum(axis=1)
