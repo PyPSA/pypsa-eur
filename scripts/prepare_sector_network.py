@@ -2708,9 +2708,8 @@ def add_industry(n, costs):
     )
 
     p_set_methanol = (
-            industrial_demand["methanol"]
-            .rename(lambda x: x + " industry methanol")
-            / nhours
+        industrial_demand["methanol"].rename(lambda x: x + " industry methanol")
+        / nhours
     )
 
     if not options["regional_methanol_demand"]:
@@ -2732,10 +2731,7 @@ def add_industry(n, costs):
         bus2="co2 atmosphere",
         carrier="industry methanol",
         p_nom_extendable=True,
-        efficiency2=1
-                    / options[
-                        "MWh_MeOH_per_tCO2"
-                    ],
+        efficiency2=1 / options["MWh_MeOH_per_tCO2"],
         # CO2 intensity methanol based on stoichiometric calculation with 22.7 GJ/t methanol (32 g/mol), CO2 (44 g/mol), 277.78 MWh/TJ = 0.218 t/MWh
     )
 

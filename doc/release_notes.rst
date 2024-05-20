@@ -314,6 +314,8 @@ Upcoming Release
   directly as methanol demand rather than with fixed methane and electricity
   demands from today's industry sector ratios.
 
+* Mark downloaded files as ``ancient`` rather than ``protected``.
+
 PyPSA-Eur 0.10.0 (19th February 2024)
 =====================================
 
