@@ -305,6 +305,8 @@ Upcoming Release
 
 * Clarify that the rolling-horizon setting ``solving: rolling_horizon:`` only works for the rule :mod:`solve_operations_network` and not for networks with sector-coupling or investment variables.
 
+* Fix non steel related coal demand during transition (using `sector_ratios_fraction_future`).
+
 PyPSA-Eur 0.10.0 (19th February 2024)
 =====================================
 
