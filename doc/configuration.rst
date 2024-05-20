@@ -174,7 +174,7 @@ Switches for some rules and optional features.
    :file: configtables/co2_budget.csv
 
 .. note::
-    this parameter is over-ridden if ``CO2Lx`` or ``cb`` is set in
+    this parameter is over-ridden if ``Co2Lx`` or ``cb`` is set in
     sector_opts.
 
 .. _electricity_cf:
