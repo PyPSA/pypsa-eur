@@ -281,6 +281,15 @@ Upcoming Release
 * Data on existing renewable capacities is now consistently taken from powerplantmatching (instead of being retrieved separately); the dataset has also been updated to include 2023 values.
 
 * Added shapes to .nc file for different stages of the network object in `base_network`, `simplify_network`, and `cluster_network`; the `build_bus_regions` rule is now integrated into the `base_network` rule.
+* Improved the behaviour of `agg_p_nom_limits`:
+
+  - Moved the associated configuration to `solving`. This allows *Snakemake* to correctly decide which rules to run when the configuration changes.
+
+  - Added the ability to enable aggregation of all *offwind* types (*offwind-ac* and *offwind-dc*) when writing the constraint.
+
+  - Added the possibility to take existing capacities into account when writing the constraint.
+
+  - Added the possibility to have a different file for each planning horizon.
 
 * Fix p_nom_min of renewables generators for myopic approach and add check of existing capacities in `add_land_use_constraint_m`.
 
