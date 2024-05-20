@@ -973,7 +973,9 @@ def insert_electricity_distribution_grid(n, costs):
         .get("electricity distribution grid", {})
         .get("efficiency_static")
     ):
-        logger.info(f"Deducting distribution losses from electricity demand: {100*(1-efficiency)}%")
+        logger.info(
+            f"Deducting distribution losses from electricity demand: {100*(1-efficiency)}%"
+        )
         n.loads_t.p_set.loc[:, n.loads.carrier == "electricity"] *= efficiency
 
     # this catches regular electricity load and "industry electricity" and
