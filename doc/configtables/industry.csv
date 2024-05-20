@@ -16,6 +16,9 @@ petrochemical_process _emissions,MtCO2/a,float,The emission of petrochemical pro
 HVC_primary_fraction,--,float,The fraction of high value chemicals (HVC) produced via primary route
 HVC_mechanical_recycling _fraction,--,float,The fraction of high value chemicals (HVC) produced using mechanical recycling
 HVC_chemical_recycling _fraction,--,float,The fraction of high value chemicals (HVC) produced using chemical recycling
+HVC_environment_sequestration_fraction,--,float,The fraction of high value chemicals (HVC) put into landfill resulting in additional carbon sequestration. The default value is 0.
+waste_to_energy,--,bool,Switch to enable expansion of waste to energy CHPs for conversion of plastics. Default is false.
+waste_to_energy_cc,--,bool,Switch to enable expansion of waste to energy CHPs for conversion of plastics with carbon capture. Default is false.
 ,,,
 sector_ratios_fraction_future,--,Dictionary with planning horizons as keys.,The fraction of total progress in fuel and process switching achieved in the industry sector.
 basic_chemicals_without_NH3_production_today,Mt/a,float,"The amount of basic chemicals produced without ammonia (= 86 Mtethylene-equiv - 17 MtNH3)."
@@ -29,5 +32,6 @@ MWh_H2_per_tCl,MWhH2/tCl,float,"The energy amount of hydrogen needed to produce 
 methanol_production _today,MtMeOH/a,float,"The amount of methanol produced. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 62"
 MWh_elec_per_tMeOH,MWh/tMeOH,float,"The energy amount of electricity needed to produce a ton of methanol. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, Table 14, page 65"
 MWh_CH4_per_tMeOH,MWhCH4/tMeOH,float,"The energy amount of methane needed to produce a ton of methanol. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, Table 14, page 65"
+MWh_MeOH_per_tMeOH,LHV,float,"The energy amount per ton of methanol. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 74."
 hotmaps_locate_missing,--,"{true,false}",Locate industrial sites without valid locations based on city and countries.
 reference_year,year,YYYY,The year used as the baseline for industrial energy demand and production. Data extracted from `JRC-IDEES 2015 <https://data.jrc.ec.europa.eu/dataset/jrc-10110-10001>`_

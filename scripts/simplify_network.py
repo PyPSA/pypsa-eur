@@ -95,7 +95,7 @@ import pypsa
 import scipy as sp
 from _helpers import configure_logging, set_scenario_config, update_p_nom_max
 from add_electricity import load_costs
-from build_bus_regions import append_bus_shapes
+from base_network import append_bus_shapes
 from cluster_network import cluster_regions, clustering_for_n_clusters
 from pypsa.clustering.spatial import (
     aggregateoneport,
