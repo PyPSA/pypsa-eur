@@ -91,13 +91,6 @@ if __name__ == "__main__":
         segments = int(resolution[:-3])
         logger.info(f"Use temporal segmentation with {segments} segments")
 
-        try:
-            import tsam.timeseriesaggregation as tsam
-        except ImportError:
-            raise ModuleNotFoundError(
-                "Optional dependency 'tsam' not found." "Install via 'pip install tsam'"
-            )
-
         # Get all time-dependent data
         dfs = [
             pnl
