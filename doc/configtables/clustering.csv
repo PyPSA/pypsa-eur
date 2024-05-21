@@ -20,4 +20,6 @@ aggregation_strategies,,,
 temporal,,,Options for temporal resolution
 -- resolution_elec,--,"{false,``nH``; i.e. ``2H``-``6H``}","Resample the time-resolution by averaging over every ``n`` snapshots in :mod:`prepare_network`. **Warning:** This option should currently only be used with electricity-only networks, not for sector-coupled networks."
 -- resolution_sector,--,"{false,``nH``; i.e. ``2H``-``6H``}","Resample the time-resolution by averaging over every ``n`` snapshots in :mod:`prepare_sector_network`."
-build_year_aggregation,bool,"{'true','false'}","Whether or not to aggregate similar components with different build years before myopic optimisations, and disaggregate after the optimisation."
+build_year_aggregation,,,
+-- enable,bool,"{'true','false'}","Whether or not to aggregate similar components with different build years before myopic optimisations, and disaggregate after the optimisation."
+-- exclude_carriers,list,"List of Str like ['solar', 'onwind'] or empty list []","List of carriers for which components with different build years will not be aggregated. If empty, every component with different build years will be aggregated."

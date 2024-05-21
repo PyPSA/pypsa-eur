@@ -1104,7 +1104,7 @@ vars_to_store = [
 ]
 
 
-def aggregate_build_years(n, excluded_build_year_agg_carriers=[]):
+def aggregate_build_years(n, exclude_carriers):
     """
     Aggregate components which are identical in all but build year.
     """
@@ -1127,9 +1127,7 @@ def aggregate_build_years(n, excluded_build_year_agg_carriers=[]):
 
             # Collect all rows whose index ends with "-YYYY"
             idx_no_year = pd.Series(c.df.index.copy(), index=c.df.index)
-            idx_to_agg = c.df.loc[
-                ~c.df.carrier.isin(excluded_build_year_agg_carriers)
-            ].index
+            idx_to_agg = c.df.loc[~c.df.carrier.isin(exclude_carriers)].index
             idx_no_year.loc[idx_to_agg] = idx_to_agg.str.replace(
                 r"-[0-9]{4}$", "", regex=True
             )
@@ -1310,7 +1308,7 @@ def disaggregate_build_years(n, indices, planning_horizon):
     logger.info(f"Disaggregated build years in {time.time() - t:.1f} seconds")
 
 
-def solve_network(n, config, solving, **kwargs):
+def solve_network(n, config, solving, build_year_agg, **kwargs):
     set_of_options = solving["solver"]["options"]
     cf_solving = solving["options"]
 
@@ -1339,6 +1337,14 @@ def solve_network(n, config, solving, **kwargs):
     # add to network for extra_functionality
     n.config = config
 
+    build_year_agg_enabled = build_year_agg["enable"] and (
+        config["foresight"] == "myopic"
+    )
+    if build_year_agg_enabled:
+        indices = aggregate_build_years(
+            n, exclude_carriers=build_year_agg["exclude_carriers"]
+        )
+
     if rolling_horizon and snakemake.rule == "solve_operations_network":
         kwargs["horizon"] = cf_solving.get("horizon", 365)
         kwargs["overlap"] = cf_solving.get("overlap", 0)
@@ -1366,6 +1372,9 @@ def solve_network(n, config, solving, **kwargs):
         logger.info(f"Labels:\n{labels}")
         n.model.print_infeasibilities()
         raise RuntimeError("Solving status 'infeasible'")
+
+    if build_year_agg_enabled:
+        disaggregate_build_years(n, indices, snakemake.wildcards.planning_horizons)
 
     return n
 
@@ -1406,23 +1415,13 @@ if __name__ == "__main__":
     with memory_logger(
         filename=getattr(snakemake.log, "memory", None), interval=0.1
     ) as mem:
-        if snakemake.params.get("build_year_aggregation", False):
-            indices = aggregate_build_years(
-                n,
-                excluded_build_year_agg_carriers=snakemake.params.get(
-                    "excluded_build_year_agg_carriers", []
-                ),
-            )
-
         n = solve_network(
             n,
             config=snakemake.config,
             solving=snakemake.params.solving,
+            build_year_agg=snakemake.params.get("build_year_agg", {"enable": False}),
             log_fn=snakemake.log.solver,
         )
-
-        if snakemake.params.get("build_year_aggregation", False):
-            disaggregate_build_years(n, indices, snakemake.wildcards.planning_horizons)
 
     logger.info(f"Maximum memory usage: {mem.mem_usage}")
 
