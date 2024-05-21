@@ -997,7 +997,11 @@ def extra_functionality(n, snapshots):
     if EQ_o := constraints["EQ"]:
         add_EQ_constraints(n, EQ_o.replace("EQ", ""))
 
-    if {"solar-hsat", "solar"}.issubset(config["renewable"].keys()):
+    if {"solar-hsat", "solar"}.issubset(
+        config["electricity"]["renewable_carriers"]
+    ) and {"solar-hsat", "solar"}.issubset(
+        config["electricity"]["extendable_carriers"]["Generator"]
+    ):
         add_solar_potential_constraints(n, config)
 
     add_battery_constraints(n)
