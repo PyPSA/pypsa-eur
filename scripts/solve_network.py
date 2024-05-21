@@ -31,7 +31,6 @@ import logging
 import os
 import re
 import sys
-from functools import reduce
 
 import numpy as np
 import pandas as pd
@@ -694,7 +693,6 @@ def add_BAU_constraints(n, config):
     ext_i = n.generators.query("p_nom_extendable")
     ext_carrier_i = xr.DataArray(ext_i.carrier.rename_axis("Generator-ext"))
     lhs = p_nom.groupby(ext_carrier_i).sum()
-    index = mincaps.index.intersection(lhs.indexes["carrier"])
     rhs = mincaps[lhs.indexes["carrier"]].rename_axis("carrier")
     n.model.add_constraints(lhs >= rhs, name="bau_mincaps")
 
@@ -998,7 +996,11 @@ def extra_functionality(n, snapshots):
     if EQ_o := constraints["EQ"]:
         add_EQ_constraints(n, EQ_o.replace("EQ", ""))
 
-    if {"solar-hsat", "solar"}.issubset(config["renewable"].keys()):
+    if {"solar-hsat", "solar"}.issubset(
+        config["electricity"]["renewable_carriers"]
+    ) and {"solar-hsat", "solar"}.issubset(
+        config["electricity"]["extendable_carriers"]["Generator"]
+    ):
         add_solar_potential_constraints(n, config)
 
     add_battery_constraints(n)

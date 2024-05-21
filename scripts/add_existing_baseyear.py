@@ -63,7 +63,7 @@ def add_existing_renewables(df_agg, costs):
     """
     tech_map = {"solar": "PV", "onwind": "Onshore", "offwind": "Offshore"}
 
-    countries = snakemake.config["countries"]
+    countries = snakemake.config["countries"]  # noqa: F841
     irena = pm.data.IRENASTAT().powerplant.convert_country_to_alpha2()
     irena = irena.query("Country in @countries")
     irena = irena.groupby(["Technology", "Country", "Year"]).Capacity.sum()
@@ -439,8 +439,6 @@ def add_heating_capacities_installed_before_baseyear(
     existing_heating = pd.read_csv(
         snakemake.input.existing_heating_distribution, header=[0, 1], index_col=0
     )
-
-    techs = existing_heating.columns.get_level_values(1).unique()
 
     for name in existing_heating.columns.get_level_values(0).unique():
         name_type = "central" if name == "urban central" else "decentral"
