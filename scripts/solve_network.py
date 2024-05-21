@@ -1029,10 +1029,10 @@ def extra_functionality(n, snapshots):
 strategies = dict(
     # The following variables are stored in columns and restored
     # exactly after disaggregation.
-    p_nom=pd.Series.sum,
-    lifetime=pd.Series.mean,
+    p_nom="sum",
+    lifetime="mean",
     # p_nom_max should be infinite if any of summands are infinite
-    p_nom_max=pd.Series.sum,
+    p_nom_max="sum",
     # Capital cost is taken to be that of the most recent year. Note:
     # components without build year (that are not to be aggregated)
     # will be "trivially" aggregated as 1-element series; in that case
@@ -1046,52 +1046,59 @@ strategies = dict(
     ),
     #
     # The remaining variables are destructively aggregated.
-    p_nom_min=pd.Series.sum,
+    p_nom_min="sum",
     p_nom_extendable=lambda x: x.any(),
-    e_nom=pd.Series.sum,
-    e_nom_min=pd.Series.sum,
-    e_nom_max=pd.Series.sum,
+    e_nom="sum",
+    e_nom_min="sum",
+    e_nom_max="sum",
     e_nom_extendable=lambda x: x.any(),
     # Take mean efficiency, then disaggregate. NB: should
     # really be weighted by capacity.
-    efficiency=pd.Series.mean,
-    efficiency2=pd.Series.mean,
-    # Some urban decentral gas boilers have efficiency3
-    # and efficiency4 1.0, other NaN. pd.Series.mean
-    # ignores NaN values.
-    efficiency3=pd.Series.mean,
-    efficiency4=pd.Series.mean,
+    efficiency="mean",
+    efficiency2="mean",
+    # Some urban decentral gas boilers have efficiency3 and
+    # efficiency4 1.0, other NaN. (mean ignores NaN values).
+    efficiency3="mean",
+    efficiency4="mean",
     # length_original sometimes contains NaN values
-    length_original=pd.Series.mean,
+    length_original="mean",
     # The following two should really be the same, but
     # equality is difficult with floats.
-    marginal_cost=pd.Series.mean,
+    marginal_cost="mean",
     # Build year is set to 0; to be reset when disaggregating
-    build_year=lambda x: 0,
+    build_year=lambda x: 0 if len(x) > 1 else x.squeeze(),
     # "weight" isn't meaningful at this stage; set to 1.
     weight=lambda x: 1,
     # Apparently "control" doesn't really matter; follow
     # pypsa.clustering.spatial by setting to ""
     control=lambda x: "",
     # p_max_pu should be the same, but sometimes not? Need to look into that
-    p_max_pu=pd.Series.mean,
+    p_max_pu="mean",
     # The remaining attributes are outputs, and allow the aggregation of solved networks.
-    p_nom_opt=pd.Series.sum,
-    e_nom_opt=pd.Series.sum,
-    p=pd.Series.sum,
-    e=pd.Series.sum,
-    p0=pd.Series.sum,
-    p1=pd.Series.sum,
-    p2=pd.Series.sum,
-    p3=pd.Series.sum,
-    p4=pd.Series.sum,
+    p_nom_opt="sum",
+    e_nom_opt="sum",
+    p="sum",
+    e="sum",
+    p0="sum",
+    p1="sum",
+    p2="sum",
+    p3="sum",
+    p4="sum",
 )
 
+# The following attributes are to be stored by build year in extra
+# columns, so that they can be properly disaggregated. The string
+# "attr_nom" is replaced by the actual attribute name in the code
+# below (i.e. "p_nom", "e_nom", etc.)
 vars_to_store = [
+    "attr_nom",
+    "attr_nom_max",
     "lifetime",
     "capital_cost",
     "marginal_cost",
-]  # In addition to 'attr' and 'attr_max'
+    "efficiency",
+    "efficiency2",
+]
 
 
 def aggregate_build_years(n):
@@ -1124,17 +1131,19 @@ def aggregate_build_years(n):
             # "-YYYY", store certain aggregated values to be
             # disaggregated again later. These include 'attr',
             # 'attr_max' and elements in `vars_to_store`.
-            attrs_to_store = []
-            for attr in [attr, f"{attr}_max"] + vars_to_store:
+            to_store = []
+            for v in [s.replace("attr_nom", attr) for s in vars_to_store]:
+                if not v in c.df.columns:
+                    continue
                 for build_year in c.df.build_year.unique():
                     if build_year == 0:
                         continue
                     mask = c.df.build_year == build_year
-                    col = c.df.loc[mask, attr].copy()
-                    col.index = col.index.str.replace(r"-[0-9]{4}$", "", regex=True)
-                    col.name = f"{attr}-{build_year}"
-                    attrs_to_store.append(col)
-            df_aggregated = pd.concat([df_aggregated] + attrs_to_store, axis=1)
+                    col = c.df.loc[mask, v].copy()
+                    col.index = pd.Index(idx_no_year.loc[mask])
+                    col.name = f"{v}-{build_year}"
+                    to_store.append(col)
+            df_aggregated = pd.concat([df_aggregated] + to_store, axis=1)
 
             pnl_aggregated = Dict()
             dynamic_strategies = align_strategies(strategies, c.pnl, c.name)
@@ -1184,15 +1193,17 @@ def disaggregate_build_years(n, indices, planning_horizon):
             disagg_df.loc[:, "build_year"] = disagg_df.index.str[-4:].astype(int)
 
             # Disaggregate specially stored values exactly
-            for col in [attr, f"{attr}_max"] + vars_to_store:
+            for v in [s.replace("attr_nom", attr) for s in vars_to_store]:
+                if not v in c.df.columns:
+                    continue
                 for build_year in disagg_df.build_year.unique():
                     idx_build_year = disagg_df.build_year == build_year
                     disagg_df.loc[
                         idx_build_year,
-                        col,
+                        v,
                     ] = c.df.loc[
                         disagg_df.loc[idx_build_year, "id_no_year"],
-                        f"{col}-{build_year}",
+                        f"{v}-{build_year}",
                     ].values
 
             # Make non-extendable
