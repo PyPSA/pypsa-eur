@@ -47,7 +47,7 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
 
     rule retrieve_eurostat_data:
         output:
-            directory("data/eurostat/eurostat-energy_balances-april_2023_edition"),
+            directory("data/eurostat/Balances-April2023"),
         log:
             "logs/retrieve_eurostat_data.log",
         retries: 2
