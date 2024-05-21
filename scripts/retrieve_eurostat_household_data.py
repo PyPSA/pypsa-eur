@@ -29,7 +29,7 @@ if __name__ == "__main__":
 
     disable_progress = snakemake.config["run"].get("disable_progressbar", False)
 
-    url_eurostat_household = "https://ec.europa.eu/eurostat/api/dissemination/sdmx/3.0/data/dataflow/ESTAT/nrg_d_hhq/1.0/*.*.*.*.*?c[freq]=A&c[nrg_bal]=FC_OTH_HH_E,FC_OTH_HH_E_SH,FC_OTH_HH_E_WH,FC_OTH_HH_E_CK&c[siec]=TOTAL&c[unit]=TJ&c[geo]=EU27_2020,EA20,BE,BG,CZ,DK,DE,EE,IE,EL,ES,FR,HR,IT,CY,LV,LT,LU,HU,MT,NL,AT,PL,PT,RO,SI,SK,FI,SE,NO,UK,BA,MD,MK,AL,RS,UA,XK,GE&compress=true&format=csvdata&formatVersion=2.0&c[time]=2021,2020,2019,2018,2017,2016,2015,2014,2013,2012,2011,2010"
+    url_eurostat_household = "https://ec.europa.eu/eurostat/databrowser-backend/api/extraction/1.0/LIVE/false/sdmx/csv/nrg_d_hhq__custom_11480365?startPeriod=2013&endPeriod=2022&i&compressed=true"
     tarball_fn = Path(f"{rootpath}/data/eurostat/eurostat_household.gz")
     to_fn = Path(
         f"{rootpath}/data/eurostat/eurostat-household_energy_balances-february_2024.csv"

@@ -316,7 +316,7 @@ Upcoming Release
 
 * Mark downloaded files as ``ancient`` rather than ``protected``.
 
-* Fix file name enconding in optional rule :mod:`build_biomass_transport_costs` depending on the operating system.
+* Fix file name encoding in optional rule :mod:`build_biomass_transport_costs` depending on the operating system.
 
 PyPSA-Eur 0.10.0 (19th February 2024)
 =====================================

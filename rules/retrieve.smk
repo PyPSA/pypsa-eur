@@ -56,7 +56,7 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
 
     rule retrieve_eurostat_household_data:
         output:
-            "data/eurostat/eurostat-household_energy_balances-february_2024.csv"
+            "data/eurostat/eurostat-household_energy_balances-february_2024.csv",
         log:
             "logs/retrieve_eurostat_household_data.log",
         retries: 2
