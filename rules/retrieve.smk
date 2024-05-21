@@ -33,8 +33,8 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
 
     rule retrieve_databundle:
         output:
-            ancient(expand("data/bundle/{file}", file=datafiles)),
-            ancient(directory("data/bundle/jrc-idees-2015")),
+            expand("data/bundle/{file}", file=datafiles),
+            directory("data/bundle/jrc-idees-2015"),
         log:
             "logs/retrieve_databundle.log",
         resources:
@@ -158,7 +158,7 @@ if config["enable"]["retrieve"]:
                 keep_local=True,
             ),
         output:
-            ancient("data/shipdensity_global.zip"),
+            "data/shipdensity_global.zip",
         log:
             "logs/retrieve_ship_raster.log",
         resources:
@@ -240,7 +240,7 @@ if config["enable"]["retrieve"]:
             zip="data/WDPA_shp.zip",
             folder=directory("data/WDPA"),
         output:
-            gpkg=ancient("data/WDPA.gpkg"),
+            gpkg="data/WDPA.gpkg",
         run:
             shell("cp {input} {params.zip}")
             shell("unzip -o {params.zip} -d {params.folder}")
@@ -265,7 +265,7 @@ if config["enable"]["retrieve"]:
             zip="data/WDPA_WDOECM_marine.zip",
             folder=directory("data/WDPA_WDOECM_marine"),
         output:
-            gpkg=ancient("data/WDPA_WDOECM_marine.gpkg"),
+            gpkg="data/WDPA_WDOECM_marine.gpkg",
         run:
             shell("cp {input} {params.zip}")
             shell("unzip -o {params.zip} -d {params.folder}")
