@@ -396,12 +396,11 @@ def build_idees(countries):
         names=["country", "year"],
     )
 
+    # efficiency kgoe/100km -> ktoe/100km
+    totals.loc[:, "passenger car efficiency"] *= 1e3
     # convert ktoe to TWh
     exclude = totals.columns.str.fullmatch("passenger cars")
     totals.loc[:, ~exclude] *= 11.63 / 1e3
-
-    # convert TWh/100km to kWh/km
-    totals.loc[:, "passenger car efficiency"] *= 10
 
     return totals
 
@@ -855,6 +854,7 @@ def rescale_idees_from_eurostat(
                 "total passenger cars",
                 "total other road passenger",
                 "total light duty road freight",
+                "total heavy duty road freight",
             ],
             "elec": [
                 "electricity road",
@@ -892,6 +892,7 @@ def rescale_idees_from_eurostat(
     navigation = [
         "total domestic navigation",
     ]
+    # international navigation is already read in from the eurostat data directly
 
     for country in idees_countries:
         filling_years = [(2015, slice(2016, 2021)), (2000, slice(1990, 1999))]
@@ -940,6 +941,22 @@ def rescale_idees_from_eurostat(
                 nav.loc[target_years],
                 energy.loc[slicer_source, navigation].squeeze(axis=0),
             ).values
+
+        # set the total of agriculture/road to the sum of all agriculture/road categories (corresponding to the IDEES data)
+        sel = [
+            "total agriculture electricity",
+            "total agriculture heat",
+            "total agriculture machinery",
+        ]
+        energy.loc[country, "total agriculture"] = energy.loc[country, sel].sum(axis=1)
+
+        sel = [
+            "total passenger cars",
+            "total other road passenger",
+            "total light duty road freight",
+            "total heavy duty road freight",
+        ]
+        energy.loc[country, "total road"] = energy.loc[country, sel].sum(axis=1)
 
     return energy
 

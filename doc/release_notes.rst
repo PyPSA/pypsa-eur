@@ -10,6 +10,30 @@ Release Notes
 Upcoming Release
 ================
 
+* Bugfix: Make sure that gas-fired power plants are correctly added as OCGT or
+  CCGT in :mod:`add_electricity`. Previously they were always added as OCGT.
+
+* Added default values for power distribution losses, assuming uniform losses of
+  3% on distribution grid links (cf. ``sector: transmission_efficiency:
+  electricity distribution grid: efficiency_static: 0.97``). Since distribution
+  losses are included in national load reports (cf. `this report
+  <https://nbviewer.org/github/Open-Power-System-Data/datapackage_timeseries/blob/2020-10-06/main.ipynb>`_),
+  these are deducted from the national load time series to avoid double counting
+  of losses. Further extensions to country-specific loss factors and
+  developments by planning horizon are planned.
+
+* Doubled solar rooftop potentials to roughly 1 TW for Europe based on `recent
+  European Commission reports
+  <https://www.epj-pv.org/articles/epjpv/full_html/2024/01/pv230071/pv230071.html>`_.
+
+* Remove exogenously set share of rooftop PV (``costs: rooftop_share:``).
+  Rooftop and utility-scale PV are now largely handled as separate technologies
+  with endogenous shares.
+
+* New technology, solar PV with single-axis horizontal tracking (on a N-S axis),
+  with a carrier called ``solar-hsat`` to the networks. The default option for adding
+  this technology is set to ``true`` in the ``config.yaml``.
+
 * The technology-data version was updated to v0.9.0.
 
 * Bugfix to avoid duplicated offshore regions.
@@ -43,6 +67,11 @@ Upcoming Release
 
 * Allow dictionary for the config aviation_demand_factor.
 
+* Add option to post-discretize line and link capacities based on unit sizes and
+  rounding thresholds specified in the configuration under ``solving: options:
+  post_discretization:`` when iterative solving is enables (``solving: optiosn:
+  skip_iterations: false``). This option is disabled by default.
+
 * Group existing capacities to the earlier grouping_year for consistency with optimized capacities.
 
 * Update data bundle:
@@ -72,6 +101,9 @@ Upcoming Release
 * Include gas and oil fields and saline aquifers in estimation of CO2 sequestration potential.
 
 * bugfix: convert Strings to pathlib.Path objects as input to ConfigSettings
+
+* bugfix: fix distinction of temperature-dependent correction factors for the
+  energy demand of electric vehicles, ICES fuel cell cars.
 
 * Allow the use of more solvers in clustering (Xpress, COPT, Gurobi, CPLEX, SCIP, MOSEK).
 
@@ -249,6 +281,15 @@ Upcoming Release
 * Data on existing renewable capacities is now consistently taken from powerplantmatching (instead of being retrieved separately); the dataset has also been updated to include 2023 values.
 
 * Added shapes to .nc file for different stages of the network object in `base_network`, `simplify_network`, and `cluster_network`; the `build_bus_regions` rule is now integrated into the `base_network` rule.
+* Improved the behaviour of `agg_p_nom_limits`:
+
+  - Moved the associated configuration to `solving`. This allows *Snakemake* to correctly decide which rules to run when the configuration changes.
+
+  - Added the ability to enable aggregation of all *offwind* types (*offwind-ac* and *offwind-dc*) when writing the constraint.
+
+  - Added the possibility to take existing capacities into account when writing the constraint.
+
+  - Added the possibility to have a different file for each planning horizon.
 
 * Fix p_nom_min of renewables generators for myopic approach and add check of existing capacities in `add_land_use_constraint_m`.
 
@@ -259,6 +300,23 @@ Upcoming Release
 * The ``{sector_opts}`` wildcard is now not used by default. All scenario definitions are now done in the ``config.yaml`` file.
 
 * Fix gas network retrofitting in `add_brownfield`.
+
+* Time aggregation for sector-coupled networks have been split into its own rule. When using time step segmentation, time aggregation is constant over planning horizons of the same network.
+
+* Clarify that the rolling-horizon setting ``solving: rolling_horizon:`` only works for the rule :mod:`solve_operations_network` and not for networks with sector-coupling or investment variables.
+
+* Fix non steel related coal demand during transition (using `sector_ratios_fraction_future`).
+
+* Fix fill missing data in `build_industry_sector_ratios_intermediate`.
+
+* Add methanol consumption in industry as reported in `DECHEMA report
+  <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry.pdf>`__
+  directly as methanol demand rather than with fixed methane and electricity
+  demands from today's industry sector ratios.
+
+* Mark downloaded files as ``ancient`` rather than ``protected``.
+
+* Fix file name enconding in optional rule :mod:`build_biomass_transport_costs` depending on the operating system.
 
 PyPSA-Eur 0.10.0 (19th February 2024)
 =====================================
