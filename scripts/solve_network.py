@@ -1101,7 +1101,7 @@ vars_to_store = [
 ]
 
 
-def aggregate_build_years(n):
+def aggregate_build_years(n, excluded_build_year_agg_carriers=[]):
     """
     Aggregate components which are identical in all but build year.
     """
@@ -1123,7 +1123,14 @@ def aggregate_build_years(n):
             c.df.loc[non_extendable, f"{attr}_max"] = c.df.loc[non_extendable, attr]
 
             # Collect all rows whose index ends with "-YYYY"
-            idx_no_year = c.df.index.str.replace(r"-[0-9]{4}$", "", regex=True)
+            idx_no_year = pd.Series(c.df.index.copy(), index=c.df.index)
+            idx_to_agg = c.df.loc[
+                ~c.df.carrier.isin(excluded_build_year_agg_carriers)
+            ].index
+            idx_no_year.loc[idx_to_agg] = idx_to_agg.str.replace(
+                r"-[0-9]{4}$", "", regex=True
+            )
+
             static_strategies = align_strategies(strategies, c.df.columns, c.name)
             df_aggregated = c.df.groupby(idx_no_year).agg(static_strategies)
 
@@ -1153,7 +1160,7 @@ def aggregate_build_years(n):
                     continue
 
                 strategy = dynamic_strategies[attr]
-                col_agg_map = pd.Series(idx_no_year, index=c.df.index)[data.columns]
+                col_agg_map = idx_no_year.loc[data.columns]
                 pnl_aggregated[attr] = data.T.groupby(col_agg_map).agg(strategy).T
 
             setattr(n, n.components[c.name]["list_name"], df_aggregated)
@@ -1400,7 +1407,12 @@ if __name__ == "__main__":
         filename=getattr(snakemake.log, "memory", None), interval=0.1
     ) as mem:
         if snakemake.params.get("build_year_aggregation", False):
-            indices = aggregate_build_years(n)
+            indices = aggregate_build_years(
+                n,
+                excluded_build_year_agg_carriers=snakemake.params.get(
+                    "excluded_build_year_agg_carriers", []
+                ),
+            )
 
         n = solve_network(
             n,

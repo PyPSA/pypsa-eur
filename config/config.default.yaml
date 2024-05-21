@@ -770,6 +770,7 @@ clustering:
     resolution_elec: false
     resolution_sector: false
   build_year_aggregation: false
+  excluded_build_year_agg_carriers: []
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#adjustments
 adjustments:

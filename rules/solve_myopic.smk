@@ -110,6 +110,9 @@ rule solve_sector_network_myopic:
             config_provider("clustering", "build_year_aggregation")(w)
             and (config_provider("foresight")(w) == "myopic")
         ),
+        excluded_build_year_agg_carriers=config_provider(
+            "clustering", "excluded_build_year_agg_carriers"
+        ),
         planning_horizons=config_provider("scenario", "planning_horizons"),
         co2_sequestration_potential=config_provider(
             "sector", "co2_sequestration_potential", default=200
