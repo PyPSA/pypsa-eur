@@ -293,6 +293,7 @@ rule build_energy_totals:
         idees="data/bundle/jrc-idees-2015",
         district_heat_share="data/district_heat_share.csv",
         eurostat="data/eurostat/Balances-April2023",
+        eurostat_households="data/eurostat/eurostat-household_energy_balances-february_2024.csv",
     output:
         energy_name=resources("energy_totals.csv"),
         co2_name=resources("co2_totals.csv"),
