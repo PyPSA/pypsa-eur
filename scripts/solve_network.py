@@ -1093,11 +1093,14 @@ strategies = dict(
 vars_to_store = [
     "attr_nom",
     "attr_nom_max",
+    "attr_nom_extendable",
     "lifetime",
     "capital_cost",
     "marginal_cost",
     "efficiency",
     "efficiency2",
+    "efficiency3",
+    "efficiency4",
 ]
 
 
@@ -1212,9 +1215,6 @@ def disaggregate_build_years(n, indices, planning_horizon):
                         disagg_df.loc[idx_build_year, "id_no_year"],
                         f"{v}-{build_year}",
                     ].values
-
-            # Make non-extendable
-            disagg_df.loc[:, f"{attr}_extendable"] = False
 
             # Set attr_{min,max,opt} to attr
             for suffix in ["min", "max", "opt"]:
