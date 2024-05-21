@@ -8,7 +8,6 @@ Build total energy demands per country using JRC IDEES, eurostat, and EEA data.
 
 import logging
 import multiprocessing as mp
-import os
 from functools import partial
 
 import country_converter as coco
