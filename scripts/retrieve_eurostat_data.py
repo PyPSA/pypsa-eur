@@ -27,11 +27,11 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     disable_progress = snakemake.config["run"].get("disable_progressbar", False)
-    url_eurostat = "https://ec.europa.eu/eurostat/documents/38154/4956218/Balances-April2023.zip"
-    tarball_fn = Path(f"{rootpath}/data/eurostat/eurostat_2023.zip")
-    to_fn = Path(
-        f"{rootpath}/data/eurostat/Balances-April2023/"
+    url_eurostat = (
+        "https://ec.europa.eu/eurostat/documents/38154/4956218/Balances-April2023.zip"
     )
+    tarball_fn = Path(f"{rootpath}/data/eurostat/eurostat_2023.zip")
+    to_fn = Path(f"{rootpath}/data/eurostat/Balances-April2023/")
 
     logger.info(f"Downloading Eurostat data from '{url_eurostat}'.")
     progress_retrieve(url_eurostat, tarball_fn, disable=disable_progress)
