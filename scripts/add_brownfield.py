@@ -18,7 +18,7 @@ from _helpers import (
     set_scenario_config,
     update_config_from_wildcards,
 )
-from add_existing_baseyear import add_build_year_to_new_assets, add_ocgt_retro
+from add_existing_baseyear import add_build_year_to_new_assets, add_h2_retro
 from pypsa.clustering.spatial import normed_or_uniform
 
 logger = logging.getLogger(__name__)
@@ -263,7 +263,7 @@ if __name__ == "__main__":
     add_brownfield(n, n_p, year)
 
     if snakemake.params.H2_retrofit_plants:
-        add_ocgt_retro(
+        add_h2_retro(
             n,
             year,
             snakemake.params,

@@ -48,3 +48,5 @@ H2_retrofit_plants,,,
 -- efficiency_ocgt,--,float,efficiency of a retrofitted hydrogen ocgt plant
 -- retro_factor_ccgt,EUR2020/kw,float,costs to retrofit ccgt plants to hydrogen
 -- efficiency_ccgt,--,float,efficiency of a retrofitted hydrogen ccgt plant
+-- retro_factor_chp,EUR2020/kw,float,costs to retrofit chp plants to hydrogen
+-- efficiency_chp,--,float,efficiency of a retrofitted hydrogen chp plant

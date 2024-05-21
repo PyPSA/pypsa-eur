@@ -17,6 +17,10 @@ rule add_existing_baseyear:
         retrofit_efficiency_ccgt=config_provider(
             "electricity", "H2_retrofit_plants", "efficiency_ccgt"
         ),
+        retrofit_cost_chp=config_provider("electricity", "H2_retrofit_plants", "retro_factor_chp"),
+        retrofit_efficiency_chp=config_provider(
+            "electricity", "H2_retrofit_plants", "efficiency_chp"
+        ),
     input:
         network=RESULTS
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",

@@ -618,82 +618,53 @@ def add_heating_capacities_installed_before_baseyear(
             )
 
 
-def add_ocgt_retro(n, baseyear, params):
+def add_h2_retro(n, baseyear, params):
     """
     Function to add H2 retrofitting of existing plants.
     """
     logger.info("Add H2 retrofitting.")
+    plant_types = [
+        ('OCGT', 'OCGT', params.retrofit_cost_ocgt, params.retrofit_efficiency_ocgt),
+        ('CCGT', 'CCGT', params.retrofit_cost_ccgt, params.retrofit_efficiency_ccgt),
+        ('urban central gas CHP', 'urban central retrofitted H2 CHP', params.retrofit_cost_chp, params.retrofit_efficiency_chp)
+    ]
     start = params.retrofit_start
-    retro_factor_ocgt = params.retrofit_cost_ocgt
-    efficiency_ocgt = params.retrofit_efficiency_ocgt
-    retro_factor_ccgt = params.retrofit_cost_ccgt
-    efficiency_ccgt = params.retrofit_efficiency_ccgt
 
-    # OCGT plants
-    ocgt_i = n.links.query("carrier == 'OCGT' and ~p_nom_extendable and p_nom > 10")
-    # only allow the retrofitting of OCGT plants from a certain year on
-    ocgt_i = ocgt_i.loc[ocgt_i.build_year >= start].index
-    if ocgt_i.empty:
-        logger.info("No more OCGT retrofitting potential.")
+    for original_carrier, new_carrier, retro_factor, efficiency in plant_types:
+        # Query to filter the DataFrame
+        plant_i = n.links.query(f"carrier == '{original_carrier}' and ~p_nom_extendable and p_nom > 10")
+        
+        # Further filtering based on build_year
+        plant_i = plant_i.loc[plant_i.build_year >= start].index
+        
+        if plant_i.empty:
+            logger.info(f"No more {original_carrier} retrofitting potential.")
+            continue
 
-    # set ocgt gas plants to extendable for constraint in solve_network()
-    else:
-        n.links.loc[ocgt_i, "p_nom_extendable"] = True
-        n.links.loc[ocgt_i, "p_nom_max"] = n.links.loc[ocgt_i, "p_nom"]
+        # Set plants to extendable for constraint in solve_network()
+        n.links.loc[plant_i, "p_nom_extendable"] = True
+        n.links.loc[plant_i, "p_nom_max"] = n.links.loc[plant_i, "p_nom"]
 
-        df = n.links.loc[ocgt_i].copy()
-        # adjust bus 0
+        df = n.links.loc[plant_i].copy()
+        # Adjust bus 0
         df["bus0"] = df.bus0.map(n.buses.location) + " H2"
-        # rename carrier and index
-        df["carrier"] = df.carrier.apply(lambda x: x.replace("OCGT", "OCGT H2 retrofitted"))
+        # Rename carrier and index
+        df["carrier"] = df.carrier.apply(lambda x: x.replace(original_carrier, new_carrier))
         df.rename(
-            index=lambda x: x.replace("OCGT", "OCGT H2 retrofitted") + f"-{baseyear}",
+            index=lambda x: x.replace(original_carrier, new_carrier) + f"-{baseyear}",
             inplace=True,
         )
-        df.loc[:, "capital_cost"] *= retro_factor_ocgt
-        df.loc[:, "efficiency"] = efficiency_ocgt
-        # set p_nom_max to OCGT gas p_nom and existing capacity to zero
+        df.loc[:, "capital_cost"] *= retro_factor
+        df.loc[:, "efficiency"] = efficiency
+        # Set p_nom_max to gas plant p_nom and existing capacity to zero
         df.loc[:, "p_nom_max"] = df["p_nom"]
         df.loc[:, "p_nom"] = 0
         df.loc[:, "p_nom_extendable"] = True
-        # set co2 emissions to 0
+        # Set CO2 emissions to 0
         df.loc[:, "efficiency2"] = 0.0
-        # build_year and lifetime will stay the same as decommissioning of gas plant
-        # add OCGT H2 to network
+        # Build_year and lifetime will stay the same as decommissioning of gas plant
+        # Add retrofitted plant to network
         import_components_from_dataframe(n, df, "Link")
-
-    # CCGT plants
-    ccgt_i = n.links.query("carrier == 'CCGT' and ~p_nom_extendable and p_nom > 10")
-    ccgt_i = ccgt_i.loc[ccgt_i.build_year >= start].index
-    if ccgt_i.empty:
-        logger.info("No more CCGT retrofitting potential.")
-
-    else:
-        n.links.loc[ccgt_i, "p_nom_extendable"] = True
-        n.links.loc[ccgt_i, "p_nom_max"] = n.links.loc[ccgt_i, "p_nom"]
-
-        df = n.links.loc[ccgt_i].copy()
-        # adjust bus 0
-        df["bus0"] = df.bus0.map(n.buses.location) + " H2"
-        # rename carrier and index
-        df["carrier"] = df.carrier.apply(lambda x: x.replace("CCGT", "CCGT H2 retrofitted"))
-        df.rename(
-            index=lambda x: x.replace("CCGT", "CCGT H2 retrofitted") + f"-{baseyear}",
-            inplace=True,
-        )
-        df.loc[:, "capital_cost"] *= retro_factor_ccgt
-        df.loc[:, "efficiency"] = efficiency_ccgt
-        # set p_nom_max to OCGT gas p_nom and existing capacity to zero
-        df.loc[:, "p_nom_max"] = df["p_nom"]
-        df.loc[:, "p_nom"] = 0
-        df.loc[:, "p_nom_extendable"] = True
-        # set co2 emissions to 0
-        df.loc[:, "efficiency2"] = 0.0
-        # build_year and lifetime will stay the same as decommissioning of gas plant
-        # add OCGT H2 to network
-        import_components_from_dataframe(n, df, "Link")
-    
-    # TODO: CHP plants
 
 
 # %%
@@ -770,8 +741,8 @@ if __name__ == "__main__":
         cluster_heat_buses(n)
 
     if snakemake.params.H2_retrofit_plants:
-        # only enable H2 OCGT from a certain year on
-        add_ocgt_retro(
+        # allow retrofitting of gas power plants to H2
+        add_h2_retro(
             n,
             baseyear,
             snakemake.params,
