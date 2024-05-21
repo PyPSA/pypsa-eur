@@ -624,19 +624,26 @@ def add_h2_retro(n, baseyear, params):
     """
     logger.info("Add H2 retrofitting.")
     plant_types = [
-        ('OCGT', 'OCGT', params.retrofit_cost_ocgt, params.retrofit_efficiency_ocgt),
-        ('CCGT', 'CCGT', params.retrofit_cost_ccgt, params.retrofit_efficiency_ccgt),
-        ('urban central gas CHP', 'urban central retrofitted H2 CHP', params.retrofit_cost_chp, params.retrofit_efficiency_chp)
+        ("OCGT", "OCGT", params.retrofit_cost_ocgt, params.retrofit_efficiency_ocgt),
+        ("CCGT", "CCGT", params.retrofit_cost_ccgt, params.retrofit_efficiency_ccgt),
+        (
+            "urban central gas CHP",
+            "urban central retrofitted H2 CHP",
+            params.retrofit_cost_chp,
+            params.retrofit_efficiency_chp,
+        ),
     ]
     start = params.retrofit_start
 
     for original_carrier, new_carrier, retro_factor, efficiency in plant_types:
         # Query to filter the DataFrame
-        plant_i = n.links.query(f"carrier == '{original_carrier}' and ~p_nom_extendable and p_nom > 10")
-        
+        plant_i = n.links.query(
+            f"carrier == '{original_carrier}' and ~p_nom_extendable and p_nom > 10"
+        )
+
         # Further filtering based on build_year
         plant_i = plant_i.loc[plant_i.build_year >= start].index
-        
+
         if plant_i.empty:
             logger.info(f"No more {original_carrier} retrofitting potential.")
             continue
@@ -649,7 +656,9 @@ def add_h2_retro(n, baseyear, params):
         # Adjust bus 0
         df["bus0"] = df.bus0.map(n.buses.location) + " H2"
         # Rename carrier and index
-        df["carrier"] = df.carrier.apply(lambda x: x.replace(original_carrier, new_carrier))
+        df["carrier"] = df.carrier.apply(
+            lambda x: x.replace(original_carrier, new_carrier)
+        )
         df.rename(
             index=lambda x: x.replace(original_carrier, new_carrier) + f"-{baseyear}",
             inplace=True,

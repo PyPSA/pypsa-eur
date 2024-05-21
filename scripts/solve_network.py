@@ -819,17 +819,21 @@ def add_h2_retrofit_constraint(n):
     Add constraint for retrofitting existing gas to H2 plants.
     """
     logger.info("Add constraint for retrofitting gas plants to H2 plants.")
-    
+
     plant_types = [
-        ('OCGT', 'OCGT H2 retrofitted'),
-        ('CCGT', 'CCGT H2 retrofitted'),
-        ('urban central gas CHP', 'urban central retrofitted H2 CHP')
+        ("OCGT", "OCGT H2 retrofitted"),
+        ("CCGT", "CCGT H2 retrofitted"),
+        ("urban central gas CHP", "urban central retrofitted H2 CHP"),
     ]
 
     for gas_carrier, h2_carrier in plant_types:
-        gas_plants = n.links.query(f"carrier == '{gas_carrier}' and p_nom_extendable and p_nom > 1e-3")
-        h2_plants = n.links.query(f"carrier == '{h2_carrier}' and p_nom_extendable").index
-        
+        gas_plants = n.links.query(
+            f"carrier == '{gas_carrier}' and p_nom_extendable and p_nom > 1e-3"
+        )
+        h2_plants = n.links.query(
+            f"carrier == '{h2_carrier}' and p_nom_extendable"
+        ).index
+
         if h2_plants.empty or gas_plants.empty:
             continue
 
@@ -843,8 +847,10 @@ def add_h2_retrofit_constraint(n):
         lhs = p_nom.loc[h2_plants] + p_nom.loc[gas_plants]
         rhs = n.links.p_nom_max[h2_plants]
         n.model.add_constraints(lhs == rhs, name=f"{gas_carrier}_retrofit")
-        
-        logger.info(f"Added constraint for retrofitting {gas_carrier} gas to {h2_carrier}.")
+
+        logger.info(
+            f"Added constraint for retrofitting {gas_carrier} gas to {h2_carrier}."
+        )
         logger.info(rhs)
         logger.info(lhs)
 

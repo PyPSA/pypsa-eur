@@ -7,17 +7,25 @@ rule add_existing_baseyear:
         sector=config_provider("sector"),
         existing_capacities=config_provider("existing_capacities"),
         costs=config_provider("costs"),
-        H2_retrofit_plants=config_provider("electricity", "H2_retrofit_plants", "enable"),
+        H2_retrofit_plants=config_provider(
+            "electricity", "H2_retrofit_plants", "enable"
+        ),
         retrofit_start=config_provider("electricity", "H2_retrofit_plants", "year"),
-        retrofit_cost_ocgt=config_provider("electricity", "H2_retrofit_plants", "retro_factor_ocgt"),
+        retrofit_cost_ocgt=config_provider(
+            "electricity", "H2_retrofit_plants", "retro_factor_ocgt"
+        ),
         retrofit_efficiency_ocgt=config_provider(
             "electricity", "H2_retrofit_plants", "efficiency_ocgt"
         ),
-        retrofit_cost_ccgt=config_provider("electricity", "H2_retrofit_plants", "retro_factor_ccgt"),
+        retrofit_cost_ccgt=config_provider(
+            "electricity", "H2_retrofit_plants", "retro_factor_ccgt"
+        ),
         retrofit_efficiency_ccgt=config_provider(
             "electricity", "H2_retrofit_plants", "efficiency_ccgt"
         ),
-        retrofit_cost_chp=config_provider("electricity", "H2_retrofit_plants", "retro_factor_chp"),
+        retrofit_cost_chp=config_provider(
+            "electricity", "H2_retrofit_plants", "retro_factor_chp"
+        ),
         retrofit_efficiency_chp=config_provider(
             "electricity", "H2_retrofit_plants", "efficiency_chp"
         ),
