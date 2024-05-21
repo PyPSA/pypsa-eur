@@ -7,7 +7,8 @@ tutorial: true
 run:
   name: "test-sector-myopic"
   disable_progressbar: true
-  shared_resources: "test"
+  shared_resources:
+    policy: "test"
   shared_cutouts: true
 
 foresight: myopic
@@ -41,7 +42,7 @@ electricity:
     Store: [H2]
     Link: [H2 pipeline]
 
-  renewable_carriers: [solar, onwind, offwind-ac, offwind-dc, offwind-float]
+  renewable_carriers: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float]
 
 atlite:
   default_cutout: be-03-2013-era5
@@ -66,6 +67,8 @@ renewable:
     max_depth: false
     min_depth: false
   solar:
+    cutout: be-03-2013-era5
+  solar-hsat:
     cutout: be-03-2013-era5
 
 clustering:

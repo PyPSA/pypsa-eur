@@ -7,7 +7,8 @@ tutorial: true
 run:
   name: "test-sector-perfect"
   disable_progressbar: true
-  shared_resources: "test"
+  shared_resources:
+    policy: "test"
   shared_cutouts: true
 
 foresight: perfect
@@ -38,7 +39,7 @@ electricity:
     Store: [H2]
     Link: [H2 pipeline]
 
-  renewable_carriers: [solar, onwind, offwind-ac, offwind-dc, offwind-float]
+  renewable_carriers: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float]
 
 sector:
   min_part_load_fischer_tropsch: 0
@@ -67,6 +68,8 @@ renewable:
     max_depth: false
     min_depth: false
   solar:
+    cutout: be-03-2013-era5
+  solar-hsat:
     cutout: be-03-2013-era5
 
 clustering:

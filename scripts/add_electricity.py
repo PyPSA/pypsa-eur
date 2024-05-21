@@ -230,10 +230,9 @@ def load_costs(tech_costs, config, max_hours, Nyears=1.0):
     costs.at["OCGT", "co2_emissions"] = costs.at["gas", "co2_emissions"]
     costs.at["CCGT", "co2_emissions"] = costs.at["gas", "co2_emissions"]
 
-    costs.at["solar", "capital_cost"] = (
-        config["rooftop_share"] * costs.at["solar-rooftop", "capital_cost"]
-        + (1 - config["rooftop_share"]) * costs.at["solar-utility", "capital_cost"]
-    )
+    costs.at["solar", "capital_cost"] = costs.at["solar-utility", "capital_cost"]
+
+    costs = costs.rename({"solar-utility single-axis tracking": "solar-hsat"})
 
     def costs_for_storage(store, link1, link2=None, max_hours=1.0):
         capital_cost = link1["capital_cost"] + max_hours * store["capital_cost"]
@@ -271,7 +270,6 @@ def load_powerplants(ppl_fn):
         "bioenergy": "biomass",
         "ccgt, thermal": "CCGT",
         "hard coal": "coal",
-        "natural gas": "OCGT",
     }
     return (
         pd.read_csv(ppl_fn, index_col=0, dtype={"bus": "str"})

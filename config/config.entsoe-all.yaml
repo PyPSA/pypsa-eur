@@ -5,7 +5,8 @@
 run:
   name: "entsoe-all"
   disable_progressbar: true
-  shared_resources: false
+  shared_resources:
+    policy: false
   shared_cutouts: true
 
 scenario:

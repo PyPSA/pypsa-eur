@@ -26,7 +26,9 @@ run:
     enable: false
     file: config/scenarios.yaml
   disable_progressbar: false
-  shared_resources: false
+  shared_resources:
+    policy: false
+    exclude: []
   shared_cutouts: true
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#foresight
@@ -92,7 +94,6 @@ electricity:
   co2limit_enable: false
   co2limit: 7.75e+7
   co2base: 1.487e+9
-  agg_p_nom_limits: data/agg_p_nom_minmax.csv
 
   operational_reserve:
     activate: false
@@ -105,7 +106,7 @@ electricity:
     H2: 168
 
   extendable_carriers:
-    Generator: [solar, onwind, offwind-ac, offwind-dc, offwind-float, OCGT]
+    Generator: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float, OCGT, CCGT]
     StorageUnit: [] # battery, H2
     Store: [battery, H2]
     Link: [] # H2 pipeline
@@ -115,7 +116,7 @@ electricity:
   everywhere_powerplants: [nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
 
   conventional_carriers: [nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
-  renewable_carriers: [solar, onwind, offwind-ac, offwind-dc, offwind-float, hydro]
+  renewable_carriers: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float, hydro]
 
   estimate_renewable_capacities:
     enable: true
@@ -244,6 +245,21 @@ renewable:
     natura: true
     excluder_resolution: 100
     clip_p_max_pu: 1.e-2
+  solar-hsat:
+    cutout: europe-2013-sarah
+    resource:
+      method: pv
+      panel: CSi
+      orientation:
+        slope: 35.
+        azimuth: 180.
+      tracking: horizontal
+    capacity_per_sqkm: 4.43 # 15% higher land usage acc. to NREL
+    corine: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 26, 31, 32]
+    luisa: false # [1111, 1121, 1122, 1123, 1130, 1210, 1221, 1222, 1230, 1241, 1242, 1310, 1320, 1330, 1410, 1421, 1422, 2110, 2120, 2130, 2210, 2220, 2230, 2310, 2410, 2420, 3210, 3320, 3330]
+    natura: true
+    excluder_resolution: 100
+    clip_p_max_pu: 1.e-2
   hydro:
     cutout: europe-2013-era5
     carriers: [ror, PHS, hydro]
@@ -276,7 +292,7 @@ lines:
   max_extension: 20000 #MW
   length_factor: 1.25
   reconnect_crimea: true
-  under_construction: 'zero' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
+  under_construction: 'keep' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
   dynamic_line_rating:
     activate: false
     cutout: europe-2013-era5
@@ -323,6 +339,7 @@ pypsa_eur:
   - offwind-ac
   - offwind-dc
   - offwind-float
+  - solar-hsat
   - solar
   - ror
   - nuclear
@@ -415,7 +432,6 @@ sector:
   bev_availability: 0.5
   bev_energy: 0.05
   bev_charge_efficiency: 0.9
-  bev_plug_to_wheel_efficiency: 0.2
   bev_charge_rate: 0.011
   bev_avail_max: 0.95
   bev_avail_mean: 0.8
@@ -444,8 +460,9 @@ sector:
     2040: 0.3
     2045: 0.15
     2050: 0
-  transport_fuel_cell_efficiency: 0.5
-  transport_internal_combustion_efficiency: 0.3
+  transport_electric_efficiency: 53.19 # 1 MWh_el = 53.19*100 km
+  transport_fuel_cell_efficiency: 30.003 # 1 MWh_H2 = 30.003*100 km
+  transport_ice_efficiency: 16.0712 # 1 MWh_oil = 16.0712 * 100 km
   agriculture_machinery_electric_share: 0
   agriculture_machinery_oil_share: 1
   agriculture_machinery_fuel_efficiency: 0.7
@@ -576,6 +593,8 @@ sector:
     gas pipeline:
       efficiency_per_1000km: 1 #0.977
       compression_per_1000km: 0.01
+    electricity distribution grid:
+      efficiency_static: 0.97
   H2_network: true
   gas_network: false
   H2_retrofit: false
@@ -669,6 +688,9 @@ industry:
     2040: 0.12
     2045: 0.16
     2050: 0.20
+  HVC_environment_sequestration_fraction: 0.
+  waste_to_energy: false
+  waste_to_energy_cc: false
   sector_ratios_fraction_future:
     2020: 0.0
     2025: 0.1
@@ -687,6 +709,7 @@ industry:
   methanol_production_today: 1.5
   MWh_elec_per_tMeOH: 0.167
   MWh_CH4_per_tMeOH: 10.25
+  MWh_MeOH_per_tMeOH: 5.528
   hotmaps_locate_missing: false
   reference_year: 2015
 
@@ -694,8 +717,7 @@ industry:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 costs:
   year: 2030
-  version: v0.8.1
-  rooftop_share: 0.14  # based on the potentials, assuming  (0.1 kW/m2 and 10 m2/person)
+  version: v0.9.0
   social_discountrate: 0.02
   fill_values:
     FOM: 0
@@ -768,11 +790,28 @@ solving:
     # io_api: "direct"  # Increases performance but only supported for the highs and gurobi solvers
     # options that go into the optimize function
     track_iterations: false
-    min_iterations: 4
-    max_iterations: 6
+    min_iterations: 2
+    max_iterations: 3
     transmission_losses: 2
     linearized_unit_commitment: true
     horizon: 365
+    post_discretization:
+      enable: false
+      line_unit_size: 1700
+      line_threshold: 0.3
+      link_unit_size:
+        DC: 2000
+        H2 pipeline: 1200
+        gas pipeline: 1500
+      link_threshold:
+        DC: 0.3
+        H2 pipeline: 0.3
+        gas pipeline: 0.3
+
+  agg_p_nom_limits:
+    agg_offwind: false
+    include_existing: false
+    file: data/agg_p_nom_minmax.csv
 
   constraints:
     CCL: false
@@ -910,6 +949,7 @@ plotting:
     # solar
     solar: "#f9d002"
     solar PV: "#f9d002"
+    solar-hsat: "#fdb915"
     solar thermal: '#ffbf2b'
     residential rural solar thermal: '#f1c069'
     services rural solar thermal: '#eabf61'
@@ -1011,6 +1051,7 @@ plotting:
     BEV charger: '#baf238'
     V2G: '#e5ffa8'
     land transport EV: '#baf238'
+    land transport demand: '#38baf2'
     Li ion: '#baf238'
     # hot water storage
     water tanks: '#e69487'
@@ -1115,6 +1156,7 @@ plotting:
     methanolisation: '#83d6d5'
     methanol: '#468c8b'
     shipping methanol: '#468c8b'
+    industry methanol: '#468c8b'
     # co2
     CC: '#f29dae'
     CCS: '#f29dae'
@@ -1154,3 +1196,6 @@ plotting:
     DC-DC: "#8a1caf"
     DC link: "#8a1caf"
     load: "#dd2e23"
+    waste CHP: '#e3d37d'
+    waste CHP CC: '#e3d3ff'
+    HVC to air: 'k'
