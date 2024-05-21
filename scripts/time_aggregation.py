@@ -78,13 +78,13 @@ if __name__ == "__main__":
     resolution = snakemake.params.time_resolution
 
     # Representative snapshots
-    if "sn" in resolution.lower():
+    if isinstance(resolution, str) and "sn" in resolution.lower():
         logger.info("Use representative snapshots")
         # Output an empty csv; this is taken care of in prepare_sector_network.py
         pd.DataFrame().to_csv(snakemake.output.snapshot_weightings)
 
     # Plain resampling
-    elif "h" in resolution.lower():
+    elif isinstance(resolution, str) and "h" in resolution.lower():
         offset = resolution.lower()
         logger.info(f"Averaging every {offset} hours")
         snapshot_weightings = n.snapshot_weightings.resample(offset).sum()
@@ -95,7 +95,7 @@ if __name__ == "__main__":
         snapshot_weightings.to_csv(snakemake.output.snapshot_weightings)
 
     # Temporal segmentation
-    elif "seg" in resolution.lower():
+    elif isinstance(resolution, str) and "seg" in resolution.lower():
         segments = int(resolution[:-3])
         logger.info(f"Use temporal segmentation with {segments} segments")
 
