@@ -896,7 +896,7 @@ def build_bus_shapes(n, country_shapes, offshore_shapes, countries):
 
     shapes = pd.concat(onshore_regions, ignore_index=True)
 
-    return onshore_regions, offshore_regions, shapes
+    return onshore_regions, offshore_regions, shapes, offshore_shapes
 
 
 def append_bus_shapes(n, shapes, type):
@@ -950,7 +950,7 @@ if __name__ == "__main__":
         snakemake.config,
     )
 
-    onshore_regions, offshore_regions, shapes = build_bus_shapes(
+    onshore_regions, offshore_regions, shapes, offshore_shapes = build_bus_shapes(
         n,
         snakemake.input.country_shapes,
         snakemake.input.offshore_shapes,

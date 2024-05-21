@@ -47,6 +47,7 @@ import numpy as np
 import pandas as pd
 import pypsa
 import xarray as xr
+import tsam.timeseriesaggregation as tsam
 from _helpers import (
     configure_logging,
     set_scenario_config,

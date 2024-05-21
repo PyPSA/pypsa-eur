@@ -13,10 +13,11 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 
+from _helpers import configure_logging, set_scenario_config
+
 logger = logging.getLogger(__name__)
 AVAILABLE_BIOMASS_YEARS = [2010, 2020, 2030, 2040, 2050]
 
-from _helpers import configure_logging, set_scenario_config
 
 
 def build_nuts_population_data(year=2013):

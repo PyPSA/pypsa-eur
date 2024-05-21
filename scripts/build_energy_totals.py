@@ -124,7 +124,6 @@ def build_eurostat(input_eurostat, countries, nprocesses=1, disable_progressbar=
     df = pd.concat([temp, df.loc[~int_avia]])
 
     # Fill in missing data on "Domestic aviation" for each country.
-    domestic_avia = df.index.get_level_values(4) == "Domestic aviation"
     for country in countries:
         slicer = idx[country, :, :, :, "Domestic aviation"]
         # For the Total and Fossil energy columns, fill in zeros with
