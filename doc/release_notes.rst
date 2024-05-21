@@ -318,6 +318,11 @@ Upcoming Release
 
 * Fix file name encoding in optional rule :mod:`build_biomass_transport_costs` depending on the operating system.
 
+* Energy balances for residential demands (space, water, cooking) in the
+  JRC-IDEES data are updated with newer values from eurostat based on a
+  disaggregated household energy balance.
+  (https://github.com/PyPSA/pypsa-eur/pull/1025)
+
 PyPSA-Eur 0.10.0 (19th February 2024)
 =====================================
 
