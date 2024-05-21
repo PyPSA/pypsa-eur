@@ -148,8 +148,6 @@ electricity:
     efficiency_ccgt: 0.55 # dummy values
     retro_factor_chp: 0.15 # dummy values
     efficiency_chp: 0.55 # dummy values
-    retro_factor_chp: 0.15 # dummy values
-    efficiency_chp: 0.55 # dummy values
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#atlite
 atlite:
