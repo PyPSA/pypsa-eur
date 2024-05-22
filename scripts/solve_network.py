@@ -845,7 +845,9 @@ def add_h2_retrofit_constraint(n):
         p_nom = n.model["Link-p_nom"]
 
         # Sum of p_nom OCGT/CCGT and retrofitted must be <= installed capacity of OCGT/CCGT
-        lhs = p_nom.loc[h2_plants].mul(efficiency_h2) + p_nom.loc[gas_plants].mul(efficiency_gas)
+        lhs = p_nom.loc[h2_plants].mul(efficiency_h2) + p_nom.loc[gas_plants].mul(
+            efficiency_gas
+        )
         rhs = n.links.p_nom_max[gas_plants].mul(efficiency_gas)
         n.model.add_constraints(lhs == rhs, name=f"{gas_carrier}_retrofit")
 
