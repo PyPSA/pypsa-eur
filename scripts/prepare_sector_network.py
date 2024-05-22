@@ -192,10 +192,10 @@ def define_spatial(nodes, options):
     if options.get("waste_incineration"):
         spatial.waste = SimpleNamespace()
         if options.get("waste_incineration") == "regional":
-            spatial.waste.nodes = nodes + " waste"
+            spatial.waste.nodes = nodes + " municipal waste"
             spatial.waste.locations = nodes
         else:
-            spatial.waste.nodes = ["EU waste"]
+            spatial.waste.nodes = ["EU municipal waste"]
             spatial.waste.locations = ["EU"]
 
         spatial.waste.df = pd.DataFrame(vars(spatial.waste), index=nodes)
@@ -2018,50 +2018,6 @@ def add_heat(n, costs):
                 lifetime=costs.at["central gas CHP", "lifetime"],
             )
 
-            if options.get("waste_incineration"):
-
-                n.add("Carrier", name + " waste CHP")
-
-                n.madd(
-                    "Bus",
-                    spatial.waste.nodes,
-                    location=spatial.waste.locations,
-                    carrier="waste",
-                    unit="LHV",
-                )
-
-                n.madd(
-                    "Store",
-                    spatial.waste.nodes,
-                    suffix=" Store",
-                    bus=spatial.waste.nodes,
-                    e_nom_extendable=False,
-                    e_cyclic=False,
-                    e_initial=options.get("waste_incineration_potential")
-                    * 2.94e6,  # 10.6 MJ/kg LHV = 10.6 PJ/Mt = 2.94 TWh/Mt
-                    e_nom=options.get("waste_incineration_potential") * 2.94e6,
-                    carrier="waste",
-                )
-
-                n.madd(
-                    "Link",
-                    nodes,
-                    suffix=f" {name} waste CHP",
-                    bus0=spatial.waste.df.loc[nodes, "nodes"].values,
-                    bus1=nodes,
-                    bus2=nodes + f" {name} heat",
-                    bus3="co2 atmosphere",
-                    carrier=f"{name} waste CHP",
-                    efficiency=costs.at["waste CHP", "efficiency"],
-                    efficiency2=costs.at["waste CHP", "efficiency-heat"],
-                    efficiency3=options.get("waste_incineration_co2_intensity"),
-                    p_nom_extendable=True,
-                    p_min_pu=0.75,
-                    capital_cost=costs.at["waste CHP", "fixed"] * overdim_factor,
-                    marginal_cost=costs.at["waste CHP", "VOM"],
-                    lifetime=costs.at["waste CHP", "lifetime"],
-                )
-
         if options["chp"] and options["micro_chp"] and name != "urban central":
             n.madd(
                 "Link",
@@ -2210,11 +2166,26 @@ def add_biomass(n, costs):
         solid_biomass_potentials_spatial = biomass_potentials["solid biomass"].rename(
             index=lambda x: x + " solid biomass"
         )
+        unsustainable_biomass_potentials_spatial = biomass_potentials[
+            "not included"
+        ].rename(index=lambda x: x + " solid biomass")
+
     else:
         solid_biomass_potentials_spatial = biomass_potentials["solid biomass"].sum()
+        unsustainable_biomass_potentials_spatial = biomass_potentials[
+            "not included"
+        ].sum()
+
+    if options.get("waste_incineration") == "regional":
+        waste_potentials_spatial = biomass_potentials["waste"].rename(
+            index=lambda x: x + " municipal waste"
+        )
+    else:
+        waste_potentials_spatial = biomass_potentials["waste"].sum()
 
     n.add("Carrier", "biogas")
     n.add("Carrier", "solid biomass")
+    n.add("Carrier", "municipal waste")
 
     n.madd(
         "Bus",
@@ -2230,6 +2201,14 @@ def add_biomass(n, costs):
         location=spatial.biomass.locations,
         carrier="solid biomass",
         unit="MWh_LHV",
+    )
+
+    n.madd(
+        "Bus",
+        spatial.waste.nodes,
+        location=spatial.waste.locations,
+        carrier="municipal waste",
+        unit="LHV",
     )
 
     n.madd(
@@ -2250,6 +2229,30 @@ def add_biomass(n, costs):
         e_nom=solid_biomass_potentials_spatial,
         marginal_cost=costs.at["solid biomass", "fuel"],
         e_initial=solid_biomass_potentials_spatial,
+    )
+
+    n.madd(
+        "Store",
+        spatial.biomass.nodes,
+        suffix=" unsustainable",
+        bus=spatial.biomass.nodes,
+        carrier="solid biomass",
+        e_nom=unsustainable_biomass_potentials_spatial,
+        marginal_cost=costs.at["solid biomass", "fuel"],
+        e_initial=unsustainable_biomass_potentials_spatial,
+    )
+
+    # No marginal costs attached due to impact beyond energy system boundaries
+    n.madd(
+        "Store",
+        spatial.waste.nodes,
+        suffix=" Store",
+        bus=spatial.waste.nodes,
+        e_nom_extendable=False,
+        e_cyclic=False,
+        e_initial=waste_potentials_spatial,
+        e_nom=waste_potentials_spatial,
+        carrier="waste",
     )
 
     n.madd(
@@ -2407,6 +2410,62 @@ def add_biomass(n, costs):
             * costs.at["biomass CHP capture", "capture_rate"],
             lifetime=costs.at[key, "lifetime"],
         )
+
+        if options.get("waste_incineration"):
+
+            n.add("Carrier", "urban central waste CHP")
+
+            n.madd(
+                "Link",
+                urban_central,
+                suffix=" urban central waste CHP",
+                bus0=spatial.waste.df.loc[urban_central, "nodes"].values,
+                bus1=urban_central,
+                bus2=urban_central + " urban central heat",
+                carrier="urban central waste CHP",
+                efficiency=costs.at["waste CHP", "efficiency"],
+                efficiency2=costs.at["waste CHP", "efficiency-heat"],
+                p_nom_extendable=True,
+                p_min_pu=1,  # waste CHPs are usually run at a high load
+                capital_cost=costs.at["waste CHP", "fixed"],
+                marginal_cost=costs.at["waste CHP", "VOM"],
+                lifetime=costs.at["waste CHP", "lifetime"],
+            )
+
+            n.add("Carrier", "urban central waste CHP CC")
+
+            n.madd(
+                "Link",
+                urban_central,
+                suffix=" urban central waste CHP CC",
+                bus0=spatial.waste.df.loc[urban_central, "nodes"].values,
+                bus1=urban_central,
+                bus2=urban_central + " urban central heat",
+                bus3="co2 atmosphere",
+                bus4=spatial.co2.df.loc[urban_central, "nodes"].values,
+                carrier="urban central waste CHP CC",
+                efficiency=costs.at["waste CHP CC", "efficiency"]
+                - costs.at["solid biomass", "CO2 intensity"]
+                * (
+                    costs.at["biomass CHP capture", "electricity-input"]
+                    + costs.at["biomass CHP capture", "compression-electricity-input"]
+                ),
+                efficiency2=costs.at["waste CHP CC", "efficiency-heat"]
+                + costs.at["solid biomass", "CO2 intensity"]
+                * (
+                    costs.at["biomass CHP capture", "heat-output"]
+                    + costs.at["biomass CHP capture", "compression-heat-output"]
+                    - costs.at["biomass CHP capture", "heat-input"]
+                ),
+                efficiency3=-costs.at["solid biomass", "CO2 intensity"]
+                * costs.at["biomass CHP capture", "capture_rate"],
+                efficiency4=costs.at["solid biomass", "CO2 intensity"]
+                * costs.at["biomass CHP capture", "capture_rate"],
+                p_nom_extendable=True,
+                capital_cost=costs.at["waste CHP CC", "fixed"],
+                marginal_cost=costs.at["waste CHP CC", "VOM"],
+                lifetime=costs.at["waste CHP CC", "lifetime"],
+            )
 
     if options["biomass_boiler"]:
         # TODO: Add surcharge for pellets
@@ -3626,14 +3685,18 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
+        import os
+
+        os.chdir(os.path.dirname(os.path.realpath(__file__)))
         snakemake = mock_snakemake(
             "prepare_sector_network",
-            configfiles="./config/config.yaml",
-            run="normal",
+            configfiles="/home/caspar/Code/dev/pypsa-ariadne/results/waste_mustrun_UC_22c_bioconstr_5/config.yaml",
+            run="biomass_separation",
             simpl="",
+            ll="v1.2",
             opts="",
-            clusters="34",
-            sector_opts="7sn-T-H-B-I-A-solarp3-linemaxext15",
+            clusters="22",
+            sector_opts="12sn-T-H-B-I-A-solarp3-linemaxext15",
             planning_horizons="2020",
         )
 

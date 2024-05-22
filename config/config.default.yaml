@@ -329,6 +329,7 @@ biomass:
     - Secondary Forestry residues - woodchips
     - Sawdust
     - Residues from landscape care
+    waste:
     - Municipal waste
     not included:
     - Sugar from sugar beet
