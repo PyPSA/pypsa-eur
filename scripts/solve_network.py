@@ -31,7 +31,6 @@ import logging
 import os
 import re
 import sys
-from functools import reduce
 
 import numpy as np
 import pandas as pd
@@ -694,7 +693,6 @@ def add_BAU_constraints(n, config):
     ext_i = n.generators.query("p_nom_extendable")
     ext_carrier_i = xr.DataArray(ext_i.carrier.rename_axis("Generator-ext"))
     lhs = p_nom.groupby(ext_carrier_i).sum()
-    index = mincaps.index.intersection(lhs.indexes["carrier"])
     rhs = mincaps[lhs.indexes["carrier"]].rename_axis("carrier")
     n.model.add_constraints(lhs >= rhs, name="bau_mincaps")
 
