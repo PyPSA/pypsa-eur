@@ -164,7 +164,6 @@ def _load_buses_from_eg(eg_buses, europe_shape, config_elec):
         lambda p: europe_shape_prepped.contains(Point(p)), axis=1
     )
 
-
     # TODO pypsa-eur: Find a long-term solution
     # buses_with_v_nom_to_keep_b = (
     #     buses.v_nom.isin(config_elec["voltages"]) | buses.v_nom.isnull()
@@ -176,9 +175,7 @@ def _load_buses_from_eg(eg_buses, europe_shape, config_elec):
     # Quick fix:
     buses_with_v_nom_to_keep_b = (v_nom_min <= buses.v_nom) & (buses.v_nom <= v_nom_max)
 
-    logger.info(
-        f'Removing buses outside of range {v_nom_min} - {v_nom_max} V'
-    )
+    logger.info(f"Removing buses outside of range {v_nom_min} - {v_nom_max} V")
     return pd.DataFrame(buses.loc[buses_in_europe_b & buses_with_v_nom_to_keep_b])
 
 
@@ -418,6 +415,7 @@ def _reconnect_crimea(lines):
 #     for v_nom in v_noms:
 #         lines.loc[lines["v_nom"] == v_nom, "type"] = linetypes[v_nom]
 
+
 def _set_electrical_parameters_lines(lines_config, voltages, lines):
     if lines.empty:
         lines["type"] = []
@@ -466,6 +464,7 @@ def _set_electrical_parameters_dc_lines(lines_config, voltages, lines):
     lines["s_max_pu"] = lines_config["s_max_pu"]
 
     return lines
+
 
 # TODO pypsa-eur: Clean/fix this, update list p_noms
 def _set_electrical_parameters_links(links, config, links_p_nom):
@@ -795,9 +794,7 @@ def base_network_osm(
 ):
     buses = _load_buses_from_eg(eg_buses, europe_shape, config["electricity"])
 
-
-
-    #TODO pypsa-eur add this
+    # TODO pypsa-eur add this
     # links = _load_links_from_eg(buses, eg_links)
     # if config["links"].get("include_tyndp"):
     #     buses, links = _add_links_from_tyndp(buses, links, links_tyndp, europe_shape)
@@ -814,15 +811,11 @@ def base_network_osm(
     lines_dc = lines[lines.tag_frequency.astype(float) == 0].copy()
 
     lines_ac = _set_electrical_parameters_lines(
-        config["lines"], 
-        config["electricity"]["voltages"], 
-        lines_ac
-        )
+        config["lines"], config["electricity"]["voltages"], lines_ac
+    )
 
     lines_dc = _set_electrical_parameters_dc_lines(
-        config["lines"], 
-        config["electricity"]["voltages"], 
-        lines_dc
+        config["lines"], config["electricity"]["voltages"], lines_dc
     )
 
     # lines = _set_electrical_parameters_lines(lines, config)
@@ -835,7 +828,9 @@ def base_network_osm(
 
     time = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
     n.set_snapshots(time)
-    n.madd("Carrier", ["AC", "DC"]) # TODO: fix hard code and check if AC/DC truly exist
+    n.madd(
+        "Carrier", ["AC", "DC"]
+    )  # TODO: fix hard code and check if AC/DC truly exist
 
     n.import_components_from_dataframe(buses, "Bus")
 
@@ -870,15 +865,15 @@ def base_network_osm(
 
     _set_lines_s_nom_from_linetypes(n)
 
-    #TODO pypsa-eur add this
-    # _apply_parameter_corrections(n, parameter_corrections) 
+    # TODO pypsa-eur add this
+    # _apply_parameter_corrections(n, parameter_corrections)
 
     # TODO: what about this?
     n = _remove_unconnected_components(n)
 
     _set_countries_and_substations(n, config, country_shapes, offshore_shapes)
 
-    #TODO pypsa-eur add this
+    # TODO pypsa-eur add this
     _set_links_underwater_fraction(n, offshore_shapes)
 
     _replace_b2b_converter_at_country_border_by_link(n)
@@ -888,6 +883,7 @@ def base_network_osm(
     _set_shapes(n, country_shapes, offshore_shapes)
 
     return n
+
 
 def _get_linetypes_config(line_types, voltages):
     """
@@ -913,6 +909,7 @@ def _get_linetypes_config(line_types, voltages):
             f"Voltages {vnoms_diff} not in the {line_types} or {voltages} list."
         )
     return {k: v for k, v in line_types.items() if k in voltages}
+
 
 def _get_linetype_by_voltage(v_nom, d_linetypes):
     """
@@ -1084,24 +1081,24 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     n = base_network_osm(
-    snakemake.input.eg_buses,
-    snakemake.input.eg_converters,
-    snakemake.input.eg_transformers,
-    snakemake.input.eg_lines,
-    snakemake.input.links_p_nom,
-    snakemake.input.europe_shape,
-    snakemake.input.country_shapes,
-    snakemake.input.offshore_shapes,
-    snakemake.config,
+        snakemake.input.eg_buses,
+        snakemake.input.eg_converters,
+        snakemake.input.eg_transformers,
+        snakemake.input.eg_lines,
+        snakemake.input.links_p_nom,
+        snakemake.input.europe_shape,
+        snakemake.input.country_shapes,
+        snakemake.input.offshore_shapes,
+        snakemake.config,
     )
 
     logger.info("Base network created using OSM.")
 
     onshore_regions, offshore_regions, shapes = build_bus_shapes(
-    n,
-    snakemake.input.country_shapes,
-    snakemake.input.offshore_shapes,
-    snakemake.params.countries,
+        n,
+        snakemake.input.country_shapes,
+        snakemake.input.offshore_shapes,
+        snakemake.params.countries,
     )
 
     shapes.to_file(snakemake.output.regions_onshore)

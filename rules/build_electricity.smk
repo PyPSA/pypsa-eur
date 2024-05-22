@@ -66,6 +66,7 @@ rule build_powerplants:
 
 
 if config["electricity_network"]["base_network"] == "gridkit":
+
     rule base_network:
         params:
             countries=config_provider("countries"),
@@ -104,6 +105,7 @@ if config["electricity_network"]["base_network"] == "gridkit":
 
 
 if config["electricity_network"]["base_network"] == "osm":
+
     rule base_network:
         params:
             countries=config_provider("countries"),
@@ -618,17 +620,29 @@ rule retrieve_osm_data:
     log:
         logs("retrieve_osm_data_{country}.log"),
     resources:
-        cores = 2, threads= 1,
+        cores=2,
+        threads=1,
     script:
         "../scripts/retrieve_osm_data.py"
 
 
 rule clean_osm_data:
     input:
-        cables_way=[f"data/osm/raw/{country}/cables_way.json" for country in config["countries"]],
-        lines_way=[f"data/osm/raw/{country}/lines_way.json" for country in config["countries"]],
-        substations_way=[f"data/osm/raw/{country}/substations_way.json" for country in config["countries"]],
-        substations_relation=[f"data/osm/raw/{country}/substations_relation.json" for country in config["countries"]],
+        cables_way=[
+            f"data/osm/raw/{country}/cables_way.json"
+            for country in config["countries"]
+        ],
+        lines_way=[
+            f"data/osm/raw/{country}/lines_way.json" for country in config["countries"]
+        ],
+        substations_way=[
+            f"data/osm/raw/{country}/substations_way.json"
+            for country in config["countries"]
+        ],
+        substations_relation=[
+            f"data/osm/raw/{country}/substations_relation.json"
+            for country in config["countries"]
+        ],
         offshore_shapes=resources("offshore_shapes.geojson"),
         country_shapes=resources("country_shapes.geojson"),
     output:
