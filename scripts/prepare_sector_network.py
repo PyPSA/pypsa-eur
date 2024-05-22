@@ -3634,14 +3634,12 @@ def set_temporal_aggregation(n, resolution, snapshot_weightings):
         logger.info("Use every %s snapshot as representative", sn)
         n.set_snapshots(n.snapshots[::sn])
         n.snapshot_weightings *= sn
+        return n
     else:
         # Otherwise, use the provided snapshots
         snapshot_weightings = pd.read_csv(
             snapshot_weightings, index_col=0, parse_dates=True
         )
-
-        n.set_snapshots(snapshot_weightings.index)
-        n.snapshot_weightings = snapshot_weightings
 
         # Define a series used for aggregation, mapping each hour in
         # n.snapshots to the closest previous timestep in
@@ -3656,16 +3654,23 @@ def set_temporal_aggregation(n, resolution, snapshot_weightings):
             .map(lambda i: snapshot_weightings.index[i])
         )
 
+        m = n.copy(with_time=False)
+        m.set_snapshots(snapshot_weightings.index)
+        m.snapshot_weightings = snapshot_weightings
+
         # Aggregation all time-varying data.
         for c in n.iterate_components():
+            pnl = getattr(m, c.list_name + "_t")
             for k, df in c.pnl.items():
                 if not df.empty:
                     if c.list_name == "stores" and k == "e_max_pu":
-                        c.pnl[k] = df.groupby(aggregation_map).min()
+                        pnl[k] = df.groupby(aggregation_map).min()
                     elif c.list_name == "stores" and k == "e_min_pu":
-                        c.pnl[k] = df.groupby(aggregation_map).max()
+                        pnl[k] = df.groupby(aggregation_map).max()
                     else:
-                        c.pnl[k] = df.groupby(aggregation_map).mean()
+                        pnl[k] = df.groupby(aggregation_map).mean()
+
+        return m
 
 
 def lossy_bidirectional_links(n, carrier, efficiencies={}):
@@ -3818,7 +3823,7 @@ if __name__ == "__main__":
     if options["allam_cycle"]:
         add_allam(n, costs)
 
-    set_temporal_aggregation(
+    n = set_temporal_aggregation(
         n, snakemake.params.time_resolution, snakemake.input.snapshot_weightings
     )
 
