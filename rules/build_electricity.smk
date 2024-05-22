@@ -641,27 +641,23 @@ rule clean_osm_data:
         "../scripts/clean_osm_data.py"
 
 
-if config["electricity_network"]["build_osm_network"] == True:
-    rule build_osm_network:
-        input:
-            substations=resources("osm/clean/substations.geojson"),
-            lines=resources("osm/clean/lines.geojson"),
-            country_shapes=resources("country_shapes.geojson"),
-        output:
-            lines=resources("osm/lines.csv"),
-            converters=resources("osm/converters.csv"),
-            transformers=resources("osm/transformers.csv"),
-            substations=resources("osm/buses.csv"),
-            lines_geojson=resources("osm/lines.geojson"),
-            converters_geojson=resources("osm/converters.geojson"),
-            transformers_geojson=resources("osm/transformers.geojson"),
-            substations_geojson=resources("osm/buses.geojson"),
-        log:
-            logs("build_osm_network.log"),
-        benchmark:
-            benchmarks("build_osm_network")
-        script:
-            "../scripts/build_osm_network.py"
-
-if config["electricity_network"]["build_osm_network"] == False:
-    print("Use prebuilt.")
+rule build_osm_network:
+    input:
+        substations=resources("osm/clean/substations.geojson"),
+        lines=resources("osm/clean/lines.geojson"),
+        country_shapes=resources("country_shapes.geojson"),
+    output:
+        lines=resources("osm/lines.csv"),
+        converters=resources("osm/converters.csv"),
+        transformers=resources("osm/transformers.csv"),
+        substations=resources("osm/buses.csv"),
+        lines_geojson=resources("osm/lines.geojson"),
+        converters_geojson=resources("osm/converters.geojson"),
+        transformers_geojson=resources("osm/transformers.geojson"),
+        substations_geojson=resources("osm/buses.geojson"),
+    log:
+        logs("build_osm_network.log"),
+    benchmark:
+        benchmarks("build_osm_network")
+    script:
+        "../scripts/build_osm_network.py"

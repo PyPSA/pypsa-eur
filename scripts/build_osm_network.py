@@ -979,20 +979,21 @@ def build_network(
 
     logger.info("Stage 2/5: AC and DC network: enabled")
 
+    # TODO pypsa-eur: Remove entirely after testing, not needed for PyPSA-Eur
     # Address the overpassing line issue Step 3/5
-    if build_osm_network_config.get("split_overpassing_lines", False):
-        tol = build_osm_network_config.get("overpassing_lines_tolerance", 1)
-        logger.info("Stage 3/5: Avoid nodes overpassing lines: enabled with tolerance")
+    # if snakemake.config["electricity_network"]["osm_split_overpassing_lines"]:
+    #     tol = snakemake.config["electricity_network"]["osm_overpassing_lines_tolerance"]
+    #     logger.info("Stage 3/5: Avoid nodes overpassing lines: enabled with tolerance")
 
-        lines, buses = fix_overpassing_lines(lines, buses, distance_crs, tol=tol)
-    else:
-        logger.info("Stage 3/5: Avoid nodes overpassing lines: disabled")
+    #     lines, buses = fix_overpassing_lines(lines, buses, distance_crs, tol=tol)
+    # else:
+    logger.info("Stage 3/5: Avoid nodes overpassing lines: disabled")
     
     # Add bus to countries with no buses
     buses = add_buses_to_empty_countries(countries_config, inputs.country_shapes, buses)
 
     # METHOD to merge buses with same voltage and within tolerance Step 4/5
-    tol = build_osm_network_config.get("group_tolerance_buses", 5000)
+    tol = snakemake.config["electricity_network"]["osm_group_tolerance_buses"]
     logger.info(
         f"Stage 4/5: Aggregate close substations: enabled with tolerance {tol} m"
     )
