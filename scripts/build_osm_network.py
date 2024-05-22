@@ -760,167 +760,6 @@ def _split_linestring_by_point(linestring, points):
     return list_linestrings
 
 
-def fix_overpassing_lines(lines, buses, distance_crs, tol=1):
-    """
-    Function to avoid buses overpassing lines with no connection when the bus
-    is within a given tolerance from the line.
-
-    Parameters
-    ----------
-    lines : GeoDataFrame
-        Geodataframe of lines
-    buses : GeoDataFrame
-        Geodataframe of substations
-    tol : float
-        Tolerance in meters of the distance between the substation and the line
-        below which the line will be split
-    """
-
-    lines_to_add = []  # list of lines to be added
-    lines_to_split = []  # list of lines that have been split
-
-    lines_epsgmod = lines.to_crs(distance_crs)
-    buses_epsgmod = buses.to_crs(distance_crs)
-
-    # set tqdm options for substation ids
-    tqdm_kwargs_substation_ids = dict(
-        ascii=False,
-        unit=" lines",
-        total=lines.shape[0],
-        desc="Verify lines overpassing nodes ",
-    )
-
-    for l in tqdm(lines.index, **tqdm_kwargs_substation_ids):
-        # bus indices being within tolerance from the line
-        bus_in_tol_epsg = buses_epsgmod[
-            buses_epsgmod.geometry.distance(lines_epsgmod.geometry.loc[l]) <= tol
-        ]
-
-        # exclude endings of the lines
-        bus_in_tol_epsg = bus_in_tol_epsg[
-            (
-                (
-                    bus_in_tol_epsg.geometry.distance(
-                        lines_epsgmod.geometry.loc[l].boundary.geoms[0]
-                    )
-                    > tol
-                )
-                | (
-                    bus_in_tol_epsg.geometry.distance(
-                        lines_epsgmod.geometry.loc[l].boundary.geoms[1]
-                    )
-                    > tol
-                )
-            )
-        ]
-
-        if not bus_in_tol_epsg.empty:
-            # add index of line to split
-            lines_to_split.append(l)
-
-            buses_locs = buses.geometry.loc[bus_in_tol_epsg.index]
-
-            # get new line geometries
-            new_geometries = _split_linestring_by_point(lines.geometry[l], buses_locs)
-            n_geoms = len(new_geometries)
-
-            # create temporary copies of the line
-            df_append = gpd.GeoDataFrame([lines.loc[l]] * n_geoms)
-            # update geometries
-            df_append["geometry"] = new_geometries
-            # update name of the line
-            df_append["line_id"] = [
-                str(df_append["line_id"].iloc[0]) + f"_{id}" for id in range(n_geoms)
-            ]
-
-            lines_to_add.append(df_append)
-
-    if not lines_to_add:
-        return lines, buses
-
-    df_to_add = gpd.GeoDataFrame(pd.concat(lines_to_add, ignore_index=True))
-    df_to_add.set_crs(lines.crs, inplace=True)
-    df_to_add.set_index(lines.index[-1] + df_to_add.index, inplace=True)
-
-    # update length
-    df_to_add["length"] = df_to_add.to_crs(distance_crs).geometry.length
-
-    # update line endings
-    df_to_add = line_endings_to_bus_conversion(df_to_add)
-
-    # remove original lines
-    lines.drop(lines_to_split, inplace=True)
-
-    lines = gpd.GeoDataFrame(
-        pd.concat([lines, df_to_add], ignore_index=True).reset_index(drop=True),
-        crs=lines.crs,
-    )
-
-    return lines, buses
-
-
-def add_buses_to_empty_countries(country_list, fp_country_shapes, buses):
-    """
-    Function to add a bus for countries missing substation data.
-    """
-    country_shapes = gpd.read_file(fp_country_shapes).set_index("name")["geometry"]
-    bus_country_list = buses["country"].unique().tolist()
-
-    # it may happen that bus_country_list contains entries not relevant as a country name (e.g. "not found")
-    # difference can't give negative values; the following will return only relevant country names
-    no_data_countries = list(set(country_list).difference(set(bus_country_list)))
-
-    if len(no_data_countries) > 0:
-        logger.info(
-            f"No buses for the following countries: {no_data_countries}. Adding a node for everyone of them."
-        )
-        no_data_countries_shape = (
-            country_shapes[country_shapes.index.isin(no_data_countries) == True]
-            .reset_index()
-            .to_crs(geo_crs)
-        )
-        length = len(no_data_countries)
-        df = gpd.GeoDataFrame(
-            {
-                "voltage": [220000] * length,
-                "country": no_data_countries_shape["name"],
-                "x": no_data_countries_shape["geometry"].centroid.x,
-                "y": no_data_countries_shape["geometry"].centroid.y,
-                "bus_id": np.arange(len(buses) + 1, len(buses) + (length + 1), 1),
-                "station_id": [np.nan] * length,
-                # All lines for the countries with NA bus data are assumed to be AC
-                "dc": [False] * length,
-                "under_construction": [False] * length,
-                "tag_area": [0.0] * length,
-                "symbol": ["substation"] * length,
-                "tag_substation": ["transmission"] * length,
-                "geometry": no_data_countries_shape["geometry"].centroid,
-                "substation_lv": [True] * length,
-            },
-            crs=geo_crs,
-        ).astype(
-            buses.dtypes.to_dict()
-        )  # keep the same dtypes as buses
-        buses = gpd.GeoDataFrame(
-            pd.concat([buses, df], ignore_index=True).reset_index(drop=True),
-            crs=buses.crs,
-        )
-
-        # update country list by buses dataframe
-        bus_country_list = buses["country"].unique().tolist()
-
-    non_allocated_countries = list(
-        set(country_list).symmetric_difference(set(bus_country_list))
-    )
-
-    if len(non_allocated_countries) > 0:
-        logger.error(
-            f"There following countries could not be allocated properly: {non_allocated_countries}"
-        )
-
-    return buses
-
-
 def build_network(
     inputs,
     outputs,
@@ -962,7 +801,7 @@ def build_network(
         }
     }
 
-    logger.info("Stage 1/5: Read input data")
+    logger.info("Read input data.")
     buses = read_geojson(
         inputs["substations"],
         osm_clean_columns["substation"].keys(),
@@ -976,32 +815,15 @@ def build_network(
     )
 
     lines = line_endings_to_bus_conversion(lines)
-
-    logger.info("Stage 2/5: AC and DC network: enabled")
-
-    # TODO pypsa-eur: Remove entirely after testing, not needed for PyPSA-Eur
-    # Address the overpassing line issue Step 3/5
-    # if snakemake.config["electricity_network"]["osm_split_overpassing_lines"]:
-    #     tol = snakemake.config["electricity_network"]["osm_overpassing_lines_tolerance"]
-    #     logger.info("Stage 3/5: Avoid nodes overpassing lines: enabled with tolerance")
-
-    #     lines, buses = fix_overpassing_lines(lines, buses, distance_crs, tol=tol)
-    # else:
-    logger.info("Stage 3/5: Avoid nodes overpassing lines: disabled")
     
-    # Add bus to countries with no buses
-    buses = add_buses_to_empty_countries(countries_config, inputs.country_shapes, buses)
-
-    # METHOD to merge buses with same voltage and within tolerance Step 4/5
+    # METHOD to merge buses with same voltage and within tolerance
     tol = snakemake.config["electricity_network"]["osm_group_tolerance_buses"]
     logger.info(
-        f"Stage 4/5: Aggregate close substations: enabled with tolerance {tol} m"
+        f"Aggregate close substations: Enabled with tolerance {tol} m"
     )
     lines, buses = merge_stations_lines_by_station_id_and_voltage(
         lines, buses, geo_crs, distance_crs, tol=tol
     )
-
-    logger.info("Stage 5/5: Add augmented substation to country with no data")
 
     # Recalculate lengths of lines
     utm = lines.estimate_utm_crs(datum_name = "WGS 84")
@@ -1019,7 +841,6 @@ def build_network(
     if not os.path.exists(outputs["lines"]):
         os.makedirs(os.path.dirname(outputs["lines"]), exist_ok=True)
 
-
     ### Convert output to pypsa-eur friendly format
     # Rename "substation" in buses["symbol"] to "Substation"
     buses["symbol"] = buses["symbol"].replace({"substation": "Substation"})
@@ -1029,7 +850,6 @@ def build_network(
     converters.set_index("converter_id", inplace=True)
     transformers.set_index("transformer_id", inplace=True)
     buses.set_index("bus_id", inplace=True)
-
 
     # Convert voltages from V to kV
     lines["voltage"] = lines["voltage"] / 1000
@@ -1051,8 +871,6 @@ def build_network(
     lines_csv = lines[cols_lines_csv]
     lines = lines[cols_lines]
     
-
-
     to_csv_nafix(lines_csv, outputs["lines"], quotechar="'")  # Generate CSV
     to_csv_nafix(converters, outputs["converters"], quotechar="'")  # Generate CSV
     to_csv_nafix(transformers, outputs["transformers"], quotechar="'")  # Generate CSV

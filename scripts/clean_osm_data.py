@@ -468,10 +468,12 @@ def _import_lines_and_cables(path_lines):
     Import lines and cables from the given input paths.
 
     Parameters:
-    - path_lines (dict): A dictionary containing the input paths for lines and cables data.
+    - path_lines (dict): A dictionary containing the input paths for lines and 
+      cables data.
 
     Returns:
-    - df_lines (DataFrame): A DataFrame containing the imported lines and cables data.
+    - df_lines (DataFrame): A DataFrame containing the imported lines and 
+      cables data.
 
     """
     columns = ["id", "bounds", "nodes", "geometry", "country", "power", "cables", "circuits", "frequency", "voltage", 
@@ -1078,8 +1080,8 @@ def _remove_lines_within_substations(gdf_lines, gdf_substations_polygon):
     Parameters:
     - gdf_lines (GeoDataFrame): A GeoDataFrame containing lines with 'line_id' 
       and 'geometry' columns.
-    - gdf_substations_polygon (GeoDataFrame): A GeoDataFrame containing substation 
-      polygons.
+    - gdf_substations_polygon (GeoDataFrame): A GeoDataFrame containing 
+      substation polygons.
 
     Returns:
     GeoDataFrame: A new GeoDataFrame without lines within substation polygons.
@@ -1197,4 +1199,3 @@ if __name__ == "__main__":
     gdf_lines.to_file(output_lines, driver="GeoJSON")
 
     logger.info("Cleaning OSM data completed.")
-    

@@ -119,7 +119,7 @@ if config["electricity_network"]["base_network"] == "osm":
             eg_converters=resources("osm/converters.csv"),
             eg_transformers=resources("osm/transformers.csv"),
             links_p_nom="data/links_p_nom.csv",
-            links_tyndp="data/links_tyndp_osm.csv",
+            links_tyndp="data/links_tyndp.csv",
             country_shapes=resources("country_shapes.geojson"),
             offshore_shapes=resources("offshore_shapes.geojson"),
             europe_shape=resources("europe_shape.geojson"),
