@@ -170,11 +170,14 @@ def _load_buses_from_eg(eg_buses, europe_shape, config_elec):
     #     buses.v_nom.isin(config_elec["voltages"]) | buses.v_nom.isnull()
     # )
 
+    v_nom_min = min(config_elec["voltages"])
+    v_nom_max = max(config_elec["voltages"])
+
     # Quick fix:
-    buses_with_v_nom_to_keep_b = (min(config_elec["voltages"]) <= buses.v_nom) & (buses.v_nom <= max(config_elec["voltages"]))
+    buses_with_v_nom_to_keep_b = (v_nom_min <= buses.v_nom) & (buses.v_nom <= v_nom_max)
 
     logger.info(
-        f'Removing buses with voltages {pd.Index(buses.v_nom.unique()).dropna().difference(config_elec["voltages"])}'
+        f'Removing buses outside of range {v_nom_min} - {v_nom_max} V'
     )
     return pd.DataFrame(buses.loc[buses_in_europe_b & buses_with_v_nom_to_keep_b])
 

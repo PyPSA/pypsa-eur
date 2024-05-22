@@ -497,6 +497,7 @@ def _import_lines_and_cables(path_lines):
                 df["id"] = df["id"].astype(str)
                 df["country"] = country
 
+                # col_tags = ["power", "cables", "circuits", "frequency", "voltage", "wires", "capacity", "rating"]
                 col_tags = ["power", "cables", "circuits", "frequency", "voltage", "wires"]
 
                 tags = pd.json_normalize(df["tags"]) \
