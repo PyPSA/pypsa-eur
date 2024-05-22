@@ -839,13 +839,14 @@ def add_h2_retrofit_constraint(n):
 
         # Filter gas plants from current planning horizon
         gas_plants = gas_plants[gas_plants.build_year == current_horizon].index
-
+        efficiency_gas = n.links.efficiency[gas_plants]
+        efficiency_h2 = n.links.efficiency[h2_plants]
         # Store p_nom value for rhs of constraint
         p_nom = n.model["Link-p_nom"]
 
         # Sum of p_nom OCGT/CCGT and retrofitted must be <= installed capacity of OCGT/CCGT
-        lhs = p_nom.loc[h2_plants] + p_nom.loc[gas_plants]
-        rhs = n.links.p_nom_max[h2_plants]
+        lhs = p_nom.loc[h2_plants].mul(efficiency_h2) + p_nom.loc[gas_plants].mul(efficiency_gas)
+        rhs = n.links.p_nom_max[gas_plants].mul(efficiency_gas)
         n.model.add_constraints(lhs == rhs, name=f"{gas_carrier}_retrofit")
 
         logger.info(
