@@ -725,7 +725,7 @@ def update_config_from_wildcards(config, w, inplace=True):
 
 def get_checksum_from_zenodo(file_url):
     parts = file_url.split("/")
-    record_id = parts[parts.index("record") + 1]
+    record_id = parts[parts.index("records") + 1]
     filename = parts[-1]
 
     response = requests.get(f"https://zenodo.org/api/records/{record_id}", timeout=30)
@@ -764,7 +764,7 @@ def validate_checksum(file_path, zenodo_url=None, checksum=None):
     >>> validate_checksum("/path/to/file", checksum="md5:abc123...")
     >>> validate_checksum(
     ...     "/path/to/file",
-    ...     zenodo_url="https://zenodo.org/record/12345/files/example.txt",
+    ...     zenodo_url="https://zenodo.org/records/12345/files/example.txt",
     ... )
 
     If the checksum is invalid, an AssertionError will be raised.

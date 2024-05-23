@@ -8,7 +8,6 @@ Build total energy demands per country using JRC IDEES, eurostat, and EEA data.
 
 import logging
 import multiprocessing as mp
-import os
 from functools import partial
 
 import country_converter as coco
@@ -125,7 +124,6 @@ def build_eurostat(input_eurostat, countries, nprocesses=1, disable_progressbar=
     df = pd.concat([temp, df.loc[~int_avia]])
 
     # Fill in missing data on "Domestic aviation" for each country.
-    domestic_avia = df.index.get_level_values(4) == "Domestic aviation"
     for country in countries:
         slicer = idx[country, :, :, :, "Domestic aviation"]
         # For the Total and Fossil energy columns, fill in zeros with
@@ -142,6 +140,7 @@ def build_eurostat(input_eurostat, countries, nprocesses=1, disable_progressbar=
         "Domestic navigation": "Domestic Navigation",
         "International maritime bunkers": "Bunkers",
         "UK": "GB",
+        "EL": "GR",
     }
     columns_rename = {"Total": "Total all products"}
     df.rename(index=index_rename, columns=columns_rename, inplace=True)
@@ -395,12 +394,11 @@ def build_idees(countries):
         names=["country", "year"],
     )
 
+    # efficiency kgoe/100km -> ktoe/100km
+    totals.loc[:, "passenger car efficiency"] *= 1e3
     # convert ktoe to TWh
     exclude = totals.columns.str.fullmatch("passenger cars")
     totals.loc[:, ~exclude] *= 11.63 / 1e3
-
-    # convert TWh/100km to kWh/km
-    totals.loc[:, "passenger car efficiency"] *= 10
 
     return totals
 
@@ -854,6 +852,7 @@ def rescale_idees_from_eurostat(
                 "total passenger cars",
                 "total other road passenger",
                 "total light duty road freight",
+                "total heavy duty road freight",
             ],
             "elec": [
                 "electricity road",
@@ -891,6 +890,7 @@ def rescale_idees_from_eurostat(
     navigation = [
         "total domestic navigation",
     ]
+    # international navigation is already read in from the eurostat data directly
 
     for country in idees_countries:
         filling_years = [(2015, slice(2016, 2021)), (2000, slice(1990, 1999))]
@@ -940,7 +940,65 @@ def rescale_idees_from_eurostat(
                 energy.loc[slicer_source, navigation].squeeze(axis=0),
             ).values
 
+        # set the total of agriculture/road to the sum of all agriculture/road categories (corresponding to the IDEES data)
+        sel = [
+            "total agriculture electricity",
+            "total agriculture heat",
+            "total agriculture machinery",
+        ]
+        energy.loc[country, "total agriculture"] = energy.loc[country, sel].sum(axis=1)
+
+        sel = [
+            "total passenger cars",
+            "total other road passenger",
+            "total light duty road freight",
+            "total heavy duty road freight",
+        ]
+        energy.loc[country, "total road"] = energy.loc[country, sel].sum(axis=1)
+
     return energy
+
+
+def update_residential_from_eurostat(energy):
+    """
+    Updates energy balances for residential from disaggregated data from
+    Eurostat.
+    """
+    eurostat_households = pd.read_csv(snakemake.input.eurostat_households)
+
+    # Column mapping for energy type
+    nrg_type = {
+        "total residential": ("FC_OTH_HH_E", "TOTAL"),
+        "total residential space": ("FC_OTH_HH_E_SH", "TOTAL"),
+        "total residential water": ("FC_OTH_HH_E_WH", "TOTAL"),
+        "total residential cooking": ("FC_OTH_HH_E_CK", "TOTAL"),
+        "electricity residential": ("FC_OTH_HH_E", "E7000"),
+        "electricity residential space": ("FC_OTH_HH_E_SH", "E7000"),
+        "electricity residential water": ("FC_OTH_HH_E_WH", "E7000"),
+        "electricity residential cooking": ("FC_OTH_HH_E_CK", "E7000"),
+    }
+
+    for nrg_name, (code, siec) in nrg_type.items():
+
+        # Select energy balance type, rename columns and countries to match IDEES data,
+        # convert TJ to TWh, and drop XK data already since included in RS data
+        col_to_rename = {"geo": "country", "TIME_PERIOD": "year", "OBS_VALUE": nrg_name}
+        idx_to_rename = {v: k for k, v in idees_rename.items()}
+        drop_geo = ["EU27_2020", "EA20", "XK"]
+        nrg_data = eurostat_households.query(
+            "nrg_bal == @code and siec == @siec and geo not in @drop_geo and OBS_VALUE > 0"
+        ).copy()
+        nrg_data.rename(columns=col_to_rename, inplace=True)
+        nrg_data = nrg_data.set_index(["country", "year"])[nrg_name] / 3.6e3
+        nrg_data.rename(index=idx_to_rename, inplace=True)
+
+        # update energy balance from household-specific eurostat data
+        idx = nrg_data.index.intersection(energy.index)
+        energy.loc[idx, nrg_name] = nrg_data[idx]
+
+    logger.info(
+        "Updated energy balances for residential using disaggregate final energy consumption data in Households from Eurostat"
+    )
 
 
 if __name__ == "__main__":
@@ -975,6 +1033,8 @@ if __name__ == "__main__":
     # Data from IDEES only exists from 2000-2015.
     logger.info("Extrapolate IDEES data based on eurostat for years 2015-2021.")
     energy = rescale_idees_from_eurostat(idees_countries, energy, eurostat)
+
+    update_residential_from_eurostat(energy)
 
     energy.to_csv(snakemake.output.energy_name)
 

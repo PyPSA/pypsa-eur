@@ -183,6 +183,11 @@ Rule ``cluster_gas_network``
 
 .. automodule:: cluster_gas_network
 
+Rule ``time_aggregation``
+==============================================================================
+
+.. automodule:: time_aggregation
+
 Rule ``prepare_sector_network``
 ==============================================================================
 
