@@ -459,6 +459,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                 existing_large, "p_nom_min"
             ]
 
+
 def add_chp_plants(n, grouping_years, costs, baseyear, clustermaps):
     # rename fuel of CHPs - lignite not in DEA database
     rename_fuel = {
@@ -482,7 +483,7 @@ def add_chp_plants(n, grouping_years, costs, baseyear, clustermaps):
     chp = ppl.query(
         "Set == 'CHP' and (DateOut >= @baseyear or DateOut != DateOut) and (DateIn <= @limit or DateIn != DateIn) and Fueltype not in @drop_fueltypes"
     ).copy()
-    
+
     # calculate remaining lifetime before phase-out (+1 because assuming
     # phase out date at the end of the year)
     chp["lifetime"] = chp.DateOut - chp.DateIn + 1
@@ -872,7 +873,6 @@ def add_heating_capacities_installed_before_baseyear(
                     if str(grouping_year) in index and n.links.p_nom[index] < threshold
                 ],
             )
-
 
 
 # %%
