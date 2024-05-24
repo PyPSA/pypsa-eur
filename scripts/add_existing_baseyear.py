@@ -424,13 +424,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                 else:
                     # for the power only biomass plants, technology parameters of CHP plants are used
                     key = "central solid biomass CHP"
-                    central_heat = n.buses.query(
-                        "carrier == 'urban central heat'"
-                    ).location.unique()
-                    heat_buses = new_capacity.index.map(
-                        lambda i: i + " urban central heat" if i in central_heat else ""
-                    )
-
+                    
                     n.madd(
                         "Link",
                         new_capacity.index,
