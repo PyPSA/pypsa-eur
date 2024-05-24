@@ -426,7 +426,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                 else:
                     # for the power only biomass plants, technology parameters of CHP plants are used
                     key = "central solid biomass CHP"
-                    
+
                     n.madd(
                         "Link",
                         new_capacity.index,
