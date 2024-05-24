@@ -10,6 +10,9 @@ Release Notes
 Upcoming Release
 ================
 
+* Non-essential example configuration files have been moved to
+  ``config/examples``.
+
 * Bugfix: The configuration setting ``electricity:
   estimate_renewable_capacities: enable:`` for rule :mod:`add_electricity` is
   not compatible with ``foresight: myopic``, as the former adds existing
