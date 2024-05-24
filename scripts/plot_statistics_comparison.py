@@ -4,6 +4,7 @@
 #
 # SPDX-License-Identifier: MIT
 
+import logging
 import re
 
 import matplotlib.pyplot as plt
@@ -12,6 +13,7 @@ import seaborn as sns
 from _helpers import configure_logging
 from plot_summary import rename_techs
 
+logger = logging.getLogger(__name__)
 sns.set_theme("paper", style="whitegrid")
 STACKED = {
     "capacity_factor": False,
@@ -44,7 +46,13 @@ def plot_static_comparison(df, ax, stacked=False):
     df = df.dropna(axis=0, how="all").fillna(0)
     if df.empty:
         return
-    c = tech_colors[df.index.get_level_values("carrier").map(rename_techs)]
+    df = df.rename(index=rename_techs).groupby(["component", "carrier"]).sum()
+    carriers = df.index.get_level_values("carrier")
+    if not carriers.difference(tech_colors.index).empty:
+        print(
+            f"Missing colors for carrier: {carriers.difference(tech_colors.index).values}\n Dark grey used instead."
+        )
+    c = carriers.map(lambda x: tech_colors.get(x, "#808080"))
     df = df.pipe(rename_index).T
     df = df.div(float(factor)) if factor != "-" else df
     df.plot.bar(color=c.values, ax=ax, stacked=stacked, legend=False, ylabel=unit)

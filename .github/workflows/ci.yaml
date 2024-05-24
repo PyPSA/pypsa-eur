@@ -19,7 +19,7 @@ on:
   - cron: "0 5 * * TUE"
 
 env:
-  DATA_CACHE_NUMBER: 1
+  DATA_CACHE_NUMBER: 2
 
 jobs:
   build:
@@ -31,7 +31,7 @@ jobs:
         os:
         - ubuntu-latest
         - macos-latest
-#        - windows-latest
+        - windows-latest
         inhouse:
         - stable
         - master

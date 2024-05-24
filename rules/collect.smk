@@ -96,21 +96,22 @@ rule validate_elec_networks:
         ),
 
 
-# temporarily comment out since conflicting with scenario management
-# rule plot_statistics:
-#    input:
-#        [
-#            expand(
-#                RESULTS
-#                + "statistics/figures/comparison/country_{country}/.statistics_{carrier}_plots",
-#                country=config["plotting"].get("countries", "all"),
-#                carrier=config["plotting"].get("carriers", ["all"]),
-#            ),
-#            expand(
-#                RESULTS
-#                + "statistics/figures/single/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/.statistics_{carrier}_plots",
-#                **config["scenario"],
-#                country=config["plotting"].get("countries", "all"),
-#                carrier=config["plotting"].get("carriers", ["all"]),
-#            ),
-#        ],
+rule plot_statistics:
+    input:
+        [
+            expand(
+                RESULTS
+                + "statistics/figures/comparison/country_{country}/.statistics_{carrier}_plots",
+                country=config["plotting"].get("countries", "all"),
+                carrier=config["plotting"].get("carriers", ["all"]),
+                run=config["run"]["name"],
+            ),
+            expand(
+                RESULTS
+                + "statistics/figures/single/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/.statistics_{carrier}_plots",
+                **config["scenario"],
+                country=config["plotting"].get("countries", "all"),
+                carrier=config["plotting"].get("carriers", ["all"]),
+                run=config["run"]["name"],
+            ),
+        ],

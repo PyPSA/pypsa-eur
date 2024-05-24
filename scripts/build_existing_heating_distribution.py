@@ -61,7 +61,6 @@ def build_existing_heating():
     nodal_heating = nodal_heating.multiply(pop_layout.fraction, axis=0)
 
     district_heat_info = pd.read_csv(snakemake.input.district_heat_share, index_col=0)
-    dist_fraction = district_heat_info["district fraction of node"]
     urban_fraction = district_heat_info["urban fraction"]
 
     energy_layout = pd.read_csv(

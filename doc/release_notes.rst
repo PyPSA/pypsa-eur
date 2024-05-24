@@ -10,6 +10,55 @@ Release Notes
 Upcoming Release
 ================
 
+* Bugfix: The configuration setting ``electricity:
+  estimate_renewable_capacities: enable:`` for rule :mod:`add_electricity` is
+  not compatible with ``foresight: myopic``, as the former adds existing
+  renewable capacities in a different way in :mod:`add_existing_baseyear`.
+  The logic was changed so that adding existing renewable capacities is now
+  skipped in :mod:`add_electricity` if the foresight mode is ``myopic``.
+
+* Bugfix: Make sure that gas-fired power plants are correctly added as OCGT or
+  CCGT in :mod:`add_electricity`. Previously they were always added as OCGT.
+
+* Added default values for power distribution losses, assuming uniform losses of
+  3% on distribution grid links (cf. ``sector: transmission_efficiency:
+  electricity distribution grid: efficiency_static: 0.97``). Since distribution
+  losses are included in national load reports (cf. `this report
+  <https://nbviewer.org/github/Open-Power-System-Data/datapackage_timeseries/blob/2020-10-06/main.ipynb>`_),
+  these are deducted from the national load time series to avoid double counting
+  of losses. Further extensions to country-specific loss factors and
+  developments by planning horizon are planned.
+
+* Doubled solar rooftop potentials to roughly 1 TW for Europe based on `recent
+  European Commission reports
+  <https://www.epj-pv.org/articles/epjpv/full_html/2024/01/pv230071/pv230071.html>`_.
+
+* Remove exogenously set share of rooftop PV (``costs: rooftop_share:``).
+  Rooftop and utility-scale PV are now largely handled as separate technologies
+  with endogenous shares.
+
+* New technology, solar PV with single-axis horizontal tracking (on a N-S axis),
+  with a carrier called ``solar-hsat`` to the networks. The default option for adding
+  this technology is set to ``true`` in the ``config.yaml``.
+
+* The technology-data version was updated to v0.9.0.
+
+* Bugfix to avoid duplicated offshore regions.
+
+* Added option ``industry: HVC_environment_sequestration_fraction:`` to specify
+  the fraction of carbon contained plastics that is permanently sequestered in
+  landfill. The default assumption is that all carbon contained in plastics is
+  eventually released to the atmosphere.
+
+* Added option for building waste-to-energy plants with and without carbon
+  capture to consume non-recycled and non-sequestered plastics. The config
+  settings are ``industry: waste_to_energy:`` and ``industry:
+  waste_to_energy_cc``. This does not include municipal solid waste.
+
+* Bump minimum ``powerplantmatching`` version to v0.5.15.
+
+* Add floating wind technology for water depths below 60m
+
 * Add config ``run: shared_resources: exclude:`` to specify additional files
   that should be excluded from shared resources with the setting ``run:
   shared_resources: base``. The function ``_helpers/get_run_path()`` now takes
@@ -25,13 +74,43 @@ Upcoming Release
 
 * Allow dictionary for the config aviation_demand_factor.
 
+* Add option to post-discretize line and link capacities based on unit sizes and
+  rounding thresholds specified in the configuration under ``solving: options:
+  post_discretization:`` when iterative solving is enables (``solving: optiosn:
+  skip_iterations: false``). This option is disabled by default.
+
 * Group existing capacities to the earlier grouping_year for consistency with optimized capacities.
+
+* Update data bundle:
+
+  - Merge electricity-only and sector-coupled data bundles into `one bundle
+    <https://zenodo.org/records/10973944>`_. This means that the rule
+    ``retrieve_sector_databundle`` was removed.
+
+  - Include rasterised ``natura.tiff`` in data bundle and remove rule
+    ``retrieve_natura_raster``.
+
+  - Remove rule ``build_natura_raster`` as this rule is rarely run and increases
+    the data bundle size considerably.
+
+  - Remove outdated files from data bundle (e.g., Eurostat energy balances)
+
+  - Reduce spatial scope of GEBCO bathymetry data to Europe to save space.
+
+  - Remove the use of a separate data bundle for tutorials.
+
+  - Directly download `Hotmaps Industrial Database
+    <https://gitlab.com/hotmaps/industrial_sites/industrial_sites_Industrial_Database/-/blob/master/data/Industrial_Database.csv>`__
+    from source and remove ``Industrial_Database.csv`` from data bundle.
 
 * bugfix: installed heating capacities were 5% lower than existing heating capacities
 
 * Include gas and oil fields and saline aquifers in estimation of CO2 sequestration potential.
 
 * bugfix: convert Strings to pathlib.Path objects as input to ConfigSettings
+
+* bugfix: fix distinction of temperature-dependent correction factors for the
+  energy demand of electric vehicles, ICES fuel cell cars.
 
 * Allow the use of more solvers in clustering (Xpress, COPT, Gurobi, CPLEX, SCIP, MOSEK).
 
@@ -201,6 +280,10 @@ Upcoming Release
 
 * Bugfix: allow modelling sector-coupled landlocked regions. (Fixed handling of offshore wind.)
 
+* Bugfix: approximation of hydro power generation if Portugal or Spain are not included works now.
+
+* Bugfix: copy_timeslice does not copy anymore, if country not present in load data.
+
 * Adapt the disabling of transmission expansion in myopic foresight optimisations when limit is already reached to also handle cost limits.
 
 * Fix duplicated years and grouping years reference in `add_land_use_constraint_m`.
@@ -213,10 +296,52 @@ Upcoming Release
 
 * Fix custom busmap read in `cluster_network`.
 
+* Add `nodal_supply_energy` to `make_summary`.
+
+* Data on existing renewable capacities is now consistently taken from powerplantmatching (instead of being retrieved separately); the dataset has also been updated to include 2023 values.
+
+* Added shapes to .nc file for different stages of the network object in `base_network`, `simplify_network`, and `cluster_network`; the `build_bus_regions` rule is now integrated into the `base_network` rule.
+* Improved the behaviour of `agg_p_nom_limits`:
+
+  - Moved the associated configuration to `solving`. This allows *Snakemake* to correctly decide which rules to run when the configuration changes.
+
+  - Added the ability to enable aggregation of all *offwind* types (*offwind-ac* and *offwind-dc*) when writing the constraint.
+
+  - Added the possibility to take existing capacities into account when writing the constraint.
+
+  - Added the possibility to have a different file for each planning horizon.
+
 * Fix p_nom_min of renewables generators for myopic approach and add check of existing capacities in `add_land_use_constraint_m`.
 
 * Add documentation section for how to contribute documentation
 
+* Clarify suffix usage in `add_existing_baseyear`.
+
+* The ``{sector_opts}`` wildcard is now not used by default. All scenario definitions are now done in the ``config.yaml`` file.
+
+* Fix gas network retrofitting in `add_brownfield`.
+
+* Time aggregation for sector-coupled networks have been split into its own rule. When using time step segmentation, time aggregation is constant over planning horizons of the same network.
+
+* Clarify that the rolling-horizon setting ``solving: rolling_horizon:`` only works for the rule :mod:`solve_operations_network` and not for networks with sector-coupling or investment variables.
+
+* Fix non steel related coal demand during transition (using `sector_ratios_fraction_future`).
+
+* Fix fill missing data in `build_industry_sector_ratios_intermediate`.
+
+* Add methanol consumption in industry as reported in `DECHEMA report
+  <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry.pdf>`__
+  directly as methanol demand rather than with fixed methane and electricity
+  demands from today's industry sector ratios.
+
+* Mark downloaded files as ``ancient`` rather than ``protected``.
+
+* Fix file name encoding in optional rule :mod:`build_biomass_transport_costs` depending on the operating system.
+
+* Energy balances for residential demands (space, water, cooking) in the
+  JRC-IDEES data are updated with newer values from eurostat based on a
+  disaggregated household energy balance.
+  (https://github.com/PyPSA/pypsa-eur/pull/1025)
 
 PyPSA-Eur 0.10.0 (19th February 2024)
 =====================================
@@ -1539,7 +1664,7 @@ This release is known to work with `PyPSA-Eur
 **Gas Transmission Network**
 
 * New rule ``retrieve_gas_infrastructure_data`` that downloads and extracts the
-  SciGRID_gas `IGGIELGN <https://zenodo.org/record/4767098>`__ dataset from
+  SciGRID_gas `IGGIELGN <https://zenodo.org/records/4767098>`__ dataset from
   zenodo. It includes data on the transmission routes, pipe diameters,
   capacities, pressure, and whether the pipeline is bidirectional and carries
   H-Gas or L-Gas.
@@ -1699,7 +1824,7 @@ This release is known to work with `PyPSA-Eur
   PyPSA network.
 
 * Updated `data bundle
-  <https://zenodo.org/record/5824485/files/pypsa-eur-sec-data-bundle.tar.gz>`__
+  <https://zenodo.org/records/5824485/files/pypsa-eur-sec-data-bundle.tar.gz>`__
   that includes the hydrogan salt cavern storage potentials.
 
 * Updated and extended documentation in
@@ -2059,7 +2184,7 @@ PyPSA-Eur-Sec codebase in Version 0.2.0 above.
 
 This model has `its own github repository
 <https://github.com/martavp/pypsa-eur-sec-30-path>`__ and is `archived
-on Zenodo <https://zenodo.org/record/4014807>`__.
+on Zenodo <https://zenodo.org/records/4014807>`__.
 
 
 
@@ -2075,7 +2200,7 @@ European countries with one node per country. It includes demand and
 supply for electricity, space and water heating in buildings, and land
 transport.
 
-It is `archived on Zenodo <https://zenodo.org/record/1146666>`__.
+It is `archived on Zenodo <https://zenodo.org/records/1146666>`__.
 
 
 Release Process
