@@ -491,7 +491,8 @@ sector:
     2050: 0.6
   retrofitting:
     retro_endogen: false
-    WWHR_endogen: true # Waste Water Heat Recovery
+    WWHR_endogen: false # Waste Water Heat Recovery
+    disaggregate_building_types: false # true separates AB, SFH and MFH
     cost_factor: 1.0
     interest_rate: 0.04
     annualise_cost: true

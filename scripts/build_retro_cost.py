@@ -124,7 +124,10 @@ rename_sectors = {
 
 
 # additional insulation thickness, determines maximum possible savings [m]
-l_strength = ["0.076", "0.197"]
+# the assumed values correspond to standard thickness values of Dupont styrofoam product sheet
+# source: https://www.dupont.com/content/dam/dupont/amer/us/en/performance-building-solutions/public/documents/en/styrofoam-brand-square-edge-st-100-pis-43-d100996-enus.pdf
+# 3 inch and 3.5inch + 4inch
+l_strength = ["0.076", "0.1905"]
 
 
 # (ii) --- FUNCTIONS ----------------------------------------------------------
@@ -183,6 +186,17 @@ def prepare_building_stock_data():
         {"Residential sector": "residential", "Service sector": "services"},
         inplace=True,
     )
+    if snakemake.params["retrofitting"]["disaggregate_building_types"]:
+        building_data["sector"] = (
+            building_data.apply(
+                lambda b: "residential SFH" if
+                b.subsector == 'Single family- Terraced houses' else
+                "residential AB" if b.subsector in "Appartment blocks" else
+                "residential MFH" if b.subsector == "Multifamily houses" else
+                "residential mixed" if b.subsector in ["Residential sector", ] else
+                b.sector, axis=1)
+        )
+
 
     # extract u-values
     u_values = building_data[
@@ -231,10 +245,18 @@ def prepare_building_stock_data():
     # add for some missing countries floor area from other data sources
     area_missing = pd.read_csv(
         snakemake.input.floor_area_missing,
-        index_col=[0, 1],
+        index_col=[0],
         usecols=[0, 1, 2, 3],
         encoding="ISO-8859-1",
     )
+    if snakemake.params["retrofitting"]["disaggregate_building_types"]:
+        area_missing.sector = area_missing.apply(
+            lambda b:
+            "residential AB" if b.sector == "residential"
+            else b.sector, axis=1
+        )
+    area_missing = area_missing.reset_index().set_index(["country", "sector"])
+
     area_tot = pd.concat([area_tot, area_missing.unstack(level=-1).dropna().stack()])
     area_tot = area_tot.loc[~area_tot.index.duplicated(keep="last")]
 
@@ -265,6 +287,8 @@ def prepare_building_stock_data():
     # u_values for Poland are missing -> take them from eurostat -----------
     u_values_PL = pd.read_csv(snakemake.input.u_values_PL)
     u_values_PL.component.replace({"Walls": "Wall", "Windows": "Window"}, inplace=True)
+    if snakemake.params["retrofitting"]["disaggregate_building_types"]:
+        u_values_PL.sector.replace({"residential": "residential AB"}, inplace=True)
     area_PL = area.loc["Poland"].reset_index()
     data_PL = pd.DataFrame(columns=u_values.columns, index=area_PL.index)
     data_PL["country"] = "Poland"
@@ -275,7 +299,7 @@ def prepare_building_stock_data():
     data_PL["btype"] = area_PL["subsector"]
 
     data_PL_final = pd.DataFrame()
-    for component in components:
+    for component in []:
         data_PL["type"] = component
         data_PL["value"] = data_PL.apply(
             lambda x: u_values_PL[
@@ -978,6 +1002,11 @@ def sample_dE_costs_area(
         .set_index(["country_code", "subsector", "bage"])
     )
 
+    if snakemake.params["retrofitting"]["disaggregate_building_types"]:
+        sub_to_sector_dict["AB"] = "residential AB"
+        sub_to_sector_dict["MFH"] = "residential MFH"
+        sub_to_sector_dict["SFH"] = "residential SFH"
+
     cost_dE = (
         pd.concat([costs, dE_space], axis=1)
         .mul(area_reordered.weight, axis=0)
@@ -1012,6 +1041,10 @@ def sample_dE_costs_area(
     cost_dE = cost_dE.reindex(countries, level=0)
     # get share of residential and service floor area
     sec_w = area_tot.div(area_tot.groupby(level=0).transform("sum"))
+    if snakemake.params["retrofitting"]["disaggregate_building_types"]:
+        missing = list(set(cost_dE.index)-set(sec_w.index))
+        sec_w = pd.concat([sec_w, pd.DataFrame(index=missing)]).loc[cost_dE.index] #.fillna(0)
+
     # get the total cost-energy-savings weight by sector area
     tot = (
         # sec_w has columns "estimated" and "value"
@@ -1042,7 +1075,7 @@ def sample_dE_costs_area(
         [moderate_dE_cost.columns, ["moderate"]]
     )
 
-    ambitious_dE_cost = cost_dE.xs("0.197", level=1, axis=1)
+    ambitious_dE_cost = cost_dE.xs("0.1905", level=1, axis=1)
     ambitious_dE_cost.columns = pd.MultiIndex.from_product(
         [ambitious_dE_cost.columns, ["ambitious"]]
     )

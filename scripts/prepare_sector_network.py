@@ -2129,15 +2129,23 @@ def add_heat(n, costs):
             # get sector name ("residential"/"services"/or both "tot" for urban central)
             if "urban central" in name:
                 sec = "tot"
+                sec_floor = ["tot"]
             if "residential" in name:
                 sec = "residential"
+                if options["retrofitting"]["disaggregate_building_types"]:
+                    sec_floor = set(
+                        ["residential AB", "residential MFH", "residential SFH"]
+                    )
+                    sec_floor = list(
+                        set(floor_area.loc[ct, "value"].index)
+                        .intersection(sec_floor)
+                    )
+                else:
+                    sec_floor = ["residential"]
             if "services" in name:
                 sec = "services"
+                sec_floor = ["services"]
 
-            # get floor aread at node and region (urban/rural) in m^2
-            floor_area_node = (
-                pop_layout.loc[node].fraction * floor_area.loc[ct, "value"] * 10**6
-            ).loc[sec] * f
             # total heat demand at node [MWh]
             demand = n.loads_t.p_set[name]
 
@@ -2151,51 +2159,59 @@ def add_heat(n, costs):
                 .fillna(0)
             )
 
-            # minimum heat demand 'dE' after retrofitting in units of original heat demand (values between 0-1)
-            dE = retro_data.loc[(ct, sec), ("dE")]
-            # get additional energy savings 'dE_diff' between the different retrofitting strengths/generators at one node
-            dE_diff = abs(dE.diff()).fillna(1 - dE.iloc[0])
-            # convert costs Euro/m^2 -> Euro/MWh
-            capital_cost = (
-                retro_data.loc[(ct, sec), ("cost")]
-                * floor_area_node
-                / ((1 - dE) * space_heat_demand.max())
-            )
-            if space_heat_demand.max() == 0:
-                capital_cost = capital_cost.apply(lambda b: 0 if b == np.inf else b)
-
-            # number of possible retrofitting measures 'strengths' (set in list at config.yaml 'l_strength')
-            # given in additional insulation thickness [m]
-            # for each measure, a retrofitting generator is added at the node
-            strengths = retro_data.columns.levels[1]
-
-            # check that ambitious retrofitting has higher costs per MWh than moderate retrofitting
-            if (capital_cost.diff() < 0).sum():
-                logger.warning(f"Costs are not linear for {ct} {sec}")
-                s = capital_cost[(capital_cost.diff() < 0)].index
-                strengths = strengths.drop(s)
-
-            # reindex normed time profile of space heat demand back to hourly resolution
-            space_pu = space_pu.reindex(index=heat_demand.index).ffill()
-
-            # add for each retrofitting strength a generator with heat generation profile following the profile of the heat demand
-            for strength in strengths:
-                node_name = " ".join(name.split(" ")[2::])
-                n.madd(
-                    "Generator",
-                    [node],
-                    suffix=" retrofitting " + strength + " " + node_name,
-                    bus=name,
-                    carrier="retrofitting",
-                    p_nom_extendable=True,
-                    p_nom_max=dE_diff[strength]
-                    * space_heat_demand.max(),  # maximum energy savings for this renovation strength
-                    p_max_pu=space_pu,
-                    p_min_pu=space_pu,
-                    country=ct,
-                    capital_cost=capital_cost[strength]
-                    * options["retrofitting"]["cost_factor"],
+            for sec_i in sec_floor:
+                # get floor aread at node and region (urban/rural) in m^2
+                floor_area_node = (
+                    pop_layout.loc[node].fraction * floor_area.loc[ct, "value"] * 10**6
+                ).loc[sec_i] * f
+                # minimum heat demand 'dE' after retrofitting in units of original heat demand (values between 0-1)
+                dE = retro_data.loc[(ct, sec_i), ("dE")]
+                # get additional energy savings 'dE_diff' between the different retrofitting strengths/generators at one node
+                dE_diff = abs(dE.diff()).fillna(1 - dE.iloc[0])
+                # convert costs Euro/m^2 -> Euro/MWh
+                capital_cost = (
+                    retro_data.loc[(ct, sec_i), ("cost")]
+                    * floor_area_node
+                    / ((1 - dE) * space_heat_demand.max())
                 )
+                if space_heat_demand.max() == 0:
+                    capital_cost = capital_cost.apply(lambda b: 0 if b == np.inf else b)
+
+                # number of possible retrofitting measures 'strengths' (set in list at config.yaml 'l_strength')
+                # given in additional insulation thickness [m]
+                # for each measure, a retrofitting generator is added at the node
+                strengths = retro_data.columns.levels[1]
+
+                # check that ambitious retrofitting has higher costs per MWh than moderate retrofitting
+                if (capital_cost.diff() < 0).sum():
+                    logger.warning(f"Costs are not linear for {ct} {sec_i}")
+                    s = capital_cost[(capital_cost.diff() < 0)].index
+                    strengths = strengths.drop(s)
+
+                # reindex normed time profile of space heat demand back to hourly resolution
+                space_pu = space_pu.reindex(index=heat_demand.index).ffill()
+
+                # add for each retrofitting strength a generator with heat generation profile following the profile of the heat demand
+                for strength in strengths:
+                    if len(sec_floor)>1 and "residential" in name:
+                         node_name = " ".join(name.split(" ")[2::]) + " " + sec_i.split(" ")[1]
+                    else:
+                        node_name = " ".join(name.split(" ")[2::])
+                    n.madd(
+                        "Generator",
+                        [node],
+                        suffix=" retrofitting " + strength + " " + node_name,
+                        bus=name,
+                        carrier="retrofitting",
+                        p_nom_extendable=True,
+                        p_nom_max=dE_diff[strength]
+                        * space_heat_demand.max(),  # maximum energy savings for this renovation strength
+                        p_max_pu=space_pu,
+                        p_min_pu=space_pu,
+                        country=ct,
+                        capital_cost=capital_cost[strength]
+                        * options["retrofitting"]["cost_factor"],
+                    )
 
     if options["retrofitting"]["WWHR_endogen"]:
         name = f"residential water"
