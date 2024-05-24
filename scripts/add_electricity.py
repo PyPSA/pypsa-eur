@@ -881,15 +881,22 @@ if __name__ == "__main__":
 
     estimate_renewable_caps = params.electricity["estimate_renewable_capacities"]
     if estimate_renewable_caps["enable"]:
-        tech_map = estimate_renewable_caps["technology_mapping"]
-        expansion_limit = estimate_renewable_caps["expansion_limit"]
-        year = estimate_renewable_caps["year"]
+        if params.foresight != "overnight":
+            logger.info(
+                "Skipping renewable capacity estimation because they are added later "
+                "in rule `add_existing_baseyear` with foresight mode 'myopic'."
+            )
+        else:
+            tech_map = estimate_renewable_caps["technology_mapping"]
+            expansion_limit = estimate_renewable_caps["expansion_limit"]
+            year = estimate_renewable_caps["year"]
 
-        if estimate_renewable_caps["from_opsd"]:
-            attach_OPSD_renewables(n, tech_map)
-        estimate_renewable_capacities(
-            n, year, tech_map, expansion_limit, params.countries
-        )
+            if estimate_renewable_caps["from_opsd"]:
+                attach_OPSD_renewables(n, tech_map)
+
+            estimate_renewable_capacities(
+                n, year, tech_map, expansion_limit, params.countries
+            )
 
     update_p_nom_max(n)
 

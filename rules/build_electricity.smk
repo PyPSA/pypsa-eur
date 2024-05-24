@@ -425,6 +425,7 @@ rule add_electricity:
         electricity=config_provider("electricity"),
         conventional=config_provider("conventional"),
         costs=config_provider("costs"),
+        foresight=config_provider("foresight"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
         unpack(input_profile_tech),

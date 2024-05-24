@@ -10,6 +10,13 @@ Release Notes
 Upcoming Release
 ================
 
+* Bugfix: The configuration setting ``electricity:
+  estimate_renewable_capacities: enable:`` for rule :mod:`add_electricity` is
+  not compatible with ``foresight: myopic``, as the former adds existing
+  renewable capacities in a different way in :mod:`add_existing_baseyear`.
+  The logic was changed so that adding existing renewable capacities is now
+  skipped in :mod:`add_electricity` if the foresight mode is ``myopic``.
+
 * Bugfix: Make sure that gas-fired power plants are correctly added as OCGT or
   CCGT in :mod:`add_electricity`. Previously they were always added as OCGT.
 
