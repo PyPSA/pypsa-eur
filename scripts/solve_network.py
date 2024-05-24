@@ -825,6 +825,7 @@ def add_h2_retrofit_constraint(n):
         ("CCGT", "CCGT H2 retrofitted"),
         ("urban central gas CHP", "urban central retrofitted H2 CHP"),
     ]
+    current_horizon = snakemake.wildcards.planning_horizons
 
     for gas_carrier, h2_carrier in plant_types:
         gas_plants = n.links.query(
