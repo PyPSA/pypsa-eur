@@ -117,7 +117,7 @@ electricity:
 
   powerplants_filter: (DateOut >= 2023 or DateOut != DateOut) and not (Country == 'Germany' and Fueltype == 'Nuclear')
   custom_powerplants: false
-  everywhere_powerplants: [nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
+  everywhere_powerplants: []
 
   conventional_carriers: [nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
   renewable_carriers: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float, hydro]

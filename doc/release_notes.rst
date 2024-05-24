@@ -10,6 +10,11 @@ Release Notes
 Upcoming Release
 ================
 
+* Disable option ``electricity: everywhere_powerplants``` by default to save memory in :mod:`simplify_network`.
+
+* Non-essential example configuration files have been moved to
+  ``config/examples``.
+
 * Bugfix: The configuration setting ``electricity:
   estimate_renewable_capacities: enable:`` for rule :mod:`add_electricity` is
   not compatible with ``foresight: myopic``, as the former adds existing
