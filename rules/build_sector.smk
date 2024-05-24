@@ -870,12 +870,12 @@ rule time_aggregation:
         hourly_heat_demand_total=lambda w: (
             resources("hourly_heat_demand_total_elec_s{simpl}_{clusters}.nc")
             if config_provider("sector", "heating")(w)
-            else None
+            else []
         ),
         solar_thermal_total=lambda w: (
             resources("solar_thermal_total_elec_s{simpl}_{clusters}.nc")
             if config_provider("sector", "solar_thermal")(w)
-            else None
+            else []
         ),
     output:
         snapshot_weightings=resources(
