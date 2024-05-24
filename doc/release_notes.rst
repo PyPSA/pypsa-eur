@@ -10,6 +10,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Disable option ``electricity: everywhere_powerplants``` by default to save memory in :mod:`simplify_network`.
+
 * Non-essential example configuration files have been moved to
   ``config/examples``.
 
