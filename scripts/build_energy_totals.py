@@ -394,8 +394,8 @@ def build_idees(countries):
         names=["country", "year"],
     )
 
-    # efficiency kgoe/100km -> ktoe/100km
-    totals.loc[:, "passenger car efficiency"] *= 1e3
+    # efficiency kgoe/100km -> ktoe/100km so that after conversion TWh/100km
+    totals.loc[:, "passenger car efficiency"] /= 1e6
     # convert ktoe to TWh
     exclude = totals.columns.str.fullmatch("passenger cars")
     totals.loc[:, ~exclude] *= 11.63 / 1e3
@@ -766,9 +766,8 @@ def build_transport_data(countries, population, idees):
 
         transport_data = transport_data.combine_first(fill_values)
 
-    # collect average fuel efficiency in kWh/km
-
-    transport_data["average fuel efficiency"] = idees["passenger car efficiency"]
+    # collect average fuel efficiency in MWh/100km, taking passengar car efficiency in TWh/100km
+    transport_data["average fuel efficiency"] = idees["passenger car efficiency"] * 1e6
 
     missing = transport_data.index[transport_data["average fuel efficiency"].isna()]
     if not missing.empty:
@@ -941,20 +940,21 @@ def rescale_idees_from_eurostat(
             ).values
 
         # set the total of agriculture/road to the sum of all agriculture/road categories (corresponding to the IDEES data)
-        sel = [
+        rows = idx[country, :]
+        cols = [
             "total agriculture electricity",
             "total agriculture heat",
             "total agriculture machinery",
         ]
-        energy.loc[country, "total agriculture"] = energy.loc[country, sel].sum(axis=1)
+        energy.loc[rows, "total agriculture"] = energy.loc[rows, cols].sum(axis=1)
 
-        sel = [
+        cols = [
             "total passenger cars",
             "total other road passenger",
             "total light duty road freight",
             "total heavy duty road freight",
         ]
-        energy.loc[country, "total road"] = energy.loc[country, sel].sum(axis=1)
+        energy.loc[rows, "total road"] = energy.loc[rows, cols].sum(axis=1)
 
     return energy
 
