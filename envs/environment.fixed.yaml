@@ -1,9 +1,9 @@
 name: pypsa-eur
 channels:
-  - conda-forge
-  - bioconda
-  - gurobi
-  - defaults
+- conda-forge
+- bioconda
+- gurobi
+- defaults
 dependencies:
   - _libgcc_mutex=0.1
   - _openmp_mutex=4.5
