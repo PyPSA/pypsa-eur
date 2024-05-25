@@ -457,7 +457,6 @@ def update_wind_solar_costs(n, costs):
             continue
         profile = snakemake.input["profile_offwind-" + connection]
         with xr.open_dataset(profile) as ds:
-
             # if-statement for compatibility with old profiles
             if "year" in ds.indexes:
                 ds = ds.sel(year=ds.year.min(), drop=True)
@@ -1838,7 +1837,7 @@ def add_heat(n, costs):
     for name in heat_systems:
         name_type = "central" if name == "urban central" else "decentral"
 
-        if name == "urban central":
+        if name == "urban central" and not options["central_heat_everywhere"]:
             nodes = dist_fraction.index[dist_fraction > 0]
         else:
             nodes = pop_layout.index
@@ -3865,8 +3864,9 @@ if __name__ == "__main__":
     if options["electricity_grid_connection"]:
         add_electricity_grid_connection(n, costs)
 
-    for k, v in options["transmission_efficiency"].items():
-        lossy_bidirectional_links(n, k, v)
+    if options.get("transmission_efficiency_enabled", True):
+        for k, v in options["transmission_efficiency"].items():
+            lossy_bidirectional_links(n, k, v)
 
     # Workaround: Remove lines with conflicting (and unrealistic) properties
     # cf. https://github.com/PyPSA/pypsa-eur/issues/444

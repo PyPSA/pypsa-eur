@@ -293,7 +293,7 @@ def calculate_energy(n, label, energy):
                     .sum()
                 )
                 # remove values where bus is missing (bug in nomopyomo)
-                no_bus = c.df.index[c.df["bus" + port] == ""]
+                no_bus = c.df.index[c.df["bus" + port] == ""].intersection(totals.index)
                 totals.loc[no_bus] = float(
                     n.component_attrs[c.name].loc["p" + port, "default"]
                 )
@@ -347,7 +347,8 @@ def calculate_supply(n, label, supply):
 
                 # lots of sign compensation for direction and to do maximums
                 s = (-1) ** (1 - int(end)) * (
-                    (-1) ** int(end) * c.pnl["p" + end][items]
+                    (-1) ** int(end)
+                    * c.pnl["p" + end].reindex(columns=items, fill_value=0.0)
                 ).max().groupby(c.df.loc[items, "carrier"]).sum()
                 s.index = s.index + end
                 s = pd.concat([s], keys=[c.list_name])
@@ -397,9 +398,11 @@ def calculate_supply_energy(n, label, supply_energy):
                 if len(items) == 0:
                     continue
 
-                s = (-1) * c.pnl["p" + end][items].multiply(
-                    n.snapshot_weightings.generators, axis=0
-                ).sum().groupby(c.df.loc[items, "carrier"]).sum()
+                s = (-1) * c.pnl["p" + end].reindex(
+                    columns=items, fill_value=0.0
+                ).multiply(n.snapshot_weightings.generators, axis=0).sum().groupby(
+                    c.df.loc[items, "carrier"]
+                ).sum()
                 s.index = s.index + end
                 s = pd.concat([s], keys=[c.list_name])
                 s = pd.concat([s], keys=[i])

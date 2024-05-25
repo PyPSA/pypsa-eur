@@ -309,6 +309,12 @@ Upcoming Release
 
 * Clarify suffix usage in `add_existing_baseyear`.
 
+* Add an experimental feature to aggregate components by build-year before optimisation, leading to a substantial reduction in memory footprint for said optimisations.
+
+* Add an option `central_heat_everywhere` to model central heating at every location in the model, even when there is no district heating there. (This option is necessary when using build year aggregation.)
+
+* Add an option `transmission_efficiency_enabled` to turn off efficiency losses for all carriers.
+
 * The ``{sector_opts}`` wildcard is now not used by default. All scenario definitions are now done in the ``config.yaml`` file.
 
 * Fix gas network retrofitting in `add_brownfield`.

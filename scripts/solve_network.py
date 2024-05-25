@@ -31,6 +31,7 @@ import logging
 import os
 import re
 import sys
+import time
 
 import numpy as np
 import pandas as pd
@@ -43,8 +44,11 @@ from _helpers import (
     set_scenario_config,
     update_config_from_wildcards,
 )
-from pypsa.descriptors import get_activity_mask
+from pypsa.clustering.spatial import align_strategies, flatten_multiindex
+from pypsa.descriptors import Dict, get_activity_mask
 from pypsa.descriptors import get_switchable_as_dense as get_as_dense
+from pypsa.descriptors import nominal_attrs
+from pypsa.io import import_components_from_dataframe, import_series_from_dataframe
 
 logger = logging.getLogger(__name__)
 pypsa.pf.logger.setLevel(logging.WARNING)
@@ -326,8 +330,8 @@ def add_carbon_constraint(n, snapshots):
             continue
 
         # stores
-        n.stores["carrier"] = n.stores.bus.map(n.buses.carrier)
-        stores = n.stores.query("carrier in @emissions.index and not e_cyclic")
+        bus_carrier = n.stores.bus.map(n.buses.carrier)
+        stores = n.stores.query("@bus_carrier in @emissions.index and not e_cyclic")
         if not stores.empty:
             last = n.snapshot_weightings.reset_index().groupby("period").last()
             last_i = last.set_index([last.index, last.timestep]).index
@@ -352,8 +356,8 @@ def add_carbon_budget_constraint(n, snapshots):
             continue
 
         # stores
-        n.stores["carrier"] = n.stores.bus.map(n.buses.carrier)
-        stores = n.stores.query("carrier in @emissions.index and not e_cyclic")
+        bus_carrier = n.stores.bus.map(n.buses.carrier)
+        stores = n.stores.query("@bus_carrier in @emissions.index and not e_cyclic")
         if not stores.empty:
             last = n.snapshot_weightings.reset_index().groupby("period").last()
             last_i = last.set_index([last.index, last.timestep]).index
@@ -927,13 +931,12 @@ def add_pipe_retrofit_constraint(n):
     """
     Add constraint for retrofitting existing CH4 pipelines to H2 pipelines.
     """
-    if "reversed" not in n.links.columns:
-        n.links["reversed"] = False
+    reversed = n.links.reversed if "reversed" in n.links.columns else False
     gas_pipes_i = n.links.query(
-        "carrier == 'gas pipeline' and p_nom_extendable and ~reversed"
+        "carrier == 'gas pipeline' and p_nom_extendable and ~@reversed"
     ).index
     h2_retrofitted_i = n.links.query(
-        "carrier == 'H2 pipeline retrofitted' and p_nom_extendable and ~reversed"
+        "carrier == 'H2 pipeline retrofitted' and p_nom_extendable and ~@reversed"
     ).index
 
     if h2_retrofitted_i.empty or gas_pipes_i.empty:
@@ -961,8 +964,8 @@ def add_co2_atmosphere_constraint(n, snapshots):
             continue
 
         # stores
-        n.stores["carrier"] = n.stores.bus.map(n.buses.carrier)
-        stores = n.stores.query("carrier in @emissions.index and not e_cyclic")
+        bus_carrier = n.stores.bus.map(n.buses.carrier)
+        stores = n.stores.query("@bus_carrier in @emissions.index and not e_cyclic")
         if not stores.empty:
             last_i = snapshots[-1]
             lhs = n.model["Store-e"].loc[last_i, stores.index]
@@ -1023,7 +1026,295 @@ def extra_functionality(n, snapshots):
         custom_extra_functionality(n, snapshots, snakemake)
 
 
-def solve_network(n, config, solving, **kwargs):
+strategies = dict(
+    # The following variables are stored in columns and restored
+    # exactly after disaggregation.
+    p_nom="sum",
+    lifetime="mean",
+    # p_nom_max should be infinite if any of summands are infinite
+    p_nom_max="sum",
+    # Capital cost is taken to be that of the most recent year. Note:
+    # components without build year (that are not to be aggregated)
+    # will be "trivially" aggregated as 1-element series; in that case
+    # their name doesn't end in "-YYYY", hence the check.
+    capital_cost=(
+        lambda s: (
+            s.iloc[pd.Series(s.index.map(lambda x: int(x[-4:]))).idxmax()]
+            if len(s) > 1
+            else s.squeeze()
+        )
+    ),
+    # Take mean efficiency, then disaggregate. NB: should
+    # really be weighted by capacity.
+    efficiency="mean",
+    efficiency2="mean",
+    # Some urban decentral gas boilers have efficiency3 and
+    # efficiency4 1.0, other NaN. (mean ignores NaN values).
+    efficiency3="mean",
+    efficiency4="mean",
+    p_nom_min="sum",
+    p_nom_extendable=lambda x: x.any(),
+    e_nom="sum",
+    e_nom_min="sum",
+    e_nom_max="sum",
+    e_nom_extendable=lambda x: x.any(),
+    # length_original sometimes contains NaN values
+    length_original="mean",
+    # The following two should really be the same, but
+    # equality is difficult with floats.
+    marginal_cost="mean",
+    # Build year is set to 0; to be reset when disaggregating
+    build_year=lambda x: 0 if len(x) > 1 else x.squeeze(),
+    # "weight" isn't meaningful at this stage; set to 1.
+    weight=lambda x: 1,
+    # Apparently "control" doesn't really matter; follow
+    # pypsa.clustering.spatial by setting to ""
+    control=lambda x: "",
+    # p_max_pu should be the same, but sometimes not? Need to look into that
+    p_max_pu="mean",
+    # The remaining attributes are outputs, and allow the aggregation of solved networks.
+    p_nom_opt="sum",
+    e_nom_opt="sum",
+    p="sum",
+    e="sum",
+    p0="sum",
+    p1="sum",
+    p2="sum",
+    p3="sum",
+    p4="sum",
+)
+
+# The following attributes are to be stored by build year in extra
+# columns, so that they can be properly disaggregated. The string
+# "attr_nom" is replaced by the actual attribute name in the code
+# below (i.e. "p_nom", "e_nom", etc.)
+vars_to_store = [
+    "attr_nom",
+    "attr_nom_min",
+    "attr_nom_max",
+    "attr_nom_extendable",
+    "lifetime",
+    "capital_cost",
+    "marginal_cost",
+    "efficiency",
+    "efficiency2",
+    "efficiency3",
+    "efficiency4",
+]
+
+
+def aggregate_build_years(n, exclude_carriers):
+    """
+    Aggregate components which are identical in all but build year.
+    """
+    t = time.time()
+    indices = dict()
+
+    for c in n.iterate_components():
+        # No lines
+        if c.name == "Line":
+            continue
+        if ("build_year" in c.df.columns) and (c.df.build_year > 0).any():
+            indices[c.name] = c.df.index.copy()
+
+            attr = nominal_attrs[c.name]
+
+            # Define the aggregation map
+            idx_to_agg = c.df.loc[~c.df.carrier.isin(exclude_carriers)].index
+            idx_no_year = pd.Series(c.df.index.copy(), index=c.df.index)
+            idx_no_year.loc[idx_to_agg] = idx_to_agg.str.replace(
+                r"-[0-9]{4}$", "", regex=True
+            )
+
+            # For each component (row) in df with name ending in
+            # "-YYYY", store the columns listed in `vars_to_store` to
+            # be disaggregated again later.
+            to_store = []
+            for v in [s.replace("attr_nom", attr) for s in vars_to_store]:
+                if v not in c.df.columns:
+                    continue
+                for build_year in c.df.build_year.unique():
+                    if build_year == 0:
+                        continue
+                    mask = c.df.build_year == build_year
+                    col = c.df.loc[mask, v].copy()
+                    col.index = pd.Index(idx_no_year.loc[mask])
+                    col.name = f"{v}-{build_year}"
+                    to_store.append(col)
+
+            # For components that are non-extendable, set
+            # attr_{min,max} = attr; this is for the aggregated
+            # extendable component to have the correct minimum and
+            # maximum bounds for nominal capacity.
+            non_extendable = c.df[~c.df[f"{attr}_extendable"]].index
+            c.df.loc[non_extendable, f"{attr}_min"] = c.df.loc[non_extendable, attr]
+            c.df.loc[non_extendable, f"{attr}_max"] = c.df.loc[non_extendable, attr]
+
+            # Aggregate
+            static_strategies = align_strategies(strategies, c.df.columns, c.name)
+            df_aggregated = c.df.groupby(idx_no_year).agg(static_strategies)
+
+            # Add the columns that are stored for disaggregation.
+            df_aggregated = pd.concat([df_aggregated] + to_store, axis=1)
+
+            # Aggregate time-varying data.
+            pnl_aggregated = Dict()
+            dynamic_strategies = align_strategies(strategies, c.pnl, c.name)
+            for attr, data in c.pnl.items():
+                if data.empty:
+                    pnl_aggregated[attr] = data
+                    continue
+
+                strategy = dynamic_strategies[attr]
+                col_agg_map = idx_no_year.loc[data.columns]
+                pnl_aggregated[attr] = data.T.groupby(col_agg_map).agg(strategy).T
+
+            setattr(n, n.components[c.name]["list_name"], df_aggregated)
+            setattr(n, n.components[c.name]["list_name"] + "_t", pnl_aggregated)
+
+    logger.info(f"Aggregated build years in {time.time() - t:.1f} seconds")
+    return indices
+
+
+def disaggregate_build_years(n, indices, planning_horizon):
+    """
+    Disaggregate components which were aggregated by `aggregate_build_years`.
+    """
+    t = time.time()
+
+    for c in n.iterate_components():
+        if c.name in indices:
+            attr = nominal_attrs[c.name]
+            old_idx = c.df.index.copy()
+
+            # Find the indices of components to be disaggregated
+            idx_diff = indices[c.name].difference(c.df.index)
+
+            # Create new DataFrame for all disaggregated components;
+            # create column to map to corresponding aggregated
+            # component
+            disagg_df = pd.DataFrame(index=idx_diff, columns=c.df.columns)
+            disagg_df["id_no_year"] = disagg_df.index.str.replace(
+                r"-[0-9]{4}$", "", regex=True
+            )
+            agg_map = disagg_df["id_no_year"].copy()
+
+            # Copy values from aggregated component to disaggregated
+            disagg_df.loc[:, c.df.columns] = c.df.loc[disagg_df["id_no_year"]].values
+
+            # Set build year from index
+            disagg_df.loc[:, "build_year"] = disagg_df.index.str[-4:].astype(int)
+
+            # Disaggregate specially stored values exactly
+            for v in [s.replace("attr_nom", attr) for s in vars_to_store]:
+                if v not in c.df.columns:
+                    continue
+                for build_year in disagg_df.build_year.unique():
+                    idx_build_year = disagg_df.build_year == build_year
+                    disagg_df.loc[
+                        idx_build_year,
+                        v,
+                    ] = c.df.loc[
+                        disagg_df.loc[idx_build_year, "id_no_year"],
+                        f"{v}-{build_year}",
+                    ].values
+
+            # Set p_nom_opt to p_nom. This should go for all non-extendable
+            # disaggregated components. p_nom_opt for the last planning horizon
+            # is dealt with below.
+            disagg_df.loc[:, f"{attr}_opt"] = disagg_df.loc[:, attr]
+
+            # Handle the last planning horizon (which was just
+            # optimised) specifically: we have to subtract the sum of
+            # nominal capacities of the previous years from attr_opt.
+            idx_last_horizon = disagg_df.loc[
+                disagg_df.build_year == int(planning_horizon)
+            ].index
+            disagg_df.loc[idx_last_horizon, f"{attr}_opt"] = c.df.loc[
+                disagg_df.loc[idx_last_horizon, "id_no_year"], f"{attr}_opt"
+            ].values
+            years = c.df.columns.str.extract(rf"{attr}-(\d{{4}})$").dropna()[0]
+            prev_years = years[years.astype(int) < int(planning_horizon)]
+            disagg_df.loc[idx_last_horizon, f"{attr}_opt"] -= (
+                c.df.loc[
+                    disagg_df.loc[idx_last_horizon, "id_no_year"],
+                    [f"{attr}-{p}" for p in prev_years.values],
+                ]
+                .sum(axis=1)
+                .values
+            )
+
+            # Drop auxiliary column keeping track of aggregated component
+            disagg_df.drop("id_no_year", axis=1, inplace=True)
+
+            # Add disaggregated components to c.df. Watch out: c.df
+            # will still refer to the "old" dataframe.
+            import_components_from_dataframe(n, disagg_df, c.name)
+
+            # Also duplicate the corresponding column in pnl
+            for v in c.pnl:
+                if c.pnl[v].empty:
+                    continue
+
+                # Set the new columns to the values of the old columns
+                mask = agg_map.index[agg_map.isin(c.pnl[v].columns)]
+                pnl = c.pnl[v].loc[:, agg_map[mask]]
+                pnl.columns = mask
+                import_series_from_dataframe(n, pnl, c.name, v)
+
+                # Variables that are outputs and don't start with
+                # "mu_" need to be scaled by nominal capacity.
+                if (
+                    n.components[c.name]["attrs"].loc[v, "status"] == "Output"
+                ) and not (v.startswith("mu_")):
+                    scaling_factors = (
+                        (
+                            disagg_df.loc[mask, attr]
+                            / c.df.loc[agg_map[mask], attr].replace(0.0, np.nan).values
+                        )
+                        .astype(float)
+                        .fillna(0.0)
+                        .reindex(c.pnl[v].columns, fill_value=1.0)
+                    )
+                    # For extendable components, recompute the scaling
+                    # factors using attr + "_opt"
+                    ext_i = mask[c.df.loc[agg_map[mask], f"{attr}_extendable"]]
+                    scaling_factors.loc[ext_i] = (
+                        (
+                            disagg_df.loc[ext_i, f"{attr}_opt"]
+                            / c.df.loc[agg_map[ext_i], f"{attr}_opt"]
+                            .replace(0.0, np.nan)
+                            .values
+                        )
+                        .astype(float)
+                        .fillna(0.0)
+                    )
+                    c.pnl[v] = c.pnl[v].mul(scaling_factors, axis=1)
+
+            # Drop all columns in df ending in "-YYYY" (the columns
+            # used to track aggregated information that has now been
+            # disaggregated).
+            cols_to_drop = n.df(c.name).columns[
+                n.df(c.name).columns.str.match(r".*-[0-9]{4}$")
+            ]
+            n.df(c.name).drop(cols_to_drop, axis=1, inplace=True)
+
+            # Now remove the aggregated components from both static
+            # and varying data.
+            n.df(c.name).drop(old_idx.difference(indices[c.name]), inplace=True)
+            for _, data in c.pnl.items():
+                if data.empty:
+                    continue
+                data.drop(
+                    old_idx.difference(indices[c.name]).intersection(data.columns),
+                    axis=1,
+                    inplace=True,
+                )
+
+    logger.info(f"Disaggregated build years in {time.time() - t:.1f} seconds")
+
+
+def solve_network(n, config, solving, build_year_agg, **kwargs):
     set_of_options = solving["solver"]["options"]
     cf_solving = solving["options"]
 
@@ -1052,6 +1343,14 @@ def solve_network(n, config, solving, **kwargs):
     # add to network for extra_functionality
     n.config = config
 
+    build_year_agg_enabled = build_year_agg["enable"] and (
+        config["foresight"] == "myopic"
+    )
+    if build_year_agg_enabled:
+        indices = aggregate_build_years(
+            n, exclude_carriers=build_year_agg["exclude_carriers"]
+        )
+
     if rolling_horizon and snakemake.rule == "solve_operations_network":
         kwargs["horizon"] = cf_solving.get("horizon", 365)
         kwargs["overlap"] = cf_solving.get("overlap", 0)
@@ -1079,6 +1378,9 @@ def solve_network(n, config, solving, **kwargs):
         logger.info(f"Labels:\n{labels}")
         n.model.print_infeasibilities()
         raise RuntimeError("Solving status 'infeasible'")
+
+    if build_year_agg_enabled:
+        disaggregate_build_years(n, indices, snakemake.wildcards.planning_horizons)
 
     return n
 
@@ -1117,12 +1419,13 @@ if __name__ == "__main__":
     )
 
     with memory_logger(
-        filename=getattr(snakemake.log, "memory", None), interval=30.0
+        filename=getattr(snakemake.log, "memory", None), interval=0.1
     ) as mem:
         n = solve_network(
             n,
             config=snakemake.config,
             solving=snakemake.params.solving,
+            build_year_agg=snakemake.params.get("build_year_agg", {"enable": False}),
             log_fn=snakemake.log.solver,
         )
 
