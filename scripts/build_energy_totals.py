@@ -940,20 +940,21 @@ def rescale_idees_from_eurostat(
             ).values
 
         # set the total of agriculture/road to the sum of all agriculture/road categories (corresponding to the IDEES data)
-        sel = [
+        rows = idx[country, :]
+        cols = [
             "total agriculture electricity",
             "total agriculture heat",
             "total agriculture machinery",
         ]
-        energy.loc[country, "total agriculture"] = energy.loc[country, sel].sum(axis=1)
+        energy.loc[rows, "total agriculture"] = energy.loc[rows, cols].sum(axis=1)
 
-        sel = [
+        cols = [
             "total passenger cars",
             "total other road passenger",
             "total light duty road freight",
             "total heavy duty road freight",
         ]
-        energy.loc[country, "total road"] = energy.loc[country, sel].sum(axis=1)
+        energy.loc[rows, "total road"] = energy.loc[rows, cols].sum(axis=1)
 
     return energy
 
