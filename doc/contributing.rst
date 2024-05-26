@@ -35,3 +35,15 @@ including our own are reviewed by a second person before they are incorporated i
 If you are unfamiliar with pull requests, the GitHub help pages have a nice `guide <https://help.github.com/en/articles/about-pull-requests>`_.
 
 To ask and answer general usage questions, join the `PyPSA mailing list <https://groups.google.com/forum/#!forum/pypsa>`_.
+
+Contributing to the documentation
+====================================
+
+We strive to keep documentation useful and up to date for all PyPSA users. If you encounter an area where documentation is not available or insufficient, we very much welcome your contribution. Here is How To:
+
+#. Install the conda environment for documentation from the `PyPSA repository <https://github.com/PyPSA/PyPSA/blob/master/environment_docs.yml>`_.
+   (Here is `how to install a conda environment <https://pypsa-eur.readthedocs.io/en/latest/installation.html#install-python-dependencies>`_.)
+#. Make your changes in the corresponding .rst file under ``pypsa-eur/doc``.
+#. Compile your changes by running the following command in your terminal in the ``doc`` folder: ``make html``
+   You may encounter some warnings, but end up with a message such as ``build succeeded, XX warnings.``. html files to review your changes can then be found under ``doc/_build/html``.
+#. Contribute your documentation in a pull request (`here is a guide <https://help.github.com/en/articles/about-pull-requests>`_).

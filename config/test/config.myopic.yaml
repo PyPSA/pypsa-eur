@@ -7,7 +7,8 @@ tutorial: true
 run:
   name: "test-sector-myopic"
   disable_progressbar: true
-  shared_resources: "test"
+  shared_resources:
+    policy: "test"
   shared_cutouts: true
 
 foresight: myopic
@@ -18,7 +19,7 @@ scenario:
   clusters:
   - 5
   sector_opts:
-  - 24h-T-H-B-I-A-dist1
+  - ''
   planning_horizons:
   - 2030
   - 2040
@@ -34,7 +35,6 @@ sector:
   central_heat_vent: true
 
 electricity:
-  co2limit: 100.e+6
 
   extendable_carriers:
     Generator: [OCGT]
@@ -42,7 +42,10 @@ electricity:
     Store: [H2]
     Link: [H2 pipeline]
 
-  renewable_carriers: [solar, onwind, offwind-ac, offwind-dc]
+  renewable_carriers: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float]
+
+  estimate_renewable_capacities:
+    enable: false
 
 atlite:
   default_cutout: be-03-2013-era5
@@ -62,8 +65,18 @@ renewable:
   offwind-dc:
     cutout: be-03-2013-era5
     max_depth: false
+  offwind-float:
+    cutout: be-03-2013-era5
+    max_depth: false
+    min_depth: false
   solar:
     cutout: be-03-2013-era5
+  solar-hsat:
+    cutout: be-03-2013-era5
+
+clustering:
+  temporal:
+    resolution_sector: 24h
 
 industry:
   St_primary_fraction:

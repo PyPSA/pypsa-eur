@@ -8,7 +8,7 @@ Techno-Economic Assumptions
 ############################
 
 The database of cost assumptions is retrieved from the repository
-`PyPSA/technology-data <https://github.com/pypsa/technology-data>`_ and then
+`PyPSA/technology-data <https://github.com/pypsa/technology-data>`__ and then
 saved to a file ``resources/costs_{year}.csv``. The ``config/config.yaml`` provides options
 to choose a reference year and use a specific version of the repository.
 
@@ -30,7 +30,7 @@ years compiled from various sources, namely for
 - carbon-dioxide intensity.
 
 Many values are taken from a database published by the Danish Energy Agency (`DEA
-<https://ens.dk/en/our-services/projections-and-models/technology-data>`_).
+<https://ens.dk/en/our-services/projections-and-models/technology-data>`__).
 
 
 The given overnight capital costs are annualised to net present costs

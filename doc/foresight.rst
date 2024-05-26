@@ -166,13 +166,13 @@ Options
 
 The total carbon budget for the entire transition path can be indicated in the
 `sector_opts
-<https://github.com/PyPSA/pypsa-eur-sec/blob/f13902510010b734c510c38c4cae99356f683058/config.default.yaml#L25>`_
+<https://github.com/PyPSA/pypsa-eur-sec/blob/f13902510010b734c510c38c4cae99356f683058/config.default.yaml#L25>`__
 in ``config/config.yaml``. The carbon budget can be split among the
 ``planning_horizons`` following an exponential or beta decay. E.g. ``'cb40ex0'``
 splits a carbon budget equal to 40 Gt :math:`_{CO_2}` following an exponential
 decay whose initial linear growth rate r is zero. They can also follow some
 user-specified path, if defined `here
-<https://github.com/PyPSA/pypsa-eur-sec/blob/413254e241fb37f55b41caba7264644805ad8e97/config.default.yaml#L56>`_.
+<https://github.com/PyPSA/pypsa-eur-sec/blob/413254e241fb37f55b41caba7264644805ad8e97/config.default.yaml#L56>`__.
 The paper `Speed of technological transformations required in Europe to achieve
 different climate goals (2022) <https://doi.org/10.1016/j.joule.2022.04.016>`__
 defines CO_2 budgets corresponding to global temperature increases (1.5C – 2C)

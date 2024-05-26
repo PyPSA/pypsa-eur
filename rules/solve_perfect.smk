@@ -25,9 +25,6 @@ rule add_existing_baseyear:
             "existing_heating_distribution_elec_s{simpl}_{clusters}_{planning_horizons}.csv"
         ),
         existing_heating="data/existing_infrastructure/existing_heating_raw.csv",
-        existing_solar="data/existing_infrastructure/solar_capacity_IRENA.csv",
-        existing_onwind="data/existing_infrastructure/onwind_capacity_IRENA.csv",
-        existing_offwind="data/existing_infrastructure/offwind_capacity_IRENA.csv",
     output:
         RESULTS
         + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
@@ -35,7 +32,8 @@ rule add_existing_baseyear:
         planning_horizons=config["scenario"]["planning_horizons"][0],  #only applies to baseyear
     threads: 1
     resources:
-        mem_mb=2000,
+        mem_mb=config_provider("solving", "mem_mb"),
+        runtime=config_provider("solving", "runtime", default="24h"),
     log:
         logs(
             "add_existing_baseyear_elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log"
