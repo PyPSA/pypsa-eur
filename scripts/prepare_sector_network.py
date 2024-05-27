@@ -3642,7 +3642,10 @@ def set_temporal_aggregation(n, resolution, snapshot_weightings):
     """
     Aggregate time-varying data to the given snapshots.
     """
-    if "sn" in resolution.lower():
+    if not resolution:
+        logger.info("No temporal aggregation. Using native resolution.")
+        return n
+    elif "sn" in resolution.lower():
         # Representative snapshots are dealt with directly
         sn = int(resolution[:-2])
         logger.info("Use every %s snapshot as representative", sn)
