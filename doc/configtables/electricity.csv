@@ -44,9 +44,5 @@ autarky,,,
 H2_retrofit_plants,,,
 -- enable,--,true or false,Allowing the retrofit of OCGT to switch to H2
 -- year,--,int,If enable the OCGT plants from that year on are able to be retrofitted
--- retro_factor_ocgt,EUR2020/kw,float,costs to retrofit ocgt plants to hydrogen
--- efficiency_ocgt,--,float,efficiency of a retrofitted hydrogen ocgt plant
--- retro_factor_ccgt,EUR2020/kw,float,costs to retrofit ccgt plants to hydrogen
--- efficiency_ccgt,--,float,efficiency of a retrofitted hydrogen ccgt plant
--- retro_factor_chp,EUR2020/kw,float,costs to retrofit chp plants to hydrogen
--- efficiency_chp,--,float,efficiency of a retrofitted hydrogen chp plant
+-- retro_factor,EUR2020/kw,float,costs to retrofit gas turbine to hydrogen
+-- efficiency,--,float,efficiency of a retrofitted hydrogen gas turbine

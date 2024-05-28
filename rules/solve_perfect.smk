@@ -11,23 +11,11 @@ rule add_existing_baseyear:
             "electricity", "H2_retrofit_plants", "enable"
         ),
         retrofit_start=config_provider("electricity", "H2_retrofit_plants", "year"),
-        retrofit_cost_ocgt=config_provider(
-            "electricity", "H2_retrofit_plants", "retro_factor_ocgt"
+        retrofit_cost=config_provider(
+            "electricity", "H2_retrofit_plants", "retro_factor"
         ),
-        retrofit_efficiency_ocgt=config_provider(
-            "electricity", "H2_retrofit_plants", "efficiency_ocgt"
-        ),
-        retrofit_cost_ccgt=config_provider(
-            "electricity", "H2_retrofit_plants", "retro_factor_ccgt"
-        ),
-        retrofit_efficiency_ccgt=config_provider(
-            "electricity", "H2_retrofit_plants", "efficiency_ccgt"
-        ),
-        retrofit_cost_chp=config_provider(
-            "electricity", "H2_retrofit_plants", "retro_factor_chp"
-        ),
-        retrofit_efficiency_chp=config_provider(
-            "electricity", "H2_retrofit_plants", "efficiency_chp"
+        retrofit_efficiency=config_provider(
+            "electricity", "H2_retrofit_plants", "efficiency"
         ),
     input:
         network=RESULTS

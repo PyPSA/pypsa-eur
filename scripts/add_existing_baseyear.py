@@ -624,18 +624,13 @@ def add_h2_retro(n, baseyear, params):
     """
     logger.info("Add H2 retrofitting.")
     plant_types = [
-        ("OCGT", "OCGT", params.retrofit_cost_ocgt, params.retrofit_efficiency_ocgt),
-        ("CCGT", "CCGT", params.retrofit_cost_ccgt, params.retrofit_efficiency_ccgt),
-        (
-            "urban central gas CHP",
-            "urban central retrofitted H2 CHP",
-            params.retrofit_cost_chp,
-            params.retrofit_efficiency_chp,
-        ),
+        ("OCGT", "OCGT"),
+        ("CCGT", "CCGT"),
+        ("urban central gas CHP", "urban central retrofitted H2 CHP"),
     ]
     start = params.retrofit_start
 
-    for original_carrier, new_carrier, retro_factor, efficiency in plant_types:
+    for original_carrier, new_carrier in plant_types:
         # Query to filter the DataFrame
         plant_i = n.links.query(
             f"carrier == '{original_carrier}' and ~p_nom_extendable and p_nom > 10"
@@ -663,14 +658,17 @@ def add_h2_retro(n, baseyear, params):
             index=lambda x: x.replace(original_carrier, new_carrier) + f"-{baseyear}",
             inplace=True,
         )
-        df.loc[:, "capital_cost"] *= retro_factor
-        df.loc[:, "efficiency"] = efficiency
+        df.loc[:, "capital_cost"] *= params.retrofit_cost
+        df.loc[:, "efficiency"] = params.retrofit_efficiency
         # Set p_nom_max to gas plant p_nom and existing capacity to zero
         df.loc[:, "p_nom_max"] = df["p_nom"]
         df.loc[:, "p_nom"] = 0
         df.loc[:, "p_nom_extendable"] = True
-        # Set CO2 emissions to 0
-        df.loc[:, "efficiency2"] = 0.0
+        # Set CO2 emissions to 0: CHP plants have co2 emissions at bus3, gas plants at bus2
+        if original_carrier != "urban central gas CHP":
+            df.loc[:, "efficiency2"] = 0.0
+        else:
+            df.loc[:, "efficiency3"] = 0.0
         # Build_year and lifetime will stay the same as decommissioning of gas plant
         # Add retrofitted plant to network
         import_components_from_dataframe(n, df, "Link")
