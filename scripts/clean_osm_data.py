@@ -513,7 +513,6 @@ def _import_lines_and_cables(path_lines):
                 df["id"] = df["id"].astype(str)
                 df["country"] = country
 
-                # col_tags = ["power", "cables", "circuits", "frequency", "voltage", "wires", "capacity", "rating"]
                 col_tags = [
                     "power",
                     "cables",
@@ -546,6 +545,82 @@ def _import_lines_and_cables(path_lines):
         logger.info("---")
 
     return df_lines
+
+
+def _import_links(path_links):
+    """
+    Import links from the given input paths.
+
+    Parameters:
+    - path_links (dict): A dictionary containing the input paths for links.
+
+    Returns:
+    - df_links (DataFrame): A DataFrame containing the imported links data.
+    """
+    columns = [
+        "id",
+        "bounds",
+        "nodes",
+        "geometry",
+        "country",
+        "circuits",
+        "frequency",
+        "rating",
+        "voltage",
+        "wires",
+    ]
+    df_links = pd.DataFrame(columns=columns)
+
+    logger.info("Importing links")
+    for key in path_links:
+        logger.info(f"Processing {key}...")
+        for idx, ip in enumerate(path_links[key]):
+            if (
+                os.path.exists(ip) and os.path.getsize(ip) > 400
+            ):  # unpopulated OSM json is about 51 bytes
+                country = os.path.basename(os.path.dirname(path_links[key][idx]))
+
+                logger.info(
+                    f" - Importing {key} {str(idx+1).zfill(2)}/{str(len(path_links[key])).zfill(2)}: {ip}"
+                )
+                with open(ip, "r") as f:
+                    data = json.load(f)
+
+                df = pd.DataFrame(data["elements"])
+                df["id"] = df["id"].astype(str)
+                df["country"] = country
+
+                col_tags = [
+                    "circuits",
+                    "frequency",
+                    "rating",
+                    "voltage",
+                    "wires",
+                ]
+
+                tags = pd.json_normalize(df["tags"]).map(
+                    lambda x: str(x) if pd.notnull(x) else x
+                )
+
+                for ct in col_tags:
+                    if ct not in tags.columns:
+                        tags[ct] = pd.NA
+
+                tags = tags.loc[:, col_tags]
+
+                df = pd.concat([df, tags], axis="columns")
+                df.drop(columns=["type", "tags"], inplace=True)
+
+                df_links = pd.concat([df_links, df], axis="rows")
+
+            else:
+                logger.info(
+                    f" - Skipping {key} {str(idx+1).zfill(2)}/{str(len(path_links[key])).zfill(2)} (empty): {ip}"
+                )
+                continue
+        logger.info("---")
+
+    return df_links
 
 
 def _drop_duplicate_lines(df_lines):
@@ -586,29 +661,29 @@ def _drop_duplicate_lines(df_lines):
     return df_lines
 
 
-def _filter_by_voltage(df, voltage_min=200000):
+def _filter_by_voltage(df, min_voltage=200000):
     """
     Filter rows in the DataFrame based on the voltage in V.
 
     Parameters:
     - df (pandas.DataFrame): The DataFrame containing the substations or lines data.
-    - voltage_min (int, optional): The minimum voltage value to filter the
+    - min_voltage (int, optional): The minimum voltage value to filter the
       rows. Defaults to 200000 [unit: V].
 
     Returns:
     - filtered df (pandas.DataFrame): The filtered DataFrame containing
-      the lines or substations above voltage_min.
-    - list_voltages (list): A list of unique voltage values above voltage_min.
+      the lines or substations above min_voltage.
+    - list_voltages (list): A list of unique voltage values above min_voltage.
       The type of the list elements is string.
     """
     logger.info(
-        f"Filtering dataframe by voltage. Only keeping rows above and including {voltage_min} V."
+        f"Filtering dataframe by voltage. Only keeping rows above and including {min_voltage} V."
     )
     list_voltages = df["voltage"].str.split(";").explode().unique().astype(str)
     # Keep numeric strings
     list_voltages = list_voltages[np.vectorize(str.isnumeric)(list_voltages)]
     list_voltages = list_voltages.astype(int)
-    list_voltages = list_voltages[list_voltages >= int(voltage_min)]
+    list_voltages = list_voltages[list_voltages >= int(min_voltage_ac)]
     list_voltages = list_voltages.astype(str)
 
     bool_voltages = df["voltage"].apply(_check_voltage, list_voltages=list_voltages)
@@ -630,7 +705,7 @@ def _clean_substations(df_substations, list_voltages):
     Parameters:
     - df_substations (pandas.DataFrame): The input dataframe containing
       substation data.
-    - list_voltages (list): A list of voltages above voltage_min to filter the
+    - list_voltages (list): A list of voltages above min_voltage to filter the
     substation data.
 
     Returns:
@@ -1233,7 +1308,8 @@ if __name__ == "__main__":
 
     # Parameters
     crs = "EPSG:4326"  # Correct crs for OSM data
-    voltage_min = 200000  # [unit: V] Minimum voltage value to filter lines.
+    min_voltage_ac = 200000  # [unit: V] Minimum voltage value to filter AC lines.
+    min_voltage_dc = 150000 #  [unit: V] Minimum voltage value to filter DC links.
 
     # TODO pypsa-eur: Temporary solution as one AC line between converters will
     # create an error in simplify_network:
@@ -1251,7 +1327,7 @@ if __name__ == "__main__":
     df_substations = _import_substations(path_substations)
     df_substations["voltage"] = _clean_voltage(df_substations["voltage"])
     df_substations, list_voltages = _filter_by_voltage(
-        df_substations, voltage_min=voltage_min
+        df_substations, min_voltage=min_voltage_ac
     )
     df_substations["frequency"] = _clean_frequency(df_substations["frequency"])
     df_substations = _clean_substations(df_substations, list_voltages)
@@ -1276,7 +1352,7 @@ if __name__ == "__main__":
     df_lines = _import_lines_and_cables(path_lines)
     df_lines = _drop_duplicate_lines(df_lines)
     df_lines.loc[:, "voltage"] = _clean_voltage(df_lines["voltage"])
-    df_lines, list_voltages = _filter_by_voltage(df_lines, voltage_min=voltage_min)
+    df_lines, list_voltages = _filter_by_voltage(df_lines, min_voltage=min_voltage_ac)
     df_lines.loc[:, "circuits"] = _clean_circuits(df_lines["circuits"])
     df_lines.loc[:, "cables"] = _clean_cables(df_lines["cables"])
     df_lines.loc[:, "frequency"] = _clean_frequency(df_lines["frequency"])
@@ -1326,5 +1402,29 @@ if __name__ == "__main__":
     gdf_substations.to_file(output_substations, driver="GeoJSON")
     logger.info(f"Exporting clean lines to {output_lines}")
     gdf_lines.to_file(output_lines, driver="GeoJSON")
+
+    logger.info("---")
+    logger.info("HVDC LINKS")
+    path_links = {
+        "links": snakemake.input.links_relation,
+    }
+
+
+    ### CONTINUE HERE
+    # Cleaning process
+    df_links = _import_links(path_links)
+    df_links = _drop_duplicate_lines(df_links)
+    df_links.loc[:, "voltage"] = _clean_voltage(df_links["voltage"])
+    df_links, list_voltages = _filter_by_voltage(df_links, min_voltage=min_voltage_dc)
+    
+    
+    df_lines.loc[:, "circuits"] = _clean_circuits(df_lines["circuits"])
+    df_lines.loc[:, "cables"] = _clean_cables(df_lines["cables"])
+    df_lines.loc[:, "frequency"] = _clean_frequency(df_lines["frequency"])
+    df_lines.loc[:, "wires"] = _clean_wires(df_lines["wires"])
+    df_lines = _clean_lines(df_lines, list_voltages)
+    df_lines = _create_lines_geometry(df_lines)
+    df_lines = _finalise_lines(df_lines)
+
 
     logger.info("Cleaning OSM data completed.")
