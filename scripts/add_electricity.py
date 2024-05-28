@@ -448,8 +448,6 @@ def attach_conventional_generators(
     fuel_price=None,
 ):
     carriers = list(set(conventional_carriers) | set(extendable_carriers["Generator"]))
-    add_missing_carriers(n, carriers)
-    add_co2_emissions(n, costs, carriers)
 
     # Replace carrier "natural gas" with the respective technology (OCGT or
     # CCGT) to align with PyPSA names of "carriers" and avoid filtering "natural
@@ -464,6 +462,11 @@ def attach_conventional_generators(
         .rename(index=lambda s: f"C{str(s)}")
     )
     ppl["efficiency"] = ppl.efficiency.fillna(ppl.efficiency_r)
+
+    # reduce carriers to those in power plant dataset
+    carriers = list(set(carriers) & set(ppl.carrier.unique()))
+    add_missing_carriers(n, carriers)
+    add_co2_emissions(n, costs, carriers)
 
     if unit_commitment is not None:
         committable_attrs = ppl.carrier.isin(unit_commitment).to_frame("committable")

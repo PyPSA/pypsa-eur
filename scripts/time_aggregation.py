@@ -79,8 +79,8 @@ if __name__ == "__main__":
     resolution = snakemake.params.time_resolution
 
     # Representative snapshots
-    if isinstance(resolution, str) and "sn" in resolution.lower():
-        logger.info("Use representative snapshots")
+    if not resolution or isinstance(resolution, str) and "sn" in resolution.lower():
+        logger.info("Use representative snapshot or no aggregation at all")
         # Output an empty csv; this is taken care of in prepare_sector_network.py
         pd.DataFrame().to_csv(snakemake.output.snapshot_weightings)
 
