@@ -1309,7 +1309,7 @@ if __name__ == "__main__":
     # Parameters
     crs = "EPSG:4326"  # Correct crs for OSM data
     min_voltage_ac = 200000  # [unit: V] Minimum voltage value to filter AC lines.
-    min_voltage_dc = 150000 #  [unit: V] Minimum voltage value to filter DC links.
+    min_voltage_dc = 150000  #  [unit: V] Minimum voltage value to filter DC links.
 
     # TODO pypsa-eur: Temporary solution as one AC line between converters will
     # create an error in simplify_network:
@@ -1409,15 +1409,13 @@ if __name__ == "__main__":
         "links": snakemake.input.links_relation,
     }
 
-
     ### CONTINUE HERE
     # Cleaning process
     df_links = _import_links(path_links)
     df_links = _drop_duplicate_lines(df_links)
     df_links.loc[:, "voltage"] = _clean_voltage(df_links["voltage"])
     df_links, list_voltages = _filter_by_voltage(df_links, min_voltage=min_voltage_dc)
-    
-    
+
     df_lines.loc[:, "circuits"] = _clean_circuits(df_lines["circuits"])
     df_lines.loc[:, "cables"] = _clean_cables(df_lines["cables"])
     df_lines.loc[:, "frequency"] = _clean_frequency(df_lines["frequency"])
@@ -1425,6 +1423,5 @@ if __name__ == "__main__":
     df_lines = _clean_lines(df_lines, list_voltages)
     df_lines = _create_lines_geometry(df_lines)
     df_lines = _finalise_lines(df_lines)
-
 
     logger.info("Cleaning OSM data completed.")
