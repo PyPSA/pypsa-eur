@@ -5,7 +5,8 @@
 run:
   name: "entsoe-all"
   disable_progressbar: true
-  shared_resources: false
+  shared_resources:
+    policy: false
   shared_cutouts: true
 
 scenario:
@@ -38,6 +39,5 @@ lines:
 enable:
   retrieve: true
   retrieve_databundle: true
-  retrieve_sector_databundle: false
   retrieve_cost_data: true
   retrieve_cutout: true

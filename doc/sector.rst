@@ -7,8 +7,15 @@
 Building Sector-Coupled Networks
 ##########################################
 
-.. warning::
-  This part of the documentation is under development.
+The preparation process of the sector-coupled version of the PyPSA-Eur energy system model consists of a group of ``snakemake`` rules which are briefly outlined and explained in detail in the sections below.
+
+Not all data dependencies are shipped with the git repository.
+Instead we provide separate data bundles which can be obtained
+using the ``retrieve*`` rules (:ref:`data`).
+Having downloaded the necessary data,
+
+- :mod:`add_brownfield` builds and stores the base network with all buses, HVAC lines and HVDC links, while
+
 
 Rule ``add_brownfield``
 ==============================================================================
@@ -175,6 +182,11 @@ Rule ``cluster_gas_network``
 ==============================================================================
 
 .. automodule:: cluster_gas_network
+
+Rule ``time_aggregation``
+==============================================================================
+
+.. automodule:: time_aggregation
 
 Rule ``prepare_sector_network``
 ==============================================================================
