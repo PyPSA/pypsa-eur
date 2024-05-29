@@ -624,8 +624,8 @@ def add_h2_retro(n, baseyear, params):
     """
     logger.info("Add H2 retrofitting.")
     plant_types = [
-        ("OCGT", "OCGT"),
-        ("CCGT", "CCGT"),
+        ("OCGT", "retrofitted H2 OCGT"),
+        ("CCGT", "retrofitted H2 CCGT"),
         ("urban central gas CHP", "urban central retrofitted H2 CHP"),
     ]
     start = params.retrofit_start
@@ -633,18 +633,25 @@ def add_h2_retro(n, baseyear, params):
     for original_carrier, new_carrier in plant_types:
         # Query to filter the DataFrame
         plant_i = n.links.query(
-            f"carrier == '{original_carrier}' and ~p_nom_extendable and p_nom > 10"
+            f"carrier == '{original_carrier}'"
         )
-
         # Further filtering based on build_year
         plant_i = plant_i.loc[plant_i.build_year >= start].index
+        # Set plants to extendable for constraint in solve_network()
+        n.links.loc[plant_i, "p_nom_extendable"] = True
 
-        if plant_i.empty:
+        # get all retrofitted plants and set p_nom_extendable to True
+        h2_counterpart = n.links.query(f"carrier == '{new_carrier}'").index
+        n.links.loc[h2_counterpart, "p_nom_extendable"] = True
+        
+        # check if the plants are not having a h2 counterpart yet
+        h2_counterpart = set(index.replace(new_carrier, original_carrier) for index in h2_counterpart)
+        plant_i = [index for index in plant_i if index not in h2_counterpart]
+
+        if not plant_i:
             logger.info(f"No more {original_carrier} retrofitting potential.")
             continue
 
-        # Set plants to extendable for constraint in solve_network()
-        n.links.loc[plant_i, "p_nom_extendable"] = True
         n.links.loc[plant_i, "p_nom_max"] = n.links.loc[plant_i, "p_nom"]
 
         df = n.links.loc[plant_i].copy()
@@ -655,15 +662,13 @@ def add_h2_retro(n, baseyear, params):
             lambda x: x.replace(original_carrier, new_carrier)
         )
         df.rename(
-            index=lambda x: x.replace(original_carrier, new_carrier) + f"-{baseyear}",
+            index=lambda x: x.replace(original_carrier, new_carrier),
             inplace=True,
         )
-        df.loc[:, "capital_cost"] *= params.retrofit_cost
+        df.loc[:, "capital_cost"] = params.retrofit_cost
         df.loc[:, "efficiency"] = params.retrofit_efficiency
         # Set p_nom_max to gas plant p_nom and existing capacity to zero
-        df.loc[:, "p_nom_max"] = df["p_nom"]
         df.loc[:, "p_nom"] = 0
-        df.loc[:, "p_nom_extendable"] = True
         # Set CO2 emissions to 0: CHP plants have co2 emissions at bus3, gas plants at bus2
         if original_carrier != "urban central gas CHP":
             df.loc[:, "efficiency2"] = 0.0

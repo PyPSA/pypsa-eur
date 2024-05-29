@@ -916,6 +916,9 @@ plotting:
     solar rooftop: '#ffea80'
     # gas
     OCGT: '#e0986c'
+    retrofitted H2 OCGT: '#e0986c'
+    retrofitted H2 CCGT: '#e0986c'
+    urban central retrofitted H2 CHP: '#e0986c'
     OCGT marginal: '#e0986c'
     OCGT-heat: '#e0986c'
     gas boiler: '#db6a25'

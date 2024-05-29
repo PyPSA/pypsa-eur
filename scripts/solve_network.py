@@ -821,36 +821,32 @@ def add_h2_retrofit_constraint(n):
     logger.info("Add constraint for retrofitting gas plants to H2 plants.")
 
     plant_types = [
-        ("OCGT", "OCGT H2 retrofitted"),
-        ("CCGT", "CCGT H2 retrofitted"),
+        ("OCGT", "retrofitted H2 OCGT"),
+        ("CCGT", "retrofitted H2 CCGT"),
         ("urban central gas CHP", "urban central retrofitted H2 CHP"),
     ]
     current_horizon = snakemake.wildcards.planning_horizons
 
     for gas_carrier, h2_carrier in plant_types:
         gas_plants = n.links.query(
-            f"carrier == '{gas_carrier}' and p_nom_extendable and p_nom > 1e-3"
-        )
+            f"carrier == '{gas_carrier}' and p_nom_extendable and build_year < {current_horizon}"
+        ).index
         h2_plants = n.links.query(
-            f"carrier == '{h2_carrier}' and p_nom_extendable"
+            f"carrier == '{h2_carrier}' and p_nom_extendable and build_year < {current_horizon}"
         ).index
 
         if h2_plants.empty or gas_plants.empty:
             continue
 
-        # Filter gas plants from current planning horizon
-        gas_plants = gas_plants[gas_plants.build_year == current_horizon].index
         efficiency_gas = n.links.efficiency[gas_plants]
         efficiency_h2 = n.links.efficiency[h2_plants]
         # Store p_nom value for rhs of constraint
         p_nom = n.model["Link-p_nom"]
 
         # Sum of p_nom OCGT/CCGT and retrofitted must be <= installed capacity of OCGT/CCGT
-        lhs = p_nom.loc[h2_plants].mul(efficiency_h2) + p_nom.loc[gas_plants].mul(
-            efficiency_gas
-        )
-        rhs = n.links.p_nom_max[gas_plants].mul(efficiency_gas)
-        n.model.add_constraints(lhs == rhs, name=f"{gas_carrier}_retrofit")
+        lhs = p_nom.loc[h2_plants] + p_nom.loc[gas_plants]
+        rhs = n.links.p_nom_max[gas_plants]
+        n.model.add_constraints(lhs <= rhs, name=f"{gas_carrier}_retrofit")
 
         logger.info(
             f"Added constraint for retrofitting {gas_carrier} gas to {h2_carrier}."
