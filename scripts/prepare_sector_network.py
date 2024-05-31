@@ -3743,11 +3743,17 @@ def add_enhanced_geothermal(n, egs_potentials, egs_overlap, costs):
             "'add_enhanced_geothermal' not implemented for multiple geothermal nodes."
         )
     logger.info(
-        "EGS implemented with 2020 CAPEX from Aghahosseini et al 2021: 'From hot rock to...'."
+        "[EGS] implemented with 2020 CAPEX from Aghahosseini et al 2021: 'From hot rock to...'."
     )
     logger.info(
-        "Recommended usage scales CAPEX to future cost expectations using config 'adjustments'."
+        "[EGS] Recommended usage scales CAPEX to future cost expectations using config 'adjustments'."
     )
+    logger.info("[EGS] During this the relevant carriers are:")
+    logger.info("[EGS] drilling part -> 'geothermal heat'")
+    logger.info(
+        "[EGS] electricity generation part -> 'geothermal organic rankine cycle'"
+    )
+    logger.info("[EGS] district heat distribution part -> 'geothermal district heat'")
 
     egs_config = snakemake.params["sector"]["enhanced_geothermal"]
     costs_config = snakemake.config["costs"]
