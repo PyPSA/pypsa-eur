@@ -8,7 +8,7 @@ from os.path import normpath, exists
 from shutil import copyfile, move, rmtree
 from snakemake.utils import min_version
 
-min_version("8.5")
+min_version("8.11")
 
 from scripts._helpers import path_provider, copy_default_files, get_scenarios, get_rdir
 

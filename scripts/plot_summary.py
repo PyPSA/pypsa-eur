@@ -65,6 +65,7 @@ def rename_techs(label):
         "offwind": "offshore wind",
         "offwind-ac": "offshore wind (AC)",
         "offwind-dc": "offshore wind (DC)",
+        "offwind-float": "offshore wind (Float)",
         "onwind": "onshore wind",
         "ror": "hydroelectricity",
         "hydro": "hydroelectricity",
@@ -485,9 +486,10 @@ def plot_carbon_budget_distribution(input_eurostat, options):
     )
     emissions = historical_emissions(countries)
     # add other years https://sdi.eea.europa.eu/data/0569441f-2853-4664-a7cd-db969ef54de0
-    emissions.loc[2019] = 2.971372
-    emissions.loc[2020] = 2.691958
-    emissions.loc[2021] = 2.869355
+    emissions.loc[2019] = 3.414362
+    emissions.loc[2020] = 3.092434
+    emissions.loc[2021] = 3.290418
+    emissions.loc[2022] = 3.213025
 
     if snakemake.config["foresight"] == "myopic":
         path_cb = "results/" + snakemake.params.RDIR + "/csvs/"

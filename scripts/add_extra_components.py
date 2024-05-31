@@ -246,7 +246,8 @@ if __name__ == "__main__":
     attach_hydrogen_pipelines(n, costs, extendable_carriers)
 
     sanitize_carriers(n, snakemake.config)
-    sanitize_locations(n)
+    if "location" in n.buses:
+        sanitize_locations(n)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     n.export_to_netcdf(snakemake.output[0])

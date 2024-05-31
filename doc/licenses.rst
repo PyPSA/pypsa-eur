@@ -28,16 +28,13 @@ Electricity Systems Databundle
   More details are included in `the description of the
   data bundles on zenodo <https://zenodo.org/record/3517935#.XbGeXvzRZGo>`__.
 
-.. csv-table::
-   :header-rows: 1
-   :file: configtables/licenses.csv
-
 * BY: Attribute Source
 * NC: Non-Commercial Use Only
 * SA: Share Alike
 
-Sector-Coupled Systems Databundle
-=================================
+.. csv-table::
+   :header-rows: 1
+   :file: configtables/licenses.csv
 
 .. csv-table::
    :header-rows: 1

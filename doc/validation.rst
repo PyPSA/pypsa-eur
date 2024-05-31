@@ -29,11 +29,11 @@ Results
 
 By the time of writing the comparison with the historical data shows partially accurate, partially improvable results. The following figures show the comparison of the dispatch of the different carriers.
 
-.. image:: ../graphics/validation_seasonal_operation_area_elec_s_37_ec_lv1.0_Ept.png
+.. image:: img/validation_seasonal_operation_area_elec_s_37_ec_lv1.0_Ept.png
    :width: 100%
    :align: center
 
-.. image:: ../graphics/validation_production_bar_elec_s_37_ec_lv1.0_Ept.png
+.. image:: img/validation_production_bar_elec_s_37_ec_lv1.0_Ept.png
    :width: 100%
    :align: center
 
