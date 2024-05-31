@@ -374,7 +374,7 @@ if config["enable"]["retrieve"]:
     # Website: https://www.protectedplanet.net/en/thematic-areas/wdpa
     rule download_wdpa:
         input:
-            HTTP.remote(url, keep_local=True),
+            storage(url, keep_local=True),
         params:
             zip="data/WDPA_shp.zip",
             folder=directory("data/WDPA"),

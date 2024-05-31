@@ -646,6 +646,7 @@ def update_config_from_wildcards(config, w, inplace=True):
                 FT=["shipping-ftfuel"],
                 MeOH=["shipping-meoh"],
                 St=["shipping-steel"],
+                DRI=["shipping-hbi"],
             )
             if len(subsets):
                 def parse_carriers(s):

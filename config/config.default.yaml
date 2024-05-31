@@ -610,17 +610,18 @@ sector:
   relocation_steel: false
   flexibility_steel: false
   import:
-    capacity_boost: 2
+    capacity_boost: 2 # p_nom_max generator
     limit: false # bool or number in TWh
     limit_sense: "=="
     options:
-    - pipeline-h2: 1.0
+    - pipeline-h2: 1.0 # relative costs
     - shipping-lh2: 1.0
     - shipping-lch4: 1.0
     - shipping-lnh3: 1.0
     - shipping-ftfuel: 1.0
     - shipping-meoh: 1.0
     - hvdc-to-elec: 1.0
+    - shipping-hbi: 1.0
     - shipping-steel: 1.0
     p_nom_max:
       pipeline-h2: .inf
@@ -1303,6 +1304,7 @@ plotting:
     import shipping-lnh3: '#87d0e6'
     import shipping-ftfuel: '#95decb'
     import shipping-meoh: '#b7dbdb'
+    import shipping-hbi: '#b1bbc9'
     import shipping-steel: '#94a4be'
     import hvdc-to-elec: '#91856a'
     external H2: '#f7cdf0'

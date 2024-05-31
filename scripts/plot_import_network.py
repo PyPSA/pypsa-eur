@@ -116,7 +116,7 @@ if __name__ == "__main__":
 
     eu_sizes = {}
 
-    carriers = ["EU import shipping-lnh3", "EU import shipping-steel"]
+    carriers = ["EU import shipping-lnh3", "EU import shipping-steel", "EU import shipping-hbi"]
     for carrier in carriers:
         if carrier in n.generators.index:
             mc = n.generators.at[carrier, "marginal_cost"]

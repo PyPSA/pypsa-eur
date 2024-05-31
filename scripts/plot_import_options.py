@@ -36,6 +36,7 @@ NICE_NAMES = {
     "shipping-meoh": "methanol",
     "shipping-ftfuel": "Fischer-Tropsch",
     "shipping-steel": "steel",
+    "shipping-hbi": "hbi",
 }
 
 PALETTE = {

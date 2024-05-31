@@ -33,6 +33,7 @@ COLOR_MAPPING = {
     "methanol (ship)": "import shipping-meoh",
     "Fischer-Tropsch (ship)": "import shipping-ftfuel",
     "steel (ship)": "import shipping-steel",
+    "hbi (ship)": "import shipping-hbi",
 }
 
 THRESHOLD = 1 # MWh

@@ -342,7 +342,7 @@ rule plot_import_options:
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
         regions=RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
         entrypoints=RESOURCES + "gas_input_locations_s{simpl}_{clusters}_simplified.csv",
-        imports="data/imports/results.csv",
+        imports="data/imports/results-230505.csv",
         rc="matplotlibrc",
     output:
         map=multiext(RESULTS + "graphics/import_options_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}", ".png", ".pdf"),
@@ -352,7 +352,7 @@ rule plot_import_options:
 
 rule plot_import_world_map:
     input:
-        imports="data/imports/results.csv",
+        imports="data/imports/results-230505.csv",
         profiles="data/imports/combined_weighted_generator_timeseries.nc",
         gadm_arg=HTTP.remote(
             "https://geodata.ucdavis.edu/gadm/gadm4.1/gpkg/gadm41_ARG.gpkg",

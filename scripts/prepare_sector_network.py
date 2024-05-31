@@ -2822,6 +2822,14 @@ def add_industry(n, costs):
         )
 
         n.add(
+            "Bus",
+            "EU hbi",
+            location="EU",
+            carrier="hbi",
+            unit="t",
+        )
+
+        n.add(
             "Load",
             "EU steel",
             bus="EU steel",
@@ -2884,6 +2892,23 @@ def add_industry(n, costs):
         )
 
     n.madd(
+            "Link",
+            nodes,
+            suffix=" hbi",
+            carrier="hbi",
+            capital_cost=costs.at["electric arc furnace", "investment"],
+            marginal_cost=0,
+            p_nom_max=p_nom if no_relocation else np.inf,
+            p_nom_extendable=True,
+            p_min_pu=1 if no_flexibility else 0,
+            bus0=nodes,
+            bus1="EU steel",
+            bus2="EU hbi",
+            efficiency=costs.at["electric arc furnace", "electricity-input"],
+            efficiency2=costs.at["electric arc furnace", "hbi-input"],
+        )
+
+    n.madd(
         "Bus",
         spatial.biomass.industry,
         location=spatial.biomass.locations,
@@ -2896,7 +2921,7 @@ def add_industry(n, costs):
             industrial_demand.loc[
                 (spatial.biomass.locations, sectors_b), "solid biomass"
             ]
-            .groupby(level="nodes")
+            .groupby(level="node")
             .sum()
             .rename(index=lambda x: x + " solid biomass for industry")
             / nhours
@@ -3394,7 +3419,7 @@ def add_industry(n, costs):
         p_set=p_set,
     )
 
-    demand_factor = options.get("aviation_demand_factor", 1)
+    demand_factor =  get(options["aviation_demand_factor"], investment_year)
     all_aviation = ["total international aviation", "total domestic aviation"]
     p_set_plastics = (
         demand_factor
@@ -4397,6 +4422,7 @@ def add_import_options(
         "shipping-meoh",
         "shipping-ftfuel",
         "shipping-lnh3",
+        "shipping-hbi",
         "shipping-steel",
     ],
     endogenous_hvdc=False,
@@ -4434,6 +4460,7 @@ def add_import_options(
         "shipping-ftfuel": " oil",
         "shipping-meoh": " methanol",
         "shipping-steel": " steel",
+        "shipping-hbi": " HBI",
     }
 
     co2_intensity = {
@@ -4495,7 +4522,7 @@ def add_import_options(
             capital_cost = 7018.0 if tech == "shipping-lch4" else 0.0  # €/MW/a
 
             n.madd("Bus", buses + " bus", carrier=f"import {tech}")
-
+            # TODO:
             n.madd(
                 "Store",
                 buses + " store",
@@ -4586,9 +4613,10 @@ def add_import_options(
 
     copperplated_carbonfree_options = {
         "shipping-steel",
+        "shipping-hbi",
         "shipping-lnh3",
     }
-
+    #TODO: differentiate between steel and DRI
     for tech in set(import_options).intersection(copperplated_carbonfree_options):
         suffix = bus_suffix[tech]
 
@@ -4596,7 +4624,6 @@ def add_import_options(
             import_costs.query("esc == @tech").marginal_cost.min()
             * import_options[tech]
         )
-        # TODO: no bus EU NH3 - no load? no link? - same for steel?
         n.add(
             "Generator",
             f"EU import {tech}",
@@ -4866,13 +4893,14 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "prepare_sector_network",
-            configfiles="/home/toni-seibold/Documents/02_repos/pypsa-import/config/config.default.yaml",
+            configfiles="/home/toni-seibold/Documents/02_repos/pypsa-de-import/config/config.yaml",
             simpl="",
             opts="",
-            clusters="20",
-            ll="v1.5",
+            clusters="22",
+            ll="vopt",
             sector_opts="",
-            planning_horizons="2050",
+            planning_horizons="2030",
+            run="KN2045_Bal_v4",
         )
 
     configure_logging(snakemake)
@@ -4973,6 +5001,7 @@ if __name__ == "__main__":
         FT=["shipping-ftfuel"],
         MeOH=["shipping-meoh"],
         St=["shipping-steel"],
+        hbi=["shipping-hbi"],
     )
 
     if options["imp"]:

@@ -45,6 +45,7 @@ NICE_NAMES = {
     "shipping-lch4": "methane",
     "shipping-lnh3": "ammonia",
     "shipping-steel": "steel",
+    "shipping-hbi": "hbi",
 }
 
 def rename(s):
@@ -208,7 +209,7 @@ if __name__ == "__main__":
         ["pipeline-h2", "shipping-lh2"],
         500e6
     )
-
+    # TODO: add DRI somehow
     composition_aus = get_cost_composition(
         df,
         "AU",

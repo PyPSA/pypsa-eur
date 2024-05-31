@@ -992,7 +992,7 @@ rule prepare_sector_network:
             else []
         ),
         import_ports=resources("ports_s{simpl}_{clusters}.csv"),
-        import_costs="data/imports/results.csv",
+        import_costs="data/imports/results-230505.csv",
         import_p_max_pu="data/imports/combined_weighted_generator_timeseries.nc",
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
         country_centroids=
