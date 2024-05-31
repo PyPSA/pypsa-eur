@@ -297,9 +297,11 @@ def plot_balances():
             "H2",
         ]
         df.index = [
-            i[:-1]
-            if ((i not in forbidden) and (i[-1:] in ["0", "1", "2", "3", "4"]))
-            else i
+            (
+                i[:-1]
+                if ((i not in forbidden) and (i[-1:] in ["0", "1", "2", "3", "4"]))
+                else i
+            )
             for i in df.index
         ]
 

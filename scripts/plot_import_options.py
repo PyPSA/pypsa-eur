@@ -45,39 +45,44 @@ PALETTE = {
     "Namibia": "#003580",
     "Saudi Arabia": "#006c35",
     "Chile": "darkorange",
-    "Other": "#aaa"
+    "Other": "#aaa",
 }
+
 
 def create_stripplot(ic, ax):
 
     order = list(NICE_NAMES.values())[:-1]
-    minimums = ic.groupby("esc").value.min().round(1)[order].reset_index(drop=True).to_dict()
-    maximums = ic.groupby("esc").value.max().round(1)[order].reset_index(drop=True).to_dict()
+    minimums = (
+        ic.groupby("esc").value.min().round(1)[order].reset_index(drop=True).to_dict()
+    )
+    maximums = (
+        ic.groupby("esc").value.max().round(1)[order].reset_index(drop=True).to_dict()
+    )
 
     sns.stripplot(
         data=ic,
-        x='esc',
-        y='value',
+        x="esc",
+        y="value",
         alpha=0.6,
-        hue='exporter',
-        jitter=.28,
+        hue="exporter",
+        jitter=0.28,
         palette=PALETTE,
         ax=ax,
         order=order,
-        size=4
+        size=4,
     )
     sns.violinplot(
         data=ic,
-        x='esc',
-        y='value',
+        x="esc",
+        y="value",
         linewidth=0,
         saturation=0.3,
         cut=0,
-        color='#ddd',
+        color="#ddd",
         fill=True,
         ax=ax,
         order=order,
-        zorder=-1
+        zorder=-1,
     )
 
     ax.set_ylim(0, 200)
@@ -99,15 +104,10 @@ def create_stripplot(ic, ax):
         ax.text(x, y - 10, str(y), ha="center", va="bottom", fontsize=9)
     for x, y in maximums.items():
         ax.text(x, y + 5, str(y), ha="center", va="bottom", fontsize=9)
-    ax.legend(
-        title="",
-        ncol=1,
-        loc=(0.55, 0.05),
-        labelspacing=0.3,
-        frameon=False
-    )
+    ax.legend(title="", ncol=1, loc=(0.55, 0.05), labelspacing=0.3, frameon=False)
     for spine in ax.spines.values():
         spine.set_visible(False)
+
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -131,6 +131,7 @@ if __name__ == "__main__":
     # dummy output if no imports considered
     if "-imp" not in snakemake.wildcards.sector_opts:
         import sys
+
         fig, ax = plt.subplots()
         for fn in snakemake.output:
             plt.savefig(fn, bbox_inches="tight")
@@ -162,9 +163,10 @@ if __name__ == "__main__":
     # TODO size external nodes according to wind and solar potential
 
     h2_cost = n.generators.filter(regex="import (pipeline-h2|shipping-lh2)", axis=0)
-    regions["marginal_cost"] = h2_cost.groupby(
-        h2_cost.bus.map(n.buses.location)
-    ).marginal_cost.min() * EUR_2015_TO_2020
+    regions["marginal_cost"] = (
+        h2_cost.groupby(h2_cost.bus.map(n.buses.location)).marginal_cost.min()
+        * EUR_2015_TO_2020
+    )
 
     # patch network
     n.buses.drop(n.buses.index[n.buses.carrier != "AC"], inplace=True)
@@ -205,7 +207,13 @@ if __name__ == "__main__":
     ic["exporter"] = ic.exporter.str.split("-").str[0]
 
     highlighted_countries = ["DZ", "AR", "SA", "CL"]
-    ic["exporter"] = ic.exporter.apply(lambda x: cc.convert(names=x, to="name_short") if x in highlighted_countries else "Other")
+    ic["exporter"] = ic.exporter.apply(
+        lambda x: (
+            cc.convert(names=x, to="name_short")
+            if x in highlighted_countries
+            else "Other"
+        )
+    )
 
     ic["esc"] = ic.esc.map(NICE_NAMES)
     ic["value"] *= EUR_2015_TO_2020
@@ -229,7 +237,7 @@ if __name__ == "__main__":
         ax=ax,
         column="marginal_cost",
         cmap="Blues_r",
-        edgecolor='#ddd',
+        edgecolor="#ddd",
         linewidths=0.5,
         vmin=50,
         vmax=100,
@@ -248,8 +256,18 @@ if __name__ == "__main__":
         "external battery": "battery storage",
         "external H2": "hydrogen storage",
     }
-    labels = list(names.values()) + ["HVDC import link", "internal power line", "LNG terminal", "pipeline entry"]
-    colors = [tech_colors[c] for c in names.keys()] + ["seagreen", "#b18ee6", "#e37959", "#86cfbc"]
+    labels = list(names.values()) + [
+        "HVDC import link",
+        "internal power line",
+        "LNG terminal",
+        "pipeline entry",
+    ]
+    colors = [tech_colors[c] for c in names.keys()] + [
+        "seagreen",
+        "#b18ee6",
+        "#e37959",
+        "#86cfbc",
+    ]
 
     legend_kw = dict(
         loc=(0.595, 0.87),
@@ -289,16 +307,15 @@ if __name__ == "__main__":
 
     ax.add_feature(
         cfeature.BORDERS.with_scale("50m"),
-        linewidth=.75,
-        color='k',
+        linewidth=0.75,
+        color="k",
     )
 
     ax.add_feature(
         cfeature.COASTLINE.with_scale("50m"),
-        linewidth=.75,
-        color='k',
+        linewidth=0.75,
+        color="k",
     )
-
 
     plt.tight_layout()
 

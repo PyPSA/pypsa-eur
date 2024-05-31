@@ -19,6 +19,7 @@ copy_default_files(workflow)
 configfile: "config/config.default.yaml"
 configfile: "config/config.yaml"
 
+
 # temporary for mock_snakemake
 # import yaml
 # from snakemake.utils import update_config
@@ -59,6 +60,8 @@ include: "rules/build_sector.smk"
 include: "rules/solve_electricity.smk"
 include: "rules/postprocess.smk"
 include: "rules/validate.smk"
+
+
 # include: "rules/plot.smk"
 
 

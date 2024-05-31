@@ -998,7 +998,7 @@ rule prepare_sector_network:
         hourly_heat_demand_total=resources(
             "hourly_heat_demand_total_elec_s{simpl}_{clusters}.nc"
         ),
-        industrial_demand_today = resources(
+        industrial_demand_today=resources(
             "industrial_energy_demand_today_elec_s{simpl}_{clusters}.csv"
         ),
         district_heat_share=resources(
@@ -1035,12 +1035,10 @@ rule prepare_sector_network:
         import_costs="data/imports/results-230505.csv",
         import_p_max_pu="data/imports/combined_weighted_generator_timeseries.nc",
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
-        country_centroids=
-            storage(
-                "https://raw.githubusercontent.com/gavinr/world-countries-centroids/v1.0.0/dist/countries.csv",
-                keep_local=True,
-                )
-                ,
+        country_centroids=storage(
+            "https://raw.githubusercontent.com/gavinr/world-countries-centroids/v1.0.0/dist/countries.csv",
+            keep_local=True,
+        ),
     output:
         RESULTS
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",

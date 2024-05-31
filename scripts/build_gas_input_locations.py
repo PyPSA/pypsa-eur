@@ -11,8 +11,8 @@ import logging
 
 import geopandas as gpd
 import pandas as pd
-from build_bus_regions import voronoi_partition_pts
 from _helpers import configure_logging, set_scenario_config
+from build_bus_regions import voronoi_partition_pts
 from cluster_gas_network import load_bus_regions
 
 logger = logging.getLogger(__name__)

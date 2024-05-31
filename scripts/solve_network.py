@@ -972,6 +972,8 @@ def add_energy_import_limit(n, sns):
     rhs = limit * 1e6
 
     n.model.add_constraints(lhs, limit_sense, rhs, name="energy_import_limit")
+
+
 def add_co2_atmosphere_constraint(n, snapshots):
     glcs = n.global_constraints[n.global_constraints.type == "co2_atmosphere"]
 

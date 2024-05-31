@@ -21,10 +21,13 @@ import numpy as np
 import pandas as pd
 import pypsa
 import xarray as xr
-from _helpers import generate_periodic_profiles, configure_logging, set_scenario_config, update_config_from_wildcards
+from _helpers import (
+    configure_logging,
+    generate_periodic_profiles,
+    set_scenario_config,
+    update_config_from_wildcards,
+)
 from add_electricity import calculate_annuity, sanitize_carriers, sanitize_locations
-from geopy.extra.rate_limiter import RateLimiter
-from geopy.geocoders import Nominatim
 from build_energy_totals import (
     build_co2_totals,
     build_eea_co2,
@@ -32,6 +35,8 @@ from build_energy_totals import (
     build_eurostat_co2,
 )
 from build_transport_demand import transport_degree_factor
+from geopy.extra.rate_limiter import RateLimiter
+from geopy.geocoders import Nominatim
 from networkx.algorithms import complement
 from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentation
 from prepare_network import maybe_adjust_costs_and_potentials
@@ -2974,21 +2979,21 @@ def add_industry(n, costs):
         )
 
     n.madd(
-            "Link",
-            nodes,
-            suffix=" hbi",
-            carrier="hbi",
-            capital_cost=costs.at["electric arc furnace", "investment"],
-            marginal_cost=0,
-            p_nom_max=p_nom if no_relocation else np.inf,
-            p_nom_extendable=True,
-            p_min_pu=1 if no_flexibility else 0,
-            bus0=nodes,
-            bus1="EU steel",
-            bus2="EU hbi",
-            efficiency=costs.at["electric arc furnace", "electricity-input"],
-            efficiency2=costs.at["electric arc furnace", "hbi-input"],
-        )
+        "Link",
+        nodes,
+        suffix=" hbi",
+        carrier="hbi",
+        capital_cost=costs.at["electric arc furnace", "investment"],
+        marginal_cost=0,
+        p_nom_max=p_nom if no_relocation else np.inf,
+        p_nom_extendable=True,
+        p_min_pu=1 if no_flexibility else 0,
+        bus0=nodes,
+        bus1="EU steel",
+        bus2="EU hbi",
+        efficiency=costs.at["electric arc furnace", "electricity-input"],
+        efficiency2=costs.at["electric arc furnace", "hbi-input"],
+    )
 
     n.madd(
         "Bus",
@@ -3539,7 +3544,7 @@ def add_industry(n, costs):
         p_set=p_set,
     )
 
-    demand_factor =  get(options["aviation_demand_factor"], investment_year)
+    demand_factor = get(options["aviation_demand_factor"], investment_year)
     all_aviation = ["total international aviation", "total domestic aviation"]
     p_set_naphtha = (
         demand_factor
@@ -3571,7 +3576,9 @@ def add_industry(n, costs):
     # some CO2 from naphtha are process emissions from steam cracker
     # rest of CO2 released to atmosphere either in waste-to-energy or decay
     process_co2_per_naphtha = (
-        industrial_demand.loc[(nodes, sectors_b), "process emission from feedstock"].sum()
+        industrial_demand.loc[
+            (nodes, sectors_b), "process emission from feedstock"
+        ].sum()
         / industrial_demand.loc[(nodes, sectors_b), "naphtha"].sum()
     )
     emitted_co2_per_naphtha = costs.at["oil", "CO2 intensity"] - process_co2_per_naphtha
@@ -3839,7 +3846,10 @@ def add_industry(n, costs):
             / nhours
         )
     else:
-        p_set = -industrial_demand.loc[(nodes, sectors_b), "process emission"].sum() / nhours
+        p_set = (
+            -industrial_demand.loc[(nodes, sectors_b), "process emission"].sum()
+            / nhours
+        )
 
     n.madd(
         "Load",
@@ -4456,7 +4466,7 @@ def add_endogenous_hvdc_import_options(n, cost_factor=1.0):
 
     import_links = pd.concat([import_links, pd.Series(xlinks)], axis=0)
     import_links = import_links.drop_duplicates(keep="first")
-    duplicated = import_links.index.duplicated(keep='first')
+    duplicated = import_links.index.duplicated(keep="first")
     import_links = import_links.loc[~duplicated]
 
     hvdc_cost = (
@@ -4640,7 +4650,9 @@ def add_import_options(
     else:
         import_options = {k: v for d in import_options for k, v in d.items()}
     if not options["gas_network"]:
-        logger.warning("Gas network is not resolved but recommended for import options.")
+        logger.warning(
+            "Gas network is not resolved but recommended for import options."
+        )
 
     logger.info("Add import options: " + " ".join(import_options.keys()))
     fn = snakemake.input.gas_input_nodes_simplified
@@ -4677,7 +4689,9 @@ def add_import_options(
         "shipping-meoh": ("methanolisation", "carbondioxide-input"),
     }
 
-    import_costs = pd.read_csv(snakemake.input.import_costs, delimiter=";", keep_default_na=False)
+    import_costs = pd.read_csv(
+        snakemake.input.import_costs, delimiter=";", keep_default_na=False
+    )
 
     # temporary bugfix for Namibia
     import_costs["exporter"] = import_costs.exporter.replace("", "NA")
@@ -4824,7 +4838,7 @@ def add_import_options(
         "shipping-hbi",
         "shipping-lnh3",
     }
-    #TODO: differentiate between steel and DRI
+    # TODO: differentiate between steel and DRI
     for tech in set(import_options).intersection(copperplated_carbonfree_options):
         suffix = bus_suffix[tech]
 
@@ -5096,9 +5110,7 @@ if __name__ == "__main__":
     )
     pop_weighted_energy_totals.update(pop_weighted_heat_totals)
 
-    country_centroids = pd.read_csv(
-        snakemake.input.country_centroids, index_col="ISO"
-    )
+    country_centroids = pd.read_csv(snakemake.input.country_centroids, index_col="ISO")
 
     patch_electricity_network(n)
 

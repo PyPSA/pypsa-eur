@@ -41,7 +41,9 @@ if __name__ == "__main__":
     nodal_production_stacked.index.names = [None, None]
     # sector: should be electric arc, steelworks etc etc.
     # final energy consumption per node, sector and carrier
-    index = pd.MultiIndex.from_product([nodal_production.index, nodal_production.columns], names=("node", "sector"))
+    index = pd.MultiIndex.from_product(
+        [nodal_production.index, nodal_production.columns], names=("node", "sector")
+    )
     nodal_df = nodal_sector_ratios.multiply(nodal_production_stacked).T
 
     # nodal_dict = {k: s * sector_ratios for k, s in nodal_production.iterrows()}

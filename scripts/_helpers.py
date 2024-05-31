@@ -649,8 +649,11 @@ def update_config_from_wildcards(config, w, inplace=True):
                 DRI=["shipping-hbi"],
             )
             if len(subsets):
+
                 def parse_carriers(s):
-                    prefixes = sorted(translate.keys(), key=lambda k: len(k), reverse=True)
+                    prefixes = sorted(
+                        translate.keys(), key=lambda k: len(k), reverse=True
+                    )
                     pattern = rf'({"|".join(prefixes)})(\d+(\.\d+)?)?'
                     match = re.search(pattern, s)
                     prefix = match.group(1) if match else None

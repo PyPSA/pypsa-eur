@@ -32,7 +32,8 @@ rule solve_sector_network:
         + "logs/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_python.log",
     threads: solver_threads
     resources:
-        mem_mb=lambda wildcards, attempt: config["solving"]["mem_mb"] + config["solving"].get("mem_increment", 32000) * (attempt - 1),
+        mem_mb=lambda wildcards, attempt: config["solving"]["mem_mb"]
+        + config["solving"].get("mem_increment", 32000) * (attempt - 1),
         runtime=config_provider("solving", "runtime", default="6h"),
     benchmark:
         (

@@ -108,7 +108,7 @@ if __name__ == "__main__":
             "plot_choropleth_capacities",
             simpl="",
             clusters=110,
-            ll='vopt',
+            ll="vopt",
             opts="",
             sector_opts="Co2L0-2190SEG-T-H-B-I-S-A-onwind+p0.5-imp",
             planning_horizons=2050,
