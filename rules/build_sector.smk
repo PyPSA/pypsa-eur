@@ -269,8 +269,8 @@ rule build_solar_thermal_profiles:
     output:
         solar_thermal=resources("solar_thermal_{scope}_elec_s{simpl}_{clusters}.nc"),
     resources:
-        mem_mb=8000,
-    threads: 1
+        mem_mb=20000,
+    threads: 16
     log:
         logs("build_solar_thermal_profiles_{scope}_s{simpl}_{clusters}.log"),
     benchmark:

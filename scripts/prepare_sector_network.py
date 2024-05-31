@@ -981,7 +981,7 @@ def insert_electricity_distribution_grid(n, costs):
         .get("efficiency_static")
     ):
         logger.info(
-            f"Deducting distribution losses from electricity demand: {100*(1-efficiency)}%"
+            f"Deducting distribution losses from electricity demand: {np.around(100*(1-efficiency), decimals=2)}%"
         )
         n.loads_t.p_set.loc[:, n.loads.carrier == "electricity"] *= efficiency
 
@@ -3742,6 +3742,12 @@ def add_enhanced_geothermal(n, egs_potentials, egs_overlap, costs):
         logger.warning(
             "'add_enhanced_geothermal' not implemented for multiple geothermal nodes."
         )
+    logger.info(
+        "EGS implemented with 2020 CAPEX from Aghahosseini et al 2021: 'From hot rock to...'."
+    )
+    logger.info(
+        "Recommended usage scales CAPEX to future cost expectations using config 'adjustments'."
+    )
 
     egs_config = snakemake.params["sector"]["enhanced_geothermal"]
     costs_config = snakemake.config["costs"]
@@ -3780,7 +3786,7 @@ def add_enhanced_geothermal(n, egs_potentials, egs_overlap, costs):
     orc_capital_cost = (orc_annuity + FOM / (1 + FOM)) * orc_capex * Nyears
 
     efficiency_orc = costs.at["organic rankine cycle", "efficiency"]
-    efficiency_dh = costs.at["geothermal", "efficiency residential heat"]
+    efficiency_dh = costs.at["geothermal", "district heat-input"]
 
     # p_nom_max conversion GW -> MW
     egs_potentials["p_nom_max"] = egs_potentials["p_nom_max"] * 1000.0
@@ -3791,7 +3797,6 @@ def add_enhanced_geothermal(n, egs_potentials, egs_overlap, costs):
     n.madd(
         "Bus",
         spatial.geothermal_heat.nodes,
-        location=spatial.geothermal_heat.locations,
         carrier="geothermal heat",
         unit="MWh_th",
     )
@@ -3894,7 +3899,8 @@ def add_enhanced_geothermal(n, egs_potentials, egs_overlap, costs):
                 carrier="geothermal district heat",
                 capital_cost=orc_capital_cost
                 * efficiency_orc
-                * costs.at["geothermal", "district heating cost"],
+                * costs.at["geothermal", "district heat surcharge"]
+                / 100.0,
                 efficiency=efficiency_dh,
                 p_nom_extendable=True,
             )

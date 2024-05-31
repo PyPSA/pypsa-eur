@@ -1032,7 +1032,7 @@ def extra_functionality(n, snapshots):
     else:
         add_co2_atmosphere_constraint(n, snapshots)
 
-    if config["sector"]["enhanced_geothermal_flexible"]:
+    if config["sector"]["enhanced_geothermal"]["enable"]:
         add_flexible_egs_constraint(n)
 
     if snakemake.params.custom_extra_functionality:
@@ -1101,6 +1101,8 @@ def solve_network(n, config, solving, **kwargs):
         logger.info(f"Labels:\n{labels}")
         n.model.print_infeasibilities()
         raise RuntimeError("Solving status 'infeasible'")
+
+    return n
 
 
 if __name__ == "__main__":
