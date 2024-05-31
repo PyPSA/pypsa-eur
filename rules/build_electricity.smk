@@ -655,6 +655,7 @@ rule clean_osm_data:
         substations=resources("osm/clean/substations.geojson"),
         substations_polygon=resources("osm/clean/substations_polygon.geojson"),
         lines=resources("osm/clean/lines.geojson"),
+        links=resources("osm/clean/links.geojson"),
     log:
         logs("clean_osm_data.log"),
     script:

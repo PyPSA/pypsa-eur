@@ -34,7 +34,7 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 from _helpers import configure_logging, set_scenario_config
-from shapely.geometry import LineString, Polygon
+from shapely.geometry import LineString, Polygon, MultiLineString
 from shapely.ops import linemerge
 
 logger = logging.getLogger(__name__)
@@ -272,6 +272,34 @@ def _clean_frequency(column):
 
     # Remove all remaining non-numeric characters except for semicolons
     column = column.apply(lambda x: re.sub(r"[^0-9;.]", "", x))
+
+    column.dropna(inplace=True)
+    return column.astype(str)
+
+
+def _clean_rating(column):
+    """
+    Function to clean and sum the rating columns: 
+
+    Args:
+    - column: pandas Series, the column to be cleaned
+
+    Returns:
+    - column: pandas Series, the cleaned column
+    """
+    logger.info("Cleaning ratings.")
+    column = column.copy()
+    column = (
+        column.astype(str)
+        .str.replace("MW", "")
+    )
+
+    # Remove all remaining non-numeric characters except for semicolons
+    column = column.apply(lambda x: re.sub(r"[^0-9;]", "", x))
+
+    # Sum up all ratings if there are multiple entries
+    column = column.str.split(";").apply(lambda x: sum([int(i) for i in x]))
+    
 
     column.dropna(inplace=True)
     return column.astype(str)
@@ -567,7 +595,6 @@ def _import_links(path_links):
         "frequency",
         "rating",
         "voltage",
-        "wires",
     ]
     df_links = pd.DataFrame(columns=columns)
 
@@ -595,7 +622,6 @@ def _import_links(path_links):
                     "frequency",
                     "rating",
                     "voltage",
-                    "wires",
                 ]
 
                 tags = pd.json_normalize(df["tags"]).map(
@@ -619,8 +645,64 @@ def _import_links(path_links):
                 )
                 continue
         logger.info("---")
+        logger.info("Dropping lines without rating.")
+        len_before = len(df_links)
+        df_links = df_links.dropna(subset=["rating"])
+        len_after = len(df_links)
+        logger.info(f"Dropped {len_before-len_after} elements without rating. " + 
+                    f"Imported {len_after} elements.")
 
     return df_links
+
+
+def _create_single_link(row):
+    """
+    Create a single link from multiple rows within a OSM link relation.
+
+    Parameters:
+    - row: A row of OSM data containing information about the link.
+
+    Returns:
+    - single_link: A single LineString representing the link.
+
+    This function takes a row of OSM data and extracts the relevant information 
+    to create a single link. It filters out elements (substations, electrodes) 
+    with invalid roles and finds the longest link based on its endpoints. 
+    If the longest link is a MultiLineString, it extracts the longest 
+    linestring from it. The resulting single link is returned.
+    """
+    valid_roles = ["line", "cable"]    
+    df = pd.json_normalize(row["members"])
+    df = df[df["role"].isin(valid_roles)]
+    df.loc[:, "geometry"] = df.apply(_create_linestring, axis=1)
+    df.loc[:, "length"] = df["geometry"].apply(lambda x: x.length)
+
+    list_endpoints = []
+    for idx, row in df.iterrows():
+        tuple = sorted([row["geometry"].coords[0], row["geometry"].coords[-1]])
+        # round tuple to 3 decimals
+        tuple = (
+            round(tuple[0][0], 2), 
+            round(tuple[0][1], 2), 
+            round(tuple[1][0], 2), 
+            round(tuple[1][1], 2)
+            )
+        list_endpoints.append(tuple)
+
+    df.loc[:, "endpoints"] = list_endpoints
+    df_longest = df.loc[df.groupby("endpoints")["length"].idxmax()]
+    
+    single_link = linemerge(df_longest["geometry"].values.tolist())
+
+    # If the longest component is a MultiLineString, extract the longest linestring from it
+    if isinstance(single_link, MultiLineString):
+        # Find connected components
+        components = list(single_link.geoms)
+
+        # Find the longest connected linestring
+        single_link = max(components, key=lambda x: x.length)
+
+    return single_link
 
 
 def _drop_duplicate_lines(df_lines):
@@ -654,9 +736,14 @@ def _drop_duplicate_lines(df_lines):
         grouped_duplicates.set_index("id"), on="id", how="left"
     )
 
+    len_before = len(df_lines)
     # Drop duplicates and update the df_lines dataframe with the cleaned data
     df_lines = df_lines[~df_lines["id"].isin(duplicate_rows["id"])]
     df_lines = pd.concat([df_lines, duplicate_rows], axis="rows")
+    len_after = len(df_lines)
+
+    logger.info(f"Dropped {len_before - len_after} duplicate elements. " +
+                f"Keeping {len_after} elements." )
 
     return df_lines
 
@@ -687,7 +774,11 @@ def _filter_by_voltage(df, min_voltage=200000):
     list_voltages = list_voltages.astype(str)
 
     bool_voltages = df["voltage"].apply(_check_voltage, list_voltages=list_voltages)
+    len_before = len(df)
     df = df[bool_voltages]
+    len_after = len(df)
+    logger.info(f"Dropped {len_before - len_after} elements with voltage below {min_voltage}. " +
+                f"Keeping {len_after} elements." )
 
     return df, list_voltages
 
@@ -1116,6 +1207,54 @@ def _finalise_lines(df_lines):
     return df_lines
 
 
+def _finalise_links(df_links):
+    """
+    Finalises the links column types.
+
+    Args:
+        df_links (pandas.DataFrame): The input DataFrame containing links data.
+
+    Returns:
+        df_links (pandas.DataFrame(): The DataFrame with finalised column types
+        and transformed data.
+    """
+    logger.info("Finalising links column types.")
+    df_links = df_links.copy()
+    # Rename columns
+    df_links.rename(
+        columns={
+            "id": "link_id",
+            "rating": "p_nom",
+        },
+        inplace=True,
+    )
+
+    # Initiate new columns for subsequent build_osm_network step
+    df_links.loc[:, "bus0"] = None
+    df_links.loc[:, "bus1"] = None
+    df_links.loc[:, "length"] = None
+
+    # Only include needed columns
+    df_links = df_links[
+        [
+            "link_id",
+            "voltage",
+            "p_nom",
+            "bus0",
+            "bus1",
+            "length",
+            "country",
+            "geometry",
+        ]
+    ]
+
+    # Set lines data types df.apply(pd.to_numeric, args=('coerce',))
+    # This workaround is needed as otherwise the column dtypes remain "objects"
+    df_links["p_nom"] = df_links["p_nom"].astype(int)
+
+    return df_links
+
+
 def _import_substations(path_substations):
     """
     Import substations from the given input paths. This function imports both
@@ -1393,6 +1532,7 @@ if __name__ == "__main__":
     output_substations_polygon = snakemake.output["substations_polygon"]
     output_substations = snakemake.output["substations"]
     output_lines = snakemake.output["lines"]
+    output_links = snakemake.output["links"]
 
     logger.info(
         f"Exporting clean substations with polygon shapes to {output_substations_polygon}"
@@ -1412,16 +1552,18 @@ if __name__ == "__main__":
     ### CONTINUE HERE
     # Cleaning process
     df_links = _import_links(path_links)
+
     df_links = _drop_duplicate_lines(df_links)
     df_links.loc[:, "voltage"] = _clean_voltage(df_links["voltage"])
     df_links, list_voltages = _filter_by_voltage(df_links, min_voltage=min_voltage_dc)
+    df_links.loc[:, "frequency"] = _clean_frequency(df_links["frequency"])
+    df_links.loc[:, "rating"] = _clean_rating(df_links["rating"])
+    df_links.loc[:, "geometry"] = df_links.apply(_create_single_link, axis=1)
+    df_links = _finalise_links(df_links)
+    gdf_links = gpd.GeoDataFrame(df_links, geometry="geometry", crs=crs)
 
-    df_lines.loc[:, "circuits"] = _clean_circuits(df_lines["circuits"])
-    df_lines.loc[:, "cables"] = _clean_cables(df_lines["cables"])
-    df_lines.loc[:, "frequency"] = _clean_frequency(df_lines["frequency"])
-    df_lines.loc[:, "wires"] = _clean_wires(df_lines["wires"])
-    df_lines = _clean_lines(df_lines, list_voltages)
-    df_lines = _create_lines_geometry(df_lines)
-    df_lines = _finalise_lines(df_lines)
+    logger.info(f"Exporting clean links to {output_links}")
+    gdf_links.to_file(output_links, driver="GeoJSON")
+    
 
     logger.info("Cleaning OSM data completed.")
