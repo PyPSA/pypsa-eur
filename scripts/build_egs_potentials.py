@@ -7,7 +7,7 @@ This rule extracts potential and cost for electricity generation through
 enhanced geothermal systems.
 
 For this, we use data from "From hot rock to useful energy..." by Aghahosseini, Breyer (2020)
-'https://www.sciencedirect.com/science/article/pii/S0306261920312551'
+'https://doi.org/10.1016/j.apenergy.2020.115769'
 Note that we input data used here is not the same as in the paper, but was passed on by the authors.
 
 The data provides a lon-lat gridded map of Europe (1° x 1°), with each grid cell assigned
