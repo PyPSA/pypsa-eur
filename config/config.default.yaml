@@ -1192,7 +1192,8 @@ plotting:
     other: '#000000'
     geothermal: '#ba91b1'
     geothermal heat: '#ba91b1'
-    geothermal organic rankine cycle: '#ba91b1'
+    geothermal district heat: '#d19D00'
+    geothermal organic rankine cycle: '#ffbf00'
     AC: "#70af1d"
     AC-AC: "#70af1d"
     AC line: "#70af1d"
