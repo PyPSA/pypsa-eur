@@ -34,7 +34,6 @@ The following subcategories of industry are considered:
 - Other non-classified
 Furthermore, the population distribution is added
 - Population
-
 """
 
 import logging

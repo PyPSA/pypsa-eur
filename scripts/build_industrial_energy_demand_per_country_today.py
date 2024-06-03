@@ -58,7 +58,6 @@ the output file contains the energy demand in TWh/a for the following carriers
 - other
 - solid
 - waste
-
 """
 
 import multiprocessing as mp

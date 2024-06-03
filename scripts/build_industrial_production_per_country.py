@@ -59,7 +59,6 @@ The following subcategories [kton/a] are considered:
 - HVC
 - Chlorine
 - Methanol
-
 """
 
 import logging
