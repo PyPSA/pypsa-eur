@@ -1947,7 +1947,7 @@ def add_heat(n, costs):
             heat_dsm_profile = heat_dsm_profile * e_nom / e_nom.max()
             e_nom = e_nom.max()
 
-            tes_time_constant_days = options["tes_tau"][name_type]
+            tes_time_constant_days = options["tes_tau"]["decentral"]
 
             n.madd(
                 "Store",
