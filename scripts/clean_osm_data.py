@@ -34,7 +34,7 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 from _helpers import configure_logging, set_scenario_config
-from shapely.geometry import LineString, Polygon, MultiLineString
+from shapely.geometry import LineString, MultiLineString, Polygon
 from shapely.ops import linemerge
 
 logger = logging.getLogger(__name__)
@@ -345,7 +345,7 @@ def _clean_frequency(column):
 
 def _clean_rating(column):
     """
-    Function to clean and sum the rating columns: 
+    Function to clean and sum the rating columns:
 
     Args:
     - column: pandas Series, the column to be cleaned
@@ -355,17 +355,13 @@ def _clean_rating(column):
     """
     logger.info("Cleaning ratings.")
     column = column.copy()
-    column = (
-        column.astype(str)
-        .str.replace("MW", "")
-    )
+    column = column.astype(str).str.replace("MW", "")
 
     # Remove all remaining non-numeric characters except for semicolons
     column = column.apply(lambda x: re.sub(r"[^0-9;]", "", x))
 
     # Sum up all ratings if there are multiple entries
     column = column.str.split(";").apply(lambda x: sum([int(i) for i in x]))
-    
 
     column.dropna(inplace=True)
     return column.astype(str)
@@ -721,8 +717,10 @@ def _import_links(path_links):
         len_before = len(df_links)
         df_links = df_links.dropna(subset=["rating"])
         len_after = len(df_links)
-        logger.info(f"Dropped {len_before-len_after} elements without rating. " + 
-                    f"Imported {len_after} elements.")
+        logger.info(
+            f"Dropped {len_before-len_after} elements without rating. "
+            + f"Imported {len_after} elements."
+        )
 
     return df_links
 
@@ -737,13 +735,13 @@ def _create_single_link(row):
     Returns:
     - single_link: A single LineString representing the link.
 
-    This function takes a row of OSM data and extracts the relevant information 
-    to create a single link. It filters out elements (substations, electrodes) 
-    with invalid roles and finds the longest link based on its endpoints. 
-    If the longest link is a MultiLineString, it extracts the longest 
+    This function takes a row of OSM data and extracts the relevant information
+    to create a single link. It filters out elements (substations, electrodes)
+    with invalid roles and finds the longest link based on its endpoints.
+    If the longest link is a MultiLineString, it extracts the longest
     linestring from it. The resulting single link is returned.
     """
-    valid_roles = ["line", "cable"]    
+    valid_roles = ["line", "cable"]
     df = pd.json_normalize(row["members"])
     df = df[df["role"].isin(valid_roles)]
     df.loc[:, "geometry"] = df.apply(_create_linestring, axis=1)
@@ -814,8 +812,10 @@ def _drop_duplicate_lines(df_lines):
     df_lines = pd.concat([df_lines, duplicate_rows], axis="rows")
     len_after = len(df_lines)
 
-    logger.info(f"Dropped {len_before - len_after} duplicate elements. " +
-                f"Keeping {len_after} elements." )
+    logger.info(
+        f"Dropped {len_before - len_after} duplicate elements. "
+        + f"Keeping {len_after} elements."
+    )
 
     return df_lines
 
@@ -849,8 +849,10 @@ def _filter_by_voltage(df, min_voltage=200000):
     len_before = len(df)
     df = df[bool_voltages]
     len_after = len(df)
-    logger.info(f"Dropped {len_before - len_after} elements with voltage below {min_voltage}. " +
-                f"Keeping {len_after} elements." )
+    logger.info(
+        f"Dropped {len_before - len_after} elements with voltage below {min_voltage}. "
+        + f"Keeping {len_after} elements."
+    )
 
     return df, list_voltages
 
