@@ -216,12 +216,12 @@ def _load_links_from_eg(buses, eg_links):
         true_values=["t"],
         false_values=["f"],
         dtype=dict(
-            link_id="str", 
-            bus0="str", 
+            link_id="str",
+            bus0="str",
             bus1="str",
             voltage="int",
             p_nom="float",
-            ),
+        ),
     ).set_index("link_id")
 
     links["length"] /= 1e3
@@ -808,7 +808,6 @@ def base_network_osm(
     n.import_components_from_dataframe(converters, "Link")
 
     _set_lines_s_nom_from_linetypes(n)
-
 
     # TODO: what about this?
     n = _remove_unconnected_components(n)

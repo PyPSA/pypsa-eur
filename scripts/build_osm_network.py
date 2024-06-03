@@ -682,7 +682,7 @@ def merge_stations_lines_by_station_id_and_voltage(
     #             all_dc_boundary_points = pd.concat(
     #                 [all_dc_boundary_points, dc_boundary_points], ignore_index=True
     #             )
-    
+
     # # TODO pypsa-eur: Add to pypsa-earth for all related entries on is_dclink_boundary_point
     # # check for each entry in buses_dc whether it is included in lines_dc_points
     # buses_ac["is_dclink_boundary_point"] = False
@@ -850,7 +850,7 @@ def build_network(
     buses = buses.replace({True: "t", False: "f"})
 
     # Change column orders
-    cols_lines= [
+    cols_lines = [
         "bus0",
         "bus1",
         "voltage",

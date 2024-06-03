@@ -80,7 +80,7 @@ def _create_polygon(row):
 
 def _extended_linemerge(lines):
     """
-    Merges a list of LineStrings into a single LineString by finding the 
+    Merges a list of LineStrings into a single LineString by finding the
     closest pair of points between all pairs of LineStrings.
 
     Parameters:
@@ -91,22 +91,22 @@ def _extended_linemerge(lines):
 
     Raises:
     TypeError: If the input is not a list of LineStrings.
-
     """
     # Ensure we have a list of LineStrings
     if not isinstance(lines, list):
         raise TypeError("Input should be a list of LineStrings")
     if any(not isinstance(line, LineString) for line in lines):
         raise TypeError("All elements in the list should be LineStrings")
-    
+
     if len(lines) == 1:
         return lines[0]
-    
+
     merged_linestring = linemerge(lines)
 
     if isinstance(merged_linestring, LineString):
         return merged_linestring
     else:
+
         def find_closest_points(line1, line2):
             min_dist = np.inf
             closest_points = (None, None)
@@ -117,7 +117,7 @@ def _extended_linemerge(lines):
                         min_dist = dist
                         closest_points = (point1, point2)
             return closest_points
-        
+
         def merge_lines(lines):
             while len(lines) > 1:
                 min_distance = np.inf
@@ -131,15 +131,26 @@ def _extended_linemerge(lines):
                             min_distance = distance
                             closest_pair = (point1, point2)
                             pair_indices = (i, j)
-                
+
                 connecting_line = LineString([closest_pair[0], closest_pair[1]])
-                combined_line = linemerge(MultiLineString([lines[pair_indices[0]], lines[pair_indices[1]], connecting_line]))
-                
-                new_lines = [line for k, line in enumerate(lines) if k not in pair_indices]
+                combined_line = linemerge(
+                    MultiLineString(
+                        [
+                            lines[pair_indices[0]],
+                            lines[pair_indices[1]],
+                            connecting_line,
+                        ]
+                    )
+                )
+
+                new_lines = [
+                    line for k, line in enumerate(lines) if k not in pair_indices
+                ]
                 new_lines.append(combined_line)
                 lines = new_lines
-            
+
             return lines[0]
+
         lines = list(merged_linestring.geoms)
         return merge_lines(lines)
 
@@ -678,11 +689,7 @@ def _import_links(path_links):
 
                 df = pd.DataFrame(data["elements"])
                 df["id"] = df["id"].astype(str)
-                df["id"] = df["id"].apply(
-                    lambda x: (
-                        f"relation/{x}"
-                    )
-                )
+                df["id"] = df["id"].apply(lambda x: (f"relation/{x}"))
                 df["country"] = country
 
                 col_tags = [
@@ -752,18 +759,18 @@ def _create_single_link(row):
         tuple = sorted([row["geometry"].coords[0], row["geometry"].coords[-1]])
         # round tuple to 3 decimals
         tuple = (
-            round(tuple[0][0], 3), 
-            round(tuple[0][1], 3), 
-            round(tuple[1][0], 3), 
-            round(tuple[1][1], 3)
-            )
+            round(tuple[0][0], 3),
+            round(tuple[0][1], 3),
+            round(tuple[1][0], 3),
+            round(tuple[1][1], 3),
+        )
         list_endpoints.append(tuple)
 
     df.loc[:, "endpoints"] = list_endpoints
     df_longest = df.loc[df.groupby("endpoints")["length"].idxmin()]
-    
+
     single_link = linemerge(df_longest["geometry"].values.tolist())
-    
+
     # If the longest component is a MultiLineString, extract the longest linestring from it
     if isinstance(single_link, MultiLineString):
         # Find connected components
@@ -1329,7 +1336,7 @@ def _finalise_links(df_links):
     # Set lines data types df.apply(pd.to_numeric, args=('coerce',))
     # This workaround is needed as otherwise the column dtypes remain "objects"
     df_links["p_nom"] = df_links["p_nom"].astype(int)
-        # Set lines data types df.apply(pd.to_numeric, args=('coerce',))
+    # Set lines data types df.apply(pd.to_numeric, args=('coerce',))
     # This workaround is needed as otherwise the column dtypes remain "objects"
     df_links["voltage"] = df_links["voltage"].astype(int)
 
@@ -1583,7 +1590,9 @@ if __name__ == "__main__":
     len_before = len(df_lines)
     df_lines = df_lines[df_lines["frequency"] == "50"]
     len_after = len(df_lines)
-    logger.info(f"Dropped {len_before - len_after} DC lines. Keeping {len_after} AC lines.")
+    logger.info(
+        f"Dropped {len_before - len_after} DC lines. Keeping {len_after} AC lines."
+    )
 
     df_lines = _create_lines_geometry(df_lines)
     df_lines = _finalise_lines(df_lines)
@@ -1622,11 +1631,10 @@ if __name__ == "__main__":
     df_links = _finalise_links(df_links)
     gdf_links = gpd.GeoDataFrame(df_links, geometry="geometry", crs=crs)
 
-
     # Add line endings to substations
     path_country_shapes = snakemake.input.country_shapes
     path_offshore_shapes = snakemake.input.offshore_shapes
-    
+
     df_substations = _add_line_endings_to_substations(
         df_substations,
         gdf_lines,
@@ -1667,5 +1675,5 @@ if __name__ == "__main__":
     gdf_lines.to_file(output_lines, driver="GeoJSON")
     logger.info(f"Exporting clean links to {output_links}")
     gdf_links.to_file(output_links, driver="GeoJSON")
-    
+
     logger.info("Cleaning OSM data completed.")
