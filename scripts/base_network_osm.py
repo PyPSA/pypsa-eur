@@ -215,14 +215,16 @@ def _load_links_from_eg(buses, eg_links):
         quotechar="'",
         true_values=["t"],
         false_values=["f"],
-        dtype=dict(link_id="str", bus0="str", bus1="str", under_construction="bool"),
+        dtype=dict(
+            link_id="str", 
+            bus0="str", 
+            bus1="str",
+            voltage="int",
+            p_nom="float",
+            ),
     ).set_index("link_id")
 
     links["length"] /= 1e3
-
-    # Skagerrak Link is connected to 132kV bus which is removed in _load_buses_from_eg.
-    # Connect to neighboring 380kV bus
-    links.loc[links.bus1 == "6396", "bus1"] = "6398"
 
     links = _remove_dangling_branches(links, buses)
 
@@ -448,54 +450,14 @@ def _set_lines_s_nom_from_linetypes(n):
     ) * n.lines.eval("v_nom * num_parallel")
 
 
-def _set_electrical_parameters_dc_lines(lines_config, voltages, lines):
-    if lines.empty:
-        lines["type"] = []
-        return lines
-
-    linetypes = _get_linetypes_config(lines_config["dc_types"], voltages)
-
-    lines["carrier"] = "DC"
-    lines["dc"] = True
-    lines.loc[:, "type"] = lines.v_nom.apply(
-        lambda x: _get_linetype_by_voltage(x, linetypes)
-    )
-
-    lines["s_max_pu"] = lines_config["s_max_pu"]
-
-    return lines
-
-
 # TODO pypsa-eur: Clean/fix this, update list p_noms
-def _set_electrical_parameters_links(links, config, links_p_nom):
+def _set_electrical_parameters_links(links, config):
     if links.empty:
         return links
 
     p_max_pu = config["links"].get("p_max_pu", 1.0)
     links["p_max_pu"] = p_max_pu
     links["p_min_pu"] = -p_max_pu
-
-    links_p_nom = pd.read_csv(links_p_nom)
-
-    # filter links that are not in operation anymore
-    removed_b = links_p_nom.Remarks.str.contains("Shut down|Replaced", na=False)
-    links_p_nom = links_p_nom[~removed_b]
-
-    # find closest link for all links in links_p_nom
-    links_p_nom["j"] = _find_closest_links(links, links_p_nom)
-
-    links_p_nom = links_p_nom.groupby(["j"], as_index=False).agg({"Power (MW)": "sum"})
-
-    p_nom = links_p_nom.dropna(subset=["j"]).set_index("j")["Power (MW)"]
-
-    # Don't update p_nom if it's already set
-    p_nom_unset = (
-        p_nom.drop(links.index[links.p_nom.notnull()], errors="ignore")
-        if "p_nom" in links
-        else p_nom
-    )
-    links.loc[p_nom_unset.index, "p_nom"] = p_nom_unset
-
     links["carrier"] = "DC"
     links["dc"] = True
 
@@ -786,7 +748,7 @@ def base_network_osm(
     eg_converters,
     eg_transformers,
     eg_lines,
-    links_p_nom,
+    eg_links,
     europe_shape,
     country_shapes,
     offshore_shapes,
@@ -795,7 +757,7 @@ def base_network_osm(
     buses = _load_buses_from_eg(eg_buses, europe_shape, config["electricity"])
 
     # TODO pypsa-eur add this
-    # links = _load_links_from_eg(buses, eg_links)
+    links = _load_links_from_eg(buses, eg_links)
     # if config["links"].get("include_tyndp"):
     #     buses, links = _add_links_from_tyndp(buses, links, links_tyndp, europe_shape)
 
@@ -807,20 +769,13 @@ def base_network_osm(
     if config["lines"].get("reconnect_crimea", True) and "UA" in config["countries"]:
         lines = _reconnect_crimea(lines)
 
-    lines_ac = lines[lines.tag_frequency.astype(float) != 0].copy()
-    lines_dc = lines[lines.tag_frequency.astype(float) == 0].copy()
-
-    lines_ac = _set_electrical_parameters_lines(
-        config["lines"], config["electricity"]["voltages"], lines_ac
+    lines = _set_electrical_parameters_lines(
+        config["lines"], config["electricity"]["voltages"], lines
     )
 
-    lines_dc = _set_electrical_parameters_dc_lines(
-        config["lines"], config["electricity"]["voltages"], lines_dc
-    )
+    links = _set_electrical_parameters_links(links, config)
 
-    # lines = _set_electrical_parameters_lines(lines, config)
     transformers = _set_electrical_parameters_transformers(transformers, config)
-    # links = _set_electrical_parameters_links(links, config, links_p_nom)
     converters = _set_electrical_parameters_converters(converters, config)
 
     n = pypsa.Network()
@@ -833,15 +788,7 @@ def base_network_osm(
     )  # TODO: fix hard code and check if AC/DC truly exist
 
     n.import_components_from_dataframe(buses, "Bus")
-
-    lines_dc = _set_electrical_parameters_links(lines_dc, config, links_p_nom)
-    # parse line information into p_nom required for converters
-    lines_dc["p_nom"] = lines_dc.apply(
-        lambda x: x["v_nom"] * n.line_types.i_nom[x["type"]],
-        axis=1,
-        result_type="reduce",
-    )
-    n.import_components_from_dataframe(lines_ac, "Line")
+    n.import_components_from_dataframe(lines, "Line")
     # The columns which names starts with "bus" are mixed up with the third-bus specification
     # when executing additional_linkports()
     # lines_dc.drop(
@@ -856,17 +803,12 @@ def base_network_osm(
     #     axis=1,
     #     inplace=True,
     # )
-    n.import_components_from_dataframe(lines_dc, "Link")
-
-    # n.import_components_from_dataframe(lines, "Line")
+    n.import_components_from_dataframe(links, "Link")
     n.import_components_from_dataframe(transformers, "Transformer")
-    # n.import_components_from_dataframe(links, "Link")
     n.import_components_from_dataframe(converters, "Link")
 
     _set_lines_s_nom_from_linetypes(n)
 
-    # TODO pypsa-eur add this
-    # _apply_parameter_corrections(n, parameter_corrections)
 
     # TODO: what about this?
     n = _remove_unconnected_components(n)
@@ -1085,7 +1027,7 @@ if __name__ == "__main__":
         snakemake.input.eg_converters,
         snakemake.input.eg_transformers,
         snakemake.input.eg_lines,
-        snakemake.input.links_p_nom,
+        snakemake.input.eg_links,
         snakemake.input.europe_shape,
         snakemake.input.country_shapes,
         snakemake.input.offshore_shapes,

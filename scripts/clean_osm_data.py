@@ -78,6 +78,72 @@ def _create_polygon(row):
     return polygon
 
 
+def _extended_linemerge(lines):
+    """
+    Merges a list of LineStrings into a single LineString by finding the 
+    closest pair of points between all pairs of LineStrings.
+
+    Parameters:
+    lines (list): A list of LineStrings to be merged.
+
+    Returns:
+    merged_line (LineString): The merged LineString.
+
+    Raises:
+    TypeError: If the input is not a list of LineStrings.
+
+    """
+    # Ensure we have a list of LineStrings
+    if not isinstance(lines, list):
+        raise TypeError("Input should be a list of LineStrings")
+    if any(not isinstance(line, LineString) for line in lines):
+        raise TypeError("All elements in the list should be LineStrings")
+    
+    if len(lines) == 1:
+        return lines[0]
+    
+    merged_linestring = linemerge(lines)
+
+    if isinstance(merged_linestring, LineString):
+        return merged_linestring
+    else:
+        def find_closest_points(line1, line2):
+            min_dist = np.inf
+            closest_points = (None, None)
+            for point1 in line1.coords:
+                for point2 in line2.coords:
+                    dist = np.linalg.norm(np.array(point1) - np.array(point2))
+                    if dist < min_dist:
+                        min_dist = dist
+                        closest_points = (point1, point2)
+            return closest_points
+        
+        def merge_lines(lines):
+            while len(lines) > 1:
+                min_distance = np.inf
+                closest_pair = (None, None)
+                pair_indices = (None, None)
+                for i in range(len(lines)):
+                    for j in range(i + 1, len(lines)):
+                        point1, point2 = find_closest_points(lines[i], lines[j])
+                        distance = np.linalg.norm(np.array(point1) - np.array(point2))
+                        if distance < min_distance:
+                            min_distance = distance
+                            closest_pair = (point1, point2)
+                            pair_indices = (i, j)
+                
+                connecting_line = LineString([closest_pair[0], closest_pair[1]])
+                combined_line = linemerge(MultiLineString([lines[pair_indices[0]], lines[pair_indices[1]], connecting_line]))
+                
+                new_lines = [line for k, line in enumerate(lines) if k not in pair_indices]
+                new_lines.append(combined_line)
+                lines = new_lines
+            
+            return lines[0]
+        lines = list(merged_linestring.geoms)
+        return merge_lines(lines)
+
+
 def _clean_voltage(column):
     """
     Function to clean the raw voltage column: manual fixing and drop nan values
@@ -391,6 +457,7 @@ def _add_line_endings_to_substations(
     gdf_lines,
     path_country_shapes,
     path_offshore_shapes,
+    prefix,
 ):
     """
     Add line endings to substations.
@@ -440,18 +507,18 @@ def _add_line_endings_to_substations(
     bus_all = bus_all.groupby(["voltage", "lon", "lat", "dc"]).first().reset_index()
     bus_all = bus_all[df_substations.columns]
     bus_all.loc[:, "bus_id"] = bus_all.apply(
-        lambda row: f"line-end/{row.name + 1}", axis=1
+        lambda row: f"{prefix}/{row.name + 1}", axis=1
     )
 
     # Initialize default values
-    bus_all["station_id"] = np.nan
+    bus_all["station_id"] = None
     # Assuming substations completed for installed lines
     bus_all["under_construction"] = False
     bus_all["tag_area"] = None
     bus_all["symbol"] = "substation"
     # TODO: this tag may be improved, maybe depending on voltage levels
     bus_all["tag_substation"] = "transmission"
-    bus_all["tag_source"] = "line-end"
+    bus_all["tag_source"] = prefix
 
     buses = pd.concat([df_substations, bus_all], ignore_index=True)
     buses.set_index("bus_id", inplace=True)
@@ -492,7 +559,7 @@ def _add_line_endings_to_substations(
         bool_multiple_countries, "index_right"
     ]
 
-    return buses
+    return buses.reset_index()
 
 
 def _import_lines_and_cables(path_lines):
@@ -615,6 +682,11 @@ def _import_links(path_links):
 
                 df = pd.DataFrame(data["elements"])
                 df["id"] = df["id"].astype(str)
+                df["id"] = df["id"].apply(
+                    lambda x: (
+                        f"relation/{x}"
+                    )
+                )
                 df["country"] = country
 
                 col_tags = [
@@ -682,18 +754,18 @@ def _create_single_link(row):
         tuple = sorted([row["geometry"].coords[0], row["geometry"].coords[-1]])
         # round tuple to 3 decimals
         tuple = (
-            round(tuple[0][0], 2), 
-            round(tuple[0][1], 2), 
-            round(tuple[1][0], 2), 
-            round(tuple[1][1], 2)
+            round(tuple[0][0], 3), 
+            round(tuple[0][1], 3), 
+            round(tuple[1][0], 3), 
+            round(tuple[1][1], 3)
             )
         list_endpoints.append(tuple)
 
     df.loc[:, "endpoints"] = list_endpoints
-    df_longest = df.loc[df.groupby("endpoints")["length"].idxmax()]
+    df_longest = df.loc[df.groupby("endpoints")["length"].idxmin()]
     
     single_link = linemerge(df_longest["geometry"].values.tolist())
-
+    
     # If the longest component is a MultiLineString, extract the longest linestring from it
     if isinstance(single_link, MultiLineString):
         # Find connected components
@@ -1233,6 +1305,8 @@ def _finalise_links(df_links):
     df_links.loc[:, "bus0"] = None
     df_links.loc[:, "bus1"] = None
     df_links.loc[:, "length"] = None
+    df_links.loc[:, "under_construction"] = False
+    df_links.loc[:, "dc"] = True
 
     # Only include needed columns
     df_links = df_links[
@@ -1243,6 +1317,8 @@ def _finalise_links(df_links):
             "bus0",
             "bus1",
             "length",
+            "under_construction",
+            "dc",
             "country",
             "geometry",
         ]
@@ -1251,6 +1327,9 @@ def _finalise_links(df_links):
     # Set lines data types df.apply(pd.to_numeric, args=('coerce',))
     # This workaround is needed as otherwise the column dtypes remain "objects"
     df_links["p_nom"] = df_links["p_nom"].astype(int)
+        # Set lines data types df.apply(pd.to_numeric, args=('coerce',))
+    # This workaround is needed as otherwise the column dtypes remain "objects"
+    df_links["voltage"] = df_links["voltage"].astype(int)
 
     return df_links
 
@@ -1497,6 +1576,13 @@ if __name__ == "__main__":
     df_lines.loc[:, "frequency"] = _clean_frequency(df_lines["frequency"])
     df_lines.loc[:, "wires"] = _clean_wires(df_lines["wires"])
     df_lines = _clean_lines(df_lines, list_voltages)
+
+    # Drop DC lines, will be added through relations later
+    len_before = len(df_lines)
+    df_lines = df_lines[df_lines["frequency"] == "50"]
+    len_after = len(df_lines)
+    logger.info(f"Dropped {len_before - len_after} DC lines. Keeping {len_after} AC lines.")
+
     df_lines = _create_lines_geometry(df_lines)
     df_lines = _finalise_lines(df_lines)
 
@@ -1510,14 +1596,49 @@ if __name__ == "__main__":
     gdf_lines = gpd.GeoDataFrame(df_lines, geometry="geometry", crs=crs)
     gdf_lines = _remove_lines_within_substations(gdf_lines, gdf_substations_polygon)
 
+    logger.info("---")
+    logger.info("HVDC LINKS")
+    path_links = {
+        "links": snakemake.input.links_relation,
+    }
+
+    ### CONTINUE HERE
+    # Cleaning process
+    df_links = _import_links(path_links)
+
+    df_links = _drop_duplicate_lines(df_links)
+    df_links.loc[:, "voltage"] = _clean_voltage(df_links["voltage"])
+    df_links, list_voltages = _filter_by_voltage(df_links, min_voltage=min_voltage_dc)
+    # Keep only highest voltage of split string
+    df_links.loc[:, "voltage"] = df_links["voltage"].apply(
+        lambda x: str(max(map(int, x.split(";"))))
+    )
+    df_links.loc[:, "frequency"] = _clean_frequency(df_links["frequency"])
+    df_links.loc[:, "rating"] = _clean_rating(df_links["rating"])
+
+    df_links.loc[:, "geometry"] = df_links.apply(_create_single_link, axis=1)
+    df_links = _finalise_links(df_links)
+    gdf_links = gpd.GeoDataFrame(df_links, geometry="geometry", crs=crs)
+
+
     # Add line endings to substations
     path_country_shapes = snakemake.input.country_shapes
     path_offshore_shapes = snakemake.input.offshore_shapes
+    
     df_substations = _add_line_endings_to_substations(
         df_substations,
         gdf_lines,
         path_country_shapes,
         path_offshore_shapes,
+        prefix="line-end",
+    )
+
+    df_substations = _add_line_endings_to_substations(
+        df_substations,
+        gdf_links,
+        path_country_shapes,
+        path_offshore_shapes,
+        prefix="link-end",
     )
 
     # Drop polygons and create GDF
@@ -1542,28 +1663,7 @@ if __name__ == "__main__":
     gdf_substations.to_file(output_substations, driver="GeoJSON")
     logger.info(f"Exporting clean lines to {output_lines}")
     gdf_lines.to_file(output_lines, driver="GeoJSON")
-
-    logger.info("---")
-    logger.info("HVDC LINKS")
-    path_links = {
-        "links": snakemake.input.links_relation,
-    }
-
-    ### CONTINUE HERE
-    # Cleaning process
-    df_links = _import_links(path_links)
-
-    df_links = _drop_duplicate_lines(df_links)
-    df_links.loc[:, "voltage"] = _clean_voltage(df_links["voltage"])
-    df_links, list_voltages = _filter_by_voltage(df_links, min_voltage=min_voltage_dc)
-    df_links.loc[:, "frequency"] = _clean_frequency(df_links["frequency"])
-    df_links.loc[:, "rating"] = _clean_rating(df_links["rating"])
-    df_links.loc[:, "geometry"] = df_links.apply(_create_single_link, axis=1)
-    df_links = _finalise_links(df_links)
-    gdf_links = gpd.GeoDataFrame(df_links, geometry="geometry", crs=crs)
-
     logger.info(f"Exporting clean links to {output_links}")
     gdf_links.to_file(output_links, driver="GeoJSON")
     
-
     logger.info("Cleaning OSM data completed.")

@@ -313,7 +313,7 @@ def merge_stations_same_station_id(
         # average location of the buses having the same station_id
         station_point_x = np.round(g_value.geometry.x.mean(), precision)
         station_point_y = np.round(g_value.geometry.y.mean(), precision)
-        is_dclink_boundary_point = any(g_value["is_dclink_boundary_point"])
+        # is_dclink_boundary_point = any(g_value["is_dclink_boundary_point"])
 
         # loop for every voltage level in the bus
         # The location of the buses is averaged; in the case of multiple voltage levels for the same station_id,
@@ -337,7 +337,7 @@ def merge_stations_same_station_id(
                     lon_bus,  # "lon"
                     lat_bus,  # "lat"
                     bus_row["country"].iloc[0],  # "country",
-                    is_dclink_boundary_point,  # check if new bus was formed of at least one DC link boundary point
+                    # is_dclink_boundary_point,  # check if new bus was formed of at least one DC link boundary point
                     Point(
                         lon_bus,
                         lat_bus,
@@ -362,7 +362,7 @@ def merge_stations_same_station_id(
         "x",
         "y",
         "country",
-        "is_dclink_boundary_point",
+        # "is_dclink_boundary_point",
         "geometry",
     ]
 
@@ -483,18 +483,17 @@ def get_converters(buses):
                 )
 
                 # check if bus is a dclink boundary point, only then add converter
-                if g_value["is_dclink_boundary_point"].loc[id_0]:
-                    df_converters.append(
-                        [
-                            f"convert_{g_name}_{id_0}",  # "line_id"
-                            g_value["bus_id"].loc[id_0],  # "bus0"
-                            g_value["bus_id"].loc[id_1],  # "bus1"
-                            False,  # "underground"
-                            False,  # "under_construction"
-                            g_value.country.loc[id_0],  # "country"
-                            geom_conv,  # "geometry"
-                        ]
-                    )
+                df_converters.append(
+                    [
+                        f"convert_{g_name}_{id_0}",  # "line_id"
+                        g_value["bus_id"].loc[id_0],  # "bus0"
+                        g_value["bus_id"].loc[id_1],  # "bus1"
+                        False,  # "underground"
+                        False,  # "under_construction"
+                        g_value.country.loc[id_0],  # "country"
+                        geom_conv,  # "geometry"
+                    ]
+                )
 
     # name of the columns
     conv_columns = [
@@ -618,7 +617,7 @@ def set_lv_substations(buses):
 
 
 def merge_stations_lines_by_station_id_and_voltage(
-    lines, buses, distance_crs, tol=5000
+    lines, links, buses, distance_crs, tol=5000
 ):
     """
     Function to merge close stations and adapt the line datasets to adhere to
@@ -637,59 +636,59 @@ def merge_stations_lines_by_station_id_and_voltage(
     set_substations_ids(buses_ac, distance_crs, tol=tol)
     set_substations_ids(buses_dc, distance_crs, tol=tol)
 
-    # Find boundary points of DC links
-    # lines_dc_shape = lines[lines["dc"] == True].unary_union
-    # lines_dc_bounds = lines_dc_shape.boundary
-    # lines_dc_points = [p for p in lines_dc_bounds.geoms]
-    lines_dc = lines[lines["dc"] == True].reset_index()
-    lines_dc["adj_idx"] = range(0, len(lines_dc))
+    # # Find boundary points of DC links
+    # # lines_dc_shape = lines[lines["dc"] == True].unary_union
+    # # lines_dc_bounds = lines_dc_shape.boundary
+    # # lines_dc_points = [p for p in lines_dc_bounds.geoms]
+    # lines_dc = lines[lines["dc"] == True].reset_index()
+    # lines_dc["adj_idx"] = range(0, len(lines_dc))
 
-    # Initialize an empty adjacency matrix
-    dc_adj_matrix = np.zeros((len(lines_dc), len(lines_dc)), dtype=int)
+    # # Initialize an empty adjacency matrix
+    # dc_adj_matrix = np.zeros((len(lines_dc), len(lines_dc)), dtype=int)
 
-    # Fill the adjacency matrix
-    for i in range(len(lines_dc)):
-        for j in range(len(lines_dc)):
-            if are_lines_connected(lines_dc.iloc[i], lines_dc.iloc[j]):
-                dc_adj_matrix[i, j] = 1
+    # # Fill the adjacency matrix
+    # for i in range(len(lines_dc)):
+    #     for j in range(len(lines_dc)):
+    #         if are_lines_connected(lines_dc.iloc[i], lines_dc.iloc[j]):
+    #             dc_adj_matrix[i, j] = 1
 
-    dc_paths = find_paths(dc_adj_matrix)
+    # dc_paths = find_paths(dc_adj_matrix)
 
-    all_dc_boundary_points = pd.Series()
+    # all_dc_boundary_points = pd.Series()
 
-    for path in dc_paths:
-        bus_0_coors = lines_dc.iloc[path]["bus_0_coors"]
-        bus_1_coors = lines_dc.iloc[path]["bus_1_coors"]
+    # for path in dc_paths:
+    #     bus_0_coors = lines_dc.iloc[path]["bus_0_coors"]
+    #     bus_1_coors = lines_dc.iloc[path]["bus_1_coors"]
 
-        # Create DataFrame containing all points within a path
-        dc_points = pd.concat([bus_0_coors, bus_1_coors], ignore_index=True)
+    #     # Create DataFrame containing all points within a path
+    #     dc_points = pd.concat([bus_0_coors, bus_1_coors], ignore_index=True)
 
-        # Determine the value counts of individual points. If it occurs more than
-        # once, it cannot be an end-point of a path
-        bool_duplicates = (
-            dc_points.apply(lambda p: sum([are_almost_equal(p, s) for s in dc_points]))
-            > 1
-        )
+    #     # Determine the value counts of individual points. If it occurs more than
+    #     # once, it cannot be an end-point of a path
+    #     bool_duplicates = (
+    #         dc_points.apply(lambda p: sum([are_almost_equal(p, s) for s in dc_points]))
+    #         > 1
+    #     )
 
-        # Drop all duplicates
-        dc_boundary_points = dc_points[~bool_duplicates]
+    #     # Drop all duplicates
+    #     dc_boundary_points = dc_points[~bool_duplicates]
 
-        if dc_boundary_points.empty:
-            all_dc_boundary_points = dc_boundary_points
-        else:
-            if all_dc_boundary_points.empty:
-                all_dc_boundary_points = dc_boundary_points
-            else:
-                all_dc_boundary_points = pd.concat(
-                    [all_dc_boundary_points, dc_boundary_points], ignore_index=True
-                )
-
-    # TODO pypsa-eur: Add to pypsa-earth for all related entries on is_dclink_boundary_point
-    # check for each entry in buses_dc whether it is included in lines_dc_points
-    buses_ac["is_dclink_boundary_point"] = False
-    buses_dc["is_dclink_boundary_point"] = buses_dc.geometry.apply(
-        lambda p: any([p.within(l) for l in all_dc_boundary_points])
-    )
+    #     if dc_boundary_points.empty:
+    #         all_dc_boundary_points = dc_boundary_points
+    #     else:
+    #         if all_dc_boundary_points.empty:
+    #             all_dc_boundary_points = dc_boundary_points
+    #         else:
+    #             all_dc_boundary_points = pd.concat(
+    #                 [all_dc_boundary_points, dc_boundary_points], ignore_index=True
+    #             )
+    
+    # # TODO pypsa-eur: Add to pypsa-earth for all related entries on is_dclink_boundary_point
+    # # check for each entry in buses_dc whether it is included in lines_dc_points
+    # buses_ac["is_dclink_boundary_point"] = False
+    # buses_dc["is_dclink_boundary_point"] = buses_dc.geometry.apply(
+    #     lambda p: any([p.within(l) for l in all_dc_boundary_points])
+    # )
 
     logger.info(" - Merging substations with the same id")
 
@@ -705,26 +704,25 @@ def merge_stations_lines_by_station_id_and_voltage(
 
     # set the bus ids to the line dataset
     lines, buses = set_lines_ids(lines, buses, distance_crs)
+    links, buses = set_lines_ids(links, buses, distance_crs)
 
     # drop lines starting and ending in the same node
     lines.drop(lines[lines["bus0"] == lines["bus1"]].index, inplace=True)
+    links.drop(links[links["bus0"] == links["bus1"]].index, inplace=True)
     # update line endings
     lines = line_endings_to_bus_conversion(lines)
+    links = line_endings_to_bus_conversion(links)
 
     # set substation_lv
     set_lv_substations(buses)
 
-    logger.info(" - Adding converters to lines")
-
-    # append fake converters
-    # lines = pd.concat([lines, converters], ignore_index=True)
-
     # reset index
     lines.reset_index(drop=True, inplace=True)
+    links.reset_index(drop=True, inplace=True)
     # if len(links) > 0:
     #     links.reset_index(drop=True, inplace=True)
 
-    return lines, buses
+    return lines, links, buses
 
 
 def build_network(
@@ -764,6 +762,17 @@ def build_network(
             "country": "object",
             "geometry": "object",
         },
+        "link": {
+            "link_id": "object",
+            "bus0": "object",
+            "bus1": "object",
+            "voltage": "float",
+            "length": "float",
+            "under_construction": "bool",
+            "dc": "bool",
+            "country": "object",
+            "geometry": "object",
+        },
     }
 
     logger.info("Reading input data.")
@@ -779,19 +788,29 @@ def build_network(
         dtype=osm_clean_columns["line"],
     )
 
+    links = read_geojson(
+        inputs["links"],
+        osm_clean_columns["link"].keys(),
+        dtype=osm_clean_columns["link"],
+    )
+
     lines = line_endings_to_bus_conversion(lines)
+    links = line_endings_to_bus_conversion(links)
 
     # METHOD to merge buses with same voltage and within tolerance
     tol = snakemake.config["electricity_network"]["osm_group_tolerance_buses"]
     logger.info(f"Aggregating close substations: Enabled with tolerance {tol} m")
-    lines, buses = merge_stations_lines_by_station_id_and_voltage(
-        lines, buses, distance_crs, tol=tol
+
+    lines, links, buses = merge_stations_lines_by_station_id_and_voltage(
+        lines, links, buses, distance_crs, tol=tol
     )
 
     # Recalculate lengths of lines
     utm = lines.estimate_utm_crs(datum_name="WGS 84")
     lines["length"] = lines.to_crs(utm).length
+    links["length"] = links.to_crs(utm).length
 
+    # TODO pypsa-eur: check if needed for updated links scripts
     # get transformers: modelled as lines connecting buses with different voltage
     transformers = get_transformers(buses, lines)
 
@@ -810,12 +829,14 @@ def build_network(
 
     # Drop unncessary index column and set respective element ids as index
     lines.set_index("line_id", inplace=True)
+    links.set_index("link_id", inplace=True)
     converters.set_index("converter_id", inplace=True)
     transformers.set_index("transformer_id", inplace=True)
     buses.set_index("bus_id", inplace=True)
 
     # Convert voltages from V to kV
     lines["voltage"] = lines["voltage"] / 1000
+    links["voltage"] = links["voltage"] / 1000
     transformers["voltage_bus0"], transformers["voltage_bus1"] = (
         transformers["voltage_bus0"] / 1000,
         transformers["voltage_bus1"] / 1000,
@@ -824,66 +845,68 @@ def build_network(
 
     # Convert 'true' and 'false' to 't' and 'f'
     lines = lines.replace({True: "t", False: "f"})
+    links = links.replace({True: "t", False: "f"})
     converters = converters.replace({True: "t", False: "f"})
     buses = buses.replace({True: "t", False: "f"})
 
     # Change column orders
-    cols_lines = [
+    cols_lines= [
         "bus0",
         "bus1",
         "voltage",
         "circuits",
+        "tag_frequency",
         "length",
         "underground",
         "under_construction",
         "geometry",
-        "tag_type",
-        "tag_frequency",
-        "country",
-        "bounds",
-        "bus_0_coors",
-        "bus_1_coors",
-        "bus0_lon",
-        "bus0_lat",
-        "bus1_lon",
-        "bus1_lat",
     ]
 
-    cols_lines_csv = [
-        "bus0",
-        "bus1",
-        "voltage",
-        "circuits",
-        "tag_frequency",
-        "length",
-        "underground",
-        "under_construction",
-        "geometry",
-    ]
-    lines_csv = lines[cols_lines_csv]
     lines = lines[cols_lines]
 
-    to_csv_nafix(lines_csv, outputs["lines"], quotechar="'")  # Generate CSV
+    cols_links = [
+        "bus0",
+        "bus1",
+        "voltage",
+        "p_nom",
+        "length",
+        "under_construction",
+        "geometry",
+    ]
+
+    links = links[cols_links]
+
+    cols_transformers = [
+        "bus0",
+        "bus1",
+        "voltage_bus0",
+        "voltage_bus1",
+        "country",
+        "geometry",
+    ]
+
+    transformers = transformers[cols_transformers]
+
+    to_csv_nafix(lines, outputs["lines"], quotechar="'")  # Generate CSV
+    to_csv_nafix(links, outputs["links"], quotechar="'")  # Generate CSV
     to_csv_nafix(converters, outputs["converters"], quotechar="'")  # Generate CSV
     to_csv_nafix(transformers, outputs["transformers"], quotechar="'")  # Generate CSV
 
-    colstodrop = ["bounds", "bus_0_coors", "bus_1_coors"]
-
     # Export to GeoJSON for quick validations
     save_to_geojson(
-        gpd.GeoDataFrame(
-            lines.drop(columns=colstodrop), geometry="geometry", crs=geo_crs
-        ),
+        gpd.GeoDataFrame(lines),
         outputs["lines_geojson"],
+    )
+    save_to_geojson(
+        gpd.GeoDataFrame(links),
+        outputs["links_geojson"],
     )
     save_to_geojson(
         gpd.GeoDataFrame(converters, geometry="geometry", crs=geo_crs),
         outputs["converters_geojson"],
     )
     save_to_geojson(
-        gpd.GeoDataFrame(
-            transformers.drop(columns=colstodrop), geometry="geometry", crs=geo_crs
-        ),
+        gpd.GeoDataFrame(transformers, geometry="geometry", crs=geo_crs),
         outputs["transformers_geojson"],
     )
 
