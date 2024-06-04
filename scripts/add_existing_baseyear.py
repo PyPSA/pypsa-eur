@@ -109,10 +109,7 @@ def add_existing_renewables(df_agg, costs):
                 name = f"{node}-{carrier}-{year}"
                 capacity = nodal_df.loc[node, year]
                 if capacity > 0.0:
-                    if carrier == "offwind-ac":
-                        cost_key = "offwind"
-                    else:
-                        cost_key = carrier
+                    cost_key = carrier.split("-")[0]
                     df_agg.at[name, "Fueltype"] = carrier
                     df_agg.at[name, "Capacity"] = capacity
                     df_agg.at[name, "DateIn"] = year
