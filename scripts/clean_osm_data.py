@@ -1540,7 +1540,8 @@ if __name__ == "__main__":
 
     # TODO pypsa-eur: Temporary solution as one AC line between converters will
     # create an error in simplify_network:
-    lines_to_drop = ["775580659"]
+    # lines_to_drop = ["775580659"]
+    lines_to_drop = [""]
 
     logger.info("---")
     logger.info("SUBSTATIONS")
