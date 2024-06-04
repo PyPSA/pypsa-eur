@@ -312,7 +312,7 @@ if __name__ == "__main__":
         fn = snakemake.input.synthetic
         synthetic_load = pd.read_csv(fn, index_col=0, parse_dates=True)
         # "UA" does not appear in synthetic load data
-        countries = list(set(countries) - set(["UA"]))
+        countries = list(set(countries) - set(["UA", "MD"]))
         synthetic_load = synthetic_load.loc[snapshots, countries]
         load = load.combine_first(synthetic_load)
 
