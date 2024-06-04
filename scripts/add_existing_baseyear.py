@@ -255,11 +255,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
         name_suffix = f" {generator}{suffix}-{grouping_year}"
         name_suffix_by = f" {generator}{suffix}-{baseyear}"
         asset_i = capacity.index + name_suffix
-        if generator in ["solar", "onwind", "offwind-ac"]:
-            if generator == "offwind-ac":
-                cost_key = "offwind"
-            else:
-                cost_key = generator
+        cost_key = generators.split("-")[0]
             # to consider electricity grid connection costs or a split between
             # solar utility and rooftop as well, rather take cost assumptions
             # from existing network than from the cost database
