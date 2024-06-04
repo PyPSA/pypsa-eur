@@ -7,8 +7,15 @@
 Release Notes
 ##########################################
 
-.. Upcoming Release
-.. ================
+Upcoming Release
+================
+
+* Added Enhanced Geothermal Systems for generation of electricity and district heat.
+  Cost and available capacity assumptions based on `Aghahosseini et al. (2020)
+  <https://www.sciencedirect.com/science/article/pii/S0306261920312551>`__.
+  See configuration ``sector: enhanced_geothermal`` for details; by default switched off.
+
+
 PyPSA-Eur 0.11.0 (25th May 2024)
 =====================================
 
@@ -808,7 +815,7 @@ PyPSA-Eur 0.9.0 (5th January 2024)
 
 * The minimum PyPSA version is now 0.26.1.
 
-* Update to ``tsam>=0.2.3`` for performance improvents in temporal clustering.
+* Update to ``tsam>=0.2.3`` for performance improvements in temporal clustering.
 
 * Pin ``snakemake`` version to below 8.0.0, as the new version is not yet
   supported. The next release will switch to the requirement ``snakemake>=8``.
