@@ -145,3 +145,11 @@ limit_max_growth,,,
 -- -- {carrier},GW,float,The historic maximum growth of a carrier
 -- max_relative_growth,,,
 -- -- {carrier},p.u.,float,The historic maximum relative growth of a carrier
+,,,
+enhanced_geothermal,,,
+-- enable,--,"{true, false}",Add option to include Enhanced Geothermal Systems
+-- flexible,--,"{true, false}",Add option for flexible operation (see Ricks et al. 2024)
+-- max_hours,--,int,The maximum hours the reservoir can be charged under flexible operation
+-- max_boost,--,float,The maximum boost in power output under flexible operation
+-- var_cf,--,"{true, false}",Add option for variable capacity factor (see Ricks et al. 2024)
+-- sustainability_factor,--,float,Share of sourced heat that is replenished by the earth's core (see details in `build_egs_potentials.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_egs_potentials.py>`_)
