@@ -61,7 +61,7 @@ def add_existing_renewables(df_agg, costs):
     Append existing renewables to the df_agg pd.DataFrame with the conventional
     power plants.
     """
-    tech_map = {"solar": "PV", "onwind": "Onshore", "offwind-dc": "Offshore"}
+    tech_map = {"solar": "PV", "onwind": "Onshore", "offwind-ac": "Offshore"}
 
     countries = snakemake.config["countries"]  # noqa: F841
     irena = pm.data.IRENASTAT().powerplant.convert_country_to_alpha2()
@@ -109,7 +109,7 @@ def add_existing_renewables(df_agg, costs):
                 name = f"{node}-{carrier}-{year}"
                 capacity = nodal_df.loc[node, year]
                 if capacity > 0.0:
-                    if carrier == "offwind-dc":
+                    if carrier == "offwind-ac":
                         cost_key = "offwind"
                     else:
                         cost_key = carrier
@@ -258,8 +258,8 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
         name_suffix = f" {generator}{suffix}-{grouping_year}"
         name_suffix_by = f" {generator}{suffix}-{baseyear}"
         asset_i = capacity.index + name_suffix
-        if generator in ["solar", "onwind", "offwind-dc"]:
-            if generator == "offwind-dc":
+        if generator in ["solar", "onwind", "offwind-ac"]:
+            if generator == "offwind-ac":
                 cost_key = "offwind"
             else:
                 cost_key = generator
