@@ -971,7 +971,7 @@ def add_energy_import_limit(n, sns):
 
     rhs = limit * 1e6
 
-    n.model.add_constraints(lhs, limit_sense, rhs, name="energy_import_limit")#
+    n.model.add_constraints(lhs, limit_sense, rhs, name="energy_import_limit")  #
 
 
 def add_flexible_egs_constraint(n):
