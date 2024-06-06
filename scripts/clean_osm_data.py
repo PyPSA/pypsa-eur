@@ -1656,7 +1656,7 @@ if __name__ == "__main__":
     # gdf_substations_polygon['connected'] = gdf_substations_polygon['polygon'].apply(intersects_any_line, lines=gdf_lines)
 
     # list_buses_disconnected = gdf_substations_polygon[gdf_substations_polygon['connected'] == False]['bus_id'].tolist()
-    
+
     # # Drop islanded substations
     # gdf_substations_polygon = gdf_substations_polygon[~gdf_substations_polygon['bus_id'].isin(list_buses_disconnected)]
     # df_substations = df_substations[~df_substations['bus_id'].isin(list_buses_disconnected)]
