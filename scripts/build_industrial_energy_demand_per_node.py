@@ -4,6 +4,36 @@
 # SPDX-License-Identifier: MIT
 """
 Build industrial energy demand per model region.
+
+Inputs
+------
+
+- ``resources/industrial_energy_demand_today_elec_s{simpl}_{clusters}.csv``
+- ``resources/industry_sector_ratios_{planning_horizons}.csv``
+- ``resources/industrial_production_elec_s{simpl}_{clusters}_{planning_horizons}.csv``
+
+Outputs
+-------
+
+- ``resources/industrial_energy_demand_elec_s{simpl}_{clusters}_{planning_horizons}.csv``
+
+Description
+-------
+This rule aggregates the energy demand of the industrial sectors per model region.
+For each bus, the following carriers are considered:
+- electricity
+- coal
+- coke
+- solid biomass
+- methane
+- hydrogen
+- low-temperature heat
+- naphtha
+- ammonia
+- process emission
+- process emission from feedstock
+
+which can later be used as values for the industry load.
 """
 
 import pandas as pd

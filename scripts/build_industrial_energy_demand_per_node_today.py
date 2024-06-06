@@ -4,6 +4,25 @@
 # SPDX-License-Identifier: MIT
 """
 Build industrial energy demand per model region.
+
+Inputs
+-------
+
+- ``resources/industrial_distribution_key_elec_s{simpl}_{clusters}.csv``
+- ``resources/industrial_energy_demand_per_country_today.csv``
+
+Outputs
+-------
+
+- ``resources/industrial_energy_demand_per_node_today_elec_s{simpl}_{clusters}.csv``
+
+Description
+-------
+
+This rule maps the industrial energy demand per country `industrial_energy_demand_per_country_today.csv` to each bus region.
+The energy demand per country is multiplied by the mapping value from the file ``industrial_distribution_key_elec_s{simpl}_{clusters}.csv`` between 0 and 1 to get the industrial energy demand per bus.
+
+The unit of the energy demand is TWh/a.
 """
 
 from itertools import product

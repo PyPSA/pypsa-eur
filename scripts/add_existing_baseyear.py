@@ -61,7 +61,7 @@ def add_existing_renewables(df_agg, costs):
     Append existing renewables to the df_agg pd.DataFrame with the conventional
     power plants.
     """
-    tech_map = {"solar": "PV", "onwind": "Onshore", "offwind": "Offshore"}
+    tech_map = {"solar": "PV", "onwind": "Onshore", "offwind-ac": "Offshore"}
 
     countries = snakemake.config["countries"]  # noqa: F841
     irena = pm.data.IRENASTAT().powerplant.convert_country_to_alpha2()
@@ -109,12 +109,13 @@ def add_existing_renewables(df_agg, costs):
                 name = f"{node}-{carrier}-{year}"
                 capacity = nodal_df.loc[node, year]
                 if capacity > 0.0:
+                    cost_key = carrier.split("-")[0]
                     df_agg.at[name, "Fueltype"] = carrier
                     df_agg.at[name, "Capacity"] = capacity
                     df_agg.at[name, "DateIn"] = year
-                    df_agg.at[name, "lifetime"] = costs.at[carrier, "lifetime"]
+                    df_agg.at[name, "lifetime"] = costs.at[cost_key, "lifetime"]
                     df_agg.at[name, "DateOut"] = (
-                        year + costs.at[carrier, "lifetime"] - 1
+                        year + costs.at[cost_key, "lifetime"] - 1
                     )
                     df_agg.at[name, "cluster_bus"] = node
 
@@ -254,7 +255,8 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
         name_suffix = f" {generator}{suffix}-{grouping_year}"
         name_suffix_by = f" {generator}{suffix}-{baseyear}"
         asset_i = capacity.index + name_suffix
-        if generator in ["solar", "onwind", "offwind"]:
+        if generator in ["solar", "onwind", "offwind-ac"]:
+            cost_key = generator.split("-")[0]
             # to consider electricity grid connection costs or a split between
             # solar utility and rooftop as well, rather take cost assumptions
             # from existing network than from the cost database
@@ -299,10 +301,10 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                         / len(inv_ind),  # split among regions in a country
                         marginal_cost=marginal_cost,
                         capital_cost=capital_cost,
-                        efficiency=costs.at[generator, "efficiency"],
+                        efficiency=costs.at[cost_key, "efficiency"],
                         p_max_pu=p_max_pu,
                         build_year=grouping_year,
-                        lifetime=costs.at[generator, "lifetime"],
+                        lifetime=costs.at[cost_key, "lifetime"],
                     )
 
             else:
@@ -318,10 +320,10 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                         p_nom=new_capacity,
                         marginal_cost=marginal_cost,
                         capital_cost=capital_cost,
-                        efficiency=costs.at[generator, "efficiency"],
+                        efficiency=costs.at[cost_key, "efficiency"],
                         p_max_pu=p_max_pu.rename(columns=n.generators.bus),
                         build_year=grouping_year,
-                        lifetime=costs.at[generator, "lifetime"],
+                        lifetime=costs.at[cost_key, "lifetime"],
                     )
 
         else:
@@ -594,13 +596,13 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "add_existing_baseyear",
-            configfiles="config/test/config.myopic.yaml",
+            configfiles="config/config.yaml",
             simpl="",
-            clusters="37",
-            ll="v1.0",
+            clusters="20",
+            ll="v1.5",
             opts="",
-            sector_opts="8760-T-H-B-I-A-dist1",
-            planning_horizons=2020,
+            sector_opts="none",
+            planning_horizons=2030,
         )
 
     configure_logging(snakemake)
