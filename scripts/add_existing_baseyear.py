@@ -475,7 +475,6 @@ def add_chp_plants(n, grouping_years, costs, baseyear, clustermaps):
 
     # calculate remaining lifetime before phase-out (+1 because assuming
     # phase out date at the end of the year)
-    chp["lifetime"] = chp.DateOut - chp.DateIn + 1
     chp.Fueltype = chp.Fueltype.map(rename_fuel)
 
     # assign clustered bus
@@ -485,6 +484,7 @@ def add_chp_plants(n, grouping_years, costs, baseyear, clustermaps):
     chp["grouping_year"] = np.take(
         grouping_years, np.digitize(chp.DateIn, grouping_years, right=True)
     )
+    chp["lifetime"] = chp.DateOut - chp["grouping_year"] + 1
 
     # check if the CHPs were read in from MaStR for Germany
     if "Capacity_thermal" in chp.columns:
@@ -729,7 +729,7 @@ def add_heating_capacities_installed_before_baseyear(
 
         assert valid_grouping_years.is_monotonic_increasing
 
-        if not baseyear in valid_grouping_years:
+        if not valid_grouping_years.iloc[-1] == baseyear:
             logger.warning(
                 f"Baseyear {baseyear} not in grouping years. "
                 "Adding capacities built between last grouping year and baseyear to last grouping year."
