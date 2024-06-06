@@ -746,6 +746,13 @@ sector:
       solar: 3
       offwind-ac: 3
       offwind-dc: 3
+  enhanced_geothermal:
+    enable: false
+    flexible: true
+    max_hours: 240
+    max_boost: 0.25
+    var_cf: true
+    sustainability_factor: 0.0025
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
 industry:
@@ -1350,6 +1357,9 @@ plotting:
     waste: '#e3d37d'
     other: '#000000'
     geothermal: '#ba91b1'
+    geothermal heat: '#ba91b1'
+    geothermal district heat: '#d19D00'
+    geothermal organic rankine cycle: '#ffbf00'
     AC: "#70af1d"
     AC-AC: "#70af1d"
     AC line: "#70af1d"

@@ -971,7 +971,26 @@ def add_energy_import_limit(n, sns):
 
     rhs = limit * 1e6
 
-    n.model.add_constraints(lhs, limit_sense, rhs, name="energy_import_limit")
+    n.model.add_constraints(lhs, limit_sense, rhs, name="energy_import_limit")#
+
+
+def add_flexible_egs_constraint(n):
+    """
+    Upper bounds the charging capacity of the geothermal reservoir according to
+    the well capacity.
+    """
+    well_index = n.links.loc[n.links.carrier == "geothermal heat"].index
+    storage_index = n.storage_units.loc[
+        n.storage_units.carrier == "geothermal heat"
+    ].index
+
+    p_nom_rhs = n.model["Link-p_nom"].loc[well_index]
+    p_nom_lhs = n.model["StorageUnit-p_nom"].loc[storage_index]
+
+    n.model.add_constraints(
+        p_nom_lhs <= p_nom_rhs,
+        name="upper_bound_charging_capacity_of_geothermal_reservoir",
+    )
 
 
 def add_co2_atmosphere_constraint(n, snapshots):
@@ -1040,6 +1059,9 @@ def extra_functionality(n, snapshots):
         add_retrofit_gas_boiler_constraint(n, snapshots)
     else:
         add_co2_atmosphere_constraint(n, snapshots)
+
+    if config["sector"]["enhanced_geothermal"]["enable"]:
+        add_flexible_egs_constraint(n)
 
     if snakemake.params.custom_extra_functionality:
         source_path = snakemake.params.custom_extra_functionality

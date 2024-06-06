@@ -30,7 +30,7 @@ repos:
 
   # Find common spelling mistakes in comments and docstrings
 - repo: https://github.com/codespell-project/codespell
-  rev: v2.2.6
+  rev: v2.3.0
   hooks:
   - id: codespell
     args: ['--ignore-regex="(\b[A-Z]+\b)"', '--ignore-words-list=fom,appartment,bage,ore,setis,tabacco,berfore,vor'] # Ignore capital case words, e.g. country codes
@@ -87,6 +87,6 @@ repos:
 
   # Check for FSFE REUSE compliance (licensing)
 - repo: https://github.com/fsfe/reuse-tool
-  rev: v3.0.2
+  rev: v3.1.0a1
   hooks:
   - id: reuse
