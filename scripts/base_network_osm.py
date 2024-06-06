@@ -145,11 +145,13 @@ def _load_buses_from_eg(eg_buses, europe_shape, config_elec):
             dtype=dict(bus_id="str"),
         )
         .set_index("bus_id")
-        .drop(["station_id"], axis=1)
         .rename(columns=dict(voltage="v_nom"))
     )
 
-    buses["carrier"] = buses.pop("dc").map({True: "DC", False: "AC"})
+    if "station_id" in buses.columns:
+        buses.drop("station_id", axis=1, inplace=True)
+
+    # buses["carrier"] = buses.pop("dc").map({True: "DC", False: "AC"})
     buses["under_construction"] = buses.under_construction.where(
         lambda s: s.notnull(), False
     ).astype(bool)
