@@ -224,7 +224,6 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
     phased_out = df_agg[df_agg["DateOut"] < baseyear].index
     df_agg.drop(phased_out, inplace=True)
 
-
     newer_assets = (df_agg.DateIn > max(grouping_years)).sum()
     if newer_assets:
         logger.warning(
@@ -235,7 +234,6 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
         )
         to_drop = df_agg[df_agg.DateIn > max(grouping_years)].index
         df_agg.drop(to_drop, inplace=True)
-
 
     df_agg["grouping_year"] = np.take(
         grouping_years, np.digitize(df_agg.DateIn, grouping_years, right=True)
