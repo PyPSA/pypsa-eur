@@ -636,60 +636,6 @@ def merge_stations_lines_by_station_id_and_voltage(
     set_substations_ids(buses_ac, distance_crs, tol=tol)
     set_substations_ids(buses_dc, distance_crs, tol=tol)
 
-    # # Find boundary points of DC links
-    # # lines_dc_shape = lines[lines["dc"] == True].unary_union
-    # # lines_dc_bounds = lines_dc_shape.boundary
-    # # lines_dc_points = [p for p in lines_dc_bounds.geoms]
-    # lines_dc = lines[lines["dc"] == True].reset_index()
-    # lines_dc["adj_idx"] = range(0, len(lines_dc))
-
-    # # Initialize an empty adjacency matrix
-    # dc_adj_matrix = np.zeros((len(lines_dc), len(lines_dc)), dtype=int)
-
-    # # Fill the adjacency matrix
-    # for i in range(len(lines_dc)):
-    #     for j in range(len(lines_dc)):
-    #         if are_lines_connected(lines_dc.iloc[i], lines_dc.iloc[j]):
-    #             dc_adj_matrix[i, j] = 1
-
-    # dc_paths = find_paths(dc_adj_matrix)
-
-    # all_dc_boundary_points = pd.Series()
-
-    # for path in dc_paths:
-    #     bus_0_coors = lines_dc.iloc[path]["bus_0_coors"]
-    #     bus_1_coors = lines_dc.iloc[path]["bus_1_coors"]
-
-    #     # Create DataFrame containing all points within a path
-    #     dc_points = pd.concat([bus_0_coors, bus_1_coors], ignore_index=True)
-
-    #     # Determine the value counts of individual points. If it occurs more than
-    #     # once, it cannot be an end-point of a path
-    #     bool_duplicates = (
-    #         dc_points.apply(lambda p: sum([are_almost_equal(p, s) for s in dc_points]))
-    #         > 1
-    #     )
-
-    #     # Drop all duplicates
-    #     dc_boundary_points = dc_points[~bool_duplicates]
-
-    #     if dc_boundary_points.empty:
-    #         all_dc_boundary_points = dc_boundary_points
-    #     else:
-    #         if all_dc_boundary_points.empty:
-    #             all_dc_boundary_points = dc_boundary_points
-    #         else:
-    #             all_dc_boundary_points = pd.concat(
-    #                 [all_dc_boundary_points, dc_boundary_points], ignore_index=True
-    #             )
-
-    # # TODO pypsa-eur: Add to pypsa-earth for all related entries on is_dclink_boundary_point
-    # # check for each entry in buses_dc whether it is included in lines_dc_points
-    # buses_ac["is_dclink_boundary_point"] = False
-    # buses_dc["is_dclink_boundary_point"] = buses_dc.geometry.apply(
-    #     lambda p: any([p.within(l) for l in all_dc_boundary_points])
-    # )
-
     logger.info(" - Merging substations with the same id")
 
     # merge buses with same station id and voltage

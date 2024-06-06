@@ -1279,8 +1279,6 @@ def _finalise_lines(df_lines):
         ]
     ]
 
-    # Set lines data types df.apply(pd.to_numeric, args=('coerce',))
-    # This workaround is needed as otherwise the column dtypes remain "objects"
     df_lines["circuits"] = df_lines["circuits"].astype(int)
     df_lines["voltage"] = df_lines["voltage"].astype(int)
     df_lines["tag_frequency"] = df_lines["tag_frequency"].astype(int)
@@ -1333,11 +1331,7 @@ def _finalise_links(df_links):
         ]
     ]
 
-    # Set lines data types df.apply(pd.to_numeric, args=('coerce',))
-    # This workaround is needed as otherwise the column dtypes remain "objects"
     df_links["p_nom"] = df_links["p_nom"].astype(int)
-    # Set lines data types df.apply(pd.to_numeric, args=('coerce',))
-    # This workaround is needed as otherwise the column dtypes remain "objects"
     df_links["voltage"] = df_links["voltage"].astype(int)
 
     return df_links
@@ -1524,6 +1518,11 @@ def _remove_lines_within_substations(gdf_lines, gdf_substations_polygon):
     return gdf_lines
 
 
+# Define a function to check if a polygon intersects any line in the lines GeoDataFrame
+def intersects_any_line(polygon, lines):
+    return lines.intersects(polygon).any()
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -1538,9 +1537,6 @@ if __name__ == "__main__":
     min_voltage_ac = 200000  # [unit: V] Minimum voltage value to filter AC lines.
     min_voltage_dc = 150000  #  [unit: V] Minimum voltage value to filter DC links.
 
-    # TODO pypsa-eur: Temporary solution as one AC line between converters will
-    # create an error in simplify_network:
-    # lines_to_drop = ["775580659"]
     lines_to_drop = [""]
 
     logger.info("---")
@@ -1614,8 +1610,6 @@ if __name__ == "__main__":
         "links": snakemake.input.links_relation,
     }
 
-    ### CONTINUE HERE
-    # Cleaning process
     df_links = _import_links(path_links)
 
     df_links = _drop_duplicate_lines(df_links)
@@ -1651,6 +1645,21 @@ if __name__ == "__main__":
         path_offshore_shapes,
         prefix="link-end",
     )
+
+    # # Drop df_substations.dc == True and tag_source != "link-end"
+    # df_substations = df_substations[
+    #     ~((df_substations.dc == True) & (df_substations.tag_source != "link-end"))
+    # ]
+
+    # # Apply the function to each polygon in the substations GeoDataFrame
+    # gdf_substations_polygon["connected"] = False
+    # gdf_substations_polygon['connected'] = gdf_substations_polygon['polygon'].apply(intersects_any_line, lines=gdf_lines)
+
+    # list_buses_disconnected = gdf_substations_polygon[gdf_substations_polygon['connected'] == False]['bus_id'].tolist()
+    
+    # # Drop islanded substations
+    # gdf_substations_polygon = gdf_substations_polygon[~gdf_substations_polygon['bus_id'].isin(list_buses_disconnected)]
+    # df_substations = df_substations[~df_substations['bus_id'].isin(list_buses_disconnected)]
 
     # Drop polygons and create GDF
     gdf_substations = gpd.GeoDataFrame(
