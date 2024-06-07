@@ -690,40 +690,6 @@ rule clean_osm_data:
         "../scripts/clean_osm_data.py"
 
 
-# rule clean_osm_data:
-#     input:
-#         cables_way=[
-#             f"data/osm/raw/{country}/cables_way.json"
-#             for country in config["countries"]
-#         ],
-#         lines_way=[
-#             f"data/osm/raw/{country}/lines_way.json" for country in config["countries"]
-#         ],
-#         links_relation=[
-#             f"data/osm/raw/{country}/links_relation.json"
-#             for country in config["countries"]
-#         ],
-#         substations_way=[
-#             f"data/osm/raw/{country}/substations_way.json"
-#             for country in config["countries"]
-#         ],
-#         substations_relation=[
-#             f"data/osm/raw/{country}/substations_relation.json"
-#             for country in config["countries"]
-#         ],
-#         offshore_shapes=resources("offshore_shapes.geojson"),
-#         country_shapes=resources("country_shapes.geojson"),
-#     output:
-#         substations=resources("osm/clean/substations.geojson"),
-#         substations_polygon=resources("osm/clean/substations_polygon.geojson"),
-#         lines=resources("osm/clean/lines.geojson"),
-#         links=resources("osm/clean/links.geojson"),
-#     log:
-#         logs("clean_osm_data.log"),
-#     script:
-#         "../scripts/clean_osm_data.py"
-
-
 rule build_osm_network:
     input:
         substations=resources("osm/clean/substations.geojson"),
