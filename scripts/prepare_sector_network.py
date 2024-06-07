@@ -2343,6 +2343,14 @@ def add_biomass(n, costs):
     )
 
     n.madd(
+        "Bus",
+        spatial.bioliquids.nodes,
+        location=spatial.bioliquids.locations,
+        carrier="unsustainable bioliquids",
+        unit="MWh_LHV",
+    )
+
+    n.madd(
         "Store",
         spatial.gas.biogas,
         bus=spatial.gas.biogas,
@@ -2352,15 +2360,28 @@ def add_biomass(n, costs):
         e_initial=biogas_potentials_spatial,
     )
 
+    # n.madd(
+    #     "Store",
+    #     spatial.gas.biogas,
+    #     suffix=" unsustainable",
+    #     bus=spatial.gas.biogas,
+    #     carrier="unsustainable biogas",
+    #     e_nom=unsustainable_biogas_potentials_spatial,
+    #     marginal_cost=costs.at["biogas", "fuel"],
+    #     e_initial=unsustainable_biogas_potentials_spatial,
+    # )
+
     n.madd(
-        "Store",
+        "Generator",
         spatial.gas.biogas,
         suffix=" unsustainable",
         bus=spatial.gas.biogas,
         carrier="unsustainable biogas",
-        e_nom=unsustainable_biogas_potentials_spatial,
+        p_nom=unsustainable_biogas_potentials_spatial.sum() / 8760,
+        capital_cost=0,
         marginal_cost=costs.at["biogas", "fuel"],
-        e_initial=unsustainable_biogas_potentials_spatial,
+        efficiency=1,
+        p_nom_extendable=False,
     )
 
     n.madd(
@@ -2374,27 +2395,31 @@ def add_biomass(n, costs):
     )
 
     n.madd(
-        "Store",
+        "Generator",
         spatial.biomass.nodes,
         suffix=" unsustainable",
         bus=spatial.biomass.nodes,
         carrier="unsustainable solid biomass",
-        e_nom=unsustainable_solid_biomass_potentials_spatial,
+        p_nom=unsustainable_solid_biomass_potentials_spatial / 8760,
+        capital_cost=0,
         marginal_cost=costs.at["solid biomass", "fuel"],
-        e_initial=unsustainable_solid_biomass_potentials_spatial,
+        efficiency=1,
+        p_nom_extendable=False,
     )
 
     n.madd(
-        "Store",
+        "Generator",
         spatial.bioliquids.nodes,
+        suffix=" unsustainable",
         bus=spatial.bioliquids.nodes,
         carrier="unsustainable bioliquids",
-        e_nom=unsustainable_liquid_biofuel_potentials_spatial,
+        p_nom=unsustainable_liquid_biofuel_potentials_spatial,
         marginal_cost=costs.at["oil", "fuel"],
-        e_initial=unsustainable_liquid_biofuel_potentials_spatial,
+        capital_cost=0,
+        p_nom_extendable=False,
+        efficiency=1,
     )
 
-    # Create a unidirectional Link from the liquid STore to the oil bus with a connection to the atmosphere uswing the BtL CO2 intensity
     n.madd(
         "Link",
         spatial.bioliquids.nodes,
