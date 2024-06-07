@@ -360,7 +360,7 @@ def add_unsustainable_potentials(df):
         - df_wo_ch["biogas"]
     ).clip(lower=0)
 
-    df_wo_ch["unsustainable liquid biofuels"] = df_wo_ch.apply(
+    df_wo_ch["unsustainable bioliquids"] = df_wo_ch.apply(
         lambda c: c.sum()
         / df_wo_ch.loc[df_wo_ch.index.str[:2] == c.name[:2]].sum().sum()
         * df_unsustainable.filter(regex="gasoline|diesel|kerosene|liquid")
