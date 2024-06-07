@@ -716,9 +716,11 @@ def add_heating_capacities_installed_before_baseyear(
         else:
             efficiency = costs.at[costs_name, "efficiency"]
 
-        too_large_grouping_years = [gy for gy in grouping_years if gy >= int(baseyear)]     
+        too_large_grouping_years = [gy for gy in grouping_years if gy >= int(baseyear)]
         if too_large_grouping_years:
-            logger.warning(f"Grouping years >= baseyear are ignored. Dropping {too_large_grouping_years}.")
+            logger.warning(
+                f"Grouping years >= baseyear are ignored. Dropping {too_large_grouping_years}."
+            )
         valid_grouping_years = pd.Series(
             [
                 int(grouping_year)
