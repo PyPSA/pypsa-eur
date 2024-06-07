@@ -132,9 +132,7 @@ def _add_land_use_constraint(n):
         "offwind-dc",
         "offwind-float",
     ]:
-        extendable_i = (n.generators.carrier == carrier) & n.generators.p_nom_extendable
-        n.generators.loc[extendable_i, "p_nom_min"] = 0
-
+        
         ext_i = (n.generators.carrier == carrier) & ~n.generators.p_nom_extendable
         existing = (
             n.generators.loc[ext_i, "p_nom"]
@@ -174,9 +172,7 @@ def _add_land_use_constraint_m(n, planning_horizons, config):
         "offwind-ac",
         "offwind-dc",
     ]:
-        extendable_i = (n.generators.carrier == carrier) & n.generators.p_nom_extendable
-        n.generators.loc[extendable_i, "p_nom_min"] = 0
-
+        
         existing = n.generators.loc[n.generators.carrier == carrier, "p_nom"]
         ind = list(
             {i.split(sep=" ")[0] + " " + i.split(sep=" ")[1] for i in existing.index}
