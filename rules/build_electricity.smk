@@ -104,7 +104,7 @@ if config["electricity_network"]["base_network"] == "gridkit":
             "../scripts/base_network.py"
 
 
-if config["electricity_network"]["base_network"] == "osm":
+if config["electricity_network"]["base_network"]  == "osm":
 
     rule base_network:
         params:
@@ -638,7 +638,7 @@ rule retrieve_osm_data:
         substations_way="data/osm/raw/{country}/substations_way.json",
         substations_relation="data/osm/raw/{country}/substations_relation.json",
     log:
-        logs("retrieve_osm_data_{country}.log"),
+        "logs/retrieve_osm_data_{country}.log",
     resources:
         cores=2,
         threads=1,
@@ -646,27 +646,37 @@ rule retrieve_osm_data:
         "../scripts/retrieve_osm_data.py"
 
 
+rule retrieve_osm_data_all:
+    input:
+        expand("data/osm/raw/{country}/cables_way.json", country=config_provider("countries")),
+        expand("data/osm/raw/{country}/lines_way.json", country=config_provider("countries")),
+        expand("data/osm/raw/{country}/links_relation.json", country=config_provider("countries")),
+        expand("data/osm/raw/{country}/substations_way.json", country=config_provider("countries")),
+        expand("data/osm/raw/{country}/substations_relation.json", country=config_provider("countries")),
+
+
 rule clean_osm_data:
     input:
-        cables_way=[
-            f"data/osm/raw/{country}/cables_way.json"
-            for country in config["countries"]
-        ],
-        lines_way=[
-            f"data/osm/raw/{country}/lines_way.json" for country in config["countries"]
-        ],
-        links_relation=[
-            f"data/osm/raw/{country}/links_relation.json"
-            for country in config["countries"]
-        ],
-        substations_way=[
-            f"data/osm/raw/{country}/substations_way.json"
-            for country in config["countries"]
-        ],
-        substations_relation=[
-            f"data/osm/raw/{country}/substations_relation.json"
-            for country in config["countries"]
-        ],
+        cables_way=expand(
+            "data/osm/raw/{country}/cables_way.json",
+            country = config_provider("countries")
+        ),
+        lines_way=expand(
+            "data/osm/raw/{country}/lines_way.json",
+            country = config_provider("countries")
+        ),
+        links_relation=expand(
+            "data/osm/raw/{country}/links_relation.json",
+           country = config_provider("countries")
+        ),
+        substations_way=expand(
+            "data/osm/raw/{country}/substations_way.json",
+            country = config_provider("countries")
+        ),
+        substations_relation=expand(
+            "data/osm/raw/{country}/substations_relation.json",
+            country = config_provider("countries")
+        ),
         offshore_shapes=resources("offshore_shapes.geojson"),
         country_shapes=resources("country_shapes.geojson"),
     output:
@@ -678,6 +688,40 @@ rule clean_osm_data:
         logs("clean_osm_data.log"),
     script:
         "../scripts/clean_osm_data.py"
+
+
+# rule clean_osm_data:
+#     input:
+#         cables_way=[
+#             f"data/osm/raw/{country}/cables_way.json"
+#             for country in config["countries"]
+#         ],
+#         lines_way=[
+#             f"data/osm/raw/{country}/lines_way.json" for country in config["countries"]
+#         ],
+#         links_relation=[
+#             f"data/osm/raw/{country}/links_relation.json"
+#             for country in config["countries"]
+#         ],
+#         substations_way=[
+#             f"data/osm/raw/{country}/substations_way.json"
+#             for country in config["countries"]
+#         ],
+#         substations_relation=[
+#             f"data/osm/raw/{country}/substations_relation.json"
+#             for country in config["countries"]
+#         ],
+#         offshore_shapes=resources("offshore_shapes.geojson"),
+#         country_shapes=resources("country_shapes.geojson"),
+#     output:
+#         substations=resources("osm/clean/substations.geojson"),
+#         substations_polygon=resources("osm/clean/substations_polygon.geojson"),
+#         lines=resources("osm/clean/lines.geojson"),
+#         links=resources("osm/clean/links.geojson"),
+#     log:
+#         logs("clean_osm_data.log"),
+#     script:
+#         "../scripts/clean_osm_data.py"
 
 
 rule build_osm_network:

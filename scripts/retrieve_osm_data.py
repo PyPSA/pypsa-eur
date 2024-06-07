@@ -17,7 +17,11 @@ import os
 import time
 
 import requests
-from _helpers import configure_logging
+from _helpers import (
+    configure_logging,
+    # set_scenario_config,
+    # update_config_from_wildcards,
+)
 
 logger = logging.getLogger(__name__)
 
