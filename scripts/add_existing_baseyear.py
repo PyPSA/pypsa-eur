@@ -716,22 +716,19 @@ def add_heating_capacities_installed_before_baseyear(
         else:
             efficiency = costs.at[costs_name, "efficiency"]
 
+        too_large_grouping_years = [gy for gy in grouping_years if gy >= int(baseyear)]     
+        if too_large_grouping_years:
+            logger.warning(f"Grouping years >= baseyear are ignored. Dropping {too_large_grouping_years}.")
         valid_grouping_years = pd.Series(
             [
                 int(grouping_year)
                 for grouping_year in grouping_years
                 if int(grouping_year) + default_lifetime > int(baseyear)
-                and int(grouping_year) <= int(baseyear)
+                and int(grouping_year) < int(baseyear)
             ]
         )
 
         assert valid_grouping_years.is_monotonic_increasing
-
-        if not valid_grouping_years.iloc[-1] == baseyear:
-            logger.warning(
-                f"Baseyear {baseyear} not in grouping years. "
-                "Adding capacities built between last grouping year and baseyear to last grouping year."
-            )
 
         # get number of years of each interval
         _years = valid_grouping_years.diff()
