@@ -10,6 +10,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Reverted outdated hotfix for doubled renewable capacity in myopic optimization.
+
 * Added Enhanced Geothermal Systems for generation of electricity and district heat.
   Cost and available capacity assumptions based on `Aghahosseini et al. (2020)
   <https://www.sciencedirect.com/science/article/pii/S0306261920312551>`__.
