@@ -77,8 +77,8 @@ enable:
 
 # Settings related to the high-voltage electricity grid
 electricity_network:
-  base_network: "osm"  # "osm" or "gridkit"
-  osm_group_tolerance_buses: 5000  # [m] (default 5000) Tolerance in meters of the close buses to merge
+  base_network: "gridkit"           # "gridkit", "osm-prebuilt" (prebuilt network from OSM data), "osm-raw" (retrieve and build network from raw OSM data, takes longer)
+  osm_group_tolerance_buses: 5000   # only relevant for "osm-raw" setting: [m] (default 5000) Tolerance in meters of the close buses to merge
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
 co2_budget:

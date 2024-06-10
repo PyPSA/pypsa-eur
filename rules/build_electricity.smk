@@ -65,99 +65,80 @@ rule build_powerplants:
         "../scripts/build_powerplants.py"
 
 
-if config["electricity_network"]["base_network"] == "gridkit":
-
-    rule base_network:
-        params:
-            countries=config_provider("countries"),
-            snapshots=config_provider("snapshots"),
-            drop_leap_day=config_provider("enable", "drop_leap_day"),
-            lines=config_provider("lines"),
-            links=config_provider("links"),
-            transformers=config_provider("transformers"),
-        input:
-            eg_buses="data/entsoegridkit/buses.csv",
-            eg_lines="data/entsoegridkit/lines.csv",
-            eg_links="data/entsoegridkit/links.csv",
-            eg_converters="data/entsoegridkit/converters.csv",
-            eg_transformers="data/entsoegridkit/transformers.csv",
-            parameter_corrections="data/parameter_corrections.yaml",
-            links_p_nom="data/links_p_nom.csv",
-            links_tyndp="data/links_tyndp.csv",
-            country_shapes=resources("country_shapes.geojson"),
-            offshore_shapes=resources("offshore_shapes.geojson"),
-            europe_shape=resources("europe_shape.geojson"),
-        output:
-            base_network=resources("networks/base.nc"),
-            regions_onshore=resources("regions_onshore.geojson"),
-            regions_offshore=resources("regions_offshore.geojson"),
-        log:
-            logs("base_network.log"),
-        benchmark:
-            benchmarks("base_network")
-        threads: 1
-        resources:
-            mem_mb=1500,
-        conda:
-            "../envs/environment.yaml"
-        script:
-            "../scripts/base_network.py"
-
-
-if config["electricity_network"]["base_network"]  == "osm":
-
-    rule base_network:
-        params:
-            countries=config_provider("countries"),
-            snapshots=config_provider("snapshots"),
-            drop_leap_day=config_provider("enable", "drop_leap_day"),
-            lines=config_provider("lines"),
-            links=config_provider("links"),
-            transformers=config_provider("transformers"),
-        input:
-            eg_buses=(
-                "data/osm/prebuilt/buses.csv"
-                if config["electricity_network"]["osm_use_prebuilt"] == True
+rule base_network:
+    params:
+        countries=config_provider("countries"),
+        snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
+        lines=config_provider("lines"),
+        links=config_provider("links"),
+        transformers=config_provider("transformers"),
+    input:
+        eg_buses=lambda w: (
+            "data/entsoegridkit/buses.csv" if config_provider("electricity_network", "base_network")(w) == "gridkit"
+            else (
+                "data/osm/prebuilt/buses.csv" if config_provider("electricity_network", "base_network")(w) == "osm-prebuilt"
                 else resources("osm/buses.csv")
-            ),
-            eg_lines=(
-                "data/osm/prebuilt/lines.csv"
-                if config["electricity_network"]["osm_use_prebuilt"] == True
+            )
+        ),
+        eg_lines=lambda w: (
+            "data/entsoegridkit/lines.csv" if config_provider("electricity_network", "base_network")(w) == "gridkit"
+            else (
+                "data/osm/prebuilt/lines.csv" if config_provider("electricity_network", "base_network")(w) == "osm-prebuilt"
                 else resources("osm/lines.csv")
-            ),
-            eg_links=(
-                "data/osm/prebuilt/links.csv"
-                if config["electricity_network"]["osm_use_prebuilt"] == True
+            )
+        ),
+        eg_links=lambda w: (
+            "data/entsoegridkit/links.csv" if config_provider("electricity_network", "base_network")(w) == "gridkit"
+            else (
+                "data/osm/prebuilt/links.csv" if config_provider("electricity_network", "base_network")(w) == "osm-prebuilt"
                 else resources("osm/links.csv")
-            ),
-            eg_converters=(
-                "data/osm/prebuilt/converters.csv"
-                if config["electricity_network"]["osm_use_prebuilt"] == True
+            )
+        ),
+        eg_converters=lambda w: (
+            "data/entsoegridkit/converters.csv" if config_provider("electricity_network", "base_network")(w) == "gridkit"
+            else (
+                "data/osm/prebuilt/converters.csv" if config_provider("electricity_network", "base_network")(w) == "osm-prebuilt"
                 else resources("osm/converters.csv")
-            ),
-            eg_transformers=(
-                "data/osm/prebuilt/transformers.csv"
-                if config["electricity_network"]["osm_use_prebuilt"] == True
+            )
+        ),
+        eg_transformers=lambda w: (
+            "data/entsoegridkit/transformers.csv" if config_provider("electricity_network", "base_network")(w) == "gridkit"
+            else (
+                "data/osm/prebuilt/transformers.csv" if config_provider("electricity_network", "base_network")(w) == "osm-prebuilt"
                 else resources("osm/transformers.csv")
-            ),
-            country_shapes=resources("country_shapes.geojson"),
-            offshore_shapes=resources("offshore_shapes.geojson"),
-            europe_shape=resources("europe_shape.geojson"),
-        output:
-            base_network=resources("networks/base.nc"),
-            regions_onshore=resources("regions_onshore.geojson"),
-            regions_offshore=resources("regions_offshore.geojson"),
-        log:
-            logs("base_network.log"),
-        benchmark:
-            benchmarks("base_network")
-        threads: 1
-        resources:
-            mem_mb=1500,
-        conda:
-            "../envs/environment.yaml"
-        script:
-            "../scripts/base_network_osm.py"
+            )
+        ),
+        parameter_corrections=lambda w: (
+            "data/parameter_corrections.yaml" if config_provider("electricity_network", "base_network")(w) == "gridkit"
+            else []
+        ),
+        links_p_nom=lambda w: (
+            "data/links_p_nom.csv" if config_provider("electricity_network", "base_network")(w) == "gridkit"
+            else []
+        ),
+        links_tyndp=lambda w: (
+            "data/links_tyndp.csv" if config_provider("electricity_network", "base_network")(w) == "gridkit"
+            else []
+        ),
+        country_shapes=resources("country_shapes.geojson"),
+        offshore_shapes=resources("offshore_shapes.geojson"),
+        europe_shape=resources("europe_shape.geojson"),
+    output:
+        base_network=resources("networks/base.nc"),
+        regions_onshore=resources("regions_onshore.geojson"),
+        regions_offshore=resources("regions_offshore.geojson"),
+    log:
+        logs("base_network.log"),
+    benchmark:
+        benchmarks("base_network")
+    threads: 1
+    resources:
+        mem_mb=1500,
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/base_network.py"
 
 
 rule build_shapes:

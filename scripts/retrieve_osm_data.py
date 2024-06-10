@@ -19,7 +19,7 @@ import time
 import requests
 from _helpers import (
     configure_logging,
-    # set_scenario_config,
+    set_scenario_config,
     # update_config_from_wildcards,
 )
 
@@ -143,8 +143,8 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("retrieve_osm_data", country="BE")
-
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     # Retrieve the OSM data
     country = snakemake.wildcards.country

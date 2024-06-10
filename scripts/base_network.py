@@ -5,7 +5,10 @@
 
 # coding: utf-8
 """
-Creates the network topology from an `ENTSO-E map extract <https://github.com/PyPSA/GridKit/tree/master/entsoe>`_ (March 2022) as a PyPSA network.
+Creates the network topology from a `ENTSO-E map extract.
+
+<https://github.com/PyPSA/GridKit/tree/master/entsoe>`_ (March 2022) as a PyPSA
+network.
 
 Relevant Settings
 -----------------
@@ -142,29 +145,39 @@ def _load_buses_from_eg(eg_buses, europe_shape, config_elec):
             dtype=dict(bus_id="str"),
         )
         .set_index("bus_id")
-        .drop(["station_id"], axis=1)
         .rename(columns=dict(voltage="v_nom"))
     )
 
-    buses["carrier"] = buses.pop("dc").map({True: "DC", False: "AC"})
+    if "station_id" in buses.columns:
+        buses.drop("station_id", axis=1, inplace=True)
+
+    # buses["carrier"] = buses.pop("dc").map({True: "DC", False: "AC"})
     buses["under_construction"] = buses.under_construction.where(
         lambda s: s.notnull(), False
     ).astype(bool)
 
     # remove all buses outside of all countries including exclusive economic zones (offshore)
     europe_shape = gpd.read_file(europe_shape).loc[0, "geometry"]
+    # TODO pypsa-eur: Temporary fix: Convex hull, this is important when nodes are between countries
+    # europe_shape = europe_shape.convex_hull
+
     europe_shape_prepped = shapely.prepared.prep(europe_shape)
     buses_in_europe_b = buses[["x", "y"]].apply(
         lambda p: europe_shape_prepped.contains(Point(p)), axis=1
     )
 
-    buses_with_v_nom_to_keep_b = (
-        buses.v_nom.isin(config_elec["voltages"]) | buses.v_nom.isnull()
-    )
-    logger.info(
-        f'Removing buses with voltages {pd.Index(buses.v_nom.unique()).dropna().difference(config_elec["voltages"])}'
-    )
+    # TODO pypsa-eur: Find a long-term solution
+    # buses_with_v_nom_to_keep_b = (
+    #     buses.v_nom.isin(config_elec["voltages"]) | buses.v_nom.isnull()
+    # )
 
+    v_nom_min = min(config_elec["voltages"])
+    v_nom_max = max(config_elec["voltages"])
+
+    # Quick fix:
+    buses_with_v_nom_to_keep_b = (v_nom_min <= buses.v_nom) & (buses.v_nom <= v_nom_max)
+
+    logger.info(f"Removing buses outside of range {v_nom_min} - {v_nom_max} V")
     return pd.DataFrame(buses.loc[buses_in_europe_b & buses_with_v_nom_to_keep_b])
 
 
@@ -212,6 +225,31 @@ def _load_links_from_eg(buses, eg_links):
     # Skagerrak Link is connected to 132kV bus which is removed in _load_buses_from_eg.
     # Connect to neighboring 380kV bus
     links.loc[links.bus1 == "6396", "bus1"] = "6398"
+
+    links = _remove_dangling_branches(links, buses)
+
+    # Add DC line parameters
+    links["carrier"] = "DC"
+
+    return links
+
+
+def _load_links_from_osm(buses, eg_links):
+    links = pd.read_csv(
+        eg_links,
+        quotechar="'",
+        true_values=["t"],
+        false_values=["f"],
+        dtype=dict(
+            link_id="str",
+            bus0="str",
+            bus1="str",
+            voltage="int",
+            p_nom="float",
+        ),
+    ).set_index("link_id")
+
+    links["length"] /= 1e3
 
     links = _remove_dangling_branches(links, buses)
 
@@ -347,7 +385,8 @@ def _load_lines_from_eg(buses, eg_lines):
     )
 
     lines["length"] /= 1e3
-    lines["carrier"] = "AC"
+
+    lines["carrier"] = "AC" #TODO pypsa-eur check
     lines = _remove_dangling_branches(lines, buses)
 
     return lines
@@ -397,7 +436,7 @@ def _reconnect_crimea(lines):
     return pd.concat([lines, lines_to_crimea])
 
 
-def _set_electrical_parameters_lines(lines, config):
+def _set_electrical_parameters_lines_eg(lines, config):
     v_noms = config["electricity"]["voltages"]
     linetypes = config["lines"]["types"]
 
@@ -409,16 +448,35 @@ def _set_electrical_parameters_lines(lines, config):
     return lines
 
 
+def _set_electrical_parameters_lines_osm(lines_config, voltages, lines):
+    if lines.empty:
+        lines["type"] = []
+        return lines
+
+    linetypes = _get_linetypes_config(lines_config["types"], voltages)
+
+    lines["carrier"] = "AC"
+    lines["dc"] = False
+
+    lines.loc[:, "type"] = lines.v_nom.apply(
+        lambda x: _get_linetype_by_voltage(x, linetypes)
+    )
+
+    lines["s_max_pu"] = lines_config["s_max_pu"]
+
+    return lines
+
+
 def _set_lines_s_nom_from_linetypes(n):
     n.lines["s_nom"] = (
         np.sqrt(3)
         * n.lines["type"].map(n.line_types.i_nom)
         * n.lines["v_nom"]
-        * n.lines.num_parallel
+        * n.lines["num_parallel"]
     )
 
 
-def _set_electrical_parameters_links(links, config, links_p_nom):
+def _set_electrical_parameters_links_eg(links, config, links_p_nom):
     if links.empty:
         return links
 
@@ -446,6 +504,19 @@ def _set_electrical_parameters_links(links, config, links_p_nom):
         else p_nom
     )
     links.loc[p_nom_unset.index, "p_nom"] = p_nom_unset
+
+    return links
+
+
+def _set_electrical_parameters_links_osm(links, config):
+    if links.empty:
+        return links
+
+    p_max_pu = config["links"].get("p_max_pu", 1.0)
+    links["p_max_pu"] = p_max_pu
+    links["p_min_pu"] = -p_max_pu
+    links["carrier"] = "DC"
+    links["dc"] = True
 
     return links
 
@@ -570,7 +641,7 @@ def _set_countries_and_substations(n, config, country_shapes, offshore_shapes):
     buses["substation_lv"] = (
         lv_b & onshore_b & (~buses["under_construction"]) & has_connections_b
     )
-    buses["substation_off"] = ((hv_b & offshore_b) | (hv_b & onshore_b)) & (
+    buses["substation_off"] = (offshore_b | (hv_b & onshore_b)) & (
         ~buses["under_construction"]
     )
 
@@ -737,31 +808,55 @@ def base_network(
     parameter_corrections,
     config,
 ):
+    
     buses = _load_buses_from_eg(eg_buses, europe_shape, config["electricity"])
 
-    links = _load_links_from_eg(buses, eg_links)
-    if config["links"].get("include_tyndp"):
+    if config["electricity_network"].get("base_network") == "gridkit":
+        links = _load_links_from_eg(buses, eg_links)
+    elif "osm" in config["electricity_network"].get("base_network"):
+        links = _load_links_from_osm(buses, eg_links)
+    else:
+        raise ValueError("base_network must be either 'gridkit' or 'osm'")
+
+    if (config["links"].get("include_tyndp") & (config["electricity_network"].get("base_network") == "gridkit")):
         buses, links = _add_links_from_tyndp(buses, links, links_tyndp, europe_shape)
 
     converters = _load_converters_from_eg(buses, eg_converters)
+    transformers = _load_transformers_from_eg(buses, eg_transformers)
 
     lines = _load_lines_from_eg(buses, eg_lines)
-    transformers = _load_transformers_from_eg(buses, eg_transformers)
 
     if config["lines"].get("reconnect_crimea", True) and "UA" in config["countries"]:
         lines = _reconnect_crimea(lines)
 
-    lines = _set_electrical_parameters_lines(lines, config)
+    if config["electricity_network"].get("base_network") == "gridkit":
+        lines = _set_electrical_parameters_lines_eg(lines, config)
+        links = _set_electrical_parameters_links_eg(links, config, links_p_nom)
+    elif "osm" in config["electricity_network"].get("base_network"):
+        lines = _set_electrical_parameters_lines_osm(
+            config["lines"], config["electricity"]["voltages"], lines
+        )
+        links = _set_electrical_parameters_links_osm(links, config)
+    else:
+        raise ValueError("base_network must be either 'gridkit' or 'osm'")
+
     transformers = _set_electrical_parameters_transformers(transformers, config)
-    links = _set_electrical_parameters_links(links, config, links_p_nom)
     converters = _set_electrical_parameters_converters(converters, config)
 
     n = pypsa.Network()
-    n.name = "PyPSA-Eur"
+
+    if config["electricity_network"].get("base_network") == "gridkit":
+        n.name = "PyPSA-Eur (GridKit)"
+    elif "osm" in config["electricity_network"].get("base_network"):
+        n.name = "PyPSA-Eur (OSM)"
+    else:
+        raise ValueError("base_network must be either 'gridkit' or 'osm'")
 
     time = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
     n.set_snapshots(time)
-    n.madd("Carrier", ["AC", "DC"])
+    n.madd(
+        "Carrier", ["AC", "DC"]
+    )  # TODO: fix hard code and check if AC/DC truly exist
 
     n.import_components_from_dataframe(buses, "Bus")
     n.import_components_from_dataframe(lines, "Line")
@@ -770,13 +865,15 @@ def base_network(
     n.import_components_from_dataframe(converters, "Link")
 
     _set_lines_s_nom_from_linetypes(n)
+    if config["electricity_network"].get("base_network") == "gridkit":
+        _apply_parameter_corrections(n, parameter_corrections)
 
-    _apply_parameter_corrections(n, parameter_corrections)
-
+    # TODO: what about this?
     n = _remove_unconnected_components(n)
 
     _set_countries_and_substations(n, config, country_shapes, offshore_shapes)
 
+    # TODO pypsa-eur add this
     _set_links_underwater_fraction(n, offshore_shapes)
 
     _replace_b2b_converter_at_country_border_by_link(n)
@@ -785,7 +882,57 @@ def base_network(
 
     _set_shapes(n, country_shapes, offshore_shapes)
 
+    logger.info(f"Base network created using {config['electricity_network'].get('base_network')}.")
+
     return n
+
+
+def _get_linetypes_config(line_types, voltages):
+    """
+    Return the dictionary of linetypes for selected voltages. The dictionary is
+    a subset of the dictionary line_types, whose keys match the selected
+    voltages.
+
+    Parameters
+    ----------
+    line_types : dict
+        Dictionary of linetypes: keys are nominal voltages and values are linetypes.
+    voltages : list
+        List of selected voltages.
+
+    Returns
+    -------
+        Dictionary of linetypes for selected voltages.
+    """
+    # get voltages value that are not availabile in the line types
+    vnoms_diff = set(voltages).symmetric_difference(set(line_types.keys()))
+    if vnoms_diff:
+        logger.warning(
+            f"Voltages {vnoms_diff} not in the {line_types} or {voltages} list."
+        )
+    return {k: v for k, v in line_types.items() if k in voltages}
+
+
+def _get_linetype_by_voltage(v_nom, d_linetypes):
+    """
+    Return the linetype of a specific line based on its voltage v_nom.
+
+    Parameters
+    ----------
+    v_nom : float
+        The voltage of the line.
+    d_linetypes : dict
+        Dictionary of linetypes: keys are nominal voltages and values are linetypes.
+
+    Returns
+    -------
+        The linetype of the line whose nominal voltage is closest to the line voltage.
+    """
+    v_nom_min, line_type_min = min(
+        d_linetypes.items(),
+        key=lambda x: abs(x[0] - v_nom),
+    )
+    return line_type_min
 
 
 def voronoi_partition_pts(points, outline):
