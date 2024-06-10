@@ -1026,7 +1026,40 @@ if __name__ == "__main__":
         disable_progressbar=snakemake.config["run"].get("disable_progressbar", False),
     )
     swiss = build_swiss()
-    idees = build_idees(idees_countries)
+    if len(idees_countries) > 0:
+        idees = build_idees(idees_countries)
+    else:
+        # e.g. UA and MD
+        logger.info(f"No IDEES data available for {countries} and years 2000-2015. Filling with zeros.")
+        years = range(2000, 2016)
+        idees = pd.DataFrame(
+            index=pd.MultiIndex.from_tuples([(country, year) for country in countries for year in years]),
+            columns=[
+                "passenger cars",
+                "passenger car efficiency",
+                "total passenger cars",
+                "total other road passenger",
+                "total light duty road freight",
+                "total two-wheel",
+                "total heavy duty road freight",
+                "electricity passenger cars",
+                "electricity other road passenger",
+                "electricity light duty road freight",
+                "total rail passenger",
+                "total rail freight",
+                "electricity rail passenger",
+                "electricity rail freight",
+                "total domestic aviation passenger",
+                "total domestic aviation freight",
+                "total international aviation passenger",
+                "total international aviation freight",
+                "derived heat residential",
+                "derived heat services",
+                "thermal uses residential",
+                "thermal uses services",
+            ],
+            data=0
+        )
 
     energy = build_energy_totals(countries, eurostat, swiss, idees)
 
