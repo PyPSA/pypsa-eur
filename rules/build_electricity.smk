@@ -75,50 +75,68 @@ rule base_network:
         transformers=config_provider("transformers"),
     input:
         eg_buses=lambda w: (
-            "data/entsoegridkit/buses.csv" if config_provider("electricity_network", "base_network")(w) == "gridkit"
+            "data/entsoegridkit/buses.csv"
+            if config_provider("electricity_network", "base_network")(w) == "gridkit"
             else (
-                "data/osm/prebuilt/buses.csv" if config_provider("electricity_network", "base_network")(w) == "osm-prebuilt"
+                "data/osm/prebuilt/buses.csv"
+                if config_provider("electricity_network", "base_network")(w)
+                == "osm-prebuilt"
                 else resources("osm/buses.csv")
             )
         ),
         eg_lines=lambda w: (
-            "data/entsoegridkit/lines.csv" if config_provider("electricity_network", "base_network")(w) == "gridkit"
+            "data/entsoegridkit/lines.csv"
+            if config_provider("electricity_network", "base_network")(w) == "gridkit"
             else (
-                "data/osm/prebuilt/lines.csv" if config_provider("electricity_network", "base_network")(w) == "osm-prebuilt"
+                "data/osm/prebuilt/lines.csv"
+                if config_provider("electricity_network", "base_network")(w)
+                == "osm-prebuilt"
                 else resources("osm/lines.csv")
             )
         ),
         eg_links=lambda w: (
-            "data/entsoegridkit/links.csv" if config_provider("electricity_network", "base_network")(w) == "gridkit"
+            "data/entsoegridkit/links.csv"
+            if config_provider("electricity_network", "base_network")(w) == "gridkit"
             else (
-                "data/osm/prebuilt/links.csv" if config_provider("electricity_network", "base_network")(w) == "osm-prebuilt"
+                "data/osm/prebuilt/links.csv"
+                if config_provider("electricity_network", "base_network")(w)
+                == "osm-prebuilt"
                 else resources("osm/links.csv")
             )
         ),
         eg_converters=lambda w: (
-            "data/entsoegridkit/converters.csv" if config_provider("electricity_network", "base_network")(w) == "gridkit"
+            "data/entsoegridkit/converters.csv"
+            if config_provider("electricity_network", "base_network")(w) == "gridkit"
             else (
-                "data/osm/prebuilt/converters.csv" if config_provider("electricity_network", "base_network")(w) == "osm-prebuilt"
+                "data/osm/prebuilt/converters.csv"
+                if config_provider("electricity_network", "base_network")(w)
+                == "osm-prebuilt"
                 else resources("osm/converters.csv")
             )
         ),
         eg_transformers=lambda w: (
-            "data/entsoegridkit/transformers.csv" if config_provider("electricity_network", "base_network")(w) == "gridkit"
+            "data/entsoegridkit/transformers.csv"
+            if config_provider("electricity_network", "base_network")(w) == "gridkit"
             else (
-                "data/osm/prebuilt/transformers.csv" if config_provider("electricity_network", "base_network")(w) == "osm-prebuilt"
+                "data/osm/prebuilt/transformers.csv"
+                if config_provider("electricity_network", "base_network")(w)
+                == "osm-prebuilt"
                 else resources("osm/transformers.csv")
             )
         ),
         parameter_corrections=lambda w: (
-            "data/parameter_corrections.yaml" if config_provider("electricity_network", "base_network")(w) == "gridkit"
+            "data/parameter_corrections.yaml"
+            if config_provider("electricity_network", "base_network")(w) == "gridkit"
             else []
         ),
         links_p_nom=lambda w: (
-            "data/links_p_nom.csv" if config_provider("electricity_network", "base_network")(w) == "gridkit"
+            "data/links_p_nom.csv"
+            if config_provider("electricity_network", "base_network")(w) == "gridkit"
             else []
         ),
         links_tyndp=lambda w: (
-            "data/links_tyndp.csv" if config_provider("electricity_network", "base_network")(w) == "gridkit"
+            "data/links_tyndp.csv"
+            if config_provider("electricity_network", "base_network")(w) == "gridkit"
             else []
         ),
         country_shapes=resources("country_shapes.geojson"),

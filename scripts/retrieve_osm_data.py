@@ -17,10 +17,9 @@ import os
 import time
 
 import requests
-from _helpers import (  # set_scenario_config,; update_config_from_wildcards,
+from _helpers import (  # set_scenario_config,; update_config_from_wildcards,; update_config_from_wildcards,
     configure_logging,
     set_scenario_config,
-    # update_config_from_wildcards,
 )
 
 logger = logging.getLogger(__name__)

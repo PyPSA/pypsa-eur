@@ -386,7 +386,7 @@ def _load_lines_from_eg(buses, eg_lines):
 
     lines["length"] /= 1e3
 
-    lines["carrier"] = "AC" #TODO pypsa-eur check
+    lines["carrier"] = "AC"  # TODO pypsa-eur check
     lines = _remove_dangling_branches(lines, buses)
 
     return lines
@@ -808,7 +808,7 @@ def base_network(
     parameter_corrections,
     config,
 ):
-    
+
     buses = _load_buses_from_eg(eg_buses, europe_shape, config["electricity"])
 
     if config["electricity_network"].get("base_network") == "gridkit":
@@ -818,7 +818,9 @@ def base_network(
     else:
         raise ValueError("base_network must be either 'gridkit' or 'osm'")
 
-    if (config["links"].get("include_tyndp") & (config["electricity_network"].get("base_network") == "gridkit")):
+    if config["links"].get("include_tyndp") & (
+        config["electricity_network"].get("base_network") == "gridkit"
+    ):
         buses, links = _add_links_from_tyndp(buses, links, links_tyndp, europe_shape)
 
     converters = _load_converters_from_eg(buses, eg_converters)
@@ -882,7 +884,9 @@ def base_network(
 
     _set_shapes(n, country_shapes, offshore_shapes)
 
-    logger.info(f"Base network created using {config['electricity_network'].get('base_network')}.")
+    logger.info(
+        f"Base network created using {config['electricity_network'].get('base_network')}."
+    )
 
     return n
 
