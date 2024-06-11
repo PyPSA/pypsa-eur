@@ -857,7 +857,7 @@ def add_generation(n, costs, existing_capacities=0, existing_efficiencies=None):
                 else False
             ),
             p_nom=(
-                existing_capacities[generator] / costs.at[generator, "efficiency"]
+                existing_capacities[generator] / existing_efficiencies[generator]
                 if not existing_capacities == 0 else 0
             ), # NB: existing capacities are MWel
             p_max_pu = 0.7 if carrier == "uranium" else 1, # be conservative for nuclear (maintance or unplanned shut downs)
