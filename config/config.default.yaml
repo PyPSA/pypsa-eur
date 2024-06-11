@@ -75,10 +75,6 @@ enable:
   custom_busmap: false
   drop_leap_day: true
 
-# Settings related to the high-voltage electricity grid
-electricity_network:
-  base_network: "gridkit"           # "gridkit", "osm-prebuilt" (prebuilt network from OSM data), "osm-raw" (retrieve and build network from raw OSM data, takes longer)
-  osm_group_tolerance_buses: 5000   # only relevant for "osm-raw" setting: [m] (default 5000) Tolerance in meters of the close buses to merge
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
 co2_budget:
@@ -92,7 +88,7 @@ co2_budget:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
-  voltages: [200., 220., 300., 380., 500., 750.]
+  voltages: [220., 300., 380., 500., 750.]
   gaslimit_enable: false
   gaslimit: false
   co2limit_enable: false
@@ -286,27 +282,11 @@ conventional:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#lines
 lines:
   types:
-    200.: "Al/St 240/40 2-bundle 220.0"
     220.: "Al/St 240/40 2-bundle 220.0"
     300.: "Al/St 240/40 3-bundle 300.0"
     380.: "Al/St 240/40 4-bundle 380.0"
-    400.: "Al/St 240/40 4-bundle 380.0"
     500.: "Al/St 240/40 4-bundle 380.0"
     750.: "Al/St 560/50 4-bundle 750.0"
-  dc_types:
-    200.: "HVDC XLPE 1000"
-    250.: "HVDC XLPE 1000"
-    270.: "HVDC XLPE 1000"
-    285.: "HVDC XLPE 1000"
-    300.: "HVDC XLPE 1000"
-    320.: "HVDC XLPE 1000"
-    350.: "HVDC XLPE 1000"
-    380.: "HVDC Oil filled 1400"
-    400.: "HVDC XLPE 1000"
-    450.: "HVDC XLPE 1000"
-    515.: "HVDC XLPE 1000"
-    525.: "HVDC XLPE 1000"
-    600.: "HVDC XLPE 1000"
   s_max_pu: 0.7
   s_nom_max: .inf
   max_extension: 20000 #MW
@@ -923,11 +903,11 @@ plotting:
   eu_node_location:
     x: -5.5
     y: 46.
-  costs_max: 1000
-  costs_threshold: 1
-  energy_max: 20000
-  energy_min: -20000
-  energy_threshold: 50.
+  # costs_max: 1000
+  # costs_threshold: 1
+  # energy_max: 20000
+  # energy_min: -20000
+  # energy_threshold: 50.
 
   nice_names:
     OCGT: "Open-Cycle Gas"
