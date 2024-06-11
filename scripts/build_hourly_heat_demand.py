@@ -18,9 +18,7 @@ def heat_dsm_profile(nodes, options):
 
     weekly_profile = np.ones((24 * 7))
     for i in options["residential_heat_restriction_time"]:
-        weekly_profile[
-        (np.arange(0, 7, 1) * 24 + int(i))
-    ] = 0
+        weekly_profile[(np.arange(0, 7, 1) * 24 + int(i))] = 0
 
     dsm_profile = generate_periodic_profiles(
         dt_index=pd.date_range(freq="h", **snakemake.params.snapshots, tz="UTC"),
