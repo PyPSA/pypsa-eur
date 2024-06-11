@@ -272,9 +272,9 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
 
             # this is for the year 2020
             if not already_build.empty:
-                n.generators.loc[already_build, "p_nom_min"] = capacity.loc[
-                    already_build.str.replace(name_suffix, "")
-                ].values
+                n.generators.loc[already_build, "p_nom"] = n.generators.loc[
+                    already_build, "p_nom_min"
+                ] = capacity.loc[already_build.str.replace(name_suffix, "")].values
             new_capacity = capacity.loc[new_build.str.replace(name_suffix, "")]
 
             if "m" in snakemake.wildcards.clusters:

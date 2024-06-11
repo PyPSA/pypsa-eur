@@ -10,6 +10,10 @@ Release Notes
 Upcoming Release
 ================
 
+* Set p_nom = p_nom_min for generators with baseyear == grouping_year in add_existing_baseyear. This has no effect on the optimization but helps n.statistics to correctly report already installed capacities.
+
+* Reverted outdated hotfix for doubled renewable capacity in myopic optimization.
+
 * Added Enhanced Geothermal Systems for generation of electricity and district heat.
   Cost and available capacity assumptions based on `Aghahosseini et al. (2020)
   <https://www.sciencedirect.com/science/article/pii/S0306261920312551>`__.
