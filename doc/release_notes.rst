@@ -10,6 +10,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Bugfix for previously incorrect total solar potential constraint (only relevant when ``solar-hsat`` was enabled).
+
 * Set p_nom = p_nom_min for generators with baseyear == grouping_year in add_existing_baseyear. This has no effect on the optimization but helps n.statistics to correctly report already installed capacities.
 
 * Reverted outdated hotfix for doubled renewable capacity in myopic optimization.
