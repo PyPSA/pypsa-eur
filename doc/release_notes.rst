@@ -19,6 +19,8 @@ Upcoming Release
   <https://www.sciencedirect.com/science/article/pii/S0306261920312551>`__.
   See configuration ``sector: enhanced_geothermal`` for details; by default switched off.
 
+* Partially revert https://github.com/PyPSA/pypsa-eur/pull/967 to return to old grouping year logic (which was mostly correct)
+
 
 PyPSA-Eur 0.11.0 (25th May 2024)
 =====================================
