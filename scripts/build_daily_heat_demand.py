@@ -9,7 +9,6 @@ Build heat demand time series using heating degree day (HDD) approximation.
 import atlite
 import geopandas as gpd
 import numpy as np
-import pandas as pd
 import xarray as xr
 from _helpers import get_snapshots, set_scenario_config
 from dask.distributed import Client, LocalCluster

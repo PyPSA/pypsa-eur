@@ -68,6 +68,7 @@ index = [
     "heat",
     "naphtha",
     "ammonia",
+    "methanol",
     "process emission",
     "process emission from feedstock",
 ]
@@ -313,7 +314,7 @@ def chemicals_industry():
     df.loc["methane", sector] += s_fec["Natural gas"]
 
     # LPG and other feedstock materials are assimilated to naphtha
-    # since they will be produced through Fischer-Tropsh process
+    # since they will be produced through Fischer-Tropsch process
     sel = [
         "Solids",
         "Refinery gas",
@@ -456,8 +457,7 @@ def chemicals_industry():
 
     sector = "Methanol"
     df[sector] = 0.0
-    df.loc["methane", sector] = params["MWh_CH4_per_tMeOH"]
-    df.loc["elec", sector] = params["MWh_elec_per_tMeOH"]
+    df.loc["methanol", sector] = params["MWh_MeOH_per_tMeOH"]
 
     # Other chemicals
 

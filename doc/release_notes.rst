@@ -11,6 +11,8 @@ Upcoming Release
 ================
 
 * Add H2_retrofit_plants to enable the retrofit of existing OCGT, CCGT and CHP plants to hydrogen for plants built from a certain year on.
+.. Upcoming Release
+.. ================
 
 * Add config ``run: shared_resources: exclude:`` to specify additional files
   that should be excluded from shared resources with the setting ``run:
@@ -34,6 +36,9 @@ Upcoming Release
 * Include gas and oil fields and saline aquifers in estimation of CO2 sequestration potential.
 
 * bugfix: convert Strings to pathlib.Path objects as input to ConfigSettings
+
+* bugfix: fix distinction of temperature-dependent correction factors for the
+  energy demand of electric vehicles, ICES fuel cell cars.
 
 * Allow the use of more solvers in clustering (Xpress, COPT, Gurobi, CPLEX, SCIP, MOSEK).
 
@@ -85,52 +90,52 @@ Upcoming Release
 
 * Removed rule ``copy_config``. Instead, a config file is created for each
   network output of the ``solve_*`` rules, with the same content as ``n.meta``.
+  (https://github.com/PyPSA/pypsa-eur/pull/965)
 
-* Added new HVDC transmission projects from `TYNDP 2024 draft projects
-  <https://tyndp.entsoe.eu/news/176-pan-european-electricity-transmission-projects-and-33-storage-projects-will-be-assessed-in-tyndp-2024>`__.
+* Moved switch ``run: shared_resources:`` to ``run: shared_resources: policy:``.
 
+**Changes**
 
-* Group existing capacities to the earlier grouping_year for consistency with optimized capacities.
+* Updated, merged, and reduced data bundle:
+  (https://github.com/PyPSA/pypsa-eur/pull/1020,
+  https://github.com/PyPSA/pypsa-eur/pull/1027)
 
-* bugfix: installed heating capacities were 5% lower than existing heating capacities
+  - Merged electricity-only and sector-coupled data bundles into one bundle.
+    This removed the ``retrieve_sector_databundle`` rule.
+  - Included rasterised ``natura.tiff`` in the data bundle and removed the
+    ``retrieve_natura_raster`` rule.
+  - Removed the ``build_natura_raster`` rule due to its infrequent use and
+    significant data bundle size increase.
+  - Removed outdated files from the data bundle (e.g., Eurostat energy
+    balances).
+  - Reduced the spatial scope of GEBCO bathymetry data to Europe to save space.
+  - Removed a separate data bundle for tutorials.
+  - Directly downloaded the `Hotmaps Industrial Database
+    <https://gitlab.com/hotmaps/industrial_sites/industrial_sites_Industrial_Database/-/blob/master/data/Industrial_Database.csv>`__
+    from the source, removing ``Industrial_Database.csv`` from the data bundle.
 
-* bugfix: convert Strings to pathlib.Path objects as input to ConfigSettings
-* Corrected a bug leading to power plants operating after their DateOut
-  (https://github.com/PyPSA/pypsa-eur/pull/958). Added additional grouping years
-  before 1980.
+* Updated energy statistics: (https://github.com/PyPSA/pypsa-eur/pull/947,
+  https://github.com/PyPSA/pypsa-eur/pull/973,
+  https://github.com/PyPSA/pypsa-eur/pull/990,
+  https://github.com/PyPSA/pypsa-eur/pull/1025,
+  https://github.com/PyPSA/pypsa-eur/pull/1074)
 
-* Upgrade default techno-economic assumptions to ``technology-data`` v0.8.1.
+  - Updated Eurostat data to the 2023 version in :mod:`build_energy_totals`.
+  - Updated the latest Swiss energy totals to the 2023 version.
+  - Scaled JRC-IDEES data using the ratio of Eurostat data for energy totals
+    years after 2015 and 2015.
+  - Updated default energy totals year to 2019.
+  - Updated energy balances for residential demands (space, water, cooking) in
+    JRC-IDEES data with newer Eurostat values.
 
+* Improved documentation: (https://github.com/PyPSA/pypsa-eur/pull/1017,
+  https://github.com/PyPSA/pypsa-eur/pull/1014)
 
-* Upgrade to Snakemake v8.5+. This version is the new minimum version required.
-  To upgrade an existing environment, run ``conda install -c bioconda
-  snakemake-minimal">=8.5"`` and ``pip install snakemake-storage-plugin-http``
-  (https://github.com/PyPSA/pypsa-eur/pull/825).
-
-* Corrected a bug leading to power plants operating after their DateOut
-  (https://github.com/PyPSA/pypsa-eur/pull/958). Added additional grouping years
-  before 1980.
-
-* Add decommissioning of existing renewables assets in `add_existing_baseyear`.
-
-* The Eurostat data was updated to the 2023 version in :mod:`build_energy_totals`.
-
-* The latest `Swiss energy totals
-  <https://www.bfe.admin.ch/bfe/de/home/versorgung/statistik-und-geodaten/energiestatistiken/energieverbrauch-nach-verwendungszweck.html/>`__
-  have been updated to the 2023 version.
-
-* The JRC-IDEES data is only available until 2015. For energy totals years (``energy: energy_totals_year``) after
-  2015, the data scaled using the ratio of Eurostat data reported for the energy
-  totals year and 2015.
-
-* The default energy totals year (``energy: energy_totals_year``) was updated to 2019.
-
-* Upgrade default techno-economic assumptions to ``technology-data`` v0.8.1.
-
-* Add possibility to download cost data from custom fork of ``technology-data``.
-
-* Linearly interpolate missing investment periods in year-dependent
-  configuration options.
+  - Clarified that ``solving: rolling_horizon:`` only works for
+    :mod:`solve_operations_network`, not for networks with sector-coupling or
+    investment variables.
+  - Clarified suffix usage in `add_existing_baseyear`.
+  - Added documentation section for contributing documentation.
 
 * Added new scenario management that supports the simultaneous execution of
   multiple scenarios with a single ``snakemake`` call. For this purpose, a
@@ -203,22 +208,62 @@ Upcoming Release
 
 * Bugfix: allow modelling sector-coupled landlocked regions. (Fixed handling of offshore wind.)
 
-* Adapt the disabling of transmission expansion in myopic foresight optimisations when limit is already reached to also handle cost limits.
+* Bugfix: Correct approximation of hydropower generation if Portugal or Spain
+  are not included. (https://github.com/PyPSA/pypsa-eur/pull/1054)
 
-* Fix duplicated years and grouping years reference in `add_land_use_constraint_m`.
+* Bugfix: In :mod:`build_electricity_demand`, ensure load data is only added if
+  the country is included in the configuration.
+  (https://github.com/PyPSA/pypsa-eur/pull/1054)
 
-* Fix type error with `m` option in `cluster_network`.
+* Bugfix: Skip heat bus for CHPs in areas without central heating.
+  (https://github.com/PyPSA/pypsa-eur/pull/1021)
 
-* Fix error with `symbol` of `buses` in `simplify_network`.
+* Bugfix: Avoid duplicated offshore regions.
 
-* Fix index of existing capacities in `add_power_capacities_installed_before_baseyear` with `m` option.
+* Fixed type error with ``m`` option in :mod:`cluster_network`.
+  (https://github.com/PyPSA/pypsa-eur/pull/986)
 
-* Fix custom busmap read in `cluster_network`.
+* Fixed error with ``symbol`` column of buses in :mod:`simplify_network`.
+  (https://github.com/PyPSA/pypsa-eur/pull/987)
 
-* Fix p_nom_min of renewables generators for myopic approach and add check of existing capacities in `add_land_use_constraint_m`.
+* Fixed index of existing capacities in
+  ``add_power_capacities_installed_before_baseyear`` with ``m`` option.
+  (https://github.com/PyPSA/pypsa-eur/pull/1002)
 
-* Add documentation section for how to contribute documentation
+* Fixed reading in custom busmaps in :mod:`cluster_network`.
+  (https://github.com/PyPSA/pypsa-eur/pull/1008)
 
+* Fixed ``p_nom_min`` of renewables generators for myopic approach and added
+  check of existing capacities in ``add_land_use_constraint_m``.
+  (https://github.com/PyPSA/pypsa-eur/pull/1022,
+  https://github.com/PyPSA/pypsa-eur/pull/1029)
+
+* Fixed duplicated years and grouping years reference in
+  ``add_land_use_constraint_m``. (https://github.com/PyPSA/pypsa-eur/pull/991,
+  https://github.com/PyPSA/pypsa-eur/pull/968)
+
+* Fixed filling of missing data in
+  ``build_industry_sector_ratios_intermediate``.
+  (https://github.com/PyPSA/pypsa-eur/pull/1004)
+
+* Fixed file name encoding in optional rule :mod:`build_biomass_transport_costs`
+  depending on the operating system.
+  (https://github.com/PyPSA/pypsa-eur/pull/769)
+
+* Technical fix for constraint function ``add_operational_reserve_margin``.
+  (https://github.com/PyPSA/pypsa-eur/pull/1071)
+
+* Technical fix for constraint function ``add_BAU_constraints``.
+  (https://github.com/PyPSA/pypsa-eur/pull/1024)
+
+* Fixed network clustering and simplification issues caused by adding TYNDP
+  links. (https://github.com/PyPSA/pypsa-eur/pull/1067)
+
+* Bugfix: Ensure correct indexing of weights in :mod:`cluster_network`.
+  (https://github.com/PyPSA/pypsa-eur/pull/988)
+
+* Bugfix: Only sanitize locations when there are buses with a location.
+  (https://github.com/PyPSA/pypsa-eur/pull/971)
 
 PyPSA-Eur 0.10.0 (19th February 2024)
 =====================================
@@ -1541,7 +1586,7 @@ This release is known to work with `PyPSA-Eur
 **Gas Transmission Network**
 
 * New rule ``retrieve_gas_infrastructure_data`` that downloads and extracts the
-  SciGRID_gas `IGGIELGN <https://zenodo.org/record/4767098>`__ dataset from
+  SciGRID_gas `IGGIELGN <https://zenodo.org/records/4767098>`__ dataset from
   zenodo. It includes data on the transmission routes, pipe diameters,
   capacities, pressure, and whether the pipeline is bidirectional and carries
   H-Gas or L-Gas.
@@ -1701,7 +1746,7 @@ This release is known to work with `PyPSA-Eur
   PyPSA network.
 
 * Updated `data bundle
-  <https://zenodo.org/record/5824485/files/pypsa-eur-sec-data-bundle.tar.gz>`__
+  <https://zenodo.org/records/5824485/files/pypsa-eur-sec-data-bundle.tar.gz>`__
   that includes the hydrogan salt cavern storage potentials.
 
 * Updated and extended documentation in
@@ -2061,7 +2106,7 @@ PyPSA-Eur-Sec codebase in Version 0.2.0 above.
 
 This model has `its own github repository
 <https://github.com/martavp/pypsa-eur-sec-30-path>`__ and is `archived
-on Zenodo <https://zenodo.org/record/4014807>`__.
+on Zenodo <https://zenodo.org/records/4014807>`__.
 
 
 
@@ -2077,7 +2122,7 @@ European countries with one node per country. It includes demand and
 supply for electricity, space and water heating in buildings, and land
 transport.
 
-It is `archived on Zenodo <https://zenodo.org/record/1146666>`__.
+It is `archived on Zenodo <https://zenodo.org/records/1146666>`__.
 
 
 Release Process

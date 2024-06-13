@@ -36,9 +36,6 @@ rule add_existing_baseyear:
         existing_heating_distribution=resources(
             "existing_heating_distribution_elec_s{simpl}_{clusters}_{planning_horizons}.csv"
         ),
-        existing_solar="data/existing_infrastructure/solar_capacity_IRENA.csv",
-        existing_onwind="data/existing_infrastructure/onwind_capacity_IRENA.csv",
-        existing_offwind="data/existing_infrastructure/offwind_capacity_IRENA.csv",
     output:
         RESULTS
         + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
