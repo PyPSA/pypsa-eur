@@ -880,9 +880,7 @@ def add_h2_retro(n, baseyear, params):
 
     for original_carrier, new_carrier in plant_types:
         # Query to filter the DataFrame
-        plant_i = n.links.query(
-            f"carrier == '{original_carrier}'"
-        )
+        plant_i = n.links.query(f"carrier == '{original_carrier}'")
         # Further filtering based on build_year
         plant_i = plant_i.loc[plant_i.build_year >= start].index
         # Set plants to extendable for constraint in solve_network()
@@ -891,9 +889,11 @@ def add_h2_retro(n, baseyear, params):
         # get all retrofitted plants and set p_nom_extendable to True
         h2_counterpart = n.links.query(f"carrier == '{new_carrier}'").index
         n.links.loc[h2_counterpart, "p_nom_extendable"] = True
-        
+
         # check if the plants are not having a h2 counterpart yet
-        h2_counterpart = set(index.replace(new_carrier, original_carrier) for index in h2_counterpart)
+        h2_counterpart = set(
+            index.replace(new_carrier, original_carrier) for index in h2_counterpart
+        )
         plant_i = [index for index in plant_i if index not in h2_counterpart]
 
         if not plant_i:
