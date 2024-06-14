@@ -19,6 +19,9 @@ Upcoming Release
   <https://www.sciencedirect.com/science/article/pii/S0306261920312551>`__.
   See configuration ``sector: enhanced_geothermal`` for details; by default switched off.
 
+* Allow running the sector model for isolated non-EU28 countries, by filling missing sectoral
+  data with defaults, average EU values or zeros, if not available.
+
 
 PyPSA-Eur 0.11.0 (25th May 2024)
 =====================================

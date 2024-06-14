@@ -33,9 +33,11 @@ if __name__ == "__main__":
     pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
 
     year = str(snakemake.params.energy_totals_year)
-    district_heat_share = pd.read_csv(snakemake.input.district_heat_share, index_col=0)[
-        year
-    ]
+    district_heat_share = pd.read_csv(snakemake.input.district_heat_share, index_col=0)
+    if not district_heat_share.empty:
+        district_heat_share = district_heat_share[year]
+    else:
+        district_heat_share = pd.Series(index=pop_layout.index, data=0)
 
     # make ct-based share nodal
     district_heat_share = district_heat_share.reindex(pop_layout.ct).fillna(0)
@@ -48,7 +50,8 @@ if __name__ == "__main__":
     pop_layout["urban_ct_fraction"] = pop_layout.urban / pop_layout.ct.map(ct_urban.get)
 
     # fraction of node that is urban
-    urban_fraction = pop_layout.urban / pop_layout[["rural", "urban"]].sum(axis=1)
+    urban_fraction = (pop_layout.urban / pop_layout[["rural", "urban"]].sum(axis=1)).fillna(0)
+
 
     # maximum potential of urban demand covered by district heating
     central_fraction = snakemake.config["sector"]["district_heating"]["potential"]
@@ -56,7 +59,7 @@ if __name__ == "__main__":
     # district heating share at each node
     dist_fraction_node = (
         district_heat_share * pop_layout["urban_ct_fraction"] / pop_layout["fraction"]
-    )
+    ).fillna(0)
 
     # if district heating share larger than urban fraction -> set urban
     # fraction to district heating share
