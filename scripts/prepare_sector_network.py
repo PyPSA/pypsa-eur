@@ -845,8 +845,7 @@ def add_generation(n, costs, existing_capacities=0, existing_efficiencies=None):
             marginal_cost=costs.at[generator, "efficiency"]
             * costs.at[generator, "VOM"],  # NB: VOM is per MWel
             capital_cost=(
-                costs.at[generator, "efficiency"]
-                * costs.at[generator, "fixed"]
+                costs.at[generator, "efficiency"] * costs.at[generator, "fixed"]
             ),  # NB: fixed cost is per MWel
             p_nom_extendable=(
                 True
@@ -857,10 +856,13 @@ def add_generation(n, costs, existing_capacities=0, existing_efficiencies=None):
                 else False
             ),
             p_nom=(
-                existing_capacities[generator] / costs.at[generator, "efficiency"]
-                if not existing_capacities == 0 else 0
-            ), # NB: existing capacities are MWel
-            p_max_pu = 0.7 if carrier == "uranium" else 1, # be conservative for nuclear (maintance or unplanned shut downs)
+                existing_capacities[generator] / existing_efficiencies[generator]
+                if not existing_capacities == 0
+                else 0
+            ),  # NB: existing capacities are MWel
+            p_max_pu=(
+                0.7 if carrier == "uranium" else 1
+            ),  # be conservative for nuclear (maintance or unplanned shut downs)
             p_nom_min=(
                 existing_capacities[generator] if not existing_capacities == 0 else 0
             ),
@@ -1020,10 +1022,13 @@ def insert_electricity_distribution_grid(n, costs):
         bus=n.generators.loc[solar, "bus"] + " low voltage",
         carrier="solar rooftop",
         p_nom_extendable=(
-            True if "solar" in
-            snakemake.params.electricity.get("extendable_carriers", dict()).get("Generator", list())
+            True
+            if "solar"
+            in snakemake.params.electricity.get("extendable_carriers", dict()).get(
+                "Generator", list()
+            )
             else False
-        ), # solar rooftop only extendable if solar is extendable
+        ),  # solar rooftop only extendable if solar is extendable
         p_nom_max=potential,
         marginal_cost=n.generators.loc[solar, "marginal_cost"],
         capital_cost=costs.at["solar-rooftop", "fixed"],
@@ -2215,8 +2220,7 @@ def add_heat(n, costs):
                         ["residential AB", "residential MFH", "residential SFH"]
                     )
                     sec_floor = list(
-                        set(floor_area.loc[ct, "value"].index)
-                        .intersection(sec_floor)
+                        set(floor_area.loc[ct, "value"].index).intersection(sec_floor)
                     )
                 else:
                     sec_floor = ["residential"]
@@ -2271,8 +2275,10 @@ def add_heat(n, costs):
 
                 # add for each retrofitting strength a generator with heat generation profile following the profile of the heat demand
                 for strength in strengths:
-                    if len(sec_floor)>1 and "residential" in name:
-                         node_name = " ".join(name.split(" ")[2::]) + " " + sec_i.split(" ")[1]
+                    if len(sec_floor) > 1 and "residential" in name:
+                        node_name = (
+                            " ".join(name.split(" ")[2::]) + " " + sec_i.split(" ")[1]
+                        )
                     else:
                         node_name = " ".join(name.split(" ")[2::])
                     n.madd(

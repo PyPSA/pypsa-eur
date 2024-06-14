@@ -187,16 +187,29 @@ def prepare_building_stock_data():
         inplace=True,
     )
     if snakemake.params["retrofitting"]["disaggregate_building_types"]:
-        building_data["sector"] = (
-            building_data.apply(
-                lambda b: "residential SFH" if
-                b.subsector == 'Single family- Terraced houses' else
-                "residential AB" if b.subsector in "Appartment blocks" else
-                "residential MFH" if b.subsector == "Multifamily houses" else
-                "residential mixed" if b.subsector in ["Residential sector", ] else
-                b.sector, axis=1)
+        building_data["sector"] = building_data.apply(
+            lambda b: (
+                "residential SFH"
+                if b.subsector == "Single family- Terraced houses"
+                else (
+                    "residential AB"
+                    if b.subsector in "Appartment blocks"
+                    else (
+                        "residential MFH"
+                        if b.subsector == "Multifamily houses"
+                        else (
+                            "residential mixed"
+                            if b.subsector
+                            in [
+                                "Residential sector",
+                            ]
+                            else b.sector
+                        )
+                    )
+                )
+            ),
+            axis=1,
         )
-
 
     # extract u-values
     u_values = building_data[
@@ -251,9 +264,8 @@ def prepare_building_stock_data():
     )
     if snakemake.params["retrofitting"]["disaggregate_building_types"]:
         area_missing.sector = area_missing.apply(
-            lambda b:
-            "residential AB" if b.sector == "residential"
-            else b.sector, axis=1
+            lambda b: "residential AB" if b.sector == "residential" else b.sector,
+            axis=1,
         )
     area_missing = area_missing.reset_index().set_index(["country", "sector"])
 
@@ -1042,8 +1054,10 @@ def sample_dE_costs_area(
     # get share of residential and service floor area
     sec_w = area_tot.div(area_tot.groupby(level=0).transform("sum"))
     if snakemake.params["retrofitting"]["disaggregate_building_types"]:
-        missing = list(set(cost_dE.index)-set(sec_w.index))
-        sec_w = pd.concat([sec_w, pd.DataFrame(index=missing)]).loc[cost_dE.index] #.fillna(0)
+        missing = list(set(cost_dE.index) - set(sec_w.index))
+        sec_w = pd.concat([sec_w, pd.DataFrame(index=missing)]).loc[
+            cost_dE.index
+        ]  # .fillna(0)
 
     # get the total cost-energy-savings weight by sector area
     tot = (
