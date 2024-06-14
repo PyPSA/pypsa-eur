@@ -2707,6 +2707,7 @@ def add_industry(n, costs):
         e_nom_extendable=True,
         e_cyclic=True,
         carrier="methanol",
+        capital_cost=0.02,
     )
 
     n.madd(
