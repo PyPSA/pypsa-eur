@@ -981,8 +981,6 @@ def add_h2_retrofit_constraint(n):
         logger.info(
             f"Added constraint for retrofitting {gas_carrier} gas to {h2_carrier}."
         )
-        logger.info(rhs)
-        logger.info(lhs)
 
 
 def add_co2_atmosphere_constraint(n, snapshots):
