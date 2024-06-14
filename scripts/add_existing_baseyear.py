@@ -88,9 +88,16 @@ def add_existing_renewables(df_agg, costs):
 
         # distribute capacities among nodes according to capacity factor
         # weighting with nodal_fraction
-        elec_buses = n.buses.index[n.buses.carrier == "AC"].union(
-            n.buses.index[n.buses.carrier == "DC"]
-        )
+        if snakemake.config["sector"]["import"]["endogenous_hvdc_import"]["enable"]:
+            cut = len(snakemake.config["sector"]["import"]["endogenous_hvdc_import"]["exporters"])
+            elec_buses = n.buses.index[n.buses.carrier == "AC"].union(
+                n.buses.index[n.buses.carrier == "DC"]
+            )[:-cut]
+        else:
+            elec_buses = n.buses.index[n.buses.carrier == "AC"].union(
+                n.buses.index[n.buses.carrier == "DC"]
+            )
+
         nodal_fraction = pd.Series(0.0, elec_buses)
 
         for country in n.buses.loc[elec_buses, "country"].unique():
@@ -878,13 +885,14 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "add_existing_baseyear",
-            configfiles="config/config.yaml",
+            configfiles="config/scenarios.automated.yaml",
             simpl="",
-            clusters="20",
-            ll="v1.5",
+            clusters="22",
+            ll="vopt",
             opts="",
             sector_opts="none",
             planning_horizons=2030,
+            run="KN2045_Bal_v4",
         )
 
     configure_logging(snakemake)

@@ -11,11 +11,70 @@ import logging
 
 import geopandas as gpd
 import pandas as pd
+import numpy as np
+from scipy import spatial
+from scipy.sparse import csgraph
+from shapely.geometry import LineString, Point, Polygon
 from _helpers import configure_logging, set_scenario_config
-from build_bus_regions import voronoi_partition_pts
 from cluster_gas_network import load_bus_regions
 
 logger = logging.getLogger(__name__)
+
+
+
+def voronoi_partition_pts(points, outline):
+    """
+    Compute the polygons of a voronoi partition of `points` within the polygon
+    `outline`. Taken from
+    https://github.com/FRESNA/vresutils/blob/master/vresutils/graph.py.
+
+    Attributes
+    ----------
+    points : Nx2 - ndarray[dtype=float]
+    outline : Polygon
+    Returns
+    -------
+    polygons : N - ndarray[dtype=Polygon|MultiPolygon]
+    """
+    points = np.asarray(points)
+
+    if len(points) == 1:
+        polygons = [outline]
+    else:
+        xmin, ymin = np.amin(points, axis=0)
+        xmax, ymax = np.amax(points, axis=0)
+        xspan = xmax - xmin
+        yspan = ymax - ymin
+
+        # to avoid any network positions outside all Voronoi cells, append
+        # the corners of a rectangle framing these points
+        vor = spatial.Voronoi(
+            np.vstack(
+                (
+                    points,
+                    [
+                        [xmin - 3.0 * xspan, ymin - 3.0 * yspan],
+                        [xmin - 3.0 * xspan, ymax + 3.0 * yspan],
+                        [xmax + 3.0 * xspan, ymin - 3.0 * yspan],
+                        [xmax + 3.0 * xspan, ymax + 3.0 * yspan],
+                    ],
+                )
+            )
+        )
+
+        polygons = []
+        for i in range(len(points)):
+            poly = Polygon(vor.vertices[vor.regions[vor.point_region[i]]])
+
+            if not poly.is_valid:
+                poly = poly.buffer(0)
+
+            with np.errstate(invalid="ignore"):
+                poly = poly.intersection(outline)
+
+            polygons.append(poly)
+
+    return polygons
 
 
 def read_scigrid_gas(fn):
@@ -153,7 +212,8 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "build_gas_input_locations",
             simpl="",
-            clusters="128",
+            clusters="22",
+            run="KN2045_Bal_v4",
         )
 
     configure_logging(snakemake)

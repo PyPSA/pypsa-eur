@@ -406,7 +406,7 @@ sector:
   heating: true
   biomass: true
   industry: true
-  shipping: false
+  shipping: true
   imp: true
   agriculture: true
   district_heating:
@@ -1400,6 +1400,7 @@ plotting:
     industry methanol emissions: '#468c8b'
     HVC: '#012345'
     methanol-to-olefins/aromatics: '#012345'
+    methanol-to-kerosene: '#012345'
     electric steam cracker: '#012345'
     load: "#dd2e23"
     waste CHP: '#e3d37d'

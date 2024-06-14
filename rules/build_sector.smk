@@ -1066,6 +1066,7 @@ rule prepare_sector_network:
         country_centroids=storage(
             "https://raw.githubusercontent.com/gavinr/world-countries-centroids/v1.0.0/dist/countries.csv",
             keep_local=True,
+        ),
         egs_potentials=lambda w: (
             resources("egs_potentials_s{simpl}_{clusters}.csv")
             if config_provider("sector", "enhanced_geothermal", "enable")(w)
