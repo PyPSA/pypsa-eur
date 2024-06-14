@@ -305,8 +305,8 @@ def idees_per_country(ct, base_dir):
     row = "Heavy duty vehicles (Diesel oil incl. biofuels)"
     ct_totals["total heavy duty road freight"] = df.loc[row]
 
-    assert df.index[61] == "Passenger cars"
-    ct_totals["passenger car efficiency"] = df.iloc[61]
+    assert df.index[58] == "Vehicle-efficiency - effective (kgoe/100 km)"
+    ct_totals["passenger car efficiency"] = df.iloc[58]
 
     df = pd.read_excel(fn_transport, "TrRail_ene", index_col=0)
 
