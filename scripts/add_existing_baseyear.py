@@ -25,6 +25,7 @@ from _helpers import (
 )
 from add_electricity import sanitize_carriers
 from prepare_sector_network import cluster_heat_buses, define_spatial, prepare_costs
+from pypsa.io import import_components_from_dataframe
 
 logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
@@ -865,6 +866,67 @@ def add_heating_capacities_installed_before_baseyear(
             )
 
 
+def add_h2_retro(n, baseyear, params):
+    """
+    Function to add H2 retrofitting of existing plants.
+    """
+    logger.info("Add H2 retrofitting.")
+    plant_types = [
+        ("OCGT", "retrofitted H2 OCGT"),
+        ("CCGT", "retrofitted H2 CCGT"),
+        ("urban central gas CHP", "urban central retrofitted H2 CHP"),
+    ]
+    start = params.retrofit_start
+
+    for original_carrier, new_carrier in plant_types:
+        # Query to filter the DataFrame
+        plant_i = n.links.query(f"carrier == '{original_carrier}'")
+        # Further filtering based on build_year
+        plant_i = plant_i.loc[plant_i.build_year >= start].index
+        # Set plants to extendable for constraint in solve_network()
+        n.links.loc[plant_i, "p_nom_extendable"] = True
+
+        # get all retrofitted plants and set p_nom_extendable to True
+        h2_counterpart = n.links.query(f"carrier == '{new_carrier}'").index
+        n.links.loc[h2_counterpart, "p_nom_extendable"] = True
+
+        # check if the plants are not having a h2 counterpart yet
+        h2_counterpart = set(
+            index.replace(new_carrier, original_carrier) for index in h2_counterpart
+        )
+        plant_i = [index for index in plant_i if index not in h2_counterpart]
+
+        if not plant_i:
+            logger.info(f"No more {original_carrier} retrofitting potential.")
+            continue
+
+        n.links.loc[plant_i, "p_nom_max"] = n.links.loc[plant_i, "p_nom"]
+
+        df = n.links.loc[plant_i].copy()
+        # Adjust bus 0
+        df["bus0"] = df.bus0.map(n.buses.location) + " H2"
+        # Rename carrier and index
+        df["carrier"] = df.carrier.apply(
+            lambda x: x.replace(original_carrier, new_carrier)
+        )
+        df.rename(
+            index=lambda x: x.replace(original_carrier, new_carrier),
+            inplace=True,
+        )
+        df.loc[:, "capital_cost"] = params.retrofit_cost
+        df.loc[:, "efficiency"] = params.retrofit_efficiency
+        # Set p_nom_max to gas plant p_nom and existing capacity to zero
+        df.loc[:, "p_nom"] = 0
+        # Set CO2 emissions to 0: CHP plants have co2 emissions at bus3, gas plants at bus2
+        if original_carrier != "urban central gas CHP":
+            df.loc[:, "efficiency2"] = 0.0
+        else:
+            df.loc[:, "efficiency3"] = 0.0
+        # Build_year and lifetime will stay the same as decommissioning of gas plant
+        # Add retrofitted plant to network
+        import_components_from_dataframe(n, df, "Link")
+
+
 # %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -940,8 +1002,18 @@ if __name__ == "__main__":
     if options.get("cluster_heat_buses", False):
         cluster_heat_buses(n)
 
+    if snakemake.params.H2_retrofit_plants:
+        # allow retrofitting of gas power plants to H2
+        add_h2_retro(
+            n,
+            baseyear,
+            snakemake.params,
+        )
+
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
 
     sanitize_carriers(n, snakemake.config)
 
     n.export_to_netcdf(snakemake.output[0])
+
+# %%

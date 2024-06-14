@@ -944,6 +944,45 @@ def add_pipe_retrofit_constraint(n):
     n.model.add_constraints(lhs == rhs, name="Link-pipe_retrofit")
 
 
+def add_h2_retrofit_constraint(n):
+    """
+    Add constraint for retrofitting existing gas to H2 plants.
+    """
+    logger.info("Add constraint for retrofitting gas plants to H2 plants.")
+
+    plant_types = [
+        ("OCGT", "retrofitted H2 OCGT"),
+        ("CCGT", "retrofitted H2 CCGT"),
+        ("urban central gas CHP", "urban central retrofitted H2 CHP"),
+    ]
+    current_horizon = snakemake.wildcards.planning_horizons
+
+    for gas_carrier, h2_carrier in plant_types:
+        gas_plants = n.links.query(
+            f"carrier == '{gas_carrier}' and p_nom_extendable and build_year < {current_horizon}"
+        ).index
+        h2_plants = n.links.query(
+            f"carrier == '{h2_carrier}' and p_nom_extendable and build_year < {current_horizon}"
+        ).index
+
+        if h2_plants.empty or gas_plants.empty:
+            continue
+
+        efficiency_gas = n.links.efficiency[gas_plants]
+        efficiency_h2 = n.links.efficiency[h2_plants]
+        # Store p_nom value for rhs of constraint
+        p_nom = n.model["Link-p_nom"]
+
+        # Sum of p_nom OCGT/CCGT and retrofitted must be <= installed capacity of OCGT/CCGT
+        lhs = p_nom.loc[h2_plants] + p_nom.loc[gas_plants]
+        rhs = n.links.p_nom_max[gas_plants]
+        n.model.add_constraints(lhs <= rhs, name=f"{gas_carrier}_retrofit")
+
+        logger.info(
+            f"Added constraint for retrofitting {gas_carrier} gas to {h2_carrier}."
+        )
+
+
 def add_co2_atmosphere_constraint(n, snapshots):
     glcs = n.global_constraints[n.global_constraints.type == "co2_atmosphere"]
 
@@ -1002,6 +1041,7 @@ def extra_functionality(n, snapshots):
     add_battery_constraints(n)
     add_lossy_bidirectional_link_constraints(n)
     add_pipe_retrofit_constraint(n)
+    add_h2_retrofit_constraint(n)
     if n._multi_invest:
         add_carbon_constraint(n, snapshots)
         add_carbon_budget_constraint(n, snapshots)

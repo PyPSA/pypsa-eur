@@ -132,6 +132,12 @@ electricity:
     enable: false
     by_country: false
 
+  H2_retrofit_plants:
+    enable: false
+    year: 2020
+    retro_factor: 0.15 # repurposing cost of OCGT gas to H2 in % investment cost in EUR/MW source: Christidis et al (2023) - H2-Ready-Gaskraftwerke, Table 3 https://reiner-lemoine-institut.de/wp-content/uploads/2023/11/RLI-Studie-H2-ready_DE.pdf
+    efficiency: 0.35 #expected efficiency drop of 10 %
+
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#atlite
 atlite:
   default_cutout: europe-2013-era5
@@ -964,6 +970,9 @@ plotting:
     solar rooftop: '#ffea80'
     # gas
     OCGT: '#e0986c'
+    retrofitted H2 OCGT: '#e0986c'
+    retrofitted H2 CCGT: '#e0986c'
+    urban central retrofitted H2 CHP: '#e0986c'
     OCGT marginal: '#e0986c'
     OCGT-heat: '#e0986c'
     gas boiler: '#db6a25'
@@ -988,6 +997,7 @@ plotting:
     gas for industry CC: '#692e0a'
     gas pipeline: '#ebbca0'
     gas pipeline new: '#a87c62'
+    OCGT H2 retrofitted: '#e0986c'
     # oil
     oil: '#c9c9c9'
     imported oil: '#a3a3a3'

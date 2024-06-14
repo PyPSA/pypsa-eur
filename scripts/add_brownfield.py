@@ -18,7 +18,7 @@ from _helpers import (
     set_scenario_config,
     update_config_from_wildcards,
 )
-from add_existing_baseyear import add_build_year_to_new_assets
+from add_existing_baseyear import add_build_year_to_new_assets, add_h2_retro
 from pypsa.clustering.spatial import normed_or_uniform
 
 logger = logging.getLogger(__name__)
@@ -256,6 +256,13 @@ if __name__ == "__main__":
     n_p = pypsa.Network(snakemake.input.network_p)
 
     add_brownfield(n, n_p, year)
+
+    if snakemake.params.H2_retrofit_plants:
+        add_h2_retro(
+            n,
+            year,
+            snakemake.params,
+        )
 
     disable_grid_expansion_if_limit_hit(n)
 
