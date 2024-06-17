@@ -5,7 +5,7 @@
 """
 Build solar thermal collector profile time series.
 
-Uses ``atlite.Cutout.solar_thermal` to compute heat generation for clustered onshore regions from population layout and weather data cutout. 
+Uses ``atlite.Cutout.solar_thermal` to compute heat generation for clustered onshore regions from population layout and weather data cutout.
 The rule is executed in ``build_sector.smk``.
 
 .. seealso::

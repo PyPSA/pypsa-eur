@@ -5,7 +5,7 @@
 """
 Build hourly heat demand time series from daily heat demand.
 
-Water and space heating demand profiles are generated using intraday profiles from BDEW. Different profiles are used for the residential and services sectors as well as weekdays and weekend. 
+Water and space heating demand profiles are generated using intraday profiles from BDEW. Different profiles are used for the residential and services sectors as well as weekdays and weekend.
 
 The daily heat demand is multiplied by the intraday profile to obtain the hourly heat demand time series. The rule is executed in ``build_sector.smk``.
 

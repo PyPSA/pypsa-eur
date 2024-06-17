@@ -34,7 +34,6 @@ Outputs
 
 - ``resources/temp_soil_<scope>_elec_s<simpl>_<clusters>.nc``:
 - ``resources/temp_air_<scope>_elec_s<simpl>_<clusters>.nc`
-
 """
 
 import atlite

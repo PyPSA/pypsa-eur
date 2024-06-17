@@ -6,7 +6,7 @@
 Builds table of existing heat generation capacities for initial planning
 horizon.
 
-Existing heat generation capacities are distributed to nodes based on population. 
+Existing heat generation capacities are distributed to nodes based on population.
 Within the nodes, the capacities are distributed to sectors (residential and services) based on sectoral consumption and urban/rural based population distribution.
 
 Inputs:
@@ -37,7 +37,6 @@ Notes:
 References:
 -----------
 - "Mapping and analyses of the current and future (2020 - 2030) heating/cooling fuel deployment (fossil/renewables)" (https://energy.ec.europa.eu/publications/mapping-and-analyses-current-and-future-2020-2030-heatingcooling-fuel-deployment-fossilrenewables-1_en)
-
 """
 import country_converter as coco
 import numpy as np

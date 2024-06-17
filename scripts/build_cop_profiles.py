@@ -40,7 +40,6 @@ Outputs:
 References
 ----------
 [1] Staffell et al., Energy & Environmental Science 11 (2012): A review of domestic heat pumps, https://doi.org/10.1039/C2EE22653G.
-
 """
 
 import xarray as xr

@@ -27,8 +27,10 @@ idx = pd.IndexSlice
 
 def approximate_heat_demand(energy_totals: pd.DataFrame, hdd: pd.DataFrame):
     """
-    Approximate heat demand for a set of countries based on energy totals and heating degree days (HDD).
-    A polynomial regression of heat demand on HDDs is performed on the data from 2007 to 2021. Then, for 2022 and 2023, the heat demand is estimated from known HDDs based on the regression.
+    Approximate heat demand for a set of countries based on energy totals and
+    heating degree days (HDD). A polynomial regression of heat demand on HDDs
+    is performed on the data from 2007 to 2021. Then, for 2022 and 2023, the
+    heat demand is estimated from known HDDs based on the regression.
 
     Parameters
     ----------
@@ -46,7 +48,7 @@ def approximate_heat_demand(energy_totals: pd.DataFrame, hdd: pd.DataFrame):
     -----
     - Missing data is filled forward for GB in 2020 and backward for CH from 2007 to 2009.
     - If only one year of heating data is available for a country, a point (0, 0) is added to make the polynomial fit work.
-    """    
+    """
 
     countries = hdd.columns.intersection(energy_totals.index.levels[0])
 
