@@ -801,7 +801,6 @@ def build_network(
         "bus1",
         "voltage",
         "circuits",
-        "tag_frequency",
         "length",
         "underground",
         "under_construction",

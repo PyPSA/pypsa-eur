@@ -108,7 +108,6 @@ def _simplify_polys(polys, minarea=0.1, tolerance=0.01, filterremote=True):
             polys = mainpoly
     return polys.simplify(tolerance=tolerance)
 
-
 def countries(naturalearth, country_list):
     if "RS" in country_list:
         country_list.append("KV")
