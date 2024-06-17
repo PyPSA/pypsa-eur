@@ -21,7 +21,7 @@ Relevant Settings
 Inputs
 ------
 
-- ``data/heat_load_profile_BDEW.csv``: Intraday heat profile fpr water and space heating demand for the residential and services sectors for weekends and weekdays.
+- ``data/heat_load_profile_BDEW.csv``: Intraday heat profile for water and space heating demand for the residential and services sectors for weekends and weekdays.
 - ``resources/daily_heat_demand_<scope>_elec_s<simpl>_<clusters>.nc``: Daily heat demand per cluster.
 
 Outputs

@@ -325,7 +325,7 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
     -----
     - Retrieves JRC-IDEES data for the specified country from `base_dir` for residential, tertiary, and transport sectors.
     - Calculates energy totals for each sector, stores them in a dictionary and returns them as data frame.
-    - Assertions ensure indeces of JRC-IDEES data are as expected.
+    - Assertions ensure indices of JRC-IDEES data are as expected.
     """
 
     ct_idees = idees_rename.get(ct, ct)

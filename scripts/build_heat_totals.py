@@ -37,7 +37,7 @@ def approximate_heat_demand(energy_totals: pd.DataFrame, hdd: pd.DataFrame):
     energy_totals : pd.DataFrame
         DataFrame with energy consumption by sector (columns), country and year. Output of :func:`scripts.build_energy_totals.py`.
     hdd : pd.DataFrame
-        DataFrame with numer of heating degree days by year (columns) and country (index).
+        DataFrame with number of heating degree days by year (columns) and country (index).
 
     Returns
     -------
