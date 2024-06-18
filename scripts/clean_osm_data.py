@@ -78,6 +78,19 @@ def _create_polygon(row):
     return polygon
 
 
+def find_closest_polygon(gdf, point):
+    # Compute the distance to each polygon
+    gdf["distance"] = gdf["geometry"].apply(lambda geom: point.distance(geom))
+
+    # Find the index of the closest polygon
+    closest_idx = gdf["distance"].idxmin()
+
+    # Get the closest polygon's row
+    closest_polygon = gdf.loc[closest_idx]
+
+    return closest_idx
+
+
 def _extended_linemerge(lines):
     """
     Merges a list of LineStrings into a single LineString by finding the
@@ -549,15 +562,17 @@ def _add_line_endings_to_substations(
         axis=1,
     )
     gdf_union = gpd.GeoDataFrame(geometry=gdf_union["geometry"], crs=crs)
-    utm = gdf_union.estimate_utm_crs(datum_name="WGS 84")
-    gdf_union = gdf_union.to_crs(utm)
-    gdf_union = gdf_union.buffer(2500)  # meters
-    gdf_union = gdf_union.to_crs(crs)
-    gdf_union = gpd.GeoDataFrame(geometry=gdf_union, crs=crs)
     gdf_buses_tofix = gpd.GeoDataFrame(
         buses[bool_multiple_countries], geometry="geometry", crs=crs
     )
     joined = gpd.sjoin(gdf_buses_tofix, gdf_union, how="left", predicate="within")
+
+    # For all remaining rows where the country/index_right column is NaN, find
+    # find the closest polygon index
+    joined.loc[joined["index_right"].isna(), "index_right"] = joined.loc[
+        joined["index_right"].isna(), "geometry"
+    ].apply(lambda x: find_closest_polygon(gdf_union, x))
+
     joined.reset_index(inplace=True)
     joined = joined.drop_duplicates(subset="bus_id")
     joined.set_index("bus_id", inplace=True)

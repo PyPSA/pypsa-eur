@@ -91,7 +91,7 @@ def _get_country(target, **keys):
         return np.nan
 
 
-def _simplify_polys(polys, minarea=0.1, tolerance=0.01, filterremote=True):
+def _simplify_polys(polys, minarea=0.1, filterremote=True):
     if isinstance(polys, MultiPolygon):
         polys = sorted(polys.geoms, key=attrgetter("area"), reverse=True)
         mainpoly = polys[0]
@@ -106,7 +106,7 @@ def _simplify_polys(polys, minarea=0.1, tolerance=0.01, filterremote=True):
             )
         else:
             polys = mainpoly
-    return polys.simplify(tolerance=tolerance)
+    return polys
 
 
 def countries(naturalearth, country_list):
