@@ -745,7 +745,7 @@ def _find_closest_bus(lines, n, offshore_shapes=None, distance_upper_bound=np.in
         bus is created. and the line is connected to it.
         """
         lines_coords = lines.geometry.apply(
-            lambda x: pd.Series(get_coords_from_port(x, port=port), index=["x", "y"])
+            lambda x: pd.Series(_get_coords_from_port(x, port=port), index=["x", "y"])
         )
         distances, indices = bus_tree.query(lines_coords)
 
@@ -803,7 +803,7 @@ def reduce_linestring_to_endpoints(linestring_wkt, reversed=False):
     return start_end_coords.flatten()
 
 
-def get_coords_from_port(linestring_wkt, port=0):
+def _get_coords_from_port(linestring_wkt, port=0):
     """
     Extracts the coordinates of a specified port from a given linestring.
 
@@ -822,14 +822,14 @@ def get_coords_from_port(linestring_wkt, port=0):
     return coords
 
 
-def _find_closest_lines(lines, new_lines, distance_upper_bound=1.5):
+def _find_closest_lines(lines, new_lines, distance_upper_bound=0.1):
     """
     Find the closest lines in a given set of lines to a set of new lines.
 
     Parameters:
     lines (pandas.DataFrame): DataFrame with column geometry containing the existing lines.
     new_lines (pandas.DataFrame): DataFrame with column geometry containing the new lines.
-    distance_upper_bound (float, optional): Maximum distance to consider a line as a match. Defaults to 1.5.
+    distance_upper_bound (float, optional): Maximum distance to consider a line as a match. Defaults to 0.1 which corresponds to approximately 15 km.
 
     Returns:
     pandas.Series: Series containing with index the new lines and values providing closest existing line.
@@ -853,9 +853,8 @@ def _find_closest_lines(lines, new_lines, distance_upper_bound=1.5):
     if len(found_i) < len(new_lines):
         not_found = new_lines.index.difference(new_lines.index[found_i])
         logger.warning(
-            "Could not find lines close enough to the upgraded lines:\n"
+            "Could not find lines close enough to provided lines:\n"
             + str(not_found.to_list())
-            + "\n Hence, the given upgraded lines are ignored."
         )
     # create a DataFrame with the distances, new line and its closest existing line
     line_map = pd.DataFrame(
@@ -922,22 +921,72 @@ def _get_project_files(plan="tyndp"):
     return lines
 
 
-def _add_projects(n, offshore_shapes, plan="tyndp"):
+def _remove_projects_outside_countries(lines, europe_shape):
+    """
+    Remove projects which are not in the considered countries.
+    """
+    europe_shape = gpd.read_file(europe_shape).loc[0, "geometry"]
+    europe_shape_prepped = shapely.prepared.prep(europe_shape)
+    is_within_covered_countries = lines.geometry.apply(
+        lambda x: europe_shape_prepped.contains(shapely.wkt.loads(x))
+    )
+
+    if not is_within_covered_countries.all():
+        logger.info(
+            "Project lines outside of the covered area (skipping): "
+            + ", ".join(str(i) for i in lines.loc[~is_within_covered_countries].index)
+        )
+
+    lines = lines.loc[is_within_covered_countries]
+    return lines
+
+
+def _is_similar(ds1, ds2, percentage=10):
+    """
+    Check if values in series ds2 are within a specified percentage of series
+    ds1.
+
+    Returns:
+    - A boolean series where True indicates ds2 values are within the percentage range of ds2.
+    """
+    lower_bound = ds1 * (1 - percentage / 100)
+    upper_bound = ds1 * (1 + percentage / 100)
+    return np.logical_and(ds2 >= lower_bound, ds2 <= upper_bound)
+
+
+def _add_projects(
+    n,
+    europe_shape,
+    offshore_shapes,
+    plan="tyndp",
+    status=["confirmed", "under construction"],
+):
     lines = _get_project_files(plan)
+
     for key, df in lines.items():
+        df = _remove_projects_outside_countries(df, europe_shape)
+        df = df.query("status in @status")
         if "new_lines" in key:
             new_lines = _find_closest_bus(df, n)
             duplicate_lines = _find_closest_lines(
-                n.lines, new_lines, distance_upper_bound=0.1
+                n.lines, new_lines, distance_upper_bound=0.10
             )
+            # ignore duplicates where v_nom is not within a tolerance of 10%
+            to_ignore = _is_similar(
+                new_lines.loc[duplicate_lines.index, "v_nom"],
+                duplicate_lines.map(n.lines["v_nom"]),
+            )
+            duplicate_lines = duplicate_lines[~to_ignore]
+            new_lines = new_lines.drop(duplicate_lines.index, errors="ignore")
             n.import_components_from_dataframe(new_lines, "Line")
         elif "new_links" in key:
             new_links = _find_closest_bus(
                 df, n, offshore_shapes, distance_upper_bound=0.4
             )
-            duplicate_lines = _find_closest_lines(
-                n.links, new_links, distance_upper_bound=0.20
+            duplicate_links = _find_closest_lines(
+                n.links, new_links, distance_upper_bound=0.10
             )
+            new_links = new_links.drop(duplicate_lines.index, errors="ignore")
             n.import_components_from_dataframe(new_links, "Link")
         elif "upgraded_lines" in key:
             line_map = _find_closest_lines(n.lines, df, distance_upper_bound=0.20)
@@ -964,8 +1013,7 @@ def base_network(
     eg_transformers,
     eg_lines,
     eg_links,
-    links_p_nom,
-    links_tyndp,
+    line_projects,
     europe_shape,
     country_shapes,
     offshore_shapes,
@@ -975,8 +1023,6 @@ def base_network(
     buses = _load_buses_from_eg(eg_buses, europe_shape, config["electricity"])
 
     links = _load_links_from_eg(buses, eg_links)
-    # if config["links"].get("include_tyndp"):
-    #     buses, links = _add_links_from_tyndp(buses, links, links_tyndp, europe_shape)
 
     converters = _load_converters_from_eg(buses, eg_converters)
 
@@ -1004,11 +1050,15 @@ def base_network(
     n.import_components_from_dataframe(links, "Link")
     n.import_components_from_dataframe(converters, "Link")
 
-    include_nep = True
-    if include_nep:
-        _add_projects(
-            n, offshore_shapes, plan="tyndp"
-        )  # TODO: add path with snakemake.params.path
+    for project, include in line_projects.include_projects.items():
+        if include:
+            _add_projects(
+                n,
+                europe_shape,
+                offshore_shapes,
+                plan=project,
+                status=line_projects.status,
+            )
 
     _set_lines_s_nom_from_linetypes(n)
 
@@ -1182,8 +1232,7 @@ if __name__ == "__main__":
         snakemake.input.eg_transformers,
         snakemake.input.eg_lines,
         snakemake.input.eg_links,
-        snakemake.input.links_p_nom,
-        snakemake.input.links_tyndp,
+        snakemake.params.line_projects,
         snakemake.input.europe_shape,
         snakemake.input.country_shapes,
         snakemake.input.offshore_shapes,

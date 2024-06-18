@@ -291,8 +291,15 @@ links:
   p_max_pu: 1.0
   p_nom_max: .inf
   max_extension: 30000 #MW
-  include_tyndp: true
+  include_tyndp: false
   under_construction: 'zero' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#line_projects
+line_projects:
+  include_projects:
+    tyndp: true
+    nep: true
+  status: ['confirmed', 'in_permitting', 'under_construction']  # 'planned_not_yet_permitting', 'under_consideration'
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#transformers
 transformers:
