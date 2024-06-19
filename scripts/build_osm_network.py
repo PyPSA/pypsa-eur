@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText:  PyPSA-Earth and PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur and PyPSA-Earth Authors
 #
-# SPDX-License-Identifier: AGPL-3.0-or-later
-
-# -*- coding: utf-8 -*-
+# SPDX-License-Identifier: MIT
 
 import logging
 import os
@@ -773,7 +771,7 @@ def build_network(
     # Rename "substation" in buses["symbol"] to "Substation"
     buses["symbol"] = buses["symbol"].replace({"substation": "Substation"})
 
-    # Drop unncessary index column and set respective element ids as index
+    # Drop unnecessary index column and set respective element ids as index
     lines.set_index("line_id", inplace=True)
     links.set_index("link_id", inplace=True)
     converters.set_index("converter_id", inplace=True)
