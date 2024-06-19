@@ -18,6 +18,7 @@ Release Notes
 
 * Partially revert https://github.com/PyPSA/pypsa-eur/pull/967 to return to old grouping year logic (which was mostly correct)
 
+* Bugfix: Correctly read in threshold capacity below which to remove components from previous planning horizons in :mod:`add_brownfield`.
 
 PyPSA-Eur 0.11.0 (25th May 2024)
 =====================================
