@@ -605,6 +605,7 @@ sector:
   biogas_upgrading_cc: false
   conventional_generation:
     OCGT: gas
+  keep_existing_capacities: false
   biomass_to_liquid: false
   biosng: false
   limit_max_growth:

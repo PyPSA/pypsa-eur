@@ -378,7 +378,7 @@ def update_transmission_costs(n, costs, length_factor=1.0):
 
 
 def attach_wind_and_solar(
-    n, costs, input_profiles, carriers, extendable_carriers, line_length_factor=1
+    n, costs, ppl, input_profiles, carriers, extendable_carriers, line_length_factor=1
 ):
     add_missing_carriers(n, carriers)
     for car in carriers:
@@ -419,12 +419,20 @@ def attach_wind_and_solar(
             else:
                 capital_cost = costs.at[car, "capital_cost"]
 
+            if not ppl.query("carrier == @car").empty:
+                caps = ppl.query("carrier == @car").groupby("bus").p_nom.sum()
+                caps = pd.Series(data = caps, index = ds.indexes["bus"]).fillna(0)
+            else:
+                caps = pd.Series(index = ds.indexes["bus"]).fillna(0)
+
             n.madd(
                 "Generator",
                 ds.indexes["bus"],
                 " " + car,
                 bus=ds.indexes["bus"],
                 carrier=car,
+                p_nom = caps,
+                p_nom_min = caps,
                 p_nom_extendable=car in extendable_carriers["Generator"],
                 p_nom_max=ds["p_nom_max"].to_pandas(),
                 weight=ds["weight"].to_pandas(),
@@ -863,6 +871,7 @@ if __name__ == "__main__":
     attach_wind_and_solar(
         n,
         costs,
+        ppl,
         snakemake.input,
         renewable_carriers,
         extendable_carriers,
