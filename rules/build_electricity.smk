@@ -81,7 +81,7 @@ rule base_network:
                 "data/osm/prebuilt/buses.csv"
                 if config_provider("electricity_network", "base_network")(w)
                 == "osm-prebuilt"
-                else resources("osm/buses.csv")
+                else resources("osm/pre-base/buses.csv")
             )
         ),
         eg_lines=lambda w: (
@@ -91,7 +91,7 @@ rule base_network:
                 "data/osm/prebuilt/lines.csv"
                 if config_provider("electricity_network", "base_network")(w)
                 == "osm-prebuilt"
-                else resources("osm/lines.csv")
+                else resources("osm/pre-base/lines.csv")
             )
         ),
         eg_links=lambda w: (
@@ -101,7 +101,7 @@ rule base_network:
                 "data/osm/prebuilt/links.csv"
                 if config_provider("electricity_network", "base_network")(w)
                 == "osm-prebuilt"
-                else resources("osm/links.csv")
+                else resources("osm/pre-base/links.csv")
             )
         ),
         eg_converters=lambda w: (
@@ -111,7 +111,7 @@ rule base_network:
                 "data/osm/prebuilt/converters.csv"
                 if config_provider("electricity_network", "base_network")(w)
                 == "osm-prebuilt"
-                else resources("osm/converters.csv")
+                else resources("osm/pre-base/converters.csv")
             )
         ),
         eg_transformers=lambda w: (
@@ -121,7 +121,7 @@ rule base_network:
                 "data/osm/prebuilt/transformers.csv"
                 if config_provider("electricity_network", "base_network")(w)
                 == "osm-prebuilt"
-                else resources("osm/transformers.csv")
+                else resources("osm/pre-base/transformers.csv")
             )
         ),
         parameter_corrections=lambda w: (
@@ -711,16 +711,16 @@ rule build_osm_network:
         links=resources("osm/clean/links.geojson"),
         country_shapes=resources("country_shapes.geojson"),
     output:
-        lines=resources("osm/lines.csv"),
-        links=resources("osm/links.csv"),
-        converters=resources("osm/converters.csv"),
-        transformers=resources("osm/transformers.csv"),
-        substations=resources("osm/buses.csv"),
-        lines_geojson=resources("osm/lines.geojson"),
-        links_geojson=resources("osm/links.geojson"),
-        converters_geojson=resources("osm/converters.geojson"),
-        transformers_geojson=resources("osm/transformers.geojson"),
-        substations_geojson=resources("osm/buses.geojson"),
+        lines=resources("osm/pre-base/lines.csv"),
+        links=resources("osm/pre-base/links.csv"),
+        converters=resources("osm/pre-base/converters.csv"),
+        transformers=resources("osm/pre-base/transformers.csv"),
+        substations=resources("osm/pre-base/buses.csv"),
+        lines_geojson=resources("osm/pre-base/lines.geojson"),
+        links_geojson=resources("osm/pre-base/links.geojson"),
+        converters_geojson=resources("osm/pre-base/converters.geojson"),
+        transformers_geojson=resources("osm/pre-base/transformers.geojson"),
+        substations_geojson=resources("osm/pre-base/buses.geojson"),
     log:
         logs("build_osm_network.log"),
     benchmark:

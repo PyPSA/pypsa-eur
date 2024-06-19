@@ -227,7 +227,7 @@ def set_lines_ids(lines, buses, distance_crs):
         ascii=False,
         unit=" lines",
         total=lines.shape[0],
-        desc="Set line bus ids ",
+        desc="Set line/link bus ids ",
     )
 
     # initialization

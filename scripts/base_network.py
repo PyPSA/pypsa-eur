@@ -211,6 +211,22 @@ def _load_converters_from_eg(buses, eg_converters):
     return converters
 
 
+def _load_converters_from_osm(buses, eg_converters):
+    converters = pd.read_csv(
+        eg_converters,
+        quotechar="'",
+        true_values=["t"],
+        false_values=["f"],
+        dtype=dict(converter_id="str", bus0="str", bus1="str"),
+    ).set_index("converter_id")
+
+    converters = _remove_dangling_branches(converters, buses)
+
+    converters["carrier"] = ""
+
+    return converters
+
+
 def _load_links_from_eg(buses, eg_links):
     links = pd.read_csv(
         eg_links,
@@ -823,12 +839,20 @@ def base_network(
     ):
         buses, links = _add_links_from_tyndp(buses, links, links_tyndp, europe_shape)
 
-    converters = _load_converters_from_eg(buses, eg_converters)
+    if config["electricity_network"].get("base_network") == "gridkit":
+        converters = _load_converters_from_eg(buses, eg_converters)
+    elif "osm" in config["electricity_network"].get("base_network"):
+        converters = _load_converters_from_osm(buses, eg_converters)
+
     transformers = _load_transformers_from_eg(buses, eg_transformers)
 
     lines = _load_lines_from_eg(buses, eg_lines)
 
-    if config["lines"].get("reconnect_crimea", True) and "UA" in config["countries"]:
+    if (
+        (config["electricity_network"].get("base_network") == "gridkit")
+        & (config["lines"].get("reconnect_crimea", True))
+        & ("UA" in config["countries"])
+    ):
         lines = _reconnect_crimea(lines)
 
     if config["electricity_network"].get("base_network") == "gridkit":
@@ -908,7 +932,7 @@ def _get_linetypes_config(line_types, voltages):
     -------
         Dictionary of linetypes for selected voltages.
     """
-    # get voltages value that are not availabile in the line types
+    # get voltages value that are not available in the line types
     vnoms_diff = set(voltages).symmetric_difference(set(line_types.keys()))
     if vnoms_diff:
         logger.warning(
