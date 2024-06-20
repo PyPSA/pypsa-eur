@@ -25,6 +25,10 @@ Upcoming Release
 
 * Bugfix: Correctly read in threshold capacity below which to remove components from previous planning horizons in :mod:`add_brownfield`.
 
+* Allow running the sector model for isolated non-EU28 countries, by filling missing sectoral
+  data with defaults, average EU values or zeros, if not available.
+
+
 PyPSA-Eur 0.11.0 (25th May 2024)
 =====================================
 
