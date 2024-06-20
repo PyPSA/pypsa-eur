@@ -75,7 +75,7 @@ rule add_brownfield:
         H2_retrofit_capacity_per_CH4=config_provider(
             "sector", "H2_retrofit_capacity_per_CH4"
         ),
-        threshold_capacity=config_provider("existing_capacities", " threshold_capacity"),
+        threshold_capacity=config_provider("existing_capacities", "threshold_capacity"),
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         carriers=config_provider("electricity", "renewable_carriers"),
