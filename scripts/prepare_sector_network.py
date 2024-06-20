@@ -879,15 +879,18 @@ def add_generation(n, costs, existing_capacities=0, existing_efficiencies=None):
                     "Generator", list()
                 )
                 else False
-            ),    
+            ),
             p_nom=(
                 existing_capacities[generator] / existing_efficiencies[generator]
-                if not existing_capacities == 0 else 0
-            ), # NB: existing capacities are MWel     
-            p_max_pu = 0.7 if carrier == "uranium" else 1, # be conservative for nuclear (maintance or unplanned shut downs)
+                if not existing_capacities == 0
+                else 0
+            ),  # NB: existing capacities are MWel
+            p_max_pu=(
+                0.7 if carrier == "uranium" else 1
+            ),  # be conservative for nuclear (maintance or unplanned shut downs)
             p_nom_min=(
                 existing_capacities[generator] if not existing_capacities == 0 else 0
-            ),   
+            ),
             carrier=generator,
             efficiency=(
                 existing_efficiencies[generator]
@@ -3952,6 +3955,7 @@ def add_enhanced_geothermal(n, egs_potentials, egs_overlap, costs):
                 cyclic_state_of_charge=True,
             )
 
+
 def get_capacities_from_elec(n, carriers, component):
     """
     Gets capacities and efficiencies for {carrier} in n.{component} that were
@@ -3974,6 +3978,7 @@ def get_capacities_from_elec(n, carriers, component):
         )[eff_col]
 
     return capacity_dict, efficiency_dict
+
 
 # %%
 if __name__ == "__main__":

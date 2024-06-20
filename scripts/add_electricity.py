@@ -421,9 +421,9 @@ def attach_wind_and_solar(
 
             if not ppl.query("carrier == @car").empty:
                 caps = ppl.query("carrier == @car").groupby("bus").p_nom.sum()
-                caps = pd.Series(data = caps, index = ds.indexes["bus"]).fillna(0)
+                caps = pd.Series(data=caps, index=ds.indexes["bus"]).fillna(0)
             else:
-                caps = pd.Series(index = ds.indexes["bus"]).fillna(0)
+                caps = pd.Series(index=ds.indexes["bus"]).fillna(0)
 
             n.madd(
                 "Generator",
@@ -431,8 +431,8 @@ def attach_wind_and_solar(
                 " " + car,
                 bus=ds.indexes["bus"],
                 carrier=car,
-                p_nom = caps,
-                p_nom_min = caps,
+                p_nom=caps,
+                p_nom_min=caps,
                 p_nom_extendable=car in extendable_carriers["Generator"],
                 p_nom_max=ds["p_nom_max"].to_pandas(),
                 weight=ds["weight"].to_pandas(),
