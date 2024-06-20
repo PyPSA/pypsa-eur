@@ -64,8 +64,8 @@ import multiprocessing as mp
 from functools import partial
 
 import country_converter as coco
-import pandas as pd
 import numpy as np
+import pandas as pd
 from _helpers import set_scenario_config
 from tqdm import tqdm
 
@@ -197,7 +197,9 @@ def add_non_eu28_industrial_energy_demand(countries, demand, production):
 
     eu28_production = production.loc[countries.intersection(eu28)].sum()
     if eu28_production.sum() == 0:
-        logger.info("EU production is zero. Fallback: Filling non EU28 countries with zeros.")
+        logger.info(
+            "EU production is zero. Fallback: Filling non EU28 countries with zeros."
+        )
     eu28_energy = demand.groupby(level=1).sum()
     eu28_averages = eu28_energy / eu28_production
 

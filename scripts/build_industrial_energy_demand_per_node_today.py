@@ -80,7 +80,7 @@ def build_nodal_industrial_energy_demand():
             )
             keys[mapping] = 0
             key = keys.loc[buses, mapping].fillna(0)
-            
+
         demand = industrial_demand[country, sector]
 
         outer = pd.DataFrame(
