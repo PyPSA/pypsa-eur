@@ -21,26 +21,17 @@ Having downloaded the necessary data,
 With these and the externally extracted ENTSO-E online map topology
 (``data/entsoegridkit``), it can build a base PyPSA network with the following rules:
 
-- :mod:`base_network` builds and stores the base network with all buses, HVAC lines and HVDC links, while
-- :mod:`build_bus_regions` determines `Voronoi cells <https://en.wikipedia.org/wiki/Voronoi_diagram>`__ for all substations.
+- :mod:`base_network` builds and stores the base network with all buses, HVAC lines and HVDC links, and determines `Voronoi cells <https://en.wikipedia.org/wiki/Voronoi_diagram>`__ for all substations.
 
 Then the process continues by calculating conventional power plant capacities, potentials, and per-unit availability time series for variable renewable energy carriers and hydro power plants with the following rules:
 
 - :mod:`build_powerplants` for today's thermal power plant capacities using `powerplantmatching <https://github.com/FRESNA/powerplantmatching>`__ allocating these to the closest substation for each powerplant,
-- :mod:`build_natura_raster` for rasterising NATURA2000 natural protection areas,
 - :mod:`build_ship_raster` for building shipping traffic density,
 - :mod:`build_renewable_profiles` for the hourly capacity factors and installation potentials constrained by land-use in each substation's Voronoi cell for PV, onshore and offshore wind, and
 - :mod:`build_hydro_profile` for the hourly per-unit hydro power availability time series.
 
 The central rule :mod:`add_electricity` then ties all the different data inputs
 together into a detailed PyPSA network stored in ``networks/elec.nc``.
-
-.. _busregions:
-
-Rule ``build_bus_regions``
-=============================
-
-.. automodule:: build_bus_regions
 
 .. _cutout:
 
@@ -54,14 +45,6 @@ Rule ``prepare_links_p_nom``
 ===============================
 
 .. automodule:: prepare_links_p_nom
-
-.. _natura:
-
-Rule ``build_natura_raster``
-===============================
-
-.. automodule:: build_natura_raster
-
 
 .. _base:
 

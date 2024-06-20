@@ -142,6 +142,7 @@ def build_eurostat(input_eurostat, countries, nprocesses=1, disable_progressbar=
         "Domestic navigation": "Domestic Navigation",
         "International maritime bunkers": "Bunkers",
         "UK": "GB",
+        "EL": "GR",
     }
     columns_rename = {"Total": "Total all products"}
     df.rename(index=index_rename, columns=columns_rename, inplace=True)

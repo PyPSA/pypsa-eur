@@ -139,7 +139,10 @@ def approximate_missing_eia_stats(eia_stats, runoff_fn, countries):
     runoff.index = runoff.index.astype(int)
 
     # fix outliers; exceptional floods in 1977-1979 in ES & PT
-    runoff.loc[1978, ["ES", "PT"]] = runoff.loc[1979, ["ES", "PT"]]
+    if "ES" in runoff:
+        runoff.loc[1978, "ES"] = runoff.loc[1979, "ES"]
+    if "PT" in runoff:
+        runoff.loc[1978, "PT"] = runoff.loc[1979, "PT"]
 
     runoff_eia = runoff.loc[eia_stats.index]
 
