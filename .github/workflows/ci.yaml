@@ -81,7 +81,12 @@ jobs:
         key: data-cutouts-${{ env.WEEK }}-${{ env.DATA_CACHE_NUMBER }}
 
     - name: Test snakemake workflow
-      run: ./test.sh
+      uses: nick-fields/retry@v2
+      with:
+        timeout_minutes: 1
+        max_attempts: 2
+        command: bash test.sh
+
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4.3.0
